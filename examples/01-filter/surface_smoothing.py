@@ -4,12 +4,12 @@
 Surface Smoothing
 ~~~~~~~~~~~~~~~~~
 
-Smoothing rough edges of a surface mesh
+Smoothing rough edges of a surface mesh.
+
 """
 
 # sphinx_gallery_thumbnail_number = 4
-from __future__ import annotations
-
+import numpy as np
 import pyvista as pv
 from pyvista import examples
 
@@ -32,11 +32,11 @@ vol.plot(show_edges=True, cpos=cpos, show_scalar_bar=False)
 
 # %%
 # Extract the outer surface of the volume using the
-# :func:`pyvista.DataSetFilters.extract_geometry` filter and then apply the
+# :func:`~pyvista.DataObjectFilters.extract_surface` filter and then apply the
 # smoothing filter:
 
 # Get the out surface as PolyData
-surf = vol.extract_geometry()
+surf = vol.extract_surface(algorithm=None)
 # Smooth the surface
 smooth = surf.smooth()
 smooth.plot(show_edges=True, cpos=cpos, show_scalar_bar=False)
@@ -73,7 +73,7 @@ pl.show()
 # Taubin Smoothing
 # ~~~~~~~~~~~~~~~~
 # You can reduce the amount of surface shrinkage by using Taubin smoothing
-# rather than the default laplacian smoothing implemented in :func:`smooth()
+# rather than the default Laplacian smoothing implemented in :func:`smooth()
 # <pyvista.PolyDataFilters.smooth>`. In this example, you can see how Taubin
 # smoothing maintains the volume relative to the original mesh.
 #
@@ -92,5 +92,74 @@ pl.show()
 print(f'Original surface volume:   {surf.volume:.1f}')
 print(f'Laplacian smoothed volume: {smooth.volume:.1f}')
 print(f'Taubin smoothed volume:    {smooth_w_taubin.volume:.1f}')
+
+# %%
+# Feature Smoothing
+# ~~~~~~~~~~~~~~~~~
+# By default, :func:`~pyvista.PolyDataFilters.smooth` moves every
+# vertex freely, which rounds off any sharp edges the mesh has. Enable
+# ``feature_smoothing`` to identify sharp interior edges with ``feature_angle``
+# and keep them sharp while the rest of the mesh is smoothed.
+#
+# Smooth a cube heavily with the feature smoothing turned off and on, and show
+# the results side-by-side. The keys of the dict are used as labels.
+
+smooth_kwargs = dict(n_iter=500, relaxation_factor=0.05)
+
+cube = pv.Cube().triangulate().subdivide(4)
+cube_smoothed = {
+    f'feature_smoothing={value}': cube.smooth(**smooth_kwargs, feature_smoothing=value)
+    for value in [False, True]
+}
+
+datasets = {'original': cube, **cube_smoothed}
+
+pv.plot_compare(datasets, show_edges=True)
+
+# %%
+# Print the number of sharp edges of each mesh
+for name, mesh in datasets.items():
+    print(f'{name}: {mesh.extract_feature_edges().n_cells} sharp edges')
+
+# %%
+# The cube keeps its edges and corners with ``feature_smoothing=True``, whereas
+# it is rounded into a ball without it.
+
+# %%
+# Boundary Smoothing
+# ~~~~~~~~~~~~~~~~~~
+# ``boundary_smoothing`` controls the vertices along an open boundary of the
+# mesh. It is enabled by default, so those vertices are smoothed along with the
+# rest of the mesh. Disable it to pin the boundary in place.
+#
+# Create a plane and displace the points along two of its edges to give it a
+# rippled boundary.
+
+plane = pv.Plane(i_resolution=40, j_resolution=40).triangulate()
+boundary = np.isclose(np.abs(plane.points[:, 0]), 0.5)
+plane.points[boundary, 2] = 0.05 * np.sin(12 * plane.points[boundary, 1])
+
+# %%
+# Smooth the plane with the boundary smoothing turned off and on. The interior
+# of the plane is already flat, so only the ripple shows a difference.
+
+plane_smoothed = {
+    f'boundary_smoothing={value}': plane.smooth(**smooth_kwargs, boundary_smoothing=value)
+    for value in [False, True]
+}
+
+datasets = {'original': plane, **plane_smoothed}
+
+pv.plot_compare(datasets, show_edges=True)
+
+# %%
+# Print the height of the rippled boundary of each mesh
+for name, mesh in datasets.items():
+    print(f'{name}: boundary z min={mesh.bounds.z_min:.4f}, max={mesh.bounds.z_max:.4f}')
+
+# %%
+# The ripple is untouched with ``boundary_smoothing=False`` and is flattened
+# with ``boundary_smoothing=True``.
+
 # %%
 # .. tags:: filter

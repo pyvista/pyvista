@@ -3,9 +3,8 @@
 
 Extrude Rotation
 ~~~~~~~~~~~~~~~~
-Sweep polygonal data creating "skirt" from free edges and lines, and
-lines from vertices using the :meth:`~pyvista.PolyDataFilters.extrude_rotate`
-filter.
+
+Sweep polygonal data into a "skirt" using :meth:`~pyvista.PolyDataFilters.extrude_rotate`.
 
 This takes polygonal data as input and generates polygonal data on
 output. The input dataset is swept around the z-axis to create
@@ -15,20 +14,17 @@ cylindrical shell, and sweeping a circle creates a torus.
 
 """
 
-from __future__ import annotations
-
 import numpy as np
-
-import pyvista
+import pyvista as pv
 
 # create a line and rotate it about the Z-axis
 resolution = 10
-line = pyvista.Line(pointa=(0, 0, 0), pointb=(1, 0, 0), resolution=2)
-poly = line.extrude_rotate(resolution=resolution)
+line = pv.Line(pointa=(0, 0, 0), pointb=(1, 0, 0), resolution=2)
+poly = line.extrude_rotate(resolution=resolution, capping=False)
 poly
 
 # %%
-# Plot the extruded line
+# Plot the Extruded Line
 # ~~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -36,34 +32,34 @@ poly
 PYVISTA_GALLERY_FORCE_STATIC = True
 # sphinx_gallery_end_ignore
 
-plotter = pyvista.Plotter(shape=(2, 1))
-plotter.subplot(0, 0)
-plotter.add_text('Line', font_size=24)
-plotter.add_mesh(line, color='lightblue', show_edges=True)
-plotter.add_mesh(
-    pyvista.PolyData(line.points),
+pl = pv.Plotter(shape=(2, 1))
+pl.subplot(0, 0)
+pl.add_text('Line', font_size=24)
+pl.add_mesh(line, color='lightblue', show_edges=True)
+pl.add_mesh(
+    pv.PolyData(line.points),
     color='red',
     point_size=10,
     render_points_as_spheres=True,
 )
-plotter.subplot(1, 0)
-plotter.add_text('Extrude Rotated Line', font_size=24)
-plotter.add_mesh(poly, color='lightblue', show_edges=True)
-plotter.add_mesh(
-    pyvista.PolyData(poly.points),
+pl.subplot(1, 0)
+pl.add_text('Extrude Rotated Line', font_size=24)
+pl.add_mesh(poly, color='lightblue', show_edges=True)
+pl.add_mesh(
+    pv.PolyData(poly.points),
     color='red',
     point_size=10,
     render_points_as_spheres=True,
 )
 
-plotter.show(cpos='xy')
+pl.show(cpos='xy')
 
 # %%
-# Create a spring
+# Create a Spring
 # ~~~~~~~~~~~~~~~
 
 # Create the spring profile (a circle).
-plotter = pyvista.Plotter()
+pl = pv.Plotter()
 
 vertices = np.array(
     [
@@ -78,13 +74,15 @@ vertices = np.array(
     ],
 )
 faces = np.hstack([[8, 0, 1, 2, 3, 4, 5, 6, 7]])
-profile = pyvista.PolyData(vertices, faces)
+profile = pv.PolyData(vertices, faces)
 
 # Extrude the profile to make a spring.
-spring = profile.extrude_rotate(resolution=360, translation=6.0, dradius=1.0, angle=2160.0)
-plotter.add_text('Spring', font_size=24)
-plotter.add_mesh(spring, color='lightblue', show_edges=True)
+spring = profile.extrude_rotate(
+    resolution=360, translation=6.0, dradius=1.0, angle=2160.0, capping=False
+)
+pl.add_text('Spring', font_size=24)
+pl.add_mesh(spring, color='lightblue', show_edges=True)
 
-plotter.show(cpos='zx')
+pl.show(cpos='zx')
 # %%
 # .. tags:: filter

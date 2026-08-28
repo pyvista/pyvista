@@ -3,14 +3,13 @@
 
 Lookup Tables
 ~~~~~~~~~~~~~
-Demonstrate the usage of a lookup table within PyVista
+
+Demonstrate the usage of a lookup table within PyVista.
 
 The :class:`pyvista.LookupTable` can be used to have fine-tuned control over
 the mapping between a :class:`pyvista.DataSet`'s scalars and RGBA colors.
 
 """
-
-from __future__ import annotations
 
 import pyvista as pv
 from pyvista import examples
@@ -30,7 +29,7 @@ bracket
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # First, let's plot using the default color map, "viridis". Internally, PyVista
 # will automatically create a lookup table to map the scalars (stored here
-# within `point_data`) to RGBA colors. This is shown here as a nested attribute
+# within ``point_data``) to RGBA colors. This is shown here as a nested attribute
 # to the :class:`pyvista.DataSetMapper` and it has a helpful ``repr`` method:
 
 pl = pv.Plotter()
@@ -60,7 +59,7 @@ pl.show()
 
 
 # %%
-# Create a Custom Lookup Table using a Matplotlib Color Map
+# Create a Custom Lookup Table Using a Matplotlib Color Map
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Here we create a lookup table with a narrow table range (same as ``clim``)
 # and color values above and below the range.
@@ -73,7 +72,7 @@ lut.plot()
 
 
 # %%
-# Plot the bracket with the custom colormap
+# Plot the Bracket With the Custom Colormap
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # You can set assign the lookup table when using ``add_mesh`` with ``cmap=``.
 
@@ -84,7 +83,7 @@ pl.show()
 
 
 # %%
-# Create a Custom Lookup Table using VTK's Methods
+# Create a Custom Lookup Table Using VTK's Methods
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # If you want to create a completely unique color map, you can use attributes
 # like :attr:`pyvista.LookupTable.hue_range` and
@@ -100,7 +99,7 @@ lut.plot()
 
 
 # %%
-# Plot the bracket with the custom colormap
+# Plot the Bracket With the Custom Colormap
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Assign this custom color map to the plotter and disable lighting to improve
 # the plot.
@@ -111,7 +110,7 @@ pl.show()
 
 
 # %%
-# Custom colormap with widgets
+# Custom Colormap With Widgets
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Here we plot the scalars and dynamically change the lookup table through
 # widgets. We create several overlapping single slider widgets to simulate a
@@ -130,7 +129,7 @@ def set_min_alpha(min_value):
     if min_value > max_value:
         # force the movement of the maximum value
         max_value = min_value
-        pl.slider_widgets[1].GetRepresentation().SetValue(max_value)
+        pl.widgets.slider_widgets[1].GetRepresentation().SetValue(max_value)
     lut.alpha_range = (min_value, max_value)
 
 
@@ -139,7 +138,7 @@ def set_max_alpha(max_value):
     if max_value < min_value:
         # force the movement of the minimum value
         min_value = max_value
-        pl.slider_widgets[0].GetRepresentation().SetValue(min_value)
+        pl.widgets.slider_widgets[0].GetRepresentation().SetValue(min_value)
 
     lut.alpha_range = (min_value, max_value)
 
@@ -189,7 +188,7 @@ def make_double_slider(attr, idx):
         if min_value > max_value:
             # force the movement of the maximum value
             max_value = min_value
-            pl.slider_widgets[idx * 2 + 1].GetRepresentation().SetValue(max_value)
+            pl.widgets.slider_widgets[idx * 2 + 1].GetRepresentation().SetValue(max_value)
         setattr(lut, attr, (min_value, max_value))
 
         if attr == 'scalar_range':
@@ -200,7 +199,7 @@ def make_double_slider(attr, idx):
         if max_value < min_value:
             # force the movement of the minimum value
             min_value = max_value
-            pl.slider_widgets[idx * 2].GetRepresentation().SetValue(min_value)
+            pl.widgets.slider_widgets[idx * 2].GetRepresentation().SetValue(min_value)
         setattr(lut, attr, (min_value, max_value))
 
         if attr == 'scalar_range':
@@ -238,7 +237,11 @@ make_double_slider('value_range', 2)
 make_double_slider('saturation_range', 3)
 make_double_slider('scalar_range', 4)
 
-pl.camera_position = [(9.021, 5.477, 7.780), (-0.679, 1.349, 0.874), (-0.498, -0.228, 0.836)]
+pl.camera_position = pv.CameraPosition(
+    position=(9.021, 5.477, 7.78),
+    focal_point=(-0.679, 1.349, 0.874),
+    viewup=(-0.498, -0.228, 0.836),
+)
 cpos = pl.show(return_cpos=True)
 # %%
 # .. tags:: plot

@@ -3,14 +3,13 @@
 
 Blurring
 ~~~~~~~~
-This example shows how you can use :func:`add_blurring
-<pyvista.Plotter.add_blurring>` to blur a plot, or use
-:func:`enable_depth_of_field <pyvista.Plotter.enable_depth_of_field>`
-to highlight part of your plot.
+
+Blur a plot, or highlight part of it, using depth-of-field style effects.
+
+Uses :func:`add_blurring <pyvista.Plotter.add_blurring>` or
+:func:`enable_depth_of_field <pyvista.Plotter.enable_depth_of_field>`.
 
 """
-
-from __future__ import annotations
 
 import pyvista as pv
 
@@ -21,7 +20,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
 # %%
-# Create several spheres
+# Create Several Spheres
 # ~~~~~~~~~~~~~~~~~~~~~~
 
 # We use a uniform grid here simply to create equidistantly spaced points for
@@ -32,7 +31,7 @@ spheres = grid.glyph(geom=pv.Sphere(), scale=False, orient=False)
 
 
 # %%
-# Blur the plot
+# Blur the Plot
 # ~~~~~~~~~~~~~
 # Add a few blur passes to blur the plot
 

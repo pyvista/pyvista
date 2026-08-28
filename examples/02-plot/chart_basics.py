@@ -5,14 +5,13 @@ Chart Basics
 ~~~~~~~~~~~~
 
 This example shows how different types of charts can be added to the scene.
+
 A more complex example, showing how to combine multiple charts as overlays
 in the same renderer, is given in :ref:`chart_overlays_example`.
+
 """
 
-from __future__ import annotations
-
 import numpy as np
-
 import pyvista as pv
 
 # sphinx_gallery_start_ignore
@@ -20,11 +19,13 @@ import pyvista as pv
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
-rng = np.random.default_rng(1)  # Seeded random number generator for consistent data generation
+rng = np.random.default_rng(
+    1
+)  # Seeded random number generator for consistent data generation
 
 # %%
 # This example shows how to create a 2D scatter plot from 100 randomly sampled
-# datapoints using :func:`~pyvista.Chart2D.scatter`. By default, the chart automatically
+# data points using :func:`~pyvista.Chart2D.scatter`. By default, the chart automatically
 # rescales its axes such that all plotted data is visible. By right clicking on the chart
 # you can enable zooming and panning of the chart.
 
@@ -35,7 +36,7 @@ chart.scatter(x, y, size=10, style='+')
 chart.show()
 
 # %%
-# To connect datapoints with lines, you can create a 2D line plot as shown in
+# To connect data points with lines, you can create a 2D line plot as shown in
 # the example below using :func:`~pyvista.Chart2D.line`. You can also dynamically
 # 'zoom in' on the plotted data by specifying a custom axis range yourself.
 
@@ -162,18 +163,21 @@ f, ax = plt.subplots(
 alphas = [0.5 + i for i in range(5)]
 betas = [*reversed(alphas)]
 N = int(1e4)
-data = [rng.beta(alpha, beta, N) for alpha, beta in zip(alphas, betas)]
-labels = [f'$\\alpha={alpha:.1f}\\,;\\,\\beta={beta:.1f}$' for alpha, beta in zip(alphas, betas)]
+data = [rng.beta(alpha, beta, N) for alpha, beta in zip(alphas, betas, strict=True)]
+labels = [
+    f'$\\alpha={alpha:.1f}\\,;\\,\\beta={beta:.1f}$'
+    for alpha, beta in zip(alphas, betas, strict=True)
+]
 ax.violinplot(data)
 ax.set_xticks(np.arange(1, 1 + len(labels)))
 ax.set_xticklabels(labels)
 ax.set_title('$B(\\alpha, \\beta)$')
 
 # Next, embed the figure into a pyvista plotting window
-p = pv.Plotter()
+pl = pv.Plotter()
 chart = pv.ChartMPL(f)
 chart.background_color = 'w'
-p.add_chart(chart)
-p.show()
+pl.add_chart(chart)
+pl.show()
 # %%
 # .. tags:: plot

@@ -4,20 +4,19 @@
 Save a Movie Using Glyphs
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Create an animated GIF by generating glyphs using :func:`glyph()
-<pyvista.DataSetFilters.glyph>` using :func:`pyvista.Sphere`.
+Create an animated GIF by generating glyphs from a scalar field.
+
+Uses :func:`glyph() <pyvista.DataSetFilters.glyph>` with
+:func:`pyvista.Sphere`.
 
 """
 
 # sphinx_gallery_thumbnail_number = 1
-from __future__ import annotations
-
 import numpy as np
-
 import pyvista as pv
 
 # %%
-# Create sphere glyphs
+# Create Sphere Glyphs
 # ~~~~~~~~~~~~~~~~~~~~
 
 x = np.arange(-10, 10, 1, dtype=float)
@@ -37,12 +36,12 @@ spheres = grid.glyph(scale='size', geom=sphere, orient=False)
 spheres.plot(show_scalar_bar=False)
 
 # %%
-# Create the movie
+# Create the Movie
 # ~~~~~~~~~~~~~~~~
 
 # Create a plotter object and set the scalars to the Z height
-plotter = pv.Plotter(notebook=False)
-plotter.add_mesh(
+pl = pv.Plotter(notebook=False)
+pl.add_mesh(
     spheres,
     show_edges=False,
     show_scalar_bar=False,
@@ -51,10 +50,10 @@ plotter.add_mesh(
 )
 
 # Open a gif
-plotter.open_gif('glyph_wave.gif')
+pl.open_gif('glyph_wave.gif')
 
 # Update Z and write a frame for each updated mesh
-nframe = 30
+nframe = 20
 for phase in np.linspace(0, 2 * np.pi, nframe + 1)[:nframe]:
     z = (np.sin(r + phase) + 1) / 2
 
@@ -66,9 +65,9 @@ for phase in np.linspace(0, 2 * np.pi, nframe + 1)[:nframe]:
     spheres.copy_from(new_spheres)
 
     # Write a frame. This triggers a render.
-    plotter.write_frame()
+    pl.write_frame()
 
 # Close and finalize the gif
-plotter.close()
+pl.close()
 # %%
 # .. tags:: plot

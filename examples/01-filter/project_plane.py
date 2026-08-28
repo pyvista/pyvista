@@ -4,14 +4,14 @@
 Project to a Plane
 ~~~~~~~~~~~~~~~~~~
 
-:class:`pyvista.PolyData` surfaces and pointsets can easily be projected to a
-plane defined by a normal and origin using
-:meth:`~pyvista.PolyDataFilters.project_points_to_plane`.
+Project a :class:`~pyvista.PolyData` surface or pointset to a plane.
+
+Uses :meth:`~pyvista.PolyDataFilters.project_points_to_plane` with a normal
+and origin.
+
 """
 
 # sphinx_gallery_thumbnail_number = 2
-from __future__ import annotations
-
 import pyvista as pv
 from pyvista import examples
 
@@ -25,9 +25,9 @@ origin[-1] -= poly.length / 3.0
 projected = poly.project_points_to_plane(origin=origin)
 
 # Display the results
-p = pv.Plotter()
-p.add_mesh(poly)
-p.add_mesh(projected)
-p.show()
+pl = pv.Plotter()
+pl.add_mesh(poly)
+pl.add_mesh(projected)
+pl.show()
 # %%
 # .. tags:: filter

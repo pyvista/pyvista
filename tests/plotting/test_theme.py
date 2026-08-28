@@ -2,18 +2,21 @@ from __future__ import annotations
 
 import os
 import re
+from typing import get_args
 
 from hypothesis import HealthCheck
 from hypothesis import given
 from hypothesis import settings
 from hypothesis import strategies as st
+import matplotlib as mpl
 import pytest
-import vtk
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista import colors
 from pyvista.examples.downloads import download_file
 import pyvista.plotting
+from pyvista.plotting._typing import ThemeOptions
 from pyvista.plotting.themes import DarkTheme
 from pyvista.plotting.themes import Theme
 from pyvista.plotting.themes import _set_plot_theme_from_env
@@ -26,20 +29,20 @@ def default_theme():
 
 @pytest.mark.parametrize('trame', [1, None, object(), True, pv.Sphere()])
 def test_theme_trame_raises(default_theme: pv.themes.Theme, trame):
-    with pytest.raises(TypeError, match='Configuration type must be `_TrameConfig`.'):
+    with pytest.raises(TypeError, match=r'Configuration type must be `_TrameConfig`.'):
         default_theme.trame = trame
 
 
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(image_scale=st.integers().filter(lambda x: x < 1))
 def test_theme_image_scale_raises(default_theme: pv.themes.Theme, image_scale):
-    with pytest.raises(ValueError, match='Scale factor must be a positive integer.'):
+    with pytest.raises(ValueError, match=r'Scale factor must be a positive integer.'):
         default_theme.image_scale = image_scale
 
 
 @pytest.mark.parametrize('lighting_params', [1, None, object(), True, pv.Sphere()])
 def test_theme_lightning_params_raises(default_theme: pv.themes.Theme, lighting_params):
-    with pytest.raises(TypeError, match='Configuration type must be `_LightingConfig`.'):
+    with pytest.raises(TypeError, match=r'Configuration type must be `_LightingConfig`.'):
         default_theme.lighting_params = lighting_params
 
 
@@ -145,7 +148,7 @@ def test_color_str():
 
 def test_font():
     font = pv.parse_font_family('times')
-    assert font == vtk.VTK_TIMES
+    assert font == _vtk.VTK_TIMES
     with pytest.raises(ValueError):  # noqa: PT011
         pv.parse_font_family('not a font')
 
@@ -179,7 +182,7 @@ def test_font_label_size(default_theme):
 
 
 def test_font_fmt(default_theme):
-    fmt = '%.6e'
+    fmt = '{:.6e}'
     default_theme.font.fmt = fmt
     assert default_theme.font.fmt == fmt
 
@@ -188,7 +191,7 @@ def test_axes_eq(default_theme):
     assert default_theme.axes == pv.plotting.themes.Theme().axes
 
     theme = pv.plotting.themes.Theme()
-    theme.axes.box = True
+    theme.axes.box = not default_theme.axes.box
     assert default_theme.axes != theme.axes
     assert default_theme.axes != 1
 
@@ -284,6 +287,17 @@ def test_themes(theme):
         pv.set_plot_theme('testing')
 
 
+def test_theme_options_literal_matches_native_themes():
+    # ``ThemeOptions`` is a hand-written ``Literal`` covering only the distinct,
+    # user-facing built-in themes; it must stay in sync with ``_NATIVE_THEMES``
+    # minus the names deliberately left out (see ``ThemeOptions``'s comment).
+    # Use ``__members__`` since plain iteration skips value-aliases like ``default``.
+    excluded = {'default', 'vtk', 'testing', 'document_build'}
+    literal_names = set(get_args(ThemeOptions))
+    native_names = set(pv.plotting.themes._NATIVE_THEMES.__members__)
+    assert literal_names == native_names - excluded
+
+
 def test_invalid_theme():
     with pytest.raises(ValueError):  # noqa: PT011
         pv.set_plot_theme('this is not a valid theme')
@@ -359,18 +373,20 @@ def test_camera_parallel_scale(default_theme):
     assert pl2.parallel_scale == 2.0
 
 
-def test_cmap(default_theme):
-    cmap = 'jet'
+@pytest.mark.parametrize('cmap', ['jet', mpl.colormaps['jet'], ['red', 'green', 'blue']])
+def test_cmap(default_theme, cmap):
     default_theme.cmap = cmap
     assert default_theme.cmap == cmap
 
+
+def test_cmap_raises(default_theme):
     match = "Invalid colormap 'not a color map'"
     with pytest.raises(ValueError, match=match):
         default_theme.cmap = 'not a color map'
 
     match = (
-        "cmap must be an instance of any type (<class 'str'>, <class 'list'>). "
-        "Got <class 'NoneType'> instead."
+        "cmap must be an instance of any type (<class 'str'>, <class 'list'>, "
+        "<class 'matplotlib.colors.Colormap'>). Got <class 'NoneType'> instead."
     )
     with pytest.raises(TypeError, match=re.escape(match)):
         default_theme.cmap = None
@@ -384,6 +400,20 @@ def test_volume_mapper(default_theme):
 
     with pytest.raises(ValueError, match='unknown'):
         default_theme.volume_mapper = 'invalid'
+
+
+def test_interactor_style(default_theme):
+    default_theme.interactor_style = 'terrain_style'
+
+    assert default_theme.interactor_style == 'terrain_style'
+
+
+def test_interactor_style_raises(default_theme):
+    with pytest.raises(TypeError, match='Interactor style must be a string'):
+        default_theme.interactor_style = 1
+
+    with pytest.raises(ValueError, match='Invalid interactor style'):
+        default_theme.interactor_style = 'not_a_style'
 
 
 def test_set_hidden_line_removal(default_theme):
@@ -402,6 +432,8 @@ def test_set_hidden_line_removal(default_theme):
         ('full_screen', True),
         ('nan_color', (0.5, 0.5, 0.5)),
         ('edge_color', (1.0, 0.0, 0.0)),
+        ('border_color', (0.25, 0.5, 0.75)),
+        ('border_width', 2.5),
         ('outline_color', (1.0, 0.0, 0.0)),
         ('floor_color', (1.0, 0.0, 0.0)),
         ('show_scalar_bar', False),
@@ -453,7 +485,7 @@ def test_repr(default_theme):
     # of the key in the repr or the key length is increased
     for line in rep.splitlines():
         if ':' in line:
-            pref, *rest = line.split(':', 1)
+            pref, *_rest = line.split(':', 1)
             assert pref.endswith(' '), f'Key str too long or need to raise key length:\n{pref!r}'
 
 
@@ -489,18 +521,32 @@ def test_theme_eq():
 
 
 def test_plotter_set_theme():
-    # test that the plotter theme is set to the new theme
+    """Test that the plotter theme is set to the new theme"""
+
     my_theme = pv.plotting.themes.Theme()
     my_theme.color = [1.0, 0.0, 0.0]
     pl = pv.Plotter(theme=my_theme)
     assert pl.theme.color == my_theme.color
     assert pv.global_theme.color != pl.theme.color
 
+
+def test_plotter_theme_attribute_setter():
+    """Test when a theme is set as a plotter attribute"""
+    my_theme = pv.themes.Theme()
+    my_theme.color = [1.0, 0.0, 0.0]
+
     pl = pv.Plotter()
-    assert pl.theme == pv.global_theme
-    pl.theme = my_theme
-    assert pl.theme != pv.global_theme
-    assert pl.theme == my_theme
+    match = (
+        'Assigning a theme for a plotter instance is deprecated '
+        'and will removed in a future version of PyVista. '
+        'Set the theme when initializing the plotter instance instead.'
+    )
+
+    with pytest.raises(pv.core.errors.DeprecationError, match=match):
+        pl.theme = my_theme
+
+    if pyvista.version_info >= (0, 50):
+        pytest.fail('Remove the `theme` setter')
 
 
 @pytest.mark.filterwarnings(
@@ -515,6 +561,21 @@ def test_load_theme(tmpdir, default_theme):
 
     default_theme.load_theme(filename)
     assert default_theme == pv.plotting.themes.DarkTheme()
+
+
+@pytest.mark.filterwarnings(
+    'ignore:The jupyter_extension_available flag is read only and is automatically '
+    'detected:UserWarning'
+)
+def test_save_interactor_style(tmpdir, default_theme):
+    filename = str(tmpdir.mkdir('tmpdir').join('tmp.json'))
+    default_theme.interactor_style = 'terrain_style'
+
+    default_theme.save(filename)
+    loaded_theme = pv.load_theme(filename)
+
+    assert loaded_theme.interactor_style == 'terrain_style'
+    assert loaded_theme == default_theme
 
 
 @pytest.mark.filterwarnings(
@@ -704,6 +765,49 @@ def test_trame_config():
     assert not trame_config.server_proxy_enabled
 
 
+@pytest.mark.parametrize(
+    ('service', 'prefix', 'expected'),
+    [
+        ('/user/afie/', '/proxy/', '/user/afie/proxy/'),
+        ('/user/afie/', 'proxy/', '/user/afie/proxy/'),
+        ('/user/afie', '/proxy', '/user/afie/proxy/'),
+        ('/user/afie/', '/proxy/port/', '/user/afie/proxy/port/'),
+    ],
+)
+def test_trame_config_server_proxy_prefix_jupyterhub(monkeypatch, service, prefix, expected):
+    # Regression test for #7595: when running under JupyterHub, the trame
+    # server proxy prefix must be joined with JUPYTERHUB_SERVICE_PREFIX and
+    # end with a trailing slash. See PR #7390 for the regression that #7595
+    # hotfixed.
+    monkeypatch.setenv('JUPYTERHUB_SERVICE_PREFIX', service)
+    monkeypatch.setenv('PYVISTA_TRAME_SERVER_PROXY_PREFIX', prefix)
+
+    trame_config = pv.plotting.themes._TrameConfig()
+    assert trame_config.server_proxy_enabled
+    assert trame_config.server_proxy_prefix == expected
+
+
+def test_trame_config_server_proxy_prefix_absolute_url(monkeypatch):
+    # When PYVISTA_TRAME_SERVER_PROXY_PREFIX is an absolute http(s) URL,
+    # JUPYTERHUB_SERVICE_PREFIX must not be prepended.
+    monkeypatch.setenv('JUPYTERHUB_SERVICE_PREFIX', '/user/afie/')
+    monkeypatch.setenv('PYVISTA_TRAME_SERVER_PROXY_PREFIX', 'https://example.com/proxy/')
+
+    trame_config = pv.plotting.themes._TrameConfig()
+    assert trame_config.server_proxy_enabled
+    assert trame_config.server_proxy_prefix == 'https://example.com/proxy/'
+
+
 def test_box_axes(default_theme):
     default_theme.axes.box = True
     _ = pv.Sphere().plot(theme=default_theme)
+
+
+def test_testing_theme_pins_notebook_off():
+    """Detected notebook mode would route a plotting test through the trame backend.
+
+    That launches the process-lifetime ``pyvista-jupyter`` server, and whichever test
+    creates it first is blamed for the ``vtkWebApplication`` it leaves behind
+    (pyvista/pyvista#8929).
+    """
+    assert pv.plotting.themes._TestingTheme().notebook is False

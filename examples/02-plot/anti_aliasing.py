@@ -3,6 +3,7 @@
 
 Anti-Aliasing
 ~~~~~~~~~~~~~
+
 Demonstrate anti-aliasing within PyVista.
 
 PyVista supports three types of anti-aliasing:
@@ -29,10 +30,7 @@ balance between efficiency and quality. If you desire additional smoothing, you
 can either increase the number of ``multi_samples`` or use SSAA. Low-end PCs
 should consider FXAA.
 
-
 """
-
-from __future__ import annotations
 
 import pyvista as pv
 
@@ -70,7 +68,7 @@ pl.show()
 
 
 # %%
-# You can increase the smoothing by increasing multi_samples
+# You can increase the smoothing by increasing ``multi_samples``
 # using :func:`~pyvista.Plotter.enable_anti_aliasing`.
 
 pl = pv.Plotter()
@@ -108,7 +106,7 @@ pl.show()
 # SSAA, or Super-Sample Anti-Aliasing is a brute force method of
 # anti-aliasing. It results in the best image quality but comes at a tremendous
 # resource cost. SSAA works by rendering the scene at a higher resolution. The
-# final image is produced by downsampling the massive source image using an
+# final image is produced by down-sampling the massive source image using an
 # averaging filter. This acts as a low pass filter which removes the high
 # frequency components that would cause jaggedness.
 #
@@ -122,7 +120,7 @@ pl.show()
 
 
 # %%
-# Compare render time
+# Compare Render Time
 # ~~~~~~~~~~~~~~~~~~~
 # You can compare the time to render for each one of the anti-aliasing
 # approaches with:

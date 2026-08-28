@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
-import contextlib
-
+from .accessor_registry import AccessorRegistration as AccessorRegistration
+from .accessor_registry import DataSetAccessor as DataSetAccessor
+from .accessor_registry import register_dataset_accessor as register_dataset_accessor
+from .accessor_registry import registered_accessors as registered_accessors
+from .accessor_registry import unregister_dataset_accessor as unregister_dataset_accessor
 from .arrays import FieldAssociation as FieldAssociation
 from .arrays import array_from_vtkmatrix as array_from_vtkmatrix
 from .arrays import cell_array as cell_array
@@ -23,6 +26,7 @@ from .arrays import set_default_active_vectors as set_default_active_vectors
 from .arrays import vtk_bit_array_to_char as vtk_bit_array_to_char
 from .arrays import vtk_id_list_to_array as vtk_id_list_to_array
 from .arrays import vtkmatrix_from_array as vtkmatrix_from_array
+from .cell_quality import cell_quality_info as cell_quality_info
 from .cells import create_mixed_cells as create_mixed_cells
 from .cells import get_mixed_cells as get_mixed_cells
 from .cells import ncells_from_cells as ncells_from_cells
@@ -38,8 +42,10 @@ from .features import transform_vectors_sph_to_cart as transform_vectors_sph_to_
 from .features import voxelize as voxelize
 from .features import voxelize_volume as voxelize_volume
 from .fileio import from_meshio as from_meshio
+from .fileio import from_trimesh as from_trimesh
 from .fileio import get_ext as get_ext
 from .fileio import is_meshio_mesh as is_meshio_mesh
+from .fileio import is_trimesh_mesh as is_trimesh_mesh
 from .fileio import read as read
 from .fileio import read_exodus as read_exodus
 from .fileio import read_grdecl as read_grdecl
@@ -49,9 +55,8 @@ from .fileio import read_texture as read_texture
 from .fileio import save_meshio as save_meshio
 from .fileio import save_pickle as save_pickle
 from .fileio import set_pickle_format as set_pickle_format
-from .fileio import set_vtkwriter_mode as set_vtkwriter_mode
 from .fileio import to_meshio as to_meshio
-from .geometric_objects import NORMALS as NORMALS
+from .fileio import to_trimesh as to_trimesh
 from .geometric_objects import Arrow as Arrow
 from .geometric_objects import Box as Box
 from .geometric_objects import Capsule as Capsule
@@ -103,27 +108,23 @@ from .geometric_sources import SphereSource as SphereSource
 from .geometric_sources import SuperquadricSource as SuperquadricSource
 from .geometric_sources import Text3DSource as Text3DSource
 from .geometric_sources import translate as translate
+from .helpers import axis_rotation as axis_rotation
+from .helpers import generate_plane as generate_plane
+from .helpers import is_inside_bounds as is_inside_bounds
+from .helpers import is_pyvista_dataset as is_pyvista_dataset
+from .helpers import wrap as wrap
 from .image_sources import ImageEllipsoidSource as ImageEllipsoidSource
 from .image_sources import ImageGaussianSource as ImageGaussianSource
 from .image_sources import ImageGridSource as ImageGridSource
 from .image_sources import ImageMandelbrotSource as ImageMandelbrotSource
 from .image_sources import ImageNoiseSource as ImageNoiseSource
 from .image_sources import ImageSinusoidSource as ImageSinusoidSource
-
-with contextlib.suppress(ImportError):
-    from .geometric_sources import CapsuleSource as CapsuleSource
-
-from .cell_quality import cell_quality_info as cell_quality_info
-from .helpers import axis_rotation as axis_rotation
-from .helpers import generate_plane as generate_plane
-from .helpers import is_inside_bounds as is_inside_bounds
-from .helpers import is_pyvista_dataset as is_pyvista_dataset
-from .helpers import wrap as wrap
 from .misc import AnnotatedIntEnum as AnnotatedIntEnum
 from .misc import abstract_class as abstract_class
 from .misc import assert_empty_kwargs as assert_empty_kwargs
 from .misc import check_valid_vector as check_valid_vector
 from .misc import conditional_decorator as conditional_decorator
+from .misc import enable_smp_tools as enable_smp_tools
 from .misc import has_module as has_module
 from .misc import set_new_attribute as set_new_attribute
 from .misc import threaded as threaded
@@ -180,11 +181,13 @@ from .reader import ExodusIIReader as ExodusIIReader
 from .reader import FacetReader as FacetReader
 from .reader import FLUENTCFFReader as FLUENTCFFReader
 from .reader import FluentReader as FluentReader
+from .reader import FRDReader as FRDReader
 from .reader import GambitReader as GambitReader
 from .reader import GaussianCubeReader as GaussianCubeReader
 from .reader import GESignaReader as GESignaReader
 from .reader import GIFReader as GIFReader
 from .reader import GLTFReader as GLTFReader
+from .reader import GRDECLReader as GRDECLReader
 from .reader import HDFReader as HDFReader
 from .reader import HDRReader as HDRReader
 from .reader import JPEGReader as JPEGReader
@@ -199,6 +202,7 @@ from .reader import OBJReader as OBJReader
 from .reader import OpenFOAMReader as OpenFOAMReader
 from .reader import ParticleReader as ParticleReader
 from .reader import PDBReader as PDBReader
+from .reader import PExodusIIReader as PExodusIIReader
 from .reader import Plot3DFunctionEnum as Plot3DFunctionEnum
 from .reader import Plot3DMetaReader as Plot3DMetaReader
 from .reader import PLYReader as PLYReader
@@ -211,11 +215,15 @@ from .reader import PTSReader as PTSReader
 from .reader import PVDDataSet as PVDDataSet
 from .reader import PVDReader as PVDReader
 from .reader import SegYReader as SegYReader
+from .reader import SeriesDataSet as SeriesDataSet
+from .reader import SeriesReader as SeriesReader
 from .reader import SLCReader as SLCReader
 from .reader import STLReader as STLReader
 from .reader import TecplotReader as TecplotReader
+from .reader import ThreeDSReader as ThreeDSReader
 from .reader import TIFFReader as TIFFReader
 from .reader import TimeReader as TimeReader
+from .reader import VRMLReader as VRMLReader
 from .reader import VTKDataSetReader as VTKDataSetReader
 from .reader import VTKPDataSetReader as VTKPDataSetReader
 from .reader import XdmfReader as XdmfReader
@@ -230,6 +238,38 @@ from .reader import XMLRectilinearGridReader as XMLRectilinearGridReader
 from .reader import XMLStructuredGridReader as XMLStructuredGridReader
 from .reader import XMLUnstructuredGridReader as XMLUnstructuredGridReader
 from .reader import get_reader as get_reader
+from .reader_registry import LocalFileRequiredError as LocalFileRequiredError
+from .reader_registry import has_scheme as has_scheme
+from .reader_registry import register_reader as register_reader
+from .state_manager import allow_new_attributes as allow_new_attributes
 from .state_manager import vtk_snake_case as vtk_snake_case
 from .state_manager import vtk_verbosity as vtk_verbosity
 from .transform import Transform as Transform
+from .writer import BaseWriter as BaseWriter
+from .writer import BMPWriter as BMPWriter
+from .writer import DataSetWriter as DataSetWriter
+from .writer import EnSightWriter as EnSightWriter
+from .writer import HDFWriter as HDFWriter
+from .writer import HoudiniPolyDataWriter as HoudiniPolyDataWriter
+from .writer import IVWriter as IVWriter
+from .writer import JPEGWriter as JPEGWriter
+from .writer import NIFTIImageWriter as NIFTIImageWriter
+from .writer import OBJWriter as OBJWriter
+from .writer import PLYWriter as PLYWriter
+from .writer import PNGWriter as PNGWriter
+from .writer import PNMWriter as PNMWriter
+from .writer import PolyDataWriter as PolyDataWriter
+from .writer import RectilinearGridWriter as RectilinearGridWriter
+from .writer import SimplePointsWriter as SimplePointsWriter
+from .writer import STLWriter as STLWriter
+from .writer import StructuredGridWriter as StructuredGridWriter
+from .writer import TIFFWriter as TIFFWriter
+from .writer import UnstructuredGridWriter as UnstructuredGridWriter
+from .writer import XMLImageDataWriter as XMLImageDataWriter
+from .writer import XMLMultiBlockDataWriter as XMLMultiBlockDataWriter
+from .writer import XMLPartitionedDataSetWriter as XMLPartitionedDataSetWriter
+from .writer import XMLPolyDataWriter as XMLPolyDataWriter
+from .writer import XMLRectilinearGridWriter as XMLRectilinearGridWriter
+from .writer import XMLStructuredGridWriter as XMLStructuredGridWriter
+from .writer import XMLUnstructuredGridWriter as XMLUnstructuredGridWriter
+from .writer_registry import register_writer as register_writer

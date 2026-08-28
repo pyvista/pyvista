@@ -4,18 +4,24 @@ from __future__ import annotations
 
 from abc import ABCMeta
 from collections.abc import Sequence
-import enum
-from functools import cache
+from enum import Enum
+import functools
 import importlib
+import inspect
 import sys
 import threading
 import traceback
 from typing import TYPE_CHECKING
+from typing import Literal
 from typing import TypeVar
 import warnings
 
 import numpy as np
 from typing_extensions import Self
+
+from pyvista import _vtk
+from pyvista._warn_external import warn_external
+from pyvista.core.utilities.accessor_registry import _resolve_pending_accessor
 
 if TYPE_CHECKING:
     from typing import Any
@@ -27,6 +33,22 @@ if TYPE_CHECKING:
     _T = TypeVar('_T')
 
 T = TypeVar('T', bound='AnnotatedIntEnum')
+
+_SMPBackendOptions = Literal['stdthread', 'tbb', 'openmp', 'sequential']
+_SMP_BACKEND_NAMES: dict[str, str] = {
+    'stdthread': 'STDThread',
+    'tbb': 'TBB',
+    'openmp': 'OpenMP',
+    'sequential': 'Sequential',
+}
+
+if sys.version_info >= (3, 11):
+    from enum import StrEnum
+else:
+
+    class StrEnum(str, Enum):  # noqa: D101
+        def __str__(self) -> str:
+            return self.value
 
 
 def assert_empty_kwargs(**kwargs) -> bool:
@@ -90,7 +112,7 @@ def check_valid_vector(point: VectorLike[float], name: str = '') -> None:
 
 
 def abstract_class(cls_):  # noqa: ANN001, ANN201 # numpydoc ignore=RT01
-    """Decorate a class, overriding __new__.
+    """Decorate a class, overriding ``__new__``.
 
     Preventing a class from being instantiated similar to abc.ABCMeta
     but does not require an abstract method.
@@ -112,16 +134,18 @@ def abstract_class(cls_):  # noqa: ANN001, ANN201 # numpydoc ignore=RT01
     return cls_
 
 
-class AnnotatedIntEnum(int, enum.Enum):
+class AnnotatedIntEnum(int, Enum):
     """Annotated enum type."""
 
     annotation: str
 
-    def __new__(cls, value: int, annotation: str) -> Self:
-        """Initialize."""
+    def __new__(cls, value: int, annotation: str, doc: str | None = None) -> Self:
+        """Initialize, optionally attaching a member docstring."""
         obj = int.__new__(cls, value)
         obj._value_ = value
         obj.annotation = annotation
+        if doc is not None:
+            obj.__doc__ = doc
         return obj
 
     @classmethod
@@ -181,7 +205,7 @@ class AnnotatedIntEnum(int, enum.Enum):
             raise TypeError(msg)
 
 
-@cache
+@functools.cache
 def has_module(module_name: str) -> bool:
     """Return if a module can be imported.
 
@@ -200,6 +224,138 @@ def has_module(module_name: str) -> bool:
     return module_spec is not None
 
 
+class _SMPToolsContext:
+    """Context manager that restores VTK SMP backend state on exit."""
+
+    def __init__(self, original_backend: str, original_threads: int) -> None:
+        self._original_backend = original_backend
+        self._original_threads = original_threads
+
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(self, *exc_info: object) -> None:
+        _vtk.vtkSMPTools.SetBackend(self._original_backend)
+        _vtk.vtkSMPTools.Initialize(self._original_threads)
+
+
+def enable_smp_tools(
+    backend: _SMPBackendOptions = 'stdthread',
+    n_threads: int | None = None,
+) -> _SMPToolsContext:
+    """Enable a VTK SMP backend for filters that support shared-memory parallelism.
+
+    VTK's Python wheels currently default to the sequential SMP backend. This
+    helper switches to a parallel backend and optionally configures the maximum
+    number of threads used by VTK filters that rely on :vtk:`vtkSMPTools`.
+
+    The backend is applied immediately, so calling this function by itself
+    enables the chosen backend for the rest of the process. The return value is
+    also a context manager, so using it with a ``with`` statement will restore
+    the previous backend and thread count on exit.
+
+    Parameters
+    ----------
+    backend : str, default: 'stdthread'
+        SMP backend to enable. Acceptable values are:
+
+        - ``'stdthread'``: Enable VTK's ``std::thread`` backend. This is the
+          default and is available in the current VTK wheels.
+        - ``'tbb'``: Enable Intel oneTBB when available in the current VTK
+          build.
+        - ``'openmp'``: Enable OpenMP when available in the current VTK build.
+        - ``'sequential'``: Use VTK's sequential backend.
+
+    n_threads : int, optional
+        Maximum number of threads to use. If not provided, VTK resets to its
+        default maximum thread count and honors the ``VTK_SMP_MAX_THREADS``
+        environment variable when it is set.
+
+    Returns
+    -------
+    contextlib.AbstractContextManager
+        A context manager that restores the previous SMP backend and thread
+        count when exited. The return value may be discarded when the change
+        should apply for the remainder of the process.
+
+    Raises
+    ------
+    TypeError
+        If ``backend`` is not a string or if ``n_threads`` is not an integer.
+
+    ValueError
+        If ``backend`` is invalid or if ``n_threads`` is less than ``1``.
+
+    RuntimeError
+        If this VTK build does not support runtime SMP backend selection, or if
+        the requested backend is unavailable.
+
+    Examples
+    --------
+    Enable the wheel-supported ``stdthread`` backend for the rest of the
+    process.
+
+    >>> import pyvista as pv
+    >>> pv.enable_smp_tools()  # doctest:+SKIP
+
+    Configure the backend before running a contour filter.
+
+    >>> from pyvista import examples
+    >>> pv.enable_smp_tools(n_threads=8)  # doctest:+SKIP
+    >>> grid = examples.download_fea_bracket()  # doctest:+SKIP
+    >>> _ = grid.contour(5, scalars='Equivalent Stress')  # doctest:+SKIP
+
+    Scope the backend change to a ``with`` block. The previous backend and
+    thread count are restored on exit, even if an exception is raised.
+
+    >>> with pv.enable_smp_tools(n_threads=8):  # doctest:+SKIP
+    ...     _ = grid.contour(5, scalars='Equivalent Stress')
+
+    """
+    if not isinstance(backend, str):
+        msg = '`backend` must be a string.'  # type: ignore[unreachable]
+        raise TypeError(msg)
+
+    backend_key = backend.lower()
+    vtk_backend = _SMP_BACKEND_NAMES.get(backend_key)
+    if vtk_backend is None:
+        valid_backends = ', '.join(f'`{name}`' for name in _SMP_BACKEND_NAMES)
+        msg = f'Invalid SMP backend `{backend}`. Valid options are: {valid_backends}.'
+        raise ValueError(msg)
+
+    if n_threads is not None:
+        if isinstance(n_threads, bool) or not isinstance(n_threads, (int, np.integer)):
+            msg = '`n_threads` must be an integer.'
+            raise TypeError(msg)
+        if n_threads < 1:
+            msg = '`n_threads` must be greater than or equal to 1.'
+            raise ValueError(msg)
+        n_threads_ = int(n_threads)
+    else:
+        n_threads_ = None
+
+    if not hasattr(_vtk, 'vtkSMPTools') or not hasattr(_vtk.vtkSMPTools, 'SetBackend'):
+        msg = 'This VTK build does not support runtime SMP backend selection.'
+        raise RuntimeError(msg)
+
+    original_backend = _vtk.vtkSMPTools.GetBackend()
+    original_threads = _vtk.vtkSMPTools.GetEstimatedNumberOfThreads()
+
+    available = _vtk.vtkSMPTools.SetBackend(vtk_backend)
+    if not available:
+        _vtk.vtkSMPTools.SetBackend(original_backend)
+        _vtk.vtkSMPTools.Initialize(original_threads)
+        msg = f'The requested SMP backend `{backend_key}` is not available in this VTK build.'
+        raise RuntimeError(msg)
+
+    if n_threads_ is None:
+        _vtk.vtkSMPTools.Initialize()
+    else:
+        _vtk.vtkSMPTools.Initialize(n_threads_)
+
+    return _SMPToolsContext(original_backend, original_threads)
+
+
 def try_callback(func, *args) -> None:  # noqa: ANN001
     """Wrap a given callback in a try statement.
 
@@ -214,13 +370,20 @@ def try_callback(func, *args) -> None:  # noqa: ANN001
     """
     try:
         func(*args)
-    except Exception:
+    except Exception:  # noqa: BLE001  # pragma: no cover
         etype, exc, tb = sys.exc_info()
         stack = traceback.extract_tb(tb)[1:]
         formatted_exception = 'Encountered issue in callback (most recent call last):\n' + ''.join(
             traceback.format_list(stack) + traceback.format_exception_only(etype, exc),
         ).rstrip('\n')
-        warnings.warn(formatted_exception)
+        # Force the warning to always be shown. Otherwise, callbacks bound to
+        # high-frequency events (e.g. ``MouseMoveEvent``) emit an identical
+        # warning at the same call site on every invocation, and Python's
+        # default filter de-duplicates it to a single message per session,
+        # making callback errors appear to be silently swallowed.
+        with warnings.catch_warnings():
+            warnings.simplefilter('always')
+            warn_external(formatted_exception)
 
 
 def threaded(fn):  # noqa: ANN001, ANN201
@@ -295,8 +458,37 @@ class _AutoFreezeABCMeta(_AutoFreezeMeta, ABCMeta):
     """Metaclass to combine automatic attribute freezing with ABC support."""
 
 
+class _DataObjectMeta(_AutoFreezeABCMeta):
+    """Metaclass for ``DataObject`` that resolves accessor entry-points on class access.
+
+    Without this hook, class-level attribute access (for example, ``pv.PolyData.manifold``)
+    bypasses lazy loading of ``pyvista.accessors`` entry-point plugins and raises
+    ``AttributeError`` until the plugin happens to be imported some other way.
+    Instance access is handled by ``DataObject.__getattr__``.
+    """
+
+    def __getattr__(cls, name: str) -> Any:
+        # Check sys.meta_path to avoid dynamic imports when Python is shutting down
+        if sys.meta_path is None:  # pragma: no cover
+            return None  # type: ignore[unreachable]
+
+        if _resolve_pending_accessor(name):
+            return getattr(cls, name)
+        msg = f'type object {cls.__name__!r} has no attribute {name!r}'
+        raise AttributeError(msg)
+
+
+def _hasattr_static(obj: Any, attr: str) -> bool:
+    """Replicate behavior of ``hasattr`` using static lookup."""
+    try:
+        inspect.getattr_static(obj, attr)
+    except AttributeError:
+        return False
+    return True
+
+
 class _NoNewAttrMixin(metaclass=_AutoFreezeABCMeta):
-    """Mixin to prevent adding new attributes.
+    """``Mixin`` to prevent adding new attributes.
 
     This class is mainly used to prevent users from setting the wrong attributes on an
     object. It freezes the attributes when called and prevents setting new ones via
@@ -308,25 +500,50 @@ class _NoNewAttrMixin(metaclass=_AutoFreezeABCMeta):
         object.__setattr__(self, '__frozen', True)
         object.__setattr__(self, '__frozen_by_class', this_class)
 
+    def _check_new_attribute(self, key: str) -> None:
+        # Check sys.meta_path to avoid dynamic imports when Python is shutting down
+        if sys.meta_path is not None:
+            # Get mode for setting new attributes. Read straight out of the module
+            # dict: this runs on every __setattr__, and going through the import
+            # machinery (or getattr, which would hit pyvista's module-level
+            # __getattr__) is needless overhead. ``pyvista.core`` is imported
+            # before ``_ALLOW_NEW_ATTRIBUTES_MODE`` is defined, so a missing key
+            # means we are still mid-import: disallow new attributes, as before.
+            pyvista_module = sys.modules.get('pyvista')
+            _ALLOW_NEW_ATTRIBUTES_MODE = (
+                False
+                if pyvista_module is None
+                else pyvista_module.__dict__.get('_ALLOW_NEW_ATTRIBUTES_MODE', False)
+            )
+
+            # Check if setting a new attribute is allowed
+            if not (
+                _ALLOW_NEW_ATTRIBUTES_MODE is True
+                or (key.startswith('_') and _ALLOW_NEW_ATTRIBUTES_MODE == 'private')
+            ):
+                # Check if this class froze itself. Any frozen state already set by parent classes,
+                # e.g. by calling super().__init__(), will be ignored. This allows subclasses to
+                # set attributes during init without being affected by a parent class init.
+                frozen = self.__dict__.get('__frozen', False)
+                frozen_by = self.__dict__.get('__frozen_by_class', None)
+                if (
+                    frozen
+                    and frozen_by is type(self)
+                    and not (key in type(self).__dict__ or _hasattr_static(self, key))
+                ):
+                    from pyvista import PyVistaAttributeError  # noqa: PLC0415
+
+                    msg = (
+                        f'Attribute {key!r} does not exist and cannot be added to class '
+                        f'{self.__class__.__name__!r}\nUse `pyvista.set_new_attribute` '
+                        f'or `pyvista.allow_new_attributes` to set new attributes.\n'
+                        f'Setting new private variables (with `_` prefix) is allowed by default.'
+                    )
+                    raise PyVistaAttributeError(msg)
+
     def __setattr__(self, key: str, value: Any) -> None:
         """Prevent adding new attributes to classes using "normal" methods."""
-        # Check if this class froze itself. Any frozen state already set by parent classes, e.g.
-        # by calling super().__init__(), will be ignored. This allows subclasses to set attributes
-        # during init without being affect by a parent class init.
-        frozen = self.__dict__.get('__frozen', False)
-        frozen_by = self.__dict__.get('__frozen_by_class', None)
-        if (
-            frozen
-            and frozen_by is type(self)
-            and not (key in type(self).__dict__ or hasattr(self, key))
-        ):
-            from pyvista import PyVistaAttributeError  # noqa: PLC0415
-
-            msg = (
-                f'Attribute {key!r} does not exist and cannot be added to class '
-                f'{self.__class__.__name__!r}\nUse `pv.set_new_attribute` to set new attributes.'
-            )
-            raise PyVistaAttributeError(msg)
+        self._check_new_attribute(key)
         object.__setattr__(self, key, value)
 
 
@@ -340,6 +557,11 @@ def set_new_attribute(obj: object, name: str, value: Any) -> None:
 
     Use :func:`set_new_attribute` to override this and set a new attribute anyway.
 
+    See Also
+    --------
+    pyvista.allow_new_attributes
+        Context manager for controlling if setting new attributes is allowed.
+
     Examples
     --------
     Set a new custom attribute on a mesh.
@@ -349,6 +571,11 @@ def set_new_attribute(obj: object, name: str, value: Any) -> None:
     >>> pv.set_new_attribute(mesh, 'foo', 42)
     >>> mesh.foo
     42
+
+    This is equivalent to using :data:`allow_new_attributes` with ``True``.
+
+    >>> with pv.allow_new_attributes(True):
+    ...     mesh.foo = 42
 
     .. versionadded:: 0.46
 
@@ -379,7 +606,7 @@ def _reciprocal(
     tol : float
         Tolerance value. Values smaller than ``tol`` have a reciprocal of zero.
     value_if_division_by_zero : float
-        Default value given to values less than ``tol``, i.e. the value given if division
+        Default value given to values less than ``tol``, that is, the value given if division
         by zero is detected.
 
     Returns
@@ -399,7 +626,7 @@ def _reciprocal(
 class _classproperty(property):  # noqa: N801
     """Read-only class property decorator.
 
-    Use this decaorator as an alternative to chaining `@classmethod`
+    Use this decorator as an alternative to chaining `@classmethod`
     and `@property` which is deprecated.
 
     See:
@@ -460,7 +687,7 @@ class _BoundsSizeMixin:
 
         Examples
         --------
-        Get the size of a cube. The cube has edge lengths af ``(1.0, 1.0, 1.0)``
+        Get the size of a cube. The cube has edge lengths of ``(1.0, 1.0, 1.0)``
         by default.
 
         >>> import pyvista as pv

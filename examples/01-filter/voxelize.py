@@ -4,17 +4,14 @@
 Voxelize a Surface Mesh
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Create a voxel model (like legos) of a closed surface or volumetric mesh.
+Create a voxel model (like LEGOs) of a closed surface or volumetric mesh.
 
 This example also demonstrates how to compute an implicit distance from a
 bounding :class:`pyvista.PolyData` surface.
 
 """
 
-from __future__ import annotations
-
 import numpy as np
-
 import pyvista as pv
 
 # sphinx_gallery_thumbnail_number = 2
@@ -25,11 +22,11 @@ surface = examples.download_foot_bones()
 surface
 
 # %%
-cpos = [
-    (7.656346967151718, -9.802071079151158, -11.021236183314311),
-    (0.2224512272564101, -0.4594554282112895, 0.5549738359311297),
-    (-0.6279216753504941, -0.7513057097368635, 0.20311105371647392),
-]
+cpos = pv.CameraPosition(
+    position=(7.656, -9.802, -11.02),
+    focal_point=(0.2225, -0.4595, 0.555),
+    viewup=(-0.6279, -0.7513, 0.2031),
+)
 
 surface.plot(cpos=cpos, opacity=0.75)
 
@@ -38,10 +35,10 @@ surface.plot(cpos=cpos, opacity=0.75)
 # Create a voxel model of the bounding surface
 voxels = surface.voxelize()
 
-p = pv.Plotter()
-p.add_mesh(voxels, color=True, show_edges=True, opacity=0.5)
-p.add_mesh(surface, color='lightblue', opacity=0.5)
-p.show(cpos=cpos)
+pl = pv.Plotter()
+pl.add_mesh(voxels, color=True, show_edges=True, opacity=0.5)
+pl.add_mesh(surface, color='lightblue', opacity=0.5)
+pl.show(cpos=cpos)
 
 
 # %%
@@ -64,9 +61,9 @@ voxels
 # %%
 contours = voxels.contour(6, scalars='implicit_distance')
 
-p = pv.Plotter()
-p.add_mesh(voxels, opacity=0.25, scalars='implicit_distance')
-p.add_mesh(contours, opacity=0.5, scalars='implicit_distance')
-p.show(cpos=cpos)
+pl = pv.Plotter()
+pl.add_mesh(voxels, opacity=0.25, scalars='implicit_distance')
+pl.add_mesh(contours, opacity=0.5, scalars='implicit_distance')
+pl.show(cpos=cpos)
 # %%
 # .. tags:: filter

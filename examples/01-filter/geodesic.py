@@ -4,12 +4,11 @@
 Geodesic Paths
 ~~~~~~~~~~~~~~
 
-Calculates the geodesic path between two vertices using Dijkstra's algorithm
+Calculates the geodesic path between two vertices using Dijkstra's algorithm.
+
 """
 
 # sphinx_gallery_thumbnail_number = 1
-from __future__ import annotations
-
 import pyvista as pv
 from pyvista import examples
 
@@ -30,17 +29,17 @@ c = land.geodesic(cape_town, rome)
 # %%
 # Render the path along the land surface
 
-p = pv.Plotter()
-p.add_mesh(a + b + c, line_width=10, color='red', label='Geodesic Path')
-p.add_mesh(land, show_edges=True)
-p.add_legend()
-p.camera_position = [
-    (3.5839785524183934, 2.3915238111304924, 1.3993738227478327),
-    (-0.06842917033182638, 0.15467201157962263, -0.07331693636555875),
-    (-0.34851770951584765, -0.04724188391065845, 0.9361108965066047),
-]
+pl = pv.Plotter()
+pl.add_mesh(a + b + c, line_width=10, color='red', label='Geodesic Path')
+pl.add_mesh(land, show_edges=True)
+pl.add_legend()
+pl.camera_position = pv.CameraPosition(
+    position=(3.584, 2.392, 1.399),
+    focal_point=(-0.06843, 0.1547, -0.07332),
+    viewup=(-0.3485, -0.04724, 0.9361),
+)
 
-p.show()
+pl.show()
 
 # %%
 # How long is that path?

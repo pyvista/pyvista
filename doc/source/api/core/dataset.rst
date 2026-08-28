@@ -37,6 +37,5 @@ arrays associated with cells, points, and the DataSet in general (fields).
 
    pyvista.DataSet
    pyvista.DataSetAttributes
-   pyvista.core.dataset.ActiveArrayInfo
    pyvista.core.dataset.ActiveArrayInfoTuple
    pyvista.core.utilities.arrays.FieldAssociation

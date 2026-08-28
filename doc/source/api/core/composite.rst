@@ -1,11 +1,13 @@
+.. _composite_api:
+
 Composite Datasets
 ==================
 
 The :class:`pyvista.MultiBlock` class is a composite class to hold many
 data sets which can be iterated over. ``MultiBlock`` behaves mostly like
-a list, but has some Dictionary-like features.
+a list, but has some dictionary-like features.
 
-List-like Features
+List-Like Features
 ------------------
 
 Create empty composite dataset
@@ -14,13 +16,13 @@ Create empty composite dataset
    :hide-code:
 
    # must have this here as our global backend may not be static
-   import pyvista
-   pyvista.set_plot_theme('document')
-   pyvista.set_jupyter_backend('static')
-   pyvista.global_theme.window_size = [600, 400]
-   pyvista.global_theme.axes.show = False
-   pyvista.global_theme.anti_aliasing = 'fxaa'
-   pyvista.global_theme.show_scalar_bar = False
+   import pyvista as pv
+   pv.set_plot_theme('document')
+   pv.set_jupyter_backend('static')
+   pv.global_theme.window_size = [600, 400]
+   pv.global_theme.axes.show = False
+   pv.global_theme.anti_aliasing = 'fxaa'
+   pv.global_theme.show_scalar_bar = False
 
 .. jupyter-execute::
 
@@ -42,7 +44,7 @@ Plotting the ``MultiBlock`` plots all the meshes contained by it.
 
    blocks.plot(smooth_shading=True)
 
-``MultiBlock`` is List-like, so individual blocks can be accessed via
+``MultiBlock`` is list-like, so individual blocks can be accessed via
 indices.
 
 .. jupyter-execute::
@@ -78,7 +80,7 @@ allow optional names to be provided for the dictionary like usage.
    blocks[0:2]  # The Sphere and Cube objects in a new ``MultiBlock``
 
 
-Dictionary-like Features
+Dictionary-Like Features
 ------------------------
 
 
@@ -94,7 +96,7 @@ of the blocks, and then access them
 
 It is important to note that ``MultiBlock`` is not a dictionary and does
 not enforce unique keys. Keys can also be ``None``. Extra care must be
-taken to avoid problems using the Dictionary-like features.
+taken to avoid problems using the dictionary-like features.
 
 PyVista tries to keep the keys ordered correctly when doing list operations.
 

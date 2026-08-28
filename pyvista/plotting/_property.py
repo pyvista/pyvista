@@ -2,18 +2,20 @@
 
 from __future__ import annotations
 
-import pyvista
-from pyvista import vtk_version_info
+import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
+from pyvista.core.errors import VTKVersionError
 from pyvista.core.utilities.misc import _check_range
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
-from . import _vtk
 from .colors import Color
 from .opts import InterpolationType
+from .opts import RepresentationType
 
 
-class Property(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
+class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
     """Wrap :vtk:`vtkProperty` and expose it pythonically.
 
     This class is used to set the property of actors.
@@ -120,9 +122,9 @@ class Property(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
         between 0 and 1.
 
         .. note::
-            `edge_opacity` uses ``SetEdgeOpacity`` as the underlying method which
+            ``edge_opacity`` uses ``SetEdgeOpacity`` as the underlying method which
             requires VTK version 9.3 or higher. If ``SetEdgeOpacity`` is not
-            available, `edge_opacity` is set to 1.
+            available, ``edge_opacity`` is set to 1.
 
     Examples
     --------
@@ -187,11 +189,11 @@ class Property(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
         edge_opacity=None,
     ):
         """Initialize this property."""
-        self._theme = pyvista.themes.Theme()
+        self._theme = pv.themes.Theme()
         if theme is None:
             # copy global theme to ensure local property theme is fixed
             # after creation.
-            self._theme.load_theme(pyvista.global_theme)
+            self._theme.load_theme(pv.global_theme)
         else:
             self._theme.load_theme(theme)
 
@@ -249,14 +251,6 @@ class Property(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
         self.line_width = line_width
         if culling is not None:
             self.culling = culling
-        if vtk_version_info < (9, 3) and edge_opacity is not None:  # pragma: no cover
-            import warnings  # noqa: PLC0415
-
-            warnings.warn(
-                '`edge_opacity` cannot be used under VTK v9.3.0. '
-                'Try installing VTK v9.3.0 or newer.',
-                UserWarning,
-            )
         if edge_opacity is None:
             edge_opacity = self._theme.edge_opacity
         self.edge_opacity = edge_opacity
@@ -270,6 +264,15 @@ class Property(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
         * ``'surface'``
         * ``'wireframe'``
         * ``'points'``
+
+        The setter also accepts an integer or a
+        :class:`~pyvista.plotting.opts.RepresentationType` enum member.
+
+        See Also
+        --------
+        representation
+            Equivalent property which returns a
+            :class:`~pyvista.plotting.opts.RepresentationType` enum member.
 
         Examples
         --------
@@ -297,25 +300,50 @@ class Property(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
         return self.GetRepresentationAsString()
 
     @style.setter
-    def style(self, new_style: str):
-        new_style = new_style.lower()
+    def style(self, new_style: str | int | RepresentationType):
+        self.representation = new_style
 
-        if new_style == 'wireframe':
-            self.SetRepresentationToWireframe()
-            if not self._color_set:
-                self.color = self._theme.outline_color  # type: ignore[union-attr] # type: ignore[attr-defined]
-        elif new_style == 'points':
-            self.SetRepresentationToPoints()
-        elif new_style == 'surface':
-            self.SetRepresentationToSurface()
-        else:
-            msg = (
-                f'Invalid style "{new_style}".  Must be one of the following:\n'
-                '\t"surface"\n'
-                '\t"wireframe"\n'
-                '\t"points"\n'
-            )
-            raise ValueError(msg)
+    @property
+    def representation(self) -> RepresentationType:  # numpydoc ignore=RT01
+        """Return or set the visualization representation of the mesh.
+
+        The setter accepts a string (case insensitive), an integer, or a
+        :class:`~pyvista.plotting.opts.RepresentationType` enum member. One of:
+
+        * ``'points'`` / :attr:`~pyvista.plotting.opts.RepresentationType.POINTS`
+        * ``'wireframe'`` / :attr:`~pyvista.plotting.opts.RepresentationType.WIREFRAME`
+        * ``'surface'`` / :attr:`~pyvista.plotting.opts.RepresentationType.SURFACE`
+
+        See Also
+        --------
+        style
+            Equivalent property which returns the representation as a string.
+
+        Examples
+        --------
+        Get the default representation.
+
+        >>> import pyvista as pv
+        >>> prop = pv.Property()
+        >>> prop.representation
+        <RepresentationType.SURFACE: 2>
+
+        Set the representation using the enum.
+
+        >>> from pyvista.plotting.opts import RepresentationType
+        >>> prop.representation = RepresentationType.WIREFRAME
+        >>> prop.representation
+        <RepresentationType.WIREFRAME: 1>
+
+        """
+        return RepresentationType.from_any(self.GetRepresentation())
+
+    @representation.setter
+    def representation(self, value: str | int | RepresentationType):
+        value = RepresentationType.from_any(value)
+        self.SetRepresentation(value.value)
+        if value == RepresentationType.WIREFRAME and not self._color_set:
+            self.color = self._theme.outline_color  # type: ignore[union-attr] # type: ignore[attr-defined]
 
     @property
     def color(self) -> Color:  # numpydoc ignore=RT01
@@ -333,7 +361,7 @@ class Property(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
         >>> import pyvista as pv
         >>> prop = pv.Property()
         >>> prop.color
-        Color(name='lightblue', hex='#add8e6ff', opacity=255)
+        Color(name='light_blue', hex='#add8e6ff', opacity=255)
 
         >>> prop.plot()
 
@@ -435,9 +463,9 @@ class Property(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
         edge opacity of the mesh and uniformly applied everywhere. Between 0 and 1.
 
         .. note::
-            `edge_opacity` uses ``SetEdgeOpacity`` as the underlying method which
+            ``edge_opacity`` uses ``SetEdgeOpacity`` as the underlying method which
             requires VTK version 9.3 or higher. If ``SetEdgeOpacity`` is not
-            available, `edge_opacity` is set to 1.
+            available, ``edge_opacity`` is set to 1.
 
         Examples
         --------
@@ -455,22 +483,18 @@ class Property(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
         >>> prop.edge_opacity = 0.75
         >>> prop.plot()
 
-        Visualize wn edge opacity of ``0.25``.
+        Visualize an edge opacity of ``0.25``.
 
         >>> prop.edge_opacity = 0.25
         >>> prop.plot()
 
         """
-        if vtk_version_info < (9, 3):
-            return 1.0
-        else:
-            return self.GetEdgeOpacity()
+        return self.GetEdgeOpacity()
 
     @edge_opacity.setter
     def edge_opacity(self, value: float):
         _check_range(value, (0, 1), 'edge_opacity')
-        if vtk_version_info >= (9, 3):
-            self.SetEdgeOpacity(value)
+        self.SetEdgeOpacity(value)
 
     @property
     def show_edges(self) -> bool:  # numpydoc ignore=RT01
@@ -751,7 +775,7 @@ class Property(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
         >>> prop.roughness
         0.5
 
-        Visualize default roughness with metallic of ``0.5`` and physically-based
+        Visualize default roughness with metallic of ``0.5`` and physically based
         rendering.
 
         >>> prop.interpolation = 'pbr'
@@ -866,7 +890,7 @@ class Property(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
 
         Defaults to :attr:`pyvista.plotting.themes.Theme.render_lines_as_tubes`.
 
-        Requires lines in the scene, e.g. with :attr:`style` set to ``'wireframe'`` or
+        Requires lines in the scene, for example, with :attr:`style` set to ``'wireframe'`` or
         :attr:`show_edges` set to ``True``.
 
         See Also
@@ -949,6 +973,8 @@ class Property(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
 
         Examples
         --------
+        .. autoopengraph_thumbnail:: 3
+
         Get the default point size and visualize it.
 
         >>> import pyvista as pv
@@ -1061,7 +1087,7 @@ class Property(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
         >>> import pyvista as pv
         >>> prop = pv.Property()
         >>> prop.ambient_color
-        Color(name='lightblue', hex='#add8e6ff', opacity=255)
+        Color(name='light_blue', hex='#add8e6ff', opacity=255)
 
         >>> prop.ambient = 0.5
         >>> prop.plot()
@@ -1094,7 +1120,7 @@ class Property(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
         >>> import pyvista as pv
         >>> prop = pv.Property()
         >>> prop.specular_color
-        Color(name='lightblue', hex='#add8e6ff', opacity=255)
+        Color(name='light_blue', hex='#add8e6ff', opacity=255)
 
         >>> prop.specular = 0.5
         >>> prop.interpolation = 'phong'
@@ -1132,7 +1158,7 @@ class Property(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
         >>> import pyvista as pv
         >>> prop = pv.Property()
         >>> prop.ambient_color
-        Color(name='lightblue', hex='#add8e6ff', opacity=255)
+        Color(name='light_blue', hex='#add8e6ff', opacity=255)
 
         >>> prop.diffuse = 0.5
         >>> prop.plot()
@@ -1173,7 +1199,7 @@ class Property(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
 
         Examples
         --------
-        Get the default anisotropy and visualize it with physically-based rendering.
+        Get the default anisotropy and visualize it with physically based rendering.
 
         >>> import pyvista as pv
         >>> prop = pv.Property()
@@ -1185,8 +1211,6 @@ class Property(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
 
         """
         if not hasattr(self, 'GetAnisotropy'):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
-
             msg = 'Anisotropy requires VTK v9.1.0 or newer.'
             raise VTKVersionError(msg)
         return self.GetAnisotropy()
@@ -1194,8 +1218,6 @@ class Property(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
     @anisotropy.setter
     def anisotropy(self, value: float):
         if not hasattr(self, 'SetAnisotropy'):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
-
             msg = 'Anisotropy requires VTK v9.1.0 or newer.'
             raise VTKVersionError(msg)
         _check_range(value, (0, 1), 'anisotropy')
@@ -1229,7 +1251,7 @@ class Property(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
 
         before_close_callback = kwargs.pop('before_close_callback', None)
 
-        pl = pyvista.Plotter(**kwargs)
+        pl = pv.Plotter(**kwargs)
         actor = pl.add_mesh(examples.download_bunny_coarse())
         actor.SetProperty(self)
 
@@ -1261,8 +1283,6 @@ class Property(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkProperty):
 
     def __repr__(self):
         """Representation of this property."""
-        from pyvista.core.errors import VTKVersionError  # noqa: PLC0415
-
         props = [
             f'{type(self).__name__} ({hex(id(self))})',
         ]

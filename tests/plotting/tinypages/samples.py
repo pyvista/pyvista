@@ -11,10 +11,16 @@ def make_sphere():
 
     Examples
     --------
-    >>> import pyvista  # must import pyvista for the plotting directive to work
+    Select the second image on the page as its Open Graph thumbnail. numpydoc wraps
+    this whole section in a ``pyvista-plot`` directive, so this also covers the
+    directive being nested inside another one.
+
+    .. autoopengraph_thumbnail:: 2
+
+    >>> import pyvista as pv  # must import pyvista for the plotting directive to work
     >>> from samples import make_sphere
     >>> sphere = make_sphere()
-    >>> sphere.plot()
+    >>> sphere.plot(text='make_sphere')
 
     """
     return pv.Sphere()
@@ -30,10 +36,10 @@ def make_sphere_second():
     .. pyvista-plot::
       :include-source: False
 
-      >>> import pyvista  # must import pyvista for the plotting directive to work
+      >>> import pyvista as pv  # must import pyvista for the plotting directive to work
       >>> from samples import make_sphere
       >>> sphere = make_sphere()
-      >>> sphere.plot()
+      >>> sphere.plot(text='make_sphere2')
 
     """
     return pv.Sphere()
@@ -47,8 +53,8 @@ def example_with_empty_plotter():
 
     Examples
     --------
-    >>> import pyvista
-    >>> pl = pyvista.Plotter()
+    >>> import pyvista as pv
+    >>> pl = pv.Plotter()
 
     """
     return
@@ -62,8 +68,8 @@ def example_with_closed_plotter():
 
     Examples
     --------
-    >>> import pyvista
-    >>> pl = pyvista.Plotter()
+    >>> import pyvista as pv
+    >>> pl = pv.Plotter()
     >>> pl.close()
 
     """

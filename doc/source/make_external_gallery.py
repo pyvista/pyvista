@@ -32,19 +32,14 @@ class Example:  # noqa: D101
 
 articles = dict(
     omf=Example(
-        title='3D visualization for the Open Mining Format (omf)',
-        link='https://opengeovis.github.io/omfvista/examples/index.html',
+        title='3D visualization for the Open Mining Format (OMF)',
+        link='https://github.com/pyvista/omfvista',
         image='omfvista.png',
     ),
     discretize=Example(
         title='3D Rendering with Discretize',
-        link='http://discretize.simpeg.xyz/en/main/examples/plot_pyvista_laguna.html',
+        link='https://discretize.simpeg.xyz/en/main/examples/plot_pyvista_laguna.html',
         image='discretize.png',
-    ),
-    open_foam=Example(
-        title='OpenFOAM Rendering',
-        link='https://pswpswpsw.github.io/posts/2018/09/blog-post-modify-vtk-openfoam/',
-        image='open-foam.png',
     ),
     aero_sandbox=Example(
         title='AeroSandbox',
@@ -63,12 +58,12 @@ articles = dict(
     ),
     tetgen=Example(
         title="TetGen's example gallery",
-        link='http://tetgen.pyvista.org/examples/index.html',
+        link='https://tetgen.pyvista.org/examples/index.html',
         image='tetgen.png',
     ),
     mesh_fix=Example(
         title="PyMeshFix's example gallery",
-        link='http://pymeshfix.pyvista.org/examples/index.html',
+        link='https://pymeshfix.pyvista.org/examples/index.html',
         image='pymeshfix.png',
     ),
     orvisu=Example(
@@ -93,7 +88,7 @@ articles = dict(
     ),
     damavand=Example(
         title='Damavand Volcano',
-        link='https://nbviewer.jupyter.org/github/banesullivan/damavand-volcano/blob/master/Damavand_Volcano.ipynb',
+        link='https://github.com/banesullivan/damavand-volcano/blob/master/Damavand_Volcano.ipynb',
         image='damavand_volcano.gif',
     ),
     atmos_conv=Example(
@@ -158,7 +153,7 @@ articles = dict(
     ),
     pyfbs=Example(
         title='pyFBS: Frequency Based Substructuring in Python',
-        link='https://pyfbs.readthedocs.io/en/latest/examples/examples.html',
+        link='https://pyfbs.readthedocs.io/en/master/examples/examples.html',
         image='pyfbs.webp',
     ),
     topogenesis=Example(
@@ -178,7 +173,7 @@ articles = dict(
     ),
     gemgis=Example(
         title='GemGIS',
-        link='https://gemgis.readthedocs.io/en/latest',
+        link='https://gemgis.readthedocs.io/en/latest/',
         image='gemgis.png',
     ),
     air_racing_optimization=Example(
@@ -213,7 +208,7 @@ articles = dict(
     ),
     comet_fenicsx=Example(
         title='Numerical Tours of Computational Mechanics with FEniCSx',
-        link='https://bleyerj.github.io/comet-fenicsx',
+        link='https://bleyerj.github.io/comet-fenicsx/',
         image='comet_fenicsx.png',
     ),
     # entry=Example(title="",
@@ -283,3 +278,8 @@ glad to add it.
     if new_text != existing:
         with Path(path).open('w', encoding='utf-8') as fid:
             fid.write(new_text)
+        print(f'Wrote external example gallery to {path}')  # noqa: T201
+
+
+if __name__ == '__main__':
+    make_example_gallery()

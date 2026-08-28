@@ -4,13 +4,11 @@
 Control Global and Local Plotting Themes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-PyVista allows you to set global and local plotting themes to easily
-set default plotting parameters. This example shows how to use the
-:ref:`theme_api` and :func:`~pyvista.set_plot_theme` function.
+Set global and local plotting themes to easily set default plot parameters.
+
+Shows how to use the :ref:`theme_api` and :func:`~pyvista.set_plot_theme` function.
 
 """
-
-from __future__ import annotations
 
 import pyvista as pv
 from pyvista import examples
@@ -22,10 +20,10 @@ mesh = examples.download_st_helens().warp_by_scalar()
 
 
 def plot_example():
-    p = pv.Plotter()
-    p.add_mesh(mesh)
-    p.add_bounding_box()
-    p.show()
+    pl = pv.Plotter()
+    pl.add_mesh(mesh)
+    pl.add_bounding_box()
+    pl.show()
 
 
 # %%
@@ -45,9 +43,10 @@ plot_example()
 # PyVista also ships with a few plotting themes:
 #
 # * ``'ParaView'``: this is designed to mimic ParaView's default plotting theme.
-# * ``'dark'``: this is designed to be night-mode friendly with dark backgrounds and color schemes.
-# * ``'document'``: this is built for use in document style plotting and making publication
-#   quality figures.
+# * ``'dark'``: this is designed to be night-mode friendly with dark backgrounds and
+#   color schemes.
+# * ``'document'``: this is built for use in document style plotting and making
+#   publication quality figures.
 
 # %%
 # Demo the ``'ParaView'`` theme.
@@ -74,12 +73,12 @@ plot_example()
 # %%
 # Note that you can also use color gradients for the background of the plotting
 # window.
-plotter = pv.Plotter()
-plotter.add_mesh(mesh)
-plotter.show_grid()
+pl = pv.Plotter()
+pl.add_mesh(mesh)
+pl.show_grid()
 # Here we set the gradient
-plotter.set_background('royalblue', top='aliceblue')
-cpos = plotter.show()
+pl.set_background('royalblue', top='aliceblue')
+cpos = pl.show()
 
 
 # %%
@@ -110,7 +109,7 @@ cpos = pv.Sphere().plot()
 # %%
 # You can reset pyvista to default behavior with ``restore_defaults``.
 # Note that the figure's color was reset to the default "white" color
-# rather than the 'lightblue' color default with the document theme.  Under
+# rather than the ``'lightblue'`` color default with the document theme.  Under
 # the hood, each theme applied changes the global plot defaults stored
 # within ``pyvista.global_theme.``
 
@@ -119,7 +118,7 @@ cpos = pv.Sphere().plot()
 
 
 # %%
-# Creating a Custom Theme and Applying it Globally
+# Creating a Custom Theme and Applying It Globally
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # You can create a custom theme by modifying one of the existing
 # themes and then loading it into the global plotting defaults.
@@ -140,7 +139,7 @@ cpos = pv.Sphere().plot()
 
 
 # %%
-# Creating a Custom Theme and Applying it to a Single Plotter
+# Creating a Custom Theme and Applying It to a Single Plotter
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # In this example, we create a custom theme from the base "default"
 # theme and then apply it to a single plotter.  Note that this does
@@ -166,7 +165,6 @@ cpos = pv.Sphere().plot(theme=my_theme)
 # Alternatively, set the theme of an instance of ``Plotter``.
 
 pl = pv.Plotter(theme=my_theme)
-# pl.theme = my_theme  # alternatively use the setter
 pl.add_mesh(pv.Cube())
 cpos = pl.show()
 

@@ -3,8 +3,8 @@
 
 Visualize Hertzian Contact Stress
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The following example demonstrates how to use PyVista to visualize
-Hertzian contact stress between a cylinder and a flat plate.
+
+Visualize Hertzian contact stress between a cylinder and a flat plate.
 
 This example loads a dataset, constructs a line to represent the point of
 contact between the cylinder and the block, and samples the stress along that
@@ -20,16 +20,13 @@ critical consideration.
 
 """
 
-from __future__ import annotations
-
 import matplotlib.pyplot as plt
 import numpy as np
-
 import pyvista as pv
 from pyvista import examples
 
 # %%
-# Load the dataset
+# Load the Dataset
 # ~~~~~~~~~~~~~~~~
 # Start by loading the dataset from the examples module with
 # :func:`~pyvista.examples.downloads.download_fea_hertzian_contact_cylinder`.
@@ -62,7 +59,7 @@ line.clear_data()
 line
 
 # %%
-# Sampling the Stress along the Line
+# Sampling the Stress Along the Line
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # We can sample the Z component stress along the contact edge and compare it
 # with expected pressure.
@@ -74,7 +71,7 @@ line
 # <https://en.wikipedia.org/wiki/Contact_mechanics>`_
 
 # Sample the stress
-sampled = line.sample(mesh, tolerance=1e-3)
+sampled = line.sample(mesh)
 x_coord = 0.1 - sampled.points[:, 0]
 samp_z_stress = -sampled['Stress'][:, 2]
 

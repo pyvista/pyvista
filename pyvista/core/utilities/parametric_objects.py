@@ -2,15 +2,18 @@
 
 from __future__ import annotations
 
-from math import pi
+from collections.abc import Sequence
+import math
 from typing import TYPE_CHECKING
+from typing import Literal
+from typing import get_args
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
-from pyvista.core import _vtk_core as _vtk
 
 from .geometric_sources import translate
 from .helpers import wrap
@@ -20,28 +23,66 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import VectorLike
 
+_ParametrizeByOptions = Literal['length', 'index']
+_BoundaryConstraintOptions = Literal['finite_difference', 'clamped', 'second', 'scaled_second']
 
-def Spline(points: VectorLike[float] | MatrixLike[float], n_points: int | None = None) -> PolyData:
+
+def Spline(
+    points: VectorLike[float] | MatrixLike[float],
+    n_points: int | None = None,
+    *,
+    closed: bool = False,
+    parametrize_by: _ParametrizeByOptions = 'length',
+    boundary_constraints: _BoundaryConstraintOptions
+    | tuple[_BoundaryConstraintOptions, _BoundaryConstraintOptions] = 'clamped',
+    boundary_values: float | tuple[float | None, float | None] | None = None,
+    **kwargs,
+) -> PolyData:
     """Create a spline from points.
 
     Parameters
     ----------
     points : numpy.ndarray
-        Array of points to build a spline out of.  Array must be 3D
-        and directionally ordered.
+        Array of points to build a spline out of. Array must be 3D and
+        directionally ordered.
 
     n_points : int, optional
         Number of points to interpolate along the points array. Defaults to
         ``points.shape[0]``.
 
+    closed : bool, default: False
+        Close the spline if ``True`` (both ends are joined). Not closed by default.
+
+    parametrize_by : str, default: 'length'
+        Parametrize spline by ``'length'`` or by point ``'index'``.
+
+    boundary_constraints : str | Sequence[str], optional, default: 'clamped'
+        Derivative constraint type at both boundaries of the spline.
+        Can be set by a single string or a sequence of length 2 (one for each left/right end).
+        Each value must be one of:
+
+        - ``'finite_difference'``: The first derivative at the left(right) most point is determined
+          from the line defined from the first(last) two points.
+        - ``'clamped'``: Default: the first derivative at the left(right) most point is set to
+          Left(Right) ``boundary_values``. (Default)
+        - ``'second'``: The second derivative at the left(right) most point is set to
+          Left(Right) ``boundary_values``.
+        - ``'scaled_second'``: The second derivative at left(right) most points is
+          Left(Right) ``boundary_values`` times second derivative at first interior point.
+
+    boundary_values : float | Sequence[float | None], optional
+        Values of derivative at both ends of the spline used by the ``boundary_constraints`` type.
+        Can be set a single float, or a sequence of floats or None (one value for each left/right
+        end). If a single value is provided, the same value is used for both ends.
+        Value must be None for each end with boundary constraint type ``'finite_difference'``.
+
+    **kwargs : dict, optional
+        See :func:`surface_from_para` for additional keyword arguments.
+
     Returns
     -------
     pyvista.PolyData
         Line mesh of spline.
-
-    See Also
-    --------
-    :ref:`distance_along_spline_example`
 
     Examples
     --------
@@ -63,17 +104,84 @@ def Spline(points: VectorLike[float] | MatrixLike[float], n_points: int | None =
     ... )
 
     """
+
+    # Validate inputs
+    def check_constraint(value: str, name: str) -> None:
+        _validation.check_contains(
+            get_args(_BoundaryConstraintOptions), must_contain=value, name=name
+        )
+
     points_ = _validation.validate_arrayNx3(points, name='points')
+    _validation.check_contains(
+        get_args(_ParametrizeByOptions), must_contain=parametrize_by, name='parametrize_by'
+    )
+
+    # Ensure we have valid constraint, value pairs
+    name = 'boundary_constraints'
+    _validation.check_instance(boundary_constraints, Sequence, name=name)
+    if isinstance(boundary_constraints, str):
+        check_constraint(boundary_constraints, name=name)
+        constraints_pair = (boundary_constraints, boundary_constraints)
+    else:
+        _validation.check_length(boundary_constraints, exact_length=2, name=name)
+        check_constraint(boundary_constraints[0], name=name)
+        check_constraint(boundary_constraints[1], name=name)
+        constraints_pair = boundary_constraints
+
+    if boundary_values is None:
+        values_list: list[float | None]
+        values_list = [None if c == 'finite_difference' else 0.0 for c in constraints_pair]
+        values_pair: Sequence[float | None] = values_list
+    else:
+        name = 'boundary_values'
+        allowed_types = float, int, type(None)
+        _validation.check_instance(boundary_values, (Sequence, *allowed_types), name=name)
+        if isinstance(boundary_values, Sequence):
+            _validation.check_length(boundary_values, exact_length=2, name=name)
+            for val in boundary_values:
+                _validation.check_instance(val, allowed_types, name=name)
+            values_pair = boundary_values
+        else:
+            values_pair = (boundary_values, boundary_values)
+
     spline_function = _vtk.vtkParametricSpline()
-    spline_function.SetPoints(pyvista.vtk_points(points_, deep=False))
+    spline_function.SetPoints(pv.vtk_points(points_, deep=False))
+
+    if closed:
+        spline_function.ClosedOn()
+    else:
+        spline_function.ClosedOff()
+
+    if parametrize_by == 'length':
+        spline_function.ParameterizeByLengthOn()
+    else:
+        spline_function.ParameterizeByLengthOff()
+
+    _boundary_types_dict = {
+        'finite_difference': 0,
+        'clamped': 1,
+        'second': 2,
+        'scaled_second': 3,
+    }
+    for left_right, constraint, value in zip(
+        ('Left', 'Right'), constraints_pair, values_pair, strict=True
+    ):
+        method = f'Set{left_right}Constraint'
+        getattr(spline_function, method)(_boundary_types_dict[constraint])
+
+        if value is not None:
+            if constraint == 'finite_difference':
+                msg = f'finite difference boundary value must be None, got {value}'
+                raise ValueError(msg)
+            method = f'Set{left_right}Value'
+            getattr(spline_function, method)(value)
 
     # get interpolation density
     u_res = n_points
     if u_res is None:
         u_res = points_.shape[0]
-
     u_res -= 1
-    spline = surface_from_para(spline_function, u_res=u_res)
+    spline = surface_from_para(spline_function, u_res=u_res, **kwargs)
     return spline.compute_arc_length()
 
 
@@ -125,8 +233,6 @@ def KochanekSpline(  # noqa: PLR0917
     >>> kochanek_spline = pv.KochanekSpline(points, n_points=6)
     >>> kochanek_spline.plot(line_width=4, color='k')
 
-    See :ref:`create_kochanek_spline_example` for an additional example.
-
     """
     if tension is None:
         tension = np.array([0.0, 0.0, 0.0])
@@ -144,7 +250,7 @@ def KochanekSpline(  # noqa: PLR0917
 
     points_ = _validation.validate_arrayNx3(points, name='points')
     spline_function = _vtk.vtkParametricSpline()
-    spline_function.SetPoints(pyvista.vtk_points(points_, deep=False))
+    spline_function.SetPoints(pv.vtk_points(points_, deep=False))
 
     # set Kochanek spline for each direction
     xspline = _vtk.vtkKochanekSpline()
@@ -541,9 +647,9 @@ def ParametricEllipsoid(
     parametric_keywords(
         parametric_function,
         min_u=kwargs.pop('min_u', 0),
-        max_u=kwargs.pop('max_u', 2 * pi),
+        max_u=kwargs.pop('max_u', 2 * math.pi),
         min_v=kwargs.pop('min_v', 0.0),
-        max_v=kwargs.pop('max_v', pi),
+        max_v=kwargs.pop('max_v', math.pi),
         join_u=kwargs.pop('join_u', False),
         join_v=kwargs.pop('join_v', False),
         twist_u=kwargs.pop('twist_u', False),
@@ -1118,7 +1224,7 @@ def ParametricSuperToroid(  # noqa: PLR0917
     ParametricSuperToroid generates a supertoroid.  Essentially a
     supertoroid is a torus with the sine and cosine terms raised to a power.
     A supertoroid is a versatile primitive that is controlled by four
-    parameters r0, r1, n1 and n2. r0, r1 determine the type of torus whilst
+    parameters r0, r1, n1, and n2. r0, r1 determine the type of torus whilst
     the value of n1 determines the shape of the torus ring and n2 determines
     the shape of the cross section of the ring. It is the different values of
     these powers which give rise to a family of 3D shapes that are all
@@ -1252,9 +1358,9 @@ def ParametricTorus(
 def parametric_keywords(  # noqa: PLR0917
     parametric_function: _vtk.vtkParametricFunction,
     min_u: float = 0.0,
-    max_u: float = 2 * pi,
+    max_u: float = 2 * math.pi,
     min_v: float = 0.0,
-    max_v: float = 2 * pi,
+    max_v: float = 2 * math.pi,
     join_u: bool = False,  # noqa: FBT001, FBT002
     join_v: bool = False,  # noqa: FBT001, FBT002
     twist_u: bool = False,  # noqa: FBT001, FBT002

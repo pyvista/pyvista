@@ -1,22 +1,18 @@
 """
 .. _project_points_tessellate_example:
 
-Project points to a plane and Tessellate
+Project Points to a Plane and Tessellate
 ----------------------------------------
 
-Using pyvista and numpy, generate a 3D point cloud, project it to a plane, and
-tessellate it.
+Generate a 3D point cloud, project it to a plane, and tessellate it.
 
 This demonstrates how to use
-:class:`pyvista.UnstructuredGridFilters.delaunay_2d` and a simple numpy
+:class:`pyvista.UnstructuredGridFilters.delaunay_2d` and a simple NumPy
 function that projects points to a plane.
 
 """
 
-from __future__ import annotations
-
 import numpy as np
-
 import pyvista as pv
 
 # %%

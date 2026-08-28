@@ -1,19 +1,19 @@
 from __future__ import annotations
 
-from functools import wraps
+import functools
 import inspect
-from inspect import Parameter
-from inspect import Signature
-import os
 from pathlib import Path
-from typing import Callable
+from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import overload
-import warnings
 
 from typing_extensions import ParamSpec
 
 from pyvista._version import version_info
+from pyvista._warn_external import warn_external
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 _MAX_POSITIONAL_ARGS = 3  # Should match value in pyproject.toml
 
@@ -120,7 +120,7 @@ def _deprecate_positional_args(
 
             # Check that allowed args are not already kwonly
             for name in allowed:
-                if sig.parameters[name].kind == Parameter.KEYWORD_ONLY:
+                if sig.parameters[name].kind == inspect.Parameter.KEYWORD_ONLY:
                     msg = (
                         f'Parameter {name!r} in decorator {decorator_name!r} is already '
                         f'keyword-only\nand should be removed from the allowed list.'
@@ -131,8 +131,8 @@ def _deprecate_positional_args(
         n_positional = 0
         for name in param_names:
             if name not in ['cls', 'self'] and sig.parameters[name].kind in [
-                Parameter.POSITIONAL_ONLY,
-                Parameter.POSITIONAL_OR_KEYWORD,
+                inspect.Parameter.POSITIONAL_ONLY,
+                inspect.Parameter.POSITIONAL_OR_KEYWORD,
             ]:
                 n_positional += 1
         actual_n_allowed = len(allowed) if allowed else 0
@@ -156,26 +156,26 @@ def _deprecate_positional_args(
                 if i > max_args_to_print:
                     has_too_many_to_print = True
                     break
-                if name in ['cls', 'self', *(allowed if allowed else [])]:
+                if name in ['cls', 'self', *(allowed or [])]:
                     current_kind = sig.parameters[name].kind
                     new_kind = (
                         current_kind
-                        if current_kind != Parameter.KEYWORD_ONLY
-                        else Parameter.KEYWORD_ONLY
+                        if current_kind != inspect.Parameter.KEYWORD_ONLY
+                        else inspect.Parameter.KEYWORD_ONLY
                     )
-                    new_parameters.append(Parameter(name, kind=new_kind))
+                    new_parameters.append(inspect.Parameter(name, kind=new_kind))
                 else:
-                    new_parameters.append(Parameter(name, kind=Parameter.KEYWORD_ONLY))
+                    new_parameters.append(
+                        inspect.Parameter(name, kind=inspect.Parameter.KEYWORD_ONLY)
+                    )
 
-            signature_string = f'{qualified_name()}{Signature(new_parameters)}'
+            signature_string = f'{qualified_name()}{inspect.Signature(new_parameters)}'
             if has_too_many_to_print:
                 # Replace ending bracket with ellipses
                 signature_string = f'{signature_string[:-1]}, ...)'
 
             # Get source file and line number
-            file = Path(
-                os.path.relpath(inspect.getfile(f), start=os.getcwd())  # noqa: PTH109  # https://github.com/pyvista/pyvista/pull/7732
-            ).as_posix()
+            file = Path(inspect.getfile(f)).as_posix()
             lineno = inspect.getsourcelines(f)[1]
             location = f'{file}:{lineno}'
 
@@ -188,7 +188,7 @@ def _deprecate_positional_args(
             )
             raise RuntimeError(msg)
 
-        @wraps(f)
+        @functools.wraps(f)
         def inner_f(*args: P.args, **kwargs: P.kwargs) -> T:
             passed_positional_names = param_names[: len(args)]
 
@@ -223,9 +223,7 @@ def _deprecate_positional_args(
                     def call_site() -> str:
                         # Get location where the function is called
                         frame = inspect.stack()[stack_level]
-                        file = Path(
-                            os.path.relpath(frame.filename, start=os.getcwd())  # noqa: PTH109  # https://github.com/pyvista/pyvista/pull/7732
-                        ).as_posix()
+                        file = Path(frame.filename).as_posix()
                         return f'{file}:{frame.lineno}'
 
                     def warn_positional_args() -> None:
@@ -238,7 +236,7 @@ def _deprecate_positional_args(
                             f'From version {version_str}, passing {this} as{a}positional '
                             f'argument{s} will result in a TypeError.'
                         )
-                        warnings.warn(msg, PyVistaDeprecationWarning, stacklevel=stack_level)
+                        warn_external(msg, PyVistaDeprecationWarning)
 
                     warn_positional_args()
 

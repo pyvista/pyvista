@@ -5,26 +5,24 @@ Creating a Uniform Grid
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 Create a simple uniform grid from a 3D NumPy array of values.
+
 This example uses :class:`pyvista.ImageData`.
 
 """
 
-from __future__ import annotations
-
 import numpy as np
-
 import pyvista as pv
 
 # %%
 # Take a 3D NumPy array of data values that holds some spatial data where each
-# axis corresponds to the XYZ cartesian axes. This example will create a
+# axis corresponds to the XYZ Cartesian axes. This example will create a
 # :class:`pyvista.ImageData` object that will hold the spatial reference for
 # a 3D grid which a 3D NumPy array of values can be plotted against.
 
 # %%
 # Create the 3D NumPy array of spatially referenced data.
 # This is spatially referenced such that the grid is 20 by 5 by 10
-# (nx by ny by nz)
+# (``nx`` by ``ny`` by ``nz``)
 values = np.linspace(0, 10, 1000).reshape((20, 5, 10))
 values.shape
 

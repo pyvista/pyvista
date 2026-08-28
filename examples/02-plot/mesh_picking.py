@@ -3,17 +3,15 @@
 
 Picking Meshes
 ~~~~~~~~~~~~~~
-This example demonstrates how to pick meshes using
-:func:`enable_mesh_picking() <pyvista.Plotter.enable_mesh_picking>`.
+
+Pick meshes using :func:`~pyvista.Plotter.enable_mesh_picking`.
 
 """
-
-from __future__ import annotations
 
 import pyvista as pv
 
 # %%
-# Pick either a cube or a sphere using "p"
+# Pick Either a Cube or a Sphere Using "P"
 # ++++++++++++++++++++++++++++++++++++++++
 #
 
@@ -28,7 +26,7 @@ pl.show()
 
 
 # %%
-# Deform the mesh after picking
+# Deform the Mesh After Picking
 # +++++++++++++++++++++++++++++
 # Pick to trigger a callback that "shrinks" the mesh each time it's selected.
 
@@ -47,7 +45,7 @@ pl.show()
 
 
 # %%
-# Pick based on Actors
+# Pick Based on Actors
 # ++++++++++++++++++++
 # Return the picked actor to the callback
 

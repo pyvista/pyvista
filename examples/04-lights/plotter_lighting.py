@@ -4,6 +4,8 @@
 Plotter Lighting Systems
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
+Compare the :class:`pyvista.Plotter` class's three default lighting systems.
+
 The :class:`pyvista.Plotter` class comes with three options for the default
 lighting system:
 
@@ -15,23 +17,22 @@ With meshes that don't have depth information encoded in their color the
 importance of an appropriate lighting setup becomes paramount for accurate
 visualization.
 
-Light kit
+Light Kit
 =========
 
 The default ``lighting='light kit'`` option recreates a lighting setup that
 corresponds to a :vtk:`vtkLightKit`. We can check what type of lights this
 lighting comprises:
+
 """
 
 # sphinx_gallery_thumbnail_number = 3
-from __future__ import annotations
-
 import pyvista as pv
 from pyvista import examples
 
 # default: light kit
-plotter = pv.Plotter()
-light_types = [light.light_type for light in plotter.renderer.lights]
+pl = pv.Plotter()
+light_types = [light.light_type for light in pl.renderer.lights]
 
 # Remove from plotters so output is not produced in docs
 pv.plotting.plotter._ALL_PLOTTERS.clear()
@@ -43,13 +44,13 @@ light_types
 # Add a white terrain to the scene:
 
 mesh = examples.download_st_helens().warp_by_scalar()
-plotter = pv.Plotter()
-plotter.add_mesh(mesh, color='white')
-plotter.show()
+pl = pv.Plotter()
+pl.add_mesh(mesh, color='white')
+pl.show()
 
 
 # %%
-# Three-lights illumination
+# Three-Lights Illumination
 # =========================
 #
 # Switching to three-lights illumination gives a different character to the
@@ -57,15 +58,15 @@ plotter.show()
 # the top, but having more contrast with views closer to the side. This becomes
 # especially clear when exploring the figures interactively.
 
-plotter = pv.Plotter(lighting='three lights')
-plotter.add_mesh(mesh, color='white')
-plotter.show()
+pl = pv.Plotter(lighting='three lights')
+pl.add_mesh(mesh, color='white')
+pl.show()
 
 # %%
 # Again we can check what kind of lights this setting uses:
 
-plotter = pv.Plotter(lighting='three lights')
-light_types = [light.light_type for light in plotter.renderer.lights]
+pl = pv.Plotter(lighting='three lights')
+light_types = [light.light_type for light in pl.renderer.lights]
 
 # Remove from plotters so output is not produced in docs
 pv.plotting.plotter._ALL_PLOTTERS.clear()
@@ -74,7 +75,7 @@ light_types
 
 
 # %%
-# Custom lighting
+# Custom Lighting
 # ===============
 #
 # We can introduce our own lighting from scratch by disabling any
@@ -82,28 +83,28 @@ light_types
 # scene will often result in ominous visuals due to objects having
 # larger regions in shadow.
 
-plotter = pv.Plotter(lighting='none', window_size=(1000, 1000))
-plotter.add_mesh(mesh, color='white', smooth_shading=True)
+pl = pv.Plotter(lighting='none', window_size=(1000, 1000))
+pl.add_mesh(mesh, color='white', smooth_shading=True)
 light = pv.Light()
 light.set_direction_angle(30, -20)
-plotter.add_light(light)
-plotter.show()
+pl.add_light(light)
+pl.show()
 
 
 # %%
-# Custom lighting with shadows
+# Custom Lighting With Shadows
 # ============================
 #
 # Here, we ``enable_shadows`` to enhance the effect that the lighting
 # angle has.  It has a subtle, but realistic effect.  Notice the sharp
 # shadows due to the mountaintop.
 
-plotter = pv.Plotter(lighting='none', window_size=(1000, 1000))
-plotter.add_mesh(mesh, color='white', smooth_shading=True)
+pl = pv.Plotter(lighting='none', window_size=(1000, 1000))
+pl.add_mesh(mesh, color='white', smooth_shading=True)
 light = pv.Light()
 light.set_direction_angle(20, -20)
-plotter.add_light(light)
-plotter.enable_shadows()
-plotter.show()
+pl.add_light(light)
+pl.enable_shadows()
+pl.show()
 # %%
 # .. tags:: lights

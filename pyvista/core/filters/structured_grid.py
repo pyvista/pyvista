@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core import _vtk_core as _vtk
 from pyvista.core.filters import _get_output
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.utilities.misc import abstract_class
@@ -18,9 +18,9 @@ class StructuredGridFilters(DataSetFilters):
 
     @_deprecate_positional_args(allowed=['voi', 'rate'])
     def extract_subset(self, voi, rate=(1, 1, 1), boundary: bool = False):  # noqa: FBT001, FBT002
-        """Select piece (e.g., volume of interest).
+        r"""Select piece (for example, volume of interest).
 
-        To use this filter set the VOI ivar which are i-j-k min/max
+        To use this filter set the VOI ``ivar`` which are i-j-k min/max
         indices that specify a rectangular region in the data. (Note
         that these are 0-offset.) You can also specify a sampling rate
         to subsample the data.
@@ -33,12 +33,12 @@ class StructuredGridFilters(DataSetFilters):
         Parameters
         ----------
         voi : sequence[int]
-            Length 6 iterable of ints: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
+            Length 6 iterable of ``int``\ s: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
             These bounds specify the volume of interest in i-j-k min/max
             indices.
 
         rate : sequence[int], default: (1, 1, 1)
-            Length 3 iterable of ints: ``(xrate, yrate, zrate)``.
+            Length 3 iterable of ``int``\ s: ``(xrate, yrate, zrate)``.
 
         boundary : bool, default: False
             Control whether to enforce that the "boundary" of the grid
@@ -123,7 +123,7 @@ class StructuredGridFilters(DataSetFilters):
             raise RuntimeError(msg)
 
         # check dimensions are compatible
-        for i, (dim1, dim2) in enumerate(zip(self.dimensions, other.dimensions)):  # type: ignore[attr-defined]
+        for i, (dim1, dim2) in enumerate(zip(self.dimensions, other.dimensions, strict=True)):  # type: ignore[attr-defined]
             if i == axis:
                 continue
             if dim1 != dim2:
@@ -193,7 +193,7 @@ class StructuredGridFilters(DataSetFilters):
             new_cell_data[name] = np.concatenate((arr_1, arr_2), axis=axis).ravel(order='F')
 
         # assemble output
-        joined = pyvista.StructuredGrid()
+        joined = pv.StructuredGrid()
         joined.dimensions = list(new_dims)
         joined.points = new_points.reshape((-1, 3), order='F')
         joined.point_data.update(new_point_data)

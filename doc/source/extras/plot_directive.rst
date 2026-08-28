@@ -21,8 +21,8 @@ documentation files::
       :caption: This is a default sphere
       :include-source: True
 
-      >>> import pyvista
-      >>> sphere = pyvista.Sphere()
+      >>> import pyvista as pv
+      >>> sphere = pv.Sphere()
       >>> out = sphere.plot()
 
 Which will be rendered as:
@@ -31,8 +31,8 @@ Which will be rendered as:
    :caption: This is a default sphere
    :include-source: True
 
-   >>> import pyvista
-   >>> sphere = pyvista.Sphere()
+   >>> import pyvista as pv
+   >>> sphere = pv.Sphere()
    >>> out = sphere.plot()
 
 .. note::

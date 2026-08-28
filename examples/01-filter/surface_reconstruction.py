@@ -4,13 +4,11 @@
 Surface Reconstruction
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Surface reconstruction has a dedicated filter in PyVista and is
-handled by :func:`pyvista.PolyDataFilters.reconstruct_surface`. This
-tends to perform much better than :func:`pyvista.DataSetFilters.delaunay_3d`.
+Reconstruct a surface with :func:`~pyvista.PolyDataFilters.reconstruct_surface`.
+
+This tends to perform much better than :func:`pyvista.DataSetFilters.delaunay_3d`.
 
 """
-
-from __future__ import annotations
 
 import pyvista as pv
 

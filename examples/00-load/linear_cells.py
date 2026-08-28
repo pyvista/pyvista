@@ -4,9 +4,9 @@
 Linear Cells
 ~~~~~~~~~~~~
 
-This example extends the :ref:`create_unstructured_surface_example` example by
-including an explanation of linear VTK cell types and how you can create them in
-PyVista.
+Explains linear VTK cell types and how to create them in PyVista.
+
+This example extends the :ref:`create_unstructured_surface_example` example.
 
 Linear cells are cells where points only occur at the edges of each
 cell. Non-linear cells contain additional points along the edges of the cell.
@@ -17,15 +17,13 @@ see :ref:`point_sets_api`.
 """
 
 # sphinx_gallery_start_ignore
-from __future__ import annotations
-
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
 import numpy as np
-
 import pyvista as pv
 from pyvista.examples import cells as example_cells
+from pyvista.examples import generate_cell_blocks
 from pyvista.examples import plot_cell
 
 # random generator for examples
@@ -33,7 +31,7 @@ rng = np.random.default_rng(2)
 
 
 # %%
-# Plot an example cell
+# Plot an Example Cell
 # ~~~~~~~~~~~~~~~~~~~~
 # PyVista contains a simple utility to plot a single cell, which is the
 # fundamental unit of each :class:`pyvista.UnstructuredGrid`. For example,
@@ -60,7 +58,7 @@ grid.cells
 
 
 # %%
-# Combine two UnstructuredGrids
+# Combine Two UnstructuredGrids
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # We can combine two unstructured grids to create a single unstructured grid
 # using the ``+`` operator.
@@ -104,7 +102,7 @@ combined.celltypes == (pv.CellType.HEXAHEDRON, pv.CellType.HEXAGONAL_PRISM)
 
 
 # %%
-# Create an UnstructuredGrid with a single linear cell
+# Create an UnstructuredGrid With a Single Linear Cell
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Now that you know the three main inputs of an
 # :class:`pyvista.UnstructuredGrid`, it's quite straightforward to create an
@@ -126,7 +124,7 @@ example_cells.plot_cell(pyrmaid)
 
 
 # %%
-# Plot all linear cell Types
+# Plot All Linear Cell Types
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Let's create a ``(4, 4)`` :class:`pyvista.Plotter` and plot all 16 linear
 # cells in a single plot.
@@ -152,8 +150,11 @@ def add_cell_helper(pl, *, text, grid, subplot, cpos=None):
         text_color='k',
     )
     if cpos is None:
-        pl.camera.azimuth = 20
-        pl.camera.elevation = -20
+        if next(grid.cell).dimension == 2:
+            pl.view_xy()
+        else:
+            pl.camera.azimuth = 20
+            pl.camera.elevation = -20
     else:
         pl.camera_position = cpos
     pl.camera.zoom(0.8)
@@ -190,28 +191,24 @@ add_cell_helper(
     text=f'TRIANGLE ({pv.CellType.TRIANGLE})',
     grid=example_cells.Triangle(),
     subplot=(1, 0),
-    cpos='xy',
 )
 add_cell_helper(
     pl,
     text=f'TRIANGLE_STRIP ({pv.CellType.TRIANGLE_STRIP})',
     grid=example_cells.TriangleStrip().rotate_z(90, inplace=False),
     subplot=(1, 1),
-    cpos='xy',
 )
 add_cell_helper(
     pl,
     text=f'POLYGON ({pv.CellType.POLYGON})',
     grid=example_cells.Polygon(),
     subplot=(1, 2),
-    cpos='xy',
 )
 add_cell_helper(
     pl,
     text=f'PIXEL ({pv.CellType.PIXEL})',
     grid=example_cells.Pixel(),
     subplot=(1, 3),
-    cpos='xy',
 )
 
 # make irregular
@@ -274,5 +271,59 @@ add_cell_helper(
 
 pl.background_color = 'w'
 pl.show()
+
+# %%
+# Auto-Generate Cell Types From Source
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Similar to above, let's create another  ``(4, 4)`` :class:`pyvista.Plotter` and plot
+# all 16 linear cells in a single plot. This time, however, we use
+# :func:`~pyvista.examples.cells.generate_cell_blocks` to generate the grids.
+
+# %%
+# Create a list of all linear cell types. The list has 19 cell types.
+linear_cell_types = [ctype for ctype in pv.CellType if ctype.is_linear]
+len(linear_cell_types)
+
+# %%
+# Remove special linear cell types not used earlier.
+linear_cell_types.remove(pv.CellType.EMPTY_CELL)
+linear_cell_types.remove(pv.CellType.POLYHEDRON)
+linear_cell_types.remove(pv.CellType.CONVEX_POINT_SET)
+
+# %%
+# Generate a :class:`~pyvista.MultiBlock` with all 16 linear cells.
+linear_cells = generate_cell_blocks(linear_cell_types)
+
+# %%
+# Plot each grid on its own subplot.
+
+n_rows = n_cols = 4
+pl = pv.Plotter(shape=(n_rows, n_cols))
+for row_id in range(n_rows):
+    for col_id in range(n_cols):
+        block_id = row_id * n_cols + col_id
+        grid = linear_cells[block_id]
+        name = linear_cells.get_block_name(block_id)
+        add_cell_helper(
+            pl,
+            text=name,
+            grid=grid,
+            subplot=(row_id, col_id),
+        )
+
+pl.background_color = 'w'
+pl.show()
+
+# %%
+# Instead of using subplots, plot the generated mesh directly as a single grid of cells.
+# Use a shrink factor to create space between cells.
+cells = generate_cell_blocks(
+    linear_cell_types, block_dimensions=(n_rows, n_cols, 1), shrink_factor=0.5
+)
+
+# %%
+# Re-orient the mesh to match orientation of the other plots then plot it.
+cells = cells.flip_y()
+plot_cell(cells, cpos='xy', point_size=40, font_size=20)
 # %%
 # .. tags:: load

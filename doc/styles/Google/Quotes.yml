@@ -1,7 +1,12 @@
+# Google style actually wants punctuation inside quotes for prose ("Care and
+# feeding of the emu.") but outside for a literal string ("escape", not
+# "escape,"). A regex can't tell those apart, and a wrong call is worse in
+# the literal case (it changes what the string actually is). We standardize
+# on always-outside instead of mixing the two.
 extends: existence
-message: "Commas and periods go inside quotation marks."
+message: "Commas and periods go outside quotation marks."
 link: "https://developers.google.com/style/quotation-marks"
 level: error
 nonword: true
 tokens:
-  - '"[^"]+"[.,?]'
+  - '"[^"]+[.,?]"'

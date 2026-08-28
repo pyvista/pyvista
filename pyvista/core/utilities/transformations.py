@@ -4,17 +4,27 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import Literal
+from typing import TypeAlias
 from typing import overload
 
 import numpy as np
 
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
+from pyvista.core.utilities.misc import _reciprocal
 
 if TYPE_CHECKING:
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
+
+    _FiveArrays: TypeAlias = tuple[
+        NumpyArray[float],
+        NumpyArray[float],
+        NumpyArray[float],
+        NumpyArray[float],
+        NumpyArray[float],
+    ]
 
 
 @_deprecate_positional_args(allowed=['axis', 'angle'])
@@ -31,14 +41,14 @@ def axis_angle_rotation(  # noqa: PLR0917
     the ``K`` cross product matrix for the unit vector ``n`` defining
     the axis of the rotation:
 
-             /   0  -nz   ny \
-        K =  |  nz    0  -nx |
-             \ -ny   nx    0 /
+             /   0  -nz   ``ny`` \
+        K =  |  ``nz``    0  -nx |
+             \ -ny   ``nx``    0 /
 
     For a rotation angle ``phi`` around the vector ``n`` the rotation
     matrix is given by
 
-        R = I + sin(phi) K  + (1 - cos(phi)) K^2
+        ``R`` = ``I`` + sin(phi) ``K``  + (1 - cos(phi)) ``K``^2
 
     where ``I`` is the 3-by-3 unit matrix and ``K^2`` denotes the matrix
     square of ``K``.
@@ -330,7 +340,7 @@ def apply_transformation_to_points(
         msg = '`points` must be of shape (N, 3).'
         raise ValueError(msg)
 
-    if transformation_shape[0] == 4:
+    if transformation_shape[0] == 4:  # type: ignore[comparison-overlap]
         # Divide by scale factor when homogeneous
         transformation /= transformation[3, 3]
 
@@ -355,13 +365,7 @@ def apply_transformation_to_points(
         return points_2
 
 
-def decomposition(
-    transformation: TransformLike,
-    *,
-    homogeneous: bool = False,
-) -> tuple[
-    NumpyArray[float], NumpyArray[float], NumpyArray[float], NumpyArray[float], NumpyArray[float]
-]:
+def decomposition(transformation: TransformLike, *, homogeneous: bool = False) -> _FiveArrays:
     """Decompose a transformation into its components.
 
     The transformation matrix ``M`` is decomposed into five components:
@@ -375,7 +379,7 @@ def decomposition(
     such that, when represented as 4x4 matrices, ``M = TRNSK``. The decomposition is
     unique and is computed with polar matrix decomposition.
 
-    By default, compact representations of the transformations are returned (e.g. as a
+    By default, compact representations of the transformations are returned (for example, as a
     3-element vector or a 3x3 matrix). Optionally, 4x4 matrices may be returned instead.
 
     .. note::
@@ -392,8 +396,8 @@ def decomposition(
 
     homogeneous : bool, default: False
         If ``True``, return the components (translation, rotation, etc.) as 4x4
-        homogeneous matrices. By default, reflection is a scalar, translation and
-        scaling are length-3 vectors, and rotation and shear are 3x3 matrices.
+        homogeneous matrices. By default, reflection is a scalar; translation and
+        scaling are length-3 vectors; and rotation and shear are 3x3 matrices.
 
     Returns
     -------
@@ -489,7 +493,6 @@ def decomposition(
 
     dtype_out = matrix4x4.dtype
     I3 = np.eye(3, dtype=dtype_out)
-    I4 = np.eye(4, dtype=dtype_out)
     matrix3x3 = matrix4x4[:3, :3]
 
     T = matrix4x4[:3, 3]
@@ -497,7 +500,10 @@ def decomposition(
 
     # Get scale from diagonals and shear from off-diagonals
     S = np.diagonal(SK).copy()  # Copy since it's read only
-    K = (SK * (I3 == 0.0)) / S[:, np.newaxis] + I3
+
+    # Avoid division by zero for cases with rank < 3
+    inv_S = _reciprocal(S, tol=1e-12, value_if_division_by_zero=0.0)
+    K = (SK * (I3 == 0.0)) * inv_S[:, np.newaxis] + I3
 
     # Get reflection and ensure rotation is right-handed
     if np.linalg.det(RN) < 0:
@@ -509,23 +515,38 @@ def decomposition(
         N = np.array(1, dtype=dtype_out)
 
     if homogeneous:
-        T4 = I4.copy()
-        T4[:3, 3] = T
-
-        R4 = I4.copy()
-        R4[:3, :3] = R
-
-        N4 = I4.copy()
-        N4[:3, :3] = I3 * N
-
-        S4 = I4.copy()
-        S4[:3, :3] = I3 * S
-
-        K4 = I4.copy()
-        K4[:3, :3] = K
-
-        return T4, R4, N4, S4, K4
+        return _decomposition_as_homogeneous(T, R, N, S, K)
     return T, R, N, S, K
+
+
+def _decomposition_as_homogeneous(  # noqa: PLR0917
+    T: NumpyArray[float],  # noqa: N803
+    R: NumpyArray[float],  # noqa: N803
+    N: NumpyArray[float],  # noqa: N803
+    S: NumpyArray[float],  # noqa: N803
+    K: NumpyArray[float],  # noqa: N803
+) -> _FiveArrays:
+    """Return TRNSK decomposition as homogeneous matrices."""
+    dtype_out = T.dtype  # Assume all inputs have the same dtype
+    I3 = np.eye(3, dtype=dtype_out)
+    I4 = np.eye(4, dtype=dtype_out)
+
+    T4 = I4.copy()
+    T4[:3, 3] = T
+
+    R4 = I4.copy()
+    R4[:3, :3] = R
+
+    N4 = I4.copy()
+    N4[:3, :3] = I3 * N
+
+    S4 = I4.copy()
+    S4[:3, :3] = I3 * S
+
+    K4 = I4.copy()
+    K4[:3, :3] = K
+
+    return T4, R4, N4, S4, K4
 
 
 def _polar_decomposition(a: NumpyArray[float]) -> tuple[NumpyArray[float], NumpyArray[float]]:

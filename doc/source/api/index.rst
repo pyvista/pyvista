@@ -10,6 +10,7 @@ API Reference
    utilities/index
    readers/index
    examples/index
+   cli/index
 
 In this section, you can learn more about how PyVista wraps different VTK mesh
 types and how you can leverage powerful 3D plotting and mesh analysis tools.
@@ -83,6 +84,32 @@ Highlights of the API include:
       >>> import pyvista as pv
       >>> mesh = pv.ParametricSuperEllipsoid(xradius=0.1)
       >>> mesh
+
+
+.. card:: Examples & Datasets
+   :link: examples_api
+   :link-type: ref
+   :class-title: pyvista-card-title
+
+   Browse PyVista's built-in and downloadable example datasets, including
+   the interactive dataset gallery with 200+ datasets.
+
+   .. jupyter-execute::
+
+      >>> from pyvista import examples
+      >>> examples.download_bunny()
+
+
+.. card:: Command Line Interface
+   :link: cli_api
+   :link-type: ref
+   :class-title: pyvista-card-title
+
+   Command-line interface for plotting, converting, and validating one or more
+   mesh files, and for generating environment reports, without needing to write
+   any Python.
+
+   .. command-output:: pyvista --help
 
 
 .. _matplotlib: https://matplotlib.org/

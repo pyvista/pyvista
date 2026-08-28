@@ -4,15 +4,13 @@
 Composite Picking
 ~~~~~~~~~~~~~~~~~
 
-Demonstrate how to pick individual blocks of a :class:`pyvista.MultiBlock`
-using :func:`pyvista.Plotter.enable_block_picking`.
+Pick individual blocks of a :class:`~pyvista.MultiBlock`.
+
+Uses :func:`pyvista.Plotter.enable_block_picking`.
 
 """
 
-from __future__ import annotations
-
 import numpy as np
-
 import pyvista as pv
 
 # %%
@@ -57,7 +55,7 @@ pl = pv.Plotter()
 actor, mapper = pl.add_composite(blocks, color='w', pbr=True, metallic=True)
 
 
-def callback(index, *args):  # noqa: ARG001
+def callback(index, *args):
     """Change a block to red if color is unset, and back to the actor color if set."""
     if mapper.block_attr[index].color is None:
         mapper.block_attr[index].color = 'r'

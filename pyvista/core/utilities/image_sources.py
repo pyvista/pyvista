@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core import _vtk_core as _vtk
+from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from .helpers import wrap
@@ -14,9 +15,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
 
-class ImageEllipsoidSource(
-    _NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkImageEllipsoidSource
-):
+class ImageEllipsoidSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageEllipsoidSource):
     """Create a binary image of an ellipsoid class.
 
     .. versionadded:: 0.44.0
@@ -141,9 +140,7 @@ class ImageEllipsoidSource(
         return wrap(self.GetOutput())
 
 
-class ImageMandelbrotSource(
-    _NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkImageMandelbrotSource
-):
+class ImageMandelbrotSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageMandelbrotSource):
     """Create an image of the Mandelbrot set.
 
     .. versionadded:: 0.44.0
@@ -238,7 +235,7 @@ class ImageMandelbrotSource(
         return wrap(self.GetOutput())
 
 
-class ImageNoiseSource(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkImageNoiseSource):
+class ImageNoiseSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageNoiseSource):
     """Create an image filled with uniform noise.
 
     .. versionadded:: 0.44.0
@@ -388,7 +385,7 @@ class ImageNoiseSource(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkImageN
         return wrap(self.GetOutput())
 
 
-class ImageSinusoidSource(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkImageSinusoidSource):
+class ImageSinusoidSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageSinusoidSource):
     """Create an image of a sinusoid.
 
     .. versionadded:: 0.44.0
@@ -589,7 +586,7 @@ class ImageSinusoidSource(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkIma
         return wrap(self.GetOutput())
 
 
-class ImageGaussianSource(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkImageGaussianSource):
+class ImageGaussianSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageGaussianSource):
     """Create a binary image with Gaussian pixel values.
 
     .. versionadded:: 0.44.0
@@ -597,16 +594,16 @@ class ImageGaussianSource(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkIma
     Parameters
     ----------
     center : sequence[float]
-        The center of the gaussian.
+        The center of the Gaussian.
 
     whole_extent : sequence[int]
         The extent of the whole output image.
 
     maximum : float
-        The maximum value of the gaussian.
+        The maximum value of the Gaussian.
 
     std : sequence[float]
-        The standard deviation of the gaussian.
+        The standard deviation of the Gaussian.
 
     Examples
     --------
@@ -639,24 +636,24 @@ class ImageGaussianSource(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkIma
 
     @property
     def center(self) -> tuple[float, float, float]:
-        """Get the center of the gaussian.
+        """Get the center of the Gaussian.
 
         Returns
         -------
         tuple[float, float, float]
-          The center of the gaussian.
+          The center of the Gaussian.
 
         """
         return self.GetCenter()
 
     @center.setter
     def center(self, center: Sequence[float]) -> None:
-        """Set the center of the gaussian.
+        """Set the center of the Gaussian.
 
         Parameters
         ----------
         center : sequence[float]
-          The center of the gaussian.
+          The center of the Gaussian.
 
         """
         self.SetCenter(center)
@@ -695,48 +692,48 @@ class ImageGaussianSource(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkIma
 
     @property
     def maximum(self) -> float:
-        """Get the maximum value of the gaussian.
+        """Get the maximum value of the Gaussian.
 
         Returns
         -------
         float
-          The maximum value of the gaussian.
+          The maximum value of the Gaussian.
 
         """
         return self.GetMaximum()
 
     @maximum.setter
     def maximum(self, maximum: float) -> None:
-        """Set the maximum value of the gaussian.
+        """Set the maximum value of the Gaussian.
 
         Parameters
         ----------
         maximum : float
-          The maximum value of the gaussian.
+          The maximum value of the Gaussian.
 
         """
         self.SetMaximum(maximum)
 
     @property
     def std(self) -> float:
-        """Get the standard deviation of the gaussian.
+        """Get the standard deviation of the Gaussian.
 
         Returns
         -------
         float
-          The standard deviation of the gaussian.
+          The standard deviation of the Gaussian.
 
         """
         return self.GetStandardDeviation()
 
     @std.setter
     def std(self, std: float) -> None:
-        """Set the standard deviation of the gaussian.
+        """Set the standard deviation of the Gaussian.
 
         Parameters
         ----------
         std : float
-          The standard deviation of the gaussian.
+          The standard deviation of the Gaussian.
 
         """
         self.SetStandardDeviation(std)
@@ -755,7 +752,7 @@ class ImageGaussianSource(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkIma
         return wrap(self.GetOutput())
 
 
-class ImageGridSource(_NoNewAttrMixin, _vtk.DisableVtkSnakeCase, _vtk.vtkImageGridSource):
+class ImageGridSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageGridSource):
     """Create an image of a grid.
 
     .. versionadded:: 0.44.0

@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 
-from . import _vtk
 from .prop3d import Prop3D
 
 if TYPE_CHECKING:
@@ -20,7 +20,7 @@ class Volume(Prop3D, _vtk.vtkVolume):
     """Wrapper class for VTK volume.
 
     This class represents a volume in a rendered scene. It inherits
-    functions related to the volume's position, orientation and origin
+    functions related to the volume's position, orientation, and origin
     from Prop3D.
 
     """

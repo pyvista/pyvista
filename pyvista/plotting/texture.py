@@ -4,18 +4,20 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
-import warnings
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
+from pyvista import _vtk
+from pyvista._warn_external import warn_external
+from pyvista.core import _validation
 from pyvista.core.dataobject import DataObject
 from pyvista.core.utilities.fileio import _try_imageio_imread
 from pyvista.core.utilities.misc import AnnotatedIntEnum
 
-from . import _vtk
-
 if TYPE_CHECKING:
+    from typing import Literal
+
     from pyvista.core._typing_core import NumpyArray
 
 
@@ -28,6 +30,10 @@ class Texture(DataObject, _vtk.vtkTexture):
     They can also be used for environment textures to affect the lighting of
     the scene, or even as a environment cubemap as in the case of
     :ref:`pbr_example` and :ref:`planets_example`.
+
+    .. versionchanged:: 0.47
+
+        All textures now use ``'direct'`` :attr:`color_mode` by default.
 
     Parameters
     ----------
@@ -104,6 +110,9 @@ class Texture(DataObject, _vtk.vtkTexture):
         * MIRRORED_REPEAT
         * CLAMP_TO_BORDER
 
+        Members accept either their ``int`` value or ``str`` annotation, for example
+        ``WrapType.from_any('Repeat')``.
+
         See :attr:`Texture.wrap` for usage.
 
         """
@@ -112,6 +121,8 @@ class Texture(DataObject, _vtk.vtkTexture):
         REPEAT = (1, 'Repeat')
         MIRRORED_REPEAT = (2, 'Mirrored repeat')
         CLAMP_TO_BORDER = (3, 'Clamp to border')
+
+    _default_color_mode: Literal['direct'] = 'direct'
 
     def __init__(self, uinput=None, **kwargs):
         """Initialize the texture."""
@@ -133,7 +144,7 @@ class Texture(DataObject, _vtk.vtkTexture):
 
             # add each image to the cubemap
             for i, image in enumerate(uinput):
-                if not isinstance(image, pyvista.ImageData):
+                if not isinstance(image, pv.ImageData):
                     msg = (
                         'If a sequence, the each item in the first argument must be a '
                         'pyvista.ImageData'
@@ -147,9 +158,11 @@ class Texture(DataObject, _vtk.vtkTexture):
             msg = f'Cannot create a pyvista.Texture from ({type(uinput)})'
             raise TypeError(msg)
 
+        self.color_mode = self._default_color_mode
+
     def _from_file(self, filename, **kwargs):
         try:
-            image = pyvista.read(filename, **kwargs)
+            image = pv.read(filename, cls=pv.ImageData, **kwargs)
             if image.n_points < 2:  # pragma: no cover
                 msg = 'Problem reading the image with VTK.'
                 raise RuntimeError(msg)
@@ -160,6 +173,36 @@ class Texture(DataObject, _vtk.vtkTexture):
     def _from_texture(self, texture):
         image = texture.GetInput()
         self._from_image_data(image)
+
+    @property
+    def color_mode(self) -> Literal['map', 'direct']:  # numpydoc ignore=RT01
+        """Return or set the color mode.
+
+        Either ``'direct'``, or ``'map'``.
+
+        * ``'direct'`` - All integer types are treated as colors with values in
+          the range 0-255 and floating types are treated as colors with values
+          in the range 0.0-1.0
+        * ``'map'`` - All scalar data will be mapped through the lookup table.
+
+        .. versionadded:: 0.47
+
+        """
+        mode = self.GetColorMode()
+        if mode == 0:
+            # VTK's default mode uses 'direct' if scalars have uint8 dtype, and 'map' otherwise
+            # But PyVista's default is to always use 'direct', even for floats
+            self.color_mode = self._default_color_mode
+            return self.color_mode
+        return 'map' if mode == 1 else 'direct'
+
+    @color_mode.setter
+    def color_mode(self, value: Literal['map', 'direct']):
+        _validation.check_contains(['map', 'direct'], must_contain=value, name='color_mode')
+        if value == 'direct':
+            self.SetColorModeToDirectScalars()
+        else:
+            self.SetColorModeToMapScalars()
 
     @property
     def interpolate(self) -> bool:  # numpydoc ignore=RT01
@@ -197,8 +240,8 @@ class Texture(DataObject, _vtk.vtkTexture):
         self.SetMipmap(value)
 
     def _from_image_data(self, image):
-        if not isinstance(image, pyvista.ImageData):
-            image = pyvista.ImageData(image)
+        if not isinstance(image, pv.ImageData):
+            image = pv.ImageData(image)
         self.SetInputDataObject(image)
         self.Update()
 
@@ -217,7 +260,7 @@ class Texture(DataObject, _vtk.vtkTexture):
         elif image.ndim == 2:
             n_components = 1
 
-        grid = pyvista.ImageData(dimensions=(image.shape[1], image.shape[0], 1))
+        grid = pv.ImageData(dimensions=(image.shape[1], image.shape[0], 1))
         grid.point_data['Image'] = np.flip(image.swapaxes(0, 1), axis=1).reshape(
             (-1, n_components),
             order='F',
@@ -327,7 +370,7 @@ class Texture(DataObject, _vtk.vtkTexture):
         Returns
         -------
         numpy.ndarray
-            Texture as a numpy array.
+            Texture as a NumPy array.
 
         Examples
         --------
@@ -404,24 +447,88 @@ class Texture(DataObject, _vtk.vtkTexture):
         """
         return Texture(self.to_image().copy())  # type: ignore[abstract]
 
-    def to_skybox(self):
-        """Return the texture as a :vtk:`vtkSkybox` if cube mapping is enabled.
+    def to_skybox(
+        self,
+        *,
+        projection: Literal['auto', 'cube', 'sphere'] = 'auto',
+        floor_plane: Sequence[float] | None = None,
+        floor_right: Sequence[float] | None = None,
+    ):
+        """Return the texture as a :vtk:`vtkSkybox`.
+
+        Cubemap textures default to cube-map projection. Non-cubemap textures
+        default to spherical projection so equirectangular environment textures
+        can also be shown as skyboxes.
+
+        .. versionchanged:: 0.48
+
+            Non-cubemap textures now return a skybox using spherical
+            projection by default. Optional floor orientation parameters were
+            also added.
+
+        Parameters
+        ----------
+        projection : {'auto', 'cube', 'sphere'}, default: 'auto'
+            Skybox projection mode. ``'auto'`` selects ``'cube'`` for cubemap
+            textures and ``'sphere'`` otherwise.
+
+        floor_plane : sequence[float], optional
+            Floor plane for the skybox as ``(nx, ny, nz, d)``. This can be
+            used to orient equirectangular environments in scenes with a
+            custom up direction.
+
+        floor_right : sequence[float], optional
+            Right direction for the floor plane as ``(x, y, z)``.
 
         Returns
         -------
         :vtk:`vtkSkybox`
-            Skybox if cube mapping is enabled.  Otherwise, ``None``.
+            Skybox actor.
 
         """
-        if self.cube_map:
-            skybox = _vtk.vtkSkybox()
-            skybox.SetTexture(self)
-            return skybox
-        return None
+        _validation.check_contains(
+            ['auto', 'cube', 'sphere'],
+            must_contain=projection,
+            name='projection',
+        )
+
+        if projection == 'auto':
+            projection = 'cube' if self.cube_map else 'sphere'
+        elif projection == 'cube' and not self.cube_map:
+            msg = 'Cube projection requires a cubemap texture.'
+            raise ValueError(msg)
+
+        skybox = _vtk.vtkSkybox()
+        skybox.SetTexture(self)
+        if projection == 'cube':
+            skybox.SetProjectionToCube()
+        else:
+            skybox.SetProjectionToSphere()
+
+        if floor_plane is not None:
+            valid_floor_plane = _validation.validate_array(
+                floor_plane,
+                must_have_shape=4,
+                dtype_out=float,
+                to_tuple=True,
+                name='floor_plane',
+            )
+            skybox.SetFloorPlane(*valid_floor_plane)
+
+        if floor_right is not None:
+            valid_floor_right = _validation.validate_array3(
+                floor_right,
+                dtype_out=float,
+                to_tuple=True,
+                name='floor_right',
+            )
+            skybox.SetFloorRight(*valid_floor_right)
+
+        return skybox
 
     def __repr__(self):
         """Return the object representation."""
-        return pyvista.DataSet.__repr__(self)  # type: ignore[type-var]
+        return pv.DataSet.__repr__(self)  # type: ignore[type-var]
 
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
@@ -435,7 +542,7 @@ class Texture(DataObject, _vtk.vtkTexture):
     def n_components(self) -> int:  # numpydoc ignore=RT01
         """Return the number of components in the image.
 
-        In textures, 3 or 4 components are used for representing RGB and RGBA
+        Textures use 3 or 4 components to represent RGB and RGBA
         images.
 
         Examples
@@ -479,11 +586,11 @@ class Texture(DataObject, _vtk.vtkTexture):
         Parameters
         ----------
         **kwargs : dict, optional
-            Optional keyworld arguments. See :func:`pyvista.plot`.
+            Optional keyword arguments. See :func:`pyvista.plot`.
 
         Returns
         -------
-        pyvista.Actor | None
+        output : pyvista.Actor | None
             See the returns section of :func:`pyvista.plot`.
 
         Examples
@@ -506,7 +613,7 @@ class Texture(DataObject, _vtk.vtkTexture):
         kwargs.setdefault('lighting', False)
         kwargs.setdefault('show_axes', False)
         kwargs.setdefault('show_scalar_bar', False)
-        mesh = pyvista.Plane(i_size=self.dimensions[0], j_size=self.dimensions[1])
+        mesh = pv.Plane(i_size=self.dimensions[0], j_size=self.dimensions[1])
         return mesh.plot(texture=self, **kwargs)
 
     def _plot_skybox(self, **kwargs):
@@ -515,10 +622,10 @@ class Texture(DataObject, _vtk.vtkTexture):
         zoom = kwargs.pop('zoom', 0.5)
         show_axes = kwargs.pop('show_axes', True)
         lighting = kwargs.pop('lighting', None)
-        pl = pyvista.Plotter(lighting=lighting)
+        pl = pv.Plotter(lighting=lighting)
         pl.add_actor(self.to_skybox())
         pl.set_environment_texture(self, is_srgb=True)
-        pl.add_mesh(pyvista.Sphere(), pbr=True, roughness=0.5, metallic=1.0)
+        pl.add_mesh(pv.Sphere(), pbr=True, roughness=0.5, metallic=1.0)
         pl.camera_position = cpos
         pl.camera.zoom(zoom)
         if show_axes:
@@ -668,7 +775,7 @@ def numpy_to_texture(image):
     Parameters
     ----------
     image : numpy.ndarray
-        Numpy image array. Texture datatype expected to be ``np.uint8``.
+        NumPy image array. Texture datatype expected to be ``np.uint8``.
 
     Returns
     -------
@@ -687,7 +794,7 @@ def numpy_to_texture(image):
     """
     if image.dtype != np.uint8:
         image = image.astype(np.uint8)
-        warnings.warn(
+        warn_external(
             'Expected `image` dtype to be ``np.uint8``. `image` has been copied '
             'and converted to np.uint8.',
             UserWarning,

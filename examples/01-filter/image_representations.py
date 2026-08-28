@@ -3,13 +3,17 @@
 
 Image Data Representations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-This example demonstrates how to use :meth:`~pyvista.ImageDataFilters.points_to_cells`
-and :meth:`~pyvista.ImageDataFilters.cells_to_points` to re-mesh :class:`~pyvista.ImageData`.
+
+Re-mesh :class:`~pyvista.ImageData` between point- and cell-based representations.
+
+Uses :meth:`~pyvista.ImageDataFilters.points_to_cells` and
+:meth:`~pyvista.ImageDataFilters.cells_to_points`.
 
 These filters can be used to ensure that image data has an appropriate representation
 when generating plots and/or when using either point- or cell-based filters such as
-:meth:`ImageDataFilters.image_threshold <pyvista.ImageDataFilters.image_threshold>` (point-based)
-and :meth:`DataSetFilters.threshold <pyvista.DataSetFilters.threshold>` (cell-based).
+:meth:`ImageDataFilters.image_threshold <pyvista.ImageDataFilters.image_threshold>`
+(point-based) and
+:meth:`DataSetFilters.threshold <pyvista.DataSetFilters.threshold>` (cell-based).
 
 """
 
@@ -18,10 +22,7 @@ and :meth:`DataSetFilters.threshold <pyvista.DataSetFilters.threshold>` (cell-ba
 # -----------------------------
 # Create image data of a 3D volume with eight points and a discrete scalar data
 # array.
-from __future__ import annotations
-
 import numpy as np
-
 import pyvista as pv
 
 # sphinx_gallery_thumbnail_number = 3
@@ -38,7 +39,7 @@ points_volume.point_data['Data'] = data_array
 points_volume.plot(show_edges=True)
 
 # %%#
-# However, in many applications (e.g. 3D medical imaging), the scalar data arrays
+# However, in many applications (for example, 3D medical imaging), the scalar data arrays
 # represent discretized samples at the centers of voxels. As such, it may
 # be more appropriate to represent the data as eight voxel cells instead of
 # eight points. We can use :meth:`~pyvista.ImageDataFilters.points_to_cells` to
@@ -62,21 +63,21 @@ cells_volume.plot(show_edges=True)
 cell_centers = cells_volume.cell_centers()
 cell_edges = cells_volume.extract_all_edges()
 
-plot = pv.Plotter()
-plot.add_mesh(points_volume, color=True, show_edges=True, opacity=0.7)
-plot.add_mesh(cell_edges, color='black', line_width=2)
-plot.add_points(
+pl = pv.Plotter()
+pl.add_mesh(points_volume, color=True, show_edges=True, opacity=0.7)
+pl.add_mesh(cell_edges, color='black', line_width=2)
+pl.add_points(
     cell_centers,
     render_points_as_spheres=True,
     color='red',
     point_size=20,
 )
-plot.camera.azimuth = -25
-plot.camera.elevation = 25
-plot.show()
+pl.camera.azimuth = -25
+pl.camera.elevation = 25
+pl.show()
 
 # %%#
-# As long as only one kind of scalar data is used (i.e. either point or cell
+# As long as only one kind of scalar data is used (that is, either point or cell
 # data, but not both), it is possible to move between representations without
 # loss of data.
 
@@ -85,7 +86,7 @@ array_after = points_volume.points_to_cells().cells_to_points().active_scalars
 np.array_equal(array_before, array_after)
 
 # %%#
-# Point Filters with Image Data
+# Point Filters With Image Data
 # -----------------------------
 # Use a point representation of the image when working with point-based
 # filters such as :meth:`~pyvista.ImageDataFilters.image_threshold`. If the
@@ -123,7 +124,7 @@ points_ithresh_as_cells.plot(show_edges=True)
 # The binary data is now correctly visualized as binary data.
 
 # %%#
-# Cell Filters with Image Data
+# Cell Filters With Image Data
 # ----------------------------
 # Use a cell representation of the image when working with cell-based filters
 # such as :meth:`~pyvista.DataSetFilters.threshold`. If the image only has point
@@ -195,9 +196,10 @@ plot_kwargs = dict(
 points_image.plot(**plot_kwargs)
 
 # %%#
-# To visualize the image correctly, we first use :meth:`~pyvista.ImageDataFilters.points_to_cells`
-# to get a cell-based representation of the image and plot the result. The plot
-# now correctly shows 16-pixel cells with discrete values.
+# To visualize the image correctly, we first use
+# :meth:`~pyvista.ImageDataFilters.points_to_cells` to get a cell-based representation of
+# the image and plot the result. The plot now correctly shows 16-pixel cells with discrete
+# values.
 
 cells_image = points_image.points_to_cells()
 cells_image.plot(**plot_kwargs)
@@ -211,16 +213,16 @@ cells_image.plot(**plot_kwargs)
 
 cell_centers = cells_image.cell_centers()
 
-plot = pv.Plotter()
-plot.add_mesh(points_image, color=True, opacity=0.7)
-plot.add_mesh(cells_image, style='wireframe', color='black', line_width=2)
-plot.add_points(
+pl = pv.Plotter()
+pl.add_mesh(points_image, color=True, opacity=0.7)
+pl.add_mesh(cells_image, style='wireframe', color='black', line_width=2)
+pl.add_points(
     cell_centers,
     render_points_as_spheres=True,
     color='red',
     point_size=20,
 )
-plot.view_xy()
-plot.show()
+pl.view_xy()
+pl.show()
 # %%
 # .. tags:: filter

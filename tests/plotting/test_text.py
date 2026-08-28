@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 
 import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista.plotting.text import _TEXT_POSITIONS
 
 
 @pytest.fixture
@@ -259,3 +261,78 @@ def test_property_shallow_copy(prop, italic, bold):
     text_prop = pv.TextProperty()
     text_prop.shallow_copy(prop)
     assert text_prop.bold == prop.bold
+
+
+@pytest.mark.parametrize('position', list(_TEXT_POSITIONS))
+def test_add_text_actor_named_position(position):
+    """Test that each named position is placed within the viewport it is drawn in."""
+    pl = pv.Plotter()
+    actor = pl._add_text_actor('text', position=position)
+
+    assert isinstance(actor, pv.Text)
+    # A named position is placed as a fraction of the viewport, so that the text is
+    # drawn in the same part of it whatever size the window is
+    x, y = actor.position
+    assert 0 <= x <= 1
+    assert 0 <= y <= 1
+    coordinate = actor.GetActualPositionCoordinate()
+    assert coordinate.GetCoordinateSystemAsString() == 'Normalized Viewport'
+
+    # The text is anchored to the part of the viewport it is placed in, so that it
+    # stays there whatever size it ends up being drawn at
+    horizontal, vertical = actor.prop.justification_horizontal, actor.prop.justification_vertical
+    assert horizontal == ('center' if x == 0.5 else 'left' if x < 0.5 else 'right')
+    assert vertical == ('center' if y == 0.5 else 'bottom' if y < 0.5 else 'top')
+    pl.close()
+
+
+def test_add_text_actor_font_size_matches_add_text():
+    """Test that a font size means the same to this as it does to ``add_text``."""
+    pl = pv.Plotter()
+    drawn = pl.add_text('text', position=(10, 10), font_size=24)
+    named = pl._add_text_actor('text', position='upper_left', font_size=24)
+    assert named.prop.font_size == drawn.prop.font_size
+
+    # The theme says how big the text is by default
+    assert pl._add_text_actor('text').prop.font_size == pl.theme.font.size * 2
+    pl.close()
+
+
+def test_add_text_actor_coordinate_position():
+    """Test that a coordinate is used as it is, in pixels of the viewport unless told
+    to read it as a fraction of the size of the viewport instead.
+    """
+    pl = pv.Plotter()
+    for viewport, expected in [(False, 'Viewport'), (True, 'Normalized Viewport')]:
+        actor = pl._add_text_actor('text', position=(10, 20), viewport=viewport)
+        assert tuple(actor.position) == (10, 20)
+        assert actor.GetActualPositionCoordinate().GetCoordinateSystemAsString() == expected
+    pl.close()
+
+
+def test_add_text_actor_raises():
+    pl = pv.Plotter()
+    match = "Position 'middle' is not a coordinate or one of 'lower_left', "
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pl._add_text_actor('text', position='middle')
+    pl.close()
+
+
+def test_add_text_actor_follows_the_theme_of_the_plotter():
+    """Test that text is drawn in the color and font its own plotter asks for."""
+    theme = pv.themes.Theme()
+    theme.font.color = 'red'
+    theme.font.family = 'courier'
+    pl = pv.Plotter(theme=theme)
+
+    # A plotter with a theme of its own, a dark one in particular, would otherwise
+    # draw text in the color of the global theme, which its background may well be
+    actor = pl._add_text_actor('text')
+    assert actor.prop.color == pv.Color('red')
+    assert actor.prop.font_family == 'courier'
+
+    # What the caller asks for is used instead
+    actor = pl._add_text_actor('text', color='blue', font='times')
+    assert actor.prop.color == pv.Color('blue')
+    assert actor.prop.font_family == 'times'
+    pl.close()

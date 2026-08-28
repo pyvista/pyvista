@@ -4,19 +4,16 @@
 Volume Rendering
 ~~~~~~~~~~~~~~~~
 
-Volume render uniform mesh types like :class:`pyvista.ImageData` or 3D
-NumPy arrays.
+Volume render uniform mesh types like :class:`pyvista.ImageData` or 3D NumPy arrays.
 
 This also explores how to extract a volume of interest (VOI) from a
 :class:`pyvista.ImageData` using the
 :func:`pyvista.ImageDataFilters.extract_subset` filter.
+
 """
 
 # sphinx_gallery_thumbnail_number = 3
-from __future__ import annotations
-
 import numpy as np
-
 import pyvista as pv
 from pyvista import examples
 
@@ -35,7 +32,11 @@ vol
 #
 
 # A nice camera position
-cpos = [(-381.74, -46.02, 216.54), (74.8305, 89.2905, 100.0), (0.23, 0.072, 0.97)]
+cpos = pv.CameraPosition(
+    position=(-381.7, -46.02, 216.5),
+    focal_point=(74.83, 89.29, 100.0),
+    viewup=(0.23, 0.072, 0.97),
+)
 
 vol.plot(volume=True, cmap='bone', cpos=cpos)
 
@@ -89,7 +90,11 @@ head = examples.download_head()
 
 pl = pv.Plotter()
 pl.add_volume(head, cmap='cool', opacity='sigmoid_6', show_scalar_bar=False)
-pl.camera_position = [(-228.0, -418.0, -158.0), (94.0, 122.0, 82.0), (-0.2, -0.3, 0.9)]
+pl.camera_position = pv.CameraPosition(
+    position=(-228.0, -418.0, -158.0),
+    focal_point=(94.0, 122.0, 82.0),
+    viewup=(-0.2, -0.3, 0.9),
+)
 pl.camera.zoom(1.5)
 pl.show()
 
@@ -106,10 +111,16 @@ pl.show()
 bolt_nut = examples.download_bolt_nut()
 
 pl = pv.Plotter()
-actors = pl.add_volume(bolt_nut, cmap='coolwarm', opacity='sigmoid_5', show_scalar_bar=False)
+actors = pl.add_volume(
+    bolt_nut, cmap='coolwarm', opacity='sigmoid_5', show_scalar_bar=False
+)
 actors[0].prop.interpolation_type = 'linear'
 actors[1].prop.interpolation_type = 'linear'
-pl.camera_position = [(127.4, -68.3, 88.2), (30.3, 54.3, 26.0), (-0.25, 0.28, 0.93)]
+pl.camera_position = pv.CameraPosition(
+    position=(127.4, -68.3, 88.2),
+    focal_point=(30.3, 54.3, 26.0),
+    viewup=(-0.25, 0.28, 0.93),
+)
 cpos = pl.show(return_cpos=True)
 
 
@@ -121,7 +132,11 @@ frog = examples.download_frog()
 
 pl = pv.Plotter()
 pl.add_volume(frog, cmap='viridis', opacity='sigmoid_6', show_scalar_bar=False)
-pl.camera_position = [(929.0, 1067.0, -278.9), (249.5, 234.5, 101.25), (-0.2048, -0.2632, -0.9427)]
+pl.camera_position = pv.CameraPosition(
+    position=(929.0, 1067.0, -278.9),
+    focal_point=(249.5, 234.5, 101.2),
+    viewup=(-0.2048, -0.2632, -0.9427),
+)
 pl.camera.zoom(1.5)
 pl.show()
 
@@ -155,7 +170,7 @@ pl.show()
 
 
 # %%
-# Woah, that's a big volume. We probably don't want to volume render the
+# Whoa, that's a big volume. We probably don't want to volume render the
 # whole thing. So let's extract a region of interest under the volcano.
 #
 # The region we will extract will be between nodes 175 and 200 on the x-axis,
@@ -174,11 +189,11 @@ pl.show()
 
 pl = pv.Plotter()
 pl.add_volume(voi, cmap='magma', clim=clim, opacity=opacity, opacity_unit_distance=2000)
-pl.camera_position = [
-    (531554.5542909054, 3944331.800171338, 26563.04809259223),
-    (599088.1433822059, 3982089.287834022, -11965.14728669936),
-    (0.3738545892415734, 0.244312810377319, 0.8947312427698892),
-]
+pl.camera_position = pv.CameraPosition(
+    position=(531600.0, 3944000.0, 26560.0),
+    focal_point=(599100.0, 3982000.0, -11970.0),
+    viewup=(0.3739, 0.2443, 0.8947),
+)
 pl.show()
 
 
@@ -213,7 +228,7 @@ heart_array = np.full_like(ct_image.active_scalars, -1000)
 # to mask the CT image to only extract the intensities of interest.
 ct_image_array = ct_image.active_scalars
 heart_mask_array = heart_mask.active_scalars
-heart_array[heart_mask_array == True] = ct_image_array[heart_mask_array == True]  # noqa: E712
+heart_array[heart_mask_array == np.True_] = ct_image_array[heart_mask_array == np.True_]
 
 # %%
 # Add the masked array to the CT image as a new set of scalar values.

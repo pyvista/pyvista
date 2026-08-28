@@ -1,19 +1,19 @@
 """
 .. _create_polyhedron_example:
 
-Unstructured Grid with Polyhedra
+Unstructured Grid With Polyhedra
 --------------------------------
 
-This example shows how to build a simple :class:`pyvista.UnstructuredGrid`
-using polyhedra. We will be using VTK types to determine which type of cells we
-are building. A list of cell types is given in :class:`pyvista.CellType`.
+Build a simple :class:`~pyvista.UnstructuredGrid` using polyhedra.
+
+We will be using VTK types to determine which type of cells we are building. A list of
+cell types is given in :class:`pyvista.CellType`.
 
 First, we import the required libraries.
+
 """
 
 # sphinx_gallery_start_ignore
-from __future__ import annotations
-
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
@@ -69,7 +69,7 @@ points = quad_points + polygon_points + hexa_points + polyhedron_points
 
 
 # %%
-# Cell connectivity
+# Cell Connectivity
 # ~~~~~~~~~~~~~~~~~
 # Connectivity describes the indices of the points to compose each cell. The
 # first item in each cell's connectivity is the number of items the cell will
@@ -89,12 +89,13 @@ hexa = [8, 9, 10, 11, 12, 13, 14, 15, 16]
 
 
 # %%
-# Polyhedron connectivity array
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Polyhedron Connectivity Array
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The connectivity array of polyhedra is defined differently from the rest of the cell
-# types. For polyhedra, we need to set the faces with the following format:
+# types. For polyhedra, we need to set the faces with the following format::
 #
-# ``[NItems, NFaces, Face0NPoints, Face0Point0, Face0Point1..., Face0PointN-1, Face1NPoints, ...]``
+#     [NItems, NFaces, Face0NPoints, Face0Point0, Face0Point1...,
+#      Face0PointN-1, Face1NPoints, ...]
 #
 # Where:
 #
@@ -154,8 +155,8 @@ polyhedron = [len(polyhedron_connectivity), *polyhedron_connectivity]
 
 
 # %%
-# Cells array
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Cells Array
+# ~~~~~~~~~~~
 # Now we build the input cells array for the
 # :class:`pyvista.UnstructuredGrid`. Here, we join all cells in a flat
 # list. Internally, the ``NItems`` previously described is used to determine
@@ -165,7 +166,7 @@ cells = quad + polygon + hexa + polyhedron
 
 
 # %%
-# Cell types
+# Cell Types
 # ~~~~~~~~~~
 # We need to specify the cell types for each of the cells we define in the
 # cells array.
@@ -173,11 +174,16 @@ cells = quad + polygon + hexa + polyhedron
 # The number of items in this list must match the number of cells in the
 # connectivity array.
 
-celltypes = [pv.CellType.QUAD, pv.CellType.POLYGON, pv.CellType.HEXAHEDRON, pv.CellType.POLYHEDRON]
+celltypes = [
+    pv.CellType.QUAD,
+    pv.CellType.POLYGON,
+    pv.CellType.HEXAHEDRON,
+    pv.CellType.POLYHEDRON,
+]
 
 
 # %%
-# Create the grid
+# Create the Grid
 # ~~~~~~~~~~~~~~~
 # To create the grid, we use the cells array we built, the cell types, and
 # the points that describe the faces.
@@ -185,7 +191,7 @@ celltypes = [pv.CellType.QUAD, pv.CellType.POLYGON, pv.CellType.HEXAHEDRON, pv.C
 grid = pv.UnstructuredGrid(cells, celltypes, points)
 
 # %%
-# Plot the mesh
+# Plot the Mesh
 # ~~~~~~~~~~~~~
 # Finally, we can plot the grid we've created. Label each cell at its cell
 # center for clarity.

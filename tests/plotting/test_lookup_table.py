@@ -1,18 +1,14 @@
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
-import vtk
 
 import pyvista as pv
 from pyvista import Color
 from pyvista import LookupTable
-
-if TYPE_CHECKING:
-    from pytest_mock import MockerFixture
+from pyvista import _vtk
 
 
 @pytest.fixture
@@ -33,17 +29,12 @@ def test_cmap_values_raises():
         LookupTable(cmap='foo', values='bar')
 
 
-def test_call_raises(lut: LookupError, mocker: MockerFixture):
-    from pyvista.plotting import lookup_table
-
-    m = mocker.patch.object(lookup_table, 'np')
-    m.array.side_effect = TypeError
-
+def test_call_raises(lut: LookupTable):
     with pytest.raises(
         TypeError,
         match=re.escape('LookupTable __call__ expects a single value or an iterable.'),
     ):
-        lut('foo')
+        lut(object())
 
 
 def test_values(lut):
@@ -71,7 +62,7 @@ def test_apply_cmap(lut):
 
 def test_init_cmap():
     new_lut = LookupTable('gray', n_values=2, flip=True)
-    assert np.allclose([[254, 255, 255, 255], [0, 0, 0, 255]], new_lut.values)
+    assert np.allclose([[255, 255, 255, 255], [0, 0, 0, 255]], new_lut.values)
 
 
 def test_init_values():
@@ -226,7 +217,6 @@ def test_table_cmap_list(lut):
     assert lut.n_values == 3
 
 
-@pytest.mark.skip_check_gc
 def test_table_values_update(lut):
     lut.cmap = 'Greens'
     lut.values[:, -1] = np.linspace(0, 255, lut.n_values)
@@ -236,7 +226,7 @@ def test_table_values_update(lut):
 
 def test_to_tf(lut):
     tf = lut.to_color_tf()
-    assert isinstance(tf, vtk.vtkColorTransferFunction)
+    assert isinstance(tf, _vtk.vtkColorTransferFunction)
 
 
 def test_map_value(lut):
@@ -245,14 +235,46 @@ def test_map_value(lut):
 
 def test_call(lut):
     n_values = 10
-    arr = lut(np.linspace(0, 1, n_values))
+    values = np.linspace(0, 1, n_values)
+    arr = lut(values)
+    expected = np.array([lut.map_value(value) for value in values])
+
     assert isinstance(arr, np.ndarray)
-    assert arr.shape[0] == n_values
+    assert arr.shape == (n_values, 4)
+    assert np.allclose(arr, expected)
 
-    assert lut.map_value(0.5) == lut.map_value(0.5)
+
+def test_call_list(lut):
+    values = [0.0, 0.5, 1.0]
+    arr = lut(values)
+    expected = np.array([lut.map_value(value) for value in values])
+
+    assert arr.shape == (3, 4)
+    assert np.allclose(arr, expected)
 
 
-@pytest.mark.skip_check_gc
+def test_call_bool_array(lut):
+    values = np.array([False, True, False, True])
+    arr = lut(values)
+    expected = np.array([lut.map_value(value) for value in values])
+
+    assert arr.shape == (4, 4)
+    assert np.allclose(arr, expected)
+
+
+def test_call_vtk_array(lut):
+    values = np.linspace(0, 1, 10)
+    arr = lut(pv.convert_array(values))
+    expected = np.array([lut.map_value(value) for value in values])
+
+    assert arr.shape == (10, 4)
+    assert np.allclose(arr, expected)
+
+
+def test_call_scalar(lut):
+    assert lut(0.5) == lut.map_value(0.5)
+
+
 def test_custom_opacity(lut):
     values_copy = lut.values.copy()
     lut.apply_opacity('sigmoid')
@@ -279,5 +301,5 @@ def test_custom_opacity(lut):
 @pytest.mark.parametrize('clamping', [True, False])
 def test_to_opacity_tf(lut, clamping):
     tf = lut.to_opacity_tf(clamping=clamping)
-    assert isinstance(tf, vtk.vtkPiecewiseFunction)
+    assert isinstance(tf, _vtk.vtkPiecewiseFunction)
     assert tf.GetClamping() == int(clamping)
