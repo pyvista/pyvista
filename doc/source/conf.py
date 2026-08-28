@@ -55,6 +55,8 @@ from pyvista.core.utilities.docs import pv_html_page_context
 from pyvista.ext._autoenum import instance_property_names
 from pyvista.ext._autoenum import metaclass_property_descriptions
 from pyvista.ext._autoenum import metaclass_property_names
+from pyvista.ext._autoinherit import inherited_member_groups
+from pyvista.ext._autoinherit import own_members
 from pyvista.plotting.utilities.sphinx_gallery import DynamicScraper
 
 # Need to import all vtk modules eagerly to avoid issues with parallel lazy imports
@@ -124,6 +126,7 @@ extensions = [
     'notfound.extension',
     'numpydoc',
     'pyvista.ext._autoenum',
+    'pyvista.ext._autoinherit',
     'pyvista.ext.plot_directive',
     'sphinx_autoopengraph',
     'sphinx_examples_as_code',
@@ -428,7 +431,12 @@ autosummary_context = {
     # Methods that should be skipped when generating the docs
     # __init__ should be documented in the class docstring
     # override is a VTK method
-    'skipmethods': ['__init__', 'override'],
+    # check_attribute is an undocumented hook used by DisableVtkSnakeCase
+    'skipmethods': ['__init__', 'override', 'check_attribute'],
+    # Used by _templates/autosummary/class.rst: see pyvista/ext/_autoinherit.py for how
+    # each member is routed to exactly one class page.
+    'own_members': own_members,
+    'inherited_member_groups': inherited_member_groups,
     # Used by _templates/autosummary/enum.rst: autosummary does not populate `attributes`
     # for the `enum` objtype the way it does for `class`, so enum.rst asks these directly.
     'instance_property_names': instance_property_names,

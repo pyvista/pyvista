@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import functools
 import importlib
+import inspect
 from pathlib import Path
 import re
 from typing import TYPE_CHECKING
@@ -126,7 +127,13 @@ def _documented_classes() -> dict[type, str]:
 @functools.cache
 def _provider(cls: type, member: str) -> type | None:
     """Return the class in ``cls``'s MRO whose body defines ``member``."""
-    return next((base for base in cls.__mro__ if member in base.__dict__), None)
+    for base in cls.__mro__:
+        if member in base.__dict__:
+            return base
+    # A bare annotation -- a dataclass field, say -- defines a member without binding
+    # anything, so it is only reachable this way. Real bindings still win, so a subclass
+    # that re-annotates an inherited member does not claim it.
+    return next((base for base in cls.__mro__ if member in inspect.get_annotations(base)), None)
 
 
 def _home(cls: type, member: str) -> type | None:
@@ -164,7 +171,7 @@ def own_members(  # numpydoc ignore=RT01
     return [name for name in _candidates(names) if _home(cls, name) is cls]
 
 
-def inherited_members(  # numpydoc ignore=RT01
+def inherited_member_groups(  # numpydoc ignore=RT01
     module: str, objname: str, names: Sequence[str]
 ) -> list[tuple[str, list[str]]]:
     """Return ``[(class documented as, [members])]`` for pages ``module.objname`` links to."""
