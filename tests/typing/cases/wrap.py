@@ -7,7 +7,14 @@ from trimesh import Trimesh
 
 import pyvista as pv
 from pyvista import _vtk
+from pyvista import examples
 from tests.typing.typeassert import assert_types
+
+
+def vtk_explicit_structured_grid() -> _vtk.vtkExplicitStructuredGrid:
+    """Return a valid grid typed as the VTK class, since VTK segfaults on an empty one."""
+    return examples.load_explicit_structured()
+
 
 assert_types(pv.wrap(_vtk.vtkPolyData()), pv.PolyData)
 assert_types(pv.wrap(pv.PolyData()), pv.PolyData)
@@ -15,8 +22,8 @@ assert_types(pv.wrap(pv.PolyData()), pv.PolyData)
 assert_types(pv.wrap(_vtk.vtkStructuredGrid()), pv.StructuredGrid)
 assert_types(pv.wrap(pv.StructuredGrid()), pv.StructuredGrid)
 
-assert_types(pv.wrap(_vtk.vtkExplicitStructuredGrid()), pv.ExplicitStructuredGrid)
-assert_types(pv.wrap(pv.ExplicitStructuredGrid()), pv.ExplicitStructuredGrid)
+assert_types(pv.wrap(vtk_explicit_structured_grid()), pv.ExplicitStructuredGrid)
+assert_types(pv.wrap(examples.load_explicit_structured()), pv.ExplicitStructuredGrid)
 
 assert_types(pv.wrap(_vtk.vtkUnstructuredGrid()), pv.UnstructuredGrid)
 assert_types(pv.wrap(pv.UnstructuredGrid()), pv.UnstructuredGrid)
