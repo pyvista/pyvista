@@ -201,16 +201,10 @@ class Prop3D(_NoNewAttrMixin, _NameMixin, _BoundsSizeMixin, DisableVtkSnakeCase,
 
         Orientation angles of the axes which define rotations about the
         world's x-y-z axes. The angles are specified in degrees and in
-        x-y-z order. However, the actual rotations are applied in the
-        following order: :func:`~rotate_y` first, then :func:`~rotate_x`
-        and finally :func:`~rotate_z`.
+        x-y-z order. However, the actual rotations are applied about the
+        y axis first, then the x axis and finally the z axis.
 
         Rotations are applied about the specified :attr:`~origin`.
-
-        See Also
-        --------
-        rotation_from
-            Alternative method for setting the :attr:`orientation`.
 
         Examples
         --------

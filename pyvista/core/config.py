@@ -132,7 +132,7 @@ class _ConfigBase(metaclass=_ForceSlots):
         dict
             Mapping of public attribute name to its current value. Nested
             config objects are recursively serialized via their own
-            ``to_dict``. Names listed in :attr:`_TO_DICT_SKIP` are omitted.
+            ``to_dict``. Names listed in ``_TO_DICT_SKIP`` are omitted.
 
         """
         skip = type(self)._TO_DICT_SKIP

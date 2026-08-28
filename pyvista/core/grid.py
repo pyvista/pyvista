@@ -1165,7 +1165,8 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         (2, 5, 2, 5, 2, 5)
 
         Note how this also modifies the grid's :attr:`offset`, :attr:`dimensions`,
-        and :attr:`bounds`. Since we use default spacing of 1 here, the bounds
+        and :attr:`~pyvista.DataSet.bounds`. Since we use default spacing of 1 here,
+        the bounds
         match the extent exactly.
 
         >>> grid.offset

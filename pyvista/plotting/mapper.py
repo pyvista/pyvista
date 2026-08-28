@@ -917,7 +917,7 @@ class _DataSetMapper(_BaseMapper):
             (``clim``). This will automatically set the scalar bar
             ``below_label`` to ``'below'``.
 
-        cmap : str, list, or pyvista.LookupTable
+        cmap : str | list | pyvista.LookupTable
             Name of the Matplotlib colormap to use when mapping the
             ``scalars``.  See available Matplotlib colormaps.  Only applicable
             for when displaying ``scalars``.
