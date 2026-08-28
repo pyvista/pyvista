@@ -592,6 +592,7 @@ class DataSet(DataSetFilters, DataObject):
             self.cell_data.set_array(scale, scale_name)
         return self.glyph(orient=vectors_name, scale=scale_name)
 
+    @_deprecate_positional_args(allowed=['name'], version=(0, 52))
     def set_active_scalars(
         self: Self,
         name: str | None,
@@ -662,6 +663,7 @@ class DataSet(DataSetFilters, DataObject):
         else:  # must be cell
             return field, self.cell_data.active_scalars
 
+    @_deprecate_positional_args(allowed=['name'], version=(0, 52))
     def set_active_vectors(
         self: Self, name: str | None, preference: PointLiteral | CellLiteral = 'point'
     ) -> None:
@@ -704,6 +706,7 @@ class DataSet(DataSetFilters, DataObject):
 
         self._active_vectors_info = ActiveArrayInfoTuple(field, name)
 
+    @_deprecate_positional_args(allowed=['name'], version=(0, 52))
     def set_active_tensors(
         self: Self, name: str | None, preference: PointLiteral | CellLiteral = 'point'
     ) -> None:
@@ -879,6 +882,7 @@ class DataSet(DataSetFilters, DataObject):
             return self.point_data.active_normals
         return self.cell_data.active_normals
 
+    @_deprecate_positional_args(allowed=['arr_var'], version=(0, 52))
     def get_data_range(  # type: ignore[override]
         self: Self,
         arr_var: str | NumpyArray[float] | None = None,
@@ -1411,6 +1415,7 @@ class DataSet(DataSetFilters, DataObject):
         sizes = self.compute_cell_sizes(length=False, area=True, volume=False)
         return sizes.cell_data['Area'].sum().item()
 
+    @_deprecate_positional_args(allowed=['name'], version=(0, 52))
     def get_array(
         self: Self,
         name: str,
@@ -1467,6 +1472,7 @@ class DataSet(DataSetFilters, DataObject):
             raise RuntimeError  # this should never be reached with err=True
         return arr
 
+    @_deprecate_positional_args(allowed=['name'], version=(0, 52))
     def get_array_association(
         self: Self,
         name: str,

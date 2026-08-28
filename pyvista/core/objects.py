@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from pyvista import _vtk
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
@@ -397,6 +398,7 @@ class Table(DataObject, _vtk.vtkTable):
         msg = "Please use the `to_pandas` method and harness Pandas' wonderful file IO methods."
         raise NotImplementedError(msg)
 
+    @_deprecate_positional_args(allowed=['arr'], version=(0, 52))
     def get_data_range(  # type: ignore[override]
         self,
         arr: str | None = None,

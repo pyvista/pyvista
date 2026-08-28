@@ -4678,7 +4678,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
 
         # Make active scalars match input
         info = self.active_scalars_info
-        subgrid.set_active_scalars(info.name, info.association)
+        subgrid.set_active_scalars(info.name, preference=info.association)
         return subgrid
 
     @_deprecate_positional_args(allowed=['ind'])

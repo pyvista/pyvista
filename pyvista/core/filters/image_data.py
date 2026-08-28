@@ -1146,7 +1146,7 @@ class ImageDataFilters(DataSetFilters):
     ) -> tuple[float, float] | None:
         if binary is None:
             # Value is unset, so check if the scalars are actually binary
-            array = self.get_array(scalars, association)
+            array = self.get_array(scalars, preference=association)
             min_val, max_val = self.get_data_range(array)
             # Binary if bool or two adjacent integers or two unique values
             # We rely on short-circuit evaluation to avoid the np.unique call unless necessary
@@ -1162,7 +1162,7 @@ class ImageDataFilters(DataSetFilters):
 
         elif binary is True:
             # Use the range to set the values
-            return self.get_data_range(scalars, association)
+            return self.get_data_range(scalars, preference=association)
         elif binary is False:
             # Do not return any values
             return None
