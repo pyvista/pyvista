@@ -238,7 +238,7 @@ def CylinderStructured(  # noqa: PLR0917
 
     See Also
     --------
-    pyvista.StructuredSphere: Sphere as a structured grid.
+    pyvista.StructuredSphere: Sphere as a :class:`~pyvista.StructuredGrid`.
 
     Notes
     -----
@@ -477,7 +477,7 @@ def Sphere(  # noqa: PLR0917
     --------
     pyvista.Icosphere : Sphere created from projection of icosahedron.
     pyvista.SolidSphere : Sphere that fills 3D space.
-    pyvista.StructuredSphere : Sphere as a structured grid.
+    pyvista.StructuredSphere : Sphere as a :class:`~pyvista.StructuredGrid`.
     :ref:`sphere_eversion_example` : Example turning a sphere inside-out.
     :func:`pyvista.examples.planets.load_planet`
         Sphere with phi/theta tessellation, texture coordinates, and seam at 180-degrees theta.
@@ -620,7 +620,8 @@ def StructuredSphere(
     --------
     pyvista.Sphere : Sphere that describes outer 2D surface.
     pyvista.SolidSphere : Sphere that fills 3D space.
-    pyvista.CylinderStructured : Cylinder as a structured grid.
+    pyvista.SolidSphereGeneric : Solid sphere using flexible sampling.
+    pyvista.CylinderStructured : Cylinder as a :class:`~pyvista.StructuredGrid`.
     :ref:`create_sphere_example` : Examples of creating spheres in other ways.
 
     Examples
@@ -794,7 +795,7 @@ def SolidSphere(  # noqa: PLR0917
     --------
     pyvista.Sphere: Sphere that describes outer 2D surface.
     pyvista.SolidSphereGeneric: Uses more flexible parameter definition.
-    pyvista.StructuredSphere: Sphere as a structured grid.
+    pyvista.StructuredSphere: Sphere as a :class:`~pyvista.StructuredGrid`.
 
     Examples
     --------
@@ -926,7 +927,7 @@ def SolidSphereGeneric(  # noqa: PLR0917
     --------
     pyvista.SolidSphere: Sphere creation using linear sampling.
     pyvista.Sphere: Sphere that describes outer 2D surface.
-    pyvista.StructuredSphere: Sphere as a structured grid.
+    pyvista.StructuredSphere: Sphere as a :class:`~pyvista.StructuredGrid`.
 
     Examples
     --------
