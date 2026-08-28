@@ -99,13 +99,26 @@ class _BaseFilePropsProtocol(Generic[_FilePropStrType_co, _FilePropIntType_co]):
         """Return the number of files from path or paths.
 
         If a path is a folder, the number of files contained in the folder is returned.
+
+        Returns
+        -------
+        int
+            Number of files.
+
         """
         paths = _as_str_list(self.path)
         return sum(1 if Path(p).is_file() else len(_get_all_nested_filepaths(p)) for p in paths)
 
     @property
     def unique_extension(self) -> str | tuple[str, ...]:
-        """Return the unique file extensions from all files."""
+        """Return the unique file extensions from all files.
+
+        Returns
+        -------
+        str | tuple[str, ...]
+            Unique file extensions.
+
+        """
         return _get_unique_extension(self.path)
 
     @property
@@ -139,7 +152,14 @@ class _BaseFilePropsProtocol(Generic[_FilePropStrType_co, _FilePropIntType_co]):
     def unique_reader_type(
         self,
     ) -> type[pv.BaseReader[Any]] | tuple[type[pv.BaseReader[Any]], ...] | None:
-        """Return unique reader types from all file readers."""
+        """Return unique reader types from all file readers.
+
+        Returns
+        -------
+        type[pyvista.BaseReader] | tuple[type[pyvista.BaseReader], ...] | None
+            Unique reader types.
+
+        """
         return _get_unique_reader_type(self._reader)
 
 
@@ -172,6 +192,12 @@ class _Downloadable(Protocol[_FilePropStrType_co]):
         """Return the source of the download.
 
         This is the full URL or local cached path used to download the data directly.
+
+        Returns
+        -------
+        _FilePropStrType_co
+            Source of the download.
+
         """
         return self._source_url()
 
@@ -210,6 +236,12 @@ class _Downloadable(Protocol[_FilePropStrType_co]):
 
         This URL is useful for linking to the source webpage for
         a human to open on a browser.
+
+        Returns
+        -------
+        _FilePropStrType_co
+            Web source of the download.
+
         """
         return self._source_url(web_blob=True)
 
@@ -233,11 +265,25 @@ class _DatasetLoader:
     @property
     @final
     def dataset(self) -> DatasetObject | None:
-        """Return the loaded dataset objects."""
+        """Return the loaded dataset objects.
+
+        Returns
+        -------
+        DatasetObject | None
+            Loaded dataset objects.
+
+        """
         return self._dataset
 
     def load(self, *args: Any, **kwargs: Any) -> DatasetObject:
-        """Load and return the dataset."""
+        """Load and return the dataset.
+
+        Returns
+        -------
+        DatasetObject
+            The loaded dataset.
+
+        """
         # Subclasses should override this as needed
         if self._load_func is None:
             msg = 'No load function has been set.'
@@ -246,7 +292,14 @@ class _DatasetLoader:
 
     @final
     def load_and_store_dataset(self) -> DatasetObject:
-        """Load the dataset and store it."""
+        """Load the dataset and store it.
+
+        Returns
+        -------
+        DatasetObject
+            The loaded dataset.
+
+        """
         dataset = self.load()
         self._dataset = dataset
         return dataset
@@ -266,6 +319,12 @@ class _DatasetLoader:
 
         For example, for a composite dataset:
             MultiBlock -> (MultiBlock, Block0, Block1, and so on)
+
+        Returns
+        -------
+        tuple[DatasetObject, ...]
+            All dataset objects, including any nested objects.
+
         """
         dataset = self.dataset
 
@@ -295,7 +354,14 @@ class _DatasetLoader:
     def unique_dataset_type(
         self,
     ) -> DatasetType | tuple[DatasetType, ...] | None:
-        """Return unique dataset types from all datasets."""
+        """Return unique dataset types from all datasets.
+
+        Returns
+        -------
+        DatasetType | tuple[DatasetType, ...] | None
+            Unique dataset types.
+
+        """
         return _get_unique_dataset_type(self.dataset_iterable)
 
     @property
@@ -303,7 +369,14 @@ class _DatasetLoader:
     def unique_cell_types(
         self,
     ) -> tuple[pv.CellType, ...]:
-        """Return unique cell types from all datasets."""
+        """Return unique cell types from all datasets.
+
+        Returns
+        -------
+        tuple[pyvista.CellType, ...]
+            Unique cell types.
+
+        """
         cell_types: dict[pv.CellType, None] = {}
         for data in self.dataset_iterable:
             # Get the underlying dataset for the texture
@@ -406,7 +479,14 @@ class _SingleFileDatasetLoader(_SingleFile, _DatasetLoader):
 
     @property
     def path_loadable(self) -> str:
-        """Return the path of the file to load."""
+        """Return the path of the file to load.
+
+        Returns
+        -------
+        str
+            Path of the file to load.
+
+        """
         return self.path
 
     def _read_and_load(
@@ -420,7 +500,14 @@ class _SingleFileDatasetLoader(_SingleFile, _DatasetLoader):
         return read if load_func is None else load_func(read)
 
     def load(self) -> Any:
-        """Read and, if applicable, load the file."""
+        """Read and, if applicable, load the file.
+
+        Returns
+        -------
+        Any
+            The loaded file.
+
+        """
         path = self.path
         read_func = self._read_func
         load_func = self._load_func
@@ -524,16 +611,37 @@ class _DownloadableFile(_SingleFile, _Downloadable[str]):
 
     @property
     def source_name(self) -> str:
-        """Return the name of the download relative to the base url."""
+        """Return the name of the download relative to the base url.
+
+        Returns
+        -------
+        str
+            Name of the download relative to the base url.
+
+        """
         return self._source_name
 
     @property
     def base_url(self) -> str:
-        """Return the base url of the download."""
+        """Return the base url of the download.
+
+        Returns
+        -------
+        str
+            Base url of the download.
+
+        """
         return self._base_url
 
     def download(self) -> str:
-        """Download the file and return its local path."""
+        """Download the file and return its local path.
+
+        Returns
+        -------
+        str
+            Local path of the downloaded file.
+
+        """
         path = self._download_func(self._source_name)
         if isinstance(path, list):
             msg = f'Expected a single downloaded file, got multiple:\n\t{path}'
@@ -630,12 +738,26 @@ class _MultiFileDatasetLoader(_DatasetLoader, _MultiFilePropsProtocol):
 
     @property
     def path(self) -> tuple[str, ...]:
-        """Return the paths of all files."""
+        """Return the paths of all files.
+
+        Returns
+        -------
+        tuple[str, ...]
+            Paths of all files.
+
+        """
         return tuple(_flatten_nested_sequence([file.path for file in self._file_objects]))
 
     @property
     def path_loadable(self) -> tuple[str, ...]:
-        """Return the paths of all loadable files."""
+        """Return the paths of all loadable files.
+
+        Returns
+        -------
+        tuple[str, ...]
+            Paths of all loadable files.
+
+        """
         return tuple(
             file.path for file in self._file_objects if isinstance(file, _SingleFileDatasetLoader)
         )
@@ -659,7 +781,14 @@ class _MultiFileDatasetLoader(_DatasetLoader, _MultiFilePropsProtocol):
 
     @property
     def total_size(self) -> str:
-        """Return the total size of all files formatted as a string."""
+        """Return the total size of all files formatted as a string.
+
+        Returns
+        -------
+        str
+            Total size of all files.
+
+        """
         return _format_file_size(self._total_size_bytes)
 
     @property
@@ -680,7 +809,14 @@ class _MultiFileDatasetLoader(_DatasetLoader, _MultiFilePropsProtocol):
         return tuple(reader_out)
 
     def load(self) -> Any:
-        """Load the files using the configured load function."""
+        """Load the files using the configured load function.
+
+        Returns
+        -------
+        Any
+            The loaded files.
+
+        """
         if self._load_func is None:
             msg = 'No load function has been set.'
             raise RuntimeError(msg)
@@ -695,18 +831,39 @@ class _MultiFileDownloadableDatasetLoader(
 
     @property
     def source_name(self) -> tuple[str, ...]:
-        """Return the name of the download relative to the base url."""
+        """Return the name of the download relative to the base url.
+
+        Returns
+        -------
+        tuple[str, ...]
+            Names of the downloads relative to the base url.
+
+        """
         name = [file.source_name for file in self._file_objects if isinstance(file, _Downloadable)]
         return tuple(_flatten_nested_sequence(name))
 
     @property
     def base_url(self) -> tuple[str, ...]:
-        """Return the base url of the download."""
+        """Return the base url of the download.
+
+        Returns
+        -------
+        tuple[str, ...]
+            Base urls of the downloads.
+
+        """
         url = [file.base_url for file in self._file_objects if isinstance(file, _Downloadable)]
         return tuple(_flatten_nested_sequence(url))
 
     def download(self) -> tuple[str, ...]:
-        """Download all files and return their paths."""
+        """Download all files and return their paths.
+
+        Returns
+        -------
+        tuple[str, ...]
+            Local paths of the downloaded files.
+
+        """
         path = [file.download() for file in self._file_objects if isinstance(file, _Downloadable)]
         # flatten paths in case any loaders have multiple files
         path_out = _flatten_nested_sequence(path)
@@ -910,7 +1067,14 @@ def _get_all_nested_filepaths(filepath: str, *, exclude_readme: bool = True) -> 
         raise ValueError(msg)
 
     def keep(name: str) -> bool:
-        """Return whether the file ``name`` should be kept."""
+        """Return whether the file ``name`` should be kept.
+
+        Returns
+        -------
+        bool
+            Whether the file should be kept.
+
+        """
         return True if not exclude_readme else not name.lower().startswith('readme')
 
     return next(

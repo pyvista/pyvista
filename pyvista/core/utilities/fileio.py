@@ -115,6 +115,11 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
         These extensions are used by :func:`~pyvista.read` and :class:`~pyvista.DataObject.save`
         to determine which reader and/or writer is used for reading and/or saving files.
 
+        Returns
+        -------
+        tuple[str, ...]
+            File extensions associated with this class.
+
         """
         extensions = set()
         for mapping in cls._get_extension_mappings():
@@ -129,6 +134,11 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
 
         These extensions are used by :func:`~pyvista.read` and :class:`~pyvista.DataObject.save`
         to determine which reader and/or writer is used for reading and/or saving files.
+
+        Returns
+        -------
+        tuple[re.Pattern[str], ...]
+            Regex patterns associated with this class.
 
         """
         patterns = {
