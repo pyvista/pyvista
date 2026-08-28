@@ -237,6 +237,14 @@ def test_structured_sphere_raises():
     match = r'end_theta \(400\) must be greater than start_theta \(0\) and within 360 degrees'
     with pytest.raises(ValueError, match=match):
         pv.StructuredSphere(start_theta=0, end_theta=400)
+    with pytest.raises(ValueError, match='theta_resolution values must all be greater than'):
+        pv.StructuredSphere(theta_resolution=0)
+    with pytest.raises(ValueError, match='phi_resolution values must all be greater than'):
+        pv.StructuredSphere(phi_resolution=1)
+    with pytest.raises(ValueError, match='theta_resolution must have integer-like values'):
+        pv.StructuredSphere(theta_resolution=2.5)
+    with pytest.raises(TypeError, match='start_theta must have real numbers'):
+        pv.StructuredSphere(start_theta='a')
 
 
 def test_solid_sphere_hollow():

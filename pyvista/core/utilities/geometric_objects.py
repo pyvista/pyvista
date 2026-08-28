@@ -701,6 +701,17 @@ def StructuredSphere(
         must_be_sorted={'ascending': True, 'strict': True},
         name='radius',
     )
+    _validation.validate_number(
+        theta_resolution,
+        must_be_integer=True,
+        must_be_in_range=[1, np.inf],
+        name='theta_resolution',
+    )
+    _validation.validate_number(
+        phi_resolution, must_be_integer=True, must_be_in_range=[2, np.inf], name='phi_resolution'
+    )
+    _validation.validate_number(start_theta, name='start_theta')
+    _validation.validate_number(end_theta, name='end_theta')
     _validation.validate_number(start_phi, must_be_in_range=[0.0, 180.0], name='start_phi')
     _validation.validate_number(end_phi, must_be_in_range=[0.0, 180.0], name='end_phi')
     if end_phi <= start_phi:
