@@ -164,6 +164,21 @@ def test_local_file_cache(tmp_path: Path):
         downloads.FETCHER.path = old_path
 
 
+def test_download_file_creates_destination_directory(tmp_path, monkeypatch):
+    """Ensure the destination dir exists before pooch fetches into it (parallel-safe)."""
+    parent_exists = []
+
+    def fake_fetch(filename, **_kwargs):
+        parent_exists.append((tmp_path / 'subdir').is_dir())
+        return str(tmp_path / filename)
+
+    monkeypatch.setattr(downloads.FETCHER, 'path', tmp_path)
+    monkeypatch.setattr(downloads.FETCHER, 'fetch', fake_fetch)
+
+    downloads.download_file('subdir/file.txt')
+    assert parent_exists == [True]
+
+
 @pytest.mark.parametrize('endswith', ['', 'Data', 'Data/'])
 def test_get_vtk_data_path_with_env_var(monkeypatch, endswith, tmp_path):
     path = (tmp_path / 'mypath').as_posix()
