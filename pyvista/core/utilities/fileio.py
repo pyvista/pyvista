@@ -18,7 +18,7 @@ from typing import cast
 from typing import overload
 import urllib.parse
 
-import input_validation as _validation
+import pyvista_validation as _validation
 import numpy as np
 
 import pyvista as pv

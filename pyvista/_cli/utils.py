@@ -23,7 +23,7 @@ from cyclopts.help import ColumnSpec
 from cyclopts.help import DefaultFormatter
 from cyclopts.help import HelpEntry
 from cyclopts.help import TableSpec
-import input_validation as _validation
+import pyvista_validation as _validation
 from rich import box
 from rich.console import Group
 from rich.console import NewLine

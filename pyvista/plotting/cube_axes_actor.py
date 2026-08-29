@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import cast
 
-import input_validation as _validation
+import pyvista_validation as _validation
 import numpy as np
 
 import pyvista as pv

@@ -11,7 +11,7 @@ from typing import ClassVar
 from typing import Literal
 from typing import cast
 
-import input_validation as _validation
+import pyvista_validation as _validation
 import numpy as np
 
 import pyvista as pv

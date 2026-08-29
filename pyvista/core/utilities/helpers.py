@@ -10,7 +10,7 @@ from typing import Literal
 from typing import cast
 from typing import overload
 
-import input_validation as _validation
+import pyvista_validation as _validation
 import numpy as np
 from typing_extensions import TypeIs
 

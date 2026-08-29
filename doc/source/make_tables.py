@@ -31,7 +31,7 @@ import cmcrameri
 import cmocean
 import colorcet
 import docutils
-import input_validation as _validation
+import pyvista_validation as _validation
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np

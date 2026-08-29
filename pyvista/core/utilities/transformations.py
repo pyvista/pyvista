@@ -7,7 +7,7 @@ from typing import Literal
 from typing import TypeAlias
 from typing import overload
 
-import input_validation as _validation
+import pyvista_validation as _validation
 import numpy as np
 
 from pyvista._deprecate_positional_args import _deprecate_positional_args

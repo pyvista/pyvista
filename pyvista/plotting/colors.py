@@ -18,7 +18,7 @@ from typing import get_args
 
 from cycler import Cycler
 from cycler import cycler
-import input_validation as _validation
+import pyvista_validation as _validation
 from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt
 import numpy as np

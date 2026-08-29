@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from typing import Literal
 from typing import get_args
 
-import input_validation as _validation
+import pyvista_validation as _validation
 import numpy as np
 
 import pyvista as pv

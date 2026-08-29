@@ -8,7 +8,7 @@ import functools
 from typing import TYPE_CHECKING
 from typing import Literal
 
-import input_validation as _validation
+import pyvista_validation as _validation
 import numpy as np
 
 from pyvista import _vtk

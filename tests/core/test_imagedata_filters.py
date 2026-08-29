@@ -4,7 +4,7 @@ import operator
 import re
 from typing import get_args
 
-from input_validation._cast_array import _cast_to_tuple
+from pyvista_validation._cast_array import _cast_to_tuple
 import numpy as np
 import pytest
 from pytest_cases import parametrize_with_cases

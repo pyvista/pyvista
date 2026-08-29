@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
-import input_validation as _validation
+import pyvista_validation as _validation
 import numpy as np
 
 import pyvista as pv

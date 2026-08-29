@@ -116,7 +116,7 @@ class _StateManager(AbstractContextManager[None], ABC, Generic[T]):
 
     @final
     def _validate_state(self, state: T) -> T:
-        import input_validation as _validation  # noqa: PLC0415
+        import pyvista_validation as _validation  # noqa: PLC0415
 
         _validation.check_contains(self._valid_states, must_contain=state, name='state')
         return state

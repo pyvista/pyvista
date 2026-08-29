@@ -13,7 +13,7 @@ from typing import NamedTuple
 from typing import TypedDict
 from typing import get_args
 
-import input_validation as _validation
+import pyvista_validation as _validation
 import numpy as np
 
 import pyvista as pv
