@@ -363,14 +363,14 @@ checks = [
   'YD01', # Yields: No plan to enforce
 ]
 exclude = [ # don't report on objects that match any of these regex
-  # Private members and dunders, but not private classes: those are documented.
-  '\._[a-z_][^.]*$',
+  '\._[a-z_][^.]*$', # private members and dunders; private classes are documented
 ]
-# Sphinx extension machinery, not shipped API; mypy excludes it the same way.
-exclude_files = ['^pyvista/ext/']
-# A summary-only docstring needs no Returns section when the signature has a
-# return annotation; the annotation is the single source of truth for the type.
-override_RT01 = ['\A[^\n]+\Z']
+exclude_files = [
+  '^pyvista/ext/',
+] # Sphinx extension machinery, not shipped API; mypy excludes it too
+override_RT01 = [
+  '\A[^\n]+\Z',
+] # a summary-only docstring relies on the return annotation for its type
 
 [tool.ruff]
 exclude = ['.git', 'build', 'dist', 'doc/_build', 'doc/examples', 'pycache__']
