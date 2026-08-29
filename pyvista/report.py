@@ -271,6 +271,7 @@ class Report(scooby.Report):
             'pillow',
             'typing-extensions',
             'cyclopts',
+            'input-validation',
         ]
 
         # Optional packages.
