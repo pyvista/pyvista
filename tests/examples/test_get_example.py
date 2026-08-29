@@ -163,18 +163,41 @@ def test_get_example_download_false_uses_local_files():
     assert Path(example.paths[0]).is_file()
 
 
-def test_get_example_download_true_downloads(monkeypatch):
-    """``download=True`` calls the loader's download; the warm cache hides this otherwise."""
+def test_get_example_download_true_downloads(monkeypatch, tmp_path):
+    """``download=True`` calls the loader's download, which provides the files."""
+    target = tmp_path / 'spy_example.vtk'
+    loader = _SingleFileDownloadableDatasetLoader('spy_example.vtk')
     calls = []
-    loader = downloads._dataset_bunny
-    monkeypatch.setattr(type(loader), 'download', lambda self: calls.append(self) or (self._path,))
 
-    examples.get_example('bunny')
-    assert len(calls) == 1
+    def fake_download():
+        calls.append(True)
+        target.write_bytes(b'')
+        return (str(target),)
+
+    monkeypatch.setattr(loader, '_path', str(target))
+    monkeypatch.setattr(loader, 'download', fake_download)
+    monkeypatch.setattr(downloads, '_dataset_spy_example', loader, raising=False)
+    monkeypatch.setattr(downloads, 'download_spy_example', lambda: None, raising=False)
+
+    example = examples.get_example('spy_example')
+    assert calls == [True]
+    assert example.paths == (str(target),)
 
     calls.clear()
-    examples.get_example('bunny', download=False)
+    assert examples.get_example('spy_example', download=False) == example
     assert calls == []
+
+
+def test_get_example_download_that_provides_nothing_raises(monkeypatch, tmp_path):
+    """A download which does not produce the files raises with the right reason."""
+    loader = _SingleFileDownloadableDatasetLoader('spy_example.vtk')
+    monkeypatch.setattr(loader, '_path', str(tmp_path / 'spy_example.vtk'))
+    monkeypatch.setattr(loader, 'download', lambda: ())
+    monkeypatch.setattr(downloads, '_dataset_spy_example', loader, raising=False)
+    monkeypatch.setattr(downloads, 'download_spy_example', lambda: None, raising=False)
+
+    with pytest.raises(FileNotFoundError, match='even after downloading'):
+        examples.get_example('spy_example')
 
 
 def test_get_example_download_false_rejects_unresolved_archive():
