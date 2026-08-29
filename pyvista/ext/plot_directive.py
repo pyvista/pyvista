@@ -33,9 +33,8 @@ The source code for the plot may be included in one of two ways:
 
 .. note::
    A ``# doctest: +SKIP`` statement is not executed, but the rest of its code
-   block still runs, so also mark any statement that depends on a skipped one.
-   Without sphinx-autocodelink installed, a block containing ``doctest:+SKIP``
-   is skipped entirely.
+   block still runs -- matching doctest -- so also mark any statement that
+   depends on a skipped one.
 
 .. note::
    Animations will not be saved, only the last frame will be shown.
@@ -194,11 +193,9 @@ import pyvista as pv
 
 try:
     # Optional: only required when `pyvista_plot_autocodelink` is enabled.
-    from sphinx_autocodelink import executable_script_from_examples
     from sphinx_autocodelink import record_namespace
 except ImportError:
     record_namespace = None
-    executable_script_from_examples = None
 
 _logger = sphinx_logging.getLogger(__name__)
 
@@ -539,34 +536,28 @@ def _executable_piece(code_piece, *, is_doctest):
     """Return ``code_piece``'s script without its ``# doctest: +SKIP`` statements.
 
     A skipped statement is not runnable; executing the rest keeps the namespace --
-    and with it, every sphinx-autocodelink link on the page -- instead of dropping
-    the whole piece the way ``_run_code`` otherwise would. ``None`` when there is nothing to
-    filter, or no sphinx-autocodelink to do it.
+    and with it, every name later statements or sphinx-autocodelink resolve through
+    it. ``None`` when there is nothing to filter.
     """
-    if not (
-        is_doctest
-        and executable_script_from_examples is not None
-        and _DOCTEST_SKIP_RE.search(code_piece)
-    ):
+    if not (is_doctest and _DOCTEST_SKIP_RE.search(code_piece)):
         return None
-    return executable_script_from_examples(code_piece)
+    return ''.join(
+        example.source
+        for example in doctest.DocTestParser().get_examples(code_piece)
+        if not example.options.get(doctest.SKIP)
+    )
 
 
 def _run_code(*, code, code_path, ns=None, function_name=None):
     """Run a docstring example.
 
-    Run the example if it does not contain ``'doctest:+SKIP'``, or a
-    ``pyvista-plot::`` directive.  In the later case, the doctest parser will
-    present the code-block again with the ``pyvista-plot::`` directive
-    and its options removed.
+    Run the example if it does not contain a ``pyvista-plot::`` directive.
+    In that case, the doctest parser will present the code-block again with
+    the ``pyvista-plot::`` directive and its options removed.
 
     Import a Python module from a path, and run the function given by
     name, if ``function_name`` is not None.
     """
-    # do not execute code containing any SKIP directives
-    if 'doctest:+SKIP' in code:
-        return ns
-
     if 'pyvista-plot::' in code:
         return ns
 

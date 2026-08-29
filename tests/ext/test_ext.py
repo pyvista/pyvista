@@ -145,21 +145,22 @@ def test_record_namespace_is_none_when_sphinx_autocodelink_unimportable(monkeypa
 DOCTEST_WITH_SKIP = '>>> a = 1\n>>> explode()  # doctest: +SKIP\n>>> b = 2\n'
 
 
-def test_executable_piece_filters_when_a_statement_is_skipped(monkeypatch):
-    # the filtering itself is sphinx-autocodelink's, tested there -- this covers
-    # pyvista's own gate: a piece with a skip goes through the helper
-    monkeypatch.setattr(
-        plot_directive, 'executable_script_from_examples', lambda piece: f'filtered:{piece}'
-    )
+def test_executable_piece_filters_when_a_statement_is_skipped():
     filtered = plot_directive._executable_piece(DOCTEST_WITH_SKIP, is_doctest=True)
-    assert filtered == f'filtered:{DOCTEST_WITH_SKIP}'
+    assert filtered == 'a = 1\nb = 2\n'
+
+
+def test_executable_piece_filters_a_skipped_multiline_statement():
+    piece = '>>> total = sum(\n...     [1, 2]\n... )  # doctest: +SKIP\n>>> a = 1\n'
+    filtered = plot_directive._executable_piece(piece, is_doctest=True)
+    assert 'sum' not in filtered
+    assert 'a = 1' in filtered
 
 
 @pytest.mark.parametrize('marker', ['# doctest: +SKIP', '# doctest:+SKIP', '#doctest: +SKIP'])
-def test_executable_piece_matches_skip_spacing_variants(monkeypatch, marker):
-    monkeypatch.setattr(plot_directive, 'executable_script_from_examples', lambda _: 'filtered')
+def test_executable_piece_matches_skip_spacing_variants(marker):
     piece = f'>>> a = 1\n>>> explode()  {marker}\n'
-    assert plot_directive._executable_piece(piece, is_doctest=True) == 'filtered'
+    assert plot_directive._executable_piece(piece, is_doctest=True) == 'a = 1\n'
 
 
 def test_executable_piece_none_without_a_skip():
@@ -170,17 +171,8 @@ def test_executable_piece_none_for_non_doctest():
     assert plot_directive._executable_piece("x = 'doctest: +SKIP'", is_doctest=False) is None
 
 
-def test_executable_piece_none_without_sphinx_autocodelink(monkeypatch):
-    monkeypatch.setattr(plot_directive, 'executable_script_from_examples', None)
-    assert plot_directive._executable_piece(DOCTEST_WITH_SKIP, is_doctest=True) is None
-
-
-def _render(code, tmp_path, monkeypatch=None, filtered=None):
+def _render(code, tmp_path):
     """Call render_figures with the minimal config the code path needs."""
-    if monkeypatch is not None:
-        monkeypatch.setattr(
-            plot_directive, 'executable_script_from_examples', lambda _piece: filtered
-        )
     config = SimpleNamespace(
         pyvista_plot_setup=None, pyvista_plot_cleanup=None, pyvista_plot_autocodelink=False
     )
@@ -196,13 +188,11 @@ def _render(code, tmp_path, monkeypatch=None, filtered=None):
     )
 
 
-def test_render_figures_degrades_when_the_filtered_remainder_raises(tmp_path, monkeypatch, caplog):
+def test_render_figures_degrades_when_the_filtered_remainder_raises(tmp_path, caplog):
     # statements alongside a skip never ran before the filtering existed, so a failure
     # among them logs instead of failing the build
-    code = '>>> a = 1\n>>> boom()  # doctest: +SKIP\n'
-    results = _render(
-        code, tmp_path, monkeypatch, filtered="a = 1\nraise RuntimeError('kaboom')\n"
-    )
+    code = ">>> raise RuntimeError('kaboom')\n>>> boom()  # doctest: +SKIP\n"
+    results = _render(code, tmp_path)
     assert len(results) == 1
     assert any('doctest: +SKIP' in r.message for r in caplog.records)
 
