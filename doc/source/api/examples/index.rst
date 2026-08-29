@@ -69,9 +69,8 @@ files, where they came from, and the readers for them.
    >>> mesh = examples.get_example('bunny').load()
    >>> mesh.plot()
 
-Use it to reach an example by name, or to get at its files and readers. The
-``download_*`` and ``load_*`` functions remain the direct way to load a single
-dataset you can name in your source:
+Use it to reach an example by name, or to get at its files, sizes, and
+readers:
 
 .. code-block:: python
 
