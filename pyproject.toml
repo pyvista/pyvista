@@ -370,6 +370,9 @@ exclude = [ # don't report on objects that match any of these regex
   '^plot_directive\..*$',
   '^viewer_directive\..*$',
 ]
+# A summary-only docstring needs no Returns section when the signature has a
+# return annotation; the annotation is the single source of truth for the type.
+override_RT01 = ['\A[^\n]+\Z']
 
 [tool.ruff]
 exclude = ['.git', 'build', 'dist', 'doc/_build', 'doc/examples', 'pycache__']
