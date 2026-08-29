@@ -733,7 +733,7 @@ def test_download_sheen_chair_deprecated(monkeypatch):
 
     class MockLoader:
         def download(self):
-            return 'SheenChair.glb'
+            return ('SheenChair.glb',)
 
     monkeypatch.setattr(examples.gltf, '_gltf_loader', lambda _: MockLoader())
 
