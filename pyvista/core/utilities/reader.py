@@ -2403,7 +2403,7 @@ class Nek5000Reader(BaseReader['UnstructuredGrid'], PointCellDataSelection, Time
         raise AttributeError(self._cell_attr_err_msg)
 
 
-class DICOMReader(BaseReader['ImageData']):
+class DICOMReader(BaseReader['ImageData']):  # numpydoc ignore=PR02
     """DICOM Reader for reading ``.dcm`` files.
 
     Wraps :vtk:`vtkDICOMImageReader`.
@@ -2850,7 +2850,7 @@ class _GRDECLReader(BaseVTKReader):
         self._other_keywords = value
 
 
-class GRDECLReader(BaseReader['ExplicitStructuredGrid']):
+class GRDECLReader(BaseReader['ExplicitStructuredGrid']):  # numpydoc ignore=PR02
     """``GRDECLReader`` for .grdecl files.
 
     Uses :func:`~pyvista.read_grdecl` internally.
@@ -2941,7 +2941,7 @@ class _GIFReader(BaseVTKReader):
         img.close()
 
 
-class GIFReader(BaseReader['ImageData']):
+class GIFReader(BaseReader['ImageData']):  # numpydoc ignore=PR02
     """``GIFReader`` for .gif files.
 
     Parameters
@@ -2986,7 +2986,7 @@ class _VRMLReader(BaseVTKReader):
         """Update Information from file."""
 
 
-class VRMLReader(BaseReader['MultiBlock']):
+class VRMLReader(BaseReader['MultiBlock']):  # numpydoc ignore=PR02
     """``VRMLReader`` for .wrl and .vrml files.
 
     .. note::
@@ -3033,7 +3033,7 @@ class _ThreeDSReader(BaseVTKReader):
         """Update Information from file."""
 
 
-class ThreeDSReader(BaseReader['MultiBlock']):
+class ThreeDSReader(BaseReader['MultiBlock']):  # numpydoc ignore=PR02
     """ThreeDSReader for .3ds files.
 
     .. note::
@@ -3069,7 +3069,9 @@ class ThreeDSReader(BaseReader['MultiBlock']):
     _class_reader = _ThreeDSReader
 
 
-class XdmfReader(BaseReader['DataObject'], PointCellDataSelection, TimeReader):
+class XdmfReader(
+    BaseReader['DataObject'], PointCellDataSelection, TimeReader
+):  # numpydoc ignore=PR02
     """XdmfReader for .xdmf files.
 
     Wraps :vtk:`vtkXdmfReader`.
@@ -4190,7 +4192,7 @@ class ExodusIIBlockSet(_NoNewAttrMixin):
 
         Parameters
         ----------
-        name: str
+        name : str
             name of set/block to be enabled.
 
         """
@@ -4206,7 +4208,7 @@ class ExodusIIBlockSet(_NoNewAttrMixin):
 
         Parameters
         ----------
-        name: str
+        name : str
             name of set/block to be disabled.
 
         """
@@ -4222,7 +4224,7 @@ class ExodusIIBlockSet(_NoNewAttrMixin):
 
         Parameters
         ----------
-        name: str
+        name : str
             name of set/block to be disabled.
 
         Returns
@@ -4275,7 +4277,7 @@ class ExodusIIBlockSet(_NoNewAttrMixin):
 
         Parameters
         ----------
-        name: str
+        name : str
             name of set/block array to be enabled.
 
         """
@@ -4292,7 +4294,7 @@ class ExodusIIBlockSet(_NoNewAttrMixin):
 
         Parameters
         ----------
-        name: str
+        name : str
             name of set/block array to be disabled.
 
         """
@@ -4309,7 +4311,7 @@ class ExodusIIBlockSet(_NoNewAttrMixin):
 
         Parameters
         ----------
-        name: str
+        name : str
             name of set/block array to be disabled.
 
         Returns

@@ -73,7 +73,7 @@ if TYPE_CHECKING:
 DEFAULT_VECTOR_KEY = '_vectors'
 
 
-class ActiveArrayInfoTuple(NamedTuple):
+class ActiveArrayInfoTuple(NamedTuple):  # numpydoc ignore=PR02
     """Active array info tuple.
 
     Parameters

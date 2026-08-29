@@ -2559,7 +2559,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
     Parameters
     ----------
-    args : str, :vtk:`vtkUnstructuredGrid`, iterable
+    *args : str, :vtk:`vtkUnstructuredGrid`, iterable
         See examples below.
 
     deep : bool, default: False
@@ -4197,7 +4197,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
 
     Parameters
     ----------
-    args : :vtk:`vtkExplicitStructuredGrid`, :vtk:`vtkUnstructuredGrid`, str, Sequence
+    *args : :vtk:`vtkExplicitStructuredGrid`, :vtk:`vtkUnstructuredGrid`, str, Sequence
         See examples below.
 
     deep : bool, default: False

@@ -32,7 +32,7 @@ def promote_type(*types: type[Any]) -> Callable[[T], T]:  # noqa: ARG001
 
     Parameters
     ----------
-    types : type
+    *types : type
         Types to promote the class to. The types are only used statically by mypy.
 
     Returns

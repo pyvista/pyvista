@@ -1221,7 +1221,7 @@ class DataObjectFilters:
 
             .. versionadded:: 0.49
 
-        cell_validator_kwargs
+        **cell_validator_kwargs
             Keyword arguments passed to :meth:`~pyvista.DataObjectFilters.cell_validator`.
 
             .. versionadded:: 0.48
