@@ -849,7 +849,7 @@ class _MultiFileDownloadableDatasetLoader(
         Returns
         -------
         tuple[str, ...]
-            Base urls of the downloads.
+            Base URLs of the downloads.
 
         """
         url = [file.base_url for file in self._file_objects if isinstance(file, _Downloadable)]
