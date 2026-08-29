@@ -43,7 +43,7 @@ requires-python = '>=3.10'
 all = ['pyvista[colormaps,io,jupyter]']
 colormaps = ['cmcrameri', 'cmocean', 'colorcet']
 cvista = ['cvista[all]>=9.7.0.2,<9.8.0']
-io = ['fsspec', 'imageio', 'meshio>=5.2', 'pyvista-zstd>=0.2.3']
+io = ['fsspec', 'imageio', 'meshio>=5.2', 'pyvista-zstd>=0.3.1']
 jupyter = ['ipywidgets', 'nest-asyncio2', 'trame-pyvista']
 
 [dependency-groups]
@@ -95,7 +95,7 @@ test = [
   'pytest-pyvista==0.3.3',
   'pytest-xdist<3.9.0',
   'pytest<9.1.0',
-  'pyvista-zstd>=0.2.3,<0.3.0',
+  'pyvista-zstd>=0.3.1,<0.5.0',
   'refleak>=0.2.2,<0.3.0',
   'retry-requests<2.1.0',
   'scipy<1.17.0',
@@ -141,7 +141,7 @@ docs = [
   'pydata-sphinx-theme==0.15.4', # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
   'pypandoc==1.17',
   'pytest-sphinx==0.7.1',
-  'pyvista-zstd==0.2.4',
+  'pyvista-zstd==0.4.0',
   'ruamel-yaml<0.20.0',
   'scipy==1.16.3; python_version >= "3.11"',
   'sphinx-autobuild==2024.10.3',
@@ -157,7 +157,7 @@ docs = [
   'sphinx-tags==0.4.0',
   'sphinx-togglebutton==0.4.5',
   'sphinx-toolbox==4.2.0',
-  'sphinx-vtk-xref==0.2.1',
+  'sphinx-vtk-xref==0.3.0',
   'sphinx==8.2.3; python_version >= "3.11"',
   'sphinxcontrib-asciinema==0.4.3',
   'sphinxcontrib-programoutput==0.20',
@@ -518,6 +518,7 @@ banned-from = [
   'os',
   'os.path',
   'pickle',
+  'pkgutil',
   'platform',
   'posixpath',
   're',
