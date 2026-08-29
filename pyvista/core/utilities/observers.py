@@ -238,7 +238,7 @@ class Observer(_NoNewAttrMixin):
         self._event_history_etc: list[str] = []
 
     @staticmethod
-    def parse_message(message) -> VtkEvent:  # numpydoc ignore=RT01
+    def parse_message(message) -> VtkEvent:
         """Parse the given message.
 
         Parameters
@@ -248,8 +248,8 @@ class Observer(_NoNewAttrMixin):
 
         Returns
         -------
-        str
-            Parsed message.
+        VtkEvent
+            Parsed event fields.
 
         """
         regex = re.compile(
@@ -336,7 +336,7 @@ class Observer(_NoNewAttrMixin):
         Parameters
         ----------
         etc : bool, default: False
-            Also return the full event information.
+            Return the full event information instead of only the message.
 
         Returns
         -------

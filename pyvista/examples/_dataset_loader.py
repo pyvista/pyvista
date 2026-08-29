@@ -998,20 +998,8 @@ def _get_all_nested_filepaths(filepath: str, *, exclude_readme: bool = True) -> 
         msg = 'Expected a file or folder path.'
         raise ValueError(msg)
 
-    def keep(name: str) -> bool:
-        """Return whether the file ``name`` should be kept.
-
-        Parameters
-        ----------
-        name : str
-            File name to test.
-
-        Returns
-        -------
-        bool
-            Whether the file should be kept.
-
-        """
+    def keep(name: str) -> bool:  # numpydoc ignore=PR01
+        """Return whether the file ``name`` should be kept."""
         return True if not exclude_readme else not name.lower().startswith('readme')
 
     return next(

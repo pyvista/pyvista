@@ -1114,7 +1114,6 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 class _CustomContextItem(_vtk.vtkPythonItem):
     class ItemWrapper:
         def Initialize(self, item) -> bool:  # noqa: ARG002, N802
-            # item is the _CustomContextItem subclass instance
             """Initialize the wrapped context item.
 
             Parameters
@@ -1131,7 +1130,6 @@ class _CustomContextItem(_vtk.vtkPythonItem):
             return True
 
         def Paint(self, item, painter):  # noqa: N802
-            # item is the _CustomContextItem subclass instance
             """Paint the wrapped context item.
 
             Parameters

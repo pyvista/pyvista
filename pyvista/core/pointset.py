@@ -3793,6 +3793,10 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         Coordinates of the points in z direction. If this is passed, ``uinput``
         and ``y`` must be a :class:`numpy.ndarray` and match the shape of ``z``.
 
+    *args : Any, optional
+        Additional positional arguments are not allowed; a ``ValueError`` is
+        raised if any are given.
+
     deep : bool, default: False
         Whether to deep copy a StructuredGrid object.
         Default is ``False``.  Keyword only.
@@ -3807,9 +3811,6 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
     **kwargs : dict, optional
         Additional keyword arguments passed when reading from a file or loading
         from arrays.
-
-    *args : Any, optional
-        Unused; raises if any extra positional arguments are given.
 
     Examples
     --------

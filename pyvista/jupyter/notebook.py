@@ -111,7 +111,7 @@ def handle_plotter(
 def show_static_image(
     plotter: Plotter,
     screenshot: str | Path | BytesIO | bool | None,  # noqa: FBT001
-) -> Image:  # numpydoc ignore=RT01
+) -> Image:
     """Display a static image to be displayed within a jupyter notebook.
 
     Parameters

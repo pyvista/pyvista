@@ -2941,7 +2941,7 @@ class _GIFReader(BaseVTKReader):
     def UpdateInformation(self) -> None:
         """Update Information from file."""
 
-    def GetProgress(self):
+    def GetProgress(self) -> float:
         """Return the fraction of frames read so far."""
         return self._current_frame / self._n_frames
 
@@ -3465,19 +3465,11 @@ class ParticleReader(BaseReader['PolyData']):
 
     @property
     def endian(self) -> str:
-        """Get the byte order of the data."""
+        """Return or set the byte order of the data, ``'BigEndian'`` or ``'LittleEndian'``."""
         return self.reader.GetDataByteOrderAsString()
 
     @endian.setter
     def endian(self, endian: str):
-        """Set the byte order of the data.
-
-        Parameters
-        ----------
-        endian : str
-            The byte order of the data. 'BigEndian' or 'LittleEndian'.
-
-        """
         if endian == 'BigEndian':
             self.reader.SetDataByteOrderToBigEndian()
         elif endian == 'LittleEndian':

@@ -8609,7 +8609,6 @@ class _WholeBodyCTUtilities:
 
     @staticmethod
     def label_map_from_masks(masks: MultiBlock) -> ImageData:
-        # Initialize array with background values (zeros)
         """Create a label map image from segmentation masks.
 
         Parameters
@@ -8624,6 +8623,7 @@ class _WholeBodyCTUtilities:
 
         """
         n_points = cast('pv.ImageData', masks[0]).n_points
+        # Initialize array with background values (zeros)
         label_map_array = np.zeros((n_points,), dtype=np.uint8)
         label_names = sorted(masks.keys())
         for i, name in enumerate(label_names):
@@ -8663,7 +8663,6 @@ class _WholeBodyCTUtilities:
 
     @staticmethod
     def files_func(name):  # noqa: ANN001, ANN205
-        # Resampled version is saved as a multiblock
         """Return the file-loading function for the named dataset variant.
 
         Parameters
@@ -8677,6 +8676,7 @@ class _WholeBodyCTUtilities:
             Function returning the file loaders.
 
         """
+        # Resampled version is saved as a multiblock
         target_file = f'{name}.vtm' if 'resampled' in name else name
 
         def func():
