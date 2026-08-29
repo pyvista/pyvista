@@ -186,9 +186,10 @@ def _get_dataset_loader(
 
 def _resolve_paths(loader: _DatasetLoader, name: str, *, download: bool) -> tuple[str, ...]:
     """Return the example's file paths, downloading them first if allowed."""
-    downloaded = download and isinstance(loader, _DOWNLOADABLE_TYPES)
-    if downloaded:
+    downloaded = False
+    if download and isinstance(loader, _DOWNLOADABLE_TYPES):
         loader.download()
+        downloaded = True
     if not isinstance(loader, _FileProps):
         return ()
 
