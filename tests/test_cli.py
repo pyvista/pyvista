@@ -2265,6 +2265,9 @@ def test_compare_too_small_warning_advises_the_command(
     assert 'link=False' not in flattened
 
 
+@pytest.mark.skipif(
+    pv.vtk_version_info < (9, 4), reason='Renderer bounds do not trigger the warning'
+)
 def test_compare_too_small_warning_is_printed_before_the_plot_is_shown(
     tmp_example_dir: Path, capsys: pytest.CaptureFixture, mocker: MockerFixture
 ):
