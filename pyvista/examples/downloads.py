@@ -13,9 +13,11 @@ including file and dataset metadata.
 
 Examples
 --------
->>> from pyvista import examples
->>> mesh = examples.download_saddle_surface()
->>> mesh.plot()
+.. pyvista-plot::
+
+   >>> from pyvista import examples
+   >>> mesh = examples.download_saddle_surface()
+   >>> mesh.plot()
 
 """
 

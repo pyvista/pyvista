@@ -2,9 +2,11 @@
 
 Examples
 --------
->>> from pyvista import examples
->>> mesh = examples.load_ant()
->>> mesh.plot()
+.. pyvista-plot::
+
+   >>> from pyvista import examples
+   >>> mesh = examples.load_ant()
+   >>> mesh.plot()
 
 """
 
@@ -366,7 +368,7 @@ def load_spline() -> PolyData:
 
     This example data was created with:
 
-    .. code-block:: python
+    .. pyvista-plot::
 
        >>> import numpy as np
        >>> import pyvista as pv
@@ -419,10 +421,11 @@ def load_random_hills() -> PolyData:
 
     This example dataset was created with:
 
-    .. code-block:: python
+    .. pyvista-plot::
 
-       >>> mesh = pv.ParametricRandomHills()  # doctest:+SKIP
-       >>> mesh = mesh.elevation()  # doctest:+SKIP
+       >>> import pyvista as pv
+       >>> mesh = pv.ParametricRandomHills()
+       >>> mesh = mesh.elevation()
 
     Returns
     -------
