@@ -68,13 +68,13 @@ class Example:
     function: Callable[..., Any]
     """Public function which returns this example's dataset, such as ``examples.download_frog``."""
 
-    paths: tuple[str, ...] = ()
+    paths: tuple[str, ...]
     """Local path of every file or folder belonging to the example, in declaration order."""
 
-    file_sizes: tuple[int, ...] = ()
+    file_sizes: tuple[int, ...]
     """Size in bytes of each entry in ``paths``, one per path, folders counted in full."""
 
-    source_urls: tuple[str, ...] = ()
+    source_urls: tuple[str, ...]
     """URL each entry in ``paths`` is downloaded from, empty if it has none."""
 
     @functools.cached_property
