@@ -13,8 +13,8 @@ import pytest
 import pyvista as pv
 from pyvista import _vtk
 
-# First VTK nightly whose wrappers traverse their instance dict (vtk/vtk!13603)
-_VTK_GC_TRAVERSES_DICT = (9, 7, 20260827)
+# vtk >= 9.8 sentinel: those wrappers traverse their instance dict (vtk/vtk!13603)
+_VTK_GC_TRAVERSES_DICT = (9, 7, 99)
 
 # Stands in for a module-level registry or cache: older than any test here, so the
 # freeze puts it out of reach along with everything else alive at collection time.
