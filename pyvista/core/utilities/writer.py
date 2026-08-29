@@ -10,8 +10,8 @@ from typing import ClassVar
 from typing import Literal
 from typing import get_args
 
-import pyvista_validation as _validation
 import numpy as np
+import pyvista_validation as _validation
 
 from pyvista.core.utilities.fileio import _CompressionOptions
 from pyvista.core.utilities.fileio import _FileIOBase

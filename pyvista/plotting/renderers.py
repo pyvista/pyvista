@@ -7,8 +7,8 @@ import itertools
 import re
 import weakref
 
-import pyvista_validation as _validation
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk

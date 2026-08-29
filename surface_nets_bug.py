@@ -2,6 +2,7 @@
 No pyvista involved except that the input .vti was originally saved via pyvista's
 examples.load_frog_tissues() -- reading/writing it here is plain VTK.
 """
+
 from __future__ import annotations
 
 import sys
@@ -58,20 +59,19 @@ def edge_count(poly, boundary, non_manifold):
 
 def print_surface_info(name, poly):
     print(f'{name} info:')
-    print("  n_points:", poly.GetNumberOfPoints())
-    print("  n_cells:", poly.GetNumberOfCells())
-    print("  open boundary edges:", edge_count(poly, True, False))
-    print("  non-manifold edges:", edge_count(poly, False, True))
+    print('  n_points:', poly.GetNumberOfPoints())
+    print('  n_cells:', poly.GetNumberOfCells())
+    print('  open boundary edges:', edge_count(poly, True, False))
+    print('  non-manifold edges:', edge_count(poly, False, True))
 
 
 # --- Voxelize: vtkPolyDataToImageStencil -> vtkImageStencil -> points-to-cells -> threshold ---
 
+
 def threshold_cells(dataset, array_name, lower, upper):
     threshold = vtkThreshold()
     threshold.SetInputData(dataset)
-    threshold.SetInputArrayToProcess(
-        0, 0, 0, vtkDataObject.FIELD_ASSOCIATION_CELLS, array_name
-    )
+    threshold.SetInputArrayToProcess(0, 0, 0, vtkDataObject.FIELD_ASSOCIATION_CELLS, array_name)
     threshold.SetThresholdFunction(vtkThreshold.THRESHOLD_BETWEEN)
     threshold.SetLowerThreshold(lower)
     threshold.SetUpperThreshold(upper)
@@ -143,12 +143,12 @@ def plot_comparison(poly_left, poly_right):
     on the right. Both should look the same if the stencil is robust to the input
     mesh's topology.
     """
-    bl_arr = poly_left.GetCellData().GetArray("BoundaryLabels")
+    bl_arr = poly_left.GetCellData().GetArray('BoundaryLabels')
 
     left_mapper = vtkPolyDataMapper()
     left_mapper.SetInputData(poly_left)
     left_mapper.SetScalarModeToUseCellData()
-    left_mapper.SelectColorArray("BoundaryLabels")
+    left_mapper.SelectColorArray('BoundaryLabels')
     left_mapper.SetArrayComponent(0)
     left_mapper.SetColorModeToMapScalars()
     left_mapper.ScalarVisibilityOn()
@@ -205,11 +205,11 @@ def plot_comparison(poly_left, poly_right):
 
 
 def main():
-    print("VTK version:", vtkVersion.GetVTKVersion())
+    print('VTK version:', vtkVersion.GetVTKVersion())
 
     smoothing = '--smooth' in sys.argv
 
-    image = read("frog_tissues.vti")
+    image = read('frog_tissues.vti')
     poly = surface_nets(image, smoothing=smoothing)
 
     print_surface_info('surface_net', poly)

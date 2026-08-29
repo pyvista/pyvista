@@ -29,8 +29,8 @@ import uuid
 import warnings
 import weakref
 
-import pyvista_validation as _validation
 import numpy as np
+import pyvista_validation as _validation
 import scooby
 
 import pyvista as pv

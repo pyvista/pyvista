@@ -39,11 +39,11 @@ from __future__ import annotations
 import argparse
 import json
 import os
+from pathlib import Path
 import statistics
 import subprocess
 import sys
 import time
-from pathlib import Path
 
 os.environ.setdefault('PYVISTA_OFF_SCREEN', 'true')
 
@@ -63,11 +63,11 @@ def _git(*args: str) -> str:
 def measure_cold_import(repeats: int) -> list[float]:
     """Time `import pyvista` in a fresh interpreter, `repeats` times (ms)."""
     snippet = (
-        "import os, time\n"
+        'import os, time\n'
         "os.environ.setdefault('PYVISTA_OFF_SCREEN', 'true')\n"
-        "start = time.perf_counter()\n"
-        "import pyvista  # noqa: F401\n"
-        "print(time.perf_counter() - start)\n"
+        'start = time.perf_counter()\n'
+        'import pyvista  # noqa: F401\n'
+        'print(time.perf_counter() - start)\n'
     )
     samples = []
     for i in range(repeats + 1):

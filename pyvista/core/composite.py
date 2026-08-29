@@ -20,8 +20,8 @@ from typing import Union
 from typing import cast
 from typing import overload
 
-import pyvista_validation as _validation
 import numpy as np
+import pyvista_validation as _validation
 from typing_extensions import Self
 from typing_extensions import TypedDict
 from typing_extensions import Unpack
