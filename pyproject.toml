@@ -19,12 +19,12 @@ classifiers = [
 ]
 dependencies = [
   'cyclopts>=4.0.0',
-  'pyvista-validation>=0.1.0',
   'matplotlib>=3.0.1',
   'numpy>=1.21.0',
   'pillow',
   'pooch',
   'pyobjc-framework-Cocoa; sys_platform == "darwin"', # see pyvista/pulls/7828, 8423, and 8832
+  'pyvista-validation>=0.1.0',
   'scooby>=0.5.1',
   'typing-extensions>=4.10',
   'vtk!=9.4.0',
