@@ -142,6 +142,55 @@ def test_record_namespace_is_none_when_sphinx_autocodelink_unimportable(monkeypa
     assert plot_directive.record_namespace is not None
 
 
+DOCTEST_WITH_SKIP = '>>> a = 1\n>>> explode()  # doctest: +SKIP\n>>> b = 2\n'
+
+
+def test_executable_piece_filters_when_a_statement_is_skipped(monkeypatch):
+    # the filtering itself is sphinx-autocodelink's, tested there -- this covers
+    # pyvista's own gate: a piece with a skip goes through the helper
+    monkeypatch.setattr(
+        plot_directive, 'executable_script_from_examples', lambda piece: f'filtered:{piece}'
+    )
+    filtered = plot_directive._executable_piece(DOCTEST_WITH_SKIP, is_doctest=True)
+    assert filtered == f'filtered:{DOCTEST_WITH_SKIP}'
+
+
+@pytest.mark.parametrize('marker', ['# doctest: +SKIP', '# doctest:+SKIP', '#doctest: +SKIP'])
+def test_executable_piece_matches_skip_spacing_variants(monkeypatch, marker):
+    monkeypatch.setattr(plot_directive, 'executable_script_from_examples', lambda _: 'filtered')
+    piece = f'>>> a = 1\n>>> explode()  {marker}\n'
+    assert plot_directive._executable_piece(piece, is_doctest=True) == 'filtered'
+
+
+def test_executable_piece_none_without_a_skip():
+    assert plot_directive._executable_piece('>>> a = 1\n', is_doctest=True) is None
+
+
+def test_executable_piece_none_for_non_doctest():
+    assert plot_directive._executable_piece("x = 'doctest: +SKIP'", is_doctest=False) is None
+
+
+def test_executable_piece_none_on_older_sphinx_autocodelink(monkeypatch):
+    monkeypatch.setattr(plot_directive, 'executable_script_from_examples', None)
+    assert plot_directive._executable_piece(DOCTEST_WITH_SKIP, is_doctest=True) is None
+
+
+def test_record_namespace_survives_missing_executable_script(monkeypatch):
+    # an older sphinx-autocodelink has record_namespace but not the newer helper --
+    # the helper import failing must not take record_namespace down with it
+    real = importlib.import_module('sphinx_autocodelink')
+    fake = SimpleNamespace(record_namespace=real.record_namespace)
+    monkeypatch.setitem(sys.modules, 'sphinx_autocodelink', fake)
+    try:
+        importlib.reload(plot_directive)
+        assert plot_directive.record_namespace is not None
+        assert plot_directive.executable_script_from_examples is None
+    finally:
+        monkeypatch.undo()
+        importlib.reload(plot_directive)
+    assert plot_directive.record_namespace is not None
+
+
 class _FakeSphinxApp:
     """Enough of Sphinx's ``Application`` for exercising ``plot_directive.setup``."""
 
