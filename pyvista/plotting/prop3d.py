@@ -8,8 +8,8 @@ import functools
 from typing import TYPE_CHECKING
 from typing import Literal
 
-import pyvista_validation as _validation
 import numpy as np
+import pyvista_validation as _validation
 
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args

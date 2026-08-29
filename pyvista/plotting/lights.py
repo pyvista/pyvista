@@ -5,8 +5,8 @@ from __future__ import annotations
 from enum import IntEnum
 from typing import TYPE_CHECKING
 
-import pyvista_validation as _validation
 import numpy as np
+import pyvista_validation as _validation
 
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args

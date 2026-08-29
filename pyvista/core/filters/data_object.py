@@ -22,8 +22,8 @@ from typing import cast
 from typing import get_args
 import warnings
 
-import pyvista_validation as _validation
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk

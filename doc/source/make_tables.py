@@ -31,10 +31,10 @@ import cmcrameri
 import cmocean
 import colorcet
 import docutils
-import pyvista_validation as _validation
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+import pyvista_validation as _validation
 from scipy.stats import linregress
 from sphinx.util import logging
 from sphinx.util.console import bold

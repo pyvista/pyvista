@@ -18,10 +18,10 @@ from typing import get_args
 
 from cycler import Cycler
 from cycler import cycler
-import pyvista_validation as _validation
 from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk

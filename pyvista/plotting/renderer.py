@@ -12,8 +12,8 @@ from typing import Any
 from typing import ClassVar
 from typing import cast
 
-import pyvista_validation as _validation
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import MAX_N_COLOR_BARS

@@ -15,8 +15,8 @@ from typing import Literal
 from typing import cast
 from typing import get_args
 
-import pyvista_validation as _validation
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
