@@ -348,7 +348,6 @@ def test_dataset_loader_one_file_local(dataset_loader_one_file_local):
     assert isinstance(loader.dataset, pv.PolyData)
     assert isinstance(loader.dataset_iterable[0], pv.PolyData)
     assert loader.unique_dataset_type == (pv.PolyData,)
-    assert loader.is_builtin
     assert loader.source_name == ('ant.ply',)
     assert loader.source_url == (
         'https://github.com/pyvista/pyvista/raw/main/pyvista/examples/ant.ply',
@@ -379,7 +378,6 @@ def test_dataset_loader_one_file(dataset_loader_one_file):
     assert isinstance(loader.dataset, pv.PolyData)
     assert isinstance(loader.dataset_iterable[0], pv.PolyData)
     assert loader.unique_dataset_type == (pv.PolyData,)
-    assert not loader.is_builtin
     assert loader.source_name == ('cow.vtp',)
     assert loader.source_url == ('https://github.com/pyvista/data/raw/master/Data/cow.vtp',)
     assert loader.web_url == ('https://github.com/pyvista/data/blob/master/Data/cow.vtp',)

@@ -122,8 +122,7 @@ class _Downloadable(Protocol):
     """Class whose files have a remote source they can be downloaded from.
 
     Having a source is not the same as needing to fetch one: built-in examples ship
-    inside the package and also have a source URL. :attr:`is_builtin` distinguishes
-    the two.
+    inside the package and also have a source URL.
     """
 
     @property
@@ -135,11 +134,6 @@ class _Downloadable(Protocol):
     @abstractmethod
     def base_url(self) -> tuple[str, ...]:
         """Return the base url of each download."""
-
-    @property
-    def is_builtin(self) -> bool:
-        """Return whether every file ships with PyVista and never needs downloading."""
-        return False
 
     @property
     def source_url(self) -> tuple[str, ...]:
@@ -441,13 +435,11 @@ class _DownloadableFile(_SingleFile, _Downloadable):
                 raise ValueError(msg)
             # A built-in file ships inside the package. It still has a source url, so it
             # is `_Downloadable`, but downloading it only hands back the packaged path.
-            self._is_builtin = True
             self._base_url = 'https://github.com/pyvista/pyvista/raw/main/pyvista/examples/'
             self._source_name = Path(path).name
             self._download_func = self._packaged_path
         else:
             # Relative path, use vars from downloads.py
-            self._is_builtin = False
             self._base_url = base_url or SOURCE
             self._download_func = download_func or download_file
             self._source_name = path
@@ -484,11 +476,6 @@ class _DownloadableFile(_SingleFile, _Downloadable):
     def _packaged_path(self, _source_name: str) -> str:
         """Return the packaged path of a built-in file, which is never downloaded."""
         return self._path
-
-    @property
-    def is_builtin(self) -> bool:
-        """Return whether the file ships with PyVista and never needs downloading."""
-        return self._is_builtin
 
     @property
     def source_name(self) -> tuple[str, ...]:
@@ -640,14 +627,6 @@ class _MultiFileDownloadableDatasetLoader(
     _Downloadable,
 ):
     """Wrap multiple files for downloading and loading."""
-
-    @property
-    def is_builtin(self) -> bool:
-        """Return whether every file ships with PyVista and never needs downloading."""
-        downloadables = [
-            file for file in self._file_objects if isinstance(file, _DOWNLOADABLE_TYPES)
-        ]
-        return bool(downloadables) and all(file.is_builtin for file in downloadables)
 
     @property
     def source_name(self) -> tuple[str, ...]:
