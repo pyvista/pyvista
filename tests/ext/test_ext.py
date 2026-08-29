@@ -142,7 +142,7 @@ def test_record_namespace_is_none_when_sphinx_autocodelink_unimportable(monkeypa
     assert plot_directive.record_namespace is not None
 
 
-DOCTEST_WITH_SKIP = '>>> a = 1\n>>> explode()  # doctest:+SKIP\n>>> b = 2\n'
+DOCTEST_WITH_SKIP = '>>> a = 1\n>>> explode()  # doctest: +SKIP\n>>> b = 2\n'
 
 
 def test_executable_piece_filters_when_a_statement_is_skipped(monkeypatch):
@@ -155,19 +155,11 @@ def test_executable_piece_filters_when_a_statement_is_skipped(monkeypatch):
     assert filtered == f'filtered:{DOCTEST_WITH_SKIP}'
 
 
-@pytest.mark.parametrize('marker', ['# doctest:+SKIP', '#doctest:+SKIP'])
-def test_executable_piece_gates_on_the_exact_skip_marker(monkeypatch, marker):
+@pytest.mark.parametrize('marker', ['# doctest: +SKIP', '# doctest:+SKIP', '#doctest: +SKIP'])
+def test_executable_piece_matches_skip_spacing_variants(monkeypatch, marker):
     monkeypatch.setattr(plot_directive, 'executable_script_from_examples', lambda _: 'filtered')
     piece = f'>>> a = 1\n>>> explode()  {marker}\n'
     assert plot_directive._executable_piece(piece, is_doctest=True) == 'filtered'
-
-
-@pytest.mark.parametrize('marker', ['# doctest: +SKIP', '#doctest: +SKIP'])
-def test_executable_piece_none_for_the_spaced_skip_marker(monkeypatch, marker):
-    # spaced markers never triggered _run_code's drop; those pieces execute fully
-    monkeypatch.setattr(plot_directive, 'executable_script_from_examples', lambda _: 'filtered')
-    piece = f'>>> dataset.plot()  {marker}\n'
-    assert plot_directive._executable_piece(piece, is_doctest=True) is None
 
 
 def test_executable_piece_none_without_a_skip():
@@ -223,12 +215,12 @@ def _render(code, tmp_path, monkeypatch=None, filtered=None):
 def test_render_figures_degrades_when_the_filtered_remainder_raises(tmp_path, monkeypatch, caplog):
     # statements alongside a skip never ran before the filtering existed, so a failure
     # among them logs instead of failing the build
-    code = '>>> a = 1\n>>> boom()  # doctest:+SKIP\n'
+    code = '>>> a = 1\n>>> boom()  # doctest: +SKIP\n'
     results = _render(
         code, tmp_path, monkeypatch, filtered="a = 1\nraise RuntimeError('kaboom')\n"
     )
     assert len(results) == 1
-    assert any('doctest:+SKIP' in r.message for r in caplog.records)
+    assert any('doctest: +SKIP' in r.message for r in caplog.records)
 
 
 def test_render_figures_still_raises_for_a_piece_without_skips(tmp_path):
