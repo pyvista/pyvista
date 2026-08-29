@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import fields
-import inspect
 import os
 from pathlib import Path
 import re
+import warnings
 
 import pytest
 
@@ -244,8 +244,16 @@ def test_get_example_all(name):
     # rest on `DataObject.__eq__`, which is not what this is testing
     assert examples.get_example(example.function) == example
 
-    # the loaded object is the type the example's own function promises to return
-    assert type(loaded).__name__ in str(inspect.signature(example.function).return_annotation)
+    # `load` returns what the example's own function returns. Compare the types
+    # rather than the datasets: `DataObject.__eq__` walks every property, and
+    # `polyhedron_faces` raises on VTK before 9.4 for a grid holding no polyhedra.
+    # The declared return annotation is not usable here either, since the type can
+    # differ by VTK version while the annotation cannot.
+    with warnings.catch_warnings():
+        # some example functions warn on their own account, such as the licence
+        # notice on `download_nefertiti`
+        warnings.simplefilter('ignore')
+        assert type(loaded) is type(example.function())
     # every tuple field is one entry per path, including the filtered one
     assert len(example.file_sizes) == len(example.paths)
     assert len(example.source_urls) == len(example.paths)
