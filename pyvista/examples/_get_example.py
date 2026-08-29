@@ -110,7 +110,8 @@ class Example:
         Returns
         -------
         DataSet | pyvista.MultiBlock | pyvista.Texture | numpy.ndarray
-            The dataset, exactly as the example's own :attr:`function` returns it.
+            The dataset the example's own :attr:`function` returns, read from
+            :attr:`paths`.
 
         """
         return self._loader.load()

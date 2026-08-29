@@ -234,6 +234,12 @@ def test_single_file_loader(file_loader, use_archive):
     assert os.path.isfile(file_loader.path[0])
 
 
+def test_single_file_loader_reader_left_out_when_file_missing(tmp_path):
+    """A path which does not exist resolves to no reader rather than raising."""
+    loader = _SingleFileDatasetLoader(str(tmp_path / 'gone.vtk'))
+    assert loader._reader == (None,)
+
+
 def test_single_file_loader_from_directory(examples_local_repository_tmp_dir):
     # Make sure directory only contains dataset files
     Path(examples_local_repository_tmp_dir, 'archive.zip').unlink()

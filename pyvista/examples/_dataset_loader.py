@@ -349,8 +349,8 @@ class _SingleFileDatasetLoader(_SingleFile, _DatasetLoader):
         #       (this will require an update to the 'read_func' API)
         try:
             return (pv.get_reader(self._path),)
-        except ValueError:
-            # Cannot be read directly (requires custom reader)
+        except (FileNotFoundError, ValueError):
+            # Missing, or cannot be read directly (requires custom reader)
             return (None,)
 
     @property
