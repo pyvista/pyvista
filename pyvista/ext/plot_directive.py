@@ -540,8 +540,8 @@ def _executable_piece(code_piece, *, is_doctest):
     """Return ``code_piece``'s script without its ``# doctest: +SKIP`` statements.
 
     A skipped statement is not runnable; executing the rest keeps the namespace --
-    and with it, every autocodelink link on the page -- instead of dropping the whole
-    piece the way ``_run_code`` otherwise would. ``None`` when there is nothing to
+    and with it, every sphinx-autocodelink link on the page -- instead of dropping
+    the whole piece the way ``_run_code`` otherwise would. ``None`` when there is nothing to
     filter, or no sphinx-autocodelink new enough to do it.
     """
     if not (
