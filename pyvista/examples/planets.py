@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import Literal
-from typing import overload
 
 import numpy as np
+from typing_extensions import overload
 
 import pyvista as pv
 from pyvista._deprecate_positional_args import _deprecate_positional_args

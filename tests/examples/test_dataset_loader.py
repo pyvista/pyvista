@@ -14,10 +14,12 @@ from typing import Any
 
 import numpy as np
 import pytest
+from typing_extensions import get_overloads
 
 import pyvista as pv
 from pyvista.examples import downloads
 from pyvista.examples import examples
+from pyvista.examples import planets
 from pyvista.examples._dataset_loader import _DatasetLoader
 from pyvista.examples._dataset_loader import _download_dataset
 from pyvista.examples._dataset_loader import _DOWNLOADABLE_TYPES
@@ -897,3 +899,14 @@ def test_load_as_multiblock_non_loadable_file_before_loadable_file():
     multi = _load_as_multiblock((not_loadable, loadable))
     assert multi.keys() == ['HeadMRVolume']
     assert isinstance(multi['HeadMRVolume'], pv.ImageData)
+
+
+def test_overloads_register_with_typing_extensions():
+    """Stubs must use `typing_extensions.overload` so `get_overloads` sees them on 3.10.
+
+    The gallery's annotation validation reads them through
+    `typing_extensions.get_overloads`, which on Python 3.10 only sees overloads
+    registered by `typing_extensions.overload`.
+    """
+    assert get_overloads(downloads.download_bunny)
+    assert get_overloads(planets.download_sun_surface)
