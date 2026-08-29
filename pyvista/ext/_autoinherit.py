@@ -211,7 +211,7 @@ def own_members(  # numpydoc ignore=RT01
 
 @functools.cache
 def _summary_document() -> Any:  # numpydoc ignore=RT01
-    """Return ``extract_summary``'s settings carrier: bare settings on Sphinx 9, a document before."""
+    """Return bare settings on Sphinx 9, else a throwaway document, for ``extract_summary``."""
     settings = get_default_settings(Parser)
     if sphinx.version_info >= (9,):
         return settings
