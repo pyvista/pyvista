@@ -15,17 +15,15 @@ from pyvista.examples import planets
 from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
 from pyvista.examples._get_example import _example_names
 from pyvista.examples._get_example import _resolve_paths
+from pyvista.examples._get_example import _supported_modules
 
-_DEPRECATED_DATASETS = ['can', 'osmnx_graph']
 _SKIP_DATASETS_WINDOWS = ['biplane']
 
 
 def _all_example_names():
     """Return the name of every example defined across the examples modules."""
     return sorted(
-        name
-        for module in (examples.examples, downloads, planets)
-        for name in _example_names(module)
+        name for module in _supported_modules() for name in _example_names(module)
     )
 
 
@@ -262,8 +260,6 @@ def test_get_example_function_without_dataset_raises():
 @pytest.mark.parametrize('name', _all_example_names())
 def test_get_example_all(name):
     """Every example resolves by name and by function, reports its files, and loads."""
-    if name in _DEPRECATED_DATASETS:
-        pytest.skip('Dataset is deprecated.')
     if os.name == 'nt' and name in _SKIP_DATASETS_WINDOWS:
         pytest.skip('Error loading on Windows')
 
