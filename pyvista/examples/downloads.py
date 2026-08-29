@@ -998,12 +998,12 @@ def download_bolt_nut(load: bool = True) -> MultiBlock | tuple[str, ...]:  # noq
     ----------
     load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
-        to ``False`` and only the filename will be returned.
+        to ``False`` and the path of every file is returned instead.
 
     Returns
     -------
-    output : pyvista.MultiBlock or tuple
-        DataSet or tuple of filenames depending on ``load``.
+    output : pyvista.MultiBlock or tuple[str, ...]
+        DataSet or the paths of the bolt and nut files depending on ``load``.
 
     Examples
     --------
@@ -4218,13 +4218,14 @@ def download_tetra_dc_mesh(load: bool = True) -> MultiBlock | tuple[str, ...]:  
     ----------
     load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
-        to ``False`` and only the filename will be returned.
+        to ``False`` and the path of every file is returned instead.
 
     Returns
     -------
-    pyvista.MultiBlock
+    output : pyvista.MultiBlock or tuple[str, ...]
         DataSet containing the high resolution forward modeled mesh
-        and a coarse inverse modeled mesh.
+        and a coarse inverse modeled mesh, or the paths of their files
+        depending on ``load``.
 
     Examples
     --------
@@ -6389,12 +6390,12 @@ def download_electronics_cooling(load: bool = True) -> MultiBlock | tuple[str, .
     ----------
     load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
-        to ``False`` and only the filename will be returned.
+        to ``False`` and the path of every file is returned instead.
 
     Returns
     -------
-    output : tuple[PolyData, UnstructuredGrid] | list[str]
-        DataSets or filenames depending on ``load``.
+    output : pyvista.MultiBlock or tuple[str, ...]
+        DataSet or the paths of the files depending on ``load``.
 
     Examples
     --------
