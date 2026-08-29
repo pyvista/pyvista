@@ -35,14 +35,16 @@ class _DataFormatMixin:
 
     @property
     @abstractmethod
-    def writer(self) -> _vtk.vtkWriter: ...
+    def writer(self) -> _vtk.vtkWriter:  # numpydoc ignore=RT01
+        """Return the VTK writer this class configures."""
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.data_format = 'binary'
 
     @property
-    def data_format(self) -> _DataFormatOptions:
+    def data_format(self) -> _DataFormatOptions:  # numpydoc ignore=RT01
+        """Return or set whether the file is written as ``'ascii'`` or ``'binary'``."""
         try:
             mode = self.writer.GetDataMode()  # type: ignore[attr-defined]
         except AttributeError:
@@ -550,7 +552,8 @@ class _XMLWriter(BaseWriter, _DataFormatMixin):
         self.compression = 'zlib'
 
     @property
-    def compression(self) -> _CompressionOptions:
+    def compression(self) -> _CompressionOptions:  # numpydoc ignore=RT01
+        """Return or set the compressor the XML writer uses."""
         return self._compression
 
     @compression.setter

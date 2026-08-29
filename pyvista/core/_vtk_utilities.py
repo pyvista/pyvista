@@ -168,27 +168,40 @@ _SETDATA_TAKES_OWNERSHIP = vtk_version_info >= (9, 6)
 _SUPPORTS_POLYHEDRON_FACE_CELL_ARRAYS = vtk_version_info >= (9, 4)
 
 
+# Per-class attribute names verified safe to access in every ``vtk_snake_case`` state.
+_SAFE_ATTRS_BY_CLASS: dict[type, set[str]] = {}
+
+
 class DisableVtkSnakeCase:
     """Base class to raise error if using VTK's ``snake_case`` API."""
 
     @staticmethod
     def check_attribute(target, attr):
-        # Skip check and exit early if possible
-        if (
-            not _VTK_SNAKE_CASE_MIN_VERSION_MET
-            or _VTK_SNAKE_CASE_STATE == 'allow'
-            or not attr
-            or not attr[0].islower()
-            or attr in ('__class__', '__init__')
-        ):
+        """Raise or warn if ``attr`` is a VTK-defined ``snake_case`` name on ``target``."""
+        safe_by_class = _SAFE_ATTRS_BY_CLASS
+        if safe_by_class is None:  # pragma: no cover  # Python is shutting down
+            return  # type: ignore[unreachable]
+        # `target.__class__` and `isinstance` would recurse into `__getattribute__`
+        cls: type = target if issubclass(type(target), type) else type(target)
+        safe = safe_by_class.get(cls)
+        if safe is None:
+            safe = safe_by_class[cls] = set()
+        elif attr in safe:
             return
 
-        # Check if we have a vtk-defined attribute using cached lookup
-        cls = target if isinstance(target, type) else target.__class__
-        if not _is_vtk_attribute_cached(cls, attr):
+        # Names that no state can flag: no snake_case API, or not a VTK lowercase name
+        if (
+            not _VTK_SNAKE_CASE_MIN_VERSION_MET
+            or not attr
+            or not attr[0].islower()
+            or not _is_vtk_attribute_cached(cls, attr)
+        ):
+            safe.add(attr)
             return
 
         # We have a VTK attribute, so raise or warn
+        if _VTK_SNAKE_CASE_STATE == 'allow':
+            return
         if sys.meta_path is not None:  # Avoid dynamic imports when Python is shutting down
             msg = f'The attribute {attr!r} is defined by VTK and is not part of the PyVista API'
             if _VTK_SNAKE_CASE_STATE == 'error':
@@ -200,6 +213,13 @@ class DisableVtkSnakeCase:
         return
 
     def __getattribute__(self, item):
+        """Get an attribute after checking it is part of the PyVista API."""
+        # Hot path: inline the cache lookup so verified-safe names skip the check call
+        try:
+            if item in _SAFE_ATTRS_BY_CLASS[type(self)]:
+                return object.__getattribute__(self, item)
+        except (KeyError, TypeError):  # unseen class, or None during Python shutdown
+            pass
         DisableVtkSnakeCase.check_attribute(self, item)
         return object.__getattribute__(self, item)
 

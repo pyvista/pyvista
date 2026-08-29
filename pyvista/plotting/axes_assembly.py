@@ -173,7 +173,8 @@ class _XYZAssembly(
         self._name = name
 
     @property
-    def parts(self):
+    def parts(self):  # numpydoc ignore=RT01
+        """Return the actors and assemblies this assembly is composed of."""
         collection = self.GetParts()
         return tuple(collection.GetItemAsObject(i) for i in range(collection.GetNumberOfItems()))
 

@@ -550,7 +550,7 @@ class ImageDataFilters(DataSetFilters):
         #. Use ``factor`` to crop a portion of the image symmetrically.
         #. Use ``margin`` to remove points from the image border.
         #. Use ``dimensions`` (and optionally, ``offset``) to explicitly crop to the specified
-           :attr:`~pyvista.ImageData.dimensions` and :attr:`~pyvista.ImageData.offset`.
+           :attr:`~pyvista.Grid.dimensions` and :attr:`~pyvista.ImageData.offset`.
         #. Use ``extent`` to explicitly crop to a specified :attr:`~pyvista.ImageData.extent`.
         #. Use ``normalized_bounds`` to crop a bounding box relative to the input size.
         #. Use ``mask``, ``padding``, and ``background_value`` to crop to this mesh using scalar
@@ -559,7 +559,7 @@ class ImageDataFilters(DataSetFilters):
         These methods are all independent, for example, it is not possible to specify
         both ``factor`` and ``margin``.
 
-        By default, the cropped output's :attr:`~pyvista.ImageData.dimensions` are typically less
+        By default, the cropped output's :attr:`~pyvista.Grid.dimensions` are typically less
         than the input's dimensions. Optionally, use ``keep_dimensions`` and ``fill_value`` to
         ensure the output dimensions always match the input.
 
@@ -595,7 +595,7 @@ class ImageDataFilters(DataSetFilters):
             provided.
 
         dimensions : VectorLike[int], optional
-            Length-3 vector of integers specifying the :attr:`~pyvista.ImageData.dimensions` of
+            Length-3 vector of integers specifying the :attr:`~pyvista.Grid.dimensions` of
             the cropping region. ``offset`` may also be provided, but if it is not, the crop is
             centered in the image.
 
@@ -2963,7 +2963,7 @@ class ImageDataFilters(DataSetFilters):
         effect, such as plotting images as voxel cells instead of as points.
 
         .. note::
-            Only the input's :attr:`~pyvista.ImageData.dimensions`, and
+            Only the input's :attr:`~pyvista.Grid.dimensions`, and
             :attr:`~pyvista.ImageData.origin` are modified by this filter. Other spatial
             properties such as :attr:`~pyvista.ImageData.spacing` and
             :attr:`~pyvista.ImageData.direction_matrix` are not affected.
@@ -3163,7 +3163,7 @@ class ImageDataFilters(DataSetFilters):
         effect, such as plotting images as points instead of as voxel cells.
 
         .. note::
-            Only the input's :attr:`~pyvista.ImageData.dimensions`, and
+            Only the input's :attr:`~pyvista.Grid.dimensions`, and
             :attr:`~pyvista.ImageData.origin` are modified by this filter. Other spatial
             properties such as :attr:`~pyvista.ImageData.spacing` and
             :attr:`~pyvista.ImageData.direction_matrix` are not affected.
@@ -4270,13 +4270,13 @@ class ImageDataFilters(DataSetFilters):
 
         reference_image : ImageData, optional
             Reference image to use. If specified, the input is resampled
-            to match the geometry of the reference. The :attr:`~pyvista.ImageData.dimensions`,
+            to match the geometry of the reference. The :attr:`~pyvista.Grid.dimensions`,
             :attr:`~pyvista.ImageData.spacing`, :attr:`~pyvista.ImageData.origin`,
             :attr:`~pyvista.ImageData.offset`, and :attr:`~pyvista.ImageData.direction_matrix`
             of the resampled image will all match the reference image.
 
         dimensions : VectorLike[int], optional
-            Set the output :attr:`~pyvista.ImageData.dimensions` of the resampled image.
+            Set the output :attr:`~pyvista.Grid.dimensions` of the resampled image.
 
             .. note::
 
@@ -4417,7 +4417,7 @@ class ImageDataFilters(DataSetFilters):
           Spacing:      5.000e-01, 5.000e-01, 1.000e+00
           N Arrays:     1
 
-        Note that the up-sampled :attr:`~pyvista.ImageData.dimensions` are doubled and
+        Note that the up-sampled :attr:`~pyvista.Grid.dimensions` are doubled and
         the :attr:`~pyvista.ImageData.spacing` is halved (as expected). Also note,
         however, that the physical bounds of the input differ from the output.
         The up-sampled :attr:`~pyvista.ImageData.origin` also differs:
