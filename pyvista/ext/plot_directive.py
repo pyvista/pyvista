@@ -32,7 +32,9 @@ The source code for the plot may be included in one of two ways:
      .. pyvista-plot:: path/to/plot.py plot_function1
 
 .. note::
-   Code blocks containing ``doctest:+SKIP`` will be skipped.
+   Code blocks containing ``doctest:+SKIP`` run without the skipped statements,
+   or are skipped entirely when sphinx-autocodelink is too old to filter them.
+   The spaced ``# doctest: +SKIP`` form is not dropped and executes fully.
 
 .. note::
    Animations will not be saved, only the last frame will be shown.
@@ -203,8 +205,8 @@ except ImportError:
 
 _logger = sphinx_logging.getLogger(__name__)
 
-#: Matches a ``# doctest: +SKIP`` marker, any spacing.
-_DOCTEST_SKIP_RE = re.compile(r'doctest:\s*\+SKIP')
+#: The exact marker ``_run_code`` drops on; spaced variants execute fully instead.
+_DOCTEST_SKIP = 'doctest:+SKIP'
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -537,17 +539,14 @@ class PlotError(RuntimeError):
 
 
 def _executable_piece(code_piece, *, is_doctest):
-    """Return ``code_piece``'s script without its ``# doctest: +SKIP`` statements.
+    """Return ``code_piece``'s script without its skipped statements.
 
-    A skipped statement is not runnable; executing the rest keeps the namespace --
-    and with it, every sphinx-autocodelink link on the page -- instead of dropping
-    the whole piece the way ``_run_code`` otherwise would. ``None`` when there is nothing to
-    filter, or no sphinx-autocodelink new enough to do it.
+    ``None`` when there is nothing to filter or sphinx-autocodelink is too old.
+    Gated on the exact marker ``_run_code`` drops on -- spaced ``# doctest: +SKIP``
+    pieces must keep executing fully (dataset-gallery images come from them).
     """
     if not (
-        is_doctest
-        and executable_script_from_examples is not None
-        and _DOCTEST_SKIP_RE.search(code_piece)
+        is_doctest and executable_script_from_examples is not None and _DOCTEST_SKIP in code_piece
     ):
         return None
     return executable_script_from_examples(code_piece)
@@ -565,7 +564,7 @@ def _run_code(*, code, code_path, ns=None, function_name=None):
     name, if ``function_name`` is not None.
     """
     # do not execute code containing any SKIP directives
-    if 'doctest:+SKIP' in code:
+    if _DOCTEST_SKIP in code:
         return ns
 
     if 'pyvista-plot::' in code:
@@ -652,7 +651,7 @@ def render_figures(
                 # Never ran before the skip filtering existed, so a failure here must
                 # not start failing builds; names bound before the raise stay usable.
                 _logger.info(
-                    '[pyvista-plot] statements alongside a "# doctest: +SKIP" failed in %s',
+                    '[pyvista-plot] statements alongside a "# doctest:+SKIP" failed in %s',
                     code_path,
                 )
 
