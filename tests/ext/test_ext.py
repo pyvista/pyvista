@@ -170,25 +170,9 @@ def test_executable_piece_none_for_non_doctest():
     assert plot_directive._executable_piece("x = 'doctest: +SKIP'", is_doctest=False) is None
 
 
-def test_executable_piece_none_on_older_sphinx_autocodelink(monkeypatch):
+def test_executable_piece_none_without_sphinx_autocodelink(monkeypatch):
     monkeypatch.setattr(plot_directive, 'executable_script_from_examples', None)
     assert plot_directive._executable_piece(DOCTEST_WITH_SKIP, is_doctest=True) is None
-
-
-def test_record_namespace_survives_missing_executable_script(monkeypatch):
-    # an older sphinx-autocodelink has record_namespace but not the newer helper --
-    # the helper import failing must not take record_namespace down with it
-    real = importlib.import_module('sphinx_autocodelink')
-    fake = SimpleNamespace(record_namespace=real.record_namespace)
-    monkeypatch.setitem(sys.modules, 'sphinx_autocodelink', fake)
-    try:
-        importlib.reload(plot_directive)
-        assert plot_directive.record_namespace is not None
-        assert plot_directive.executable_script_from_examples is None
-    finally:
-        monkeypatch.undo()
-        importlib.reload(plot_directive)
-    assert plot_directive.record_namespace is not None
 
 
 def _render(code, tmp_path, monkeypatch=None, filtered=None):

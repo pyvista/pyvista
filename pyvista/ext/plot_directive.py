@@ -34,8 +34,8 @@ The source code for the plot may be included in one of two ways:
 .. note::
    A ``# doctest: +SKIP`` statement is not executed, but the rest of its code
    block still runs, so also mark any statement that depends on a skipped one.
-   When sphinx-autocodelink is too old to filter statements, a block containing
-   ``doctest:+SKIP`` is skipped entirely.
+   Without sphinx-autocodelink installed, a block containing ``doctest:+SKIP``
+   is skipped entirely.
 
 .. note::
    Animations will not be saved, only the last frame will be shown.
@@ -194,14 +194,10 @@ import pyvista as pv
 
 try:
     # Optional: only required when `pyvista_plot_autocodelink` is enabled.
+    from sphinx_autocodelink import executable_script_from_examples
     from sphinx_autocodelink import record_namespace
 except ImportError:
     record_namespace = None
-
-try:
-    # Optional and newer than record_namespace -- absent on older versions.
-    from sphinx_autocodelink import executable_script_from_examples
-except ImportError:
     executable_script_from_examples = None
 
 _logger = sphinx_logging.getLogger(__name__)
@@ -545,7 +541,7 @@ def _executable_piece(code_piece, *, is_doctest):
     A skipped statement is not runnable; executing the rest keeps the namespace --
     and with it, every sphinx-autocodelink link on the page -- instead of dropping
     the whole piece the way ``_run_code`` otherwise would. ``None`` when there is nothing to
-    filter, or no sphinx-autocodelink new enough to do it.
+    filter, or no sphinx-autocodelink to do it.
     """
     if not (
         is_doctest
