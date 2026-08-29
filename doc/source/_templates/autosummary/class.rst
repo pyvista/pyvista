@@ -15,7 +15,8 @@
    module. ``enum.rst`` builds a table this way for the same reason.
 
    Filters get their own section at the end: every dataset mixes in the filter classes,
-   and for ``PolyData`` they are 142 of the 226 members it inherits. #}
+   and for ``PolyData`` they are 142 of the 226 members it inherits. Attributes lead so
+   that the three method sections stay together, ending with those filters. #}
 {%- set documented_methods = methods | reject('in', skipmethods) | list %}
 {%- set documented_attributes = attributes | reject('in', skipmethods) | list %}
 {%- set own_methods = own_members(module, objname, documented_methods) %}
@@ -23,35 +24,6 @@
 {%- set inherited_methods = inherited_member_rows(module, objname, documented_methods) %}
 {%- set inherited_attributes = inherited_member_rows(module, objname, documented_attributes) %}
 {%- set filters = filter_member_rows(module, objname, documented_methods + documented_attributes) %}
-
-{% block methods %}
-{% if own_methods %}
-
-{{ _('Methods') }}
-{{ '-' * _('Methods')|length }}
-
-.. autosummary::
-   :toctree:
-{% for item in own_methods %}
-   {{ name }}.{{ item }}
-{%- endfor %}
-{% endif %}
-
-{% if inherited_methods %}
-
-{{ _('Inherited Methods') }}
-{{ '-' * _('Inherited Methods')|length }}
-
-.. list-table::
-   :class: autosummary longtable
-   :widths: 10 90
-
-{% for label, target, summary in inherited_methods %}
-   * - :py:obj:`{{ label }} <{{ target }}>`
-     - {{ summary }}
-{%- endfor %}
-{% endif %}
-{% endblock %}
 
 {% block attributes %}
 {% if own_attributes %}
@@ -76,6 +48,35 @@
    :widths: 10 90
 
 {% for label, target, summary in inherited_attributes %}
+   * - :py:obj:`{{ label }} <{{ target }}>`
+     - {{ summary }}
+{%- endfor %}
+{% endif %}
+{% endblock %}
+
+{% block methods %}
+{% if own_methods %}
+
+{{ _('Methods') }}
+{{ '-' * _('Methods')|length }}
+
+.. autosummary::
+   :toctree:
+{% for item in own_methods %}
+   {{ name }}.{{ item }}
+{%- endfor %}
+{% endif %}
+
+{% if inherited_methods %}
+
+{{ _('Inherited Methods') }}
+{{ '-' * _('Inherited Methods')|length }}
+
+.. list-table::
+   :class: autosummary longtable
+   :widths: 10 90
+
+{% for label, target, summary in inherited_methods %}
    * - :py:obj:`{{ label }} <{{ target }}>`
      - {{ summary }}
 {%- endfor %}
