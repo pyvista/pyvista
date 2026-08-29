@@ -651,6 +651,9 @@ autocodelink_show_usage_count = True
 # render gallery backreferences as thumbnail cards
 autocodelink_gallery_cards = True
 
+# execute and record ``.. jupyter-execute::`` cells so their identifiers link too
+autocodelink_jupyter_blocks = True
+
 
 def _str_examples(self):
     examples_str = '\n'.join(self['Examples'])
