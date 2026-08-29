@@ -93,6 +93,7 @@ DATASET_GALLERY_IMAGE_DIR = '../_build/pyvista_plot_directive/api/examples/_auto
 # Define special cases for specific datasets here. Use `None` if no image is generated.
 DATASET_GALLERY_IMAGE_EXT_DICT = {
     'cavity': None,
+    'nefertiti': None,
     'gpr_data_array': None,
     'sheen_chair': None,
     'sphere_vectors': None,

@@ -262,7 +262,6 @@ log_level = 'INFO'
 filterwarnings = [
   'error',
 
-  'ignore:download_nefertiti returns a dataset licensed under CC BY-NC-SA 4.0:UserWarning', # intended license notice; lets the docstring example run as a doctest
 
   "ignore:'mode' parameter is deprecated and will be removed in Pillow 13:DeprecationWarning", # matplotlib toolbar icon creation with newer Pillow
   'ignore:.*A NumPy version .* is required for this version of SciPy.*:UserWarning',
