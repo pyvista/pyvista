@@ -4931,16 +4931,21 @@ def download_sky_box_cube_map(load: Literal[False]) -> tuple[str, ...]: ...
 def download_sky_box_cube_map(load: bool = True) -> Texture | tuple[str, ...]:  # noqa: FBT001, FBT002
     """Download a skybox cube map texture.
 
+    .. versionchanged:: 0.49
+        ``load=False`` returns the path of every face. It previously returned
+        an empty tuple.
+
     Parameters
     ----------
     load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
-        to ``False`` and only the filename will be returned.
+        to ``False`` and the path of every face is returned instead.
 
     Returns
     -------
-    pyvista.Texture
-        Texture containing a skybox.
+    output : pyvista.Texture or tuple[str, ...]
+        Texture containing a skybox, or the path of every face when
+        ``load`` is ``False``.
 
     Examples
     --------
