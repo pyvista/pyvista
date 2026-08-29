@@ -78,10 +78,8 @@ readers:
    >>> frog = examples.get_example('frog')
    >>> len(frog.paths)  # stored as two files
    2
-   >>> [
-   ...     type(reader).__name__ for reader in frog.readers
-   ... ]  # only one is read
-   ['MetaImageReader']
+   >>> len(frog.readers)  # only one is read
+   1
    >>> sum(frog.file_sizes)  # bytes, one per path
    5173494
 
