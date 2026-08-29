@@ -246,6 +246,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*NormalsLiteral'),
     (r'py:.*', '.*_CellQualityLiteral'),
     (r'py:.*', '.*_CompressionOptions'),
+    (r'py:.*', '.*_SENTINEL'),
     (r'py:.*', '.*T'),
     (r'py:.*', '.*Options'),
     # Python 3.14 typing internals leaked through get_type_hints() on
