@@ -150,6 +150,10 @@ extensions = [
 ]
 
 
+# Configuration for sphinx.ext.duration: save reading durations to the output dir
+duration_write_json = 'sphinx-reading-durations.json'
+
+
 # Configuration for sphinx.ext.autodoc
 # Do not expand following type aliases when generating the docs
 autodoc_type_aliases = {
