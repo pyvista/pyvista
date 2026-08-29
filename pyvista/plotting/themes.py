@@ -1940,39 +1940,39 @@ class Theme(_ConfigBase):
 
         Examples
         --------
-        Compare interpolation off and on.
+        Enable hidden line removal.
 
-        .. pyvista-plot::
+        >>> import pyvista as pv
 
-            import pyvista as pv
+        Load a cylinder which has cells with a wide spread
 
-            # Load a cylinder which has cells with a wide spread
-            cyl = pv.Cylinder(direction=(0, 0, 1), height=2).elevation()
+        >>> cyl = pv.Cylinder(direction=(0, 0, 1), height=2).elevation()
 
-            # Common display argument to make sure all else is constant
-            dargs = dict(scalars='Elevation', cmap='rainbow', show_edges=True)
+        Common display argument to make sure all else is constant
 
-            pl = pv.Plotter(shape=(1, 2))
-            _ = pl.add_mesh(
-                cyl,
-                interpolate_before_map=False,
-                scalar_bar_args={'title': 'Elevation - interpolated'},
-                **dargs,
-            )
-            pl.subplot(0, 1)
-            _ = pl.add_mesh(
-                cyl,
-                interpolate_before_map=True,
-                scalar_bar_args={'title': 'Elevation - interpolated'},
-                **dargs,
-            )
-            pl.link_views()
-            pl.camera_position = pv.CameraPosition(
-                position=(-1.67, -5.1, 2.06),
-                focal_point=(0.0, 0.0, 0.0),
-                viewup=(0.0, 0.37, 0.93),
-            )
-            pl.show()
+        >>> dargs = dict(scalars='Elevation', cmap='rainbow', show_edges=True)
+
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> _ = pl.add_mesh(
+        ...     cyl,
+        ...     interpolate_before_map=False,
+        ...     scalar_bar_args={'title': 'Elevation - interpolated'},
+        ...     **dargs,
+        ... )
+        >>> pl.subplot(0, 1)
+        >>> _ = pl.add_mesh(
+        ...     cyl,
+        ...     interpolate_before_map=True,
+        ...     scalar_bar_args={'title': 'Elevation - interpolated'},
+        ...     **dargs,
+        ... )
+        >>> pl.link_views()
+        >>> pl.camera_position = pv.CameraPosition(
+        ...     position=(-1.67, -5.1, 2.06),
+        ...     focal_point=(0.0, 0.0, 0.0),
+        ...     viewup=(0.0, 0.37, 0.93),
+        ... )
+        >>> pl.show()
 
         """
         return self._interpolate_before_map
@@ -2430,19 +2430,15 @@ class Theme(_ConfigBase):
         --------
         Set the default color cycler to iterate through red, green, and blue.
 
-        .. pyvista-plot::
+        >>> import pyvista as pv
+        >>> pv.global_theme.color_cycler = ['red', 'green', 'blue']
 
-            import pyvista as pv
-
-            # Set the cycler on the global theme
-            pv.global_theme.color_cycler = ['red', 'green', 'blue']
-
-            pl = pv.Plotter()
-            _ = pl.add_mesh(pv.Cone(center=(0, 0, 0)))  # red
-            _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))  # green
-            _ = pl.add_mesh(pv.Sphere(center=(1, 1, 0)))  # blue
-            _ = pl.add_mesh(pv.Cylinder(center=(0, 1, 0)))  # red again
-            pl.show()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Cone(center=(0, 0, 0)))  # red
+        >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))  # green
+        >>> _ = pl.add_mesh(pv.Sphere(center=(1, 1, 0)))  # blue
+        >>> _ = pl.add_mesh(pv.Cylinder(center=(0, 1, 0)))  # red again
+        >>> pl.show()
 
         """
         return self._color_cycler
@@ -3117,17 +3113,14 @@ class Theme(_ConfigBase):
         --------
         Enable plotting of empty meshes.
 
-        .. pyvista-plot::
+        >>> import pyvista as pv
+        >>> pv.global_theme.allow_empty_mesh = True
 
-            import pyvista as pv
+        Now add an empty mesh to a plotter
 
-            # Enable empty meshes on the global theme
-            pv.global_theme.allow_empty_mesh = True
-
-            # Now add an empty mesh to a plotter
-            pl = pv.Plotter()
-            _ = pl.add_mesh(pv.PolyData())
-            pl.show()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.PolyData())
+        >>> pl.show()
 
         """
         return self._allow_empty_mesh
