@@ -118,7 +118,7 @@ Points that reviewers raise when they are missing:
 - **`_update_alg` and `_get_output`** (`pyvista/core/filters/__init__.py`) are the only
   pipeline driver. They handle the progress bar, VTK errors, and wrapping the output into
   the right PyVista subclass with its metadata intact.
-- **Validate at the boundary.** `pyvista.core._validation` has the checks already:
+- **Validate at the boundary.** The `input-validation` package, imported as `_validation`, has the checks already:
   `check_string`, `check_contains`, `check_range`, `check_subdtype`, `validate_array`,
   `validate_array3`, `validate_arrayNx3`, `validate_axes`, `validate_transform4x4`,
   `validate_number`, and more. Internal helpers can trust their inputs; public entry points
