@@ -2267,8 +2267,8 @@ def _validate_color_sequence(
     If ``n_colors`` is None, no broadcasting or length-checking is performed.
     """
     try:
-        # Assume we have one color
-        color_list = [Color(color)]
+        # Assume we have one color; a sequence raises and is handled below.
+        color_list = [Color(color)]  # type: ignore[arg-type]
         n_colors = 1 if n_colors is None else n_colors
         return tuple(color_list * n_colors)
     except ValueError:
