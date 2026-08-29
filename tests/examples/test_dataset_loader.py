@@ -20,7 +20,7 @@ from pyvista.examples import downloads
 from pyvista.examples import examples
 from pyvista.examples._dataset_loader import _DatasetLoader
 from pyvista.examples._dataset_loader import _download_dataset
-from pyvista.examples._dataset_loader import _Downloadable
+from pyvista.examples._dataset_loader import _DOWNLOADABLE_TYPES
 from pyvista.examples._dataset_loader import _DownloadableFile
 from pyvista.examples._dataset_loader import _format_file_size
 from pyvista.examples._dataset_loader import _get_all_nested_filepaths
@@ -189,7 +189,7 @@ def examples_local_repository_tmp_dir(tmp_path: Path, monkeypatch: pytest.Monkey
 )
 def test_single_file_loader(file_loader, use_archive):
     basename = 'pyvista_logo.png'
-    if use_archive and isinstance(file_loader, _Downloadable):
+    if use_archive and issubclass(file_loader, _DOWNLOADABLE_TYPES):
         file_loader = file_loader('archive.zip', target_file=basename)
         expected_path_is_absolute = False
     else:
@@ -207,8 +207,7 @@ def test_single_file_loader(file_loader, use_archive):
         assert not os.path.isabs(path)
 
     # test download
-    if isinstance(file_loader, (_DownloadableFile, _SingleFileDownloadableDatasetLoader)):
-        assert isinstance(file_loader, _Downloadable)
+    if isinstance(file_loader, _DOWNLOADABLE_TYPES):
         (path_download,) = file_loader.download()
         assert os.path.isfile(path_download)
         assert os.path.isabs(path_download)

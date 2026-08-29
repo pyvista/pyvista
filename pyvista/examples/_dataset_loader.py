@@ -42,7 +42,6 @@ from typing import Any
 from typing import Protocol
 from typing import cast
 from typing import final
-from typing import runtime_checkable
 
 import pyvista as pv
 from pyvista.core.utilities.fileio import get_ext
@@ -117,7 +116,6 @@ class _FileProps:
         return _get_unique_reader_type(self._reader)
 
 
-@runtime_checkable
 class _Downloadable(Protocol):
     """Class whose files have a remote source they can be downloaded from.
 
@@ -715,9 +713,9 @@ def _download_dataset(
 
 _MultiBlockFile = _SingleFileDatasetLoader | _MultiFileDatasetLoader | _DownloadableFile
 
-# `isinstance` against a `runtime_checkable` Protocol calls every member it checks on
-# Python < 3.12, which evaluates properties such as `web_url` and can raise. Test against
-# the concrete classes instead.
+# For `isinstance` checks: `_Downloadable` is deliberately not `runtime_checkable`,
+# since checking a runtime-checkable Protocol on Python < 3.12 evaluates properties
+# such as `web_url` and can raise.
 _DOWNLOADABLE_TYPES = (_DownloadableFile, _MultiFileDownloadableDatasetLoader)
 
 
