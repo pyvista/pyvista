@@ -5703,7 +5703,7 @@ class BasePlotter(_BoundsSizeMixin):
             self._before_close_callback(self)  # type: ignore[arg-type]
             self._before_close_callback = None
 
-        # Suppress the implicit interactor renders that widget teardown triggers.
+        # Suppress interactor-initiated renders for the rest of teardown.
         if self.iren is not None and self.iren.interactor is not None:
             self.iren.interactor.EnableRenderOff()
 
