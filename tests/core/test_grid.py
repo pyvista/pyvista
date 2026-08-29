@@ -737,7 +737,7 @@ def test_merge_invalid(hexbeam, sphere):
 def test_init_structured_raise():
     with pytest.raises(TypeError, match='Invalid parameters'):
         pv.StructuredGrid(['a', 'b', 'c'])
-    with pytest.raises(ValueError, match='Too many args'):
+    with pytest.raises(TypeError, match='positional argument'):
         pv.StructuredGrid([0, 1], [0, 1], [0, 1], [0, 1])
 
 

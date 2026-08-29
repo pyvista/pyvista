@@ -3793,10 +3793,6 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         Coordinates of the points in z direction. If this is passed, ``uinput``
         and ``y`` must be a :class:`numpy.ndarray` and match the shape of ``z``.
 
-    *args : Any, optional
-        Additional positional arguments are not allowed; a ``ValueError`` is
-        raised if any are given.
-
     deep : bool, default: False
         Whether to deep copy a StructuredGrid object.
         Default is ``False``.  Keyword only.
@@ -3861,17 +3857,13 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         uinput=None,
         y=None,
         z=None,
-        *args,
+        *,
         deep: bool = False,
         validate: bool | _NestedMeshValidationFields = False,
         **kwargs,
     ) -> None:
         """Initialize the structured grid."""
         super().__init__()
-
-        if args:
-            msg = 'Too many args to create StructuredGrid.'
-            raise ValueError(msg)
 
         if isinstance(uinput, _vtk.vtkStructuredGrid):
             if deep:
