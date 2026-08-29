@@ -185,7 +185,8 @@ def _get_dataset_loader(
 
 def _resolve_paths(loader: _DatasetLoader, name: str, *, download: bool) -> tuple[str, ...]:
     """Return the example's file paths, downloading them first if allowed."""
-    if download and isinstance(loader, _DOWNLOADABLE_TYPES):
+    downloaded = download and isinstance(loader, _DOWNLOADABLE_TYPES)
+    if downloaded:
         loader.download()
     if not isinstance(loader, _FileProps):
         return ()
@@ -197,10 +198,13 @@ def _resolve_paths(loader: _DatasetLoader, name: str, *, download: bool) -> tupl
     paths = tuple(loader.path)
     if missing := [p for p in paths if not (p and Path(p).is_absolute() and Path(p).exists())]:
         missing_str = '\n\t'.join(missing)
-        msg = (
-            f'Example {name!r} is not available locally and download=False.\n'
-            f'Missing:\n\t{missing_str}'
-        )
+        if not download:
+            reason = 'and download=False'
+        elif downloaded:
+            reason = 'even after downloading'
+        else:
+            reason = 'and cannot be downloaded'
+        msg = f'Example {name!r} is not available locally {reason}.\nMissing:\n\t{missing_str}'
         raise FileNotFoundError(msg)
     return paths
 
