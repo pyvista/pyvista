@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import difflib
+import functools
 from pathlib import Path
 import sys
 from typing import TYPE_CHECKING
@@ -76,19 +77,19 @@ class Example:
     source_urls: tuple[str, ...] = ()
     """URL each entry in ``paths`` is downloaded from, empty if it has none."""
 
-    @property
+    @functools.cached_property
     def _loader(self) -> _DatasetLoader:
-        """Return the loader backing this example, resolved from :attr:`function`."""
+        """Return the loader backing this example, resolved from :attr:`function` once."""
         loader, _, _ = _get_dataset_loader(self.function)
         return loader
 
-    @property
+    @functools.cached_property
     def readers(self) -> tuple[pv.BaseReader[Any], ...]:
         """Return a reader for each file which has one.
 
         The readers report which reader PyVista resolves for each file. They are not
         the objects :meth:`load` reads through, so configuring one does not change what
-        :meth:`load` returns.
+        :meth:`load` returns. They are resolved on first access and reused.
 
         Empty for examples read with a custom function or generated in memory, and
         shorter than :attr:`paths` when only some files are read directly.
