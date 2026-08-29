@@ -186,7 +186,7 @@ documented once, here, and linked from every class that inherits it.
    :toctree: _autosummary
 
    plotting.axes_assembly._XYZAssembly
+   plotting.mapper._BaseDataSetMapper
    plotting.mapper._BaseMapper
    plotting.mapper._BaseVolumeMapper
-   plotting.mapper._DataSetMapper
    plotting.prop3d._Prop3DMixin

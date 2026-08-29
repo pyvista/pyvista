@@ -397,7 +397,7 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
         self.Update()
 
 
-class _DataSetMapper(_BaseMapper):
+class _BaseDataSetMapper(_BaseMapper):
     """Base wrapper for :vtk:`vtkDataSetMapper`.
 
     Parameters
@@ -758,7 +758,7 @@ class _DataSetMapper(_BaseMapper):
             pipeline.
 
         """
-        new_mapper = cast('_DataSetMapper', super().copy())
+        new_mapper = cast('_BaseDataSetMapper', super().copy())
         new_mapper._input_dataset = self._input_dataset
         new_mapper._use_default_scalar_range = self._use_default_scalar_range
         if self._active_scalars_algo is not None:
@@ -1211,7 +1211,7 @@ class _DataSetMapper(_BaseMapper):
         return '\n'.join(mapper_attr)
 
 
-class DataSetMapper(_DataSetMapper, _vtk.vtkDataSetMapper):
+class DataSetMapper(_BaseDataSetMapper, _vtk.vtkDataSetMapper):
     """Wrap :vtk:`vtkDataSetMapper`.
 
     Parameters
@@ -1244,7 +1244,7 @@ class DataSetMapper(_DataSetMapper, _vtk.vtkDataSetMapper):
         super().__init__(dataset=dataset, theme=theme)
 
 
-class PointGaussianMapper(_DataSetMapper, _vtk.vtkPointGaussianMapper):
+class PointGaussianMapper(_BaseDataSetMapper, _vtk.vtkPointGaussianMapper):
     """Wrap :vtk:`vtkPointGaussianMapper`.
 
     Parameters
