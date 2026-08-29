@@ -683,11 +683,10 @@ def _download_dataset(
     metafiles
         When ``load`` is ``False``, set this value to ``True`` to
         return all files required to load the example, including any metafiles.
-        If ``False``, only the paths of files which are explicitly loaded are
-        returned. E.g if a file format uses two files to specify the header info
-        and file data separately, setting ``metafiles=True`` will return a tuple
-        with both file paths, whereas setting ``metafiles=False`` will only return
-        the single path of the header file as a string.
+        If ``False``, only the paths of files which are loaded on their own are
+        returned -- for a format which splits header and data into two files,
+        that is the header file's path alone. When no file is loadable on its
+        own, every path is returned either way.
 
     Returns
     -------
@@ -723,7 +722,7 @@ def _default_multiblock_name(file: _MultiBlockFile) -> str:
     """Return the default MultiBlock key for a loadable file, derived from its path."""
     path_loadable: tuple[str, ...] = getattr(file, 'path_loadable', ())
     if len(path_loadable) != 1:
-        # Not loadable, or ambiguous nesting; unused either way
+        # No single loadable path to name the block after
         return ''
     path = Path(path_loadable[0])
     return path.name[: -len(get_ext(path.name))] if path.is_file() else path.name
