@@ -232,9 +232,9 @@ class EnumDocumenter(ClassDocumenter):
 def _patch_autosummary_objtype() -> None:
     """Route ``Enum`` classes to the ``enum`` template in autosummary's stub generation.
 
-    Sphinx 9's autosummary picks stub templates from a fixed objtype table instead of the
-    documenter registry, so registering :class:`EnumDocumenter` is not enough to map enums
-    to ``enum.rst`` there.
+    Sphinx 9's autosummary picks stub templates from a fixed object-type table instead of
+    the documenter registry, so registering :class:`EnumDocumenter` is not enough to map
+    enums to ``enum.rst`` there.
     """
     from sphinx.ext.autosummary import generate  # noqa: PLC0415
 
