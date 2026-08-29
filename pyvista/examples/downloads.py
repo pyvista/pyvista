@@ -8558,7 +8558,7 @@ def download_whole_body_ct_male(
 class _WholeBodyCTUtilities:
     @staticmethod
     def import_colors_dict(module_path) -> dict[str, tuple[int, int, int]]:  # noqa: ANN001
-        # Import `colors` dict from downloaded `colors.py` module
+        """Import the ``colors`` dict from the downloaded ``colors.py`` module."""
         module_name = 'colors'
         spec = importlib.util.spec_from_file_location(module_name, module_path)
         if spec is not None:
@@ -8574,7 +8574,7 @@ class _WholeBodyCTUtilities:
 
     @staticmethod
     def add_metadata(dataset: MultiBlock, colors_module_path: str) -> None:
-        # Add color and id mappings to dataset
+        """Add color and id mappings to the dataset's user dict."""
         segmentations = cast('pv.MultiBlock', dataset['segmentations'])
         label_names = sorted(segmentations.keys())
         names_to_colors = _WholeBodyCTUtilities.import_colors_dict(colors_module_path)
@@ -8587,8 +8587,8 @@ class _WholeBodyCTUtilities:
 
     @staticmethod
     def label_map_from_masks(masks: MultiBlock) -> ImageData:
-        # Create label map array from segmentation masks
         # Initialize array with background values (zeros)
+        """Create a label map image from segmentation masks."""
         n_points = cast('pv.ImageData', masks[0]).n_points
         label_map_array = np.zeros((n_points,), dtype=np.uint8)
         label_names = sorted(masks.keys())
@@ -8604,6 +8604,7 @@ class _WholeBodyCTUtilities:
 
     @staticmethod
     def load_func(files):  # noqa: ANN001, ANN205
+        """Load the dataset and add its label map and metadata."""
         dataset_file, colors_module = files
         dataset = dataset_file.load()
 
@@ -8617,6 +8618,7 @@ class _WholeBodyCTUtilities:
     @staticmethod
     def files_func(name):  # noqa: ANN001, ANN205
         # Resampled version is saved as a multiblock
+        """Return the file-loading function for the named dataset variant."""
         target_file = f'{name}.vtm' if 'resampled' in name else name
 
         def func():

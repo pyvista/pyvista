@@ -2421,4 +2421,5 @@ class _AxisActor(DisableVtkSnakeCase, _vtk.vtkAxisActor):
 
     @property
     def prop(self) -> TextProperty:
+        """Return the title text property."""
         return self.GetTitleTextProperty()

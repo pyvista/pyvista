@@ -115,6 +115,12 @@ repos:
         entry: python hooks/gallery_docstrings.py
         files: ^examples/.*\.py$
         types: [python]
+      - id: private-class-docstrings
+        name: "Public members of private classes need docstrings (ruff D1 skips them)"
+        language: python
+        entry: python hooks/private_class_docstrings.py
+        files: ^pyvista/
+        types: [python]
       - id: no-lint-suppression-comments
         name: "No lint suppression comments (fix it, or use pyproject.toml per-file-ignores)"
         language: pygrep

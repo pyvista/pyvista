@@ -758,6 +758,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
 
     @property
     def validation_report(self) -> _MeshValidationReport[_DataSetOrMultiBlockType]:
+        """Return the mesh validation report."""
         return self._validation_report
 
     @staticmethod
@@ -877,14 +878,18 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
 
     @property
     def name(self) -> str | None:
+        """Return the name of the validated mesh."""
         return self._name  # type: ignore[attr-defined]
 
     @property
     def mesh(self) -> _DataSetOrMultiBlockType:
+        """Return the validated mesh."""
         return self._mesh  # type: ignore[attr-defined]
 
     @property
     def message(self) -> str | None:
+        """Return the formatted validation message, if any."""
+
         def insert_bullet(indent: str, string: str):
             bullet = (
                 _MeshValidator._MESSAGE_BULLET
@@ -5511,7 +5516,7 @@ class _Crinkler:
 
     @staticmethod
     def extract_cells(dataset, ids, active_scalars_info_):
-        # Extract cells and remove arrays, and restore active scalars
+        """Extract cells by ID and restore the active scalars."""
         output = dataset.extract_cells(ids, pass_cell_ids=False, pass_point_ids=False)
         association, name = active_scalars_info_
         if not dataset.is_empty:
@@ -5522,6 +5527,7 @@ class _Crinkler:
 
     @staticmethod
     def extract_crinkle_cells(dataset, a_, b_, active_scalars_info):  # noqa: PLR0917
+        """Extract crinkled cells from the clip output."""
         if b_ is None:
             # Extract cells when `return_clipped=False`
             def extract_cells_from_block(block_, clipped_a, _, active_scalars_info_):
@@ -5590,7 +5596,7 @@ class _Crinkler:
 
     @staticmethod
     def add_cell_ids(dataset: DataSet | MultiBlock):
-        # Add Cell IDs to all blocks and keep track of scalars to restore later
+        """Add cell ID arrays to all blocks and record the active scalars to restore."""
         active_scalars_info = []
         if isinstance(dataset, pv.MultiBlock):
             blocks: Iterable[DataSet] = dataset.recursive_iterator(

@@ -1115,10 +1115,12 @@ class _CustomContextItem(_vtk.vtkPythonItem):
     class ItemWrapper:
         def Initialize(self, item) -> bool:  # noqa: ARG002, N802
             # item is the _CustomContextItem subclass instance
+            """Initialize the wrapped context item."""
             return True
 
         def Paint(self, item, painter):  # noqa: N802
             # item is the _CustomContextItem subclass instance
+            """Paint the wrapped context item."""
             return item.paint(painter)
 
     def __init__(self) -> None:
@@ -1127,6 +1129,7 @@ class _CustomContextItem(_vtk.vtkPythonItem):
         self.SetPythonObject(_CustomContextItem.ItemWrapper())
 
     def paint(self, _) -> bool:
+        """Paint the context item."""
         return True
 
 
@@ -1146,6 +1149,7 @@ class _ChartBackground(DisableVtkSnakeCase, _CustomContextItem):
         self.ActiveBackgroundBrush = Brush(color=(1.0, 1.0, 1.0, 0.4))
 
     def paint(self, painter) -> bool:
+        """Paint the chart's background and border."""
         if self._chart.visible:
             painter.ApplyPen(self.ActiveBorderPen if self._chart._interactive else self.BorderPen)
             painter.ApplyBrush(

@@ -149,6 +149,7 @@ class _FRDParser:
         self._filename = filename
 
     def parse(self) -> _FRDData:
+        """Parse the FRD file into an ``_FRDData`` container."""
         frd_data = _FRDData()
         with Path(self._filename).open(errors='replace') as file_stream:
             lines = _LineTrackingStream(file_stream)

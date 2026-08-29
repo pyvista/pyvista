@@ -355,6 +355,7 @@ class _SingleFile(_SingleFilePropsProtocol):
 
     @property
     def path(self) -> str:
+        """Return the path of the file."""
         return self._path
 
     @property
@@ -371,6 +372,7 @@ class _SingleFile(_SingleFilePropsProtocol):
 
     @property
     def total_size(self) -> str:
+        """Return the total size of all files formatted as a string."""
         return self._filesize_format
 
     @property
