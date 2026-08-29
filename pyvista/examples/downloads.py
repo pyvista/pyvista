@@ -1419,18 +1419,26 @@ def download_nefertiti(load: bool = True) -> PolyData | str:  # noqa: FBT001, FB
         * :ref:`box_widget_example`
 
     """
-    warn_external(
-        'download_nefertiti returns a dataset licensed under CC BY-NC-SA 4.0 '
-        '("The Other Nefertiti" by Al-Badri and Nelles, 2016). It may not be '
-        'used for commercial purposes, and derivative works must be shared '
-        'under the same license. For a CC0 alternative suitable for commercial '
-        'use, see download_washington_bust or download_lincoln_life_mask.',
-        UserWarning,
-    )
     return _download_dataset(_dataset_nefertiti, load=load)
 
 
-_dataset_nefertiti = _SingleFileDownloadableDatasetLoader(
+class _NefertitiDatasetLoader(_SingleFileDownloadableDatasetLoader):
+    """Loader which reports the dataset's licence wherever the data is reached."""
+
+    def download(self) -> tuple[str, ...]:
+        """Warn about the licence, then download as usual."""
+        warn_external(
+            'The nefertiti dataset is licensed under CC BY-NC-SA 4.0 '
+            '("The Other Nefertiti" by Al-Badri and Nelles, 2016). It may not be '
+            'used for commercial purposes, and derivative works must be shared '
+            'under the same license. For a CC0 alternative suitable for commercial '
+            'use, see download_washington_bust or download_lincoln_life_mask.',
+            UserWarning,
+        )
+        return super().download()
+
+
+_dataset_nefertiti = _NefertitiDatasetLoader(
     'nefertiti.ply.zip',
     target_file='nefertiti.ply',
 )

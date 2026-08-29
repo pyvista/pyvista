@@ -233,27 +233,27 @@ def test_get_example_all(name):
     if os.name == 'nt' and name in _SKIP_DATASETS_WINDOWS:
         pytest.skip('Error loading on Windows')
 
-    try:
-        example = examples.get_example(name)
-        loaded = example.load()
-    except pv.VTKVersionError:
-        pytest.skip('VTK version not supported.')
-
-    # looking the example up by its own function finds the same example, which is what
-    # makes the two forms interchangeable -- comparing the loaded datasets instead would
-    # rest on `DataObject.__eq__`, which is not what this is testing
-    assert examples.get_example(example.function) == example
+    with warnings.catch_warnings():
+        # a few examples warn on their own account, and the nefertiti licence fires
+        # from its loader, so it reaches every route taken here
+        warnings.simplefilter('ignore')
+        try:
+            example = examples.get_example(name)
+            loaded = example.load()
+            from_function = example.function()
+        except pv.VTKVersionError:
+            pytest.skip('VTK version not supported.')
+        # looking the example up by its own function finds the same example, which is
+        # what makes the two forms interchangeable -- comparing the loaded datasets
+        # would rest on `DataObject.__eq__`, which is not what this is testing
+        assert examples.get_example(example.function) == example
 
     # `load` returns what the example's own function returns. Compare the types
     # rather than the datasets: `DataObject.__eq__` walks every property, and
     # `polyhedron_faces` raises on VTK before 9.4 for a grid holding no polyhedra.
     # The declared return annotation is not usable here either, since the type can
     # differ by VTK version while the annotation cannot.
-    with warnings.catch_warnings():
-        # some example functions warn on their own account, such as the licence
-        # notice on `download_nefertiti`
-        warnings.simplefilter('ignore')
-        assert type(loaded) is type(example.function())
+    assert type(loaded) is type(from_function)
     # every tuple field is one entry per path, including the filtered one
     assert len(example.file_sizes) == len(example.paths)
     assert len(example.source_urls) == len(example.paths)
