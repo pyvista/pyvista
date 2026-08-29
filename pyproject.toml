@@ -348,8 +348,6 @@ checks = [
   'GL07', # 'Sections are in the wrong order. Correct order is: {correct_sections}',
   'GL08', # Fires on @overload stubs and property setters, which numpydoc cannot skip; ruff D101/D102/D103 covers this
   'GL09', # Deprecation warning should precede extended summary (check broken)
-  'PR01', # 'Parameters {missing_params} not documented',
-  'PR02', # 'Unknown parameters {unknown_params}',
   'PR03', # 'Wrong parameters order. Actual: {actual_params}. Documented: {documented_params}',
   'PR04', # 'Parameter "{param_name}" has no type',
   'PR05', # 'Parameter "{param_name}" type should not finish with "."',
