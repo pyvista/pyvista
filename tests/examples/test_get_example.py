@@ -145,6 +145,17 @@ def test_get_example_file_sizes_compare():
     assert sum(frog.file_sizes) > sum(bunny.file_sizes)
 
 
+@pytest.mark.needs_download
+def test_get_example_nefertiti_warns_without_download():
+    """The licence warning fires on the load-only route too."""
+    with pytest.warns(UserWarning, match='CC BY-NC-SA'):
+        examples.download_nefertiti(load=False)  # ensure the files are cached
+
+    example = examples.get_example('nefertiti', download=False)
+    with pytest.warns(UserWarning, match='CC BY-NC-SA'):
+        example.load()
+
+
 def test_get_example_download_false_uses_local_files():
     """Built-in examples are available with ``download=False``."""
     example = examples.get_example('uniform', download=False)

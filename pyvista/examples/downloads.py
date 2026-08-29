@@ -53,6 +53,8 @@ from pyvista.examples._dataset_loader import _MultiFileDownloadableDatasetLoader
 from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
 
 if TYPE_CHECKING:
+    from typing import Any
+
     from numpy import ndarray
 
     from pyvista import ExplicitStructuredGrid
@@ -1425,8 +1427,9 @@ def download_nefertiti(load: bool = True) -> PolyData | str:  # noqa: FBT001, FB
 class _NefertitiDatasetLoader(_SingleFileDownloadableDatasetLoader):
     """Loader which reports the dataset's licence wherever the data is reached."""
 
-    def download(self) -> tuple[str, ...]:
-        """Warn about the licence, then download as usual."""
+    @staticmethod
+    def _warn_licence() -> None:
+        """Warn that the dataset is not licensed for commercial use."""
         warn_external(
             'The nefertiti dataset is licensed under CC BY-NC-SA 4.0 '
             '("The Other Nefertiti" by Al-Badri and Nelles, 2016). It may not be '
@@ -1435,7 +1438,16 @@ class _NefertitiDatasetLoader(_SingleFileDownloadableDatasetLoader):
             'use, see download_washington_bust or download_lincoln_life_mask.',
             UserWarning,
         )
+
+    def download(self) -> tuple[str, ...]:
+        """Warn about the licence, then download as usual."""
+        self._warn_licence()
         return super().download()
+
+    def load(self) -> Any:
+        """Warn about the licence, then load as usual."""
+        self._warn_licence()
+        return super().load()
 
 
 _dataset_nefertiti = _NefertitiDatasetLoader(
