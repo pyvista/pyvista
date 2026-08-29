@@ -9,13 +9,16 @@ from __future__ import annotations
 
 from collections import defaultdict
 from enum import Enum
+import importlib
 import inspect
+import pkgutil
 
 import pytest
 from sphinx.ext.autodoc.importer import get_class_members
 from sphinx.util.inspect import safe_getattr
 
 import pyvista as pv
+import pyvista.core.filters
 from pyvista.core.filters.data_object import DataObjectFilters
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.grid import Grid
@@ -223,11 +226,6 @@ def test_filters_are_split_out_of_the_inherited_rows():
 
 def test_filter_classes_define_nothing_but_methods_and_the_allow_list():
     """A property added to a filter class would be documented nowhere, so pin the set."""
-    import importlib
-    import pkgutil
-
-    import pyvista.core.filters
-
     unexpected = set()
     for module_info in pkgutil.iter_modules(pyvista.core.filters.__path__):
         module = importlib.import_module(f'pyvista.core.filters.{module_info.name}')

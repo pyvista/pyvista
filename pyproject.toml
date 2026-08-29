@@ -518,6 +518,7 @@ banned-from = [
   'os',
   'os.path',
   'pickle',
+  'pkgutil',
   'platform',
   'posixpath',
   're',
