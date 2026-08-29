@@ -4919,10 +4919,6 @@ def download_sky_box_cube_map(load: Literal[False]) -> tuple[str, ...]: ...
 def download_sky_box_cube_map(load: bool = True) -> Texture | tuple[str, ...]:  # noqa: FBT001, FBT002
     """Download a skybox cube map texture.
 
-    .. versionchanged:: 0.49
-        ``load=False`` returns the path of every face. It previously returned an
-        empty tuple.
-
     Parameters
     ----------
     load : bool, default: True

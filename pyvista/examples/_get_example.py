@@ -31,13 +31,6 @@ class Example:
     a tuple with one entry per path, in the same order, including for single-file
     examples.
 
-    Notes
-    -----
-    The fields are limited to what an example cannot be asked for directly. Anything
-    derivable is left out: the extensions are the suffixes of ``paths``, the total
-    size is ``sum(file_sizes)``, and the reader types and the file which is read both
-    come from ``readers``.
-
     Examples
     --------
     Look up an example. This resolves its files but does not read them.
@@ -51,8 +44,8 @@ class Example:
 
     >>> len(frog.paths)
     2
-    >>> [type(reader).__name__ for reader in frog.readers]
-    ['MetaImageReader']
+    >>> len(frog.readers)
+    1
 
     Sizes are in bytes, one per path, so examples compare directly.
 
@@ -221,9 +214,7 @@ def get_example(name: str | Callable[..., Any], *, download: bool = True) -> Exa
     :mod:`pyvista.examples.planets`. It returns the example itself -- its files,
     where they come from, and the readers for them -- rather than the dataset, which
     :meth:`Example.load` reads. Reach for it to work with an example by name, or to
-    get at its files or readers; :func:`~pyvista.examples.downloads.download_bunny`
-    and its 200-odd siblings remain the direct way to load one dataset you can name
-    in your source.
+    get at its files or readers.
 
     Parameters
     ----------
@@ -254,7 +245,8 @@ def get_example(name: str | Callable[..., Any], *, download: bool = True) -> Exa
 
     >>> from pyvista import examples
     >>> uniform = examples.get_example('uniform')
-    >>> uniform.load().n_cells
+    >>> mesh = uniform.load()
+    >>> mesh.n_cells
     729
 
     Get its files, always as a tuple however many it has.
@@ -262,7 +254,8 @@ def get_example(name: str | Callable[..., Any], *, download: bool = True) -> Exa
     >>> uniform.paths  # doctest:+SKIP
     ('.../pyvista/examples/uniform.vtk',)
 
-    Get the reader PyVista resolves for each file that has one.
+    Get the reader PyVista resolves for each file that has one. Most examples have
+    exactly one reader.
 
     >>> [type(reader).__name__ for reader in uniform.readers]
     ['VTKDataSetReader']

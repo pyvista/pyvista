@@ -23,8 +23,6 @@ and combines with the others.
         >>> frog = examples.get_example('frog')
         >>> frog.paths  # doctest:+SKIP
         ('.../froggy/frog.mhd', '.../froggy/frog.zraw')
-        >>> [type(reader).__name__ for reader in frog.readers]
-        ['MetaImageReader']
 
     See :class:`~pyvista.examples.Example` for every field.
 

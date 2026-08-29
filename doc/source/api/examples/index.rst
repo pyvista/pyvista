@@ -46,6 +46,16 @@ See the API reference for more downloads:
 
    examples.downloads
 
+Planets
+-------
+Examples of planets and celestial bodies are also included. See the
+API reference for details:
+
+.. autosummary::
+   :toctree: _autosummary
+
+   examples.planets
+
 Any Example
 -----------
 :func:`~pyvista.examples.get_example` looks up any built-in, downloadable, or
@@ -84,6 +94,30 @@ See the API reference for details:
    examples.get_example
    examples.Example
 
+Dataset Gallery
+---------------
+Most of PyVista's datasets are showcased in the dataset gallery.
+You can browse the gallery to find a particular kind of dataset and
+view file and instance metadata for all datasets.
+
+.. toctree::
+   :maxdepth: 3
+
+   /api/examples/dataset_gallery
+
+Cells
+-----
+Many examples of VTK :class:`cell types <pyvista.CellType>` are
+available. These functions create single-cell :class:`pyvista.UnstructuredGrid`
+objects which can be useful for learning about the different cells.
+
+See the API reference for details:
+
+.. autosummary::
+   :toctree: _autosummary
+
+   examples.cells
+
 Demos
 -----
 PyVista also contains some demos which can be used to quickly
@@ -102,40 +136,6 @@ See the API reference for more demos:
    :toctree: _autosummary
 
    demos.demos
-
-Planets
--------
-Examples of planets and celestial bodies are also included. See the
-API reference for details:
-
-.. autosummary::
-   :toctree: _autosummary
-
-   examples.planets
-
-Cells
------
-Many examples of VTK :class:`cell types <pyvista.CellType>` are
-available. These functions create single-cell :class:`pyvista.UnstructuredGrid`
-objects which can be useful for learning about the different cells.
-
-See the API reference for details:
-
-.. autosummary::
-   :toctree: _autosummary
-
-   examples.cells
-
-Dataset Gallery
----------------
-Most of PyVista's datasets are showcased in the dataset gallery.
-You can browse the gallery to find a particular kind of dataset and
-view file and instance metadata for all datasets.
-
-.. toctree::
-   :maxdepth: 3
-
-   /api/examples/dataset_gallery
 
 Usage Considerations
 --------------------
