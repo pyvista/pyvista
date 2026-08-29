@@ -65,7 +65,7 @@ class Example:
     """Name of the example, such as ``'frog'``."""
 
     function: Callable[..., Any]
-    """Public function which returns this example, such as ``examples.download_frog``."""
+    """Public function which returns this example's dataset, such as ``examples.download_frog``."""
 
     paths: tuple[str, ...] = ()
     """Local path of every file or folder belonging to the example, in declaration order."""
