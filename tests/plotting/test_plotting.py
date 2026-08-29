@@ -1065,9 +1065,11 @@ def test_plot_add_scalar_bar_cmap(verify_image_cache):
     cmap = 'bwr'
     pl.add_scalar_bar(cmap=cmap)
 
-    # pl.scalar_bar is a vtkScalarBarActor for vtk < 9.4.0
-    if pv.vtk_version_info >= (9, 4, 0):
-        assert pl.scalar_bar.lookup_table.cmap.name == cmap
+    # ``pl.scalar_bar`` is a bare scalar bar actor with no PyVista wrapper, so read
+    # the table back the way ``scalar_bars.py`` itself writes it. The snake_case
+    # ``.lookup_table`` alias exists only on stock VTK >= 9.4, and never on cvista,
+    # which omits the snake_case API altogether.
+    assert pl.scalar_bar.GetLookupTable().cmap.name == cmap
 
     pl.show()
 
@@ -1080,9 +1082,7 @@ def test_plot_add_scalar_bar_lookup_table(verify_image_cache):
     pl = pv.Plotter()
     pl.add_scalar_bar(lookup_table=ltable)
 
-    # pl.scalar_bar is a vtkScalarBarActor for vtk < 9.4.0
-    if pv.vtk_version_info >= (9, 4, 0):
-        assert pl.scalar_bar.lookup_table.cmap.name == ltable.cmap.name
+    assert pl.scalar_bar.GetLookupTable().cmap.name == ltable.cmap.name
 
     pl.show()
 
