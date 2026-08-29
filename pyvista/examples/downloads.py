@@ -1395,8 +1395,8 @@ def download_nefertiti(load: bool = True) -> PolyData | str:  # noqa: FBT001, FB
     Examples
     --------
     >>> from pyvista import examples
-    >>> dataset = examples.download_nefertiti()  # doctest: +SKIP
-    >>> dataset.plot(cpos='xz')  # doctest: +SKIP
+    >>> dataset = examples.download_nefertiti()
+    >>> dataset.plot(cpos='xz')
 
     .. seealso::
 
@@ -1458,8 +1458,8 @@ def download_washington_bust(*, load: bool = True) -> PolyData | str:
     Examples
     --------
     >>> from pyvista import examples
-    >>> dataset = examples.download_washington_bust()  # doctest: +SKIP
-    >>> dataset.plot()  # doctest: +SKIP
+    >>> dataset = examples.download_washington_bust()
+    >>> dataset.plot()
 
     .. seealso::
 
@@ -1507,8 +1507,8 @@ def download_lincoln_life_mask(*, load: bool = True) -> PolyData | str:
     Examples
     --------
     >>> from pyvista import examples
-    >>> dataset = examples.download_lincoln_life_mask()  # doctest: +SKIP
-    >>> dataset.plot()  # doctest: +SKIP
+    >>> dataset = examples.download_lincoln_life_mask()
+    >>> dataset.plot()
 
     .. seealso::
 
