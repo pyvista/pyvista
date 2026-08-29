@@ -22,9 +22,7 @@ _SKIP_DATASETS_WINDOWS = ['biplane']
 
 def _all_example_names():
     """Return the name of every example defined across the examples modules."""
-    return sorted(
-        name for module in _supported_modules() for name in _example_names(module)
-    )
+    return sorted(name for module in _supported_modules() for name in _example_names(module))
 
 
 @pytest.mark.parametrize(

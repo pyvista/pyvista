@@ -20,9 +20,9 @@ import pyvista as pv
 from pyvista.examples import downloads
 from pyvista.examples import examples
 from pyvista.examples import planets
+from pyvista.examples._dataset_loader import _DOWNLOADABLE_TYPES
 from pyvista.examples._dataset_loader import _DatasetLoader
 from pyvista.examples._dataset_loader import _download_dataset
-from pyvista.examples._dataset_loader import _DOWNLOADABLE_TYPES
 from pyvista.examples._dataset_loader import _DownloadableFile
 from pyvista.examples._dataset_loader import _format_file_size
 from pyvista.examples._dataset_loader import _get_all_nested_filepaths
