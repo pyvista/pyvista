@@ -13,6 +13,7 @@ import inspect
 from typing import TYPE_CHECKING
 from typing import Any
 
+import sphinx
 from sphinx.ext.autodoc import ClassDocumenter
 from sphinx.ext.autodoc import ClassLevelDocumenter
 from sphinx.ext.autodoc import ObjectMember
@@ -228,6 +229,27 @@ class EnumDocumenter(ClassDocumenter):
                 self.add_line('', sourcename)
 
 
+def _patch_autosummary_objtype() -> None:
+    """Route ``Enum`` classes to the ``enum`` template in autosummary's stub generation.
+
+    Sphinx 9's autosummary picks stub templates from a fixed objtype table instead of the
+    documenter registry, so registering :class:`EnumDocumenter` is not enough to map enums
+    to ``enum.rst`` there.
+    """
+    from sphinx.ext.autosummary import generate  # noqa: PLC0415
+
+    original = generate._get_documenter
+    if getattr(original, '_autoenum_patch', False):
+        return
+
+    def _get_documenter(obj: Any, parent: Any) -> str:
+        """Return ``'enum'`` for ``Enum`` classes, else defer to autosummary's own lookup."""
+        return 'enum' if _is_enum(obj) else original(obj, parent)
+
+    _get_documenter._autoenum_patch = True  # type: ignore[attr-defined]
+    generate._get_documenter = _get_documenter
+
+
 def setup(app: Sphinx) -> dict[str, Any]:  # numpydoc ignore=RT01
     """Register the ``autoenum``/``autometaclassproperty`` directives.
 
@@ -238,6 +260,8 @@ def setup(app: Sphinx) -> dict[str, Any]:  # numpydoc ignore=RT01
     """
     app.add_autodocumenter(EnumDocumenter)
     app.add_autodocumenter(MetaclassPropertyDocumenter)
+    if sphinx.version_info >= (9,):
+        _patch_autosummary_objtype()
     return {
         'version': '0.1',
         'parallel_read_safe': True,
