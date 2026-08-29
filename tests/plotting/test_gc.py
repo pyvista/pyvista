@@ -1,15 +1,20 @@
 from __future__ import annotations
 
+import gc
 import os
 from pathlib import Path
 import shutil
 import subprocess
 from typing import Any
+import weakref
 
 import pytest
 
 import pyvista as pv
 from pyvista import _vtk
+
+# First VTK nightly whose wrappers traverse their instance dict (vtk/vtk!13603)
+_VTK_GC_TRAVERSES_DICT = (9, 7, 20260827)
 
 # Stands in for a module-level registry or cache: older than any test here, so the
 # freeze puts it out of reach along with everything else alive at collection time.
@@ -29,11 +34,29 @@ def test_leak_into_a_container_older_than_the_test() -> None:
     _REGISTRY.append(_vtk.vtkPolyData())
 
 
+@pytest.mark.needs_vtk_version(
+    less_than=_VTK_GC_TRAVERSES_DICT,
+    reason='This VTK collects the cycle; see test_vtk_self_reference_collected.',
+)
 @pytest.mark.expect_check_gc_fail
 def test_leak_vtk() -> None:
     """Create a vtk leak with a simple self-reference."""
     sphere = _vtk.vtkSphereSource()
     sphere.self_ref = sphere
+
+
+@pytest.mark.needs_vtk_version(
+    at_least=_VTK_GC_TRAVERSES_DICT,
+    reason='This VTK cannot collect the cycle; see test_leak_vtk.',
+)
+def test_vtk_self_reference_collected() -> None:
+    """A self-reference through a wrapper attribute is garbage-collectable."""
+    sphere = _vtk.vtkSphereSource()
+    sphere.self_ref = sphere
+    ref = weakref.ref(sphere)
+    del sphere
+    gc.collect()
+    assert ref() is None
 
 
 @pytest.mark.expect_check_gc_fail
@@ -82,6 +105,10 @@ def test_leak_pv() -> None:
     assert 'new VTK/plotter object' in result.stdout
 
 
+@pytest.mark.needs_vtk_version(
+    less_than=_VTK_GC_TRAVERSES_DICT,
+    reason='This VTK collects the plotter; see test_plotter_collected_without_cleanup.',
+)
 @pytest.mark.expect_check_gc_fail
 def test_leak_pv_plotter() -> None:
     """Trigger a leak in pyvista.Plotter by disabling cleanup ."""
@@ -94,3 +121,25 @@ def test_leak_pv_plotter() -> None:
     pl.enable_point_picking()
     pl.close = noop
     pl.deep_clean = noop
+
+
+@pytest.mark.needs_vtk_version(
+    at_least=_VTK_GC_TRAVERSES_DICT,
+    reason='This VTK cannot collect the plotter; see test_leak_pv_plotter.',
+)
+def test_plotter_collected_without_cleanup() -> None:
+    """A plotter whose cleanup is disabled is still garbage-collectable."""
+
+    def noop(*args: Any, **kwargs: Any):  # noqa: ARG001
+        return None
+
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    pl.enable_point_picking()
+    pl.close = noop
+    pl.deep_clean = noop
+    ref = weakref.ref(pl)
+    pv.close_all()  # drop the _ALL_PLOTTERS reference; close itself is a noop
+    del pl
+    gc.collect()
+    assert ref() is None
