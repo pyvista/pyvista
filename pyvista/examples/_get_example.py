@@ -256,11 +256,6 @@ def get_example(name: str | Callable[..., Any], *, download: bool = True) -> Exa
     >>> mesh.n_cells
     729
 
-    Get its files, always as a tuple however many it has.
-
-    >>> uniform.paths  # doctest:+SKIP
-    ('.../pyvista/examples/uniform.vtk',)
-
     Get the reader PyVista resolves for each file that has one. Most examples have
     exactly one reader.
 

@@ -69,20 +69,6 @@ files, where they came from, and the readers for them.
    >>> mesh = examples.get_example('bunny').load()
    >>> mesh.plot()
 
-Use it to reach an example by name, or to get at its files, sizes, and
-readers:
-
-.. code-block:: python
-
-   >>> from pyvista import examples
-   >>> frog = examples.get_example('frog')
-   >>> len(frog.paths)  # stored as two files
-   2
-   >>> len(frog.readers)  # only one is read
-   1
-   >>> sum(frog.file_sizes)  # bytes, one per path
-   5173494
-
 See the API reference for details:
 
 .. autosummary::
