@@ -50,7 +50,7 @@ class _Sentinel:
     Parameters
     ----------
     name : str
-        Name used for the repr.
+        Name shown when the sentinel is printed.
 
     """
 

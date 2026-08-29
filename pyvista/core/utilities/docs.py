@@ -244,7 +244,7 @@ def pv_html_page_context(  # noqa: PLR0917
         Template context to modify.
 
     doctree : docutils.nodes.document, optional
-        Doctree of the page, if any.
+        Document tree of the page, if any.
 
     """
     _fix_edit_button(pagename, context)
