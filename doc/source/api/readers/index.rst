@@ -361,6 +361,10 @@ This is how :class:`pyvista.PVDReader` and :class:`pyvista.FRDReader`
 are built, and it is the supported base for a third-party reader
 registered with :func:`pyvista.register_reader`.
 
+The remaining classes are not used directly. They are documented because they
+define members shared by several readers and writers, so that each of those
+members is documented once and linked from every class that inherits it.
+
 .. autosummary::
    :toctree: _autosummary
 
@@ -370,6 +374,9 @@ registered with :func:`pyvista.register_reader`.
    PVDDataSet
    SeriesDataSet
    TimeReader
+   core.utilities.fileio._FileIOBase
+   core.utilities.writer._DataFormatMixin
+   core.utilities.writer._XMLWriter
 
 
 Enumerations
