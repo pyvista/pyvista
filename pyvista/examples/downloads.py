@@ -1394,9 +1394,12 @@ def download_nefertiti(load: bool = True) -> PolyData | str:  # noqa: FBT001, FB
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_nefertiti()  # doctest: +SKIP
-    >>> dataset.plot(cpos='xz')  # doctest: +SKIP
+    .. pyvista-plot::
+
+        from pyvista import examples
+
+        dataset = examples.download_nefertiti()
+        dataset.plot(cpos='xz')
 
     .. seealso::
 
