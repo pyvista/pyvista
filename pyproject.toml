@@ -365,12 +365,8 @@ checks = [
 exclude = [ # don't report on objects that match any of these regex
   '\._[a-z_][^.]*$', # private members and dunders; private classes are documented
 ]
-exclude_files = [
-  '^pyvista/ext/',
-] # Sphinx extension machinery, not shipped API; mypy excludes it too
-override_RT01 = [
-  '\A[^\n]+\Z',
-] # a summary-only docstring relies on the return annotation for its type
+exclude_files = ['^pyvista/ext/'] # Sphinx machinery, not shipped API
+override_RT01 = ['\A[^\n]+\Z'] # one-line docstrings rely on the annotation
 
 [tool.ruff]
 exclude = ['.git', 'build', 'dist', 'doc/_build', 'doc/examples', 'pycache__']
