@@ -191,6 +191,43 @@ def test_record_namespace_survives_missing_executable_script(monkeypatch):
     assert plot_directive.record_namespace is not None
 
 
+def _render(code, tmp_path, monkeypatch=None, filtered=None):
+    """Call render_figures with the minimal config the code path needs."""
+    if monkeypatch is not None:
+        monkeypatch.setattr(
+            plot_directive, 'executable_script_from_examples', lambda _piece: filtered
+        )
+    config = SimpleNamespace(
+        pyvista_plot_setup=None, pyvista_plot_cleanup=None, pyvista_plot_autocodelink=False
+    )
+    return plot_directive.render_figures(
+        code=code,
+        code_path='<test>',
+        output_dir=str(tmp_path),
+        output_base='out',
+        context=False,
+        function_name=None,
+        config=config,
+        force_static=True,
+    )
+
+
+def test_render_figures_degrades_when_the_filtered_remainder_raises(tmp_path, monkeypatch, caplog):
+    # statements alongside a skip never ran before the filtering existed, so a failure
+    # among them logs instead of failing the build
+    code = '>>> a = 1\n>>> boom()  # doctest: +SKIP\n'
+    results = _render(
+        code, tmp_path, monkeypatch, filtered="a = 1\nraise RuntimeError('kaboom')\n"
+    )
+    assert len(results) == 1
+    assert any('doctest: +SKIP' in r.message for r in caplog.records)
+
+
+def test_render_figures_still_raises_for_a_piece_without_skips(tmp_path):
+    with pytest.raises(plot_directive.PlotError, match='kaboom'):
+        _render(">>> raise RuntimeError('kaboom')\n", tmp_path)
+
+
 class _FakeSphinxApp:
     """Enough of Sphinx's ``Application`` for exercising ``plot_directive.setup``."""
 
