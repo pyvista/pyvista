@@ -230,7 +230,7 @@ PyVista exports a :class:`~pyvista.DataSetAccessor` structural
 protocol so plugin authors can have type checkers verify their own
 accessor class conforms to the expected shape:
 
-.. code-block:: python
+.. pyvista-plot::
 
     import pyvista as pv
 
