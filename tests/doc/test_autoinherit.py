@@ -19,7 +19,7 @@ import pyvista as pv
 from pyvista.core.filters.data_object import DataObjectFilters
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.grid import Grid
-from pyvista.core.pointset import _PointSet
+from pyvista.core.pointset import _PointSetBase
 from pyvista.ext import _autoinherit as autoinherit
 from tests.conftest import PYVISTA_ROOT_DIR
 
@@ -109,7 +109,7 @@ def test_documented_classes_needs_the_extension_to_be_loaded(monkeypatch):
 
 
 def test_provider_finds_the_class_that_defines_the_member():
-    assert autoinherit._provider(pv.PolyData, 'remove_cells') is _PointSet
+    assert autoinherit._provider(pv.PolyData, 'remove_cells') is _PointSetBase
     assert autoinherit._provider(pv.ImageData, 'dimensions') is Grid
     assert autoinherit._provider(pv.PolyData, 'faces') is pv.PolyData
 
@@ -165,7 +165,7 @@ def test_home_falls_through_to_the_class_when_every_provider_is_undocumented(mon
 
 def test_the_bases_that_collapse_duplicates_are_documented(documented):
     """Guard the doc entries that ``test_no_implementation_is_documented_twice`` needs."""
-    assert _PointSet in documented
+    assert _PointSetBase in documented
     assert Grid in documented
 
 

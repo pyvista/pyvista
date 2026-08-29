@@ -89,7 +89,7 @@ DEFAULT_INPLACE_WARNING = (
 
 
 @abstract_class
-class _PointSet(DataSet):
+class _PointSetBase(DataSet):
     """PyVista's equivalent of :vtk:`vtkPointSet`.
 
     This holds methods common to PolyData and UnstructuredGrid.
@@ -148,7 +148,7 @@ class _PointSet(DataSet):
         self,
         ind: VectorLike[bool] | VectorLike[int],
         inplace: bool = False,  # noqa: FBT001, FBT002
-    ) -> _PointSet:
+    ) -> _PointSetBase:
         """Remove cells.
 
         Parameters
@@ -274,7 +274,7 @@ class _PointSet(DataSet):
         )
 
 
-class PointSet(_PointSet, _vtk.vtkPointSet):
+class PointSet(_PointSetBase, _vtk.vtkPointSet):
     """Concrete class for storing a set of points.
 
     This is a concrete class representing a set of points that specifies the
@@ -579,7 +579,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         raise PointSetCellOperationError
 
 
-class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
+class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
     """Dataset consisting of surface geometry (for example, vertices, lines, and polygons).
 
     The surface geometry is defined by its :attr:`~pyvista.DataSet.points` and four separate
@@ -2551,7 +2551,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
 
 @abstract_class
-class PointGrid(_PointSet):
+class PointGrid(_PointSetBase):
     """Class in common with structured and unstructured grids."""
 
     def __init__(self, *args, **kwargs) -> None:  # noqa: ARG002

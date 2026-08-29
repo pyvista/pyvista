@@ -106,4 +106,4 @@ documented once, here, and linked from every class that inherits it.
    :toctree: _autosummary
 
    PointGrid
-   core.pointset._PointSet
+   core.pointset._PointSetBase

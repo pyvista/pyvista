@@ -3,7 +3,7 @@
 ``autosummary``'s class template can only ask whether a member is inherited, not
 *where* it is documented, so ``_templates/autosummary/class.rst`` used to drop every
 inherited member. Members whose defining class is not itself documented -- private
-bases such as ``_PointSet`` and internal ones such as ``Grid`` or ``BasePlotter`` --
+bases such as ``_PointSetBase`` and internal ones such as ``Grid`` or ``BasePlotter`` --
 were therefore dropped everywhere, and the workaround (documenting every member of
 ``ImageData``, ``DataSetMapper`` and ``Plotter``) duplicated hundreds of pages and
 pulled in pure-VTK members that raise on access.
