@@ -262,8 +262,11 @@ def _validate_jupyter_backend(
     raise ValueError(msg)
 
 
-def set_jupyter_backend(backend: JupyterBackendOptions | str, name=None, **kwargs):  # noqa: ARG001
+def set_jupyter_backend(backend: JupyterBackendOptions | str):
     """Set the plotting backend for a jupyter notebook.
+
+    .. versionchanged:: 0.49
+        The unused ``name`` and ``**kwargs`` parameters were removed.
 
     Parameters
     ----------
@@ -303,11 +306,6 @@ def set_jupyter_backend(backend: JupyterBackendOptions | str, name=None, **kwarg
         Custom backends registered via :func:`~pyvista.register_jupyter_backend`
         are also accepted. Pass ``None`` to reset to auto-detection at display
         time.
-
-    name : str, optional
-        The unique name identifier for the server.
-    **kwargs : dict, optional
-        Any additional keyword arguments to pass to the server launch.
 
     Examples
     --------
