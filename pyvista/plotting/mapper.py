@@ -1432,7 +1432,7 @@ class _BaseVolumeMapper(_BaseMapper):
         return None
 
     @interpolate_before_map.setter
-    def interpolate_before_map(self, *args) -> None:
+    def interpolate_before_map(self, value) -> None:
         pass
 
     @property

@@ -2501,19 +2501,9 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
 
 @abstract_class
 class PointGrid(_PointSetBase):
-    """Class in common with structured and unstructured grids.
+    """Class in common with structured and unstructured grids."""
 
-    Parameters
-    ----------
-    *args : Any, optional
-        Unused.
-
-    **kwargs : dict, optional
-        Unused.
-
-    """
-
-    def __init__(self, *args, **kwargs) -> None:  # noqa: ARG002
+    def __init__(self) -> None:
         """Initialize the point grid."""
         super().__init__()
 

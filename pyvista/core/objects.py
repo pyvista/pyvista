@@ -40,9 +40,6 @@ class Table(DataObject, _vtk.vtkTable):
     deep : bool, default: True
         Deep copy the input when initializing from a :vtk:`vtkTable`.
 
-    **kwargs : dict, optional
-        Unused.
-
     Examples
     --------
     >>> import pyvista as pv
@@ -52,7 +49,7 @@ class Table(DataObject, _vtk.vtkTable):
 
     """
 
-    def __init__(self, *args, deep: bool = True, **kwargs):  # noqa: ARG002
+    def __init__(self, *args, deep: bool = True):
         """Initialize the table."""
         super().__init__()
         if len(args) == 1:
