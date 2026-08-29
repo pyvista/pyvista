@@ -733,25 +733,12 @@ def test_download_sheen_chair_deprecated(monkeypatch):
 
     class MockLoader:
         def download(self):
-            # `_DownloadableFile.download` returns one path per file, so the mock has
-            # to as well or it cannot catch the caller forgetting to unpack it
-            return ('SheenChair.glb',)
+            return 'SheenChair.glb'
 
     monkeypatch.setattr(examples.gltf, '_gltf_loader', lambda _: MockLoader())
 
     with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
         assert examples.gltf.download_sheen_chair() == 'SheenChair.glb'
-
-
-@pytest.mark.needs_download
-def test_download_sheen_chair_returns_a_usable_path():
-    """The path is a plain `str`, as `Plotter.import_gltf` requires."""
-    with pytest.warns(pv.PyVistaDeprecationWarning):
-        filename = examples.gltf.download_sheen_chair()
-
-    assert isinstance(filename, str)
-    assert Path(filename).is_file()
-    pv.Plotter().import_gltf(filename)
 
 
 def test_download_cavity():

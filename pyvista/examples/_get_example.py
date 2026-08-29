@@ -116,7 +116,7 @@ class Example:
 
         Returns
         -------
-        DataSet | MultiBlock | Texture | numpy.ndarray
+        DataSet | pyvista.MultiBlock | pyvista.Texture | numpy.ndarray
             The dataset, exactly as the example's own :attr:`function` returns it.
 
         """
