@@ -2162,7 +2162,7 @@ class PVDReader(BaseReader['MultiBlock'], TimeReader):
     _class_reader = _PVDReader
 
     @property
-    def active_readers(self) -> list[BaseReader]:
+    def active_readers(self) -> list[BaseReader[Any]]:
         """Return the active readers."""
         return self.reader._active_readers
 
@@ -4531,7 +4531,7 @@ class SeriesReader(BaseReader['DataObject'], TimeReader, Generic[_SeriesEachRead
     _output_types = get_args(_mesh_types)
 
     @property
-    def active_reader(self) -> BaseReader:
+    def active_reader(self) -> BaseReader[Any]:
         """Return the active reader."""
         return self.reader._active_reader
 
