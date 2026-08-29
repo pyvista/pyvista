@@ -1693,7 +1693,7 @@ class MultiBlockPlot3DReader(BaseReader['MultiBlock']):
             Whether intermediate computed quantities are preserved.
 
         """
-        return self.reader.GetPreserveIntermediateFunctions()
+        return bool(self.reader.GetPreserveIntermediateFunctions())
 
     @preserve_intermediate_functions.setter
     def preserve_intermediate_functions(self, val) -> None:
