@@ -32,6 +32,17 @@ class Table(DataObject, _vtk.vtkTable):
     Create by passing a 2D NumPy array of shape (``n_rows`` by ``n_columns``)
     or from a dictionary containing NumPy arrays.
 
+    Parameters
+    ----------
+    *args : :vtk:`vtkTable`, numpy.ndarray, dict, pandas.DataFrame, optional
+        Data source used to initialize the table.
+
+    deep : bool, default: True
+        Deep copy the input when initializing from a :vtk:`vtkTable`.
+
+    **kwargs : dict, optional
+        Unused.
+
     Examples
     --------
     >>> import pyvista as pv
@@ -392,7 +403,7 @@ class Table(DataObject, _vtk.vtkTable):
         """
         return self.to_arrow().__arrow_c_stream__(requested_schema)
 
-    def save(self, *args, **kwargs):  # pragma: no cover
+    def save(self, *args, **kwargs):  # pragma: no cover  # numpydoc ignore=PR01
         """Save the table."""
         msg = "Please use the `to_pandas` method and harness Pandas' wonderful file IO methods."
         raise NotImplementedError(msg)

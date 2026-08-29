@@ -187,7 +187,14 @@ class BaseVTKReader(ABC):
         self._observers: list[int | Callable[[Any], Any]] = []
 
     def SetFileName(self, filename) -> None:
-        """Set file name."""
+        """Set file name.
+
+        Parameters
+        ----------
+        filename : str
+            Path of the file to read.
+
+        """
         self._filename = filename
 
     @abstractmethod
@@ -195,10 +202,20 @@ class BaseVTKReader(ABC):
         """Update Information from file."""
 
     def AddObserver(self, event_type, callback) -> None:
-        """Add Observer that can be triggered during Update."""
+        """Add Observer that can be triggered during Update.
+
+        Parameters
+        ----------
+        event_type : str
+            Event type to observe.
+
+        callback : callable
+            Function called when the event is triggered.
+
+        """
         self._observers.append([event_type, callback])  # type: ignore[arg-type]
 
-    def RemoveObservers(self, *args) -> None:  # noqa: ARG002
+    def RemoveObservers(self, *args) -> None:  # noqa: ARG002  # numpydoc ignore=PR01
         """Remove Observer."""
         self._observers = []
 
@@ -207,7 +224,14 @@ class BaseVTKReader(ABC):
         return 0.0 if self._data_object is None else 1.0
 
     def UpdateObservers(self, event_type) -> None:
-        """Call matching observer."""
+        """Call matching observer.
+
+        Parameters
+        ----------
+        event_type : str
+            Event type whose observers are called.
+
+        """
         for event_type_allowed, observer in self._observers:  # type: ignore[misc]
             if event_type_allowed == event_type:
                 observer(self, event_type)
@@ -219,7 +243,7 @@ class BaseVTKReader(ABC):
         Set self._data_object.
         """
 
-    def GetOutputDataObject(self, *args) -> pv.DataObject | None:  # noqa: ARG002
+    def GetOutputDataObject(self, *args) -> pv.DataObject | None:  # noqa: ARG002  # numpydoc ignore=PR01
         """Return stored data."""
         return self._data_object
 
@@ -2053,7 +2077,14 @@ class _PVDReader(BaseVTKReader):
         self._time_values: list[float] | None = None
 
     def SetFileName(self, filename) -> None:
-        """Set filename and update reader."""
+        """Set filename and update reader.
+
+        Parameters
+        ----------
+        filename : str
+            Path of the PVD file.
+
+        """
         self._filename = str(filename)
         self._directory = str(Path(filename).parent)
 
@@ -2091,7 +2122,14 @@ class _PVDReader(BaseVTKReader):
         self._data_object = pv.MultiBlock([reader.read() for reader in self._active_readers])
 
     def _SetActiveTime(self, time_value) -> None:
-        """Set active time."""
+        """Set active time.
+
+        Parameters
+        ----------
+        time_value : float
+            Time value to set as active.
+
+        """
         self._active_datasets = self._time_mapping[time_value]
         self._active_readers = [
             get_reader(Path(self._directory) / dataset.path)  # type: ignore[arg-type]
@@ -4108,7 +4146,19 @@ class FRDReader(BaseReader['UnstructuredGrid'], TimeReader):
         return len(self.reader._time_steps)
 
     def time_point_value(self, time_point: int) -> float:
-        """Return the time value associated with the given time point."""
+        """Return the time value associated with the given time point.
+
+        Parameters
+        ----------
+        time_point : int
+            Time point index.
+
+        Returns
+        -------
+        float
+            Value of the time point.
+
+        """
         return self.reader._time_steps[time_point]
 
     @property
@@ -4117,7 +4167,14 @@ class FRDReader(BaseReader['UnstructuredGrid'], TimeReader):
         return list(self.reader._time_steps)
 
     def set_active_time_point(self, time_point: int) -> None:
-        """Set the active time point."""
+        """Set the active time point.
+
+        Parameters
+        ----------
+        time_point : int
+            Time point index to set as active.
+
+        """
         n = self.number_time_points
         if not 0 <= time_point < n:
             msg = f'time_point {time_point} is out of range (file has {n} time point(s)).'
@@ -4125,7 +4182,14 @@ class FRDReader(BaseReader['UnstructuredGrid'], TimeReader):
         self.reader._active_time_point = time_point
 
     def set_active_time_value(self, time_value: float) -> None:
-        """Set the active time value."""
+        """Set the active time value.
+
+        Parameters
+        ----------
+        time_value : float
+            Time value to set as active.
+
+        """
         steps = self.reader._time_steps
         if not steps:
             msg = 'No time steps found in the FRD file.'
@@ -4148,12 +4212,21 @@ class FRDReader(BaseReader['UnstructuredGrid'], TimeReader):
 
     @active_time_value.setter
     def active_time_value(self, value: float) -> None:
-        """Set the active time value."""
         self.set_active_time_value(value)
 
 
 class ExodusIIBlockSet(_NoNewAttrMixin):
-    """Class for enabling and disabling blocks, sets, and block/set arrays in Exodus II files."""
+    """Class for enabling and disabling blocks, sets, and block/set arrays in Exodus II files.
+
+    Parameters
+    ----------
+    exodus_reader : ExodusIIReader
+        Reader this block set belongs to.
+
+    object_type : int
+        Exodus object type constant from :vtk:`vtkExodusIIReader`.
+
+    """
 
     def __init__(self, exodus_reader: ExodusIIReader, object_type):
         if not exodus_reader.reader.GetObjectTypeName(object_type):
@@ -4349,7 +4422,14 @@ class _SeriesReader(BaseVTKReader, Generic[_SeriesEachReader]):
         self._active_reader: _SeriesEachReader | None = None
 
     def SetFileName(self, filename) -> None:
-        """Set filename and update reader."""
+        """Set filename and update reader.
+
+        Parameters
+        ----------
+        filename : str
+            Path of the series file.
+
+        """
         self._filename = str(filename)
         self._directory = str(Path(filename).parent)
 
@@ -4408,7 +4488,14 @@ class _SeriesReader(BaseVTKReader, Generic[_SeriesEachReader]):
         self._data_object = self._active_reader.read()
 
     def _SetActiveTime(self, time_value) -> None:
-        """Set active time."""
+        """Set active time.
+
+        Parameters
+        ----------
+        time_value : float
+            Time value to set as active.
+
+        """
         self._active_dataset = self._time_mapping[time_value]
         self._reader_type = cast('type[_SeriesEachReader]', self._reader_type)
         self._active_reader = (

@@ -363,7 +363,7 @@ class DataObject(
                     del fdata[key]
 
     @abstractmethod
-    def get_data_range(
+    def get_data_range(  # numpydoc ignore=PR01
         self: Self, name: str | None, preference: FieldAssociation | str
     ) -> tuple[float, float]:  # pragma: no cover
         """Get the non-NaN min and max of a named array."""

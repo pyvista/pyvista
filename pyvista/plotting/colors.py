@@ -2187,7 +2187,14 @@ class Color(_NoNewAttrMixin):
 
     @classmethod
     def from_dict(cls, dict_):  # numpydoc ignore=RT01
-        """Construct from dictionary for JSON deserialization."""
+        """Construct from dictionary for JSON deserialization.
+
+        Parameters
+        ----------
+        dict_ : dict
+            Dictionary with color channel keys.
+
+        """
         return Color(dict_)
 
     def to_dict(self):  # numpydoc ignore=RT01

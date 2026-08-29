@@ -213,8 +213,7 @@ class _XYZAssembly(
 
     @labels.setter
     @abstractmethod
-    def labels(self, labels):
-        """XYZ labels."""
+    def labels(self, labels): ...
 
     @property
     @abstractmethod
@@ -223,8 +222,7 @@ class _XYZAssembly(
 
     @x_label.setter
     @abstractmethod
-    def x_label(self, label):
-        """Text label for the x-axis."""
+    def x_label(self, label): ...
 
     @property
     @abstractmethod
@@ -233,8 +231,7 @@ class _XYZAssembly(
 
     @y_label.setter
     @abstractmethod
-    def y_label(self, label):
-        """Text label for the y-axis."""
+    def y_label(self, label): ...
 
     @property
     @abstractmethod
@@ -243,8 +240,7 @@ class _XYZAssembly(
 
     @z_label.setter
     @abstractmethod
-    def z_label(self, label):
-        """Text label for the z-axis."""
+    def z_label(self, label): ...
 
     @property
     @abstractmethod
@@ -253,8 +249,7 @@ class _XYZAssembly(
 
     @label_size.setter
     @abstractmethod
-    def label_size(self, size):
-        """Size of the text labels."""
+    def label_size(self, size): ...
 
     @property
     @abstractmethod
@@ -263,8 +258,7 @@ class _XYZAssembly(
 
     @label_position.setter
     @abstractmethod
-    def label_position(self, position):
-        """Position of the text labels."""
+    def label_position(self, position): ...
 
     @property
     def label_color(self) -> Color:  # numpydoc ignore=RT01
@@ -285,8 +279,7 @@ class _XYZAssembly(
 
     @x_color.setter
     @abstractmethod
-    def x_color(self, color):
-        """Color of the x-axis actors."""
+    def x_color(self, color): ...
 
     @property
     @abstractmethod
@@ -295,8 +288,7 @@ class _XYZAssembly(
 
     @y_color.setter
     @abstractmethod
-    def y_color(self, color):
-        """Color of the y-axis actors."""
+    def y_color(self, color): ...
 
     @property
     @abstractmethod
@@ -305,8 +297,7 @@ class _XYZAssembly(
 
     @z_color.setter
     @abstractmethod
-    def z_color(self, color):
-        """Color of the z-axis actors."""
+    def z_color(self, color): ...
 
 
 class AxesAssembly(_XYZAssembly):
@@ -670,7 +661,6 @@ class AxesAssembly(_XYZAssembly):
     @shaft_length.setter
     @functools.wraps(AxesGeometrySource.shaft_length.fset)  # type: ignore[attr-defined]
     def shaft_length(self, length: float | VectorLike[float]) -> None:
-        """Wrap AxesGeometrySource."""
         self._shaft_and_tip_geometry_source.shaft_length = length
         self._shaft_and_tip_geometry_source.update()
 
@@ -683,7 +673,6 @@ class AxesAssembly(_XYZAssembly):
     @tip_length.setter
     @functools.wraps(AxesGeometrySource.tip_length.fset)  # type: ignore[attr-defined]
     def tip_length(self, length: float | VectorLike[float]) -> None:
-        """Wrap AxesGeometrySource."""
         self._shaft_and_tip_geometry_source.tip_length = length
         self._shaft_and_tip_geometry_source.update()
 
@@ -696,7 +685,6 @@ class AxesAssembly(_XYZAssembly):
     @shaft_radius.setter
     @functools.wraps(AxesGeometrySource.shaft_radius.fset)  # type: ignore[attr-defined]
     def shaft_radius(self, radius: float | VectorLike[float]) -> None:
-        """Wrap AxesGeometrySource."""
         self._shaft_and_tip_geometry_source.shaft_radius = radius
         self._shaft_and_tip_geometry_source.update()
 
@@ -709,7 +697,6 @@ class AxesAssembly(_XYZAssembly):
     @tip_radius.setter
     @functools.wraps(AxesGeometrySource.tip_radius.fset)  # type: ignore[attr-defined]
     def tip_radius(self, radius: float | VectorLike[float]) -> None:
-        """Wrap AxesGeometrySource."""
         self._shaft_and_tip_geometry_source.tip_radius = radius
         self._shaft_and_tip_geometry_source.update()
 
@@ -722,7 +709,6 @@ class AxesAssembly(_XYZAssembly):
     @shaft_type.setter
     @functools.wraps(AxesGeometrySource.shaft_type.fset)  # type: ignore[attr-defined]
     def shaft_type(self, shaft_type: AxesGeometrySource.GeometryTypes | DataSet) -> None:
-        """Wrap AxesGeometrySource."""
         self._shaft_and_tip_geometry_source.shaft_type = shaft_type
         self._shaft_and_tip_geometry_source.update()
 
@@ -735,7 +721,6 @@ class AxesAssembly(_XYZAssembly):
     @tip_type.setter
     @functools.wraps(AxesGeometrySource.tip_type.fset)  # type: ignore[attr-defined]
     def tip_type(self, tip_type: AxesGeometrySource.GeometryTypes | DataSet) -> None:
-        """Wrap AxesGeometrySource."""
         self._shaft_and_tip_geometry_source.tip_type = tip_type
         self._shaft_and_tip_geometry_source.update()
 
@@ -748,7 +733,6 @@ class AxesAssembly(_XYZAssembly):
     @scale.setter
     @functools.wraps(Prop3D.scale.fset)  # type: ignore[attr-defined]
     def scale(self, scale: float | VectorLike[float]):
-        """Wrap Prop3D.scale."""
         _Prop3DMixin.scale.fset(self, scale)  # type: ignore[attr-defined]
         self._update_scale()
 
@@ -761,7 +745,6 @@ class AxesAssembly(_XYZAssembly):
     @user_matrix.setter
     @functools.wraps(Prop3D.user_matrix.fset)  # type: ignore[attr-defined]
     def user_matrix(self, value: TransformLike) -> None:
-        """Wrap Prop3D.user_matrix."""
         _Prop3DMixin.user_matrix.fset(self, value)  # type: ignore[attr-defined]
         self._update_scale()
 

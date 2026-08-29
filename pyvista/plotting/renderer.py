@@ -349,7 +349,23 @@ class CameraPosition(_NoNewAttrMixin):
 
 
 class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
-    """Renderer class."""
+    """Renderer class.
+
+    Parameters
+    ----------
+    parent : pyvista.Plotter
+        Plotter this renderer belongs to.
+
+    border : bool, default: True
+        Draw a border around the renderer.
+
+    border_color : ColorLike, default: "w"
+        Color of the border.
+
+    border_width : float, default: 1.0
+        Width of the border.
+
+    """
 
     # map camera_position string to an attribute
     CAMERA_STR_ATTR_MAP: ClassVar[dict[str, str]] = {

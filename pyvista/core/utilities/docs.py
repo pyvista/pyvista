@@ -229,6 +229,23 @@ def pv_html_page_context(  # noqa: PLR0917
     Must be connected to ``html-page-context`` with a priority above the 501
     used by the theme's own handlers, which is where the buttons are built.
 
+    Parameters
+    ----------
+    app : sphinx.application.Sphinx
+        Sphinx application.
+
+    pagename : str
+        Name of the page being rendered.
+
+    templatename : str
+        Name of the template in use.
+
+    context : dict
+        Template context to modify.
+
+    doctree : docutils.nodes.document, optional
+        Doctree of the page, if any.
+
     """
     _fix_edit_button(pagename, context)
     _drop_download_button(context)

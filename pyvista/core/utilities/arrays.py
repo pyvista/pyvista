@@ -980,6 +980,14 @@ class _SerializedDictArray(DisableVtkSnakeCase, UserDict, _vtk.vtkStringArray): 
     modified, such that modifying the dict will also implicitly modify
     its JSON string representation.
 
+    Parameters
+    ----------
+    dict_ : str | dict | UserDict, optional
+        Initial data. A JSON string is parsed first.
+
+    **kwargs : dict, optional
+        Additional key-value pairs, as for :class:`dict`.
+
     Notes
     -----
     This class is intended for metadata storage. Values are JSON-serialized
@@ -1076,7 +1084,17 @@ class _SerializedDictArray(DisableVtkSnakeCase, UserDict, _vtk.vtkStringArray): 
         self._update_string() if key != '_string' else None
 
     def update(self: _SerializedDictArray, *args, **kwargs) -> None:
-        """Update the dictionary and re-serialize."""
+        """Update the dictionary and re-serialize.
+
+        Parameters
+        ----------
+        *args : tuple, optional
+            Arguments of :meth:`dict.update`.
+
+        **kwargs : dict, optional
+            Keyword arguments of :meth:`dict.update`.
+
+        """
         super().update(*args, **kwargs)
         self._update_string()
 
@@ -1087,7 +1105,19 @@ class _SerializedDictArray(DisableVtkSnakeCase, UserDict, _vtk.vtkStringArray): 
         return item
 
     def pop(self: _SerializedDictArray, __key: Any) -> Any:  # type: ignore[override]  # noqa: PYI063
-        """Pop an item by key and re-serialize."""
+        """Pop an item by key and re-serialize.
+
+        Parameters
+        ----------
+        __key : Any
+            Key to remove.
+
+        Returns
+        -------
+        Any
+            Removed value.
+
+        """
         item = super().pop(__key)
         self._update_string()
         return item
@@ -1098,6 +1128,16 @@ class _SerializedDictArray(DisableVtkSnakeCase, UserDict, _vtk.vtkStringArray): 
         self._update_string()
 
     def setdefault(self: _SerializedDictArray, *args, **kwargs) -> None:
-        """Insert a default value and re-serialize."""
+        """Insert a default value and re-serialize.
+
+        Parameters
+        ----------
+        *args : tuple, optional
+            Arguments of :meth:`dict.setdefault`.
+
+        **kwargs : dict, optional
+            Keyword arguments of :meth:`dict.setdefault`.
+
+        """
         super().setdefault(*args, **kwargs)
         self._update_string()

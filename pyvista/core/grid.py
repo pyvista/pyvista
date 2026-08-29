@@ -225,6 +225,9 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
 
         .. versionadded:: 0.47
 
+    **kwargs : dict, optional
+        Additional keyword arguments passed to :func:`pyvista.read` when initializing from a file.
+
     Examples
     --------
     >>> import pyvista as pv

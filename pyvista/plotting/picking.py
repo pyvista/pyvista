@@ -1696,7 +1696,14 @@ class PickingComponent(_NoNewAttrMixin):
 
     @_deprecate_positional_args
     def fly_to_mouse_position(self, focus=False):  # noqa: FBT002
-        """Focus on last stored mouse position."""
+        """Focus on last stored mouse position.
+
+        Parameters
+        ----------
+        focus : bool, default: False
+            Set the camera focal point to the picked point instead of flying to it.
+
+        """
         plotter = self._plotter
         if plotter.mouse_position is None:
             plotter.store_mouse_position()

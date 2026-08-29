@@ -20,6 +20,11 @@ class _PropCollection(MutableSequence[_vtk.vtkProp]):
 
     .. versionadded:: 0.45
 
+    Parameters
+    ----------
+    prop_collection : :vtk:`vtkPropCollection`
+        Collection to wrap.
+
     """
 
     def __init__(self, prop_collection: _vtk.vtkPropCollection):
@@ -82,7 +87,17 @@ class _PropCollection(MutableSequence[_vtk.vtkProp]):
             raise TypeError(msg)
 
     def insert(self, index, value) -> None:
-        """Insert a prop at the given index."""
+        """Insert a prop at the given index.
+
+        Parameters
+        ----------
+        index : int
+            Index to insert the prop at.
+
+        value : :vtk:`vtkProp`
+            Prop to insert.
+
+        """
         _validation.check_instance(value, _vtk.vtkProp)
         if len(self) == 0:
             self.append(value)
@@ -93,7 +108,14 @@ class _PropCollection(MutableSequence[_vtk.vtkProp]):
         self._prop_collection.InsertItem(index - 1, value)
 
     def append(self, value: _vtk.vtkProp):
-        """Add a prop to the end of the collection."""
+        """Add a prop to the end of the collection.
+
+        Parameters
+        ----------
+        value : :vtk:`vtkProp`
+            Prop to add.
+
+        """
         _validation.check_instance(value, _vtk.vtkProp)
         self._prop_collection.AddItem(value)
 

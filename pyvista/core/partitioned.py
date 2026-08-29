@@ -36,6 +36,14 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
 
     DataSet which composite dataset to encapsulates a dataset consisting of partitions.
 
+    Parameters
+    ----------
+    *args : :vtk:`vtkPartitionedDataSet` | sequence[DataSet], optional
+        Partitioned dataset to wrap or datasets to use as partitions.
+
+    **kwargs : dict, optional
+        Supports ``deep`` to control copying a :vtk:`vtkPartitionedDataSet`.
+
     Examples
     --------
     >>> import pyvista as pv
@@ -138,7 +146,7 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
             self[i + 1] = self[i]
         self[index] = dataset
 
-    def pop(self, index: int = -1) -> None:  # numpydoc ignore=PR01  # noqa: ARG002
+    def pop(self, index: int = -1) -> None:  # noqa: ARG002  # numpydoc ignore=PR01
         """Pop off a partition at the specified index are not supported."""
         raise PartitionedDataSetsNotSupported
 
@@ -279,7 +287,7 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
         self.n_partitions += 1
         self[index] = dataset
 
-    def get_data_range(  # numpydoc ignore=RT01
+    def get_data_range(  # numpydoc ignore=RT01,PR01
         self: Self, name: str | None, preference: FieldAssociation | str
     ) -> tuple[float, float]:  # pragma: no cover
         """Get the non-NaN min and max of a named array."""

@@ -202,7 +202,20 @@ class VtkEvent(NamedTuple):
 
 
 class Observer(_NoNewAttrMixin):
-    """A standard class for observing VTK objects."""
+    """A standard class for observing VTK objects.
+
+    Parameters
+    ----------
+    event_type : str, default: "ErrorEvent"
+        Event type to observe.
+
+    log : bool, default: True
+        Log the caught messages.
+
+    store_history : bool, default: False
+        Store each caught event.
+
+    """
 
     @_deprecate_positional_args(allowed=['event_type'])
     def __init__(
@@ -226,7 +239,19 @@ class Observer(_NoNewAttrMixin):
 
     @staticmethod
     def parse_message(message) -> VtkEvent:  # numpydoc ignore=RT01
-        """Parse the given message."""
+        """Parse the given message.
+
+        Parameters
+        ----------
+        message : str
+            Message from the VTK event.
+
+        Returns
+        -------
+        str
+            Parsed message.
+
+        """
         regex = re.compile(
             r'(?P<kind>[a-zA-Z]+):\sIn\s(?P<path>.+?),\sline\s(?P<line>\d+)\r?\n'
             r'(?P<name>\w+) \((?P<address>0x[0-9a-fA-F]+)\):\s(?P<alert>.+)',
@@ -248,7 +273,17 @@ class Observer(_NoNewAttrMixin):
         return VtkEvent(kind='', path='', line='', name='', address='', alert=message.strip())
 
     def log_message(self, kind, alert) -> None:
-        """Parse different event types and passes them to logging."""
+        """Parse different event types and passes them to logging.
+
+        Parameters
+        ----------
+        kind : str
+            Event kind; ``'ERROR'`` logs as an error, anything else as a warning.
+
+        alert : str
+            Message text to log.
+
+        """
         if kind == 'ERROR':
             logging.error(alert)  # noqa: LOG015
         else:
@@ -298,6 +333,11 @@ class Observer(_NoNewAttrMixin):
     def get_message(self, etc: bool = False):  # noqa: FBT001, FBT002
         """Get the last set error message.
 
+        Parameters
+        ----------
+        etc : bool, default: False
+            Also return the full event information.
+
         Returns
         -------
         str
@@ -309,7 +349,14 @@ class Observer(_NoNewAttrMixin):
         return self.__message
 
     def observe(self, algorithm):
-        """Make this an observer of an algorithm."""
+        """Make this an observer of an algorithm.
+
+        Parameters
+        ----------
+        algorithm : :vtk:`vtkAlgorithm`
+            Algorithm to observe.
+
+        """
         if self.__observing:
             msg = 'This error observer is already observing an algorithm.'
             raise RuntimeError(msg)
@@ -361,7 +408,17 @@ class ProgressMonitor(_NoNewAttrMixin):
         self._progress_bar = None
 
     def handler(self, sig, frame) -> None:
-        """Pass signal to custom interrupt handler."""
+        """Pass signal to custom interrupt handler.
+
+        Parameters
+        ----------
+        sig : int
+            Signal number.
+
+        frame : types.FrameType
+            Current stack frame.
+
+        """
         self._interrupt_signal_received = (sig, frame)  # type: ignore[assignment]
         logging.debug('SIGINT received. Delaying KeyboardInterrupt until VTK algorithm finishes.')  # noqa: LOG015
 

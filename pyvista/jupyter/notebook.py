@@ -39,6 +39,20 @@ def handle_plotter(
 ) -> EmbeddableWidget | IFrame | Widget | Image:
     """Show the ``pyvista`` plot in a jupyter environment.
 
+    Parameters
+    ----------
+    plotter : pyvista.Plotter
+        Plotter to display.
+
+    backend : str, optional
+        Jupyter backend to use.
+
+    screenshot : str | pathlib.Path | io.BytesIO | bool, optional
+        Save a screenshot to this path when set.
+
+    **kwargs : dict, optional
+        Passed to the backend handler.
+
     Returns
     -------
     IPython Widget
@@ -98,7 +112,22 @@ def show_static_image(
     plotter: Plotter,
     screenshot: str | Path | BytesIO | bool | None,  # noqa: FBT001
 ) -> Image:  # numpydoc ignore=RT01
-    """Display a static image to be displayed within a jupyter notebook."""
+    """Display a static image to be displayed within a jupyter notebook.
+
+    Parameters
+    ----------
+    plotter : pyvista.Plotter
+        Plotter to take the screenshot from.
+
+    screenshot : str | pathlib.Path | io.BytesIO | bool, optional
+        Save the screenshot to this path when set.
+
+    Returns
+    -------
+    PIL.Image.Image
+        Static image of the plotter.
+
+    """
     import PIL.Image  # noqa: PLC0415
 
     if plotter.last_image is None:

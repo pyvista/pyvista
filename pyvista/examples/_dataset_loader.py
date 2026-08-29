@@ -242,7 +242,14 @@ class _Downloadable(Protocol[_FilePropStrType_co]):
 
 
 class _DatasetLoader:
-    """Load a dataset."""
+    """Load a dataset.
+
+    Parameters
+    ----------
+    load_func : callable, optional
+        Function that loads the dataset.
+
+    """
 
     def __init__(self, load_func: Callable[..., DatasetObject] | None) -> None:
         self._load_func = load_func
@@ -255,7 +262,22 @@ class _DatasetLoader:
         return self._dataset
 
     def load(self, *args: Any, **kwargs: Any) -> DatasetObject:
-        """Load and return the dataset."""
+        """Load and return the dataset.
+
+        Parameters
+        ----------
+        *args : Any, optional
+            Passed to the load function.
+
+        **kwargs : dict, optional
+            Passed to the load function.
+
+        Returns
+        -------
+        DatasetObject
+            The loaded dataset.
+
+        """
         # Subclasses should override this as needed
         if self._load_func is None:
             msg = 'No load function has been set.'
@@ -345,7 +367,14 @@ class _DatasetLoader:
 
 
 class _SingleFile(_SingleFilePropsProtocol):
-    """Wrap a single file."""
+    """Wrap a single file.
+
+    Parameters
+    ----------
+    path : str
+        Path of the file.
+
+    """
 
     def __init__(self, path: str) -> None:
         """Wrap a single file at ``path``."""
@@ -482,6 +511,20 @@ class _DownloadableFile(_SingleFile, _Downloadable[str]):
     a zip file and no target file is specified, the entire archive is downloaded
     and extracted and the root directory of the path is returned.
 
+    Parameters
+    ----------
+    path : str
+        Path of the file to download, relative to the base url.
+
+    target_file : str, optional
+        File or folder to extract from a downloaded archive.
+
+    base_url : str, optional
+        Base url of the download.
+
+    download_func : callable, optional
+        Function used to download the file.
+
     """
 
     def __init__(
@@ -580,6 +623,26 @@ class _SingleFileDownloadableDatasetLoader(_SingleFileDatasetLoader, _Downloadab
 
        ``download()`` should be called before accessing other attributes. Otherwise,
        calling ``load()`` or ``path`` may fail or produce unexpected results.
+
+    Parameters
+    ----------
+    path : str
+        Path of the file to download, relative to the base url.
+
+    read_func : callable, optional
+        Function used to read the file.
+
+    load_func : callable, optional
+        Function applied to the dataset after reading.
+
+    target_file : str, optional
+        File or folder to extract from a downloaded archive.
+
+    download_func : callable, optional
+        Function used to download the file.
+
+    base_url : str, optional
+        Base url of the download.
 
     """
 
@@ -936,7 +999,19 @@ def _get_all_nested_filepaths(filepath: str, *, exclude_readme: bool = True) -> 
         raise ValueError(msg)
 
     def keep(name: str) -> bool:
-        """Return whether the file ``name`` should be kept."""
+        """Return whether the file ``name`` should be kept.
+
+        Parameters
+        ----------
+        name : str
+            File name to test.
+
+        Returns
+        -------
+        bool
+            Whether the file should be kept.
+
+        """
         return True if not exclude_readme else not name.lower().startswith('readme')
 
     return next(

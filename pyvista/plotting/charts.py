@@ -1115,12 +1115,39 @@ class _CustomContextItem(_vtk.vtkPythonItem):
     class ItemWrapper:
         def Initialize(self, item) -> bool:  # noqa: ARG002, N802
             # item is the _CustomContextItem subclass instance
-            """Initialize the wrapped context item."""
+            """Initialize the wrapped context item.
+
+            Parameters
+            ----------
+            item : _CustomContextItem
+                Wrapped item.
+
+            Returns
+            -------
+            bool
+                Always ``True``.
+
+            """
             return True
 
         def Paint(self, item, painter):  # noqa: N802
             # item is the _CustomContextItem subclass instance
-            """Paint the wrapped context item."""
+            """Paint the wrapped context item.
+
+            Parameters
+            ----------
+            item : _CustomContextItem
+                Item to paint.
+
+            painter : :vtk:`vtkContext2D`
+                Painter to draw with.
+
+            Returns
+            -------
+            bool
+                Whether painting succeeded.
+
+            """
             return item.paint(painter)
 
     def __init__(self) -> None:
@@ -1128,13 +1155,20 @@ class _CustomContextItem(_vtk.vtkPythonItem):
         # This will also call ItemWrapper.Initialize
         self.SetPythonObject(_CustomContextItem.ItemWrapper())
 
-    def paint(self, _) -> bool:
+    def paint(self, _) -> bool:  # numpydoc ignore=PR01
         """Paint the context item."""
         return True
 
 
 class _ChartBackground(DisableVtkSnakeCase, _CustomContextItem):
-    """Utility class for chart backgrounds."""
+    """Utility class for chart backgrounds.
+
+    Parameters
+    ----------
+    chart : _Chart
+        Chart this background belongs to.
+
+    """
 
     def __init__(self, chart) -> None:
         super().__init__()
@@ -1149,7 +1183,19 @@ class _ChartBackground(DisableVtkSnakeCase, _CustomContextItem):
         self.ActiveBackgroundBrush = Brush(color=(1.0, 1.0, 1.0, 0.4))
 
     def paint(self, painter) -> bool:
-        """Paint the chart's background and border."""
+        """Paint the chart's background and border.
+
+        Parameters
+        ----------
+        painter : :vtk:`vtkContext2D`
+            Painter to draw with.
+
+        Returns
+        -------
+        bool
+            Whether the background was painted.
+
+        """
         if self._chart.visible:
             painter.ApplyPen(self.ActiveBorderPen if self._chart._interactive else self.BorderPen)
             painter.ApplyBrush(
@@ -1162,7 +1208,17 @@ class _ChartBackground(DisableVtkSnakeCase, _CustomContextItem):
 
 @abstract_class
 class _Chart(DocSubs):
-    """Common interface for ``vtkChart``/``vtkChartBox``/``vtkChartPie``/``ChartMPL``."""
+    """Common interface for ``vtkChart``/``vtkChartBox``/``vtkChartPie``/``ChartMPL``.
+
+    Parameters
+    ----------
+    size : sequence[float], default: (1, 1)
+        Size of the chart in normalized coordinates.
+
+    loc : sequence[float], default: (0, 0)
+        Location of the chart in normalized coordinates.
+
+    """
 
     # Subclasses should specify following substitutions: 'chart_name', 'chart_args', 'chart_init'
     # and 'chart_set_labels'.
@@ -1726,7 +1782,14 @@ class _Chart(DocSubs):
 # Subclasses of `_Plot` also inherit from vtk classes, so we disable the vtk snake_case API here
 @abstract_class
 class _Plot(DocSubs):
-    """Common pythonic interface for :vtk:`vtkPlot` and :vtk:`vtkPlot3D` instances."""
+    """Common pythonic interface for :vtk:`vtkPlot` and :vtk:`vtkPlot3D` instances.
+
+    Parameters
+    ----------
+    chart : _Chart
+        Chart containing this plot.
+
+    """
 
     # Subclasses should specify following substitutions: 'plot_name', 'chart_init' and 'plot_init'.
     _DOC_SUBS: dict[str, str] | None = None
@@ -1963,6 +2026,12 @@ class _MultiCompPlot(_Plot):
     """Common pythonic interface for :vtk:`vtkPlot` instances with multiple components.
 
     Example subclasses are BoxPlot, PiePlot, BarPlot, and StackPlot.
+
+    Parameters
+    ----------
+    chart : _Chart
+        Chart containing this plot.
+
     """
 
     DEFAULT_COLOR_SCHEME = 'qual_accent'

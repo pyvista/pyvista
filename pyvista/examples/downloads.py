@@ -8558,7 +8558,19 @@ def download_whole_body_ct_male(
 class _WholeBodyCTUtilities:
     @staticmethod
     def import_colors_dict(module_path) -> dict[str, tuple[int, int, int]]:  # noqa: ANN001
-        """Import the ``colors`` dict from the downloaded ``colors.py`` module."""
+        """Import the ``colors`` dict from the downloaded ``colors.py`` module.
+
+        Parameters
+        ----------
+        module_path : str
+            Path of the downloaded ``colors.py`` module.
+
+        Returns
+        -------
+        dict[str, tuple[int, int, int]]
+            Mapping from label names to RGB colors.
+
+        """
         module_name = 'colors'
         spec = importlib.util.spec_from_file_location(module_name, module_path)
         if spec is not None:
@@ -8574,7 +8586,17 @@ class _WholeBodyCTUtilities:
 
     @staticmethod
     def add_metadata(dataset: MultiBlock, colors_module_path: str) -> None:
-        """Add color and id mappings to the dataset's user dict."""
+        """Add color and id mappings to the dataset's user dict.
+
+        Parameters
+        ----------
+        dataset : pyvista.MultiBlock
+            Dataset to annotate.
+
+        colors_module_path : str
+            Path of the downloaded ``colors.py`` module.
+
+        """
         segmentations = cast('pv.MultiBlock', dataset['segmentations'])
         label_names = sorted(segmentations.keys())
         names_to_colors = _WholeBodyCTUtilities.import_colors_dict(colors_module_path)
@@ -8588,7 +8610,19 @@ class _WholeBodyCTUtilities:
     @staticmethod
     def label_map_from_masks(masks: MultiBlock) -> ImageData:
         # Initialize array with background values (zeros)
-        """Create a label map image from segmentation masks."""
+        """Create a label map image from segmentation masks.
+
+        Parameters
+        ----------
+        masks : pyvista.MultiBlock
+            Segmentation masks, one block per label.
+
+        Returns
+        -------
+        pyvista.ImageData
+            Label map image.
+
+        """
         n_points = cast('pv.ImageData', masks[0]).n_points
         label_map_array = np.zeros((n_points,), dtype=np.uint8)
         label_names = sorted(masks.keys())
@@ -8604,7 +8638,19 @@ class _WholeBodyCTUtilities:
 
     @staticmethod
     def load_func(files):  # noqa: ANN001, ANN205
-        """Load the dataset and add its label map and metadata."""
+        """Load the dataset and add its label map and metadata.
+
+        Parameters
+        ----------
+        files : sequence
+            Loaders for the dataset file and the colors module.
+
+        Returns
+        -------
+        pyvista.MultiBlock
+            Loaded dataset with label map and metadata.
+
+        """
         dataset_file, colors_module = files
         dataset = dataset_file.load()
 
@@ -8618,7 +8664,19 @@ class _WholeBodyCTUtilities:
     @staticmethod
     def files_func(name):  # noqa: ANN001, ANN205
         # Resampled version is saved as a multiblock
-        """Return the file-loading function for the named dataset variant."""
+        """Return the file-loading function for the named dataset variant.
+
+        Parameters
+        ----------
+        name : str
+            Name of the dataset variant.
+
+        Returns
+        -------
+        callable
+            Function returning the file loaders.
+
+        """
         target_file = f'{name}.vtm' if 'resampled' in name else name
 
         def func():
@@ -9517,6 +9575,12 @@ def download_teapot_vrml(*, load: bool = True) -> MultiBlock | str:
     dataset; the model has been freely distributed in computer graphics
     software for 50 years and is conventionally treated as public domain.
 
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
     Returns
     -------
     output : pyvista.MultiBlock | str
@@ -9549,6 +9613,12 @@ def download_sextant(*, load: Literal[True] = True) -> MultiBlock: ...
 def download_sextant(*, load: Literal[False]) -> str: ...
 def download_sextant(*, load: bool = True) -> MultiBlock | str:
     """Download the sextant example.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
 
     Returns
     -------
@@ -9584,6 +9654,12 @@ def download_grasshopper(*, load: bool = True) -> MultiBlock | str:
     """Download the grasshopper example.
 
     .. versionadded:: 0.45
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
 
     Returns
     -------
@@ -9625,6 +9701,12 @@ def download_flamingo(*, load: bool = True) -> MultiBlock | str:
 
     .. versionadded:: 0.44.0
 
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
     Returns
     -------
     output : pyvista.MultiBlock | str
@@ -9657,6 +9739,12 @@ def download_damaged_helmet(*, load: Literal[True] = True) -> MultiBlock: ...
 def download_damaged_helmet(*, load: Literal[False]) -> str: ...
 def download_damaged_helmet(*, load: bool = True) -> MultiBlock | str:  # pragma: no cover
     """Download the damaged helmet example.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
 
     Returns
     -------
@@ -9693,6 +9781,12 @@ def download_gearbox(*, load: Literal[False]) -> str: ...
 def download_gearbox(*, load: bool = True) -> MultiBlock | str:  # pragma: no cover
     """Download the gearbox example.
 
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
     Returns
     -------
     output : pyvista.MultiBlock | str
@@ -9726,6 +9820,12 @@ def download_avocado(*, load: Literal[False]) -> str: ...
 def download_avocado(*, load: bool = True) -> MultiBlock | str:  # pragma: no cover
     """Download the avocado example.
 
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
     Returns
     -------
     output : pyvista.MultiBlock | str
@@ -9758,6 +9858,12 @@ def download_milk_truck(*, load: Literal[True] = True) -> MultiBlock: ...
 def download_milk_truck(*, load: Literal[False]) -> str: ...
 def download_milk_truck(*, load: bool = True) -> MultiBlock | str:  # pragma: no cover
     """Download the milk truck example.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
 
     Returns
     -------
