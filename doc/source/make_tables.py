@@ -55,8 +55,8 @@ from pyvista.core.utilities.reader import _CLASS_READER_RETURN_TYPE
 from pyvista.core.utilities.reader import CLASS_READERS
 from pyvista.core.utilities.reader import _mesh_types
 from pyvista.examples import cells
+from pyvista.examples._dataset_loader import _DOWNLOADABLE_TYPES
 from pyvista.examples._dataset_loader import _DatasetLoader
-from pyvista.examples._dataset_loader import _Downloadable
 from pyvista.examples._dataset_loader import _FileProps
 from pyvista.plotting.colors import _CSS_COLORS
 from pyvista.plotting.colors import _PARAVIEW_COLORS
@@ -2331,7 +2331,7 @@ class DatasetCard:
     @staticmethod
     def _generate_dataset_properties(loader):
         # Get data from loader
-        if isinstance(loader, _Downloadable):
+        if isinstance(loader, _DOWNLOADABLE_TYPES):
             loader.download()
 
         # properties collected by the loader
@@ -2798,7 +2798,7 @@ class DatasetPropsGenerator:
         def _rst_link(name, url):
             return f'`{name} <{url}>`_'
 
-        if not isinstance(loader, _Downloadable):
+        if not isinstance(loader, _DOWNLOADABLE_TYPES):
             return None
         # Use dict to create an ordered set to make sure links are unique
         url_dict = {
@@ -2930,7 +2930,7 @@ def _build_dataset_card(module_name: str, dataset_name: str) -> _DatasetCardResu
     module_display = module_name.removeprefix('pyvista.')
     summary = bold(f'generating rst for {module_display}...')
     print(f'{summary} {darkgreen(dataset_name)}', flush=True)
-    if isinstance(dataset_loader, _Downloadable):
+    if isinstance(dataset_loader, _DOWNLOADABLE_TYPES):
         dataset_loader.download()
     dataset_loader.load_and_store_dataset()
     assert dataset_loader.dataset is not None

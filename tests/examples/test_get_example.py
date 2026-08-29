@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from dataclasses import fields
+import inspect
 import os
 from pathlib import Path
 import re
@@ -12,6 +14,7 @@ from pyvista.examples import downloads
 from pyvista.examples import planets
 from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
 from pyvista.examples._get_example import _example_names
+from pyvista.examples._get_example import _resolve_paths
 
 _DEPRECATED_DATASETS = ['can', 'osmnx_graph']
 _SKIP_DATASETS_WINDOWS = ['biplane']
@@ -149,6 +152,50 @@ def test_get_example_download_false_uses_local_files():
     assert Path(example.paths[0]).is_file()
 
 
+def test_get_example_download_true_downloads(monkeypatch):
+    """``download=True`` calls the loader's download; the warm cache hides this otherwise."""
+    calls = []
+    loader = downloads._dataset_bunny
+    monkeypatch.setattr(type(loader), 'download', lambda self: calls.append(self) or (self._path,))
+
+    examples.get_example('bunny')
+    assert len(calls) == 1
+
+    calls.clear()
+    examples.get_example('bunny', download=False)
+    assert calls == []
+
+
+def test_get_example_download_false_rejects_unresolved_archive():
+    """An archive member is a relative path until extracted, and must not pass as present."""
+    # `Path('data').exists()` is true whenever the working directory holds a `data/`,
+    # and `Path('').exists()` is always true -- neither means the example is available
+    for target in ('data', ''):
+        loader = _SingleFileDownloadableDatasetLoader('not_downloaded.zip', target_file=target)
+        assert not Path(loader.path[0]).is_absolute()
+        with pytest.raises(FileNotFoundError, match='not available locally'):
+            _resolve_paths(loader, 'archived_example', download=False)
+
+
+def test_get_example_from_function_rejects_a_foreign_function():
+    """A function which does not own the example is refused rather than mispaired."""
+    # `planets` has both, and only `download_saturn_rings` owns `_dataset_saturn_rings`
+    match = "is not the function for example 'saturn_rings'; that is 'download_saturn_rings'"
+    with pytest.raises(ValueError, match=match):
+        examples.get_example(planets.load_saturn_rings)
+
+
+def test_example_has_no_private_loader_field():
+    """The loader is derived from ``function``, so it cannot be passed or left unset."""
+    assert {f.name for f in fields(examples.Example)} == {
+        'name',
+        'function',
+        'paths',
+        'file_sizes',
+        'source_urls',
+    }
+
+
 def test_get_example_download_false_raises(monkeypatch):
     """A missing file raises rather than downloading when ``download=False``."""
     loader = _SingleFileDownloadableDatasetLoader('missing_example.vtk')
@@ -197,7 +244,13 @@ def test_get_example_all(name):
     # rest on `DataObject.__eq__`, which is not what this is testing
     assert examples.get_example(example.function) == example
 
-    assert loaded is not None
+    # the loaded object is the type the example's own function promises to return
+    assert type(loaded).__name__ in str(inspect.signature(example.function).return_annotation)
+    # every tuple field is one entry per path, including the filtered one
     assert len(example.file_sizes) == len(example.paths)
+    assert len(example.source_urls) == len(example.paths)
+    assert all(Path(path).is_absolute() for path in example.paths)
     assert all(Path(path).is_file() or Path(path).is_dir() for path in example.paths)
-    assert all(reader is not None for reader in example.readers)
+    # readers are a subset of the example's own files, never invented
+    assert len(example.readers) <= len(example.paths)
+    assert {reader.path for reader in example.readers} <= set(example.paths)

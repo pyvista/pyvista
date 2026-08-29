@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from dataclasses import field
 import difflib
 from pathlib import Path
 import sys
@@ -13,6 +12,7 @@ from typing import Any
 import pyvista as pv
 from pyvista.examples._dataset_loader import _DOWNLOADABLE_TYPES
 from pyvista.examples._dataset_loader import _DatasetLoader
+from pyvista.examples._dataset_loader import _FileProps
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -24,6 +24,8 @@ if TYPE_CHECKING:
 @dataclass(frozen=True)
 class Example:
     """A single example dataset: its files, where they come from, and how to read it.
+
+    .. versionadded:: 0.49
 
     Returned by :func:`~pyvista.examples.get_example`. Every sequence-valued field is
     a tuple with one entry per path, in the same order, including for single-file
@@ -81,14 +83,22 @@ class Example:
     source_urls: tuple[str, ...] = ()
     """URL each entry in ``paths`` is downloaded from, empty if it has none."""
 
-    _loader: _DatasetLoader | None = field(default=None, repr=False, compare=False)
+    @property
+    def _loader(self) -> _DatasetLoader:
+        """Return the loader backing this example, resolved from :attr:`function`."""
+        loader, _, _ = _get_dataset_loader(self.function)
+        return loader
 
     @property
     def readers(self) -> tuple[pv.BaseReader[Any], ...]:
         """Return a reader for each file which has one.
 
+        The readers report which reader PyVista resolves for each file. They are not
+        the objects :meth:`load` reads through, so configuring one does not change what
+        :meth:`load` returns.
+
         Empty for examples read with a custom function or generated in memory, and
-        shorter than ``paths`` when only some files are read directly.
+        shorter than :attr:`paths` when only some files are read directly.
 
         Returns
         -------
@@ -96,22 +106,20 @@ class Example:
             One reader per file which has one.
 
         """
-        return tuple(r for r in getattr(self._loader, '_reader', ()) if r is not None)
+        loader = self._loader
+        if not isinstance(loader, _FileProps):
+            return ()
+        return tuple(r for r in loader._reader if r is not None)
 
     def load(self) -> DatasetObject:
         """Read the example and return its dataset.
 
         Returns
         -------
-        DataSet | tuple[str, ...] | tuple[pyvista.BaseReader, ...]
-            The dataset, as the example's own function returns it. Examples which load
-            as a :class:`~pyvista.MultiBlock`, :class:`~pyvista.Texture` or
-            :class:`numpy.ndarray` return that in place of a :class:`~pyvista.DataSet`.
+        DataSet | MultiBlock | Texture | numpy.ndarray
+            The dataset, exactly as the example's own :attr:`function` returns it.
 
         """
-        if self._loader is None:  # pragma: no cover
-            msg = f'Example {self.name!r} has no loader.'
-            raise RuntimeError(msg)
         return self._loader.load()
 
 
@@ -150,9 +158,19 @@ def _get_dataset_loader(
     """Return the loader, name, and public function for an example."""
     if callable(name):
         dataset_name = name.__name__.removeprefix('download_').removeprefix('load_')
-        loader = _example_loader(sys.modules[name.__module__], dataset_name)
+        module = sys.modules[name.__module__]
+        loader = _example_loader(module, dataset_name)
         if loader is None:
             msg = f'Function {name.__name__!r} does not have an example dataset.'
+            raise ValueError(msg)
+        # Several names can share a stem, and only one of them owns the dataset:
+        # `planets` has both `download_saturn_rings` and a deprecated `load_saturn_rings`
+        canonical = _public_function(module, dataset_name)
+        if canonical is not name:
+            msg = (
+                f'Function {name.__name__!r} is not the function for example '
+                f'{dataset_name!r}; that is {canonical.__name__!r}.'
+            )
             raise ValueError(msg)
         return loader, dataset_name, name
 
@@ -173,14 +191,17 @@ def _get_dataset_loader(
 
 def _resolve_paths(loader: _DatasetLoader, name: str, *, download: bool) -> tuple[str, ...]:
     """Return the example's file paths, downloading them first if allowed."""
-    if not hasattr(loader, 'path'):
-        return ()
     if download and isinstance(loader, _DOWNLOADABLE_TYPES):
         loader.download()
+    if not isinstance(loader, _FileProps):
+        return ()
 
     # Re-read `path` after downloading: archive members only resolve once extracted
+    # A relative path means an archive member which `download()` has not resolved yet.
+    # `Path` would resolve it against the working directory, and `Path('')` against `'.'`,
+    # so both would look present and hand back whatever the caller happens to be sitting in.
     paths = tuple(loader.path)
-    if missing := [p for p in paths if not Path(p).exists()]:
+    if missing := [p for p in paths if not (p and Path(p).is_absolute() and Path(p).exists())]:
         missing_str = '\n\t'.join(missing)
         msg = (
             f'Example {name!r} is not available locally and download=False.\n'
@@ -192,6 +213,8 @@ def _resolve_paths(loader: _DatasetLoader, name: str, *, download: bool) -> tupl
 
 def get_example(name: str | Callable[..., Any], *, download: bool = True) -> Example:
     """Look up any example dataset.
+
+    .. versionadded:: 0.49
 
     This is a single entry point for every example in
     :mod:`pyvista.examples.examples`, :mod:`pyvista.examples.downloads`, and
@@ -239,7 +262,7 @@ def get_example(name: str | Callable[..., Any], *, download: bool = True) -> Exa
     >>> uniform.paths  # doctest:+SKIP
     ('.../pyvista/examples/uniform.vtk',)
 
-    Get a reader for each file that has one, to inspect or configure before reading.
+    Get the reader PyVista resolves for each file that has one.
 
     >>> [type(reader).__name__ for reader in uniform.readers]
     ['VTKDataSetReader']
@@ -250,7 +273,6 @@ def get_example(name: str | Callable[..., Any], *, download: bool = True) -> Exa
         name=dataset_name,
         function=function,
         paths=_resolve_paths(loader, dataset_name, download=download),
-        file_sizes=getattr(loader, '_filesize_bytes', ()),
-        source_urls=getattr(loader, 'source_url', ()),
-        _loader=loader,
+        file_sizes=loader._filesize_bytes if isinstance(loader, _FileProps) else (),
+        source_urls=loader.source_url if isinstance(loader, _DOWNLOADABLE_TYPES) else (),
     )

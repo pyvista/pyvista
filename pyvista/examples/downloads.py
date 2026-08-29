@@ -32,10 +32,10 @@ import sys
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import cast
-from typing import overload
 
 import numpy as np
 import pooch
+from typing_extensions import overload
 
 import pyvista as pv
 from pyvista import _vtk
@@ -4911,6 +4911,10 @@ def download_sky_box_cube_map(load: Literal[False]) -> tuple[str, ...]: ...
 def download_sky_box_cube_map(load: bool = True) -> Texture | tuple[str, ...]:  # noqa: FBT001, FBT002
     """Download a skybox cube map texture.
 
+    .. versionchanged:: 0.49
+        ``load=False`` returns the path of every face. It previously returned an
+        empty tuple.
+
     Parameters
     ----------
     load : bool, default: True
@@ -8499,6 +8503,12 @@ def download_whole_body_ct_male(
         ``(320, 320, 547)`` was returned. Use ``high_resolution=True`` for the
         high-resolution version.
 
+    .. note::
+        ``load=False`` returns only the file which is read directly, not the
+        other files downloaded alongside it. This is a legacy quirk of the
+        ``load`` argument. For every file belonging to this example, use
+        :func:`examples.get_example('whole_body_ct_male').paths <pyvista.examples.get_example>`.
+
     Parameters
     ----------
     load : bool, default: True
@@ -8749,7 +8759,7 @@ def download_whole_body_ct_female(
         ``load=False`` returns only the file which is read directly, not the
         other files downloaded alongside it. This is a legacy quirk of the
         ``load`` argument. For every file belonging to this example, use
-        :func:`examples.get_example('whole_body_ct_male').paths <pyvista.examples.get_example>`.
+        :func:`examples.get_example('whole_body_ct_female').paths <pyvista.examples.get_example>`.
 
     Parameters
     ----------
@@ -8885,12 +8895,6 @@ def download_room_cff(load: bool = True) -> MultiBlock | str:  # noqa: FBT001, F
         other files downloaded alongside it. This is a legacy quirk of the
         ``load`` argument. For every file belonging to this example, use
         :func:`examples.get_example('room_cff').paths <pyvista.examples.get_example>`.
-
-    .. note::
-        ``load=False`` returns only the file which is read directly, not the
-        other files downloaded alongside it. This is a legacy quirk of the
-        ``load`` argument. For every file belonging to this example, use
-        :func:`examples.get_example('whole_body_ct_female').paths <pyvista.examples.get_example>`.
 
     Parameters
     ----------
