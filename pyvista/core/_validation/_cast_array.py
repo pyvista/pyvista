@@ -128,7 +128,7 @@ def _cast_to_numpy(
     if must_be_real and not issubclass(out.dtype.type, (np.floating, np.integer)):
         msg = f'Array must have real numbers. Got dtype {out.dtype.type}'
         raise TypeError(msg)
-    elif out.dtype.name == 'object':
+    elif out.dtype.kind == 'O':
         msg = f'Object arrays are not supported. Got {arr} when casting to a NumPy array.'
         raise TypeError(msg)
     return out
