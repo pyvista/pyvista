@@ -3909,16 +3909,17 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.UseImageBasedLightingOn()
 
         if resample is None:
-            resample = pv.global_theme.resample_environment_texture
+            resample = self._theme.resample_environment_texture
+
+        default_size = _default_irradiance_size()
 
         if resample:
             resample = 1 / 16 if resample is True else resample
 
             # Convolving the diffuse irradiance map dominates image-based lighting
             # for cube maps, so scale it with the texture.
-            default_size = _default_irradiance_size()
-            self.GetEnvMapIrradiance().SetIrradianceSize(
-                min(default_size, max(_MIN_IRRADIANCE_SIZE, round(default_size * resample)))
+            irradiance_size = min(
+                default_size, max(_MIN_IRRADIANCE_SIZE, round(default_size * resample))
             )
 
             # Copy the texture
@@ -3936,7 +3937,10 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
                 texture_copy.SetInputDataObject(i, new_image)
             self.SetEnvironmentTexture(texture_copy, is_srgb)
         else:
+            irradiance_size = default_size
             self.SetEnvironmentTexture(texture, is_srgb)
+
+        self.GetEnvMapIrradiance().SetIrradianceSize(irradiance_size)
 
         if rotation is not None:
             if vtk_version_info < (9, 6):  # pragma: no cover

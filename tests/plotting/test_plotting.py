@@ -343,7 +343,7 @@ def test_set_environment_texture_resample_shrinks_irradiance(no_images_to_verify
     pl.set_environment_texture(texture, resample=2.0)
     assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == default_size
 
-    # Very low sampling rates are clamped so the diffuse term stays smooth
+    # Rates below the floor all land on it
     pl.set_environment_texture(texture, resample=1 / 1024)
     assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == _MIN_IRRADIANCE_SIZE
     pl.close()
@@ -351,6 +351,15 @@ def test_set_environment_texture_resample_shrinks_irradiance(no_images_to_verify
     # The theme applies the same scaling when `resample` is not given explicitly
     pv.global_theme.resample_environment_texture = True
     pl = pv.Plotter(lighting=None)
+    pl.set_environment_texture(texture)
+    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == 32
+    pl.close()
+
+    # A theme passed to the plotter applies instead of the global one
+    pv.global_theme.resample_environment_texture = False
+    theme = pv.plotting.themes._TestingTheme()
+    theme.resample_environment_texture = True
+    pl = pv.Plotter(lighting=None, theme=theme)
     pl.set_environment_texture(texture)
     assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == 32
     pl.close()
