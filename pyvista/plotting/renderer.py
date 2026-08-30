@@ -3864,7 +3864,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
                 image-based lighting is down-sampled at the same rate, with its
                 size clamped between 32 texels and its default. Any rate at or
                 below ``1/8``, including the ``1/16`` that ``True`` selects,
-                therefore gives a 32 texel map.
+                therefore gives a 32 texel map. Only a single rate is accepted;
+                a sequence of per-axis rates raises ``ValueError``.
 
         rotation : RotationLike, optional
             Rotation to apply to the environment texture for image-based

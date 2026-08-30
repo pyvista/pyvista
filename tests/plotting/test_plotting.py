@@ -324,12 +324,24 @@ def test_set_environment_texture_resample_uses_linear_anti_aliasing(mocker, no_i
     pl.close()
 
 
-def test_set_environment_texture_resample_shrinks_irradiance(no_images_to_verify):  # noqa: ARG001
+@pytest.fixture
+def small_cubemap():
+    """Return a low-resolution cube map, for tests that assert state and never render."""
+    rng = np.random.default_rng(0)
+    faces = []
+    for _ in range(6):
+        image = pv.ImageData(dimensions=(32, 32, 1))
+        image['data'] = rng.integers(0, 255, (32 * 32, 3), dtype=np.uint8)
+        faces.append(image)
+    return pv.Texture(faces)
+
+
+def test_set_environment_texture_resample_shrinks_irradiance(small_cubemap, no_images_to_verify):  # noqa: ARG001
     """Resampling should also shrink the diffuse irradiance map VTK convolves."""
     # Pinned, so the assertions below test the floor's value and not just its name
     assert _MIN_IRRADIANCE_SIZE == 32
 
-    texture = examples.download_cubemap_park()
+    texture = small_cubemap
 
     # The testing theme resamples by default, so turn it off to see the full-size map
     pv.global_theme.resample_environment_texture = False
