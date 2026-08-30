@@ -278,6 +278,7 @@ jobs:
 
     env:
       VTK_WHEEL_DIR: ${{ github.workspace }}/vtk-wheel
+      PARALLEL: "-n auto" # Use all available cores on the selected runner
 
     steps:
       - name: Checkout PyVista
@@ -361,6 +362,7 @@ jobs:
 
     env:
       VTK_WHEEL_DIR: ${{ github.workspace }}/vtk-wheel
+      PARALLEL: "-n auto" # Use all available cores on the selected runner
 
     steps:
       - name: Checkout PyVista
@@ -439,6 +441,7 @@ jobs:
 
     env:
       VTK_WHEEL_DIR: ${{ github.workspace }}/vtk-wheel
+      PARALLEL: "-n auto" # Use all available cores on the selected runner
 
     steps:
       - name: Checkout PyVista
