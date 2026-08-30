@@ -3309,6 +3309,15 @@ class PolyDataFilters(DataSetFilters):
         computed arc length for each of the polylines in the
         input. For all other cell types, the arc length is set to 0.
 
+        The arc length accumulates along each polyline in point order, so the
+        lines must be ordered for the result to grow along the curve. When
+        every line cell of the input is a two-point segment, as produced by
+        :meth:`~pyvista.DataSetFilters.slice`, the segments are assembled into
+        polylines with :meth:`~pyvista.PolyDataFilters.strip` before the arc
+        length is accumulated. The returned mesh keeps the points and cells of
+        the input. Each polyline restarts at 0, so a mesh holding several
+        disconnected loops ends below the sum of its cell lengths.
+
         Parameters
         ----------
         progress_bar : bool, default: False
@@ -3334,16 +3343,31 @@ class PolyDataFilters(DataSetFilters):
         >>> f'Length is {length:.3f}'
         'Length is 0.812'
 
+        A slice through a surface is a set of unordered two-point segments, and
+        the arc length still spans the whole contour.
+
+        >>> contour = sphere.slice(normal='y').compute_arc_length()
+        >>> f'Perimeter is {contour["arc_length"].max():.3f}'
+        'Perimeter is 3.140'
+
         You can also plot the ``arc_length``.
 
         >>> arc = path.compute_arc_length()
         >>> arc.plot(scalars='arc_length')
 
         """
+        segments = self.n_lines > 1 and self.lines.size == 3 * self.n_lines
+
         alg = _vtk.vtkAppendArcLength()
-        alg.SetInputData(self)
+        alg.SetInputData(self.strip(join=True, progress_bar=progress_bar) if segments else self)
         _update_alg(alg, progress_bar=progress_bar, message='Computing the Arc Length')
-        return _get_output(alg)
+        output = _get_output(alg)
+
+        if segments:
+            arc_length = output.point_data['arc_length']
+            output = self.copy()
+            output.point_data.set_array(arc_length, 'arc_length')
+        return output
 
     @_deprecate_positional_args
     def project_points_to_plane(  # type: ignore[misc]  # noqa: PLR0917
