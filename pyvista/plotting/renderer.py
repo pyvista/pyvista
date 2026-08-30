@@ -2058,9 +2058,9 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.remove_bounds_axes()
 
         vtk_less_than_96 = pv.vtk_version_info < (9, 6, 0)
-        if use_3d_text is None:
-            # Use 2D for VTK 9.6 since 3D is broken https://gitlab.kitware.com/vtk/vtk/-/issues/19729
-            use_3d_text = vtk_less_than_96
+        if not np.allclose(self.scale, [1.0, 1.0, 1.0]):
+            # 3D text is not placed correctly when the renderer is scaled
+            use_3d_text = False
         if font_family is None:
             font_family = self._theme.font.family
         if font_size is None:
@@ -2121,6 +2121,10 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             color=color,
             grid=grid,
             location=location,
+            font_size=font_size,
+            font_family=font_family,
+            bold=bold,
+            use_3d_text=use_3d_text,
         )
 
         cube_axes_actor.use_2d_mode = use_2d or not np.allclose(self.scale, [1.0, 1.0, 1.0])
@@ -2167,51 +2171,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             cube_axes_actor.x_axis_range = axes_ranges[0], axes_ranges[1]
             cube_axes_actor.y_axis_range = axes_ranges[2], axes_ranges[3]
             cube_axes_actor.z_axis_range = axes_ranges[4], axes_ranges[5]
-
-        # set font
-        font_family = parse_font_family(font_family)
-
-        if not use_3d_text or not np.allclose(self.scale, [1.0, 1.0, 1.0]):
-            use_3d_text = False
-            cube_axes_actor.SetUseTextActor3D(False)
-        else:
-            cube_axes_actor.SetUseTextActor3D(True)
-
-        props = [
-            cube_axes_actor.GetTitleTextProperty(0),
-            cube_axes_actor.GetTitleTextProperty(1),
-            cube_axes_actor.GetTitleTextProperty(2),
-            cube_axes_actor.GetLabelTextProperty(0),
-            cube_axes_actor.GetLabelTextProperty(1),
-            cube_axes_actor.GetLabelTextProperty(2),
-        ]
-
-        # For 3D text, use `SetFontSize` to a relatively high value and use `SetScreenSize` to
-        # shrink it back down. This creates a higher-resolution font and makes it appear sharper.
-        # In VTK 9.6+, the 3D font size is also tied to the value set by SetFontSize, so we need
-        # an additional scaling factor.
-        default_screen_size = 10.0
-        default_font_size = 12
-        scaled_font_size = 50
-
-        for prop in props:
-            prop.SetColor(color.float_rgb)
-            prop.SetFontFamily(font_family)
-            prop.SetBold(bold)
-
-            if use_3d_text:
-                # this merely makes the font sharper
-                prop.SetFontSize(scaled_font_size)
-            else:
-                prop.SetFontSize(font_size)
-
-        if use_3d_text:
-            font_size_factor = 1.0 if vtk_less_than_96 else scaled_font_size / default_font_size
-            cube_axes_actor.SetScreenSize(
-                font_size / default_font_size / font_size_factor * default_screen_size
-            )
-        elif vtk_less_than_96:
-            cube_axes_actor.SetScreenSize(font_size / default_font_size * default_screen_size)
 
         if all_edges:
             self.add_bounding_box(color=color, corner_factor=corner_factor)

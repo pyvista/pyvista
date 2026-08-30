@@ -18,6 +18,7 @@ from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.core.utilities.misc import _NameMixin
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.plotting.colors import Color
+from pyvista.plotting.tools import parse_font_family
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -149,6 +150,35 @@ class CubeAxesActor(
 
         .. versionadded:: 0.49
 
+    font_size : float, optional
+        Size of the label font. Defaults to :attr:`pyvista.global_theme.font.size
+        <pyvista.plotting.themes._Font.size>`.
+
+        .. versionadded:: 0.49
+
+    font_family : str, optional
+        Font family. Must be either ``'courier'``, ``'times'``, or ``'arial'``.
+        Defaults to :attr:`pyvista.global_theme.font.family
+        <pyvista.plotting.themes._Font.family>`.
+
+        .. versionadded:: 0.49
+
+    bold : bool, default: True
+        Bold the axis labels and titles.
+
+        .. versionadded:: 0.49
+
+    use_3d_text : bool, optional
+        Use :vtk:`vtkTextActor3D` for titles and labels. Defaults to ``False`` for
+        VTK 9.6 and later, and ``True`` for older versions of VTK.
+
+        .. warning::
+            Setting ``use_3d_text=True`` is not recommended with VTK 9.6.0 or later since
+            the 3D labels may not render at all in some cases. This is a known VTK bug:
+            https://gitlab.kitware.com/vtk/vtk/-/issues/19729.
+
+        .. versionadded:: 0.49
+
     See Also
     --------
     :meth:`~pyvista.Plotter.show_bounds`
@@ -193,6 +223,10 @@ class CubeAxesActor(
         color: ColorLike | None = None,
         grid: bool | str | None = None,  # noqa: FBT001
         location: str | None = 'closest',
+        font_size: float | None = None,
+        font_family: str | None = None,
+        bold: bool = True,  # noqa: FBT001, FBT002
+        use_3d_text: bool | None = None,  # noqa: FBT001
     ):
         """Initialize CubeAxesActor."""
         super().__init__()
@@ -251,6 +285,13 @@ class CubeAxesActor(
             visibility=(x_axis_visibility, y_axis_visibility, z_axis_visibility),
         )
         self._configure_fly_mode(location=location)
+        self._configure_text(
+            color=color_,
+            font_size=font_size,
+            font_family=font_family,
+            bold=bold,
+            use_3d_text=use_3d_text,
+        )
 
         self.GetXAxesLinesProperty().SetColor(color_.float_rgb)
         self.GetYAxesLinesProperty().SetColor(color_.float_rgb)
@@ -287,6 +328,51 @@ class CubeAxesActor(
         self.GetXAxesGridlinesProperty().SetColor(color.float_rgb)
         self.GetYAxesGridlinesProperty().SetColor(color.float_rgb)
         self.GetZAxesGridlinesProperty().SetColor(color.float_rgb)
+
+    def _configure_text(
+        self,
+        *,
+        color: Color,
+        font_size: float | None,
+        font_family: str | None,
+        bold: bool,
+        use_3d_text: bool | None,
+    ) -> None:
+        """Set the color, font and rendering mode of the titles and labels."""
+        vtk_less_than_96 = pv.vtk_version_info < (9, 6, 0)
+        if use_3d_text is None:
+            # 3D text does not render at all with VTK 9.6
+            # https://gitlab.kitware.com/vtk/vtk/-/issues/19729
+            use_3d_text = vtk_less_than_96
+        if font_size is None:
+            font_size = pv.global_theme.font.size
+        if font_family is None:
+            font_family = pv.global_theme.font.family
+
+        self.SetUseTextActor3D(use_3d_text)
+
+        # For 3D text, use `SetFontSize` to a relatively high value and use `SetScreenSize` to
+        # shrink it back down. This creates a higher-resolution font and makes it appear sharper.
+        # In VTK 9.6+, the 3D font size is also tied to the value set by SetFontSize, so we need
+        # an additional scaling factor.
+        default_screen_size = 10.0
+        default_font_size = 12
+        scaled_font_size = 50
+
+        for axis in range(3):
+            for prop in (self.GetTitleTextProperty(axis), self.GetLabelTextProperty(axis)):
+                prop.SetColor(color.float_rgb)
+                prop.SetFontFamily(parse_font_family(font_family))
+                prop.SetBold(bold)
+                prop.SetFontSize(scaled_font_size if use_3d_text else font_size)
+
+        if use_3d_text:
+            font_size_factor = 1.0 if vtk_less_than_96 else scaled_font_size / default_font_size
+            self.SetScreenSize(
+                font_size / default_font_size / font_size_factor * default_screen_size
+            )
+        elif vtk_less_than_96:
+            self.SetScreenSize(font_size / default_font_size * default_screen_size)
 
     def _configure_fly_mode(self, *, location: str | None) -> None:
         """Set how the axes are drawn in relation to the camera position."""
