@@ -379,6 +379,18 @@ def test_set_environment_texture_resample_per_axis_rate(no_images_to_verify):  #
     pl.close()
 
 
+def test_set_environment_texture_irradiance_is_cubemap_only(no_images_to_verify):  # noqa: ARG001
+    """Equirectangular textures light through spherical harmonics, so their map is left alone."""
+    texture = examples.load_globe_texture()
+    assert not texture.cube_map
+
+    pl = pv.Plotter(lighting=None)
+    pl.renderer.GetEnvMapIrradiance().SetIrradianceSize(64)
+    pl.set_environment_texture(texture, resample=True)
+    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == 64
+    pl.close()
+
+
 @pytest.mark.needs_vtk_version(at_least=(9, 6))
 def test_set_environment_texture_rotation(verify_image_cache):
     """Environment texture rotation rotates both background and reflections."""

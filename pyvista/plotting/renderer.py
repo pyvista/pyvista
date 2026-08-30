@@ -3936,7 +3936,10 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             irradiance_size = default_size
             self.SetEnvironmentTexture(texture, is_srgb)
 
-        self.GetEnvMapIrradiance().SetIrradianceSize(irradiance_size)
+        # VTK convolves the irradiance map only when spherical harmonics are off,
+        # which is the cube map case handled above.
+        if texture.cube_map:
+            self.GetEnvMapIrradiance().SetIrradianceSize(irradiance_size)
 
         if rotation is not None:
             if vtk_version_info < (9, 6):  # pragma: no cover
