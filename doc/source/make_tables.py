@@ -2583,7 +2583,7 @@ class DatasetCard:
 
         add('mod', DATASET_GALLERY_MODULES[loader._module])
 
-        for dataset_type in loader.unique_dataset_type:
+        for dataset_type in loader.unique_dataset_types:
             name = 'None' if dataset_type is type(None) else dataset_type.__name__
             add('dtype', name)
 
@@ -2594,7 +2594,7 @@ class DatasetCard:
         else:
             add('ctype', 'N/A (no cells)', slug='na')
 
-        reader_types = DatasetPropsGenerator._try_getattr(loader, 'unique_reader_type')
+        reader_types = DatasetPropsGenerator._try_getattr(loader, 'unique_reader_types')
         if reader_types:
             for reader_type in reader_types:
                 add('reader', reader_type.__name__)
@@ -2718,7 +2718,7 @@ class DatasetPropsGenerator:
             return sep.join(['``' + ext + '``' for ext in file_ext_])
 
         sep = ',\n'
-        file_ext = DatasetPropsGenerator._try_getattr(loader, 'unique_extension')
+        file_ext = DatasetPropsGenerator._try_getattr(loader, 'unique_extensions')
         if file_ext:
             if len(file_ext) > 10:
                 # Limit number of extensions displayed
@@ -2733,7 +2733,7 @@ class DatasetPropsGenerator:
         loader: _FileProps,
     ):
         """Format reader type(s) with doc references to reader class(es)."""
-        reader_types = DatasetPropsGenerator._try_getattr(loader, 'unique_reader_type')
+        reader_types = DatasetPropsGenerator._try_getattr(loader, 'unique_reader_types')
         if not reader_types:
             return '``N/A (generated in code)``'
         return '\n'.join(f':class:`~{_get_fullname(cls)}`' for cls in reader_types)
@@ -2743,7 +2743,7 @@ class DatasetPropsGenerator:
         loader: _FileProps,
     ):
         """Format Plotter importer method with a doc reference."""
-        reader_types = DatasetPropsGenerator._try_getattr(loader, 'unique_reader_type')
+        reader_types = DatasetPropsGenerator._try_getattr(loader, 'unique_reader_types')
         if not reader_types or len(reader_types) != 1:
             return None
 
@@ -2756,7 +2756,7 @@ class DatasetPropsGenerator:
         """Format dataset type(s) with doc references to dataset class(es)."""
         return '\n'.join(
             '``None``' if cls is type(None) else f':class:`~{_get_fullname(cls)}`'
-            for cls in loader.unique_dataset_type
+            for cls in loader.unique_dataset_types
         )
 
     @staticmethod
@@ -2802,7 +2802,7 @@ class DatasetPropsGenerator:
             return None
         # Use dict to create an ordered set to make sure links are unique
         url_dict = {
-            url: name for name, url in zip(loader.source_name, loader.web_url, strict=True)
+            url: name for name, url in zip(loader.source_names, loader.web_urls, strict=True)
         }
 
         rst_links = [_rst_link(name, url) for url, name in url_dict.items()]
@@ -3109,7 +3109,7 @@ def _expected_return_types(card: DatasetCard) -> tuple[str, str]:
     """Return the dataset type an example loads and the type ``load=False`` gives back."""
     dataset_type = type(card.loader.dataset).__name__
     # `_download_dataset` collapses to a bare path only when there is one to return
-    loadable = getattr(card.loader, 'path_loadable', ())
+    loadable = getattr(card.loader, 'loadable_paths', ())
     return dataset_type, 'str' if len(loadable) == 1 else 'tuple[str, ...]'
 
 

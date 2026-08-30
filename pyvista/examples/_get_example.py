@@ -103,7 +103,7 @@ class Example:
         loader = self._loader
         if not isinstance(loader, _FileProps):
             return ()
-        return tuple(r for r in loader._reader if r is not None)
+        return tuple(r for r in loader._readers if r is not None)
 
     def load(self) -> DatasetObject:
         """Read the example and return its dataset.
@@ -193,11 +193,11 @@ def _resolve_paths(loader: _DatasetLoader, name: str, *, download: bool) -> tupl
     if not isinstance(loader, _FileProps):
         return ()
 
-    # Re-read `path` after downloading: archive members only resolve once extracted
+    # Re-read `paths` after downloading: archive members only resolve once extracted
     # A relative path means an archive member which `download()` has not resolved yet.
     # `Path` would resolve it against the working directory, and `Path('')` against `'.'`,
     # so both would look present and hand back whatever the caller happens to be sitting in.
-    paths = tuple(loader.path)
+    paths = tuple(loader.paths)
     if missing := [p for p in paths if not (p and Path(p).is_absolute() and Path(p).exists())]:
         missing_str = '\n\t'.join(missing)
         if not download:
@@ -268,6 +268,6 @@ def get_example(name: str | Callable[..., Any], *, download: bool = True) -> Exa
         name=dataset_name,
         function=function,
         paths=_resolve_paths(loader, dataset_name, download=download),
-        file_sizes=loader._filesize_bytes if isinstance(loader, _FileProps) else (),
-        source_urls=loader.source_url if isinstance(loader, _DOWNLOADABLE_TYPES) else (),
+        file_sizes=loader._file_sizes if isinstance(loader, _FileProps) else (),
+        source_urls=loader.source_urls if isinstance(loader, _DOWNLOADABLE_TYPES) else (),
     )

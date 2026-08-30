@@ -8687,7 +8687,7 @@ class _WholeBodyCTUtilities:
         dataset['label_map'] = _WholeBodyCTUtilities.label_map_from_masks(dataset['segmentations'])
 
         # Add metadata
-        _WholeBodyCTUtilities.add_metadata(dataset, colors_module.path[0])
+        _WholeBodyCTUtilities.add_metadata(dataset, colors_module.paths[0])
         return dataset
 
     @staticmethod

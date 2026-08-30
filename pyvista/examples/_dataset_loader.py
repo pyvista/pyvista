@@ -67,38 +67,38 @@ class _FileProps:
 
     @property
     @abstractmethod
-    def path(self) -> tuple[str, ...]:
+    def paths(self) -> tuple[str, ...]:
         """Return the paths of all files."""
 
     @property
     def num_files(self) -> int:
-        """Return the number of files from path or paths.
+        """Return the number of files across all paths.
 
         If a path is a folder, the number of files contained in the folder is returned.
         """
         return sum(
-            1 if Path(p).is_file() else len(_get_all_nested_filepaths(p)) for p in self.path
+            1 if Path(p).is_file() else len(_get_all_nested_filepaths(p)) for p in self.paths
         )
 
     @property
-    def unique_extension(self) -> tuple[str, ...]:
+    def unique_extensions(self) -> tuple[str, ...]:
         """Return the unique file extensions from all files."""
-        return _get_unique_extension(self.path)
+        return _get_unique_extensions(self.paths)
 
     @property
     @abstractmethod
-    def _filesize_bytes(self) -> tuple[int, ...]:
+    def _file_sizes(self) -> tuple[int, ...]:
         """Return the file sizes of all files in bytes."""
 
     @property
-    def _filesize_format(self) -> tuple[str, ...]:
+    def _file_sizes_formatted(self) -> tuple[str, ...]:
         """Return the formatted size of all files."""
-        return tuple(_format_file_size(size) for size in self._filesize_bytes)
+        return tuple(_format_file_size(size) for size in self._file_sizes)
 
     @property
     def _total_size_bytes(self) -> int:
         """Return the total size of all files in bytes."""
-        return sum(self._filesize_bytes)
+        return sum(self._file_sizes)
 
     @property
     def total_size(self) -> str:
@@ -107,13 +107,13 @@ class _FileProps:
 
     @property
     @abstractmethod
-    def _reader(self) -> tuple[pv.BaseReader[Any] | None, ...]:
+    def _readers(self) -> tuple[pv.BaseReader[Any] | None, ...]:
         """Return the base file readers used to read the files."""
 
     @property
-    def unique_reader_type(self) -> tuple[type[pv.BaseReader[Any]], ...]:
+    def unique_reader_types(self) -> tuple[type[pv.BaseReader[Any]], ...]:
         """Return unique reader types from all file readers."""
-        return _get_unique_reader_type(self._reader)
+        return _get_unique_reader_types(self._readers)
 
 
 class _Downloadable(Protocol):
@@ -125,25 +125,25 @@ class _Downloadable(Protocol):
 
     @property
     @abstractmethod
-    def source_name(self) -> tuple[str, ...]:
+    def source_names(self) -> tuple[str, ...]:
         """Return the name of each download relative to its base url."""
 
     @property
     @abstractmethod
-    def base_url(self) -> tuple[str, ...]:
+    def base_urls(self) -> tuple[str, ...]:
         """Return the base url of each download."""
 
     @property
-    def source_url(self) -> tuple[str, ...]:
+    def source_urls(self) -> tuple[str, ...]:
         """Return the source of each download.
 
         This is the full URL or local cached path used to download the data directly.
         """
-        return self._source_url()
+        return self._source_urls()
 
-    def _source_url(self, *, web_blob: bool = False) -> tuple[str, ...]:
+    def _source_urls(self, *, web_blob: bool = False) -> tuple[str, ...]:
         """Join each base url with its source name, optionally as a blob url for a browser."""
-        base_urls = list(self.base_url)
+        base_urls = list(self.base_urls)
         if web_blob:
             # Ensure urls are not based on a local cache path
             from pyvista.examples.downloads import _DEFAULT_VTK_DATA_SOURCE  # noqa: PLC0415
@@ -164,21 +164,21 @@ class _Downloadable(Protocol):
         # Use posixpath (not pathlib) since these are URLs, not filesystem paths.
         return tuple(
             posixpath.join(base, name)
-            for base, name in zip(base_urls, self.source_name, strict=True)
+            for base, name in zip(base_urls, self.source_names, strict=True)
         )
 
     @property
-    def web_url(self) -> tuple[str, ...]:
+    def web_urls(self) -> tuple[str, ...]:
         """Return the web source of each download as blob instead of raw.
 
         This URL is useful for linking to the source webpage for
         a human to open on a browser.
         """
-        return self._source_url(web_blob=True)
+        return self._source_urls(web_blob=True)
 
     @property
     @abstractmethod
-    def path(self) -> tuple[str, ...]:
+    def paths(self) -> tuple[str, ...]:
         """Return the file path of each downloaded file."""
 
     @abstractmethod
@@ -255,9 +255,9 @@ class _DatasetLoader:
 
     @property
     @final
-    def unique_dataset_type(self) -> tuple[DatasetType, ...]:
+    def unique_dataset_types(self) -> tuple[DatasetType, ...]:
         """Return unique dataset types from all datasets."""
-        return _get_unique_dataset_type(self.dataset_iterable)
+        return _get_unique_dataset_types(self.dataset_iterable)
 
     @property
     @final
@@ -291,15 +291,15 @@ class _SingleFile(_FileProps):
         self._path = path if Path(path).is_absolute() else str(Path(USER_DATA_PATH) / path)
 
     @property
-    def path(self) -> tuple[str, ...]:
+    def paths(self) -> tuple[str, ...]:
         return (self._path,)
 
     @property
-    def _filesize_bytes(self) -> tuple[int, ...]:
+    def _file_sizes(self) -> tuple[int, ...]:
         return (_get_file_or_folder_size(self._path),)
 
     @property
-    def _reader(self) -> tuple[pv.BaseReader[Any] | None, ...]:
+    def _readers(self) -> tuple[pv.BaseReader[Any] | None, ...]:
         return (None,)
 
 
@@ -344,7 +344,7 @@ class _SingleFileDatasetLoader(_SingleFile, _DatasetLoader):
         self._read_func = pv.read if path and read_func is None else read_func
 
     @property
-    def _reader(self) -> tuple[pv.BaseReader[Any] | None, ...]:
+    def _readers(self) -> tuple[pv.BaseReader[Any] | None, ...]:
         # TODO: return the actual reader used, and not just a lookup
         #       (this will require an update to the 'read_func' API)
         try:
@@ -354,8 +354,8 @@ class _SingleFileDatasetLoader(_SingleFile, _DatasetLoader):
             return (None,)
 
     @property
-    def path_loadable(self) -> tuple[str, ...]:
-        """Return the path of the file to load."""
+    def loadable_paths(self) -> tuple[str, ...]:
+        """Return the paths of all loadable files."""
         return (self._path,)
 
     def _read_and_load(
@@ -476,13 +476,13 @@ class _DownloadableFile(_SingleFile, _Downloadable):
         return self._path
 
     @property
-    def source_name(self) -> tuple[str, ...]:
-        """Return the name of the download relative to the base url."""
+    def source_names(self) -> tuple[str, ...]:
+        """Return the name of each download relative to its base url."""
         return (self._source_name,)
 
     @property
-    def base_url(self) -> tuple[str, ...]:
-        """Return the base url of the download."""
+    def base_urls(self) -> tuple[str, ...]:
+        """Return the base url of each download."""
         return (self._base_url,)
 
     def download(self) -> tuple[str, ...]:
@@ -577,12 +577,12 @@ class _MultiFileDatasetLoader(_DatasetLoader, _FileProps):
         return self._file_loaders_
 
     @property
-    def path(self) -> tuple[str, ...]:
+    def paths(self) -> tuple[str, ...]:
         """Return the paths of all files."""
-        return tuple(itertools.chain.from_iterable(file.path for file in self._file_objects))
+        return tuple(itertools.chain.from_iterable(file.paths for file in self._file_objects))
 
     @property
-    def path_loadable(self) -> tuple[str, ...]:
+    def loadable_paths(self) -> tuple[str, ...]:
         """Return the paths of all loadable files.
 
         A file is loadable on its own when it is wrapped as a dataset loader. When none
@@ -591,26 +591,26 @@ class _MultiFileDatasetLoader(_DatasetLoader, _FileProps):
         """
         loadable = tuple(
             itertools.chain.from_iterable(
-                file.path
+                file.paths
                 for file in self._file_objects
                 if isinstance(file, _SingleFileDatasetLoader)
             ),
         )
-        return loadable or self.path
+        return loadable or self.paths
 
     @property
-    def _filesize_bytes(self) -> tuple[int, ...]:
+    def _file_sizes(self) -> tuple[int, ...]:
         """Return the file sizes of all files in bytes."""
         return tuple(
-            itertools.chain.from_iterable(file._filesize_bytes for file in self._file_objects)
+            itertools.chain.from_iterable(file._file_sizes for file in self._file_objects)
         )
 
     @property
-    def _reader(self) -> tuple[pv.BaseReader[Any] | None, ...]:
+    def _readers(self) -> tuple[pv.BaseReader[Any] | None, ...]:
         """Return the base file readers used to read the files."""
         # TODO: return the actual reader used, and not just a lookup
         #       (this will require an update to the 'read_func' API)
-        return tuple(itertools.chain.from_iterable(file._reader for file in self._file_objects))
+        return tuple(itertools.chain.from_iterable(file._readers for file in self._file_objects))
 
     def load(self) -> Any:
         """Load the files using the configured load function."""
@@ -627,22 +627,22 @@ class _MultiFileDownloadableDatasetLoader(
     """Wrap multiple files for downloading and loading."""
 
     @property
-    def source_name(self) -> tuple[str, ...]:
+    def source_names(self) -> tuple[str, ...]:
         """Return the name of each download relative to its base url."""
         return tuple(
             itertools.chain.from_iterable(
-                file.source_name
+                file.source_names
                 for file in self._file_objects
                 if isinstance(file, _DOWNLOADABLE_TYPES)
             ),
         )
 
     @property
-    def base_url(self) -> tuple[str, ...]:
+    def base_urls(self) -> tuple[str, ...]:
         """Return the base url of each download."""
         return tuple(
             itertools.chain.from_iterable(
-                file.base_url
+                file.base_urls
                 for file in self._file_objects
                 if isinstance(file, _DOWNLOADABLE_TYPES)
             ),
@@ -701,7 +701,7 @@ def _download_dataset(
 
     # Exclude non-loadable metafiles from result (if any)
     if not metafiles and isinstance(dataset_loader, _MultiFileDownloadableDatasetLoader):
-        path = dataset_loader.path_loadable
+        path = dataset_loader.loadable_paths
 
     if load:
         return dataset_loader.load()
@@ -714,17 +714,17 @@ _MultiBlockFile = _SingleFileDatasetLoader | _MultiFileDatasetLoader | _Download
 
 # For `isinstance` checks: `_Downloadable` is deliberately not `runtime_checkable`,
 # since checking a runtime-checkable Protocol on Python < 3.12 evaluates properties
-# such as `web_url` and can raise.
+# such as `web_urls` and can raise.
 _DOWNLOADABLE_TYPES = (_DownloadableFile, _MultiFileDownloadableDatasetLoader)
 
 
 def _default_multiblock_name(file: _MultiBlockFile) -> str:
     """Return the default MultiBlock key for a loadable file, derived from its path."""
-    path_loadable: tuple[str, ...] = getattr(file, 'path_loadable', ())
-    if len(path_loadable) != 1:
+    loadable_paths: tuple[str, ...] = getattr(file, 'loadable_paths', ())
+    if len(loadable_paths) != 1:
         # No single loadable path to name the block after
         return ''
-    path = Path(path_loadable[0])
+    path = Path(loadable_paths[0])
     return path.name[: -len(get_ext(path.name))] if path.is_file() else path.name
 
 
@@ -767,7 +767,7 @@ def _load_as_cubemap(files: str | _SingleFile | Sequence[_SingleFile]) -> pv.Tex
     """
     if isinstance(files, str):
         return pv.cubemap(files) if Path(files).is_dir() else pv.cubemap_from_filenames(files)
-    paths = list(files.path) if isinstance(files, _SingleFile) else [f._path for f in files]
+    paths = list(files.paths) if isinstance(files, _SingleFile) else [f._path for f in files]
     return pv.cubemap_from_filenames(paths)
 
 
@@ -843,7 +843,7 @@ def _get_all_nested_filepaths(filepath: str, *, exclude_readme: bool = True) -> 
     )
 
 
-def _get_unique_extension(path: Sequence[str]) -> tuple[str, ...]:
+def _get_unique_extensions(path: Sequence[str]) -> tuple[str, ...]:
     """Return the unique set of file extensions from a sequence of paths."""
     ext_set: set[str] = set()
     for file in path:
@@ -852,7 +852,7 @@ def _get_unique_extension(path: Sequence[str]) -> tuple[str, ...]:
     return tuple(sorted(ext_set))
 
 
-def _get_unique_reader_type(
+def _get_unique_reader_types(
     reader: Sequence[pv.BaseReader[Any] | None],
 ) -> tuple[type[pv.BaseReader[Any]], ...]:
     """Return the unique reader types from a sequence of readers, empty if there are none."""
@@ -861,7 +861,7 @@ def _get_unique_reader_type(
     return tuple(sorted(unique_types, key=lambda t: t.__name__))
 
 
-def _get_unique_dataset_type(
+def _get_unique_dataset_types(
     dataset_iterable: tuple[DatasetObject, ...],
 ) -> tuple[DatasetType, ...]:
     """Return the unique dataset types from all datasets."""

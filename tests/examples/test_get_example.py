@@ -202,7 +202,7 @@ def test_get_example_download_false_rejects_unresolved_archive():
     # and `Path('').exists()` is always true -- neither means the example is available
     for target in ('data', ''):
         loader = _SingleFileDownloadableDatasetLoader('not_downloaded.zip', target_file=target)
-        assert not Path(loader.path[0]).is_absolute()
+        assert not Path(loader.paths[0]).is_absolute()
         with pytest.raises(FileNotFoundError, match='not available locally'):
             _resolve_paths(loader, 'archived_example', download=False)
 
