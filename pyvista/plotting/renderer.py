@@ -2061,6 +2061,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         if not np.allclose(self.scale, [1.0, 1.0, 1.0]):
             # 3D text is not placed correctly when the renderer is scaled
             use_3d_text = False
+            use_2d = True
         if font_family is None:
             font_family = self._theme.font.family
         if font_size is None:
@@ -2125,52 +2126,11 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             font_family=font_family,
             bold=bold,
             use_3d_text=use_3d_text,
+            use_2d_mode=use_2d,
+            bounds=bounds,
+            axes_ranges=axes_ranges,
+            padding=padding,
         )
-
-        cube_axes_actor.use_2d_mode = use_2d or not np.allclose(self.scale, [1.0, 1.0, 1.0])
-
-        if isinstance(padding, (int, float)) and 0.0 <= padding < 1.0:
-            if not np.any(np.abs(bounds) == np.inf):
-                cushion = (
-                    np.array(
-                        [
-                            np.abs(bounds[1] - bounds[0]),
-                            np.abs(bounds[3] - bounds[2]),
-                            np.abs(bounds[5] - bounds[4]),
-                        ],
-                    )
-                    * padding
-                )
-                bounds[::2] -= cushion
-                bounds[1::2] += cushion
-        else:
-            msg = f'padding ({padding}) not understood. Must be float between 0 and 1'
-            raise ValueError(msg)
-        cube_axes_actor.bounds = bounds
-
-        # set axes ranges if input
-        if axes_ranges is not None:
-            if isinstance(axes_ranges, (Sequence, np.ndarray)):
-                axes_ranges = np.asanyarray(axes_ranges)
-            else:
-                msg = 'Input axes_ranges must be a numeric sequence.'
-                raise TypeError(msg)
-
-            if not np.issubdtype(axes_ranges.dtype, np.number):
-                msg = 'All of the elements of axes_ranges must be numbers.'
-                raise TypeError(msg)
-
-            # set the axes ranges
-            if axes_ranges.shape != (6,):
-                msg = (
-                    '`axes_ranges` must be passed as a '
-                    '(x_min, x_max, y_min, y_max, z_min, z_max) sequence.'
-                )
-                raise ValueError(msg)
-
-            cube_axes_actor.x_axis_range = axes_ranges[0], axes_ranges[1]
-            cube_axes_actor.y_axis_range = axes_ranges[2], axes_ranges[3]
-            cube_axes_actor.z_axis_range = axes_ranges[4], axes_ranges[5]
 
         if all_edges:
             self.add_bounding_box(color=color, corner_factor=corner_factor)

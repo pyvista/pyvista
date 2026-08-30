@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import cast
 
@@ -21,10 +22,42 @@ from pyvista.plotting.colors import Color
 from pyvista.plotting.tools import parse_font_family
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
-
     from pyvista.core._typing_core import VectorLike
     from pyvista.plotting.colors import ColorLike
+
+
+def _validate_axes_ranges(axes_ranges: VectorLike[float]) -> np.ndarray:
+    """Check that axes ranges are a numeric sequence of six values."""
+    if isinstance(axes_ranges, (Sequence, np.ndarray)):
+        axes_ranges = np.asanyarray(axes_ranges)
+    else:
+        msg = 'Input axes_ranges must be a numeric sequence.'
+        raise TypeError(msg)
+
+    if not np.issubdtype(axes_ranges.dtype, np.number):
+        msg = 'All of the elements of axes_ranges must be numbers.'
+        raise TypeError(msg)
+
+    if axes_ranges.shape != (6,):
+        msg = (
+            '`axes_ranges` must be passed as a '
+            '(x_min, x_max, y_min, y_max, z_min, z_max) sequence.'
+        )
+        raise ValueError(msg)
+    return axes_ranges
+
+
+def _pad_bounds(bounds: VectorLike[float], *, padding: float) -> np.ndarray:
+    """Cushion bounds by a percentage of their size along each axial direction."""
+    if not (isinstance(padding, (int, float)) and 0.0 <= padding < 1.0):
+        msg = f'padding ({padding}) not understood. Must be float between 0 and 1'
+        raise ValueError(msg)
+    padded = np.asanyarray(bounds, dtype=float).copy()
+    if not np.any(np.abs(padded) == np.inf):
+        cushion = np.abs(padded[1::2] - padded[::2]) * padding
+        padded[::2] -= cushion
+        padded[1::2] += cushion
+    return padded
 
 
 @_deprecate_positional_args
@@ -179,6 +212,30 @@ class CubeAxesActor(
 
         .. versionadded:: 0.49
 
+    use_2d_mode : bool, default: False
+        Use the 2D render mode. This can be enabled for smoother plotting.
+
+        .. versionadded:: 0.49
+
+    bounds : sequence[float], optional
+        Bounds of the axes in the form ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
+        Defaults to the unit cube.
+
+        .. versionadded:: 0.49
+
+    axes_ranges : sequence[float], optional
+        Values shown on the axes in the form
+        ``(x_min, x_max, y_min, y_max, z_min, z_max)``. These override the values
+        derived from ``bounds``.
+
+        .. versionadded:: 0.49
+
+    padding : float, default: 0.0
+        Percent padding applied to ``bounds`` along each axial direction to cushion
+        the datasets in the scene from the axes annotations.
+
+        .. versionadded:: 0.49
+
     See Also
     --------
     :meth:`~pyvista.Plotter.show_bounds`
@@ -227,6 +284,10 @@ class CubeAxesActor(
         font_family: str | None = None,
         bold: bool = True,  # noqa: FBT001, FBT002
         use_3d_text: bool | None = None,  # noqa: FBT001
+        use_2d_mode: bool = False,  # noqa: FBT001, FBT002
+        bounds: VectorLike[float] | None = None,
+        axes_ranges: VectorLike[float] | None = None,
+        padding: float = 0.0,
     ):
         """Initialize CubeAxesActor."""
         super().__init__()
@@ -297,9 +358,20 @@ class CubeAxesActor(
         self.GetYAxesLinesProperty().SetColor(color_.float_rgb)
         self.GetZAxesLinesProperty().SetColor(color_.float_rgb)
 
+        self.use_2d_mode = use_2d_mode
+
         self.x_axis_visibility = x_axis_visibility
         self.y_axis_visibility = y_axis_visibility
         self.z_axis_visibility = z_axis_visibility
+
+        # labels are only regenerated while the axes are visible
+        if bounds is not None:
+            self.bounds = _pad_bounds(bounds, padding=padding)
+        if axes_ranges is not None:
+            ranges = _validate_axes_ranges(axes_ranges)
+            self.x_axis_range = ranges[0], ranges[1]
+            self.y_axis_range = ranges[2], ranges[3]
+            self.z_axis_range = ranges[4], ranges[5]
 
     def _configure_grid_lines(
         self, *, grid: bool | str | None, color: Color, visibility: tuple[bool, bool, bool]
