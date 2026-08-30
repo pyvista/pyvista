@@ -3911,9 +3911,11 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             resample = 1 / 16 if resample is True else resample
 
             # Convolving the diffuse irradiance map dominates image-based lighting
-            # for cube maps, so scale it with the texture.
+            # for cube maps, so scale it with the texture. The map is square, so a
+            # per-axis rate scales it by its least reduced axis.
+            rate = float(np.max(resample))
             irradiance_size = min(
-                default_size, max(_MIN_IRRADIANCE_SIZE, round(default_size * resample))
+                default_size, max(_MIN_IRRADIANCE_SIZE, round(default_size * rate))
             )
 
             # Copy the texture

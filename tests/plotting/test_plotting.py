@@ -369,6 +369,16 @@ def test_set_environment_texture_resample_shrinks_irradiance(no_images_to_verify
     pl.close()
 
 
+def test_set_environment_texture_resample_per_axis_rate(no_images_to_verify):  # noqa: ARG001
+    """A per-axis sampling rate scales the irradiance map by its least reduced axis."""
+    texture = examples.download_cubemap_park()
+
+    pl = pv.Plotter(lighting=None)
+    pl.set_environment_texture(texture, resample=[0.25, 0.5, 0.5])
+    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == 128
+    pl.close()
+
+
 @pytest.mark.needs_vtk_version(at_least=(9, 6))
 def test_set_environment_texture_rotation(verify_image_cache):
     """Environment texture rotation rotates both background and reflections."""
