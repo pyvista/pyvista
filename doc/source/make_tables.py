@@ -26,6 +26,7 @@ from typing import ClassVar
 from typing import Literal
 from typing import final
 from typing import get_args
+import warnings
 
 import cmcrameri
 import cmocean
@@ -75,6 +76,7 @@ logger = logging.getLogger(__name__)
 READERS_DIR = 'api/readers'
 MESHIO_DIR = 'api/utilities/io_table'
 CELL_QUALITY_DIR = 'api/core/cell_quality'
+POINTS_DTYPE_DIR = 'api/core/points_dtype'
 CHARTS_TABLE_DIR = 'api/plotting/charts'
 CHARTS_IMAGE_DIR = 'images/charts'
 COLORS_TABLE_DIR = 'api/utilities/color_table'
@@ -539,6 +541,171 @@ class CellQualityMeasuresTable(DocTable):
 
         table_entries = [_get_table_entry(cell_type) for cell_type in cls.cell_types]
         return cls.row_template.format(f'``{measure}``', *table_entries)
+
+
+PARTIAL_SYMBOL = ':material-regular:`remove;2em;sd-text-warning`'
+
+
+class _PointsDtypeTable(DocTable):
+    """Base class for the per-mixin tables of double-precision support.
+
+    Support belongs to the VTK algorithm a filter runs, so it is measured by running
+    the filter rather than read off a list. A filter is measured only on the dataset
+    types where it resolves to this mixin, so a name defined on two mixins -- as
+    ``triangulate`` is -- is reported separately for each.
+    """
+
+    mixin: str = None  # type: ignore[assignment]
+
+    header = _aligned_dedent(
+        """
+        |.. list-table::
+        |   :widths: 40 12
+        |   :header-rows: 1
+        |
+        |   * - Filter
+        |     - ``'float64'``
+        """,
+    )
+    row_template = _aligned_dedent(
+        """
+        |   * - :meth:`~pyvista.{}.{}`
+        |     - {}
+        """,
+    )
+
+    @classmethod
+    def _sample(cls, class_name):
+        axis = np.arange(4.0)
+        mesh = {
+            'PolyData': lambda: pv.Sphere().points_to_double(),
+            'UnstructuredGrid': cells.Hexahedron,
+            'StructuredGrid': lambda: pv.StructuredGrid(
+                *np.meshgrid(axis, axis, axis, indexing='ij')
+            ),
+            'PointSet': lambda: pv.PointSet(np.random.default_rng(0).random((30, 3))),
+            'ImageData': lambda: pv.ImageData(dimensions=(5, 5, 5)),
+            'RectilinearGrid': lambda: pv.RectilinearGrid(axis, axis, axis),
+            'ExplicitStructuredGrid': lambda: pv.ImageData(
+                dimensions=(4, 4, 4)
+            ).cast_to_explicit_structured_grid(),
+            'MultiBlock': lambda: pv.MultiBlock([pv.Sphere().points_to_double()]),
+        }[class_name]()
+        for block in mesh.recursive_iterator() if isinstance(mesh, pv.MultiBlock) else [mesh]:
+            block['scalars'] = np.arange(block.n_points, dtype=float)
+            block['vectors'] = np.ones((block.n_points, 3))
+        return mesh
+
+    @classmethod
+    def _dataset_types(cls):
+        mixin_cls = getattr(pv, cls.mixin)
+        names = [
+            'PolyData',
+            'UnstructuredGrid',
+            'StructuredGrid',
+            'PointSet',
+            'ImageData',
+            'RectilinearGrid',
+            'ExplicitStructuredGrid',
+            'MultiBlock',
+        ]
+        return [n for n in names if issubclass(getattr(pv, n), mixin_cls)]
+
+    @classmethod
+    def _delivers_double(cls, class_name, name):
+        pv.global_config.points_dtype = 'float64'
+        try:
+            with warnings.catch_warnings(record=True) as caught:
+                warnings.simplefilter('always')
+                output = getattr(cls._sample(class_name), name)()
+            points = getattr(output, 'points', None)
+            if isinstance(output, pv.MultiBlock):
+                points = next(
+                    (b.points for b in output.recursive_iterator(skip_none=True) if b.n_points),
+                    None,
+                )
+            if points is None or not points.size:
+                return None
+        except Exception:  # noqa: BLE001
+            # A filter that cannot run on the sample says nothing about its support
+            return None
+        finally:
+            pv.global_config.points_dtype = None
+        return not any(issubclass(w.category, pv.PyVistaPrecisionWarning) for w in caught)
+
+    @classmethod
+    def fetch_data(cls):
+        mixin_cls = getattr(pv, cls.mixin)
+        rows = []
+        for name in sorted(n for n in vars(mixin_cls) if not n.startswith('_')):
+            if not callable(getattr(mixin_cls, name, None)):
+                continue
+            results = []
+            for class_name in cls._dataset_types():
+                # Only where this mixin is the one that actually provides the method
+                resolved = getattr(getattr(pv, class_name), name, None)
+                if resolved is None or not getattr(resolved, '__qualname__', '').startswith(
+                    cls.mixin + '.'
+                ):
+                    continue
+                verdict = cls._delivers_double(class_name, name)
+                if verdict is not None:
+                    results.append(verdict)
+            if results:
+                rows.append((name, all(results), any(results)))
+        return rows
+
+    @classmethod
+    def get_header(cls, _):
+        return cls.header
+
+    @classmethod
+    def get_row(cls, _, row_data):
+        name, always, ever = row_data
+        symbol = SUCCESS_SYMBOL if always else (PARTIAL_SYMBOL if ever else ERROR_SYMBOL)
+        return cls.row_template.format(cls.mixin, name, symbol)
+
+
+class DataObjectFiltersPointsDtypeTable(_PointsDtypeTable):
+    """Points dtype support for :class:`pyvista.DataObjectFilters`."""
+
+    mixin = 'DataObjectFilters'
+    path = f'{POINTS_DTYPE_DIR}/data_object_filters.rst'
+
+
+class DataSetFiltersPointsDtypeTable(_PointsDtypeTable):
+    """Points dtype support for :class:`pyvista.DataSetFilters`."""
+
+    mixin = 'DataSetFilters'
+    path = f'{POINTS_DTYPE_DIR}/data_set_filters.rst'
+
+
+class PolyDataFiltersPointsDtypeTable(_PointsDtypeTable):
+    """Points dtype support for :class:`pyvista.PolyDataFilters`."""
+
+    mixin = 'PolyDataFilters'
+    path = f'{POINTS_DTYPE_DIR}/poly_data_filters.rst'
+
+
+class UnstructuredGridFiltersPointsDtypeTable(_PointsDtypeTable):
+    """Points dtype support for :class:`pyvista.UnstructuredGridFilters`."""
+
+    mixin = 'UnstructuredGridFilters'
+    path = f'{POINTS_DTYPE_DIR}/unstructured_grid_filters.rst'
+
+
+class ImageDataFiltersPointsDtypeTable(_PointsDtypeTable):
+    """Points dtype support for :class:`pyvista.ImageDataFilters`."""
+
+    mixin = 'ImageDataFilters'
+    path = f'{POINTS_DTYPE_DIR}/image_data_filters.rst'
+
+
+class CompositeFiltersPointsDtypeTable(_PointsDtypeTable):
+    """Points dtype support for :class:`pyvista.CompositeFilters`."""
+
+    mixin = 'CompositeFilters'
+    path = f'{POINTS_DTYPE_DIR}/composite_filters.rst'
 
 
 class CellQualityInfoTable(DocTable):
@@ -3185,6 +3352,17 @@ def make_tables(jobs: int = 1) -> list[str]:  # noqa: D103
         CellQualityInfoTableTETRA,
         CellQualityInfoTableWEDGE,
         CellQualityInfoTablePYRAMID,
+    )
+
+    # Make the points dtype support tables
+    os.makedirs(POINTS_DTYPE_DIR, exist_ok=True)
+    collect(
+        DataObjectFiltersPointsDtypeTable,
+        DataSetFiltersPointsDtypeTable,
+        PolyDataFiltersPointsDtypeTable,
+        UnstructuredGridFiltersPointsDtypeTable,
+        ImageDataFiltersPointsDtypeTable,
+        CompositeFiltersPointsDtypeTable,
     )
 
     # Make colormap tables
