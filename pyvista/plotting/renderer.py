@@ -69,8 +69,8 @@ ACTOR_LOC_MAP = [
     'center',
 ]
 
-# Floor for the diffuse irradiance map: 32 keeps 91% of the speed-up from
-# down-sampling at a twelfth of the accuracy loss of 16.
+# Floor for the diffuse irradiance map: below 32 the diffuse term degrades
+# visibly on rough surfaces for little further speed-up.
 _MIN_IRRADIANCE_SIZE = 32
 
 
