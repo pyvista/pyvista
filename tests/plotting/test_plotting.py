@@ -3705,7 +3705,10 @@ def test_set_viewup(verify_image_cache, vector):
     pl.show()
 
 
-def test_plot_shadows():
+def test_plot_shadows(verify_image_cache):
+    """Test rendering with shadows enabled."""
+    # Shadow map speckles nondeterministically on macOS software rendering.
+    verify_image_cache.macos_skip_image_cache = True
     pl = pv.Plotter(lighting=None)
 
     # add several planes
