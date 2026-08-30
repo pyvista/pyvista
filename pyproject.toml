@@ -254,7 +254,7 @@ run.parallel = true
 run.patch = ["subprocess"]
 
 [tool.pytest.ini_options]
-addopts = ['--strict-config', '--strict-markers', '-ra']
+addopts = ['--durations=25', '--strict-config', '--strict-markers', '-ra']
 doctest_optionflags = 'NUMBER ELLIPSIS'
 log_level = 'INFO'
 

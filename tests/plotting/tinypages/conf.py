@@ -89,9 +89,14 @@ IMPORT_PYVISTA_RE = r'\b(import +pyvista|from +pyvista +import)\b'
 IMPORT_MATPLOTLIB_RE = r'\b(import +matplotlib|from +matplotlib +import)\b'
 
 plot_setup = """
+from pyvista import global_theme as __g_t
 from pyvista import set_plot_theme as __s_p_t
 __s_p_t('document')
-del __s_p_t
+# These builds assert on which files a build produces and what they are named, never on
+# their pixels. Rendering the plots dominates the build -- skipping them entirely takes
+# it from ~35 s to ~5 s -- and the CI runners have no GPU, so render small.
+__g_t.window_size = [256, 192]
+del __s_p_t, __g_t
 """
 plot_cleanup = plot_setup
 

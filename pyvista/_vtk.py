@@ -812,6 +812,7 @@ _OPENGL_MODULES: dict[str, tuple[str, ...]] = {
         'vtkOpenGLSkybox',
         'vtkOpenGLTexture',
         'vtkPBRIrradianceTexture',
+        'vtkPBRPrefilterTexture',
         'vtkRenderStepsPass',
         'vtkSSAAPass',
         'vtkSSAOPass',

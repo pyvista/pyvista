@@ -80,6 +80,17 @@ def _default_irradiance_size() -> int:
     return _vtk.vtkPBRIrradianceTexture().GetIrradianceSize()
 
 
+# Floor for the specular prefilter: too few samples show up as noise in rough
+# reflections rather than as a loss of detail.
+_MIN_PREFILTER_SAMPLES = 32
+
+
+@functools.lru_cache(maxsize=1)
+def _default_prefilter_samples() -> int:
+    """Return VTK's default specular prefilter sample count per texel."""
+    return _vtk.vtkPBRPrefilterTexture().GetPrefilterMaxSamples()
+
+
 def map_loc_to_pos(loc, size, border=0.05):
     """Map location and size to a VTK position and position2.
 
@@ -3866,8 +3877,9 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
             .. versionchanged:: 0.49
 
-                The diffuse irradiance map used for image-based lighting is
-                down-sampled at the same rate, subject to a lower bound.
+                The image-based lighting textures are down-sampled at the same
+                rate, subject to a lower bound: the diffuse irradiance map shrinks
+                and the specular prefilter integrates fewer samples per texel.
 
         rotation : RotationLike, optional
             Rotation to apply to the environment texture for image-based
@@ -3912,6 +3924,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             resample = self._theme.resample_environment_texture
 
         default_size = _default_irradiance_size()
+        default_samples = _default_prefilter_samples()
 
         if resample:
             resample = 1 / 16 if resample is True else resample
@@ -3920,6 +3933,12 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             # for cube maps, so scale it with the texture.
             irradiance_size = min(
                 default_size, max(_MIN_IRRADIANCE_SIZE, round(default_size * resample))
+            )
+
+            # The prefilter's resolution follows the texture, its sample count does not.
+            prefilter_samples = min(
+                default_samples,
+                max(_MIN_PREFILTER_SAMPLES, round(default_samples * resample)),
             )
 
             # Copy the texture
@@ -3938,9 +3957,11 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             self.SetEnvironmentTexture(texture_copy, is_srgb)
         else:
             irradiance_size = default_size
+            prefilter_samples = default_samples
             self.SetEnvironmentTexture(texture, is_srgb)
 
         self.GetEnvMapIrradiance().SetIrradianceSize(irradiance_size)
+        self.GetEnvMapPrefiltered().SetPrefilterMaxSamples(prefilter_samples)
 
         if rotation is not None:
             if vtk_version_info < (9, 6):  # pragma: no cover

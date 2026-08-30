@@ -43,6 +43,7 @@ from pyvista.plotting.opts import PointSpriteShape
 from pyvista.plotting.opts import StereoType
 from pyvista.plotting.plotter import SUPPORTED_FORMATS
 from pyvista.plotting.renderer import _MIN_IRRADIANCE_SIZE
+from pyvista.plotting.renderer import _MIN_PREFILTER_SAMPLES
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
 from tests.core.test_imagedata_filters import labeled_image  # noqa: F401
@@ -326,26 +327,33 @@ def test_set_environment_texture_resample_shrinks_irradiance(no_images_to_verify
     pv.global_theme.resample_environment_texture = False
     pl = pv.Plotter(lighting=None)
     default_size = pl.renderer.GetEnvMapIrradiance().GetIrradianceSize()
+    default_samples = pl.renderer.GetEnvMapPrefiltered().GetPrefilterMaxSamples()
     pl.set_environment_texture(texture)
     assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == default_size
+    assert pl.renderer.GetEnvMapPrefiltered().GetPrefilterMaxSamples() == default_samples
 
     pl.set_environment_texture(texture, resample=0.5)
     assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == 128
+    assert pl.renderer.GetEnvMapPrefiltered().GetPrefilterMaxSamples() == 256
 
     pl.set_environment_texture(texture, resample=False)
     assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == default_size
+    assert pl.renderer.GetEnvMapPrefiltered().GetPrefilterMaxSamples() == default_samples
 
     # ``True`` means a sampling rate of 1/16. Setting the texture again must scale from
     # the default size rather than compound with the size set by the previous call.
     pl.set_environment_texture(texture, resample=True)
     assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == 32
+    assert pl.renderer.GetEnvMapPrefiltered().GetPrefilterMaxSamples() == 32
 
     pl.set_environment_texture(texture, resample=2.0)
     assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == default_size
+    assert pl.renderer.GetEnvMapPrefiltered().GetPrefilterMaxSamples() == default_samples
 
     # Rates below the floor all land on it
     pl.set_environment_texture(texture, resample=1 / 1024)
     assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == _MIN_IRRADIANCE_SIZE
+    assert pl.renderer.GetEnvMapPrefiltered().GetPrefilterMaxSamples() == _MIN_PREFILTER_SAMPLES
     pl.close()
 
     # The theme applies the same scaling when `resample` is not given explicitly
