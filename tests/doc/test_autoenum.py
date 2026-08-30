@@ -13,6 +13,7 @@ import subprocess
 import sys
 
 import pytest
+import sphinx
 
 from pyvista.ext import _autoenum as autoenum
 
@@ -205,6 +206,25 @@ def test_metaclass_property_documenter_can_document_member_always_declines():
     assert not autoenum.MetaclassPropertyDocumenter.can_document_member(
         object(), 'anything', True, object()
     )
+
+
+@pytest.mark.skipif(sphinx.version_info < (9,), reason='patch only applies to Sphinx 9')
+def test_patch_autosummary_objtype_routes_enums(monkeypatch):
+    from sphinx.ext.autosummary import generate
+
+    class Color(Enum):
+        RED = 1
+
+    # Snapshot so monkeypatch restores the unpatched function afterwards.
+    monkeypatch.setattr(generate, '_get_documenter', generate._get_documenter)
+
+    autoenum._patch_autosummary_objtype()
+    patched = generate._get_documenter
+    autoenum._patch_autosummary_objtype()
+    assert generate._get_documenter is patched  # second call must not re-wrap
+
+    assert generate._get_documenter(Color, None) == 'enum'
+    assert generate._get_documenter(int, None) == 'class'
 
 
 # --- Integration: build tinypages_autoenum for real, with sphinx-build -------------------

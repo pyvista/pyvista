@@ -319,3 +319,12 @@ the flexibility of PyVista and the raw power of VTK.
 .. note::
    You can use :func:`pyvista.Polygon` for a one line replacement of
    the above VTK code.
+
+Configuring the VTK Interface
+-----------------------------
+PyVista has several runtime controls for the underlying VTK library,
+such as :func:`pyvista.vtk_snake_case` for access to VTK's own
+``snake_case`` attributes on wrapped objects,
+:func:`pyvista.vtk_verbosity` for VTK's logging verbosity, and
+``pv.global_config.show_vtk_api`` for showing the VTK-inherited API
+in tab completion. See :ref:`configuration` for all of them.
