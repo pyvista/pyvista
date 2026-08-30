@@ -1,7 +1,0 @@
-<?xml version="1.0"?>
-<VTKFile type="vtkPartitionedDataSet" version="1.0" byte_order="LittleEndian" header_type="UInt32" compressor="vtkZLibDataCompressor">
-  <vtkPartitionedDataSet>
-    <DataSet index="0" file="my_partitions/my_partitions_0.vti"/>
-    <DataSet index="1" file="my_partitions/my_partitions_1.vti"/>
-  </vtkPartitionedDataSet>
-</VTKFile>
