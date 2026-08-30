@@ -17,6 +17,7 @@ PyVista.
 .. autosummary::
    :toctree: _autosummary
 
+   themes._ConfigBase
    themes.DarkTheme
    themes.Theme
    themes.DocumentTheme

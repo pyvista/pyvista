@@ -177,15 +177,17 @@ can be installed via package managers like ``scoop`` or ``chocolatey``.
 
 .. code-block:: bash
 
-    make sync-deps      # install dev dependencies via uv (includes tox + tox-uv)
-    make lint           # run pre-commit on all files
-    make typecheck      # run mypy via tox
-    make test           # run the full test suite via tox (matches CI flags)
-    make test-core      # run the core test suite via tox (matches CI)
-    make test-plotting  # run the plotting test suite via tox (matches CI)
-    make doctest        # run all docstring tests via tox (matches CI)
-    make docs           # build the full documentation via tox (matches CI)
-    make docs-test      # test the built documentation via tox (matches CI)
+    make sync-deps         # install dev dependencies via uv (includes tox + tox-uv)
+    make lint              # run pre-commit on all files
+    make docstyle          # run Vale (matches CI)
+    make typecheck         # run mypy via tox (matches CI)
+    make test              # run the full test suite via tox (matches CI flags)
+    make test-core         # run the core test suite via tox (matches CI)
+    make test-plotting     # run the plotting test suite via tox (matches CI)
+    make doctest           # run all docstring tests via tox (matches CI)
+    make docs              # build the full documentation via tox (matches CI)
+    make docs-test-build   # sanity-check the built documentation via tox (matches CI)
+    make docs-test-images  # compare documentation images against cached baselines via tox (matches CI)
     make integration PROJECT=<name>  # run integration tests for trame/geovista/mne/pyvistaqt/playwright/cvista
 
 ``make test``, ``make test-core``, and ``make test-plotting`` all
@@ -208,9 +210,9 @@ variable, for example:
 These targets are thin wrappers around ``uv``, ``pre-commit``, ``tox``,
 and ``pytest``. If you need more control (for example, running against a
 specific ``vtk`` or ``numpy`` version, or building documentation), see
-the `Unit Testing`_, `Style Checking`_, and `Building the
-Documentation`_ sections below, which document the underlying tools
-directly.
+the `Unit Testing`_, `Docstring Testing`_, `Type Checking`_, `Style
+Checking`_, and `Building the Documentation`_ sections below, which
+document the underlying tools directly.
 
 Continuous Integration Etiquette
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -839,7 +841,7 @@ The top-level ``Makefile`` also wraps the most common invocations—see
             .. code-block:: bash
 
                 tox run -e py3.11-vtk_9.4.2 # run tests for vtk==9.4.2
-                tox run -e py3.11-vtk_9.4.2_numpy_nightly # run tests for vtk==9.4.2 with nightly numpy
+                tox run -e py3.11-vtk_9.4.2-numpy_nightly # run tests for vtk==9.4.2 with nightly numpy
 
             If you need to tests dependencies that are not predefined in the configuration, you can always override them such
             that:
@@ -856,7 +858,7 @@ The top-level ``Makefile`` also wraps the most common invocations—see
 
                 tox run -e py3.11-core # run core tests (no need for graphics library)
                 tox run -e py3.11-plotting # run plotting tests (requires graphics library)
-                tox rnu -e py3.11-core-plotting # equivalent to 'tox run -e py3.11'
+                tox run -e py3.11-core-plotting # equivalent to 'tox run -e py3.11'
 
             To specify supplementary arguments to the ``pytest`` command line, use ``--`` to separate
             ``tox`` arguments from ``pytest`` ones such that:
@@ -1109,10 +1111,65 @@ Run all code examples in the docstrings with:
 
             tox run -e doctest-modules
 
+    .. tab-item:: make
+        :sync: make
+
+        .. code-block:: bash
+
+            make doctest
+
+        .. note::
+
+            ``make doctest`` runs ``tox run -f doctest``, which matches CI
+            (``.github/workflows/style-docstring.yml``) by running both the
+            ``doctest-modules`` environment above and the ``doctest-local``
+            environment. The latter has no ``pytest``/``tox -e`` equivalent
+            shown above since it doesn't run through ``pytest``: it statically
+            checks that names used in docstring examples are actually defined
+            (see ``tests/check_doctest_names.py``).
+
 .. note::
 
     Additional testing is also performed on any images generated
     by the docstring. See `Documentation Image Regression Testing`_.
+
+
+Type Checking
+~~~~~~~~~~~~~
+PyVista uses `mypy <https://mypy.readthedocs.io/>`_ for static type checking. Configuration
+lives in the ``[tool.mypy]`` section of ``pyproject.toml``, so no additional command-line
+flags are required to run it.
+
+.. tab-set::
+    :sync-group: category
+
+    .. tab-item:: mypy
+        :sync: pytest
+
+        .. code-block:: bash
+
+            pip install -e . --group typing
+            mypy
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: bash
+
+            tox run -e mypy
+
+    .. tab-item:: make
+        :sync: make
+
+        .. code-block:: bash
+
+            make typecheck
+
+.. seealso::
+
+    `Notes Regarding Input Validation Testing`_ describes a related but separate
+    ``pytest``-based suite that checks the type hints of ``pyvista.core._validation``
+    using ``mypy`` and ``pyanalyze`` at both static-analysis and runtime.
 
 
 Style Checking
@@ -1321,7 +1378,7 @@ See `pytest-pyvista`_ for more details.
 
 Notes Regarding Input Validation Testing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The ``pyvista.core.validation`` package has two distinct test suites which
+The ``pyvista.core._validation`` package has two distinct test suites which
 are executed with ``pytest``:
 
 #. Regular unit tests in ``tests/core/test_validation.py``
@@ -1461,6 +1518,14 @@ Documentation can be build either directly (that is, using Python commands) or w
 
                 tox run -e docs-build -- mini18n-html # for translated languages
 
+    .. tab-item:: make
+        :sync: make
+
+        .. code-block:: bash
+
+            make sync-deps # install dev dependencies via uv
+            make docs      # matches CI
+
 The generated documentation can be found in the ``doc/_build/html``
 directory.
 
@@ -1472,7 +1537,7 @@ To test this locally you need to run a http server in the html directory with:
 
 .. code-block:: bash
 
-   make serve-html
+   make -C doc serve-html
 
 Clearing the Local Build
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1534,14 +1599,14 @@ To test all the images, run tests using either ``pytest`` or ``tox`` such that:
 
         .. code-block:: bash
 
-            tox run -e docs-test
+            tox run -e docs-test-images
 
     .. tab-item:: make
         :sync: make
 
         .. code-block:: bash
 
-            make docs-test
+            make docs-test-images
 
 Note that above commands use the ``doc-mode`` feature implemented in `pytest-pyvista`_.
 When executed, the test will first pre-process the build images. The images are:
@@ -1641,14 +1706,14 @@ To test that interactive plots do not exceed this limit, run:
 
         .. code-block:: bash
 
-            tox run -e docs-test
+            tox run -e docs-test-images
 
     .. tab-item:: make
         :sync: make
 
         .. code-block:: bash
 
-            make docs-test
+            make docs-test-images
 
 
 Note that above commands use the ``doc-mode`` feature implemented in `pytest-pyvista`_
@@ -1908,15 +1973,16 @@ created the following will occur:
 #.  Locally run all tests as outlined in the `Testing
     Section <#testing>`_ and ensure all are passing.
 
-#.  Locally test and build the documentation. Be sure to run ``make clean``
-    to ensure no results are cached.
+#.  Locally test and build the documentation. Be sure to run ``make -C doc clean``
+    to ensure no results are cached. Run these commands from the repository
+    root, using the ``make`` targets from `Quick Development Commands`_ so
+    they match CI:
 
     .. code-block:: bash
 
-       cd doc
-       make clean  # deletes the sphinx-gallery cache
-       tox run -e doctest-modules
-       tox run -e docs-build
+       make -C doc clean  # deletes the sphinx-gallery cache
+       make doctest       # matches CI
+       make docs          # matches CI
 
 #.  After building the documentation, open the local build and examine
     the examples gallery for any obvious issues.
@@ -2045,12 +2111,12 @@ status check label regardless of if it is self hosted.
       matrix:
         include:
           # GitHub-hosted runner configuration
-          - job-name: MacOS Unit Testing (Python 3.9)
-            python-version: "3.9"
-            runner-labels: "macos-13"
-          # Self-hosted runner configurations
           - job-name: MacOS Unit Testing (Python 3.10)
             python-version: "3.10"
+            runner-labels: "macos-15"
+          # Self-hosted runner configurations
+          - job-name: MacOS Unit Testing (Python 3.11)
+            python-version: "3.11"
             runner-labels: "macos-15-self-hosted"
 
 With this approach, a job can be configured to use GitHub's hosted runners simply

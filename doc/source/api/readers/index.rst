@@ -241,7 +241,7 @@ for zero-config discovery at install time.
 **Handler signature**
 
 A writer handler is a callable ``handler(dataset, path, **kwargs)``
-that writes *dataset* to *path*.  Any extra keyword arguments passed
+that writes ``dataset`` to ``path``.  Any extra keyword arguments passed
 to :meth:`pyvista.DataObject.save` beyond its documented parameters
 are forwarded verbatim to the handler as ``**kwargs``. Use them to
 expose format-specific options such as compression level, thread
@@ -361,6 +361,10 @@ This is how :class:`pyvista.PVDReader` and :class:`pyvista.FRDReader`
 are built, and it is the supported base for a third-party reader
 registered with :func:`pyvista.register_reader`.
 
+The remaining classes are not used directly. They are documented because they
+define members shared by several readers and writers, so that each of those
+members is documented once and linked from every class that inherits it.
+
 .. autosummary::
    :toctree: _autosummary
 
@@ -370,6 +374,9 @@ registered with :func:`pyvista.register_reader`.
    PVDDataSet
    SeriesDataSet
    TimeReader
+   core.utilities.fileio._FileIOBase
+   core.utilities.writer._DataFormatMixin
+   core.utilities.writer._XMLWriter
 
 
 Enumerations
