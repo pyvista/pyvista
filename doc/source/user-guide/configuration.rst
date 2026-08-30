@@ -151,7 +151,9 @@ Rendering
 
 .. envvar:: PYVISTA_OFF_SCREEN
 
-   Render all plots off screen. Sets ``pv.OFF_SCREEN``.
+   Render all plots off screen, without opening a window. Sets
+   ``pv.OFF_SCREEN``; a single plotter can opt in with
+   ``pv.Plotter(off_screen=True)``.
 
 .. envvar:: PYVISTA_MULTI_SAMPLES
 
@@ -163,6 +165,17 @@ Rendering
    Set to ``false`` to stop plotters from closing automatically after
    showing. Sets the default of
    :attr:`pyvista.plotting.themes.Theme.auto_close`.
+
+.. note::
+
+   VTK's own ``VTK_DEFAULT_OPENGL_WINDOW`` environment variable selects
+   the render window class VTK creates, such as an EGL window for
+   headless rendering; see the `VTK runtime settings
+   <https://docs.vtk.org/en/latest/advanced/runtime_settings.html#opengl>`_.
+   ``PYVISTA_VIRTUAL_DISPLAY``, mentioned in some older issues, is not
+   a PyVista setting, and
+   :attr:`~pyvista.plotting.themes.Theme.interactive` controls whether
+   shown plots accept user interaction, not off-screen rendering.
 
 Theme and Jupyter
 ~~~~~~~~~~~~~~~~~
