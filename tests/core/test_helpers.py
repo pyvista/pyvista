@@ -293,6 +293,7 @@ def test_points_dtype_preserve_ignores_generated_points(grid, monkeypatch, mocke
     monkeypatch.setattr(pv.global_config, 'points_dtype', 'preserve')
     spy = mocker.patch.object(type(grid), 'points', new_callable=mocker.PropertyMock)
 
+    spy.assert_not_called()
     assert filters._points_dtype(grid) is None
     spy.assert_not_called()
 
@@ -331,6 +332,54 @@ def test_points_dtype_preserve_ignores_integer_points(monkeypatch):
     assert mesh.points.dtype == np.int64
     assert filters._points_dtype(mesh) is None
     assert np.issubdtype(mesh.ruled_surface(resolution=(21, 21)).points.dtype, np.floating)
+
+
+def test_points_dtype_preserve_ignores_a_mesh_without_points(monkeypatch):
+    # `DataSet.points` installs an empty float64 array when there is no `vtkPoints`,
+    # so reading it would both report a dtype nobody chose and modify the input
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'preserve')
+    empty = pv.PolyData()
+
+    assert filters._points_dtype(empty) is None
+    assert empty.GetPoints() is None
+
+    # accumulating into an empty mesh is a common idiom and must not widen the result
+    assert (pv.PolyData() + pv.Sphere()).points.dtype == np.float32
+    assert pv.PolyData().merge(pv.Sphere()).points.dtype == np.float32
+
+
+def test_points_dtype_float64_does_not_warn_for_integer_points(monkeypatch):
+    # Widening integers to float64 is exact, so there is no precision to report losing
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'float64')
+    mesh = pv.PolyData(
+        np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0]], dtype=np.int32),
+        faces=[3, 0, 1, 2],
+        force_float=False,
+    )
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', pv.PyVistaPrecisionWarning)
+        out = mesh.triangulate()
+    assert out.points.dtype == np.float64
+
+
+@pytest.mark.parametrize(
+    'filter_name', ['outline_corners', 'extrude_rotate', 'reconstruct_surface', 'convex_hull']
+)
+@pytest.mark.parametrize('dtype', ['float32', 'float64'])
+def test_points_dtype_applies_to_filters_wrapping_their_own_output(
+    filter_name, dtype, monkeypatch
+):
+    # These wrap the algorithm output themselves rather than going through
+    # `_get_output`, which is where the setting is enforced
+    monkeypatch.setattr(pv.global_config, 'points_dtype', dtype)
+    mesh = pv.Line().compute_arc_length() if filter_name == 'extrude_rotate' else pv.Sphere()
+    kwargs = {'resolution': 4, 'capping': False} if filter_name == 'extrude_rotate' else {}
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', pv.PyVistaPrecisionWarning)
+        out = getattr(mesh, filter_name)(**kwargs)
+    assert out.points.dtype == np.dtype(dtype)
 
 
 def test_points_dtype_float64_warns_when_vtk_cannot_deliver(monkeypatch):
@@ -382,6 +431,9 @@ def test_points_dtype_leaves_user_arrays_alone(dtype, monkeypatch):
     mesh = pv.Sphere()
     mesh.points = np.zeros((mesh.n_points, 3), dtype=other)
     assert mesh.points.dtype == other
+
+    # ... but the geometry factories are sources, and do follow the setting
+    assert pv.Triangle(np.eye(3, dtype=other)).points.dtype == np.dtype(dtype)
 
 
 def test_points_dtype_applies_to_multiblock(monkeypatch):

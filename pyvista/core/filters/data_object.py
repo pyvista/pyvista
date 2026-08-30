@@ -35,6 +35,7 @@ from pyvista.core.celltype import CellType
 from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
+from pyvista.core.filters import _apply_points_dtype
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _points_dtype
 from pyvista.core.filters import _update_alg
@@ -4442,9 +4443,11 @@ class DataObjectFilters:
             alg.SetInputDataObject(alg_input)
             alg.SetDimension(int(dimensionality_))
             _update_alg(alg, progress_bar=progress_bar)
-            output = pv.wrap(alg.GetOutput())
+            output = _get_output(alg, keep_pointset=False)
         else:
-            output = _convex_hull_scipy(points, dimensionality=dimensionality_)
+            output = _apply_points_dtype(
+                _convex_hull_scipy(points, dimensionality=dimensionality_)
+            )
         output.point_data.clear()
         output.cell_data.clear()
         return output

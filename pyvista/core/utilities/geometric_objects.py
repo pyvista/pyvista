@@ -1308,6 +1308,11 @@ def Cube(  # noqa: PLR0917
 
         .. versionadded:: 0.44.0
 
+        .. versionchanged:: 0.49
+            Defaults to ``None``, deferring to
+            :attr:`pyvista.core.config.Config.points_dtype`. Passing ``'float32'``
+            explicitly keeps the previous behavior.
+
     Returns
     -------
     pyvista.PolyData

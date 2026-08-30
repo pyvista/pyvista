@@ -778,9 +778,8 @@ fork that still has an old ``doc`` branch is rejected with ``directory file conf
 Check the remote you push to with ``git ls-remote --heads origin refs/heads/doc``, then
 either use another prefix or delete the stale branch.
 
-Filter Conventions
-^^^^^^^^^^^^^^^^^^
 Points dtype
+^^^^^^^^^^^^
 
 The ``points`` dtype of a filter's output is decided globally, by
 ``pyvista.global_config.points_dtype``, and enforced in ``_update_alg`` and
@@ -793,8 +792,10 @@ add a keyword of its own for precision.
   the fact.
 - Call ``_get_output`` rather than wrapping ``alg.GetOutput()``. It casts the output
   points for the algorithms that ignore the request.
-- Sources have no input to preserve, so they subclass ``_Source``, which applies the
-  same two steps in its ``Update`` and ``GetOutput``.
+- Sources have no input to preserve, so they subclass ``_Source``, which requests the
+  precision in ``Update`` and casts in ``_update_and_wrap_output``. Return
+  ``self._update_and_wrap_output()`` from a source's ``output`` property rather than
+  wrapping ``GetOutput()``, which is uncast.
 - Geometry that PyVista builds without a VTK algorithm passes through
   ``_apply_points_dtype``.
 - Neither helper needs to know whether the algorithm supports double precision. The

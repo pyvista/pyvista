@@ -1001,6 +1001,11 @@ class CubeSource(_Source, _vtk.vtkCubeSource):
 
         .. versionadded:: 0.44.0
 
+        .. versionchanged:: 0.49
+            Defaults to ``None``, deferring to
+            :attr:`pyvista.core.config.Config.points_dtype`. Passing ``'float32'``
+            explicitly keeps the previous behavior.
+
     Examples
     --------
     Create a default CubeSource.
@@ -3936,6 +3941,11 @@ class CubeFacesSource(CubeSource):
         Set the desired output point types. It must be either 'float32' or 'float64'.
         Ignored unless :attr:`pyvista.core.config.Config.points_dtype` is ``'preserve'``, which
         is its default.
+
+        .. versionchanged:: 0.49
+            Defaults to ``None``, deferring to
+            :attr:`pyvista.core.config.Config.points_dtype`. Passing ``'float32'``
+            explicitly keeps the previous behavior.
 
     Examples
     --------

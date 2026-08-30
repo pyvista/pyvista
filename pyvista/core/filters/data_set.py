@@ -1288,7 +1288,7 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         alg.SetInputDataObject(self)
         alg.SetCornerFactor(factor)
         _update_alg(alg, progress_bar=progress_bar, message='Producing an Outline of the Corners')
-        return wrap(alg.GetOutputDataObject(0))
+        return _get_output(alg, keep_pointset=False)
 
     def gaussian_splatting(  # type: ignore[misc]
         self: _DataSetType,

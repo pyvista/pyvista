@@ -87,7 +87,10 @@ def _points_dtype(mesh: Any = None) -> np.dtype[Any] | None:
     setting = pv.global_config.points_dtype
     if setting != 'preserve':
         return np.dtype(setting)
-    if not isinstance(mesh, _vtk.vtkPointSet):
+    # `DataSet.points` installs an empty float64 array when the mesh has no `vtkPoints`,
+    # so ask VTK directly: reading the property would report a dtype nobody chose, and
+    # modify the input as a side effect of a read.
+    if not isinstance(mesh, _vtk.vtkPointSet) or mesh.GetPoints() is None:
         return None
     # Only the two precisions VTK stores points in are meaningful to preserve. Points
     # can be integers -- `pv.PolyData(..., force_float=False)` keeps them -- and casting
@@ -145,14 +148,18 @@ def _enforce_points_dtype(
     if points.dtype == dtype:
         return
     if (
-        points.dtype.itemsize < dtype.itemsize
+        algorithm is not None
+        and np.issubdtype(points.dtype, np.floating)
+        and points.dtype.itemsize < dtype.itemsize
         and points.size
         and pv.global_config.points_dtype == 'float64'
     ):
-        name = 'This algorithm' if algorithm is None else type(algorithm).__name__
+        # No algorithm means PyVista packaged the caller's own array, so nothing
+        # discarded the digits and widening it is exact.
         msg = (
-            f'{name} generated {points.dtype.name} points, and does not support the '
-            f"double precision `pyvista.global_config.points_dtype = 'float64'` asks for.\n"
+            f'{type(algorithm).__name__} generated {points.dtype.name} points, and does '
+            f'not support the double precision '
+            f"`pyvista.global_config.points_dtype = 'float64'` asks for.\n"
             f'The output points are cast to float64, but hold single-precision values.'
         )
         warn_external(msg, PyVistaPrecisionWarning)

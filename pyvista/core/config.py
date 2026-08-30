@@ -270,12 +270,15 @@ class Config(_ConfigBase):
         It is enforced everywhere PyVista wraps the output of a VTK algorithm, which
         covers every filter, every geometry and parametric source, and the generated
         points of :class:`~pyvista.ImageData` and :class:`~pyvista.RectilinearGrid`.
-        Arrays you supply yourself are never modified, so ``pv.PolyData(points)`` keeps
-        the dtype of ``points``.
+        Constructing a dataset keeps the array you pass, so ``pv.PolyData(points)`` has
+        the dtype of ``points``; the geometry factories are sources, so
+        ``pv.Triangle(points)`` follows the setting like the rest of them.
 
         ``'preserve'``
             The default. A filter's output points have the same dtype as its input
-            points, so a filter never changes the dtype. This covers the meshes that
+            points, so a filter never changes the dtype. Before PyVista 0.49 they
+            inherited whatever dtype VTK produced, and a double-precision mesh could
+            come out of a filter single precision. This covers the meshes that
             store their points; :class:`~pyvista.ImageData` and
             :class:`~pyvista.RectilinearGrid` generate theirs from the origin and
             spacing, or from the coordinate arrays, so they constrain nothing and VTK
@@ -314,11 +317,6 @@ class Config(_ConfigBase):
         particular precision, and the cast keeps that promise in full.
 
         .. versionadded:: 0.49
-
-        .. versionchanged:: 0.49
-            Filters used to inherit whatever dtype VTK produced, so a
-            double-precision mesh could come out of a filter single precision.
-            Under the ``'preserve'`` default they no longer do.
 
         Examples
         --------
