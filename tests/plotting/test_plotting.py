@@ -308,7 +308,13 @@ def test_set_environment_texture_resample_uses_linear_anti_aliasing(mocker, no_i
 
     pl = pv.Plotter(lighting=None)
     texture = examples.load_globe_texture()
+    default_size = pl.renderer.GetEnvMapIrradiance().GetIrradianceSize()
     pl.set_environment_texture(texture, resample=0.5)
+
+    # Equirectangular textures light through spherical harmonics, so their irradiance
+    # map is left alone rather than scaled with the texture
+    assert not texture.cube_map
+    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == default_size
 
     spy.assert_called_once()
     args, kwargs = spy.call_args
@@ -319,19 +325,40 @@ def test_set_environment_texture_resample_uses_linear_anti_aliasing(mocker, no_i
     pl.close()
 
 
-def test_set_environment_texture_resample_shrinks_irradiance(no_images_to_verify):  # noqa: ARG001
+@pytest.fixture
+def small_cubemap():
+    """Return a low-resolution cube map, for tests that assert state and never render."""
+    rng = np.random.default_rng(0)
+    faces = []
+    for _ in range(6):
+        image = pv.ImageData(dimensions=(32, 32, 1))
+        image['data'] = rng.integers(0, 255, (32 * 32, 3), dtype=np.uint8)
+        faces.append(image)
+    return pv.Texture(faces)
+
+
+def test_set_environment_texture_resample_shrinks_irradiance(small_cubemap, no_images_to_verify):  # noqa: ARG001
     """Resampling should also shrink the diffuse irradiance map VTK convolves."""
-    texture = examples.download_cubemap_park()
+    # Pinned, so the assertions below test the floor's value and not just its name
+    assert _MIN_IRRADIANCE_SIZE == 32
+
+    texture = small_cubemap
 
     # The testing theme resamples by default, so turn it off to see the full-size map
     pv.global_theme.resample_environment_texture = False
     pl = pv.Plotter(lighting=None)
     default_size = pl.renderer.GetEnvMapIrradiance().GetIrradianceSize()
     default_samples = pl.renderer.GetEnvMapPrefiltered().GetPrefilterMaxSamples()
-    pl.set_environment_texture(texture)
-    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == default_size
-    assert pl.renderer.GetEnvMapPrefiltered().GetPrefilterMaxSamples() == default_samples
 
+    # A per-axis rate has no meaning for the square irradiance map
+    with pytest.raises(ValueError, match='resample has shape'):
+        pl.set_environment_texture(texture, resample=[0.25, 0.5, 0.5])
+
+    pl.set_environment_texture(texture, resample=0.5)
+    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == 128
+
+    # Setting the texture again scales from the default size rather than compounding
+    # with the size the previous call left behind
     pl.set_environment_texture(texture, resample=0.5)
     assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == 128
     assert pl.renderer.GetEnvMapPrefiltered().GetPrefilterMaxSamples() == 256
@@ -340,15 +367,25 @@ def test_set_environment_texture_resample_shrinks_irradiance(no_images_to_verify
     assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == default_size
     assert pl.renderer.GetEnvMapPrefiltered().GetPrefilterMaxSamples() == default_samples
 
-    # ``True`` means a sampling rate of 1/16. Setting the texture again must scale from
-    # the default size rather than compound with the size set by the previous call.
+    # ``True`` means a sampling rate of 1/16, which lands on the floor
     pl.set_environment_texture(texture, resample=True)
-    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == 32
+    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == _MIN_IRRADIANCE_SIZE
     assert pl.renderer.GetEnvMapPrefiltered().GetPrefilterMaxSamples() == 32
 
     pl.set_environment_texture(texture, resample=2.0)
     assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == default_size
     assert pl.renderer.GetEnvMapPrefiltered().GetPrefilterMaxSamples() == default_samples
+
+    # Rates that do not divide the default size exactly are rounded
+    pl.set_environment_texture(texture, resample=0.3)
+    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == 77
+
+    pl.set_environment_texture(texture, resample=0.13)
+    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == 33
+
+    # ``1.0`` is a sampling rate, not ``True``
+    pl.set_environment_texture(texture, resample=1.0)
+    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == default_size
 
     # Rates below the floor all land on it
     pl.set_environment_texture(texture, resample=1 / 1024)
@@ -356,24 +393,16 @@ def test_set_environment_texture_resample_shrinks_irradiance(no_images_to_verify
     assert pl.renderer.GetEnvMapPrefiltered().GetPrefilterMaxSamples() == _MIN_PREFILTER_SAMPLES
     pl.close()
 
-    # The theme applies the same scaling when `resample` is not given explicitly
-    pv.global_theme.resample_environment_texture = True
-    pl = pv.Plotter(lighting=None)
-    pl.set_environment_texture(texture)
-    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == 32
-    pl.close()
-
-    # A theme passed to the plotter applies instead of the global one
-    pv.global_theme.resample_environment_texture = False
+    # The theme supplies the rate when `resample` is not given, and the plotter's own
+    # theme wins over the global one
     theme = pv.plotting.themes._TestingTheme()
     theme.resample_environment_texture = True
     pl = pv.Plotter(lighting=None, theme=theme)
     pl.set_environment_texture(texture)
-    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == 32
+    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == _MIN_IRRADIANCE_SIZE
     pl.close()
 
 
-@pytest.mark.needs_vtk_version(at_least=(9, 6))
 def test_set_environment_texture_rotation(verify_image_cache):
     """Environment texture rotation rotates both background and reflections."""
     verify_image_cache.windows_skip_image_cache = True

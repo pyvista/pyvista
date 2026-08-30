@@ -69,26 +69,13 @@ ACTOR_LOC_MAP = [
     'center',
 ]
 
-# Floor for the diffuse irradiance map: 32 keeps 91% of the speed-up from
-# down-sampling at a twelfth of the accuracy loss of 16.
+# Floor for the diffuse irradiance map: below 32 the diffuse term degrades
+# visibly on rough surfaces for little further speed-up.
 _MIN_IRRADIANCE_SIZE = 32
-
-
-@functools.lru_cache(maxsize=1)
-def _default_irradiance_size() -> int:
-    """Return VTK's default diffuse irradiance cube map size."""
-    return _vtk.vtkPBRIrradianceTexture().GetIrradianceSize()
-
 
 # Floor for the specular prefilter: too few samples show up as noise in rough
 # reflections rather than as a loss of detail.
 _MIN_PREFILTER_SAMPLES = 32
-
-
-@functools.lru_cache(maxsize=1)
-def _default_prefilter_samples() -> int:
-    """Return VTK's default specular prefilter sample count per texel."""
-    return _vtk.vtkPBRPrefilterTexture().GetPrefilterMaxSamples()
 
 
 def map_loc_to_pos(loc, size, border=0.05):
@@ -3878,8 +3865,11 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             .. versionchanged:: 0.49
 
                 The image-based lighting textures are down-sampled at the same
-                rate, subject to a lower bound: the diffuse irradiance map shrinks
-                and the specular prefilter integrates fewer samples per texel.
+                rate: the specular prefilter integrates fewer samples per texel,
+                and for cube map textures the diffuse irradiance map shrinks as
+                well. Both are clamped between a floor and their default size, so
+                a very low rate stops making them cheaper. Only a single rate is
+                accepted; a sequence of per-axis rates raises ``ValueError``.
 
         rotation : RotationLike, optional
             Rotation to apply to the environment texture for image-based
@@ -3923,11 +3913,13 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         if resample is None:
             resample = self._theme.resample_environment_texture
 
-        default_size = _default_irradiance_size()
-        default_samples = _default_prefilter_samples()
+        default_size = _vtk.vtkPBRIrradianceTexture().GetIrradianceSize()
+        default_samples = _vtk.vtkPBRPrefilterTexture().GetPrefilterMaxSamples()
 
         if resample:
             resample = 1 / 16 if resample is True else resample
+
+            resample = _validation.validate_number(resample, must_be_finite=True, name='resample')
 
             # Convolving the diffuse irradiance map dominates image-based lighting
             # for cube maps, so scale it with the texture.
@@ -3960,7 +3952,10 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             prefilter_samples = default_samples
             self.SetEnvironmentTexture(texture, is_srgb)
 
-        self.GetEnvMapIrradiance().SetIrradianceSize(irradiance_size)
+        # VTK convolves the irradiance map only when spherical harmonics are off,
+        # which is the cube map case handled above. The prefilter runs either way.
+        if texture.cube_map:
+            self.GetEnvMapIrradiance().SetIrradianceSize(irradiance_size)
         self.GetEnvMapPrefiltered().SetPrefilterMaxSamples(prefilter_samples)
 
         if rotation is not None:
