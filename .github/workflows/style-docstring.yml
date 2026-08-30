@@ -29,6 +29,7 @@ jobs:
             python-version: "3.10" # Should be the oldest version supported
 
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
 
     needs: cache-pyvista-data
     env:
@@ -67,11 +68,39 @@ jobs:
 
       - name: Test Package Docstrings (Linux)
         if: runner.os == 'Linux'
-        run: xvfb-run -a tox run -f doctest
+        run: xvfb-run -a tox run -e doctest-modules
 
       - name: Test Package Docstrings (Windows)
         if: runner.os == 'Windows'
-        run: tox run -f doctest
+        run: tox run -e doctest-modules
+
+  doctest-names:
+    name: Doctest Names
+    runs-on: "blacksmith-4vcpu-ubuntu-2204"
+    timeout-minutes: 15
+    env:
+      TOX_COLORED: "yes"
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.14" # Should be the latest version supported
+          cache: pip
+
+      - uses: awalsh128/cache-apt-pkgs-action@553a35bb8ebd9fcabcb1c9451aa4c98e1b4ca8a9
+        with:
+          packages: libgl1 libglx-mesa0
+          version: 3.0
+
+      - name: Install tox-uv
+        run: pip install tox-uv
+
+      - name: Check Docstring Example Names
+        run: tox run -e doctest-names
 
   vale:
     name: Vale
