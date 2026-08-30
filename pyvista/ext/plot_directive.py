@@ -81,8 +81,8 @@ The ``pyvista-plot`` directive supports the following options:
         boolean variable in :file:`conf.py`.
 
 Additionally, this directive supports all the options of the ``image``
-directive, except for *target* (since plot will add its own target).  These
-include *alt*, *height*, *width*, *scale*, *align*.
+directive, except for ``target`` (since plot will add its own target).  These
+include ``alt``, ``height``, ``width``, ``scale``, ``align``.
 
 
 **Open Graph previews**
@@ -577,9 +577,9 @@ def render_figures(
     *``output_base``*. Closed plotters are ignored if they were never
     rendered.
 
-    If *env* is given and *``include_source``* is true, also records the code's identifiers
+    If ``env`` is given and ``include_source`` is true, also records the code's identifiers
     to hyperlink -- skipped when the source isn't shown, since there would be nothing on the
-    page for a reader to click through to. *state* is the calling directive's own
+    page for a reader to click through to. ``state`` is the calling directive's own
     ``self.state``, passed through to sphinx-autocodelink for its own categorization.
     """
     # We skip snippets that contain the ``pyvista-plot::`` directive as part of their code.
