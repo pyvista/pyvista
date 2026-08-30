@@ -591,7 +591,8 @@ class _PointsDtypeTable(DocTable):
             ).cast_to_explicit_structured_grid(),
             'MultiBlock': lambda: pv.MultiBlock([pv.Sphere().points_to_double()]),
         }[class_name]()
-        for block in mesh.recursive_iterator() if isinstance(mesh, pv.MultiBlock) else [mesh]:
+        blocks = list(mesh.recursive_iterator()) if isinstance(mesh, pv.MultiBlock) else [mesh]
+        for block in blocks:
             block['scalars'] = np.arange(block.n_points, dtype=float)
             block['vectors'] = np.ones((block.n_points, 3))
         return mesh
@@ -599,17 +600,7 @@ class _PointsDtypeTable(DocTable):
     @classmethod
     def _dataset_types(cls):
         mixin_cls = getattr(pv, cls.mixin)
-        names = [
-            'PolyData',
-            'UnstructuredGrid',
-            'StructuredGrid',
-            'PointSet',
-            'ImageData',
-            'RectilinearGrid',
-            'ExplicitStructuredGrid',
-            'MultiBlock',
-        ]
-        return [n for n in names if issubclass(getattr(pv, n), mixin_cls)]
+        return [name for name in get_args(_mesh_types) if issubclass(getattr(pv, name), mixin_cls)]
 
     @classmethod
     def _delivers_double(cls, class_name, name):
