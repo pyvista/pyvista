@@ -22,6 +22,7 @@ Examples
 from __future__ import annotations
 
 import contextlib
+import errno
 import functools
 import importlib.util
 import logging
@@ -31,9 +32,15 @@ from pathlib import PureWindowsPath
 import shutil
 import sys
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import Literal
 from typing import cast
 from typing import overload
+
+if sys.platform == 'win32':
+    import msvcrt
+else:
+    import fcntl
 
 import numpy as np
 import pooch
@@ -54,6 +61,8 @@ from pyvista.examples._dataset_loader import _MultiFileDownloadableDatasetLoader
 from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from numpy import ndarray
 
     from pyvista import ExplicitStructuredGrid
@@ -180,7 +189,7 @@ def _gltf_loader(name: str):
     return _SingleFileDownloadableDatasetLoader(
         paths[name],
         base_url=base_url,
-        download_func=fetcher.fetch,
+        download_func=functools.partial(_locked_fetch, fetcher),
     )
 
 
@@ -268,12 +277,57 @@ def download_file(filename: str) -> str | list[str]:
         return _download_file(filename)
 
 
+@contextlib.contextmanager
+def _file_lock(path: Path) -> Iterator[None]:
+    """Hold an advisory cross-process lock while ``path`` is downloaded."""
+    try:
+        lock_path = Path(f'{path}.lock')
+        lock_path.parent.mkdir(parents=True, exist_ok=True)
+        fd = os.open(lock_path, os.O_CREAT | os.O_RDWR)
+    except OSError:
+        # Cannot create the lock; proceed unlocked and let pooch report any real errors
+        yield
+        return
+    try:
+        if sys.platform == 'win32':
+            while True:
+                try:
+                    os.lseek(fd, 0, os.SEEK_SET)
+                    msvcrt.locking(fd, msvcrt.LK_LOCK, 1)
+                    break
+                except OSError as e:
+                    # Keep waiting on contention (LK_LOCK gives up after ~10s); else unlocked
+                    if e.errno not in (errno.EACCES, errno.EDEADLOCK):
+                        break
+        else:
+            with contextlib.suppress(OSError):
+                fcntl.flock(fd, fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            with contextlib.suppress(OSError):
+                if sys.platform == 'win32':
+                    os.lseek(fd, 0, os.SEEK_SET)
+                    msvcrt.locking(fd, msvcrt.LK_UNLCK, 1)
+                else:
+                    fcntl.flock(fd, fcntl.LOCK_UN)
+    finally:
+        os.close(fd)
+
+
+def _locked_fetch(fetcher: Any, filename: str, **kwargs):
+    """Fetch with a per-file lock so parallel processes cannot corrupt a shared download."""
+    with _file_lock(fetcher.abspath / filename):
+        return fetcher.fetch(filename, **kwargs)
+
+
 def _download_file(filename: str):
     """Download a file using pooch."""
     # Pre-create the parent dir: pooch's check-then-makedirs races under parallel downloads
     with contextlib.suppress(OSError):
         (FETCHER.abspath / filename).parent.mkdir(parents=True, exist_ok=True)
-    return FETCHER.fetch(
+    return _locked_fetch(
+        FETCHER,
         filename,
         processor=pooch.Unzip() if filename.endswith('.zip') else None,  # type: ignore[attr-defined]
         downloader=_file_copier if _FILE_CACHE else None,
