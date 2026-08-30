@@ -1913,7 +1913,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         if geom is None:
             arrow_source = _vtk.vtkArrowSource()
             _update_alg(arrow_source, progress_bar=progress_bar, message='Making Arrow')
-            arrow = _apply_points_dtype(pv.wrap(arrow_source.GetOutput()), arrow_source)
+            # No algorithm passed: the template is scaled and copied onto the
+            # user's points, so its own precision is not worth warning about
+            arrow = _apply_points_dtype(pv.wrap(arrow_source.GetOutput()))
             geoms: Sequence[_vtk.vtkDataSet] = [arrow]
         # Check if a table of geometries was passed
         elif isinstance(geom, (np.ndarray, Sequence)):

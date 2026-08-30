@@ -13,7 +13,6 @@ import platform
 import re
 from types import FunctionType
 from types import ModuleType
-from typing import TypeVar
 
 import numpy as np
 from numpy.random import default_rng
@@ -943,18 +942,10 @@ def pytest_report_header(config):  # noqa: ARG001
     return '\n'.join(lines)
 
 
-_TypeType = TypeVar('_TypeType', bound=type)
-
-
-def _get_module_functions(module: ModuleType):
+def _get_module_functions(module: ModuleType) -> dict[str, FunctionType]:
     """Get all functions defined locally inside a module."""
 
-    def _get_module_members(module: ModuleType, typ: _TypeType) -> dict[str, _TypeType]:
-        """Get all members of a specified type which are defined locally inside a module."""
+    def is_local(obj):
+        return type(obj) is FunctionType and obj.__module__ == module.__name__
 
-        def is_local(obj):
-            return type(obj) is typ and obj.__module__ == module.__name__
-
-        return dict(inspect.getmembers(module, predicate=is_local))
-
-    return _get_module_members(module, typ=FunctionType)
+    return dict(inspect.getmembers(module, predicate=is_local))

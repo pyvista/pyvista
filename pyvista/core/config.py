@@ -296,6 +296,11 @@ class Config(_ConfigBase):
         Copying or recasting a dataset is not a source and keeps the points it was
         given, so ``mesh.copy()`` and ``mesh.cast_to_pointset()`` never change dtype.
 
+        ``'preserve'`` casts in both directions, so a filter that computes in double
+        from a single-precision mesh comes back single precision. What that discards is
+        smaller than the input's own representation error, and the alternative is the
+        dtype changing under you, which is the thing this setting exists to stop.
+
         The setter also accepts anything :class:`numpy.dtype` resolves to
         ``numpy.float32`` or ``numpy.float64`` (for example ``np.float64``,
         ``'double'``, or ``float``), and ``None`` as a synonym for ``'preserve'``.

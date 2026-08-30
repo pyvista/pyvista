@@ -25,6 +25,8 @@ Examples
 
 from __future__ import annotations
 
+import contextlib
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import cast
 
@@ -37,11 +39,12 @@ from pyvista.core.errors import PyVistaPrecisionWarning
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.observers import ProgressMonitor
 
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
 
 def _update_alg(alg: _vtk.vtkAlgorithm, *, progress_bar: bool = False, message='') -> None:
     """Update an algorithm with or without a progress bar."""
-    _set_output_points_precision(alg)
-
     # Get the status of the alg update using GetExecutive
     # https://discourse.vtk.org/t/changing-vtkalgorithm-update-return-type-from-void-to-bool/16164
     if pv.vtk_version_info >= (9, 7):
@@ -54,11 +57,12 @@ def _update_alg(alg: _vtk.vtkAlgorithm, *, progress_bar: bool = False, message='
             to_be_updated = alg
 
     # Do the update
-    if progress_bar:
-        with ProgressMonitor(alg, message=message):
+    with _requested_points_precision(alg):
+        if progress_bar:
+            with ProgressMonitor(alg, message=message):
+                status = to_be_updated.Update()
+        else:
             status = to_be_updated.Update()
-    else:
-        status = to_be_updated.Update()
 
     if status is not None and status == 0:
         # There was an error with the update. Re-run so we can catch it and
@@ -76,13 +80,9 @@ def _points_dtype(mesh: Any = None) -> np.dtype[Any] | None:
     ``'preserve'`` setting. Pass nothing for an algorithm with no input, such as a
     geometry source, where ``'preserve'`` has nothing to preserve.
 
-    ``'preserve'`` preserves the dtype of points a mesh actually stores.
-    :class:`~pyvista.ImageData` and :class:`~pyvista.RectilinearGrid` store none --
-    theirs are generated on demand from the origin and spacing, or from the coordinate
-    arrays -- so they constrain nothing and VTK picks the output precision. Treating
-    their generated double as a request would double every image pipeline's output, and
-    a filter that builds one as an intermediate would silently widen an unrelated
-    single-precision input.
+    See :attr:`pyvista.core.config.Config.points_dtype` for what each setting means.
+    ``'preserve'`` preserves the dtype of points a mesh actually stores, so a mesh that
+    generates or lacks them constrains nothing.
     """
     setting = pv.global_config.points_dtype
     if setting != 'preserve':
@@ -99,25 +99,34 @@ def _points_dtype(mesh: Any = None) -> np.dtype[Any] | None:
     return dtype if dtype in (np.dtype(np.float32), np.dtype(np.float64)) else None
 
 
-def _set_output_points_precision(alg: _vtk.vtkAlgorithm) -> None:
-    """Ask an algorithm to generate points with the configured dtype.
+@contextlib.contextmanager
+def _requested_points_precision(alg: _vtk.vtkAlgorithm) -> Iterator[None]:
+    """Ask an algorithm for the configured points dtype for the duration of an update.
 
-    Only an explicit ``'float32'`` or ``'float64'`` is requested. Under ``'preserve'``
-    VTK's own default already matches the input, and asking anyway is not free: for
+    Only an explicit ``'float32'`` or ``'float64'`` is requested, and the algorithm's
+    own setting is restored afterwards so a temporary global does not outlive itself on
+    a source the caller configured. Under ``'preserve'`` nothing is asked for: VTK's
+    default already matches the input, and asking anyway is not free -- for
     :vtk:`vtkTransformFilter` the request widens the data arrays it transforms as well
-    as the points. The filters that do not honor the default -- :vtk:`vtkOutlineFilter`
-    initializes to single precision rather than default, for one -- are corrected by
-    ``_enforce_points_dtype`` instead.
-
-    Algorithms that support this compute in the requested precision, which is both
-    cheaper and more accurate than casting afterwards.
+    as the points. Algorithms that ignore what they are asked for are corrected by
+    :func:`_enforce_points_dtype` instead.
     """
     dtype = _points_dtype()
-    if dtype is None:
-        return
     set_precision = getattr(alg, 'SetOutputPointsPrecision', None)
-    if set_precision is not None:
-        set_precision(alg.DOUBLE_PRECISION if dtype == np.float64 else alg.SINGLE_PRECISION)
+    get_precision = getattr(alg, 'GetOutputPointsPrecision', None)
+    if dtype is None or set_precision is None or get_precision is None:
+        yield
+        return
+    previous = get_precision()
+    set_precision(
+        _vtk.vtkAlgorithm.DOUBLE_PRECISION
+        if dtype == np.float64
+        else _vtk.vtkAlgorithm.SINGLE_PRECISION
+    )
+    try:
+        yield
+    finally:
+        set_precision(previous)
 
 
 def _enforce_points_dtype(
@@ -125,14 +134,11 @@ def _enforce_points_dtype(
 ) -> None:
     """Cast ``mesh_out``'s points to ``dtype`` in place if the algorithm ignored the request.
 
-    Only meshes that own their points are cast. :class:`~pyvista.ImageData` and
-    :class:`~pyvista.RectilinearGrid` generate their points on demand and apply the
-    setting in their own ``points`` property instead.
-
-    Casting single-precision output up to a requested ``'float64'`` fixes the dtype but
-    cannot recover the digits the algorithm already discarded, so that case warns.
-    Under ``'preserve'`` it does not: that setting promises a stable dtype rather than
-    any particular precision, and the cast keeps that promise in full.
+    Only meshes that own their points are cast; the rest apply the setting in their own
+    ``points`` property. Casting single-precision output up to a requested ``'float64'``
+    fixes the dtype but cannot recover the digits the algorithm already discarded, so
+    that case warns. ``'preserve'`` does not warn in either direction: it promises a
+    stable dtype rather than a precision, and the cast keeps that promise in full.
     """
     if dtype is None:
         return
@@ -164,8 +170,29 @@ def _enforce_points_dtype(
     mesh_out.points = points.astype(dtype)
 
 
-def _apply_points_dtype(mesh: Any, algorithm: _vtk.vtkAlgorithm | None = None) -> Any:
-    """Apply the configured dtype to a mesh PyVista generated without a VTK algorithm."""
+def _match_points_dtype(
+    mesh_out: Any, mesh_in: Any, *, algorithm: _vtk.vtkAlgorithm | None = None
+) -> None:
+    """Give ``mesh_out`` the dtype the setting asks for, given the algorithm's input.
+
+    Composites are paired block for block where their structure corresponds, so
+    ``'preserve'`` preserves each block's own dtype rather than the whole composite's.
+    """
+    if pv.global_config.points_dtype != 'preserve':
+        _enforce_points_dtype(mesh_out, _points_dtype(), algorithm=algorithm)
+        return
+    if isinstance(mesh_out, pv.MultiBlock) and isinstance(mesh_in, pv.MultiBlock):
+        blocks_out = list(mesh_out.recursive_iterator(skip_none=True))
+        blocks_in = list(mesh_in.recursive_iterator(skip_none=True))
+        if len(blocks_out) == len(blocks_in):
+            for block_out, block_in in zip(blocks_out, blocks_in, strict=True):
+                _enforce_points_dtype(block_out, _points_dtype(block_in), algorithm=algorithm)
+            return
+    _enforce_points_dtype(mesh_out, _points_dtype(mesh_in), algorithm=algorithm)
+
+
+def _apply_points_dtype(mesh: Any, *, algorithm: _vtk.vtkAlgorithm | None = None) -> Any:
+    """Apply the configured dtype to a mesh wrapped without :func:`_get_output`."""
     _enforce_points_dtype(mesh, _points_dtype(), algorithm=algorithm)
     return mesh
 
@@ -183,7 +210,7 @@ def _get_output(
     """Get the algorithm's output and copy input's pyvista meta info."""
     ido = cast('pv.DataObject', wrap(algorithm.GetInputDataObject(iport, iconnection)))
     data = cast('pv.DataObject', wrap(algorithm.GetOutputDataObject(oport)))
-    _enforce_points_dtype(data, _points_dtype(ido), algorithm=algorithm)
+    _match_points_dtype(data, ido, algorithm=algorithm)
     if not isinstance(data, pv.MultiBlock):
         data.copy_meta_from(ido, deep=True)
         if not data.field_data and ido.field_data:

@@ -14,7 +14,7 @@ from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core.filters import _apply_points_dtype
-from pyvista.core.filters import _set_output_points_precision
+from pyvista.core.filters import _update_alg
 
 from .arrays import _coerce_pointslike_arg
 from .geometric_sources import ArrowSource
@@ -1791,8 +1791,7 @@ def Wavelet(  # noqa: PLR0917
     wavelet_source.SetStandardDeviation(std)
     wavelet_source.SetSubsampleRate(subsample_rate)
     wavelet_source.Update()
-    out = cast('pv.ImageData', wrap(wavelet_source.GetOutput()))
-    return _apply_points_dtype(out)
+    return cast('pv.ImageData', wrap(wavelet_source.GetOutput()))
 
 
 @_deprecate_positional_args
@@ -1871,9 +1870,7 @@ def CircularArc(  # noqa: PLR0917
     alg.SetCenter(*center)
     alg.SetResolution(resolution)
     alg.SetNegative(negative)
-    _set_output_points_precision(alg)
-
-    alg.Update()
+    _update_alg(alg)
     angle = np.deg2rad(alg.GetAngle())
     arc = wrap(alg.GetOutput())
     # Compute distance of every point along circular arc
@@ -1956,8 +1953,7 @@ def CircularArcFromNormal(  # noqa: PLR0917
     check_valid_vector(polar, 'polar')
     alg.SetPolarVector(*polar)
     alg.SetAngle(angle_)
-    _set_output_points_precision(alg)
-    alg.Update()
+    _update_alg(alg)
     angle_ = np.deg2rad(alg.GetAngle())
     arc = wrap(alg.GetOutput())
     # Compute distance of every point along circular arc

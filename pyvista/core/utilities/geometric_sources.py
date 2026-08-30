@@ -24,7 +24,7 @@ from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.filters import _apply_points_dtype
-from pyvista.core.filters import _set_output_points_precision
+from pyvista.core.filters import _requested_points_precision
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _check_range
@@ -43,6 +43,7 @@ if TYPE_CHECKING:
     from pyvista.core.pointset import PolyData
 
 
+DEFAULT_PRECISION = _vtk.vtkAlgorithm.DEFAULT_PRECISION
 SINGLE_PRECISION = _vtk.vtkAlgorithm.SINGLE_PRECISION
 DOUBLE_PRECISION = _vtk.vtkAlgorithm.DOUBLE_PRECISION
 
@@ -55,13 +56,13 @@ class _Source(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkAlgorithm):
 
     def Update(self, *args: Any) -> Any:  # noqa: N802
         """Update the source, requesting the configured points dtype."""
-        _set_output_points_precision(self)
-        return super().Update(*args)
+        with _requested_points_precision(self):
+            return super().Update(*args)
 
     def _update_and_wrap_output(self) -> Any:
         """Update and return the output with the configured points dtype applied."""
         self.Update()
-        return _apply_points_dtype(wrap(self.GetOutput()), self)
+        return _apply_points_dtype(wrap(self.GetOutput()), algorithm=self)
 
 
 def translate(
@@ -1176,6 +1177,8 @@ class CubeSource(_Source, _vtk.vtkCubeSource):
         """
         precision = self.GetOutputPointsPrecision()
         return {
+            # A source has no input to match, so VTK's default is single precision
+            DEFAULT_PRECISION: 'float32',
             SINGLE_PRECISION: 'float32',
             DOUBLE_PRECISION: 'float64',
         }[precision]  # type: ignore[index]

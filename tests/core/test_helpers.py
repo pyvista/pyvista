@@ -442,6 +442,57 @@ def test_points_dtype_applies_to_multiblock(monkeypatch):
     assert all(block.points.dtype == np.float64 for block in multi.clip())
 
 
+def test_points_dtype_preserve_pairs_multiblock_blocks(monkeypatch):
+    # A block keeps its own dtype, the same as it would outside the composite
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'preserve')
+    double, single = pv.Sphere().points_to_double(), pv.Sphere()
+
+    assert double.clip_box().points.dtype == np.float64
+    blocks = pv.MultiBlock([double, single]).clip_box()
+    assert [block.points.dtype for block in blocks] == [np.float64, np.float32]
+
+    nested = pv.MultiBlock([pv.MultiBlock([double]), single]).clip_box()
+    assert [b.points.dtype for b in nested.recursive_iterator()] == [np.float64, np.float32]
+
+
+def test_points_dtype_preserve_casts_both_directions(monkeypatch):
+    # vtkCellCenters computes in double whatever it is given; 'preserve' brings that
+    # back to the input's dtype rather than letting the dtype change
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'preserve')
+    mesh = pv.Sphere()
+
+    assert mesh.points.dtype == np.float32
+    assert mesh.cell_centers().points.dtype == np.float32
+    assert mesh.points_to_double().cell_centers().points.dtype == np.float64
+
+
+def test_points_dtype_restores_an_explicitly_configured_source(monkeypatch):
+    # A temporary global must not outlive itself on a source the caller configured
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'preserve')
+    source = pv.CubeSource(point_dtype='float64')
+    assert source.output.points.dtype == np.float64
+
+    pv.global_config.points_dtype = 'float32'
+    assert source.output.points.dtype == np.float32
+
+    pv.global_config.points_dtype = 'preserve'
+    assert source.point_dtype == 'float64'
+    assert source.output.points.dtype == np.float64
+
+
+def test_points_dtype_float64_does_not_warn_for_an_internal_template(monkeypatch):
+    # `glyph` builds its own arrow, which is scaled and copied onto the user's points;
+    # the template's precision is not something the caller can act on
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'float64')
+    mesh = pv.Sphere().points_to_double()
+    mesh['vectors'] = np.ones((mesh.n_points, 3))
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', pv.PyVistaPrecisionWarning)
+        glyphed = mesh.glyph(orient='vectors', scale=False)
+    assert glyphed.points.dtype == np.float64
+
+
 def test_reader_forwards_validate_kwarg(mocker: MockerFixture):
     # BaseReader.read(validate=...) must forward the kwarg through to wrap().
     spy = mocker.spy(reader_module, 'wrap')
