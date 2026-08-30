@@ -402,6 +402,18 @@ def test_widget_closed(uniform):
         pl.add_checkbox_button_widget(callback=lambda value: value)
 
 
+def test_close_with_widgets_does_not_render(uniform):
+    """Widget teardown during ``close`` must not trigger renders."""
+    pl = pv.Plotter()
+    pl.add_mesh(uniform)
+    pl.add_plane_widget(callback=lambda normal, origin: None)  # noqa: ARG005
+    pl.show(auto_close=False)
+    render_starts = []
+    pl.render_window.AddObserver('StartEvent', lambda *_: render_starts.append(1))
+    pl.close()
+    assert not render_starts
+
+
 def test_widget_radio_button(uniform):
     pl = pv.Plotter()
     func = lambda: None  # Does nothing
