@@ -82,6 +82,8 @@ jobs:
     # expensive at the 360-minute default. The suite finishes in ~15.
     timeout-minutes: 80
     needs: cache-github-hosted
+    env:
+      PARALLEL: "-n auto" # Use all available cores on the selected runner
     strategy:
       fail-fast: false
       matrix:
