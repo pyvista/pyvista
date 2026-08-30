@@ -184,10 +184,10 @@ def test_get_vtk_data_path_with_env_var(monkeypatch, endswith, tmp_path):
     path = (tmp_path / 'mypath').as_posix()
     if endswith:
         path = path + '/' + endswith
-    monkeypatch.setenv(downloads._VTK_DATA_VARNAME, path)
+    monkeypatch.setenv(downloads._DATA_VARNAME, path)
     path_no_trailing_slash = path.removesuffix('/')
     match = (
-        f'The given {downloads._VTK_DATA_VARNAME} is not a valid directory '
+        f'The given {downloads._DATA_VARNAME} is not a valid directory '
         f'and will not be used:\n{path_no_trailing_slash}'
     )
     with pytest.warns(UserWarning, match=re.escape(match)):
@@ -199,10 +199,38 @@ def test_get_vtk_data_path_with_env_var(monkeypatch, endswith, tmp_path):
 
 
 def test_get_vtk_data_path_without_env_var(monkeypatch):
+    monkeypatch.delenv(downloads._DATA_VARNAME, raising=False)
     monkeypatch.delenv(downloads._VTK_DATA_VARNAME, raising=False)
     source, file_cache = _get_vtk_data_source()
     assert source == downloads._DEFAULT_VTK_DATA_SOURCE
     assert file_cache is False
+
+
+def test_get_vtk_data_path_with_deprecated_env_var(monkeypatch, tmp_path):
+    monkeypatch.delenv(downloads._DATA_VARNAME, raising=False)
+    data_dir = tmp_path / 'Data'
+    data_dir.mkdir()
+    monkeypatch.setenv(downloads._VTK_DATA_VARNAME, str(data_dir))
+    match = (
+        f"The '{downloads._VTK_DATA_VARNAME}' environment variable is deprecated; "
+        f"use '{downloads._DATA_VARNAME}' instead."
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(match)):
+        source, file_cache = _get_vtk_data_source()
+    assert source == data_dir.as_posix() + '/'
+    assert file_cache is True
+
+
+def test_get_vtk_data_path_new_env_var_wins(monkeypatch, tmp_path):
+    new_dir = tmp_path / 'new' / 'Data'
+    new_dir.mkdir(parents=True)
+    old_dir = tmp_path / 'old' / 'Data'
+    old_dir.mkdir(parents=True)
+    monkeypatch.setenv(downloads._DATA_VARNAME, str(new_dir))
+    monkeypatch.setenv(downloads._VTK_DATA_VARNAME, str(old_dir))
+    source, file_cache = _get_vtk_data_source()
+    assert source == new_dir.as_posix() + '/'
+    assert file_cache is True
 
 
 def test_get_user_data_path_env_var_valid(monkeypatch, tmp_path):

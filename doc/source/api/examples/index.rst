@@ -142,7 +142,8 @@ You can clear out the local cache with :func:`examples.delete_downloads()
 <pyvista.examples.downloads.delete_downloads>` if needed.
 
 If you want to override this local cache path, set the
-``PYVISTA_USERDATA_PATH`` environment variable. This path must be writable.
+:envvar:`PYVISTA_USERDATA_PATH` environment variable. This path must be
+writable. See :ref:`configuration` for all environment variables.
 
 
 Data Sources
@@ -150,14 +151,13 @@ Data Sources
 PyVista uses `pyvista/data <https://github.com/pyvista/data>`_ as
 the main source for example data. If you do not have internet access or you
 prefer using a local or network directory instead, you can override this
-source with the ``VTK_DATA_PATH`` environment variable.
+source with the :envvar:`PYVISTA_DATA` environment variable.
 
 The following example first clones the git repository and then exports that
-directory to PyVista via ``VTK_DATA_PATH``. Note how the path ends in
-``'Data'`` since we need to specify the exact directory of the Data for
-``pooch``.
+directory to PyVista via ``PYVISTA_DATA``. ``Data`` is appended to the
+path if it does not already end in it.
 
 .. code-block:: bash
 
    git clone https://github.com/pyvista/data.git
-   export VTK_DATA_PATH=/home/alex/python/pyvista/data/Data
+   export PYVISTA_DATA=/home/alex/python/pyvista/data/Data

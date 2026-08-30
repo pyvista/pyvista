@@ -32,7 +32,7 @@ env:
     !startsWith(github.ref, 'refs/heads/main')
     }}
   CACHE_FOLDER_NAME: pyvista-data
-  PYVISTA_VTK_DATA: ${{ github.workspace }}/pyvista-data
+  PYVISTA_DATA: ${{ github.workspace }}/pyvista-data
 
 permissions:
   id-token: none
