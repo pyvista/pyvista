@@ -114,10 +114,6 @@ jobs:
             cat "$f"
           done
 
-      - name: Dump Sphinx Reading Durations
-        if: always()
-        run: if [ -e doc/_build/html/sphinx-reading-durations.json ]; then cat doc/_build/html/sphinx-reading-durations.json; fi
-
       # Translated (i18n) docs are built in a dedicated pipeline in
       # pyvista/pyvista-doc-translations. See issue #8626.
 

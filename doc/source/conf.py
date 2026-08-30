@@ -154,8 +154,9 @@ extensions = [
 ]
 
 
-# Configuration for sphinx.ext.duration: save reading durations to the output dir
-duration_write_json = 'sphinx-reading-durations.json'
+# Configuration for sphinx.ext.duration: report in the build log, skip the JSON file
+duration_n_slowest = 50
+duration_write_json = None
 
 
 # Configuration for sphinx.ext.autodoc
