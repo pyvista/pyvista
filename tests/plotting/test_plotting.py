@@ -319,12 +319,8 @@ def test_set_environment_texture_resample_uses_linear_anti_aliasing(mocker, no_i
 
 
 def test_set_environment_texture_resample_shrinks_irradiance(no_images_to_verify):  # noqa: ARG001
-    """Resampling should also shrink the diffuse irradiance map VTK convolves.
-
-    Convolving that map, rather than the resolution of the texture itself,
-    dominates the cost of image-based lighting for cube maps.
-    """
-    texture = examples.load_globe_texture()
+    """Resampling should also shrink the diffuse irradiance map VTK convolves."""
+    texture = examples.download_cubemap_park()
 
     # The testing theme resamples by default, so turn it off to see the full-size map
     pv.global_theme.resample_environment_texture = False
@@ -334,12 +330,18 @@ def test_set_environment_texture_resample_shrinks_irradiance(no_images_to_verify
     assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == default_size
 
     pl.set_environment_texture(texture, resample=0.5)
-    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == default_size // 2
+    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == 128
+
+    pl.set_environment_texture(texture, resample=False)
+    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == default_size
 
     # ``True`` means a sampling rate of 1/16. Setting the texture again must scale from
     # the default size rather than compound with the size set by the previous call.
     pl.set_environment_texture(texture, resample=True)
-    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == default_size // 16
+    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == 32
+
+    pl.set_environment_texture(texture, resample=2.0)
+    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == default_size
 
     # Very low sampling rates are clamped so the diffuse term stays smooth
     pl.set_environment_texture(texture, resample=1 / 1024)
@@ -350,7 +352,7 @@ def test_set_environment_texture_resample_shrinks_irradiance(no_images_to_verify
     pv.global_theme.resample_environment_texture = True
     pl = pv.Plotter(lighting=None)
     pl.set_environment_texture(texture)
-    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == default_size // 16
+    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == 32
     pl.close()
 
 
