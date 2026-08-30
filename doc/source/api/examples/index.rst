@@ -151,14 +151,14 @@ Data Sources
 PyVista uses `pyvista/data <https://github.com/pyvista/data>`_ as
 the main source for example data. If you do not have internet access or you
 prefer using a local or network directory instead, you can override this
-source with the ``VTK_DATA_PATH`` environment variable.
+source with the :envvar:`PYVISTA_VTK_DATA` environment variable.
 
 The following example first clones the git repository and then exports that
-directory to PyVista via ``VTK_DATA_PATH``. Note how the path ends in
+directory to PyVista via ``PYVISTA_VTK_DATA``. Note how the path ends in
 ``'Data'`` since we need to specify the exact directory of the Data for
 ``pooch``.
 
 .. code-block:: bash
 
    git clone https://github.com/pyvista/data.git
-   export VTK_DATA_PATH=/home/alex/python/pyvista/data/Data
+   export PYVISTA_VTK_DATA=/home/alex/python/pyvista/data/Data
