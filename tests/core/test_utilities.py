@@ -594,6 +594,14 @@ def test_report_downloads():
     assert f'File Cache : {pv.examples.downloads._FILE_CACHE}' in repr_
 
 
+def test_report_env_vars(monkeypatch):
+    monkeypatch.setenv('PYVISTA_PLOT_THEME', 'dark')
+    monkeypatch.delenv('PYVISTA_DOES_NOT_EXIST', raising=False)
+    repr_ = repr(pv.Report(gpu=False))
+    assert 'PYVISTA_PLOT_THEME : dark' in repr_
+    assert 'PYVISTA_DOES_NOT_EXIST' not in repr_
+
+
 def test_line_segments_from_points():
     points = np.array([[0, 0, 0], [1, 0, 0], [1, 0, 0], [1, 1, 0]])
     poly = pv.line_segments_from_points(points)

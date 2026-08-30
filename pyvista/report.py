@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 import subprocess
 import sys
@@ -186,6 +187,10 @@ class Report(scooby.Report):
         This class is also available via command-line interface. See
         :ref:`pyvista report <cli_report>` for details.
 
+    Any set ``PYVISTA_*`` environment variables are included in the report.
+
+    .. versionadded:: 0.49
+
     Parameters
     ----------
     additional : sequence[types.ModuleType], sequence[str]
@@ -335,6 +340,8 @@ class Report(scooby.Report):
                 ]
             )
 
+        extra_meta.extend(_get_set_env_vars())
+
         scooby.Report.__init__(
             self,
             additional=additional,
@@ -345,6 +352,13 @@ class Report(scooby.Report):
             sort=sort,
             extra_meta=extra_meta,
         )
+
+
+def _get_set_env_vars() -> list[tuple[str, str]]:
+    """Return name-value pairs for all set ``PYVISTA_*`` environment variables."""
+    return [
+        (name, value) for name, value in sorted(os.environ.items()) if name.startswith('PYVISTA_')
+    ]
 
 
 def _get_downloads_info() -> tuple[str, str, bool]:
