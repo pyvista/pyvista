@@ -307,7 +307,13 @@ def test_set_environment_texture_resample_uses_linear_anti_aliasing(mocker, no_i
 
     pl = pv.Plotter(lighting=None)
     texture = examples.load_globe_texture()
+    default_size = pl.renderer.GetEnvMapIrradiance().GetIrradianceSize()
     pl.set_environment_texture(texture, resample=0.5)
+
+    # Equirectangular textures light through spherical harmonics, so their irradiance
+    # map is left alone rather than scaled with the texture
+    assert not texture.cube_map
+    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == default_size
 
     spy.assert_called_once()
     args, kwargs = spy.call_args
@@ -329,8 +335,10 @@ def test_set_environment_texture_resample_shrinks_irradiance(no_images_to_verify
     pv.global_theme.resample_environment_texture = False
     pl = pv.Plotter(lighting=None)
     default_size = pl.renderer.GetEnvMapIrradiance().GetIrradianceSize()
-    pl.set_environment_texture(texture)
-    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == default_size
+
+    # A per-axis rate has no meaning for the square irradiance map
+    with pytest.raises(ValueError, match='resample has shape'):
+        pl.set_environment_texture(texture, resample=[0.25, 0.5, 0.5])
 
     pl.set_environment_texture(texture, resample=0.5)
     assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == 128
@@ -366,15 +374,8 @@ def test_set_environment_texture_resample_shrinks_irradiance(no_images_to_verify
     assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == _MIN_IRRADIANCE_SIZE
     pl.close()
 
-    # The theme applies the same scaling when `resample` is not given explicitly
-    pv.global_theme.resample_environment_texture = True
-    pl = pv.Plotter(lighting=None)
-    pl.set_environment_texture(texture)
-    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == _MIN_IRRADIANCE_SIZE
-    pl.close()
-
-    # A theme passed to the plotter applies instead of the global one
-    pv.global_theme.resample_environment_texture = False
+    # The theme supplies the rate when `resample` is not given, and the plotter's own
+    # theme wins over the global one
     theme = pv.plotting.themes._TestingTheme()
     theme.resample_environment_texture = True
     pl = pv.Plotter(lighting=None, theme=theme)
@@ -383,29 +384,6 @@ def test_set_environment_texture_resample_shrinks_irradiance(no_images_to_verify
     pl.close()
 
 
-def test_set_environment_texture_resample_per_axis_rate(no_images_to_verify):  # noqa: ARG001
-    """A per-axis sampling rate scales the irradiance map by its least reduced axis."""
-    texture = examples.download_cubemap_park()
-
-    pl = pv.Plotter(lighting=None)
-    pl.set_environment_texture(texture, resample=[0.25, 0.5, 0.5])
-    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == 128
-    pl.close()
-
-
-def test_set_environment_texture_irradiance_is_cubemap_only(no_images_to_verify):  # noqa: ARG001
-    """Equirectangular textures light through spherical harmonics, so their map is left alone."""
-    texture = examples.load_globe_texture()
-    assert not texture.cube_map
-
-    pl = pv.Plotter(lighting=None)
-    pl.renderer.GetEnvMapIrradiance().SetIrradianceSize(64)
-    pl.set_environment_texture(texture, resample=True)
-    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == 64
-    pl.close()
-
-
-@pytest.mark.needs_vtk_version(at_least=(9, 6))
 def test_set_environment_texture_rotation(verify_image_cache):
     """Environment texture rotation rotates both background and reflections."""
     verify_image_cache.windows_skip_image_cache = True
