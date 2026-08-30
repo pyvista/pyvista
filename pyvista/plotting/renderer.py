@@ -3860,8 +3860,11 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
             .. versionchanged:: 0.49
 
-                The diffuse irradiance map used for image-based lighting is
-                down-sampled at the same rate, subject to a lower bound.
+                For cube map textures, the diffuse irradiance map used for
+                image-based lighting is down-sampled at the same rate, with its
+                size clamped between 32 texels and its default. Any rate at or
+                below ``1/8``, including the ``1/16`` that ``True`` selects,
+                therefore gives a 32 texel map.
 
         rotation : RotationLike, optional
             Rotation to apply to the environment texture for image-based
