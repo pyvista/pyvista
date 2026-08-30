@@ -628,6 +628,30 @@ pyvista_plot_cleanup = pyvista_plot_setup
 # Hyperlink identifiers in ``.. pyvista-plot::`` output to their documented targets.
 pyvista_plot_autocodelink = True
 
+
+def pyvista_plot_read_group_key(docname):
+    """Group autosummary pages whose target objects share their doctest lines.
+
+    ``Plotter`` methods that wrap a ``Renderer`` method carry its docstring
+    verbatim, so both pages render identical figures; reading them on the same
+    worker lets the plot directive's figure cache render each figure once.
+    """
+    _, sep, qualname = docname.rpartition('_autosummary/')
+    if not sep or not qualname.startswith('pyvista.'):
+        return None
+    try:
+        obj = pv
+        for attr in qualname.split('.')[1:]:
+            obj = getattr(obj, attr)
+        doc = obj.__doc__ or ''
+    except Exception:  # noqa: BLE001
+        return None
+    doctest_lines = [
+        line.strip() for line in doc.splitlines() if line.lstrip().startswith(('>>>', '...'))
+    ]
+    return '\n'.join(doctest_lines) if doctest_lines else None
+
+
 # Append a "Used In" backreferences section to every autodoc-documented object's own
 # docstring (empty ones get nothing appended, not "No references found.").
 autocodelink_autodoc_backrefs = True

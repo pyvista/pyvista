@@ -341,3 +341,45 @@ def test_setup_connects_figure_cache_clear():
     app = _FakeSphinxApp()
     plot_directive.setup(app)
     assert plot_directive._clear_figure_cache in app.connected['builder-inited']
+
+
+def test_adjacent_by_group_pulls_members_together():
+    docnames = ['a', 'plotter.foo', 'b', 'c', 'renderer.foo', 'd']
+
+    def key(name):
+        return 'foo' if name.endswith('.foo') else None
+
+    ordered = plot_directive._adjacent_by_group(docnames, key)
+
+    assert ordered == ['a', 'plotter.foo', 'renderer.foo', 'b', 'c', 'd']
+
+
+def test_adjacent_by_group_leaves_singletons_and_unkeyed_in_place():
+    docnames = ['a', 'only.foo', 'b']
+
+    def key(name):
+        return 'foo' if name.endswith('.foo') else None
+
+    assert plot_directive._adjacent_by_group(docnames, key) == docnames
+
+
+def test_group_duplicate_docs_reorders_in_place():
+    app = SimpleNamespace(
+        config=SimpleNamespace(
+            pyvista_plot_read_group_key=lambda name: name[-1] if name[-1].isdigit() else None
+        )
+    )
+    docnames = ['x1', 'a', 'y1', 'b']
+
+    plot_directive._group_duplicate_docs(app, None, docnames)
+
+    assert docnames == ['x1', 'y1', 'a', 'b']
+
+
+def test_group_duplicate_docs_without_key_is_a_no_op():
+    app = SimpleNamespace(config=SimpleNamespace(pyvista_plot_read_group_key=None))
+    docnames = ['b', 'a']
+
+    plot_directive._group_duplicate_docs(app, None, docnames)
+
+    assert docnames == ['b', 'a']

@@ -141,6 +141,14 @@ The plot directive has the following configuration options:
 
         .. versionadded:: 0.49
 
+    ``pyvista_plot_read_group_key`` : Callable[[str], Any] | None
+        Key function over docnames for parallel reading. Docs whose keys are
+        equal (and not ``None``) are read adjacently, and so by the same
+        worker -- without this, identical directives on pages read
+        concurrently each render instead of sharing one result.
+
+        .. versionadded:: 0.49
+
 These options can be set by defining global variables of the same name in
 :file:`conf.py`.
 
@@ -326,6 +334,7 @@ def setup(app: Sphinx):
     setup.confdir = app.confdir
     app.add_directive('pyvista-plot', PlotDirective)
     app.connect('builder-inited', _clear_figure_cache)
+    app.connect('env-before-read-docs', _group_duplicate_docs)
     if record_namespace is not None:
         app.setup_extension('sphinx_autocodelink')
 
@@ -391,6 +400,7 @@ def setup(app: Sphinx):
     app.add_config_value(name='pyvista_plot_skip', default=False, rebuild='html')
     app.add_config_value(name='pyvista_plot_skip_optional', default=False, rebuild='html')
     app.add_config_value(name='pyvista_plot_autocodelink', default=False, rebuild='html')
+    app.add_config_value(name='pyvista_plot_read_group_key', default=None, rebuild='env')
     return {
         'parallel_read_safe': True,
         'parallel_write_safe': True,
@@ -600,6 +610,41 @@ def _figure_cache_dir(app: Sphinx) -> Path:
 def _clear_figure_cache(app: Sphinx) -> None:
     """Drop the figure cache so no entry outlives the build that rendered it."""
     shutil.rmtree(_figure_cache_dir(app), ignore_errors=True)
+
+
+def _adjacent_by_group(docnames, key):
+    """Return ``docnames`` with every multi-member group made contiguous.
+
+    A group's members move up to its first member's position; every other name
+    keeps its place in the order.
+    """
+    group_of = {name: key(name) for name in docnames}
+    members: dict = {}
+    for name in docnames:
+        if group_of[name] is not None:
+            members.setdefault(group_of[name], []).append(name)
+    grouped = {name for group in members.values() if len(group) > 1 for name in group}
+    ordered = []
+    emitted: set[str] = set()
+    for name in docnames:
+        if name not in grouped:
+            ordered.append(name)
+        elif name not in emitted:
+            group = members[group_of[name]]
+            ordered.extend(group)
+            emitted.update(group)
+    return ordered
+
+
+def _group_duplicate_docs(app: Sphinx, _env, docnames) -> None:
+    """Reorder the reading order so docs sharing a group key are read together.
+
+    A parallel read splits ``docnames`` into contiguous chunks, so adjacent
+    duplicates land in one worker and the figure cache serves the later ones.
+    """
+    key = app.config.pyvista_plot_read_group_key
+    if callable(key) and docnames:
+        docnames[:] = _adjacent_by_group(docnames, key)
 
 
 def _load_cached_figures(cache_entry: Path, *, code, output_dir, output_base):
