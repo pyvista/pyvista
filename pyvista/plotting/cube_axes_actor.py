@@ -23,7 +23,7 @@ from pyvista.plotting.tools import parse_font_family
 
 if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLike
-    from pyvista.plotting.colors import ColorLike
+    from pyvista.plotting._typing import ColorLike
 
 
 def _validate_axes_ranges(axes_ranges: VectorLike[float]) -> np.ndarray:
@@ -31,7 +31,7 @@ def _validate_axes_ranges(axes_ranges: VectorLike[float]) -> np.ndarray:
     if isinstance(axes_ranges, (Sequence, np.ndarray)):
         axes_ranges = np.asanyarray(axes_ranges)
     else:
-        msg = 'Input axes_ranges must be a numeric sequence.'
+        msg = 'Input axes_ranges must be a numeric sequence.'  # type: ignore[unreachable]
         raise TypeError(msg)
 
     if not np.issubdtype(axes_ranges.dtype, np.number):
@@ -49,7 +49,7 @@ def _validate_axes_ranges(axes_ranges: VectorLike[float]) -> np.ndarray:
 
 def _pad_bounds(bounds: VectorLike[float], *, padding: float) -> np.ndarray:
     """Cushion bounds by a percentage of their size along each axial direction."""
-    if not (isinstance(padding, (int, float)) and 0.0 <= padding < 1.0):
+    if not (isinstance(padding, (int, float)) and 0.0 <= padding < 1.0):  # type: ignore[redundant-expr]
         msg = f'padding ({padding}) not understood. Must be float between 0 and 1'
         raise ValueError(msg)
     padded = np.asanyarray(bounds, dtype=float).copy()
@@ -381,7 +381,7 @@ class CubeAxesActor(
             return
         grid = 'back' if grid is True else grid
         if not isinstance(grid, str):
-            msg = f'`grid` must be a str, not {type(grid)}'
+            msg = f'`grid` must be a str, not {type(grid)}'  # type: ignore[unreachable]
             raise TypeError(msg)
         grid = grid.lower()
         if grid in ('front', 'frontface'):
@@ -451,7 +451,7 @@ class CubeAxesActor(
         if location is None:
             return
         if not isinstance(location, str):
-            msg = 'location must be a string'
+            msg = 'location must be a string'  # type: ignore[unreachable]
             raise TypeError(msg)
         location = location.lower()
         if location == 'all':
