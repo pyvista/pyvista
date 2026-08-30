@@ -21,6 +21,7 @@ Examples
 
 from __future__ import annotations
 
+import contextlib
 import functools
 import importlib.util
 import logging
@@ -269,6 +270,9 @@ def download_file(filename: str) -> str | list[str]:
 
 def _download_file(filename: str):
     """Download a file using pooch."""
+    # Pre-create the parent dir: pooch's check-then-makedirs races under parallel downloads
+    with contextlib.suppress(OSError):
+        (FETCHER.abspath / filename).parent.mkdir(parents=True, exist_ok=True)
     return FETCHER.fetch(
         filename,
         processor=pooch.Unzip() if filename.endswith('.zip') else None,  # type: ignore[attr-defined]
