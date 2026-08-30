@@ -1396,6 +1396,36 @@ def test_transform_should_fail_given_wrong_numpy_shape(array, hexbeam):
         hexbeam.transform(array, inplace=True)
 
 
+@pytest.mark.parametrize('inplace', [True, False])
+def test_translate_transform_all_input_vectors(datasets, inplace):
+    """Translating honors ``transform_all_input_vectors`` whether or not it is in place."""
+    for dataset in datasets:
+        dataset.point_data['int_vectors'] = np.ones((dataset.n_points, 3), dtype=np.int64)
+
+        match = 'have been converted to ``np.float32``'
+        with pytest.warns(UserWarning, match=match):
+            output = dataset.translate(
+                (-1.0, 2.0, 3.0), transform_all_input_vectors=True, inplace=inplace
+            )
+
+        assert output.point_data['int_vectors'].dtype == np.float32
+        assert (output is dataset) is inplace
+
+
+@pytest.mark.parametrize('inplace', [True, False])
+def test_translate_transform_all_input_vectors_false(datasets, inplace):
+    """Inactive vector data is left alone when ``transform_all_input_vectors`` is off."""
+    for dataset in datasets:
+        dataset.point_data['int_vectors'] = np.ones((dataset.n_points, 3), dtype=np.int64)
+        dataset.set_active_vectors(None)
+
+        output = dataset.translate(
+            (-1.0, 2.0, 3.0), transform_all_input_vectors=False, inplace=inplace
+        )
+
+        assert output.point_data['int_vectors'].dtype == np.int64
+
+
 @pytest.mark.parametrize('axis_amounts', [[1, 1, 1], [0, 0, 0], [-1, -1, -1]])
 def test_translate_should_translate_grid(hexbeam, axis_amounts):
     grid_copy = hexbeam.copy()

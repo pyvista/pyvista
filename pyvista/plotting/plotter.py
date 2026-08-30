@@ -5568,11 +5568,19 @@ class BasePlotter(_BoundsSizeMixin):
         if render is None:
             kwargs['render'] = not self._first_time
 
-        # check if maper exists
+        # check if mapper, lookup_table, or cmap exists; the three ways of
+        # specifying the mapping. Only use saved mapper if none are specified.
+        # No input validation here; ScalarBars.add_scalar_bar will raise
+        # ValueError if more than one of mapper/lookup_table/cmap is provided.
         mapper = kwargs.get('mapper')
-        if mapper is None:
+        lookup_table = kwargs.get('lookup_table')
+        cmap = kwargs.get('cmap')
+        if mapper is None and lookup_table is None and cmap is None:
             if self.mapper is None:
-                msg = 'Mapper does not exist.  Add a mesh with scalars first.'
+                msg = (
+                    'Neither `cmap`/`clim`, `lookup_table`, or `mapper` provided.'
+                    ' To use an existing Mapper, add a mesh with scalars first.'
+                )
                 raise AttributeError(msg)
             kwargs['mapper'] = self.mapper
 
@@ -8315,6 +8323,24 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         * ``shape="3|1"`` means 3 plots on the left and 1 on the right,
         * ``shape="4/2"`` means 4 plots on top and 2 at the bottom.
 
+    groups : list, optional
+        A list of sequences that defines the grouping of the subplots.
+        Each group is given as ``(rows, cols)``, where each entry is a
+        row/column index or a :class:`slice`, and the group spans from
+        the smallest to the largest index it covers. The subplots in a
+        group are merged into a single renderer. Groups may not
+        overlap. See :ref:`multi_window_example` for a full example.
+
+    row_weights : sequence[float], optional
+        The relative heights of the rows, used to size the subplots
+        when the plot window is resized. Must have one entry per row.
+        Defaults to equal weights.
+
+    col_weights : sequence[float], optional
+        The relative widths of the columns, used to size the subplots
+        when the plot window is resized. Must have one entry per
+        column. Defaults to equal weights.
+
     border : bool | 'interior' | 'exterior', optional
         Draw a border around the plotting area. ``True`` draws both
         an outer frame and lines between subplots; ``False`` draws
@@ -8356,8 +8382,23 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
     line_smoothing : bool, default: False
         If ``True``, enable line smoothing.
 
+    point_smoothing : bool, default: False
+        If ``True``, enable point smoothing.
+
     polygon_smoothing : bool, default: False
         If ``True``, enable polygon smoothing.
+
+    splitting_position : float, optional
+        The position, between ``0`` and ``1``, at which to place the
+        splitting line between plots when ``shape`` is given as a
+        string descriptor such as ``"3|1"``. Defaults to
+        :attr:`pyvista.global_theme.multi_rendering_splitting_position
+        <pyvista.plotting.themes.Theme.multi_rendering_splitting_position>`.
+
+    title : str, optional
+        Title of the plotting window. Defaults to
+        :attr:`pyvista.global_theme.title
+        <pyvista.plotting.themes.Theme.title>`.
 
     lighting : str, default: 'light kit"
         Lighting to set up for the plotter. Accepted options:

@@ -89,7 +89,7 @@ DEFAULT_INPLACE_WARNING = (
 
 
 @abstract_class
-class _PointSet(DataSet):
+class _PointSetBase(DataSet):
     """PyVista's equivalent of :vtk:`vtkPointSet`.
 
     This holds methods common to PolyData and UnstructuredGrid.
@@ -148,7 +148,7 @@ class _PointSet(DataSet):
         self,
         ind: VectorLike[bool] | VectorLike[int],
         inplace: bool = False,  # noqa: FBT001, FBT002
-    ) -> _PointSet:
+    ) -> _PointSetBase:
         """Remove cells.
 
         Parameters
@@ -165,10 +165,6 @@ class _PointSet(DataSet):
         pyvista.DataSet
             Same type as the input, but with the specified cells
             removed.
-
-        See Also
-        --------
-        :ref:`ghost_cells_example`
 
         Examples
         --------
@@ -272,59 +268,8 @@ class _PointSet(DataSet):
             self.points = self.points.astype(np.single)
         return self
 
-    # todo: `transform_all_input_vectors` is not handled when modifying inplace
-    @_deprecate_positional_args(allowed=['xyz'])
-    def translate(
-        self: Self,
-        xyz: VectorLike[float],
-        transform_all_input_vectors: bool = False,  # noqa: FBT001, FBT002
-        inplace: bool = False,  # noqa: FBT001, FBT002
-    ):
-        """Translate the mesh.
 
-        Parameters
-        ----------
-        xyz : VectorLike[float]
-            A vector of three floats of Cartesian values to translate the mesh with.
-
-        transform_all_input_vectors : bool, default: False
-            When ``True``, all input vectors are transformed. Otherwise, only
-            the points, normals, and active vectors are transformed. This is
-            only valid when not updating in place.
-
-        inplace : bool, default: False
-            Updates mesh in-place.
-
-        Returns
-        -------
-        pyvista.PointSet
-            Translated pointset.
-
-        Examples
-        --------
-        Create a sphere and translate it by ``(2, 1, 2)``.
-
-        >>> import pyvista as pv
-        >>> mesh = pv.Sphere()
-        >>> mesh.center
-        (0.0, 0.0, 0.0)
-        >>> trans = mesh.translate((2, 1, 2), inplace=True)
-        >>> trans.center
-        (2.0, 1.0, 2.0)
-
-        """
-        if inplace:
-            self.points += np.asarray(xyz)
-            return self
-        return pv.DataObjectFilters.translate(
-            self,
-            xyz,
-            transform_all_input_vectors=transform_all_input_vectors,
-            inplace=inplace,
-        )
-
-
-class PointSet(_PointSet, _vtk.vtkPointSet):
+class PointSet(_PointSetBase, _vtk.vtkPointSet):
     """Concrete class for storing a set of points.
 
     This is a concrete class representing a set of points that specifies the
@@ -629,7 +574,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         raise PointSetCellOperationError
 
 
-class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
+class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
     """Dataset consisting of surface geometry (for example, vertices, lines, and polygons).
 
     The surface geometry is defined by its :attr:`~pyvista.DataSet.points` and four separate
@@ -2601,7 +2546,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
 
 @abstract_class
-class PointGrid(_PointSet):
+class PointGrid(_PointSetBase):
     """Class in common with structured and unstructured grids."""
 
     def __init__(self, *args, **kwargs) -> None:  # noqa: ARG002

@@ -7,7 +7,6 @@ from collections.abc import Sequence
 from enum import Enum
 import functools
 import importlib
-import inspect
 import sys
 import threading
 import traceback
@@ -478,15 +477,6 @@ class _DataObjectMeta(_AutoFreezeABCMeta):
         raise AttributeError(msg)
 
 
-def _hasattr_static(obj: Any, attr: str) -> bool:
-    """Replicate behavior of ``hasattr`` using static lookup."""
-    try:
-        inspect.getattr_static(obj, attr)
-    except AttributeError:
-        return False
-    return True
-
-
 class _NoNewAttrMixin(metaclass=_AutoFreezeABCMeta):
     """``Mixin`` to prevent adding new attributes.
 
@@ -501,6 +491,7 @@ class _NoNewAttrMixin(metaclass=_AutoFreezeABCMeta):
         object.__setattr__(self, '__frozen_by_class', this_class)
 
     def _check_new_attribute(self, key: str) -> None:
+        """Raise if a frozen instance is given a new attribute it does not allow."""
         # Check sys.meta_path to avoid dynamic imports when Python is shutting down
         if sys.meta_path is not None:
             # Get mode for setting new attributes. Read straight out of the module
@@ -521,29 +512,29 @@ class _NoNewAttrMixin(metaclass=_AutoFreezeABCMeta):
                 _ALLOW_NEW_ATTRIBUTES_MODE is True
                 or (key.startswith('_') and _ALLOW_NEW_ATTRIBUTES_MODE == 'private')
             ):
-                # Check if this class froze itself. Any frozen state already set by parent classes,
-                # e.g. by calling super().__init__(), will be ignored. This allows subclasses to
-                # set attributes during init without being affected by a parent class init.
-                frozen = self.__dict__.get('__frozen', False)
-                frozen_by = self.__dict__.get('__frozen_by_class', None)
-                if (
-                    frozen
-                    and frozen_by is type(self)
-                    and not (key in type(self).__dict__ or _hasattr_static(self, key))
-                ):
-                    from pyvista import PyVistaAttributeError  # noqa: PLC0415
+                # Allow attributes that already exist on the instance or anywhere in the MRO
+                cls = type(self)
+                if key in object.__getattribute__(self, '__dict__'):
+                    return
+                for base in cls.__mro__:
+                    if key in base.__dict__:
+                        return
 
-                    msg = (
-                        f'Attribute {key!r} does not exist and cannot be added to class '
-                        f'{self.__class__.__name__!r}\nUse `pyvista.set_new_attribute` '
-                        f'or `pyvista.allow_new_attributes` to set new attributes.\n'
-                        f'Setting new private variables (with `_` prefix) is allowed by default.'
-                    )
-                    raise PyVistaAttributeError(msg)
+                from pyvista import PyVistaAttributeError  # noqa: PLC0415
+
+                msg = (
+                    f'Attribute {key!r} does not exist and cannot be added to class '
+                    f'{cls.__name__!r}\nUse `pyvista.set_new_attribute` '
+                    f'or `pyvista.allow_new_attributes` to set new attributes.\n'
+                    f'Setting new private variables (with `_` prefix) is allowed by default.'
+                )
+                raise PyVistaAttributeError(msg)
 
     def __setattr__(self, key: str, value: Any) -> None:
         """Prevent adding new attributes to classes using "normal" methods."""
-        self._check_new_attribute(key)
+        # Only check instances frozen by their own class, ignoring parent-set state
+        if object.__getattribute__(self, '__dict__').get('__frozen_by_class') is type(self):
+            _NoNewAttrMixin._check_new_attribute(self, key)
         object.__setattr__(self, key, value)
 
 

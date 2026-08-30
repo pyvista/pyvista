@@ -54,9 +54,7 @@ _ALLOWED_UNDOCUMENTED = frozenset(
         'BackgroundPlotter',  # deprecated and moved to pyvistaqt
         'BasePlotter',  # abstract base; Plotter subclass is documented
         'FONTS',  # internal variable
-        'Grid',  # abstract base; concrete Grid subclasses are documented
         'has_module',  # internal helper for testing only - should be moved into conftest.py
-        'PointGrid',  # abstract base; concrete subclasses are documented
         'QtDeprecationError',  # deprecated and moved to pyvistaqt
         'QtInteractor',  # deprecated and moved to pyvistaqt
         'Scraper',  # internal sphinx gallery tool

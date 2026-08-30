@@ -90,7 +90,7 @@ class _ConfigBase(metaclass=_ForceSlots):
 
     Provides dict-style item access, ``from_dict`` / ``to_dict`` serialization,
     and equality comparison. Used as the base for both the core
-    :class:`Config` (this module) and every node of the plotting
+    :class:`pyvista.core.config.Config` and every node of the plotting
     :class:`pyvista.plotting.themes.Theme` hierarchy.
 
     Subclasses must list every attribute as an underscore-prefixed entry in
@@ -140,7 +140,7 @@ class _ConfigBase(metaclass=_ForceSlots):
         dict
             Mapping of public attribute name to its current value. Nested
             config objects are recursively serialized via their own
-            ``to_dict``. Names listed in :attr:`_TO_DICT_SKIP` are omitted.
+            ``to_dict``. Names listed in ``_TO_DICT_SKIP`` are omitted.
 
         """
         skip = type(self)._TO_DICT_SKIP

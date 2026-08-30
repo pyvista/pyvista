@@ -125,7 +125,9 @@ class Grid(DataSet):
 
         See Also
         --------
-        to_quads, to_tetrahedra
+        to_quads
+        pyvista.ImageData.to_tetrahedra
+        pyvista.RectilinearGrid.to_tetrahedra
         pyvista.DataSet.cast_to_unstructured_grid
 
         Examples
@@ -168,7 +170,9 @@ class Grid(DataSet):
 
         See Also
         --------
-        to_hexahedra, to_tetrahedra
+        to_hexahedra
+        pyvista.ImageData.to_tetrahedra
+        pyvista.RectilinearGrid.to_tetrahedra
         pyvista.DataSet.cast_to_unstructured_grid
 
         Examples
@@ -645,7 +649,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         set, remainder of arguments are ignored.
 
     dimensions : sequence[int], optional
-        :attr:`dimensions` of the uniform grid.
+        :attr:`~pyvista.Grid.dimensions` of the uniform grid.
 
     spacing : sequence[float], default: (1.0, 1.0, 1.0)
         :attr:`spacing` of the uniform grid in each dimension. Must be positive.
@@ -1164,7 +1168,8 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         """Return or set the extent of the ImageData.
 
         The extent is simply the first and last indices for each of the three axes.
-        It encodes information about the image's :attr:`offset` and :attr:`dimensions`.
+        It encodes information about the image's :attr:`offset` and
+        :attr:`~pyvista.Grid.dimensions`.
 
         Examples
         --------
@@ -1179,9 +1184,9 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         >>> grid.extent
         (2, 5, 2, 5, 2, 5)
 
-        Note how this also modifies the grid's :attr:`offset`, :attr:`dimensions`,
-        and :attr:`bounds`. Since we use default spacing of 1 here, the bounds
-        match the extent exactly.
+        Note how this also modifies the grid's :attr:`offset`,
+        :attr:`~pyvista.Grid.dimensions`, and :attr:`~pyvista.DataSet.bounds`. Since
+        we use default spacing of 1 here, the bounds match the extent exactly.
 
         >>> grid.offset
         (2, 2, 2)

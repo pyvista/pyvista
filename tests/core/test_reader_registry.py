@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import contextlib
+from importlib.metadata import EntryPoint
 import importlib.util
 from io import BytesIO
 from pathlib import Path
@@ -433,7 +434,10 @@ def test_register_custom_collision_override_silent():
         return pv.PolyData()
 
     with warnings.catch_warnings():
-        warnings.simplefilter('error')
+        # UserWarning is what warn_external emits; a bare 'error' would also
+        # promote third-party noise such as NumPy's .shape deprecation, which
+        # vtkmodules triggers returning from a real read.
+        warnings.simplefilter('error', UserWarning)
         pv.register_reader('.collide', replacement, override=True)
     assert _reg_mod._custom_ext_readers['.collide'] is replacement
 
@@ -535,3 +539,487 @@ def test_registered_readers_forces_full_discovery():
     assert len(matches) == 1
     assert matches[0].handler is _mock_reader
     mock_ep.load.assert_called_once()
+
+
+class _MockVTKReader(pv.BaseVTKReader):
+    """Pure-Python stand-in for a VTK reader, as third-party readers use."""
+
+    def __init__(self):
+        super().__init__()
+        self.theta_resolution = 10
+
+    def UpdateInformation(self):  # noqa: N802
+        pass
+
+    def Update(self):  # noqa: N802
+        self._data_object = pv.Sphere(theta_resolution=self.theta_resolution)
+
+
+class _MockReader(pv.BaseReader['PolyData']):
+    """Reader class a plugin would register."""
+
+    _class_reader = _MockVTKReader
+
+    @property
+    def theta_resolution(self):
+        return self.reader.theta_resolution
+
+    @theta_resolution.setter
+    def theta_resolution(self, value):
+        self.reader.theta_resolution = value
+
+
+class _MockTimeReader(pv.BaseReader['PolyData'], pv.TimeReader):
+    """Reader class exercising the :class:`pyvista.TimeReader` protocol."""
+
+    _class_reader = _MockVTKReader
+
+    def __init__(self, path):
+        super().__init__(path)
+        self._active = 0
+
+    @property
+    def number_time_points(self):
+        return 3
+
+    def time_point_value(self, time_point):
+        return float(time_point) * 10.0
+
+    @property
+    def active_time_value(self):
+        return self.time_point_value(self._active)
+
+    def set_active_time_value(self, time_value):
+        self._active = self.time_values.index(time_value)
+
+    def set_active_time_point(self, time_point):
+        self._active = time_point
+
+
+@pytest.fixture
+def custom_file(tmp_path):
+    path = tmp_path / 'data.myclassfmt'
+    path.touch()
+    return path
+
+
+def test_register_reader_class_lands_in_class_registry():
+    pv.register_reader('.myclassfmt', _MockReader)
+    assert _reg_mod._custom_class_readers['.myclassfmt'] is _MockReader
+    assert '.myclassfmt' not in _reg_mod._custom_ext_readers
+
+
+def test_register_reader_class_as_decorator():
+    @pv.register_reader('.decoratedcls')
+    class Decorated(pv.BaseReader['PolyData']):
+        _class_reader = _MockVTKReader
+
+    assert _reg_mod._custom_class_readers['.decoratedcls'] is Decorated
+
+
+def test_get_reader_resolves_registered_class(custom_file):
+    pv.register_reader('.myclassfmt', _MockReader)
+    reader = pv.get_reader(custom_file)
+    assert isinstance(reader, _MockReader)
+    assert reader.path == str(custom_file)
+
+
+def test_read_uses_registered_class(custom_file):
+    pv.register_reader('.myclassfmt', _MockReader)
+    mesh = pv.read(custom_file)
+    assert isinstance(mesh, pv.PolyData)
+
+
+def test_read_forwards_kwargs_to_registered_class(custom_file):
+    """A class reader gets ``pv.read`` kwargs as reader attributes.
+
+    This is what a bare callable handler cannot do: ``pv.read`` drops its
+    kwargs on that path.
+    """
+    pv.register_reader('.myclassfmt', _MockReader)
+    default = pv.read(custom_file)
+    denser = pv.read(custom_file, theta_resolution=30)
+    assert denser.n_points > default.n_points
+
+
+def test_read_rejects_unknown_kwarg_on_registered_class(custom_file):
+    pv.register_reader('.myclassfmt', _MockReader)
+    with pytest.raises(AttributeError):
+        pv.read(custom_file, not_an_attribute=1)
+
+
+def test_registered_class_supports_time_reader(custom_file):
+    pv.register_reader('.myclassfmt', _MockTimeReader)
+    reader = pv.get_reader(custom_file)
+    assert isinstance(reader, pv.TimeReader)
+    assert reader.time_values == [0.0, 10.0, 20.0]
+    reader.set_active_time_value(20.0)
+    assert reader.active_time_value == 20.0
+
+
+def test_registered_class_may_override_builtin(tmp_path):
+    """``override=True`` replaces a built-in on *both* dispatch paths."""
+    builtin_file = tmp_path / 'data.vtp'
+    builtin_file.touch()
+    with pytest.raises(ValueError, match='collides with built-in VTK reader'):
+        pv.register_reader('.vtp', _MockReader)
+
+    pv.register_reader('.vtp', _MockReader, override=True)
+    assert isinstance(pv.get_reader(builtin_file), _MockReader)
+
+
+def test_builtin_readers_unaffected_by_registry(tmp_path):
+    mesh_file = tmp_path / 'mesh.vtp'
+    pv.Sphere().save(mesh_file)
+    pv.register_reader('.myclassfmt', _MockReader)
+    assert isinstance(pv.get_reader(mesh_file), pv.XMLPolyDataReader)
+
+
+def test_get_reader_still_raises_for_callable_registration(custom_file):
+    """A bare callable is reachable from ``pv.read`` but not ``pv.get_reader``.
+
+    The error names the reason rather than claiming nothing is registered.
+    """
+    pv.register_reader('.myclassfmt', _mock_reader)
+    with pytest.raises(ValueError, match=re.escape('only reachable through `pyvista.read`')):
+        pv.get_reader(custom_file)
+
+
+def test_get_reader_message_unchanged_for_unknown_extension(tmp_path):
+    unknown = tmp_path / 'data.nosuchfmt'
+    unknown.touch()
+    with pytest.raises(
+        ValueError, match=re.escape('does not support a file with the .nosuchfmt extension')
+    ):
+        pv.get_reader(unknown)
+
+
+def test_reregistering_switches_between_forms():
+    """An extension resolves to exactly one reader, whichever form is last."""
+    pv.register_reader('.myclassfmt', _MockReader)
+    pv.register_reader('.myclassfmt', _mock_reader, override=True)
+    assert '.myclassfmt' not in _reg_mod._custom_class_readers
+    assert _reg_mod._custom_ext_readers['.myclassfmt'] is _mock_reader
+
+    pv.register_reader('.myclassfmt', _MockReader, override=True)
+    assert '.myclassfmt' not in _reg_mod._custom_ext_readers
+    assert _reg_mod._custom_class_readers['.myclassfmt'] is _MockReader
+
+
+def test_registered_readers_marks_reader_class():
+    pv.register_reader('.myclassfmt', _MockReader)
+    pv.register_reader('.myfuncfmt', _mock_reader)
+    records = {r.extension: r for r in pv.registered_readers()}
+    assert records['.myclassfmt'].reader_class is True
+    assert records['.myclassfmt'].handler is _MockReader
+    assert records['.myfuncfmt'].reader_class is False
+
+
+def test_registry_state_roundtrips_class_registrations():
+    pv.register_reader('.snapshotfmt', _MockReader)
+    state = _reg_mod._save_registry_state()
+    _reg_mod._custom_class_readers.clear()
+    _reg_mod._restore_registry_state(state)
+    assert _reg_mod._custom_class_readers['.snapshotfmt'] is _MockReader
+
+
+def _fake_entry_point(name, module_name, attr, obj):
+    """Build a real ``EntryPoint`` backed by a module injected into ``sys.modules``.
+
+    Uses the genuine :class:`importlib.metadata.EntryPoint` rather than a
+    mock so that ``ep.load()`` exercises the real import machinery, which
+    is the code path an installed distribution would take.
+    """
+    module = SimpleNamespace(**{attr: obj})
+    return EntryPoint(name=name, value=f'{module_name}:{attr}', group='pyvista.readers'), module
+
+
+def test_entry_point_resolving_to_class_reaches_get_reader(tmp_path, monkeypatch):
+    ep, module = _fake_entry_point('.eprfmt', 'fake_reader_plugin', 'PluginReader', _MockReader)
+    monkeypatch.setitem(sys.modules, 'fake_reader_plugin', module)
+    monkeypatch.setattr('pyvista.core.utilities.reader_registry.entry_points', lambda **_: [ep])
+    _reg_mod._entry_points_loaded = False
+    _reg_mod._pending_ext_readers.clear()
+
+    path = tmp_path / 'data.eprfmt'
+    path.touch()
+    reader = pv.get_reader(path)
+    assert isinstance(reader, _MockReader)
+    assert _reg_mod._custom_class_readers['.eprfmt'] is _MockReader
+    record = next(r for r in pv.registered_readers() if r.extension == '.eprfmt')
+    assert record.reader_class is True
+    assert record.source == 'fake_reader_plugin:PluginReader'
+
+
+def test_entry_point_resolving_to_callable_still_lands_in_handler_table(monkeypatch):
+    ep, module = _fake_entry_point('.epffmt', 'fake_func_plugin', 'read', _mock_reader)
+    monkeypatch.setitem(sys.modules, 'fake_func_plugin', module)
+    monkeypatch.setattr('pyvista.core.utilities.reader_registry.entry_points', lambda **_: [ep])
+    _reg_mod._entry_points_loaded = False
+    _reg_mod._pending_ext_readers.clear()
+
+    assert _reg_mod._get_ext_handler('.epffmt') is _mock_reader
+    assert '.epffmt' not in _reg_mod._custom_class_readers
+
+
+def test_get_reader_does_not_import_plugins_for_builtin_extensions(tmp_path, monkeypatch):
+    """Resolving a built-in extension must not import a third-party plugin."""
+    loaded = []
+
+    class _CountingEntryPoint(EntryPoint):
+        def load(self):
+            loaded.append(self.name)
+            return _MockReader
+
+    ep = _CountingEntryPoint(name='.neverloaded', value='x:y', group='pyvista.readers')
+    monkeypatch.setattr('pyvista.core.utilities.reader_registry.entry_points', lambda **_: [ep])
+    _reg_mod._entry_points_loaded = False
+    _reg_mod._pending_ext_readers.clear()
+
+    mesh_file = tmp_path / 'mesh.vtp'
+    pv.Sphere().save(mesh_file)
+    pv.get_reader(mesh_file)
+    assert loaded == []
+
+
+def test_registered_class_reports_its_extensions():
+    """``BaseReader.extensions`` answers for a plugin class, as for a built-in.
+
+    Raised by user27182 on pyvista/pyvista#8547.
+    """
+    assert _MockReader.extensions == ()
+    pv.register_reader('.myclassfmt', _MockReader)
+    assert _MockReader.extensions == ('.myclassfmt',)
+    assert pv.XMLPolyDataReader.extensions == ('.vtp',)
+
+
+def _install_plugin(monkeypatch, *, readers=(), overrides=()):
+    """Fake an installed distribution declaring reader entry points.
+
+    Each of *readers* and *overrides* is a sequence of
+    ``(extension, module_name, attribute, object)``. The patched
+    ``entry_points`` honors its ``group`` argument, which is what lets a
+    test distinguish an ordinary declaration from a declared override.
+    """
+    groups = {_reg_mod.READER_GROUP: [], _reg_mod.READER_OVERRIDE_GROUP: []}
+    for group, specs in (
+        (_reg_mod.READER_GROUP, readers),
+        (_reg_mod.READER_OVERRIDE_GROUP, overrides),
+    ):
+        for ext, module_name, attr, obj in specs:
+            monkeypatch.setitem(sys.modules, module_name, SimpleNamespace(**{attr: obj}))
+            groups[group].append(EntryPoint(name=ext, value=f'{module_name}:{attr}', group=group))
+
+    monkeypatch.setattr(
+        'pyvista.core.utilities.reader_registry.entry_points',
+        lambda group: groups.get(group, []),
+    )
+    _reg_mod._entry_points_loaded = False
+    _reg_mod._pending_ext_readers.clear()
+    _reg_mod._override_ext_readers.clear()
+
+
+def test_undeclared_entry_point_shadowing_builtin_raises(tmp_path, monkeypatch):
+    """The ordinary group may not take an extension PyVista already reads."""
+    _install_plugin(monkeypatch, readers=[('.vtp', 'shadow_plugin', 'PluginReader', _MockReader)])
+    mesh_file = tmp_path / 'mesh.vtp'
+    pv.Sphere().save(mesh_file)
+
+    with pytest.raises(ValueError, match=re.escape('already reads ".vtp" with XMLPolyDataReader')):
+        pv.read(mesh_file)
+
+
+def test_undeclared_override_error_names_everything_needed(tmp_path, monkeypatch):
+    """The error has to be actionable without reading PyVista's source."""
+    _install_plugin(monkeypatch, readers=[('.vtp', 'shadow_plugin', 'PluginReader', _MockReader)])
+    mesh_file = tmp_path / 'mesh.vtp'
+    pv.Sphere().save(mesh_file)
+
+    with pytest.raises(ValueError, match='refuses rather than guess') as excinfo:
+        pv.get_reader(mesh_file)
+    message = str(excinfo.value)
+    assert 'shadow_plugin' in message  # the package
+    assert '.vtp' in message  # the extension
+    assert 'XMLPolyDataReader' in message  # the reader it would have shadowed
+    assert 'pyvista.readers.override' in message  # the supported route
+    assert 'shadow_plugin:PluginReader' in message  # a copy-pasteable declaration
+
+
+def test_undeclared_override_raises_every_time(tmp_path, monkeypatch):
+    """The refusal is idempotent: it must not decay into a silent fallback."""
+    _install_plugin(monkeypatch, readers=[('.vtp', 'shadow_plugin', 'PluginReader', _MockReader)])
+    mesh_file = tmp_path / 'mesh.vtp'
+    pv.Sphere().save(mesh_file)
+
+    for _ in range(3):
+        with pytest.raises(ValueError, match='refuses rather than guess'):
+            pv.read(mesh_file)
+
+
+def test_declared_override_replaces_builtin_silently(tmp_path, monkeypatch):
+    """Declaring the intent in metadata is the whole point: no warning."""
+    _install_plugin(
+        monkeypatch, overrides=[('.vtp', 'override_plugin', 'PluginReader', _MockReader)]
+    )
+    mesh_file = tmp_path / 'mesh.vtp'
+    pv.Sphere().save(mesh_file)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', UserWarning)
+        reader = pv.get_reader(mesh_file)
+        mesh = pv.read(mesh_file)
+    assert isinstance(reader, _MockReader)
+    assert isinstance(mesh, pv.PolyData)
+
+
+def test_declared_override_accepts_a_callable_too(tmp_path, monkeypatch):
+    """Both groups take both forms; the loading path is not forked."""
+    _install_plugin(
+        monkeypatch, overrides=[('.vtp', 'override_func_plugin', 'read', _mock_reader)]
+    )
+    mesh_file = tmp_path / 'mesh.vtp'
+    pv.Sphere().save(mesh_file)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', UserWarning)
+        assert isinstance(pv.read(mesh_file), pv.PolyData)
+    assert _reg_mod._custom_ext_readers['.vtp'] is _mock_reader
+
+
+def test_ordinary_group_accepts_a_reader_class_for_a_new_extension(tmp_path, monkeypatch):
+    """The rule is about built-in collisions, not about which group or form."""
+    _install_plugin(
+        monkeypatch, readers=[('.plainfmt', 'plain_plugin', 'PluginReader', _MockReader)]
+    )
+    path = tmp_path / 'data.plainfmt'
+    path.touch()
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', UserWarning)
+        assert isinstance(pv.get_reader(path), _MockReader)
+
+
+def test_declared_override_on_a_new_extension_is_allowed_silently(tmp_path, monkeypatch):
+    """Declaring an override for a format PyVista does not ship is harmless.
+
+    It future-proofs the package: if PyVista later adds a reader for the
+    extension, the plugin keeps working instead of breaking on upgrade.
+    Requiring the package to know which extensions PyVista serves would
+    couple it to a moving target.
+    """
+    _install_plugin(
+        monkeypatch, overrides=[('.futurefmt', 'future_plugin', 'PluginReader', _MockReader)]
+    )
+    path = tmp_path / 'data.futurefmt'
+    path.touch()
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', UserWarning)
+        assert isinstance(pv.get_reader(path), _MockReader)
+
+
+def test_registered_readers_reports_override(tmp_path, monkeypatch):
+    """A user asking "who took .vtp?" gets an answer from one call."""
+    _install_plugin(
+        monkeypatch, overrides=[('.vtp', 'override_plugin', 'PluginReader', _MockReader)]
+    )
+    mesh_file = tmp_path / 'mesh.vtp'
+    pv.Sphere().save(mesh_file)
+    pv.get_reader(mesh_file)
+
+    record = next(r for r in pv.registered_readers() if r.extension == '.vtp')
+    assert record.override is True
+    assert record.source == 'override_plugin:PluginReader'
+
+
+def test_registered_readers_marks_programmatic_override():
+    pv.register_reader('.vtp', _MockReader, override=True)
+    pv.register_reader('.myclassfmt', _MockReader)
+    records = {r.extension: r for r in pv.registered_readers()}
+    assert records['.vtp'].override is True
+    assert records['.myclassfmt'].override is False
+
+
+def test_registered_readers_warns_instead_of_raising_on_a_refused_plugin(monkeypatch):
+    """Introspection must not be the call that explodes."""
+    _install_plugin(
+        monkeypatch,
+        readers=[
+            ('.vtp', 'shadow_plugin', 'PluginReader', _MockReader),
+            ('.goodfmt', 'good_plugin', 'read', _mock_reader),
+        ],
+    )
+    with pytest.warns(UserWarning, match='refuses rather than guess'):
+        records = pv.registered_readers()
+
+    extensions = {r.extension for r in records}
+    assert '.goodfmt' in extensions  # the healthy plugin still resolved
+    assert '.vtp' not in extensions  # the refused one did not register
+    # Still pending, so reading a .vtp keeps raising rather than silently
+    # falling back to the built-in after an introspection call.
+    assert '.vtp' in _reg_mod._pending_ext_readers
+
+
+def test_registry_state_roundtrips_overrides():
+    pv.register_reader('.snapshotfmt', _MockReader, override=True)
+    state = _reg_mod._save_registry_state()
+    _reg_mod._override_ext_readers.clear()
+    _reg_mod._restore_registry_state(state)
+    assert '.snapshotfmt' in _reg_mod._override_ext_readers
+
+
+def test_real_installed_plugin_still_round_trips(tmp_path):
+    """The one plugin PyVista actually ships against must keep working.
+
+    ``pyvista-zstd`` is a test dependency and declares ``.pv`` and
+    ``.zvtk`` in the ordinary ``pyvista.readers`` group as plain
+    callables. Neither extension collides with a built-in, so the
+    override rules must leave it completely alone. Every other test here
+    fakes a distribution; this one exercises the real entry-point
+    metadata of a real installed package.
+    """
+    mesh = pv.Sphere()
+    path = tmp_path / 'mesh.pv'
+    mesh.save(path)
+    assert pv.read(path).n_points == mesh.n_points
+
+    record = next(r for r in pv.registered_readers() if r.extension == '.pv')
+    assert record.source.startswith('pyvista_zstd')
+    assert record.override is False
+
+
+def test_direct_registration_beats_entry_point_metadata(monkeypatch):
+    """An extension registered in code is not displaced by a plugin declaring it."""
+
+    def in_code(_path, **__):
+        return pv.PolyData()
+
+    pv.register_reader('.bothways', in_code)
+    _install_plugin(
+        monkeypatch, readers=[('.bothways', 'bothways_plugin', 'PluginReader', _MockReader)]
+    )
+    _reg_mod._ensure_entry_points()
+
+    assert '.bothways' not in _reg_mod._pending_ext_readers
+    assert _reg_mod._custom_ext_readers['.bothways'] is in_code
+
+
+def test_error_names_the_distribution_when_the_entry_point_has_one():
+    """A real installed plugin is named by its distribution, not by its module."""
+    # ``_for`` sets ``dist`` on the entry point and returns it, so the two cases
+    # need two objects.
+    spec = {'name': '.vtp', 'value': 'some_module:SomeReader', 'group': _reg_mod.READER_GROUP}
+    installed = EntryPoint(**spec)._for(SimpleNamespace(name='acme-readers'))
+
+    assert _reg_mod._entry_point_package(installed) == 'acme-readers'
+    assert 'acme-readers' in _reg_mod._undeclared_override_message('.vtp', installed)
+    # Without a distribution the module half stands in, which is the shape every
+    # other test in this file builds.
+    assert _reg_mod._entry_point_package(EntryPoint(**spec)) == 'some_module'
+
+
+def test_resolving_an_extension_no_plugin_claimed_loads_nothing():
+    """``_resolve_pending_reader`` reports False rather than raising."""
+    _reg_mod._pending_ext_readers.pop('.nopluginclaims', None)
+
+    assert _reg_mod._resolve_pending_reader('.nopluginclaims') is False

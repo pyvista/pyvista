@@ -222,3 +222,17 @@ VTKVersionInfo(major=9, minor=1, micro=0)
 >>> # Get the major version of VTK
 >>> pv.vtk_version_info.major
 9
+
+
+Shared Base Classes
+~~~~~~~~~~~~~~~~~~~
+These classes are not used directly. They are documented because they define
+members shared by classes across the core and plotting APIs, so that each of
+those members is documented once, here, and linked from every class that
+inherits it.
+
+.. autosummary::
+   :toctree: _autosummary
+
+   core.utilities.misc._BoundsSizeMixin
+   core.utilities.misc._NameMixin
