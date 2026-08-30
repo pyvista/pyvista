@@ -285,6 +285,25 @@ class Config(_ConfigBase):
             picks the precision as it does today. Sources have no input either, and
             keep the dtype VTK generates (single precision, for most).
 
+        .. warning::
+
+            ``'preserve'`` guarantees the dtype, not the precision behind it. Some
+            algorithms cannot run in double at all -- :vtk:`vtkShrinkFilter` has no
+            precision setting -- so they compute in single and their output is cast
+            back up. The points are then ``float64`` holding values that are only
+            single precision, and calling
+            :meth:`~pyvista.PointSet.points_to_double` on them recovers nothing: the
+            digits went when the filter ran. A ``float64`` points array is not on its
+            own evidence of double-precision values.
+
+            This is deliberate. The dtype staying put is what stops a pipeline
+            degrading step after step, and raising instead would make common filters
+            unusable on double-precision meshes. Where it matters, set
+            ``points_dtype = 'float64'`` and every algorithm that cannot deliver
+            double warns with :class:`~pyvista.PyVistaPrecisionWarning`, naming
+            itself -- which makes that setting a way to audit a pipeline as much as a
+            way to configure one.
+
         ``'float32'``
             Every source and filter generates single-precision points, including the
             ones that would otherwise generate double precision.

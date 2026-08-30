@@ -204,6 +204,14 @@ class _PointSetBase(DataSet):
         -----
         This operates in place.
 
+        .. warning::
+
+            Converting up does not recover precision that has already been lost. If a
+            filter computed in single precision, its output holds single-precision
+            values whatever dtype they are given afterwards. See
+            :attr:`pyvista.core.config.Config.points_dtype` for finding out where that
+            happens.
+
         See Also
         --------
         points_to_single
