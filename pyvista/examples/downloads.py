@@ -38,7 +38,7 @@ from typing import cast
 from typing import overload
 
 if sys.platform == 'win32':
-    import msvcrt
+    import msvcrt  # pragma: no cover
 else:
     import fcntl
 
@@ -61,6 +61,7 @@ from pyvista.examples._dataset_loader import _MultiFileDownloadableDatasetLoader
 from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from collections.abc import Iterator
 
     from numpy import ndarray
@@ -295,40 +296,76 @@ def download_file(filename: str) -> str | list[str]:
         return _download_file(filename)
 
 
-@contextlib.contextmanager
-def _file_lock(path: Path) -> Iterator[None]:
-    """Hold an advisory cross-process lock while ``path`` is downloaded."""
+# Errors meaning another process holds the lock; EDEADLOCK is the Windows spelling
+_CONTENTION_ERRNOS = (errno.EACCES, getattr(errno, 'EDEADLOCK', errno.EDEADLK))
+
+
+def _retry_while_contended(lock_func: Callable[[], None]) -> None:
+    """Call ``lock_func`` until it takes the lock, or until it fails for another reason."""
+    while True:
+        try:
+            lock_func()
+        except OSError as e:
+            # Keep waiting on contention (LK_LOCK gives up after ~10s); else proceed unlocked
+            if e.errno not in _CONTENTION_ERRNOS:
+                return
+        else:
+            return
+
+
+if sys.platform == 'win32':  # pragma: no cover
+
+    def _msvcrt_lock(fd: int, mode: int) -> None:
+        """Lock or unlock the first byte of ``fd``."""
+        os.lseek(fd, 0, os.SEEK_SET)
+        msvcrt.locking(fd, mode, 1)
+
+    def _lock_exclusive(fd: int) -> None:
+        """Take an exclusive lock on ``fd``, waiting for any other holder."""
+        _retry_while_contended(functools.partial(_msvcrt_lock, fd, msvcrt.LK_LOCK))
+
+    def _unlock(fd: int) -> None:
+        """Release the lock held on ``fd``."""
+        with contextlib.suppress(OSError):
+            _msvcrt_lock(fd, msvcrt.LK_UNLCK)
+
+else:
+
+    def _lock_exclusive(fd: int) -> None:
+        """Take an exclusive lock on ``fd``, waiting for any other holder."""
+        with contextlib.suppress(OSError):
+            fcntl.flock(fd, fcntl.LOCK_EX)
+
+    def _unlock(fd: int) -> None:
+        """Release the lock held on ``fd``."""
+        with contextlib.suppress(OSError):
+            fcntl.flock(fd, fcntl.LOCK_UN)
+
+
+def _open_lock_file(path: Path) -> int | None:
+    """Return a descriptor for ``path``'s lock file, or None if it cannot be created."""
     try:
         lock_path = Path(f'{path}.lock')
         lock_path.parent.mkdir(parents=True, exist_ok=True)
-        fd = os.open(lock_path, os.O_CREAT | os.O_RDWR)
+        return os.open(lock_path, os.O_CREAT | os.O_RDWR)
     except OSError:
-        # Cannot create the lock; proceed unlocked and let pooch report any real errors
+        return None
+
+
+@contextlib.contextmanager
+def _file_lock(path: Path) -> Iterator[None]:
+    """Hold an advisory cross-process lock while ``path`` is downloaded."""
+    fd = _open_lock_file(path)
+    if fd is None:
+        # Proceed unlocked and let pooch report any real errors
         yield
         return
     try:
-        if sys.platform == 'win32':
-            while True:
-                try:
-                    os.lseek(fd, 0, os.SEEK_SET)
-                    msvcrt.locking(fd, msvcrt.LK_LOCK, 1)
-                    break
-                except OSError as e:
-                    # Keep waiting on contention (LK_LOCK gives up after ~10s); else unlocked
-                    if e.errno not in (errno.EACCES, errno.EDEADLOCK):
-                        break
-        else:
-            with contextlib.suppress(OSError):
-                fcntl.flock(fd, fcntl.LOCK_EX)
+        _lock_exclusive(fd)
         try:
             yield
         finally:
-            with contextlib.suppress(OSError):
-                if sys.platform == 'win32':
-                    os.lseek(fd, 0, os.SEEK_SET)
-                    msvcrt.locking(fd, msvcrt.LK_UNLCK, 1)
-                else:
-                    fcntl.flock(fd, fcntl.LOCK_UN)
+            _unlock(fd)
     finally:
         os.close(fd)
 
