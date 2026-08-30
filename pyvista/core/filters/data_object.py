@@ -35,8 +35,8 @@ from pyvista.core.celltype import CellType
 from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
-from pyvista.core.filters import _apply_points_dtype
 from pyvista.core.filters import _get_output
+from pyvista.core.filters import _match_points_dtype
 from pyvista.core.filters import _points_dtype
 from pyvista.core.filters import _update_alg
 from pyvista.core.utilities.helpers import _NormalsLiteral
@@ -4438,16 +4438,18 @@ class DataObjectFilters:
             else dimensionality
         )
 
+        # Only the points dtype is taken from the setting here; `_get_output` would
+        # also copy the input's metadata over a hull that does not want it.
         if pv.vtk_version_info >= (9, 7, 0):
             alg = _vtk.vtkConvexHull()
             alg.SetInputDataObject(alg_input)
             alg.SetDimension(int(dimensionality_))
             _update_alg(alg, progress_bar=progress_bar)
-            output = _get_output(alg, keep_pointset=False)
+            output = pv.wrap(alg.GetOutput())
+            _match_points_dtype(output, alg_input, algorithm=alg)
         else:
-            output = _apply_points_dtype(
-                _convex_hull_scipy(points, dimensionality=dimensionality_)
-            )
+            output = _convex_hull_scipy(points, dimensionality=dimensionality_)
+            _match_points_dtype(output, alg_input)
         output.point_data.clear()
         output.cell_data.clear()
         return output
