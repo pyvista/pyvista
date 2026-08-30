@@ -1065,9 +1065,7 @@ def test_plot_add_scalar_bar_cmap(verify_image_cache):
     cmap = 'bwr'
     pl.add_scalar_bar(cmap=cmap)
 
-    # pl.scalar_bar is a vtkScalarBarActor for vtk < 9.4.0
-    if pv.vtk_version_info >= (9, 4, 0):
-        assert pl.scalar_bar.lookup_table.cmap.name == cmap
+    assert pl.scalar_bar.GetLookupTable().cmap.name == cmap
 
     pl.show()
 
@@ -1080,9 +1078,7 @@ def test_plot_add_scalar_bar_lookup_table(verify_image_cache):
     pl = pv.Plotter()
     pl.add_scalar_bar(lookup_table=ltable)
 
-    # pl.scalar_bar is a vtkScalarBarActor for vtk < 9.4.0
-    if pv.vtk_version_info >= (9, 4, 0):
-        assert pl.scalar_bar.lookup_table.cmap.name == ltable.cmap.name
+    assert pl.scalar_bar.GetLookupTable().cmap.name == ltable.cmap.name
 
     pl.show()
 
@@ -3030,9 +3026,10 @@ def test_plot_compare_multiblock(compare_datasets, verify_image_cache):
         zip(['contour', 'threshold', 'decimate', 'glyph'], compare_datasets, strict=True)
     )
     kwargs = dict(color='w', screenshot=True, return_img=True)
-    assert np.array_equal(
-        pv.plot_compare(pv.MultiBlock(datasets), **kwargs), pv.plot_compare(datasets, **kwargs)
-    )
+    img_multiblock = pv.plot_compare(pv.MultiBlock(datasets), **kwargs)
+    img_dict = pv.plot_compare(datasets, **kwargs)
+    # Tolerate sub-LSB pixel noise from non-deterministic renderers.
+    assert pv.compare_images(img_multiblock, img_dict) < 1.0
 
 
 def test_plot_compare_raises(no_images_to_verify):  # noqa: ARG001
@@ -3705,7 +3702,10 @@ def test_set_viewup(verify_image_cache, vector):
     pl.show()
 
 
-def test_plot_shadows():
+def test_plot_shadows(verify_image_cache):
+    """Test rendering with shadows enabled."""
+    # Shadow map speckles nondeterministically on macOS software rendering.
+    verify_image_cache.macos_skip_image_cache = True
     pl = pv.Plotter(lighting=None)
 
     # add several planes
@@ -4471,7 +4471,10 @@ def test_plot_composite_poly_component_norm(multiblock_poly):
     pl.show()
 
 
-def test_plot_composite_poly_component_single(multiblock_poly):
+def test_plot_composite_poly_component_single(multiblock_poly, verify_image_cache):
+    """Test plotting a single component of multi-component composite scalars."""
+    # Component scalars speckle nondeterministically on macOS software rendering.
+    verify_image_cache.macos_skip_image_cache = True
     for block in multiblock_poly:
         data = block.compute_normals().point_data['Normals']
         block['data'] = data

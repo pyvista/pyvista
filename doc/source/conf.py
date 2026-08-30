@@ -154,6 +154,11 @@ extensions = [
 ]
 
 
+# Configuration for sphinx.ext.duration: report in the build log, skip the JSON file
+duration_n_slowest = 50
+duration_write_json = None
+
+
 # Configuration for sphinx.ext.autodoc
 # Do not expand following type aliases when generating the docs
 autodoc_type_aliases = {
@@ -242,6 +247,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*NormalsLiteral'),
     (r'py:.*', '.*_CellQualityLiteral'),
     (r'py:.*', '.*_CompressionOptions'),
+    (r'py:.*', '.*_SENTINEL'),
     (r'py:.*', '.*T'),
     (r'py:.*', '.*Options'),
     # Python 3.14 typing internals leaked through get_type_hints() on
