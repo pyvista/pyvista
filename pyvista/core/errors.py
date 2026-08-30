@@ -267,7 +267,7 @@ class InvalidMeshWarning(Warning):
     """
 
 
-class PyVistaPrecisionWarning(Warning):
+class PrecisionWarning(Warning):
     """Warning that points could not be generated at the requested precision.
 
     Raised when :attr:`pyvista.core.config.Config.points_dtype` asks for a wider
@@ -279,11 +279,11 @@ class PyVistaPrecisionWarning(Warning):
     Being a warning rather than an error is what keeps the choice with the caller.
     Escalate it where the fabricated precision is not acceptable::
 
-        warnings.filterwarnings('error', category=pv.PyVistaPrecisionWarning)
+        warnings.filterwarnings('error', category=pv.PrecisionWarning)
 
     or silence it where it is::
 
-        warnings.filterwarnings('ignore', category=pv.PyVistaPrecisionWarning)
+        warnings.filterwarnings('ignore', category=pv.PrecisionWarning)
 
     Either can be scoped to a block with :class:`warnings.catch_warnings`, or set
     for a run from ``-W`` or a test runner's own configuration.

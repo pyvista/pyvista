@@ -56,7 +56,7 @@ def test_geometric_objects_points_dtype(geometric_obj_test_case, dtype):
     with warnings.catch_warnings():
         # A few of these are built from VTK algorithms that only generate single
         # precision; they warn under 'float64' but still come back float64
-        warnings.simplefilter('ignore', pv.PyVistaPrecisionWarning)
+        warnings.simplefilter('ignore', pv.PrecisionWarning)
         obj = func(**kwargs)
     assert obj.points.dtype == np.dtype(dtype)
 

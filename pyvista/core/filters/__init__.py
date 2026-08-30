@@ -35,7 +35,7 @@ import numpy as np
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._warn_external import warn_external
-from pyvista.core.errors import PyVistaPrecisionWarning
+from pyvista.core.errors import PrecisionWarning
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.observers import ProgressMonitor
 
@@ -169,7 +169,7 @@ def _enforce_points_dtype(
             f'The output points are cast to {dtype.name}, but hold '
             f'{points.dtype.name} values.'
         )
-        warn_external(msg, PyVistaPrecisionWarning)
+        warn_external(msg, PrecisionWarning)
     mesh_out.points = points.astype(dtype)
 
 

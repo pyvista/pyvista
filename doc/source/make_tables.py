@@ -622,7 +622,7 @@ class _PointsDtypeTable(DocTable):
             return None
         finally:
             pv.global_config.points_dtype = None
-        return not any(issubclass(w.category, pv.PyVistaPrecisionWarning) for w in caught)
+        return not any(issubclass(w.category, pv.PrecisionWarning) for w in caught)
 
     @classmethod
     def fetch_data(cls):

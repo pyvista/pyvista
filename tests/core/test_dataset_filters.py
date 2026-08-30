@@ -103,7 +103,7 @@ def test_shrink_preserves_points_dtype(hexbeam, monkeypatch):
     monkeypatch.setattr(pv.global_config, 'points_dtype', 'preserve')
     assert hexbeam.points_to_double().points.dtype == np.double
     with warnings.catch_warnings():
-        warnings.simplefilter('ignore', pv.PyVistaPrecisionWarning)
+        warnings.simplefilter('ignore', pv.PrecisionWarning)
         assert hexbeam.shrink().points.dtype == np.double
 
 

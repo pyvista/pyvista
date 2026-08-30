@@ -308,7 +308,7 @@ class Config(_ConfigBase):
             recovers nothing: the digits went when the filter ran. A ``float64``
             points array is not on its own evidence of double-precision values.
 
-            Every such cast warns with :class:`~pyvista.PyVistaPrecisionWarning`,
+            Every such cast warns with :class:`~pyvista.PrecisionWarning`,
             naming the algorithm, so the fabrication is never silent. Casting the other
             way does not warn: discarding digits below the input's own representation
             error loses nothing that was there.
@@ -361,12 +361,12 @@ class Config(_ConfigBase):
         block, a module, or a whole session, and set from ``-W`` or pytest as well.
 
         >>> with warnings.catch_warnings():
-        ...     warnings.filterwarnings('error', category=pv.PyVistaPrecisionWarning)
+        ...     warnings.filterwarnings('error', category=pv.PrecisionWarning)
         ...     try:
         ...         _ = mesh.shrink(1.0)
-        ...     except pv.PyVistaPrecisionWarning as error:
+        ...     except pv.PrecisionWarning as error:
         ...         print(f'raised: {type(error).__name__}')
-        raised: PyVistaPrecisionWarning
+        raised: PrecisionWarning
 
         Sources follow the setting too.
 

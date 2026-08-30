@@ -804,7 +804,7 @@ own for precision.
   ``_apply_points_dtype``.
 - Neither helper needs to know whether the algorithm supports double precision. The
   ones that do not are cast, and every widening cast warns with
-  ``PyVistaPrecisionWarning`` because it fabricates precision the algorithm discarded --
+  ``PrecisionWarning`` because it fabricates precision the algorithm discarded --
   so no filter needs a keyword to opt out of the setting.
 - Under ``'preserve'`` only the meshes that store their points constrain the output.
   ``ImageData`` and ``RectilinearGrid`` generate theirs, so a filter reading one, or

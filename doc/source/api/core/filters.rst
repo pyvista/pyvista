@@ -27,7 +27,7 @@ Filters
           :class:`~pyvista.ImageData`.
       * - :material-regular:`close;2em;sd-text-error`
         - Cannot. PyVista casts the single-precision output up so the dtype is the one
-          requested, and raises :class:`~pyvista.PyVistaPrecisionWarning` to say the
+          requested, and raises :class:`~pyvista.PrecisionWarning` to say the
           values behind it are not.
 
    These marks are measured by running each filter while the documentation is built, so

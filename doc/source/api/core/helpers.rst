@@ -51,4 +51,4 @@ Global Configuration
 
 .. autoclass:: pyvista.InvalidMeshWarning
 
-.. autoclass:: pyvista.PyVistaPrecisionWarning
+.. autoclass:: pyvista.PrecisionWarning

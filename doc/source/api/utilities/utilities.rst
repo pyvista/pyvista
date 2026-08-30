@@ -181,12 +181,12 @@ Errors and Warnings
    core.errors.PointSetCellOperationError
    core.errors.PointSetDimensionReductionError
    core.errors.PointSetNotSupported
+   core.errors.PrecisionWarning
    core.errors.PyVistaAttributeError
    core.errors.PyVistaDeprecationWarning
    core.errors.PyVistaEfficiencyWarning
    core.errors.PyVistaFutureWarning
    core.errors.PyVistaPipelineError
-   core.errors.PyVistaPrecisionWarning
    core.errors.VTKExecutionError
    core.errors.VTKExecutionWarning
    core.errors.VTKVersionError

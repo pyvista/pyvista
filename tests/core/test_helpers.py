@@ -267,7 +267,7 @@ def test_points_dtype_preserve_keeps_filter_input_dtype(input_dtype, monkeypatch
 
     with warnings.catch_warnings():
         # a widening cast warns; this test is about the dtype it produces
-        warnings.simplefilter('ignore', pv.PyVistaPrecisionWarning)
+        warnings.simplefilter('ignore', pv.PrecisionWarning)
         assert mesh.shrink().points.dtype == input_dtype  # no SetOutputPointsPrecision
         assert mesh.decimate(0.5).points.dtype == input_dtype
         assert mesh.triangulate().points.dtype == input_dtype
@@ -284,7 +284,7 @@ def test_points_dtype_applies_to_filters_and_sources(dtype, monkeypatch):
 
     # Sources and filters without output precision support are cast to match
     with warnings.catch_warnings():
-        warnings.simplefilter('ignore', pv.PyVistaPrecisionWarning)
+        warnings.simplefilter('ignore', pv.PrecisionWarning)
         assert pv.Arrow().points.dtype == expected
         assert pv.Sphere().shrink().points.dtype == expected
 
@@ -366,7 +366,7 @@ def test_points_dtype_float64_does_not_warn_for_integer_points(monkeypatch):
     )
 
     with warnings.catch_warnings():
-        warnings.simplefilter('error', pv.PyVistaPrecisionWarning)
+        warnings.simplefilter('error', pv.PrecisionWarning)
         out = mesh.triangulate()
     assert out.points.dtype == np.float64
 
@@ -385,7 +385,7 @@ def test_points_dtype_applies_to_filters_wrapping_their_own_output(
     kwargs = {'resolution': 4, 'capping': False} if filter_name == 'extrude_rotate' else {}
 
     with warnings.catch_warnings():
-        warnings.simplefilter('ignore', pv.PyVistaPrecisionWarning)
+        warnings.simplefilter('ignore', pv.PrecisionWarning)
         out = getattr(mesh, filter_name)(**kwargs)
     assert out.points.dtype == np.dtype(dtype)
 
@@ -397,14 +397,14 @@ def test_points_dtype_float64_names_the_algorithm(monkeypatch):
     mesh.points = mesh.points.astype(np.float32)  # a source would follow the setting
 
     match = 'vtkShrinkFilter generated float32 points'
-    with pytest.warns(pv.PyVistaPrecisionWarning, match=match):
+    with pytest.warns(pv.PrecisionWarning, match=match):
         filters._enforce_points_dtype(mesh, np.dtype(np.float64), algorithm=_vtk.vtkShrinkFilter())
 
 
 def test_points_dtype_float64_silent_when_vtk_delivers(monkeypatch):
     monkeypatch.setattr(pv.global_config, 'points_dtype', 'float64')
     with warnings.catch_warnings():
-        warnings.simplefilter('error', pv.PyVistaPrecisionWarning)
+        warnings.simplefilter('error', pv.PrecisionWarning)
         assert pv.Sphere().points.dtype == np.float64
         assert cells.Hexahedron().triangulate().points.dtype == np.float64
 
@@ -418,7 +418,7 @@ def test_points_dtype_warns_on_every_widening_cast(setting, monkeypatch):
     mesh.points = mesh.points.astype(np.float32)  # a source would follow the setting
     assert mesh.points.dtype == np.float32
 
-    with pytest.warns(pv.PyVistaPrecisionWarning, match='vtkSphereSource'):
+    with pytest.warns(pv.PrecisionWarning, match='vtkSphereSource'):
         filters._enforce_points_dtype(mesh, np.dtype(np.float64), algorithm=_vtk.vtkSphereSource())
     assert mesh.points.dtype == np.float64
 
@@ -427,7 +427,7 @@ def test_points_dtype_does_not_warn_on_narrowing(monkeypatch):
     # Discarding digits below the input's own representation error loses nothing
     monkeypatch.setattr(pv.global_config, 'points_dtype', 'float32')
     with warnings.catch_warnings():
-        warnings.simplefilter('error', pv.PyVistaPrecisionWarning)
+        warnings.simplefilter('error', pv.PrecisionWarning)
         assert cells.Hexahedron().shrink().points.dtype == np.float32
         assert pv.Sphere().cell_centers().points.dtype == np.float32
 
@@ -442,7 +442,7 @@ def test_points_dtype_none_never_intervenes(monkeypatch):
     assert filters._points_dtype(mesh) is None
     assert filters._points_dtype() is None
     with warnings.catch_warnings():
-        warnings.simplefilter('error', pv.PyVistaPrecisionWarning)
+        warnings.simplefilter('error', pv.PrecisionWarning)
         mesh.shrink()
         pv.Sphere().cell_centers()
         pv.Arrow()
@@ -477,10 +477,10 @@ def test_points_dtype_preserve_pairs_multiblock_blocks(monkeypatch):
     double, single = pv.Sphere().points_to_double(), pv.Sphere()
 
     with warnings.catch_warnings():
-        warnings.simplefilter('ignore', pv.PyVistaPrecisionWarning)
+        warnings.simplefilter('ignore', pv.PrecisionWarning)
         assert double.clip_box().points.dtype == np.float64
     with warnings.catch_warnings():
-        warnings.simplefilter('ignore', pv.PyVistaPrecisionWarning)
+        warnings.simplefilter('ignore', pv.PrecisionWarning)
         blocks = pv.MultiBlock([double, single]).clip_box()
         nested = pv.MultiBlock([pv.MultiBlock([double]), single]).clip_box()
     assert [block.points.dtype for block in blocks] == [np.float64, np.float32]
@@ -520,7 +520,7 @@ def test_points_dtype_float64_does_not_warn_for_an_internal_template(monkeypatch
     mesh['vectors'] = np.ones((mesh.n_points, 3))
 
     with warnings.catch_warnings():
-        warnings.simplefilter('error', pv.PyVistaPrecisionWarning)
+        warnings.simplefilter('error', pv.PrecisionWarning)
         glyphed = mesh.glyph(orient='vectors', scale=False)
     assert glyphed.points.dtype == np.float64
 
