@@ -1,55 +1,31 @@
-"""A helper script to check names in doctests.
+"""Check that names used in doctests are defined by the doctests themselves.
 
-This module is intended to be called from pyvista's root directory with
+Call this from pyvista's root directory with
 
     python tests/check_doctest_names.py
 
-The problem is that pytest doctests (following the standard-library
-doctest module) see the module-global namespace. So when a doctest looks
-like this:
-
-Examples
---------
-    >>> import numpy
-    >>> from pyvista import CellType
-    >>> offset = np.array([0, 9])
-    >>> cell0_ids = [8, 0, 1, 2, 3, 4, 5, 6, 7]
-    >>> cell1_ids = [8, 8, 9, 10, 11, 12, 13, 14, 15]
-    >>> cells = np.hstack((cell0_ids, cell1_ids))
-    >>> cell_type = np.array([CellType.HEXAHEDRON, CellType.HEXAHEDRON], np.int8)
-
-there will be a ``NameError`` when the code block is copied into Python
-because the ``np`` name is undefined. However, pytest and sphinx test
-runs will not catch this, as the ``np`` name is typically also available
-in the global namespace of the module where the doctest resides.
-
-In order to fix this, we build a tree of pyvista's public and private
-API, using the standard-library doctest module as a doctest parser. We
-execute examples with a clean empty namespace to ensure that mistakes
-such as the above can be caught.
-
-Note that we don't try to verify that the actual results from each
-example are correct; that's still pytest's responsibility. As long
-as the examples run without error, this module will be happy.
-
-The implementation is not very robust or smart, it just gets the job
-done to find the rare name mistake in our examples.
-
-If you need off-screen plotting, set the ``PYVISTA_OFF_SCREEN``
-environmental variable to ``True`` before running the script.
+The examples of each docstring are concatenated and analysed with ``symtable``.
+Any name referenced without ever being bound is reported.
 
 """
 
 from __future__ import annotations
 
 import argparse
+import ast
+import builtins
 import doctest
 import re
+import symtable
 import sys
 import textwrap
 from types import ModuleType
 
 import pyvista as pv
+
+MODULE_DUNDERS = frozenset(
+    {'__name__', '__file__', '__doc__', '__package__', '__spec__', '__loader__', '__builtins__'}
+)
 
 
 def discover_modules(entry=pv, recurse=True):
@@ -107,8 +83,74 @@ def discover_modules(entry=pv, recurse=True):
     return found_modules
 
 
+def _iter_scopes(table):
+    """Yield a symbol table and every scope nested inside it."""
+    yield table
+    for child in table.get_children():
+        yield from _iter_scopes(child)
+
+
+def _has_import_star(tree):
+    """Return whether the parsed source contains a star import."""
+    return any(
+        isinstance(node, ast.ImportFrom) and any(alias.name == '*' for alias in node.names)
+        for node in ast.walk(tree)
+    )
+
+
+def _bound_names(table):
+    """Return the names bound at module scope of a symbol table."""
+    bound = {
+        sym.get_name() for sym in table.get_symbols() if sym.is_assigned() or sym.is_imported()
+    }
+    for scope in _iter_scopes(table):
+        bound.update(
+            sym.get_name()
+            for sym in scope.get_symbols()
+            if sym.is_declared_global() and sym.is_assigned()
+        )
+    return bound
+
+
+def undefined_names(source):
+    """Return the sorted names a source uses without ever binding them.
+
+    Parameters
+    ----------
+    source : str
+        Python source to analyse.
+
+    Returns
+    -------
+    list of str
+        Names referenced but never bound. Empty for sources with a star import.
+
+    """
+    tree = ast.parse(source)
+    if _has_import_star(tree):
+        return []
+
+    table = symtable.symtable(source, '<doctest>', 'exec')
+    bound = _bound_names(table)
+
+    undefined = set()
+    for scope in _iter_scopes(table):
+        for sym in scope.get_symbols():
+            name = sym.get_name()
+            if not sym.is_referenced() or name in bound or name in MODULE_DUNDERS:
+                continue
+            if hasattr(builtins, name):
+                continue
+            if scope is table:
+                if not (sym.is_assigned() or sym.is_imported()):
+                    undefined.add(name)
+            elif sym.is_global():
+                undefined.add(name)
+    return sorted(undefined)
+
+
 def check_doctests(modules=None, respect_skips=True, verbose=True):
-    """Check whether doctests can be run as-is without errors.
+    """Check whether doctests define every name they use.
 
     Parameters
     ----------
@@ -122,14 +164,14 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
         directive.
 
     verbose : bool, optional
-        Whether to print passes/failures as the testing progresses.
+        Whether to print passes/failures as the checking progresses.
         Failures are printed at the end in every case.
 
     Returns
     -------
-    failures : dict of (Exception, str)  tuples
-        An (object name -> (exception raised, failing code)) mapping
-        of failed doctests under the specified modules.
+    failures : dict of (Exception, str) tuples
+        An (object name -> (exception, offending code)) mapping of
+        doctests that use names they never define.
 
     """
     skip_pattern = re.compile(r'doctest: *\+SKIP')
@@ -152,24 +194,32 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
         if not dt.examples:
             continue
 
-        # mock print to suppress output from a few talkative tests
-        globs = {'print': (lambda *args, **kwargs: ...)}  # noqa: ARG005
-        for iline, example in enumerate(dt.examples, start=1):
-            if not example.source.strip() or (
-                respect_skips and skip_pattern.search(example.source)
-            ):
-                continue
-            try:
-                exec(example.source, globs)  # noqa: S102
-            except Exception as exc:  # noqa: BLE001
-                if verbose:
-                    print(f'FAILED: {dt.name} -- {exc!r}')
-                erroring_code = ''.join([example.source for example in dt.examples[:iline]])
-                failures[dt_name] = exc, erroring_code
-                break
-        else:
+        sources = [
+            example.source
+            for example in dt.examples
+            if example.source.strip()
+            and not (respect_skips and skip_pattern.search(example.source))
+        ]
+        if not sources:
+            continue
+        source = ''.join(sources)
+
+        try:
+            missing = undefined_names(source)
+        except SyntaxError as exc:
+            failures[dt_name] = exc, source
             if verbose:
-                print(f'PASSED: {dt.name}')
+                print(f'FAILED: {dt.name} -- {exc!r}')
+            continue
+
+        if missing:
+            listed = ', '.join(repr(name) for name in missing)
+            exc = NameError(f'name {listed} is not defined')
+            failures[dt_name] = exc, source
+            if verbose:
+                print(f'FAILED: {dt.name} -- {exc!r}')
+        elif verbose:
+            print(f'PASSED: {dt.name}')
 
     total = len(doctests)
     fails = len(failures)
@@ -179,10 +229,10 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
         return failures
 
     print('List of failures:')
-    for name, (exc, erroring_code) in failures.items():
+    for name, (exc, offending_code) in failures.items():
         print('-' * 60)
         print(f'{name}:')
-        print(textwrap.indent(erroring_code, '    '))
+        print(textwrap.indent(offending_code, '    '))
         print(repr(exc))
     print('-' * 60)
 
@@ -195,7 +245,7 @@ if __name__ == '__main__':
         '-v',
         '--verbose',
         action='store_true',
-        help='print passes and failures as tests progress',
+        help='print passes and failures as checks progress',
     )
     parser.add_argument(
         '--no-respect-skips',
