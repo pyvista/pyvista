@@ -1637,8 +1637,6 @@ class DataSet(DataSetFilters, DataObject):
         attrs.append(('X Bounds', (bds.x_min, bds.x_max), fmt))
         attrs.append(('Y Bounds', (bds.y_min, bds.y_max), fmt))
         attrs.append(('Z Bounds', (bds.z_min, bds.z_max), fmt))
-        # if self.n_cells <= pyvista.REPR_VOLUME_MAX_CELLS and self.n_cells > 0:
-        #     attrs.append(("Volume", (self.volume), pyvista.FLOAT_FORMAT))
         return attrs
 
     def _repr_html_(self: Self) -> str:
