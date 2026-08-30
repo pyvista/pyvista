@@ -43,10 +43,9 @@ Array Utilities
    sample_function
    perlin_noise
 
-Global Configuration
-~~~~~~~~~~~~~~~~~~~~
+.. seealso::
 
-.. autoclass:: pyvista.core.config.Config
-   :members:
-
-.. autoclass:: pyvista.InvalidMeshWarning
+   :ref:`configuration`
+      Central reference for all global configuration, including
+      :class:`pyvista.core.config.Config`, module-level flags, and
+      environment variables.

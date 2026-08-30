@@ -142,7 +142,8 @@ You can clear out the local cache with :func:`examples.delete_downloads()
 <pyvista.examples.downloads.delete_downloads>` if needed.
 
 If you want to override this local cache path, set the
-``PYVISTA_USERDATA_PATH`` environment variable. This path must be writable.
+:envvar:`PYVISTA_USERDATA_PATH` environment variable. This path must be
+writable. See :ref:`configuration` for all environment variables.
 
 
 Data Sources
