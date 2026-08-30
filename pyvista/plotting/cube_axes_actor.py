@@ -17,11 +17,13 @@ from pyvista.core.utilities.arrays import convert_string_array
 from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.core.utilities.misc import _NameMixin
 from pyvista.core.utilities.misc import _NoNewAttrMixin
+from pyvista.plotting.colors import Color
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from pyvista.core._typing_core import VectorLike
+    from pyvista.plotting.colors import ColorLike
 
 
 @_deprecate_positional_args
@@ -126,6 +128,27 @@ class CubeAxesActor(
     n_zlabels : int, default: 5
         Number of labels along the z-axis.
 
+    color : ColorLike, optional
+        Color of all labels, axis titles, axis lines, and grid lines. Defaults to
+        :attr:`pyvista.global_theme.font.color
+        <pyvista.plotting.themes._Font.color>`.
+
+        .. versionadded:: 0.49
+
+    grid : bool | str, optional
+        Add grid lines to the backface (``True``, ``'back'``, or ``'backface'``) or to
+        the frontface (``'front'``, ``'frontface'``) of the axes actor.
+
+        .. versionadded:: 0.49
+
+    location : str, default: "closest"
+        Set how the axes are drawn: either static (``'all'``), closest triad
+        (``'front'``, ``'closest'``, ``'default'``), furthest triad (``'back'``,
+        ``'furthest'``), static closest to the origin (``'origin'``), or outer edges
+        (``'outer'``) in relation to the camera position.
+
+        .. versionadded:: 0.49
+
     See Also
     --------
     :meth:`~pyvista.Plotter.show_bounds`
@@ -167,6 +190,9 @@ class CubeAxesActor(
         n_xlabels=5,
         n_ylabels=5,
         n_zlabels=5,
+        color: ColorLike | None = None,
+        grid: bool | str | None = None,  # noqa: FBT001
+        location: str | None = 'closest',
     ):
         """Initialize CubeAxesActor."""
         super().__init__()
@@ -218,9 +244,74 @@ class CubeAxesActor(
         self.n_ylabels = n_ylabels
         self.n_zlabels = n_zlabels
 
+        color_ = Color(color, default_color=pv.global_theme.font.color)
+        self._configure_grid_lines(
+            grid=grid,
+            color=color_,
+            visibility=(x_axis_visibility, y_axis_visibility, z_axis_visibility),
+        )
+        self._configure_fly_mode(location=location)
+
+        self.GetXAxesLinesProperty().SetColor(color_.float_rgb)
+        self.GetYAxesLinesProperty().SetColor(color_.float_rgb)
+        self.GetZAxesLinesProperty().SetColor(color_.float_rgb)
+
         self.x_axis_visibility = x_axis_visibility
         self.y_axis_visibility = y_axis_visibility
         self.z_axis_visibility = z_axis_visibility
+
+    def _configure_grid_lines(
+        self, *, grid: bool | str | None, color: Color, visibility: tuple[bool, bool, bool]
+    ) -> None:
+        """Set the grid line location, visibility and color."""
+        if not grid:
+            return
+        grid = 'back' if grid is True else grid
+        if not isinstance(grid, str):
+            msg = f'`grid` must be a str, not {type(grid)}'
+            raise TypeError(msg)
+        grid = grid.lower()
+        if grid in ('front', 'frontface'):
+            self.SetGridLineLocation(self.VTK_GRID_LINES_CLOSEST)
+        elif grid in ('both', 'all'):
+            self.SetGridLineLocation(self.VTK_GRID_LINES_ALL)
+        elif grid in ('back', True):
+            self.SetGridLineLocation(self.VTK_GRID_LINES_FURTHEST)
+        else:
+            msg = f'`grid` must be either "front", "back, or, "all", not {grid}'
+            raise ValueError(msg)
+
+        self.SetDrawXGridlines(visibility[0])
+        self.SetDrawYGridlines(visibility[1])
+        self.SetDrawZGridlines(visibility[2])
+        self.GetXAxesGridlinesProperty().SetColor(color.float_rgb)
+        self.GetYAxesGridlinesProperty().SetColor(color.float_rgb)
+        self.GetZAxesGridlinesProperty().SetColor(color.float_rgb)
+
+    def _configure_fly_mode(self, *, location: str | None) -> None:
+        """Set how the axes are drawn in relation to the camera position."""
+        if location is None:
+            return
+        if not isinstance(location, str):
+            msg = 'location must be a string'
+            raise TypeError(msg)
+        location = location.lower()
+        if location in ('all'):
+            self.SetFlyModeToStaticEdges()
+        elif location in ('origin'):
+            self.SetFlyModeToStaticTriad()
+        elif location in ('outer'):
+            self.SetFlyModeToOuterEdges()
+        elif location in ('default', 'closest', 'front'):
+            self.SetFlyModeToClosestTriad()
+        elif location in ('furthest', 'back'):
+            self.SetFlyModeToFurthestTriad()
+        else:
+            msg = (
+                f'Value of location ("{location}") should be either "all", "origin",'
+                ' "outer", "default", "closest", "front", "furthest", or "back".'
+            )
+            raise ValueError(msg)
 
     @property
     def tick_location(self) -> str:  # numpydoc ignore=RT01

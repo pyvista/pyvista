@@ -2118,55 +2118,12 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             n_xlabels=n_xlabels,
             n_ylabels=n_ylabels,
             n_zlabels=n_zlabels,
+            color=color,
+            grid=grid,
+            location=location,
         )
 
         cube_axes_actor.use_2d_mode = use_2d or not np.allclose(self.scale, [1.0, 1.0, 1.0])
-
-        if grid:
-            grid = 'back' if grid is True else grid
-            if not isinstance(grid, str):
-                msg = f'`grid` must be a str, not {type(grid)}'
-                raise TypeError(msg)
-            grid = grid.lower()
-            if grid in ('front', 'frontface'):
-                cube_axes_actor.SetGridLineLocation(cube_axes_actor.VTK_GRID_LINES_CLOSEST)
-            elif grid in ('both', 'all'):
-                cube_axes_actor.SetGridLineLocation(cube_axes_actor.VTK_GRID_LINES_ALL)
-            elif grid in ('back', True):
-                cube_axes_actor.SetGridLineLocation(cube_axes_actor.VTK_GRID_LINES_FURTHEST)
-            else:
-                msg = f'`grid` must be either "front", "back, or, "all", not {grid}'
-                raise ValueError(msg)
-            # Only show user desired grid lines
-            cube_axes_actor.SetDrawXGridlines(show_xaxis)
-            cube_axes_actor.SetDrawYGridlines(show_yaxis)
-            cube_axes_actor.SetDrawZGridlines(show_zaxis)
-            # Set the colors
-            cube_axes_actor.GetXAxesGridlinesProperty().SetColor(color.float_rgb)
-            cube_axes_actor.GetYAxesGridlinesProperty().SetColor(color.float_rgb)
-            cube_axes_actor.GetZAxesGridlinesProperty().SetColor(color.float_rgb)
-
-        if isinstance(location, str):
-            location = location.lower()
-            if location in ('all'):
-                cube_axes_actor.SetFlyModeToStaticEdges()
-            elif location in ('origin'):
-                cube_axes_actor.SetFlyModeToStaticTriad()
-            elif location in ('outer'):
-                cube_axes_actor.SetFlyModeToOuterEdges()
-            elif location in ('default', 'closest', 'front'):
-                cube_axes_actor.SetFlyModeToClosestTriad()
-            elif location in ('furthest', 'back'):
-                cube_axes_actor.SetFlyModeToFurthestTriad()
-            else:
-                msg = (
-                    f'Value of location ("{location}") should be either "all", "origin",'
-                    ' "outer", "default", "closest", "front", "furthest", or "back".'
-                )
-                raise ValueError(msg)
-        elif location is not None:
-            msg = 'location must be a string'
-            raise TypeError(msg)
 
         if isinstance(padding, (int, float)) and 0.0 <= padding < 1.0:
             if not np.any(np.abs(bounds) == np.inf):
@@ -2210,11 +2167,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             cube_axes_actor.x_axis_range = axes_ranges[0], axes_ranges[1]
             cube_axes_actor.y_axis_range = axes_ranges[2], axes_ranges[3]
             cube_axes_actor.z_axis_range = axes_ranges[4], axes_ranges[5]
-
-        # set color
-        cube_axes_actor.GetXAxesLinesProperty().SetColor(color.float_rgb)
-        cube_axes_actor.GetYAxesLinesProperty().SetColor(color.float_rgb)
-        cube_axes_actor.GetZAxesLinesProperty().SetColor(color.float_rgb)
 
         # set font
         font_family = parse_font_family(font_family)
