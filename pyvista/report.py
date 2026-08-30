@@ -187,10 +187,6 @@ class Report(scooby.Report):
         This class is also available via command-line interface. See
         :ref:`pyvista report <cli_report>` for details.
 
-    Any set ``PYVISTA_*`` environment variables are included in the report.
-
-    .. versionadded:: 0.49
-
     Parameters
     ----------
     additional : sequence[types.ModuleType], sequence[str]
@@ -217,7 +213,22 @@ class Report(scooby.Report):
         - The VTK Data source (where files are downloaded from)
         - Whether local file caching is enabled for the VTK Data source
 
+        These are the resolved values in use, derived from the
+        ``PYVISTA_USERDATA_PATH`` and ``PYVISTA_VTK_DATA`` environment
+        variables. Pass ``env_vars=True`` to also list the raw
+        variables as set.
+
         .. versionadded:: 0.47
+
+    env_vars : bool, default: False
+        List any set ``PYVISTA_*`` environment variables. These are the
+        raw inputs read from the environment, not the settings derived
+        from them; for the derived download settings, see
+        ``downloads``. Values may include local file paths (such as a
+        user name), so only enable this when sharing the report is
+        acceptable.
+
+        .. versionadded:: 0.49
 
     Examples
     --------
@@ -263,6 +274,7 @@ class Report(scooby.Report):
         sort: bool = False,  # noqa: FBT001, FBT002
         gpu: bool = True,  # noqa: FBT001, FBT002
         downloads: bool = False,  # noqa: FBT001, FBT002
+        env_vars: bool = False,  # noqa: FBT001, FBT002
     ):
         """Generate a :class:`scooby.Report` instance."""
         # Mandatory packages
@@ -340,7 +352,8 @@ class Report(scooby.Report):
                 ]
             )
 
-        extra_meta.extend(_get_set_env_vars())
+        if env_vars:
+            extra_meta.extend(_get_set_env_vars())
 
         scooby.Report.__init__(
             self,

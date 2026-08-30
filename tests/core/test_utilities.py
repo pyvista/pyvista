@@ -597,11 +597,10 @@ def test_report_downloads():
 def test_report_env_vars(monkeypatch):
     monkeypatch.setenv('PYVISTA_FOO', 'bar')
     monkeypatch.setenv('NOTPYVISTA_VAR', 'baz')
-    monkeypatch.delenv('PYVISTA_DOES_NOT_EXIST', raising=False)
-    repr_ = repr(pv.Report(gpu=False))
+    assert 'PYVISTA_FOO' not in repr(pv.Report(gpu=False))
+    repr_ = repr(pv.Report(gpu=False, env_vars=True))
     assert 'PYVISTA_FOO : bar' in repr_
     assert 'NOTPYVISTA_VAR' not in repr_
-    assert 'PYVISTA_DOES_NOT_EXIST' not in repr_
 
 
 def test_line_segments_from_points():
