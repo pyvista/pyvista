@@ -69,6 +69,11 @@ ACTOR_LOC_MAP = [
     'center',
 ]
 
+# Smallest diffuse irradiance cube map `set_environment_texture` will convolve when
+# down-sampling. The diffuse term is very low frequency, so a small map still looks
+# smooth, but going below this starts to show as banding on curved surfaces.
+_MIN_IRRADIANCE_SIZE = 16
+
 
 def map_loc_to_pos(loc, size, border=0.05):
     """Map location and size to a VTK position and position2.
@@ -3854,6 +3859,13 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
                 instead of nearest-neighbor, which gives smoother results for
                 continuous environment textures.
 
+            .. versionchanged:: 0.49
+
+                The diffuse irradiance map used for image-based lighting is now
+                down-sampled at the same rate. Its size was previously fixed, and
+                since convolving it dominates the cost of image-based lighting for
+                cube maps, resampling on its own had little effect on render time.
+
         rotation : RotationLike, optional
             Rotation to apply to the environment texture for image-based
             lighting and the background texture. Accepts any 3x3
@@ -3898,6 +3910,17 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         if resample:
             resample = 1 / 16 if resample is True else resample
+
+            # Resampling the texture on its own does not make image-based lighting any
+            # cheaper. Whenever spherical harmonics are unavailable -- which is always the
+            # case for cube maps, see above -- VTK convolves a diffuse irradiance cube map
+            # whose size is fixed regardless of the input texture's resolution, and that
+            # convolution dominates the cost of image-based lighting. Scale it down
+            # alongside the texture so that resampling actually buys performance.
+            default_size = _vtk.vtkPBRIrradianceTexture().GetIrradianceSize()
+            self.GetEnvMapIrradiance().SetIrradianceSize(
+                max(_MIN_IRRADIANCE_SIZE, round(default_size * resample))
+            )
 
             # Copy the texture
             # TODO: use Texture.copy() once support for cubemaps is added, see https://github.com/pyvista/pyvista/issues/7300
