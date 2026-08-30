@@ -145,22 +145,6 @@ def __getattr__(name):
         # Do not cache since we want to re-issue the deprecation warning
         return _get_deprecated_hexcolors()
 
-    if name == 'REPR_VOLUME_MAX_CELLS':
-        # deprecated 0.49.0, convert to error in 0.52.0, remove 0.53.0
-        from pyvista._warn_external import warn_external  # noqa: PLC0415
-        from pyvista.core.errors import PyVistaDeprecationWarning  # noqa: PLC0415
-
-        msg = "'REPR_VOLUME_MAX_CELLS' is deprecated and has no effect."
-        warn_external(msg, PyVistaDeprecationWarning)
-        if version_info >= (0, 52):  # pragma: no cover
-            msg = 'Convert this deprecation warning into an error.'
-            raise RuntimeError(msg)
-        if version_info >= (0, 53):  # pragma: no cover
-            msg = 'Remove REPR_VOLUME_MAX_CELLS.'
-            raise RuntimeError(msg)
-        # Do not cache since we want to re-issue the deprecation warning
-        return 1e6
-
     allow = {
         'demos',
         'examples',

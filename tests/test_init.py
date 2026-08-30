@@ -1,14 +1,12 @@
 from __future__ import annotations
 
 import os
-import re
 import subprocess
 import sys
 import textwrap
 
 import pytest
 
-import pyvista as pv
 from pyvista import _vtk
 from tests.vtk_backend_divergence import CVISTA_NAMESPACE
 
@@ -313,10 +311,3 @@ def test_vtk_import_all_suppressed_ignores_failures(monkeypatch):
     _vtk.import_all(suppress_import_errors=True)
 
     assert calls == ['A', 'SpecialA']
-
-
-def test_repr_volume_max_cells_deprecated():
-    """Test that accessing the removed global warns and returns its old value."""
-    msg = "'REPR_VOLUME_MAX_CELLS' is deprecated and has no effect."
-    with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(msg)):
-        assert pv.REPR_VOLUME_MAX_CELLS == 1e6
