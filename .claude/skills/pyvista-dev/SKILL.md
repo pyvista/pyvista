@@ -187,7 +187,8 @@ Moving `pv.BUILDING_GALLERY` out of `pyvista/ext/plot_directive.py`'s module sco
 exactly that -- collecting that module was what set the flag, and one example's
 anti-aliasing warning is silenced only while a gallery is being built.
 
-`tests/conftest.py` and the doctest tox environment already set off-screen rendering, so
+`tests/conftest.py` and the `doctest-modules` tox environment already set off-screen
+rendering, so
 the `make` targets are safe. Only a bare `pytest --doctest-modules` outside tox needs
 `PYVISTA_OFF_SCREEN=true`; without it the examples open render windows and take over the
 display.
