@@ -69,6 +69,10 @@ ACTOR_LOC_MAP = [
     'center',
 ]
 
+# Floor for the diffuse irradiance map: below 32 the diffuse term degrades
+# visibly on rough surfaces for little further speed-up.
+_MIN_IRRADIANCE_SIZE = 32
+
 
 def map_loc_to_pos(loc, size, border=0.05):
     """Map location and size to a VTK position and position2.
@@ -3854,6 +3858,15 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
                 instead of nearest-neighbor, which gives smoother results for
                 continuous environment textures.
 
+            .. versionchanged:: 0.49
+
+                For cube map textures, the diffuse irradiance map used for
+                image-based lighting is down-sampled at the same rate, with its
+                size clamped between 32 texels and its default. Any rate at or
+                below ``1/8``, including the ``1/16`` that ``True`` selects,
+                therefore gives a 32 texel map. Only a single rate is accepted;
+                a sequence of per-axis rates raises ``ValueError``.
+
         rotation : RotationLike, optional
             Rotation to apply to the environment texture for image-based
             lighting and the background texture. Accepts any 3x3
@@ -3894,10 +3907,20 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.UseImageBasedLightingOn()
 
         if resample is None:
-            resample = pv.global_theme.resample_environment_texture
+            resample = self._theme.resample_environment_texture
+
+        default_size = _vtk.vtkPBRIrradianceTexture().GetIrradianceSize()
 
         if resample:
             resample = 1 / 16 if resample is True else resample
+
+            resample = _validation.validate_number(resample, must_be_finite=True, name='resample')
+
+            # Convolving the diffuse irradiance map dominates image-based lighting
+            # for cube maps, so scale it with the texture.
+            irradiance_size = min(
+                default_size, max(_MIN_IRRADIANCE_SIZE, round(default_size * resample))
+            )
 
             # Copy the texture
             # TODO: use Texture.copy() once support for cubemaps is added, see https://github.com/pyvista/pyvista/issues/7300
@@ -3914,7 +3937,13 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
                 texture_copy.SetInputDataObject(i, new_image)
             self.SetEnvironmentTexture(texture_copy, is_srgb)
         else:
+            irradiance_size = default_size
             self.SetEnvironmentTexture(texture, is_srgb)
+
+        # VTK convolves the irradiance map only when spherical harmonics are off,
+        # which is the cube map case handled above.
+        if texture.cube_map:
+            self.GetEnvMapIrradiance().SetIrradianceSize(irradiance_size)
 
         if rotation is not None:
             if vtk_version_info < (9, 6):  # pragma: no cover

@@ -4725,6 +4725,7 @@ class ImageDataFilters(DataSetFilters):
             sample_rate_ = _validation.validate_array3(
                 sample_rate,
                 broadcast=True,
+                must_be_finite=True,
                 must_be_in_range=[0, np.inf],
                 strict_lower_bound=True,
                 name='sample_rate',

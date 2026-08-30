@@ -9,6 +9,13 @@ creation and manipulation of meshes or interfacing with VTK datasets.
 See :ref:`utilities-api-index` for the full API reference of all
 utility functions organized by category.
 
+.. seealso::
+
+   :ref:`configuration`
+      Central reference for all global configuration, including
+      :class:`pyvista.core.config.Config`, module-level flags, and
+      environment variables.
+
 .. currentmodule:: pyvista
 
 Mesh Creation
@@ -42,11 +49,3 @@ Array Utilities
    convert_array
    sample_function
    perlin_noise
-
-Global Configuration
-~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: pyvista.core.config.Config
-   :members:
-
-.. autoclass:: pyvista.InvalidMeshWarning
