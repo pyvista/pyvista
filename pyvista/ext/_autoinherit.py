@@ -27,6 +27,7 @@ from typing import Any
 from docutils.frontend import get_default_settings
 from docutils.parsers.rst import Parser
 from docutils.utils import new_document
+import sphinx
 from sphinx.ext.autosummary import extract_summary
 from sphinx.util import logging
 from sphinx.util.docstrings import prepare_docstring
@@ -210,8 +211,11 @@ def own_members(  # numpydoc ignore=RT01
 
 @functools.cache
 def _summary_document() -> Any:  # numpydoc ignore=RT01
-    """Return a throwaway document; ``extract_summary`` reads only its settings."""
-    return new_document('', get_default_settings(Parser))
+    """Return bare settings on Sphinx 9, else a throwaway document, for ``extract_summary``."""
+    settings = get_default_settings(Parser)
+    if sphinx.version_info >= (9,):
+        return settings
+    return new_document('', settings)
 
 
 def _summary(cls: type, member: str) -> str:
