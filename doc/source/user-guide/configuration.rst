@@ -172,8 +172,9 @@ Rendering
      selects the render window class VTK creates, such as an EGL
      window for headless rendering; see the `VTK runtime settings
      <https://docs.vtk.org/en/latest/advanced/runtime_settings.html#opengl>`_.
-   * ``PYVISTA_VIRTUAL_DISPLAY``, mentioned in some older issues, is
-     not a PyVista setting.
+   * ``PYVISTA_VIRTUAL_DISPLAY``, asked about in `issue #8120
+     <https://github.com/pyvista/pyvista/issues/8120>`_, is not a
+     PyVista setting.
    * :attr:`~pyvista.plotting.themes.Theme.interactive` controls
      whether shown plots accept user interaction, not off-screen
      rendering.
@@ -229,7 +230,7 @@ Example Data
    <https://github.com/pyvista/data>`_ to use instead of downloading
    example files. See :ref:`examples_api`.
 
-Both example-data variables are included in the output of
+The settings derived from both variables appear in the output of
 ``pv.Report(downloads=True)``.
 
 Documentation Building

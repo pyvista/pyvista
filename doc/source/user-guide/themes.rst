@@ -11,8 +11,8 @@ and styles through one global configuration.
 
    :ref:`configuration`
       ``pv.global_theme`` is one of two global configuration objects.
-      The other, ``pv.global_config``, holds every non-plotting
-      setting.
+      The other, ``pv.global_config``, holds the core non-plotting
+      settings.
 
 The default theme parameters in PyVista can be accessed and displayed with:
 
