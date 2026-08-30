@@ -11,7 +11,7 @@ to use them with related plotting methods.
 
 """
 
-# sphinx_gallery_thumbnail_number = 7
+# sphinx_gallery_thumbnail_number = 8
 
 import pyvista as pv
 from pyvista import examples
@@ -25,16 +25,30 @@ mesh = examples.download_bunny_coarse()
 
 pl = pv.Plotter()
 pl.add_mesh(mesh)
-axes = pv.CubeAxesActor(camera=pl.camera)
-axes.bounds = mesh.bounds
+axes = pv.CubeAxesActor(camera=pl.camera, bounds=mesh.bounds)
 pl.add_actor(axes)
-pl.background_color = pv.Color('paraview')
 pl.show()
 
 # %%
-# Adding the axes like this can be a bit cumbersome since the camera, bounds, and color
-# must be set manually. Instead, use :meth:`~pyvista.Plotter.show_bounds` to add a
-# :class:`~pyvista.CubeAxesActor` with pre-configured parameters.
+# The colors, fonts, grid lines and axis placement can all be set on the actor. Here,
+# grid lines are drawn on the back faces and the axes are labeled on the outer edges.
+
+pl = pv.Plotter()
+pl.add_mesh(mesh)
+axes = pv.CubeAxesActor(
+    camera=pl.camera,
+    bounds=mesh.bounds,
+    color='blue',
+    grid='back',
+    location='outer',
+)
+pl.add_actor(axes)
+pl.show()
+
+# %%
+# Adding the axes like this still requires the camera to be set manually. Instead, use
+# :meth:`~pyvista.Plotter.show_bounds` to add a :class:`~pyvista.CubeAxesActor` sized to
+# the meshes already in the scene.
 
 pl = pv.Plotter()
 pl.add_mesh(mesh)
