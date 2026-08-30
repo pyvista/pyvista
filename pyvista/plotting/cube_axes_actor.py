@@ -388,7 +388,7 @@ class CubeAxesActor(
             self.SetGridLineLocation(self.VTK_GRID_LINES_CLOSEST)
         elif grid in ('both', 'all'):
             self.SetGridLineLocation(self.VTK_GRID_LINES_ALL)
-        elif grid in ('back', True):
+        elif grid in ('back', 'backface'):
             self.SetGridLineLocation(self.VTK_GRID_LINES_FURTHEST)
         else:
             msg = f'`grid` must be either "front", "back, or, "all", not {grid}'
@@ -454,11 +454,11 @@ class CubeAxesActor(
             msg = 'location must be a string'
             raise TypeError(msg)
         location = location.lower()
-        if location in ('all'):
+        if location == 'all':
             self.SetFlyModeToStaticEdges()
-        elif location in ('origin'):
+        elif location == 'origin':
             self.SetFlyModeToStaticTriad()
-        elif location in ('outer'):
+        elif location == 'outer':
             self.SetFlyModeToOuterEdges()
         elif location in ('default', 'closest', 'front'):
             self.SetFlyModeToClosestTriad()
