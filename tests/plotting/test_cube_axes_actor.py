@@ -123,3 +123,158 @@ def test_label_offset(cube_axes_actor):
     assert isinstance(cube_axes_actor.label_offset, float)
     cube_axes_actor.label_offset = 0.01
     assert cube_axes_actor.label_offset == 0.01
+
+
+@pytest.fixture
+def camera():
+    return pv.Plotter().camera
+
+
+def test_color_default(camera):
+    actor = pv.CubeAxesActor(camera)
+    expected = pv.Color(pv.global_theme.font.color).float_rgb
+    assert actor.GetXAxesLinesProperty().GetColor() == expected
+    assert actor.GetYAxesLinesProperty().GetColor() == expected
+    assert actor.GetZAxesLinesProperty().GetColor() == expected
+    assert actor.GetTitleTextProperty(0).GetColor() == expected
+    assert actor.GetLabelTextProperty(0).GetColor() == expected
+
+
+def test_color(camera):
+    actor = pv.CubeAxesActor(camera, color='red', grid=True)
+    expected = pv.Color('red').float_rgb
+    assert actor.GetXAxesLinesProperty().GetColor() == expected
+    assert actor.GetXAxesGridlinesProperty().GetColor() == expected
+    assert actor.GetTitleTextProperty(2).GetColor() == expected
+
+
+@pytest.mark.parametrize(
+    ('grid', 'expected'),
+    [
+        (True, pv.CubeAxesActor.VTK_GRID_LINES_FURTHEST),
+        ('back', pv.CubeAxesActor.VTK_GRID_LINES_FURTHEST),
+        ('backface', pv.CubeAxesActor.VTK_GRID_LINES_FURTHEST),
+        ('front', pv.CubeAxesActor.VTK_GRID_LINES_CLOSEST),
+        ('frontface', pv.CubeAxesActor.VTK_GRID_LINES_CLOSEST),
+        ('all', pv.CubeAxesActor.VTK_GRID_LINES_ALL),
+        ('both', pv.CubeAxesActor.VTK_GRID_LINES_ALL),
+    ],
+)
+def test_grid(camera, grid, expected):
+    actor = pv.CubeAxesActor(camera, grid=grid)
+    assert actor.GetGridLineLocation() == expected
+    assert actor.GetDrawXGridlines()
+    assert actor.GetDrawYGridlines()
+    assert actor.GetDrawZGridlines()
+
+
+def test_grid_follows_axis_visibility(camera):
+    actor = pv.CubeAxesActor(camera, grid=True, y_axis_visibility=False)
+    assert actor.GetDrawXGridlines()
+    assert not actor.GetDrawYGridlines()
+
+
+def test_grid_none(camera):
+    actor = pv.CubeAxesActor(camera)
+    assert not actor.GetDrawXGridlines()
+
+
+def test_grid_raises(camera):
+    with pytest.raises(TypeError, match='`grid` must be a str'):
+        pv.CubeAxesActor(camera, grid=1.0)
+    with pytest.raises(ValueError, match='`grid` must be either'):
+        pv.CubeAxesActor(camera, grid='sideways')
+
+
+@pytest.mark.parametrize(
+    ('location', 'expected'),
+    [
+        ('all', pv.CubeAxesActor.VTK_FLY_STATIC_EDGES),
+        ('origin', pv.CubeAxesActor.VTK_FLY_STATIC_TRIAD),
+        ('outer', pv.CubeAxesActor.VTK_FLY_OUTER_EDGES),
+        ('default', pv.CubeAxesActor.VTK_FLY_CLOSEST_TRIAD),
+        ('closest', pv.CubeAxesActor.VTK_FLY_CLOSEST_TRIAD),
+        ('front', pv.CubeAxesActor.VTK_FLY_CLOSEST_TRIAD),
+        ('furthest', pv.CubeAxesActor.VTK_FLY_FURTHEST_TRIAD),
+        ('back', pv.CubeAxesActor.VTK_FLY_FURTHEST_TRIAD),
+    ],
+)
+def test_location(camera, location, expected):
+    assert pv.CubeAxesActor(camera, location=location).GetFlyMode() == expected
+
+
+def test_location_default(camera):
+    assert pv.CubeAxesActor(camera).GetFlyMode() == pv.CubeAxesActor.VTK_FLY_CLOSEST_TRIAD
+
+
+def test_location_raises(camera):
+    with pytest.raises(TypeError, match='location must be a string'):
+        pv.CubeAxesActor(camera, location=1)
+    with pytest.raises(ValueError, match='Value of location'):
+        pv.CubeAxesActor(camera, location='sideways')
+
+
+def test_font(camera):
+    actor = pv.CubeAxesActor(camera, font_size=42, font_family='times', bold=False)
+    prop = actor.GetTitleTextProperty(0)
+    assert prop.GetFontSize() == 42
+    assert prop.GetFontFamilyAsString() == 'Times'
+    assert not prop.GetBold()
+
+
+def test_font_defaults(camera):
+    actor = pv.CubeAxesActor(camera)
+    prop = actor.GetLabelTextProperty(1)
+    assert prop.GetFontSize() == pv.global_theme.font.size
+    assert prop.GetBold()
+
+
+def test_use_3d_text_default(camera):
+    expected = pv.vtk_version_info < (9, 6, 0)
+    assert bool(pv.CubeAxesActor(camera).GetUseTextActor3D()) is expected
+
+
+@pytest.mark.parametrize('use_3d_text', [True, False])
+def test_use_3d_text(camera, use_3d_text):
+    actor = pv.CubeAxesActor(camera, use_3d_text=use_3d_text)
+    assert bool(actor.GetUseTextActor3D()) is use_3d_text
+
+
+def test_use_2d_mode_init(camera):
+    assert pv.CubeAxesActor(camera, use_2d_mode=True).use_2d_mode is True
+    assert pv.CubeAxesActor(camera).use_2d_mode is False
+
+
+def test_bounds_init(camera):
+    bounds = (-1, 2, -3, 4, -5, 6)
+    actor = pv.CubeAxesActor(camera, bounds=bounds)
+    assert actor.bounds == bounds
+    assert actor.x_labels[0] == '-1.0'
+    assert actor.x_labels[-1] == '2.0'
+
+
+def test_padding(camera):
+    actor = pv.CubeAxesActor(camera, bounds=(0, 10, 0, 10, 0, 10), padding=0.1)
+    assert actor.bounds == (-1, 11, -1, 11, -1, 11)
+
+
+def test_padding_raises(camera):
+    with pytest.raises(ValueError, match='padding'):
+        pv.CubeAxesActor(camera, bounds=(0, 1, 0, 1, 0, 1), padding=1.5)
+
+
+def test_axes_ranges_init(camera):
+    actor = pv.CubeAxesActor(camera, bounds=(0, 1, 0, 1, 0, 1), axes_ranges=(0, 10, 0, 20, 0, 30))
+    assert actor.x_axis_range == (0, 10)
+    assert actor.y_axis_range == (0, 20)
+    assert actor.z_axis_range == (0, 30)
+    assert actor.z_labels[-1] == '30.0'
+
+
+def test_axes_ranges_init_raises(camera):
+    with pytest.raises(TypeError, match='numeric sequence'):
+        pv.CubeAxesActor(camera, axes_ranges=1)
+    with pytest.raises(TypeError, match='All of the elements'):
+        pv.CubeAxesActor(camera, axes_ranges=[0, 1, 'a', 'b', 2, 3])
+    with pytest.raises(ValueError, match=r'\(x_min, x_max, y_min, y_max, z_min, z_max\)'):
+        pv.CubeAxesActor(camera, axes_ranges=[0, 1, 2, 3, 4])
