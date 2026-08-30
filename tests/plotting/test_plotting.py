@@ -320,6 +320,9 @@ def test_set_environment_texture_resample_uses_linear_anti_aliasing(mocker, no_i
 
 def test_set_environment_texture_resample_shrinks_irradiance(no_images_to_verify):  # noqa: ARG001
     """Resampling should also shrink the diffuse irradiance map VTK convolves."""
+    # Pinned, so the assertions below test the floor's value and not just its name
+    assert _MIN_IRRADIANCE_SIZE == 32
+
     texture = examples.download_cubemap_park()
 
     # The testing theme resamples by default, so turn it off to see the full-size map
@@ -345,6 +348,17 @@ def test_set_environment_texture_resample_shrinks_irradiance(no_images_to_verify
     assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == _MIN_IRRADIANCE_SIZE
 
     pl.set_environment_texture(texture, resample=2.0)
+    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == default_size
+
+    # Rates that do not divide the default size exactly are rounded
+    pl.set_environment_texture(texture, resample=0.3)
+    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == 77
+
+    pl.set_environment_texture(texture, resample=0.13)
+    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == 33
+
+    # ``1.0`` is a sampling rate, not ``True``
+    pl.set_environment_texture(texture, resample=1.0)
     assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == default_size
 
     # Rates below the floor all land on it
