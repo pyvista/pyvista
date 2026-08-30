@@ -1255,7 +1255,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
     def _raise_field_data_no_scalars_vectors_normals(self: Self) -> None:
         """Raise a ``TypeError`` if FieldData."""
         if self.association == FieldAssociation.NONE:
-            msg = 'FieldData does not have active scalars or vectors or normals.'
+            msg = 'FieldData does not have active scalars or vectors or normals or tensors.'
             raise TypeError(msg)
 
     @property
@@ -1420,6 +1420,58 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
             msg = f'{name} needs 3 components, has ({n_comp})'
             raise ValueError(msg)
         self.SetActiveVectors(name)
+
+    @property
+    def active_tensors_name(self: Self) -> str | None:
+        """Return name of the active tensors.
+
+        .. versionadded:: 0.49
+
+        Returns
+        -------
+        Optional[str]
+            Name of the active tensors.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> import numpy as np
+        >>> mesh = pv.Sphere()
+        >>> mesh.point_data['my-tensors'] = np.zeros((mesh.n_points, 9))
+        >>> mesh.point_data.active_tensors_name = 'my-tensors'
+        >>> mesh.point_data.active_tensors_name
+        'my-tensors'
+
+        """
+        if self.GetTensors() is not None:
+            return str(self.GetTensors().GetName())
+        return None
+
+    @active_tensors_name.setter
+    def active_tensors_name(self: Self, name: str | None) -> None:
+        """Set name of the active tensors.
+
+        Parameters
+        ----------
+        name : str
+            Name of the active tensors.
+
+        """
+        # permit setting no active
+        if name is None:
+            self.SetActiveTensors(None)
+            return
+        self._raise_field_data_no_scalars_vectors_normals()
+        if name not in self:
+            msg = f'DataSetAttribute does not contain "{name}"'
+            raise KeyError(msg)
+        # verify that the array has the correct number of components: 6 for a
+        # symmetric tensor, 9 for a full tensor
+        n_comp = self.GetArray(name).GetNumberOfComponents()
+        if n_comp not in (6, 9):
+            msg = f'{name} needs 6 or 9 components, has ({n_comp})'
+            raise ValueError(msg)
+        self.SetActiveTensors(name)
 
     def __eq__(self: Self, other: object) -> bool:
         """Test dict-like equivalency."""

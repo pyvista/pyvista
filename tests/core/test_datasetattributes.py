@@ -668,6 +668,33 @@ def test_active_vectors_name_setter():
         mesh.point_data.active_vectors_name = 'my-scalars'
 
 
+def test_active_tensors_name_setter():
+    mesh = pv.Plane(i_resolution=1, j_resolution=1)
+    mesh.point_data.set_array(range(4), 'my-scalars')
+    mesh.point_data['tensors0'] = np.zeros((4, 9))
+    mesh.point_data['tensors1'] = np.zeros((4, 9))
+
+    assert mesh.point_data.active_tensors_name is None
+    mesh.point_data.active_tensors_name = 'tensors1'
+    assert mesh.point_data.active_tensors_name == 'tensors1'
+    mesh.point_data.active_tensors_name = 'tensors0'
+    assert mesh.point_data.active_tensors_name == 'tensors0'
+
+    mesh.point_data.active_tensors_name = None
+    assert mesh.point_data.active_tensors_name is None
+
+    with pytest.raises(KeyError, match='does not contain'):
+        mesh.point_data.active_tensors_name = 'not a valid key'
+
+    with pytest.raises(ValueError, match='needs 6 or 9 components'):
+        mesh.point_data.active_tensors_name = 'my-scalars'
+
+    # a symmetric tensor (6 components) is also valid
+    mesh.point_data['tensors-symmetric'] = np.zeros((4, 6))
+    mesh.point_data.active_tensors_name = 'tensors-symmetric'
+    assert mesh.point_data.active_tensors_name == 'tensors-symmetric'
+
+
 def test_active_vectors_eq():
     mesh = pv.Plane(i_resolution=1, j_resolution=1)
     vectors0 = np.random.default_rng().random((4, 3))
