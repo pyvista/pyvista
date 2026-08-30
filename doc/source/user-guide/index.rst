@@ -65,6 +65,7 @@ User Guide Contents
    data_model
    vtk_to_pyvista
    themes
+   configuration
    jupyter/index
    optional_features
 
