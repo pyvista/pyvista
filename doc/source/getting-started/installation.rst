@@ -194,7 +194,7 @@ That installs the fork alongside stock ``vtk``; because it imports under its own
 ``cvista`` name, it does not clobber an existing install. When it is present
 PyVista selects it automatically.
 
-Set ``PYVISTA_VTK_BACKEND`` to choose explicitly. It must be set **before**
+Set :envvar:`PYVISTA_VTK_BACKEND` to choose explicitly. It must be set **before**
 PyVista is imported, since the backend is resolved at import time::
 
     PYVISTA_VTK_BACKEND=vtkmodules   # force stock VTK, even if cvista is installed
@@ -339,9 +339,10 @@ and set up Python:
 
 With ``libegl1`` installed, VTK 9.5+ renders off-screen via EGL out of the
 box, so no ``Xvfb`` or ``DISPLAY`` configuration is required. Set
-``PYVISTA_OFF_SCREEN=true`` in your shell (or pass ``off_screen=True``
-when constructing a ``Plotter``) and ``pv.Plotter(off_screen=True)`` will
-just work.
+:envvar:`PYVISTA_OFF_SCREEN` to ``true`` in your shell (or pass
+``off_screen=True`` when constructing a ``Plotter``) and
+``pv.Plotter(off_screen=True)`` will just work. See :ref:`configuration`
+for all environment variables.
 
 Reconnect to the server with port-forwarding, and start Jupyter:
 

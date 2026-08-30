@@ -84,6 +84,8 @@ POOCH_LOGGER.setLevel(logging.CRITICAL)
 CACHE_VERSION = 3
 
 _USERDATA_PATH_VARNAME = 'PYVISTA_USERDATA_PATH'
+_DATA_VARNAME = 'PYVISTA_DATA'
+# deprecated 0.49.0, convert to error in 0.52.0, remove 0.53.0
 _VTK_DATA_VARNAME = 'PYVISTA_VTK_DATA'
 
 _DEFAULT_USER_DATA_PATH = str(pooch.os_cache(f'pyvista_{CACHE_VERSION}'))  # type: ignore[attr-defined]
@@ -95,15 +97,31 @@ def _warn_invalid_dir_not_used(path: Path, env_var: str):
     warn_external(msg)
 
 
+def _get_data_varname() -> str | None:
+    """Return the name of the set data-source variable, preferring the current name."""
+    if _DATA_VARNAME in os.environ:
+        return _DATA_VARNAME
+    if _VTK_DATA_VARNAME in os.environ:
+        from pyvista.core.errors import PyVistaDeprecationWarning  # noqa: PLC0415
+
+        msg = (
+            f"The '{_VTK_DATA_VARNAME}' environment variable is deprecated; "
+            f"use '{_DATA_VARNAME}' instead."
+        )
+        warn_external(msg, PyVistaDeprecationWarning)
+        return _VTK_DATA_VARNAME
+    return None
+
+
 def _get_vtk_data_source() -> tuple[str, bool]:
     # If available, a local pyvista/data instance will be used for examples
     # Set default output
     source = _DEFAULT_VTK_DATA_SOURCE
     file_cache = False
-    if _VTK_DATA_VARNAME in os.environ:
-        path = Path(os.environ[_VTK_DATA_VARNAME])
+    if (varname := _get_data_varname()) is not None:
+        path = Path(os.environ[varname])
         if not path.is_dir():
-            _warn_invalid_dir_not_used(path, _VTK_DATA_VARNAME)
+            _warn_invalid_dir_not_used(path, varname)
         else:
             if path.name != 'Data':
                 # append 'Data' if user does not provide it
@@ -238,7 +256,7 @@ def file_from_files(target_path: str, fnames: list[str]) -> str:
 def _file_copier(input_file, output_file, *_, **__):  # noqa: ANN001
     """Copy a file from a local directory to the output path."""
     if not Path(input_file).is_file():
-        msg = f"'{input_file}' not found within PYVISTA_VTK_DATA '{SOURCE}'"
+        msg = f"'{input_file}' not found within {_DATA_VARNAME} '{SOURCE}'"
         raise FileNotFoundError(msg)
     shutil.copy(input_file, output_file)
 

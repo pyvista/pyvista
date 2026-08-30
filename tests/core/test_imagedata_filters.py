@@ -1300,6 +1300,11 @@ def test_resample_raises(uniform):
     with pytest.raises(ValueError, match=re.escape(match)):
         uniform.resample(reference_image=uniform, extend_border=True)
 
+    match = 'sample_rate must have finite values.'
+    for rate in [np.inf, np.nan]:
+        with pytest.raises(ValueError, match=re.escape(match)):
+            uniform.resample(sample_rate=rate)
+
 
 def test_select_values(uniform):
     selected = uniform.select_values(ranges=uniform.get_data_range())

@@ -15,7 +15,7 @@ env:
   SHELLOPTS: "errexit:pipefail"
   TOX_COLORED: "yes"
   CACHE_FOLDER_NAME: pyvista-data
-  PYVISTA_VTK_DATA: ${{ github.workspace }}/pyvista-data
+  PYVISTA_DATA: ${{ github.workspace }}/pyvista-data
 
 jobs:
   check-should-run:
