@@ -94,7 +94,7 @@ the dtype ends up wider than the values behind it:
 
 .. seealso::
 
-   :ref:`points_dtype_support`
+   :ref:`Double-precision support <points_dtype_support>`
       Which filters deliver double-precision points, marked per filter.
 
 .. _config_flags:
