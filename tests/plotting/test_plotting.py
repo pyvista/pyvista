@@ -1153,9 +1153,7 @@ def test_plot_add_scalar_bar_cmap(verify_image_cache):
     cmap = 'bwr'
     pl.add_scalar_bar(cmap=cmap)
 
-    # pl.scalar_bar is a vtkScalarBarActor for vtk < 9.4.0
-    if pv.vtk_version_info >= (9, 4, 0):
-        assert pl.scalar_bar.lookup_table.cmap.name == cmap
+    assert pl.scalar_bar.GetLookupTable().cmap.name == cmap
 
     pl.show()
 
@@ -1168,9 +1166,7 @@ def test_plot_add_scalar_bar_lookup_table(verify_image_cache):
     pl = pv.Plotter()
     pl.add_scalar_bar(lookup_table=ltable)
 
-    # pl.scalar_bar is a vtkScalarBarActor for vtk < 9.4.0
-    if pv.vtk_version_info >= (9, 4, 0):
-        assert pl.scalar_bar.lookup_table.cmap.name == ltable.cmap.name
+    assert pl.scalar_bar.GetLookupTable().cmap.name == ltable.cmap.name
 
     pl.show()
 
