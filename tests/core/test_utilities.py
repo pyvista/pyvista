@@ -590,7 +590,8 @@ def test_report_downloads():
     report = pv.Report(downloads=True)
     repr_ = repr(report)
     assert f'User Data Path : {pv.examples.downloads.USER_DATA_PATH}' in repr_
-    assert f'VTK Data Source : {pv.examples.downloads.SOURCE}' in repr_
+    assert f'Data Source : {pv.examples.downloads.SOURCE}' in repr_
+    assert 'VTK Data Source' not in repr_
     assert f'File Cache : {pv.examples.downloads._FILE_CACHE}' in repr_
 
 

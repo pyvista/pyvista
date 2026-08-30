@@ -187,6 +187,9 @@ class Report(scooby.Report):
         This class is also available via command-line interface. See
         :ref:`pyvista report <cli_report>` for details.
 
+    See :ref:`configuration` for every setting PyVista reads from the
+    environment.
+
     Parameters
     ----------
     additional : sequence[types.ModuleType], sequence[str]
@@ -210,13 +213,13 @@ class Report(scooby.Report):
     downloads : bool, default: False
         Gather information about downloads. If ``True``, includes:
         - The local user data path (where downloads are saved)
-        - The VTK Data source (where files are downloaded from)
-        - Whether local file caching is enabled for the VTK Data source
+        - The data source (where files are downloaded from)
+        - Whether local file caching is enabled for the data source
 
         These are the resolved values in use, derived from the
-        ``PYVISTA_USERDATA_PATH`` and ``PYVISTA_VTK_DATA`` environment
-        variables. Pass ``env_vars=True`` to also list the raw
-        variables as set.
+        :envvar:`PYVISTA_USERDATA_PATH` and :envvar:`PYVISTA_DATA`
+        environment variables. Pass ``env_vars=True`` to also list the
+        raw variables as set.
 
         .. versionadded:: 0.47
 
@@ -347,7 +350,7 @@ class Report(scooby.Report):
             extra_meta.extend(
                 [
                     ('User Data Path', user_data_path),
-                    ('VTK Data Source', vtk_data_source),
+                    ('Data Source', vtk_data_source),
                     ('File Cache', file_cache),
                 ]
             )
