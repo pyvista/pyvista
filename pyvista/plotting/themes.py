@@ -1658,6 +1658,14 @@ class _PlotCellConfig(_ConfigBase):
 class Theme(_ConfigBase):
     """Base VTK theme.
 
+    The active theme is exposed as ``pyvista.global_theme``. See
+    :ref:`configuration` for an overview of all global settings.
+
+    See Also
+    --------
+    pyvista.core.config.Config
+        Non-plotting counterpart, exposed as ``pyvista.global_config``.
+
     Notes
     -----
     This section is aimed at theme authors and plugin package
@@ -3388,6 +3396,12 @@ class Theme(_ConfigBase):
         some environments, for example, headless setups or if GPU support is limited.
 
         .. versionadded:: 0.45
+
+        .. versionchanged:: 0.49
+
+            For cube map textures, the diffuse irradiance map used for
+            image-based lighting is down-sampled at the same rate. See
+            :meth:`~pyvista.Plotter.set_environment_texture` for details.
 
         Examples
         --------
