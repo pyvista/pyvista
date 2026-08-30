@@ -20,9 +20,11 @@ import numpy as np
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters import _apply_points_dtype
 from pyvista.core.filters import _requested_points_precision
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
@@ -46,6 +48,31 @@ if TYPE_CHECKING:
 DEFAULT_PRECISION = _vtk.vtkAlgorithm.DEFAULT_PRECISION
 SINGLE_PRECISION = _vtk.vtkAlgorithm.SINGLE_PRECISION
 DOUBLE_PRECISION = _vtk.vtkAlgorithm.DOUBLE_PRECISION
+
+
+def _warn_point_dtype_deprecated() -> None:
+    """Warn that the ``point_dtype`` spelling has been renamed."""
+    # Deprecated v0.49, convert to error in v0.52, remove v0.53
+    if pv.version_info >= (0, 52):  # pragma: no cover
+        msg = 'Convert the `point_dtype` deprecation into an error.'
+        raise RuntimeError(msg)
+    msg = (
+        '`point_dtype` is deprecated. Use `points_dtype` instead, which matches\n'
+        '`pyvista.global_config.points_dtype` -- set that to control the dtype for a\n'
+        'whole session rather than one source at a time.'
+    )
+    warn_external(msg, PyVistaDeprecationWarning)
+
+
+def _resolve_points_dtype_kwarg(point_dtype: str | None, points_dtype: str | None) -> str | None:
+    """Fold the deprecated ``point_dtype`` spelling into ``points_dtype``."""
+    if point_dtype is None:
+        return points_dtype
+    if points_dtype is not None:
+        msg = 'Set `points_dtype` or `point_dtype`, not both.'
+        raise TypeError(msg)
+    _warn_point_dtype_deprecated()
+    return point_dtype
 
 
 class _Source(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkAlgorithm):
@@ -995,17 +1022,21 @@ class CubeSource(_Source, _vtk.vtkCubeSource):
         Specify the bounding box of the cube. If given, all other size
         arguments are ignored. ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
-    point_dtype : str, optional
+    points_dtype : str, optional
         Set the desired output point types. It must be either 'float32' or 'float64'.
         Ignored unless :attr:`pyvista.core.config.Config.points_dtype` is ``None``, its
         default, or ``'preserve'``.
 
+        .. versionadded:: 0.49
+
+    point_dtype : str, optional
+        Set the desired output point types.
+
         .. versionadded:: 0.44.0
 
-        .. versionchanged:: 0.49
-            Defaults to ``None``, deferring to
-            :attr:`pyvista.core.config.Config.points_dtype`. Passing ``'float32'``
-            explicitly keeps the previous behavior.
+        .. deprecated:: 0.49
+            Renamed to ``points_dtype``, matching
+            :attr:`pyvista.core.config.Config.points_dtype`.
 
     Examples
     --------
@@ -1026,6 +1057,7 @@ class CubeSource(_Source, _vtk.vtkCubeSource):
         z_length: float = 1.0,
         bounds: VectorLike[float] | None = None,
         point_dtype: str | None = None,
+        points_dtype: str | None = None,
     ) -> None:
         """Initialize the cube source class."""
         super().__init__()
@@ -1036,8 +1068,8 @@ class CubeSource(_Source, _vtk.vtkCubeSource):
             self.x_length = x_length
             self.y_length = y_length
             self.z_length = z_length
-        if point_dtype is not None:
-            self.point_dtype = point_dtype
+        if (dtype := _resolve_points_dtype_kwarg(point_dtype, points_dtype)) is not None:
+            self.points_dtype = dtype
 
     @property
     def bounds(self: CubeSource) -> BoundsTuple:  # numpydoc ignore=RT01
@@ -1165,14 +1197,19 @@ class CubeSource(_Source, _vtk.vtkCubeSource):
         return self._update_and_wrap_output()
 
     @property
-    def point_dtype(self: CubeSource) -> str:
-        """Get the desired output point types.
+    def points_dtype(self: CubeSource) -> str:
+        """Return or set the dtype of the points this source generates.
+
+        It must be either ``'float32'`` or ``'float64'``. Setting
+        :attr:`pyvista.core.config.Config.points_dtype` to anything but ``None`` or
+        ``'preserve'`` overrides it.
+
+        .. versionadded:: 0.49
 
         Returns
         -------
         str
-            Desired output point types.
-            It must be either 'float32' or 'float64'.
+            Dtype of the generated points, ``'float32'`` or ``'float64'``.
 
         """
         precision = self.GetOutputPointsPrecision()
@@ -1183,30 +1220,33 @@ class CubeSource(_Source, _vtk.vtkCubeSource):
             DOUBLE_PRECISION: 'float64',
         }[precision]  # type: ignore[index]
 
-    @point_dtype.setter
-    def point_dtype(self: CubeSource, point_dtype: str) -> None:
-        """Set the desired output point types.
-
-        Parameters
-        ----------
-        point_dtype : str, default: 'float32'
-            Set the desired output point types.
-            It must be either 'float32' or 'float64'.
-
-        Returns
-        -------
-        point_dtype: str
-            Desired output point types.
-
-        """
-        if point_dtype not in ['float32', 'float64']:
-            msg = "Point dtype must be either 'float32' or 'float64'"
+    @points_dtype.setter
+    def points_dtype(self: CubeSource, points_dtype: str) -> None:
+        if points_dtype not in ['float32', 'float64']:
+            msg = "Points dtype must be either 'float32' or 'float64'"
             raise ValueError(msg)
         precision = {
             'float32': SINGLE_PRECISION,
             'float64': DOUBLE_PRECISION,
-        }[point_dtype]
+        }[points_dtype]
         self.SetOutputPointsPrecision(precision)
+
+    @property
+    def point_dtype(self: CubeSource) -> str:  # numpydoc ignore=RT01
+        """Return or set the dtype of the points this source generates.
+
+        .. deprecated:: 0.49
+            Renamed to :attr:`points_dtype`, matching
+            :attr:`pyvista.core.config.Config.points_dtype`.
+
+        """
+        _warn_point_dtype_deprecated()
+        return self.points_dtype
+
+    @point_dtype.setter
+    def point_dtype(self: CubeSource, point_dtype: str) -> None:
+        _warn_point_dtype_deprecated()
+        self.points_dtype = point_dtype
 
 
 class DiscSource(_Source, _vtk.vtkDiskSource):
@@ -3940,15 +3980,19 @@ class CubeFacesSource(CubeSource):
     names : sequence[str], default: ('+X','-X','+Y','-Y','+Z','-Z')
         Name of each face in the generated :class:`~pyvista.MultiBlock`.
 
-    point_dtype : str, optional
+    points_dtype : str, optional
         Set the desired output point types. It must be either 'float32' or 'float64'.
         Ignored unless :attr:`pyvista.core.config.Config.points_dtype` is ``None``, its
         default, or ``'preserve'``.
 
-        .. versionchanged:: 0.49
-            Defaults to ``None``, deferring to
-            :attr:`pyvista.core.config.Config.points_dtype`. Passing ``'float32'``
-            explicitly keeps the previous behavior.
+        .. versionadded:: 0.49
+
+    point_dtype : str, optional
+        Set the desired output point types.
+
+        .. deprecated:: 0.49
+            Renamed to ``points_dtype``, matching
+            :attr:`pyvista.core.config.Config.points_dtype`.
 
     Examples
     --------
@@ -4041,6 +4085,7 @@ class CubeFacesSource(CubeSource):
         explode_factor: float | None = None,
         names: Sequence[str] = ('+X', '-X', '+Y', '-Y', '+Z', '-Z'),
         point_dtype: str | None = None,
+        points_dtype: str | None = None,
     ) -> None:
         # Init CubeSource
         super().__init__(
@@ -4049,7 +4094,7 @@ class CubeFacesSource(CubeSource):
             y_length=y_length,
             z_length=z_length,
             bounds=bounds,
-            point_dtype=point_dtype,
+            points_dtype=_resolve_points_dtype_kwarg(point_dtype, points_dtype),
         )
         # Init output
         self._output = pv.MultiBlock([pv.PolyData() for _ in range(6)])

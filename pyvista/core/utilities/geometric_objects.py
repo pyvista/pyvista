@@ -1259,6 +1259,7 @@ def Cube(  # noqa: PLR0917
     bounds: VectorLike[float] | None = None,
     clean: bool = True,  # noqa: FBT001, FBT002
     point_dtype: str | None = None,
+    points_dtype: str | None = None,
 ) -> PolyData:
     """Create a cube.
 
@@ -1301,17 +1302,21 @@ def Cube(  # noqa: PLR0917
 
         .. versionadded:: 0.33.0
 
-    point_dtype : str, optional
+    points_dtype : str, optional
         Set the desired output point types. It must be either 'float32' or 'float64'.
         Ignored unless :attr:`pyvista.core.config.Config.points_dtype` is ``None``, its
         default, or ``'preserve'``.
 
+        .. versionadded:: 0.49
+
+    point_dtype : str, optional
+        Set the desired output point types.
+
         .. versionadded:: 0.44.0
 
-        .. versionchanged:: 0.49
-            Defaults to ``None``, deferring to
-            :attr:`pyvista.core.config.Config.points_dtype`. Passing ``'float32'``
-            explicitly keeps the previous behavior.
+        .. deprecated:: 0.49
+            Renamed to ``points_dtype``, matching
+            :attr:`pyvista.core.config.Config.points_dtype`.
 
     Returns
     -------
@@ -1334,6 +1339,7 @@ def Cube(  # noqa: PLR0917
         z_length=z_length,
         bounds=bounds,
         point_dtype=point_dtype,
+        points_dtype=points_dtype,
     )
     cube = algo.output
 

@@ -594,14 +594,43 @@ def test_cube():
     assert np.allclose(np.abs(normals), expected)
 
 
-@pytest.mark.parametrize(('point_dtype'), (['float32', 'float64', 'invalid']))
-def test_cube_point_dtype(point_dtype):
-    if point_dtype in ['float32', 'float64']:
-        cube = pv.Cube(point_dtype=point_dtype)
-        assert cube.points.dtype == point_dtype
+@pytest.mark.parametrize(('points_dtype'), (['float32', 'float64', 'invalid']))
+def test_cube_points_dtype(points_dtype):
+    if points_dtype in ['float32', 'float64']:
+        cube = pv.Cube(points_dtype=points_dtype)
+        assert cube.points.dtype == points_dtype
     else:
-        with pytest.raises(ValueError, match="Point dtype must be either 'float32' or 'float64'"):
-            _ = pv.Cube(point_dtype=point_dtype)
+        with pytest.raises(ValueError, match="Points dtype must be either 'float32' or 'float64'"):
+            _ = pv.Cube(points_dtype=points_dtype)
+
+
+@pytest.mark.parametrize('source', [pv.Cube, pv.CubeSource, pv.CubeFacesSource])
+def test_point_dtype_deprecated(source):
+    match = r'`point_dtype` is deprecated\. Use `points_dtype` instead'
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        source(point_dtype='float64')
+
+    # the message points at the global as well as the new name
+    with pytest.warns(pv.PyVistaDeprecationWarning, match='pyvista.global_config.points_dtype'):
+        source(point_dtype='float64')
+
+    with pytest.raises(TypeError, match='not both'):
+        source(point_dtype='float64', points_dtype='float64')
+
+
+def test_point_dtype_deprecated_property():
+    src = pv.CubeSource(points_dtype='float64')
+    match = r'`point_dtype` is deprecated'
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        assert src.point_dtype == 'float64'
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        src.point_dtype = 'float32'
+    assert src.points_dtype == 'float32'
+
+
+def test_point_dtype_deprecation_expires():
+    # Deprecated v0.49, convert to error in v0.52, remove v0.53
+    assert pv.version_info < (0, 52), 'Convert the `point_dtype` deprecation into an error.'
 
 
 def test_cone():

@@ -501,14 +501,14 @@ def test_points_dtype_preserve_casts_both_directions(monkeypatch):
 def test_points_dtype_restores_an_explicitly_configured_source(monkeypatch):
     # A temporary global must not outlive itself on a source the caller configured
     monkeypatch.setattr(pv.global_config, 'points_dtype', 'preserve')
-    source = pv.CubeSource(point_dtype='float64')
+    source = pv.CubeSource(points_dtype='float64')
     assert source.output.points.dtype == np.float64
 
     pv.global_config.points_dtype = 'float32'
     assert source.output.points.dtype == np.float32
 
     pv.global_config.points_dtype = 'preserve'
-    assert source.point_dtype == 'float64'
+    assert source.points_dtype == 'float64'
     assert source.output.points.dtype == np.float64
 
 
