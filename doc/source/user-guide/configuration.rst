@@ -168,14 +168,15 @@ Rendering
 
 .. note::
 
-   VTK's own ``VTK_DEFAULT_OPENGL_WINDOW`` environment variable selects
-   the render window class VTK creates, such as an EGL window for
-   headless rendering; see the `VTK runtime settings
-   <https://docs.vtk.org/en/latest/advanced/runtime_settings.html#opengl>`_.
-   ``PYVISTA_VIRTUAL_DISPLAY``, mentioned in some older issues, is not
-   a PyVista setting, and
-   :attr:`~pyvista.plotting.themes.Theme.interactive` controls whether
-   shown plots accept user interaction, not off-screen rendering.
+   * VTK's own ``VTK_DEFAULT_OPENGL_WINDOW`` environment variable
+     selects the render window class VTK creates, such as an EGL
+     window for headless rendering; see the `VTK runtime settings
+     <https://docs.vtk.org/en/latest/advanced/runtime_settings.html#opengl>`_.
+   * ``PYVISTA_VIRTUAL_DISPLAY``, mentioned in some older issues, is
+     not a PyVista setting.
+   * :attr:`~pyvista.plotting.themes.Theme.interactive` controls
+     whether shown plots accept user interaction, not off-screen
+     rendering.
 
 Theme and Jupyter
 ~~~~~~~~~~~~~~~~~
