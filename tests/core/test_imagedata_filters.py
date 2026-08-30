@@ -221,7 +221,7 @@ def test_contour_labels_boundary_style(
 ALL_LABEL_IDS = {0, 2, 5}
 
 
-@pytest.mark.parametrize('background_value', ALL_LABEL_IDS)
+@pytest.mark.parametrize('background_value', sorted(ALL_LABEL_IDS))
 def test_contour_labels_background_value(labeled_image, background_value):
     assert background_value in labeled_image.active_scalars
 

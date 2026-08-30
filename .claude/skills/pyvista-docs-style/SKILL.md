@@ -21,10 +21,18 @@ finishes by confirming the heading rule still rejects the fixture in
 `tests/doc/vale/headings_invalid.rst`. Do not spell the `vale` invocation out by hand --
 four copies of it had already drifted apart once.
 
-Vale never sees a `.py` file directly. It sees the `.rst` files the extraction script
-generates, with the same line numbers as the source (`doc/extract_rst_from_py_for_vale.py:31:1`)
--- read an alert's `.vale/examples/...` or `.vale/pyvista/...` path, swap it back to
-`examples/...` or `pyvista/...` with a `.py` extension, and that is the line to fix.
+Prose in a `.py` file is checked through the `.rst` the extraction script generates, not
+from the `.py` itself. The extracted file has the same line numbers as the source
+(`doc/extract_rst_from_py_for_vale.py:31:1`) -- read an alert's `.vale/examples/...` or
+`.vale/pyvista/...` path, swap it back to `examples/...` or `pyvista/...` with a `.py`
+extension, and that is the line to fix.
+
+Vale does still open `.py` files directly, for whatever `doc/.vale.ini`'s `[*.py]`
+section turns on -- today just `Google.Exclamation`. **An alert reported against a
+`pyvista/...py` path rather than a `.vale/...rst` one came from that scan**, which sees
+the raw file: numpydoc signature lines, `See Also` entries and doctest blocks all reach
+it as ordinary prose, with none of the handling described below. Enabling a prose rule
+there means signing up for that.
 
 **Trust a live Vale run over a mental model of what it checks.** This session got this
 wrong twice: once assuming a rule (`Google.Headings`'s exceptions list) was needed by
@@ -35,12 +43,13 @@ the real diff in alert count before deciding a rule change is safe.
 
 ## What the extractor does and does not see
 
-- `Parameters`' `name : type` signature line is blanked before Vale runs; its description
-  is checked like any other prose.
-- `Returns`, `Attributes`, `Raises`, `Yields`, `Warns`, `Methods`, `Other Parameters`,
-  and `Receives` are **not** blanked -- their content is checked as ordinary prose. If a
-  change here starts producing type-name/class-name false positives, that is a sign the
-  described value needs backticks, not that the section needs skipping again.
+- Every numpydoc section shaped `name : type` over an indented description has its
+  signature line blanked before Vale runs; the description is checked like any other
+  prose. That is `Parameters`, `Other Parameters`, `Attributes`, `Methods`, `Returns`,
+  `Yields`, `Raises`, `Warns` and `Receives` -- the `STRUCTURED_SECTIONS` set in
+  `doc/extract_rst_from_py_for_vale.py`, which is the list to read rather than this one.
+  Blanking the signature line is what stops a description restating the type it
+  documents (`pyvista.PolyData` over "PolyData mesh.") from reading as a doubled word.
 - `See Also` **is** fully skipped, deliberately. It is numpydoc's own bare-name
   cross-reference DSL (auto-linked at doc-build time), not prose -- backtick-wrapping a
   `See Also` entry fights that convention instead of fixing anything. Don't add prose
@@ -67,6 +76,12 @@ accept). The two failure modes worth naming directly:
   earlier commit had deliberately removed it and hyphenated the one real usage instead.
   The fix for a Vale.Spelling hit you have not seen before might already have a decided
   answer sitting in the log.
+- **An accepted word is exempt from every rule, not just `Vale.Spelling`.** Vale drops
+  vocabulary terms before any check runs, so a term in `accept.txt` can never be reported
+  by `PyVista.Repetition`, `Google.Latin`, or anything else. `PolyData` sat in that rule's
+  exceptions list for exactly this reason: it was already unreachable, and the entry did
+  nothing. If a rule mysteriously will not fire on a word you expect it to, grep
+  `accept.txt` before assuming the rule is broken.
 - **The file is dual-purpose.** `pyproject.toml`'s `codespell` config also uses it as
   `ignore-words`. A word can be dead to Vale (no prose ever uses it, because it only shows
   up in a raw comment, a test fixture, or a variable name) and still required by
