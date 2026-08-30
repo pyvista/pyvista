@@ -334,7 +334,12 @@ def test_points_dtype_preserve_ignores_integer_points(monkeypatch):
 
     assert mesh.points.dtype == np.int64
     assert filters._points_dtype(mesh) is None
-    assert np.issubdtype(mesh.ruled_surface(resolution=(21, 21)).points.dtype, np.floating)
+
+    # ... so the filter's output is whatever it would be with the setting off
+    monkeypatch.setattr(pv.global_config, 'points_dtype', None)
+    untouched = mesh.ruled_surface(resolution=(21, 21)).points.dtype
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'preserve')
+    assert mesh.ruled_surface(resolution=(21, 21)).points.dtype == untouched
 
 
 def test_points_dtype_preserve_ignores_a_mesh_without_points(monkeypatch):
@@ -385,20 +390,15 @@ def test_points_dtype_applies_to_filters_wrapping_their_own_output(
     assert out.points.dtype == np.dtype(dtype)
 
 
-def test_points_dtype_float64_warns_when_vtk_cannot_deliver(monkeypatch):
-    # Casting up fixes the dtype but not the values, so say so rather than
-    # reporting a precision that was not delivered
+def test_points_dtype_float64_names_the_algorithm(monkeypatch):
+    # Casting up fixes the dtype but not the values, so say which algorithm did it
     monkeypatch.setattr(pv.global_config, 'points_dtype', 'float64')
-    mesh = cells.Hexahedron()
+    mesh = pv.Sphere()
+    mesh.points = mesh.points.astype(np.float32)  # a source would follow the setting
 
     match = 'vtkShrinkFilter generated float32 points'
     with pytest.warns(pv.PyVistaPrecisionWarning, match=match):
-        shrunk = mesh.shrink()
-    assert shrunk.points.dtype == np.float64
-
-    match = 'ArrowSource generated float32 points'
-    with pytest.warns(pv.PyVistaPrecisionWarning, match=match):
-        pv.Arrow()
+        filters._enforce_points_dtype(mesh, np.dtype(np.float64), algorithm=_vtk.vtkShrinkFilter())
 
 
 def test_points_dtype_float64_silent_when_vtk_delivers(monkeypatch):
@@ -411,10 +411,16 @@ def test_points_dtype_float64_silent_when_vtk_delivers(monkeypatch):
 
 @pytest.mark.parametrize('setting', ['preserve', 'float64'])
 def test_points_dtype_warns_on_every_widening_cast(setting, monkeypatch):
-    # Widening fabricates precision the algorithm discarded, whichever setting asked
+    # Widening fabricates precision the algorithm discarded, whichever setting asked.
+    # Driven directly: which filters degrade is VTK's business and varies by backend.
     monkeypatch.setattr(pv.global_config, 'points_dtype', setting)
-    with pytest.warns(pv.PyVistaPrecisionWarning, match='vtkShrinkFilter'):
-        cells.Hexahedron().points_to_double().shrink()
+    mesh = pv.Sphere()
+    mesh.points = mesh.points.astype(np.float32)  # a source would follow the setting
+    assert mesh.points.dtype == np.float32
+
+    with pytest.warns(pv.PyVistaPrecisionWarning, match='vtkSphereSource'):
+        filters._enforce_points_dtype(mesh, np.dtype(np.float64), algorithm=_vtk.vtkSphereSource())
+    assert mesh.points.dtype == np.float64
 
 
 def test_points_dtype_does_not_warn_on_narrowing(monkeypatch):
@@ -427,16 +433,19 @@ def test_points_dtype_does_not_warn_on_narrowing(monkeypatch):
 
 
 def test_points_dtype_none_never_intervenes(monkeypatch):
-    # The default is the status quo: no checks, no casts, no warnings
+    # The default is the status quo: no checks, no casts, no warnings. Which dtype VTK
+    # then produces is VTK's business and varies by backend, so assert only that
+    # PyVista leaves it alone.
     monkeypatch.setattr(pv.global_config, 'points_dtype', None)
     mesh = cells.Hexahedron()
-    assert mesh.points.dtype == np.float64
 
+    assert filters._points_dtype(mesh) is None
+    assert filters._points_dtype() is None
     with warnings.catch_warnings():
         warnings.simplefilter('error', pv.PyVistaPrecisionWarning)
-        assert mesh.shrink().points.dtype == np.float32  # VTK's own answer
-        assert pv.Sphere().cell_centers().points.dtype == np.float64
-    assert filters._points_dtype(mesh) is None
+        mesh.shrink()
+        pv.Sphere().cell_centers()
+        pv.Arrow()
 
 
 @pytest.mark.parametrize('dtype', ['float32', 'float64'])

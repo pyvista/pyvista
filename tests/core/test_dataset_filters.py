@@ -9,6 +9,7 @@ from typing import Any
 from typing import NamedTuple
 from unittest.mock import Mock
 from unittest.mock import patch
+import warnings
 
 from hypothesis import given
 from hypothesis import strategies as st
@@ -97,14 +98,13 @@ def uniform_vec():
 
 
 def test_shrink_preserves_points_dtype(hexbeam, monkeypatch):
-    # https://github.com/pyvista/pyvista/issues/8166
-    # vtkShrinkFilter has no SetOutputPointsPrecision, so the output is cast instead,
-    # and says so because the cast cannot recover what the filter discarded
+    # https://github.com/pyvista/pyvista/issues/8166. Whether the filter needed casting
+    # to get there is VTK's business; the dtype surviving is PyVista's.
     monkeypatch.setattr(pv.global_config, 'points_dtype', 'preserve')
     assert hexbeam.points_to_double().points.dtype == np.double
-    with pytest.warns(pv.PyVistaPrecisionWarning, match='vtkShrinkFilter'):
-        shrunk = hexbeam.shrink()
-    assert shrunk.points.dtype == np.double
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', pv.PyVistaPrecisionWarning)
+        assert hexbeam.shrink().points.dtype == np.double
 
 
 def test_threshold_raises(mocker: MockerFixture):
