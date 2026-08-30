@@ -788,10 +788,11 @@ The ``points`` dtype of a filter's output is decided globally, by
 ``_get_output``. A filter gets this for free by calling those two, and must not
 add a keyword of its own for precision.
 
-- Call ``_update_alg`` rather than ``alg.Update()``. It asks the algorithm for the
-  configured precision before updating, so algorithms that support
-  ``SetOutputPointsPrecision`` compute in that precision rather than being cast after
-  the fact.
+- Call ``_update_alg`` rather than ``alg.Update()``. Where the setting is an explicit
+  ``'float32'`` or ``'float64'`` it asks the algorithm for that precision before
+  updating, so the ones supporting ``SetOutputPointsPrecision`` compute in it rather
+  than being cast after the fact. Under ``'preserve'`` it asks for nothing, since VTK's
+  default already matches the input.
 - Call ``_get_output`` rather than wrapping ``alg.GetOutput()``. It casts the output
   points for the algorithms that ignore the request.
 - Sources have no input to preserve, so they subclass ``_Source``, which requests the

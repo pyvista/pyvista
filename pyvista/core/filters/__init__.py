@@ -102,24 +102,22 @@ def _points_dtype(mesh: Any = None) -> np.dtype[Any] | None:
 def _set_output_points_precision(alg: _vtk.vtkAlgorithm) -> None:
     """Ask an algorithm to generate points with the configured dtype.
 
-    Algorithms that support ``SetOutputPointsPrecision`` compute in the requested
-    precision, which is both cheaper and more accurate than casting afterwards. The
-    rest ignore this and are corrected by ``_enforce_points_dtype``.
+    Only an explicit ``'float32'`` or ``'float64'`` is requested. Under ``'preserve'``
+    VTK's own default already matches the input, and asking anyway is not free: for
+    :vtk:`vtkTransformFilter` the request widens the data arrays it transforms as well
+    as the points. The filters that do not honor the default -- :vtk:`vtkOutlineFilter`
+    initializes to single precision rather than default, for one -- are corrected by
+    ``_enforce_points_dtype`` instead.
 
-    ``vtkAlgorithm.DEFAULT_PRECISION`` is *supposed* to match the input precision on
-    its own, but in practice some filters do not honor it for some mesh types --
-    see https://gitlab.kitware.com/vtk/vtk/-/issues/19965 -- so the input is
-    inspected and the precision is requested explicitly.
+    Algorithms that support this compute in the requested precision, which is both
+    cheaper and more accurate than casting afterwards.
     """
-    set_precision = getattr(alg, 'SetOutputPointsPrecision', None)
-    if set_precision is None:
+    dtype = _points_dtype()
+    if dtype is None:
         return
-    mesh_in = wrap(alg.GetInputDataObject(0, 0)) if alg.GetNumberOfInputPorts() > 0 else None
-    dtype = _points_dtype(mesh_in)
-    if dtype == np.float64:
-        set_precision(alg.DOUBLE_PRECISION)
-    elif dtype == np.float32:
-        set_precision(alg.SINGLE_PRECISION)
+    set_precision = getattr(alg, 'SetOutputPointsPrecision', None)
+    if set_precision is not None:
+        set_precision(alg.DOUBLE_PRECISION if dtype == np.float64 else alg.SINGLE_PRECISION)
 
 
 def _enforce_points_dtype(

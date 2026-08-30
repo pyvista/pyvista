@@ -286,12 +286,15 @@ class Config(_ConfigBase):
             keep the dtype VTK generates (single precision, for most).
 
         ``'float32'``
-            Points are always single precision, including the output of the sources
-            and filters that would otherwise generate double precision.
+            Every source and filter generates single-precision points, including the
+            ones that would otherwise generate double precision.
 
         ``'float64'``
-            Points are always double precision. Algorithms that cannot generate
-            double-precision points warn, see the notes below.
+            Every source and filter generates double-precision points. The algorithms
+            that cannot warn, see the notes below.
+
+        Copying or recasting a dataset is not a source and keeps the points it was
+        given, so ``mesh.copy()`` and ``mesh.cast_to_pointset()`` never change dtype.
 
         The setter also accepts anything :class:`numpy.dtype` resolves to
         ``numpy.float32`` or ``numpy.float64`` (for example ``np.float64``,
@@ -299,10 +302,12 @@ class Config(_ConfigBase):
 
         Notes
         -----
-        PyVista asks the algorithm for the requested precision first, via
+        ``'float32'`` and ``'float64'`` are requested from the algorithm first, via
         ``SetOutputPointsPrecision``, so the computation itself is done in that
-        precision wherever VTK supports it. Only the algorithms that ignore the
-        request need their output cast afterwards.
+        precision wherever VTK supports it, and only the algorithms that ignore the
+        request need their output cast afterwards. ``'preserve'`` asks for nothing:
+        VTK's own default already matches the input, and requesting it anyway would
+        widen more than the points for some filters.
 
         Not every VTK algorithm can generate double-precision points. Casting one
         that cannot up to ``'float64'`` fixes the dtype but cannot recover the
