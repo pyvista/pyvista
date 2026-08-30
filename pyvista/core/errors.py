@@ -270,14 +270,23 @@ class InvalidMeshWarning(Warning):
 class PyVistaPrecisionWarning(Warning):
     """Warning that points could not be generated at the requested precision.
 
-    Raised when :attr:`pyvista.core.config.Config.points_dtype` asks for
-    ``'float64'`` but the VTK algorithm that ran only generates single-precision
-    points. The output points are cast to ``float64`` so that the dtype is still
-    what was asked for, but the values they hold are single precision.
+    Raised when :attr:`pyvista.core.config.Config.points_dtype` asks for a wider
+    dtype than the VTK algorithm that ran can generate. The output points are cast
+    up so that the dtype is the one asked for, but the values they hold have the
+    precision the algorithm produced, and casting cannot bring back digits it
+    already discarded.
 
-    Silence it for a whole session with a standard warnings filter::
+    Being a warning rather than an error is what keeps the choice with the caller.
+    Escalate it where the fabricated precision is not acceptable::
+
+        warnings.filterwarnings('error', category=pv.PyVistaPrecisionWarning)
+
+    or silence it where it is::
 
         warnings.filterwarnings('ignore', category=pv.PyVistaPrecisionWarning)
+
+    Either can be scoped to a block with :class:`warnings.catch_warnings`, or set
+    for a run from ``-W`` or a test runner's own configuration.
 
     .. versionadded:: 0.49
 

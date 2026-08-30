@@ -112,7 +112,7 @@ def _requested_points_precision(alg: _vtk.vtkAlgorithm) -> Iterator[None]:
     default already matches the input, and asking anyway is not free -- for
     :vtk:`vtkTransformFilter` the request widens the data arrays it transforms as well
     as the points. Algorithms that ignore what they are asked for are corrected by
-    :func:`_enforce_points_dtype` instead.
+    ``_enforce_points_dtype`` instead.
     """
     dtype = _points_dtype()
     set_precision = getattr(alg, 'SetOutputPointsPrecision', None)
@@ -195,7 +195,7 @@ def _match_points_dtype(
 
 
 def _apply_points_dtype(mesh: Any, *, algorithm: _vtk.vtkAlgorithm | None = None) -> Any:
-    """Apply the configured dtype to a mesh wrapped without :func:`_get_output`."""
+    """Apply the configured dtype to a mesh wrapped without ``_get_output``."""
     _enforce_points_dtype(mesh, _points_dtype(), algorithm=algorithm)
     return mesh
 

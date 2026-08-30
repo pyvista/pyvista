@@ -341,14 +341,32 @@ class Config(_ConfigBase):
         >>> mesh.shrink(1.0).points.dtype
         dtype('float32')
 
-        Ask for the dtype to survive the filter instead.
+        Ask for the dtype to survive the filter instead. It does, and because this
+        filter cannot compute in double, the widened points are reported as holding
+        single-precision values.
 
         >>> import warnings
         >>> pv.global_config.points_dtype = 'preserve'
-        >>> with warnings.catch_warnings():  # this one cannot deliver it
-        ...     warnings.simplefilter('ignore', pv.PyVistaPrecisionWarning)
-        ...     mesh.shrink(1.0).points.dtype
+        >>> with warnings.catch_warnings(record=True) as caught:
+        ...     warnings.simplefilter('always')
+        ...     shrunk = mesh.shrink(1.0)
+        >>> shrunk.points.dtype
         dtype('float64')
+        >>> print(caught[0].message)
+        vtkShrinkFilter generated float32 points, and cannot generate the float64...
+        The output points are cast to float64, but hold float32 values.
+
+        Treat that as an error instead wherever the fabricated precision is not
+        acceptable. This is a standard warnings filter, so it can be scoped to a
+        block, a module, or a whole session, and set from ``-W`` or pytest as well.
+
+        >>> with warnings.catch_warnings():
+        ...     warnings.filterwarnings('error', category=pv.PyVistaPrecisionWarning)
+        ...     try:
+        ...         _ = mesh.shrink(1.0)
+        ...     except pv.PyVistaPrecisionWarning as error:
+        ...         print(f'raised: {type(error).__name__}')
+        raised: PyVistaPrecisionWarning
 
         Sources follow the setting too.
 
