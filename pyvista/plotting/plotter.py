@@ -194,12 +194,6 @@ gl_Position.x = new_x * u_distortion_projection_scale.x * clip_w;
 gl_Position.y = new_y * u_distortion_projection_scale.y * clip_w;
 """
 
-if os.environ.get('PYVISTA_KILL_DISPLAY'):  # pragma: no cover
-    from pyvista.core.errors import DeprecationError
-
-    msg = 'PYVISTA_KILL_DISPLAY has been deprecated'
-    DeprecationError(msg)
-
 
 def close_all() -> bool:
     """Close all open/active plotters and clean up memory.
