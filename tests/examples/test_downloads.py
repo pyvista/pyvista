@@ -65,7 +65,6 @@ def test_dataset_loader_source_urls_blob(test_case: DatasetLoaderTestCase):
         pytest.skip(reason)
 
     # Test valid url
-    sources = [sources] if isinstance(sources, str) else sources  # Make iterable
     for url in sources:
         # Check is_file() in case local cache of pyvista/data is used
         if not (Path(url).is_file() or _is_valid_url(url)):
