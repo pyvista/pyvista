@@ -6014,6 +6014,25 @@ def test_show_bounds_n_labels(verify_image_cache):
     pl.show()
 
 
+def test_show_bounds_with_scale(verify_image_cache):
+    # A regression here typically drops the scaled axis' labels and title entirely
+    # (https://github.com/pyvista/pyvista/issues/8687), so keep the thresholds tight:
+    # the broken rendering measures ~360 against a suite default error of 500.
+    verify_image_cache.warning_value = 100
+    verify_image_cache.error_value = 200
+
+    pl = pv.Plotter()
+    pl.set_scale(zscale=2)
+    pl.add_mesh(pv.Cone())
+    pl.show_bounds(grid='back', location='outer')
+    pl.camera_position = pv.CameraPosition(
+        position=(1.97, 1.89, 1.66),
+        focal_point=(0.05, -0.05, 0.0),
+        viewup=(-0.36, -0.36, 0.85),
+    )
+    pl.show()
+
+
 def test_radial_gradient_background():
     pl = pv.Plotter()
     pl.set_background('white', right='black')

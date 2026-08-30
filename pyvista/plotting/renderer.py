@@ -1116,8 +1116,11 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             )
         actor.name = name
         actor.SetPickable(pickable)
-        # Apply this renderer's scale to the actor (which can be further scaled)
-        if hasattr(actor, 'SetScale'):
+        # Apply this renderer's scale to the actor (which can be further scaled).
+        # `cube_axes_actor` is excluded since its bounds are already expressed in
+        # scaled world coordinates (see `show_bounds` and `update_bounds_axes`), so
+        # scaling its transform on top would shift its geometry out of place.
+        if hasattr(actor, 'SetScale') and not isinstance(actor, pv.CubeAxesActor):
             actor.SetScale(np.array(actor.GetScale()) * np.array(self.scale))
         self.AddActor(actor)  # must add actor before resetting camera
 
@@ -2116,8 +2119,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             n_zlabels=n_zlabels,
         )
 
-        cube_axes_actor.use_2d_mode = use_2d or not np.allclose(self.scale, [1.0, 1.0, 1.0])
-
         if grid:
             grid = 'back' if grid is True else grid
             if not isinstance(grid, str):
@@ -2262,6 +2263,14 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         self.add_actor(cube_axes_actor, reset_camera=False, pickable=False, render=render)
         self.cube_axes_actor = cube_axes_actor
+
+        # Must be set after the actor is fully configured and added to the renderer,
+        # otherwise VTK silently drops the labels and title of any axis that was
+        # scaled (https://github.com/pyvista/pyvista/issues/8687). Note this does not
+        # fix `use_2d_mode` labels vanishing in every subplot but the first one of a
+        # multi-viewport `Plotter`, which reproduces without any scaling at all and
+        # looks like a separate, deeper limitation.
+        cube_axes_actor.use_2d_mode = use_2d or not np.allclose(self.scale, [1.0, 1.0, 1.0])
 
         self.Modified()
         return cube_axes_actor
@@ -3097,9 +3106,12 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             zscale = self.scale[2]
         self.scale = [xscale, yscale, zscale]
 
-        # Reset all actors to match this scale
+        # Reset all actors to match this scale. `cube_axes_actor` is excluded since
+        # its bounds are already expressed in scaled world coordinates (see
+        # `show_bounds` and `update_bounds_axes`), so scaling its transform on top
+        # would shift its geometry out of place.
         for actor in self.actors.values():
-            if hasattr(actor, 'SetScale'):
+            if hasattr(actor, 'SetScale') and not isinstance(actor, pv.CubeAxesActor):
                 actor.SetScale(self.scale)
 
         self.parent.render()
