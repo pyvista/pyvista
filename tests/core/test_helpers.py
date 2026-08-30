@@ -185,7 +185,7 @@ def test_wrap_auto_names_unnamed_arrays():
 
 def test_global_config_to_dict():
     assert pv.global_config.to_dict() == {
-        'points_dtype': 'preserve',
+        'points_dtype': None,
         'show_vtk_api': False,
         'validate_on_wrap': True,
     }
@@ -232,7 +232,7 @@ def test_global_config_show_vtk_api_rejects_non_bool(value, monkeypatch):
 @pytest.mark.parametrize(
     ('value', 'expected'),
     [
-        (None, 'preserve'),
+        (None, None),
         ('preserve', 'preserve'),
         ('float32', 'float32'),
         ('float64', 'float64'),
@@ -254,7 +254,7 @@ def test_global_config_points_dtype_normalizes(value, expected, monkeypatch):
 def test_global_config_points_dtype_rejects_other_dtypes(value, monkeypatch):
     # ``np.dtype(None)`` is float64, so a non-dtype must not slip through as one
     monkeypatch.setattr(pv.global_config, 'points_dtype', 'preserve')
-    with pytest.raises(ValueError, match="must be 'preserve', 'float32', or 'float64'"):
+    with pytest.raises(ValueError, match="must be None, 'preserve', 'float32', or 'float64'"):
         pv.global_config.points_dtype = value
 
 
@@ -265,10 +265,13 @@ def test_points_dtype_preserve_keeps_filter_input_dtype(input_dtype, monkeypatch
     mesh = pv.Sphere()
     mesh.points = mesh.points.astype(input_dtype)
 
-    assert mesh.shrink().points.dtype == input_dtype  # no SetOutputPointsPrecision
-    assert mesh.decimate(0.5).points.dtype == input_dtype
-    assert mesh.triangulate().points.dtype == input_dtype
-    assert mesh.clip().points.dtype == input_dtype
+    with warnings.catch_warnings():
+        # a widening cast warns; this test is about the dtype it produces
+        warnings.simplefilter('ignore', pv.PyVistaPrecisionWarning)
+        assert mesh.shrink().points.dtype == input_dtype  # no SetOutputPointsPrecision
+        assert mesh.decimate(0.5).points.dtype == input_dtype
+        assert mesh.triangulate().points.dtype == input_dtype
+        assert mesh.clip().points.dtype == input_dtype
 
 
 @pytest.mark.parametrize('dtype', ['float32', 'float64'])
@@ -406,17 +409,34 @@ def test_points_dtype_float64_silent_when_vtk_delivers(monkeypatch):
         assert cells.Hexahedron().triangulate().points.dtype == np.float64
 
 
-@pytest.mark.parametrize('setting', ['preserve', 'float32'])
-def test_points_dtype_only_float64_warns(setting, monkeypatch):
-    # 'preserve' promises a stable dtype, not a precision, and the cast keeps that
-    # promise in full; 'float32' asked for the downcast it got
+@pytest.mark.parametrize('setting', ['preserve', 'float64'])
+def test_points_dtype_warns_on_every_widening_cast(setting, monkeypatch):
+    # Widening fabricates precision the algorithm discarded, whichever setting asked
     monkeypatch.setattr(pv.global_config, 'points_dtype', setting)
-    mesh = cells.Hexahedron()
+    with pytest.warns(pv.PyVistaPrecisionWarning, match='vtkShrinkFilter'):
+        cells.Hexahedron().points_to_double().shrink()
+
+
+def test_points_dtype_does_not_warn_on_narrowing(monkeypatch):
+    # Discarding digits below the input's own representation error loses nothing
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'float32')
     with warnings.catch_warnings():
         warnings.simplefilter('error', pv.PyVistaPrecisionWarning)
-        mesh.shrink()
-        pv.Arrow()
-        pv.ImageData(dimensions=(4, 4, 4)).contour(isosurfaces=1, scalars=np.arange(64.0))
+        assert cells.Hexahedron().shrink().points.dtype == np.float32
+        assert pv.Sphere().cell_centers().points.dtype == np.float32
+
+
+def test_points_dtype_none_never_intervenes(monkeypatch):
+    # The default is the status quo: no checks, no casts, no warnings
+    monkeypatch.setattr(pv.global_config, 'points_dtype', None)
+    mesh = cells.Hexahedron()
+    assert mesh.points.dtype == np.float64
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', pv.PyVistaPrecisionWarning)
+        assert mesh.shrink().points.dtype == np.float32  # VTK's own answer
+        assert pv.Sphere().cell_centers().points.dtype == np.float64
+    assert filters._points_dtype(mesh) is None
 
 
 @pytest.mark.parametrize('dtype', ['float32', 'float64'])
@@ -447,11 +467,14 @@ def test_points_dtype_preserve_pairs_multiblock_blocks(monkeypatch):
     monkeypatch.setattr(pv.global_config, 'points_dtype', 'preserve')
     double, single = pv.Sphere().points_to_double(), pv.Sphere()
 
-    assert double.clip_box().points.dtype == np.float64
-    blocks = pv.MultiBlock([double, single]).clip_box()
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', pv.PyVistaPrecisionWarning)
+        assert double.clip_box().points.dtype == np.float64
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', pv.PyVistaPrecisionWarning)
+        blocks = pv.MultiBlock([double, single]).clip_box()
+        nested = pv.MultiBlock([pv.MultiBlock([double]), single]).clip_box()
     assert [block.points.dtype for block in blocks] == [np.float64, np.float32]
-
-    nested = pv.MultiBlock([pv.MultiBlock([double]), single]).clip_box()
     assert [b.points.dtype for b in nested.recursive_iterator()] == [np.float64, np.float32]
 
 

@@ -96,11 +96,15 @@ def uniform_vec():
     return mesh
 
 
-def test_shrink_preserves_points_dtype(hexbeam):
+def test_shrink_preserves_points_dtype(hexbeam, monkeypatch):
     # https://github.com/pyvista/pyvista/issues/8166
-    # vtkShrinkFilter has no SetOutputPointsPrecision, so the output is cast instead
+    # vtkShrinkFilter has no SetOutputPointsPrecision, so the output is cast instead,
+    # and says so because the cast cannot recover what the filter discarded
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'preserve')
     assert hexbeam.points_to_double().points.dtype == np.double
-    assert hexbeam.shrink().points.dtype == np.double
+    with pytest.warns(pv.PyVistaPrecisionWarning, match='vtkShrinkFilter'):
+        shrunk = hexbeam.shrink()
+    assert shrunk.points.dtype == np.double
 
 
 def test_threshold_raises(mocker: MockerFixture):

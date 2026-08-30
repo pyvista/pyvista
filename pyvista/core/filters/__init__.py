@@ -81,10 +81,13 @@ def _points_dtype(mesh: Any = None) -> np.dtype[Any] | None:
     geometry source, where ``'preserve'`` has nothing to preserve.
 
     See :attr:`pyvista.core.config.Config.points_dtype` for what each setting means.
-    ``'preserve'`` preserves the dtype of points a mesh actually stores, so a mesh that
-    generates or lacks them constrains nothing.
+    ``None``, the default, constrains nothing at all. ``'preserve'`` preserves the dtype
+    of points a mesh actually stores, so a mesh that generates or lacks them constrains
+    nothing either.
     """
     setting = pv.global_config.points_dtype
+    if setting is None:
+        return None
     if setting != 'preserve':
         return np.dtype(setting)
     # `DataSet.points` installs an empty float64 array when the mesh has no `vtkPoints`,
@@ -135,10 +138,10 @@ def _enforce_points_dtype(
     """Cast ``mesh_out``'s points to ``dtype`` in place if the algorithm ignored the request.
 
     Only meshes that own their points are cast; the rest apply the setting in their own
-    ``points`` property. Casting single-precision output up to a requested ``'float64'``
-    fixes the dtype but cannot recover the digits the algorithm already discarded, so
-    that case warns. ``'preserve'`` does not warn in either direction: it promises a
-    stable dtype rather than a precision, and the cast keeps that promise in full.
+    ``points`` property. Casting narrow output up to a wider dtype fixes the dtype but
+    cannot recover the digits the algorithm already discarded, so every upward cast
+    warns. Casting the other way does not: discarding digits below the input's own
+    representation error loses nothing that was there.
     """
     if dtype is None:
         return
@@ -156,15 +159,15 @@ def _enforce_points_dtype(
         and np.issubdtype(points.dtype, np.floating)
         and points.dtype.itemsize < dtype.itemsize
         and points.size
-        and pv.global_config.points_dtype == 'float64'
     ):
-        # No algorithm means PyVista packaged the caller's own array, so nothing
-        # discarded the digits and widening it is exact.
+        # Widening fabricates precision the algorithm already discarded. Narrowing does
+        # not, and neither does packaging a caller's own array, which has no algorithm.
         msg = (
-            f'{type(algorithm).__name__} generated {points.dtype.name} points, and does '
-            f'not support the double precision '
-            f"`pyvista.global_config.points_dtype = 'float64'` asks for.\n"
-            f'The output points are cast to float64, but hold single-precision values.'
+            f'{type(algorithm).__name__} generated {points.dtype.name} points, and '
+            f'cannot generate the {dtype.name} that '
+            f'`pyvista.global_config.points_dtype` asks for.\n'
+            f'The output points are cast to {dtype.name}, but hold '
+            f'{points.dtype.name} values.'
         )
         warn_external(msg, PyVistaPrecisionWarning)
     mesh_out.points = points.astype(dtype)

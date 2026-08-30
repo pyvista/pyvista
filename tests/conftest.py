@@ -238,7 +238,7 @@ def reset_global_state():
     assert pv.allow_new_attributes() is False
 
     pv.PICKLE_FORMAT = 'vtk'
-    pv.global_config.points_dtype = 'preserve'
+    pv.global_config.points_dtype = None
 
 
 @pytest.fixture

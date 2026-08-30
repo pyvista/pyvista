@@ -785,8 +785,9 @@ Points dtype
 
 The ``points`` dtype of a filter's output is decided globally, by
 ``pyvista.global_config.points_dtype``, and enforced in ``_update_alg`` and
-``_get_output``. A filter gets this for free by calling those two, and must not
-add a keyword of its own for precision.
+``_get_output``. It defaults to ``None``, where PyVista does not intervene at all. A
+filter gets the rest for free by calling those two, and must not add a keyword of its
+own for precision.
 
 - Call ``_update_alg`` rather than ``alg.Update()``. Where the setting is an explicit
   ``'float32'`` or ``'float64'`` it asks the algorithm for that precision before
@@ -802,8 +803,9 @@ add a keyword of its own for precision.
 - Geometry that PyVista builds without a VTK algorithm passes through
   ``_apply_points_dtype``.
 - Neither helper needs to know whether the algorithm supports double precision. The
-  ones that do not are cast, and warn with ``PyVistaPrecisionWarning`` when the user
-  asked for ``'float64'`` -- so no filter needs a keyword to opt out of the setting.
+  ones that do not are cast, and every widening cast warns with
+  ``PyVistaPrecisionWarning`` because it fabricates precision the algorithm discarded --
+  so no filter needs a keyword to opt out of the setting.
 - Under ``'preserve'`` only the meshes that store their points constrain the output.
   ``ImageData`` and ``RectilinearGrid`` generate theirs, so a filter reading one, or
   building one as an intermediate, leaves the precision to VTK.

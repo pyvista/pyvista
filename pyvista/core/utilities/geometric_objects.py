@@ -1303,8 +1303,8 @@ def Cube(  # noqa: PLR0917
 
     point_dtype : str, optional
         Set the desired output point types. It must be either 'float32' or 'float64'.
-        Ignored unless :attr:`pyvista.core.config.Config.points_dtype` is ``'preserve'``, which
-        is its default.
+        Ignored unless :attr:`pyvista.core.config.Config.points_dtype` is ``None``, its
+        default, or ``'preserve'``.
 
         .. versionadded:: 0.44.0
 
