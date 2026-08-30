@@ -15,6 +15,8 @@ PyVista:
 * :ref:`config_vtk` -- runtime controls for the VTK interface.
 * :ref:`config_registries` -- registration functions and entry points
   for extending PyVista.
+* :ref:`config_report` -- inspecting the active configuration with
+  :class:`pyvista.Report`.
 
 .. _config_objects:
 
@@ -77,6 +79,10 @@ counterpart of ``pv.global_theme``:
 .. autoclass:: pyvista.core.config.Config
    :members:
 
+The warning emitted when
+:attr:`~pyvista.core.config.Config.validate_on_wrap` finds an invalid
+data array:
+
 .. autoclass:: pyvista.InvalidMeshWarning
 
 .. _config_flags:
@@ -133,11 +139,12 @@ change the behavior of the whole process:
 Environment Variables
 ---------------------
 
-Environment variables are read once, when PyVista (or the module that
-uses them) is first imported; changing them afterwards has no effect
-on the running process. Use the runtime equivalent listed with each
-variable instead. Boolean variables accept ``true`` or ``false``
-(case-insensitive).
+Most environment variables are read once, when PyVista (or the module
+that uses them) is first imported. The theme-related variables are
+re-read each time a new :class:`~pyvista.plotting.themes.Theme` is
+created. Use the runtime equivalent listed with each variable to
+change behavior in a running process. Boolean variables accept
+``true`` or ``false`` (case-insensitive).
 
 Rendering
 ~~~~~~~~~
@@ -162,9 +169,12 @@ Theme and Jupyter
 
 .. envvar:: PYVISTA_PLOT_THEME
 
-   Name of the theme to apply on import. Any name reported by
-   :func:`pyvista.registered_themes` is accepted, including plugin
-   themes. Equivalent to calling :func:`pyvista.set_plot_theme`.
+   Theme to apply when the plotting module is first loaded. Any name
+   reported by :func:`pyvista.registered_themes` is accepted, as is a
+   ``"package.module:ClassName"`` dotted path to a
+   :class:`~pyvista.plotting.themes.Theme` subclass. An invalid value
+   emits a warning. Equivalent to calling
+   :func:`pyvista.set_plot_theme`.
 
 .. envvar:: PYVISTA_JUPYTER_BACKEND
 
@@ -179,7 +189,7 @@ Theme and Jupyter
 
 .. envvar:: PYVISTA_TRAME_JUPYTER_MODE
 
-   How trame communicates with Jupyter: ``extension``, ``proxy``, or
+   How Trame communicates with Jupyter: ``extension``, ``proxy``, or
    ``native``. See :ref:`trame_jupyter`.
 
 VTK
@@ -235,7 +245,7 @@ Documentation Building
 
 .. note::
 
-   ``PYVISTA_KILL_DISPLAY`` is deprecated and has no effect.
+   ``PYVISTA_KILL_DISPLAY`` is no longer used and has no effect.
 
 .. _config_vtk:
 
@@ -327,6 +337,8 @@ is discovered without an explicit import.
    :ref:`extending-pyvista`
       Guide to writing a plugin package, with a worked accessor
       example.
+
+.. _config_report:
 
 Inspecting the Environment
 --------------------------

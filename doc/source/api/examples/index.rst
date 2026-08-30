@@ -154,9 +154,8 @@ prefer using a local or network directory instead, you can override this
 source with the :envvar:`PYVISTA_VTK_DATA` environment variable.
 
 The following example first clones the git repository and then exports that
-directory to PyVista via ``PYVISTA_VTK_DATA``. Note how the path ends in
-``'Data'`` since we need to specify the exact directory of the Data for
-``pooch``.
+directory to PyVista via ``PYVISTA_VTK_DATA``. ``Data`` is appended to the
+path if it does not already end in it.
 
 .. code-block:: bash
 
