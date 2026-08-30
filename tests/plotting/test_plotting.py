@@ -312,9 +312,10 @@ def test_set_environment_texture_resample_uses_linear_anti_aliasing(mocker, no_i
     pl.set_environment_texture(texture, resample=0.5)
 
     # Equirectangular textures light through spherical harmonics, so their irradiance
-    # map is left alone rather than scaled with the texture
+    # map is left alone. The specular prefilter is used either way, so it still scales
     assert not texture.cube_map
     assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == default_size
+    assert pl.renderer.GetEnvMapPrefiltered().GetPrefilterMaxSamples() == 256
 
     spy.assert_called_once()
     args, kwargs = spy.call_args
@@ -341,6 +342,7 @@ def test_set_environment_texture_resample_shrinks_irradiance(small_cubemap, no_i
     """Resampling should also shrink the diffuse irradiance map VTK convolves."""
     # Pinned, so the assertions below test the floor's value and not just its name
     assert _MIN_IRRADIANCE_SIZE == 32
+    assert _MIN_PREFILTER_SAMPLES == 32
 
     texture = small_cubemap
 
