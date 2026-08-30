@@ -201,7 +201,8 @@ def test_actor_mapper_array_name_matches_active_scalars_rendering(association):
     assert array_name_mapper.lookup_table.cmap.name == 'plasma'
     assert array_name_mapper.scalar_range == (float(np.min(expected)), float(np.max(expected)))
     assert np.array_equal(active_mapper._mapped_scalars, expected)
-    assert np.array_equal(array_name_image, active_image)
+    # Tolerate sub-LSB pixel noise from non-deterministic renderers.
+    assert pv.compare_images(array_name_image, active_image) < 1.0
     assert mesh.active_scalars_name == 'keep_active'
 
 

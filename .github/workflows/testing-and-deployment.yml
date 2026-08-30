@@ -32,7 +32,7 @@ env:
     !startsWith(github.ref, 'refs/heads/main')
     }}
   CACHE_FOLDER_NAME: pyvista-data
-  PYVISTA_VTK_DATA: ${{ github.workspace }}/pyvista-data
+  PYVISTA_DATA: ${{ github.workspace }}/pyvista-data
 
 permissions:
   id-token: none
@@ -65,70 +65,45 @@ jobs:
   # Runner labels should match the actual runners used by the different jobs in this file
 
   # GitHub-hosted runners can re-use the cache across OS's.
-  # Here we run the cache on ubuntu, but it's usable by windows GitHub runners too
+  # Here we run the cache on ubuntu, but it's usable by the Windows and macOS
+  # GitHub runners too, via enableCrossOsArchive on the restore.
   cache-github-hosted:
     name: Cache pyvista/data
     uses: ./.github/workflows/cache-pyvista-data.yml
     with:
       runs-on: "ubuntu-22.04"
 
-  # The macOS self-hosted runner needs its own cache (GitHub-hosted runners
-  # share cache-github-hosted across Linux and Windows).
-  cache-macOS-self-hosted:
-    name: Cache pyvista/data
-    uses: ./.github/workflows/cache-pyvista-data.yml
-    with:
-      runs-on: "macos-15-self-hosted"
-
   macOS:
-    name: ${{ matrix.name }}
-    needs: cache-macOS-self-hosted
+    # Job names are required status checks on main, so they have to keep
+    # rendering exactly as `MacOS Unit Testing (3.10)`.
+    name: MacOS Unit Testing (${{ matrix.python-version }})
+    runs-on: macos-latest
+    # macOS runner minutes bill at ten times the Linux rate, so a hung job is
+    # expensive at the 360-minute default. The suite finishes in ~15.
+    timeout-minutes: 80
+    needs: cache-github-hosted
+    env:
+      PARALLEL: "-n auto" # Use all available cores on the selected runner
     strategy:
       fail-fast: false
       matrix:
-        include:
-          # Self-hosted runner configurations
-          - name: MacOS Unit Testing (3.10)
-            python-version: "3.10"
-            runner-labels: "macos-15-self-hosted"
-          - name: MacOS Unit Testing (3.11)
-            python-version: "3.11"
-            runner-labels: "macos-15-self-hosted"
-          - name: MacOS Unit Testing (3.12)
-            python-version: "3.12"
-            runner-labels: "macos-15-self-hosted"
-          - name: MacOS Unit Testing (3.13)
-            python-version: "3.13"
-            runner-labels: "macos-15-self-hosted"
-          - name: MacOS Unit Testing (3.14)
-            python-version: "3.14"
-            runner-labels: "macos-15-self-hosted"
-
-    runs-on: ${{ matrix.runner-labels }}
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
       - name: Set up Python ${{ matrix.python-version }}
-        if: runner.environment != 'self-hosted'
         uses: actions/setup-python@v7
-        continue-on-error: true
         with:
           python-version: ${{ matrix.python-version }}
           cache: ${{ env.USE_CACHE == 'true' && 'pip' || '' }}
-
-      - name: Set Python PATH and create a virtual env
-        if: runner.environment == 'self-hosted'
-        run: |
-          /opt/homebrew/bin/python${{ matrix.python-version }} -m venv .venv
-          echo "${{ github.workspace }}/.venv/bin" >> $GITHUB_PATH
 
       - name: Restore pyvista/data cache
         uses: actions/cache/restore@v6
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
-          key: ${{ needs.cache-macOS-self-hosted.outputs.key }}
+          key: ${{ needs.cache-github-hosted.outputs.key }}
           enableCrossOsArchive: true
 
       - name: Install tox-uv

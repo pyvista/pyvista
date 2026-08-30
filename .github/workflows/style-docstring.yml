@@ -33,7 +33,7 @@ jobs:
     needs: cache-pyvista-data
     env:
       TOX_COLORED: "yes"
-      PYVISTA_VTK_DATA: ${{ github.workspace }}/pyvista-data
+      PYVISTA_DATA: ${{ github.workspace }}/pyvista-data
     steps:
       - uses: actions/checkout@v7
         with:
