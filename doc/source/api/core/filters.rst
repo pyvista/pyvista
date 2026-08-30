@@ -5,6 +5,19 @@ Filters
 
 .. currentmodule:: pyvista
 
+.. note::
+
+   A filter's output :attr:`~pyvista.DataSet.points` dtype is decided by
+   :attr:`pyvista.core.config.Config.points_dtype`, which is ``None`` by default and
+   leaves each algorithm to produce whatever it produces.
+
+   Not every VTK algorithm can generate double-precision points, and which ones can
+   varies with the VTK build and, for filters that choose their algorithm from the type
+   of their input, with the mesh you pass. Rather than consult a list, set
+   ``points_dtype = 'float64'`` and run your own pipeline: any algorithm that cannot
+   deliver it raises :class:`~pyvista.PyVistaPrecisionWarning` naming itself, so the
+   answer comes from the build you are actually using.
+
 Data Object Filters
 ~~~~~~~~~~~~~~~~~~~
 The :class:`pyvista.DataObjectFilters` is inherited by :class:`pyvista.DataSet`
