@@ -4474,7 +4474,10 @@ def test_plot_composite_poly_component_norm(multiblock_poly):
     pl.show()
 
 
-def test_plot_composite_poly_component_single(multiblock_poly):
+def test_plot_composite_poly_component_single(multiblock_poly, verify_image_cache):
+    """Test plotting a single component of multi-component composite scalars."""
+    # Component scalars speckle nondeterministically on macOS software rendering.
+    verify_image_cache.macos_skip_image_cache = True
     for block in multiblock_poly:
         data = block.compute_normals().point_data['Normals']
         block['data'] = data
