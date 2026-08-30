@@ -3397,6 +3397,12 @@ class Theme(_ConfigBase):
 
         .. versionadded:: 0.45
 
+        .. versionchanged:: 0.49
+
+            For cube map textures, the diffuse irradiance map used for
+            image-based lighting is down-sampled at the same rate. See
+            :meth:`~pyvista.Plotter.set_environment_texture` for details.
+
         Examples
         --------
         Enable resampling the environment texture globally.
