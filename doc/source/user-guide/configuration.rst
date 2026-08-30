@@ -224,11 +224,15 @@ Example Data
    Writable directory where downloaded example data is cached. See
    :ref:`examples_api`.
 
-.. envvar:: PYVISTA_VTK_DATA
+.. envvar:: PYVISTA_DATA
 
    Path to a local clone of `pyvista/data
    <https://github.com/pyvista/data>`_ to use instead of downloading
    example files. See :ref:`examples_api`.
+
+   .. versionchanged:: 0.49
+      Renamed from ``PYVISTA_VTK_DATA``. The old name is deprecated
+      but still accepted when the new name is not set.
 
 The settings derived from both variables appear in the output of
 ``pv.Report(downloads=True)``.
