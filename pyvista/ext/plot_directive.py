@@ -166,12 +166,19 @@ that indexed is incompatible with parallel builds due to race conditions.
     (e.g. the https://github.com/pyvista/sphinx-examples-as-code Sphinx extension)
     to reliably locate this directive's generated code within a page.
 
+Within one build, directives with the same source hash share their rendered
+output: the first one executes and every later one copies its figures instead
+of executing again. ``:context:`` directives always execute.
+
+.. versionadded:: 0.49
+
 """
 
 from __future__ import annotations
 
 import doctest
 import hashlib
+import json
 import os
 from pathlib import Path
 import re
@@ -193,6 +200,33 @@ try:
     from sphinx_autocodelink import record_namespace
 except ImportError:
     record_namespace = None
+
+try:
+    # Record capture/replay for the figure cache (see ``run`` when missing).
+    from sphinx_autocodelink import DEFAULT_DOCSTRING_EXAMPLE_CATEGORY
+    from sphinx_autocodelink import is_inside_autodoc_desc
+    from sphinx_autocodelink import record_namespace_to_disk
+
+    try:
+        from sphinx_autocodelink import capture_records
+
+        _records_from_jsonable = list
+    except ImportError:  # older sphinx-autocodelink keeps the round trip private
+        from sphinx_autocodelink import _from_jsonable
+        from sphinx_autocodelink import _records_for
+        from sphinx_autocodelink import _to_jsonable
+
+        def capture_records(*, source, namespace):
+            """Resolve ``source``'s records as JSON-able dicts."""
+            return [_to_jsonable(record) for record in _records_for(source, namespace)]
+
+        def _records_from_jsonable(entries):
+            """Rebuild record objects for ``record_namespace_to_disk``'s ``extra``."""
+            return [_from_jsonable(entry) for entry in entries]
+except ImportError:
+    _RECORDS_CACHE_OK = False
+else:
+    _RECORDS_CACHE_OK = True
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -291,6 +325,7 @@ def setup(app: Sphinx):
     setup.config = app.config
     setup.confdir = app.confdir
     app.add_directive('pyvista-plot', PlotDirective)
+    app.connect('builder-inited', _clear_figure_cache)
     if record_namespace is not None:
         app.setup_extension('sphinx_autocodelink')
 
@@ -557,6 +592,96 @@ def _run_code(*, code, code_path, ns=None, function_name=None):
     return ns
 
 
+def _figure_cache_dir(app: Sphinx) -> Path:
+    """Return the build-wide directory of results shared between identical directives."""
+    return Path(app.doctreedir).parent / 'pyvista_plot_directive' / '_cache'
+
+
+def _clear_figure_cache(app: Sphinx) -> None:
+    """Drop the figure cache so no entry outlives the build that rendered it."""
+    shutil.rmtree(_figure_cache_dir(app), ignore_errors=True)
+
+
+def _load_cached_figures(cache_entry: Path, *, code, output_dir, output_base):
+    """Copy a cached directive's files in as this directive's output.
+
+    Returns ``(results, records)`` for ``render_figures``, or ``None`` when
+    there is no usable entry and the code has to be executed.
+    """
+    try:
+        manifest = json.loads((cache_entry / 'manifest.json').read_text(encoding='utf-8'))
+        image_names = manifest['images']
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+    _, code_pieces = _split_code_at_show(code)
+    if len(image_names) != len(code_pieces):
+        return None
+    try:
+        results = []
+        for code_piece, names in zip(code_pieces, image_names, strict=True):
+            images = []
+            for name in names:
+                image_file = ImageFile(output_dir, f'{output_base}_{name}')
+                if image_file.extension == 'vtksz':
+                    # the template pairs every interactive scene with a static .png
+                    png = str(Path(name).with_suffix('.png'))
+                    shutil.copyfile(cache_entry / png, Path(output_dir) / f'{output_base}_{png}')
+                shutil.copyfile(cache_entry / name, image_file.filename)
+                images.append(image_file)
+            results.append((code_piece, images))
+    except OSError:
+        return None
+    return results, manifest.get('records')
+
+
+def _store_cached_figures(cache_entry: Path, *, results, output_base, records) -> None:
+    """Copy this directive's rendered files into the build-wide figure cache.
+
+    Staged in a temporary sibling and renamed into place, so a parallel reader
+    never sees a partial entry and a losing concurrent writer is discarded.
+    """
+    prefix = f'{output_base}_'
+    image_names = []
+    files = []
+    for _, images in results:
+        names = []
+        for img in images:
+            names.append(img.basename.removeprefix(prefix))
+            files.append((img.filename, names[-1]))
+            if img.extension == 'vtksz':
+                png = f'{img.stem}.png'
+                files.append((str(Path(img.dirname) / png), png.removeprefix(prefix)))
+        image_names.append(names)
+
+    staging = cache_entry.parent / f'{cache_entry.name}.{os.getpid()}.tmp'
+    try:
+        staging.mkdir(parents=True, exist_ok=True)
+        for source, name in files:
+            shutil.copyfile(source, staging / name)
+        manifest = {'images': image_names, 'records': records}
+        (staging / 'manifest.json').write_text(json.dumps(manifest), encoding='utf-8')
+        staging.rename(cache_entry)
+    except OSError:
+        shutil.rmtree(staging, ignore_errors=True)
+
+
+def _replay_cached_records(records, *, docname, state) -> None:
+    """Write cache-captured autocodelink records to the package's on-disk records."""
+    category = (
+        DEFAULT_DOCSTRING_EXAMPLE_CATEGORY
+        if state is not None and is_inside_autodoc_desc(state)
+        else ''
+    )
+    record_namespace_to_disk(
+        directory=Path(setup.app.srcdir) / setup.app.config.autocodelink_records_dir,
+        docname=docname,
+        source='',
+        namespace={},
+        extra=_records_from_jsonable(records),
+        category=category,
+    )
+
+
 def render_figures(
     *,
     code,
@@ -570,6 +695,7 @@ def render_figures(
     env: BuildEnvironment | None = None,
     include_source: bool = True,
     state: RSTState | None = None,
+    cache_entry: Path | None = None,
 ):
     """Run a pyplot script and save the images in *``output_dir``*.
 
@@ -581,7 +707,25 @@ def render_figures(
     to hyperlink -- skipped when the source isn't shown, since there would be nothing on the
     page for a reader to click through to. ``state`` is the calling directive's own
     ``self.state``, passed through to sphinx-autocodelink for its own categorization.
+
+    ``cache_entry`` names this code's slot in the build-wide figure cache: a usable
+    entry is copied instead of executing the code, and a rendered result is stored.
     """
+    if cache_entry is not None:
+        cached = _load_cached_figures(
+            cache_entry, code=code, output_dir=output_dir, output_base=output_base
+        )
+        if cached is not None:
+            results, cached_records = cached
+            if (
+                cached_records
+                and env is not None
+                and config.pyvista_plot_autocodelink
+                and include_source
+            ):
+                _replay_cached_records(cached_records, docname=env.docname, state=state)
+            return results
+
     # We skip snippets that contain the ``pyvista-plot::`` directive as part of their code.
     # The doctest parser will present the code-block once again with the ``pyvista-plot::``
     # directive and its options properly parsed.
@@ -594,6 +738,7 @@ def render_figures(
 
     # Otherwise, we didn't find the files, so build them
     results = []
+    records = None
     ns = plot_context if context else {}
     clean_pieces = []
 
@@ -652,22 +797,26 @@ def render_figures(
 
             results.append((code_piece, images))
 
-        if (
-            env is not None
-            and clean_pieces
-            and config.pyvista_plot_autocodelink
-            and include_source
-        ):
-            record_namespace(
-                env=env,
-                docname=env.docname,
-                source='\n'.join(clean_pieces),
-                namespace=ns,
-                state=state,
-            )
+        if env is not None and clean_pieces and config.pyvista_plot_autocodelink:
+            source = '\n'.join(clean_pieces)
+            if include_source:
+                record_namespace(
+                    env=env,
+                    docname=env.docname,
+                    source=source,
+                    namespace=ns,
+                    state=state,
+                )
+            if cache_entry is not None:
+                records = capture_records(source=source, namespace=ns)
     finally:
         if code_cleanup:
             _run_code(code=code_cleanup, code_path=code_path, ns=ns, function_name=function_name)
+
+    if cache_entry is not None:
+        _store_cached_figures(
+            cache_entry, results=results, output_base=output_base, records=records
+        )
 
     return results
 
@@ -805,6 +954,17 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
         build_dir_link = build_dir
     build_dir_link = Path(build_dir_link).as_posix()
 
+    # directives whose results are not a pure function of their source always execute
+    cache_entry = None
+    if (
+        not keep_context
+        and function_name is None
+        and not _contains_pyvista_plot(code)
+        and (not config.pyvista_plot_autocodelink or _RECORDS_CACHE_OK)
+    ):
+        static_tag = '-static' if force_static else ''
+        cache_entry = _figure_cache_dir(setup.app) / f'{hash_plot_code(code, options)}{static_tag}'
+
     # make figures
     errors = []
     if skip:
@@ -823,6 +983,7 @@ def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR
                 env=document.settings.env,
                 include_source=options['include-source'],
                 state=state,
+                cache_entry=cache_entry,
             )
         except PlotError as err:  # pragma: no cover
             reporter = state.memo.reporter

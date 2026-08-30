@@ -245,3 +245,99 @@ def test_setup_enables_gallery_mode(monkeypatch):
 
     assert pv.BUILDING_GALLERY
     assert pv.OFF_SCREEN
+
+
+_TWO_PIECE_CODE = '>>> import pyvista as pv\n>>> pv.Sphere().plot()\n>>> pv.Cube().plot()\n'
+
+
+def _fake_render(output_dir, output_base):
+    """Write the files ``render_figures`` would produce for ``_TWO_PIECE_CODE``."""
+    files = {
+        f'{output_base}_00_00.png': b'static',
+        f'{output_base}_00_00.vtksz': b'interactive',
+        f'{output_base}_01_00.png': b'cube',
+    }
+    for name, content in files.items():
+        (output_dir / name).write_bytes(content)
+    _, pieces = plot_directive._split_code_at_show(_TWO_PIECE_CODE)
+    return [
+        (pieces[0], [plot_directive.ImageFile(str(output_dir), f'{output_base}_00_00.vtksz')]),
+        (pieces[1], [plot_directive.ImageFile(str(output_dir), f'{output_base}_01_00.png')]),
+    ]
+
+
+def test_figure_cache_round_trip(tmp_path):
+    first = tmp_path / 'first'
+    second = tmp_path / 'second'
+    first.mkdir()
+    second.mkdir()
+    entry = tmp_path / 'cache' / 'abc123'
+    records = [{'accessed': 'pv.Sphere', 'candidates': ['pyvista.Sphere'], 'counts_as_use': True}]
+
+    results = _fake_render(first, 'page-abc123')
+    plot_directive._store_cached_figures(
+        entry, results=results, output_base='page-abc123', records=records
+    )
+
+    cached = plot_directive._load_cached_figures(
+        entry, code=_TWO_PIECE_CODE, output_dir=str(second), output_base='other-abc123'
+    )
+    assert cached is not None
+    cached_results, cached_records = cached
+    assert cached_records == records
+    assert [[img.basename for img in images] for _, images in cached_results] == [
+        ['other-abc123_00_00.vtksz'],
+        ['other-abc123_01_00.png'],
+    ]
+    assert [piece for piece, _ in cached_results] == [piece for piece, _ in results]
+    assert (second / 'other-abc123_00_00.vtksz').read_bytes() == b'interactive'
+    # the interactive scene's static companion is carried along
+    assert (second / 'other-abc123_00_00.png').read_bytes() == b'static'
+    assert (second / 'other-abc123_01_00.png').read_bytes() == b'cube'
+
+
+def test_figure_cache_misses(tmp_path):
+    out = tmp_path / 'out'
+    out.mkdir()
+    entry = tmp_path / 'cache' / 'abc123'
+
+    def load(code):
+        return plot_directive._load_cached_figures(
+            entry, code=code, output_dir=str(out), output_base='page'
+        )
+
+    assert load(_TWO_PIECE_CODE) is None  # no entry yet
+
+    results = _fake_render(out, 'page-abc123')
+    plot_directive._store_cached_figures(
+        entry, results=results, output_base='page-abc123', records=None
+    )
+
+    one_piece = '>>> import pyvista as pv\n>>> pv.Sphere().plot()\n'
+    assert load(one_piece) is None  # code splits into a different number of pieces
+
+    (entry / '01_00.png').unlink()
+    assert load(_TWO_PIECE_CODE) is None  # a listed file is missing from the entry
+
+
+def test_figure_cache_store_loses_race(tmp_path):
+    out = tmp_path / 'out'
+    out.mkdir()
+    entry = tmp_path / 'cache' / 'abc123'
+    results = _fake_render(out, 'page-abc123')
+    plot_directive._store_cached_figures(
+        entry, results=results, output_base='page-abc123', records=None
+    )
+    manifest = (entry / 'manifest.json').read_bytes()
+
+    plot_directive._store_cached_figures(
+        entry, results=results, output_base='page-abc123', records=['changed']
+    )
+    assert (entry / 'manifest.json').read_bytes() == manifest
+    assert list(entry.parent.glob('*.tmp')) == []
+
+
+def test_setup_connects_figure_cache_clear():
+    app = _FakeSphinxApp()
+    plot_directive.setup(app)
+    assert plot_directive._clear_figure_cache in app.connected['builder-inited']
