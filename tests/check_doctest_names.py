@@ -112,6 +112,41 @@ def _bound_names(table):
     return bound
 
 
+_OWN_SCOPE_NODES = (
+    ast.FunctionDef,
+    ast.AsyncFunctionDef,
+    ast.Lambda,
+    ast.ListComp,
+    ast.SetComp,
+    ast.DictComp,
+    ast.GeneratorExp,
+)
+
+
+def _immediate_loads(node):
+    """Yield names a node loads when it runs, skipping nodes with their own scope."""
+    if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load):
+        yield node.id
+        return
+    if isinstance(node, _OWN_SCOPE_NODES):
+        return
+    for child in ast.iter_child_nodes(node):
+        yield from _immediate_loads(child)
+
+
+def _used_before_bound(tree):
+    """Return module-level names used by a statement that nothing binds yet."""
+    missing = set()
+    for index, stmt in enumerate(tree.body):
+        prefix = ast.Module(body=tree.body[: index + 1], type_ignores=[])
+        bound = _bound_names(symtable.symtable(ast.unparse(prefix), '<doctest>', 'exec'))
+        for name in _immediate_loads(stmt):
+            if name in bound or name in MODULE_DUNDERS or hasattr(builtins, name):
+                continue
+            missing.add(name)
+    return missing
+
+
 def undefined_names(source):
     """Return the sorted names a source uses without ever binding them.
 
@@ -146,7 +181,7 @@ def undefined_names(source):
                     undefined.add(name)
             elif sym.is_global():
                 undefined.add(name)
-    return sorted(undefined)
+    return sorted(undefined | _used_before_bound(tree))
 
 
 def check_doctests(modules=None, respect_skips=True, verbose=True):

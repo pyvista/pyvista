@@ -31,6 +31,23 @@ def test_undefined_names(source, expected):
     assert undefined_names(source) == expected
 
 
+@pytest.mark.parametrize(
+    ('source', 'expected'),
+    [
+        pytest.param('arr = np.array([1])\nimport numpy as np\n', ['np'], id='import-after-use'),
+        pytest.param('print(val)\nval = 1\n', ['val'], id='assign-after-use'),
+        pytest.param('def fn():\n    return later\n\n\nlater = 1\n', [], id='deferred-body'),
+        pytest.param(
+            'items = [1]\nall(isinstance(b, int) for b in items)\n', [], id='genexp-target'
+        ),
+        pytest.param('items = [1]\n[b for b in items]\n', [], id='listcomp-target'),
+    ],
+)
+def test_names_used_before_they_are_bound(source, expected):
+    """A name is reported when it is used above the line that binds it."""
+    assert undefined_names(source) == expected
+
+
 def test_names_bound_by_an_earlier_line_are_clean():
     """A name defined by an earlier example is available to later ones."""
     source = 'import pyvista as pv\nmesh = pv.Sphere()\nmesh.plot()\n'
