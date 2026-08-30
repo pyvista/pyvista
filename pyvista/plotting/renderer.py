@@ -74,12 +74,6 @@ ACTOR_LOC_MAP = [
 _MIN_IRRADIANCE_SIZE = 32
 
 
-@functools.lru_cache(maxsize=1)
-def _default_irradiance_size() -> int:
-    """Return VTK's default diffuse irradiance cube map size."""
-    return _vtk.vtkPBRIrradianceTexture().GetIrradianceSize()
-
-
 def map_loc_to_pos(loc, size, border=0.05):
     """Map location and size to a VTK position and position2.
 
@@ -3911,7 +3905,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         if resample is None:
             resample = self._theme.resample_environment_texture
 
-        default_size = _default_irradiance_size()
+        default_size = _vtk.vtkPBRIrradianceTexture().GetIrradianceSize()
 
         if resample:
             resample = 1 / 16 if resample is True else resample

@@ -332,13 +332,17 @@ def test_set_environment_texture_resample_shrinks_irradiance(no_images_to_verify
     pl.set_environment_texture(texture, resample=0.5)
     assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == 128
 
+    # Setting the texture again scales from the default size rather than compounding
+    # with the size the previous call left behind
+    pl.set_environment_texture(texture, resample=0.5)
+    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == 128
+
     pl.set_environment_texture(texture, resample=False)
     assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == default_size
 
-    # ``True`` means a sampling rate of 1/16. Setting the texture again must scale from
-    # the default size rather than compound with the size set by the previous call.
+    # ``True`` means a sampling rate of 1/16, which lands on the floor
     pl.set_environment_texture(texture, resample=True)
-    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == 32
+    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == _MIN_IRRADIANCE_SIZE
 
     pl.set_environment_texture(texture, resample=2.0)
     assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == default_size
@@ -352,7 +356,7 @@ def test_set_environment_texture_resample_shrinks_irradiance(no_images_to_verify
     pv.global_theme.resample_environment_texture = True
     pl = pv.Plotter(lighting=None)
     pl.set_environment_texture(texture)
-    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == 32
+    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == _MIN_IRRADIANCE_SIZE
     pl.close()
 
     # A theme passed to the plotter applies instead of the global one
@@ -361,7 +365,7 @@ def test_set_environment_texture_resample_shrinks_irradiance(no_images_to_verify
     theme.resample_environment_texture = True
     pl = pv.Plotter(lighting=None, theme=theme)
     pl.set_environment_texture(texture)
-    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == 32
+    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == _MIN_IRRADIANCE_SIZE
     pl.close()
 
 
