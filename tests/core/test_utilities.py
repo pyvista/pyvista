@@ -590,8 +590,18 @@ def test_report_downloads():
     report = pv.Report(downloads=True)
     repr_ = repr(report)
     assert f'User Data Path : {pv.examples.downloads.USER_DATA_PATH}' in repr_
-    assert f'VTK Data Source : {pv.examples.downloads.SOURCE}' in repr_
+    assert f'Data Source : {pv.examples.downloads.SOURCE}' in repr_
+    assert 'VTK Data Source' not in repr_
     assert f'File Cache : {pv.examples.downloads._FILE_CACHE}' in repr_
+
+
+def test_report_env_vars(monkeypatch):
+    monkeypatch.setenv('PYVISTA_FOO', 'bar')
+    monkeypatch.setenv('NOTPYVISTA_VAR', 'baz')
+    assert 'PYVISTA_FOO' not in repr(pv.Report(gpu=False))
+    repr_ = repr(pv.Report(gpu=False, env_vars=True))
+    assert 'PYVISTA_FOO : bar' in repr_
+    assert 'NOTPYVISTA_VAR' not in repr_
 
 
 def test_line_segments_from_points():
