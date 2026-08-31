@@ -207,6 +207,9 @@ class CasesReport:
     def case_no_bool(self):
         return '--no-downloads --no-sort', (), dict(downloads=False, sort=False)
 
+    def case_env_vars(self):
+        return '--env-vars', (), dict(env_vars=True)
+
     def case_additional(self):
         return '--additional "foo"', (['foo'],), {}
 
