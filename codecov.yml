@@ -31,6 +31,12 @@ component_management:
       name: pyvista
       paths:
         - pyvista/**
+      # Same rule the project status above applies to the repository as a whole,
+      # scoped to the package so a gain under tests/ cannot absorb a loss here.
+      statuses:
+        - type: project
+          target: auto
+          threshold: 0.5%
     - component_id: tests
       name: tests
       paths:
