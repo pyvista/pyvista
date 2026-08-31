@@ -2051,14 +2051,16 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
                 https://gitlab.kitware.com/vtk/vtk/-/issues/19729.
 
         actor : str, optional
-            Which actor to draw the bounds with, either ``'cube'`` for
-            :class:`~pyvista.CubeAxesActor` or ``'grid'`` for
-            :class:`~pyvista.GridAxesActor`. Set to ``None`` to use ``'grid'`` where the
+            Which actor to draw the bounds with, either ``'grid'`` for
+            :class:`~pyvista.GridAxesActor` or ``'cube'`` for the legacy
+            :class:`~pyvista.CubeAxesActor`. Set to ``None`` to use ``'grid'`` where the
             installed VTK version provides it and ``'cube'`` otherwise.
 
-            ``'grid'`` renders math text in titles as symbols, and labels its axes at
-            rounded values. It does not support ``location``, ``ticks``,
-            ``minor_ticks``, ``use_2d``, or ``use_3d_text``.
+            ``'grid'`` renders math text in titles as symbols, labels its axes at rounded
+            values, and is positioned correctly under :meth:`~pyvista.Plotter.set_scale`.
+            Prefer it for new code. It does not support ``location``, ``ticks``,
+            ``minor_ticks``, ``use_2d``, or ``use_3d_text``, and formats tick labels with
+            a fixed number of decimal places rather than an arbitrary ``fmt`` string.
 
             .. versionadded:: 0.49
 

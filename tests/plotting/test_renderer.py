@@ -14,6 +14,11 @@ from pyvista import examples
 from pyvista.plotting.prop_collection import _PropCollection
 from pyvista.plotting.renderer import ACTOR_LOC_MAP
 
+NEEDS_GRID_ACTOR = pytest.mark.needs_vtk_version(
+    9, 5, reason='vtkGridAxesActor3D was added in VTK 9.5'
+)
+ACTORS = ['cube', pytest.param('grid', marks=NEEDS_GRID_ACTOR)]
+
 
 @pytest.fixture
 def plane2x2():
@@ -79,25 +84,26 @@ def test_show_bounds_with_scaling(sphere):
     assert not actor1.GetUseTextActor3D()
 
 
-def test_show_bounds_invalid_axes_ranges():
+@pytest.mark.parametrize('actor', ACTORS)
+def test_show_bounds_invalid_axes_ranges(actor):
     pl = pv.Plotter()
 
     # send incorrect axes_ranges types
     axes_ranges = 1
     with pytest.raises(ValueError, match=r'has shape \(\) which is not allowed'):
-        pl.show_bounds(actor='cube', axes_ranges=axes_ranges)
+        pl.show_bounds(actor=actor, axes_ranges=axes_ranges)
 
     axes_ranges = [0, 1, 'a', 'b', 2, 3]
     with pytest.raises(TypeError, match='axes_ranges must have real numbers'):
-        pl.show_bounds(actor='cube', axes_ranges=axes_ranges)
+        pl.show_bounds(actor=actor, axes_ranges=axes_ranges)
 
     axes_ranges = [0, 1, 2, 3, 4]
     with pytest.raises(ValueError, match=r'has shape \(5,\) which is not allowed'):
-        pl.show_bounds(actor='cube', axes_ranges=axes_ranges)
+        pl.show_bounds(actor=actor, axes_ranges=axes_ranges)
 
     axes_ranges = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12]]
     with pytest.raises(ValueError, match=r'has shape \(6, 2\) which is not allowed'):
-        pl.show_bounds(actor='cube', axes_ranges=axes_ranges)
+        pl.show_bounds(actor=actor, axes_ranges=axes_ranges)
 
 
 @pytest.mark.skip_plotting
