@@ -291,7 +291,12 @@ class Config(_ConfigBase):
             points; :class:`~pyvista.ImageData` and :class:`~pyvista.RectilinearGrid`
             generate theirs from the origin and spacing, or from the coordinate arrays,
             so they constrain nothing. Sources have no input either, and keep the dtype
-            VTK generates.
+            VTK generates. A filter that builds one of those as an intermediate takes
+            the dtype from it rather than from the input, so
+            :meth:`~pyvista.DataSetFilters.voxelize` and
+            :meth:`~pyvista.PolyDataFilters.reconstruct_surface` still produce single
+            precision from a double-precision mesh. Ask for ``'float64'`` where the
+            output dtype has to be certain.
 
         ``'float32'``
             Every source and filter generates single-precision points, including the
@@ -331,6 +336,13 @@ class Config(_ConfigBase):
         the request need their output cast afterwards. ``'preserve'`` asks for nothing:
         VTK's own default already matches the input for all but a handful, and
         requesting it anyway would widen more than the points for some filters.
+
+        That request reaches whatever else the algorithm generates at the same
+        precision, so an explicit dtype is not confined to the points. Transforming a
+        mesh with :meth:`~pyvista.DataObjectFilters.transform` and
+        ``transform_all_input_vectors=True`` under ``'float64'`` gives the transformed
+        vector arrays ``float64`` as well, doubling their memory. Arrays the filter
+        does not transform keep the dtype they had.
 
         .. versionadded:: 0.49
 
