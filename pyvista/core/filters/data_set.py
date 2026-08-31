@@ -5895,15 +5895,17 @@ class DataSetFilters(DataObjectFilters):
             Updates grid in-place when ``True`` if the input type is an
             :class:`pyvista.UnstructuredGrid`.
 
-        main_has_priority : bool, default: True
+        main_has_priority : bool, optional
             When this parameter is true and ``merge_points`` is true,
             the arrays of the merging grids will be overwritten
             by the original main mesh.
 
             .. deprecated:: 0.46
 
-                This keyword will be removed in a future version. The main mesh
-                always has priority with VTK 9.5.0 or later.
+                Deprecated with VTK 9.5.0 or later, where the main mesh always has
+                priority and ``False`` raises :class:`ValueError`. With older VTK the
+                keyword still selects which mesh has priority. It will be removed in a
+                future version.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -5932,16 +5934,20 @@ class DataSetFilters(DataObjectFilters):
 
         """
         vtk_at_least_95 = vtk_version_info >= (9, 5, 0)
-        # Deprecated on v0.46.0 for vtk>=9.5.0 only; older vtk still needs the keyword.
+        # Deprecated on v0.46.0 for vtk>=9.5.0 only; remove with the vtk<9.5.0 branch below.
         if main_has_priority is not None and vtk_at_least_95:
-            msg = (
-                "The keyword 'main_has_priority' is deprecated and should not be used.\n"
-                'The main mesh will always have priority in a future version, and this keyword '
-                'will be removed.'
-            )
             if main_has_priority is False:
-                msg += '\nIts value cannot be False for vtk>=9.5.0.'
+                msg = (
+                    "'main_has_priority=False' is not supported for vtk>=9.5.0, where the "
+                    'main mesh always has priority. Swap the meshes instead, as in '
+                    '`other.merge(main)`.'
+                )
                 raise ValueError(msg)
+            msg = (
+                "The keyword 'main_has_priority' is deprecated and has no effect for "
+                'vtk>=9.5.0, where the main mesh always has priority. It will be removed '
+                'in a future version.'
+            )
             warn_external(msg, pv.PyVistaDeprecationWarning)
         elif main_has_priority is None and not vtk_at_least_95:
             # Set default for older VTK:
