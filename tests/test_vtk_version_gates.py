@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import ast
+import operator
 from typing import TYPE_CHECKING
+
+import pytest
 
 import pyvista as pv
 from tests.conftest import PYVISTA_ROOT_DIR
@@ -15,19 +18,26 @@ if TYPE_CHECKING:
 SOURCE_DIRS = ('pyvista', 'tests')
 SKIP_PARTS = {'build', 'dist', '_build', '__pycache__', '.git'}
 
-# Constant once the bound is reached.
-_INCLUSIVE_OPS = (ast.Lt, ast.GtE)
-# Constant only strictly below the bound.
-_EXCLUSIVE_OPS = (ast.LtE, ast.Gt, ast.Eq, ast.NotEq)
+_DEAD_AT_BOUND = (ast.Lt, ast.GtE)
+_DEAD_BELOW_BOUND = (ast.LtE, ast.Gt, ast.Eq, ast.NotEq)
 
 _MIRRORED = {ast.Lt: ast.Gt, ast.Gt: ast.Lt, ast.LtE: ast.GtE, ast.GtE: ast.LtE}
+
+_OPERATORS = {
+    ast.Lt: operator.lt,
+    ast.LtE: operator.le,
+    ast.Gt: operator.gt,
+    ast.GtE: operator.ge,
+    ast.Eq: operator.eq,
+    ast.NotEq: operator.ne,
+}
 
 
 def _iter_source_files() -> Iterator[Path]:
     """Yield every Python file in the scanned source directories."""
     for directory in SOURCE_DIRS:
         for path in sorted((PYVISTA_ROOT_DIR / directory).rglob('*.py')):
-            if SKIP_PARTS.isdisjoint(path.parts):
+            if SKIP_PARTS.isdisjoint(path.relative_to(PYVISTA_ROOT_DIR).parts):
                 yield path
 
 
@@ -41,7 +51,7 @@ def _version_bound(node: ast.expr) -> tuple[int, ...] | None:
             for element in node.elts
         )
     ):
-        return tuple(element.value for element in node.elts)  # type: ignore[misc]
+        return tuple(element.value for element in node.elts)
     return None
 
 
@@ -52,27 +62,33 @@ def _reads_vtk_version(node: ast.expr) -> bool:
     return isinstance(node, ast.Attribute) and node.attr == 'vtk_version_info'
 
 
+def _is_constant(operator_: ast.cmpop, bound: tuple[int, ...], minimum: tuple[int, ...]) -> bool:
+    """Return True if the comparison holds the same result for every supported version."""
+    return (isinstance(operator_, _DEAD_AT_BOUND) and bound <= minimum) or (
+        isinstance(operator_, _DEAD_BELOW_BOUND) and bound < minimum
+    )
+
+
 def _dead_gates(tree: ast.Module) -> Iterator[tuple[int, str]]:
     """Yield the line and source of every constant version comparison in a module."""
     minimum = tuple(pv._MIN_SUPPORTED_VTK_VERSION)
     for node in ast.walk(tree):
-        if not isinstance(node, ast.Compare) or len(node.ops) != 1:
+        if not isinstance(node, ast.Compare):
             continue
-        operator = node.ops[0]
-        if _reads_vtk_version(node.left):
-            bound = _version_bound(node.comparators[0])
-        elif _reads_vtk_version(node.comparators[0]):
-            bound = _version_bound(node.left)
-            operator = _MIRRORED.get(type(operator), type(operator))()
-        else:
-            continue
-        if bound is None:
-            continue
-        constant = (isinstance(operator, _INCLUSIVE_OPS) and bound <= minimum) or (
-            isinstance(operator, _EXCLUSIVE_OPS) and bound < minimum
-        )
-        if constant:
-            yield node.lineno, ast.unparse(node)
+        operands = [node.left, *node.comparators]
+        for index, node_op in enumerate(node.ops):
+            left, right = operands[index], operands[index + 1]
+            operator_ = node_op
+            if _reads_vtk_version(left):
+                bound = _version_bound(right)
+            elif _reads_vtk_version(right):
+                bound = _version_bound(left)
+                operator_ = _MIRRORED.get(type(node_op), type(node_op))()
+            else:
+                continue
+            if bound is not None and _is_constant(operator_, bound, minimum):
+                yield node.lineno, ast.unparse(node)
+                break
 
 
 def test_no_dead_vtk_version_gates():
@@ -80,7 +96,7 @@ def test_no_dead_vtk_version_gates():
     dead = [
         f'{path.relative_to(PYVISTA_ROOT_DIR)}:{lineno}  {source}'
         for path in _iter_source_files()
-        for lineno, source in _dead_gates(ast.parse(path.read_text()))
+        for lineno, source in _dead_gates(ast.parse(path.read_text(encoding='utf-8')))
     ]
     assert not dead, (
         f'VTK {pv._MIN_SUPPORTED_VTK_VERSION} is the minimum supported version, so these '
@@ -88,10 +104,52 @@ def test_no_dead_vtk_version_gates():
     )
 
 
-def test_dead_vtk_version_gates_detected(monkeypatch):
-    """Raising the minimum must flag the gates it makes constant."""
-    monkeypatch.setattr(pv, '_MIN_SUPPORTED_VTK_VERSION', (9, 5, 0))
-    source = (
-        'if vtk_version_info >= (9, 5, 0):\n    pass\nif vtk_version_info < (9, 9):\n    pass\n'
+_MINIMUM = (9, 5, 0)
+_BOUNDS = [(9, 4, 0), (9, 5, 0), (9, 6, 0), (9, 5), (9,)]
+_SUPPORTED = [(9, 5, 0), (9, 5, 1), (9, 6, 0), (9, 6, 1), (9, 7, 0), (10, 0, 0)]
+
+
+@pytest.mark.parametrize('bound', _BOUNDS)
+@pytest.mark.parametrize('symbol', ['<', '<=', '>', '>=', '==', '!='])
+@pytest.mark.parametrize('mirrored', [False, True])
+def test_dead_gate_matches_brute_force(monkeypatch, symbol, bound, mirrored):
+    """The classification must agree with evaluating the gate at every supported version."""
+    monkeypatch.setattr(pv, '_MIN_SUPPORTED_VTK_VERSION', _MINIMUM)
+    gate = (
+        f'{bound} {symbol} vtk_version_info' if mirrored else f'vtk_version_info {symbol} {bound}'
     )
-    assert list(_dead_gates(ast.parse(source))) == [(1, 'vtk_version_info >= (9, 5, 0)')]
+    node = ast.parse(gate).body[0].value
+    operator_ = _OPERATORS[type(node.ops[0])]
+    results = {
+        operator_(bound, version) if mirrored else operator_(version, bound)
+        for version in _SUPPORTED
+    }
+    expected = [(1, gate)] if len(results) == 1 else []
+    assert list(_dead_gates(ast.parse(gate))) == expected
+
+
+@pytest.mark.parametrize(
+    'gate',
+    [
+        '(9, 4, 0) <= vtk_version_info < (9, 9)',
+        'lower <= vtk_version_info < (9, 5, 0)',
+    ],
+    ids=['dead_first_half', 'dead_second_half'],
+)
+def test_dead_gate_reports_chained_comparison(monkeypatch, gate):
+    """A chained comparison is reported when either half has gone constant."""
+    monkeypatch.setattr(pv, '_MIN_SUPPORTED_VTK_VERSION', _MINIMUM)
+    assert list(_dead_gates(ast.parse(gate))) == [(1, gate)]
+
+
+def test_dead_gate_ignores_other_comparisons(monkeypatch):
+    """Comparisons that do not read ``vtk_version_info`` are left alone."""
+    monkeypatch.setattr(pv, '_MIN_SUPPORTED_VTK_VERSION', _MINIMUM)
+    for gate in ('version_info < (9, 4, 0)', 'vtk_version_info < other', 'value == (9, 4, 0)'):
+        assert list(_dead_gates(ast.parse(gate))) == []
+
+
+def test_source_files_scanned():
+    """The scan must actually reach the package and the test suite."""
+    scanned = {path.relative_to(PYVISTA_ROOT_DIR).parts[0] for path in _iter_source_files()}
+    assert scanned == set(SOURCE_DIRS)
