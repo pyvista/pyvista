@@ -173,6 +173,12 @@ def test_plotter_theme_raises():
         pl.theme = pv.themes.DarkTheme()
 
 
+@pytest.mark.parametrize('name', ['check_math_text_support', 'check_matplotlib_vtk_compatibility'])
+def test_moved_check_shims_raise(name):
+    with pytest.raises(pv.core.errors.DeprecationError, match=f'`pyvista.plotting.{name}`'):
+        getattr(tools_mod, name)()
+
+
 @pytest.mark.parametrize('theme', pv.plotting.themes._NATIVE_THEMES)
 def test_plotter_theme_by_name(theme):
     pl = pv.Plotter(theme=theme.name)
