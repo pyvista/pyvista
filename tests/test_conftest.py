@@ -11,6 +11,7 @@ from pytest_cases import parametrize
 from pytest_cases import parametrize_with_cases
 
 import pyvista as pv
+from tests.conftest import flaky_test
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -658,3 +659,52 @@ def test_notebook_mode_is_pinned_off():
     ``notebook=True`` themselves.
     """
     assert pv.global_theme.notebook is False
+
+
+def test_flaky_test_retries_until_it_passes(capsys):
+    attempts = []
+
+    @flaky_test
+    def sometimes_fails():
+        attempts.append(None)
+        if len(attempts) < 3:
+            msg = 'not yet'
+            raise AssertionError(msg)
+
+    sometimes_fails()
+    assert len(attempts) == 3
+    assert capsys.readouterr().out.count('retrying...') == 2
+
+
+def test_flaky_test_reraises_after_the_last_attempt(capsys):
+    attempts = []
+
+    @flaky_test(times=2)
+    def always_fails():
+        attempts.append(None)
+        msg = 'nope'
+        raise AssertionError(msg)
+
+    with pytest.raises(AssertionError, match='nope'):
+        always_fails()
+
+    assert len(attempts) == 2
+    out = capsys.readouterr().out.splitlines()
+    assert out[0].endswith('retrying...')
+    assert out[-1] == (
+        'FLAKY TEST FAILED (Attempt 2 of 2) - tests.test_conftest::always_fails - AssertionError'
+    )
+
+
+def test_flaky_test_does_not_retry_an_unlisted_exception():
+    attempts = []
+
+    @flaky_test(exceptions=(ValueError,))
+    def raises_type_error():
+        attempts.append(None)
+        raise TypeError
+
+    with pytest.raises(TypeError):
+        raises_type_error()
+
+    assert len(attempts) == 1
