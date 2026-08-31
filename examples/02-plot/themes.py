@@ -75,7 +75,7 @@ plot_example()
 # window.
 pl = pv.Plotter()
 pl.add_mesh(mesh)
-pl.show_grid()
+pl.show_grid(actor='cube')
 # Here we set the gradient
 pl.set_background('royalblue', top='aliceblue')
 cpos = pl.show()

@@ -849,7 +849,7 @@ def test_plotter_shape_invalid():
 
 def test_plot_bounds_axes_with_no_data():
     pl = pv.Plotter()
-    pl.show_bounds()
+    pl.show_bounds(actor='cube')
     pl.show()
 
 
@@ -857,15 +857,15 @@ def test_plot_show_grid(sphere):
     pl = pv.Plotter()
 
     with pytest.raises(ValueError, match='Value of location'):
-        pl.show_grid(location='foo')
+        pl.show_grid(actor='cube', location='foo')
     with pytest.raises(TypeError, match='location must be a string'):
-        pl.show_grid(location=10)
+        pl.show_grid(actor='cube', location=10)
     with pytest.raises(ValueError, match='Value of tick'):
-        pl.show_grid(ticks='foo')
+        pl.show_grid(actor='cube', ticks='foo')
     with pytest.raises(TypeError, match='must be a string'):
-        pl.show_grid(ticks=10)
+        pl.show_grid(actor='cube', ticks=10)
 
-    pl.show_grid()  # Add mesh after to make sure bounds update
+    pl.show_grid(actor='cube')  # Add mesh after to make sure bounds update
     pl.add_mesh(sphere)
     pl.show()
 
@@ -879,7 +879,7 @@ def test_plot_show_grid_with_mesh(hexbeam, plane, verify_image_cache):
     pl = pv.Plotter()
     pl.add_mesh(hexbeam, style='wireframe')
     pl.add_mesh(plane)
-    pl.show_grid(mesh=plane, show_zlabels=False, show_zaxis=False)
+    pl.show_grid(actor='cube', mesh=plane, show_zlabels=False, show_zaxis=False)
     pl.show()
 
 
@@ -888,7 +888,7 @@ def test_plot_show_grid_with_mesh(hexbeam, plane, verify_image_cache):
 def test_plot_show_grid_font_size(sphere, use_3d_text, font_size):
     pl = pv.Plotter()
     pl.add_mesh(sphere)
-    pl.show_grid(use_3d_text=use_3d_text, font_size=font_size)
+    pl.show_grid(actor='cube', use_3d_text=use_3d_text, font_size=font_size)
     pl.show()
 
 
@@ -1005,6 +1005,7 @@ def test_plot_show_bounds(sphere):
     pl = pv.Plotter()
     pl.add_mesh(sphere)
     pl.show_bounds(
+        actor='cube',
         show_xaxis=False,
         show_yaxis=False,
         show_zaxis=False,
@@ -1020,7 +1021,7 @@ def test_plot_label_fmt(sphere):
     pl = pv.Plotter()
     pl.add_mesh(sphere)
     fmt = '%.3f' if pv.vtk_version_info < (9, 6, 0) else '{:.3f}'
-    pl.show_bounds(xtitle='My X', fmt=fmt)
+    pl.show_bounds(actor='cube', xtitle='My X', fmt=fmt)
     pl.show()
 
 
@@ -1030,9 +1031,9 @@ def test_plot_label_fmt(sphere):
 def test_plot_show_bounds_params(grid, location):
     pl = pv.Plotter()
     pl.add_mesh(pv.Cone())
-    pl.show_bounds(grid=grid, ticks='inside', location=location)
-    pl.show_bounds(grid=grid, ticks='outside', location=location)
-    pl.show_bounds(grid=grid, ticks='both', location=location)
+    pl.show_bounds(actor='cube', grid=grid, ticks='inside', location=location)
+    pl.show_bounds(actor='cube', grid=grid, ticks='outside', location=location)
+    pl.show_bounds(actor='cube', grid=grid, ticks='both', location=location)
     pl.show()
 
 
@@ -2004,7 +2005,7 @@ def test_multi_renderers():
     pl.add_text('Render Window 3', position=(0.0, 0.0), font_size=30, viewport=True)
     pl.add_mesh(pv.Cone(), color='g', show_edges=True, culling=True)
     pl.add_bounding_box(render_lines_as_tubes=True, line_width=5)
-    pl.show_bounds(all_edges=True)
+    pl.show_bounds(actor='cube', all_edges=True)
 
     pl.update_bounds_axes()
     pl.show()
@@ -4847,7 +4848,7 @@ def test_backface_params():
 def test_remove_bounds_axes(sphere):
     pl = pv.Plotter()
     pl.add_mesh(sphere)
-    actor = pl.show_bounds(grid='front', location='outer')
+    actor = pl.show_bounds(actor='cube', grid='front', location='outer')
     assert isinstance(actor, _vtk.vtkActor)
     pl.remove_bounds_axes()
     pl.show()
@@ -6057,6 +6058,7 @@ def test_show_bounds_no_labels(verify_image_cache):
     pl = pv.Plotter()
     pl.add_mesh(pv.Cone())
     pl.show_bounds(
+        actor='cube',
         grid='back',
         location='outer',
         ticks='both',
@@ -6081,6 +6083,7 @@ def test_show_bounds_n_labels(verify_image_cache):
     pl = pv.Plotter()
     pl.add_mesh(pv.Cone())
     pl.show_bounds(
+        actor='cube',
         grid='back',
         location='outer',
         ticks='both',
@@ -6841,7 +6844,7 @@ def test_contour_labels_smoothing_constraint(
     # the scale of the smoothing applied by the smoothing constraints
     pl.enable_parallel_projection()
     pl.view_yz()
-    pl.show_grid()
+    pl.show_grid(actor='cube')
     pl.reset_camera()
     pl.camera.zoom(1.5)
     pl.show()

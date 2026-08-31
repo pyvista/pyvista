@@ -2597,12 +2597,12 @@ class DataObjectFilters:
         >>> pl.subplot(0, 0)
         >>> _ = pl.add_mesh(mesh1)
         >>> pl.show_axes()
-        >>> _ = pl.show_grid()
+        >>> _ = pl.show_grid(actor='cube')
         >>> # Create plot with scaled mesh
         >>> pl.subplot(0, 1)
         >>> _ = pl.add_mesh(mesh2)
         >>> pl.show_axes()
-        >>> _ = pl.show_grid()
+        >>> _ = pl.show_grid(actor='cube')
         >>> pl.show(cpos='xy')
 
         """

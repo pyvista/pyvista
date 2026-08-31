@@ -377,9 +377,9 @@ def plot(  # noqa: ANN202, PLR0917
         pl.add_text(text)
 
     if show_grid:
-        pl.show_grid()
+        pl.show_grid(actor='cube')
     elif show_bounds:
-        pl.show_bounds()
+        pl.show_bounds(actor='cube')
 
     if cpos is None:
         cpos = pl.get_default_cam_pos()

@@ -972,7 +972,7 @@ def plot_compare(  # noqa: ANN201
 
     if show_bounds:
         for renderer in renderers:
-            renderer.show_bounds()
+            renderer.show_bounds(actor='cube')
 
     _set_background(pl, background)
 
