@@ -57,6 +57,8 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
 
+from pyvista._warn_external import warn_external
+
 if TYPE_CHECKING:
     from typing_extensions import Self
 
@@ -107,7 +109,10 @@ class _ConfigBase(metaclass=_ForceSlots):
         dict_ : dict
             Mapping of public attribute name to value, as produced by
             :meth:`to_dict`. Nested config objects are recursively
-            reconstructed via their own ``from_dict``.
+            reconstructed via their own ``from_dict``. A key that is not a
+            valid attribute of ``cls`` is skipped with a warning instead of
+            raising, so a dict saved by a different pyvista version can
+            still be loaded.
 
         Returns
         -------
@@ -117,6 +122,10 @@ class _ConfigBase(metaclass=_ForceSlots):
         """
         inst = cls()
         for key, value in dict_.items():
+            if not hasattr(inst, key):
+                msg = f'{cls.__name__!r} has no attribute {key!r}. Ignoring it.'
+                warn_external(msg)
+                continue
             attr = getattr(inst, key)
             if hasattr(attr, 'from_dict'):
                 setattr(inst, key, attr.from_dict(value))
