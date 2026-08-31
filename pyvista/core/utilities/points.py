@@ -774,7 +774,7 @@ def principal_axes(
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(mesh)
     >>> _ = pl.add_points(mesh, color='black')
-    >>> _ = pl.show_grid(actor='grid')
+    >>> _ = pl.show_grid(actor=None)
     >>> pl.show()
 
     Compute its principal axes and return the standard deviations.

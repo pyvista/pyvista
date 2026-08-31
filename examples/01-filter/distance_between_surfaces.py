@@ -58,7 +58,7 @@ h1 = h1.elevation()
 pl = pv.Plotter()
 pl.add_mesh(h0, smooth_shading=True)
 pl.add_mesh(h1, smooth_shading=True)
-pl.show_grid(actor='grid')
+pl.show_grid(actor=None)
 pl.show()
 
 # %%

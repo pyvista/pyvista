@@ -39,7 +39,7 @@ pl.add_points(
     point_size=12,
     render_points_as_spheres=True,
 )
-pl.show_grid(actor='grid')
+pl.show_grid(actor=None)
 pl.view_xy()
 pl.show()
 
@@ -60,7 +60,7 @@ arc_from_normal = pv.CircularArcFromNormal(
 pl = pv.Plotter()
 pl.add_mesh(arc_from_normal.tube(radius=0.04), color='seagreen')
 pl.add_mesh(pv.Circle(radius=1.0).extract_feature_edges(), color='gray', line_width=2)
-pl.show_grid(actor='grid')
+pl.show_grid(actor=None)
 pl.view_xy()
 pl.show()
 # %%

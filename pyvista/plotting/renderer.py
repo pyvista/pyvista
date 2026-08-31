@@ -2107,7 +2107,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         >>> pl = pv.Plotter()
         >>> actor = pl.add_mesh(mesh)
         >>> actor = pl.show_bounds(
-        ...     actor='grid',
+        ...     actor=None,
         ...     grid='front',
         ...     all_edges=True,
         ... )
@@ -2120,7 +2120,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         >>> pl = pv.Plotter()
         >>> actor = pl.add_mesh(mesh, cmap='terrain', show_scalar_bar=False)
         >>> actor = pl.show_bounds(
-        ...     actor='grid',
+        ...     actor=None,
         ...     grid='back',
         ...     n_xlabels=2,
         ...     n_ylabels=2,
@@ -2136,7 +2136,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         >>> pl = pv.Plotter()
         >>> actor = pl.add_mesh(mesh, cmap='terrain', show_scalar_bar=False)
         >>> actor = pl.show_bounds(
-        ...     actor='grid',
+        ...     actor=None,
         ...     grid='back',
         ...     show_xlabels=False,
         ...     show_ylabels=False,
@@ -2292,7 +2292,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         >>> mesh = pv.Cone()
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(mesh)
-        >>> _ = pl.show_grid(actor='grid')
+        >>> _ = pl.show_grid(actor=None)
         >>> pl.show()
 
         """
@@ -2672,10 +2672,10 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         >>> pl = pv.Plotter(shape=(1, 2))
         >>> pl.subplot(0, 0)
         >>> actor = pl.add_mesh(pv.Sphere())
-        >>> actor = pl.show_bounds(actor='grid', grid='front')
+        >>> actor = pl.show_bounds(actor=None, grid='front')
         >>> pl.subplot(0, 1)
         >>> actor = pl.add_mesh(pv.Sphere())
-        >>> actor = pl.show_bounds(actor='grid', grid='front')
+        >>> actor = pl.show_bounds(actor=None, grid='front')
         >>> actor = pl.remove_bounds_axes()
         >>> pl.show()
 

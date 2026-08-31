@@ -46,7 +46,7 @@ pl.add_axes(interactive=True)
 pl.subplot(1, 1)
 pl.add_text('Render Window 3', font_size=30)
 pl.add_mesh(pv.Cone(), color='g', show_edges=True)
-pl.show_bounds(actor='grid', all_edges=True)
+pl.show_bounds(actor=None, all_edges=True)
 
 # Display the window
 pl.show()

@@ -56,7 +56,7 @@ def callback(point):
 pl.add_sphere_widget(callback)
 pl.add_mesh(surf, color=True)
 
-pl.show_grid(actor='grid')
+pl.show_grid(actor=None)
 pl.show()
 
 # %%
@@ -96,7 +96,7 @@ def callback(point, i):
 pl.add_sphere_widget(callback, center=surf.points)
 pl.add_mesh(surf, color=True)
 
-pl.show_grid(actor='grid')
+pl.show_grid(actor=None)
 pl.show()
 
 # %%
@@ -168,7 +168,7 @@ pl.add_mesh(surf, color=True)
 # Add the widgets which will update the surface
 pl.add_sphere_widget(update_surface, center=points, color=colors, radius=3)
 # Add axes grid
-pl.show_grid(actor='grid')
+pl.show_grid(actor=None)
 
 # Show it
 pl.show()
