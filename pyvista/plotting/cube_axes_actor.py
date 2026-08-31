@@ -99,6 +99,13 @@ class CubeAxesActor(
     and labels for the input data bounds. This wrapping aims to provide a
     user-friendly interface to use :vtk:`vtkCubeAxesActor`.
 
+    .. versionchanged:: 0.49
+
+        The bounds, colors, fonts, grid lines, and axis placement are now set by the
+        constructor, using the same defaults as :meth:`~pyvista.Plotter.show_bounds`.
+        Previously these were only applied to actors created by that method, and an
+        actor created directly used VTK's defaults instead.
+
     Parameters
     ----------
     camera : pyvista.Camera
@@ -339,6 +346,13 @@ class CubeAxesActor(
         self.n_ylabels = n_ylabels
         self.n_zlabels = n_zlabels
 
+        self.x_axis_visibility = x_axis_visibility
+        self.y_axis_visibility = y_axis_visibility
+        self.z_axis_visibility = z_axis_visibility
+
+        # 2D mode and the label arrays rebuild the text actors, so text properties come last
+        self.use_2d_mode = use_2d_mode
+
         color_ = Color(color, default_color=pv.global_theme.font.color)
         self._configure_grid_lines(
             grid=grid,
@@ -346,25 +360,7 @@ class CubeAxesActor(
             visibility=(x_axis_visibility, y_axis_visibility, z_axis_visibility),
         )
         self._configure_fly_mode(location=location)
-        self._configure_text(
-            color=color_,
-            font_size=font_size,
-            font_family=font_family,
-            bold=bold,
-            use_3d_text=use_3d_text,
-        )
 
-        self.GetXAxesLinesProperty().SetColor(color_.float_rgb)
-        self.GetYAxesLinesProperty().SetColor(color_.float_rgb)
-        self.GetZAxesLinesProperty().SetColor(color_.float_rgb)
-
-        self.use_2d_mode = use_2d_mode
-
-        self.x_axis_visibility = x_axis_visibility
-        self.y_axis_visibility = y_axis_visibility
-        self.z_axis_visibility = z_axis_visibility
-
-        # labels are only regenerated while the axes are visible
         if bounds is not None:
             self.bounds = _pad_bounds(bounds, padding=padding)
         if axes_ranges is not None:
@@ -373,10 +369,22 @@ class CubeAxesActor(
             self.y_axis_range = ranges[2], ranges[3]
             self.z_axis_range = ranges[4], ranges[5]
 
+        self.GetXAxesLinesProperty().SetColor(color_.float_rgb)
+        self.GetYAxesLinesProperty().SetColor(color_.float_rgb)
+        self.GetZAxesLinesProperty().SetColor(color_.float_rgb)
+
+        self._configure_text(
+            color=color_,
+            font_size=font_size,
+            font_family=font_family,
+            bold=bold,
+            use_3d_text=use_3d_text,
+        )
+
     def _configure_grid_lines(
         self, *, grid: bool | str | None, color: Color, visibility: tuple[bool, bool, bool]
     ) -> None:
-        """Set the grid line location, visibility and color."""
+        """Set the grid line location, visibility, and color."""
         if not grid:
             return
         grid = 'back' if grid is True else grid
@@ -410,7 +418,7 @@ class CubeAxesActor(
         bold: bool,
         use_3d_text: bool | None,
     ) -> None:
-        """Set the color, font and rendering mode of the titles and labels."""
+        """Set the color, font, and rendering mode of the titles and labels."""
         vtk_less_than_96 = pv.vtk_version_info < (9, 6, 0)
         if use_3d_text is None:
             # 3D text does not render at all with VTK 9.6

@@ -214,16 +214,26 @@ def test_location_raises(camera):
         pv.CubeAxesActor(camera, location='sideways')
 
 
-def test_font(camera):
-    actor = pv.CubeAxesActor(camera, font_size=42, font_family='times', bold=False)
+def test_font_2d_text(camera):
+    actor = pv.CubeAxesActor(
+        camera, font_size=42, font_family='times', bold=False, use_3d_text=False
+    )
     prop = actor.GetTitleTextProperty(0)
     assert prop.GetFontSize() == 42
     assert prop.GetFontFamilyAsString() == 'Times'
     assert not prop.GetBold()
 
 
+def test_font_3d_text(camera):
+    """3D text renders at a fixed high resolution and is scaled down by the screen size."""
+    actor = pv.CubeAxesActor(camera, font_size=42, use_3d_text=True)
+    assert actor.GetTitleTextProperty(0).GetFontSize() == 50
+    factor = 1.0 if pv.vtk_version_info < (9, 6, 0) else 50 / 12
+    assert actor.GetScreenSize() == pytest.approx(42 / 12 / factor * 10)
+
+
 def test_font_defaults(camera):
-    actor = pv.CubeAxesActor(camera)
+    actor = pv.CubeAxesActor(camera, use_3d_text=False)
     prop = actor.GetLabelTextProperty(1)
     assert prop.GetFontSize() == pv.global_theme.font.size
     assert prop.GetBold()
