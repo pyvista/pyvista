@@ -10,7 +10,6 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
@@ -205,21 +204,21 @@ class GridAxesActor(
 
     """
 
-    @_deprecate_positional_args
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
+        *,
         bounds: VectorLike[float] | None = None,
         axes_ranges: VectorLike[float] | None = None,
         padding: float = 0.0,
         x_title: str = 'X Axis',
         y_title: str = 'Y Axis',
         z_title: str = 'Z Axis',
-        x_axis_visibility: bool = True,  # noqa: FBT001, FBT002
-        y_axis_visibility: bool = True,  # noqa: FBT001, FBT002
-        z_axis_visibility: bool = True,  # noqa: FBT001, FBT002
-        x_label_visibility: bool = True,  # noqa: FBT001, FBT002
-        y_label_visibility: bool = True,  # noqa: FBT001, FBT002
-        z_label_visibility: bool = True,  # noqa: FBT001, FBT002
+        x_axis_visibility: bool = True,
+        y_axis_visibility: bool = True,
+        z_axis_visibility: bool = True,
+        x_label_visibility: bool = True,
+        y_label_visibility: bool = True,
+        z_label_visibility: bool = True,
         n_xlabels: int | None = None,
         n_ylabels: int | None = None,
         n_zlabels: int | None = None,
@@ -229,10 +228,10 @@ class GridAxesActor(
         color: ColorLike | None = None,
         font_size: float | None = None,
         font_family: str | None = None,
-        bold: bool = True,  # noqa: FBT001, FBT002
-        grid: bool = True,  # noqa: FBT001, FBT002
-        ticks: bool = True,  # noqa: FBT001, FBT002
-        unique_edges_only: bool = True,  # noqa: FBT001, FBT002
+        bold: bool = True,
+        grid: bool = True,
+        ticks: bool = True,
+        unique_edges_only: bool = True,
         label_offset: VectorLike[int] | None = None,
     ) -> None:
         """Initialize GridAxesActor."""
