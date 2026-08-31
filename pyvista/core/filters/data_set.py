@@ -31,6 +31,7 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _apply_points_dtype
 from pyvista.core.filters import _get_output
+from pyvista.core.filters import _match_points_dtype
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_object import DataObjectFilters
 from pyvista.core.filters.data_object import _cast_output_to_match_input_type
@@ -1249,7 +1250,9 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         alg.SetInputDataObject(self)
         alg.SetGenerateFaces(generate_faces)
         _update_alg(alg, progress_bar=progress_bar, message='Producing an outline')
-        return wrap(alg.GetOutputDataObject(0))
+        output = wrap(alg.GetOutputDataObject(0))
+        _match_points_dtype(output, self, algorithm=alg)
+        return output
 
     @_deprecate_positional_args
     def outline_corners(  # type: ignore[misc]
