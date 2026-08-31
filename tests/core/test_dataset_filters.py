@@ -3837,7 +3837,7 @@ def test_integrate_data_datasets(datasets):
             assert integrated['Area'] > 0
         elif 'Volume' in integrated.array_names:
             assert integrated['Volume'] > 0
-        else:
+        else:  # pragma: no cover -- parametrize covers every case
             msg = 'Unexpected integration'
             raise ValueError(msg)
 

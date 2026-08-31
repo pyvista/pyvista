@@ -73,7 +73,7 @@ def _generate_dataset_loader_test_cases_from_module(
         elif func.startswith('load_'):
             dataset_name = func.split('load_')[1]
             key = 'dataset_function'
-        else:
+        else:  # pragma: no cover -- parametrize covers every case
             msg = f'Invalid case specified: {(func, dataset_function)}'
             raise RuntimeError(msg)
         test_cases_dict.setdefault(dataset_name, {})

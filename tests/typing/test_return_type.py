@@ -71,7 +71,7 @@ def try_init_object(class_, kwargs):
     except TypeError as e:
         if 'abstract' in repr(e):
             pytest.skip('Class is abstract.')
-        raise
+        raise  # pragma: no cover -- failure path
     return instance
 
 

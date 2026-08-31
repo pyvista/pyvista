@@ -249,7 +249,7 @@ def test_user_dict_removal(data_object_type, method):
             data_object.clear_field_data()
         elif method == 'set_none':
             data_object.user_dict = None
-        else:
+        else:  # pragma: no cover -- parametrize covers every case
             msg = f'Invalid test method {method}.'
             raise RuntimeError(msg)
 
