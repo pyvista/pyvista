@@ -15,6 +15,27 @@ coverage:
         if_not_found: failure
         if_ci_failed: error
         if_no_uploads: error
+      # Scoped to the package so a gain under tests/ cannot absorb a loss here.
+      # `if_not_found: success` until main carries flag history to compare against.
+      package:
+        flags:
+          - package
+        target: auto
+        threshold: 0.5%
+        if_not_found: success
+        if_ci_failed: error
+        if_no_uploads: error
+      # A test line that never executes is a test that does not test what it appears
+      # to, so this target is absolute rather than a ratchet. Reach for
+      # `# pragma: no cover` when a branch exists to prove it is never taken.
+      tests:
+        flags:
+          - tests
+        target: 100%
+        threshold: 0%
+        if_not_found: success
+        if_ci_failed: error
+        if_no_uploads: error
     patch:
       default:
         target: auto
@@ -22,30 +43,22 @@ coverage:
         if_not_found: failure
         if_ci_failed: error
         if_no_uploads: error
+      tests:
+        flags:
+          - tests
+        target: 100%
+        threshold: 0%
+        if_not_found: success
+        if_ci_failed: error
+        if_no_uploads: error
 
-# `pyvista` and `tests` are reported in the same upload, so without components a
-# gain on one side hides a loss on the other. Splitting them keeps each honest.
-component_management:
-  individual_components:
-    - component_id: package
-      name: pyvista
+# `pyvista` and `tests` are uploaded as separate reports (see the upload job in
+# .github/workflows/testing-and-deployment.yml), one XML per side per matrix cell.
+flag_management:
+  individual_flags:
+    - name: package
       paths:
-        - pyvista/**
-      # Same rule the project status above applies to the repository as a whole,
-      # scoped to the package so a gain under tests/ cannot absorb a loss here.
-      statuses:
-        - type: project
-          target: auto
-          threshold: 0.5%
-    - component_id: tests
-      name: tests
+        - pyvista/
+    - name: tests
       paths:
-        - tests/**
-      # An uncovered line in a test file is a test that never runs what it looks
-      # like it runs, so the goal here is 100% rather than "don't regress". Until
-      # the tree gets there, `threshold: 0%` ratchets: no PR may add a test line
-      # that never executes.
-      statuses:
-        - type: project
-          target: auto
-          threshold: 0%
+        - tests/
