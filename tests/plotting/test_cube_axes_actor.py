@@ -282,9 +282,11 @@ def test_axes_ranges_init(camera):
 
 
 def test_axes_ranges_init_raises(camera):
-    with pytest.raises(ValueError, match='axes_ranges must have a length equal to any of: 6'):
+    with pytest.raises(ValueError, match=r'has shape \(\) which is not allowed'):
         pv.CubeAxesActor(camera, axes_ranges=1)
     with pytest.raises(TypeError, match='axes_ranges must have real numbers'):
         pv.CubeAxesActor(camera, axes_ranges=[0, 1, 'a', 'b', 2, 3])
-    with pytest.raises(ValueError, match='Got length 5 instead'):
+    with pytest.raises(ValueError, match=r'has shape \(5,\) which is not allowed'):
         pv.CubeAxesActor(camera, axes_ranges=[0, 1, 2, 3, 4])
+    with pytest.raises(ValueError, match=r'has shape \(6, 2\) which is not allowed'):
+        pv.CubeAxesActor(camera, axes_ranges=[[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12]])

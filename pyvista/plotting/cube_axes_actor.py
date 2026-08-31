@@ -345,7 +345,7 @@ class CubeAxesActor(
             self.bounds = _pad_bounds(bounds, padding=padding)
         if axes_ranges is not None:
             ranges = _validation.validate_array(
-                axes_ranges, must_have_length=6, name='axes_ranges'
+                axes_ranges, must_have_shape=(6,), name='axes_ranges'
             )
             self.x_axis_range = ranges[0], ranges[1]
             self.y_axis_range = ranges[2], ranges[3]
