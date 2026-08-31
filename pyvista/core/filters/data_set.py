@@ -7868,10 +7868,11 @@ class DataSetFilters(DataObjectFilters):
         >>> mask.dimensions
         (10, 20, 30)
 
-        Create a mask using a reference volume. First generate polydata from
-        an existing mask.
+        Create a mask using a reference volume. First load a label map,
+        crop it to the frog's head, and generate polydata from it.
 
         >>> volume = examples.load_frog_tissues()
+        >>> volume = volume.crop(extent=(300, 499, 110, 350, 0, 100))
         >>> poly = volume.contour_labels()
 
         Now create the mask from the polydata using the volume as a reference.
