@@ -49,6 +49,7 @@ jupyter = ['ipywidgets', 'nest-asyncio2', 'trame-pyvista']
 [dependency-groups]
 pinned = [ # Pinned versions of core dependencies
   'cyclopts<4.23.0',
+  'filelock<3.33.0', # not a runtime dep; serializes parallel example downloads
   'matplotlib<3.10.10',
   'numpy<2.5.0',
   'pillow<12.4.0',
@@ -60,9 +61,6 @@ pinned = [ # Pinned versions of core dependencies
 
 # Deliberately empty: integration envs use the target project's test deps, not ours (see tox.ini)
 integration = []
-
-# filelock serializes the parallel example downloads that xdist workers make
-xdist = ['filelock<3.33.0', 'pytest-xdist<3.9.0']
 
 typing = [
   'meshio<5.4.0',
@@ -96,6 +94,7 @@ test = [
   'pytest-mock<3.16.0',
   'pytest-mypy-plugins<4.1.0',
   'pytest-pyvista==0.3.3',
+  'pytest-xdist<3.9.0',
   'pytest<9.1.0',
   'pyvista-zstd>=0.3.1,<0.5.0',
   'refleak>=0.2.2,<0.3.0',
@@ -115,7 +114,6 @@ test = [
   'trimesh<4.13.0',
   'typing-extensions<4.17.0',
   { include-group = 'pinned' },
-  { include-group = 'xdist' },
 ]
 
 test-playwright = ['playwright<1.62.0', { include-group = 'test' }]
@@ -127,7 +125,6 @@ docs = [
   'colour-science==0.4.6; python_version < "3.14"',
   'colour-science==0.4.7; python_version >= "3.14"',
   'erbsland-sphinx-ansi==1.2.4',
-  'filelock<3.33.0', # serializes the parallel downloads in make_tables.py
   'fsspec==2026.6.0',
   'imageio-ffmpeg==0.6.0',
   'imageio==2.37.4',
@@ -175,10 +172,10 @@ docs = [
 
 docs-test = [
   'pytest-pyvista[vtksz]==0.3.3',
+  'pytest-xdist<3.9.0',
   'refleak>=0.2.2,<0.3.0', # tests/conftest.py imports it for the leak check
   'trame-pyvista==0.1.6',
   { include-group = 'pinned' },
-  { include-group = 'xdist' },
 ]
 
 dev = [

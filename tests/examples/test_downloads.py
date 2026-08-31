@@ -213,7 +213,7 @@ def test_file_lock_proceeds_when_it_cannot_be_created(tmp_path):
 
 def test_file_lock_is_a_no_op_without_filelock(tmp_path, monkeypatch):
     """Downloads continue unlocked when filelock is not installed."""
-    monkeypatch.setattr(downloads, 'filelock', None)
+    monkeypatch.setattr(downloads, '_HAS_FILELOCK', False)
     entered = []
     with downloads._file_lock(tmp_path / 'file.txt'):
         entered.append(True)

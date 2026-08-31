@@ -41,9 +41,11 @@ import pooch
 
 try:
     import filelock
+
+    _HAS_FILELOCK = True
 except ImportError:  # pragma: no cover
     # Only needed to serialize parallel downloads
-    filelock = None
+    _HAS_FILELOCK = False
 
 import pyvista as pv
 from pyvista import _vtk
@@ -298,7 +300,7 @@ def download_file(filename: str) -> str | list[str]:
 @contextlib.contextmanager
 def _file_lock(path: Path) -> Iterator[None]:
     """Hold an advisory cross-process lock while ``path`` is downloaded."""
-    if filelock is None:
+    if not _HAS_FILELOCK:
         yield
         return
     try:
