@@ -226,7 +226,8 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         .. versionadded:: 0.47
 
     **kwargs : dict, optional
-        Additional keyword arguments passed to :func:`pyvista.read` when initializing from a file.
+        Additional keyword arguments passed when reading from a file or loading
+        from arrays.
 
     Examples
     --------
@@ -310,6 +311,9 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
             else:
                 msg = 'Arguments not understood by `RectilinearGrid`.'
                 raise TypeError(msg)
+        elif args:
+            msg = 'Too many args to create RectilinearGrid.'
+            raise ValueError(msg)
 
         if validate:
             self._validate_mesh(validate)
