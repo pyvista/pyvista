@@ -545,7 +545,7 @@ def test_plotter_theme_attribute_setter():
     with pytest.raises(pv.core.errors.DeprecationError, match=match):
         pl.theme = my_theme
 
-    if pyvista.version_info >= (0, 50):
+    if pyvista.version_info >= (0, 50):  # pragma: no cover -- fires at the version bump
         pytest.fail('Remove the `theme` setter')
 
 
