@@ -89,24 +89,12 @@
 {{ _('Filters') }}
 {{ '-' * _('Filters')|length }}
 
-.. note::
-
-   :material-regular:`check;1.3em;sd-text-success` generates double-precision
-   :attr:`~pyvista.DataSet.points` when
-   :attr:`pyvista.core.config.Config.points_dtype` asks for them.
-   :material-regular:`close;1.3em;sd-text-error` cannot, so PyVista casts the output up
-   and raises :class:`~pyvista.PrecisionWarning` to say the values behind the dtype are
-   not double precision. An unmarked filter is one that does not run on the sample these
-   docs measure with. The marks describe the VTK release PyVista is built against here;
-   another release, or a different backend such as ``cvista``, may draw the line
-   elsewhere.
-
 .. list-table::
    :class: autosummary longtable
    :widths: 10 90
 
 {% for label, target, summary in filters %}
-   * - :py:obj:`{{ label }} <{{ target }}>` {{ points_dtype_mark(objname, label) }}
+   * - :py:obj:`{{ label }} <{{ target }}>`
      - {{ summary }}
 {%- endfor %}
 {% endif %}

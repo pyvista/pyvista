@@ -92,11 +92,6 @@ the dtype ends up wider than the values behind it:
 
 .. autoclass:: pyvista.PrecisionWarning
 
-.. seealso::
-
-   :ref:`Double-precision support <points_dtype_support>`
-      Which filters deliver double-precision points, marked per filter.
-
 .. _config_flags:
 
 Module-Level Flags

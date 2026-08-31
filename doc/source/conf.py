@@ -45,7 +45,6 @@ os.environ['PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'] = 'true'
 
 sys.path.insert(0, str(Path().cwd()))
 import make_tables
-from points_dtype import points_dtype_mark
 
 # -- pyvista configuration ---------------------------------------------------
 import pyvista as pv
@@ -448,7 +447,6 @@ autosummary_context = {
     'own_members': own_members,
     'inherited_member_rows': inherited_member_rows,
     'filter_member_rows': filter_member_rows,
-    'points_dtype_mark': points_dtype_mark,
     # Used by _templates/autosummary/enum.rst: autosummary does not populate `attributes`
     # for the `enum` objtype the way it does for `class`, so enum.rst asks these directly.
     'instance_property_names': instance_property_names,
