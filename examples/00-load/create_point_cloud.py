@@ -126,7 +126,7 @@ pl.add_mesh(point_cloud, color='maroon', point_size=10.0, render_points_as_spher
 pl.add_mesh(arrows, color='lightblue')
 # pl.add_point_labels([point_cloud.center,], ['Center',],
 #                          point_color='yellow', point_size=20)
-pl.show_grid(actor=None)
+pl.show_grid()
 pl.show()
 # %%
 # .. tags:: load

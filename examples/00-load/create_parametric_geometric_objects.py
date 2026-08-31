@@ -196,7 +196,7 @@ arc = pv.CircularArc(pointa=pointa, pointb=pointb, center=center, resolution=res
 
 pl = pv.Plotter()
 pl.add_mesh(arc, color='k', line_width=4)
-pl.show_bounds(actor=None)
+pl.show_bounds()
 pl.view_xy()
 pl.show()
 

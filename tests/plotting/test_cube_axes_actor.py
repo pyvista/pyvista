@@ -12,7 +12,7 @@ import pyvista as pv
 def cube_axes_actor():
     pl = pv.Plotter()
     pl.add_mesh(pv.Sphere())
-    return pl.show_bounds(actor='cube')
+    return pl.show_bounds()
 
 
 def test_cube_axes_actor():

@@ -133,7 +133,7 @@ if inter:
         font_size=40,
         always_visible=True,
     )
-    pl.show_bounds(actor=None)
+    pl.show_bounds()
     pl.camera_position = 'xy'
     pl.show()
 
@@ -149,7 +149,7 @@ else:  # no intersection
     )
     pl.add_mesh(tri)
 
-    pl.show_bounds(actor=None)
+    pl.show_bounds()
     pl.camera_position = 'xy'
 
     pl.show()

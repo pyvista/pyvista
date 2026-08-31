@@ -3405,7 +3405,7 @@ class PolyDataFilters(DataSetFilters):
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(projected, show_edges=True, line_width=3)
         >>> _ = pl.add_mesh(sphere)
-        >>> _ = pl.show_grid(actor=None)
+        >>> _ = pl.show_grid()
         >>> cpos = pv.CameraPosition(
         ...     position=(2.5, 2.5, 1.1),
         ...     focal_point=(0.0, 0.0, -0.3),

@@ -33,7 +33,7 @@ dargs = dict(cmap='gist_ncar_r')
 
 pl = pv.Plotter()
 pl.add_mesh(slices, **dargs)
-pl.show_grid(actor=None)
+pl.show_grid()
 pl.show(cpos=cpos)
 
 
@@ -43,24 +43,24 @@ pl = pv.Plotter(shape=(2, 2))
 # XYZ - show 3D scene first
 pl.subplot(1, 1)
 pl.add_mesh(slices, **dargs)
-pl.show_grid(actor=None)
+pl.show_grid()
 pl.camera_position = cpos
 # XY
 pl.subplot(0, 0)
 pl.add_mesh(slices, **dargs)
-pl.show_grid(actor=None)
+pl.show_grid()
 pl.camera_position = 'xy'
 pl.enable_parallel_projection()
 # ZY
 pl.subplot(0, 1)
 pl.add_mesh(slices, **dargs)
-pl.show_grid(actor=None)
+pl.show_grid()
 pl.camera_position = 'zy'
 pl.enable_parallel_projection()
 # XZ
 pl.subplot(1, 0)
 pl.add_mesh(slices, **dargs)
-pl.show_grid(actor=None)
+pl.show_grid()
 pl.camera_position = 'xz'
 pl.enable_parallel_projection()
 

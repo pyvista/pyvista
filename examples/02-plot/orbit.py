@@ -45,7 +45,7 @@ pl.close()
 
 pl = pv.Plotter()
 pl.add_mesh(mesh, lighting=False)
-pl.show_grid(actor=None)
+pl.show_grid()
 pl.show(auto_close=False)
 viewup = [0.5, 0.5, 1]
 path = pl.generate_orbital_path(factor=2.0, shift=10000, viewup=viewup, n_points=20)

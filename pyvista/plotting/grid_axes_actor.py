@@ -72,6 +72,11 @@ class GridAxesActor(
 
         Requires VTK 9.5 or later.
 
+    .. warning::
+
+        The ``'trame'`` Jupyter backend draws this actor's box but not its labels or
+        titles. Use :class:`~pyvista.CubeAxesActor` for interactive scenes.
+
     Parameters
     ----------
     bounds : sequence[float], optional

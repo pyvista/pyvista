@@ -19,7 +19,7 @@ from pyvista import examples
 
 pl = pv.Plotter()
 pl.add_mesh(pv.Sphere(), smooth_shading=True)
-pl.show_bounds(actor=None)
+pl.show_bounds()
 pl.show()
 
 
@@ -35,7 +35,7 @@ gears = examples.download_gears()
 
 pl = pv.Plotter()
 pl.add_mesh(gears, smooth_shading=True, split_sharp_edges=True)
-pl.show_bounds(actor=None, axes_ranges=[0, 5, 0, 5, 0, 2], show_zlabels=False)
+pl.show_bounds(axes_ranges=[0, 5, 0, 5, 0, 2], show_zlabels=False)
 pl.show()
 
 print(f'Actual dataset bounds: {gears.bounds}')
@@ -60,7 +60,6 @@ pl = pv.Plotter()
 pl.add_mesh(split_gears, smooth_shading=True, split_sharp_edges=True)
 pl.add_mesh(central_gear, smooth_shading=True, split_sharp_edges=True)
 pl.show_grid(
-    actor=None,
     mesh=central_gear,
     axes_ranges=[0, x_size, 0, y_size, 0, z_size],
     show_xaxis=False,
