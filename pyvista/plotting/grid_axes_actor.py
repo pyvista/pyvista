@@ -76,7 +76,7 @@ class GridAxesActor(
     ----------
     bounds : sequence[float], optional
         Bounds of the axes in the form ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
-        Defaults to the unit cube.
+        Defaults to ``(-1, 1, -1, 1, -1, 1)``.
 
     axes_ranges : sequence[float], optional
         Values shown on the axes in the form
@@ -106,7 +106,8 @@ class GridAxesActor(
         Visibility of the z-axis, its labels, and its grid lines.
 
     x_label_visibility : bool, default: True
-        The visibility of the x-axis labels.
+        The visibility of the x-axis labels. Hiding them also hides that axis's
+        ticks and grid lines.
 
     y_label_visibility : bool, default: True
         The visibility of the y-axis labels.
@@ -170,7 +171,8 @@ class GridAxesActor(
 
     label_offset : sequence[int], optional
         Offset of the labels from their edge, in display coordinates, as
-        ``(x_offset, y_offset)``. Useful when labels overlap at the corners.
+        ``(x_offset, y_offset)``, by default ``(0, 0)``. Useful when labels overlap
+        at the corners.
 
     See Also
     --------
@@ -261,8 +263,9 @@ class GridAxesActor(
         if label_offset is not None:
             self.label_offset = label_offset
 
-        for title in (x_title, y_title, z_title):
-            _validation.check_string(title, name='title')
+        for name, title in zip('xyz', (x_title, y_title, z_title), strict=True):
+            _validation.check_string(title, name=f'{name}_title')
+
         self._titles = [x_title, y_title, z_title]
         self._axis_visibility = [x_axis_visibility, y_axis_visibility, z_axis_visibility]
         self._label_visibility = [x_label_visibility, y_label_visibility, z_label_visibility]

@@ -2004,6 +2004,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             ``'frontface'``) of the axes actor.
 
         location : str, optional
+            Only supported by ``actor='cube'``. Defaults to ``'closest'``.
             Set how the axes are drawn: either static (``'all'``), closest
             triad (``'front'``, ``'closest'``, ``'default'``), furthest triad
             (``'back'``, ``'furthest'``), static closest to the origin
@@ -2012,7 +2013,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         ticks : str, optional
             Set how the ticks are drawn on the axes grid. Options include:
-            ``'inside', 'outside', 'both'``.
+            ``'inside', 'outside', 'both'``. Only supported by ``actor='cube'``.
 
         all_edges : bool, default: False
             Adds an unlabeled and unticked box at the boundaries of
@@ -2026,6 +2027,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         fmt : str, optional
             A format string defining how tick labels are generated from
             tick positions. A default is looked up on the active theme.
+            ``actor='grid'`` accepts only a fixed-point format such as ``'%.2f'``.
 
         minor_ticks : bool, optional
             If ``True``, also plot minor ticks on all axes. Only supported by
@@ -2036,7 +2038,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             cushion the datasets in the scene from the axes
             annotations. Defaults no padding.
 
-        use_3d_text : bool
+        use_3d_text : bool, optional
+            Only supported by ``actor='cube'``.
             Use :vtk:`vtkTextActor3D` for titles and labels. Defaults to ``False`` for
             VTK 9.6 and later, and ``True`` for older versions of VTK.
 
