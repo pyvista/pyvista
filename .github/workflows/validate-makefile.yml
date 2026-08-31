@@ -94,7 +94,7 @@ jobs:
           for env in test test-core test-plotting mypy docs-build docs-test-build \
                      docs-test-images integration-trame integration-geovista \
                      integration-mne integration-pyvistaqt doctest-modules \
-                     doctest-local; do
+                     doctest-names; do
             grep -q "^${env}\b" tox-envs.txt || {
               echo "ERROR: tox env '${env}' referenced by Makefile not found in tox.ini"
               exit 1

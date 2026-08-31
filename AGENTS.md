@@ -31,7 +31,8 @@ targets CI runs, so run them: `make lint`, `make docstyle`, `make doctest`, and
 `make test-core` or `make test-plotting` scoped to what you touched. Run the style and
 docstring gates before you call a change finished, not only when the diff looks related
 to them: `make doctest` executes every docstring example in the package, so a change to
-import-time behavior or to a plotting default fails it with no docstring in the diff.
+import-time behavior or to a plotting default fails it with no docstring in the diff; it
+also statically checks the names those examples use.
 Amend or squash locally and push once. `CONTRIBUTING.rst` states this as
 `Continuous Integration Etiquette`. Some jobs run only when a label asks for them
 (`vtk-dev-testing`, `vtk-master-testing`, `integration-testing`, `docker`) -- see
