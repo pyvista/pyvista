@@ -2161,6 +2161,14 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         grid_only = {'unique_edges_only': unique_edges_only, 'label_offset': label_offset}
         _check_actor_keywords(actor, cube_only=cube_only, grid_only=grid_only)
 
+        if actor == 'grid' and isinstance(grid, str):
+            msg = (
+                f'`grid={grid!r}` places grid lines on a face, which is only supported by\n'
+                f"`actor='cube'`. The grid actor draws them on whichever faces are furthest "
+                f'from the\ncamera. Pass `grid=True` or `grid=False` instead.'
+            )
+            raise TypeError(msg)
+
         if font_family is None:
             font_family = self._theme.font.family
         if font_size is None:
@@ -2224,7 +2232,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
                 n_xlabels=n_xlabels,
                 n_ylabels=n_ylabels,
                 n_zlabels=n_zlabels,
-                grid=True if grid is None else bool(grid),
+                grid=False if grid is None else grid,
                 unique_edges_only=True if unique_edges_only is None else unique_edges_only,
                 label_offset=label_offset,
                 **common,
@@ -2297,11 +2305,14 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         """
         # Resolved here so the cube-only defaults below are not applied to grid axes
-        kwargs['actor'] = actor = _resolve_axes_actor(kwargs.get('actor', _NotSelected))
-        kwargs.setdefault('grid', 'back')
+        actor = _resolve_axes_actor(kwargs.get('actor', _NotSelected))
+        kwargs['actor'] = actor
         if actor == 'cube':
+            kwargs.setdefault('grid', 'back')
             kwargs.setdefault('location', 'outer')
             kwargs.setdefault('ticks', 'both')
+        else:
+            kwargs.setdefault('grid', True)
         return self.show_bounds(**kwargs)
 
     @_deprecate_positional_args
