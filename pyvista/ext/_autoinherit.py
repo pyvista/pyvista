@@ -46,7 +46,7 @@ _MODULE_RE = re.compile(r'^\s*\.\.\s+(?:current)?module::\s*([a-zA-Z0-9_.]+)\s*$
 
 logger = logging.getLogger(__name__)
 
-#: ``provider.member`` for each non-method reachable on a filter class; a new one is reported.
+#: ``provider.member`` for each non-method a filter page would document; a new one is reported.
 _NOT_API_ON_FILTERS = frozenset({'DataObjectFilters.points'})
 
 #: Set by :func:`setup`; the helpers below are called from Jinja and get nothing else.
@@ -174,16 +174,16 @@ def _home(cls: type, member: str) -> type | None:
     provider = _provider(cls, member)
     if provider is None or not provider.__module__.startswith('pyvista'):
         return None  # implemented by VTK or the standard library
-    if not inspect.isroutine(provider.__dict__.get(member)) and (
-        _is_filter(provider) or _is_filter(cls)
-    ):
-        _warn_unexpected_filter_member(provider, member)
-        return None
     documented = _documented_classes()
     home = cls
     for base in cls.__mro__:  # most derived first, so the last match is the most basal
         if base in documented and _provider(base, member) is provider:
             home = base
+    if not inspect.isroutine(provider.__dict__.get(member)) and (
+        _is_filter(provider) or _is_filter(home)
+    ):
+        _warn_unexpected_filter_member(provider, member)
+        return None
     return home
 
 
@@ -241,6 +241,8 @@ def _summary(cls: type, member: str) -> str:
 def _rows(module: str, objname: str, names: Sequence[str]) -> list[tuple[type, str, str, str]]:
     """Return ``[(home, label, target, summary)]``, sorted by member name."""
     cls = _class_from(module, objname)
+    if _is_filter(cls):
+        return []  # a filter class page lists only the filters it defines
     documented = _documented_classes()
     rows: list[tuple[str, type, str, str, str]] = []
     for name in _candidates(names):
@@ -260,8 +262,6 @@ def inherited_member_rows(  # numpydoc ignore=RT01
 
     Filters are left out; they outnumber everything else and get their own section.
     """
-    if _is_filter(_class_from(module, objname)):
-        return []  # a filter class page lists only the filters it defines
     return [row[1:] for row in _rows(module, objname, names) if not _is_filter(row[0])]
 
 
@@ -269,8 +269,6 @@ def filter_member_rows(  # numpydoc ignore=RT01
     module: str, objname: str, names: Sequence[str]
 ) -> list[tuple[str, str, str]]:
     """Return ``[(label, target, summary)]`` for the filters ``module.objname`` inherits."""
-    if _is_filter(_class_from(module, objname)):
-        return []
     return [row[1:] for row in _rows(module, objname, names) if _is_filter(row[0])]
 
 

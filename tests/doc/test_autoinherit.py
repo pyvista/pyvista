@@ -12,7 +12,6 @@ from enum import Enum
 import importlib
 import inspect
 import pkgutil
-from types import SimpleNamespace
 
 import pytest
 from sphinx.ext.autodoc.importer import get_class_members
@@ -25,7 +24,6 @@ from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.filters.poly_data import PolyDataFilters
 from pyvista.core.grid import Grid
 from pyvista.core.pointset import _PointSetBase
-from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.ext import _autoinherit as autoinherit
 from tests.conftest import PYVISTA_ROOT_DIR
 
@@ -339,9 +337,9 @@ def test_a_filter_class_lists_only_the_filters_it_defines():
     assert 'contour' not in own  # documented as DataSetFilters.contour
 
 
-def test_a_filter_class_documents_no_attributes(monkeypatch):
-    """Filters are methods; a mixin's property belongs to the classes that use it."""
-    reported = []
+@pytest.fixture
+def mixin_on_a_filter(monkeypatch):
+    """Return ``(mixin, filters, reported)`` for a property a filter class inherits."""
 
     class _Mixin:
         @property
@@ -351,34 +349,42 @@ def test_a_filter_class_documents_no_attributes(monkeypatch):
     class _Filters(_Mixin, DataObjectFilters):
         pass
 
-    class _Dataset(_Mixin):
-        pass
-
     _Mixin.__module__ = 'pyvista.fake'  # or _home reads it as VTK's and declines
     _Filters.__module__ = 'pyvista.core.filters.fake'
 
-    def _record(*args, **_kwargs):
-        """Record the warning the way Sphinx's logger would emit it."""
-        reported.append(args)
+    reported = []
 
-    monkeypatch.setattr(autoinherit, 'logger', SimpleNamespace(warning=_record))
-    monkeypatch.setattr(autoinherit, '_documented', {_Mixin: 'pkg._Mixin'})
+    class _Recorder:
+        def warning(self, message, *args, **_kwargs):
+            """Record the warning the way Sphinx's logger would emit it."""
+            reported.append(message % args)
+
+    monkeypatch.setattr(autoinherit, 'logger', _Recorder())
+    autoinherit._warn_unexpected_filter_member.cache_clear()
+    yield _Mixin, _Filters, reported
     autoinherit._warn_unexpected_filter_member.cache_clear()
 
-    assert autoinherit._home(_Filters, 'size') is None
-    assert reported  # the mixin is reported, not silently dropped
+
+def test_a_filter_class_documents_no_attributes(monkeypatch, mixin_on_a_filter):
+    """A property with nowhere else to go is dropped from a filter page, and reported."""
+    mixin, filters, reported = mixin_on_a_filter
+
+    class _Dataset(mixin):
+        pass
+
+    monkeypatch.setattr(autoinherit, '_documented', {filters: 'pkg._Filters'})
+    assert autoinherit._home(filters, 'size') is None
+    assert '_Mixin.size is not a method' in reported[0]
     # Reached on anything but a filter class, the same property is documented as usual.
-    assert autoinherit._home(_Dataset, 'size') is _Mixin
-    autoinherit._warn_unexpected_filter_member.cache_clear()
+    assert autoinherit._home(_Dataset, 'size') is _Dataset
 
 
-def test_bounds_size_is_documented_once_on_the_mixin():
-    """``DataSet`` mixes it in, so no dataset may claim a page of its own for it."""
-    assert autoinherit._home(pv.PolyData, 'bounds_size') is _BoundsSizeMixin
-    assert autoinherit._home(pv.MultiBlock, 'bounds_size') is _BoundsSizeMixin
-    assert 'bounds_size' not in autoinherit.own_members(
-        'pyvista', 'PolyData', _members(pv.PolyData)
-    )
+def test_a_documentedmixin_on_a_filter_class_keeps_its_page(monkeypatch, mixin_on_a_filter):
+    """The mixin holds the page, so the filter class has nothing to report or drop."""
+    mixin, filters, reported = mixin_on_a_filter
+    monkeypatch.setattr(autoinherit, '_documented', {mixin: 'pkg._Mixin', filters: 'pkg._Filters'})
+    assert autoinherit._home(filters, 'size') is mixin
+    assert not reported
 
 
 def test_a_class_that_mixes_in_no_filters_has_no_filter_rows():
@@ -436,10 +442,10 @@ def test_every_reachable_member_has_exactly_one_page(documented):
             provider = autoinherit._provider(cls, item)
             if provider is None or not provider.__module__.startswith('pyvista'):
                 continue
-            if not inspect.isroutine(provider.__dict__.get(item)) and (
-                autoinherit._is_filter(provider) or autoinherit._is_filter(cls)
+            if autoinherit._is_filter(provider) and not inspect.isroutine(
+                provider.__dict__.get(item)
             ):
-                continue  # a filter class documents filters, and filters are methods
+                continue  # a filter class's bare annotation is a typing aid, not API
             if item not in homed:
                 missing.add(f'{docname}.{item}')
 
