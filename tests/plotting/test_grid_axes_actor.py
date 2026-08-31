@@ -20,6 +20,25 @@ def grid_axes_actor():
     return pv.GridAxesActor(bounds=UNIT_CUBE)
 
 
+class RecordingGridAxesActor(pv.GridAxesActor):
+    """Record the tick positions pushed into VTK."""
+
+    def __init__(self, **kwargs):
+        self.counts = []
+        self.labels = []
+        super().__init__(**kwargs)
+
+    def SetNumberOfLabels(self, axis, count):  # noqa: N802
+        """Record and forward."""
+        self.counts.append((axis, count))
+        super().SetNumberOfLabels(axis, count)
+
+    def SetLabel(self, axis, index, value):  # noqa: N802
+        """Record and forward."""
+        self.labels.append((axis, index, value))
+        super().SetLabel(axis, index, value)
+
+
 def test_default_bounds():
     assert pv.GridAxesActor().bounds == (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
 
@@ -72,10 +91,12 @@ def test_axis_visibility(axis):
 @pytest.mark.parametrize('axis', ['x', 'y', 'z'])
 def test_label_visibility(axis):
     index = 'xyz'.index(axis)
-    actor = pv.GridAxesActor(bounds=UNIT_CUBE, **{f'{axis}_label_visibility': False})
+    actor = RecordingGridAxesActor(bounds=UNIT_CUBE, **{f'{axis}_label_visibility': False})
     assert getattr(actor, f'{axis}_label_visibility') is False
     # The title survives even though the labels are gone
     assert actor.GetTitle(index) == f'{axis.upper()} Axis'
+    # The hidden axis is the only one given no tick positions
+    assert actor.counts == [(index, 0)]
 
 
 @pytest.mark.parametrize('axis', ['x', 'y', 'z'])
@@ -96,11 +117,18 @@ def test_title_must_be_string(axis):
 
 @pytest.mark.parametrize('axis', ['x', 'y', 'z'])
 def test_n_labels(axis):
-    actor = pv.GridAxesActor(bounds=UNIT_CUBE, **{f'n_{axis}labels': 3})
+    index = 'xyz'.index(axis)
+    actor = RecordingGridAxesActor(bounds=UNIT_CUBE, **{f'n_{axis}labels': 3})
     assert getattr(actor, f'n_{axis}labels') == 3
+    assert actor.counts == [(index, 3)]
+    # Three positions spanning the unit cube
+    assert actor.labels == [(index, 0, 0.0), (index, 1, 0.5), (index, 2, 1.0)]
 
+    actor.counts.clear()
     setattr(actor, f'n_{axis}labels', None)
     assert getattr(actor, f'n_{axis}labels') is None
+    # Automatic labelling places no custom positions on any axis
+    assert actor.counts == []
 
 
 @pytest.mark.parametrize(('fmt', 'precision'), [('%.3f', 3), ('{0:.2f}', 2), ('{:.1f}', 1)])
@@ -207,8 +235,8 @@ def _title_ink(title):
 def test_math_text_title_is_rendered_as_symbols():
     """Math text in a title renders as a symbol rather than as its source string.
 
-    Regression test for https://github.com/pyvista/pyvista/issues/8691, where
-    ``show_grid(xtitle=r'$\\rho$')`` drew the literal characters ``$\\rho$``.
+    Covers https://github.com/pyvista/pyvista/issues/8691, where the cube actor drew
+    the literal characters ``$\\rho$``.
     """
     # Subtract the grid itself so only the title glyphs are counted
     grid_only = _title_ink('')
@@ -217,6 +245,8 @@ def test_math_text_title_is_rendered_as_symbols():
     one_character = _title_ink('A') - grid_only
 
     assert six_characters > 0
+    # A symbol was drawn, rather than the title being dropped altogether
+    assert math_text > 0
     # A single rendered glyph uses far less ink than the six characters of its source
     assert math_text < six_characters / 2
     assert math_text < one_character * 3
