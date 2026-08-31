@@ -582,6 +582,11 @@ class _Prop3DMixin(_BoundsSizeMixin, ABC):
 
     Derived classes need to implement the ``_post_set_update`` method to define
     their behavior, for example, manually apply a transformation.
+
+    .. note::
+        This is a private implementation detail. Its public members are
+        exposed through its public subclasses.
+
     """
 
     def __init__(self) -> None:

@@ -43,6 +43,10 @@ if TYPE_CHECKING:
 class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkAbstractMapper):
     """Base Mapper with methods common to other mappers.
 
+    .. note::
+        This is a private implementation detail. Its public members are
+        exposed through its public subclasses.
+
     Parameters
     ----------
     theme : pyvista.plotting.themes.Theme, optional
@@ -408,6 +412,10 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
 
 class _BaseDataSetMapper(_BaseMapper):
     """Base wrapper for :vtk:`vtkDataSetMapper`.
+
+    .. note::
+        This is a private implementation detail. Its public members are
+        exposed through its public subclasses.
 
     Parameters
     ----------
@@ -1412,6 +1420,10 @@ class PointGaussianMapper(_BaseDataSetMapper, _vtk.vtkPointGaussianMapper):
 @abstract_class
 class _BaseVolumeMapper(_BaseMapper):
     """Volume mapper class to override methods and attributes for to volume mappers.
+
+    .. note::
+        This is a private implementation detail. Its public members are
+        exposed through its public subclasses.
 
     Parameters
     ----------

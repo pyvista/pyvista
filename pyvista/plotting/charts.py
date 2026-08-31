@@ -1208,6 +1208,10 @@ class _ChartBackground(DisableVtkSnakeCase, _CustomContextItem):
 class _Chart(DocSubs):
     """Common interface for ``vtkChart``/``vtkChartBox``/``vtkChartPie``/``ChartMPL``.
 
+    .. note::
+        This is a private implementation detail. Its public members are
+        exposed through its public subclasses.
+
     Parameters
     ----------
     size : sequence[float], default: (1, 1)
@@ -1782,6 +1786,10 @@ class _Chart(DocSubs):
 class _Plot(DocSubs):
     """Common pythonic interface for :vtk:`vtkPlot` and :vtk:`vtkPlot3D` instances.
 
+    .. note::
+        This is a private implementation detail. Its public members are
+        exposed through its public subclasses.
+
     Parameters
     ----------
     chart : _Chart
@@ -2024,6 +2032,10 @@ class _MultiCompPlot(_Plot):
     """Common pythonic interface for :vtk:`vtkPlot` instances with multiple components.
 
     Example subclasses are BoxPlot, PiePlot, BarPlot, and StackPlot.
+
+    .. note::
+        This is a private implementation detail. Its public members are
+        exposed through its public subclasses.
 
     Parameters
     ----------

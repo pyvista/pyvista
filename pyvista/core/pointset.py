@@ -93,6 +93,11 @@ class _PointSetBase(DataSet):
     """PyVista's equivalent of :vtk:`vtkPointSet`.
 
     This holds methods common to PolyData and UnstructuredGrid.
+
+    .. note::
+        This is a private implementation detail. Its public members are
+        exposed through its public subclasses.
+
     """
 
     _WRITERS: ClassVar[dict[str, type[BaseWriter]]] = {

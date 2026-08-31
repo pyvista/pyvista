@@ -89,6 +89,10 @@ class _ConfigBase(metaclass=_ForceSlots):
     their ``__slots__`` and expose each one via a public ``@property`` getter
     / setter pair that reads and writes the underscore slot.
 
+    .. note::
+        This is a private implementation detail. Its public members are
+        exposed through its public subclasses.
+
     """
 
     __slots__: ClassVar[list[str]] = []

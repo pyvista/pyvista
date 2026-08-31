@@ -79,13 +79,21 @@ class _XYZTuple(NamedTuple):
 
 
 @abstract_class
-class _XYZAssembly(
+class _XYZAssembly(  # numpydoc ignore=PR01
     _NoNewAttrMixin,
     DisableVtkSnakeCase,
     _Prop3DMixin,
     _NameMixin,
     _vtk.vtkPropAssembly,
 ):
+    """Base class for assemblies of x-y-z actors with labels.
+
+    .. note::
+        This is a private implementation detail. Its public members are
+        exposed through its public subclasses.
+
+    """
+
     DEFAULT_LABELS = _XYZTuple('X', 'Y', 'Z')
 
     def __init__(

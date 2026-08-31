@@ -76,6 +76,14 @@ _ReadReturnT = TypeVar('_ReadReturnT', bound='DataObject')
 
 
 class _FileIOBase(ABC, _NoNewAttrMixin):
+    """Base class for readers and writers, which are matched to files by extension.
+
+    .. note::
+        This is a private implementation detail. Its public members are
+        exposed through its public subclasses.
+
+    """
+
     _vtk_class_name: str = ''
 
     def __repr__(self) -> str:

@@ -29,6 +29,22 @@ _DataFormatOptions = Literal['binary', 'ascii']
 @abstract_class
 class _DataFormatMixin:
     # Different writers use different values to indicate the current format
+    """Add a ``data_format`` property to writers which support ASCII and binary output.
+
+    .. note::
+        This is a private implementation detail. Its public members are
+        exposed through its public subclasses.
+
+    Parameters
+    ----------
+    *args : tuple, optional
+        Positional arguments passed to the parent class.
+
+    **kwargs : dict, optional
+        Keyword arguments passed to the parent class.
+
+    """
+
     _ascii0_binary1: ClassVar[dict[int, _DataFormatOptions]] = {0: 'ascii', 1: 'binary'}
     _ascii1_binary2: ClassVar[dict[int, _DataFormatOptions]] = {1: 'ascii', 2: 'binary'}
     _format_mapping: ClassVar[dict[int, _DataFormatOptions]] = _ascii1_binary2
@@ -545,6 +561,22 @@ class EnSightWriter(BaseWriter):
 
 @abstract_class
 class _XMLWriter(BaseWriter, _DataFormatMixin):
+    """Base class for the XML writers, which also support compression.
+
+    .. note::
+        This is a private implementation detail. Its public members are
+        exposed through its public subclasses.
+
+    Parameters
+    ----------
+    *args : tuple, optional
+        Positional arguments passed to the parent class.
+
+    **kwargs : dict, optional
+        Keyword arguments passed to the parent class.
+
+    """
+
     _format_mapping = _DataFormatMixin._ascii0_binary1
 
     def __init__(self, *args, **kwargs) -> None:
