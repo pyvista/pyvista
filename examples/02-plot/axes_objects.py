@@ -66,11 +66,11 @@ pl.show()
 
 pl = pv.Plotter()
 pl.add_mesh(mesh)
-axes = pl.add_axes_at_origin()
+pl.add_axes_at_origin()
 pl.show()
 
 # %%
-# The axes are too large and should be scaled down. Transformations with `AxesActor`
+# The axes are too large and should be scaled down. Transformations with ``AxesActor``
 # are possible, but with some caveats:
 #
 # - The bounds of ``AxesActor`` are hard-coded as ``+/- 1``, which makes it challenging
@@ -130,7 +130,6 @@ pl.show()
 # #. Add :class:`~pyvista.AxesAssemblySymmetric` as a custom
 #    orientation widget using :meth:`~pyvista.Plotter.add_orientation_widget`.
 
-# Load a dataset
 mesh = examples.load_airplane()
 
 # Create a plotter with four linked views.
@@ -163,9 +162,9 @@ pl.show()
 
 # %%
 # Camera Orientation Widget
-# -------------------------
-# There is also a specialized camera widget which can added to a plot with
-# :class:`~pyvista.Plotter.add_camera_orientation_widget`.
+# =========================
+# There is also a specialized camera widget which can be added to a plot with
+# :meth:`~pyvista.Plotter.add_camera_orientation_widget`.
 
 pl = pv.Plotter()
 pl.add_mesh(mesh)
