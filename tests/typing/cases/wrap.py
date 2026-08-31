@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import numpy as np
 from trimesh import Trimesh
+from type_assert import assert_types
 
 import pyvista as pv
 from pyvista import _vtk
 from pyvista import examples
-from tests.typing.typeassert import assert_types
 
 
 def vtk_explicit_structured_grid() -> _vtk.vtkExplicitStructuredGrid:

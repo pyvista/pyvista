@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+from type_assert import assert_types
+
 import pyvista as pv
 from pyvista import DataSet
 from pyvista import MultiBlock
-from tests.typing.typeassert import assert_types
 
 
 def multi() -> MultiBlock:

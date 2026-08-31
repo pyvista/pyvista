@@ -1385,7 +1385,8 @@ type it should have.
     assert_types(pv.wrap(None), None)
     assert_types(list(multi().recursive_iterator("names")), list[str])
 
-``assert_types`` is two things at once. To Mypy it is
+``assert_types`` comes from `type-assert <https://github.com/user27182/type-assert>`_
+and is two things at once. To Mypy it is
 `typing_extensions.assert_type <https://typing-extensions.readthedocs.io/en/latest/#typing_extensions.assert_type>`_,
 which requires the expression's inferred type to match the second argument
 *exactly*: a supertype is a failure, not a pass. At runtime it is a checker
@@ -1410,10 +1411,9 @@ sits in the file:
 
 The runtime half compiles the file's setup, runs it in a namespace of its own
 and then executes that one case against it, so a case cannot reach another
-case's state and reordering a file changes nothing. It is backed by
-`pycroscope.runtime <https://pycroscope.readthedocs.io/en/latest/reference/runtime.html>`_,
-which walks containers exhaustively, so it catches a ``None`` at any position in
-a ``list[DataSet]``, not only the first element.
+case's state and reordering a file changes nothing. It walks containers
+exhaustively, so it catches a ``None`` at any position in a ``list[DataSet]``,
+not only the first element.
 
 The static half reads a single Mypy run, made once per session in a separate
 process, and reports the diagnostics landing on that case's lines. Mypy failing
@@ -1439,11 +1439,17 @@ test, so a skip cannot quietly outlive the case it was written for.
 
 The Framework
 """""""""""""
-``tests/typing/typeassert`` holds the framework and knows nothing about
-PyVista: ``_assertions`` is the assertion, ``_cases`` parses a case file,
-``_mypy`` runs the checker, and ``plugin`` is the pytest integration.
-``tests/typing/conftest.py`` is the only part that says where the cases live.
-``tests/typing/test_typeassert.py`` tests the framework itself, in plain Python.
+The machinery lives in `type-assert <https://github.com/user27182/type-assert>`_,
+a standalone package that knows nothing about PyVista. It registers itself as a
+pytest plugin, so the only wiring here is one setting in ``pyproject.toml``:
+
+.. code-block:: toml
+
+    typeassert_cases = 'tests/typing/cases'
+
+The checker it drives is selectable with ``typeassert_checker``, which defaults
+to Mypy. Report anything wrong with the framework itself against that repository
+rather than this one.
 
 Building the Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~

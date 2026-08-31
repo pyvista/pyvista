@@ -87,7 +87,6 @@ test = [
   'pandas<=2.4.0',
   'polars<=1.44',
   'pyarrow<26.0.0',
-  'pycroscope<0.6.0',
   'pytest-cases<3.11.0',
   'pytest-cov<7.2.0',
   'pytest-mock<3.16.0',
@@ -109,6 +108,7 @@ test = [
   'sympy<1.15.0',
   'tqdm<4.70.0',
   'trame-pyvista<0.2.0',
+  'type-assert @ git+https://github.com/user27182/type-assert',
   'typing-extensions<4.17.0',
   { include-group = 'typing' },
 ]
@@ -302,6 +302,7 @@ markers = [
 ]
 minversion = "7"
 testpaths = 'tests'
+typeassert_cases = 'tests/typing/cases'
 xfail_strict = true
 
 # pytest-pyvista options
