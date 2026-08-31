@@ -302,6 +302,8 @@ def test_points_dtype_preserve_ignores_generated_points(grid, monkeypatch, mocke
 
 
 def test_points_dtype_preserve_leaves_image_filters_to_vtk(monkeypatch):
+    # These dtypes are VTK's own, unchanged by the setting; the test guards them
+    # against a VTK release moving them, not the enforcement path.
     # ImageData generates its points from its always-double origin and spacing, so
     # treating that as a request would double the output of every image pipeline
     monkeypatch.setattr(pv.global_config, 'points_dtype', 'preserve')
@@ -314,11 +316,13 @@ def test_points_dtype_preserve_leaves_image_filters_to_vtk(monkeypatch):
     assert image.cast_to_unstructured_grid().points.dtype == np.float64
 
 
-def test_points_dtype_preserve_survives_a_grid_intermediate(monkeypatch):
-    # `voxelize` builds an ImageData on the way, which must not widen the output
+def test_points_dtype_preserve_takes_the_grid_intermediate_dtype(monkeypatch):
+    # `voxelize` builds an ImageData on the way and takes the dtype from it rather than
+    # from the input, so 'preserve' does not reach it. VTK decides this either way, so
+    # this guards the documented exclusion rather than the enforcement.
     monkeypatch.setattr(pv.global_config, 'points_dtype', 'preserve')
-    mesh = pv.Sphere()
-    assert mesh.points.dtype == np.float32
+    mesh = pv.Sphere().points_to_double()
+    assert mesh.points.dtype == np.float64
     assert mesh.voxelize(spacing=0.1).points.dtype == np.float32
 
 

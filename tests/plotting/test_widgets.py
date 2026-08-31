@@ -993,8 +993,6 @@ class TestEventParser:
 
         if widget == 'vtkSplineWidget':
             mocker.patch.object(widgets.pv, 'wrap').return_value = pv.PolyData()
-            # `_update_alg` asks the source how many input ports it has
-            mock_vtk.vtkParametricFunctionSource().GetNumberOfInputPorts.return_value = 0
 
         kwargs = dict(callback=lambda *b: b, interaction_event=(e := 'foo'))
         if widget == 'vtkLineWidget':

@@ -83,8 +83,14 @@ def test_to_tetrahedra_pass_cell_data(tiny_rectilinear):
     assert tet_grid.active_scalars_name == 'point_data'
 
 
-def test_to_tetrahedra_points_dtype(rectilinear):
+def test_to_tetrahedra_points_dtype(rectilinear, monkeypatch):
     # RectilinearGrid generates its points rather than storing them, so 'preserve'
     # constrains nothing here and vtkRectilinearGridToTetrahedra picks single
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'preserve')
     assert rectilinear.points.dtype == np.double
     assert rectilinear.to_tetrahedra().points.dtype == np.single
+
+    # An explicit dtype does reach it, and says the widened points are not double
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'float64')
+    with pytest.warns(pv.PrecisionWarning, match='vtkRectilinearGridToTetrahedra'):
+        assert rectilinear.to_tetrahedra().points.dtype == np.double
