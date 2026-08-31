@@ -22,3 +22,24 @@ coverage:
         if_not_found: failure
         if_ci_failed: error
         if_no_uploads: error
+
+# `pyvista` and `tests` are reported in the same upload, so without components a
+# gain on one side hides a loss on the other. Splitting them keeps each honest.
+component_management:
+  individual_components:
+    - component_id: package
+      name: pyvista
+      paths:
+        - pyvista/**
+    - component_id: tests
+      name: tests
+      paths:
+        - tests/**
+      # An uncovered line in a test file is a test that never runs what it looks
+      # like it runs, so the goal here is 100% rather than "don't regress". Until
+      # the tree gets there, `threshold: 0%` ratchets: no PR may add a test line
+      # that never executes.
+      statuses:
+        - type: project
+          target: auto
+          threshold: 0%

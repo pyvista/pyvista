@@ -956,6 +956,31 @@ for more details.
 However, code coverage exclusion should rarely be used and has to be carefully justified in the PR thread
 if no simple alternative solution has been found.
 
+Test code is covered too
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+``tests`` is measured alongside ``pyvista``, and Codecov reports the two as separate
+components so a gain on one cannot hide a loss on the other. The target for ``tests`` is
+100%: an uncovered line in a test file is a test that does not run the code it appears to,
+and a partly-covered branch is a case the suite never reaches. Both usually mean a missing
+assertion rather than a missing ``pragma``.
+
+Some patterns produce dead test code:
+
+- A helper class or fixture whose attributes nothing ever reads. Delete the unused member.
+- A stub body written as ``class Stub: ...``. Coverage counts the one-line form as a
+  partial branch, and ``ruff format`` collapses ``...`` onto the ``class`` line, so write
+  ``pass`` or a docstring instead.
+- A class registered or patched but never instantiated, where ``__init__`` only assigns.
+  Drop the ``__init__``, or assert on the instance the test already set up.
+- A branch that only one CI job reaches. Coverage is combined across the matrix, so a
+  ``vtk_version_info`` gate is covered as long as some job takes each side. Only the
+  Linux jobs upload, so a ``sys.platform`` gate for macOS or Windows never is.
+
+Not every file under ``tests`` is measured. The ones run outside a ``-cov`` environment
+(the ``doc_build`` suite, the standalone scripts, the Sphinx projects used as build
+fixtures) are listed under ``report.omit`` in ``pyproject.toml``.
+
 The CI is configured to test multiple vtk versions to ensure sufficient compatibility with vtk.
 If needed, the minimum and/or maximum vtk version needed by a specific test can be controlled with a
 custom pytest marker ``needs_vtk_version``, enabling the following usage (note the inclusive and exclusive signs):
