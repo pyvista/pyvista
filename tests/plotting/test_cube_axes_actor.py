@@ -282,9 +282,9 @@ def test_axes_ranges_init(camera):
 
 
 def test_axes_ranges_init_raises(camera):
-    with pytest.raises(TypeError, match='numeric sequence'):
+    with pytest.raises(ValueError, match='axes_ranges must have a length equal to any of: 6'):
         pv.CubeAxesActor(camera, axes_ranges=1)
-    with pytest.raises(TypeError, match='All of the elements'):
+    with pytest.raises(TypeError, match='axes_ranges must have real numbers'):
         pv.CubeAxesActor(camera, axes_ranges=[0, 1, 'a', 'b', 2, 3])
-    with pytest.raises(ValueError, match=r'\(x_min, x_max, y_min, y_max, z_min, z_max\)'):
+    with pytest.raises(ValueError, match='Got length 5 instead'):
         pv.CubeAxesActor(camera, axes_ranges=[0, 1, 2, 3, 4])

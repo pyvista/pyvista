@@ -83,15 +83,15 @@ def test_show_bounds_invalid_axes_ranges():
 
     # send incorrect axes_ranges types
     axes_ranges = 1
-    with pytest.raises(TypeError, match='numeric sequence'):
+    with pytest.raises(ValueError, match='axes_ranges must have a length equal to any of: 6'):
         pl.show_bounds(axes_ranges=axes_ranges)
 
     axes_ranges = [0, 1, 'a', 'b', 2, 3]
-    with pytest.raises(TypeError, match='All of the elements'):
+    with pytest.raises(TypeError, match='axes_ranges must have real numbers'):
         pl.show_bounds(axes_ranges=axes_ranges)
 
     axes_ranges = [0, 1, 2, 3, 4]
-    with pytest.raises(ValueError, match=r'[xmin, xmax, ymin, max, zmin, zmax]'):
+    with pytest.raises(ValueError, match='Got length 5 instead'):
         pl.show_bounds(axes_ranges=axes_ranges)
 
 

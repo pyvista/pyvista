@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import cast
 
@@ -22,29 +21,10 @@ from pyvista.plotting.colors import Color
 from pyvista.plotting.tools import parse_font_family
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from pyvista.core._typing_core import VectorLike
     from pyvista.plotting._typing import ColorLike
-
-
-def _validate_axes_ranges(axes_ranges: VectorLike[float]) -> np.ndarray:
-    """Check that axes ranges are a numeric sequence of six values."""
-    if isinstance(axes_ranges, (Sequence, np.ndarray)):
-        axes_ranges = np.asanyarray(axes_ranges)
-    else:
-        msg = 'Input axes_ranges must be a numeric sequence.'  # type: ignore[unreachable]
-        raise TypeError(msg)
-
-    if not np.issubdtype(axes_ranges.dtype, np.number):
-        msg = 'All of the elements of axes_ranges must be numbers.'
-        raise TypeError(msg)
-
-    if axes_ranges.shape != (6,):
-        msg = (
-            '`axes_ranges` must be passed as a '
-            '(x_min, x_max, y_min, y_max, z_min, z_max) sequence.'
-        )
-        raise ValueError(msg)
-    return axes_ranges
 
 
 def _pad_bounds(bounds: VectorLike[float], *, padding: float) -> np.ndarray:
@@ -364,7 +344,9 @@ class CubeAxesActor(
         if bounds is not None:
             self.bounds = _pad_bounds(bounds, padding=padding)
         if axes_ranges is not None:
-            ranges = _validate_axes_ranges(axes_ranges)
+            ranges = _validation.validate_array(
+                axes_ranges, must_have_length=6, name='axes_ranges'
+            )
             self.x_axis_range = ranges[0], ranges[1]
             self.y_axis_range = ranges[2], ranges[3]
             self.z_axis_range = ranges[4], ranges[5]
