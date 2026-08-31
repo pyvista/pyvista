@@ -85,5 +85,5 @@ def test_private_classes_exposing_public_members_carry_the_note(needs_note):
     )
     assert not missing, (
         'These private classes expose public members through public subclasses, '
-        f'so their docstring must contain a note saying so:\n  ' + '\n  '.join(missing)
+        'so their docstring must contain a note saying so:\n  ' + '\n  '.join(missing)
     )
