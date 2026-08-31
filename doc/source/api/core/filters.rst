@@ -12,29 +12,9 @@ Filters
    A filter's output :attr:`~pyvista.DataSet.points` dtype is decided by
    :attr:`pyvista.core.config.Config.points_dtype`, which is ``None`` by default and
    leaves each algorithm to produce whatever it produces. Not every VTK algorithm can
-   generate double-precision points, so each section below marks which of its filters
-   can:
-
-   .. list-table::
-      :widths: 8 92
-
-      * - :material-regular:`check;2em;sd-text-success`
-        - Generates double-precision points when asked for them.
-      * - :material-regular:`remove;2em;sd-text-warning`
-        - Depends on the type of mesh passed in, because the filter chooses its
-          algorithm from it. :meth:`~pyvista.DataSetFilters.contour` delivers double
-          precision from a :class:`~pyvista.PolyData` and cannot from an
-          :class:`~pyvista.ImageData`.
-      * - :material-regular:`close;2em;sd-text-error`
-        - Cannot. PyVista casts the single-precision output up so the dtype is the one
-          requested, and raises :class:`~pyvista.PrecisionWarning` to say the
-          values behind it are not.
-
-   These marks are measured by running each filter while the documentation is built, so
-   they describe the VTK release PyVista is built against here. Another release, or a
-   different backend such as ``cvista``, may draw the line elsewhere. To settle it for
-   the build you are actually using, set ``points_dtype = 'float64'`` and run your own
-   pipeline: any algorithm that cannot deliver it names itself in the warning.
+   generate double-precision points, so each filter is marked with whether it can in the
+   ``Filters`` section of the dataset class it applies to, such as
+   :class:`~pyvista.PolyData` or :class:`~pyvista.ImageData`.
 
 Data Object Filters
 ~~~~~~~~~~~~~~~~~~~
@@ -47,8 +27,6 @@ available as callable methods directly from any PyVista dataset or multi-block.
 
    DataObjectFilters
 
-.. include:: /api/core/points_dtype/data_object_filters.rst
-
 Dataset Filters
 ~~~~~~~~~~~~~~~
 The :class:`pyvista.DataSetFilters` is inherited by :class:`pyvista.DataSet` making
@@ -59,8 +37,6 @@ PyVista dataset.
    :toctree: _autosummary
 
    DataSetFilters
-
-.. include:: /api/core/points_dtype/data_set_filters.rst
 
 
 PolyData Filters
@@ -74,8 +50,6 @@ from any ``PolyData`` mesh.
 
    PolyDataFilters
 
-.. include:: /api/core/points_dtype/poly_data_filters.rst
-
 
 UnstructuredGrid Filters
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -87,8 +61,6 @@ available as callable methods directly from any ``UnstructuredGrid`` mesh.
    :toctree: _autosummary
 
    UnstructuredGridFilters
-
-.. include:: /api/core/points_dtype/unstructured_grid_filters.rst
 
 
 ImageData Filters
@@ -102,8 +74,6 @@ available as callable methods directly from any ``ImageData`` mesh.
 
    ImageDataFilters
 
-.. include:: /api/core/points_dtype/image_data_filters.rst
-
 
 Composite Filters
 ~~~~~~~~~~~~~~~~~
@@ -115,5 +85,3 @@ inherits many but not all of the filters from :class:`pyvista.DataSetFilters`.
    :toctree: _autosummary
 
    CompositeFilters
-
-.. include:: /api/core/points_dtype/composite_filters.rst

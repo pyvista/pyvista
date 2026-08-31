@@ -85,7 +85,6 @@ tests/plotting/tinypages/_build
 
 # Generated files from `make_tables.py`
 doc/source/api/core/cell_quality
-doc/source/api/core/points_dtype
 doc/source/api/examples/dataset-gallery
 doc/source/api/readers/readers_table.rst
 doc/source/images/charts
