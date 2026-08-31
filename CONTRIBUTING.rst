@@ -976,6 +976,9 @@ Some patterns produce dead test code:
 - A stub body written as ``class Stub: ...``. Coverage counts the one-line form as a
   partial branch, and ``ruff format`` collapses ``...`` onto the ``class`` line, so write
   ``pass`` or a docstring instead.
+- A no-op callback whose body is ``pass`` or a bare ``return``, registered somewhere that
+  never calls it. Give it a docstring instead and delete the statement: a docstring is not
+  an executable line, so nothing is left to go uncovered.
 - A class registered or patched but never instantiated, where ``__init__`` only assigns.
   Drop the ``__init__``, or assert on the instance the test already set up.
 - A branch that only one CI job reaches. Coverage is combined across the matrix, so a

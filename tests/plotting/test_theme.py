@@ -587,7 +587,7 @@ def test_save_before_close_callback(tmpdir, default_theme):
     dark_theme = pv.plotting.themes.DarkTheme()
 
     def fun(plotter):
-        pass
+        """Assigned to the theme, never called: the theme is saved, not used."""
 
     dark_theme.before_close_callback = fun
     assert dark_theme != pv.plotting.themes.DarkTheme()
