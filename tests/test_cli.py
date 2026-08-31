@@ -2265,6 +2265,8 @@ def test_compare_too_small_warning_advises_the_command(
     assert 'link=False' not in flattened
 
 
+# Pinned so the panel below is not rendered at a width or style of the environment's choosing
+@pytest.mark.usefixtures('patch_app_console')
 def test_compare_too_small_warning_is_printed_before_the_plot_is_shown(
     tmp_example_dir: Path, capsys: pytest.CaptureFixture, mocker: MockerFixture
 ):
@@ -2283,15 +2285,14 @@ def test_compare_too_small_warning_is_printed_before_the_plot_is_shown(
 
     def fake_show(*args, **kwargs):  # noqa: ARG001
         _, err = capsys.readouterr()
-        # The message is wrapped and padded to the width of the panel it is printed
-        # in, so flatten it the same way it is elsewhere before matching a substring
-        flattened = ' '.join(err.replace('│', ' ').split())
-        printed_before_shown.append('too small to make out' in flattened)
+        # Flatten the wrapping and padding of the panel, as the tests above do
+        printed_before_shown.append(' '.join(err.replace('│', ' ').split()))
 
     mocker.patch.object(pv.Plotter, 'show', fake_show)
     main('compare tiny.vtp huge.vtp --link --off-screen')
 
-    assert printed_before_shown == [True]
+    assert len(printed_before_shown) == 1
+    assert 'too small to make out' in printed_before_shown[0]
 
 
 def test_compare_forwards_other_warnings(tmp_compare_files: list[Path], mocker: MockerFixture):
