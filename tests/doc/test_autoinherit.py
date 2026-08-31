@@ -18,6 +18,7 @@ from sphinx.ext.autodoc.importer import get_class_members
 from sphinx.util.inspect import safe_getattr
 
 import pyvista as pv
+from pyvista import _vtk
 import pyvista.core.filters
 from pyvista.core.filters.data_object import DataObjectFilters
 from pyvista.core.filters.data_set import DataSetFilters
@@ -316,43 +317,59 @@ def test_a_class_that_mixes_in_no_filters_has_no_filter_rows():
     assert autoinherit.filter_member_rows('pyvista', 'Camera', _members(pv.Camera)) == []
 
 
-def test_inherited_classes_are_the_documented_mro_and_the_vtk_class():
+def test_inherited_classes_are_the_documented_mro():
     assert autoinherit.inherited_classes('pyvista', 'CompositeFilters') == [
-        ('py:obj', 'pyvista.DataObjectFilters')
+        'pyvista.DataObjectFilters'
     ]
-    # Most derived first, the class itself dropped, and the VTK class it wraps last.
+    # Most derived first, the class itself dropped, and no VTK base: those are not
+    # documented here, so they are listed separately by vtk_bases.
     assert autoinherit.inherited_classes('pyvista', 'PolyData') == [
-        ('py:obj', 'pyvista.core.pointset._PointSetBase'),
-        ('py:obj', 'pyvista.DataSet'),
-        ('py:obj', 'pyvista.core.utilities.misc._BoundsSizeMixin'),
-        ('py:obj', 'pyvista.PolyDataFilters'),
-        ('py:obj', 'pyvista.DataSetFilters'),
-        ('py:obj', 'pyvista.DataObjectFilters'),
-        ('py:obj', 'pyvista.DataObject'),
-        ('vtk', 'vtkPolyData'),
+        'pyvista.core.pointset._PointSetBase',
+        'pyvista.DataSet',
+        'pyvista.core.utilities.misc._BoundsSizeMixin',
+        'pyvista.PolyDataFilters',
+        'pyvista.DataSetFilters',
+        'pyvista.DataObjectFilters',
+        'pyvista.DataObject',
     ]
 
 
-def test_inherited_classes_trims_the_vtk_hierarchy_to_its_entry_point():
+def test_vtk_bases_are_trimmed_to_the_class_the_page_wraps():
     """VTK documents its own hierarchy, so vtkObject would be on nearly every page."""
-    for name in ('PolyData', 'MultiBlock', 'ImageData'):
-        vtk = [target for role, target in autoinherit.inherited_classes('pyvista', name)]
-        assert 'vtkObject' not in vtk
-        assert 'vtkObjectBase' not in vtk
-    assert ('vtk', 'vtkMultiBlockDataSet') in autoinherit.inherited_classes(
-        'pyvista', 'MultiBlock'
-    )
+    assert autoinherit.vtk_bases('pyvista', 'PolyData') == ['vtkPolyData']
+    assert autoinherit.vtk_bases('pyvista', 'MultiBlock') == ['vtkMultiBlockDataSet']
+    assert autoinherit.vtk_bases('pyvista', 'ImageData') == ['vtkImageData']
+    # A filter class mixes into datasets rather than wrapping anything.
+    assert autoinherit.vtk_bases('pyvista', 'DataObjectFilters') == []
 
 
-def test_inherited_classes_skips_vtk_classes_that_vtk_does_not_document():
+def test_vtk_entry_points_keeps_each_independent_vtk_base():
+    """A class wrapping two unrelated VTK classes has an entry point for each."""
+
+    class _Two(_vtk.vtkPolyData, _vtk.vtkTable): ...
+
+    assert [cls.__name__ for cls in autoinherit._vtk_entry_points(_Two)] == [
+        'vtkPolyData',
+        'vtkTable',
+    ]
+    # The shared bases both derive from are not entry points.
+    assert 'vtkDataObject' not in {cls.__name__ for cls in autoinherit._vtk_entry_points(_Two)}
+
+
+def test_a_class_with_only_a_vtk_base_still_gets_a_row():
+    # 44 documented classes render an Inheritance section that is only the VTK link.
+    assert autoinherit.inherited_classes('pyvista', 'Camera') == []
+    assert autoinherit.vtk_bases('pyvista', 'Camera') == ['vtkCamera']
+
+
+def test_vtk_bases_skips_vtk_classes_that_vtk_does_not_document():
     # VTKObjectWrapper is pure Python in vtkmodules.numpy_interface, so it has no page
     # and the :vtk: role would fail the nitpicky build on it.
     from pyvista._vtk import VTKObjectWrapper
 
     assert issubclass(pv.DataSetAttributes, VTKObjectWrapper)
     assert not autoinherit._is_vtk(VTKObjectWrapper)
-    targets = [t for _, t in autoinherit.inherited_classes('pyvista', 'DataSetAttributes')]
-    assert 'VTKObjectWrapper' not in targets
+    assert autoinherit.vtk_bases('pyvista', 'DataSetAttributes') == []
 
 
 def test_inherited_classes_covers_every_class_the_tables_link_to():
@@ -362,16 +379,19 @@ def test_inherited_classes_covers_every_class_the_tables_link_to():
         rows = autoinherit.inherited_member_rows('pyvista', name, members)
         rows += autoinherit.filter_member_rows('pyvista', name, members)
         homes = {target.rsplit('.', 1)[0] for _, target, _ in rows}
-        documented = {
-            target
-            for role, target in autoinherit.inherited_classes('pyvista', name)
-            if role == 'py:obj'
-        }
-        assert homes <= documented
+        listed = autoinherit.inherited_classes('pyvista', name)
+        assert homes <= set(listed)
+        # Nothing outside the MRO is listed, so returning every documented class fails.
+        assert listed
+        assert {autoinherit._resolve(target) for target in listed} <= set(cls.__mro__)
 
 
-def test_a_class_with_no_documented_or_vtk_base_has_no_inherited_classes():
-    assert autoinherit.inherited_classes('pyvista', 'DataObjectFilters') == []
+def test_a_class_whose_bases_are_all_undocumented_gets_no_section():
+    # numpy.ndarray and _NoNewAttrMixin are neither documented here nor VTK classes, so
+    # a class with real bases can still render nothing.
+    assert len(pv.pyvista_ndarray.__mro__) > 2
+    assert autoinherit.inherited_classes('pyvista', 'pyvista_ndarray') == []
+    assert autoinherit.vtk_bases('pyvista', 'pyvista_ndarray') == []
 
 
 def test_is_filter_recognises_only_the_filter_classes():
@@ -478,9 +498,10 @@ def test_class_template_calls_only_helpers_that_exist():
     for helper in ('own_members', 'inherited_member_rows'):
         assert f'{helper}(module, objname,' in template
         assert callable(getattr(autoinherit, helper))
-    # inherited_classes reads the MRO rather than a member list, so it takes no names.
-    assert 'inherited_classes(module, objname)' in template
-    assert callable(autoinherit.inherited_classes)
+    # These two read the MRO rather than a member list, so they take no names.
+    for helper in ('inherited_classes', 'vtk_bases'):
+        assert f'{helper}(module, objname)' in template
+        assert callable(getattr(autoinherit, helper))
     # ``ns['inherited_members']`` is a set of names by the time the template renders.
     assert 'inherited_members(' not in template
 
@@ -490,6 +511,8 @@ def test_helpers_reject_a_non_class():
         autoinherit.own_members('pyvista', 'wrap', [])
     with pytest.raises(TypeError, match='is not a class'):
         autoinherit.inherited_classes('pyvista', 'wrap')
+    with pytest.raises(TypeError, match='is not a class'):
+        autoinherit.vtk_bases('pyvista', 'wrap')
 
 
 def test_setup_records_the_source_directory():

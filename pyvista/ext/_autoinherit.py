@@ -271,31 +271,32 @@ def filter_member_rows(  # numpydoc ignore=RT01
 
 
 def _is_vtk(cls: type) -> bool:
-    """Return whether ``cls`` is a VTK class with a page in VTK's documentation."""
+    """Return whether ``cls`` is defined in a compiled VTK module."""
     # ``vtkmodules`` also holds pure-Python helpers -- ``VTKObjectWrapper`` in
-    # ``numpy_interface`` -- that VTK does not document; only the compiled modules count.
+    # ``numpy_interface`` -- that VTK does not document, so the ``:vtk:`` role, which
+    # checks every target against vtk.org, cannot resolve them.
     return cls.__module__.startswith('vtkmodules.vtk')
 
 
-def inherited_classes(  # numpydoc ignore=RT01
-    module: str, objname: str
-) -> list[tuple[str, str]]:
-    """Return ``[(role, target)]`` for the classes ``module.objname`` inherits from.
+def _vtk_entry_points(cls: type) -> list[type]:
+    """Return the VTK classes in ``cls``'s MRO that no other VTK class there derives from."""
+    vtk = [base for base in cls.__mro__[1:] if _is_vtk(base)]
+    return [base for base in vtk if not any(o is not base and issubclass(o, base) for o in vtk)]
 
-    Documented pyvista classes are listed in full, most derived first. VTK contributes
-    only the classes nothing else in the MRO derives from.
-    """
+
+def inherited_classes(module: str, objname: str) -> list[str]:  # numpydoc ignore=RT01
+    """Return the documented classes ``module.objname`` inherits from, most derived first."""
     cls = _class_from(module, objname)
     documented = _documented_classes()
-    vtk = [base for base in cls.__mro__[1:] if _is_vtk(base)]
-    entry = {base for base in vtk if not any(o is not base and issubclass(o, base) for o in vtk)}
-    rows: list[tuple[str, str]] = []
-    for base in cls.__mro__[1:]:
-        if base in documented:
-            rows.append(('py:obj', documented[base]))
-        elif base in entry:
-            rows.append(('vtk', base.__name__))
-    return rows
+    return [documented[base] for base in cls.__mro__[1:] if base in documented]
+
+
+def vtk_bases(module: str, objname: str) -> list[str]:  # numpydoc ignore=RT01
+    """Return the names of the VTK classes ``module.objname`` wraps.
+
+    VTK documents its own hierarchy, so the bases above each entry point are left out.
+    """
+    return [base.__name__ for base in _vtk_entry_points(_class_from(module, objname))]
 
 
 def setup(app: Sphinx) -> dict[str, Any]:  # numpydoc ignore=RT01

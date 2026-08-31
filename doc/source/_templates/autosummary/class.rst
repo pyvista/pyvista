@@ -14,9 +14,11 @@
    as written, which cannot show ``_BaseMapper.bounds`` without also spelling out its
    module. ``enum.rst`` builds a table this way for the same reason.
 
-   The inheritance section leads with the documented classes in the MRO -- exactly the
-   classes the sections below link to -- and the VTK class each one wraps, which the
-   ``:vtk:`` role links out to VTK's own docs.
+   The inheritance section leads. It names the classes the sections below link to, not
+   every base: an undocumented base has no page to point at, so it says where the
+   inherited members are documented rather than claiming to be the full hierarchy. The
+   VTK class the page's own class wraps is linked out to VTK's docs by the ``:vtk:`` role.
+
    Filters get their own section at the end: every dataset mixes in the filter classes,
    and for ``PolyData`` they are 142 of the 226 members it inherits. Attributes come
    before the three method sections so those stay together, ending with those filters. #}
@@ -28,15 +30,19 @@
 {%- set inherited_attributes = inherited_member_rows(module, objname, documented_attributes) %}
 {%- set filters = filter_member_rows(module, objname, documented_methods + documented_attributes) %}
 {%- set base_classes = inherited_classes(module, objname) %}
+{%- set vtk_classes = vtk_bases(module, objname) %}
 
 {% block inheritance %}
-{% if base_classes %}
-{% set last_role, last_target = base_classes[-1] %}
+{% if base_classes or vtk_classes %}
 
 {{ _('Inheritance') }}
 {{ '-' * _('Inheritance')|length }}
-
-Inherits from {% for role, item in base_classes[:-1] %}:{{ role }}:`~{{ item }}`, {% endfor %}:{{ last_role }}:`~{{ last_target }}`.
+{% if base_classes %}
+Inherited members are documented on {% for item in base_classes[:-1] %}:py:obj:`~{{ item }}`, {% endfor %}:py:obj:`~{{ base_classes[-1] }}`.
+{% endif %}
+{% if vtk_classes %}
+Wraps {% for item in vtk_classes[:-1] %}:vtk:`{{ item }}`, {% endfor %}:vtk:`{{ vtk_classes[-1] }}`.
+{% endif %}
 {% endif %}
 {% endblock %}
 
