@@ -314,6 +314,14 @@ def test_a_filter_class_documents_only_what_it_defines_as_a_filter():
     assert autoinherit._home(pv.PolyData, 'points') is pv.DataSet
 
 
+def test_a_filter_class_lists_its_own_filters_as_inherited_methods():
+    """A filter class inherits nothing else, so a separate table would say nothing."""
+    members = _members(PolyDataFilters)
+    inherited = autoinherit.inherited_member_rows('pyvista', 'PolyDataFilters', members)
+    assert autoinherit.filter_member_rows('pyvista', 'PolyDataFilters', members) == []
+    assert 'DataSetFilters.contour' in {label for label, _, _ in inherited}
+
+
 def test_a_filter_class_documents_no_attributes():
     """Filters are methods; a mixin's property belongs to the classes that use it."""
     members = _members(PolyDataFilters)

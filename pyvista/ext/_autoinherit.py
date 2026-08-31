@@ -261,15 +261,21 @@ def inherited_member_rows(  # numpydoc ignore=RT01
 ) -> list[tuple[str, str, str]]:
     """Return ``[(label, target, summary)]`` for members documented on another class.
 
-    Filters are left out; they outnumber everything else and get their own section.
+    Filters are left out; they outnumber everything else and get their own section. A
+    filter class inherits nothing but filters, so its own page keeps them here.
     """
-    return [row[1:] for row in _rows(module, objname, names) if not _is_filter(row[0])]
+    keep_filters = _is_filter(_class_from(module, objname))
+    return [
+        row[1:] for row in _rows(module, objname, names) if keep_filters or not _is_filter(row[0])
+    ]
 
 
 def filter_member_rows(  # numpydoc ignore=RT01
     module: str, objname: str, names: Sequence[str]
 ) -> list[tuple[str, str, str]]:
     """Return ``[(label, target, summary)]`` for the filters ``module.objname`` inherits."""
+    if _is_filter(_class_from(module, objname)):
+        return []
     return [row[1:] for row in _rows(module, objname, names) if _is_filter(row[0])]
 
 
