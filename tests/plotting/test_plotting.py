@@ -287,7 +287,10 @@ def test_pbr(sphere, verify_image_cache):
     pl.show()
 
 
-@pytest.mark.parametrize('resample', [True, 0.5])
+# 0.1 rather than 0.5: a rate that clears the floors on every image-based lighting
+# texture renders 4.5x faster, and the arithmetic for rates between is covered by
+# `test_set_environment_texture_resample_shrinks_irradiance`, which does not render.
+@pytest.mark.parametrize('resample', [True, 0.1])
 def test_set_environment_texture_cubemap(resample, verify_image_cache):
     """Test set_environment_texture with a cubemap."""
     # Skip due to large variance
