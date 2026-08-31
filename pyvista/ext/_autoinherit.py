@@ -270,6 +270,13 @@ def filter_member_rows(  # numpydoc ignore=RT01
     return [row[1:] for row in _rows(module, objname, names) if _is_filter(row[0])]
 
 
+def inherited_classes(module: str, objname: str) -> list[str]:  # numpydoc ignore=RT01
+    """Return the documented classes ``module.objname`` inherits from, most derived first."""
+    cls = _class_from(module, objname)
+    documented = _documented_classes()
+    return [documented[base] for base in cls.__mro__[1:] if base in documented]
+
+
 def setup(app: Sphinx) -> dict[str, Any]:  # numpydoc ignore=RT01
     """Record the source directory the documented-class registry is built from."""
     global _srcdir  # noqa: PLW0603

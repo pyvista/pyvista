@@ -14,9 +14,11 @@
    as written, which cannot show ``_BaseMapper.bounds`` without also spelling out its
    module. ``enum.rst`` builds a table this way for the same reason.
 
+   The inheritance section leads with the documented classes in the MRO -- exactly the
+   classes the sections below link to, since VTK and undocumented bases have no page.
    Filters get their own section at the end: every dataset mixes in the filter classes,
-   and for ``PolyData`` they are 142 of the 226 members it inherits. Attributes lead so
-   that the three method sections stay together, ending with those filters. #}
+   and for ``PolyData`` they are 142 of the 226 members it inherits. Attributes come
+   before the three method sections so those stay together, ending with those filters. #}
 {%- set documented_methods = methods | reject('in', skipmethods) | list %}
 {%- set documented_attributes = attributes | reject('in', skipmethods) | list %}
 {%- set own_methods = own_members(module, objname, documented_methods) %}
@@ -24,6 +26,17 @@
 {%- set inherited_methods = inherited_member_rows(module, objname, documented_methods) %}
 {%- set inherited_attributes = inherited_member_rows(module, objname, documented_attributes) %}
 {%- set filters = filter_member_rows(module, objname, documented_methods + documented_attributes) %}
+{%- set base_classes = inherited_classes(module, objname) %}
+
+{% block inheritance %}
+{% if base_classes %}
+
+{{ _('Inheritance') }}
+{{ '-' * _('Inheritance')|length }}
+
+Inherits from {% for item in base_classes[:-1] %}:py:obj:`~{{ item }}`, {% endfor %}:py:obj:`~{{ base_classes[-1] }}`.
+{% endif %}
+{% endblock %}
 
 {% block attributes %}
 {% if own_attributes %}

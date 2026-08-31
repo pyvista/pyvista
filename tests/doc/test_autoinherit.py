@@ -316,6 +316,36 @@ def test_a_class_that_mixes_in_no_filters_has_no_filter_rows():
     assert autoinherit.filter_member_rows('pyvista', 'Camera', _members(pv.Camera)) == []
 
 
+def test_inherited_classes_are_the_documented_mro():
+    assert autoinherit.inherited_classes('pyvista', 'CompositeFilters') == [
+        'pyvista.DataObjectFilters'
+    ]
+    # Most derived first, the class itself dropped, and no vtkPolyData: VTK has no page.
+    assert autoinherit.inherited_classes('pyvista', 'PolyData') == [
+        'pyvista.core.pointset._PointSetBase',
+        'pyvista.DataSet',
+        'pyvista.core.utilities.misc._BoundsSizeMixin',
+        'pyvista.PolyDataFilters',
+        'pyvista.DataSetFilters',
+        'pyvista.DataObjectFilters',
+        'pyvista.DataObject',
+    ]
+
+
+def test_inherited_classes_covers_every_class_the_tables_link_to():
+    """The section indexes the tables below it, so it may not omit a class they link to."""
+    for cls, name in [(pv.PolyData, 'PolyData'), (pv.MultiBlock, 'MultiBlock')]:
+        members = _members(cls)
+        rows = autoinherit.inherited_member_rows('pyvista', name, members)
+        rows += autoinherit.filter_member_rows('pyvista', name, members)
+        homes = {target.rsplit('.', 1)[0] for _, target, _ in rows}
+        assert homes <= set(autoinherit.inherited_classes('pyvista', name))
+
+
+def test_a_class_with_no_documented_base_has_no_inherited_classes():
+    assert autoinherit.inherited_classes('pyvista', 'DataObjectFilters') == []
+
+
 def test_is_filter_recognises_only_the_filter_classes():
     assert autoinherit._is_filter(DataSetFilters)
     assert not autoinherit._is_filter(pv.DataSet)
@@ -420,6 +450,9 @@ def test_class_template_calls_only_helpers_that_exist():
     for helper in ('own_members', 'inherited_member_rows'):
         assert f'{helper}(module, objname,' in template
         assert callable(getattr(autoinherit, helper))
+    # inherited_classes reads the MRO rather than a member list, so it takes no names.
+    assert 'inherited_classes(module, objname)' in template
+    assert callable(autoinherit.inherited_classes)
     # ``ns['inherited_members']`` is a set of names by the time the template renders.
     assert 'inherited_members(' not in template
 
@@ -427,6 +460,8 @@ def test_class_template_calls_only_helpers_that_exist():
 def test_helpers_reject_a_non_class():
     with pytest.raises(TypeError, match='is not a class'):
         autoinherit.own_members('pyvista', 'wrap', [])
+    with pytest.raises(TypeError, match='is not a class'):
+        autoinherit.inherited_classes('pyvista', 'wrap')
 
 
 def test_setup_records_the_source_directory():
