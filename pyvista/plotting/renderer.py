@@ -1177,8 +1177,9 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             )
         actor.name = name
         actor.SetPickable(pickable)
-        # Apply this renderer's scale to the actor (which can be further scaled)
-        if hasattr(actor, 'SetScale'):
+        # Apply this renderer's scale to the actor (which can be further scaled).
+        # GridAxesActor is already placed in world coordinates by its own transform.
+        if hasattr(actor, 'SetScale') and not isinstance(actor, pv.GridAxesActor):
             actor.SetScale(np.array(actor.GetScale()) * np.array(self.scale))
         self.AddActor(actor)  # must add actor before resetting camera
 
@@ -2056,9 +2057,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             :class:`~pyvista.CubeAxesActor`. Set to ``None`` to use ``'grid'`` where the
             installed VTK version provides it and ``'cube'`` otherwise.
 
-            ``'grid'`` renders math text in titles as symbols, labels its axes at rounded
-            values, and is positioned correctly under :meth:`~pyvista.Plotter.set_scale`.
-            Prefer it for new code. It does not support ``location``, ``ticks``,
+            ``'grid'`` renders math text in titles as symbols and labels its axes at
+            rounded values. Prefer it for new code. It does not support ``location``, ``ticks``,
             ``minor_ticks``, ``use_2d``, or ``use_3d_text``, and formats tick labels with
             a fixed number of decimal places rather than an arbitrary ``fmt`` string.
 

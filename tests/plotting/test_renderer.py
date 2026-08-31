@@ -73,6 +73,21 @@ def test_show_grid_axes_ranges_with_all_edges():
     assert labels_ranges == axes_ranges
 
 
+@pytest.mark.parametrize('actor', ACTORS)
+def test_show_bounds_bounds_are_stable_under_scaling(sphere, actor):
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
+    pl.set_scale(zscale=2)
+    axes = pl.show_bounds(actor=actor)
+    expected = axes.GetBounds()
+
+    # Adding more actors must not re-apply the scale to the axes
+    pl.add_mesh(pv.Sphere(center=(2, 0, 0)))
+    assert axes.GetBounds()[4:] == expected[4:]
+    pl.add_mesh(pv.Sphere(center=(4, 0, 0)))
+    assert axes.GetBounds()[4:] == expected[4:]
+
+
 def test_show_bounds_with_scaling(sphere):
     pl = pv.Plotter()
     pl.add_mesh(sphere)
