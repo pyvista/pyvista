@@ -584,8 +584,9 @@ class _Prop3DMixin(_BoundsSizeMixin, ABC):
     their behavior, for example, manually apply a transformation.
 
     .. note::
-        This is a private implementation detail. Its public members are
-        exposed through its public subclasses.
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
 
     """
 

@@ -664,8 +664,9 @@ class _NameMixin:
     .. versionadded:: 0.45
 
     .. note::
-        This is a private implementation detail. Its public members are
-        exposed through its public subclasses.
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
 
     """
 
@@ -693,8 +694,9 @@ class _BoundsSizeMixin:
     """Add a ``bounds_size`` property to classes which define ``bounds``.
 
     .. note::
-        This is a private implementation detail. Its public members are
-        exposed through its public subclasses.
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
 
     """
 

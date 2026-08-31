@@ -1217,8 +1217,9 @@ class _Chart(DocSubs):
     """Common interface for ``vtkChart``/``vtkChartBox``/``vtkChartPie``/``ChartMPL``.
 
     .. note::
-        This is a private implementation detail. Its public members are
-        exposed through its public subclasses.
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
 
     Parameters
     ----------
@@ -1795,8 +1796,9 @@ class _Plot(DocSubs):
     """Common pythonic interface for :vtk:`vtkPlot` and :vtk:`vtkPlot3D` instances.
 
     .. note::
-        This is a private implementation detail. Its public members are
-        exposed through its public subclasses.
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
 
     Parameters
     ----------
@@ -2042,8 +2044,9 @@ class _MultiCompPlot(_Plot):
     Example subclasses are BoxPlot, PiePlot, BarPlot, and StackPlot.
 
     .. note::
-        This is a private implementation detail. Its public members are
-        exposed through its public subclasses.
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
 
     Parameters
     ----------

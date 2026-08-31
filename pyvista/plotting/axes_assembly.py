@@ -95,8 +95,9 @@ class _XYZAssembly(  # numpydoc ignore=PR01
     """Base class for assemblies of x-y-z actors with labels.
 
     .. note::
-        This is a private implementation detail. Its public members are
-        exposed through its public subclasses.
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
 
     """
 

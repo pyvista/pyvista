@@ -32,8 +32,9 @@ class _DataFormatMixin:
     """Add a ``data_format`` property to writers which support ASCII and binary output.
 
     .. note::
-        This is a private implementation detail. Its public members are
-        exposed through its public subclasses.
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
 
     Parameters
     ----------
@@ -564,8 +565,9 @@ class _XMLWriter(BaseWriter, _DataFormatMixin):
     """Base class for the XML writers, which also support compression.
 
     .. note::
-        This is a private implementation detail. Its public members are
-        exposed through its public subclasses.
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
 
     Parameters
     ----------
