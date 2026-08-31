@@ -91,14 +91,9 @@ class _FileProps:
         """Return the file sizes of all files in bytes."""
 
     @property
-    def _total_size_bytes(self) -> int:
-        """Return the total size of all files in bytes."""
-        return sum(self._file_sizes)
-
-    @property
     def total_size(self) -> str:
         """Return the total size of all files formatted as a string."""
-        return _format_file_size(self._total_size_bytes)
+        return _format_file_size(sum(self._file_sizes))
 
     @property
     @abstractmethod

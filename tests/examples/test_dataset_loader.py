@@ -347,7 +347,7 @@ def test_dataset_loader_one_file_local(dataset_loader_one_file_local):
     loader = dataset_loader_one_file_local
     assert len(loader.paths) == 1
     assert loader.num_files == 1
-    assert loader._total_size_bytes == 17941
+    assert sum(loader._file_sizes) == 17941
     assert loader.total_size == '17.9 KB'
     assert loader.unique_extensions == ('.ply',)
     assert isinstance(loader._readers[0], pv.PLYReader)
@@ -377,7 +377,7 @@ def test_dataset_loader_one_file(dataset_loader_one_file):
     loader = dataset_loader_one_file
     assert len(loader.paths) == 1
     assert loader.num_files == 1
-    assert loader._total_size_bytes == 60449
+    assert sum(loader._file_sizes) == 60449
     assert loader.total_size == '60.4 KB'
     assert loader.unique_extensions == ('.vtp',)
     assert isinstance(loader._readers[0], pv.XMLPolyDataReader)
@@ -412,7 +412,7 @@ def test_dataset_loader_two_files_one_loadable(dataset_loader_two_files_one_load
     loader = dataset_loader_two_files_one_loadable
     assert len(loader.paths) == 2
     assert loader.num_files == 2
-    assert loader._total_size_bytes == 125223
+    assert sum(loader._file_sizes) == 125223
     assert loader.total_size == '125.2 KB'
     assert loader.unique_extensions == ('.mhd', '.raw')
     assert pv.get_ext(loader.paths[0]) == '.mhd'
@@ -453,7 +453,7 @@ def test_dataset_loader_two_files_both_loadable(dataset_loader_two_files_both_lo
     loader = dataset_loader_two_files_both_loadable
     assert len(loader.paths) == 2
     assert loader.num_files == 2
-    assert loader._total_size_bytes == 132818
+    assert sum(loader._file_sizes) == 132818
     assert loader.total_size == '132.8 KB'
     assert loader.unique_extensions == ('.slc',)
     assert pv.get_ext(loader.paths[0]) == '.slc'
@@ -550,7 +550,7 @@ def test_dataset_loader_cubemap(dataset_loader_cubemap):
     loader = dataset_loader_cubemap
     assert os.path.isdir(loader.paths[0])
     assert loader.num_files == 6
-    assert loader._total_size_bytes == 606113
+    assert sum(loader._file_sizes) == 606113
     assert loader.total_size == '606.1 KB'
     assert loader.unique_extensions == ('.jpg',)
     assert isinstance(loader.dataset, pv.Texture)
@@ -579,7 +579,7 @@ def test_dataset_loader_dicom(dataset_loader_dicom):
     loader = dataset_loader_dicom
     assert os.path.isdir(loader.paths[0])
     assert loader.num_files == 3
-    assert loader._total_size_bytes == 1583688
+    assert sum(loader._file_sizes) == 1583688
     assert loader.total_size == '1.6 MB'
     assert loader.unique_extensions == ('.dcm',)
     assert isinstance(loader._readers[0], pv.DICOMReader)
@@ -619,7 +619,7 @@ def test_dataset_loader_from_nested_files_and_directory(
     assert os.path.isfile(loader.paths[2])
     assert os.path.isdir(loader.paths[3])
     assert loader._file_sizes == (60449, 231, 124992, 1583688)
-    assert loader._total_size_bytes == 1769360
+    assert sum(loader._file_sizes) == 1769360
     assert loader.total_size == '1.8 MB'
     assert loader.unique_extensions == ('.dcm', '.mhd', '.raw', '.vtp')
     assert len(loader._readers) == 4
@@ -681,7 +681,7 @@ def test_dataset_loader_from_nested_multiblock(dataset_loader_nested_multiblock)
     assert loader.num_files == 1
     assert os.path.isfile(loader.paths[0])
     assert loader._file_sizes == (69732,)
-    assert loader._total_size_bytes == 69732
+    assert sum(loader._file_sizes) == 69732
     assert loader.total_size == '69.7 KB'
     assert loader.unique_extensions == ('.exo',)
     assert isinstance(loader._readers[0], pv.ExodusIIReader)

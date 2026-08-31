@@ -2592,7 +2592,8 @@ class DatasetCard:
             add('reader', 'N/A (generated in code)', slug='na')
 
         # Uses DATASET_GALLERY_SIZE_BINS' own slugs so bins sort numerically, not alphabetically.
-        total_size_bytes = DatasetPropsGenerator._try_getattr(loader, '_total_size_bytes')
+        file_sizes = DatasetPropsGenerator._try_getattr(loader, '_file_sizes')
+        total_size_bytes = None if file_sizes is None else sum(file_sizes)
         size_bin = _facet_size_bin(total_size_bytes)
         size_label, size_slug = size_bin or ('N/A (no file)', 'na')
         add('size', size_label, slug=size_slug)
