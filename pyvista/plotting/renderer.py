@@ -10,6 +10,7 @@ import html
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
+from typing import Literal
 from typing import cast
 
 import numpy as np
@@ -55,7 +56,63 @@ if TYPE_CHECKING:
     from pyvista.core.pointset import PolyData
 
     from .cube_axes_actor import CubeAxesActor
+    from .grid_axes_actor import GridAxesActor
     from .lights import Light
+
+
+class _NotSelected:
+    """Sentinel for a bounds actor choice the caller has not made."""
+
+
+_GRID_AXES_MIN_VTK = (9, 5, 0)
+
+
+def _resolve_axes_actor(actor):
+    """Return the bounds actor class name to build."""
+    if actor is _NotSelected:
+        # Future warning added v0.49, change the default in v0.51, remove v0.52
+        if pv.version_info >= (0, 51):  # pragma: no cover
+            msg = (
+                'Convert this future warning into the new default: `_NotSelected` should '
+                'be removed and the signature default should be `actor=None`.'
+            )
+            raise RuntimeError(msg)
+        msg = (
+            'The default value of `actor` for `show_bounds` and `show_grid` will change '
+            "in the future.\nIt currently defaults to `'cube'`, but will change to "
+            "`'grid'` where the VTK version allows it.\nExplicitly set the `actor` keyword "
+            'to silence this warning, or set it to None to select automatically.'
+        )
+        warn_external(msg, pv.PyVistaFutureWarning)
+        return 'cube'
+    if actor is None:
+        return 'grid' if pv.vtk_version_info >= _GRID_AXES_MIN_VTK else 'cube'
+    _validation.check_contains(['cube', 'grid'], must_contain=actor, name='actor')
+    if actor == 'grid' and pv.vtk_version_info < _GRID_AXES_MIN_VTK:
+        msg = (
+            f"`actor='grid'` requires VTK "
+            f'{".".join(str(v) for v in _GRID_AXES_MIN_VTK)} or later, but VTK '
+            f'{pv.vtk_version_info} is installed.\n'
+            f"Use `actor='cube'`, or `actor=None` to select automatically."
+        )
+        raise pv.VTKVersionError(msg)
+    return actor
+
+
+def _check_actor_keywords(actor, *, cube_only, grid_only):
+    """Reject keywords the selected bounds actor cannot honor."""
+    unusable, other = (cube_only, 'cube') if actor == 'grid' else (grid_only, 'grid')
+    used = sorted(name for name, value in unusable.items() if value is not None)
+    if not used:
+        return
+    names = ', '.join(f'`{name}`' for name in used)
+    is_are, them, plural = ('are', 'them', 's') if len(used) > 1 else ('is', 'it', '')
+    msg = (
+        f"The keyword{plural} {names} {is_are} only supported by `actor='{other}'`, "
+        f"but\n`actor='{actor}'` is selected. Remove {them} or pass `actor='{other}'`."
+    )
+    raise TypeError(msg)
+
 
 ACTOR_LOC_MAP = [
     'upper right',
@@ -400,7 +457,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         )
         self._shadow_pass = None
         self._render_passes = RenderPasses(self)
-        self.cube_axes_actor: CubeAxesActor | None = None
+        self.cube_axes_actor: CubeAxesActor | GridAxesActor | None = None
 
         # This is a private variable to keep track of how many colorbars exist
         # This allows us to keep adding colorbars without overlapping
@@ -1832,19 +1889,22 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         xtitle='X Axis',
         ytitle='Y Axis',
         ztitle='Z Axis',
-        n_xlabels=5,
-        n_ylabels=5,
-        n_zlabels=5,
-        use_2d=False,  # noqa: FBT002
+        n_xlabels=None,
+        n_ylabels=None,
+        n_zlabels=None,
+        use_2d=None,
         grid=None,
-        location='closest',
+        location=None,
         ticks=None,
         all_edges=False,  # noqa: FBT002
         corner_factor=0.5,
         fmt=None,
-        minor_ticks=False,  # noqa: FBT002
+        minor_ticks=None,
         padding=0.0,
         use_3d_text: bool | None = None,  # noqa: FBT001
+        actor: Literal['grid', 'cube'] | type[_NotSelected] | None = _NotSelected,
+        unique_edges_only: bool | None = None,  # noqa: FBT001
+        label_offset=None,
         render=None,
         **kwargs,
     ):
@@ -1923,24 +1983,28 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         ztitle : str, default: "Z Axis"
             Title of the z-axis.  Default ``"Z Axis"``.
 
-        n_xlabels : int, default: 5
-            Number of labels for the x-axis.
+        n_xlabels : int, optional
+            Number of labels for the x-axis. Defaults to ``5`` for ``actor='cube'``, and
+            to labels chosen by the axis at rounded values for ``actor='grid'``.
 
-        n_ylabels : int, default: 5
-            Number of labels for the y-axis.
+        n_ylabels : int, optional
+            Number of labels for the y-axis. Defaults to ``5`` for ``actor='cube'``, and
+            to labels chosen by the axis at rounded values for ``actor='grid'``.
 
-        n_zlabels : int, default: 5
-            Number of labels for the z-axis.
+        n_zlabels : int, optional
+            Number of labels for the z-axis. Defaults to ``5`` for ``actor='cube'``, and
+            to labels chosen by the axis at rounded values for ``actor='grid'``.
 
-        use_2d : bool, default: False
-            This can be enabled for smoother plotting.
+        use_2d : bool, optional
+            This can be enabled for smoother plotting. Only supported by
+            ``actor='cube'``. Defaults to ``False``.
 
         grid : bool or str, optional
             Add grid lines to the backface (``True``, ``'back'``, or
             ``'backface'``) or to the frontface (``'front'``,
             ``'frontface'``) of the axes actor.
 
-        location : str, default: "closest"
+        location : str, optional
             Set how the axes are drawn: either static (``'all'``), closest
             triad (``'front'``, ``'closest'``, ``'default'``), furthest triad
             (``'back'``, ``'furthest'``), static closest to the origin
@@ -1964,8 +2028,9 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             A format string defining how tick labels are generated from
             tick positions. A default is looked up on the active theme.
 
-        minor_ticks : bool, default: False
-            If ``True``, also plot minor ticks on all axes.
+        minor_ticks : bool, optional
+            If ``True``, also plot minor ticks on all axes. Only supported by
+            ``actor='cube'``. Defaults to ``False``.
 
         padding : float, default: 0.0
             An optional percent padding along each axial direction to
@@ -1985,6 +2050,34 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
                 the 3D labels may not render at all in some cases. This is a known VTK bug:
                 https://gitlab.kitware.com/vtk/vtk/-/issues/19729.
 
+        actor : str, optional
+            Which actor to draw the bounds with, either ``'cube'`` for
+            :class:`~pyvista.CubeAxesActor` or ``'grid'`` for
+            :class:`~pyvista.GridAxesActor`. Set to ``None`` to use ``'grid'`` where the
+            installed VTK version provides it and ``'cube'`` otherwise.
+
+            ``'grid'`` renders math text in titles as symbols, and labels its axes at
+            rounded values. It does not support ``location``, ``ticks``,
+            ``minor_ticks``, ``use_2d``, or ``use_3d_text``.
+
+            .. versionadded:: 0.49
+
+            .. warning::
+                The default is currently ``'cube'`` and will change to ``'grid'`` in a
+                future version. Set this keyword explicitly to silence the warning.
+
+        unique_edges_only : bool, optional
+            Label only the edges that belong to a single visible face. Only supported by
+            ``actor='grid'``. Defaults to ``True``.
+
+            .. versionadded:: 0.49
+
+        label_offset : sequence[int], optional
+            Offset of the labels from their edge in display coordinates, as
+            ``(x_offset, y_offset)``. Only supported by ``actor='grid'``.
+
+            .. versionadded:: 0.49
+
         render : bool, optional
             If the render window is being shown, trigger a render
             after showing bounds.
@@ -1994,7 +2087,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         Returns
         -------
-        pyvista.CubeAxesActor
+        pyvista.CubeAxesActor | pyvista.GridAxesActor
             Bounds actor.
 
         See Also
@@ -2012,6 +2105,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         >>> pl = pv.Plotter()
         >>> actor = pl.add_mesh(mesh)
         >>> actor = pl.show_bounds(
+        ...     actor='cube',
         ...     grid='front',
         ...     location='outer',
         ...     all_edges=True,
@@ -2025,6 +2119,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         >>> pl = pv.Plotter()
         >>> actor = pl.add_mesh(mesh, cmap='terrain', show_scalar_bar=False)
         >>> actor = pl.show_bounds(
+        ...     actor='cube',
         ...     grid='back',
         ...     location='outer',
         ...     ticks='both',
@@ -2042,6 +2137,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         >>> pl = pv.Plotter()
         >>> actor = pl.add_mesh(mesh, cmap='terrain', show_scalar_bar=False)
         >>> actor = pl.show_bounds(
+        ...     actor='cube',
         ...     grid='back',
         ...     location='outer',
         ...     ticks='both',
@@ -2057,19 +2153,23 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """
         self.remove_bounds_axes()
 
-        vtk_less_than_96 = pv.vtk_version_info < (9, 6, 0)
-        if not np.allclose(self.scale, [1.0, 1.0, 1.0]):
-            # 3D text is not placed correctly when the renderer is scaled
-            use_3d_text = False
-            use_2d = True
+        actor = _resolve_axes_actor(actor)
+        cube_only = {
+            'location': location,
+            'ticks': ticks,
+            'minor_ticks': minor_ticks,
+            'use_2d': use_2d,
+            'use_3d_text': use_3d_text,
+        }
+        grid_only = {'unique_edges_only': unique_edges_only, 'label_offset': label_offset}
+        _check_actor_keywords(actor, cube_only=cube_only, grid_only=grid_only)
+
         if font_family is None:
             font_family = self._theme.font.family
         if font_size is None:
             font_size = self._theme.font.size
         if fmt is None:
             fmt = self._theme.font.fmt
-        if fmt is None:
-            fmt = '%.1f' if vtk_less_than_96 else '{0:.1f}'  # fallback
 
         if 'xlabel' in kwargs:  # pragma: no cover
             xtitle = kwargs.pop('xlabel')
@@ -2099,47 +2199,69 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         else:
             bounds = np.asanyarray(bounds, dtype=float)
 
-        # create actor
-        cube_axes_actor = pv.CubeAxesActor(
-            self.camera,
-            minor_ticks=minor_ticks,
-            tick_location=ticks,
+        common = dict(
             x_title=xtitle,
             y_title=ytitle,
             z_title=ztitle,
             x_axis_visibility=show_xaxis,
             y_axis_visibility=show_yaxis,
             z_axis_visibility=show_zaxis,
-            x_label_format=fmt,
-            y_label_format=fmt,
-            z_label_format=fmt,
             x_label_visibility=show_xlabels,
             y_label_visibility=show_ylabels,
             z_label_visibility=show_zlabels,
-            n_xlabels=n_xlabels,
-            n_ylabels=n_ylabels,
-            n_zlabels=n_zlabels,
+            x_label_format=fmt,
+            y_label_format=fmt,
+            z_label_format=fmt,
             color=color,
-            grid=grid,
-            location=location,
             font_size=font_size,
             font_family=font_family,
             bold=bold,
-            use_3d_text=use_3d_text,
-            use_2d_mode=use_2d,
             bounds=bounds,
             axes_ranges=axes_ranges,
             padding=padding,
         )
 
+        axes_actor: pv.CubeAxesActor | pv.GridAxesActor
+        if actor == 'grid':
+            axes_actor = pv.GridAxesActor(
+                n_xlabels=n_xlabels,
+                n_ylabels=n_ylabels,
+                n_zlabels=n_zlabels,
+                grid=True if grid is None else bool(grid),
+                unique_edges_only=True if unique_edges_only is None else unique_edges_only,
+                label_offset=label_offset,
+                **common,
+            )
+        else:
+            if not np.allclose(self.scale, [1.0, 1.0, 1.0]):
+                # 3D text is not placed correctly when the renderer is scaled
+                use_3d_text = False
+                use_2d = True
+            if fmt is None:
+                fmt = '%.1f' if pv.vtk_version_info < (9, 6, 0) else '{0:.1f}'
+            common.update(x_label_format=fmt, y_label_format=fmt, z_label_format=fmt)
+            axes_actor = pv.CubeAxesActor(
+                self.camera,
+                minor_ticks=False if minor_ticks is None else minor_ticks,
+                tick_location=ticks,
+                n_xlabels=5 if n_xlabels is None else n_xlabels,
+                n_ylabels=5 if n_ylabels is None else n_ylabels,
+                n_zlabels=5 if n_zlabels is None else n_zlabels,
+                grid=grid,
+                location='closest' if location is None else location,
+                use_3d_text=use_3d_text,
+                use_2d_mode=False if use_2d is None else use_2d,
+                **common,
+            )
+
         if all_edges:
             self.add_bounding_box(color=color, corner_factor=corner_factor)
 
-        self.add_actor(cube_axes_actor, reset_camera=False, pickable=False, render=render)
-        self.cube_axes_actor = cube_axes_actor
+        self.add_actor(axes_actor, reset_camera=False, pickable=False, render=render)
+        self.cube_axes_actor = axes_actor
 
         self.Modified()
-        return cube_axes_actor
+        return axes_actor
 
     def show_grid(self, **kwargs):
         """Show grid lines and bounds axes labels.
@@ -2158,7 +2280,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         Returns
         -------
-        pyvista.CubeAxesActor
+        pyvista.CubeAxesActor | pyvista.GridAxesActor
             Bounds actor.
 
         See Also
@@ -2173,13 +2295,16 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         >>> mesh = pv.Cone()
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(mesh)
-        >>> _ = pl.show_grid()
+        >>> _ = pl.show_grid(actor='cube')
         >>> pl.show()
 
         """
+        # Resolved here so the cube-only defaults below are not applied to grid axes
+        kwargs['actor'] = actor = _resolve_axes_actor(kwargs.get('actor', _NotSelected))
         kwargs.setdefault('grid', 'back')
-        kwargs.setdefault('location', 'outer')
-        kwargs.setdefault('ticks', 'both')
+        if actor == 'cube':
+            kwargs.setdefault('location', 'outer')
+            kwargs.setdefault('ticks', 'both')
         return self.show_bounds(**kwargs)
 
     @_deprecate_positional_args
@@ -2550,10 +2675,10 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         >>> pl = pv.Plotter(shape=(1, 2))
         >>> pl.subplot(0, 0)
         >>> actor = pl.add_mesh(pv.Sphere())
-        >>> actor = pl.show_bounds(grid='front', location='outer')
+        >>> actor = pl.show_bounds(actor='cube', grid='front', location='outer')
         >>> pl.subplot(0, 1)
         >>> actor = pl.add_mesh(pv.Sphere())
-        >>> actor = pl.show_bounds(grid='front', location='outer')
+        >>> actor = pl.show_bounds(actor='cube', grid='front', location='outer')
         >>> actor = pl.remove_bounds_axes()
         >>> pl.show()
 
@@ -3026,10 +3151,9 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
                     self.add_floor(**floor_kwargs)
         if self.cube_axes_actor is not None:
             self.cube_axes_actor.update_bounds(self.bounds)
-            if not np.allclose(self.scale, [1.0, 1.0, 1.0]):
-                self.cube_axes_actor.SetUse2DMode(True)
-            else:
-                self.cube_axes_actor.SetUse2DMode(False)
+            if isinstance(self.cube_axes_actor, pv.CubeAxesActor):
+                scaled = not np.allclose(self.scale, [1.0, 1.0, 1.0])
+                self.cube_axes_actor.SetUse2DMode(scaled)
             self.Modified()
 
     @_deprecate_positional_args
