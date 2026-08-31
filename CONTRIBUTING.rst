@@ -1445,10 +1445,10 @@ pytest plugin, so the only wiring here is one setting in ``pyproject.toml``:
 
 .. code-block:: toml
 
-    typeassert_cases = 'tests/typing/cases'
+    type_assert_cases = 'tests/typing/cases'
 
-The checker it drives is selectable with ``typeassert_checker``, which defaults
-to Mypy. Report anything wrong with the framework itself against that repository
+The checkers it drives are selectable with ``type_assert_checkers``, which
+defaults to Mypy and accepts more than one. Report anything wrong with the framework itself against that repository
 rather than this one.
 
 Building the Documentation

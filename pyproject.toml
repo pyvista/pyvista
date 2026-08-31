@@ -302,7 +302,7 @@ markers = [
 ]
 minversion = "7"
 testpaths = 'tests'
-typeassert_cases = 'tests/typing/cases'
+type_assert_cases = 'tests/typing/cases'
 xfail_strict = true
 
 # pytest-pyvista options
