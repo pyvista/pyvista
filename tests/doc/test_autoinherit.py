@@ -12,6 +12,7 @@ from enum import Enum
 import importlib
 import inspect
 import pkgutil
+from types import SimpleNamespace
 
 import pytest
 from sphinx.ext.autodoc.importer import get_class_members
@@ -338,13 +339,46 @@ def test_a_filter_class_lists_only_the_filters_it_defines():
     assert 'contour' not in own  # documented as DataSetFilters.contour
 
 
-def test_a_filter_class_documents_no_attributes():
+def test_a_filter_class_documents_no_attributes(monkeypatch):
     """Filters are methods; a mixin's property belongs to the classes that use it."""
-    members = _members(PolyDataFilters)
-    assert autoinherit._home(PolyDataFilters, 'bounds_size') is None
-    assert 'bounds_size' not in autoinherit.own_members('pyvista', 'PolyDataFilters', members)
-    # The property is untouched on the datasets that mix it in.
+    reported = []
+
+    class _Mixin:
+        @property
+        def size(self):
+            """Return a size."""
+
+    class _Filters(_Mixin, DataObjectFilters):
+        pass
+
+    class _Dataset(_Mixin):
+        pass
+
+    _Mixin.__module__ = 'pyvista.fake'  # or _home reads it as VTK's and declines
+    _Filters.__module__ = 'pyvista.core.filters.fake'
+
+    def _record(*args, **_kwargs):
+        """Record the warning the way Sphinx's logger would emit it."""
+        reported.append(args)
+
+    monkeypatch.setattr(autoinherit, 'logger', SimpleNamespace(warning=_record))
+    monkeypatch.setattr(autoinherit, '_documented', {_Mixin: 'pkg._Mixin'})
+    autoinherit._warn_unexpected_filter_member.cache_clear()
+
+    assert autoinherit._home(_Filters, 'size') is None
+    assert reported  # the mixin is reported, not silently dropped
+    # Reached on anything but a filter class, the same property is documented as usual.
+    assert autoinherit._home(_Dataset, 'size') is _Mixin
+    autoinherit._warn_unexpected_filter_member.cache_clear()
+
+
+def test_bounds_size_is_documented_once_on_the_mixin():
+    """``DataSet`` mixes it in, so no dataset may claim a page of its own for it."""
     assert autoinherit._home(pv.PolyData, 'bounds_size') is _BoundsSizeMixin
+    assert autoinherit._home(pv.MultiBlock, 'bounds_size') is _BoundsSizeMixin
+    assert 'bounds_size' not in autoinherit.own_members(
+        'pyvista', 'PolyData', _members(pv.PolyData)
+    )
 
 
 def test_a_class_that_mixes_in_no_filters_has_no_filter_rows():

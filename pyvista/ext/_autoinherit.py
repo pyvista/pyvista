@@ -47,7 +47,7 @@ _MODULE_RE = re.compile(r'^\s*\.\.\s+(?:current)?module::\s*([a-zA-Z0-9_.]+)\s*$
 logger = logging.getLogger(__name__)
 
 #: ``provider.member`` for each non-method reachable on a filter class; a new one is reported.
-_NOT_API_ON_FILTERS = frozenset({'DataObjectFilters.points', '_BoundsSizeMixin.bounds_size'})
+_NOT_API_ON_FILTERS = frozenset({'DataObjectFilters.points'})
 
 #: Set by :func:`setup`; the helpers below are called from Jinja and get nothing else.
 _srcdir: Path | None = None
