@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import warnings
 
 from hypothesis import given
 from hypothesis import strategies as st
@@ -23,19 +24,19 @@ def test_show_bounds_axes_ranges():
     pl = pv.Plotter()
 
     # test empty call
-    pl.show_bounds()
+    pl.show_bounds(actor='cube')
     cube_axes_actor = pl.renderer.cube_axes_actor
     assert cube_axes_actor.GetBounds() == tuple(pl.bounds)
 
     # send bounds but no axes ranges
     bounds = (0, 1, 0, 1, 0, 1)
-    pl.show_bounds(bounds=bounds)
+    pl.show_bounds(actor='cube', bounds=bounds)
     cube_axes_actor = pl.renderer.cube_axes_actor
     assert cube_axes_actor.bounds == bounds
 
     # send bounds and axes ranges
     axes_ranges = [0, 1, 0, 2, 0, 3]
-    pl.show_bounds(bounds=bounds, axes_ranges=axes_ranges)
+    pl.show_bounds(actor='cube', bounds=bounds, axes_ranges=axes_ranges)
     cube_axes_actor = pl.renderer.cube_axes_actor
     assert cube_axes_actor.GetBounds() == bounds
     test_ranges = [
@@ -58,7 +59,7 @@ def test_show_grid_axes_ranges_with_all_edges():
     pl = pv.Plotter()
 
     axes_ranges = [5, 10, 5, 10, 5, 10]
-    pl.show_grid(axes_ranges=axes_ranges, all_edges=True)
+    pl.show_grid(actor='cube', axes_ranges=axes_ranges, all_edges=True)
     labels_ranges = []
     for axis in range(3):
         axis_labels = pl.renderer.cube_axes_actor.GetAxisLabels(axis)
@@ -70,11 +71,11 @@ def test_show_grid_axes_ranges_with_all_edges():
 def test_show_bounds_with_scaling(sphere):
     pl = pv.Plotter()
     pl.add_mesh(sphere)
-    actor0 = pl.show_bounds()
+    actor0 = pl.show_bounds(actor='cube')
     expected_default = pv.vtk_version_info < (9, 6, 0)
     assert actor0.GetUseTextActor3D() == expected_default
     pl.set_scale(0.5, 0.5, 2)
-    actor1 = pl.show_bounds()
+    actor1 = pl.show_bounds(actor='cube')
     assert not actor1.GetUseTextActor3D()
 
 
@@ -84,19 +85,19 @@ def test_show_bounds_invalid_axes_ranges():
     # send incorrect axes_ranges types
     axes_ranges = 1
     with pytest.raises(ValueError, match=r'has shape \(\) which is not allowed'):
-        pl.show_bounds(axes_ranges=axes_ranges)
+        pl.show_bounds(actor='cube', axes_ranges=axes_ranges)
 
     axes_ranges = [0, 1, 'a', 'b', 2, 3]
     with pytest.raises(TypeError, match='axes_ranges must have real numbers'):
-        pl.show_bounds(axes_ranges=axes_ranges)
+        pl.show_bounds(actor='cube', axes_ranges=axes_ranges)
 
     axes_ranges = [0, 1, 2, 3, 4]
     with pytest.raises(ValueError, match=r'has shape \(5,\) which is not allowed'):
-        pl.show_bounds(axes_ranges=axes_ranges)
+        pl.show_bounds(actor='cube', axes_ranges=axes_ranges)
 
     axes_ranges = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12]]
     with pytest.raises(ValueError, match=r'has shape \(6, 2\) which is not allowed'):
-        pl.show_bounds(axes_ranges=axes_ranges)
+        pl.show_bounds(actor='cube', axes_ranges=axes_ranges)
 
 
 @pytest.mark.skip_plotting
@@ -734,7 +735,7 @@ def test_actors_removed_from_scene_on_close():
     # regardless of whether pyvista still holds a Python attribute pointing to it.
     pl = pv.Plotter()
     pl.add_mesh(pv.Sphere())
-    cube_axes_actor = pl.show_bounds()
+    cube_axes_actor = pl.show_bounds(actor='cube')
     _add_self_referencing_observer(pl, cube_axes_actor)
 
     assert pl.renderer.GetViewProps().GetNumberOfItems() > 0
@@ -943,7 +944,7 @@ def test_add_actor_raises():
 def test_show_bounds_grid_raises(grid):
     pl = pv.Plotter()
     with pytest.raises(TypeError, match=re.escape(f'`grid` must be a str, not {type(grid)}')):
-        pl.renderer.show_bounds(grid=grid)
+        pl.renderer.show_bounds(actor='cube', grid=grid)
 
 
 def test_show_bounds_grid_value_raises():
@@ -951,7 +952,7 @@ def test_show_bounds_grid_value_raises():
     with pytest.raises(
         ValueError, match=re.escape('`grid` must be either "front", "back, or, "all", not foo')
     ):
-        pl.renderer.show_bounds(grid='foo')
+        pl.renderer.show_bounds(actor='cube', grid='foo')
 
 
 @given(padding=st.floats().filter(lambda x: (x > 1.0) | (x < 0)))
@@ -961,7 +962,7 @@ def test_show_bounds_padding_raises(padding):
         ValueError,
         match=re.escape(f'padding ({padding}) not understood. Must be float between 0 and 1'),
     ):
-        pl.renderer.show_bounds(padding=padding)
+        pl.renderer.show_bounds(actor='cube', padding=padding)
 
 
 @pytest.mark.parametrize('groups', [1, object(), True])
@@ -1009,3 +1010,99 @@ def test_init_renderers_shape_descriptor_positive_raises(shape):
     match = f'"shape" must contain only positive integers. Got {shape!r}.'
     with pytest.raises(ValueError, match=re.escape(match)):
         pv.Plotter(shape=shape)
+
+
+def test_show_bounds_actor_future_warning(sphere):
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
+    match = 'The default value of `actor` for `show_bounds` and `show_grid` will change'
+    with pytest.warns(pv.PyVistaFutureWarning, match=match):
+        actor = pl.show_bounds()
+    assert isinstance(actor, pv.CubeAxesActor)
+
+
+@pytest.mark.parametrize('method', ['show_bounds', 'show_grid'])
+@pytest.mark.parametrize('actor', ['cube', 'grid'])
+def test_show_bounds_actor_explicit_is_silent(sphere, method, actor):
+    if actor == 'grid' and pv.vtk_version_info < (9, 5, 0):
+        pytest.skip('vtkGridAxesActor3D was added in VTK 9.5')
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
+    expected = pv.GridAxesActor if actor == 'grid' else pv.CubeAxesActor
+    with warnings.catch_warnings():
+        warnings.simplefilter('error')
+        assert isinstance(getattr(pl, method)(actor=actor), expected)
+
+
+@pytest.mark.parametrize('method', ['show_bounds', 'show_grid'])
+def test_show_bounds_actor_none_selects_automatically(sphere, method):
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
+    expected = pv.GridAxesActor if pv.vtk_version_info >= (9, 5, 0) else pv.CubeAxesActor
+    with warnings.catch_warnings():
+        warnings.simplefilter('error')
+        assert isinstance(getattr(pl, method)(actor=None), expected)
+
+
+def test_show_bounds_actor_invalid(sphere):
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
+    with pytest.raises(ValueError, match='actor'):
+        pl.show_bounds(actor='sideways')
+
+
+@pytest.mark.needs_vtk_version(9, 5, reason='vtkGridAxesActor3D was added in VTK 9.5')
+@pytest.mark.parametrize(
+    'kwargs',
+    [
+        {'ticks': 'both'},
+        {'location': 'outer'},
+        {'minor_ticks': True},
+        {'use_2d': True},
+        {'use_3d_text': True},
+    ],
+)
+def test_show_bounds_cube_only_keywords_rejected_by_grid(sphere, kwargs):
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
+    name = next(iter(kwargs))
+    with pytest.raises(TypeError, match=rf'`{name}`.*only supported by `actor=.cube.`'):
+        pl.show_bounds(actor='grid', **kwargs)
+
+
+@pytest.mark.parametrize('kwargs', [{'unique_edges_only': True}, {'label_offset': (2, 2)}])
+def test_show_bounds_grid_only_keywords_rejected_by_cube(sphere, kwargs):
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
+    name = next(iter(kwargs))
+    with pytest.raises(TypeError, match=rf'`{name}`.*only supported by `actor=.grid.`'):
+        pl.show_bounds(actor='cube', **kwargs)
+
+
+@pytest.mark.needs_vtk_version(9, 5, reason='vtkGridAxesActor3D was added in VTK 9.5')
+def test_show_bounds_multiple_rejected_keywords_listed(sphere):
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
+    with pytest.raises(TypeError, match='`minor_ticks`, `ticks`'):
+        pl.show_bounds(actor='grid', minor_ticks=True, ticks='both')
+
+
+@pytest.mark.needs_vtk_version(9, 5, reason='vtkGridAxesActor3D was added in VTK 9.5')
+def test_show_grid_does_not_pass_cube_defaults_to_grid_actor(sphere):
+    # show_grid sets `ticks` and `location`, which the grid actor cannot accept
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
+    actor = pl.show_grid(actor='grid')
+    assert isinstance(actor, pv.GridAxesActor)
+    assert actor.grid is True
+
+
+@pytest.mark.needs_vtk_version(9, 5, reason='vtkGridAxesActor3D was added in VTK 9.5')
+def test_show_bounds_grid_is_tracked_by_the_renderer(sphere):
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
+    actor = pl.show_bounds(actor='grid')
+    assert pl.renderer.cube_axes_actor is actor
+    pl.update_bounds_axes()
+    pl.remove_bounds_axes()
+    assert pl.renderer.cube_axes_actor is None
