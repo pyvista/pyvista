@@ -1034,13 +1034,14 @@ def test_init_renderers_shape_descriptor_positive_raises(shape):
         pv.Plotter(shape=shape)
 
 
-def test_show_bounds_actor_future_warning(sphere):
+@pytest.mark.parametrize('method', ['show_bounds', 'show_grid'])
+def test_show_bounds_defaults_to_the_cube_actor(sphere, method):
     pl = pv.Plotter()
     pl.add_mesh(sphere)
-    match = 'The default value of `actor` for `show_bounds` and `show_grid` will change'
-    with pytest.warns(pv.PyVistaFutureWarning, match=match):
-        actor = pl.show_bounds()
-    assert isinstance(actor, pv.CubeAxesActor)
+    assert pl._theme.bounds_axes_actor == 'cube'
+    with warnings.catch_warnings():
+        warnings.simplefilter('error')
+        assert isinstance(getattr(pl, method)(), pv.CubeAxesActor)
 
 
 @pytest.mark.parametrize('method', ['show_bounds', 'show_grid'])
@@ -1056,16 +1057,26 @@ def test_show_bounds_actor_explicit_is_silent(sphere, method, actor):
         assert isinstance(getattr(pl, method)(actor=actor), expected)
 
 
+@NEEDS_GRID_ACTOR
 @pytest.mark.parametrize('method', ['show_bounds', 'show_grid'])
-def test_show_bounds_actor_none_selects_automatically(sphere, method):
-    pl = pv.Plotter()
-    pl.add_mesh(sphere)
-    expected = (
-        pv.GridAxesActor if pv.vtk_version_info >= GRID_AXES_MIN_VTK_VERSION else pv.CubeAxesActor
-    )
-    with warnings.catch_warnings():
-        warnings.simplefilter('error')
-        assert isinstance(getattr(pl, method)(actor=None), expected)
+@pytest.mark.parametrize('actor', ACTORS)
+def test_show_bounds_follows_the_theme(sphere, method, actor):
+    # The theme is copied into the plotter, so it has to be set first
+    pv.global_theme.bounds_axes_actor = actor
+    try:
+        pl = pv.Plotter()
+        pl.add_mesh(sphere)
+        expected = pv.GridAxesActor if actor == 'grid' else pv.CubeAxesActor
+        assert isinstance(getattr(pl, method)(), expected)
+        # An explicit keyword still wins over the theme
+        assert isinstance(getattr(pl, method)(actor='cube'), pv.CubeAxesActor)
+    finally:
+        pv.global_theme.bounds_axes_actor = 'cube'
+
+
+def test_show_bounds_theme_rejects_unknown_actor():
+    with pytest.raises(ValueError, match='bounds_axes_actor'):
+        pv.global_theme.bounds_axes_actor = 'sideways'
 
 
 def test_show_bounds_actor_invalid(sphere):

@@ -61,37 +61,17 @@ if TYPE_CHECKING:
     from .lights import Light
 
 
-class _NotSelected:
-    """Sentinel for a bounds actor choice the caller has not made."""
-
-
-def _resolve_axes_actor(actor):
-    """Return the bounds actor class name to build."""
-    if actor is _NotSelected:
-        # Future warning added v0.49, change the default in v0.51, remove v0.52
-        if pv.version_info >= (0, 51):  # pragma: no cover
-            msg = (
-                'Convert this future warning into the new default: `_NotSelected` should '
-                'be removed and the signature default should be `actor=None`.'
-            )
-            raise RuntimeError(msg)
-        msg = (
-            'The default value of `actor` for `show_bounds` and `show_grid` will change '
-            "in the future.\nIt currently defaults to `'cube'`, but will change to "
-            "`'grid'` where the VTK version allows it.\nExplicitly set the `actor` keyword "
-            'to silence this warning, or set it to None to select automatically.'
-        )
-        warn_external(msg, pv.PyVistaFutureWarning)
-        return 'cube'
+def _resolve_axes_actor(actor, theme):
+    """Return the name of the bounds actor to build."""
     if actor is None:
-        return 'grid' if pv.vtk_version_info >= GRID_AXES_MIN_VTK_VERSION else 'cube'
+        actor = theme.bounds_axes_actor
     _validation.check_contains(['cube', 'grid'], must_contain=actor, name='actor')
     if actor == 'grid' and pv.vtk_version_info < GRID_AXES_MIN_VTK_VERSION:
+        installed = '.'.join(str(v) for v in pv.vtk_version_info)
+        minimum = '.'.join(str(v) for v in GRID_AXES_MIN_VTK_VERSION)
         msg = (
-            f"`actor='grid'` requires VTK "
-            f'{".".join(str(v) for v in GRID_AXES_MIN_VTK_VERSION)} or later, but VTK '
-            f'{pv.vtk_version_info} is installed.\n'
-            f"Use `actor='cube'`, or `actor=None` to select automatically."
+            f"`actor='grid'` requires VTK {minimum} or later, but VTK {installed} is\n"
+            f"installed. Use `actor='cube'`."
         )
         raise pv.VTKVersionError(msg)
     return actor
@@ -1901,7 +1881,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         minor_ticks=None,
         padding=0.0,
         use_3d_text: bool | None = None,  # noqa: FBT001
-        actor: Literal['grid', 'cube'] | type[_NotSelected] | None = _NotSelected,
+        actor: Literal['grid', 'cube'] | None = None,
         unique_edges_only: bool | None = None,  # noqa: FBT001
         show_ticks: bool | None = None,  # noqa: FBT001
         label_display_offset=None,
@@ -2054,21 +2034,20 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
                 https://gitlab.kitware.com/vtk/vtk/-/issues/19729.
 
         actor : str, optional
-            Which actor to draw the bounds with, either ``'grid'`` for
-            :class:`~pyvista.GridAxesActor` or ``'cube'`` for the legacy
-            :class:`~pyvista.CubeAxesActor`. Set to ``None`` to use ``'grid'`` where the
-            installed VTK version provides it and ``'cube'`` otherwise.
+            Which actor to draw the bounds with, either ``'cube'`` for
+            :class:`~pyvista.CubeAxesActor` or ``'grid'`` for
+            :class:`~pyvista.GridAxesActor`. Defaults to
+            :attr:`pyvista.global_theme.bounds_axes_actor
+            <pyvista.plotting.themes.Theme.bounds_axes_actor>`, which is ``'cube'``.
 
             ``'grid'`` renders math text in titles as symbols and labels its axes at
-            rounded values. Prefer it for new code. It does not support ``location``, ``ticks``,
-            ``minor_ticks``, ``use_2d``, or ``use_3d_text``, and formats tick labels with
-            a fixed number of decimal places rather than an arbitrary ``fmt`` string.
+            rounded values. It requires VTK 9.5 or later, its labels are not drawn by
+            the ``'trame'`` Jupyter backend, and it does not support ``location``,
+            ``ticks``, ``minor_ticks``, ``use_2d``, or ``use_3d_text``. It formats tick
+            labels with a fixed number of decimal places rather than an arbitrary
+            ``fmt`` string.
 
             .. versionadded:: 0.49
-
-            .. warning::
-                The default is currently ``'cube'`` and will change to ``'grid'`` in a
-                future version. Set this keyword explicitly to silence the warning.
 
         unique_edges_only : bool, optional
             Label only the edges that belong to a single visible face. Only supported by
@@ -2116,8 +2095,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         >>> pl = pv.Plotter()
         >>> actor = pl.add_mesh(mesh)
         >>> actor = pl.show_bounds(
-        ...     actor=None,
-        ...     grid=True,
+        ...     grid='front',
+        ...     location='outer',
         ...     all_edges=True,
         ... )
         >>> pl.show()
@@ -2129,8 +2108,9 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         >>> pl = pv.Plotter()
         >>> actor = pl.add_mesh(mesh, cmap='terrain', show_scalar_bar=False)
         >>> actor = pl.show_bounds(
-        ...     actor=None,
-        ...     grid=True,
+        ...     grid='back',
+        ...     location='outer',
+        ...     ticks='both',
         ...     n_xlabels=2,
         ...     n_ylabels=2,
         ...     n_zlabels=2,
@@ -2145,8 +2125,9 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         >>> pl = pv.Plotter()
         >>> actor = pl.add_mesh(mesh, cmap='terrain', show_scalar_bar=False)
         >>> actor = pl.show_bounds(
-        ...     actor=None,
-        ...     grid=True,
+        ...     grid='back',
+        ...     location='outer',
+        ...     ticks='both',
         ...     show_xlabels=False,
         ...     show_ylabels=False,
         ...     show_zlabels=False,
@@ -2159,7 +2140,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """
         self.remove_bounds_axes()
 
-        actor = _resolve_axes_actor(actor)
+        actor = _resolve_axes_actor(actor, self._theme)
         cube_only = {
             'location': location,
             'ticks': ticks,
@@ -2314,12 +2295,12 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         >>> mesh = pv.Cone()
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(mesh)
-        >>> _ = pl.show_grid(actor=None)
+        >>> _ = pl.show_grid()
         >>> pl.show()
 
         """
         # Resolved here so the cube-only defaults below are not applied to grid axes
-        actor = _resolve_axes_actor(kwargs.get('actor', _NotSelected))
+        actor = _resolve_axes_actor(kwargs.get('actor'), self._theme)
         kwargs['actor'] = actor
         if actor == 'cube':
             kwargs.setdefault('grid', 'back')
@@ -2697,10 +2678,10 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         >>> pl = pv.Plotter(shape=(1, 2))
         >>> pl.subplot(0, 0)
         >>> actor = pl.add_mesh(pv.Sphere())
-        >>> actor = pl.show_bounds(actor=None, grid=True)
+        >>> actor = pl.show_bounds(grid='front', location='outer')
         >>> pl.subplot(0, 1)
         >>> actor = pl.add_mesh(pv.Sphere())
-        >>> actor = pl.show_bounds(actor=None, grid=True)
+        >>> actor = pl.show_bounds(grid='front', location='outer')
         >>> actor = pl.remove_bounds_axes()
         >>> pl.show()
 
