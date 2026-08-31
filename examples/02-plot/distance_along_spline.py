@@ -77,7 +77,7 @@ pl.add_point_labels(
     point_size=20,
     render_points_as_spheres=True,
 )
-pl.show_bounds(actor='cube')
+pl.show_bounds(actor='grid')
 pl.show_axes()
 pl.camera_position = 'xz'
 pl.show()

@@ -74,7 +74,7 @@ warped_subset = subset.warp_by_scalar(factor=0.0001)
 pl = pv.Plotter(lighting='three lights')
 pl.add_mesh(warped_subset, cmap='blues', show_scalar_bar=False)
 pl.show_bounds(
-    actor='cube',
+    actor='grid',
     axes_ranges=(0, max_freq, 0, max_freq, 0, warped_subset.bounds[-1]),
     xtitle='X Frequency',
     ytitle='Y Frequency',

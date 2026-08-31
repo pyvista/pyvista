@@ -43,7 +43,7 @@ pl.show()
 
 pl = pv.Plotter()
 pl.add_mesh(mesh)
-pl.show_grid(actor='cube')
+pl.show_grid(actor='grid')
 pl.show()
 
 # %%

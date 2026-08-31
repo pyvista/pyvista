@@ -77,7 +77,7 @@ def my_plane_func(normal, origin):
 
 
 pl.add_plane_widget(my_plane_func)
-pl.show_grid(actor='cube')
+pl.show_grid(actor='grid')
 pl.add_axes()
 pl.show()
 

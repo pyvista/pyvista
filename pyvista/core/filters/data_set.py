@@ -4899,7 +4899,7 @@ class DataSetFilters(DataObjectFilters):
 
         >>> pl = pv.Plotter()
         >>> _ = pl.add_composite(multiblock, multi_colors=True)
-        >>> _ = pl.show_grid(actor='cube')
+        >>> _ = pl.show_grid(actor='grid')
         >>> pl.show()
 
         Note that the block names are generic by default.

@@ -1834,7 +1834,7 @@ def CircularArc(  # noqa: PLR0917
     >>> arc = pv.CircularArc(pointa=[-1, 0, 0], pointb=[0, 1, 0], center=[0, 0, 0])
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(arc, color='k', line_width=10)
-    >>> _ = pl.show_bounds(actor='cube', location='all', font_size=30, use_2d=True)
+    >>> _ = pl.show_bounds(actor='grid', font_size=30)
     >>> _ = pl.view_xy()
     >>> pl.show()
 
@@ -1924,7 +1924,7 @@ def CircularArcFromNormal(  # noqa: PLR0917
     ... )
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(arc, color='k', line_width=10)
-    >>> _ = pl.show_bounds(actor='cube', location='all', font_size=30, use_2d=True)
+    >>> _ = pl.show_bounds(actor='grid', font_size=30)
     >>> _ = pl.view_xy()
     >>> pl.show()
 
