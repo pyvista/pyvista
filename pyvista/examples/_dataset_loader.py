@@ -91,11 +91,6 @@ class _FileProps:
         """Return the file sizes of all files in bytes."""
 
     @property
-    def _file_sizes_formatted(self) -> tuple[str, ...]:
-        """Return the formatted size of all files."""
-        return tuple(_format_file_size(size) for size in self._file_sizes)
-
-    @property
     def _total_size_bytes(self) -> int:
         """Return the total size of all files in bytes."""
         return sum(self._file_sizes)

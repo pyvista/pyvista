@@ -58,6 +58,8 @@ from pyvista.examples import cells
 from pyvista.examples._dataset_loader import _DOWNLOADABLE_TYPES
 from pyvista.examples._dataset_loader import _DatasetLoader
 from pyvista.examples._dataset_loader import _FileProps
+from pyvista.examples._get_example import _example_loader
+from pyvista.examples._get_example import _public_function
 from pyvista.plotting.colors import _CSS_COLORS
 from pyvista.plotting.colors import _PARAVIEW_COLORS
 from pyvista.plotting.colors import _TABLEAU_COLORS
@@ -2240,19 +2242,22 @@ class DatasetCard:
         self,
         dataset_name: str,
         loader: _DatasetLoader,
+        *,
+        module: ModuleType,
+        function: Callable[..., Any],
     ):
         self.dataset_name = dataset_name
         self.loader = loader
+        self.module = module
+        self.function = function
         self.card = None
         self.ref = None
 
     def generate(self):
         # Get rst dataset name-related info
-        index_name, header_name, func_ref, func_doc, func_name = self._generate_dataset_name(
-            self.dataset_name,
-        )
+        index_name, header_name, func_ref, func_doc, func_name = self._generate_dataset_name()
         # Get thumbnail image path
-        module_name = self.loader._module.__name__.replace('.', '-')
+        module_name = self.module.__name__.replace('.', '-')
         ext = DATASET_GALLERY_IMAGE_EXT_DICT.get(self.dataset_name, '.png')
         if ext is None:
             img_path = self._create_default_image()
@@ -2280,14 +2285,12 @@ class DatasetCard:
             dimensions,
             spacing,
             n_arrays,
-        ) = DatasetCard._generate_dataset_properties(self.loader)
+        ) = DatasetCard._generate_dataset_properties(self.loader, self.module)
 
         # Get cross-references from docs
-        cross_references = DatasetCard._generate_cross_references(
-            self.dataset_name, index_name, header_name
-        )
+        cross_references = self._generate_cross_references(index_name, header_name)
 
-        class_card, facet_labels = DatasetCard._generate_facet_classes(self.loader)
+        class_card, facet_labels = DatasetCard._generate_facet_classes(self.loader, self.module)
         DatasetCardFetcher.FACET_LABELS.update(facet_labels)
 
         # Assemble rst parts into main blocks used by the card
@@ -2329,7 +2332,7 @@ class DatasetCard:
         )
 
     @staticmethod
-    def _generate_dataset_properties(loader):
+    def _generate_dataset_properties(loader, module: ModuleType):
         # Get data from loader
         if isinstance(loader, _DOWNLOADABLE_TYPES):
             loader.download()
@@ -2340,7 +2343,7 @@ class DatasetCard:
         file_ext = DatasetPropsGenerator.generate_file_ext(loader)
         reader_type = DatasetPropsGenerator.generate_reader_type(loader)
         importer_meth = DatasetPropsGenerator.generate_importer_method(loader)
-        module_badge = DatasetPropsGenerator.generate_module_badge(loader)
+        module_badge = DatasetPropsGenerator.generate_module_badge(module)
         dataset_type = DatasetPropsGenerator.generate_dataset_type(loader)
         celltype_field = DatasetPropsGenerator.generate_celltype_field(loader)
         datasource_links = DatasetPropsGenerator.generate_datasource_links(loader)
@@ -2371,31 +2374,17 @@ class DatasetCard:
             n_arrays,
         )
 
-    @staticmethod
-    def _get_dataset_function(dataset_name: str) -> tuple[FunctionType, str]:
-        # Get the corresponding function of the loader
-        for func_name in ['download_' + dataset_name, 'load_' + dataset_name]:
-            for module in DATASET_GALLERY_MODULES:
-                if func := getattr(module, func_name, None):
-                    return func, func_name
-
-        msg = f'No load or download function was found for {dataset_name}.'
-        raise RuntimeError(msg)
-
-    @staticmethod
-    def _generate_dataset_name(dataset_name: str):
+    def _generate_dataset_name(self):
         # Format dataset name for indexing and section heading
-        index_name = dataset_name + '_dataset'
+        index_name = self.dataset_name + '_dataset'
         header = ' '.join([word.capitalize() for word in index_name.split('_')])
 
         # Get the card's header info
-        func, func_name = DatasetCard._get_dataset_function(dataset_name)
-        func_ref = f':func:`~{_get_fullname(func)}`'
-        func_doc = _get_doc(func)
-        return index_name, header, func_ref, func_doc, func_name
+        func_ref = f':func:`~{_get_fullname(self.function)}`'
+        func_doc = _get_doc(self.function)
+        return index_name, header, func_ref, func_doc, self.function.__name__
 
-    @staticmethod
-    def _generate_cross_references(dataset_name: str, index_name: str, header_name):
+    def _generate_cross_references(self, index_name: str, header_name):
         def find_seealso_refs(func: FunctionType) -> list[str]:
             # Find and return the :ref: references from the .. seealso:: directive
             # in the docstring of a function.
@@ -2439,8 +2428,7 @@ class DatasetCard:
 
             return refs
 
-        func, _ = DatasetCard._get_dataset_function(dataset_name)
-        refs = find_seealso_refs(func)
+        refs = find_seealso_refs(self.function)
 
         # Filter the references
         self_ref = f':ref:`{header_name} <{index_name}>`'
@@ -2458,8 +2446,8 @@ class DatasetCard:
             keep_refs.append(ref)
 
         assert self_ref_count == 1, (
-            f"Dataset '{dataset_name}' is missing a cross-reference link to its corresponding "
-            f'entry in the Dataset Gallery.\n'
+            f"Dataset '{self.dataset_name}' is missing a cross-reference link to its "
+            f'corresponding entry in the Dataset Gallery.\n'
             f'A reference link should be included in a see also directive, e.g.:\n'
             f'\n'
             f'    .. seealso::\n'
@@ -2565,7 +2553,9 @@ class DatasetCard:
         )
 
     @staticmethod
-    def _generate_facet_classes(loader: _DatasetLoader) -> tuple[str, dict[str, str]]:
+    def _generate_facet_classes(
+        loader: _DatasetLoader, module: ModuleType
+    ) -> tuple[str, dict[str, str]]:
         """Compute `:class-card:` CSS classes (and their labels) for the filter toolbar.
 
         A dataset gets one class per value per facet (e.g. multiple cell
@@ -2581,7 +2571,7 @@ class DatasetCard:
             classes.append(f'{prefix}-{slug}')
             labels[f'{prefix}-{slug}'] = value_name
 
-        add('mod', DATASET_GALLERY_MODULES[loader._module])
+        add('mod', DATASET_GALLERY_MODULES[module])
 
         for dataset_type in loader.unique_dataset_types:
             name = 'None' if dataset_type is type(None) else dataset_type.__name__
@@ -2760,11 +2750,11 @@ class DatasetPropsGenerator:
         )
 
     @staticmethod
-    def generate_module_badge(loader: _DatasetLoader):
+    def generate_module_badge(module: ModuleType):
         """Format the dataset's source module as a small badge linking to its module page."""
-        label = DATASET_GALLERY_MODULES[loader._module]
-        color = DATASET_GALLERY_MODULE_BADGE_COLORS[loader._module]
-        module_path = loader._module.__name__
+        label = DATASET_GALLERY_MODULES[module]
+        color = DATASET_GALLERY_MODULE_BADGE_COLORS[module]
+        module_path = module.__name__
         return f':bdg-ref-{color}:`{label} <{module_path}>`'
 
     @staticmethod
@@ -2919,13 +2909,9 @@ def _build_dataset_card(module_name: str, dataset_name: str) -> _DatasetCardResu
     worker process independently of every other dataset's card.
     """
     module = importlib.import_module(module_name)
-    dataset_loader: _DatasetLoader = getattr(module, f'_dataset_{dataset_name}')
-    # Store module and function as dynamic properties for access later
-    dataset_loader._module = module
-    try:
-        dataset_loader._function = getattr(module, f'download_{dataset_name}')
-    except AttributeError:
-        dataset_loader._function = getattr(module, f'load_{dataset_name}')
+    dataset_loader = _example_loader(module, dataset_name)
+    assert dataset_loader is not None
+    function = _public_function(module, dataset_name)
 
     module_display = module_name.removeprefix('pyvista.')
     summary = bold(f'generating rst for {module_display}...')
@@ -2935,7 +2921,7 @@ def _build_dataset_card(module_name: str, dataset_name: str) -> _DatasetCardResu
     dataset_loader.load_and_store_dataset()
     assert dataset_loader.dataset is not None
 
-    card = DatasetCard(dataset_name, dataset_loader)
+    card = DatasetCard(dataset_name, dataset_loader, module=module, function=function)
     # indent one level from the carousel header directive
     DatasetCardFetcher.FACET_LABELS.clear()
     rst = _pad_lines(card.generate(), pad_left='   ')
@@ -3120,10 +3106,10 @@ def _validate_function_annotation(card: DatasetCard) -> str | None:
     are what a caller and a type checker actually see; an implementation annotated as a
     union says nothing about which branch returns which half.
     """
-    if card.loader._module not in DATASET_GALLERY_MODULES:
+    if card.module not in DATASET_GALLERY_MODULES:
         return None
 
-    function = card.loader._function
+    function = card.function
     signature = inspect.signature(function)
     dataset_type, path_type = _expected_return_types(card)
 

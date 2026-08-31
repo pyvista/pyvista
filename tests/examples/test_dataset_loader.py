@@ -619,7 +619,6 @@ def test_dataset_loader_from_nested_files_and_directory(
     assert os.path.isfile(loader.paths[2])
     assert os.path.isdir(loader.paths[3])
     assert loader._file_sizes == (60449, 231, 124992, 1583688)
-    assert loader._file_sizes_formatted == ('60.4 KB', '231 B', '125.0 KB', '1.6 MB')
     assert loader._total_size_bytes == 1769360
     assert loader.total_size == '1.8 MB'
     assert loader.unique_extensions == ('.dcm', '.mhd', '.raw', '.vtp')
@@ -682,7 +681,6 @@ def test_dataset_loader_from_nested_multiblock(dataset_loader_nested_multiblock)
     assert loader.num_files == 1
     assert os.path.isfile(loader.paths[0])
     assert loader._file_sizes == (69732,)
-    assert loader._file_sizes_formatted == ('69.7 KB',)
     assert loader._total_size_bytes == 69732
     assert loader.total_size == '69.7 KB'
     assert loader.unique_extensions == ('.exo',)
