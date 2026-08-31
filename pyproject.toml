@@ -75,6 +75,7 @@ test = [
   'cmocean<4.0.4',
   'colorcet<3.3.0',
   'embreex<4.4.1',
+  'filelock<3.33.0',
   'fsspec<2026.7.0',
   'hypothesis<6.161.3',
   'imageio-ffmpeg<0.7.0',
@@ -124,6 +125,7 @@ docs = [
   'colour-science==0.4.6; python_version < "3.14"',
   'colour-science==0.4.7; python_version >= "3.14"',
   'erbsland-sphinx-ansi==1.2.4',
+  'filelock<3.33.0',
   'fsspec==2026.6.0',
   'imageio-ffmpeg==0.6.0',
   'imageio==2.37.4',
@@ -170,6 +172,7 @@ docs = [
 ]
 
 docs-test = [
+  'filelock<3.33.0',
   'pytest-pyvista[vtksz]==0.3.3',
   'pytest-xdist<3.9.0',
   'refleak>=0.2.2,<0.3.0', # tests/conftest.py imports it for the leak check
@@ -498,9 +501,7 @@ banned-from = [
   'ctypes',
   'datetime',
   'doctest',
-  'errno',
   'faulthandler',
-  'fcntl',
   'functools',
   'gc',
   'glob',
@@ -514,7 +515,6 @@ banned-from = [
   'locale',
   'logging',
   'math',
-  'msvcrt',
   'multiprocessing',
   'numbers',
   'operator',

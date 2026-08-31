@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import contextlib
-import errno
 import os
 from pathlib import Path
 from pathlib import PureWindowsPath
@@ -202,46 +201,6 @@ def test_file_lock_blocks_second_acquirer(tmp_path):
     assert order == ['first', 'second']
 
 
-def test_retry_while_contended_returns_once_the_lock_is_taken():
-    """A lock function that succeeds is called exactly once."""
-    attempts = []
-    downloads._retry_while_contended(lambda: attempts.append('locked'))
-    assert attempts == ['locked']
-
-
-def test_retry_while_contended_waits_out_another_holder():
-    """Contention errors are retried until the lock is free."""
-    attempts = []
-
-    def lock_func():
-        attempts.append(len(attempts))
-        if len(attempts) < 3:
-            raise OSError(errno.EACCES, 'held by another process')
-
-    downloads._retry_while_contended(lock_func)
-    assert len(attempts) == 3
-
-
-@pytest.mark.parametrize('err', [errno.EINVAL, errno.ENOLCK])
-def test_retry_while_contended_gives_up_when_locking_is_unsupported(err):
-    """Errors that are not contention stop the retry loop instead of spinning."""
-    attempts = []
-
-    def lock_func():
-        attempts.append(len(attempts))
-        raise OSError(err, 'locking unsupported')
-
-    downloads._retry_while_contended(lock_func)
-    assert len(attempts) == 1
-
-
-def test_open_lock_file_returns_none_when_it_cannot_be_created(tmp_path):
-    """An unusable cache location yields no descriptor rather than raising."""
-    blocker = tmp_path / 'blocker'
-    blocker.write_text('not a directory')
-    assert downloads._open_lock_file(blocker / 'sub' / 'file.txt') is None
-
-
 def test_file_lock_proceeds_when_it_cannot_be_created(tmp_path):
     """Downloads continue unlocked when the lock file cannot be created."""
     blocker = tmp_path / 'blocker'
@@ -250,6 +209,16 @@ def test_file_lock_proceeds_when_it_cannot_be_created(tmp_path):
     with downloads._file_lock(blocker / 'sub' / 'file.txt'):
         entered.append(True)
     assert entered == [True]
+
+
+def test_file_lock_is_a_no_op_without_filelock(tmp_path, monkeypatch):
+    """Downloads continue unlocked when filelock is not installed."""
+    monkeypatch.setattr(downloads, 'filelock', None)
+    entered = []
+    with downloads._file_lock(tmp_path / 'file.txt'):
+        entered.append(True)
+    assert entered == [True]
+    assert not list(tmp_path.glob('*.lock'))
 
 
 def test_download_file_fetches_under_lock(tmp_path, monkeypatch):
