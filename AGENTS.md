@@ -14,6 +14,7 @@ Open the one that matches the task.
 | Writing or changing code here                                             | `.claude/skills/pyvista-dev/SKILL.md`        |
 | Wrapping a VTK class, adding or editing a filter                          | `.claude/skills/pyvista-vtk/SKILL.md`        |
 | Any plotting test, baseline image, or image flag                          | `.claude/skills/pyvista-testing/SKILL.md`    |
+| Repairing the documentation image cache after a docs image failure        | `.claude/skills/pyvista-doc-images/SKILL.md` |
 | Reviewing a branch, diff, or pull request                                 | `.claude/skills/pyvista-review/SKILL.md`     |
 | Writing the pull request title and body                                   | `.claude/skills/pyvista-pr/SKILL.md`         |
 | Deprecating or renaming anything public                                   | `.claude/skills/pyvista-vtk/SKILL.md`        |
@@ -31,7 +32,8 @@ targets CI runs, so run them: `make lint`, `make docstyle`, `make doctest`, and
 `make test-core` or `make test-plotting` scoped to what you touched. Run the style and
 docstring gates before you call a change finished, not only when the diff looks related
 to them: `make doctest` executes every docstring example in the package, so a change to
-import-time behavior or to a plotting default fails it with no docstring in the diff.
+import-time behavior or to a plotting default fails it with no docstring in the diff; it
+also statically checks the names those examples use.
 Amend or squash locally and push once. `CONTRIBUTING.rst` states this as
 `Continuous Integration Etiquette`. Some jobs run only when a label asks for them
 (`vtk-dev-testing`, `vtk-master-testing`, `integration-testing`, `docker`) -- see

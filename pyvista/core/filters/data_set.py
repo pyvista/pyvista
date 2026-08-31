@@ -42,7 +42,6 @@ from pyvista.core.utilities.cells import numpy_to_idarr
 from pyvista.core.utilities.helpers import _NORMALS
 from pyvista.core.utilities.helpers import _warn_if_invalid_data
 from pyvista.core.utilities.helpers import wrap
-from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.transform import Transform
@@ -69,7 +68,7 @@ _SelectInteriorPointsOptions = Literal['signed_distance', 'cell_locator']
 
 
 @abstract_class
-class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
+class DataSetFilters(DataObjectFilters):
     """A set of common filters that can be applied to any :vtk:`vtkDataSet`."""
 
     @_deprecate_positional_args(allowed=['target'])
@@ -7869,10 +7868,11 @@ class DataSetFilters(_BoundsSizeMixin, DataObjectFilters):
         >>> mask.dimensions
         (10, 20, 30)
 
-        Create a mask using a reference volume. First generate polydata from
-        an existing mask.
+        Create a mask using a reference volume. First load a label map,
+        crop it to the frog's head, and generate polydata from it.
 
         >>> volume = examples.load_frog_tissues()
+        >>> volume = volume.crop(extent=(300, 499, 110, 350, 0, 100))
         >>> poly = volume.contour_labels()
 
         Now create the mask from the polydata using the volume as a reference.

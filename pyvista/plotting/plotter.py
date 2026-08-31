@@ -194,12 +194,6 @@ gl_Position.x = new_x * u_distortion_projection_scale.x * clip_w;
 gl_Position.y = new_y * u_distortion_projection_scale.y * clip_w;
 """
 
-if os.environ.get('PYVISTA_KILL_DISPLAY'):  # pragma: no cover
-    from pyvista.core.errors import DeprecationError
-
-    msg = 'PYVISTA_KILL_DISPLAY has been deprecated'
-    DeprecationError(msg)
-
 
 def close_all() -> bool:
     """Close all open/active plotters and clean up memory.
@@ -5710,6 +5704,10 @@ class BasePlotter(_BoundsSizeMixin):
         if self._before_close_callback is not None:
             self._before_close_callback(self)  # type: ignore[arg-type]
             self._before_close_callback = None
+
+        # Suppress interactor-initiated renders for the rest of teardown.
+        if self.iren is not None and self.iren.interactor is not None:
+            self.iren.interactor.EnableRenderOff()
 
         # Tear down plotter components first (in reverse construction
         # order) so that widgets / pickers release their VTK observers
