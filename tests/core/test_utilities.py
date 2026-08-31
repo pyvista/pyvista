@@ -1630,7 +1630,8 @@ def test_no_new_attr_mixin_side_effects():
         @foo.setter
         def foo(self, val): ...
 
-    class Child(Parent): ...
+    class Child(Parent):
+        pass
 
     # Test that setting attributes on lasses does not trigger a call to the getter
     obj = Parent()
@@ -2983,7 +2984,8 @@ def _create_state_manager_subclass(arg1, arg2=None, sub_subclass=False):
 
     if sub_subclass:
 
-        class MyState2(MyState): ...
+        class MyState2(MyState):
+            pass
 
         return MyState2
     return MyState

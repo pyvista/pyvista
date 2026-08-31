@@ -88,7 +88,8 @@ def test_metaclass_properties_first_definition_wins_in_mro():
         def shared(self):
             return 'sub'
 
-    class Widget(metaclass=SubMeta): ...
+    class Widget(metaclass=SubMeta):
+        pass
 
     props = autoenum._metaclass_properties(Widget)
     assert props['shared'] is SubMeta.__dict__['shared']
@@ -135,7 +136,8 @@ def test_metaclass_property_descriptions_uses_first_docstring_line(monkeypatch):
             """
             return 'value'
 
-    class Widget(metaclass=Meta): ...
+    class Widget(metaclass=Meta):
+        pass
 
     monkeypatch.setattr(autoenum, '_resolve', lambda *_args: Widget)
     descriptions = dict(autoenum.metaclass_property_descriptions('unused', 'unused'))
