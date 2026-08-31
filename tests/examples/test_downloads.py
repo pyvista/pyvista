@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import contextlib
 import os
 from pathlib import Path
 from pathlib import PureWindowsPath
 import re
+import threading
 
 import pytest
 import requests
@@ -177,6 +179,68 @@ def test_download_file_creates_destination_directory(tmp_path, monkeypatch):
 
     downloads.download_file('subdir/file.txt')
     assert parent_exists == [True]
+
+
+def test_file_lock_blocks_second_acquirer(tmp_path):
+    """A held download lock must block other acquirers until it is released."""
+    target = tmp_path / 'file.txt'
+    order = []
+
+    def acquire():
+        with downloads._file_lock(target):
+            order.append('second')
+
+    thread = threading.Thread(target=acquire, daemon=True)
+    with downloads._file_lock(target):
+        thread.start()
+        thread.join(timeout=1.0)
+        assert thread.is_alive()  # still blocked on the lock
+        order.append('first')
+    thread.join(timeout=30.0)
+    assert not thread.is_alive()
+    assert order == ['first', 'second']
+
+
+def test_file_lock_proceeds_when_it_cannot_be_created(tmp_path):
+    """Downloads continue unlocked when the lock file cannot be created."""
+    blocker = tmp_path / 'blocker'
+    blocker.write_text('not a directory')
+    entered = []
+    with downloads._file_lock(blocker / 'sub' / 'file.txt'):
+        entered.append(True)
+    assert entered == [True]
+
+
+def test_file_lock_is_a_no_op_without_filelock(tmp_path, monkeypatch):
+    """Downloads continue unlocked when filelock is not installed."""
+    monkeypatch.setattr(downloads, '_HAS_FILELOCK', False)
+    entered = []
+    with downloads._file_lock(tmp_path / 'file.txt'):
+        entered.append(True)
+    assert entered == [True]
+    assert not list(tmp_path.glob('*.lock'))
+
+
+def test_download_file_fetches_under_lock(tmp_path, monkeypatch):
+    """The pooch fetch must run while the per-file lock is held."""
+    events = []
+    real_lock = downloads._file_lock
+
+    @contextlib.contextmanager
+    def spy_lock(path):
+        events.append(f'lock {Path(path).name}')
+        with real_lock(path):
+            yield
+        events.append('unlock')
+
+    monkeypatch.setattr(downloads, '_file_lock', spy_lock)
+    monkeypatch.setattr(downloads.FETCHER, 'path', tmp_path)
+    monkeypatch.setattr(
+        downloads.FETCHER, 'fetch', lambda _filename, **_kwargs: events.append('fetch')
+    )
+
+    downloads.download_file('subdir/file.txt')
+    assert events == ['lock file.txt', 'fetch', 'unlock']
 
 
 @pytest.mark.parametrize('endswith', ['', 'Data', 'Data/'])
