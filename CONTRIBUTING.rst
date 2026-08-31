@@ -959,11 +959,16 @@ if no simple alternative solution has been found.
 Test code is covered too
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-``tests`` is measured alongside ``pyvista``, and Codecov reports the two as separate
-components so a gain on one cannot hide a loss on the other. The target for ``tests`` is
-100%: an uncovered line in a test file is a test that does not run the code it appears to,
-and a partly-covered branch is a case the suite never reaches. Both usually mean a missing
-assertion rather than a missing ``pragma``.
+``tests`` is measured alongside ``pyvista``, and the two are uploaded to Codecov as
+separate reports under the ``package`` and ``tests`` flags, so a gain on one cannot hide a
+loss on the other. ``tests`` is held at 100%: an uncovered line in a test file is a test
+that does not run the code it appears to, and a partly-covered branch is a case the suite
+never reaches. Both usually mean a missing assertion rather than a missing ``pragma``.
+
+Reach for ``# pragma: no cover`` when a branch exists in order to prove it is never taken
+-- a callback asserted never to fire, a fallback for a backend no covered environment runs
+-- and say which in the comment. ``# pragma: no branch`` fits a loop or guard that only
+ever goes one way, such as a retry loop whose last attempt always returns or raises.
 
 Some patterns produce dead test code:
 
