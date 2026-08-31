@@ -35,7 +35,8 @@ else:  # The class is unavailable before VTK 9.5; __init__ raises with a clear m
         _GridAxesActor3DBase = object
 
 _ALL_FACES = 0b111111
-_FIXED_NOTATION = 2
+_AUTOMATIC_NOTATION = _vtk.vtkAxis.STANDARD_NOTATION
+_FIXED_NOTATION = _vtk.vtkAxis.FIXED_NOTATION
 _LABEL_FORMAT_PATTERN = re.compile(r'^(?:%\.(\d+)f|\{0?:\.(\d+)f\})$')
 
 
@@ -46,7 +47,7 @@ def _parse_label_format(fmt: str, name: str) -> int:
         msg = (
             f'{name} {fmt!r} is not supported by GridAxesActor, which formats labels with a\n'
             f'fixed number of decimal places. Use a plain fixed-point format such as '
-            f"'%.2f' or '{{0:.2f}}',\nor set it to None to let the axis choose its own labels."
+            f"'%.2f' or '{{0:.2f}}'."
         )
         raise ValueError(msg)
     return int(match.group(1) or match.group(2))
@@ -299,7 +300,8 @@ class GridAxesActor(
         for axis, (fmt, name) in enumerate(zip(self._label_formats, names, strict=True)):
             resolved = pv.global_theme.font.fmt if fmt is None else fmt
             if resolved is None:
-                continue  # type: ignore[unreachable]
+                self.SetNotation(axis, _AUTOMATIC_NOTATION)  # type: ignore[unreachable]
+                continue
             self.SetNotation(axis, _FIXED_NOTATION)
             self.SetPrecision(axis, _parse_label_format(resolved, name))
 
