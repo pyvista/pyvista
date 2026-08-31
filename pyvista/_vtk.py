@@ -777,6 +777,11 @@ _PLOTTING_MODULES: dict[str, tuple[str, ...]] = {
         'vtkMathTextFreeTypeTextRenderer',
         'vtkVectorText',
     ),
+    # Added in VTK 9.5
+    'vtkRenderingGridAxes': (
+        'vtkGridAxesActor3D',
+        'vtkGridAxesHelper',
+    ),
     'vtkRenderingLabel': (
         'vtkLabelPlacementMapper',
         'vtkPointSetToLabelHierarchy',

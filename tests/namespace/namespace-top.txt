@@ -61,6 +61,7 @@ GIFReader, <class 'pyvista.utilities.reader.GIFReader'>
 GLTFReader, <class 'pyvista.utilities.reader.GLTFReader'>
 GPUInfo, <class 'pyvista.utilities.errors.GPUInfo'>
 Grid, <class 'pyvista.core.grid.Grid'>
+GridAxesActor, <class 'pyvista.plotting.grid_axes_actor.GridAxesActor'>
 HDFReader, <class 'pyvista.utilities.reader.HDFReader'>
 HDRReader, <class 'pyvista.utilities.reader.HDRReader'>
 ID_TYPE, <class 'numpy.int64'>

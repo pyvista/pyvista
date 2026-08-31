@@ -38,6 +38,7 @@ all plotting functionality in PyVista.
    CubeAxesActor
    DataSetMapper
    Follower
+   GridAxesActor
    Label
    LookupTable
    PlanesAssembly
