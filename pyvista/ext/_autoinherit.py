@@ -46,10 +46,8 @@ _MODULE_RE = re.compile(r'^\s*\.\.\s+(?:current)?module::\s*([a-zA-Z0-9_.]+)\s*$
 
 logger = logging.getLogger(__name__)
 
-#: Filter classes are documented as filters, so anything they define that is not a
-#: method is a typing aid rather than API. ``points`` is a bare annotation that lets
-#: the filters type ``self.points``. A new one is a mistake, so it is reported.
-_NOT_API_ON_FILTERS = frozenset({'DataObjectFilters.points'})
+#: ``provider.member`` for each non-method reachable on a filter class; a new one is reported.
+_NOT_API_ON_FILTERS = frozenset({'DataObjectFilters.points', '_BoundsSizeMixin.bounds_size'})
 
 #: Set by :func:`setup`; the helpers below are called from Jinja and get nothing else.
 _srcdir: Path | None = None
@@ -176,12 +174,11 @@ def _home(cls: type, member: str) -> type | None:
     provider = _provider(cls, member)
     if provider is None or not provider.__module__.startswith('pyvista'):
         return None  # implemented by VTK or the standard library
-    if not inspect.isroutine(provider.__dict__.get(member)):
-        if _is_filter(provider):
-            _warn_unexpected_filter_member(provider, member)
-            return None
-        if _is_filter(cls):
-            return None  # a filter class documents filters, and filters are methods
+    if not inspect.isroutine(provider.__dict__.get(member)) and (
+        _is_filter(provider) or _is_filter(cls)
+    ):
+        _warn_unexpected_filter_member(provider, member)
+        return None
     documented = _documented_classes()
     home = cls
     for base in cls.__mro__:  # most derived first, so the last match is the most basal
@@ -261,13 +258,11 @@ def inherited_member_rows(  # numpydoc ignore=RT01
 ) -> list[tuple[str, str, str]]:
     """Return ``[(label, target, summary)]`` for members documented on another class.
 
-    Filters are left out; they outnumber everything else and get their own section. A
-    filter class inherits nothing but filters, so its own page keeps them here.
+    Filters are left out; they outnumber everything else and get their own section.
     """
-    keep_filters = _is_filter(_class_from(module, objname))
-    return [
-        row[1:] for row in _rows(module, objname, names) if keep_filters or not _is_filter(row[0])
-    ]
+    if _is_filter(_class_from(module, objname)):
+        return []  # a filter class page lists only the filters it defines
+    return [row[1:] for row in _rows(module, objname, names) if not _is_filter(row[0])]
 
 
 def filter_member_rows(  # numpydoc ignore=RT01

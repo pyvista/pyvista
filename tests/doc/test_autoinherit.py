@@ -226,24 +226,38 @@ def test_filters_are_split_out_of_the_inherited_rows():
     assert not {label for label, _, _ in inherited} & {label for label, _, _ in filters}
 
 
-def test_filter_classes_define_nothing_but_methods_and_the_allow_list():
-    """A property added to a filter class would be documented nowhere, so pin the set."""
-    unexpected = set()
+def _filter_classes():
+    """Yield every filter class, whether or not it has a page of its own."""
     for module_info in pkgutil.iter_modules(pyvista.core.filters.__path__):
         module = importlib.import_module(f'pyvista.core.filters.{module_info.name}')
         for cls in vars(module).values():
             if not isinstance(cls, type) or cls.__module__ != module.__name__:
                 continue
-            if not autoinherit._is_filter(cls) or not cls.__name__.endswith('Filters'):
-                continue
-            for member, value in list(vars(cls).items()) + [
-                (name, None) for name in inspect.get_annotations(cls)
-            ]:
-                if member.startswith('_') or inspect.isroutine(value):
-                    continue
+            if autoinherit._is_filter(cls) and cls.__name__.endswith('Filters'):
+                yield cls
+
+
+def test_nothing_but_methods_is_reachable_on_a_filter_class():
+    """A non-method on a filter class is documented nowhere, so pin the set.
+
+    Inheriting a mixin reaches one without declaring it, so both paths are checked.
+    """
+    unexpected = set()
+    for cls in _filter_classes():
+        declared = list(vars(cls).items()) + [
+            (name, None) for name in inspect.get_annotations(cls)
+        ]
+        for member, value in declared:
+            if not member.startswith('_') and not inspect.isroutine(value):
                 unexpected.add(f'{cls.__qualname__}.{member}')
+        for member in autoinherit._candidates(_members(cls)):
+            provider = autoinherit._provider(cls, member)
+            if provider is None or not provider.__module__.startswith('pyvista'):
+                continue
+            if not inspect.isroutine(provider.__dict__.get(member)):
+                unexpected.add(f'{provider.__qualname__}.{member}')
     assert unexpected == set(autoinherit._NOT_API_ON_FILTERS), (
-        'A filter class gained a member that is not a method, so it is documented '
+        'A filter class reaches a member that is not a method, so it is documented '
         'nowhere. Move it to the class it belongs on, or add it to _NOT_API_ON_FILTERS.'
     )
 
@@ -314,21 +328,21 @@ def test_a_filter_class_documents_only_what_it_defines_as_a_filter():
     assert autoinherit._home(pv.PolyData, 'points') is pv.DataSet
 
 
-def test_a_filter_class_lists_its_own_filters_as_inherited_methods():
-    """A filter class inherits nothing else, so a separate table would say nothing."""
+def test_a_filter_class_lists_only_the_filters_it_defines():
+    """Everything a filter class inherits is a filter documented where it is defined."""
     members = _members(PolyDataFilters)
-    inherited = autoinherit.inherited_member_rows('pyvista', 'PolyDataFilters', members)
+    assert autoinherit.inherited_member_rows('pyvista', 'PolyDataFilters', members) == []
     assert autoinherit.filter_member_rows('pyvista', 'PolyDataFilters', members) == []
-    assert 'DataSetFilters.contour' in {label for label, _, _ in inherited}
+    own = autoinherit.own_members('pyvista', 'PolyDataFilters', members)
+    assert 'clean' in own  # PolyDataFilters defines it
+    assert 'contour' not in own  # documented as DataSetFilters.contour
 
 
 def test_a_filter_class_documents_no_attributes():
     """Filters are methods; a mixin's property belongs to the classes that use it."""
     members = _members(PolyDataFilters)
-    rows = autoinherit.inherited_member_rows('pyvista', 'PolyDataFilters', members)
     assert autoinherit._home(PolyDataFilters, 'bounds_size') is None
     assert 'bounds_size' not in autoinherit.own_members('pyvista', 'PolyDataFilters', members)
-    assert not [label for label, _, _ in rows if label.endswith('.bounds_size')]
     # The property is untouched on the datasets that mix it in.
     assert autoinherit._home(pv.PolyData, 'bounds_size') is _BoundsSizeMixin
 
@@ -367,6 +381,14 @@ def test_every_reachable_member_has_exactly_one_page(documented):
         module, _, objname = docname.rpartition('.')
         members = _members(cls)
         homed = set(autoinherit.own_members(module, objname, members))
+        if autoinherit._is_filter(cls):
+            # A filter class page lists only its own, so ask where the rest are homed.
+            homed |= {
+                item
+                for item in autoinherit._candidates(members)
+                if (home := autoinherit._home(cls, item)) is not None
+                and f'{documented[home]}.{item}' in pages
+            }
         elsewhere = autoinherit.inherited_member_rows(
             module, objname, members
         ) + autoinherit.filter_member_rows(module, objname, members)
