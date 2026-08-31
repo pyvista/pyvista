@@ -1655,7 +1655,9 @@ def test_cell_neighbors_levels(grid: DataSet, i0, n_levels, connections):
         assert set(cell_ids) == set(grid.cell_neighbors(i0, connections=connections))
 
     else:
-        assert len(list(cell_ids)) == n_levels
+        # `cell_ids` is a generator, so materialize it before asserting on it twice.
+        cell_ids = list(cell_ids)
+        assert len(cell_ids) == n_levels
         for ids in cell_ids:
             assert isinstance(ids, list)
             assert all(isinstance(id_, int) for id_ in ids)
