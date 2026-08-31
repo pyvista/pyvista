@@ -47,20 +47,61 @@ if TYPE_CHECKING:
 
 
 def default(entry: HelpEntry):  # noqa: ANN202
+    """Return the entry's default value, or ``'-'`` when it has none.
+
+    Parameters
+    ----------
+    entry : HelpEntry
+        Help entry to read.
+
+    Returns
+    -------
+    str
+        Default value, or ``'-'`` when the entry has none.
+
+    """
     return d if (d := entry.default) is not None else '-'
 
 
 def names(entry: HelpEntry):  # noqa: ANN202
+    """Return the styled option names, marked when the option is required.
+
+    Parameters
+    ----------
+    entry : HelpEntry
+        Help entry to read.
+
+    Returns
+    -------
+    rich.text.Text
+        Styled option names.
+
+    """
     strings = (*entry.names, *entry.shorts)
     names = Text(' '.join(strings), style='cyan')
     return (Text('* ', style='red') + names) if entry.required else names
 
 
 def description(entry: HelpEntry):  # noqa: ANN202
+    """Return the entry's description.
+
+    Parameters
+    ----------
+    entry : HelpEntry
+        Help entry to read.
+
+    Returns
+    -------
+    str
+        Description of the entry.
+
+    """
     return entry.description
 
 
 class _PyvistaHelpFormatter(DefaultFormatter):
+    """Help formatter which renders the usage line as plain text."""
+
     def render_usage(self, console: Console, options: ConsoleOptions, usage: str) -> None:  # noqa: ARG002
         """Render the usage line.
 
@@ -117,6 +158,17 @@ skip_unreadable = Annotated[
 
 
 def print_error_and_exit(message: str | Group, *, title: str = 'PyVista Error') -> NoReturn:
+    """Print an error panel and exit with a non-zero status.
+
+    Parameters
+    ----------
+    message : str | rich.console.Group
+        Error message to show in the panel.
+
+    title : str, default: "PyVista Error"
+        Title of the panel.
+
+    """
     panel = Panel(
         message,
         title=title,

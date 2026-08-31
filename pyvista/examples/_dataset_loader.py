@@ -89,6 +89,8 @@ def _collapse_str_sequence(values: Sequence[str]) -> str | tuple[str, ...]:
 
 
 class _BaseFilePropsProtocol(Generic[_FilePropStrType_co, _FilePropIntType_co]):
+    """Define the file properties shared by single- and multi-file loaders."""
+
     @property
     @abstractmethod
     def path(self) -> _FilePropStrType_co:

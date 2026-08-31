@@ -131,6 +131,8 @@ class _InvalidElement:
 @dataclass
 class _FRDData:
     # Parsed data
+    """Parsed contents of a CalculiX FRD file."""
+
     nodes: dict[int, list[float]] = field(default_factory=dict)
     elements: list[list[int]] = field(default_factory=list)
     cell_types: list[int] = field(default_factory=list)

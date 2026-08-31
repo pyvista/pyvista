@@ -8617,6 +8617,8 @@ def download_whole_body_ct_male(
 
 
 class _WholeBodyCTUtilities:
+    """Helpers for loading the whole body CT datasets."""
+
     @staticmethod
     def import_colors_dict(module_path) -> dict[str, tuple[int, int, int]]:  # noqa: ANN001
         """Import the ``colors`` dict from the downloaded ``colors.py`` module.

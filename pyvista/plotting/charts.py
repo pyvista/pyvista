@@ -34,6 +34,8 @@ if TYPE_CHECKING:
 
 # region Some metaclass wrapping magic
 class _vtkWrapperMeta(type):  # noqa: N801
+    """Metaclass which restores the signature of a wrapped VTK class."""
+
     def __init__(cls, clsname, bases, attrs) -> None:
         # Restore the signature of classes inheriting from _vtkWrapper
         # Based on https://stackoverflow.com/questions/49740290/call-from-metaclass-shadows-signature-of-init
@@ -54,6 +56,8 @@ class _vtkWrapperMeta(type):  # noqa: N801
 
 
 class _vtkWrapper(DisableVtkSnakeCase, metaclass=_vtkWrapperMeta):  # noqa: N801
+    """Forward attribute access to a wrapped VTK object."""
+
     def __getattribute__(self, item):
         unwrapped_attrs = ['_wrapped', '__class__', '__init__']
         wrapped = super().__getattribute__('_wrapped')
@@ -1112,7 +1116,11 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
 @abstract_class
 class _CustomContextItem(_vtk.vtkPythonItem):
+    """Context item which paints through a Python subclass."""
+
     class ItemWrapper:
+        """Adapter passed to :vtk:`vtkPythonItem`."""
+
         def Initialize(self, item) -> bool:  # noqa: ARG002, N802
             """Initialize the wrapped context item.
 
@@ -1191,7 +1199,7 @@ class _ChartBackground(DisableVtkSnakeCase, _CustomContextItem):
         Returns
         -------
         bool
-            Whether the background was painted.
+            Always ``True``.
 
         """
         if self._chart.visible:

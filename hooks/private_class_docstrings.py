@@ -1,4 +1,9 @@
-"""Require docstrings on public members of private classes, which ruff D1 skips."""
+"""Require docstrings where ruff's D1 rules stop at a private name.
+
+Ruff treats a private class, a private module, and everything inside them as
+private, so neither they nor their public members are checked. This applies the
+D101/D102/D103 standard there.
+"""
 
 from __future__ import annotations
 
@@ -19,7 +24,7 @@ def _decorator_names(node: ast.FunctionDef | ast.AsyncFunctionDef) -> list[str]:
     return names
 
 
-def _has_docstring(node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
+def _has_docstring(node: ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef) -> bool:
     """Return whether ``node`` starts with a docstring."""
     return (
         bool(node.body)
@@ -33,21 +38,35 @@ def _check_file(path: Path) -> list[str]:
     """Return one error line per undocumented public member of a private class."""
     errors = []
 
-    def visit(node: ast.AST, *, in_private_class: bool) -> None:
+    def visit(node: ast.AST, *, inside: str | None) -> None:
         for child in ast.iter_child_nodes(node):
             if isinstance(child, ast.ClassDef):
-                visit(child, in_private_class=in_private_class or child.name.startswith('_'))
+                private = child.name.startswith('_')
+                if (private or inside) and not _has_docstring(child):
+                    why = 'is private' if private else f'is in {inside}'
+                    errors.append(
+                        f'{path}:{child.lineno}: class {child.name!r} {why}, '
+                        f'so it needs a docstring'
+                    )
+                visit(
+                    child, inside=inside or f'private class {child.name!r}' if private else inside
+                )
             elif isinstance(child, ast.FunctionDef | ast.AsyncFunctionDef):
-                if in_private_class and not child.name.startswith('_'):
+                if inside and not child.name.startswith('_'):
                     decorators = _decorator_names(child)
                     exempt = {'overload', 'setter', 'deleter'} & set(decorators)
                     if not exempt and not _has_docstring(child):
                         errors.append(
-                            f'{path}:{child.lineno}: public member '
-                            f'{child.name!r} of a private class has no docstring'
+                            f'{path}:{child.lineno}: public {child.name!r} is in {inside}, '
+                            f'so it needs a docstring'
                         )
 
-    visit(ast.parse(path.read_text()), in_private_class=False)
+    # Ruff skips a private module wholesale, so its public defs are unchecked too
+    private_module = any(part.startswith('_') for part in path.with_suffix('').parts)
+    visit(
+        ast.parse(path.read_text(encoding='utf-8')),
+        inside='a private module' if private_module else None,
+    )
     return errors
 
 
@@ -62,4 +81,4 @@ def main(argv: list[str]) -> int:
 
 
 if __name__ == '__main__':
-    sys.exit(main(sys.argv[1:]))
+    raise SystemExit(main(sys.argv[1:]))

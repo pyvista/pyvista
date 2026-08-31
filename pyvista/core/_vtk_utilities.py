@@ -56,6 +56,8 @@ def _get_vtk_version():
 
 
 class VTKVersionInfo(VersionInfo):
+    """Version info which rejects comparisons against unsupported VTK versions."""
+
     def _check_min_supported(self, other: tuple[int, int, int]) -> None:
         if isinstance(other, tuple) and other < _MIN_SUPPORTED_VTK_VERSION:  # type: ignore[redundant-expr]
             msg = (

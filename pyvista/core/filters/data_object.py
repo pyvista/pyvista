@@ -69,6 +69,8 @@ if TYPE_CHECKING:
 
 
 class _CellStatusTuple(NamedTuple):
+    """Value and documentation of a cell status flag."""
+
     value: int
     doc: str
 
@@ -169,7 +171,8 @@ class CellStatus(IntEnum):
         return obj
 
 
-class _SENTINEL: ...
+class _SENTINEL:
+    """Sentinel marking an argument the caller did not give."""
 
 
 _ExtractSurfaceOptions = Literal['geometry', 'dataset_surface', None]  # noqa: PYI061
@@ -210,6 +213,28 @@ _OtherFieldGroups = Literal['memory_safe']
 
 
 class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
+    """Run the mesh validation checks and build the report.
+
+    Parameters
+    ----------
+    mesh : DataSet | MultiBlock
+        Mesh to validate.
+
+    validation_fields : str | sequence[str], optional
+        Fields to validate. All supported fields are validated by default.
+
+    exclude_fields : str | sequence[str], optional
+        Fields to leave out of the validation.
+
+    name : str, optional
+        Name to use in the report and error messages.
+
+    **cell_validator_kwargs : dict, optional
+        Keyword arguments passed to
+        :meth:`~pyvista.DataObjectFilters.cell_validator`.
+
+    """
+
     _allowed_data_fields = get_args(_DataFields)
     _allowed_point_fields = get_args(_PointFields)
     _allowed_cell_fields = get_args(_CellFields)
@@ -222,6 +247,8 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
 
     @dataclass
     class _FieldSummary:
+        """One validated field's name, message, and offending values."""
+
         name: str
         message: str | list[str]
         values: Sequence[str | int] | None
@@ -5510,6 +5537,8 @@ def _cast_output_to_match_input_type(
 
 
 class _Crinkler:
+    """Extract crinkled cells from the output of a clip."""
+
     CELL_IDS = 'cell_ids'
     INT_DTYPE = np.int64
     ITER_KWARGS: ClassVar = dict(skip_none=True)
