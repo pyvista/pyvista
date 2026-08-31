@@ -162,14 +162,14 @@ class GridAxesActor(
     grid : bool, default: True
         Draw grid lines across the faces of the box.
 
-    ticks : bool, default: True
+    show_ticks : bool, default: True
         Draw tick marks alongside the labels.
 
     unique_edges_only : bool, default: True
         Label only the edges that belong to a single visible face. When ``False`` an
         edge shared by two faces is labelled twice.
 
-    label_offset : sequence[int], optional
+    label_display_offset : sequence[int], optional
         Offset of the labels from their edge, in display coordinates, as
         ``(x_offset, y_offset)``, by default ``(0, 0)``. Useful when labels overlap
         at the corners.
@@ -233,9 +233,9 @@ class GridAxesActor(
         font_family: str | None = None,
         bold: bool = True,
         grid: bool = True,
-        ticks: bool = True,
+        show_ticks: bool = True,
         unique_edges_only: bool = True,
-        label_offset: VectorLike[int] | None = None,
+        label_display_offset: VectorLike[int] | None = None,
     ) -> None:
         """Initialize GridAxesActor."""
         if pv.vtk_version_info < GRID_AXES_MIN_VTK_VERSION:
@@ -258,10 +258,10 @@ class GridAxesActor(
         self._property.SetFrontfaceCulling(True)
 
         self.grid = grid
-        self.ticks = ticks
+        self.show_ticks = show_ticks
         self.unique_edges_only = unique_edges_only
-        if label_offset is not None:
-            self.label_offset = label_offset
+        if label_display_offset is not None:
+            self.label_display_offset = label_display_offset
 
         for name, title in zip('xyz', (x_title, y_title, z_title), strict=True):
             _validation.check_string(title, name=f'{name}_title')
@@ -400,12 +400,12 @@ class GridAxesActor(
         self.SetGenerateGrid(bool(value))
 
     @property
-    def ticks(self) -> bool:  # numpydoc ignore=RT01
+    def show_ticks(self) -> bool:  # numpydoc ignore=RT01
         """Return or set whether tick marks are drawn alongside the labels."""
         return bool(self.GetGenerateTicks())
 
-    @ticks.setter
-    def ticks(self, value: bool) -> None:
+    @show_ticks.setter
+    def show_ticks(self, value: bool) -> None:
         self.SetGenerateTicks(bool(value))
 
     @property
@@ -418,15 +418,15 @@ class GridAxesActor(
         self.SetLabelUniqueEdgesOnly(bool(value))
 
     @property
-    def label_offset(self) -> tuple[int, int]:  # numpydoc ignore=RT01
+    def label_display_offset(self) -> tuple[int, int]:  # numpydoc ignore=RT01
         """Return or set the display-space offset of the labels from their edge."""
         offset = self.GetLabelDisplayOffset()
         return int(offset[0]), int(offset[1])
 
-    @label_offset.setter
-    def label_offset(self, value: VectorLike[int]) -> None:
+    @label_display_offset.setter
+    def label_display_offset(self, value: VectorLike[int]) -> None:
         offset = _validation.validate_array(
-            value, must_have_shape=(2,), name='label_offset', dtype_out=int
+            value, must_have_shape=(2,), name='label_display_offset', dtype_out=int
         )
         self.SetLabelDisplayOffset(int(offset[0]), int(offset[1]))
 

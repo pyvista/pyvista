@@ -1094,7 +1094,10 @@ def test_show_bounds_cube_only_keywords_rejected_by_grid(sphere, kwargs):
         pl.show_bounds(actor='grid', **kwargs)
 
 
-@pytest.mark.parametrize('kwargs', [{'unique_edges_only': True}, {'label_offset': (2, 2)}])
+@pytest.mark.parametrize(
+    'kwargs',
+    [{'unique_edges_only': True}, {'label_display_offset': (2, 2)}, {'show_ticks': False}],
+)
 def test_show_bounds_grid_only_keywords_rejected_by_cube(sphere, kwargs):
     pl = pv.Plotter()
     pl.add_mesh(sphere)

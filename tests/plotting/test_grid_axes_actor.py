@@ -183,8 +183,8 @@ def test_grid(value):
 
 
 @pytest.mark.parametrize('value', [True, False])
-def test_ticks(value):
-    assert pv.GridAxesActor(ticks=value).ticks is value
+def test_show_ticks(value):
+    assert pv.GridAxesActor(show_ticks=value).show_ticks is value
 
 
 @pytest.mark.parametrize('value', [True, False])
@@ -192,11 +192,11 @@ def test_unique_edges_only(value):
     assert pv.GridAxesActor(unique_edges_only=value).unique_edges_only is value
 
 
-def test_label_offset():
-    actor = pv.GridAxesActor(label_offset=(3, 4))
-    assert actor.label_offset == (3, 4)
-    actor.label_offset = (5, 6)
-    assert actor.label_offset == (5, 6)
+def test_label_display_offset():
+    actor = pv.GridAxesActor(label_display_offset=(3, 4))
+    assert actor.label_display_offset == (3, 4)
+    actor.label_display_offset = (5, 6)
+    assert actor.label_display_offset == (5, 6)
 
 
 def test_no_camera_required():

@@ -1903,7 +1903,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         use_3d_text: bool | None = None,  # noqa: FBT001
         actor: Literal['grid', 'cube'] | type[_NotSelected] | None = _NotSelected,
         unique_edges_only: bool | None = None,  # noqa: FBT001
-        label_offset=None,
+        show_ticks: bool | None = None,  # noqa: FBT001
+        label_display_offset=None,
         render=None,
         **kwargs,
     ):
@@ -2075,9 +2076,16 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
             .. versionadded:: 0.49
 
-        label_offset : sequence[int], optional
+        label_display_offset : sequence[int], optional
             Offset of the labels from their edge in display coordinates, as
-            ``(x_offset, y_offset)``. Only supported by ``actor='grid'``.
+            ``(x_offset, y_offset)``. Only supported by ``actor='grid'``; the cube actor
+            offsets its labels through :attr:`~pyvista.CubeAxesActor.label_offset`.
+
+            .. versionadded:: 0.49
+
+        show_ticks : bool, optional
+            Draw tick marks alongside the labels. Only supported by ``actor='grid'``;
+            ``ticks`` sets where the cube actor draws them. Defaults to ``True``.
 
             .. versionadded:: 0.49
 
@@ -2109,7 +2117,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         >>> actor = pl.add_mesh(mesh)
         >>> actor = pl.show_bounds(
         ...     actor=None,
-        ...     grid='front',
+        ...     grid=True,
         ...     all_edges=True,
         ... )
         >>> pl.show()
@@ -2122,7 +2130,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         >>> actor = pl.add_mesh(mesh, cmap='terrain', show_scalar_bar=False)
         >>> actor = pl.show_bounds(
         ...     actor=None,
-        ...     grid='back',
+        ...     grid=True,
         ...     n_xlabels=2,
         ...     n_ylabels=2,
         ...     n_zlabels=2,
@@ -2138,7 +2146,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         >>> actor = pl.add_mesh(mesh, cmap='terrain', show_scalar_bar=False)
         >>> actor = pl.show_bounds(
         ...     actor=None,
-        ...     grid='back',
+        ...     grid=True,
         ...     show_xlabels=False,
         ...     show_ylabels=False,
         ...     show_zlabels=False,
@@ -2159,7 +2167,11 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             'use_2d': use_2d,
             'use_3d_text': use_3d_text,
         }
-        grid_only = {'unique_edges_only': unique_edges_only, 'label_offset': label_offset}
+        grid_only = {
+            'unique_edges_only': unique_edges_only,
+            'label_display_offset': label_display_offset,
+            'show_ticks': show_ticks,
+        }
         _check_actor_keywords(actor, cube_only=cube_only, grid_only=grid_only)
 
         if actor == 'grid' and isinstance(grid, str):
@@ -2235,7 +2247,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
                 n_zlabels=n_zlabels,
                 grid=False if grid is None else grid,
                 unique_edges_only=True if unique_edges_only is None else unique_edges_only,
-                label_offset=label_offset,
+                show_ticks=True if show_ticks is None else show_ticks,
+                label_display_offset=label_display_offset,
                 **common,
             )
         else:
@@ -2684,10 +2697,10 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         >>> pl = pv.Plotter(shape=(1, 2))
         >>> pl.subplot(0, 0)
         >>> actor = pl.add_mesh(pv.Sphere())
-        >>> actor = pl.show_bounds(actor=None, grid='front')
+        >>> actor = pl.show_bounds(actor=None, grid=True)
         >>> pl.subplot(0, 1)
         >>> actor = pl.add_mesh(pv.Sphere())
-        >>> actor = pl.show_bounds(actor=None, grid='front')
+        >>> actor = pl.show_bounds(actor=None, grid=True)
         >>> actor = pl.remove_bounds_axes()
         >>> pl.show()
 
@@ -4424,7 +4437,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         tick_length=5,
         minor_tick_length=3,
         show_ticks=True,  # noqa: FBT002
-        tick_label_offset=2,
+        tick_label_display_offset=2,
         label_color=None,
         tick_color=None,
         scale=1.0,
@@ -4485,7 +4498,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         show_ticks : bool, default: True
             Whether to show the ticks.
 
-        tick_label_offset : int, default: 2
+        tick_label_display_offset : int, default: 2
             Offset between tick and label in pixels.
 
         label_color : ColorLike, optional
@@ -4574,7 +4587,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         ruler.SetTickVisibility(show_ticks)
         ruler.SetTickLength(tick_length)
         ruler.SetMinorTickLength(minor_tick_length)
-        ruler.SetTickOffset(tick_label_offset)
+        ruler.SetTickOffset(tick_label_display_offset)
 
         self.add_actor(ruler, reset_camera=True, pickable=False)
         return ruler
@@ -4602,7 +4615,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         tick_length=5,
         minor_tick_length=3,
         show_ticks=True,  # noqa: FBT002
-        tick_label_offset=2,
+        tick_label_display_offset=2,
     ):
         """Annotate the render window with scale and distance information.
 
@@ -4682,7 +4695,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         show_ticks : bool, default: True
             Whether to show the ticks.
 
-        tick_label_offset : int, default: 2
+        tick_label_display_offset : int, default: 2
             Offset between tick and label in pixels.
 
         Returns
@@ -4752,7 +4765,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             axis.SetTickLength(tick_length)
             axis.SetMinorTickLength(minor_tick_length)
             axis.SetTickVisibility(show_ticks)
-            axis.SetTickOffset(tick_label_offset)
+            axis.SetTickOffset(tick_label_display_offset)
 
         return self.add_actor(
             legend_scale,
