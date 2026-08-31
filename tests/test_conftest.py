@@ -76,10 +76,11 @@ def _load_current_config(
     pytestconfig: pytest.Config,
     pytester: pytest.Pytester,
 ):
-    with (pytestconfig.rootpath / 'pyproject.toml').open('r') as file:
+    # Explicit encoding: the locale default is ASCII on the CI runners.
+    with (pytestconfig.rootpath / 'pyproject.toml').open('r', encoding='utf-8') as file:
         toml = pytester.makepyprojecttoml(file.read())
 
-    with (pytestconfig.rootpath / 'tests/conftest.py').open('r') as file:
+    with (pytestconfig.rootpath / 'tests/conftest.py').open('r', encoding='utf-8') as file:
         conftest = pytester.makeconftest(file.read())
 
     yield
