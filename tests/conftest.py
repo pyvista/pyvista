@@ -839,7 +839,7 @@ def pytest_runtest_setup(item: pytest.Item):
         )
 
         bounds = _check_args_kwargs_marker(item_mark=item_mark, sig=sig)
-        if os.name == 'nt':
+        if os.name == 'nt':  # pragma: no cover -- Windows only
             pytest.skip(bounds.arguments[r])
 
     if item_mark := item.get_closest_marker('skip_mac'):
@@ -879,7 +879,8 @@ def pytest_runtest_setup(item: pytest.Item):
             pytest.skip(bounds.arguments[r])
 
     test_downloads = item.config.getoption(flag := '--test_downloads')
-    if item.get_closest_marker('needs_download') and not test_downloads:
+    # Unreached: the core run enables downloads, and no plotting test is marked.
+    if item.get_closest_marker('needs_download') and not test_downloads:  # pragma: no cover
         pytest.skip(f'Downloads not enabled with {flag}')
 
     playwright = item.config.getoption(flag := '--playwright')
