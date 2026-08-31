@@ -21,8 +21,10 @@ import pyvista as pv
 import pyvista.core.filters
 from pyvista.core.filters.data_object import DataObjectFilters
 from pyvista.core.filters.data_set import DataSetFilters
+from pyvista.core.filters.poly_data import PolyDataFilters
 from pyvista.core.grid import Grid
 from pyvista.core.pointset import _PointSetBase
+from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.ext import _autoinherit as autoinherit
 from tests.conftest import PYVISTA_ROOT_DIR
 
@@ -312,6 +314,17 @@ def test_a_filter_class_documents_only_what_it_defines_as_a_filter():
     assert autoinherit._home(pv.PolyData, 'points') is pv.DataSet
 
 
+def test_a_filter_class_documents_no_attributes():
+    """Filters are methods; a mixin's property belongs to the classes that use it."""
+    members = _members(PolyDataFilters)
+    rows = autoinherit.inherited_member_rows('pyvista', 'PolyDataFilters', members)
+    assert autoinherit._home(PolyDataFilters, 'bounds_size') is None
+    assert 'bounds_size' not in autoinherit.own_members('pyvista', 'PolyDataFilters', members)
+    assert not [label for label, _, _ in rows if label.endswith('.bounds_size')]
+    # The property is untouched on the datasets that mix it in.
+    assert autoinherit._home(pv.PolyData, 'bounds_size') is _BoundsSizeMixin
+
+
 def test_a_class_that_mixes_in_no_filters_has_no_filter_rows():
     assert autoinherit.filter_member_rows('pyvista', 'Camera', _members(pv.Camera)) == []
 
@@ -359,10 +372,10 @@ def test_every_reachable_member_has_exactly_one_page(documented):
             provider = autoinherit._provider(cls, item)
             if provider is None or not provider.__module__.startswith('pyvista'):
                 continue
-            if autoinherit._is_filter(provider) and not inspect.isroutine(
-                provider.__dict__.get(item)
+            if not inspect.isroutine(provider.__dict__.get(item)) and (
+                autoinherit._is_filter(provider) or autoinherit._is_filter(cls)
             ):
-                continue  # a filter class's bare annotation is a typing aid, not API
+                continue  # a filter class documents filters, and filters are methods
             if item not in homed:
                 missing.add(f'{docname}.{item}')
 

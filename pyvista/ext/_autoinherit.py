@@ -176,9 +176,12 @@ def _home(cls: type, member: str) -> type | None:
     provider = _provider(cls, member)
     if provider is None or not provider.__module__.startswith('pyvista'):
         return None  # implemented by VTK or the standard library
-    if _is_filter(provider) and not inspect.isroutine(provider.__dict__.get(member)):
-        _warn_unexpected_filter_member(provider, member)
-        return None
+    if not inspect.isroutine(provider.__dict__.get(member)):
+        if _is_filter(provider):
+            _warn_unexpected_filter_member(provider, member)
+            return None
+        if _is_filter(cls):
+            return None  # a filter class documents filters, and filters are methods
     documented = _documented_classes()
     home = cls
     for base in cls.__mro__:  # most derived first, so the last match is the most basal
