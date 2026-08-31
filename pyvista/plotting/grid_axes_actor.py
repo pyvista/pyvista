@@ -192,7 +192,10 @@ class GridAxesActor(
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(mesh)
     >>> grid_axes_actor = pv.GridAxesActor(
-    ...     bounds=mesh.bounds, x_title=r'$\\rho$', y_title=r'$\\eta$', z_title=r'$\\mu$'
+    ...     bounds=mesh.bounds,
+    ...     x_title=r'$\\rho$',
+    ...     y_title=r'$\\eta$',
+    ...     z_title=r'$\\mu$',
     ... )
     >>> _ = pl.add_actor(grid_axes_actor)
     >>> pl.show()
@@ -264,9 +267,7 @@ class GridAxesActor(
         self._label_formats = [x_label_format, y_label_format, z_label_format]
         self._ranges = np.zeros(6)
 
-        self._configure_text(
-            color=color_, font_size=font_size, font_family=font_family, bold=bold
-        )
+        self._configure_text(color=color_, font_size=font_size, font_family=font_family, bold=bold)
         self._configure_label_format()
 
         if not (isinstance(padding, (int, float)) and 0.0 <= padding < 1.0):  # type: ignore[redundant-expr]
@@ -312,11 +313,11 @@ class GridAxesActor(
             visible = self._axis_visibility[axis] and self._label_visibility[axis]
             n_labels = self._n_labels[axis]
             if visible and n_labels is None:
-                self.SetUseCustomLabels(axis, False)  # noqa: FBT003
+                self.SetUseCustomLabels(axis, False)
                 continue
             # An axis with no tick positions draws no labels, ticks, or grid lines
             count = 0 if not visible else cast('int', n_labels)
-            self.SetUseCustomLabels(axis, True)  # noqa: FBT003
+            self.SetUseCustomLabels(axis, True)
             self.SetNumberOfLabels(axis, count)
             if count:
                 lo, hi = ranges[2 * axis], ranges[2 * axis + 1]
@@ -388,7 +389,7 @@ class GridAxesActor(
         return bool(self.GetGenerateGrid())
 
     @grid.setter
-    def grid(self, value: bool):  # noqa: FBT001
+    def grid(self, value: bool):
         self.SetGenerateGrid(bool(value))
 
     @property
@@ -397,7 +398,7 @@ class GridAxesActor(
         return bool(self.GetGenerateTicks())
 
     @ticks.setter
-    def ticks(self, value: bool):  # noqa: FBT001
+    def ticks(self, value: bool):
         self.SetGenerateTicks(bool(value))
 
     @property
@@ -406,7 +407,7 @@ class GridAxesActor(
         return bool(self.GetLabelUniqueEdgesOnly())
 
     @unique_edges_only.setter
-    def unique_edges_only(self, value: bool):  # noqa: FBT001
+    def unique_edges_only(self, value: bool):
         self.SetLabelUniqueEdgesOnly(bool(value))
 
     @property
@@ -438,7 +439,7 @@ class GridAxesActor(
         return self._axis_visibility[0]
 
     @x_axis_visibility.setter
-    def x_axis_visibility(self, value: bool):  # noqa: FBT001
+    def x_axis_visibility(self, value: bool):
         self._axis_visibility[0] = bool(value)
         self._refresh()
 
@@ -448,7 +449,7 @@ class GridAxesActor(
         return self._label_visibility[0]
 
     @x_label_visibility.setter
-    def x_label_visibility(self, value: bool):  # noqa: FBT001
+    def x_label_visibility(self, value: bool):
         self._label_visibility[0] = bool(value)
         self._refresh()
 
@@ -489,7 +490,7 @@ class GridAxesActor(
         return self._axis_visibility[1]
 
     @y_axis_visibility.setter
-    def y_axis_visibility(self, value: bool):  # noqa: FBT001
+    def y_axis_visibility(self, value: bool):
         self._axis_visibility[1] = bool(value)
         self._refresh()
 
@@ -499,7 +500,7 @@ class GridAxesActor(
         return self._label_visibility[1]
 
     @y_label_visibility.setter
-    def y_label_visibility(self, value: bool):  # noqa: FBT001
+    def y_label_visibility(self, value: bool):
         self._label_visibility[1] = bool(value)
         self._refresh()
 
@@ -540,7 +541,7 @@ class GridAxesActor(
         return self._axis_visibility[2]
 
     @z_axis_visibility.setter
-    def z_axis_visibility(self, value: bool):  # noqa: FBT001
+    def z_axis_visibility(self, value: bool):
         self._axis_visibility[2] = bool(value)
         self._refresh()
 
@@ -550,7 +551,7 @@ class GridAxesActor(
         return self._label_visibility[2]
 
     @z_label_visibility.setter
-    def z_label_visibility(self, value: bool):  # noqa: FBT001
+    def z_label_visibility(self, value: bool):
         self._label_visibility[2] = bool(value)
         self._refresh()
 
