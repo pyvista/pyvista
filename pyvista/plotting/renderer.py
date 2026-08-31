@@ -73,13 +73,10 @@ ACTOR_LOC_MAP = [
 # visibly on rough surfaces for little further speed-up.
 _MIN_IRRADIANCE_SIZE = 32
 
-# Floor for the specular prefilter: too few samples show up as noise in rough
-# reflections rather than as a loss of detail.
+# Floor for the specular prefilter; fewer samples show up as noise, not lost detail.
 _MIN_PREFILTER_SAMPLES = 32
 
-# Floors for the split-sum BRDF lookup table. It is smooth in both viewing angle and
-# roughness, and unlike the other two textures it does not depend on the environment
-# at all, so a small table stays faithful to it.
+# Floors for the BRDF lookup table, which is smooth in both of its inputs.
 _MIN_LUT_SIZE = 128
 _MIN_LUT_SAMPLES = 128
 
@@ -3942,8 +3939,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
                 max(_MIN_PREFILTER_SAMPLES, round(default_samples * resample)),
             )
 
-            # Nothing else scales the lookup table down, since it is a function of the
-            # shading model rather than of the environment texture.
             lut_size = min(
                 default_lut_size, max(_MIN_LUT_SIZE, round(default_lut_size * resample))
             )
@@ -3974,8 +3969,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             self.SetEnvironmentTexture(texture, is_srgb)
 
         # VTK convolves the irradiance map only when spherical harmonics are off,
-        # which is the cube map case handled above. The prefilter and the lookup table
-        # run either way.
+        # which is the cube map case handled above.
         if texture.cube_map:
             self.GetEnvMapIrradiance().SetIrradianceSize(irradiance_size)
         self.GetEnvMapPrefiltered().SetPrefilterMaxSamples(prefilter_samples)
