@@ -34,12 +34,14 @@ pl.show()
 # :ref:`bounds_example` for more ways to configure them.
 #
 # Creating the actor directly means passing the camera and bounds yourself, and the
-# renderer does not track it. :meth:`~pyvista.Plotter.show_bounds` builds the same actor
-# from the scene and registers it, so :meth:`~pyvista.Plotter.remove_bounds_axes` and
+# renderer does not track it. :meth:`~pyvista.Plotter.show_bounds` sizes an actor from
+# the scene and registers it, so :meth:`~pyvista.Plotter.remove_bounds_axes` and
 # :meth:`~pyvista.Plotter.update_bounds_axes` apply to it.
 #
-# :meth:`~pyvista.Plotter.show_grid` adds grid lines on the back faces, labels on the
-# outer edges, and ticks on both sides.
+# Both methods take an ``actor`` keyword choosing between
+# :class:`~pyvista.CubeAxesActor` and :class:`~pyvista.GridAxesActor`. Passing ``None``
+# selects whichever the installed VTK provides.
+# :meth:`~pyvista.Plotter.show_grid` is the same method with grid lines turned on.
 
 pl = pv.Plotter()
 pl.add_mesh(mesh)
