@@ -112,13 +112,14 @@ repos:
       - id: gallery-docstring-structure
         name: "Gallery examples need a '.. _label:', a title/underline, and a summary sentence"
         language: python
-        entry: python hooks/gallery_docstrings.py
+        entry: python -P hooks/gallery_docstrings.py
         files: ^examples/.*\.py$
         types: [python]
       - id: private-class-docstrings
         name: "Public members of private classes need docstrings (ruff D1 skips them)"
         language: python
-        entry: python hooks/private_class_docstrings.py
+        # -P so hooks/warnings.py cannot shadow the stdlib module on the path
+        entry: python -P hooks/private_class_docstrings.py
         files: ^pyvista/
         types: [python]
       - id: no-lint-suppression-comments
