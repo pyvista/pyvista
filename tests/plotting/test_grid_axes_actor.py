@@ -90,7 +90,7 @@ def test_titles(axis):
 
 @pytest.mark.parametrize('axis', ['x', 'y', 'z'])
 def test_title_must_be_string(axis):
-    with pytest.raises(TypeError, match='must be an instance of .*str'):
+    with pytest.raises(TypeError, match=r'must be an instance of .*str'):
         pv.GridAxesActor(**{f'{axis}_title': None})
 
 

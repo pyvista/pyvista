@@ -27,10 +27,13 @@ if TYPE_CHECKING:
 #: Minimum VTK version providing :vtk:`vtkGridAxesActor3D`.
 MINIMUM_VTK_VERSION = (9, 5, 0)
 
-try:  # The class is unavailable before VTK 9.5; __init__ raises with a clear message
-    _vtkGridAxesActor3D: type = _vtk.vtkGridAxesActor3D
-except ImportError:  # pragma: no cover
-    _vtkGridAxesActor3D = object
+if TYPE_CHECKING:
+    _GridAxesActor3DBase = _vtk.vtkGridAxesActor3D
+else:  # The class is unavailable before VTK 9.5; __init__ raises with a clear message
+    try:
+        _GridAxesActor3DBase = _vtk.vtkGridAxesActor3D
+    except ImportError:  # pragma: no cover
+        _GridAxesActor3DBase = object
 
 _ALL_FACES = 0b111111
 _FIXED_NOTATION = 2
@@ -51,9 +54,9 @@ def _parse_label_format(fmt: str, name: str) -> int:
 
 
 class GridAxesActor(
-    _NoNewAttrMixin, _NameMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtkGridAxesActor3D
+    _NoNewAttrMixin, _NameMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _GridAxesActor3DBase
 ):
-    """Wrap :vtk:`vtkGridAxesActor3D`.
+    r"""Wrap :vtk:`vtkGridAxesActor3D`.
 
     Draw a labelled grid around the input data bounds. Grid lines are drawn on the
     faces of the box furthest from the camera, and each axis is labelled on the
@@ -61,7 +64,7 @@ class GridAxesActor(
 
     Unlike :class:`~pyvista.CubeAxesActor` this actor renders titles with
     :vtk:`vtkBillboardTextActor3D`, so titles containing math text such as
-    ``r'$\\rho$'`` are rendered as symbols.
+    ``r'$\rho$'`` are rendered as symbols.
 
     .. versionadded:: 0.49
 
@@ -192,7 +195,10 @@ class GridAxesActor(
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(mesh)
     >>> grid_axes_actor = pv.GridAxesActor(
-    ...     bounds=mesh.bounds, x_title=r'$\\rho$', y_title=r'$\\eta$', z_title=r'$\\mu$'
+    ...     bounds=mesh.bounds,
+    ...     x_title=r'$\rho$',
+    ...     y_title=r'$\eta$',
+    ...     z_title=r'$\mu$',
     ... )
     >>> _ = pl.add_actor(grid_axes_actor)
     >>> pl.show()
@@ -228,7 +234,7 @@ class GridAxesActor(
         ticks: bool = True,  # noqa: FBT001, FBT002
         unique_edges_only: bool = True,  # noqa: FBT001, FBT002
         label_offset: VectorLike[int] | None = None,
-    ):
+    ) -> None:
         """Initialize GridAxesActor."""
         if pv.vtk_version_info < MINIMUM_VTK_VERSION:
             msg = (
@@ -264,9 +270,7 @@ class GridAxesActor(
         self._label_formats = [x_label_format, y_label_format, z_label_format]
         self._ranges = np.zeros(6)
 
-        self._configure_text(
-            color=color_, font_size=font_size, font_family=font_family, bold=bold
-        )
+        self._configure_text(color=color_, font_size=font_size, font_family=font_family, bold=bold)
         self._configure_label_format()
 
         if not (isinstance(padding, (int, float)) and 0.0 <= padding < 1.0):  # type: ignore[redundant-expr]
@@ -293,7 +297,7 @@ class GridAxesActor(
     def _configure_label_format(self) -> None:
         """Set the notation and precision used to format tick labels."""
         names = ('x_label_format', 'y_label_format', 'z_label_format')
-        for axis, (fmt, name) in enumerate(zip(self._label_formats, names)):
+        for axis, (fmt, name) in enumerate(zip(self._label_formats, names, strict=True)):
             resolved = pv.global_theme.font.fmt if fmt is None else fmt
             if resolved is None:
                 continue  # type: ignore[unreachable]
@@ -312,11 +316,11 @@ class GridAxesActor(
             visible = self._axis_visibility[axis] and self._label_visibility[axis]
             n_labels = self._n_labels[axis]
             if visible and n_labels is None:
-                self.SetUseCustomLabels(axis, False)  # noqa: FBT003
+                self.SetUseCustomLabels(axis, False)
                 continue
             # An axis with no tick positions draws no labels, ticks, or grid lines
             count = 0 if not visible else cast('int', n_labels)
-            self.SetUseCustomLabels(axis, True)  # noqa: FBT003
+            self.SetUseCustomLabels(axis, True)
             self.SetNumberOfLabels(axis, count)
             if count:
                 lo, hi = ranges[2 * axis], ranges[2 * axis + 1]
@@ -335,7 +339,7 @@ class GridAxesActor(
         return BoundsTuple(*[c[axis] for axis in range(3) for c in corners])
 
     @bounds.setter
-    def bounds(self, bounds: VectorLike[float]):
+    def bounds(self, bounds: VectorLike[float]) -> None:
         bounds = np.asarray(
             _validation.validate_array(
                 bounds, must_have_shape=(6,), name='bounds', dtype_out=float
@@ -388,7 +392,7 @@ class GridAxesActor(
         return bool(self.GetGenerateGrid())
 
     @grid.setter
-    def grid(self, value: bool):  # noqa: FBT001
+    def grid(self, value: bool) -> None:
         self.SetGenerateGrid(bool(value))
 
     @property
@@ -397,7 +401,7 @@ class GridAxesActor(
         return bool(self.GetGenerateTicks())
 
     @ticks.setter
-    def ticks(self, value: bool):  # noqa: FBT001
+    def ticks(self, value: bool) -> None:
         self.SetGenerateTicks(bool(value))
 
     @property
@@ -406,16 +410,17 @@ class GridAxesActor(
         return bool(self.GetLabelUniqueEdgesOnly())
 
     @unique_edges_only.setter
-    def unique_edges_only(self, value: bool):  # noqa: FBT001
+    def unique_edges_only(self, value: bool) -> None:
         self.SetLabelUniqueEdgesOnly(bool(value))
 
     @property
     def label_offset(self) -> tuple[int, int]:  # numpydoc ignore=RT01
         """Return or set the display-space offset of the labels from their edge."""
-        return tuple(self.GetLabelDisplayOffset())  # type: ignore[return-value]
+        offset = self.GetLabelDisplayOffset()
+        return int(offset[0]), int(offset[1])
 
     @label_offset.setter
-    def label_offset(self, value: VectorLike[int]):
+    def label_offset(self, value: VectorLike[int]) -> None:
         offset = _validation.validate_array(
             value, must_have_shape=(2,), name='label_offset', dtype_out=int
         )
@@ -427,7 +432,7 @@ class GridAxesActor(
         return self._titles[0]
 
     @x_title.setter
-    def x_title(self, value: str):
+    def x_title(self, value: str) -> None:
         _validation.check_string(value, name='x_title')
         self._titles[0] = value
         self._refresh()
@@ -438,7 +443,7 @@ class GridAxesActor(
         return self._axis_visibility[0]
 
     @x_axis_visibility.setter
-    def x_axis_visibility(self, value: bool):  # noqa: FBT001
+    def x_axis_visibility(self, value: bool) -> None:
         self._axis_visibility[0] = bool(value)
         self._refresh()
 
@@ -448,7 +453,7 @@ class GridAxesActor(
         return self._label_visibility[0]
 
     @x_label_visibility.setter
-    def x_label_visibility(self, value: bool):  # noqa: FBT001
+    def x_label_visibility(self, value: bool) -> None:
         self._label_visibility[0] = bool(value)
         self._refresh()
 
@@ -458,7 +463,7 @@ class GridAxesActor(
         return self._n_labels[0]
 
     @n_xlabels.setter
-    def n_xlabels(self, value: int | None):
+    def n_xlabels(self, value: int | None) -> None:
         self._n_labels[0] = value
         self._refresh()
 
@@ -468,7 +473,7 @@ class GridAxesActor(
         return self._label_formats[0]
 
     @x_label_format.setter
-    def x_label_format(self, value: str | None):
+    def x_label_format(self, value: str | None) -> None:
         self._label_formats[0] = value
         self._configure_label_format()
 
@@ -478,7 +483,7 @@ class GridAxesActor(
         return self._titles[1]
 
     @y_title.setter
-    def y_title(self, value: str):
+    def y_title(self, value: str) -> None:
         _validation.check_string(value, name='y_title')
         self._titles[1] = value
         self._refresh()
@@ -489,7 +494,7 @@ class GridAxesActor(
         return self._axis_visibility[1]
 
     @y_axis_visibility.setter
-    def y_axis_visibility(self, value: bool):  # noqa: FBT001
+    def y_axis_visibility(self, value: bool) -> None:
         self._axis_visibility[1] = bool(value)
         self._refresh()
 
@@ -499,7 +504,7 @@ class GridAxesActor(
         return self._label_visibility[1]
 
     @y_label_visibility.setter
-    def y_label_visibility(self, value: bool):  # noqa: FBT001
+    def y_label_visibility(self, value: bool) -> None:
         self._label_visibility[1] = bool(value)
         self._refresh()
 
@@ -509,7 +514,7 @@ class GridAxesActor(
         return self._n_labels[1]
 
     @n_ylabels.setter
-    def n_ylabels(self, value: int | None):
+    def n_ylabels(self, value: int | None) -> None:
         self._n_labels[1] = value
         self._refresh()
 
@@ -519,7 +524,7 @@ class GridAxesActor(
         return self._label_formats[1]
 
     @y_label_format.setter
-    def y_label_format(self, value: str | None):
+    def y_label_format(self, value: str | None) -> None:
         self._label_formats[1] = value
         self._configure_label_format()
 
@@ -529,7 +534,7 @@ class GridAxesActor(
         return self._titles[2]
 
     @z_title.setter
-    def z_title(self, value: str):
+    def z_title(self, value: str) -> None:
         _validation.check_string(value, name='z_title')
         self._titles[2] = value
         self._refresh()
@@ -540,7 +545,7 @@ class GridAxesActor(
         return self._axis_visibility[2]
 
     @z_axis_visibility.setter
-    def z_axis_visibility(self, value: bool):  # noqa: FBT001
+    def z_axis_visibility(self, value: bool) -> None:
         self._axis_visibility[2] = bool(value)
         self._refresh()
 
@@ -550,7 +555,7 @@ class GridAxesActor(
         return self._label_visibility[2]
 
     @z_label_visibility.setter
-    def z_label_visibility(self, value: bool):  # noqa: FBT001
+    def z_label_visibility(self, value: bool) -> None:
         self._label_visibility[2] = bool(value)
         self._refresh()
 
@@ -560,7 +565,7 @@ class GridAxesActor(
         return self._n_labels[2]
 
     @n_zlabels.setter
-    def n_zlabels(self, value: int | None):
+    def n_zlabels(self, value: int | None) -> None:
         self._n_labels[2] = value
         self._refresh()
 
@@ -570,7 +575,7 @@ class GridAxesActor(
         return self._label_formats[2]
 
     @z_label_format.setter
-    def z_label_format(self, value: str | None):
+    def z_label_format(self, value: str | None) -> None:
         self._label_formats[2] = value
         self._configure_label_format()
 
