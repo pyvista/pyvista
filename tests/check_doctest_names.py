@@ -7,6 +7,11 @@ Call this from pyvista's root directory with
 The examples of each docstring are concatenated and analysed with ``symtable``.
 Any name referenced without ever being bound is reported.
 
+A name bound anywhere in the docstring counts, so rebinding forms that read the
+name they bind are not reported: augmented assignment, a use of an ``except ...
+as`` target after its block, and a use after ``del``. A docstring containing a
+star import is skipped, since its names cannot be resolved statically.
+
 """
 
 from __future__ import annotations
@@ -24,7 +29,17 @@ from types import ModuleType
 import pyvista as pv
 
 MODULE_DUNDERS = frozenset(
-    {'__name__', '__file__', '__doc__', '__package__', '__spec__', '__loader__', '__builtins__'}
+    {
+        '__builtins__',
+        # Compiler-generated for a module-scope annotation since Python 3.14.
+        '__conditional_annotations__',
+        '__doc__',
+        '__file__',
+        '__loader__',
+        '__name__',
+        '__package__',
+        '__spec__',
+    }
 )
 
 
@@ -83,6 +98,16 @@ def discover_modules(entry=pv, recurse=True):
     return found_modules
 
 
+def _walrus_targets(node):
+    """Yield walrus targets bound in the scope of a node, skipping nested functions."""
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
+        return
+    if isinstance(node, ast.NamedExpr) and isinstance(node.target, ast.Name):
+        yield node.target.id
+    for child in ast.iter_child_nodes(node):
+        yield from _walrus_targets(child)
+
+
 def _iter_scopes(table):
     """Yield a symbol table and every scope nested inside it."""
     yield table
@@ -115,6 +140,7 @@ def _bound_names(table):
 _OWN_SCOPE_NODES = (
     ast.FunctionDef,
     ast.AsyncFunctionDef,
+    ast.ClassDef,
     ast.Lambda,
     ast.ListComp,
     ast.SetComp,
@@ -128,6 +154,12 @@ def _immediate_loads(node):
     if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load):
         yield node.id
         return
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        # The body is deferred, but decorators and defaults evaluate at definition.
+        for child in (*node.decorator_list, *node.args.defaults, *node.args.kw_defaults):
+            if child is not None:
+                yield from _immediate_loads(child)
+        return
     if isinstance(node, _OWN_SCOPE_NODES):
         return
     for child in ast.iter_child_nodes(node):
@@ -140,6 +172,7 @@ def _used_before_bound(tree):
     for index, stmt in enumerate(tree.body):
         prefix = ast.Module(body=tree.body[: index + 1], type_ignores=[])
         bound = _bound_names(symtable.symtable(ast.unparse(prefix), '<doctest>', 'exec'))
+        bound |= set(_walrus_targets(prefix))
         for name in _immediate_loads(stmt):
             if name in bound or name in MODULE_DUNDERS or hasattr(builtins, name):
                 continue
@@ -166,7 +199,7 @@ def undefined_names(source):
         return []
 
     table = symtable.symtable(source, '<doctest>', 'exec')
-    bound = _bound_names(table)
+    bound = _bound_names(table) | set(_walrus_targets(tree))
 
     undefined = set()
     for scope in _iter_scopes(table):
@@ -249,7 +282,11 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
 
         if missing:
             listed = ', '.join(repr(name) for name in missing)
-            exc = NameError(f'name {listed} is not defined')
+            exc = NameError(
+                f'name {listed} is not defined'
+                if len(missing) == 1
+                else f'names {listed} are not defined'
+            )
             failures[dt_name] = exc, source
             if verbose:
                 print(f'FAILED: {dt.name} -- {exc!r}')

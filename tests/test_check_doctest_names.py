@@ -24,6 +24,12 @@ from tests.check_doctest_names import undefined_names
         pytest.param(
             'mesh = pv.Sphere()\nmesh.plot(color=col)\n', ['col', 'pv'], id='several-names'
         ),
+        pytest.param('count: int = 1\nprint(count)\n', [], id='annotated-assign'),
+        pytest.param('class Foo:\n    bar = 1\n    baz = bar + 1\n', [], id='class-body'),
+        pytest.param('class Foo(Base):\n    pass\n', ['Base'], id='class-base'),
+        pytest.param('class Foo:\n    bar = missing\n', ['missing'], id='class-body-undefined'),
+        pytest.param('[b + k for b in [1]]\n', ['k'], id='listcomp-free-name'),
+        pytest.param('print(__name__)\n', [], id='module-dunder'),
     ],
 )
 def test_undefined_names(source, expected):
@@ -41,6 +47,17 @@ def test_undefined_names(source, expected):
             'items = [1]\nall(isinstance(b, int) for b in items)\n', [], id='genexp-target'
         ),
         pytest.param('items = [1]\n[b for b in items]\n', [], id='listcomp-target'),
+        pytest.param(
+            'items = [1]\n[y for x in items if (y := x)]\nprint(y)\n', [], id='walrus-in-comp'
+        ),
+        pytest.param(
+            '@deco\ndef f():\n    pass\n\n\ndef deco(fn):\n    return fn\n',
+            ['deco'],
+            id='decorator-after-use',
+        ),
+        pytest.param(
+            'def f(a=later):\n    return a\n\n\nlater = 1\n', ['later'], id='default-after-use'
+        ),
     ],
 )
 def test_names_used_before_they_are_bound(source, expected):

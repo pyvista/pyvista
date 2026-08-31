@@ -76,7 +76,7 @@ jobs:
 
   doctest-names:
     name: Doctest Names
-    runs-on: "blacksmith-4vcpu-ubuntu-2204"
+    runs-on: ubuntu-22.04
     timeout-minutes: 15
     env:
       TOX_COLORED: "yes"

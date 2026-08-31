@@ -189,14 +189,13 @@ anti-aliasing warning is silenced only while a gallery is being built.
 
 The target runs two environments: `doctest-modules` executes the examples, and
 `doctest-names` statically checks that every name an example uses is bound by that example
-(`tests/check_doctest_names.py`). The second runs no code, so its failures are name
-resolution bugs in the docstring rather than runtime errors.
+(`tests/check_doctest_names.py`). The second executes none of the examples, so its
+failures are name resolution bugs in the docstring rather than runtime errors.
 
 `tests/conftest.py` and the `doctest-modules` tox environment already set off-screen
 rendering, so the `make` targets are safe. Only a bare `pytest --doctest-modules` outside
-tox needs
-`PYVISTA_OFF_SCREEN=true`; without it the examples open render windows and take over the
-display.
+tox needs `PYVISTA_OFF_SCREEN=true`; without it the examples open render windows and take
+over the display.
 
 **Never push a commit to find out whether something passes.** `AGENTS.md` opens with that
 rule and `CONTRIBUTING.rst` states it as `Continuous Integration Etiquette`. It binds you

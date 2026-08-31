@@ -1125,7 +1125,7 @@ Run all code examples in the docstrings with:
             environment (``tox run -e doctest-names``). The latter has no
             ``pytest`` equivalent since it does not run the examples: it
             statically checks that the names they use are actually defined
-            (see ``tests/check_doctest_names.py``). Pass ``-- -v`` to list
+            (see ``tests/check_doctest_names.py``). Pass ``ARGS="-v"`` to list
             every docstring as it is checked. CI runs the two as separate
             jobs in ``.github/workflows/style-docstring.yml``.
 
