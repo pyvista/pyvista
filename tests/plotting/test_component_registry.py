@@ -368,11 +368,17 @@ def test_non_class_component_raises():
 def test_unregister_removes_descriptor():
     @pv.register_plotter_component('removable')
     class RemovableComponent:
-        pass
+        def __init__(self, plotter):
+            self._plotter = plotter
 
+    pl = pv.Plotter()
+    assert pl.removable._plotter is pl
     assert 'removable' in pv.BasePlotter.__dict__
+
     pv.unregister_plotter_component('removable')
     assert 'removable' not in pv.BasePlotter.__dict__
+    with pytest.raises(AttributeError):
+        _ = pv.Plotter().removable
 
 
 def test_unregister_missing_raises():

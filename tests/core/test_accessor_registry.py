@@ -505,11 +505,17 @@ def test_non_class_accessor_raises():
 def test_unregister_removes_descriptor():
     @pv.register_dataset_accessor('removable', pv.PolyData)
     class RemovableAccessor:
-        pass
+        def __init__(self, mesh):
+            self._mesh = mesh
 
+    sphere = pv.Sphere()
+    assert sphere.removable._mesh is sphere
     assert 'removable' in pv.PolyData.__dict__
+
     pv.unregister_dataset_accessor('removable', pv.PolyData)
     assert 'removable' not in pv.PolyData.__dict__
+    with pytest.raises(AttributeError):
+        _ = pv.Sphere().removable
 
 
 def test_unregister_restores_overridden_builtin():
