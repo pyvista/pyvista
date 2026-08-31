@@ -14,6 +14,7 @@ Open the one that matches the task.
 | Writing or changing code here                                             | `.claude/skills/pyvista-dev/SKILL.md`        |
 | Wrapping a VTK class, adding or editing a filter                          | `.claude/skills/pyvista-vtk/SKILL.md`        |
 | Any plotting test, baseline image, or image flag                          | `.claude/skills/pyvista-testing/SKILL.md`    |
+| Repairing the documentation image cache after a docs image failure        | `.claude/skills/pyvista-doc-images/SKILL.md` |
 | Reviewing a branch, diff, or pull request                                 | `.claude/skills/pyvista-review/SKILL.md`     |
 | Writing the pull request title and body                                   | `.claude/skills/pyvista-pr/SKILL.md`         |
 | Deprecating or renaming anything public                                   | `.claude/skills/pyvista-vtk/SKILL.md`        |
