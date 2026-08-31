@@ -18,6 +18,8 @@
    every base: an undocumented base has no page to point at, so it says where the
    inherited members are documented rather than claiming to be the full hierarchy. The
    VTK class the page's own class wraps is linked out to VTK's docs by the ``:vtk:`` role.
+   Its links to the member sections are implicit references to their titles, so it may
+   only name a section this page actually renders.
 
    Filters get their own section at the end: every dataset mixes in the filter classes,
    and for ``PolyData`` they are 142 of the 226 members it inherits. Attributes come
@@ -33,12 +35,20 @@
 {%- set vtk_classes = vtk_bases(module, objname) %}
 
 {% block inheritance %}
+{%- set member_sections = [
+      _('Inherited Attributes') if inherited_attributes else '',
+      _('Inherited Methods') if inherited_methods else '',
+      _('Filters') if filters else '',
+   ] | select | list %}
 {% if base_classes or vtk_classes %}
 
 {{ _('Inheritance') }}
 {{ '-' * _('Inheritance')|length }}
 {% if base_classes %}
 Inherited members are documented on {% for item in base_classes[:-1] %}:py:obj:`~{{ item }}`, {% endfor %}:py:obj:`~{{ base_classes[-1] }}`.
+{% endif %}
+{% if member_sections %}
+See them all under {% for section in member_sections[:-1] %}`{{ section }}`_{{ ' and ' if loop.last else ', ' }}{% endfor %}`{{ member_sections[-1] }}`_.
 {% endif %}
 {% if vtk_classes %}
 Wraps {% for item in vtk_classes[:-1] %}:vtk:`{{ item }}`, {% endfor %}:vtk:`{{ vtk_classes[-1] }}`.

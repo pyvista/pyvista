@@ -13,6 +13,8 @@ import importlib
 import inspect
 import pkgutil
 
+from jinja2 import FileSystemLoader
+from jinja2.sandbox import SandboxedEnvironment
 import pytest
 from sphinx.ext.autodoc.importer import get_class_members
 from sphinx.util.inspect import safe_getattr
@@ -488,6 +490,77 @@ def test_no_vtk_member_is_documented(documented):
             if provider is not None and not provider.__module__.startswith('pyvista'):
                 leaked.add(f'{docname}.{item}')
     assert not leaked, 'VTK members documented as PyVista API:\n  ' + '\n  '.join(sorted(leaked))
+
+
+@pytest.fixture(scope='module')
+def render_inheritance():
+    """Render ``class.rst``'s inheritance section the way ``autosummary`` would."""
+    env = SandboxedEnvironment(
+        loader=FileSystemLoader(PYVISTA_ROOT_DIR / 'doc' / 'source' / '_templates' / 'autosummary')
+    )
+    env.filters['escape'] = lambda text: text
+    env.filters['underline'] = lambda text, line='=': f'{text}\n{line * len(text)}'
+    template = env.get_template('class.rst')
+
+    def render(*, attributes, methods, filters, bases=('pyvista.DataObject',), vtk=()):
+        def member_rows(_module, _objname, names):
+            has = attributes if 'ATTRIBUTE' in names else methods
+            return [('X.y', 'pyvista.X.y', 'Summary.')] if has else []
+
+        text = template.render(
+            objname='Example',
+            name='Example',
+            module='pyvista',
+            attributes=['ATTRIBUTE'],
+            methods=['METHOD'],
+            skipmethods=SKIP,
+            # `_` is the gettext callable autosummary passes in; a template that shadows
+            # it renders every other class page wrong, so leave it callable here.
+            _=lambda text: text,
+            own_members=lambda *_: [],
+            inherited_member_rows=member_rows,
+            filter_member_rows=lambda *_: [('X.f', 'pyvista.X.f', 'Summary.')] if filters else [],
+            inherited_classes=lambda *_: list(bases),
+            vtk_bases=lambda *_: list(vtk),
+        )
+        return [line for line in text.splitlines() if line.startswith('See them all')]
+
+    return render
+
+
+@pytest.mark.parametrize(
+    ('sections', 'expected'),
+    [
+        ((False, False, False), []),
+        ((True, False, False), ['See them all under `Inherited Attributes`_.']),
+        ((False, True, False), ['See them all under `Inherited Methods`_.']),
+        ((False, False, True), ['See them all under `Filters`_.']),
+        (
+            (True, True, False),
+            ['See them all under `Inherited Attributes`_ and `Inherited Methods`_.'],
+        ),
+        ((True, False, True), ['See them all under `Inherited Attributes`_ and `Filters`_.']),
+        ((False, True, True), ['See them all under `Inherited Methods`_ and `Filters`_.']),
+        (
+            (True, True, True),
+            ['See them all under `Inherited Attributes`_, `Inherited Methods`_ and `Filters`_.'],
+        ),
+    ],
+)
+def test_the_inheritance_section_links_only_the_member_sections_the_page_has(
+    render_inheritance, sections, expected
+):
+    """Each link is an implicit reference, so naming a section the page lacks fails the build."""
+    attributes, methods, filters = sections
+    assert render_inheritance(attributes=attributes, methods=methods, filters=filters) == expected
+
+
+def test_a_page_with_only_a_vtk_base_still_links_its_member_sections(render_inheritance):
+    # The classes are listed by vtk_bases rather than inherited_classes, but the member
+    # sections below are populated the same way.
+    assert render_inheritance(
+        attributes=True, methods=False, filters=False, bases=(), vtk=('vtkCamera',)
+    ) == ['See them all under `Inherited Attributes`_.']
 
 
 def test_class_template_calls_only_helpers_that_exist():
