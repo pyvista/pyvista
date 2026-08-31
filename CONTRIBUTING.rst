@@ -1120,13 +1120,14 @@ Run all code examples in the docstrings with:
 
         .. note::
 
-            ``make doctest`` runs ``tox run -f doctest``, which matches CI
-            (``.github/workflows/style-docstring.yml``) by running both the
-            ``doctest-modules`` environment above and the ``doctest-local``
-            environment. The latter has no ``pytest``/``tox -e`` equivalent
-            shown above since it doesn't run through ``pytest``: it statically
-            checks that names used in docstring examples are actually defined
-            (see ``tests/check_doctest_names.py``).
+            ``make doctest`` runs ``tox run -f doctest``, which runs both the
+            ``doctest-modules`` environment above and the ``doctest-names``
+            environment (``tox run -e doctest-names``). The latter has no
+            ``pytest`` equivalent since it does not run the examples: it
+            statically checks that the names they use are actually defined
+            (see ``tests/check_doctest_names.py``). Pass ``ARGS="-v"`` to list
+            every docstring as it is checked. CI runs the two as separate
+            jobs in ``.github/workflows/style-docstring.yml``.
 
 .. note::
 

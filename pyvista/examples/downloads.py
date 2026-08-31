@@ -31,12 +31,21 @@ from pathlib import PureWindowsPath
 import shutil
 import sys
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import Literal
 from typing import cast
 from typing import overload
 
 import numpy as np
 import pooch
+
+try:
+    import filelock
+
+    _HAS_FILELOCK = True
+except ImportError:  # pragma: no cover
+    # Only needed to serialize parallel downloads
+    _HAS_FILELOCK = False
 
 import pyvista as pv
 from pyvista import _vtk
@@ -54,6 +63,8 @@ from pyvista.examples._dataset_loader import _MultiFileDownloadableDatasetLoader
 from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from numpy import ndarray
 
     from pyvista import ExplicitStructuredGrid
@@ -198,7 +209,7 @@ def _gltf_loader(name: str):
     return _SingleFileDownloadableDatasetLoader(
         paths[name],
         base_url=base_url,
-        download_func=fetcher.fetch,
+        download_func=functools.partial(_locked_fetch, fetcher),
     )
 
 
@@ -286,12 +297,40 @@ def download_file(filename: str) -> str | list[str]:
         return _download_file(filename)
 
 
+@contextlib.contextmanager
+def _file_lock(path: Path) -> Iterator[None]:
+    """Hold an advisory cross-process lock while ``path`` is downloaded."""
+    if not _HAS_FILELOCK:
+        yield
+        return
+    try:
+        lock_path = Path(f'{path}.lock')
+        lock_path.parent.mkdir(parents=True, exist_ok=True)
+        lock = filelock.FileLock(lock_path)
+        lock.acquire()
+    except OSError:
+        # Cannot create the lock; proceed unlocked and let pooch report any real errors
+        yield
+        return
+    try:
+        yield
+    finally:
+        lock.release()
+
+
+def _locked_fetch(fetcher: Any, filename: str, **kwargs):
+    """Fetch with a per-file lock so parallel processes cannot corrupt a shared download."""
+    with _file_lock(fetcher.abspath / filename):
+        return fetcher.fetch(filename, **kwargs)
+
+
 def _download_file(filename: str):
     """Download a file using pooch."""
     # Pre-create the parent dir: pooch's check-then-makedirs races under parallel downloads
     with contextlib.suppress(OSError):
         (FETCHER.abspath / filename).parent.mkdir(parents=True, exist_ok=True)
-    return FETCHER.fetch(
+    return _locked_fetch(
+        FETCHER,
         filename,
         processor=pooch.Unzip() if filename.endswith('.zip') else None,  # type: ignore[attr-defined]
         downloader=_file_copier if _FILE_CACHE else None,
