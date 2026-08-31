@@ -26,12 +26,14 @@ def _all_classes():
             modules.append(importlib.import_module(info.name))
         except Exception:  # noqa: BLE001, S112  # pragma: no cover
             continue  # a module whose optional dependency is missing
-    classes = {}
-    for module in modules:
-        for _, obj in inspect.getmembers(module, inspect.isclass):
-            if getattr(obj, '__module__', '').startswith(pv.__name__):
-                classes[obj] = obj
-    return list(classes)
+    return list(
+        {
+            obj
+            for module in modules
+            for _, obj in inspect.getmembers(module, inspect.isclass)
+            if getattr(obj, '__module__', '').startswith(pv.__name__)
+        }
+    )
 
 
 def _own_public_members(cls) -> list[str]:
