@@ -23,8 +23,8 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLike
     from pyvista.plotting._typing import ColorLike
 
-#: Minimum VTK version providing :vtk:`vtkGridAxesActor3D`.
-MINIMUM_VTK_VERSION = (9, 5, 0)
+# Minimum VTK version providing vtkGridAxesActor3D
+GRID_AXES_MIN_VTK_VERSION = (9, 5, 0)
 
 if TYPE_CHECKING:
     _GridAxesActor3DBase = _vtk.vtkGridAxesActor3D
@@ -236,10 +236,10 @@ class GridAxesActor(
         label_offset: VectorLike[int] | None = None,
     ) -> None:
         """Initialize GridAxesActor."""
-        if pv.vtk_version_info < MINIMUM_VTK_VERSION:
+        if pv.vtk_version_info < GRID_AXES_MIN_VTK_VERSION:
             msg = (
                 f'GridAxesActor requires VTK '
-                f'{".".join(str(v) for v in MINIMUM_VTK_VERSION)} or later, '
+                f'{".".join(str(v) for v in GRID_AXES_MIN_VTK_VERSION)} or later, '
                 f'but VTK {pv.vtk_version_info} is installed.\n'
                 f'Use CubeAxesActor instead.'
             )

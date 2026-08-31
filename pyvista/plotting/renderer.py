@@ -40,6 +40,7 @@ from .charts import Charts
 from .colors import Color
 from .colors import get_cycler
 from .errors import InvalidCameraError
+from .grid_axes_actor import GRID_AXES_MIN_VTK_VERSION
 from .helpers import view_vectors
 from .mapper import DataSetMapper
 from .prop_collection import _PropCollection
@@ -64,9 +65,6 @@ class _NotSelected:
     """Sentinel for a bounds actor choice the caller has not made."""
 
 
-_GRID_AXES_MIN_VTK = (9, 5, 0)
-
-
 def _resolve_axes_actor(actor):
     """Return the bounds actor class name to build."""
     if actor is _NotSelected:
@@ -86,12 +84,12 @@ def _resolve_axes_actor(actor):
         warn_external(msg, pv.PyVistaFutureWarning)
         return 'cube'
     if actor is None:
-        return 'grid' if pv.vtk_version_info >= _GRID_AXES_MIN_VTK else 'cube'
+        return 'grid' if pv.vtk_version_info >= GRID_AXES_MIN_VTK_VERSION else 'cube'
     _validation.check_contains(['cube', 'grid'], must_contain=actor, name='actor')
-    if actor == 'grid' and pv.vtk_version_info < _GRID_AXES_MIN_VTK:
+    if actor == 'grid' and pv.vtk_version_info < GRID_AXES_MIN_VTK_VERSION:
         msg = (
             f"`actor='grid'` requires VTK "
-            f'{".".join(str(v) for v in _GRID_AXES_MIN_VTK)} or later, but VTK '
+            f'{".".join(str(v) for v in GRID_AXES_MIN_VTK_VERSION)} or later, but VTK '
             f'{pv.vtk_version_info} is installed.\n'
             f"Use `actor='cube'`, or `actor=None` to select automatically."
         )

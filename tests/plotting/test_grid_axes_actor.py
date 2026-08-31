@@ -6,10 +6,10 @@ import numpy as np
 import pytest
 
 import pyvista as pv
-from pyvista.plotting.grid_axes_actor import MINIMUM_VTK_VERSION
+from pyvista.plotting.grid_axes_actor import GRID_AXES_MIN_VTK_VERSION
 
 pytestmark = pytest.mark.needs_vtk_version(
-    MINIMUM_VTK_VERSION, reason='vtkGridAxesActor3D was added in VTK 9.5'
+    GRID_AXES_MIN_VTK_VERSION, reason='vtkGridAxesActor3D was added in VTK 9.5'
 )
 
 UNIT_CUBE = (0.0, 1.0, 0.0, 1.0, 0.0, 1.0)

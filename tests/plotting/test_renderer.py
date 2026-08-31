@@ -11,11 +11,12 @@ import pytest
 import pyvista as pv
 from pyvista import _vtk
 from pyvista import examples
+from pyvista.plotting.grid_axes_actor import GRID_AXES_MIN_VTK_VERSION
 from pyvista.plotting.prop_collection import _PropCollection
 from pyvista.plotting.renderer import ACTOR_LOC_MAP
 
 NEEDS_GRID_ACTOR = pytest.mark.needs_vtk_version(
-    9, 5, reason='vtkGridAxesActor3D was added in VTK 9.5'
+    *GRID_AXES_MIN_VTK_VERSION[:2], reason='vtkGridAxesActor3D was added in VTK 9.5'
 )
 ACTORS = ['cube', pytest.param('grid', marks=NEEDS_GRID_ACTOR)]
 
@@ -1045,7 +1046,7 @@ def test_show_bounds_actor_future_warning(sphere):
 @pytest.mark.parametrize('method', ['show_bounds', 'show_grid'])
 @pytest.mark.parametrize('actor', ['cube', 'grid'])
 def test_show_bounds_actor_explicit_is_silent(sphere, method, actor):
-    if actor == 'grid' and pv.vtk_version_info < (9, 5, 0):
+    if actor == 'grid' and pv.vtk_version_info < GRID_AXES_MIN_VTK_VERSION:
         pytest.skip('vtkGridAxesActor3D was added in VTK 9.5')
     pl = pv.Plotter()
     pl.add_mesh(sphere)
@@ -1059,7 +1060,9 @@ def test_show_bounds_actor_explicit_is_silent(sphere, method, actor):
 def test_show_bounds_actor_none_selects_automatically(sphere, method):
     pl = pv.Plotter()
     pl.add_mesh(sphere)
-    expected = pv.GridAxesActor if pv.vtk_version_info >= (9, 5, 0) else pv.CubeAxesActor
+    expected = (
+        pv.GridAxesActor if pv.vtk_version_info >= GRID_AXES_MIN_VTK_VERSION else pv.CubeAxesActor
+    )
     with warnings.catch_warnings():
         warnings.simplefilter('error')
         assert isinstance(getattr(pl, method)(actor=None), expected)
@@ -1072,7 +1075,7 @@ def test_show_bounds_actor_invalid(sphere):
         pl.show_bounds(actor='sideways')
 
 
-@pytest.mark.needs_vtk_version(9, 5, reason='vtkGridAxesActor3D was added in VTK 9.5')
+@NEEDS_GRID_ACTOR
 @pytest.mark.parametrize(
     'kwargs',
     [
@@ -1100,7 +1103,7 @@ def test_show_bounds_grid_only_keywords_rejected_by_cube(sphere, kwargs):
         pl.show_bounds(actor='cube', **kwargs)
 
 
-@pytest.mark.needs_vtk_version(9, 5, reason='vtkGridAxesActor3D was added in VTK 9.5')
+@NEEDS_GRID_ACTOR
 def test_show_bounds_multiple_rejected_keywords_listed(sphere):
     pl = pv.Plotter()
     pl.add_mesh(sphere)
@@ -1108,7 +1111,7 @@ def test_show_bounds_multiple_rejected_keywords_listed(sphere):
         pl.show_bounds(actor='grid', minor_ticks=True, ticks='both')
 
 
-@pytest.mark.needs_vtk_version(9, 5, reason='vtkGridAxesActor3D was added in VTK 9.5')
+@NEEDS_GRID_ACTOR
 def test_show_grid_does_not_pass_cube_defaults_to_grid_actor(sphere):
     # show_grid sets `ticks` and `location`, which the grid actor cannot accept
     pl = pv.Plotter()
@@ -1118,7 +1121,7 @@ def test_show_grid_does_not_pass_cube_defaults_to_grid_actor(sphere):
     assert actor.grid is True
 
 
-@pytest.mark.needs_vtk_version(9, 5, reason='vtkGridAxesActor3D was added in VTK 9.5')
+@NEEDS_GRID_ACTOR
 def test_show_bounds_grid_is_tracked_by_the_renderer(sphere):
     pl = pv.Plotter()
     pl.add_mesh(sphere)
