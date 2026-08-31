@@ -42,7 +42,6 @@ from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
-from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
 from pyvista.core.utilities.arrays import raise_not_matching
@@ -5589,85 +5588,6 @@ class BasePlotter(_BoundsSizeMixin):
         # by default, use the plotter local theme
         kwargs.setdefault('theme', self._theme)
         return self.scalar_bars.add_scalar_bar(title, **kwargs)
-
-    @_deprecate_positional_args(allowed=['scalars'])
-    def update_scalars(self, scalars, mesh=None, render: bool = True) -> None:  # noqa: ANN001, FBT001, FBT002
-        """Update scalars of an object in the plotter.
-
-        .. deprecated:: 0.43.0
-            This method is deprecated and will be removed in a future version of
-            PyVista. It is functionally equivalent to directly modifying the
-            scalars of a mesh in-place.
-
-            .. code-block:: python
-
-                # Modify the points in place
-                mesh['my scalars'] = values
-                # Explicitly call render if needed
-                pl.render()
-
-        Parameters
-        ----------
-        scalars : sequence
-            Scalars to replace existing scalars.
-
-        mesh : vtk.PolyData | vtk.UnstructuredGrid, optional
-            Object that has already been added to the Plotter.  If
-            None, uses last added mesh.
-
-        render : bool, default: True
-            Force a render when True.
-
-        """
-        # Deprecated on 0.43.0, estimated removal on v0.46.0
-        warn_external(
-            'This method is deprecated and will be removed in a future version of '
-            'PyVista. Directly modify the scalars of a mesh in-place instead.',
-            PyVistaDeprecationWarning,
-        )
-
-        if mesh is None:
-            mesh = self.mesh
-
-        if isinstance(mesh, (Iterable, pv.MultiBlock)):
-            # Recursive if need to update scalars on many meshes
-            for m in mesh:
-                self.update_scalars(scalars, mesh=m, render=False)
-            if render:
-                self.render()
-            return
-
-        if isinstance(scalars, str):
-            # Grab scalars array if name given
-            scalars = get_array(mesh, scalars)
-
-        if scalars is None:
-            if render:
-                self.render()
-            return
-
-        if scalars.shape[0] == mesh.GetNumberOfPoints():
-            data = mesh.GetPointData()
-        elif scalars.shape[0] == mesh.GetNumberOfCells():
-            data = mesh.GetCellData()
-        else:
-            raise_not_matching(scalars, mesh)
-
-        vtk_scalars = data.GetScalars()
-        if vtk_scalars is None:
-            msg = 'No active scalars'
-            raise ValueError(msg)
-        s = convert_array(vtk_scalars)
-        s[:] = scalars
-        vtk_scalars.Modified()
-        data.Modified()
-        with contextlib.suppress(Exception):
-            # Why are the points updated here? Not all datasets have points
-            # and only the scalars array is modified by this function...
-            mesh.GetPoints().Modified()
-
-        if render:
-            self.render()
 
     def _clear_ren_win(self) -> None:
         """Clear the render window."""
