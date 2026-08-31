@@ -270,11 +270,32 @@ def filter_member_rows(  # numpydoc ignore=RT01
     return [row[1:] for row in _rows(module, objname, names) if _is_filter(row[0])]
 
 
-def inherited_classes(module: str, objname: str) -> list[str]:  # numpydoc ignore=RT01
-    """Return the documented classes ``module.objname`` inherits from, most derived first."""
+def _is_vtk(cls: type) -> bool:
+    """Return whether ``cls`` is a VTK class with a page in VTK's documentation."""
+    # ``vtkmodules`` also holds pure-Python helpers -- ``VTKObjectWrapper`` in
+    # ``numpy_interface`` -- that VTK does not document; only the compiled modules count.
+    return cls.__module__.startswith('vtkmodules.vtk')
+
+
+def inherited_classes(  # numpydoc ignore=RT01
+    module: str, objname: str
+) -> list[tuple[str, str]]:
+    """Return ``[(role, target)]`` for the classes ``module.objname`` inherits from.
+
+    Documented pyvista classes are listed in full, most derived first. VTK contributes
+    only the classes nothing else in the MRO derives from.
+    """
     cls = _class_from(module, objname)
     documented = _documented_classes()
-    return [documented[base] for base in cls.__mro__[1:] if base in documented]
+    vtk = [base for base in cls.__mro__[1:] if _is_vtk(base)]
+    entry = {base for base in vtk if not any(o is not base and issubclass(o, base) for o in vtk)}
+    rows: list[tuple[str, str]] = []
+    for base in cls.__mro__[1:]:
+        if base in documented:
+            rows.append(('py:obj', documented[base]))
+        elif base in entry:
+            rows.append(('vtk', base.__name__))
+    return rows
 
 
 def setup(app: Sphinx) -> dict[str, Any]:  # numpydoc ignore=RT01

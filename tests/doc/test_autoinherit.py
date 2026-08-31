@@ -316,20 +316,43 @@ def test_a_class_that_mixes_in_no_filters_has_no_filter_rows():
     assert autoinherit.filter_member_rows('pyvista', 'Camera', _members(pv.Camera)) == []
 
 
-def test_inherited_classes_are_the_documented_mro():
+def test_inherited_classes_are_the_documented_mro_and_the_vtk_class():
     assert autoinherit.inherited_classes('pyvista', 'CompositeFilters') == [
-        'pyvista.DataObjectFilters'
+        ('py:obj', 'pyvista.DataObjectFilters')
     ]
-    # Most derived first, the class itself dropped, and no vtkPolyData: VTK has no page.
+    # Most derived first, the class itself dropped, and the VTK class it wraps last.
     assert autoinherit.inherited_classes('pyvista', 'PolyData') == [
-        'pyvista.core.pointset._PointSetBase',
-        'pyvista.DataSet',
-        'pyvista.core.utilities.misc._BoundsSizeMixin',
-        'pyvista.PolyDataFilters',
-        'pyvista.DataSetFilters',
-        'pyvista.DataObjectFilters',
-        'pyvista.DataObject',
+        ('py:obj', 'pyvista.core.pointset._PointSetBase'),
+        ('py:obj', 'pyvista.DataSet'),
+        ('py:obj', 'pyvista.core.utilities.misc._BoundsSizeMixin'),
+        ('py:obj', 'pyvista.PolyDataFilters'),
+        ('py:obj', 'pyvista.DataSetFilters'),
+        ('py:obj', 'pyvista.DataObjectFilters'),
+        ('py:obj', 'pyvista.DataObject'),
+        ('vtk', 'vtkPolyData'),
     ]
+
+
+def test_inherited_classes_trims_the_vtk_hierarchy_to_its_entry_point():
+    """VTK documents its own hierarchy, so vtkObject would be on nearly every page."""
+    for name in ('PolyData', 'MultiBlock', 'ImageData'):
+        vtk = [target for role, target in autoinherit.inherited_classes('pyvista', name)]
+        assert 'vtkObject' not in vtk
+        assert 'vtkObjectBase' not in vtk
+    assert ('vtk', 'vtkMultiBlockDataSet') in autoinherit.inherited_classes(
+        'pyvista', 'MultiBlock'
+    )
+
+
+def test_inherited_classes_skips_vtk_classes_that_vtk_does_not_document():
+    # VTKObjectWrapper is pure Python in vtkmodules.numpy_interface, so it has no page
+    # and the :vtk: role would fail the nitpicky build on it.
+    from pyvista._vtk import VTKObjectWrapper
+
+    assert issubclass(pv.DataSetAttributes, VTKObjectWrapper)
+    assert not autoinherit._is_vtk(VTKObjectWrapper)
+    targets = [t for _, t in autoinherit.inherited_classes('pyvista', 'DataSetAttributes')]
+    assert 'VTKObjectWrapper' not in targets
 
 
 def test_inherited_classes_covers_every_class_the_tables_link_to():
@@ -339,10 +362,15 @@ def test_inherited_classes_covers_every_class_the_tables_link_to():
         rows = autoinherit.inherited_member_rows('pyvista', name, members)
         rows += autoinherit.filter_member_rows('pyvista', name, members)
         homes = {target.rsplit('.', 1)[0] for _, target, _ in rows}
-        assert homes <= set(autoinherit.inherited_classes('pyvista', name))
+        documented = {
+            target
+            for role, target in autoinherit.inherited_classes('pyvista', name)
+            if role == 'py:obj'
+        }
+        assert homes <= documented
 
 
-def test_a_class_with_no_documented_base_has_no_inherited_classes():
+def test_a_class_with_no_documented_or_vtk_base_has_no_inherited_classes():
     assert autoinherit.inherited_classes('pyvista', 'DataObjectFilters') == []
 
 

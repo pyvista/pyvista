@@ -15,7 +15,8 @@
    module. ``enum.rst`` builds a table this way for the same reason.
 
    The inheritance section leads with the documented classes in the MRO -- exactly the
-   classes the sections below link to, since VTK and undocumented bases have no page.
+   classes the sections below link to -- and the VTK class each one wraps, which the
+   ``:vtk:`` role links out to VTK's own docs.
    Filters get their own section at the end: every dataset mixes in the filter classes,
    and for ``PolyData`` they are 142 of the 226 members it inherits. Attributes come
    before the three method sections so those stay together, ending with those filters. #}
@@ -30,11 +31,12 @@
 
 {% block inheritance %}
 {% if base_classes %}
+{% set last_role, last_target = base_classes[-1] %}
 
 {{ _('Inheritance') }}
 {{ '-' * _('Inheritance')|length }}
 
-Inherits from {% for item in base_classes[:-1] %}:py:obj:`~{{ item }}`, {% endfor %}:py:obj:`~{{ base_classes[-1] }}`.
+Inherits from {% for role, item in base_classes[:-1] %}:{{ role }}:`~{{ item }}`, {% endfor %}:{{ last_role }}:`~{{ last_target }}`.
 {% endif %}
 {% endblock %}
 
