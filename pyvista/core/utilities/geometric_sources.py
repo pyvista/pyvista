@@ -894,6 +894,7 @@ class Text3DSource(_NoNewAttrMixin):
     def update(self: Text3DSource) -> None:
         """Update the output of the source."""
         if self._modified:
+            algorithm: _vtk.vtkAlgorithm
             is_empty_string = self.string == '' or self.string.isspace()
             is_2d = self.depth == 0 or (self.depth is None and self.height == 0)
             if is_empty_string or is_2d:
