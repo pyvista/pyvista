@@ -25,6 +25,9 @@ from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.filters import DEFAULT_PRECISION
+from pyvista.core.filters import DOUBLE_PRECISION
+from pyvista.core.filters import SINGLE_PRECISION
 from pyvista.core.filters import _apply_points_dtype
 from pyvista.core.filters import _requested_points_precision
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
@@ -43,11 +46,6 @@ if TYPE_CHECKING:
     from pyvista.core.composite import MultiBlock
     from pyvista.core.dataset import DataSet
     from pyvista.core.pointset import PolyData
-
-
-DEFAULT_PRECISION = _vtk.vtkAlgorithm.DEFAULT_PRECISION
-SINGLE_PRECISION = _vtk.vtkAlgorithm.SINGLE_PRECISION
-DOUBLE_PRECISION = _vtk.vtkAlgorithm.DOUBLE_PRECISION
 
 
 def _warn_point_dtype_deprecated() -> None:
@@ -902,6 +900,7 @@ class Text3DSource(_NoNewAttrMixin):
                 # Do not apply filters
                 self._source.Update()
                 out = self._source.GetOutput()
+                algorithm = self._source
             else:
                 # 3D case, apply filters
                 # Create output filters to make text 3D
@@ -914,6 +913,7 @@ class Text3DSource(_NoNewAttrMixin):
                 tri_filter.SetInputConnection(extrude.GetOutputPort())
                 tri_filter.Update()
                 out = tri_filter.GetOutput()
+                algorithm = tri_filter
 
             # Modify output object
             self._output.copy_from(out)
@@ -924,7 +924,7 @@ class Text3DSource(_NoNewAttrMixin):
                 # Add a single point to 'fix' the bounds
                 self._output.points = (0.0, 0.0, 0.0)
 
-            _apply_points_dtype(self._output)
+            _apply_points_dtype(self._output, algorithm=algorithm)
             self._transform_output()
             self._modified = False
 
