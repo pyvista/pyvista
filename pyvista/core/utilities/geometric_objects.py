@@ -1878,7 +1878,7 @@ def CircularArc(  # noqa: PLR0917
     alg.SetNegative(negative)
     _update_alg(alg)
     angle = np.deg2rad(alg.GetAngle())
-    arc = wrap(alg.GetOutput())
+    arc = _apply_points_dtype(wrap(alg.GetOutput()), algorithm=alg)
     # Compute distance of every point along circular arc
     center = np.array(center).ravel()
     radius = np.sqrt(np.sum((arc.points[0] - center) ** 2, axis=0))
@@ -1961,7 +1961,7 @@ def CircularArcFromNormal(  # noqa: PLR0917
     alg.SetAngle(angle_)
     _update_alg(alg)
     angle_ = np.deg2rad(alg.GetAngle())
-    arc = wrap(alg.GetOutput())
+    arc = _apply_points_dtype(wrap(alg.GetOutput()), algorithm=alg)
     # Compute distance of every point along circular arc
     center = np.array(center)
     radius = np.sqrt(np.sum((arc.points[0] - center) ** 2, axis=0))

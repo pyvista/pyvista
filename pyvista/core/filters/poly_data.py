@@ -3634,7 +3634,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetInputData(self)
         alg.SetCapping(capping)
         _update_alg(alg, progress_bar=progress_bar, message='Extruding')
-        output = _get_output(alg, keep_pointset=False)
+        output = _get_output(alg)
         if inplace:
             self.copy_from(output, deep=False)  # type: ignore[attr-defined]
             return self
