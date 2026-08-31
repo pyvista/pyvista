@@ -2506,10 +2506,32 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
 
 @abstract_class
 class PointGrid(_PointSetBase):
-    """Class in common with structured and unstructured grids."""
+    """Class in common with structured and unstructured grids.
 
-    def __init__(self) -> None:
+    Parameters
+    ----------
+    *args : Any, optional
+        Unused.
+
+        .. deprecated:: 0.49
+            These arguments have never had any effect and will be removed.
+
+    **kwargs : dict, optional
+        Unused.
+
+        .. deprecated:: 0.49
+            These arguments have never had any effect and will be removed.
+
+    """
+
+    def __init__(self, *args, **kwargs) -> None:
         """Initialize the point grid."""
+        if args or kwargs:
+            warn_external(
+                'Passing unused arguments to `PointGrid` is deprecated and they will be '
+                'removed. Remove them from the call.',
+                PyVistaDeprecationWarning,
+            )
         super().__init__()
 
     def plot_curvature(self: Self, curv_type='mean', **kwargs):
@@ -2579,7 +2601,8 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         .. versionadded:: 0.47
 
     **kwargs : dict, optional
-        Additional keyword arguments passed to :func:`pyvista.read` when initializing from a file.
+        Additional keyword arguments passed when reading from a file or loading
+        from arrays.
 
     Examples
     --------

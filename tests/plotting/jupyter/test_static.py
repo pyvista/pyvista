@@ -95,3 +95,12 @@ def test_show_return_values(sphere: pv.PolyData):
     assert isinstance(cpos, pv.CameraPosition)
     assert isinstance(img, np.ndarray)
     assert isinstance(viewer, Image)
+
+
+def test_set_jupyter_backend_unused_args_deprecated():
+    """The unused `name` and `**kwargs` warn instead of being silently ignored."""
+    try:
+        with pytest.warns(pv.core.errors.PyVistaDeprecationWarning, match='unused'):
+            pv.set_jupyter_backend('none', name='foo')
+    finally:
+        pv.set_jupyter_backend(None)

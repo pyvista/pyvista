@@ -11,6 +11,8 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from pyvista import _vtk
+from pyvista._warn_external import warn_external
+from pyvista.core.errors import PyVistaDeprecationWarning
 
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
@@ -40,6 +42,12 @@ class Table(DataObject, _vtk.vtkTable):
     deep : bool, default: True
         Deep copy the input when initializing from a :vtk:`vtkTable`.
 
+    **kwargs : dict, optional
+        Unused.
+
+        .. deprecated:: 0.49
+            These arguments have never had any effect and will be removed.
+
     Examples
     --------
     >>> import pyvista as pv
@@ -49,8 +57,14 @@ class Table(DataObject, _vtk.vtkTable):
 
     """
 
-    def __init__(self, *args, deep: bool = True):
+    def __init__(self, *args, deep: bool = True, **kwargs):
         """Initialize the table."""
+        if kwargs:
+            warn_external(
+                'Passing unused keyword arguments to `Table` is deprecated and they will '
+                'be removed. Remove them from the call.',
+                PyVistaDeprecationWarning,
+            )
         super().__init__()
         if len(args) == 1:
             if isinstance(args[0], _vtk.vtkTable):

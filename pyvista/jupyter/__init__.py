@@ -262,11 +262,8 @@ def _validate_jupyter_backend(
     raise ValueError(msg)
 
 
-def set_jupyter_backend(backend: JupyterBackendOptions | str):
+def set_jupyter_backend(backend: JupyterBackendOptions | str, name=None, **kwargs):
     """Set the plotting backend for a jupyter notebook.
-
-    .. versionchanged:: 0.49
-        The unused ``name`` and ``**kwargs`` parameters were removed.
 
     Parameters
     ----------
@@ -307,6 +304,18 @@ def set_jupyter_backend(backend: JupyterBackendOptions | str):
         are also accepted. Pass ``None`` to reset to auto-detection at display
         time.
 
+    name : str, optional
+        Unused.
+
+        .. deprecated:: 0.49
+            This parameter has never had any effect and will be removed.
+
+    **kwargs : dict, optional
+        Unused.
+
+        .. deprecated:: 0.49
+            These parameters have never had any effect and will be removed.
+
     Examples
     --------
     Enable the trame Trame backend.
@@ -327,4 +336,10 @@ def set_jupyter_backend(backend: JupyterBackendOptions | str):
     >>> pv.set_jupyter_backend(None)  # doctest:+SKIP
 
     """
+    if name is not None or kwargs:
+        warn_external(
+            'The `name` and `**kwargs` arguments of `set_jupyter_backend` are unused and '
+            'will be removed. Remove them from the call.',
+            PyVistaDeprecationWarning,
+        )
     pv.global_theme._jupyter_backend = _validate_jupyter_backend(backend)
