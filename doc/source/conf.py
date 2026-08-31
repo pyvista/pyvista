@@ -45,6 +45,7 @@ os.environ['PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'] = 'true'
 
 sys.path.insert(0, str(Path().cwd()))
 import make_tables
+from points_dtype import points_dtype_mark
 
 # -- pyvista configuration ---------------------------------------------------
 import pyvista as pv
@@ -58,7 +59,6 @@ from pyvista.ext._autoenum import metaclass_property_names
 from pyvista.ext._autoinherit import filter_member_rows
 from pyvista.ext._autoinherit import inherited_member_rows
 from pyvista.ext._autoinherit import own_members
-from pyvista.ext._points_dtype import points_dtype_mark
 from pyvista.plotting.utilities.sphinx_gallery import DynamicScraper
 
 # Need to import all vtk modules eagerly to avoid issues with parallel lazy imports

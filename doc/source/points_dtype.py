@@ -3,7 +3,8 @@
 Support belongs to the VTK algorithm a filter runs rather than to PyVista, and it moves
 between VTK releases and backends, so it is measured by running the filter instead of
 read off a list. ``_templates/autosummary/class.rst`` marks each filter in a class's
-``Filters`` section with the result.
+``Filters`` section with the result, through the ``points_dtype_mark`` Jinja global
+``conf.py`` registers.
 """
 
 from __future__ import annotations

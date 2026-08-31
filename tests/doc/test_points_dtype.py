@@ -10,9 +10,9 @@ from __future__ import annotations
 
 import pytest
 
+from doc.source import points_dtype as _points_dtype
 import pyvista as pv
 from pyvista.ext import _autoinherit as autoinherit
-from pyvista.ext import _points_dtype
 from tests.conftest import PYVISTA_ROOT_DIR
 
 # Filters that no sample measures: they render, take a callback, need data the samples do
@@ -144,7 +144,7 @@ def test_every_filter_is_measured(class_name):
     missing = unmeasured - expected
     assert not missing, (
         f'{class_name} filters are no longer measured: {sorted(missing)}. Add sample '
-        f'arguments to `ARGS` in pyvista/ext/_points_dtype.py, or list them here.'
+        f'arguments to `ARGS` in doc/source/points_dtype.py, or list them here.'
     )
 
     stale = (expected & names) - unmeasured
