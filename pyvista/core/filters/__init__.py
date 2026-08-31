@@ -73,6 +73,11 @@ def _update_alg(alg: _vtk.vtkAlgorithm, *, progress_bar: bool = False, message='
             alg.Update()
 
 
+DEFAULT_PRECISION = _vtk.vtkAlgorithm.DEFAULT_PRECISION
+SINGLE_PRECISION = _vtk.vtkAlgorithm.SINGLE_PRECISION
+DOUBLE_PRECISION = _vtk.vtkAlgorithm.DOUBLE_PRECISION
+
+
 def _points_dtype(mesh: Any = None) -> np.dtype[Any] | None:
     """Return the dtype ``mesh``'s points should have, or ``None`` to leave them alone.
 
@@ -115,17 +120,16 @@ def _requested_points_precision(alg: _vtk.vtkAlgorithm) -> Iterator[None]:
     ``_enforce_points_dtype`` instead.
     """
     dtype = _points_dtype()
+    if dtype is None:
+        yield
+        return
     set_precision = getattr(alg, 'SetOutputPointsPrecision', None)
     get_precision = getattr(alg, 'GetOutputPointsPrecision', None)
-    if dtype is None or set_precision is None or get_precision is None:
+    if set_precision is None or get_precision is None:
         yield
         return
     previous = get_precision()
-    set_precision(
-        _vtk.vtkAlgorithm.DOUBLE_PRECISION
-        if dtype == np.float64
-        else _vtk.vtkAlgorithm.SINGLE_PRECISION
-    )
+    set_precision(DOUBLE_PRECISION if dtype == np.float64 else SINGLE_PRECISION)
     try:
         yield
     finally:
@@ -165,7 +169,8 @@ def _enforce_points_dtype(
         msg = (
             f'{type(algorithm).__name__} generated {points.dtype.name} points, and '
             f'cannot generate the {dtype.name} that '
-            f'`pyvista.global_config.points_dtype` asks for.\n'
+            f'`pyvista.global_config.points_dtype = '
+            f'{pv.global_config.points_dtype!r}` requires here.\n'
             f'The output points are cast to {dtype.name}, but hold '
             f'{points.dtype.name} values.'
         )
