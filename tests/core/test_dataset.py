@@ -720,7 +720,7 @@ def test_rename_array_doesnt_delete():
     mesh = make_mesh()
     was_deleted = [False]
 
-    def on_delete(*_):
+    def on_delete(*_):  # pragma: no cover -- asserted never invoked
         # Would be easier to throw an exception here but even though the exception gets printed to
         # stderr pytest reports the test passing. See #5246 .
         was_deleted[0] = True
