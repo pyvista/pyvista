@@ -1681,7 +1681,9 @@ def test_point_neighbors_levels(grid: DataSet, i0, n_levels):
         assert set(point_ids) == set(grid.point_neighbors(i0))
 
     else:
-        assert len(list(point_ids)) == n_levels
+        # `point_ids` is a generator, so materialize it before asserting on it twice.
+        point_ids = list(point_ids)
+        assert len(point_ids) == n_levels
         for ids in point_ids:
             assert isinstance(ids, list)
             assert all(isinstance(id_, int) for id_ in ids)
