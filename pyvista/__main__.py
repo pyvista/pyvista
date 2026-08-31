@@ -15,7 +15,7 @@ def main(argv: list[str] | str | None = None) -> None:
     Parameters
     ----------
     argv : list[str] | str, optional
-        Command-line arguments. Defaults to ``sys.argv``.
+        Command-line arguments. Defaults to ``sys.argv[1:]``.
 
     """
     # Ignore warnings emitted because arguments are passed positionally by the

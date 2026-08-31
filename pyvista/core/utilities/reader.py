@@ -2348,7 +2348,7 @@ class Nek5000Reader(BaseReader['UnstructuredGrid'], PointCellDataSelection, Time
 
     @property
     def number_cell_arrays(self):
-        """Return the number of cell arrays.
+        """Raise Nek5000 data does not contain cell arrays.
 
         Raises
         ------
@@ -2360,7 +2360,7 @@ class Nek5000Reader(BaseReader['UnstructuredGrid'], PointCellDataSelection, Time
 
     @property
     def cell_array_names(self):
-        """Return the list of all cell array names.
+        """Raise Nek5000 data does not contain cell arrays.
 
         Raises
         ------
@@ -2371,7 +2371,7 @@ class Nek5000Reader(BaseReader['UnstructuredGrid'], PointCellDataSelection, Time
         raise AttributeError(self._cell_attr_err_msg)
 
     def enable_cell_array(self, name) -> None:  # noqa: ARG002
-        """Enable cell array with name.
+        """Raise Nek5000 data does not contain cell arrays.
 
         Parameters
         ----------
@@ -2387,7 +2387,7 @@ class Nek5000Reader(BaseReader['UnstructuredGrid'], PointCellDataSelection, Time
         raise AttributeError(self._cell_attr_err_msg)
 
     def disable_cell_array(self, name) -> None:  # noqa: ARG002
-        """Disable cell array with name.
+        """Raise Nek5000 data does not contain cell arrays.
 
         Parameters
         ----------
@@ -2403,7 +2403,7 @@ class Nek5000Reader(BaseReader['UnstructuredGrid'], PointCellDataSelection, Time
         raise AttributeError(self._cell_attr_err_msg)
 
     def cell_array_status(self, name):  # noqa: ARG002
-        """Get status of cell array with name.
+        """Raise Nek5000 data does not contain cell arrays.
 
         Parameters
         ----------
@@ -2419,7 +2419,7 @@ class Nek5000Reader(BaseReader['UnstructuredGrid'], PointCellDataSelection, Time
         raise AttributeError(self._cell_attr_err_msg)
 
     def enable_all_cell_arrays(self) -> None:
-        """Enable all cell arrays.
+        """Raise Nek5000 data does not contain cell arrays.
 
         Raises
         ------
@@ -2430,7 +2430,7 @@ class Nek5000Reader(BaseReader['UnstructuredGrid'], PointCellDataSelection, Time
         raise AttributeError(self._cell_attr_err_msg)
 
     def disable_all_cell_arrays(self) -> None:
-        """Disable all cell arrays.
+        """Raise Nek5000 data does not contain cell arrays.
 
         Raises
         ------
@@ -3538,7 +3538,14 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         self.enable_all_side_set_arrays()
 
     def read_global(self) -> pv.Table:
-        """Read enabled global data."""
+        """Read enabled global data.
+
+        Returns
+        -------
+        pyvista.Table
+            Global data from the Exodus II file.
+
+        """
         global_extractor = _vtk.vtkExtractExodusGlobalTemporalVariables()
         global_extractor.SetInputConnection(self.reader.GetOutputPort())
         global_extractor.Update()

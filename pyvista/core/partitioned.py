@@ -42,7 +42,7 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
         Partitioned dataset to wrap or datasets to use as partitions.
 
     **kwargs : dict, optional
-        Supports ``deep`` to control copying a :vtk:`vtkPartitionedDataSet`.
+        Supports ``deep``; only ``deep=True`` is supported.
 
     Examples
     --------

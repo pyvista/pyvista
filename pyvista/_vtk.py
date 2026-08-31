@@ -944,7 +944,7 @@ def import_all(*, suppress_import_errors: bool = True):
     Parameters
     ----------
     suppress_import_errors : bool, default: True
-        Skip modules that fail to import.
+        Skip classes that fail to import.
 
     """
     for name in (*list(_VTK_CLASS_TO_MODULE.keys()), *list(_SPECIAL_LOADERS.keys())):

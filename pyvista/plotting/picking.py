@@ -1654,7 +1654,7 @@ class PickingComponent(_NoNewAttrMixin):
         sel_index = _vtk.vtkSelectionNode.COMPOSITE_INDEX()
         sel_prop = _vtk.vtkSelectionNode.PROP()
 
-        def get_picked_block(*args, **kwargs):  # numpydoc ignore=PR01  # noqa: ARG001
+        def get_picked_block(*args, **kwargs):  # noqa: ARG001  # numpydoc ignore=PR01
             component = self_()
             if component is None:
                 return
