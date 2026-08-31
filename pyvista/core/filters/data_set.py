@@ -5902,18 +5902,18 @@ class DataSetFilters(DataObjectFilters):
 
         """
         vtk_at_least_95 = vtk_version_info >= (9, 5, 0)
-        if main_has_priority is not None:
+        # Deprecated on v0.46.0 for vtk>=9.5.0 only; older vtk still needs the keyword.
+        if main_has_priority is not None and vtk_at_least_95:
             msg = (
                 "The keyword 'main_has_priority' is deprecated and should not be used.\n"
                 'The main mesh will always have priority in a future version, and this keyword '
                 'will be removed.'
             )
-            if main_has_priority is False and vtk_at_least_95:
+            if main_has_priority is False:
                 msg += '\nIts value cannot be False for vtk>=9.5.0.'
                 raise ValueError(msg)
-            else:
-                warn_external(msg, pv.PyVistaDeprecationWarning)
-        elif not vtk_at_least_95:
+            warn_external(msg, pv.PyVistaDeprecationWarning)
+        elif main_has_priority is None and not vtk_at_least_95:
             # Set default for older VTK:
             main_has_priority = True
 
