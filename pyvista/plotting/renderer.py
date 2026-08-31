@@ -2058,9 +2058,10 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.remove_bounds_axes()
 
         vtk_less_than_96 = pv.vtk_version_info < (9, 6, 0)
-        if use_3d_text is None:
-            # Use 2D for VTK 9.6 since 3D is broken https://gitlab.kitware.com/vtk/vtk/-/issues/19729
-            use_3d_text = vtk_less_than_96
+        if not np.allclose(self.scale, [1.0, 1.0, 1.0]):
+            # 3D text is not placed correctly when the renderer is scaled
+            use_3d_text = False
+            use_2d = True
         if font_family is None:
             font_family = self._theme.font.family
         if font_size is None:
@@ -2118,148 +2119,18 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             n_xlabels=n_xlabels,
             n_ylabels=n_ylabels,
             n_zlabels=n_zlabels,
+            color=color,
+            grid=grid,
+            location=location,
+            font_size=font_size,
+            font_family=font_family,
+            bold=bold,
+            use_3d_text=use_3d_text,
+            use_2d_mode=use_2d,
+            bounds=bounds,
+            axes_ranges=axes_ranges,
+            padding=padding,
         )
-
-        cube_axes_actor.use_2d_mode = use_2d or not np.allclose(self.scale, [1.0, 1.0, 1.0])
-
-        if grid:
-            grid = 'back' if grid is True else grid
-            if not isinstance(grid, str):
-                msg = f'`grid` must be a str, not {type(grid)}'
-                raise TypeError(msg)
-            grid = grid.lower()
-            if grid in ('front', 'frontface'):
-                cube_axes_actor.SetGridLineLocation(cube_axes_actor.VTK_GRID_LINES_CLOSEST)
-            elif grid in ('both', 'all'):
-                cube_axes_actor.SetGridLineLocation(cube_axes_actor.VTK_GRID_LINES_ALL)
-            elif grid in ('back', True):
-                cube_axes_actor.SetGridLineLocation(cube_axes_actor.VTK_GRID_LINES_FURTHEST)
-            else:
-                msg = f'`grid` must be either "front", "back, or, "all", not {grid}'
-                raise ValueError(msg)
-            # Only show user desired grid lines
-            cube_axes_actor.SetDrawXGridlines(show_xaxis)
-            cube_axes_actor.SetDrawYGridlines(show_yaxis)
-            cube_axes_actor.SetDrawZGridlines(show_zaxis)
-            # Set the colors
-            cube_axes_actor.GetXAxesGridlinesProperty().SetColor(color.float_rgb)
-            cube_axes_actor.GetYAxesGridlinesProperty().SetColor(color.float_rgb)
-            cube_axes_actor.GetZAxesGridlinesProperty().SetColor(color.float_rgb)
-
-        if isinstance(location, str):
-            location = location.lower()
-            if location in ('all'):
-                cube_axes_actor.SetFlyModeToStaticEdges()
-            elif location in ('origin'):
-                cube_axes_actor.SetFlyModeToStaticTriad()
-            elif location in ('outer'):
-                cube_axes_actor.SetFlyModeToOuterEdges()
-            elif location in ('default', 'closest', 'front'):
-                cube_axes_actor.SetFlyModeToClosestTriad()
-            elif location in ('furthest', 'back'):
-                cube_axes_actor.SetFlyModeToFurthestTriad()
-            else:
-                msg = (
-                    f'Value of location ("{location}") should be either "all", "origin",'
-                    ' "outer", "default", "closest", "front", "furthest", or "back".'
-                )
-                raise ValueError(msg)
-        elif location is not None:
-            msg = 'location must be a string'
-            raise TypeError(msg)
-
-        if isinstance(padding, (int, float)) and 0.0 <= padding < 1.0:
-            if not np.any(np.abs(bounds) == np.inf):
-                cushion = (
-                    np.array(
-                        [
-                            np.abs(bounds[1] - bounds[0]),
-                            np.abs(bounds[3] - bounds[2]),
-                            np.abs(bounds[5] - bounds[4]),
-                        ],
-                    )
-                    * padding
-                )
-                bounds[::2] -= cushion
-                bounds[1::2] += cushion
-        else:
-            msg = f'padding ({padding}) not understood. Must be float between 0 and 1'
-            raise ValueError(msg)
-        cube_axes_actor.bounds = bounds
-
-        # set axes ranges if input
-        if axes_ranges is not None:
-            if isinstance(axes_ranges, (Sequence, np.ndarray)):
-                axes_ranges = np.asanyarray(axes_ranges)
-            else:
-                msg = 'Input axes_ranges must be a numeric sequence.'
-                raise TypeError(msg)
-
-            if not np.issubdtype(axes_ranges.dtype, np.number):
-                msg = 'All of the elements of axes_ranges must be numbers.'
-                raise TypeError(msg)
-
-            # set the axes ranges
-            if axes_ranges.shape != (6,):
-                msg = (
-                    '`axes_ranges` must be passed as a '
-                    '(x_min, x_max, y_min, y_max, z_min, z_max) sequence.'
-                )
-                raise ValueError(msg)
-
-            cube_axes_actor.x_axis_range = axes_ranges[0], axes_ranges[1]
-            cube_axes_actor.y_axis_range = axes_ranges[2], axes_ranges[3]
-            cube_axes_actor.z_axis_range = axes_ranges[4], axes_ranges[5]
-
-        # set color
-        cube_axes_actor.GetXAxesLinesProperty().SetColor(color.float_rgb)
-        cube_axes_actor.GetYAxesLinesProperty().SetColor(color.float_rgb)
-        cube_axes_actor.GetZAxesLinesProperty().SetColor(color.float_rgb)
-
-        # set font
-        font_family = parse_font_family(font_family)
-
-        if not use_3d_text or not np.allclose(self.scale, [1.0, 1.0, 1.0]):
-            use_3d_text = False
-            cube_axes_actor.SetUseTextActor3D(False)
-        else:
-            cube_axes_actor.SetUseTextActor3D(True)
-
-        props = [
-            cube_axes_actor.GetTitleTextProperty(0),
-            cube_axes_actor.GetTitleTextProperty(1),
-            cube_axes_actor.GetTitleTextProperty(2),
-            cube_axes_actor.GetLabelTextProperty(0),
-            cube_axes_actor.GetLabelTextProperty(1),
-            cube_axes_actor.GetLabelTextProperty(2),
-        ]
-
-        # For 3D text, use `SetFontSize` to a relatively high value and use `SetScreenSize` to
-        # shrink it back down. This creates a higher-resolution font and makes it appear sharper.
-        # In VTK 9.6+, the 3D font size is also tied to the value set by SetFontSize, so we need
-        # an additional scaling factor.
-        default_screen_size = 10.0
-        default_font_size = 12
-        scaled_font_size = 50
-
-        for prop in props:
-            prop.SetColor(color.float_rgb)
-            prop.SetFontFamily(font_family)
-            prop.SetBold(bold)
-
-            if use_3d_text:
-                # this merely makes the font sharper
-                prop.SetFontSize(scaled_font_size)
-            else:
-                prop.SetFontSize(font_size)
-
-        if use_3d_text:
-            font_size_factor = 1.0 if vtk_less_than_96 else scaled_font_size / default_font_size
-            cube_axes_actor.SetScreenSize(
-                font_size / default_font_size / font_size_factor * default_screen_size
-            )
-        elif vtk_less_than_96:
-            cube_axes_actor.SetScreenSize(font_size / default_font_size * default_screen_size)
 
         if all_edges:
             self.add_bounding_box(color=color, corner_factor=corner_factor)
