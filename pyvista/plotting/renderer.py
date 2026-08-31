@@ -81,6 +81,11 @@ _MIN_LUT_SIZE = 128
 _MIN_LUT_SAMPLES = 128
 
 
+def _scale_ibl(default: int, minimum: int, rate: float) -> int:
+    """Scale an image-based lighting parameter, clamped between ``minimum`` and ``default``."""
+    return min(default, max(minimum, round(default * rate)))
+
+
 def map_loc_to_pos(loc, size, border=0.05):
     """Map location and size to a VTK position and position2.
 
@@ -3929,23 +3934,13 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
             # Convolving the diffuse irradiance map dominates image-based lighting
             # for cube maps, so scale it with the texture.
-            irradiance_size = min(
-                default_size, max(_MIN_IRRADIANCE_SIZE, round(default_size * resample))
-            )
+            irradiance_size = _scale_ibl(default_size, _MIN_IRRADIANCE_SIZE, resample)
 
             # The prefilter's resolution follows the texture, its sample count does not.
-            prefilter_samples = min(
-                default_samples,
-                max(_MIN_PREFILTER_SAMPLES, round(default_samples * resample)),
-            )
+            prefilter_samples = _scale_ibl(default_samples, _MIN_PREFILTER_SAMPLES, resample)
 
-            lut_size = min(
-                default_lut_size, max(_MIN_LUT_SIZE, round(default_lut_size * resample))
-            )
-            lut_samples = min(
-                default_lut_samples,
-                max(_MIN_LUT_SAMPLES, round(default_lut_samples * resample)),
-            )
+            lut_size = _scale_ibl(default_lut_size, _MIN_LUT_SIZE, resample)
+            lut_samples = _scale_ibl(default_lut_samples, _MIN_LUT_SAMPLES, resample)
 
             # Copy the texture
             # TODO: use Texture.copy() once support for cubemaps is added, see https://github.com/pyvista/pyvista/issues/7300
