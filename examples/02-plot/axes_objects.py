@@ -11,7 +11,7 @@ to use them with related plotting methods.
 
 """
 
-# sphinx_gallery_thumbnail_number = 8
+# sphinx_gallery_thumbnail_number = 6  # AxesAssemblySymmetric
 
 import pyvista as pv
 from pyvista import examples
@@ -30,34 +30,16 @@ pl.add_actor(axes)
 pl.show()
 
 # %%
-# The colors, fonts, grid lines and axis placement can all be set on the actor. Here,
-# grid lines are drawn on the back faces and the axes are labeled on the outer edges.
-
-pl = pv.Plotter()
-pl.add_mesh(mesh)
-axes = pv.CubeAxesActor(
-    camera=pl.camera,
-    bounds=mesh.bounds,
-    color='blue',
-    grid='back',
-    location='outer',
-)
-pl.add_actor(axes)
-pl.show()
-
-# %%
-# Adding the axes like this still requires the camera to be set manually. Instead, use
-# :meth:`~pyvista.Plotter.show_bounds` to add a :class:`~pyvista.CubeAxesActor` sized to
-# the meshes already in the scene.
-
-pl = pv.Plotter()
-pl.add_mesh(mesh)
-pl.show_bounds()
-pl.show()
-
-# %%
-# Alternatively, use :meth:`~pyvista.Plotter.show_grid`. This also adds a
-# :class:`~pyvista.CubeAxesActor` to the plot but with different default options.
+# The colors, fonts, grid lines, and axis placement are all constructor arguments. See
+# :ref:`bounds_example` for more ways to configure them.
+#
+# Creating the actor directly means passing the camera and bounds yourself, and the
+# renderer does not track it. :meth:`~pyvista.Plotter.show_bounds` builds the same actor
+# from the scene and registers it, so :meth:`~pyvista.Plotter.remove_bounds_axes` and
+# :meth:`~pyvista.Plotter.update_bounds_axes` apply to it.
+#
+# :meth:`~pyvista.Plotter.show_grid` adds grid lines on the back faces, labels on the
+# outer edges, and ticks on both sides.
 
 pl = pv.Plotter()
 pl.add_mesh(mesh)
