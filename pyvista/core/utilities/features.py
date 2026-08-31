@@ -606,14 +606,16 @@ def merge(  # noqa: PLR0917
     merge_points : bool, default: True
         Merge equivalent points when ``True``.
 
-    main_has_priority : bool, default: True
+    main_has_priority : bool, optional
         When this parameter is ``True`` and ``merge_points=True``, the arrays
         of the merging grids will be overwritten by the original main mesh.
 
         .. deprecated:: 0.46
 
-            This keyword will be removed in a future version. The main mesh
-            always has priority with VTK 9.5.0 or later.
+            Deprecated with VTK 9.5.0 or later, where the main mesh always has
+            priority and ``False`` raises :class:`ValueError`. With older VTK the
+            keyword still selects which mesh has priority. It will be removed in a
+            future version.
 
     progress_bar : bool, default: False
         Display a progress bar to indicate progress.

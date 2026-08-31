@@ -512,8 +512,10 @@ class PolyDataFilters(DataSetFilters):
 
             .. deprecated:: 0.46
 
-                This keyword will be removed in a future version. The main mesh
-                always has priority with VTK 9.5.0 or later.
+                Deprecated with VTK 9.5.0 or later, where the main mesh always has
+                priority and ``False`` raises :class:`ValueError`. With older VTK the
+                keyword still selects which mesh has priority. It will be removed in a
+                future version.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.

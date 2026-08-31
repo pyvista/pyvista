@@ -4,7 +4,6 @@ import math
 from pathlib import Path
 import re
 from unittest.mock import patch
-import warnings
 
 import numpy as np
 import pytest
@@ -663,19 +662,15 @@ def test_merge_main_has_priority(input_, main_has_priority):
 
 @pytest.mark.parametrize('main_has_priority', [True, False])
 def test_merge_main_has_priority_deprecated(sphere, main_has_priority):
-    match = (
-        "The keyword 'main_has_priority' is deprecated and should not be used.\n"
-        'The main mesh will always have priority in a future version.'
-    )
     if pv.vtk_version_info < (9, 5, 0):
         # The keyword still selects the winning mesh, so it is not deprecated yet.
-        with warnings.catch_warnings():
-            warnings.simplefilter('error', pv.PyVistaDeprecationWarning)
-            sphere.merge(sphere, main_has_priority=main_has_priority)
+        sphere.merge(sphere, main_has_priority=main_has_priority)
     elif main_has_priority is False:
+        match = "'main_has_priority=False' is not supported for vtk>=9.5.0"
         with pytest.raises(ValueError, match=match):
             sphere.merge(sphere, main_has_priority=main_has_priority)
     else:
+        match = "The keyword 'main_has_priority' is deprecated and has no effect"
         with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
             sphere.merge(sphere, main_has_priority=main_has_priority)
 
@@ -690,19 +685,15 @@ def test_merge_field_data(mesh, main_has_priority):
     other = mesh.copy()
     other.field_data[key] = data_other
 
-    match = (
-        "The keyword 'main_has_priority' is deprecated and should not be used.\n"
-        'The main mesh will always have priority in a future version, and this '
-        'keyword will be removed.'
-    )
     if pv.vtk_version_info < (9, 5, 0):
         merged = mesh.merge(other, main_has_priority=main_has_priority)
     elif main_has_priority is False:
-        match += '\nIts value cannot be False for vtk>=9.5.0.'
-        with pytest.raises(ValueError, match=re.escape(match)):
+        match = re.escape("'main_has_priority=False' is not supported for vtk>=9.5.0")
+        with pytest.raises(ValueError, match=match):
             mesh.merge(other, main_has_priority=main_has_priority)
         return
     else:
+        match = "The keyword 'main_has_priority' is deprecated and has no effect"
         with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
             merged = mesh.merge(other, main_has_priority=main_has_priority)
 
