@@ -43,6 +43,8 @@ from pyvista.plotting.opts import PointSpriteShape
 from pyvista.plotting.opts import StereoType
 from pyvista.plotting.plotter import SUPPORTED_FORMATS
 from pyvista.plotting.renderer import _MIN_IRRADIANCE_SIZE
+from pyvista.plotting.renderer import _MIN_LUT_SAMPLES
+from pyvista.plotting.renderer import _MIN_LUT_SIZE
 from pyvista.plotting.renderer import _MIN_PREFILTER_SAMPLES
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
@@ -343,6 +345,7 @@ def test_set_environment_texture_resample_shrinks_irradiance(small_cubemap, no_i
     # Pinned, so the assertions below test the floor's value and not just its name
     assert _MIN_IRRADIANCE_SIZE == 32
     assert _MIN_PREFILTER_SAMPLES == 32
+    assert (_MIN_LUT_SIZE, _MIN_LUT_SAMPLES) == (128, 128)
 
     texture = small_cubemap
 
@@ -351,6 +354,9 @@ def test_set_environment_texture_resample_shrinks_irradiance(small_cubemap, no_i
     pl = pv.Plotter(lighting=None)
     default_size = pl.renderer.GetEnvMapIrradiance().GetIrradianceSize()
     default_samples = pl.renderer.GetEnvMapPrefiltered().GetPrefilterMaxSamples()
+    default_lut = pl.renderer.GetEnvMapLookupTable()
+    default_lut_size = default_lut.GetLUTSize()
+    default_lut_samples = default_lut.GetLUTSamples()
 
     # A per-axis rate has no meaning for the square irradiance map
     with pytest.raises(ValueError, match='resample has shape'):
@@ -364,19 +370,26 @@ def test_set_environment_texture_resample_shrinks_irradiance(small_cubemap, no_i
     pl.set_environment_texture(texture, resample=0.5)
     assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == 128
     assert pl.renderer.GetEnvMapPrefiltered().GetPrefilterMaxSamples() == 256
+    assert pl.renderer.GetEnvMapLookupTable().GetLUTSize() == 256
+    assert pl.renderer.GetEnvMapLookupTable().GetLUTSamples() == 512
 
     pl.set_environment_texture(texture, resample=False)
     assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == default_size
     assert pl.renderer.GetEnvMapPrefiltered().GetPrefilterMaxSamples() == default_samples
+    assert pl.renderer.GetEnvMapLookupTable().GetLUTSize() == default_lut_size
+    assert pl.renderer.GetEnvMapLookupTable().GetLUTSamples() == default_lut_samples
 
     # ``True`` means a sampling rate of 1/16, which lands on the floor
     pl.set_environment_texture(texture, resample=True)
     assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == _MIN_IRRADIANCE_SIZE
     assert pl.renderer.GetEnvMapPrefiltered().GetPrefilterMaxSamples() == 32
+    assert pl.renderer.GetEnvMapLookupTable().GetLUTSize() == _MIN_LUT_SIZE
+    assert pl.renderer.GetEnvMapLookupTable().GetLUTSamples() == _MIN_LUT_SAMPLES
 
     pl.set_environment_texture(texture, resample=2.0)
     assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == default_size
     assert pl.renderer.GetEnvMapPrefiltered().GetPrefilterMaxSamples() == default_samples
+    assert pl.renderer.GetEnvMapLookupTable().GetLUTSize() == default_lut_size
 
     # Rates that do not divide the default size exactly are rounded
     pl.set_environment_texture(texture, resample=0.3)
@@ -393,6 +406,7 @@ def test_set_environment_texture_resample_shrinks_irradiance(small_cubemap, no_i
     pl.set_environment_texture(texture, resample=1 / 1024)
     assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == _MIN_IRRADIANCE_SIZE
     assert pl.renderer.GetEnvMapPrefiltered().GetPrefilterMaxSamples() == _MIN_PREFILTER_SAMPLES
+    assert pl.renderer.GetEnvMapLookupTable().GetLUTSize() == _MIN_LUT_SIZE
     pl.close()
 
     # The theme supplies the rate when `resample` is not given, and the plotter's own

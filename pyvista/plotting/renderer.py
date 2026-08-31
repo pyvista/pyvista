@@ -77,6 +77,12 @@ _MIN_IRRADIANCE_SIZE = 32
 # reflections rather than as a loss of detail.
 _MIN_PREFILTER_SAMPLES = 32
 
+# Floors for the split-sum BRDF lookup table. It is smooth in both viewing angle and
+# roughness, and unlike the other two textures it does not depend on the environment
+# at all, so a small table stays faithful to it.
+_MIN_LUT_SIZE = 128
+_MIN_LUT_SAMPLES = 128
+
 
 def map_loc_to_pos(loc, size, border=0.05):
     """Map location and size to a VTK position and position2.
@@ -3915,6 +3921,9 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         default_size = _vtk.vtkPBRIrradianceTexture().GetIrradianceSize()
         default_samples = _vtk.vtkPBRPrefilterTexture().GetPrefilterMaxSamples()
+        default_lut = _vtk.vtkPBRLUTTexture()
+        default_lut_size = default_lut.GetLUTSize()
+        default_lut_samples = default_lut.GetLUTSamples()
 
         if resample:
             resample = 1 / 16 if resample is True else resample
@@ -3931,6 +3940,16 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             prefilter_samples = min(
                 default_samples,
                 max(_MIN_PREFILTER_SAMPLES, round(default_samples * resample)),
+            )
+
+            # Nothing else scales the lookup table down, since it is a function of the
+            # shading model rather than of the environment texture.
+            lut_size = min(
+                default_lut_size, max(_MIN_LUT_SIZE, round(default_lut_size * resample))
+            )
+            lut_samples = min(
+                default_lut_samples,
+                max(_MIN_LUT_SAMPLES, round(default_lut_samples * resample)),
             )
 
             # Copy the texture
@@ -3950,13 +3969,19 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         else:
             irradiance_size = default_size
             prefilter_samples = default_samples
+            lut_size = default_lut_size
+            lut_samples = default_lut_samples
             self.SetEnvironmentTexture(texture, is_srgb)
 
         # VTK convolves the irradiance map only when spherical harmonics are off,
-        # which is the cube map case handled above. The prefilter runs either way.
+        # which is the cube map case handled above. The prefilter and the lookup table
+        # run either way.
         if texture.cube_map:
             self.GetEnvMapIrradiance().SetIrradianceSize(irradiance_size)
         self.GetEnvMapPrefiltered().SetPrefilterMaxSamples(prefilter_samples)
+        lookup_table = self.GetEnvMapLookupTable()
+        lookup_table.SetLUTSize(lut_size)
+        lookup_table.SetLUTSamples(lut_samples)
 
         if rotation is not None:
             if vtk_version_info < (9, 6):  # pragma: no cover
