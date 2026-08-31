@@ -917,7 +917,7 @@ such that:
 
         .. code-block:: bash
 
-            pytest --cov pyvista
+            pytest --cov pyvista --cov tests
 
     .. tab-item:: tox
         :sync: tox
@@ -940,7 +940,7 @@ such that:
 
         .. code-block:: bash
 
-            make coverage # pytest -v --cov pyvista
+            make coverage # pytest -v --cov pyvista --cov tests
             make coverage-html # same, with an HTML report at ./htmlcov
 
 When submitting a PR, it is highly recommended that all modifications are thoroughly tested.
@@ -957,7 +957,7 @@ However, code coverage exclusion should rarely be used and has to be carefully j
 if no simple alternative solution has been found.
 
 Test Code Is Covered Too
-~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``tests`` is measured alongside ``pyvista``, and the two are uploaded to Codecov as
 separate reports under the ``package`` and ``tests`` flags, so a gain on one cannot hide a
