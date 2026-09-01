@@ -188,7 +188,7 @@ can be installed via package managers like ``scoop`` or ``chocolatey``.
     make docs              # build the full documentation via tox (matches CI)
     make docs-test-build   # sanity-check the built documentation via tox (matches CI)
     make docs-test-images  # compare documentation images against cached baselines via tox (matches CI)
-    make integration PROJECT=<name>  # run integration tests for trame/geovista/mne/pyvistaqt/playwright/cvista
+    make integration PROJECT=<name>  # run integration tests for trame/geovista/mne/pyvistaqt/playwright/cvista/numpy-nightly
 
 ``make test``, ``make test-core``, and ``make test-plotting`` all
 invoke tox environments defined in ``tox.ini`` so they run with the
@@ -917,7 +917,7 @@ such that:
 
         .. code-block:: bash
 
-            pytest --cov pyvista
+            pytest --cov pyvista --cov tests
 
     .. tab-item:: tox
         :sync: tox
@@ -940,7 +940,7 @@ such that:
 
         .. code-block:: bash
 
-            make coverage # pytest -v --cov pyvista
+            make coverage # pytest -v --cov pyvista --cov tests
             make coverage-html # same, with an HTML report at ./htmlcov
 
 When submitting a PR, it is highly recommended that all modifications are thoroughly tested.
@@ -955,6 +955,40 @@ If needed, code coverage can be deactivated for specific lines by adding the ``#
 for more details.
 However, code coverage exclusion should rarely be used and has to be carefully justified in the PR thread
 if no simple alternative solution has been found.
+
+Test Code Is Covered Too
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+``tests`` is measured alongside ``pyvista``, and the two are uploaded to Codecov as
+separate reports under the ``package`` and ``tests`` flags, so a gain on one cannot hide a
+loss on the other. New and changed test code must be fully covered, and the total may not
+fall: an uncovered line in a test file is a test that does not run the code it appears to,
+and a partly covered branch is a case the suite never reaches. Both usually mean a missing
+assertion rather than a missing ``pragma``.
+
+Reach for ``# pragma: no cover`` when a branch exists in order to prove it is never taken
+-- a callback asserted never to fire, a fallback for a backend no covered environment runs
+-- and say which in the comment. ``# pragma: no branch`` fits a loop or guard that only
+ever goes one way, such as a retry loop whose last attempt always returns or raises.
+
+Some patterns produce dead test code:
+
+- A helper class or fixture whose attributes nothing ever reads. Delete the unused member.
+- A stub body written as ``class Stub: ...``. Coverage counts the one-line form as a
+  partial branch, and ``ruff format`` collapses ``...`` onto the ``class`` line, so write
+  ``pass`` or a docstring instead.
+- A no-op callback whose body is ``pass`` or a bare ``return``, registered somewhere that
+  never calls it. Give it a docstring instead and delete the statement: a docstring is not
+  an executable line, so nothing is left to go uncovered.
+- A class registered or patched but never instantiated, where ``__init__`` only assigns.
+  Drop the ``__init__``, or assert on the instance the test already set up.
+- A branch that only one CI job reaches. Coverage is combined across the matrix, so a
+  ``vtk_version_info`` gate is covered as long as some job takes each side. Only the
+  Linux jobs upload, so a ``sys.platform`` gate for macOS or Windows never is.
+
+Not every file under ``tests`` is measured. The ones run outside a ``-cov`` environment
+(the ``doc_build`` suite, the standalone scripts, the Sphinx projects used as build
+fixtures) are listed under ``report.omit`` in ``pyproject.toml``.
 
 The CI is configured to test multiple vtk versions to ensure sufficient compatibility with vtk.
 If needed, the minimum and/or maximum vtk version needed by a specific test can be controlled with a

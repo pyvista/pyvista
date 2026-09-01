@@ -73,6 +73,18 @@ ACTOR_LOC_MAP = [
 # visibly on rough surfaces for little further speed-up.
 _MIN_IRRADIANCE_SIZE = 32
 
+# Floor for the specular prefilter; fewer samples show up as noise, not lost detail.
+_MIN_PREFILTER_SAMPLES = 32
+
+# Floors for the BRDF lookup table, which is smooth in both of its inputs.
+_MIN_LUT_SIZE = 128
+_MIN_LUT_SAMPLES = 128
+
+
+def _scale_ibl(default: int, minimum: int, rate: float) -> int:
+    """Scale an image-based lighting parameter, clamped between ``minimum`` and ``default``."""
+    return min(default, max(minimum, round(default * rate)))
+
 
 def map_loc_to_pos(loc, size, border=0.05):
     """Map location and size to a VTK position and position2.
@@ -3731,12 +3743,12 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
             .. versionchanged:: 0.49
 
-                For cube map textures, the diffuse irradiance map used for
-                image-based lighting is down-sampled at the same rate, with its
-                size clamped between 32 texels and its default. Any rate at or
-                below ``1/8``, including the ``1/16`` that ``True`` selects,
-                therefore gives a 32 texel map. Only a single rate is accepted;
-                a sequence of per-axis rates raises ``ValueError``.
+                The image-based lighting textures are down-sampled at the same
+                rate: the specular prefilter integrates fewer samples per texel,
+                and for cube map textures the diffuse irradiance map shrinks as
+                well. Both are clamped between a floor and their default size, so
+                a very low rate stops making them cheaper. Only a single rate is
+                accepted; a sequence of per-axis rates raises ``ValueError``.
 
         rotation : RotationLike, optional
             Rotation to apply to the environment texture for image-based
@@ -3781,6 +3793,10 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             resample = self._theme.resample_environment_texture
 
         default_size = _vtk.vtkPBRIrradianceTexture().GetIrradianceSize()
+        default_samples = _vtk.vtkPBRPrefilterTexture().GetPrefilterMaxSamples()
+        default_lut = _vtk.vtkPBRLUTTexture()
+        default_lut_size = default_lut.GetLUTSize()
+        default_lut_samples = default_lut.GetLUTSamples()
 
         if resample:
             resample = 1 / 16 if resample is True else resample
@@ -3789,9 +3805,13 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
             # Convolving the diffuse irradiance map dominates image-based lighting
             # for cube maps, so scale it with the texture.
-            irradiance_size = min(
-                default_size, max(_MIN_IRRADIANCE_SIZE, round(default_size * resample))
-            )
+            irradiance_size = _scale_ibl(default_size, _MIN_IRRADIANCE_SIZE, resample)
+
+            # The prefilter's resolution follows the texture, its sample count does not.
+            prefilter_samples = _scale_ibl(default_samples, _MIN_PREFILTER_SAMPLES, resample)
+
+            lut_size = _scale_ibl(default_lut_size, _MIN_LUT_SIZE, resample)
+            lut_samples = _scale_ibl(default_lut_samples, _MIN_LUT_SAMPLES, resample)
 
             # Copy the texture
             # TODO: use Texture.copy() once support for cubemaps is added, see https://github.com/pyvista/pyvista/issues/7300
@@ -3809,12 +3829,19 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             self.SetEnvironmentTexture(texture_copy, is_srgb)
         else:
             irradiance_size = default_size
+            prefilter_samples = default_samples
+            lut_size = default_lut_size
+            lut_samples = default_lut_samples
             self.SetEnvironmentTexture(texture, is_srgb)
 
         # VTK convolves the irradiance map only when spherical harmonics are off,
         # which is the cube map case handled above.
         if texture.cube_map:
             self.GetEnvMapIrradiance().SetIrradianceSize(irradiance_size)
+        self.GetEnvMapPrefiltered().SetPrefilterMaxSamples(prefilter_samples)
+        lookup_table = self.GetEnvMapLookupTable()
+        lookup_table.SetLUTSize(lut_size)
+        lookup_table.SetLUTSamples(lut_samples)
 
         if rotation is not None:
             if vtk_version_info < (9, 6):  # pragma: no cover

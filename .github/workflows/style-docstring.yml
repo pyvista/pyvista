@@ -48,7 +48,7 @@ jobs:
 
       - name: Setup headless display on Windows
         if: runner.os == 'Windows'
-        uses: pyvista/setup-headless-display-action@5bc8de3bc71fcda7a96439571287a554901541a0
+        uses: pyvista/setup-headless-display-action@b0bf9f57d62d2b3fee9f1c0e0c7e390f05e97a4e
 
       - uses: awalsh128/cache-apt-pkgs-action@553a35bb8ebd9fcabcb1c9451aa4c98e1b4ca8a9
         if: runner.os == 'Linux'
