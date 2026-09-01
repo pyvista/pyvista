@@ -156,7 +156,7 @@ jobs:
 
       - name: Set up sccache (Windows)
         if: runner.os == 'Windows'
-        uses: mozilla-actions/sccache-action@9e7fa8a12102821edf02ca5dbea1acd0f89a2696
+        uses: mozilla-actions/sccache-action@fc920bf0ec8de6ee65d409111f7ec508035751ba
 
       - name: Enable sccache GHA backend (Windows)
         if: runner.os == 'Windows'
@@ -480,7 +480,7 @@ jobs:
           enableCrossOsArchive: true
 
       - name: Set up headless display
-        uses: pyvista/setup-headless-display-action@5bc8de3bc71fcda7a96439571287a554901541a0
+        uses: pyvista/setup-headless-display-action@b0bf9f57d62d2b3fee9f1c0e0c7e390f05e97a4e
 
       - name: Install tox-uv
         run: pip install tox-uv

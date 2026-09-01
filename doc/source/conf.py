@@ -204,6 +204,9 @@ sphinx_examples_as_code_conf = {
     'gallery_downloads': True,
 }
 
+# Disable checking if vtk links resolve correctly, web checks can be unstable
+vtk_xref_nitpicky = False
+
 # Warn if target links or references cannot be found
 nitpicky = True
 # Except ignore these entries

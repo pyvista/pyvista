@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from enum import Enum
-import inspect
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -71,17 +70,12 @@ def try_init_object(class_, kwargs):
     except TypeError as e:
         if 'abstract' in repr(e):
             pytest.skip('Class is abstract.')
-        raise
+        raise  # pragma: no cover -- failure path
     return instance
 
 
 def get_property_return_type(prop: property):
-    members = inspect.getmembers(prop)
-    for member in members:
-        name, func = member
-        if name == 'fget':
-            return func.__annotations__['return']
-    return None
+    return prop.fget.__annotations__['return']
 
 
 def test_bounds_tuple(class_with_bounds):

@@ -573,7 +573,7 @@ def test_axes_geometry_source_bounds(axes_geometry_source, part):
         )
         assert np.allclose(actual_bounds, expected_bounds)
 
-    else:
+    else:  # pragma: no cover -- parametrize covers every case
         raise NotImplementedError
 
 

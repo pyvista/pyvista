@@ -1018,7 +1018,7 @@ def test_validate_fields(tmp_ant_file, field, capsys: pytest.CaptureFixture):
     main(f'validate {tmp_ant_file!s} --help')
     out, err = capture_out_err(capsys)
     assert err == ''
-    if f'• {field}:' not in out:
+    if f'• {field}:' not in out:  # pragma: no cover -- failure path
         pytest.fail(f'Field {field} is missing from the validate CLI help documentation.')
 
     # Discard captured output to clean up test output

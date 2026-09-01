@@ -161,8 +161,7 @@ def test_del_on_a_slotted_target_raises():
 
     @pv.register_dataset_accessor('slotted_del', SlottedTarget)
     class SlottedAccessor:
-        def __init__(self, obj):
-            self._obj = obj
+        pass
 
     with pytest.raises(AttributeError, match='slotted_del'):
         del SlottedTarget().slotted_del
@@ -235,9 +234,6 @@ def test_class_access_returns_accessor_class():
     class ExposedAccessor:
         """Docstring visible on help(pv.PolyData.exposed)."""
 
-        def __init__(self, mesh):
-            self._mesh = mesh
-
     assert pv.PolyData.exposed is ExposedAccessor
     assert 'Docstring visible' in (pv.PolyData.exposed.__doc__ or '')
 
@@ -245,8 +241,7 @@ def test_class_access_returns_accessor_class():
 def test_accessor_name_appears_in_dir():
     @pv.register_dataset_accessor('discoverable', pv.PolyData)
     class DiscoverableAccessor:
-        def __init__(self, mesh):
-            self._mesh = mesh
+        pass
 
     assert 'discoverable' in dir(pv.PolyData)
     assert 'discoverable' in dir(pv.Sphere())
@@ -353,6 +348,8 @@ def test_accessor_vs_accessor_collision_warns_and_replaces():
         def who(self):
             return 'first'
 
+    assert pv.Sphere().clashing.who() == 'first'
+
     with pytest.warns(UserWarning, match='replaces an existing registered accessor'):
 
         @pv.register_dataset_accessor('clashing', pv.PolyData)
@@ -424,8 +421,7 @@ def test_builtin_shadow_raises_without_override():
 
         @pv.register_dataset_accessor('clip', pv.PolyData)
         class ClipAccessor:
-            def __init__(self, mesh):
-                self._mesh = mesh
+            pass
 
     assert callable(pv.PolyData.clip)
 
@@ -459,8 +455,7 @@ def test_inherited_builtin_shadow_raises():
 
         @pv.register_dataset_accessor('bounds', pv.PolyData)
         class BoundsAccessor:
-            def __init__(self, mesh):
-                self._mesh = mesh
+            pass
 
 
 def test_empty_name_raises():
@@ -513,9 +508,14 @@ def test_unregister_removes_descriptor():
         def __init__(self, mesh):
             self._mesh = mesh
 
+    sphere = pv.Sphere()
+    assert sphere.removable._mesh is sphere
     assert 'removable' in pv.PolyData.__dict__
+
     pv.unregister_dataset_accessor('removable', pv.PolyData)
     assert 'removable' not in pv.PolyData.__dict__
+    with pytest.raises(AttributeError):
+        _ = pv.Sphere().removable
 
 
 def test_unregister_restores_overridden_builtin():
@@ -536,8 +536,10 @@ def test_unregister_restores_overridden_builtin():
             return 'accessor'
 
     assert Target.__dict__['existing_method'] is not original_method
+    assert Target().existing_method() == 'accessor'
     pv.unregister_dataset_accessor('existing_method', Target)
     assert Target.__dict__['existing_method'] is original_method
+    assert Target().existing_method() == 'original'
 
 
 def test_unregister_missing_raises():
@@ -563,8 +565,7 @@ def test_unregister_inherited_accessor_raises():
 def test_unregister_updates_records():
     @pv.register_dataset_accessor('tracked', pv.PolyData)
     class TrackedAccessor:
-        def __init__(self, mesh):
-            self._mesh = mesh
+        pass
 
     names_before = [r.name for r in pv.registered_accessors()]
     assert 'tracked' in names_before
@@ -577,8 +578,7 @@ def test_unregister_updates_records():
 def test_registered_accessors_reports_records():
     @pv.register_dataset_accessor('introspect_me', pv.PolyData)
     class IntrospectMeAccessor:
-        def __init__(self, mesh):
-            self._mesh = mesh
+        pass
 
     records = pv.registered_accessors()
     matches = [r for r in records if r.name == 'introspect_me']
@@ -596,16 +596,14 @@ def test_registered_accessors_returns_tuple():
 def test_re_register_replaces_single_record():
     @pv.register_dataset_accessor('single_record', pv.PolyData)
     class FirstAccessor:
-        def __init__(self, mesh):
-            self._mesh = mesh
+        pass
 
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
 
         @pv.register_dataset_accessor('single_record', pv.PolyData)
         class SecondAccessor:
-            def __init__(self, mesh):
-                self._mesh = mesh
+            pass
 
     records = [r for r in pv.registered_accessors() if r.name == 'single_record']
     assert len(records) == 1
@@ -632,8 +630,7 @@ def test_save_restore_round_trip_populated():
 
     @pv.register_dataset_accessor('post_snapshot', pv.PolyData)
     class PostSnapshotAccessor:
-        def __init__(self, mesh):
-            self._mesh = mesh
+        pass
 
     pv.unregister_dataset_accessor('snapshot_me', pv.PolyData)
 
@@ -653,8 +650,7 @@ def test_save_restore_round_trip_preserves_override():
 
     @pv.register_dataset_accessor('clip', pv.PolyData, override=True)
     class ClipOverride:
-        def __init__(self, mesh):
-            self._mesh = mesh
+        pass
 
     _reg_mod._restore_registry_state(state)
     assert pv.PolyData.clip is original_clip
@@ -666,8 +662,7 @@ def test_fixture_isolation_setup():
 
     @pv.register_dataset_accessor('leaked_accessor', pv.PolyData)
     class LeakedAccessor:
-        def __init__(self, mesh):
-            self._mesh = mesh
+        pass
 
 
 def test_fixture_isolation_teardown():
@@ -1092,7 +1087,7 @@ def test_pending_accessor_appears_in_dir_without_loading(monkeypatch):
     _reset_entry_point_state(monkeypatch, [ep])
     import_calls: list[str] = []
 
-    def _tracking_import(module_path: str):
+    def _tracking_import(module_path: str):  # pragma: no cover — asserted never called
         import_calls.append(module_path)
         return fake_import(module_path)
 
@@ -1115,8 +1110,7 @@ def test_explicit_accessor_appears_in_dir():
 
     @pv.register_dataset_accessor('explicit_dir_demo', pv.PolyData)
     class ExplicitDirDemo:
-        def __init__(self, mesh):
-            self._mesh = mesh
+        pass
 
     try:
         assert 'explicit_dir_demo' in dir(pv.Sphere())
@@ -1160,7 +1154,7 @@ def test_dir_after_pending_accessor_resolved(monkeypatch):
     finally:
         sys.modules.pop(plugin_name, None)
         # Clean up the descriptor that fake_import attached
-        if 'resolved_demo' in pv.PolyData.__dict__:
+        if 'resolved_demo' in pv.PolyData.__dict__:  # pragma: no branch — set by the body
             delattr(pv.PolyData, 'resolved_demo')
 
 
