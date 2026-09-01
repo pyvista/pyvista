@@ -917,7 +917,8 @@ def test_plot_show_grid_font_size(sphere, use_3d_text, font_size):
 
 
 cpos_param = [
-    [(2.0, 5.0, 13.0), (0.0, 0.0, 0.0), (-0.7, -0.5, 0.3)],
+    # position is outside the sphere, whose radius is ~127
+    [(120.0, 300.0, 780.0), (0.0, 0.0, 0.0), (-0.7, -0.5, 0.3)],
     [-1, 2, -5],  # trigger view vector
     [1.0, 2.0, 3.0],
 ]
