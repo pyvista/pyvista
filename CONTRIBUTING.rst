@@ -188,7 +188,7 @@ can be installed via package managers like ``scoop`` or ``chocolatey``.
     make docs              # build the full documentation via tox (matches CI)
     make docs-test-build   # sanity-check the built documentation via tox (matches CI)
     make docs-test-images  # compare documentation images against cached baselines via tox (matches CI)
-    make integration PROJECT=<name>  # run integration tests for trame/geovista/mne/pyvistaqt/playwright/cvista
+    make integration PROJECT=<name>  # run integration tests for trame/geovista/mne/pyvistaqt/playwright/cvista/numpy-nightly
 
 ``make test``, ``make test-core``, and ``make test-plotting`` all
 invoke tox environments defined in ``tox.ini`` so they run with the
