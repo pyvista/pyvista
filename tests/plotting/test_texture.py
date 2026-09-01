@@ -35,6 +35,27 @@ def test_texture_empty_init():
     assert texture.n_components == 0
 
 
+def test_texture_not_abstract():
+    # Regression test: `Texture` must actually implement every `DataObject`
+    # abstractmethod, or type checkers correctly flag `pv.Texture()` as
+    # instantiating an abstract class even though it works at runtime.
+    assert not pv.Texture.__abstractmethods__
+
+
+def test_texture_is_empty():
+    assert pv.Texture().is_empty
+    assert not pv.Texture(examples.mapfile).is_empty
+
+
+def test_texture_get_data_range():
+    assert np.isnan(pv.Texture().get_data_range()).all()
+
+    texture = pv.Texture(np.zeros((2, 2, 1), dtype=np.uint8))
+    texture.to_image().point_data['Image'][0] = 255
+    assert texture.get_data_range() == (0, 255)
+    assert texture.get_data_range('Image') == (0, 255)
+
+
 def test_texture_grayscale_init():
     # verify a grayscale image can be created on init
     texture = pv.Texture(np.zeros((10, 10, 1), dtype=np.uint8))

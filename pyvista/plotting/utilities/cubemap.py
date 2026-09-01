@@ -113,7 +113,7 @@ def _cubemap_from_paths(image_paths):
             )
             raise FileNotFoundError(msg)
 
-    texture = pv.Texture()  # type: ignore[abstract]
+    texture = pv.Texture()
     texture.mipmap = True
     texture.interpolate = True
     texture.color_mode = 'direct'

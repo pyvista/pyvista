@@ -368,7 +368,7 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
             self._texture = None
             self.SetTexture(None)
         else:
-            self._texture = pv.Texture(val)  # type: ignore[abstract]
+            self._texture = pv.Texture(val)
             self.SetTexture(self._texture.to_image())
 
     @property
@@ -4782,7 +4782,7 @@ class ChartMPL(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkImageItem):
             )  # Store figure data in numpy array
             w, h = self._canvas.get_width_height()
             img_arr = img.reshape([h, w, 4])
-            img_data = pv.Texture(img_arr).to_image()  # type: ignore[abstract] # Convert to vtkImageData
+            img_data = pv.Texture(img_arr).to_image()  # Convert to vtkImageData
             self.SetImage(img_data)
 
     def _render_event(self, *_, plotter_render: bool = False, **__) -> None:
