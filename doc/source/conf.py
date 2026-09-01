@@ -890,6 +890,7 @@ html_theme_options = {
     # Capping at depth 4 keeps classes nested under their section pages while
     # avoiding an O(N^2) sidebar render across ~2,700 method-level entries.
     'max_navbar_depth': 4,
+    'article_header_start': ['toggle-primary-sidebar.html', 'breadcrumbs.html'],
     'icon_links': [
         {
             'name': 'Slack Community',
