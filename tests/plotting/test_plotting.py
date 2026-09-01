@@ -1984,7 +1984,7 @@ def test_vector_array_fail_with_incorrect_component(multicomp_poly):
         pl.add_mesh(multicomp_poly, scalars='vector_values_points', component=-1)
 
 
-def test_camera(sphere, verify_image_cache):
+def test_camera(sphere):
     pl = pv.Plotter()
     pl.add_mesh(sphere)
     pl.view_isometric()
@@ -1998,12 +1998,9 @@ def test_camera(sphere, verify_image_cache):
     pl.view_yz(negative=True)
     pl.show()
 
-    # Facet edges of the zoomed sphere land differently on each macOS run
-    verify_image_cache.macos_skip_image_cache = True
-
     pl = pv.Plotter()
     pl.add_mesh(sphere)
-    pl.camera.zoom(5)
+    pl.camera.zoom(1.5)  # the silhouette stays in frame, so no facet is clipped by the viewport
     pl.camera.up = 0, 0, 10
     pl.show()
 
