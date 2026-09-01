@@ -545,7 +545,7 @@ def test_plotter_theme_attribute_setter():
     with pytest.raises(pv.core.errors.DeprecationError, match=match):
         pl.theme = my_theme
 
-    if pyvista.version_info >= (0, 50):
+    if pyvista.version_info >= (0, 50):  # pragma: no cover -- fires at the version bump
         pytest.fail('Remove the `theme` setter')
 
 
@@ -599,7 +599,7 @@ def test_save_before_close_callback(tmpdir, default_theme):
     dark_theme = pv.plotting.themes.DarkTheme()
 
     def fun(plotter):
-        pass
+        """Assigned to the theme, never called: the theme is saved, not used."""
 
     dark_theme.before_close_callback = fun
     assert dark_theme != pv.plotting.themes.DarkTheme()

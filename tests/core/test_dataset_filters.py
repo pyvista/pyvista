@@ -993,24 +993,12 @@ class InterrogateVTKGlyph3D:
         return self.input_data_object.active_vectors_info
 
     @property
-    def scaling(self):
-        return self.alg.GetScaling()
-
-    @property
     def scale_mode(self):
         return self.alg.GetScaleModeAsString()
 
     @property
     def scale_factor(self):
         return self.alg.GetScaleFactor()
-
-    @property
-    def clamping(self):
-        return self.alg.GetClamping()
-
-    @property
-    def vector_mode(self):
-        return self.alg.GetVectorModeAsString()
 
 
 def test_glyph_settings(sphere):
@@ -3848,7 +3836,7 @@ def test_integrate_data_datasets(datasets):
             assert integrated['Area'] > 0
         elif 'Volume' in integrated.array_names:
             assert integrated['Volume'] > 0
-        else:
+        else:  # pragma: no cover -- parametrize covers every case
             msg = 'Unexpected integration'
             raise ValueError(msg)
 
