@@ -86,7 +86,7 @@ jobs:
       PARALLEL: "-n auto" # Use all available cores on the selected runner
     strategy:
       fail-fast: false
-      # Keep to 3 entries or fewer: GitHub-hosted macOS runners are a limited shared pool and bottleneck this workflow.
+      # Keep to 2 entries, the oldest and newest Python: GitHub-hosted macOS runners are a limited shared pool and bottleneck this workflow.
       matrix:
         python-version: ["3.10", "3.14"]
     steps:
