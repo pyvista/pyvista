@@ -2729,6 +2729,7 @@ class _GRDECLReader(BaseVTKReader):
 
     @property
     def elevation(self) -> bool:
+        """Convert depths to elevations and flip grid along Z axis."""
         return self._elevation
 
     @elevation.setter
@@ -2737,6 +2738,7 @@ class _GRDECLReader(BaseVTKReader):
 
     @property
     def other_keywords(self) -> Sequence[str] | None:
+        """Additional keywords to read."""
         return self._other_keywords
 
     @other_keywords.setter
@@ -2798,6 +2800,7 @@ class _GIFReader(BaseVTKReader):
         """Update Information from file."""
 
     def GetProgress(self):
+        """Return the fraction of frames read so far."""
         return self._current_frame / self._n_frames
 
     def Update(self) -> None:
@@ -3929,6 +3932,7 @@ class _FRDReader(BaseVTKReader):
         self._active_time_point: int = 0
 
     def UpdateInformation(self) -> None:
+        """Parse the FRD file and update time step information."""
         parser = _FRDParser(self._filename)
         self._frd_data = parser.parse()
 
