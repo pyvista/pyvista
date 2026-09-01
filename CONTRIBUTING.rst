@@ -1051,6 +1051,18 @@ behaviour that differs deliberately. Attach it to the test with a reason naming 
 It is not a way to park a real regression. In library code, use :func:`pyvista.vtk_backend` to raise a clear error for a
 build that cannot support a feature.
 
+Testing Against Nightly ``numpy`` and ``matplotlib``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The nightly ``numpy`` and ``matplotlib`` wheels are tested at **integration cadence**—nightly, and on PRs carrying the
+``integration-testing`` label:
+
+.. code-block:: shell
+
+    make integration PROJECT=numpy-nightly
+
+VTK stays at its latest release, and download-backed tests are skipped. A failure on ``main`` or on the nightly schedule
+opens or comments on the shared ``integration-test-failure`` issue.
+
 Garbage Collection Checks
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 Every test is checked for reference leaks: no plotter or VTK object created by a test
