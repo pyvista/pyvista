@@ -925,7 +925,9 @@ cpos_param.extend(pv.plotting.renderer.Renderer.CAMERA_STR_ATTR_MAP)
 
 
 @pytest.mark.parametrize('cpos', cpos_param)
-def test_set_camera_position(cpos, sphere):
+def test_set_camera_position(cpos, sphere, verify_image_cache):
+    # Sphere edges land differently on each macOS run, see pyvista/pyvista#9030
+    verify_image_cache.macos_skip_image_cache = True
     pl = pv.Plotter()
     pl.add_mesh(sphere)
     pl.camera_position = cpos

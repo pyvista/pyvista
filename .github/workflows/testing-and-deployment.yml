@@ -86,8 +86,9 @@ jobs:
       PARALLEL: "-n auto" # Use all available cores on the selected runner
     strategy:
       fail-fast: false
+      # Keep to 2 entries, the oldest and newest Python: GitHub-hosted macOS runners are a limited shared pool and bottleneck this workflow.
       matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        python-version: ["3.10", "3.14"]
     steps:
       - uses: actions/checkout@v7
         with:
