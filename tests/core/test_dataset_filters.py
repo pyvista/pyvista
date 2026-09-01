@@ -2404,6 +2404,26 @@ def test_extract_cells(sphere):
         _ = sphere.extract_cells([True, True])
 
 
+def test_extract_cells_and_extract_points_drop_unused_points():
+    # Regression test for https://github.com/pyvista/pyvista/issues/7750
+    # `vtkExtractCells` silently passes its input through unchanged, unused points
+    # included, when asked to extract every cell it has.
+    points = [[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]]
+    faces = [1, 0]  # a single vertex cell at point 0; point 1 is unused
+    poly = pv.PolyData(points, faces)
+    assert poly.n_points == 2
+    assert poly.n_cells == 1
+
+    assert poly.extract_cells([0]).n_points == 1
+    assert poly.extract_points([0]).n_points == 1
+
+    # a purely unused point on its own has no cells to attach it to
+    assert poly.extract_points([1]).n_points == 0
+
+    # `include_cells=False` has no notion of cells, so it must be left untouched
+    assert poly.extract_points([1], include_cells=False).n_points == 1
+
+
 @pytest.mark.parametrize('preference', ['point', 'cell'])
 @pytest.mark.parametrize('adjacent_fixture', [True, False])
 def test_extract_values_preference(

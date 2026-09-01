@@ -4675,6 +4675,13 @@ class DataSetFilters(DataObjectFilters):
         _update_alg(extract, progress_bar=progress_bar, message='Extracting Cells')
         subgrid = _get_output(extract)
 
+        # vtkExtractCells passes its input through unchanged, unused points included,
+        # when asked to extract every cell it has. Clean those up in the same rare
+        # case rather than always paying for it. See:
+        # https://github.com/pyvista/pyvista/issues/7750
+        if indices.size == ds_copy.n_cells:
+            subgrid = subgrid.remove_unused_points()
+
         # Make active scalars match input
         info = self.active_scalars_info
         subgrid.set_active_scalars(info.name, info.association)
@@ -4770,6 +4777,13 @@ class DataSetFilters(DataObjectFilters):
         extract_sel.SetInputData(1, selection)
         _update_alg(extract_sel, progress_bar=progress_bar, message='Extracting Points')
         output = _get_output(extract_sel)
+
+        # Shares the vtkExtractCells shortcut `extract_cells` works around: when every
+        # input cell ends up included, any pre-existing unused points leak into the
+        # output unchanged. Only relevant when cells -- and thus point usage -- are
+        # part of the output at all. See: https://github.com/pyvista/pyvista/issues/7750
+        if include_cells and output.n_cells == self.n_cells:
+            output = output.remove_unused_points()
 
         # Process output arrays
         if (name := 'vtkOriginalPointIds') in (data := output.point_data) and not pass_point_ids:
