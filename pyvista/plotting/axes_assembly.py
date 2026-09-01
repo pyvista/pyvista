@@ -58,8 +58,6 @@ ScaleModeOptions = Literal['default', 'anti_distortion']
 
 
 class _AxesPropTuple(NamedTuple):
-    """A property value for each axis shaft and tip."""
-
     x_shaft: float | str | ColorLike
     y_shaft: float | str | ColorLike
     z_shaft: float | str | ColorLike
@@ -69,38 +67,25 @@ class _AxesPropTuple(NamedTuple):
 
 
 class _OrthogonalPlanesKwargs(TypedDict):
-    """Keyword arguments accepted by the orthogonal planes source."""
-
     bounds: VectorLike[float]
     resolution: int | VectorLike[int]
     normal_sign: Literal['+', '-'] | Sequence[str]
 
 
 class _XYZTuple(NamedTuple):
-    """A value for each of the x, y, and z axes."""
-
     x: Any
     y: Any
     z: Any
 
 
 @abstract_class
-class _XYZAssembly(  # numpydoc ignore=PR01
+class _XYZAssembly(
     _NoNewAttrMixin,
     DisableVtkSnakeCase,
     _Prop3DMixin,
     _NameMixin,
     _vtk.vtkPropAssembly,
 ):
-    """Base class for assemblies of x-y-z actors with labels.
-
-    .. note::
-        This class is a private internal implementation detail. It is documented
-        solely so that its public members, which are inherited by public classes,
-        are visible in the documentation.
-
-    """
-
     DEFAULT_LABELS = _XYZTuple('X', 'Y', 'Z')
 
     def __init__(
@@ -2382,8 +2367,6 @@ class PlanesAssembly(_XYZAssembly):
 
 
 class _AxisActor(DisableVtkSnakeCase, _vtk.vtkAxisActor):
-    """Axis actor which shows only its title."""
-
     def __init__(self):
         super().__init__()
         # Only show the title
@@ -2421,5 +2404,4 @@ class _AxisActor(DisableVtkSnakeCase, _vtk.vtkAxisActor):
 
     @property
     def prop(self) -> TextProperty:
-        """Return the title text property."""
         return self.GetTitleTextProperty()

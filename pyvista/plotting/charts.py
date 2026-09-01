@@ -34,8 +34,6 @@ if TYPE_CHECKING:
 
 # region Some metaclass wrapping magic
 class _vtkWrapperMeta(type):  # noqa: N801
-    """Metaclass which restores the signature of a wrapped VTK class."""
-
     def __init__(cls, clsname, bases, attrs) -> None:
         # Restore the signature of classes inheriting from _vtkWrapper
         # Based on https://stackoverflow.com/questions/49740290/call-from-metaclass-shadows-signature-of-init
@@ -56,8 +54,6 @@ class _vtkWrapperMeta(type):  # noqa: N801
 
 
 class _vtkWrapper(DisableVtkSnakeCase, metaclass=_vtkWrapperMeta):  # noqa: N801
-    """Forward attribute access to a wrapped VTK object."""
-
     def __getattribute__(self, item):
         unwrapped_attrs = ['_wrapped', '__class__', '__init__']
         wrapped = super().__getattribute__('_wrapped')
@@ -1116,44 +1112,13 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
 @abstract_class
 class _CustomContextItem(_vtk.vtkPythonItem):
-    """Context item which paints through a Python subclass."""
-
     class ItemWrapper:
-        """Adapter passed to :vtk:`vtkPythonItem`."""
-
         def Initialize(self, item) -> bool:  # noqa: ARG002, N802
-            """Initialize the wrapped context item.
-
-            Parameters
-            ----------
-            item : _CustomContextItem
-                Wrapped item.
-
-            Returns
-            -------
-            bool
-                Always ``True``.
-
-            """
+            # item is the _CustomContextItem subclass instance
             return True
 
         def Paint(self, item, painter):  # noqa: N802
-            """Paint the wrapped context item.
-
-            Parameters
-            ----------
-            item : _CustomContextItem
-                Item to paint.
-
-            painter : :vtk:`vtkContext2D`
-                Painter to draw with.
-
-            Returns
-            -------
-            bool
-                Whether painting succeeded.
-
-            """
+            # item is the _CustomContextItem subclass instance
             return item.paint(painter)
 
     def __init__(self) -> None:
@@ -1161,8 +1126,7 @@ class _CustomContextItem(_vtk.vtkPythonItem):
         # This will also call ItemWrapper.Initialize
         self.SetPythonObject(_CustomContextItem.ItemWrapper())
 
-    def paint(self, _) -> bool:  # numpydoc ignore=PR01
-        """Paint the context item."""
+    def paint(self, _) -> bool:
         return True
 
 
@@ -1189,19 +1153,6 @@ class _ChartBackground(DisableVtkSnakeCase, _CustomContextItem):
         self.ActiveBackgroundBrush = Brush(color=(1.0, 1.0, 1.0, 0.4))
 
     def paint(self, painter) -> bool:
-        """Paint the chart's background and border.
-
-        Parameters
-        ----------
-        painter : :vtk:`vtkContext2D`
-            Painter to draw with.
-
-        Returns
-        -------
-        bool
-            Always ``True``.
-
-        """
         if self._chart.visible:
             painter.ApplyPen(self.ActiveBorderPen if self._chart._interactive else self.BorderPen)
             painter.ApplyBrush(
@@ -1215,11 +1166,6 @@ class _ChartBackground(DisableVtkSnakeCase, _CustomContextItem):
 @abstract_class
 class _Chart(DocSubs):
     """Common interface for ``vtkChart``/``vtkChartBox``/``vtkChartPie``/``ChartMPL``.
-
-    .. note::
-        This class is a private internal implementation detail. It is documented
-        solely so that its public members, which are inherited by public classes,
-        are visible in the documentation.
 
     Parameters
     ----------
@@ -1795,11 +1741,6 @@ class _Chart(DocSubs):
 class _Plot(DocSubs):
     """Common pythonic interface for :vtk:`vtkPlot` and :vtk:`vtkPlot3D` instances.
 
-    .. note::
-        This class is a private internal implementation detail. It is documented
-        solely so that its public members, which are inherited by public classes,
-        are visible in the documentation.
-
     Parameters
     ----------
     chart : _Chart
@@ -2042,11 +1983,6 @@ class _MultiCompPlot(_Plot):
     """Common pythonic interface for :vtk:`vtkPlot` instances with multiple components.
 
     Example subclasses are BoxPlot, PiePlot, BarPlot, and StackPlot.
-
-    .. note::
-        This class is a private internal implementation detail. It is documented
-        solely so that its public members, which are inherited by public classes,
-        are visible in the documentation.
 
     Parameters
     ----------

@@ -99,8 +99,6 @@ class ReaderRegistration(NamedTuple):
 
 
 class _RegistryState(TypedDict):
-    """Mutable state of the reader registry."""
-
     ext: dict[str, ReaderHandler]
     classes: dict[str, type[BaseReader[Any]]]
     sources: dict[str, str]
