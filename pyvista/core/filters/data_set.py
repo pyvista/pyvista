@@ -2730,6 +2730,24 @@ class DataSetFilters(DataObjectFilters):
         pyvista.DataSet
             Warped Dataset.  Return type matches input.
 
+        See Also
+        --------
+        warp_by_vector
+            Warp along a per-point direction instead of a single fixed one.
+
+        Notes
+        -----
+        Points are only moved along their own point normals when the dataset has
+        them. Without point normals, or with ``normal`` given, every point is instead
+        moved along that single fixed direction -- :vtk:`vtkWarpScalar`'s default is
+        ``(0, 0, 1)`` -- rather than radially or otherwise per point. This is easy to
+        miss on a dataset assembled directly from coordinates, such as
+        :func:`~pyvista.grid_from_sph_coords`, where the result looks like a uniform
+        vertical shift instead of the intended radial warp. Use :func:`warp_by_vector`
+        instead when the warp direction should vary per point but the dataset has no
+        normals to warp along, for example using each point's own radial direction as
+        the vector array.
+
         Examples
         --------
         First, plot the un-warped mesh.
@@ -2812,6 +2830,11 @@ class DataSetFilters(DataObjectFilters):
         -------
         pyvista.PolyData
             The warped mesh resulting from the operation.
+
+        See Also
+        --------
+        warp_by_scalar
+            Warp along a single fixed direction using a scalar amount per point.
 
         Examples
         --------
