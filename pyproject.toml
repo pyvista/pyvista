@@ -24,9 +24,7 @@ dependencies = [
   'pillow',
   'pooch',
   'pyobjc-framework-Cocoa; sys_platform == "darwin"', # see pyvista/pulls/7828, 8423, and 8832
-  # Exact pin: the validation API is still unstable, so each PyVista release
-  # ties itself to one known-good version.
-  'pyvista-validation==0.1.0',
+  'pyvista-validation==0.1.0', # Exact pin: the validation API is still unstable
   'scooby>=0.5.1',
   'typing-extensions>=4.10',
   'vtk!=9.4.0',
