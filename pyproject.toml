@@ -157,7 +157,7 @@ docs = [
   'sphinx-sitemap==2.9.0',
   'sphinx-tags==0.4.0',
   'sphinx-togglebutton==0.4.5',
-  'sphinx-toolbox==4.2.0',
+  'sphinx-toolbox==4.3.0',
   'sphinx-vtk-xref==0.3.0',
   'sphinx==9.1.0; python_version >= "3.12"',
   'sphinxcontrib-asciinema==0.4.3',
