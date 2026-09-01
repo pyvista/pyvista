@@ -396,11 +396,30 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           pattern: coverage_reports-*
-          path: coverage*.xml
+          path: coverage_reports
 
-      - name: Upload coverage to CodeCov
+      # Each matrix cell contributes one report per side. Sorting them into their own
+      # directories lets each side upload under its own flag.
+      - name: Sort reports by flag
+        run: |
+          mkdir -p flag_package flag_tests
+          find coverage_reports -name 'coverage_package_*.xml' -exec mv {} flag_package/ \;
+          find coverage_reports -name 'coverage_tests_*.xml' -exec mv {} flag_tests/ \;
+          ls flag_package flag_tests
+
+      - name: Upload pyvista coverage to CodeCov
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f
         with:
+          directory: flag_package
+          flags: package
+          fail_ci_if_error: true
+          use_oidc: true
+
+      - name: Upload test coverage to CodeCov
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f
+        with:
+          directory: flag_tests
+          flags: tests
           fail_ci_if_error: true
           use_oidc: true
 

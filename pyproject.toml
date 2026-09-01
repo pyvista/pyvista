@@ -249,6 +249,18 @@ report.exclude_also = [
 report.omit = [
   '*/pyvista/conftest.py',
   '*/pyvista/plotting/theme.py', # kept for backwards compatibility
+
+  # Under tests/, only files the `-cov` environments actually run are measured.
+  # Everything below runs somewhere else, so coverage would report it as dead.
+  '*/tests/check_doctest_names.py', # tox -e doctest-local
+  '*/tests/doc/doc_build/*', # tox -e docs-test-build
+  '*/tests/doc/vale/check_expected_failures.py', # .github/workflows/style-docstring.yml
+  '*/tests/generate_test_image_report.py', # tox -e image-report
+
+  # Sphinx projects used as build input, copied to a tmpdir and built in a subprocess.
+  '*/tests/doc/tinypages_autoenum/*',
+  '*/tests/plotting/tinypages/*',
+  '*/tests/plotting/tinypages_autocodelink/*',
 ]
 run.branch = true
 run.parallel = true
