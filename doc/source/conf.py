@@ -883,7 +883,8 @@ html_theme_options = {
     'analytics': {'google_analytics_id': 'UA-140243896-1'},
     'show_prev_next': False,
     'github_url': 'https://github.com/pyvista/pyvista',
-    'collapse_navigation': True,
+    # `sbt-sidebar-nav.html` reads `collapse_navbar`; `collapse_navigation` is pydata's.
+    'collapse_navbar': True,
     'use_edit_page_button': True,
     'navigation_with_keys': False,
     'show_navbar_depth': 1,
