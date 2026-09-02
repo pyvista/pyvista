@@ -126,11 +126,23 @@ def test_wrap_by_vector_raises(mocker: MockerFixture):
 
 
 @given(
-    strategy=st.text().filter(lambda x: x not in ['null_value', 'mark_points', 'closest_point'])
+    strategy=st.text().filter(lambda x: x not in ['null_value', 'mask_points', 'closest_point'])
 )
 def test_interpolate_raises(strategy):
     with pytest.raises(ValueError, match=re.escape(f'strategy `{strategy}` not supported.')):
         pv.Sphere().interpolate(pv.Sphere(), strategy=strategy)
+
+
+def test_get_output_restores_field_data(sphere):
+    sphere.field_data['data'] = np.arange(3)
+    alg = _vtk.vtkPassArrays()
+    alg.SetInputDataObject(sphere)
+    alg.UseFieldTypesOn()
+    alg.AddFieldType(_vtk.vtkDataObject.FIELD)
+    alg.Update()
+    assert alg.GetOutputDataObject(0).GetFieldData().GetNumberOfArrays() == 0
+    output = _get_output(alg)
+    assert np.array_equal(output.field_data['data'], np.arange(3))
 
 
 def test_datasetfilters_init():
@@ -198,25 +210,25 @@ def test_clip_scalar_no_active(sphere):
 
 
 def test_clip_scalar_ranges_imagedata():
-    mesh = pv.examples.download_whole_body_ct_male()['ct']
+    mesh = pv.Wavelet()
     vol = mesh.clip_scalar(
-        value=(150, 3000),
+        value=(200, 300),
     )
     assert vol.n_points < mesh.n_points
     vol2 = mesh.clip_scalar(
-        value=150,
+        value=200,
     )
     assert vol.n_points < vol2.n_points
 
 
 def test_clip_scalar_errors():
-    mesh = pv.examples.download_whole_body_ct_male()['ct']
+    mesh = pv.Wavelet()
     with pytest.raises(TypeError):
-        mesh.clip_scalar(value=(150, 3000), inplace=True)
+        mesh.clip_scalar(value=(200, 300), inplace=True)
     with pytest.raises(ValueError, match='Cannot have invert=False for a range clip'):
-        mesh.clip_scalar(value=(150, 3000), invert=False)
+        mesh.clip_scalar(value=(200, 300), invert=False)
     with pytest.raises(ValueError, match='Cannot have both=True for a range clip'):
-        mesh.clip_scalar(value=(150, 3000), both=True)
+        mesh.clip_scalar(value=(200, 300), both=True)
 
 
 def test_clip_scalar_multiple():
@@ -4498,7 +4510,9 @@ def test_color_labels_return_dict(labeled_image, color_type):
 
 @pytest.fixture
 def frog_tissues_image():
-    return examples.load_frog_tissues()
+    # subsample: contouring and voxelizing the full image takes seconds
+    image = examples.load_frog_tissues()
+    return image.extract_subset(image.extent, rate=(4, 4, 4))
 
 
 @pytest.fixture

@@ -21,7 +21,9 @@ MIN_PAGES_WITH_HOISTED_SECTIONS = 100
 # A generated page for a single object whose docstring has Notes and Examples.
 API_PAGE = 'pyvista.PolyDataFilters.decimate.html'
 
-_PAGE_TOC_RE = re.compile(r'<nav class="bd-toc-nav page-toc">(.*?)</nav>', re.DOTALL)
+_PAGE_TOC_RE = re.compile(
+    r'<nav\b[^>]*\bclass="[^"]*\bpage-toc\b[^"]*"[^>]*>(.*?)</nav>', re.DOTALL
+)
 _HREF_RE = re.compile(r'href="#([^"]+)"')
 
 

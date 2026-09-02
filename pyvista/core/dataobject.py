@@ -425,13 +425,12 @@ class DataObject(
         # Otherwise return a string that is Python console friendly
         fmt = f'{type(self).__name__} ({hex(id(self))})\n'
         # now make a call on the object to get its attributes as a list of len 2 tuples
+        attrs = self._get_attrs()
         # get longest row header
-        max_len = max(len(attr[0]) for attr in self._get_attrs()) + 4
+        max_len = max(len(attr[0]) for attr in attrs) + 4
 
-        # now make a call on the object to get its attributes as a list of len
-        # 2 tuples
         row = f'  {{:{max_len}s}}' + '{}\n'
-        for attr in self._get_attrs():
+        for attr in attrs:
             try:
                 fmt += row.format(attr[0] + ':', attr[2].format(*attr[1]))
             except TypeError:
