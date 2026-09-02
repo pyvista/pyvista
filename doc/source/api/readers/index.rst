@@ -1,11 +1,12 @@
 .. _reader_api:
 
-Readers
-=======
+Readers and Writers
+===================
 PyVista provides class based readers to have more control over reading
-data files. These classes allows for more fine-grained control over
+data files. These classes allow for more fine-grained control over
 reading datasets from files. See :func:`pyvista.get_reader` for a
-list of file types supported.
+list of file types supported. The writer classes used by
+:meth:`pyvista.DataObject.save` are listed further down this page.
 
 Also, see :ref:`reader_example` for a full example using reader classes.
 
