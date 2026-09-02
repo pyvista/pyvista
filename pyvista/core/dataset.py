@@ -1987,7 +1987,9 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             cell_data = cell_data.cell_data_to_point_data()
             pset.GetCellData().DeepCopy(cell_data.GetPointData())
         pset.GetPointData().DeepCopy(self.GetPointData())
-        pset.active_scalars_name = self.active_scalars_name
+        field, name = self.active_scalars_info
+        if field == FieldAssociation.POINT or pass_cell_data:
+            pset.active_scalars_name = name
         return pset
 
     @overload

@@ -1387,6 +1387,17 @@ def test_cast_to_pointset_implicit(uniform):
         assert not np.allclose(uniform[name], pointset[name])
 
 
+def test_cast_to_poly_points_cell_scalars(sphere):
+    sphere.cell_data['cell_scalars'] = np.arange(sphere.n_cells)
+    sphere.set_active_scalars('cell_scalars')
+    points = sphere.cast_to_poly_points()
+    assert isinstance(points, pv.PolyData)
+    assert points.active_scalars_name is None
+    points = sphere.cast_to_poly_points(pass_cell_data=True)
+    assert points.active_scalars_name == 'cell_scalars'
+    assert points.active_scalars_info.association == pv.FieldAssociation.CELL
+
+
 def test_cast_to_poly_points_implicit(uniform):
     points = uniform.cast_to_poly_points(pass_cell_data=True)
     assert isinstance(points, pv.PolyData)
