@@ -12,7 +12,7 @@ from pyvista import _vtk
 from pyvista.core._vtk_utilities import VTKObjectWrapperCheckSnakeCase
 
 from .utilities.arrays import FieldAssociation
-from .utilities.arrays import convert_array
+from .utilities.arrays import _vtk_array_to_numpy
 from .utilities.misc import _NoNewAttrMixin
 
 if TYPE_CHECKING:
@@ -73,7 +73,7 @@ class pyvista_ndarray(_NoNewAttrMixin, np.ndarray):  # numpydoc ignore=PR02  # n
         """Allocate the array."""
         vtk_object = None
         if isinstance(array, _vtk.vtkAbstractArray):
-            obj = convert_array(array).view(cls)
+            obj = _vtk_array_to_numpy(array).view(cls)
             vtk_object = array
         elif isinstance(array, Iterable):
             obj = np.asarray(array).view(cls)

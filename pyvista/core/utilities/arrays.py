@@ -316,6 +316,11 @@ def convert_array(  # noqa: PLR0917
             vtk_data.SetName(name)
         return vtk_data
     # Otherwise input must be a vtkDataArray
+    return _vtk_array_to_numpy(arr)
+
+
+def _vtk_array_to_numpy(arr: _vtk.vtkAbstractArray) -> npt.NDArray[Any]:
+    """Convert a VTK data, bit or string array to a NumPy array."""
     if not isinstance(arr, (_vtk.vtkDataArray, _vtk.vtkBitArray, _vtk.vtkStringArray)):
         msg = f'Invalid input array type ({type(arr)}).'
         raise TypeError(msg)
