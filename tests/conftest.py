@@ -65,7 +65,7 @@ if HAS_PLOTTING:
     )
     from pyvista.plotting.theme_registry import _save_registry_state as _save_theme_registry_state
     from pyvista.plotting.utilities.gl_checks import uses_egl
-else:  # core-only VTK backend: rendering modules are absent
+else:  # pragma: no cover -- core-only VTK backend, measured by no -cov environment
 
     def _save_component_registry_state():
         return None
@@ -153,7 +153,7 @@ def flaky_test(
 
     @functools.wraps(test_function)
     def wrapper(*args, **kwargs):
-        for i in range(times):
+        for i in range(times):  # pragma: no branch -- the last attempt returns or raises
             try:
                 test_function(*args, **kwargs)
             except exceptions as e:
@@ -613,15 +613,14 @@ def pytest_ignore_collect(collection_path, config):  # noqa: ARG001
     (``HAS_PLOTTING is False``); otherwise these modules collect and run
     normally (and carry the ``needs_rendering`` marker).
     """
-    if HAS_PLOTTING:
-        return None
-
-    tests_root = Path(__file__).parent
-    try:
-        rel = Path(str(collection_path)).relative_to(tests_root).as_posix()
-    except ValueError:
-        return None
-    return True if rel in _RENDERING_ONLY_MODULES else None
+    if not HAS_PLOTTING:  # pragma: no cover -- measured by no -cov environment
+        tests_root = Path(__file__).parent
+        try:
+            rel = Path(str(collection_path)).relative_to(tests_root).as_posix()
+        except ValueError:
+            return None
+        return True if rel in _RENDERING_ONLY_MODULES else None
+    return None
 
 
 def pytest_collection_modifyitems(config, items):  # noqa: ARG001
@@ -840,7 +839,7 @@ def pytest_runtest_setup(item: pytest.Item):
         )
 
         bounds = _check_args_kwargs_marker(item_mark=item_mark, sig=sig)
-        if os.name == 'nt':
+        if os.name == 'nt':  # pragma: no cover -- Windows only
             pytest.skip(bounds.arguments[r])
 
     if item_mark := item.get_closest_marker('skip_mac'):
@@ -880,7 +879,8 @@ def pytest_runtest_setup(item: pytest.Item):
             pytest.skip(bounds.arguments[r])
 
     test_downloads = item.config.getoption(flag := '--test_downloads')
-    if item.get_closest_marker('needs_download') and not test_downloads:
+    # Unreached: the core run enables downloads, and no plotting test is marked.
+    if item.get_closest_marker('needs_download') and not test_downloads:  # pragma: no cover
         pytest.skip(f'Downloads not enabled with {flag}')
 
     playwright = item.config.getoption(flag := '--playwright')

@@ -69,6 +69,22 @@ ACTOR_LOC_MAP = [
     'center',
 ]
 
+# Floor for the diffuse irradiance map: below 32 the diffuse term degrades
+# visibly on rough surfaces for little further speed-up.
+_MIN_IRRADIANCE_SIZE = 32
+
+# Floor for the specular prefilter; fewer samples show up as noise, not lost detail.
+_MIN_PREFILTER_SAMPLES = 32
+
+# Floors for the BRDF lookup table, which is smooth in both of its inputs.
+_MIN_LUT_SIZE = 128
+_MIN_LUT_SAMPLES = 128
+
+
+def _scale_ibl(default: int, minimum: int, rate: float) -> int:
+    """Scale an image-based lighting parameter, clamped between ``minimum`` and ``default``."""
+    return min(default, max(minimum, round(default * rate)))
+
 
 def map_loc_to_pos(loc, size, border=0.05):
     """Map location and size to a VTK position and position2.
@@ -2057,9 +2073,10 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.remove_bounds_axes()
 
         vtk_less_than_96 = pv.vtk_version_info < (9, 6, 0)
-        if use_3d_text is None:
-            # Use 2D for VTK 9.6 since 3D is broken https://gitlab.kitware.com/vtk/vtk/-/issues/19729
-            use_3d_text = vtk_less_than_96
+        if not np.allclose(self.scale, [1.0, 1.0, 1.0]):
+            # 3D text is not placed correctly when the renderer is scaled
+            use_3d_text = False
+            use_2d = True
         if font_family is None:
             font_family = self._theme.font.family
         if font_size is None:
@@ -2117,6 +2134,17 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             n_xlabels=n_xlabels,
             n_ylabels=n_ylabels,
             n_zlabels=n_zlabels,
+            color=color,
+            grid=grid,
+            location=location,
+            font_size=font_size,
+            font_family=font_family,
+            bold=bold,
+            use_3d_text=use_3d_text,
+            use_2d_mode=use_2d,
+            bounds=bounds,
+            axes_ranges=axes_ranges,
+            padding=padding,
         )
 
         if grid:
@@ -3866,6 +3894,15 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
                 instead of nearest-neighbor, which gives smoother results for
                 continuous environment textures.
 
+            .. versionchanged:: 0.49
+
+                The image-based lighting textures are down-sampled at the same
+                rate: the specular prefilter integrates fewer samples per texel,
+                and for cube map textures the diffuse irradiance map shrinks as
+                well. Both are clamped between a floor and their default size, so
+                a very low rate stops making them cheaper. Only a single rate is
+                accepted; a sequence of per-axis rates raises ``ValueError``.
+
         rotation : RotationLike, optional
             Rotation to apply to the environment texture for image-based
             lighting and the background texture. Accepts any 3x3
@@ -3906,10 +3943,28 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.UseImageBasedLightingOn()
 
         if resample is None:
-            resample = pv.global_theme.resample_environment_texture
+            resample = self._theme.resample_environment_texture
+
+        default_size = _vtk.vtkPBRIrradianceTexture().GetIrradianceSize()
+        default_samples = _vtk.vtkPBRPrefilterTexture().GetPrefilterMaxSamples()
+        default_lut = _vtk.vtkPBRLUTTexture()
+        default_lut_size = default_lut.GetLUTSize()
+        default_lut_samples = default_lut.GetLUTSamples()
 
         if resample:
             resample = 1 / 16 if resample is True else resample
+
+            resample = _validation.validate_number(resample, must_be_finite=True, name='resample')
+
+            # Convolving the diffuse irradiance map dominates image-based lighting
+            # for cube maps, so scale it with the texture.
+            irradiance_size = _scale_ibl(default_size, _MIN_IRRADIANCE_SIZE, resample)
+
+            # The prefilter's resolution follows the texture, its sample count does not.
+            prefilter_samples = _scale_ibl(default_samples, _MIN_PREFILTER_SAMPLES, resample)
+
+            lut_size = _scale_ibl(default_lut_size, _MIN_LUT_SIZE, resample)
+            lut_samples = _scale_ibl(default_lut_samples, _MIN_LUT_SAMPLES, resample)
 
             # Copy the texture
             # TODO: use Texture.copy() once support for cubemaps is added, see https://github.com/pyvista/pyvista/issues/7300
@@ -3926,7 +3981,20 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
                 texture_copy.SetInputDataObject(i, new_image)
             self.SetEnvironmentTexture(texture_copy, is_srgb)
         else:
+            irradiance_size = default_size
+            prefilter_samples = default_samples
+            lut_size = default_lut_size
+            lut_samples = default_lut_samples
             self.SetEnvironmentTexture(texture, is_srgb)
+
+        # VTK convolves the irradiance map only when spherical harmonics are off,
+        # which is the cube map case handled above.
+        if texture.cube_map:
+            self.GetEnvMapIrradiance().SetIrradianceSize(irradiance_size)
+        self.GetEnvMapPrefiltered().SetPrefilterMaxSamples(prefilter_samples)
+        lookup_table = self.GetEnvMapLookupTable()
+        lookup_table.SetLUTSize(lut_size)
+        lookup_table.SetLUTSamples(lut_samples)
 
         if rotation is not None:
             if vtk_version_info < (9, 6):  # pragma: no cover

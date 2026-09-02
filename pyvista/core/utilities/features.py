@@ -456,6 +456,15 @@ def grid_from_sph_coords(theta, phi, r):
     pyvista.StructuredGrid
         Structured grid.
 
+    Notes
+    -----
+    The returned grid has no point normals. Warping it with
+    :func:`~pyvista.DataSetFilters.warp_by_scalar` therefore moves every point
+    along a single fixed direction rather than radially outward -- see that
+    filter's notes. For a radial warp, use
+    :func:`~pyvista.DataSetFilters.warp_by_vector` with the (normalized) point
+    coordinates as the vector array instead.
+
     """
     x, y, z = np.meshgrid(np.radians(theta), np.radians(phi), r)
     # Transform grid to cartesian coordinates

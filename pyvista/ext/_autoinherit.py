@@ -27,6 +27,7 @@ from typing import Any
 from docutils.frontend import get_default_settings
 from docutils.parsers.rst import Parser
 from docutils.utils import new_document
+import sphinx
 from sphinx.ext.autosummary import extract_summary
 from sphinx.util import logging
 from sphinx.util.docstrings import prepare_docstring
@@ -45,9 +46,7 @@ _MODULE_RE = re.compile(r'^\s*\.\.\s+(?:current)?module::\s*([a-zA-Z0-9_.]+)\s*$
 
 logger = logging.getLogger(__name__)
 
-#: Filter classes are documented as filters, so anything they define that is not a
-#: method is a typing aid rather than API. ``points`` is a bare annotation that lets
-#: the filters type ``self.points``. A new one is a mistake, so it is reported.
+#: ``provider.member`` for each non-method a filter page would document; a new one is reported.
 _NOT_API_ON_FILTERS = frozenset({'DataObjectFilters.points'})
 
 #: Set by :func:`setup`; the helpers below are called from Jinja and get nothing else.
@@ -175,14 +174,16 @@ def _home(cls: type, member: str) -> type | None:
     provider = _provider(cls, member)
     if provider is None or not provider.__module__.startswith('pyvista'):
         return None  # implemented by VTK or the standard library
-    if _is_filter(provider) and not inspect.isroutine(provider.__dict__.get(member)):
-        _warn_unexpected_filter_member(provider, member)
-        return None
     documented = _documented_classes()
     home = cls
     for base in cls.__mro__:  # most derived first, so the last match is the most basal
         if base in documented and _provider(base, member) is provider:
             home = base
+    if not inspect.isroutine(provider.__dict__.get(member)) and (
+        _is_filter(provider) or _is_filter(home)
+    ):
+        _warn_unexpected_filter_member(provider, member)
+        return None
     return home
 
 
@@ -210,8 +211,11 @@ def own_members(  # numpydoc ignore=RT01
 
 @functools.cache
 def _summary_document() -> Any:  # numpydoc ignore=RT01
-    """Return a throwaway document; ``extract_summary`` reads only its settings."""
-    return new_document('', get_default_settings(Parser))
+    """Return bare settings on Sphinx 9, else a throwaway document, for ``extract_summary``."""
+    settings = get_default_settings(Parser)
+    if sphinx.version_info >= (9,):
+        return settings
+    return new_document('', settings)
 
 
 def _summary(cls: type, member: str) -> str:
@@ -237,6 +241,8 @@ def _summary(cls: type, member: str) -> str:
 def _rows(module: str, objname: str, names: Sequence[str]) -> list[tuple[type, str, str, str]]:
     """Return ``[(home, label, target, summary)]``, sorted by member name."""
     cls = _class_from(module, objname)
+    if _is_filter(cls):
+        return []  # a filter class page lists only the filters it defines
     documented = _documented_classes()
     rows: list[tuple[str, type, str, str, str]] = []
     for name in _candidates(names):
