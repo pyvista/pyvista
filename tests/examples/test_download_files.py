@@ -1239,7 +1239,7 @@ def test_download_coil_magnetic_field():
     assert dataset.n_points == 531441
 
 
-def test_download_nek5000():
+def test_download_nek5000(capfd):
     filename = examples.download_nek5000(load=False)
     assert Path(filename).is_file()
     assert filename.endswith('nek5000')
@@ -1249,6 +1249,7 @@ def test_download_nek5000():
 
     nek_data = examples.download_nek5000(load=True)
     assert isinstance(nek_data, pv.UnstructuredGrid)
+    assert 'Mesh found' not in capfd.readouterr().out
 
 
 @pytest.mark.skip_windows

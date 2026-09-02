@@ -4,12 +4,15 @@ from __future__ import annotations
 
 from abc import ABC
 from abc import abstractmethod
+import contextlib
 from dataclasses import dataclass
 from enum import Enum
 from enum import IntEnum
 import json
+import os
 from pathlib import Path
 import re
+import sys
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
@@ -408,9 +411,7 @@ class BaseReader(_FileIOBase, Generic[_T_Output_co]):
             :class:`~pyvista.UnstructuredGrid`.
 
         """
-        from pyvista.core.filters import _update_alg  # avoid circular import  # noqa: PLC0415
-
-        _update_alg(self.reader, progress_bar=self._progress_bar, message=self._progress_msg)
+        self._update()
         data = wrap(self.reader.GetOutputDataObject(0), validate=validate)
         if data is None:  # pragma: no cover
             msg = 'File reader failed to read and/or produced no output.'
@@ -420,6 +421,12 @@ class BaseReader(_FileIOBase, Generic[_T_Output_co]):
         # check for any pyvista metadata
         data._restore_metadata()
         return cast('_T_Output_co', data)
+
+    def _update(self) -> None:
+        """Execute the reader."""
+        from pyvista.core.filters import _update_alg  # avoid circular import  # noqa: PLC0415
+
+        _update_alg(self.reader, progress_bar=self._progress_bar, message=self._progress_msg)
 
     def _update_information(self) -> None:
         self.reader.UpdateInformation()
@@ -2150,6 +2157,26 @@ class PVDReader(BaseReader['MultiBlock'], TimeReader):
         self.set_active_time_value(self.time_values[time_point])
 
 
+@contextlib.contextmanager
+def _stdout_fd_silenced():
+    """Discard everything written to the C-level stdout for the duration of the block."""
+    if sys.stdout is not None:
+        sys.stdout.flush()
+    try:
+        saved = os.dup(1)
+    except OSError:  # no usable stdout to silence
+        yield
+        return
+    devnull = os.open(os.devnull, os.O_WRONLY)
+    try:
+        os.dup2(devnull, 1)
+        yield
+    finally:
+        os.dup2(saved, 1)
+        os.close(saved)
+        os.close(devnull)
+
+
 class Nek5000Reader(BaseReader['UnstructuredGrid'], PointCellDataSelection, TimeReader):
     """Class for reading .nek5000 files produced by Nek5000 and NekRS.
 
@@ -2172,6 +2199,11 @@ class Nek5000Reader(BaseReader['UnstructuredGrid'], PointCellDataSelection, Time
     """
 
     _vtk_class_name = 'vtkNek5000Reader'
+
+    def _update(self) -> None:
+        """Execute the reader without the mesh summary it prints with ``std::cout``."""
+        with _stdout_fd_silenced():
+            super()._update()
 
     def _set_defaults_post(self) -> None:
         self.set_active_time_point(0)
