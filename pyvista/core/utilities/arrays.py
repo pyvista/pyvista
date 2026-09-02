@@ -381,22 +381,23 @@ def get_array(  # noqa: PLR0917
             )
             raise ValueError(msg)
 
-        parr = point_array(mesh, name)
-        carr = cell_array(mesh, name)
-        farr = field_array(mesh, name)
-        if sum(array is not None for array in (parr, carr, farr)) > 1:
+        # probe for the array first so that only the returned one is wrapped
+        has_point = mesh.GetPointData().GetAbstractArray(name) is not None
+        has_cell = mesh.GetCellData().GetAbstractArray(name) is not None
+        has_field = mesh.GetFieldData().GetAbstractArray(name) is not None
+        if has_point + has_cell + has_field > 1:
             if preference_ == FieldAssociation.CELL:
-                out = carr
+                out = cell_array(mesh, name)
             elif preference_ == FieldAssociation.POINT:
-                out = parr
+                out = point_array(mesh, name)
             else:  # must be field
-                out = farr
-        elif parr is not None:
-            out = parr
-        elif carr is not None:
-            out = carr
-        elif farr is not None:
-            out = farr
+                out = field_array(mesh, name)
+        elif has_point:
+            out = point_array(mesh, name)
+        elif has_cell:
+            out = cell_array(mesh, name)
+        elif has_field:
+            out = field_array(mesh, name)
         elif err:
             msg = f'Data array ({name}) not present in this dataset.'
             raise KeyError(msg)
