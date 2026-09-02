@@ -44,8 +44,8 @@ and from other libraries.
       :link-type: ref
       :class-title: pyvista-card-title
 
-      Build meshes from points, merge and voxelize datasets, fit points,
-      and sample implicit functions.
+      Build meshes from points or other datasets, fit points, and sample
+      implicit functions.
 
    .. grid-item-card:: Image
       :link: image_api

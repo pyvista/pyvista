@@ -183,3 +183,15 @@ to = "/api/utilities/index.html"
 from = "/api/core/misc.html"
 status = 301
 to = "/api/utilities/index.html"
+
+# voxelize and voxelize_volume raise DeprecationError and left the reference;
+# send their pages to the filters that replaced them.
+[[redirects]]
+from = "/api/utilities/_autosummary/pyvista.voxelize.html"
+status = 301
+to = "/api/core/_autosummary/pyvista.DataSetFilters.voxelize.html"
+
+[[redirects]]
+from = "/api/utilities/_autosummary/pyvista.voxelize_volume.html"
+status = 301
+to = "/api/core/_autosummary/pyvista.DataSetFilters.voxelize_rectilinear.html"

@@ -9,27 +9,13 @@ Most operations on a mesh are available as filter methods; see :ref:`filters`.
 
 Mesh Creation
 ~~~~~~~~~~~~~
-These functions build a mesh from existing points and faces.
+These functions build a mesh from existing points and faces, or from other
+datasets.
 
 .. seealso::
 
    :ref:`create_spline_example`
       Build a spline from an array of points.
-
-.. autosummary::
-   :toctree: _autosummary
-
-   line_segments_from_points
-   lines_from_points
-   make_tri_mesh
-   vector_poly_data
-
-Merge and Voxelize
-~~~~~~~~~~~~~~~~~~
-.. seealso::
-
-   :ref:`voxelize_example`
-      Voxelize a surface mesh.
 
    :meth:`~pyvista.DataSetFilters.merge`
       Merge datasets as a method on the dataset.
@@ -38,9 +24,11 @@ Merge and Voxelize
    :toctree: _autosummary
 
    create_grid
+   line_segments_from_points
+   lines_from_points
+   make_tri_mesh
    merge
-   voxelize
-   voxelize_volume
+   vector_poly_data
 
 Points
 ~~~~~~

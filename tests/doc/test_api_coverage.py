@@ -88,6 +88,8 @@ _ALLOWED_UNDOCUMENTED = frozenset(
         'threaded',  # internal threading decorator
         'try_callback',  # internal callback guard
         'uses_egl',  # internal helper
+        'voxelize',  # raises DeprecationError since 0.49; drop with the function
+        'voxelize_volume',  # raises DeprecationError since 0.49; drop with the function
         'vtk_bit_array_to_char',  # low-level VTK bit-array conversion
         'vtk_id_list_to_array',  # low-level VTK id-list conversion
         'wrap_image_array',  # internal helper
