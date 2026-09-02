@@ -3017,6 +3017,16 @@ def test_select_interior_points_empty_mesh(method):
     assert out['selected_points'].size == 0
 
 
+@pytest.mark.parametrize('method', ['cell_locator', 'signed_distance'])
+@pytest.mark.parametrize('inside_out', [True, False])
+def test_select_interior_points_empty_surface(method, inside_out):
+    mesh = pv.Sphere()
+    with pv.VtkErrorCatcher() as catcher:
+        out = mesh.select_interior_points(pv.PolyData(), method=method, inside_out=inside_out)
+    assert catcher.error_events == []
+    assert np.array_equal(out['selected_points'], np.full(mesh.n_points, inside_out))
+
+
 def test_decimate_boundary():
     mesh = examples.load_uniform()
     boundary = mesh.decimate_boundary(progress_bar=True)

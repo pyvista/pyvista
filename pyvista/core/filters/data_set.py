@@ -3186,7 +3186,9 @@ class DataSetFilters(DataObjectFilters):
             raise RuntimeError(msg)
 
         out = self.copy(deep=False)
-        if method == 'signed_distance':
+        if surface.n_cells == 0:
+            bools = np.full(self.n_points, inside_out, dtype=bool)
+        elif method == 'signed_distance':
             if locator_tolerance is not None:
                 msg = 'locator_tolerance cannot be used with the signed_distance method.'
                 raise ValueError(msg)
