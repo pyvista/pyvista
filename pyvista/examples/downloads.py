@@ -9493,9 +9493,7 @@ def download_nek5000(load: bool = True) -> UnstructuredGrid | str:  # noqa: FBT0
             See this dataset in the Dataset Gallery for more info.
 
     """
-    # Silence info messages about 2D mesh found
-    with pv.vtk_verbosity('off'):
-        return _download_dataset(_dataset_nek5000, load=load)
+    return _download_dataset(_dataset_nek5000, load=load)
 
 
 def _nek_5000_download():
