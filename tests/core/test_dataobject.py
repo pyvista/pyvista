@@ -370,7 +370,7 @@ def test_default_pickle_format():
 
 
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
-def test_pickle_serialize_deserialize(datasets_no_pointset, pickle_format):
+def test_pickle_serialize_deserialize(datasets_no_pointset, pickle_format, capfd):
     """Test in-memory pickle protocol (multiprocessing/dask use case).
 
     Pickle is NOT a supported mesh file format — only the in-memory
@@ -381,9 +381,8 @@ def test_pickle_serialize_deserialize(datasets_no_pointset, pickle_format):
     for dataset in datasets_no_pointset:
         # These datasets carry no field data of their own.
         dataset.field_data['pickled_field'] = [1, 2, 3]
-        with pv.VtkErrorCatcher() as catcher:
-            dataset_2 = pickle.loads(pickle.dumps(dataset))
-        assert catcher.events == []
+        dataset_2 = pickle.loads(pickle.dumps(dataset))
+        assert not re.search(r'(WARN|ERR)\|', capfd.readouterr().err)
 
         # check python attributes are the same
         for attr in dataset.__dict__:
