@@ -954,6 +954,7 @@ html_css_files = [
     'announcement.css',  # override banner color
     'codimensional.css',  # pin partner card to bottom of right sidebar
     'jupyter_sphinx_theme.css',  # make jupyter-sphinx containers follow the dark mode toggle
+    'breadcrumbs.css',  # keep the trail on one line in the fixed-height article header
 ]
 
 # -- Options for HTMLHelp output ------------------------------------------
