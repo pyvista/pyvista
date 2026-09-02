@@ -55,6 +55,8 @@ class WriterRegistration(NamedTuple):
 
 
 class _RegistryState(TypedDict):
+    """Mutable state of the writer registry."""
+
     ext: dict[str, WriterHandler]
     sources: dict[str, str]
     pending: dict[str, list[EntryPoint]]
