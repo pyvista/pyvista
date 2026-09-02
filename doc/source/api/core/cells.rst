@@ -73,8 +73,8 @@ Enumerations
 .. autosummary::
    :toctree: _autosummary
 
-   pyvista.CellType
    pyvista.CellStatus
+   pyvista.CellType
 
 
 Cell Quality

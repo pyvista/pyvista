@@ -51,8 +51,8 @@ Environment Report
 .. autosummary::
    :toctree: _autosummary
 
-   Report
    GPUInfo
+   Report
    get_gpu_info
 
 Runtime Controls
@@ -63,9 +63,9 @@ context managers, applying only within the ``with`` block.
 .. autosummary::
    :toctree: _autosummary
 
-   vtk_verbosity
-   vtk_snake_case
-   enable_smp_tools
    allow_new_attributes
+   enable_smp_tools
    set_new_attribute
    set_pickle_format
+   vtk_snake_case
+   vtk_verbosity

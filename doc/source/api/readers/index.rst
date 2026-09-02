@@ -34,11 +34,11 @@ the file extension. To write a file, see :meth:`~pyvista.DataObject.save`.
 .. autosummary::
    :toctree: _autosummary
 
+   get_ext
    read
    read_exodus
    read_grdecl
    read_texture
-   get_ext
 
 Reader Classes
 ~~~~~~~~~~~~~~

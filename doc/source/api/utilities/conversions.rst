@@ -21,8 +21,8 @@ Wrapping VTK Objects
 .. autosummary::
    :toctree: _autosummary
 
-   wrap
    is_pyvista_dataset
+   wrap
 
 Meshio
 ~~~~~~
@@ -30,10 +30,10 @@ Meshio
    :toctree: _autosummary
 
    from_meshio
-   to_meshio
    is_meshio_mesh
    read_meshio
    save_meshio
+   to_meshio
 
 Trimesh
 ~~~~~~~
@@ -41,5 +41,5 @@ Trimesh
    :toctree: _autosummary
 
    from_trimesh
-   to_trimesh
    is_trimesh_mesh
+   to_trimesh
