@@ -29,6 +29,7 @@ from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .datasetattributes import _active_scalars_name
 from .datasetattributes import _active_vectors_name
+from .datasetattributes import _array_names
 from .errors import PyVistaDeprecationWarning
 from .filters import DataSetFilters
 from .filters import _get_output
@@ -1637,12 +1638,13 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         """
         names: list[str] = []
-        names.extend(self.field_data.keys())
-        names.extend(self.point_data.keys())
-        names.extend(self.cell_data.keys())
-        if self.active_scalars_name is not None:
-            names.remove(self.active_scalars_name)
-            names.insert(0, self.active_scalars_name)
+        names.extend(_array_names(self.GetFieldData()))
+        names.extend(_array_names(self.GetPointData()))
+        names.extend(_array_names(self.GetCellData()))
+        active_scalars_name = self.active_scalars_name
+        if active_scalars_name is not None:
+            names.remove(active_scalars_name)
+            names.insert(0, active_scalars_name)
         return names
 
     def _get_attrs(self: Self) -> list[tuple[str, Any, str]]:
