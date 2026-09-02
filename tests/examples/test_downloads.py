@@ -40,7 +40,7 @@ def pytest_generate_tests(metafunc):
 
 
 def test_dataset_loader_name_matches_download_name(test_case: DatasetLoaderTestCase):
-    if (msg := _get_mismatch_fail_msg(test_case)) is not None:
+    if (msg := _get_mismatch_fail_msg(test_case)) is not None:  # pragma: no cover -- failure path
         pytest.fail(msg)
 
 
@@ -70,7 +70,7 @@ def test_dataset_loader_source_url_blob(test_case: DatasetLoaderTestCase):
     sources = [sources] if isinstance(sources, str) else sources  # Make iterable
     for url in sources:
         # Check is_file() in case local cache of pyvista/data is used
-        if not (Path(url).is_file() or _is_valid_url(url)):
+        if not (Path(url).is_file() or _is_valid_url(url)):  # pragma: no cover -- failure path
             pytest.fail(f'Invalid blob URL for {test_case.dataset_name}:\n{url}')
 
 

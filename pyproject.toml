@@ -48,7 +48,7 @@ jupyter = ['ipywidgets', 'nest-asyncio2', 'trame-pyvista']
 
 [dependency-groups]
 pinned = [ # Pinned versions of core dependencies
-  'cyclopts<4.23.0',
+  'cyclopts<4.24.0',
   'filelock<3.33.0', # not a core dep; serializes parallel example downloads
   'matplotlib<3.10.10',
   'numpy<2.5.0',
@@ -67,22 +67,22 @@ typing = [
   'mypy<2.4.0',
   'npt-promote==0.2',
   'numpy>=2.0.0',
-  'trimesh<4.13.0',
+  'trimesh<5.1.0',
   { include-group = 'pinned' },
 ]
 
 test = [
-  'cmcrameri<1.10.0',
+  'cmcrameri<1.11.0',
   'cmocean<4.0.4',
   'colorcet<3.3.0',
   'embreex<4.4.1',
-  'fsspec<2026.7.0',
-  'hypothesis<6.161.3',
+  'fsspec<2026.8.0',
+  'hypothesis<6.165.11',
   'imageio-ffmpeg<0.7.0',
   'imageio<2.38.0',
   'ipython<10.0.0',
   'ipywidgets<9.0.0',
-  'libcst<1.8.7',
+  'libcst<1.9.1',
   'meshio<5.4.0',
   'nest-asyncio2<1.8.0',
   'numpydoc<1.11.0',
@@ -109,36 +109,36 @@ test = [
   'sphinx<9.2.0',
   'sphinxext-opengraph<0.14.0',
   'sympy<1.15.0',
-  'tqdm<4.70.0',
+  'tqdm<4.71.0',
   'trame-pyvista<0.2.0',
-  'trimesh<4.13.0',
+  'trimesh<5.1.0',
   'typing-extensions<4.17.0',
   { include-group = 'pinned' },
 ]
 
-test-playwright = ['playwright<1.62.0', { include-group = 'test' }]
+test-playwright = ['playwright<1.63.0', { include-group = 'test' }]
 
 docs = [
-  'cmcrameri==1.9.0',
+  'cmcrameri==1.10',
   'cmocean==4.0.3',
   'colorcet==3.2.1',
   'colour-science==0.4.6; python_version < "3.14"',
   'colour-science==0.4.7; python_version >= "3.14"',
   'erbsland-sphinx-ansi==1.2.4',
-  'fsspec==2026.6.0',
+  'fsspec==2026.7.0',
   'imageio-ffmpeg==0.6.0',
   'imageio==2.37.4',
   'joblib==1.5.3',
   'jupyter-sphinx==0.5.3',
-  'jupyterlab==4.6.2',
-  'lxml==6.1.1',
+  'jupyterlab==4.6.3',
+  'lxml==6.1.2',
   'meshio==5.3.5',
   'mypy-extensions==1.1.0',
-  'mypy==2.3.0',
+  'mypy==2.3.1',
   'nest-asyncio2==1.7.2',
   'numpydoc==1.10.0',
   'pandas==2.3.3',
-  'pyarrow==25.0.0',
+  'pyarrow==25.0.1',
   'pydata-sphinx-theme==0.15.4', # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
   'pypandoc==1.17',
   'pytest-sphinx==0.7.1',
@@ -157,7 +157,7 @@ docs = [
   'sphinx-sitemap==2.9.0',
   'sphinx-tags==0.4.0',
   'sphinx-togglebutton==0.4.5',
-  'sphinx-toolbox==4.2.0',
+  'sphinx-toolbox==4.3.0',
   'sphinx-vtk-xref==0.3.0',
   'sphinx==9.1.0; python_version >= "3.12"',
   'sphinxcontrib-asciinema==0.4.3',
@@ -166,7 +166,7 @@ docs = [
   'sphinxext-opengraph==0.13.0',
   'sympy==1.14.0',
   'trame-pyvista==0.1.7',
-  'trimesh==4.12.2',
+  'trimesh==5.0.0',
   { include-group = 'pinned' },
 ]
 
@@ -249,13 +249,25 @@ report.exclude_also = [
 report.omit = [
   '*/pyvista/conftest.py',
   '*/pyvista/plotting/theme.py', # kept for backwards compatibility
+
+  # Under tests/, only files the `-cov` environments actually run are measured.
+  # Everything below runs somewhere else, so coverage would report it as dead.
+  '*/tests/check_doctest_names.py', # tox -e doctest-local
+  '*/tests/doc/doc_build/*', # tox -e docs-test-build
+  '*/tests/doc/vale/check_expected_failures.py', # .github/workflows/style-docstring.yml
+  '*/tests/generate_test_image_report.py', # tox -e image-report
+
+  # Sphinx projects used as build input, copied to a tmpdir and built in a subprocess.
+  '*/tests/doc/tinypages_autoenum/*',
+  '*/tests/plotting/tinypages/*',
+  '*/tests/plotting/tinypages_autocodelink/*',
 ]
 run.branch = true
 run.parallel = true
 run.patch = ["subprocess"]
 
 [tool.pytest.ini_options]
-addopts = ['--strict-config', '--strict-markers', '-ra']
+addopts = ['--durations=25', '--strict-config', '--strict-markers', '-ra']
 doctest_optionflags = 'NUMBER ELLIPSIS'
 log_level = 'INFO'
 

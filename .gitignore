@@ -52,6 +52,8 @@ test.bat
 # Code coverage results
 htmlcov
 .coverage
+# per-process data files, from run.parallel
+.coverage.*
 *,cover
 
 # Mac

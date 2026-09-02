@@ -43,6 +43,9 @@ from pyvista.plotting.opts import PointSpriteShape
 from pyvista.plotting.opts import StereoType
 from pyvista.plotting.plotter import SUPPORTED_FORMATS
 from pyvista.plotting.renderer import _MIN_IRRADIANCE_SIZE
+from pyvista.plotting.renderer import _MIN_LUT_SAMPLES
+from pyvista.plotting.renderer import _MIN_LUT_SIZE
+from pyvista.plotting.renderer import _MIN_PREFILTER_SAMPLES
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
 from tests.core.test_imagedata_filters import labeled_image  # noqa: F401
@@ -284,7 +287,8 @@ def test_pbr(sphere, verify_image_cache):
     pl.show()
 
 
-@pytest.mark.parametrize('resample', [True, 0.5])
+# 0.1 clears every floor; 0.5 misses them all and renders 4.5x slower
+@pytest.mark.parametrize('resample', [True, 0.1])
 def test_set_environment_texture_cubemap(resample, verify_image_cache):
     """Test set_environment_texture with a cubemap."""
     # Skip due to large variance
@@ -311,9 +315,10 @@ def test_set_environment_texture_resample_uses_linear_anti_aliasing(mocker, no_i
     pl.set_environment_texture(texture, resample=0.5)
 
     # Equirectangular textures light through spherical harmonics, so their irradiance
-    # map is left alone rather than scaled with the texture
+    # map is left alone. The specular prefilter is used either way, so it still scales
     assert not texture.cube_map
     assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == default_size
+    assert pl.renderer.GetEnvMapPrefiltered().GetPrefilterMaxSamples() == 256
 
     spy.assert_called_once()
     args, kwargs = spy.call_args
@@ -340,6 +345,8 @@ def test_set_environment_texture_resample_shrinks_irradiance(small_cubemap, no_i
     """Resampling should also shrink the diffuse irradiance map VTK convolves."""
     # Pinned, so the assertions below test the floor's value and not just its name
     assert _MIN_IRRADIANCE_SIZE == 32
+    assert _MIN_PREFILTER_SAMPLES == 32
+    assert (_MIN_LUT_SIZE, _MIN_LUT_SAMPLES) == (128, 128)
 
     texture = small_cubemap
 
@@ -347,6 +354,10 @@ def test_set_environment_texture_resample_shrinks_irradiance(small_cubemap, no_i
     pv.global_theme.resample_environment_texture = False
     pl = pv.Plotter(lighting=None)
     default_size = pl.renderer.GetEnvMapIrradiance().GetIrradianceSize()
+    default_samples = pl.renderer.GetEnvMapPrefiltered().GetPrefilterMaxSamples()
+    default_lut = pl.renderer.GetEnvMapLookupTable()
+    default_lut_size = default_lut.GetLUTSize()
+    default_lut_samples = default_lut.GetLUTSamples()
 
     # A per-axis rate has no meaning for the square irradiance map
     with pytest.raises(ValueError, match='resample has shape'):
@@ -359,16 +370,27 @@ def test_set_environment_texture_resample_shrinks_irradiance(small_cubemap, no_i
     # with the size the previous call left behind
     pl.set_environment_texture(texture, resample=0.5)
     assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == 128
+    assert pl.renderer.GetEnvMapPrefiltered().GetPrefilterMaxSamples() == 256
+    assert pl.renderer.GetEnvMapLookupTable().GetLUTSize() == 256
+    assert pl.renderer.GetEnvMapLookupTable().GetLUTSamples() == 512
 
     pl.set_environment_texture(texture, resample=False)
     assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == default_size
+    assert pl.renderer.GetEnvMapPrefiltered().GetPrefilterMaxSamples() == default_samples
+    assert pl.renderer.GetEnvMapLookupTable().GetLUTSize() == default_lut_size
+    assert pl.renderer.GetEnvMapLookupTable().GetLUTSamples() == default_lut_samples
 
     # ``True`` means a sampling rate of 1/16, which lands on the floor
     pl.set_environment_texture(texture, resample=True)
     assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == _MIN_IRRADIANCE_SIZE
+    assert pl.renderer.GetEnvMapPrefiltered().GetPrefilterMaxSamples() == 32
+    assert pl.renderer.GetEnvMapLookupTable().GetLUTSize() == _MIN_LUT_SIZE
+    assert pl.renderer.GetEnvMapLookupTable().GetLUTSamples() == _MIN_LUT_SAMPLES
 
     pl.set_environment_texture(texture, resample=2.0)
     assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == default_size
+    assert pl.renderer.GetEnvMapPrefiltered().GetPrefilterMaxSamples() == default_samples
+    assert pl.renderer.GetEnvMapLookupTable().GetLUTSize() == default_lut_size
 
     # Rates that do not divide the default size exactly are rounded
     pl.set_environment_texture(texture, resample=0.3)
@@ -384,6 +406,8 @@ def test_set_environment_texture_resample_shrinks_irradiance(small_cubemap, no_i
     # Rates below the floor all land on it
     pl.set_environment_texture(texture, resample=1 / 1024)
     assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == _MIN_IRRADIANCE_SIZE
+    assert pl.renderer.GetEnvMapPrefiltered().GetPrefilterMaxSamples() == _MIN_PREFILTER_SAMPLES
+    assert pl.renderer.GetEnvMapLookupTable().GetLUTSize() == _MIN_LUT_SIZE
     pl.close()
 
     # The theme supplies the rate when `resample` is not given, and the plotter's own
@@ -901,7 +925,9 @@ cpos_param.extend(pv.plotting.renderer.Renderer.CAMERA_STR_ATTR_MAP)
 
 
 @pytest.mark.parametrize('cpos', cpos_param)
-def test_set_camera_position(cpos, sphere):
+def test_set_camera_position(cpos, sphere, verify_image_cache):
+    # Sphere edges land differently on each macOS run, see pyvista/pyvista#9030
+    verify_image_cache.macos_skip_image_cache = True
     pl = pv.Plotter()
     pl.add_mesh(sphere)
     pl.camera_position = cpos
@@ -967,21 +993,9 @@ def test_plot_no_active_scalars(sphere):
 
     def _test_update_scalars_with_invalid_array():
         pl.update_scalars(np.arange(5))
-        if pv._version.version_info[:2] > (0, 46):
-            msg = 'Convert error this method'
-            raise RuntimeError(msg)
-        if pv._version.version_info[:2] > (0, 47):
-            msg = 'Remove this method'
-            raise RuntimeError(msg)
 
     def _test_update_scalars_with_valid_array():
         pl.update_scalars(np.arange(sphere.n_faces))
-        if pv._version.version_info[:2] > (0, 46):
-            msg = 'Convert error this method'
-            raise RuntimeError(msg)
-        if pv._version.version_info[:2] > (0, 47):
-            msg = 'Remove this method'
-            raise RuntimeError(msg)
 
     with (
         pytest.raises(ValueError, match='Number of scalars'),
@@ -6605,6 +6619,7 @@ def _generate_direction_object_functions() -> ItemsView[str, FunctionType]:
         'SolidSphere',
         'SolidSphereGeneric',
         'Sphere',
+        'StructuredSphere',
         'Text3D',
     ]
 
@@ -7432,6 +7447,13 @@ def test_mip_with_point_sprite_render(verify_image_cache_wrapper, mip_test_point
     pl.show()
 
 
+def test_structured_sphere_radius_layers():
+    sphere = pv.StructuredSphere(
+        radius=np.linspace(0.5, 1.0, 4), theta_resolution=16, phi_resolution=10
+    )
+    sphere.clip(normal='x').plot(show_edges=True)
+
+
 @pytest.mark.parametrize(
     ('start_phi', 'end_phi', 'start_theta', 'end_theta'), [(0, 180, 0, 360), (0, 90, 0, 90)]
 )
@@ -7451,11 +7473,15 @@ def test_solid_sphere_resolution_matches_sphere(start_phi, end_phi, start_theta,
         }
         data[f'Sphere {phi_res} {theta_res}'] = pv.Sphere(**kwargs)
         data[f'Solid {phi_res} {theta_res}'] = pv.SolidSphere(**kwargs)
+        data[f'Structured {phi_res} {theta_res}'] = pv.StructuredSphere(**kwargs)
 
     pv.plot_compare(
         data,
         show_edges=True,
         link=False,
+        # Three columns per row, so the panes are portrait and the pinned camera
+        # would otherwise crop the geometry
+        zoom=0.7,
         cpos=pv.CameraPosition(
             position=(1.087, 1.087, 1.087),
             focal_point=(0.0, 0.0, 0.0),
