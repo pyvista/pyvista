@@ -43,6 +43,8 @@ either :func:`Plotter.show() <pyvista.Plotter.show>` or :func:`dataset.plot()
 
     pv.set_jupyter_backend('trame')
 
-.. autofunction:: pyvista.set_jupyter_backend
+.. autosummary::
 
-.. autofunction:: pyvista.register_jupyter_backend
+   ~pyvista.set_jupyter_backend
+   ~pyvista.register_jupyter_backend
+   ~pyvista.registered_jupyter_backends
