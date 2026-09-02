@@ -2649,8 +2649,8 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         [0, 2, 1]
 
         """
-        # must check upper bounds, otherwise segfaults (on Linux, 9.2)
-        if index + 1 > self.n_cells:
+        # must check bounds, otherwise segfaults (on Linux, 9.2) or returns an empty cell
+        if not 0 <= index < self.n_cells:
             msg = f'Invalid index {index} for a dataset with {self.n_cells} cells.'
             raise IndexError(msg)
 
