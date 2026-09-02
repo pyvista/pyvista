@@ -86,7 +86,6 @@ _ALLOWED_UNDOCUMENTED = frozenset(
         'scale_point',  # internal helper
         'system_supports_plotting',  # internal helper
         'threaded',  # internal threading decorator
-        'translate',  # internal helper for the geometric objects; translates and orients
         'try_callback',  # internal callback guard
         'uses_egl',  # internal helper
         'vtk_bit_array_to_char',  # low-level VTK bit-array conversion
