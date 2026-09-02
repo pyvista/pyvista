@@ -77,3 +77,19 @@ Data Types
       :class-title: pyvista-card-title
 
       Camera, Light, Cell, and CellArray.
+
+
+Shared Base Classes
+-------------------
+These classes are not used directly. They are documented because they define
+members shared by classes across the core and plotting APIs, so that each of
+those members is documented once, here, and linked from every class that
+inherits it.
+
+.. currentmodule:: pyvista
+
+.. autosummary::
+   :toctree: _autosummary
+
+   core.utilities.misc._BoundsSizeMixin
+   core.utilities.misc._NameMixin

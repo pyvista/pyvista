@@ -57,3 +57,22 @@ Class Definition
 
    pyvista.Cell
    pyvista.CellArray
+
+
+Enumerations
+~~~~~~~~~~~~
+
+.. autosummary::
+   :toctree: _autosummary
+
+   pyvista.CellType
+   pyvista.CellStatus
+
+
+Cell Quality
+~~~~~~~~~~~~
+
+.. autosummary::
+   :toctree: _autosummary
+
+   pyvista.cell_quality_info

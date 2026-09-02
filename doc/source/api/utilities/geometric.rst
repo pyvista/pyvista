@@ -108,3 +108,33 @@ Geometric sources are closer to the actual VTK pipeline. They serve as the
    SphereSource
    SuperquadricSource
    Text3DSource
+
+
+Mesh Creation Functions
+~~~~~~~~~~~~~~~~~~~~~~~
+These functions build a mesh from existing points, faces, or datasets.
+
+.. autosummary::
+   :toctree: _autosummary
+
+   create_grid
+   line_segments_from_points
+   lines_from_points
+   make_tri_mesh
+   merge
+   vector_poly_data
+   voxelize
+   voxelize_volume
+
+
+Points
+~~~~~~
+These functions operate on arrays of points.
+
+.. autosummary::
+   :toctree: _autosummary
+
+   fit_line_to_points
+   fit_plane_to_points
+   principal_axes
+   core.utilities.is_inside_bounds

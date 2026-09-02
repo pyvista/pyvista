@@ -16,6 +16,21 @@ Also, see :ref:`reader_example` for a full example using reader classes.
 
    get_reader
 
+Reading Functions
+~~~~~~~~~~~~~~~~~
+
+These functions read a file in a single call, selecting the reader from
+the file extension.
+
+.. autosummary::
+   :toctree: _autosummary
+
+   read
+   read_exodus
+   read_grdecl
+   read_texture
+   get_ext
+
 Reader Classes
 ~~~~~~~~~~~~~~
 
