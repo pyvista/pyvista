@@ -397,6 +397,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkGradientFilter',
         'vtkIntersectionPolyDataFilter',
         'vtkOBBTree',
+        'vtkPassArrays',
         'vtkRectilinearGridToPointSet',
         'vtkRectilinearGridToTetrahedra',
         'vtkRemovePolyData',

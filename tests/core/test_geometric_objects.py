@@ -156,8 +156,8 @@ def test_solid_sphere():
     assert np.any(sphere.points)
 
     # make sure cell creation gives positive volume.
-    for cell in sphere.cell:
-        assert cell.cast_to_unstructured_grid().volume > 0
+    volumes = sphere.compute_cell_sizes(length=False, area=False)['Volume']
+    assert np.all(volumes > 0)
     sphere = pv.SolidSphere(radius_resolution=5, theta_resolution=100, phi_resolution=100)
     assert sphere.volume == pytest.approx(4.0 / 3.0 * np.pi * 0.5**3, rel=1e-3)
 
