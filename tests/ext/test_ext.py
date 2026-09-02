@@ -142,6 +142,66 @@ def test_record_namespace_is_none_when_sphinx_autocodelink_unimportable(monkeypa
     assert plot_directive.record_namespace is not None
 
 
+DOCTEST_WITH_SKIP = '>>> a = 1\n>>> explode()  # doctest: +SKIP\n>>> b = 2\n'
+
+
+def test_executable_piece_filters_when_a_statement_is_skipped():
+    filtered = plot_directive._executable_piece(DOCTEST_WITH_SKIP, is_doctest=True)
+    assert filtered == 'a = 1\nb = 2\n'
+
+
+def test_executable_piece_filters_a_skipped_multiline_statement():
+    piece = '>>> total = sum(\n...     [1, 2]\n... )  # doctest: +SKIP\n>>> a = 1\n'
+    filtered = plot_directive._executable_piece(piece, is_doctest=True)
+    assert 'sum' not in filtered
+    assert 'a = 1' in filtered
+
+
+@pytest.mark.parametrize('marker', ['# doctest: +SKIP', '# doctest:+SKIP', '#doctest: +SKIP'])
+def test_executable_piece_matches_skip_spacing_variants(marker):
+    piece = f'>>> a = 1\n>>> explode()  {marker}\n'
+    assert plot_directive._executable_piece(piece, is_doctest=True) == 'a = 1\n'
+
+
+def test_executable_piece_none_without_a_skip():
+    assert plot_directive._executable_piece('>>> a = 1\n', is_doctest=True) is None
+
+
+def test_executable_piece_none_for_non_doctest():
+    assert plot_directive._executable_piece("x = 'doctest: +SKIP'", is_doctest=False) is None
+
+
+def _render(code, tmp_path):
+    """Call render_figures with the minimal config the code path needs."""
+    config = SimpleNamespace(
+        pyvista_plot_setup=None, pyvista_plot_cleanup=None, pyvista_plot_autocodelink=False
+    )
+    return plot_directive.render_figures(
+        code=code,
+        code_path='<test>',
+        output_dir=str(tmp_path),
+        output_base='out',
+        context=False,
+        function_name=None,
+        config=config,
+        force_static=True,
+    )
+
+
+def test_render_figures_degrades_when_the_filtered_remainder_raises(tmp_path, caplog):
+    # statements alongside a skip never ran before the filtering existed, so a failure
+    # among them logs instead of failing the build
+    code = ">>> raise RuntimeError('kaboom')\n>>> boom()  # doctest: +SKIP\n"
+    results = _render(code, tmp_path)
+    assert len(results) == 1
+    assert any('doctest: +SKIP' in r.message for r in caplog.records)
+
+
+def test_render_figures_still_raises_for_a_piece_without_skips(tmp_path):
+    with pytest.raises(plot_directive.PlotError, match='kaboom'):
+        _render(">>> raise RuntimeError('kaboom')\n", tmp_path)
+
+
 class _FakeSphinxApp:
     """Enough of Sphinx's ``Application`` for exercising ``plot_directive.setup``."""
 

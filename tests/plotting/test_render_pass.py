@@ -93,14 +93,26 @@ def test_ssao_raise_no_depth_of_field():
 
 
 def test_shadow_pass():
-    _ren, passes = make_passes()
+    ren, passes = make_passes()
     ren_pass = passes.enable_shadow_pass()
     assert isinstance(ren_pass, _vtk.vtkShadowMapPass)
 
     assert passes._pass_collection.IsItemPresent(ren_pass)
+    assert passes._pass_collection.IsItemPresent(ren_pass.GetShadowMapBakerPass())
+    assert ren.GetPass() is not None
 
     passes.disable_shadow_pass()
     assert not passes._pass_collection.IsItemPresent(ren_pass)
+    assert not passes._pass_collection.IsItemPresent(ren_pass.GetShadowMapBakerPass())
+    assert passes._shadow_map_pass is None
+    assert ren.GetPass() is None
+
+    # enabling again after disabling should add a new pass
+    new_pass = passes.enable_shadow_pass()
+    assert isinstance(new_pass, _vtk.vtkShadowMapPass)
+    assert new_pass is not ren_pass
+    assert passes._pass_collection.IsItemPresent(new_pass)
+    assert passes._pass_collection.IsItemPresent(new_pass.GetShadowMapBakerPass())
 
 
 def test_edl_pass():

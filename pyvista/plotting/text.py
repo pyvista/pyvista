@@ -6,10 +6,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Literal
 
+import pyvista_validation as _validation
+
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.misc import _check_range

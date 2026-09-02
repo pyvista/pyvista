@@ -179,6 +179,8 @@ def test_cell_get_cell():
     hexbeam = grids[0]
     with pytest.raises(IndexError, match='Invalid index'):
         hexbeam.get_cell(hexbeam.n_cells)
+    with pytest.raises(IndexError, match='Invalid index'):
+        hexbeam.get_cell(-1)
     assert isinstance(hexbeam.get_cell(0), pv.Cell)
 
 

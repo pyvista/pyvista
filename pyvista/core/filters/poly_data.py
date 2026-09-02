@@ -8,12 +8,12 @@ from typing import Literal
 from typing import cast
 
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
-from pyvista.core import _validation
 from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import NotAllTrianglesError
@@ -3002,7 +3002,7 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere = pv.Sphere()
         >>> sphere.plot_normals(mag=0.1)
         >>> sphere.flip_normals()  # doctest:+SKIP
-        >>> sphere.plot_normals(mag=0.1, opacity=0.5)
+        >>> sphere.plot_normals(mag=0.1, opacity=0.5)  # doctest:+SKIP
 
         """
         # Deprecated on v0.45.0, error on v0.49.0
