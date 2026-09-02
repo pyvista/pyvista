@@ -889,8 +889,9 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         842
 
         """
-        if self.point_data.active_normals is not None:
-            return self.point_data.active_normals
+        point_normals = self.point_data.active_normals
+        if point_normals is not None:
+            return point_normals
         return self.cell_data.active_normals
 
     def get_data_range(  # type: ignore[override]
