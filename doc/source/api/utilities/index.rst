@@ -12,6 +12,7 @@ and from other libraries.
 
    geometric
    parametric
+   mesh_operations
    image
    transform
    arrays
@@ -29,8 +30,7 @@ and from other libraries.
       :link-type: ref
       :class-title: pyvista-card-title
 
-      Geometric objects, geometric sources, mesh creation functions,
-      and implicit functions.
+      Geometric objects and geometric sources.
 
    .. grid-item-card:: Parametric Objects
       :link: parametric_api
@@ -39,12 +39,20 @@ and from other libraries.
 
       Surfaces parametrised by a set of independent variables.
 
+   .. grid-item-card:: Mesh Operations
+      :link: mesh_operations_api
+      :link-type: ref
+      :class-title: pyvista-card-title
+
+      Build meshes from points, merge and voxelize datasets, fit points,
+      and sample implicit functions.
+
    .. grid-item-card:: Image
       :link: image_api
       :link-type: ref
       :class-title: pyvista-card-title
 
-      Image sources, implicit function sampling, and image comparison.
+      Image sources and image comparison.
 
    .. grid-item-card:: Transformations
       :link: transform_api
