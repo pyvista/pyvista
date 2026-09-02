@@ -410,7 +410,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         """
         self._raise_field_data_no_scalars_vectors_normals()
-        vectors = self.GetVectors()
+        vectors = self.VTKObject.GetVectors()
         if vectors is not None:
             return pyvista_ndarray(vectors, dataset=self.dataset, association=self.association)
         return None
