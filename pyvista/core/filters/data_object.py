@@ -23,13 +23,13 @@ from typing import get_args
 import warnings
 
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._version import version_info
 from pyvista._warn_external import warn_external
-from pyvista.core import _validation
 from pyvista.core._typing_core import _DataSetOrMultiBlockType
 from pyvista.core.celltype import CellType
 from pyvista.core.errors import DeprecationError
