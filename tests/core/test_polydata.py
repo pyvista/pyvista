@@ -752,14 +752,14 @@ def test_invalid_curvature(sphere):
         sphere.curvature('not valid')
 
 
-@pytest.mark.parametrize('binary', [True, False])
-@pytest.mark.parametrize('extension', pv.core.pointset.PolyData._WRITERS)
 def test_volume_empty():
     with pv.VtkErrorCatcher() as catcher:
         assert pv.PolyData().volume == 0.0
     assert catcher.error_events == []
 
 
+@pytest.mark.parametrize('binary', [True, False])
+@pytest.mark.parametrize('extension', pv.core.pointset.PolyData._WRITERS)
 def test_save(sphere, extension, binary, tmpdir):
     filename = str(tmpdir.mkdir('tmpdir').join(f'tmp{extension}'))
 
