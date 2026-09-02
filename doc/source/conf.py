@@ -427,6 +427,10 @@ intersphinx_mapping = {
     ),
     'pytest': ('https://docs.pytest.org/en/stable/', ('../intersphinx/pytest-objects.inv',)),
     'pyvistaqt': ('https://qt.pyvista.org/', ('../intersphinx/pyvistaqt-objects.inv',)),
+    'pyvista_validation': (
+        'https://validation.pyvista.org/',
+        ('../intersphinx/pyvista-validation-objects.inv',),
+    ),
     'trimesh': ('https://trimesh.org', ('../intersphinx/trimesh-objects.inv',)),
 }
 intersphinx_timeout = 5
