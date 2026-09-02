@@ -151,6 +151,7 @@ if TYPE_CHECKING:
     from pyvista.plotting._typing import StyleOptions
     from pyvista.plotting._typing import ThemeOptions
     from pyvista.plotting.cube_axes_actor import CubeAxesActor
+    from pyvista.plotting.grid_axes_actor import GridAxesActor
     from pyvista.plotting.text import HorizontalOptions
     from pyvista.plotting.text import VerticalOptions
 
@@ -1726,7 +1727,9 @@ class BasePlotter(_BoundsSizeMixin):
         return self.renderer.add_axes_at_origin(*args, **kwargs)
 
     @functools.wraps(Renderer.show_bounds)
-    def show_bounds(self, *args, **kwargs) -> CubeAxesActor:  # numpydoc ignore=PR01,RT01
+    def show_bounds(  # numpydoc ignore=PR01,RT01
+        self, *args, **kwargs
+    ) -> CubeAxesActor | GridAxesActor:
         """Wrap ``Renderer.show_bounds``."""
         return self.renderer.show_bounds(*args, **kwargs)
 
@@ -1746,7 +1749,9 @@ class BasePlotter(_BoundsSizeMixin):
         return self.renderer.remove_bounds_axes(*args, **kwargs)
 
     @functools.wraps(Renderer.show_grid)
-    def show_grid(self, *args, **kwargs) -> CubeAxesActor:  # numpydoc ignore=PR01,RT01
+    def show_grid(  # numpydoc ignore=PR01,RT01
+        self, *args, **kwargs
+    ) -> CubeAxesActor | GridAxesActor:
         """Wrap ``Renderer.show_grid``."""
         return self.renderer.show_grid(*args, **kwargs)
 

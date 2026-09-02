@@ -99,7 +99,7 @@ manipulation or export tasks. To get started, try instantiating the
 
     p = pvqt.BackgroundPlotter()
     p.add_mesh(dataset)
-    p.show_bounds(grid=True, location='back')
+    p.show_bounds(grid=True)
 
 
 

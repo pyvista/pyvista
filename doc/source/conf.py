@@ -216,6 +216,8 @@ nitpick_ignore_regex = [
     #
     # PyVista TypeVars and TypeAliases
     (r'py:.*', '.*ColorLike'),
+    # Sphinx splits a Literal of string values on the comma
+    (r'py:.*', r'typing\.Literal\[.*'),
     (r'py:.*', '.*ImageCompareType'),
     (r'py:.*', '.*ColormapOptions'),
     (r'py:.*', '.*ArrayLike'),

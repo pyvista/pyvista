@@ -79,6 +79,14 @@ class CubeAxesActor(
     and labels for the input data bounds. This wrapping aims to provide a
     user-friendly interface to use :vtk:`vtkCubeAxesActor`.
 
+    .. note::
+
+        :class:`~pyvista.GridAxesActor` is preferred for new code and will become the
+        default. It renders math text in titles, chooses rounded label values, and needs
+        no camera. This class remains available for the features it alone provides:
+        :attr:`tick_location`, minor ticks, ``location`` fly modes, and arbitrary format
+        strings for tick labels.
+
     .. versionchanged:: 0.49
 
         The bounds, colors, fonts, grid lines, and axis placement are now set by the

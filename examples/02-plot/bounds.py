@@ -13,13 +13,13 @@ import pyvista as pv
 from pyvista import examples
 
 # %%
-# Show All Bounds
-# ~~~~~~~~~~~~~~~
-# In this plot we show the bounds for all axes by setting ``location='all'``.
+# Show Bounds
+# ~~~~~~~~~~~
+# Show the bounds for all axes with :meth:`~pyvista.Plotter.show_bounds`.
 
 pl = pv.Plotter()
 pl.add_mesh(pv.Sphere(), smooth_shading=True)
-pl.show_bounds(location='all')
+pl.show_bounds()
 pl.show()
 
 

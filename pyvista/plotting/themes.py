@@ -43,6 +43,7 @@ from typing import ClassVar
 
 import pyvista  # noqa: TC001
 from pyvista._warn_external import warn_external
+from pyvista.core import _validation
 from pyvista.core.config import _ConfigBase
 from pyvista.core.utilities.misc import _check_range
 
@@ -1763,6 +1764,7 @@ class Theme(_ConfigBase):
         '_below_range_color',
         '_border_color',
         '_border_width',
+        '_bounds_axes_actor',
         '_camera',
         '_cmap',
         '_color',
@@ -1866,6 +1868,7 @@ class Theme(_ConfigBase):
         self._transparent_background = False
         self._title = 'PyVista'
         self._axes = _AxesConfig()
+        self._bounds_axes_actor = 'cube'
         self._split_sharp_edges = False
         self._sharp_edges_feature_angle = 30.0
         self._before_close_callback = None
@@ -2874,6 +2877,36 @@ class Theme(_ConfigBase):
     @title.setter
     def title(self, title: str):
         self._title = title
+
+    @property
+    def bounds_axes_actor(self) -> str:  # numpydoc ignore=RT01
+        """Return or set which actor draws the bounds axes.
+
+        Either ``'cube'`` for :class:`~pyvista.CubeAxesActor` or ``'grid'`` for
+        :class:`~pyvista.GridAxesActor`. Used by :meth:`~pyvista.Plotter.show_bounds`
+        and :meth:`~pyvista.Plotter.show_grid` when they are not given an ``actor``.
+
+        ``'grid'`` requires VTK 9.5 or later, and its labels are not drawn by the
+        ``'trame'`` Jupyter backend.
+
+        .. versionadded:: 0.49
+
+        Examples
+        --------
+        Draw bounds axes with :class:`~pyvista.GridAxesActor` by default.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.bounds_axes_actor = 'grid'
+        >>> pv.global_theme.bounds_axes_actor
+        'grid'
+
+        """
+        return self._bounds_axes_actor
+
+    @bounds_axes_actor.setter
+    def bounds_axes_actor(self, value: str):
+        _validation.check_contains(['cube', 'grid'], must_contain=value, name='bounds_axes_actor')
+        self._bounds_axes_actor = value
 
     @property
     def anti_aliasing(self) -> str | None:  # numpydoc ignore=RT01
