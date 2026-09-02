@@ -66,12 +66,7 @@ def url_session():
 
 
 def test_dataset_loader_source_urls_blob(test_case: DatasetLoaderTestCase, url_session):
-    try:
-        # Skip test if not loadable
-        sources = test_case.dataset_loader[1].source_urls
-    except AttributeError as e:
-        reason = e.args[0]
-        pytest.skip(reason)
+    sources = test_case.dataset_loader[1].source_urls
 
     def is_valid(url: str) -> bool:
         # Check is_file() in case local cache of pyvista/data is used

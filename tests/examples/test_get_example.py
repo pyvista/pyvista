@@ -15,6 +15,7 @@ from pyvista import examples
 from pyvista.examples import _get_example
 from pyvista.examples import downloads
 from pyvista.examples import planets
+from pyvista.examples._dataset_loader import _SingleFileDatasetLoader
 from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
 from pyvista.examples._get_example import _example_names
 from pyvista.examples._get_example import _get_dataset_loader
@@ -253,11 +254,29 @@ def test_get_example_function_overloads_accept_a_plain_call(name):
     ), f'no overload of {function.__name__} accepts a plain call'
 
 
+def test_format_overloads_renders_one_line_per_stub():
+    """The generated block is one ``@overload`` line and one one-line stub per example."""
+    block = _format_overloads(
+        {
+            'cow': ('pv.PolyData', 'tuple[pv.XMLPolyDataReader]'),
+            'ant': ('pv.PolyData', 'tuple[pv.PLYReader]'),
+        }
+    )
+    assert block == (
+        '@overload\n'
+        "def get_example(name: Literal['ant'], *, download: bool = ...)"
+        ' -> Example[pv.PolyData, tuple[pv.PLYReader]]: ...\n'
+        '@overload\n'
+        "def get_example(name: Literal['cow'], *, download: bool = ...)"
+        ' -> Example[pv.PolyData, tuple[pv.XMLPolyDataReader]]: ...\n'
+    )
+
+
 @pytest.mark.needs_download
 def test_get_example_overloads_current(request):
     """The generated overloads match every example; ``--regenerate_overloads`` rewrites them."""
     current = _current_overloads()
-    if request.config.getoption('--regenerate_overloads'):
+    if request.config.getoption('--regenerate_overloads'):  # pragma: no cover -- maintainer path
         source = _OVERLOADS_FILE.read_text()
         start = source.index(_GENERATED_START) + len(_GENERATED_START)
         end = source.index(_GENERATED_END)
@@ -360,6 +379,26 @@ def test_get_example_download_false_raises(monkeypatch):
         examples.get_example('missing_example', download=False)
 
 
+def test_get_example_without_public_function_raises(monkeypatch):
+    """A loader with no ``download_``/``load_`` function is an error, not a silent skip."""
+    loader = _SingleFileDownloadableDatasetLoader('orphan_example.vtk')
+    monkeypatch.setattr(downloads, '_dataset_orphan_example', loader, raising=False)
+
+    match = "Example 'orphan_example' has no public function in 'pyvista.examples.downloads'"
+    with pytest.raises(ValueError, match=match):
+        examples.get_example('orphan_example')
+
+
+def test_get_example_missing_file_that_cannot_be_downloaded_raises(monkeypatch, tmp_path):
+    """A built-in whose file is missing says so, rather than blaming ``download=False``."""
+    loader = _SingleFileDatasetLoader(str(tmp_path / 'ghost_example.vtk'))
+    monkeypatch.setattr(examples.examples, '_dataset_ghost_example', loader, raising=False)
+    monkeypatch.setattr(examples.examples, 'load_ghost_example', lambda: None, raising=False)
+
+    with pytest.raises(FileNotFoundError, match='and cannot be downloaded'):
+        examples.get_example('ghost_example')
+
+
 def test_get_example_unknown_name_raises():
     """An unknown name raises and suggests close matches."""
     match = re.escape("Example 'bunni' does not exist. Did you mean: 'bunny'")
@@ -381,7 +420,7 @@ def test_get_example_function_without_dataset_raises():
 @pytest.mark.parametrize('name', _all_example_names())
 def test_get_example_all(name):
     """Every example resolves by name and by function, reports its files, and loads."""
-    if os.name == 'nt' and name in _SKIP_DATASETS_WINDOWS:
+    if os.name == 'nt' and name in _SKIP_DATASETS_WINDOWS:  # pragma: no cover -- Windows only
         pytest.skip('Error loading on Windows')
 
     with warnings.catch_warnings():
@@ -392,7 +431,7 @@ def test_get_example_all(name):
             example = examples.get_example(name)
             loaded = example.load()
             from_function = example.function()
-        except pv.VTKVersionError:
+        except pv.VTKVersionError:  # pragma: no cover -- only on older VTK
             pytest.skip('VTK version not supported.')
         # looking the example up by its own function finds the same example, which is
         # what makes the two forms interchangeable -- comparing the loaded datasets
