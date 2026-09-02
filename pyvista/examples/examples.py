@@ -628,17 +628,20 @@ def load_hydrogen_orbital(n: int = 1, l: int = 0, m: int = 0, zoom_fac: float = 
 
     Examples
     --------
-    Plot the 3dxy orbital of a hydrogen atom. This corresponds to the quantum
-    numbers ``n=3``, ``l=2``, and ``m=-2``.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.load_hydrogen_orbital(3, 2, -2)
-    >>> grid.plot(volume=True, opacity=[1, 0, 1], cmap='magma')
+        Plot the 3dxy orbital of a hydrogen atom. This corresponds to the quantum
+        numbers ``n=3``, ``l=2``, and ``m=-2``.
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> grid = examples.load_hydrogen_orbital(3, 2, -2)
+        >>> grid.plot(volume=True, opacity=[1, 0, 1], cmap='magma')
 
-        :ref:`Hydrogen Orbital Dataset <hydrogen_orbital_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
+
+            :ref:`Hydrogen Orbital Dataset <hydrogen_orbital_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
     """
     return _dataset_hydrogen_orbital.load(n=n, l=l, m=m, zoom_fac=zoom_fac)  # type:ignore[return-value]
@@ -711,17 +714,20 @@ def load_logo() -> ImageData:
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> image = examples.load_logo()
-    >>> image.dimensions
-    (1389, 592, 1)
+    .. pyvista-plot::
+        :force_static:
 
-    >>> image.plot(cpos='xy', zoom='tight', rgb=True, show_axes=False)
+        >>> from pyvista import examples
+        >>> image = examples.load_logo()
+        >>> image.dimensions
+        (1389, 592, 1)
 
-    .. seealso::
+        >>> image.plot(cpos='xy', zoom='tight', rgb=True, show_axes=False)
 
-        :ref:`Logo Dataset <logo_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
+
+            :ref:`Logo Dataset <logo_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
     """
     return _dataset_logo.load()

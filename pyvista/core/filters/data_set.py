@@ -4903,59 +4903,62 @@ class DataSetFilters(DataObjectFilters):
 
         Examples
         --------
-        Load image with labeled regions.
+        .. pyvista-plot::
+            :force_static:
 
-        >>> import numpy as np
-        >>> import pyvista as pv
-        >>> from pyvista import examples
-        >>> image = examples.load_channels()
-        >>> np.unique(image.active_scalars)
-        pyvista_ndarray([0, 1, 2, 3, 4]...)
+            Load image with labeled regions.
 
-        Split the image into its separate regions. Here, we also remove the first
-        region for visualization.
+            >>> import numpy as np
+            >>> import pyvista as pv
+            >>> from pyvista import examples
+            >>> image = examples.load_channels()
+            >>> np.unique(image.active_scalars)
+            pyvista_ndarray([0, 1, 2, 3, 4]...)
 
-        >>> multiblock = image.split_values()
-        >>> _ = multiblock.pop(0)  # Remove first region
+            Split the image into its separate regions. Here, we also remove the first
+            region for visualization.
 
-        Plot the regions.
+            >>> multiblock = image.split_values()
+            >>> _ = multiblock.pop(0)  # Remove first region
 
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_composite(multiblock, multi_colors=True)
-        >>> _ = pl.show_grid()
-        >>> pl.show()
+            Plot the regions.
 
-        Note that the block names are generic by default.
+            >>> pl = pv.Plotter()
+            >>> _ = pl.add_composite(multiblock, multi_colors=True)
+            >>> _ = pl.show_grid()
+            >>> pl.show()
 
-        >>> multiblock.keys()
-        ['Block-01', 'Block-02', 'Block-03', 'Block-04']
+            Note that the block names are generic by default.
 
-        To name the output blocks, use a dictionary as input instead.
+            >>> multiblock.keys()
+            ['Block-01', 'Block-02', 'Block-03', 'Block-04']
 
-        Here, we also explicitly omit the region with ``0`` values from the input
-        instead of removing it from the output.
+            To name the output blocks, use a dictionary as input instead.
 
-        >>> labels = dict(region1=1, region2=2, region3=3, region4=4)
-        >>>
-        >>> multiblock = image.split_values(labels)
-        >>> multiblock.keys()
-        ['region1', 'region2', 'region3', 'region4']
+            Here, we also explicitly omit the region with ``0`` values from the input
+            instead of removing it from the output.
 
-        Plot the regions as separate meshes using the labels instead of plotting
-        the MultiBlock directly.
+            >>> labels = dict(region1=1, region2=2, region3=3, region4=4)
+            >>>
+            >>> multiblock = image.split_values(labels)
+            >>> multiblock.keys()
+            ['region1', 'region2', 'region3', 'region4']
 
-        Clear scalar data so we can color each mesh using a single color
+            Plot the regions as separate meshes using the labels instead of plotting
+            the MultiBlock directly.
 
-        >>> _ = [block.clear_data() for block in multiblock]
-        >>>
-        >>> pl = pv.Plotter()
-        >>> pl.set_color_cycler('default')
-        >>> _ = [
-        ...     pl.add_mesh(block, label=label)
-        ...     for block, label in zip(multiblock, labels)
-        ... ]
-        >>> _ = pl.add_legend()
-        >>> pl.show()
+            Clear scalar data so we can color each mesh using a single color
+
+            >>> _ = [block.clear_data() for block in multiblock]
+            >>>
+            >>> pl = pv.Plotter()
+            >>> pl.set_color_cycler('default')
+            >>> _ = [
+            ...     pl.add_mesh(block, label=label)
+            ...     for block, label in zip(multiblock, labels)
+            ... ]
+            >>> _ = pl.add_legend()
+            >>> pl.show()
 
         """
         if values is None and ranges is None:

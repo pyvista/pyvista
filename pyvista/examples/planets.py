@@ -659,24 +659,27 @@ def download_sun_surface(
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> texture = examples.planets.download_sun_surface(texture=True)
-    >>> texture.plot(zoom='tight', show_axes=False)
+    .. pyvista-plot::
+        :force_static:
 
-    >>> mesh = examples.planets.load_planet()
-    >>> image_path = examples.planets.download_stars_sky_background(load=False)
-    >>> mesh.plot(texture=texture, background=image_path)
+        >>> from pyvista import examples
+        >>> texture = examples.planets.download_sun_surface(texture=True)
+        >>> texture.plot(zoom='tight', show_axes=False)
 
-    .. seealso::
+        >>> mesh = examples.planets.load_planet()
+        >>> image_path = examples.planets.download_stars_sky_background(load=False)
+        >>> mesh.plot(texture=texture, background=image_path)
 
-        :ref:`Sun Surface Dataset <sun_surface_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
 
-        :func:`~pyvista.examples.planets.load_planet`
-            Load a planet as a sphere with texture coordinates.
+            :ref:`Sun Surface Dataset <sun_surface_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
-        :ref:`planets_example`
-            Example plot of the solar system.
+            :func:`~pyvista.examples.planets.load_planet`
+                Load a planet as a sphere with texture coordinates.
+
+            :ref:`planets_example`
+                Example plot of the solar system.
 
     """
     return _download_dataset_texture(_dataset_sun_surface, load=load, texture=texture)
@@ -723,24 +726,27 @@ def download_moon_surface(
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> texture = examples.planets.download_moon_surface(texture=True)
-    >>> texture.plot(zoom='tight', show_axes=False)
+    .. pyvista-plot::
+        :force_static:
 
-    >>> mesh = examples.planets.load_planet()
-    >>> image_path = examples.planets.download_stars_sky_background(load=False)
-    >>> mesh.plot(texture=texture, background=image_path)
+        >>> from pyvista import examples
+        >>> texture = examples.planets.download_moon_surface(texture=True)
+        >>> texture.plot(zoom='tight', show_axes=False)
 
-    .. seealso::
+        >>> mesh = examples.planets.load_planet()
+        >>> image_path = examples.planets.download_stars_sky_background(load=False)
+        >>> mesh.plot(texture=texture, background=image_path)
 
-        :ref:`Moon Surface Dataset <moon_surface_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
 
-        :func:`~pyvista.examples.planets.load_planet`
-            Load a planet as a sphere with texture coordinates.
+            :ref:`Moon Surface Dataset <moon_surface_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
-        :ref:`planets_example`
-            Example plot of the solar system.
+            :func:`~pyvista.examples.planets.load_planet`
+                Load a planet as a sphere with texture coordinates.
+
+            :ref:`planets_example`
+                Example plot of the solar system.
 
     """
     return _download_dataset_texture(_dataset_moon_surface, load=load, texture=texture)
@@ -787,21 +793,24 @@ def download_mercury_surface(
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> texture = examples.planets.download_mercury_surface(texture=True)
-    >>> texture.plot(zoom='tight', show_axes=False)
+    .. pyvista-plot::
+        :force_static:
 
-    >>> mesh = examples.planets.load_planet()
-    >>> image_path = examples.planets.download_stars_sky_background(load=False)
-    >>> mesh.plot(texture=texture, background=image_path)
+        >>> from pyvista import examples
+        >>> texture = examples.planets.download_mercury_surface(texture=True)
+        >>> texture.plot(zoom='tight', show_axes=False)
 
-    .. seealso::
+        >>> mesh = examples.planets.load_planet()
+        >>> image_path = examples.planets.download_stars_sky_background(load=False)
+        >>> mesh.plot(texture=texture, background=image_path)
 
-        :ref:`Mercury Surface Dataset <mercury_surface_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
 
-        :func:`~pyvista.examples.planets.load_planet`
-            Load a planet as a sphere with texture coordinates.
+            :ref:`Mercury Surface Dataset <mercury_surface_dataset>`
+                See this dataset in the Dataset Gallery for more info.
+
+            :func:`~pyvista.examples.planets.load_planet`
+                Load a planet as a sphere with texture coordinates.
 
     """
     return _download_dataset_texture(_dataset_mercury_surface, load=load, texture=texture)
@@ -934,21 +943,24 @@ def download_mars_surface(
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> texture = examples.planets.download_mars_surface(texture=True)
-    >>> texture.plot(zoom='tight', show_axes=False)
+    .. pyvista-plot::
+        :force_static:
 
-    >>> mesh = examples.planets.load_planet()
-    >>> image_path = examples.planets.download_stars_sky_background(load=False)
-    >>> mesh.plot(texture=texture, background=image_path)
+        >>> from pyvista import examples
+        >>> texture = examples.planets.download_mars_surface(texture=True)
+        >>> texture.plot(zoom='tight', show_axes=False)
 
-    .. seealso::
+        >>> mesh = examples.planets.load_planet()
+        >>> image_path = examples.planets.download_stars_sky_background(load=False)
+        >>> mesh.plot(texture=texture, background=image_path)
 
-        :ref:`Mars Surface Dataset <mars_surface_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
 
-        :func:`~pyvista.examples.planets.load_planet`
-            Load a planet as a sphere with texture coordinates.
+            :ref:`Mars Surface Dataset <mars_surface_dataset>`
+                See this dataset in the Dataset Gallery for more info.
+
+            :func:`~pyvista.examples.planets.load_planet`
+                Load a planet as a sphere with texture coordinates.
 
     """
     return _download_dataset_texture(_dataset_mars_surface, load=load, texture=texture)
@@ -995,21 +1007,24 @@ def download_jupiter_surface(
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> texture = examples.planets.download_jupiter_surface(texture=True)
-    >>> texture.plot(zoom='tight', show_axes=False)
+    .. pyvista-plot::
+        :force_static:
 
-    >>> mesh = examples.planets.load_planet()
-    >>> image_path = examples.planets.download_stars_sky_background(load=False)
-    >>> mesh.plot(texture=texture, background=image_path)
+        >>> from pyvista import examples
+        >>> texture = examples.planets.download_jupiter_surface(texture=True)
+        >>> texture.plot(zoom='tight', show_axes=False)
 
-    .. seealso::
+        >>> mesh = examples.planets.load_planet()
+        >>> image_path = examples.planets.download_stars_sky_background(load=False)
+        >>> mesh.plot(texture=texture, background=image_path)
 
-        :ref:`Jupiter Surface Dataset <jupiter_surface_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
 
-        :func:`~pyvista.examples.planets.load_planet`
-            Load a planet as a sphere with texture coordinates.
+            :ref:`Jupiter Surface Dataset <jupiter_surface_dataset>`
+                See this dataset in the Dataset Gallery for more info.
+
+            :func:`~pyvista.examples.planets.load_planet`
+                Load a planet as a sphere with texture coordinates.
 
     """
     return _download_dataset_texture(_dataset_jupiter_surface, load=load, texture=texture)
@@ -1311,21 +1326,24 @@ def download_pluto_surface(
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> texture = examples.planets.download_pluto_surface(texture=True)
-    >>> texture.plot(zoom='tight', show_axes=False)
+    .. pyvista-plot::
+        :force_static:
 
-    >>> mesh = examples.planets.load_planet()
-    >>> image_path = examples.planets.download_stars_sky_background(load=False)
-    >>> mesh.plot(texture=texture, background=image_path)
+        >>> from pyvista import examples
+        >>> texture = examples.planets.download_pluto_surface(texture=True)
+        >>> texture.plot(zoom='tight', show_axes=False)
 
-    .. seealso::
+        >>> mesh = examples.planets.load_planet()
+        >>> image_path = examples.planets.download_stars_sky_background(load=False)
+        >>> mesh.plot(texture=texture, background=image_path)
 
-        :ref:`Pluto Surface Dataset <pluto_surface_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
 
-        :func:`~pyvista.examples.planets.load_planet`
-            Load a planet as a sphere with texture coordinates.
+            :ref:`Pluto Surface Dataset <pluto_surface_dataset>`
+                See this dataset in the Dataset Gallery for more info.
+
+            :func:`~pyvista.examples.planets.load_planet`
+                Load a planet as a sphere with texture coordinates.
 
     """
     return _download_dataset_texture(_dataset_pluto_surface, load=load, texture=texture)

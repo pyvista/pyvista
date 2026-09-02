@@ -551,16 +551,19 @@ def download_puppy_texture(load: bool = True) -> Texture | str:  # noqa: FBT001,
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_puppy_texture()
-    >>> dataset.plot(cpos='xy')
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> dataset = examples.download_puppy_texture()
+        >>> dataset.plot(cpos='xy')
 
-        :ref:`Puppy Texture Dataset <puppy_texture_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
 
-        :ref:`Puppy Dataset <puppy_dataset>`
+            :ref:`Puppy Texture Dataset <puppy_texture_dataset>`
+                See this dataset in the Dataset Gallery for more info.
+
+            :ref:`Puppy Dataset <puppy_dataset>`
 
     """
     return _download_dataset(_dataset_puppy_texture, load=load)
@@ -1020,19 +1023,22 @@ def download_head_2(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT0
 
     Examples
     --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> dataset = examples.download_head_2()
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_volume(dataset, cmap='cool', opacity='sigmoid_6')
-    >>> pl.show()
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> dataset = examples.download_head_2()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_volume(dataset, cmap='cool', opacity='sigmoid_6')
+        >>> pl.show()
 
-        :ref:`Head 2 Dataset <head_2_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
 
-        :ref:`Head Dataset <head_dataset>`
+            :ref:`Head 2 Dataset <head_2_dataset>`
+                See this dataset in the Dataset Gallery for more info.
+
+            :ref:`Head Dataset <head_dataset>`
 
     """
     return _download_dataset(_dataset_head_2, load=load)
@@ -1199,14 +1205,17 @@ def download_topo_land(load: bool = True) -> PolyData | str:  # noqa: FBT001, FB
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_topo_land()
-    >>> dataset.plot(clim=[-2000, 3000], cmap='gist_earth', show_scalar_bar=False)
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> dataset = examples.download_topo_land()
+        >>> dataset.plot(clim=[-2000, 3000], cmap='gist_earth', show_scalar_bar=False)
 
-        :ref:`Topo Land Dataset <topo_land_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
+
+            :ref:`Topo Land Dataset <topo_land_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_topo_land, load=load)
@@ -1314,22 +1323,25 @@ def download_knee_full(load: bool = True) -> ImageData | str:  # noqa: FBT001, F
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> import pyvista as pv
-    >>> dataset = examples.download_knee_full()
-    >>> cpos = pv.CameraPosition(
-    ...     position=(-381.7, -46.02, 216.5),
-    ...     focal_point=(74.83, 89.29, 100.0),
-    ...     viewup=(0.23, 0.072, 0.97),
-    ... )
-    >>> dataset.plot(volume=True, cmap='bone', cpos=cpos, show_scalar_bar=False)
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> dataset = examples.download_knee_full()
+        >>> cpos = pv.CameraPosition(
+        ...     position=(-381.7, -46.02, 216.5),
+        ...     focal_point=(74.83, 89.29, 100.0),
+        ...     viewup=(0.23, 0.072, 0.97),
+        ... )
+        >>> dataset.plot(volume=True, cmap='bone', cpos=cpos, show_scalar_bar=False)
 
-        :ref:`Knee Full Dataset <knee_full_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
 
-        :ref:`Knee Dataset <knee_dataset>`
+            :ref:`Knee Full Dataset <knee_full_dataset>`
+                See this dataset in the Dataset Gallery for more info.
+
+            :ref:`Knee Dataset <knee_dataset>`
 
     """
     return _download_dataset(_dataset_knee_full, load=load)
@@ -1458,6 +1470,7 @@ def download_nefertiti(load: bool = True) -> PolyData | str:  # noqa: FBT001, FB
     Examples
     --------
     .. pyvista-plot::
+        :force_static:
 
         from pyvista import examples
 
@@ -1473,7 +1486,6 @@ def download_nefertiti(load: bool = True) -> PolyData | str:  # noqa: FBT001, FB
 
         * :ref:`compute_normals_example`
         * :ref:`extract_edges_example`
-        * :ref:`show_edges_example`
         * :ref:`edl_example`
         * :ref:`pbr_example`
         * :ref:`box_widget_example`
@@ -1523,17 +1535,20 @@ def download_washington_bust(*, load: bool = True) -> PolyData | str:
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_washington_bust()
-    >>> dataset.plot()
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> dataset = examples.download_washington_bust()
+        >>> dataset.plot()
 
-        :ref:`Washington Bust Dataset <washington_bust_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
 
-        :func:`download_lincoln_life_mask`
-            Another CC0 head sculpture from the Smithsonian.
+            :ref:`Washington Bust Dataset <washington_bust_dataset>`
+                See this dataset in the Dataset Gallery for more info.
+
+            :func:`download_lincoln_life_mask`
+                Another CC0 head sculpture from the Smithsonian.
 
     """
     return _download_dataset(_dataset_washington_bust, load=load)
@@ -1572,17 +1587,20 @@ def download_lincoln_life_mask(*, load: bool = True) -> PolyData | str:
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_lincoln_life_mask()
-    >>> dataset.plot()
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> dataset = examples.download_lincoln_life_mask()
+        >>> dataset.plot()
 
-        :ref:`Lincoln Life Mask Dataset <lincoln_life_mask_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
 
-        :func:`download_washington_bust`
-            A proper head-and-shoulders bust, also CC0.
+            :ref:`Lincoln Life Mask Dataset <lincoln_life_mask_dataset>`
+                See this dataset in the Dataset Gallery for more info.
+
+            :func:`download_washington_bust`
+                A proper head-and-shoulders bust, also CC0.
 
     """
     return _download_dataset(_dataset_lincoln_life_mask, load=load)
@@ -2266,18 +2284,21 @@ def download_gourds(zoom: bool = False, load: bool = True) -> ImageData | str:  
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_gourds()
-    >>> dataset.plot(rgba=True, cpos='xy')
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> dataset = examples.download_gourds()
+        >>> dataset.plot(rgba=True, cpos='xy')
 
-        :ref:`Gourds Dataset <gourds_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
 
-        :ref:`Gourds Pnm Dataset <gourds_pnm_dataset>`
+            :ref:`Gourds Dataset <gourds_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
-        :ref:`Gourds Texture Dataset <gourds_texture_dataset>`
+            :ref:`Gourds Pnm Dataset <gourds_pnm_dataset>`
+
+            :ref:`Gourds Texture Dataset <gourds_texture_dataset>`
 
     """
     example = __gourds2 if zoom else _dataset_gourds
@@ -2364,18 +2385,21 @@ def download_gourds_pnm(load: bool = True) -> ImageData | str:  # noqa: FBT001, 
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_gourds_pnm()
-    >>> dataset.plot(rgba=True, cpos='xy')
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> dataset = examples.download_gourds_pnm()
+        >>> dataset.plot(rgba=True, cpos='xy')
 
-        :ref:`Gourds Pnm Dataset <gourds_pnm_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
 
-        :ref:`Gourds Dataset <gourds_dataset>`
+            :ref:`Gourds Pnm Dataset <gourds_pnm_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
-        :ref:`Gourds Texture Dataset <gourds_texture_dataset>`
+            :ref:`Gourds Dataset <gourds_dataset>`
+
+            :ref:`Gourds Texture Dataset <gourds_texture_dataset>`
 
     """
     return _download_dataset(_dataset_gourds_pnm, load=load)
@@ -2594,23 +2618,26 @@ def download_frog(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> import pyvista as pv
-    >>> cpos = pv.CameraPosition(
-    ...     position=(842.9, -574.2, -440.8),
-    ...     focal_point=(249.5, 234.5, 101.2),
-    ...     viewup=(-0.32, 0.35, -0.88),
-    ... )
-    >>> dataset = examples.download_frog()
-    >>> dataset.plot(volume=True, cpos=cpos)
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> cpos = pv.CameraPosition(
+        ...     position=(842.9, -574.2, -440.8),
+        ...     focal_point=(249.5, 234.5, 101.2),
+        ...     viewup=(-0.32, 0.35, -0.88),
+        ... )
+        >>> dataset = examples.download_frog()
+        >>> dataset.plot(volume=True, cpos=cpos)
 
-        :ref:`Frog Dataset <frog_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
 
-        :ref:`Frog Tissues Dataset <frog_tissues_dataset>`
-            Segmentation labels associated with this dataset.
+            :ref:`Frog Dataset <frog_dataset>`
+                See this dataset in the Dataset Gallery for more info.
+
+            :ref:`Frog Tissues Dataset <frog_tissues_dataset>`
+                Segmentation labels associated with this dataset.
 
     """
     return _download_dataset(_dataset_frog, load=load)
@@ -2647,17 +2674,20 @@ def download_chest(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT00
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_chest()
-    >>> dataset.plot(cpos='xy')
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> dataset = examples.download_chest()
+        >>> dataset.plot(cpos='xy')
 
-        :ref:`Chest Dataset <chest_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
 
-        :ref:`volume_rendering_example`
-            Example using this dataset.
+            :ref:`Chest Dataset <chest_dataset>`
+                See this dataset in the Dataset Gallery for more info.
+
+            :ref:`volume_rendering_example`
+                Example using this dataset.
 
     """
     return _download_dataset(_dataset_chest, load=load)
@@ -3121,16 +3151,19 @@ def download_brain(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT00
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_brain()
-    >>> dataset.plot(volume=True)
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> dataset = examples.download_brain()
+        >>> dataset.plot(volume=True)
 
-        :ref:`Brain Dataset <brain_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
 
-        :ref:`Brain Atlas With Sides Dataset <brain_atlas_with_sides_dataset>`
+            :ref:`Brain Dataset <brain_dataset>`
+                See this dataset in the Dataset Gallery for more info.
+
+            :ref:`Brain Atlas With Sides Dataset <brain_atlas_with_sides_dataset>`
 
     """
     return _download_dataset(_dataset_brain, load=load)
@@ -3353,18 +3386,21 @@ def download_sky_box_nz(load: bool = True) -> ImageData | str:  # noqa: FBT001, 
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_sky_box_nz()
-    >>> dataset.plot(rgba=True, cpos='xy')
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> dataset = examples.download_sky_box_nz()
+        >>> dataset.plot(rgba=True, cpos='xy')
 
-        :ref:`Sky Box Nz Dataset <sky_box_nz_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
 
-        :ref:`Sky Box Nz Texture Dataset <sky_box_nz_texture_dataset>`
+            :ref:`Sky Box Nz Dataset <sky_box_nz_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
-        :ref:`Sky Box Cube Map Dataset <sky_box_cube_map_dataset>`
+            :ref:`Sky Box Nz Texture Dataset <sky_box_nz_texture_dataset>`
+
+            :ref:`Sky Box Cube Map Dataset <sky_box_cube_map_dataset>`
 
     """
     return _download_dataset(_dataset_sky_box_nz, load=load)
@@ -3995,14 +4031,17 @@ def download_dragon(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT00
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_dragon()
-    >>> dataset.plot(cpos='xy')
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> dataset = examples.download_dragon()
+        >>> dataset.plot(cpos='xy')
 
-        :ref:`Dragon Dataset <dragon_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
+
+            :ref:`Dragon Dataset <dragon_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_dragon, load=load)
@@ -4032,22 +4071,25 @@ def download_armadillo(load: bool = True) -> PolyData | str:  # noqa: FBT001, FB
 
     Examples
     --------
-    Plot the armadillo dataset. Use a custom camera position.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> import pyvista as pv
-    >>> cpos = pv.CameraPosition(
-    ...     position=(161.5, 82.1, -330.2),
-    ...     focal_point=(-4.3, 24.5, -1.6),
-    ...     viewup=(-0.1, 1, 0.12),
-    ... )
-    >>> dataset = examples.download_armadillo()
-    >>> dataset.plot(cpos=cpos)
+        Plot the armadillo dataset. Use a custom camera position.
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> cpos = pv.CameraPosition(
+        ...     position=(161.5, 82.1, -330.2),
+        ...     focal_point=(-4.3, 24.5, -1.6),
+        ...     viewup=(-0.1, 1, 0.12),
+        ... )
+        >>> dataset = examples.download_armadillo()
+        >>> dataset.plot(cpos=cpos)
 
-        :ref:`Armadillo Dataset <armadillo_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
+
+            :ref:`Armadillo Dataset <armadillo_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_armadillo, load=load)
@@ -4386,14 +4428,17 @@ def download_carburetor(load: bool = True) -> PolyData | str:  # noqa: FBT001, F
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_carburetor()
-    >>> dataset.plot()
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> dataset = examples.download_carburetor()
+        >>> dataset.plot()
 
-        :ref:`Carburetor Dataset <carburetor_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
+
+            :ref:`Carburetor Dataset <carburetor_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_carburetor, load=load)
@@ -4460,14 +4505,17 @@ def download_pine_roots(load: bool = True) -> PolyData | str:  # noqa: FBT001, F
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_pine_roots()
-    >>> dataset.plot()
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> dataset = examples.download_pine_roots()
+        >>> dataset.plot()
 
-        :ref:`Pine Roots Dataset <pine_roots_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
+
+            :ref:`Pine Roots Dataset <pine_roots_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_pine_roots, load=load)
@@ -4625,31 +4673,34 @@ def download_damavand_volcano(load: bool = True) -> ImageData | str:  # noqa: FB
 
     Examples
     --------
-    Load the dataset.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> import pyvista as pv
-    >>> dataset = examples.download_damavand_volcano()
+        Load the dataset.
 
-    Use :meth:`~pyvista.ImageDataFilters.resample` to down-sample it before plotting.
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> dataset = examples.download_damavand_volcano()
 
-    >>> dataset = dataset.resample(0.5)
-    >>> dataset.dimensions
-    (140, 116, 85)
+        Use :meth:`~pyvista.ImageDataFilters.resample` to down-sample it before plotting.
 
-    Plot it.
+        >>> dataset = dataset.resample(0.5)
+        >>> dataset.dimensions
+        (140, 116, 85)
 
-    >>> cpos = pv.CameraPosition(
-    ...     position=(46630.0, 4328000.0, -382500.0),
-    ...     focal_point=(552500.0, 3980000.0, -24740.0),
-    ...     viewup=(0.41, -0.29, -0.86),
-    ... )
-    >>> dataset.plot(cpos=cpos, cmap='reds', show_scalar_bar=False, volume=True)
+        Plot it.
 
-    .. seealso::
+        >>> cpos = pv.CameraPosition(
+        ...     position=(46630.0, 4328000.0, -382500.0),
+        ...     focal_point=(552500.0, 3980000.0, -24740.0),
+        ...     viewup=(0.41, -0.29, -0.86),
+        ... )
+        >>> dataset.plot(cpos=cpos, cmap='reds', show_scalar_bar=False, volume=True)
 
-        :ref:`Damavand Volcano Dataset <damavand_volcano_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
+
+            :ref:`Damavand Volcano Dataset <damavand_volcano_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_damavand_volcano, load=load)
@@ -4771,14 +4822,17 @@ def download_antarctica_velocity(load: bool = True) -> PolyData | str:  # noqa: 
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_antarctica_velocity()
-    >>> dataset.plot(cpos='xy', clim=[1e-3, 1e4], cmap='Blues', log_scale=True)
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> dataset = examples.download_antarctica_velocity()
+        >>> dataset.plot(cpos='xy', clim=[1e-3, 1e4], cmap='Blues', log_scale=True)
 
-        :ref:`Antarctica Velocity Dataset <antarctica_velocity_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
+
+            :ref:`Antarctica Velocity Dataset <antarctica_velocity_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_antarctica_velocity, load=load)
@@ -5565,14 +5619,17 @@ def download_drill(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_drill()
-    >>> dataset.plot()
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> dataset = examples.download_drill()
+        >>> dataset.plot()
 
-        :ref:`Drill Dataset <drill_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
+
+            :ref:`Drill Dataset <drill_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
     """
     # Silence warning: unexpected data at end of line in OBJ file
@@ -5772,25 +5829,28 @@ def download_louis_louvre(load: bool = True) -> PolyData | str:  # noqa: FBT001,
 
     Examples
     --------
-    Plot the Louis XIV statue with custom lighting and camera angle.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> import pyvista as pv
-    >>> dataset = examples.download_louis_louvre()
-    >>> pl = pv.Plotter(lighting=None)
-    >>> _ = pl.add_mesh(dataset, smooth_shading=True)
-    >>> pl.add_light(pv.Light(position=(10, -10, 10)))
-    >>> pl.camera_position = pv.CameraPosition(
-    ...     position=(-6.71, -14.55, 15.17),
-    ...     focal_point=(1.44, 2.54, 9.84),
-    ...     viewup=(0.16, 0.22, 0.96),
-    ... )
-    >>> pl.show()
+        Plot the Louis XIV statue with custom lighting and camera angle.
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> dataset = examples.download_louis_louvre()
+        >>> pl = pv.Plotter(lighting=None)
+        >>> _ = pl.add_mesh(dataset, smooth_shading=True)
+        >>> pl.add_light(pv.Light(position=(10, -10, 10)))
+        >>> pl.camera_position = pv.CameraPosition(
+        ...     position=(-6.71, -14.55, 15.17),
+        ...     focal_point=(1.44, 2.54, 9.84),
+        ...     viewup=(0.16, 0.22, 0.96),
+        ... )
+        >>> pl.show()
 
-        :ref:`Louis Louvre Dataset <louis_louvre_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
+
+            :ref:`Louis Louvre Dataset <louis_louvre_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_louis_louvre, load=load)
@@ -6397,54 +6457,57 @@ def download_electronics_cooling(load: bool = True) -> MultiBlock | str:  # noqa
 
     Examples
     --------
-    Load the datasets and plot the air velocity through the electronics.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> structure, air = examples.download_electronics_cooling()
+        Load the datasets and plot the air velocity through the electronics.
 
-    Show the type and bounds of the datasets.
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> structure, air = examples.download_electronics_cooling()
 
-    >>> structure, air
-    (PolyData (...)
-      N Cells:    344270
-      N Points:   187992
-      N Strips:   0
-      X Bounds:   -3.000e-03, 1.530e-01
-      Y Bounds:   -3.000e-03, 2.030e-01
-      Z Bounds:   -9.000e-03, 4.200e-02
-      N Arrays:   4, UnstructuredGrid (...)
-      N Cells:    1749992
-      N Points:   610176
-      X Bounds:   -1.388e-18, 1.500e-01
-      Y Bounds:   -3.000e-03, 2.030e-01
-      Z Bounds:   -6.000e-03, 4.400e-02
-      N Arrays:   10)
+        Show the type and bounds of the datasets.
 
-    >>> z_slice = air.clip('z', value=-0.005)
-    >>> pl = pv.Plotter()
-    >>> pl.enable_ssao(radius=0.01)
-    >>> _ = pl.add_mesh(
-    ...     z_slice,
-    ...     scalars='U',
-    ...     lighting=False,
-    ...     scalar_bar_args={'title': 'Velocity'},
-    ... )
-    >>> _ = pl.add_mesh(
-    ...     structure,
-    ...     color='w',
-    ...     smooth_shading=True,
-    ...     split_sharp_edges=True,
-    ... )
-    >>> pl.camera_position = 'xy'
-    >>> pl.camera.roll = 90
-    >>> pl.enable_anti_aliasing('fxaa')
-    >>> pl.show()
+        >>> structure, air
+        (PolyData (...)
+          N Cells:    344270
+          N Points:   187992
+          N Strips:   0
+          X Bounds:   -3.000e-03, 1.530e-01
+          Y Bounds:   -3.000e-03, 2.030e-01
+          Z Bounds:   -9.000e-03, 4.200e-02
+          N Arrays:   4, UnstructuredGrid (...)
+          N Cells:    1749992
+          N Points:   610176
+          X Bounds:   -1.388e-18, 1.500e-01
+          Y Bounds:   -3.000e-03, 2.030e-01
+          Z Bounds:   -6.000e-03, 4.400e-02
+          N Arrays:   10)
 
-    .. seealso::
+        >>> z_slice = air.clip('z', value=-0.005)
+        >>> pl = pv.Plotter()
+        >>> pl.enable_ssao(radius=0.01)
+        >>> _ = pl.add_mesh(
+        ...     z_slice,
+        ...     scalars='U',
+        ...     lighting=False,
+        ...     scalar_bar_args={'title': 'Velocity'},
+        ... )
+        >>> _ = pl.add_mesh(
+        ...     structure,
+        ...     color='w',
+        ...     smooth_shading=True,
+        ...     split_sharp_edges=True,
+        ... )
+        >>> pl.camera_position = 'xy'
+        >>> pl.camera.roll = 90
+        >>> pl.enable_anti_aliasing('fxaa')
+        >>> pl.show()
 
-        :ref:`Electronics Cooling Dataset <electronics_cooling_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
+
+            :ref:`Electronics Cooling Dataset <electronics_cooling_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_electronics_cooling, load=load)
@@ -7005,18 +7068,21 @@ def download_mount_damavand(load: bool = True) -> PolyData | str:  # noqa: FBT00
 
     Examples
     --------
-    Download the Damavand dataset and plot it after warping it by its altitude.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> dataset = examples.download_mount_damavand()
-    >>> dataset = dataset.cell_data_to_point_data()
-    >>> dataset = dataset.warp_by_scalar('z', factor=2)
-    >>> dataset.plot(cmap='gist_earth', show_scalar_bar=False)
+        Download the Damavand dataset and plot it after warping it by its altitude.
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> dataset = examples.download_mount_damavand()
+        >>> dataset = dataset.cell_data_to_point_data()
+        >>> dataset = dataset.warp_by_scalar('z', factor=2)
+        >>> dataset.plot(cmap='gist_earth', show_scalar_bar=False)
 
-        :ref:`Mount Damavand Dataset <mount_damavand_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
+
+            :ref:`Mount Damavand Dataset <mount_damavand_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_mount_damavand, load=load)
@@ -8213,68 +8279,71 @@ def download_coil_magnetic_field(load: bool = True) -> ImageData | str:  # noqa:
 
     Examples
     --------
-    Download the magnetic field dataset and generate streamlines from the field.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> grid = examples.download_coil_magnetic_field()
-    >>> seed = pv.Disc(inner=1, outer=5.2, r_res=3, c_res=12)
-    >>> strl = grid.streamlines_from_source(
-    ...     seed,
-    ...     vectors='B',
-    ...     max_length=180,
-    ...     initial_step_length=0.1,
-    ...     integration_direction='both',
-    ... )
-    >>> strl.plot(
-    ...     cmap='plasma',
-    ...     render_lines_as_tubes=True,
-    ...     line_width=2,
-    ...     lighting=False,
-    ...     zoom=2,
-    ... )
+        Download the magnetic field dataset and generate streamlines from the field.
 
-    Plot the magnet field strength in the Z direction.
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> grid = examples.download_coil_magnetic_field()
+        >>> seed = pv.Disc(inner=1, outer=5.2, r_res=3, c_res=12)
+        >>> strl = grid.streamlines_from_source(
+        ...     seed,
+        ...     vectors='B',
+        ...     max_length=180,
+        ...     initial_step_length=0.1,
+        ...     integration_direction='both',
+        ... )
+        >>> strl.plot(
+        ...     cmap='plasma',
+        ...     render_lines_as_tubes=True,
+        ...     line_width=2,
+        ...     lighting=False,
+        ...     zoom=2,
+        ... )
 
-    >>> import numpy as np
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> grid = examples.download_coil_magnetic_field()
-    >>> # create coils
-    >>> coils = []
-    >>> for z in np.linspace(-8, 8, 16):
-    ...     coils.append(
-    ...         pv.Polygon(center=(0, 0, z), radius=5, n_sides=100, fill=False)
-    ...     )
-    >>> coils = pv.MultiBlock(coils)
-    >>> # plot the magnet field strength in the Z direction
-    >>> scalars = np.abs(grid['B'][:, 2])
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(coils, render_lines_as_tubes=True, line_width=5, color='w')
-    >>> vol = pl.add_volume(
-    ...     grid,
-    ...     scalars=scalars,
-    ...     cmap='plasma',
-    ...     show_scalar_bar=False,
-    ...     log_scale=True,
-    ...     opacity='sigmoid_2',
-    ... )
-    >>> vol.prop.interpolation_type = 'linear'
-    >>> _ = pl.add_volume_clip_plane(
-    ...     vol,
-    ...     normal='-x',
-    ...     normal_rotation=False,
-    ...     interaction_event='always',
-    ...     widget_color=pv.Color(opacity=0.0),
-    ... )
-    >>> pl.enable_anti_aliasing()
-    >>> pl.camera.zoom(2)
-    >>> pl.show()
+        Plot the magnet field strength in the Z direction.
 
-    .. seealso::
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> grid = examples.download_coil_magnetic_field()
+        >>> # create coils
+        >>> coils = []
+        >>> for z in np.linspace(-8, 8, 16):
+        ...     coils.append(
+        ...         pv.Polygon(center=(0, 0, z), radius=5, n_sides=100, fill=False)
+        ...     )
+        >>> coils = pv.MultiBlock(coils)
+        >>> # plot the magnet field strength in the Z direction
+        >>> scalars = np.abs(grid['B'][:, 2])
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(coils, render_lines_as_tubes=True, line_width=5, color='w')
+        >>> vol = pl.add_volume(
+        ...     grid,
+        ...     scalars=scalars,
+        ...     cmap='plasma',
+        ...     show_scalar_bar=False,
+        ...     log_scale=True,
+        ...     opacity='sigmoid_2',
+        ... )
+        >>> vol.prop.interpolation_type = 'linear'
+        >>> _ = pl.add_volume_clip_plane(
+        ...     vol,
+        ...     normal='-x',
+        ...     normal_rotation=False,
+        ...     interaction_event='always',
+        ...     widget_color=pv.Color(opacity=0.0),
+        ... )
+        >>> pl.enable_anti_aliasing()
+        >>> pl.camera.zoom(2)
+        >>> pl.show()
 
-        :ref:`Coil Magnetic Field Dataset <coil_magnetic_field_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
+
+            :ref:`Coil Magnetic Field Dataset <coil_magnetic_field_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_coil_magnetic_field, load=load)
@@ -8537,83 +8606,86 @@ def download_whole_body_ct_male(
 
     Examples
     --------
-    Load the dataset and get some of its properties.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> import pyvista as pv
-    >>> dataset = examples.download_whole_body_ct_male()
+        Load the dataset and get some of its properties.
 
-    Get the CT image.
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> dataset = examples.download_whole_body_ct_male()
 
-    >>> ct_image = dataset['ct']
-    >>> ct_image
-    ImageData (...)
-      N Cells:      6876432
-      N Points:     6988800
-      X Bounds:     7.500e-01, 4.778e+02
-      Y Bounds:     7.500e-01, 4.778e+02
-      Z Bounds:     7.527e-01, 8.182e+02
-      Dimensions:   160, 160, 273
-      Spacing:      3.000e+00, 3.000e+00, 3.005e+00
-      N Arrays:     1
+        Get the CT image.
 
-    Get the segmentation label names and show the first three.
+        >>> ct_image = dataset['ct']
+        >>> ct_image
+        ImageData (...)
+          N Cells:      6876432
+          N Points:     6988800
+          X Bounds:     7.500e-01, 4.778e+02
+          Y Bounds:     7.500e-01, 4.778e+02
+          Z Bounds:     7.527e-01, 8.182e+02
+          Dimensions:   160, 160, 273
+          Spacing:      3.000e+00, 3.000e+00, 3.005e+00
+          N Arrays:     1
 
-    >>> segmentations = dataset['segmentations']
-    >>> label_names = segmentations.keys()
-    >>> label_names[:3]
-    ['adrenal_gland_left', 'adrenal_gland_right', 'aorta']
+        Get the segmentation label names and show the first three.
 
-    Get the label map and show its data range.
+        >>> segmentations = dataset['segmentations']
+        >>> label_names = segmentations.keys()
+        >>> label_names[:3]
+        ['adrenal_gland_left', 'adrenal_gland_right', 'aorta']
 
-    >>> label_map = dataset['label_map']
-    >>> label_map.get_data_range()
-    (np.uint8(0), np.uint8(117))
+        Get the label map and show its data range.
 
-    Show the ``'names_to_colors'`` dictionary with RGB colors for each segment.
+        >>> label_map = dataset['label_map']
+        >>> label_map.get_data_range()
+        (np.uint8(0), np.uint8(117))
 
-    >>> dataset.user_dict['names_to_colors']  # doctest: +SKIP
+        Show the ``'names_to_colors'`` dictionary with RGB colors for each segment.
 
-    Show the ``'names_to_ids'`` dictionary with a mapping from segment names to segment ids.
+        >>> dataset.user_dict['names_to_colors']  # doctest: +SKIP
 
-    >>> dataset.user_dict['names_to_ids']  # doctest: +SKIP
+        Show the ``'names_to_ids'`` dictionary with a mapping from segment names to segment ids.
 
-    Create a surface mesh of the segmentation labels.
+        >>> dataset.user_dict['names_to_ids']  # doctest: +SKIP
 
-    >>> labels_mesh = label_map.contour_labels()
+        Create a surface mesh of the segmentation labels.
 
-    Color the surface using :func:`~pyvista.DataSetFilters.color_labels`. Use the
-    ``'ids_to_colors'`` dictionary that's included with the dataset to map the colors.
+        >>> labels_mesh = label_map.contour_labels()
 
-    >>> colored_mesh = labels_mesh.color_labels(
-    ...     colors=dataset.user_dict['ids_to_colors']
-    ... )
+        Color the surface using :func:`~pyvista.DataSetFilters.color_labels`. Use the
+        ``'ids_to_colors'`` dictionary that's included with the dataset to map the colors.
 
-    Plot the CT image and segmentation labels together.
+        >>> colored_mesh = labels_mesh.color_labels(
+        ...     colors=dataset.user_dict['ids_to_colors']
+        ... )
 
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_volume(
-    ...     ct_image,
-    ...     cmap='bone',
-    ...     opacity='sigmoid_8',
-    ...     show_scalar_bar=False,
-    ... )
-    >>> _ = pl.add_mesh(colored_mesh)
-    >>> pl.view_zx()
-    >>> pl.camera.up = (0, 0, 1)
-    >>> pl.camera.zoom(1.3)
-    >>> pl.show()
+        Plot the CT image and segmentation labels together.
 
-    .. seealso::
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_volume(
+        ...     ct_image,
+        ...     cmap='bone',
+        ...     opacity='sigmoid_8',
+        ...     show_scalar_bar=False,
+        ... )
+        >>> _ = pl.add_mesh(colored_mesh)
+        >>> pl.view_zx()
+        >>> pl.camera.up = (0, 0, 1)
+        >>> pl.camera.zoom(1.3)
+        >>> pl.show()
 
-        :ref:`anatomical_groups_example`
-            Additional examples using this dataset.
+        .. seealso::
 
-        :ref:`Whole Body Ct Male Dataset <whole_body_ct_male_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+            :ref:`anatomical_groups_example`
+                Additional examples using this dataset.
 
-        :ref:`Whole Body Ct Female Dataset <whole_body_ct_female_dataset>`
-            Similar dataset of a female subject.
+            :ref:`Whole Body Ct Male Dataset <whole_body_ct_male_dataset>`
+                See this dataset in the Dataset Gallery for more info.
+
+            :ref:`Whole Body Ct Female Dataset <whole_body_ct_female_dataset>`
+                Similar dataset of a female subject.
 
     """
     if high_resolution:
@@ -8853,91 +8925,94 @@ def download_whole_body_ct_female(
 
     Examples
     --------
-    Load the dataset.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> import pyvista as pv
-    >>> dataset = examples.download_whole_body_ct_female()
+        Load the dataset.
 
-    Get the names of the dataset's blocks.
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> dataset = examples.download_whole_body_ct_female()
 
-    >>> dataset.keys()
-    ['ct', 'segmentations', 'label_map']
+        Get the names of the dataset's blocks.
 
-    Get the CT image.
+        >>> dataset.keys()
+        ['ct', 'segmentations', 'label_map']
 
-    >>> ct_image = dataset['ct']
-    >>> ct_image
-    ImageData (...)
-      N Cells:      6825870
-      N Points:     6937600
-      X Bounds:     7.500e-01, 4.778e+02
-      Y Bounds:     7.500e-01, 4.778e+02
-      Z Bounds:     7.528e-01, 8.122e+02
-      Dimensions:   160, 160, 271
-      Spacing:      3.000e+00, 3.000e+00, 3.006e+00
-      N Arrays:     1
+        Get the CT image.
 
-    Get the segmentation label names and show the first three.
+        >>> ct_image = dataset['ct']
+        >>> ct_image
+        ImageData (...)
+          N Cells:      6825870
+          N Points:     6937600
+          X Bounds:     7.500e-01, 4.778e+02
+          Y Bounds:     7.500e-01, 4.778e+02
+          Z Bounds:     7.528e-01, 8.122e+02
+          Dimensions:   160, 160, 271
+          Spacing:      3.000e+00, 3.000e+00, 3.006e+00
+          N Arrays:     1
 
-    >>> segmentations = dataset['segmentations']
-    >>> label_names = segmentations.keys()
-    >>> label_names[:3]
-    ['adrenal_gland_left', 'adrenal_gland_right', 'aorta']
+        Get the segmentation label names and show the first three.
 
-    Get the label map and show its data range.
+        >>> segmentations = dataset['segmentations']
+        >>> label_names = segmentations.keys()
+        >>> label_names[:3]
+        ['adrenal_gland_left', 'adrenal_gland_right', 'aorta']
 
-    >>> label_map = dataset['label_map']
-    >>> label_map.get_data_range()
-    (np.uint8(0), np.uint8(117))
+        Get the label map and show its data range.
 
-    Show the ``'names_to_colors'`` dictionary with RGB colors for each segment.
+        >>> label_map = dataset['label_map']
+        >>> label_map.get_data_range()
+        (np.uint8(0), np.uint8(117))
 
-    >>> dataset.user_dict['names_to_colors']  # doctest: +SKIP
+        Show the ``'names_to_colors'`` dictionary with RGB colors for each segment.
 
-    Show the ``'names_to_ids'`` dictionary with a mapping from segment names to segment ids.
+        >>> dataset.user_dict['names_to_colors']  # doctest: +SKIP
 
-    >>> dataset.user_dict['names_to_ids']  # doctest: +SKIP
+        Show the ``'names_to_ids'`` dictionary with a mapping from segment names to segment ids.
 
-    Create a surface mesh of the segmentation labels.
+        >>> dataset.user_dict['names_to_ids']  # doctest: +SKIP
 
-    >>> labels_mesh = label_map.contour_labels()
+        Create a surface mesh of the segmentation labels.
 
-    Color the surface using :func:`~pyvista.DataSetFilters.color_labels`. Use the
-    ``'ids_to_colors'`` dictionary included with the dataset to map the colors.
+        >>> labels_mesh = label_map.contour_labels()
 
-    >>> colored_mesh = labels_mesh.color_labels(
-    ...     colors=dataset.user_dict['ids_to_colors']
-    ... )
+        Color the surface using :func:`~pyvista.DataSetFilters.color_labels`. Use the
+        ``'ids_to_colors'`` dictionary included with the dataset to map the colors.
 
-    Plot the CT image and segmentation labels together.
+        >>> colored_mesh = labels_mesh.color_labels(
+        ...     colors=dataset.user_dict['ids_to_colors']
+        ... )
 
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_volume(
-    ...     ct_image,
-    ...     cmap='bone',
-    ...     opacity='sigmoid_7',
-    ...     show_scalar_bar=False,
-    ... )
-    >>> _ = pl.add_mesh(colored_mesh)
-    >>> pl.view_zx()
-    >>> pl.camera.up = (0, 0, 1)
-    >>> pl.camera.zoom(1.3)
-    >>> pl.show()
+        Plot the CT image and segmentation labels together.
 
-    .. seealso::
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_volume(
+        ...     ct_image,
+        ...     cmap='bone',
+        ...     opacity='sigmoid_7',
+        ...     show_scalar_bar=False,
+        ... )
+        >>> _ = pl.add_mesh(colored_mesh)
+        >>> pl.view_zx()
+        >>> pl.camera.up = (0, 0, 1)
+        >>> pl.camera.zoom(1.3)
+        >>> pl.show()
 
-        :ref:`Whole Body Ct Female Dataset <whole_body_ct_female_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
 
-        :ref:`Whole Body Ct Male Dataset <whole_body_ct_male_dataset>`
-            Similar dataset of a male subject.
+            :ref:`Whole Body Ct Female Dataset <whole_body_ct_female_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
-        :ref:`crop_labeled_example`
-            Example cropping this dataset using a segmentation mask.
+            :ref:`Whole Body Ct Male Dataset <whole_body_ct_male_dataset>`
+                Similar dataset of a male subject.
 
-        :ref:`volume_with_mask_example`
-            See additional examples using this dataset.
+            :ref:`crop_labeled_example`
+                Example cropping this dataset using a segmentation mask.
+
+            :ref:`volume_with_mask_example`
+                See additional examples using this dataset.
 
     """
     if high_resolution:
@@ -9429,14 +9504,17 @@ def download_full_head(load: bool = True) -> ImageData | str:  # noqa: FBT001, F
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_full_head()
-    >>> dataset.plot(volume=True)
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> dataset = examples.download_full_head()
+        >>> dataset.plot(volume=True)
 
-        :ref:`Full Head Dataset <full_head_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
+
+            :ref:`Full Head Dataset <full_head_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_full_head, load=load)
