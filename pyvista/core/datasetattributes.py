@@ -70,6 +70,18 @@ def _array_names(field_data: _vtk.vtkFieldData) -> list[str]:
     return names
 
 
+def _active_scalars_name(attributes: _vtk.vtkDataSetAttributes) -> str | None:
+    """Return the active scalars name of a VTK attributes object, naming it if unnamed."""
+    scalars = attributes.GetScalars()
+    if scalars is None:
+        return None
+    name = scalars.GetName()
+    if name is None:
+        _array_names(attributes)
+        name = scalars.GetName()
+    return str(name)
+
+
 class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCheckSnakeCase):
     """Python friendly wrapper of :vtk:`vtkDataSetAttributes`.
 
@@ -1288,14 +1300,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         'my_other_data'
 
         """
-        if self.GetScalars() is not None:
-            name = self.GetScalars().GetName()
-            if name is None:
-                # Getting the keys has the side effect of naming "unnamed" arrays
-                self.keys()
-                name = self.GetScalars().GetName()
-            return str(name)
-        return None
+        return _active_scalars_name(self.VTKObject)
 
     @active_scalars_name.setter
     def active_scalars_name(self: Self, name: str | None) -> None:
@@ -1309,13 +1314,18 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         """
         # permit setting no active scalars
         if name is None:
-            self.SetActiveScalars(None)
+            self.VTKObject.SetActiveScalars(None)
             return
         self._raise_field_data_no_scalars_vectors_normals()
-        dtype = self[name].dtype
+        vtk_arr = self.VTKObject.GetAbstractArray(name) if isinstance(name, str) else None
         # only vtkDataArray subclasses can be set as active attributes
-        if np.issubdtype(dtype, np.number) or np.issubdtype(dtype, bool):
-            self.SetActiveScalars(name)
+        if isinstance(vtk_arr, _vtk.vtkDataArray):
+            self.VTKObject.SetActiveScalars(name)
+        elif not isinstance(vtk_arr, _vtk.vtkStringArray):
+            # missing keys, non-string keys and unsupported arrays raise here
+            dtype = self[name].dtype
+            if np.issubdtype(dtype, np.number) or np.issubdtype(dtype, bool):
+                self.VTKObject.SetActiveScalars(name)
 
     @property
     def _active_normals_name(self: Self) -> str | None:
