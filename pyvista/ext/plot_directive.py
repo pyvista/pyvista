@@ -32,7 +32,9 @@ The source code for the plot may be included in one of two ways:
      .. pyvista-plot:: path/to/plot.py plot_function1
 
 .. note::
-   Code blocks containing ``doctest:+SKIP`` will be skipped.
+   A ``# doctest: +SKIP`` statement is not executed, but the rest of its code
+   block still runs -- matching doctest -- so also mark any statement that
+   depends on a skipped one.
 
 .. note::
    Animations will not be saved, only the last frame will be shown.
@@ -81,8 +83,8 @@ The ``pyvista-plot`` directive supports the following options:
         boolean variable in :file:`conf.py`.
 
 Additionally, this directive supports all the options of the ``image``
-directive, except for *target* (since plot will add its own target).  These
-include *alt*, *height*, *width*, *scale*, *align*.
+directive, except for ``target`` (since plot will add its own target).  These
+include ``alt``, ``height``, ``width``, ``scale``, ``align``.
 
 
 **Open Graph previews**
@@ -185,6 +187,7 @@ from docutils.parsers.rst import Directive
 from docutils.parsers.rst import directives
 from docutils.parsers.rst.directives.images import Image
 import jinja2  # Sphinx dependency.
+from sphinx.util import logging as sphinx_logging
 
 import pyvista as pv
 
@@ -193,6 +196,11 @@ try:
     from sphinx_autocodelink import record_namespace
 except ImportError:
     record_namespace = None
+
+_logger = sphinx_logging.getLogger(__name__)
+
+#: Matches a ``# doctest: +SKIP`` marker, any spacing.
+_DOCTEST_SKIP_RE = re.compile(r'doctest:\s*\+SKIP')
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -524,21 +532,32 @@ class PlotError(RuntimeError):
     """More descriptive plot error."""
 
 
+def _executable_piece(code_piece, *, is_doctest):
+    """Return ``code_piece``'s script without its ``# doctest: +SKIP`` statements.
+
+    A skipped statement is not runnable; executing the rest keeps the namespace --
+    and with it, every name later statements or sphinx-autocodelink resolve through
+    it. ``None`` when there is nothing to filter.
+    """
+    if not (is_doctest and _DOCTEST_SKIP_RE.search(code_piece)):
+        return None
+    return ''.join(
+        example.source
+        for example in doctest.DocTestParser().get_examples(code_piece)
+        if not example.options.get(doctest.SKIP)
+    )
+
+
 def _run_code(*, code, code_path, ns=None, function_name=None):
     """Run a docstring example.
 
-    Run the example if it does not contain ``'doctest:+SKIP'``, or a
-    ``pyvista-plot::`` directive.  In the later case, the doctest parser will
-    present the code-block again with the ``pyvista-plot::`` directive
-    and its options removed.
+    Run the example if it does not contain a ``pyvista-plot::`` directive.
+    In that case, the doctest parser will present the code-block again with
+    the ``pyvista-plot::`` directive and its options removed.
 
     Import a Python module from a path, and run the function given by
     name, if ``function_name`` is not None.
     """
-    # do not execute code containing any SKIP directives
-    if 'doctest:+SKIP' in code:
-        return ns
-
     if 'pyvista-plot::' in code:
         return ns
 
@@ -577,9 +596,9 @@ def render_figures(
     *``output_base``*. Closed plotters are ignored if they were never
     rendered.
 
-    If *env* is given and *``include_source``* is true, also records the code's identifiers
+    If ``env`` is given and ``include_source`` is true, also records the code's identifiers
     to hyperlink -- skipped when the source isn't shown, since there would be nothing on the
-    page for a reader to click through to. *state* is the calling directive's own
+    page for a reader to click through to. ``state`` is the calling directive's own
     ``self.state``, passed through to sphinx-autocodelink for its own categorization.
     """
     # We skip snippets that contain the ``pyvista-plot::`` directive as part of their code.
@@ -609,12 +628,22 @@ def render_figures(
             # generate the plot
             clean_piece = doctest.script_from_examples(code_piece) if is_doctest else code_piece
             clean_pieces.append(clean_piece)
-            _run_code(
-                code=clean_piece,
-                code_path=code_path,
-                ns=ns,
-                function_name=function_name,
-            )
+            filtered = _executable_piece(code_piece, is_doctest=is_doctest)
+            try:
+                _run_code(
+                    code=clean_piece if filtered is None else filtered,
+                    code_path=code_path,
+                    ns=ns,
+                    function_name=function_name,
+                )
+            except PlotError:
+                if filtered is None:
+                    raise
+                # a failing remainder degrades to a log; names bound so far stay usable
+                _logger.info(
+                    '[pyvista-plot] statements alongside a "# doctest: +SKIP" failed in %s',
+                    code_path,
+                )
 
             images = []
 

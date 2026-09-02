@@ -72,7 +72,7 @@ pl.show()
 
 
 # %%
-# Show the terrain with custom lighting and shadows
+# Show the terrain with custom lighting
 
 pl = pv.Plotter(lighting=None)
 pl.add_light(
@@ -92,7 +92,6 @@ pl.add_mesh(
     smooth_shading=True,
     clim=clim,
 )
-pl.enable_shadows = True
 pl.show()
 # %%
 # .. tags:: filter

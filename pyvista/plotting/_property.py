@@ -1255,7 +1255,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         actor = pl.add_mesh(examples.download_bunny_coarse())
         actor.SetProperty(self)
 
-        if str(self.interpolation) == 'Physically based rendering':
+        if self.interpolation == InterpolationType.PBR:
             cubemap = examples.download_sky_box_cube_map()
             pl.set_environment_texture(cubemap)
 

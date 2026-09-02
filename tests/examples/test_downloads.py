@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import contextlib
 import os
 from pathlib import Path
 from pathlib import PureWindowsPath
 import re
+import threading
 
 import pytest
 import requests
@@ -38,7 +40,7 @@ def pytest_generate_tests(metafunc):
 
 
 def test_dataset_loader_name_matches_download_name(test_case: DatasetLoaderTestCase):
-    if (msg := _get_mismatch_fail_msg(test_case)) is not None:
+    if (msg := _get_mismatch_fail_msg(test_case)) is not None:  # pragma: no cover -- failure path
         pytest.fail(msg)
 
 
@@ -67,7 +69,7 @@ def test_dataset_loader_source_urls_blob(test_case: DatasetLoaderTestCase):
     # Test valid url
     for url in sources:
         # Check is_file() in case local cache of pyvista/data is used
-        if not (Path(url).is_file() or _is_valid_url(url)):
+        if not (Path(url).is_file() or _is_valid_url(url)):  # pragma: no cover -- failure path
             pytest.fail(f'Invalid blob URL for {test_case.dataset_name}:\n{url}')
 
 
@@ -163,15 +165,92 @@ def test_local_file_cache(tmp_path: Path):
         downloads.FETCHER.path = old_path
 
 
+def test_download_file_creates_destination_directory(tmp_path, monkeypatch):
+    """Ensure the destination dir exists before pooch fetches into it (parallel-safe)."""
+    parent_exists = []
+
+    def fake_fetch(filename, **_kwargs):
+        parent_exists.append((tmp_path / 'subdir').is_dir())
+        return str(tmp_path / filename)
+
+    monkeypatch.setattr(downloads.FETCHER, 'path', tmp_path)
+    monkeypatch.setattr(downloads.FETCHER, 'fetch', fake_fetch)
+
+    downloads.download_file('subdir/file.txt')
+    assert parent_exists == [True]
+
+
+def test_file_lock_blocks_second_acquirer(tmp_path):
+    """A held download lock must block other acquirers until it is released."""
+    target = tmp_path / 'file.txt'
+    order = []
+
+    def acquire():
+        with downloads._file_lock(target):
+            order.append('second')
+
+    thread = threading.Thread(target=acquire, daemon=True)
+    with downloads._file_lock(target):
+        thread.start()
+        thread.join(timeout=1.0)
+        assert thread.is_alive()  # still blocked on the lock
+        order.append('first')
+    thread.join(timeout=30.0)
+    assert not thread.is_alive()
+    assert order == ['first', 'second']
+
+
+def test_file_lock_proceeds_when_it_cannot_be_created(tmp_path):
+    """Downloads continue unlocked when the lock file cannot be created."""
+    blocker = tmp_path / 'blocker'
+    blocker.write_text('not a directory')
+    entered = []
+    with downloads._file_lock(blocker / 'sub' / 'file.txt'):
+        entered.append(True)
+    assert entered == [True]
+
+
+def test_file_lock_is_a_no_op_without_filelock(tmp_path, monkeypatch):
+    """Downloads continue unlocked when filelock is not installed."""
+    monkeypatch.setattr(downloads, '_HAS_FILELOCK', False)
+    entered = []
+    with downloads._file_lock(tmp_path / 'file.txt'):
+        entered.append(True)
+    assert entered == [True]
+    assert not list(tmp_path.glob('*.lock'))
+
+
+def test_download_file_fetches_under_lock(tmp_path, monkeypatch):
+    """The pooch fetch must run while the per-file lock is held."""
+    events = []
+    real_lock = downloads._file_lock
+
+    @contextlib.contextmanager
+    def spy_lock(path):
+        events.append(f'lock {Path(path).name}')
+        with real_lock(path):
+            yield
+        events.append('unlock')
+
+    monkeypatch.setattr(downloads, '_file_lock', spy_lock)
+    monkeypatch.setattr(downloads.FETCHER, 'path', tmp_path)
+    monkeypatch.setattr(
+        downloads.FETCHER, 'fetch', lambda _filename, **_kwargs: events.append('fetch')
+    )
+
+    downloads.download_file('subdir/file.txt')
+    assert events == ['lock file.txt', 'fetch', 'unlock']
+
+
 @pytest.mark.parametrize('endswith', ['', 'Data', 'Data/'])
 def test_get_vtk_data_path_with_env_var(monkeypatch, endswith, tmp_path):
     path = (tmp_path / 'mypath').as_posix()
     if endswith:
         path = path + '/' + endswith
-    monkeypatch.setenv(downloads._VTK_DATA_VARNAME, path)
+    monkeypatch.setenv(downloads._DATA_VARNAME, path)
     path_no_trailing_slash = path.removesuffix('/')
     match = (
-        f'The given {downloads._VTK_DATA_VARNAME} is not a valid directory '
+        f'The given {downloads._DATA_VARNAME} is not a valid directory '
         f'and will not be used:\n{path_no_trailing_slash}'
     )
     with pytest.warns(UserWarning, match=re.escape(match)):
@@ -183,10 +262,38 @@ def test_get_vtk_data_path_with_env_var(monkeypatch, endswith, tmp_path):
 
 
 def test_get_vtk_data_path_without_env_var(monkeypatch):
+    monkeypatch.delenv(downloads._DATA_VARNAME, raising=False)
     monkeypatch.delenv(downloads._VTK_DATA_VARNAME, raising=False)
     source, file_cache = _get_vtk_data_source()
     assert source == downloads._DEFAULT_VTK_DATA_SOURCE
     assert file_cache is False
+
+
+def test_get_vtk_data_path_with_deprecated_env_var(monkeypatch, tmp_path):
+    monkeypatch.delenv(downloads._DATA_VARNAME, raising=False)
+    data_dir = tmp_path / 'Data'
+    data_dir.mkdir()
+    monkeypatch.setenv(downloads._VTK_DATA_VARNAME, str(data_dir))
+    match = (
+        f"The '{downloads._VTK_DATA_VARNAME}' environment variable is deprecated; "
+        f"use '{downloads._DATA_VARNAME}' instead."
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(match)):
+        source, file_cache = _get_vtk_data_source()
+    assert source == data_dir.as_posix() + '/'
+    assert file_cache is True
+
+
+def test_get_vtk_data_path_new_env_var_wins(monkeypatch, tmp_path):
+    new_dir = tmp_path / 'new' / 'Data'
+    new_dir.mkdir(parents=True)
+    old_dir = tmp_path / 'old' / 'Data'
+    old_dir.mkdir(parents=True)
+    monkeypatch.setenv(downloads._DATA_VARNAME, str(new_dir))
+    monkeypatch.setenv(downloads._VTK_DATA_VARNAME, str(old_dir))
+    source, file_cache = _get_vtk_data_source()
+    assert source == new_dir.as_posix() + '/'
+    assert file_cache is True
 
 
 def test_get_user_data_path_env_var_valid(monkeypatch, tmp_path):

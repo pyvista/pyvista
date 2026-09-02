@@ -11,7 +11,6 @@ from pyvista._plot import plot as plot
 from pyvista._version import __version__ as __version__
 from pyvista._version import version_info as version_info
 from pyvista.core import *
-from pyvista.core import _validation as _validation
 from pyvista.core._typing_core._dataset_types import _DataObjectType as _DataObjectType
 from pyvista.core._typing_core._dataset_types import (
     _DataSetOrMultiBlockType as _DataSetOrMultiBlockType,
@@ -73,9 +72,6 @@ OFF_SCREEN = os.environ.get('PYVISTA_OFF_SCREEN', 'false').lower() == 'true'
 
 # flag for when building the sphinx_gallery
 BUILDING_GALLERY = os.environ.get('PYVISTA_BUILDING_GALLERY', 'false').lower() == 'true'
-
-# A threshold for the max cells to compute a volume for when repr-ing
-REPR_VOLUME_MAX_CELLS = 1e6
 
 # Set where figures are saved
 FIGURE_PATH = os.environ.get('PYVISTA_FIGURE_PATH', None)

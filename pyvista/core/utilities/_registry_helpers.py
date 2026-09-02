@@ -11,7 +11,7 @@ from __future__ import annotations
 
 
 def handler_source(handler: object) -> str:
-    """Return ``module.qualname`` for *handler* when available.
+    """Return ``module.qualname`` for ``handler`` when available.
 
     Used by every plugin registry to attach a human-readable origin
     string to each explicit registration so that :func:`registered_*`

@@ -282,14 +282,17 @@ class _SingleFile(_FileProps):
 
     @property
     def paths(self) -> tuple[str, ...]:
+        """Return the path of the file."""
         return (self._path,)
 
     @property
     def _file_sizes(self) -> tuple[int, ...]:
+        """Return the size of the file in bytes."""
         return (_get_file_or_folder_size(self._path),)
 
     @property
     def _readers(self) -> tuple[pv.BaseReader[Any] | None, ...]:
+        """Return no reader; a bare file is not loaded on its own."""
         return (None,)
 
 

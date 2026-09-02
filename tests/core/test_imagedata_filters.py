@@ -7,10 +7,10 @@ from typing import get_args
 import numpy as np
 import pytest
 from pytest_cases import parametrize_with_cases
+from pyvista_validation._cast_array import _cast_to_tuple
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.core._validation._cast_array import _cast_to_tuple
 from pyvista.core.filters.image_data import _InterpolationOptions
 from tests.conftest import NUMPY_VERSION_INFO
 
@@ -1299,6 +1299,11 @@ def test_resample_raises(uniform):
     match = '`extend_border` cannot be set when a `image_reference` is provided.'
     with pytest.raises(ValueError, match=re.escape(match)):
         uniform.resample(reference_image=uniform, extend_border=True)
+
+    match = 'sample_rate must have finite values.'
+    for rate in [np.inf, np.nan]:
+        with pytest.raises(ValueError, match=re.escape(match)):
+            uniform.resample(sample_rate=rate)
 
 
 def test_select_values(uniform):

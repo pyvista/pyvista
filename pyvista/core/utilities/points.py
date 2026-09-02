@@ -8,12 +8,12 @@ from typing import cast
 from typing import overload
 
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
-from pyvista.core import _validation
 
 if TYPE_CHECKING:
     from pyvista import PolyData
@@ -86,7 +86,12 @@ def vtk_points(  # noqa: PLR0917
         points_ = points_.astype(np.float32)
 
     # use the underlying vtk data if present to avoid memory leaks
-    if not deep and isinstance(points_, pv.pyvista_ndarray) and points_.VTKObject is not None:
+    # (only a vtkDataArray can back vtkPoints, string arrays cannot)
+    if (
+        not deep
+        and isinstance(points_, pv.pyvista_ndarray)
+        and isinstance(points_.VTKObject, _vtk.vtkDataArray)
+    ):
         vtk_object = points_.VTKObject
 
         # we can only use the underlying data if `points` is not a slice of
@@ -94,7 +99,7 @@ def vtk_points(  # noqa: PLR0917
         size = vtk_object.GetSize() if pv.vtk_version_info < (9, 7) else vtk_object.GetCapacity()
         if size == points_.size:
             vtkpts = _vtk.vtkPoints()
-            vtkpts.SetData(points_.VTKObject)
+            vtkpts.SetData(vtk_object)
             return vtkpts
         else:
             deep = True

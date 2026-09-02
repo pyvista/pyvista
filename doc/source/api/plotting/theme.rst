@@ -12,6 +12,12 @@ provides a theme that is similar to the default styling of VTK.
 See :ref:`themes_example` for an example on how to use themes within
 PyVista.
 
+.. seealso::
+
+   :ref:`configuration`
+      Central reference for all global settings, including the
+      non-plotting counterpart :class:`pyvista.core.config.Config`.
+
 .. currentmodule:: pyvista.plotting
 
 .. autosummary::
