@@ -21,6 +21,7 @@ from sphinx_autocodelink.gallery import AutoCodeLinkScraper
 if TYPE_CHECKING:
     from docutils.nodes import Element
     from sphinx.application import Sphinx
+    from sphinx.environment import BuildEnvironment
 
 # Otherwise VTK reader issues on some systems, causing sphinx to crash. See also #226.
 locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
@@ -1123,9 +1124,19 @@ def configure_backend(app: Sphinx) -> None:  # noqa: D103
     app.add_directive('image', PlaceHolderImage)
 
 
+def forget_tag_page_toctrees(app: Sphinx, env: BuildEnvironment) -> None:
+    """Drop tag pages' toctree entries so an example's parent stays its gallery."""
+    tags_dir = f'{app.config.tags_output_dir}/'
+    for docname in list(env.toctree_includes):
+        if docname.startswith(tags_dir) and docname != f'{tags_dir}tagsindex':
+            del env.toctree_includes[docname]
+
+
 def setup(app: Sphinx) -> None:  # noqa: D103
     app.connect('config-inited', report_parallel_safety)
     app.connect('builder-inited', configure_backend)
+    # The last toctree listing a page becomes its parent, and tag pages sort after galleries.
+    app.connect('env-updated', forget_tag_page_toctrees)
     # Priority must stay above the 501 used by sphinx-book-theme's
     # ``add_source_buttons``, which is what builds the "suggest edit" button.
     app.connect('html-page-context', pv_html_page_context, priority=502)
