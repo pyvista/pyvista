@@ -57,8 +57,8 @@ Cameras and lights are documented on their own pages: :ref:`cameras_api` and
 
    Plotter
    CameraPosition
-   RenderWindowInteractor
    Renderer
+   RenderWindowInteractor
    Timer
 
 
