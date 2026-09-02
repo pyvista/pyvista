@@ -263,6 +263,8 @@ class BaseReader(_FileIOBase, Generic[_T_Output_co]):
         else:
             # edge case where some class customization is needed on instantiation
             self._reader = self._class_reader()
+        if isinstance(self._reader, _vtk.vtkXMLReader):
+            _vtk.vtkExodusIIReader  # noqa: B018  # registers the Exodus keys XML files may reference
         self._filename: str | None = None
         self._progress_bar = False
         self._progress_msg = None

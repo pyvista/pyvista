@@ -6563,13 +6563,7 @@ def download_can_crushed_vtu(load: bool = True) -> UnstructuredGrid | str:  # no
     return _download_dataset(_dataset_can_crushed_vtu, load=load)
 
 
-def _read_can_vtu(path: str) -> UnstructuredGrid:
-    """Read ``can.vtu`` with the Exodus information key its arrays reference registered."""
-    _vtk.vtkExodusIIReader  # noqa: B018  # importing the module registers the key
-    return cast('UnstructuredGrid', read(path))
-
-
-_dataset_can_crushed_vtu = _SingleFileDownloadableDatasetLoader('can.vtu', read_func=_read_can_vtu)
+_dataset_can_crushed_vtu = _SingleFileDownloadableDatasetLoader('can.vtu')
 
 
 @overload
