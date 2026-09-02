@@ -85,17 +85,14 @@ def _current_overloads():
 
 
 def _format_overloads(overloads):
-    """Render the generated block, wrapped the way ``ruff format`` wraps a signature."""
+    """Render the generated block, one overload per line; the block is not formatted."""
     lines = []
     for name, (dataset, readers) in sorted(overloads.items()):
-        signature = f"name: Literal['{name}'], *, download: bool = ..."
-        returns = f'Example[{dataset}, {readers}]'
-        one_line = f'def get_example({signature}) -> {returns}: ...'
         lines.append('@overload')
-        if len(one_line) <= 99:
-            lines.append(one_line)
-        else:
-            lines.extend(['def get_example(', f'    {signature}', f') -> {returns}: ...'])
+        lines.append(
+            f"def get_example(name: Literal['{name}'], *, download: bool = ...)"
+            f' -> Example[{dataset}, {readers}]: ...'
+        )
     return '\n'.join(lines) + '\n'
 
 
