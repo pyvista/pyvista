@@ -17,12 +17,12 @@ from typing import get_args
 import warnings
 
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
-from pyvista.core import _validation
 from pyvista.core._vtk_utilities import vtk_version_info
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import DeprecationError
@@ -2730,6 +2730,24 @@ class DataSetFilters(DataObjectFilters):
         pyvista.DataSet
             Warped Dataset.  Return type matches input.
 
+        See Also
+        --------
+        warp_by_vector
+            Warp along a per-point direction instead of a single fixed one.
+
+        Notes
+        -----
+        Points are only moved along their own point normals when the dataset has
+        them. Without point normals, or with ``normal`` given, every point is instead
+        moved along that single fixed direction -- :vtk:`vtkWarpScalar`'s default is
+        ``(0, 0, 1)`` -- rather than radially or otherwise per point. This is easy to
+        miss on a dataset assembled directly from coordinates, such as
+        :func:`~pyvista.grid_from_sph_coords`, where the result looks like a uniform
+        vertical shift instead of the intended radial warp. Use :func:`warp_by_vector`
+        instead when the warp direction should vary per point but the dataset has no
+        normals to warp along, for example using each point's own radial direction as
+        the vector array.
+
         Examples
         --------
         First, plot the un-warped mesh.
@@ -2812,6 +2830,11 @@ class DataSetFilters(DataObjectFilters):
         -------
         pyvista.PolyData
             The warped mesh resulting from the operation.
+
+        See Also
+        --------
+        warp_by_scalar
+            Warp along a single fixed direction using a scalar amount per point.
 
         Examples
         --------
@@ -7478,7 +7501,7 @@ class DataSetFilters(DataObjectFilters):
         # Lazy import since these are from plotting module
         import matplotlib.colors  # noqa: PLC0415
 
-        from pyvista.core._validation.validate import _validate_color_sequence  # noqa: PLC0415
+        from pyvista.plotting.colors import _validate_color_sequence  # noqa: PLC0415
         from pyvista.plotting.colors import get_cmap_safe  # noqa: PLC0415
 
         def _local_validate_color_sequence(

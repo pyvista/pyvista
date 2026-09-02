@@ -130,7 +130,7 @@ def test_update_title_image(sphere, verify_image_cache):
 def test_too_many_scalar_bars():
     pl = pv.Plotter()
     with pytest.raises(RuntimeError, match='Maximum number of color'):  # noqa: PT012
-        for i in range(100):
+        for i in range(100):  # pragma: no branch -- raises before the loop ends
             mesh = pv.Sphere()
             mesh[str(i)] = range(mesh.n_points)
             pl.add_mesh(mesh)

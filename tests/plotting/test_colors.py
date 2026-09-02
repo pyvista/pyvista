@@ -25,6 +25,7 @@ from pyvista.plotting.colors import _COLORCET_CMAPS
 from pyvista.plotting.colors import _MATPLOTLIB_CMAPS
 from pyvista.plotting.colors import _format_color_name
 from pyvista.plotting.colors import _formatted_hex_colors
+from pyvista.plotting.colors import _validate_color_sequence
 from pyvista.plotting.colors import color_scheme_to_cycler
 from pyvista.plotting.colors import get_cmap_safe
 from pyvista.plotting.colors import hex_colors
@@ -341,7 +342,7 @@ def _vtk_named_color_as_hex(name: str) -> str:
     # Get expected hex value from vtkNamedColors
     color3ub = _vtk.vtkNamedColors().GetColor3ub(name)
     int_rgb = (color3ub.GetRed(), color3ub.GetGreen(), color3ub.GetBlue())
-    if int_rgb == (0.0, 0.0, 0.0) and name != 'black':
+    if int_rgb == (0.0, 0.0, 0.0) and name != 'black':  # pragma: no cover -- failure path
         pytest.fail(f"Color '{name}' is not a valid VTK color.")
     return pv.Color(int_rgb).hex_rgb
 
@@ -372,7 +373,7 @@ def test_color_synonyms(color_synonym):
 
 def test_unique_colors():
     duplicates = np.rec.find_duplicate(pv.hex_colors.values())
-    if len(duplicates) > 0:
+    if len(duplicates) > 0:  # pragma: no cover -- failure path
         pytest.fail(f'The following colors have duplicate definitions: {duplicates}.')
 
     assert len(pv.hex_colors) == len(_ALL_ANNOTATED_COLORS)
@@ -448,3 +449,21 @@ def test_hexcolors_deprecated():
         _ = pv.hexcolors
     with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(msg)):
         _ = pv.plotting.hexcolors
+
+
+@pytest.mark.parametrize(
+    ('n_colors', 'match'),
+    [
+        (
+            None,
+            'Input must be a single ColorLike color or a sequence of ColorLike colors.',
+        ),
+        (
+            42,
+            'Input must be a single ColorLike color or a sequence of 42 ColorLike colors.',
+        ),
+    ],
+)
+def test_validate_color_sequence_raises(n_colors, match):
+    with pytest.raises(ValueError, match=match):
+        _validate_color_sequence('foo', n_colors=n_colors)

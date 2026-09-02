@@ -111,6 +111,8 @@ CameraPositionOptions = (
 
 
 class BackfaceArgs(TypedDict, total=False):
+    """Keyword arguments accepted by backface property settings."""
+
     theme: Theme
     interpolation: Literal['Physically based rendering', 'pbr', 'Phong', 'Gouraud', 'Flat']
     color: ColorLike
@@ -134,6 +136,8 @@ class BackfaceArgs(TypedDict, total=False):
 
 
 class ScalarBarArgs(TypedDict, total=False):
+    """Keyword arguments accepted by :meth:`~pyvista.Plotter.add_scalar_bar`."""
+
     title: str
     mapper: _vtk.vtkMapper
     n_labels: int
@@ -165,6 +169,8 @@ class ScalarBarArgs(TypedDict, total=False):
 
 
 class SilhouetteArgs(TypedDict, total=False):
+    """Keyword arguments accepted by silhouette settings."""
+
     color: ColorLike
     line_width: float
     opacity: float

@@ -6,11 +6,11 @@ from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._warn_external import warn_external
-from pyvista.core import _validation
 from pyvista.core.dataobject import DataObject
 from pyvista.core.utilities.fileio import _try_imageio_imread
 from pyvista.core.utilities.misc import AnnotatedIntEnum

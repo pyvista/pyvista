@@ -23,13 +23,13 @@ from typing import get_args
 import warnings
 
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._version import version_info
 from pyvista._warn_external import warn_external
-from pyvista.core import _validation
 from pyvista.core._typing_core import _DataSetOrMultiBlockType
 from pyvista.core.celltype import CellType
 from pyvista.core.errors import DeprecationError
@@ -69,6 +69,8 @@ if TYPE_CHECKING:
 
 
 class _CellStatusTuple(NamedTuple):
+    """Value and documentation of a cell status flag."""
+
     value: int
     doc: str
 
@@ -169,7 +171,8 @@ class CellStatus(IntEnum):
         return obj
 
 
-class _SENTINEL: ...
+class _SENTINEL:
+    """Sentinel marking an argument the caller did not give."""
 
 
 _ExtractSurfaceOptions = Literal['geometry', 'dataset_surface', None]  # noqa: PYI061
@@ -210,6 +213,29 @@ _OtherFieldGroups = Literal['memory_safe']
 
 
 class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
+    """Run the mesh validation checks and build the report.
+
+    Parameters
+    ----------
+    mesh : DataSet | MultiBlock
+        Mesh to validate.
+
+    validation_fields : str | sequence[str], optional
+        Fields to validate. All supported fields are validated by default.
+
+    exclude_fields : str | sequence[str], optional
+        Fields to leave out of the validation.
+
+    name : str, optional
+        Name to use in the report and error messages.
+
+    **cell_validator_kwargs : dict, optional
+        Keyword arguments passed to
+        :meth:`~pyvista.DataObjectFilters.cell_validator`.
+
+
+    """
+
     _allowed_data_fields = get_args(_DataFields)
     _allowed_point_fields = get_args(_PointFields)
     _allowed_cell_fields = get_args(_CellFields)
@@ -222,6 +248,8 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
 
     @dataclass
     class _FieldSummary:
+        """One validated field's name, message, and offending values."""
+
         name: str
         message: str | list[str]
         values: Sequence[str | int] | None
@@ -758,6 +786,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
 
     @property
     def validation_report(self) -> _MeshValidationReport[_DataSetOrMultiBlockType]:
+        """Return the mesh validation report."""
         return self._validation_report
 
     @staticmethod
@@ -877,14 +906,18 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
 
     @property
     def name(self) -> str | None:
+        """Return the name of the validated mesh."""
         return self._name  # type: ignore[attr-defined]
 
     @property
     def mesh(self) -> _DataSetOrMultiBlockType:
+        """Return the validated mesh."""
         return self._mesh  # type: ignore[attr-defined]
 
     @property
     def message(self) -> str | None:
+        """Return the formatted validation message, if any."""
+
         def insert_bullet(indent: str, string: str):
             bullet = (
                 _MeshValidator._MESSAGE_BULLET
@@ -5505,6 +5538,8 @@ def _cast_output_to_match_input_type(
 
 
 class _Crinkler:
+    """Extract crinkled cells from the output of a clip."""
+
     CELL_IDS = 'cell_ids'
     INT_DTYPE = np.int64
     ITER_KWARGS: ClassVar = dict(skip_none=True)
@@ -5512,6 +5547,7 @@ class _Crinkler:
     @staticmethod
     def extract_cells(dataset, ids, active_scalars_info_):
         # Extract cells and remove arrays, and restore active scalars
+        """Extract cells by ID and restore the active scalars."""
         output = dataset.extract_cells(ids, pass_cell_ids=False, pass_point_ids=False)
         association, name = active_scalars_info_
         if not dataset.is_empty:
@@ -5522,6 +5558,7 @@ class _Crinkler:
 
     @staticmethod
     def extract_crinkle_cells(dataset, a_, b_, active_scalars_info):  # noqa: PLR0917
+        """Extract crinkled cells from the clip output."""
         if b_ is None:
             # Extract cells when `return_clipped=False`
             def extract_cells_from_block(block_, clipped_a, _, active_scalars_info_):
@@ -5591,6 +5628,7 @@ class _Crinkler:
     @staticmethod
     def add_cell_ids(dataset: DataSet | MultiBlock):
         # Add Cell IDs to all blocks and keep track of scalars to restore later
+        """Add cell ID arrays to all blocks and record the active scalars to restore."""
         active_scalars_info = []
         if isinstance(dataset, pv.MultiBlock):
             blocks: Iterable[DataSet] = dataset.recursive_iterator(

@@ -85,7 +85,7 @@ def test_scraper(tmpdir, monkeypatch, n_win, scraper_type):
     elif scraper_type == 'dynamic':
         scraper = DynamicScraper()
         assert repr(scraper) == '<DynamicScraper object>'
-    else:
+    else:  # pragma: no cover -- parametrize covers every case
         msg = f'Invalid scraper type: {scraper}'
         raise ValueError(msg)
 

@@ -44,6 +44,7 @@ warnings.filterwarnings(
 os.environ['_PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'] = 'true'
 
 sys.path.insert(0, str(Path().cwd()))
+import make_search_summaries
 import make_tables
 
 # -- pyvista configuration ---------------------------------------------------
@@ -201,6 +202,9 @@ sphinx_examples_as_code_conf = {
     # this extension's nicer, cross-reference-aware .py/.ipynb downloads.
     'gallery_downloads': True,
 }
+
+# Disable checking if vtk links resolve correctly, web checks can be unstable
+vtk_xref_nitpicky = False
 
 # Warn if target links or references cannot be found
 nitpicky = True
@@ -423,6 +427,10 @@ intersphinx_mapping = {
     ),
     'pytest': ('https://docs.pytest.org/en/stable/', ('../intersphinx/pytest-objects.inv',)),
     'pyvistaqt': ('https://qt.pyvista.org/', ('../intersphinx/pyvistaqt-objects.inv',)),
+    'pyvista_validation': (
+        'https://validation.pyvista.org/',
+        ('../intersphinx/pyvista-validation-objects.inv',),
+    ),
     'trimesh': ('https://trimesh.org', ('../intersphinx/trimesh-objects.inv',)),
 }
 intersphinx_timeout = 5
@@ -621,7 +629,8 @@ from jinja2.sandbox import SandboxedEnvironment
 from numpydoc.docscrape import NumpyDocString
 from numpydoc.docscrape_sphinx import SphinxDocString
 
-IMPORT_PYVISTA_RE = r'\b(import +pyvista|from +pyvista +import)\b'
+# Also matches submodule imports, e.g. ``from pyvista.examples.cells import ...``.
+IMPORT_PYVISTA_RE = r'\b(import +pyvista|from +pyvista(\.[\w.]+)? +import)\b'
 IMPORT_MATPLOTLIB_RE = r'\b(import +matplotlib|from +matplotlib +import)\b'
 
 pyvista_plot_setup = """
@@ -656,6 +665,9 @@ autocodelink_show_usage_count = True
 
 # render gallery backreferences as thumbnail cards
 autocodelink_gallery_cards = True
+
+# execute and record ``.. jupyter-execute::`` cells so their identifiers link too
+autocodelink_jupyter_blocks = True
 
 
 def _str_examples(self):
@@ -1122,6 +1134,9 @@ def setup(app: Sphinx) -> None:  # noqa: D103
 
     # right before writing, patch the gallery placeholders
     app.connect('doctree-resolved', make_tables.patch_gallery_placeholders)
+
+    # feeds the search result snippets rendered by search_summaries.js
+    app.connect('build-finished', make_search_summaries.dump_search_summaries)
 
     app.add_css_file('copybutton.css')
     app.add_css_file('no_search_highlight.css')

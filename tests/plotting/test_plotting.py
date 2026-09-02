@@ -993,21 +993,9 @@ def test_plot_no_active_scalars(sphere):
 
     def _test_update_scalars_with_invalid_array():
         pl.update_scalars(np.arange(5))
-        if pv._version.version_info[:2] > (0, 46):
-            msg = 'Convert error this method'
-            raise RuntimeError(msg)
-        if pv._version.version_info[:2] > (0, 47):
-            msg = 'Remove this method'
-            raise RuntimeError(msg)
 
     def _test_update_scalars_with_valid_array():
         pl.update_scalars(np.arange(sphere.n_faces))
-        if pv._version.version_info[:2] > (0, 46):
-            msg = 'Convert error this method'
-            raise RuntimeError(msg)
-        if pv._version.version_info[:2] > (0, 47):
-            msg = 'Remove this method'
-            raise RuntimeError(msg)
 
     with (
         pytest.raises(ValueError, match='Number of scalars'),
@@ -6631,6 +6619,7 @@ def _generate_direction_object_functions() -> ItemsView[str, FunctionType]:
         'SolidSphere',
         'SolidSphereGeneric',
         'Sphere',
+        'StructuredSphere',
         'Text3D',
     ]
 
@@ -7458,6 +7447,13 @@ def test_mip_with_point_sprite_render(verify_image_cache_wrapper, mip_test_point
     pl.show()
 
 
+def test_structured_sphere_radius_layers():
+    sphere = pv.StructuredSphere(
+        radius=np.linspace(0.5, 1.0, 4), theta_resolution=16, phi_resolution=10
+    )
+    sphere.clip(normal='x').plot(show_edges=True)
+
+
 @pytest.mark.parametrize(
     ('start_phi', 'end_phi', 'start_theta', 'end_theta'), [(0, 180, 0, 360), (0, 90, 0, 90)]
 )
@@ -7477,11 +7473,15 @@ def test_solid_sphere_resolution_matches_sphere(start_phi, end_phi, start_theta,
         }
         data[f'Sphere {phi_res} {theta_res}'] = pv.Sphere(**kwargs)
         data[f'Solid {phi_res} {theta_res}'] = pv.SolidSphere(**kwargs)
+        data[f'Structured {phi_res} {theta_res}'] = pv.StructuredSphere(**kwargs)
 
     pv.plot_compare(
         data,
         show_edges=True,
         link=False,
+        # Three columns per row, so the panes are portrait and the pinned camera
+        # would otherwise crop the geometry
+        zoom=0.7,
         cpos=pv.CameraPosition(
             position=(1.087, 1.087, 1.087),
             focal_point=(0.0, 0.0, 0.0),
