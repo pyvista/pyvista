@@ -60,6 +60,10 @@ class pyvista_ndarray(_NoNewAttrMixin, np.ndarray):  # numpydoc ignore=PR02  # n
 
     """
 
+    dataset: _vtk.vtkWeakReference | None
+    association: FieldAssociation
+    VTKObject: _vtk.vtkAbstractArray | None
+
     def __new__(  # noqa: PYI034
         cls: type[pyvista_ndarray],
         array: ArrayLike[float] | _vtk.vtkAbstractArray,
@@ -92,22 +96,22 @@ class pyvista_ndarray(_NoNewAttrMixin, np.ndarray):  # numpydoc ignore=PR02  # n
 
     def __array_finalize__(self: pyvista_ndarray, obj: npt.NDArray[Any] | None) -> None:
         """Finalize array (associate with parent metadata)."""
-        # this is necessary to ensure that views/slices of pyvista_ndarray
-        # objects stay associated with those of their parents.
-        #
-        # the VTKArray class uses attributes called `DataSet` and `Association`
-        # to hold this data. I don't know why this class doesn't use the same
-        # convention, but here we just map those over to the appropriate
-        # attributes of this class
-        _vtk.VTKArray.__array_finalize__(self, obj)  # type: ignore[arg-type]
-        if np.shares_memory(self, obj):
-            self.dataset = getattr(obj, 'dataset', None)
-            self.association = getattr(obj, 'association', FieldAssociation.NONE)
-            self.VTKObject = getattr(obj, 'VTKObject', None)
-        else:
-            self.dataset = None
-            self.association = FieldAssociation.NONE
-            self.VTKObject = None
+        # Views and slices stay associated with the dataset and VTK array of their parent.
+        # This runs for every view and ufunc result, so write the instance dict directly.
+        if isinstance(obj, pyvista_ndarray):
+            if np.shares_memory(self, obj):
+                self.__dict__.update(
+                    dataset=obj.dataset, association=obj.association, VTKObject=obj.VTKObject
+                )
+                return
+        elif obj is not None and np.shares_memory(self, obj):
+            self.__dict__.update(
+                dataset=getattr(obj, 'dataset', None),
+                association=getattr(obj, 'association', FieldAssociation.NONE),
+                VTKObject=getattr(obj, 'VTKObject', None),
+            )
+            return
+        self.__dict__.update(dataset=None, association=FieldAssociation.NONE, VTKObject=None)
 
     def __setitem__(self: pyvista_ndarray, key: int | NumpyArray[int], value: Any) -> None:  # type: ignore[override]
         """Implement [] set operator.
