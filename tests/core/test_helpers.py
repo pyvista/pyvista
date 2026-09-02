@@ -422,6 +422,9 @@ def test_to_from_trimesh_empty_mesh():
 
 @pytest.mark.skip_vtk_backend('cvista', reason=INT32_CELL_STORAGE)
 def test_to_from_trimesh_points_faces(ant):
+    # Zero-copy sharing requires int64 connectivity, which a reader is free not
+    # to produce, so build it rather than inheriting it from the example file.
+    ant = pv.PolyData(ant.points, faces=ant.faces.astype(np.int64))
     ant.points_to_double()
     tmesh = pv.to_trimesh(ant)
     assert np.shares_memory(tmesh.vertices, ant.points)

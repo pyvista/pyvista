@@ -490,6 +490,8 @@ def test_save_raises_no_writers(monkeypatch: pytest.MonkeyPatch):
 
 @pytest.mark.skip_vtk_backend('cvista', reason=INT32_COMPRESSION)
 def test_save_compression(sphere, tmp_path):
+    # int32 indices compress less, so pin the width the ratio below assumes.
+    sphere = pv.PolyData(sphere.points, faces=sphere.faces.astype(np.int64))
     path = tmp_path / 'tmp.vtp'
     sphere.save(path, compression='zlib')
     compressed_size = path.stat().st_size

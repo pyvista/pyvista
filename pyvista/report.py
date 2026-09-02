@@ -311,6 +311,8 @@ class Report(scooby.Report):
             'imageio',
             'meshio',
             'pyvista-frd-reader',
+            'pyvista-miniply',
+            'pyvista-stl',
             # colormaps extras
             'cmcrameri',
             'cmocean',
