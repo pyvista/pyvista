@@ -33,12 +33,21 @@ from pathlib import PureWindowsPath
 import shutil
 import sys
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import Literal
 from typing import cast
 from typing import overload
 
 import numpy as np
 import pooch
+
+try:
+    import filelock
+
+    _HAS_FILELOCK = True
+except ImportError:  # pragma: no cover
+    # Only needed to serialize parallel downloads
+    _HAS_FILELOCK = False
 
 import pyvista as pv
 from pyvista import _vtk
@@ -56,6 +65,8 @@ from pyvista.examples._dataset_loader import _MultiFileDownloadableDatasetLoader
 from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from numpy import ndarray
 
     from pyvista import ExplicitStructuredGrid
@@ -200,7 +211,7 @@ def _gltf_loader(name: str):
     return _SingleFileDownloadableDatasetLoader(
         paths[name],
         base_url=base_url,
-        download_func=fetcher.fetch,
+        download_func=functools.partial(_locked_fetch, fetcher),
     )
 
 
@@ -288,12 +299,40 @@ def download_file(filename: str) -> str | list[str]:
         return _download_file(filename)
 
 
+@contextlib.contextmanager
+def _file_lock(path: Path) -> Iterator[None]:
+    """Hold an advisory cross-process lock while ``path`` is downloaded."""
+    if not _HAS_FILELOCK:
+        yield
+        return
+    try:
+        lock_path = Path(f'{path}.lock')
+        lock_path.parent.mkdir(parents=True, exist_ok=True)
+        lock = filelock.FileLock(lock_path)
+        lock.acquire()
+    except OSError:
+        # Cannot create the lock; proceed unlocked and let pooch report any real errors
+        yield
+        return
+    try:
+        yield
+    finally:
+        lock.release()
+
+
+def _locked_fetch(fetcher: Any, filename: str, **kwargs):
+    """Fetch with a per-file lock so parallel processes cannot corrupt a shared download."""
+    with _file_lock(fetcher.abspath / filename):
+        return fetcher.fetch(filename, **kwargs)
+
+
 def _download_file(filename: str):
     """Download a file using pooch."""
     # Pre-create the parent dir: pooch's check-then-makedirs races under parallel downloads
     with contextlib.suppress(OSError):
         (FETCHER.abspath / filename).parent.mkdir(parents=True, exist_ok=True)
-    return FETCHER.fetch(
+    return _locked_fetch(
+        FETCHER,
         filename,
         processor=pooch.Unzip() if filename.endswith('.zip') else None,  # type: ignore[attr-defined]
         downloader=_file_copier if _FILE_CACHE else None,
@@ -8580,9 +8619,25 @@ def download_whole_body_ct_male(
 
 
 class _WholeBodyCTUtilities:
+    """Helpers for loading the whole body CT datasets."""
+
     @staticmethod
     def import_colors_dict(module_path) -> dict[str, tuple[int, int, int]]:  # noqa: ANN001
         # Import `colors` dict from downloaded `colors.py` module
+        """Import the ``colors`` dict from the downloaded ``colors.py`` module.
+
+        Parameters
+        ----------
+        module_path : str
+            Path of the downloaded ``colors.py`` module.
+
+        Returns
+        -------
+        dict[str, tuple[int, int, int]]
+            Mapping from label names to RGB colors.
+
+
+        """
         module_name = 'colors'
         spec = importlib.util.spec_from_file_location(module_name, module_path)
         if spec is not None:
@@ -8599,6 +8654,18 @@ class _WholeBodyCTUtilities:
     @staticmethod
     def add_metadata(dataset: MultiBlock, colors_module_path: str) -> None:
         # Add color and id mappings to dataset
+        """Add color and id mappings to the dataset's user dict.
+
+        Parameters
+        ----------
+        dataset : pyvista.MultiBlock
+            Dataset to annotate.
+
+        colors_module_path : str
+            Path of the downloaded ``colors.py`` module.
+
+
+        """
         segmentations = cast('pv.MultiBlock', dataset['segmentations'])
         label_names = sorted(segmentations.keys())
         names_to_colors = _WholeBodyCTUtilities.import_colors_dict(colors_module_path)
@@ -8613,6 +8680,20 @@ class _WholeBodyCTUtilities:
     def label_map_from_masks(masks: MultiBlock) -> ImageData:
         # Create label map array from segmentation masks
         # Initialize array with background values (zeros)
+        """Create a label map image from segmentation masks.
+
+        Parameters
+        ----------
+        masks : pyvista.MultiBlock
+            Segmentation masks, one block per label.
+
+        Returns
+        -------
+        pyvista.ImageData
+            Label map image.
+
+
+        """
         n_points = cast('pv.ImageData', masks[0]).n_points
         label_map_array = np.zeros((n_points,), dtype=np.uint8)
         label_names = sorted(masks.keys())
@@ -8628,6 +8709,20 @@ class _WholeBodyCTUtilities:
 
     @staticmethod
     def load_func(files):  # noqa: ANN001, ANN205
+        """Load the dataset and add its label map and metadata.
+
+        Parameters
+        ----------
+        files : sequence
+            Loaders for the dataset file and the colors module.
+
+        Returns
+        -------
+        pyvista.MultiBlock
+            Loaded dataset with label map and metadata.
+
+
+        """
         dataset_file, colors_module = files
         dataset = dataset_file.load()
 
@@ -8641,6 +8736,20 @@ class _WholeBodyCTUtilities:
     @staticmethod
     def files_func(name):  # noqa: ANN001, ANN205
         # Resampled version is saved as a multiblock
+        """Return the file-loading function for the named dataset variant.
+
+        Parameters
+        ----------
+        name : str
+            Name of the dataset variant.
+
+        Returns
+        -------
+        callable
+            Function returning the file loaders.
+
+
+        """
         target_file = f'{name}.vtm' if 'resampled' in name else name
 
         def func():

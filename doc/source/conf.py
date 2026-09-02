@@ -41,7 +41,7 @@ warnings.filterwarnings(
 # import things like `scipy` or `matplotlib` that would be unnecessarily bulky to import by default
 # during normal operation. See https://github.com/pyvista/pyvista/pull/7023.
 # Note that `import make_tables` below imports pyvista.
-os.environ['PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'] = 'true'
+os.environ['_PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'] = 'true'
 
 sys.path.insert(0, str(Path().cwd()))
 import make_tables
@@ -201,6 +201,9 @@ sphinx_examples_as_code_conf = {
     # this extension's nicer, cross-reference-aware .py/.ipynb downloads.
     'gallery_downloads': True,
 }
+
+# Disable checking if vtk links resolve correctly, web checks can be unstable
+vtk_xref_nitpicky = False
 
 # Warn if target links or references cannot be found
 nitpicky = True

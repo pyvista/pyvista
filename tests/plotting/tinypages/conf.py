@@ -81,6 +81,8 @@ html_static_path = ['_static']
 
 # -- pyvista configuration ------------------------------------------------
 pv.BUILDING_GALLERY = True
+# Small renders: nothing in these builds asserts on image size.
+pv.global_theme.window_size = [256, 192]
 
 # -- .. pyvista-plot:: directive ----------------------------------------------
 from numpydoc.docscrape_sphinx import SphinxDocString
