@@ -495,9 +495,10 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         """
         self._raise_index_out_of_bounds(index=key)
-        vtk_arr = self.GetArray(key)
+        vtk_attributes = self.VTKObject
+        vtk_arr = vtk_attributes.GetArray(key)
         if vtk_arr is None:
-            vtk_arr = self.GetAbstractArray(key)
+            vtk_arr = vtk_attributes.GetAbstractArray(key)
             if vtk_arr is None:
                 msg = f'{key}'
                 raise KeyError(msg)
@@ -506,11 +507,14 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
     def _patch_type(self: Self, narray: pyvista_ndarray) -> pyvista_ndarray:
         """Check if array needs to be represented as a different type."""
-        if hasattr(narray, 'VTKObject') and isinstance(narray.VTKObject, _vtk.vtkAbstractArray):
-            name = narray.VTKObject.GetName()
-            if name in self.dataset._association_bitarray_names[self.association.name]:  # type: ignore[union-attr]
+        vtk_arr = getattr(narray, 'VTKObject', None)
+        if isinstance(vtk_arr, _vtk.vtkAbstractArray):
+            name = vtk_arr.GetName()
+            dataset = self.dataset
+            association_name = self.association.name
+            if name in dataset._association_bitarray_names[association_name]:  # type: ignore[union-attr]
                 narray = narray.view(np.bool_)  # type: ignore[assignment]
-            elif name in self.dataset._association_complex_names[self.association.name]:  # type: ignore[union-attr]
+            elif name in dataset._association_complex_names[association_name]:  # type: ignore[union-attr]
                 if narray.dtype == np.float32:
                     narray = narray.view(np.complex64)  # type: ignore[assignment]
                 if narray.dtype == np.float64:
@@ -519,9 +523,9 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
                 # VTK arrays
                 narray = narray.squeeze()  # type: ignore[assignment]
             elif (
-                narray.association == FieldAssociation.NONE
+                narray.ndim == 0
+                and narray.association == FieldAssociation.NONE
                 and np.issubdtype(narray.dtype, np.str_)
-                and narray.ndim == 0
             ):
                 # For field data with a string scalar, return the string
                 # itself instead of a scalar array
