@@ -41,7 +41,14 @@ if TYPE_CHECKING:
 
 @abstract_class
 class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkAbstractMapper):
-    """Base Mapper with methods common to other mappers."""
+    """Base Mapper with methods common to other mappers.
+
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
+
+    """
 
     def __init__(self, theme=None, **kwargs) -> None:
         self._theme = pv.themes.Theme()
@@ -397,8 +404,13 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
         self.Update()
 
 
-class _DataSetMapper(_BaseMapper):
+class _BaseDataSetMapper(_BaseMapper):
     """Base wrapper for :vtk:`vtkDataSetMapper`.
+
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
 
     Parameters
     ----------
@@ -415,9 +427,9 @@ class _DataSetMapper(_BaseMapper):
     still derived from the mapped array (``True``) or has been pinned by
     the caller (``False``). It starts ``True``. Setting ``scalar_range``
     directly, or calling :meth:`set_scalars` with an explicit ``clim``,
-    flips it to ``False`` via :meth:`_set_scalar_range`. While ``True``,
+    flips it to ``False`` via ``_set_scalar_range``. While ``True``,
     the range auto-refreshes from the mapped array in
-    :meth:`_maybe_set_default_scalar_range`, which is called from
+    ``_maybe_set_default_scalar_range``, which is called from
     :meth:`set_active_scalars` and the ``dataset`` setter. Once
     ``False``, auto-refresh is suppressed so user-supplied ``clim``
     values are preserved.
@@ -758,7 +770,7 @@ class _DataSetMapper(_BaseMapper):
             pipeline.
 
         """
-        new_mapper = cast('_DataSetMapper', super().copy())
+        new_mapper = cast('_BaseDataSetMapper', super().copy())
         new_mapper._input_dataset = self._input_dataset
         new_mapper._use_default_scalar_range = self._use_default_scalar_range
         if self._active_scalars_algo is not None:
@@ -917,7 +929,7 @@ class _DataSetMapper(_BaseMapper):
             (``clim``). This will automatically set the scalar bar
             ``below_label`` to ``'below'``.
 
-        cmap : str, list, or pyvista.LookupTable
+        cmap : str | list | pyvista.LookupTable
             Name of the Matplotlib colormap to use when mapping the
             ``scalars``.  See available Matplotlib colormaps.  Only applicable
             for when displaying ``scalars``.
@@ -1211,7 +1223,7 @@ class _DataSetMapper(_BaseMapper):
         return '\n'.join(mapper_attr)
 
 
-class DataSetMapper(_DataSetMapper, _vtk.vtkDataSetMapper):
+class DataSetMapper(_BaseDataSetMapper, _vtk.vtkDataSetMapper):
     """Wrap :vtk:`vtkDataSetMapper`.
 
     Parameters
@@ -1244,7 +1256,7 @@ class DataSetMapper(_DataSetMapper, _vtk.vtkDataSetMapper):
         super().__init__(dataset=dataset, theme=theme)
 
 
-class PointGaussianMapper(_DataSetMapper, _vtk.vtkPointGaussianMapper):
+class PointGaussianMapper(_BaseDataSetMapper, _vtk.vtkPointGaussianMapper):
     """Wrap :vtk:`vtkPointGaussianMapper`.
 
     Parameters
@@ -1402,7 +1414,14 @@ class PointGaussianMapper(_DataSetMapper, _vtk.vtkPointGaussianMapper):
 
 @abstract_class
 class _BaseVolumeMapper(_BaseMapper):
-    """Volume mapper class to override methods and attributes for to volume mappers."""
+    """Volume mapper class to override methods and attributes for to volume mappers.
+
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
+
+    """
 
     def __init__(self, theme=None) -> None:
         """Initialize this class."""
@@ -1433,6 +1452,7 @@ class _BaseVolumeMapper(_BaseMapper):
 
     @property
     def lookup_table(self):  # numpydoc ignore=RT01
+        """Return or set the lookup table used to map scalars to colors."""
         return self._lut
 
     @lookup_table.setter

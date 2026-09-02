@@ -113,6 +113,12 @@ def get_reader(filename, force_ext=None):
     pyvista.BaseReader
         A subclass of :class:`pyvista.BaseReader` is returned based on file type.
 
+    See Also
+    --------
+    pyvista.register_reader
+        Register a :class:`BaseReader` subclass for an extension PyVista
+        does not ship a reader for.
+
     Examples
     --------
     >>> import pyvista as pv
@@ -130,8 +136,14 @@ def get_reader(filename, force_ext=None):
     >>> mesh.plot(color='lightblue')
 
     """
+    # Circular import: reader_registry -> reader
+    from pyvista.core.utilities.reader_registry import _get_ext_reader_class  # noqa: PLC0415
+
     ext = _get_ext_force(filename, force_ext)
-    reader_class = CLASS_READERS.get(ext)
+
+    # Plugins first, so ``override=True`` wins here as it does in ``pv.read``.
+    # Without it, registration refuses an extension already in CLASS_READERS.
+    reader_class = _get_ext_reader_class(ext) or CLASS_READERS.get(ext)
 
     if reader_class is None:
         reader_class = next(
@@ -154,7 +166,16 @@ def get_reader(filename, force_ext=None):
         msg = f'`pyvista.get_reader` does not support reading from directory:\n\t{filename}'
         raise ValueError(msg)
 
+    from pyvista.core.utilities.reader_registry import _get_ext_handler  # noqa: PLC0415
+
     msg = f'`pyvista.get_reader` does not support a file with the {ext} extension'
+    if _get_ext_handler(ext) is not None:
+        # Claimed by a callable, so there is no reader object to hand back.
+        msg += (
+            f'.\nA custom reader is registered for {ext}, but as a plain callable, so it is '
+            f'only reachable through `pyvista.read`. Ask the provider to register a '
+            f'`pyvista.BaseReader` subclass to make it available here too.'
+        )
     raise ValueError(msg)
 
 
@@ -256,7 +277,12 @@ class BaseReader(_FileIOBase, Generic[_T_Output_co]):
 
     @classmethod
     def _get_extension_mappings(cls) -> list[dict[str, type]]:
-        return [CLASS_READERS]
+        # Includes plugins, so ``extensions`` answers for a registered class.
+        # Holding the class means its registration already happened, so this
+        # need not force entry-point discovery.
+        from pyvista.core.utilities.reader_registry import _custom_class_readers  # noqa: PLC0415
+
+        return [CLASS_READERS, _custom_class_readers]
 
     @classmethod
     def _get_extension_pattern_mappings(
@@ -2703,6 +2729,7 @@ class _GRDECLReader(BaseVTKReader):
 
     @property
     def elevation(self) -> bool:
+        """Convert depths to elevations and flip grid along Z axis."""
         return self._elevation
 
     @elevation.setter
@@ -2711,6 +2738,7 @@ class _GRDECLReader(BaseVTKReader):
 
     @property
     def other_keywords(self) -> Sequence[str] | None:
+        """Additional keywords to read."""
         return self._other_keywords
 
     @other_keywords.setter
@@ -2772,6 +2800,7 @@ class _GIFReader(BaseVTKReader):
         """Update Information from file."""
 
     def GetProgress(self):
+        """Return the fraction of frames read so far."""
         return self._current_frame / self._n_frames
 
     def Update(self) -> None:
@@ -3903,6 +3932,7 @@ class _FRDReader(BaseVTKReader):
         self._active_time_point: int = 0
 
     def UpdateInformation(self) -> None:
+        """Parse the FRD file and update time step information."""
         parser = _FRDParser(self._filename)
         self._frd_data = parser.parse()
 

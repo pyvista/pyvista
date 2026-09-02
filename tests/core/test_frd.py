@@ -460,7 +460,7 @@ def test_frd_element_sizes(generic_element_frd):
         assert val > 0.0, (
             f'Element {elem_name} generated non-positive volume ({val}). Bad node ordering!'
         )
-    else:
+    else:  # pragma: no cover -- failure path
         pytest.fail(f'Unhandled cell dimension for element {elem_name} with VTK type {vtk_type}.')
 
 

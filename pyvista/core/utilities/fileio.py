@@ -76,6 +76,16 @@ _ReadReturnT = TypeVar('_ReadReturnT', bound='DataObject')
 
 
 class _FileIOBase(ABC, _NoNewAttrMixin):
+    """Base class for readers and writers, which are matched to files by extension.
+
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
+
+
+    """
+
     _vtk_class_name: str = ''
 
     def __repr__(self) -> str:
@@ -100,7 +110,11 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
 
     @classmethod
     @abstractmethod
-    def _get_extension_mappings(cls) -> list[dict[str, type]]: ...
+    def _get_extension_mappings(cls) -> list[dict[str, type]]:
+        # Subclasses must override this, but `extensions` is a `_classproperty` and so is
+        # evaluated on this class too, e.g. when Sphinx imports it. Match
+        # `_get_extension_pattern_mappings` and return nothing rather than None.
+        return []
 
     @classmethod
     def _get_extension_pattern_mappings(

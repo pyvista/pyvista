@@ -39,7 +39,7 @@ _VTK_ROOT = _resolve_vtk_root()
 
 
 def _resolve_root_is_flat(root: str) -> bool:
-    """Return whether *root* exposes VTK classes directly off its package root.
+    """Return whether ``root`` exposes VTK classes directly off its package root.
 
     A flat backend (for example, cvista >=9.6.2.4) resolves public names lazily off the
     root, so PyVista looks classes up by NAME and stays agnostic to module layout.
@@ -811,6 +811,9 @@ _OPENGL_MODULES: dict[str, tuple[str, ...]] = {
         'vtkOpenGLRenderer',
         'vtkOpenGLSkybox',
         'vtkOpenGLTexture',
+        'vtkPBRIrradianceTexture',
+        'vtkPBRLUTTexture',
+        'vtkPBRPrefilterTexture',
         'vtkRenderStepsPass',
         'vtkSSAAPass',
         'vtkSSAOPass',
@@ -907,7 +910,7 @@ def __getattr__(name: str):
 
 
 def has_attr(name: str) -> bool:
-    """Return ``True`` if *name* resolves to a VTK class on this build.
+    """Return ``True`` if ``name`` resolves to a VTK class on this build.
 
     ``hasattr(_vtk, 'X')`` does not work as expected because the lazy
     ``__getattr__`` raises ``ImportError`` (not ``AttributeError``) when a

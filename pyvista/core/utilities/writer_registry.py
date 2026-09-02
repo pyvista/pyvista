@@ -22,10 +22,10 @@ if TYPE_CHECKING:
 
 
 class WriterHandler(Protocol):
-    """Callable that writes *dataset* to *path*."""
+    """Callable that writes ``dataset`` to ``path``."""
 
     def __call__(self, dataset: DataObject, path: str, /, **kwargs: Any) -> None:
-        """Write *dataset* to *path*, consuming format-specific *``kwargs``*."""
+        """Write ``dataset`` to ``path``, consuming format-specific ``kwargs``."""
 
 
 class WriterRegistration(NamedTuple):
@@ -55,6 +55,8 @@ class WriterRegistration(NamedTuple):
 
 
 class _RegistryState(TypedDict):
+    """Mutable state of the writer registry."""
+
     ext: dict[str, WriterHandler]
     sources: dict[str, str]
     pending: dict[str, list[EntryPoint]]
@@ -157,7 +159,7 @@ def register_writer(
 
     handler : callable, optional
         A callable with signature ``handler(dataset, path, **kwargs)`` that
-        writes *dataset* to *path*.  Any extra keyword arguments passed to
+        writes ``dataset`` to ``path``.  Any extra keyword arguments passed to
         :meth:`pyvista.DataObject.save` are forwarded to the handler as
         ``**kwargs``—use them to expose format-specific options such as
         compression level, thread count, or chunking.  Handlers that do
@@ -181,7 +183,7 @@ def register_writer(
     Raises
     ------
     ValueError
-        If ``key`` collides with a built-in PyVista writer and *override*
+        If ``key`` collides with a built-in PyVista writer and ``override``
         is ``False``.
 
     Warns
@@ -309,7 +311,7 @@ def _ensure_entry_points() -> None:
 
 
 def _resolve_pending_writer(ext: str) -> bool:
-    """Import the plugin claiming *ext*, if any.
+    """Import the plugin claiming ``ext``, if any.
 
     Returns
     -------

@@ -1069,11 +1069,15 @@ def _make_fake_render_window():
 
 def _invoke_check_depth_peeling():
     fake_render_window = _make_fake_render_window()
+    # cleared on both sides: a warm cache would skip the call entirely, and the
+    # result computed from the fake window must not outlive this invocation
+    check_depth_peeling.cache_clear()
     with patch(
         'pyvista.plotting.utilities.gl_checks._vtk.vtkRenderWindow',
         return_value=fake_render_window,
     ):
         check_depth_peeling()
+    check_depth_peeling.cache_clear()
     return fake_render_window
 
 
@@ -1113,9 +1117,10 @@ _MACOS_FIX_CASES = [
 
 @pytest.mark.skipif(sys.platform != 'darwin', reason='macOS-specific test')
 @pytest.mark.parametrize('case', _MACOS_FIX_CASES, ids=lambda c: c.id)
-def test_macos_offscreen_render_window_configured(case):
+def test_macos_offscreen_render_window_configured(case):  # pragma: no cover -- macOS only
     """Test no macOS phantom window is generated for off-screen plotting."""
     appkit_mock = MagicMock()
+    appkit_mock.NSApp.return_value = None  # no application running
     with patch('sys.platform', 'darwin'), patch.dict(sys.modules, {'AppKit': appkit_mock}):
         render_window = case.invoke()
 
@@ -1125,3 +1130,22 @@ def test_macos_offscreen_render_window_configured(case):
     appkit_mock.NSApplication.sharedApplication().setActivationPolicy_.assert_called_once_with(
         appkit_mock.NSApplicationActivationPolicyAccessory,
     )
+
+
+@pytest.mark.skipif(sys.platform != 'darwin', reason='macOS-specific test')
+@pytest.mark.parametrize('case', _MACOS_FIX_CASES, ids=lambda c: c.id)
+def test_macos_offscreen_keeps_visible_application_in_dock(case):  # pragma: no cover -- macOS only
+    """Test a host GUI application keeps its Dock icon and menu bar.
+
+    The activation policy is process-global, so demoting it for an off-screen
+    render window would strip both from a Qt application embedding a plotter.
+    """
+    appkit_mock = MagicMock()
+    appkit_mock.NSApp.return_value.activationPolicy.return_value = (
+        appkit_mock.NSApplicationActivationPolicyRegular
+    )
+    with patch('sys.platform', 'darwin'), patch.dict(sys.modules, {'AppKit': appkit_mock}):
+        render_window = case.invoke()
+
+    assert render_window.GetConnectContextToNSView() is False
+    appkit_mock.NSApplication.sharedApplication().setActivationPolicy_.assert_not_called()

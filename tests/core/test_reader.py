@@ -117,7 +117,8 @@ def test_extract_base_reader_generic_arg_skips_non_base_reader_generics():
 
     _T = TypeVar('_T')
 
-    class _UnrelatedGeneric(Generic[_T]): ...
+    class _UnrelatedGeneric(Generic[_T]):
+        pass
 
     class _MixedClass(_UnrelatedGeneric[int]):  # Generic, but not a BaseReader
         pass
