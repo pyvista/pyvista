@@ -171,6 +171,34 @@ def test_active_scalars_name(sphere):
     assert sphere.point_data.active_scalars_name is None
 
 
+def test_active_scalars_name_unnamed_array(sphere):
+    sphere.clear_data()
+    scalars = pv.convert_array(np.arange(sphere.n_points, dtype=float))
+    sphere.point_data.VTKObject.SetScalars(scalars)
+    assert sphere.point_data.active_scalars_name == 'Unnamed_0'
+    assert sphere.active_scalars_name == 'Unnamed_0'
+
+
+@pytest.mark.parametrize('attr', ['active_scalars_name', 'active_texture_coordinates_name'])
+def test_active_name_setter_missing_array_raises(sphere, attr):
+    with pytest.raises(KeyError, match='missing'):
+        setattr(sphere.point_data, attr, 'missing')
+
+
+@pytest.mark.parametrize('attr', ['active_scalars_name', 'active_texture_coordinates_name'])
+def test_active_name_setter_ignores_string_array(plane, attr):
+    plane.point_data['strings'] = np.array(['a'] * plane.n_points)
+    before = getattr(plane.point_data, attr)
+    setattr(plane.point_data, attr, 'strings')
+    assert getattr(plane.point_data, attr) == before
+    assert before != 'strings'
+
+
+def test_patch_type_without_vtk_array(sphere):
+    array = pv.pyvista_ndarray([1.0, 2.0])
+    assert sphere.point_data._patch_type(array) is array
+
+
 def test_active_normals_name():
     # Load dataset known to have active normals by default
     sphere = pv.Sphere()

@@ -57,6 +57,39 @@ attr_type = [
 _SENTINEL = pyvista_ndarray([])
 
 
+# These helpers take the raw VTK attributes so that DataSet can use them without
+# constructing a DataSetAttributes wrapper, which is what makes its properties slow.
+def _array_names(field_data: _vtk.vtkFieldData) -> list[str]:
+    """Return the array names of a VTK field data object, naming any unnamed arrays."""
+    names = []
+    for i in range(field_data.GetNumberOfArrays()):
+        array = field_data.GetAbstractArray(i)
+        name = array.GetName()
+        if not name:  # pragma: no cover
+            name = f'Unnamed_{i}'
+            array.SetName(name)
+        names.append(name)
+    return names
+
+
+def _active_scalars_name(attributes: _vtk.vtkDataSetAttributes) -> str | None:
+    """Return the active scalars name of a VTK attributes object, naming it if unnamed."""
+    scalars = attributes.GetScalars()
+    if scalars is None:
+        return None
+    name = scalars.GetName()
+    if name is None:
+        _array_names(attributes)
+        name = scalars.GetName()
+    return str(name)
+
+
+def _active_vectors_name(attributes: _vtk.vtkDataSetAttributes) -> str | None:
+    """Return the active vectors name of a VTK attributes object."""
+    vectors = attributes.GetVectors()
+    return None if vectors is None else str(vectors.GetName())
+
+
 class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCheckSnakeCase):
     """Python friendly wrapper of :vtk:`vtkDataSetAttributes`.
 
@@ -341,12 +374,9 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         """
         self._raise_field_data_no_scalars_vectors_normals()
-        if self.GetScalars() is not None:
-            array = pyvista_ndarray(
-                self.GetScalars(),
-                dataset=self.dataset,
-                association=self.association,
-            )
+        scalars = self.VTKObject.GetScalars()  # Optimization: skip the __getattr__ forwarding
+        if scalars is not None:
+            array = pyvista_ndarray(scalars, dataset=self.dataset, association=self.association)
             return self._patch_type(array)
         return None
 
@@ -382,7 +412,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         """
         self._raise_field_data_no_scalars_vectors_normals()
-        vectors = self.GetVectors()
+        vectors = self.VTKObject.GetVectors()
         if vectors is not None:
             return pyvista_ndarray(vectors, dataset=self.dataset, association=self.association)
         return None
@@ -470,9 +500,12 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         """
         self._raise_index_out_of_bounds(index=key)
-        vtk_arr = self.GetArray(key)
+        # Optimization: call the VTK object directly; going through the __getattr__
+        # forwarding costs about as much as the VTK call itself
+        vtk_attributes = self.VTKObject
+        vtk_arr = vtk_attributes.GetArray(key)
         if vtk_arr is None:
-            vtk_arr = self.GetAbstractArray(key)
+            vtk_arr = vtk_attributes.GetAbstractArray(key)
             if vtk_arr is None:
                 msg = f'{key}'
                 raise KeyError(msg)
@@ -481,11 +514,14 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
     def _patch_type(self: Self, narray: pyvista_ndarray) -> pyvista_ndarray:
         """Check if array needs to be represented as a different type."""
-        if hasattr(narray, 'VTKObject') and isinstance(narray.VTKObject, _vtk.vtkAbstractArray):
-            name = narray.VTKObject.GetName()
-            if name in self.dataset._association_bitarray_names[self.association.name]:  # type: ignore[union-attr]
+        vtk_arr = getattr(narray, 'VTKObject', None)
+        if isinstance(vtk_arr, _vtk.vtkAbstractArray):
+            name = vtk_arr.GetName()
+            dataset = self.dataset
+            association_name = self.association.name
+            if name in dataset._association_bitarray_names[association_name]:  # type: ignore[union-attr]
                 narray = narray.view(np.bool_)  # type: ignore[assignment]
-            elif name in self.dataset._association_complex_names[self.association.name]:  # type: ignore[union-attr]
+            elif name in dataset._association_complex_names[association_name]:  # type: ignore[union-attr]
                 if narray.dtype == np.float32:
                     narray = narray.view(np.complex64)  # type: ignore[assignment]
                 if narray.dtype == np.float64:
@@ -494,9 +530,9 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
                 # VTK arrays
                 narray = narray.squeeze()  # type: ignore[assignment]
             elif (
-                narray.association == FieldAssociation.NONE
+                narray.ndim == 0
+                and narray.association == FieldAssociation.NONE
                 and np.issubdtype(narray.dtype, np.str_)
-                and narray.ndim == 0
             ):
                 # For field data with a string scalar, return the string
                 # itself instead of a scalar array
@@ -727,18 +763,19 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         # convert to numpy type if necessary
         data = np.asanyarray(data)
 
-        if self.association == FieldAssociation.POINT:
+        association = self.association
+        if association == FieldAssociation.POINT:
             array_len = self.dataset.GetNumberOfPoints()
-        elif self.association == FieldAssociation.CELL:
+        elif association == FieldAssociation.CELL:
             array_len = self.dataset.GetNumberOfCells()
         else:
             array_len = 1 if data.ndim == 0 else data.shape[0]
 
-        if np.issubdtype(data.dtype, np.str_) and data.ndim == 0:
+        if data.ndim == 0 and np.issubdtype(data.dtype, np.str_):
             pass  # Do not reshape string scalars
         else:
             # Fixup input array length for scalar input
-            if np.ndim(data) == 0:
+            if data.ndim == 0:
                 tmparray = np.empty(array_len, dtype=data.dtype)
                 tmparray.fill(data)
                 data = tmparray
@@ -773,14 +810,14 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
                         vtk_arr.SetName(name)
                     return vtk_arr
 
-        # reset data association
-        if name in self.dataset._association_bitarray_names[self.association.name]:  # type: ignore[union-attr]
-            self.dataset._association_bitarray_names[self.association.name].remove(name)  # type: ignore[union-attr]
-        if name in self.dataset._association_complex_names[self.association.name]:  # type: ignore[union-attr]
-            self.dataset._association_complex_names[self.association.name].remove(name)  # type: ignore[union-attr]
+        # reset data association (look the name sets up once, they are reused below)
+        bitarray_names = self.dataset._association_bitarray_names[association.name]  # type: ignore[union-attr]
+        complex_names = self.dataset._association_complex_names[association.name]  # type: ignore[union-attr]
+        bitarray_names.discard(name)
+        complex_names.discard(name)
 
         if data.dtype == np.bool_:
-            self.dataset._association_bitarray_names[self.association.name].add(name)  # type: ignore[union-attr]
+            bitarray_names.add(name)
             data = data.view(np.uint8)
         elif np.issubdtype(data.dtype, np.complexfloating):
             if data.dtype not in (np.complex64, np.complex128):
@@ -794,7 +831,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
                 if data.shape[1] != 1:
                     msg = 'Complex data must be single dimensional.'
                     raise ValueError(msg)
-            self.dataset._association_complex_names[self.association.name].add(name)  # type: ignore[union-attr]
+            complex_names.add(name)
 
             # complex data is stored internally as a contiguous 2 component
             # float arrays
@@ -834,7 +871,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         # this handles the case when an input array is directly added to the
         # output. We want to make sure that the array added to the output is not
         # referring to the input dataset.
-        copy = pyvista_ndarray(data)
+        copy = data.view(np.ndarray)
 
         return convert_array(copy, name, deep=deep_copy)
 
@@ -969,18 +1006,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         ['data0', 'data1']
 
         """
-        keys = []
-        for i in range(self.GetNumberOfArrays()):
-            array = self.VTKObject.GetAbstractArray(i)
-            name = array.GetName()
-            if name:
-                keys.append(name)
-            else:  # pragma: no cover
-                # Assign this array a name
-                name = f'Unnamed_{i}'
-                array.SetName(name)
-                keys.append(name)
-        return keys
+        return _array_names(self.VTKObject)
 
     def values(self: Self) -> list[pyvista_ndarray]:
         """Return the arrays as a list.
@@ -1286,14 +1312,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         'my_other_data'
 
         """
-        if self.GetScalars() is not None:
-            name = self.GetScalars().GetName()
-            if name is None:
-                # Getting the keys has the side effect of naming "unnamed" arrays
-                self.keys()
-                name = self.GetScalars().GetName()
-            return str(name)
-        return None
+        return _active_scalars_name(self.VTKObject)
 
     @active_scalars_name.setter
     def active_scalars_name(self: Self, name: str | None) -> None:
@@ -1307,13 +1326,17 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         """
         # permit setting no active scalars
         if name is None:
-            self.SetActiveScalars(None)
+            self.VTKObject.SetActiveScalars(None)
             return
         self._raise_field_data_no_scalars_vectors_normals()
-        dtype = self[name].dtype
+        # Optimization: check the VTK array class rather than wrapping the array for its dtype
+        vtk_arr = self.VTKObject.GetAbstractArray(name)
         # only vtkDataArray subclasses can be set as active attributes
-        if np.issubdtype(dtype, np.number) or np.issubdtype(dtype, bool):
-            self.SetActiveScalars(name)
+        if isinstance(vtk_arr, _vtk.vtkDataArray):
+            self.VTKObject.SetActiveScalars(name)
+        elif not isinstance(vtk_arr, _vtk.vtkStringArray):
+            # raises KeyError for missing keys and TypeError for unsupported arrays
+            self.get_array(name)
 
     @property
     def _active_normals_name(self: Self) -> str | None:
@@ -1341,9 +1364,8 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         'my-normals'
 
         """
-        if self.GetNormals() is not None:
-            return str(self.GetNormals().GetName())
-        return None
+        normals = self.VTKObject.GetNormals()
+        return None if normals is None else str(normals.GetName())
 
     @_active_normals_name.setter
     def _active_normals_name(self: Self, name: str | None) -> None:
@@ -1392,9 +1414,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         'my-vectors'
 
         """
-        if self.GetVectors() is not None:
-            return str(self.GetVectors().GetName())
-        return None
+        return _active_vectors_name(self.VTKObject)
 
     @active_vectors_name.setter
     def active_vectors_name(self: Self, name: str | None) -> None:
@@ -1509,7 +1529,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         """
         self._raise_no_normals()
-        vtk_normals = self.GetNormals()
+        vtk_normals = self.VTKObject.GetNormals()
         if vtk_normals is not None:
             return pyvista_ndarray(vtk_normals, dataset=self.dataset, association=self.association)
         return None
@@ -1565,9 +1585,8 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         """
         self._raise_no_normals()
-        if self.GetNormals() is not None:
-            return str(self.GetNormals().GetName())
-        return None
+        normals = self.VTKObject.GetNormals()
+        return None if normals is None else str(normals.GetName())
 
     @active_normals_name.setter
     def active_normals_name(self: Self, name: str | None) -> None:
@@ -1623,7 +1642,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         """
         self._raise_no_texture_coordinates()
-        texture_coordinates = self.GetTCoords()
+        texture_coordinates = self.VTKObject.GetTCoords()
         if texture_coordinates is not None:
             return pyvista_ndarray(
                 texture_coordinates,
@@ -1687,9 +1706,8 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         """
         self._raise_no_texture_coordinates()
-        if self.GetTCoords() is not None:
-            return str(self.GetTCoords().GetName())
-        return None
+        texture_coordinates = self.VTKObject.GetTCoords()
+        return None if texture_coordinates is None else str(texture_coordinates.GetName())
 
     @active_texture_coordinates_name.setter
     def active_texture_coordinates_name(self: Self, name: str | None) -> None:
@@ -1706,7 +1724,10 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
             return
 
         self._raise_no_texture_coordinates()
-        dtype = self[name].dtype
+        vtk_arr = self.VTKObject.GetAbstractArray(name)
         # only vtkDataArray subclasses can be set as active attributes
-        if np.issubdtype(dtype, np.number) or np.issubdtype(dtype, bool):
-            self.SetActiveTCoords(name)
+        if isinstance(vtk_arr, _vtk.vtkDataArray):
+            self.VTKObject.SetActiveTCoords(name)
+        elif not isinstance(vtk_arr, _vtk.vtkStringArray):
+            # raises KeyError for missing keys and TypeError for unsupported arrays
+            self.get_array(name)

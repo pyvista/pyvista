@@ -133,6 +133,18 @@ def test_interpolate_raises(strategy):
         pv.Sphere().interpolate(pv.Sphere(), strategy=strategy)
 
 
+def test_get_output_restores_field_data(sphere):
+    sphere.field_data['data'] = np.arange(3)
+    alg = _vtk.vtkPassArrays()
+    alg.SetInputDataObject(sphere)
+    alg.UseFieldTypesOn()
+    alg.AddFieldType(_vtk.vtkDataObject.FIELD)
+    alg.Update()
+    assert alg.GetOutputDataObject(0).GetFieldData().GetNumberOfArrays() == 0
+    output = _get_output(alg)
+    assert np.array_equal(output.field_data['data'], np.arange(3))
+
+
 def test_datasetfilters_init():
     with pytest.raises(TypeError):
         pv.core.filters.DataSetFilters()
