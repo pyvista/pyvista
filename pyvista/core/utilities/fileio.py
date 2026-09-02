@@ -614,12 +614,12 @@ def read_texture(filename: str | Path, progress_bar: bool = False) -> Texture:  
         if image.n_points < 2:
             msg = 'Problem reading the image with VTK.'
             raise ValueError(msg)
-        return pv.Texture(image)  # type: ignore[abstract]
+        return pv.Texture(image)
     except (KeyError, ValueError):
         # Otherwise, use the imageio reader
         pass
 
-    return pv.Texture(_try_imageio_imread(filename))  # type: ignore[abstract] # pragma: no cover
+    return pv.Texture(_try_imageio_imread(filename))  # pragma: no cover
 
 
 @_deprecate_positional_args(allowed=['filename'])

@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     from typing import Literal
 
     from pyvista.core._typing_core import NumpyArray
+    from pyvista.core.utilities.arrays import FieldAssociation
 
 
 class Texture(DataObject, _vtk.vtkTexture):
@@ -331,7 +332,7 @@ class Texture(DataObject, _vtk.vtkTexture):
             >>> flipped.plot()
 
         """
-        return Texture(self.to_image()._flip_uniform(0))  # type: ignore[abstract]
+        return Texture(self.to_image()._flip_uniform(0))
 
     def flip_y(self) -> Texture:
         """Flip the texture in the y direction.
@@ -352,7 +353,7 @@ class Texture(DataObject, _vtk.vtkTexture):
             >>> flipped.plot()
 
         """
-        return Texture(self.to_image()._flip_uniform(1))  # type: ignore[abstract]
+        return Texture(self.to_image()._flip_uniform(1))
 
     def to_image(self):
         """Return the texture as an image.
@@ -397,6 +398,47 @@ class Texture(DataObject, _vtk.vtkTexture):
             [*list(self.dimensions)[::-1], self.n_components]
         )[::-1]
 
+    @property
+    def is_empty(self) -> bool:  # numpydoc ignore=RT01
+        """Return ``True`` if the texture has no image data.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pv.Texture().is_empty
+        True
+
+        """
+        image = self.to_image()
+        return image is None or image.is_empty
+
+    def get_data_range(
+        self, name: str | None = None, preference: FieldAssociation | str = 'point'
+    ) -> tuple[float, float]:
+        """Get the min and max of a named array of the texture's image.
+
+        Parameters
+        ----------
+        name : str, optional
+            The name of the array to get the range. If ``None``, the
+            active scalars is used.
+
+        preference : str, default: "point"
+            When scalars is specified, this is the preferred array type
+            to search for. Must be either ``'point'``, ``'cell'``, or
+            ``'field'``.
+
+        Returns
+        -------
+        tuple
+            ``(min, max)`` of the named array.
+
+        """
+        image = self.to_image()
+        if image is None:
+            return (np.nan, np.nan)
+        return image.get_data_range(name, preference=preference)
+
     def rotate_cw(self) -> Texture:
         """Rotate this texture 90 degrees clockwise.
 
@@ -416,7 +458,7 @@ class Texture(DataObject, _vtk.vtkTexture):
             >>> rotated.plot()
 
         """
-        return Texture(np.rot90(self.to_array()))  # type: ignore[abstract]
+        return Texture(np.rot90(self.to_array()))
 
     def rotate_ccw(self) -> Texture:
         """Rotate this texture 90 degrees counter-clockwise.
@@ -437,7 +479,7 @@ class Texture(DataObject, _vtk.vtkTexture):
             >>> rotated.plot()
 
         """
-        return Texture(np.rot90(self.to_array(), k=3))  # type: ignore[abstract]
+        return Texture(np.rot90(self.to_array(), k=3))
 
     @property
     def cube_map(self) -> bool:  # numpydoc ignore=RT01
@@ -457,7 +499,7 @@ class Texture(DataObject, _vtk.vtkTexture):
             Copied texture.
 
         """
-        return Texture(self.to_image().copy())  # type: ignore[abstract]
+        return Texture(self.to_image().copy())
 
     def to_skybox(
         self,
@@ -761,7 +803,7 @@ class Texture(DataObject, _vtk.vtkTexture):
         data = self.to_array()
         r, g, b = data[..., 0], data[..., 1], data[..., 2]
         data = (0.299 * r + 0.587 * g + 0.114 * b).round().astype(np.uint8)
-        return Texture(data)  # type: ignore[abstract]
+        return Texture(data)
 
 
 def image_to_texture(image):
@@ -778,7 +820,7 @@ def image_to_texture(image):
         The texture.
 
     """
-    return Texture(image)  # type: ignore[abstract]
+    return Texture(image)
 
 
 def numpy_to_texture(image):
@@ -812,4 +854,4 @@ def numpy_to_texture(image):
             UserWarning,
         )
 
-    return Texture(image)  # type: ignore[abstract]
+    return Texture(image)
