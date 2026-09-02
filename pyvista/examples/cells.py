@@ -16,13 +16,13 @@ from typing import cast
 from typing import get_args
 
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import CellType
 from pyvista import UnstructuredGrid
 from pyvista import _vtk
 from pyvista._warn_external import warn_external
-from pyvista.core import _validation
 
 if TYPE_CHECKING:
     from pyvista import DataSet

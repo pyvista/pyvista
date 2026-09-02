@@ -7,8 +7,8 @@ from collections.abc import MutableSequence
 from typing import TYPE_CHECKING
 
 import numpy as np
+import pyvista_validation as _validation
 
-from pyvista import _validation
 from pyvista import _vtk
 
 if TYPE_CHECKING:

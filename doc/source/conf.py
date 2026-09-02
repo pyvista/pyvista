@@ -427,6 +427,10 @@ intersphinx_mapping = {
     ),
     'pytest': ('https://docs.pytest.org/en/stable/', ('../intersphinx/pytest-objects.inv',)),
     'pyvistaqt': ('https://qt.pyvista.org/', ('../intersphinx/pyvistaqt-objects.inv',)),
+    'pyvista_validation': (
+        'https://validation.pyvista.org/',
+        ('../intersphinx/pyvista-validation-objects.inv',),
+    ),
     'trimesh': ('https://trimesh.org', ('../intersphinx/trimesh-objects.inv',)),
 }
 intersphinx_timeout = 5
@@ -661,6 +665,9 @@ autocodelink_show_usage_count = True
 
 # render gallery backreferences as thumbnail cards
 autocodelink_gallery_cards = True
+
+# execute and record ``.. jupyter-execute::`` cells so their identifiers link too
+autocodelink_jupyter_blocks = True
 
 
 def _str_examples(self):

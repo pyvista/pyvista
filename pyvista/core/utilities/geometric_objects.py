@@ -8,11 +8,11 @@ from typing import Literal
 from typing import cast
 
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core import _validation
 
 from .arrays import _coerce_pointslike_arg
 from .geometric_sources import ArrowSource

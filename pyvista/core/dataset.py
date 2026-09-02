@@ -16,6 +16,7 @@ from typing import cast
 from typing import overload
 
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
@@ -23,7 +24,6 @@ from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.typing.mypy_plugin import promote_type
 
-from . import _validation
 from ._typing_core import BoundsTuple
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
@@ -1951,7 +1951,9 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         pset.points = self.points.copy()
         out = self.cell_data_to_point_data() if pass_cell_data else self
         pset.GetPointData().DeepCopy(out.GetPointData())
-        pset.active_scalars_name = out.active_scalars_name
+        field, name = out.active_scalars_info
+        if field == FieldAssociation.POINT:
+            pset.active_scalars_name = name
         return pset
 
     @_deprecate_positional_args
@@ -2011,7 +2013,9 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             cell_data = cell_data.cell_data_to_point_data()
             pset.GetCellData().DeepCopy(cell_data.GetPointData())
         pset.GetPointData().DeepCopy(self.GetPointData())
-        pset.active_scalars_name = self.active_scalars_name
+        field, name = self.active_scalars_info
+        if field == FieldAssociation.POINT or pass_cell_data:
+            pset.active_scalars_name = name
         return pset
 
     @overload
@@ -2675,8 +2679,8 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         [0, 2, 1]
 
         """
-        # must check upper bounds, otherwise segfaults (on Linux, 9.2)
-        if index + 1 > self.n_cells:
+        # must check bounds, otherwise segfaults (on Linux, 9.2) or returns an empty cell
+        if not 0 <= index < self.n_cells:
             msg = f'Invalid index {index} for a dataset with {self.n_cells} cells.'
             raise IndexError(msg)
 

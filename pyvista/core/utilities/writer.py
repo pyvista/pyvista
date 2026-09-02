@@ -11,8 +11,8 @@ from typing import Literal
 from typing import get_args
 
 import numpy as np
+import pyvista_validation as _validation
 
-from pyvista.core import _validation
 from pyvista.core.utilities.fileio import _CompressionOptions
 from pyvista.core.utilities.fileio import _FileIOBase
 from pyvista.core.utilities.fileio import _warn_multiblock_nested_field_data
