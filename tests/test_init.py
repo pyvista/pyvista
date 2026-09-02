@@ -105,18 +105,15 @@ def _module_is_loaded(module_to_check: str, module_to_import: str = 'pyvista') -
     ids=['core', 'plotting'],
 )
 def test_minimal_vtkmodules_imported(allowed_modules, module_to_import):
-    vtkmodules_not_allowed = sorted(
-        {
-            module
-            for module in sys.modules
-            if module.startswith('vtkmodules.') and module not in allowed_modules
-        }
+    # Import in a fresh interpreter, since pytest itself has already loaded VTK here
+    code = (
+        f'import {module_to_import}, sys; '
+        "print(*(m for m in sys.modules if m.startswith('vtkmodules.')))"
     )
-    vtkmodules_loaded = {
-        module
-        for module in vtkmodules_not_allowed
-        if _module_is_loaded(module_to_import=module_to_import, module_to_check=module)
-    }
+    imported = subprocess.run(
+        [sys.executable, '-c', code], check=True, capture_output=True, text=True
+    ).stdout.split()
+    vtkmodules_loaded = set(imported) - allowed_modules
 
     error_msg = """
     Disallowed VTK module(s) were loaded at root `import pyvista`.
