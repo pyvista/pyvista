@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 import subprocess
 import sys
 import textwrap
@@ -311,3 +312,19 @@ def test_vtk_import_all_suppressed_ignores_failures(monkeypatch):
     _vtk.import_all(suppress_import_errors=True)
 
     assert calls == ['A', 'SpecialA']
+
+
+def test_validation_forward_deprecated():
+    import pyvista_validation
+
+    import pyvista as pv
+
+    msg = (
+        '`pyvista._validation` has moved to the `pyvista_validation` package; '
+        'use `from pyvista_validation import ...` instead.'
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(msg)):
+        assert pv._validation is pyvista_validation
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(msg)):
+        from pyvista import _validation
+    assert _validation.validate_array3([1, 2, 3]).shape == (3,)
