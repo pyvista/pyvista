@@ -16,7 +16,7 @@ from ._array_like import _ArrayLike1D
 from ._array_like import _ArrayLike2D
 
 if TYPE_CHECKING or os.environ.get(
-    'PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'
+    '_PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'
 ):  # pragma: no cover
     try:
         from scipy.spatial.transform import Rotation

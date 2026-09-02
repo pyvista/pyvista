@@ -45,6 +45,7 @@ from .utilities.arrays import parse_field_choice
 from .utilities.arrays import raise_not_matching
 from .utilities.arrays import vtk_id_list_to_array
 from .utilities.helpers import is_pyvista_dataset
+from .utilities.misc import _BoundsSizeMixin
 from .utilities.misc import abstract_class
 from .utilities.points import vtk_points
 
@@ -114,7 +115,7 @@ class _ActiveArrayExistsInfoTuple(NamedTuple):
 
 @promote_type(_vtk.vtkDataSet)
 @abstract_class
-class DataSet(DataSetFilters, DataObject):
+class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
     """Methods in common to spatially referenced objects.
 
     Parameters
@@ -1637,8 +1638,6 @@ class DataSet(DataSetFilters, DataObject):
         attrs.append(('X Bounds', (bds.x_min, bds.x_max), fmt))
         attrs.append(('Y Bounds', (bds.y_min, bds.y_max), fmt))
         attrs.append(('Z Bounds', (bds.z_min, bds.z_max), fmt))
-        # if self.n_cells <= pyvista.REPR_VOLUME_MAX_CELLS and self.n_cells > 0:
-        #     attrs.append(("Volume", (self.volume), pyvista.FLOAT_FORMAT))
         return attrs
 
     def _repr_html_(self: Self) -> str:

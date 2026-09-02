@@ -1071,6 +1071,8 @@ def test_raise_rectilinear_grid_non_unique():
 
 def test_cast_rectilinear_grid():
     grid = pv.read(examples.rectfile)
+    # The file carries cell data only.
+    grid.point_data['point_values'] = np.arange(grid.n_points)
     structured = grid.cast_to_structured_grid()
     assert isinstance(structured, pv.StructuredGrid)
     assert structured.n_points == grid.n_points

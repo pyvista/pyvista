@@ -41,9 +41,10 @@ warnings.filterwarnings(
 # import things like `scipy` or `matplotlib` that would be unnecessarily bulky to import by default
 # during normal operation. See https://github.com/pyvista/pyvista/pull/7023.
 # Note that `import make_tables` below imports pyvista.
-os.environ['PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'] = 'true'
+os.environ['_PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'] = 'true'
 
 sys.path.insert(0, str(Path().cwd()))
+import make_search_summaries
 import make_tables
 
 # -- pyvista configuration ---------------------------------------------------
@@ -201,6 +202,9 @@ sphinx_examples_as_code_conf = {
     # this extension's nicer, cross-reference-aware .py/.ipynb downloads.
     'gallery_downloads': True,
 }
+
+# Disable checking if vtk links resolve correctly, web checks can be unstable
+vtk_xref_nitpicky = False
 
 # Warn if target links or references cannot be found
 nitpicky = True
@@ -621,7 +625,8 @@ from jinja2.sandbox import SandboxedEnvironment
 from numpydoc.docscrape import NumpyDocString
 from numpydoc.docscrape_sphinx import SphinxDocString
 
-IMPORT_PYVISTA_RE = r'\b(import +pyvista|from +pyvista +import)\b'
+# Also matches submodule imports, e.g. ``from pyvista.examples.cells import ...``.
+IMPORT_PYVISTA_RE = r'\b(import +pyvista|from +pyvista(\.[\w.]+)? +import)\b'
 IMPORT_MATPLOTLIB_RE = r'\b(import +matplotlib|from +matplotlib +import)\b'
 
 pyvista_plot_setup = """
@@ -1125,6 +1130,9 @@ def setup(app: Sphinx) -> None:  # noqa: D103
 
     # right before writing, patch the gallery placeholders
     app.connect('doctree-resolved', make_tables.patch_gallery_placeholders)
+
+    # feeds the search result snippets rendered by search_summaries.js
+    app.connect('build-finished', make_search_summaries.dump_search_summaries)
 
     app.add_css_file('copybutton.css')
     app.add_css_file('no_search_highlight.css')

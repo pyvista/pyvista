@@ -1076,23 +1076,63 @@ class _SerializedDictArray(DisableVtkSnakeCase, UserDict, _vtk.vtkStringArray): 
         self._update_string() if key != '_string' else None
 
     def update(self: _SerializedDictArray, *args, **kwargs) -> None:
+        """Update the dictionary and re-serialize.
+
+        Parameters
+        ----------
+        *args : tuple, optional
+            Arguments of :meth:`dict.update`.
+
+        **kwargs : dict, optional
+            Keyword arguments of :meth:`dict.update`.
+
+
+        """
         super().update(*args, **kwargs)
         self._update_string()
 
     def popitem(self: _SerializedDictArray) -> Any:
+        """Pop the last item and re-serialize."""
         item = super().popitem()
         self._update_string()
         return item
 
     def pop(self: _SerializedDictArray, __key: Any) -> Any:  # type: ignore[override]  # noqa: PYI063
+        """Pop an item by key and re-serialize.
+
+        Parameters
+        ----------
+        __key : Any
+            Key to remove.
+
+        Returns
+        -------
+        Any
+            Removed value.
+
+
+        """
         item = super().pop(__key)
         self._update_string()
         return item
 
     def clear(self: _SerializedDictArray) -> None:
+        """Clear the dictionary and re-serialize."""
         super().clear()
         self._update_string()
 
     def setdefault(self: _SerializedDictArray, *args, **kwargs) -> None:
+        """Insert a default value and re-serialize.
+
+        Parameters
+        ----------
+        *args : tuple, optional
+            Arguments of :meth:`dict.setdefault`.
+
+        **kwargs : dict, optional
+            Keyword arguments of :meth:`dict.setdefault`.
+
+
+        """
         super().setdefault(*args, **kwargs)
         self._update_string()
