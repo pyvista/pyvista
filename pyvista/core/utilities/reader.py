@@ -2159,12 +2159,12 @@ class PVDReader(BaseReader['MultiBlock'], TimeReader):
 
 @contextlib.contextmanager
 def _stdout_fd_silenced():
-    """Discard everything written to the C-level stdout for the duration of the block."""
+    """Discard everything written to the C-level standard output while the block runs."""
     if sys.stdout is not None:
         sys.stdout.flush()
     try:
         saved = os.dup(1)
-    except OSError:  # no usable stdout to silence
+    except OSError:  # pragma: no cover  # no usable stdout to silence
         yield
         return
     devnull = os.open(os.devnull, os.O_WRONLY)
