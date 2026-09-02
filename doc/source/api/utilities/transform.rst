@@ -5,7 +5,7 @@ Transformations
 The :class:`~pyvista.Transform` class describes linear transformations and is
 accepted wherever a transformation is used, such as
 :meth:`~pyvista.DataObjectFilters.transform`. The functions on this page
-transform meshes, points, and vectors directly.
+transform points and vectors directly.
 
 .. seealso::
 
@@ -24,7 +24,6 @@ transform meshes, points, and vectors directly.
    :toctree: _autosummary
 
    Transform
-   translate
    core.utilities.axis_rotation
 
 Spherical Coordinates

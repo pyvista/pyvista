@@ -36,7 +36,6 @@ Mesh Operations
 .. autosummary::
 
    merge
-   translate
    generate_plane
    fit_plane_to_points
    fit_line_to_points
