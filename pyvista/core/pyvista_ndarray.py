@@ -126,7 +126,7 @@ class pyvista_ndarray(_NoNewAttrMixin, np.ndarray):  # numpydoc ignore=PR02  # n
 
         # the associated dataset should also be marked as modified
         dataset = self.dataset
-        if dataset is not None and dataset.Get():
+        if dataset is not None and dataset.Get() is not None:
             dataset.Get().Modified()
 
     def __array_wrap__(self: pyvista_ndarray, out_arr, context=None, return_scalar: bool = False):  # noqa: ANN001, ANN204, FBT001, FBT002
