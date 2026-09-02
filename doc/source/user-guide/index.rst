@@ -62,6 +62,7 @@ User Guide Contents
 
    what-is-a-mesh
    simple
+   plotting
    data_model
    vtk_to_pyvista
    themes
