@@ -49,10 +49,10 @@ Selecting and Registering Themes
 .. autosummary::
    :toctree: _autosummary
 
-   set_plot_theme
+   ThemeRegistration
    load_theme
    registered_themes
-   ThemeRegistration
+   set_plot_theme
 
 Custom Interactor Styles
 ------------------------

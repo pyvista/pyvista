@@ -29,11 +29,11 @@ These functions provide a simplified interface to the plotting classes below.
 .. autosummary::
    :toctree: _autosummary
 
+   close_all
    plot
    plot_arrows
    plot_compare
    plot_compare_four
-   close_all
 
 
 Plotter
@@ -56,10 +56,10 @@ Cameras and lights are documented on their own pages: :ref:`cameras_api` and
    :toctree: _autosummary
 
    Plotter
-   Renderer
-   RenderWindowInteractor
-   Timer
    CameraPosition
+   RenderWindowInteractor
+   Renderer
+   Timer
 
 
 Actors and Mappers
@@ -76,11 +76,11 @@ Actors and Mappers
    :toctree: _autosummary
 
    Actor
-   Prop3D
-   Follower
-   Property
    DataSetMapper
+   Follower
    plotting.mapper.PointGaussianMapper
+   Prop3D
+   Property
 
 
 Volume Rendering
@@ -97,12 +97,12 @@ Volume Rendering
    :toctree: _autosummary
 
    plotting.volume.Volume
-   plotting.volume_property.VolumeProperty
    plotting.mapper.FixedPointVolumeRayCastMapper
    plotting.mapper.GPUVolumeRayCastMapper
    plotting.mapper.OpenGLGPUVolumeRayCastMapper
    plotting.mapper.SmartVolumeMapper
    plotting.mapper.UnstructuredGridVolumeRayCastMapper
+   plotting.volume_property.VolumeProperty
    opacity_transfer_function
 
 
@@ -116,10 +116,10 @@ Text and Labels
 .. autosummary::
    :toctree: _autosummary
 
-   Text
-   TextProperty
    CornerAnnotation
    Label
+   Text
+   TextProperty
 
 
 Axes and Orientation
@@ -280,10 +280,10 @@ third-party packages can register additional backends. See
 .. autosummary::
    :toctree: _autosummary
 
-   set_jupyter_backend
+   JupyterBackendRegistration
    register_jupyter_backend
    registered_jupyter_backends
-   JupyterBackendRegistration
+   set_jupyter_backend
 
 
 Shared Base Classes
