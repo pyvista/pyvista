@@ -29,7 +29,7 @@ bracket
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # First, let's plot using the default color map, "viridis". Internally, PyVista
 # will automatically create a lookup table to map the scalars (stored here
-# within `point_data`) to RGBA colors. This is shown here as a nested attribute
+# within ``point_data``) to RGBA colors. This is shown here as a nested attribute
 # to the :class:`pyvista.DataSetMapper` and it has a helpful ``repr`` method:
 
 pl = pv.Plotter()
@@ -59,7 +59,7 @@ pl.show()
 
 
 # %%
-# Create a Custom Lookup Table using a Matplotlib Color Map
+# Create a Custom Lookup Table Using a Matplotlib Color Map
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Here we create a lookup table with a narrow table range (same as ``clim``)
 # and color values above and below the range.
@@ -72,7 +72,7 @@ lut.plot()
 
 
 # %%
-# Plot the bracket with the custom colormap
+# Plot the Bracket With the Custom Colormap
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # You can set assign the lookup table when using ``add_mesh`` with ``cmap=``.
 
@@ -83,7 +83,7 @@ pl.show()
 
 
 # %%
-# Create a Custom Lookup Table using VTK's Methods
+# Create a Custom Lookup Table Using VTK's Methods
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # If you want to create a completely unique color map, you can use attributes
 # like :attr:`pyvista.LookupTable.hue_range` and
@@ -99,7 +99,7 @@ lut.plot()
 
 
 # %%
-# Plot the bracket with the custom colormap
+# Plot the Bracket With the Custom Colormap
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Assign this custom color map to the plotter and disable lighting to improve
 # the plot.
@@ -110,7 +110,7 @@ pl.show()
 
 
 # %%
-# Custom colormap with widgets
+# Custom Colormap With Widgets
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Here we plot the scalars and dynamically change the lookup table through
 # widgets. We create several overlapping single slider widgets to simulate a

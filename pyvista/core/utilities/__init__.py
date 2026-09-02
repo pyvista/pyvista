@@ -84,6 +84,7 @@ from .geometric_objects import Rectangle as Rectangle
 from .geometric_objects import SolidSphere as SolidSphere
 from .geometric_objects import SolidSphereGeneric as SolidSphereGeneric
 from .geometric_objects import Sphere as Sphere
+from .geometric_objects import StructuredSphere as StructuredSphere
 from .geometric_objects import Superquadric as Superquadric
 from .geometric_objects import Tetrahedron as Tetrahedron
 from .geometric_objects import Text3D as Text3D
@@ -169,6 +170,7 @@ from .points import vector_poly_data as vector_poly_data
 from .points import vtk_points as vtk_points
 from .reader import AVSucdReader as AVSucdReader
 from .reader import BaseReader as BaseReader
+from .reader import BaseVTKReader as BaseVTKReader
 from .reader import BinaryMarchingCubesReader as BinaryMarchingCubesReader
 from .reader import BMPReader as BMPReader
 from .reader import BYUReader as BYUReader

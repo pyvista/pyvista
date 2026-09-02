@@ -1,7 +1,7 @@
 .. _vtk_to_pyvista_docs:
 
 
-Transitioning from VTK to PyVista
+Transitioning From VTK to PyVista
 =================================
 VTK is primarily developed in C++ and uses chained setter and getter
 commands to access data. Instead, PyVista wraps the VTK data types
@@ -45,11 +45,12 @@ structure using VTK Python's bindings, one would write the following:
 
 As you can see, there is quite a bit of boilerplate that goes into
 the creation of a simple :vtk:`vtkImageData` dataset. PyVista provides
-much more concise syntax that is more "Pythonic." The equivalent code in
+much more concise syntax that is more "Pythonic". The equivalent code in
 PyVista is:
 
 
-.. code-block:: python
+.. pyvista-plot::
+   :context:
 
    >>> import pyvista as pv
    >>> import numpy as np
@@ -73,7 +74,7 @@ Here, PyVista has done several things for us:
    "tuples" to describe the shape of the data (where it sits in space)
    and "components" to describe the type of data (1 = scalars/scalar
    fields, 2 = vectors/vector fields, n = tensors/tensor
-   fields). Here, shape and values are stored concretely in one
+   fields). Here, both shape and values are stored concretely in one
    variable.
 
 #. :class:`pyvista.ImageData` wraps :vtk:`vtkImageData`, just with a
@@ -104,7 +105,7 @@ Here, PyVista has done several things for us:
    example, the first argument to ``SetValue()`` was written as
    ``x*300 + y``. Here, numpy takes care of this for us quite nicely
    and it's made more explicit in the code, following the Python best
-   practice of "Explicit is better than implicit."
+   practice of "Explicit is better than implicit".
 
 Finally, with PyVista, each geometry class contains methods that allow
 you to immediately plot the mesh without also setting up the plot.
@@ -127,28 +128,9 @@ For example, in VTK you would have to do:
 
 However, with PyVista you only need:
 
-.. code-block:: python
-
-    grid.plot(cpos='xy', show_scalar_bar=False, cmap='coolwarm')
-
-..
-   This is here so we can generate a plot. We used to have to repeat
-   everything since jupyter-execute didn't allow for
-   plain text between command blocks. We have to try again with pyvista-plot.
-
 .. pyvista-plot::
-   :include-source: false
    :context:
 
-   import pyvista as pv
-   pv.set_plot_theme('document')
-   pv.set_jupyter_backend('static')
-   import numpy as np
-   xi = np.arange(300)
-   x, y = np.meshgrid(xi, xi)
-   values = 127.5 + (1.0 + np.sin(x/25.0)*np.cos(y/25.0))
-   grid = pv.ImageData(dimensions=(300, 300, 1))
-   grid.point_data["values"] = values.flatten(order="F")
    grid.plot(cpos='xy', show_scalar_bar=False, cmap='coolwarm')
 
 
@@ -337,3 +319,12 @@ the flexibility of PyVista and the raw power of VTK.
 .. note::
    You can use :func:`pyvista.Polygon` for a one line replacement of
    the above VTK code.
+
+Configuring the VTK Interface
+-----------------------------
+PyVista has several runtime controls for the underlying VTK library,
+such as :func:`pyvista.vtk_snake_case` for access to VTK's own
+``snake_case`` attributes on wrapped objects,
+:func:`pyvista.vtk_verbosity` for VTK's logging verbosity, and
+``pv.global_config.show_vtk_api`` for showing the VTK-inherited API
+in tab completion. See :ref:`configuration` for all of them.

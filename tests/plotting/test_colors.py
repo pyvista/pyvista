@@ -184,7 +184,7 @@ def test_color():
 @pytest.mark.parametrize('opacity', [275, -50, 2.4, -1.2, '#zz'])
 def test_color_invalid_opacity(opacity):
     match = (
-        'Must be an integer, float or string.  For example:'
+        'Must be an integer, float, or string.  For example:'
         "\n\t\topacity='1.0'"
         "\n\t\topacity='255'"
         "\n\t\topacity='#FF'"
@@ -341,7 +341,7 @@ def _vtk_named_color_as_hex(name: str) -> str:
     # Get expected hex value from vtkNamedColors
     color3ub = _vtk.vtkNamedColors().GetColor3ub(name)
     int_rgb = (color3ub.GetRed(), color3ub.GetGreen(), color3ub.GetBlue())
-    if int_rgb == (0.0, 0.0, 0.0) and name != 'black':
+    if int_rgb == (0.0, 0.0, 0.0) and name != 'black':  # pragma: no cover -- failure path
         pytest.fail(f"Color '{name}' is not a valid VTK color.")
     return pv.Color(int_rgb).hex_rgb
 
@@ -372,7 +372,7 @@ def test_color_synonyms(color_synonym):
 
 def test_unique_colors():
     duplicates = np.rec.find_duplicate(pv.hex_colors.values())
-    if len(duplicates) > 0:
+    if len(duplicates) > 0:  # pragma: no cover -- failure path
         pytest.fail(f'The following colors have duplicate definitions: {duplicates}.')
 
     assert len(pv.hex_colors) == len(_ALL_ANNOTATED_COLORS)

@@ -1,4 +1,4 @@
-"""Contains pyvista_ndarray a numpy ndarray type used in pyvista."""
+"""Contains ``pyvista_ndarray`` a NumPy ``ndarray`` type used in PyVista."""
 
 from __future__ import annotations
 
@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 
 
 class pyvista_ndarray(_NoNewAttrMixin, np.ndarray):  # numpydoc ignore=PR02  # noqa: N801
-    """A ndarray which references the owning dataset and the underlying vtk array.
+    """A ``ndarray`` which references the owning dataset and the underlying vtk array.
 
     This array can be acted upon just like a :class:`numpy.ndarray`.
 
@@ -126,7 +126,7 @@ class pyvista_ndarray(_NoNewAttrMixin, np.ndarray):  # numpydoc ignore=PR02  # n
             dataset.Get().Modified()
 
     def __array_wrap__(self: pyvista_ndarray, out_arr, context=None, return_scalar: bool = False):  # noqa: ANN001, ANN204, FBT001, FBT002
-        """Return a numpy scalar if array is 0d.
+        """Return a NumPy scalar if array is 0d.
 
         See https://github.com/numpy/numpy/issues/5819
 

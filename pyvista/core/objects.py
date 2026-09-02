@@ -139,7 +139,7 @@ class Table(DataObject, _vtk.vtkTable):
         return self.n_columns
 
     def _row_array(self, name=None):
-        """Return row scalars of a vtk object.
+        """Return row scalars of a VTK object.
 
         Parameters
         ----------
@@ -149,7 +149,7 @@ class Table(DataObject, _vtk.vtkTable):
         Returns
         -------
         numpy.ndarray
-            Numpy array of the row.
+            NumPy array of the row.
 
         """
         return self.row_arrays.get_array(name)
@@ -259,7 +259,7 @@ class Table(DataObject, _vtk.vtkTable):
         return self[index]
 
     def __setitem__(self, name, scalars) -> None:
-        """Add/set an array in the row_arrays."""
+        """Add/set an array in the ``row_arrays``."""
         self.row_arrays[name] = scalars
 
     def _remove_array(self, _, key) -> None:
@@ -346,7 +346,7 @@ class Table(DataObject, _vtk.vtkTable):
     def to_arrow(self) -> pyarrow.Table:
         """Return this table as a :class:`pyarrow.Table`.
 
-        Each row array becomes a column with the same name and dtype.
+        Each row array becomes a column with the same name and ``dtype``.
 
         Requires :mod:`pyarrow`.
 

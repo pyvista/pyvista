@@ -13,14 +13,17 @@ including file and dataset metadata.
 
 Examples
 --------
->>> from pyvista import examples
->>> mesh = examples.download_saddle_surface()
->>> mesh.plot()
+.. pyvista-plot::
+
+   >>> from pyvista import examples
+   >>> mesh = examples.download_saddle_surface()
+   >>> mesh.plot()
 
 """
 
 from __future__ import annotations
 
+import contextlib
 import functools
 import importlib.util
 import logging
@@ -30,12 +33,21 @@ from pathlib import PureWindowsPath
 import shutil
 import sys
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import Literal
 from typing import cast
 from typing import overload
 
 import numpy as np
 import pooch
+
+try:
+    import filelock
+
+    _HAS_FILELOCK = True
+except ImportError:  # pragma: no cover
+    # Only needed to serialize parallel downloads
+    _HAS_FILELOCK = False
 
 import pyvista as pv
 from pyvista import _vtk
@@ -53,6 +65,8 @@ from pyvista.examples._dataset_loader import _MultiFileDownloadableDatasetLoader
 from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from numpy import ndarray
 
     from pyvista import ExplicitStructuredGrid
@@ -74,6 +88,8 @@ POOCH_LOGGER.setLevel(logging.CRITICAL)
 CACHE_VERSION = 3
 
 _USERDATA_PATH_VARNAME = 'PYVISTA_USERDATA_PATH'
+_DATA_VARNAME = 'PYVISTA_DATA'
+# deprecated 0.49.0, convert to error in 0.52.0, remove 0.53.0
 _VTK_DATA_VARNAME = 'PYVISTA_VTK_DATA'
 
 _DEFAULT_USER_DATA_PATH = str(pooch.os_cache(f'pyvista_{CACHE_VERSION}'))  # type: ignore[attr-defined]
@@ -85,15 +101,31 @@ def _warn_invalid_dir_not_used(path: Path, env_var: str):
     warn_external(msg)
 
 
+def _get_data_varname() -> str | None:
+    """Return the name of the set data-source variable, preferring the current name."""
+    if _DATA_VARNAME in os.environ:
+        return _DATA_VARNAME
+    if _VTK_DATA_VARNAME in os.environ:
+        from pyvista.core.errors import PyVistaDeprecationWarning  # noqa: PLC0415
+
+        msg = (
+            f"The '{_VTK_DATA_VARNAME}' environment variable is deprecated; "
+            f"use '{_DATA_VARNAME}' instead."
+        )
+        warn_external(msg, PyVistaDeprecationWarning)
+        return _VTK_DATA_VARNAME
+    return None
+
+
 def _get_vtk_data_source() -> tuple[str, bool]:
     # If available, a local pyvista/data instance will be used for examples
     # Set default output
     source = _DEFAULT_VTK_DATA_SOURCE
     file_cache = False
-    if _VTK_DATA_VARNAME in os.environ:
-        path = Path(os.environ[_VTK_DATA_VARNAME])
+    if (varname := _get_data_varname()) is not None:
+        path = Path(os.environ[varname])
         if not path.is_dir():
-            _warn_invalid_dir_not_used(path, _VTK_DATA_VARNAME)
+            _warn_invalid_dir_not_used(path, varname)
         else:
             if path.name != 'Data':
                 # append 'Data' if user does not provide it
@@ -179,7 +211,7 @@ def _gltf_loader(name: str):
     return _SingleFileDownloadableDatasetLoader(
         paths[name],
         base_url=base_url,
-        download_func=fetcher.fetch,
+        download_func=functools.partial(_locked_fetch, fetcher),
     )
 
 
@@ -228,7 +260,7 @@ def file_from_files(target_path: str, fnames: list[str]) -> str:
 def _file_copier(input_file, output_file, *_, **__):  # noqa: ANN001
     """Copy a file from a local directory to the output path."""
     if not Path(input_file).is_file():
-        msg = f"'{input_file}' not found within PYVISTA_VTK_DATA '{SOURCE}'"
+        msg = f"'{input_file}' not found within {_DATA_VARNAME} '{SOURCE}'"
         raise FileNotFoundError(msg)
     shutil.copy(input_file, output_file)
 
@@ -267,9 +299,40 @@ def download_file(filename: str) -> str | list[str]:
         return _download_file(filename)
 
 
+@contextlib.contextmanager
+def _file_lock(path: Path) -> Iterator[None]:
+    """Hold an advisory cross-process lock while ``path`` is downloaded."""
+    if not _HAS_FILELOCK:
+        yield
+        return
+    try:
+        lock_path = Path(f'{path}.lock')
+        lock_path.parent.mkdir(parents=True, exist_ok=True)
+        lock = filelock.FileLock(lock_path)
+        lock.acquire()
+    except OSError:
+        # Cannot create the lock; proceed unlocked and let pooch report any real errors
+        yield
+        return
+    try:
+        yield
+    finally:
+        lock.release()
+
+
+def _locked_fetch(fetcher: Any, filename: str, **kwargs):
+    """Fetch with a per-file lock so parallel processes cannot corrupt a shared download."""
+    with _file_lock(fetcher.abspath / filename):
+        return fetcher.fetch(filename, **kwargs)
+
+
 def _download_file(filename: str):
     """Download a file using pooch."""
-    return FETCHER.fetch(
+    # Pre-create the parent dir: pooch's check-then-makedirs races under parallel downloads
+    with contextlib.suppress(OSError):
+        (FETCHER.abspath / filename).parent.mkdir(parents=True, exist_ok=True)
+    return _locked_fetch(
+        FETCHER,
         filename,
         processor=pooch.Unzip() if filename.endswith('.zip') else None,  # type: ignore[attr-defined]
         downloader=_file_copier if _FILE_CACHE else None,
@@ -305,7 +368,7 @@ def _download_archive(filename: str, target_file: str | None = None):
 def _download_archive_file_or_folder(filename: str, target_file: str | None = None):
     """Download an archive.
 
-    This function is similar to _download_archive, but also allows
+    This function is similar to ``_download_archive``, but also allows
     setting ``target_file`` as a folder. The target folder path must be
     fully specified relative to the root path of the archive.
 
@@ -401,7 +464,7 @@ def download_masonry_texture(load: bool = True) -> Texture | str:  # noqa: FBT00
 
     Examples
     --------
-    Create plot the masonry testure on a surface.
+    Create plot the masonry texture on a surface.
 
     >>> import pyvista as pv
     >>> from pyvista import examples
@@ -556,7 +619,7 @@ def download_usa(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
 def download_usa(load: Literal[False]) -> str: ...
 @_deprecate_positional_args
 def download_usa(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
-    """Download usa dataset.
+    """Download USA dataset.
 
     Parameters
     ----------
@@ -1440,7 +1503,7 @@ def download_washington_bust(*, load: bool = True) -> PolyData | str:
     Domain Dedication <https://creativecommons.org/publicdomain/zero/1.0/>`_:
     *"This media file is in the public domain (free of copyright
     restrictions). You can copy, modify, and distribute this work without
-    contacting the Smithsonian."*
+    contacting the Smithsonian"*.
 
     Source: https://3d.si.edu/
 
@@ -1489,7 +1552,7 @@ def download_lincoln_life_mask(*, load: bool = True) -> PolyData | str:
     Domain Dedication <https://creativecommons.org/publicdomain/zero/1.0/>`_:
     *"This media file is in the public domain (free of copyright
     restrictions). You can copy, modify, and distribute this work without
-    contacting the Smithsonian."*
+    contacting the Smithsonian"*.
 
     Source: https://3d.si.edu/
 
@@ -3394,7 +3457,7 @@ def download_honolulu(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT0
 def download_honolulu(load: Literal[False]) -> str: ...
 @_deprecate_positional_args
 def download_honolulu(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
-    """Download honolulu dataset.
+    """Download Honolulu dataset.
 
     Parameters
     ----------
@@ -3473,7 +3536,7 @@ def download_tri_quadratic_hexahedron(load: Literal[True] = True) -> Unstructure
 def download_tri_quadratic_hexahedron(load: Literal[False]) -> str: ...
 @_deprecate_positional_args
 def download_tri_quadratic_hexahedron(load: bool = True) -> UnstructuredGrid | str:  # noqa: FBT001, FBT002
-    """Download tri quadratic hexahedron dataset.
+    """Download triquadratic hexahedron dataset.
 
     Parameters
     ----------
@@ -3860,7 +3923,7 @@ def download_grey_nurse_shark(load: bool = True) -> PolyData | str:  # noqa: FBT
 
         The ShareAlike clause requires derivative works to be distributed
         under the same license. Incorporating this mesh into a proprietary
-        or differently-licensed work may be restricted.
+        or differently licensed work may be restricted.
 
     Required attribution: *Grey Nurse Shark by rogerpeng1
     (thingiverse.com/thing:137954), licensed under CC BY-SA.*
@@ -4544,7 +4607,7 @@ def download_damavand_volcano(load: Literal[True] = True) -> ImageData: ...  # n
 def download_damavand_volcano(load: Literal[False]) -> str: ...
 @_deprecate_positional_args
 def download_damavand_volcano(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
-    """Download damavand volcano model.
+    """Download Damavand volcano model.
 
     Parameters
     ----------
@@ -4565,7 +4628,7 @@ def download_damavand_volcano(load: bool = True) -> ImageData | str:  # noqa: FB
     >>> import pyvista as pv
     >>> dataset = examples.download_damavand_volcano()
 
-    Use :meth:`~pyvista.ImageDataFilters.resample` to downsample it before plotting.
+    Use :meth:`~pyvista.ImageDataFilters.resample` to down-sample it before plotting.
 
     >>> dataset = dataset.resample(0.5)
     >>> dataset.dimensions
@@ -4690,7 +4753,7 @@ def download_antarctica_velocity(load: Literal[True] = True) -> PolyData: ...  #
 def download_antarctica_velocity(load: Literal[False]) -> str: ...
 @_deprecate_positional_args
 def download_antarctica_velocity(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
-    """Download the antarctica velocity simulation results.
+    """Download the Antarctica velocity simulation results.
 
     Parameters
     ----------
@@ -5095,7 +5158,7 @@ def download_cubemap_space_16k(load: bool = True) -> Texture | str:  # noqa: FBT
 
     Notes
     -----
-    This is a 38MB file and may take a while to download.
+    This is a 38 MB file and may take a while to download.
 
     Examples
     --------
@@ -6273,7 +6336,7 @@ def download_pump_bracket(load: bool = True) -> UnstructuredGrid | str:  # noqa:
       Z Bounds:   -2.500e-02, 2.500e-02
       N Arrays:   10
 
-    Plot the displacement of the 4th mode shape as scalars.
+    Plot the displacement of the fourth mode shape as scalars.
 
     >>> cpos = pv.CameraPosition(
     ...     position=(0.744, -0.502, -0.83),
@@ -6519,7 +6582,7 @@ def download_cgns_structured(load: bool = True) -> MultiBlock | str:  # noqa: FB
     -------
     output : pyvista.MultiBlock | str
         Structured, 12 block, 3-D constricting channel, with example use of
-        Family_t for BCs (ADF type). If ``load`` is ``False``, then the path of the
+        ``Family_t`` for BCs (ADF type). If ``load`` is ``False``, then the path of the
         example CGNS file is returned.
 
     Examples
@@ -6760,7 +6823,7 @@ def download_parched_canal_4k(load: bool = True) -> Texture | str:  # noqa: FBT0
         >>> texture.dimensions
         (4096, 2048)
 
-        Use :meth:`~pyvista.ImageDataFilters.resample` to downsample the texture's
+        Use :meth:`~pyvista.ImageDataFilters.resample` to down-sample the texture's
         underlying image before plotting.
 
         >>> _ = texture.to_image().resample(0.25, inplace=True)
@@ -7906,7 +7969,7 @@ def download_dikhololo_night(load: Literal[True] = True) -> Texture: ...  # noqa
 def download_dikhololo_night(load: Literal[False]) -> str: ...
 @_deprecate_positional_args
 def download_dikhololo_night(load: bool = True) -> Texture | str:  # noqa: FBT001, FBT002
-    """Download and read the dikholo night hdr texture example.
+    """Download and read the dikhololo night HDR texture example.
 
     Files hosted at https://polyhaven.com/
 
@@ -7931,7 +7994,7 @@ def download_dikhololo_night(load: bool = True) -> Texture | str:  # noqa: FBT00
         >>> texture.dimensions
         (4096, 2048)
 
-        Use :meth:`~pyvista.ImageDataFilters.resample` to downsample the texture's
+        Use :meth:`~pyvista.ImageDataFilters.resample` to down-sample the texture's
         underlying image before plotting.
 
         >>> _ = texture.to_image().resample(0.25, inplace=True)
@@ -8407,7 +8470,7 @@ def download_whole_body_ct_male(
     r"""Download a CT image of a male subject with 117 segmented anatomic structures.
 
     This dataset is subject ``'s1397'`` from the TotalSegmentator dataset, version 2.0.1,
-    available from `zenodo <https://zenodo.org/records/10047292>`_. See the
+    available from `Zenodo <https://zenodo.org/records/10047292>`_. See the
     original paper for details:
 
     Jakob Wasserthal et al., TotalSegmentator: Robust Segmentation of 104 Anatomic
@@ -8419,7 +8482,7 @@ def download_whole_body_ct_male(
 
     -   ``'segmentations'``: :class:`~pyvista.MultiBlock` with 117 :class:`~pyvista.ImageData`
         blocks, each containing a binary segmentation label. The blocks are named by
-        their anatomic structure (e.g. ``'heart'``) and are sorted alphabetically. See the
+        their anatomic structure (for example, ``'heart'``) and are sorted alphabetically. See the
         examples below for a complete list label names.
 
     -   ``'label_map'``: :class:`~pyvista.ImageData` with a label map array. The
@@ -8446,7 +8509,7 @@ def download_whole_body_ct_male(
 
     .. versionchanged:: 0.45
 
-        A downsampled version of this dataset with dimensions ``(160, 160, 273)``
+        A down-sampled version of this dataset with dimensions ``(160, 160, 273)``
         is now returned. Previously, a high-resolution version with dimensions
         ``(320, 320, 547)`` was returned. Use ``high_resolution=True`` for the
         high-resolution version.
@@ -8556,9 +8619,25 @@ def download_whole_body_ct_male(
 
 
 class _WholeBodyCTUtilities:
+    """Helpers for loading the whole body CT datasets."""
+
     @staticmethod
     def import_colors_dict(module_path) -> dict[str, tuple[int, int, int]]:  # noqa: ANN001
         # Import `colors` dict from downloaded `colors.py` module
+        """Import the ``colors`` dict from the downloaded ``colors.py`` module.
+
+        Parameters
+        ----------
+        module_path : str
+            Path of the downloaded ``colors.py`` module.
+
+        Returns
+        -------
+        dict[str, tuple[int, int, int]]
+            Mapping from label names to RGB colors.
+
+
+        """
         module_name = 'colors'
         spec = importlib.util.spec_from_file_location(module_name, module_path)
         if spec is not None:
@@ -8575,6 +8654,18 @@ class _WholeBodyCTUtilities:
     @staticmethod
     def add_metadata(dataset: MultiBlock, colors_module_path: str) -> None:
         # Add color and id mappings to dataset
+        """Add color and id mappings to the dataset's user dict.
+
+        Parameters
+        ----------
+        dataset : pyvista.MultiBlock
+            Dataset to annotate.
+
+        colors_module_path : str
+            Path of the downloaded ``colors.py`` module.
+
+
+        """
         segmentations = cast('pv.MultiBlock', dataset['segmentations'])
         label_names = sorted(segmentations.keys())
         names_to_colors = _WholeBodyCTUtilities.import_colors_dict(colors_module_path)
@@ -8589,6 +8680,20 @@ class _WholeBodyCTUtilities:
     def label_map_from_masks(masks: MultiBlock) -> ImageData:
         # Create label map array from segmentation masks
         # Initialize array with background values (zeros)
+        """Create a label map image from segmentation masks.
+
+        Parameters
+        ----------
+        masks : pyvista.MultiBlock
+            Segmentation masks, one block per label.
+
+        Returns
+        -------
+        pyvista.ImageData
+            Label map image.
+
+
+        """
         n_points = cast('pv.ImageData', masks[0]).n_points
         label_map_array = np.zeros((n_points,), dtype=np.uint8)
         label_names = sorted(masks.keys())
@@ -8604,6 +8709,20 @@ class _WholeBodyCTUtilities:
 
     @staticmethod
     def load_func(files):  # noqa: ANN001, ANN205
+        """Load the dataset and add its label map and metadata.
+
+        Parameters
+        ----------
+        files : sequence
+            Loaders for the dataset file and the colors module.
+
+        Returns
+        -------
+        pyvista.MultiBlock
+            Loaded dataset with label map and metadata.
+
+
+        """
         dataset_file, colors_module = files
         dataset = dataset_file.load()
 
@@ -8617,6 +8736,20 @@ class _WholeBodyCTUtilities:
     @staticmethod
     def files_func(name):  # noqa: ANN001, ANN205
         # Resampled version is saved as a multiblock
+        """Return the file-loading function for the named dataset variant.
+
+        Parameters
+        ----------
+        name : str
+            Name of the dataset variant.
+
+        Returns
+        -------
+        callable
+            Function returning the file loaders.
+
+
+        """
         target_file = f'{name}.vtm' if 'resampled' in name else name
 
         def func():
@@ -8653,7 +8786,7 @@ def download_whole_body_ct_female(
     r"""Download a CT image of a female subject with 117 segmented anatomic structures.
 
     This dataset is subject ``'s1380'`` from the TotalSegmentator dataset, version 2.0.1,
-    available from `zenodo <https://zenodo.org/records/10047292>`_. See the
+    available from `Zenodo <https://zenodo.org/records/10047292>`_. See the
     original paper for details:
 
     Jakob Wasserthal et al., TotalSegmentator: Robust Segmentation of 104 Anatomic
@@ -8665,7 +8798,7 @@ def download_whole_body_ct_female(
 
     -   ``'segmentations'``: :class:`~pyvista.MultiBlock` with 117 :class:`~pyvista.ImageData`
         blocks, each containing a binary segmentation label. The blocks are named by
-        their anatomic structure (e.g. ``'heart'``) and are sorted alphabetically. See the
+        their anatomic structure (for example, ``'heart'``) and are sorted alphabetically. See the
         examples below for a complete list label names.
 
     -   ``'label_map'``: :class:`~pyvista.ImageData` with a label map array. The
@@ -8692,7 +8825,7 @@ def download_whole_body_ct_female(
 
     .. versionchanged:: 0.45
 
-        A downsampled version of this dataset with dimensions ``(160, 160, 273)``
+        A down-sampled version of this dataset with dimensions ``(160, 160, 273)``
         is now returned. Previously, a high-resolution version with dimensions
         ``(320, 320, 547)`` was returned. Use ``high_resolution=True`` for the
         high-resolution version.
@@ -9098,7 +9231,7 @@ _dataset_caffeine = _SingleFileDownloadableDatasetLoader('caffeine.pdb')
 def download_e07733s002i009(
     load: bool = True,  # noqa: FBT001,FBT002
 ) -> ImageData | str:  # pragma: no cover
-    """Download a e07733s002i009 image.
+    """Download an ``e07733s002i009`` image.
 
     .. versionadded:: 0.44.0
 

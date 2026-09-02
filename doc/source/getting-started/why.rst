@@ -29,11 +29,11 @@ Compare two approaches for loading and plotting a surface mesh from a
 file:
 
 
-Plotting a Mesh using Python's VTK
+Plotting a Mesh Using Python's VTK
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Using this `example
-<https://examples.vtk.org/site/Python/IO/ReadSTL/>`_ as
-a baseline, loading and plotting an STL file requires a lot of code
+This `example
+<https://examples.vtk.org/site/Python/IO/ReadSTL/>`_ shows that
+loading and plotting an STL file requires a lot of code
 when using only the `vtk`_ library. PyVista on the other hand only
 requires a few lines of code.
 
@@ -46,25 +46,27 @@ requires a few lines of code.
    ...     (-0.01684, 0.110154, -0.0015369),
    ...     (-0.15446, 0.939031, -0.3071841),
    ... ]
+   >>> from pyvista import examples
+   >>> examples.download_bunny().save('bunny.stl')
 
 +----------------------------------------------------+-------------------------------------+
 | Read and plot STL file using `vtk`_                | Read an STL file using PyVista      |
 +====================================================+=====================================+
-| .. code-block:: python                             | .. code-block:: python              |
-|                                                    |                                     |
-|    import vtk                                      |    import pyvista as pv             |
-|    reader = vtk.vtkSTLReader()                     |    mesh = pv.read('bunny.stl')      |
-|    reader.SetFileName("bunny.stl")                 |    mesh.plot()                      |
-|    mapper = vtk.vtkDataSetMapper()                 |                                     |
-|    output_port = reader.GetOutputPort()            | .. pyvista-plot::                   |
-|    mapper.SetInputConnection(output_port)          |    :include-source: False           |
-|    actor = vtk.vtkActor()                          |    :context:                        |
-|    actor.SetMapper(mapper)                         |                                     |
-|    ren = vtk.vtkRenderer()                         |    from pyvista import examples     |
-|    renWin = vtk.vtkRenderWindow()                  |    mesh = examples.download_bunny() |
-|    renWin.AddRenderer(ren)                         |    mesh.plot(cpos=bunny_cpos)       |
-|    iren = vtk.vtkRenderWindowInteractor()          |                                     |
-|    style = vtk.vtkInteractorStyleTrackballCamera() |                                     |
+| .. code-block:: python                             | .. pyvista-plot::                   |
+|                                                    |    :nofigs:                         |
+|    import vtk                                      |    :context:                        |
+|    reader = vtk.vtkSTLReader()                     |                                     |
+|    reader.SetFileName("bunny.stl")                 |    import pyvista as pv             |
+|    mapper = vtk.vtkDataSetMapper()                 |    mesh = pv.read('bunny.stl')      |
+|    output_port = reader.GetOutputPort()            |    mesh.plot()                      |
+|    mapper.SetInputConnection(output_port)          |                                     |
+|    actor = vtk.vtkActor()                          | .. pyvista-plot::                   |
+|    actor.SetMapper(mapper)                         |    :include-source: False           |
+|    ren = vtk.vtkRenderer()                         |    :context:                        |
+|    renWin = vtk.vtkRenderWindow()                  |                                     |
+|    renWin.AddRenderer(ren)                         |    from pyvista import examples     |
+|    iren = vtk.vtkRenderWindowInteractor()          |    mesh = examples.download_bunny() |
+|    style = vtk.vtkInteractorStyleTrackballCamera() |    mesh.plot(cpos=bunny_cpos)       |
 |    iren.SetRenderWindow(renWin)                    |                                     |
 |    iren.SetInteractorStyle(style)                  |                                     |
 |    ren.AddActor(actor)                             |                                     |
@@ -115,7 +117,7 @@ to a description of how to use those methods:
 .. figure:: ../images/gifs/documentation.gif
 
 
-Interfacing with Other Libraries
+Interfacing With Other Libraries
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 PyVista is heavily dependent on `numpy <https://numpy.org/>`_ and uses
 it to represent point, cell, field, and other data from the VTK
@@ -134,7 +136,7 @@ And these points can be operated on as if it was a NumPy array,
 all without losing connection to the underlying VTK data array.
 
 At the same time, a variety of PyVista objects can be generated
-directly from numpy arrays. For example, below we generate a vector
+directly from NumPy arrays. For example, below we generate a vector
 field of arrows using :func:`numpy.meshgrid`:
 
 .. pyvista-plot::

@@ -59,7 +59,7 @@ gen-dataset-gallery:
 	@if [ -d "$(SOURCEDIR)/api/examples/dataset-gallery" ]; then \
 		echo "Dataset gallery directory already exists, skipping. Run clean-dataset-gallery to clear."; \
 	else \
-		mkdir -p "$(SOURCEDIR)/api/examples/dataset-gallery" && cd "$(SOURCEDIR)" && uv run python make_tables.py; \
+		mkdir -p "$(SOURCEDIR)/api/examples/dataset-gallery" && cd "$(SOURCEDIR)" && uv run python make_tables.py -j auto; \
 	fi
 
 gen-external-examples:

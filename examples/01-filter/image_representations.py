@@ -39,7 +39,7 @@ points_volume.point_data['Data'] = data_array
 points_volume.plot(show_edges=True)
 
 # %%#
-# However, in many applications (e.g. 3D medical imaging), the scalar data arrays
+# However, in many applications (for example, 3D medical imaging), the scalar data arrays
 # represent discretized samples at the centers of voxels. As such, it may
 # be more appropriate to represent the data as eight voxel cells instead of
 # eight points. We can use :meth:`~pyvista.ImageDataFilters.points_to_cells` to
@@ -77,7 +77,7 @@ pl.camera.elevation = 25
 pl.show()
 
 # %%#
-# As long as only one kind of scalar data is used (i.e. either point or cell
+# As long as only one kind of scalar data is used (that is, either point or cell
 # data, but not both), it is possible to move between representations without
 # loss of data.
 
@@ -86,7 +86,7 @@ array_after = points_volume.points_to_cells().cells_to_points().active_scalars
 np.array_equal(array_before, array_after)
 
 # %%#
-# Point Filters with Image Data
+# Point Filters With Image Data
 # -----------------------------
 # Use a point representation of the image when working with point-based
 # filters such as :meth:`~pyvista.ImageDataFilters.image_threshold`. If the
@@ -124,7 +124,7 @@ points_ithresh_as_cells.plot(show_edges=True)
 # The binary data is now correctly visualized as binary data.
 
 # %%#
-# Cell Filters with Image Data
+# Cell Filters With Image Data
 # ----------------------------
 # Use a cell representation of the image when working with cell-based filters
 # such as :meth:`~pyvista.DataSetFilters.threshold`. If the image only has point

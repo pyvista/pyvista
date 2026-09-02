@@ -40,17 +40,17 @@ if TYPE_CHECKING:
 
 
 def _get_vtk_id_type() -> type[np.int32 | np.longlong]:
-    """Return the numpy datatype responding to :vtk:`vtkIdTypeArray`.
+    """Return the NumPy datatype responding to :vtk:`vtkIdTypeArray`.
 
     The 64-bit case returns :class:`numpy.longlong` (C ``long long``) rather than
     :class:`numpy.int64`. ``vtkIdType`` is C ``long long`` on every platform, but on
-    LP64 (Linux/macOS) numpy binds the name ``int64`` to C ``long`` instead, which is
-    a *distinct* scalar type. Since VTK 9.7 the numpy-to-VTK mapping follows the
+    LP64 (Linux/macOS) NumPy binds the name ``int64`` to C ``long`` instead, which is
+    a *distinct* scalar type. Since VTK 9.7 the NumPy-to-VTK mapping follows the
     underlying C type, so ``np.int64`` there resolves to ``VTK_LONG`` and only
     ``np.longlong`` resolves to ``VTK_ID_TYPE``. ``longlong`` maps to ``VTK_LONG_LONG``
     on all supported VTK versions and platforms, so it is correct either way.
 
-    The two compare equal as dtypes and have identical width, so this is invisible to
+    The two compare equal as ``dtypes`` and have identical width, so this is invisible to
     value comparisons; it only affects which VTK array class conversions produce.
     """
     VTK_ID_TYPE_SIZE = _vtk.vtkIdTypeArray().GetDataTypeSize()
@@ -95,7 +95,7 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
 
     Examples
     --------
-    Get the 0-th cell from a :class:`pyvista.PolyData`.
+    Get cell 0 from a :class:`pyvista.PolyData`.
 
     >>> import pyvista as pv
     >>> mesh = pv.Sphere()
@@ -112,7 +112,7 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
       Y Bounds:   0.000e+00, 1.124e-02
       Z Bounds:   -5.000e-01, -4.971e-01
 
-    Get the 0-th cell from a :class:`pyvista.UnstructuredGrid`.
+    Get cell 0 from a :class:`pyvista.UnstructuredGrid`.
 
     >>> from pyvista import examples
     >>> mesh = examples.load_hexbeam()
@@ -433,7 +433,7 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
         return _vtk.vtk_to_numpy(self.GetPoints().GetData())
 
     def get_edge(self: Self, index: int) -> Cell:
-        """Get the i-th edge composing the cell.
+        """Get the edge at ``index`` composing the cell.
 
         Parameters
         ----------
@@ -509,7 +509,7 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
         return [self.get_face(i) for i in range(self.n_faces)]
 
     def get_face(self: Self, index: int) -> Cell:
-        """Get the i-th face composing the cell.
+        """Get the face at ``index`` composing the cell.
 
         Parameters
         ----------
@@ -660,6 +660,23 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
         return type(self)(self, deep=deep)
 
 
+def _expected_legacy_cell_array_size(cells: NumpyArray[int]) -> int | None:
+    """Return the array size a well-formed legacy ``[npts, id0, id1, ...]`` array implies.
+
+    Returns ``None`` if a negative point count makes the layout uninterpretable.
+    """
+    cells = np.ravel(cells)
+    size = 0
+    pos = 0
+    while pos < cells.size:
+        npts = int(cells[pos])
+        if npts < 0:
+            return None
+        size += 1 + npts
+        pos += 1 + npts
+    return size
+
+
 class CellArray(
     _NoNewAttrMixin,
     DisableVtkSnakeCase,
@@ -669,15 +686,15 @@ class CellArray(
     """PyVista wrapping of :vtk:`vtkCellArray`.
 
     Provides convenience functions to simplify creating a CellArray from
-    a numpy array or list.
+    a NumPy array or list.
 
     Parameters
     ----------
     cells : np.ndarray or list, optional
-        Import an array of data with the legacy :vtk:`vtkCellArray` layout, e.g.
-        ``{ n0, p0_0, p0_1, ..., p0_n, n1, p1_0, p1_1, ..., p1_n, ... }``
-        Where n0 is the number of points in cell 0, and pX_Y is the Y'th
-        point in cell X.
+        Import an array of data with the legacy :vtk:`vtkCellArray` layout: each
+        cell is stored as its point count followed by that many point indices,
+        with cells concatenated back-to-back (for example ``[3, 0, 1, 2, 4, 0, 1, 2, 3]``
+        for a triangle followed by a quad).
 
     Examples
     --------
@@ -708,12 +725,12 @@ class CellArray(
 
     @property
     def cells(self: Self) -> NumpyArray[int]:
-        """Return a numpy array of the cells.
+        """Return a NumPy array of the cells.
 
         Returns
         -------
         np.ndarray
-            A numpy array of the cells.
+            A NumPy array of the cells.
 
         """
         cells = _vtk.vtkIdTypeArray()
@@ -724,15 +741,25 @@ class CellArray(
     def cells(self: Self, cells: CellsLike) -> None:
         cells = np.asarray(cells)
         vtk_idarr = numpy_to_idarr(cells, deep=False, return_ind=False)
-        self.ImportLegacyFormat(vtk_idarr)
+        output = self.ImportLegacyFormat(vtk_idarr)
 
-        imported_size = self.GetNumberOfCells() + self.GetNumberOfConnectivityIds()
-
+        # VTK's ImportLegacyFormat started returning a bool (success/corrupt) instead of None
+        # https://gitlab.kitware.com/vtk/vtk/-/commit/82af9fa1e5a0ea5c0a827e91672cd42fe09575de
+        size_is_valid = (
+            self.GetNumberOfCells() + self.GetNumberOfConnectivityIds() == cells.size
+            if output is None  # type: ignore[redundant-expr]
+            else output
+        )
         # https://github.com/pyvista/pyvista/pull/5404
-        if imported_size != cells.size:
+        if not size_is_valid:
+            expected_size = _expected_legacy_cell_array_size(cells)
+            problem = (
+                f'Size ({cells.size}) does not match expected size ({expected_size}).'
+                if expected_size is not None
+                else 'A cell has a negative number of points.'
+            )
             msg = (
-                f'Cell array size is invalid. Size ({cells.size}) does not'
-                f' match expected size ({imported_size}). This is likely'
+                f'Cell array size is invalid. {problem} This is likely'
                 ' due to invalid connectivity array.'
             )
             raise CellSizeError(msg)
@@ -998,12 +1025,12 @@ class CellArray(
 
     @property
     def regular_cells(self: Self) -> NumpyArray[int]:
-        """Return a (n_cells, cell_size)-shaped array of point indices for equal-sized faces.
+        """Return a (``n_cells``, cell_size)-shaped array of point indices for equal-sized faces.
 
         Returns
         -------
         numpy.ndarray
-            Array of face indices of shape (n_cells, cell_size).
+            Array of face indices of shape (``n_cells``, ``cell_size``).
 
         Notes
         -----
@@ -1023,7 +1050,7 @@ class CellArray(
     ) -> CellArray:
         """Construct a ``CellArray`` from cells which all have the same size.
 
-        Use this method when every cell has the same number of points, e.g. an
+        Use this method when every cell has the same number of points, for example, an
         array of triangles or an array of quads. The cell offsets are computed
         directly from the cell size, and the input array is used as the
         connectivity array. Use :meth:`from_irregular_cells` instead if the
@@ -1032,7 +1059,8 @@ class CellArray(
         Parameters
         ----------
         cells : numpy.ndarray or list[list[int]]
-            Cell array of shape (n_cells, cell_size) where all cells have the same ``cell_size``.
+            Cell array of shape (``n_cells``, ``cell_size``) where all cells have the same
+            ``cell_size``.
 
         deep : bool, default: False
             Whether to deep copy the cell array data into the vtk connectivity array.
@@ -1080,7 +1108,7 @@ class CellArray(
     def from_irregular_cells(cls: type[CellArray], cells: MatrixLike[int]) -> CellArray:
         """Construct a ``CellArray`` from cells which may have different sizes.
 
-        Use this method when the cells have varying numbers of points, e.g. a
+        Use this method when the cells have varying numbers of points, for example, a
         mix of triangles and quads. The cell offsets are computed from the
         length of each cell, and the connectivity array is built by
         concatenating the cells. Use :meth:`from_regular_cells` instead if all
@@ -1093,7 +1121,7 @@ class CellArray(
         Parameters
         ----------
         cells : Sequence[Sequence[int]]
-            Sequence of length n_cells where each item is a sequence of the
+            Sequence of length ``n_cells`` where each item is a sequence of the
             point indices for that cell. The cells may have different lengths.
 
         Returns
@@ -1227,7 +1255,7 @@ def _make_cell_array(offsets: VectorLike[int], connectivity: VectorLike[int]) ->
 
 
 def _get_regular_cells(cellarr: _vtk.vtkCellArray) -> NumpyArray[int]:
-    """Return a (n_cells, cell_size)-shaped array of point indices for equal-sized faces."""
+    """Return a (``n_cells``, cell_size)-shaped array of point indices for equal-sized faces."""
     cells = _get_connectivity_array(cellarr)
     if len(cells) == 0:
         return cells
@@ -1251,7 +1279,7 @@ def _get_regular_cells(cellarr: _vtk.vtkCellArray) -> NumpyArray[int]:
 
 
 def _get_irregular_cells(cellarr: _vtk.vtkCellArray) -> tuple[NumpyArray[int], ...]:
-    """Return a tuple of length n_cells of each cell's point indices."""
+    """Return a tuple of length ``n_cells`` of each cell's point indices."""
     cells = _get_connectivity_array(cellarr)
     if len(cells) == 0:
         return ()

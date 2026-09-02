@@ -36,23 +36,6 @@ from pyvista.core.utilities.writer_registry import (
 from pyvista.core.utilities.writer_registry import (
     _save_registry_state as _save_writer_registry_state,
 )
-from pyvista.plotting.component_registry import (
-    _restore_registry_state as _restore_component_registry_state,
-)
-from pyvista.plotting.component_registry import (
-    _save_registry_state as _save_component_registry_state,
-)
-from pyvista.plotting.interactor_style_registry import (
-    _restore_registry_state as _restore_style_registry_state,
-)
-from pyvista.plotting.interactor_style_registry import (
-    _save_registry_state as _save_style_registry_state,
-)
-from pyvista.plotting.theme_registry import (
-    _restore_registry_state as _restore_theme_registry_state,
-)
-from pyvista.plotting.theme_registry import _save_registry_state as _save_theme_registry_state
-from pyvista.plotting.utilities.gl_checks import uses_egl
 
 # Unconditional, unlike the Hypothesis probe below: every environment that runs pytest
 # over tests/ has to carry refleak, the docs-test dependency group included.
@@ -60,6 +43,66 @@ from tests.gc_check import assert_no_leaks
 from tests.gc_check import check_enabled
 from tests.gc_check import stash_phase_report
 from tests.gc_check import take_snapshot
+
+# Probe the active backend for a rendering module (precise, and no import-error control flow).
+HAS_PLOTTING = importlib.util.find_spec(f'{_vtk._VTK_ROOT}.vtkRenderingCore') is not None
+
+if HAS_PLOTTING:
+    from pyvista.plotting.component_registry import (
+        _restore_registry_state as _restore_component_registry_state,
+    )
+    from pyvista.plotting.component_registry import (
+        _save_registry_state as _save_component_registry_state,
+    )
+    from pyvista.plotting.interactor_style_registry import (
+        _restore_registry_state as _restore_style_registry_state,
+    )
+    from pyvista.plotting.interactor_style_registry import (
+        _save_registry_state as _save_style_registry_state,
+    )
+    from pyvista.plotting.theme_registry import (
+        _restore_registry_state as _restore_theme_registry_state,
+    )
+    from pyvista.plotting.theme_registry import _save_registry_state as _save_theme_registry_state
+    from pyvista.plotting.utilities.gl_checks import uses_egl
+else:  # pragma: no cover -- core-only VTK backend, measured by no -cov environment
+
+    def _save_component_registry_state():
+        return None
+
+    def _restore_component_registry_state(state):  # noqa: ARG001
+        return None
+
+    def _save_style_registry_state():
+        return None
+
+    def _restore_style_registry_state(state):  # noqa: ARG001
+        return None
+
+    def _save_theme_registry_state():
+        return None
+
+    def _restore_theme_registry_state(state):  # noqa: ARG001
+        return None
+
+    def uses_egl():
+        return False
+
+
+def _has_vtk_module(module_name: str) -> bool:
+    """Probe the active backend for an IO module a core-only build may omit.
+
+    Lets ``pytest_collection_modifyitems`` auto-apply ``needs_io_extra`` so the
+    core-only subset can deselect the readers/writers that wrap these lazily.
+    """
+    return importlib.util.find_spec(f'{_vtk._VTK_ROOT}.{module_name}') is not None
+
+
+# IO-tier VTK modules a core-only build may omit; each backs lazily-wrapped readers/writers.
+HAS_IO_HDF = _has_vtk_module('vtkIOHDF')  # HDFReader, .vtkhdf save
+HAS_IO_ENSIGHT = _has_vtk_module('vtkIOEnSight')  # EnSightReader (.case)
+HAS_IO_CHEMISTRY = _has_vtk_module('vtkIOChemistry')  # PDB / XYZ / GaussianCube
+HAS_IO_EXTRA = HAS_IO_HDF and HAS_IO_ENSIGHT and HAS_IO_CHEMISTRY
 
 pv.OFF_SCREEN = True
 
@@ -110,7 +153,7 @@ def flaky_test(
 
     @functools.wraps(test_function)
     def wrapper(*args, **kwargs):
-        for i in range(times):
+        for i in range(times):  # pragma: no branch -- the last attempt returns or raises
             try:
                 test_function(*args, **kwargs)
             except exceptions as e:
@@ -488,6 +531,129 @@ def pytest_addoption(parser):
     )
 
 
+# --- core-only test selection --------------------------------------------------
+# Auto-apply ``needs_rendering`` (by location / fixture / name) so `-m "not
+# needs_rendering"` selects the subset that runs without any rendering module -- the
+# offline use case served by the rendering-free ``cvista`` core wheel.
+
+# Fixtures that build a real Plotter; requesting one marks the test needs_rendering.
+_RENDERING_FIXTURES = frozenset({'texture', 'image'})
+
+# Otherwise-core tests exercising formats implemented in rendering-only modules
+# (Text3D, VRML/3DS/Facet readers, texture reads). Scattered inside core modules,
+# so matched by test-name substring.
+_RENDERING_NAME_KEYWORDS = (
+    'text3d',
+    'text_3d',
+    'vrml_reader',
+    'threeds_reader',
+    'facetreader',
+    'read_texture',
+    'jpeg_reader',
+)
+
+
+def _name_needs_rendering(item) -> bool:
+    name = (getattr(item, 'originalname', '') or item.name).lower()
+    return any(kw in name for kw in _RENDERING_NAME_KEYWORDS)
+
+
+# Non-``tests/plotting`` modules (relative to ``tests/``) whose tests require
+# rendering because they construct a Plotter at runtime.
+_RENDERING_MODULES = frozenset(
+    {
+        'test_attributes.py',
+        'test_cli.py',
+        'examples/test_gltf.py',
+        'typing/test_return_type.py',
+        # These also evaluate plotting symbols at module scope, so on a
+        # rendering-free backend they are skipped at collection time (see
+        # ``_RENDERING_ONLY_MODULES`` / ``pytest_ignore_collect``).
+        'core/test_dataobject_filters.py',
+        'core/test_dataset_filters.py',
+        'core/test_helpers.py',
+        'core/test_polydata.py',
+        'core/test_utilities.py',
+    }
+)
+
+# Subset of ``_RENDERING_MODULES`` importing rendering at module scope, so on a
+# rendering-free backend they must be skipped at collection time (a marker is too late).
+_RENDERING_ONLY_MODULES = frozenset(
+    {
+        'test_attributes.py',
+        'core/test_dataobject_filters.py',
+        'core/test_dataset_filters.py',
+        'core/test_helpers.py',
+        'core/test_polydata.py',
+        'core/test_utilities.py',
+    }
+)
+
+
+# Tests exercising an IO-tier format a core-only build omits, matched by name
+# substring and gated on the matching ``HAS_IO_*`` probe (a no-op on a full build).
+_IO_EXTRA_NAME_KEYWORDS = (
+    ('hdf', HAS_IO_HDF),  # HDFReader, .vtkhdf save, download_can_crushed_hdf
+    ('ensight', HAS_IO_ENSIGHT),  # EnSightReader (.case)
+    ('pdbreader', HAS_IO_CHEMISTRY),  # PDBReader
+    ('gaussian_cubes_reader', HAS_IO_CHEMISTRY),  # GaussianCubeReader (.cube)
+)
+
+
+def _name_needs_io_extra(item) -> bool:
+    name = (getattr(item, 'originalname', '') or item.name).lower()
+    return any(kw in name for kw, available in _IO_EXTRA_NAME_KEYWORDS if not available)
+
+
+def pytest_ignore_collect(collection_path, config):  # noqa: ARG001
+    """Skip collecting modules that import rendering at module scope.
+
+    Only relevant when the active VTK backend ships no rendering modules
+    (``HAS_PLOTTING is False``); otherwise these modules collect and run
+    normally (and carry the ``needs_rendering`` marker).
+    """
+    if not HAS_PLOTTING:  # pragma: no cover -- measured by no -cov environment
+        tests_root = Path(__file__).parent
+        try:
+            rel = Path(str(collection_path)).relative_to(tests_root).as_posix()
+        except ValueError:
+            return None
+        return True if rel in _RENDERING_ONLY_MODULES else None
+    return None
+
+
+def pytest_collection_modifyitems(config, items):  # noqa: ARG001
+    """Auto-apply the ``needs_rendering`` / ``needs_io_extra`` markers.
+
+    See ``_RENDERING_*`` and ``_IO_EXTRA_*`` above. The ``needs_io_extra``
+    marking only fires when the relevant ``HAS_IO_*`` probe reports the module
+    absent, so it is a no-op on a full VTK build.
+    """
+    tests_root = Path(__file__).parent
+    plotting_dir = tests_root / 'plotting'
+    mark = pytest.mark.needs_rendering
+    io_extra_mark = pytest.mark.needs_io_extra
+    for item in items:
+        path = Path(str(getattr(item, 'fspath', item.nodeid)))
+        rel = None
+        try:
+            rel = path.relative_to(tests_root).as_posix()
+        except ValueError:
+            rel = path.as_posix()
+
+        needs = (
+            plotting_dir in path.parents
+            or rel in _RENDERING_MODULES
+            or bool(_RENDERING_FIXTURES.intersection(getattr(item, 'fixturenames', ())))
+            or _name_needs_rendering(item)
+        )
+        if needs:
+            item.add_marker(mark)
+        if _name_needs_io_extra(item):
+            item.add_marker(io_extra_mark)
+
+
 def _check_args_kwargs_marker(item_mark: pytest.Mark, sig: inspect.Signature):
     """Test for a given args and kwargs for a mark using its signature"""
 
@@ -553,6 +719,28 @@ def pytest_runtest_setup(item: pytest.Item):
 
     See custom marks in pyproject.toml.
     """
+    if item_mark := item.get_closest_marker('skip_vtk_backend'):
+        sig = inspect.Signature(
+            [
+                inspect.Parameter(
+                    b := 'backend',
+                    kind=inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                    annotation=str,
+                ),
+                inspect.Parameter(
+                    r := 'reason',
+                    kind=inspect.Parameter.KEYWORD_ONLY,
+                    default='Test diverges on this VTK backend',
+                    annotation=str,
+                ),
+            ]
+        )
+
+        bounds = _check_args_kwargs_marker(item_mark=item_mark, sig=sig)
+        backend = bounds.arguments[b]
+        if pv.vtk_backend() == backend:
+            pytest.skip(f'{backend} backend: {bounds.arguments[r]}')
+
     needs_vtk_version = 'needs_vtk_version'
     # this test needs a given VTK version
     for item_mark in item.iter_markers(needs_vtk_version):
@@ -651,7 +839,7 @@ def pytest_runtest_setup(item: pytest.Item):
         )
 
         bounds = _check_args_kwargs_marker(item_mark=item_mark, sig=sig)
-        if os.name == 'nt':
+        if os.name == 'nt':  # pragma: no cover -- Windows only
             pytest.skip(bounds.arguments[r])
 
     if item_mark := item.get_closest_marker('skip_mac'):
@@ -691,7 +879,8 @@ def pytest_runtest_setup(item: pytest.Item):
             pytest.skip(bounds.arguments[r])
 
     test_downloads = item.config.getoption(flag := '--test_downloads')
-    if item.get_closest_marker('needs_download') and not test_downloads:
+    # Unreached: the core run enables downloads, and no plotting test is marked.
+    if item.get_closest_marker('needs_download') and not test_downloads:  # pragma: no cover
         pytest.skip(f'Downloads not enabled with {flag}')
 
     playwright = item.config.getoption(flag := '--playwright')

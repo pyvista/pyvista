@@ -12,10 +12,10 @@ This example is inspired by `planet3D-MATLAB
 .. note::
    The purpose of this example is to demonstrate plotting celestial bodies and
    may lack astronomical precision. There may be inaccuracies in the
-   representation, so please take care when reusing or repurposing this
+   representation, so please take care when reusing or re-purposing this
    example.
 
-   Please take a look at libraries like `astropy <https://www.astropy.org/>`_
+   Please take a look at libraries like `Astropy <https://www.astropy.org/>`_
    if you wish to use Python for astronomical calculations.
 
 """
@@ -29,7 +29,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
 # %%
-# Plot the Solar System with Stars in the Background
+# Plot the Solar System With Stars in the Background
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # This section relies on calculations in `Visualizing Celestial Bodies in 3D
 # <https://tamaskis.github.io/files/Visualizing_Celestial_Bodies_in_3D.pdf>`_.
@@ -104,7 +104,7 @@ pl.show()
 
 
 # %%
-# Plot the Planets and their Textures
+# Plot the Planets and Their Textures
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Each planet here is in a different subplot. The planet's textures are from
 # `Solar Textures <https://www.solarsystemscope.com/textures/>`_.

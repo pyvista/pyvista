@@ -34,6 +34,8 @@ if TYPE_CHECKING:
 
 # region Some metaclass wrapping magic
 class _vtkWrapperMeta(type):  # noqa: N801
+    """Metaclass which restores the signature of a wrapped VTK class."""
+
     def __init__(cls, clsname, bases, attrs) -> None:
         # Restore the signature of classes inheriting from _vtkWrapper
         # Based on https://stackoverflow.com/questions/49740290/call-from-metaclass-shadows-signature-of-init
@@ -54,6 +56,8 @@ class _vtkWrapperMeta(type):  # noqa: N801
 
 
 class _vtkWrapper(DisableVtkSnakeCase, metaclass=_vtkWrapperMeta):  # noqa: N801
+    """Forward attribute access to a wrapped VTK object."""
+
     def __getattribute__(self, item):
         unwrapped_attrs = ['_wrapped', '__class__', '__init__']
         wrapped = super().__getattribute__('_wrapped')
@@ -142,7 +146,7 @@ def doc_subs(member):  # numpydoc ignore=PR01,RT01
     """Doc subs wrapper.
 
     Only common attribute between methods and properties that we can
-    modify is __doc__, so use that to mark members that need doc
+    modify is ``__doc__``, so use that to mark members that need doc
     substitutions.
     Still, only methods can be marked for doc substitution (as for
     properties the docstring seems to be overwritten when specifying
@@ -646,7 +650,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         """Set the axis' scaling behavior.
 
         Allowed behaviors are ``'auto'`` to automatically rescale the
-        axis to fit all visible datapoints in the plot, or ``'fixed'``
+        axis to fit all visible data points in the plot, or ``'fixed'``
         to use the user defined range.
 
         Examples
@@ -1112,13 +1116,48 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
 @abstract_class
 class _CustomContextItem(_vtk.vtkPythonItem):
+    """Context item which paints through a Python subclass."""
+
     class ItemWrapper:
+        """Adapter passed to :vtk:`vtkPythonItem`."""
+
         def Initialize(self, item) -> bool:  # noqa: ARG002, N802
             # item is the _CustomContextItem subclass instance
+            """Initialize the wrapped context item.
+
+            Parameters
+            ----------
+            item : _CustomContextItem
+                Wrapped item.
+
+            Returns
+            -------
+            bool
+                Always ``True``.
+
+
+            """
             return True
 
         def Paint(self, item, painter):  # noqa: N802
             # item is the _CustomContextItem subclass instance
+            """Paint the wrapped context item.
+
+            Parameters
+            ----------
+            item : _CustomContextItem
+                Item to paint.
+
+            painter : :vtk:`vtkContext2D`
+                Painter to draw with.
+
+            Returns
+            -------
+            bool
+                Whether painting succeeded.
+
+
+            """
             return item.paint(painter)
 
     def __init__(self) -> None:
@@ -1127,6 +1166,7 @@ class _CustomContextItem(_vtk.vtkPythonItem):
         self.SetPythonObject(_CustomContextItem.ItemWrapper())
 
     def paint(self, _) -> bool:
+        """Paint the context item."""
         return True
 
 
@@ -1146,6 +1186,20 @@ class _ChartBackground(DisableVtkSnakeCase, _CustomContextItem):
         self.ActiveBackgroundBrush = Brush(color=(1.0, 1.0, 1.0, 0.4))
 
     def paint(self, painter) -> bool:
+        """Paint the chart's background and border.
+
+        Parameters
+        ----------
+        painter : :vtk:`vtkContext2D`
+            Painter to draw with.
+
+        Returns
+        -------
+        bool
+            Always ``True``.
+
+
+        """
         if self._chart.visible:
             painter.ApplyPen(self.ActiveBorderPen if self._chart._interactive else self.BorderPen)
             painter.ApplyBrush(
@@ -1158,7 +1212,14 @@ class _ChartBackground(DisableVtkSnakeCase, _CustomContextItem):
 
 @abstract_class
 class _Chart(DocSubs):
-    """Common interface for vtkChart, vtkChartBox, vtkChartPie, and ChartMPL instances."""
+    """Common interface for ``vtkChart``/``vtkChartBox``/``vtkChartPie``/``ChartMPL``.
+
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
+
+    """
 
     # Subclasses should specify following substitutions: 'chart_name', 'chart_args', 'chart_init'
     # and 'chart_set_labels'.
@@ -1561,7 +1622,7 @@ class _Chart(DocSubs):
 
         Examples
         --------
-        Create a {chart_name} with title 'My Chart'.
+        Create a {chart_name} with title 'Example Chart'.
 
         .. pyvista-plot::
            :force_static:
@@ -1683,7 +1744,7 @@ class _Chart(DocSubs):
         Returns
         -------
         np.ndarray
-            Numpy array of the last image when ``screenshot=True``
+            NumPy array of the last image when ``screenshot=True``
             is set. Optionally contains alpha values. Sized:
 
             * [Window height x Window width x 3] if the theme sets
@@ -1722,7 +1783,14 @@ class _Chart(DocSubs):
 # Subclasses of `_Plot` also inherit from vtk classes, so we disable the vtk snake_case API here
 @abstract_class
 class _Plot(DocSubs):
-    """Common pythonic interface for :vtk:`vtkPlot` and :vtk:`vtkPlot3D` instances."""
+    """Common pythonic interface for :vtk:`vtkPlot` and :vtk:`vtkPlot3D` instances.
+
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
+
+    """
 
     # Subclasses should specify following substitutions: 'plot_name', 'chart_init' and 'plot_init'.
     _DOC_SUBS: dict[str, str] | None = None
@@ -1958,7 +2026,13 @@ class _Plot(DocSubs):
 class _MultiCompPlot(_Plot):
     """Common pythonic interface for :vtk:`vtkPlot` instances with multiple components.
 
-    Example subclasses are BoxPlot, PiePlot, BarPlot and StackPlot.
+    Example subclasses are BoxPlot, PiePlot, BarPlot, and StackPlot.
+
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
+
     """
 
     DEFAULT_COLOR_SCHEME = 'qual_accent'
@@ -3391,7 +3465,7 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
             Values to plot on the Y-axis.
 
         fmt : str, default: "-"
-            A format string, e.g. ``'ro'`` for red circles. See the Notes
+            A format string, for example, ``'ro'`` for red circles. See the Notes
             section for a full description of the format strings.
 
         Returns
@@ -3973,7 +4047,7 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
     def hide_axes(self) -> None:
         """Hide the x- and y-axis of this chart.
 
-        This includes all labels, ticks and the grid.
+        This includes all labels, ticks, and the grid.
 
         Examples
         --------
@@ -4009,7 +4083,7 @@ class BoxPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPlot
         The chart containing this plot.
 
     data : sequence[array_like]
-        Dataset(s) from which the relevant statistics will be
+        Datasets from which the relevant statistics will be
         calculated used to draw the box plot.
 
     colors : sequence[ColorLike], optional
@@ -4114,12 +4188,12 @@ class BoxPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPlot
         return tuple(stats_table[f'data_{i}'] for i in range(stats_table.n_arrays))
 
     def update(self, data) -> None:
-        """Update the plot's underlying dataset(s).
+        """Update the plot's underlying datasets.
 
         Parameters
         ----------
         data : sequence[array_like]
-            The new dataset(s) used in this box plot.
+            The new datasets used in this box plot.
 
         Examples
         --------
@@ -4152,7 +4226,7 @@ class ChartBox(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartBox):
     Parameters
     ----------
     data : sequence[array_like]
-        Dataset(s) from which the relevant statistics will be
+        Datasets from which the relevant statistics will be
         calculated used to draw the box plot.
 
     colors : sequence[ColorLike], optional
@@ -4823,7 +4897,7 @@ class ChartMPL(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkImageItem):
 
         Examples
         --------
-        Create a matplotlib chart with title 'My Chart'.
+        Create a Matplotlib chart with title 'Example Chart'.
 
 
         .. pyvista-plot::
@@ -4970,8 +5044,8 @@ class Charts(_NoNewAttrMixin):
               or indices.
 
         toggle : bool, default: False
-            Instead of enabling interaction with the provided chart(s), interaction
-            with the provided chart(s) is toggled. Only applicable when ``interactive``
+            Instead of enabling interaction with the provided charts, interaction
+            with the provided charts is toggled. Only applicable when ``interactive``
             is not a boolean.
 
         Returns

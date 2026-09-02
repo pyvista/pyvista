@@ -43,7 +43,7 @@ def test_remove_fail(scalar_bars):
 
 
 def test_add_fail(scalar_bars):
-    with pytest.raises(ValueError, match='Mapper cannot be ``None``'):
+    with pytest.raises(ValueError, match="Exactly one of 'mapper'"):
         scalar_bars.add_scalar_bar('MOARDATA')
 
 
@@ -130,7 +130,7 @@ def test_update_title_image(sphere, verify_image_cache):
 def test_too_many_scalar_bars():
     pl = pv.Plotter()
     with pytest.raises(RuntimeError, match='Maximum number of color'):  # noqa: PT012
-        for i in range(100):
+        for i in range(100):  # pragma: no branch -- raises before the loop ends
             mesh = pv.Sphere()
             mesh[str(i)] = range(mesh.n_points)
             pl.add_mesh(mesh)

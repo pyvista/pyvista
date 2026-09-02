@@ -70,7 +70,7 @@ class RectilinearGridFilters:
         Divide a rectangular grid into tetrahedrons. Each cell contains by
         default 5 tetrahedrons.
 
-        First, create and plot the grid.
+        Create and plot the grid.
 
         >>> import numpy as np
         >>> import pyvista as pv

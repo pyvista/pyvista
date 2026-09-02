@@ -1,7 +1,7 @@
 """
 .. _load_gltf_example:
 
-Working with glTF Files
+Working With glTF Files
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 Import a glTF file directly into a PyVista plotting scene.

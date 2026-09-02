@@ -1,7 +1,7 @@
 """
 .. _clip_with_surface_example:
 
-Clipping with a Surface
+Clipping With a Surface
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 Clip any PyVista dataset by a :class:`~pyvista.PolyData` surface mesh.

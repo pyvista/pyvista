@@ -5,6 +5,7 @@ import json
 import multiprocessing
 import pickle
 import re
+import sys
 from unittest.mock import patch
 
 import numpy as np
@@ -12,8 +13,10 @@ import pytest
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.core import _vtk_utilities
 from pyvista.core.dataobject import USER_DICT_KEY
 from pyvista.core.utilities.writer import BaseWriter
+from tests.vtk_backend_divergence import INT32_COMPRESSION
 
 
 def test_eq_wrong_type(sphere):
@@ -246,7 +249,7 @@ def test_user_dict_removal(data_object_type, method):
             data_object.clear_field_data()
         elif method == 'set_none':
             data_object.user_dict = None
-        else:
+        else:  # pragma: no cover -- parametrize covers every case
             msg = f'Invalid test method {method}.'
             raise RuntimeError(msg)
 
@@ -376,6 +379,8 @@ def test_pickle_serialize_deserialize(datasets_no_pointset, pickle_format):
     """
     pv.set_pickle_format(pickle_format)
     for dataset in datasets_no_pointset:
+        # These datasets carry no field data of their own.
+        dataset.field_data['pickled_field'] = [1, 2, 3]
         dataset_2 = pickle.loads(pickle.dumps(dataset))
 
         # check python attributes are the same
@@ -483,6 +488,7 @@ def test_save_raises_no_writers(monkeypatch: pytest.MonkeyPatch):
         pv.Sphere().save('foo.vtp')
 
 
+@pytest.mark.skip_vtk_backend('cvista', reason=INT32_COMPRESSION)
 def test_save_compression(sphere, tmp_path):
     path = tmp_path / 'tmp.vtp'
     sphere.save(path, compression='zlib')
@@ -546,3 +552,21 @@ def test_raise_error_when_writing_is_failed(tmp_path):
     ):
         with pytest.raises(OSError, match='VTK writer failed to write file'):
             cylinder.save(tmp_path / 'cylinder.vtk')
+
+
+def test_del_while_interpreter_is_finalizing(monkeypatch, sphere):
+    """Deleting a dataset is a no-op once module globals have been cleared.
+
+    ``isinstance`` against a cleared ``vtkObjectBase`` raises ``TypeError``,
+    and an ``AttributeError`` raised from ``__getattribute__`` is silently
+    rerouted into ``__getattr__``, which reaches ``importlib.metadata``.
+    """
+    sphere._glyph_geom = (pv.Sphere(),)
+    # The interpreter calls the slot directly, so no attribute lookup is involved.
+    finalizer = type(sphere).__del__
+
+    monkeypatch.setattr(pv._vtk, 'vtkObjectBase', None)
+    monkeypatch.setattr(_vtk_utilities, 'DisableVtkSnakeCase', None)
+    monkeypatch.setattr(sys, 'is_finalizing', lambda: True)
+
+    finalizer(sphere)

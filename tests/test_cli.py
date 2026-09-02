@@ -207,6 +207,9 @@ class CasesReport:
     def case_no_bool(self):
         return '--no-downloads --no-sort', (), dict(downloads=False, sort=False)
 
+    def case_env_vars(self):
+        return '--env-vars', (), dict(env_vars=True)
+
     def case_additional(self):
         return '--additional "foo"', (['foo'],), {}
 
@@ -574,7 +577,11 @@ def test_convert_help(capsys: pytest.CaptureFixture):
     ('download', 'in_ext', 'out_ext'),
     [
         (examples.download_brain_atlas_with_sides, '.nii.gz', '.vti'),
-        (examples.download_parallel_exodus, '.e.4.0', '.vtm'),
+        pytest.param(
+            examples.download_parallel_exodus,
+            '.e.4.0',
+            '.vtm',
+        ),
     ],
 )
 @pytest.mark.skipif(sys.version_info < (3, 12), reason='Flaky issue with dataset loader')
@@ -940,13 +947,13 @@ def test_validate_help(capsys: pytest.CaptureFixture):
     assert 'Mesh(es) to validate.' in out, out
 
     assert '│ --fields -f            -' in out, out
-    assert 'Field(s) to validate.' in out, out
+    assert 'Fields to validate.' in out, out
 
     assert '│ --exclude -e           -' in out, out
-    assert 'Field(s) to exclude' in out, out
+    assert 'Fields to exclude' in out, out
 
     assert '│ --tolerance            -' in out, out
-    assert 'Field(s) to exclude' in out, out
+    assert 'Fields to exclude' in out, out
 
     assert '│ --planarity-tolerance  -' in out, out
     assert 'Allowed relative distance' in out, out
@@ -1011,7 +1018,7 @@ def test_validate_fields(tmp_ant_file, field, capsys: pytest.CaptureFixture):
     main(f'validate {tmp_ant_file!s} --help')
     out, err = capture_out_err(capsys)
     assert err == ''
-    if f'• {field}:' not in out:
+    if f'• {field}:' not in out:  # pragma: no cover -- failure path
         pytest.fail(f'Field {field} is missing from the validate CLI help documentation.')
 
     # Discard captured output to clean up test output
@@ -2261,6 +2268,8 @@ def test_compare_too_small_warning_advises_the_command(
     assert 'link=False' not in flattened
 
 
+# Pinned so the panel below is not rendered at a width or style of the environment's choosing
+@pytest.mark.usefixtures('patch_app_console')
 def test_compare_too_small_warning_is_printed_before_the_plot_is_shown(
     tmp_example_dir: Path, capsys: pytest.CaptureFixture, mocker: MockerFixture
 ):
@@ -2279,15 +2288,14 @@ def test_compare_too_small_warning_is_printed_before_the_plot_is_shown(
 
     def fake_show(*args, **kwargs):  # noqa: ARG001
         _, err = capsys.readouterr()
-        # The message is wrapped and padded to the width of the panel it is printed
-        # in, so flatten it the same way it is elsewhere before matching a substring
-        flattened = ' '.join(err.replace('│', ' ').split())
-        printed_before_shown.append('too small to make out' in flattened)
+        # Flatten the wrapping and padding of the panel, as the tests above do
+        printed_before_shown.append(' '.join(err.replace('│', ' ').split()))
 
     mocker.patch.object(pv.Plotter, 'show', fake_show)
     main('compare tiny.vtp huge.vtp --link --off-screen')
 
-    assert printed_before_shown == [True]
+    assert len(printed_before_shown) == 1
+    assert 'too small to make out' in printed_before_shown[0]
 
 
 def test_compare_forwards_other_warnings(tmp_compare_files: list[Path], mocker: MockerFixture):

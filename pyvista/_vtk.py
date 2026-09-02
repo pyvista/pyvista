@@ -1,7 +1,7 @@
 """Lazy-loaded imports from VTK.
 
 These are the modules within VTK that must be loaded across pyvista's
-core and plotting API. The modules are lazily-loaded, and are only
+core and plotting API. The modules are lazily loaded, and are only
 imported on first access. We import from ``vtkmodules`` instead of
 ``vtk`` to selectively import modules and not the entire library.
 
@@ -10,7 +10,57 @@ imported on first access. We import from ``vtkmodules`` instead of
 from __future__ import annotations
 
 import importlib
+import importlib.util
+import os
 from typing import TYPE_CHECKING
+
+
+def _resolve_vtk_root() -> str:
+    """Return the root package PyVista resolves VTK imports against.
+
+    ``PYVISTA_VTK_BACKEND`` wins if set (``vtk``/``vtkmodules`` for stock, a name
+    like ``cvista`` for the fork); else auto-select ``cvista`` if installed; else
+    stock ``vtkmodules``. Resolved at import, so set the variable before importing
+    :mod:`pyvista`.
+    """
+    backend = os.environ.get('PYVISTA_VTK_BACKEND')
+    if backend:
+        # `vtk` is what vtk_backend() reports for stock; map it to the real root
+        # (the `vtk` shim is eager and does not re-export every name).
+        return 'vtkmodules' if backend == 'vtk' else backend
+    if importlib.util.find_spec('cvista') is not None:
+        return 'cvista'
+    return 'vtkmodules'
+
+
+# Root package VTK imports resolve against. Only used for the few *module* imports
+# made for their side effects (factory registration); classes go through __getattr__.
+_VTK_ROOT = _resolve_vtk_root()
+
+
+def _resolve_root_is_flat(root: str) -> bool:
+    """Return whether ``root`` exposes VTK classes directly off its package root.
+
+    A flat backend (for example, cvista >=9.6.2.4) resolves public names lazily off the
+    root, so PyVista looks classes up by NAME and stays agnostic to module layout.
+    Probed rather than inferred, since a custom build may be laid out like stock VTK.
+    """
+    if root == 'vtkmodules':
+        return False
+    try:
+        module = importlib.import_module(root)
+    except ImportError as e:
+        msg = (
+            f'The VTK backend {root!r} is not importable. It is selected by '
+            f'PYVISTA_VTK_BACKEND or by being installed alongside PyVista.'
+        )
+        raise ImportError(msg) from e
+    # vtkPolyData exists in every supported build, so its presence marks a flat root.
+    return hasattr(module, 'vtkPolyData')
+
+
+_VTK_ROOT_IS_FLAT = _resolve_root_is_flat(_VTK_ROOT)
+
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -288,6 +338,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkConnectivityFilter',
         'vtkContourFilter',
         'vtkConvertToMultiBlockDataSet',
+        'vtkConvexHull',
         'vtkCutter',
         'vtkDecimatePolylineFilter',
         'vtkDecimatePro',
@@ -760,6 +811,9 @@ _OPENGL_MODULES: dict[str, tuple[str, ...]] = {
         'vtkOpenGLRenderer',
         'vtkOpenGLSkybox',
         'vtkOpenGLTexture',
+        'vtkPBRIrradianceTexture',
+        'vtkPBRLUTTexture',
+        'vtkPBRPrefilterTexture',
         'vtkRenderStepsPass',
         'vtkSSAAPass',
         'vtkSSAOPass',
@@ -781,15 +835,53 @@ _VTK_CLASS_TO_MODULE: dict[str, str] = {
 }
 
 
+def _import_from(module_name: str, class_name: str) -> Any:
+    """Import ``class_name`` for the irregular loaders below.
+
+    ``module_name`` is ignored on a flat backend (the class resolves off the root);
+    a missing module or attribute raises ``ImportError``, as ``from m import c`` does.
+    """
+    root = importlib.import_module(
+        _VTK_ROOT if _VTK_ROOT_IS_FLAT else f'{_VTK_ROOT}.{module_name}'
+    )
+    try:
+        return getattr(root, class_name)
+    except AttributeError as e:  # match `from m import c` (raises ImportError)
+        raise ImportError(str(e)) from e
+
+
 def __getattr__(name: str):
     """Lazy attribute access.
 
     VTK modules are only imported when first accessed.
     """
+    # Private/dunder lookups are this module's own (or interpreter probes); don't
+    # forward them to the backend (would turn AttributeError into a stray ImportError).
+    if name.startswith('_'):
+        raise AttributeError(name)
+
     # Handle special cases
     if importer := _SPECIAL_LOADERS.get(name):
         obj = importer()
-    else:  # Default case: lazily import based on module mapping
+    elif _VTK_ROOT_IS_FLAT:
+        # Flat backend (cvista): resolve the class by NAME off the root. The mapping
+        # is still consulted for MEMBERSHIP (an unmapped name stays an AttributeError,
+        # as on stock VTK); only its module value -- the part that churns -- is unused.
+        if name not in _VTK_CLASS_TO_MODULE:
+            msg = (
+                f"{name!r} is not defined in PyVista's vtk namespace.\n"
+                f'Developers should add a new `module:{name}` mapping to the `_vtk` module.'
+            )
+            raise AttributeError(msg)
+        try:
+            obj = getattr(importlib.import_module(_VTK_ROOT), name)
+        except (ImportError, AttributeError) as e:
+            msg = (
+                f'Cannot import name {name!r} from {_VTK_ROOT!r}.\n'
+                'The cause is likely attributable to VTK version or a custom VTK build.'
+            )
+            raise ImportError(msg) from e
+    else:  # Stock vtkmodules: lazily import based on the module mapping
         module_name = _VTK_CLASS_TO_MODULE.get(name)
         if module_name is None:
             msg = (
@@ -801,18 +893,15 @@ def __getattr__(name: str):
         # Attempt to import the vtkmodule and the desired attribute
         # Convert module or attribute errors into a similar message that would otherwise be
         # seen when doing `from vtkmodules.vtkModule import vtkClass`
-        module_full_name = f'vtkmodules.{module_name}'
+        module_full_name = f'{_VTK_ROOT}.{module_name}'
         error_msg = (
             f'Cannot import name {name!r} from {module_full_name!r}.\n'
             'The cause is likely attributable to VTK version or a custom VTK build.'
         )
         try:
             module = importlib.import_module(module_full_name)
-        except ModuleNotFoundError as e:
-            raise ImportError(error_msg) from e
-        try:
             obj = getattr(module, name)
-        except AttributeError as e:
+        except (ModuleNotFoundError, AttributeError) as e:
             raise ImportError(error_msg) from e
 
     # Cache object for next access
@@ -821,7 +910,7 @@ def __getattr__(name: str):
 
 
 def has_attr(name: str) -> bool:
-    """Return ``True`` if *name* resolves to a VTK class on this build.
+    """Return ``True`` if ``name`` resolves to a VTK class on this build.
 
     ``hasattr(_vtk, 'X')`` does not work as expected because the lazy
     ``__getattr__`` raises ``ImportError`` (not ``AttributeError``) when a
@@ -866,11 +955,11 @@ def import_all(*, suppress_import_errors: bool = True):
 
 def _import_vtkPythonItem():  # noqa: N802
     try:
-        from vtkmodules.vtkPythonContext2D import vtkPythonItem  # noqa: TID251
+        return _import_from('vtkPythonContext2D', 'vtkPythonItem')
     except ImportError:  # pragma: no cover
         # Suppress for ParaView shell https://github.com/pyvista/pyvista/issues/3224
 
-        class vtkPythonItem:  # type: ignore[no-redef]  # noqa: N801
+        class vtkPythonItem:  # noqa: N801
             """Empty placeholder."""
 
             def __init__(self) -> None:  # pragma: no cover
@@ -885,32 +974,23 @@ def _import_vtkPythonItem():  # noqa: N802
 
 def _import_vtkCellTypeUtilities():  # noqa: N802
     try:  # Introduced VTK 9.6.0
-        from vtkmodules.vtkCommonDataModel import vtkCellTypeUtilities  # noqa: TID251
+        return _import_from('vtkCommonDataModel', 'vtkCellTypeUtilities')
     except ImportError:
-        from vtkmodules.vtkCommonDataModel import (  # type:ignore[assignment] # noqa: TID251
-            vtkCellTypes as vtkCellTypeUtilities,
-        )
-    return vtkCellTypeUtilities
+        return _import_from('vtkCommonDataModel', 'vtkCellTypes')
 
 
 def _import_vtkRenderPassCollection():  # noqa: N802
     try:  # Moved in VTK 10.0.0
-        from vtkmodules.vtkRenderingCore import (  # type: ignore[attr-defined]  # noqa: TID251
-            vtkRenderPassCollection,
-        )
+        return _import_from('vtkRenderingCore', 'vtkRenderPassCollection')
     except ImportError:
-        from vtkmodules.vtkRenderingOpenGL2 import vtkRenderPassCollection  # noqa: TID251
-    return vtkRenderPassCollection
+        return _import_from('vtkRenderingOpenGL2', 'vtkRenderPassCollection')
 
 
 def _import_vtkSequencePass():  # noqa: N802
     try:  # Moved in VTK 10.0.0
-        from vtkmodules.vtkRenderingCore import (  # type: ignore[attr-defined]  # noqa: TID251
-            vtkSequencePass,
-        )
+        return _import_from('vtkRenderingCore', 'vtkSequencePass')
     except ImportError:
-        from vtkmodules.vtkRenderingOpenGL2 import vtkSequencePass  # noqa: TID251
-    return vtkSequencePass
+        return _import_from('vtkRenderingOpenGL2', 'vtkSequencePass')
 
 
 _SPECIAL_LOADERS: dict[str, Callable[[], type[Any]]] = {

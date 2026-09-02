@@ -21,6 +21,7 @@ from pyvista.core.cell import _set_cell_array_data
 from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.celltype import _DEPRECATED_CELL_TYPES
 from pyvista.core.celltype import _RENAMED_CELL_TYPES
+from pyvista.core.errors import CellSizeError
 from pyvista.core.utilities.cells import numpy_to_idarr
 from pyvista.examples import cells as example_cells
 from pyvista.examples import load_airplane
@@ -30,6 +31,7 @@ from pyvista.examples import load_rectilinear
 from pyvista.examples import load_structured
 from pyvista.examples import load_tetbeam
 from pyvista.examples import load_uniform
+from tests.vtk_backend_divergence import FIXED_SIZE_CELL_STORAGE
 
 grids = [
     load_hexbeam(),
@@ -281,7 +283,7 @@ def test_abstract_celltype_dimension_is_correct(celltype, expected_dim):
     assert celltype.dimension == expected_dim
 
 
-@pytest.mark.parametrize('celltype', _DEPRECATED_CELL_TYPES)
+@pytest.mark.parametrize('celltype', sorted(_DEPRECATED_CELL_TYPES))
 def test_celltype_deprecated(celltype):
     val = _CELL_TYPE_INFO[celltype].value
     match = f'<CellType.{celltype}: {val}> is deprecated and will be removed in a future version.'
@@ -481,6 +483,13 @@ def test_init_cell_array(cells):
     assert cell_array.n_cells == cell_array.GetNumberOfCells() == NCELLS
 
 
+@pytest.mark.parametrize('cells', [[-1, 2, 0], [0, -1, 3], [-2, 2, 0]])
+def test_init_cell_array_negative_size(cells):
+    match = re.escape('Cell array size is invalid. A cell has a negative number of points.')
+    with pytest.raises(CellSizeError, match=match):
+        _ = pv.core.cell.CellArray(cells)
+
+
 CONNECTIVITY_LIST = [0, 1, 2, 3, 4, 5]
 OFFSETS_LIST = [0, 3, 6]
 
@@ -659,6 +668,7 @@ def offsets_meshes(hexbeam):
     return meshes
 
 
+@pytest.mark.skip_vtk_backend('cvista', reason=FIXED_SIZE_CELL_STORAGE)
 @pytest.mark.parametrize('name', OFFSETS_MESH_NAMES)
 def test_offsets_meshes_storage(offsets_meshes, name):
     # Pin which fixture entries use fixed-size storage so the coverage of the

@@ -17,29 +17,29 @@ CODE_DIRS ?= doc examples examples_trame pyvista tests
 # Files in top level directory
 CODE_FILES ?= *.py *.rst *.md
 
+# Both `pyvista` and `tests` are measured, matching the `-cov` tox environments.
+COV_FLAGS = --cov pyvista --cov tests
+
 coverage:
 	@echo "Running coverage"
-	@pytest -v --cov pyvista
+	@pytest -v $(COV_FLAGS)
 
 coverage-xml:
 	@echo "Reporting XML coverage"
-	@pytest -v --cov pyvista --cov-report xml
+	@pytest -v $(COV_FLAGS) --cov-report xml
 
 coverage-html:
 	@echo "Reporting HTML coverage"
-	@pytest -v --cov pyvista --cov-report html
+	@pytest -v $(COV_FLAGS) --cov-report html
 
 coverage-docs:
 	@echo "Reporting documentation coverage"
 	@make -C doc html SPHINXOPTS="-Q" -b coverage
 	@cat doc/_build/coverage/python.txt
 
-# Vale is pinned to match CI (.github/workflows/style-docstring.yml).
-# Install with: `uv tool install vale@2.29.5`
-# Newer vale versions currently fail on the pyvista vocab config.
 docstyle:
 	@echo "Running vale"
-	@vale --config doc/.vale.ini doc pyvista examples
+	@python3 doc/run_vale.py
 
 sync-deps:
 	@echo "Installing dev dependencies"
@@ -77,8 +77,8 @@ test-plotting:
 	@echo "Running plotting tests (matches CI)"
 	@uv run tox -e test-plotting $(TOX_ARGS)
 
-# Run all docstring tests (matches CI `tox -f doctest`).
-# Executes both doctest-modules and doctest-local tox envs.
+# Run all docstring checks (matches CI).
+# Executes both the doctest-modules and doctest-names tox envs.
 doctest:
 	@echo "Running docstring tests (matches CI)"
 	@uv run tox -f doctest $(TOX_ARGS)
@@ -103,8 +103,8 @@ docs-test-images:
 
 # Run an integration test env (matches CI `tox -e integration-<project>`).
 # Specify project via PROJECT, e.g. `make integration PROJECT=trame`.
-# Supported projects: trame, geovista, mne, pyvistaqt, playwright
+# Supported projects: trame, geovista, mne, pyvistaqt, playwright, cvista
 integration:
-	@test -n "$(PROJECT)" || { echo "Error: PROJECT is required (trame|geovista|mne|pyvistaqt|playwright)"; exit 1; }
+	@test -n "$(PROJECT)" || { echo "Error: PROJECT is required (trame|geovista|mne|pyvistaqt|playwright|cvista)"; exit 1; }
 	@echo "Running integration-$(PROJECT) tests (matches CI)"
 	@uv run tox -e integration-$(PROJECT) $(TOX_ARGS)

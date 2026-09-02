@@ -1,7 +1,7 @@
 """
 .. _distance_measurement_example:
 
-Measuring distance
+Measuring Distance
 ~~~~~~~~~~~~~~~~~~
 
 Measure distance between two points using :func:`~pyvista.Plotter.add_measurement_widget`.

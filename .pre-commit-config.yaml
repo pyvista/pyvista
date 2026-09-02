@@ -55,7 +55,7 @@ repos:
       - id: mixed-line-ending
       - id: file-contents-sorter
         verbose: true
-        files: ^(\.dockerignore|doc/styles/Vocab/pyvista/accept\.txt)$
+        files: ^(\.dockerignore|doc/styles/config/vocabularies/pyvista/accept\.txt)$
 
   - repo: https://github.com/scientific-python/cookie
     rev: 2026.06.18
@@ -85,7 +85,7 @@ repos:
       - id: warn_external
         name: Convert warnings to warn_external
         language: python
-        entry: python -m libcst.tool codemod -x hooks.warnings.ConvertWarningsToExternal --no-format
+        entry: python -m hooks.warnings
         additional_dependencies: [libcst]
         files: ^pyvista/
         types: [file, python]
@@ -107,13 +107,21 @@ repos:
       - id: namespace-stdlib-imports
         name: "Import members directly from these stdlib modules (e.g. 'from pathlib import Path')"
         language: pygrep
-        entry: '^\s*(?:>>>|\.\.\.)?\s*import\s+(?:__future__|abc|collections|collections\.abc|dataclasses|enum|http\.server|importlib\.metadata|io|pathlib|types|typing|typing_extensions|unittest\.mock)\s*$'
+        entry: '^\s*(?:>>>|\.\.\.)?\s*import\s+(?:__future__|abc|collections|collections\.abc|concurrent\.futures|dataclasses|enum|http\.server|importlib\.metadata|io|pathlib|types|typing|typing_extensions|unittest\.mock)\s*$'
         types_or: [python, rst, markdown]
       - id: gallery-docstring-structure
         name: "Gallery examples need a '.. _label:', a title/underline, and a summary sentence"
         language: python
-        entry: python hooks/gallery_docstrings.py
+        entry: python -m hooks.gallery_docstrings
         files: ^examples/.*\.py$
+        types: [python]
+      - id: private-class-docstrings
+        name: "Private classes and modules need docstrings too (ruff D1 skips them)"
+        language: python
+        # Run as a module, like warn_external: a script path would put hooks/ on
+        # sys.path, where its warnings.py shadows the stdlib module.
+        entry: python -m hooks.private_class_docstrings
+        files: ^pyvista/
         types: [python]
       - id: no-lint-suppression-comments
         name: "No lint suppression comments (fix it, or use pyproject.toml per-file-ignores)"

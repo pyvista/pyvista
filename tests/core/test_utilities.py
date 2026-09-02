@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+import importlib.util
 import inspect
 import itertools
 import json
@@ -86,6 +87,7 @@ from pyvista.core.utilities.writer import _DataFormatMixin
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
 from pyvista.plotting.widgets import _parse_interaction_event
 from tests.conftest import NUMPY_VERSION_INFO
+from tests.vtk_backend_divergence import NO_SNAKE_CASE
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -577,6 +579,10 @@ def test_report_dependencies(package):
         pytest.xfail('pyvista-zstd lands alongside the custom writer registry PR')
     elif package == 'pyobjc-framework-Cocoa' and sys.platform != 'darwin':
         pytest.xfail('package only available on macOS')
+    elif package == 'cvista' and importlib.util.find_spec('cvista') is None:
+        # cvista is an alternative VTK backend, installed only in the dedicated
+        # vtk_cvista CI env (see tox.ini). The report covers it there.
+        pytest.skip('cvista (alternative VTK backend) is not installed in this environment')
     assert package in REPORT, f'Package {package!r} should be defined in Report.__init__'
 
 
@@ -584,8 +590,18 @@ def test_report_downloads():
     report = pv.Report(downloads=True)
     repr_ = repr(report)
     assert f'User Data Path : {pv.examples.downloads.USER_DATA_PATH}' in repr_
-    assert f'VTK Data Source : {pv.examples.downloads.SOURCE}' in repr_
+    assert f'Data Source : {pv.examples.downloads.SOURCE}' in repr_
+    assert 'VTK Data Source' not in repr_
     assert f'File Cache : {pv.examples.downloads._FILE_CACHE}' in repr_
+
+
+def test_report_env_vars(monkeypatch):
+    monkeypatch.setenv('PYVISTA_FOO', 'bar')
+    monkeypatch.setenv('NOTPYVISTA_VAR', 'baz')
+    assert 'PYVISTA_FOO' not in repr(pv.Report(gpu=False))
+    repr_ = repr(pv.Report(gpu=False, env_vars=True))
+    assert 'PYVISTA_FOO : bar' in repr_
+    assert 'NOTPYVISTA_VAR' not in repr_
 
 
 def test_line_segments_from_points():
@@ -1624,7 +1640,8 @@ def test_no_new_attr_mixin_side_effects():
         @foo.setter
         def foo(self, val): ...
 
-    class Child(Parent): ...
+    class Child(Parent):
+        pass
 
     # Test that setting attributes on lasses does not trigger a call to the getter
     obj = Parent()
@@ -2765,6 +2782,7 @@ def test_vtk_verbosity_invalid_input(value):
 
 
 @pytest.mark.needs_vtk_version(9, 4)
+@pytest.mark.skip_vtk_backend('cvista', reason=NO_SNAKE_CASE)
 def test_vtk_snake_case():
     assert pv.vtk_snake_case() == 'error'
     match = "The attribute 'information' is defined by VTK and is not part of the PyVista API"
@@ -2976,7 +2994,8 @@ def _create_state_manager_subclass(arg1, arg2=None, sub_subclass=False):
 
     if sub_subclass:
 
-        class MyState2(MyState): ...
+        class MyState2(MyState):
+            pass
 
         return MyState2
     return MyState
@@ -3040,7 +3059,7 @@ def test_cell_quality_info_valid_measures(info):
     # Ensure the computed measure is not null
     null_value = -1
     qual_value = _compute_unit_cell_quality(info, null_value)
-    if np.isclose(qual_value, null_value):
+    if np.isclose(qual_value, null_value):  # pragma: no cover -- failure path
         pytest.fail(
             f'Measure {info.quality_measure!r} is not valid for cell type {info.cell_type.name!r}'
         )
@@ -3152,6 +3171,7 @@ def test_cell_quality_info_raises():
 
 
 @pytest.mark.needs_vtk_version(9, 4)
+@pytest.mark.skip_vtk_backend('cvista', reason=NO_SNAKE_CASE)
 def test_is_vtk_attribute():
     assert is_vtk_attribute(pv.ImageData(), 'GetCells')
     assert is_vtk_attribute(pv.UnstructuredGrid(), 'GetCells')
@@ -3399,10 +3419,18 @@ def get_concrete_classes(module, abc):
 
 
 WRITER_CLASSES = get_concrete_classes(pv.core.utilities.writer, pv.BaseWriter)
+
+
+def _writer_params():
+    """Yield the writer classes."""
+    for cls in WRITER_CLASSES:
+        yield pytest.param(cls)
+
+
 READER_CLASSES = get_concrete_classes(pv.core.utilities.reader, pv.BaseReader)
 
 
-@pytest.mark.parametrize('writer_cls', WRITER_CLASSES)
+@pytest.mark.parametrize('writer_cls', _writer_params())
 def test_writer_data_mode_mixin(writer_cls):
     """Test that classes with an ascii setter have a data_mode property."""
     if writer_cls is pv.HDFWriter and pv.vtk_version_info < (9, 4, 0):

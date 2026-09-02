@@ -95,7 +95,7 @@ BorderOptions = Literal[True, False, 'interior', 'exterior']
 # Distinct, user-facing built-in theme names, for autocomplete only. Excludes
 # 'default'/'vtk' (legacy aliases for 'document'/the base Theme) and
 # 'testing'/'document_build' (internal-only, for pytest/doc builds). All four
-# remain valid at runtime as a plain ``str`` — see ``pyvista.registered_themes``.
+# remain valid at runtime as a plain ``str``—see ``pyvista.registered_themes``.
 ThemeOptions = Literal[
     'dark',
     'document',
@@ -111,6 +111,8 @@ CameraPositionOptions = (
 
 
 class BackfaceArgs(TypedDict, total=False):
+    """Keyword arguments accepted by backface property settings."""
+
     theme: Theme
     interpolation: Literal['Physically based rendering', 'pbr', 'Phong', 'Gouraud', 'Flat']
     color: ColorLike
@@ -134,6 +136,8 @@ class BackfaceArgs(TypedDict, total=False):
 
 
 class ScalarBarArgs(TypedDict, total=False):
+    """Keyword arguments accepted by :meth:`~pyvista.Plotter.add_scalar_bar`."""
+
     title: str
     mapper: _vtk.vtkMapper
     n_labels: int
@@ -165,6 +169,8 @@ class ScalarBarArgs(TypedDict, total=False):
 
 
 class SilhouetteArgs(TypedDict, total=False):
+    """Keyword arguments accepted by silhouette settings."""
+
     color: ColorLike
     line_width: float
     opacity: float

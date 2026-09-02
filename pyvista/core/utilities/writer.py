@@ -29,20 +29,40 @@ _DataFormatOptions = Literal['binary', 'ascii']
 @abstract_class
 class _DataFormatMixin:
     # Different writers use different values to indicate the current format
+    """Add a ``data_format`` property to writers which support ASCII and binary output.
+
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
+
+    Parameters
+    ----------
+    *args : tuple, optional
+        Positional arguments passed to the parent class.
+
+    **kwargs : dict, optional
+        Keyword arguments passed to the parent class.
+
+
+    """
+
     _ascii0_binary1: ClassVar[dict[int, _DataFormatOptions]] = {0: 'ascii', 1: 'binary'}
     _ascii1_binary2: ClassVar[dict[int, _DataFormatOptions]] = {1: 'ascii', 2: 'binary'}
     _format_mapping: ClassVar[dict[int, _DataFormatOptions]] = _ascii1_binary2
 
     @property
     @abstractmethod
-    def writer(self) -> _vtk.vtkWriter: ...
+    def writer(self) -> _vtk.vtkWriter:  # numpydoc ignore=RT01
+        """Return the VTK writer this class configures."""
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.data_format = 'binary'
 
     @property
-    def data_format(self) -> _DataFormatOptions:
+    def data_format(self) -> _DataFormatOptions:  # numpydoc ignore=RT01
+        """Return or set whether the file is written as ``'ascii'`` or ``'binary'``."""
         try:
             mode = self.writer.GetDataMode()  # type: ignore[attr-defined]
         except AttributeError:
@@ -130,7 +150,7 @@ class BaseWriter(_FileIOBase):
         -----
         This is the path that will be passed to the underlying VTK writer.
         For most writers, this is the actual path of the written file.
-        For writers that write multiple files (e.g., EnSightWriter),
+        For writers that write multiple files (for example, EnSightWriter),
         this path can be renamed. See :attr:`written_path` for the actual path of the written file.
 
         Returns
@@ -165,7 +185,7 @@ class BaseWriter(_FileIOBase):
         -----
         Unlike :attr:`path`, ``written_path`` is the actual path of the written file.
         For most readers, ``path`` and ``written_path`` are identical. In cases where
-        multiple files are written (e.g. :class:`vtkEnSightWriter`), this path corresponds
+        multiple files are written (for example, :class:`vtkEnSightWriter`), this path corresponds
         to the "main" output file that would be used for reading the mesh again.
 
         Returns
@@ -183,7 +203,7 @@ class BaseWriter(_FileIOBase):
     def _execute_before_write(self) -> None:
         """Execute code before calling ``write()``.
 
-        Subclasses may optionally define this, e.g. to issue warnings.
+        Subclasses may optionally define this, for example, to issue warnings.
         """
 
     def write(self) -> None:
@@ -199,7 +219,7 @@ class BaseWriter(_FileIOBase):
 
 
 class BMPWriter(BaseWriter):
-    """BMPWriter for ``.bmp`` files.
+    """``BMPWriter`` for ``.bmp`` files.
 
     Wraps :vtk:`vtkBMPWriter`.
 
@@ -238,7 +258,7 @@ class DataSetWriter(BaseWriter, _DataFormatMixin):
 
 
 class HDFWriter(BaseWriter):
-    """HDFWriter for ``.hdf`` and ``.vtkhdf`` files.
+    """``HDFWriter`` for ``.hdf`` and ``.vtkhdf`` files.
 
     Wraps :vtk:`vtkHDFWriter`.
 
@@ -302,7 +322,7 @@ class HoudiniPolyDataWriter(BaseWriter):
 
 
 class IVWriter(BaseWriter):
-    """IVWriter for OpenInventor ``.iv`` files.
+    """``IVWriter`` for OpenInventor ``.iv`` files.
 
     Wraps :vtk:`vtkIVWriter`.
 
@@ -314,7 +334,7 @@ class IVWriter(BaseWriter):
 
 
 class JPEGWriter(BaseWriter):
-    """JPEGWriter for ``.jpeg`` and ``.jpg`` files.
+    """``JPEGWriter`` for ``.jpeg`` and ``.jpg`` files.
 
     Wraps :vtk:`vtkJPEGWriter`.
 
@@ -338,7 +358,7 @@ class NIFTIImageWriter(BaseWriter):
 
 
 class OBJWriter(BaseWriter):
-    """OBJWriter for Wavefront ``.obj`` files.
+    """``OBJWriter`` for Wavefront ``.obj`` files.
 
     Wraps :vtk:`vtkOBJWriter`.
 
@@ -350,7 +370,7 @@ class OBJWriter(BaseWriter):
 
 
 class PLYWriter(BaseWriter, _DataFormatMixin):
-    """PLYWriter for PLY polygonal ``.ply`` files.
+    """``PLYWriter`` for PLY polygonal ``.ply`` files.
 
     Wraps :vtk:`vtkPLYWriter`.
 
@@ -388,7 +408,7 @@ class PLYWriter(BaseWriter, _DataFormatMixin):
 
 
 class PNGWriter(BaseWriter):
-    """PNGWriter for ``.png`` files.
+    """``PNGWriter`` for ``.png`` files.
 
     Wraps :vtk:`vtkPNGWriter`.
 
@@ -400,7 +420,7 @@ class PNGWriter(BaseWriter):
 
 
 class PNMWriter(BaseWriter):
-    """PNMWriter for ``.pnm`` files.
+    """``PNMWriter`` for ``.pnm`` files.
 
     Wraps :vtk:`vtkPNMWriter`.
 
@@ -436,7 +456,7 @@ class RectilinearGridWriter(BaseWriter, _DataFormatMixin):
 
 
 class STLWriter(BaseWriter, _DataFormatMixin):
-    """STLWriter for stereolithography  ``.stl`` files.
+    """``STLWriter`` for stereolithography  ``.stl`` files.
 
     Wraps :vtk:`vtkSTLWriter`.
 
@@ -472,7 +492,7 @@ class StructuredGridWriter(BaseWriter, _DataFormatMixin):
 
 
 class TIFFWriter(BaseWriter):
-    """TIFFWriter for ``.tif`` and ``.tiff`` files.
+    """``TIFFWriter`` for ``.tif`` and ``.tiff`` files.
 
     Wraps :vtk:`vtkTIFFWriter`.
 
@@ -502,7 +522,7 @@ class EnSightWriter(BaseWriter):
 
     .. note::
         This is a parallel writer that prepends a process number to the ``.case`` extension,
-        e.g. ``<filename>.0.case``. Use :attr:`~pyvista.BaseWriter.written_path`
+        for example, ``<filename>.0.case``. Use :attr:`~pyvista.BaseWriter.written_path`
         to get the saved file after calling :meth:`~pyvista.BaseWriter.write`.
 
     .. note::
@@ -543,6 +563,24 @@ class EnSightWriter(BaseWriter):
 
 @abstract_class
 class _XMLWriter(BaseWriter, _DataFormatMixin):
+    """Base class for the XML writers, which also support compression.
+
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
+
+    Parameters
+    ----------
+    *args : tuple, optional
+        Positional arguments passed to the parent class.
+
+    **kwargs : dict, optional
+        Keyword arguments passed to the parent class.
+
+
+    """
+
     _format_mapping = _DataFormatMixin._ascii0_binary1
 
     def __init__(self, *args, **kwargs) -> None:
@@ -550,7 +588,8 @@ class _XMLWriter(BaseWriter, _DataFormatMixin):
         self.compression = 'zlib'
 
     @property
-    def compression(self) -> _CompressionOptions:
+    def compression(self) -> _CompressionOptions:  # numpydoc ignore=RT01
+        """Return or set the compressor the XML writer uses."""
         return self._compression
 
     @compression.setter

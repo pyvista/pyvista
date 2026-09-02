@@ -14,7 +14,7 @@ import numpy as np
 import pyvista as pv
 
 # %%
-# Integrate the Lorenz system
+# Integrate the Lorenz System
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # A forward-Euler scheme is enough to trace the chaotic trajectory.
 
@@ -40,7 +40,7 @@ trajectory['z'] = points[:, 2]
 
 
 # %%
-# Render the attractor
+# Render the Attractor
 # ~~~~~~~~~~~~~~~~~~~~
 # Tube the polyline so the trajectory has visible thickness in 3D.
 
@@ -50,7 +50,7 @@ pl.show()
 
 
 # %%
-# Inspect the path length
+# Inspect the Path Length
 # ~~~~~~~~~~~~~~~~~~~~~~~
 # The integrated trajectory accumulates several hundred units of arc length.
 

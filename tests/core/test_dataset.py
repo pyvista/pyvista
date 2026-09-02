@@ -227,6 +227,12 @@ def test_field_data_string(hexbeam):
     assert returned == field_value
     assert isinstance(returned, str)
 
+    # a sequence of strings, not only a single one
+    field_name = 'spam'
+    field_value = ['I could', 'write', 'notes', 'here']
+    hexbeam.add_field_data(field_value, field_name)
+    assert hexbeam.field_data[field_name].tolist() == field_value
+
 
 @pytest.mark.parametrize('field', [range(5), np.ones((3, 3))[:, 0]])
 def test_add_field_data(hexbeam, field):
@@ -714,7 +720,7 @@ def test_rename_array_doesnt_delete():
     mesh = make_mesh()
     was_deleted = [False]
 
-    def on_delete(*_):
+    def on_delete(*_):  # pragma: no cover -- asserted never invoked
         # Would be easier to throw an exception here but even though the exception gets printed to
         # stderr pytest reports the test passing. See #5246 .
         was_deleted[0] = True
@@ -1649,7 +1655,9 @@ def test_cell_neighbors_levels(grid: DataSet, i0, n_levels, connections):
         assert set(cell_ids) == set(grid.cell_neighbors(i0, connections=connections))
 
     else:
-        assert len(list(cell_ids)) == n_levels
+        # `cell_ids` is a generator, so materialize it before asserting on it twice.
+        cell_ids = list(cell_ids)
+        assert len(cell_ids) == n_levels
         for ids in cell_ids:
             assert isinstance(ids, list)
             assert all(isinstance(id_, int) for id_ in ids)
@@ -1673,7 +1681,9 @@ def test_point_neighbors_levels(grid: DataSet, i0, n_levels):
         assert set(point_ids) == set(grid.point_neighbors(i0))
 
     else:
-        assert len(list(point_ids)) == n_levels
+        # `point_ids` is a generator, so materialize it before asserting on it twice.
+        point_ids = list(point_ids)
+        assert len(point_ids) == n_levels
         for ids in point_ids:
             assert isinstance(ids, list)
             assert all(isinstance(id_, int) for id_ in ids)
@@ -1792,6 +1802,32 @@ def test_distinct_cell_types_dimensions(dimensions):
 
     structured = image.cast_to_structured_grid()
     assert_distinct_cell_types(structured)
+
+
+@pytest.mark.parametrize(
+    ('mesh_', 'expected_type'),
+    [
+        (examples.load_explicit_structured(), pv.CellType.HEXAHEDRON),
+        (examples.load_structured(), pv.CellType.QUAD),
+    ],
+)
+def test_distinct_cell_types_hidden_cells(mesh_, expected_type):
+    hidden = mesh_.hide_cells(range(mesh_.n_cells // 4, mesh_.n_cells // 2))
+
+    expected = {pv.CellType.EMPTY_CELL, expected_type}
+    assert hidden.distinct_cell_types == expected
+    assert {cell.type for cell in hidden.cell} == expected
+
+
+def test_min_max_cell_dimensionality_hidden_cells_legacy(monkeypatch):
+    # Simulate legacy VTK to exercise the `_distinct_cell_dimensions` fallback path.
+    monkeypatch.setattr(pv, 'vtk_version_info', (9, 0, 0))
+
+    mesh_ = examples.load_explicit_structured()
+    hidden = mesh_.hide_cells(range(mesh_.n_cells // 4, mesh_.n_cells // 2))
+
+    assert hidden.min_cell_dimensionality == 0
+    assert hidden.max_cell_dimensionality == 3
 
 
 def test_structured_grid_dimensionality():

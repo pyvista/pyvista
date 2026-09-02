@@ -57,6 +57,8 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
 
+from pyvista._warn_external import warn_external
+
 if TYPE_CHECKING:
     from typing_extensions import Self
 
@@ -82,12 +84,17 @@ class _ConfigBase(metaclass=_ForceSlots):
 
     Provides dict-style item access, ``from_dict`` / ``to_dict`` serialization,
     and equality comparison. Used as the base for both the core
-    :class:`Config` (this module) and every node of the plotting
+    :class:`pyvista.core.config.Config` and every node of the plotting
     :class:`pyvista.plotting.themes.Theme` hierarchy.
 
     Subclasses must list every attribute as an underscore-prefixed entry in
     their ``__slots__`` and expose each one via a public ``@property`` getter
     / setter pair that reads and writes the underscore slot.
+
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
 
     """
 
@@ -107,7 +114,10 @@ class _ConfigBase(metaclass=_ForceSlots):
         dict_ : dict
             Mapping of public attribute name to value, as produced by
             :meth:`to_dict`. Nested config objects are recursively
-            reconstructed via their own ``from_dict``.
+            reconstructed via their own ``from_dict``. A key that is not a
+            valid attribute of ``cls`` is skipped with a warning instead of
+            raising, so a dict saved by a different pyvista version can
+            still be loaded.
 
         Returns
         -------
@@ -117,6 +127,10 @@ class _ConfigBase(metaclass=_ForceSlots):
         """
         inst = cls()
         for key, value in dict_.items():
+            if not hasattr(inst, key):
+                msg = f'{cls.__name__!r} has no attribute {key!r}. Ignoring it.'
+                warn_external(msg)
+                continue
             attr = getattr(inst, key)
             if hasattr(attr, 'from_dict'):
                 setattr(inst, key, attr.from_dict(value))
@@ -132,7 +146,7 @@ class _ConfigBase(metaclass=_ForceSlots):
         dict
             Mapping of public attribute name to its current value. Nested
             config objects are recursively serialized via their own
-            ``to_dict``. Names listed in :attr:`_TO_DICT_SKIP` are omitted.
+            ``to_dict``. Names listed in ``_TO_DICT_SKIP`` are omitted.
 
         """
         skip = type(self)._TO_DICT_SKIP
@@ -183,6 +197,12 @@ class Config(_ConfigBase):
     Holds process-wide settings that affect ``pyvista.core`` behavior. The
     singleton instance is exposed as ``pyvista.global_config``. This is the
     sibling of ``pyvista.global_theme`` for plotting (rendering) settings.
+    See :ref:`configuration` for an overview of all global settings.
+
+    See Also
+    --------
+    pyvista.plotting.themes.Theme
+        Plotting counterpart, exposed as ``pyvista.global_theme``.
 
     Examples
     --------
@@ -269,19 +289,19 @@ class Config(_ConfigBase):
         .. warning::
 
             This option requires runtime inspection and does not work with all developer
-            tools, e.g. it has no effect when using PyCharm. This is because it relies on
+            tools, for example, it has no effect when using PyCharm. This is because it relies on
             calling the object's ``__dir__`` method for generating auto-completion
             suggestions. Tools like PyCharm that only use static analysis for
             auto-completion are therefore unaffected.
 
         Notes
         -----
-        The snake_case VTK aliases (``number_of_points``, ``deep_copy``, ...) are
+        The ``snake_case`` VTK aliases (``number_of_points``, ``deep_copy``, and so on) are
         controlled separately by :func:`pyvista.vtk_snake_case`. When
-        snake_case is not ``'allow'`` (the default), those names are hidden
+        ``snake_case`` is not ``'allow'`` (the default), those names are hidden
         from :func:`dir` regardless of this setting, because accessing them
         would already raise ``PyVistaAttributeError``.
-        Enabling snake_case surfaces the snake_case names in :func:`dir`;
+        Enabling ``snake_case`` surfaces the ``snake_case`` names in :func:`dir`;
         ``show_vtk_api`` only controls the CamelCase VTK API.
 
         .. versionadded:: 0.48

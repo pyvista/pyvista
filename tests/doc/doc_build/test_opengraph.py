@@ -17,6 +17,8 @@ _META_TAG = re.compile(r'<meta\b[^>]*>')
 _META_KEY = re.compile(r'\b(?:property|name)="([^"]+)"')
 _META_CONTENT = re.compile(r'\bcontent="([^"]*)"')
 _PAGE_IMAGE = re.compile(r'<img\b[^>]*\bsrc="[^"]*/_images/([^"]+)"')
+# matches a gallery-card thumbnail, excluded below so it isn't double-counted as a page image
+_GALLERY_THUMBNAIL = re.compile(r'<div class="sphx-glr-thumbcontainer"[^>]*>.*?</div>', re.DOTALL)
 
 
 def meta_tags(page: Path) -> dict[str, str]:
@@ -32,7 +34,8 @@ def meta_tags(page: Path) -> dict[str, str]:
 
 def page_images(page: Path) -> list[str]:
     """Return the filenames of the images a page shows, in the order it shows them."""
-    images = _PAGE_IMAGE.findall(page.read_text(encoding='utf-8'))
+    content = _GALLERY_THUMBNAIL.sub('', page.read_text(encoding='utf-8'))
+    images = _PAGE_IMAGE.findall(content)
     assert images, f'{page} shows no images'
     return images
 

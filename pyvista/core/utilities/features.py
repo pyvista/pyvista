@@ -69,7 +69,7 @@ def voxelize(  # noqa: PLR0917
     density : float | array_like[float]
         The uniform size of the voxels when single float passed.
         A list of densities along x,y,z directions.
-        Defaults to 1/100th of the mesh length.
+        Defaults to 1/100 of the mesh length.
 
     check_surface : bool, default: True
         Specify whether to check the surface for closure. If on, then the
@@ -279,7 +279,7 @@ def voxelize_volume(  # noqa: PLR0917
     density : float | array_like[float]
         The uniform size of the voxels when single float passed.
         Nonuniform voxel size if a list of values are passed along x,y,z directions.
-        Defaults to 1/100th of the mesh length.
+        Defaults to 1/100 of the mesh length.
 
     check_surface : bool, default: True
         Specify whether to check the surface for closure. If on, then the
@@ -456,6 +456,15 @@ def grid_from_sph_coords(theta, phi, r):
     pyvista.StructuredGrid
         Structured grid.
 
+    Notes
+    -----
+    The returned grid has no point normals. Warping it with
+    :func:`~pyvista.DataSetFilters.warp_by_scalar` therefore moves every point
+    along a single fixed direction rather than radially outward -- see that
+    filter's notes. For a radial warp, use
+    :func:`~pyvista.DataSetFilters.warp_by_vector` with the (normalized) point
+    coordinates as the vector array instead.
+
     """
     x, y, z = np.meshgrid(np.radians(theta), np.radians(phi), r)
     # Transform grid to cartesian coordinates
@@ -468,7 +477,7 @@ def grid_from_sph_coords(theta, phi, r):
 
 @_deprecate_positional_args
 def transform_vectors_sph_to_cart(theta, phi, r, u, v, w):  # noqa: PLR0917  # numpydoc ignore=RT02
-    """Transform vectors from spherical (r, phi, theta) to cartesian coordinates (z, y, x).
+    """Transform vectors from spherical (r, phi, theta) to Cartesian coordinates (z, y, x).
 
     Note the "reverse" order of arrays's axes, commonly used in geosciences.
 
@@ -816,9 +825,6 @@ def sample_function(  # noqa: PLR0917
     >>> noise = pv.perlin_noise(0.1, (5, 5, 5), (0, 0, 0))
     >>> surf = pv.sample_function(noise, dim=(200, 200, 1))
     >>> surf.plot()
-
-    See :ref:`perlin_noise_2d_example` and :ref:`perlin_noise_3d_example`
-    for a full example using this function.
 
     """
     # internal import to avoid circular dependency

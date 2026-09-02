@@ -13,6 +13,7 @@ import inspect
 from typing import TYPE_CHECKING
 from typing import Any
 
+import sphinx
 from sphinx.ext.autodoc import ClassDocumenter
 from sphinx.ext.autodoc import ClassLevelDocumenter
 from sphinx.ext.autodoc import ObjectMember
@@ -88,7 +89,7 @@ def metaclass_property_descriptions(  # numpydoc ignore=RT01
 ) -> list[tuple[str, str]]:
     """Return ``[(name, first docstring line)]`` for ``module.objname``'s metaclass properties.
 
-    ``.. autosummary::`` gets each entry's description the same eagerly-evaluated way it gets
+    ``.. autosummary::`` gets each entry's description the same eagerly evaluated way it gets
     everything else here wrong -- so enum.rst builds its own table from this instead.
     """
     props = _metaclass_properties(_resolve(module, objname))
@@ -102,8 +103,8 @@ def metaclass_property_descriptions(  # numpydoc ignore=RT01
 def _is_bitmask_like(cls: type[Enum]) -> bool:
     """Return whether every member of ``cls`` looks like a bit flag (0 or a power of two).
 
-    Only ``int``-valued enums (``IntEnum``, ``IntFlag``, ...) can look like bit flags --
-    ``int(member.value)`` would raise for e.g. a ``str``-valued ``Enum``.
+    Only ``int``-valued enums (``IntEnum``, ``IntFlag``, and so on) can look like bit flags --
+    ``int(member.value)`` would raise, for example, for a ``str``-valued ``Enum``.
     """
     if issubclass(cls, Flag):
         return True
@@ -198,7 +199,7 @@ class EnumDocumenter(ClassDocumenter):
     def _document_members(self, sourcename: str) -> None:
         """Write out each enum member's value and (if any) docstring, flat under one rubric.
 
-        Regular properties and metaclass properties (e.g. dimension_map) are *not*
+        Regular properties and metaclass properties (for example, ``dimension_map``) are *not*
         written here -- both get their own page via enum.rst's Attributes table instead,
         the same as any other class's attributes.
         """
@@ -228,6 +229,27 @@ class EnumDocumenter(ClassDocumenter):
                 self.add_line('', sourcename)
 
 
+def _patch_autosummary_objtype() -> None:
+    """Route ``Enum`` classes to the ``enum`` template in autosummary's stub generation.
+
+    Sphinx 9's autosummary picks stub templates from a fixed object-type table instead of
+    the documenter registry, so registering :class:`EnumDocumenter` is not enough to map
+    enums to ``enum.rst`` there.
+    """
+    from sphinx.ext.autosummary import generate  # noqa: PLC0415
+
+    original = generate._get_documenter
+    if getattr(original, '_autoenum_patch', False):
+        return
+
+    def _get_documenter(obj: Any, parent: Any) -> str:
+        """Return ``'enum'`` for ``Enum`` classes, else defer to autosummary's own lookup."""
+        return 'enum' if _is_enum(obj) else original(obj, parent)
+
+    _get_documenter._autoenum_patch = True  # type: ignore[attr-defined]
+    generate._get_documenter = _get_documenter
+
+
 def setup(app: Sphinx) -> dict[str, Any]:  # numpydoc ignore=RT01
     """Register the ``autoenum``/``autometaclassproperty`` directives.
 
@@ -238,6 +260,8 @@ def setup(app: Sphinx) -> dict[str, Any]:  # numpydoc ignore=RT01
     """
     app.add_autodocumenter(EnumDocumenter)
     app.add_autodocumenter(MetaclassPropertyDocumenter)
+    if sphinx.version_info >= (9,):
+        _patch_autosummary_objtype()
     return {
         'version': '0.1',
         'parallel_read_safe': True,

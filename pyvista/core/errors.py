@@ -124,7 +124,7 @@ class PartitionedDataSetsNotSupported(TypeError):  # noqa: N818
 
 
 class MissingDataError(ValueError):
-    """Exception when data is missing, e.g. no active scalars can be set.
+    """Exception when data is missing, for example, no active scalars can be set.
 
     Parameters
     ----------
@@ -139,7 +139,7 @@ class MissingDataError(ValueError):
 
 
 class AmbiguousDataError(ValueError):
-    """Exception when data is ambiguous, e.g. multiple active scalars can be set.
+    """Exception when data is ambiguous, for example, multiple active scalars can be set.
 
     Parameters
     ----------

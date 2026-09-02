@@ -76,6 +76,16 @@ _ReadReturnT = TypeVar('_ReadReturnT', bound='DataObject')
 
 
 class _FileIOBase(ABC, _NoNewAttrMixin):
+    """Base class for readers and writers, which are matched to files by extension.
+
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
+
+
+    """
+
     _vtk_class_name: str = ''
 
     def __repr__(self) -> str:
@@ -100,7 +110,11 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
 
     @classmethod
     @abstractmethod
-    def _get_extension_mappings(cls) -> list[dict[str, type]]: ...
+    def _get_extension_mappings(cls) -> list[dict[str, type]]:
+        # Subclasses must override this, but `extensions` is a `_classproperty` and so is
+        # evaluated on this class too, e.g. when Sphinx imports it. Match
+        # `_get_extension_pattern_mappings` and return nothing rather than None.
+        return []
 
     @classmethod
     def _get_extension_pattern_mappings(
@@ -110,7 +124,7 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
 
     @_classproperty
     def extensions(cls) -> tuple[str, ...]:  # noqa: N805
-        """Return the file extension(s) associated with this class.
+        """Return the file extensions associated with this class.
 
         These extensions are used by :func:`~pyvista.read` and :class:`~pyvista.DataObject.save`
         to determine which reader and/or writer is used for reading and/or saving files.
@@ -220,7 +234,7 @@ def get_ext(filename: str | Path) -> str:
     """Extract the extension of the filename.
 
     For files with the .gz suffix, the previous extension is returned as well.
-    This is needed e.g. for the compressed NIFTI format (.nii.gz).
+    This is needed for example, for the compressed NIFTI format (.nii.gz).
 
     Parameters
     ----------
@@ -314,7 +328,7 @@ def read(  # noqa: PLR0917
         refused. Pickle is a Python serialization protocol, not a mesh
         file format, and loading an untrusted pickle is arbitrary code
         execution (CWE-502). Use a real mesh format (``.vtu``, ``.vtp``,
-        ``.vtm``, ``.vtk``, ``.ply``, ``.stl``, ...) or install
+        ``.vtm``, ``.vtk``, ``.ply``, ``.stl``, and so on) or install
         ``pyvista-zstd`` for the ``.pv`` single-blob format.
 
     See Also
@@ -347,7 +361,7 @@ def read(  # noqa: PLR0917
         (``mypy``, ``pyright``) use this to narrow the return type to
         ``cls`` directly, so callers do not need ``typing.cast`` or a
         manual ``assert isinstance`` to access subclass-specific
-        attributes, e.g. ``pv.read('file.vtu', cls=pv.UnstructuredGrid)``.
+        attributes, for example, ``pv.read('file.vtu', cls=pv.UnstructuredGrid)``.
 
     validate : bool, optional
         Forwarded to :func:`pyvista.wrap` as the ``validate`` keyword when
@@ -580,7 +594,7 @@ def read_texture(filename: str | Path, progress_bar: bool = False) -> Texture:  
 
     Examples
     --------
-    Read in an example jpg map file as a texture.
+    Read in an example JPG map file as a texture.
 
     >>> from pathlib import Path
     >>> import pyvista as pv
@@ -1063,7 +1077,7 @@ def _read_grdecl(
 # unused; the shims exist solely to keep the import path callable while always
 # raising. They must accept any historical call signature unchanged.
 def read_pickle(*args: Any, **kwargs: Any) -> NoReturn:  # noqa: ARG001
-    """Raise :class:`ValueError` — pickle is not a supported mesh file format.
+    """Raise :class:`ValueError`—pickle is not a supported mesh file format.
 
     This shim is kept only for backwards-compatible import paths. See
     the module-level refusal message for migration guidance. PyVista
@@ -1075,7 +1089,7 @@ def read_pickle(*args: Any, **kwargs: Any) -> NoReturn:  # noqa: ARG001
 
 
 def save_pickle(*args: Any, **kwargs: Any) -> NoReturn:  # noqa: ARG001
-    """Raise :class:`ValueError` — pickle is not a supported mesh file format.
+    """Raise :class:`ValueError`—pickle is not a supported mesh file format.
 
     See :func:`read_pickle`.
     """
@@ -1524,7 +1538,7 @@ def from_trimesh(
     - ``vertex_attributes`` are stored as point data.
     - ``face_attributes`` are stored as cell data.
     - ``metadata`` is stored as field data: NumPy arrays are stored directly as field data
-      arrays, and any other metadata (e.g. strings or lists) is stored in the
+      arrays, and any other metadata (for example, strings or lists) is stored in the
       :attr:`~pyvista.DataObject.user_dict`.
 
     .. note::

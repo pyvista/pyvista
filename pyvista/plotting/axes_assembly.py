@@ -58,6 +58,8 @@ ScaleModeOptions = Literal['default', 'anti_distortion']
 
 
 class _AxesPropTuple(NamedTuple):
+    """A property value for each axis shaft and tip."""
+
     x_shaft: float | str | ColorLike
     y_shaft: float | str | ColorLike
     z_shaft: float | str | ColorLike
@@ -67,12 +69,16 @@ class _AxesPropTuple(NamedTuple):
 
 
 class _OrthogonalPlanesKwargs(TypedDict):
+    """Keyword arguments accepted by the orthogonal planes source."""
+
     bounds: VectorLike[float]
     resolution: int | VectorLike[int]
     normal_sign: Literal['+', '-'] | Sequence[str]
 
 
 class _XYZTuple(NamedTuple):
+    """A value for each of the x, y, and z axes."""
+
     x: Any
     y: Any
     z: Any
@@ -86,6 +92,16 @@ class _XYZAssembly(
     _NameMixin,
     _vtk.vtkPropAssembly,
 ):
+    """Base class for assemblies of x-y-z actors with labels.
+
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
+
+
+    """
+
     DEFAULT_LABELS = _XYZTuple('X', 'Y', 'Z')
 
     def __init__(
@@ -173,7 +189,8 @@ class _XYZAssembly(
         self._name = name
 
     @property
-    def parts(self):
+    def parts(self):  # numpydoc ignore=RT01
+        """Return the actors and assemblies this assembly is composed of."""
         collection = self.GetParts()
         return tuple(collection.GetItemAsObject(i) for i in range(collection.GetNumberOfItems()))
 
@@ -1001,7 +1018,7 @@ class AxesAssembly(_XYZAssembly):
 
         value : float | str | ColorLike | Sequence[float | str | ColorLike]
             Value to set the attribute to. If a single value, set all specified axes
-            shaft(s) or tip(s) :class:`~pyvista.Property` attributes to this value.
+            shafts or tips :class:`~pyvista.Property` attributes to this value.
             If a sequence of values, set the specified parts to these values.
 
         axis : str | int, default: 'all'
@@ -2383,6 +2400,8 @@ class PlanesAssembly(_XYZAssembly):
 
 
 class _AxisActor(DisableVtkSnakeCase, _vtk.vtkAxisActor):
+    """Axis actor which shows only its title."""
+
     def __init__(self):
         super().__init__()
         # Only show the title
@@ -2420,4 +2439,5 @@ class _AxisActor(DisableVtkSnakeCase, _vtk.vtkAxisActor):
 
     @property
     def prop(self) -> TextProperty:
+        """Return the title text property."""
         return self.GetTitleTextProperty()

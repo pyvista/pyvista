@@ -42,6 +42,10 @@ from pyvista.plotting.errors import RenderWindowUnavailable
 from pyvista.plotting.opts import PointSpriteShape
 from pyvista.plotting.opts import StereoType
 from pyvista.plotting.plotter import SUPPORTED_FORMATS
+from pyvista.plotting.renderer import _MIN_IRRADIANCE_SIZE
+from pyvista.plotting.renderer import _MIN_LUT_SAMPLES
+from pyvista.plotting.renderer import _MIN_LUT_SIZE
+from pyvista.plotting.renderer import _MIN_PREFILTER_SAMPLES
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
 from tests.core.test_imagedata_filters import labeled_image  # noqa: F401
@@ -283,7 +287,8 @@ def test_pbr(sphere, verify_image_cache):
     pl.show()
 
 
-@pytest.mark.parametrize('resample', [True, 0.5])
+# 0.1 clears every floor; 0.5 misses them all and renders 4.5x slower
+@pytest.mark.parametrize('resample', [True, 0.1])
 def test_set_environment_texture_cubemap(resample, verify_image_cache):
     """Test set_environment_texture with a cubemap."""
     # Skip due to large variance
@@ -306,7 +311,14 @@ def test_set_environment_texture_resample_uses_linear_anti_aliasing(mocker, no_i
 
     pl = pv.Plotter(lighting=None)
     texture = examples.load_globe_texture()
+    default_size = pl.renderer.GetEnvMapIrradiance().GetIrradianceSize()
     pl.set_environment_texture(texture, resample=0.5)
+
+    # Equirectangular textures light through spherical harmonics, so their irradiance
+    # map is left alone. The specular prefilter is used either way, so it still scales
+    assert not texture.cube_map
+    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == default_size
+    assert pl.renderer.GetEnvMapPrefiltered().GetPrefilterMaxSamples() == 256
 
     spy.assert_called_once()
     args, kwargs = spy.call_args
@@ -314,6 +326,97 @@ def test_set_environment_texture_resample_uses_linear_anti_aliasing(mocker, no_i
     assert args[1] == 0.5
     assert args[2] == 'linear'
     assert kwargs.get('anti_aliasing') is True
+    pl.close()
+
+
+@pytest.fixture
+def small_cubemap():
+    """Return a low-resolution cube map, for tests that assert state and never render."""
+    rng = np.random.default_rng(0)
+    faces = []
+    for _ in range(6):
+        image = pv.ImageData(dimensions=(32, 32, 1))
+        image['data'] = rng.integers(0, 255, (32 * 32, 3), dtype=np.uint8)
+        faces.append(image)
+    return pv.Texture(faces)
+
+
+def test_set_environment_texture_resample_shrinks_irradiance(small_cubemap, no_images_to_verify):  # noqa: ARG001
+    """Resampling should also shrink the diffuse irradiance map VTK convolves."""
+    # Pinned, so the assertions below test the floor's value and not just its name
+    assert _MIN_IRRADIANCE_SIZE == 32
+    assert _MIN_PREFILTER_SAMPLES == 32
+    assert (_MIN_LUT_SIZE, _MIN_LUT_SAMPLES) == (128, 128)
+
+    texture = small_cubemap
+
+    # The testing theme resamples by default, so turn it off to see the full-size map
+    pv.global_theme.resample_environment_texture = False
+    pl = pv.Plotter(lighting=None)
+    default_size = pl.renderer.GetEnvMapIrradiance().GetIrradianceSize()
+    default_samples = pl.renderer.GetEnvMapPrefiltered().GetPrefilterMaxSamples()
+    default_lut = pl.renderer.GetEnvMapLookupTable()
+    default_lut_size = default_lut.GetLUTSize()
+    default_lut_samples = default_lut.GetLUTSamples()
+
+    # A per-axis rate has no meaning for the square irradiance map
+    with pytest.raises(ValueError, match='resample has shape'):
+        pl.set_environment_texture(texture, resample=[0.25, 0.5, 0.5])
+
+    pl.set_environment_texture(texture, resample=0.5)
+    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == 128
+
+    # Setting the texture again scales from the default size rather than compounding
+    # with the size the previous call left behind
+    pl.set_environment_texture(texture, resample=0.5)
+    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == 128
+    assert pl.renderer.GetEnvMapPrefiltered().GetPrefilterMaxSamples() == 256
+    assert pl.renderer.GetEnvMapLookupTable().GetLUTSize() == 256
+    assert pl.renderer.GetEnvMapLookupTable().GetLUTSamples() == 512
+
+    pl.set_environment_texture(texture, resample=False)
+    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == default_size
+    assert pl.renderer.GetEnvMapPrefiltered().GetPrefilterMaxSamples() == default_samples
+    assert pl.renderer.GetEnvMapLookupTable().GetLUTSize() == default_lut_size
+    assert pl.renderer.GetEnvMapLookupTable().GetLUTSamples() == default_lut_samples
+
+    # ``True`` means a sampling rate of 1/16, which lands on the floor
+    pl.set_environment_texture(texture, resample=True)
+    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == _MIN_IRRADIANCE_SIZE
+    assert pl.renderer.GetEnvMapPrefiltered().GetPrefilterMaxSamples() == 32
+    assert pl.renderer.GetEnvMapLookupTable().GetLUTSize() == _MIN_LUT_SIZE
+    assert pl.renderer.GetEnvMapLookupTable().GetLUTSamples() == _MIN_LUT_SAMPLES
+
+    pl.set_environment_texture(texture, resample=2.0)
+    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == default_size
+    assert pl.renderer.GetEnvMapPrefiltered().GetPrefilterMaxSamples() == default_samples
+    assert pl.renderer.GetEnvMapLookupTable().GetLUTSize() == default_lut_size
+
+    # Rates that do not divide the default size exactly are rounded
+    pl.set_environment_texture(texture, resample=0.3)
+    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == 77
+
+    pl.set_environment_texture(texture, resample=0.13)
+    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == 33
+
+    # ``1.0`` is a sampling rate, not ``True``
+    pl.set_environment_texture(texture, resample=1.0)
+    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == default_size
+
+    # Rates below the floor all land on it
+    pl.set_environment_texture(texture, resample=1 / 1024)
+    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == _MIN_IRRADIANCE_SIZE
+    assert pl.renderer.GetEnvMapPrefiltered().GetPrefilterMaxSamples() == _MIN_PREFILTER_SAMPLES
+    assert pl.renderer.GetEnvMapLookupTable().GetLUTSize() == _MIN_LUT_SIZE
+    pl.close()
+
+    # The theme supplies the rate when `resample` is not given, and the plotter's own
+    # theme wins over the global one
+    theme = pv.plotting.themes._TestingTheme()
+    theme.resample_environment_texture = True
+    pl = pv.Plotter(lighting=None, theme=theme)
+    pl.set_environment_texture(texture)
+    assert pl.renderer.GetEnvMapIrradiance().GetIrradianceSize() == _MIN_IRRADIANCE_SIZE
     pl.close()
 
 
@@ -822,7 +925,9 @@ cpos_param.extend(pv.plotting.renderer.Renderer.CAMERA_STR_ATTR_MAP)
 
 
 @pytest.mark.parametrize('cpos', cpos_param)
-def test_set_camera_position(cpos, sphere):
+def test_set_camera_position(cpos, sphere, verify_image_cache):
+    # Sphere edges land differently on each macOS run, see pyvista/pyvista#9030
+    verify_image_cache.macos_skip_image_cache = True
     pl = pv.Plotter()
     pl.add_mesh(sphere)
     pl.camera_position = cpos
@@ -888,21 +993,9 @@ def test_plot_no_active_scalars(sphere):
 
     def _test_update_scalars_with_invalid_array():
         pl.update_scalars(np.arange(5))
-        if pv._version.version_info[:2] > (0, 46):
-            msg = 'Convert error this method'
-            raise RuntimeError(msg)
-        if pv._version.version_info[:2] > (0, 47):
-            msg = 'Remove this method'
-            raise RuntimeError(msg)
 
     def _test_update_scalars_with_valid_array():
         pl.update_scalars(np.arange(sphere.n_faces))
-        if pv._version.version_info[:2] > (0, 46):
-            msg = 'Convert error this method'
-            raise RuntimeError(msg)
-        if pv._version.version_info[:2] > (0, 47):
-            msg = 'Remove this method'
-            raise RuntimeError(msg)
 
     with (
         pytest.raises(ValueError, match='Number of scalars'),
@@ -1047,6 +1140,39 @@ def test_plot_add_scalar_bar(sphere, verify_image_cache):
     )
     pl.add_scalar_bar(background_color='white', n_colors=256)
     assert isinstance(pl.scalar_bar, _vtk.vtkScalarBarActor)
+    pl.show()
+
+
+def test_plot_add_scalar_bar_cmap(verify_image_cache):
+    verify_image_cache.windows_skip_image_cache = True
+
+    pl = pv.Plotter()
+
+    ltable = pv.LookupTable()
+    with pytest.raises(ValueError, match='Exactly one of'):
+        pl.add_scalar_bar(cmap='jet', lookup_table=ltable)
+    match = '`cmap` must be specified when `clim` is provided.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pl.add_scalar_bar(clim=(0, 1), lookup_table=ltable)
+
+    cmap = 'bwr'
+    pl.add_scalar_bar(cmap=cmap)
+
+    assert pl.scalar_bar.GetLookupTable().cmap.name == cmap
+
+    pl.show()
+
+
+def test_plot_add_scalar_bar_lookup_table(verify_image_cache):
+    """Verify we can add a scalar bar just by specifying a lookup table."""
+    verify_image_cache.windows_skip_image_cache = True
+
+    ltable = pv.LookupTable(cmap='reds')
+    pl = pv.Plotter()
+    pl.add_scalar_bar(lookup_table=ltable)
+
+    assert pl.scalar_bar.GetLookupTable().cmap.name == ltable.cmap.name
+
     pl.show()
 
 
@@ -1847,7 +1973,7 @@ def test_vector_array_fail_with_incorrect_component(multicomp_poly):
         pl.add_mesh(multicomp_poly, scalars='vector_values_points', component=-1)
 
 
-def test_camera(sphere):
+def test_camera(sphere, verify_image_cache):
     pl = pv.Plotter()
     pl.add_mesh(sphere)
     pl.view_isometric()
@@ -1860,6 +1986,9 @@ def test_camera(sphere):
     pl.view_xz(negative=True)
     pl.view_yz(negative=True)
     pl.show()
+
+    # Facet edges of the zoomed sphere land differently on each macOS run
+    verify_image_cache.macos_skip_image_cache = True
 
     pl = pv.Plotter()
     pl.add_mesh(sphere)
@@ -2993,9 +3122,10 @@ def test_plot_compare_multiblock(compare_datasets, verify_image_cache):
         zip(['contour', 'threshold', 'decimate', 'glyph'], compare_datasets, strict=True)
     )
     kwargs = dict(color='w', screenshot=True, return_img=True)
-    assert np.array_equal(
-        pv.plot_compare(pv.MultiBlock(datasets), **kwargs), pv.plot_compare(datasets, **kwargs)
-    )
+    img_multiblock = pv.plot_compare(pv.MultiBlock(datasets), **kwargs)
+    img_dict = pv.plot_compare(datasets, **kwargs)
+    # Tolerate sub-LSB pixel noise from non-deterministic renderers.
+    assert pv.compare_images(img_multiblock, img_dict) < 1.0
 
 
 def test_plot_compare_raises(no_images_to_verify):  # noqa: ARG001
@@ -3668,7 +3798,10 @@ def test_set_viewup(verify_image_cache, vector):
     pl.show()
 
 
-def test_plot_shadows():
+def test_plot_shadows(verify_image_cache):
+    """Test rendering with shadows enabled."""
+    # Shadow map speckles nondeterministically on macOS software rendering.
+    verify_image_cache.macos_skip_image_cache = True
     pl = pv.Plotter(lighting=None)
 
     # add several planes
@@ -4434,7 +4567,10 @@ def test_plot_composite_poly_component_norm(multiblock_poly):
     pl.show()
 
 
-def test_plot_composite_poly_component_single(multiblock_poly):
+def test_plot_composite_poly_component_single(multiblock_poly, verify_image_cache):
+    """Test plotting a single component of multi-component composite scalars."""
+    # Component scalars speckle nondeterministically on macOS software rendering.
+    verify_image_cache.macos_skip_image_cache = True
     for block in multiblock_poly:
         data = block.compute_normals().point_data['Normals']
         block['data'] = data
@@ -6124,6 +6260,241 @@ def test_enable_custom_trackball_style():
     pl.close()
 
 
+def _make_checkerboard_texture():
+    checkerboard = np.indices((16, 16)).sum(axis=0) % 2
+    image = np.repeat((checkerboard * 255).astype(np.uint8)[:, :, np.newaxis], 3, axis=2)
+    return numpy_to_texture(image)
+
+
+def _add_checkerboard_grid_scene(pl):
+    grid = pv.Plane(
+        center=(0.0, 0.0, 0.0),
+        direction=(0.0, 0.0, 1.0),
+        i_size=3.0,
+        j_size=3.0,
+        i_resolution=32,
+        j_resolution=32,
+    )
+    actor = pl.add_mesh(grid, texture=_make_checkerboard_texture())
+    pl.camera_position = [
+        (0, 0, 3.0),
+        (0, 0, 0.0),
+        (0.0, 1.0, 0.0),
+    ]
+    return [actor]
+
+
+# The distortion is a per-vertex transform of clip coordinates, so it does not
+# depend on the scene. One flat calibration target carries both cases that a
+# render can tell apart: the radial terms, and the tangential ones.
+@pytest.mark.parametrize(
+    ('scene_builder', 'distortion_coeffs'),
+    [
+        pytest.param(
+            _add_checkerboard_grid_scene,
+            (3.8, 2.1, 0.004, -0.003),
+            id='checkerboard_centered-strong_barrel',
+        ),
+        pytest.param(
+            _add_checkerboard_grid_scene,
+            (0.08, -0.06, 0.05, -0.07),
+            id='checkerboard_centered-mixed_tangential',
+        ),
+    ],
+)
+def test_camera_distortion(scene_builder, distortion_coeffs):
+    pl = pv.Plotter(window_size=[400, 400])
+    actors = scene_builder(pl)
+    pl.enable_camera_distortion(distortion_coeffs)
+    for actor in actors:
+        assert 'camera_distortion' in actor._shader_replacements
+        uniforms = actor.GetShaderProperty().GetVertexCustomUniforms()
+        values = [0.0, 0.0, 0.0, 0.0]
+        assert uniforms.GetUniform4f('u_distortion_coefficients', values)
+        assert values == pytest.approx(distortion_coeffs)
+    pl.show()
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_camera_distortion_reaches_what_it_can_and_warns_about_the_rest():
+    """The sweep runs before every render over everything the renderer holds.
+
+    A composite brings its own mapper, text is an overlay rather than geometry,
+    and a volume and Gaussian points are drawn by shaders with no vertices to
+    displace. The warning for those two is not news on the second sweep.
+    """
+    pl = pv.Plotter()
+    composite = pl.add_composite(pv.MultiBlock([pv.Cube()]))[0]
+    text = pl.add_text('text is an overlay, not geometry')
+    volume = pl.add_volume(pv.ImageData(dimensions=(8, 8, 8)), scalars=np.zeros(8**3))
+    gaussian = pl.add_mesh(pv.Sphere(), style='points_gaussian')
+
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter('always')
+        pl.enable_camera_distortion((0.18, 0.06, 0.004, -0.003))
+        late = pl.add_mesh(pv.Sphere())
+        assert 'camera_distortion' not in late._shader_replacements
+        pl.screenshot()  # the sweep runs from the render, not from add_mesh
+    messages = [str(w.message) for w in record]
+
+    assert 'camera_distortion' in composite._shader_replacements
+    assert 'camera_distortion' in late._shader_replacements
+    assert not hasattr(text, '_shader_replacements')
+    assert getattr(volume, '_camera_distortion_state', None) is None
+    assert 'camera_distortion' not in gaussian._shader_replacements
+    assert sum('does not apply to volumes' in m for m in messages) == 1
+    assert sum('does not apply to Gaussian points' in m for m in messages) == 1
+
+    # Disabling walks the same props, including the ones it never gave anything to undo.
+    pl.disable_camera_distortion()
+    assert 'camera_distortion' not in composite._shader_replacements
+    pl.close()
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_camera_distortion_validates_coefficients():
+    expected = (0.18, 0.06, 0.004, -0.003)
+    for coefficients in (np.array(expected), np.array([expected]), list(expected)):
+        pl = pv.Plotter()
+        actor = pl.add_mesh(pv.Sphere())
+        pl.enable_camera_distortion(coefficients)
+        values = [0.0, 0.0, 0.0, 0.0]
+        uniforms = actor.GetShaderProperty().GetVertexCustomUniforms()
+        assert uniforms.GetUniform4f('u_distortion_coefficients', values)
+        assert values == pytest.approx(expected)
+        pl.close()
+
+    for wrong in ((0.1, 0.2), (0.1, 0.2, 0.3, 0.4, 0.5)):
+        match = f'must have four values \\(k1, k2, p1, p2\\), got {len(wrong)}'
+        with pytest.raises(ValueError, match=match):
+            pv.Plotter().enable_camera_distortion(wrong)
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_camera_distortion_updates_and_undoes_both_kinds_of_actor():
+    """A `vtkImporter` fills the render window with plain VTK actors.
+
+    They never go through ``add_actor`` and carry none of PyVista's shader
+    bookkeeping, so attaching, updating and removing each take their own
+    branch beside the one a `pyvista.Actor` takes.
+    """
+    pl = pv.Plotter()
+    actor = pl.add_mesh(pv.Sphere())
+    pl.import_vrml(Path(__file__).parent.parent / 'example_files' / 'Box.wrl')
+    imported = [prop for prop in pl.renderer.actors.values() if not isinstance(prop, pv.Actor)]
+    assert imported
+    before = [prop.GetShaderProperty().GetNumberOfShaderReplacements() for prop in imported]
+
+    pl.enable_camera_distortion((0.18, 0.06, 0.004, -0.003))
+    pl.enable_camera_distortion((-0.22, 0.08, 0.006, -0.005))
+    assert 'camera_distortion' in actor._shader_replacements
+    uniforms = actor.GetShaderProperty().GetVertexCustomUniforms()
+    values = [0.0, 0.0, 0.0, 0.0]
+    assert uniforms.GetUniform4f('u_distortion_coefficients', values)
+    assert values == pytest.approx((-0.22, 0.08, 0.006, -0.005))
+    for prop, count in zip(imported, before, strict=True):
+        assert prop._camera_distortion_state[0] == (-0.22, 0.08, 0.006, -0.005)
+        assert prop.GetShaderProperty().GetNumberOfShaderReplacements() == count + 1
+
+    pl.disable_camera_distortion()
+    assert 'camera_distortion' not in actor._shader_replacements
+    assert actor._camera_distortion_state is None
+    assert not uniforms.GetUniform4f('u_distortion_coefficients', values)
+    for prop, count in zip(imported, before, strict=True):
+        assert prop._camera_distortion_state is None
+        assert prop.GetShaderProperty().GetNumberOfShaderReplacements() == count
+        assert (
+            not prop.GetShaderProperty()
+            .GetVertexCustomUniforms()
+            .GetUniform4f('u_distortion_coefficients', values)
+        )
+    pl.close()
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_camera_distortion_reads_each_subplots_projection_and_keeps_it_current():
+    """Subplots share the coefficients but not the camera they are applied through.
+
+    The scale comes from the projection matrix, so it goes stale whenever the
+    projection changes and has to be rewritten before the next render.
+    """
+
+    def projection_scale(actor):
+        values = [0.0, 0.0]
+        uniforms = actor.GetShaderProperty().GetVertexCustomUniforms()
+        assert uniforms.GetUniform2f('u_distortion_projection_scale', values)
+        return values[1]
+
+    pl = pv.Plotter(shape=(1, 2))
+    actors = []
+    for column, view_angle in enumerate((30.0, 60.0)):
+        pl.subplot(0, column)
+        actors.append(pl.add_mesh(pv.Sphere()))
+        pl.camera.view_angle = view_angle
+
+    pl.subplot(0, 0)
+    pl.enable_camera_distortion((0.18, 0.06, 0.004, -0.003))
+    for actor in actors:
+        assert 'camera_distortion' in actor._shader_replacements
+    narrow, wide = (projection_scale(actor) for actor in actors)
+    assert narrow > wide  # the narrower the view angle, the longer the focal length
+
+    pl.camera.view_angle = 2 * pl.camera.view_angle
+    pl.screenshot()
+    assert projection_scale(actors[0]) < narrow
+    pl.close()
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_camera_distortion_of_a_parallel_projection_does_not_follow_the_scene_scale():
+    """A parallel projection has no focal length to write the coefficients in."""
+
+    def render(size):
+        pl = pv.Plotter(window_size=[200, 200])
+        pl.add_mesh(
+            pv.Plane(i_size=size, j_size=size, i_resolution=16, j_resolution=16),
+            style='wireframe',
+            color='black',
+        )
+        pl.camera_position = 'xy'
+        pl.enable_parallel_projection()
+        pl.camera.tight()
+        pl.enable_camera_distortion((0.4, 0.15, 0.0, 0.0))
+        image = pl.screenshot()
+        pl.close()
+        return image.astype(int)
+
+    assert np.abs(render(1.0) - render(10.0)).max() == 0
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_camera_distortion_reaches_an_actor_without_view_coordinates():
+    """An unlit actor's shader has no view coordinates to distort from.
+
+    VTK writes the view position into the vertex shader only for lit actors,
+    so a distortion written in terms of it compiles for a surface and fails
+    for the unlit lines beside it, leaving them straight.
+    """
+
+    def render(*, distort):
+        pl = pv.Plotter(window_size=[200, 200])
+        pl.add_mesh(
+            pv.Plane(i_resolution=16, j_resolution=16),
+            style='wireframe',
+            color='black',
+            lighting=False,
+        )
+        pl.camera_position = 'xy'
+        if distort:
+            pl.enable_camera_distortion((0.4, 0.15, 0.0, 0.0))
+        with pv.VtkErrorCatcher(raise_errors=True):
+            image = pl.screenshot()
+        pl.close()
+        return image.astype(int)
+
+    assert np.abs(render(distort=True) - render(distort=False)).max() > 0
+
+
 def test_create_axes_orientation_box(verify_image_cache):
     verify_image_cache.warning_value = 250
 
@@ -6248,6 +6619,7 @@ def _generate_direction_object_functions() -> ItemsView[str, FunctionType]:
         'SolidSphere',
         'SolidSphereGeneric',
         'Sphere',
+        'StructuredSphere',
         'Text3D',
     ]
 
@@ -7075,6 +7447,13 @@ def test_mip_with_point_sprite_render(verify_image_cache_wrapper, mip_test_point
     pl.show()
 
 
+def test_structured_sphere_radius_layers():
+    sphere = pv.StructuredSphere(
+        radius=np.linspace(0.5, 1.0, 4), theta_resolution=16, phi_resolution=10
+    )
+    sphere.clip(normal='x').plot(show_edges=True)
+
+
 @pytest.mark.parametrize(
     ('start_phi', 'end_phi', 'start_theta', 'end_theta'), [(0, 180, 0, 360), (0, 90, 0, 90)]
 )
@@ -7094,11 +7473,15 @@ def test_solid_sphere_resolution_matches_sphere(start_phi, end_phi, start_theta,
         }
         data[f'Sphere {phi_res} {theta_res}'] = pv.Sphere(**kwargs)
         data[f'Solid {phi_res} {theta_res}'] = pv.SolidSphere(**kwargs)
+        data[f'Structured {phi_res} {theta_res}'] = pv.StructuredSphere(**kwargs)
 
     pv.plot_compare(
         data,
         show_edges=True,
         link=False,
+        # Three columns per row, so the panes are portrait and the pinned camera
+        # would otherwise crop the geometry
+        zoom=0.7,
         cpos=pv.CameraPosition(
             position=(1.087, 1.087, 1.087),
             focal_point=(0.0, 0.0, 0.0),

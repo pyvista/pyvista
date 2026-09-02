@@ -26,7 +26,7 @@ import pyvista as pv
 from pyvista import examples
 
 # %%
-# Load the dataset
+# Load the Dataset
 # ~~~~~~~~~~~~~~~~
 # Start by loading the dataset from the examples module with
 # :func:`~pyvista.examples.downloads.download_fea_hertzian_contact_cylinder`.
@@ -59,7 +59,7 @@ line.clear_data()
 line
 
 # %%
-# Sampling the Stress along the Line
+# Sampling the Stress Along the Line
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # We can sample the Z component stress along the contact edge and compare it
 # with expected pressure.

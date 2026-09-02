@@ -115,7 +115,9 @@ class Grid(DataSet):
 
         See Also
         --------
-        to_quads, to_tetrahedra
+        to_quads
+        pyvista.ImageData.to_tetrahedra
+        pyvista.RectilinearGrid.to_tetrahedra
         pyvista.DataSet.cast_to_unstructured_grid
 
         Examples
@@ -158,7 +160,9 @@ class Grid(DataSet):
 
         See Also
         --------
-        to_hexahedra, to_tetrahedra
+        to_hexahedra
+        pyvista.ImageData.to_tetrahedra
+        pyvista.RectilinearGrid.to_tetrahedra
         pyvista.DataSet.cast_to_unstructured_grid
 
         Examples
@@ -334,9 +338,9 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         z: NumpyArray[float],
         check_duplicates: bool = False,
     ) -> None:
-        """Create VTK rectilinear grid directly from numpy arrays.
+        """Create VTK rectilinear grid directly from NumPy arrays.
 
-        Each array gives the uniques coordinates of the mesh along each axial
+        Each array gives the unique coordinates of the mesh along each axial
         direction. To help ensure you are using this correctly, we take the unique
         values of each argument.
 
@@ -383,7 +387,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
     def meshgrid(
         self: Self,
     ) -> tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float]]:
-        """Return a meshgrid of numpy arrays for this mesh.
+        """Return a meshgrid of NumPy arrays for this mesh.
 
         This simply returns a :func:`numpy.meshgrid` of the
         coordinates for this mesh in ``ij`` indexing. These are a copy
@@ -392,7 +396,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         Returns
         -------
         tuple[numpy.ndarray, numpy.ndarray, numpy.ndarray]
-            Tuple of numpy arrays representing the points of this mesh.
+            Tuple of NumPy arrays representing the points of this mesh.
 
         """
         # Converting to tuple needed to be consistent type across numpy version
@@ -406,7 +410,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
 
     @property  # type: ignore[override]
     def points(self: Self) -> NumpyArray[float]:
-        """Return a copy of the points as an ``(n, 3)`` numpy array.
+        """Return a copy of the points as an ``(n, 3)`` NumPy array.
 
         Returns
         -------
@@ -634,7 +638,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         set, remainder of arguments are ignored.
 
     dimensions : sequence[int], optional
-        :attr:`dimensions` of the uniform grid.
+        :attr:`~pyvista.Grid.dimensions` of the uniform grid.
 
     spacing : sequence[float], default: (1.0, 1.0, 1.0)
         :attr:`spacing` of the uniform grid in each dimension. Must be positive.
@@ -875,7 +879,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
     @property  # type: ignore[override]
     def points(self: Self) -> NumpyArray[float]:
-        """Build a copy of the implicitly defined points as a numpy array.
+        """Build a copy of the implicitly defined points as a NumPy array.
 
         Returns
         -------
@@ -1149,7 +1153,8 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         """Return or set the extent of the ImageData.
 
         The extent is simply the first and last indices for each of the three axes.
-        It encodes information about the image's :attr:`offset` and :attr:`dimensions`.
+        It encodes information about the image's :attr:`offset` and
+        :attr:`~pyvista.Grid.dimensions`.
 
         Examples
         --------
@@ -1164,9 +1169,9 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         >>> grid.extent
         (2, 5, 2, 5, 2, 5)
 
-        Note how this also modifies the grid's :attr:`offset`, :attr:`dimensions`,
-        and :attr:`bounds`. Since we use default spacing of 1 here, the bounds
-        match the extent exactly.
+        Note how this also modifies the grid's :attr:`offset`,
+        :attr:`~pyvista.Grid.dimensions`, and :attr:`~pyvista.DataSet.bounds`. Since
+        we use default spacing of 1 here, the bounds match the extent exactly.
 
         >>> grid.offset
         (2, 2, 2)
@@ -1286,7 +1291,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
     @property
     def index_to_physical_matrix(self: Self) -> NumpyArray[float]:
-        """Return or set 4x4 matrix to transform index space (ijk) to physical space (xyz).
+        """Return or set 4x4 matrix to transform index space (``ijk``) to physical space (``xyz``).
 
         .. note::
             Setting this property modifies the object's :class:`~pyvista.ImageData.origin`,
@@ -1322,7 +1327,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
     @property
     def physical_to_index_matrix(self: Self) -> NumpyArray[float]:
-        """Return or set 4x4 matrix to transform from physical space (xyz) to index space (ijk).
+        """Return or set the 4x4 matrix from physical (``xyz``) to index (``ijk``) space.
 
         .. note::
             Setting this property modifies the object's :class:`~pyvista.ImageData.origin`,

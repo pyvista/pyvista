@@ -41,7 +41,7 @@ The source code for the plot may be included in one of two ways:
 **Options**
 The ``pyvista-plot`` directive supports the following options:
 
-    include-source : bool
+    include-source : ``bool``
         Whether to display the source code. The default can be changed
         using the ``pyvista_plot_include_source`` variable in :file:`conf.py`.
 
@@ -55,7 +55,7 @@ The ``pyvista-plot`` directive supports the following options:
         directives for which the ``:context:`` option was specified.  This only
         applies to inline code plot directives, not those run from files.
 
-    nofigs : None
+    ``nofigs`` : None
         When setting this flag, the code block will be run but no figures will be
         inserted.  This is usually useful with the ``:context:`` option.
 
@@ -64,13 +64,13 @@ The ``pyvista-plot`` directive supports the following options:
         figure. This overwrites the caption given in the content, when the plot
         is generated from a file.
 
-    force_static : None
+    ``force_static`` : None
         When setting this flag, static images will be used instead of an
         interactive scene.
 
-    skip : bool, default: True
+    skip : ``bool``, default: True
         Whether to skip execution of this directive. If no argument is provided
-        i.e., ``:skip:``, then it defaults to ``:skip: true``.  Default
+        that is, ``:skip:``, then it defaults to ``:skip: true``.  Default
         behaviour is controlled by the ``pyvista_plot_skip`` boolean variable in
         :file:`conf.py`.  Note that, if specified, this option overrides the
         ``pyvista_plot_skip`` configuration.
@@ -81,8 +81,8 @@ The ``pyvista-plot`` directive supports the following options:
         boolean variable in :file:`conf.py`.
 
 Additionally, this directive supports all the options of the ``image``
-directive, except for *target* (since plot will add its own target).  These
-include *alt*, *height*, *width*, *scale*, *align*.
+directive, except for ``target`` (since plot will add its own target).  These
+include ``alt``, ``height``, ``width``, ``scale``, ``align``.
 
 
 **Open Graph previews**
@@ -101,34 +101,34 @@ See :ref:`opengraph_docs`.
 
 The plot directive has the following configuration options:
 
-    pyvista_plot_include_source : bool, default: True
+    ``pyvista_plot_include_source`` : bool, default: True
         Default value for the ``include-source`` directive option.
         Default is ``True``.
 
-    pyvista_plot_basedir : str
+    ``pyvista_plot_basedir`` : str
         Base directory, to which ``plot::`` file names are relative
         to.  If ``None`` or unset, file names are relative to the
         directory where the file containing the directive is.
 
-    pyvista_plot_html_show_formats : bool, default: True
+    ``pyvista_plot_html_show_formats`` : bool, default: True
         Whether to show links to the files in HTML. Default ``True``.
 
-    pyvista_plot_template : str
+    ``pyvista_plot_template`` : str
         Provide a customized Jinja2 template for preparing restructured text.
 
-    pyvista_plot_setup : str
+    ``pyvista_plot_setup`` : str
         Python code to be run before every plot directive block.
 
-    pyvista_plot_cleanup : str
+    ``pyvista_plot_cleanup`` : str
         Python code to be run after every plot directive block.
 
-    pyvista_plot_skip : bool, default: False
+    ``pyvista_plot_skip`` : bool, default: False
         Default value for the ``skip`` directive option.
 
-    pyvista_plot_skip_optional : bool, default: False
+    ``pyvista_plot_skip_optional`` : bool, default: False
         Whether to skip execution of ``optional`` directives.
 
-    pyvista_plot_autocodelink : bool, default: False
+    ``pyvista_plot_autocodelink`` : bool, default: False
         Hyperlink identifiers in the rendered output to their documented
         targets. Requires the `sphinx-autocodelink
         <https://github.com/user27182/sphinx-autocodelink>`_ package to be
@@ -513,7 +513,7 @@ class ImageFile:
 
     @property
     def stem(self):
-        """Return the basename without the suffix."""
+        """Return the ``basename`` without the suffix."""
         return Path(self.basename).stem
 
     def __repr__(self) -> str:  # pragma no cover
@@ -533,7 +533,7 @@ def _run_code(*, code, code_path, ns=None, function_name=None):
     and its options removed.
 
     Import a Python module from a path, and run the function given by
-    name, if function_name is not None.
+    name, if ``function_name`` is not None.
     """
     # do not execute code containing any SKIP directives
     if 'doctest:+SKIP' in code:
@@ -571,15 +571,15 @@ def render_figures(
     include_source: bool = True,
     state: RSTState | None = None,
 ):
-    """Run a pyplot script and save the images in *output_dir*.
+    """Run a pyplot script and save the images in *``output_dir``*.
 
-    Save the images under *output_dir* with file names derived from
-    *output_base*. Closed plotters are ignored if they were never
+    Save the images under *``output_dir``* with file names derived from
+    *``output_base``*. Closed plotters are ignored if they were never
     rendered.
 
-    If *env* is given and *include_source* is true, also records the code's identifiers
-    to hyperlink -- skipped when the source isn't shown, since there'd be nothing on the
-    page for a reader to click through to. *state* is the calling directive's own
+    If ``env`` is given and ``include_source`` is true, also records the code's identifiers
+    to hyperlink -- skipped when the source isn't shown, since there would be nothing on the
+    page for a reader to click through to. ``state`` is the calling directive's own
     ``self.state``, passed through to sphinx-autocodelink for its own categorization.
     """
     # We skip snippets that contain the ``pyvista-plot::`` directive as part of their code.

@@ -12,7 +12,7 @@ import numpy as np
 import pyvista as pv
 
 # %%
-# Define a benzene ring
+# Define a Benzene Ring
 # ~~~~~~~~~~~~~~~~~~~~~
 # Place six carbons evenly around a circle with a hydrogen pointing
 # radially outward from each one.
@@ -48,7 +48,7 @@ hydrogen_bonds = pv.merge(
 
 
 # %%
-# Render the molecule
+# Render the Molecule
 # ~~~~~~~~~~~~~~~~~~~
 # Atoms are rendered as spheres and bonds as cylinders, each with their
 # own radius and color.

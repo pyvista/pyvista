@@ -221,7 +221,7 @@ def test_contour_labels_boundary_style(
 ALL_LABEL_IDS = {0, 2, 5}
 
 
-@pytest.mark.parametrize('background_value', ALL_LABEL_IDS)
+@pytest.mark.parametrize('background_value', sorted(ALL_LABEL_IDS))
 def test_contour_labels_background_value(labeled_image, background_value):
     assert background_value in labeled_image.active_scalars
 
@@ -1299,6 +1299,11 @@ def test_resample_raises(uniform):
     match = '`extend_border` cannot be set when a `image_reference` is provided.'
     with pytest.raises(ValueError, match=re.escape(match)):
         uniform.resample(reference_image=uniform, extend_border=True)
+
+    match = 'sample_rate must have finite values.'
+    for rate in [np.inf, np.nan]:
+        with pytest.raises(ValueError, match=re.escape(match)):
+            uniform.resample(sample_rate=rate)
 
 
 def test_select_values(uniform):

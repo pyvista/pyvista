@@ -17,7 +17,7 @@ With meshes that don't have depth information encoded in their color the
 importance of an appropriate lighting setup becomes paramount for accurate
 visualization.
 
-Light kit
+Light Kit
 =========
 
 The default ``lighting='light kit'`` option recreates a lighting setup that
@@ -50,7 +50,7 @@ pl.show()
 
 
 # %%
-# Three-lights illumination
+# Three-Lights Illumination
 # =========================
 #
 # Switching to three-lights illumination gives a different character to the
@@ -75,7 +75,7 @@ light_types
 
 
 # %%
-# Custom lighting
+# Custom Lighting
 # ===============
 #
 # We can introduce our own lighting from scratch by disabling any
@@ -92,7 +92,7 @@ pl.show()
 
 
 # %%
-# Custom lighting with shadows
+# Custom Lighting With Shadows
 # ============================
 #
 # Here, we ``enable_shadows`` to enhance the effect that the lighting

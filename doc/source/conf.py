@@ -41,9 +41,10 @@ warnings.filterwarnings(
 # import things like `scipy` or `matplotlib` that would be unnecessarily bulky to import by default
 # during normal operation. See https://github.com/pyvista/pyvista/pull/7023.
 # Note that `import make_tables` below imports pyvista.
-os.environ['PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'] = 'true'
+os.environ['_PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'] = 'true'
 
 sys.path.insert(0, str(Path().cwd()))
+import make_search_summaries
 import make_tables
 
 # -- pyvista configuration ---------------------------------------------------
@@ -55,6 +56,9 @@ from pyvista.core.utilities.docs import pv_html_page_context
 from pyvista.ext._autoenum import instance_property_names
 from pyvista.ext._autoenum import metaclass_property_descriptions
 from pyvista.ext._autoenum import metaclass_property_names
+from pyvista.ext._autoinherit import filter_member_rows
+from pyvista.ext._autoinherit import inherited_member_rows
+from pyvista.ext._autoinherit import own_members
 from pyvista.plotting.utilities.sphinx_gallery import DynamicScraper
 
 # Need to import all vtk modules eagerly to avoid issues with parallel lazy imports
@@ -124,6 +128,7 @@ extensions = [
     'notfound.extension',
     'numpydoc',
     'pyvista.ext._autoenum',
+    'pyvista.ext._autoinherit',
     'pyvista.ext.plot_directive',
     'sphinx_autoopengraph',
     'sphinx_examples_as_code',
@@ -148,6 +153,11 @@ extensions = [
     'sphinx_sitemap',
     'sphinx_vtk_xref',
 ]
+
+
+# Configuration for sphinx.ext.duration: report in the build log, skip the JSON file
+duration_n_slowest = 50
+duration_write_json = None
 
 
 # Configuration for sphinx.ext.autodoc
@@ -193,6 +203,9 @@ sphinx_examples_as_code_conf = {
     'gallery_downloads': True,
 }
 
+# Disable checking if vtk links resolve correctly, web checks can be unstable
+vtk_xref_nitpicky = False
+
 # Warn if target links or references cannot be found
 nitpicky = True
 # Except ignore these entries
@@ -213,6 +226,8 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*InteractorStyleHandler'),
     (r'py:.*', '.*WriterHandler'),
     (r'py:.*', '.*ReaderHandler'),
+    (r'py:.*', '.*ReaderProvider'),
+    (r'py:.*', '.*_T_Provider'),
     (r'py:.*', '.*BoundsLike'),
     (r'py:.*', '.*RotationLike'),
     (r'py:.*', '.*CellsLike'),
@@ -236,6 +251,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*NormalsLiteral'),
     (r'py:.*', '.*_CellQualityLiteral'),
     (r'py:.*', '.*_CompressionOptions'),
+    (r'py:.*', '.*_SENTINEL'),
     (r'py:.*', '.*T'),
     (r'py:.*', '.*Options'),
     # Python 3.14 typing internals leaked through get_type_hints() on
@@ -250,7 +266,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*_TypeMultiBlockLeaf'),
     (r'py:.*', '.*Grid'),
     (r'py:.*', '.*PointGrid'),
-    (r'py:.*', '.*_PointSet'),
+    (r'py:.*', '.*_PointSetBase'),
     #
     # PyVista array-related types
     (r'py:.*', 'ActiveArrayInfo'),
@@ -428,7 +444,13 @@ autosummary_context = {
     # Methods that should be skipped when generating the docs
     # __init__ should be documented in the class docstring
     # override is a VTK method
-    'skipmethods': ['__init__', 'override'],
+    # check_attribute is an undocumented hook used by DisableVtkSnakeCase
+    'skipmethods': ['__init__', 'override', 'check_attribute'],
+    # Used by _templates/autosummary/class.rst: see pyvista/ext/_autoinherit.py for how
+    # each member is routed to exactly one class page.
+    'own_members': own_members,
+    'inherited_member_rows': inherited_member_rows,
+    'filter_member_rows': filter_member_rows,
     # Used by _templates/autosummary/enum.rst: autosummary does not populate `attributes`
     # for the `enum` objtype the way it does for `class`, so enum.rst asks these directly.
     'instance_property_names': instance_property_names,
@@ -582,8 +604,7 @@ sphinx_gallery_conf = {
     'backreferences_dir': None,
     # Modules for which function level galleries are created.  In
     'doc_module': 'pyvista',
-    # AutoCodeLinkScraper adds hyperlinks inside code blocks to pyvista methods. Only
-    # resolves an example's own top-level (module) scope; see sphinx-autocodelink's README.
+    # AutoCodeLinkScraper adds hyperlinks inside code blocks to pyvista methods.
     'image_scrapers': (DynamicScraper(), AutoCodeLinkScraper(), 'matplotlib'),
     'first_notebook_cell': '%matplotlib inline',
     'reset_modules': (reset_pyvista,),
@@ -604,7 +625,8 @@ from jinja2.sandbox import SandboxedEnvironment
 from numpydoc.docscrape import NumpyDocString
 from numpydoc.docscrape_sphinx import SphinxDocString
 
-IMPORT_PYVISTA_RE = r'\b(import +pyvista|from +pyvista +import)\b'
+# Also matches submodule imports, e.g. ``from pyvista.examples.cells import ...``.
+IMPORT_PYVISTA_RE = r'\b(import +pyvista|from +pyvista(\.[\w.]+)? +import)\b'
 IMPORT_MATPLOTLIB_RE = r'\b(import +matplotlib|from +matplotlib +import)\b'
 
 pyvista_plot_setup = """
@@ -627,6 +649,18 @@ autocodelink_category_labels = {
     'Docstring Examples': 'Docstring Examples',
     'Documentation': 'Guides',
 }
+
+# show gallery examples last, not alphabetically by heading
+autocodelink_category_order = ['Documentation', 'Docstring Examples', 'Sphinx Gallery']
+
+# rank "Used In" entries by usage frequency
+autocodelink_sort = 'frequency'
+
+# show each entry's usage count alongside it
+autocodelink_show_usage_count = True
+
+# render gallery backreferences as thumbnail cards
+autocodelink_gallery_cards = True
 
 
 def _str_examples(self):
@@ -1093,6 +1127,9 @@ def setup(app: Sphinx) -> None:  # noqa: D103
 
     # right before writing, patch the gallery placeholders
     app.connect('doctree-resolved', make_tables.patch_gallery_placeholders)
+
+    # feeds the search result snippets rendered by search_summaries.js
+    app.connect('build-finished', make_search_summaries.dump_search_summaries)
 
     app.add_css_file('copybutton.css')
     app.add_css_file('no_search_highlight.css')

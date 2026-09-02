@@ -69,6 +69,22 @@ ACTOR_LOC_MAP = [
     'center',
 ]
 
+# Floor for the diffuse irradiance map: below 32 the diffuse term degrades
+# visibly on rough surfaces for little further speed-up.
+_MIN_IRRADIANCE_SIZE = 32
+
+# Floor for the specular prefilter; fewer samples show up as noise, not lost detail.
+_MIN_PREFILTER_SAMPLES = 32
+
+# Floors for the BRDF lookup table, which is smooth in both of its inputs.
+_MIN_LUT_SIZE = 128
+_MIN_LUT_SAMPLES = 128
+
+
+def _scale_ibl(default: int, minimum: int, rate: float) -> int:
+    """Scale an image-based lighting parameter, clamped between ``minimum`` and ``default``."""
+    return min(default, max(minimum, round(default * rate)))
+
 
 def map_loc_to_pos(loc, size, border=0.05):
     """Map location and size to a VTK position and position2.
@@ -246,7 +262,7 @@ class CameraPosition(_NoNewAttrMixin):
         self._viewup = viewup
 
     def to_list(self):
-        """Convert to a list of the position, focal point, and viewup.
+        """Convert to a list of the position, focal point, and ``viewup``.
 
         Returns
         -------
@@ -340,7 +356,7 @@ class CameraPosition(_NoNewAttrMixin):
 
     @property
     def viewup(self):  # numpydoc ignore=RT01
-        """Viewup vector of the camera."""
+        """The view-up vector of the camera."""
         return self._viewup
 
     @viewup.setter
@@ -901,7 +917,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         return None
 
     def _drop_border_actor(self):
-        """Remove this renderer's own border actor(s), if any.
+        """Remove this renderer's own border actors, if any.
 
         Used when subplot seams are being drawn by a shared overlay
         renderer so neighboring renderers don't each rasterize their
@@ -2054,9 +2070,10 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.remove_bounds_axes()
 
         vtk_less_than_96 = pv.vtk_version_info < (9, 6, 0)
-        if use_3d_text is None:
-            # Use 2D for VTK 9.6 since 3D is broken https://gitlab.kitware.com/vtk/vtk/-/issues/19729
-            use_3d_text = vtk_less_than_96
+        if not np.allclose(self.scale, [1.0, 1.0, 1.0]):
+            # 3D text is not placed correctly when the renderer is scaled
+            use_3d_text = False
+            use_2d = True
         if font_family is None:
             font_family = self._theme.font.family
         if font_size is None:
@@ -2114,148 +2131,18 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             n_xlabels=n_xlabels,
             n_ylabels=n_ylabels,
             n_zlabels=n_zlabels,
+            color=color,
+            grid=grid,
+            location=location,
+            font_size=font_size,
+            font_family=font_family,
+            bold=bold,
+            use_3d_text=use_3d_text,
+            use_2d_mode=use_2d,
+            bounds=bounds,
+            axes_ranges=axes_ranges,
+            padding=padding,
         )
-
-        cube_axes_actor.use_2d_mode = use_2d or not np.allclose(self.scale, [1.0, 1.0, 1.0])
-
-        if grid:
-            grid = 'back' if grid is True else grid
-            if not isinstance(grid, str):
-                msg = f'`grid` must be a str, not {type(grid)}'
-                raise TypeError(msg)
-            grid = grid.lower()
-            if grid in ('front', 'frontface'):
-                cube_axes_actor.SetGridLineLocation(cube_axes_actor.VTK_GRID_LINES_CLOSEST)
-            elif grid in ('both', 'all'):
-                cube_axes_actor.SetGridLineLocation(cube_axes_actor.VTK_GRID_LINES_ALL)
-            elif grid in ('back', True):
-                cube_axes_actor.SetGridLineLocation(cube_axes_actor.VTK_GRID_LINES_FURTHEST)
-            else:
-                msg = f'`grid` must be either "front", "back, or, "all", not {grid}'
-                raise ValueError(msg)
-            # Only show user desired grid lines
-            cube_axes_actor.SetDrawXGridlines(show_xaxis)
-            cube_axes_actor.SetDrawYGridlines(show_yaxis)
-            cube_axes_actor.SetDrawZGridlines(show_zaxis)
-            # Set the colors
-            cube_axes_actor.GetXAxesGridlinesProperty().SetColor(color.float_rgb)
-            cube_axes_actor.GetYAxesGridlinesProperty().SetColor(color.float_rgb)
-            cube_axes_actor.GetZAxesGridlinesProperty().SetColor(color.float_rgb)
-
-        if isinstance(location, str):
-            location = location.lower()
-            if location in ('all'):
-                cube_axes_actor.SetFlyModeToStaticEdges()
-            elif location in ('origin'):
-                cube_axes_actor.SetFlyModeToStaticTriad()
-            elif location in ('outer'):
-                cube_axes_actor.SetFlyModeToOuterEdges()
-            elif location in ('default', 'closest', 'front'):
-                cube_axes_actor.SetFlyModeToClosestTriad()
-            elif location in ('furthest', 'back'):
-                cube_axes_actor.SetFlyModeToFurthestTriad()
-            else:
-                msg = (
-                    f'Value of location ("{location}") should be either "all", "origin",'
-                    ' "outer", "default", "closest", "front", "furthest", or "back".'
-                )
-                raise ValueError(msg)
-        elif location is not None:
-            msg = 'location must be a string'
-            raise TypeError(msg)
-
-        if isinstance(padding, (int, float)) and 0.0 <= padding < 1.0:
-            if not np.any(np.abs(bounds) == np.inf):
-                cushion = (
-                    np.array(
-                        [
-                            np.abs(bounds[1] - bounds[0]),
-                            np.abs(bounds[3] - bounds[2]),
-                            np.abs(bounds[5] - bounds[4]),
-                        ],
-                    )
-                    * padding
-                )
-                bounds[::2] -= cushion
-                bounds[1::2] += cushion
-        else:
-            msg = f'padding ({padding}) not understood. Must be float between 0 and 1'
-            raise ValueError(msg)
-        cube_axes_actor.bounds = bounds
-
-        # set axes ranges if input
-        if axes_ranges is not None:
-            if isinstance(axes_ranges, (Sequence, np.ndarray)):
-                axes_ranges = np.asanyarray(axes_ranges)
-            else:
-                msg = 'Input axes_ranges must be a numeric sequence.'
-                raise TypeError(msg)
-
-            if not np.issubdtype(axes_ranges.dtype, np.number):
-                msg = 'All of the elements of axes_ranges must be numbers.'
-                raise TypeError(msg)
-
-            # set the axes ranges
-            if axes_ranges.shape != (6,):
-                msg = (
-                    '`axes_ranges` must be passed as a '
-                    '(x_min, x_max, y_min, y_max, z_min, z_max) sequence.'
-                )
-                raise ValueError(msg)
-
-            cube_axes_actor.x_axis_range = axes_ranges[0], axes_ranges[1]
-            cube_axes_actor.y_axis_range = axes_ranges[2], axes_ranges[3]
-            cube_axes_actor.z_axis_range = axes_ranges[4], axes_ranges[5]
-
-        # set color
-        cube_axes_actor.GetXAxesLinesProperty().SetColor(color.float_rgb)
-        cube_axes_actor.GetYAxesLinesProperty().SetColor(color.float_rgb)
-        cube_axes_actor.GetZAxesLinesProperty().SetColor(color.float_rgb)
-
-        # set font
-        font_family = parse_font_family(font_family)
-
-        if not use_3d_text or not np.allclose(self.scale, [1.0, 1.0, 1.0]):
-            use_3d_text = False
-            cube_axes_actor.SetUseTextActor3D(False)
-        else:
-            cube_axes_actor.SetUseTextActor3D(True)
-
-        props = [
-            cube_axes_actor.GetTitleTextProperty(0),
-            cube_axes_actor.GetTitleTextProperty(1),
-            cube_axes_actor.GetTitleTextProperty(2),
-            cube_axes_actor.GetLabelTextProperty(0),
-            cube_axes_actor.GetLabelTextProperty(1),
-            cube_axes_actor.GetLabelTextProperty(2),
-        ]
-
-        # For 3D text, use `SetFontSize` to a relatively high value and use `SetScreenSize` to
-        # shrink it back down. This creates a higher-resolution font and makes it appear sharper.
-        # In VTK 9.6+, the 3D font size is also tied to the value set by SetFontSize, so we need
-        # an additional scaling factor.
-        default_screen_size = 10.0
-        default_font_size = 12
-        scaled_font_size = 50
-
-        for prop in props:
-            prop.SetColor(color.float_rgb)
-            prop.SetFontFamily(font_family)
-            prop.SetBold(bold)
-
-            if use_3d_text:
-                # this merely makes the font sharper
-                prop.SetFontSize(scaled_font_size)
-            else:
-                prop.SetFontSize(font_size)
-
-        if use_3d_text:
-            font_size_factor = 1.0 if vtk_less_than_96 else scaled_font_size / default_font_size
-            cube_axes_actor.SetScreenSize(
-                font_size / default_font_size / font_size_factor * default_screen_size
-            )
-        elif vtk_less_than_96:
-            cube_axes_actor.SetScreenSize(font_size / default_font_size * default_screen_size)
 
         if all_edges:
             self.add_bounding_box(color=color, corner_factor=corner_factor)
@@ -2487,10 +2374,10 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             scene (minimum z).
 
         i_resolution : int, default: 10
-            Number of points on the plane in the i direction.
+            Number of points on the plane in the ``i`` direction.
 
         j_resolution : int, default: 10
-            Number of points on the plane in the j direction.
+            Number of points on the plane in the ``j`` direction.
 
         color : ColorLike, optional
             Color of all labels and axis titles.  Default gray.
@@ -2831,12 +2718,12 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
     @_deprecate_positional_args(allowed=['vector'])
     def set_viewup(self, vector, reset=True, render=True) -> None:  # noqa: FBT002
-        """Set camera viewup vector.
+        """Set camera ``viewup`` vector.
 
         Parameters
         ----------
         vector : sequence[float]
-            New camera viewup vector.
+            New camera ``viewup`` vector.
 
         reset : bool, default: True
             Whether to reset the camera after setting the camera
@@ -2844,7 +2731,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         render : bool, default: True
             If the render window is being shown, trigger a render
-            after setting the viewup.
+            after setting the ``viewup``.
 
         Examples
         --------
@@ -3047,7 +2934,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
     ) -> None:
         """Scale all the actors in the scene.
 
-        Scaling in performed independently on the X, Y and z-axis.
+        Scaling in performed independently on the X, Y, and z-axis.
         A scale of zero is illegal and will be replaced with one.
 
         .. warning::
@@ -3110,7 +2997,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
     @_deprecate_positional_args
     def get_default_cam_pos(self, negative=False):  # noqa: FBT002
-        """Return the default focal points and viewup.
+        """Return the default focal points and ``viewup``.
 
         Uses ResetCamera to make a useful view.
 
@@ -3496,8 +3383,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         >>> pl.add_blurring()
         >>> pl.show()
 
-        See :ref:`blurring_example` for a full example using this method.
-
         """
         self._render_passes.add_blur_pass()
 
@@ -3555,8 +3440,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         ... )
         >>> pl.enable_depth_of_field()
         >>> pl.show()
-
-        See :ref:`depth_of_field_example` for a full example using this method.
 
         """
         self._render_passes.enable_depth_of_field_pass(
@@ -3836,18 +3719,18 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         resample : bool | float, optional
             Resample the environment texture. Set this to a float to set the
-            sampling rate explicitly or set to ``True`` to downsample the
-            texture to 1/16th of its original resolution. By default, the
+            sampling rate explicitly or set to ``True`` to down-sample the
+            texture to 1/16 of its original resolution. By default, the
             theme value for ``resample_environment_texture`` is used, which
             is ``False`` for the standard theme.
 
-            Downsampling the texture can substantially improve performance for
-            some environments, e.g. headless setups or if GPU support is limited.
+            Down-sampling the texture can substantially improve performance for
+            some environments, for example, headless setups or if GPU support is limited.
 
             .. note::
 
                 This will resample the texture used for image-based lighting only,
-                e.g. the texture used for rendering reflective surfaces. It
+                for example, the texture used for rendering reflective surfaces. It
                 does `not` resample the background texture.
 
             .. versionadded:: 0.45
@@ -3857,6 +3740,15 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
                 Resampling now uses linear interpolation with anti-aliasing
                 instead of nearest-neighbor, which gives smoother results for
                 continuous environment textures.
+
+            .. versionchanged:: 0.49
+
+                The image-based lighting textures are down-sampled at the same
+                rate: the specular prefilter integrates fewer samples per texel,
+                and for cube map textures the diffuse irradiance map shrinks as
+                well. Both are clamped between a floor and their default size, so
+                a very low rate stops making them cheaper. Only a single rate is
+                accepted; a sequence of per-axis rates raises ``ValueError``.
 
         rotation : RotationLike, optional
             Rotation to apply to the environment texture for image-based
@@ -3877,7 +3769,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         --------
         Add a skybox cubemap as an environment texture and show that the
         lighting from the texture is mapped on to a sphere dataset. Note how
-        even when disabling the default lightkit, the scene lighting will still
+        even when disabling the default ``'light kit'``, the scene lighting will still
         be mapped onto the actor.
 
         >>> from pyvista import examples
@@ -3898,10 +3790,28 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.UseImageBasedLightingOn()
 
         if resample is None:
-            resample = pv.global_theme.resample_environment_texture
+            resample = self._theme.resample_environment_texture
+
+        default_size = _vtk.vtkPBRIrradianceTexture().GetIrradianceSize()
+        default_samples = _vtk.vtkPBRPrefilterTexture().GetPrefilterMaxSamples()
+        default_lut = _vtk.vtkPBRLUTTexture()
+        default_lut_size = default_lut.GetLUTSize()
+        default_lut_samples = default_lut.GetLUTSamples()
 
         if resample:
             resample = 1 / 16 if resample is True else resample
+
+            resample = _validation.validate_number(resample, must_be_finite=True, name='resample')
+
+            # Convolving the diffuse irradiance map dominates image-based lighting
+            # for cube maps, so scale it with the texture.
+            irradiance_size = _scale_ibl(default_size, _MIN_IRRADIANCE_SIZE, resample)
+
+            # The prefilter's resolution follows the texture, its sample count does not.
+            prefilter_samples = _scale_ibl(default_samples, _MIN_PREFILTER_SAMPLES, resample)
+
+            lut_size = _scale_ibl(default_lut_size, _MIN_LUT_SIZE, resample)
+            lut_samples = _scale_ibl(default_lut_samples, _MIN_LUT_SAMPLES, resample)
 
             # Copy the texture
             # TODO: use Texture.copy() once support for cubemaps is added, see https://github.com/pyvista/pyvista/issues/7300
@@ -3918,7 +3828,20 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
                 texture_copy.SetInputDataObject(i, new_image)
             self.SetEnvironmentTexture(texture_copy, is_srgb)
         else:
+            irradiance_size = default_size
+            prefilter_samples = default_samples
+            lut_size = default_lut_size
+            lut_samples = default_lut_samples
             self.SetEnvironmentTexture(texture, is_srgb)
+
+        # VTK convolves the irradiance map only when spherical harmonics are off,
+        # which is the cube map case handled above.
+        if texture.cube_map:
+            self.GetEnvMapIrradiance().SetIrradianceSize(irradiance_size)
+        self.GetEnvMapPrefiltered().SetPrefilterMaxSamples(prefilter_samples)
+        lookup_table = self.GetEnvMapLookupTable()
+        lookup_table.SetLUTSize(lut_size)
+        lookup_table.SetLUTSamples(lut_samples)
 
         if rotation is not None:
             if vtk_version_info < (9, 6):  # pragma: no cover
@@ -4061,9 +3984,9 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
     @property
     def viewport(self):  # numpydoc ignore=RT01
-        """Viewport of the renderer.
+        """The viewport of the renderer.
 
-        Viewport describes the ``(xstart, ystart, xend, yend)`` square
+        The viewport describes the ``(xstart, ystart, xend, yend)`` square
         of the renderer relative to the main renderer window.
 
         For example, a renderer taking up the entire window will have
@@ -4074,7 +3997,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         Returns
         -------
         tuple
-            Viewport in the form ``(xstart, ystart, xend, yend)``.
+            ``viewport`` in the form ``(xstart, ystart, xend, yend)``.
 
         Examples
         --------
@@ -4149,7 +4072,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
               item to add, and ``color`` is the color of the label to add.
             * Three strings ([label, color, face]) where ``label`` is the name
               of the item to add, ``color`` is the color of the label to add,
-              and ``face`` is a string which defines the face (i.e. ``circle``,
+              and ``face`` is a string which defines the face (that is, ``circle``,
               ``triangle``, ``box``, etc.).
               ``face`` could be also ``"none"`` (no face shown for the entry),
               or a :class:`pyvista.PolyData`.
@@ -4160,7 +4083,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         bcolor : ColorLike, default: (0.5, 0.5, 0.5)
             Background color, either a three item 0 to 1 RGB color
-            list, or a matplotlib color string (e.g. ``'w'`` or ``'white'``
+            list, or a matplotlib color string (for example, ``'w'`` or ``'white'``
             for a white color).  If None, legend background is
             disabled.
 
@@ -4194,7 +4117,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         face : str | pyvista.PolyData, optional
             Face shape of legend face. Defaults to a triangle for most meshes,
             with the exception of glyphs where the glyph is shown
-            (e.g. arrows).
+            (for example, arrows).
 
             You may set it to one of the following:
 
@@ -4404,7 +4327,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         The ruler is a 2D object that is not occluded by 3D objects.
         To avoid issues with perspective, it is recommended to use
-        parallel projection, i.e. :func:`Plotter.enable_parallel_projection`,
+        parallel projection, that is, :func:`Plotter.enable_parallel_projection`,
         and place the ruler orthogonal to the viewing direction.
 
         The title and labels are placed to the right of ruler moving from
@@ -4439,7 +4362,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Factor to scale label size relative to title size.
 
         label_format : str, optional
-            A printf style format for labels, e.g. '%E'.
+            A ``printf`` style format for labels, for example, '%E'.
 
         title : str, default: "Distance"
             The title to display.
@@ -4638,7 +4561,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Factor to scale label size relative to title size.
 
         label_format : str, optional
-            A printf style format for labels, e.g. ``'%E'``.
+            A ``printf`` style format for labels, for example, ``'%E'``.
             See :ref:`old-string-formatting`.
 
         number_minor_ticks : int, default: 0
@@ -4665,7 +4588,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         --------
         Please be aware that the axes and scale values are subject to perspective
         effects. The distances are computed in the focal plane of the camera. When
-        there are large view angles (i.e., perspective projection), the computed
+        there are large view angles (that is, perspective projection), the computed
         distances may provide users the wrong sense of scale. These effects are not
         present when parallel projection is enabled.
 

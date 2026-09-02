@@ -146,7 +146,7 @@ pl.show()
 
 
 # %%
-# Slice At Different Bearings
+# Slice at Different Bearings
 # +++++++++++++++++++++++++++
 #
 # From `pyvista-support#23 <https://github.com/pyvista/pyvista-support/issues/23>`_

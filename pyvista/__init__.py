@@ -22,6 +22,7 @@ from pyvista.core._typing_core._dataset_types import _PointGridType as _PointGri
 from pyvista.core._typing_core._dataset_types import _PointSetType as _PointSetType
 from pyvista.core._vtk_utilities import _MIN_SUPPORTED_VTK_VERSION
 from pyvista.core._vtk_utilities import VersionInfo
+from pyvista.core._vtk_utilities import vtk_backend as vtk_backend
 from pyvista.core._vtk_utilities import vtk_version_info as vtk_version_info
 from pyvista.core.cell import _get_vtk_id_type
 from pyvista.core.filters.data_object import MeshValidationFields as MeshValidationFields
@@ -72,9 +73,6 @@ OFF_SCREEN = os.environ.get('PYVISTA_OFF_SCREEN', 'false').lower() == 'true'
 
 # flag for when building the sphinx_gallery
 BUILDING_GALLERY = os.environ.get('PYVISTA_BUILDING_GALLERY', 'false').lower() == 'true'
-
-# A threshold for the max cells to compute a volume for when repr-ing
-REPR_VOLUME_MAX_CELLS = 1e6
 
 # Set where figures are saved
 FIGURE_PATH = os.environ.get('PYVISTA_FIGURE_PATH', None)

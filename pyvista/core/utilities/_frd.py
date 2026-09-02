@@ -124,6 +124,8 @@ class _InvalidElement:
 @dataclass
 class _FRDData:
     # Parsed data
+    """Parsed contents of a CalculiX FRD file."""
+
     nodes: dict[int, list[float]] = field(default_factory=dict)
     elements: list[list[int]] = field(default_factory=list)
     cell_types: list[int] = field(default_factory=list)
@@ -140,7 +142,7 @@ class _FRDData:
 
 
 class _FRDParser:
-    """Parses a CalculiX FRD file into an FRDData object."""
+    """Parses a CalculiX FRD file into an ``FRDData`` object."""
 
     # Compiled regex to fix scientific notation formatting issues
     _SCIENTIFIC_RE = re.compile(r'(?<![EeDd])-')
@@ -149,6 +151,7 @@ class _FRDParser:
         self._filename = filename
 
     def parse(self) -> _FRDData:
+        """Parse the FRD file into an ``_FRDData`` container."""
         frd_data = _FRDData()
         with Path(self._filename).open(errors='replace') as file_stream:
             lines = _LineTrackingStream(file_stream)

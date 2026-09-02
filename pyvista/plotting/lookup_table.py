@@ -29,7 +29,7 @@ RAMP_MAP_INV = {k: v for v, k in RAMP_MAP.items()}
 
 
 class lookup_table_ndarray(_NoNewAttrMixin, np.ndarray):  # noqa: N801
-    """An ndarray which references the owning table and the underlying :vtk:`vtkArray`.
+    """An ``ndarray`` which references the owning table and the underlying :vtk:`vtkArray`.
 
     This class is used to ensure that the internal :vtk:`vtkLookupTable` updates when
     the values array is updated.
@@ -78,7 +78,7 @@ class lookup_table_ndarray(_NoNewAttrMixin, np.ndarray):  # noqa: N801
             self.table.Get().values = self
 
     def __array_wrap__(self, out_arr, context=None, return_scalar: bool = False):  # noqa: FBT001, FBT002
-        """Return a numpy scalar if array is 0d.
+        """Return a NumPy scalar if array is 0d.
 
         See https://github.com/numpy/numpy/issues/5819
 
@@ -114,7 +114,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         Number of colors in the color map.
 
     flip : bool, default: False
-        Flip the direction of cmap. Most colormaps allow ``*_r`` suffix to do this
+        Flip the direction of ``cmap``. Most colormaps allow ``*_r`` suffix to do this
         as well.
 
     values : array_like[float], optional
@@ -144,7 +144,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         Use a log scale when mapping scalar values.
 
     nan_color : ColorLike, optional
-        Color to render any values that are NANs.
+        Color to render any values that are NaNs.
 
     above_range_color : ColorLike, optional
         Color to render any values above :attr:`LookupTable.scalar_range`.
@@ -507,7 +507,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
     def nan_color(self) -> Color | None:  # numpydoc ignore=RT01
         """Return or set the not a number (NAN) color.
 
-        Any values that are NANs will be rendered with this color.
+        Any values that are NaNs will be rendered with this color.
 
         Examples
         --------
@@ -531,7 +531,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
     def nan_opacity(self):  # numpydoc ignore=RT01
         """Return or set the not a number (NAN) opacity.
 
-        Any values that are NANs will be rendered with this opacity.
+        Any values that are NaNs will be rendered with this opacity.
 
         Examples
         --------
@@ -764,7 +764,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
             Number of colors in the color map.
 
         flip : bool, default: False
-            Flip direction of cmap. Most colormaps allow ``*_r`` suffix to do
+            Flip direction of ``cmap``. Most colormaps allow ``*_r`` suffix to do
             this as well.
 
         Examples

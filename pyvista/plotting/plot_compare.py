@@ -60,7 +60,7 @@ _AUTO_LABELS: Any = _Sentinel('auto')
 
 
 def _generate_labels(n_labels: int) -> list[str]:
-    """Generate labels ``'A'``, ``'B'``, ..., ``'Z'``, ``'AA'``, ``'AB'``, ... ."""
+    """Generate labels ``'A'`` through ``'Z'``, then ``'AA'``, ``'AB'``, and so on."""
     labels = []
     for index in range(n_labels):
         label = ''
@@ -496,7 +496,7 @@ def plot_compare(  # noqa: ANN201
         :ref:`pyvista compare <cli_compare>` for details.
 
     Each data object is shown in its own subplot. By default, the subplots are arranged
-    in a compact grid which is never taller than it is wide, e.g. ``(1, 2)`` for two
+    in a compact grid which is never taller than it is wide, for example, ``(1, 2)`` for two
     datasets, ``(1, 3)`` for three, ``(2, 2)`` for four, and ``(2, 3)`` for five or six.
     Any leftover subplots are left empty. Use ``shape`` to control the layout explicitly.
 
@@ -514,7 +514,7 @@ def plot_compare(  # noqa: ANN201
         The labels to display for each data object. Must have the same length as
         ``datasets``. By default, the keys of ``datasets`` are used when it is a
         mapping or a :class:`~pyvista.MultiBlock`, and the labels ``'A'``,
-        ``'B'``, ``'C'``, ... are generated otherwise. Set to ``None`` to disable
+        ``'B'``, ``'C'``, and so on are generated otherwise. Set to ``None`` to disable
         labels.
 
         If the input has keys `and` ``labels`` are provided, the provided
@@ -536,7 +536,7 @@ def plot_compare(  # noqa: ANN201
         By default, ``'uniform'`` is used when ``shape`` is a grid and all subplots
         have the same width; `'best_fit'`` is used otherwise when ``shape`` is a
         string descriptor and the subplots have different widths. A label too long
-        to fit at a readable size has its middle elided, e.g. ``this is a very long label``
+        to fit at a readable size has its middle elided, for example, ``this is a very long label``
         may become ``this is...g label``.
 
         With the ``'best_fit'`` and ``'uniform'`` options, the actual font size is
@@ -552,13 +552,13 @@ def plot_compare(  # noqa: ANN201
 
     label_kwargs : dict, optional
         Additional keyword arguments for the :class:`~pyvista.Text` actor which
-        draws each of the ``labels``, e.g. ``{'color': 'red'}``. Takes what
+        draws each of the ``labels``, for example, ``{'color': 'red'}``. Takes what
         :meth:`~pyvista.Plotter.add_text` takes. Has no effect when ``labels``
         is ``None``.
 
     reference_mesh : DataSet | MultiBlock, optional
         A mesh to draw in every subplot to give the comparison a common frame of
-        reference, e.g. an outline of the dataset the compared results are
+        reference, for example, an outline of the dataset the compared results are
         derived from. The same mesh is drawn in each subplot, so it does not
         follow the bounds of the individual datasets. See the warning in
         ``normalize`` before using both.
@@ -612,12 +612,12 @@ def plot_compare(  # noqa: ANN201
         one is given, since the same mesh is drawn alongside every dataset.
 
         In every case the camera is only fit when ``cpos`` is ``None`` or a
-        string, since a fully-specified camera position is used as given.
+        string, since a fully specified camera position is used as given.
 
     cpos : CameraPositionOptions, optional
         The camera position to use in every subplot, as a list of the position,
         the focal point and the view up, or as one of the views
-        :attr:`~pyvista.Plotter.camera_position` names, e.g. ``'xy'`` or
+        :attr:`~pyvista.Plotter.camera_position` names, for example, ``'xy'`` or
         ``'iso'``. A view is fit to the datasets, and a fully specified position
         is used as it is.
 
@@ -637,7 +637,7 @@ def plot_compare(  # noqa: ANN201
 
     anti_aliasing : Literal['ssaa', 'msaa', 'fxaa'] | bool, optional
         Enable or disable anti-aliasing. If ``True``, uses ``"msaa"``. If False,
-        disables anti_aliasing. If a string, should be one of the following:
+        disables ``anti_aliasing``. If a string, should be one of the following:
 
         * ``"ssaa"`` - Super-Sample Anti-Aliasing
         * ``"msaa"`` - Multi-Sample Anti-Aliasing
@@ -692,7 +692,7 @@ def plot_compare(  # noqa: ANN201
 
     theme : pyvista.plotting.themes.Theme | str, optional
         Plot-specific theme. Accepts a ``Theme`` instance or a registered
-        theme name (e.g. ``'dark'``); see :func:`~pyvista.registered_themes`.
+        theme name (for example, ``'dark'``); see :func:`~pyvista.registered_themes`.
 
     screenshot : str | bool, optional
         File name or path to save screenshot of the plot, or ``True`` to return
@@ -706,7 +706,7 @@ def plot_compare(  # noqa: ANN201
         Allows user to pan and move figure.
 
     return_img : bool, default: False
-        Returns numpy array of the last image rendered.
+        Returns a NumPy array of the last image rendered.
 
     return_cpos : bool, default: False
         Return the last camera position from the render window

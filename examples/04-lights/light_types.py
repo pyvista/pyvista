@@ -42,7 +42,7 @@ pl.show()
 
 
 # %%
-# Camera light
+# Camera Light
 # ============
 #
 # Camera lights define their :py:attr:`pyvista.Camera.position` and
@@ -63,7 +63,7 @@ pl.show()
 
 
 # %%
-# Scene light
+# Scene Light
 # ===========
 #
 # Scene lights are attached to the scene, their position and focal point are

@@ -26,7 +26,7 @@ class Follower(Actor, _vtk.vtkFollower):
     Parameters
     ----------
     mapper : pyvista.DataSetMapper, optional
-        DataSetMapper.
+        Mapper used to render the actor's mesh.
 
     prop : pyvista.Property, optional
         Property of the actor.

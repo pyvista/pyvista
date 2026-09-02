@@ -787,7 +787,7 @@ class CompositePolyDataMapper(_BaseMapper, _vtk.vtkCompositePolyDataMapper):
             are installed, their colormaps can be specified by name.
 
         flip_scalars : bool
-            Flip direction of cmap. Most colormaps allow ``*_r``
+            Flip direction of ``cmap``. Most colormaps allow ``*_r``
             suffix to do this as well.
 
         log_scale : bool

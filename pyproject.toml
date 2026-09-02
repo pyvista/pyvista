@@ -42,12 +42,14 @@ requires-python = '>=3.10'
 [project.optional-dependencies]
 all = ['pyvista[colormaps,io,jupyter]']
 colormaps = ['cmcrameri', 'cmocean', 'colorcet']
-io = ['fsspec', 'imageio', 'meshio>=5.2', 'pyvista-zstd>=0.2.3']
+cvista = ['cvista[all]>=9.7.0.2,<9.8.0']
+io = ['fsspec', 'imageio', 'meshio>=5.2', 'pyvista-zstd>=0.3.1']
 jupyter = ['ipywidgets', 'nest-asyncio2', 'trame-pyvista']
 
 [dependency-groups]
 pinned = [ # Pinned versions of core dependencies
-  'cyclopts<4.23.0',
+  'cyclopts<4.24.0',
+  'filelock<3.33.0', # not a core dep; serializes parallel example downloads
   'matplotlib<3.10.10',
   'numpy<2.5.0',
   'pillow<12.4.0',
@@ -65,22 +67,22 @@ typing = [
   'mypy<2.4.0',
   'npt-promote==0.2',
   'numpy>=2.0.0',
-  'trimesh<4.13.0',
+  'trimesh<5.1.0',
   { include-group = 'pinned' },
 ]
 
 test = [
-  'cmcrameri<1.10.0',
+  'cmcrameri<1.11.0',
   'cmocean<4.0.4',
   'colorcet<3.3.0',
   'embreex<4.4.1',
-  'fsspec<2026.7.0',
-  'hypothesis<6.161.3',
+  'fsspec<2026.8.0',
+  'hypothesis<6.165.11',
   'imageio-ffmpeg<0.7.0',
   'imageio<2.38.0',
   'ipython<10.0.0',
   'ipywidgets<9.0.0',
-  'libcst<1.8.7',
+  'libcst<1.9.1',
   'meshio<5.4.0',
   'nest-asyncio2<1.8.0',
   'numpydoc<1.11.0',
@@ -94,77 +96,77 @@ test = [
   'pytest-pyvista==0.3.3',
   'pytest-xdist<3.9.0',
   'pytest<9.2.0',
-  'pyvista-zstd>=0.2.3,<0.3.0',
+  'pyvista-zstd>=0.3.1,<0.5.0',
   'refleak>=0.2.2,<0.3.0',
   'retry-requests<2.1.0',
   'scipy<1.17.0',
-  'sphinx-autocodelink>=0.6,<0.7',
+  'sphinx-autocodelink==0.10.5',
   'sphinx-autoopengraph<0.3',
   'sphinx-book-theme<1.2.0',
-  'sphinx-design<0.7.0',
+  'sphinx-design<0.8.0',
   'sphinx-examples-as-code>=0.5,<0.6',
   'sphinx-gallery<0.22.0',
-  'sphinx<8.3.0',
+  'sphinx<9.2.0',
   'sphinxext-opengraph<0.14.0',
   'sympy<1.15.0',
-  'tqdm<4.70.0',
+  'tqdm<4.71.0',
   'trame-pyvista<0.2.0',
-  'trimesh<4.13.0',
+  'trimesh<5.1.0',
   'typing-extensions<4.17.0',
   { include-group = 'pinned' },
 ]
 
-test-playwright = ['playwright<1.62.0', { include-group = 'test' }]
+test-playwright = ['playwright<1.63.0', { include-group = 'test' }]
 
 docs = [
-  'cmcrameri==1.9.0',
+  'cmcrameri==1.10',
   'cmocean==4.0.3',
   'colorcet==3.2.1',
   'colour-science==0.4.6; python_version < "3.14"',
   'colour-science==0.4.7; python_version >= "3.14"',
   'erbsland-sphinx-ansi==1.2.4',
-  'fsspec==2026.6.0',
+  'fsspec==2026.7.0',
   'imageio-ffmpeg==0.6.0',
   'imageio==2.37.4',
   'joblib==1.5.3',
   'jupyter-sphinx==0.5.3',
-  'jupyterlab==4.6.2',
-  'lxml==6.1.1',
+  'jupyterlab==4.6.3',
+  'lxml==6.1.2',
   'meshio==5.3.5',
   'mypy-extensions==1.1.0',
-  'mypy==2.3.0',
+  'mypy==2.3.1',
   'nest-asyncio2==1.7.2',
   'numpydoc==1.10.0',
   'pandas==2.3.3',
-  'pyarrow==25.0.0',
+  'pyarrow==25.0.1',
   'pydata-sphinx-theme==0.15.4', # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
   'pypandoc==1.17',
   'pytest-sphinx==0.7.1',
-  'pyvista-zstd==0.2.4',
+  'pyvista-zstd==0.4.0',
   'ruamel-yaml<0.20.0',
   'scipy==1.16.3; python_version >= "3.11"',
   'sphinx-autobuild==2024.10.3',
-  'sphinx-autocodelink==0.6.2',
+  'sphinx-autocodelink==0.10.5',
   'sphinx-autoopengraph==0.2.1',
   'sphinx-book-theme==1.1.4',
   'sphinx-copybutton==0.5.2',
-  'sphinx-design==0.6.1',
+  'sphinx-design==0.7.0; python_version >= "3.11"',
   'sphinx-examples-as-code==0.5.0',
   'sphinx-gallery==0.21.0',
   'sphinx-notfound-page==1.1.0',
   'sphinx-sitemap==2.9.0',
   'sphinx-tags==0.4.0',
   'sphinx-togglebutton==0.4.5',
-  'sphinx-toolbox==4.2.0',
-  'sphinx-vtk-xref==0.2.1',
-  'sphinx==8.2.3; python_version >= "3.11"',
+  'sphinx-toolbox==4.3.0',
+  'sphinx-vtk-xref==0.3.0',
+  'sphinx==9.1.0; python_version >= "3.12"',
   'sphinxcontrib-asciinema==0.4.3',
   'sphinxcontrib-programoutput==0.20',
   'sphinxcontrib-websupport==2.0.0',
   'sphinxext-opengraph==0.13.0',
   'sympy==1.14.0',
   'trame-pyvista==0.1.6',
-  'trimesh==4.12.2',
+  'trimesh==5.0.0',
   { include-group = 'pinned' },
 ]
 
@@ -233,7 +235,7 @@ source-dir = 'doc'
 upload-dir = 'doc/_build/html'
 
 [tool.codespell]
-ignore-words = 'doc/styles/Vocab/pyvista/accept.txt'
+ignore-words = 'doc/styles/config/vocabularies/pyvista/accept.txt'
 quiet-level = 3
 skip = '*.pyc,*.txt,*.gif,*.png,*.jpg,*.ply,*.vtk,*.vti,*.vtu,*.js,*.html,*.doctree,*.ttf,*.woff,*.woff2,*.eot,*.mp4,*.inv,*.pickle,*.ipynb,flycheck*,./.git/*,./.hypothesis/*,*.yml,doc/_build/*,./doc/images/*,./dist/*,*~,.hypothesis*,./doc/examples/*,*.mypy_cache/*,*cover,./tests/tinypages/_build/*,*/_autosummary/*'
 
@@ -247,13 +249,25 @@ report.exclude_also = [
 report.omit = [
   '*/pyvista/conftest.py',
   '*/pyvista/plotting/theme.py', # kept for backwards compatibility
+
+  # Under tests/, only files the `-cov` environments actually run are measured.
+  # Everything below runs somewhere else, so coverage would report it as dead.
+  '*/tests/check_doctest_names.py', # tox -e doctest-local
+  '*/tests/doc/doc_build/*', # tox -e docs-test-build
+  '*/tests/doc/vale/check_expected_failures.py', # .github/workflows/style-docstring.yml
+  '*/tests/generate_test_image_report.py', # tox -e image-report
+
+  # Sphinx projects used as build input, copied to a tmpdir and built in a subprocess.
+  '*/tests/doc/tinypages_autoenum/*',
+  '*/tests/plotting/tinypages/*',
+  '*/tests/plotting/tinypages_autocodelink/*',
 ]
 run.branch = true
 run.parallel = true
 run.patch = ["subprocess"]
 
 [tool.pytest.ini_options]
-addopts = ['--strict-config', '--strict-markers', '-ra']
+addopts = ['--durations=25', '--strict-config', '--strict-markers', '-ra']
 doctest_optionflags = 'NUMBER ELLIPSIS'
 log_level = 'INFO'
 
@@ -284,12 +298,15 @@ markers = [
   'expect_check_gc_fail: Expect vtk leak. Checked even under --no_check_gc.',
   'needs_doc_build: this test requires the documentation to already be built and must be enabled with the --doc_build CLI flag',
   'needs_download: this test downloads data during execution',
+  'needs_io_extra: this test requires an IO-tier VTK module omitted from a core-only build (vtkIOHDF / vtkIOEnSight / vtkIOChemistry, e.g. .vtkhdf, EnSight .case, PDB/XYZ/GaussianCube readers). Auto-applied (only when the module is actually absent) via the HAS_IO_* probes in conftest.py. Deselect with `-m "not needs_io_extra"` alongside `not needs_rendering` to run the core-only subset against a rendering-free VTK backend (e.g. the core-only cvista wheel).',
   'needs_playwright: this test uses playwright and must be enabled with the --playwright CLI flag',
+  'needs_rendering: this test requires VTK rendering modules (Plotter, .plot(), screenshots, charts, widgets). Auto-applied to tests/plotting. Deselect with `-m "not needs_rendering"` to run the core-only subset against a rendering-free VTK backend (e.g. the core-only cvista wheel).',
   'needs_vtk_version(at_least, less_than, reason): skip test unless VTK version corresponds to at_least and greater_than values.',
   'security: security regression test (refusal of unsafe paths, untrusted-input handling). Run with `pytest -m security`.',
   'skip_check_gc: Disable the autouse check_gc fixture for this test.',
   'skip_egl(reason="Test fails when using OSMesa/EGL VTK build"): skip test for OSMesa/EGL.',
   'skip_mac(reason="Test fails on MacOS", machine=None, processor=None): skip test for MacOS and specific architectures if needed',
+  'skip_vtk_backend(backend, reason="..."): skip test when `pyvista.vtk_backend()` is `backend` (e.g. `cvista`). Use for behaviour that genuinely differs on an alternative VTK build -- attach it to the test itself, with a reason naming what diverges.',
   'skip_windows(reason="Test fails on Windows"): skip test for windows.',
 ]
 minversion = "7"
@@ -488,6 +505,7 @@ banned-from = [
   'ast',
   'asyncio',
   'atexit',
+  'builtins',
   'colorsys',
   'contextlib',
   'copy',
@@ -514,7 +532,9 @@ banned-from = [
   'os',
   'os.path',
   'pickle',
+  'pkgutil',
   'platform',
+  'posixpath',
   're',
   'reprlib',
   'shlex',
@@ -522,6 +542,7 @@ banned-from = [
   'signal',
   'string',
   'subprocess',
+  'symtable',
   'sys',
   'tempfile',
   'textwrap',
@@ -548,8 +569,12 @@ pyvista = "pv"
 [tool.ruff.lint.per-file-ignores]
 # TODO: Add annotations to any files with 'ANN' ignores listed below
 '*/conf.py' = ['E402']
+# A command-line script bundled with an agent skill, not an importable package.
+'.claude/skills/*/scripts/*.py' = ['INP', 'T20']
 '__init__.py' = ['PLC0414']
 'doc/*' = ['ANN', 'INP', 'PLC0415']
+# A command-line script: it reports what it runs, like `make` does.
+'doc/run_vale.py' = ['T20']
 'doc/source/make_tables.py' = [
   'D101',
   'D102',
@@ -611,15 +636,6 @@ pyvista = "pv"
 'pyvista/core/utilities/reader.py' = ['ANN', 'N802']
 'pyvista/demos/*' = ['ANN']
 'pyvista/errors.py' = ['ANN']
-'pyvista/examples/_dataset_loader.py' = [
-  'ANN',
-  'PTH112',
-  'PTH113',
-  'PTH117',
-  'PTH118',
-  'PTH202',
-  'S101',
-]
 'pyvista/examples/cells.py' = ['N802']
 'pyvista/examples/download_3ds.py' = ['ANN']
 'pyvista/examples/downloads.py' = ['ANN202']

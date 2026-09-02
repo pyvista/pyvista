@@ -15,7 +15,7 @@ env:
   SHELLOPTS: "errexit:pipefail"
   TOX_COLORED: "yes"
   CACHE_FOLDER_NAME: pyvista-data
-  PYVISTA_VTK_DATA: ${{ github.workspace }}/pyvista-data
+  PYVISTA_DATA: ${{ github.workspace }}/pyvista-data
 
 jobs:
   check-should-run:
@@ -56,6 +56,48 @@ jobs:
           echo "Pinning build to VTK's nightly date-stamp commit: $NIGHTLY_SHA"
           git checkout "$NIGHTLY_SHA"
           echo "VTK_NIGHTLY_SHA=$NIGHTLY_SHA" >> "$GITHUB_ENV"
+
+          # Commits since the previous nightly date-stamp, grouped by merge topic.
+          PREV_NIGHTLY_SHA="$(git log --grep='^VTK Nightly Date Stamp$' --skip=1 -n 1 --format=%H)"
+          BASE_URL="https://gitlab.kitware.com/vtk/vtk/-/commit"
+          {
+            if [ -z "$PREV_NIGHTLY_SHA" ]; then
+              echo "Could not find a previous nightly date-stamp commit within the last 200 commits;"
+              echo "showing only the pinned commit: [\`${NIGHTLY_SHA:0:8}\`](${BASE_URL}/${NIGHTLY_SHA})"
+            else
+              n_commits="$(git rev-list --count "${PREV_NIGHTLY_SHA}..${NIGHTLY_SHA}")"
+              echo "Commits since the previous nightly date-stamp ([\`${PREV_NIGHTLY_SHA:0:8}\`](${BASE_URL}/${PREV_NIGHTLY_SHA})):"
+              echo
+              echo "[Compare on GitLab](https://gitlab.kitware.com/vtk/vtk/-/compare/${PREV_NIGHTLY_SHA}...${NIGHTLY_SHA})"
+              echo
+              echo "<details>"
+              echo "<summary>${n_commits} commits (grouped by merge topic)</summary>"
+              echo
+              git log --first-parent --reverse --format='%H%x09%h%x09%s%x09%an' \
+                "${PREV_NIGHTLY_SHA}..${NIGHTLY_SHA}" |
+                while IFS=$'\t' read -r full short subject author; do
+                  echo "- [\`${short}\`](${BASE_URL}/${full}) ${subject} (${author})"
+                  read -r -a parents <<<"$(git log -1 --format='%P' "$full")"
+                  if [ "${#parents[@]}" -ge 2 ]; then
+                    # Second parent is the topic branch tip; list what it added over the mainline.
+                    git log --no-merges --reverse --format='%H%x09%h%x09%s%x09%an' \
+                      "${parents[0]}..${parents[1]}" |
+                      while IFS=$'\t' read -r sfull sshort ssubject sauthor; do
+                        echo "  - [\`${sshort}\`](${BASE_URL}/${sfull}) ${ssubject} (${sauthor})"
+                      done
+                  fi
+                done
+              echo
+              echo "</details>"
+            fi
+          } > "$GITHUB_WORKSPACE/vtk-commit-range.md"
+
+      - name: Upload VTK commit range
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v7
+        with:
+          name: vtk-commit-range-${{ runner.os }}
+          path: vtk-commit-range.md
 
       - name: Setup Python
         uses: actions/setup-python@v7
@@ -114,7 +156,7 @@ jobs:
 
       - name: Set up sccache (Windows)
         if: runner.os == 'Windows'
-        uses: mozilla-actions/sccache-action@9e7fa8a12102821edf02ca5dbea1acd0f89a2696
+        uses: mozilla-actions/sccache-action@fc920bf0ec8de6ee65d409111f7ec508035751ba
 
       - name: Enable sccache GHA backend (Windows)
         if: runner.os == 'Windows'
@@ -236,6 +278,7 @@ jobs:
 
     env:
       VTK_WHEEL_DIR: ${{ github.workspace }}/vtk-wheel
+      PARALLEL: "-n auto" # Use all available cores on the selected runner
 
     steps:
       - name: Checkout PyVista
@@ -281,12 +324,17 @@ jobs:
       - name: Install tox-uv
         run: pip install tox-uv
 
+      # Teed to a file for the failure-summary upload below.
       - name: Core Testing (no GL)
-        run: tox run -e py${{ matrix.python-version }}-core-vtk_local
+        run: tox run -e py${{ matrix.python-version }}-core-vtk_local 2>&1 | tee core-test.log
 
       - name: Plotting Testing (uses GL)
         if: ${{ !cancelled() }}
-        run: xvfb-run tox run -e py${{ matrix.python-version }}-plotting-vtk_local
+        run: xvfb-run tox run -e py${{ matrix.python-version }}-plotting-vtk_local 2>&1 | tee plotting-test.log
+
+      - name: Upload failure summary
+        if: failure()
+        uses: ./.github/actions/vtk-master-failure-summary
 
       - name: Upload Images for Failed Tests
         if: always()
@@ -314,6 +362,7 @@ jobs:
 
     env:
       VTK_WHEEL_DIR: ${{ github.workspace }}/vtk-wheel
+      PARALLEL: "-n auto" # Use all available cores on the selected runner
 
     steps:
       - name: Checkout PyVista
@@ -354,12 +403,17 @@ jobs:
       - name: Install tox-uv
         run: pip install tox-uv
 
+      # Teed to a file for the failure-summary upload below.
       - name: Core Testing (no GL)
-        run: tox run -e py${{ matrix.python-version }}-core-vtk_local
+        run: tox run -e py${{ matrix.python-version }}-core-vtk_local 2>&1 | tee core-test.log
 
       - name: Plotting Testing (uses GL)
         if: ${{ !cancelled() }}
-        run: tox run -e py${{ matrix.python-version }}-plotting-vtk_local
+        run: tox run -e py${{ matrix.python-version }}-plotting-vtk_local 2>&1 | tee plotting-test.log
+
+      - name: Upload failure summary
+        if: failure()
+        uses: ./.github/actions/vtk-master-failure-summary
 
       - name: Upload Images for Failed Tests
         if: always()
@@ -387,6 +441,7 @@ jobs:
 
     env:
       VTK_WHEEL_DIR: ${{ github.workspace }}/vtk-wheel
+      PARALLEL: "-n auto" # Use all available cores on the selected runner
 
     steps:
       - name: Checkout PyVista
@@ -425,18 +480,20 @@ jobs:
           enableCrossOsArchive: true
 
       - name: Set up headless display
-        uses: pyvista/setup-headless-display-action@5bc8de3bc71fcda7a96439571287a554901541a0
+        uses: pyvista/setup-headless-display-action@b0bf9f57d62d2b3fee9f1c0e0c7e390f05e97a4e
 
       - name: Install tox-uv
         run: pip install tox-uv
 
+      # `shell: bash`: this action's Windows default is PowerShell, which `tee` needs to avoid.
       - name: Core Testing (no GL)
         uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60
         with:
           timeout_minutes: 12
           max_attempts: 3
           retry_on: timeout
-          command: tox run -e py${{ matrix.python-version }}-core-vtk_local
+          shell: bash
+          command: tox run -e py${{ matrix.python-version }}-core-vtk_local 2>&1 | tee core-test.log
 
       - name: Plotting Testing (uses GL)
         uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60
@@ -445,7 +502,12 @@ jobs:
           timeout_minutes: 30
           max_attempts: 3
           retry_on: timeout
-          command: tox run -e py${{ matrix.python-version }}-plotting-vtk_local
+          shell: bash
+          command: tox run -e py${{ matrix.python-version }}-plotting-vtk_local 2>&1 | tee plotting-test.log
+
+      - name: Upload failure summary
+        if: failure()
+        uses: ./.github/actions/vtk-master-failure-summary
 
       - name: Upload Images for Failed Tests
         if: always()
@@ -483,11 +545,45 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GH_REPO: ${{ github.repository }}
     steps:
+      - name: Download VTK commit range
+        id: download-commit-range
+        uses: actions/download-artifact@v8
+        continue-on-error: true
+        with:
+          name: vtk-commit-range-Linux
+          path: vtk-commit-range
+
+      # Populated by each test job's "Upload failure summary" step, if it failed.
+      - name: Download failure summaries
+        id: download-failure-summaries
+        uses: actions/download-artifact@v8
+        continue-on-error: true
+        with:
+          pattern: failure-summary-*
+          path: failure-summaries
+
       - name: Report VTK master wheel failure
         env:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           RUN_ID: ${{ github.run_id }}
+          COMMIT_RANGE_OUTCOME: ${{ steps.download-commit-range.outcome }}
         run: |
+          # `for x in "${arr[@]}"` below is guarded by a length check first: bash <4.4 raises
+          # an unbound-variable error under nounset for an empty array otherwise.
+          set -uo pipefail
+
+          # No failure-hash match (e.g. an older report predates this marker) is expected, not
+          # an error, so it must not raise under `set -e` above.
+          extract_hash() {
+            printf '%s' "$1" | grep -F "failure-hash:${2}:" | tail -n1 | sed -E 's/.*failure-hash:[^:]+:([0-9a-f]+).*/\1/' || true
+          }
+
+          # Strips wall-clock timing so two runs hitting the identical failure hash the same.
+          normalize_for_hash() {
+            grep -Ev '^\s*(py3\.[0-9]+-[a-z_-]+: (exit|FAIL code)|evaluation failed|congratulations|py3\.[0-9]+-[a-z_-]+: OK)' \
+              | sed -E 's/ in [0-9]+\.[0-9]+s \([0-9:]+\)//'
+          }
+
           # Ensure the dedup label exists (idempotent).
           gh label create vtk-master-wheel-failure \
             --color cbb230 \
@@ -495,16 +591,91 @@ jobs:
             --force || true
 
           # The matrix job names include the OS/python-version, e.g. "build-vtk (ubuntu-latest, 3.14)"
-          failed=$(gh run view "$RUN_ID" --json jobs \
-            --jq '.jobs[] | select(.conclusion == "failure") | [.name, .url] | @tsv')
+          failed_jobs_raw=$(gh run view "$RUN_ID" --json jobs \
+            --jq '.jobs[] | select(.conclusion == "failure") | [.name, .url] | @tsv' || true)
 
-          jobs_list=""
+          failed_jobs=()
           while IFS=$'\t' read -r name url; do
             [ -n "$name" ] || continue
-            jobs_list+="- [\`${name}\`](${url})"$'\n'
-          done <<< "$failed"
+            failed_jobs+=("${name}"$'\t'"${url}")
+          done <<< "$failed_jobs_raw"
 
-          [ -n "$jobs_list" ] || jobs_list="- (could not determine which jobs failed, see the run)"$'\n'
+          # Only jobs that ran pytest and failed have a failure-summary-* artifact.
+          summary_names=()
+          summary_texts=()
+          if [ -d failure-summaries ]; then
+            while IFS= read -r label_file; do
+              summary_file="$(dirname "$label_file")/failure_summary.txt"
+              [ -f "$summary_file" ] || continue
+              name="$(cat "$label_file")"
+              summary="$(cat "$summary_file")"
+              summary_names+=("$name")
+              summary_texts+=("$summary")
+            done < <(find failure-summaries -name job_label.txt | sort)
+          fi
+
+          if [ "$COMMIT_RANGE_OUTCOME" = "success" ] && [ -f vtk-commit-range/vtk-commit-range.md ]; then
+            commit_range_body="$(cat vtk-commit-range/vtk-commit-range.md)"
+          else
+            commit_range_body="(could not determine which VTK commits landed since the previous nightly)"
+          fi
+
+          # Most recently posted report: the last comment, or the issue body if none yet.
+          existing=$(gh issue list --label "vtk-master-wheel-failure" --state open --limit 1 --json number --jq '.[0].number // empty' || true)
+          prev_text=""
+          prev_url=""
+          if [ -n "$existing" ]; then
+            prev_text="$(gh issue view "$existing" --json body,comments \
+              --jq 'if (.comments | length) > 0 then .comments[-1].body else .body end' 2>/dev/null || true)"
+            prev_url="$(gh issue view "$existing" --json url,comments \
+              --jq 'if (.comments | length) > 0 then .comments[-1].url else .url end' 2>/dev/null || true)"
+          fi
+
+          jobs_list=""
+          if [ "${#failed_jobs[@]}" -eq 0 ]; then
+            jobs_list="- (could not determine which jobs failed, see the run)"$'\n'
+          else
+            for row in "${failed_jobs[@]}"; do
+              IFS=$'\t' read -r name url <<< "$row"
+
+              summary=""
+              if [ "${#summary_names[@]}" -gt 0 ]; then
+                for i in "${!summary_names[@]}"; do
+                  if [ "${summary_names[$i]}" = "$name" ]; then
+                    summary="${summary_texts[$i]}"
+                    break
+                  fi
+                done
+              fi
+
+              jobs_list+="- [\`${name}\`](${url})"$'\n'
+              if [ -z "$summary" ]; then
+                continue
+              fi
+
+              hash="$(printf '%s' "$summary" | normalize_for_hash | sha256sum | cut -d' ' -f1)"
+              prev_hash="$(extract_hash "$prev_text" "$name")"
+              if [ -n "$prev_hash" ] && [ "$prev_hash" = "$hash" ]; then
+                jobs_list+="  ⚠️ Same failure signature as the [previous report](${prev_url})."$'\n'
+              fi
+
+              # Counted here rather than trusting pytest's own "N failed" line, which isn't in
+              # $summary any more (and wasn't reliable for repeat-detection either -- see the
+              # FAILED/ERROR-only filtering above).
+              n_failures="$(printf '%s\n' "$summary" | grep -c .)"
+              failure_word="failures"
+              [ "$n_failures" -eq 1 ] && failure_word="failure"
+
+              # Indented 2 spaces to stay nested inside this list item on GitHub.
+              jobs_list+="  <!-- failure-hash:${name}:${hash} -->"$'\n'
+              jobs_list+="  <details>"$'\n'
+              jobs_list+="  <summary>❌ ${n_failures} ${failure_word}</summary>"$'\n\n'
+              jobs_list+='  ```text'$'\n'
+              jobs_list+="$(printf '%s\n' "$summary" | sed 's/^/  /')"$'\n'
+              jobs_list+='  ```'$'\n\n'
+              jobs_list+="  </details>"$'\n'
+            done
+          fi
 
           body=$(cat <<EOF
           ### VTK Master Wheel Failure
@@ -513,12 +684,11 @@ jobs:
           **Run:** ${RUN_URL}
 
           **Failing jobs:**
+
           ${jobs_list}
+          ${commit_range_body}
           EOF
           )
-
-          # Check for an existing open issue
-          existing=$(gh issue list --label "vtk-master-wheel-failure" --state open --limit 1 --json number --jq '.[0].number // empty')
 
           if [ -n "$existing" ]; then
             gh issue comment "$existing" --body "$body"

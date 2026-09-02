@@ -170,7 +170,7 @@ pl.show()
 
 
 # %%
-# Woah, that's a big volume. We probably don't want to volume render the
+# Whoa, that's a big volume. We probably don't want to volume render the
 # whole thing. So let's extract a region of interest under the volcano.
 #
 # The region we will extract will be between nodes 175 and 200 on the x-axis,

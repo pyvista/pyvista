@@ -20,7 +20,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
 # %%
-# Create several spheres
+# Create Several Spheres
 # ~~~~~~~~~~~~~~~~~~~~~~
 
 # We use a uniform grid here simply to create equidistantly spaced points for
@@ -31,7 +31,7 @@ spheres = grid.glyph(geom=pv.Sphere(), scale=False, orient=False)
 
 
 # %%
-# Blur the plot
+# Blur the Plot
 # ~~~~~~~~~~~~~
 # Add a few blur passes to blur the plot
 

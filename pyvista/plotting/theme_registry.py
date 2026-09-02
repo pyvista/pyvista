@@ -38,7 +38,7 @@ class ThemeRegistration(NamedTuple):
     kind : {'subclass', 'entry_point', 'alias'}
         How the name was registered.
     source : str
-        Human-readable origin (e.g. ``'my_package.theme.MyTheme'``).
+        Human-readable origin (for example, ``'my_package.theme.MyTheme'``).
 
     Examples
     --------
@@ -141,7 +141,7 @@ def _register_theme_class(name: str, cls: type[Theme], *, source: str) -> None:
 
 
 def _register_alias(name: str, cls: type[Theme]) -> None:
-    """Register a built-in name alias (e.g. ``'default' → DocumentTheme``).
+    """Register a built-in name alias (for example, ``'default' → DocumentTheme``).
 
     Bypasses collision detection so built-in aliases can coexist with
     auto-registered subclasses without warning.
@@ -176,8 +176,8 @@ def _resolve_theme(name: str) -> Theme | None:
     """Look up a theme by name and return a usable ``Theme`` instance.
 
     Explicit subclass registrations win over entry-point discoveries.
-    Entry-point plugins are imported lazily — only the plugin claiming
-    *name* loads, sibling plugins stay pending.
+    Entry-point plugins are imported lazily—only the plugin claiming
+    ``name`` loads, sibling plugins stay pending.
     """
     normalized = _normalize_theme_name(name)
 
@@ -219,7 +219,7 @@ def _available_theme_names() -> tuple[str, ...]:
     """Return all currently registered theme names.
 
     Pending entry-point names appear in the result without triggering
-    plugin imports — only metadata is consulted.
+    plugin imports—only metadata is consulted.
     """
     _ensure_entry_points()
     names = (
@@ -375,14 +375,14 @@ def _ensure_entry_points() -> None:
             )
             continue
         if normalized in _registered_theme_classes:
-            # Explicit registration wins silently — user-owned registrations
+            # Explicit registration wins silently—user-owned registrations
             # shouldn't be shouted at just because a plugin also defines it.
             continue
         _pending_ep_themes.setdefault(normalized, []).append(ep)
 
 
 def _resolve_pending_theme(name: str) -> bool:
-    """Import the plugin claiming *name*, if any.
+    """Import the plugin claiming ``name``, if any.
 
     Returns
     -------
@@ -405,7 +405,7 @@ def _resolve_pending_theme(name: str) -> bool:
     winner = eps[0]
     source = winner.value
     try:
-        # ep.load() runs third-party import machinery — it can raise
+        # ep.load() runs third-party import machinery—it can raise
         # literally anything. Convert to a warning so one broken plugin
         # cannot take down every theme lookup.
         loaded = winner.load()
@@ -450,7 +450,7 @@ def _register_discovered_theme(name: str, obj: object, *, source: str) -> None:
         return
 
     if normalized in _registered_theme_classes:
-        # Explicit registration wins silently — user-owned registrations
+        # Explicit registration wins silently—user-owned registrations
         # shouldn't be shouted at just because a plugin also defines it.
         return
 
