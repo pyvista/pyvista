@@ -1639,7 +1639,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         """
         self._raise_no_texture_coordinates()
-        texture_coordinates = self.GetTCoords()
+        texture_coordinates = self.VTKObject.GetTCoords()
         if texture_coordinates is not None:
             return pyvista_ndarray(
                 texture_coordinates,
