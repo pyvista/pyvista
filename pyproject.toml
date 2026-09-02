@@ -24,7 +24,7 @@ dependencies = [
   'pillow',
   'pooch',
   'pyobjc-framework-Cocoa; sys_platform == "darwin"', # see pyvista/pulls/7828, 8423, and 8832
-  'pyvista-validation==0.1.0', # Exact pin: the validation API is still unstable
+  'pyvista-validation==0.1.1', # Exact pin: the validation API is still unstable
   'scooby>=0.5.1',
   'typing-extensions>=4.10',
   'vtk!=9.4.0',
@@ -103,7 +103,7 @@ test = [
   'scipy<1.17.0',
   'sphinx-autocodelink==0.11.2',
   'sphinx-autoopengraph<0.3',
-  'sphinx-book-theme<1.2.0',
+  'sphinx-book-theme<1.5.0',
   'sphinx-design<0.8.0',
   'sphinx-examples-as-code>=0.5,<0.6',
   'sphinx-gallery<0.22.0',
@@ -140,16 +140,16 @@ docs = [
   'numpydoc==1.10.0',
   'pandas==2.3.3',
   'pyarrow==25.0.1',
-  'pydata-sphinx-theme==0.15.4', # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
+  'pydata-sphinx-theme==0.20.0; python_version >= "3.11"',
   'pypandoc==1.17',
   'pytest-sphinx==0.7.1',
   'pyvista-zstd==0.4.0',
   'ruamel-yaml<0.20.0',
   'scipy==1.16.3; python_version >= "3.11"',
-  'sphinx-autobuild==2024.10.3',
+  'sphinx-autobuild==2025.8.25; python_version >= "3.11"',
   'sphinx-autocodelink==0.11.2',
   'sphinx-autoopengraph==0.2.1',
-  'sphinx-book-theme==1.1.4',
+  'sphinx-book-theme==1.4.0; python_version >= "3.11"',
   'sphinx-copybutton==0.5.2',
   'sphinx-design==0.7.0; python_version >= "3.11"',
   'sphinx-examples-as-code==0.5.0',

@@ -54,7 +54,11 @@ def _prose(paragraph: nodes.paragraph) -> str:
 def _lead_paragraph(doctree: nodes.document) -> str:
     """Return the document's first prose paragraph, or ``''`` if it has none."""
     for paragraph in doctree.findall(nodes.paragraph):
-        if any(isinstance(ancestor, _SKIP_ANCESTORS) for ancestor in _ancestors(paragraph)):
+        # ``desc`` subclasses ``Admonition`` but holds the documented object's own summary.
+        if any(
+            isinstance(ancestor, _SKIP_ANCESTORS) and not isinstance(ancestor, addnodes.desc)
+            for ancestor in _ancestors(paragraph)
+        ):
             continue
         text = _prose(paragraph)
         if re.search('[A-Za-z]', text):
