@@ -1,3 +1,5 @@
+.. _cells_api:
+
 Cells
 =====
 

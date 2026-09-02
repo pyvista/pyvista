@@ -20,8 +20,6 @@ and provide direct access to common VTK filters (see :ref:`filters`).
    partitioned
    filters
    accessors
-   camera
-   lights
    cells
    typing
 
@@ -69,12 +67,12 @@ Data Types
 
       All filtering methods available on PyVista datasets.
 
-   .. grid-item-card:: Scene Objects
-      :link: cameras_api
+   .. grid-item-card:: Cells
+      :link: cells_api
       :link-type: ref
       :class-title: pyvista-card-title
 
-      Camera, Light, Cell, and CellArray.
+      Cell, CellArray, cell types, and cell quality.
 
 
 Shared Base Classes

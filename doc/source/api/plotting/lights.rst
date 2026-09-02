@@ -1,3 +1,5 @@
+.. _lights_api:
+
 Lights
 ======
 The :class:`pyvista.Light` class adds additional functionality and a pythonic API
