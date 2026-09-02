@@ -4500,7 +4500,9 @@ def test_color_labels_return_dict(labeled_image, color_type):
 
 @pytest.fixture
 def frog_tissues_image():
-    return examples.load_frog_tissues()
+    # subsample: contouring and voxelizing the full image takes seconds
+    image = examples.load_frog_tissues()
+    return image.extract_subset(image.extent, rate=(4, 4, 4))
 
 
 @pytest.fixture
