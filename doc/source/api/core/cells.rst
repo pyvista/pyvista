@@ -62,6 +62,14 @@ Class Definition
 Enumerations
 ~~~~~~~~~~~~
 
+.. seealso::
+
+   :ref:`linear_cells_example`
+      Build one cell of each linear cell type.
+
+   :meth:`~pyvista.DataObjectFilters.cell_validator`
+      The filter that reports :class:`~pyvista.CellStatus` bits.
+
 .. autosummary::
    :toctree: _autosummary
 
@@ -71,6 +79,14 @@ Enumerations
 
 Cell Quality
 ~~~~~~~~~~~~
+
+.. seealso::
+
+   :meth:`~pyvista.DataObjectFilters.cell_quality`
+      Compute cell quality measures for a dataset.
+
+   :ref:`mesh_quality_example`
+      Compute and plot mesh quality.
 
 .. autosummary::
    :toctree: _autosummary

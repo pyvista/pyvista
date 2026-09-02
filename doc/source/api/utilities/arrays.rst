@@ -8,6 +8,17 @@ available as :attr:`~pyvista.DataSet.point_data`,
 The functions on this page look up those arrays by name and convert between
 NumPy arrays and VTK arrays.
 
+.. seealso::
+
+   :ref:`pyvista_data_model`
+      How points, cells, and data arrays fit together.
+
+   :ref:`point_cell_scalars_example`
+      Point data versus cell data when plotting.
+
+   :class:`~pyvista.core.utilities.arrays.FieldAssociation`
+      The association returned by :func:`~pyvista.get_array_association`.
+
 .. currentmodule:: pyvista
 
 Array Access

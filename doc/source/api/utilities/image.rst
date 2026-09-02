@@ -26,6 +26,17 @@ An implicit function defines a scalar value at every point in space.
 :func:`~pyvista.sample_function` evaluates one over a grid to produce a
 :class:`~pyvista.ImageData`.
 
+.. seealso::
+
+   :ref:`perlin_noise_2d_example`
+      Sample Perlin noise in 2D.
+
+   :ref:`perlin_noise_3d_example`
+      Sample Perlin noise in 3D.
+
+   :ref:`image_fft_perlin_noise_example`
+      Filter sampled noise with a fast Fourier transform.
+
 .. autosummary::
    :toctree: _autosummary
 
@@ -35,6 +46,11 @@ An implicit function defines a scalar value at every point in space.
 
 Image Comparison
 ~~~~~~~~~~~~~~~~
+.. seealso::
+
+   :ref:`cli_compare`
+      Compare two files from the command line.
+
 .. autosummary::
    :toctree: _autosummary
 

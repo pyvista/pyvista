@@ -114,6 +114,17 @@ Mesh Creation Functions
 ~~~~~~~~~~~~~~~~~~~~~~~
 These functions build a mesh from existing points, faces, or datasets.
 
+.. seealso::
+
+   :ref:`create_spline_example`
+      Build a spline from an array of points.
+
+   :ref:`voxelize_example`
+      Voxelize a surface mesh.
+
+   :meth:`~pyvista.DataSetFilters.merge`
+      Merge datasets as a method on the dataset.
+
 .. autosummary::
    :toctree: _autosummary
 
@@ -130,6 +141,11 @@ These functions build a mesh from existing points, faces, or datasets.
 Points
 ~~~~~~
 These functions operate on arrays of points.
+
+.. seealso::
+
+   :ref:`point_cloud_orientation_example`
+      Fit a plane and a line to a point cloud using its principal axes.
 
 .. autosummary::
    :toctree: _autosummary

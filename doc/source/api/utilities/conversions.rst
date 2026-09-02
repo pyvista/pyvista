@@ -3,7 +3,16 @@
 Conversions
 -----------
 These functions convert between PyVista datasets and the objects of VTK and
-other mesh libraries.
+other mesh libraries. To read or write a file, see :ref:`reader_api` and
+:meth:`~pyvista.DataObject.save`.
+
+.. seealso::
+
+   :ref:`wrap_trimesh_example`
+      Wrap ``trimesh`` and VTK objects.
+
+   :ref:`vtk_to_pyvista_docs`
+      How PyVista's interface relates to VTK's.
 
 .. currentmodule:: pyvista
 

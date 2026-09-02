@@ -11,6 +11,12 @@ Environment
       :class:`pyvista.core.config.Config`, module-level flags, and
       environment variables.
 
+   :ref:`cli_report`
+      Generate the environment report from the command line.
+
+   :ref:`vtk_backend`
+      Installing and selecting a VTK backend.
+
 PyVista Version Information
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The PyVista library provides a way of getting the version installed in your

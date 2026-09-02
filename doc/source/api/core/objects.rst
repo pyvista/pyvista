@@ -40,6 +40,17 @@ coordinates.
 These functions create a :class:`pyvista.Texture` from image data or arrays.
 To load a texture from an image file, see :func:`pyvista.read_texture`.
 
+.. seealso::
+
+   :ref:`texture_example`
+      Apply textures to meshes.
+
+   :ref:`pbr_example`
+      Use a cubemap as an environment texture.
+
+   :meth:`~pyvista.DataSetFilters.texture_map_to_plane`
+      Generate texture coordinates for a dataset.
+
 .. autosummary::
    :toctree: _autosummary
 

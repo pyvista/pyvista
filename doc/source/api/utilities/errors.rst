@@ -41,7 +41,9 @@ the progress of an algorithm.
 
 VTK Error Output
 ~~~~~~~~~~~~~~~~
-These functions redirect the errors and warnings that VTK emits.
+These functions redirect the errors and warnings that VTK emits. To
+control how much VTK logs in the first place, see
+:func:`~pyvista.vtk_verbosity`.
 
 .. autosummary::
    :toctree: _autosummary

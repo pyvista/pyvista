@@ -4,6 +4,20 @@ Colors
 ------
 .. currentmodule:: pyvista
 
+.. seealso::
+
+   :ref:`colormap_example`
+      Choose a colormap when plotting scalars.
+
+   :ref:`color_cycler_example`
+      Cycle through colors when adding meshes.
+
+   :ref:`lookup_table_example`
+      Build a :class:`~pyvista.LookupTable` from a colormap or colors.
+
+   :ref:`theme_api`
+      Set default colors through a theme.
+
 .. autosummary::
    :toctree: _autosummary
 
