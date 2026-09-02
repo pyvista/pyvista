@@ -45,6 +45,6 @@ either :func:`Plotter.show() <pyvista.Plotter.show>` or :func:`dataset.plot()
 
 .. autosummary::
 
-   ~pyvista.set_jupyter_backend
    ~pyvista.register_jupyter_backend
    ~pyvista.registered_jupyter_backends
+   ~pyvista.set_jupyter_backend

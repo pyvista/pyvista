@@ -9,6 +9,7 @@ Errors and Warnings
 
    core.errors.AmbiguousDataError
    core.errors.DeprecationError
+   plotting.errors.InvalidCameraError
    core.errors.InvalidMeshError
    core.errors.InvalidMeshWarning
    core.errors.MissingDataError
@@ -21,11 +22,10 @@ Errors and Warnings
    core.errors.PyVistaEfficiencyWarning
    core.errors.PyVistaFutureWarning
    core.errors.PyVistaPipelineError
+   plotting.errors.RenderWindowUnavailable
    core.errors.VTKExecutionError
    core.errors.VTKExecutionWarning
    core.errors.VTKVersionError
-   plotting.errors.InvalidCameraError
-   plotting.errors.RenderWindowUnavailable
 
 VTK Observers
 ~~~~~~~~~~~~~

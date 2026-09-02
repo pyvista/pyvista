@@ -47,9 +47,9 @@ Reader Classes
    :toctree: _autosummary
 
     AVSucdReader
+    BinaryMarchingCubesReader
     BMPReader
     BYUReader
-    BinaryMarchingCubesReader
     CGNSReader
     DEMReader
     DICOMReader
@@ -69,8 +69,8 @@ Reader Classes
     HDFReader
     HDRReader
     JPEGReader
-    MFIXReader
     MetaImageReader
+    MFIXReader
     MINCImageReader
     MultiBlockPlot3DReader
     Nek5000Reader
@@ -81,35 +81,35 @@ Reader Classes
     ParticleReader
     PDBReader
     PExodusIIReader
+    Plot3DMetaReader
     PLYReader
     PNGReader
     PNMReader
     POpenFOAMReader
+    ProStarReader
     PTSReader
     PVDReader
-    Plot3DMetaReader
-    ProStarReader
-    SLCReader
-    STLReader
     SegYReader
     SeriesReader
+    SLCReader
+    STLReader
+    TecplotReader
     ThreeDSReader
     TIFFReader
-    TecplotReader
     VRMLReader
     VTKDataSetReader
     VTKPDataSetReader
+    XdmfReader
     XMLImageDataReader
     XMLMultiBlockDataReader
+    XMLPartitionedDataSetReader
     XMLPImageDataReader
+    XMLPolyDataReader
     XMLPRectilinearGridReader
     XMLPUnstructuredGridReader
-    XMLPartitionedDataSetReader
-    XMLPolyDataReader
     XMLRectilinearGridReader
     XMLStructuredGridReader
     XMLUnstructuredGridReader
-    XdmfReader
 
 Custom Readers
 ~~~~~~~~~~~~~~
@@ -350,8 +350,8 @@ formats. These are used internally by :meth:`pyvista.DataObject.save`.
    PNMWriter
    PolyDataWriter
    RectilinearGridWriter
-   STLWriter
    SimplePointsWriter
+   STLWriter
    StructuredGridWriter
    TIFFWriter
    UnstructuredGridWriter
@@ -394,12 +394,12 @@ members is documented once and linked from every class that inherits it.
 
    BaseReader
    BaseVTKReader
+   core.utilities.writer._DataFormatMixin
+   core.utilities.fileio._FileIOBase
    PointCellDataSelection
    PVDDataSet
    SeriesDataSet
    TimeReader
-   core.utilities.fileio._FileIOBase
-   core.utilities.writer._DataFormatMixin
    core.utilities.writer._XMLWriter
 
 
