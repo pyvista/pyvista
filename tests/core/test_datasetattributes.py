@@ -548,11 +548,7 @@ def test_values_should_be_pyvista_ndarrays(insert_arange_narray):
 
 def test_value_should_exist(insert_arange_narray):
     dsa, sample_array = insert_arange_narray
-    for arr in dsa.values():
-        if np.array_equal(sample_array, arr):
-            return
-    msg = 'Array not in values.'
-    raise AssertionError(msg)
+    assert any(np.array_equal(sample_array, arr) for arr in dsa.values()), 'Array not in values.'
 
 
 def test_active_scalars_setter(hexbeam_point_attributes):

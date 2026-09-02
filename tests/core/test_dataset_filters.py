@@ -29,7 +29,6 @@ from pyvista.core.errors import NotAllTrianglesError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters import _get_output
 from pyvista.core.filters.data_set import _swap_axes
-from tests.conftest import flaky_test
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -994,24 +993,12 @@ class InterrogateVTKGlyph3D:
         return self.input_data_object.active_vectors_info
 
     @property
-    def scaling(self):
-        return self.alg.GetScaling()
-
-    @property
     def scale_mode(self):
         return self.alg.GetScaleModeAsString()
 
     @property
     def scale_factor(self):
         return self.alg.GetScaleFactor()
-
-    @property
-    def clamping(self):
-        return self.alg.GetClamping()
-
-    @property
-    def vector_mode(self):
-        return self.alg.GetVectorModeAsString()
 
 
 def test_glyph_settings(sphere):
@@ -3849,7 +3836,7 @@ def test_integrate_data_datasets(datasets):
             assert integrated['Area'] > 0
         elif 'Volume' in integrated.array_names:
             assert integrated['Volume'] > 0
-        else:
+        else:  # pragma: no cover -- parametrize covers every case
             msg = 'Unexpected integration'
             raise ValueError(msg)
 
@@ -4558,18 +4545,37 @@ def test_voxelize_binary_mask_spacing(ant):
         ant.voxelize_binary_mask(spacing=0.1, cell_length_sample_size=ant.n_cells)
 
 
-# This test is flaky because of random sampling that cannot be controlled.
-# Sometimes the sampling produces the same output.
-# https://github.com/pyvista/pyvista/pull/6728
-@flaky_test(times=5)
-def test_voxelize_binary_mask_cell_length_sample_size(ant):
-    mask_samples_1 = ant.voxelize_binary_mask(cell_length_sample_size=100)
-    mask_samples_2 = ant.voxelize_binary_mask(cell_length_sample_size=200)
-    assert mask_samples_1.spacing != mask_samples_2.spacing
+def test_voxelize_binary_mask_cell_length_sample_size(ant, mocker: MockerFixture):
+    from pyvista import _vtk
+    from pyvista.core.filters import data_set
 
-    mask_samples_1 = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells)
-    mask_samples_2 = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells)
-    assert mask_samples_1.spacing == mask_samples_2.spacing
+    sample_sizes = []
+    update_alg = data_set._update_alg
+
+    def _record_sample_size(alg, **kwargs):
+        if isinstance(alg, _vtk.vtkLengthDistribution):
+            sample_sizes.append(alg.GetSampleSize())
+        return update_alg(alg, **kwargs)
+
+    mocker.patch.object(data_set, '_update_alg', _record_sample_size)
+
+    # Sample size is used when sampling cell lengths
+    ant.voxelize_binary_mask(cell_length_sample_size=100)
+    assert sample_sizes == [100]
+
+    # Default sample size covers all cells
+    sample_sizes.clear()
+    ant.voxelize_binary_mask()
+    assert sample_sizes[0] > ant.n_cells
+
+    # Sampling all cells is not random, so the spacing is reproducible
+    mask_all_cells = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells)
+    mask_all_cells_again = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells)
+    assert mask_all_cells.spacing == mask_all_cells_again.spacing
+
+    # Sample sizes larger than the number of cells are clamped
+    mask_clamped = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells * 10)
+    assert mask_clamped.spacing == mask_all_cells.spacing
 
 
 @pytest.mark.parametrize(
