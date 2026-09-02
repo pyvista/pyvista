@@ -1063,9 +1063,9 @@ class DataObject(
                 _vtk.vtkUnstructuredGrid: _vtk.vtkUnstructuredGridReader,
                 _vtk.vtkPolyData: _vtk.vtkPolyDataReader,
             }
-            for parent_type, reader_type in legacy_readers.items():
+            for parent_type, legacy_reader_type in legacy_readers.items():
                 if isinstance(self, parent_type):
-                    reader = reader_type()
+                    reader = legacy_reader_type()  # type: ignore[unreachable]
                     break
             else:
                 reader = _vtk.vtkDataSetReader()
