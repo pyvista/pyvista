@@ -162,6 +162,109 @@ def test_solid_sphere():
     assert sphere.volume == pytest.approx(4.0 / 3.0 * np.pi * 0.5**3, rel=1e-3)
 
 
+def test_structured_sphere():
+    sphere = pv.StructuredSphere()
+    assert isinstance(sphere, pv.StructuredGrid)
+    assert sphere.dimensions == (1, 30, 31)
+    assert sphere.points.dtype == np.float64
+    assert sphere.n_cells == 870
+    assert sphere.distinct_cell_types == {pv.CellType.QUAD}
+    assert np.allclose(np.linalg.norm(sphere.points, axis=1), 0.5)
+
+    assert sphere.point_data.keys() == []
+    assert sphere.cell_data.keys() == []
+
+
+def test_structured_sphere_resolution():
+    sphere = pv.StructuredSphere(theta_resolution=20, phi_resolution=10)
+    # The theta dimension has an extra point for the seam
+    assert sphere.dimensions == (1, 10, 21)
+
+
+def test_structured_sphere_radius_sequence():
+    radius = np.linspace(1.0, 2.0, 5)
+    sphere = pv.StructuredSphere(radius=radius, theta_resolution=100, phi_resolution=100)
+    assert sphere.dimensions == (5, 100, 101)
+    assert sphere.distinct_cell_types == {pv.CellType.HEXAHEDRON}
+
+    # Cells must not be inverted
+    expected = 4.0 / 3.0 * np.pi * (radius[-1] ** 3 - radius[0] ** 3)
+    assert sphere.volume == pytest.approx(expected, rel=1e-3)
+
+
+@pytest.mark.parametrize(
+    ('start_phi', 'end_phi', 'start_theta', 'end_theta'), [(0, 180, 0, 360), (30, 150, 90, 270)]
+)
+def test_structured_sphere_matches_solid_sphere(start_phi, end_phi, start_theta, end_theta):
+    # The docstring claims the two tessellate identically at the same resolutions
+    kwargs = dict(
+        theta_resolution=8,
+        phi_resolution=5,
+        start_phi=start_phi,
+        end_phi=end_phi,
+        start_theta=start_theta,
+        end_theta=end_theta,
+    )
+    structured = pv.StructuredSphere(radius=np.linspace(0.25, 0.5, 3), **kwargs)
+    solid = pv.SolidSphere(inner_radius=0.25, outer_radius=0.5, radius_resolution=3, **kwargs)
+    assert structured.n_cells == solid.n_cells
+    assert structured.volume == pytest.approx(solid.volume)
+
+
+def test_structured_sphere_angles():
+    sphere = pv.StructuredSphere(start_theta=90, end_theta=270, start_phi=30, end_phi=150)
+    assert sphere.dimensions == (1, 30, 31)
+    assert sphere.bounds.x_max == pytest.approx(0.0, abs=1e-8)
+    assert sphere.bounds.z_max == pytest.approx(0.5 * np.cos(np.deg2rad(30)))
+
+    # Shifting theta by a full turn rotates the sphere
+    shifted = pv.StructuredSphere(start_theta=180, end_theta=540)
+    expected = pv.StructuredSphere().rotate_z(180)
+    assert np.allclose(shifted.points, expected.points)
+
+
+def test_structured_sphere_center_direction():
+    center = (1.0, 2.0, 3.0)
+    sphere = pv.StructuredSphere(center=center, direction=(0.0, 1.0, 0.0))
+    assert np.allclose(sphere.center, center)
+    # North pole is along `direction`
+    assert np.allclose(sphere.points[0], np.array(center) + np.array([0.0, 0.5, 0.0]))
+
+
+def test_structured_sphere_seam():
+    sphere = pv.StructuredSphere()
+    seam = sphere.extract_feature_edges(
+        boundary_edges=True, non_manifold_edges=False, feature_edges=False, manifold_edges=False
+    )
+    # Seam is on the +x axis
+    expected = pv.BoundsTuple(x_min=0.0, x_max=0.5, y_min=0.0, y_max=0.0, z_min=-0.5, z_max=0.5)
+    assert np.allclose(seam.bounds, expected, atol=1e-3)
+
+
+def test_structured_sphere_raises():
+    with pytest.raises(ValueError, match=re.escape('radius values must all be greater than 0.0')):
+        pv.StructuredSphere(radius=0.0)
+    with pytest.raises(ValueError, match='must be sorted in strict ascending order'):
+        pv.StructuredSphere(radius=[2.0, 1.0])
+    with pytest.raises(ValueError, match='start_phi values must all be greater than'):
+        pv.StructuredSphere(start_phi=-1)
+    with pytest.raises(ValueError, match='end_phi values must all be less than'):
+        pv.StructuredSphere(end_phi=181)
+    with pytest.raises(ValueError, match=r'end_phi \(0\) must be greater than start_phi \(0\)'):
+        pv.StructuredSphere(start_phi=0, end_phi=0)
+    match = r'end_theta \(400\) must be greater than start_theta \(0\) and within 360 degrees'
+    with pytest.raises(ValueError, match=match):
+        pv.StructuredSphere(start_theta=0, end_theta=400)
+    with pytest.raises(ValueError, match='theta_resolution values must all be greater than'):
+        pv.StructuredSphere(theta_resolution=0)
+    with pytest.raises(ValueError, match='phi_resolution values must all be greater than'):
+        pv.StructuredSphere(phi_resolution=1)
+    with pytest.raises(ValueError, match='theta_resolution must have integer-like values'):
+        pv.StructuredSphere(theta_resolution=2.5)
+    with pytest.raises(TypeError, match='start_theta must have real numbers'):
+        pv.StructuredSphere(start_theta='a')
+
+
 def test_solid_sphere_hollow():
     sphere = pv.SolidSphere(
         outer_radius=1.0,

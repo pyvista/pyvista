@@ -567,6 +567,18 @@ def test_load_theme(tmpdir, default_theme):
     'ignore:The jupyter_extension_available flag is read only and is automatically '
     'detected:UserWarning'
 )
+def test_load_theme_unknown_key(default_theme):
+    dict_ = default_theme.to_dict()
+    dict_['a_stale_removed_property'] = True
+    with pytest.warns(UserWarning, match="'Theme' has no attribute 'a_stale_removed_property'"):
+        loaded_theme = Theme.from_dict(dict_)
+    assert loaded_theme == default_theme
+
+
+@pytest.mark.filterwarnings(
+    'ignore:The jupyter_extension_available flag is read only and is automatically '
+    'detected:UserWarning'
+)
 def test_save_interactor_style(tmpdir, default_theme):
     filename = str(tmpdir.mkdir('tmpdir').join('tmp.json'))
     default_theme.interactor_style = 'terrain_style'

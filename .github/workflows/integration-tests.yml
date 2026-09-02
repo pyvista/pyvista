@@ -58,6 +58,9 @@ jobs:
           - project: cvista
             timeout: 80
             runner: ubuntu-22.04
+          - project: numpy-nightly
+            timeout: 80 # runs the whole suite, like cvista
+            runner: ubuntu-22.04
     runs-on: ${{ matrix.runner || 'ubuntu-latest' }}
     timeout-minutes: ${{ matrix.timeout }}
     defaults:
@@ -136,6 +139,7 @@ jobs:
             [geovista]="@bjlittle"
             [playwright]="@user27182"
             [cvista]="@akaszynski"
+            [numpy-nightly]="@user27182"
           )
 
           # The matrix job names are just the project names (see `name:` above)

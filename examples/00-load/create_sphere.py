@@ -8,7 +8,7 @@ This example shows how to create meshes in different ways.
 
 """
 
-# sphinx_gallery_thumbnail_number = 5
+# sphinx_gallery_thumbnail_number = 7
 import numpy as np
 import pyvista as pv
 
@@ -46,11 +46,13 @@ mesh.get_cell(0).type
 # The structure of the mesh can be important. Instead of a
 # triangulated mesh, it can be useful to have a structured
 # mesh that has an i-j-k ordering that allows for simplified
-# cell connectivity.
+# cell connectivity. :func:`~pyvista.StructuredSphere` builds this mesh in a
+# single call, as the next section shows; constructing it by hand first is what
+# makes the layout of its points and cells visible.
 #
 # The points are generated as a regular grid in spherical coordinates using
 # :func:`pyvista.spherical_to_cartesian`.
-# Here, we will used the convention that ``theta`` is the
+# Here, we use the convention that ``theta`` is the
 # azimuthal angle, similar to longitude on the globe.  ``phi`` is the
 # polar angle, similar to latitude on the globe.
 
@@ -104,6 +106,43 @@ pl = pv.Plotter()
 pl.add_mesh(mesh, show_edges=True)
 pl.add_mesh(boundaries, line_width=10, color='red')
 pl.show()
+
+# %%
+# Structured Sphere
+# ~~~~~~~~~~~~~~~~~
+# :func:`pyvista.StructuredSphere` generates the mesh built by hand above, with
+# the same points in the same order. Since the seam is included in the theta
+# direction, ``theta_resolution`` is one less than the number of points used
+# there.
+
+mesh = pv.StructuredSphere(
+    radius=radius, theta_resolution=ntheta - 1, phi_resolution=nphi
+)
+mesh.plot(show_edges=True)
+
+# %%
+# The i-j-k ordering runs radius, ``phi``, then ``theta``, so a single radius
+# leaves the first dimension at one.
+
+mesh.dimensions
+
+# %%
+# Unlike the other meshes in this example, this one is not limited to a
+# surface. Pass a sequence of radii to generate a 3D grid of
+# :attr:`~pyvista.CellType.HEXAHEDRON` cells with concentric layers, such as
+# the layers of an atmosphere.
+
+mesh = pv.StructuredSphere(
+    radius=np.linspace(0.2, 0.5, 4), theta_resolution=30, phi_resolution=15
+)
+mesh
+
+# %%
+# Clip the grid in half and color the cells by radial position to show the layers.
+
+clipped = mesh.clip(normal='y')
+clipped['radial position'] = np.linalg.norm(clipped.cell_centers().points, axis=1)
+clipped.plot(show_edges=True)
 
 # %%
 # Generate Quadrilateral Mesh of Sphere
