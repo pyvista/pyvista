@@ -1526,7 +1526,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         """
         self._raise_no_normals()
-        vtk_normals = self.GetNormals()
+        vtk_normals = self.VTKObject.GetNormals()
         if vtk_normals is not None:
             return pyvista_ndarray(vtk_normals, dataset=self.dataset, association=self.association)
         return None
