@@ -238,6 +238,24 @@ def test_get_example_overload_dataset_type_matches_the_function(name):
     assert _declared_overloads()[name][0] == _dataset_annotation(function)
 
 
+@pytest.mark.parametrize('name', _all_example_names())
+def test_get_example_function_overloads_accept_a_plain_call(name):
+    """A function with a ``load`` parameter has overloads, one of which a plain call matches.
+
+    Without them a type checker sees the ``dataset | str`` union for ``load=True``, and
+    the function form of ``get_example`` inherits it.
+    """
+    _, _, function = _get_dataset_loader(name)
+    if 'load' not in inspect.signature(function).parameters:
+        pytest.skip('no `load` parameter')
+    overloads = get_overloads(function)
+    assert overloads, f'{function.__name__} has a `load` parameter but no overloads'
+    assert any(
+        all(p.default is not p.empty for p in inspect.signature(o).parameters.values())
+        for o in overloads
+    ), f'no overload of {function.__name__} accepts a plain call'
+
+
 @pytest.mark.needs_download
 def test_get_example_overloads_current(request):
     """The generated overloads match every example; ``--regenerate_overloads`` rewrites them."""
