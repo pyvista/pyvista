@@ -55,7 +55,17 @@ def _is_valid_url(session: requests.Session, url: str) -> bool:
         return True
 
 
-def test_dataset_loader_source_url_blob(test_case: DatasetLoaderTestCase):
+@pytest.fixture(scope='module')
+def url_session():
+    """One session for every URL check, so connections are reused across tests."""
+    return retry(
+        status_to_retry=[500, 502, 504, 403, 429],  # default + GH rate limit (403, 429)
+        retries=5,
+        backoff_factor=2.0,
+    )
+
+
+def test_dataset_loader_source_url_blob(test_case: DatasetLoaderTestCase, url_session):
     try:
         # Skip test if not loadable
         sources = test_case.dataset_loader[1].source_url
@@ -63,15 +73,9 @@ def test_dataset_loader_source_url_blob(test_case: DatasetLoaderTestCase):
         reason = e.args[0]
         pytest.skip(reason)
 
-    session = retry(
-        status_to_retry=[500, 502, 504, 403, 429],  # default + GH rate limit (403, 429)
-        retries=5,
-        backoff_factor=2.0,
-    )
-
     def is_valid(url: str) -> bool:
         # Check is_file() in case local cache of pyvista/data is used
-        return Path(url).is_file() or _is_valid_url(session, url)
+        return Path(url).is_file() or _is_valid_url(url_session, url)
 
     # Test valid url; some datasets have dozens of files, so check them concurrently
     sources = [sources] if isinstance(sources, str) else sources  # Make iterable
