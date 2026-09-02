@@ -28,9 +28,9 @@ Array Access
 
    cell_array
    field_array
-   point_array
    get_array
    get_array_association
+   point_array
    set_default_active_scalars
    set_default_active_vectors
 
@@ -39,8 +39,8 @@ Array Conversion
 .. autosummary::
    :toctree: _autosummary
 
-   pyvista_ndarray
-   convert_array
    array_from_vtkmatrix
-   vtkmatrix_from_array
+   convert_array
+   pyvista_ndarray
    vtk_points
+   vtkmatrix_from_array

@@ -44,8 +44,8 @@ These functions operate on arrays of points.
 
    fit_line_to_points
    fit_plane_to_points
-   principal_axes
    core.utilities.is_inside_bounds
+   principal_axes
 
 Implicit Functions
 ~~~~~~~~~~~~~~~~~~

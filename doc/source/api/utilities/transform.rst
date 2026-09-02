@@ -40,6 +40,6 @@ Spherical Coordinates
    :toctree: _autosummary
 
    cartesian_to_spherical
-   spherical_to_cartesian
    grid_from_sph_coords
+   spherical_to_cartesian
    transform_vectors_sph_to_cart
