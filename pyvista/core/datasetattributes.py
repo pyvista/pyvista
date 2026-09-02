@@ -82,6 +82,12 @@ def _active_scalars_name(attributes: _vtk.vtkDataSetAttributes) -> str | None:
     return str(name)
 
 
+def _active_vectors_name(attributes: _vtk.vtkDataSetAttributes) -> str | None:
+    """Return the active vectors name of a VTK attributes object."""
+    vectors = attributes.GetVectors()
+    return None if vectors is None else str(vectors.GetName())
+
+
 class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCheckSnakeCase):
     """Python friendly wrapper of :vtk:`vtkDataSetAttributes`.
 
@@ -1409,9 +1415,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         'my-vectors'
 
         """
-        if self.GetVectors() is not None:
-            return str(self.GetVectors().GetName())
-        return None
+        return _active_vectors_name(self.VTKObject)
 
     @active_vectors_name.setter
     def active_vectors_name(self: Self, name: str | None) -> None:
