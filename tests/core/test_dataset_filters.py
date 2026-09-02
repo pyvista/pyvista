@@ -126,7 +126,7 @@ def test_wrap_by_vector_raises(mocker: MockerFixture):
 
 
 @given(
-    strategy=st.text().filter(lambda x: x not in ['null_value', 'mark_points', 'closest_point'])
+    strategy=st.text().filter(lambda x: x not in ['null_value', 'mask_points', 'closest_point'])
 )
 def test_interpolate_raises(strategy):
     with pytest.raises(ValueError, match=re.escape(f'strategy `{strategy}` not supported.')):
