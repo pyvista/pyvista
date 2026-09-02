@@ -2001,30 +2001,28 @@ class DataObjectFilters:
         # so convert input points and relevant vectors to float
         # (creating a new copy would be harmful much more often)
         converted_ints = False
-        if not np.issubdtype(self.points.dtype, np.floating):
-            self.points = self.points.astype(np.float32)
+        points = self.points
+        if not np.issubdtype(points.dtype, np.floating):
+            self.points = points.astype(np.float32)
             converted_ints = True
+        point_data = self.point_data
+        cell_data = self.cell_data
         if transform_all_input_vectors:
             # all vector-shaped data will be transformed
+            n_points, n_cells = self.n_points, self.n_cells
             point_vectors: list[str | None] = [
-                name for name, data in self.point_data.items() if data.shape == (self.n_points, 3)
+                name for name, data in point_data.items() if data.shape == (n_points, 3)
             ]
             cell_vectors: list[str | None] = [
-                name for name, data in self.cell_data.items() if data.shape == (self.n_cells, 3)
+                name for name, data in cell_data.items() if data.shape == (n_cells, 3)
             ]
         else:
             # we'll only transform active vectors and normals
-            point_vectors = [
-                self.point_data.active_vectors_name,
-                self.point_data.active_normals_name,
-            ]
-            cell_vectors = [
-                self.cell_data.active_vectors_name,
-                self.cell_data.active_normals_name,
-            ]
+            point_vectors = [point_data.active_vectors_name, point_data.active_normals_name]
+            cell_vectors = [cell_data.active_vectors_name, cell_data.active_normals_name]
         # dynamically convert each self.point_data[name] etc. to float32
         all_vectors = [point_vectors, cell_vectors]
-        all_dataset_attrs = [self.point_data, self.cell_data]
+        all_dataset_attrs = [point_data, cell_data]
         for vector_names, dataset_attrs in zip(all_vectors, all_dataset_attrs, strict=True):
             for vector_name in vector_names:
                 if vector_name is None:
@@ -2041,8 +2039,8 @@ class DataObjectFilters:
             )
 
         # vtkTransformFilter doesn't respect active scalars.  We need to track this
-        active_point_scalars_name: str | None = self.point_data.active_scalars_name
-        active_cell_scalars_name: str | None = self.cell_data.active_scalars_name
+        active_point_scalars_name: str | None = point_data.active_scalars_name
+        active_cell_scalars_name: str | None = cell_data.active_scalars_name
 
         # vtkTransformFilter sometimes doesn't transform all vector arrays
         # when there are active point/cell scalars. Use this workaround
@@ -2120,10 +2118,10 @@ class DataObjectFilters:
             output.copy_from(vtk_filter_output, deep=True)
 
         # Make the previously active scalars active again
-        self.point_data.active_scalars_name = active_point_scalars_name
+        point_data.active_scalars_name = active_point_scalars_name
         if output is not self:
             output.point_data.active_scalars_name = active_point_scalars_name
-        self.cell_data.active_scalars_name = active_cell_scalars_name
+        cell_data.active_scalars_name = active_cell_scalars_name
         if output is not self:
             output.cell_data.active_scalars_name = active_cell_scalars_name
 
