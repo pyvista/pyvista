@@ -2424,6 +2424,17 @@ def test_extract_cells_and_extract_points_drop_unused_points():
     assert poly.extract_points([1], include_cells=False).n_points == 1
 
 
+def test_extract_cells_and_extract_points_on_pointset():
+    # Regression test: a bare PointSet always has n_cells == 0, so `_get_output`
+    # flattens the vtkExtractCells/vtkExtractSelection output back down to a
+    # PointSet, which has no `remove_unused_points` and no cell topology to
+    # define "unused" against. Selecting every "cell" (there are none) must not
+    # try to call it. See: https://github.com/pyvista/pyvista/issues/7750
+    pointset = pv.PointSet([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
+    assert isinstance(pointset.extract_cells(np.array([], dtype=int)), pv.PointSet)
+    assert isinstance(pointset.extract_points([0, 1]), pv.PointSet)
+
+
 @pytest.mark.parametrize('preference', ['point', 'cell'])
 @pytest.mark.parametrize('adjacent_fixture', [True, False])
 def test_extract_values_preference(

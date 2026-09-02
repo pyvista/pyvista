@@ -4677,9 +4677,11 @@ class DataSetFilters(DataObjectFilters):
 
         # vtkExtractCells passes its input through unchanged, unused points included,
         # when asked to extract every cell it has. Clean those up in the same rare
-        # case rather than always paying for it. See:
+        # case rather than always paying for it. Not applicable when the input is a
+        # bare PointSet: `_get_output` flattens the result back to one, which has no
+        # `remove_unused_points` and no cell topology to define "unused" against. See:
         # https://github.com/pyvista/pyvista/issues/7750
-        if indices.size == ds_copy.n_cells:
+        if indices.size == ds_copy.n_cells and isinstance(subgrid, pv.UnstructuredGrid):
             subgrid = subgrid.remove_unused_points()
 
         # Make active scalars match input
@@ -4781,8 +4783,14 @@ class DataSetFilters(DataObjectFilters):
         # Shares the vtkExtractCells shortcut `extract_cells` works around: when every
         # input cell ends up included, any pre-existing unused points leak into the
         # output unchanged. Only relevant when cells -- and thus point usage -- are
-        # part of the output at all. See: https://github.com/pyvista/pyvista/issues/7750
-        if include_cells and output.n_cells == self.n_cells:
+        # part of the output at all, and not when the input is a bare PointSet: `_get_output`
+        # flattens the result back to one, which has no `remove_unused_points` and no cell
+        # topology to define "unused" against. See: https://github.com/pyvista/pyvista/issues/7750
+        if (
+            include_cells
+            and output.n_cells == self.n_cells
+            and isinstance(output, (pv.PolyData, pv.UnstructuredGrid))
+        ):
             output = output.remove_unused_points()
 
         # Process output arrays
