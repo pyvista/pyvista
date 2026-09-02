@@ -71,9 +71,10 @@ class pyvista_ndarray(_NoNewAttrMixin, np.ndarray):  # numpydoc ignore=PR02  # n
         association: FieldAssociation = FieldAssociation.NONE,
     ) -> pyvista_ndarray:
         """Allocate the array."""
+        vtk_object = None
         if isinstance(array, _vtk.vtkAbstractArray):
             obj = convert_array(array).view(cls)
-            obj.VTKObject = array
+            vtk_object = array
         elif isinstance(array, Iterable):
             obj = np.asarray(array).view(cls)
         else:
@@ -83,15 +84,14 @@ class pyvista_ndarray(_NoNewAttrMixin, np.ndarray):  # numpydoc ignore=PR02  # n
             )
             raise TypeError(msg)
 
-        obj.association = association
-        if dataset is None:
-            obj.dataset = None
-        else:
-            obj.dataset = _vtk.vtkWeakReference()
+        dataset_ref = None
+        if dataset is not None:
+            dataset_ref = _vtk.vtkWeakReference()
             if isinstance(dataset, _vtk.VTKObjectWrapper):
-                obj.dataset.Set(dataset.VTKObject)
+                dataset_ref.Set(dataset.VTKObject)
             else:
-                obj.dataset.Set(cast('_vtk.vtkDataSet', dataset))
+                dataset_ref.Set(cast('_vtk.vtkDataSet', dataset))
+        obj.__dict__.update(dataset=dataset_ref, association=association, VTKObject=vtk_object)
         return obj
 
     def __array_finalize__(self: pyvista_ndarray, obj: npt.NDArray[Any] | None) -> None:
