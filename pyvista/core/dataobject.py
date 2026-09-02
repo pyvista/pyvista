@@ -1055,7 +1055,20 @@ class DataObject(
             reader.Update()
 
         elif pickle_format.lower() == 'legacy':
-            reader = _vtk.vtkDataSetReader()
+            # vtkDataSetReader truncates the string at its first NUL byte when probing metadata
+            legacy_readers = {
+                _vtk.vtkImageData: _vtk.vtkStructuredPointsReader,
+                _vtk.vtkStructuredGrid: _vtk.vtkStructuredGridReader,
+                _vtk.vtkRectilinearGrid: _vtk.vtkRectilinearGridReader,
+                _vtk.vtkUnstructuredGrid: _vtk.vtkUnstructuredGridReader,
+                _vtk.vtkPolyData: _vtk.vtkPolyDataReader,
+            }
+            for parent_type, reader_type in legacy_readers.items():
+                if isinstance(self, parent_type):
+                    reader = reader_type()
+                    break
+            else:
+                reader = _vtk.vtkDataSetReader()
             reader.ReadFromInputStringOn()
             if isinstance(vtk_serialized, bytes):
                 reader.SetBinaryInputString(vtk_serialized, len(vtk_serialized))  # type: ignore[arg-type]

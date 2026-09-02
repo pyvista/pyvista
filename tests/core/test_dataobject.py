@@ -381,7 +381,9 @@ def test_pickle_serialize_deserialize(datasets_no_pointset, pickle_format):
     for dataset in datasets_no_pointset:
         # These datasets carry no field data of their own.
         dataset.field_data['pickled_field'] = [1, 2, 3]
-        dataset_2 = pickle.loads(pickle.dumps(dataset))
+        with pv.VtkErrorCatcher() as catcher:
+            dataset_2 = pickle.loads(pickle.dumps(dataset))
+        assert catcher.events == []
 
         # check python attributes are the same
         for attr in dataset.__dict__:
