@@ -27,6 +27,7 @@ from . import _validation
 from ._typing_core import BoundsTuple
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
+from .datasetattributes import _active_scalars_name
 from .errors import PyVistaDeprecationWarning
 from .filters import DataSetFilters
 from .filters import _get_output
@@ -73,6 +74,9 @@ if TYPE_CHECKING:
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
+
+# array names that are never reported as the active scalars
+_ACTIVE_SCALARS_EXCLUDE = frozenset({'__custom_rgba', 'Normals', 'vtkOriginalPointIds', 'TCoords'})
 
 
 def _copy_association_names(names: Mapping[str, Iterable[str]]) -> defaultdict[str, set[str]]:
@@ -193,28 +197,28 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         """
         field, name = self._active_scalars_info
-        exclude = {'__custom_rgba', 'Normals', 'vtkOriginalPointIds', 'TCoords'}
-        if name in exclude:
+        if name in _ACTIVE_SCALARS_EXCLUDE:
             name = self._last_active_scalars_name
 
         # verify this field is still valid
         if name is not None:
             if field is FieldAssociation.CELL:
-                if self.cell_data.active_scalars_name != name:
+                if _active_scalars_name(self.GetCellData()) != name:
                     name = None
             elif field is FieldAssociation.POINT:
-                if self.point_data.active_scalars_name != name:
+                if _active_scalars_name(self.GetPointData()) != name:
                     name = None
 
         if name is None:
             # check for the active scalars in point or cell arrays
             self._active_scalars_info = ActiveArrayInfoTuple(field, None)
-            for attr in [self.point_data, self.cell_data]:
-                if attr.active_scalars_name is not None:
-                    self._active_scalars_info = ActiveArrayInfoTuple(
-                        attr.association,
-                        attr.active_scalars_name,
-                    )
+            for association, attributes in (
+                (FieldAssociation.POINT, self.GetPointData()),
+                (FieldAssociation.CELL, self.GetCellData()),
+            ):
+                active_name = _active_scalars_name(attributes)
+                if active_name is not None:
+                    self._active_scalars_info = ActiveArrayInfoTuple(association, active_name)
                     break
 
         return self._active_scalars_info
