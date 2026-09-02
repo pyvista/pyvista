@@ -1330,10 +1330,8 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         if isinstance(vtk_arr, _vtk.vtkDataArray):
             self.VTKObject.SetActiveScalars(name)
         elif not isinstance(vtk_arr, _vtk.vtkStringArray):
-            # missing keys and unsupported arrays raise here
-            dtype = self[name].dtype
-            if np.issubdtype(dtype, np.number) or np.issubdtype(dtype, bool):
-                self.VTKObject.SetActiveScalars(name)
+            # raises KeyError for missing keys and TypeError for unsupported arrays
+            self.get_array(name)
 
     @property
     def _active_normals_name(self: Self) -> str | None:
@@ -1726,7 +1724,5 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         if isinstance(vtk_arr, _vtk.vtkDataArray):
             self.VTKObject.SetActiveTCoords(name)
         elif not isinstance(vtk_arr, _vtk.vtkStringArray):
-            # missing keys and unsupported arrays raise here
-            dtype = self[name].dtype
-            if np.issubdtype(dtype, np.number) or np.issubdtype(dtype, bool):
-                self.VTKObject.SetActiveTCoords(name)
+            # raises KeyError for missing keys and TypeError for unsupported arrays
+            self.get_array(name)
