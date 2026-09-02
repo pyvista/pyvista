@@ -35,7 +35,7 @@ import pyvista as pv
 
 freq = [10, 5, 0]
 noise = pv.perlin_noise(1, freq, (0, 0, 0))
-xdim, ydim = (2**9, 2**9)
+xdim, ydim = (2**8, 2**8)
 sampled = pv.sample_function(noise, bounds=(0, 10, 0, 10, 0, 10), dim=(xdim, ydim, 1))
 
 # warp and plot the sampled noise
