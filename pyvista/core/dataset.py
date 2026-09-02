@@ -28,6 +28,7 @@ from ._typing_core import BoundsTuple
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .datasetattributes import _active_scalars_name
+from .datasetattributes import _active_vectors_name
 from .errors import PyVistaDeprecationWarning
 from .filters import DataSetFilters
 from .filters import _get_output
@@ -261,19 +262,22 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         # verify this field is still valid
         if name is not None:
             if field is FieldAssociation.POINT:
-                if self.point_data.active_vectors_name != name:
+                if _active_vectors_name(self.GetPointData()) != name:
                     name = None
             if field is FieldAssociation.CELL:
-                if self.cell_data.active_vectors_name != name:
+                if _active_vectors_name(self.GetCellData()) != name:
                     name = None
 
         if name is None:
             # check for the active vectors in point or cell arrays
             self._active_vectors_info = ActiveArrayInfoTuple(field, None)
-            for attr in [self.point_data, self.cell_data]:
-                name = attr.active_vectors_name
+            for association, attributes in (
+                (FieldAssociation.POINT, self.GetPointData()),
+                (FieldAssociation.CELL, self.GetCellData()),
+            ):
+                name = _active_vectors_name(attributes)
                 if name is not None:
-                    self._active_vectors_info = ActiveArrayInfoTuple(attr.association, name)
+                    self._active_vectors_info = ActiveArrayInfoTuple(association, name)
                     break
 
         return self._active_vectors_info
