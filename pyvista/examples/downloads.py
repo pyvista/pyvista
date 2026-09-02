@@ -1520,6 +1520,10 @@ _dataset_nefertiti = _NefertitiDatasetLoader(
 )
 
 
+@overload
+def download_washington_bust(*, load: Literal[True] = True) -> PolyData: ...
+@overload
+def download_washington_bust(*, load: Literal[False]) -> str: ...
 def download_washington_bust(*, load: bool = True) -> PolyData | str:
     """Download a bust of George Washington.
 
@@ -1568,6 +1572,10 @@ _dataset_washington_bust = _SingleFileDownloadableDatasetLoader(
 )
 
 
+@overload
+def download_lincoln_life_mask(*, load: Literal[True] = True) -> PolyData: ...
+@overload
+def download_lincoln_life_mask(*, load: Literal[False]) -> str: ...
 def download_lincoln_life_mask(*, load: bool = True) -> PolyData | str:
     """Download the life mask of Abraham Lincoln.
 
@@ -3181,6 +3189,10 @@ def download_brain(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT00
 _dataset_brain = _SingleFileDownloadableDatasetLoader('brain.vtk')
 
 
+@overload
+def download_frd(*, load: Literal[True] = True) -> UnstructuredGrid: ...
+@overload
+def download_frd(*, load: Literal[False]) -> str: ...
 def download_frd(*, load: bool = True) -> UnstructuredGrid | str:
     """Download a sample CalculiX FRD file.
 
@@ -5627,6 +5639,14 @@ def download_drill(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
 _dataset_drill = _SingleFileDownloadableDatasetLoader('drill.obj')
 
 
+@overload
+def download_action_figure(
+    load: Literal[True] = True,  # noqa: FBT002
+    *,
+    high_resolution: bool = False,
+) -> PolyData: ...
+@overload
+def download_action_figure(load: Literal[False], *, high_resolution: bool = False) -> str: ...
 @_deprecate_positional_args
 def download_action_figure(load: bool = True, *, high_resolution: bool = False) -> PolyData | str:  # noqa: FBT001, FBT002
     """Download scan of an action figure.
@@ -6786,6 +6806,10 @@ _dataset_cgns_multi = _SingleFileDownloadableDatasetLoader(
 )
 
 
+@overload
+def download_dicom_stack(load: Literal[True] = True) -> ImageData: ...  # noqa: FBT002
+@overload
+def download_dicom_stack(load: Literal[False]) -> str: ...
 @_deprecate_positional_args
 def download_dicom_stack(
     load: bool = True,  # noqa: FBT001, FBT002
@@ -9322,6 +9346,10 @@ def download_caffeine(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT
 _dataset_caffeine = _SingleFileDownloadableDatasetLoader('caffeine.pdb')
 
 
+@overload
+def download_e07733s002i009(load: Literal[True] = True) -> ImageData: ...  # noqa: FBT002
+@overload
+def download_e07733s002i009(load: Literal[False]) -> str: ...
 @_deprecate_positional_args
 def download_e07733s002i009(
     load: bool = True,  # noqa: FBT001,FBT002
