@@ -171,3 +171,15 @@ to = "/api/readers/_autosummary/pyvista.read_grdecl.html"
 from = "/api/utilities/_autosummary/pyvista.read_texture.html"
 status = 301
 to = "/api/readers/_autosummary/pyvista.read_texture.html"
+
+# The Core Helpers and Miscellaneous pages only linked to functions that
+# are now documented under Utilities.
+[[redirects]]
+from = "/api/core/helpers.html"
+status = 301
+to = "/api/utilities/index.html"
+
+[[redirects]]
+from = "/api/core/misc.html"
+status = 301
+to = "/api/utilities/index.html"
