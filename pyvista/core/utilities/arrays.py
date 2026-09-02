@@ -447,17 +447,17 @@ def get_array_association(  # noqa: PLR0917
         return FieldAssociation.ROW
 
     # with multiple arrays, return the array preference if possible
-    parr = point_array(mesh, name)
-    carr = cell_array(mesh, name)
-    farr = field_array(mesh, name)
-    arrays = [parr, carr, farr]
+    has_point = mesh.GetPointData().GetAbstractArray(name) is not None
+    has_cell = mesh.GetCellData().GetAbstractArray(name) is not None
+    has_field = mesh.GetFieldData().GetAbstractArray(name) is not None
+    exists = [has_point, has_cell, has_field]
     preferences = [FieldAssociation.POINT, FieldAssociation.CELL, FieldAssociation.NONE]
     preference_field = parse_field_choice(preference)
     if preference_field not in preferences:
         msg = f'Data field ({preference}) not supported.'
         raise ValueError(msg)
 
-    matches = [pref for pref, array in zip(preferences, arrays, strict=True) if array is not None]
+    matches = [pref for pref, has_array in zip(preferences, exists, strict=True) if has_array]
     # optionally raise if no match
     if not matches:
         if err:
