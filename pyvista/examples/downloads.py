@@ -5572,12 +5572,17 @@ def download_drill(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
             See this dataset in the Dataset Gallery for more info.
 
     """
-    # Silence warning: unexpected data at end of line in OBJ file
-    with pv.vtk_verbosity('off'):
-        return _download_dataset(_dataset_drill, load=load)
+    return _download_dataset(_dataset_drill, load=load)
 
 
-_dataset_drill = _SingleFileDownloadableDatasetLoader('drill.obj')
+def _read_drill(path: str) -> PolyData:
+    """Read ``drill.obj`` without the warning about its space-separated ``mtllib`` line."""
+    reader = pv.OBJReader(path)
+    reader.reader.AddObserver(_vtk.vtkCommand.WarningEvent, lambda *_: None)
+    return reader.read()
+
+
+_dataset_drill = _SingleFileDownloadableDatasetLoader('drill.obj', read_func=_read_drill)
 
 
 @_deprecate_positional_args
