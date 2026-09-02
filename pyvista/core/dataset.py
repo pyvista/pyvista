@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from collections import defaultdict
 from collections.abc import Iterable
+from collections.abc import Mapping
 from collections.abc import Sequence
-import copy
 import functools
 from typing import TYPE_CHECKING
 from typing import Any
@@ -72,6 +73,11 @@ if TYPE_CHECKING:
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
+
+
+def _copy_association_names(names: Mapping[str, Iterable[str]]) -> defaultdict[str, set[str]]:
+    """Return an independent copy of a per-association array name mapping."""
+    return defaultdict(set, {key: set(value) for key, value in names.items()})
 
 
 class ActiveArrayInfoTuple(NamedTuple):
@@ -936,8 +942,12 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         """
         if deep:
-            self._association_complex_names = copy.deepcopy(ido._association_complex_names)
-            self._association_bitarray_names = copy.deepcopy(ido._association_bitarray_names)
+            self._association_complex_names = _copy_association_names(
+                ido._association_complex_names
+            )
+            self._association_bitarray_names = _copy_association_names(
+                ido._association_bitarray_names
+            )
             self._active_scalars_info = ido.active_scalars_info.copy()
             self._active_vectors_info = ido.active_vectors_info.copy()
             self._active_tensors_info = ido.active_tensors_info.copy()
