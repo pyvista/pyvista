@@ -1364,9 +1364,8 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         'my-normals'
 
         """
-        if self.GetNormals() is not None:
-            return str(self.GetNormals().GetName())
-        return None
+        normals = self.VTKObject.GetNormals()
+        return None if normals is None else str(normals.GetName())
 
     @_active_normals_name.setter
     def _active_normals_name(self: Self, name: str | None) -> None:
@@ -1586,9 +1585,8 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         """
         self._raise_no_normals()
-        if self.GetNormals() is not None:
-            return str(self.GetNormals().GetName())
-        return None
+        normals = self.VTKObject.GetNormals()
+        return None if normals is None else str(normals.GetName())
 
     @active_normals_name.setter
     def active_normals_name(self: Self, name: str | None) -> None:
