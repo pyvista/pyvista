@@ -54,8 +54,10 @@ if TYPE_CHECKING:
 # Annotations only (never resolved at runtime), so keep these out of the runtime
 # namespace: ``pv.Texture`` would eagerly import rendering and break core-only builds.
 if TYPE_CHECKING:
-    DatasetObject = pv.DataSet | pv.Texture | NumpyArray[Any] | pv.MultiBlock
-    DatasetType = type[pv.DataSet | pv.Texture | NumpyArray[Any] | pv.MultiBlock]
+    DatasetObject = (
+        pv.DataSet | pv.Texture | NumpyArray[Any] | pv.MultiBlock | pv.PartitionedDataSet
+    )
+    DatasetType = type[DatasetObject]
 
 
 class _FileProps:
