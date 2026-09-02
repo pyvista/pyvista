@@ -89,6 +89,8 @@ def _collapse_str_sequence(values: Sequence[str]) -> str | tuple[str, ...]:
 
 
 class _BaseFilePropsProtocol(Generic[_FilePropStrType_co, _FilePropIntType_co]):
+    """Define the file properties shared by single- and multi-file loaders."""
+
     @property
     @abstractmethod
     def path(self) -> _FilePropStrType_co:
@@ -384,6 +386,7 @@ class _SingleFile(_SingleFilePropsProtocol):
 
     @property
     def path(self) -> str:
+        """Return the path of the file."""
         return self._path
 
     @property
@@ -400,6 +403,7 @@ class _SingleFile(_SingleFilePropsProtocol):
 
     @property
     def total_size(self) -> str:
+        """Return the total size of all files formatted as a string."""
         return self._filesize_format
 
     @property

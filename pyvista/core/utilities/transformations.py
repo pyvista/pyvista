@@ -8,9 +8,9 @@ from typing import TypeAlias
 from typing import overload
 
 import numpy as np
+import pyvista_validation as _validation
 
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core import _validation
 from pyvista.core.utilities.misc import _reciprocal
 
 if TYPE_CHECKING:

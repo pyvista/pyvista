@@ -81,7 +81,8 @@ def _get_output(
     data = cast('pv.DataObject', wrap(algorithm.GetOutputDataObject(oport)))
     if not isinstance(data, pv.MultiBlock):
         data.copy_meta_from(ido, deep=True)
-        if not data.field_data and ido.field_data:
+        # Optimization: ask VTK directly instead of building DataSetAttributes wrappers
+        if not data.GetFieldData().GetNumberOfArrays() and ido.GetFieldData().GetNumberOfArrays():
             data.field_data.update(ido.field_data)
         if active_scalars is not None:
             data.set_active_scalars(active_scalars, preference=active_scalars_field)

@@ -188,7 +188,7 @@ can be installed via package managers like ``scoop`` or ``chocolatey``.
     make docs              # build the full documentation via tox (matches CI)
     make docs-test-build   # sanity-check the built documentation via tox (matches CI)
     make docs-test-images  # compare documentation images against cached baselines via tox (matches CI)
-    make integration PROJECT=<name>  # run integration tests for trame/geovista/mne/pyvistaqt/playwright/cvista
+    make integration PROJECT=<name>  # run integration tests for trame/geovista/mne/pyvistaqt/playwright/cvista/numpy-nightly
 
 ``make test``, ``make test-core``, and ``make test-plotting`` all
 invoke tox environments defined in ``tox.ini`` so they run with the
@@ -921,7 +921,7 @@ such that:
 
         .. code-block:: bash
 
-            pytest --cov pyvista
+            pytest --cov pyvista --cov tests
 
     .. tab-item:: tox
         :sync: tox
@@ -944,7 +944,7 @@ such that:
 
         .. code-block:: bash
 
-            make coverage # pytest -v --cov pyvista
+            make coverage # pytest -v --cov pyvista --cov tests
             make coverage-html # same, with an HTML report at ./htmlcov
 
 When submitting a PR, it is highly recommended that all modifications are thoroughly tested.
@@ -959,6 +959,40 @@ If needed, code coverage can be deactivated for specific lines by adding the ``#
 for more details.
 However, code coverage exclusion should rarely be used and has to be carefully justified in the PR thread
 if no simple alternative solution has been found.
+
+Test Code Is Covered Too
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+``tests`` is measured alongside ``pyvista``, and the two are uploaded to Codecov as
+separate reports under the ``package`` and ``tests`` flags, so a gain on one cannot hide a
+loss on the other. New and changed test code must be fully covered, and the total may not
+fall: an uncovered line in a test file is a test that does not run the code it appears to,
+and a partly covered branch is a case the suite never reaches. Both usually mean a missing
+assertion rather than a missing ``pragma``.
+
+Reach for ``# pragma: no cover`` when a branch exists in order to prove it is never taken
+-- a callback asserted never to fire, a fallback for a backend no covered environment runs
+-- and say which in the comment. ``# pragma: no branch`` fits a loop or guard that only
+ever goes one way, such as a retry loop whose last attempt always returns or raises.
+
+Some patterns produce dead test code:
+
+- A helper class or fixture whose attributes nothing ever reads. Delete the unused member.
+- A stub body written as ``class Stub: ...``. Coverage counts the one-line form as a
+  partial branch, and ``ruff format`` collapses ``...`` onto the ``class`` line, so write
+  ``pass`` or a docstring instead.
+- A no-op callback whose body is ``pass`` or a bare ``return``, registered somewhere that
+  never calls it. Give it a docstring instead and delete the statement: a docstring is not
+  an executable line, so nothing is left to go uncovered.
+- A class registered or patched but never instantiated, where ``__init__`` only assigns.
+  Drop the ``__init__``, or assert on the instance the test already set up.
+- A branch that only one CI job reaches. Coverage is combined across the matrix, so a
+  ``vtk_version_info`` gate is covered as long as some job takes each side. Only the
+  Linux jobs upload, so a ``sys.platform`` gate for macOS or Windows never is.
+
+Not every file under ``tests`` is measured. The ones run outside a ``-cov`` environment
+(the ``doc_build`` suite, the standalone scripts, the Sphinx projects used as build
+fixtures) are listed under ``report.omit`` in ``pyproject.toml``.
 
 The CI is configured to test multiple vtk versions to ensure sufficient compatibility with vtk.
 If needed, the minimum and/or maximum vtk version needed by a specific test can be controlled with a
@@ -1170,13 +1204,6 @@ flags are required to run it.
 
             make typecheck
 
-.. seealso::
-
-    `Notes Regarding Input Validation Testing`_ describes a related but separate
-    ``pytest``-based suite that checks the type hints of ``pyvista.core._validation``
-    using ``mypy`` and ``pyanalyze`` at both static-analysis and runtime.
-
-
 Style Checking
 ~~~~~~~~~~~~~~
 PyVista follows PEP8 standard as outlined in the `Coding Style section
@@ -1380,102 +1407,6 @@ See `pytest-pyvista`_ for more details.
 
     Additional regression testing is also performed on the documentation
     images. See `Documentation Image Regression Testing`_.
-
-Notes Regarding Input Validation Testing
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The ``pyvista.core._validation`` package has two distinct test suites which
-are executed with ``pytest``:
-
-#. Regular unit tests in ``tests/core/test_validation.py``
-#. Customized unit tests in ``tests/core/typing`` for testing type hints
-
-The custom unit tests check that the type hints for the validation package are
-correct both statically and dynamically. This is mainly used to check complex and
-overloaded function signatures, such as the type hints for ``validate_array``
-or related functions.
-
-Individual test cases are written as a single line of Python code with the format:
-
-.. code-block:: python
-
-    reveal_type(arg)  # EXPECTED_TYPE: "<T>"
-
-where ``arg`` is any argument you want mypy to analyze, and ``"<T>"`` is the
-expected revealed type returned by ``Mypy``.
-
-For example, the ``validate_array`` function, by default, returns a list of floats
-when a list of floats is provided at the input. The type hint should reflect this.
-To test this, we can write a test case for the function call ``validate_array([1.0])``
-as follows:
-
-.. code-block:: python
-
-    reveal_type(validate_array([1.0]))  # EXPECTED_TYPE: "list[float]"
-
-The actual revealed type returned by ``Mypy`` for this test can be generated with
-the following command. Note that ``grep`` is needed to only return the output
-from the input string. Otherwise, all ``Mypy`` errors for the ``pyvista`` package
-are reported.
-
-.. code-block:: bash
-
-    mypy -c "from pyvista.core._validation import validate_array; reveal_type(validate_array([1.0]))" | grep \<string\>
-
-For this test case, the revealed type by ``Mypy`` is:
-
-.. code-block:: python
-
-    "builtins.list[builtins.float]"
-
-Notice that the revealed type is fully qualified, that is, it includes ``builtins``. For
-brevity, the custom test suite omits this and requires that only ``list`` be
-included in the expected type. Therefore, for this test case, the ``EXPECTED_TYPE``
-type is ``"list[float]"``, not ``"builtins.list[builtins.float]"``. (Similarly, the
-package name ``numpy`` should also be omitted for tests where a ``numpy.ndarray`` is
-expected.)
-
-Any number of related test cases (one test case per line) may be written and
-included in a single ``.py`` file. The test cases are all stored in
-``tests/core/typing/validation_cases``.
-
-The tests can be executed with:
-
-.. tab-set::
-    :sync-group: category
-
-    .. tab-item:: pytest
-        :sync: pytest
-
-        .. code-block:: bash
-
-            pytest tests/core/typing
-
-    .. tab-item:: tox
-        :sync: tox
-
-        .. code-block:: bash
-
-            tox run -e py3.11 -- tests/core/typing
-
-    .. tab-item:: make
-        :sync: make
-
-        .. code-block:: bash
-
-            make test ARGS="tests/core/typing"
-
-
-When executed, a single instance of ``Mypy`` will statically analyze all the
-test cases. The actual revealed types by ``Mypy`` are compared against the
-``EXPECTED_TYPE`` is defined by each test case.
-
-In addition, the ``pyanalyze`` package tests the actual returned
-type at runtime to match the statically revealed type. The
-`pyanalyze.runtime.get_compatibility_error <https://pyanalyze.readthedocs.io/en/latest/reference/runtime.html#pyanalyze.runtime.get_compatibility_error>`_
-method is used for this. If new typing test cases are added for a new
-validation function, the new function must be added to the list of
-imports in ``tests/core/typing/test_validation_typing.py`` so that the
-runtime test can call the function.
 
 Building the Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~

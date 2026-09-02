@@ -21,9 +21,9 @@ from cycler import cycler
 from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
-from pyvista import _validation
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
@@ -40,6 +40,8 @@ except ImportError:  # pragma: no cover
     from matplotlib import colors
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from ._typing import ColorLike
     from ._typing import ColormapOptions
 
@@ -2256,6 +2258,47 @@ class Color(_NoNewAttrMixin):
 
 
 PARAVIEW_BACKGROUND = Color('paraview').float_rgb
+
+
+def _validate_color_sequence(
+    color: ColorLike | Sequence[ColorLike],
+    n_colors: int | None = None,
+) -> tuple[Color, ...]:
+    """Validate a color sequence.
+
+    If ``n_colors`` is specified, the output will have ``n`` colors. For single-color
+    inputs, the color is copied and a sequence of ``n`` identical colors is returned.
+    For inputs with multiple colors, the number of colors in the input must
+    match ``n_colors``.
+
+    If ``n_colors`` is None, no broadcasting or length-checking is performed.
+    """
+    try:
+        # Assume we have one color; a sequence raises and is handled below.
+        color_list = [Color(color)]  # type: ignore[arg-type]
+        n_colors = 1 if n_colors is None else n_colors
+        return tuple(color_list * n_colors)
+    except ValueError:
+        if isinstance(color, (tuple, list)):
+            try:
+                color_list = [_validate_color_sequence(c, n_colors=1)[0] for c in color]
+                if len(color_list) == 1:
+                    n_colors = 1 if n_colors is None else n_colors
+                    color_list = color_list * n_colors
+
+                # Only return if we have the correct number of colors
+                if n_colors is None or len(color_list) == n_colors:
+                    return tuple(color_list)
+            except ValueError:
+                pass
+    n_colors_str = f' {n_colors} ' if n_colors else ' '
+    msg = (
+        f'Invalid color(s):\n'
+        f'\t{color}\n'
+        f'Input must be a single ColorLike color '
+        f'or a sequence of{n_colors_str}ColorLike colors.'
+    )
+    raise ValueError(msg)
 
 
 def get_cmap_safe(cmap: ColormapOptions) -> colors.Colormap:

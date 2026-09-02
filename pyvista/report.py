@@ -291,6 +291,7 @@ class Report(scooby.Report):
             'pillow',
             'typing-extensions',
             'cyclopts',
+            'pyvista-validation',
         ]
 
         # Optional packages.

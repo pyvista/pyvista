@@ -14,13 +14,12 @@ from typing import TypedDict
 from typing import get_args
 
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import BoundsTuple
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core import _validation
-from pyvista.core._validation.validate import _validate_color_sequence
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.geometric_sources import AxesGeometrySource
 from pyvista.core.utilities.geometric_sources import OrthogonalPlanesSource
@@ -33,6 +32,7 @@ from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.transformations import decomposition
 from pyvista.plotting.actor import Actor
 from pyvista.plotting.colors import Color
+from pyvista.plotting.colors import _validate_color_sequence
 from pyvista.plotting.prop3d import Prop3D
 from pyvista.plotting.prop3d import _Prop3DMixin
 from pyvista.plotting.text import Label
@@ -58,6 +58,8 @@ ScaleModeOptions = Literal['default', 'anti_distortion']
 
 
 class _AxesPropTuple(NamedTuple):
+    """A property value for each axis shaft and tip."""
+
     x_shaft: float | str | ColorLike
     y_shaft: float | str | ColorLike
     z_shaft: float | str | ColorLike
@@ -67,25 +69,39 @@ class _AxesPropTuple(NamedTuple):
 
 
 class _OrthogonalPlanesKwargs(TypedDict):
+    """Keyword arguments accepted by the orthogonal planes source."""
+
     bounds: VectorLike[float]
     resolution: int | VectorLike[int]
     normal_sign: Literal['+', '-'] | Sequence[str]
 
 
 class _XYZTuple(NamedTuple):
+    """A value for each of the x, y, and z axes."""
+
     x: Any
     y: Any
     z: Any
 
 
 @abstract_class
-class _XYZAssembly(
+class _XYZAssembly(  # numpydoc ignore=PR01
     _NoNewAttrMixin,
     DisableVtkSnakeCase,
     _Prop3DMixin,
     _NameMixin,
     _vtk.vtkPropAssembly,
 ):
+    """Base class for assemblies of x-y-z actors with labels.
+
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
+
+
+    """
+
     DEFAULT_LABELS = _XYZTuple('X', 'Y', 'Z')
 
     def __init__(
@@ -2367,6 +2383,8 @@ class PlanesAssembly(_XYZAssembly):
 
 
 class _AxisActor(DisableVtkSnakeCase, _vtk.vtkAxisActor):
+    """Axis actor which shows only its title."""
+
     def __init__(self):
         super().__init__()
         # Only show the title
@@ -2404,4 +2422,5 @@ class _AxisActor(DisableVtkSnakeCase, _vtk.vtkAxisActor):
 
     @property
     def prop(self) -> TextProperty:
+        """Return the title text property."""
         return self.GetTitleTextProperty()

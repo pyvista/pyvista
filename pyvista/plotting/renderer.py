@@ -13,6 +13,7 @@ from typing import ClassVar
 from typing import cast
 
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import MAX_N_COLOR_BARS
@@ -20,7 +21,6 @@ from pyvista import _vtk
 from pyvista import vtk_version_info
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
-from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.errors import PyVistaDeprecationWarning
@@ -3831,7 +3831,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
             # Copy the texture
             # TODO: use Texture.copy() once support for cubemaps is added, see https://github.com/pyvista/pyvista/issues/7300
-            texture_copy = pv.Texture()  # type: ignore[abstract]
+            texture_copy = pv.Texture()
             texture_copy.cube_map = texture.cube_map
             texture_copy.mipmap = texture.mipmap
             texture_copy.interpolate = texture.interpolate

@@ -1980,7 +1980,7 @@ class Theme(_ConfigBase):
         ...     focal_point=(0.0, 0.0, 0.0),
         ...     viewup=(0.0, 0.37, 0.93),
         ... )
-        >>> pl.show()  # doctest: +SKIP
+        >>> pl.show()
 
         """
         return self._interpolate_before_map
@@ -2446,7 +2446,7 @@ class Theme(_ConfigBase):
         >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))  # green
         >>> _ = pl.add_mesh(pv.Sphere(center=(1, 1, 0)))  # blue
         >>> _ = pl.add_mesh(pv.Cylinder(center=(0, 1, 0)))  # red again
-        >>> pl.show()  # doctest: +SKIP
+        >>> pl.show()
 
         """
         return self._color_cycler
@@ -3128,7 +3128,7 @@ class Theme(_ConfigBase):
 
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(pv.PolyData())
-        >>> pl.show()  # doctest: +SKIP
+        >>> pl.show()
 
         """
         return self._allow_empty_mesh

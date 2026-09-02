@@ -26,7 +26,6 @@ and provide direct access to common VTK filters (see :ref:`filters`).
    helpers
    misc
    typing
-   _validation
 
 
 Data Types
