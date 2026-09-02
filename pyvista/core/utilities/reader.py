@@ -263,8 +263,6 @@ class BaseReader(_FileIOBase, Generic[_T_Output_co]):
         else:
             # edge case where some class customization is needed on instantiation
             self._reader = self._class_reader()
-        if isinstance(self._reader, _vtk.vtkXMLReader):
-            _vtk.vtkExodusIIReader  # noqa: B018  # registers the Exodus keys XML files may reference
         self._filename: str | None = None
         self._progress_bar = False
         self._progress_msg = None
@@ -762,7 +760,16 @@ class XMLPRectilinearGridReader(BaseReader['RectilinearGrid'], PointCellDataSele
     _vtk_class_name = 'vtkXMLPRectilinearGridReader'
 
 
-class XMLUnstructuredGridReader(BaseReader['UnstructuredGrid'], PointCellDataSelection):
+class _ExodusInformationKeys:
+    """Register the information keys that XML files written from Exodus data reference."""
+
+    def _set_defaults(self) -> None:
+        _vtk.vtkExodusIIReader  # noqa: B018  # importing the module registers the keys
+
+
+class XMLUnstructuredGridReader(
+    _ExodusInformationKeys, BaseReader['UnstructuredGrid'], PointCellDataSelection
+):
     """XML UnstructuredGrid Reader for .vtu files.
 
     Wraps :vtk:`vtkXMLUnstructuredGridReader`.
@@ -789,7 +796,9 @@ class XMLUnstructuredGridReader(BaseReader['UnstructuredGrid'], PointCellDataSel
     _vtk_class_name = 'vtkXMLUnstructuredGridReader'
 
 
-class XMLPUnstructuredGridReader(BaseReader['UnstructuredGrid'], PointCellDataSelection):
+class XMLPUnstructuredGridReader(
+    _ExodusInformationKeys, BaseReader['UnstructuredGrid'], PointCellDataSelection
+):
     """Parallel XML UnstructuredGrid Reader for .pvtu files.
 
     Wraps :vtk:`vtkXMLPUnstructuredGridReader`.
@@ -850,7 +859,9 @@ class XMLStructuredGridReader(BaseReader['StructuredGrid'], PointCellDataSelecti
     _vtk_class_name = 'vtkXMLStructuredGridReader'
 
 
-class XMLMultiBlockDataReader(BaseReader['MultiBlock'], PointCellDataSelection):
+class XMLMultiBlockDataReader(
+    _ExodusInformationKeys, BaseReader['MultiBlock'], PointCellDataSelection
+):
     """XML MultiBlock Data Reader for .vtm or .vtmb files.
 
     Wraps :vtk:`vtkXMLMultiBlockDataReader`.
@@ -3037,7 +3048,7 @@ class XdmfReader(BaseReader['DataObject'], PointCellDataSelection, TimeReader):
         self.set_active_time_value(self._active_time_value)
 
 
-class XMLPartitionedDataSetReader(BaseReader['PartitionedDataSet']):
+class XMLPartitionedDataSetReader(_ExodusInformationKeys, BaseReader['PartitionedDataSet']):
     """XML PartitionedDataSet Reader for reading .vtpd files.
 
     Wraps :vtk:`vtkXMLPartitionedDataSetReader`.

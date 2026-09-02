@@ -582,7 +582,6 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkXMLPartitionedDataSetReader',
         'vtkXMLPolyDataReader',
         'vtkXMLPolyDataWriter',
-        'vtkXMLReader',
         'vtkXMLRectilinearGridReader',
         'vtkXMLRectilinearGridWriter',
         'vtkXMLStructuredGridReader',
