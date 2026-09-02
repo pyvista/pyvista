@@ -56,6 +56,12 @@ def test_texture_get_data_range():
     assert texture.get_data_range('Image') == (0, 255)
 
 
+def test_image_to_texture():
+    image = pv.ImageData(dimensions=(2, 2, 1))
+    texture = pv.image_to_texture(image)
+    assert isinstance(texture, pv.Texture)
+
+
 def test_texture_grayscale_init():
     # verify a grayscale image can be created on init
     texture = pv.Texture(np.zeros((10, 10, 1), dtype=np.uint8))
