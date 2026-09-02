@@ -452,6 +452,7 @@ def get_array_association(  # noqa: PLR0917
         return FieldAssociation.ROW
 
     # with multiple arrays, return the array preference if possible
+    # Optimization: probe VTK for the name instead of wrapping arrays only to discard them
     has_point = mesh.GetPointData().GetAbstractArray(name) is not None
     has_cell = mesh.GetCellData().GetAbstractArray(name) is not None
     has_field = mesh.GetFieldData().GetAbstractArray(name) is not None

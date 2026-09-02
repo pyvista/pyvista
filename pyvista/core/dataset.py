@@ -83,6 +83,7 @@ _ACTIVE_SCALARS_EXCLUDE = frozenset({'__custom_rgba', 'Normals', 'vtkOriginalPoi
 
 def _copy_association_names(names: Mapping[str, Iterable[str]]) -> defaultdict[str, set[str]]:
     """Return an independent copy of a per-association array name mapping."""
+    # Optimization: the values are sets of strings, so this is much cheaper than copy.deepcopy
     return defaultdict(set, {key: set(value) for key, value in names.items()})
 
 
@@ -203,6 +204,8 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             name = self._last_active_scalars_name
 
         # verify this field is still valid
+        # Optimization: read the VTK attributes directly rather than through point_data/cell_data,
+        # which construct a DataSetAttributes wrapper on every access
         if name is not None:
             if field is FieldAssociation.CELL:
                 if _active_scalars_name(self.GetCellData()) != name:
@@ -261,6 +264,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         field, name = self._active_vectors_info
 
         # verify this field is still valid
+        # Optimization: read the VTK attributes directly, as in active_scalars_info
         if name is not None:
             if field is FieldAssociation.POINT:
                 if _active_vectors_name(self.GetPointData()) != name:
@@ -1638,6 +1642,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         """
         names: list[str] = []
+        # Optimization: read the VTK attributes directly instead of wrapping them
         names.extend(_array_names(self.GetFieldData()))
         names.extend(_array_names(self.GetPointData()))
         names.extend(_array_names(self.GetCellData()))

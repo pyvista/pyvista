@@ -86,6 +86,7 @@ def vtk_points(  # noqa: PLR0917
         points_ = points_.astype(np.float32)
 
     # use the underlying vtk data if present to avoid memory leaks
+    # (only a vtkDataArray can back vtkPoints, string arrays cannot)
     if (
         not deep
         and isinstance(points_, pv.pyvista_ndarray)

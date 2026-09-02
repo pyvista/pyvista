@@ -73,6 +73,7 @@ class pyvista_ndarray(_NoNewAttrMixin, np.ndarray):  # numpydoc ignore=PR02  # n
         """Allocate the array."""
         vtk_object = None
         if isinstance(array, _vtk.vtkAbstractArray):
+            # Optimization: skip the positional-argument checks of the public convert_array
             obj = _vtk_array_to_numpy(array).view(cls)
             vtk_object = array
         elif isinstance(array, Iterable):
@@ -91,6 +92,8 @@ class pyvista_ndarray(_NoNewAttrMixin, np.ndarray):  # numpydoc ignore=PR02  # n
                 dataset_ref.Set(dataset.VTKObject)
             else:
                 dataset_ref.Set(cast('_vtk.vtkDataSet', dataset))
+        # Optimization: write the instance dict directly, attribute assignment goes through
+        # _NoNewAttrMixin.__setattr__ (the instance is not frozen until __new__ returns)
         obj.__dict__.update(dataset=dataset_ref, association=association, VTKObject=vtk_object)
         return obj
 

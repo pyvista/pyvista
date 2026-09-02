@@ -57,6 +57,8 @@ attr_type = [
 _SENTINEL = pyvista_ndarray([])
 
 
+# These helpers take the raw VTK attributes so that DataSet can use them without
+# constructing a DataSetAttributes wrapper, which is what makes its properties slow.
 def _array_names(field_data: _vtk.vtkFieldData) -> list[str]:
     """Return the array names of a VTK field data object, naming any unnamed arrays."""
     names = []
@@ -372,7 +374,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         """
         self._raise_field_data_no_scalars_vectors_normals()
-        scalars = self.VTKObject.GetScalars()
+        scalars = self.VTKObject.GetScalars()  # Optimization: skip the __getattr__ forwarding
         if scalars is not None:
             array = pyvista_ndarray(scalars, dataset=self.dataset, association=self.association)
             return self._patch_type(array)
@@ -498,6 +500,8 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         """
         self._raise_index_out_of_bounds(index=key)
+        # Optimization: call the VTK object directly; going through the __getattr__
+        # forwarding costs about as much as the VTK call itself
         vtk_attributes = self.VTKObject
         vtk_arr = vtk_attributes.GetArray(key)
         if vtk_arr is None:
@@ -806,7 +810,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
                         vtk_arr.SetName(name)
                     return vtk_arr
 
-        # reset data association
+        # reset data association (look the name sets up once, they are reused below)
         bitarray_names = self.dataset._association_bitarray_names[association.name]  # type: ignore[union-attr]
         complex_names = self.dataset._association_complex_names[association.name]  # type: ignore[union-attr]
         bitarray_names.discard(name)
@@ -1325,6 +1329,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
             self.VTKObject.SetActiveScalars(None)
             return
         self._raise_field_data_no_scalars_vectors_normals()
+        # Optimization: check the VTK array class rather than wrapping the array for its dtype
         vtk_arr = self.VTKObject.GetAbstractArray(name)
         # only vtkDataArray subclasses can be set as active attributes
         if isinstance(vtk_arr, _vtk.vtkDataArray):

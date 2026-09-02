@@ -2005,6 +2005,8 @@ class DataObjectFilters:
         if not np.issubdtype(points.dtype, np.floating):
             self.points = points.astype(np.float32)
             converted_ints = True
+        # Optimization: build the attribute wrappers once; they refer to the same VTK objects
+        # for the whole filter, including after copy_from, so reusing them is safe
         point_data = self.point_data
         cell_data = self.cell_data
         if transform_all_input_vectors:
