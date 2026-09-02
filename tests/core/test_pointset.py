@@ -128,7 +128,7 @@ def test_filters_return_pointset(sphere):
 def test_pointset_clip_vtk_bug(sphere):
     pointset = sphere.cast_to_pointset()
     alg = _vtk.vtkTableBasedClipDataSet()
-    alg.SetClipFunction(pv.generate_plane((1, 0, 0), (0, 0, 0)))
+    alg.SetClipFunction(pv.generate_plane((1, 0, 0), origin=(0, 0, 0)))
 
     # Filter works with PolyData
     alg.SetInputData(sphere)

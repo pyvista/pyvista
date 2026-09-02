@@ -913,6 +913,7 @@ class BasePlotter(_BoundsSizeMixin):
         )
         return self._trame_component().export_html(filename)
 
+    @_deprecate_positional_args(allowed=['filename'], version=(0, 52))
     def export_vtksz(
         self,
         filename: str | Path | None = 'scene-export.vtksz',
@@ -1941,8 +1942,8 @@ class BasePlotter(_BoundsSizeMixin):
             if isinstance(prop, Actor):
                 prop.add_shader_replacement(
                     'vertex',
-                    '//VTK::PositionVC::Impl',
-                    _CAMERA_DISTORTION_VERTEX,
+                    original='//VTK::PositionVC::Impl',
+                    replacement=_CAMERA_DISTORTION_VERTEX,
                     replace_first=True,
                     replace_all=False,
                     _feature_name=_CAMERA_DISTORTION_FEATURE,
@@ -5381,6 +5382,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         return cast('Actor', actor)
 
+    @_deprecate_positional_args(allowed=['clim'], version=(0, 52))
     def update_scalar_bar_range(
         self, clim: float | Sequence[float], name: str | None = None
     ) -> None:
@@ -6024,6 +6026,7 @@ class BasePlotter(_BoundsSizeMixin):
         self.add_actor(actor, reset_camera=False, name=name, pickable=False, render=render)  # type: ignore[arg-type]
         return actor
 
+    @_deprecate_positional_args(allowed=['filename'], version=(0, 52))
     def open_movie(
         self, filename: str | Path, framerate: int = 24, quality: int = 5, **kwargs
     ) -> None:
@@ -6761,6 +6764,7 @@ class BasePlotter(_BoundsSizeMixin):
             labels = [phrase.format(val) for val in scalars]
         return self.add_point_labels(points, labels, **kwargs)
 
+    @_deprecate_positional_args(allowed=['points'], version=(0, 52))
     def add_points(
         self,
         points: MatrixLike[float] | VectorLike[float] | DataSet,
@@ -7463,7 +7467,9 @@ class BasePlotter(_BoundsSizeMixin):
         # background layer
         if not self._has_background_layer:
             self.render_window.SetNumberOfLayers(3)  # type: ignore[union-attr]
-        renderer = self.renderers.add_background_renderer(image_path, scale, as_global)
+        renderer = self.renderers.add_background_renderer(
+            image_path, scale=scale, as_global=as_global
+        )
         self.render_window.AddRenderer(renderer)  # type: ignore[union-attr]
 
         # set up autoscaling of the image

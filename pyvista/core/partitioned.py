@@ -279,6 +279,7 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
         self.n_partitions += 1
         self[index] = dataset
 
+    @_deprecate_positional_args(allowed=['name'], version=(0, 52))
     def get_data_range(  # numpydoc ignore=RT01
         self: Self, name: str | None, preference: FieldAssociation | str
     ) -> tuple[float, float]:  # pragma: no cover

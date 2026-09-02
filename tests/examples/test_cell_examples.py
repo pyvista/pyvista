@@ -202,7 +202,7 @@ def test_generate_cell_blocks(cell_type, generator):
         generator == 'source' and cell_type in _NOT_SUPPORTED_CELL_SOURCE
     ):
         pytest.xfail('Not supported')
-    mesh = cells.generate_cell_blocks(cell_type, generator)
+    mesh = cells.generate_cell_blocks(cell_type, generator=generator)
     assert isinstance(mesh, pv.MultiBlock)
     assert mesh.n_blocks == 1
     assert mesh.keys() == [cell_type.name]
@@ -223,7 +223,7 @@ def test_generate_cell_blocks(cell_type, generator):
 def test_generate_cell_blocks_block_dimensions(dimensions, generator):
     celltype = CellType.HEXAHEDRON
     mesh = cells.generate_cell_blocks(
-        celltype, generator, block_dimensions=dimensions, fill_mode='cycle'
+        celltype, generator=generator, block_dimensions=dimensions, fill_mode='cycle'
     )
     assert np.allclose(mesh.bounds, (0.0, dimensions[0], 0.0, dimensions[1], 0.0, dimensions[2]))
     assert mesh.keys() == ['HEXAHEDRON', 'HEXAHEDRON_1', 'HEXAHEDRON_2', 'HEXAHEDRON_3']
@@ -234,7 +234,7 @@ def test_generate_cell_blocks_block_dimensions(dimensions, generator):
 
     # Test without cycle
     mesh_no_cycle = cells.generate_cell_blocks(
-        [celltype] * 4, generator, block_dimensions=dimensions, fill_mode='exact'
+        [celltype] * 4, generator=generator, block_dimensions=dimensions, fill_mode='exact'
     )
     assert mesh == mesh_no_cycle
 

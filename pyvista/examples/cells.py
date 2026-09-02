@@ -21,6 +21,7 @@ import pyvista as pv
 from pyvista import CellType
 from pyvista import UnstructuredGrid
 from pyvista import _vtk
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core import _validation
 
@@ -2721,6 +2722,7 @@ _FillModeOptions = Literal['exact', 'cycle', 'stop']
 _UnsupportedActionOptions = Literal['squeeze', 'skip', 'warn', 'error']
 
 
+@_deprecate_positional_args(allowed=['cell_types'], version=(0, 52))
 def generate_cell_blocks(  # numpydoc ignore=RT01
     cell_types: int | Sequence[int],
     generator: _GeneratorOptions = 'examples',
@@ -2824,12 +2826,14 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
 
     Use the ``'parametric'`` generator instead.
 
-    >>> triangle = generate_cell_blocks(pv.CellType.TRIANGLE, 'parametric')
+    >>> triangle = generate_cell_blocks(
+    ...     pv.CellType.TRIANGLE, generator='parametric'
+    ... )
     >>> plot_cell(triangle, cpos='xy')
 
     Use the ``'source'`` generator instead.
 
-    >>> triangle = generate_cell_blocks(pv.CellType.TRIANGLE, 'source')
+    >>> triangle = generate_cell_blocks(pv.CellType.TRIANGLE, generator='source')
     >>> plot_cell(triangle, cpos='xy')
 
     Generate multiple cell types. Here we generate all concrete linear 2D cells.
@@ -2858,7 +2862,10 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
     triangle strip or polygon cells, so we skip these.
 
     >>> cell_blocks = generate_cell_blocks(
-    ...     cell_types, 'parametric', shrink_factor=0.8, unsupported_action='skip'
+    ...     cell_types,
+    ...     generator='parametric',
+    ...     shrink_factor=0.8,
+    ...     unsupported_action='skip',
     ... )
     >>> plot_cell(cell_blocks, cpos='xy')
 
@@ -2867,7 +2874,7 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
     This combination generates a continuous grid with no gaps.
 
     >>> cell_blocks = generate_cell_blocks(
-    ...     cell_types, 'source', unsupported_action='squeeze'
+    ...     cell_types, generator='source', unsupported_action='squeeze'
     ... )
     >>> plot_cell(cell_blocks, cpos='xy')
 
@@ -2915,7 +2922,7 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
     ... ]
     >>> cell_blocks = generate_cell_blocks(
     ...     cell_types,
-    ...     'source',
+    ...     generator='source',
     ...     block_dimensions=(5, 5, 5),
     ...     unsupported_action='squeeze',
     ...     fill_mode='cycle',

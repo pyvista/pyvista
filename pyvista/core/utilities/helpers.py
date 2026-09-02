@@ -380,6 +380,7 @@ def is_pyvista_dataset(obj: Any) -> TypeIs[DataSet | MultiBlock | PartitionedDat
     return isinstance(obj, (pv.DataSet, pv.MultiBlock, pv.PartitionedDataSet))
 
 
+@_deprecate_positional_args(allowed=['normal'], version=(0, 52))
 def generate_plane(normal: VectorLike[float], origin: VectorLike[float]):
     """Return a :vtk:`vtkPlane`.
 

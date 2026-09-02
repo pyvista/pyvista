@@ -362,6 +362,7 @@ class DataObject(
                     assoc_data[assoc_type] = set(fdata[key])
                     del fdata[key]
 
+    @_deprecate_positional_args(allowed=['name'], version=(0, 52))
     @abstractmethod
     def get_data_range(
         self: Self, name: str | None, preference: FieldAssociation | str

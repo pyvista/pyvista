@@ -1101,6 +1101,7 @@ class DataObjectFilters:
 
     points: pyvista_ndarray
 
+    @_deprecate_positional_args(allowed=['validation_fields'], version=(0, 52))
     def validate_mesh(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
         validation_fields: MeshValidationFields | Sequence[MeshValidationFields] | None = None,
@@ -3292,7 +3293,7 @@ class DataObjectFilters:
             self, origin, normal, plane, default_normal='x'
         )
         # create the plane for clipping
-        function = generate_plane(normal_, origin_)
+        function = generate_plane(normal_, origin=origin_)
         # run the clip
         result = self._clip_with_function(
             function,
@@ -3451,6 +3452,7 @@ class DataObjectFilters:
             clipped = _Crinkler.extract_crinkle_cells(self, clipped, None, active_scalars_info)
         return _remove_unused_points_post_clip(clipped, self.bounds)
 
+    @_deprecate_positional_args(allowed=['thickness'], version=(0, 52))
     def clip_slab(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
         thickness: float,
@@ -3756,7 +3758,7 @@ class DataObjectFilters:
             self, origin, normal, plane, default_normal='x'
         )
         # create the plane for clipping
-        implicit_function = generate_plane(normal_, origin_)
+        implicit_function = generate_plane(normal_, origin=origin_)
         return self.slice_implicit(
             implicit_function,
             generate_triangles=generate_triangles,

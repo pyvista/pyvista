@@ -526,8 +526,8 @@ def test_add_shader_replacement(point_cloud_actor):
 
     actor.add_shader_replacement(
         'vertex',
-        '//VTK::LineWidthGLES30::Impl',
-        'gl_Position.z = 0.0;\n//VTK::LineWidthGLES30::Impl\n',
+        original='//VTK::LineWidthGLES30::Impl',
+        replacement='gl_Position.z = 0.0;\n//VTK::LineWidthGLES30::Impl\n',
     )
     assert '_user' in actor._shader_replacements
     assert len(actor._shader_replacements['_user']) == 1
@@ -542,8 +542,8 @@ def test_shader_replacement_invalid_type(point_cloud_actor):
     with pytest.raises(ValueError, match='Invalid shader_type'):
         point_cloud_actor.add_shader_replacement(
             'invalid',
-            '//VTK::Color::Impl',
-            'code;',
+            original='//VTK::Color::Impl',
+            replacement='code;',
         )
 
 
@@ -551,15 +551,15 @@ def test_shader_replacement_conflict(point_cloud_actor):
     actor = point_cloud_actor
     actor.add_shader_replacement(
         'vertex',
-        '//VTK::LineWidthGLES30::Impl',
-        'code1;',
+        original='//VTK::LineWidthGLES30::Impl',
+        replacement='code1;',
         _feature_name='feature_a',
     )
     with pytest.raises(ValueError, match='conflict'):
         actor.add_shader_replacement(
             'vertex',
-            '//VTK::LineWidthGLES30::Impl',
-            'code2;',
+            original='//VTK::LineWidthGLES30::Impl',
+            replacement='code2;',
             _feature_name='feature_b',
         )
 
@@ -569,14 +569,14 @@ def test_clear_all_shader_replacements(point_cloud_actor):
     shader_prop = actor.GetShaderProperty()
     actor.add_shader_replacement(
         'vertex',
-        '//VTK::LineWidthGLES30::Impl',
-        'code1;',
+        original='//VTK::LineWidthGLES30::Impl',
+        replacement='code1;',
         _feature_name='a',
     )
     actor.add_shader_replacement(
         'fragment',
-        '//VTK::Color::Impl',
-        'code2;',
+        original='//VTK::Color::Impl',
+        replacement='code2;',
         _feature_name='b',
     )
     assert len(actor._shader_replacements) == 2

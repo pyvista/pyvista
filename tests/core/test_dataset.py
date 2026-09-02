@@ -1496,7 +1496,7 @@ def test_raises_point_neighbors_ind_overflow(hexbeam):
 
 def test_raises_cell_neighbors_connections(hexbeam):
     with pytest.raises(ValueError, match='got "topological"'):
-        _ = hexbeam.cell_neighbors(0, 'topological')
+        _ = hexbeam.cell_neighbors(0, connections='topological')
 
 
 @pytest.mark.parametrize('grid', grids, ids=ids)
@@ -1530,7 +1530,7 @@ def test_point_cell_ids_order():
 @pytest.mark.parametrize('grid', grids_cells, ids=ids_cells)
 @pytest.mark.parametrize('i0', i0s)
 def test_cell_point_neighbors_ids(grid: DataSet, i0):
-    cell_ids = grid.cell_neighbors(i0, 'points')
+    cell_ids = grid.cell_neighbors(i0, connections='points')
     cell = grid.get_cell(i0)
 
     assert isinstance(cell_ids, list)
@@ -1555,7 +1555,7 @@ def test_cell_point_neighbors_ids(grid: DataSet, i0):
 @pytest.mark.parametrize('grid', grids_cells, ids=ids_cells)
 @pytest.mark.parametrize('i0', i0s)
 def test_cell_edge_neighbors_ids(grid: DataSet, i0):
-    cell_ids = grid.cell_neighbors(i0, 'edges')
+    cell_ids = grid.cell_neighbors(i0, connections='edges')
     cell = grid.get_cell(i0)
 
     assert isinstance(cell_ids, list)
@@ -1595,7 +1595,7 @@ def test_cell_edge_neighbors_ids(grid: DataSet, i0):
 @pytest.mark.parametrize('grid', grids_cells[2:], ids=ids_cells[2:])
 @pytest.mark.parametrize('i0', i0s)
 def test_cell_face_neighbors_ids(grid: DataSet, i0):
-    cell_ids = grid.cell_neighbors(i0, 'faces')
+    cell_ids = grid.cell_neighbors(i0, connections='faces')
     cell = grid.get_cell(i0)
 
     assert isinstance(cell_ids, list)

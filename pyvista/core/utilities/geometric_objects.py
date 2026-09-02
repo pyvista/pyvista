@@ -2737,6 +2737,7 @@ def Icosahedron(radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0)
     return PlatonicSolid(kind='icosahedron', radius=radius, center=center)
 
 
+@_deprecate_positional_args(allowed=['radius', 'center'], version=(0, 52))
 def Icosphere(
     radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0), nsub: int = 3
 ) -> PolyData:

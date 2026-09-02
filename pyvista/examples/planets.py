@@ -34,7 +34,7 @@ def _download_dataset_texture(
 
 
 def load_planet(
-    radius: float = 1.0, lat_resolution: int = 50, lon_resolution: int = 100
+    radius: float = 1.0, *, lat_resolution: int = 50, lon_resolution: int = 100
 ) -> PolyData:
     """Load a planet or celestial body as a sphere with texture coordinates.
 

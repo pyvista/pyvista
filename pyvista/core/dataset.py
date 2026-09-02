@@ -593,6 +593,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             self.cell_data.set_array(scale, scale_name)
         return self.glyph(orient=vectors_name, scale=scale_name)
 
+    @_deprecate_positional_args(allowed=['name'], version=(0, 52))
     def set_active_scalars(
         self: Self,
         name: str | None,
@@ -663,6 +664,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         else:  # must be cell
             return field, self.cell_data.active_scalars
 
+    @_deprecate_positional_args(allowed=['name'], version=(0, 52))
     def set_active_vectors(
         self: Self, name: str | None, preference: PointLiteral | CellLiteral = 'point'
     ) -> None:
@@ -705,6 +707,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         self._active_vectors_info = ActiveArrayInfoTuple(field, name)
 
+    @_deprecate_positional_args(allowed=['name'], version=(0, 52))
     def set_active_tensors(
         self: Self, name: str | None, preference: PointLiteral | CellLiteral = 'point'
     ) -> None:
@@ -747,6 +750,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         self._active_tensors_info = ActiveArrayInfoTuple(field, name)
 
+    @_deprecate_positional_args(allowed=['old_name', 'new_name'], version=(0, 52))
     def rename_array(
         self: Self,
         old_name: str,
@@ -879,6 +883,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             return self.point_data.active_normals
         return self.cell_data.active_normals
 
+    @_deprecate_positional_args(allowed=['arr_var'], version=(0, 52))
     def get_data_range(  # type: ignore[override]
         self: Self,
         arr_var: str | NumpyArray[float] | None = None,
@@ -1411,6 +1416,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         sizes = self.compute_cell_sizes(length=False, area=True, volume=False)
         return sizes.cell_data['Area'].sum().item()
 
+    @_deprecate_positional_args(allowed=['name'], version=(0, 52))
     def get_array(
         self: Self,
         name: str,
@@ -1467,6 +1473,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             raise RuntimeError  # this should never be reached with err=True
         return arr
 
+    @_deprecate_positional_args(allowed=['name'], version=(0, 52))
     def get_array_association(
         self: Self,
         name: str,
@@ -2270,6 +2277,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         containing_cells = [locator.FindCell(node) for node in point]
         return containing_cells[0] if singular else np.array(containing_cells)
 
+    @_deprecate_positional_args(allowed=['pointa', 'pointb'], version=(0, 52))
     def find_cells_along_line(
         self: Self,
         pointa: VectorLike[float],
@@ -2348,6 +2356,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         )
         return vtk_id_list_to_array(id_list)
 
+    @_deprecate_positional_args(allowed=['pointa', 'pointb'], version=(0, 52))
     def find_cells_intersecting_line(
         self: Self,
         pointa: VectorLike[float],
@@ -2694,6 +2703,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         for i in range(self.n_cells):
             yield self.get_cell(i)
 
+    @_deprecate_positional_args(allowed=['ind'], version=(0, 52))
     def cell_neighbors(self: Self, ind: int, connections: str = 'points') -> list[int]:
         """Get the cell neighbors of the ind-th cell.
 
@@ -2731,20 +2741,20 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         Get the neighbor cell ids that have at least one point in common with
         the 0-th cell.
 
-        >>> mesh.cell_neighbors(0, 'points')
+        >>> mesh.cell_neighbors(0, connections='points')
         [1, 2, 3, 388, 389, 11, 12, 395, 14, 209, 211, 212]
 
         Get the neighbor cell ids that have at least one edge in common with
         the 0-th cell.
 
-        >>> mesh.cell_neighbors(0, 'edges')
+        >>> mesh.cell_neighbors(0, connections='edges')
         [1, 3, 12]
 
         For unstructured grids with cells of dimension 3 (Tetrahedron for example),
         cell neighbors can be defined using faces.
 
         >>> mesh = examples.download_tetrahedron()
-        >>> mesh.cell_neighbors(0, 'faces')
+        >>> mesh.cell_neighbors(0, connections='faces')
         [1, 5, 7]
 
         Show a visual example.
@@ -2783,7 +2793,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         ...     )
         ...
         ...     # Add neighbors
-        ...     ids = mesh.cell_neighbors(i_cell, connection)
+        ...     ids = mesh.cell_neighbors(i_cell, connections=connection)
         ...     cells = mesh.extract_cells(ids)
         ...     _ = pl.add_mesh(cells, color='red', show_edges=True)
         ...     _ = add_point_labels(
@@ -2899,6 +2909,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             out.extend([i for i in self.get_cell(cell).point_ids if i != ind])
         return list(set(out))
 
+    @_deprecate_positional_args(allowed=['ind'], version=(0, 52))
     def point_neighbors_levels(
         self: Self,
         ind: int,
@@ -2931,7 +2942,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         >>> import pyvista as pv
         >>> mesh = pv.Sphere(theta_resolution=10)
-        >>> pt_nbr_levels = mesh.point_neighbors_levels(0, 3)
+        >>> pt_nbr_levels = mesh.point_neighbors_levels(0, n_levels=3)
         >>> pt_nbr_levels = list(pt_nbr_levels)
         >>> pt_nbr_levels[0]
         [2, 226, 198, 170, 142, 114, 86, 30, 58, 254]
@@ -2975,6 +2986,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         method = self.point_neighbors
         return self._get_levels_neihgbors(ind, n_levels, method)
 
+    @_deprecate_positional_args(allowed=['ind'], version=(0, 52))
     def cell_neighbors_levels(
         self: Self,
         ind: int,

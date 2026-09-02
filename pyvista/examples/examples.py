@@ -20,6 +20,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 import pyvista as pv
+from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.examples._dataset_loader import _DatasetLoader
 from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
 
@@ -508,6 +509,7 @@ def _sphere_vectors_load_func() -> PolyData:
 _dataset_sphere_vectors = _DatasetLoader(_sphere_vectors_load_func)
 
 
+@_deprecate_positional_args(allowed=['dimensions'], version=(0, 52))
 def load_explicit_structured(
     dimensions: VectorLike[int] = (5, 6, 7), spacing: VectorLike[float] = (20, 10, 1)
 ) -> ExplicitStructuredGrid:

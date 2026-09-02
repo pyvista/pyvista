@@ -1146,7 +1146,7 @@ class ImageDataFilters(DataSetFilters):
     ) -> tuple[float, float] | None:
         if binary is None:
             # Value is unset, so check if the scalars are actually binary
-            array = self.get_array(scalars, association)
+            array = self.get_array(scalars, preference=association)
             min_val, max_val = self.get_data_range(array)
             # Binary if bool or two adjacent integers or two unique values
             # We rely on short-circuit evaluation to avoid the np.unique call unless necessary
@@ -1162,7 +1162,7 @@ class ImageDataFilters(DataSetFilters):
 
         elif binary is True:
             # Use the range to set the values
-            return self.get_data_range(scalars, association)
+            return self.get_data_range(scalars, preference=association)
         elif binary is False:
             # Do not return any values
             return None
@@ -1240,6 +1240,7 @@ class ImageDataFilters(DataSetFilters):
                 raise ValueError(msg)
         return cast('Literal[FieldAssociation.POINT]', field), scalars
 
+    @_deprecate_positional_args(allowed=['kernel_size'], version=(0, 52))
     def dilate(  # type: ignore[misc]
         self: ImageData,
         kernel_size: int | VectorLike[int] = (3, 3, 3),
@@ -1394,6 +1395,7 @@ class ImageDataFilters(DataSetFilters):
         )
         return self._get_alg_output_from_input(alg, progress_bar=progress_bar, operation=operation)
 
+    @_deprecate_positional_args(allowed=['kernel_size'], version=(0, 52))
     def erode(  # type: ignore[misc]
         self: ImageData,
         kernel_size: int | VectorLike[int] = (3, 3, 3),
@@ -1552,6 +1554,7 @@ class ImageDataFilters(DataSetFilters):
         )
         return self._get_alg_output_from_input(alg, progress_bar=progress_bar, operation=operation)
 
+    @_deprecate_positional_args(allowed=['kernel_size'], version=(0, 52))
     def open(  # type: ignore[misc]
         self: ImageData,
         kernel_size: int | VectorLike[int] = (3, 3, 3),
@@ -1659,6 +1662,7 @@ class ImageDataFilters(DataSetFilters):
             dilation_alg, progress_bar=progress_bar, operation=dilation
         )
 
+    @_deprecate_positional_args(allowed=['kernel_size'], version=(0, 52))
     def close(  # type: ignore[misc]
         self: ImageData,
         kernel_size: int | VectorLike[int] = (3, 3, 3),
@@ -4185,6 +4189,7 @@ class ImageDataFilters(DataSetFilters):
 
         return dimensions_mask, dimensions_result
 
+    @_deprecate_positional_args(allowed=['sample_rate'], version=(0, 52))
     def resample(  # type: ignore[misc]
         self: ImageData,
         sample_rate: float | VectorLike[float] | None = None,
@@ -4382,7 +4387,7 @@ class ImageDataFilters(DataSetFilters):
         Use ``'linear'`` interpolation. Note that the argument names ``sample_rate``
         and ``interpolation`` may be omitted.
 
-        >>> upsampled = image.resample(2.0, 'linear')
+        >>> upsampled = image.resample(2.0, interpolation='linear')
         >>> plot = image_plotter(upsampled)
         >>> plot.show()
 
@@ -4571,7 +4576,7 @@ class ImageDataFilters(DataSetFilters):
         Down-sample the gourds image to 1/10 its original resolution using ``'lanczos'``
         interpolation.
 
-        >>> downsampled = gourds.resample(1 / 8, 'lanczos')
+        >>> downsampled = gourds.resample(1 / 8, interpolation='lanczos')
         >>> downsampled.dimensions
         (80, 60, 1)
 
@@ -4593,7 +4598,9 @@ class ImageDataFilters(DataSetFilters):
         Note that down-sampling can create image artifacts caused by aliasing. Enable
         anti-aliasing to smooth the image before resampling.
 
-        >>> downsampled2 = gourds.resample(1 / 8, 'lanczos', anti_aliasing=True)
+        >>> downsampled2 = gourds.resample(
+        ...     1 / 8, interpolation='lanczos', anti_aliasing=True
+        ... )
 
         Compare down-sampling with aliasing (left) to without aliasing (right).
 
@@ -4603,7 +4610,7 @@ class ImageDataFilters(DataSetFilters):
         Load an MRI of a knee and down-sample it.
 
         >>> knee = pv.examples.download_knee().resample(
-        ...     0.1, 'linear', anti_aliasing=True
+        ...     0.1, interpolation='linear', anti_aliasing=True
         ... )
 
         Crop and plot it.
@@ -4616,20 +4623,22 @@ class ImageDataFilters(DataSetFilters):
 
         Up-sample it with B-spline interpolation. The interpolation is very smooth.
 
-        >>> upsampled = knee.resample(2.0, 'bspline', border_mode='clamp')
+        >>> upsampled = knee.resample(
+        ...     2.0, interpolation='bspline', border_mode='clamp'
+        ... )
         >>> pl = image_plotter(upsampled, clim=[vmin, vmax])
         >>> pl.show()
 
         Use the ``'wrap'`` border mode. Note how points at the border are brighter than previously,
         since the bright pixels from the opposite edge are now included in the interpolation.
 
-        >>> upsampled = knee.resample(2.0, 'bspline', border_mode='wrap')
+        >>> upsampled = knee.resample(2.0, interpolation='bspline', border_mode='wrap')
         >>> pl = image_plotter(upsampled, clim=[vmin, vmax])
         >>> pl.show()
 
         Compare B-spline interpolation to ``'hamming'``.
 
-        >>> upsampled = knee.resample(2.0, 'hamming')
+        >>> upsampled = knee.resample(2.0, interpolation='hamming')
         >>> pl = image_plotter(upsampled, clim=[vmin, vmax])
         >>> pl.show()
 
@@ -5201,6 +5210,7 @@ class ImageDataFilters(DataSetFilters):
         output[array_name] = array_out
         return output
 
+    @_deprecate_positional_args(allowed=['images'], version=(0, 52))
     def concatenate(  # type: ignore[misc]
         self: ImageData,
         images: ImageData | Sequence[ImageData],

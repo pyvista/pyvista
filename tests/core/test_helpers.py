@@ -751,7 +751,7 @@ def test_array_association():
 
     # regression test against overly suggestive preference
     mesh.clear_cell_data()  # point and field left
-    assoc = mesh.get_array_association('common', 'cell')
+    assoc = mesh.get_array_association('common', preference='cell')
     assert assoc != FieldAssociation.CELL
 
     # missing cases

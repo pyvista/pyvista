@@ -865,7 +865,7 @@ class WidgetComponent(_NoNewAttrMixin):
         self.plane_clipped_meshes.append(plane_clipped_mesh)
 
         def callback(normal, loc):
-            function = generate_plane(normal, loc)
+            function = generate_plane(normal, origin=loc)
             clipper.SetClipFunction(function)  # the implicit function
             clipper.Update()  # Perform the Cut
             if crinkle:
@@ -1167,7 +1167,7 @@ class WidgetComponent(_NoNewAttrMixin):
 
         def callback(normal, origin):
             # create the plane for clipping
-            plane = generate_plane(normal, origin)
+            plane = generate_plane(normal, origin=origin)
             alg.SetCutFunction(plane)  # the cutter to use the plane we made
             alg.Update()  # Perform the Cut
             plane_sliced_mesh.shallow_copy(alg.GetOutput())

@@ -501,7 +501,7 @@ def _read_dispatch(  # noqa: PLR0911
 
     # Read file using meshio.read if file_format is present
     if file_format:
-        return read_meshio(filename, file_format)
+        return read_meshio(filename, file_format=file_format)
 
     ext = _get_ext_force(filename, force_ext)
     if ext in _PICKLE_FILE_EXT:
@@ -513,7 +513,7 @@ def _read_dispatch(  # noqa: PLR0911
         return ext_handler(str(filename))
 
     try:
-        reader = pv.get_reader(filename, force_ext)
+        reader = pv.get_reader(filename, force_ext=force_ext)
     except ValueError:
         msg = f'This file was not able to be automatically read by pyvista.\n  {str(filename)!r}'
         # if using force_ext, we are explicitly only using vtk readers
@@ -1392,6 +1392,7 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
     return meshio.Mesh(mesh.points, cells, point_data=point_data, cell_data=cell_data)
 
 
+@_deprecate_positional_args(allowed=['filename'], version=(0, 52))
 def read_meshio(filename: str | Path, file_format: str | None = None) -> UnstructuredGrid:
     """Read any mesh file using meshio.
 
@@ -1427,6 +1428,7 @@ def read_meshio(filename: str | Path, file_format: str | None = None) -> Unstruc
     return from_meshio(mesh)
 
 
+@_deprecate_positional_args(allowed=['filename', 'mesh'], version=(0, 52))
 def save_meshio(
     filename: str | Path, mesh: DataSet, file_format: str | None = None, **kwargs
 ) -> None:

@@ -4859,6 +4859,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
                 return np.stack(coords, axis=1)
             return np.asanyarray(coords)  # type: ignore[unreachable]
 
+    @_deprecate_positional_args(allowed=['ind'], version=(0, 52))
     def neighbors(self, ind: int | VectorLike[int], rel: str = 'connectivity') -> list[int]:
         """Return the indices of neighboring cells.
 

@@ -163,7 +163,7 @@ def test_positioning():
     elev, azim = (30, 60)
     expected_position = (np.sqrt(3) / 2 * 1 / 2, np.sqrt(3) / 2 * np.sqrt(3) / 2, 1 / 2)
     light.positional = True
-    light.set_direction_angle(elev, azim)
+    light.set_direction_angle(elev, azim=azim)
     assert not light.positional
     assert light.focal_point == (0, 0, 0)
     assert np.allclose(light.position, expected_position)

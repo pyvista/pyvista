@@ -390,6 +390,7 @@ class Prop3D(_NoNewAttrMixin, _NameMixin, _BoundsSizeMixin, DisableVtkSnakeCase,
         array = np.eye(4) if value is None else _validation.validate_transform4x4(value)
         self.SetUserMatrix(vtkmatrix_from_array(array))
 
+    @_deprecate_positional_args(allowed=['trans'], version=(0, 52))
     def transform(
         self,
         trans: TransformLike,
