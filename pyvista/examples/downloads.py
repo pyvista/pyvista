@@ -558,12 +558,12 @@ def download_puppy_texture(load: bool = True) -> Texture | str:  # noqa: FBT001,
         >>> dataset = examples.download_puppy_texture()
         >>> dataset.plot(cpos='xy')
 
-        .. seealso::
+    .. seealso::
 
-            :ref:`Puppy Texture Dataset <puppy_texture_dataset>`
-                See this dataset in the Dataset Gallery for more info.
+        :ref:`Puppy Texture Dataset <puppy_texture_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
-            :ref:`Puppy Dataset <puppy_dataset>`
+        :ref:`Puppy Dataset <puppy_dataset>`
 
     """
     return _download_dataset(_dataset_puppy_texture, load=load)
@@ -1033,12 +1033,12 @@ def download_head_2(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT0
         >>> _ = pl.add_volume(dataset, cmap='cool', opacity='sigmoid_6')
         >>> pl.show()
 
-        .. seealso::
+    .. seealso::
 
-            :ref:`Head 2 Dataset <head_2_dataset>`
-                See this dataset in the Dataset Gallery for more info.
+        :ref:`Head 2 Dataset <head_2_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
-            :ref:`Head Dataset <head_dataset>`
+        :ref:`Head Dataset <head_dataset>`
 
     """
     return _download_dataset(_dataset_head_2, load=load)
@@ -1212,10 +1212,10 @@ def download_topo_land(load: bool = True) -> PolyData | str:  # noqa: FBT001, FB
         >>> dataset = examples.download_topo_land()
         >>> dataset.plot(clim=[-2000, 3000], cmap='gist_earth', show_scalar_bar=False)
 
-        .. seealso::
+    .. seealso::
 
-            :ref:`Topo Land Dataset <topo_land_dataset>`
-                See this dataset in the Dataset Gallery for more info.
+        :ref:`Topo Land Dataset <topo_land_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_topo_land, load=load)
@@ -1336,12 +1336,12 @@ def download_knee_full(load: bool = True) -> ImageData | str:  # noqa: FBT001, F
         ... )
         >>> dataset.plot(volume=True, cmap='bone', cpos=cpos, show_scalar_bar=False)
 
-        .. seealso::
+    .. seealso::
 
-            :ref:`Knee Full Dataset <knee_full_dataset>`
-                See this dataset in the Dataset Gallery for more info.
+        :ref:`Knee Full Dataset <knee_full_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
-            :ref:`Knee Dataset <knee_dataset>`
+        :ref:`Knee Dataset <knee_dataset>`
 
     """
     return _download_dataset(_dataset_knee_full, load=load)
@@ -1542,13 +1542,13 @@ def download_washington_bust(*, load: bool = True) -> PolyData | str:
         >>> dataset = examples.download_washington_bust()
         >>> dataset.plot()
 
-        .. seealso::
+    .. seealso::
 
-            :ref:`Washington Bust Dataset <washington_bust_dataset>`
-                See this dataset in the Dataset Gallery for more info.
+        :ref:`Washington Bust Dataset <washington_bust_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
-            :func:`download_lincoln_life_mask`
-                Another CC0 head sculpture from the Smithsonian.
+        :func:`download_lincoln_life_mask`
+            Another CC0 head sculpture from the Smithsonian.
 
     """
     return _download_dataset(_dataset_washington_bust, load=load)
@@ -1594,13 +1594,13 @@ def download_lincoln_life_mask(*, load: bool = True) -> PolyData | str:
         >>> dataset = examples.download_lincoln_life_mask()
         >>> dataset.plot()
 
-        .. seealso::
+    .. seealso::
 
-            :ref:`Lincoln Life Mask Dataset <lincoln_life_mask_dataset>`
-                See this dataset in the Dataset Gallery for more info.
+        :ref:`Lincoln Life Mask Dataset <lincoln_life_mask_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
-            :func:`download_washington_bust`
-                A proper head-and-shoulders bust, also CC0.
+        :func:`download_washington_bust`
+            A proper head-and-shoulders bust, also CC0.
 
     """
     return _download_dataset(_dataset_lincoln_life_mask, load=load)
@@ -2291,14 +2291,14 @@ def download_gourds(zoom: bool = False, load: bool = True) -> ImageData | str:  
         >>> dataset = examples.download_gourds()
         >>> dataset.plot(rgba=True, cpos='xy')
 
-        .. seealso::
+    .. seealso::
 
-            :ref:`Gourds Dataset <gourds_dataset>`
-                See this dataset in the Dataset Gallery for more info.
+        :ref:`Gourds Dataset <gourds_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
-            :ref:`Gourds Pnm Dataset <gourds_pnm_dataset>`
+        :ref:`Gourds Pnm Dataset <gourds_pnm_dataset>`
 
-            :ref:`Gourds Texture Dataset <gourds_texture_dataset>`
+        :ref:`Gourds Texture Dataset <gourds_texture_dataset>`
 
     """
     example = __gourds2 if zoom else _dataset_gourds
@@ -2392,14 +2392,14 @@ def download_gourds_pnm(load: bool = True) -> ImageData | str:  # noqa: FBT001, 
         >>> dataset = examples.download_gourds_pnm()
         >>> dataset.plot(rgba=True, cpos='xy')
 
-        .. seealso::
+    .. seealso::
 
-            :ref:`Gourds Pnm Dataset <gourds_pnm_dataset>`
-                See this dataset in the Dataset Gallery for more info.
+        :ref:`Gourds Pnm Dataset <gourds_pnm_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
-            :ref:`Gourds Dataset <gourds_dataset>`
+        :ref:`Gourds Dataset <gourds_dataset>`
 
-            :ref:`Gourds Texture Dataset <gourds_texture_dataset>`
+        :ref:`Gourds Texture Dataset <gourds_texture_dataset>`
 
     """
     return _download_dataset(_dataset_gourds_pnm, load=load)
@@ -2631,13 +2631,13 @@ def download_frog(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
         >>> dataset = examples.download_frog()
         >>> dataset.plot(volume=True, cpos=cpos)
 
-        .. seealso::
+    .. seealso::
 
-            :ref:`Frog Dataset <frog_dataset>`
-                See this dataset in the Dataset Gallery for more info.
+        :ref:`Frog Dataset <frog_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
-            :ref:`Frog Tissues Dataset <frog_tissues_dataset>`
-                Segmentation labels associated with this dataset.
+        :ref:`Frog Tissues Dataset <frog_tissues_dataset>`
+            Segmentation labels associated with this dataset.
 
     """
     return _download_dataset(_dataset_frog, load=load)
@@ -2681,13 +2681,13 @@ def download_chest(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT00
         >>> dataset = examples.download_chest()
         >>> dataset.plot(cpos='xy')
 
-        .. seealso::
+    .. seealso::
 
-            :ref:`Chest Dataset <chest_dataset>`
-                See this dataset in the Dataset Gallery for more info.
+        :ref:`Chest Dataset <chest_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
-            :ref:`volume_rendering_example`
-                Example using this dataset.
+        :ref:`volume_rendering_example`
+            Example using this dataset.
 
     """
     return _download_dataset(_dataset_chest, load=load)
@@ -3158,12 +3158,12 @@ def download_brain(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT00
         >>> dataset = examples.download_brain()
         >>> dataset.plot(volume=True)
 
-        .. seealso::
+    .. seealso::
 
-            :ref:`Brain Dataset <brain_dataset>`
-                See this dataset in the Dataset Gallery for more info.
+        :ref:`Brain Dataset <brain_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
-            :ref:`Brain Atlas With Sides Dataset <brain_atlas_with_sides_dataset>`
+        :ref:`Brain Atlas With Sides Dataset <brain_atlas_with_sides_dataset>`
 
     """
     return _download_dataset(_dataset_brain, load=load)
@@ -3393,14 +3393,14 @@ def download_sky_box_nz(load: bool = True) -> ImageData | str:  # noqa: FBT001, 
         >>> dataset = examples.download_sky_box_nz()
         >>> dataset.plot(rgba=True, cpos='xy')
 
-        .. seealso::
+    .. seealso::
 
-            :ref:`Sky Box Nz Dataset <sky_box_nz_dataset>`
-                See this dataset in the Dataset Gallery for more info.
+        :ref:`Sky Box Nz Dataset <sky_box_nz_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
-            :ref:`Sky Box Nz Texture Dataset <sky_box_nz_texture_dataset>`
+        :ref:`Sky Box Nz Texture Dataset <sky_box_nz_texture_dataset>`
 
-            :ref:`Sky Box Cube Map Dataset <sky_box_cube_map_dataset>`
+        :ref:`Sky Box Cube Map Dataset <sky_box_cube_map_dataset>`
 
     """
     return _download_dataset(_dataset_sky_box_nz, load=load)
@@ -4038,10 +4038,10 @@ def download_dragon(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT00
         >>> dataset = examples.download_dragon()
         >>> dataset.plot(cpos='xy')
 
-        .. seealso::
+    .. seealso::
 
-            :ref:`Dragon Dataset <dragon_dataset>`
-                See this dataset in the Dataset Gallery for more info.
+        :ref:`Dragon Dataset <dragon_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_dragon, load=load)
@@ -4086,10 +4086,10 @@ def download_armadillo(load: bool = True) -> PolyData | str:  # noqa: FBT001, FB
         >>> dataset = examples.download_armadillo()
         >>> dataset.plot(cpos=cpos)
 
-        .. seealso::
+    .. seealso::
 
-            :ref:`Armadillo Dataset <armadillo_dataset>`
-                See this dataset in the Dataset Gallery for more info.
+        :ref:`Armadillo Dataset <armadillo_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_armadillo, load=load)
@@ -4435,10 +4435,10 @@ def download_carburetor(load: bool = True) -> PolyData | str:  # noqa: FBT001, F
         >>> dataset = examples.download_carburetor()
         >>> dataset.plot()
 
-        .. seealso::
+    .. seealso::
 
-            :ref:`Carburetor Dataset <carburetor_dataset>`
-                See this dataset in the Dataset Gallery for more info.
+        :ref:`Carburetor Dataset <carburetor_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_carburetor, load=load)
@@ -4512,10 +4512,10 @@ def download_pine_roots(load: bool = True) -> PolyData | str:  # noqa: FBT001, F
         >>> dataset = examples.download_pine_roots()
         >>> dataset.plot()
 
-        .. seealso::
+    .. seealso::
 
-            :ref:`Pine Roots Dataset <pine_roots_dataset>`
-                See this dataset in the Dataset Gallery for more info.
+        :ref:`Pine Roots Dataset <pine_roots_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_pine_roots, load=load)
@@ -4697,10 +4697,10 @@ def download_damavand_volcano(load: bool = True) -> ImageData | str:  # noqa: FB
         ... )
         >>> dataset.plot(cpos=cpos, cmap='reds', show_scalar_bar=False, volume=True)
 
-        .. seealso::
+    .. seealso::
 
-            :ref:`Damavand Volcano Dataset <damavand_volcano_dataset>`
-                See this dataset in the Dataset Gallery for more info.
+        :ref:`Damavand Volcano Dataset <damavand_volcano_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_damavand_volcano, load=load)
@@ -4829,10 +4829,10 @@ def download_antarctica_velocity(load: bool = True) -> PolyData | str:  # noqa: 
         >>> dataset = examples.download_antarctica_velocity()
         >>> dataset.plot(cpos='xy', clim=[1e-3, 1e4], cmap='Blues', log_scale=True)
 
-        .. seealso::
+    .. seealso::
 
-            :ref:`Antarctica Velocity Dataset <antarctica_velocity_dataset>`
-                See this dataset in the Dataset Gallery for more info.
+        :ref:`Antarctica Velocity Dataset <antarctica_velocity_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_antarctica_velocity, load=load)
@@ -5626,10 +5626,10 @@ def download_drill(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
         >>> dataset = examples.download_drill()
         >>> dataset.plot()
 
-        .. seealso::
+    .. seealso::
 
-            :ref:`Drill Dataset <drill_dataset>`
-                See this dataset in the Dataset Gallery for more info.
+        :ref:`Drill Dataset <drill_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
     """
     # Silence warning: unexpected data at end of line in OBJ file
@@ -5847,10 +5847,10 @@ def download_louis_louvre(load: bool = True) -> PolyData | str:  # noqa: FBT001,
         ... )
         >>> pl.show()
 
-        .. seealso::
+    .. seealso::
 
-            :ref:`Louis Louvre Dataset <louis_louvre_dataset>`
-                See this dataset in the Dataset Gallery for more info.
+        :ref:`Louis Louvre Dataset <louis_louvre_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_louis_louvre, load=load)
@@ -6504,10 +6504,10 @@ def download_electronics_cooling(load: bool = True) -> MultiBlock | str:  # noqa
         >>> pl.enable_anti_aliasing('fxaa')
         >>> pl.show()
 
-        .. seealso::
+    .. seealso::
 
-            :ref:`Electronics Cooling Dataset <electronics_cooling_dataset>`
-                See this dataset in the Dataset Gallery for more info.
+        :ref:`Electronics Cooling Dataset <electronics_cooling_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_electronics_cooling, load=load)
@@ -7079,10 +7079,10 @@ def download_mount_damavand(load: bool = True) -> PolyData | str:  # noqa: FBT00
         >>> dataset = dataset.warp_by_scalar('z', factor=2)
         >>> dataset.plot(cmap='gist_earth', show_scalar_bar=False)
 
-        .. seealso::
+    .. seealso::
 
-            :ref:`Mount Damavand Dataset <mount_damavand_dataset>`
-                See this dataset in the Dataset Gallery for more info.
+        :ref:`Mount Damavand Dataset <mount_damavand_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_mount_damavand, load=load)
@@ -8340,10 +8340,10 @@ def download_coil_magnetic_field(load: bool = True) -> ImageData | str:  # noqa:
         >>> pl.camera.zoom(2)
         >>> pl.show()
 
-        .. seealso::
+    .. seealso::
 
-            :ref:`Coil Magnetic Field Dataset <coil_magnetic_field_dataset>`
-                See this dataset in the Dataset Gallery for more info.
+        :ref:`Coil Magnetic Field Dataset <coil_magnetic_field_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_coil_magnetic_field, load=load)
@@ -8676,16 +8676,16 @@ def download_whole_body_ct_male(
         >>> pl.camera.zoom(1.3)
         >>> pl.show()
 
-        .. seealso::
+    .. seealso::
 
-            :ref:`anatomical_groups_example`
-                Additional examples using this dataset.
+        :ref:`anatomical_groups_example`
+            Additional examples using this dataset.
 
-            :ref:`Whole Body Ct Male Dataset <whole_body_ct_male_dataset>`
-                See this dataset in the Dataset Gallery for more info.
+        :ref:`Whole Body Ct Male Dataset <whole_body_ct_male_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
-            :ref:`Whole Body Ct Female Dataset <whole_body_ct_female_dataset>`
-                Similar dataset of a female subject.
+        :ref:`Whole Body Ct Female Dataset <whole_body_ct_female_dataset>`
+            Similar dataset of a female subject.
 
     """
     if high_resolution:
@@ -9000,19 +9000,19 @@ def download_whole_body_ct_female(
         >>> pl.camera.zoom(1.3)
         >>> pl.show()
 
-        .. seealso::
+    .. seealso::
 
-            :ref:`Whole Body Ct Female Dataset <whole_body_ct_female_dataset>`
-                See this dataset in the Dataset Gallery for more info.
+        :ref:`Whole Body Ct Female Dataset <whole_body_ct_female_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
-            :ref:`Whole Body Ct Male Dataset <whole_body_ct_male_dataset>`
-                Similar dataset of a male subject.
+        :ref:`Whole Body Ct Male Dataset <whole_body_ct_male_dataset>`
+            Similar dataset of a male subject.
 
-            :ref:`crop_labeled_example`
-                Example cropping this dataset using a segmentation mask.
+        :ref:`crop_labeled_example`
+            Example cropping this dataset using a segmentation mask.
 
-            :ref:`volume_with_mask_example`
-                See additional examples using this dataset.
+        :ref:`volume_with_mask_example`
+            See additional examples using this dataset.
 
     """
     if high_resolution:
@@ -9511,10 +9511,10 @@ def download_full_head(load: bool = True) -> ImageData | str:  # noqa: FBT001, F
         >>> dataset = examples.download_full_head()
         >>> dataset.plot(volume=True)
 
-        .. seealso::
+    .. seealso::
 
-            :ref:`Full Head Dataset <full_head_dataset>`
-                See this dataset in the Dataset Gallery for more info.
+        :ref:`Full Head Dataset <full_head_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_full_head, load=load)
