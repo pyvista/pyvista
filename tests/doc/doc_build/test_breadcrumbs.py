@@ -8,7 +8,7 @@ import re
 from conftest import BUILD_HTML_DIR
 
 _BREADCRUMBS_RE = re.compile(r'<ul class="bd-breadcrumbs">(.*?)</ul>', re.DOTALL)
-_ITEM_RE = re.compile(r'<li class="breadcrumb-item[^"]*">(.*?)</li>', re.DOTALL)
+_ITEM_RE = re.compile(r'<li class="breadcrumb-item[^"]*"[^>]*>(.*?)</li>', re.DOTALL)
 _TAG_RE = re.compile(r'<[^>]+>')
 
 
