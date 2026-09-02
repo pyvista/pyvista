@@ -86,7 +86,11 @@ def vtk_points(  # noqa: PLR0917
         points_ = points_.astype(np.float32)
 
     # use the underlying vtk data if present to avoid memory leaks
-    if not deep and isinstance(points_, pv.pyvista_ndarray) and points_.VTKObject is not None:
+    if (
+        not deep
+        and isinstance(points_, pv.pyvista_ndarray)
+        and isinstance(points_.VTKObject, _vtk.vtkDataArray)
+    ):
         vtk_object = points_.VTKObject
 
         # we can only use the underlying data if `points` is not a slice of
@@ -94,7 +98,7 @@ def vtk_points(  # noqa: PLR0917
         size = vtk_object.GetSize() if pv.vtk_version_info < (9, 7) else vtk_object.GetCapacity()
         if size == points_.size:
             vtkpts = _vtk.vtkPoints()
-            vtkpts.SetData(points_.VTKObject)
+            vtkpts.SetData(vtk_object)
             return vtkpts
         else:
             deep = True
