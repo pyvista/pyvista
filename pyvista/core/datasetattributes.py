@@ -756,18 +756,19 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         # convert to numpy type if necessary
         data = np.asanyarray(data)
 
-        if self.association == FieldAssociation.POINT:
+        association = self.association
+        if association == FieldAssociation.POINT:
             array_len = self.dataset.GetNumberOfPoints()
-        elif self.association == FieldAssociation.CELL:
+        elif association == FieldAssociation.CELL:
             array_len = self.dataset.GetNumberOfCells()
         else:
             array_len = 1 if data.ndim == 0 else data.shape[0]
 
-        if np.issubdtype(data.dtype, np.str_) and data.ndim == 0:
+        if data.ndim == 0 and np.issubdtype(data.dtype, np.str_):
             pass  # Do not reshape string scalars
         else:
             # Fixup input array length for scalar input
-            if np.ndim(data) == 0:
+            if data.ndim == 0:
                 tmparray = np.empty(array_len, dtype=data.dtype)
                 tmparray.fill(data)
                 data = tmparray
@@ -803,13 +804,13 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
                     return vtk_arr
 
         # reset data association
-        if name in self.dataset._association_bitarray_names[self.association.name]:  # type: ignore[union-attr]
-            self.dataset._association_bitarray_names[self.association.name].remove(name)  # type: ignore[union-attr]
-        if name in self.dataset._association_complex_names[self.association.name]:  # type: ignore[union-attr]
-            self.dataset._association_complex_names[self.association.name].remove(name)  # type: ignore[union-attr]
+        bitarray_names = self.dataset._association_bitarray_names[association.name]  # type: ignore[union-attr]
+        complex_names = self.dataset._association_complex_names[association.name]  # type: ignore[union-attr]
+        bitarray_names.discard(name)
+        complex_names.discard(name)
 
         if data.dtype == np.bool_:
-            self.dataset._association_bitarray_names[self.association.name].add(name)  # type: ignore[union-attr]
+            bitarray_names.add(name)
             data = data.view(np.uint8)
         elif np.issubdtype(data.dtype, np.complexfloating):
             if data.dtype not in (np.complex64, np.complex128):
@@ -823,7 +824,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
                 if data.shape[1] != 1:
                     msg = 'Complex data must be single dimensional.'
                     raise ValueError(msg)
-            self.dataset._association_complex_names[self.association.name].add(name)  # type: ignore[union-attr]
+            complex_names.add(name)
 
             # complex data is stored internally as a contiguous 2 component
             # float arrays
@@ -863,7 +864,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         # this handles the case when an input array is directly added to the
         # output. We want to make sure that the array added to the output is not
         # referring to the input dataset.
-        copy = pyvista_ndarray(data)
+        copy = data.view(np.ndarray)
 
         return convert_array(copy, name, deep=deep_copy)
 
