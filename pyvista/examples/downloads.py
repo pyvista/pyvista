@@ -3142,6 +3142,8 @@ _dataset_brain = _SingleFileDownloadableDatasetLoader('brain.vtk')
 def download_frd(*, load: bool = True) -> UnstructuredGrid | str:
     """Download a sample CalculiX FRD file.
 
+    Loading requires the ``pyvista-frd-reader`` package (``pip install pyvista[io]``).
+
     .. versionadded:: 0.48
 
     Parameters
