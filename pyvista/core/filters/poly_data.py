@@ -2997,7 +2997,7 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere = pv.Sphere()
         >>> sphere.plot_normals(mag=0.1)
         >>> sphere.flip_normals()  # doctest:+SKIP
-        >>> sphere.plot_normals(mag=0.1, opacity=0.5)
+        >>> sphere.plot_normals(mag=0.1, opacity=0.5)  # doctest:+SKIP
 
         """
         # Deprecated on v0.45.0, error on v0.49.0
