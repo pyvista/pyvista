@@ -2995,12 +2995,16 @@ class SuperquadricSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkSuperquad
 
 
 class _AxisEnum(IntEnum):
+    """Index of each x-y-z axis."""
+
     x = 0
     y = 1
     z = 2
 
 
 class _PartEnum(IntEnum):
+    """Index of the shaft and tip parts of an axis."""
+
     shaft = 0
     tip = 1
 
@@ -3996,6 +4000,8 @@ class CubeFacesSource(CubeSource):
     """
 
     class _FaceIndex(IntEnum):
+        """Index of each face of a box."""
+
         X_NEG = 0
         X_POS = 1
         Y_NEG = 2

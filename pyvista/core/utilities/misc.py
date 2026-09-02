@@ -642,6 +642,11 @@ class _NameMixin:
 
     .. versionadded:: 0.45
 
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
+
     """
 
     @property
@@ -665,6 +670,16 @@ class _NameMixin:
 
 
 class _BoundsSizeMixin:
+    """Add a ``bounds_size`` property to classes which define ``bounds``.
+
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
+
+
+    """
+
     @property
     def bounds_size(self) -> tuple[float, float, float]:
         """Return the size of each axis of the object's bounding box.
