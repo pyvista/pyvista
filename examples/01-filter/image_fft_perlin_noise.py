@@ -19,6 +19,8 @@ that noise.
 import numpy as np
 import pyvista as pv
 
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+
 # %%
 # Generate Perlin Noise
 # ~~~~~~~~~~~~~~~~~~~~~
@@ -35,7 +37,7 @@ import pyvista as pv
 
 freq = [10, 5, 0]
 noise = pv.perlin_noise(1, freq, (0, 0, 0))
-xdim, ydim = (2**8, 2**8)
+xdim, ydim = (2**9, 2**9)
 sampled = pv.sample_function(noise, bounds=(0, 10, 0, 10, 0, 10), dim=(xdim, ydim, 1))
 
 # warp and plot the sampled noise
@@ -71,6 +73,7 @@ subset = sampled_fft.extract_subset((0, xdim // 2, 0, ydim // 2, 0, 0))
 subset['scalars'] = np.abs(subset.active_scalars)
 warped_subset = subset.warp_by_scalar(factor=0.0001)
 
+PYVISTA_GALLERY_FORCE_STATIC = False
 pl = pv.Plotter(lighting='three lights')
 pl.add_mesh(warped_subset, cmap='blues', show_scalar_bar=False)
 pl.show_bounds(
