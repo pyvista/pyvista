@@ -1706,9 +1706,8 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         """
         self._raise_no_texture_coordinates()
-        if self.GetTCoords() is not None:
-            return str(self.GetTCoords().GetName())
-        return None
+        texture_coordinates = self.VTKObject.GetTCoords()
+        return None if texture_coordinates is None else str(texture_coordinates.GetName())
 
     @active_texture_coordinates_name.setter
     def active_texture_coordinates_name(self: Self, name: str | None) -> None:
@@ -1725,7 +1724,12 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
             return
 
         self._raise_no_texture_coordinates()
-        dtype = self[name].dtype
+        vtk_arr = self.VTKObject.GetAbstractArray(name) if isinstance(name, str) else None
         # only vtkDataArray subclasses can be set as active attributes
-        if np.issubdtype(dtype, np.number) or np.issubdtype(dtype, bool):
-            self.SetActiveTCoords(name)
+        if isinstance(vtk_arr, _vtk.vtkDataArray):
+            self.VTKObject.SetActiveTCoords(name)
+        elif not isinstance(vtk_arr, _vtk.vtkStringArray):
+            # missing keys, non-string keys and unsupported arrays raise here
+            dtype = self[name].dtype
+            if np.issubdtype(dtype, np.number) or np.issubdtype(dtype, bool):
+                self.VTKObject.SetActiveTCoords(name)
