@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import re
+from types import SimpleNamespace
 from typing import TYPE_CHECKING
 
 import pytest
@@ -11,6 +12,7 @@ from pytest_cases import parametrize
 from pytest_cases import parametrize_with_cases
 
 import pyvista as pv
+from tests.conftest import _VTKSZ_SIZE_EXCEPTIONS_MB
 from tests.conftest import flaky_test
 
 if TYPE_CHECKING:
@@ -709,3 +711,24 @@ def test_flaky_test_does_not_retry_an_unlisted_exception():
         raises_type_error()
 
     assert len(attempts) == 1
+
+
+@pytest.mark.parametrize(
+    ('test_name', 'expected'),
+    [
+        ('sphx_glr_ghost_cells_001', _VTKSZ_SIZE_EXCEPTIONS_MB['sphx_glr_ghost_cells_001']),
+        (
+            'pyvista-DataSetFilters-voxelize_binary_mask-9c3aed42d500a348_04_00',
+            _VTKSZ_SIZE_EXCEPTIONS_MB['pyvista-DataSetFilters-voxelize_binary_mask_04_00'],
+        ),
+        ('sphx_glr_ghost_cells_002', 5),
+        ('pyvista-DataSetFilters-voxelize_binary_mask-9c3aed42d500a348_00_00', 5),
+    ],
+)
+def test_vtksz_file_size_exceptions(request, test_name, expected):
+    """The size hook raises the limit only for the listed scenes, hash stripped."""
+    test_case = SimpleNamespace(test_name=test_name, max_vtksz_file_size=5)
+    request.config.hook.pytest_pyvista_max_vtksz_file_size_hook(
+        test_case=test_case, request=request
+    )
+    assert test_case.max_vtksz_file_size == expected
