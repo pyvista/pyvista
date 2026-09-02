@@ -1573,11 +1573,24 @@ def test_cell_point_neighbors_ids(grid: DataSet, i0):
         assert neighbor_points.isdisjoint(current_points)
 
 
+# The point ids of every cell's edges or faces, built once per grid since every
+# parametrization below walks all cells of the grid.
+_cell_point_sets_cache: dict[tuple[int, str], list[set[frozenset[int]]]] = {}
+
+
+def _cell_point_sets(grid: DataSet, parts: str) -> list[set[frozenset[int]]]:
+    key = (id(grid), parts)
+    if key not in _cell_point_sets_cache:
+        _cell_point_sets_cache[key] = [
+            {frozenset(part.point_ids) for part in getattr(cell, parts)} for cell in grid.cell
+        ]
+    return _cell_point_sets_cache[key]
+
+
 @pytest.mark.parametrize('grid', grids_cells, ids=ids_cells)
 @pytest.mark.parametrize('i0', i0s)
 def test_cell_edge_neighbors_ids(grid: DataSet, i0):
     cell_ids = grid.cell_neighbors(i0, 'edges')
-    cell = grid.get_cell(i0)
 
     assert isinstance(cell_ids, list)
     assert all(isinstance(id_, int) for id_ in cell_ids)
@@ -1586,30 +1599,15 @@ def test_cell_edge_neighbors_ids(grid: DataSet, i0):
 
     # Check that all the neighbors cells share at least one edge with the
     # current cell
-    current_points = set()
-    current_points.update(frozenset(e.point_ids) for e in cell.edges)
-
+    edge_points = _cell_point_sets(grid, 'edges')
+    current_points = edge_points[i0]
     for i in cell_ids:
-        neighbor_points = set()
-        neighbor_cell = grid.get_cell(i)
-
-        for ie in range(neighbor_cell.n_edges):
-            e = neighbor_cell.get_edge(ie)
-            neighbor_points.add(frozenset(e.point_ids))
-
-        assert not neighbor_points.isdisjoint(current_points)
+        assert not edge_points[i].isdisjoint(current_points)
 
     # Check that other cells do not share an edge with the current cell
     other_ids = [i for i in range(grid.n_cells) if (i not in cell_ids and i != i0)]
     for i in other_ids:
-        neighbor_points = set()
-        neighbor_cell = grid.get_cell(i)
-
-        for ie in range(neighbor_cell.n_edges):
-            e = neighbor_cell.get_edge(ie)
-            neighbor_points.add(frozenset(e.point_ids))
-
-        assert neighbor_points.isdisjoint(current_points)
+        assert edge_points[i].isdisjoint(current_points)
 
 
 # Slice grids since some do not contain faces
@@ -1617,7 +1615,6 @@ def test_cell_edge_neighbors_ids(grid: DataSet, i0):
 @pytest.mark.parametrize('i0', i0s)
 def test_cell_face_neighbors_ids(grid: DataSet, i0):
     cell_ids = grid.cell_neighbors(i0, 'faces')
-    cell = grid.get_cell(i0)
 
     assert isinstance(cell_ids, list)
     assert all(isinstance(id_, int) for id_ in cell_ids)
@@ -1626,30 +1623,15 @@ def test_cell_face_neighbors_ids(grid: DataSet, i0):
 
     # Check that all the neighbors cells share at least one face with the
     # current cell
-    current_points = set()
-    current_points.update(frozenset(f.point_ids) for f in cell.faces)
-
+    face_points = _cell_point_sets(grid, 'faces')
+    current_points = face_points[i0]
     for i in cell_ids:
-        neighbor_points = set()
-        neighbor_cell = grid.get_cell(i)
-
-        for ifa in range(neighbor_cell.n_faces):
-            f = neighbor_cell.get_face(ifa)
-            neighbor_points.add(frozenset(f.point_ids))
-
-        assert not neighbor_points.isdisjoint(current_points)
+        assert not face_points[i].isdisjoint(current_points)
 
     # Check that other cells do not share a face with the current cell
     other_ids = [i for i in range(grid.n_cells) if (i not in cell_ids and i != i0)]
     for i in other_ids:
-        neighbor_points = set()
-        neighbor_cell = grid.get_cell(i)
-
-        for ifa in range(neighbor_cell.n_faces):
-            f = neighbor_cell.get_face(ifa)
-            neighbor_points.add(frozenset(f.point_ids))
-
-        assert neighbor_points.isdisjoint(current_points)
+        assert face_points[i].isdisjoint(current_points)
 
 
 @pytest.mark.parametrize('grid', grids_cells, ids=ids_cells)
