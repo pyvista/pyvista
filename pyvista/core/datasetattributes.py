@@ -57,6 +57,19 @@ attr_type = [
 _SENTINEL = pyvista_ndarray([])
 
 
+def _array_names(field_data: _vtk.vtkFieldData) -> list[str]:
+    """Return the array names of a VTK field data object, naming any unnamed arrays."""
+    names = []
+    for i in range(field_data.GetNumberOfArrays()):
+        array = field_data.GetAbstractArray(i)
+        name = array.GetName()
+        if not name:  # pragma: no cover
+            name = f'Unnamed_{i}'
+            array.SetName(name)
+        names.append(name)
+    return names
+
+
 class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCheckSnakeCase):
     """Python friendly wrapper of :vtk:`vtkDataSetAttributes`.
 
@@ -969,18 +982,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         ['data0', 'data1']
 
         """
-        keys = []
-        for i in range(self.GetNumberOfArrays()):
-            array = self.VTKObject.GetAbstractArray(i)
-            name = array.GetName()
-            if name:
-                keys.append(name)
-            else:  # pragma: no cover
-                # Assign this array a name
-                name = f'Unnamed_{i}'
-                array.SetName(name)
-                keys.append(name)
-        return keys
+        return _array_names(self.VTKObject)
 
     def values(self: Self) -> list[pyvista_ndarray]:
         """Return the arrays as a list.
