@@ -740,7 +740,9 @@ def test_intersection(sphere, sphere_shifted):
 
 @pytest.mark.parametrize('curv_type', ['mean', 'gaussian', 'maximum', 'minimum'])
 def test_curvature(sphere, curv_type):
-    curv = sphere.curvature(curv_type)
+    with pv.VtkErrorCatcher() as catcher:
+        curv = sphere.curvature(curv_type)
+    assert catcher.warning_events == []
     assert np.any(curv)
     assert curv.size == sphere.n_points
 
