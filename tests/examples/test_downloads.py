@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 import contextlib
 import os
 from pathlib import Path
@@ -44,14 +45,10 @@ def test_dataset_loader_name_matches_download_name(test_case: DatasetLoaderTestC
         pytest.fail(msg)
 
 
-def _is_valid_url(url):
-    session = retry(
-        status_to_retry=[500, 502, 504, 403, 429],  # default + GH rate limit (403, 429)
-        retries=5,
-        backoff_factor=2.0,
-    )
+def _is_valid_url(session: requests.Session, url: str) -> bool:
     try:
-        session.get(url)
+        # HEAD checks that the file is served without downloading it
+        session.head(url, allow_redirects=True).raise_for_status()
     except requests.RequestException:
         return False
     else:
@@ -66,12 +63,24 @@ def test_dataset_loader_source_url_blob(test_case: DatasetLoaderTestCase):
         reason = e.args[0]
         pytest.skip(reason)
 
-    # Test valid url
-    sources = [sources] if isinstance(sources, str) else sources  # Make iterable
-    for url in sources:
+    session = retry(
+        status_to_retry=[500, 502, 504, 403, 429],  # default + GH rate limit (403, 429)
+        retries=5,
+        backoff_factor=2.0,
+    )
+
+    def is_valid(url: str) -> bool:
         # Check is_file() in case local cache of pyvista/data is used
-        if not (Path(url).is_file() or _is_valid_url(url)):  # pragma: no cover -- failure path
-            pytest.fail(f'Invalid blob URL for {test_case.dataset_name}:\n{url}')
+        return Path(url).is_file() or _is_valid_url(session, url)
+
+    # Test valid url; some datasets have dozens of files, so check them concurrently
+    sources = [sources] if isinstance(sources, str) else sources  # Make iterable
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        valid = pool.map(is_valid, sources)
+        invalid = [url for url, ok in zip(sources, valid, strict=True) if not ok]
+    if invalid:  # pragma: no cover -- failure path
+        urls = '\n'.join(invalid)
+        pytest.fail(f'Invalid blob URL for {test_case.dataset_name}:\n{urls}')
 
 
 def test_delete_downloads(tmpdir):
