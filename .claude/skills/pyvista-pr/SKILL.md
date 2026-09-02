@@ -105,9 +105,13 @@ The second half of that clause is the author's statement, not yours. Put it in t
 the sentence is complete, and say plainly that it is theirs to confirm, reword, or drop —
 you cannot attest that someone else reviewed the change.
 
-No banner, no badge, no separate heading, no generated-with footer. Put it in the
-description rather than only in a commit trailer, because the description is what a
-reviewer reads first.
+Then close the body with the generated-with footer. It is mandatory for any pull request
+an AI tool helped write:
+
+> 🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+No banner, no badge, no separate heading. Put the disclosure in the description rather
+than only in a commit trailer, because the description is what a reviewer reads first.
 
 ## Labels that start extra CI
 

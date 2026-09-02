@@ -407,7 +407,8 @@ def test_vtk_obb_tree_raises():
 
 
 def test_polydata_subclass_del():
-    class PolyDataDerived(pv.PolyData): ...
+    class PolyDataDerived(pv.PolyData):
+        pass
 
     poly = PolyDataDerived()
     del poly
