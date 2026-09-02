@@ -446,17 +446,26 @@ def test_parallel_error(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None
     assert 'cannot be enabled for parallel builds' in err
 
 
-@flaky_test(exceptions=(AssertionError,))
-def test_autocodelink(tmp_path: Path):
-    """Check that ``pyvista_plot_autocodelink`` hyperlinks identifiers resolved from execution."""
-    source_dir = Path(__file__).parent / 'tinypages_autocodelink'
+AUTOCODELINK_DIR = Path(__file__).parent / 'tinypages_autocodelink'
+
+
+@pytest.fixture(scope='module')
+def autocodelink_build(tmp_path_factory: pytest.TempPathFactory) -> tuple[Path, Path, str, str]:
+    """Build ``tinypages_autocodelink`` once; return its html and doctree dirs and output."""
+    tmp_path = tmp_path_factory.mktemp('autocodelink')
     html_dir = tmp_path / 'html'
     doctree_dir = tmp_path / 'doctrees'
-
     returncode, out, err = _run_sphinx_build(
-        _sphinx_build_cmd(source_dir, html_dir, doctree_dir),
+        _sphinx_build_cmd(AUTOCODELINK_DIR, html_dir, doctree_dir),
     )
     assert returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
+    return html_dir, doctree_dir, out, err
+
+
+@flaky_test(exceptions=(AssertionError,))
+def test_autocodelink(autocodelink_build: tuple[Path, Path, str, str]):
+    """Check that ``pyvista_plot_autocodelink`` hyperlinks identifiers resolved from execution."""
+    html_dir, _, out, err = autocodelink_build
 
     html = (html_dir / 'index.html').read_text(encoding='utf-8')
 
@@ -498,16 +507,14 @@ def test_autocodelink(tmp_path: Path):
 
 
 @flaky_test(exceptions=(AssertionError,))
-def test_autocodelink_idempotent_rebuild(tmp_path: Path):
+def test_autocodelink_idempotent_rebuild(autocodelink_build: tuple[Path, Path, str, str]):
     """Rebuilding into the same output dir must not nest a second anchor."""
-    source_dir = Path(__file__).parent / 'tinypages_autocodelink'
-    html_dir = tmp_path / 'html'
-    doctree_dir = tmp_path / 'doctrees'
-    cmd = _sphinx_build_cmd(source_dir, html_dir, doctree_dir)
+    html_dir, doctree_dir, _, _ = autocodelink_build
 
-    for _ in range(2):
-        returncode, out, err = _run_sphinx_build(cmd)
-        assert returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
+    returncode, out, err = _run_sphinx_build(
+        _sphinx_build_cmd(AUTOCODELINK_DIR, html_dir, doctree_dir),
+    )
+    assert returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
 
     html = (html_dir / 'index.html').read_text(encoding='utf-8')
     assert (
@@ -518,16 +525,9 @@ def test_autocodelink_idempotent_rebuild(tmp_path: Path):
 
 
 @flaky_test(exceptions=(AssertionError,))
-def test_autodoc_backrefs_hoisted_to_page_level(tmp_path: Path):
+def test_autodoc_backrefs_hoisted_to_page_level(autocodelink_build: tuple[Path, Path, str, str]):
     """``autocodelink_autodoc_backrefs`` sections must hoist exactly like numpydoc's own."""
-    source_dir = Path(__file__).parent / 'tinypages_autocodelink'
-    html_dir = tmp_path / 'html'
-    doctree_dir = tmp_path / 'doctrees'
-
-    returncode, out, err = _run_sphinx_build(
-        _sphinx_build_cmd(source_dir, html_dir, doctree_dir),
-    )
-    assert returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
+    html_dir = autocodelink_build[0]
 
     referenced = (html_dir / 'hoist_referenced.html').read_text(encoding='utf-8')
     # hoisted: </section> (closing Examples) directly precedes it, as a sibling -- not
