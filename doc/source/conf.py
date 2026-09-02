@@ -266,6 +266,8 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*UnstructuredGrid'),
     (r'py:.*', '.*_TypeMultiBlockLeaf'),
     (r'py:.*', '.*DatasetObject'),
+    (r'py:.*', '.*_DatasetT_co'),
+    (r'py:.*', '.*_ReadersT_co'),
     (r'py:.*', '.*_DatasetLoader'),
     (r'py:.*', '.*Grid'),
     (r'py:.*', '.*PointGrid'),
