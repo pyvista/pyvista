@@ -1925,7 +1925,9 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         pset.points = self.points.copy()
         out = self.cell_data_to_point_data() if pass_cell_data else self
         pset.GetPointData().DeepCopy(out.GetPointData())
-        pset.active_scalars_name = out.active_scalars_name
+        field, name = out.active_scalars_info
+        if field == FieldAssociation.POINT:
+            pset.active_scalars_name = name
         return pset
 
     @_deprecate_positional_args

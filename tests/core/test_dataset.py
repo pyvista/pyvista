@@ -1360,6 +1360,16 @@ def test_cast_to_pointset(sphere):
     assert not np.allclose(sphere.active_scalars, pointset.active_scalars)
 
 
+def test_cast_to_pointset_cell_scalars(sphere):
+    sphere.cell_data['cell_scalars'] = np.arange(sphere.n_cells)
+    sphere.set_active_scalars('cell_scalars')
+    pointset = sphere.cast_to_pointset()
+    assert isinstance(pointset, pv.PointSet)
+    assert pointset.active_scalars_name is None
+    pointset = sphere.cast_to_pointset(pass_cell_data=True)
+    assert pointset.active_scalars_name == 'cell_scalars'
+
+
 def test_cast_to_pointset_implicit(uniform):
     pointset = uniform.cast_to_pointset(pass_cell_data=True)
     assert isinstance(pointset, pv.PointSet)
