@@ -20,8 +20,8 @@ Image Sources
    ImageNoiseSource
    ImageSinusoidSource
 
-Implicit Functions
-~~~~~~~~~~~~~~~~~~
+Implicit Function Sampling
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 An implicit function defines a scalar value at every point in space.
 :func:`~pyvista.sample_function` evaluates one over a grid to produce a
 :class:`~pyvista.ImageData`.
@@ -40,7 +40,6 @@ An implicit function defines a scalar value at every point in space.
 .. autosummary::
    :toctree: _autosummary
 
-   generate_plane
    perlin_noise
    sample_function
 

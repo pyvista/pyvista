@@ -29,8 +29,8 @@ and from other libraries.
       :link-type: ref
       :class-title: pyvista-card-title
 
-      Geometric objects, geometric sources, and functions that build
-      meshes from points.
+      Geometric objects, geometric sources, mesh creation functions,
+      and implicit functions.
 
    .. grid-item-card:: Parametric Objects
       :link: parametric_api
@@ -44,7 +44,7 @@ and from other libraries.
       :link-type: ref
       :class-title: pyvista-card-title
 
-      Image sources, implicit functions, and image comparison.
+      Image sources, implicit function sampling, and image comparison.
 
    .. grid-item-card:: Transformations
       :link: transform_api

@@ -154,3 +154,15 @@ These functions operate on arrays of points.
    fit_plane_to_points
    principal_axes
    core.utilities.is_inside_bounds
+
+
+Implicit Functions
+~~~~~~~~~~~~~~~~~~
+An implicit function defines a scalar value at every point in space, such as
+the signed distance from a plane. To sample one onto a grid, see
+:func:`~pyvista.sample_function`.
+
+.. autosummary::
+   :toctree: _autosummary
+
+   generate_plane
