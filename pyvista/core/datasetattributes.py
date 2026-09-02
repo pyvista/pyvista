@@ -372,12 +372,9 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
         """
         self._raise_field_data_no_scalars_vectors_normals()
-        if self.GetScalars() is not None:
-            array = pyvista_ndarray(
-                self.GetScalars(),
-                dataset=self.dataset,
-                association=self.association,
-            )
+        scalars = self.VTKObject.GetScalars()
+        if scalars is not None:
+            array = pyvista_ndarray(scalars, dataset=self.dataset, association=self.association)
             return self._patch_type(array)
         return None
 
