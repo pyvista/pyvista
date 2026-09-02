@@ -177,9 +177,9 @@ These classes are used when plotting :class:`pyvista.MultiBlock` datasets.
 .. autosummary::
    :toctree: _autosummary
 
-   CompositePolyDataMapper
-   CompositeAttributes
    BlockAttributes
+   CompositeAttributes
+   CompositePolyDataMapper
 
 
 Charts API
@@ -206,8 +206,8 @@ details, see the :ref:`widgets` examples.
 .. autosummary::
    :toctree: _autosummary
 
-   plotting.widgets.WidgetComponent
    plotting.widgets.AffineWidget3D
+   plotting.widgets.WidgetComponent
 
 
 Picking API
@@ -239,9 +239,9 @@ interaction styles.
    plotting.render_window_interactor.InteractorStyleJoystickCamera
    plotting.render_window_interactor.InteractorStyleRubberBand2D
    plotting.render_window_interactor.InteractorStyleRubberBandPick
+   plotting.render_window_interactor.InteractorStyleTerrain
    plotting.render_window_interactor.InteractorStyleTrackballActor
    plotting.render_window_interactor.InteractorStyleTrackballCamera
-   plotting.render_window_interactor.InteractorStyleTerrain
    plotting.render_window_interactor.InteractorStyleZoom
 
 
@@ -295,8 +295,8 @@ documented once, here, and linked from every class that inherits it.
 .. autosummary::
    :toctree: _autosummary
 
-   plotting.axes_assembly._XYZAssembly
    plotting.mapper._BaseDataSetMapper
    plotting.mapper._BaseMapper
    plotting.mapper._BaseVolumeMapper
    plotting.prop3d._Prop3DMixin
+   plotting.axes_assembly._XYZAssembly

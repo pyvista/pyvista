@@ -26,14 +26,22 @@ PyVista.
 .. autosummary::
    :toctree: _autosummary
 
-   themes._ConfigBase
-   themes.DarkTheme
    themes.Theme
+   themes.DarkTheme
    themes.DocumentTheme
    themes.ParaViewTheme
+
+Each theme groups its settings into the following configuration sections.
+:class:`~pyvista.plotting.themes._ConfigBase` is the base class they share
+with :class:`~pyvista.core.config.Config`.
+
+.. autosummary::
+   :toctree: _autosummary
+
    themes._AxesConfig
    themes._CameraConfig
    themes._ColorbarConfig
+   themes._ConfigBase
    themes._DepthPeelingConfig
    themes._Font
    themes._LightingConfig
