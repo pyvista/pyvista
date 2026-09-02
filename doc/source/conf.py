@@ -894,6 +894,8 @@ html_theme_options = {
     # avoiding an O(N^2) sidebar render across ~2,700 method-level entries.
     'max_navbar_depth': 4,
     'article_header_start': ['toggle-primary-sidebar.html', 'breadcrumbs.html'],
+    # Else pydata injects a hidden navbar that steals the sidebar toggles, sphinx-book-theme#988.
+    'navbar_persistent': [],
     'icon_links': [
         {
             'name': 'Slack Community',
@@ -1062,6 +1064,12 @@ html_sidebars = {
         'navbar-logo.html',
         'icon-links.html',
         'search-button-field.html',
+        'sbt-sidebar-nav.html',
+    ],
+    # The search page renders its own search box, so drop the sidebar's.
+    'search': [
+        'navbar-logo.html',
+        'icon-links.html',
         'sbt-sidebar-nav.html',
     ],
 }
