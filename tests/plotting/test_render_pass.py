@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 
+import pyvista as pv
 from pyvista import _vtk
 from pyvista.plotting.render_passes import RenderPasses
 
@@ -162,3 +163,34 @@ def test_render_passes_deep_clean():
     assert passes._dof_pass is None
     assert passes._ssaa_pass is None
     assert passes._blur_passes == []
+
+
+@pytest.mark.parametrize(
+    ('enable', 'disable'),
+    [
+        pytest.param(
+            'enable_eye_dome_lighting',
+            'disable_eye_dome_lighting',
+            marks=pytest.mark.skip_windows('No testing on windows for EDL'),
+        ),
+        ('enable_shadows', 'disable_shadows'),
+        ('enable_depth_of_field', 'disable_depth_of_field'),
+        ('add_blurring', 'remove_blurring'),
+    ],
+)
+def test_render_pass_releases_graphics_resources(enable, disable):
+    with pv.VtkErrorCatcher() as catcher:
+        pl = pv.Plotter()
+        pl.add_mesh(pv.Sphere())
+        getattr(pl, enable)()
+        pl.show()
+    assert catcher.error_events == []
+
+    with pv.VtkErrorCatcher() as catcher:
+        pl = pv.Plotter()
+        pl.add_mesh(pv.Sphere())
+        getattr(pl, enable)()
+        pl.show(auto_close=False)
+        getattr(pl, disable)()
+        pl.close()
+    assert catcher.error_events == []
