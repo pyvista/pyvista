@@ -316,7 +316,7 @@ def convert_array(  # noqa: PLR0917
             vtk_data.SetName(name)
         return vtk_data
     # Otherwise input must be a vtkDataArray
-    return _vtk_array_to_numpy(arr)
+    return _vtk_array_to_numpy(cast('_vtk.vtkAbstractArray', arr))
 
 
 def _vtk_array_to_numpy(arr: _vtk.vtkAbstractArray) -> npt.NDArray[Any]:
