@@ -3815,7 +3815,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
             # Copy the texture
             # TODO: use Texture.copy() once support for cubemaps is added, see https://github.com/pyvista/pyvista/issues/7300
-            texture_copy = pv.Texture()  # type: ignore[abstract]
+            texture_copy = pv.Texture()
             texture_copy.cube_map = texture.cube_map
             texture_copy.mipmap = texture.mipmap
             texture_copy.interpolate = texture.interpolate
