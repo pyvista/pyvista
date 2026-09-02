@@ -57,8 +57,10 @@ from pyvista.ext._autoenum import instance_property_names
 from pyvista.ext._autoenum import metaclass_property_descriptions
 from pyvista.ext._autoenum import metaclass_property_names
 from pyvista.ext._autoinherit import filter_member_rows
+from pyvista.ext._autoinherit import inherited_classes
 from pyvista.ext._autoinherit import inherited_member_rows
 from pyvista.ext._autoinherit import own_members
+from pyvista.ext._autoinherit import vtk_bases
 from pyvista.plotting.utilities.sphinx_gallery import DynamicScraper
 
 # Need to import all vtk modules eagerly to avoid issues with parallel lazy imports
@@ -453,8 +455,10 @@ autosummary_context = {
     # Used by _templates/autosummary/class.rst: see pyvista/ext/_autoinherit.py for how
     # each member is routed to exactly one class page.
     'own_members': own_members,
+    'inherited_classes': inherited_classes,
     'inherited_member_rows': inherited_member_rows,
     'filter_member_rows': filter_member_rows,
+    'vtk_bases': vtk_bases,
     # Used by _templates/autosummary/enum.rst: autosummary does not populate `attributes`
     # for the `enum` objtype the way it does for `class`, so enum.rst asks these directly.
     'instance_property_names': instance_property_names,
