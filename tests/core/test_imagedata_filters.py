@@ -1370,6 +1370,30 @@ def test_resample_collapse_axis_spacing(extend_border):
     assert np.allclose(resampled.spacing, (1, 2, expected_z_spacing))
 
 
+@pytest.mark.parametrize('dtype', ['uint8', 'int32', 'uint32', 'int64', 'uint64', 'bool'])
+@pytest.mark.parametrize('interpolation', ['linear', 'bspline'])
+def test_resample_dtype(dtype, interpolation):
+    image = pv.ImageData(dimensions=(4, 4, 4))
+    values = np.arange(image.n_points) % 2 if dtype == 'bool' else np.arange(image.n_points)
+    image['data'] = values.astype(dtype)
+
+    resampled = image.resample(2, interpolation)
+    array = resampled['data']
+    assert array.dtype == dtype
+    if interpolation == 'linear':
+        assert array.min() == values.min()
+        assert array.max() == values.max()
+
+
+def test_resample_int64_rounding():
+    # 64-bit integers are cast to float for resampling and rounded like the other integers
+    image = pv.ImageData(dimensions=(3, 1, 1))
+    image['data'] = np.array([0, 3, 6], dtype=np.int32)
+    expected = image.resample(2, 'linear')['data']
+    image['data'] = np.array([0, 3, 6], dtype=np.int64)
+    assert np.array_equal(image.resample(2, 'linear')['data'], expected)
+
+
 def test_select_values(uniform):
     selected = uniform.select_values(ranges=uniform.get_data_range())
     assert isinstance(selected, pv.ImageData)

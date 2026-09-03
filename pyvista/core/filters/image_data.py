@@ -4662,7 +4662,8 @@ class ImageDataFilters(DataSetFilters):
 
         # Validate interpolation and modify scalars as needed
         input_dtype = active_scalars.dtype
-        has_int_scalars = input_dtype == np.int64
+        # 64-bit integers are not supported by the filter so we cast to float
+        has_int_scalars = input_dtype.kind in 'iu' and input_dtype.itemsize == 8
         _validation.check_contains(
             get_args(_InterpolationOptions),
             must_contain=interpolation,
@@ -4676,7 +4677,6 @@ class ImageDataFilters(DataSetFilters):
         # Shallow copy so the requested scalars can be made active without modifying self
         input_image = self.copy(deep=False)
         if has_int_scalars:
-            # int (long long) is not supported by the filter so we cast to float
             input_image[name] = active_scalars.astype(float)
         else:
             input_image.set_active_scalars(name, preference=field.name.lower())  # type: ignore[arg-type]
@@ -4871,8 +4871,9 @@ class ImageDataFilters(DataSetFilters):
             output_image.rename_array('ImageScalars', name)
 
         if has_int_scalars:
-            # Can safely cast to int to match input
-            output_image.point_data[name] = output_image.point_data[name].astype(input_dtype)
+            output_image.point_data[name] = _round_to_dtype(
+                output_image.point_data[name], input_dtype
+            )
 
         if processing_cell_scalars:
             # Convert back to cells. This modifies origin so we need to reset it.
@@ -5829,3 +5830,13 @@ def _pad_extent(extent, padding):
         ext_zn - pad_zn,  # minZ
         ext_zp + pad_zp,  # maxZ
     )
+
+
+def _round_to_dtype(array: NumpyArray[float], dtype: np.dtype[Any]) -> NumpyArray[Any]:
+    """Round and clamp floating point values to an integer or boolean dtype."""
+    if dtype.kind in 'iu':
+        info = np.iinfo(dtype)
+        array = np.clip(np.floor(array + 0.5), info.min, info.max)
+    elif dtype.kind == 'b':
+        array = np.floor(array + 0.5)
+    return array.astype(dtype)
