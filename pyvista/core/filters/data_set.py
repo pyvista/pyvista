@@ -7705,8 +7705,7 @@ class DataSetFilters(DataObjectFilters):
         mask fits the bounds of the input surface.
 
         If no inputs are provided, ``cell_length_percentile=0.1`` (tenth percentile) is
-        used by default to estimate the spacing. On systems with VTK < 9.2, the default
-        spacing is set to ``1/100`` of the input mesh's length.
+        used by default to estimate the spacing.
 
         .. versionadded:: 0.45.0
 
@@ -7771,9 +7770,6 @@ class DataSetFilters(DataObjectFilters):
             #. Inserting the distance into an ordered set to create the CDF.
 
             Has no effect if ``dimensions`` or ``reference_volume`` are specified.
-
-            .. note::
-                This option is only available for VTK 9.2 or greater.
 
         cell_length_sample_size : int, optional
             Number of samples to use for the cumulative distribution function (CDF)
@@ -8163,8 +8159,7 @@ class DataSetFilters(DataObjectFilters):
         grid fits the bounds of the input mesh.
 
         If no inputs are provided, ``cell_length_percentile=0.1`` (tenth percentile) is
-        used by default to estimate the spacing. On systems with VTK < 9.2, the default
-        spacing is set to ``1/100`` of the input mesh's length.
+        used by default to estimate the spacing.
 
         A point data array ``mask`` is included where points inside and outside of the
         input surface are labelled with ``foreground_value`` and ``background_value``,
@@ -8227,9 +8222,6 @@ class DataSetFilters(DataObjectFilters):
             #. Inserting the distance into an ordered set to create the CDF.
 
             Has no effect if ``dimensions`` or ``reference_volume`` are specified.
-
-            .. note::
-                This option is only available for VTK 9.2 or greater.
 
         cell_length_sample_size : int, optional
             Number of samples to use for the cumulative distribution function (CDF)
