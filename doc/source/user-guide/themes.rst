@@ -30,7 +30,7 @@ attribute names:
 
    >>> pv.global_theme.color = 'lightblue'
 
-Here's an example plot of the Stanford Dragon using default plotting
+Here's an example plot of the Stanford Bunny using default plotting
 parameters:
 
 .. pyvista-plot::
@@ -38,8 +38,8 @@ parameters:
 
    >>> import pyvista as pv
    >>> from pyvista import examples
-   >>> dragon = examples.download_dragon()
-   >>> dragon.plot(cpos='xy')
+   >>> bunny = examples.download_bunny()
+   >>> bunny.plot(cpos='xy')
 
 These parameters can then be modified globally with:
 
@@ -55,14 +55,14 @@ Now, the mesh will be plotted with the new global parameters:
 .. pyvista-plot::
    :context:
 
-   >>> dragon.plot(cpos='xy')
+   >>> bunny.plot(cpos='xy')
 
 This is identical to plotting the mesh with the following parameters:
 
 .. pyvista-plot::
    :context:
 
-   >>> dragon.plot(
+   >>> bunny.plot(
    ...     cpos='xy', color='red', background='white', show_axes=False
    ... )
 

@@ -1604,27 +1604,30 @@ class ImageDataFilters(DataSetFilters):
 
         Examples
         --------
-        Load a grayscale image :func:`~pyvista.examples.downloads.download_chest()` and show it
-        for context.
+        .. pyvista-plot::
+            :force_static:
 
-        >>> from pyvista import examples
-        >>> im = examples.download_chest()
-        >>> clim = im.get_data_range()
-        >>> kwargs = dict(
-        ...     cmap='grey',
-        ...     clim=clim,
-        ...     lighting=False,
-        ...     cpos='xy',
-        ...     zoom='tight',
-        ...     show_axes=False,
-        ...     show_scalar_bar=False,
-        ... )
-        >>> im.plot(**kwargs)
+            Load a grayscale image :func:`~pyvista.examples.downloads.download_chest()` and show it
+            for context.
 
-        Use ``open`` to remove small objects in the lungs.
+            >>> from pyvista import examples
+            >>> im = examples.download_chest()
+            >>> clim = im.get_data_range()
+            >>> kwargs = dict(
+            ...     cmap='grey',
+            ...     clim=clim,
+            ...     lighting=False,
+            ...     cpos='xy',
+            ...     zoom='tight',
+            ...     show_axes=False,
+            ...     show_scalar_bar=False,
+            ... )
+            >>> im.plot(**kwargs)
 
-        >>> opened = im.open(kernel_size=15)
-        >>> opened.plot(**kwargs)
+            Use ``open`` to remove small objects in the lungs.
+
+            >>> opened = im.open(kernel_size=15)
+            >>> opened.plot(**kwargs)
 
         """
         # Opening: erosion followed by dilation
@@ -5007,86 +5010,89 @@ class ImageDataFilters(DataSetFilters):
 
         Examples
         --------
-        Load a CT image. Here we load
-        :func:`~pyvista.examples.downloads.download_whole_body_ct_male`.
+        .. pyvista-plot::
+            :force_static:
 
-        >>> import pyvista as pv
-        >>> from pyvista import examples
-        >>> dataset = examples.download_whole_body_ct_male()
-        >>> ct_image = dataset['ct']
+            Load a CT image. Here we load
+            :func:`~pyvista.examples.downloads.download_whole_body_ct_male`.
 
-        Show the initial data range.
+            >>> import pyvista as pv
+            >>> from pyvista import examples
+            >>> dataset = examples.download_whole_body_ct_male()
+            >>> ct_image = dataset['ct']
 
-        >>> ct_image.get_data_range()
-        (np.int16(-1348), np.int16(3409))
+            Show the initial data range.
 
-        Select intensity values above ``150`` to select the bones.
+            >>> ct_image.get_data_range()
+            (np.int16(-1348), np.int16(3409))
 
-        >>> bone_range = [150, float('inf')]
-        >>> fill_value = -1000  # fill with intensity values corresponding to air
-        >>> bone_image = ct_image.select_values(
-        ...     ranges=bone_range, fill_value=fill_value
-        ... )
+            Select intensity values above ``150`` to select the bones.
 
-        Show the new data range.
+            >>> bone_range = [150, float('inf')]
+            >>> fill_value = -1000  # fill with intensity values corresponding to air
+            >>> bone_image = ct_image.select_values(
+            ...     ranges=bone_range, fill_value=fill_value
+            ... )
 
-        >>> bone_image.get_data_range()
-        (np.int16(-1000), np.int16(3409))
+            Show the new data range.
 
-        Plot the selected values. Use ``'foreground'`` opacity to make the fill value
-        transparent and the selected values opaque.
+            >>> bone_image.get_data_range()
+            (np.int16(-1000), np.int16(3409))
 
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_volume(
-        ...     bone_image,
-        ...     opacity='foreground',
-        ...     cmap='bone',
-        ... )
-        >>> pl.view_zx()
-        >>> pl.camera.up = (0, 0, 1)
-        >>> pl.show()
+            Plot the selected values. Use ``'foreground'`` opacity to make the fill value
+            transparent and the selected values opaque.
 
-        Use ``'replacement_value'`` to binarize the selected values instead. The fill
-        value, or background, is ``0`` by default.
+            >>> pl = pv.Plotter()
+            >>> _ = pl.add_volume(
+            ...     bone_image,
+            ...     opacity='foreground',
+            ...     cmap='bone',
+            ... )
+            >>> pl.view_zx()
+            >>> pl.camera.up = (0, 0, 1)
+            >>> pl.show()
 
-        >>> bone_mask = ct_image.select_values(ranges=bone_range, replacement_value=1)
-        >>> bone_mask.get_data_range()
-        (np.int16(0), np.int16(1))
+            Use ``'replacement_value'`` to binarize the selected values instead. The fill
+            value, or background, is ``0`` by default.
 
-        Generate a surface contour of the mask and plot it.
+            >>> bone_mask = ct_image.select_values(ranges=bone_range, replacement_value=1)
+            >>> bone_mask.get_data_range()
+            (np.int16(0), np.int16(1))
 
-        >>> surf = bone_mask.contour_labels()
+            Generate a surface contour of the mask and plot it.
 
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(surf, color=True)
-        >>> pl.view_zx()
-        >>> pl.camera.up = (0, 0, 1)
-        >>> pl.show()
+            >>> surf = bone_mask.contour_labels()
 
-        Load a color image. Here we load :func:`~pyvista.examples.downloads.download_beach`.
+            >>> pl = pv.Plotter()
+            >>> _ = pl.add_mesh(surf, color=True)
+            >>> pl.view_zx()
+            >>> pl.camera.up = (0, 0, 1)
+            >>> pl.show()
 
-        >>> image = examples.download_beach()
-        >>> plot_kwargs = dict(
-        ...     cpos='xy', rgb=True, lighting=False, zoom='tight', show_axes=False
-        ... )
-        >>> image.plot(**plot_kwargs)
+            Load a color image. Here we load :func:`~pyvista.examples.downloads.download_beach`.
 
-        Select components from the image which have a strong red component.
-        Use ``replacement_value`` to replace these pixels with a pure red color
-        and ``fill_value`` to fill the rest of the image with white pixels.
+            >>> image = examples.download_beach()
+            >>> plot_kwargs = dict(
+            ...     cpos='xy', rgb=True, lighting=False, zoom='tight', show_axes=False
+            ... )
+            >>> image.plot(**plot_kwargs)
 
-        >>> white = [255, 255, 255]
-        >>> red = [255, 0, 0]
-        >>> red_range = [200, 255]
-        >>> red_component = 0
-        >>> selected = image.select_values(
-        ...     ranges=red_range,
-        ...     component_mode=red_component,
-        ...     replacement_value=red,
-        ...     fill_value=white,
-        ... )
+            Select components from the image which have a strong red component.
+            Use ``replacement_value`` to replace these pixels with a pure red color
+            and ``fill_value`` to fill the rest of the image with white pixels.
 
-        >>> selected.plot(**plot_kwargs)
+            >>> white = [255, 255, 255]
+            >>> red = [255, 0, 0]
+            >>> red_range = [200, 255]
+            >>> red_component = 0
+            >>> selected = image.select_values(
+            ...     ranges=red_range,
+            ...     component_mode=red_component,
+            ...     replacement_value=red,
+            ...     fill_value=white,
+            ... )
+
+            >>> selected.plot(**plot_kwargs)
 
         """
         validated = self._validate_extract_values(
