@@ -75,12 +75,12 @@ to = "/api/core/_autosummary/pyvista.cell_quality_info.html"
 [[redirects]]
 from = "/api/utilities/_autosummary/pyvista.core.utilities.misc._BoundsSizeMixin.html"
 status = 301
-to = "/api/core/_autosummary/pyvista.core.utilities.misc._BoundsSizeMixin.html"
+to = "/api/plotting/_autosummary/pyvista.core.utilities.misc._BoundsSizeMixin.html"
 
 [[redirects]]
 from = "/api/utilities/_autosummary/pyvista.core.utilities.misc._BoundsSizeMixin.bounds_size.html"
 status = 301
-to = "/api/core/_autosummary/pyvista.core.utilities.misc._BoundsSizeMixin.bounds_size.html"
+to = "/api/plotting/_autosummary/pyvista.core.utilities.misc._BoundsSizeMixin.bounds_size.html"
 
 [[redirects]]
 from = "/api/utilities/_autosummary/pyvista.core.utilities.misc._NameMixin.html"
