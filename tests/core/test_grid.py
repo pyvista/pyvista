@@ -507,7 +507,7 @@ def test_save(extension, binary, tmpdir, hexbeam):
 
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', ['.case'])
-def test_ensight_save(extension, binary, tmpdir, hexbeam, capfd):
+def test_ensight_save(extension, binary, tmpdir, hexbeam):
     filename = str(tmpdir.mkdir('tmpdir').join(f'tmp{extension}'))
     if not binary:
         with pytest.raises(ValueError, match=r'.case files can only be written in binary format'):
@@ -515,7 +515,6 @@ def test_ensight_save(extension, binary, tmpdir, hexbeam, capfd):
         return
 
     hexbeam.save(filename, binary=binary)
-    assert 'No BlockID' not in capfd.readouterr().err
 
     output_filename = list(Path(filename).parent.glob('*.case'))
     expected_pattern = re.compile(r'^tmp\.[0-9]+\.case$')

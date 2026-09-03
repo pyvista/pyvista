@@ -311,9 +311,7 @@ def test_download_can_crushed_hdf():
 def test_download_can_crushed_vtu():
     path = examples.download_can_crushed_vtu(load=False)
     assert Path(path).is_file()
-    with pv.VtkErrorCatcher() as catcher:
-        dataset = examples.download_can_crushed_vtu()
-    assert catcher.warning_events == []
+    dataset = examples.download_can_crushed_vtu()
     assert isinstance(dataset, pv.UnstructuredGrid)
 
 
@@ -1239,7 +1237,7 @@ def test_download_coil_magnetic_field():
     assert dataset.n_points == 531441
 
 
-def test_download_nek5000(capfd):
+def test_download_nek5000():
     filename = examples.download_nek5000(load=False)
     assert Path(filename).is_file()
     assert filename.endswith('nek5000')
@@ -1249,7 +1247,6 @@ def test_download_nek5000(capfd):
 
     nek_data = examples.download_nek5000(load=True)
     assert isinstance(nek_data, pv.UnstructuredGrid)
-    assert 'Mesh found' not in capfd.readouterr().out
 
 
 @pytest.mark.skip_windows

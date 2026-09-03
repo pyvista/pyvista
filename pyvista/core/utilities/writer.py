@@ -17,7 +17,6 @@ from pyvista.core.utilities.fileio import _CompressionOptions
 from pyvista.core.utilities.fileio import _FileIOBase
 from pyvista.core.utilities.fileio import _warn_multiblock_nested_field_data
 from pyvista.core.utilities.misc import abstract_class
-from pyvista.core.utilities.state_manager import vtk_verbosity
 
 if TYPE_CHECKING:
     from pyvista import DataObject
@@ -560,12 +559,6 @@ class EnSightWriter(BaseWriter):
         raw_path = Path(self.path)
         process_number = self.writer.GetProcessNumber()  # type: ignore[attr-defined]
         self.written_path = raw_path.parent / f'{raw_path.stem}.{process_number}.case'
-
-    def write(self) -> None:
-        """Write data to path."""
-        # The writer logs that no ``BlockId`` cell array is present, which is the normal case
-        with vtk_verbosity('off'):
-            super().write()
 
 
 @abstract_class
