@@ -1318,6 +1318,29 @@ def test_resample_scalars_not_active():
     assert image.active_scalars_name == 'active'
 
 
+def test_resample_reference_image_cell_data():
+    image = pv.ImageData(dimensions=(5, 5, 5))
+    image.cell_data['data'] = np.arange(image.n_cells, dtype=float)
+    reference = pv.ImageData(dimensions=(9, 9, 9), spacing=(0.5, 0.5, 0.5), origin=(1, 1, 1))
+
+    resampled = image.resample(reference_image=reference)
+    assert np.array_equal(resampled.dimensions, reference.dimensions)
+    assert np.allclose(resampled.spacing, reference.spacing)
+    assert np.allclose(resampled.origin, reference.origin)
+    assert np.allclose(resampled.bounds, reference.bounds)
+    assert resampled.array_names == ['data']
+
+
+def test_resample_cell_data_dimensions_raises():
+    image = pv.ImageData(dimensions=(5, 5, 5))
+    image.cell_data['data'] = np.arange(image.n_cells, dtype=float)
+    match = (
+        '`dimensions` must be at least 2 along each non-singleton axis when resampling cell data.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        image.resample(dimensions=(1, 5, 5))
+
+
 def test_select_values(uniform):
     selected = uniform.select_values(ranges=uniform.get_data_range())
     assert isinstance(selected, pv.ImageData)

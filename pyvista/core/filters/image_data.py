@@ -4737,10 +4737,17 @@ class ImageDataFilters(DataSetFilters):
             new_dimensions = old_dimensions * sample_rate_
         else:
             if dimensions is not None:
-                dimensions_ = np.array(dimensions)
-                dimensions_ = dimensions_ - 1 if processing_cell_scalars else dimensions_
-                reference_image.dimensions = dimensions_
+                reference_image.dimensions = dimensions
             new_dimensions = np.array(reference_image.dimensions)
+            if processing_cell_scalars and (dimensions is not None or reference_image_provided):
+                # Dimensions count points, and there is one less cell than points along each axis
+                new_dimensions = new_dimensions - 1
+                if np.any(new_dimensions[old_dimensions > 1] < 1):
+                    msg = (
+                        '`dimensions` must be at least 2 along each non-singleton axis when '
+                        'resampling cell data.'
+                    )
+                    raise ValueError(msg)
 
         # Compute the magnification factors to use with the filter
         # Note that SetMagnificationFactors will multiply the factors by the extent
