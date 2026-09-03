@@ -257,6 +257,43 @@ def test_timer():
     assert len(events) == E
 
 
+@skip_windows_mesa
+@pytest.mark.skipif(
+    type(_vtk.vtkRenderWindowInteractor()).__name__
+    not in ('vtkWin32RenderWindowInteractor', 'vtkXRenderWindowInteractor'),
+    reason='Other RenderWindowInteractors do not invoke TimerEvents during ProcessEvents.',
+)
+@pytest.mark.skipif(
+    type(_vtk.vtkRenderWindowInteractor()).__name__ == 'vtkXRenderWindowInteractor'
+    and type(_vtk.vtkRenderWindow()).__name__ != 'vtkXOpenGLRenderWindow',
+    reason='X interactor ProcessEvents() segfaults without an X-backed render window',
+)
+def test_multiple_timers_do_not_cross_fire():
+    # https://github.com/pyvista/pyvista/issues/7962
+    # A second, fast-firing timer must not also drive a slower timer's
+    # callback -- every timer shares the same 'TimerEvent' observer chain,
+    # so without filtering by the firing timer's own id, any timer event
+    # invokes every registered timer's callback.
+    pl = pv.Plotter()
+    iren = pv.plotting.render_window_interactor.RenderWindowInteractor(pl)
+    iren.set_render_window(pl.render_window)
+    iren.initialize()
+
+    def process_events(iren, duration):
+        t = 1000 * time.time()
+        while 1000 * time.time() - t < duration:
+            iren.process_events()
+
+    fast_calls = []
+    slow_calls = []
+    iren.add_timer_event(max_steps=1000, duration=10, callback=fast_calls.append)
+    iren.add_timer_event(max_steps=1000, duration=2000, callback=slow_calls.append)
+
+    process_events(iren, 200)  # well under the slow timer's 2000 ms period
+    assert len(fast_calls) > 1
+    assert len(slow_calls) == 0
+
+
 def test_add_timer_event():
     sphere = pv.Sphere()
 

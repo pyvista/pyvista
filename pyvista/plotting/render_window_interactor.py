@@ -47,19 +47,35 @@ class Timer(_NoNewAttrMixin):
         A callable that takes one argument. It will be passed ``step``,
         which is the number of times the timer event has occurred.
 
+    duration : int, optional
+        The timer's own duration in milliseconds, i.e. the value passed to
+        :func:`~pyvista.Plotter.add_timer_event`. ``TimerEvent`` is observed
+        on the interactor itself, so with more than one active timer, every
+        timer's ``execute`` fires whenever *any* one of them does; this is
+        used to ignore fires that land before this timer's own duration has
+        actually elapsed (:vtk:`vtkRenderWindowInteractor` does not expose
+        which timer fired). See #7962.
+
     """
 
-    def __init__(self, max_steps, callback):
+    def __init__(self, max_steps, callback, duration=None):
         """Initialize."""
         self.step = 0
         self.max_steps = max_steps
         self.id = None
         self.callback = callback
+        self.duration = duration
+        self._last_fire_time = time.monotonic()
 
     def execute(self, obj, _event):  # pragma: no cover # numpydoc ignore=PR01,RT01
         """Execute Timer."""
         # https://github.com/pyvista/pyvista/pull/5618
         iren = obj
+
+        now = time.monotonic()
+        if self.duration is not None and (now - self._last_fire_time) * 1000 < self.duration:
+            return
+        self._last_fire_time = now
 
         if self.step < self.max_steps:
             self.callback(self.step)
@@ -203,7 +219,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         >>> pl.add_timer_event(max_steps=200, duration=500, callback=callback)
 
         """
-        self._timer = Timer(max_steps, callback)
+        self._timer = Timer(max_steps, callback, duration=duration)
         self.add_observer('TimerEvent', self._timer.execute)
         self._timer.id = self.create_timer(duration)
 
