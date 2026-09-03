@@ -4374,6 +4374,9 @@ class ImageDataFilters(DataSetFilters):
         :ref:`image_representations_example`
             Compare images represented as points vs. cells.
 
+        :ref:`resample_reslice_example`
+            Compare the ``resample`` and ``reslice`` filters.
+
         Examples
         --------
         .. autoopengraph_thumbnail:: 9
@@ -4934,6 +4937,9 @@ class ImageDataFilters(DataSetFilters):
 
         :meth:`~pyvista.DataSetFilters.interpolate`
             Interpolate values from one mesh onto another.
+
+        :ref:`resample_reslice_example`
+            Compare the ``resample`` and ``reslice`` filters.
 
         Examples
         --------
