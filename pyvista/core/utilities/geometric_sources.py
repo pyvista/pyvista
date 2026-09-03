@@ -73,10 +73,13 @@ def _resolve_points_dtype_kwarg(point_dtype: str | None, points_dtype: str | Non
     return point_dtype
 
 
-class _Source(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkAlgorithm):
-    """Base class for sources that honor :attr:`pyvista.core.config.Config.points_dtype`.
+class _AlgorithmSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkAlgorithm):
+    """Base class for the sources that are themselves a VTK algorithm.
 
-    A source has no input, so ``'preserve'`` leaves the dtype VTK generates alone.
+    Each subclass mixes this with the ``vtk*Source`` it wraps, so updating it runs that
+    algorithm, and :attr:`pyvista.core.config.Config.points_dtype` is requested from it
+    and applied to its output. A source has no input, so ``'preserve'`` leaves the dtype
+    VTK generates alone.
     """
 
     def Update(self, *args: Any) -> Any:  # noqa: N802
@@ -135,7 +138,7 @@ def translate(
         surf.points += np.array(center, dtype=surf.points.dtype)
 
 
-class ConeSource(_Source, _vtk.vtkConeSource):
+class ConeSource(_AlgorithmSource, _vtk.vtkConeSource):
     """Cone source algorithm class.
 
     Parameters
@@ -392,7 +395,7 @@ class ConeSource(_Source, _vtk.vtkConeSource):
         return self._update_and_wrap_output()
 
 
-class CylinderSource(_Source, _vtk.vtkCylinderSource):
+class CylinderSource(_AlgorithmSource, _vtk.vtkCylinderSource):
     """Cylinder source algorithm class.
 
     .. warning::
@@ -654,7 +657,7 @@ class CylinderSource(_Source, _vtk.vtkCylinderSource):
         return self._update_and_wrap_output()
 
 
-class MultipleLinesSource(_Source, _vtk.vtkLineSource):
+class MultipleLinesSource(_AlgorithmSource, _vtk.vtkLineSource):
     """Multiple lines source algorithm class.
 
     Parameters
@@ -1000,7 +1003,7 @@ class Text3DSource(_NoNewAttrMixin):
             out.points += self.center
 
 
-class CubeSource(_Source, _vtk.vtkCubeSource):
+class CubeSource(_AlgorithmSource, _vtk.vtkCubeSource):
     """Cube source algorithm class.
 
     .. versionadded:: 0.44.0
@@ -1250,7 +1253,7 @@ class CubeSource(_Source, _vtk.vtkCubeSource):
         self.points_dtype = point_dtype
 
 
-class DiscSource(_Source, _vtk.vtkDiskSource):
+class DiscSource(_AlgorithmSource, _vtk.vtkDiskSource):
     """Disc source algorithm class.
 
     .. versionadded:: 0.44.0
@@ -1433,7 +1436,7 @@ class DiscSource(_Source, _vtk.vtkDiskSource):
         return self._update_and_wrap_output()
 
 
-class LineSource(_Source, _vtk.vtkLineSource):
+class LineSource(_AlgorithmSource, _vtk.vtkLineSource):
     """Create a line.
 
     .. versionadded:: 0.44
@@ -1551,7 +1554,7 @@ class LineSource(_Source, _vtk.vtkLineSource):
         return self._update_and_wrap_output()
 
 
-class SphereSource(_Source, _vtk.vtkSphereSource):
+class SphereSource(_AlgorithmSource, _vtk.vtkSphereSource):
     """Sphere source algorithm class.
 
     .. versionadded:: 0.44.0
@@ -1949,7 +1952,7 @@ class SphereSource(_Source, _vtk.vtkSphereSource):
         return out
 
 
-class PolygonSource(_Source, _vtk.vtkRegularPolygonSource):
+class PolygonSource(_AlgorithmSource, _vtk.vtkRegularPolygonSource):
     """Polygon source algorithm class.
 
     .. versionadded:: 0.44.0
@@ -2132,7 +2135,7 @@ class PolygonSource(_Source, _vtk.vtkRegularPolygonSource):
         return self._update_and_wrap_output()
 
 
-class PlatonicSolidSource(_Source, _vtk.vtkPlatonicSolidSource):
+class PlatonicSolidSource(_AlgorithmSource, _vtk.vtkPlatonicSolidSource):
     """Platonic solid source algorithm class.
 
     .. versionadded:: 0.44.0
@@ -2232,7 +2235,7 @@ class PlatonicSolidSource(_Source, _vtk.vtkPlatonicSolidSource):
         return self._update_and_wrap_output()
 
 
-class PlaneSource(_Source, _vtk.vtkPlaneSource):
+class PlaneSource(_AlgorithmSource, _vtk.vtkPlaneSource):
     """Create a plane source.
 
     The plane is defined by specifying an origin point, and then
@@ -2471,7 +2474,7 @@ class PlaneSource(_Source, _vtk.vtkPlaneSource):
         self.center = (self.center + np.array(self.normal) * distance).tolist()
 
 
-class ArrowSource(_Source, _vtk.vtkArrowSource):
+class ArrowSource(_AlgorithmSource, _vtk.vtkArrowSource):
     """Create a arrow source.
 
     .. versionadded:: 0.44
@@ -2644,7 +2647,7 @@ class ArrowSource(_Source, _vtk.vtkArrowSource):
         return self._update_and_wrap_output()
 
 
-class BoxSource(_Source, _vtk.vtkTessellatedBoxSource):
+class BoxSource(_AlgorithmSource, _vtk.vtkTessellatedBoxSource):
     """Create a box source.
 
     .. versionadded:: 0.44
@@ -2755,7 +2758,7 @@ class BoxSource(_Source, _vtk.vtkTessellatedBoxSource):
         return self._update_and_wrap_output()
 
 
-class SuperquadricSource(_Source, _vtk.vtkSuperquadricSource):
+class SuperquadricSource(_AlgorithmSource, _vtk.vtkSuperquadricSource):
     """Create superquadric source.
 
     .. versionadded:: 0.44
