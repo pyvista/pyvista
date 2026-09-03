@@ -135,12 +135,13 @@ def test_interpolate_raises(strategy):
 
 def test_get_output_restores_field_data(sphere):
     sphere.field_data['data'] = np.arange(3)
-    alg = _vtk.vtkPassArrays()
+    alg = _vtk.vtkTriangleFilter()
     alg.SetInputDataObject(sphere)
-    alg.UseFieldTypesOn()
-    alg.AddFieldType(_vtk.vtkDataObject.FIELD)
     alg.Update()
-    assert alg.GetOutputDataObject(0).GetFieldData().GetNumberOfArrays() == 0
+    vtk_output = alg.GetOutputDataObject(0)
+    vtk_output.GetFieldData().Initialize()
+    assert 'data' in sphere.field_data
+    assert vtk_output.GetFieldData().GetNumberOfArrays() == 0
     output = _get_output(alg)
     assert np.array_equal(output.field_data['data'], np.arange(3))
 
