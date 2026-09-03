@@ -222,6 +222,7 @@ class RenderPasses(_NoNewAttrMixin):
             return
         self._pass_collection.RemoveItem(self._shadow_map_pass.GetShadowMapBakerPass())
         self._pass_collection.RemoveItem(self._shadow_map_pass)
+        self._shadow_map_pass = None
         self._update_passes()
 
     @_deprecate_positional_args

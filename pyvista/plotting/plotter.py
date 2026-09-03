@@ -30,13 +30,13 @@ import warnings
 import weakref
 
 import numpy as np
+import pyvista_validation as _validation
 import scooby
 
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
-from pyvista.core import _validation
 from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
@@ -194,12 +194,6 @@ float new_y = y * radial + 2.0 * p2 * x * y + p1 * (rSquared + 2.0 * y * y);
 gl_Position.x = new_x * u_distortion_projection_scale.x * clip_w;
 gl_Position.y = new_y * u_distortion_projection_scale.y * clip_w;
 """
-
-if os.environ.get('PYVISTA_KILL_DISPLAY'):  # pragma: no cover
-    from pyvista.core.errors import DeprecationError
-
-    msg = 'PYVISTA_KILL_DISPLAY has been deprecated'
-    DeprecationError(msg)
 
 
 def close_all() -> bool:
@@ -4648,6 +4642,11 @@ class BasePlotter(_BoundsSizeMixin):
             render=render,
             remove_existing_actor=remove_existing_actor,
         )
+
+        if silhouette:
+            # Give the silhouette actor a name to avoid duplicate
+            # silhouettes for the same actor
+            silhouette_actor.name = f'{name}-silhouette'
 
         # hide scalar bar if using special scalars
         if scalar_bar_args.get('title') == '__custom_rgba':

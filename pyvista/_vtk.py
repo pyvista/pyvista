@@ -640,7 +640,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkImageSinusoidSource',
     ),
     'vtkImagingStencil': (
-        'vtkImageStencil',
+        'vtkImageStencilToImage',
         'vtkPolyDataToImageStencil',
     ),
     'vtkParallelCore': ('vtkDummyController',),
@@ -812,6 +812,8 @@ _OPENGL_MODULES: dict[str, tuple[str, ...]] = {
         'vtkOpenGLSkybox',
         'vtkOpenGLTexture',
         'vtkPBRIrradianceTexture',
+        'vtkPBRLUTTexture',
+        'vtkPBRPrefilterTexture',
         'vtkRenderStepsPass',
         'vtkSSAAPass',
         'vtkSSAOPass',

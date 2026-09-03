@@ -29,7 +29,6 @@ from pyvista.core.errors import NotAllTrianglesError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters import _get_output
 from pyvista.core.filters.data_set import _swap_axes
-from tests.conftest import flaky_test
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -127,11 +126,24 @@ def test_wrap_by_vector_raises(mocker: MockerFixture):
 
 
 @given(
-    strategy=st.text().filter(lambda x: x not in ['null_value', 'mark_points', 'closest_point'])
+    strategy=st.text().filter(lambda x: x not in ['null_value', 'mask_points', 'closest_point'])
 )
 def test_interpolate_raises(strategy):
     with pytest.raises(ValueError, match=re.escape(f'strategy `{strategy}` not supported.')):
         pv.Sphere().interpolate(pv.Sphere(), strategy=strategy)
+
+
+def test_get_output_restores_field_data(sphere):
+    sphere.field_data['data'] = np.arange(3)
+    alg = _vtk.vtkTriangleFilter()
+    alg.SetInputDataObject(sphere)
+    alg.Update()
+    vtk_output = alg.GetOutputDataObject(0)
+    vtk_output.GetFieldData().Initialize()
+    assert 'data' in sphere.field_data
+    assert vtk_output.GetFieldData().GetNumberOfArrays() == 0
+    output = _get_output(alg)
+    assert np.array_equal(output.field_data['data'], np.arange(3))
 
 
 def test_datasetfilters_init():
@@ -199,25 +211,25 @@ def test_clip_scalar_no_active(sphere):
 
 
 def test_clip_scalar_ranges_imagedata():
-    mesh = pv.examples.download_whole_body_ct_male()['ct']
+    mesh = pv.Wavelet()
     vol = mesh.clip_scalar(
-        value=(150, 3000),
+        value=(200, 300),
     )
     assert vol.n_points < mesh.n_points
     vol2 = mesh.clip_scalar(
-        value=150,
+        value=200,
     )
     assert vol.n_points < vol2.n_points
 
 
 def test_clip_scalar_errors():
-    mesh = pv.examples.download_whole_body_ct_male()['ct']
+    mesh = pv.Wavelet()
     with pytest.raises(TypeError):
-        mesh.clip_scalar(value=(150, 3000), inplace=True)
+        mesh.clip_scalar(value=(200, 300), inplace=True)
     with pytest.raises(ValueError, match='Cannot have invert=False for a range clip'):
-        mesh.clip_scalar(value=(150, 3000), invert=False)
+        mesh.clip_scalar(value=(200, 300), invert=False)
     with pytest.raises(ValueError, match='Cannot have both=True for a range clip'):
-        mesh.clip_scalar(value=(150, 3000), both=True)
+        mesh.clip_scalar(value=(200, 300), both=True)
 
 
 def test_clip_scalar_multiple():
@@ -994,24 +1006,12 @@ class InterrogateVTKGlyph3D:
         return self.input_data_object.active_vectors_info
 
     @property
-    def scaling(self):
-        return self.alg.GetScaling()
-
-    @property
     def scale_mode(self):
         return self.alg.GetScaleModeAsString()
 
     @property
     def scale_factor(self):
         return self.alg.GetScaleFactor()
-
-    @property
-    def clamping(self):
-        return self.alg.GetClamping()
-
-    @property
-    def vector_mode(self):
-        return self.alg.GetVectorModeAsString()
 
 
 def test_glyph_settings(sphere):
@@ -3849,7 +3849,7 @@ def test_integrate_data_datasets(datasets):
             assert integrated['Area'] > 0
         elif 'Volume' in integrated.array_names:
             assert integrated['Volume'] > 0
-        else:
+        else:  # pragma: no cover -- parametrize covers every case
             msg = 'Unexpected integration'
             raise ValueError(msg)
 
@@ -4501,7 +4501,9 @@ def test_color_labels_return_dict(labeled_image, color_type):
 
 @pytest.fixture
 def frog_tissues_image():
-    return examples.load_frog_tissues()
+    # subsample: contouring and voxelizing the full image takes seconds
+    image = examples.load_frog_tissues()
+    return image.extract_subset(image.extent, rate=(4, 4, 4))
 
 
 @pytest.fixture
@@ -4558,18 +4560,42 @@ def test_voxelize_binary_mask_spacing(ant):
         ant.voxelize_binary_mask(spacing=0.1, cell_length_sample_size=ant.n_cells)
 
 
-# This test is flaky because of random sampling that cannot be controlled.
-# Sometimes the sampling produces the same output.
-# https://github.com/pyvista/pyvista/pull/6728
-@flaky_test(times=5)
-def test_voxelize_binary_mask_cell_length_sample_size(ant):
-    mask_samples_1 = ant.voxelize_binary_mask(cell_length_sample_size=100)
-    mask_samples_2 = ant.voxelize_binary_mask(cell_length_sample_size=200)
-    assert mask_samples_1.spacing != mask_samples_2.spacing
+def test_voxelize_binary_mask_cell_length_sample_size(ant, mocker: MockerFixture):
+    from pyvista import _vtk
+    from pyvista.core.filters import data_set
 
-    mask_samples_1 = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells)
-    mask_samples_2 = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells)
-    assert mask_samples_1.spacing == mask_samples_2.spacing
+    sample_sizes = []
+    update_alg = data_set._update_alg
+
+    def _record_sample_size(alg, **kwargs):
+        if isinstance(alg, _vtk.vtkLengthDistribution):
+            sample_sizes.append(alg.GetSampleSize())
+        return update_alg(alg, **kwargs)
+
+    mocker.patch.object(data_set, '_update_alg', _record_sample_size)
+
+    # Sample size is used when sampling cell lengths
+    ant.voxelize_binary_mask(cell_length_sample_size=100)
+    assert sample_sizes == [100]
+
+    # Default sample size covers all cells
+    sample_sizes.clear()
+    ant.voxelize_binary_mask()
+    assert sample_sizes[0] > ant.n_cells
+
+    # Sampling all cells is not random, so the spacing is reproducible
+    mask_all_cells = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells)
+    mask_all_cells_again = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells)
+    assert mask_all_cells.spacing == mask_all_cells_again.spacing
+
+    # Sample sizes larger than the number of cells are clamped
+    mask_clamped = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells * 10)
+    assert mask_clamped.spacing == mask_all_cells.spacing
+
+    # The spacing is not estimated when the dimensions are given
+    sample_sizes.clear()
+    ant.voxelize_binary_mask(dimensions=(10, 10, 10))
+    assert sample_sizes == []
 
 
 @pytest.mark.parametrize(
@@ -4687,6 +4713,47 @@ def test_voxelize_binary_mask_raises(sphere):
         )
         with pytest.raises(TypeError, match=match):
             sphere.voxelize_binary_mask(reference_volume=pv.ImageData(), **kwargs)
+
+
+def test_voxelize_binary_mask_numpy_values(sphere):
+    mask = sphere.voxelize_binary_mask(foreground_value=np.uint8(2), background_value=np.int32(0))
+    assert mask['mask'].dtype == np.uint8
+    assert np.array_equal(np.unique(mask['mask']), [0, 2])
+
+
+@pytest.mark.parametrize('slab_slices', [1, 3, 1000])
+def test_voxelize_binary_mask_slabs(ant, monkeypatch, slab_slices):
+    from pyvista.core.filters import data_set
+
+    expected = ant.voxelize_binary_mask(dimensions=(20, 21, 22))
+    monkeypatch.setattr(data_set, '_STENCIL_SLAB_SLICES', slab_slices)
+    mask = ant.voxelize_binary_mask(dimensions=(20, 21, 22))
+    assert np.array_equal(mask['mask'], expected['mask'])
+
+
+def test_voxelize_binary_mask_sphere_values():
+    sphere = pv.Sphere(radius=1.0, theta_resolution=200, phi_resolution=200)
+    mask = sphere.voxelize_binary_mask(dimensions=(41, 43, 45))
+    inside = mask['mask'].astype(bool)
+    distance = np.linalg.norm(mask.points, axis=1)
+    margin = max(mask.spacing)
+    # Points well inside the sphere are foreground and points well outside are background
+    assert np.all(inside[distance < 1 - margin])
+    assert not np.any(inside[distance > 1 + margin])
+    volume = inside.sum() * np.prod(mask.spacing)
+    assert np.isclose(volume, 4 / 3 * np.pi, rtol=0.05)
+
+
+def test_voxelize_binary_mask_reference_volume_beyond_mesh():
+    # Slices of the reference volume beyond the mesh are background
+    sphere = pv.Sphere()
+    reference = pv.ImageData(
+        dimensions=(12, 12, 40), spacing=(0.1, 0.1, 0.1), origin=(-0.55, -0.55, -2.0)
+    )
+    mask = sphere.voxelize_binary_mask(reference_volume=reference)
+    z = mask.points[:, 2]
+    assert not np.any(mask['mask'][np.abs(z) > 0.6])
+    assert np.any(mask['mask'][np.abs(z) < 0.3])
 
 
 def test_voxelize_rectilinear(ant):

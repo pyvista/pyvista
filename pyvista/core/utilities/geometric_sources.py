@@ -16,12 +16,12 @@ from typing import cast
 from typing import get_args
 
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
-from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.errors import PyVistaDeprecationWarning
@@ -93,7 +93,7 @@ class _AlgorithmSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkAlgorithm):
         return _apply_points_dtype(wrap(self.GetOutput()), algorithm=self)
 
 
-def translate(
+def _translate_and_orient(
     surf: DataSet,
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     direction: VectorLike[float] = (1.0, 0.0, 0.0),
@@ -998,7 +998,7 @@ class Text3DSource(_NoNewAttrMixin):
         if not np.array_equal(self.normal, (0, 0, 1)):
             out.rotate_x(90, inplace=True)
             out.rotate_z(90, inplace=True)
-            translate(out, self.center, self.normal)
+            _translate_and_orient(out, self.center, self.normal)
         else:
             out.points += self.center
 
@@ -3057,12 +3057,16 @@ class SuperquadricSource(_AlgorithmSource, _vtk.vtkSuperquadricSource):
 
 
 class _AxisEnum(IntEnum):
+    """Index of each x-y-z axis."""
+
     x = 0
     y = 1
     z = 2
 
 
 class _PartEnum(IntEnum):
+    """Index of the shaft and tip parts of an axis."""
+
     shaft = 0
     tip = 1
 
@@ -4069,6 +4073,8 @@ class CubeFacesSource(CubeSource):
     """
 
     class _FaceIndex(IntEnum):
+        """Index of each face of a box."""
+
         X_NEG = 0
         X_POS = 1
         Y_NEG = 2

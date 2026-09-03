@@ -19,12 +19,12 @@ from typing import overload
 import urllib.parse
 
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
-from pyvista.core import _validation
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import _classproperty
 from pyvista.core.utilities.misc import _NoNewAttrMixin
@@ -76,6 +76,16 @@ _ReadReturnT = TypeVar('_ReadReturnT', bound='DataObject')
 
 
 class _FileIOBase(ABC, _NoNewAttrMixin):
+    """Base class for readers and writers, which are matched to files by extension.
+
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
+
+
+    """
+
     _vtk_class_name: str = ''
 
     def __repr__(self) -> str:
@@ -604,12 +614,12 @@ def read_texture(filename: str | Path, progress_bar: bool = False) -> Texture:  
         if image.n_points < 2:
             msg = 'Problem reading the image with VTK.'
             raise ValueError(msg)
-        return pv.Texture(image)  # type: ignore[abstract]
+        return pv.Texture(image)
     except (KeyError, ValueError):
         # Otherwise, use the imageio reader
         pass
 
-    return pv.Texture(_try_imageio_imread(filename))  # type: ignore[abstract] # pragma: no cover
+    return pv.Texture(_try_imageio_imread(filename))  # pragma: no cover
 
 
 @_deprecate_positional_args(allowed=['filename'])

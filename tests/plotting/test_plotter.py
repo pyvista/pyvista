@@ -1117,7 +1117,7 @@ _MACOS_FIX_CASES = [
 
 @pytest.mark.skipif(sys.platform != 'darwin', reason='macOS-specific test')
 @pytest.mark.parametrize('case', _MACOS_FIX_CASES, ids=lambda c: c.id)
-def test_macos_offscreen_render_window_configured(case):
+def test_macos_offscreen_render_window_configured(case):  # pragma: no cover -- macOS only
     """Test no macOS phantom window is generated for off-screen plotting."""
     appkit_mock = MagicMock()
     appkit_mock.NSApp.return_value = None  # no application running
@@ -1134,7 +1134,7 @@ def test_macos_offscreen_render_window_configured(case):
 
 @pytest.mark.skipif(sys.platform != 'darwin', reason='macOS-specific test')
 @pytest.mark.parametrize('case', _MACOS_FIX_CASES, ids=lambda c: c.id)
-def test_macos_offscreen_keeps_visible_application_in_dock(case):
+def test_macos_offscreen_keeps_visible_application_in_dock(case):  # pragma: no cover -- macOS only
     """Test a host GUI application keeps its Dock icon and menu bar.
 
     The activation policy is process-global, so demoting it for an off-screen

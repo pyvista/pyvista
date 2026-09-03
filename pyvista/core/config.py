@@ -61,6 +61,8 @@ from typing import cast
 
 import numpy as np
 
+from pyvista._warn_external import warn_external
+
 if TYPE_CHECKING:
     import numpy.typing as npt
     from typing_extensions import Self
@@ -96,6 +98,11 @@ class _ConfigBase(metaclass=_ForceSlots):
     their ``__slots__`` and expose each one via a public ``@property`` getter
     / setter pair that reads and writes the underscore slot.
 
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
+
     """
 
     __slots__: ClassVar[list[str]] = []
@@ -114,7 +121,10 @@ class _ConfigBase(metaclass=_ForceSlots):
         dict_ : dict
             Mapping of public attribute name to value, as produced by
             :meth:`to_dict`. Nested config objects are recursively
-            reconstructed via their own ``from_dict``.
+            reconstructed via their own ``from_dict``. A key that is not a
+            valid attribute of ``cls`` is skipped with a warning instead of
+            raising, so a dict saved by a different pyvista version can
+            still be loaded.
 
         Returns
         -------
@@ -124,6 +134,10 @@ class _ConfigBase(metaclass=_ForceSlots):
         """
         inst = cls()
         for key, value in dict_.items():
+            if not hasattr(inst, key):
+                msg = f'{cls.__name__!r} has no attribute {key!r}. Ignoring it.'
+                warn_external(msg)
+                continue
             attr = getattr(inst, key)
             if hasattr(attr, 'from_dict'):
                 setattr(inst, key, attr.from_dict(value))

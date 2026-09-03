@@ -316,6 +316,11 @@ def convert_array(  # noqa: PLR0917
             vtk_data.SetName(name)
         return vtk_data
     # Otherwise input must be a vtkDataArray
+    return _vtk_array_to_numpy(cast('_vtk.vtkAbstractArray', arr))
+
+
+def _vtk_array_to_numpy(arr: _vtk.vtkAbstractArray) -> npt.NDArray[Any]:
+    """Convert a VTK data, bit or string array to a NumPy array."""
     if not isinstance(arr, (_vtk.vtkDataArray, _vtk.vtkBitArray, _vtk.vtkStringArray)):
         msg = f'Invalid input array type ({type(arr)}).'
         raise TypeError(msg)
@@ -381,22 +386,23 @@ def get_array(  # noqa: PLR0917
             )
             raise ValueError(msg)
 
-        parr = point_array(mesh, name)
-        carr = cell_array(mesh, name)
-        farr = field_array(mesh, name)
-        if sum(array is not None for array in (parr, carr, farr)) > 1:
+        # probe for the array first so that only the returned one is wrapped
+        has_point = mesh.GetPointData().GetAbstractArray(name) is not None
+        has_cell = mesh.GetCellData().GetAbstractArray(name) is not None
+        has_field = mesh.GetFieldData().GetAbstractArray(name) is not None
+        if has_point + has_cell + has_field > 1:
             if preference_ == FieldAssociation.CELL:
-                out = carr
+                out = cell_array(mesh, name)
             elif preference_ == FieldAssociation.POINT:
-                out = parr
+                out = point_array(mesh, name)
             else:  # must be field
-                out = farr
-        elif parr is not None:
-            out = parr
-        elif carr is not None:
-            out = carr
-        elif farr is not None:
-            out = farr
+                out = field_array(mesh, name)
+        elif has_point:
+            out = point_array(mesh, name)
+        elif has_cell:
+            out = cell_array(mesh, name)
+        elif has_field:
+            out = field_array(mesh, name)
         elif err:
             msg = f'Data array ({name}) not present in this dataset.'
             raise KeyError(msg)
@@ -446,17 +452,18 @@ def get_array_association(  # noqa: PLR0917
         return FieldAssociation.ROW
 
     # with multiple arrays, return the array preference if possible
-    parr = point_array(mesh, name)
-    carr = cell_array(mesh, name)
-    farr = field_array(mesh, name)
-    arrays = [parr, carr, farr]
+    # Optimization: probe VTK for the name instead of wrapping arrays only to discard them
+    has_point = mesh.GetPointData().GetAbstractArray(name) is not None
+    has_cell = mesh.GetCellData().GetAbstractArray(name) is not None
+    has_field = mesh.GetFieldData().GetAbstractArray(name) is not None
+    exists = [has_point, has_cell, has_field]
     preferences = [FieldAssociation.POINT, FieldAssociation.CELL, FieldAssociation.NONE]
     preference_field = parse_field_choice(preference)
     if preference_field not in preferences:
         msg = f'Data field ({preference}) not supported.'
         raise ValueError(msg)
 
-    matches = [pref for pref, array in zip(preferences, arrays, strict=True) if array is not None]
+    matches = [pref for pref, has_array in zip(preferences, exists, strict=True) if has_array]
     # optionally raise if no match
     if not matches:
         if err:
@@ -1076,23 +1083,63 @@ class _SerializedDictArray(DisableVtkSnakeCase, UserDict, _vtk.vtkStringArray): 
         self._update_string() if key != '_string' else None
 
     def update(self: _SerializedDictArray, *args, **kwargs) -> None:
+        """Update the dictionary and re-serialize.
+
+        Parameters
+        ----------
+        *args : tuple, optional
+            Arguments of :meth:`dict.update`.
+
+        **kwargs : dict, optional
+            Keyword arguments of :meth:`dict.update`.
+
+
+        """
         super().update(*args, **kwargs)
         self._update_string()
 
     def popitem(self: _SerializedDictArray) -> Any:
+        """Pop the last item and re-serialize."""
         item = super().popitem()
         self._update_string()
         return item
 
     def pop(self: _SerializedDictArray, __key: Any) -> Any:  # type: ignore[override]  # noqa: PYI063
+        """Pop an item by key and re-serialize.
+
+        Parameters
+        ----------
+        __key : Any
+            Key to remove.
+
+        Returns
+        -------
+        Any
+            Removed value.
+
+
+        """
         item = super().pop(__key)
         self._update_string()
         return item
 
     def clear(self: _SerializedDictArray) -> None:
+        """Clear the dictionary and re-serialize."""
         super().clear()
         self._update_string()
 
     def setdefault(self: _SerializedDictArray, *args, **kwargs) -> None:
+        """Insert a default value and re-serialize.
+
+        Parameters
+        ----------
+        *args : tuple, optional
+            Arguments of :meth:`dict.setdefault`.
+
+        **kwargs : dict, optional
+            Keyword arguments of :meth:`dict.setdefault`.
+
+
+        """
         super().setdefault(*args, **kwargs)
         self._update_string()

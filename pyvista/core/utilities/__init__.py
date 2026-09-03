@@ -84,6 +84,7 @@ from .geometric_objects import Rectangle as Rectangle
 from .geometric_objects import SolidSphere as SolidSphere
 from .geometric_objects import SolidSphereGeneric as SolidSphereGeneric
 from .geometric_objects import Sphere as Sphere
+from .geometric_objects import StructuredSphere as StructuredSphere
 from .geometric_objects import Superquadric as Superquadric
 from .geometric_objects import Tetrahedron as Tetrahedron
 from .geometric_objects import Text3D as Text3D
@@ -107,7 +108,6 @@ from .geometric_sources import PolygonSource as PolygonSource
 from .geometric_sources import SphereSource as SphereSource
 from .geometric_sources import SuperquadricSource as SuperquadricSource
 from .geometric_sources import Text3DSource as Text3DSource
-from .geometric_sources import translate as translate
 from .helpers import axis_rotation as axis_rotation
 from .helpers import generate_plane as generate_plane
 from .helpers import is_inside_bounds as is_inside_bounds

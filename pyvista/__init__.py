@@ -11,7 +11,6 @@ from pyvista._plot import plot as plot
 from pyvista._version import __version__ as __version__
 from pyvista._version import version_info as version_info
 from pyvista.core import *
-from pyvista.core import _validation as _validation
 from pyvista.core._typing_core._dataset_types import _DataObjectType as _DataObjectType
 from pyvista.core._typing_core._dataset_types import (
     _DataSetOrMultiBlockType as _DataSetOrMultiBlockType,
@@ -74,9 +73,6 @@ OFF_SCREEN = os.environ.get('PYVISTA_OFF_SCREEN', 'false').lower() == 'true'
 # flag for when building the sphinx_gallery
 BUILDING_GALLERY = os.environ.get('PYVISTA_BUILDING_GALLERY', 'false').lower() == 'true'
 
-# A threshold for the max cells to compute a volume for when repr-ing
-REPR_VOLUME_MAX_CELLS = 1e6
-
 # Set where figures are saved
 FIGURE_PATH = os.environ.get('PYVISTA_FIGURE_PATH', None)
 
@@ -122,6 +118,27 @@ _env_theme_applied: bool = False
 
 
 # Lazily import/access the plotting module
+def _get_deprecated_validation():
+    """Forward ``pyvista._validation`` to the ``pyvista_validation`` package with a warning."""
+    import pyvista_validation  # noqa: PLC0415
+
+    from pyvista._warn_external import warn_external  # noqa: PLC0415
+    from pyvista.core.errors import PyVistaDeprecationWarning  # noqa: PLC0415
+
+    msg = (
+        '`pyvista._validation` has moved to the `pyvista_validation` package; '
+        'use `from pyvista_validation import ...` instead.'
+    )
+    warn_external(msg, PyVistaDeprecationWarning)
+    if version_info >= (0, 51):  # pragma: no cover
+        msg = 'Convert this deprecation warning into an error.'
+        raise RuntimeError(msg)
+    if version_info >= (0, 52):  # pragma: no cover
+        msg = 'Remove the _validation forward.'
+        raise RuntimeError(msg)
+    return pyvista_validation
+
+
 def __getattr__(name):
     """Fetch an attribute ``name`` from ``globals()`` or the ``pyvista.plotting`` module.
 
@@ -147,6 +164,9 @@ def __getattr__(name):
 
         # Do not cache since we want to re-issue the deprecation warning
         return _get_deprecated_hexcolors()
+    if name == '_validation':
+        # Not cached either, so the deprecation warning is re-issued on each access
+        return _get_deprecated_validation()
 
     allow = {
         'demos',

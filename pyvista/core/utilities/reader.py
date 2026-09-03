@@ -1975,15 +1975,18 @@ class BinaryMarchingCubesReader(BaseReader['PolyData']):
 
     Examples
     --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> from pathlib import Path
-    >>> filename = examples.download_pine_roots(load=False)
-    >>> Path(filename).name
-    'pine_root.tri'
-    >>> reader = pv.get_reader(filename)
-    >>> mesh = reader.read()
-    >>> mesh.plot(color='brown')
+    .. pyvista-plot::
+        :force_static:
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> from pathlib import Path
+        >>> filename = examples.download_pine_roots(load=False)
+        >>> Path(filename).name
+        'pine_root.tri'
+        >>> reader = pv.get_reader(filename)
+        >>> mesh = reader.read()
+        >>> mesh.plot(color='brown')
 
     """
 
@@ -2410,15 +2413,18 @@ class MetaImageReader(BaseReader['ImageData']):
 
     Examples
     --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> from pathlib import Path
-    >>> filename = examples.download_chest(load=False)
-    >>> Path(filename).name
-    'ChestCT-SHORT.mha'
-    >>> reader = pv.get_reader(filename)
-    >>> mesh = reader.read()
-    >>> mesh.plot()
+    .. pyvista-plot::
+        :force_static:
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> from pathlib import Path
+        >>> filename = examples.download_chest(load=False)
+        >>> Path(filename).name
+        'ChestCT-SHORT.mha'
+        >>> reader = pv.get_reader(filename)
+        >>> mesh = reader.read()
+        >>> mesh.plot()
 
     """
 
@@ -2498,15 +2504,18 @@ class PNMReader(BaseReader['ImageData']):
 
     Examples
     --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> from pathlib import Path
-    >>> filename = examples.download_gourds_pnm(load=False)
-    >>> Path(filename).name
-    'Gourds.pnm'
-    >>> reader = pv.get_reader(filename)
-    >>> mesh = reader.read()
-    >>> mesh.plot()
+    .. pyvista-plot::
+        :force_static:
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> from pathlib import Path
+        >>> filename = examples.download_gourds_pnm(load=False)
+        >>> Path(filename).name
+        'Gourds.pnm'
+        >>> reader = pv.get_reader(filename)
+        >>> mesh = reader.read()
+        >>> mesh.plot()
 
     """
 
@@ -2729,6 +2738,7 @@ class _GRDECLReader(BaseVTKReader):
 
     @property
     def elevation(self) -> bool:
+        """Convert depths to elevations and flip grid along Z axis."""
         return self._elevation
 
     @elevation.setter
@@ -2737,6 +2747,7 @@ class _GRDECLReader(BaseVTKReader):
 
     @property
     def other_keywords(self) -> Sequence[str] | None:
+        """Additional keywords to read."""
         return self._other_keywords
 
     @other_keywords.setter
@@ -2798,6 +2809,7 @@ class _GIFReader(BaseVTKReader):
         """Update Information from file."""
 
     def GetProgress(self):
+        """Return the fraction of frames read so far."""
         return self._current_frame / self._n_frames
 
     def Update(self) -> None:
@@ -3929,6 +3941,7 @@ class _FRDReader(BaseVTKReader):
         self._active_time_point: int = 0
 
     def UpdateInformation(self) -> None:
+        """Parse the FRD file and update time step information."""
         parser = _FRDParser(self._filename)
         self._frd_data = parser.parse()
 

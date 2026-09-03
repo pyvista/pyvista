@@ -7,8 +7,8 @@ from collections.abc import MutableSequence
 from typing import TYPE_CHECKING
 
 import numpy as np
+import pyvista_validation as _validation
 
-from pyvista import _validation
 from pyvista import _vtk
 
 if TYPE_CHECKING:
@@ -82,6 +82,18 @@ class _PropCollection(MutableSequence[_vtk.vtkProp]):
             raise TypeError(msg)
 
     def insert(self, index, value) -> None:
+        """Insert a prop at the given index.
+
+        Parameters
+        ----------
+        index : int
+            Index to insert the prop at.
+
+        value : :vtk:`vtkProp`
+            Prop to insert.
+
+
+        """
         _validation.check_instance(value, _vtk.vtkProp)
         if len(self) == 0:
             self.append(value)
@@ -92,10 +104,20 @@ class _PropCollection(MutableSequence[_vtk.vtkProp]):
         self._prop_collection.InsertItem(index - 1, value)
 
     def append(self, value: _vtk.vtkProp):
+        """Add a prop to the end of the collection.
+
+        Parameters
+        ----------
+        value : :vtk:`vtkProp`
+            Prop to add.
+
+
+        """
         _validation.check_instance(value, _vtk.vtkProp)
         self._prop_collection.AddItem(value)
 
     def keys(self) -> list[str]:
+        """Return the name of each prop in the collection."""
         return [
             prop.name
             if hasattr(prop, 'name')
@@ -104,6 +126,7 @@ class _PropCollection(MutableSequence[_vtk.vtkProp]):
         ]
 
     def items(self) -> Iterable[tuple[str, _vtk.vtkProp]]:
+        """Yield ``(name, prop)`` pairs for the collection."""
         yield from zip(self.keys(), self, strict=True)
 
     def __del__(self):

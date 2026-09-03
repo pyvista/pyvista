@@ -46,9 +46,7 @@ _MODULE_RE = re.compile(r'^\s*\.\.\s+(?:current)?module::\s*([a-zA-Z0-9_.]+)\s*$
 
 logger = logging.getLogger(__name__)
 
-#: Filter classes are documented as filters, so anything they define that is not a
-#: method is a typing aid rather than API. ``points`` is a bare annotation that lets
-#: the filters type ``self.points``. A new one is a mistake, so it is reported.
+#: ``provider.member`` for each non-method a filter page would document; a new one is reported.
 _NOT_API_ON_FILTERS = frozenset({'DataObjectFilters.points'})
 
 #: Set by :func:`setup`; the helpers below are called from Jinja and get nothing else.
@@ -176,14 +174,16 @@ def _home(cls: type, member: str) -> type | None:
     provider = _provider(cls, member)
     if provider is None or not provider.__module__.startswith('pyvista'):
         return None  # implemented by VTK or the standard library
-    if _is_filter(provider) and not inspect.isroutine(provider.__dict__.get(member)):
-        _warn_unexpected_filter_member(provider, member)
-        return None
     documented = _documented_classes()
     home = cls
     for base in cls.__mro__:  # most derived first, so the last match is the most basal
         if base in documented and _provider(base, member) is provider:
             home = base
+    if not inspect.isroutine(provider.__dict__.get(member)) and (
+        _is_filter(provider) or _is_filter(home)
+    ):
+        _warn_unexpected_filter_member(provider, member)
+        return None
     return home
 
 
@@ -241,6 +241,8 @@ def _summary(cls: type, member: str) -> str:
 def _rows(module: str, objname: str, names: Sequence[str]) -> list[tuple[type, str, str, str]]:
     """Return ``[(home, label, target, summary)]``, sorted by member name."""
     cls = _class_from(module, objname)
+    if _is_filter(cls):
+        return []  # a filter class page lists only the filters it defines
     documented = _documented_classes()
     rows: list[tuple[str, type, str, str, str]] = []
     for name in _candidates(names):
@@ -268,6 +270,35 @@ def filter_member_rows(  # numpydoc ignore=RT01
 ) -> list[tuple[str, str, str]]:
     """Return ``[(label, target, summary)]`` for the filters ``module.objname`` inherits."""
     return [row[1:] for row in _rows(module, objname, names) if _is_filter(row[0])]
+
+
+def _is_vtk(cls: type) -> bool:
+    """Return whether ``cls`` is defined in a compiled VTK module."""
+    # ``vtkmodules`` also holds pure-Python helpers -- ``VTKObjectWrapper`` in
+    # ``numpy_interface`` -- that VTK does not document, so the ``:vtk:`` role, which
+    # checks every target against vtk.org, cannot resolve them.
+    return cls.__module__.startswith('vtkmodules.vtk')
+
+
+def _vtk_entry_points(cls: type) -> list[type]:
+    """Return the VTK classes in ``cls``'s MRO that no other VTK class there derives from."""
+    vtk = [base for base in cls.__mro__[1:] if _is_vtk(base)]
+    return [base for base in vtk if not any(o is not base and issubclass(o, base) for o in vtk)]
+
+
+def inherited_classes(module: str, objname: str) -> list[str]:  # numpydoc ignore=RT01
+    """Return the documented classes ``module.objname`` inherits from, most derived first."""
+    cls = _class_from(module, objname)
+    documented = _documented_classes()
+    return [documented[base] for base in cls.__mro__[1:] if base in documented]
+
+
+def vtk_bases(module: str, objname: str) -> list[str]:  # numpydoc ignore=RT01
+    """Return the names of the VTK classes ``module.objname`` wraps.
+
+    VTK documents its own hierarchy, so the bases above each entry point are left out.
+    """
+    return [base.__name__ for base in _vtk_entry_points(_class_from(module, objname))]
 
 
 def setup(app: Sphinx) -> dict[str, Any]:  # numpydoc ignore=RT01
