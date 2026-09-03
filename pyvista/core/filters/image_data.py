@@ -4857,9 +4857,11 @@ class ImageDataFilters(DataSetFilters):
                     new_spacing = (size + input_image.spacing) / output_dimensions
                 else:
                     with np.errstate(divide='ignore', invalid='ignore'):
-                        # Ignore division by zero, this is fixed with
-                        # singleton_dims on the next line
+                        # Ignore division by zero, this is fixed for singleton dimensions below
                         new_spacing = size / (output_dimensions - 1)
+                    # Keep the original spacing for axes collapsed to a single point
+                    collapsed = output_dimensions == 1
+                    new_spacing[collapsed] = old_spacing[collapsed]
 
             # For singleton dimensions, keep the original spacing value
             new_spacing[singleton_dims] = old_spacing[singleton_dims]

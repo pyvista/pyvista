@@ -1359,6 +1359,17 @@ def test_resample_cell_data_offset():
     assert np.allclose(resampled.bounds, image.bounds)
 
 
+@pytest.mark.parametrize('extend_border', [True, False])
+def test_resample_collapse_axis_spacing(extend_border):
+    image = pv.ImageData(dimensions=(4, 4, 4), spacing=(1, 2, 3))
+    image['data'] = np.arange(image.n_points, dtype=float)
+
+    resampled = image.resample(dimensions=(4, 4, 1), extend_border=extend_border)
+    assert np.array_equal(resampled.dimensions, (4, 4, 1))
+    expected_z_spacing = 12.0 if extend_border else 3.0
+    assert np.allclose(resampled.spacing, (1, 2, expected_z_spacing))
+
+
 def test_select_values(uniform):
     selected = uniform.select_values(ranges=uniform.get_data_range())
     assert isinstance(selected, pv.ImageData)
