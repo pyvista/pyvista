@@ -22,15 +22,6 @@ PyVista.
    themes.DocumentTheme
    themes.ParaViewTheme
 
-.. seealso::
-
-   :ref:`userguide_themes`
-      User guide for customizing and applying themes.
-
-   :ref:`configuration`
-      Central reference for all global settings, including the
-      non-plotting counterpart :class:`pyvista.core.config.Config`.
-
 Each theme groups its settings into the following configuration sections.
 :class:`~pyvista.plotting.themes._ConfigBase` is the base class they share
 with :class:`~pyvista.core.config.Config`.
@@ -49,6 +40,15 @@ with :class:`~pyvista.core.config.Config`.
    themes._SliderConfig
    themes._SliderStyleConfig
    themes._TrameConfig
+
+.. seealso::
+
+   :ref:`userguide_themes`
+      User guide for customizing and applying themes.
+
+   :ref:`configuration`
+      Central reference for all global settings, including the
+      non-plotting counterpart :class:`pyvista.core.config.Config`.
 
 Selecting and Registering Themes
 --------------------------------
