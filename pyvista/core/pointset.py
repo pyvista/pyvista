@@ -4113,6 +4113,14 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
             Vector of point indices to be hidden. The vector can also be a
             boolean array of the same size as the number of points.
 
+        Notes
+        -----
+        The cells that use a hidden point are hidden too, since VTK's mapper
+        does not otherwise exclude them from the render. Excluding hidden
+        cells from a :class:`~pyvista.StructuredGrid` render requires VTK
+        9.6 or later; on earlier versions, the point and its cells are
+        marked hidden but still appear in the render.
+
         Examples
         --------
         Hide part of the middle of a structured surface.

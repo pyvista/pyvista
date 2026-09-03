@@ -7210,6 +7210,10 @@ def test_hide_cells_no_scalars(verify_image_cache):
     grid.plot(color='w', show_edges=True, show_grid=True)
 
 
+@pytest.mark.needs_vtk_version(
+    at_least=(9, 6),
+    reason='A StructuredGrid render does not exclude ghost cells before VTK 9.6',
+)
 def test_hide_points():
     grid = examples.load_structured()
     grid.hide_points(range(80 * 30, 80 * 50))
