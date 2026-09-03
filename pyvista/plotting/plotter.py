@@ -4642,6 +4642,16 @@ class BasePlotter(_BoundsSizeMixin):
             remove_existing_actor=remove_existing_actor,
         )
 
+        if silhouette:
+            # Naming it only now, after the mesh actor above has already been
+            # registered, matters: that registration removes any actor whose
+            # name is prefixed `f'{name}-'` (the mechanism that is supposed to
+            # clean up a stale silhouette from a previous add_mesh() call
+            # under this name). Naming the silhouette any earlier would let
+            # that same cleanup immediately remove the one just created here
+            # instead of only the old one (#7761).
+            silhouette_actor.name = f'{name}-silhouette'
+
         # hide scalar bar if using special scalars
         if scalar_bar_args.get('title') == '__custom_rgba':
             show_scalar_bar = False
