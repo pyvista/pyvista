@@ -276,6 +276,10 @@ class PrecisionWarning(Warning):
     precision the algorithm produced, and casting cannot bring back digits it
     already discarded.
 
+    The message names whatever generated the points: the VTK class for a filter, the
+    PyVista class for a source, since a source is its own algorithm, and the library
+    for a hull computed outside VTK.
+
     Being a warning rather than an error is what keeps the choice with the caller.
     Escalate it where the fabricated precision is not acceptable::
 

@@ -52,7 +52,6 @@ Dump the current config to a plain dict (useful for logging or round-tripping):
 
 from __future__ import annotations
 
-import contextlib
 import itertools
 from typing import TYPE_CHECKING
 from typing import Any
@@ -407,13 +406,14 @@ class Config(_ConfigBase):
             return
         # `np.dtype(None)` is float64, so a value that is not a dtype at all must not
         # reach `np.dtype` as a stand-in for "unset".
-        name = None
-        with contextlib.suppress(TypeError):
+        msg = f"`points_dtype` must be None, 'preserve', 'float32', or 'float64', got {value!r}."
+        try:
             name = np.dtype(value).name
+        except TypeError:
+            # Names no dtype at all, so it is the wrong kind of value rather than the
+            # wrong dtype, as it is for `numpy.dtype` itself.
+            raise TypeError(msg) from None
         if name not in ('float32', 'float64'):
-            msg = (
-                f"`points_dtype` must be None, 'preserve', 'float32', or 'float64', got {value!r}."
-            )
             raise ValueError(msg)
         self._points_dtype = cast('_PointsDtypeOptions', name)
 
