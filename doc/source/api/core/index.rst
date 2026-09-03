@@ -73,4 +73,3 @@ Data Types
       :class-title: pyvista-card-title
 
       Cell, CellArray, cell types, and cell quality.
-
