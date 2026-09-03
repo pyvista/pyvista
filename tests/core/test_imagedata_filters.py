@@ -1341,6 +1341,24 @@ def test_resample_cell_data_dimensions_raises():
         image.resample(dimensions=(1, 5, 5))
 
 
+def test_resample_extend_border_offset():
+    image = pv.ImageData(dimensions=(4, 4, 1), offset=(10, -3, 0))
+    image['data'] = np.arange(image.n_points, dtype=float)
+
+    resampled = image.resample(2)
+    assert np.array_equal(resampled.offset, image.offset)
+    assert np.allclose(resampled.points_to_cells().bounds, image.points_to_cells().bounds)
+
+
+def test_resample_cell_data_offset():
+    image = pv.ImageData(dimensions=(5, 5, 1), offset=(10, -3, 0))
+    image.cell_data['data'] = np.arange(image.n_cells, dtype=float)
+
+    resampled = image.resample(2)
+    assert np.array_equal(resampled.offset, image.offset)
+    assert np.allclose(resampled.bounds, image.bounds)
+
+
 def test_select_values(uniform):
     selected = uniform.select_values(ranges=uniform.get_data_range())
     assert isinstance(selected, pv.ImageData)

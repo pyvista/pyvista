@@ -4841,13 +4841,13 @@ class ImageDataFilters(DataSetFilters):
                 actual_sample_rate = output_dimensions / old_dimensions
                 new_spacing = old_spacing / actual_sample_rate
 
-                # This will enlarge the image, so we need to shift the origin accordingly
-                # Shift the origin by 1/2 of the old and new spacing, but keep the spacing
-                # unchanged for singleton dimensions.
-                shift_old = old_spacing[~singleton_dims] / 2
-                shift_new = new_spacing[~singleton_dims] / 2
+                # This will enlarge the image, so we need to shift the origin such that the
+                # extended bounds of the first point are unchanged. The spacing is unchanged
+                # for singleton dimensions.
+                first_index = np.array(input_image.offset) - 0.5
+                shift = first_index * (old_spacing - new_spacing)
                 new_origin = np.array(input_image.origin)
-                new_origin[~singleton_dims] += shift_new - shift_old
+                new_origin[~singleton_dims] += shift[~singleton_dims]
 
                 output_image.origin = new_origin
             else:
@@ -4877,9 +4877,14 @@ class ImageDataFilters(DataSetFilters):
             output_image = output_image.points_to_cells(
                 scalars=name, copy=False, dimensionality=dimensionality
             )
-            output_image.origin = (
-                reference_image.origin if reference_image_provided else self.origin
-            )
+            if reference_image_provided:
+                output_image.origin = reference_image.origin
+            else:
+                # Shift the origin such that the bounds of the first cell are unchanged
+                spacing_change = np.array(self.spacing) - np.array(output_image.spacing)
+                output_image.origin = (
+                    np.array(self.origin) + np.array(self.offset) * spacing_change
+                )
             output_image.point_data.clear()
         else:
             output_image.cell_data.clear()
