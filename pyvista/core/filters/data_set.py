@@ -7905,6 +7905,11 @@ class DataSetFilters(DataObjectFilters):
         >>> pl = mask_and_polydata_plotter(mask, poly)
         >>> pl.show()
 
+        The mask is mottled where the surface is not closed. Smoothed surfaces from
+        :meth:`~pyvista.ImageDataFilters.contour_labels` have gaps wherever the labels
+        touch only along a voxel edge, and the cut contours are closed heuristically
+        there.
+
         Visualize the effect of internal surfaces.
 
         >>> mesh = pv.Cylinder() + pv.Cylinder(center=(0, 0.75, 0))
