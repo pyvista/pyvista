@@ -62,6 +62,12 @@ Class Definition
 Enumerations
 ~~~~~~~~~~~~
 
+.. autosummary::
+   :toctree: _autosummary
+
+   pyvista.CellStatus
+   pyvista.CellType
+
 .. seealso::
 
    :ref:`linear_cells_example`
@@ -70,15 +76,14 @@ Enumerations
    :meth:`~pyvista.DataObjectFilters.cell_validator`
       The filter that reports :class:`~pyvista.CellStatus` bits.
 
-.. autosummary::
-   :toctree: _autosummary
-
-   pyvista.CellStatus
-   pyvista.CellType
-
 
 Cell Quality
 ~~~~~~~~~~~~
+
+.. autosummary::
+   :toctree: _autosummary
+
+   pyvista.cell_quality_info
 
 .. seealso::
 
@@ -87,8 +92,3 @@ Cell Quality
 
    :ref:`mesh_quality_example`
       Compute and plot mesh quality.
-
-.. autosummary::
-   :toctree: _autosummary
-
-   pyvista.cell_quality_info

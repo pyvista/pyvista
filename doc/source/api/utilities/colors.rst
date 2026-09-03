@@ -4,6 +4,13 @@ Colors
 ------
 .. currentmodule:: pyvista
 
+.. autosummary::
+   :toctree: _autosummary
+
+   Color
+   ColorLike
+   get_cmap_safe
+
 .. seealso::
 
    :ref:`colormap_example`
@@ -17,13 +24,6 @@ Colors
 
    :ref:`theme_api`
       Set default colors through a theme.
-
-.. autosummary::
-   :toctree: _autosummary
-
-   Color
-   ColorLike
-   get_cmap_safe
 
 Named colors supported by :class:`~pyvista.Color`, :class:`~pyvista.Plotter`,
 and other plotting-related methods:

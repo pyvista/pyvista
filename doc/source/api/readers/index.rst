@@ -23,14 +23,6 @@ Reading Functions
 These functions read a file in a single call, selecting the reader from
 the file extension. To write a file, see :meth:`~pyvista.DataObject.save`.
 
-.. seealso::
-
-   :ref:`read_file_example`
-      Load and plot a mesh from a file.
-
-   :ref:`conversions_api`
-      Read and write files with ``meshio``.
-
 .. autosummary::
    :toctree: _autosummary
 
@@ -39,6 +31,14 @@ the file extension. To write a file, see :meth:`~pyvista.DataObject.save`.
    read_exodus
    read_grdecl
    read_texture
+
+.. seealso::
+
+   :ref:`read_file_example`
+      Load and plot a mesh from a file.
+
+   :ref:`conversions_api`
+      Read and write files with ``meshio``.
 
 Reader Classes
 ~~~~~~~~~~~~~~

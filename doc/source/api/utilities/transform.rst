@@ -7,6 +7,14 @@ accepted wherever a transformation is used, such as
 :meth:`~pyvista.DataObjectFilters.transform`. The functions on this page
 transform points and vectors directly.
 
+.. currentmodule:: pyvista
+
+.. autosummary::
+   :toctree: _autosummary
+
+   Transform
+   core.utilities.axis_rotation
+
 .. seealso::
 
    :ref:`rotate_example`
@@ -18,24 +26,8 @@ transform points and vectors directly.
    :meth:`~pyvista.Prop3D.transform`
       Transform an actor instead of its mesh.
 
-.. currentmodule:: pyvista
-
-.. autosummary::
-   :toctree: _autosummary
-
-   Transform
-   core.utilities.axis_rotation
-
 Spherical Coordinates
 ~~~~~~~~~~~~~~~~~~~~~
-.. seealso::
-
-   :ref:`spherical_example`
-      Plot data in spherical coordinates.
-
-   :ref:`create_sphere_example`
-      Build a sphere from spherical coordinates.
-
 .. autosummary::
    :toctree: _autosummary
 
@@ -43,3 +35,11 @@ Spherical Coordinates
    grid_from_sph_coords
    spherical_to_cartesian
    transform_vectors_sph_to_cart
+
+.. seealso::
+
+   :ref:`spherical_example`
+      Plot data in spherical coordinates.
+
+   :ref:`create_sphere_example`
+      Build a sphere from spherical coordinates.
