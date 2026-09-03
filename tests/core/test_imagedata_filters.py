@@ -1306,6 +1306,18 @@ def test_resample_raises(uniform):
             uniform.resample(sample_rate=rate)
 
 
+def test_resample_scalars_not_active():
+    image = pv.ImageData(dimensions=(3, 3, 1))
+    image['active'] = np.zeros(image.n_points)
+    image['other'] = np.arange(image.n_points, dtype=float)
+    image.set_active_scalars('active')
+
+    resampled = image.resample(2, scalars='other')
+    assert resampled.array_names == ['other']
+    assert resampled['other'].max() == image['other'].max()
+    assert image.active_scalars_name == 'active'
+
+
 def test_select_values(uniform):
     selected = uniform.select_values(ranges=uniform.get_data_range())
     assert isinstance(selected, pv.ImageData)

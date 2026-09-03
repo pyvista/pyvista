@@ -4673,12 +4673,13 @@ class ImageDataFilters(DataSetFilters):
             must_contain=border_mode,
             name='border_mode',
         )
+        # Shallow copy so the requested scalars can be made active without modifying self
+        input_image = self.copy(deep=False)
         if has_int_scalars:
             # int (long long) is not supported by the filter so we cast to float
-            input_image = self.copy(deep=False)
             input_image[name] = active_scalars.astype(float)
         else:
-            input_image = self
+            input_image.set_active_scalars(name, preference=field.name.lower())  # type: ignore[arg-type]
 
         # Make sure we have point scalars
         processing_cell_scalars = field == FieldAssociation.CELL
