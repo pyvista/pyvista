@@ -1719,6 +1719,9 @@ def test_hide_cells(ind, struct_grid):
 def test_hide_points(ind, struct_grid):
     struct_grid.hide_points(ind)
     assert struct_grid.HasAnyBlankPoints()
+    # The cells touching a hidden point must be hidden too, otherwise VTK's
+    # mapper keeps drawing them since it does not act on hidden points alone.
+    assert struct_grid.HasAnyBlankCells()
 
     with pytest.raises(ValueError, match='Boolean array size must match'):
         struct_grid.hide_points(np.ones(10, dtype=bool))
