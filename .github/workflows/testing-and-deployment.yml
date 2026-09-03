@@ -372,8 +372,8 @@ jobs:
     runs-on: ubuntu-22.04
     needs: [Linux, VTK-dev]
     # `always()` ensures this still runs when VTK-dev is skipped because the
-    # 'vtk-dev-testing' label is not applied. When VTK-dev does run, its
-    # coverage artifacts get bundled into this single CodeCov upload.
+    # 'vtk-dev-testing' label is not applied. When VTK-dev does run, its reports
+    # upload under their own flags.
     # Run on push/merge_group as well as pull_request so Codecov's
     # main-branch baseline keeps advancing with every merge.
     if: always() && needs.Linux.result == 'success'
@@ -396,13 +396,20 @@ jobs:
           path: coverage_reports
 
       # Each matrix cell contributes one report per side. Sorting them into their own
-      # directories lets each side upload under its own flag.
+      # directories lets each side upload under its own flag. VTK-dev is held apart from
+      # the pinned matrix because it runs only nightly and on labelled pull requests: a
+      # flag whose contents depend on which jobs ran cannot be compared across commits,
+      # and the tests VTK-dev alone executes then read as a coverage loss on any pull
+      # request whose base is a commit the nightly happened to cover. Pull the VTK-dev
+      # reports out first so the globs below match the pinned matrix only.
       - name: Sort reports by flag
         run: |
-          mkdir -p flag_package flag_tests
+          mkdir -p flag_package flag_tests flag_package_vtk_dev flag_tests_vtk_dev
+          find coverage_reports -name 'coverage_package_*vtk_dev.xml' -exec mv {} flag_package_vtk_dev/ \;
+          find coverage_reports -name 'coverage_tests_*vtk_dev.xml' -exec mv {} flag_tests_vtk_dev/ \;
           find coverage_reports -name 'coverage_package_*.xml' -exec mv {} flag_package/ \;
           find coverage_reports -name 'coverage_tests_*.xml' -exec mv {} flag_tests/ \;
-          ls flag_package flag_tests
+          ls flag_package flag_tests flag_package_vtk_dev flag_tests_vtk_dev
 
       - name: Upload pyvista coverage to CodeCov
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f
@@ -417,6 +424,24 @@ jobs:
         with:
           directory: flag_tests
           flags: tests
+          fail_ci_if_error: true
+          use_oidc: true
+
+      - name: Upload pyvista coverage from VTK dev to CodeCov
+        if: needs.VTK-dev.result == 'success'
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f
+        with:
+          directory: flag_package_vtk_dev
+          flags: package-vtk-dev
+          fail_ci_if_error: true
+          use_oidc: true
+
+      - name: Upload test coverage from VTK dev to CodeCov
+        if: needs.VTK-dev.result == 'success'
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f
+        with:
+          directory: flag_tests_vtk_dev
+          flags: tests-vtk-dev
           fail_ci_if_error: true
           use_oidc: true
 
