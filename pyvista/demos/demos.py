@@ -32,9 +32,12 @@ def glyphs(grid_sz=3):
 
     Examples
     --------
-    >>> from pyvista import demos
-    >>> mesh = demos.glyphs()
-    >>> mesh.plot()
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import demos
+        >>> mesh = demos.glyphs()
+        >>> mesh.plot()
 
     """
     # Seed rng for reproducible plots
@@ -87,8 +90,11 @@ def plot_glyphs(grid_sz=3, **kwargs):
 
     Examples
     --------
-    >>> from pyvista import demos
-    >>> demos.plot_glyphs()
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import demos
+        >>> demos.plot_glyphs()
 
     """
     # construct the glyphs on top of the mesh; don't scale by scalars now

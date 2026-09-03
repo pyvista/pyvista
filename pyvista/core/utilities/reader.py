@@ -1975,15 +1975,18 @@ class BinaryMarchingCubesReader(BaseReader['PolyData']):
 
     Examples
     --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> from pathlib import Path
-    >>> filename = examples.download_pine_roots(load=False)
-    >>> Path(filename).name
-    'pine_root.tri'
-    >>> reader = pv.get_reader(filename)
-    >>> mesh = reader.read()
-    >>> mesh.plot(color='brown')
+    .. pyvista-plot::
+        :force_static:
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> from pathlib import Path
+        >>> filename = examples.download_pine_roots(load=False)
+        >>> Path(filename).name
+        'pine_root.tri'
+        >>> reader = pv.get_reader(filename)
+        >>> mesh = reader.read()
+        >>> mesh.plot(color='brown')
 
     """
 
@@ -2410,15 +2413,18 @@ class MetaImageReader(BaseReader['ImageData']):
 
     Examples
     --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> from pathlib import Path
-    >>> filename = examples.download_chest(load=False)
-    >>> Path(filename).name
-    'ChestCT-SHORT.mha'
-    >>> reader = pv.get_reader(filename)
-    >>> mesh = reader.read()
-    >>> mesh.plot()
+    .. pyvista-plot::
+        :force_static:
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> from pathlib import Path
+        >>> filename = examples.download_chest(load=False)
+        >>> Path(filename).name
+        'ChestCT-SHORT.mha'
+        >>> reader = pv.get_reader(filename)
+        >>> mesh = reader.read()
+        >>> mesh.plot()
 
     """
 
@@ -2498,15 +2504,18 @@ class PNMReader(BaseReader['ImageData']):
 
     Examples
     --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> from pathlib import Path
-    >>> filename = examples.download_gourds_pnm(load=False)
-    >>> Path(filename).name
-    'Gourds.pnm'
-    >>> reader = pv.get_reader(filename)
-    >>> mesh = reader.read()
-    >>> mesh.plot()
+    .. pyvista-plot::
+        :force_static:
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> from pathlib import Path
+        >>> filename = examples.download_gourds_pnm(load=False)
+        >>> Path(filename).name
+        'Gourds.pnm'
+        >>> reader = pv.get_reader(filename)
+        >>> mesh = reader.read()
+        >>> mesh.plot()
 
     """
 

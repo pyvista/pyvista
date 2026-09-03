@@ -1103,6 +1103,15 @@ def test_plot_silhouette_options(tri_cylinder):
     pl.show()
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_plot_silhouette_replaced_with_same_name(tri_cylinder):
+    # https://github.com/pyvista/pyvista/issues/7761
+    pl = pv.Plotter()
+    for _ in range(3):
+        pl.add_mesh(tri_cylinder, name='cylinder', silhouette=True)
+    assert sorted(pl.renderer.actors) == ['cylinder', 'cylinder-silhouette']
+
+
 def test_plotter_scale(sphere):
     pl = pv.Plotter()
     pl.add_mesh(sphere)

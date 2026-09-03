@@ -20,11 +20,11 @@ from pyvista import examples
 # Start by loading the elevation data and a topographic map.
 
 # Load the elevation data as a surface
-topo = examples.download_crater_topo().resample(0.5, anti_aliasing=True)
+topo = examples.download_crater_topo().resample(0.25, anti_aliasing=True)
 elevation = topo.warp_by_scalar()
 # Load the topographic map from a GeoTiff
 topo_map = examples.download_crater_imagery()
-topo_map.to_image().resample(0.5, anti_aliasing=True, inplace=True)
+topo_map = pv.Texture(topo_map.to_image().resample(0.5, anti_aliasing=True))
 topo_map = topo_map.flip_y()  # flip to align to our dataset
 
 elevation
@@ -32,7 +32,7 @@ elevation
 # %%
 # Let's inspect the imagery that we just loaded.
 
-mpl.rcParams['figure.dpi'] = 500
+mpl.rcParams['figure.dpi'] = 150
 plt.imshow(topo_map.to_array())
 
 

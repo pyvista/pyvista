@@ -135,12 +135,13 @@ def test_interpolate_raises(strategy):
 
 def test_get_output_restores_field_data(sphere):
     sphere.field_data['data'] = np.arange(3)
-    alg = _vtk.vtkPassArrays()
+    alg = _vtk.vtkTriangleFilter()
     alg.SetInputDataObject(sphere)
-    alg.UseFieldTypesOn()
-    alg.AddFieldType(_vtk.vtkDataObject.FIELD)
     alg.Update()
-    assert alg.GetOutputDataObject(0).GetFieldData().GetNumberOfArrays() == 0
+    vtk_output = alg.GetOutputDataObject(0)
+    vtk_output.GetFieldData().Initialize()
+    assert 'data' in sphere.field_data
+    assert vtk_output.GetFieldData().GetNumberOfArrays() == 0
     output = _get_output(alg)
     assert np.array_equal(output.field_data['data'], np.arange(3))
 
@@ -4601,6 +4602,11 @@ def test_voxelize_binary_mask_cell_length_sample_size(ant, mocker: MockerFixture
     mask_clamped = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells * 10)
     assert mask_clamped.spacing == mask_all_cells.spacing
 
+    # The spacing is not estimated when the dimensions are given
+    sample_sizes.clear()
+    ant.voxelize_binary_mask(dimensions=(10, 10, 10))
+    assert sample_sizes == []
+
 
 @pytest.mark.parametrize(
     'rounding_func',
@@ -4717,6 +4723,47 @@ def test_voxelize_binary_mask_raises(sphere):
         )
         with pytest.raises(TypeError, match=match):
             sphere.voxelize_binary_mask(reference_volume=pv.ImageData(), **kwargs)
+
+
+def test_voxelize_binary_mask_numpy_values(sphere):
+    mask = sphere.voxelize_binary_mask(foreground_value=np.uint8(2), background_value=np.int32(0))
+    assert mask['mask'].dtype == np.uint8
+    assert np.array_equal(np.unique(mask['mask']), [0, 2])
+
+
+@pytest.mark.parametrize('slab_slices', [1, 3, 1000])
+def test_voxelize_binary_mask_slabs(ant, monkeypatch, slab_slices):
+    from pyvista.core.filters import data_set
+
+    expected = ant.voxelize_binary_mask(dimensions=(20, 21, 22))
+    monkeypatch.setattr(data_set, '_STENCIL_SLAB_SLICES', slab_slices)
+    mask = ant.voxelize_binary_mask(dimensions=(20, 21, 22))
+    assert np.array_equal(mask['mask'], expected['mask'])
+
+
+def test_voxelize_binary_mask_sphere_values():
+    sphere = pv.Sphere(radius=1.0, theta_resolution=200, phi_resolution=200)
+    mask = sphere.voxelize_binary_mask(dimensions=(41, 43, 45))
+    inside = mask['mask'].astype(bool)
+    distance = np.linalg.norm(mask.points, axis=1)
+    margin = max(mask.spacing)
+    # Points well inside the sphere are foreground and points well outside are background
+    assert np.all(inside[distance < 1 - margin])
+    assert not np.any(inside[distance > 1 + margin])
+    volume = inside.sum() * np.prod(mask.spacing)
+    assert np.isclose(volume, 4 / 3 * np.pi, rtol=0.05)
+
+
+def test_voxelize_binary_mask_reference_volume_beyond_mesh():
+    # Slices of the reference volume beyond the mesh are background
+    sphere = pv.Sphere()
+    reference = pv.ImageData(
+        dimensions=(12, 12, 40), spacing=(0.1, 0.1, 0.1), origin=(-0.55, -0.55, -2.0)
+    )
+    mask = sphere.voxelize_binary_mask(reference_volume=reference)
+    z = mask.points[:, 2]
+    assert not np.any(mask['mask'][np.abs(z) > 0.6])
+    assert np.any(mask['mask'][np.abs(z) < 0.3])
 
 
 def test_voxelize_rectilinear(ant):

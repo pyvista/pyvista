@@ -35,7 +35,7 @@ pl.show()
 # ++++++++++++
 #
 # Let's extract 2D iso-surfaces of a scalar field from a 3D mesh.
-mesh = examples.download_embryo()
+mesh = examples.download_embryo().resample(0.5, anti_aliasing=True)
 
 contours = mesh.contour(np.linspace(50, 200, 5))
 
@@ -83,7 +83,7 @@ pl.show()
 #
 # Create labeled surfaces from 3D label maps (e.f. multi-label image segmentation)
 # using :func:`~pyvista.ImageDataFilters.contour_labels`.
-label_map = pv.examples.load_frog_tissues()
+label_map = pv.examples.load_frog_tissues().resample(0.5, interpolation='nearest')
 mesh = label_map.contour_labels()
 mesh.plot(cmap='glasbey', cpos='yx', categories=True)
 # %%
