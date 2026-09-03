@@ -2,10 +2,11 @@ from __future__ import annotations
 
 from dataclasses import fields
 import inspect
-from typing import get_args
 import os
 from pathlib import Path
 import re
+import textwrap
+from typing import get_args
 import warnings
 
 import pytest
@@ -88,7 +89,9 @@ def _current_overloads():
 
 def _format_overloads(overloads):
     """Render the generated block: the ``ExampleName`` literal, then one overload per line."""
-    lines = ['ExampleName = Literal[', *(f"    '{name}'," for name in sorted(overloads)), ']']
+    names = ' '.join(f"'{name}'," for name in sorted(overloads))
+    packed = textwrap.wrap(names, width=90, initial_indent='    ', subsequent_indent='    ')
+    lines = ['ExampleName = Literal[', *packed, ']']
     for name, (dataset, readers) in sorted(overloads.items()):
         lines.append('@overload')
         lines.append(
@@ -270,8 +273,7 @@ def test_format_overloads_renders_one_line_per_stub():
     )
     assert block == (
         'ExampleName = Literal[\n'
-        "    'ant',\n"
-        "    'cow',\n"
+        "    'ant', 'cow',\n"
         ']\n'
         '@overload\n'
         "def get_example(name: Literal['ant'], *, download: bool = ...)"
