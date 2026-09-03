@@ -8474,11 +8474,12 @@ def _stencil_binary_mask(
     z = surface.points[:, 2][faces]
     z_min, z_max = z.min(axis=1), z.max(axis=1)
     extent_ = np.asarray(extent)
+    x_min, x_max, y_min, y_max, z_first, z_last = extent_.tolist()
     dimensions = extent_[1::2] - extent_[::2] + 1
     mask = np.full(dimensions[::-1], background_value, dtype=dtype)
     vtk_type = _vtk.get_vtk_array_type(dtype)
-    for k_min in range(extent_[4], extent_[5] + 1, _STENCIL_SLAB_SLICES):
-        k_max = min(k_min + _STENCIL_SLAB_SLICES - 1, extent_[5])
+    for k_min in range(z_first, z_last + 1, _STENCIL_SLAB_SLICES):
+        k_max = min(k_min + _STENCIL_SLAB_SLICES - 1, z_last)
         z_slab = sorted((origin[2] + k_min * spacing[2], origin[2] + k_max * spacing[2]))
         # Only the cells crossing the slab's slices can contribute to it
         crossing = (z_min <= z_slab[1]) & (z_max >= z_slab[0])
@@ -8489,7 +8490,7 @@ def _stencil_binary_mask(
         poly_to_stencil.SetInputData(slab_surface)
         poly_to_stencil.SetOutputSpacing(*spacing)
         poly_to_stencil.SetOutputOrigin(*origin)
-        poly_to_stencil.SetOutputWholeExtent(*extent_[:4].tolist(), k_min, k_max)
+        poly_to_stencil.SetOutputWholeExtent(x_min, x_max, y_min, y_max, k_min, k_max)
         stencil_to_image = _vtk.vtkImageStencilToImage()
         stencil_to_image.SetInputConnection(poly_to_stencil.GetOutputPort())
         stencil_to_image.SetInsideValue(foreground_value)
@@ -8497,7 +8498,7 @@ def _stencil_binary_mask(
         stencil_to_image.SetOutputScalarType(vtk_type)
         _update_alg(stencil_to_image, progress_bar=progress_bar, message='Generating binary mask')
         slab = convert_array(stencil_to_image.GetOutput().GetPointData().GetScalars())
-        mask[k_min - extent_[4] : k_max - extent_[4] + 1] = slab.reshape(
+        mask[k_min - z_first : k_max - z_first + 1] = slab.reshape(
             k_max - k_min + 1, dimensions[1], dimensions[0]
         )
     return mask.ravel()

@@ -4743,6 +4743,18 @@ def test_voxelize_binary_mask_sphere_values():
     assert np.isclose(volume, 4 / 3 * np.pi, rtol=0.05)
 
 
+def test_voxelize_binary_mask_reference_volume_beyond_mesh():
+    # Slices of the reference volume beyond the mesh are background
+    sphere = pv.Sphere()
+    reference = pv.ImageData(
+        dimensions=(12, 12, 40), spacing=(0.1, 0.1, 0.1), origin=(-0.55, -0.55, -2.0)
+    )
+    mask = sphere.voxelize_binary_mask(reference_volume=reference)
+    z = mask.points[:, 2]
+    assert not np.any(mask['mask'][np.abs(z) > 0.6])
+    assert np.any(mask['mask'][np.abs(z) < 0.3])
+
+
 def test_voxelize_rectilinear(ant):
     vox = ant.voxelize_rectilinear()
     assert isinstance(vox, pv.RectilinearGrid)
