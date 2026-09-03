@@ -6093,7 +6093,7 @@ def _reslice_image(
     alg = _vtk.vtkImageReslice()
     alg.SetInputData(image)
     alg.SetOutputExtent(*reference.extent)
-    alg.SetOutputOrigin(*reference.origin)
+    alg.SetOutputOrigin(list(reference.origin))
     alg.SetOutputSpacing(*reference.spacing)
     alg.SetOutputDirection(reference.direction_matrix.ravel().tolist())
     alg.SetBackgroundLevel(background_value)
