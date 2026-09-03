@@ -37,7 +37,6 @@ from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
-from pyvista.core.utilities.arrays import get_vtk_type
 from pyvista.core.utilities.arrays import set_default_active_scalars
 from pyvista.core.utilities.arrays import set_default_active_vectors
 from pyvista.core.utilities.cells import numpy_to_idarr
@@ -8477,7 +8476,7 @@ def _stencil_binary_mask(
     extent_ = np.asarray(extent)
     dimensions = extent_[1::2] - extent_[::2] + 1
     mask = np.full(dimensions[::-1], background_value, dtype=dtype)
-    vtk_type = get_vtk_type(dtype)
+    vtk_type = _vtk.get_vtk_array_type(dtype)
     for k_min in range(extent_[4], extent_[5] + 1, _STENCIL_SLAB_SLICES):
         k_max = min(k_min + _STENCIL_SLAB_SLICES - 1, extent_[5])
         z_slab = sorted((origin[2] + k_min * spacing[2], origin[2] + k_max * spacing[2]))
