@@ -9,3 +9,497 @@ force = true
 from = "/version/dev/*"
 status = 301
 to = "https://dev.pyvista.org/:splat"
+
+# The General Utilities page was split up; send its old URL and every
+# stub page that moved to another section to the new location.
+[[redirects]]
+from = "/api/utilities/utilities.html"
+status = 301
+to = "/api/utilities/index.html"
+
+[[redirects]]
+from = "/api/utilities/_autosummary/pyvista.CellStatus.html"
+status = 301
+to = "/api/core/_autosummary/pyvista.CellStatus.html"
+
+[[redirects]]
+from = "/api/utilities/_autosummary/pyvista.CellType.html"
+status = 301
+to = "/api/core/_autosummary/pyvista.CellType.html"
+
+[[redirects]]
+from = "/api/utilities/_autosummary/pyvista.CellType.dimension.html"
+status = 301
+to = "/api/core/_autosummary/pyvista.CellType.dimension.html"
+
+[[redirects]]
+from = "/api/utilities/_autosummary/pyvista.CellType.dimension_map.html"
+status = 301
+to = "/api/core/_autosummary/pyvista.CellType.dimension_map.html"
+
+[[redirects]]
+from = "/api/utilities/_autosummary/pyvista.CellType.is_composite.html"
+status = 301
+to = "/api/core/_autosummary/pyvista.CellType.is_composite.html"
+
+[[redirects]]
+from = "/api/utilities/_autosummary/pyvista.CellType.is_linear.html"
+status = 301
+to = "/api/core/_autosummary/pyvista.CellType.is_linear.html"
+
+[[redirects]]
+from = "/api/utilities/_autosummary/pyvista.CellType.n_edges.html"
+status = 301
+to = "/api/core/_autosummary/pyvista.CellType.n_edges.html"
+
+[[redirects]]
+from = "/api/utilities/_autosummary/pyvista.CellType.n_faces.html"
+status = 301
+to = "/api/core/_autosummary/pyvista.CellType.n_faces.html"
+
+[[redirects]]
+from = "/api/utilities/_autosummary/pyvista.CellType.n_points.html"
+status = 301
+to = "/api/core/_autosummary/pyvista.CellType.n_points.html"
+
+[[redirects]]
+from = "/api/utilities/_autosummary/pyvista.CellType.vtk_class.html"
+status = 301
+to = "/api/core/_autosummary/pyvista.CellType.vtk_class.html"
+
+[[redirects]]
+from = "/api/utilities/_autosummary/pyvista.cell_quality_info.html"
+status = 301
+to = "/api/core/_autosummary/pyvista.cell_quality_info.html"
+
+[[redirects]]
+from = "/api/utilities/_autosummary/pyvista.core.utilities.misc._BoundsSizeMixin.html"
+status = 301
+to = "/api/core/_autosummary/pyvista.core.utilities.misc._BoundsSizeMixin.html"
+
+[[redirects]]
+from = "/api/utilities/_autosummary/pyvista.core.utilities.misc._BoundsSizeMixin.bounds_size.html"
+status = 301
+to = "/api/core/_autosummary/pyvista.core.utilities.misc._BoundsSizeMixin.bounds_size.html"
+
+[[redirects]]
+from = "/api/utilities/_autosummary/pyvista.core.utilities.misc._NameMixin.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.core.utilities.misc._NameMixin.html"
+
+[[redirects]]
+from = "/api/utilities/_autosummary/pyvista.core.utilities.misc._NameMixin.name.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.core.utilities.misc._NameMixin.name.html"
+
+[[redirects]]
+from = "/api/utilities/_autosummary/pyvista.cubemap.html"
+status = 301
+to = "/api/core/_autosummary/pyvista.cubemap.html"
+
+[[redirects]]
+from = "/api/utilities/_autosummary/pyvista.cubemap_from_filenames.html"
+status = 301
+to = "/api/core/_autosummary/pyvista.cubemap_from_filenames.html"
+
+[[redirects]]
+from = "/api/utilities/_autosummary/pyvista.image_to_texture.html"
+status = 301
+to = "/api/core/_autosummary/pyvista.image_to_texture.html"
+
+[[redirects]]
+from = "/api/utilities/_autosummary/pyvista.numpy_to_texture.html"
+status = 301
+to = "/api/core/_autosummary/pyvista.numpy_to_texture.html"
+
+[[redirects]]
+from = "/api/utilities/_autosummary/pyvista.JupyterBackendRegistration.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.JupyterBackendRegistration.html"
+
+[[redirects]]
+from = "/api/utilities/_autosummary/pyvista.JupyterBackendRegistration.handler.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.JupyterBackendRegistration.handler.html"
+
+[[redirects]]
+from = "/api/utilities/_autosummary/pyvista.JupyterBackendRegistration.name.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.JupyterBackendRegistration.name.html"
+
+[[redirects]]
+from = "/api/utilities/_autosummary/pyvista.JupyterBackendRegistration.source.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.JupyterBackendRegistration.source.html"
+
+[[redirects]]
+from = "/api/utilities/_autosummary/pyvista.register_jupyter_backend.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.register_jupyter_backend.html"
+
+[[redirects]]
+from = "/api/utilities/_autosummary/pyvista.registered_jupyter_backends.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.registered_jupyter_backends.html"
+
+[[redirects]]
+from = "/api/utilities/_autosummary/pyvista.set_jupyter_backend.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.set_jupyter_backend.html"
+
+[[redirects]]
+from = "/api/utilities/_autosummary/pyvista.get_ext.html"
+status = 301
+to = "/api/readers/_autosummary/pyvista.get_ext.html"
+
+[[redirects]]
+from = "/api/utilities/_autosummary/pyvista.read.html"
+status = 301
+to = "/api/readers/_autosummary/pyvista.read.html"
+
+[[redirects]]
+from = "/api/utilities/_autosummary/pyvista.read_exodus.html"
+status = 301
+to = "/api/readers/_autosummary/pyvista.read_exodus.html"
+
+[[redirects]]
+from = "/api/utilities/_autosummary/pyvista.read_grdecl.html"
+status = 301
+to = "/api/readers/_autosummary/pyvista.read_grdecl.html"
+
+[[redirects]]
+from = "/api/utilities/_autosummary/pyvista.read_texture.html"
+status = 301
+to = "/api/readers/_autosummary/pyvista.read_texture.html"
+
+# The Core Helpers and Miscellaneous pages only linked to functions that
+# are now documented under Utilities.
+[[redirects]]
+from = "/api/core/helpers.html"
+status = 301
+to = "/api/utilities/index.html"
+
+[[redirects]]
+from = "/api/core/misc.html"
+status = 301
+to = "/api/utilities/index.html"
+
+# voxelize and voxelize_volume raise DeprecationError and left the reference;
+# send their pages to the filters that replaced them.
+[[redirects]]
+from = "/api/utilities/_autosummary/pyvista.voxelize.html"
+status = 301
+to = "/api/core/_autosummary/pyvista.DataSetFilters.voxelize.html"
+
+[[redirects]]
+from = "/api/utilities/_autosummary/pyvista.voxelize_volume.html"
+status = 301
+to = "/api/core/_autosummary/pyvista.DataSetFilters.voxelize_rectilinear.html"
+
+# Cameras and Lights moved from Core to Plotting, the plotting guide moved to
+# the user guide, and the convenience functions were folded into the Plotting
+# index.
+[[redirects]]
+from = "/api/core/camera.html"
+status = 301
+to = "/api/plotting/camera.html"
+
+[[redirects]]
+from = "/api/core/lights.html"
+status = 301
+to = "/api/plotting/lights.html"
+
+[[redirects]]
+from = "/api/plotting/plotting.html"
+status = 301
+to = "/user-guide/plotting.html"
+
+[[redirects]]
+from = "/api/plotting/conv_func.html"
+status = 301
+to = "/api/plotting/index.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Camera.azimuth.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Camera.azimuth.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Camera.clipping_range.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Camera.clipping_range.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Camera.copy.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Camera.copy.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Camera.direction.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Camera.direction.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Camera.disable_parallel_projection.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Camera.disable_parallel_projection.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Camera.distance.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Camera.distance.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Camera.elevation.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Camera.elevation.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Camera.enable_parallel_projection.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Camera.enable_parallel_projection.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Camera.focal_point.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Camera.focal_point.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Camera.from_paraview_pvcc.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Camera.from_paraview_pvcc.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Camera.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Camera.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Camera.is_set.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Camera.is_set.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Camera.model_transform_matrix.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Camera.model_transform_matrix.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Camera.parallel_projection.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Camera.parallel_projection.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Camera.parallel_scale.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Camera.parallel_scale.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Camera.position.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Camera.position.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Camera.reset_clipping_range.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Camera.reset_clipping_range.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Camera.roll.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Camera.roll.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Camera.thickness.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Camera.thickness.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Camera.tight.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Camera.tight.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Camera.to_paraview_pvcc.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Camera.to_paraview_pvcc.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Camera.up.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Camera.up.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Camera.view_angle.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Camera.view_angle.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Camera.view_frustum.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Camera.view_frustum.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Camera.zoom.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Camera.zoom.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Light.add_renderer.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Light.add_renderer.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Light.ambient_color.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Light.ambient_color.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Light.attenuation_values.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Light.attenuation_values.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Light.cone_angle.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Light.cone_angle.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Light.copy.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Light.copy.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Light.diffuse_color.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Light.diffuse_color.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Light.exponent.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Light.exponent.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Light.focal_point.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Light.focal_point.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Light.from_vtk.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Light.from_vtk.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Light.hide_actor.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Light.hide_actor.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Light.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Light.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Light.intensity.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Light.intensity.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Light.is_camera_light.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Light.is_camera_light.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Light.is_headlight.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Light.is_headlight.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Light.is_scene_light.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Light.is_scene_light.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Light.light_type.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Light.light_type.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Light.on.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Light.on.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Light.position.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Light.position.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Light.positional.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Light.positional.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Light.renderers.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Light.renderers.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Light.set_camera_light.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Light.set_camera_light.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Light.set_direction_angle.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Light.set_direction_angle.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Light.set_headlight.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Light.set_headlight.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Light.set_scene_light.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Light.set_scene_light.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Light.shadow_attenuation.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Light.shadow_attenuation.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Light.show_actor.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Light.show_actor.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Light.specular_color.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Light.specular_color.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Light.switch_off.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Light.switch_off.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Light.switch_on.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Light.switch_on.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Light.transform_matrix.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Light.transform_matrix.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Light.world_focal_point.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Light.world_focal_point.html"
+
+[[redirects]]
+from = "/api/core/_autosummary/pyvista.Light.world_position.html"
+status = 301
+to = "/api/plotting/_autosummary/pyvista.Light.world_position.html"
