@@ -12,57 +12,28 @@ questions. ``resample`` changes how densely an image is sampled and leaves it wh
 is. ``reslice`` samples the image at the points of a second image, so the two images end
 up on a common grid.
 
+See :meth:`~pyvista.ImageDataFilters.resample` for changing an image's resolution and
+for the interpolation and anti-aliasing options both filters share.
+
 """
 
 from __future__ import annotations
 
 import numpy as np
 
-# sphinx_gallery_thumbnail_number = 3
+# sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 from pyvista import examples
-
-# %%
-# Resample
-# ++++++++
-#
-# Load a photograph and down-sample it to an eighth of its resolution. Anti-aliasing
-# blurs the image before sampling it, which reduces the artifacts caused by discarding
-# samples.
-
-gourds = examples.download_gourds()
-downsampled = gourds.resample(1 / 8, 'lanczos')
-smoothed = gourds.resample(1 / 8, 'lanczos', anti_aliasing=True)
-
-pl = pv.Plotter(shape=(1, 3))
-pl.add_mesh(gourds, rgba=True, lighting=False)
-pl.add_text('Original', font_size=10)
-pl.subplot(0, 1)
-pl.add_mesh(downsampled, rgba=True, lighting=False)
-pl.add_text('Down-sampled', font_size=10)
-pl.subplot(0, 2)
-pl.add_mesh(smoothed, rgba=True, lighting=False)
-pl.add_text('Anti-aliased', font_size=10)
-pl.link_views()
-pl.view_xy()
-pl.camera.tight()
-pl.show()
-
-# %%
-# The image has fewer samples, but it still covers the same region of space.
-
-print(gourds.dimensions, downsampled.dimensions)
-print(gourds.bounds)
-print(downsampled.bounds)
 
 # %%
 # Reslice
 # +++++++
 #
-# Load a second photograph. It is smaller than the first, and both images start at the
+# Load two photographs. The bird is smaller than the gourds, and both start at the
 # origin with unit spacing, so the bird covers the lower left corner of the region the
 # gourds cover.
 
+gourds = examples.download_gourds()
 bird = examples.download_bird()
 print(bird.dimensions, gourds.dimensions)
 
