@@ -20,6 +20,11 @@ class _PropCollection(MutableSequence[_vtk.vtkProp]):
 
     .. versionadded:: 0.45
 
+    Parameters
+    ----------
+    prop_collection : :vtk:`vtkPropCollection`
+        Collection to wrap.
+
     """
 
     def __init__(self, prop_collection: _vtk.vtkPropCollection):

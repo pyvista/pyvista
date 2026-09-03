@@ -87,7 +87,7 @@ def _copy_association_names(names: Mapping[str, Iterable[str]]) -> defaultdict[s
     return defaultdict(set, {key: set(value) for key, value in names.items()})
 
 
-class ActiveArrayInfoTuple(NamedTuple):
+class ActiveArrayInfoTuple(NamedTuple):  # numpydoc ignore=PR02
     """Active array info tuple.
 
     Parameters

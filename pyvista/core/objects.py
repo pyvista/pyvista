@@ -11,6 +11,8 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from pyvista import _vtk
+from pyvista._warn_external import warn_external
+from pyvista.core.errors import PyVistaDeprecationWarning
 
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
@@ -32,6 +34,20 @@ class Table(DataObject, _vtk.vtkTable):
     Create by passing a 2D NumPy array of shape (``n_rows`` by ``n_columns``)
     or from a dictionary containing NumPy arrays.
 
+    Parameters
+    ----------
+    *args : :vtk:`vtkTable`, numpy.ndarray, dict, pandas.DataFrame, optional
+        Data source used to initialize the table.
+
+    deep : bool, default: True
+        Deep copy the input when initializing from a :vtk:`vtkTable`.
+
+    **kwargs : dict, optional
+        Unused.
+
+        .. deprecated:: 0.49
+            These arguments have never had any effect and will be removed.
+
     Examples
     --------
     >>> import pyvista as pv
@@ -41,8 +57,14 @@ class Table(DataObject, _vtk.vtkTable):
 
     """
 
-    def __init__(self, *args, deep: bool = True, **kwargs):  # noqa: ARG002
+    def __init__(self, *args, deep: bool = True, **kwargs):
         """Initialize the table."""
+        if kwargs:
+            warn_external(
+                'Passing unused keyword arguments to `Table` is deprecated and they will '
+                'be removed. Remove them from the call.',
+                PyVistaDeprecationWarning,
+            )
         super().__init__()
         if len(args) == 1:
             if isinstance(args[0], _vtk.vtkTable):
@@ -392,7 +414,7 @@ class Table(DataObject, _vtk.vtkTable):
         """
         return self.to_arrow().__arrow_c_stream__(requested_schema)
 
-    def save(self, *args, **kwargs):  # pragma: no cover
+    def save(self, *args, **kwargs):  # pragma: no cover  # numpydoc ignore=PR01
         """Save the table."""
         msg = "Please use the `to_pandas` method and harness Pandas' wonderful file IO methods."
         raise NotImplementedError(msg)

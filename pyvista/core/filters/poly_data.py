@@ -1760,19 +1760,19 @@ class PolyDataFilters(DataSetFilters):
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
-        boundary_constraints: bool, default: False
+        boundary_constraints : bool, default: False
             Use the legacy weighting by ``boundary_edge_length`` instead of by
             boundary_edge_length^2 for backwards compatibility.
 
             .. versionadded:: 0.45.0
 
-        boundary_weight: float, default: 1.0
+        boundary_weight : float, default: 1.0
             A floating point factor to weigh the boundary quadric constraints
             by: higher factors further constrain the boundary.
 
             .. versionadded:: 0.45.0
 
-        enable_all_attribute_error: bool, default: False
+        enable_all_attribute_error : bool, default: False
             This flag control the default value of all attribute metrics to
             eventually include them in the error calculation
 
