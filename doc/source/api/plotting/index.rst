@@ -41,6 +41,15 @@ Plotter
 Cameras and lights are documented on their own pages: :ref:`cameras_api` and
 :ref:`lights_api`.
 
+.. autosummary::
+   :toctree: _autosummary
+
+   Plotter
+   CameraPosition
+   Renderer
+   RenderWindowInteractor
+   Timer
+
 .. seealso::
 
    :ref:`multi_window_example`
@@ -52,26 +61,9 @@ Cameras and lights are documented on their own pages: :ref:`cameras_api` and
    :ref:`movie_example`
       Write frames to a movie.
 
-.. autosummary::
-   :toctree: _autosummary
-
-   Plotter
-   CameraPosition
-   Renderer
-   RenderWindowInteractor
-   Timer
-
 
 Actors and Mappers
 ------------------
-.. seealso::
-
-   :ref:`backface_prop_example`
-      Set properties for the back faces of an actor.
-
-   :ref:`lighting_mesh_example`
-      Control how an actor's surface reflects light.
-
 .. autosummary::
    :toctree: _autosummary
 
@@ -82,17 +74,17 @@ Actors and Mappers
    Prop3D
    Property
 
+.. seealso::
+
+   :ref:`backface_prop_example`
+      Set properties for the back faces of an actor.
+
+   :ref:`lighting_mesh_example`
+      Control how an actor's surface reflects light.
+
 
 Volume Rendering
 ----------------
-.. seealso::
-
-   :ref:`volume_rendering_example`
-      Render a volume with the different mappers.
-
-   :ref:`opacity_example`
-      Build an opacity transfer function.
-
 .. autosummary::
    :toctree: _autosummary
 
@@ -105,14 +97,17 @@ Volume Rendering
    plotting.volume_property.VolumeProperty
    opacity_transfer_function
 
+.. seealso::
+
+   :ref:`volume_rendering_example`
+      Render a volume with the different mappers.
+
+   :ref:`opacity_example`
+      Build an opacity transfer function.
+
 
 Text and Labels
 ---------------
-.. seealso::
-
-   :ref:`point_labels_example`
-      Label points in a scene.
-
 .. autosummary::
    :toctree: _autosummary
 
@@ -121,14 +116,14 @@ Text and Labels
    Text
    TextProperty
 
+.. seealso::
+
+   :ref:`point_labels_example`
+      Label points in a scene.
+
 
 Axes and Orientation
 --------------------
-.. seealso::
-
-   :ref:`axes_objects_example`
-      Compare the axes objects and add them to a scene.
-
 .. autosummary::
    :toctree: _autosummary
 
@@ -141,21 +136,26 @@ Axes and Orientation
    create_axes_marker
    create_axes_orientation_box
 
+.. seealso::
+
+   :ref:`axes_objects_example`
+      Compare the axes objects and add them to a scene.
+
 
 Lookup Tables
 -------------
 Colors, colormaps, and the :class:`~pyvista.Color` class are documented under
 :ref:`colors_api`.
 
-.. seealso::
-
-   :ref:`lookup_table_example`
-      Build a lookup table from a colormap or a list of colors.
-
 .. autosummary::
    :toctree: _autosummary
 
    LookupTable
+
+.. seealso::
+
+   :ref:`lookup_table_example`
+      Build a lookup table from a colormap or a list of colors.
 
 
 Enumerations

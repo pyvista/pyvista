@@ -12,15 +12,6 @@ provides a theme that is similar to the default styling of VTK.
 See :ref:`themes_example` for an example on how to use themes within
 PyVista.
 
-.. seealso::
-
-   :ref:`userguide_themes`
-      User guide for customizing and applying themes.
-
-   :ref:`configuration`
-      Central reference for all global settings, including the
-      non-plotting counterpart :class:`pyvista.core.config.Config`.
-
 .. currentmodule:: pyvista.plotting
 
 .. autosummary::
@@ -30,6 +21,15 @@ PyVista.
    themes.DarkTheme
    themes.DocumentTheme
    themes.ParaViewTheme
+
+.. seealso::
+
+   :ref:`userguide_themes`
+      User guide for customizing and applying themes.
+
+   :ref:`configuration`
+      Central reference for all global settings, including the
+      non-plotting counterpart :class:`pyvista.core.config.Config`.
 
 Each theme groups its settings into the following configuration sections.
 :class:`~pyvista.plotting.themes._ConfigBase` is the base class they share
