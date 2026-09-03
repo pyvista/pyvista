@@ -126,11 +126,24 @@ def test_wrap_by_vector_raises(mocker: MockerFixture):
 
 
 @given(
-    strategy=st.text().filter(lambda x: x not in ['null_value', 'mark_points', 'closest_point'])
+    strategy=st.text().filter(lambda x: x not in ['null_value', 'mask_points', 'closest_point'])
 )
 def test_interpolate_raises(strategy):
     with pytest.raises(ValueError, match=re.escape(f'strategy `{strategy}` not supported.')):
         pv.Sphere().interpolate(pv.Sphere(), strategy=strategy)
+
+
+def test_get_output_restores_field_data(sphere):
+    sphere.field_data['data'] = np.arange(3)
+    alg = _vtk.vtkTriangleFilter()
+    alg.SetInputDataObject(sphere)
+    alg.Update()
+    vtk_output = alg.GetOutputDataObject(0)
+    vtk_output.GetFieldData().Initialize()
+    assert 'data' in sphere.field_data
+    assert vtk_output.GetFieldData().GetNumberOfArrays() == 0
+    output = _get_output(alg)
+    assert np.array_equal(output.field_data['data'], np.arange(3))
 
 
 def test_datasetfilters_init():
@@ -198,25 +211,25 @@ def test_clip_scalar_no_active(sphere):
 
 
 def test_clip_scalar_ranges_imagedata():
-    mesh = pv.examples.download_whole_body_ct_male()['ct']
+    mesh = pv.Wavelet()
     vol = mesh.clip_scalar(
-        value=(150, 3000),
+        value=(200, 300),
     )
     assert vol.n_points < mesh.n_points
     vol2 = mesh.clip_scalar(
-        value=150,
+        value=200,
     )
     assert vol.n_points < vol2.n_points
 
 
 def test_clip_scalar_errors():
-    mesh = pv.examples.download_whole_body_ct_male()['ct']
+    mesh = pv.Wavelet()
     with pytest.raises(TypeError):
-        mesh.clip_scalar(value=(150, 3000), inplace=True)
+        mesh.clip_scalar(value=(200, 300), inplace=True)
     with pytest.raises(ValueError, match='Cannot have invert=False for a range clip'):
-        mesh.clip_scalar(value=(150, 3000), invert=False)
+        mesh.clip_scalar(value=(200, 300), invert=False)
     with pytest.raises(ValueError, match='Cannot have both=True for a range clip'):
-        mesh.clip_scalar(value=(150, 3000), both=True)
+        mesh.clip_scalar(value=(200, 300), both=True)
 
 
 def test_clip_scalar_multiple():
@@ -4488,7 +4501,9 @@ def test_color_labels_return_dict(labeled_image, color_type):
 
 @pytest.fixture
 def frog_tissues_image():
-    return examples.load_frog_tissues()
+    # subsample: contouring and voxelizing the full image takes seconds
+    image = examples.load_frog_tissues()
+    return image.extract_subset(image.extent, rate=(4, 4, 4))
 
 
 @pytest.fixture
@@ -4576,6 +4591,11 @@ def test_voxelize_binary_mask_cell_length_sample_size(ant, mocker: MockerFixture
     # Sample sizes larger than the number of cells are clamped
     mask_clamped = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells * 10)
     assert mask_clamped.spacing == mask_all_cells.spacing
+
+    # The spacing is not estimated when the dimensions are given
+    sample_sizes.clear()
+    ant.voxelize_binary_mask(dimensions=(10, 10, 10))
+    assert sample_sizes == []
 
 
 @pytest.mark.parametrize(
@@ -4693,6 +4713,47 @@ def test_voxelize_binary_mask_raises(sphere):
         )
         with pytest.raises(TypeError, match=match):
             sphere.voxelize_binary_mask(reference_volume=pv.ImageData(), **kwargs)
+
+
+def test_voxelize_binary_mask_numpy_values(sphere):
+    mask = sphere.voxelize_binary_mask(foreground_value=np.uint8(2), background_value=np.int32(0))
+    assert mask['mask'].dtype == np.uint8
+    assert np.array_equal(np.unique(mask['mask']), [0, 2])
+
+
+@pytest.mark.parametrize('slab_slices', [1, 3, 1000])
+def test_voxelize_binary_mask_slabs(ant, monkeypatch, slab_slices):
+    from pyvista.core.filters import data_set
+
+    expected = ant.voxelize_binary_mask(dimensions=(20, 21, 22))
+    monkeypatch.setattr(data_set, '_STENCIL_SLAB_SLICES', slab_slices)
+    mask = ant.voxelize_binary_mask(dimensions=(20, 21, 22))
+    assert np.array_equal(mask['mask'], expected['mask'])
+
+
+def test_voxelize_binary_mask_sphere_values():
+    sphere = pv.Sphere(radius=1.0, theta_resolution=200, phi_resolution=200)
+    mask = sphere.voxelize_binary_mask(dimensions=(41, 43, 45))
+    inside = mask['mask'].astype(bool)
+    distance = np.linalg.norm(mask.points, axis=1)
+    margin = max(mask.spacing)
+    # Points well inside the sphere are foreground and points well outside are background
+    assert np.all(inside[distance < 1 - margin])
+    assert not np.any(inside[distance > 1 + margin])
+    volume = inside.sum() * np.prod(mask.spacing)
+    assert np.isclose(volume, 4 / 3 * np.pi, rtol=0.05)
+
+
+def test_voxelize_binary_mask_reference_volume_beyond_mesh():
+    # Slices of the reference volume beyond the mesh are background
+    sphere = pv.Sphere()
+    reference = pv.ImageData(
+        dimensions=(12, 12, 40), spacing=(0.1, 0.1, 0.1), origin=(-0.55, -0.55, -2.0)
+    )
+    mask = sphere.voxelize_binary_mask(reference_volume=reference)
+    z = mask.points[:, 2]
+    assert not np.any(mask['mask'][np.abs(z) > 0.6])
+    assert np.any(mask['mask'][np.abs(z) < 0.3])
 
 
 def test_voxelize_rectilinear(ant):

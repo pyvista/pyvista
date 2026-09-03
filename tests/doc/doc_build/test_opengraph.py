@@ -82,7 +82,7 @@ OPENGRAPH_PAGES = (
         id='autoenum-gallery',
         # Images are plain ``.. image::`` directives rather than the plot directive,
         # to confirm selection counts image nodes generically
-        path='api/utilities/_autosummary/pyvista.CellType.html',
+        path='api/core/_autosummary/pyvista.CellType.html',
         description='Define types of cells.',
         image_number=13,
     ),

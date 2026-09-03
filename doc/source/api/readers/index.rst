@@ -1,11 +1,12 @@
 .. _reader_api:
 
-Readers
-=======
+Readers and Writers
+===================
 PyVista provides class based readers to have more control over reading
-data files. These classes allows for more fine-grained control over
+data files. These classes allow for more fine-grained control over
 reading datasets from files. See :func:`pyvista.get_reader` for a
-list of file types supported.
+list of file types supported. The writer classes used by
+:meth:`pyvista.DataObject.save` are listed further down this page.
 
 Also, see :ref:`reader_example` for a full example using reader classes.
 
@@ -16,6 +17,29 @@ Also, see :ref:`reader_example` for a full example using reader classes.
 
    get_reader
 
+Reading Functions
+~~~~~~~~~~~~~~~~~
+
+These functions read a file in a single call, selecting the reader from
+the file extension. To write a file, see :meth:`~pyvista.DataObject.save`.
+
+.. autosummary::
+   :toctree: _autosummary
+
+   get_ext
+   read
+   read_exodus
+   read_grdecl
+   read_texture
+
+.. seealso::
+
+   :ref:`read_file_example`
+      Load and plot a mesh from a file.
+
+   :ref:`conversions_api`
+      Read and write files with ``meshio``.
+
 Reader Classes
 ~~~~~~~~~~~~~~
 
@@ -23,9 +47,9 @@ Reader Classes
    :toctree: _autosummary
 
     AVSucdReader
+    BinaryMarchingCubesReader
     BMPReader
     BYUReader
-    BinaryMarchingCubesReader
     CGNSReader
     DEMReader
     DICOMReader
@@ -44,8 +68,8 @@ Reader Classes
     HDFReader
     HDRReader
     JPEGReader
-    MFIXReader
     MetaImageReader
+    MFIXReader
     MINCImageReader
     MultiBlockPlot3DReader
     Nek5000Reader
@@ -56,35 +80,35 @@ Reader Classes
     ParticleReader
     PDBReader
     PExodusIIReader
+    Plot3DMetaReader
     PLYReader
     PNGReader
     PNMReader
     POpenFOAMReader
+    ProStarReader
     PTSReader
     PVDReader
-    Plot3DMetaReader
-    ProStarReader
-    SLCReader
-    STLReader
     SegYReader
     SeriesReader
+    SLCReader
+    STLReader
+    TecplotReader
     ThreeDSReader
     TIFFReader
-    TecplotReader
     VRMLReader
     VTKDataSetReader
     VTKPDataSetReader
+    XdmfReader
     XMLImageDataReader
     XMLMultiBlockDataReader
+    XMLPartitionedDataSetReader
     XMLPImageDataReader
+    XMLPolyDataReader
     XMLPRectilinearGridReader
     XMLPUnstructuredGridReader
-    XMLPartitionedDataSetReader
-    XMLPolyDataReader
     XMLRectilinearGridReader
     XMLStructuredGridReader
     XMLUnstructuredGridReader
-    XdmfReader
 
 Custom Readers
 ~~~~~~~~~~~~~~
@@ -372,8 +396,8 @@ formats. These are used internally by :meth:`pyvista.DataObject.save`.
    PNMWriter
    PolyDataWriter
    RectilinearGridWriter
-   STLWriter
    SimplePointsWriter
+   STLWriter
    StructuredGridWriter
    TIFFWriter
    UnstructuredGridWriter
@@ -416,12 +440,12 @@ members is documented once and linked from every class that inherits it.
 
    BaseReader
    BaseVTKReader
+   core.utilities.writer._DataFormatMixin
+   core.utilities.fileio._FileIOBase
    PointCellDataSelection
    PVDDataSet
    SeriesDataSet
    TimeReader
-   core.utilities.fileio._FileIOBase
-   core.utilities.writer._DataFormatMixin
    core.utilities.writer._XMLWriter
 
 

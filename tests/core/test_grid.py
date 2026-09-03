@@ -734,10 +734,15 @@ def test_merge_invalid(hexbeam, sphere):
         sphere.merge([hexbeam], inplace=True)
 
 
+def test_rectilinear_grid_too_many_args_raises():
+    with pytest.raises(ValueError, match='Too many args'):
+        pv.RectilinearGrid([0, 1], [0, 1], [0, 1], [0, 1])
+
+
 def test_init_structured_raise():
     with pytest.raises(TypeError, match='Invalid parameters'):
         pv.StructuredGrid(['a', 'b', 'c'])
-    with pytest.raises(ValueError, match='Too many args'):
+    with pytest.raises(TypeError, match='positional argument'):
         pv.StructuredGrid([0, 1], [0, 1], [0, 1], [0, 1])
 
 
@@ -2183,7 +2188,7 @@ def test_rect_grid_raises(arg):
         pv.RectilinearGrid(arg)
 
 
-@given(args=st.lists(st.none()).filter(lambda x: len(x) in [2, 3]))
+@given(args=st.lists(st.none(), min_size=2, max_size=3))
 def test_rect_grid_raises_args(args):
     with pytest.raises(
         TypeError,

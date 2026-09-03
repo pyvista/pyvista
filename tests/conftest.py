@@ -937,3 +937,26 @@ def pytest_report_header(config):  # noqa: ARG001
         comma_lst = ', '.join(not_found)
         lines.append(f'optional package{plrl} not found: {comma_lst}')
     return '\n'.join(lines)
+
+
+# Interactive scenes above ``max_vtksz_file_size`` in pyproject.toml fail the docs image
+# tests; these are the known exceptions with their own limit in MB, keyed by the vtksz
+# file stem without the plot-directive content hash.
+_VTKSZ_SIZE_EXCEPTIONS_MB = {
+    'pyvista-DataSetFilters-voxelize_binary_mask_04_00': 7,
+    'sphx_glr_connectivity_001': 7,
+    'sphx_glr_connectivity_002': 7,
+    'sphx_glr_connectivity_003': 7,
+    'sphx_glr_ghost_cells_001': 7,
+    'sphx_glr_openfoam_cooling_002': 7,
+    'sphx_glr_openfoam_cooling_003': 8,
+    'sphx_glr_pump_bracket_002': 7,
+}
+
+
+def pytest_pyvista_max_vtksz_file_size_hook(test_case, request):  # noqa: ARG001
+    """Raise the vtksz size limit for the known exceptions."""
+    name = re.sub(r'-[0-9a-f]{16}(?=_\d\d_\d\d$)', '', test_case.test_name)
+    if (limit := _VTKSZ_SIZE_EXCEPTIONS_MB.get(name)) is not None:
+        test_case.max_vtksz_file_size = limit
+    return test_case

@@ -1249,7 +1249,7 @@ class DataObjectFilters:
 
             .. versionadded:: 0.49
 
-        cell_validator_kwargs
+        **cell_validator_kwargs
             Keyword arguments passed to :meth:`~pyvista.DataObjectFilters.cell_validator`.
 
             .. versionadded:: 0.48
@@ -2001,30 +2001,30 @@ class DataObjectFilters:
         # so convert input points and relevant vectors to float
         # (creating a new copy would be harmful much more often)
         converted_ints = False
-        if not np.issubdtype(self.points.dtype, np.floating):
-            self.points = self.points.astype(np.float32)
+        points = self.points
+        if not np.issubdtype(points.dtype, np.floating):
+            self.points = points.astype(np.float32)
             converted_ints = True
+        # Optimization: build the attribute wrappers once; they refer to the same VTK objects
+        # for the whole filter, including after copy_from, so reusing them is safe
+        point_data = self.point_data
+        cell_data = self.cell_data
         if transform_all_input_vectors:
             # all vector-shaped data will be transformed
+            n_points, n_cells = self.n_points, self.n_cells
             point_vectors: list[str | None] = [
-                name for name, data in self.point_data.items() if data.shape == (self.n_points, 3)
+                name for name, data in point_data.items() if data.shape == (n_points, 3)
             ]
             cell_vectors: list[str | None] = [
-                name for name, data in self.cell_data.items() if data.shape == (self.n_cells, 3)
+                name for name, data in cell_data.items() if data.shape == (n_cells, 3)
             ]
         else:
             # we'll only transform active vectors and normals
-            point_vectors = [
-                self.point_data.active_vectors_name,
-                self.point_data.active_normals_name,
-            ]
-            cell_vectors = [
-                self.cell_data.active_vectors_name,
-                self.cell_data.active_normals_name,
-            ]
+            point_vectors = [point_data.active_vectors_name, point_data.active_normals_name]
+            cell_vectors = [cell_data.active_vectors_name, cell_data.active_normals_name]
         # dynamically convert each self.point_data[name] etc. to float32
         all_vectors = [point_vectors, cell_vectors]
-        all_dataset_attrs = [self.point_data, self.cell_data]
+        all_dataset_attrs = [point_data, cell_data]
         for vector_names, dataset_attrs in zip(all_vectors, all_dataset_attrs, strict=True):
             for vector_name in vector_names:
                 if vector_name is None:
@@ -2041,8 +2041,8 @@ class DataObjectFilters:
             )
 
         # vtkTransformFilter doesn't respect active scalars.  We need to track this
-        active_point_scalars_name: str | None = self.point_data.active_scalars_name
-        active_cell_scalars_name: str | None = self.cell_data.active_scalars_name
+        active_point_scalars_name: str | None = point_data.active_scalars_name
+        active_cell_scalars_name: str | None = cell_data.active_scalars_name
 
         # vtkTransformFilter sometimes doesn't transform all vector arrays
         # when there are active point/cell scalars. Use this workaround
@@ -2120,10 +2120,10 @@ class DataObjectFilters:
             output.copy_from(vtk_filter_output, deep=True)
 
         # Make the previously active scalars active again
-        self.point_data.active_scalars_name = active_point_scalars_name
+        point_data.active_scalars_name = active_point_scalars_name
         if output is not self:
             output.point_data.active_scalars_name = active_point_scalars_name
-        self.cell_data.active_scalars_name = active_cell_scalars_name
+        cell_data.active_scalars_name = active_cell_scalars_name
         if output is not self:
             output.cell_data.active_scalars_name = active_cell_scalars_name
 
@@ -3155,7 +3155,7 @@ class DataObjectFilters:
     ):
         """Clip using an implicit function (internal helper)."""
         if crinkle:
-            active_scalars_info = _Crinkler.add_cell_ids(self)
+            active_scalars_info = _Crinkler._add_cell_ids(self)
 
         # Need to cast PointSet to PolyData since vtkTableBasedClipDataSet is broken
         # with vtk 9.4.X, see https://gitlab.kitware.com/vtk/vtk/-/issues/19649
@@ -3187,11 +3187,11 @@ class DataObjectFilters:
             a = _get_output(alg, oport=0)
             b = _get_output(alg, oport=1)
             if crinkle:
-                a, b = _Crinkler.extract_crinkle_cells(self, a, b, active_scalars_info)
+                a, b = _Crinkler._extract_crinkle_cells(self, a, b, active_scalars_info)
             return _maybe_cast_to_point_set(a), _maybe_cast_to_point_set(b)
         clipped = _get_output(alg)
         if crinkle:
-            clipped = _Crinkler.extract_crinkle_cells(self, clipped, None, active_scalars_info)
+            clipped = _Crinkler._extract_crinkle_cells(self, clipped, None, active_scalars_info)
         return _maybe_cast_to_point_set(clipped)
 
     @_deprecate_positional_args(allowed=['normal'])
@@ -3433,7 +3433,7 @@ class DataObjectFilters:
                 )
             )
         if crinkle:
-            active_scalars_info = _Crinkler.add_cell_ids(self)
+            active_scalars_info = _Crinkler._add_cell_ids(self)
         alg = _vtk.vtkBoxClipDataSet()
         if not merge_points:
             # vtkBoxClipDataSet uses vtkMergePoints by default
@@ -3448,7 +3448,7 @@ class DataObjectFilters:
         _update_alg(alg, progress_bar=progress_bar, message='Clipping a Dataset by a Bounding Box')
         clipped = _get_output(alg, oport=port)
         if crinkle:
-            clipped = _Crinkler.extract_crinkle_cells(self, clipped, None, active_scalars_info)
+            clipped = _Crinkler._extract_crinkle_cells(self, clipped, None, active_scalars_info)
         return _remove_unused_points_post_clip(clipped, self.bounds)
 
     def clip_slab(  # type: ignore[misc]
@@ -5545,8 +5545,7 @@ class _Crinkler:
     ITER_KWARGS: ClassVar = dict(skip_none=True)
 
     @staticmethod
-    def extract_cells(dataset, ids, active_scalars_info_):
-        # Extract cells and remove arrays, and restore active scalars
+    def _extract_cells(dataset, ids, active_scalars_info_):
         """Extract cells by ID and restore the active scalars."""
         output = dataset.extract_cells(ids, pass_cell_ids=False, pass_point_ids=False)
         association, name = active_scalars_info_
@@ -5557,13 +5556,13 @@ class _Crinkler:
         return output
 
     @staticmethod
-    def extract_crinkle_cells(dataset, a_, b_, active_scalars_info):  # noqa: PLR0917
+    def _extract_crinkle_cells(dataset, a_, b_, active_scalars_info):  # noqa: PLR0917
         """Extract crinkled cells from the clip output."""
         if b_ is None:
             # Extract cells when `return_clipped=False`
             def extract_cells_from_block(block_, clipped_a, _, active_scalars_info_):
                 if _Crinkler.CELL_IDS in clipped_a.cell_data.keys():
-                    return _Crinkler.extract_cells(
+                    return _Crinkler._extract_cells(
                         block_,
                         np.unique(clipped_a.cell_data[_Crinkler.CELL_IDS]),
                         active_scalars_info_,
@@ -5591,8 +5590,8 @@ class _Crinkler:
                 array_a = np.array(list(set_a), dtype=_Crinkler.INT_DTYPE)
                 array_b = np.array(list(set_b), dtype=_Crinkler.INT_DTYPE)
 
-                clipped_a = _Crinkler.extract_cells(block_, array_a, active_scalars_info_)
-                clipped_b = _Crinkler.extract_cells(block_, array_b, active_scalars_info_)
+                clipped_a = _Crinkler._extract_cells(block_, array_a, active_scalars_info_)
+                clipped_b = _Crinkler._extract_cells(block_, array_b, active_scalars_info_)
                 return clipped_a, clipped_b
 
         def extract_cells_from_multiblock(  # noqa: PLR0917
@@ -5626,8 +5625,7 @@ class _Crinkler:
         return extract_cells_from_block(dataset, a_, b_, active_scalars_info[0])
 
     @staticmethod
-    def add_cell_ids(dataset: DataSet | MultiBlock):
-        # Add Cell IDs to all blocks and keep track of scalars to restore later
+    def _add_cell_ids(dataset: DataSet | MultiBlock):
         """Add cell ID arrays to all blocks and record the active scalars to restore."""
         active_scalars_info = []
         if isinstance(dataset, pv.MultiBlock):

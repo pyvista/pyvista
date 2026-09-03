@@ -21,6 +21,7 @@ from sphinx_autocodelink.gallery import AutoCodeLinkScraper
 if TYPE_CHECKING:
     from docutils.nodes import Element
     from sphinx.application import Sphinx
+    from sphinx.environment import BuildEnvironment
 
 # Otherwise VTK reader issues on some systems, causing sphinx to crash. See also #226.
 locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
@@ -57,8 +58,10 @@ from pyvista.ext._autoenum import instance_property_names
 from pyvista.ext._autoenum import metaclass_property_descriptions
 from pyvista.ext._autoenum import metaclass_property_names
 from pyvista.ext._autoinherit import filter_member_rows
+from pyvista.ext._autoinherit import inherited_classes
 from pyvista.ext._autoinherit import inherited_member_rows
 from pyvista.ext._autoinherit import own_members
+from pyvista.ext._autoinherit import vtk_bases
 from pyvista.plotting.utilities.sphinx_gallery import DynamicScraper
 
 # Need to import all vtk modules eagerly to avoid issues with parallel lazy imports
@@ -453,8 +456,10 @@ autosummary_context = {
     # Used by _templates/autosummary/class.rst: see pyvista/ext/_autoinherit.py for how
     # each member is routed to exactly one class page.
     'own_members': own_members,
+    'inherited_classes': inherited_classes,
     'inherited_member_rows': inherited_member_rows,
     'filter_member_rows': filter_member_rows,
+    'vtk_bases': vtk_bases,
     # Used by _templates/autosummary/enum.rst: autosummary does not populate `attributes`
     # for the `enum` objtype the way it does for `class`, so enum.rst asks these directly.
     'instance_property_names': instance_property_names,
@@ -895,13 +900,16 @@ html_theme_options = {
     'analytics': {'google_analytics_id': 'UA-140243896-1'},
     'show_prev_next': False,
     'github_url': 'https://github.com/pyvista/pyvista',
-    'collapse_navigation': True,
+    'collapse_navbar': True,
     'use_edit_page_button': True,
     'navigation_with_keys': False,
     'show_navbar_depth': 1,
     # Capping at depth 4 keeps classes nested under their section pages while
     # avoiding an O(N^2) sidebar render across ~2,700 method-level entries.
     'max_navbar_depth': 4,
+    'article_header_start': ['toggle-primary-sidebar.html', 'breadcrumbs.html'],
+    # Else pydata injects a hidden navbar that steals the sidebar toggles, sphinx-book-theme#988.
+    'navbar_persistent': [],
     'icon_links': [
         {
             'name': 'Slack Community',
@@ -960,6 +968,7 @@ html_css_files = [
     'announcement.css',  # override banner color
     'codimensional.css',  # pin partner card to bottom of right sidebar
     'jupyter_sphinx_theme.css',  # make jupyter-sphinx containers follow the dark mode toggle
+    'breadcrumbs.css',  # keep the trail on one line in the fixed-height article header
 ]
 
 # -- Options for HTMLHelp output ------------------------------------------
@@ -1024,10 +1033,16 @@ texinfo_documents = [
 
 # -- Custom 404 page
 
+# Netlify serves this page for any missing path, at any depth, so its links are
+# site-root absolute, as ``notfound_urls_prefix = None`` makes the theme's own.
+# ``notfound.js`` fills the container with suggestions built from the requested URL.
 notfound_context = {
     'body': (
-        '<h1>Page not found.</h1>\n\n'
-        'Perhaps try the <a href="https://docs.pyvista.org/examples/index.html">examples page</a>.'
+        '<h1>Page not found</h1>\n'
+        '<div id="notfound"></div>\n'
+        '<p>Try the <a href="/search.html">search page</a>, '
+        'the <a href="/api/index.html">API reference</a>, '
+        'or the <a href="/examples/index.html">examples gallery</a>.</p>'
     ),
 }
 notfound_urls_prefix = None
@@ -1070,6 +1085,12 @@ html_sidebars = {
         'navbar-logo.html',
         'icon-links.html',
         'search-button-field.html',
+        'sbt-sidebar-nav.html',
+    ],
+    # The search page renders its own search box, so drop the sidebar's.
+    'search': [
+        'navbar-logo.html',
+        'icon-links.html',
         'sbt-sidebar-nav.html',
     ],
 }
@@ -1120,9 +1141,19 @@ def configure_backend(app: Sphinx) -> None:  # noqa: D103
     app.add_directive('image', PlaceHolderImage)
 
 
+def forget_tag_page_toctrees(app: Sphinx, env: BuildEnvironment) -> None:
+    """Drop tag pages' toctree entries so an example's parent stays its gallery."""
+    tags_dir = f'{app.config.tags_output_dir}/'
+    for docname in list(env.toctree_includes):
+        if docname.startswith(tags_dir) and docname != f'{tags_dir}tagsindex':
+            del env.toctree_includes[docname]
+
+
 def setup(app: Sphinx) -> None:  # noqa: D103
     app.connect('config-inited', report_parallel_safety)
     app.connect('builder-inited', configure_backend)
+    # The last toctree listing a page becomes its parent, and tag pages sort after galleries.
+    app.connect('env-updated', forget_tag_page_toctrees)
     # Priority must stay above the 501 used by sphinx-book-theme's
     # ``add_source_buttons``, which is what builds the "suggest edit" button.
     app.connect('html-page-context', pv_html_page_context, priority=502)
@@ -1142,4 +1173,5 @@ def setup(app: Sphinx) -> None:  # noqa: D103
     app.add_css_file('no_search_highlight.css')
     app.add_css_file('dataset_gallery_filter.css')
     app.add_js_file('redirect_fragments.js')
+    app.add_js_file('notfound.js')
     app.add_js_file('dataset_gallery_filter.js')

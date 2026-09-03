@@ -2608,11 +2608,11 @@ class BasePlotter(_BoundsSizeMixin):
         if self.iren is not None:
             self.iren.clear_events_for_key(*args, **kwargs)
 
-    def store_mouse_position(self, *args) -> None:  # noqa: ARG002
+    def store_mouse_position(self, *args) -> None:  # noqa: ARG002  # numpydoc ignore=PR01
         """Store mouse position."""
         self.mouse_position = self._get_iren_not_none().get_event_position()
 
-    def store_click_position(self, *args) -> None:  # noqa: ARG002
+    def store_click_position(self, *args) -> None:  # noqa: ARG002  # numpydoc ignore=PR01
         """Store click position in viewport coordinates."""
         self.click_position = self._get_iren_not_none().get_event_position()
         self.mouse_position = self.click_position
@@ -2790,7 +2790,7 @@ class BasePlotter(_BoundsSizeMixin):
         """Wrap RenderWindowInteractor.key_press_event."""
         self._get_iren_not_none().key_press_event(*args, **kwargs)
 
-    def left_button_down(self, *args) -> None:  # noqa: ARG002
+    def left_button_down(self, *args) -> None:  # noqa: ARG002  # numpydoc ignore=PR01
         """Register the event for a left button down click."""
         attr = 'GetRenderFramebuffer'
         if (
@@ -4641,6 +4641,11 @@ class BasePlotter(_BoundsSizeMixin):
             render=render,
             remove_existing_actor=remove_existing_actor,
         )
+
+        if silhouette:
+            # Give the silhouette actor a name to avoid duplicate
+            # silhouettes for the same actor
+            silhouette_actor.name = f'{name}-silhouette'
 
         # hide scalar bar if using special scalars
         if scalar_bar_args.get('title') == '__custom_rgba':

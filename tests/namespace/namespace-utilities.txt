@@ -190,7 +190,6 @@ threaded, <function threaded at 0x7f72f5e07670>
 # trans_from_matrix, <function trans_from_matrix at 0x7f72f5e05ee0>
 transform_vectors_sph_to_cart, <function transform_vectors_sph_to_cart at 0x7f72f5d21280>
 transformations, <module 'pyvista.utilities.transformations' from 'pyvista/utilities/transformations.py'>
-translate, <function translate at 0x7f72f5d21940>
 try_callback, <function try_callback at 0x7f72f5e07550>
 vector_poly_data, <function vector_poly_data at 0x7f72f5e05e50>
 voxelize, <function voxelize at 0x7f72f5d210d0>
