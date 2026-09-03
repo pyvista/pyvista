@@ -3245,7 +3245,6 @@ class Theme(_ConfigBase):
 
     @interactor_style.setter
     def interactor_style(self, interactor_style: str) -> None:
-        """Set the default interactor style."""
         self._interactor_style = _validate_interactor_style(interactor_style)
 
     def load_theme(self, theme: str | Theme) -> None:

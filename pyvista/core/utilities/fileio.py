@@ -99,8 +99,7 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
 
     @path.setter
     @abstractmethod
-    def path(self, path: str | Path) -> None:
-        """Set the path."""
+    def path(self, path: str | Path) -> None: ...
 
     @_classproperty
     def _vtk_class(cls) -> _vtk.vtkWriter | None:  # noqa: N805
@@ -129,6 +128,11 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
         These extensions are used by :func:`~pyvista.read` and :class:`~pyvista.DataObject.save`
         to determine which reader and/or writer is used for reading and/or saving files.
 
+        Returns
+        -------
+        tuple[str, ...]
+            File extensions associated with this class.
+
         """
         extensions = set()
         for mapping in cls._get_extension_mappings():
@@ -143,6 +147,11 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
 
         These extensions are used by :func:`~pyvista.read` and :class:`~pyvista.DataObject.save`
         to determine which reader and/or writer is used for reading and/or saving files.
+
+        Returns
+        -------
+        tuple[re.Pattern[str], ...]
+            Regex patterns associated with this class.
 
         """
         patterns = {
@@ -1076,7 +1085,7 @@ def _read_grdecl(
 
 # unused; the shims exist solely to keep the import path callable while always
 # raising. They must accept any historical call signature unchanged.
-def read_pickle(*args: Any, **kwargs: Any) -> NoReturn:  # noqa: ARG001
+def read_pickle(*args: Any, **kwargs: Any) -> NoReturn:  # noqa: ARG001  # numpydoc ignore=PR01
     """Raise :class:`ValueError`—pickle is not a supported mesh file format.
 
     This shim is kept only for backwards-compatible import paths. See
@@ -1088,7 +1097,7 @@ def read_pickle(*args: Any, **kwargs: Any) -> NoReturn:  # noqa: ARG001
     _raise_pickle_removed()
 
 
-def save_pickle(*args: Any, **kwargs: Any) -> NoReturn:  # noqa: ARG001
+def save_pickle(*args: Any, **kwargs: Any) -> NoReturn:  # noqa: ARG001  # numpydoc ignore=PR01
     """Raise :class:`ValueError`—pickle is not a supported mesh file format.
 
     See :func:`read_pickle`.

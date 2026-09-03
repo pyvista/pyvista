@@ -224,7 +224,17 @@ def has_module(module_name: str) -> bool:
 
 
 class _SMPToolsContext:
-    """Context manager that restores VTK SMP backend state on exit."""
+    """Context manager that restores VTK SMP backend state on exit.
+
+    Parameters
+    ----------
+    original_backend : str
+        SMP backend to restore on exit.
+
+    original_threads : int
+        Thread count to restore on exit.
+
+    """
 
     def __init__(self, original_backend: str, original_threads: int) -> None:
         self._original_backend = original_backend
@@ -547,6 +557,17 @@ def set_new_attribute(obj: object, name: str, value: Any) -> None:
     to set it.
 
     Use :func:`set_new_attribute` to override this and set a new attribute anyway.
+
+    Parameters
+    ----------
+    obj : object
+        Object to set the attribute on.
+
+    name : str
+        Attribute name.
+
+    value : Any
+        Attribute value.
 
     See Also
     --------

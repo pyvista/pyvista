@@ -82,7 +82,14 @@ ResultsByStep = dict[float, StepBucket]
 
 
 class _LineTrackingStream:
-    """Wrap a file-like iterator to track line numbers automatically."""
+    """Wrap a file-like iterator to track line numbers automatically.
+
+    Parameters
+    ----------
+    lines : iterable of str
+        File-like iterator to wrap.
+
+    """
 
     def __init__(self, lines: Any) -> None:
         self._lines = iter(lines)
@@ -142,7 +149,14 @@ class _FRDData:
 
 
 class _FRDParser:
-    """Parses a CalculiX FRD file into an ``FRDData`` object."""
+    """Parses a CalculiX FRD file into an ``FRDData`` object.
+
+    Parameters
+    ----------
+    filename : str
+        Path of the FRD file.
+
+    """
 
     # Compiled regex to fix scientific notation formatting issues
     _SCIENTIFIC_RE = re.compile(r'(?<![EeDd])-')
