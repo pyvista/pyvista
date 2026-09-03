@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from dataclasses import fields
 import inspect
-from typing import get_args
 import os
 from pathlib import Path
 import re
+from typing import get_args
 import warnings
 
 import pytest
