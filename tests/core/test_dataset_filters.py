@@ -4591,6 +4591,11 @@ def test_voxelize_binary_mask_cell_length_sample_size(ant, mocker: MockerFixture
     mask_clamped = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells * 10)
     assert mask_clamped.spacing == mask_all_cells.spacing
 
+    # The spacing is not estimated when the dimensions are given
+    sample_sizes.clear()
+    ant.voxelize_binary_mask(dimensions=(10, 10, 10))
+    assert sample_sizes == []
+
 
 @pytest.mark.parametrize(
     'rounding_func',

@@ -8002,32 +8002,32 @@ class DataSetFilters(DataObjectFilters):
             # cell length percentile
             poly_ijk = _preprocess_polydata(surface)
 
-            if spacing is None:
-                # Estimate spacing from cell length percentile
-                cell_length_percentile = (
-                    0.1 if cell_length_percentile is None else cell_length_percentile
-                )
-                cell_length_sample_size = (
-                    100_000 if cell_length_sample_size is None else cell_length_sample_size
-                )
-                spacing = _length_distribution_percentile(
-                    poly_ijk,
-                    cell_length_percentile,
-                    cell_length_sample_size,
-                    progress_bar=progress_bar,
-                )
-            # Spacing is specified directly. Make sure other params are not set.
-            elif cell_length_percentile is not None or cell_length_sample_size is not None:
+            if spacing is not None and (
+                cell_length_percentile is not None or cell_length_sample_size is not None
+            ):
                 msg = 'Spacing and cell length options cannot both be set. Set one or the other.'
                 raise TypeError(msg)
-
-            # Get initial spacing (will be adjusted later)
-            initial_spacing = _validation.validate_array3(spacing, broadcast=True)
 
             # Get size of poly data for computing dimensions
             size = np.array(surface.bounds_size)
 
             if dimensions is None:
+                if spacing is None:
+                    # Estimate spacing from cell length percentile
+                    cell_length_percentile = (
+                        0.1 if cell_length_percentile is None else cell_length_percentile
+                    )
+                    cell_length_sample_size = (
+                        100_000 if cell_length_sample_size is None else cell_length_sample_size
+                    )
+                    spacing = _length_distribution_percentile(
+                        poly_ijk,
+                        cell_length_percentile,
+                        cell_length_sample_size,
+                        progress_bar=progress_bar,
+                    )
+                # Get initial spacing (will be adjusted later)
+                initial_spacing = _validation.validate_array3(spacing, broadcast=True)
                 rounding_func = np.round if rounding_func is None else rounding_func
                 initial_dimensions = size / initial_spacing
                 # Make sure we don't round dimensions to zero, make it one instead
