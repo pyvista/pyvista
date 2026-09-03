@@ -77,6 +77,19 @@ interactive documentation online.
 
 For more details, see the section on :ref:`jupyter_plotting`.
 
+The backend is selected with :func:`pyvista.set_jupyter_backend`, and
+third-party packages can register additional backends.
+
+.. currentmodule:: pyvista
+
+.. autosummary::
+   :toctree: _autosummary
+
+   set_jupyter_backend
+   register_jupyter_backend
+   registered_jupyter_backends
+   JupyterBackendRegistration
+
 
 Background Plotting
 ~~~~~~~~~~~~~~~~~~~

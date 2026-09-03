@@ -190,3 +190,4 @@ documented once, here, and linked from every class that inherits it.
    plotting.mapper._BaseMapper
    plotting.mapper._BaseVolumeMapper
    plotting.prop3d._Prop3DMixin
+   core.utilities.misc._NameMixin

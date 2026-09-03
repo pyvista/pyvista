@@ -23,8 +23,6 @@ and provide direct access to common VTK filters (see :ref:`filters`).
    camera
    lights
    cells
-   helpers
-   misc
    typing
 
 
