@@ -1630,16 +1630,23 @@ def test_reslice_cell_data():
     assert np.allclose(resliced.cell_data['values'], image.cell_data['values'])
 
 
-def test_reslice_anti_aliasing():
+@pytest.mark.parametrize('interpolation', ['linear', 'lanczos'])
+def test_reslice_anti_aliasing(interpolation):
     rng = np.random.default_rng(0)
     image = pv.ImageData(dimensions=(40, 40, 1))
     image['values'] = rng.random(image.n_points)
     reference = pv.ImageData(dimensions=(10, 10, 1), spacing=(4.0, 4.0, 1.0))
 
-    plain = image.reslice(reference, 'linear')['values']
-    smoothed = image.reslice(reference, 'linear', anti_aliasing=True)['values']
+    plain = image.reslice(reference, interpolation)['values']
+    smoothed = image.reslice(reference, interpolation, anti_aliasing=True)['values']
     assert not np.allclose(plain, smoothed)
     assert smoothed.std() < plain.std()
+
+    # Has no effect when the reference samples the image at least as finely
+    reference = pv.ImageData(dimensions=(40, 40, 1))
+    plain = image.reslice(reference, interpolation)['values']
+    smoothed = image.reslice(reference, interpolation, anti_aliasing=True)['values']
+    assert np.allclose(plain, smoothed)
 
 
 @pytest.mark.parametrize('border_mode', ['clamp', 'wrap', 'mirror'])
