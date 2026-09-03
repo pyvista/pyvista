@@ -8060,7 +8060,7 @@ class DataSetFilters(DataObjectFilters):
         scalars_shape = (binary_mask.n_points,)
         scalars_dtype: type[np.uint8 | float | int]
         if all(
-            isinstance(val, int) and val < 256 and val >= 0
+            isinstance(val, (int, np.integer)) and val < 256 and val >= 0
             for val in (background_value, foreground_value)
         ):
             scalars_dtype = np.uint8

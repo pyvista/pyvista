@@ -4714,6 +4714,12 @@ def test_voxelize_binary_mask_raises(sphere):
             sphere.voxelize_binary_mask(reference_volume=pv.ImageData(), **kwargs)
 
 
+def test_voxelize_binary_mask_numpy_values(sphere):
+    mask = sphere.voxelize_binary_mask(foreground_value=np.uint8(2), background_value=np.int32(0))
+    assert mask['mask'].dtype == np.uint8
+    assert np.array_equal(np.unique(mask['mask']), [0, 2])
+
+
 def test_voxelize_rectilinear(ant):
     vox = ant.voxelize_rectilinear()
     assert isinstance(vox, pv.RectilinearGrid)
