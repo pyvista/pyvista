@@ -22,12 +22,12 @@ Image Sources
 
 Image Comparison
 ~~~~~~~~~~~~~~~~
-.. seealso::
-
-   :ref:`cli_compare`
-      Compare two files from the command line.
-
 .. autosummary::
    :toctree: _autosummary
 
    compare_images
+
+.. seealso::
+
+   :ref:`cli_compare`
+      Compare two files from the command line.

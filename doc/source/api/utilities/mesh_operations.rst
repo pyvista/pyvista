@@ -12,14 +12,6 @@ Mesh Creation
 These functions build a mesh from existing points and faces, or from other
 datasets.
 
-.. seealso::
-
-   :ref:`create_spline_example`
-      Build a spline from an array of points.
-
-   :meth:`~pyvista.DataSetFilters.merge`
-      Merge datasets as a method on the dataset.
-
 .. autosummary::
    :toctree: _autosummary
 
@@ -30,14 +22,17 @@ datasets.
    merge
    vector_poly_data
 
+.. seealso::
+
+   :ref:`create_spline_example`
+      Build a spline from an array of points.
+
+   :meth:`~pyvista.DataSetFilters.merge`
+      Merge datasets as a method on the dataset.
+
 Points
 ~~~~~~
 These functions operate on arrays of points.
-
-.. seealso::
-
-   :ref:`point_cloud_orientation_example`
-      Fit a plane and a line to a point cloud using its principal axes.
 
 .. autosummary::
    :toctree: _autosummary
@@ -47,11 +42,23 @@ These functions operate on arrays of points.
    core.utilities.is_inside_bounds
    principal_axes
 
+.. seealso::
+
+   :ref:`point_cloud_orientation_example`
+      Fit a plane and a line to a point cloud using its principal axes.
+
 Implicit Functions
 ~~~~~~~~~~~~~~~~~~
 An implicit function defines a scalar value at every point in space, such as
 the signed distance from a plane. :func:`~pyvista.sample_function` evaluates
 one over a grid to produce a :class:`~pyvista.ImageData`.
+
+.. autosummary::
+   :toctree: _autosummary
+
+   generate_plane
+   perlin_noise
+   sample_function
 
 .. seealso::
 
@@ -63,10 +70,3 @@ one over a grid to produce a :class:`~pyvista.ImageData`.
 
    :ref:`image_fft_perlin_noise_example`
       Filter sampled noise with a fast Fourier transform.
-
-.. autosummary::
-   :toctree: _autosummary
-
-   generate_plane
-   perlin_noise
-   sample_function
