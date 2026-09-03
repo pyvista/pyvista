@@ -298,5 +298,6 @@ documented once, here, and linked from every class that inherits it.
    plotting.mapper._BaseDataSetMapper
    plotting.mapper._BaseMapper
    plotting.mapper._BaseVolumeMapper
+   core.utilities.misc._NameMixin
    plotting.prop3d._Prop3DMixin
    plotting.axes_assembly._XYZAssembly
