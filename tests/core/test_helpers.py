@@ -250,12 +250,21 @@ def test_global_config_points_dtype_normalizes(value, expected, monkeypatch):
     assert pv.global_config.points_dtype == expected
 
 
-@pytest.mark.parametrize('value', ['float16', 'nope', 3, int, np.int32])
+@pytest.mark.parametrize('value', ['float16', int, np.int32])
 def test_global_config_points_dtype_rejects_other_dtypes(value, monkeypatch):
-    # ``np.dtype(None)`` is float64, so a non-dtype must not slip through as one
     monkeypatch.setattr(pv.global_config, 'points_dtype', 'preserve')
     with pytest.raises(ValueError, match="must be None, 'preserve', 'float32', or 'float64'"):
         pv.global_config.points_dtype = value
+    assert pv.global_config.points_dtype == 'preserve'
+
+
+@pytest.mark.parametrize('value', ['nope', 3, object()])
+def test_global_config_points_dtype_rejects_non_dtypes(value, monkeypatch):
+    # ``np.dtype(None)`` is float64, so a non-dtype must not slip through as one
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'preserve')
+    with pytest.raises(TypeError, match="must be None, 'preserve', 'float32', or 'float64'"):
+        pv.global_config.points_dtype = value
+    assert pv.global_config.points_dtype == 'preserve'
 
 
 @pytest.mark.parametrize('input_dtype', [np.float32, np.float64])
@@ -355,9 +364,12 @@ def test_points_dtype_preserve_ignores_a_mesh_without_points(monkeypatch):
     assert filters._points_dtype(empty) is None
     assert empty.GetPoints() is None
 
-    # accumulating into an empty mesh is a common idiom and must not widen the result
-    assert (pv.PolyData() + pv.Sphere()).points.dtype == np.float32
-    assert pv.PolyData().merge(pv.Sphere()).points.dtype == np.float32
+    # Accumulating into an empty mesh is a common idiom. Were the empty mesh's phantom
+    # float64 taken as the target, the float32 input would be cast up, and say so.
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', pv.PrecisionWarning)
+        assert (pv.PolyData() + pv.Sphere()).points.dtype == np.float32
+        assert pv.PolyData().merge(pv.Sphere()).points.dtype == np.float32
 
 
 def test_points_dtype_float64_does_not_warn_for_integer_points(monkeypatch):
@@ -383,9 +395,14 @@ def test_points_dtype_applies_to_filters_wrapping_their_own_output(
     filter_name, dtype, monkeypatch
 ):
     # These wrap the algorithm output themselves rather than going through
-    # `_get_output`, which is where the setting is enforced
+    # `_get_output`, which is where the setting is enforced. Each starts from the dtype
+    # the filter is not being asked for, so the setting has to do the work. The three
+    # that generate single precision anyway cannot be distinguished from VTK for
+    # ``'float32'``; those cases guard against a regression rather than prove the cast.
     monkeypatch.setattr(pv.global_config, 'points_dtype', dtype)
     mesh = pv.Line().compute_arc_length() if filter_name == 'extrude_rotate' else pv.Sphere()
+    # The sources above already follow the setting, so force the other dtype in
+    mesh = mesh.points_to_double() if dtype == 'float32' else mesh.points_to_single()
     kwargs = {'resolution': 4, 'capping': False} if filter_name == 'extrude_rotate' else {}
 
     with warnings.catch_warnings():
