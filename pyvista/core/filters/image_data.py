@@ -4759,7 +4759,6 @@ class ImageDataFilters(DataSetFilters):
         magnification_factors[singleton_dims] = 1
 
         resize_filter = _vtk.vtkImageResize()
-        resize_filter.SetInputData(input_image)
         # Reducing a non-singleton axis to a single point requires a magnification
         # factor of zero, but `vtkImageResize` silently ignores zero factors and
         # leaves the axis unchanged. Set the output dimensions explicitly in that
@@ -4799,14 +4798,6 @@ class ImageDataFilters(DataSetFilters):
             # Set degree
             degree = 3 if interpolation.endswith('bspline') else int(interpolation[-1])
             interpolator.SetSplineDegree(degree)
-            # Need to pre-compute coefficients
-            coefficients = _vtk.vtkImageBSplineCoefficients()
-            coefficients.SetInputData(input_image)
-            set_border_mode(coefficients)
-            _update_alg(
-                coefficients, progress_bar=progress_bar, message='Computing spline coefficients.'
-            )
-            input_image = _get_output(coefficients)
         else:  # pragma: no cover
             msg = f"Unexpected interpolation mode '{interpolation}'."
             raise RuntimeError(msg)
@@ -4816,8 +4807,23 @@ class ImageDataFilters(DataSetFilters):
             if isinstance(interpolator, _vtk.vtkImageSincInterpolator):
                 interpolator.AntialiasingOn()
             else:
-                resize_filter.SetInputData(input_image.gaussian_smooth())
+                input_image = input_image.gaussian_smooth()
 
+        if isinstance(interpolator, _vtk.vtkImageBSplineInterpolator):
+            # The interpolator expects pre-computed spline coefficients as input
+            coefficients = _vtk.vtkImageBSplineCoefficients()
+            coefficients.SetInputData(input_image)
+            coefficients.SetSplineDegree(interpolator.GetSplineDegree())
+            set_border_mode(coefficients)
+            dtype = input_image.point_data[name].dtype
+            if dtype != np.float32 and dtype.itemsize > 2:
+                coefficients.SetOutputScalarTypeToDouble()
+            _update_alg(
+                coefficients, progress_bar=progress_bar, message='Computing spline coefficients.'
+            )
+            input_image = _get_output(coefficients)
+
+        resize_filter.SetInputData(input_image)
         resize_filter.SetInterpolator(interpolator)
 
         # Get output
@@ -4870,10 +4876,10 @@ class ImageDataFilters(DataSetFilters):
         if output_image.active_scalars_name == 'ImageScalars':
             output_image.rename_array('ImageScalars', name)
 
-        if has_int_scalars:
-            output_image.point_data[name] = _round_to_dtype(
-                output_image.point_data[name], input_dtype
-            )
+        # Cast back for scalars that were converted to floats for the filter
+        output_array = output_image.point_data[name]
+        if output_array.dtype != input_dtype:
+            output_image.point_data[name] = _round_to_dtype(output_array, input_dtype)
 
         if processing_cell_scalars:
             # Convert back to cells. This modifies origin so we need to reset it.

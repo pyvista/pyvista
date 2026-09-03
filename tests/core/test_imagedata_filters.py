@@ -1181,11 +1181,11 @@ def test_resample_interpolation(uniform, interpolation, dtype, sample_rate):
         ('cubic', 'wrap', [0.0, 0.1839928, 0.75200433, 1.24799567, 1.8160072, 2.0]),
         ('cubic', 'mirror', [0.0, 0.25599316, 0.76800391, 1.23199609, 1.74400684, 2.0]),
         ('cubic', 'clamp', [0.0, 0.32799353, 0.78400348, 1.21599652, 1.67200647, 2.0]),
-        ('bspline', 'wrap', [0.5, 0.50799719, 0.80400287, 1.19599713, 1.49200281, 1.5]),
-        ('bspline', 'mirror', [0.3333333, 0.4719961, 0.8026696, 1.1973304, 1.52800391, 1.6666667]),
-        ('bspline', 'clamp', [0.16666667, 0.435995, 0.80133632, 1.19866368, 1.564005, 1.83333333]),
+        ('bspline', 'wrap', [0.0, 0.0159944, 0.6080057, 1.3919943, 1.9840056, 2.0]),
+        ('bspline', 'mirror', [0.0, 0.2079941, 0.7040044, 1.2959956, 1.7920059, 2.0]),
+        ('bspline', 'clamp', [0.0, 0.323194, 0.7616036, 1.2383964, 1.676806, 2.0]),
         ('bspline0', 'clamp', [0.0, 0.0, 1.0, 1.0, 2.0, 2.0]),
-        ('bspline9', 'clamp', [0.326433, 0.55864616, 0.84595512, 1.1540449, 1.44135384, 1.673567]),
+        ('bspline9', 'clamp', [-0.0682354, 0.3000403, 0.7556944, 1.2443056, 1.6999597, 2.0682354]),
     ],
 )
 def test_resample_border_mode(interpolation, border_mode, expected_array):
@@ -1392,6 +1392,21 @@ def test_resample_int64_rounding():
     expected = image.resample(2, 'linear')['data']
     image['data'] = np.array([0, 3, 6], dtype=np.int64)
     assert np.array_equal(image.resample(2, 'linear')['data'], expected)
+
+
+@pytest.mark.parametrize('border_mode', ['clamp', 'wrap', 'mirror'])
+def test_resample_bspline_interpolates(border_mode):
+    # Cubic B-spline interpolation reproduces the input values at the input points
+    rng = np.random.default_rng(0)
+    image = pv.ImageData(dimensions=(16, 1, 1))
+    image['data'] = rng.random(16)
+    kwargs = dict(dimensions=(31, 1, 1), border_mode=border_mode, extend_border=False)
+
+    resampled = image.resample(interpolation='bspline', **kwargs)
+    assert np.allclose(resampled['data'][::2], image['data'])
+    # The spline degree changes the result
+    resampled5 = image.resample(interpolation='bspline5', **kwargs)
+    assert not np.allclose(resampled5['data'], resampled['data'])
 
 
 def test_select_values(uniform):
