@@ -308,7 +308,7 @@ def test_add_timer_event():
     actor = pl.add_mesh(sphere)
 
     def callback(step):
-        actor.position = [step / 100.0, step / 100.0, 0]
+        actor.position = [step / 100.0, step / 100.0, 0]  # pragma: no cover
 
     pl.add_timer_event(max_steps=200, duration=500, callback=callback)
 
