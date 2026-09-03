@@ -1286,7 +1286,7 @@ def test_resample_raises(uniform):
         uniform.resample(dimensions=(2, 2, 2), reference_image=uniform)
 
     match = (
-        'Cannot specify a sample rate along with `reference_image` or `sample_rate` parameters.\n'
+        'Cannot specify a sample rate along with `reference_image` or `dimensions` parameters.\n'
         '`sample_rate` must define the sampling geometry exclusively.'
     )
     with pytest.raises(ValueError, match=re.escape(match)):
@@ -1296,7 +1296,7 @@ def test_resample_raises(uniform):
     with pytest.raises(ValueError, match=re.escape(match)):
         uniform.resample(scalars='Spatial Cell Data', extend_border=True)
 
-    match = '`extend_border` cannot be set when a `image_reference` is provided.'
+    match = '`extend_border` cannot be set when a `reference_image` is provided.'
     with pytest.raises(ValueError, match=re.escape(match)):
         uniform.resample(reference_image=uniform, extend_border=True)
 

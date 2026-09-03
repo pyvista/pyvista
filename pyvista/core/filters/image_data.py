@@ -4694,7 +4694,7 @@ class ImageDataFilters(DataSetFilters):
             # Only extend border with point data
             extend_border = not processing_cell_scalars
         elif extend_border and reference_image is not None:
-            msg = '`extend_border` cannot be set when a `image_reference` is provided.'
+            msg = '`extend_border` cannot be set when a `reference_image` is provided.'
             raise ValueError(msg)
 
         # Setup reference image
@@ -4720,7 +4720,7 @@ class ImageDataFilters(DataSetFilters):
         if sample_rate is not None:
             if reference_image_provided or dimensions is not None:
                 msg = (
-                    'Cannot specify a sample rate along with `reference_image` or `sample_rate` '
+                    'Cannot specify a sample rate along with `reference_image` or `dimensions` '
                     'parameters.\n`sample_rate` must define the sampling geometry exclusively.'
                 )
                 raise ValueError(msg)
