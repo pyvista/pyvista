@@ -19,7 +19,6 @@ from pyvista.core.utilities.points import make_tri_mesh
 from pyvista.examples import cells
 from tests.core.test_dataobject_filters import grid_with_invalid_arrays  # noqa: F401
 from tests.core.test_dataobject_filters import sphere_with_invalid_arrays  # noqa: F401
-from tests.vtk_backend_divergence import INT32_CELL_STORAGE
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
