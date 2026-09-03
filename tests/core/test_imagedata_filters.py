@@ -1409,6 +1409,18 @@ def test_resample_bspline_interpolates(border_mode):
     assert not np.allclose(resampled5['data'], resampled['data'])
 
 
+def test_resample_anti_aliasing_per_axis():
+    # Only down-sampled axes are blurred
+    image = pv.ImageData(dimensions=(8, 8, 1))
+    image['data'] = np.repeat(np.arange(8.0), 8)  # varies along y only
+
+    def resample(sample_rate, **kwargs):
+        return image.resample(sample_rate, 'linear', **kwargs)['data']
+
+    assert np.allclose(resample((0.5, 1, 1), anti_aliasing=True), resample((0.5, 1, 1)))
+    assert not np.allclose(resample((1, 0.5, 1), anti_aliasing=True), resample((1, 0.5, 1)))
+
+
 def test_select_values(uniform):
     selected = uniform.select_values(ranges=uniform.get_data_range())
     assert isinstance(selected, pv.ImageData)

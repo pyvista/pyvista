@@ -4289,8 +4289,9 @@ class ImageDataFilters(DataSetFilters):
                 along each axis). See examples.
 
         anti_aliasing : bool, default: False
-            Enable anti-aliasing. This will blur the image as part of the resampling
-            to reduce image artifacts when down-sampling. Has no effect when up-sampling.
+            Enable anti-aliasing to reduce image artifacts when down-sampling. Each
+            down-sampled axis is blurred in proportion to its sampling ratio before
+            resampling. Has no effect on axes that are not down-sampled.
 
         extend_border : bool, optional
             Extend the apparent input border by approximately half the
@@ -4807,7 +4808,11 @@ class ImageDataFilters(DataSetFilters):
             if isinstance(interpolator, _vtk.vtkImageSincInterpolator):
                 interpolator.AntialiasingOn()
             else:
-                input_image = input_image.gaussian_smooth()
+                # Blur each down-sampled axis in proportion to its sampling ratio
+                std_dev = np.maximum(0.0, (old_dimensions / new_dimensions - 1) / 2)
+                input_image = input_image.gaussian_smooth(
+                    std_dev=std_dev, radius_factor=3.0, progress_bar=progress_bar
+                )
 
         if isinstance(interpolator, _vtk.vtkImageBSplineInterpolator):
             # The interpolator expects pre-computed spline coefficients as input
