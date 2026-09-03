@@ -16,7 +16,6 @@ from pyvista import examples
 from pyvista.core import _vtk_utilities
 from pyvista.core.dataobject import USER_DICT_KEY
 from pyvista.core.utilities.writer import BaseWriter
-from tests.vtk_backend_divergence import INT32_COMPRESSION
 
 
 def test_eq_wrong_type(sphere):
