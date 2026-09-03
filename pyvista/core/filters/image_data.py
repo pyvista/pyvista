@@ -4781,17 +4781,13 @@ class ImageDataFilters(DataSetFilters):
                 )
         if isinstance(interpolator, _vtk.vtkImageBSplineInterpolator):
             # The interpolator expects pre-computed spline coefficients as input
-            coefficients = _vtk.vtkImageBSplineCoefficients()
-            coefficients.SetInputData(input_image)
-            coefficients.SetSplineDegree(interpolator.GetSplineDegree())
-            dtype = input_image.point_data[name].dtype
-            if dtype != np.float32 and dtype.itemsize > 2:
-                coefficients.SetOutputScalarTypeToDouble()
-            _set_border_mode(coefficients, border_mode)
-            _update_alg(
-                coefficients, progress_bar=progress_bar, message='Computing spline coefficients.'
+            input_image = _bspline_coefficients(
+                input_image,
+                scalars=name,
+                degree=interpolator.GetSplineDegree(),
+                border_mode=border_mode,
+                progress_bar=progress_bar,
             )
-            input_image = _get_output(coefficients)
 
         resize_filter = _vtk.vtkImageResize()
         resize_filter.SetInputData(input_image)
@@ -4825,6 +4821,240 @@ class ImageDataFilters(DataSetFilters):
             output_image.point_data.clear()
         else:
             output_image.cell_data.clear()
+
+        if inplace:
+            self.copy_from(output_image)
+            return self
+        return output_image
+
+    def reslice(  # type: ignore[misc]
+        self: ImageData,
+        reference_image: ImageData,
+        interpolation: _InterpolationOptions = 'nearest',
+        *,
+        border_mode: Literal['clamp', 'wrap', 'mirror'] = 'clamp',
+        background_value: float = 0.0,
+        anti_aliasing: bool = False,
+        scalars: str | None = None,
+        preference: Literal['point', 'cell'] = 'point',
+        inplace: bool = False,
+        progress_bar: bool = False,
+    ):
+        """Sample the image at the points of a reference image.
+
+        The image is sampled at the physical position of each point of the
+        ``reference_image``, so the two images are aligned in space. The
+        :attr:`~pyvista.Grid.dimensions`, :attr:`~pyvista.ImageData.spacing`,
+        :attr:`~pyvista.ImageData.origin`, :attr:`~pyvista.ImageData.offset`, and
+        :attr:`~pyvista.ImageData.direction_matrix` of the output all match the reference.
+
+        Use this filter to map an image onto the grid of another image, for example, to
+        give two acquisitions of the same subject a common grid. Use
+        :meth:`resample` instead to change an image's sampling density in its own frame.
+
+        This filter may be used to reslice either point or cell data. Cell data is
+        sampled at the cell centers of the reference image.
+
+        .. note::
+
+            Reference points which are outside the image are filled with
+            ``background_value``. Only points inside the image are interpolated, so
+            ``border_mode`` applies to the image's own boundary.
+
+        .. versionadded:: 0.49
+
+        Parameters
+        ----------
+        reference_image : ImageData
+            Image defining the points to sample at. Its geometry is matched exactly by
+            the output.
+
+        interpolation : 'nearest', 'linear', 'cubic', 'lanczos', 'hamming', 'blackman', 'bspline'
+            Interpolation mode to use. See :meth:`resample` for a description of each
+            mode.
+
+        border_mode : 'clamp' | 'wrap' | 'mirror', default: 'clamp'
+            Controls the interpolation at the image's borders.
+
+            - ``'clamp'`` - values outside the image are clamped to the nearest edge.
+            - ``'wrap'`` - values outside the image are wrapped periodically along the axis.
+            - ``'mirror'`` - values outside the image are mirrored at the boundary.
+
+        background_value : float, default: 0.0
+            Value to use for reference points which are outside the image.
+
+        anti_aliasing : bool, default: False
+            Enable anti-aliasing. Each axis sampled more coarsely than the image is
+            blurred in proportion to its sampling ratio to reduce image artifacts.
+
+        scalars : str, optional
+            Name of scalars to reslice. Defaults to currently active scalars.
+
+        preference : str, default: 'point'
+            When scalars is specified, this is the preferred array type to search
+            for in the dataset.  Must be either ``'point'`` or ``'cell'``.
+
+        inplace : bool, default: False
+            If ``True``, reslice the image in-place. By default, a new
+            :class:`~pyvista.ImageData` instance is returned.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        ImageData
+            Resliced image.
+
+        See Also
+        --------
+        resample
+            Change an image's dimensions and spacing in its own frame.
+
+        :meth:`~pyvista.DataObjectFilters.sample`
+            Resample array data from one mesh onto another.
+
+        :meth:`~pyvista.DataSetFilters.interpolate`
+            Interpolate values from one mesh onto another.
+
+        Examples
+        --------
+        Create a small image whose values are the ``x`` coordinate of each point.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> image = pv.ImageData(dimensions=(6, 6, 1))
+        >>> image['values'] = image.points[:, 0]
+        >>> image.bounds
+        BoundsTuple(x_min = 0.0,
+                    x_max = 5.0,
+                    y_min = 0.0,
+                    y_max = 5.0,
+                    z_min = 0.0,
+                    z_max = 0.0)
+
+        Create a reference image which covers part of it with half the spacing.
+
+        >>> reference = pv.ImageData(
+        ...     dimensions=(6, 6, 1), spacing=(0.5, 0.5, 1.0), origin=(2.0, 1.0, 0.0)
+        ... )
+
+        Reslice the image onto the reference.
+
+        >>> resliced = image.reslice(reference, 'linear')
+
+        The output has the reference's geometry.
+
+        >>> resliced.dimensions
+        (6, 6, 1)
+        >>> resliced.origin
+        (2.0, 1.0, 0.0)
+
+        Since the image is sampled at the reference's points, the values still equal the
+        ``x`` coordinate of the points they are stored at.
+
+        >>> bool(np.allclose(resliced['values'], resliced.points[:, 0]))
+        True
+
+        Compare this to :meth:`resample`, which fits the image to the output dimensions
+        and therefore does not preserve the physical positions of the values.
+
+        >>> resampled = image.resample(dimensions=(6, 6, 1))
+        >>> bool(np.allclose(resampled['values'], resampled.points[:, 0]))
+        True
+
+        Reference points outside the image are filled with ``background_value``.
+
+        >>> reference = pv.ImageData(
+        ...     dimensions=(4, 1, 1), spacing=(2.0, 1.0, 1.0), origin=(2.0, 0.0, 0.0)
+        ... )
+        >>> resliced = image.reslice(reference, 'linear', background_value=-1.0)
+        >>> resliced['values'].tolist()
+        [2.0, 4.0, -1.0, -1.0]
+
+        """
+        _validation.check_instance(reference_image, pv.ImageData, name='reference_image')
+        _validation.check_contains(
+            get_args(_InterpolationOptions), must_contain=interpolation, name='interpolation'
+        )
+        _validation.check_contains(
+            ['clamp', 'wrap', 'mirror'], must_contain=border_mode, name='border_mode'
+        )
+        background_value = _validation.validate_number(
+            background_value, must_be_finite=True, name='background_value'
+        )
+
+        if scalars is None:
+            field, name = set_default_active_scalars(self)
+        else:
+            name = scalars
+            field = self.get_array_association(scalars, preference=preference)
+
+        # The filter operates on point scalars, so sample cell scalars at the cell centers
+        processing_cell_scalars = field == FieldAssociation.CELL
+        if processing_cell_scalars:
+            input_image = self.cells_to_points(scalars=name, copy=False)
+            sample_grid = reference_image.cells_to_points(copy=False)
+        else:
+            # Pass only the requested scalars, the filter copies any others through
+            input_image = pv.ImageData()
+            input_image.copy_structure(self)
+            input_image.point_data[name] = self.point_data[name]
+            sample_grid = reference_image
+
+        # 64-bit integers are not supported by the VTK image filters, so cast to float
+        input_dtype = input_image.point_data[name].dtype
+        if input_dtype.kind in 'iu' and input_dtype.itemsize == 8:
+            input_image.point_data[name] = input_image.point_data[name].astype(float)
+
+        interpolator = _image_interpolator(interpolation, border_mode)
+        sampling_ratio = np.array(sample_grid.spacing) / np.array(input_image.spacing)
+        if anti_aliasing and np.any(sampling_ratio > 1):
+            if isinstance(interpolator, _vtk.vtkImageSincInterpolator):
+                interpolator.AntialiasingOn()
+            else:
+                # Blur each coarsely sampled axis in proportion to its sampling ratio
+                std_dev = np.maximum(0.0, (sampling_ratio - 1) / 2)
+                input_image = input_image.gaussian_smooth(
+                    std_dev=std_dev, radius_factor=3.0, progress_bar=progress_bar
+                )
+        if isinstance(interpolator, _vtk.vtkImageBSplineInterpolator):
+            input_image = _bspline_coefficients(
+                input_image,
+                scalars=name,
+                degree=interpolator.GetSplineDegree(),
+                border_mode=border_mode,
+                progress_bar=progress_bar,
+            )
+
+        output_image = _reslice_image(
+            input_image,
+            reference=sample_grid,
+            interpolator=interpolator,
+            interpolation=interpolation,
+            border_mode=border_mode,
+            background_value=background_value,
+            progress_bar=progress_bar,
+        )
+
+        output_scalars = output_image.GetPointData().GetScalars()
+        output_scalars.SetName(name)
+        output_array = convert_array(output_scalars)
+        if output_array.dtype != input_dtype:
+            output_image.point_data[name] = _round_to_dtype(output_array, input_dtype)
+
+        if processing_cell_scalars:
+            output_image = output_image.points_to_cells(
+                scalars=name, copy=False, dimensionality=reference_image.dimensionality
+            )
+            output_image.point_data.clear()
+        else:
+            output_image.cell_data.clear()
+        # Match the reference geometry exactly
+        output_image.direction_matrix = reference_image.direction_matrix
+        output_image.spacing = reference_image.spacing
+        output_image.origin = reference_image.origin
+        output_image.offset = reference_image.offset
 
         if inplace:
             self.copy_from(output_image)
@@ -5809,6 +6039,62 @@ def _image_interpolator(
         raise RuntimeError(msg)
     _set_border_mode(interpolator, border_mode)
     return interpolator
+
+
+def _bspline_coefficients(
+    image: ImageData,
+    *,
+    scalars: str,
+    degree: int,
+    border_mode: Literal['clamp', 'wrap', 'mirror'],
+    progress_bar: bool,
+) -> ImageData:
+    """Pre-compute the spline coefficients expected by the B-spline interpolator."""
+    coefficients = _vtk.vtkImageBSplineCoefficients()
+    coefficients.SetInputData(image)
+    coefficients.SetSplineDegree(degree)
+    dtype = image.point_data[scalars].dtype
+    if dtype != np.float32 and dtype.itemsize > 2:
+        coefficients.SetOutputScalarTypeToDouble()
+    _set_border_mode(coefficients, border_mode)
+    _update_alg(coefficients, progress_bar=progress_bar, message='Computing spline coefficients.')
+    return _get_output(coefficients)
+
+
+def _reslice_image(
+    image: ImageData,
+    *,
+    reference: ImageData,
+    interpolator: _vtk.vtkAbstractImageInterpolator,
+    interpolation: _InterpolationOptions,
+    border_mode: Literal['clamp', 'wrap', 'mirror'],
+    background_value: float,
+    progress_bar: bool,
+) -> ImageData:
+    """Sample an image at the points of a reference image."""
+    alg = _vtk.vtkImageReslice()
+    alg.SetInputData(image)
+    alg.SetOutputExtent(*reference.extent)
+    alg.SetOutputOrigin(*reference.origin)
+    alg.SetOutputSpacing(*reference.spacing)
+    alg.SetOutputDirection(reference.direction_matrix.ravel().tolist())
+    alg.SetBackgroundLevel(background_value)
+    alg.SetInterpolator(interpolator)
+    # The filter overrides the border mode and, for the basic interpolator, the
+    # interpolation mode of the interpolator it is given, so set both on the filter
+    if border_mode == 'wrap':
+        alg.SetWrap(True)
+    elif border_mode == 'mirror':
+        alg.SetMirror(True)
+    modes = {
+        'nearest': alg.SetInterpolationModeToNearestNeighbor,
+        'linear': alg.SetInterpolationModeToLinear,
+        'cubic': alg.SetInterpolationModeToCubic,
+    }
+    if interpolation in modes:
+        modes[interpolation]()
+    _update_alg(alg, progress_bar=progress_bar, message='Reslicing image.')
+    return _get_output(alg)
 
 
 def _round_to_dtype(array: NumpyArray[float], dtype: np.dtype[Any]) -> NumpyArray[Any]:

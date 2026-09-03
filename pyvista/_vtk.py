@@ -604,6 +604,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkImageFlip',
         'vtkImageInterpolator',
         'vtkImageMirrorPad',
+        'vtkImageReslice',
         'vtkImageResize',
         'vtkImageSincInterpolator',
         'vtkImageThreshold',
