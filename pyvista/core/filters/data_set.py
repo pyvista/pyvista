@@ -7717,8 +7717,9 @@ class DataSetFilters(DataObjectFilters):
         .. note::
             This filter returns voxels represented as point data, not
             :attr:`~pyvista.CellType.VOXEL` cells.
-            This differs from :func:`~pyvista.voxelize` and :func:`~pyvista.voxelize_volume`
-            which return meshes with voxel cells. See :ref:`image_representations_example`
+            This differs from :meth:`~pyvista.DataSetFilters.voxelize` and
+            :meth:`~pyvista.DataSetFilters.voxelize_rectilinear` which return meshes
+            with voxel cells. See :ref:`image_representations_example`
             for examples demonstrating the difference.
 
         .. note::

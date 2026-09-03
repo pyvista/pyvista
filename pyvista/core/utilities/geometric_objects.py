@@ -29,7 +29,7 @@ from .geometric_sources import PolygonSource
 from .geometric_sources import SphereSource
 from .geometric_sources import SuperquadricSource
 from .geometric_sources import Text3DSource
-from .geometric_sources import translate
+from .geometric_sources import _translate_and_orient
 from .helpers import wrap
 from .misc import check_valid_vector
 
@@ -111,7 +111,7 @@ def Capsule(  # noqa: PLR0917
     algo.capsule_cap = True
     output = wrap(algo.output)
     output.rotate_z(90, inplace=True)
-    translate(output, center, direction)
+    _translate_and_orient(output, center, direction)
     return output
 
 
@@ -189,7 +189,7 @@ def Cylinder(  # noqa: PLR0917
     )
     output = wrap(algo.output)
     output.rotate_z(90, inplace=True)
-    translate(output, center, direction)
+    _translate_and_orient(output, center, direction)
     return output
 
 
@@ -300,7 +300,7 @@ def CylinderStructured(  # noqa: PLR0917
     grid.rotate_x(180, inplace=True)
 
     # move to final position
-    translate(grid, center=center, direction=direction)
+    _translate_and_orient(grid, center=center, direction=direction)
     return grid
 
 
@@ -375,7 +375,7 @@ def Arrow(  # noqa: PLR0917
         msg = "Scale must be either float, int or 'auto'."  # type: ignore[unreachable]
         raise TypeError(msg)
 
-    translate(surf, start, direction)
+    _translate_and_orient(surf, start, direction)
     return surf
 
 
@@ -529,7 +529,7 @@ def Sphere(  # noqa: PLR0917
     )
     surf = sphere.output
     surf.rotate_y(90, inplace=True)
-    translate(surf, center, direction)
+    _translate_and_orient(surf, center, direction)
     return surf
 
 
@@ -733,7 +733,7 @@ def StructuredSphere(
 
     # Rotate to face +X so that `translate` orients the poles along `direction`
     sphere.rotate_y(90, inplace=True)
-    translate(sphere, center, direction)
+    _translate_and_orient(sphere, center, direction)
     return sphere
 
 
@@ -1275,7 +1275,7 @@ def SolidSphereGeneric(  # noqa: PLR0917
 
     mesh = pv.UnstructuredGrid(cells, celltypes, points)
     mesh.rotate_y(90, inplace=True)
-    translate(mesh, center, direction)
+    _translate_and_orient(mesh, center, direction)
     return mesh
 
 
@@ -1331,7 +1331,7 @@ def Plane(  # noqa: PLR0917
     surf.points[:, 0] *= i_size
     surf.points[:, 1] *= j_size
     surf.rotate_y(90, inplace=True)
-    translate(surf, center, direction)
+    _translate_and_orient(surf, center, direction)
     return surf
 
 
@@ -1778,7 +1778,7 @@ def Disc(  # noqa: PLR0917
     center = np.array(center)
     surf = algo.output
     surf.rotate_y(90, inplace=True)
-    translate(surf, center, normal)
+    _translate_and_orient(surf, center, normal)
     return surf
 
 
