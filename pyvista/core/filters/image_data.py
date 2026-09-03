@@ -5803,9 +5803,8 @@ def _image_interpolator(
 
 def _round_to_dtype(array: NumpyArray[float], dtype: np.dtype[Any]) -> NumpyArray[Any]:
     """Round and clamp floating point values to an integer or boolean data type."""
+    array = np.floor(array + 0.5)
     if dtype.kind in 'iu':
         info = np.iinfo(dtype)
-        array = np.clip(np.floor(array + 0.5), info.min, info.max)
-    elif dtype.kind == 'b':
-        array = np.floor(array + 0.5)
+        array = np.clip(array, info.min, info.max)
     return array.astype(dtype)
