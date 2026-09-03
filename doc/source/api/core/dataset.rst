@@ -39,16 +39,3 @@ arrays associated with cells, points, and the DataSet in general (fields).
    pyvista.DataSetAttributes
    pyvista.core.dataset.ActiveArrayInfoTuple
    pyvista.core.utilities.arrays.FieldAssociation
-
-
-Shared Base Classes
--------------------
-This class is not used directly. It is documented because it defines the
-``bounds_size`` member shared by datasets, cells, and several plotting classes,
-so that the member is documented once, here, and linked from every class that
-inherits it.
-
-.. autosummary::
-   :toctree: _autosummary
-
-   pyvista.core.utilities.misc._BoundsSizeMixin

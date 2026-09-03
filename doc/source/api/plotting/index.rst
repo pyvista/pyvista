@@ -289,8 +289,8 @@ third-party packages can register additional backends. See
 Shared Base Classes
 -------------------
 These classes are not used directly. They are documented because they define
-members that several of the classes above share, so that each of those members is
-documented once, here, and linked from every class that inherits it.
+members shared by several classes, here and in the core API, so that each of
+those members is documented once and linked from every class that inherits it.
 
 .. autosummary::
    :toctree: _autosummary
@@ -298,6 +298,7 @@ documented once, here, and linked from every class that inherits it.
    plotting.mapper._BaseDataSetMapper
    plotting.mapper._BaseMapper
    plotting.mapper._BaseVolumeMapper
+   core.utilities.misc._BoundsSizeMixin
    core.utilities.misc._NameMixin
    plotting.prop3d._Prop3DMixin
    plotting.axes_assembly._XYZAssembly
