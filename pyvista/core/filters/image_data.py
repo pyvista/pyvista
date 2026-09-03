@@ -4245,6 +4245,14 @@ class ImageDataFilters(DataSetFilters):
 
         .. versionadded:: 0.45
 
+        .. versionchanged:: 0.49
+            Values are sampled at the centers of the resampled voxels when the border is
+            extended and when resampling cell data. Previously the first and last
+            samples were aligned with the first and last samples of the input, which
+            offset the values from the points they are stored at by up to half the input
+            spacing. Reducing an axis to a singleton now samples the center of that axis
+            instead of its first slice.
+
         Parameters
         ----------
         sample_rate : float | VectorLike[float], optional
@@ -4308,6 +4316,11 @@ class ImageDataFilters(DataSetFilters):
             down-sampled axis is blurred in proportion to its sampling ratio before
             resampling, which approximates averaging the samples it merges. Has no
             effect on axes that are not down-sampled.
+
+            .. versionchanged:: 0.49
+                The blur is sized from each axis's own sampling ratio. Previously a
+                fixed blur was applied to all three axes, including axes which are not
+                down-sampled.
 
         extend_border : bool, optional
             Extend the apparent input border by approximately half the
