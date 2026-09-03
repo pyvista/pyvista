@@ -4320,7 +4320,8 @@ class ImageDataFilters(DataSetFilters):
             .. versionchanged:: 0.49
                 The blur is sized from each axis's own sampling ratio. Previously a
                 fixed blur was applied to all three axes, including axes which are not
-                down-sampled.
+                down-sampled, which left aliasing at large sampling ratios and blurred
+                more than necessary at small ones.
 
         extend_border : bool, optional
             Extend the apparent input border by approximately half the
