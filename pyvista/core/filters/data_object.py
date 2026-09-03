@@ -4449,7 +4449,9 @@ class DataObjectFilters:
             _match_points_dtype(output, alg_input, algorithm=alg)
         else:
             output = _convex_hull_scipy(points, dimensionality=dimensionality_)
-            _match_points_dtype(output, alg_input)
+            # The hull's points are the input's own, so widening them fabricates
+            # precision exactly as a VTK algorithm's output would
+            _match_points_dtype(output, alg_input, algorithm='scipy.spatial.ConvexHull')
         output.point_data.clear()
         output.cell_data.clear()
         return output

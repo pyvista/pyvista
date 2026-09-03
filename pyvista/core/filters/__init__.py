@@ -136,8 +136,20 @@ def _requested_points_precision(alg: _vtk.vtkAlgorithm) -> Iterator[None]:
         set_precision(previous)
 
 
+def _producer_name(producer: _vtk.vtkAlgorithm | str) -> str:
+    """Return the name to report for whatever generated the points.
+
+    A source is its own algorithm, so this is the PyVista class a caller of
+    ``pyvista.Arrow`` would recognize; a filter reports the VTK class that ran.
+    """
+    return producer if isinstance(producer, str) else type(producer).__name__
+
+
 def _enforce_points_dtype(
-    mesh_out: Any, dtype: np.dtype[Any] | None, *, algorithm: _vtk.vtkAlgorithm | None = None
+    mesh_out: Any,
+    dtype: np.dtype[Any] | None,
+    *,
+    algorithm: _vtk.vtkAlgorithm | str | None = None,
 ) -> None:
     """Cast ``mesh_out``'s points to ``dtype`` in place if the algorithm ignored the request.
 
@@ -167,7 +179,7 @@ def _enforce_points_dtype(
         # Widening fabricates precision the algorithm already discarded. Narrowing does
         # not, and neither does packaging a caller's own array, which has no algorithm.
         msg = (
-            f'{type(algorithm).__name__} generated {points.dtype.name} points, and '
+            f'{_producer_name(algorithm)} generated {points.dtype.name} points, and '
             f'cannot generate the {dtype.name} that '
             f'`pyvista.global_config.points_dtype = '
             f'{pv.global_config.points_dtype!r}` requires here.\n'
@@ -179,7 +191,7 @@ def _enforce_points_dtype(
 
 
 def _match_points_dtype(
-    mesh_out: Any, mesh_in: Any, *, algorithm: _vtk.vtkAlgorithm | None = None
+    mesh_out: Any, mesh_in: Any, *, algorithm: _vtk.vtkAlgorithm | str | None = None
 ) -> None:
     """Give ``mesh_out`` the dtype the setting asks for, given the algorithm's input.
 
@@ -199,7 +211,7 @@ def _match_points_dtype(
     _enforce_points_dtype(mesh_out, _points_dtype(mesh_in), algorithm=algorithm)
 
 
-def _apply_points_dtype(mesh: Any, *, algorithm: _vtk.vtkAlgorithm | None = None) -> Any:
+def _apply_points_dtype(mesh: Any, *, algorithm: _vtk.vtkAlgorithm | str | None = None) -> Any:
     """Apply the configured dtype to a mesh wrapped without ``_get_output``."""
     _enforce_points_dtype(mesh, _points_dtype(), algorithm=algorithm)
     return mesh
