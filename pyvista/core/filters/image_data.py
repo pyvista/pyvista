@@ -2349,6 +2349,20 @@ class ImageDataFilters(DataSetFilters):
         may be fine-tuned to control the smoothing process. Optionally, smoothing may
         be disabled to generate a staircase-like surface.
 
+        .. note::
+
+            Where the foreground touches itself only along a voxel edge, the surface
+            has a non-manifold junction which may be split into separate sheets with
+            open edges. Smoothing pulls these sheets apart and leaves gaps, so the
+            surface is not watertight. Filters which require a closed surface, such as
+            :meth:`~pyvista.DataSetFilters.voxelize_binary_mask` and
+            :meth:`~pyvista.DataSetFilters.select_enclosed_points`, may leak through
+            the gaps. Check :attr:`~pyvista.PolyData.n_open_edges`, and either disable
+            ``smoothing`` (the staircase surface encloses the voxels exactly) or
+            thicken the labels first, for example with
+            :meth:`~pyvista.ImageDataFilters.dilate`, so that regions no longer touch
+            only along an edge.
+
         The output surface includes a two-component cell data array ``'boundary_labels'``.
         The array indicates the labels/regions on either side of the polygons composing
         the output. The array's values are structured as follows:

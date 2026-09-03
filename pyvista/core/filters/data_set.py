@@ -34,6 +34,7 @@ from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_object import DataObjectFilters
 from pyvista.core.filters.data_object import _cast_output_to_match_input_type
 from pyvista.core.utilities.arrays import FieldAssociation
+from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
 from pyvista.core.utilities.arrays import set_default_active_scalars
@@ -7705,8 +7706,7 @@ class DataSetFilters(DataObjectFilters):
         mask fits the bounds of the input surface.
 
         If no inputs are provided, ``cell_length_percentile=0.1`` (tenth percentile) is
-        used by default to estimate the spacing. On systems with VTK < 9.2, the default
-        spacing is set to ``1/100`` of the input mesh's length.
+        used by default to estimate the spacing.
 
         .. versionadded:: 0.45.0
 
@@ -7772,9 +7772,6 @@ class DataSetFilters(DataObjectFilters):
             #. Inserting the distance into an ordered set to create the CDF.
 
             Has no effect if ``dimensions`` or ``reference_volume`` are specified.
-
-            .. note::
-                This option is only available for VTK 9.2 or greater.
 
         cell_length_sample_size : int, optional
             Number of samples to use for the cumulative distribution function (CDF)
@@ -7908,6 +7905,11 @@ class DataSetFilters(DataObjectFilters):
         >>> pl = mask_and_polydata_plotter(mask, poly)
         >>> pl.show()
 
+        The mask is mottled where the surface is not closed. Smoothed surfaces from
+        :meth:`~pyvista.ImageDataFilters.contour_labels` have gaps wherever the labels
+        touch only along a voxel edge, and the cut contours are closed heuristically
+        there.
+
         Visualize the effect of internal surfaces.
 
         >>> mesh = pv.Cylinder() + pv.Cylinder(center=(0, 0.75, 0))
@@ -7970,9 +7972,6 @@ class DataSetFilters(DataObjectFilters):
             msg = 'Input mesh must have faces for voxelization.'
             raise ValueError(msg)
 
-        def _preprocess_polydata(poly_in):
-            return poly_in.compute_normals().triangulate()
-
         if reference_volume is not None:
             if (
                 dimensions is not None
@@ -7992,43 +7991,42 @@ class DataSetFilters(DataObjectFilters):
             poly_ijk = surface.rotate(
                 reference_volume.direction_matrix.T, point=reference_volume.origin, inplace=False
             )
-            poly_ijk = _preprocess_polydata(poly_ijk)
+            poly_ijk = poly_ijk.triangulate()
         else:
             # Compute reference volume geometry
             if spacing is not None and dimensions is not None:
                 msg = 'Spacing and dimensions cannot both be set. Set one or the other.'
                 raise TypeError(msg)
 
-            # Need to preprocess so that we have a triangle mesh for computing
-            # cell length percentile
-            poly_ijk = _preprocess_polydata(surface)
+            # Triangulate for computing the cell length percentile
+            poly_ijk = surface.triangulate()
 
-            if spacing is None:
-                # Estimate spacing from cell length percentile
-                cell_length_percentile = (
-                    0.1 if cell_length_percentile is None else cell_length_percentile
-                )
-                cell_length_sample_size = (
-                    100_000 if cell_length_sample_size is None else cell_length_sample_size
-                )
-                spacing = _length_distribution_percentile(
-                    poly_ijk,
-                    cell_length_percentile,
-                    cell_length_sample_size,
-                    progress_bar=progress_bar,
-                )
-            # Spacing is specified directly. Make sure other params are not set.
-            elif cell_length_percentile is not None or cell_length_sample_size is not None:
+            if spacing is not None and (
+                cell_length_percentile is not None or cell_length_sample_size is not None
+            ):
                 msg = 'Spacing and cell length options cannot both be set. Set one or the other.'
                 raise TypeError(msg)
-
-            # Get initial spacing (will be adjusted later)
-            initial_spacing = _validation.validate_array3(spacing, broadcast=True)
 
             # Get size of poly data for computing dimensions
             size = np.array(surface.bounds_size)
 
             if dimensions is None:
+                if spacing is None:
+                    # Estimate spacing from cell length percentile
+                    cell_length_percentile = (
+                        0.1 if cell_length_percentile is None else cell_length_percentile
+                    )
+                    cell_length_sample_size = (
+                        100_000 if cell_length_sample_size is None else cell_length_sample_size
+                    )
+                    spacing = _length_distribution_percentile(
+                        poly_ijk,
+                        cell_length_percentile,
+                        cell_length_sample_size,
+                        progress_bar=progress_bar,
+                    )
+                # Get initial spacing (will be adjusted later)
+                initial_spacing = _validation.validate_array3(spacing, broadcast=True)
                 rounding_func = np.round if rounding_func is None else rounding_func
                 initial_dimensions = size / initial_spacing
                 # Make sure we don't round dimensions to zero, make it one instead
@@ -8050,18 +8048,10 @@ class DataSetFilters(DataObjectFilters):
             reference_volume.spacing = final_spacing
             reference_volume.origin = np.array(surface.bounds[::2]) + final_spacing / 2
 
-        # Init output structure. The image stencil filters do not support
-        # orientation, so we do not set the direction matrix
-        binary_mask = pv.ImageData()
-        binary_mask.extent = reference_volume.extent
-        binary_mask.spacing = reference_volume.spacing
-        binary_mask.origin = reference_volume.origin
-
-        # Init output scalars. Use uint8 dtype if possible.
-        scalars_shape = (binary_mask.n_points,)
+        # Use uint8 dtype if possible
         scalars_dtype: type[np.uint8 | float | int]
         if all(
-            isinstance(val, int) and val < 256 and val >= 0
+            isinstance(val, (int, np.integer)) and val < 256 and val >= 0
             for val in (background_value, foreground_value)
         ):
             scalars_dtype = np.uint8
@@ -8069,37 +8059,26 @@ class DataSetFilters(DataObjectFilters):
             scalars_dtype = np.int_
         else:
             scalars_dtype = np.float64
-        scalars = (  # Init with background value
-            np.zeros(scalars_shape, dtype=scalars_dtype)
-            if background_value == 0
-            else np.ones(scalars_shape, dtype=scalars_dtype) * background_value
+
+        mask = _stencil_binary_mask(
+            poly_ijk,
+            extent=reference_volume.extent,
+            spacing=reference_volume.spacing,
+            origin=reference_volume.origin,
+            dtype=scalars_dtype,
+            foreground_value=foreground_value,
+            background_value=background_value,
+            progress_bar=progress_bar,
         )
-        binary_mask['mask'] = scalars  # type: ignore[type-var, unused-ignore]
-        # Make sure that we have a clean triangle-strip polydata
-        # Note: Poly was partially pre-processed earlier
-        poly_ijk = poly_ijk.strip()
-
-        # Convert polydata to stencil
-        poly_to_stencil = _vtk.vtkPolyDataToImageStencil()
-        poly_to_stencil.SetInputData(poly_ijk)
-        poly_to_stencil.SetOutputSpacing(*reference_volume.spacing)
-        poly_to_stencil.SetOutputOrigin(*reference_volume.origin)  # type: ignore[call-overload]
-        poly_to_stencil.SetOutputWholeExtent(*reference_volume.extent)
-        _update_alg(poly_to_stencil, progress_bar=progress_bar, message='Converting polydata')
-
-        # Convert stencil to image
-        stencil = _vtk.vtkImageStencil()
-        stencil.SetInputData(binary_mask)
-        stencil.SetStencilConnection(poly_to_stencil.GetOutputPort())
-        stencil.ReverseStencilOn()
-        stencil.SetBackgroundValue(foreground_value)
-        _update_alg(stencil, progress_bar=progress_bar, message='Generating binary mask')
-        output_volume = _get_output(stencil)
-
-        # Set the orientation of the output
-        output_volume.direction_matrix = reference_volume.direction_matrix
-
-        return output_volume
+        # The image stencil filters do not support orientation, so the direction
+        # matrix is only set on the output
+        binary_mask = pv.ImageData()
+        binary_mask.extent = reference_volume.extent
+        binary_mask.spacing = reference_volume.spacing
+        binary_mask.origin = reference_volume.origin
+        binary_mask['mask'] = mask
+        binary_mask.direction_matrix = reference_volume.direction_matrix
+        return binary_mask
 
     def _voxelize_binary_mask_cells(  # type: ignore[misc]
         self: DataSet,
@@ -8164,8 +8143,7 @@ class DataSetFilters(DataObjectFilters):
         grid fits the bounds of the input mesh.
 
         If no inputs are provided, ``cell_length_percentile=0.1`` (tenth percentile) is
-        used by default to estimate the spacing. On systems with VTK < 9.2, the default
-        spacing is set to ``1/100`` of the input mesh's length.
+        used by default to estimate the spacing.
 
         A point data array ``mask`` is included where points inside and outside of the
         input surface are labelled with ``foreground_value`` and ``background_value``,
@@ -8228,9 +8206,6 @@ class DataSetFilters(DataObjectFilters):
             #. Inserting the distance into an ordered set to create the CDF.
 
             Has no effect if ``dimensions`` or ``reference_volume`` are specified.
-
-            .. note::
-                This option is only available for VTK 9.2 or greater.
 
         cell_length_sample_size : int, optional
             Number of samples to use for the cumulative distribution function (CDF)
@@ -8484,6 +8459,55 @@ def _length_distribution_percentile(poly, percentile, cell_length_sample_size, *
         distribution, progress_bar=progress_bar, message='Computing cell length distribution'
     )
     return distribution.GetLengthQuantile(percentile)
+
+
+_STENCIL_SLAB_SLICES = 8
+
+
+def _stencil_binary_mask(
+    surface: PolyData,
+    *,
+    extent: VectorLike[int],
+    spacing: VectorLike[float],
+    origin: VectorLike[float],
+    dtype: type,
+    foreground_value: float,
+    background_value: float,
+    progress_bar: bool,
+) -> NumpyArray[Any]:
+    """Rasterize a triangle surface into a flat binary mask, one slab of z-slices at a time."""
+    faces = surface.regular_faces
+    z = surface.points[:, 2][faces]
+    z_min, z_max = z.min(axis=1), z.max(axis=1)
+    extent_ = np.asarray(extent)
+    x_min, x_max, y_min, y_max, z_first, z_last = extent_.tolist()
+    dimensions = extent_[1::2] - extent_[::2] + 1
+    mask = np.full(dimensions[::-1], background_value, dtype=dtype)
+    vtk_type = _vtk.get_vtk_array_type(dtype)
+    for k_min in range(z_first, z_last + 1, _STENCIL_SLAB_SLICES):
+        k_max = min(k_min + _STENCIL_SLAB_SLICES - 1, z_last)
+        z_slab = sorted((origin[2] + k_min * spacing[2], origin[2] + k_max * spacing[2]))
+        # Only the cells crossing the slab's slices can contribute to it
+        crossing = (z_min <= z_slab[1]) & (z_max >= z_slab[0])
+        if not crossing.any():
+            continue
+        slab_surface = pv.PolyData.from_regular_faces(surface.points, faces[crossing])
+        poly_to_stencil = _vtk.vtkPolyDataToImageStencil()
+        poly_to_stencil.SetInputData(slab_surface)
+        poly_to_stencil.SetOutputSpacing(*spacing)
+        poly_to_stencil.SetOutputOrigin(*origin)
+        poly_to_stencil.SetOutputWholeExtent(x_min, x_max, y_min, y_max, k_min, k_max)
+        stencil_to_image = _vtk.vtkImageStencilToImage()
+        stencil_to_image.SetInputConnection(poly_to_stencil.GetOutputPort())
+        stencil_to_image.SetInsideValue(foreground_value)
+        stencil_to_image.SetOutsideValue(background_value)
+        stencil_to_image.SetOutputScalarType(vtk_type)
+        _update_alg(stencil_to_image, progress_bar=progress_bar, message='Generating binary mask')
+        slab = convert_array(stencil_to_image.GetOutput().GetPointData().GetScalars())
+        mask[k_min - z_first : k_max - z_first + 1] = slab.reshape(
+            k_max - k_min + 1, dimensions[1], dimensions[0]
+        )
+    return mask.ravel()
 
 
 def _set_threshold_limit(alg, *, value, method, invert):

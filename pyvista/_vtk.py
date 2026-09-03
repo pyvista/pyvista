@@ -397,7 +397,6 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkGradientFilter',
         'vtkIntersectionPolyDataFilter',
         'vtkOBBTree',
-        'vtkPassArrays',
         'vtkRectilinearGridToPointSet',
         'vtkRectilinearGridToTetrahedra',
         'vtkRemovePolyData',
@@ -641,7 +640,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkImageSinusoidSource',
     ),
     'vtkImagingStencil': (
-        'vtkImageStencil',
+        'vtkImageStencilToImage',
         'vtkPolyDataToImageStencil',
     ),
     'vtkParallelCore': ('vtkDummyController',),
