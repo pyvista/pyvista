@@ -7965,9 +7965,6 @@ class DataSetFilters(DataObjectFilters):
             msg = 'Input mesh must have faces for voxelization.'
             raise ValueError(msg)
 
-        def _preprocess_polydata(poly_in):
-            return poly_in.compute_normals().triangulate()
-
         if reference_volume is not None:
             if (
                 dimensions is not None
@@ -7987,16 +7984,15 @@ class DataSetFilters(DataObjectFilters):
             poly_ijk = surface.rotate(
                 reference_volume.direction_matrix.T, point=reference_volume.origin, inplace=False
             )
-            poly_ijk = _preprocess_polydata(poly_ijk)
+            poly_ijk = poly_ijk.triangulate()
         else:
             # Compute reference volume geometry
             if spacing is not None and dimensions is not None:
                 msg = 'Spacing and dimensions cannot both be set. Set one or the other.'
                 raise TypeError(msg)
 
-            # Need to preprocess so that we have a triangle mesh for computing
-            # cell length percentile
-            poly_ijk = _preprocess_polydata(surface)
+            # Triangulate for computing the cell length percentile
+            poly_ijk = surface.triangulate()
 
             if spacing is not None and (
                 cell_length_percentile is not None or cell_length_sample_size is not None
@@ -8070,9 +8066,6 @@ class DataSetFilters(DataObjectFilters):
             else np.ones(scalars_shape, dtype=scalars_dtype) * background_value
         )
         binary_mask['mask'] = scalars  # type: ignore[type-var, unused-ignore]
-        # Make sure that we have a clean triangle-strip polydata
-        # Note: Poly was partially pre-processed earlier
-        poly_ijk = poly_ijk.strip()
 
         # Convert polydata to stencil
         poly_to_stencil = _vtk.vtkPolyDataToImageStencil()
