@@ -1432,6 +1432,13 @@ def test_resample_values_at_point_locations():
     assert np.allclose(resampled['ramp'], np.clip(x, 0, 2))
 
 
+def test_resample_fractional_dimensions():
+    image = pv.ImageData(dimensions=(233, 171, 1))
+    image['data'] = np.zeros(image.n_points)
+    assert np.array_equal(image.resample(0.5).dimensions, (116, 85, 1))
+    assert np.array_equal(image.resample(0.29).dimensions, (67, 49, 1))
+
+
 def test_select_values(uniform):
     selected = uniform.select_values(ranges=uniform.get_data_range())
     assert isinstance(selected, pv.ImageData)

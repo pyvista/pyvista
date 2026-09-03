@@ -4718,7 +4718,8 @@ class ImageDataFilters(DataSetFilters):
         if processing_cell_scalars and (reference_image_provided or dimensions is not None):
             # Dimensions count points, and there is one less cell than points along each axis
             new_dimensions = new_dimensions - 1
-        new_dimensions = np.floor(new_dimensions + 0.5).astype(int)
+        # Truncate fractional dimensions, with a tolerance for floating point error
+        new_dimensions = np.floor(new_dimensions + 1e-6).astype(int)
         # Singleton input dimensions are never resampled
         new_dimensions[old_dimensions == 1] = 1
         if processing_cell_scalars and np.any(new_dimensions < 1):
