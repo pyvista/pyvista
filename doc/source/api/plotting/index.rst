@@ -271,6 +271,8 @@ fine-grained control over the VTK pipeline.
    plotting.utilities.triangulate_algorithm
 
 
+.. _jupyter_backends_api:
+
 Jupyter Backends
 ----------------
 The backend is selected with :func:`~pyvista.set_jupyter_backend`, and
