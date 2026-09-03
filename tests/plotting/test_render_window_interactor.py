@@ -257,41 +257,48 @@ def test_timer():
     assert len(events) == E
 
 
-@skip_windows_mesa
-@pytest.mark.skipif(
-    type(_vtk.vtkRenderWindowInteractor()).__name__
-    not in ('vtkWin32RenderWindowInteractor', 'vtkXRenderWindowInteractor'),
-    reason='Other RenderWindowInteractors do not invoke TimerEvents during ProcessEvents.',
-)
-@pytest.mark.skipif(
-    type(_vtk.vtkRenderWindowInteractor()).__name__ == 'vtkXRenderWindowInteractor'
-    and type(_vtk.vtkRenderWindow()).__name__ != 'vtkXOpenGLRenderWindow',
-    reason='X interactor ProcessEvents() segfaults without an X-backed render window',
-)
-def test_multiple_timers_do_not_cross_fire():
+def test_timer_ignores_events_before_its_own_duration_elapses():
     # https://github.com/pyvista/pyvista/issues/7962
-    # A second, fast-firing timer must not also drive a slower timer's
-    # callback -- every timer shares the same 'TimerEvent' observer chain,
-    # so without filtering by the firing timer's own id, any timer event
-    # invokes every registered timer's callback.
+    # `TimerEvent` is observed on the interactor itself, so every active
+    # timer's `execute` fires whenever *any* timer does -- e.g. a fast
+    # timer's event would also land on a slower timer's `execute`. Verify
+    # the slower timer ignores an event that arrives before its own
+    # duration has elapsed, using a fake interactor rather than two real,
+    # simultaneously-firing native timers: driving that scenario through
+    # `vtkXRenderWindowInteractor` segfaults VTK 9.3.1 when two repeating
+    # timers are both active.
+    calls = []
+    timer = pv.plotting.render_window_interactor.Timer(
+        max_steps=10, callback=calls.append, duration=1000
+    )
+    timer.id = 1
+
+    class _FakeRenderWindow:
+        def Render(self):  # noqa: N802
+            pass
+
+    class _FakeInteractor:
+        def GetRenderWindow(self):  # noqa: N802
+            return _FakeRenderWindow()
+
+    fake_iren = _FakeInteractor()
+
+    # Its own duration has already elapsed since construction, so this event
+    # is the one that actually belongs to it.
+    timer._last_fire_time -= 2  # 2 s, comfortably past the 1000 ms duration
+    timer.execute(fake_iren, 'TimerEvent')
+    assert calls == [0]
+
+    # A second event lands immediately after, as if a much faster timer had
+    # fired -- well within this timer's own 1000 ms duration.
+    timer.execute(fake_iren, 'TimerEvent')
+    assert calls == [0]
+
+
+def test_add_timer_event_forwards_duration_to_timer():
     pl = pv.Plotter()
-    iren = pv.plotting.render_window_interactor.RenderWindowInteractor(pl)
-    iren.set_render_window(pl.render_window)
-    iren.initialize()
-
-    def process_events(iren, duration):
-        t = 1000 * time.time()
-        while 1000 * time.time() - t < duration:
-            iren.process_events()
-
-    fast_calls = []
-    slow_calls = []
-    iren.add_timer_event(max_steps=1000, duration=10, callback=fast_calls.append)
-    iren.add_timer_event(max_steps=1000, duration=2000, callback=slow_calls.append)
-
-    process_events(iren, 200)  # well under the slow timer's 2000 ms period
-    assert len(fast_calls) > 1
-    assert len(slow_calls) == 0
+    pl.iren.add_timer_event(max_steps=5, duration=250, callback=lambda step: None)  # noqa: ARG005
+    assert pl.iren._timer.duration == 250
 
 
 def test_add_timer_event():

@@ -48,7 +48,7 @@ class Timer(_NoNewAttrMixin):
         which is the number of times the timer event has occurred.
 
     duration : int, optional
-        The timer's own duration in milliseconds, i.e. the value passed to
+        The timer's own duration in milliseconds, that is, the value passed to
         :func:`~pyvista.Plotter.add_timer_event`. ``TimerEvent`` is observed
         on the interactor itself, so with more than one active timer, every
         timer's ``execute`` fires whenever *any* one of them does; this is
