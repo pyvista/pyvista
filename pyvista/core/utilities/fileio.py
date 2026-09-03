@@ -483,6 +483,7 @@ def _read_dispatch(  # noqa: PLR0911
     from pyvista.core.utilities.reader_registry import LocalFileRequiredError  # noqa: PLC0415
     from pyvista.core.utilities.reader_registry import _download_uri  # noqa: PLC0415
     from pyvista.core.utilities.reader_registry import _get_ext_handler  # noqa: PLC0415
+    from pyvista.core.utilities.reader_registry import _missing_reader_message  # noqa: PLC0415
     from pyvista.core.utilities.reader_registry import has_scheme  # noqa: PLC0415
 
     # Handle remote URIs before Path coercion
@@ -520,6 +521,9 @@ def _read_dispatch(  # noqa: PLR0911
     ext_handler = _get_ext_handler(ext)
     if ext_handler is not None:
         return ext_handler(str(filename))
+
+    if (missing := _missing_reader_message(ext, str(filename))) is not None:
+        raise ImportError(missing)
 
     try:
         reader = pv.get_reader(filename, force_ext)
