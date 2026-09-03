@@ -85,12 +85,12 @@ to = "/api/core/_autosummary/pyvista.core.utilities.misc._BoundsSizeMixin.bounds
 [[redirects]]
 from = "/api/utilities/_autosummary/pyvista.core.utilities.misc._NameMixin.html"
 status = 301
-to = "/api/core/_autosummary/pyvista.core.utilities.misc._NameMixin.html"
+to = "/api/plotting/_autosummary/pyvista.core.utilities.misc._NameMixin.html"
 
 [[redirects]]
 from = "/api/utilities/_autosummary/pyvista.core.utilities.misc._NameMixin.name.html"
 status = 301
-to = "/api/core/_autosummary/pyvista.core.utilities.misc._NameMixin.name.html"
+to = "/api/plotting/_autosummary/pyvista.core.utilities.misc._NameMixin.name.html"
 
 [[redirects]]
 from = "/api/utilities/_autosummary/pyvista.cubemap.html"
