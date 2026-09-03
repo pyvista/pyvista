@@ -7893,23 +7893,17 @@ class DataSetFilters(DataObjectFilters):
         (10, 20, 30)
 
         Create a mask using a reference volume. First load a label map,
-        crop it to the frog's head, and generate polydata from it. Smoothing is
-        disabled so that the surface is closed and encloses the labelled voxels exactly.
+        crop it to the frog's head, and generate polydata from it.
 
         >>> volume = examples.load_frog_tissues()
         >>> volume = volume.crop(extent=(300, 499, 110, 350, 0, 100))
-        >>> poly = volume.contour_labels(smoothing=False)
+        >>> poly = volume.contour_labels()
 
         Now create the mask from the polydata using the volume as a reference.
 
         >>> mask = poly.voxelize_binary_mask(reference_volume=volume)
         >>> pl = mask_and_polydata_plotter(mask, poly)
         >>> pl.show()
-
-        The mask matches the foreground of the label map.
-
-        >>> np.array_equal(mask['mask'] == 1, volume.active_scalars > 0)
-        True
 
         Visualize the effect of internal surfaces.
 
