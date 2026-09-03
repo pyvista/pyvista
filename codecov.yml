@@ -56,9 +56,6 @@ coverage:
 
 # `pyvista` and `tests` are uploaded as separate reports (see the upload job in
 # .github/workflows/testing-and-deployment.yml), one XML per side per matrix cell.
-# The `package` and `tests` flags carry the pinned Linux matrix and nothing else, so a
-# commit's report for them does not depend on which optional jobs ran. That is what lets
-# the statuses above compare a pull request against `main` at `threshold: 0%`.
 flag_management:
   individual_flags:
     - name: package
@@ -67,11 +64,9 @@ flag_management:
     - name: tests
       paths:
         - tests/
-    # VTK-dev runs nightly and on labelled pull requests only, so these two are absent
-    # from most commits. `carryforward` reuses the last run's report instead of reporting
-    # the lines it alone covers as uncovered -- the VTK >= 9.8 half of tests/plotting/
-    # test_gc.py runs nowhere else. No status is attached to either flag, so a stale
-    # carry-forward can inform the report without ever gating a pull request.
+    # Flagged apart from the two above so the statuses compare a fixed set of jobs.
+    # VTK-dev runs only nightly, so `carryforward` keeps the lines it alone covers from
+    # reading as uncovered; no status is attached, so a stale carry-forward cannot gate.
     - name: package-vtk-dev
       carryforward: true
       paths:
