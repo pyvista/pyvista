@@ -1178,14 +1178,14 @@ def test_resample_interpolation(uniform, interpolation, dtype, sample_rate):
 @pytest.mark.parametrize(
     ('interpolation', 'border_mode', 'expected_array'),
     [  # Exact values aren't important, we're just checking the values differ between modes
-        ('cubic', 'wrap', [0.0, 0.1839928, 0.75200433, 1.24799567, 1.8160072, 2.0]),
-        ('cubic', 'mirror', [0.0, 0.25599316, 0.76800391, 1.23199609, 1.74400684, 2.0]),
-        ('cubic', 'clamp', [0.0, 0.32799353, 0.78400348, 1.21599652, 1.67200647, 2.0]),
-        ('bspline', 'wrap', [0.0, 0.0159944, 0.6080057, 1.3919943, 1.9840056, 2.0]),
-        ('bspline', 'mirror', [0.0, 0.2079941, 0.7040044, 1.2959956, 1.7920059, 2.0]),
-        ('bspline', 'clamp', [0.0, 0.323194, 0.7616036, 1.2383964, 1.676806, 2.0]),
+        ('cubic', 'wrap', [0.359375, 0.0390625, 0.6796875, 1.3203125, 1.9609375, 1.640625]),
+        ('cubic', 'mirror', [0.109375, 0.109375, 0.703125, 1.296875, 1.890625, 1.890625]),
+        ('cubic', 'clamp', [-0.0703125, 0.1796875, 0.7265625, 1.2734375, 1.8203125, 2.0703125]),
+        ('bspline', 'wrap', [0.40625, -0.078125, 0.515625, 1.484375, 2.078125, 1.59375]),
+        ('bspline', 'mirror', [0.0859375, 0.0859375, 0.6328125, 1.3671875, 1.9140625, 1.9140625]),
+        ('bspline', 'clamp', [-0.115625, 0.184375, 0.703125, 1.296875, 1.815625, 2.115625]),
         ('bspline0', 'clamp', [0.0, 0.0, 1.0, 1.0, 2.0, 2.0]),
-        ('bspline9', 'clamp', [-0.0682354, 0.3000403, 0.7556944, 1.2443056, 1.6999597, 2.0682354]),
+        ('bspline9', 'clamp', [-0.2413581, 0.149598, 0.6956133, 1.3043867, 1.850402, 2.2413581]),
     ],
 )
 def test_resample_border_mode(interpolation, border_mode, expected_array):
@@ -1257,15 +1257,15 @@ def test_resample_dimensions_to_singleton(uniform, dimensions):
 
 
 def test_resample_dimensions_to_singleton_values():
-    # The collapsed axis is sampled (not ignored): a 3D volume flattened to a
-    # single z-slice must contain the values from that slice.
-    image = pv.ImageData(dimensions=(4, 4, 4))
+    # The collapsed axis is sampled at its center: a volume with five z-slices
+    # flattened to a single slice contains the values of the middle slice.
+    image = pv.ImageData(dimensions=(4, 4, 5))
     image['v'] = np.arange(image.n_points, dtype=float)
     resampled = image.resample(dimensions=(4, 4, 1))
     assert np.array_equal(resampled.dimensions, (4, 4, 1))
-    # Nearest interpolation samples the first (z=0) slice of the volume.
-    first_slice = image['v'].reshape(image.dimensions[::-1])[0].ravel()
-    assert np.array_equal(np.sort(resampled.active_scalars), np.sort(first_slice))
+    middle_slice = image['v'].reshape(image.dimensions[::-1])[2].ravel()
+    assert np.array_equal(resampled.active_scalars, middle_slice)
+    assert np.allclose(resampled.origin, (0.0, 0.0, 2.0))
 
 
 def test_resample_inplace(uniform):
@@ -1419,6 +1419,17 @@ def test_resample_anti_aliasing_per_axis():
 
     assert np.allclose(resample((0.5, 1, 1), anti_aliasing=True), resample((0.5, 1, 1)))
     assert not np.allclose(resample((1, 0.5, 1), anti_aliasing=True), resample((1, 0.5, 1)))
+
+
+def test_resample_values_at_point_locations():
+    # A linear ramp is reproduced exactly at the resampled point locations
+    image = pv.ImageData(dimensions=(3, 1, 1))
+    image['ramp'] = np.arange(3, dtype=float)
+
+    resampled = image.resample(2, 'linear')
+    x = resampled.points[:, 0]
+    assert np.allclose(x, [-0.25, 0.25, 0.75, 1.25, 1.75, 2.25])
+    assert np.allclose(resampled['ramp'], np.clip(x, 0, 2))
 
 
 def test_select_values(uniform):

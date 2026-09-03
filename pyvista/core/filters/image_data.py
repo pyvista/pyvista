@@ -4300,7 +4300,8 @@ class ImageDataFilters(DataSetFilters):
             resampled points will be larger than the input image bounds.
             Enabling this option also has the effect that the re-sampled spacing
             will directly correlate with the resampled dimensions, for example, if
-            the dimensions are doubled the spacing will be halved. See examples.
+            the dimensions are doubled the spacing will be halved. The values are
+            sampled at the centers of the resampled voxels. See examples.
 
             This option is enabled by default when resampling point data. Has no effect
             when resampling cell data or when a ``reference_image`` is provided.
@@ -4757,6 +4758,9 @@ class ImageDataFilters(DataSetFilters):
         resize_filter.SetInterpolator(interpolator)
         resize_filter.SetResizeMethodToOutputDimensions()
         resize_filter.SetOutputDimensions(*new_dimensions.tolist())
+        # The border stretches the resampled bounds by half a voxel so that the spacing scales
+        # with the dimensions, which is also how cells are resampled
+        resize_filter.SetBorder(extend_border or processing_cell_scalars)
         _update_alg(resize_filter, progress_bar=progress_bar, message='Resampling image.')
         output_image = _get_output(resize_filter)
 
@@ -4771,26 +4775,6 @@ class ImageDataFilters(DataSetFilters):
             output_image.origin = reference_image.origin
             output_image.spacing = reference_image.spacing
             output_image.offset = reference_image.offset
-        else:
-            old_spacing = np.array(input_image.spacing)
-            if extend_border or processing_cell_scalars:
-                # The extended bounds are preserved, so the spacing scales with the dimensions
-                new_spacing = old_spacing * old_dimensions / new_dimensions
-                # Shift the origin so that the extended bounds of the first point are unchanged
-                first_index = np.array(input_image.offset) - 0.5
-                new_origin = np.array(input_image.origin) + first_index * (
-                    old_spacing - new_spacing
-                )
-            else:
-                # The bounds are preserved
-                with np.errstate(divide='ignore', invalid='ignore'):
-                    new_spacing = old_spacing * (old_dimensions - 1) / (new_dimensions - 1)
-                # Keep the original spacing for singleton axes
-                singleton = (old_dimensions == 1) | (new_dimensions == 1)
-                new_spacing[singleton] = old_spacing[singleton]
-                new_origin = np.array(input_image.origin)
-            output_image.spacing = new_spacing
-            output_image.origin = new_origin
 
         if processing_cell_scalars:
             # Convert back to cells. This modifies origin so we need to reset it.
