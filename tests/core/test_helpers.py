@@ -420,7 +420,6 @@ def test_to_from_trimesh_empty_mesh():
     assert isinstance(pvmesh, pv.PolyData)
 
 
-@pytest.mark.skip_vtk_backend('cvista', reason=INT32_CELL_STORAGE)
 def test_to_from_trimesh_points_faces(ant):
     # Zero-copy sharing requires int64 connectivity, which a reader is free not
     # to produce, so build it rather than inheriting it from the example file.
