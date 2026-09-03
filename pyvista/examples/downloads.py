@@ -4684,7 +4684,7 @@ def download_damavand_volcano(load: bool = True) -> ImageData | str:  # noqa: FB
 
         Use :meth:`~pyvista.ImageDataFilters.resample` to down-sample it before plotting.
 
-        >>> dataset = dataset.resample(0.5)
+        >>> dataset = dataset.resample(0.5, anti_aliasing=True)
         >>> dataset.dimensions
         (140, 116, 85)
 
