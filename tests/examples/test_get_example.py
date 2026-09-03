@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import fields
 import inspect
+from typing import get_args
 import os
 from pathlib import Path
 import re
@@ -86,8 +87,8 @@ def _current_overloads():
 
 
 def _format_overloads(overloads):
-    """Render the generated block, one overload per line; the block is not formatted."""
-    lines = []
+    """Render the generated block: the ``ExampleName`` literal, then one overload per line."""
+    lines = ['ExampleName = Literal[', *(f"    '{name}'," for name in sorted(overloads)), ']']
     for name, (dataset, readers) in sorted(overloads.items()):
         lines.append('@overload')
         lines.append(
@@ -254,8 +255,13 @@ def test_get_example_function_overloads_accept_a_plain_call(name):
     ), f'no overload of {function.__name__} accepts a plain call'
 
 
+def test_example_name_literal_lists_every_example():
+    """``ExampleName`` is the ``Literal`` of every example name, so editors can complete it."""
+    assert get_args(_get_example.ExampleName) == tuple(_all_example_names())
+
+
 def test_format_overloads_renders_one_line_per_stub():
-    """The generated block is one ``@overload`` line and one one-line stub per example."""
+    """The generated block is the name literal, then an ``@overload`` and a one-line stub each."""
     block = _format_overloads(
         {
             'cow': ('pv.PolyData', 'tuple[pv.XMLPolyDataReader]'),
@@ -263,6 +269,10 @@ def test_format_overloads_renders_one_line_per_stub():
         }
     )
     assert block == (
+        'ExampleName = Literal[\n'
+        "    'ant',\n"
+        "    'cow',\n"
+        ']\n'
         '@overload\n'
         "def get_example(name: Literal['ant'], *, download: bool = ...)"
         ' -> Example[pv.PolyData, tuple[pv.PLYReader]]: ...\n'

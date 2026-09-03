@@ -166,6 +166,8 @@ duration_write_json = None
 # Configuration for sphinx.ext.autodoc
 # Do not expand following type aliases when generating the docs
 autodoc_type_aliases = {
+    # every example name, generated; keep it a name rather than 200 literals
+    'ExampleName': 'pyvista.examples._get_example.ExampleName',
     'CameraPositionOptions': 'pyvista.CameraPositionOptions',
     'JupyterBackendOptions': 'pyvista.JupyterBackendOptions',
     'MeshValidationFields': 'pyvista.MeshValidationFields',
@@ -271,6 +273,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*DatasetObject'),
     (r'py:.*', '.*_DatasetT_co'),
     (r'py:.*', '.*_ReadersT_co'),
+    (r'py:.*', '.*ExampleName'),
     (r'py:.*', '.*_DatasetLoader'),
     (r'py:.*', '.*Grid'),
     (r'py:.*', '.*PointGrid'),
