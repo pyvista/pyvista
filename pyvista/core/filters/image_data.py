@@ -4903,7 +4903,8 @@ class ImageDataFilters(DataSetFilters):
 
         anti_aliasing : bool, default: False
             Enable anti-aliasing. Each axis sampled more coarsely than the image is
-            blurred in proportion to its sampling ratio to reduce image artifacts.
+            blurred in proportion to its sampling ratio, which approximates averaging
+            the samples it merges.
 
         scalars : str, optional
             Name of scalars to reslice. Defaults to currently active scalars.
@@ -5031,8 +5032,9 @@ class ImageDataFilters(DataSetFilters):
             if isinstance(interpolator, _vtk.vtkImageSincInterpolator):
                 interpolator.AntialiasingOn()
             else:
-                # Blur each coarsely sampled axis in proportion to its sampling ratio
-                std_dev = np.maximum(0.0, (sampling_ratio - 1) / 2)
+                # Blur each coarsely sampled axis with the Gaussian which has the same
+                # width as a box filter averaging the samples the axis merges
+                std_dev = np.where(sampling_ratio > 1, sampling_ratio / np.sqrt(12), 0.0)
                 input_image = input_image.gaussian_smooth(
                     std_dev=std_dev, radius_factor=3.0, progress_bar=progress_bar
                 )
