@@ -3,77 +3,183 @@
 Plotting
 ========
 
-* Intuitive plotting routines with `matplotlib`_ like syntax (see :ref:`plotting`).
+* Intuitive plotting routines with `matplotlib`_ like syntax. See
+  :ref:`plotting` for using the interactive window.
 * Plotting tools built for interactivity (see :ref:`widgets`).
 
 .. toctree::
    :hidden:
 
-   plotting
-   qt_plotting
+   camera
+   lights
    theme
+   qt_plotting
    trame
    components
 
 .. _matplotlib: https://matplotlib.org/
 
 
-Plotting API Reference
-----------------------
-Plotting module API reference. These plotting modules are the basis for
-all plotting functionality in PyVista.
+Plotting Functions
+------------------
+These functions provide a simplified interface to the plotting classes below.
 
 .. currentmodule:: pyvista
 
 .. autosummary::
    :toctree: _autosummary
 
+   close_all
+   plot
+   plot_arrows
+   plot_compare
+   plot_compare_four
+
+
+Plotter
+-------
+Cameras and lights are documented on their own pages: :ref:`cameras_api` and
+:ref:`lights_api`.
+
+.. autosummary::
+   :toctree: _autosummary
+
+   Plotter
+   CameraPosition
+   Renderer
+   RenderWindowInteractor
+   Timer
+
+.. seealso::
+
+   :ref:`multi_window_example`
+      Lay out several renderers in one window.
+
+   :ref:`screenshot_example`
+      Save screenshots from a plotter.
+
+   :ref:`movie_example`
+      Write frames to a movie.
+
+
+Actors and Mappers
+------------------
+.. autosummary::
+   :toctree: _autosummary
+
    Actor
+   DataSetMapper
+   Follower
+   plotting.mapper.PointGaussianMapper
+   Prop3D
+   Property
+
+.. seealso::
+
+   :ref:`backface_prop_example`
+      Set properties for the back faces of an actor.
+
+   :ref:`lighting_mesh_example`
+      Control how an actor's surface reflects light.
+
+
+Volume Rendering
+----------------
+.. autosummary::
+   :toctree: _autosummary
+
+   plotting.volume.Volume
+   plotting.mapper.FixedPointVolumeRayCastMapper
+   plotting.mapper.GPUVolumeRayCastMapper
+   plotting.mapper.OpenGLGPUVolumeRayCastMapper
+   plotting.mapper.SmartVolumeMapper
+   plotting.mapper.UnstructuredGridVolumeRayCastMapper
+   plotting.volume_property.VolumeProperty
+   opacity_transfer_function
+
+.. seealso::
+
+   :ref:`volume_rendering_example`
+      Render a volume with the different mappers.
+
+   :ref:`opacity_example`
+      Build an opacity transfer function.
+
+
+Text and Labels
+---------------
+.. autosummary::
+   :toctree: _autosummary
+
+   CornerAnnotation
+   Label
+   Text
+   TextProperty
+
+.. seealso::
+
+   :ref:`point_labels_example`
+      Label points in a scene.
+
+
+Axes and Orientation
+--------------------
+.. autosummary::
+   :toctree: _autosummary
+
    Axes
    AxesActor
    AxesAssembly
    AxesAssemblySymmetric
-   CameraPosition
-   CornerAnnotation
    CubeAxesActor
-   DataSetMapper
-   Follower
-   Label
-   LookupTable
    PlanesAssembly
-   Plotter
-   Prop3D
-   Property
-   Renderer
-   RenderWindowInteractor
-   Text
-   TextProperty
-   Timer
-   plotting.mapper.FixedPointVolumeRayCastMapper
-   plotting.mapper.GPUVolumeRayCastMapper
-   plotting.mapper.OpenGLGPUVolumeRayCastMapper
-   plotting.mapper.PointGaussianMapper
-   plotting.mapper.SmartVolumeMapper
-   plotting.mapper.UnstructuredGridVolumeRayCastMapper
+   create_axes_marker
+   create_axes_orientation_box
+
+.. seealso::
+
+   :ref:`axes_objects_example`
+      Compare the axes objects and add them to a scene.
+
+
+Lookup Tables
+-------------
+Colors, colormaps, and the :class:`~pyvista.Color` class are documented under
+:ref:`colors_api`.
+
+.. autosummary::
+   :toctree: _autosummary
+
+   LookupTable
+
+.. seealso::
+
+   :ref:`lookup_table_example`
+      Build a lookup table from a colormap or a list of colors.
+
+
+Enumerations
+------------
+.. autosummary::
+   :toctree: _autosummary
+
    plotting.opts.ElementType
    plotting.opts.InterpolationType
    plotting.opts.PointSpriteShape
    plotting.opts.RepresentationType
    plotting.opts.ShaderType
-   plotting.volume.Volume
-   plotting.volume_property.VolumeProperty
 
 
-Composite Plotting Reference
-----------------------------
+Composite Plotting
+------------------
 These classes are used when plotting :class:`pyvista.MultiBlock` datasets.
 
 .. autosummary::
    :toctree: _autosummary
 
-   CompositePolyDataMapper
-   CompositeAttributes
    BlockAttributes
+   CompositeAttributes
+   CompositePolyDataMapper
 
 
 Charts API
@@ -100,8 +206,8 @@ details, see the :ref:`widgets` examples.
 .. autosummary::
    :toctree: _autosummary
 
-   plotting.widgets.WidgetComponent
    plotting.widgets.AffineWidget3D
+   plotting.widgets.WidgetComponent
 
 
 Picking API
@@ -133,14 +239,14 @@ interaction styles.
    plotting.render_window_interactor.InteractorStyleJoystickCamera
    plotting.render_window_interactor.InteractorStyleRubberBand2D
    plotting.render_window_interactor.InteractorStyleRubberBandPick
+   plotting.render_window_interactor.InteractorStyleTerrain
    plotting.render_window_interactor.InteractorStyleTrackballActor
    plotting.render_window_interactor.InteractorStyleTrackballCamera
-   plotting.render_window_interactor.InteractorStyleTerrain
    plotting.render_window_interactor.InteractorStyleZoom
 
 
 VTK Algorithm Utilities
-~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------
 These functions create VTK algorithm pipeline nodes for use with PyVista's
 pipeline-based rendering. They are useful for advanced users who need
 fine-grained control over the VTK pipeline.
@@ -165,15 +271,21 @@ fine-grained control over the VTK pipeline.
    plotting.utilities.triangulate_algorithm
 
 
-Convenience Functions
-~~~~~~~~~~~~~~~~~~~~~
-These functions provide a simplified interface to the various plotting
-routines in PyVista.
+.. _jupyter_backends_api:
 
-.. toctree::
-   :maxdepth: 2
+Jupyter Backends
+----------------
+The backend is selected with :func:`~pyvista.set_jupyter_backend`, and
+third-party packages can register additional backends. See
+:ref:`jupyter_plotting` for plotting in a notebook.
 
-   conv_func
+.. autosummary::
+   :toctree: _autosummary
+
+   JupyterBackendRegistration
+   register_jupyter_backend
+   registered_jupyter_backends
+   set_jupyter_backend
 
 
 Shared Base Classes
@@ -185,9 +297,9 @@ documented once, here, and linked from every class that inherits it.
 .. autosummary::
    :toctree: _autosummary
 
-   plotting.axes_assembly._XYZAssembly
    plotting.mapper._BaseDataSetMapper
    plotting.mapper._BaseMapper
    plotting.mapper._BaseVolumeMapper
-   plotting.prop3d._Prop3DMixin
    core.utilities.misc._NameMixin
+   plotting.prop3d._Prop3DMixin
+   plotting.axes_assembly._XYZAssembly

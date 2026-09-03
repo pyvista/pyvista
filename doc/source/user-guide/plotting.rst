@@ -1,7 +1,7 @@
 .. _plotting:
 
-Plotting
---------
+Interactive Plotting
+====================
 
 When plotting with the interactive rendering windows in VTK, several keyboard
 shortcuts are available:
@@ -42,7 +42,7 @@ shortcuts are available:
 
 
 Plotting in a Jupyter Notebook
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------
 Static and interactive inline plots are possible using a Jupyter
 notebook. The code snippet below will create a static screenshot of
 the rendering and display it in the Jupyter notebook:
@@ -78,21 +78,12 @@ interactive documentation online.
 For more details, see the section on :ref:`jupyter_plotting`.
 
 The backend is selected with :func:`pyvista.set_jupyter_backend`, and
-third-party packages can register additional backends.
-
-.. currentmodule:: pyvista
-
-.. autosummary::
-   :toctree: _autosummary
-
-   set_jupyter_backend
-   register_jupyter_backend
-   registered_jupyter_backends
-   JupyterBackendRegistration
+third-party packages can register additional backends; see
+:ref:`plotting-api-index`.
 
 
 Background Plotting
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 PyVista provides a plotter that enables users to create a rendering
 window in the background that remains interactive while the user
@@ -117,7 +108,7 @@ manipulation or export tasks. To get started, try instantiating the
 
 
 Plot Time Series Data
-~~~~~~~~~~~~~~~~~~~~~
+---------------------
 
 This example outlines how to plot data where the spatial reference and data
 values change through time:
@@ -161,4 +152,4 @@ values change through time:
     thread = Thread(target=shrink)
     thread.start()
 
-.. figure:: ../../images/gifs/shrink-globe.gif
+.. figure:: ../images/gifs/shrink-globe.gif

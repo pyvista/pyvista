@@ -20,7 +20,7 @@ Highlights of the API include:
 * Filtering/plotting tools built for interactivity (see :ref:`widgets`)
 * Direct access to common VTK filters (see :ref:`filters`)
 * Intuitive plotting routines with `matplotlib`_ similar syntax (see
-  :ref:`plotting`)
+  :ref:`plotting-api-index`)
 
 
 .. card:: Core API
