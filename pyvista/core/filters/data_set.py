@@ -34,8 +34,10 @@ from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_object import DataObjectFilters
 from pyvista.core.filters.data_object import _cast_output_to_match_input_type
 from pyvista.core.utilities.arrays import FieldAssociation
+from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
+from pyvista.core.utilities.arrays import get_vtk_type
 from pyvista.core.utilities.arrays import set_default_active_scalars
 from pyvista.core.utilities.arrays import set_default_active_vectors
 from pyvista.core.utilities.cells import numpy_to_idarr
@@ -8041,15 +8043,7 @@ class DataSetFilters(DataObjectFilters):
             reference_volume.spacing = final_spacing
             reference_volume.origin = np.array(surface.bounds[::2]) + final_spacing / 2
 
-        # Init output structure. The image stencil filters do not support
-        # orientation, so we do not set the direction matrix
-        binary_mask = pv.ImageData()
-        binary_mask.extent = reference_volume.extent
-        binary_mask.spacing = reference_volume.spacing
-        binary_mask.origin = reference_volume.origin
-
-        # Init output scalars. Use uint8 dtype if possible.
-        scalars_shape = (binary_mask.n_points,)
+        # Use uint8 dtype if possible
         scalars_dtype: type[np.uint8 | float | int]
         if all(
             isinstance(val, (int, np.integer)) and val < 256 and val >= 0
@@ -8060,34 +8054,26 @@ class DataSetFilters(DataObjectFilters):
             scalars_dtype = np.int_
         else:
             scalars_dtype = np.float64
-        scalars = (  # Init with background value
-            np.zeros(scalars_shape, dtype=scalars_dtype)
-            if background_value == 0
-            else np.ones(scalars_shape, dtype=scalars_dtype) * background_value
+
+        mask = _stencil_binary_mask(
+            poly_ijk,
+            extent=reference_volume.extent,
+            spacing=reference_volume.spacing,
+            origin=reference_volume.origin,
+            dtype=scalars_dtype,
+            foreground_value=foreground_value,
+            background_value=background_value,
+            progress_bar=progress_bar,
         )
-        binary_mask['mask'] = scalars  # type: ignore[type-var, unused-ignore]
-
-        # Convert polydata to stencil
-        poly_to_stencil = _vtk.vtkPolyDataToImageStencil()
-        poly_to_stencil.SetInputData(poly_ijk)
-        poly_to_stencil.SetOutputSpacing(*reference_volume.spacing)
-        poly_to_stencil.SetOutputOrigin(*reference_volume.origin)  # type: ignore[call-overload]
-        poly_to_stencil.SetOutputWholeExtent(*reference_volume.extent)
-        _update_alg(poly_to_stencil, progress_bar=progress_bar, message='Converting polydata')
-
-        # Convert stencil to image
-        stencil = _vtk.vtkImageStencil()
-        stencil.SetInputData(binary_mask)
-        stencil.SetStencilConnection(poly_to_stencil.GetOutputPort())
-        stencil.ReverseStencilOn()
-        stencil.SetBackgroundValue(foreground_value)
-        _update_alg(stencil, progress_bar=progress_bar, message='Generating binary mask')
-        output_volume = _get_output(stencil)
-
-        # Set the orientation of the output
-        output_volume.direction_matrix = reference_volume.direction_matrix
-
-        return output_volume
+        # The image stencil filters do not support orientation, so the direction
+        # matrix is only set on the output
+        binary_mask = pv.ImageData()
+        binary_mask.extent = reference_volume.extent
+        binary_mask.spacing = reference_volume.spacing
+        binary_mask.origin = reference_volume.origin
+        binary_mask['mask'] = mask
+        binary_mask.direction_matrix = reference_volume.direction_matrix
+        return binary_mask
 
     def _voxelize_binary_mask_cells(  # type: ignore[misc]
         self: DataSet,
@@ -8468,6 +8454,54 @@ def _length_distribution_percentile(poly, percentile, cell_length_sample_size, *
         distribution, progress_bar=progress_bar, message='Computing cell length distribution'
     )
     return distribution.GetLengthQuantile(percentile)
+
+
+_STENCIL_SLAB_SLICES = 8
+
+
+def _stencil_binary_mask(
+    surface: PolyData,
+    *,
+    extent: VectorLike[int],
+    spacing: VectorLike[float],
+    origin: VectorLike[float],
+    dtype: type,
+    foreground_value: float,
+    background_value: float,
+    progress_bar: bool,
+) -> NumpyArray[Any]:
+    """Rasterize a triangle surface into a flat binary mask, one slab of z-slices at a time."""
+    faces = surface.regular_faces
+    z = surface.points[:, 2][faces]
+    z_min, z_max = z.min(axis=1), z.max(axis=1)
+    extent_ = np.asarray(extent)
+    dimensions = extent_[1::2] - extent_[::2] + 1
+    mask = np.full(dimensions[::-1], background_value, dtype=dtype)
+    vtk_type = get_vtk_type(dtype)
+    for k_min in range(extent_[4], extent_[5] + 1, _STENCIL_SLAB_SLICES):
+        k_max = min(k_min + _STENCIL_SLAB_SLICES - 1, extent_[5])
+        z_slab = sorted((origin[2] + k_min * spacing[2], origin[2] + k_max * spacing[2]))
+        # Only the cells crossing the slab's slices can contribute to it
+        crossing = (z_min <= z_slab[1]) & (z_max >= z_slab[0])
+        if not crossing.any():
+            continue
+        slab_surface = pv.PolyData.from_regular_faces(surface.points, faces[crossing])
+        poly_to_stencil = _vtk.vtkPolyDataToImageStencil()
+        poly_to_stencil.SetInputData(slab_surface)
+        poly_to_stencil.SetOutputSpacing(*spacing)
+        poly_to_stencil.SetOutputOrigin(*origin)
+        poly_to_stencil.SetOutputWholeExtent(*extent_[:4].tolist(), k_min, k_max)
+        stencil_to_image = _vtk.vtkImageStencilToImage()
+        stencil_to_image.SetInputConnection(poly_to_stencil.GetOutputPort())
+        stencil_to_image.SetInsideValue(foreground_value)
+        stencil_to_image.SetOutsideValue(background_value)
+        stencil_to_image.SetOutputScalarType(vtk_type)
+        _update_alg(stencil_to_image, progress_bar=progress_bar, message='Generating binary mask')
+        slab = convert_array(stencil_to_image.GetOutput().GetPointData().GetScalars())
+        mask[k_min - extent_[4] : k_max - extent_[4] + 1] = slab.reshape(
+            k_max - k_min + 1, dimensions[1], dimensions[0]
+        )
+    return mask.ravel()
 
 
 def _set_threshold_limit(alg, *, value, method, invert):

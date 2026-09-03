@@ -641,7 +641,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkImageSinusoidSource',
     ),
     'vtkImagingStencil': (
-        'vtkImageStencil',
+        'vtkImageStencilToImage',
         'vtkPolyDataToImageStencil',
     ),
     'vtkParallelCore': ('vtkDummyController',),

@@ -4720,6 +4720,29 @@ def test_voxelize_binary_mask_numpy_values(sphere):
     assert np.array_equal(np.unique(mask['mask']), [0, 2])
 
 
+@pytest.mark.parametrize('slab_slices', [1, 3, 1000])
+def test_voxelize_binary_mask_slabs(ant, monkeypatch, slab_slices):
+    from pyvista.core.filters import data_set
+
+    expected = ant.voxelize_binary_mask(dimensions=(20, 21, 22))
+    monkeypatch.setattr(data_set, '_STENCIL_SLAB_SLICES', slab_slices)
+    mask = ant.voxelize_binary_mask(dimensions=(20, 21, 22))
+    assert np.array_equal(mask['mask'], expected['mask'])
+
+
+def test_voxelize_binary_mask_sphere_values():
+    sphere = pv.Sphere(radius=1.0, theta_resolution=200, phi_resolution=200)
+    mask = sphere.voxelize_binary_mask(dimensions=(41, 43, 45))
+    inside = mask['mask'].astype(bool)
+    distance = np.linalg.norm(mask.points, axis=1)
+    margin = max(mask.spacing)
+    # Points well inside the sphere are foreground and points well outside are background
+    assert np.all(inside[distance < 1 - margin])
+    assert not np.any(inside[distance > 1 + margin])
+    volume = inside.sum() * np.prod(mask.spacing)
+    assert np.isclose(volume, 4 / 3 * np.pi, rtol=0.05)
+
+
 def test_voxelize_rectilinear(ant):
     vox = ant.voxelize_rectilinear()
     assert isinstance(vox, pv.RectilinearGrid)
