@@ -7210,6 +7210,18 @@ def test_hide_cells_no_scalars(verify_image_cache):
     grid.plot(color='w', show_edges=True, show_grid=True)
 
 
+def test_hide_points():
+    grid = examples.load_structured()
+    grid.hide_points(range(80 * 30, 80 * 50))
+    # A hidden point alone must not leave its cells visible.
+    assert grid.HasAnyBlankCells()
+
+    pl = pv.Plotter()
+    pl.add_mesh(grid, color=True, show_edges=True)
+    pl.camera_position = 'iso'
+    pl.show()
+
+
 def test_connectivity_cmap():
     # Test case described in https://github.com/pyvista/pyvista/issues/8252
     large = pv.Sphere(center=(-4, 0, 0), phi_resolution=40, theta_resolution=40)

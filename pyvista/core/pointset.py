@@ -4138,6 +4138,16 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         # add but do not make active
         self.point_data.set_array(ghost_points, _vtk.vtkDataSetAttributes.GhostArrayName())  # type: ignore[arg-type]
 
+        # A hidden point by itself does not stop VTK's mapper from drawing the cells
+        # that use it, unlike a hidden cell, so also hide those cells directly.
+        hidden_point_ids = np.flatnonzero(ghost_points)
+        if hidden_point_ids.size:
+            ghost_cells = np.zeros(self.n_cells, np.uint8)
+            hidden_cell = _vtk.vtkDataSetAttributes.HIDDENCELL
+            for point_id in hidden_point_ids:
+                ghost_cells[self.point_cell_ids(int(point_id))] = hidden_cell
+            self.cell_data.set_array(ghost_cells, _vtk.vtkDataSetAttributes.GhostArrayName())  # type: ignore[arg-type]
+
     def cast_to_explicit_structured_grid(self) -> ExplicitStructuredGrid:
         """Cast to an explicit structured grid.
 
