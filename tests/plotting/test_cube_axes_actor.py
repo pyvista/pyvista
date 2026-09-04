@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import math
+
 import numpy as np
 import pytest
 
@@ -294,6 +296,8 @@ def test_axes_ranges_init_raises(camera):
 
 
 ARC = (-1.0, 1.0399938821792603)  # the circular arc gallery scene, tube radius included
+# a span a hair under a whole number of intervals, where VTK's own epsilon counts one more
+GAP = (0.0, 0.99999999999999989)
 
 
 @pytest.mark.parametrize(
@@ -309,16 +313,64 @@ ARC = (-1.0, 1.0399938821792603)  # the circular arc gallery scene, tube radius 
         ((-10.0, 10.0), 9, [-10.0, -5.0, 0.0, 5.0, 10.0]),
         ((-10.0, 10.0), 3, [-10.0, 0.0, 10.0]),
         ((-0.5, 0.5), 5, [-0.5, -0.25, 0.0, 0.25, 0.5]),
+        # a count between the two spacings is used by neither, so it drops to VTK's ticks
+        (GAP, 10, [0.0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1.0]),
+        # a range given the other way round counts down
+        ((10.0, 0.0), 5, [10.0, 7.5, 5.0, 2.5, 0.0]),
+        ((11.64, -11.64), 5, [11.64, 3.88, -3.88, -11.64]),
+        # counting down onto VTK's own ticks
+        ((10.0, 0.0), 6, [10.0, 8.0, 6.0, 4.0, 2.0, 0.0]),
+        # a range that divides exactly, but not from a bound VTK's ticks start on
+        ((0.3, 20.3), 5, [0.3, 5.3, 10.3, 15.3, 20.3]),
     ],
 )
 def test_axis_label_values(bounds, n, expected):
     assert np.allclose(_axis_label_values(*bounds, n), expected)
 
 
+@pytest.mark.parametrize(
+    ('bounds', 'divisor'),
+    [
+        ((0.0, 1.5), 5.0),  # span / decade in [1, 2), VTK drops two decades
+        ((0.0, 2.5), 2.0),  # in [2, 4), one decade
+        ((0.0, 4.5), 1.0),  # in [4, 5), the rung the ladder changes on
+        ((0.0, 7.5), 1.0),  # in [5, 10), the decade itself
+    ],
+)
+def test_axis_label_values_tick_decade(bounds, divisor):
+    """Each rung of VTK's spacing ladder puts its labels on multiples of the spacing."""
+    values = _axis_label_values(*bounds, 20)
+    step = 10.0 ** math.floor(math.log10(bounds[1] - bounds[0])) / divisor
+    assert values[0] == bounds[0]
+    assert np.allclose(np.diff(values), step)
+
+
+@pytest.mark.parametrize('n', [0, 1])
+def test_axis_label_values_no_room(n):
+    assert len(_axis_label_values(-1.0, 1.0, n)) == n
+
+
 @pytest.mark.parametrize('bounds', [(0.0, 0.0), (-np.inf, np.inf), (0.0, 5e-324)])
 def test_axis_label_values_degenerate(bounds):
     with np.errstate(invalid='ignore'):
         assert len(_axis_label_values(*bounds, 5)) == 5
+
+
+@pytest.mark.parametrize('bounds', [(-0.5, 0.5), (0.0, 0.4), (0.0, 400.0)])
+def test_axis_label_values_span_decades(bounds):
+    """A span of exactly one, below one, and well above one all stay on their ticks."""
+    values = _axis_label_values(*bounds, 5)
+    assert values[0] == bounds[0]
+    assert np.allclose(np.diff(values), np.diff(values)[0])
+
+
+def test_axis_label_values_reversed_axes_ranges():
+    """A descending ``axes_ranges`` reaches the labels the same way round."""
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    actor = pl.show_bounds(axes_ranges=[10, 0, 0, 10, 0, 10], fmt='')
+    assert np.allclose(np.array(actor.x_labels, dtype=float), [10.0, 7.5, 5.0, 2.5, 0.0])
+    assert np.allclose(np.array(actor.y_labels, dtype=float), [0.0, 2.5, 5.0, 7.5, 10.0])
 
 
 def test_labels_evenly_spaced():

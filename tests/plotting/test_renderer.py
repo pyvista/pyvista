@@ -149,6 +149,52 @@ def test_show_bounds_keeps_use_2d():
     assert actor.use_2d_mode
 
 
+def test_show_bounds_scaled_drops_3d_text():
+    """3D text is not placed correctly on a scaled renderer, whichever order it is set in."""
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    actor = pl.show_bounds(use_3d_text=True)
+    assert actor.GetUseTextActor3D()
+    pl.set_scale(zscale=2)
+    assert not actor.GetUseTextActor3D()
+
+
+def test_show_bounds_scaled_keeps_text_changes():
+    """Dropping 3D text happens once, not on every actor added afterwards."""
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    actor = pl.show_bounds()
+    pl.set_scale(zscale=2)
+    actor.GetLabelTextProperty(0).SetFontSize(37)
+    pl.add_mesh(pv.Cube())
+    assert actor.GetLabelTextProperty(0).GetFontSize() == 37
+
+
+def test_show_bounds_actor_assigned_directly_follows_scene():
+    """An actor put on the renderer by hand still tracks the scene."""
+    cube = pv.Cube()
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    pl.renderer.cube_axes_actor = pv.CubeAxesActor(pl.camera, bounds=(0, 1, 0, 1, 0, 1))
+    pl.add_mesh(cube)
+    assert pl.renderer.cube_axes_actor.bounds == cube.bounds
+
+
+def test_update_bounds_reapplies_padding_and_ranges():
+    """The actor keeps what it was built with when its bounds are updated."""
+    ranges = (0.0, 100.0)
+    actor = pv.CubeAxesActor(
+        pv.Plotter().camera,
+        bounds=(0, 1, 0, 1, 0, 1),
+        padding=0.1,
+        axes_ranges=[*ranges, *ranges, *ranges],
+    )
+    actor.update_bounds((-1, 1, -1, 1, -1, 1))
+    assert actor.bounds == pytest.approx((-1.2, 1.2, -1.2, 1.2, -1.2, 1.2))
+    assert actor.x_axis_range == ranges
+    assert actor.z_axis_range == ranges
+
+
 def test_show_bounds_with_scaling(sphere):
     pl = pv.Plotter()
     pl.add_mesh(sphere)

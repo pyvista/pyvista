@@ -932,9 +932,27 @@ def test_plot_show_grid_label_positions():
     pl = pv.Plotter()
     pl.enable_parallel_projection()
     pl.add_mesh(mesh, color='lightgray', show_edges=True)
-    pl.show_grid(xtitle='X', ytitle='Y', ztitle='Z')
+    pl.show_grid(xtitle='X', ytitle='Y', ztitle='Z', font_size=34)
     pl.view_xy()
     pl.camera.zoom(1.6)
+    pl.show()
+
+
+def test_plot_show_bounds_round_ticks():
+    """Where VTK's own ticks are the round ones, the labels belong on those.
+
+    The second plot of the circular arc gallery example. The tube radius pushes the
+    bounds a little past the circle, so the range no longer divides into five, and an
+    even split would read -1.0, -0.3, 0.4, 1.0 with no line through the origin.
+    """
+    arc = pv.CircularArcFromNormal(
+        center=(0, 0, 0), polar=(1, 0, 0), normal=(0, 0, 1), angle=120, resolution=60
+    )
+    pl = pv.Plotter()
+    pl.add_mesh(arc.tube(radius=0.04), color='seagreen')
+    pl.add_mesh(pv.Circle(radius=1.0).extract_feature_edges(), color='gray', line_width=2)
+    pl.show_grid(font_size=20)
+    pl.view_xy()
     pl.show()
 
 
