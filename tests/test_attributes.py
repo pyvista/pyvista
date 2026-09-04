@@ -188,7 +188,7 @@ def try_init_pyvista_object(class_):
     except TypeError as e:
         if 'abstract' in repr(e):
             pytest.skip('Class is abstract.')
-        raise
+        raise  # pragma: no cover -- failure path
     return instance
 
 
@@ -332,7 +332,7 @@ def test_vtk_snake_case_api_is_disabled(vtk_subclass):
                 f'the PyVista API'
             )
             assert match in repr(e)  # noqa: PT017
-        else:
+        else:  # pragma: no cover -- failure path
             if DisableVtkSnakeCase not in vtk_subclass.__mro__:
                 msg = (
                     f'The class {vtk_subclass.__name__!r} in {vtk_subclass.__module__!r}\n'
@@ -485,7 +485,7 @@ def test_pyvista_class_no_new_attributes(pyvista_class):
     except AttributeError as e:
         if 'dict' in repr(e):
             pytest.skip('Skip dict classes')
-    else:
+    else:  # pragma: no cover -- failure path
         if not issubclass(pyvista_class, _NoNewAttrMixin):
             msg = (
                 f'The class {pyvista_class.__name__!r} in {pyvista_class.__module__!r}'

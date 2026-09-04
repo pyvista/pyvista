@@ -109,12 +109,13 @@ scenario:
    pv.Text3D('world').plot(text='Plot 9 world')
 
 
-**Plot 10** Uses the skip directive and should not generate a plot:
+**Plot 10** Skips its plot statement with a doctest skip and should not
+generate a plot; the unskipped import still runs:
 
 .. pyvista-plot::
 
-   import pyvista as pv
-   pv.ParametricEnneper().plot(text='Plot 10')  # doctest:+SKIP
+   >>> import pyvista as pv
+   >>> pv.ParametricEnneper().plot(text='Plot 10')  # doctest:+SKIP
 
 
 **Plot 11** Uses ``:include-source: False``:

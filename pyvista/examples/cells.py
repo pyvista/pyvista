@@ -16,13 +16,13 @@ from typing import cast
 from typing import get_args
 
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import CellType
 from pyvista import UnstructuredGrid
 from pyvista import _vtk
 from pyvista._warn_external import warn_external
-from pyvista.core import _validation
 
 if TYPE_CHECKING:
     from pyvista import DataSet
@@ -2935,12 +2935,12 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
      <CellType.BEZIER_TETRAHEDRON: 78>, <CellType.BEZIER_HEXAHEDRON: 79>,
      <CellType.BEZIER_WEDGE: 80>}
 
-    Compare the first 25 cell types from the different generators. Note that some values, e.g.
-    ``17``, do not correspond to any cell type, so gaps are expected in all outputs.
+    Compare the first 16 cell types from the different generators. Gaps are expected in the
+    output wherever a generator does not support a cell type.
 
     >>> kwargs = dict(
-    ...     cell_types=range(1, 26),
-    ...     block_dimensions=(5, 5, 1),
+    ...     cell_types=range(1, 17),
+    ...     block_dimensions=(4, 4, 1),
     ...     unsupported_action='skip',
     ... )
     >>> cell_blocks = generate_cell_blocks(generator='examples', **kwargs)

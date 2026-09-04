@@ -116,7 +116,7 @@ class _StateManager(AbstractContextManager[None], ABC, Generic[T]):
 
     @final
     def _validate_state(self, state: T) -> T:
-        from pyvista import _validation  # noqa: PLC0415
+        import pyvista_validation as _validation  # noqa: PLC0415
 
         _validation.check_contains(self._valid_states, must_contain=state, name='state')
         return state
@@ -159,7 +159,7 @@ _VerbosityOptions = Literal[
 ]
 
 
-class _VTKVerbosity(_StateManager[_VerbosityOptions]):
+class _VTKVerbosity(_StateManager[_VerbosityOptions]):  # numpydoc ignore=PR02
     """Context manager to set VTK verbosity level.
 
     .. versionadded:: 0.45
@@ -317,7 +317,7 @@ vtk_snake_case = _vtkSnakeCase()
 _AllowNewAttributesOptions = Literal['private', True, False]
 
 
-class _AllowNewAttributes(_StateManager[_AllowNewAttributesOptions]):
+class _AllowNewAttributes(_StateManager[_AllowNewAttributesOptions]):  # numpydoc ignore=PR02
     """Context manager to control setting new attributes on PyVista classes.
 
     Python allows arbitrarily setting new attributes on objects at any time,

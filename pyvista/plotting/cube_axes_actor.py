@@ -6,22 +6,38 @@ from typing import TYPE_CHECKING
 from typing import cast
 
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.arrays import convert_string_array
 from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.core.utilities.misc import _NameMixin
 from pyvista.core.utilities.misc import _NoNewAttrMixin
+from pyvista.plotting.colors import Color
+from pyvista.plotting.tools import parse_font_family
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from pyvista.core._typing_core import VectorLike
+    from pyvista.plotting._typing import ColorLike
+
+
+def _pad_bounds(bounds: VectorLike[float], *, padding: float) -> np.ndarray:
+    """Cushion bounds by a percentage of their size along each axial direction."""
+    if not (isinstance(padding, (int, float)) and 0.0 <= padding < 1.0):  # type: ignore[redundant-expr]
+        msg = f'padding ({padding}) not understood. Must be float between 0 and 1'
+        raise ValueError(msg)
+    padded = np.asanyarray(bounds, dtype=float).copy()
+    if not np.any(np.abs(padded) == np.inf):
+        cushion = np.abs(padded[1::2] - padded[::2]) * padding
+        padded[::2] -= cushion
+        padded[1::2] += cushion
+    return padded
 
 
 @_deprecate_positional_args
@@ -62,6 +78,13 @@ class CubeAxesActor(
     This class is created to wrap :vtk:`vtkCubeAxesActor`, which is used to draw axes
     and labels for the input data bounds. This wrapping aims to provide a
     user-friendly interface to use :vtk:`vtkCubeAxesActor`.
+
+    .. versionchanged:: 0.49
+
+        The bounds, colors, fonts, grid lines, and axis placement are now set by the
+        constructor, using the same defaults as :meth:`~pyvista.Plotter.show_bounds`.
+        Previously these were only applied to actors created by that method, and an
+        actor created directly used VTK's defaults instead.
 
     Parameters
     ----------
@@ -126,6 +149,80 @@ class CubeAxesActor(
     n_zlabels : int, default: 5
         Number of labels along the z-axis.
 
+    color : ColorLike, optional
+        Color of all labels, axis titles, axis lines, and grid lines. Defaults to
+        :attr:`pyvista.global_theme.font.color
+        <pyvista.plotting.themes._Font.color>`.
+
+        .. versionadded:: 0.49
+
+    grid : bool | str, optional
+        Add grid lines to the backface (``True``, ``'back'``, or ``'backface'``) or to
+        the frontface (``'front'``, ``'frontface'``) of the axes actor.
+
+        .. versionadded:: 0.49
+
+    location : str, default: "closest"
+        Set how the axes are drawn: either static (``'all'``), closest triad
+        (``'front'``, ``'closest'``, ``'default'``), furthest triad (``'back'``,
+        ``'furthest'``), static closest to the origin (``'origin'``), or outer edges
+        (``'outer'``) in relation to the camera position.
+
+        .. versionadded:: 0.49
+
+    font_size : float, optional
+        Size of the label font. Defaults to :attr:`pyvista.global_theme.font.size
+        <pyvista.plotting.themes._Font.size>`.
+
+        .. versionadded:: 0.49
+
+    font_family : str, optional
+        Font family. Must be either ``'courier'``, ``'times'``, or ``'arial'``.
+        Defaults to :attr:`pyvista.global_theme.font.family
+        <pyvista.plotting.themes._Font.family>`.
+
+        .. versionadded:: 0.49
+
+    bold : bool, default: True
+        Bold the axis labels and titles.
+
+        .. versionadded:: 0.49
+
+    use_3d_text : bool, optional
+        Use :vtk:`vtkTextActor3D` for titles and labels. Defaults to ``False`` for
+        VTK 9.6 and later, and ``True`` for older versions of VTK.
+
+        .. warning::
+            Setting ``use_3d_text=True`` is not recommended with VTK 9.6.0 or later since
+            the 3D labels may not render at all in some cases. This is a known VTK bug:
+            https://gitlab.kitware.com/vtk/vtk/-/issues/19729.
+
+        .. versionadded:: 0.49
+
+    use_2d_mode : bool, default: False
+        Use the 2D render mode. This can be enabled for smoother plotting.
+
+        .. versionadded:: 0.49
+
+    bounds : sequence[float], optional
+        Bounds of the axes in the form ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
+        Defaults to the unit cube.
+
+        .. versionadded:: 0.49
+
+    axes_ranges : sequence[float], optional
+        Values shown on the axes in the form
+        ``(x_min, x_max, y_min, y_max, z_min, z_max)``. These override the values
+        derived from ``bounds``.
+
+        .. versionadded:: 0.49
+
+    padding : float, default: 0.0
+        Percent padding applied to ``bounds`` along each axial direction to cushion
+        the datasets in the scene from the axes annotations.
+
+        .. versionadded:: 0.49
+
     See Also
     --------
     :meth:`~pyvista.Plotter.show_bounds`
@@ -167,6 +264,17 @@ class CubeAxesActor(
         n_xlabels=5,
         n_ylabels=5,
         n_zlabels=5,
+        color: ColorLike | None = None,
+        grid: bool | str | None = None,  # noqa: FBT001
+        location: str | None = 'closest',
+        font_size: float | None = None,
+        font_family: str | None = None,
+        bold: bool = True,  # noqa: FBT001, FBT002
+        use_3d_text: bool | None = None,  # noqa: FBT001
+        use_2d_mode: bool = False,  # noqa: FBT001, FBT002
+        bounds: VectorLike[float] | None = None,
+        axes_ranges: VectorLike[float] | None = None,
+        padding: float = 0.0,
     ):
         """Initialize CubeAxesActor."""
         super().__init__()
@@ -221,6 +329,137 @@ class CubeAxesActor(
         self.x_axis_visibility = x_axis_visibility
         self.y_axis_visibility = y_axis_visibility
         self.z_axis_visibility = z_axis_visibility
+
+        # 2D mode and the label arrays rebuild the text actors, so text properties come last
+        self.use_2d_mode = use_2d_mode
+
+        color_ = Color(color, default_color=pv.global_theme.font.color)
+        self._configure_grid_lines(
+            grid=grid,
+            color=color_,
+            visibility=(x_axis_visibility, y_axis_visibility, z_axis_visibility),
+        )
+        self._configure_fly_mode(location=location)
+
+        if bounds is not None:
+            self.bounds = _pad_bounds(bounds, padding=padding)
+        if axes_ranges is not None:
+            ranges = _validation.validate_array(
+                axes_ranges, must_have_shape=(6,), name='axes_ranges'
+            )
+            self.x_axis_range = ranges[0], ranges[1]
+            self.y_axis_range = ranges[2], ranges[3]
+            self.z_axis_range = ranges[4], ranges[5]
+
+        self.GetXAxesLinesProperty().SetColor(color_.float_rgb)
+        self.GetYAxesLinesProperty().SetColor(color_.float_rgb)
+        self.GetZAxesLinesProperty().SetColor(color_.float_rgb)
+
+        self._configure_text(
+            color=color_,
+            font_size=font_size,
+            font_family=font_family,
+            bold=bold,
+            use_3d_text=use_3d_text,
+        )
+
+    def _configure_grid_lines(
+        self, *, grid: bool | str | None, color: Color, visibility: tuple[bool, bool, bool]
+    ) -> None:
+        """Set the grid line location, visibility, and color."""
+        if not grid:
+            return
+        grid = 'back' if grid is True else grid
+        if not isinstance(grid, str):
+            msg = f'`grid` must be a str, not {type(grid)}'  # type: ignore[unreachable]
+            raise TypeError(msg)
+        grid = grid.lower()
+        if grid in ('front', 'frontface'):
+            self.SetGridLineLocation(self.VTK_GRID_LINES_CLOSEST)
+        elif grid in ('both', 'all'):
+            self.SetGridLineLocation(self.VTK_GRID_LINES_ALL)
+        elif grid in ('back', 'backface'):
+            self.SetGridLineLocation(self.VTK_GRID_LINES_FURTHEST)
+        else:
+            msg = f'`grid` must be either "front", "back, or, "all", not {grid}'
+            raise ValueError(msg)
+
+        self.SetDrawXGridlines(visibility[0])
+        self.SetDrawYGridlines(visibility[1])
+        self.SetDrawZGridlines(visibility[2])
+        self.GetXAxesGridlinesProperty().SetColor(color.float_rgb)
+        self.GetYAxesGridlinesProperty().SetColor(color.float_rgb)
+        self.GetZAxesGridlinesProperty().SetColor(color.float_rgb)
+
+    def _configure_text(
+        self,
+        *,
+        color: Color,
+        font_size: float | None,
+        font_family: str | None,
+        bold: bool,
+        use_3d_text: bool | None,
+    ) -> None:
+        """Set the color, font, and rendering mode of the titles and labels."""
+        vtk_less_than_96 = pv.vtk_version_info < (9, 6, 0)
+        if use_3d_text is None:
+            # 3D text does not render at all with VTK 9.6
+            # https://gitlab.kitware.com/vtk/vtk/-/issues/19729
+            use_3d_text = vtk_less_than_96
+        if font_size is None:
+            font_size = pv.global_theme.font.size
+        if font_family is None:
+            font_family = pv.global_theme.font.family
+
+        self.SetUseTextActor3D(use_3d_text)
+
+        # For 3D text, use `SetFontSize` to a relatively high value and use `SetScreenSize` to
+        # shrink it back down. This creates a higher-resolution font and makes it appear sharper.
+        # In VTK 9.6+, the 3D font size is also tied to the value set by SetFontSize, so we need
+        # an additional scaling factor.
+        default_screen_size = 10.0
+        default_font_size = 12
+        scaled_font_size = 50
+
+        for axis in range(3):
+            for prop in (self.GetTitleTextProperty(axis), self.GetLabelTextProperty(axis)):
+                prop.SetColor(color.float_rgb)
+                prop.SetFontFamily(parse_font_family(font_family))
+                prop.SetBold(bold)
+                prop.SetFontSize(scaled_font_size if use_3d_text else font_size)
+
+        if use_3d_text:
+            font_size_factor = 1.0 if vtk_less_than_96 else scaled_font_size / default_font_size
+            self.SetScreenSize(
+                font_size / default_font_size / font_size_factor * default_screen_size
+            )
+        elif vtk_less_than_96:
+            self.SetScreenSize(font_size / default_font_size * default_screen_size)
+
+    def _configure_fly_mode(self, *, location: str | None) -> None:
+        """Set how the axes are drawn in relation to the camera position."""
+        if location is None:
+            return
+        if not isinstance(location, str):
+            msg = 'location must be a string'  # type: ignore[unreachable]
+            raise TypeError(msg)
+        location = location.lower()
+        if location == 'all':
+            self.SetFlyModeToStaticEdges()
+        elif location == 'origin':
+            self.SetFlyModeToStaticTriad()
+        elif location == 'outer':
+            self.SetFlyModeToOuterEdges()
+        elif location in ('default', 'closest', 'front'):
+            self.SetFlyModeToClosestTriad()
+        elif location in ('furthest', 'back'):
+            self.SetFlyModeToFurthestTriad()
+        else:
+            msg = (
+                f'Value of location ("{location}") should be either "all", "origin",'
+                ' "outer", "default", "closest", "front", "furthest", or "back".'
+            )
+            raise ValueError(msg)
 
     @property
     def tick_location(self) -> str:  # numpydoc ignore=RT01

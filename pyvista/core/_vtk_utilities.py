@@ -56,6 +56,8 @@ def _get_vtk_version():
 
 
 class VTKVersionInfo(VersionInfo):
+    """Version info which rejects comparisons against unsupported VTK versions."""
+
     def _check_min_supported(self, other: tuple[int, int, int]) -> None:
         if isinstance(other, tuple) and other < _MIN_SUPPORTED_VTK_VERSION:  # type: ignore[redundant-expr]
             msg = (
@@ -177,7 +179,17 @@ class DisableVtkSnakeCase:
 
     @staticmethod
     def check_attribute(target, attr):
-        """Raise or warn if ``attr`` is a VTK-defined ``snake_case`` name on ``target``."""
+        """Raise or warn if ``attr`` is a VTK-defined ``snake_case`` name on ``target``.
+
+        Parameters
+        ----------
+        target : object
+            Object the attribute is accessed on.
+
+        attr : str
+            Name of the accessed attribute.
+
+        """
         safe_by_class = _SAFE_ATTRS_BY_CLASS
         if safe_by_class is None:  # pragma: no cover  # Python is shutting down
             return  # type: ignore[unreachable]

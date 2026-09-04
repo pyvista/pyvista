@@ -590,8 +590,18 @@ def test_report_downloads():
     report = pv.Report(downloads=True)
     repr_ = repr(report)
     assert f'User Data Path : {pv.examples.downloads.USER_DATA_PATH}' in repr_
-    assert f'VTK Data Source : {pv.examples.downloads.SOURCE}' in repr_
+    assert f'Data Source : {pv.examples.downloads.SOURCE}' in repr_
+    assert 'VTK Data Source' not in repr_
     assert f'File Cache : {pv.examples.downloads._FILE_CACHE}' in repr_
+
+
+def test_report_env_vars(monkeypatch):
+    monkeypatch.setenv('PYVISTA_FOO', 'bar')
+    monkeypatch.setenv('NOTPYVISTA_VAR', 'baz')
+    assert 'PYVISTA_FOO' not in repr(pv.Report(gpu=False))
+    repr_ = repr(pv.Report(gpu=False, env_vars=True))
+    assert 'PYVISTA_FOO : bar' in repr_
+    assert 'NOTPYVISTA_VAR' not in repr_
 
 
 def test_line_segments_from_points():
@@ -1630,7 +1640,8 @@ def test_no_new_attr_mixin_side_effects():
         @foo.setter
         def foo(self, val): ...
 
-    class Child(Parent): ...
+    class Child(Parent):
+        pass
 
     # Test that setting attributes on lasses does not trigger a call to the getter
     obj = Parent()
@@ -2983,7 +2994,8 @@ def _create_state_manager_subclass(arg1, arg2=None, sub_subclass=False):
 
     if sub_subclass:
 
-        class MyState2(MyState): ...
+        class MyState2(MyState):
+            pass
 
         return MyState2
     return MyState
@@ -3047,7 +3059,7 @@ def test_cell_quality_info_valid_measures(info):
     # Ensure the computed measure is not null
     null_value = -1
     qual_value = _compute_unit_cell_quality(info, null_value)
-    if np.isclose(qual_value, null_value):
+    if np.isclose(qual_value, null_value):  # pragma: no cover -- failure path
         pytest.fail(
             f'Measure {info.quality_measure!r} is not valid for cell type {info.cell_type.name!r}'
         )

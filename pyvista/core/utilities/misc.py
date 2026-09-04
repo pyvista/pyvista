@@ -224,7 +224,17 @@ def has_module(module_name: str) -> bool:
 
 
 class _SMPToolsContext:
-    """Context manager that restores VTK SMP backend state on exit."""
+    """Context manager that restores VTK SMP backend state on exit.
+
+    Parameters
+    ----------
+    original_backend : str
+        SMP backend to restore on exit.
+
+    original_threads : int
+        Thread count to restore on exit.
+
+    """
 
     def __init__(self, original_backend: str, original_threads: int) -> None:
         self._original_backend = original_backend
@@ -548,6 +558,17 @@ def set_new_attribute(obj: object, name: str, value: Any) -> None:
 
     Use :func:`set_new_attribute` to override this and set a new attribute anyway.
 
+    Parameters
+    ----------
+    obj : object
+        Object to set the attribute on.
+
+    name : str
+        Attribute name.
+
+    value : Any
+        Attribute value.
+
     See Also
     --------
     pyvista.allow_new_attributes
@@ -642,6 +663,11 @@ class _NameMixin:
 
     .. versionadded:: 0.45
 
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
+
     """
 
     @property
@@ -665,6 +691,16 @@ class _NameMixin:
 
 
 class _BoundsSizeMixin:
+    """Add a ``bounds_size`` property to classes which define ``bounds``.
+
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
+
+
+    """
+
     @property
     def bounds_size(self) -> tuple[float, float, float]:
         """Return the size of each axis of the object's bounding box.

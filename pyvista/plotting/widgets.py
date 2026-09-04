@@ -2799,7 +2799,7 @@ class WidgetComponent(_NoNewAttrMixin):
             The method called when a radio button's state changes from off to
             on.
 
-        radio_button_group: str
+        radio_button_group : str
             Name of the group for the radio button.
 
         value : bool, default: False
@@ -2807,7 +2807,7 @@ class WidgetComponent(_NoNewAttrMixin):
             group are initialized with to True state, only the last initialized
             button will remain on.
 
-        title: str, optional
+        title : str, optional
             String title to be displayed next to the radio button.
 
         position : sequence[float], default: (10.0, 10.0)

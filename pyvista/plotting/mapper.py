@@ -41,7 +41,22 @@ if TYPE_CHECKING:
 
 @abstract_class
 class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkAbstractMapper):
-    """Base Mapper with methods common to other mappers."""
+    """Base Mapper with methods common to other mappers.
+
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
+
+    Parameters
+    ----------
+    theme : pyvista.plotting.themes.Theme, optional
+        Plot-specific theme.
+
+    **kwargs : dict, optional
+        Supports ``interpolate_before_map``.
+
+    """
 
     def __init__(self, theme=None, **kwargs) -> None:
         self._theme = pv.themes.Theme()
@@ -281,7 +296,6 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
 
     @array_name.setter
     def array_name(self, name: str) -> None:
-        """Return or set the array name or number and component to color by."""
         self.SetArrayName(name)
 
     @property
@@ -399,6 +413,11 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
 
 class _BaseDataSetMapper(_BaseMapper):
     """Base wrapper for :vtk:`vtkDataSetMapper`.
+
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
 
     Parameters
     ----------
@@ -1402,7 +1421,19 @@ class PointGaussianMapper(_BaseDataSetMapper, _vtk.vtkPointGaussianMapper):
 
 @abstract_class
 class _BaseVolumeMapper(_BaseMapper):
-    """Volume mapper class to override methods and attributes for to volume mappers."""
+    """Volume mapper class to override methods and attributes for to volume mappers.
+
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
+
+    Parameters
+    ----------
+    theme : pyvista.plotting.themes.Theme, optional
+        Plot-specific theme.
+
+    """
 
     def __init__(self, theme=None) -> None:
         """Initialize this class."""
@@ -1416,7 +1447,7 @@ class _BaseVolumeMapper(_BaseMapper):
         return None
 
     @interpolate_before_map.setter
-    def interpolate_before_map(self, *args) -> None:
+    def interpolate_before_map(self, value) -> None:
         pass
 
     @property
@@ -1514,7 +1545,14 @@ class _BaseVolumeMapper(_BaseMapper):
 
 
 class FixedPointVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkFixedPointVolumeRayCastMapper):
-    """Wrap :vtk:`vtkFixedPointVolumeRayCastMapper`."""
+    """Wrap :vtk:`vtkFixedPointVolumeRayCastMapper`.
+
+    Parameters
+    ----------
+    theme : pyvista.plotting.themes.Theme, optional
+        Plot-specific theme.
+
+    """
 
     def __init__(self, theme=None) -> None:
         """Initialize this class."""
@@ -1523,7 +1561,14 @@ class FixedPointVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkFixedPointVolumeR
 
 
 class GPUVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkGPUVolumeRayCastMapper):
-    """Wrap :vtk:`vtkGPUVolumeRayCastMapper`."""
+    """Wrap :vtk:`vtkGPUVolumeRayCastMapper`.
+
+    Parameters
+    ----------
+    theme : pyvista.plotting.themes.Theme, optional
+        Plot-specific theme.
+
+    """
 
     def __init__(self, theme=None) -> None:
         """Initialize this class."""
@@ -1532,7 +1577,14 @@ class GPUVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkGPUVolumeRayCastMapper):
 
 
 class OpenGLGPUVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkOpenGLGPUVolumeRayCastMapper):
-    """Wrap :vtk:`vtkOpenGLGPUVolumeRayCastMapper`."""
+    """Wrap :vtk:`vtkOpenGLGPUVolumeRayCastMapper`.
+
+    Parameters
+    ----------
+    theme : pyvista.plotting.themes.Theme, optional
+        Plot-specific theme.
+
+    """
 
     def __init__(self, theme=None) -> None:
         """Initialize this class."""
@@ -1541,7 +1593,14 @@ class OpenGLGPUVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkOpenGLGPUVolumeRay
 
 
 class SmartVolumeMapper(_BaseVolumeMapper, _vtk.vtkSmartVolumeMapper):
-    """Wrap :vtk:`vtkSmartVolumeMapper`."""
+    """Wrap :vtk:`vtkSmartVolumeMapper`.
+
+    Parameters
+    ----------
+    theme : pyvista.plotting.themes.Theme, optional
+        Plot-specific theme.
+
+    """
 
     def __init__(self, theme=None) -> None:
         """Initialize this class."""
@@ -1553,7 +1612,14 @@ class SmartVolumeMapper(_BaseVolumeMapper, _vtk.vtkSmartVolumeMapper):
 class UnstructuredGridVolumeRayCastMapper(
     _BaseVolumeMapper, _vtk.vtkUnstructuredGridVolumeRayCastMapper
 ):
-    """Wrap :vtk:`vtkUnstructuredGridVolumeMapper`."""
+    """Wrap :vtk:`vtkUnstructuredGridVolumeMapper`.
+
+    Parameters
+    ----------
+    theme : pyvista.plotting.themes.Theme, optional
+        Plot-specific theme.
+
+    """
 
     def __init__(self, theme=None) -> None:
         """Initialize this class."""

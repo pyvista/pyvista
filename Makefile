@@ -17,17 +17,20 @@ CODE_DIRS ?= doc examples examples_trame pyvista tests
 # Files in top level directory
 CODE_FILES ?= *.py *.rst *.md
 
+# Both `pyvista` and `tests` are measured, matching the `-cov` tox environments.
+COV_FLAGS = --cov pyvista --cov tests
+
 coverage:
 	@echo "Running coverage"
-	@pytest -v --cov pyvista
+	@pytest -v $(COV_FLAGS)
 
 coverage-xml:
 	@echo "Reporting XML coverage"
-	@pytest -v --cov pyvista --cov-report xml
+	@pytest -v $(COV_FLAGS) --cov-report xml
 
 coverage-html:
 	@echo "Reporting HTML coverage"
-	@pytest -v --cov pyvista --cov-report html
+	@pytest -v $(COV_FLAGS) --cov-report html
 
 coverage-docs:
 	@echo "Reporting documentation coverage"
@@ -74,8 +77,8 @@ test-plotting:
 	@echo "Running plotting tests (matches CI)"
 	@uv run tox -e test-plotting $(TOX_ARGS)
 
-# Run all docstring tests (matches CI `tox -f doctest`).
-# Executes both doctest-modules and doctest-local tox envs.
+# Run all docstring checks (matches CI).
+# Executes both the doctest-modules and doctest-names tox envs.
 doctest:
 	@echo "Running docstring tests (matches CI)"
 	@uv run tox -f doctest $(TOX_ARGS)

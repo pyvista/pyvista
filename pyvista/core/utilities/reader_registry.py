@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import atexit
+import importlib
 from importlib.metadata import EntryPoint
 from importlib.metadata import entry_points
+import importlib.util
 from pathlib import Path
 import shutil
 import tempfile
@@ -54,6 +56,29 @@ READER_GROUP = 'pyvista.readers'
 READER_OVERRIDE_GROUP = 'pyvista.readers.override'
 
 
+class _OptionalReader(NamedTuple):
+    """A format served by a companion package rather than by PyVista itself."""
+
+    module: str
+    attr: str
+    distribution: str
+    extra: str
+    describes: str
+    reader_class: str
+
+
+_OPTIONAL_READERS: dict[str, _OptionalReader] = {
+    '.frd': _OptionalReader(
+        module='pyvista_frd',
+        attr='read',
+        distribution='pyvista-frd-reader',
+        extra='pyvista[io]',
+        describes='CalculiX FRD result files',
+        reader_class='pyvista_frd.FRDReader',
+    ),
+}
+
+
 class ReaderRegistration(NamedTuple):
     """Describe one registered custom reader.
 
@@ -99,6 +124,8 @@ class ReaderRegistration(NamedTuple):
 
 
 class _RegistryState(TypedDict):
+    """Mutable state of the reader registry."""
+
     ext: dict[str, ReaderHandler]
     classes: dict[str, type[BaseReader[Any]]]
     sources: dict[str, str]
@@ -469,6 +496,79 @@ def _get_ext_reader_class(ext: str) -> type[BaseReader[Any]] | None:
     return _custom_class_readers.get(ext)
 
 
+def _optional_reader_installed(ext: str) -> bool:
+    """Return ``True`` when ``ext`` is an optional format whose package looks importable."""
+    spec = _OPTIONAL_READERS.get(ext)
+    if spec is None:
+        return False
+    try:
+        return importlib.util.find_spec(spec.module) is not None
+    except ImportError:
+        return False
+
+
+def _import_optional_reader(ext: str) -> tuple[ReaderHandler | None, ImportError | None]:
+    """Import the companion package serving ``ext``, returning its handler or the failure."""
+    spec = _OPTIONAL_READERS.get(ext)
+    if spec is None:
+        return None, None
+    try:
+        module = importlib.import_module(spec.module)
+    except ImportError as err:
+        return None, err
+    return cast('ReaderHandler', getattr(module, spec.attr)), None
+
+
+def _missing_reader_message(ext: str, filename: str | None = None) -> str | None:
+    """Return install instructions when ``ext`` needs a companion package PyVista cannot import.
+
+    ``None`` when ``ext`` is not an optional format, or when its package imports cleanly.
+    """
+    spec = _OPTIONAL_READERS.get(ext)
+    if spec is None:
+        return None
+    handler, err = _import_optional_reader(ext)
+    if handler is not None:
+        return None
+    opening = f'Cannot read {filename!r}.\n' if filename is not None else ''
+    installed = not (isinstance(err, ModuleNotFoundError) and err.name == spec.module)
+    if installed:
+        return (
+            f'{opening}Reading {spec.describes} ({ext}) requires the '
+            f'`{spec.distribution}` package, which is installed but failed to import:\n'
+            f'    {err}'
+        )
+    return (
+        f'{opening}Reading {spec.describes} ({ext}) requires the '
+        f'`{spec.distribution}` package, which is not installed.\n'
+        f'\n'
+        f'Install it with:\n'
+        f'    pip install {spec.extra}\n'
+        f'\n'
+        f'or, for just this reader:\n'
+        f'    pip install {spec.distribution}'
+    )
+
+
+def _optional_reader_class_name(ext: str) -> str | None:
+    """Return the reader class an optional format exposes, when it is importable."""
+    spec = _OPTIONAL_READERS.get(ext)
+    if spec is None:
+        return None
+    handler, _ = _import_optional_reader(ext)
+    return spec.reader_class if handler is not None else None
+
+
+def _resolve_optional_reader(ext: str) -> bool:
+    """Register the companion package serving ``ext``, when it is importable."""
+    handler, _ = _import_optional_reader(ext)
+    if handler is None:
+        return False
+    spec = _OPTIONAL_READERS[ext]
+    _register(ext, handler, source=f'{spec.module}:{spec.attr}')
+    return True
+
+
 def _resolve_ext(ext: str) -> None:
     """Make sure any plugin claiming *ext* has been imported."""
     if ext in _custom_ext_readers or ext in _custom_class_readers:
@@ -476,6 +576,8 @@ def _resolve_ext(ext: str) -> None:
     _ensure_entry_points()
     if ext in _pending_ext_readers:
         _resolve_pending_reader(ext)
+        return
+    _resolve_optional_reader(ext)
 
 
 def _ensure_entry_points() -> None:
@@ -611,8 +713,12 @@ def _list_custom_exts() -> list[str]:
     formats. The plugin modules themselves are **not** imported.
     """
     _ensure_entry_points()
+    installed_optional = {ext for ext in _OPTIONAL_READERS if _optional_reader_installed(ext)}
     return list(
-        _custom_ext_readers.keys() | _custom_class_readers.keys() | _pending_ext_readers.keys()
+        _custom_ext_readers.keys()
+        | _custom_class_readers.keys()
+        | _pending_ext_readers.keys()
+        | installed_optional
     )
 
 

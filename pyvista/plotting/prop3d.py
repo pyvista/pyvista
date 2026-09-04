@@ -9,10 +9,10 @@ from typing import TYPE_CHECKING
 from typing import Literal
 
 import numpy as np
+import pyvista_validation as _validation
 
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
@@ -462,7 +462,14 @@ class Prop3D(_NoNewAttrMixin, _NameMixin, _BoundsSizeMixin, DisableVtkSnakeCase,
         self: Self,
         deep: bool = True,  # noqa: FBT001, FBT002
     ) -> Self:  # numpydoc ignore=RT01
-        """Return a copy of this prop."""
+        """Return a copy of this prop.
+
+        Parameters
+        ----------
+        deep : bool, default: True
+            Return a deep copy of the prop.
+
+        """
         raise NotImplementedError  # pragma: no cover
 
     @property
@@ -575,6 +582,12 @@ class _Prop3DMixin(_BoundsSizeMixin, ABC):
 
     Derived classes need to implement the ``_post_set_update`` method to define
     their behavior, for example, manually apply a transformation.
+
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
+
     """
 
     def __init__(self) -> None:
