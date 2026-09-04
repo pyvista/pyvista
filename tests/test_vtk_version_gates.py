@@ -60,8 +60,8 @@ def _is_constant(operator_: ast.cmpop, bound: tuple[int, ...], minimum: tuple[in
     )
 
 
-def _dead_gates(tree: ast.Module) -> Iterator[tuple[int, str]]:
-    """Yield the line and source of every constant version comparison in a module."""
+def _dead_gates(tree: ast.Module) -> Iterator[tuple[int, str, bool]]:
+    """Yield the line, source and fixed result of every constant version comparison."""
     minimum = tuple(pv._MIN_SUPPORTED_VTK_VERSION)
     for node in ast.walk(tree):
         if not isinstance(node, ast.Compare):
@@ -78,20 +78,21 @@ def _dead_gates(tree: ast.Module) -> Iterator[tuple[int, str]]:
             else:
                 continue
             if bound is not None and _is_constant(operator_, bound, minimum):
-                yield node.lineno, ast.unparse(node)
+                constant = _OPERATORS[type(operator_)](minimum, bound)
+                yield node.lineno, ast.unparse(node), constant
                 break
 
 
 def test_no_dead_vtk_version_gates():
     """Every ``vtk_version_info`` comparison must still be able to go both ways."""
     dead = [
-        f'{path.relative_to(PYVISTA_ROOT_DIR)}:{lineno}  {source}'
+        f'{path.relative_to(PYVISTA_ROOT_DIR)}:{lineno}  {source}  (always {constant})'
         for path in source_files(*SOURCE_DIRS)
-        for lineno, source in _dead_gates(ast.parse(path.read_text(encoding='utf-8')))
+        for lineno, source, constant in _dead_gates(ast.parse(path.read_text(encoding='utf-8')))
     ]
     assert not dead, (
-        f'VTK {pv._MIN_SUPPORTED_VTK_VERSION} is the minimum supported version, so these '
-        'comparisons are constant, so one of the branches they guard is dead:\n  '
+        f'VTK {pv._MIN_SUPPORTED_VTK_VERSION} is the minimum supported version. These '
+        'comparisons cannot change their result, so the branch they never take is dead:\n  '
         + '\n  '.join(dead)
     )
 
@@ -128,22 +129,22 @@ def test_dead_gate_matches_brute_force(monkeypatch, symbol, bound, mirrored):
         operator_(bound, version) if mirrored else operator_(version, bound)
         for version in _reachable_versions(bound)
     }
-    expected = [(1, gate)] if len(results) == 1 else []
+    expected = [(1, gate, next(iter(results)))] if len(results) == 1 else []
     assert list(_dead_gates(ast.parse(gate))) == expected
 
 
 @pytest.mark.parametrize(
-    'gate',
+    ('gate', 'constant'),
     [
-        '(9, 4, 0) <= vtk_version_info < (9, 9)',
-        'lower <= vtk_version_info < (9, 5, 0)',
+        ('(9, 4, 0) <= vtk_version_info < (9, 9)', True),
+        ('lower <= vtk_version_info < (9, 5, 0)', False),
     ],
     ids=['dead_first_half', 'dead_second_half'],
 )
-def test_dead_gate_reports_chained_comparison(monkeypatch, gate):
+def test_dead_gate_reports_chained_comparison(monkeypatch, gate, constant):
     """A chained comparison is reported when either half has gone constant."""
     monkeypatch.setattr(pv, '_MIN_SUPPORTED_VTK_VERSION', _MINIMUM)
-    assert list(_dead_gates(ast.parse(gate))) == [(1, gate)]
+    assert list(_dead_gates(ast.parse(gate))) == [(1, gate, constant)]
 
 
 @pytest.mark.parametrize(
