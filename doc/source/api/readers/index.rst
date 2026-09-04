@@ -400,10 +400,6 @@ options are reachable without a separate import::
    ``.frd`` moved from a built-in reader to ``pyvista-frd-reader``.
    ``pyvista.FRDReader`` was removed; use ``pyvista_frd.FRDReader``.
 
-.. versionchanged:: 0.49.0
-   Reading or saving ``.pv`` without ``pyvista-zstd`` raises
-   :class:`ImportError` rather than :class:`OSError` / :class:`ValueError`.
-
 
 Faster Readers for Built-in Formats
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
