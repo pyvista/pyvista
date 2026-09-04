@@ -65,7 +65,7 @@ def _axis_label_values(vmin: float, vmax: float, n: int) -> np.ndarray:
     decade = 10.0 ** float(int(power))
     if decade == 0.0:  # a subnormal span underflows the decade, as ``GetNumTicks`` allows for
         return np.linspace(vmin, vmax, n)
-    # ``span`` covers at least one decade, so VTK's ``FRound`` always rounds this up
+    # VTK's ``FRound`` of this count; the rare zero rounds to the same divisor either way
     ticks = int(span / decade) + 1
     divisor = 5.0 if ticks <= 2 else 2.0 if ticks < 5 else 1.0
     major = decade / divisor
@@ -190,16 +190,22 @@ class CubeAxesActor(
         The visibility of the z-axis labels.
 
     n_xlabels : int, default: 5
-        Number of labels along the x-axis. Fewer are shown, on VTK's own
-        ticks, where it cannot space that many evenly between the axis bounds.
+        At most this many labels along the x-axis. Where VTK's own tick
+        spacing fits the range, the labels sit on those ticks and the last may
+        stop short of the upper bound; otherwise fewer are spaced evenly
+        between the bounds.
 
     n_ylabels : int, default: 5
-        Number of labels along the y-axis. Fewer are shown, on VTK's own
-        ticks, where it cannot space that many evenly between the axis bounds.
+        At most this many labels along the y-axis. Where VTK's own tick
+        spacing fits the range, the labels sit on those ticks and the last may
+        stop short of the upper bound; otherwise fewer are spaced evenly
+        between the bounds.
 
     n_zlabels : int, default: 5
-        Number of labels along the z-axis. Fewer are shown, on VTK's own
-        ticks, where it cannot space that many evenly between the axis bounds.
+        At most this many labels along the z-axis. Where VTK's own tick
+        spacing fits the range, the labels sit on those ticks and the last may
+        stop short of the upper bound; otherwise fewer are spaced evenly
+        between the bounds.
 
     color : ColorLike, optional
         Color of all labels, axis titles, axis lines, and grid lines. Defaults to

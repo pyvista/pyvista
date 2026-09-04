@@ -170,6 +170,18 @@ def test_show_bounds_scaled_keeps_text_changes():
     assert actor.GetLabelTextProperty(0).GetFontSize() == 37
 
 
+def test_remove_bounds_axes_forgets_pinned_bounds():
+    """Pinned bounds do not outlive the actor they were pinned for."""
+    cube = pv.Cube()
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    pl.show_bounds(bounds=(0, 1, 0, 1, 0, 1))
+    pl.remove_bounds_axes()
+    pl.renderer.cube_axes_actor = pv.CubeAxesActor(pl.camera, bounds=(0, 1, 0, 1, 0, 1))
+    pl.add_mesh(cube)
+    assert pl.renderer.cube_axes_actor.bounds == cube.bounds
+
+
 def test_show_bounds_actor_assigned_directly_follows_scene():
     """An actor put on the renderer by hand still tracks the scene."""
     cube = pv.Cube()

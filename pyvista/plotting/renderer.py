@@ -1953,16 +1953,22 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Title of the z-axis.  Default ``"Z Axis"``.
 
         n_xlabels : int, default: 5
-            Number of labels for the x-axis. Fewer are shown, on VTK's own
-            ticks, where it cannot space that many evenly between the axis bounds.
+            At most this many labels for the x-axis. Where VTK's own tick
+            spacing fits the range, the labels sit on those ticks and the last may
+            stop short of the upper bound; otherwise fewer are spaced evenly
+            between the bounds.
 
         n_ylabels : int, default: 5
-            Number of labels for the y-axis. Fewer are shown, on VTK's own
-            ticks, where it cannot space that many evenly between the axis bounds.
+            At most this many labels for the y-axis. Where VTK's own tick
+            spacing fits the range, the labels sit on those ticks and the last may
+            stop short of the upper bound; otherwise fewer are spaced evenly
+            between the bounds.
 
         n_zlabels : int, default: 5
-            Number of labels for the z-axis. Fewer are shown, on VTK's own
-            ticks, where it cannot space that many evenly between the axis bounds.
+            At most this many labels for the z-axis. Where VTK's own tick
+            spacing fits the range, the labels sit on those ticks and the last may
+            stop short of the upper bound; otherwise fewer are spaced evenly
+            between the bounds.
 
         use_2d : bool, default: False
             This can be enabled for smoother plotting. VTK also hides the z-axis
@@ -2595,6 +2601,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         if self.cube_axes_actor is not None:
             self.remove_actor(self.cube_axes_actor)
             self.cube_axes_actor = None
+            self._cube_axes_follow_scene = True
             self.Modified()
 
     def add_light(self, light):
@@ -3924,6 +3931,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self._border_actor_secondary = None
         self._border_requested_width = None
         self.cube_axes_actor = None
+        self._cube_axes_follow_scene = True
         self._render_passes.close()
 
         if self._empty_str is not None:
@@ -3958,6 +3966,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """
         if self.cube_axes_actor is not None:
             self.cube_axes_actor = None
+            self._cube_axes_follow_scene = True
 
         if hasattr(self, 'edl_pass'):
             del self.edl_pass
