@@ -14,6 +14,8 @@ from typing import Literal
 from typing import cast
 
 from typing_extensions import TypeVar
+
+# `typing.overload` registers with `get_overloads` only from 3.11
 from typing_extensions import overload
 
 import pyvista as pv
@@ -92,7 +94,7 @@ class Example(Generic[_DatasetT_co, _ReadersT_co]):
     """Size in bytes of each entry in ``paths``, one per path, folders counted in full."""
 
     source_urls: tuple[str, ...]
-    """URL each entry in ``paths`` is downloaded from, empty if it has none."""
+    """URL of each file which is downloaded, empty for an example which ships with PyVista."""
 
     @functools.cached_property
     def _loader(self) -> _DatasetLoader:
@@ -127,7 +129,7 @@ class Example(Generic[_DatasetT_co, _ReadersT_co]):
 
         Returns
         -------
-        DataSet | pyvista.MultiBlock | pyvista.PartitionedDataSet | pyvista.Texture | numpy.ndarray
+        pyvista.DataSet | pyvista.MultiBlock | pyvista.PartitionedDataSet | pyvista.Texture | numpy.ndarray
             The dataset the example's own :attr:`function` returns, read from
             :attr:`paths`.
 
@@ -210,12 +212,10 @@ def _resolve_paths(loader: _DatasetLoader, name: str, *, download: bool) -> tupl
     if not isinstance(loader, _FileProps):
         return ()
 
-    # Re-read `paths` after downloading: archive members only resolve once extracted
-    # A relative path means an archive member which `download()` has not resolved yet.
-    # `Path` would resolve it against the working directory, and `Path('')` against `'.'`,
-    # so both would look present and hand back whatever the caller happens to be sitting in.
+    # A relative path is an archive member `download()` has not extracted yet; `Path`
+    # would resolve it against the working directory and make it look present.
     paths = tuple(loader.paths)
-    if missing := [p for p in paths if not (p and Path(p).is_absolute() and Path(p).exists())]:
+    if missing := [p for p in paths if not (Path(p).is_absolute() and Path(p).exists())]:
         missing_str = '\n\t'.join(missing)
         if not download:
             reason = 'and download=False'
@@ -223,7 +223,11 @@ def _resolve_paths(loader: _DatasetLoader, name: str, *, download: bool) -> tupl
             reason = 'even after downloading'
         else:
             reason = 'and cannot be downloaded'
-        msg = f'Example {name!r} is not available locally {reason}.\nMissing:\n\t{missing_str}'
+        msg = (
+            f'Example {name!r} is not available locally {reason}.\n'
+            f'Missing:\n\t{missing_str}\n'
+            f'Call get_example({name!r}) to download it.'
+        )
         raise FileNotFoundError(msg)
     return paths
 

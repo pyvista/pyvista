@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import fields
+import functools
 import inspect
 import os
 from pathlib import Path
@@ -33,6 +34,12 @@ _GENERATED_END = '# --- end generated overloads ---\n'
 _PATH_TYPES = {'str', 'list[str]', 'tuple[str, ...]'}
 # every other dataset type name is an attribute of `pv`
 _DATASET_TYPE_NAMES = {'ndarray': 'pv.NumpyArray[Any]'}
+_REGENERATE = (
+    'Regenerate the generated block with\n'
+    '  pytest tests/examples/test_get_example.py -k overloads_current '
+    '--test_downloads --regenerate_overloads\n'
+    'and run pre-commit afterwards.'
+)
 
 
 def _all_example_names():
@@ -62,6 +69,7 @@ def _readers_annotation(example):
     return f'tuple[{names}]' if names else 'tuple[()]'
 
 
+@functools.cache
 def _declared_overloads():
     """Return ``{name: (dataset, readers)}`` from the ``Literal``-name overloads in place."""
     declared = {}
@@ -218,19 +226,27 @@ def test_get_example_file_sizes_compare():
 
 
 @pytest.mark.needs_download
-def test_get_example_nefertiti_warns_without_download():
-    """The licence warning fires on the load-only route too."""
-    with pytest.warns(UserWarning, match='CC BY-NC-SA'):
-        examples.download_nefertiti(load=False)  # ensure the files are cached
+def test_get_example_nefertiti_warns_on_every_route():
+    """Downloading and loading each warn about the licence, on whichever route reaches them."""
+    with pytest.warns(UserWarning, match='CC BY-NC-SA') as downloaded:
+        examples.download_nefertiti(load=False)  # also caches the files for the routes below
+    assert len(downloaded) == 1
 
     example = examples.get_example('nefertiti', download=False)
-    with pytest.warns(UserWarning, match='CC BY-NC-SA'):
+    with pytest.warns(UserWarning, match='CC BY-NC-SA') as loaded:
         example.load()
+    assert len(loaded) == 1
+
+    # a call which downloads and then loads performs both, so it warns for each; a user
+    # under the default filters is shown the first and Python suppresses the repeat
+    with pytest.warns(UserWarning, match='CC BY-NC-SA') as both:
+        examples.download_nefertiti()
+    assert len(both) == 2
 
 
 def test_get_example_overloads_cover_every_example():
     """One ``Literal`` overload per example, and none for an example which does not exist."""
-    assert sorted(_declared_overloads()) == _all_example_names()
+    assert sorted(_declared_overloads()) == _all_example_names(), _REGENERATE
 
 
 @pytest.mark.parametrize('name', _all_example_names())
@@ -260,7 +276,7 @@ def test_get_example_function_overloads_accept_a_plain_call(name):
 
 def test_example_name_literal_lists_every_example():
     """``ExampleName`` is the ``Literal`` of every example name, so editors can complete it."""
-    assert get_args(_get_example.ExampleName) == tuple(_all_example_names())
+    assert get_args(_get_example.ExampleName) == tuple(_all_example_names()), _REGENERATE
 
 
 def test_format_overloads_renders_one_line_per_stub():
@@ -298,12 +314,7 @@ def test_get_example_overloads_current(request):
     declared = _declared_overloads()
     stale = sorted(name for name in current if declared.get(name) != current[name])
     stale += sorted(set(declared) - set(current))
-    assert not stale, (
-        f'The generated `get_example` overloads are stale for: {stale}. Regenerate with\n'
-        '  pytest tests/examples/test_get_example.py -k overloads_current '
-        '--test_downloads --regenerate_overloads\n'
-        'and run pre-commit afterwards.'
-    )
+    assert not stale, f'The generated overloads are stale for: {stale}. {_REGENERATE}'
 
 
 def test_get_example_download_false_uses_local_files():

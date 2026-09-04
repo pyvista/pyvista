@@ -39,6 +39,8 @@ from typing import cast
 
 import numpy as np
 import pooch
+
+# `typing.overload` registers with `get_overloads` only from 3.11
 from typing_extensions import overload
 
 try:

@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING
 from typing import Literal
 
 import numpy as np
+
+# `typing.overload` registers with `get_overloads` only from 3.11
 from typing_extensions import overload
 
 import pyvista as pv
