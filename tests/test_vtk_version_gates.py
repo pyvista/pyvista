@@ -10,13 +10,12 @@ import pytest
 
 import pyvista as pv
 from tests.conftest import PYVISTA_ROOT_DIR
+from tests.conftest import source_files
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
-    from pathlib import Path
 
 SOURCE_DIRS = ('pyvista', 'tests')
-SKIP_PARTS = {'build', 'dist', '_build', '__pycache__', '.git'}
 
 _DEAD_AT_BOUND = (ast.Lt, ast.GtE)
 _DEAD_BELOW_BOUND = (ast.LtE, ast.Gt, ast.Eq, ast.NotEq)
@@ -31,14 +30,6 @@ _OPERATORS = {
     ast.Eq: operator.eq,
     ast.NotEq: operator.ne,
 }
-
-
-def _iter_source_files() -> Iterator[Path]:
-    """Yield every Python file in the scanned source directories."""
-    for directory in SOURCE_DIRS:
-        for path in sorted((PYVISTA_ROOT_DIR / directory).rglob('*.py')):
-            if SKIP_PARTS.isdisjoint(path.relative_to(PYVISTA_ROOT_DIR).parts):
-                yield path
 
 
 def _version_bound(node: ast.expr) -> tuple[int, ...] | None:
@@ -95,7 +86,7 @@ def test_no_dead_vtk_version_gates():
     """Every ``vtk_version_info`` comparison must still be able to go both ways."""
     dead = [
         f'{path.relative_to(PYVISTA_ROOT_DIR)}:{lineno}  {source}'
-        for path in _iter_source_files()
+        for path in source_files(*SOURCE_DIRS)
         for lineno, source in _dead_gates(ast.parse(path.read_text(encoding='utf-8')))
     ]
     assert not dead, (
@@ -151,5 +142,5 @@ def test_dead_gate_ignores_other_comparisons(monkeypatch):
 
 def test_source_files_scanned():
     """The scan must actually reach the package and the test suite."""
-    scanned = {path.relative_to(PYVISTA_ROOT_DIR).parts[0] for path in _iter_source_files()}
+    scanned = {path.relative_to(PYVISTA_ROOT_DIR).parts[0] for path in source_files(*SOURCE_DIRS)}
     assert scanned == set(SOURCE_DIRS)
