@@ -64,6 +64,7 @@ _InterpolationOptions = Literal[
     'bspline8',
     'bspline9',
 ]
+_BorderModeOptions = Literal['clamp', 'wrap', 'mirror']
 _AxisOptions = Literal[0, 1, 2, 'x', 'y', 'z']
 _ConcatenateModeOptions = Literal[
     'strict',
@@ -4207,7 +4208,7 @@ class ImageDataFilters(DataSetFilters):
         sample_rate: float | VectorLike[float] | None = None,
         interpolation: _InterpolationOptions = 'nearest',
         *,
-        border_mode: Literal['clamp', 'wrap', 'mirror'] = 'clamp',
+        border_mode: _BorderModeOptions = 'clamp',
         reference_image: ImageData | None = None,
         dimensions: VectorLike[int] | None = None,
         anti_aliasing: bool = False,
@@ -4243,6 +4244,14 @@ class ImageDataFilters(DataSetFilters):
             however, for example, to flatten a 3D volume into a single 2D slice.
 
         .. versionadded:: 0.45
+
+        .. versionchanged:: 0.49
+            Values are sampled at the centers of the resampled voxels when the border is
+            extended and when resampling cell data. Previously the first and last
+            samples were aligned with the first and last samples of the input, which
+            offset the values from the points they are stored at by up to half the input
+            spacing. Reducing an axis to a singleton now samples the center of that axis
+            instead of its first slice.
 
         Parameters
         ----------
@@ -4303,8 +4312,16 @@ class ImageDataFilters(DataSetFilters):
                 along each axis). See examples.
 
         anti_aliasing : bool, default: False
-            Enable anti-aliasing. This will blur the image as part of the resampling
-            to reduce image artifacts when down-sampling. Has no effect when up-sampling.
+            Enable anti-aliasing to reduce image artifacts when down-sampling. Each
+            down-sampled axis is blurred in proportion to its sampling ratio before
+            resampling, which approximates averaging the samples it merges. Has no
+            effect on axes that are not down-sampled.
+
+            .. versionchanged:: 0.49
+                The blur is sized from each axis's own sampling ratio. Previously a
+                fixed blur was applied to all three axes, including axes which are not
+                down-sampled, which left aliasing at large sampling ratios and blurred
+                more than necessary at small ones.
 
         extend_border : bool, optional
             Extend the apparent input border by approximately half the
@@ -4312,7 +4329,8 @@ class ImageDataFilters(DataSetFilters):
             resampled points will be larger than the input image bounds.
             Enabling this option also has the effect that the re-sampled spacing
             will directly correlate with the resampled dimensions, for example, if
-            the dimensions are doubled the spacing will be halved. See examples.
+            the dimensions are doubled the spacing will be halved. The values are
+            sampled at the centers of the resampled voxels. See examples.
 
             This option is enabled by default when resampling point data. Has no effect
             when resampling cell data or when a ``reference_image`` is provided.
@@ -4651,73 +4669,14 @@ class ImageDataFilters(DataSetFilters):
         >>> pl.show()
 
         """
-
-        def set_border_mode(
-            obj: _vtk.vtkImageBSplineCoefficients | _vtk.vtkAbstractImageInterpolator,
-        ):
-            if border_mode == 'clamp':
-                obj.SetBorderModeToClamp()
-            elif border_mode == 'mirror':
-                obj.SetBorderModeToMirror()
-            elif border_mode == 'wrap':
-                obj.SetBorderModeToRepeat()
-            else:  # pragma: no cover
-                msg = f"Unexpected border mode '{border_mode}'."  # type: ignore[unreachable]
-                raise RuntimeError(msg)
-
-        # Process scalars
-        if scalars is None:
-            field, name = set_default_active_scalars(self)
-        else:
-            name = scalars
-            field = self.get_array_association(scalars, preference=preference)
-
-        active_scalars = self.get_array(name, preference=field.name.lower())  # type: ignore[arg-type]
-
-        # Validate interpolation and modify scalars as needed
-        input_dtype = active_scalars.dtype
-        has_int_scalars = input_dtype == np.int64
         _validation.check_contains(
-            get_args(_InterpolationOptions),
-            must_contain=interpolation,
-            name='interpolation',
+            get_args(_InterpolationOptions), must_contain=interpolation, name='interpolation'
         )
         _validation.check_contains(
-            ['clamp', 'wrap', 'mirror'],
-            must_contain=border_mode,
-            name='border_mode',
+            get_args(_BorderModeOptions), must_contain=border_mode, name='border_mode'
         )
-        if has_int_scalars:
-            # int (long long) is not supported by the filter so we cast to float
-            input_image = self.copy(deep=False)
-            input_image[name] = active_scalars.astype(float)
-        else:
-            input_image = self
-
-        # Make sure we have point scalars
-        processing_cell_scalars = field == FieldAssociation.CELL
-        if processing_cell_scalars:
-            if extend_border:
-                msg = '`extend_border` cannot be set when resampling cell data.'
-                raise ValueError(msg)
-            dimensionality = input_image.dimensionality
-            input_image = input_image.cells_to_points(scalars=scalars, copy=False)
-
-        # Set default extend_border value
-        if extend_border is None:
-            # Only extend border with point data
-            extend_border = not processing_cell_scalars
-        elif extend_border and reference_image is not None:
-            msg = '`extend_border` cannot be set when a `image_reference` is provided.'
-            raise ValueError(msg)
-
-        # Setup reference image
-        if reference_image is None:
-            # Use the input as a reference
-            reference_image = pv.ImageData()
-            reference_image.copy_structure(input_image)
-            reference_image_provided = False
-        else:
+        reference_image_provided = reference_image is not None
+        if reference_image_provided:
             if dimensions is not None or sample_rate is not None:
                 msg = (
                     'Cannot specify a reference image along with `dimensions` or `sample_rate` '
@@ -4725,20 +4684,55 @@ class ImageDataFilters(DataSetFilters):
                 )
                 raise ValueError(msg)
             _validation.check_instance(reference_image, pv.ImageData, name='reference_image')
-            reference_image_provided = True
+        elif sample_rate is not None and dimensions is not None:
+            msg = (
+                'Cannot specify a sample rate along with the `dimensions` parameter.\n'
+                '`sample_rate` must define the sampling geometry exclusively.'
+            )
+            raise ValueError(msg)
 
-        # Use SetMagnificationFactors to indirectly set the dimensions.
-        # To compute the magnification factors we first define input (old) and output
-        # (new) dimensions.
-        old_dimensions = np.array(input_image.dimensions)
-        if sample_rate is not None:
-            if reference_image_provided or dimensions is not None:
-                msg = (
-                    'Cannot specify a sample rate along with `reference_image` or `sample_rate` '
-                    'parameters.\n`sample_rate` must define the sampling geometry exclusively.'
-                )
+        if scalars is None:
+            field, name = set_default_active_scalars(self)
+        else:
+            name = scalars
+            field = self.get_array_association(scalars, preference=preference)
+
+        # The filter operates on point scalars, so convert cell scalars to points
+        processing_cell_scalars = field == FieldAssociation.CELL
+        if processing_cell_scalars:
+            if extend_border:
+                msg = '`extend_border` cannot be set when resampling cell data.'
                 raise ValueError(msg)
-            # Set reference dimensions from the sample rate
+            dimensionality = self.dimensionality
+            input_image = self.cells_to_points(scalars=name, copy=False)
+        else:
+            if extend_border and reference_image_provided:
+                msg = '`extend_border` cannot be set when a `reference_image` is provided.'
+                raise ValueError(msg)
+            # Shallow copy so the requested scalars can be made active without modifying self
+            input_image = self.copy(deep=False)
+            input_image.point_data.active_scalars_name = name
+        if extend_border is None:
+            extend_border = not (processing_cell_scalars or reference_image_provided)
+
+        # 64-bit integers are not supported by the VTK image filters, so cast to float
+        input_dtype = input_image.point_data[name].dtype
+        if input_dtype.kind in 'iu' and input_dtype.itemsize == 8:
+            input_image.point_data[name] = input_image.point_data[name].astype(float)
+
+        # Compute the output dimensions of the point image
+        old_dimensions = np.array(input_image.dimensions)
+        if reference_image is not None:
+            new_dimensions = np.array(reference_image.dimensions)
+        elif dimensions is not None:
+            new_dimensions = _validation.validate_array3(
+                dimensions,
+                must_be_integer=True,
+                must_be_in_range=[1, np.inf],
+                dtype_out=int,
+                name='dimensions',
+            )
+        elif sample_rate is not None:
             sample_rate_ = _validation.validate_array3(
                 sample_rate,
                 broadcast=True,
@@ -4749,143 +4743,85 @@ class ImageDataFilters(DataSetFilters):
             )
             new_dimensions = old_dimensions * sample_rate_
         else:
-            if dimensions is not None:
-                dimensions_ = np.array(dimensions)
-                dimensions_ = dimensions_ - 1 if processing_cell_scalars else dimensions_
-                reference_image.dimensions = dimensions_
-            new_dimensions = np.array(reference_image.dimensions)
+            new_dimensions = old_dimensions
+        if processing_cell_scalars and (reference_image_provided or dimensions is not None):
+            # Dimensions count points, and there is one less cell than points along each axis
+            new_dimensions = new_dimensions - 1
+        # Truncate fractional dimensions, with a tolerance for floating point error
+        new_dimensions = np.floor(new_dimensions + 1e-6).astype(int)
+        # Singleton input dimensions are never resampled
+        new_dimensions[old_dimensions == 1] = 1
+        if processing_cell_scalars and np.any(new_dimensions < 1):
+            axes = 'at least 2 along each non-singleton axis when resampling cell data.'
+            if sample_rate is not None:
+                msg = (
+                    '`sample_rate` is too small, it must keep at least one cell along each '
+                    'axis when resampling cell data.'
+                )
+            elif reference_image is not None:
+                msg = f'`reference_image` must have dimensions of {axes}'
+            else:
+                msg = f'`dimensions` must be {axes}'
+            raise ValueError(msg)
+        new_dimensions = np.maximum(new_dimensions, 1)
 
-        # Compute the magnification factors to use with the filter
-        # Note that SetMagnificationFactors will multiply the factors by the extent
-        # but we want to multiply the dimensions. These values are off by one.
-        singleton_dims = old_dimensions == 1
-        with np.errstate(divide='ignore', invalid='ignore'):
-            # Ignore division by zero, this is fixed with singleton_dims on the next line
-            magnification_factors = (new_dimensions - 1) / (old_dimensions - 1)
-        magnification_factors[singleton_dims] = 1
-
-        resize_filter = _vtk.vtkImageResize()
-        resize_filter.SetInputData(input_image)
-        # Reducing a non-singleton axis to a single point requires a magnification
-        # factor of zero, but `vtkImageResize` silently ignores zero factors and
-        # leaves the axis unchanged. Set the output dimensions explicitly in that
-        # case so that e.g. flattening a 3D volume to a 2D slice is honored.
-        target_dimensions = np.maximum(np.rint(new_dimensions).astype(int), 1)
-        if np.any((target_dimensions == 1) & ~singleton_dims):
-            # Preserve input singleton dimensions (these are never resampled).
-            target_dimensions[singleton_dims] = old_dimensions[singleton_dims]
-            resize_filter.SetResizeMethodToOutputDimensions()
-            resize_filter.SetOutputDimensions(*(int(d) for d in target_dimensions))
-        else:
-            resize_filter.SetResizeMethodToMagnificationFactors()
-            resize_filter.SetMagnificationFactors(*magnification_factors)
-
-        # Set interpolation mode
-        interpolator: _vtk.vtkAbstractImageInterpolator
-        if interpolation == 'nearest':
-            interpolator = _vtk.vtkImageInterpolator()
-            interpolator.SetInterpolationModeToNearest()
-        elif interpolation == 'linear':
-            interpolator = _vtk.vtkImageInterpolator()
-            interpolator.SetInterpolationModeToLinear()
-        elif interpolation == 'cubic':
-            interpolator = _vtk.vtkImageInterpolator()
-            interpolator.SetInterpolationModeToCubic()
-        elif interpolation == 'lanczos':
-            interpolator = _vtk.vtkImageSincInterpolator()
-            interpolator.SetWindowFunctionToLanczos()
-        elif interpolation == 'hamming':
-            interpolator = _vtk.vtkImageSincInterpolator()
-            interpolator.SetWindowFunctionToHamming()
-        elif interpolation == 'blackman':
-            interpolator = _vtk.vtkImageSincInterpolator()
-            interpolator.SetWindowFunctionToBlackman()
-        elif interpolation.startswith('bspline'):
-            interpolator = _vtk.vtkImageBSplineInterpolator()
-            # Set degree
-            degree = 3 if interpolation.endswith('bspline') else int(interpolation[-1])
-            interpolator.SetSplineDegree(degree)
-            # Need to pre-compute coefficients
+        interpolator = _image_interpolator(interpolation, border_mode)
+        if anti_aliasing and np.any(new_dimensions < old_dimensions):
+            if isinstance(interpolator, _vtk.vtkImageSincInterpolator):
+                interpolator.AntialiasingOn()
+            else:
+                # Blur each down-sampled axis with the Gaussian which has the same
+                # width as a box filter averaging the samples the axis merges
+                ratio = old_dimensions / new_dimensions
+                std_dev = np.where(ratio > 1, ratio / np.sqrt(12), 0.0)
+                # The kernel radius is truncated to an integer, so the default factor of
+                # 1.5 gives a single tap, and no blurring at all, for ratios below ~2.3
+                input_image = input_image.gaussian_smooth(
+                    std_dev=std_dev, radius_factor=3.0, progress_bar=progress_bar
+                )
+        if isinstance(interpolator, _vtk.vtkImageBSplineInterpolator):
+            # The interpolator expects pre-computed spline coefficients as input
             coefficients = _vtk.vtkImageBSplineCoefficients()
             coefficients.SetInputData(input_image)
-            set_border_mode(coefficients)
+            coefficients.SetSplineDegree(interpolator.GetSplineDegree())
+            dtype = input_image.point_data[name].dtype
+            if dtype != np.float32 and dtype.itemsize > 2:
+                coefficients.SetOutputScalarTypeToDouble()
+            _set_border_mode(coefficients, border_mode)
             _update_alg(
                 coefficients, progress_bar=progress_bar, message='Computing spline coefficients.'
             )
             input_image = _get_output(coefficients)
-        else:  # pragma: no cover
-            msg = f"Unexpected interpolation mode '{interpolation}'."
-            raise RuntimeError(msg)
 
-        set_border_mode(interpolator)
-        if anti_aliasing and np.any(magnification_factors < 1.0):
-            if isinstance(interpolator, _vtk.vtkImageSincInterpolator):
-                interpolator.AntialiasingOn()
-            else:
-                resize_filter.SetInputData(input_image.gaussian_smooth())
-
+        resize_filter = _vtk.vtkImageResize()
+        resize_filter.SetInputData(input_image)
         resize_filter.SetInterpolator(interpolator)
-
-        # Get output
+        resize_filter.SetResizeMethodToOutputDimensions()
+        resize_filter.SetOutputDimensions(*new_dimensions.tolist())
+        # The border stretches the resampled bounds by half a voxel so that the spacing scales
+        # with the dimensions, which is also how cells are resampled
+        resize_filter.SetBorder(extend_border or processing_cell_scalars)
         _update_alg(resize_filter, progress_bar=progress_bar, message='Resampling image.')
-        output_image = _get_output(resize_filter).copy(deep=False)
+        output_image = _get_output(resize_filter)
 
-        # Set geometry from the reference
-        output_image.direction_matrix = reference_image.direction_matrix
-        output_image.origin = reference_image.origin
-        output_image.offset = reference_image.offset
+        output_image.rename_array(output_image.active_scalars_name, name)
+        output_array = output_image.active_scalars
+        if output_array.dtype != input_dtype:
+            output_image.point_data[name] = _round_to_dtype(output_array, input_dtype)
 
-        if reference_image_provided:
+        if reference_image is not None:
+            output_image.direction_matrix = reference_image.direction_matrix
+            output_image.origin = reference_image.origin
             output_image.spacing = reference_image.spacing
-        else:
-            # Need to fixup the spacing
-            old_spacing = np.array(input_image.spacing)
-            output_dimensions = np.array(output_image.dimensions)
-
-            if extend_border and not processing_cell_scalars:
-                # Compute spacing to have the same effective sample rate as the dimensions
-                actual_sample_rate = output_dimensions / old_dimensions
-                new_spacing = old_spacing / actual_sample_rate
-
-                # This will enlarge the image, so we need to shift the origin accordingly
-                # Shift the origin by 1/2 of the old and new spacing, but keep the spacing
-                # unchanged for singleton dimensions.
-                shift_old = old_spacing[~singleton_dims] / 2
-                shift_new = new_spacing[~singleton_dims] / 2
-                new_origin = np.array(input_image.origin)
-                new_origin[~singleton_dims] += shift_new - shift_old
-
-                output_image.origin = new_origin
-            else:
-                # Compute spacing to match bounds of input and dimensions of output
-                size = np.array(input_image.bounds_size)
-                if processing_cell_scalars:
-                    new_spacing = (size + input_image.spacing) / output_dimensions
-                else:
-                    with np.errstate(divide='ignore', invalid='ignore'):
-                        # Ignore division by zero, this is fixed with
-                        # singleton_dims on the next line
-                        new_spacing = size / (output_dimensions - 1)
-
-            # For singleton dimensions, keep the original spacing value
-            new_spacing[singleton_dims] = old_spacing[singleton_dims]
-            output_image.spacing = new_spacing
-
-        if output_image.active_scalars_name == 'ImageScalars':
-            output_image.rename_array('ImageScalars', name)
-
-        if has_int_scalars:
-            # Can safely cast to int to match input
-            output_image.point_data[name] = output_image.point_data[name].astype(input_dtype)
+            output_image.offset = reference_image.offset
 
         if processing_cell_scalars:
-            # Convert back to cells. This modifies origin so we need to reset it.
+            # Convert back to cells
             output_image = output_image.points_to_cells(
                 scalars=name, copy=False, dimensionality=dimensionality
             )
-            output_image.origin = (
-                reference_image.origin if reference_image_provided else self.origin
-            )
+            if reference_image is not None:
+                output_image.origin = reference_image.origin
             output_image.point_data.clear()
         else:
             output_image.cell_data.clear()
@@ -5828,3 +5764,57 @@ def _pad_extent(extent, padding):
         ext_zn - pad_zn,  # minZ
         ext_zp + pad_zp,  # maxZ
     )
+
+
+def _set_border_mode(
+    obj: _vtk.vtkAbstractImageInterpolator | _vtk.vtkImageBSplineCoefficients,
+    border_mode: _BorderModeOptions,
+) -> None:
+    """Set the border mode of an image interpolator or spline coefficients filter."""
+    setters = {
+        'clamp': obj.SetBorderModeToClamp,
+        'wrap': obj.SetBorderModeToRepeat,
+        'mirror': obj.SetBorderModeToMirror,
+    }
+    setters[border_mode]()
+
+
+def _image_interpolator(
+    interpolation: _InterpolationOptions, border_mode: _BorderModeOptions
+) -> _vtk.vtkAbstractImageInterpolator:
+    """Create the image interpolator used by the ``resample`` filter."""
+    interpolator: _vtk.vtkAbstractImageInterpolator
+    if interpolation in ('nearest', 'linear', 'cubic'):
+        interpolator = _vtk.vtkImageInterpolator()
+        modes = {
+            'nearest': interpolator.SetInterpolationModeToNearest,
+            'linear': interpolator.SetInterpolationModeToLinear,
+            'cubic': interpolator.SetInterpolationModeToCubic,
+        }
+        modes[interpolation]()
+    elif interpolation in ('lanczos', 'hamming', 'blackman'):
+        interpolator = _vtk.vtkImageSincInterpolator()
+        windows = {
+            'lanczos': interpolator.SetWindowFunctionToLanczos,
+            'hamming': interpolator.SetWindowFunctionToHamming,
+            'blackman': interpolator.SetWindowFunctionToBlackman,
+        }
+        windows[interpolation]()
+    elif interpolation.startswith('bspline'):
+        # The degree is an optional suffix, for example 'bspline5'
+        interpolator = _vtk.vtkImageBSplineInterpolator()
+        interpolator.SetSplineDegree(int(interpolation.removeprefix('bspline') or 3))
+    else:  # pragma: no cover
+        msg = f"Unexpected interpolation mode '{interpolation}'."
+        raise RuntimeError(msg)
+    _set_border_mode(interpolator, border_mode)
+    return interpolator
+
+
+def _round_to_dtype(array: NumpyArray[float], dtype: np.dtype[Any]) -> NumpyArray[Any]:
+    """Round and clamp floating point values to an integer or boolean data type."""
+    array = np.floor(array + 0.5)
+    if dtype.kind in 'iu':
+        info = np.iinfo(dtype)
+        array = np.clip(array, info.min, info.max)
+    return array.astype(dtype)
