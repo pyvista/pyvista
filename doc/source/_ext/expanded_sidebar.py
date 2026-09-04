@@ -1,4 +1,10 @@
-"""Render the expanded sidebar navigation once and reuse it on every page."""
+"""Render the expanded sidebar navigation once and reuse it on every page.
+
+This is a workaround for the theme, which rebuilds the whole toctree for every page and
+renders the sidebar template twice on top of that. #9023 collapsed the sidebar to escape
+that cost, #9070 expanded it again for tag builds only, and #9082 added this so it can
+stay expanded everywhere. Drop it if the theme ever caches the tree itself.
+"""
 
 from __future__ import annotations
 
