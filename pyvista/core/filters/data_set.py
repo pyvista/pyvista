@@ -5528,16 +5528,12 @@ class DataSetFilters(DataObjectFilters):
         component_logic,
         invert,
     ):
-        """Extract values using validated input.
-
-        Internal method for ``extract_values`` filter to avoid repeated calls to input
-        validation methods.
-        """
+        """Build the selection mask from validated values and ranges."""
 
         def _update_id_mask(logic_) -> None:
             """Apply component logic and update the id mask."""
             logic_ = component_logic(logic_) if component_logic else logic_
-            id_mask[logic_] = True
+            np.logical_or(id_mask, logic_, out=id_mask)
 
         # Determine which ids to keep
         id_mask = np.zeros((len(array),), dtype=bool)
