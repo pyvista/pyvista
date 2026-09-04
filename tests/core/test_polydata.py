@@ -627,7 +627,10 @@ def test_merge_active_scalars(input_):
     assert merged.active_scalars_name == 'foo'
 
 
-_MERGE_PRIORITY_INPUTS = [examples.load_hexbeam(), pv.Plane(i_resolution=1, j_resolution=1)]
+_MERGE_PRIORITY_INPUTS = [
+    pytest.param(examples.load_hexbeam(), id='hexbeam'),
+    pytest.param(pv.Plane(i_resolution=1, j_resolution=1), id='plane'),
+]
 
 
 def _conflicting_scalars(input_):
@@ -674,7 +677,9 @@ def test_merge_main_has_priority(input_, main_has_priority):
     assert merged.active_scalars_name == 'present_in_both'
 
 
-@pytest.mark.parametrize('main_has_priority', [True, False, 0, np.False_])
+@pytest.mark.parametrize(
+    'main_has_priority', [True, False, 0, pytest.param(np.False_, id='np_False')]
+)
 def test_merge_main_has_priority_deprecated(sphere, main_has_priority):
     if pv.vtk_version_info < (9, 5, 0):
         # The keyword still selects the winning mesh, so it is not deprecated yet.
@@ -701,7 +706,7 @@ def test_merge_field_data(mesh, main_has_priority):
 
     if pv.vtk_version_info < (9, 5, 0):
         merged = mesh.merge(other, main_has_priority=main_has_priority)
-    elif main_has_priority is False:
+    elif not main_has_priority:
         match = re.escape("'main_has_priority=False' is not supported for vtk>=9.5.0")
         with pytest.raises(ValueError, match=match):
             mesh.merge(other, main_has_priority=main_has_priority)
