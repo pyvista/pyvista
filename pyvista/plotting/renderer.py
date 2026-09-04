@@ -2093,7 +2093,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         if not np.allclose(self.scale, [1.0, 1.0, 1.0]):
             # 3D text is not placed correctly when the renderer is scaled
             use_3d_text = False
-            use_2d = True
         if font_family is None:
             font_family = self._theme.font.family
         if font_size is None:
@@ -3064,10 +3063,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
                 self.cube_axes_actor.update_bounds(
                     self.compute_bounds(ignore_actors=[self.cube_axes_actor])
                 )
-            if not np.allclose(self.scale, [1.0, 1.0, 1.0]):
-                self.cube_axes_actor.SetUse2DMode(True)
-            else:
-                self.cube_axes_actor.SetUse2DMode(False)
             self.Modified()
 
     @_deprecate_positional_args

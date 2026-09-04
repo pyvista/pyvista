@@ -115,6 +115,26 @@ def test_show_bounds_follows_scene():
     assert actor.bounds == cube.bounds
 
 
+def test_show_bounds_scaled_keeps_zaxis():
+    """Regression test for https://github.com/pyvista/pyvista/issues/8687."""
+    pl = pv.Plotter()
+    pl.set_scale(zscale=2)
+    pl.add_mesh(pv.Sphere())
+    actor = pl.show_bounds(location='outer', grid='back')
+    assert not actor.use_2d_mode
+    assert actor.z_axis_visibility
+    assert len(actor.z_labels) == 5
+
+
+def test_show_bounds_keeps_use_2d():
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    actor = pl.show_bounds(use_2d=True)
+    assert actor.use_2d_mode
+    pl.add_mesh(pv.Cube())
+    assert actor.use_2d_mode
+
+
 def test_show_bounds_with_scaling(sphere):
     pl = pv.Plotter()
     pl.add_mesh(sphere)
