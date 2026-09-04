@@ -41,7 +41,8 @@ def _pad_bounds(bounds: VectorLike[float], *, padding: float) -> np.ndarray:
     return padded
 
 
-_FLT_EPSILON = 1.1920928955078125e-07
+# VTK compares its label count against C's ``FLT_EPSILON``
+_FLT_EPSILON = float(np.finfo(np.float32).eps)
 
 
 def _fit_n_labels(vmin: float, vmax: float, n: int) -> int:
