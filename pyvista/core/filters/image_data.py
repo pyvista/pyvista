@@ -1795,9 +1795,8 @@ class ImageDataFilters(DataSetFilters):
         If ``None`` is given for ``in_value``, scalars that are ``'in'`` will not be replaced.
         If ``None`` is given for ``out_value``, scalars that are ``'out'`` will not be replaced.
 
-        Warning: applying this filter to cell data will send the output to a
-        new point array with the same name, overwriting any existing point data
-        array with the same name.
+        Cell scalars are thresholded in place and stay cell data. Other arrays are
+        passed through unchanged.
 
         Parameters
         ----------
@@ -1857,19 +1856,28 @@ class ImageDataFilters(DataSetFilters):
         else:
             field = self.get_array_association(scalars, preference=preference)
 
-        # For some systems integer scalars won't threshold
-        # correctly. Cast to float to be robust. See https://gitlab.kitware.com/vtk/vtk/-/work_items/20019
-        cast_dtype = (array_dtype := self.active_scalars.dtype) == np.int64  # type: ignore[union-attr]
-        if cast_dtype:
-            alg_input = self.copy(deep=False)
-            alg_input[scalars] = alg_input[scalars].astype(float, casting='safe')
-        else:
-            alg_input = self
-
         threshold_val = np.atleast_1d(threshold)
         if (size := threshold_val.size) not in (1, 2):
             msg = f'Threshold must have one or two values, got {size}.'
             raise ValueError(msg)
+
+        # The VTK filters only see point scalars and type the output after the
+        # active scalars, so re-mesh cell data and make the array active
+        is_cell_data = field == FieldAssociation.CELL
+        if is_cell_data:
+            alg_input = self.cells_to_points(scalars, copy=False)
+        else:
+            alg_input = self.copy(deep=False)
+            alg_input.set_active_scalars(scalars, preference='point')
+        field = FieldAssociation.POINT
+
+        # int64 overflowed before VTK 9.7, see https://gitlab.kitware.com/vtk/vtk/-/work_items/20019
+        array_dtype = alg_input.point_data[scalars].dtype
+        cast_dtype = array_dtype == np.int64 and pv.vtk_version_info < (9, 7)
+        if cast_dtype:
+            alg_input.point_data[scalars] = alg_input.point_data[scalars].astype(
+                float, casting='safe'
+            )
 
         def _image_threshold(
             *,
@@ -1954,7 +1962,14 @@ class ImageDataFilters(DataSetFilters):
         )
 
         if cast_dtype:
-            output[scalars] = output[scalars].astype(array_dtype)
+            output.point_data[scalars] = output.point_data[scalars].astype(array_dtype)
+        if is_cell_data:
+            cell_output = self.copy(deep=False)
+            cell_output.cell_data[scalars] = output.points_to_cells(scalars, copy=False).cell_data[
+                scalars
+            ]
+            cell_output.set_active_scalars(scalars, preference='cell')
+            return cell_output
         return output
 
     @_deprecate_positional_args
