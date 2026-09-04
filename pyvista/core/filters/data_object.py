@@ -3345,15 +3345,20 @@ class DataObjectFilters:
         If no bounds are given, a corner of the dataset bounds will be removed.
 
         :class:`~pyvista.PolyData` and :class:`~pyvista.PointSet` inputs are clipped with
-        :vtk:`vtkBoxClipDataSet`, which splits the output into tetrahedra. Other datasets are
-        clipped by the six box planes in turn with the same clipper as :meth:`clip`, which
-        keeps hexahedra and other cell types.
+        :vtk:`vtkBoxClipDataSet`, which splits the output into tetrahedra. All other inputs,
+        that is :class:`~pyvista.ImageData`, :class:`~pyvista.RectilinearGrid`,
+        :class:`~pyvista.StructuredGrid`, :class:`~pyvista.ExplicitStructuredGrid`, and
+        :class:`~pyvista.UnstructuredGrid`, are clipped by the six box planes in turn with
+        the same clipper as :meth:`clip`, which keeps hexahedra and other cell types.
 
         .. versionchanged:: 0.49
 
-            - Grids are clipped by the six box planes instead of :vtk:`vtkBoxClipDataSet`, so
-              the output keeps the input's cell types instead of being split into tetrahedra
-              and has fewer cells and points for the same clipped volume. Call
+            - :class:`~pyvista.ImageData`, :class:`~pyvista.RectilinearGrid`,
+              :class:`~pyvista.StructuredGrid`, :class:`~pyvista.ExplicitStructuredGrid`, and
+              :class:`~pyvista.UnstructuredGrid` inputs are clipped by the six box planes
+              instead of :vtk:`vtkBoxClipDataSet`, so the output keeps the input's cell types
+              instead of being split into tetrahedra and has fewer cells and points for the
+              same clipped volume. Call
               :meth:`~pyvista.DataSetFilters.triangulate` on the output for an all-tetrahedra
               mesh as before.
             - :class:`~pyvista.PointSet` blocks of a :class:`~pyvista.MultiBlock` stay
@@ -3451,6 +3456,7 @@ class DataObjectFilters:
                     zmin + bounds_[2],
                 )
             )
+        # Clip block by block so each block takes the path for its own type
         if isinstance(self, pv.MultiBlock):
             return self.generic_filter(
                 'clip_box',
@@ -3465,6 +3471,10 @@ class DataObjectFilters:
         if crinkle:
             source, active_scalars_info = _Crinkler._add_cell_ids(self)
 
+        # Optimization: ImageData, RectilinearGrid, StructuredGrid, ExplicitStructuredGrid, and
+        # UnstructuredGrid are clipped plane by plane, which keeps their cell types and is ~5x
+        # faster than vtkBoxClipDataSet; PolyData gains nothing from it, and only the box
+        # filter has the non-merging locator behind ``merge_points=False``
         if isinstance(self, (pv.PolyData, pv.PointSet)) or not merge_points:
             alg = _vtk.vtkBoxClipDataSet()
             if not merge_points:
@@ -3805,6 +3815,8 @@ class DataObjectFilters:
         origin_, normal_ = _validate_plane_origin_and_normal(
             self, origin, normal, plane, default_normal='x'
         )
+        # Optimization: build axis-aligned image slices directly; vtkCutter's quad path is
+        # ~60x slower and the output is the same up to ordering
         if (
             isinstance(self, pv.ImageData)
             and not generate_triangles
@@ -3820,6 +3832,7 @@ class DataObjectFilters:
                 coordinate=float(origin_[axis]),
                 sign=float(np.sign(normal_[axis])),
             )
+            # A plane that misses the image falls through to the cutter for its empty output
             if output is not None:
                 return output.contour() if contour else output
         # create the plane for clipping
@@ -5638,6 +5651,8 @@ def _clip_by_box_planes(
     progress_bar: bool,
 ) -> DataSet:
     """Clip by each plane in turn, keeping the inside or appending the outside pieces."""
+    # Each plane keeps the box side of the mesh; with ``invert`` the pieces cut away are
+    # collected and appended instead
     inside: DataSet = dataset
     outside = []
     for normal, origin in planes:
@@ -5657,6 +5672,7 @@ def _clip_by_box_planes(
     if not invert:
         return inside
     if not outside:
+        # Nothing lay outside the box, so return an empty clip of the right type
         return inside.clip(normal=planes[0][0], origin=planes[0][1], invert=False)
     append = _vtk.vtkAppendFilter()
     append.MergePointsOn()
