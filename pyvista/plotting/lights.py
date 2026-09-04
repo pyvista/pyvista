@@ -1128,9 +1128,22 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
             raise TypeError(msg)
 
         light = cls()
-        # Optimization: ``vtkLight.DeepCopy`` sets every field that used to be copied one
-        # property at a time here, in the same order (light type before the transform)
-        light.DeepCopy(vtk_light)
+        light.light_type = vtk_light.GetLightType()  # resets transformation matrix
+        light.position = vtk_light.GetPosition()
+        light.focal_point = vtk_light.GetFocalPoint()
+        light.ambient_color = vtk_light.GetAmbientColor()
+        light.diffuse_color = vtk_light.GetDiffuseColor()
+        light.specular_color = vtk_light.GetSpecularColor()
+        light.intensity = vtk_light.GetIntensity()
+        light.on = vtk_light.GetSwitch()
+        light.positional = vtk_light.GetPositional()
+        light.exponent = vtk_light.GetExponent()
+        light.cone_angle = vtk_light.GetConeAngle()
+        light.attenuation_values = vtk_light.GetAttenuationValues()
+        trans = vtk_light.GetTransformMatrix()
+        light.transform_matrix = trans
+        light.shadow_attenuation = vtk_light.GetShadowAttenuation()
+
         return light
 
     def show_actor(self):
