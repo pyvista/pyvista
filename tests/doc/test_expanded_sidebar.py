@@ -4,17 +4,14 @@ from __future__ import annotations
 
 import posixpath
 import re
+import subprocess
+import sys
 from typing import TYPE_CHECKING
 
 import pytest
-from sphinx.application import Sphinx
-from sphinx.util.docutils import docutils_namespace
 
 if TYPE_CHECKING:
     from pathlib import Path
-
-# Raised by sphinx_book_theme 1.4.0 under Sphinx 9, not by anything under test.
-pytestmark = pytest.mark.filterwarnings('ignore::sphinx.deprecation.RemovedInSphinx11Warning')
 
 SECTIONS = 2
 SUBSECTIONS = 2
@@ -64,12 +61,15 @@ def write_project(root: Path, *, extensions: list[str]) -> None:
 
 def build(source: Path) -> Path:
     """Build the project to HTML and return the output directory."""
+    # A subprocess: an in-process build leaves the 'sphinx' logger unable to propagate.
     out = source / '_build'
-    with docutils_namespace():
-        app = Sphinx(
-            str(source), str(source), str(out), str(out / '.doctrees'), 'html', status=None
-        )
-        app.build()
+    proc = subprocess.run(
+        [sys.executable, '-msphinx', '-b', 'html', str(source), str(out)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert proc.returncode == 0, proc.stdout + proc.stderr
     return out
 
 
