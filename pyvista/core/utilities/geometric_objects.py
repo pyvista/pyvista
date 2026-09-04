@@ -1106,7 +1106,7 @@ def SolidSphereGeneric(  # noqa: PLR0917
     # Optimization: the points and cells below are built with array arithmetic instead of
     # per-cell Python loops; every block keeps the point and cell order of the old loops
     # (origin, axis points, then r-major/phi/theta; tetras, pyramids, wedges, hexahedra)
-    point_blocks = []
+    point_blocks: list[NumpyArray[float]] = []
     npoints_on_axis = 0
     if np.isclose(radius[0], 0.0, rtol=0.0, atol=tol_radius):
         point_blocks.append(np.zeros((1, 3)))
@@ -1209,13 +1209,13 @@ def SolidSphereGeneric(  # noqa: PLR0917
             )
 
         # Pyramids that form to origin but without an axis point
-        iphi, ith = np.meshgrid(np.arange(nphi - 1), itheta, indexing='ij')
+        iphi_p, ith_p = np.meshgrid(np.arange(nphi - 1), itheta, indexing='ij')
         _add_cells(
             pv.CellType.PYRAMID,
-            _index(0, iphi, ith),
-            _index(0, iphi, ith + 1),
-            _index(0, iphi + 1, ith + 1),
-            _index(0, iphi + 1, ith),
+            _index(0, iphi_p, ith_p),
+            _index(0, iphi_p, ith_p + 1),
+            _index(0, iphi_p + 1, ith_p + 1),
+            _index(0, iphi_p + 1, ith_p),
             0,
         )
 
@@ -1228,16 +1228,16 @@ def SolidSphereGeneric(  # noqa: PLR0917
     # Wedges form between two r levels at first and last phi position
     #   At each r level, the triangle is formed with axis point,  two theta positions
     # First go upwards
-    ir, ith = np.meshgrid(np.arange(nr - 1), itheta, indexing='ij')
+    ir_w, ith_w = np.meshgrid(np.arange(nr - 1), itheta, indexing='ij')
     if positive_axis:
-        axis0 = ir + 1 if include_origin else ir
+        axis0 = ir_w + 1 if include_origin else ir_w
         raw_points = [
             axis0,
-            _index(ir, 0, ith),
-            _index(ir, 0, ith + 1),
+            _index(ir_w, 0, ith_w),
+            _index(ir_w, 0, ith_w + 1),
             axis0 + 1,
-            _index(ir + 1, 0, ith),
-            _index(ir + 1, 0, ith + 1),
+            _index(ir_w + 1, 0, ith_w),
+            _index(ir_w + 1, 0, ith_w + 1),
         ]
         if pv.vtk_version_info < (9, 7):
             raw_points = _reorder_wedge(raw_points)
@@ -1245,14 +1245,14 @@ def SolidSphereGeneric(  # noqa: PLR0917
 
     # now go downwards
     if negative_axis:
-        axis0 = npoints_on_pos_axis + ir
+        axis0 = npoints_on_pos_axis + ir_w
         raw_points = [
             axis0,
-            _index(ir, nphi - 1, ith + 1),
-            _index(ir, nphi - 1, ith),
+            _index(ir_w, nphi - 1, ith_w + 1),
+            _index(ir_w, nphi - 1, ith_w),
             axis0 + 1,
-            _index(ir + 1, nphi - 1, ith + 1),
-            _index(ir + 1, nphi - 1, ith),
+            _index(ir_w + 1, nphi - 1, ith_w + 1),
+            _index(ir_w + 1, nphi - 1, ith_w),
         ]
         if pv.vtk_version_info < (9, 7):
             raw_points = _reorder_wedge(raw_points)
@@ -1261,17 +1261,19 @@ def SolidSphereGeneric(  # noqa: PLR0917
     # Form Hexahedra
     # Hexahedra form between two r levels and two phi levels and two theta levels
     #   Order by r levels
-    ir, iphi, ith = np.meshgrid(np.arange(nr - 1), np.arange(nphi - 1), itheta, indexing='ij')
+    ir_h, iphi_h, ith_h = np.meshgrid(
+        np.arange(nr - 1), np.arange(nphi - 1), itheta, indexing='ij'
+    )
     _add_cells(
         pv.CellType.HEXAHEDRON,
-        _index(ir, iphi, ith),
-        _index(ir, iphi + 1, ith),
-        _index(ir, iphi + 1, ith + 1),
-        _index(ir, iphi, ith + 1),
-        _index(ir + 1, iphi, ith),
-        _index(ir + 1, iphi + 1, ith),
-        _index(ir + 1, iphi + 1, ith + 1),
-        _index(ir + 1, iphi, ith + 1),
+        _index(ir_h, iphi_h, ith_h),
+        _index(ir_h, iphi_h + 1, ith_h),
+        _index(ir_h, iphi_h + 1, ith_h + 1),
+        _index(ir_h, iphi_h, ith_h + 1),
+        _index(ir_h + 1, iphi_h, ith_h),
+        _index(ir_h + 1, iphi_h + 1, ith_h),
+        _index(ir_h + 1, iphi_h + 1, ith_h + 1),
+        _index(ir_h + 1, iphi_h, ith_h + 1),
     )
 
     mesh = pv.UnstructuredGrid(
