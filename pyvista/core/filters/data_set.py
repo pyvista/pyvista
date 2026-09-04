@@ -784,8 +784,9 @@ class DataSetFilters(DataObjectFilters):
             surface_ = surface_.extract_surface(  # type: ignore[unreachable]
                 algorithm=None, pass_pointid=False, pass_cellid=False
             )
-        function: _vtk.vtkImplicitPolyDataDistance | None = _vtk.vtkImplicitPolyDataDistance()
+        function = _vtk.vtkImplicitPolyDataDistance()
         function.SetInput(surface_)
+        clip_function: _vtk.vtkImplicitFunction | None = function
         source = self
         if compute_distance:
             points = pv.convert_array(self.points)
@@ -800,17 +801,17 @@ class DataSetFilters(DataObjectFilters):
                 self, surface_, function
             )
             source.set_active_scalars(_CLIP_SURFACE_SCALARS, preference='point')
-            function = None
+            clip_function = None
         # run the clip
         clipped = DataSetFilters._clip_with_function(
             source,
-            function,
+            clip_function,
             invert=invert,
             value=value,
             progress_bar=progress_bar,
             crinkle=crinkle,
         )
-        if function is None:
+        if clip_function is None:
             clipped.point_data.pop(_CLIP_SURFACE_SCALARS, None)
             info = self.active_scalars_info
             if info.name is not None and not clipped.is_empty:
