@@ -80,10 +80,28 @@ class _AlgorithmSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkAlgorithm):
     algorithm, and :attr:`pyvista.core.config.Config.points_dtype` is requested from it
     and applied to its output. A source has no input, so ``'preserve'`` leaves the dtype
     VTK generates alone.
+
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
+
     """
 
     def Update(self, *args: Any) -> Any:  # noqa: N802
-        """Update the source, requesting the configured points dtype."""
+        """Update the source, requesting the configured points dtype.
+
+        Parameters
+        ----------
+        *args : Any
+            Arguments forwarded to the VTK algorithm's ``Update``.
+
+        Returns
+        -------
+        Any
+            Whatever the VTK algorithm's ``Update`` returns.
+
+        """
         with _requested_points_precision(self):
             return super().Update(*args)
 
