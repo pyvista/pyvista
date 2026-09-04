@@ -142,6 +142,18 @@ def test_record_namespace_is_none_when_sphinx_autocodelink_unimportable(monkeypa
     assert plot_directive.record_namespace is not None
 
 
+def test_split_code_at_show_ends_a_piece_at_a_commented_show():
+    code = '>>> pl.show()  # doctest: +SKIP\n>>> pl = pv.Plotter()\n'
+    _, pieces = plot_directive._split_code_at_show(code)
+    assert pieces == ['>>> pl.show()  # doctest: +SKIP', '>>> pl = pv.Plotter()\n']
+
+
+def test_split_code_at_show_keeps_a_hash_inside_a_string():
+    code = ">>> mesh.plot(color='#ff0000')\n>>> a = 1\n"
+    _, pieces = plot_directive._split_code_at_show(code)
+    assert pieces == [">>> mesh.plot(color='#ff0000')", '>>> a = 1\n']
+
+
 DOCTEST_WITH_SKIP = '>>> a = 1\n>>> explode()  # doctest: +SKIP\n>>> b = 2\n'
 
 

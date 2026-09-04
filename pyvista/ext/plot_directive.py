@@ -202,6 +202,9 @@ _logger = sphinx_logging.getLogger(__name__)
 #: Matches a ``# doctest: +SKIP`` marker, any spacing.
 _DOCTEST_SKIP_RE = re.compile(r'doctest:\s*\+SKIP')
 
+#: Matches a ``#`` comment, or, as group 1, a string literal that may contain one.
+_COMMENT_RE = re.compile(r"""('(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*")|[ \t]*\#[^\n]*""")
+
 if TYPE_CHECKING:
     from collections.abc import Callable
 
@@ -392,8 +395,8 @@ def _contains_pyvista_plot(text) -> bool:
 
 
 def _strip_comments(code):
-    """Remove comments from a line of python code."""
-    return re.sub(r'(?m)^ *#.*\n?', '', code)
+    """Remove comments from a line of python code, leaving string literals alone."""
+    return _COMMENT_RE.sub(lambda match: match.group(1) or '', code)
 
 
 def _split_code_at_show(text):
