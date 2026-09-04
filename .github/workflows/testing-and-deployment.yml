@@ -15,7 +15,9 @@ on: # zizmor: ignore[cache-poisoning]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Runs started by the schedule or by hand never cancel an in-progress run, so a merge to
+  # `main` always finishes; they queue behind it, and are dropped if another merge arrives.
+  cancel-in-progress: ${{ github.event_name != 'schedule' && github.event_name != 'workflow_dispatch' }}
 
 env:
   ALLOW_PLOTTING: true
@@ -227,9 +229,9 @@ jobs:
           twine check --strict dist/*
 
   VTK-dev:
-    # For PRs, only run this job if the 'vtk-dev-testing' label is applied
+    # Runs on manual dispatch, and on PRs carrying the 'vtk-dev-testing' label
     if: |
-      (github.event_name != 'pull_request' && github.event_name != 'push' && github.event_name != 'merge_group') ||
+      github.event_name == 'workflow_dispatch' ||
       contains(github.event.pull_request.labels.*.name, 'vtk-dev-testing')
     name: Linux VTK Dev Testing
     permissions:
@@ -397,8 +399,8 @@ jobs:
 
       # Each matrix cell contributes one report per side. Sorting them into their own
       # directories lets each side upload under its own flag. VTK-dev is matched first
-      # and flagged apart, since it runs only nightly and a flag whose set of jobs varies
-      # cannot be compared across commits.
+      # and flagged apart, since it runs only on demand and a flag whose set of jobs
+      # varies cannot be compared across commits.
       - name: Sort reports by flag
         run: |
           mkdir -p flag_package flag_tests flag_package_vtk_dev flag_tests_vtk_dev
