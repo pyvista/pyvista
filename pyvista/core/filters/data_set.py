@@ -86,18 +86,71 @@ def _points_inside_surface(dataset: DataSet, surface: PolyData) -> NumpyArray[np
 
 def _signed_distance_near_surface(
     dataset: DataSet, surface: PolyData, function: _vtk.vtkImplicitPolyDataDistance
-) -> NumpyArray[float]:
+) -> NumpyArray[float] | None:
     """Build a signed distance field that is exact on the cells the surface cuts.
 
     Every point is classified inside (-1) or outside (1) the surface, and the points of
-    cells with both kinds of corner get their exact distance so the cut interpolates
-    to the surface.
+    cells with corners on both sides get their exact distance so the cut interpolates to
+    the surface. The points of the cells holding the surface's vertices and a sample of
+    all points are evaluated too, and each exact distance is checked against the
+    classification; a disagreement is corrected and the cells are re-examined once, and
+    ``None`` is returned if any remain.
     """
     inside = _points_inside_surface(dataset, surface)
     distance = np.where(inside, -1.0, 1.0)
-    if dataset.n_cells == 0:
-        return distance
+    is_exact = np.zeros(dataset.n_points, dtype=bool)
+    points = dataset.points
 
+    def exact_distance(point_ids):
+        values = _vtk.vtkDoubleArray()
+        function.FunctionValue(pv.convert_array(points[point_ids]), values)
+        return pv.convert_array(values)
+
+    seeds = np.concatenate(
+        [
+            _points_of_cells_containing(dataset, surface.points),
+            np.arange(0, dataset.n_points, max(1, dataset.n_points // 256)),
+        ]
+    )
+    for _ in range(2):
+        point_ids = np.union1d(seeds, _points_of_cells_cut_by_sign(dataset, inside))
+        point_ids = point_ids[~is_exact[point_ids]]
+        if point_ids.size == 0:
+            return distance
+        exact = exact_distance(point_ids)
+        distance[point_ids] = exact
+        is_exact[point_ids] = True
+        wrong = point_ids[(exact < 0) != inside[point_ids]]
+        if wrong.size == 0:
+            return distance
+        inside[wrong] = ~inside[wrong]
+    return None
+
+
+def _points_of_cells_containing(dataset: DataSet, points: NumpyArray[float]) -> NumpyArray[int]:
+    """Return the ids of the points of the cells that contain the given points."""
+    if isinstance(dataset, pv.ImageData):
+        # Index arithmetic instead of a cell locator
+        index = (
+            np.column_stack([points, np.ones(len(points))]) @ dataset.physical_to_index_matrix.T
+        )[:, :3]
+        cell = np.floor(index).astype(int) - np.array(dataset.offset)
+        n_cells = np.array(dataset.dimensions) - 1
+        cell = cell[np.all((cell >= 0) & (cell < n_cells), axis=1)]
+        cell_ids = np.unique(cell[:, 0] + n_cells[0] * (cell[:, 1] + n_cells[1] * cell[:, 2]))
+    else:
+        cell_ids = np.unique(dataset.find_containing_cell(points))
+    cell_ids = cell_ids[cell_ids >= 0]
+    if cell_ids.size == 0:
+        return np.empty(0, dtype=int)
+    cells = dataset.extract_cells(cell_ids, pass_point_ids=True, pass_cell_ids=False)
+    return np.asarray(cells.point_data['vtkOriginalPointIds'])
+
+
+def _points_of_cells_cut_by_sign(
+    dataset: DataSet, inside: NumpyArray[np.bool_]
+) -> NumpyArray[int]:
+    """Return the ids of the points of cells that have corners on both sides."""
     marked = dataset.copy(deep=False)
     marked.point_data[_CLIP_SURFACE_SCALARS] = inside.astype(np.float32)
     to_cells = _vtk.vtkPointDataToCellData()
@@ -110,12 +163,9 @@ def _signed_distance_near_surface(
     cut = dataset.extract_cells(
         np.flatnonzero((fraction > 0) & (fraction < 1)), pass_point_ids=True, pass_cell_ids=False
     )
-    if cut.n_points:
-        point_ids = np.asarray(cut.point_data['vtkOriginalPointIds'])
-        exact = _vtk.vtkDoubleArray()
-        function.FunctionValue(pv.convert_array(dataset.points[point_ids]), exact)
-        distance[point_ids] = pv.convert_array(exact)
-    return distance
+    if cut.n_points == 0:
+        return np.empty(0, dtype=int)
+    return np.asarray(cut.point_data['vtkOriginalPointIds'])
 
 
 @abstract_class
@@ -748,8 +798,9 @@ class DataSetFilters(DataObjectFilters):
             dataset.  A new array called ``'implicit_distance'`` will
             be added to the output clipped mesh. With a closed surface and
             ``value=0``, this also makes the clip evaluate the distance at
-            every point instead of only at the points of cells the surface
-            passes through.
+            every point instead of classifying points as inside or outside
+            and evaluating it only at the points of cells the surface passes
+            through, where the classification is checked and corrected.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -794,14 +845,14 @@ class DataSetFilters(DataObjectFilters):
             function.FunctionValue(points, dists)
             source = self.copy(deep=False)
             source['implicit_distance'] = pv.convert_array(dists)
-        elif value == 0 and not self.is_empty and surface_.n_faces and surface_.n_open_edges == 0:
+        elif value == 0 and self.n_cells and surface_.n_faces and surface_.n_open_edges == 0:
             # Only the points of cells the surface passes through need a distance
-            source = self.copy(deep=False)
-            source.point_data[_CLIP_SURFACE_SCALARS] = _signed_distance_near_surface(
-                self, surface_, function
-            )
-            source.set_active_scalars(_CLIP_SURFACE_SCALARS, preference='point')
-            clip_function = None
+            distance = _signed_distance_near_surface(self, surface_, function)
+            if distance is not None:
+                source = self.copy(deep=False)
+                source.point_data[_CLIP_SURFACE_SCALARS] = distance
+                source.set_active_scalars(_CLIP_SURFACE_SCALARS, preference='point')
+                clip_function = None
         # run the clip
         clipped = DataSetFilters._clip_with_function(
             source,
