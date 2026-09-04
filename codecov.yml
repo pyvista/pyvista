@@ -65,8 +65,8 @@ flag_management:
       paths:
         - tests/
     # Flagged apart from the two above so the statuses compare a fixed set of jobs.
-    # VTK-dev runs only nightly, so `carryforward` keeps the lines it alone covers from
-    # reading as uncovered; no status is attached, so a stale carry-forward cannot gate.
+    # VTK-dev runs only on labelled PRs, so `carryforward` keeps the lines it alone covers
+    # from reading as uncovered; no status is attached, so a stale carry-forward cannot gate.
     - name: package-vtk-dev
       carryforward: true
       paths:

@@ -13,7 +13,9 @@ on: # zizmor: ignore[cache-poisoning]
       - "maint/integration*"
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  # The nightly run and a push to `main` share a ref, so the event name keeps a merge
+  # from cancelling the nightly and the nightly from cancelling a merge.
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
 
 env:
