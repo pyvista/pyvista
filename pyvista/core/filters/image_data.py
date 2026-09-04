@@ -27,7 +27,6 @@ from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.utilities.arrays import FieldAssociation
-from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import set_default_active_scalars
 from pyvista.core.utilities.helpers import _warn_if_invalid_data
@@ -65,6 +64,7 @@ _InterpolationOptions = Literal[
     'bspline8',
     'bspline9',
 ]
+_BorderModeOptions = Literal['clamp', 'wrap', 'mirror']
 _AxisOptions = Literal[0, 1, 2, 'x', 'y', 'z']
 _ConcatenateModeOptions = Literal[
     'strict',
@@ -4208,7 +4208,7 @@ class ImageDataFilters(DataSetFilters):
         sample_rate: float | VectorLike[float] | None = None,
         interpolation: _InterpolationOptions = 'nearest',
         *,
-        border_mode: Literal['clamp', 'wrap', 'mirror'] = 'clamp',
+        border_mode: _BorderModeOptions = 'clamp',
         reference_image: ImageData | None = None,
         dimensions: VectorLike[int] | None = None,
         anti_aliasing: bool = False,
@@ -4673,7 +4673,7 @@ class ImageDataFilters(DataSetFilters):
             get_args(_InterpolationOptions), must_contain=interpolation, name='interpolation'
         )
         _validation.check_contains(
-            ['clamp', 'wrap', 'mirror'], must_contain=border_mode, name='border_mode'
+            get_args(_BorderModeOptions), must_contain=border_mode, name='border_mode'
         )
         reference_image_provided = reference_image is not None
         if reference_image_provided:
@@ -4686,8 +4686,8 @@ class ImageDataFilters(DataSetFilters):
             _validation.check_instance(reference_image, pv.ImageData, name='reference_image')
         elif sample_rate is not None and dimensions is not None:
             msg = (
-                'Cannot specify a sample rate along with `reference_image` or `dimensions` '
-                'parameters.\n`sample_rate` must define the sampling geometry exclusively.'
+                'Cannot specify a sample rate along with the `dimensions` parameter.\n'
+                '`sample_rate` must define the sampling geometry exclusively.'
             )
             raise ValueError(msg)
 
@@ -4752,10 +4752,16 @@ class ImageDataFilters(DataSetFilters):
         # Singleton input dimensions are never resampled
         new_dimensions[old_dimensions == 1] = 1
         if processing_cell_scalars and np.any(new_dimensions < 1):
-            msg = (
-                '`dimensions` must be at least 2 along each non-singleton axis when resampling '
-                'cell data.'
-            )
+            axes = 'at least 2 along each non-singleton axis when resampling cell data.'
+            if sample_rate is not None:
+                msg = (
+                    '`sample_rate` is too small, it must keep at least one cell along each '
+                    'axis when resampling cell data.'
+                )
+            elif reference_image is not None:
+                msg = f'`reference_image` must have dimensions of {axes}'
+            else:
+                msg = f'`dimensions` must be {axes}'
             raise ValueError(msg)
         new_dimensions = np.maximum(new_dimensions, 1)
 
@@ -4768,6 +4774,8 @@ class ImageDataFilters(DataSetFilters):
                 # width as a box filter averaging the samples the axis merges
                 ratio = old_dimensions / new_dimensions
                 std_dev = np.where(ratio > 1, ratio / np.sqrt(12), 0.0)
+                # The kernel radius is truncated to an integer, so the default factor of
+                # 1.5 gives a single tap, and no blurring at all, for ratios below ~2.3
                 input_image = input_image.gaussian_smooth(
                     std_dev=std_dev, radius_factor=3.0, progress_bar=progress_bar
                 )
@@ -4796,9 +4804,8 @@ class ImageDataFilters(DataSetFilters):
         _update_alg(resize_filter, progress_bar=progress_bar, message='Resampling image.')
         output_image = _get_output(resize_filter)
 
-        output_scalars = output_image.GetPointData().GetScalars()
-        output_scalars.SetName(name)
-        output_array = convert_array(output_scalars)
+        output_image.rename_array(output_image.active_scalars_name, name)
+        output_array = output_image.active_scalars
         if output_array.dtype != input_dtype:
             output_image.point_data[name] = _round_to_dtype(output_array, input_dtype)
 
@@ -4809,7 +4816,7 @@ class ImageDataFilters(DataSetFilters):
             output_image.offset = reference_image.offset
 
         if processing_cell_scalars:
-            # Convert back to cells. This modifies origin so we need to reset it.
+            # Convert back to cells
             output_image = output_image.points_to_cells(
                 scalars=name, copy=False, dimensionality=dimensionality
             )
@@ -5761,7 +5768,7 @@ def _pad_extent(extent, padding):
 
 def _set_border_mode(
     obj: _vtk.vtkAbstractImageInterpolator | _vtk.vtkImageBSplineCoefficients,
-    border_mode: Literal['clamp', 'wrap', 'mirror'],
+    border_mode: _BorderModeOptions,
 ) -> None:
     """Set the border mode of an image interpolator or spline coefficients filter."""
     setters = {
@@ -5773,7 +5780,7 @@ def _set_border_mode(
 
 
 def _image_interpolator(
-    interpolation: _InterpolationOptions, border_mode: Literal['clamp', 'wrap', 'mirror']
+    interpolation: _InterpolationOptions, border_mode: _BorderModeOptions
 ) -> _vtk.vtkAbstractImageInterpolator:
     """Create the image interpolator used by the ``resample`` filter."""
     interpolator: _vtk.vtkAbstractImageInterpolator
@@ -5793,10 +5800,13 @@ def _image_interpolator(
             'blackman': interpolator.SetWindowFunctionToBlackman,
         }
         windows[interpolation]()
-    else:
-        # B-spline with an optional degree suffix, e.g. 'bspline5'
+    elif interpolation.startswith('bspline'):
+        # The degree is an optional suffix, for example 'bspline5'
         interpolator = _vtk.vtkImageBSplineInterpolator()
         interpolator.SetSplineDegree(int(interpolation.removeprefix('bspline') or 3))
+    else:  # pragma: no cover
+        msg = f"Unexpected interpolation mode '{interpolation}'."
+        raise RuntimeError(msg)
     _set_border_mode(interpolator, border_mode)
     return interpolator
 

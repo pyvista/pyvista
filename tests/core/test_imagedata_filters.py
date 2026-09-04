@@ -1286,7 +1286,7 @@ def test_resample_raises(uniform):
         uniform.resample(dimensions=(2, 2, 2), reference_image=uniform)
 
     match = (
-        'Cannot specify a sample rate along with `reference_image` or `dimensions` parameters.\n'
+        'Cannot specify a sample rate along with the `dimensions` parameter.\n'
         '`sample_rate` must define the sampling geometry exclusively.'
     )
     with pytest.raises(ValueError, match=re.escape(match)):
@@ -1340,6 +1340,13 @@ def test_resample_cell_data_dimensions_raises():
     with pytest.raises(ValueError, match=re.escape(match)):
         image.resample(dimensions=(1, 5, 5))
 
+    match = (
+        '`reference_image` must have dimensions of at least 2 along each non-singleton axis '
+        'when resampling cell data.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        image.resample(reference_image=pv.ImageData(dimensions=(1, 5, 5)))
+
 
 def test_resample_extend_border_offset():
     image = pv.ImageData(dimensions=(4, 4, 1), offset=(10, -3, 0))
@@ -1383,6 +1390,12 @@ def test_resample_dtype(dtype, interpolation):
     if interpolation == 'linear':
         assert array.min() == values.min()
         assert array.max() == values.max()
+    else:
+        # B-spline overshoots slightly. Without clamping, an undershoot below zero wraps
+        # around to a huge value for the unsigned types.
+        overshoot = 5
+        assert int(array.min()) >= int(values.min()) - overshoot
+        assert int(array.max()) <= int(values.max()) + overshoot
 
 
 def test_resample_int64_rounding():
@@ -1437,6 +1450,44 @@ def test_resample_fractional_dimensions():
     image['data'] = np.zeros(image.n_points)
     assert np.array_equal(image.resample(0.5).dimensions, (116, 85, 1))
     assert np.array_equal(image.resample(0.29).dimensions, (67, 49, 1))
+
+    # A rate whose product is an integer but computes just below it is rounded up
+    image = pv.ImageData(dimensions=(100, 100, 1))
+    image['data'] = np.zeros(image.n_points)
+    assert 100 * 0.29 < 29.0
+    assert np.array_equal(image.resample(0.29).dimensions, (29, 29, 1))
+
+
+def test_resample_anti_aliasing_blur_width():
+    # The blur matches a Gaussian whose width is the sampling ratio's box filter
+    rng = np.random.default_rng(0)
+    image = pv.ImageData(dimensions=(64, 64, 1))
+    image['data'] = rng.random(image.n_points)
+    ratio = 8
+
+    expected = image.gaussian_smooth(
+        std_dev=(ratio / np.sqrt(12), ratio / np.sqrt(12), 0.0), radius_factor=3.0
+    ).resample(1 / ratio, 'linear')
+    actual = image.resample(1 / ratio, 'linear', anti_aliasing=True)
+    assert np.allclose(actual['data'], expected['data'])
+
+    # A fixed blur, as used before, is not equivalent
+    fixed = image.gaussian_smooth(std_dev=(2.0, 2.0, 0.0), radius_factor=3.0).resample(
+        1 / ratio, 'linear'
+    )
+    assert not np.allclose(actual['data'], fixed['data'])
+
+
+def test_resample_cell_data_sample_rate_raises():
+    image = pv.ImageData(dimensions=(5, 5, 5))
+    image.cell_data['data'] = np.arange(image.n_cells, dtype=float)
+
+    match = (
+        '`sample_rate` is too small, it must keep at least one cell along each axis when '
+        'resampling cell data.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        image.resample(0.1)
 
 
 def test_select_values(uniform):
