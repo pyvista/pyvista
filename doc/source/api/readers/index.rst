@@ -372,6 +372,56 @@ selection is needed::
    ``pyvista.FRDReader`` was removed; use ``pyvista_frd.FRDReader``.
 
 
+Faster Readers for Built-in Formats
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Two further companion packages read a format PyVista already supports,
+faster than the VTK reader does.  They declare the
+``pyvista.readers.override`` entry point described above, so installing
+one is all it takes for :func:`pyvista.read` to use it.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 10 35 25
+
+   * - Extension
+     - Format
+     - Package
+   * - ``.ply``
+     - Polygon File Format
+     - `pyvista-miniply <https://github.com/pyvista/pyvista-miniply>`_
+   * - ``.stl``
+     - Stereolithography
+     - `pyvista-stl <https://github.com/pyvista/pyvista-stl>`_
+
+Both ship in the ``io-override`` extra, which is intentionally separate
+from ``io`` because installing it changes the readers used for existing
+formats::
+
+   pip install pyvista[io-override]
+
+The packages aim to match the stock VTK readers, including point normals,
+texture coordinates, and colors, but their behavior and output are not
+guaranteed to be identical.  Neither is required: without them
+:func:`pyvista.read` falls back to :class:`pyvista.PLYReader` and
+:class:`pyvista.STLReader`, which also remain what
+:func:`pyvista.get_reader` hands back.
+
+Because an override changes a format the user did not choose,
+:func:`pyvista.registered_readers` reports it::
+
+   import pyvista as pv
+
+   [(r.extension, r.source) for r in pv.registered_readers() if r.override]
+   # [('.ply', 'pyvista_miniply:read_as_mesh'), ('.stl', 'pyvista_stl:read_as_mesh')]
+
+To read a file with the VTK reader while a package is installed, use
+the reader class directly::
+
+   mesh = pv.STLReader('mesh.stl').read()
+
+.. versionadded:: 0.49.0
+
 Writer Classes
 ~~~~~~~~~~~~~~
 
