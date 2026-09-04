@@ -31,6 +31,8 @@ from pyvista.core.filters.data_object import _VTK_CELL_STATUS_INFO
 from pyvista.core.filters.data_object import _convex_hull_scipy
 from pyvista.core.filters.data_object import _get_cell_quality_measures
 from pyvista.core.utilities.cell_quality import _CellQualityLiteral
+from pyvista.core.utilities.helpers import _NORMALS
+from pyvista.core.utilities.helpers import generate_plane
 from tests.core.test_dataset_filters import HYPOTHESIS_MAX_EXAMPLES
 from tests.core.test_dataset_filters import n_numbers
 from tests.core.test_dataset_filters import normals
@@ -549,6 +551,108 @@ def test_clip_slab_matches_two_clip_workaround_polydata():
     assert old.n_cells > 0
     assert np.allclose(new.bounds, old.bounds, atol=1e-6)
     assert new.area == pytest.approx(old.area, rel=1e-6)
+
+
+def _image_for_slicing():
+    image = pv.ImageData(dimensions=(9, 7, 6), spacing=(1.0, 1.5, 2.0), origin=(1.0, 2.0, 3.0))
+    image.point_data['ints'] = np.arange(image.n_points, dtype=np.int16) - 100
+    image.point_data['floats'] = np.linspace(-1.0, 1.0, image.n_points) ** 3
+    image.point_data['rgb'] = np.tile(np.arange(image.n_points)[:, None], (1, 3)).astype(np.uint8)
+    image.cell_data['cell'] = np.arange(image.n_cells, dtype=np.int32)
+    image.field_data['meta'] = ['x']
+    image.set_active_scalars('floats')
+    return image
+
+
+def _cutter_slice(mesh, normal, origin):
+    normal = _NORMALS[normal] if isinstance(normal, str) else normal
+    return mesh.slice_implicit(generate_plane(normal, origin))
+
+
+def _assert_slices_match(actual, expected):
+    assert actual.n_points == expected.n_points
+    assert actual.n_cells == expected.n_cells
+    assert actual.array_names == expected.array_names
+    assert actual.active_scalars_name == expected.active_scalars_name
+    assert list(actual.field_data.keys()) == list(expected.field_data.keys())
+    if actual.n_points == 0:
+        return
+    assert set(np.unique(actual.faces[::5])) == {4}
+    order_actual = np.lexsort(np.asarray(actual.points).T[::-1])
+    order_expected = np.lexsort(np.asarray(expected.points).T[::-1])
+    assert np.allclose(actual.points[order_actual], expected.points[order_expected])
+    for name in expected.point_data.keys():
+        got = np.asarray(actual.point_data[name])[order_actual]
+        want = np.asarray(expected.point_data[name])[order_expected]
+        assert got.dtype == want.dtype
+        # Integer values are truncated from a lerp that can differ in the last bit
+        atol = 1 if got.dtype.kind in 'iu' else 1e-12
+        assert np.allclose(got, want, atol=atol)
+    for name in expected.cell_data.keys():
+        assert np.array_equal(
+            np.sort(actual.cell_data[name], axis=0), np.sort(expected.cell_data[name], axis=0)
+        )
+
+
+@pytest.mark.parametrize('normal', ['x', 'y', 'z', (-1, 0, 0), (0, -2, 0), (0, 0, -1)])
+@pytest.mark.parametrize('fraction', [0.0, 0.2, 0.5, 0.731, 1.0])
+def test_slice_image_axis_aligned_matches_cutter(normal, fraction):
+    image = _image_for_slicing()
+    axis = int(np.flatnonzero(_NORMALS[normal] if isinstance(normal, str) else normal)[0])
+    bounds = image.bounds
+    origin = list(image.center)
+    origin[axis] = bounds[2 * axis] + fraction * (bounds[2 * axis + 1] - bounds[2 * axis])
+    _assert_slices_match(image.slice(normal, origin=origin), _cutter_slice(image, normal, origin))
+
+
+def test_slice_image_axis_aligned_on_grid_plane_and_offset():
+    image = _image_for_slicing()
+    image.offset = (3, 4, 5)
+    for k in (0, 1, 4, 8):
+        origin = [image.origin[0] + (image.offset[0] + k) * image.spacing[0], 0.0, 0.0]
+        _assert_slices_match(image.slice('x', origin=origin), _cutter_slice(image, 'x', origin))
+
+
+def test_slice_image_plane_outside_is_empty():
+    image = _image_for_slicing()
+    sliced = image.slice('x', origin=(image.bounds[1] + 1.0, 0.0, 0.0))
+    assert sliced.n_points == 0
+    assert sliced.array_names == image.array_names
+
+
+@pytest.mark.parametrize(
+    'kwargs',
+    [
+        dict(normal=(1, 1, 0)),
+        dict(normal='x', generate_triangles=True),
+        dict(normal='x', contour=True),
+    ],
+)
+def test_slice_image_other_paths(kwargs):
+    image = _image_for_slicing()
+    sliced = image.slice(**kwargs)
+    assert isinstance(sliced, pv.PolyData)
+    assert sliced.n_cells
+
+
+def test_slice_image_rotated_uses_cutter():
+    image = _image_for_slicing()
+    image.direction_matrix = pv.Transform().rotate_z(30).matrix[:3, :3]
+    sliced = image.slice('x')
+    expected = _cutter_slice(image, 'x', image.center)
+    assert sliced.n_points == expected.n_points
+    assert np.allclose(np.sort(sliced.points, axis=0), np.sort(expected.points, axis=0))
+
+
+def test_slice_image_orthogonal_and_along_axis():
+    image = _image_for_slicing()
+    orthogonal = image.slice_orthogonal()
+    assert orthogonal.n_blocks == 3
+    for block, axis in zip(orthogonal, (0, 1, 2), strict=True):
+        assert np.allclose(block.points[:, axis], image.center[axis])
+    along = image.slice_along_axis(n=4, axis='z')
+    assert along.n_blocks == 4
+    assert all(block.n_cells == 8 * 6 for block in along)
 
 
 def test_slice_filter(datasets_no_pointset):

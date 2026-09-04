@@ -53,6 +53,7 @@ if TYPE_CHECKING:
 
     from pyvista import DataSet
     from pyvista import DataSetAttributes
+    from pyvista import ImageData
     from pyvista import MultiBlock
     from pyvista import PolyData
     from pyvista import RotationLike
@@ -3751,6 +3752,13 @@ class DataObjectFilters:
         pyvista.PolyData
             Sliced dataset.
 
+        Notes
+        -----
+        An axis-aligned plane through an :class:`~pyvista.ImageData` with an identity
+        :attr:`~pyvista.ImageData.direction_matrix` is sliced directly into quads, with
+        point data interpolated between the two neighbouring grid planes. All other
+        inputs use :vtk:`vtkCutter`.
+
         See Also
         --------
         slice_implicit
@@ -3776,6 +3784,23 @@ class DataObjectFilters:
         origin_, normal_ = _validate_plane_origin_and_normal(
             self, origin, normal, plane, default_normal='x'
         )
+        if (
+            isinstance(self, pv.ImageData)
+            and not generate_triangles
+            and np.count_nonzero(normal_) == 1
+            and min(self.dimensions) > 1
+            and np.array_equal(self.direction_matrix, np.eye(3))
+            and all(array.dtype.kind in 'biuf' for array in self.point_data.values())
+        ):
+            axis = int(np.flatnonzero(normal_)[0])
+            output = _slice_image_along_axis(
+                self,
+                axis=axis,
+                coordinate=float(origin_[axis]),
+                sign=float(np.sign(normal_[axis])),
+            )
+            if output is not None:
+                return output.contour() if contour else output
         # create the plane for clipping
         implicit_function = generate_plane(normal_, origin_)
         return self.slice_implicit(
@@ -5510,6 +5535,63 @@ def _get_cell_quality_measures() -> dict[str, str]:
             measure_name = re.sub(r'([a-z])([A-Z])', r'\1_\2', measure_name).lower()
             measures[measure_name] = attr
     return measures
+
+
+def _slice_image_along_axis(
+    image: ImageData, *, axis: int, coordinate: float, sign: float
+) -> PolyData | None:
+    """Slice an image by an axis-aligned plane without the generic cutter.
+
+    A point is on the kept side of the plane when ``sign * (x - coordinate)`` is not
+    negative, as in :vtk:`vtkCutter`, so a plane on grid plane ``k`` takes its values
+    from that plane. Returns ``None`` when the plane misses the image.
+    """
+    dims = np.array(image.dimensions)
+    spacing = np.array(image.spacing)
+    origin = np.array(image.origin)
+    offset = np.array(image.offset)
+    grids = [origin[ax] + (offset[ax] + np.arange(dims[ax])) * spacing[ax] for ax in range(3)]
+    side = sign * (grids[axis] - coordinate) >= 0
+    crossing = np.flatnonzero(side[:-1] != side[1:])
+
+    if crossing.size == 0:
+        return None
+
+    # The cutter interpolates an edge with t = (0 - s0) / (s1 - s0)
+    k0 = int(crossing[0])
+    s0 = sign * (grids[axis][k0] - coordinate)
+    s1 = sign * (grids[axis][k0 + 1] - coordinate)
+    t = (0.0 - s0) / (s1 - s0)
+    grids[axis] = np.array([grids[axis][k0] + t * (grids[axis][k0 + 1] - grids[axis][k0])])
+    points = np.column_stack(
+        [coords.ravel(order='F') for coords in np.meshgrid(*grids, indexing='ij')]
+    )
+    n_i, n_j = (dims[ax] for ax in range(3) if ax != axis)
+    ii, jj = np.meshgrid(np.arange(n_i - 1), np.arange(n_j - 1), indexing='ij')
+    first = (ii + jj * n_i).ravel(order='F')
+    faces = np.column_stack([first, first + 1, first + 1 + n_i, first + n_i])
+    output = pv.PolyData.from_regular_faces(points, faces)
+
+    def slab(array, k):
+        # The plane of values at index k along the axis, ordered like the points
+        grid_shape = tuple(dims[::-1]) if len(array) == image.n_points else tuple(dims[::-1] - 1)
+        index = [slice(None)] * 3
+        index[2 - axis] = k
+        return array.reshape(grid_shape + array.shape[1:])[tuple(index)].reshape(
+            -1, *array.shape[1:]
+        )
+
+    for name in image.point_data.keys():
+        array = np.asarray(image.point_data[name])
+        lower, upper = slab(array, k0).astype(float), slab(array, k0 + 1).astype(float)
+        output.point_data[name] = (lower * (1.0 - t) + upper * t).astype(array.dtype)
+    for name in image.cell_data.keys():
+        output.cell_data[name] = slab(np.asarray(image.cell_data[name]), k0)
+
+    output.copy_meta_from(image, deep=True)
+    output.field_data.update(image.field_data)
+    output.set_active_scalars(image.active_scalars_name)
+    return output
 
 
 def _box_planes(bounds: NumpyArray[float]) -> list[tuple[VectorLike[float], VectorLike[float]]]:
