@@ -508,17 +508,20 @@ def download_usa_texture(load: bool = True) -> Texture | str:  # noqa: FBT001, F
 
     Examples
     --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> dataset = examples.download_usa_texture()
-    >>> dataset.plot(cpos='xy')
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> dataset = examples.download_usa_texture()
+        >>> dataset.plot(cpos='xy')
 
-        :ref:`Usa Texture Dataset <usa_texture_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
 
-        :ref:`Usa Dataset <usa_dataset>`
+            :ref:`Usa Texture Dataset <usa_texture_dataset>`
+                See this dataset in the Dataset Gallery for more info.
+
+            :ref:`Usa Dataset <usa_dataset>`
 
     """
     return _download_dataset(_dataset_usa_texture, load=load)
@@ -969,24 +972,27 @@ def download_head(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
 
     Examples
     --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> dataset = examples.download_head()
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_volume(dataset, cmap='cool', opacity='sigmoid_6')
-    >>> pl.camera_position = pv.CameraPosition(
-    ...     position=(-228.0, -418.0, -158.0),
-    ...     focal_point=(94.0, 122.0, 82.0),
-    ...     viewup=(-0.2, -0.3, 0.9),
-    ... )
-    >>> pl.show()
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> dataset = examples.download_head()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_volume(dataset, cmap='cool', opacity='sigmoid_6')
+        >>> pl.camera_position = pv.CameraPosition(
+        ...     position=(-228.0, -418.0, -158.0),
+        ...     focal_point=(94.0, 122.0, 82.0),
+        ...     viewup=(-0.2, -0.3, 0.9),
+        ... )
+        >>> pl.show()
 
-        :ref:`Head Dataset <head_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
 
-        :ref:`Head 2 Dataset <head_2_dataset>`
+            :ref:`Head Dataset <head_dataset>`
+                See this dataset in the Dataset Gallery for more info.
+
+            :ref:`Head 2 Dataset <head_2_dataset>`
 
     """
     return _download_dataset(_dataset_head, load=load)
@@ -1068,27 +1074,30 @@ def download_bolt_nut(load: bool = True) -> MultiBlock | str:  # noqa: FBT001, F
 
     Examples
     --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> dataset = examples.download_bolt_nut()
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_volume(
-    ...     dataset,
-    ...     cmap='coolwarm',
-    ...     opacity='sigmoid_5',
-    ...     show_scalar_bar=False,
-    ... )
-    >>> pl.camera_position = pv.CameraPosition(
-    ...     position=(194.6, -141.8, 182.0),
-    ...     focal_point=(34.5, 61.0, 32.5),
-    ...     viewup=(-0.229, 0.45, 0.86),
-    ... )
-    >>> pl.show()
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> dataset = examples.download_bolt_nut()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_volume(
+        ...     dataset,
+        ...     cmap='coolwarm',
+        ...     opacity='sigmoid_5',
+        ...     show_scalar_bar=False,
+        ... )
+        >>> pl.camera_position = pv.CameraPosition(
+        ...     position=(194.6, -141.8, 182.0),
+        ...     focal_point=(34.5, 61.0, 32.5),
+        ...     viewup=(-0.229, 0.45, 0.86),
+        ... )
+        >>> pl.show()
 
-        :ref:`Bolt Nut Dataset <bolt_nut_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
+
+            :ref:`Bolt Nut Dataset <bolt_nut_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_bolt_nut, load=load)
@@ -1678,14 +1687,17 @@ def download_iron_protein(load: bool = True) -> ImageData | str:  # noqa: FBT001
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_iron_protein()
-    >>> dataset.plot(volume=True, cmap='blues')
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> dataset = examples.download_iron_protein()
+        >>> dataset.plot(volume=True, cmap='blues')
 
-        :ref:`Iron Protein Dataset <iron_protein_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
+
+            :ref:`Iron Protein Dataset <iron_protein_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_iron_protein, load=load)
@@ -2004,16 +2016,19 @@ def download_bird_texture(load: bool = True) -> Texture | str:  # noqa: FBT001, 
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_bird_texture()
-    >>> dataset.plot(cpos='xy')
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> dataset = examples.download_bird_texture()
+        >>> dataset.plot(cpos='xy')
 
-        :ref:`Bird Texture Dataset <bird_texture_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
 
-        :ref:`Bird Dataset <bird_dataset>`
+            :ref:`Bird Texture Dataset <bird_texture_dataset>`
+                See this dataset in the Dataset Gallery for more info.
+
+            :ref:`Bird Dataset <bird_dataset>`
 
     """
     return _download_dataset(_dataset_bird_texture, load=load)
@@ -2336,18 +2351,21 @@ def download_gourds_texture(zoom: bool = False, load: bool = True) -> Texture | 
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_gourds_texture()
-    >>> dataset.plot(cpos='xy')
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> dataset = examples.download_gourds_texture()
+        >>> dataset.plot(cpos='xy')
 
-        :ref:`Gourds Texture Dataset <gourds_texture_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
 
-        :ref:`Gourds Dataset <gourds_dataset>`
+            :ref:`Gourds Texture Dataset <gourds_texture_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
-        :ref:`Gourds Pnm Dataset <gourds_pnm_dataset>`
+            :ref:`Gourds Dataset <gourds_dataset>`
+
+            :ref:`Gourds Pnm Dataset <gourds_pnm_dataset>`
 
     """
     example = __gourds2_texture if zoom else _dataset_gourds_texture
@@ -3432,18 +3450,21 @@ def download_sky_box_nz_texture(load: bool = True) -> Texture | str:  # noqa: FB
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_sky_box_nz_texture()
-    >>> dataset.plot(cpos='xy')
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> dataset = examples.download_sky_box_nz_texture()
+        >>> dataset.plot(cpos='xy')
 
-        :ref:`Sky Box Nz Texture Dataset <sky_box_nz_texture_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
 
-        :ref:`Sky Box Nz Dataset <sky_box_nz_dataset>`
+            :ref:`Sky Box Nz Texture Dataset <sky_box_nz_texture_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
-        :ref:`Sky Box Cube Map Dataset <sky_box_cube_map_dataset>`
+            :ref:`Sky Box Nz Dataset <sky_box_nz_dataset>`
+
+            :ref:`Sky Box Cube Map Dataset <sky_box_cube_map_dataset>`
 
     """
     return _download_dataset(_dataset_sky_box_nz_texture, load=load)
@@ -3755,20 +3776,23 @@ def download_carotid(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> import pyvista as pv
-    >>> cpos = pv.CameraPosition(
-    ...     position=(221.0, -24.38, -69.96),
-    ...     focal_point=(135.9, 106.6, 17.72),
-    ...     viewup=(-0.25, 0.42, -0.87),
-    ... )
-    >>> dataset = examples.download_carotid()
-    >>> dataset.plot(volume=True, cpos=cpos)
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> cpos = pv.CameraPosition(
+        ...     position=(221.0, -24.38, -69.96),
+        ...     focal_point=(135.9, 106.6, 17.72),
+        ...     viewup=(-0.25, 0.42, -0.87),
+        ... )
+        >>> dataset = examples.download_carotid()
+        >>> dataset.plot(volume=True, cpos=cpos)
 
-        :ref:`Carotid Dataset <carotid_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
+
+            :ref:`Carotid Dataset <carotid_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_carotid, load=load)
@@ -4587,20 +4611,23 @@ def download_crater_imagery(load: bool = True) -> Texture | str:  # noqa: FBT001
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> import pyvista as pv
-    >>> cpos = pv.CameraPosition(
-    ...     position=(66.0, 73.0, -382.6),
-    ...     focal_point=(66.0, 73.0, 0.0),
-    ...     viewup=(0.0, -1.0, 0.0),
-    ... )
-    >>> texture = examples.download_crater_imagery()
-    >>> texture.plot(cpos=cpos)
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> cpos = pv.CameraPosition(
+        ...     position=(66.0, 73.0, -382.6),
+        ...     focal_point=(66.0, 73.0, 0.0),
+        ...     viewup=(0.0, -1.0, 0.0),
+        ... )
+        >>> texture = examples.download_crater_imagery()
+        >>> texture.plot(cpos=cpos)
 
-        :ref:`Crater Imagery Dataset <crater_imagery_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
+
+            :ref:`Crater Imagery Dataset <crater_imagery_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_crater_imagery, load=load)
@@ -4777,14 +4804,17 @@ def download_embryo(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT0
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_embryo()
-    >>> dataset.plot(volume=True)
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> dataset = examples.download_embryo()
+        >>> dataset.plot(volume=True)
 
-        :ref:`Embryo Dataset <embryo_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
+
+            :ref:`Embryo Dataset <embryo_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_embryo, load=load)
@@ -4943,14 +4973,17 @@ def download_rgba_texture(load: bool = True) -> Texture | str:  # noqa: FBT001, 
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_rgba_texture()
-    >>> dataset.plot(cpos='xy')
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> dataset = examples.download_rgba_texture()
+        >>> dataset.plot(cpos='xy')
 
-        :ref:`Rgba Texture Dataset <rgba_texture_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
+
+            :ref:`Rgba Texture Dataset <rgba_texture_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_rgba_texture, load=load)
@@ -4983,16 +5016,19 @@ def download_vtk_logo(load: bool = True) -> Texture | str:  # noqa: FBT001, FBT0
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_vtk_logo()
-    >>> dataset.plot(cpos='xy')
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> dataset = examples.download_vtk_logo()
+        >>> dataset.plot(cpos='xy')
 
-        :ref:`Vtk Logo Dataset <vtk_logo_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
 
-        :ref:`Vtk Dataset <vtk_dataset>`
+            :ref:`Vtk Logo Dataset <vtk_logo_dataset>`
+                See this dataset in the Dataset Gallery for more info.
+
+            :ref:`Vtk Dataset <vtk_dataset>`
 
     """
     return _download_dataset(_dataset_vtk_logo, load=load)
@@ -5022,24 +5058,27 @@ def download_sky_box_cube_map(load: bool = True) -> Texture | str:  # noqa: FBT0
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> import pyvista as pv
-    >>> pl = pv.Plotter()
-    >>> dataset = examples.download_sky_box_cube_map()
-    >>> _ = pl.add_actor(dataset.to_skybox())
-    >>> pl.set_environment_texture(dataset)
-    >>> pl.show()
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> dataset = examples.download_sky_box_cube_map()
+        >>> _ = pl.add_actor(dataset.to_skybox())
+        >>> pl.set_environment_texture(dataset)
+        >>> pl.show()
 
-        :ref:`Sky Box Cube Map Dataset <sky_box_cube_map_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
 
-        :ref:`Cubemap Space 4k Dataset <cubemap_space_4k_dataset>`
+            :ref:`Sky Box Cube Map Dataset <sky_box_cube_map_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
-        :ref:`Cubemap Space 16k Dataset <cubemap_space_16k_dataset>`
+            :ref:`Cubemap Space 4k Dataset <cubemap_space_4k_dataset>`
 
-        :ref:`Cubemap Park Dataset <cubemap_park_dataset>`
+            :ref:`Cubemap Space 16k Dataset <cubemap_space_16k_dataset>`
+
+            :ref:`Cubemap Park Dataset <cubemap_park_dataset>`
 
     """
     return _download_dataset(_dataset_sky_box_cube_map, load=load)
@@ -6848,14 +6887,17 @@ def download_dicom_stack(
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_dicom_stack()
-    >>> dataset.plot(volume=True, zoom=3, show_scalar_bar=False)
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> dataset = examples.download_dicom_stack()
+        >>> dataset.plot(volume=True, zoom=3, show_scalar_bar=False)
 
-        :ref:`Dicom Stack Dataset <dicom_stack_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
+
+            :ref:`Dicom Stack Dataset <dicom_stack_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_dicom_stack, load=load)
@@ -7227,38 +7269,41 @@ def download_cloud_dark_matter(load: bool = True) -> PointSet | str:  # noqa: FB
 
     Examples
     --------
-    Download the dark matter cloud and display its representation.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> import numpy as np
-    >>> from pyvista import examples
-    >>> pc = examples.download_cloud_dark_matter()
-    >>> pc
-    PointSet (...)
-      N Cells:    0
-      N Points:   32314
-      X Bounds:   7.451e+01, 7.892e+01
-      Y Bounds:   1.616e+01, 2.275e+01
-      Z Bounds:   8.900e+01, 9.319e+01
-      N Arrays:   0
+        Download the dark matter cloud and display its representation.
 
-    Plot the point cloud. Color based on the distance from the center of the
-    cloud.
+        >>> import numpy as np
+        >>> from pyvista import examples
+        >>> pc = examples.download_cloud_dark_matter()
+        >>> pc
+        PointSet (...)
+          N Cells:    0
+          N Points:   32314
+          X Bounds:   7.451e+01, 7.892e+01
+          Y Bounds:   1.616e+01, 2.275e+01
+          Z Bounds:   8.900e+01, 9.319e+01
+          N Arrays:   0
 
-    >>> pc.plot(
-    ...     scalars=np.linalg.norm(pc.points - pc.center, axis=1),
-    ...     style='points_gaussian',
-    ...     opacity=0.5,
-    ...     point_size=1.5,
-    ...     show_scalar_bar=False,
-    ...     zoom=2,
-    ... )
+        Plot the point cloud. Color based on the distance from the center of the
+        cloud.
 
-    .. seealso::
+        >>> pc.plot(
+        ...     scalars=np.linalg.norm(pc.points - pc.center, axis=1),
+        ...     style='points_gaussian',
+        ...     opacity=0.5,
+        ...     point_size=1.5,
+        ...     show_scalar_bar=False,
+        ...     zoom=2,
+        ... )
 
-        :ref:`Cloud Dark Matter Dataset <cloud_dark_matter_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
 
-        :ref:`Cloud Dark Matter Dense Dataset <cloud_dark_matter_dense_dataset>`
+            :ref:`Cloud Dark Matter Dataset <cloud_dark_matter_dataset>`
+                See this dataset in the Dataset Gallery for more info.
+
+            :ref:`Cloud Dark Matter Dense Dataset <cloud_dark_matter_dense_dataset>`
 
     """
     return _download_dataset(_dataset_cloud_dark_matter, load=load)
@@ -7294,41 +7339,44 @@ def download_cloud_dark_matter_dense(load: bool = True) -> PointSet | str:  # no
 
     Examples
     --------
-    Download the dark matter cloud and display its representation.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> import numpy as np
-    >>> from pyvista import examples
-    >>> pc = examples.download_cloud_dark_matter_dense()
-    >>> pc
-    PointSet (...)
-      N Cells:    0
-      N Points:   2062256
-      X Bounds:   7.462e+01, 7.863e+01
-      Y Bounds:   1.604e+01, 2.244e+01
-      Z Bounds:   8.893e+01, 9.337e+01
-      N Arrays:   0
+        Download the dark matter cloud and display its representation.
 
-    Plot the point cloud. Color based on the distance from the center of the
-    cloud.
+        >>> import numpy as np
+        >>> from pyvista import examples
+        >>> pc = examples.download_cloud_dark_matter_dense()
+        >>> pc
+        PointSet (...)
+          N Cells:    0
+          N Points:   2062256
+          X Bounds:   7.462e+01, 7.863e+01
+          Y Bounds:   1.604e+01, 2.244e+01
+          Z Bounds:   8.893e+01, 9.337e+01
+          N Arrays:   0
 
-    >>> pc.plot(
-    ...     scalars=np.linalg.norm(pc.points - pc.center, axis=1),
-    ...     style='points_gaussian',
-    ...     opacity=0.030,
-    ...     point_size=2.0,
-    ...     show_scalar_bar=False,
-    ...     zoom=2,
-    ... )
+        Plot the point cloud. Color based on the distance from the center of the
+        cloud.
 
-    .. seealso::
+        >>> pc.plot(
+        ...     scalars=np.linalg.norm(pc.points - pc.center, axis=1),
+        ...     style='points_gaussian',
+        ...     opacity=0.030,
+        ...     point_size=2.0,
+        ...     show_scalar_bar=False,
+        ...     zoom=2,
+        ... )
 
-        :ref:`Cloud Dark Matter Dense Dataset <cloud_dark_matter_dense_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
 
-        :ref:`Cloud Dark Matter Dataset <cloud_dark_matter_dataset>`
+            :ref:`Cloud Dark Matter Dense Dataset <cloud_dark_matter_dense_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
-        :ref:`point_clouds_example`
-            More details on how to plot point clouds.
+            :ref:`Cloud Dark Matter Dataset <cloud_dark_matter_dataset>`
+
+            :ref:`point_clouds_example`
+                More details on how to plot point clouds.
 
     """
     return _download_dataset(_dataset_cloud_dark_matter_dense, load=load)
@@ -7375,38 +7423,41 @@ def download_stars_cloud_hyg(load: bool = True) -> PolyData | str:  # noqa: FBT0
 
     Examples
     --------
-    Download and plot a point cloud of stars within 3,000 light years. Stars
-    are colored according to their RGBA colors.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> import numpy as np
-    >>> from pyvista import examples
-    >>> stars = examples.download_stars_cloud_hyg()
-    >>> stars.plot(
-    ...     style='points_gaussian',
-    ...     background='k',
-    ...     point_size=0.5,
-    ...     scalars='_rgba',
-    ...     render_points_as_spheres=False,
-    ...     zoom=3.0,
-    ... )
+        Download and plot a point cloud of stars within 3,000 light years. Stars
+        are colored according to their RGBA colors.
 
-    >>> stars
-    PolyData (...)
-      N Cells:    107857
-      N Points:   107857
-      N Strips:   0
-      X Bounds:   -9.755e+02, 9.774e+02
-      Y Bounds:   -9.620e+02, 9.662e+02
-      Z Bounds:   -9.788e+02, 9.702e+02
-      N Arrays:   3
+        >>> import numpy as np
+        >>> from pyvista import examples
+        >>> stars = examples.download_stars_cloud_hyg()
+        >>> stars.plot(
+        ...     style='points_gaussian',
+        ...     background='k',
+        ...     point_size=0.5,
+        ...     scalars='_rgba',
+        ...     render_points_as_spheres=False,
+        ...     zoom=3.0,
+        ... )
 
-    .. seealso::
+        >>> stars
+        PolyData (...)
+          N Cells:    107857
+          N Points:   107857
+          N Strips:   0
+          X Bounds:   -9.755e+02, 9.774e+02
+          Y Bounds:   -9.620e+02, 9.662e+02
+          Z Bounds:   -9.788e+02, 9.702e+02
+          N Arrays:   3
 
-        :ref:`Stars Cloud Hyg Dataset <stars_cloud_hyg_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
 
-        :ref:`point_clouds_example`
-            More details on how to plot point clouds.
+            :ref:`Stars Cloud Hyg Dataset <stars_cloud_hyg_dataset>`
+                See this dataset in the Dataset Gallery for more info.
+
+            :ref:`point_clouds_example`
+                More details on how to plot point clouds.
 
     """
     return _download_dataset(_dataset_stars_cloud_hyg, load=load)
@@ -9116,34 +9167,37 @@ def download_m4_total_density(load: bool = True) -> ImageData | str:  # noqa: FB
 
     Examples
     --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
+    .. pyvista-plot::
+        :force_static:
 
-    >>> filename = examples.download_m4_total_density(load=False)
-    >>> reader = pv.get_reader(filename)
-    >>> reader.hb_scale = 1.1
-    >>> reader.b_scale = 10.0
+        >>> import pyvista as pv
+        >>> from pyvista import examples
 
-    >>> grid = reader.read()
-    >>> poly = reader.read(grid=False)
+        >>> filename = examples.download_m4_total_density(load=False)
+        >>> reader = pv.get_reader(filename)
+        >>> reader.hb_scale = 1.1
+        >>> reader.b_scale = 10.0
 
-    Add the outline and volume to the plotter.
+        >>> grid = reader.read()
+        >>> poly = reader.read(grid=False)
 
-    >>> pl = pv.Plotter()
-    >>> outline = pl.add_mesh(grid.outline(), color='black')
-    >>> volume = pl.add_volume(grid)
+        Add the outline and volume to the plotter.
 
-    Add atoms and bonds to the plotter.
+        >>> pl = pv.Plotter()
+        >>> outline = pl.add_mesh(grid.outline(), color='black')
+        >>> volume = pl.add_volume(grid)
 
-    >>> atoms = pl.add_mesh(poly.glyph(geom=pv.Sphere()), color='red')
-    >>> bonds = pl.add_mesh(poly.tube(), color='white')
+        Add atoms and bonds to the plotter.
 
-    >>> pl.show(cpos='zx')
+        >>> atoms = pl.add_mesh(poly.glyph(geom=pv.Sphere()), color='red')
+        >>> bonds = pl.add_mesh(poly.tube(), color='white')
 
-    .. seealso::
+        >>> pl.show(cpos='zx')
 
-        :ref:`M4 Total Density Dataset <m4_total_density_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
+
+            :ref:`M4 Total Density Dataset <m4_total_density_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_m4_total_density, load=load)
@@ -9660,25 +9714,28 @@ def download_yinyang(*, load: bool = True) -> ImageData | str:
 
     Examples
     --------
-    Load the image and plot it as grayscale pixel cells.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> dataset = examples.download_yinyang()
-    >>> pixel_cells = dataset.points_to_cells()
-    >>> pixel_cells.plot(
-    ...     cmap='gray',
-    ...     clim=[0, 255],
-    ...     cpos='xy',
-    ...     zoom='tight',
-    ...     lighting=False,
-    ...     show_scalar_bar=False,
-    ...     show_axes=False,
-    ... )
+        Load the image and plot it as grayscale pixel cells.
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> dataset = examples.download_yinyang()
+        >>> pixel_cells = dataset.points_to_cells()
+        >>> pixel_cells.plot(
+        ...     cmap='gray',
+        ...     clim=[0, 255],
+        ...     cpos='xy',
+        ...     zoom='tight',
+        ...     lighting=False,
+        ...     show_scalar_bar=False,
+        ...     show_axes=False,
+        ... )
 
-        :ref:`Yinyang Dataset <yinyang_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
+
+            :ref:`Yinyang Dataset <yinyang_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_yinyang, load=load)
@@ -9800,17 +9857,20 @@ def download_sextant(*, load: bool = True) -> MultiBlock | str:
 
     Examples
     --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> vrml_file = examples.download_sextant(load=False)
-    >>> pl = pv.Plotter()
-    >>> pl.import_vrml(vrml_file)
-    >>> pl.show()
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> vrml_file = examples.download_sextant(load=False)
+        >>> pl = pv.Plotter()
+        >>> pl.import_vrml(vrml_file)
+        >>> pl.show()
 
-        :ref:`Sextant Dataset <sextant_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
+
+            :ref:`Sextant Dataset <sextant_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_sextant, load=load)

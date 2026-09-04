@@ -2836,35 +2836,38 @@ class WidgetComponent(_NoNewAttrMixin):
 
         Examples
         --------
-        The following example creates a background color switcher.
+        .. pyvista-plot::
+            :force_static:
 
-        >>> import pyvista as pv
-        >>> pl = pv.Plotter()
-        >>> def set_bg(color):
-        ...     def wrapped_callback():
-        ...         pl.background_color = color
-        ...
-        ...     return wrapped_callback
-        >>> _ = pl.add_radio_button_widget(
-        ...     set_bg('white'),
-        ...     'bgcolor',
-        ...     position=(10.0, 200.0),
-        ...     title='White',
-        ...     value=True,
-        ... )
-        >>> _ = pl.add_radio_button_widget(
-        ...     set_bg('lightblue'),
-        ...     'bgcolor',
-        ...     position=(10.0, 140.0),
-        ...     title='Light Blue',
-        ... )
-        >>> _ = pl.add_radio_button_widget(
-        ...     set_bg('pink'),
-        ...     'bgcolor',
-        ...     position=(10.0, 80.0),
-        ...     title='Pink',
-        ... )
-        >>> pl.show()
+            The following example creates a background color switcher.
+
+            >>> import pyvista as pv
+            >>> pl = pv.Plotter()
+            >>> def set_bg(color):
+            ...     def wrapped_callback():
+            ...         pl.background_color = color
+            ...
+            ...     return wrapped_callback
+            >>> _ = pl.add_radio_button_widget(
+            ...     set_bg('white'),
+            ...     'bgcolor',
+            ...     position=(10.0, 200.0),
+            ...     title='White',
+            ...     value=True,
+            ... )
+            >>> _ = pl.add_radio_button_widget(
+            ...     set_bg('lightblue'),
+            ...     'bgcolor',
+            ...     position=(10.0, 140.0),
+            ...     title='Light Blue',
+            ... )
+            >>> _ = pl.add_radio_button_widget(
+            ...     set_bg('pink'),
+            ...     'bgcolor',
+            ...     position=(10.0, 80.0),
+            ...     title='Pink',
+            ... )
+            >>> pl.show()
 
         """
         msg = 'Cannot add a widget to a closed plotter.'

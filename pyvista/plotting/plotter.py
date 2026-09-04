@@ -1251,14 +1251,17 @@ class BasePlotter(_BoundsSizeMixin):
 
         Examples
         --------
-        Return the plotter shape.
+        .. pyvista-plot::
+            :force_static:
 
-        >>> import pyvista as pv
-        >>> pl = pv.Plotter(shape=(2, 2))
-        >>> pl.shape
-        (2, 2)
+            Return the plotter shape.
 
-        >>> pl.show()
+            >>> import pyvista as pv
+            >>> pl = pv.Plotter(shape=(2, 2))
+            >>> pl.shape
+            (2, 2)
+
+            >>> pl.show()
 
         """
         return self.renderers.shape
@@ -4953,50 +4956,53 @@ class BasePlotter(_BoundsSizeMixin):
 
         Examples
         --------
-        Show a built-in volume example with the ``coolwarm`` colormap.
+        .. pyvista-plot::
+            :force_static:
 
-        >>> from pyvista import examples
-        >>> import pyvista as pv
-        >>> bolt_nut = examples.download_bolt_nut()
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_volume(bolt_nut, cmap='coolwarm')
-        >>> pl.show()
+            Show a built-in volume example with the ``coolwarm`` colormap.
 
-        Create a volume from scratch and plot it using single vector of
-        scalars.
+            >>> from pyvista import examples
+            >>> import pyvista as pv
+            >>> bolt_nut = examples.download_bolt_nut()
+            >>> pl = pv.Plotter()
+            >>> _ = pl.add_volume(bolt_nut, cmap='coolwarm')
+            >>> pl.show()
 
-        >>> import pyvista as pv
-        >>> grid = pv.ImageData(dimensions=(9, 9, 9))
-        >>> grid['scalars'] = -grid.x
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_volume(grid, opacity='linear')
-        >>> pl.show()
+            Create a volume from scratch and plot it using single vector of
+            scalars.
 
-        Plot a volume from scratch using RGBA scalars
+            >>> import pyvista as pv
+            >>> grid = pv.ImageData(dimensions=(9, 9, 9))
+            >>> grid['scalars'] = -grid.x
+            >>> pl = pv.Plotter()
+            >>> _ = pl.add_volume(grid, opacity='linear')
+            >>> pl.show()
 
-        >>> import pyvista as pv
-        >>> import numpy as np
-        >>> grid = pv.ImageData(dimensions=(5, 20, 20))
-        >>> scalars = grid.points - (grid.origin)
-        >>> scalars /= scalars.max()
-        >>> opacity = np.linalg.norm(grid.points - grid.center, axis=1).reshape(-1, 1)
-        >>> opacity /= opacity.max()
-        >>> scalars = np.hstack((scalars, opacity**3))
-        >>> scalars *= 255
-        >>> pl = pv.Plotter()
-        >>> vol = pl.add_volume(grid, scalars=scalars.astype(np.uint8))
-        >>> vol.prop.interpolation_type = 'linear'
-        >>> pl.show()
+            Plot a volume from scratch using RGBA scalars
 
-        Plot an UnstructuredGrid.
+            >>> import pyvista as pv
+            >>> import numpy as np
+            >>> grid = pv.ImageData(dimensions=(5, 20, 20))
+            >>> scalars = grid.points - (grid.origin)
+            >>> scalars /= scalars.max()
+            >>> opacity = np.linalg.norm(grid.points - grid.center, axis=1).reshape(-1, 1)
+            >>> opacity /= opacity.max()
+            >>> scalars = np.hstack((scalars, opacity**3))
+            >>> scalars *= 255
+            >>> pl = pv.Plotter()
+            >>> vol = pl.add_volume(grid, scalars=scalars.astype(np.uint8))
+            >>> vol.prop.interpolation_type = 'linear'
+            >>> pl.show()
 
-        >>> from pyvista import examples
-        >>> import pyvista as pv
-        >>> mesh = examples.download_letter_a()
-        >>> mesh['scalars'] = mesh.points[:, 1]
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_volume(mesh, opacity_unit_distance=0.1)
-        >>> pl.show()
+            Plot an UnstructuredGrid.
+
+            >>> from pyvista import examples
+            >>> import pyvista as pv
+            >>> mesh = examples.download_letter_a()
+            >>> mesh['scalars'] = mesh.points[:, 1]
+            >>> pl = pv.Plotter()
+            >>> _ = pl.add_volume(mesh, opacity_unit_distance=0.1)
+            >>> pl.show()
 
         """
         # Handle default arguments
@@ -5864,27 +5870,29 @@ class BasePlotter(_BoundsSizeMixin):
 
         Examples
         --------
-        Add blue text to the upper right of the plotter.
+        .. pyvista-plot::
+            :force_static:
 
-        >>> import pyvista as pv
-        >>> pl = pv.Plotter()
-        >>> actor = pl.add_text(
-        ...     'Sample Text',
-        ...     position='upper_right',
-        ...     color='blue',
-        ...     shadow=True,
-        ...     font_size=26,
-        ... )
-        >>> pl.show()
+            Add blue text to the upper right of the plotter.
 
-        Add text and use a custom freetype readable font file.
+            >>> import pyvista as pv
+            >>> pl = pv.Plotter()
+            >>> actor = pl.add_text(
+            ...     'Sample Text',
+            ...     position='upper_right',
+            ...     color='blue',
+            ...     shadow=True,
+            ...     font_size=26,
+            ... )
+            >>> pl.show()
 
-        >>> pl = pv.Plotter()
-        >>> actor = pl.add_text(
-        ...     'Text',
-        ...     font_file='/home/user/Mplus2-Regular.ttf',
-        ... )  # doctest:+SKIP
+            Add text and use a custom freetype readable font file.
 
+            >>> pl = pv.Plotter()
+            >>> actor = pl.add_text(
+            ...     'Text',
+            ...     font_file='/home/user/Mplus2-Regular.ttf',
+            ... )  # doctest:+SKIP
 
         """
         if font_size is None:
@@ -9023,11 +9031,14 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
         Examples
         --------
-        >>> import pyvista as pv
-        >>> pl = pv.Plotter()
-        >>> pl.background_color = 'grey'
-        >>> actor = pl.add_title('Plot Title', font='courier', color='k', font_size=40)
-        >>> pl.show()
+        .. pyvista-plot::
+            :force_static:
+
+            >>> import pyvista as pv
+            >>> pl = pv.Plotter()
+            >>> pl.background_color = 'grey'
+            >>> actor = pl.add_title('Plot Title', font='courier', color='k', font_size=40)
+            >>> pl.show()
 
         """
         # add additional spacing from the top of the figure by default
