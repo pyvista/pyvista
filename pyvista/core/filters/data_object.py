@@ -3361,10 +3361,6 @@ class DataObjectFilters:
               same clipped volume. Call
               :meth:`~pyvista.DataSetFilters.triangulate` on the output for an all-tetrahedra
               mesh as before.
-            - :class:`~pyvista.PointSet` blocks of a :class:`~pyvista.MultiBlock` stay
-              :class:`~pyvista.PointSet` instead of becoming
-              :class:`~pyvista.UnstructuredGrid`; call
-              :meth:`~pyvista.DataSet.cast_to_unstructured_grid` on them if needed.
 
         Parameters
         ----------
