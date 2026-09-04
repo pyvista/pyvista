@@ -5904,8 +5904,8 @@ class DataSetFilters(DataObjectFilters):
 
                 Has no effect with VTK 9.5.0 or later, where the main mesh always has
                 priority and ``False`` raises :class:`ValueError`. With older VTK the
-                keyword still selects which mesh has priority. It will be removed in a
-                future version.
+                keyword still selects which mesh has priority and defaults to ``True``.
+                It will be removed in a future version.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -5938,9 +5938,9 @@ class DataSetFilters(DataObjectFilters):
         if main_has_priority is not None and vtk_at_least_95:
             if not main_has_priority:
                 msg = (
-                    "'main_has_priority=False' is not supported for vtk>=9.5.0, where the "
-                    'main mesh always has priority. Swap the meshes instead, as in '
-                    '`other.merge(main)`.'
+                    f'main_has_priority={main_has_priority!r} is not supported for '
+                    'vtk>=9.5.0, where the main mesh always has priority. Swap the meshes '
+                    'instead, as in `other.merge(main)`.'
                 )
                 raise ValueError(msg)
             msg = (
