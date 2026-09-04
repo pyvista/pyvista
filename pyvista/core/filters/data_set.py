@@ -71,21 +71,14 @@ _SelectInteriorPointsOptions = Literal['signed_distance', 'cell_locator']
 _CLIP_SURFACE_SCALARS = '__pyvista_clip_surface_distance'
 
 
-def _points_inside_surface(dataset: DataSet, surface: PolyData) -> NumpyArray[np.bool_]:
-    """Return which points of the dataset a closed surface encloses."""
-    if isinstance(dataset, pv.ImageData):
-        mask = surface.voxelize_binary_mask(reference_volume=dataset)
-        return np.asarray(mask.point_data['mask']).astype(bool)
-    alg = _vtk.vtkSelectEnclosedPoints()
-    alg.SetInputData(dataset)
-    alg.SetSurfaceData(surface)
-    alg.SetTolerance(1e-9)
-    _update_alg(alg, message='Selecting Enclosed Points')
-    return np.asarray(_get_output(alg).point_data['SelectedPoints']).astype(bool)
+def _points_inside_surface(image: ImageData, surface: PolyData) -> NumpyArray[np.bool_]:
+    """Return which points of the image a closed surface encloses, from a stencil."""
+    mask = surface.voxelize_binary_mask(reference_volume=image)
+    return np.asarray(mask.point_data['mask']).astype(bool)
 
 
 def _signed_distance_near_surface(
-    dataset: DataSet, surface: PolyData, function: _vtk.vtkImplicitPolyDataDistance
+    dataset: ImageData, surface: PolyData, function: _vtk.vtkImplicitPolyDataDistance
 ) -> NumpyArray[float] | None:
     """Build a signed distance field that is exact on the cells the surface cuts.
 
@@ -127,28 +120,23 @@ def _signed_distance_near_surface(
     return None
 
 
-def _points_of_cells_containing(dataset: DataSet, points: NumpyArray[float]) -> NumpyArray[int]:
-    """Return the ids of the points of the cells that contain the given points."""
-    if isinstance(dataset, pv.ImageData):
-        # Index arithmetic instead of a cell locator
-        index = (
-            np.column_stack([points, np.ones(len(points))]) @ dataset.physical_to_index_matrix.T
-        )[:, :3]
-        cell = np.floor(index).astype(int) - np.array(dataset.offset)
-        n_cells = np.array(dataset.dimensions) - 1
-        cell = cell[np.all((cell >= 0) & (cell < n_cells), axis=1)]
-        cell_ids = np.unique(cell[:, 0] + n_cells[0] * (cell[:, 1] + n_cells[1] * cell[:, 2]))
-    else:
-        cell_ids = np.unique(dataset.find_containing_cell(points))
-    cell_ids = cell_ids[cell_ids >= 0]
+def _points_of_cells_containing(image: ImageData, points: NumpyArray[float]) -> NumpyArray[int]:
+    """Return the ids of the points of the image cells that contain the given points."""
+    index = (np.column_stack([points, np.ones(len(points))]) @ image.physical_to_index_matrix.T)[
+        :, :3
+    ]
+    cell = np.floor(index).astype(int) - np.array(image.offset)
+    n_cells = np.array(image.dimensions) - 1
+    cell = cell[np.all((cell >= 0) & (cell < n_cells), axis=1)]
+    cell_ids = np.unique(cell[:, 0] + n_cells[0] * (cell[:, 1] + n_cells[1] * cell[:, 2]))
     if cell_ids.size == 0:
         return np.empty(0, dtype=int)
-    cells = dataset.extract_cells(cell_ids, pass_point_ids=True, pass_cell_ids=False)
+    cells = image.extract_cells(cell_ids, pass_point_ids=True, pass_cell_ids=False)
     return np.asarray(cells.point_data['vtkOriginalPointIds'])
 
 
 def _points_of_cells_cut_by_sign(
-    dataset: DataSet, inside: NumpyArray[np.bool_]
+    dataset: ImageData, inside: NumpyArray[np.bool_]
 ) -> NumpyArray[int]:
     """Return the ids of the points of cells that have corners on both sides."""
     marked = dataset.copy(deep=False)
@@ -796,11 +784,12 @@ class DataSetFilters(DataObjectFilters):
         compute_distance : bool, default: False
             Compute the implicit distance from the mesh onto the input
             dataset.  A new array called ``'implicit_distance'`` will
-            be added to the output clipped mesh. With a closed surface and
-            ``value=0``, this also makes the clip evaluate the distance at
-            every point instead of classifying points as inside or outside
-            and evaluating it only at the points of cells the surface passes
-            through, where the classification is checked and corrected.
+            be added to the output clipped mesh. For :class:`~pyvista.ImageData`
+            with a closed surface and ``value=0``, this also makes the clip
+            evaluate the distance at every point instead of classifying points
+            as inside or outside with a stencil and evaluating it only at the
+            points of cells the surface passes through, where the classification
+            is checked against it.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -845,7 +834,13 @@ class DataSetFilters(DataObjectFilters):
             function.FunctionValue(points, dists)
             source = self.copy(deep=False)
             source['implicit_distance'] = pv.convert_array(dists)
-        elif value == 0 and self.n_cells and surface_.n_faces and surface_.n_open_edges == 0:
+        elif (
+            isinstance(self, pv.ImageData)
+            and value == 0
+            and self.n_cells
+            and surface_.n_faces
+            and surface_.n_open_edges == 0
+        ):
             # Only the points of cells the surface passes through need a distance
             distance = _signed_distance_near_surface(self, surface_, function)
             if distance is not None:

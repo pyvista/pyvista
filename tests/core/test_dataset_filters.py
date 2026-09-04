@@ -264,7 +264,20 @@ def _clip_surface_case(kind):
 
 
 @pytest.mark.parametrize(
-    'kind', ['image', 'rotated_image', 'unstructured', 'polydata', 'pointset']
+    'kind',
+    [
+        'image',
+        pytest.param(
+            'rotated_image',
+            marks=pytest.mark.skipif(
+                pv.vtk_version_info < (9, 4),
+                reason='The implicit function clip ignores the image direction matrix',
+            ),
+        ),
+        'unstructured',
+        'polydata',
+        'pointset',
+    ],
 )
 @pytest.mark.parametrize('kwargs', [dict(invert=True), dict(invert=False), dict(crinkle=True)])
 def test_clip_surface_closed_surface_matches_exact_clip(kind, kwargs):
