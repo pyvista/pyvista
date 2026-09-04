@@ -307,7 +307,7 @@ def _wrong_classifier(kind, original):
         grid = inside.reshape(dims[2], dims[1], dims[0]).copy()
         if kind == 'streak':
             grid[2, 3, :] = ~grid[2, 3, :]  # a ray-shaped run of wrong points
-        elif kind == 'blob':
+        else:
             grid[1:5, 1:5, 1:5] = True  # a solid wrong region away from the surface
         return grid.ravel()
 
