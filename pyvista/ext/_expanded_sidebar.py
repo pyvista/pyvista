@@ -1,9 +1,9 @@
 """Render the expanded sidebar navigation once and reuse it on every page.
 
-The theme rebuilds the whole toctree for every page, and renders the sidebar template
-twice on top of that, which is why an expanded sidebar was only affordable on tag builds
-(#9023, #9070). This works around that: the tree is rendered once against the root
-document and the current-page markers are spliced into the cached string (#9082).
+The theme rebuilds the whole ``toctree`` for every page, and renders the sidebar
+template twice on top of that, which is why an expanded sidebar was only affordable on
+tag builds (#9023, #9070). This works around that: the tree is rendered once against the
+root document and the current-page markers are spliced into the cached string (#9082).
 """
 
 from __future__ import annotations
@@ -52,7 +52,7 @@ class _ExpandedSidebar:
 
     @staticmethod
     def _docnames(app: Sphinx) -> dict[str, str]:
-        """Map every document's output URI back to its docname."""
+        """Map every document's output URI back to its document name."""
         get_target_uri = app.builder.get_target_uri
         return {get_target_uri(docname): docname for docname in app.env.found_docs}
 
