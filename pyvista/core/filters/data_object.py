@@ -3145,7 +3145,7 @@ class DataObjectFilters:
 
     def _clip_with_function(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
-        function: _vtk.vtkImplicitFunction,
+        function: _vtk.vtkImplicitFunction | None,
         *,
         invert: bool = True,
         value: float = 0.0,
@@ -3153,9 +3153,10 @@ class DataObjectFilters:
         progress_bar: bool = False,
         crinkle: bool = False,
     ):
-        """Clip using an implicit function (internal helper)."""
+        """Clip using an implicit function, or the active scalars if it is ``None``."""
+        source = self
         if crinkle:
-            active_scalars_info = _Crinkler._add_cell_ids(self)
+            source, active_scalars_info = _Crinkler._add_cell_ids(self)
 
         # Need to cast PointSet to PolyData since vtkTableBasedClipDataSet is broken
         # with vtk 9.4.X, see https://gitlab.kitware.com/vtk/vtk/-/issues/19649
@@ -3164,7 +3165,7 @@ class DataObjectFilters:
             and pv.vtk_version_info >= (9, 4)
             and pv.vtk_version_info < (9, 5)
         )
-        mesh_in = self.cast_to_poly_points() if apply_vtk_94x_patch else self
+        mesh_in = source.cast_to_poly_points() if apply_vtk_94x_patch else source
 
         if isinstance(mesh_in, pv.PolyData):
             alg: _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet = _vtk.vtkClipPolyData()
@@ -3175,7 +3176,9 @@ class DataObjectFilters:
             alg = _vtk.vtkTableBasedClipDataSet()
         alg.SetInputDataObject(mesh_in)  # Use the grid as the data we desire to cut
         alg.SetValue(value)
-        alg.SetClipFunction(function)  # the implicit function
+        # ``None`` clips by the active scalars instead, for a precomputed distance field
+        if function is not None:
+            alg.SetClipFunction(function)  # the implicit function
         alg.SetInsideOut(invert)  # invert the clip if needed
         alg.SetGenerateClippedOutput(return_clipped)
         _update_alg(alg, progress_bar=progress_bar, message='Clipping with Function')
@@ -3187,11 +3190,11 @@ class DataObjectFilters:
             a = _get_output(alg, oport=0)
             b = _get_output(alg, oport=1)
             if crinkle:
-                a, b = _Crinkler._extract_crinkle_cells(self, a, b, active_scalars_info)
+                a, b = _Crinkler._extract_crinkle_cells(source, a, b, active_scalars_info)
             return _maybe_cast_to_point_set(a), _maybe_cast_to_point_set(b)
         clipped = _get_output(alg)
         if crinkle:
-            clipped = _Crinkler._extract_crinkle_cells(self, clipped, None, active_scalars_info)
+            clipped = _Crinkler._extract_crinkle_cells(source, clipped, None, active_scalars_info)
         return _maybe_cast_to_point_set(clipped)
 
     @_deprecate_positional_args(allowed=['normal'])
@@ -3408,12 +3411,10 @@ class DataObjectFilters:
                 msg = 'The bounds mesh must have only 6 faces.'
                 raise ValueError(msg)
             bounds = []
-            poly.compute_normals(inplace=True)
+            normals = poly.compute_normals(point_normals=False, cell_normals=True).cell_normals
             for cid in range(6):
-                cell = poly.extract_cells(cid)
-                normal = cell['Normals'][0]
-                bounds.append(normal)
-                bounds.append(cell.center)
+                bounds.append(normals[cid])
+                bounds.append(poly.get_cell(cid).center)
         bounds_ = _validation.validate_array(
             bounds,  # type: ignore[arg-type]
             dtype_out=float,
@@ -3432,13 +3433,14 @@ class DataObjectFilters:
                     zmin + bounds_[2],
                 )
             )
+        source = self
         if crinkle:
-            active_scalars_info = _Crinkler._add_cell_ids(self)
+            source, active_scalars_info = _Crinkler._add_cell_ids(self)
         alg = _vtk.vtkBoxClipDataSet()
         if not merge_points:
             # vtkBoxClipDataSet uses vtkMergePoints by default
             alg.SetLocator(_vtk.vtkNonMergingPointLocator())
-        alg.SetInputDataObject(self)
+        alg.SetInputDataObject(source)
         alg.SetBoxClip(*bounds_)
         port = 0
         if invert:
@@ -3448,7 +3450,7 @@ class DataObjectFilters:
         _update_alg(alg, progress_bar=progress_bar, message='Clipping a Dataset by a Bounding Box')
         clipped = _get_output(alg, oport=port)
         if crinkle:
-            clipped = _Crinkler._extract_crinkle_cells(self, clipped, None, active_scalars_info)
+            clipped = _Crinkler._extract_crinkle_cells(source, clipped, None, active_scalars_info)
         return _remove_unused_points_post_clip(clipped, self.bounds)
 
     def clip_slab(  # type: ignore[misc]
@@ -3547,11 +3549,7 @@ class DataObjectFilters:
         origin_, normal_ = _validate_plane_origin_and_normal(
             self, origin, normal, plane, default_normal='x'
         )
-        norm = float(np.linalg.norm(normal_))
-        if norm == 0.0:
-            msg = '`normal` must be a non-zero vector.'
-            raise ValueError(msg)
-        unit_normal = normal_ / norm
+        unit_normal = normal_ / np.linalg.norm(normal_)
         half = thickness / 2.0
 
         upper = _vtk.vtkPlane()
@@ -5560,14 +5558,21 @@ class _Crinkler:
     @staticmethod
     def _extract_crinkle_cells(dataset, a_, b_, active_scalars_info):  # noqa: PLR0917
         """Extract crinkled cells from the clip output."""
+
+        def clipped_cell_mask(block_, clipped):
+            # Optimization: mark the ids in a boolean array instead of collecting them in
+            # Python sets, whose construction dominated the crinkle clip for large meshes
+            mask = np.zeros(block_.n_cells, dtype=bool)
+            if _Crinkler.CELL_IDS in clipped.cell_data.keys():
+                mask[clipped.cell_data[_Crinkler.CELL_IDS]] = True
+            return mask
+
         if b_ is None:
             # Extract cells when `return_clipped=False`
             def extract_cells_from_block(block_, clipped_a, _, active_scalars_info_):
                 if _Crinkler.CELL_IDS in clipped_a.cell_data.keys():
                     return _Crinkler._extract_cells(
-                        block_,
-                        np.unique(clipped_a.cell_data[_Crinkler.CELL_IDS]),
-                        active_scalars_info_,
+                        block_, clipped_cell_mask(block_, clipped_a), active_scalars_info_
                     )
                 return clipped_a
         else:
@@ -5575,25 +5580,10 @@ class _Crinkler:
             def extract_cells_from_block(  # noqa: PLR0917
                 block_, clipped_a, clipped_b, active_scalars_info_
             ):
-                set_a = (
-                    set(clipped_a.cell_data[_Crinkler.CELL_IDS])
-                    if _Crinkler.CELL_IDS in clipped_a.cell_data.keys()
-                    else set()
-                )
-                set_b = (
-                    set(clipped_b.cell_data[_Crinkler.CELL_IDS])
-                    if _Crinkler.CELL_IDS in clipped_b.cell_data.keys()
-                    else set()
-                )
-                set_b = set_b - set_a
-
-                # Need to cast as int dtype explicitly to ensure empty arrays have
-                # the right type required by extract_cells
-                array_a = np.array(list(set_a), dtype=_Crinkler.INT_DTYPE)
-                array_b = np.array(list(set_b), dtype=_Crinkler.INT_DTYPE)
-
-                clipped_a = _Crinkler._extract_cells(block_, array_a, active_scalars_info_)
-                clipped_b = _Crinkler._extract_cells(block_, array_b, active_scalars_info_)
+                mask_a = clipped_cell_mask(block_, clipped_a)
+                mask_b = clipped_cell_mask(block_, clipped_b) & ~mask_a
+                clipped_a = _Crinkler._extract_cells(block_, mask_a, active_scalars_info_)
+                clipped_b = _Crinkler._extract_cells(block_, mask_b, active_scalars_info_)
                 return clipped_a, clipped_b
 
         def extract_cells_from_multiblock(  # noqa: PLR0917
@@ -5628,14 +5618,17 @@ class _Crinkler:
 
     @staticmethod
     def _add_cell_ids(dataset: DataSet | MultiBlock):
-        """Add cell ID arrays to all blocks and record the active scalars to restore."""
+        """Shallow copy the dataset, add cell ID arrays, and record the active scalars."""
         active_scalars_info = []
+        # Shallow copies keep the cell ids off the caller's dataset and blocks
         if isinstance(dataset, pv.MultiBlock):
+            dataset = dataset.generic_filter(lambda block: block.copy(deep=False))
             blocks: Iterable[DataSet] = dataset.recursive_iterator(
                 'blocks',
                 **_Crinkler.ITER_KWARGS,  # type: ignore[call-overload]
             )
         else:
+            dataset = dataset.copy(deep=False)
             blocks = [dataset]
         for block in blocks:
             active_scalars_info.append(block.active_scalars_info)
@@ -5643,7 +5636,7 @@ class _Crinkler:
                 block.cell_data[_Crinkler.CELL_IDS] = np.arange(
                     block.n_cells, dtype=_Crinkler.INT_DTYPE
                 )
-        return active_scalars_info
+        return dataset, active_scalars_info
 
 
 def _cell_status_docs_insert():

@@ -132,6 +132,34 @@ def test_clip_filter_empty_inputs(dataset):
     dataset.clip('x')
 
 
+@pytest.mark.parametrize('as_composite', [True, False])
+@pytest.mark.parametrize(
+    'clip',
+    [
+        lambda mesh: mesh.clip(crinkle=True),
+        lambda mesh: mesh.clip(crinkle=True, return_clipped=True),
+        lambda mesh: mesh.clip_box(crinkle=True),
+        lambda mesh: mesh.clip_slab(thickness=1.0, crinkle=True),
+    ],
+)
+def test_clip_crinkle_does_not_modify_input(uniform, as_composite, clip):
+    mesh = pv.MultiBlock([uniform, uniform.copy()]) if as_composite else uniform
+    blocks = list(mesh.recursive_iterator()) if as_composite else [mesh]
+    before = [(block.array_names, block.active_scalars_name) for block in blocks]
+
+    clip(mesh)
+
+    assert [(block.array_names, block.active_scalars_name) for block in blocks] == before
+
+
+def test_clip_box_does_not_modify_bounds_mesh(uniform):
+    box = pv.Cube(center=uniform.center, x_length=3, y_length=3, z_length=3)
+    before = box.copy()
+    clipped = uniform.clip_box(box, invert=False)
+    assert clipped.n_cells
+    assert box == before
+
+
 def test_clip_filter_crinkle_disjoint(uniform):
     def assert_array_names(clipped):
         assert cell_ids in clipped.array_names
@@ -382,6 +410,22 @@ def test_clip_slab_invalid_thickness(thickness):
     mesh = pv.Sphere()
     with pytest.raises(ValueError, match='strictly positive'):
         mesh.clip_slab(thickness=thickness, normal='x')
+
+
+@pytest.mark.parametrize('normal', [(0, 0, 0), [0.0, 0.0, 0.0]])
+@pytest.mark.parametrize(
+    'method',
+    [
+        pv.DataObjectFilters.clip,
+        pv.DataObjectFilters.slice,
+        pv.DataObjectFilters.clip_slab,
+        pv.PolyDataFilters.clip_closed_surface,
+    ],
+)
+def test_zero_normal_raises(method, normal):
+    kwargs = dict(thickness=1.0) if method is pv.DataObjectFilters.clip_slab else {}
+    with pytest.raises(ValueError, match=re.escape('`normal` must be a non-zero vector.')):
+        method(pv.Sphere(), normal=normal, **kwargs)
 
 
 def test_clip_slab_zero_normal():

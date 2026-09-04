@@ -69,6 +69,99 @@ if TYPE_CHECKING:
 _SelectInteriorPointsOptions = Literal['signed_distance', 'cell_locator']
 
 
+_CLIP_SURFACE_SCALARS = '__pyvista_clip_surface_distance'
+
+
+def _points_inside_surface(image: ImageData, surface: PolyData) -> NumpyArray[np.bool_]:
+    """Return which points of the image a closed surface encloses, from a stencil."""
+    mask = surface.voxelize_binary_mask(reference_volume=image)
+    return np.asarray(mask.point_data['mask']).astype(bool)
+
+
+def _signed_distance_near_surface(
+    dataset: ImageData, surface: PolyData, function: _vtk.vtkImplicitPolyDataDistance
+) -> NumpyArray[float] | None:
+    """Build a signed distance field that is exact on the cells the surface cuts.
+
+    Every point is classified inside (-1) or outside (1) the surface, and the points of
+    cells with corners on both sides get their exact distance so the cut interpolates to
+    the surface. The points of the cells holding the surface's vertices and a sample of
+    all points are evaluated too, and each exact distance is checked against the
+    classification; a disagreement is corrected and the cells are re-examined once, and
+    ``None`` is returned if any remain.
+    """
+    inside = _points_inside_surface(dataset, surface)
+    distance = np.where(inside, -1.0, 1.0)
+    is_exact = np.zeros(dataset.n_points, dtype=bool)
+    points = dataset.points
+
+    def exact_distance(point_ids):
+        values = _vtk.vtkDoubleArray()
+        function.FunctionValue(pv.convert_array(points[point_ids]), values)
+        return pv.convert_array(values)
+
+    # Seeds: the cells holding the surface's vertices and a strided sample, so a
+    # classification that misses a whole region is still checked
+    seeds = np.concatenate(
+        [
+            _points_of_cells_containing(dataset, surface.points),
+            np.arange(0, dataset.n_points, max(1, dataset.n_points // 256)),
+        ]
+    )
+    # Two passes: evaluate, correct wrong classifications, re-examine the cells; then give up
+    for _ in range(2):
+        point_ids = np.union1d(seeds, _points_of_cells_cut_by_sign(dataset, inside))
+        point_ids = point_ids[~is_exact[point_ids]]
+        if point_ids.size == 0:
+            return distance
+        exact = exact_distance(point_ids)
+        distance[point_ids] = exact
+        is_exact[point_ids] = True
+        wrong = point_ids[(exact < 0) != inside[point_ids]]
+        if wrong.size == 0:
+            return distance
+        inside[wrong] = ~inside[wrong]
+    return None  # still disagreeing, so the caller evaluates the distance everywhere
+
+
+def _points_of_cells_containing(image: ImageData, points: NumpyArray[float]) -> NumpyArray[int]:
+    """Return the ids of the points of the image cells that contain the given points."""
+    # Optimization: index arithmetic instead of a cell locator, which VTK 9.7 spends about
+    # a second building for an image of a few million cells
+    index = (np.column_stack([points, np.ones(len(points))]) @ image.physical_to_index_matrix.T)[
+        :, :3
+    ]
+    cell = np.floor(index).astype(int) - np.array(image.offset)
+    n_cells = np.array(image.dimensions) - 1
+    cell = cell[np.all((cell >= 0) & (cell < n_cells), axis=1)]
+    cell_ids = np.unique(cell[:, 0] + n_cells[0] * (cell[:, 1] + n_cells[1] * cell[:, 2]))
+    if cell_ids.size == 0:
+        return np.empty(0, dtype=int)
+    cells = image.extract_cells(cell_ids, pass_point_ids=True, pass_cell_ids=False)
+    return np.asarray(cells.point_data['vtkOriginalPointIds'])
+
+
+def _points_of_cells_cut_by_sign(
+    dataset: ImageData, inside: NumpyArray[np.bool_]
+) -> NumpyArray[int]:
+    """Return the ids of the points of cells that have corners on both sides."""
+    marked = dataset.copy(deep=False)
+    marked.point_data[_CLIP_SURFACE_SCALARS] = inside.astype(np.float32)
+    to_cells = _vtk.vtkPointDataToCellData()
+    to_cells.SetInputData(marked)
+    to_cells.PassPointDataOff()
+    to_cells.ProcessAllArraysOff()
+    to_cells.AddPointDataArray(_CLIP_SURFACE_SCALARS)
+    _update_alg(to_cells, message='Finding Cells Cut by the Surface')
+    fraction = np.asarray(_get_output(to_cells).cell_data[_CLIP_SURFACE_SCALARS])
+    cut = dataset.extract_cells(
+        np.flatnonzero((fraction > 0) & (fraction < 1)), pass_point_ids=True, pass_cell_ids=False
+    )
+    if cut.n_points == 0:
+        return np.empty(0, dtype=int)
+    return np.asarray(cut.point_data['vtkOriginalPointIds'])
+
+
 class _ExtractValuesInputs(NamedTuple):
     """Validated inputs shared by ``extract_values`` and ``select_values``."""
 
@@ -645,11 +738,13 @@ class DataSetFilters(DataObjectFilters):
             if both:
                 msg = 'Cannot have both=True for a range clip'
                 raise ValueError(msg)
-        alg.SetInputDataObject(self)
+        # Activate the scalars on a shallow copy so the input's active scalars are untouched
+        source = self.copy(deep=False)
         if scalars is None:
-            set_default_active_scalars(self)
+            set_default_active_scalars(source)
         else:
-            self.set_active_scalars(scalars)
+            source.set_active_scalars(scalars)
+        alg.SetInputDataObject(source)
 
         alg.SetInsideOut(invert)  # invert the clip if needed
         alg.SetGenerateClippedOutput(both)
@@ -709,7 +804,12 @@ class DataSetFilters(DataObjectFilters):
         compute_distance : bool, default: False
             Compute the implicit distance from the mesh onto the input
             dataset.  A new array called ``'implicit_distance'`` will
-            be added to the output clipped mesh.
+            be added to the output clipped mesh. For :class:`~pyvista.ImageData`
+            with a closed surface and ``value=0``, this also makes the clip
+            evaluate the distance at every point instead of classifying points
+            as inside or outside with a stencil and evaluating it only at the
+            points of cells the surface passes through, where the classification
+            is checked against it.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -739,26 +839,54 @@ class DataSetFilters(DataObjectFilters):
         >>> clipped.plot(show_edges=True, cpos='xy', line_width=3)
 
         """
-        if not isinstance(surface, _vtk.vtkPolyData):
-            surface = wrap(surface).extract_surface(
+        surface_ = cast('pv.PolyData', wrap(surface))
+        if not isinstance(surface_, pv.PolyData):
+            surface_ = surface_.extract_surface(  # type: ignore[unreachable]
                 algorithm=None, pass_pointid=False, pass_cellid=False
             )
         function = _vtk.vtkImplicitPolyDataDistance()
-        function.SetInput(surface)
+        function.SetInput(surface_)
+        clip_function: _vtk.vtkImplicitFunction | None = function
+        source = self
         if compute_distance:
             points = pv.convert_array(self.points)
             dists = _vtk.vtkDoubleArray()
             function.FunctionValue(points, dists)
-            self['implicit_distance'] = pv.convert_array(dists)
+            # The array goes on a shallow copy, so it reaches the output but not the input
+            source = self.copy(deep=False)
+            source['implicit_distance'] = pv.convert_array(dists)
+        elif (
+            isinstance(self, pv.ImageData)
+            and value == 0
+            and self.n_cells
+            and surface_.n_faces
+            and surface_.n_open_edges == 0
+        ):
+            # Optimization: vtkImplicitPolyDataDistance evaluates serially (VTK 9.7), so
+            # classify the points with a stencil and evaluate the distance only where the
+            # surface cuts cells. The clip interpolates the same cut, so the output is the
+            # same, and the check below guards against a misclassification.
+            distance = _signed_distance_near_surface(self, surface_, function)
+            if distance is not None:
+                source = self.copy(deep=False)
+                source.point_data[_CLIP_SURFACE_SCALARS] = distance
+                source.set_active_scalars(_CLIP_SURFACE_SCALARS, preference='point')
+                clip_function = None
         # run the clip
         clipped = DataSetFilters._clip_with_function(
-            self,
-            function,
+            source,
+            clip_function,
             invert=invert,
             value=value,
             progress_bar=progress_bar,
             crinkle=crinkle,
         )
+        if clip_function is None:
+            # Drop the working scalars and restore the input's active scalars
+            clipped.point_data.pop(_CLIP_SURFACE_SCALARS, None)
+            info = self.active_scalars_info
+            if info.name is not None and not clipped.is_empty:
+                clipped.set_active_scalars(info.name, preference=info.association)
         return _cast_output_to_match_input_type(clipped, self)
 
     @_deprecate_positional_args(allowed=['value'])

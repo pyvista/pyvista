@@ -222,6 +222,154 @@ def test_clip_scalar_ranges_imagedata():
     assert vol.n_points < vol2.n_points
 
 
+def test_clip_scalar_does_not_change_active_scalars(uniform):
+    uniform.point_data['other'] = np.arange(uniform.n_points)
+    uniform.set_active_scalars('Spatial Point Data')
+    clipped = uniform.clip_scalar(scalars='other', value=uniform.n_points / 2)
+    assert clipped.n_cells
+    assert uniform.active_scalars_name == 'Spatial Point Data'
+
+
+def _clip_surface_exact(mesh, surface, **kwargs):
+    # The distance-everywhere clip the fast path must reproduce
+    from pyvista.core.filters.data_object import _cast_output_to_match_input_type
+
+    function = _vtk.vtkImplicitPolyDataDistance()
+    function.SetInput(surface)
+    clipped = pv.DataSetFilters._clip_with_function(mesh, function, **kwargs)
+    return _cast_output_to_match_input_type(clipped, mesh)
+
+
+def _clip_surface_case(kind):
+    # Built per test so the cell locator cached on the mesh does not outlive it
+    if kind == 'image':
+        mesh = pv.ImageData(dimensions=(12, 11, 10), spacing=(1.0, 1.5, 2.0), offset=(2, 3, 4))
+        mesh['data'] = np.arange(mesh.n_points, dtype=float)
+        return mesh, pv.Sphere(radius=6, center=mesh.center)
+    if kind == 'rotated_image':
+        mesh = pv.ImageData(dimensions=(12, 11, 10), spacing=(1.0, 1.5, 2.0))
+        mesh['data'] = np.arange(mesh.n_points, dtype=float)
+        mesh.direction_matrix = pv.Transform().rotate_z(30).matrix[:3, :3]
+        return mesh, pv.Sphere(radius=6, center=mesh.center)
+    if kind == 'unstructured':
+        mesh, surface = _clip_surface_case('image')
+        return mesh.cast_to_unstructured_grid(), surface
+    if kind == 'polydata':
+        mesh = pv.Sphere(theta_resolution=40, phi_resolution=40)
+        mesh['z'] = mesh.points[:, 2]
+        return mesh, pv.Cube(x_length=1.2, y_length=0.8, z_length=0.8).triangulate()
+    mesh = pv.PointSet(np.random.default_rng(0).uniform(-1, 1, (500, 3)))
+    mesh['v'] = mesh.points[:, 0]
+    return mesh, pv.Sphere(radius=0.7)
+
+
+@pytest.mark.parametrize(
+    'kind',
+    [
+        'image',
+        pytest.param(
+            'rotated_image',
+            marks=pytest.mark.skipif(
+                pv.vtk_version_info < (9, 4),
+                reason='The implicit function clip ignores the image direction matrix',
+            ),
+        ),
+        'unstructured',
+        'polydata',
+        'pointset',
+    ],
+)
+@pytest.mark.parametrize('kwargs', [dict(invert=True), dict(invert=False), dict(crinkle=True)])
+def test_clip_surface_closed_surface_matches_exact_clip(kind, kwargs):
+    mesh, surface = _clip_surface_case(kind)
+    assert surface.n_open_edges == 0
+    clipped = mesh.clip_surface(surface, **kwargs)
+    expected = _clip_surface_exact(mesh, surface, **kwargs)
+    assert type(clipped) is type(expected)
+    assert clipped.n_points == expected.n_points
+    assert clipped.n_cells == expected.n_cells
+    assert clipped.array_names == expected.array_names
+    assert clipped.active_scalars_name == expected.active_scalars_name
+    assert set(map(tuple, np.round(clipped.points, 6))) == set(
+        map(tuple, np.round(expected.points, 6))
+    )
+
+
+def _wrong_classifier(kind, original):
+    # Corrupt the inside/outside classification the fast path starts from
+    def classify(dataset, surface):
+        inside = original(dataset, surface)
+        if kind == 'inverted':
+            return ~inside
+        if kind == 'all_outside':
+            return np.zeros_like(inside)
+        dims = dataset.dimensions
+        grid = inside.reshape(dims[2], dims[1], dims[0]).copy()
+        if kind == 'streak':
+            grid[2, 3, :] = ~grid[2, 3, :]  # a ray-shaped run of wrong points
+        else:
+            grid[1:5, 1:5, 1:5] = True  # a solid wrong region away from the surface
+        return grid.ravel()
+
+    return classify
+
+
+@pytest.mark.parametrize('kind', ['streak', 'blob', 'inverted', 'all_outside'])
+@pytest.mark.parametrize('invert', [True, False])
+def test_clip_surface_wrong_classification_still_exact(monkeypatch, kind, invert):
+    from pyvista.core.filters import data_set
+
+    image = pv.ImageData(dimensions=(12, 11, 10), spacing=(1.0, 1.5, 2.0))
+    image['data'] = np.arange(image.n_points, dtype=float)
+    surface = pv.Sphere(radius=6, center=(9.0, 12.0, 14.0))
+    original = data_set._points_inside_surface
+    monkeypatch.setattr(data_set, '_points_inside_surface', _wrong_classifier(kind, original))
+
+    clipped = image.clip_surface(surface, invert=invert)
+    expected = _clip_surface_exact(image, surface, invert=invert)
+    assert clipped.n_cells == expected.n_cells
+    assert set(map(tuple, np.round(clipped.points, 6))) == set(
+        map(tuple, np.round(expected.points, 6))
+    )
+
+
+@pytest.mark.parametrize(
+    ('kind', 'verified'), [('streak', True), ('blob', False), ('inverted', False)]
+)
+def test_signed_distance_near_surface_heals_or_gives_up(monkeypatch, kind, verified):
+    from pyvista.core.filters import data_set
+
+    image = pv.ImageData(dimensions=(12, 11, 10), spacing=(1.0, 1.5, 2.0))
+    surface = pv.Sphere(radius=6, center=(9.0, 12.0, 14.0))
+    original = data_set._points_inside_surface
+    monkeypatch.setattr(data_set, '_points_inside_surface', _wrong_classifier(kind, original))
+    function = _vtk.vtkImplicitPolyDataDistance()
+    function.SetInput(surface)
+
+    distance = data_set._signed_distance_near_surface(image, surface, function)
+    assert (distance is not None) == verified
+
+
+@pytest.mark.parametrize(
+    'kwargs', [dict(value=1.0), dict(compute_distance=True), dict(surface=pv.Sphere().clip())]
+)
+def test_clip_surface_falls_back_to_exact_clip(uniform, kwargs):
+    surface = kwargs.pop('surface', pv.Sphere(radius=4, center=uniform.center))
+    clipped = uniform.clip_surface(surface, **kwargs)
+    expected = _clip_surface_exact(uniform, surface, value=kwargs.get('value', 0.0))
+    assert clipped.n_cells == expected.n_cells
+    assert set(map(tuple, np.round(clipped.points, 6))) == set(
+        map(tuple, np.round(expected.points, 6))
+    )
+
+
+def test_clip_surface_compute_distance_does_not_modify_input(uniform):
+    surface = pv.Sphere(radius=3, center=uniform.center)
+    clipped = uniform.clip_surface(surface, compute_distance=True)
+    assert 'implicit_distance' in clipped.point_data
+    assert 'implicit_distance' not in uniform.point_data
+
+
 def test_clip_scalar_errors():
     mesh = pv.Wavelet()
     with pytest.raises(TypeError):
@@ -267,7 +415,7 @@ def test_clip_surface():
     assert 'implicit_distance' in clipped.array_names
     clipped = dataset.clip_surface(surface.cast_to_unstructured_grid(), progress_bar=True)
     assert isinstance(clipped, pv.UnstructuredGrid)
-    assert 'implicit_distance' in clipped.array_names
+    assert 'implicit_distance' not in clipped.array_names
     # Test crinkle
     clipped = dataset.clip_surface(surface, invert=False, progress_bar=True, crinkle=True)
     assert isinstance(clipped, pv.UnstructuredGrid)
