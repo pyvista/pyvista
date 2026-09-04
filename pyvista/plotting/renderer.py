@@ -1965,7 +1965,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             VTK cannot space that many evenly between the axis bounds.
 
         use_2d : bool, default: False
-            This can be enabled for smoother plotting.
+            This can be enabled for smoother plotting. VTK also hides the z-axis
+            in this mode, so it suits a scene viewed down a single axis.
 
         grid : bool or str, optional
             Add grid lines to the backface (``True``, ``'back'``, or
@@ -3063,6 +3064,9 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
                 self.cube_axes_actor.update_bounds(
                     self.compute_bounds(ignore_actors=[self.cube_axes_actor])
                 )
+            if not np.allclose(self.scale, [1.0, 1.0, 1.0]):
+                # 3D text is not placed correctly when the renderer is scaled
+                self.cube_axes_actor._disable_3d_text()
             self.Modified()
 
     @_deprecate_positional_args

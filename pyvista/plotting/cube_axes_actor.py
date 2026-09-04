@@ -46,13 +46,11 @@ _FLT_EPSILON = float(np.finfo(np.float32).eps)
 
 
 def _fit_n_labels(vmin: float, vmax: float, n: int) -> int:
-    """Reduce a label count to the most :vtk:`vtkCubeAxesActor` spaces evenly over a range.
+    """Return the largest count up to ``n`` that VTK spaces evenly between two values.
 
-    :vtk:`vtkCubeAxesActor` replaces its own major tick spacing with
-    ``(vmax - vmin) / (n - 1)`` only when that spacing is finer than the one it
-    picks itself. Ask for more labels than that and the ticks stay where VTK put
-    them while the labels keep the values of an evenly spaced axis, so every
-    label after the first is drawn at the wrong coordinate.
+    :vtk:`vtkCubeAxesActor` adopts a spacing of ``(vmax - vmin) / (n - 1)`` only while ``n``
+    stays below the number of ticks it computes for itself. Above that it keeps its own
+    spacing, and evenly spaced labels no longer belong to the ticks they are drawn on.
     """
     span = abs(vmax - vmin)
     if n < 2 or span == 0.0 or not math.isfinite(span):
@@ -64,6 +62,8 @@ def _fit_n_labels(vmin: float, vmax: float, n: int) -> int:
     if power < 0.0:
         power -= 1.0
     decade = 10.0 ** float(int(power))
+    if decade == 0.0:  # a subnormal span underflows the decade, as ``GetNumTicks`` allows for
+        return n
     ticks = int(span / decade)
     ticks = ticks + 1 if ticks else 0
     divisor = 5.0 if ticks <= 2 else 2.0 if ticks < 5 else 1.0
@@ -75,6 +75,8 @@ def _fit_n_labels(vmin: float, vmax: float, n: int) -> int:
     # it keeps its spacing, which suits evenly spaced labels only if its last tick is ``vmax``
     lands_on_vmax = abs(intervals - labelled + 1) <= 1e-9 * (intervals or 1.0)
     maximum = labelled if lands_on_vmax else int(intervals)
+    # A count between the two is spaced by neither: VTK builds ``labelled`` labels but is
+    # handed ``n``, and the integer division it indexes them with then floors to zero
     return maximum if n >= maximum else min(n, int(intervals))
 
 
@@ -243,7 +245,8 @@ class CubeAxesActor(
         .. versionadded:: 0.49
 
     use_2d_mode : bool, default: False
-        Use the 2D render mode. This can be enabled for smoother plotting.
+        Use the 2D render mode. This can be enabled for smoother plotting. VTK also
+        hides the z-axis in this mode, so it suits a scene viewed down a single axis.
 
         .. versionadded:: 0.49
 
@@ -398,13 +401,10 @@ class CubeAxesActor(
         self.GetYAxesLinesProperty().SetColor(color_.float_rgb)
         self.GetZAxesLinesProperty().SetColor(color_.float_rgb)
 
-        self._configure_text(
-            color=color_,
-            font_size=font_size,
-            font_family=font_family,
-            bold=bold,
-            use_3d_text=use_3d_text,
+        self._text_config = dict(
+            color=color_, font_size=font_size, font_family=font_family, bold=bold
         )
+        self._configure_text(**self._text_config, use_3d_text=use_3d_text)  # type: ignore[arg-type]
 
     def _configure_grid_lines(
         self, *, grid: bool | str | None, color: Color, visibility: tuple[bool, bool, bool]
@@ -433,6 +433,11 @@ class CubeAxesActor(
         self.GetXAxesGridlinesProperty().SetColor(color.float_rgb)
         self.GetYAxesGridlinesProperty().SetColor(color.float_rgb)
         self.GetZAxesGridlinesProperty().SetColor(color.float_rgb)
+
+    def _disable_3d_text(self) -> None:
+        """Redraw the titles and labels as 2D text actors."""
+        if self.GetUseTextActor3D():
+            self._configure_text(**self._text_config, use_3d_text=False)  # type: ignore[arg-type]
 
     def _configure_text(
         self,
@@ -901,9 +906,8 @@ class CubeAxesActor(
     def update_bounds(self, bounds):
         """Update the bounds of this actor.
 
-        Unlike the :attr:`CubeAxesActor.bounds` attribute, updating the bounds
-        also updates the axis labels. The ``padding`` and ``axes_ranges`` given
-        to the constructor are applied to the new bounds.
+        The ``padding`` and ``axes_ranges`` given to the constructor are applied
+        to the new bounds.
 
         Parameters
         ----------
