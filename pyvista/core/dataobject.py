@@ -5,7 +5,6 @@ from __future__ import annotations
 from abc import abstractmethod
 from collections import UserDict
 from collections import defaultdict
-import importlib.util
 from pathlib import Path
 import sys
 from typing import TYPE_CHECKING
@@ -40,6 +39,7 @@ from .utilities.misc import abstract_class
 from .utilities.state_manager import vtk_verbosity
 from .utilities.writer_registry import _get_ext_handler as _get_writer_ext_handler
 from .utilities.writer_registry import _list_custom_exts as _list_custom_writer_exts
+from .utilities.writer_registry import _missing_writer_message
 
 if TYPE_CHECKING:
     from types import FunctionType
@@ -198,6 +198,11 @@ class DataObject(
             not a mesh file format (CWE-502). Use a real mesh format or
             install ``pyvista-zstd`` for the ``.pv`` single-blob format.
 
+        .. versionchanged:: 0.49.0
+            Saving to an extension served by a companion package that is
+            not installed raises :class:`ImportError` rather than
+            :class:`ValueError`.
+
         See Also
         --------
         pyvista.read
@@ -250,6 +255,9 @@ class DataObject(
         TypeError
             If ``**writer_kwargs`` are provided but the target extension
             does not dispatch to a registered custom writer.
+        ImportError
+            If ``file_ext`` is served by a companion package that PyVista
+            cannot import, such as ``.pv`` and ``pyvista-zstd``.
         ValueError
             If ``file_ext`` is not a supported extension.
 
@@ -321,18 +329,13 @@ class DataObject(
         elif file_ext in _PICKLE_FILE_EXT:
             _raise_pickle_removed()
         else:
+            if (missing := _missing_writer_message(file_ext, str(file_path))) is not None:
+                raise ImportError(missing)
             msg = (
                 f'Invalid file extension {file_ext!r} for data type {type(self)}.\n'
                 f'Must be one of: '
                 f'{list(writer_exts) + _list_custom_writer_exts()}'
             )
-            if file_ext == '.pv' and not importlib.util.find_spec(
-                'pyvista-zstd'
-            ):  # pragma: no cover
-                msg += (
-                    ".\nThe '.pv' extension is supported by the `pyvista-zstd` package. "
-                    'It can be installed with `pyvista[io]`.'
-                )
             raise ValueError(msg)
 
     def _store_metadata(self: Self) -> None:
