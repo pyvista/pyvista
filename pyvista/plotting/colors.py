@@ -1657,11 +1657,9 @@ _MATPLOTLIB_CMAPS = get_args(_MATPLOTLIB_CMAPS_LITERAL)
 
 @functools.lru_cache(maxsize=1024)
 def _hex_to_channels(h: str) -> tuple[int, ...]:
-    """Parse a hex string with an optional prefix into three or four channel integers.
-
-    Optimization: color names and hex strings are immutable inputs that are parsed
-    over and over (every theme copy and ``add_mesh`` call), so the result is cached.
-    """
+    """Parse a hex string with an optional prefix into three or four channel integers."""
+    # Optimization: color names and hex strings are immutable inputs that are parsed
+    # over and over (every theme copy and ``add_mesh`` call), so the result is cached
     h = Color.strip_hex_prefix(h)
     channels = tuple(Color.convert_color_channel(h[i : i + 2]) for i in range(0, len(h), 2))
     if len(channels) not in (3, 4):

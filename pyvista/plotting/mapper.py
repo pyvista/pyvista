@@ -59,8 +59,7 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
     """
 
     def __init__(self, theme=None, **kwargs) -> None:
-        # copy global theme to ensure local mapper theme is fixed
-        # after creation.
+        # snapshot the theme so later edits to the source theme do not reach this mapper
         self._theme = pv.themes.Theme._from_theme(pv.global_theme if theme is None else theme)
         self.lookup_table = LookupTable()
 
