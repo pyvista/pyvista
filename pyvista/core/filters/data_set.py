@@ -5535,7 +5535,8 @@ class DataSetFilters(DataObjectFilters):
         def _update_id_mask(logic_) -> None:
             """Apply component logic and update the id mask."""
             logic_ = component_logic(logic_) if component_logic else logic_
-            # Optimization: accumulate in place; scattering ``True`` by mask is ~9x slower
+            # Optimization: accumulate in place, since assigning ``True`` through a boolean
+            # mask allocates and scatters on every value and range
             np.logical_or(id_mask, logic_, out=id_mask)
 
         # Determine which ids to keep

@@ -5119,8 +5119,8 @@ class ImageDataFilters(DataSetFilters):
         _validate_value_for_dtype(replacement_value, input_array.dtype, name='replacement_value')
 
         # Optimization: a single value or range of a single-component array with scalar
-        # fill and replacement values is a threshold, which the VTK image filter does ~15x
-        # faster than the numpy path below
+        # fill and replacement values is a threshold, which the VTK image filter does in one
+        # threaded pass (VTK 9.7) rather than the several array passes made below
         threshold = None
         if values is None and len(ranges) == 1:
             threshold = ranges[0]
@@ -5158,7 +5158,8 @@ class ImageDataFilters(DataSetFilters):
             if fill_value is None
             else np.full_like(input_array, fill_value=fill_value)
         )
-        # Optimization: a masked copy is one pass, unlike gathering then scattering by mask
+        # Optimization: copy under the mask in one pass, instead of gathering the selected
+        # values into a temporary and scattering them back
         np.copyto(
             array_out,
             input_array if replacement_value is None else replacement_value,
