@@ -3467,10 +3467,11 @@ class DataObjectFilters:
         if crinkle:
             source, active_scalars_info = _Crinkler._add_cell_ids(self)
 
-        # Optimization: ImageData, RectilinearGrid, StructuredGrid, ExplicitStructuredGrid, and
-        # UnstructuredGrid are clipped plane by plane, which keeps their cell types and is ~5x
-        # faster than vtkBoxClipDataSet; PolyData gains nothing from it, and only the box
-        # filter has the non-merging locator behind ``merge_points=False``
+        # Optimization: vtkBoxClipDataSet splits every cell into tetrahedra (VTK 9.7), so
+        # ImageData, RectilinearGrid, StructuredGrid, ExplicitStructuredGrid, and
+        # UnstructuredGrid are clipped plane by plane instead, which keeps their cell types
+        # and is faster for it. PolyData and PointSet are already triangulated, so they gain
+        # nothing, and only the box filter has a locator to disable for ``merge_points``.
         if isinstance(self, (pv.PolyData, pv.PointSet)) or not merge_points:
             alg = _vtk.vtkBoxClipDataSet()
             if not merge_points:
@@ -3811,8 +3812,9 @@ class DataObjectFilters:
         origin_, normal_ = _validate_plane_origin_and_normal(
             self, origin, normal, plane, default_normal='x'
         )
-        # Optimization: build axis-aligned image slices directly; vtkCutter's quad path is
-        # ~60x slower and the output is the same up to ordering
+        # Optimization: vtkCutter is much slower when it emits quads than triangles
+        # (VTK 9.7), and an axis-aligned plane through an unrotated image has a closed form,
+        # so build the quads and interpolate the point data directly instead
         if (
             isinstance(self, pv.ImageData)
             and not generate_triangles
