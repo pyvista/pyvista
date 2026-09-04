@@ -59,13 +59,9 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
     """
 
     def __init__(self, theme=None, **kwargs) -> None:
-        self._theme = pv.themes.Theme()
-        if theme is None:
-            # copy global theme to ensure local property theme is fixed
-            # after creation.
-            self._theme.load_theme(pv.global_theme)
-        else:
-            self._theme.load_theme(theme)
+        # copy global theme to ensure local mapper theme is fixed
+        # after creation.
+        self._theme = pv.themes.Theme._from_theme(pv.global_theme if theme is None else theme)
         self.lookup_table = LookupTable()
 
         self.interpolate_before_map = kwargs.get(
