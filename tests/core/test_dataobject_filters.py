@@ -335,20 +335,20 @@ def _box_clip_filter(mesh, bounds, *, invert):
         pytest.param(lambda mesh: mesh.cast_to_rectilinear_grid(), id='rectilinear'),
         pytest.param(lambda mesh: mesh.cast_to_structured_grid(), id='structured'),
         pytest.param(lambda mesh: mesh.cast_to_unstructured_grid(), id='unstructured'),
-        pytest.param(lambda mesh: examples.load_explicit_structured(), id='explicit_structured'),
+        pytest.param(lambda _mesh: examples.load_explicit_structured(), id='explicit_structured'),
     ],
 )
 def test_clip_box_planes_match_box_filter(uniform, invert, cast):
     mesh = cast(uniform)
-    lower = np.array(mesh.bounds[::2]) + 0.3 * (
-        np.array(mesh.bounds[1::2]) - np.array(mesh.bounds[::2])
-    )
-    bounds = [lower[0], mesh.bounds[1], lower[1], mesh.bounds[3], lower[2], mesh.bounds[5]]
+    lower, upper = np.array(mesh.bounds[::2]), np.array(mesh.bounds[1::2])
+    lower = lower + 0.3 * (upper - lower)
+    bounds = [lower[0], upper[0], lower[1], upper[1], lower[2], upper[2]]
     clipped = mesh.clip_box(bounds, invert=invert)
     expected = _box_clip_filter(mesh, bounds, invert=invert)
     assert isinstance(clipped, pv.UnstructuredGrid)
     assert np.isclose(clipped.volume, expected.volume)
-    assert np.allclose(clipped.bounds, expected.bounds)
+    # The box filter keeps unused input points, so compare with the box, not its bounds
+    assert np.allclose(clipped.bounds, mesh.bounds if invert else bounds)
     # Whole hexahedra are kept instead of being split into tetrahedra
     assert set(clipped.celltypes) <= {pv.CellType.HEXAHEDRON, pv.CellType.POLYHEDRON}
     assert set(expected.celltypes) == {pv.CellType.TETRA}
