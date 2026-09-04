@@ -1797,7 +1797,7 @@ class ImageDataFilters(DataSetFilters):
         If ``None`` is given for ``in_value``, scalars that are ``'in'`` will not be replaced.
         If ``None`` is given for ``out_value``, scalars that are ``'out'`` will not be replaced.
 
-        Cell scalars are thresholded in place and stay cell data. Other arrays are
+        Thresholded cell scalars are returned as cell data, and all other arrays are
         passed through unchanged.
 
         Parameters
