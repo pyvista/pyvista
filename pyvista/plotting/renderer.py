@@ -3729,9 +3729,10 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Texture.
 
         is_srgb : bool, default: False
-            If the texture is in sRGB color space, set the color flag on the
-            texture or set this parameter to ``True``. Textures are assumed
-            to be in linear color space by default.
+            Decode the texture from sRGB to linear color space while computing
+            the image-based lighting. Set :attr:`~pyvista.Texture.srgb` instead
+            to decode the texture everywhere it is sampled, including the
+            background. Enabling both decodes the texture twice.
 
         resample : bool | float, optional
             Resample the environment texture. Set this to a float to set the
@@ -3836,6 +3837,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             texture_copy.mipmap = texture.mipmap
             texture_copy.interpolate = texture.interpolate
             texture_copy.color_mode = texture.color_mode
+            texture_copy.srgb = texture.srgb
 
             # Resample the texture's images
             for i in range(6 if texture_copy.cube_map else 1):

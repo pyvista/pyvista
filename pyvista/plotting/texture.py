@@ -240,6 +240,22 @@ class Texture(DataObject, _vtk.vtkTexture):
     def mipmap(self, value: bool):
         self.SetMipmap(value)
 
+    @property
+    def srgb(self) -> bool:  # numpydoc ignore=RT01
+        """Return or set whether the texture is in sRGB color space.
+
+        When enabled, the texture is decoded to linear color space everywhere it
+        is sampled. Textures are assumed to be in linear color space by default.
+
+        .. versionadded:: 0.49
+
+        """
+        return bool(self.GetUseSRGBColorSpace())
+
+    @srgb.setter
+    def srgb(self, value: bool):
+        self.SetUseSRGBColorSpace(value)
+
     def _from_image_data(self, image):
         if not isinstance(image, pv.ImageData):
             image = pv.ImageData(image)
