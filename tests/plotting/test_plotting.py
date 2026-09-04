@@ -341,6 +341,60 @@ def small_cubemap():
     return pv.Texture(faces)
 
 
+@pytest.fixture
+def small_texture():
+    """Return a low-resolution equirectangular texture."""
+    rng = np.random.default_rng(0)
+    image = pv.ImageData(dimensions=(64, 32, 1))
+    image['data'] = rng.integers(0, 255, (64 * 32, 3), dtype=np.uint8)
+    return pv.Texture(image)
+
+
+@pytest.mark.parametrize('resample', [False, 0.5])
+def test_set_environment_texture_enables_mipmap(
+    resample,
+    small_texture,
+    no_images_to_verify,  # noqa: ARG001
+):
+    """Image-based lighting needs a mipmapped and interpolated texture."""
+    assert not small_texture.mipmap
+    assert not small_texture.interpolate
+
+    pl = pv.Plotter(lighting=None)
+    pl.set_environment_texture(small_texture, resample=resample)
+
+    assert small_texture.mipmap
+    assert small_texture.interpolate
+    lighting_texture = pl.renderer.GetEnvironmentTexture()
+    assert lighting_texture.GetMipmap()
+    assert lighting_texture.GetInterpolate()
+    pl.close()
+
+
+def test_set_environment_texture_keeps_texture_state(small_texture, no_images_to_verify):  # noqa: ARG001
+    """Without resampling the given texture lights the scene, so its own state is kept."""
+    small_texture.SetUseSRGBColorSpace(True)
+
+    pl = pv.Plotter(lighting=None)
+    pl.set_environment_texture(small_texture, resample=False)
+
+    assert pl.renderer.GetEnvironmentTexture() is small_texture
+    assert pl.renderer.GetEnvironmentTexture().GetUseSRGBColorSpace()
+    pl.close()
+
+
+def test_set_environment_texture_prefilter_warning(small_texture, verify_image_cache):
+    """Lighting with an equirectangular texture does not warn from VTK's specular prefilter."""
+    verify_image_cache.skip = True
+
+    pl = pv.Plotter(lighting=None)
+    with pv.VtkErrorCatcher() as catcher:
+        pl.set_environment_texture(small_texture, resample=False)
+        pl.add_mesh(pv.Sphere(), pbr=True, metallic=0.8, roughness=0.2)
+        pl.show()
+    assert [event.name for event in catcher.warning_events] == []
+
+
 def test_set_environment_texture_resample_shrinks_irradiance(small_cubemap, no_images_to_verify):  # noqa: ARG001
     """Resampling should also shrink the diffuse irradiance map VTK convolves."""
     # Pinned, so the assertions below test the floor's value and not just its name

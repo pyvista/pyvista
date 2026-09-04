@@ -3726,7 +3726,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         Parameters
         ----------
         texture : pyvista.Texture
-            Texture.
+            Texture. Its :attr:`~pyvista.Texture.mipmap` and
+            :attr:`~pyvista.Texture.interpolate` are enabled for the lighting.
 
         is_srgb : bool, default: False
             If the texture is in sRGB color space, set the color flag on the
@@ -3804,6 +3805,10 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             self.UseSphericalHarmonicsOff()
 
         self.UseImageBasedLightingOn()
+
+        # VTK's specular prefilter samples the texture's mipmap levels to shade rough surfaces
+        texture.mipmap = True
+        texture.interpolate = True
 
         if resample is None:
             resample = self._theme.resample_environment_texture
