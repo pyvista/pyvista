@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Sequence
@@ -2952,21 +2953,37 @@ def _build_dataset_card(module_name: str, dataset_name: str) -> _DatasetCardResu
     module_display = module_name.removeprefix('pyvista.')
     summary = bold(f'generating rst for {module_display}...')
     print(f'{summary} {darkgreen(dataset_name)}', flush=True)
-    if isinstance(dataset_loader, _Downloadable):
-        dataset_loader.download()
-    dataset_loader.load_and_store_dataset()
-    assert dataset_loader.dataset is not None
+    with pv.VtkErrorCatcher(send_to_logging=False) as catcher:
+        if isinstance(dataset_loader, _Downloadable):
+            dataset_loader.download()
+        dataset_loader.load_and_store_dataset()
+        assert dataset_loader.dataset is not None
 
-    card = DatasetCard(dataset_name, dataset_loader)
-    # indent one level from the carousel header directive
-    DatasetCardFetcher.FACET_LABELS.clear()
-    rst = _pad_lines(card.generate(), pad_left='   ')
-    facet_labels = dict(DatasetCardFetcher.FACET_LABELS)
+        card = DatasetCard(dataset_name, dataset_loader)
+        # indent one level from the carousel header directive
+        DatasetCardFetcher.FACET_LABELS.clear()
+        rst = _pad_lines(card.generate(), pad_left='   ')
+        facet_labels = dict(DatasetCardFetcher.FACET_LABELS)
 
-    type_mismatch = _validate_function_annotation(card)
-    dataset_loader.clear_dataset()
+        type_mismatch = _validate_function_annotation(card)
+        dataset_loader.clear_dataset()
+    _report_vtk_output(dataset_name, catcher.events)
 
     return _DatasetCardResult(dataset_name, rst, facet_labels, type_mismatch)
+
+
+def _report_vtk_output(dataset_name: str, events: list[pv.VtkEvent]) -> None:
+    """Attribute the VTK errors and warnings logged while a dataset's card was built.
+
+    VTK logs these to stderr with no indication of which dataset produced them, so the
+    build log alone cannot say where they came from.
+    """
+    if not events:
+        return
+    counts = Counter(' '.join(str(event).split()) for event in events)
+    header = bold(f'{dataset_name} logged {len(events)} VTK error(s) or warning(s):')
+    body = '\n'.join(f'    {count}x {message}' for message, count in counts.items())
+    print(f'{header}\n{body}', flush=True)
 
 
 class DatasetCardFetcher:
