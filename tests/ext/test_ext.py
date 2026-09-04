@@ -206,7 +206,7 @@ def test_render_figures_degrades_when_the_filtered_remainder_raises(tmp_path, ca
     code = ">>> raise RuntimeError('kaboom')\n>>> boom()  # doctest: +SKIP\n"
     results = _render(code, tmp_path)
     assert len(results) == 1
-    assert any('doctest: +SKIP' in r.message for r in caplog.records)
+    assert any('doctest: +SKIP' in r.message and 'kaboom' in r.message for r in caplog.records)
 
 
 def test_render_figures_still_raises_for_a_piece_without_skips(tmp_path):
