@@ -5512,11 +5512,11 @@ def _get_cell_quality_measures() -> dict[str, str]:
     return measures
 
 
-def _box_planes(bounds: NumpyArray[float]) -> list[tuple[NumpyArray[float], NumpyArray[float]]]:
+def _box_planes(bounds: NumpyArray[float]) -> list[tuple[VectorLike[float], VectorLike[float]]]:
     """Return the six ``(outward normal, origin)`` planes of a box clip specification."""
     if len(bounds) == 12:
         return [(bounds[i], bounds[i + 1]) for i in range(0, 12, 2)]
-    planes = []
+    planes: list[tuple[VectorLike[float], VectorLike[float]]] = []
     for axis in range(3):
         for sign, bound in ((-1.0, bounds[2 * axis]), (1.0, bounds[2 * axis + 1])):
             normal = np.zeros(3)
@@ -5529,7 +5529,7 @@ def _box_planes(bounds: NumpyArray[float]) -> list[tuple[NumpyArray[float], Nump
 
 def _clip_by_box_planes(
     dataset: DataSet,
-    planes: list[tuple[NumpyArray[float], NumpyArray[float]]],
+    planes: Sequence[tuple[VectorLike[float], VectorLike[float]]],
     *,
     invert: bool,
     progress_bar: bool,
