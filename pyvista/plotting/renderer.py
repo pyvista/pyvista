@@ -429,6 +429,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self._shadow_pass = None
         self._render_passes = RenderPasses(self)
         self.cube_axes_actor: CubeAxesActor | None = None
+        self._cube_axes_follow_scene = True
 
         # This is a private variable to keep track of how many colorbars exist
         # This allows us to keep adding colorbars without overlapping
@@ -2121,7 +2122,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         color = Color(color, default_color=self._theme.font.color)
 
-        if mesh is None and bounds is None:
+        follow_scene = mesh is None and bounds is None
+        if follow_scene:
             # Use the bounds of all data in the rendering window
             bounds = np.array(self.bounds)
         elif bounds is None:
@@ -2168,6 +2170,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         self.add_actor(cube_axes_actor, reset_camera=False, pickable=False, render=render)
         self.cube_axes_actor = cube_axes_actor
+        self._cube_axes_follow_scene = follow_scene
 
         self.Modified()
         return cube_axes_actor
@@ -3056,7 +3059,11 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
                     floor_kwargs['store_floor_kwargs'] = False
                     self.add_floor(**floor_kwargs)
         if self.cube_axes_actor is not None:
-            self.cube_axes_actor.update_bounds(self.bounds)
+            if self._cube_axes_follow_scene:
+                # Ignore the axes actor itself, or its padding compounds on every update
+                self.cube_axes_actor.update_bounds(
+                    self.compute_bounds(ignore_actors=[self.cube_axes_actor])
+                )
             if not np.allclose(self.scale, [1.0, 1.0, 1.0]):
                 self.cube_axes_actor.SetUse2DMode(True)
             else:

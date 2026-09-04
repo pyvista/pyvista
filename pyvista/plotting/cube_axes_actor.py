@@ -383,15 +383,15 @@ class CubeAxesActor(
         )
         self._configure_fly_mode(location=location)
 
+        self._padding = padding
+        self._axes_ranges = (
+            None
+            if axes_ranges is None
+            else _validation.validate_array(axes_ranges, must_have_shape=(6,), name='axes_ranges')
+        )
         if bounds is not None:
             self.bounds = _pad_bounds(bounds, padding=padding)
-        if axes_ranges is not None:
-            ranges = _validation.validate_array(
-                axes_ranges, must_have_shape=(6,), name='axes_ranges'
-            )
-            self.x_axis_range = ranges[0], ranges[1]
-            self.y_axis_range = ranges[2], ranges[3]
-            self.z_axis_range = ranges[4], ranges[5]
+        self._apply_axes_ranges()
 
         self.GetXAxesLinesProperty().SetColor(color_.float_rgb)
         self.GetYAxesLinesProperty().SetColor(color_.float_rgb)
@@ -890,11 +890,19 @@ class CubeAxesActor(
         labels_vtk = cast('_vtk.vtkStringArray', self.GetAxisLabels(2))
         return convert_string_array(labels_vtk).tolist()
 
+    def _apply_axes_ranges(self) -> None:
+        """Restore the axes ranges given to the constructor, if any."""
+        if (ranges := self._axes_ranges) is not None:
+            self.x_axis_range = ranges[0], ranges[1]
+            self.y_axis_range = ranges[2], ranges[3]
+            self.z_axis_range = ranges[4], ranges[5]
+
     def update_bounds(self, bounds):
         """Update the bounds of this actor.
 
         Unlike the :attr:`CubeAxesActor.bounds` attribute, updating the bounds
-        also updates the axis labels.
+        also updates the axis labels. The ``padding`` and ``axes_ranges`` given
+        to the constructor are applied to the new bounds.
 
         Parameters
         ----------
@@ -902,4 +910,5 @@ class CubeAxesActor(
             Bounds in the form of ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
         """
-        self.bounds = bounds
+        self.bounds = _pad_bounds(bounds, padding=self._padding)
+        self._apply_axes_ranges()

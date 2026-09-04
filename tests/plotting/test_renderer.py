@@ -67,6 +67,54 @@ def test_show_grid_axes_ranges_with_all_edges():
     assert labels_ranges == axes_ranges
 
 
+def test_show_bounds_keeps_explicit_bounds():
+    """Regression test for https://github.com/pyvista/pyvista/issues/8231."""
+    bounds = (1.0, 7.0, 2.0, 5.0, -2.0, 2.0)
+    pl = pv.Plotter()
+    actor = pl.show_bounds(bounds=bounds)
+    pl.add_mesh(pv.Sphere(radius=5))
+    assert actor.bounds == bounds
+
+
+def test_show_bounds_keeps_mesh_bounds():
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere(radius=5))
+    actor = pl.show_bounds(mesh=pv.Cube())
+    pl.add_mesh(pv.Sphere(radius=9))
+    assert actor.bounds == pv.Cube().bounds
+
+
+def test_show_bounds_keeps_axes_ranges():
+    ranges = (0.0, 100.0)
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    actor = pl.show_bounds(axes_ranges=[*ranges, *ranges, *ranges])
+    pl.add_mesh(pv.Cube())
+    assert actor.x_axis_range == ranges
+    assert actor.y_axis_range == ranges
+    assert actor.z_axis_range == ranges
+
+
+def test_show_bounds_keeps_padding():
+    padded = pytest.approx((-0.6, 0.6, -0.6, 0.6, -0.6, 0.6))
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    actor = pl.show_bounds(padding=0.1)
+    pl.add_mesh(pv.Cube())
+    assert actor.bounds == padded
+    # padding must not compound as more actors are added
+    pl.add_mesh(pv.Cube())
+    assert actor.bounds == padded
+
+
+def test_show_bounds_follows_scene():
+    cube = pv.Cube()
+    pl = pv.Plotter()
+    actor = pl.show_bounds()
+    pl.add_mesh(cube)
+    assert actor.bounds == cube.bounds
+
+
 def test_show_bounds_with_scaling(sphere):
     pl = pv.Plotter()
     pl.add_mesh(sphere)
