@@ -26,6 +26,7 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
+from pyvista.core.filters.data_set import _ExtractValuesInputs
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import set_default_active_scalars
@@ -5136,29 +5137,17 @@ class ImageDataFilters(DataSetFilters):
             split=split,
             mesh_type=pv.ImageData,
         )
-        if isinstance(validated, tuple):
-            (
-                valid_values,
-                valid_ranges,
-                value_names,
-                range_names,
-                array,
-                array_name,
-                association,
-                component_logic,
-            ) = validated
-        else:
-            # Return empty dataset
-            return validated
+        if not isinstance(validated, _ExtractValuesInputs):
+            return validated  # empty input
 
         kwargs = dict(
-            values=valid_values,
-            ranges=valid_ranges,
-            array=array,
-            association=association,
-            component_logic=component_logic,
+            values=validated.values,
+            ranges=validated.ranges,
+            array=validated.array,
+            association=validated.association,
+            component_logic=validated.component_logic,
             invert=invert,
-            array_name=array_name,
+            array_name=validated.array_name,
             fill_value=fill_value,
             replacement_value=replacement_value,
         )
@@ -5166,8 +5155,8 @@ class ImageDataFilters(DataSetFilters):
         if split:
             return self._split_values(
                 method=self._select_values,
-                value_names=value_names,
-                range_names=range_names,
+                value_names=validated.value_names,
+                range_names=validated.range_names,
                 **kwargs,
             )
 
