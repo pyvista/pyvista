@@ -512,10 +512,9 @@ class PolyDataFilters(DataSetFilters):
 
             .. deprecated:: 0.46
 
-                Has no effect with VTK 9.5.0 or later, where the main mesh always has
-                priority and ``False`` raises :class:`ValueError`. With older VTK the
-                keyword still selects which mesh has priority and defaults to ``True``.
-                It will be removed in a future version.
+                Omit this keyword; the main mesh already has priority. ``False`` raises
+                :class:`ValueError` with VTK 9.5.0 or later and still selects the other
+                mesh with older VTK. It will be removed in a future version.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.

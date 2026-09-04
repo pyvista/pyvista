@@ -5902,10 +5902,9 @@ class DataSetFilters(DataObjectFilters):
 
             .. deprecated:: 0.46
 
-                Has no effect with VTK 9.5.0 or later, where the main mesh always has
-                priority and ``False`` raises :class:`ValueError`. With older VTK the
-                keyword still selects which mesh has priority and defaults to ``True``.
-                It will be removed in a future version.
+                Omit this keyword; the main mesh already has priority. ``False`` raises
+                :class:`ValueError` with VTK 9.5.0 or later and still selects the other
+                mesh with older VTK. It will be removed in a future version.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -5934,24 +5933,24 @@ class DataSetFilters(DataObjectFilters):
 
         """
         vtk_at_least_95 = vtk_version_info >= (9, 5, 0)
-        # Deprecated on v0.46.0 for vtk>=9.5.0 only; remove with the vtk<9.5.0 branch below.
-        if main_has_priority is not None and vtk_at_least_95:
-            if not main_has_priority:
-                msg = (
-                    f'main_has_priority={main_has_priority!r} is not supported for '
-                    'vtk>=9.5.0, where the main mesh always has priority. Swap the meshes '
-                    'instead, as in `other.merge(main)`.'
-                )
-                raise ValueError(msg)
+        # Deprecated on v0.46.0; remove with the vtk<9.5.0 branch below.
+        if main_has_priority is None:
+            if not vtk_at_least_95:
+                # Set default for older VTK:
+                main_has_priority = True
+        elif main_has_priority:
             msg = (
-                "The keyword 'main_has_priority' is deprecated and has no effect for "
-                'vtk>=9.5.0, where the main mesh always has priority. It will be removed '
-                'in a future version.'
+                "The keyword 'main_has_priority' is deprecated and will be removed in a "
+                'future version. Omit it; the main mesh already has priority.'
             )
             warn_external(msg, pv.PyVistaDeprecationWarning)
-        elif main_has_priority is None and not vtk_at_least_95:
-            # Set default for older VTK:
-            main_has_priority = True
+        elif vtk_at_least_95:
+            msg = (
+                f'main_has_priority={main_has_priority!r} is not supported for '
+                'vtk>=9.5.0, where the main mesh always has priority. Swap the meshes '
+                'instead, as in `other.merge(main)`.'
+            )
+            raise ValueError(msg)
 
         append_filter = _vtk.vtkAppendFilter()
         append_filter.SetMergePoints(merge_points)
