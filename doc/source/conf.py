@@ -127,12 +127,12 @@ sys.path.append(str(Path('./_ext').resolve()))
 # ones.
 extensions = [
     'erbsland.sphinx.ansi',
-    'expanded_sidebar',
     'jupyter_sphinx',
     'notfound.extension',
     'numpydoc',
     'pyvista.ext._autoenum',
     'pyvista.ext._autoinherit',
+    'pyvista.ext._expanded_sidebar',
     'pyvista.ext.plot_directive',
     'sphinx_autoopengraph',
     'sphinx_examples_as_code',
@@ -901,7 +901,7 @@ html_theme_options = {
     'analytics': {'google_analytics_id': 'UA-140243896-1'},
     'show_prev_next': False,
     'github_url': 'https://github.com/pyvista/pyvista',
-    # The expanded tree is rendered once and reused, see the `expanded_sidebar` extension.
+    # The expanded tree is rendered once and reused by `pyvista.ext._expanded_sidebar`.
     'collapse_navbar': False,
     'use_edit_page_button': True,
     'navigation_with_keys': False,
