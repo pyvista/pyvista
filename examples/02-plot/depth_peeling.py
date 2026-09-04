@@ -77,7 +77,7 @@ pl.show()
 # And here is another example when rendering many translucent contour
 # surfaces.
 
-mesh = examples.download_brain().resample(0.5, anti_aliasing=True)
+mesh = examples.download_brain().resample(0.4, anti_aliasing=True)
 contours = mesh.contour(5)
 cmap = 'viridis_r'
 
