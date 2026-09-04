@@ -22,6 +22,7 @@ import pytest
 
 import pyvista as pv
 from pyvista import _vtk
+from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import MissingDataError
 from pyvista.plotting.errors import RenderWindowUnavailable
 import pyvista.plotting.tools as tools_mod
@@ -171,6 +172,12 @@ def test_plotter_theme_raises():
         match=r'Assigning a theme for a plotter instance is deprecated',
     ):
         pl.theme = pv.themes.DarkTheme()
+
+
+@pytest.mark.parametrize('name', ['check_math_text_support', 'check_matplotlib_vtk_compatibility'])
+def test_moved_check_shims_raise(name):
+    with pytest.raises(DeprecationError, match=f'`pyvista.plotting.{name}`'):
+        getattr(tools_mod, name)()
 
 
 @pytest.mark.parametrize('theme', pv.plotting.themes._NATIVE_THEMES)

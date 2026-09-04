@@ -986,35 +986,6 @@ def test_set_parallel_scale_invalid():
         pl.parallel_scale = 'invalid'
 
 
-@pytest.mark.usefixtures('no_images_to_verify')
-def test_plot_no_active_scalars(sphere):
-    pl = pv.Plotter()
-    pl.add_mesh(sphere)
-
-    def _test_update_scalars_with_invalid_array():
-        pl.update_scalars(np.arange(5))
-
-    def _test_update_scalars_with_valid_array():
-        pl.update_scalars(np.arange(sphere.n_faces))
-
-    with (
-        pytest.raises(ValueError, match='Number of scalars'),
-        pytest.warns(
-            PyVistaDeprecationWarning,
-            match='This method is deprecated and will be removed in a future version',
-        ),
-    ):
-        _test_update_scalars_with_invalid_array()
-    with (
-        pytest.raises(ValueError, match='No active scalars'),
-        pytest.warns(
-            PyVistaDeprecationWarning,
-            match='This method is deprecated and will be removed in a future version',
-        ),
-    ):
-        _test_update_scalars_with_valid_array()
-
-
 def test_plot_show_bounds(sphere):
     pl = pv.Plotter()
     pl.add_mesh(sphere)

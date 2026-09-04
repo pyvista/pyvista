@@ -7,6 +7,7 @@ import os
 import platform
 import subprocess
 import sys
+from typing import NoReturn
 
 import numpy as np
 
@@ -790,32 +791,21 @@ def parse_font_family(font_family: str) -> int:
     return FONTS[font_family].value
 
 
-def check_math_text_support() -> bool:  # pragma: no cover
-    """Raise a DeprecationError as this has been moved.
-
-    Returns
-    -------
-    bool
-        Returns False for compatibility.
-
-    """
+def check_math_text_support() -> NoReturn:
+    """Raise a DeprecationError as this has been moved."""
     # Deprecated on v0.47.0, estimated removal on v0.50.0
-    msg = '`check_math_text_support` is now imported from `pyvista.report`'
-    DeprecationError(msg)
+    msg = (
+        '`pyvista.plotting.check_math_text_support` is deprecated. '
+        'Use `pyvista.check_math_text_support` instead.'
+    )
+    raise DeprecationError(msg)
 
-    return False
 
-
-def check_matplotlib_vtk_compatibility() -> bool:  # pragma: no cover
-    """Raise a DeprecationError as this has been moved.
-
-    Returns
-    -------
-    bool
-        Returns False for compatibility.
-
-    """
+def check_matplotlib_vtk_compatibility() -> NoReturn:
+    """Raise a DeprecationError as this has been moved."""
     # Deprecated on v0.47.0, estimated removal on v0.50.0
-    msg = '`check_matplotlib_vtk_compatibility` is now imported from `pyvista.report`'
-    DeprecationError(msg)
-    return False  # returning bool for compatibility
+    msg = (
+        '`pyvista.plotting.check_matplotlib_vtk_compatibility` is deprecated. '
+        'Use `pyvista.check_matplotlib_vtk_compatibility` instead.'
+    )
+    raise DeprecationError(msg)
