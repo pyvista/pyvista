@@ -5556,14 +5556,20 @@ class _Crinkler:
     @staticmethod
     def _extract_crinkle_cells(dataset, a_, b_, active_scalars_info):  # noqa: PLR0917
         """Extract crinkled cells from the clip output."""
+
+        def clipped_cell_mask(block_, clipped):
+            # Mark the input cells that a clipped output touches
+            mask = np.zeros(block_.n_cells, dtype=bool)
+            if _Crinkler.CELL_IDS in clipped.cell_data.keys():
+                mask[clipped.cell_data[_Crinkler.CELL_IDS]] = True
+            return mask
+
         if b_ is None:
             # Extract cells when `return_clipped=False`
             def extract_cells_from_block(block_, clipped_a, _, active_scalars_info_):
                 if _Crinkler.CELL_IDS in clipped_a.cell_data.keys():
                     return _Crinkler._extract_cells(
-                        block_,
-                        np.unique(clipped_a.cell_data[_Crinkler.CELL_IDS]),
-                        active_scalars_info_,
+                        block_, clipped_cell_mask(block_, clipped_a), active_scalars_info_
                     )
                 return clipped_a
         else:
@@ -5571,25 +5577,10 @@ class _Crinkler:
             def extract_cells_from_block(  # noqa: PLR0917
                 block_, clipped_a, clipped_b, active_scalars_info_
             ):
-                set_a = (
-                    set(clipped_a.cell_data[_Crinkler.CELL_IDS])
-                    if _Crinkler.CELL_IDS in clipped_a.cell_data.keys()
-                    else set()
-                )
-                set_b = (
-                    set(clipped_b.cell_data[_Crinkler.CELL_IDS])
-                    if _Crinkler.CELL_IDS in clipped_b.cell_data.keys()
-                    else set()
-                )
-                set_b = set_b - set_a
-
-                # Need to cast as int dtype explicitly to ensure empty arrays have
-                # the right type required by extract_cells
-                array_a = np.array(list(set_a), dtype=_Crinkler.INT_DTYPE)
-                array_b = np.array(list(set_b), dtype=_Crinkler.INT_DTYPE)
-
-                clipped_a = _Crinkler._extract_cells(block_, array_a, active_scalars_info_)
-                clipped_b = _Crinkler._extract_cells(block_, array_b, active_scalars_info_)
+                mask_a = clipped_cell_mask(block_, clipped_a)
+                mask_b = clipped_cell_mask(block_, clipped_b) & ~mask_a
+                clipped_a = _Crinkler._extract_cells(block_, mask_a, active_scalars_info_)
+                clipped_b = _Crinkler._extract_cells(block_, mask_b, active_scalars_info_)
                 return clipped_a, clipped_b
 
         def extract_cells_from_multiblock(  # noqa: PLR0917
