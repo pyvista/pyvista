@@ -5366,6 +5366,8 @@ class DataObjectFilters:
             # 'TriArea', 'QuadArea', 'TetVolume', 'PyrVolume', 'WedgeVolume', 'HexVolume'
             # which are used later by vtkCellQuality
             mesh_quality = _vtk.vtkMeshQuality()
+            # Only the size statistics are kept, so its per-cell measure warnings are noise
+            mesh_quality.AddObserver(_vtk.vtkCommand.WarningEvent, lambda *_: None)
             mesh_quality.SaveCellQualityOff()
             mesh_quality.SetInputData(self)
             # Setting any 'Size' measure for any cell (tri, quad, etc.) is sufficient to
