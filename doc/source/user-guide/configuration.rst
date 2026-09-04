@@ -256,11 +256,6 @@ Documentation Building
    Save a screenshot each time a plot is shown. Sets
    ``pv.ON_SCREENSHOT``.
 
-.. envvar:: PYVISTA_RELEASE
-
-   Build the documentation for a release: the sidebar navigation is
-   expanded instead of collapsed.
-
 .. note::
 
    ``PYVISTA_GALLERY_FORCE_STATIC`` and
