@@ -97,15 +97,27 @@ def test_no_dead_vtk_version_gates():
 
 
 _MINIMUM = (9, 5, 0)
-_BOUNDS = [(9, 4, 0), (9, 5, 0), (9, 6, 0), (9, 5), (9,)]
-_SUPPORTED = [(9, 5, 0), (9, 5, 1), (9, 6, 0), (9, 6, 1), (9, 7, 0), (10, 0, 0)]
+_BOUNDS = [(9, 4, 0), (9, 5, 0), (9, 5, 2), (9, 6, 0), (9, 5), (9,)]
+
+
+def _reachable_versions(bound: tuple[int, ...]) -> list[tuple[int, int, int]]:
+    """Return allowed versions on both sides of a bound, including the bound itself."""
+    near = (*bound, 0, 0)[:3]
+    candidates = {
+        _MINIMUM,
+        near,
+        (near[0], near[1], near[2] + 1),
+        (near[0], near[1] + 1, 0),
+        (near[0] + 1, 0, 0),
+    }
+    return sorted(version for version in candidates if version >= _MINIMUM)
 
 
 @pytest.mark.parametrize('bound', _BOUNDS)
 @pytest.mark.parametrize('symbol', ['<', '<=', '>', '>=', '==', '!='])
 @pytest.mark.parametrize('mirrored', [False, True])
 def test_dead_gate_matches_brute_force(monkeypatch, symbol, bound, mirrored):
-    """The classification must agree with evaluating the gate at every supported version."""
+    """The classification must agree with evaluating the gate on either side of the bound."""
     monkeypatch.setattr(pv, '_MIN_SUPPORTED_VTK_VERSION', _MINIMUM)
     gate = (
         f'{bound} {symbol} vtk_version_info' if mirrored else f'vtk_version_info {symbol} {bound}'
@@ -114,7 +126,7 @@ def test_dead_gate_matches_brute_force(monkeypatch, symbol, bound, mirrored):
     operator_ = _OPERATORS[type(node.ops[0])]
     results = {
         operator_(bound, version) if mirrored else operator_(version, bound)
-        for version in _SUPPORTED
+        for version in _reachable_versions(bound)
     }
     expected = [(1, gate)] if len(results) == 1 else []
     assert list(_dead_gates(ast.parse(gate))) == expected
@@ -134,11 +146,13 @@ def test_dead_gate_reports_chained_comparison(monkeypatch, gate):
     assert list(_dead_gates(ast.parse(gate))) == [(1, gate)]
 
 
-def test_dead_gate_ignores_other_comparisons(monkeypatch):
+@pytest.mark.parametrize(
+    'gate', ['version_info < (9, 4, 0)', 'vtk_version_info < other', 'value == (9, 4, 0)']
+)
+def test_dead_gate_ignores_other_comparisons(monkeypatch, gate):
     """Comparisons that do not read ``vtk_version_info`` are left alone."""
     monkeypatch.setattr(pv, '_MIN_SUPPORTED_VTK_VERSION', _MINIMUM)
-    for gate in ('version_info < (9, 4, 0)', 'vtk_version_info < other', 'value == (9, 4, 0)'):
-        assert list(_dead_gates(ast.parse(gate))) == []
+    assert list(_dead_gates(ast.parse(gate))) == []
 
 
 def test_source_files_scanned():
