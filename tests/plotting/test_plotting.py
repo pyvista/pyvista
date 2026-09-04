@@ -420,6 +420,37 @@ def test_set_environment_texture_resample_shrinks_irradiance(small_cubemap, no_i
     pl.close()
 
 
+@pytest.mark.parametrize('resample', [False, 0.5])
+def test_set_environment_texture_keeps_srgb(resample, small_cubemap, no_images_to_verify):  # noqa: ARG001
+    """A texture in sRGB color space lights the scene in sRGB, resampled or not."""
+    small_cubemap.srgb = True
+
+    pl = pv.Plotter(lighting=None)
+    pl.set_environment_texture(small_cubemap, resample=resample)
+
+    assert pl.renderer.GetEnvironmentTexture().srgb
+    pl.close()
+
+
+def test_set_environment_texture_resampled_srgb_changes_lighting(verify_image_cache):
+    """A resampled environment texture in sRGB color space casts different light."""
+    verify_image_cache.skip = True
+
+    def render(srgb):
+        texture = examples.load_globe_texture()
+        texture.srgb = srgb
+        pl = pv.Plotter(lighting=None, window_size=(300, 300))
+        pl.set_environment_texture(texture, resample=0.5, show_background=False)
+        pl.add_mesh(pv.Sphere(), pbr=True, metallic=0.5, roughness=0.3)
+        pl.camera_position = 'xy'
+        return pl.show(return_img=True).astype(np.int16)
+
+    linear = render(srgb=False)
+    # Renders of the same scene are identical, so any difference below is the color space
+    assert np.array_equal(render(srgb=False), linear)
+    assert np.abs(render(srgb=True) - linear).mean() > 1.0
+
+
 @pytest.mark.needs_vtk_version(at_least=(9, 6))
 def test_set_environment_texture_rotation(verify_image_cache):
     """Environment texture rotation rotates both background and reflections."""
