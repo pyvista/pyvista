@@ -896,11 +896,14 @@ def get_version_match(semver):
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
+# Release builds (see `docs.yml`) expand the sidebar; all other builds collapse it.
+RELEASE_BUILD = os.environ.get('PYVISTA_RELEASE', '').lower() == 'true'
+
 html_theme_options = {
     'analytics': {'google_analytics_id': 'UA-140243896-1'},
     'show_prev_next': False,
     'github_url': 'https://github.com/pyvista/pyvista',
-    'collapse_navbar': True,
+    'collapse_navbar': not RELEASE_BUILD,
     'use_edit_page_button': True,
     'navigation_with_keys': False,
     'show_navbar_depth': 1,
