@@ -1521,14 +1521,12 @@ def test_select_values_like_threshold(
 @pytest.mark.parametrize(
     'kwargs',
     [
-        # invert=True excludes the fast path
-        dict(ranges=[10, 20], invert=True),
         # multiple ranges excludes the fast path
         dict(ranges=[[10, 20], [50, 60]]),
-        # ``values`` excludes the fast path
+        dict(ranges=[[10, 20], [50, 60]], invert=True),
+        # multiple values excludes the fast path
         dict(values=[10, 20, 30]),
-        # cell preference excludes the fast path
-        dict(ranges=[10, 20], preference='cell', scalars='Spatial Cell Data'),
+        dict(values=[10, 20], preference='cell', scalars='Spatial Cell Data'),
     ],
 )
 def test_select_values_slow_path(uniform, kwargs):
@@ -1562,6 +1560,100 @@ def test_select_values_fast_and_slow_path_match(uniform):
         np.asarray(slow.active_scalars),
         np.where(expected_mask, 1, -1).astype(slow.active_scalars.dtype),
     )
+
+
+@pytest.mark.parametrize(
+    'kwargs',
+    [
+        dict(ranges=[10, 20]),
+        dict(ranges=[10, 20], invert=True),
+        dict(values=[10]),
+        dict(ranges=[10, 20], scalars='Spatial Cell Data', preference='cell'),
+        dict(ranges=[[10, 20], [50, 60]]),
+        dict(values=[10, 20], scalars='Spatial Cell Data', preference='cell'),
+    ],
+)
+def test_select_values_passes_other_arrays(uniform, kwargs):
+    uniform.point_data['other_point'] = np.arange(uniform.n_points)
+    uniform.cell_data['other_cell'] = np.arange(uniform.n_cells)
+    name = kwargs.get('scalars', 'Spatial Point Data')
+    before = uniform[name].copy()
+
+    selected = uniform.select_values(**kwargs, replacement_value=1, fill_value=0)
+
+    assert set(selected.array_names) == set(uniform.array_names)
+    assert selected.active_scalars_name == name
+    assert np.array_equal(selected['other_point'], uniform['other_point'])
+    assert np.array_equal(selected['other_cell'], uniform['other_cell'])
+    assert np.array_equal(uniform[name], before)
+    assert set(np.unique(selected[name])) <= {0, 1}
+
+
+@pytest.mark.parametrize('replacement_value', [1, None])
+@pytest.mark.parametrize('fill_value', [0, None])
+@pytest.mark.parametrize('preference', ['point', 'cell'])
+def test_select_values_threshold_paths_match(uniform, preference, fill_value, replacement_value):
+    # Single selections use ``image_threshold``, the rest of these use numpy
+    name = 'Spatial Point Data' if preference == 'point' else 'Spatial Cell Data'
+    kwargs = dict(
+        scalars=name,
+        preference=preference,
+        fill_value=fill_value,
+        replacement_value=replacement_value,
+    )
+    lower, upper = 10, 20
+    within = uniform.select_values(ranges=[lower, upper], **kwargs)
+    within_numpy = uniform.select_values(ranges=[[lower, upper], [upper, upper]], **kwargs)
+    assert within == within_numpy
+
+    outside = uniform.select_values(ranges=[lower, upper], invert=True, **kwargs)
+    outside_numpy = uniform.select_values(
+        ranges=[[lower, upper], [upper, upper]], invert=True, **kwargs
+    )
+    assert outside == outside_numpy
+
+    value = uniform[name][0]
+    single = uniform.select_values(values=[value], **kwargs)
+    single_numpy = uniform.select_values(values=[value, value], **kwargs)
+    assert single == single_numpy
+    assert single == uniform.select_values(ranges=[value, value], **kwargs)
+
+
+@pytest.mark.parametrize(
+    ('dtype', 'kwargs', 'match'),
+    [
+        (np.uint16, dict(fill_value=-1), '`fill_value` -1 is out of range for uint16 scalars.'),
+        (
+            np.uint8,
+            dict(replacement_value=300),
+            '`replacement_value` 300 is out of range for uint8 scalars.',
+        ),
+        (
+            np.int8,
+            dict(fill_value=[0, 200]),
+            '`fill_value` [0, 200] is out of range for int8 scalars.',
+        ),
+    ],
+)
+@pytest.mark.parametrize('ranges', [[1, 2], [[1, 2], [3, 4]]])
+def test_select_values_value_out_of_range_raises(dtype, kwargs, match, ranges):
+    image = pv.ImageData(dimensions=(3, 3, 3))
+    image['data'] = np.arange(image.n_points, dtype=dtype)
+    with pytest.raises(ValueError, match=re.escape(match)):
+        image.select_values(ranges=ranges, **kwargs)
+
+
+def test_select_values_multi_component_fill_replacement():
+    image = pv.ImageData(dimensions=(4, 1, 1))
+    image['rgb'] = np.array([[0, 0, 0], [5, 6, 7], [8, 9, 10], [255, 255, 255]], dtype=np.uint8)
+    selected = image.select_values(
+        ranges=[5, 8], component_mode=0, replacement_value=[1, 2, 3], fill_value=[9, 9, 9]
+    )
+    assert selected['rgb'].dtype == np.uint8
+    assert np.array_equal(selected['rgb'], [[9, 9, 9], [1, 2, 3], [1, 2, 3], [9, 9, 9]])
+
+    selected = image.select_values(ranges=[5, 8], component_mode=0, fill_value=None)
+    assert np.array_equal(selected['rgb'], image['rgb'])
 
 
 def test_select_values_split(uniform):

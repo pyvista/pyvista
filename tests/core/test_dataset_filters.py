@@ -3022,6 +3022,15 @@ def test_extract_values_empty():
     assert output.n_blocks == 4
 
 
+def test_extract_values_component_mode_digit_string(grid4x4):
+    grid4x4['four'] = np.tile(np.arange(grid4x4.n_points)[:, None], (1, 4))
+    grid4x4['four'][:, 3] += 100
+    expected = grid4x4.extract_values([103], scalars='four', component_mode=3)
+    assert expected.n_points > 0
+    actual = grid4x4.extract_values([103], scalars='four', component_mode='3')
+    assert actual == expected
+
+
 def test_extract_values_raises(grid4x4):
     match = 'Values must be numeric.'
     with pytest.raises(TypeError, match=match):
@@ -3042,6 +3051,14 @@ def test_extract_values_raises(grid4x4):
     match = 'Invalid range [1 0] specified. Lower value cannot be greater than upper value.'
     with pytest.raises(ValueError, match=re.escape(match)):
         grid4x4.extract_values(ranges=[1, 0])
+
+    match = 'Ranges must have two values per range. Got shape (1, 0).'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        grid4x4.extract_values(ranges=[])
+
+    match = 'Ranges must have two values per range. Got shape (1, 3).'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        grid4x4.extract_values(ranges=[0, 1, 2])
 
     match = 'No ranges or values were specified. At least one must be specified.'
     with pytest.raises(TypeError, match=match):
@@ -3584,6 +3601,50 @@ def test_image_threshold_dtype(value_dtype, array_dtype):
     assert np.array_equal(actual_array, expected_array)
 
     assert image['Data'].dtype == thresh['Data'].dtype
+
+
+def test_image_threshold_cell_data():
+    image = pv.ImageData(dimensions=(5, 4, 3))
+    image.cell_data['cell'] = np.arange(image.n_cells, dtype=float)
+    image.point_data['point'] = np.arange(image.n_points, dtype=float)
+
+    thresh = image.image_threshold([10, 20], scalars='cell', preference='cell')
+
+    assert thresh.dimensions == image.dimensions
+    assert thresh.point_data.keys() == ['point']
+    assert thresh.cell_data.keys() == ['cell']
+    assert thresh.active_scalars_name == 'cell'
+    expected = (np.arange(image.n_cells) >= 10) & (np.arange(image.n_cells) <= 20)
+    assert np.array_equal(thresh.cell_data['cell'], expected.astype(float))
+    assert np.array_equal(thresh.point_data['point'], image.point_data['point'])
+
+
+def test_image_threshold_non_active_scalars():
+    image = pv.ImageData(dimensions=(2, 2, 2))
+    image['integers'] = np.arange(8, dtype=np.int64)
+    image['floats'] = np.arange(8, dtype=float) + 0.5
+
+    # The named array, not the active scalars, sets the output dtype and values
+    image.set_active_scalars('integers')
+    thresh = image.image_threshold(3, scalars='floats', in_value=None, out_value=None)
+    assert thresh['floats'].dtype == float
+    assert np.array_equal(thresh['floats'], image['floats'])
+    assert thresh.active_scalars_name == 'floats'
+
+    image.set_active_scalars('floats')
+    thresh = image.image_threshold(3, scalars='integers')
+    assert thresh['integers'].dtype == np.int64
+    assert np.array_equal(thresh['integers'], [0, 0, 0, 1, 1, 1, 1, 1])
+
+
+@pytest.mark.skipif(pv.vtk_version_info < (9, 7), reason='int64 is cast to float')
+def test_image_threshold_int64_exact():
+    image = pv.ImageData(dimensions=(2, 2, 2))
+    values = np.array([2**53 + 1, 2**53 + 3, 0, 1, 2, 3, 4, 5], dtype=np.int64)
+    image['data'] = values
+    thresh = image.image_threshold(2**53, in_value=None, out_value=0)
+    assert thresh['data'].dtype == np.int64
+    assert np.array_equal(thresh['data'], [2**53 + 1, 2**53 + 3, 0, 0, 0, 0, 0, 0])
 
 
 def test_image_threshold_wrong_threshold_length():
