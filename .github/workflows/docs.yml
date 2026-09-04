@@ -59,7 +59,7 @@ jobs:
       PYVISTA_DATA: ${{ github.workspace }}/pyvista-data
       # Tag builds are the docs published to docs.pyvista.org; `conf.py` expands
       # the sidebar navigation for them.
-      PYVISTA_RELEASE: ${{ startsWith(github.ref, 'refs/tags/v') }}
+      _PYVISTA_RELEASE: ${{ startsWith(github.ref, 'refs/tags/v') }}
     steps:
       - uses: actions/checkout@v7
         with:

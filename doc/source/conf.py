@@ -897,7 +897,7 @@ def get_version_match(semver):
 # documentation.
 #
 # Release builds (see `docs.yml`) expand the sidebar; all other builds collapse it.
-RELEASE_BUILD = os.environ.get('PYVISTA_RELEASE', '').lower() == 'true'
+RELEASE_BUILD = os.environ.get('_PYVISTA_RELEASE', '').lower() == 'true'
 
 html_theme_options = {
     'analytics': {'google_analytics_id': 'UA-140243896-1'},
