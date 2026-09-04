@@ -3359,8 +3359,8 @@ class DataObjectFilters:
               instead of :vtk:`vtkBoxClipDataSet`, so the output keeps the input's cell types
               instead of being split into tetrahedra and has fewer cells and points for the
               same clipped volume. Call
-              :meth:`~pyvista.DataSetFilters.triangulate` on the output for an all-tetrahedra
-              mesh as before.
+              :meth:`~pyvista.DataObjectFilters.triangulate` on the output for an
+              all-tetrahedra mesh as before.
 
         Parameters
         ----------
