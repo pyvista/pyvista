@@ -394,11 +394,18 @@ one is all it takes for :func:`pyvista.read` to use it.
      - Stereolithography
      - `pyvista-stl <https://github.com/pyvista/pyvista-stl>`_
 
-Both ship in the ``io`` extra and both return the same mesh the VTK
-reader returns, including point normals, texture coordinates and
-colors.  Neither is required: without them :func:`pyvista.read` falls
-back to :class:`pyvista.PLYReader` and :class:`pyvista.STLReader`,
-which also remain what :func:`pyvista.get_reader` hands back.
+Both ship in the ``io-override`` extra, which is intentionally separate
+from ``io`` because installing it changes the readers used for existing
+formats::
+
+   pip install pyvista[io-override]
+
+The packages aim to match the stock VTK readers, including point normals,
+texture coordinates, and colors, but their behavior and output are not
+guaranteed to be identical.  Neither is required: without them
+:func:`pyvista.read` falls back to :class:`pyvista.PLYReader` and
+:class:`pyvista.STLReader`, which also remain what
+:func:`pyvista.get_reader` hands back.
 
 Because an override changes a format the user did not choose,
 :func:`pyvista.registered_readers` reports it::

@@ -41,7 +41,7 @@ readme = 'README.md'
 requires-python = '>=3.10'
 
 [project.optional-dependencies]
-all = ['pyvista[colormaps,io,jupyter]']
+all = ['pyvista[colormaps,io,io-override,jupyter]']
 colormaps = ['cmcrameri', 'cmocean', 'colorcet']
 cvista = ['cvista[all]>=9.7.0.2,<9.8.0']
 io = [
@@ -49,10 +49,9 @@ io = [
   'imageio',
   'meshio>=5.2',
   'pyvista-frd-reader>=0.2.1',
-  'pyvista-miniply>=0.5.2',
-  'pyvista-stl>=0.5.3',
   'pyvista-zstd>=0.3.1',
 ]
+io-override = ['pyvista-miniply>=0.5.2', 'pyvista-stl>=0.5.3']
 jupyter = ['ipywidgets', 'nest-asyncio2', 'trame-pyvista']
 
 [dependency-groups]
