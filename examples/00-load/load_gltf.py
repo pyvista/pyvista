@@ -22,6 +22,10 @@ from pyvista import examples
 helmet_file = examples.download_damaged_helmet(load=False)
 texture = examples.download_dikhololo_night()
 
+# Image-based lighting reflects the environment from the texture's mipmap levels
+texture.mipmap = True
+texture.interpolate = True
+
 
 # %%
 # Set up the plotter and enable environment textures.  This works well
