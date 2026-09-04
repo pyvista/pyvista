@@ -412,6 +412,22 @@ def test_clip_slab_invalid_thickness(thickness):
         mesh.clip_slab(thickness=thickness, normal='x')
 
 
+@pytest.mark.parametrize('normal', [(0, 0, 0), [0.0, 0.0, 0.0]])
+@pytest.mark.parametrize(
+    'method',
+    [
+        pv.DataObjectFilters.clip,
+        pv.DataObjectFilters.slice,
+        pv.DataObjectFilters.clip_slab,
+        pv.PolyDataFilters.clip_closed_surface,
+    ],
+)
+def test_zero_normal_raises(method, normal):
+    kwargs = dict(thickness=1.0) if method is pv.DataObjectFilters.clip_slab else {}
+    with pytest.raises(ValueError, match=re.escape('`normal` must be a non-zero vector.')):
+        method(pv.Sphere(), normal=normal, **kwargs)
+
+
 def test_clip_slab_zero_normal():
     mesh = pv.Sphere()
     with pytest.raises(ValueError, match='non-zero'):

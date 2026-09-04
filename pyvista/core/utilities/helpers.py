@@ -441,6 +441,9 @@ def _validate_plane_origin_and_normal(  # noqa: PLR0917
         # find center of data if origin not specified
         origin = mesh.center if origin is None else origin
         origin_ = _validation.validate_array3(origin, dtype_out=float, name='origin')
+    if not np.any(normal_):
+        msg = '`normal` must be a non-zero vector.'
+        raise ValueError(msg)
     return origin_, normal_
 
 

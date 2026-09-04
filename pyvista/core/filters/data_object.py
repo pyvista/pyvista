@@ -3547,11 +3547,7 @@ class DataObjectFilters:
         origin_, normal_ = _validate_plane_origin_and_normal(
             self, origin, normal, plane, default_normal='x'
         )
-        norm = float(np.linalg.norm(normal_))
-        if norm == 0.0:
-            msg = '`normal` must be a non-zero vector.'
-            raise ValueError(msg)
-        unit_normal = normal_ / norm
+        unit_normal = normal_ / np.linalg.norm(normal_)
         half = thickness / 2.0
 
         upper = _vtk.vtkPlane()
