@@ -126,6 +126,20 @@ def test_show_bounds_scaled_keeps_zaxis():
     assert len(actor.z_labels) == 5
 
 
+def test_show_bounds_scaled_after_show_keeps_zaxis():
+    """Scaling after the axes exist must not switch them to 2D either.
+
+    Regression test for https://github.com/pyvista/pyvista/issues/4768.
+    """
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    actor = pl.show_bounds(font_size=24)
+    pl.set_scale(1, 1, 2)
+    assert not actor.use_2d_mode
+    assert actor.z_axis_visibility
+    assert actor.GetLabelTextProperty(0).GetFontSize() == 24
+
+
 def test_show_bounds_keeps_use_2d():
     pl = pv.Plotter()
     pl.add_mesh(pv.Sphere())
