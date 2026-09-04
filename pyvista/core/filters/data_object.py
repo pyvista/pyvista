@@ -3352,10 +3352,13 @@ class DataObjectFilters:
 
             - Grids are clipped by the six box planes instead of :vtk:`vtkBoxClipDataSet`, so
               the output keeps the input's cell types instead of being split into tetrahedra
-              and has fewer cells and points for the same clipped volume.
+              and has fewer cells and points for the same clipped volume. Call
+              :meth:`~pyvista.DataSetFilters.triangulate` on the output for an all-tetrahedra
+              mesh as before.
             - :class:`~pyvista.PointSet` blocks of a :class:`~pyvista.MultiBlock` stay
               :class:`~pyvista.PointSet` instead of becoming
-              :class:`~pyvista.UnstructuredGrid`.
+              :class:`~pyvista.UnstructuredGrid`; call
+              :meth:`~pyvista.DataSet.cast_to_unstructured_grid` on them if needed.
 
         Parameters
         ----------
@@ -3718,7 +3721,8 @@ class DataObjectFilters:
             Axis-aligned planes through an :class:`~pyvista.ImageData` with an identity
             :attr:`~pyvista.ImageData.direction_matrix` are sliced directly instead of with
             :vtk:`vtkCutter`. The points and cells are ordered differently, and integer point
-            data interpolated across a cell can differ from the cutter's by one unit.
+            data interpolated across a cell can differ from the cutter's by one unit. Use
+            :meth:`slice_implicit` with :func:`~pyvista.generate_plane` for the cutter's output.
 
         Parameters
         ----------
