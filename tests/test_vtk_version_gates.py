@@ -91,7 +91,8 @@ def test_no_dead_vtk_version_gates():
     ]
     assert not dead, (
         f'VTK {pv._MIN_SUPPORTED_VTK_VERSION} is the minimum supported version, so these '
-        'comparisons are constant and the code they guard is dead:\n  ' + '\n  '.join(dead)
+        'comparisons are constant, so one of the branches they guard is dead:\n  '
+        + '\n  '.join(dead)
     )
 
 
