@@ -46,6 +46,12 @@ class _Sentinel:
 
     Prints as the name it is given, so that a signature shows what it stands for
     rather than the address of an object.
+
+    Parameters
+    ----------
+    name : str
+        Name shown when the sentinel is printed.
+
     """
 
     def __init__(self, name: str) -> None:

@@ -987,6 +987,14 @@ class _SerializedDictArray(DisableVtkSnakeCase, UserDict, _vtk.vtkStringArray): 
     modified, such that modifying the dict will also implicitly modify
     its JSON string representation.
 
+    Parameters
+    ----------
+    dict_ : str | dict | UserDict, optional
+        Initial data. A JSON string is parsed first.
+
+    **kwargs : dict, optional
+        Additional key-value pairs, as for :class:`dict`.
+
     Notes
     -----
     This class is intended for metadata storage. Values are JSON-serialized

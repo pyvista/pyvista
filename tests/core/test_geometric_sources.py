@@ -11,7 +11,7 @@ import pytest
 import pyvista as pv
 from pyvista import _vtk
 from pyvista import examples
-from pyvista.core.utilities.geometric_objects import translate
+from pyvista.core.utilities.geometric_sources import _translate_and_orient
 
 
 @pytest.fixture
@@ -97,7 +97,7 @@ def test_translate_direction_collinear(is_negative, delta, bunny):
     if is_negative:
         direction *= -1
     mesh_out = mesh_in.copy()
-    translate(mesh_out, direction=direction)
+    _translate_and_orient(mesh_out, direction=direction)
     points_in = mesh_in.points
     points_out = mesh_out.points
 

@@ -69,6 +69,11 @@ class DataSetAccessor(Protocol):
 
     .. versionadded:: 0.48.0
 
+    Parameters
+    ----------
+    dataset : pyvista.DataSet
+        Dataset the accessor is attached to.
+
     Examples
     --------
     Declare an accessor that satisfies the protocol.
@@ -154,6 +159,12 @@ class _AccessorAnchor:
     """Hold an accessor from its dataset's observer list.
 
     See :class:`_CachedAccessor` for why the observer list, of all places.
+
+    Parameters
+    ----------
+    accessor : object
+        Accessor instance to anchor.
+
     """
 
     __slots__ = ('accessor',)
@@ -185,6 +196,15 @@ class _CachedAccessor:
     When the target uses ``__slots__`` and has no ``__dict__``, or is not a
     ``vtkObject`` and so has nowhere to anchor, the accessor is constructed fresh on
     each access -- slower but still correct.
+
+    Parameters
+    ----------
+    name : str
+        Attribute name the accessor is registered under.
+
+    accessor_cls : type
+        Accessor class to instantiate on first access.
+
     """
 
     def __init__(self, name: str, accessor_cls: type) -> None:

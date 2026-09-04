@@ -371,14 +371,14 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
         return self.cast_to_polydata(deep=False).cast_to_unstructured_grid()
 
     @functools.wraps(DataSet.plot)
-    def plot(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01
+    def plot(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01,PR01
         """Cast to PolyData and plot."""
         pdata = self.cast_to_polydata(deep=False)
         kwargs.setdefault('style', 'points')
         return pdata.plot(*args, **kwargs)
 
     @functools.wraps(PolyDataFilters.threshold)
-    def threshold(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01
+    def threshold(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01,PR01
         """Cast to PolyData and threshold.
 
         Need this because cell-wise operations fail for PointSets.
@@ -386,7 +386,7 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
         return self.cast_to_polydata(deep=False).threshold(*args, **kwargs).cast_to_pointset()
 
     @functools.wraps(PolyDataFilters.threshold_percent)
-    def threshold_percent(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01
+    def threshold_percent(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01,PR01
         """Cast to PolyData and threshold.
 
         Need this because cell-wise operations fail for PointSets.
@@ -396,7 +396,7 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
         )
 
     @functools.wraps(PolyDataFilters.explode)
-    def explode(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01
+    def explode(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01,PR01
         """Cast to PolyData and explode.
 
         The explode filter relies on cells.
@@ -405,7 +405,7 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
         return self.cast_to_polydata(deep=False).explode(*args, **kwargs).cast_to_pointset()
 
     @functools.wraps(PolyDataFilters.delaunay_3d)
-    def delaunay_3d(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01
+    def delaunay_3d(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01,PR01
         """Cast to PolyData and run delaunay_3d."""
         return self.cast_to_polydata(deep=False).delaunay_3d(*args, **kwargs)
 
@@ -419,78 +419,78 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
         """Return 0.0 since a PointSet has no volume."""
         return 0.0
 
-    def contour(self, *args, **kwargs):  # noqa: ARG002
+    def contour(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise dimension reducing operations are not supported."""
         msg = 'Contour and other dimension reducing filters are not supported on PointSets'
         raise PointSetNotSupported(msg)
 
-    def cell_data_to_point_data(self, *args, **kwargs):  # noqa: ARG002
+    def cell_data_to_point_data(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise PointSets do not have cells."""
         msg = 'PointSets contain no cells or cell data.'
         raise PointSetNotSupported(msg)
 
-    def point_data_to_cell_data(self, *args, **kwargs):  # noqa: ARG002
+    def point_data_to_cell_data(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise PointSets do not have cells."""
         msg = 'PointSets contain no cells or cell data.'
         raise PointSetNotSupported(msg)
 
-    def triangulate(self, *args, **kwargs):  # noqa: ARG002
+    def triangulate(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
-    def decimate_boundary(self, *args, **kwargs):  # noqa: ARG002
+    def decimate_boundary(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
-    def find_cells_along_line(self, *args, **kwargs):  # noqa: ARG002
+    def find_cells_along_line(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
-    def tessellate(self, *args, **kwargs):  # noqa: ARG002
+    def tessellate(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
-    def slice(self, *args, **kwargs):  # noqa: ARG002
+    def slice(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise dimension reducing operations are not supported."""
         raise PointSetDimensionReductionError
 
-    def slice_along_axis(self, *args, **kwargs):  # noqa: ARG002
+    def slice_along_axis(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise dimension reducing operations are not supported."""
         raise PointSetDimensionReductionError
 
-    def slice_along_line(self, *args, **kwargs):  # noqa: ARG002
+    def slice_along_line(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise dimension reducing operations are not supported."""
         raise PointSetDimensionReductionError
 
-    def slice_implicit(self, *args, **kwargs):  # noqa: ARG002
+    def slice_implicit(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise dimension reducing operations are not supported."""
         raise PointSetDimensionReductionError
 
-    def slice_orthogonal(self, *args, **kwargs):  # noqa: ARG002
+    def slice_orthogonal(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise dimension reducing operations are not supported."""
         raise PointSetDimensionReductionError
 
-    def shrink(self, *args, **kwargs):  # noqa: ARG002
+    def shrink(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
-    def separate_cells(self, *args, **kwargs):  # noqa: ARG002
+    def separate_cells(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
-    def remove_cells(self, *args, **kwargs):  # noqa: ARG002
+    def remove_cells(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
-    def point_is_inside_cell(self, *args, **kwargs):  # noqa: ARG002
+    def point_is_inside_cell(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
-    def extract_surface(self, *args, **kwargs):  # noqa: ARG002
+    def extract_surface(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise extract surface are not supported."""
         raise PointSetCellOperationError
 
-    def extract_geometry(self, *args, **kwargs):  # noqa: ARG002
+    def extract_geometry(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise extract geometry are not supported.
 
         ..deprecated:: 0.47
@@ -508,19 +508,19 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
             raise RuntimeError(msg)
         raise PointSetCellOperationError
 
-    def cell_validator(self, *args, **kwargs):  # noqa: ARG002
+    def cell_validator(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
-    def extract_all_edges(self, *args, **kwargs):  # noqa: ARG002
+    def extract_all_edges(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise extract all edges are not supported."""
         raise PointSetCellOperationError
 
-    def compute_cell_sizes(self, *args, **kwargs):  # noqa: ARG002
+    def compute_cell_sizes(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise extract all edges are not supported."""
         raise PointSetCellOperationError
 
-    def cell_quality(self, *args, **kwargs):  # noqa: ARG002
+    def cell_quality(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise extract all edges are not supported."""
         raise PointSetCellOperationError
 
@@ -2334,6 +2334,8 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
         0.5183
 
         """
+        if self.n_points == 0 or self.n_cells == 0:
+            return 0.0
         mprop = _vtk.vtkMassProperties()
         mprop.SetInputData(self.triangulate())
         return mprop.GetVolume()
@@ -2507,10 +2509,32 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
 
 @abstract_class
 class PointGrid(_PointSetBase):
-    """Class in common with structured and unstructured grids."""
+    """Class in common with structured and unstructured grids.
 
-    def __init__(self, *args, **kwargs) -> None:  # noqa: ARG002
+    Parameters
+    ----------
+    *args : Any, optional
+        Unused.
+
+        .. deprecated:: 0.49
+            These arguments have never had any effect and will be removed.
+
+    **kwargs : dict, optional
+        Unused.
+
+        .. deprecated:: 0.49
+            These arguments have never had any effect and will be removed.
+
+    """
+
+    def __init__(self, *args, **kwargs) -> None:
         """Initialize the point grid."""
+        if args or kwargs:
+            warn_external(
+                'Passing unused arguments to `PointGrid` is deprecated and they will be '
+                'removed. Remove them from the call.',
+                PyVistaDeprecationWarning,
+            )
         super().__init__()
 
     def plot_curvature(self: Self, curv_type='mean', **kwargs):
@@ -2565,7 +2589,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
     Parameters
     ----------
-    args : str, :vtk:`vtkUnstructuredGrid`, iterable
+    *args : str, :vtk:`vtkUnstructuredGrid`, iterable
         See examples below.
 
     deep : bool, default: False
@@ -2578,6 +2602,10 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         combination of fields allowed by ``validate_mesh``.
 
         .. versionadded:: 0.47
+
+    **kwargs : dict, optional
+        Additional keyword arguments passed when reading from a file or loading
+        from arrays.
 
     Examples
     --------
@@ -3850,17 +3878,13 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         uinput=None,
         y=None,
         z=None,
-        *args,
+        *,
         deep: bool = False,
         validate: bool | _NestedMeshValidationFields = False,
         **kwargs,
     ) -> None:
         """Initialize the structured grid."""
         super().__init__()
-
-        if args:
-            msg = 'Too many args to create StructuredGrid.'
-            raise ValueError(msg)
 
         if isinstance(uinput, _vtk.vtkStructuredGrid):
             if deep:
@@ -4203,7 +4227,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
 
     Parameters
     ----------
-    args : :vtk:`vtkExplicitStructuredGrid`, :vtk:`vtkUnstructuredGrid`, str, Sequence
+    *args : :vtk:`vtkExplicitStructuredGrid`, :vtk:`vtkUnstructuredGrid`, str, Sequence
         See examples below.
 
     deep : bool, default: False

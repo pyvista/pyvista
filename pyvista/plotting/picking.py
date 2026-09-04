@@ -1654,7 +1654,7 @@ class PickingComponent(_NoNewAttrMixin):
         sel_index = _vtk.vtkSelectionNode.COMPOSITE_INDEX()
         sel_prop = _vtk.vtkSelectionNode.PROP()
 
-        def get_picked_block(*args, **kwargs):  # numpydoc ignore=PR01  # noqa: ARG001
+        def get_picked_block(*args, **kwargs):  # noqa: ARG001  # numpydoc ignore=PR01
             component = self_()
             if component is None:
                 return
@@ -1696,7 +1696,14 @@ class PickingComponent(_NoNewAttrMixin):
 
     @_deprecate_positional_args
     def fly_to_mouse_position(self, focus=False):  # noqa: FBT002
-        """Focus on last stored mouse position."""
+        """Focus on last stored mouse position.
+
+        Parameters
+        ----------
+        focus : bool, default: False
+            Set the camera focal point to the picked point instead of flying to it.
+
+        """
         plotter = self._plotter
         if plotter.mouse_position is None:
             plotter.store_mouse_position()

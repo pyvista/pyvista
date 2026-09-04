@@ -37,6 +37,7 @@ from .utilities.helpers import wrap
 from .utilities.misc import _DataObjectMeta
 from .utilities.misc import _NoNewAttrMixin
 from .utilities.misc import abstract_class
+from .utilities.state_manager import vtk_verbosity
 from .utilities.writer_registry import _get_ext_handler as _get_writer_ext_handler
 from .utilities.writer_registry import _list_custom_exts as _list_custom_writer_exts
 
@@ -363,7 +364,7 @@ class DataObject(
                     del fdata[key]
 
     @abstractmethod
-    def get_data_range(
+    def get_data_range(  # numpydoc ignore=PR01
         self: Self, name: str | None, preference: FieldAssociation | str
     ) -> tuple[float, float]:  # pragma: no cover
         """Get the non-NaN min and max of a named array."""
@@ -1008,7 +1009,9 @@ class DataObject(
         unserialize_func = state[0]
         state_dict = state[1][0]
         self.__dict__.update(state_dict['_PYVISTA_STATE_DICT'])
-        obj = unserialize_func(state_dict)
+        # VTK's unserializer reads a legacy string whose metadata pass warns spuriously
+        with vtk_verbosity('off'):
+            obj = unserialize_func(state_dict)
         self.deep_copy(obj)
 
     def _unserialize_pyvista_pickle_format(self: Self, state: dict[str, Any]) -> None:
@@ -1060,7 +1063,9 @@ class DataObject(
                 reader.SetBinaryInputString(vtk_serialized, len(vtk_serialized))  # type: ignore[arg-type]
             elif isinstance(vtk_serialized, str):
                 reader.SetInputString(vtk_serialized)
-            reader.Update()
+            # The metadata pass hands the string on without its length and warns spuriously
+            with vtk_verbosity('off'):
+                reader.Update()
 
         mesh = wrap(reader.GetOutput())
 

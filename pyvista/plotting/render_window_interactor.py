@@ -469,7 +469,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         """Clear key event callbacks."""
         self._key_press_event_callbacks.clear()
 
-    def key_press_event(self, *args):  # noqa: ARG002
+    def key_press_event(self, *args):  # noqa: ARG002  # numpydoc ignore=PR01
         """Listen for key press event."""
         key = self.interactor.GetKeySym()
         log.debug(f'Key {key} pressed')
@@ -1682,6 +1682,11 @@ class InteractorStyleCaptureMixin(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtk
     Use a custom capturing events because the default ones
     swallow the release events. See
     https://public.kitware.com/pipermail/vtkusers/2013-December/082315.html.
+
+    Parameters
+    ----------
+    render_window_interactor : RenderWindowInteractor
+        Interactor this style is bound to.
 
     """
 

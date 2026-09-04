@@ -3,10 +3,13 @@
 Image
 -----
 
-PyVista includes a simple image classes to handle 2D image data.
+PyVista includes several sources for generating image data, along with a
+function for comparing images.
 
 .. currentmodule:: pyvista
 
+Image Sources
+~~~~~~~~~~~~~
 .. autosummary::
    :toctree: _autosummary
 
@@ -16,3 +19,15 @@ PyVista includes a simple image classes to handle 2D image data.
    ImageMandelbrotSource
    ImageNoiseSource
    ImageSinusoidSource
+
+Image Comparison
+~~~~~~~~~~~~~~~~
+.. autosummary::
+   :toctree: _autosummary
+
+   compare_images
+
+.. seealso::
+
+   :ref:`cli_compare`
+      Compare two files from the command line.

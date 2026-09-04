@@ -3175,6 +3175,8 @@ _dataset_brain = _SingleFileDownloadableDatasetLoader('brain.vtk')
 def download_frd(*, load: bool = True) -> UnstructuredGrid | str:
     """Download a sample CalculiX FRD file.
 
+    Loading requires the ``pyvista-frd-reader`` package (``pip install pyvista[io]``).
+
     .. versionadded:: 0.48
 
     Parameters
@@ -5632,12 +5634,17 @@ def download_drill(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
             See this dataset in the Dataset Gallery for more info.
 
     """
-    # Silence warning: unexpected data at end of line in OBJ file
-    with pv.vtk_verbosity('off'):
-        return _download_dataset(_dataset_drill, load=load)
+    return _download_dataset(_dataset_drill, load=load)
 
 
-_dataset_drill = _SingleFileDownloadableDatasetLoader('drill.obj')
+def _read_drill(path: str) -> PolyData:
+    """Read ``drill.obj`` without the warning about its space-separated ``mtllib`` line."""
+    reader = pv.OBJReader(path)
+    reader.reader.AddObserver(_vtk.vtkCommand.WarningEvent, lambda *_: None)
+    return reader.read()
+
+
+_dataset_drill = _SingleFileDownloadableDatasetLoader('drill.obj', read_func=_read_drill)
 
 
 @_deprecate_positional_args
@@ -8770,6 +8777,7 @@ class _WholeBodyCTUtilities:
 
         """
         n_points = cast('pv.ImageData', masks[0]).n_points
+        # Initialize array with background values (zeros)
         label_map_array = np.zeros((n_points,), dtype=np.uint8)
         label_names = sorted(masks.keys())
         for i, name in enumerate(label_names):
@@ -8810,6 +8818,19 @@ class _WholeBodyCTUtilities:
 
     @staticmethod
     def files_func(name):  # noqa: ANN001, ANN205
+        """Return the file-loading function for the named dataset variant.
+
+        Parameters
+        ----------
+        name : str
+            Name of the dataset variant.
+
+        Returns
+        -------
+        callable
+            Function returning the file loaders.
+
+        """
         # Resampled version is saved as a multiblock
         """Return the file-loading function for the named dataset variant.
 
@@ -9563,9 +9584,7 @@ def download_nek5000(load: bool = True) -> UnstructuredGrid | str:  # noqa: FBT0
             See this dataset in the Dataset Gallery for more info.
 
     """
-    # Silence info messages about 2D mesh found
-    with pv.vtk_verbosity('off'):
-        return _download_dataset(_dataset_nek5000, load=load)
+    return _download_dataset(_dataset_nek5000, load=load)
 
 
 def _nek_5000_download():
@@ -9729,6 +9748,12 @@ def download_teapot_vrml(*, load: bool = True) -> MultiBlock | str:
     dataset; the model has been freely distributed in computer graphics
     software for 50 years and is conventionally treated as public domain.
 
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
     Returns
     -------
     output : pyvista.MultiBlock | str
@@ -9761,6 +9786,12 @@ def download_sextant(*, load: Literal[True] = True) -> MultiBlock: ...
 def download_sextant(*, load: Literal[False]) -> str: ...
 def download_sextant(*, load: bool = True) -> MultiBlock | str:
     """Download the sextant example.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
 
     Returns
     -------
@@ -9796,6 +9827,12 @@ def download_grasshopper(*, load: bool = True) -> MultiBlock | str:
     """Download the grasshopper example.
 
     .. versionadded:: 0.45
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
 
     Returns
     -------
@@ -9837,6 +9874,12 @@ def download_flamingo(*, load: bool = True) -> MultiBlock | str:
 
     .. versionadded:: 0.44.0
 
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
     Returns
     -------
     output : pyvista.MultiBlock | str
@@ -9869,6 +9912,12 @@ def download_damaged_helmet(*, load: Literal[True] = True) -> MultiBlock: ...
 def download_damaged_helmet(*, load: Literal[False]) -> str: ...
 def download_damaged_helmet(*, load: bool = True) -> MultiBlock | str:  # pragma: no cover
     """Download the damaged helmet example.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
 
     Returns
     -------
@@ -9905,6 +9954,12 @@ def download_gearbox(*, load: Literal[False]) -> str: ...
 def download_gearbox(*, load: bool = True) -> MultiBlock | str:  # pragma: no cover
     """Download the gearbox example.
 
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
     Returns
     -------
     output : pyvista.MultiBlock | str
@@ -9938,6 +9993,12 @@ def download_avocado(*, load: Literal[False]) -> str: ...
 def download_avocado(*, load: bool = True) -> MultiBlock | str:  # pragma: no cover
     """Download the avocado example.
 
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
     Returns
     -------
     output : pyvista.MultiBlock | str
@@ -9970,6 +10031,12 @@ def download_milk_truck(*, load: Literal[True] = True) -> MultiBlock: ...
 def download_milk_truck(*, load: Literal[False]) -> str: ...
 def download_milk_truck(*, load: bool = True) -> MultiBlock | str:  # pragma: no cover
     """Download the milk truck example.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
 
     Returns
     -------

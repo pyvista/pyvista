@@ -1,0 +1,71 @@
+.. _environment_api:
+
+Environment
+-----------
+.. currentmodule:: pyvista
+
+.. seealso::
+
+   :ref:`configuration`
+      Central reference for all global configuration, including
+      :class:`pyvista.core.config.Config`, module-level flags, and
+      environment variables.
+
+   :ref:`cli_report`
+      Generate the environment report from the command line.
+
+   :ref:`vtk_backend`
+      Installing and selecting a VTK backend.
+
+PyVista Version Information
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The PyVista library provides a way of getting the version installed in your
+environment.
+
+>>> # Output the version of PyVista.
+>>> import pyvista as pv
+>>> pv.version_info
+(0, 44, 0)
+
+VTK Version and Backend
+~~~~~~~~~~~~~~~~~~~~~~~
+.. autosummary::
+   :toctree: _autosummary
+
+   vtk_backend
+
+The PyVista library is heavily dependent on VTK and provides an easy
+way of getting the version of VTK in your environment.
+
+>>> # Output the version of VTK.
+>>> import pyvista as pv
+>>> pv.vtk_version_info
+VTKVersionInfo(major=9, minor=1, micro=0)
+
+>>> # Get the major version of VTK
+>>> pv.vtk_version_info.major
+9
+
+Environment Report
+~~~~~~~~~~~~~~~~~~
+.. autosummary::
+   :toctree: _autosummary
+
+   GPUInfo
+   Report
+   get_gpu_info
+
+Runtime Controls
+~~~~~~~~~~~~~~~~
+These settings apply to the whole process. The state managers also work as
+context managers, applying only within the ``with`` block.
+
+.. autosummary::
+   :toctree: _autosummary
+
+   allow_new_attributes
+   enable_smp_tools
+   set_new_attribute
+   set_pickle_format
+   vtk_snake_case
+   vtk_verbosity
