@@ -5057,9 +5057,8 @@ class ImageDataFilters(DataSetFilters):
             progress_bar=progress_bar,
         )
 
-        output_scalars = output_image.GetPointData().GetScalars()
-        output_scalars.SetName(name)
-        output_array = convert_array(output_scalars)
+        output_image.rename_array(cast('str', output_image.active_scalars_name), name)
+        output_array = cast('pyvista_ndarray', output_image.active_scalars)
         if output_array.dtype != input_dtype:
             output_image.point_data[name] = _round_to_dtype(output_array, input_dtype)
 

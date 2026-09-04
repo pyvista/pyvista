@@ -1349,7 +1349,10 @@ def test_resample_cell_data_dimensions_raises():
         '`reference_image` must have dimensions of at least 2 along each non-singleton axis '
         'when resampling cell data.'
     )
-    with pytest.raises(ValueError, match=re.escape(match)):
+    with (
+        pytest.warns(pv.PyVistaDeprecationWarning),
+        pytest.raises(ValueError, match=re.escape(match)),
+    ):
         image.resample(reference_image=pv.ImageData(dimensions=(1, 5, 5)))
 
 
