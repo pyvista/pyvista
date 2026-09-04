@@ -911,13 +911,10 @@ def test_plot_show_grid_label_positions():
     """Each label must be drawn on the tick whose value it carries.
 
     The reproducer from https://github.com/pyvista/pyvista/issues/9033, whose y range
-    is one VTK refuses to divide into five. Nothing observable from Python
-    distinguishes right from wrong here, because the label values PyVista generates
-    are correct either way; only the render shows where they land. The zoom is this
-    test's own: at the 400 pixels the suite renders, the labels are too small a part
-    of the frame to move the comparison past its threshold without it. The text mode
-    is pinned because its default follows the VTK version, and at this size the two
-    modes differ by more than a misplaced label would.
+    is one VTK refuses to divide into five. The zoom is this test's own: at the 400
+    pixels the suite renders, the labels are too small a part of the frame to move
+    the comparison past its threshold without it. The text mode is pinned because
+    its default follows the VTK version.
     """
     points = np.array(
         [
@@ -945,8 +942,11 @@ def test_plot_show_bounds_round_ticks():
 
     The second plot of the circular arc gallery example. The tube radius pushes the
     bounds a little past the circle, so the range no longer divides into five, and an
-    even split would read -1.0, -0.3, 0.4, 1.0 with no line through the origin. The
-    text mode is pinned because its default follows the VTK version.
+    even split would read -1.0, -0.3, 0.4, 1.0 with no line through the origin. Two
+    decimals are needed to tell these labels from the old ones, which sat on the same
+    ticks reading -0.49, 0.02, 0.53. The zoom keeps five-character labels from
+    running into each other. The text mode is pinned because its default follows
+    the VTK version.
     """
     arc = pv.CircularArcFromNormal(
         center=(0, 0, 0), polar=(1, 0, 0), normal=(0, 0, 1), angle=120, resolution=60
@@ -954,8 +954,9 @@ def test_plot_show_bounds_round_ticks():
     pl = pv.Plotter()
     pl.add_mesh(arc.tube(radius=0.04), color='seagreen')
     pl.add_mesh(pv.Circle(radius=1.0).extract_feature_edges(), color='gray', line_width=2)
-    pl.show_grid(font_size=20, use_3d_text=False)
+    pl.show_grid(font_size=26, use_3d_text=False, fmt='%.2f')
     pl.view_xy()
+    pl.camera.zoom(1.15)
     pl.show()
 
 
