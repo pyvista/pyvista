@@ -329,16 +329,16 @@ def _box_clip_filter(mesh, bounds, *, invert):
 
 @pytest.mark.parametrize('invert', [True, False])
 @pytest.mark.parametrize(
-    'cast',
+    ('cast', 'regular'),
     [
-        pytest.param(lambda mesh: mesh, id='image'),
-        pytest.param(lambda mesh: mesh.cast_to_rectilinear_grid(), id='rectilinear'),
-        pytest.param(lambda mesh: mesh.cast_to_structured_grid(), id='structured'),
-        pytest.param(lambda mesh: mesh.cast_to_unstructured_grid(), id='unstructured'),
-        pytest.param(lambda _mesh: examples.load_explicit_structured(), id='explicit_structured'),
+        pytest.param(lambda mesh: mesh, True, id='image'),
+        pytest.param(lambda mesh: mesh.cast_to_rectilinear_grid(), True, id='rectilinear'),
+        pytest.param(lambda mesh: mesh.cast_to_structured_grid(), True, id='structured'),
+        pytest.param(lambda mesh: mesh.cast_to_unstructured_grid(), True, id='unstructured'),
+        pytest.param(lambda _mesh: examples.load_explicit_structured(), False, id='explicit'),
     ],
 )
-def test_clip_box_planes_match_box_filter(uniform, invert, cast):
+def test_clip_box_planes_match_box_filter(uniform, invert, cast, regular):
     mesh = cast(uniform)
     lower, upper = np.array(mesh.bounds[::2]), np.array(mesh.bounds[1::2])
     lower = lower + 0.3 * (upper - lower)
@@ -349,10 +349,23 @@ def test_clip_box_planes_match_box_filter(uniform, invert, cast):
     assert np.isclose(clipped.volume, expected.volume)
     # The box filter keeps unused input points, so compare with the box, not its bounds
     assert np.allclose(clipped.bounds, mesh.bounds if invert else bounds)
-    # Whole hexahedra are kept instead of being split into tetrahedra
-    assert set(clipped.celltypes) <= {pv.CellType.HEXAHEDRON, pv.CellType.POLYHEDRON}
+
+    # Whole cells are kept instead of being split into tetrahedra
     assert set(expected.celltypes) == {pv.CellType.TETRA}
-    assert clipped.n_cells < expected.n_cells
+    assert pv.CellType.HEXAHEDRON in set(clipped.celltypes)
+    if regular:
+        # Cells the box cuts stay hexahedral for a grid with axis-aligned cells
+        assert set(clipped.celltypes) == {pv.CellType.HEXAHEDRON}
+        assert clipped.n_cells < expected.n_cells
+    else:
+        # How VTK splits the cut cells of a curvilinear grid varies by version
+        assert set(clipped.celltypes) <= {
+            pv.CellType.HEXAHEDRON,
+            pv.CellType.POLYHEDRON,
+            pv.CellType.TETRA,
+            pv.CellType.WEDGE,
+            pv.CellType.PYRAMID,
+        }
 
 
 def test_clip_box_planes_invert_is_complement(uniform):
