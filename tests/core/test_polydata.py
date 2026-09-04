@@ -627,37 +627,50 @@ def test_merge_active_scalars(input_):
     assert merged.active_scalars_name == 'foo'
 
 
-@pytest.mark.parametrize(
-    'input_', [examples.load_hexbeam(), pv.Plane(i_resolution=1, j_resolution=1)]
-)
-@pytest.mark.parametrize('main_has_priority', [True, False])
-def test_merge_main_has_priority(input_, main_has_priority):
+_MERGE_PRIORITY_INPUTS = [examples.load_hexbeam(), pv.Plane(i_resolution=1, j_resolution=1)]
+
+
+def _conflicting_scalars(input_):
+    """Return a mesh and a copy whose shared active scalars have the opposite sign."""
     mesh = input_.copy()
     data_main = np.arange(mesh.n_points, dtype=float)
     mesh.point_data['present_in_both'] = data_main
     mesh.set_active_scalars('present_in_both')
 
     other = mesh.copy()
-    data_other = -data_main
-    other.point_data['present_in_both'] = data_other
+    other.point_data['present_in_both'] = -data_main
     other.set_active_scalars('present_in_both')
+    return mesh, other
 
+
+def _matching_point_data(this, that, scalars_name):
+    """Return True if scalars on two meshes only differ by point order."""
     # note: order of points can change after point merging
-    def matching_point_data(this, that, scalars_name):
-        """Return True if scalars on two meshes only differ by point order."""
-        return all(
-            new_val == this.point_data[scalars_name][j]
-            for point, new_val in zip(that.points, that.point_data[scalars_name], strict=True)
-            for j in (this.points == point).all(-1).nonzero()
-        )
+    return all(
+        new_val == this.point_data[scalars_name][j]
+        for point, new_val in zip(that.points, that.point_data[scalars_name], strict=True)
+        for j in (this.points == point).all(-1).nonzero()
+    )
 
-    if pv.vtk_version_info >= (9, 5, 0):
-        merged = mesh.merge(other)
-        expected_to_match = mesh
-    else:
-        merged = mesh.merge(other, main_has_priority=main_has_priority)
-        expected_to_match = mesh if main_has_priority else other
-    assert matching_point_data(merged, expected_to_match, 'present_in_both')
+
+@pytest.mark.parametrize('input_', _MERGE_PRIORITY_INPUTS)
+def test_merge_main_has_priority_by_default(input_):
+    mesh, other = _conflicting_scalars(input_)
+    merged = mesh.merge(other)
+    assert _matching_point_data(merged, mesh, 'present_in_both')
+    assert merged.active_scalars_name == 'present_in_both'
+
+
+@pytest.mark.needs_vtk_version(
+    less_than=(9, 5, 0), reason='Main always has priority for vtk >= 9.5.'
+)
+@pytest.mark.parametrize('input_', _MERGE_PRIORITY_INPUTS)
+@pytest.mark.parametrize('main_has_priority', [True, False])
+def test_merge_main_has_priority(input_, main_has_priority):
+    mesh, other = _conflicting_scalars(input_)
+    merged = mesh.merge(other, main_has_priority=main_has_priority)
+    expected_to_match = mesh if main_has_priority else other
+    assert _matching_point_data(merged, expected_to_match, 'present_in_both')
     assert merged.active_scalars_name == 'present_in_both'
 
 
