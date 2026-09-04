@@ -139,8 +139,8 @@ class _Downloadable(Protocol):
 
         Returns
         -------
-        _FilePropStrType_co
-            Source of the download.
+        tuple[str, ...]
+            Source of each download.
 
         """
         return self._source_urls()
@@ -180,8 +180,8 @@ class _Downloadable(Protocol):
 
         Returns
         -------
-        _FilePropStrType_co
-            Web source of the download.
+        tuple[str, ...]
+            Web source of each download.
 
         """
         return self._source_urls(web_blob=True)
@@ -670,6 +670,12 @@ class _MultiFileDatasetLoader(_DatasetLoader, _FileProps):
         A file is loadable on its own when it is wrapped as a dataset loader. When none
         of them are, the load function reads them together -- a cubemap's six faces,
         say -- so every path is returned rather than none of them.
+
+        Returns
+        -------
+        tuple[str, ...]
+            Paths of all loadable files.
+
         """
         loadable = tuple(
             itertools.chain.from_iterable(
