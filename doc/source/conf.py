@@ -566,11 +566,16 @@ def _filter_sphinx_gallery_warnings():
 class ResetPyVista:
     """Reset pyvista module to default settings."""
 
-    def __call__(self, gallery_conf, fname):  # noqa: ARG002
+    def __init__(self):
+        self._error_catcher = None
+
+    def __call__(self, gallery_conf, fname, when):  # noqa: ARG002
         """Reset pyvista module to default settings.
 
         If default documentation settings are modified in any example, reset here.
         """
+        if when == 'after':
+            self._raise_for_vtk_output(fname)
         _filter_sphinx_gallery_warnings()
         import matplotlib as mpl  # must import before pyvista
 
@@ -585,6 +590,35 @@ class ResetPyVista:
 
         pv._wrappers['vtkPolyData'] = pv.PolyData
         pv.set_plot_theme('document_build')
+
+        if when == 'before':
+            self._start_catching_vtk_output()
+
+    def _start_catching_vtk_output(self):
+        """Begin recording the errors and warnings VTK logs while an example runs."""
+        import pyvista as pv
+
+        # An example that aborted may have left the previous recording open.
+        self._stop_catching_vtk_output()
+        catcher = pv.VtkErrorCatcher(send_to_logging=False)
+        catcher.__enter__()
+        self._error_catcher = catcher
+
+    def _stop_catching_vtk_output(self):
+        """Stop recording and return the events logged since recording began."""
+        catcher, self._error_catcher = self._error_catcher, None
+        if catcher is None:
+            return []
+        catcher.__exit__(None, None, None)
+        return catcher.events
+
+    def _raise_for_vtk_output(self, fname):
+        """Fail the build when an example logged a VTK error or warning."""
+        events = self._stop_catching_vtk_output()
+        if events:
+            logged = '\n'.join(str(event) for event in events)
+            msg = f'{fname} logged {len(events)} VTK error(s) or warning(s):\n{logged}'
+            raise RuntimeError(msg)
 
     def __repr__(self):
         return 'ResetPyVista'
