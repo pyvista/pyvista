@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 import pyvista as pv
-from pyvista.plotting.cube_axes_actor import _fit_n_labels
+from pyvista.plotting.cube_axes_actor import _axis_label_values
 
 
 @pytest.fixture
@@ -293,21 +293,32 @@ def test_axes_ranges_init_raises(camera):
         pv.CubeAxesActor(camera, axes_ranges=[[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12]])
 
 
+ARC = (-1.0, 1.0399938821792603)  # the circular arc gallery scene, tube radius included
+
+
 @pytest.mark.parametrize(
     ('bounds', 'n', 'expected'),
     [
-        ((-11.64, 11.64), 5, 4),
-        ((-11.7236, 11.7236), 5, 4),
-        ((-10.0, 10.0), 9, 5),
-        ((-10.0, 10.0), 3, 3),
-        ((-0.5, 0.5), 5, 5),
-        ((0.0, 1.0), 11, 6),
-        ((0.0, 0.0), 5, 5),
-        ((-np.inf, np.inf), 5, 5),
+        # VTK divides none of these into five, so the labels are spaced to a count it takes
+        ((-11.64, 11.64), 5, [-11.64, -3.88, 3.88, 11.64]),
+        ((-11.7236, 11.7236), 5, [-11.7236, -3.907867, 3.907867, 11.7236]),
+        # here its own ticks are the round ones, and there is room for all of them
+        (ARC, 5, [-1.0, -0.5, 0.0, 0.5, 1.0]),
+        # but not when fewer labels are wanted than it would draw
+        (ARC, 4, [-1.0, -0.320002, 0.359996, 1.039994]),
+        ((-10.0, 10.0), 9, [-10.0, -5.0, 0.0, 5.0, 10.0]),
+        ((-10.0, 10.0), 3, [-10.0, 0.0, 10.0]),
+        ((-0.5, 0.5), 5, [-0.5, -0.25, 0.0, 0.25, 0.5]),
     ],
 )
-def test_fit_n_labels(bounds, n, expected):
-    assert _fit_n_labels(*bounds, n) == expected
+def test_axis_label_values(bounds, n, expected):
+    assert np.allclose(_axis_label_values(*bounds, n), expected)
+
+
+@pytest.mark.parametrize('bounds', [(0.0, 0.0), (-np.inf, np.inf), (0.0, 5e-324)])
+def test_axis_label_values_degenerate(bounds):
+    with np.errstate(invalid='ignore'):
+        assert len(_axis_label_values(*bounds, 5)) == 5
 
 
 def test_labels_evenly_spaced():

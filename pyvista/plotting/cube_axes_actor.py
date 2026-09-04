@@ -45,16 +45,17 @@ def _pad_bounds(bounds: VectorLike[float], *, padding: float) -> np.ndarray:
 _FLT_EPSILON = float(np.finfo(np.float32).eps)
 
 
-def _fit_n_labels(vmin: float, vmax: float, n: int) -> int:
-    """Return the largest count up to ``n`` that VTK spaces evenly between two values.
+def _axis_label_values(vmin: float, vmax: float, n: int) -> np.ndarray:
+    """Return up to ``n`` values to label, at coordinates VTK puts major ticks on.
 
     :vtk:`vtkCubeAxesActor` adopts a spacing of ``(vmax - vmin) / (n - 1)`` only while ``n``
     stays below the number of ticks it computes for itself. Above that it keeps its own
-    spacing, and evenly spaced labels no longer belong to the ticks they are drawn on.
+    spacing, which starts at ``vmin``, so labels are placed either evenly across the range
+    or on the multiples of that spacing, whichever VTK is going to draw.
     """
     span = abs(vmax - vmin)
     if n < 2 or span == 0.0 or not math.isfinite(span):
-        return n
+        return np.linspace(vmin, vmax, n)
     # Mirrors the tick spacing of ``vtkCubeAxesActor::AdjustTicksComputeRange``
     power = math.log10(span)
     if power != 0.0:
@@ -63,7 +64,7 @@ def _fit_n_labels(vmin: float, vmax: float, n: int) -> int:
         power -= 1.0
     decade = 10.0 ** float(int(power))
     if decade == 0.0:  # a subnormal span underflows the decade, as ``GetNumTicks`` allows for
-        return n
+        return np.linspace(vmin, vmax, n)
     ticks = int(span / decade)
     ticks = ticks + 1 if ticks else 0
     divisor = 5.0 if ticks <= 2 else 2.0 if ticks < 5 else 1.0
@@ -75,9 +76,15 @@ def _fit_n_labels(vmin: float, vmax: float, n: int) -> int:
     # it keeps its spacing, which suits evenly spaced labels only if its last tick is ``vmax``
     lands_on_vmax = abs(intervals - labelled + 1) <= 1e-9 * (intervals or 1.0)
     maximum = labelled if lands_on_vmax else int(intervals)
-    # A count between the two is spaced by neither: VTK builds ``labelled`` labels but is
-    # handed ``n``, and the integer division it indexes them with then floors to zero
-    return maximum if n >= maximum else min(n, int(intervals))
+    if n < maximum:
+        # A count between the two is spaced by neither: VTK builds ``labelled`` labels but is
+        # handed ``n``, and the integer division it indexes them with then floors to zero
+        return np.linspace(vmin, vmax, min(n, int(intervals)))
+    if n >= labelled and abs(vmin / major - round(vmin / major)) <= 1e-9:
+        # VTK's own ticks fall on multiples of the spacing here, which read better than an
+        # even split of a range that does not divide by it
+        return vmin + np.arange(labelled) * math.copysign(major, vmax - vmin)
+    return np.linspace(vmin, vmax, maximum)
 
 
 @_deprecate_positional_args
@@ -91,9 +98,9 @@ def make_axis_labels(vmin, vmax, n, fmt):  # noqa: PLR0917
     vmax : float
         The maximum value for the axis labels.
     n : int
-        The number of labels to create. Fewer labels are created if
-        :vtk:`vtkCubeAxesActor` cannot space that many evenly between ``vmin``
-        and ``vmax``.
+        The number of labels to create. Fewer are created, and placed on
+        :vtk:`vtkCubeAxesActor`'s own ticks, if it cannot space that many evenly
+        between ``vmin`` and ``vmax``.
     fmt : str
         A format string for the labels. If the string starts with '%', the label will be formatted
         using the old-style string formatting method.
@@ -106,7 +113,7 @@ def make_axis_labels(vmin, vmax, n, fmt):  # noqa: PLR0917
 
     """
     labels = _vtk.vtkStringArray()
-    for v in np.linspace(vmin, vmax, _fit_n_labels(vmin, vmax, n)):
+    for v in _axis_label_values(vmin, vmax, n):
         label = (fmt % v if fmt.startswith('%') else fmt.format(v)) if fmt else f'{v}'
         labels.InsertNextValue(label)
     return labels
