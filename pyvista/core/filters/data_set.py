@@ -108,7 +108,7 @@ def _signed_distance_near_surface(
     _update_alg(to_cells, message='Finding Cells Cut by the Surface')
     fraction = np.asarray(_get_output(to_cells).cell_data[_CLIP_SURFACE_SCALARS])
     cut = dataset.extract_cells(
-        (fraction > 0) & (fraction < 1), pass_point_ids=True, pass_cell_ids=False
+        np.flatnonzero((fraction > 0) & (fraction < 1)), pass_point_ids=True, pass_cell_ids=False
     )
     if cut.n_points:
         point_ids = np.asarray(cut.point_data['vtkOriginalPointIds'])
@@ -779,12 +779,13 @@ class DataSetFilters(DataObjectFilters):
         >>> clipped.plot(show_edges=True, cpos='xy', line_width=3)
 
         """
-        if not isinstance(surface, _vtk.vtkPolyData):
-            surface = wrap(surface).extract_surface(
+        surface_ = cast('pv.PolyData', wrap(surface))
+        if not isinstance(surface_, pv.PolyData):
+            surface_ = surface_.extract_surface(  # type: ignore[unreachable]
                 algorithm=None, pass_pointid=False, pass_cellid=False
             )
-        function = _vtk.vtkImplicitPolyDataDistance()
-        function.SetInput(surface)
+        function: _vtk.vtkImplicitPolyDataDistance | None = _vtk.vtkImplicitPolyDataDistance()
+        function.SetInput(surface_)
         source = self
         if compute_distance:
             points = pv.convert_array(self.points)
@@ -792,11 +793,11 @@ class DataSetFilters(DataObjectFilters):
             function.FunctionValue(points, dists)
             source = self.copy(deep=False)
             source['implicit_distance'] = pv.convert_array(dists)
-        elif value == 0 and not self.is_empty and surface.n_faces and surface.n_open_edges == 0:
+        elif value == 0 and not self.is_empty and surface_.n_faces and surface_.n_open_edges == 0:
             # Only the points of cells the surface passes through need a distance
             source = self.copy(deep=False)
             source.point_data[_CLIP_SURFACE_SCALARS] = _signed_distance_near_surface(
-                self, surface, function
+                self, surface_, function
             )
             source.set_active_scalars(_CLIP_SURFACE_SCALARS, preference='point')
             function = None
