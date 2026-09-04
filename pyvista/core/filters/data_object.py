@@ -3759,7 +3759,10 @@ class DataObjectFilters:
                ``generate_triangles=True`` (~5x slowdown). Pass
                ``generate_triangles=True`` for the fast path when the
                output cell shape is not load-bearing for your downstream
-               code.
+               code. This does not apply to the axis-aligned
+               :class:`~pyvista.ImageData` slices described below, which
+               do not use :vtk:`vtkCutter` and are fastest with the
+               default ``False``.
 
         contour : bool, default: False
             If ``True``, apply a ``contour`` filter after slicing.
