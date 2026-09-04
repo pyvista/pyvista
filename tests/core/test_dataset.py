@@ -587,6 +587,20 @@ def test_set_active_tensors(hexbeam):
     active_component_consistency_check(hexbeam, 'tensors', 'point')
 
 
+def test_active_tensors_info_self_heals_after_removal():
+    # Regression test for issue #8749: `active_tensors_info` must validate its
+    # cached name against the actual VTK state, like `active_scalars_info` does,
+    # instead of returning a stale name after the array is removed.
+    mesh = pv.Sphere()
+    mesh.point_data['t'] = np.zeros((mesh.n_points, 9))
+    mesh.active_tensors_name = 't'
+
+    mesh.point_data.remove('t')
+
+    assert mesh.active_tensors_name is None
+    assert mesh.point_data.active_tensors_name is None
+
+
 def test_set_texture_coordinates(hexbeam):
     with pytest.raises(TypeError):
         hexbeam.active_texture_coordinates = [1, 2, 3]
@@ -751,18 +765,12 @@ def test_rename_array_preserves_active_attributes():
     # renaming must not add any.
     point_data.active_scalars_name = None
 
-    def active_tensors_name():
-        # There is no attributes-level tensors accessor, and the dataset-level
-        # `active_tensors_name` reports stale state after a rename (see issue #8749),
-        # so read the actual state from VTK directly.
-        tensors = point_data.VTKObject.GetTensors()
-        return None if tensors is None else tensors.GetName()
-
     # Sanity check the setup before renaming.
     assert point_data.active_normals_name == 'my_normals'
     assert point_data.active_texture_coordinates_name == 'my_tcoords'
     assert point_data.active_vectors_name == 'my_vectors'
-    assert active_tensors_name() == 'my_tensors'
+    assert point_data.active_tensors_name == 'my_tensors'
+    assert mesh.active_tensors_name == 'my_tensors'
     assert point_data.active_scalars_name is None
     assert mesh.active_scalars_name is None
 
@@ -777,7 +785,8 @@ def test_rename_array_preserves_active_attributes():
     assert point_data.active_texture_coordinates is not None
     assert point_data.active_vectors_name == 'renamed_vectors'
     assert point_data.active_vectors is not None
-    assert active_tensors_name() == 'renamed_tensors'
+    assert point_data.active_tensors_name == 'renamed_tensors'
+    assert mesh.active_tensors_name == 'renamed_tensors'
     assert point_data.active_scalars_name is None
     assert mesh.active_scalars_name is None
 
