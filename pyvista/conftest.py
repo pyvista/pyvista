@@ -20,6 +20,21 @@ collect_ignore = [  # Avoid importing deprecated modules
 ]
 
 
+@pytest.fixture(autouse=True)
+def fail_on_vtk_output():
+    """Fail the test when VTK logs an error or warning while it runs.
+
+    Defined here rather than in ``tests`` so that it also applies to the doctests run
+    from the installed package, which collect no ``conftest.py`` from the repository.
+    """
+    with pv.VtkErrorCatcher(send_to_logging=False) as catcher:
+        yield
+    if events := catcher.events:
+        logged = '\n'.join(str(event) for event in events)
+        msg = f'VTK logged {len(events)} error(s) or warning(s):\n{logged}'
+        pytest.fail(msg)
+
+
 @pytest.fixture(autouse=True, scope='session')
 def matplotlib_headless():
     """Use a non-interactive Matplotlib backend to avoid Tk issues on Windows CI."""
