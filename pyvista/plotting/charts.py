@@ -1165,13 +1165,20 @@ class _CustomContextItem(_vtk.vtkPythonItem):
         # This will also call ItemWrapper.Initialize
         self.SetPythonObject(_CustomContextItem.ItemWrapper())
 
-    def paint(self, _) -> bool:
+    def paint(self, _) -> bool:  # numpydoc ignore=PR01
         """Paint the context item."""
         return True
 
 
 class _ChartBackground(DisableVtkSnakeCase, _CustomContextItem):
-    """Utility class for chart backgrounds."""
+    """Utility class for chart backgrounds.
+
+    Parameters
+    ----------
+    chart : _Chart
+        Chart this background belongs to.
+
+    """
 
     def __init__(self, chart) -> None:
         super().__init__()
@@ -1218,6 +1225,14 @@ class _Chart(DocSubs):
         This class is a private internal implementation detail. It is documented
         solely so that its public members, which are inherited by public classes,
         are visible in the documentation.
+
+    Parameters
+    ----------
+    size : sequence[float], default: (1, 1)
+        Size of the chart in normalized coordinates.
+
+    loc : sequence[float], default: (0, 0)
+        Location of the chart in normalized coordinates.
 
     """
 
@@ -1790,6 +1805,11 @@ class _Plot(DocSubs):
         solely so that its public members, which are inherited by public classes,
         are visible in the documentation.
 
+    Parameters
+    ----------
+    chart : _Chart
+        Chart containing this plot.
+
     """
 
     # Subclasses should specify following substitutions: 'plot_name', 'chart_init' and 'plot_init'.
@@ -2032,6 +2052,11 @@ class _MultiCompPlot(_Plot):
         This class is a private internal implementation detail. It is documented
         solely so that its public members, which are inherited by public classes,
         are visible in the documentation.
+
+    Parameters
+    ----------
+    chart : _Chart
+        Chart containing this plot.
 
     """
 

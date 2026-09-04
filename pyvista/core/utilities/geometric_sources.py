@@ -45,7 +45,7 @@ SINGLE_PRECISION = _vtk.vtkAlgorithm.SINGLE_PRECISION
 DOUBLE_PRECISION = _vtk.vtkAlgorithm.DOUBLE_PRECISION
 
 
-def translate(
+def _translate_and_orient(
     surf: DataSet,
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     direction: VectorLike[float] = (1.0, 0.0, 0.0),
@@ -949,7 +949,7 @@ class Text3DSource(_NoNewAttrMixin):
         if not np.array_equal(self.normal, (0, 0, 1)):
             out.rotate_x(90, inplace=True)
             out.rotate_z(90, inplace=True)
-            translate(out, self.center, self.normal)
+            _translate_and_orient(out, self.center, self.normal)
         else:
             out.points += self.center
 

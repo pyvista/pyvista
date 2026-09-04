@@ -904,11 +904,16 @@ def get_version_match(semver):
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
+# An expanded sidebar embeds the site's whole toctree (~2,100 links) in every page:
+# the write phase grew from ~40s to ~7min and pages two- to five-fold (see #9023).
+# Release builds take that cost for navigability; every other build collapses it.
+RELEASE_BUILD = os.environ.get('_PYVISTA_RELEASE', '').lower() == 'true'
+
 html_theme_options = {
     'analytics': {'google_analytics_id': 'UA-140243896-1'},
     'show_prev_next': False,
     'github_url': 'https://github.com/pyvista/pyvista',
-    'collapse_navbar': True,
+    'collapse_navbar': not RELEASE_BUILD,
     'use_edit_page_button': True,
     'navigation_with_keys': False,
     'show_navbar_depth': 1,
@@ -1041,10 +1046,16 @@ texinfo_documents = [
 
 # -- Custom 404 page
 
+# Netlify serves this page for any missing path, at any depth, so its links are
+# site-root absolute, as ``notfound_urls_prefix = None`` makes the theme's own.
+# ``notfound.js`` fills the container with suggestions built from the requested URL.
 notfound_context = {
     'body': (
-        '<h1>Page not found.</h1>\n\n'
-        'Perhaps try the <a href="https://docs.pyvista.org/examples/index.html">examples page</a>.'
+        '<h1>Page not found</h1>\n'
+        '<div id="notfound"></div>\n'
+        '<p>Try the <a href="/search.html">search page</a>, '
+        'the <a href="/api/index.html">API reference</a>, '
+        'or the <a href="/examples/index.html">examples gallery</a>.</p>'
     ),
 }
 notfound_urls_prefix = None
@@ -1175,4 +1186,5 @@ def setup(app: Sphinx) -> None:  # noqa: D103
     app.add_css_file('no_search_highlight.css')
     app.add_css_file('dataset_gallery_filter.css')
     app.add_js_file('redirect_fragments.js')
+    app.add_js_file('notfound.js')
     app.add_js_file('dataset_gallery_filter.js')

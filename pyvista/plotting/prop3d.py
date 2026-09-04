@@ -462,7 +462,14 @@ class Prop3D(_NoNewAttrMixin, _NameMixin, _BoundsSizeMixin, DisableVtkSnakeCase,
         self: Self,
         deep: bool = True,  # noqa: FBT001, FBT002
     ) -> Self:  # numpydoc ignore=RT01
-        """Return a copy of this prop."""
+        """Return a copy of this prop.
+
+        Parameters
+        ----------
+        deep : bool, default: True
+            Return a deep copy of the prop.
+
+        """
         raise NotImplementedError  # pragma: no cover
 
     @property

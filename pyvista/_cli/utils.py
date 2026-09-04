@@ -106,7 +106,20 @@ class _PyvistaHelpFormatter(DefaultFormatter):
     """Help formatter which renders the usage line as plain text."""
 
     def render_usage(self, console: Console, options: ConsoleOptions, usage: str) -> None:  # noqa: ARG002
-        """Render the usage line."""
+        """Render the usage line.
+
+        Parameters
+        ----------
+        console : rich.console.Console
+            Console to render to.
+
+        options : rich.console.ConsoleOptions
+            Console render options.
+
+        usage : str
+            Usage line to print.
+
+        """
         if usage:  # pragma: no branch
             console.print(usage)
 
@@ -251,6 +264,11 @@ def validate_paths(paths: list[str]) -> list[Path]:
     """Expand globs, verify existence, and filter MultiBlock sidecar children.
 
     Prints a console message for any sidecar children that were filtered out.
+
+    Parameters
+    ----------
+    paths : list[str]
+        Paths or glob patterns to expand and check.
 
     Returns
     -------

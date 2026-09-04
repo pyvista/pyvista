@@ -12,6 +12,7 @@ import operator
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
+from typing import NamedTuple
 from typing import cast
 from typing import get_args
 import warnings
@@ -34,6 +35,7 @@ from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_object import DataObjectFilters
 from pyvista.core.filters.data_object import _cast_output_to_match_input_type
 from pyvista.core.utilities.arrays import FieldAssociation
+from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
 from pyvista.core.utilities.arrays import set_default_active_scalars
@@ -65,6 +67,19 @@ if TYPE_CHECKING:
 
 
 _SelectInteriorPointsOptions = Literal['signed_distance', 'cell_locator']
+
+
+class _ExtractValuesInputs(NamedTuple):
+    """Validated inputs shared by ``extract_values`` and ``select_values``."""
+
+    values: NumpyArray[float] | None
+    ranges: NumpyArray[float] | None
+    value_names: list[str] | None
+    range_names: list[str] | None
+    array: NumpyArray[float]
+    array_name: str
+    association: FieldAssociation
+    component_logic: Callable[[NumpyArray[np.bool_]], NumpyArray[np.bool_]] | None
 
 
 @abstract_class
@@ -3186,7 +3201,9 @@ class DataSetFilters(DataObjectFilters):
             raise RuntimeError(msg)
 
         out = self.copy(deep=False)
-        if method == 'signed_distance':
+        if surface.n_cells == 0:
+            bools = np.full(self.n_points, inside_out, dtype=bool)
+        elif method == 'signed_distance':
             if locator_tolerance is not None:
                 msg = 'locator_tolerance cannot be used with the signed_distance method.'
                 raise ValueError(msg)
@@ -4903,59 +4920,62 @@ class DataSetFilters(DataObjectFilters):
 
         Examples
         --------
-        Load image with labeled regions.
+        .. pyvista-plot::
+            :force_static:
 
-        >>> import numpy as np
-        >>> import pyvista as pv
-        >>> from pyvista import examples
-        >>> image = examples.load_channels()
-        >>> np.unique(image.active_scalars)
-        pyvista_ndarray([0, 1, 2, 3, 4]...)
+            Load image with labeled regions.
 
-        Split the image into its separate regions. Here, we also remove the first
-        region for visualization.
+            >>> import numpy as np
+            >>> import pyvista as pv
+            >>> from pyvista import examples
+            >>> image = examples.load_channels()
+            >>> np.unique(image.active_scalars)
+            pyvista_ndarray([0, 1, 2, 3, 4]...)
 
-        >>> multiblock = image.split_values()
-        >>> _ = multiblock.pop(0)  # Remove first region
+            Split the image into its separate regions. Here, we also remove the first
+            region for visualization.
 
-        Plot the regions.
+            >>> multiblock = image.split_values()
+            >>> _ = multiblock.pop(0)  # Remove first region
 
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_composite(multiblock, multi_colors=True)
-        >>> _ = pl.show_grid()
-        >>> pl.show()
+            Plot the regions.
 
-        Note that the block names are generic by default.
+            >>> pl = pv.Plotter()
+            >>> _ = pl.add_composite(multiblock, multi_colors=True)
+            >>> _ = pl.show_grid()
+            >>> pl.show()
 
-        >>> multiblock.keys()
-        ['Block-01', 'Block-02', 'Block-03', 'Block-04']
+            Note that the block names are generic by default.
 
-        To name the output blocks, use a dictionary as input instead.
+            >>> multiblock.keys()
+            ['Block-01', 'Block-02', 'Block-03', 'Block-04']
 
-        Here, we also explicitly omit the region with ``0`` values from the input
-        instead of removing it from the output.
+            To name the output blocks, use a dictionary as input instead.
 
-        >>> labels = dict(region1=1, region2=2, region3=3, region4=4)
-        >>>
-        >>> multiblock = image.split_values(labels)
-        >>> multiblock.keys()
-        ['region1', 'region2', 'region3', 'region4']
+            Here, we also explicitly omit the region with ``0`` values from the input
+            instead of removing it from the output.
 
-        Plot the regions as separate meshes using the labels instead of plotting
-        the MultiBlock directly.
+            >>> labels = dict(region1=1, region2=2, region3=3, region4=4)
+            >>>
+            >>> multiblock = image.split_values(labels)
+            >>> multiblock.keys()
+            ['region1', 'region2', 'region3', 'region4']
 
-        Clear scalar data so we can color each mesh using a single color
+            Plot the regions as separate meshes using the labels instead of plotting
+            the MultiBlock directly.
 
-        >>> _ = [block.clear_data() for block in multiblock]
-        >>>
-        >>> pl = pv.Plotter()
-        >>> pl.set_color_cycler('default')
-        >>> _ = [
-        ...     pl.add_mesh(block, label=label)
-        ...     for block, label in zip(multiblock, labels)
-        ... ]
-        >>> _ = pl.add_legend()
-        >>> pl.show()
+            Clear scalar data so we can color each mesh using a single color
+
+            >>> _ = [block.clear_data() for block in multiblock]
+            >>>
+            >>> pl = pv.Plotter()
+            >>> pl.set_color_cycler('default')
+            >>> _ = [
+            ...     pl.add_mesh(block, label=label)
+            ...     for block, label in zip(multiblock, labels)
+            ... ]
+            >>> _ = pl.add_legend()
+            >>> pl.show()
 
         """
         if values is None and ranges is None:
@@ -5271,31 +5291,19 @@ class DataSetFilters(DataObjectFilters):
             component_mode=component_mode,
             split=split,
         )
-        if isinstance(validated, tuple):
-            (
-                valid_values,
-                valid_ranges,
-                value_names,
-                range_names,
-                array,
-                _,
-                association,
-                component_logic,
-            ) = validated
-        else:
-            # Return empty dataset
-            return validated
+        if not isinstance(validated, _ExtractValuesInputs):
+            return validated  # empty input
 
         # Set default for include cells
         if include_cells is None:
             include_cells = self.n_cells > 0
 
         kwargs = dict(
-            values=valid_values,
-            ranges=valid_ranges,
-            array=array,
-            association=association,
-            component_logic=component_logic,
+            values=validated.values,
+            ranges=validated.ranges,
+            array=validated.array,
+            association=validated.association,
+            component_logic=validated.component_logic,
             invert=invert,
             adjacent_cells=adjacent_cells,
             include_cells=include_cells,
@@ -5307,8 +5315,8 @@ class DataSetFilters(DataObjectFilters):
         if split:
             return self._split_values(
                 method=self._extract_values,
-                value_names=value_names,
-                range_names=range_names,
+                value_names=validated.value_names,
+                range_names=validated.range_names,
                 **kwargs,
             )
 
@@ -5335,11 +5343,9 @@ class DataSetFilters(DataObjectFilters):
         def _validate_component_mode(array_, component_mode_):
             # Validate component mode and return logic function
             num_components = 1 if array_.ndim == 1 else array_.shape[1]
-            if isinstance(component_mode_, (int, np.integer)) or component_mode_ in [
-                '0',
-                '1',
-                '2',
-            ]:
+            if isinstance(component_mode_, (int, np.integer)) or (
+                isinstance(component_mode_, str) and component_mode_.isdigit()
+            ):
                 component_mode_ = int(component_mode_)
                 if component_mode_ > num_components - 1 or component_mode_ < 0:
                     msg = (
@@ -5445,6 +5451,9 @@ class DataSetFilters(DataObjectFilters):
                 ):
                     msg = 'Ranges must be numeric.'
                     raise TypeError(msg)
+                if ranges_.shape[1] != 2:
+                    msg = f'Ranges must have two values per range. Got shape {ranges_.shape}.'
+                    raise ValueError(msg)
                 is_valid_range = ranges_[:, 0] <= ranges_[:, 1]
                 not_valid = np.invert(is_valid_range)
                 if np.any(not_valid):
@@ -5481,15 +5490,15 @@ class DataSetFilters(DataObjectFilters):
             component_mode_=component_mode,
         )
 
-        return (
-            valid_values,
-            valid_ranges,
-            value_names,
-            range_names,
-            array,
-            array_name,
-            association,
-            component_logic,
+        return _ExtractValuesInputs(
+            values=valid_values,
+            ranges=valid_ranges,
+            value_names=value_names,
+            range_names=range_names,
+            array=array,
+            array_name=array_name,
+            association=association,
+            component_logic=component_logic,
         )
 
     def _split_values(  # type:ignore[misc]
@@ -5523,16 +5532,14 @@ class DataSetFilters(DataObjectFilters):
         component_logic,
         invert,
     ):
-        """Extract values using validated input.
-
-        Internal method for ``extract_values`` filter to avoid repeated calls to input
-        validation methods.
-        """
+        """Build the selection mask from validated values and ranges."""
 
         def _update_id_mask(logic_) -> None:
             """Apply component logic and update the id mask."""
             logic_ = component_logic(logic_) if component_logic else logic_
-            id_mask[logic_] = True
+            # Optimization: accumulate in place, since assigning ``True`` through a boolean
+            # mask allocates and scatters on every value and range
+            np.logical_or(id_mask, logic_, out=id_mask)
 
         # Determine which ids to keep
         id_mask = np.zeros((len(array),), dtype=bool)
@@ -7702,8 +7709,7 @@ class DataSetFilters(DataObjectFilters):
         mask fits the bounds of the input surface.
 
         If no inputs are provided, ``cell_length_percentile=0.1`` (tenth percentile) is
-        used by default to estimate the spacing. On systems with VTK < 9.2, the default
-        spacing is set to ``1/100`` of the input mesh's length.
+        used by default to estimate the spacing.
 
         .. versionadded:: 0.45.0
 
@@ -7714,8 +7720,9 @@ class DataSetFilters(DataObjectFilters):
         .. note::
             This filter returns voxels represented as point data, not
             :attr:`~pyvista.CellType.VOXEL` cells.
-            This differs from :func:`~pyvista.voxelize` and :func:`~pyvista.voxelize_volume`
-            which return meshes with voxel cells. See :ref:`image_representations_example`
+            This differs from :meth:`~pyvista.DataSetFilters.voxelize` and
+            :meth:`~pyvista.DataSetFilters.voxelize_rectilinear` which return meshes
+            with voxel cells. See :ref:`image_representations_example`
             for examples demonstrating the difference.
 
         .. note::
@@ -7768,9 +7775,6 @@ class DataSetFilters(DataObjectFilters):
             #. Inserting the distance into an ordered set to create the CDF.
 
             Has no effect if ``dimensions`` or ``reference_volume`` are specified.
-
-            .. note::
-                This option is only available for VTK 9.2 or greater.
 
         cell_length_sample_size : int, optional
             Number of samples to use for the cumulative distribution function (CDF)
@@ -7904,6 +7908,11 @@ class DataSetFilters(DataObjectFilters):
         >>> pl = mask_and_polydata_plotter(mask, poly)
         >>> pl.show()
 
+        The mask is mottled where the surface is not closed. Smoothed surfaces from
+        :meth:`~pyvista.ImageDataFilters.contour_labels` have gaps wherever the labels
+        touch only along a voxel edge, and the cut contours are closed heuristically
+        there.
+
         Visualize the effect of internal surfaces.
 
         >>> mesh = pv.Cylinder() + pv.Cylinder(center=(0, 0.75, 0))
@@ -7966,9 +7975,6 @@ class DataSetFilters(DataObjectFilters):
             msg = 'Input mesh must have faces for voxelization.'
             raise ValueError(msg)
 
-        def _preprocess_polydata(poly_in):
-            return poly_in.compute_normals().triangulate()
-
         if reference_volume is not None:
             if (
                 dimensions is not None
@@ -7988,43 +7994,42 @@ class DataSetFilters(DataObjectFilters):
             poly_ijk = surface.rotate(
                 reference_volume.direction_matrix.T, point=reference_volume.origin, inplace=False
             )
-            poly_ijk = _preprocess_polydata(poly_ijk)
+            poly_ijk = poly_ijk.triangulate()
         else:
             # Compute reference volume geometry
             if spacing is not None and dimensions is not None:
                 msg = 'Spacing and dimensions cannot both be set. Set one or the other.'
                 raise TypeError(msg)
 
-            # Need to preprocess so that we have a triangle mesh for computing
-            # cell length percentile
-            poly_ijk = _preprocess_polydata(surface)
+            # Triangulate for computing the cell length percentile
+            poly_ijk = surface.triangulate()
 
-            if spacing is None:
-                # Estimate spacing from cell length percentile
-                cell_length_percentile = (
-                    0.1 if cell_length_percentile is None else cell_length_percentile
-                )
-                cell_length_sample_size = (
-                    100_000 if cell_length_sample_size is None else cell_length_sample_size
-                )
-                spacing = _length_distribution_percentile(
-                    poly_ijk,
-                    cell_length_percentile,
-                    cell_length_sample_size,
-                    progress_bar=progress_bar,
-                )
-            # Spacing is specified directly. Make sure other params are not set.
-            elif cell_length_percentile is not None or cell_length_sample_size is not None:
+            if spacing is not None and (
+                cell_length_percentile is not None or cell_length_sample_size is not None
+            ):
                 msg = 'Spacing and cell length options cannot both be set. Set one or the other.'
                 raise TypeError(msg)
-
-            # Get initial spacing (will be adjusted later)
-            initial_spacing = _validation.validate_array3(spacing, broadcast=True)
 
             # Get size of poly data for computing dimensions
             size = np.array(surface.bounds_size)
 
             if dimensions is None:
+                if spacing is None:
+                    # Estimate spacing from cell length percentile
+                    cell_length_percentile = (
+                        0.1 if cell_length_percentile is None else cell_length_percentile
+                    )
+                    cell_length_sample_size = (
+                        100_000 if cell_length_sample_size is None else cell_length_sample_size
+                    )
+                    spacing = _length_distribution_percentile(
+                        poly_ijk,
+                        cell_length_percentile,
+                        cell_length_sample_size,
+                        progress_bar=progress_bar,
+                    )
+                # Get initial spacing (will be adjusted later)
+                initial_spacing = _validation.validate_array3(spacing, broadcast=True)
                 rounding_func = np.round if rounding_func is None else rounding_func
                 initial_dimensions = size / initial_spacing
                 # Make sure we don't round dimensions to zero, make it one instead
@@ -8046,18 +8051,10 @@ class DataSetFilters(DataObjectFilters):
             reference_volume.spacing = final_spacing
             reference_volume.origin = np.array(surface.bounds[::2]) + final_spacing / 2
 
-        # Init output structure. The image stencil filters do not support
-        # orientation, so we do not set the direction matrix
-        binary_mask = pv.ImageData()
-        binary_mask.extent = reference_volume.extent
-        binary_mask.spacing = reference_volume.spacing
-        binary_mask.origin = reference_volume.origin
-
-        # Init output scalars. Use uint8 dtype if possible.
-        scalars_shape = (binary_mask.n_points,)
+        # Use uint8 dtype if possible
         scalars_dtype: type[np.uint8 | float | int]
         if all(
-            isinstance(val, int) and val < 256 and val >= 0
+            isinstance(val, (int, np.integer)) and val < 256 and val >= 0
             for val in (background_value, foreground_value)
         ):
             scalars_dtype = np.uint8
@@ -8065,37 +8062,26 @@ class DataSetFilters(DataObjectFilters):
             scalars_dtype = np.int_
         else:
             scalars_dtype = np.float64
-        scalars = (  # Init with background value
-            np.zeros(scalars_shape, dtype=scalars_dtype)
-            if background_value == 0
-            else np.ones(scalars_shape, dtype=scalars_dtype) * background_value
+
+        mask = _stencil_binary_mask(
+            poly_ijk,
+            extent=reference_volume.extent,
+            spacing=reference_volume.spacing,
+            origin=reference_volume.origin,
+            dtype=scalars_dtype,
+            foreground_value=foreground_value,
+            background_value=background_value,
+            progress_bar=progress_bar,
         )
-        binary_mask['mask'] = scalars  # type: ignore[type-var, unused-ignore]
-        # Make sure that we have a clean triangle-strip polydata
-        # Note: Poly was partially pre-processed earlier
-        poly_ijk = poly_ijk.strip()
-
-        # Convert polydata to stencil
-        poly_to_stencil = _vtk.vtkPolyDataToImageStencil()
-        poly_to_stencil.SetInputData(poly_ijk)
-        poly_to_stencil.SetOutputSpacing(*reference_volume.spacing)
-        poly_to_stencil.SetOutputOrigin(*reference_volume.origin)  # type: ignore[call-overload]
-        poly_to_stencil.SetOutputWholeExtent(*reference_volume.extent)
-        _update_alg(poly_to_stencil, progress_bar=progress_bar, message='Converting polydata')
-
-        # Convert stencil to image
-        stencil = _vtk.vtkImageStencil()
-        stencil.SetInputData(binary_mask)
-        stencil.SetStencilConnection(poly_to_stencil.GetOutputPort())
-        stencil.ReverseStencilOn()
-        stencil.SetBackgroundValue(foreground_value)
-        _update_alg(stencil, progress_bar=progress_bar, message='Generating binary mask')
-        output_volume = _get_output(stencil)
-
-        # Set the orientation of the output
-        output_volume.direction_matrix = reference_volume.direction_matrix
-
-        return output_volume
+        # The image stencil filters do not support orientation, so the direction
+        # matrix is only set on the output
+        binary_mask = pv.ImageData()
+        binary_mask.extent = reference_volume.extent
+        binary_mask.spacing = reference_volume.spacing
+        binary_mask.origin = reference_volume.origin
+        binary_mask['mask'] = mask
+        binary_mask.direction_matrix = reference_volume.direction_matrix
+        return binary_mask
 
     def _voxelize_binary_mask_cells(  # type: ignore[misc]
         self: DataSet,
@@ -8160,8 +8146,7 @@ class DataSetFilters(DataObjectFilters):
         grid fits the bounds of the input mesh.
 
         If no inputs are provided, ``cell_length_percentile=0.1`` (tenth percentile) is
-        used by default to estimate the spacing. On systems with VTK < 9.2, the default
-        spacing is set to ``1/100`` of the input mesh's length.
+        used by default to estimate the spacing.
 
         A point data array ``mask`` is included where points inside and outside of the
         input surface are labelled with ``foreground_value`` and ``background_value``,
@@ -8224,9 +8209,6 @@ class DataSetFilters(DataObjectFilters):
             #. Inserting the distance into an ordered set to create the CDF.
 
             Has no effect if ``dimensions`` or ``reference_volume`` are specified.
-
-            .. note::
-                This option is only available for VTK 9.2 or greater.
 
         cell_length_sample_size : int, optional
             Number of samples to use for the cumulative distribution function (CDF)
@@ -8480,6 +8462,55 @@ def _length_distribution_percentile(poly, percentile, cell_length_sample_size, *
         distribution, progress_bar=progress_bar, message='Computing cell length distribution'
     )
     return distribution.GetLengthQuantile(percentile)
+
+
+_STENCIL_SLAB_SLICES = 8
+
+
+def _stencil_binary_mask(
+    surface: PolyData,
+    *,
+    extent: VectorLike[int],
+    spacing: VectorLike[float],
+    origin: VectorLike[float],
+    dtype: type,
+    foreground_value: float,
+    background_value: float,
+    progress_bar: bool,
+) -> NumpyArray[Any]:
+    """Rasterize a triangle surface into a flat binary mask, one slab of z-slices at a time."""
+    faces = surface.regular_faces
+    z = surface.points[:, 2][faces]
+    z_min, z_max = z.min(axis=1), z.max(axis=1)
+    extent_ = np.asarray(extent)
+    x_min, x_max, y_min, y_max, z_first, z_last = extent_.tolist()
+    dimensions = extent_[1::2] - extent_[::2] + 1
+    mask = np.full(dimensions[::-1], background_value, dtype=dtype)
+    vtk_type = _vtk.get_vtk_array_type(dtype)
+    for k_min in range(z_first, z_last + 1, _STENCIL_SLAB_SLICES):
+        k_max = min(k_min + _STENCIL_SLAB_SLICES - 1, z_last)
+        z_slab = sorted((origin[2] + k_min * spacing[2], origin[2] + k_max * spacing[2]))
+        # Only the cells crossing the slab's slices can contribute to it
+        crossing = (z_min <= z_slab[1]) & (z_max >= z_slab[0])
+        if not crossing.any():
+            continue
+        slab_surface = pv.PolyData.from_regular_faces(surface.points, faces[crossing])
+        poly_to_stencil = _vtk.vtkPolyDataToImageStencil()
+        poly_to_stencil.SetInputData(slab_surface)
+        poly_to_stencil.SetOutputSpacing(*spacing)
+        poly_to_stencil.SetOutputOrigin(*origin)
+        poly_to_stencil.SetOutputWholeExtent(x_min, x_max, y_min, y_max, k_min, k_max)
+        stencil_to_image = _vtk.vtkImageStencilToImage()
+        stencil_to_image.SetInputConnection(poly_to_stencil.GetOutputPort())
+        stencil_to_image.SetInsideValue(foreground_value)
+        stencil_to_image.SetOutsideValue(background_value)
+        stencil_to_image.SetOutputScalarType(vtk_type)
+        _update_alg(stencil_to_image, progress_bar=progress_bar, message='Generating binary mask')
+        slab = convert_array(stencil_to_image.GetOutput().GetPointData().GetScalars())
+        mask[k_min - z_first : k_max - z_first + 1] = slab.reshape(
+            k_max - k_min + 1, dimensions[1], dimensions[0]
+        )
+    return mask.ravel()
 
 
 def _set_threshold_limit(alg, *, value, method, invert):

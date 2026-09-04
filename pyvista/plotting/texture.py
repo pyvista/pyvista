@@ -323,10 +323,13 @@ class Texture(DataObject, _vtk.vtkTexture):
 
         Examples
         --------
-        >>> from pyvista import examples
-        >>> texture = examples.download_puppy_texture()
-        >>> flipped = texture.flip_x()
-        >>> flipped.plot()
+        .. pyvista-plot::
+            :force_static:
+
+            >>> from pyvista import examples
+            >>> texture = examples.download_puppy_texture()
+            >>> flipped = texture.flip_x()
+            >>> flipped.plot()
 
         """
         return Texture(self.to_image()._flip_uniform(0))
@@ -341,10 +344,13 @@ class Texture(DataObject, _vtk.vtkTexture):
 
         Examples
         --------
-        >>> from pyvista import examples
-        >>> texture = examples.download_puppy_texture()
-        >>> flipped = texture.flip_y()
-        >>> flipped.plot()
+        .. pyvista-plot::
+            :force_static:
+
+            >>> from pyvista import examples
+            >>> texture = examples.download_puppy_texture()
+            >>> flipped = texture.flip_y()
+            >>> flipped.plot()
 
         """
         return Texture(self.to_image()._flip_uniform(1))
@@ -443,10 +449,13 @@ class Texture(DataObject, _vtk.vtkTexture):
 
         Examples
         --------
-        >>> from pyvista import examples
-        >>> texture = examples.download_puppy_texture()
-        >>> rotated = texture.rotate_cw()
-        >>> rotated.plot()
+        .. pyvista-plot::
+            :force_static:
+
+            >>> from pyvista import examples
+            >>> texture = examples.download_puppy_texture()
+            >>> rotated = texture.rotate_cw()
+            >>> rotated.plot()
 
         """
         return Texture(np.rot90(self.to_array()))
@@ -461,10 +470,13 @@ class Texture(DataObject, _vtk.vtkTexture):
 
         Examples
         --------
-        >>> from pyvista import examples
-        >>> texture = examples.download_puppy_texture()
-        >>> rotated = texture.rotate_ccw()
-        >>> rotated.plot()
+        .. pyvista-plot::
+            :force_static:
+
+            >>> from pyvista import examples
+            >>> texture = examples.download_puppy_texture()
+            >>> rotated = texture.rotate_ccw()
+            >>> rotated.plot()
 
         """
         return Texture(np.rot90(self.to_array(), k=3))

@@ -41,10 +41,17 @@ readme = 'README.md'
 requires-python = '>=3.10'
 
 [project.optional-dependencies]
-all = ['pyvista[colormaps,io,jupyter]']
+all = ['pyvista[colormaps,io,io-override,jupyter]']
 colormaps = ['cmcrameri', 'cmocean', 'colorcet']
 cvista = ['cvista[all]>=9.7.0.2,<9.8.0']
-io = ['fsspec', 'imageio', 'meshio>=5.2', 'pyvista-zstd>=0.3.1']
+io = [
+  'fsspec',
+  'imageio',
+  'meshio>=5.2',
+  'pyvista-frd-reader>=0.2.1',
+  'pyvista-zstd>=0.3.1',
+]
+io-override = ['pyvista-miniply>=0.5.2', 'pyvista-stl>=0.5.3']
 jupyter = ['ipywidgets', 'nest-asyncio2', 'trame-pyvista']
 
 [dependency-groups]
@@ -97,6 +104,9 @@ test = [
   'pytest-pyvista==0.3.3',
   'pytest-xdist<3.9.0',
   'pytest<9.1.0',
+  'pyvista-frd-reader>=0.2.1,<0.3.0',
+  'pyvista-miniply>=0.5.2,<0.6.0',
+  'pyvista-stl>=0.5.3,<0.6.0',
   'pyvista-zstd>=0.3.1,<0.5.0',
   'refleak>=0.2.2,<0.3.0',
   'retry-requests<2.1.0',
@@ -143,6 +153,9 @@ docs = [
   'pydata-sphinx-theme==0.20.0; python_version >= "3.11"',
   'pypandoc==1.17',
   'pytest-sphinx==0.7.1',
+  'pyvista-frd-reader==0.2.1',
+  'pyvista-miniply==0.5.2',
+  'pyvista-stl==0.5.3',
   'pyvista-zstd==0.4.0',
   'ruamel-yaml<0.20.0',
   'scipy==1.16.3; python_version >= "3.11"',
@@ -326,7 +339,7 @@ image_cache_dir = 'tests/plotting/image_cache'
 image_format = 'png'
 include_vtksz = true
 max_image_size = 400 # pixels
-max_vtksz_file_size = 25 # MB
+max_vtksz_file_size = 5 # MB
 
 [tool.mypy]
 check_untyped_defs = true
@@ -360,10 +373,8 @@ checks = [
   'GL03', # Considering enforcing
   'GL06', # Found unknown section
   'GL07', # 'Sections are in the wrong order. Correct order is: {correct_sections}',
-  'GL08', # The object does not have a docstring
+  'GL08', # mostly @overload stubs and setters numpydoc cannot skip; ruff D1 and the hook cover the rest
   'GL09', # Deprecation warning should precede extended summary (check broken)
-  'PR01', # 'Parameters {missing_params} not documented',
-  'PR02', # 'Unknown parameters {unknown_params}',
   'PR03', # 'Wrong parameters order. Actual: {actual_params}. Documented: {documented_params}',
   'PR04', # 'Parameter "{param_name}" has no type',
   'PR05', # 'Parameter "{param_name}" type should not finish with "."',
@@ -379,11 +390,10 @@ checks = [
   'YD01', # Yields: No plan to enforce
 ]
 exclude = [ # don't report on objects that match any of these regex
-  '\.*Reader(\.|$)', # classes inherit from BaseReader
-  '\._.*$', # Ignore anything that's private (e.g., starts with _)
-  '^plot_directive\..*$',
-  '^viewer_directive\..*$',
+  '\._[a-z_][^.]*$', # private members and dunders; private classes are documented
 ]
+exclude_files = ['^pyvista/ext/'] # Sphinx machinery, not shipped API
+override_RT01 = ['\A[^\n]+\Z'] # summary-only; the annotation carries the type
 
 [tool.ruff]
 exclude = ['.git', 'build', 'dist', 'doc/_build', 'doc/examples', 'pycache__']

@@ -108,7 +108,6 @@ from .geometric_sources import PolygonSource as PolygonSource
 from .geometric_sources import SphereSource as SphereSource
 from .geometric_sources import SuperquadricSource as SuperquadricSource
 from .geometric_sources import Text3DSource as Text3DSource
-from .geometric_sources import translate as translate
 from .helpers import axis_rotation as axis_rotation
 from .helpers import generate_plane as generate_plane
 from .helpers import is_inside_bounds as is_inside_bounds
@@ -183,7 +182,6 @@ from .reader import ExodusIIReader as ExodusIIReader
 from .reader import FacetReader as FacetReader
 from .reader import FLUENTCFFReader as FLUENTCFFReader
 from .reader import FluentReader as FluentReader
-from .reader import FRDReader as FRDReader
 from .reader import GambitReader as GambitReader
 from .reader import GaussianCubeReader as GaussianCubeReader
 from .reader import GESignaReader as GESignaReader

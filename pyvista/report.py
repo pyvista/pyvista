@@ -310,6 +310,9 @@ class Report(scooby.Report):
             'fsspec',
             'imageio',
             'meshio',
+            'pyvista-frd-reader',
+            'pyvista-miniply',
+            'pyvista-stl',
             # colormaps extras
             'cmcrameri',
             'cmocean',
