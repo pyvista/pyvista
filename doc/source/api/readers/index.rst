@@ -315,6 +315,10 @@ without any manual registration::
    mesh.save('sphere.pv')
    pv.read('sphere.pv')
 
+Without it, both :func:`pyvista.read` and
+:meth:`pyvista.DataObject.save` raise :class:`ImportError` naming the
+package and the install command; see :ref:`optional_formats` below.
+
 Supported dataset types include :class:`~pyvista.ImageData`,
 :class:`~pyvista.PolyData`, :class:`~pyvista.StructuredGrid`,
 :class:`~pyvista.RectilinearGrid`, :class:`~pyvista.UnstructuredGrid`,
@@ -325,36 +329,51 @@ over ``.vtu`` / ``.vtp`` / ``.vtm`` when file size or I/O latency
 matters.
 
 
-Optional Readers
+.. _optional_formats:
+
+Optional Formats
 ~~~~~~~~~~~~~~~~
 
-A few formats are read by companion packages rather than by PyVista
-itself, so that a heavyweight or narrowly used parser is not carried by
+A few formats are served by companion packages rather than by PyVista
+itself, so that a heavyweight or narrowly used codec is not carried by
 every install.  PyVista still knows the extension: :func:`pyvista.read`
-dispatches to the companion package when it is installed, and raises
-:class:`ImportError` naming the package and the install command when it
-is not.
+and :meth:`pyvista.DataObject.save` dispatch to the companion package
+when it is installed, and raise :class:`ImportError` naming the package
+and the install command when it is not.
 
 .. list-table::
    :header-rows: 1
-   :widths: 10 35 25
+   :widths: 10 30 15 25
 
    * - Extension
      - Format
+     - Direction
      - Package
    * - ``.frd``
      - CalculiX FRD result files
+     - read
      - `pyvista-frd-reader <https://github.com/pyvista/pyvista-frd-reader>`_
+   * - ``.pv``
+     - PyVista's native ``zstd``-compressed format
+     - read, write
+     - `pyvista-zstd <https://github.com/pyvista/pyvista-zstd>`_
 
 All of them are included in the ``io`` extra::
 
    pip install pyvista[io]
 
-Once installed, reading is transparent::
+Reading and saving are then transparent::
 
    import pyvista as pv
 
    mesh = pv.read('mesh.frd')
+   mesh.save('mesh.pv')
+
+Without the package, the extension is still recognized: the
+:class:`ImportError` names the format, the missing package, and both
+the ``pip install pyvista[io]`` command and the command for that one
+package on its own.  When the package is present but fails to import,
+the error reports the import failure instead, with no install command.
 
 These packages provide the reader object themselves, so
 :func:`pyvista.get_reader` does not resolve their extensions.  Use the
@@ -367,9 +386,23 @@ selection is needed::
    reader.set_active_time_value(reader.time_values[-1])
    mesh = reader.read()
 
+The error :func:`pyvista.get_reader` raises names that class, so it
+says where to go: ``pyvista_frd.FRDReader`` for ``.frd`` and
+``pyvista_zstd.Reader`` for ``.pv``.
+
+Keyword arguments beyond those :meth:`~pyvista.DataObject.save`
+documents are forwarded to the package's writer, so format-specific
+options are reachable without a separate import::
+
+   mesh.save('mesh.pv', level=19, n_threads=4)
+
 .. versionchanged:: 0.49.0
    ``.frd`` moved from a built-in reader to ``pyvista-frd-reader``.
    ``pyvista.FRDReader`` was removed; use ``pyvista_frd.FRDReader``.
+
+.. versionchanged:: 0.49.0
+   Reading or saving ``.pv`` without ``pyvista-zstd`` raises
+   :class:`ImportError` rather than :class:`OSError` / :class:`ValueError`.
 
 
 Faster Readers for Built-in Formats
