@@ -125,7 +125,8 @@ def _signed_distance_near_surface(
 
 def _points_of_cells_containing(image: ImageData, points: NumpyArray[float]) -> NumpyArray[int]:
     """Return the ids of the points of the image cells that contain the given points."""
-    # Optimization: index arithmetic instead of a cell locator, which takes ~1 s on 7M cells
+    # Optimization: index arithmetic instead of a cell locator, which VTK 9.7 spends about
+    # a second building for an image of a few million cells
     index = (np.column_stack([points, np.ones(len(points))]) @ image.physical_to_index_matrix.T)[
         :, :3
     ]
@@ -847,8 +848,10 @@ class DataSetFilters(DataObjectFilters):
             and surface_.n_faces
             and surface_.n_open_edges == 0
         ):
-            # Optimization: classify image points with a stencil and evaluate the serial
-            # signed distance only where the surface cuts cells (~40x faster, same output)
+            # Optimization: vtkImplicitPolyDataDistance evaluates serially (VTK 9.7), so
+            # classify the points with a stencil and evaluate the distance only where the
+            # surface cuts cells. The clip interpolates the same cut, so the output is the
+            # same, and the check below guards against a misclassification.
             distance = _signed_distance_near_surface(self, surface_, function)
             if distance is not None:
                 source = self.copy(deep=False)
