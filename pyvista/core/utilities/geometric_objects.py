@@ -1103,9 +1103,9 @@ def SolidSphereGeneric(  # noqa: PLR0917
         x, y, z = pv.spherical_to_cartesian(r, phi, theta)
         return np.vstack((x.ravel(), y.ravel(), z.ravel())).transpose()
 
-    # Optimization: the points and cells below are built with array arithmetic instead of
-    # per-cell Python loops; every block keeps the point and cell order of the old loops
-    # (origin, axis points, then r-major/phi/theta; tetras, pyramids, wedges, hexahedra)
+    # Optimization: points and cells are built with array arithmetic rather than per-cell
+    # loops. Block order is part of the output and must not change: origin, +axis, -axis,
+    # then the (r, phi, theta) grid with theta fastest; tetras, pyramids, wedges, hexahedra.
     point_blocks: list[NumpyArray[float]] = []
     npoints_on_axis = 0
     if np.isclose(radius[0], 0.0, rtol=0.0, atol=tol_radius):
@@ -1155,22 +1155,8 @@ def SolidSphereGeneric(  # noqa: PLR0917
     ) -> int | NumpyArray[int]:
         """Index for points not on axis.
 
-        Parameters
-        ----------
-        ir : int | numpy.ndarray[int]
-            Radial index or indices.
-
-        iphi : int | numpy.ndarray[int]
-            Phi index or indices.
-
-        itheta : int | numpy.ndarray[int]
-            Theta index or indices.
-
-        Returns
-        -------
-        int | numpy.ndarray[int]
-            Point index or indices.
-
+        Values of ``ir`` and ``iphi`` are relative to the first non-axis values; all
+        three accept scalars or broadcastable index arrays.
         """
         if duplicate_theta:
             ntheta_ = ntheta - 1

@@ -293,6 +293,73 @@ def test_solid_sphere_generic():
     assert sphere == sphere_seq
 
 
+@pytest.mark.parametrize(
+    ('kwargs', 'n_points', 'cells', 'celltypes'),
+    [
+        (
+            dict(radius=[0.25, 0.5], theta=[0, 180, 360], phi=[45, 135]),
+            8,
+            [8, 0, 2, 3, 1, 4, 6, 7, 5, 8, 1, 3, 2, 0, 5, 7, 6, 4],
+            [pv.CellType.HEXAHEDRON] * 2,
+        ),
+        (
+            dict(radius=[0, 0.5], theta=[0, 180, 360], phi=[0, 60, 120, 180]),
+            7,
+            [
+                4,
+                0,
+                1,
+                3,
+                4,
+                4,
+                0,
+                1,
+                4,
+                3,
+                4,
+                0,
+                2,
+                6,
+                5,
+                4,
+                0,
+                2,
+                5,
+                6,
+                5,
+                3,
+                4,
+                6,
+                5,
+                0,
+                5,
+                4,
+                3,
+                5,
+                6,
+                0,
+            ],
+            [pv.CellType.TETRA] * 4 + [pv.CellType.PYRAMID] * 2,
+        ),
+        (
+            dict(radius=[0.25, 0.5], theta=[0, 120, 240, 360], phi=[0, 90]),
+            8,
+            [6, 0, 2, 3, 1, 5, 6, 6, 0, 3, 4, 1, 6, 7, 6, 0, 4, 2, 1, 7, 5],
+            [pv.CellType.WEDGE] * 3,
+        ),
+    ],
+)
+def test_solid_sphere_generic_cell_order(kwargs, n_points, cells, celltypes):
+    # Pin the exact point and cell ordering of the generic solid sphere
+    sphere = pv.SolidSphereGeneric(**kwargs)
+    if pv.vtk_version_info < (9, 7) and celltypes[0] == pv.CellType.WEDGE:
+        # Wedge points 1,2 and 4,5 are swapped for older VTK
+        cells = np.array(cells).reshape(-1, 7)[:, [0, 1, 3, 2, 4, 6, 5]].ravel().tolist()
+    assert sphere.n_points == n_points
+    assert sphere.cells.tolist() == cells
+    assert sphere.celltypes.tolist() == celltypes
+
+
 def test_solid_sphere_theta_start_end():
     sphere = pv.SolidSphere(
         start_theta=0,
