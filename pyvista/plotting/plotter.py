@@ -502,13 +502,10 @@ class BasePlotter(_BoundsSizeMixin):
         # 3D location of the last click registered by ``left_button_down``
         self.pickpoint: NumpyArray[float] | None = None
 
-        self._theme = Theme()
-        if theme is None:
-            # copy global theme to ensure local plot theme is fixed
-            # after creation.
-            self._theme.load_theme(pv.global_theme)
-        else:
-            self._theme.load_theme(_resolve_theme_like(theme))
+        # snapshot the theme so later edits to the source theme do not reach this plotter
+        self._theme = Theme._from_theme(
+            pv.global_theme if theme is None else _resolve_theme_like(theme)
+        )
 
         self.image_transparent_background = self._theme.transparent_background
 

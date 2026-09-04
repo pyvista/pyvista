@@ -204,6 +204,8 @@ def test_color_invalid_opacity(opacity):
         (-0.5, 0, 0),
         (0, 0),
         '#hh0000',
+        '#ff',
+        '#ff00ff00ff',
         'invalid_name',
         {'invalid_name': 100},
     ],
