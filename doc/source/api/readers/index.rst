@@ -1,11 +1,12 @@
 .. _reader_api:
 
-Readers
-=======
+Readers and Writers
+===================
 PyVista provides class based readers to have more control over reading
-data files. These classes allows for more fine-grained control over
+data files. These classes allow for more fine-grained control over
 reading datasets from files. See :func:`pyvista.get_reader` for a
-list of file types supported.
+list of file types supported. The writer classes used by
+:meth:`pyvista.DataObject.save` are listed further down this page.
 
 Also, see :ref:`reader_example` for a full example using reader classes.
 
@@ -16,6 +17,29 @@ Also, see :ref:`reader_example` for a full example using reader classes.
 
    get_reader
 
+Reading Functions
+~~~~~~~~~~~~~~~~~
+
+These functions read a file in a single call, selecting the reader from
+the file extension. To write a file, see :meth:`~pyvista.DataObject.save`.
+
+.. autosummary::
+   :toctree: _autosummary
+
+   get_ext
+   read
+   read_exodus
+   read_grdecl
+   read_texture
+
+.. seealso::
+
+   :ref:`read_file_example`
+      Load and plot a mesh from a file.
+
+   :ref:`conversions_api`
+      Read and write files with ``meshio``.
+
 Reader Classes
 ~~~~~~~~~~~~~~
 
@@ -23,9 +47,9 @@ Reader Classes
    :toctree: _autosummary
 
     AVSucdReader
+    BinaryMarchingCubesReader
     BMPReader
     BYUReader
-    BinaryMarchingCubesReader
     CGNSReader
     DEMReader
     DICOMReader
@@ -35,7 +59,6 @@ Reader Classes
     FacetReader
     FLUENTCFFReader
     FluentReader
-    FRDReader
     GambitReader
     GaussianCubeReader
     GESignaReader
@@ -45,8 +68,8 @@ Reader Classes
     HDFReader
     HDRReader
     JPEGReader
-    MFIXReader
     MetaImageReader
+    MFIXReader
     MINCImageReader
     MultiBlockPlot3DReader
     Nek5000Reader
@@ -57,35 +80,35 @@ Reader Classes
     ParticleReader
     PDBReader
     PExodusIIReader
+    Plot3DMetaReader
     PLYReader
     PNGReader
     PNMReader
     POpenFOAMReader
+    ProStarReader
     PTSReader
     PVDReader
-    Plot3DMetaReader
-    ProStarReader
-    SLCReader
-    STLReader
     SegYReader
     SeriesReader
+    SLCReader
+    STLReader
+    TecplotReader
     ThreeDSReader
     TIFFReader
-    TecplotReader
     VRMLReader
     VTKDataSetReader
     VTKPDataSetReader
+    XdmfReader
     XMLImageDataReader
     XMLMultiBlockDataReader
+    XMLPartitionedDataSetReader
     XMLPImageDataReader
+    XMLPolyDataReader
     XMLPRectilinearGridReader
     XMLPUnstructuredGridReader
-    XMLPartitionedDataSetReader
-    XMLPolyDataReader
     XMLRectilinearGridReader
     XMLStructuredGridReader
     XMLUnstructuredGridReader
-    XdmfReader
 
 Custom Readers
 ~~~~~~~~~~~~~~
@@ -169,7 +192,7 @@ either a callable or a :class:`pyvista.BaseReader` subclass:
 
 An entry point in the ``pyvista.readers`` group may only claim an
 extension PyVista does not already read.  Claiming one it does
-(``.vtp``, ``.stl``, ``.frd``) would silently change what every
+(``.vtp``, ``.stl``, ``.ply``) would silently change what every
 :func:`pyvista.read` call in the environment returns, so PyVista
 refuses and raises :class:`ValueError` naming the package, the built-in
 reader, and this section.
@@ -182,7 +205,7 @@ extension PyVista ships a reader for, and does so silently:
 .. code-block:: toml
 
    [project.entry-points."pyvista.readers.override"]
-   ".frd" = "my_package:MyFRDReader"
+   ".vtp" = "my_package:MyPolyDataReader"
 
 This is the entry-point equivalent of ``override=True`` on
 :func:`pyvista.register_reader`.  Both groups accept both forms, a
@@ -207,7 +230,7 @@ built-in format reads differently than expected.
         for r in pv.registered_readers()
         if r.override
     ]
-    # [('.frd', 'my_package:MyFRDReader')]
+    # [('.vtp', 'my_package:MyPolyDataReader')]
 
 **Remote URI support**
 
@@ -302,6 +325,103 @@ over ``.vtu`` / ``.vtp`` / ``.vtm`` when file size or I/O latency
 matters.
 
 
+Optional Readers
+~~~~~~~~~~~~~~~~
+
+A few formats are read by companion packages rather than by PyVista
+itself, so that a heavyweight or narrowly used parser is not carried by
+every install.  PyVista still knows the extension: :func:`pyvista.read`
+dispatches to the companion package when it is installed, and raises
+:class:`ImportError` naming the package and the install command when it
+is not.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 10 35 25
+
+   * - Extension
+     - Format
+     - Package
+   * - ``.frd``
+     - CalculiX FRD result files
+     - `pyvista-frd-reader <https://github.com/pyvista/pyvista-frd-reader>`_
+
+All of them are included in the ``io`` extra::
+
+   pip install pyvista[io]
+
+Once installed, reading is transparent::
+
+   import pyvista as pv
+
+   mesh = pv.read('mesh.frd')
+
+These packages provide the reader object themselves, so
+:func:`pyvista.get_reader` does not resolve their extensions.  Use the
+package's own reader class when reader-level control such as time-step
+selection is needed::
+
+   import pyvista_frd
+
+   reader = pyvista_frd.FRDReader('mesh.frd')
+   reader.set_active_time_value(reader.time_values[-1])
+   mesh = reader.read()
+
+.. versionchanged:: 0.49.0
+   ``.frd`` moved from a built-in reader to ``pyvista-frd-reader``.
+   ``pyvista.FRDReader`` was removed; use ``pyvista_frd.FRDReader``.
+
+
+Faster Readers for Built-in Formats
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Two further companion packages read a format PyVista already supports,
+faster than the VTK reader does.  They declare the
+``pyvista.readers.override`` entry point described above, so installing
+one is all it takes for :func:`pyvista.read` to use it.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 10 35 25
+
+   * - Extension
+     - Format
+     - Package
+   * - ``.ply``
+     - Polygon File Format
+     - `pyvista-miniply <https://github.com/pyvista/pyvista-miniply>`_
+   * - ``.stl``
+     - Stereolithography
+     - `pyvista-stl <https://github.com/pyvista/pyvista-stl>`_
+
+Both ship in the ``io-override`` extra, which is intentionally separate
+from ``io`` because installing it changes the readers used for existing
+formats::
+
+   pip install pyvista[io-override]
+
+The packages aim to match the stock VTK readers, including point normals,
+texture coordinates, and colors, but their behavior and output are not
+guaranteed to be identical.  Neither is required: without them
+:func:`pyvista.read` falls back to :class:`pyvista.PLYReader` and
+:class:`pyvista.STLReader`, which also remain what
+:func:`pyvista.get_reader` hands back.
+
+Because an override changes a format the user did not choose,
+:func:`pyvista.registered_readers` reports it::
+
+   import pyvista as pv
+
+   [(r.extension, r.source) for r in pv.registered_readers() if r.override]
+   # [('.ply', 'pyvista_miniply:read_as_mesh'), ('.stl', 'pyvista_stl:read_as_mesh')]
+
+To read a file with the VTK reader while a package is installed, use
+the reader class directly::
+
+   mesh = pv.STLReader('mesh.stl').read()
+
+.. versionadded:: 0.49.0
+
 Writer Classes
 ~~~~~~~~~~~~~~
 
@@ -326,8 +446,8 @@ formats. These are used internally by :meth:`pyvista.DataObject.save`.
    PNMWriter
    PolyDataWriter
    RectilinearGridWriter
-   STLWriter
    SimplePointsWriter
+   STLWriter
    StructuredGridWriter
    TIFFWriter
    UnstructuredGridWriter
@@ -357,7 +477,7 @@ The :class:`BaseVTKReader` is the base for a reader implemented in pure
 Python rather than by a VTK reader class. Subclass it, implement
 ``UpdateInformation`` and ``Update``, and point a
 :class:`pyvista.BaseReader` subclass at it through ``_class_reader``.
-This is how :class:`pyvista.PVDReader` and :class:`pyvista.FRDReader`
+This is how :class:`pyvista.PVDReader` and :class:`pyvista.GIFReader`
 are built, and it is the supported base for a third-party reader
 registered with :func:`pyvista.register_reader`.
 
@@ -370,12 +490,12 @@ members is documented once and linked from every class that inherits it.
 
    BaseReader
    BaseVTKReader
+   core.utilities.writer._DataFormatMixin
+   core.utilities.fileio._FileIOBase
    PointCellDataSelection
    PVDDataSet
    SeriesDataSet
    TimeReader
-   core.utilities.fileio._FileIOBase
-   core.utilities.writer._DataFormatMixin
    core.utilities.writer._XMLWriter
 
 

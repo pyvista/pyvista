@@ -8,12 +8,12 @@ from typing import Literal
 from typing import cast
 
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
-from pyvista.core import _validation
 from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import NotAllTrianglesError
@@ -707,6 +707,9 @@ class PolyDataFilters(DataSetFilters):
             * ``"maximum"``
             * ``"minimum"``
 
+            For ``"maximum"`` and ``"minimum"``, points where the discrete Gaussian
+            and mean curvatures are inconsistent are assigned the mean curvature.
+
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
@@ -734,6 +737,8 @@ class PolyDataFilters(DataSetFilters):
 
         # Create curve filter and compute curvature
         curvefilter = _vtk.vtkCurvatures()
+        # Warns once per point where the Gaussian and mean curvatures are inconsistent
+        curvefilter.AddObserver(_vtk.vtkCommand.WarningEvent, lambda *_: None)
         curvefilter.SetInputData(self)
         if curv_type == 'mean':
             curvefilter.SetCurvatureTypeToMean()
@@ -1762,19 +1767,19 @@ class PolyDataFilters(DataSetFilters):
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
-        boundary_constraints: bool, default: False
+        boundary_constraints : bool, default: False
             Use the legacy weighting by ``boundary_edge_length`` instead of by
             boundary_edge_length^2 for backwards compatibility.
 
             .. versionadded:: 0.45.0
 
-        boundary_weight: float, default: 1.0
+        boundary_weight : float, default: 1.0
             A floating point factor to weigh the boundary quadric constraints
             by: higher factors further constrain the boundary.
 
             .. versionadded:: 0.45.0
 
-        enable_all_attribute_error: bool, default: False
+        enable_all_attribute_error : bool, default: False
             This flag control the default value of all attribute metrics to
             eventually include them in the error calculation
 
@@ -2999,7 +3004,7 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere = pv.Sphere()
         >>> sphere.plot_normals(mag=0.1)
         >>> sphere.flip_normals()  # doctest:+SKIP
-        >>> sphere.plot_normals(mag=0.1, opacity=0.5)
+        >>> sphere.plot_normals(mag=0.1, opacity=0.5)  # doctest:+SKIP
 
         """
         # Deprecated on v0.45.0, error on v0.49.0

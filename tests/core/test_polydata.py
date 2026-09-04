@@ -407,7 +407,8 @@ def test_vtk_obb_tree_raises():
 
 
 def test_polydata_subclass_del():
-    class PolyDataDerived(pv.PolyData): ...
+    class PolyDataDerived(pv.PolyData):
+        pass
 
     poly = PolyDataDerived()
     del poly
@@ -734,7 +735,9 @@ def test_intersection(sphere, sphere_shifted):
 
 @pytest.mark.parametrize('curv_type', ['mean', 'gaussian', 'maximum', 'minimum'])
 def test_curvature(sphere, curv_type):
-    curv = sphere.curvature(curv_type)
+    with pv.VtkErrorCatcher() as catcher:
+        curv = sphere.curvature(curv_type)
+    assert catcher.warning_events == []
     assert np.any(curv)
     assert curv.size == sphere.n_points
 
@@ -742,6 +745,12 @@ def test_curvature(sphere, curv_type):
 def test_invalid_curvature(sphere):
     with pytest.raises(ValueError):  # noqa: PT011
         sphere.curvature('not valid')
+
+
+def test_volume_empty():
+    with pv.VtkErrorCatcher() as catcher:
+        assert pv.PolyData().volume == 0.0
+    assert catcher.error_events == []
 
 
 @pytest.mark.parametrize('binary', [True, False])

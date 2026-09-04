@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 
+import pyvista as pv
 from pyvista import _vtk
 from pyvista.plotting.render_passes import RenderPasses
 
@@ -92,14 +93,26 @@ def test_ssao_raise_no_depth_of_field():
 
 
 def test_shadow_pass():
-    _ren, passes = make_passes()
+    ren, passes = make_passes()
     ren_pass = passes.enable_shadow_pass()
     assert isinstance(ren_pass, _vtk.vtkShadowMapPass)
 
     assert passes._pass_collection.IsItemPresent(ren_pass)
+    assert passes._pass_collection.IsItemPresent(ren_pass.GetShadowMapBakerPass())
+    assert ren.GetPass() is not None
 
     passes.disable_shadow_pass()
     assert not passes._pass_collection.IsItemPresent(ren_pass)
+    assert not passes._pass_collection.IsItemPresent(ren_pass.GetShadowMapBakerPass())
+    assert passes._shadow_map_pass is None
+    assert ren.GetPass() is None
+
+    # enabling again after disabling should add a new pass
+    new_pass = passes.enable_shadow_pass()
+    assert isinstance(new_pass, _vtk.vtkShadowMapPass)
+    assert new_pass is not ren_pass
+    assert passes._pass_collection.IsItemPresent(new_pass)
+    assert passes._pass_collection.IsItemPresent(new_pass.GetShadowMapBakerPass())
 
 
 def test_edl_pass():
@@ -162,3 +175,34 @@ def test_render_passes_deep_clean():
     assert passes._dof_pass is None
     assert passes._ssaa_pass is None
     assert passes._blur_passes == []
+
+
+@pytest.mark.parametrize(
+    ('enable', 'disable'),
+    [
+        pytest.param(
+            'enable_eye_dome_lighting',
+            'disable_eye_dome_lighting',
+            marks=pytest.mark.skip_windows('No testing on windows for EDL'),
+        ),
+        ('enable_shadows', 'disable_shadows'),
+        ('enable_depth_of_field', 'disable_depth_of_field'),
+        ('add_blurring', 'remove_blurring'),
+    ],
+)
+def test_render_pass_releases_graphics_resources(enable, disable):
+    with pv.VtkErrorCatcher() as catcher:
+        pl = pv.Plotter()
+        pl.add_mesh(pv.Sphere())
+        getattr(pl, enable)()
+        pl.show()
+    assert catcher.error_events == []
+
+    with pv.VtkErrorCatcher() as catcher:
+        pl = pv.Plotter()
+        pl.add_mesh(pv.Sphere())
+        getattr(pl, enable)()
+        pl.show(auto_close=False)
+        getattr(pl, disable)()
+        pl.close()
+    assert catcher.error_events == []

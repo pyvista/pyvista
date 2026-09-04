@@ -29,7 +29,7 @@ def _download_dataset_texture(
     if texture:
         from pyvista.plotting.texture import Texture  # noqa: PLC0415
 
-        return Texture(dataset)  # type: ignore[abstract]
+        return Texture(dataset)
     return dataset
 
 
@@ -659,13 +659,16 @@ def download_sun_surface(
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> texture = examples.planets.download_sun_surface(texture=True)
-    >>> texture.plot(zoom='tight', show_axes=False)
+    .. pyvista-plot::
+        :force_static:
 
-    >>> mesh = examples.planets.load_planet()
-    >>> image_path = examples.planets.download_stars_sky_background(load=False)
-    >>> mesh.plot(texture=texture, background=image_path)
+        >>> from pyvista import examples
+        >>> texture = examples.planets.download_sun_surface(texture=True)
+        >>> texture.plot(zoom='tight', show_axes=False)
+
+        >>> mesh = examples.planets.load_planet()
+        >>> image_path = examples.planets.download_stars_sky_background(load=False)
+        >>> mesh.plot(texture=texture, background=image_path)
 
     .. seealso::
 
@@ -723,13 +726,16 @@ def download_moon_surface(
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> texture = examples.planets.download_moon_surface(texture=True)
-    >>> texture.plot(zoom='tight', show_axes=False)
+    .. pyvista-plot::
+        :force_static:
 
-    >>> mesh = examples.planets.load_planet()
-    >>> image_path = examples.planets.download_stars_sky_background(load=False)
-    >>> mesh.plot(texture=texture, background=image_path)
+        >>> from pyvista import examples
+        >>> texture = examples.planets.download_moon_surface(texture=True)
+        >>> texture.plot(zoom='tight', show_axes=False)
+
+        >>> mesh = examples.planets.load_planet()
+        >>> image_path = examples.planets.download_stars_sky_background(load=False)
+        >>> mesh.plot(texture=texture, background=image_path)
 
     .. seealso::
 
@@ -787,13 +793,16 @@ def download_mercury_surface(
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> texture = examples.planets.download_mercury_surface(texture=True)
-    >>> texture.plot(zoom='tight', show_axes=False)
+    .. pyvista-plot::
+        :force_static:
 
-    >>> mesh = examples.planets.load_planet()
-    >>> image_path = examples.planets.download_stars_sky_background(load=False)
-    >>> mesh.plot(texture=texture, background=image_path)
+        >>> from pyvista import examples
+        >>> texture = examples.planets.download_mercury_surface(texture=True)
+        >>> texture.plot(zoom='tight', show_axes=False)
+
+        >>> mesh = examples.planets.load_planet()
+        >>> image_path = examples.planets.download_stars_sky_background(load=False)
+        >>> mesh.plot(texture=texture, background=image_path)
 
     .. seealso::
 
@@ -934,13 +943,16 @@ def download_mars_surface(
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> texture = examples.planets.download_mars_surface(texture=True)
-    >>> texture.plot(zoom='tight', show_axes=False)
+    .. pyvista-plot::
+        :force_static:
 
-    >>> mesh = examples.planets.load_planet()
-    >>> image_path = examples.planets.download_stars_sky_background(load=False)
-    >>> mesh.plot(texture=texture, background=image_path)
+        >>> from pyvista import examples
+        >>> texture = examples.planets.download_mars_surface(texture=True)
+        >>> texture.plot(zoom='tight', show_axes=False)
+
+        >>> mesh = examples.planets.load_planet()
+        >>> image_path = examples.planets.download_stars_sky_background(load=False)
+        >>> mesh.plot(texture=texture, background=image_path)
 
     .. seealso::
 
@@ -995,13 +1007,16 @@ def download_jupiter_surface(
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> texture = examples.planets.download_jupiter_surface(texture=True)
-    >>> texture.plot(zoom='tight', show_axes=False)
+    .. pyvista-plot::
+        :force_static:
 
-    >>> mesh = examples.planets.load_planet()
-    >>> image_path = examples.planets.download_stars_sky_background(load=False)
-    >>> mesh.plot(texture=texture, background=image_path)
+        >>> from pyvista import examples
+        >>> texture = examples.planets.download_jupiter_surface(texture=True)
+        >>> texture.plot(zoom='tight', show_axes=False)
+
+        >>> mesh = examples.planets.load_planet()
+        >>> image_path = examples.planets.download_stars_sky_background(load=False)
+        >>> mesh.plot(texture=texture, background=image_path)
 
     .. seealso::
 
@@ -1311,13 +1326,16 @@ def download_pluto_surface(
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> texture = examples.planets.download_pluto_surface(texture=True)
-    >>> texture.plot(zoom='tight', show_axes=False)
+    .. pyvista-plot::
+        :force_static:
 
-    >>> mesh = examples.planets.load_planet()
-    >>> image_path = examples.planets.download_stars_sky_background(load=False)
-    >>> mesh.plot(texture=texture, background=image_path)
+        >>> from pyvista import examples
+        >>> texture = examples.planets.download_pluto_surface(texture=True)
+        >>> texture.plot(zoom='tight', show_axes=False)
+
+        >>> mesh = examples.planets.load_planet()
+        >>> image_path = examples.planets.download_stars_sky_background(load=False)
+        >>> mesh.plot(texture=texture, background=image_path)
 
     .. seealso::
 

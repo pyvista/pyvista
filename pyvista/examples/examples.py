@@ -2,9 +2,11 @@
 
 Examples
 --------
->>> from pyvista import examples
->>> mesh = examples.load_ant()
->>> mesh.plot()
+.. pyvista-plot::
+
+   >>> from pyvista import examples
+   >>> mesh = examples.load_ant()
+   >>> mesh.plot()
 
 """
 
@@ -366,7 +368,7 @@ def load_spline() -> PolyData:
 
     This example data was created with:
 
-    .. code-block:: python
+    .. pyvista-plot::
 
        >>> import numpy as np
        >>> import pyvista as pv
@@ -419,10 +421,11 @@ def load_random_hills() -> PolyData:
 
     This example dataset was created with:
 
-    .. code-block:: python
+    .. pyvista-plot::
 
-       >>> mesh = pv.ParametricRandomHills()  # doctest:+SKIP
-       >>> mesh = mesh.elevation()  # doctest:+SKIP
+       >>> import pyvista as pv
+       >>> mesh = pv.ParametricRandomHills()
+       >>> mesh = mesh.elevation()
 
     Returns
     -------
@@ -625,12 +628,15 @@ def load_hydrogen_orbital(n: int = 1, l: int = 0, m: int = 0, zoom_fac: float = 
 
     Examples
     --------
-    Plot the 3dxy orbital of a hydrogen atom. This corresponds to the quantum
-    numbers ``n=3``, ``l=2``, and ``m=-2``.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.load_hydrogen_orbital(3, 2, -2)
-    >>> grid.plot(volume=True, opacity=[1, 0, 1], cmap='magma')
+        Plot the 3dxy orbital of a hydrogen atom. This corresponds to the quantum
+        numbers ``n=3``, ``l=2``, and ``m=-2``.
+
+        >>> from pyvista import examples
+        >>> grid = examples.load_hydrogen_orbital(3, 2, -2)
+        >>> grid.plot(volume=True, opacity=[1, 0, 1], cmap='magma')
 
     .. seealso::
 
@@ -708,12 +714,15 @@ def load_logo() -> ImageData:
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> image = examples.load_logo()
-    >>> image.dimensions
-    (1389, 592, 1)
+    .. pyvista-plot::
+        :force_static:
 
-    >>> image.plot(cpos='xy', zoom='tight', rgb=True, show_axes=False)
+        >>> from pyvista import examples
+        >>> image = examples.load_logo()
+        >>> image.dimensions
+        (1389, 592, 1)
+
+        >>> image.plot(cpos='xy', zoom='tight', rgb=True, show_axes=False)
 
     .. seealso::
 

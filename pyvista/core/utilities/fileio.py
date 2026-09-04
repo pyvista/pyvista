@@ -19,12 +19,12 @@ from typing import overload
 import urllib.parse
 
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
-from pyvista.core import _validation
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import _classproperty
 from pyvista.core.utilities.misc import _NoNewAttrMixin
@@ -76,6 +76,16 @@ _ReadReturnT = TypeVar('_ReadReturnT', bound='DataObject')
 
 
 class _FileIOBase(ABC, _NoNewAttrMixin):
+    """Base class for readers and writers, which are matched to files by extension.
+
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
+
+
+    """
+
     _vtk_class_name: str = ''
 
     def __repr__(self) -> str:
@@ -89,8 +99,7 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
 
     @path.setter
     @abstractmethod
-    def path(self, path: str | Path) -> None:
-        """Set the path."""
+    def path(self, path: str | Path) -> None: ...
 
     @_classproperty
     def _vtk_class(cls) -> _vtk.vtkWriter | None:  # noqa: N805
@@ -119,6 +128,11 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
         These extensions are used by :func:`~pyvista.read` and :class:`~pyvista.DataObject.save`
         to determine which reader and/or writer is used for reading and/or saving files.
 
+        Returns
+        -------
+        tuple[str, ...]
+            File extensions associated with this class.
+
         """
         extensions = set()
         for mapping in cls._get_extension_mappings():
@@ -133,6 +147,11 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
 
         These extensions are used by :func:`~pyvista.read` and :class:`~pyvista.DataObject.save`
         to determine which reader and/or writer is used for reading and/or saving files.
+
+        Returns
+        -------
+        tuple[re.Pattern[str], ...]
+            Regex patterns associated with this class.
 
         """
         patterns = {
@@ -430,6 +449,20 @@ def read(  # noqa: PLR0917
     return result
 
 
+def _needs_reader_object(
+    ext: str, *, progress_bar: bool, validate: bool | None, kwargs: dict[str, Any]
+) -> bool:
+    """Return ``True`` when the caller asked for what only a reader object provides.
+
+    A handler takes a path and nothing else, so an override of a built-in
+    extension steps aside rather than dropping arguments it cannot honor.
+    """
+    from pyvista.core.utilities.reader import CLASS_READERS  # noqa: PLC0415
+
+    asked = progress_bar or validate is not None or bool(kwargs)
+    return asked and ext in CLASS_READERS
+
+
 def _read_dispatch(  # noqa: PLR0911
     filename: PathStrSeq,
     *,
@@ -464,6 +497,7 @@ def _read_dispatch(  # noqa: PLR0911
     from pyvista.core.utilities.reader_registry import LocalFileRequiredError  # noqa: PLC0415
     from pyvista.core.utilities.reader_registry import _download_uri  # noqa: PLC0415
     from pyvista.core.utilities.reader_registry import _get_ext_handler  # noqa: PLC0415
+    from pyvista.core.utilities.reader_registry import _missing_reader_message  # noqa: PLC0415
     from pyvista.core.utilities.reader_registry import has_scheme  # noqa: PLC0415
 
     # Handle remote URIs before Path coercion
@@ -499,8 +533,13 @@ def _read_dispatch(  # noqa: PLR0911
 
     # Check for registered custom extension readers
     ext_handler = _get_ext_handler(ext)
-    if ext_handler is not None:
+    if ext_handler is not None and not _needs_reader_object(
+        ext, progress_bar=progress_bar, validate=validate, kwargs=kwargs
+    ):
         return ext_handler(str(filename))
+
+    if (missing := _missing_reader_message(ext, str(filename))) is not None:
+        raise ImportError(missing)
 
     try:
         reader = pv.get_reader(filename, force_ext)
@@ -604,12 +643,12 @@ def read_texture(filename: str | Path, progress_bar: bool = False) -> Texture:  
         if image.n_points < 2:
             msg = 'Problem reading the image with VTK.'
             raise ValueError(msg)
-        return pv.Texture(image)  # type: ignore[abstract]
+        return pv.Texture(image)
     except (KeyError, ValueError):
         # Otherwise, use the imageio reader
         pass
 
-    return pv.Texture(_try_imageio_imread(filename))  # type: ignore[abstract] # pragma: no cover
+    return pv.Texture(_try_imageio_imread(filename))  # pragma: no cover
 
 
 @_deprecate_positional_args(allowed=['filename'])
@@ -1066,7 +1105,7 @@ def _read_grdecl(
 
 # unused; the shims exist solely to keep the import path callable while always
 # raising. They must accept any historical call signature unchanged.
-def read_pickle(*args: Any, **kwargs: Any) -> NoReturn:  # noqa: ARG001
+def read_pickle(*args: Any, **kwargs: Any) -> NoReturn:  # noqa: ARG001  # numpydoc ignore=PR01
     """Raise :class:`ValueError`—pickle is not a supported mesh file format.
 
     This shim is kept only for backwards-compatible import paths. See
@@ -1078,7 +1117,7 @@ def read_pickle(*args: Any, **kwargs: Any) -> NoReturn:  # noqa: ARG001
     _raise_pickle_removed()
 
 
-def save_pickle(*args: Any, **kwargs: Any) -> NoReturn:  # noqa: ARG001
+def save_pickle(*args: Any, **kwargs: Any) -> NoReturn:  # noqa: ARG001  # numpydoc ignore=PR01
     """Raise :class:`ValueError`—pickle is not a supported mesh file format.
 
     See :func:`read_pickle`.

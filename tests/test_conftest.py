@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import re
+from types import SimpleNamespace
 from typing import TYPE_CHECKING
 
 import pytest
@@ -11,6 +12,8 @@ from pytest_cases import parametrize
 from pytest_cases import parametrize_with_cases
 
 import pyvista as pv
+from tests.conftest import _VTKSZ_SIZE_EXCEPTIONS_MB
+from tests.conftest import flaky_test
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -75,10 +78,11 @@ def _load_current_config(
     pytestconfig: pytest.Config,
     pytester: pytest.Pytester,
 ):
-    with (pytestconfig.rootpath / 'pyproject.toml').open('r') as file:
+    # Explicit encoding: the locale default is ASCII on the CI runners.
+    with (pytestconfig.rootpath / 'pyproject.toml').open('r', encoding='utf-8') as file:
         toml = pytester.makepyprojecttoml(file.read())
 
-    with (pytestconfig.rootpath / 'tests/conftest.py').open('r') as file:
+    with (pytestconfig.rootpath / 'tests/conftest.py').open('r', encoding='utf-8') as file:
         conftest = pytester.makeconftest(file.read())
 
     yield
@@ -658,3 +662,73 @@ def test_notebook_mode_is_pinned_off():
     ``notebook=True`` themselves.
     """
     assert pv.global_theme.notebook is False
+
+
+def test_flaky_test_retries_until_it_passes(capsys):
+    attempts = []
+
+    @flaky_test
+    def sometimes_fails():
+        attempts.append(None)
+        if len(attempts) < 3:
+            msg = 'not yet'
+            raise AssertionError(msg)
+
+    sometimes_fails()
+    assert len(attempts) == 3
+    assert capsys.readouterr().out.count('retrying...') == 2
+
+
+def test_flaky_test_reraises_after_the_last_attempt(capsys):
+    attempts = []
+
+    @flaky_test(times=2)
+    def always_fails():
+        attempts.append(None)
+        msg = 'nope'
+        raise AssertionError(msg)
+
+    with pytest.raises(AssertionError, match='nope'):
+        always_fails()
+
+    assert len(attempts) == 2
+    out = capsys.readouterr().out.splitlines()
+    assert out[0].endswith('retrying...')
+    assert out[-1] == (
+        'FLAKY TEST FAILED (Attempt 2 of 2) - tests.test_conftest::always_fails - AssertionError'
+    )
+
+
+def test_flaky_test_does_not_retry_an_unlisted_exception():
+    attempts = []
+
+    @flaky_test(exceptions=(ValueError,))
+    def raises_type_error():
+        attempts.append(None)
+        raise TypeError
+
+    with pytest.raises(TypeError):
+        raises_type_error()
+
+    assert len(attempts) == 1
+
+
+@pytest.mark.parametrize(
+    ('test_name', 'expected'),
+    [
+        ('sphx_glr_ghost_cells_001', _VTKSZ_SIZE_EXCEPTIONS_MB['sphx_glr_ghost_cells_001']),
+        (
+            'pyvista-DataSetFilters-voxelize_binary_mask-9c3aed42d500a348_04_00',
+            _VTKSZ_SIZE_EXCEPTIONS_MB['pyvista-DataSetFilters-voxelize_binary_mask_04_00'],
+        ),
+        ('sphx_glr_ghost_cells_002', 5),
+        ('pyvista-DataSetFilters-voxelize_binary_mask-9c3aed42d500a348_00_00', 5),
+    ],
+)
+def test_vtksz_file_size_exceptions(request, test_name, expected):
+    """The size hook raises the limit only for the listed scenes, hash stripped."""
+    test_case = SimpleNamespace(test_name=test_name, max_vtksz_file_size=5)
+    request.config.hook.pytest_pyvista_max_vtksz_file_size_hook(
+        test_case=test_case, request=request
+    )
+    assert test_case.max_vtksz_file_size == expected

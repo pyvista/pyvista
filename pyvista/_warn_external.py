@@ -13,6 +13,14 @@ def warn_external(message: str, category: type[Warning] | None = None) -> None:
     Taken and modified from Matplotlib
     https://github.com/matplotlib/matplotlib/blob/db83efff4d7d3849f8bffbd1f6cdfc43d74c9aea/lib/matplotlib/_api/__init__.py#L395
 
+    Parameters
+    ----------
+    message : str
+        Warning message.
+
+    category : type[Warning], optional
+        Warning category class.
+
     """
     kwargs = {}
     if sys.version_info[:2] >= (3, 12):

@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from collections import defaultdict
 from collections.abc import Iterable
+from collections.abc import Mapping
 from collections.abc import Sequence
-import copy
 import functools
 from typing import TYPE_CHECKING
 from typing import Any
@@ -15,6 +16,7 @@ from typing import cast
 from typing import overload
 
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
@@ -22,10 +24,12 @@ from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.typing.mypy_plugin import promote_type
 
-from . import _validation
 from ._typing_core import BoundsTuple
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
+from .datasetattributes import _active_scalars_name
+from .datasetattributes import _active_vectors_name
+from .datasetattributes import _array_names
 from .errors import PyVistaDeprecationWarning
 from .filters import DataSetFilters
 from .filters import _get_output
@@ -73,8 +77,17 @@ if TYPE_CHECKING:
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
 
+# array names that are never reported as the active scalars
+_ACTIVE_SCALARS_EXCLUDE = frozenset({'__custom_rgba', 'Normals', 'vtkOriginalPointIds', 'TCoords'})
 
-class ActiveArrayInfoTuple(NamedTuple):
+
+def _copy_association_names(names: Mapping[str, Iterable[str]]) -> defaultdict[str, set[str]]:
+    """Return an independent copy of a per-association array name mapping."""
+    # Optimization: the values are sets of strings, so this is much cheaper than copy.deepcopy
+    return defaultdict(set, {key: set(value) for key, value in names.items()})
+
+
+class ActiveArrayInfoTuple(NamedTuple):  # numpydoc ignore=PR02
     """Active array info tuple.
 
     Parameters
@@ -187,28 +200,30 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         """
         field, name = self._active_scalars_info
-        exclude = {'__custom_rgba', 'Normals', 'vtkOriginalPointIds', 'TCoords'}
-        if name in exclude:
+        if name in _ACTIVE_SCALARS_EXCLUDE:
             name = self._last_active_scalars_name
 
         # verify this field is still valid
+        # Optimization: read the VTK attributes directly rather than through point_data/cell_data,
+        # which construct a DataSetAttributes wrapper on every access
         if name is not None:
             if field is FieldAssociation.CELL:
-                if self.cell_data.active_scalars_name != name:
+                if _active_scalars_name(self.GetCellData()) != name:
                     name = None
             elif field is FieldAssociation.POINT:
-                if self.point_data.active_scalars_name != name:
+                if _active_scalars_name(self.GetPointData()) != name:
                     name = None
 
         if name is None:
             # check for the active scalars in point or cell arrays
             self._active_scalars_info = ActiveArrayInfoTuple(field, None)
-            for attr in [self.point_data, self.cell_data]:
-                if attr.active_scalars_name is not None:
-                    self._active_scalars_info = ActiveArrayInfoTuple(
-                        attr.association,
-                        attr.active_scalars_name,
-                    )
+            for association, attributes in (
+                (FieldAssociation.POINT, self.GetPointData()),
+                (FieldAssociation.CELL, self.GetCellData()),
+            ):
+                active_name = _active_scalars_name(attributes)
+                if active_name is not None:
+                    self._active_scalars_info = ActiveArrayInfoTuple(association, active_name)
                     break
 
         return self._active_scalars_info
@@ -249,21 +264,25 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         field, name = self._active_vectors_info
 
         # verify this field is still valid
+        # Optimization: read the VTK attributes directly, as in active_scalars_info
         if name is not None:
             if field is FieldAssociation.POINT:
-                if self.point_data.active_vectors_name != name:
+                if _active_vectors_name(self.GetPointData()) != name:
                     name = None
             if field is FieldAssociation.CELL:
-                if self.cell_data.active_vectors_name != name:
+                if _active_vectors_name(self.GetCellData()) != name:
                     name = None
 
         if name is None:
             # check for the active vectors in point or cell arrays
             self._active_vectors_info = ActiveArrayInfoTuple(field, None)
-            for attr in [self.point_data, self.cell_data]:
-                name = attr.active_vectors_name
+            for association, attributes in (
+                (FieldAssociation.POINT, self.GetPointData()),
+                (FieldAssociation.CELL, self.GetCellData()),
+            ):
+                name = _active_vectors_name(attributes)
                 if name is not None:
-                    self._active_vectors_info = ActiveArrayInfoTuple(attr.association, name)
+                    self._active_vectors_info = ActiveArrayInfoTuple(association, name)
                     break
 
         return self._active_vectors_info
@@ -875,8 +894,9 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         842
 
         """
-        if self.point_data.active_normals is not None:
-            return self.point_data.active_normals
+        point_normals = self.point_data.active_normals
+        if point_normals is not None:
+            return point_normals
         return self.cell_data.active_normals
 
     def get_data_range(  # type: ignore[override]
@@ -936,8 +956,12 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         """
         if deep:
-            self._association_complex_names = copy.deepcopy(ido._association_complex_names)
-            self._association_bitarray_names = copy.deepcopy(ido._association_bitarray_names)
+            self._association_complex_names = _copy_association_names(
+                ido._association_complex_names
+            )
+            self._association_bitarray_names = _copy_association_names(
+                ido._association_bitarray_names
+            )
             self._active_scalars_info = ido.active_scalars_info.copy()
             self._active_vectors_info = ido.active_vectors_info.copy()
             self._active_tensors_info = ido.active_tensors_info.copy()
@@ -1618,12 +1642,14 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         """
         names: list[str] = []
-        names.extend(self.field_data.keys())
-        names.extend(self.point_data.keys())
-        names.extend(self.cell_data.keys())
-        if self.active_scalars_name is not None:
-            names.remove(self.active_scalars_name)
-            names.insert(0, self.active_scalars_name)
+        # Optimization: read the VTK attributes directly instead of wrapping them
+        names.extend(_array_names(self.GetFieldData()))
+        names.extend(_array_names(self.GetPointData()))
+        names.extend(_array_names(self.GetCellData()))
+        active_scalars_name = self.active_scalars_name
+        if active_scalars_name is not None:
+            names.remove(active_scalars_name)
+            names.insert(0, active_scalars_name)
         return names
 
     def _get_attrs(self: Self) -> list[tuple[str, Any, str]]:
@@ -1925,7 +1951,9 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         pset.points = self.points.copy()
         out = self.cell_data_to_point_data() if pass_cell_data else self
         pset.GetPointData().DeepCopy(out.GetPointData())
-        pset.active_scalars_name = out.active_scalars_name
+        field, name = out.active_scalars_info
+        if field == FieldAssociation.POINT:
+            pset.active_scalars_name = name
         return pset
 
     @_deprecate_positional_args
@@ -1985,7 +2013,9 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             cell_data = cell_data.cell_data_to_point_data()
             pset.GetCellData().DeepCopy(cell_data.GetPointData())
         pset.GetPointData().DeepCopy(self.GetPointData())
-        pset.active_scalars_name = self.active_scalars_name
+        field, name = self.active_scalars_info
+        if field == FieldAssociation.POINT or pass_cell_data:
+            pset.active_scalars_name = name
         return pset
 
     @overload
@@ -2649,8 +2679,8 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         [0, 2, 1]
 
         """
-        # must check upper bounds, otherwise segfaults (on Linux, 9.2)
-        if index + 1 > self.n_cells:
+        # must check bounds, otherwise segfaults (on Linux, 9.2) or returns an empty cell
+        if not 0 <= index < self.n_cells:
             msg = f'Invalid index {index} for a dataset with {self.n_cells} cells.'
             raise IndexError(msg)
 

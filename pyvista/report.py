@@ -291,6 +291,7 @@ class Report(scooby.Report):
             'pillow',
             'typing-extensions',
             'cyclopts',
+            'pyvista-validation',
         ]
 
         # Optional packages.
@@ -309,6 +310,9 @@ class Report(scooby.Report):
             'fsspec',
             'imageio',
             'meshio',
+            'pyvista-frd-reader',
+            'pyvista-miniply',
+            'pyvista-stl',
             # colormaps extras
             'cmcrameri',
             'cmocean',

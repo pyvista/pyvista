@@ -34,6 +34,7 @@ import docutils
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+import pyvista_validation as _validation
 from scipy.stats import linregress
 from sphinx.util import logging
 from sphinx.util.console import bold
@@ -42,7 +43,6 @@ from sphinx.util.console import darkgreen
 from sphinx.util.console import nocolor
 
 import pyvista as pv
-from pyvista import _validation
 from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.celltype import PLACEHOLDER
 from pyvista.core.filters.data_object import _get_cell_quality_measures

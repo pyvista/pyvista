@@ -165,6 +165,25 @@ def test_property_interpolation(prop):
         prop.interpolation = 'foo'
 
 
+@pytest.mark.parametrize(
+    ('interpolation', 'lit_by_environment'),
+    [('pbr', True), ('phong', False)],
+)
+def test_property_plot_environment_texture(prop, interpolation, lit_by_environment):
+    """Only physically based rendering is lit by the skybox environment texture."""
+    prop.interpolation = interpolation
+    captured = {}
+
+    def capture(pl):
+        captured['image_based_lighting'] = bool(pl.renderer.GetUseImageBasedLighting())
+        captured['environment_texture'] = pl.renderer.GetEnvironmentTexture() is not None
+
+    prop.plot(before_close_callback=capture)
+
+    assert captured['image_based_lighting'] is lit_by_environment
+    assert captured['environment_texture'] is lit_by_environment
+
+
 def test_property_render_points_as_spheres(prop):
     value = True
     prop.render_points_as_spheres = value

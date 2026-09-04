@@ -13,14 +13,18 @@ import importlib
 import inspect
 import pkgutil
 
+from jinja2 import FileSystemLoader
+from jinja2.sandbox import SandboxedEnvironment
 import pytest
 from sphinx.ext.autodoc.importer import get_class_members
 from sphinx.util.inspect import safe_getattr
 
 import pyvista as pv
+from pyvista import _vtk
 import pyvista.core.filters
 from pyvista.core.filters.data_object import DataObjectFilters
 from pyvista.core.filters.data_set import DataSetFilters
+from pyvista.core.filters.poly_data import PolyDataFilters
 from pyvista.core.grid import Grid
 from pyvista.core.pointset import _PointSetBase
 from pyvista.ext import _autoinherit as autoinherit
@@ -224,24 +228,38 @@ def test_filters_are_split_out_of_the_inherited_rows():
     assert not {label for label, _, _ in inherited} & {label for label, _, _ in filters}
 
 
-def test_filter_classes_define_nothing_but_methods_and_the_allow_list():
-    """A property added to a filter class would be documented nowhere, so pin the set."""
-    unexpected = set()
+def _filter_classes():
+    """Yield every filter class, whether or not it has a page of its own."""
     for module_info in pkgutil.iter_modules(pyvista.core.filters.__path__):
         module = importlib.import_module(f'pyvista.core.filters.{module_info.name}')
         for cls in vars(module).values():
             if not isinstance(cls, type) or cls.__module__ != module.__name__:
                 continue
-            if not autoinherit._is_filter(cls) or not cls.__name__.endswith('Filters'):
-                continue
-            for member, value in list(vars(cls).items()) + [
-                (name, None) for name in inspect.get_annotations(cls)
-            ]:
-                if member.startswith('_') or inspect.isroutine(value):
-                    continue
+            if autoinherit._is_filter(cls) and cls.__name__.endswith('Filters'):
+                yield cls
+
+
+def test_nothing_but_methods_is_reachable_on_a_filter_class():
+    """A non-method on a filter class is documented nowhere, so pin the set.
+
+    Inheriting a mixin reaches one without declaring it, so both paths are checked.
+    """
+    unexpected = set()
+    for cls in _filter_classes():
+        declared = list(vars(cls).items()) + [
+            (name, None) for name in inspect.get_annotations(cls)
+        ]
+        for member, value in declared:
+            if not member.startswith('_') and not inspect.isroutine(value):
                 unexpected.add(f'{cls.__qualname__}.{member}')
+        for member in autoinherit._candidates(_members(cls)):
+            provider = autoinherit._provider(cls, member)
+            if provider is None or not provider.__module__.startswith('pyvista'):
+                continue
+            if not inspect.isroutine(provider.__dict__.get(member)):
+                unexpected.add(f'{provider.__qualname__}.{member}')
     assert unexpected == set(autoinherit._NOT_API_ON_FILTERS), (
-        'A filter class gained a member that is not a method, so it is documented '
+        'A filter class reaches a member that is not a method, so it is documented '
         'nowhere. Move it to the class it belongs on, or add it to _NOT_API_ON_FILTERS.'
     )
 
@@ -312,8 +330,145 @@ def test_a_filter_class_documents_only_what_it_defines_as_a_filter():
     assert autoinherit._home(pv.PolyData, 'points') is pv.DataSet
 
 
+def test_a_filter_class_lists_only_the_filters_it_defines():
+    """Everything a filter class inherits is a filter documented where it is defined."""
+    members = _members(PolyDataFilters)
+    assert autoinherit.inherited_member_rows('pyvista', 'PolyDataFilters', members) == []
+    assert autoinherit.filter_member_rows('pyvista', 'PolyDataFilters', members) == []
+    own = autoinherit.own_members('pyvista', 'PolyDataFilters', members)
+    assert 'clean' in own  # PolyDataFilters defines it
+    assert 'contour' not in own  # documented as DataSetFilters.contour
+
+
+@pytest.fixture
+def mixin_on_a_filter(monkeypatch):
+    """Return ``(mixin, filters, reported)`` for a property a filter class inherits."""
+
+    class _Mixin:
+        @property
+        def size(self):
+            """Return a size."""
+
+    class _Filters(_Mixin, DataObjectFilters):
+        pass
+
+    _Mixin.__module__ = 'pyvista.fake'  # or _home reads it as VTK's and declines
+    _Filters.__module__ = 'pyvista.core.filters.fake'
+
+    reported = []
+
+    class _Recorder:
+        def warning(self, message, *args, **_kwargs):
+            """Record the warning the way Sphinx's logger would emit it."""
+            reported.append(message % args)
+
+    monkeypatch.setattr(autoinherit, 'logger', _Recorder())
+    autoinherit._warn_unexpected_filter_member.cache_clear()
+    yield _Mixin, _Filters, reported
+    autoinherit._warn_unexpected_filter_member.cache_clear()
+
+
+def test_a_filter_class_documents_no_attributes(monkeypatch, mixin_on_a_filter):
+    """A property with nowhere else to go is dropped from a filter page, and reported."""
+    mixin, filters, reported = mixin_on_a_filter
+
+    class _Dataset(mixin):
+        pass
+
+    monkeypatch.setattr(autoinherit, '_documented', {filters: 'pkg._Filters'})
+    assert autoinherit._home(filters, 'size') is None
+    assert '_Mixin.size is not a method' in reported[0]
+    # Reached on anything but a filter class, the same property is documented as usual.
+    assert autoinherit._home(_Dataset, 'size') is _Dataset
+
+
+def test_a_documentedmixin_on_a_filter_class_keeps_its_page(monkeypatch, mixin_on_a_filter):
+    """The mixin holds the page, so the filter class has nothing to report or drop."""
+    mixin, filters, reported = mixin_on_a_filter
+    monkeypatch.setattr(autoinherit, '_documented', {mixin: 'pkg._Mixin', filters: 'pkg._Filters'})
+    assert autoinherit._home(filters, 'size') is mixin
+    assert not reported
+
+
 def test_a_class_that_mixes_in_no_filters_has_no_filter_rows():
     assert autoinherit.filter_member_rows('pyvista', 'Camera', _members(pv.Camera)) == []
+
+
+def test_inherited_classes_are_the_documented_mro():
+    assert autoinherit.inherited_classes('pyvista', 'CompositeFilters') == [
+        'pyvista.DataObjectFilters'
+    ]
+    # Most derived first, the class itself dropped, and no VTK base: those are not
+    # documented here, so they are listed separately by vtk_bases.
+    assert autoinherit.inherited_classes('pyvista', 'PolyData') == [
+        'pyvista.core.pointset._PointSetBase',
+        'pyvista.DataSet',
+        'pyvista.core.utilities.misc._BoundsSizeMixin',
+        'pyvista.PolyDataFilters',
+        'pyvista.DataSetFilters',
+        'pyvista.DataObjectFilters',
+        'pyvista.DataObject',
+    ]
+
+
+def test_vtk_bases_are_trimmed_to_the_class_the_page_wraps():
+    """VTK documents its own hierarchy, so vtkObject would be on nearly every page."""
+    assert autoinherit.vtk_bases('pyvista', 'PolyData') == ['vtkPolyData']
+    assert autoinherit.vtk_bases('pyvista', 'MultiBlock') == ['vtkMultiBlockDataSet']
+    assert autoinherit.vtk_bases('pyvista', 'ImageData') == ['vtkImageData']
+    # A filter class mixes into datasets rather than wrapping anything.
+    assert autoinherit.vtk_bases('pyvista', 'DataObjectFilters') == []
+
+
+def test_vtk_entry_points_keeps_each_independent_vtk_base():
+    """A class wrapping two unrelated VTK classes has an entry point for each."""
+
+    class _Two(_vtk.vtkPolyData, _vtk.vtkTable): ...
+
+    assert [cls.__name__ for cls in autoinherit._vtk_entry_points(_Two)] == [
+        'vtkPolyData',
+        'vtkTable',
+    ]
+    # The shared bases both derive from are not entry points.
+    assert 'vtkDataObject' not in {cls.__name__ for cls in autoinherit._vtk_entry_points(_Two)}
+
+
+def test_a_class_with_only_a_vtk_base_still_gets_a_row():
+    # 44 documented classes render an Inheritance section that is only the VTK link.
+    assert autoinherit.inherited_classes('pyvista', 'Camera') == []
+    assert autoinherit.vtk_bases('pyvista', 'Camera') == ['vtkCamera']
+
+
+def test_vtk_bases_skips_vtk_classes_that_vtk_does_not_document():
+    # VTKObjectWrapper is pure Python in vtkmodules.numpy_interface, so it has no page
+    # and the :vtk: role would fail the nitpicky build on it.
+    from pyvista._vtk import VTKObjectWrapper
+
+    assert issubclass(pv.DataSetAttributes, VTKObjectWrapper)
+    assert not autoinherit._is_vtk(VTKObjectWrapper)
+    assert autoinherit.vtk_bases('pyvista', 'DataSetAttributes') == []
+
+
+def test_inherited_classes_covers_every_class_the_tables_link_to():
+    """The section indexes the tables below it, so it may not omit a class they link to."""
+    for cls, name in [(pv.PolyData, 'PolyData'), (pv.MultiBlock, 'MultiBlock')]:
+        members = _members(cls)
+        rows = autoinherit.inherited_member_rows('pyvista', name, members)
+        rows += autoinherit.filter_member_rows('pyvista', name, members)
+        homes = {target.rsplit('.', 1)[0] for _, target, _ in rows}
+        listed = autoinherit.inherited_classes('pyvista', name)
+        assert homes <= set(listed)
+        # Nothing outside the MRO is listed, so returning every documented class fails.
+        assert listed
+        assert {autoinherit._resolve(target) for target in listed} <= set(cls.__mro__)
+
+
+def test_a_class_whose_bases_are_all_undocumented_gets_no_section():
+    # numpy.ndarray and _NoNewAttrMixin are neither documented here nor VTK classes, so
+    # a class with real bases can still render nothing.
+    assert len(pv.pyvista_ndarray.__mro__) > 2
+    assert autoinherit.inherited_classes('pyvista', 'pyvista_ndarray') == []
+    assert autoinherit.vtk_bases('pyvista', 'pyvista_ndarray') == []
 
 
 def test_is_filter_recognises_only_the_filter_classes():
@@ -346,6 +501,14 @@ def test_every_reachable_member_has_exactly_one_page(documented):
         module, _, objname = docname.rpartition('.')
         members = _members(cls)
         homed = set(autoinherit.own_members(module, objname, members))
+        if autoinherit._is_filter(cls):
+            # A filter class page lists only its own, so ask where the rest are homed.
+            homed |= {
+                item
+                for item in autoinherit._candidates(members)
+                if (home := autoinherit._home(cls, item)) is not None
+                and f'{documented[home]}.{item}' in pages
+            }
         elsewhere = autoinherit.inherited_member_rows(
             module, objname, members
         ) + autoinherit.filter_member_rows(module, objname, members)
@@ -412,6 +575,77 @@ def test_no_vtk_member_is_documented(documented):
     assert not leaked, 'VTK members documented as PyVista API:\n  ' + '\n  '.join(sorted(leaked))
 
 
+@pytest.fixture(scope='module')
+def render_inheritance():
+    """Render ``class.rst``'s inheritance section the way ``autosummary`` would."""
+    env = SandboxedEnvironment(
+        loader=FileSystemLoader(PYVISTA_ROOT_DIR / 'doc' / 'source' / '_templates' / 'autosummary')
+    )
+    env.filters['escape'] = lambda text: text
+    env.filters['underline'] = lambda text, line='=': f'{text}\n{line * len(text)}'
+    template = env.get_template('class.rst')
+
+    def render(*, attributes, methods, filters, bases=('pyvista.DataObject',), vtk=()):
+        def member_rows(_module, _objname, names):
+            has = attributes if 'ATTRIBUTE' in names else methods
+            return [('X.y', 'pyvista.X.y', 'Summary.')] if has else []
+
+        text = template.render(
+            objname='Example',
+            name='Example',
+            module='pyvista',
+            attributes=['ATTRIBUTE'],
+            methods=['METHOD'],
+            skipmethods=SKIP,
+            # `_` is the gettext callable autosummary passes in; a template that shadows
+            # it renders every other class page wrong, so leave it callable here.
+            _=lambda text: text,
+            own_members=lambda *_: [],
+            inherited_member_rows=member_rows,
+            filter_member_rows=lambda *_: [('X.f', 'pyvista.X.f', 'Summary.')] if filters else [],
+            inherited_classes=lambda *_: list(bases),
+            vtk_bases=lambda *_: list(vtk),
+        )
+        return [line for line in text.splitlines() if line.startswith('See them all')]
+
+    return render
+
+
+@pytest.mark.parametrize(
+    ('sections', 'expected'),
+    [
+        ((False, False, False), []),
+        ((True, False, False), ['See them all under `Inherited Attributes`_.']),
+        ((False, True, False), ['See them all under `Inherited Methods`_.']),
+        ((False, False, True), ['See them all under `Filters`_.']),
+        (
+            (True, True, False),
+            ['See them all under `Inherited Attributes`_ and `Inherited Methods`_.'],
+        ),
+        ((True, False, True), ['See them all under `Inherited Attributes`_ and `Filters`_.']),
+        ((False, True, True), ['See them all under `Inherited Methods`_ and `Filters`_.']),
+        (
+            (True, True, True),
+            ['See them all under `Inherited Attributes`_, `Inherited Methods`_ and `Filters`_.'],
+        ),
+    ],
+)
+def test_the_inheritance_section_links_only_the_member_sections_the_page_has(
+    render_inheritance, sections, expected
+):
+    """Each link is an implicit reference, so naming a section the page lacks fails the build."""
+    attributes, methods, filters = sections
+    assert render_inheritance(attributes=attributes, methods=methods, filters=filters) == expected
+
+
+def test_a_page_with_only_a_vtk_base_still_links_its_member_sections(render_inheritance):
+    # The classes are listed by vtk_bases rather than inherited_classes, but the member
+    # sections below are populated the same way.
+    assert render_inheritance(
+        attributes=True, methods=False, filters=False, bases=(), vtk=('vtkCamera',)
+    ) == ['See them all under `Inherited Attributes`_.']
+
+
 def test_class_template_calls_only_helpers_that_exist():
     """`autosummary` overwrites its own names in the template namespace, so guard them."""
     template = (
@@ -420,6 +654,10 @@ def test_class_template_calls_only_helpers_that_exist():
     for helper in ('own_members', 'inherited_member_rows'):
         assert f'{helper}(module, objname,' in template
         assert callable(getattr(autoinherit, helper))
+    # These two read the MRO rather than a member list, so they take no names.
+    for helper in ('inherited_classes', 'vtk_bases'):
+        assert f'{helper}(module, objname)' in template
+        assert callable(getattr(autoinherit, helper))
     # ``ns['inherited_members']`` is a set of names by the time the template renders.
     assert 'inherited_members(' not in template
 
@@ -427,6 +665,10 @@ def test_class_template_calls_only_helpers_that_exist():
 def test_helpers_reject_a_non_class():
     with pytest.raises(TypeError, match='is not a class'):
         autoinherit.own_members('pyvista', 'wrap', [])
+    with pytest.raises(TypeError, match='is not a class'):
+        autoinherit.inherited_classes('pyvista', 'wrap')
+    with pytest.raises(TypeError, match='is not a class'):
+        autoinherit.vtk_bases('pyvista', 'wrap')
 
 
 def test_setup_records_the_source_directory():

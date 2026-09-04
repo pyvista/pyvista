@@ -10,7 +10,14 @@ from ._cli import CLI_APP
 
 
 def main(argv: list[str] | str | None = None) -> None:
-    """PyVista Command-Line Interface entry point."""
+    """PyVista Command-Line Interface entry point.
+
+    Parameters
+    ----------
+    argv : list[str] | str, optional
+        Command-line arguments. Defaults to ``sys.argv[1:]``.
+
+    """
     # Ignore warnings emitted because arguments are passed positionally by the
     # inspect module. See https://docs.python.org/3/library/inspect.html#inspect.BoundArguments.kwargs
     # and https://github.com/BrianPugh/cyclopts/issues/567

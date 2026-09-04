@@ -21,7 +21,9 @@ MIN_PAGES_WITH_HOISTED_SECTIONS = 100
 # A generated page for a single object whose docstring has Notes and Examples.
 API_PAGE = 'pyvista.PolyDataFilters.decimate.html'
 
-_PAGE_TOC_RE = re.compile(r'<nav class="bd-toc-nav page-toc">(.*?)</nav>', re.DOTALL)
+_PAGE_TOC_RE = re.compile(
+    r'<nav\b[^>]*\bclass="[^"]*\bpage-toc\b[^"]*"[^>]*>(.*?)</nav>', re.DOTALL
+)
 _HREF_RE = re.compile(r'href="#([^"]+)"')
 
 
@@ -66,9 +68,10 @@ def test_hoisted_sections_are_not_rubrics():
 
 def test_multi_object_page_does_not_hoist_sections():
     """Confirm pages documenting several objects via ``:members:`` skip hoisting."""
-    # `helpers.rst` documents several objects on one page via `:members:`, so
-    # hoisting is skipped there to avoid colliding sections at page level.
-    page = Path(BUILD_HTML_DIR) / 'api' / 'core' / 'helpers.html'
+    # The configuration guide documents `Config` via `:members:` alongside a
+    # second class, so hoisting is skipped there to avoid colliding sections at
+    # page level.
+    page = Path(BUILD_HTML_DIR) / 'user-guide' / 'configuration.html'
     assert page.is_file(), (
         f'{page} not found. If the API doc layout changed, point this test at another '
         f'page that documents several objects via `:members:`.'
