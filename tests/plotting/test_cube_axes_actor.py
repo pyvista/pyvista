@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista.plotting.cube_axes_actor import _fit_n_labels
 
 
 @pytest.fixture
@@ -290,3 +291,44 @@ def test_axes_ranges_init_raises(camera):
         pv.CubeAxesActor(camera, axes_ranges=[0, 1, 2, 3, 4])
     with pytest.raises(ValueError, match=r'has shape \(6, 2\) which is not allowed'):
         pv.CubeAxesActor(camera, axes_ranges=[[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12]])
+
+
+@pytest.mark.parametrize(
+    ('bounds', 'n', 'expected'),
+    [
+        ((-11.64, 11.64), 5, 4),
+        ((-11.7236, 11.7236), 5, 4),
+        ((-10.0, 10.0), 9, 5),
+        ((-10.0, 10.0), 3, 3),
+        ((-0.5, 0.5), 5, 5),
+        ((0.0, 1.0), 11, 6),
+        ((0.0, 0.0), 5, 5),
+        ((-np.inf, np.inf), 5, 5),
+    ],
+)
+def test_fit_n_labels(bounds, n, expected):
+    assert _fit_n_labels(*bounds, n) == expected
+
+
+def test_labels_evenly_spaced():
+    """Labels must sit on the ticks VTK draws them on.
+
+    Regression test for https://github.com/pyvista/pyvista/issues/9033.
+    """
+    pl = pv.Plotter()
+    actor = pl.show_bounds(bounds=(-2.725, 1.075, -11.64, 11.64, 0.0, 1.0), fmt='')
+    assert np.allclose(np.array(actor.y_labels, dtype=float), [-11.64, -3.88, 3.88, 11.64])
+    assert np.allclose(
+        np.array(actor.x_labels, dtype=float), [-2.725, -1.775, -0.825, 0.125, 1.075]
+    )
+
+
+@pytest.mark.parametrize('bounds', [(-11.64, 11.64), (-10.0, 10.0), (0.1416, 7.4831)])
+@pytest.mark.parametrize('n', list(range(2, 16)))
+def test_labels_span_bounds(bounds, n):
+    vmin, vmax = bounds
+    pl = pv.Plotter()
+    actor = pl.show_bounds(bounds=(0.0, 1.0, vmin, vmax, 0.0, 1.0), n_ylabels=n, fmt='')
+    values = np.array(actor.y_labels, dtype=float)
+    assert 2 <= len(values) <= n
+    assert np.allclose(values, np.linspace(vmin, vmax, len(values)))

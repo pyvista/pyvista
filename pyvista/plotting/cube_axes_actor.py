@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from typing import TYPE_CHECKING
 from typing import cast
 
@@ -40,6 +41,42 @@ def _pad_bounds(bounds: VectorLike[float], *, padding: float) -> np.ndarray:
     return padded
 
 
+_FLT_EPSILON = 1.1920928955078125e-07
+
+
+def _fit_n_labels(vmin: float, vmax: float, n: int) -> int:
+    """Reduce a label count to the most :vtk:`vtkCubeAxesActor` spaces evenly over a range.
+
+    :vtk:`vtkCubeAxesActor` replaces its own major tick spacing with
+    ``(vmax - vmin) / (n - 1)`` only when that spacing is finer than the one it
+    picks itself. Ask for more labels than that and the ticks stay where VTK put
+    them while the labels keep the values of an evenly spaced axis, so every
+    label after the first is drawn at the wrong coordinate.
+    """
+    span = abs(vmax - vmin)
+    if n < 2 or span == 0.0 or not math.isfinite(span):
+        return n
+    # Mirrors the tick spacing of ``vtkCubeAxesActor::AdjustTicksComputeRange``
+    power = math.log10(span)
+    if power != 0.0:
+        power = math.copysign(abs(power) + 10.0e-10, power)
+    if power < 0.0:
+        power -= 1.0
+    decade = 10.0 ** float(int(power))
+    ticks = int(span / decade)
+    ticks = ticks + 1 if ticks else 0
+    divisor = 5.0 if ticks <= 2 else 2.0 if ticks < 5 else 1.0
+    major = decade / divisor
+    intervals = span / major
+    # Mirrors the label count of ``vtkCubeAxesActor::BuildLabels``
+    labelled = math.floor(intervals + 2 * _FLT_EPSILON) + 1
+    # VTK only overrides ``major`` while there are fewer labels than its own ticks. Past that
+    # it keeps its spacing, which suits evenly spaced labels only if its last tick is ``vmax``
+    lands_on_vmax = abs(intervals - labelled + 1) <= 1e-9 * (intervals or 1.0)
+    maximum = labelled if lands_on_vmax else int(intervals)
+    return maximum if n >= maximum else min(n, int(intervals))
+
+
 @_deprecate_positional_args
 def make_axis_labels(vmin, vmax, n, fmt):  # noqa: PLR0917
     """Create axis labels as a :vtk:`vtkStringArray`.
@@ -51,7 +88,9 @@ def make_axis_labels(vmin, vmax, n, fmt):  # noqa: PLR0917
     vmax : float
         The maximum value for the axis labels.
     n : int
-        The number of labels to create.
+        The number of labels to create. Fewer labels are created if
+        :vtk:`vtkCubeAxesActor` cannot space that many evenly between ``vmin``
+        and ``vmax``.
     fmt : str
         A format string for the labels. If the string starts with '%', the label will be formatted
         using the old-style string formatting method.
@@ -64,7 +103,7 @@ def make_axis_labels(vmin, vmax, n, fmt):  # noqa: PLR0917
 
     """
     labels = _vtk.vtkStringArray()
-    for v in np.linspace(vmin, vmax, n):
+    for v in np.linspace(vmin, vmax, _fit_n_labels(vmin, vmax, n)):
         label = (fmt % v if fmt.startswith('%') else fmt.format(v)) if fmt else f'{v}'
         labels.InsertNextValue(label)
     return labels
@@ -141,13 +180,16 @@ class CubeAxesActor(
         The visibility of the z-axis labels.
 
     n_xlabels : int, default: 5
-        Number of labels along the x-axis.
+        Number of labels along the x-axis. Fewer labels are shown when VTK
+        cannot space that many evenly between the axis bounds.
 
     n_ylabels : int, default: 5
-        Number of labels along the y-axis.
+        Number of labels along the y-axis. Fewer labels are shown when VTK
+        cannot space that many evenly between the axis bounds.
 
     n_zlabels : int, default: 5
-        Number of labels along the z-axis.
+        Number of labels along the z-axis. Fewer labels are shown when VTK
+        cannot space that many evenly between the axis bounds.
 
     color : ColorLike, optional
         Color of all labels, axis titles, axis lines, and grid lines. Defaults to

@@ -1952,13 +1952,16 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Title of the z-axis.  Default ``"Z Axis"``.
 
         n_xlabels : int, default: 5
-            Number of labels for the x-axis.
+            Number of labels for the x-axis. Fewer labels are shown when
+            VTK cannot space that many evenly between the axis bounds.
 
         n_ylabels : int, default: 5
-            Number of labels for the y-axis.
+            Number of labels for the y-axis. Fewer labels are shown when
+            VTK cannot space that many evenly between the axis bounds.
 
         n_zlabels : int, default: 5
-            Number of labels for the z-axis.
+            Number of labels for the z-axis. Fewer labels are shown when
+            VTK cannot space that many evenly between the axis bounds.
 
         use_2d : bool, default: False
             This can be enabled for smoother plotting.
