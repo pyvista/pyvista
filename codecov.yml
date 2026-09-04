@@ -9,10 +9,16 @@ comment: false
 coverage:
   status:
     project:
+      # A base report that does not exist yet is not the pull request's fault. A PR
+      # stacked on another PR's branch has nothing to compare against until that
+      # branch's own CI uploads, and never will if it does not; both defaults failed
+      # that way on #9074 while the flagged statuses below, already `success`, passed
+      # on the same commit. `if_no_uploads` and `if_ci_failed` still guard the head,
+      # and a real regression is still caught wherever a base report exists.
       default:
         target: auto
         threshold: 0.5%
-        if_not_found: failure
+        if_not_found: success
         if_ci_failed: error
         if_no_uploads: error
       # Scoped to the package so a gain under tests/ cannot absorb a loss here.
@@ -39,10 +45,11 @@ coverage:
         if_ci_failed: error
         if_no_uploads: error
     patch:
+      # `if_not_found: success` for the reason given on `project.default` above.
       default:
         target: auto
         threshold: 0.5%
-        if_not_found: failure
+        if_not_found: success
         if_ci_failed: error
         if_no_uploads: error
       tests:
