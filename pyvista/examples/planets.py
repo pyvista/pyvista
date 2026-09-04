@@ -1394,29 +1394,32 @@ def download_stars_sky_background(
 
     Examples
     --------
-    Load the night sky image as a background image.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> import pyvista as pv
-    >>> pl = pv.Plotter()
-    >>> image_path = examples.planets.download_stars_sky_background(load=False)
-    >>> pl.add_background_image(image_path)
-    >>> pl.show()
+        Load the night sky image as a background image.
+
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> image_path = examples.planets.download_stars_sky_background(load=False)
+        >>> pl.add_background_image(image_path)
+        >>> pl.show()
 
 
-    .. seealso::
+        .. seealso::
 
-        :ref:`Stars Sky Background Dataset <stars_sky_background_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+            :ref:`Stars Sky Background Dataset <stars_sky_background_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
-        :func:`~pyvista.examples.planets.load_planet`
-            Load a planet as a sphere with texture coordinates.
+            :func:`~pyvista.examples.planets.load_planet`
+                Load a planet as a sphere with texture coordinates.
 
-        :ref:`Milkyway Sky Background Dataset <milkyway_sky_background_dataset>`
-            Sky texture of the Milky Way galaxy.
+            :ref:`Milkyway Sky Background Dataset <milkyway_sky_background_dataset>`
+                Sky texture of the Milky Way galaxy.
 
-        :ref:`planets_example`
-            Example plot of the solar system.
+            :ref:`planets_example`
+                Example plot of the solar system.
 
     """
     return _download_dataset_texture(_dataset_stars_sky_background, load=load, texture=texture)
@@ -1467,25 +1470,28 @@ def download_milkyway_sky_background(
 
     Examples
     --------
-    Load the Milky Way sky image as a background image.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> import pyvista as pv
-    >>> pl = pv.Plotter()
-    >>> image_path = examples.planets.download_milkyway_sky_background(load=False)
-    >>> pl.add_background_image(image_path)
-    >>> pl.show()
+        Load the Milky Way sky image as a background image.
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> image_path = examples.planets.download_milkyway_sky_background(load=False)
+        >>> pl.add_background_image(image_path)
+        >>> pl.show()
 
-        :ref:`Milkyway Sky Background Dataset <milkyway_sky_background_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
 
-        :ref:`Stars Sky Background Dataset <stars_sky_background_dataset>`
-            Night sky stars texture.
+            :ref:`Milkyway Sky Background Dataset <milkyway_sky_background_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
-        :ref:`planets_example`
-            Example plot of the solar system.
+            :ref:`Stars Sky Background Dataset <stars_sky_background_dataset>`
+                Night sky stars texture.
+
+            :ref:`planets_example`
+                Example plot of the solar system.
 
     """
     return _download_dataset_texture(_dataset_milkyway_sky_background, load=load, texture=texture)

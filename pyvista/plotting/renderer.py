@@ -965,12 +965,15 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         Examples
         --------
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> _ = chart.plot(range(10), range(10))
-        >>> pl = pv.Plotter()
-        >>> pl.add_chart(chart)
-        >>> pl.show()
+        .. pyvista-plot::
+            :force_static:
+
+            >>> import pyvista as pv
+            >>> chart = pv.Chart2D()
+            >>> _ = chart.plot(range(10), range(10))
+            >>> pl = pv.Plotter()
+            >>> pl.add_chart(chart)
+            >>> pl.show()
 
         """
         # lazy instantiation here to avoid creating the charts object unless needed.
@@ -1031,33 +1034,36 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         Examples
         --------
-        First define a function to add two charts to a renderer.
+        .. pyvista-plot::
+            :force_static:
 
-        >>> import pyvista as pv
-        >>> def plotter_with_charts():
-        ...     pl = pv.Plotter()
-        ...     pl.background_color = 'w'
-        ...     chart_left = pv.Chart2D(size=(0.5, 1))
-        ...     _ = chart_left.line([0, 1, 2], [2, 1, 3])
-        ...     pl.add_chart(chart_left)
-        ...     chart_right = pv.Chart2D(size=(0.5, 1), loc=(0.5, 0))
-        ...     _ = chart_right.line([0, 1, 2], [3, 1, 2])
-        ...     pl.add_chart(chart_right)
-        ...     return pl, chart_left, chart_right
-        >>> pl, *_ = plotter_with_charts()
-        >>> pl.show()
+            First define a function to add two charts to a renderer.
 
-        Now reconstruct the same plotter but remove the right chart by index.
+            >>> import pyvista as pv
+            >>> def plotter_with_charts():
+            ...     pl = pv.Plotter()
+            ...     pl.background_color = 'w'
+            ...     chart_left = pv.Chart2D(size=(0.5, 1))
+            ...     _ = chart_left.line([0, 1, 2], [2, 1, 3])
+            ...     pl.add_chart(chart_left)
+            ...     chart_right = pv.Chart2D(size=(0.5, 1), loc=(0.5, 0))
+            ...     _ = chart_right.line([0, 1, 2], [3, 1, 2])
+            ...     pl.add_chart(chart_right)
+            ...     return pl, chart_left, chart_right
+            >>> pl, *_ = plotter_with_charts()
+            >>> pl.show()
 
-        >>> pl, *_ = plotter_with_charts()
-        >>> pl.remove_chart(1)
-        >>> pl.show()
+            Now reconstruct the same plotter but remove the right chart by index.
 
-        Finally, remove the left chart by reference.
+            >>> pl, *_ = plotter_with_charts()
+            >>> pl.remove_chart(1)
+            >>> pl.show()
 
-        >>> pl, chart_left, chart_right = plotter_with_charts()
-        >>> pl.remove_chart(chart_left)
-        >>> pl.show()
+            Finally, remove the left chart by reference.
+
+            >>> pl, chart_left, chart_right = plotter_with_charts()
+            >>> pl.remove_chart(chart_left)
+            >>> pl.show()
 
         """
         if self.has_charts:

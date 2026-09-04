@@ -2467,22 +2467,25 @@ class DICOMReader(BaseReader['ImageData']):  # numpydoc ignore=PR02
 
     Examples
     --------
-    Read a DICOM stack.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> path = examples.download_dicom_stack(load=False)
-    >>> reader = pv.DICOMReader(path)
-    >>> dataset = reader.read()
-    >>> dataset.plot(volume=True, zoom=3, show_scalar_bar=False)
+        Read a DICOM stack.
 
-    .. note::
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> path = examples.download_dicom_stack(load=False)
+        >>> reader = pv.DICOMReader(path)
+        >>> dataset = reader.read()
+        >>> dataset.plot(volume=True, zoom=3, show_scalar_bar=False)
 
-        The example dataset is the CPTAC-SAR collection from The Cancer
-        Imaging Archive, distributed under CC BY 3.0 and subject to the
-        TCIA Data Usage Policy. See
-        :func:`~pyvista.examples.downloads.download_dicom_stack` for the
-        required attribution and usage terms.
+        .. note::
+
+            The example dataset is the CPTAC-SAR collection from The Cancer
+            Imaging Archive, distributed under CC BY 3.0 and subject to the
+            TCIA Data Usage Policy. See
+            :func:`~pyvista.examples.downloads.download_dicom_stack` for the
+            required attribution and usage terms.
 
     """
 
@@ -3005,15 +3008,18 @@ class GIFReader(BaseReader['ImageData']):  # numpydoc ignore=PR02
 
     Examples
     --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> from pathlib import Path
-    >>> filename = examples.download_gif_simple(load=False)
-    >>> Path(filename).name
-    'sample.gif'
-    >>> reader = pv.get_reader(filename)
-    >>> mesh = reader.read()
-    >>> mesh.plot(rgba=True, zoom='tight', border=True, border_width=2)
+    .. pyvista-plot::
+        :force_static:
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> from pathlib import Path
+        >>> filename = examples.download_gif_simple(load=False)
+        >>> Path(filename).name
+        'sample.gif'
+        >>> reader = pv.get_reader(filename)
+        >>> mesh = reader.read()
+        >>> mesh.plot(rgba=True, zoom='tight', border=True, border_width=2)
 
     """
 
