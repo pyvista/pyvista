@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import numpy as np
 import pytest
 
 import pyvista as pv
@@ -171,3 +172,78 @@ def test_ruled_surface():
     )
     ruled = poly.ruled_surface(resolution=(21, 21))
     assert ruled.n_cells
+
+
+def test_compute_arc_length_polyline():
+    spline = pv.Spline(np.column_stack([np.linspace(0, 1, 20), np.zeros(20), np.zeros(20)]), 40)
+    arc = spline.compute_arc_length()
+
+    assert arc.n_cells == spline.n_cells
+    assert arc['arc_length'][0] == 0.0
+    assert arc['arc_length'].max() == pytest.approx(1.0)
+    assert np.all(np.diff(arc['arc_length']) >= 0.0)
+
+
+def test_compute_arc_length_unordered_segments():
+    contour = pv.Sphere().slice(normal='y')
+    perimeter = contour.compute_cell_sizes(length=True, area=False, volume=False)['Length'].sum()
+
+    assert contour.n_lines > 1
+    assert contour.lines.size == 3 * contour.n_lines
+
+    arc = contour.compute_arc_length()
+
+    assert arc['arc_length'].max() == pytest.approx(perimeter)
+    stripped = contour.strip(join=True).compute_arc_length()['arc_length']
+    assert np.allclose(np.sort(arc['arc_length']), np.sort(stripped))
+
+
+def test_compute_arc_length_keeps_input_topology():
+    contour = pv.Sphere().slice(normal='y')
+    perimeter = contour.compute_cell_sizes(length=True, area=False, volume=False)['Length'].sum()
+    contour['data'] = np.arange(contour.n_points, dtype=float)
+    contour.set_active_scalars('data')
+
+    arc = contour.compute_arc_length()
+
+    assert arc['arc_length'].max() == pytest.approx(perimeter)
+    assert arc.n_cells == contour.n_cells
+    assert arc.n_points == contour.n_points
+    assert np.array_equal(arc.lines, contour.lines)
+    assert np.allclose(arc.points, contour.points)
+    assert arc.active_scalars_name == 'data'
+
+
+def test_compute_arc_length_disjoint_segments_are_not_joined():
+    poly = pv.PolyData(
+        [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [5.0, 0.0, 0.0], [7.0, 0.0, 0.0]],
+        lines=[[2, 0, 1], [2, 2, 3]],
+    )
+
+    arc = poly.compute_arc_length()
+
+    assert arc['arc_length'].max() == pytest.approx(2.0)
+
+
+def test_compute_arc_length_no_lines():
+    arc = pv.Sphere().compute_arc_length()
+
+    assert arc.n_cells == pv.Sphere().n_cells
+    assert not np.any(arc['arc_length'])
+
+
+def test_compute_arc_length_existing_polylines_are_left_alone():
+    angles = np.linspace(0.0, 2.0 * np.pi, 9)[:-1]
+    left = np.column_stack([np.cos(angles) - 1.0, np.sin(angles), np.zeros(8)])
+    right = np.column_stack([1.0 - np.cos(angles), -np.sin(angles), np.zeros(8)])
+    points = np.vstack([[0.0, 0.0, 0.0], left[1:], right[1:]])
+    figure_eight = pv.PolyData(points, lines=[9, 0, *range(1, 8), 0, 9, 0, *range(8, 15), 0])
+    lengths = figure_eight.compute_cell_sizes(length=True, area=False, volume=False)['Length']
+
+    assert figure_eight.n_lines == 2
+    assert figure_eight.lines.size > 3 * figure_eight.n_lines
+    assert lengths[0] == pytest.approx(lengths[1])
+
+    arc = figure_eight.compute_arc_length()
+
+    assert arc['arc_length'].max() == pytest.approx(lengths[0])
