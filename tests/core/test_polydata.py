@@ -685,7 +685,7 @@ def test_merge_main_has_priority_deprecated(sphere, main_has_priority):
         # The keyword still selects the winning mesh, so it is not deprecated yet.
         sphere.merge(sphere, main_has_priority=main_has_priority)
     elif not main_has_priority:
-        match = "'main_has_priority=False' is not supported for vtk>=9.5.0"
+        match = re.escape(f'main_has_priority={main_has_priority!r} is not supported')
         with pytest.raises(ValueError, match=match):
             sphere.merge(sphere, main_has_priority=main_has_priority)
     else:
@@ -707,7 +707,7 @@ def test_merge_field_data(mesh, main_has_priority):
     if pv.vtk_version_info < (9, 5, 0):
         merged = mesh.merge(other, main_has_priority=main_has_priority)
     elif not main_has_priority:
-        match = re.escape("'main_has_priority=False' is not supported for vtk>=9.5.0")
+        match = re.escape(f'main_has_priority={main_has_priority!r} is not supported')
         with pytest.raises(ValueError, match=match):
             mesh.merge(other, main_has_priority=main_has_priority)
         return

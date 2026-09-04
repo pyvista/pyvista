@@ -623,8 +623,8 @@ def merge(  # noqa: PLR0917
 
             Has no effect with VTK 9.5.0 or later, where the main mesh always has
             priority and ``False`` raises :class:`ValueError`. With older VTK the
-            keyword still selects which mesh has priority. It will be removed in a
-            future version.
+            keyword still selects which mesh has priority and defaults to ``True``.
+            It will be removed in a future version.
 
     progress_bar : bool, default: False
         Display a progress bar to indicate progress.
