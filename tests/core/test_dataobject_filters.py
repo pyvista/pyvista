@@ -246,8 +246,9 @@ def test_clip_box_output_type(multiblock_all_with_nested_and_none, crinkle):
         assert clp is not None
         assert isinstance(clp, (pv.UnstructuredGrid, pv.MultiBlock, pv.PointSet))
         if isinstance(clp, pv.MultiBlock):
+            # PointSet blocks stay PointSet, like a PointSet input does
             assert all(
-                isinstance(block, pv.UnstructuredGrid)
+                isinstance(block, (pv.UnstructuredGrid, pv.PointSet))
                 for block in clp.recursive_iterator(skip_none=True)
             )
         clp2 = dataset.clip_box(merge_points=False)
@@ -312,6 +313,73 @@ def test_clip_box_no_unused_points(as_composite):
     )
     clipped = mesh.clip_box(bounds=new_bounds, invert=False)
     assert np.allclose(clipped.bounds, new_bounds)
+
+
+def _box_clip_filter(mesh, bounds, *, invert):
+    alg = _vtk.vtkBoxClipDataSet()
+    alg.SetInputDataObject(mesh)
+    alg.SetBoxClip(*bounds)
+    if invert:
+        alg.GenerateClippedOutputOn()
+    alg.Update()
+    return pv.wrap(alg.GetOutputDataObject(1 if invert else 0))
+
+
+@pytest.mark.parametrize('invert', [True, False])
+@pytest.mark.parametrize('as_unstructured', [True, False])
+def test_clip_box_planes_match_box_filter(uniform, invert, as_unstructured):
+    mesh = uniform.cast_to_unstructured_grid() if as_unstructured else uniform
+    bounds = [3.0, 9.0, 2.0, 9.0, 4.0, 9.0]
+    clipped = mesh.clip_box(bounds, invert=invert)
+    expected = _box_clip_filter(mesh, bounds, invert=invert)
+    assert isinstance(clipped, pv.UnstructuredGrid)
+    assert np.isclose(clipped.volume, expected.volume)
+    assert np.allclose(clipped.bounds, expected.bounds)
+    # Whole hexahedra are kept instead of being split into tetrahedra
+    assert set(clipped.celltypes) <= {pv.CellType.HEXAHEDRON, pv.CellType.POLYHEDRON}
+    assert set(expected.celltypes) == {pv.CellType.TETRA}
+    assert clipped.n_cells < expected.n_cells
+
+
+def test_clip_box_planes_invert_is_complement(uniform):
+    bounds = [3.0, 9.0, 2.0, 9.0, 4.0, 9.0]
+    inside = uniform.clip_box(bounds, invert=False)
+    outside = uniform.clip_box(bounds, invert=True)
+    assert np.isclose(inside.volume + outside.volume, uniform.volume)
+    assert np.allclose(inside.bounds, bounds)
+
+
+def test_clip_box_planes_oriented(uniform):
+    box = pv.Cube(center=uniform.center, x_length=5, y_length=5, z_length=5).rotate_z(30)
+    inside = uniform.clip_box(box, invert=False)
+    outside = uniform.clip_box(box, invert=True)
+    assert 0 < inside.volume < uniform.volume
+    assert np.isclose(inside.volume + outside.volume, uniform.volume)
+
+
+@pytest.mark.parametrize('invert', [True, False])
+def test_clip_box_planes_crinkle(uniform, invert):
+    bounds = [3.0, 9.0, 2.0, 9.0, 4.0, 9.0]
+    crinkled = uniform.clip_box(bounds, invert=invert, crinkle=True)
+    assert 'cell_ids' in crinkled.cell_data
+    assert set(crinkled.celltypes) == {pv.CellType.VOXEL}
+    expected = _box_clip_filter(uniform, bounds, invert=invert)
+    assert crinkled.volume >= expected.volume
+
+
+def test_clip_box_planes_box_outside_or_containing_mesh(uniform):
+    bounds = np.array(uniform.bounds)
+    larger = bounds + np.array([-1, 1] * 3)
+    assert uniform.clip_box(larger, invert=False).n_cells == uniform.n_cells
+    assert uniform.clip_box(larger, invert=True).n_cells == 0
+    far = [bounds[1] + 1, bounds[1] + 2, 0, 1, 0, 1]
+    assert uniform.clip_box(far, invert=False).n_cells == 0
+    assert uniform.clip_box(far, invert=True).n_cells == uniform.n_cells
+
+
+def test_clip_box_merge_points_false_uses_box_filter(uniform):
+    clipped = uniform.clip_box(merge_points=False)
+    assert set(clipped.celltypes) == {pv.CellType.TETRA}
 
 
 def test_clip_box_composite(multiblock_all):

@@ -3342,6 +3342,11 @@ class DataObjectFilters:
 
         If no bounds are given, a corner of the dataset bounds will be removed.
 
+        :class:`~pyvista.PolyData` and :class:`~pyvista.PointSet` inputs are clipped with
+        :vtk:`vtkBoxClipDataSet`, which tetrahedralizes the output. Other datasets are
+        clipped by the six box planes in turn with the same clipper as :meth:`clip`, which
+        keeps hexahedra and other cell types.
+
         Parameters
         ----------
         bounds : sequence[float], optional
@@ -3432,22 +3437,41 @@ class DataObjectFilters:
                     zmin + bounds_[2],
                 )
             )
+        if isinstance(self, pv.MultiBlock):
+            return self.generic_filter(
+                'clip_box',
+                bounds=bounds_,
+                invert=invert,
+                progress_bar=progress_bar,
+                merge_points=merge_points,
+                crinkle=crinkle,
+            )
+
         source = self
         if crinkle:
             source, active_scalars_info = _Crinkler._add_cell_ids(self)
-        alg = _vtk.vtkBoxClipDataSet()
-        if not merge_points:
-            # vtkBoxClipDataSet uses vtkMergePoints by default
-            alg.SetLocator(_vtk.vtkNonMergingPointLocator())
-        alg.SetInputDataObject(source)
-        alg.SetBoxClip(*bounds_)
-        port = 0
-        if invert:
-            # invert the clip if needed
-            port = 1
-            alg.GenerateClippedOutputOn()
-        _update_alg(alg, progress_bar=progress_bar, message='Clipping a Dataset by a Bounding Box')
-        clipped = _get_output(alg, oport=port)
+
+        if isinstance(self, (pv.PolyData, pv.PointSet)) or not merge_points:
+            alg = _vtk.vtkBoxClipDataSet()
+            if not merge_points:
+                # vtkBoxClipDataSet uses vtkMergePoints by default
+                alg.SetLocator(_vtk.vtkNonMergingPointLocator())
+            alg.SetInputDataObject(source)
+            alg.SetBoxClip(*bounds_)
+            port = 0
+            if invert:
+                # invert the clip if needed
+                port = 1
+                alg.GenerateClippedOutputOn()
+            _update_alg(
+                alg, progress_bar=progress_bar, message='Clipping a Dataset by a Bounding Box'
+            )
+            clipped = _get_output(alg, oport=port)
+        else:
+            clipped = _clip_by_box_planes(
+                source, _box_planes(bounds_), invert=invert, progress_bar=progress_bar
+            )
+
         if crinkle:
             clipped = _Crinkler._extract_crinkle_cells(source, clipped, None, active_scalars_info)
         return _remove_unused_points_post_clip(clipped, self.bounds)
@@ -5486,6 +5510,57 @@ def _get_cell_quality_measures() -> dict[str, str]:
             measure_name = re.sub(r'([a-z])([A-Z])', r'\1_\2', measure_name).lower()
             measures[measure_name] = attr
     return measures
+
+
+def _box_planes(bounds: NumpyArray[float]) -> list[tuple[NumpyArray[float], NumpyArray[float]]]:
+    """Return the six ``(outward normal, origin)`` planes of a box clip specification."""
+    if len(bounds) == 12:
+        return [(bounds[i], bounds[i + 1]) for i in range(0, 12, 2)]
+    planes = []
+    for axis in range(3):
+        for sign, bound in ((-1.0, bounds[2 * axis]), (1.0, bounds[2 * axis + 1])):
+            normal = np.zeros(3)
+            normal[axis] = sign
+            origin = np.zeros(3)
+            origin[axis] = bound
+            planes.append((normal, origin))
+    return planes
+
+
+def _clip_by_box_planes(
+    dataset: DataSet,
+    planes: list[tuple[NumpyArray[float], NumpyArray[float]]],
+    *,
+    invert: bool,
+    progress_bar: bool,
+) -> DataSet:
+    """Clip by each plane in turn, keeping the inside or appending the outside pieces."""
+    inside: DataSet = dataset
+    outside = []
+    for normal, origin in planes:
+        result = inside.clip(
+            normal=normal,
+            origin=origin,
+            invert=True,
+            return_clipped=invert,
+            progress_bar=progress_bar,
+        )
+        if invert:
+            inside, piece = result
+            if piece.n_cells:
+                outside.append(piece)
+        else:
+            inside = result
+    if not invert:
+        return inside
+    if not outside:
+        return inside.clip(normal=planes[0][0], origin=planes[0][1], invert=False)
+    append = _vtk.vtkAppendFilter()
+    append.MergePointsOn()
+    for piece in outside:
+        append.AddInputData(piece)
+    _update_alg(append, progress_bar=progress_bar, message='Clipping a Dataset by a Bounding Box')
+    return _get_output(append)
 
 
 def _remove_unused_points_post_clip(clip_output, input_bounds):
