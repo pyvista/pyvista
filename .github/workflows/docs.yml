@@ -57,9 +57,6 @@ jobs:
     env:
       TOX_COLORED: "yes"
       PYVISTA_DATA: ${{ github.workspace }}/pyvista-data
-      # Tag builds are the docs published to docs.pyvista.org; `conf.py` expands
-      # the sidebar navigation for them.
-      _PYVISTA_RELEASE: ${{ startsWith(github.ref, 'refs/tags/v') }}
     steps:
       - uses: actions/checkout@v7
         with:
