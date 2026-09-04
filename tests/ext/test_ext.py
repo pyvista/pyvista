@@ -148,10 +148,17 @@ def test_split_code_at_show_ends_a_piece_at_a_commented_show():
     assert pieces == ['>>> pl.show()  # doctest: +SKIP', '>>> pl = pv.Plotter()\n']
 
 
-def test_split_code_at_show_keeps_a_hash_inside_a_string():
-    code = ">>> mesh.plot(color='#ff0000')\n>>> a = 1\n"
+def test_split_code_at_show_ends_a_piece_at_a_comment_holding_a_quote():
+    code = ">>> pl.show()  # don't rely on this\n>>> pl = pv.Plotter()\n"
     _, pieces = plot_directive._split_code_at_show(code)
-    assert pieces == [">>> mesh.plot(color='#ff0000')", '>>> a = 1\n']
+    assert pieces == [">>> pl.show()  # don't rely on this", '>>> pl = pv.Plotter()\n']
+
+
+@pytest.mark.parametrize('quote', ["'", '"'])
+def test_split_code_at_show_keeps_a_hash_inside_a_string(quote):
+    show = f'>>> mesh.plot(color={quote}#ff0000{quote})'
+    _, pieces = plot_directive._split_code_at_show(f'{show}\n>>> a = 1\n')
+    assert pieces == [show, '>>> a = 1\n']
 
 
 DOCTEST_WITH_SKIP = '>>> a = 1\n>>> explode()  # doctest: +SKIP\n>>> b = 2\n'
@@ -200,8 +207,25 @@ def _render(code, tmp_path):
     )
 
 
+def test_render_figures_runs_the_example_after_a_skipped_show(tmp_path, caplog):
+    # the example after a skipped show binds its own plotter instead of the closed one
+    code = (
+        '>>> import pyvista as pv\n'
+        '>>> pl = pv.Plotter()\n'
+        '>>> pl.show()  # doctest: +SKIP\n'
+        '\n'
+        'Prose between the two examples.\n'
+        '\n'
+        '>>> pl = pv.Plotter()\n'
+        '>>> pl.enable_terrain_style()\n'
+        '>>> pl.show()  # doctest: +SKIP\n'
+    )
+    _render(code, tmp_path)
+    assert not [r for r in caplog.records if 'doctest: +SKIP' in r.message]
+
+
 def test_render_figures_warns_when_the_filtered_remainder_raises(tmp_path, caplog):
-    # a failure among the statements alongside a skip warns rather than aborting the page
+    # a failure among the statements alongside a skip warns instead of raising
     code = ">>> raise RuntimeError('kaboom')\n>>> boom()  # doctest: +SKIP\n"
     results = _render(code, tmp_path)
     assert len(results) == 1
