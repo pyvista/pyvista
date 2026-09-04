@@ -132,6 +132,7 @@ extensions = [
     'numpydoc',
     'pyvista.ext._autoenum',
     'pyvista.ext._autoinherit',
+    'pyvista.ext._expanded_sidebar',
     'pyvista.ext.plot_directive',
     'sphinx_autoopengraph',
     'sphinx_examples_as_code',
@@ -896,21 +897,16 @@ def get_version_match(semver):
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
-# An expanded sidebar embeds the site's whole toctree (~2,100 links) in every page:
-# the write phase grew from ~40s to ~7min and pages two- to five-fold (see #9023).
-# Release builds take that cost for navigability; every other build collapses it.
-RELEASE_BUILD = os.environ.get('_PYVISTA_RELEASE', '').lower() == 'true'
-
 html_theme_options = {
     'analytics': {'google_analytics_id': 'UA-140243896-1'},
     'show_prev_next': False,
     'github_url': 'https://github.com/pyvista/pyvista',
-    'collapse_navbar': not RELEASE_BUILD,
+    # The expanded tree is rendered once and reused by `pyvista.ext._expanded_sidebar`.
+    'collapse_navbar': False,
     'use_edit_page_button': True,
     'navigation_with_keys': False,
     'show_navbar_depth': 1,
-    # Capping at depth 4 keeps classes nested under their section pages while
-    # avoiding an O(N^2) sidebar render across ~2,700 method-level entries.
+    # Depth 4 reaches the class pages, stopping above their members.
     'max_navbar_depth': 4,
     'article_header_start': ['toggle-primary-sidebar.html', 'breadcrumbs.html'],
     # Else pydata injects a hidden navbar that steals the sidebar toggles, sphinx-book-theme#988.
