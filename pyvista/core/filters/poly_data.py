@@ -512,7 +512,7 @@ class PolyDataFilters(DataSetFilters):
 
             .. deprecated:: 0.46
 
-                Deprecated with VTK 9.5.0 or later, where the main mesh always has
+                Has no effect with VTK 9.5.0 or later, where the main mesh always has
                 priority and ``False`` raises :class:`ValueError`. With older VTK the
                 keyword still selects which mesh has priority. It will be removed in a
                 future version.
