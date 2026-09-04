@@ -54,7 +54,7 @@ def _axis_label_values(vmin: float, vmax: float, n: int) -> np.ndarray:
     or on the multiples of that spacing, whichever VTK is going to draw.
     """
     span = abs(vmax - vmin)
-    if n < 2 or span == 0.0 or not math.isfinite(span):
+    if span == 0.0 or not math.isfinite(span):
         return np.linspace(vmin, vmax, n)
     # Mirrors the tick spacing of ``vtkCubeAxesActor::AdjustTicksComputeRange``
     power = math.log10(span)
@@ -65,8 +65,8 @@ def _axis_label_values(vmin: float, vmax: float, n: int) -> np.ndarray:
     decade = 10.0 ** float(int(power))
     if decade == 0.0:  # a subnormal span underflows the decade, as ``GetNumTicks`` allows for
         return np.linspace(vmin, vmax, n)
-    ticks = int(span / decade)
-    ticks = ticks + 1 if ticks else 0
+    # ``span`` covers at least one decade, so VTK's ``FRound`` always rounds this up
+    ticks = int(span / decade) + 1
     divisor = 5.0 if ticks <= 2 else 2.0 if ticks < 5 else 1.0
     major = decade / divisor
     intervals = span / major
@@ -190,16 +190,16 @@ class CubeAxesActor(
         The visibility of the z-axis labels.
 
     n_xlabels : int, default: 5
-        Number of labels along the x-axis. Fewer labels are shown when VTK
-        cannot space that many evenly between the axis bounds.
+        Number of labels along the x-axis. Fewer are shown, on VTK's own
+        ticks, where it cannot space that many evenly between the axis bounds.
 
     n_ylabels : int, default: 5
-        Number of labels along the y-axis. Fewer labels are shown when VTK
-        cannot space that many evenly between the axis bounds.
+        Number of labels along the y-axis. Fewer are shown, on VTK's own
+        ticks, where it cannot space that many evenly between the axis bounds.
 
     n_zlabels : int, default: 5
-        Number of labels along the z-axis. Fewer labels are shown when VTK
-        cannot space that many evenly between the axis bounds.
+        Number of labels along the z-axis. Fewer are shown, on VTK's own
+        ticks, where it cannot space that many evenly between the axis bounds.
 
     color : ColorLike, optional
         Color of all labels, axis titles, axis lines, and grid lines. Defaults to
