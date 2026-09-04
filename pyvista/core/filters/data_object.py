@@ -3356,9 +3356,9 @@ class DataObjectFilters:
             - :class:`~pyvista.ImageData`, :class:`~pyvista.RectilinearGrid`,
               :class:`~pyvista.StructuredGrid`, :class:`~pyvista.ExplicitStructuredGrid`, and
               :class:`~pyvista.UnstructuredGrid` inputs are clipped by the six box planes
-              instead of :vtk:`vtkBoxClipDataSet`, so the output keeps the input's cell types
-              instead of being split into tetrahedra and has fewer cells and points for the
-              same clipped volume. Call
+              instead of :vtk:`vtkBoxClipDataSet`, so cells the box does not cut keep their
+              type instead of being split into tetrahedra, and the output normally has fewer
+              cells and points for the same clipped volume. Call
               :meth:`~pyvista.DataObjectFilters.triangulate` on the output for an
               all-tetrahedra mesh as before.
 
