@@ -12,6 +12,7 @@ import operator
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
+from typing import NamedTuple
 from typing import cast
 from typing import get_args
 import warnings
@@ -66,6 +67,19 @@ if TYPE_CHECKING:
 
 
 _SelectInteriorPointsOptions = Literal['signed_distance', 'cell_locator']
+
+
+class _ExtractValuesInputs(NamedTuple):
+    """Validated inputs shared by ``extract_values`` and ``select_values``."""
+
+    values: NumpyArray[float] | None
+    ranges: NumpyArray[float] | None
+    value_names: list[str] | None
+    range_names: list[str] | None
+    array: NumpyArray[float]
+    array_name: str
+    association: FieldAssociation
+    component_logic: Callable[[NumpyArray[np.bool_]], NumpyArray[np.bool_]] | None
 
 
 @abstract_class
@@ -5277,31 +5291,19 @@ class DataSetFilters(DataObjectFilters):
             component_mode=component_mode,
             split=split,
         )
-        if isinstance(validated, tuple):
-            (
-                valid_values,
-                valid_ranges,
-                value_names,
-                range_names,
-                array,
-                _,
-                association,
-                component_logic,
-            ) = validated
-        else:
-            # Return empty dataset
-            return validated
+        if not isinstance(validated, _ExtractValuesInputs):
+            return validated  # empty input
 
         # Set default for include cells
         if include_cells is None:
             include_cells = self.n_cells > 0
 
         kwargs = dict(
-            values=valid_values,
-            ranges=valid_ranges,
-            array=array,
-            association=association,
-            component_logic=component_logic,
+            values=validated.values,
+            ranges=validated.ranges,
+            array=validated.array,
+            association=validated.association,
+            component_logic=validated.component_logic,
             invert=invert,
             adjacent_cells=adjacent_cells,
             include_cells=include_cells,
@@ -5313,8 +5315,8 @@ class DataSetFilters(DataObjectFilters):
         if split:
             return self._split_values(
                 method=self._extract_values,
-                value_names=value_names,
-                range_names=range_names,
+                value_names=validated.value_names,
+                range_names=validated.range_names,
                 **kwargs,
             )
 
@@ -5341,11 +5343,9 @@ class DataSetFilters(DataObjectFilters):
         def _validate_component_mode(array_, component_mode_):
             # Validate component mode and return logic function
             num_components = 1 if array_.ndim == 1 else array_.shape[1]
-            if isinstance(component_mode_, (int, np.integer)) or component_mode_ in [
-                '0',
-                '1',
-                '2',
-            ]:
+            if isinstance(component_mode_, (int, np.integer)) or (
+                isinstance(component_mode_, str) and component_mode_.isdigit()
+            ):
                 component_mode_ = int(component_mode_)
                 if component_mode_ > num_components - 1 or component_mode_ < 0:
                     msg = (
@@ -5451,6 +5451,9 @@ class DataSetFilters(DataObjectFilters):
                 ):
                     msg = 'Ranges must be numeric.'
                     raise TypeError(msg)
+                if ranges_.shape[1] != 2:
+                    msg = f'Ranges must have two values per range. Got shape {ranges_.shape}.'
+                    raise ValueError(msg)
                 is_valid_range = ranges_[:, 0] <= ranges_[:, 1]
                 not_valid = np.invert(is_valid_range)
                 if np.any(not_valid):
@@ -5487,15 +5490,15 @@ class DataSetFilters(DataObjectFilters):
             component_mode_=component_mode,
         )
 
-        return (
-            valid_values,
-            valid_ranges,
-            value_names,
-            range_names,
-            array,
-            array_name,
-            association,
-            component_logic,
+        return _ExtractValuesInputs(
+            values=valid_values,
+            ranges=valid_ranges,
+            value_names=value_names,
+            range_names=range_names,
+            array=array,
+            array_name=array_name,
+            association=association,
+            component_logic=component_logic,
         )
 
     def _split_values(  # type:ignore[misc]
@@ -5529,16 +5532,14 @@ class DataSetFilters(DataObjectFilters):
         component_logic,
         invert,
     ):
-        """Extract values using validated input.
-
-        Internal method for ``extract_values`` filter to avoid repeated calls to input
-        validation methods.
-        """
+        """Build the selection mask from validated values and ranges."""
 
         def _update_id_mask(logic_) -> None:
             """Apply component logic and update the id mask."""
             logic_ = component_logic(logic_) if component_logic else logic_
-            id_mask[logic_] = True
+            # Optimization: accumulate in place, since assigning ``True`` through a boolean
+            # mask allocates and scatters on every value and range
+            np.logical_or(id_mask, logic_, out=id_mask)
 
         # Determine which ids to keep
         id_mask = np.zeros((len(array),), dtype=bool)

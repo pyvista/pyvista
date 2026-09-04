@@ -26,6 +26,7 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
+from pyvista.core.filters.data_set import _ExtractValuesInputs
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import set_default_active_scalars
@@ -1796,9 +1797,8 @@ class ImageDataFilters(DataSetFilters):
         If ``None`` is given for ``in_value``, scalars that are ``'in'`` will not be replaced.
         If ``None`` is given for ``out_value``, scalars that are ``'out'`` will not be replaced.
 
-        Warning: applying this filter to cell data will send the output to a
-        new point array with the same name, overwriting any existing point data
-        array with the same name.
+        Thresholded cell scalars are returned as cell data, and all other arrays are
+        passed through unchanged.
 
         Parameters
         ----------
@@ -1858,19 +1858,28 @@ class ImageDataFilters(DataSetFilters):
         else:
             field = self.get_array_association(scalars, preference=preference)
 
-        # For some systems integer scalars won't threshold
-        # correctly. Cast to float to be robust. See https://gitlab.kitware.com/vtk/vtk/-/work_items/20019
-        cast_dtype = (array_dtype := self.active_scalars.dtype) == np.int64  # type: ignore[union-attr]
-        if cast_dtype:
-            alg_input = self.copy(deep=False)
-            alg_input[scalars] = alg_input[scalars].astype(float, casting='safe')
-        else:
-            alg_input = self
-
         threshold_val = np.atleast_1d(threshold)
         if (size := threshold_val.size) not in (1, 2):
             msg = f'Threshold must have one or two values, got {size}.'
             raise ValueError(msg)
+
+        # The VTK filters only see point scalars and type the output after the
+        # active scalars, so re-mesh cell data and make the array active
+        is_cell_data = field == FieldAssociation.CELL
+        if is_cell_data:
+            alg_input = self.cells_to_points(scalars, copy=False)
+        else:
+            alg_input = self.copy(deep=False)
+            alg_input.set_active_scalars(scalars, preference='point')
+        field = FieldAssociation.POINT
+
+        # int64 overflowed before VTK 9.7, see https://gitlab.kitware.com/vtk/vtk/-/work_items/20019
+        array_dtype = alg_input.point_data[scalars].dtype
+        cast_dtype = array_dtype == np.int64 and pv.vtk_version_info < (9, 7)
+        if cast_dtype:
+            alg_input.point_data[scalars] = alg_input.point_data[scalars].astype(
+                float, casting='safe'
+            )
 
         def _image_threshold(
             *,
@@ -1955,7 +1964,14 @@ class ImageDataFilters(DataSetFilters):
         )
 
         if cast_dtype:
-            output[scalars] = output[scalars].astype(array_dtype)
+            output.point_data[scalars] = output.point_data[scalars].astype(array_dtype)
+        if is_cell_data:
+            cell_output = self.copy(deep=False)
+            cell_output.cell_data[scalars] = output.points_to_cells(scalars, copy=False).cell_data[
+                scalars
+            ]
+            cell_output.set_active_scalars(scalars, preference='cell')
+            return cell_output
         return output
 
     @_deprecate_positional_args
@@ -4862,6 +4878,7 @@ class ImageDataFilters(DataSetFilters):
         data. Selected values may optionally be split into separate meshes.
 
         The selected values are stored in an array with the same name as the input.
+        Other arrays are passed through unchanged.
 
         .. versionadded:: 0.45
 
@@ -4901,13 +4918,15 @@ class ImageDataFilters(DataSetFilters):
             Value used to fill the image. Can be a single value or a multi-component
             vector. Non-selected parts of the image will have this value. Set this to
             ``None`` to keep the input array's original values for non-selected regions.
+            The value must be representable by the input array's data type.
 
         replacement_value : float | VectorLike[float], optional
             Replacement value for the output array. Can be a single value or a
             multi-component vector. If provided, selected values will be replaced with
             the given value. If no value is given, the selected values are retained and
             returned as-is. Setting this value is useful for generating a binarized
-            output array.
+            output array. The value must be representable by the input array's data
+            type.
 
         scalars : str, optional
             Name of scalars to select from. Defaults to currently active scalars.
@@ -5054,29 +5073,17 @@ class ImageDataFilters(DataSetFilters):
             split=split,
             mesh_type=pv.ImageData,
         )
-        if isinstance(validated, tuple):
-            (
-                valid_values,
-                valid_ranges,
-                value_names,
-                range_names,
-                array,
-                array_name,
-                association,
-                component_logic,
-            ) = validated
-        else:
-            # Return empty dataset
-            return validated
+        if not isinstance(validated, _ExtractValuesInputs):
+            return validated  # empty input
 
         kwargs = dict(
-            values=valid_values,
-            ranges=valid_ranges,
-            array=array,
-            association=association,
-            component_logic=component_logic,
+            values=validated.values,
+            ranges=validated.ranges,
+            array=validated.array,
+            association=validated.association,
+            component_logic=validated.component_logic,
             invert=invert,
-            array_name=array_name,
+            array_name=validated.array_name,
             fill_value=fill_value,
             replacement_value=replacement_value,
         )
@@ -5084,8 +5091,8 @@ class ImageDataFilters(DataSetFilters):
         if split:
             return self._split_values(
                 method=self._select_values,
-                value_names=value_names,
-                range_names=range_names,
+                value_names=validated.value_names,
+                range_names=validated.range_names,
                 **kwargs,
             )
 
@@ -5104,31 +5111,34 @@ class ImageDataFilters(DataSetFilters):
         fill_value,
         replacement_value,
     ):
-        # Fast path: a single range over single-component point data with scalar
-        # replacement/fill values is equivalent to ``image_threshold``, which is
-        # implemented as a VTK image filter and is substantially faster than the
-        # generic numpy-based path below. ``image_threshold`` cannot represent
-        # multi-component replacement/fill values, and only sees the full input
-        # array (so we cannot use it when the threshold is on an extracted
-        # component of a multi-component array).
         input_array = cast(
             'pv.pyvista_ndarray',
             get_array(self, name=array_name, preference=association),
         )
+        _validate_value_for_dtype(fill_value, input_array.dtype, name='fill_value')
+        _validate_value_for_dtype(replacement_value, input_array.dtype, name='replacement_value')
+
+        # Optimization: a single value or range of a single-component array with scalar
+        # fill and replacement values is a threshold, which the VTK image filter does in one
+        # threaded pass (VTK 9.7) rather than the several array passes made below
+        threshold = None
+        if values is None and len(ranges) == 1:
+            threshold = ranges[0]
+        elif ranges is None and len(values) == 1:
+            threshold = (values[0], values[0])
         if (
-            input_array.ndim == 1
-            and association == FieldAssociation.POINT
-            and not invert
-            and values is None
-            and ranges is not None
-            and len(ranges) == 1
-            and not isinstance(replacement_value, (list, tuple, np.ndarray))
-            and not isinstance(fill_value, (list, tuple, np.ndarray))
+            threshold is not None
+            and input_array.ndim == 1
+            and np.ndim(fill_value) == 0
+            and np.ndim(replacement_value) == 0
         ):
+            in_value, out_value = (
+                (fill_value, replacement_value) if invert else (replacement_value, fill_value)
+            )
             return self.image_threshold(
-                ranges[0],
-                in_value=replacement_value,
-                out_value=fill_value,
+                threshold,
+                in_value=in_value,
+                out_value=out_value,
                 scalars=array_name,
                 preference=association,
             )
@@ -5140,21 +5150,26 @@ class ImageDataFilters(DataSetFilters):
             component_logic=component_logic,
             invert=invert,
         )
+        if input_array.ndim == 2:
+            id_mask = id_mask[:, np.newaxis]
 
-        # Generate output array
         array_out = (
             input_array.copy()
             if fill_value is None
             else np.full_like(input_array, fill_value=fill_value)
         )
-        replacement_values = (
-            input_array[id_mask] if replacement_value is None else replacement_value
+        # Optimization: copy under the mask in one pass, instead of gathering the selected
+        # values into a temporary and scattering them back
+        np.copyto(
+            array_out,
+            input_array if replacement_value is None else replacement_value,
+            where=id_mask,
+            casting='unsafe',
         )
-        array_out[id_mask] = replacement_values
 
-        output = pv.ImageData()
-        output.copy_structure(self)
+        output = self.copy(deep=False)
         output[array_name] = array_out
+        output.set_active_scalars(array_name, preference=association)
         return output
 
     def concatenate(  # type: ignore[misc]
@@ -5714,6 +5729,17 @@ class ImageDataFilters(DataSetFilters):
         if mode != 'preserve-extents':
             output.offset = self.offset
         return output
+
+
+def _validate_value_for_dtype(value: Any, dtype: np.dtype[Any], *, name: str) -> None:
+    """Raise if an integer array cannot hold a fill or replacement value."""
+    if value is None or dtype.kind not in 'iu':
+        return
+    info = np.iinfo(dtype)
+    array = np.asarray(value)
+    if np.any(array < info.min) or np.any(array > info.max):
+        msg = f'`{name}` {value} is out of range for {dtype} scalars.'
+        raise ValueError(msg)
 
 
 def _validate_padding(pad_size):
