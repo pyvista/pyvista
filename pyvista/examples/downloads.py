@@ -8091,13 +8091,6 @@ def download_dikhololo_night(load: bool = True) -> Texture | str:  # noqa: FBT00
     return _download_dataset(_dataset_dikhololo_night, load=load)
 
 
-def _dikhololo_night_load_func(texture):  # noqa: ANN001
-    texture.SetColorModeToDirectScalars()
-    texture.SetMipmap(True)
-    texture.SetInterpolate(True)
-    return texture
-
-
 _dataset_dikhololo_night = _SingleFileDownloadableDatasetLoader(
     'dikhololo_night_4k.hdr',
     read_func=read_texture,
