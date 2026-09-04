@@ -3343,7 +3343,7 @@ class DataObjectFilters:
         If no bounds are given, a corner of the dataset bounds will be removed.
 
         :class:`~pyvista.PolyData` and :class:`~pyvista.PointSet` inputs are clipped with
-        :vtk:`vtkBoxClipDataSet`, which tetrahedralizes the output. Other datasets are
+        :vtk:`vtkBoxClipDataSet`, which splits the output into tetrahedra. Other datasets are
         clipped by the six box planes in turn with the same clipper as :meth:`clip`, which
         keeps hexahedra and other cell types.
 
