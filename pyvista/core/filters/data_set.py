@@ -5936,7 +5936,7 @@ class DataSetFilters(DataObjectFilters):
         vtk_at_least_95 = vtk_version_info >= (9, 5, 0)
         # Deprecated on v0.46.0 for vtk>=9.5.0 only; remove with the vtk<9.5.0 branch below.
         if main_has_priority is not None and vtk_at_least_95:
-            if main_has_priority is False:
+            if not main_has_priority:
                 msg = (
                     "'main_has_priority=False' is not supported for vtk>=9.5.0, where the "
                     'main mesh always has priority. Swap the meshes instead, as in '
