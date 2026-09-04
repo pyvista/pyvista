@@ -5,6 +5,8 @@ on: # zizmor: ignore[cache-poisoning]
   pull_request:
   merge_group:
   workflow_dispatch:
+  schedule:
+    - cron: "0 4 * * *"
   push:
     tags:
       - "*"
@@ -12,10 +14,10 @@ on: # zizmor: ignore[cache-poisoning]
       - main
 
 concurrency:
-  # A manual run on `main` shares a ref with a push to `main`, so the event name
-  # keeps a merge from cancelling it and it from cancelling a merge.
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # Runs started by the schedule or by hand never cancel an in-progress run, so a merge to
+  # `main` always finishes; they queue behind it, and are dropped if another merge arrives.
+  cancel-in-progress: ${{ github.event_name != 'schedule' && github.event_name != 'workflow_dispatch' }}
 
 env:
   ALLOW_PLOTTING: true
@@ -397,8 +399,8 @@ jobs:
 
       # Each matrix cell contributes one report per side. Sorting them into their own
       # directories lets each side upload under its own flag. VTK-dev is matched first
-      # and flagged apart, since it runs only on labelled PRs and a flag whose set of
-      # jobs varies cannot be compared across commits.
+      # and flagged apart, since it runs only on demand and a flag whose set of jobs
+      # varies cannot be compared across commits.
       - name: Sort reports by flag
         run: |
           mkdir -p flag_package flag_tests flag_package_vtk_dev flag_tests_vtk_dev

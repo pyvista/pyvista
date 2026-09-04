@@ -13,10 +13,10 @@ on: # zizmor: ignore[cache-poisoning]
       - "maint/integration*"
 
 concurrency:
-  # The nightly run and a push to `main` share a ref, so the event name keeps a merge
-  # from cancelling the nightly and the nightly from cancelling a merge.
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # Runs started by the schedule or by hand never cancel an in-progress run, so a merge to
+  # `main` always finishes; they queue behind it, and are dropped if another merge arrives.
+  cancel-in-progress: ${{ github.event_name != 'schedule' && github.event_name != 'workflow_dispatch' }}
 
 env:
   ALLOW_PLOTTING: true
