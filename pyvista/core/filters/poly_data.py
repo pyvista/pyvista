@@ -705,6 +705,9 @@ class PolyDataFilters(DataSetFilters):
             * ``"maximum"``
             * ``"minimum"``
 
+            For ``"maximum"`` and ``"minimum"``, points where the discrete Gaussian
+            and mean curvatures are inconsistent are assigned the mean curvature.
+
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
@@ -732,6 +735,8 @@ class PolyDataFilters(DataSetFilters):
 
         # Create curve filter and compute curvature
         curvefilter = _vtk.vtkCurvatures()
+        # Warns once per point where the Gaussian and mean curvatures are inconsistent
+        curvefilter.AddObserver(_vtk.vtkCommand.WarningEvent, lambda *_: None)
         curvefilter.SetInputData(self)
         if curv_type == 'mean':
             curvefilter.SetCurvatureTypeToMean()

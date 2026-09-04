@@ -956,6 +956,21 @@ def test_cell_quality_all_valid(ant):
     assert VOLUME not in qual.array_names
 
 
+@pytest.mark.parametrize(
+    'mesh',
+    [
+        examples.cells.QuadraticTriangle(),
+        examples.cells.QuadraticQuadrilateral(),
+        examples.cells.QuadraticTetrahedron(),
+        examples.cells.QuadraticHexahedron(),
+    ],
+)
+def test_cell_quality_no_vtk_warnings(mesh):
+    with pv.VtkErrorCatcher() as catcher:
+        mesh.cell_quality('all_valid')
+    assert catcher.warning_events == []
+
+
 def test_cell_quality_composite(
     multiblock_all_with_nested_and_none, multiblock_all_no_pointset_with_nested_and_none
 ):
