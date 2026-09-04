@@ -200,13 +200,13 @@ def _render(code, tmp_path):
     )
 
 
-def test_render_figures_degrades_when_the_filtered_remainder_raises(tmp_path, caplog):
-    # statements alongside a skip never ran before the filtering existed, so a failure
-    # among them logs instead of failing the build
+def test_render_figures_warns_when_the_filtered_remainder_raises(tmp_path, caplog):
+    # a failure among the statements alongside a skip warns rather than aborting the page
     code = ">>> raise RuntimeError('kaboom')\n>>> boom()  # doctest: +SKIP\n"
     results = _render(code, tmp_path)
     assert len(results) == 1
-    assert any('doctest: +SKIP' in r.message and 'kaboom' in r.message for r in caplog.records)
+    warnings = [record for record in caplog.records if record.levelname == 'WARNING']
+    assert any('doctest: +SKIP' in r.message and 'kaboom' in r.message for r in warnings)
 
 
 def test_render_figures_still_raises_for_a_piece_without_skips(tmp_path):

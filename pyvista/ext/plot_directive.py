@@ -642,8 +642,8 @@ def render_figures(
             except PlotError as error:
                 if filtered is None:
                     raise
-                # a failing remainder degrades to a log; names bound so far stay usable
-                _logger.info(
+                # a failing remainder degrades to a warning; names bound so far stay usable
+                _logger.warning(
                     '[pyvista-plot] statements alongside a "# doctest: +SKIP" failed in %s\n%s',
                     code_path,
                     error,
