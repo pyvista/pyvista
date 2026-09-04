@@ -1,4 +1,13 @@
-"""Fail when a ``vtk_version_info`` comparison can no longer change its result."""
+"""Fail when a ``vtk_version_info`` comparison can no longer change its result.
+
+``VTKVersionInfo`` raises for an ordering comparison against a version below the
+minimum, and the ``needs_vtk_version`` marker raises for a stale test bound. Both
+report a single site, and only when that line runs.
+
+This is the static equivalent: one pass over the package and the test suite lists
+every stale gate at once, including those no runtime check reaches -- a bound equal
+to the minimum, ``==`` and ``!=``, and lines no test executes.
+"""
 
 from __future__ import annotations
 
