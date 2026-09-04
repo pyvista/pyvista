@@ -108,19 +108,6 @@ pv.OFF_SCREEN = True
 
 PYVISTA_ROOT_DIR = Path(__file__).parent.parent
 
-_SKIP_PARTS = frozenset({'build', 'dist', '_build', '__pycache__', '.git'})
-
-
-def source_files(*directories: str) -> list[Path]:
-    """Return every Python file under the given directories of the repository."""
-    return [
-        path
-        for directory in directories
-        for path in sorted((PYVISTA_ROOT_DIR / directory).rglob('*.py'))
-        if _SKIP_PARTS.isdisjoint(path.relative_to(PYVISTA_ROOT_DIR).parts)
-    ]
-
-
 NUMPY_VERSION_INFO = VersionInfo(
     major=int(np.__version__.split('.')[0]),
     minor=int(np.__version__.split('.')[1]),

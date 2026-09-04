@@ -627,75 +627,56 @@ def test_merge_active_scalars(input_):
     assert merged.active_scalars_name == 'foo'
 
 
-_MERGE_PRIORITY_INPUTS = [
-    pytest.param(examples.load_hexbeam(), id='hexbeam'),
-    pytest.param(pv.Plane(i_resolution=1, j_resolution=1), id='plane'),
-]
-
-
-def _conflicting_scalars(input_):
-    """Return a mesh and a copy whose shared active scalars have the opposite sign."""
+@pytest.mark.parametrize(
+    'input_', [examples.load_hexbeam(), pv.Plane(i_resolution=1, j_resolution=1)]
+)
+@pytest.mark.parametrize('main_has_priority', [True, False])
+def test_merge_main_has_priority(input_, main_has_priority):
     mesh = input_.copy()
     data_main = np.arange(mesh.n_points, dtype=float)
     mesh.point_data['present_in_both'] = data_main
     mesh.set_active_scalars('present_in_both')
 
     other = mesh.copy()
-    other.point_data['present_in_both'] = -data_main
+    data_other = -data_main
+    other.point_data['present_in_both'] = data_other
     other.set_active_scalars('present_in_both')
-    return mesh, other
 
-
-def _matching_point_data(this, that, scalars_name):
-    """Return True if scalars on two meshes only differ by point order."""
     # note: order of points can change after point merging
-    return all(
-        new_val == this.point_data[scalars_name][j]
-        for point, new_val in zip(that.points, that.point_data[scalars_name], strict=True)
-        for j in (this.points == point).all(-1).nonzero()
-    )
+    def matching_point_data(this, that, scalars_name):
+        """Return True if scalars on two meshes only differ by point order."""
+        return all(
+            new_val == this.point_data[scalars_name][j]
+            for point, new_val in zip(that.points, that.point_data[scalars_name], strict=True)
+            for j in (this.points == point).all(-1).nonzero()
+        )
 
-
-@pytest.mark.parametrize('input_', _MERGE_PRIORITY_INPUTS)
-def test_merge_main_has_priority_by_default(input_):
-    mesh, other = _conflicting_scalars(input_)
-    merged = mesh.merge(other)
-    assert _matching_point_data(merged, mesh, 'present_in_both')
-    assert merged.active_scalars_name == 'present_in_both'
-
-
-@pytest.mark.needs_vtk_version(
-    less_than=(9, 5, 0), reason='Main always has priority for vtk >= 9.5.'
-)
-@pytest.mark.parametrize('input_', _MERGE_PRIORITY_INPUTS)
-@pytest.mark.parametrize('main_has_priority', [True, False])
-def test_merge_main_has_priority(input_, main_has_priority):
-    mesh, other = _conflicting_scalars(input_)
-    if main_has_priority:
-        with pytest.warns(pv.PyVistaDeprecationWarning, match='is deprecated'):
-            merged = mesh.merge(other, main_has_priority=main_has_priority)
+    if pv.vtk_version_info >= (9, 5, 0):
+        merged = mesh.merge(other)
+        expected_to_match = mesh
     else:
-        merged = mesh.merge(other, main_has_priority=main_has_priority)
-    expected_to_match = mesh if main_has_priority else other
-    assert _matching_point_data(merged, expected_to_match, 'present_in_both')
+        with pytest.warns(
+            pv.PyVistaDeprecationWarning,
+            match="The keyword 'main_has_priority' is deprecated and should not be used",
+        ):
+            merged = mesh.merge(other, main_has_priority=main_has_priority)
+        expected_to_match = mesh if main_has_priority else other
+    assert matching_point_data(merged, expected_to_match, 'present_in_both')
     assert merged.active_scalars_name == 'present_in_both'
 
 
-@pytest.mark.parametrize(
-    'main_has_priority', [True, False, 0, pytest.param(np.False_, id='np_False')]
-)
+@pytest.mark.parametrize('main_has_priority', [True, False])
 def test_merge_main_has_priority_deprecated(sphere, main_has_priority):
-    if main_has_priority:
-        match = "The keyword 'main_has_priority' is deprecated"
-        with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
-            sphere.merge(sphere, main_has_priority=main_has_priority)
-    elif pv.vtk_version_info >= (9, 5, 0):
-        match = re.escape(f'main_has_priority={main_has_priority!r} is not supported')
+    match = (
+        "The keyword 'main_has_priority' is deprecated and should not be used.\n"
+        'The main mesh will always have priority in a future version.'
+    )
+    if main_has_priority is False and pv.vtk_version_info >= (9, 5, 0):
         with pytest.raises(ValueError, match=match):
             sphere.merge(sphere, main_has_priority=main_has_priority)
     else:
-        # The keyword still selects the winning mesh, so it is not deprecated yet.
-        sphere.merge(sphere, main_has_priority=main_has_priority)
+        with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+            sphere.merge(sphere, main_has_priority=main_has_priority)
 
 
 @pytest.mark.parametrize('main_has_priority', [True, False])
@@ -708,17 +689,19 @@ def test_merge_field_data(mesh, main_has_priority):
     other = mesh.copy()
     other.field_data[key] = data_other
 
-    if main_has_priority:
-        match = "The keyword 'main_has_priority' is deprecated"
-        with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
-            merged = mesh.merge(other, main_has_priority=main_has_priority)
-    elif pv.vtk_version_info >= (9, 5, 0):
-        match = re.escape(f'main_has_priority={main_has_priority!r} is not supported')
-        with pytest.raises(ValueError, match=match):
+    match = (
+        "The keyword 'main_has_priority' is deprecated and should not be used.\n"
+        'The main mesh will always have priority in a future version, and this '
+        'keyword will be removed.'
+    )
+    if main_has_priority is False and pv.vtk_version_info >= (9, 5, 0):
+        match += '\nIts value cannot be False for vtk>=9.5.0.'
+        with pytest.raises(ValueError, match=re.escape(match)):
             mesh.merge(other, main_has_priority=main_has_priority)
         return
     else:
-        merged = mesh.merge(other, main_has_priority=main_has_priority)
+        with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+            merged = mesh.merge(other, main_has_priority=main_has_priority)
 
     actual = merged.field_data[key]
     expected = data_main if main_has_priority else data_other

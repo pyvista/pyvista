@@ -12,13 +12,18 @@ from __future__ import annotations
 import ast
 import re
 import sys
+from typing import TYPE_CHECKING
 
 import pytest
 
 from tests.conftest import PYVISTA_ROOT_DIR
-from tests.conftest import source_files
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+    from pathlib import Path
 
 SOURCE_DIRS = ('pyvista', 'tests', 'doc', 'examples')
+SKIP_PARTS = {'build', 'dist', '_build', '__pycache__', '.git'}
 
 # Aliased imports are an intentional escape hatch, so the modules only ever
 # reached that way are governed by neither list.
@@ -27,6 +32,14 @@ WAIVED = {
     'xml.dom.minidom',  # import xml.dom.minidom as md
     'xml.etree',  # from xml.etree import ElementTree as ET
 }
+
+
+def _iter_source_files() -> Iterator[Path]:
+    for directory in SOURCE_DIRS:
+        for path in sorted((PYVISTA_ROOT_DIR / directory).rglob('*.py')):
+            if not SKIP_PARTS.isdisjoint(path.parts):
+                continue
+            yield path
 
 
 def _namespace_modules() -> set[str]:
@@ -77,7 +90,7 @@ def _documented_member_modules() -> set[str]:
 def _imported_stdlib_modules() -> dict[str, set[str]]:
     """Map each imported stdlib module to the files importing it."""
     found: dict[str, set[str]] = {}
-    for path in source_files(*SOURCE_DIRS):
+    for path in _iter_source_files():
         try:
             tree = ast.parse(path.read_text(encoding='utf-8'))
         except SyntaxError:  # pragma: no cover

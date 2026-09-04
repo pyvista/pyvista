@@ -5895,16 +5895,15 @@ class DataSetFilters(DataObjectFilters):
             Updates grid in-place when ``True`` if the input type is an
             :class:`pyvista.UnstructuredGrid`.
 
-        main_has_priority : bool, optional
+        main_has_priority : bool, default: True
             When this parameter is true and ``merge_points`` is true,
             the arrays of the merging grids will be overwritten
             by the original main mesh.
 
             .. deprecated:: 0.46
 
-                Omit this keyword; the main mesh already has priority. ``False`` raises
-                :class:`ValueError` with VTK 9.5.0 or later and still selects the other
-                mesh with older VTK. It will be removed in a future version.
+                This keyword will be removed in a future version. The main mesh
+                always has priority with VTK 9.5.0 or later.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -5933,24 +5932,20 @@ class DataSetFilters(DataObjectFilters):
 
         """
         vtk_at_least_95 = vtk_version_info >= (9, 5, 0)
-        # Deprecated on v0.46.0; remove with the vtk<9.5.0 branch below.
-        if main_has_priority is None:
-            if not vtk_at_least_95:
-                # Set default for older VTK:
-                main_has_priority = True
-        elif main_has_priority:
+        if main_has_priority is not None:
             msg = (
-                "The keyword 'main_has_priority' is deprecated and will be removed in a "
-                'future version. Omit it; the main mesh already has priority.'
+                "The keyword 'main_has_priority' is deprecated and should not be used.\n"
+                'The main mesh will always have priority in a future version, and this keyword '
+                'will be removed.'
             )
-            warn_external(msg, pv.PyVistaDeprecationWarning)
-        elif vtk_at_least_95:
-            msg = (
-                f'main_has_priority={main_has_priority!r} is not supported for '
-                'vtk>=9.5.0, where the main mesh always has priority. Swap the meshes '
-                'instead, as in `other.merge(main)`.'
-            )
-            raise ValueError(msg)
+            if main_has_priority is False and vtk_at_least_95:
+                msg += '\nIts value cannot be False for vtk>=9.5.0.'
+                raise ValueError(msg)
+            else:
+                warn_external(msg, pv.PyVistaDeprecationWarning)
+        elif not vtk_at_least_95:
+            # Set default for older VTK:
+            main_has_priority = True
 
         append_filter = _vtk.vtkAppendFilter()
         append_filter.SetMergePoints(merge_points)
