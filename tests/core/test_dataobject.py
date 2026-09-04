@@ -16,7 +16,6 @@ from pyvista import examples
 from pyvista.core import _vtk_utilities
 from pyvista.core.dataobject import USER_DICT_KEY
 from pyvista.core.utilities.writer import BaseWriter
-from tests.vtk_backend_divergence import INT32_COMPRESSION
 
 
 def test_eq_wrong_type(sphere):
@@ -370,7 +369,7 @@ def test_default_pickle_format():
 
 
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
-def test_pickle_serialize_deserialize(datasets_no_pointset, pickle_format):
+def test_pickle_serialize_deserialize(datasets_no_pointset, pickle_format, capfd):
     """Test in-memory pickle protocol (multiprocessing/dask use case).
 
     Pickle is NOT a supported mesh file format — only the in-memory
@@ -382,6 +381,7 @@ def test_pickle_serialize_deserialize(datasets_no_pointset, pickle_format):
         # These datasets carry no field data of their own.
         dataset.field_data['pickled_field'] = [1, 2, 3]
         dataset_2 = pickle.loads(pickle.dumps(dataset))
+        assert not re.search(r'(WARN|ERR)\|', capfd.readouterr().err)
 
         # check python attributes are the same
         for attr in dataset.__dict__:
@@ -488,8 +488,9 @@ def test_save_raises_no_writers(monkeypatch: pytest.MonkeyPatch):
         pv.Sphere().save('foo.vtp')
 
 
-@pytest.mark.skip_vtk_backend('cvista', reason=INT32_COMPRESSION)
 def test_save_compression(sphere, tmp_path):
+    # int32 indices compress less, so pin the width the ratio below assumes.
+    sphere = pv.PolyData(sphere.points, faces=sphere.faces.astype(np.int64))
     path = tmp_path / 'tmp.vtp'
     sphere.save(path, compression='zlib')
     compressed_size = path.stat().st_size

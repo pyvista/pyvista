@@ -273,3 +273,9 @@ def test_table_to_arrow_matches_to_pandas():
     arrays = np.random.default_rng(seed=0).random((10, 3))
     table = pv.Table(arrays)
     pd.testing.assert_frame_equal(table.to_arrow().to_pandas(), table.to_pandas())
+
+
+def test_table_unused_kwargs_deprecated():
+    """Unused keyword arguments warn instead of being silently swallowed."""
+    with pytest.warns(pv.core.errors.PyVistaDeprecationWarning, match='unused keyword'):
+        pv.Table(np.zeros((3, 2)), bogus=1)

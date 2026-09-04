@@ -211,20 +211,13 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
 
     Parameters
     ----------
-    uinput : str, pathlib.Path, :vtk:`vtkRectilinearGrid`, numpy.ndarray, optional
-        Filename, dataset, or array to initialize the rectilinear grid from. If a
-        filename is passed, pyvista will attempt to load it as a
-        :class:`RectilinearGrid`. If passed a :vtk:`vtkRectilinearGrid`, it
-        will be wrapped. If a :class:`numpy.ndarray` is passed, this will be
-        loaded as the x range.
-
-    y : numpy.ndarray, optional
-        Coordinates of the points in y direction. If this is passed, ``uinput``
-        must be a :class:`numpy.ndarray`.
-
-    z : numpy.ndarray, optional
-        Coordinates of the points in z direction. If this is passed, ``uinput``
-        and ``y`` must be a :class:`numpy.ndarray`.
+    *args : str, pathlib.Path, :vtk:`vtkRectilinearGrid`, numpy.ndarray, optional
+        Filename, dataset, or up to three point arrays to initialize the
+        rectilinear grid from. If a filename is passed, pyvista will attempt to
+        load it as a :class:`RectilinearGrid`. If passed a
+        :vtk:`vtkRectilinearGrid`, it will be wrapped. If one to three
+        :class:`numpy.ndarray` are passed, they are used as the x, y, and z
+        point coordinates.
 
     check_duplicates : bool, optional
         Check for duplications in any arrays that are passed. Defaults to
@@ -241,6 +234,10 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         combination of fields allowed by ``validate_mesh``.
 
         .. versionadded:: 0.47
+
+    **kwargs : dict, optional
+        Additional keyword arguments passed when reading from a file or loading
+        from arrays.
 
     Examples
     --------
@@ -324,6 +321,9 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
             else:
                 msg = 'Arguments not understood by `RectilinearGrid`.'
                 raise TypeError(msg)
+        elif args:
+            msg = 'Too many args to create RectilinearGrid.'
+            raise ValueError(msg)
 
         if validate:
             self._validate_mesh(validate)

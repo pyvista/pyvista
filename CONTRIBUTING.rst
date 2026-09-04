@@ -558,6 +558,10 @@ PyVista follows the ``numpydoc`` style for its docstrings. Please follow the
   out what individual methods do.
 * With optional parameters, use ``default: <value>`` instead of ``optional``
   when the parameter has a default value instead of ``None``.
+* A docstring that is only a one-line summary may omit the ``Returns`` section
+  when the return type is annotated on the signature; the annotation is the
+  source of truth for the type. Docstrings with more than a summary still
+  document ``Returns``.
 
 Sample docstring follows:
 

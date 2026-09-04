@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import itertools
 import weakref
 
 from pyvista import _vtk
@@ -134,6 +135,13 @@ class RenderPasses(_NoNewAttrMixin):
 
     def deep_clean(self):
         """Delete all render passes."""
+        for render_pass in (
+            *itertools.chain.from_iterable(self._passes.values()),
+            self._shadow_map_pass,
+            self.__camera_pass,
+        ):
+            if render_pass is not None:
+                self._release_graphics_resources(render_pass)
         if self._renderer is not None:
             self._renderer.SetPass(None)
         self._renderer_ref = None  # type: ignore[assignment]
@@ -220,6 +228,7 @@ class RenderPasses(_NoNewAttrMixin):
         self._check_closed()
         if self._shadow_map_pass is None:
             return
+        self._release_graphics_resources(self._shadow_map_pass)
         self._pass_collection.RemoveItem(self._shadow_map_pass.GetShadowMapBakerPass())
         self._pass_collection.RemoveItem(self._shadow_map_pass)
         self._shadow_map_pass = None
@@ -360,6 +369,13 @@ class RenderPasses(_NoNewAttrMixin):
 
         self._update_passes()
 
+    def _release_graphics_resources(self, render_pass):
+        """Free the GPU resources a pass holds before it is dropped."""
+        renderer = self._renderer
+        ren_win = None if renderer is None else renderer.GetRenderWindow()
+        if ren_win is not None:
+            render_pass.ReleaseGraphicsResources(ren_win)
+
     def _remove_pass(self, render_pass):
         """Remove a pass.
 
@@ -371,6 +387,7 @@ class RenderPasses(_NoNewAttrMixin):
         if class_name not in self._passes:  # pragma: no cover
             return
         else:
+            self._release_graphics_resources(render_pass)
             self._passes[class_name].remove(render_pass)
             if not self._passes[class_name]:
                 self._passes.pop(class_name)
