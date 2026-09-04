@@ -5560,7 +5560,8 @@ class _Crinkler:
         """Extract crinkled cells from the clip output."""
 
         def clipped_cell_mask(block_, clipped):
-            # Optimization: a boolean mask per input cell is ~40x faster than Python sets of ids
+            # Optimization: mark the ids in a boolean array instead of collecting them in
+            # Python sets, whose construction dominated the crinkle clip for large meshes
             mask = np.zeros(block_.n_cells, dtype=bool)
             if _Crinkler.CELL_IDS in clipped.cell_data.keys():
                 mask[clipped.cell_data[_Crinkler.CELL_IDS]] = True
