@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import fnmatch
 import hashlib
 from pathlib import Path
 import sys
@@ -34,30 +35,72 @@ def verdict(value: float) -> str:
     return 'warn' if value > WARNING_THRESHOLD else 'ok'
 
 
-def classify(
-    gen: Path, cache_files: dict[str, Path], cache_digests: dict[str, str]
-) -> tuple[str, str]:
+def slots(cache: Path, pattern: str) -> dict[str, list[Path]]:
+    """Map each cached slot name to its baselines, a directory holding several."""
+    found = {p.name: [p] for p in cache.glob(pattern) if p.is_file()}
+    for d in cache.iterdir():
+        if d.is_dir() and fnmatch.fnmatch(f'{d.name}.jpg', pattern):
+            found[f'{d.name}.jpg'] = sorted(d.rglob('*.jpg'))
+    return found
+
+
+def best_match(variants: list[Path], generated: Path) -> tuple[float, Path | None]:
+    """Return the closest baseline for one generated image, as pytest-pyvista grades it."""
+    best: tuple[float, Path | None] = (float('inf'), None)
+    gen_digest = digest(generated)
+    for path in variants:
+        if digest(path) == gen_digest:
+            return 0.0, path
+        value = score(path, generated)
+        if value < best[0]:
+            best = (value, path)
+    return best
+
+
+def describe(name: str, variants: list[Path], chosen: Path | None) -> str:
+    """Name the matched baseline, mentioning the variant only for a directory slot."""
+    if chosen is None or len(variants) == 1:
+        return name
+    return f'{name} [{chosen.name}]'
+
+
+def classify(gen: Path, cache_slots: dict[str, list[Path]]) -> tuple[str, str]:
     """Return the action for one generated image, with a sentence explaining it."""
     gen_digest = digest(gen)
-    identical = [name for name, d in cache_digests.items() if d == gen_digest]
+    identical = [
+        name for name, paths in cache_slots.items() if any(digest(p) == gen_digest for p in paths)
+    ]
     if identical:
-        if gen.name in identical:
-            return 'unchanged', 'byte-identical to its cache slot'
-        return 'rename', f'byte-identical to {identical[0]}'
+        return (
+            ('unchanged', 'byte-identical to its cache slot')
+            if gen.name in identical
+            else ('rename', f'byte-identical to {identical[0]}')
+        )
 
-    scores = sorted((score(path, gen), name) for name, path in cache_files.items())
-    if not scores:
+    matches = {name: best_match(paths, gen) for name, paths in cache_slots.items()}
+    scored = sorted((value, name, path) for name, (value, path) in matches.items())
+    if not scored:
         return 'new', 'no cached files to compare against'
 
-    best_value, best_name = scores[0]
+    best_value, best_name, best_path = scored[0]
     if best_value <= WARNING_THRESHOLD:
-        same_slot = best_name == gen.name
-        detail = 're-encoded, same render' if same_slot else f'same render as {best_name}'
-        return 'unchanged' if same_slot else 'rename', f'{detail} (value {best_value:.2f})'
-    if gen.name in cache_files:
-        own = score(cache_files[gen.name], gen)
-        return 'replace', f'differs from its slot (value {own:.2f})'
-    return 'new', f'no cache slot; closest is {best_name} (value {best_value:.2f})'
+        if best_name == gen.name:
+            return 'unchanged', 're-encoded, same render'
+        target = describe(best_name, cache_slots[best_name], best_path)
+        return 'rename', f'same render as {target} (value {best_value:.2f})'
+    if gen.name in cache_slots:
+        variants = cache_slots[gen.name]
+        own_value, own_path = matches[gen.name]
+        if len(variants) > 1:
+            detail = (
+                f'differs from every variant (value {own_value:.2f}); '
+                f'refresh {own_path.name} only'  # type: ignore[union-attr]
+            )
+        else:
+            detail = f'differs from its slot (value {own_value:.2f})'
+        return 'replace', detail
+    target = describe(best_name, cache_slots[best_name], best_path)
+    return 'new', f'no cache slot; closest is {target} (value {best_value:.2f})'
 
 
 def plan(cache: Path, generated: Path, pattern: str) -> int:
@@ -70,16 +113,15 @@ def plan(cache: Path, generated: Path, pattern: str) -> int:
         print(f'{len(gen_files)} files match {pattern!r}; narrow it to one example first')
         return 1
 
-    cache_files = {p.name: p for p in cache.glob(pattern)}
-    cache_digests = {name: digest(path) for name, path in cache_files.items()}
+    cache_slots = slots(cache, pattern)
 
     actions = dict.fromkeys(('unchanged', 'rename', 'replace', 'new'), 0)
     for gen in gen_files:
-        action, detail = classify(gen, cache_files, cache_digests)
+        action, detail = classify(gen, cache_slots)
         actions[action] += 1
         print(f'{gen.name:52} {action.upper():9} {detail}')
 
-    orphans = sorted(set(cache_files) - {p.name for p in gen_files})
+    orphans = sorted(set(cache_slots) - {p.name for p in gen_files})
     print('\n' + ', '.join(f'{k}={v}' for k, v in actions.items()))
     print(f'cached files the run did not generate: {orphans or "none"}')
     return 0
@@ -92,19 +134,21 @@ def verify(cache: Path, generated: Path, pattern: str) -> int:
         print(f'no generated images match {pattern!r} in {generated}')
         return 1
 
+    cache_slots = slots(cache, pattern)
     failures = 0
     for gen in gen_files:
-        cached = cache / gen.name
-        if not cached.exists():
+        variants = cache_slots.get(gen.name, [])
+        if not variants:
             print(f'{gen.name:52} MISSING from the cache')
             failures += 1
             continue
-        value = score(cached, gen)
+        value, path = best_match(variants, gen)
         state = verdict(value)
         failures += state == 'ERROR'
-        print(f'{gen.name:52} {value:10.2f}  {state}')
+        variant = f'  [{path.name}]' if len(variants) > 1 and path is not None else ''
+        print(f'{gen.name:52} {value:10.2f}  {state}{variant}')
 
-    orphans = sorted({p.name for p in cache.glob(pattern)} - {p.name for p in gen_files})
+    orphans = sorted(set(cache_slots) - {p.name for p in gen_files})
     print(f'\ncached files the run did not generate: {orphans or "none"}')
     print(f'slots above the {ERROR_THRESHOLD:.0f} error threshold: {failures}')
     return 1 if failures else 0
