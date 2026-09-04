@@ -5339,11 +5339,9 @@ class DataSetFilters(DataObjectFilters):
         def _validate_component_mode(array_, component_mode_):
             # Validate component mode and return logic function
             num_components = 1 if array_.ndim == 1 else array_.shape[1]
-            if isinstance(component_mode_, (int, np.integer)) or component_mode_ in [
-                '0',
-                '1',
-                '2',
-            ]:
+            if isinstance(component_mode_, (int, np.integer)) or (
+                isinstance(component_mode_, str) and component_mode_.isdigit()
+            ):
                 component_mode_ = int(component_mode_)
                 if component_mode_ > num_components - 1 or component_mode_ < 0:
                     msg = (
@@ -5449,6 +5447,9 @@ class DataSetFilters(DataObjectFilters):
                 ):
                     msg = 'Ranges must be numeric.'
                     raise TypeError(msg)
+                if ranges_.shape[1] != 2:
+                    msg = f'Ranges must have two values per range. Got shape {ranges_.shape}.'
+                    raise ValueError(msg)
                 is_valid_range = ranges_[:, 0] <= ranges_[:, 1]
                 not_valid = np.invert(is_valid_range)
                 if np.any(not_valid):

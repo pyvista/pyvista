@@ -2874,6 +2874,15 @@ def test_extract_values_empty():
     assert output.n_blocks == 4
 
 
+def test_extract_values_component_mode_digit_string(grid4x4):
+    grid4x4['four'] = np.tile(np.arange(grid4x4.n_points)[:, None], (1, 4))
+    grid4x4['four'][:, 3] += 100
+    expected = grid4x4.extract_values([103], scalars='four', component_mode=3)
+    assert expected.n_points > 0
+    actual = grid4x4.extract_values([103], scalars='four', component_mode='3')
+    assert actual == expected
+
+
 def test_extract_values_raises(grid4x4):
     match = 'Values must be numeric.'
     with pytest.raises(TypeError, match=match):
@@ -2894,6 +2903,14 @@ def test_extract_values_raises(grid4x4):
     match = 'Invalid range [1 0] specified. Lower value cannot be greater than upper value.'
     with pytest.raises(ValueError, match=re.escape(match)):
         grid4x4.extract_values(ranges=[1, 0])
+
+    match = 'Ranges must have two values per range. Got shape (1, 0).'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        grid4x4.extract_values(ranges=[])
+
+    match = 'Ranges must have two values per range. Got shape (1, 3).'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        grid4x4.extract_values(ranges=[0, 1, 2])
 
     match = 'No ranges or values were specified. At least one must be specified.'
     with pytest.raises(TypeError, match=match):
