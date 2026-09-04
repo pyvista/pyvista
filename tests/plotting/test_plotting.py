@@ -907,6 +907,47 @@ def test_plot_show_grid_with_mesh(hexbeam, plane, verify_image_cache):
     pl.show()
 
 
+def test_plot_show_grid_label_positions():
+    """Each label must be drawn on the tick whose value it carries.
+
+    Regression test for https://github.com/pyvista/pyvista/issues/9033. The y range
+    is one VTK refuses to divide into five, so the labels move a whole grid interval
+    when the count is not capped. Nothing observable from Python distinguishes the
+    two, since the label values PyVista generates are correct either way.
+    """
+    points = np.array(
+        [
+            [0.575, 11.64, 0.0],
+            [1.075, 11.64, 0.0],
+            [1.075, -11.64, 0.0],
+            [0.575, -11.64, 0.0],
+            [-2.725, -5.0, 0.0],
+            [-2.725, 5.0, 0.0],
+        ]
+    )
+    pl = pv.Plotter()
+    pl.add_mesh(pv.PolyData(points, np.array([6, 0, 1, 2, 3, 4, 5])), show_edges=True)
+    pl.show_grid(grid='back', font_size=26, show_xlabels=False, show_zlabels=False)
+    pl.camera_position = 'xy'
+    pl.camera.azimuth = 20
+    pl.camera.elevation = 15
+    pl.camera.zoom(1.15)
+    pl.show()
+
+
+def test_plot_show_grid_scaled():
+    """Scaling must not cost the scene its z-axis.
+
+    Regression test for https://github.com/pyvista/pyvista/issues/8687.
+    """
+    pl = pv.Plotter()
+    pl.set_scale(zscale=3)
+    pl.add_mesh(examples.load_random_hills(), cmap='terrain', show_scalar_bar=False)
+    pl.show_grid(location='outer')
+    pl.camera_position = 'iso'
+    pl.show()
+
+
 @pytest.mark.parametrize('use_3d_text', [True, False])
 @pytest.mark.parametrize('font_size', [12, 24])
 def test_plot_show_grid_font_size(sphere, use_3d_text, font_size):

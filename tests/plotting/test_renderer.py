@@ -137,7 +137,7 @@ def test_show_bounds_scaled_after_show_keeps_zaxis():
     pl.set_scale(1, 1, 2)
     assert not actor.use_2d_mode
     assert actor.z_axis_visibility
-    assert actor.GetLabelTextProperty(0).GetFontSize() == 24
+    assert not actor.GetUseTextActor3D()
 
 
 def test_show_bounds_keeps_use_2d():

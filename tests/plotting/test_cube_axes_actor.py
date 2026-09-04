@@ -323,12 +323,20 @@ def test_labels_evenly_spaced():
     )
 
 
-@pytest.mark.parametrize('bounds', [(-11.64, 11.64), (-10.0, 10.0), (0.1416, 7.4831)])
+# The count VTK will space evenly for each of these ranges, for n = 2 through 15
+EVENLY_SPACED = {
+    (-11.64, 11.64): [2, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4],
+    (-10.0, 10.0): [2, 3, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+    (0.1416, 7.4831): [2, 3, 4, 5, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7],
+}
+
+
+@pytest.mark.parametrize('bounds', list(EVENLY_SPACED))
 @pytest.mark.parametrize('n', list(range(2, 16)))
-def test_labels_span_bounds(bounds, n):
+def test_n_labels_capped_at_what_vtk_spaces_evenly(bounds, n):
     vmin, vmax = bounds
     pl = pv.Plotter()
     actor = pl.show_bounds(bounds=(0.0, 1.0, vmin, vmax, 0.0, 1.0), n_ylabels=n, fmt='')
     values = np.array(actor.y_labels, dtype=float)
-    assert 2 <= len(values) <= n
+    assert len(values) == EVENLY_SPACED[bounds][n - 2]
     assert np.allclose(values, np.linspace(vmin, vmax, len(values)))
