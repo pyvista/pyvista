@@ -896,7 +896,9 @@ def get_version_match(semver):
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
-# Release builds (see `docs.yml`) expand the sidebar; all other builds collapse it.
+# An expanded sidebar embeds the site's whole toctree (~2,100 links) in every page:
+# the write phase grew from ~40s to ~7min and pages two- to five-fold (see #9023).
+# Release builds take that cost for navigability; every other build collapses it.
 RELEASE_BUILD = os.environ.get('_PYVISTA_RELEASE', '').lower() == 'true'
 
 html_theme_options = {
