@@ -910,10 +910,12 @@ def test_plot_show_grid_with_mesh(hexbeam, plane, verify_image_cache):
 def test_plot_show_grid_label_positions():
     """Each label must be drawn on the tick whose value it carries.
 
-    Regression test for https://github.com/pyvista/pyvista/issues/9033. The y range
-    is one VTK refuses to divide into five, so the labels move a whole grid interval
-    when the count is not capped. Nothing observable from Python distinguishes the
-    two, since the label values PyVista generates are correct either way.
+    The reproducer from https://github.com/pyvista/pyvista/issues/9033, whose y range
+    is one VTK refuses to divide into five. Nothing observable from Python
+    distinguishes right from wrong here, because the label values PyVista generates
+    are correct either way; only the render shows where they land. The zoom is this
+    test's own: at the 400 pixels the suite renders, the labels are too small a part
+    of the frame to move the comparison past its threshold without it.
     """
     points = np.array(
         [
@@ -925,26 +927,42 @@ def test_plot_show_grid_label_positions():
             [-2.725, 5.0, 0.0],
         ]
     )
+    mesh = pv.PolyData(points, np.array([6, 0, 1, 2, 3, 4, 5]))
+
     pl = pv.Plotter()
-    pl.add_mesh(pv.PolyData(points, np.array([6, 0, 1, 2, 3, 4, 5])), show_edges=True)
-    pl.show_grid(grid='back', font_size=26, show_xlabels=False, show_zlabels=False)
-    pl.camera_position = 'xy'
-    pl.camera.azimuth = 20
-    pl.camera.elevation = 15
-    pl.camera.zoom(1.15)
+    pl.enable_parallel_projection()
+    pl.add_mesh(mesh, color='lightgray', show_edges=True)
+    pl.show_grid(xtitle='X', ytitle='Y', ztitle='Z')
+    pl.view_xy()
+    pl.camera.zoom(1.6)
     pl.show()
 
 
-def test_plot_show_grid_scaled():
-    """Scaling must not cost the scene its z-axis.
-
-    Regression test for https://github.com/pyvista/pyvista/issues/8687.
-    """
+def test_plot_show_bounds_many_labels():
+    """The reproducer from https://github.com/pyvista/pyvista/issues/4275."""
     pl = pv.Plotter()
-    pl.set_scale(zscale=3)
     pl.add_mesh(examples.load_random_hills(), cmap='terrain', show_scalar_bar=False)
-    pl.show_grid(location='outer')
-    pl.camera_position = 'iso'
+    pl.show_bounds(
+        grid='back',
+        location='outer',
+        ticks='both',
+        n_xlabels=7,
+        n_ylabels=8,
+        n_zlabels=9,
+        xtitle='Easting',
+        ytitle='Northing',
+        ztitle='Elevation',
+        fmt='%.2f',
+    )
+    pl.show()
+
+
+def test_plot_show_bounds_scaled():
+    """The reproducer from https://github.com/pyvista/pyvista/issues/8687."""
+    pl = pv.Plotter()
+    pl.set_scale(zscale=2)
+    pl.add_mesh(pv.Sphere())
+    pl.show_bounds(location='outer', grid='back')
     pl.show()
 
 
