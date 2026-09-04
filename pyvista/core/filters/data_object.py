@@ -3154,8 +3154,9 @@ class DataObjectFilters:
         crinkle: bool = False,
     ):
         """Clip using an implicit function (internal helper)."""
+        source = self
         if crinkle:
-            active_scalars_info = _Crinkler._add_cell_ids(self)
+            source, active_scalars_info = _Crinkler._add_cell_ids(self)
 
         # Need to cast PointSet to PolyData since vtkTableBasedClipDataSet is broken
         # with vtk 9.4.X, see https://gitlab.kitware.com/vtk/vtk/-/issues/19649
@@ -3164,7 +3165,7 @@ class DataObjectFilters:
             and pv.vtk_version_info >= (9, 4)
             and pv.vtk_version_info < (9, 5)
         )
-        mesh_in = self.cast_to_poly_points() if apply_vtk_94x_patch else self
+        mesh_in = source.cast_to_poly_points() if apply_vtk_94x_patch else source
 
         if isinstance(mesh_in, pv.PolyData):
             alg: _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet = _vtk.vtkClipPolyData()
@@ -3187,11 +3188,11 @@ class DataObjectFilters:
             a = _get_output(alg, oport=0)
             b = _get_output(alg, oport=1)
             if crinkle:
-                a, b = _Crinkler._extract_crinkle_cells(self, a, b, active_scalars_info)
+                a, b = _Crinkler._extract_crinkle_cells(source, a, b, active_scalars_info)
             return _maybe_cast_to_point_set(a), _maybe_cast_to_point_set(b)
         clipped = _get_output(alg)
         if crinkle:
-            clipped = _Crinkler._extract_crinkle_cells(self, clipped, None, active_scalars_info)
+            clipped = _Crinkler._extract_crinkle_cells(source, clipped, None, active_scalars_info)
         return _maybe_cast_to_point_set(clipped)
 
     @_deprecate_positional_args(allowed=['normal'])
@@ -3408,12 +3409,10 @@ class DataObjectFilters:
                 msg = 'The bounds mesh must have only 6 faces.'
                 raise ValueError(msg)
             bounds = []
-            poly.compute_normals(inplace=True)
+            normals = poly.compute_normals(point_normals=False, cell_normals=True).cell_normals
             for cid in range(6):
-                cell = poly.extract_cells(cid)
-                normal = cell['Normals'][0]
-                bounds.append(normal)
-                bounds.append(cell.center)
+                bounds.append(normals[cid])
+                bounds.append(poly.get_cell(cid).center)
         bounds_ = _validation.validate_array(
             bounds,  # type: ignore[arg-type]
             dtype_out=float,
@@ -3432,13 +3431,14 @@ class DataObjectFilters:
                     zmin + bounds_[2],
                 )
             )
+        source = self
         if crinkle:
-            active_scalars_info = _Crinkler._add_cell_ids(self)
+            source, active_scalars_info = _Crinkler._add_cell_ids(self)
         alg = _vtk.vtkBoxClipDataSet()
         if not merge_points:
             # vtkBoxClipDataSet uses vtkMergePoints by default
             alg.SetLocator(_vtk.vtkNonMergingPointLocator())
-        alg.SetInputDataObject(self)
+        alg.SetInputDataObject(source)
         alg.SetBoxClip(*bounds_)
         port = 0
         if invert:
@@ -3448,7 +3448,7 @@ class DataObjectFilters:
         _update_alg(alg, progress_bar=progress_bar, message='Clipping a Dataset by a Bounding Box')
         clipped = _get_output(alg, oport=port)
         if crinkle:
-            clipped = _Crinkler._extract_crinkle_cells(self, clipped, None, active_scalars_info)
+            clipped = _Crinkler._extract_crinkle_cells(source, clipped, None, active_scalars_info)
         return _remove_unused_points_post_clip(clipped, self.bounds)
 
     def clip_slab(  # type: ignore[misc]
@@ -5628,14 +5628,16 @@ class _Crinkler:
 
     @staticmethod
     def _add_cell_ids(dataset: DataSet | MultiBlock):
-        """Add cell ID arrays to all blocks and record the active scalars to restore."""
+        """Shallow copy the dataset, add cell ID arrays, and record the active scalars."""
         active_scalars_info = []
         if isinstance(dataset, pv.MultiBlock):
+            dataset = dataset.generic_filter(lambda block: block.copy(deep=False))
             blocks: Iterable[DataSet] = dataset.recursive_iterator(
                 'blocks',
                 **_Crinkler.ITER_KWARGS,  # type: ignore[call-overload]
             )
         else:
+            dataset = dataset.copy(deep=False)
             blocks = [dataset]
         for block in blocks:
             active_scalars_info.append(block.active_scalars_info)
@@ -5643,7 +5645,7 @@ class _Crinkler:
                 block.cell_data[_Crinkler.CELL_IDS] = np.arange(
                     block.n_cells, dtype=_Crinkler.INT_DTYPE
                 )
-        return active_scalars_info
+        return dataset, active_scalars_info
 
 
 def _cell_status_docs_insert():

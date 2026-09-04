@@ -222,6 +222,21 @@ def test_clip_scalar_ranges_imagedata():
     assert vol.n_points < vol2.n_points
 
 
+def test_clip_scalar_does_not_change_active_scalars(uniform):
+    uniform.point_data['other'] = np.arange(uniform.n_points)
+    uniform.set_active_scalars('Spatial Point Data')
+    clipped = uniform.clip_scalar(scalars='other', value=uniform.n_points / 2)
+    assert clipped.n_cells
+    assert uniform.active_scalars_name == 'Spatial Point Data'
+
+
+def test_clip_surface_compute_distance_does_not_modify_input(uniform):
+    surface = pv.Sphere(radius=3, center=uniform.center)
+    clipped = uniform.clip_surface(surface, compute_distance=True)
+    assert 'implicit_distance' in clipped.point_data
+    assert 'implicit_distance' not in uniform.point_data
+
+
 def test_clip_scalar_errors():
     mesh = pv.Wavelet()
     with pytest.raises(TypeError):
@@ -267,7 +282,7 @@ def test_clip_surface():
     assert 'implicit_distance' in clipped.array_names
     clipped = dataset.clip_surface(surface.cast_to_unstructured_grid(), progress_bar=True)
     assert isinstance(clipped, pv.UnstructuredGrid)
-    assert 'implicit_distance' in clipped.array_names
+    assert 'implicit_distance' not in clipped.array_names
     # Test crinkle
     clipped = dataset.clip_surface(surface, invert=False, progress_bar=True, crinkle=True)
     assert isinstance(clipped, pv.UnstructuredGrid)

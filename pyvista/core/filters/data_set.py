@@ -631,11 +631,12 @@ class DataSetFilters(DataObjectFilters):
             if both:
                 msg = 'Cannot have both=True for a range clip'
                 raise ValueError(msg)
-        alg.SetInputDataObject(self)
+        source = self.copy(deep=False)
         if scalars is None:
-            set_default_active_scalars(self)
+            set_default_active_scalars(source)
         else:
-            self.set_active_scalars(scalars)
+            source.set_active_scalars(scalars)
+        alg.SetInputDataObject(source)
 
         alg.SetInsideOut(invert)  # invert the clip if needed
         alg.SetGenerateClippedOutput(both)
@@ -731,14 +732,16 @@ class DataSetFilters(DataObjectFilters):
             )
         function = _vtk.vtkImplicitPolyDataDistance()
         function.SetInput(surface)
+        source = self
         if compute_distance:
             points = pv.convert_array(self.points)
             dists = _vtk.vtkDoubleArray()
             function.FunctionValue(points, dists)
-            self['implicit_distance'] = pv.convert_array(dists)
+            source = self.copy(deep=False)
+            source['implicit_distance'] = pv.convert_array(dists)
         # run the clip
         clipped = DataSetFilters._clip_with_function(
-            self,
+            source,
             function,
             invert=invert,
             value=value,
