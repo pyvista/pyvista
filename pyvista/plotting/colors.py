@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import colorsys
 import contextlib
+import functools
 import importlib
 import inspect
 from typing import TYPE_CHECKING
@@ -1654,6 +1655,21 @@ _MATPLOTLIB_CMAPS_LITERAL = Literal[
 _MATPLOTLIB_CMAPS = get_args(_MATPLOTLIB_CMAPS_LITERAL)
 
 
+@functools.lru_cache(maxsize=1024)
+def _hex_to_channels(h: str) -> tuple[int, ...]:
+    """Parse a hex string with an optional prefix into three or four channel integers.
+
+    Optimization: color names and hex strings are immutable inputs that are parsed
+    over and over (every theme copy and ``add_mesh`` call), so the result is cached.
+    """
+    h = Color.strip_hex_prefix(h)
+    channels = tuple(Color.convert_color_channel(h[i : i + 2]) for i in range(0, len(h), 2))
+    if len(channels) not in (3, 4):
+        msg = 'Invalid length for RGBA sequence.'
+        raise ValueError(msg)
+    return channels
+
+
 class Color(_NoNewAttrMixin):
     r"""Helper class to convert between different color representations used in PyVista.
 
@@ -1743,7 +1759,8 @@ class Color(_NoNewAttrMixin):
         default_opacity: float | str = 255,
     ):
         """Initialize new instance."""
-        self._red, self._green, self._blue, self._opacity = 0, 0, 0, 0
+        # Optimization: the color channels are assigned by every branch below, so only
+        # the opacity (read by the three-channel paths) needs a value up front
         self._opacity = self.convert_color_channel(default_opacity)
         self._name = None
 
@@ -1896,15 +1913,17 @@ class Color(_NoNewAttrMixin):
 
     def _from_hex(self, h):
         """Construct color from a hex string."""
-        arg = h
-        h = self.strip_hex_prefix(h)
         try:
-            self._from_rgba(
-                [self.convert_color_channel(h[i : i + 2]) for i in range(0, len(h), 2)]
-            )
+            channels = _hex_to_channels(h)
         except ValueError:
-            msg = f'Invalid hex string: {arg}'
+            msg = f'Invalid hex string: {h}'
             raise ValueError(msg) from None
+        # Optimization: the channels are validated integers already, so assign them
+        # directly instead of re-validating each one through ``_from_rgba``
+        if len(channels) == 3:
+            self._red, self._green, self._blue = channels
+        else:
+            self._red, self._green, self._blue, self._opacity = channels
 
     def _from_str(self, n: str):
         """Construct color from a name or hex string."""
@@ -2064,9 +2083,7 @@ class Color(_NoNewAttrMixin):
         '#ff000040'
 
         """
-        return '#' + ''.join(
-            f'{c:0>2x}' for c in (self._red, self._green, self._blue, self._opacity)
-        )
+        return f'#{self._red:02x}{self._green:02x}{self._blue:02x}{self._opacity:02x}'
 
     @property
     def hex_rgb(self) -> str:  # numpydoc ignore=RT01
