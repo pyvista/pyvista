@@ -328,10 +328,22 @@ def _box_clip_filter(mesh, bounds, *, invert):
 
 
 @pytest.mark.parametrize('invert', [True, False])
-@pytest.mark.parametrize('as_unstructured', [True, False])
-def test_clip_box_planes_match_box_filter(uniform, invert, as_unstructured):
-    mesh = uniform.cast_to_unstructured_grid() if as_unstructured else uniform
-    bounds = [3.0, 9.0, 2.0, 9.0, 4.0, 9.0]
+@pytest.mark.parametrize(
+    'cast',
+    [
+        pytest.param(lambda mesh: mesh, id='image'),
+        pytest.param(lambda mesh: mesh.cast_to_rectilinear_grid(), id='rectilinear'),
+        pytest.param(lambda mesh: mesh.cast_to_structured_grid(), id='structured'),
+        pytest.param(lambda mesh: mesh.cast_to_unstructured_grid(), id='unstructured'),
+        pytest.param(lambda mesh: examples.load_explicit_structured(), id='explicit_structured'),
+    ],
+)
+def test_clip_box_planes_match_box_filter(uniform, invert, cast):
+    mesh = cast(uniform)
+    lower = np.array(mesh.bounds[::2]) + 0.3 * (
+        np.array(mesh.bounds[1::2]) - np.array(mesh.bounds[::2])
+    )
+    bounds = [lower[0], mesh.bounds[1], lower[1], mesh.bounds[3], lower[2], mesh.bounds[5]]
     clipped = mesh.clip_box(bounds, invert=invert)
     expected = _box_clip_filter(mesh, bounds, invert=invert)
     assert isinstance(clipped, pv.UnstructuredGrid)
