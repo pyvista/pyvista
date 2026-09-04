@@ -68,6 +68,56 @@ if TYPE_CHECKING:
 _SelectInteriorPointsOptions = Literal['signed_distance', 'cell_locator']
 
 
+_CLIP_SURFACE_SCALARS = '__pyvista_clip_surface_distance'
+
+
+def _points_inside_surface(dataset: DataSet, surface: PolyData) -> NumpyArray[np.bool_]:
+    """Return which points of the dataset a closed surface encloses."""
+    if isinstance(dataset, pv.ImageData):
+        mask = surface.voxelize_binary_mask(reference_volume=dataset)
+        return np.asarray(mask.point_data['mask']).astype(bool)
+    alg = _vtk.vtkSelectEnclosedPoints()
+    alg.SetInputData(dataset)
+    alg.SetSurfaceData(surface)
+    alg.SetTolerance(1e-9)
+    _update_alg(alg, message='Selecting Enclosed Points')
+    return np.asarray(_get_output(alg).point_data['SelectedPoints']).astype(bool)
+
+
+def _signed_distance_near_surface(
+    dataset: DataSet, surface: PolyData, function: _vtk.vtkImplicitPolyDataDistance
+) -> NumpyArray[float]:
+    """Build a signed distance field that is exact on the cells the surface cuts.
+
+    Every point is classified inside (-1) or outside (1) the surface, and the points of
+    cells with both kinds of corner get their exact distance so the cut interpolates
+    to the surface.
+    """
+    inside = _points_inside_surface(dataset, surface)
+    distance = np.where(inside, -1.0, 1.0)
+    if dataset.n_cells == 0:
+        return distance
+
+    marked = dataset.copy(deep=False)
+    marked.point_data[_CLIP_SURFACE_SCALARS] = inside.astype(np.float32)
+    to_cells = _vtk.vtkPointDataToCellData()
+    to_cells.SetInputData(marked)
+    to_cells.PassPointDataOff()
+    to_cells.ProcessAllArraysOff()
+    to_cells.AddPointDataArray(_CLIP_SURFACE_SCALARS)
+    _update_alg(to_cells, message='Finding Cells Cut by the Surface')
+    fraction = np.asarray(_get_output(to_cells).cell_data[_CLIP_SURFACE_SCALARS])
+    cut = dataset.extract_cells(
+        (fraction > 0) & (fraction < 1), pass_point_ids=True, pass_cell_ids=False
+    )
+    if cut.n_points:
+        point_ids = np.asarray(cut.point_data['vtkOriginalPointIds'])
+        exact = _vtk.vtkDoubleArray()
+        function.FunctionValue(pv.convert_array(dataset.points[point_ids]), exact)
+        distance[point_ids] = pv.convert_array(exact)
+    return distance
+
+
 @abstract_class
 class DataSetFilters(DataObjectFilters):
     """A set of common filters that can be applied to any :vtk:`vtkDataSet`."""
@@ -696,7 +746,10 @@ class DataSetFilters(DataObjectFilters):
         compute_distance : bool, default: False
             Compute the implicit distance from the mesh onto the input
             dataset.  A new array called ``'implicit_distance'`` will
-            be added to the output clipped mesh.
+            be added to the output clipped mesh. With a closed surface and
+            ``value=0``, this also makes the clip evaluate the distance at
+            every point instead of only at the points of cells the surface
+            passes through.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -739,6 +792,14 @@ class DataSetFilters(DataObjectFilters):
             function.FunctionValue(points, dists)
             source = self.copy(deep=False)
             source['implicit_distance'] = pv.convert_array(dists)
+        elif value == 0 and not self.is_empty and surface.n_faces and surface.n_open_edges == 0:
+            # Only the points of cells the surface passes through need a distance
+            source = self.copy(deep=False)
+            source.point_data[_CLIP_SURFACE_SCALARS] = _signed_distance_near_surface(
+                self, surface, function
+            )
+            source.set_active_scalars(_CLIP_SURFACE_SCALARS, preference='point')
+            function = None
         # run the clip
         clipped = DataSetFilters._clip_with_function(
             source,
@@ -748,6 +809,11 @@ class DataSetFilters(DataObjectFilters):
             progress_bar=progress_bar,
             crinkle=crinkle,
         )
+        if function is None:
+            clipped.point_data.pop(_CLIP_SURFACE_SCALARS, None)
+            info = self.active_scalars_info
+            if info.name is not None and not clipped.is_empty:
+                clipped.set_active_scalars(info.name, preference=info.association)
         return _cast_output_to_match_input_type(clipped, self)
 
     @_deprecate_positional_args(allowed=['value'])

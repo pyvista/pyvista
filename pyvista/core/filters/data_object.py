@@ -3145,7 +3145,7 @@ class DataObjectFilters:
 
     def _clip_with_function(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
-        function: _vtk.vtkImplicitFunction,
+        function: _vtk.vtkImplicitFunction | None,
         *,
         invert: bool = True,
         value: float = 0.0,
@@ -3153,7 +3153,7 @@ class DataObjectFilters:
         progress_bar: bool = False,
         crinkle: bool = False,
     ):
-        """Clip using an implicit function (internal helper)."""
+        """Clip using an implicit function, or the active scalars if it is ``None``."""
         source = self
         if crinkle:
             source, active_scalars_info = _Crinkler._add_cell_ids(self)
@@ -3176,7 +3176,8 @@ class DataObjectFilters:
             alg = _vtk.vtkTableBasedClipDataSet()
         alg.SetInputDataObject(mesh_in)  # Use the grid as the data we desire to cut
         alg.SetValue(value)
-        alg.SetClipFunction(function)  # the implicit function
+        if function is not None:
+            alg.SetClipFunction(function)  # the implicit function
         alg.SetInsideOut(invert)  # invert the clip if needed
         alg.SetGenerateClippedOutput(return_clipped)
         _update_alg(alg, progress_bar=progress_bar, message='Clipping with Function')

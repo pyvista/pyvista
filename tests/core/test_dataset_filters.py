@@ -230,6 +230,67 @@ def test_clip_scalar_does_not_change_active_scalars(uniform):
     assert uniform.active_scalars_name == 'Spatial Point Data'
 
 
+def _clip_surface_exact(mesh, surface, **kwargs):
+    # The distance-everywhere clip the fast path must reproduce
+    from pyvista.core.filters.data_object import _cast_output_to_match_input_type
+
+    function = _vtk.vtkImplicitPolyDataDistance()
+    function.SetInput(surface)
+    clipped = pv.DataSetFilters._clip_with_function(mesh, function, **kwargs)
+    return _cast_output_to_match_input_type(clipped, mesh)
+
+
+def _clip_surface_cases():
+    image = pv.ImageData(dimensions=(12, 11, 10), spacing=(1.0, 1.5, 2.0), offset=(2, 3, 4))
+    image['data'] = np.arange(image.n_points, dtype=float)
+    rotated = pv.ImageData(dimensions=(12, 11, 10), spacing=(1.0, 1.5, 2.0))
+    rotated['data'] = np.arange(rotated.n_points, dtype=float)
+    rotated.direction_matrix = pv.Transform().rotate_z(30).matrix[:3, :3]
+    grid = image.cast_to_unstructured_grid()
+    poly = pv.Sphere(theta_resolution=40, phi_resolution=40)
+    poly['z'] = poly.points[:, 2]
+    points = pv.PointSet(np.random.default_rng(0).uniform(-1, 1, (500, 3)))
+    points['v'] = points.points[:, 0]
+    return [
+        pytest.param(image, pv.Sphere(radius=6, center=image.center), id='image'),
+        pytest.param(rotated, pv.Sphere(radius=6, center=rotated.center), id='rotated_image'),
+        pytest.param(grid, pv.Sphere(radius=6, center=grid.center), id='unstructured'),
+        pytest.param(
+            poly, pv.Cube(x_length=1.2, y_length=0.8, z_length=0.8).triangulate(), id='polydata'
+        ),
+        pytest.param(points, pv.Sphere(radius=0.7), id='pointset'),
+    ]
+
+
+@pytest.mark.parametrize(('mesh', 'surface'), _clip_surface_cases())
+@pytest.mark.parametrize('kwargs', [dict(invert=True), dict(invert=False), dict(crinkle=True)])
+def test_clip_surface_closed_surface_matches_exact_clip(mesh, surface, kwargs):
+    assert surface.n_open_edges == 0
+    clipped = mesh.clip_surface(surface, **kwargs)
+    expected = _clip_surface_exact(mesh, surface, **kwargs)
+    assert type(clipped) is type(expected)
+    assert clipped.n_points == expected.n_points
+    assert clipped.n_cells == expected.n_cells
+    assert clipped.array_names == expected.array_names
+    assert clipped.active_scalars_name == expected.active_scalars_name
+    assert set(map(tuple, np.round(clipped.points, 6))) == set(
+        map(tuple, np.round(expected.points, 6))
+    )
+
+
+@pytest.mark.parametrize(
+    'kwargs', [dict(value=1.0), dict(compute_distance=True), dict(surface=pv.Sphere().clip())]
+)
+def test_clip_surface_falls_back_to_exact_clip(uniform, kwargs):
+    surface = kwargs.pop('surface', pv.Sphere(radius=4, center=uniform.center))
+    clipped = uniform.clip_surface(surface, **kwargs)
+    expected = _clip_surface_exact(uniform, surface, value=kwargs.get('value', 0.0))
+    assert clipped.n_cells == expected.n_cells
+    assert set(map(tuple, np.round(clipped.points, 6))) == set(
+        map(tuple, np.round(expected.points, 6))
+    )
+
+
 def test_clip_surface_compute_distance_does_not_modify_input(uniform):
     surface = pv.Sphere(radius=3, center=uniform.center)
     clipped = uniform.clip_surface(surface, compute_distance=True)
