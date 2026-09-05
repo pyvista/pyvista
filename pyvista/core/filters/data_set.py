@@ -4704,10 +4704,7 @@ class DataSetFilters(DataObjectFilters):
         extract.SetPassThroughCellIds(False)
         _update_alg(extract, progress_bar=progress_bar, message='Extracting Cells')
         output = _finish_extraction(
-            _get_output(extract),
-            self,
-            pass_point_ids=pass_point_ids,
-            pass_cell_ids=pass_cell_ids,
+            _get_output(extract), pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids
         )
 
         # Make active scalars match input
@@ -4825,7 +4822,7 @@ class DataSetFilters(DataObjectFilters):
         if not pass_cell_ids:
             output.cell_data.pop('vtkOriginalCellIds', None)
         return _finish_extraction(
-            output, self, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids
+            output, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids
         )
 
     @_deprecate_positional_args(allowed=['ind'])
@@ -8770,14 +8767,10 @@ def _cast_extraction(
 ) -> DataSet:
     """Cast an extracted mesh to the input type and keep its original id arrays."""
     output = cast('DataSet', _cast_output_to_match_input_type(output, input_mesh))
-    return _finish_extraction(
-        output, input_mesh, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids
-    )
+    return _finish_extraction(output, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids)
 
 
-def _finish_extraction(
-    output: DataSet, input_mesh: DataSet, *, pass_point_ids: bool, pass_cell_ids: bool
-) -> DataSet:
+def _finish_extraction(output: DataSet, *, pass_point_ids: bool, pass_cell_ids: bool) -> DataSet:
     """Ensure an empty extraction still carries the requested original id arrays."""
     if output.is_empty:
         # Always include the arrays, even when nothing is extracted
