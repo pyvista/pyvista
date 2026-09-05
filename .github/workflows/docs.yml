@@ -22,24 +22,21 @@ permissions:
   id-token: none
 
 jobs:
-  # Save PR metadata as an artifact so the separate deploy workflow (triggered
+  # Save the PR number as an artifact so the separate deploy workflow (triggered
   # via workflow_run) can associate the build with its PR — workflow_run events
-  # do not include pull_request data for fork PRs.
+  # do not include pull_request data for fork PRs. Nothing else goes in here:
+  # the deploy workflow takes the head SHA and fork status from its own event.
   pr-info:
     name: Save PR info
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     steps:
-      - name: Save PR metadata
+      - name: Save PR number
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          IS_FORK: ${{ github.event.pull_request.head.repo.fork }}
         run: |
           mkdir -p pr-info
           printf '%s' "$PR_NUMBER" > pr-info/pr_number.txt
-          printf '%s' "$HEAD_SHA" > pr-info/head_sha.txt
-          printf '%s' "$IS_FORK" > pr-info/is_fork.txt
       - uses: actions/upload-artifact@v7
         with:
           name: pr-info
@@ -47,7 +44,7 @@ jobs:
 
   cache-pyvista-data:
     name: Cache pyvista/data
-    uses: ./.github/workflows/cache-pyvista-data.yml
+    uses: $/.github/workflows/cache-pyvista-data.yml
     with:
       # Runner should match the actual runner used by the build job
       runs-on: blacksmith-8vcpu-ubuntu-2204
@@ -224,9 +221,13 @@ jobs:
           name: pyvista-notebooks
           path: .
 
+      # Pinned to a commit: cookiecutter runs the template's hooks, and this job
+      # later publishes the result with a write token.
       - name: Make Cookiecutter
+        env:
+          TEMPLATE_REF: 001da281b2e49efe97af86ab628176d47ce23e21
         run: |
-          cookiecutter -f --no-input --config-file ./doc/source/pyvista-binder-config.yml https://github.com/pyvista/cookiecutter-pyvista-binder.git;
+          cookiecutter -f --no-input --checkout "$TEMPLATE_REF" --config-file ./doc/source/pyvista-binder-config.yml https://github.com/pyvista/cookiecutter-pyvista-binder.git
           rm -rf ./pyvista-examples/notebooks/
           cp -r doc/source/examples/ ./pyvista-examples/
           ls -l ./pyvista-examples/

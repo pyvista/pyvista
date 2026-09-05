@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import re
 
 from hypothesis import given
@@ -108,10 +109,13 @@ def test_camera_position():
     assert isinstance(cpos, pv.CameraPosition)
 
     # Test str format is a list
-    assert eval(str(cpos)) == cpos.to_list()
+    assert ast.literal_eval(str(cpos)) == cpos.to_list()
 
-    # Test repr format is init-able
-    cpos2 = eval('pv.' + repr(cpos))
+    # Test repr format is a CameraPosition call with literal arguments
+    call = ast.parse(repr(cpos), mode='eval').body
+    assert isinstance(call, ast.Call)
+    assert call.func.id == pv.CameraPosition.__name__
+    cpos2 = pv.CameraPosition(**{kw.arg: ast.literal_eval(kw.value) for kw in call.keywords})
     assert cpos2 == cpos
 
 
