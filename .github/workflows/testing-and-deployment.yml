@@ -69,6 +69,10 @@ jobs:
   resolve:
     name: Find a matching build
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # A called workflow can only narrow the caller's token, and this file sets
+    # `id-token: none`, which zeroes every other scope.
+    permissions:
+      actions: read
     uses: ./.github/workflows/find-tree-build.yml
     with:
       marker-prefix: unit-tests-tree
@@ -473,19 +477,18 @@ jobs:
           fail_ci_if_error: true
           use_oidc: true
 
-      # Advertise this run's coverage reports to a later run of the same tree —
-      # a push to `main` out of the merge queue. Recorded only when this run
-      # earned the reports itself, so the marker never points at a run that was
-      # reusing someone else's.
+      # Advertise these reports to the push to `main` that follows this run out
+      # of the queue. Recorded only when this run earned them itself, so the
+      # marker never points at a run that was reusing someone else's.
       - name: Record the tree these reports cover
-        if: needs.Linux.result == 'success'
+        if: github.event_name == 'merge_group' && needs.Linux.result == 'success'
         id: tree
         run: |
           echo "sha=$(git rev-parse 'HEAD^{tree}')" >> "$GITHUB_OUTPUT"
           touch tree-marker
 
       - name: Upload the tree marker
-        if: needs.Linux.result == 'success'
+        if: github.event_name == 'merge_group' && needs.Linux.result == 'success'
         uses: actions/upload-artifact@v7
         with:
           name: unit-tests-tree-${{ steps.tree.outputs.sha }}

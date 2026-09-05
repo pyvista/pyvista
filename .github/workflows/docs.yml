@@ -51,6 +51,10 @@ jobs:
   resolve:
     name: Find a matching build
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # A called workflow can only narrow the caller's token, and this file sets
+    # `id-token: none`, which zeroes every other scope.
+    permissions:
+      actions: read
     uses: ./.github/workflows/find-tree-build.yml
     with:
       marker-prefix: docs-tree
@@ -166,18 +170,18 @@ jobs:
           name: pyvista-notebooks
           path: _notebooks
 
-      # Advertise this build to a later run of the same tree — a push to `main`
-      # out of the merge queue. Recorded only once every upload above has
-      # succeeded, and never for a tag, whose sidebar differs.
+      # Advertise this build to the push to `main` that follows it out of the
+      # queue. The step `if` carries an implicit `success()`, so a build that
+      # failed any upload above never advertises itself.
       - name: Record the tree that was built
         id: tree
-        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        if: github.event_name == 'merge_group'
         run: |
           echo "sha=$(git rev-parse 'HEAD^{tree}')" >> "$GITHUB_OUTPUT"
           touch tree-marker
 
       - name: Upload the tree marker
-        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        if: github.event_name == 'merge_group'
         uses: actions/upload-artifact@v7
         with:
           name: docs-tree-${{ steps.tree.outputs.sha }}

@@ -2,18 +2,23 @@ name: Find a matching build
 
 # Finds an earlier run that built the same source tree as this one.
 #
-# A workflow opts in by uploading an artifact named `<marker-prefix>-<tree>`
-# once its expensive jobs have succeeded, where `<tree>` is the git tree SHA of
-# the commit it built. Git tree SHAs are content addresses: an equal SHA means
+# A merge queue run uploads an artifact named `<marker-prefix>-<tree>` once its
+# expensive jobs have succeeded, where `<tree>` is the git tree SHA of the
+# commit it built. Git tree SHAs are content addresses, so an equal SHA means
 # byte-identical sources, down to the workflow files themselves. A push to
-# `main` that comes out of the merge queue therefore matches the queue's own
-# run, and can take that run's artifacts instead of rebuilding them.
+# `main` therefore matches the queue run that put it there, and can take that
+# run's artifacts instead of rebuilding them.
+#
+# An artifact name is chosen by whoever uploads it, and a pull request from a
+# fork runs in this repository, so the name alone decides nothing. The match is
+# accepted only from a merge queue branch of this repository — a ref namespace
+# GitHub owns and no pull request can write to.
 
 on:
   workflow_call:
     inputs:
       marker-prefix:
-        description: Artifact name prefix that completed builds record.
+        description: Artifact name prefix that merge queue builds record.
         required: true
         type: string
     outputs:
@@ -26,30 +31,30 @@ permissions:
 
 jobs:
   find:
-    name: Find a matching build
+    name: Look up
     runs-on: ubuntu-latest
     permissions:
       actions: read
-      contents: read
     outputs:
       run-id: ${{ steps.find.outputs.run-id }}
     steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-
       - name: Look for a recorded build of this tree
         id: find
         env:
           GH_TOKEN: ${{ github.token }}
           PREFIX: ${{ inputs.marker-prefix }}
           REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
         run: |
-          tree=$(git rev-parse 'HEAD^{tree}')
-          # The artifacts endpoint returns newest first, so the first live
-          # match is the most recent build of this tree.
-          run_id=$(gh api "repos/${REPO}/actions/artifacts?name=${PREFIX}-${tree}&per_page=100" \
-            --jq 'first(.artifacts[] | select(.expired == false) | .workflow_run.id) // empty')
+          # A lookup that cannot answer answers "no match", so an API blip
+          # costs a rebuild rather than the whole run.
+          tree=$(gh api "repos/${REPO}/commits/${SHA}" --jq '.commit.tree.sha' || true)
+          run_id=$(gh api "repos/${REPO}/actions/artifacts?name=${PREFIX}-${tree:-none}&per_page=100" \
+            --jq '[.artifacts[]
+                   | select(.expired == false)
+                   | select(.workflow_run.repository_id == .workflow_run.head_repository_id)
+                   | select(.workflow_run.head_branch | startswith("gh-readonly-queue/"))]
+                  | max_by(.created_at) | .workflow_run.id // empty' || true)
           echo "run-id=${run_id}" >> "$GITHUB_OUTPUT"
           if [ -n "${run_id}" ]; then
             echo "Tree \`${tree}\` was built by run ${run_id}." >> "$GITHUB_STEP_SUMMARY"
