@@ -92,9 +92,14 @@ jobs:
             3.13
             3.14
 
+      # The key is remote text, so keep it to one line of safe characters before
+      # it goes into GITHUB_ENV, and fail on an HTTP error instead of caching under it.
       - name: Set cache key for mne
         if: ${{ matrix.project == 'mne' }}
-        run: echo MNE_DATA_KEY=$(curl -L https://github.com/mne-tools/mne-testing-data/raw/refs/heads/master/version.txt) | tee -a "$GITHUB_ENV"
+        run: |
+          key="$(curl -fsSL https://github.com/mne-tools/mne-testing-data/raw/refs/heads/master/version.txt | head -n1 | tr -cd '[:alnum:]._-')"
+          [ -n "$key" ] || { echo "::error::mne-testing-data version.txt is empty"; exit 1; }
+          echo "MNE_DATA_KEY=$key" | tee -a "$GITHUB_ENV"
 
       - uses: actions/cache@v6
         if: ${{ env.USE_CACHE == 'true' && matrix.project == 'mne' }}
