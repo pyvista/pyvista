@@ -1767,6 +1767,20 @@ def test_convert_string_array_scalar_string():
     assert str(out) == 'hello'
 
 
+@pytest.mark.parametrize(
+    'array', [np.array([['a', 'b'], ['c', 'd']]), np.array([[b'a', b'b'], [b'c', b'd']])]
+)
+def test_convert_string_array_flattens_multidimensional(array):
+    # A vtkStringArray built here has a single component, so the second axis is not kept
+    vtk_arr = convert_string_array(array)
+    assert vtk_arr.GetNumberOfValues() == 4
+    assert vtk_arr.GetNumberOfComponents() == 1
+
+    out = convert_string_array(vtk_arr)
+    assert out.shape == (4,)
+    assert np.array_equal(out, ['a', 'b', 'c', 'd'])
+
+
 def test_convert_string_array_rejects_non_ascii():
     with pytest.raises(ValueError, match='non-ASCII'):
         convert_string_array(np.array(['hello', 'wörld']))
