@@ -171,6 +171,8 @@ autodoc_type_aliases = {
     'MeshValidationFields': 'pyvista.MeshValidationFields',
     'Chart': 'pyvista.Chart',
     'ColorLike': 'pyvista.ColorLike',
+    # generated from the example names; render it as a name, not 222 literals
+    'ExampleName': 'ExampleName',
     'ArrayLike': 'pyvista.ArrayLike',
     'VectorLike': 'pyvista.VectorLike',
     'MatrixLike': 'pyvista.MatrixLike',
@@ -269,6 +271,9 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*UnstructuredGrid'),
     (r'py:.*', '.*_TypeMultiBlockLeaf'),
     (r'py:.*', '.*DatasetObject'),
+    (r'py:.*', '.*_DatasetT_co'),
+    (r'py:.*', '.*_ReadersT_co'),
+    (r'py:.*', '.*ExampleName'),
     (r'py:.*', '.*_DatasetLoader'),
     (r'py:.*', '.*Grid'),
     (r'py:.*', '.*PointGrid'),
