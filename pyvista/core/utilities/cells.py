@@ -272,7 +272,7 @@ def _variable_size_cells(
     # Optimization: check the indices and build the array for all cells at once instead
     # of concatenating one cell at a time; each cell's size is inserted ahead of its ids
     sizes = np.array([cell.size for cell in per_cell], dtype=pv.ID_TYPE)
-    connectivity = (
+    connectivity: NumpyArray[int] = (
         np.concatenate(per_cell).astype(pv.ID_TYPE, copy=False)
         if per_cell
         else np.empty(0, dtype=pv.ID_TYPE)
