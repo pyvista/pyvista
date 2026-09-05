@@ -742,8 +742,8 @@ def convert_string_array(
 
     Notes
     -----
-    Note that this is terribly inefficient. If you have ideas on how
-    to make this faster, please consider opening a pull request.
+    Values cross between Python and VTK one at a time, so conversion cost grows
+    with the number of strings rather than with their total length.
 
     """
     arr = np.array(arr) if isinstance(arr, str) else arr
