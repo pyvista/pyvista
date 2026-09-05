@@ -40,7 +40,7 @@ class ScalarBars(_NoNewAttrMixin):
         """Remove all scalar bars and resets all scalar bar properties."""
         self._scalar_bar_ranges = {}
         self._scalar_bar_mappers = {}
-        self._resync_titles: set[str] = set()
+        self._resync_titles = set()
         self._scalar_bar_actors = {}
         self._scalar_bar_widgets = {}
 
