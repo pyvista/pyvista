@@ -10,11 +10,9 @@ import pyvista as pv
 from pyvista import _vtk
 from pyvista import examples
 
-
-def vtk_explicit_structured_grid() -> _vtk.vtkExplicitStructuredGrid:
-    """Return a valid grid typed as the VTK class, since VTK segfaults on an empty one."""
-    return examples.load_explicit_structured()
-
+SKIP_RUNTIME = {
+    'pv.wrap(_vtk.vtkExplicitStructuredGrid())': 'VTK segfaults on an empty grid',
+}
 
 assert_types(pv.wrap(_vtk.vtkPolyData()), pv.PolyData)
 assert_types(pv.wrap(pv.PolyData()), pv.PolyData)
@@ -22,7 +20,7 @@ assert_types(pv.wrap(pv.PolyData()), pv.PolyData)
 assert_types(pv.wrap(_vtk.vtkStructuredGrid()), pv.StructuredGrid)
 assert_types(pv.wrap(pv.StructuredGrid()), pv.StructuredGrid)
 
-assert_types(pv.wrap(vtk_explicit_structured_grid()), pv.ExplicitStructuredGrid)
+assert_types(pv.wrap(_vtk.vtkExplicitStructuredGrid()), pv.ExplicitStructuredGrid)
 assert_types(pv.wrap(examples.load_explicit_structured()), pv.ExplicitStructuredGrid)
 
 assert_types(pv.wrap(_vtk.vtkUnstructuredGrid()), pv.UnstructuredGrid)
