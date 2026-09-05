@@ -221,9 +221,13 @@ jobs:
           name: pyvista-notebooks
           path: .
 
+      # Pinned to a commit: cookiecutter runs the template's hooks, and this job
+      # later publishes the result with a write token.
       - name: Make Cookiecutter
+        env:
+          TEMPLATE_REF: 001da281b2e49efe97af86ab628176d47ce23e21
         run: |
-          cookiecutter -f --no-input --config-file ./doc/source/pyvista-binder-config.yml https://github.com/pyvista/cookiecutter-pyvista-binder.git;
+          cookiecutter -f --no-input --checkout "$TEMPLATE_REF" --config-file ./doc/source/pyvista-binder-config.yml https://github.com/pyvista/cookiecutter-pyvista-binder.git
           rm -rf ./pyvista-examples/notebooks/
           cp -r doc/source/examples/ ./pyvista-examples/
           ls -l ./pyvista-examples/
