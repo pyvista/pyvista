@@ -20,8 +20,8 @@ import numpy.typing as npt
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core._vtk_utilities import _MATRIX_GET_DATA_RETURNS_ELEMENTS
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
-from pyvista.core._vtk_utilities import vtk_version_info
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import MissingDataError
 
@@ -33,10 +33,6 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
     from pyvista.core.dataset import _ActiveArrayExistsInfoTuple
-
-
-# vtkMatrix4x4.GetData() returns a pointer rather than the 16 elements before VTK 9.4
-_MATRIX_GET_DATA_RETURNS_TUPLE = vtk_version_info >= (9, 4)
 
 
 class FieldAssociation(Enum):
@@ -806,7 +802,7 @@ def array_from_vtkmatrix(matrix: _vtk.vtkMatrix3x3 | _vtk.vtkMatrix4x4) -> Numpy
             f' got {type(matrix).__name__} instead.'
         )
         raise TypeError(msg)
-    if _MATRIX_GET_DATA_RETURNS_TUPLE:
+    if _MATRIX_GET_DATA_RETURNS_ELEMENTS:
         return np.array(matrix.GetData(), dtype=float).reshape(shape)
     array = np.zeros(shape)
     for i, j in itertools.product(range(shape[0]), range(shape[1])):

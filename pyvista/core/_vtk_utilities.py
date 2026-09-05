@@ -163,6 +163,9 @@ _SUPPORTS_FIXED_SIZE_STORAGE = vtk_version_info >= (9, 6, 2)
 # alive itself -- see `CellArray._set_data`.
 _SETDATA_TAKES_OWNERSHIP = vtk_version_info >= (9, 6)
 
+# From VTK 9.4, `vtkMatrix3x3/4x4.GetData` return their elements as a tuple, not a pointer.
+_MATRIX_GET_DATA_RETURNS_ELEMENTS = vtk_version_info >= (9, 4)
+
 # VTK 9.4 keeps the polyhedron faces and face locations in two cell arrays, reachable
 # from `GetPolyhedronFaces` and `GetPolyhedronFaceLocations`. Before that a polyhedron
 # is a single padded face stream with no offsets or connectivity of its own, so the
