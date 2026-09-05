@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import itertools
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import cast
@@ -1104,12 +1103,13 @@ def SolidSphereGeneric(  # noqa: PLR0917
         x, y, z = pv.spherical_to_cartesian(r, phi, theta)
         return np.vstack((x.ravel(), y.ravel(), z.ravel())).transpose()
 
-    points = []
-
+    # Optimization: points and cells are built with array arithmetic rather than per-cell
+    # loops. Block order is part of the output and must not change: origin, +axis, -axis,
+    # then the (r, phi, theta) grid with theta fastest; tetras, pyramids, wedges, hexahedra.
+    point_blocks: list[NumpyArray[float]] = []
     npoints_on_axis = 0
-
     if np.isclose(radius[0], 0.0, rtol=0.0, atol=tol_radius):
-        points.append([0.0, 0.0, 0.0])
+        point_blocks.append(np.zeros((1, 3)))
         include_origin = True
         nr = nr - 1
         radius = radius[1:]
@@ -1124,17 +1124,18 @@ def SolidSphereGeneric(  # noqa: PLR0917
         duplicate_theta = False
 
     if np.isclose(phi[0], 0.0, rtol=0.0, atol=tol_angle_):
-        points.extend(_spherical_to_cartesian(radius, 0.0, theta[0]))
+        point_blocks.append(_spherical_to_cartesian(radius, 0.0, theta[0]))
         positive_axis = True
         phi = phi[1:]
         nphi = nphi - 1
         npoints_on_axis += nr
     else:
         positive_axis = False
+
     npoints_on_pos_axis = npoints_on_axis
 
     if np.isclose(phi[-1], np.pi, rtol=0.0, atol=tol_angle_):
-        points.extend(_spherical_to_cartesian(radius, np.pi, theta[0]))
+        point_blocks.append(_spherical_to_cartesian(radius, np.pi, theta[0]))
         negative_axis = True
         phi = phi[:-1]
         nphi = nphi - 1
@@ -1143,68 +1144,68 @@ def SolidSphereGeneric(  # noqa: PLR0917
         negative_axis = False
 
     # rest of points with theta changing quickest
-    for ir, iphi in itertools.product(radius, phi):
-        points.extend(_spherical_to_cartesian(ir, iphi, theta))
+    point_blocks.append(_spherical_to_cartesian(radius, phi, theta))
+    points = np.vstack(point_blocks)
 
-    cells = []
-    celltypes = []
+    cell_blocks: list[NumpyArray[int]] = []
+    celltype_blocks: list[NumpyArray[np.uint8]] = []
 
-    def _index(ir: int, iphi: int, itheta: int) -> int:
+    def _index(
+        ir: int | NumpyArray[int], iphi: int | NumpyArray[int], itheta: int | NumpyArray[int]
+    ) -> int | NumpyArray[int]:
         """Index for points not on axis.
 
-        Values of ``ir`` and ``iphi`` here are relative to the first non-axis values.
+        Values of ``ir`` and ``iphi`` are relative to the first non-axis values; all
+        three accept scalars or index arrays that broadcast together.
         """
         if duplicate_theta:
             ntheta_ = ntheta - 1
             itheta = itheta % ntheta_
         else:
             ntheta_ = ntheta
-
         return npoints_on_axis + ir * nphi * ntheta_ + iphi * ntheta_ + itheta
 
+    def _add_cells(celltype: pv.CellType, *point_ids: int | NumpyArray[int]) -> None:
+        """Append one block of same-type cells, one row per broadcast element."""
+        ids = np.broadcast_arrays(*point_ids)
+        block = np.stack([np.full_like(ids[0], len(ids)), *ids], axis=-1)
+        cell_blocks.append(block.reshape(-1))
+        celltype_blocks.append(np.full(ids[0].size, celltype, dtype=np.uint8))
+
+    itheta = np.arange(ntheta - 1)
     if include_origin:
         # First make the tetras that form with origin and axis point
         #   origin is 0
         #   first axis point is 1
         #   other points at first phi position off axis
         if positive_axis:
-            for itheta in range(ntheta - 1):
-                cells.append(4)
-                cells.extend([0, 1, _index(0, 0, itheta), _index(0, 0, itheta + 1)])
-                celltypes.append(pv.CellType.TETRA)
+            _add_cells(pv.CellType.TETRA, 0, 1, _index(0, 0, itheta), _index(0, 0, itheta + 1))
 
         # Next tetras that form with origin and bottom axis point
         #   origin is 0
         #   axis point is first in negative dir
         #   other points at last phi position off axis
         if negative_axis:
-            for itheta in range(ntheta - 1):
-                cells.append(4)
-                cells.extend(
-                    [
-                        0,
-                        npoints_on_pos_axis,
-                        _index(0, nphi - 1, itheta + 1),
-                        _index(0, nphi - 1, itheta),
-                    ],
-                )
-                celltypes.append(pv.CellType.TETRA)
+            _add_cells(
+                pv.CellType.TETRA,
+                0,
+                npoints_on_pos_axis,
+                _index(0, nphi - 1, itheta + 1),
+                _index(0, nphi - 1, itheta),
+            )
 
         # Pyramids that form to origin but without an axis point
-        for iphi, itheta in itertools.product(range(nphi - 1), range(ntheta - 1)):
-            cells.append(5)
-            cells.extend(
-                [
-                    _index(0, iphi, itheta),
-                    _index(0, iphi, itheta + 1),
-                    _index(0, iphi + 1, itheta + 1),
-                    _index(0, iphi + 1, itheta),
-                    0,
-                ],
-            )
-            celltypes.append(pv.CellType.PYRAMID)
+        iphi_p, ith_p = np.meshgrid(np.arange(nphi - 1), itheta, indexing='ij')
+        _add_cells(
+            pv.CellType.PYRAMID,
+            _index(0, iphi_p, ith_p),
+            _index(0, iphi_p, ith_p + 1),
+            _index(0, iphi_p + 1, ith_p + 1),
+            _index(0, iphi_p + 1, ith_p),
+            0,
+        )
 
-    def _reorder_wedge(points: list[int]) -> list[int]:
+    def _reorder_wedge(points: list[int | NumpyArray[int]]) -> list[int | NumpyArray[int]]:
         """Swap points 1,2 and 4,5 for wedge cells."""
         points[1], points[2] = points[2], points[1]
         points[4], points[5] = points[5], points[4]
@@ -1213,67 +1214,57 @@ def SolidSphereGeneric(  # noqa: PLR0917
     # Wedges form between two r levels at first and last phi position
     #   At each r level, the triangle is formed with axis point,  two theta positions
     # First go upwards
+    ir_w, ith_w = np.meshgrid(np.arange(nr - 1), itheta, indexing='ij')
     if positive_axis:
-        for ir, itheta in itertools.product(range(nr - 1), range(ntheta - 1)):
-            axis0 = ir + 1 if include_origin else ir
-            axis1 = ir + 2 if include_origin else ir + 1
-
-            raw_points = [
-                axis0,
-                _index(ir, 0, itheta),
-                _index(ir, 0, itheta + 1),
-                axis1,
-                _index(ir + 1, 0, itheta),
-                _index(ir + 1, 0, itheta + 1),
-            ]
-            if pv.vtk_version_info < (9, 7):
-                raw_points = _reorder_wedge(raw_points)
-
-            cells.append(6)
-            cells.extend(raw_points)
-            celltypes.append(pv.CellType.WEDGE)
+        axis0 = ir_w + 1 if include_origin else ir_w
+        raw_points = [
+            axis0,
+            _index(ir_w, 0, ith_w),
+            _index(ir_w, 0, ith_w + 1),
+            axis0 + 1,
+            _index(ir_w + 1, 0, ith_w),
+            _index(ir_w + 1, 0, ith_w + 1),
+        ]
+        if pv.vtk_version_info < (9, 7):
+            raw_points = _reorder_wedge(raw_points)
+        _add_cells(pv.CellType.WEDGE, *raw_points)
 
     # now go downwards
     if negative_axis:
-        for ir, itheta in itertools.product(range(nr - 1), range(ntheta - 1)):
-            axis0 = npoints_on_pos_axis + ir
-            axis1 = npoints_on_pos_axis + ir + 1
-
-            raw_points = [
-                axis0,
-                _index(ir, nphi - 1, itheta + 1),
-                _index(ir, nphi - 1, itheta),
-                axis1,
-                _index(ir + 1, nphi - 1, itheta + 1),
-                _index(ir + 1, nphi - 1, itheta),
-            ]
-            if pv.vtk_version_info < (9, 7):
-                raw_points = _reorder_wedge(raw_points)
-
-            cells.append(6)
-            cells.extend(raw_points)
-            celltypes.append(pv.CellType.WEDGE)
+        axis0 = npoints_on_pos_axis + ir_w
+        raw_points = [
+            axis0,
+            _index(ir_w, nphi - 1, ith_w + 1),
+            _index(ir_w, nphi - 1, ith_w),
+            axis0 + 1,
+            _index(ir_w + 1, nphi - 1, ith_w + 1),
+            _index(ir_w + 1, nphi - 1, ith_w),
+        ]
+        if pv.vtk_version_info < (9, 7):
+            raw_points = _reorder_wedge(raw_points)
+        _add_cells(pv.CellType.WEDGE, *raw_points)
 
     # Form Hexahedra
     # Hexahedra form between two r levels and two phi levels and two theta levels
     #   Order by r levels
-    for ir, iphi, itheta in itertools.product(range(nr - 1), range(nphi - 1), range(ntheta - 1)):
-        cells.append(8)
-        cells.extend(
-            [
-                _index(ir, iphi, itheta),
-                _index(ir, iphi + 1, itheta),
-                _index(ir, iphi + 1, itheta + 1),
-                _index(ir, iphi, itheta + 1),
-                _index(ir + 1, iphi, itheta),
-                _index(ir + 1, iphi + 1, itheta),
-                _index(ir + 1, iphi + 1, itheta + 1),
-                _index(ir + 1, iphi, itheta + 1),
-            ],
-        )
-        celltypes.append(pv.CellType.HEXAHEDRON)
+    ir_h, iphi_h, ith_h = np.meshgrid(
+        np.arange(nr - 1), np.arange(nphi - 1), itheta, indexing='ij'
+    )
+    _add_cells(
+        pv.CellType.HEXAHEDRON,
+        _index(ir_h, iphi_h, ith_h),
+        _index(ir_h, iphi_h + 1, ith_h),
+        _index(ir_h, iphi_h + 1, ith_h + 1),
+        _index(ir_h, iphi_h, ith_h + 1),
+        _index(ir_h + 1, iphi_h, ith_h),
+        _index(ir_h + 1, iphi_h + 1, ith_h),
+        _index(ir_h + 1, iphi_h + 1, ith_h + 1),
+        _index(ir_h + 1, iphi_h, ith_h + 1),
+    )
 
-    mesh = pv.UnstructuredGrid(cells, celltypes, points)
+    mesh = pv.UnstructuredGrid(
+        np.concatenate(cell_blocks), np.concatenate(celltype_blocks), points
+    )
     mesh.rotate_y(90, inplace=True)
     _translate_and_orient(mesh, center, direction)
     return mesh
