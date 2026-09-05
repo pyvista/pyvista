@@ -2454,6 +2454,12 @@ def test_extract_cells_match_input_type_polydata(sphere):
     assert empty.n_arrays == 0
 
 
+def test_extract_cells_column_vector_ind(hexbeam):
+    mask = np.arange(hexbeam.n_cells) < 3
+    assert hexbeam.extract_cells(np.argwhere(mask)) == hexbeam.extract_cells(mask)
+    assert hexbeam.remove_cells(np.argwhere(mask)) == hexbeam.remove_cells(mask)
+
+
 def test_extract_points_invert(sphere):
     mask = sphere.points[:, 2] > 0
     kwargs = dict(adjacent_cells=False, pass_point_ids=False, pass_cell_ids=False)
@@ -2543,15 +2549,16 @@ def test_remove_cells_inplace(hexbeam, sphere, struct_grid):
     # Cells cannot be removed from a structured grid in-place
     n_cells = struct_grid.n_cells
     assert isinstance(struct_grid.remove_cells([0]), pv.UnstructuredGrid)
-    with pytest.raises(TypeError, match='must be compatible with the one being overwritten'):
+    match = 'Cannot update StructuredGrid in-place, the output is UnstructuredGrid.'
+    with pytest.raises(TypeError, match=match):
         struct_grid.remove_cells([0], inplace=True)
     assert struct_grid.n_cells == n_cells
 
 
 @pytest.mark.parametrize('mode', ['any', 'all'])
 def test_remove_points(datasets, mode):
-    ind = [0, 1, 2]
     for dataset in datasets:
+        ind = dataset.get_cell(0).point_ids if dataset.n_cells else [0, 1, 2]
         removed = dataset.remove_points(
             ind=ind, mode=mode, pass_point_ids=True, pass_cell_ids=True
         )
@@ -2572,6 +2579,7 @@ def test_remove_points(datasets, mode):
         if mode == 'any':
             assert not np.isin(ind, removed['vtkOriginalPointIds']).any()
         if dataset.n_cells:
+            assert removed.n_cells < dataset.n_cells
             assert removed.n_points == removed.remove_unused_points().n_points
 
         # No id arrays by default
@@ -2601,8 +2609,24 @@ def test_remove_points_invert_inplace(hexbeam, struct_grid):
     assert hexbeam.n_points < n_points
 
     assert isinstance(struct_grid.remove_points([0]), pv.UnstructuredGrid)
-    with pytest.raises(TypeError, match='must be compatible with the one being overwritten'):
+    match = 'Cannot update StructuredGrid in-place, the output is UnstructuredGrid.'
+    with pytest.raises(TypeError, match=match):
         struct_grid.remove_points([0], inplace=True)
+
+
+@pytest.mark.parametrize('mode', ['any', 'all'])
+def test_remove_points_unused_points(mode):
+    points = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [2.0, 0.0, 0.0], [3.0, 0.0, 0.0], [9.0, 9.0, 9.0]]
+    lines = pv.PolyData(points, lines=[2, 0, 1, 2, 1, 2, 2, 2, 3])
+    assert lines.n_points == 5
+
+    # Point 4 is not used by any cell
+    removed = lines.remove_points(ind=4, mode=mode, pass_point_ids=True)
+    assert removed['vtkOriginalPointIds'].tolist() == [0, 1, 2, 3]
+    # Point 3 is only removed when its cell is removed too
+    removed = lines.remove_points(ind=[4, 3], mode=mode, pass_point_ids=True)
+    expected = [0, 1, 2] if mode == 'any' else [0, 1, 2, 3]
+    assert removed['vtkOriginalPointIds'].tolist() == expected
 
 
 def test_remove_points_invalid_mode(hexbeam):

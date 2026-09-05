@@ -4631,6 +4631,9 @@ class DataSetFilters(DataObjectFilters):
     ):
         r"""Return a subset of the grid.
 
+        .. versionchanged:: 0.49
+            Negative and out-of-range indices raise ``IndexError``.
+
         Parameters
         ----------
         ind : int | VectorLike[int] | VectorLike[bool]
@@ -4658,8 +4661,7 @@ class DataSetFilters(DataObjectFilters):
         match_input_type : bool, default: False
             If ``True``, return :class:`~pyvista.PolyData` when the input is ``PolyData``.
             Otherwise, an :class:`~pyvista.UnstructuredGrid` is returned. This has no
-            effect on other input types. The current default is ``False``, but this
-            will change to ``True`` in a future version.
+            effect on other input types.
 
             .. versionadded:: 0.49
 
@@ -4669,9 +4671,8 @@ class DataSetFilters(DataObjectFilters):
 
         Returns
         -------
-        pyvista.UnstructuredGrid | pyvista.PolyData | pyvista.PointSet
-            Subselected cells. A :class:`~pyvista.PointSet` input always returns a
-            ``PointSet``, and ``PolyData`` is only returned when ``match_input_type``
+        pyvista.UnstructuredGrid | pyvista.PolyData
+            Subselected cells. ``PolyData`` is only returned when ``match_input_type``
             is ``True``.
 
         Examples
@@ -4746,6 +4747,9 @@ class DataSetFilters(DataObjectFilters):
     ):
         r"""Return a subset of the grid (with cells) that contains any of the given point indices.
 
+        .. versionchanged:: 0.49
+            Negative and out-of-range indices raise ``IndexError``.
+
         Parameters
         ----------
         ind : int | VectorLike[int] | VectorLike[bool]
@@ -4784,8 +4788,7 @@ class DataSetFilters(DataObjectFilters):
         match_input_type : bool, default: False
             If ``True``, return :class:`~pyvista.PolyData` when the input is ``PolyData``.
             Otherwise, an :class:`~pyvista.UnstructuredGrid` is returned. This has no
-            effect on other input types. The current default is ``False``, but this
-            will change to ``True`` in a future version.
+            effect on other input types.
 
             .. versionadded:: 0.49
 
@@ -4837,8 +4840,13 @@ class DataSetFilters(DataObjectFilters):
         extract_sel.SetInputData(0, self.copy(deep=False))
         extract_sel.SetInputData(1, selection)
         _update_alg(extract_sel, progress_bar=progress_bar, message='Extracting Points')
+        output = _get_output(extract_sel)
+        if not pass_point_ids:
+            output.point_data.pop('vtkOriginalPointIds', None)
+        if not pass_cell_ids:
+            output.cell_data.pop('vtkOriginalCellIds', None)
         return _finish_extraction(
-            _get_output(extract_sel),
+            output,
             self,
             match_input_type=match_input_type,
             pass_point_ids=pass_point_ids,
@@ -4863,9 +4871,10 @@ class DataSetFilters(DataObjectFilters):
         :class:`~pyvista.UnstructuredGrid` otherwise.
 
         .. versionchanged:: 0.49
-            This filter is available for all datasets, unused points are removed from
-            the output, and the ``invert``, ``pass_point_ids``, ``pass_cell_ids``, and
-            ``progress_bar`` keywords were added.
+            This filter is available for all datasets, including
+            :class:`~pyvista.StructuredGrid`, and the ``invert``, ``pass_point_ids``,
+            ``pass_cell_ids``, and ``progress_bar`` keywords were added. Negative and
+            out-of-range indices raise ``IndexError``.
 
         Parameters
         ----------
@@ -4928,10 +4937,7 @@ class DataSetFilters(DataObjectFilters):
             progress_bar=progress_bar,
             match_input_type=True,
         )
-        if inplace:
-            self.copy_from(output, deep=False)
-            return self
-        return output
+        return _apply_inplace(self, output, inplace=inplace)
 
     def remove_points(  # type: ignore[misc]
         self: _DataSetType,
@@ -5026,10 +5032,12 @@ class DataSetFilters(DataObjectFilters):
             progress_bar=progress_bar,
             match_input_type=True,
         )
-        if inplace:
-            self.copy_from(output, deep=False)
-            return self
-        return output
+        if output.n_cells == self.n_cells and isinstance(
+            output, (pv.PolyData, pv.UnstructuredGrid)
+        ):
+            # Every cell survived, so the input was passed through with its unused points
+            output = output.remove_unused_points()
+        return _apply_inplace(self, output, inplace=inplace)
 
     def split_values(  # type: ignore[misc]
         self: _DataSetType,
@@ -5355,8 +5363,7 @@ class DataSetFilters(DataObjectFilters):
         match_input_type : bool, default: False
             If ``True``, return :class:`~pyvista.PolyData` when the input is ``PolyData``.
             Otherwise, an :class:`~pyvista.UnstructuredGrid` is returned. This has no
-            effect on other input types. The current default is ``False``, but this
-            will change to ``True`` in a future version.
+            effect on other input types.
 
             .. versionadded:: 0.49
 
@@ -8747,7 +8754,13 @@ def _validate_extraction_ids(
     invert: bool,
 ) -> NumpyArray[bool]:
     """Return a boolean selection mask from integer ids or a boolean mask."""
-    ids = _validation.validate_arrayN(ind, must_be_real=False, name='indices')
+    ids = _validation.validate_array(
+        ind,
+        must_have_shape=[(), -1, (1, -1), (-1, 1)],
+        reshape_to=-1,
+        must_be_real=False,
+        name='indices',
+    )
     if ids.dtype == bool:
         if ids.size != n_items:
             msg = (
@@ -8771,6 +8784,19 @@ def _validate_extraction_ids(
     return np.invert(mask) if invert else mask
 
 
+def _apply_inplace(mesh: DataSet, output: DataSet, *, inplace: bool) -> DataSet:
+    """Return the output, or overwrite the input mesh with it in-place."""
+    if not inplace:
+        return output
+    if not isinstance(mesh, type(output)):
+        msg = (
+            f'Cannot update {type(mesh).__name__} in-place, the output is {type(output).__name__}.'
+        )
+        raise TypeError(msg)
+    mesh.copy_from(output, deep=False)
+    return mesh
+
+
 def _finish_extraction(
     output: DataSet,
     input_mesh: DataSet,
@@ -8779,18 +8805,15 @@ def _finish_extraction(
     pass_point_ids: bool,
     pass_cell_ids: bool,
 ) -> DataSet:
-    """Cast an extracted mesh to the input type and normalize its original id arrays."""
+    """Cast an extracted mesh to the input type and keep its original id arrays."""
     if match_input_type:
         output = cast('DataSet', _cast_output_to_match_input_type(output, input_mesh))
-    for array_name, data, keep in (
-        ('vtkOriginalPointIds', output.point_data, pass_point_ids),
-        ('vtkOriginalCellIds', output.cell_data, pass_cell_ids),
-    ):
-        if not keep:
-            data.pop(array_name, None)
-        elif output.is_empty and array_name not in data:
-            # Always include the arrays, even when nothing is extracted
-            data[array_name] = np.array((), dtype=int)
+    if output.is_empty:
+        # Always include the arrays, even when nothing is extracted
+        if pass_point_ids and 'vtkOriginalPointIds' not in output.point_data:
+            output.point_data['vtkOriginalPointIds'] = np.array((), dtype=int)
+        if pass_cell_ids and 'vtkOriginalCellIds' not in output.cell_data:
+            output.cell_data['vtkOriginalCellIds'] = np.array((), dtype=int)
     return output
 
 
