@@ -149,10 +149,13 @@ jobs:
       # headings that must be flagged, and fails if any of them stops being.
       - name: Install Vale
         run: |
-          curl -sSfL https://github.com/errata-ai/vale/releases/download/v${VALE_VERSION}/vale_${VALE_VERSION}_Linux_64-bit.tar.gz \
-            | sudo tar -xz -C /usr/local/bin vale
+          curl -sSfL "https://github.com/errata-ai/vale/releases/download/v${VALE_VERSION}/vale_${VALE_VERSION}_Linux_64-bit.tar.gz" -o vale.tar.gz
+          echo "${VALE_SHA256}  vale.tar.gz" | sha256sum --check
+          sudo tar -xz -C /usr/local/bin -f vale.tar.gz vale
         env:
           VALE_VERSION: 3.18.0
+          # From vale_<version>_checksums.txt on the release page; update both together.
+          VALE_SHA256: a6f71a75a12fe689345b754f2412b90367fe33648abb7d200fa19eaadc2dbf6d
 
       - name: "Check Vale still catches known-bad headings"
         run: python3 tests/doc/vale/check_expected_failures.py
