@@ -7562,6 +7562,10 @@ class DataSetFilters(DataObjectFilters):
         output_mesh = self if inplace else self.copy()
         data = output_mesh.point_data if field == FieldAssociation.POINT else output_mesh.cell_data
         array = data[name]
+        colors_out = np.full(
+            (len(array), num_components), default_channel_value, dtype=color_dtype
+        )
+        mapping = {}
 
         if isinstance(colors, dict):
             if coloring_mode is not None:
@@ -7571,7 +7575,12 @@ class DataSetFilters(DataObjectFilters):
                 cast('list[ColorLike]', list(colors.values()))
             )
             color_rgb_sequence = [getattr(c, color_type) for c in colors_]
-            items = zip(colors.keys(), color_rgb_sequence, strict=True)
+            for label, color in zip(colors.keys(), color_rgb_sequence, strict=True):
+                mask = array == label
+                if np.any(mask):
+                    colors_out[mask, :] = color
+                    if return_dict:
+                        mapping[label] = color
 
         else:
             if array.ndim > 1:
@@ -7613,16 +7622,18 @@ class DataSetFilters(DataObjectFilters):
                     color_rgb_sequence = color_rgb_sequence * len(array)
 
             n_colors = len(color_rgb_sequence)
+            index_like = np.all(_is_index_like(array, max_value=n_colors))
             if coloring_mode is None:
-                coloring_mode = (
-                    'index' if np.all(_is_index_like(array, max_value=n_colors)) else 'cycle'
-                )
+                coloring_mode = 'index' if index_like else 'cycle'
 
             _validation.check_contains(
                 ['index', 'cycle'], must_contain=coloring_mode, name='coloring_mode'
             )
+            # Optimization: color every point with one array lookup instead of scanning the
+            # array once per color
+            table = np.asarray(color_rgb_sequence, dtype=color_dtype)
             if coloring_mode == 'index':
-                if not np.all(_is_index_like(array, max_value=n_colors)):
+                if not index_like:
                     msg = (
                         f"Index coloring mode cannot be used with scalars '{name}'. "
                         f'Scalars must be positive integers \n'
@@ -7630,35 +7641,40 @@ class DataSetFilters(DataObjectFilters):
                         f'than the number of colors ({n_colors}).'
                     )
                     raise ValueError(msg)
-                keys: Iterable[float]
-                values: Iterable[Any]
-
-                keys_ = np.arange(n_colors)
-                values_ = color_rgb_sequence
+                keys = np.arange(n_colors)
                 if negative_indexing:
-                    keys_ = np.append(keys_, keys_[::-1] - len(keys_))
-                    values_.extend(values_[::-1])
-                keys = keys_
-                values = values_
+                    keys = np.append(keys, keys[::-1] - len(keys))
+                indices = array.astype(int)
+                if return_dict:
+                    present = set(np.unique(indices).tolist())
+                    mapping = {
+                        label: color_rgb_sequence[label] for label in keys if label in present
+                    }
+                # Negative labels index the sequence from the end like the negative keys, and
+                # the appended default row is what a label equal to ``n_colors`` gets: that
+                # label passes the check above but has no color
+                indices[indices < 0] += n_colors
+                colors_out = np.vstack((table, colors_out[:1]))[indices]
             elif coloring_mode == 'cycle':
                 if negative_indexing:
                     msg = "Negative indexing is not supported with 'cycle' mode enabled."
                     raise ValueError(msg)
-                keys = np.unique(array)
-                values = itertools.cycle(color_rgb_sequence)
-
-            items = zip(keys, values, strict=False)
-
-        colors_out = np.full(
-            (len(array), num_components), default_channel_value, dtype=color_dtype
-        )
-        mapping = {}
-        for label, color in items:
-            mask = array == label
-            if np.any(mask):
-                colors_out[mask, :] = color
+                labels = np.unique(array)
+                positions = np.searchsorted(labels, array) % n_colors
+                # NaN never compares equal to a label, so NaN points keep the default color
+                has_color = ~np.isnan(array)
+                colors_out[has_color] = table[positions[has_color]]
                 if return_dict:
-                    mapping[label] = color
+                    mapping = {
+                        label: color
+                        for label, color, is_nan in zip(
+                            labels,
+                            itertools.cycle(color_rgb_sequence),
+                            np.isnan(labels),
+                            strict=False,
+                        )
+                        if not is_nan
+                    }
 
         colors_name = name + scalars_suffix if output_scalars is None else output_scalars
         data[colors_name] = colors_out
