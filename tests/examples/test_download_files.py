@@ -58,7 +58,7 @@ def _data_cache_populated():
 @pytest.fixture(scope='module', autouse=True)
 def check_cache_on_ci():
     """Assert the local data cache is used on CI whenever it is populated."""
-    if not (_on_ci() and _data_cache_populated()):
+    if not (_on_ci() and _data_cache_populated()):  # pragma: no branch -- returns early off CI
         return
 
     assert examples.downloads._FILE_CACHE, (
@@ -72,7 +72,7 @@ def requests_fixture(mocker: pytest_mock.MockerFixture):
     """Mock the requests.get method to make sure HTTP requests are not emitted on CI,
     since can cause flakiness dut to GH rate limits.
     """
-    if not (_on_ci() and _data_cache_populated()):
+    if not (_on_ci() and _data_cache_populated()):  # pragma: no branch -- skips the spy off CI
         yield
         return
 
