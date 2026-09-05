@@ -129,7 +129,7 @@ class Example(Generic[_DatasetT_co, _ReadersT_co]):
 
         Returns
         -------
-        pyvista.DataSet | pyvista.MultiBlock | pyvista.PartitionedDataSet | pyvista.Texture | numpy.ndarray
+        pyvista.DataObject | numpy.ndarray
             The dataset the example's own :attr:`function` returns, read from
             :attr:`paths`.
 
