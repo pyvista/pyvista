@@ -281,14 +281,14 @@ def test_uri_downloads_then_reads_builtin_ext(tmp_path):
         's3://bucket/evil.pkl',
     ],
 )
-def test_remote_pickle_uri_refused(uri):
+def test_remote_pickle_uri_refused(uri, tmp_path):
     """Remote .pkl/.pickle URIs must be refused before download to prevent RCE."""
     downloaded = False
 
     def fake_retrieve(*_args, **_kwargs):
         nonlocal downloaded
         downloaded = True
-        return '/tmp/should-not-be-used'
+        return str(tmp_path / 'should-not-be-used')
 
     with patch('pooch.retrieve', side_effect=fake_retrieve):
         with pytest.raises(
