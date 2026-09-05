@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 import weakref
 from xml.etree import ElementTree as ET
 
@@ -15,6 +15,9 @@ from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from .helpers import view_vectors
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
