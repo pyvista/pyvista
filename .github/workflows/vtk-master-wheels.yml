@@ -202,6 +202,8 @@ jobs:
             -DVTK_BUILD_TESTING=OFF
             -DVTK_BUILD_DOCUMENTATION=OFF
             -DVTK_BUILD_EXAMPLES=OFF
+            # Off in VTK's own wheel builds too; a precompiled header defeats the compiler cache.
+            -DVTK_USE_PCH=OFF
             -DVTK_VERSION_SUFFIX=dev0+g${VTK_NIGHTLY_SHA:0:8}
             -DPython3_EXECUTABLE=$(python -c "import sys; print(sys.executable)")
             -DCMAKE_C_COMPILER_LAUNCHER=$COMPILER_LAUNCHER
