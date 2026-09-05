@@ -988,6 +988,24 @@ def test_plot_show_bounds_scaled():
     pl.show()
 
 
+def test_plot_show_bounds_scaled_subplots():
+    """The reproducer from https://github.com/pyvista/pyvista/issues/699."""
+    xy_data = np.array([[0, 2], [10, 5], [20, 3], [30, -1], [40, 0], [50, 2]])
+    points = np.concatenate((xy_data, np.zeros((xy_data.shape[0], 1))), axis=1)
+    pl = pv.Plotter(shape=(2, 1))
+    pl.subplot(0, 0)
+    pl.add_mesh(pv.lines_from_points(points))
+    pl.set_scale(yscale=10)
+    pl.show_bounds(show_zaxis=False, show_zlabels=False)
+    pl.view_xy()
+    pl.subplot(1, 0)
+    pl.add_mesh(pv.lines_from_points(points))
+    pl.set_scale(yscale=10)
+    pl.show_bounds(show_zaxis=False, show_zlabels=False)
+    pl.view_xy()
+    pl.show()
+
+
 @pytest.mark.parametrize('use_3d_text', [True, False])
 @pytest.mark.parametrize('font_size', [12, 24])
 def test_plot_show_grid_font_size(sphere, use_3d_text, font_size):
