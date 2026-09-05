@@ -283,7 +283,7 @@ def CylinderStructured(  # noqa: PLR0917
     dz = height / (z_resolution - 1)
     zz = np.full((X.size, z_resolution), dz)
     zz *= np.arange(z_resolution)
-    zz = zz.ravel(order='f')  # type: ignore[arg-type]
+    zz = zz.ravel(order='f')  # type: ignore[arg-type, assignment]
 
     # Create the grid
     grid = pv.StructuredGrid()

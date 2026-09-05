@@ -840,10 +840,10 @@ class ImageDataFilters(DataSetFilters):
             default_background = 0.0
             background = default_background if background_value is None else background_value
             if num_components > 1:
-                background = _validation.validate_arrayN(
+                background_array = _validation.validate_arrayN(
                     background, name='background_value', must_have_length=(1, num_components)
                 )
-                mask_array = np.any(array != background, axis=1)
+                mask_array = np.any(array != background_array, axis=1)
             else:
                 background = _validation.validate_number(background, name='background_value')
                 mask_array = array != background
@@ -4136,7 +4136,9 @@ class ImageDataFilters(DataSetFilters):
         """
         dimensions = np.asarray(self.dimensions)  # type: ignore[attr-defined]
         # Build an array of the operation size
-        operation_size = _validation.validate_array3(operation_size, reshape=True, broadcast=True)
+        operation_size = _validation.validate_array3(
+            operation_size, reshape=True, broadcast=True, dtype_out=int
+        )
 
         if not isinstance(operation_mask, str) and operation_mask not in [0, 1, 2, 3]:
             # Build a bool array of the mask
@@ -4146,6 +4148,7 @@ class ImageDataFilters(DataSetFilters):
                 broadcast=False,
                 must_have_dtype=bool,
                 must_be_real=False,
+                dtype_out=bool,
             )
 
         elif operation_mask == 'preserve':

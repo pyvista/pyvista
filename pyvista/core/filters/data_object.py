@@ -609,7 +609,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                             cell_types.remove(ctype)
                     return _MeshValidator._invalid_cell_msg(
                         name,
-                        tuple(arrays),  # type: ignore[arg-type]
+                        tuple(arrays),
                         cell_type=cell_types,
                     )
                 else:
@@ -2854,19 +2854,20 @@ class DataObjectFilters:
             target_center = np.mean(target_bounds3x2, axis=1)
 
         else:
-            ensure_positive = dict(must_be_in_range=[0, np.inf], strict_lower_bound=True)
             if bounds_size is not None:
                 target_size = _validation.validate_array3(
                     bounds_size,
                     broadcast=True,
                     name='bounds_size',
-                    **ensure_positive,  # type: ignore[arg-type]
+                    must_be_in_range=[0, np.inf],
+                    strict_lower_bound=True,
                 )
             else:
                 valid_length = _validation.validate_number(
                     cast('float', length),
                     name='length',
-                    **ensure_positive,  # type: ignore[arg-type]
+                    must_be_in_range=[0, np.inf],
+                    strict_lower_bound=True,
                 )
                 target_size = np.array(self.bounds_size) * valid_length / self.length
             current_center = np.array(self.center)
@@ -4562,12 +4563,12 @@ class DataObjectFilters:
             low_point_ = list(self.center)
             low_point_[2] = self.bounds.z_min
         else:
-            low_point_ = _validation.validate_array3(low_point)
+            low_point_ = _validation.validate_array3(low_point, dtype_out=float, to_list=True)
         if high_point is None:
             high_point_ = list(self.center)
             high_point_[2] = self.bounds.z_max
         else:
-            high_point_ = _validation.validate_array3(high_point)
+            high_point_ = _validation.validate_array3(high_point, dtype_out=float, to_list=True)
         # Fix scalar_range:
         if scalar_range is None:
             scalar_range_ = (low_point_[2], high_point_[2])

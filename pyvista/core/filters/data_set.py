@@ -4693,7 +4693,7 @@ class DataSetFilters(DataObjectFilters):
                 mask = np.ones(self.n_cells, bool)
                 mask[ind] = False
                 indices = mask
-        _, indices = numpy_to_idarr(indices, return_ind=True)  # type: ignore[misc]
+        _, indices = numpy_to_idarr(indices, return_ind=True)  # type: ignore[misc, arg-type]
 
         # Extract using a shallow copy to avoid the side effect of creating the
         # vtkOriginalPointIds and vtkOriginalCellIds arrays in the input
@@ -4708,7 +4708,7 @@ class DataSetFilters(DataObjectFilters):
 
         extract = _vtk.vtkExtractCells()
         extract.SetInputData(ds_copy)
-        extract.SetCellIds(indices, indices.size)
+        extract.SetCellIds(indices, indices.size)  # type: ignore[arg-type]
         extract.SetAssumeSortedAndUniqueIds(assume_sorted_and_unique)
         # We set the arrays manually earlier
         extract.SetPassThroughCellIds(False)
@@ -8105,7 +8105,7 @@ class DataSetFilters(DataObjectFilters):
             dimensions_ = _validation.validate_array3(
                 dimensions, must_be_integer=True, dtype_out=int, name='dimensions'
             )
-            dimensions = cast('NumpyArray[int]', dimensions_) - 1
+            dimensions = dimensions_ - 1
 
         binary_mask = self.voxelize_binary_mask(
             background_value=background_value,

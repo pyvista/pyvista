@@ -11,6 +11,7 @@ from typing import Any
 from typing import Literal
 from typing import NamedTuple
 from typing import TypedDict
+from typing import cast
 from typing import get_args
 
 import numpy as np
@@ -934,7 +935,7 @@ class AxesAssembly(_XYZAssembly):
         value = self._shaft_and_tip_geometry_source.shaft_length if position is None else position
         if self.scale_mode == 'anti_distortion':
             factor = self._shaft_and_tip_geometry_source._anti_distortion_factor
-            value += self.tip_length * (1 - factor)
+            value = cast('tuple[float, float, float]', value + self.tip_length * (1 - factor))
         return value
 
     @label_position.setter

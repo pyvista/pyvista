@@ -430,7 +430,7 @@ class Label(_Prop3DMixin, Text):
 
     @_label_position.setter
     def _label_position(self, position: VectorLike[float]):
-        valid_position = _validation.validate_array3(position)
+        valid_position = _validation.validate_array3(position, dtype_out=float, to_tuple=True)
         self.GetPositionCoordinate().SetValue(valid_position)
 
     @property
