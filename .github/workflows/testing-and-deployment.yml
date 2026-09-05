@@ -79,6 +79,10 @@ jobs:
     # Job names are required status checks on main, so they have to keep
     # rendering exactly as `MacOS Unit Testing (3.10)`.
     name: MacOS Unit Testing (${{ matrix.python-version }})
+    # The merge queue runs this suite against the exact tree that lands, and
+    # nothing downstream of a push to `main` consumes its output, so it is only
+    # repeated for a tag, where `release` gates on it.
+    if: github.event_name != 'push' || startsWith(github.ref, 'refs/tags/')
     runs-on: macos-latest
     # macOS runner minutes bill at ten times the Linux rate, so a hung job is
     # expensive at the 360-minute default. The suite finishes in ~15.
@@ -135,6 +139,10 @@ jobs:
 
   Linux:
     name: Linux Unit Testing (${{ matrix.python-version }}, ${{ matrix.vtk-version }}, ${{ matrix.numpy-version }})
+    # Repeated for a tag only, like the other two. The merge queue's own commit
+    # is the one that lands, so the coverage it uploads is already Codecov's
+    # report for `main` and the push has nothing left to add.
+    if: github.event_name != 'push' || startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-22.04
     needs: cache-github-hosted
     strategy:
@@ -300,6 +308,8 @@ jobs:
 
   windows:
     name: Windows Unit Testing
+    # Repeated for a tag only, for the same reason as the macOS suite.
+    if: github.event_name != 'push' || startsWith(github.ref, 'refs/tags/')
     runs-on: windows-latest
     timeout-minutes: 80
     needs: cache-github-hosted

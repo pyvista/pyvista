@@ -165,14 +165,17 @@ jobs:
     # Run on both success and failure — the whole point of the image report is
     # to show what failed. Build-stage failures that produced no test artifact
     # are handled gracefully below via continue-on-error and the has_report
-    # check. Also runs on pushes to main so the report site tracks main.
+    # check. The report site tracks `main` through the merge queue run, whose
+    # commit is the one that lands, and which still holds the images after a
+    # merge skips the rebuild.
     if: >-
       (github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.conclusion == 'failure') &&
       github.event.workflow_run.name == 'Build Documentation' &&
       (github.event.workflow_run.event == 'pull_request' ||
-       (github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main'))
+       (github.event.workflow_run.event == 'merge_group' &&
+        startsWith(github.event.workflow_run.head_branch, 'gh-readonly-queue/main/')))
     environment:
-      name: ${{ github.event.workflow_run.event == 'push' && 'docs-main' || (needs.setup.outputs.is_fork == 'true' && 'fork-deploys' || 'internal-deploys') }}
+      name: ${{ github.event.workflow_run.event == 'merge_group' && 'docs-main' || (needs.setup.outputs.is_fork == 'true' && 'fork-deploys' || 'internal-deploys') }}
     steps:
       - name: Get app installation token
         id: app-token
@@ -224,9 +227,9 @@ jobs:
         uses: nwtgck/actions-netlify@d22a32a27c918fe470bbc562e984f80ec48c2668
         with:
           publish-dir: _doc_image_report
-          production-deploy: ${{ github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main' }}
+          production-deploy: ${{ github.event.workflow_run.event == 'merge_group' }}
           github-token: ${{ steps.app-token.outputs.token }}
-          deploy-message: "${{ needs.setup.outputs.pr_number != '' && format('Doc image report for PR #{0}', needs.setup.outputs.pr_number) || format('Doc image report for {0}', github.event.workflow_run.head_branch) }}"
+          deploy-message: "${{ needs.setup.outputs.pr_number != '' && format('Doc image report for PR #{0}', needs.setup.outputs.pr_number) || format('Doc image report for {0}', github.event.workflow_run.head_sha) }}"
           enable-pull-request-comment: false
           enable-commit-comment: false
           enable-commit-status: false
@@ -264,15 +267,17 @@ jobs:
     runs-on: ubuntu-22.04
     needs: setup
     # Run on both success and failure — the whole point of the image report is
-    # to show what failed. Also runs on pushes to main so the report site
-    # tracks main.
+    # to show what failed. The report site tracks `main` through the merge queue
+    # run, whose commit is the one that lands, and which runs the full matrix a
+    # merge no longer repeats.
     if: >-
       (github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.conclusion == 'failure') &&
       github.event.workflow_run.name == 'Unit Testing and Deployment' &&
       (github.event.workflow_run.event == 'pull_request' ||
-       (github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main'))
+       (github.event.workflow_run.event == 'merge_group' &&
+        startsWith(github.event.workflow_run.head_branch, 'gh-readonly-queue/main/')))
     environment:
-      name: ${{ github.event.workflow_run.event == 'push' && 'docs-main' || (needs.setup.outputs.is_fork == 'true' && 'fork-deploys' || 'internal-deploys') }}
+      name: ${{ github.event.workflow_run.event == 'merge_group' && 'docs-main' || (needs.setup.outputs.is_fork == 'true' && 'fork-deploys' || 'internal-deploys') }}
     steps:
       - name: Get app installation token
         id: app-token
@@ -323,9 +328,9 @@ jobs:
         uses: nwtgck/actions-netlify@d22a32a27c918fe470bbc562e984f80ec48c2668
         with:
           publish-dir: _image_report
-          production-deploy: ${{ github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main' }}
+          production-deploy: ${{ github.event.workflow_run.event == 'merge_group' }}
           github-token: ${{ steps.app-token.outputs.token }}
-          deploy-message: "${{ needs.setup.outputs.pr_number != '' && format('Test image report for PR #{0}', needs.setup.outputs.pr_number) || format('Test image report for {0}', github.event.workflow_run.head_branch) }}"
+          deploy-message: "${{ needs.setup.outputs.pr_number != '' && format('Test image report for PR #{0}', needs.setup.outputs.pr_number) || format('Test image report for {0}', github.event.workflow_run.head_sha) }}"
           enable-pull-request-comment: false
           enable-commit-comment: false
           enable-commit-status: false

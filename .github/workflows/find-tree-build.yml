@@ -1,0 +1,67 @@
+name: Find a matching build
+
+# Finds an earlier run that built the same source tree as this one.
+#
+# A merge queue run uploads an artifact named `<marker-prefix>-<tree>` once its
+# expensive jobs have succeeded, where `<tree>` is the git tree SHA of the
+# commit it built. Git tree SHAs are content addresses, so an equal SHA means
+# byte-identical sources, down to the workflow files themselves. A push to
+# `main` therefore matches the queue run that put it there, and can take that
+# run's artifacts instead of rebuilding them.
+#
+# An artifact name is chosen by whoever uploads it, and a pull request from a
+# fork runs in this repository, so the name alone decides nothing. The match is
+# accepted only from a merge queue branch of this repository — a ref namespace
+# GitHub owns and no pull request can write to.
+
+on:
+  workflow_call:
+    inputs:
+      marker-prefix:
+        description: Artifact name prefix that merge queue builds record.
+        required: true
+        type: string
+    outputs:
+      run-id:
+        description: Run that built this tree, or empty when there is none.
+        value: ${{ jobs.find.outputs.run-id }}
+
+permissions:
+  id-token: none
+
+jobs:
+  find:
+    name: Look up
+    runs-on: ubuntu-22.04
+    permissions:
+      actions: read
+    outputs:
+      run-id: ${{ steps.find.outputs.run-id }}
+    steps:
+      - name: Look for a recorded build of this tree
+        id: find
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PREFIX: ${{ inputs.marker-prefix }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          # A lookup that cannot answer answers "no match", so an API blip
+          # costs a rebuild rather than the whole run. It says so out loud,
+          # because a silent miss and a broken lookup both just rebuild.
+          if ! tree=$(gh api "repos/${REPO}/commits/${SHA}" --jq '.commit.tree.sha'); then
+            echo "::warning::Could not read the tree for ${SHA}; rebuilding."
+            tree=""
+          fi
+          run_id=$(gh api "repos/${REPO}/actions/artifacts?name=${PREFIX}-${tree:-none}&per_page=100" \
+            --jq '[.artifacts[]
+                   | select(.expired == false)
+                   | select(.workflow_run.repository_id == .workflow_run.head_repository_id)
+                   | select(.workflow_run.head_branch | startswith("gh-readonly-queue/"))]
+                  | max_by(.created_at) | .workflow_run.id // empty' || true)
+          echo "run-id=${run_id}" >> "$GITHUB_OUTPUT"
+          if [ -n "${run_id}" ]; then
+            echo "Tree \`${tree}\` was built by run ${run_id}." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Tree \`${tree}\` has no recorded build." >> "$GITHUB_STEP_SUMMARY"
+          fi
