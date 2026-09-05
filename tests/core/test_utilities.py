@@ -725,6 +725,33 @@ def test_convert_id_list():
         id_list.SetId(i, v)
     converted = vtk_id_list_to_array(id_list)
     assert np.allclose(converted, ids)
+    assert np.issubdtype(converted.dtype, np.integer)
+
+    empty = vtk_id_list_to_array(_vtk.vtkIdList())
+    assert empty.shape == (0,)
+    assert np.issubdtype(empty.dtype, np.integer)
+
+
+def test_vtkmatrix_from_array_like():
+    values = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+    matrix = pv.vtkmatrix_from_array(values)
+    assert np.array_equal(pv.array_from_vtkmatrix(matrix), values)
+
+    strided = np.asarray(values, dtype=np.float32)[::-1]
+    matrix = pv.vtkmatrix_from_array(strided)
+    assert np.array_equal(pv.array_from_vtkmatrix(matrix), strided)
+
+
+def test_convert_array_scalar_and_strided():
+    vtk_scalar = convert_array(np.array(1.5))
+    assert vtk_scalar.GetNumberOfTuples() == 1
+    assert vtk_scalar.GetValue(0) == 1.5
+
+    strided = np.arange(10.0)[::2]
+    assert np.array_equal(convert_array(convert_array(strided)), strided)
+
+    strings = np.array(['a', 'bb', 'ccc', 'dddd'])[::2]
+    assert np.array_equal(convert_array(convert_array(strings)), strings)
 
 
 def test_progress_monitor():
