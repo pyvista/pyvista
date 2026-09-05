@@ -108,7 +108,7 @@ test = [
   'sympy<1.15.0',
   'tqdm<4.70.0',
   'trame-pyvista<0.2.0',
-  'type-assert @ git+https://github.com/user27182/type-assert',
+  'type-assert==0.2.1',
   'typing-extensions<4.17.0',
   { include-group = 'typing' },
 ]
