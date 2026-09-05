@@ -2405,6 +2405,106 @@ def test_extract_cells(sphere):
         _ = sphere.extract_cells([True, True])
 
 
+@pytest.mark.parametrize('dataset_filter', ['extract_cells', 'extract_points'])
+def test_extract_cells_extract_points_match_input_type(datasets, dataset_filter):
+    for dataset in datasets:
+        n_items = dataset.n_cells if dataset_filter == 'extract_cells' else dataset.n_points
+        ind = np.arange(n_items) < 4
+        kwargs = (
+            {} if dataset_filter == 'extract_cells' else dict(include_cells=dataset.n_cells > 0)
+        )
+        default = getattr(dataset, dataset_filter)(ind, **kwargs)
+        matched = getattr(dataset, dataset_filter)(ind, match_input_type=True, **kwargs)
+
+        is_pointset = isinstance(dataset, pv.PointSet)
+        assert type(default) is (pv.PointSet if is_pointset else pv.UnstructuredGrid)
+        assert type(matched) is (
+            type(dataset)
+            if isinstance(dataset, (pv.PolyData, pv.PointSet))
+            else pv.UnstructuredGrid
+        )
+        assert matched.n_points == default.n_points
+        assert matched.n_cells == default.n_cells
+        assert np.array_equal(matched.points, default.points)
+        assert np.array_equal(matched['vtkOriginalPointIds'], default['vtkOriginalPointIds'])
+
+
+def test_extract_cells_match_input_type_polydata(sphere):
+    sphere.point_data['scalars'] = np.arange(sphere.n_points)
+    sphere.set_active_scalars('scalars')
+    ind = [0, 5, 10]
+    extracted = sphere.extract_cells(ind, match_input_type=True)
+    assert isinstance(extracted, pv.PolyData)
+    assert extracted.n_cells == len(ind)
+    assert np.array_equal(extracted['vtkOriginalCellIds'], ind)
+    assert np.array_equal(extracted.points, sphere.points[extracted['vtkOriginalPointIds']])
+    assert extracted.active_scalars_name == 'scalars'
+    assert 'vtkOriginalPointIds' not in sphere.point_data
+    assert 'vtkOriginalCellIds' not in sphere.cell_data
+
+    # An empty selection keeps the id arrays
+    empty = sphere.extract_cells([], match_input_type=True)
+    assert isinstance(empty, pv.PolyData)
+    assert empty.is_empty
+    assert empty.point_data.keys() == ['vtkOriginalPointIds']
+    assert empty.cell_data.keys() == ['vtkOriginalCellIds']
+    empty = sphere.extract_cells(
+        [], match_input_type=True, pass_point_ids=False, pass_cell_ids=False
+    )
+    assert empty.n_arrays == 0
+
+
+def test_extract_points_invert(sphere):
+    mask = sphere.points[:, 2] > 0
+    kwargs = dict(adjacent_cells=False, pass_point_ids=False, pass_cell_ids=False)
+    assert sphere.extract_points(mask, invert=True, **kwargs) == sphere.extract_points(
+        ~mask, **kwargs
+    )
+
+    ind = [0, 1, 2]
+    inverted = sphere.extract_points(ind, invert=True, include_cells=False)
+    assert inverted.n_points == sphere.n_points - len(ind)
+    assert not np.isin(ind, inverted['vtkOriginalPointIds']).any()
+
+
+@pytest.mark.parametrize('dataset_filter', ['extract_cells', 'extract_points'])
+def test_extract_cells_extract_points_invalid_ind(sphere, dataset_filter):
+    dataset_filter = getattr(sphere, dataset_filter)
+    name = 'cells' if dataset_filter.__name__ == 'extract_cells' else 'points'
+    n_items = sphere.n_cells if name == 'cells' else sphere.n_points
+
+    match = f'Number of bool indices (2) must match the number of {name} ({n_items}).'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        dataset_filter([True, True])
+
+    match = 'Indices must be either a mask or an integer array-like'
+    with pytest.raises(TypeError, match=match):
+        dataset_filter([0.5])
+
+    match = f'Index {n_items} is out of bounds for a mesh with {n_items} {name}.'
+    with pytest.raises(IndexError, match=re.escape(match)):
+        dataset_filter([0, n_items])
+
+    match = f'Index -1 is out of bounds for a mesh with {n_items} {name}.'
+    with pytest.raises(IndexError, match=re.escape(match)):
+        dataset_filter(-1)
+
+    # An empty selection is valid
+    assert dataset_filter([]).n_points == 0
+
+
+def test_extract_values_match_input_type(sphere):
+    sphere['z'] = sphere.points[:, 2]
+    assert isinstance(sphere.extract_values(ranges=[0, 1]), pv.UnstructuredGrid)
+    assert isinstance(sphere.extract_values(ranges=[0, 1], match_input_type=True), pv.PolyData)
+    assert isinstance(sphere.split_values(ranges=[[0, 1]], match_input_type=True)[0], pv.PolyData)
+
+    sphere.cell_data['cell_ids'] = np.arange(sphere.n_cells)
+    extracted = sphere.extract_values(ranges=[0, 10], scalars='cell_ids', match_input_type=True)
+    assert isinstance(extracted, pv.PolyData)
+    assert extracted.n_cells == 11
+
+
 @pytest.mark.parametrize('preference', ['point', 'cell'])
 @pytest.mark.parametrize('adjacent_fixture', [True, False])
 def test_extract_values_preference(

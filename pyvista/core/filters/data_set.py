@@ -4619,17 +4619,19 @@ class DataSetFilters(DataObjectFilters):
     @_deprecate_positional_args(allowed=['ind'])
     def extract_cells(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
-        ind: int | VectorLike[int],
+        ind: int | VectorLike[int] | VectorLike[bool],
         invert: bool = False,  # noqa: FBT001, FBT002
         pass_cell_ids: bool = True,  # noqa: FBT001, FBT002
         pass_point_ids: bool = True,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
+        *,
+        match_input_type: bool = False,
     ):
         r"""Return a subset of the grid.
 
         Parameters
         ----------
-        ind : int | VectorLike[int]
+        ind : int | VectorLike[int] | VectorLike[bool]
             Cell indices to extract. Can be a single ``int`` or a vector of ``int``\ s.
             A ``bool`` vector is also supported; the vector size should match the number of cells.
 
@@ -4651,14 +4653,24 @@ class DataSetFilters(DataObjectFilters):
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
+        match_input_type : bool, default: False
+            If ``True``, return :class:`~pyvista.PolyData` when the input is ``PolyData``.
+            Otherwise, an :class:`~pyvista.UnstructuredGrid` is returned. This has no
+            effect on other input types. The current default is ``False``, but this
+            will change to ``True`` in a future version.
+
+            .. versionadded:: 0.49
+
         See Also
         --------
-        extract_points, extract_values
+        extract_points, extract_values, remove_cells
 
         Returns
         -------
-        pyvista.UnstructuredGrid
-            Subselected grid.
+        pyvista.UnstructuredGrid | pyvista.PolyData | pyvista.PointSet
+            Subselected cells. A :class:`~pyvista.PointSet` input always returns a
+            ``PointSet``, and ``PolyData`` is only returned when ``match_input_type``
+            is ``True``.
 
         Examples
         --------
@@ -4673,27 +4685,17 @@ class DataSetFilters(DataObjectFilters):
         >>> actor = pl.add_mesh(subset, color='grey')
         >>> pl.show()
 
-        """
-        indices = _validation.validate_arrayN(ind, must_be_real=False, name='indices')
-        if indices.dtype == bool:
-            assume_sorted_and_unique = True
-            if indices.size != self.n_cells:
-                msg = (
-                    f'Number of bool indices ({indices.size}) '
-                    f'must match the number of cells ({self.n_cells}).'
-                )
-                raise ValueError(msg)
-        else:
-            assume_sorted_and_unique = False
+        Extract cells from :class:`~pyvista.PolyData` and match the output type to
+        the input.
 
-        if invert:
-            if indices.dtype == bool:
-                indices = np.invert(indices)
-            else:
-                mask = np.ones(self.n_cells, bool)
-                mask[ind] = False
-                indices = mask
-        _, indices = numpy_to_idarr(indices, return_ind=True)  # type: ignore[misc]
+        >>> sphere = pv.Sphere()
+        >>> subset = sphere.extract_cells(range(20), match_input_type=True)
+        >>> type(subset)
+        <class 'pyvista.core.pointset.PolyData'>
+
+        """
+        mask = _validate_extraction_ids(ind, n_items=self.n_cells, name='cells', invert=invert)
+        _, indices = numpy_to_idarr(np.flatnonzero(mask), return_ind=True)  # type: ignore[misc]
 
         # Extract using a shallow copy to avoid the side effect of creating the
         # vtkOriginalPointIds and vtkOriginalCellIds arrays in the input
@@ -4709,16 +4711,23 @@ class DataSetFilters(DataObjectFilters):
         extract = _vtk.vtkExtractCells()
         extract.SetInputData(ds_copy)
         extract.SetCellIds(indices, indices.size)
-        extract.SetAssumeSortedAndUniqueIds(assume_sorted_and_unique)
+        extract.SetAssumeSortedAndUniqueIds(True)
         # We set the arrays manually earlier
         extract.SetPassThroughCellIds(False)
         _update_alg(extract, progress_bar=progress_bar, message='Extracting Cells')
-        subgrid = _get_output(extract)
+        output = _finish_extraction(
+            _get_output(extract),
+            self,
+            match_input_type=match_input_type,
+            pass_point_ids=pass_point_ids,
+            pass_cell_ids=pass_cell_ids,
+        )
 
         # Make active scalars match input
         info = self.active_scalars_info
-        subgrid.set_active_scalars(info.name, info.association)
-        return subgrid
+        if info.name is None or info.name in output.array_names:
+            output.set_active_scalars(info.name, info.association)
+        return output
 
     @_deprecate_positional_args(allowed=['ind'])
     def extract_points(  # type: ignore[misc]  # noqa: PLR0917
@@ -4729,13 +4738,17 @@ class DataSetFilters(DataObjectFilters):
         pass_cell_ids: bool = True,  # noqa: FBT001, FBT002
         pass_point_ids: bool = True,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
+        *,
+        invert: bool = False,
+        match_input_type: bool = False,
     ):
-        """Return a subset of the grid (with cells) that contains any of the given point indices.
+        r"""Return a subset of the grid (with cells) that contains any of the given point indices.
 
         Parameters
         ----------
-        ind : sequence[int]
-            Sequence of point indices to be extracted.
+        ind : int | VectorLike[int] | VectorLike[bool]
+            Point indices to extract. Can be a single ``int`` or a vector of ``int``\ s.
+            A ``bool`` vector is also supported; the vector size should match the number of points.
 
         adjacent_cells : bool, default: True
             If ``True``, extract the cells that contain at least one of
@@ -4761,14 +4774,29 @@ class DataSetFilters(DataObjectFilters):
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
+        invert : bool, default: False
+            Invert the selection.
+
+            .. versionadded:: 0.49
+
+        match_input_type : bool, default: False
+            If ``True``, return :class:`~pyvista.PolyData` when the input is ``PolyData``.
+            Otherwise, an :class:`~pyvista.UnstructuredGrid` is returned. This has no
+            effect on other input types. The current default is ``False``, but this
+            will change to ``True`` in a future version.
+
+            .. versionadded:: 0.49
+
         See Also
         --------
-        extract_cells, extract_values
+        extract_cells, extract_values, remove_points
 
         Returns
         -------
-        pyvista.UnstructuredGrid
-            Subselected grid.
+        pyvista.UnstructuredGrid | pyvista.PolyData | pyvista.PointSet
+            Subselected points. A :class:`~pyvista.PointSet` input always returns a
+            ``PointSet``, and ``PolyData`` is only returned when ``match_input_type``
+            is ``True``.
 
         Examples
         --------
@@ -4783,7 +4811,7 @@ class DataSetFilters(DataObjectFilters):
         >>> extracted.plot()
 
         """
-        ind = np.array(ind)
+        mask = _validate_extraction_ids(ind, n_items=self.n_points, name='points', invert=invert)
         # Create selection objects
         selectionNode = _vtk.vtkSelectionNode()
         selectionNode.SetFieldType(_vtk.vtkSelectionNode.POINT)
@@ -4791,13 +4819,11 @@ class DataSetFilters(DataObjectFilters):
         if not include_cells:
             adjacent_cells = True
         if not adjacent_cells:
-            # Build array of point indices to be removed.
-            ind_rem = np.ones(self.n_points, dtype='bool')
-            ind_rem[ind] = False
-            ind = np.arange(self.n_points)[ind_rem]
-            # Invert selection
+            # Select the complement and invert the selection so that cells using
+            # any unselected point are dropped
+            mask = np.invert(mask)
             selectionNode.GetProperties().Set(_vtk.vtkSelectionNode.INVERSE(), 1)
-        selectionNode.SetSelectionList(numpy_to_idarr(ind))
+        selectionNode.SetSelectionList(numpy_to_idarr(np.flatnonzero(mask)))
         if include_cells:
             selectionNode.GetProperties().Set(_vtk.vtkSelectionNode.CONTAINING_CELLS(), 1)
 
@@ -4809,21 +4835,13 @@ class DataSetFilters(DataObjectFilters):
         extract_sel.SetInputData(0, self.copy(deep=False))
         extract_sel.SetInputData(1, selection)
         _update_alg(extract_sel, progress_bar=progress_bar, message='Extracting Points')
-        output = _get_output(extract_sel)
-
-        # Process output arrays
-        if (name := 'vtkOriginalPointIds') in (data := output.point_data) and not pass_point_ids:
-            del data[name]
-        if (name := 'vtkOriginalCellIds') in (data := output.cell_data) and not pass_cell_ids:
-            del data[name]
-
-        # For consistency, ensure there is always an output array
-        if output.is_empty:
-            if pass_point_ids:
-                output.point_data['vtkOriginalPointIds'] = np.array((), dtype=int)
-            if pass_cell_ids:
-                output.cell_data['vtkOriginalCellIds'] = np.array((), dtype=int)
-        return output
+        return _finish_extraction(
+            _get_output(extract_sel),
+            self,
+            match_input_type=match_input_type,
+            pass_point_ids=pass_point_ids,
+            pass_cell_ids=pass_cell_ids,
+        )
 
     def split_values(  # type: ignore[misc]
         self: _DataSetType,
@@ -5014,6 +5032,7 @@ class DataSetFilters(DataObjectFilters):
         pass_point_ids: bool = True,
         pass_cell_ids: bool = True,
         progress_bar: bool = False,
+        match_input_type: bool = False,
     ):
         """Return a subset of the mesh based on the values of point or cell data.
 
@@ -5145,6 +5164,14 @@ class DataSetFilters(DataObjectFilters):
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
+        match_input_type : bool, default: False
+            If ``True``, return :class:`~pyvista.PolyData` when the input is ``PolyData``.
+            Otherwise, an :class:`~pyvista.UnstructuredGrid` is returned. This has no
+            effect on other input types. The current default is ``False``, but this
+            will change to ``True`` in a future version.
+
+            .. versionadded:: 0.49
+
         See Also
         --------
         split_values
@@ -5162,8 +5189,10 @@ class DataSetFilters(DataObjectFilters):
 
         Returns
         -------
-        output : pyvista.UnstructuredGrid | pyvista.MultiBlock
+        output : pyvista.DataSet | pyvista.MultiBlock
             An extracted mesh or a composite of extracted meshes, depending on ``split``.
+            The mesh type is an :class:`~pyvista.UnstructuredGrid` unless
+            ``match_input_type`` is ``True``.
 
         Examples
         --------
@@ -5310,6 +5339,7 @@ class DataSetFilters(DataObjectFilters):
             pass_point_ids=pass_point_ids,
             pass_cell_ids=pass_cell_ids,
             progress_bar=progress_bar,
+            match_input_type=match_input_type,
         )
 
         if split:
@@ -5578,6 +5608,7 @@ class DataSetFilters(DataObjectFilters):
         progress_bar,
         pass_point_ids,
         pass_cell_ids,
+        match_input_type,
     ):
         id_mask = self._apply_component_logic_to_array(
             values=values,
@@ -5596,6 +5627,7 @@ class DataSetFilters(DataObjectFilters):
                 pass_point_ids=pass_point_ids,
                 pass_cell_ids=pass_cell_ids,
                 progress_bar=progress_bar,
+                match_input_type=match_input_type,
             )
         else:
             output = self.extract_cells(
@@ -5603,6 +5635,7 @@ class DataSetFilters(DataObjectFilters):
                 pass_point_ids=pass_point_ids,
                 pass_cell_ids=pass_cell_ids,
                 progress_bar=progress_bar,
+                match_input_type=match_input_type,
             )
 
         return output
@@ -8516,6 +8549,61 @@ def _stencil_binary_mask(
             k_max - k_min + 1, dimensions[1], dimensions[0]
         )
     return mask.ravel()
+
+
+def _validate_extraction_ids(
+    ind: int | VectorLike[int] | VectorLike[bool],
+    *,
+    n_items: int,
+    name: str,
+    invert: bool,
+) -> NumpyArray[bool]:
+    """Return a boolean selection mask from integer ids or a boolean mask."""
+    ids = _validation.validate_arrayN(ind, must_be_real=False, name='indices')
+    if ids.dtype == bool:
+        if ids.size != n_items:
+            msg = (
+                f'Number of bool indices ({ids.size}) must match the number of {name} ({n_items}).'
+            )
+            raise ValueError(msg)
+        mask = ids
+    else:
+        mask = np.zeros(n_items, dtype=bool)
+        if ids.size:
+            if not np.issubdtype(ids.dtype, np.integer):
+                msg = 'Indices must be either a mask or an integer array-like'
+                raise TypeError(msg)
+            out_of_bounds = ids[(ids < 0) | (ids >= n_items)]
+            if out_of_bounds.size:
+                msg = (
+                    f'Index {out_of_bounds[0]} is out of bounds for a mesh with {n_items} {name}.'
+                )
+                raise IndexError(msg)
+            mask[ids] = True
+    return np.invert(mask) if invert else mask
+
+
+def _finish_extraction(
+    output: DataSet,
+    input_mesh: DataSet,
+    *,
+    match_input_type: bool,
+    pass_point_ids: bool,
+    pass_cell_ids: bool,
+) -> DataSet:
+    """Cast an extracted mesh to the input type and normalize its original id arrays."""
+    if match_input_type:
+        output = cast('DataSet', _cast_output_to_match_input_type(output, input_mesh))
+    for array_name, data, keep in (
+        ('vtkOriginalPointIds', output.point_data, pass_point_ids),
+        ('vtkOriginalCellIds', output.cell_data, pass_cell_ids),
+    ):
+        if not keep:
+            data.pop(array_name, None)
+        elif output.is_empty and array_name not in data:
+            # Always include the arrays, even when nothing is extracted
+            data[array_name] = np.array((), dtype=int)
+    return output
 
 
 def _set_threshold_limit(alg, *, value, method, invert):
