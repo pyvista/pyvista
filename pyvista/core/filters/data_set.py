@@ -7613,12 +7613,18 @@ class DataSetFilters(DataObjectFilters):
                     else:
                         colors = cmap_colors
 
+            table = None
             if not _is_rgb_sequence:
                 color_rgb_sequence = [
                     getattr(c, color_type)
                     for c in _local_validate_color_sequence(colors)  # type: ignore[arg-type]
                 ]
                 if len(color_rgb_sequence) == 1:
+                    # Optimization: build the color table from the one row before the list is
+                    # repeated for every point; converting the repeated list is far slower
+                    table = np.repeat(
+                        np.asarray(color_rgb_sequence, dtype=color_dtype), len(array), axis=0
+                    )
                     color_rgb_sequence = color_rgb_sequence * len(array)
 
             n_colors = len(color_rgb_sequence)
@@ -7630,8 +7636,9 @@ class DataSetFilters(DataObjectFilters):
                 ['index', 'cycle'], must_contain=coloring_mode, name='coloring_mode'
             )
             # Optimization: color every point with one array lookup instead of scanning the
-            # array once per color
-            table = np.asarray(color_rgb_sequence, dtype=color_dtype)
+            # array once per label
+            if table is None:
+                table = np.asarray(color_rgb_sequence, dtype=color_dtype)
             if coloring_mode == 'index':
                 if not index_like:
                     msg = (
@@ -7651,10 +7658,10 @@ class DataSetFilters(DataObjectFilters):
                         label: color_rgb_sequence[label] for label in keys if label in present
                     }
                 # Negative labels index the sequence from the end like the negative keys, and
-                # the appended default row is what a label equal to ``n_colors`` gets: that
-                # label passes the check above but has no color
+                # a label equal to ``n_colors`` passes the check above but has no color
                 indices[indices < 0] += n_colors
-                colors_out = np.vstack((table, colors_out[:1]))[indices]
+                default_row = np.full((1, num_components), default_channel_value, color_dtype)
+                colors_out = np.vstack((table, default_row))[indices]
             else:  # 'cycle', validated above
                 if negative_indexing:
                     msg = "Negative indexing is not supported with 'cycle' mode enabled."
