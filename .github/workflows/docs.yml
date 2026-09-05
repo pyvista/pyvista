@@ -22,24 +22,21 @@ permissions:
   id-token: none
 
 jobs:
-  # Save PR metadata as an artifact so the separate deploy workflow (triggered
+  # Save the PR number as an artifact so the separate deploy workflow (triggered
   # via workflow_run) can associate the build with its PR — workflow_run events
-  # do not include pull_request data for fork PRs.
+  # do not include pull_request data for fork PRs. Nothing else goes in here:
+  # the deploy workflow takes the head SHA and fork status from its own event.
   pr-info:
     name: Save PR info
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     steps:
-      - name: Save PR metadata
+      - name: Save PR number
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          IS_FORK: ${{ github.event.pull_request.head.repo.fork }}
         run: |
           mkdir -p pr-info
           printf '%s' "$PR_NUMBER" > pr-info/pr_number.txt
-          printf '%s' "$HEAD_SHA" > pr-info/head_sha.txt
-          printf '%s' "$IS_FORK" > pr-info/is_fork.txt
       - uses: actions/upload-artifact@v7
         with:
           name: pr-info
