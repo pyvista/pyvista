@@ -1166,9 +1166,10 @@ def test_remove_points_deprecated(sphere):
     assert reduced.n_points == sphere.n_points - 1
     assert len(ridx) == reduced.n_points
 
-    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
-        with pytest.raises(TypeError, match="missing required argument 'ind'"):
-            sphere.remove_points()
+    with pytest.raises(TypeError, match="missing required argument 'ind'"):
+        sphere.remove_points()
+    with pytest.raises(TypeError, match='require `ind`'):
+        sphere.remove_points([0], invert=True)
 
     if pv.version_info >= (0, 52):  # pragma: no cover -- fires at the version bump
         pytest.fail('Convert the `remove_points` tuple return into an error.')
