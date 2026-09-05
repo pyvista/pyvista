@@ -3246,9 +3246,14 @@ def test_deprecate_positional_args_post_deprecation():
 def test_deprecate_positional_args_allowed():
     # Test single allowed
     @_deprecate_positional_args(allowed=['bar'])
-    def foo(bar, baz): ...
+    def foo(bar, baz):
+        return bar, baz
 
-    foo(True, baz=True)
+    with warnings.catch_warnings():
+        warnings.simplefilter('error')
+        assert foo(True, baz=False) == (True, False)
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        assert foo(True, False) == (True, False)
 
     # Too many allowed args
     match = (
