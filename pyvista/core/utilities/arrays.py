@@ -52,6 +52,20 @@ CellLiteral = Literal[FieldAssociation.CELL, 'cell']
 FieldLiteral = Literal[FieldAssociation.NONE, 'field']
 RowLiteral = Literal[FieldAssociation.ROW, 'row']
 
+_FIELD_CHOICES: dict[str, FieldAssociation] = {
+    'cell': FieldAssociation.CELL,
+    'c': FieldAssociation.CELL,
+    'cells': FieldAssociation.CELL,
+    'point': FieldAssociation.POINT,
+    'p': FieldAssociation.POINT,
+    'points': FieldAssociation.POINT,
+    'field': FieldAssociation.NONE,
+    'f': FieldAssociation.NONE,
+    'fields': FieldAssociation.NONE,
+    'row': FieldAssociation.ROW,
+    'r': FieldAssociation.ROW,
+}
+
 
 @overload
 def parse_field_choice(
@@ -102,21 +116,6 @@ def parse_field_choice(
     else:
         msg = f'Data field ({field}) not supported.'  # type: ignore[unreachable]
         raise TypeError(msg)
-
-
-_FIELD_CHOICES: dict[str, FieldAssociation] = {
-    'cell': FieldAssociation.CELL,
-    'c': FieldAssociation.CELL,
-    'cells': FieldAssociation.CELL,
-    'point': FieldAssociation.POINT,
-    'p': FieldAssociation.POINT,
-    'points': FieldAssociation.POINT,
-    'field': FieldAssociation.NONE,
-    'f': FieldAssociation.NONE,
-    'fields': FieldAssociation.NONE,
-    'row': FieldAssociation.ROW,
-    'r': FieldAssociation.ROW,
-}
 
 
 def _coerce_pointslike_arg(
