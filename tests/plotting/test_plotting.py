@@ -1006,8 +1006,9 @@ def test_plot_show_bounds_scaled_subplots():
     pl.show()
 
 
-def test_plot_show_bounds_scaled_bounding_box():
+def test_plot_show_bounds_scaled_bounding_box(verify_image_cache):
     """The third reproducer from https://github.com/pyvista/pyvista/issues/4695, on a sphere."""
+    verify_image_cache.macos_skip_image_cache = True  # macOS draws every line one pixel wide
     pl = pv.Plotter()
     pl.add_mesh(pv.Sphere(), smooth_shading=True, specular=1, color='#DDDDDD')
     pl.set_scale(xscale=1, yscale=15, zscale=5)
