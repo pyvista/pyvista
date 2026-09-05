@@ -39,7 +39,8 @@ jobs:
         uses: actions/cache/restore@v6
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
-          key: pyvista-data-${{ env.VTK_DATA_COMMIT }}
+          # Bump the number to invalidate existing entries.
+          key: pyvista-data-1-${{ env.VTK_DATA_COMMIT }}
           lookup-only: true
 
       - name: Clone pyvista/data if cache miss
@@ -50,10 +51,14 @@ jobs:
           repository: pyvista/data
           path: ${{ env.CACHE_FOLDER_NAME }}
 
+      - name: Remove git metadata
+        if: steps.restore.outputs.cache-hit != 'true'
+        run: rm -rf "$CACHE_FOLDER_NAME/.git"
+
       - name: Save pyvista/data cache
         if: steps.restore.outputs.cache-hit != 'true'
         uses: actions/cache/save@v6
         with:
           path: ${{ env.CACHE_FOLDER_NAME }}
-          key: pyvista-data-${{ env.VTK_DATA_COMMIT }}
+          key: pyvista-data-1-${{ env.VTK_DATA_COMMIT }}
           enableCrossOsArchive: true

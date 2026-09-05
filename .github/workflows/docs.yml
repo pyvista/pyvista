@@ -75,7 +75,6 @@ jobs:
     if: ${{ !cancelled() && needs.cache-pyvista-data.result == 'success' && needs.resolve.outputs.run-id == '' }}
     env:
       TOX_COLORED: "yes"
-      PYVISTA_DATA: ${{ github.workspace }}/pyvista-data
       # Tag builds are the docs published to docs.pyvista.org; `conf.py` expands
       # the sidebar navigation for them.
       _PYVISTA_RELEASE: ${{ startsWith(github.ref, 'refs/tags/v') }}
@@ -95,11 +94,9 @@ jobs:
           version: 3.0
 
       - name: Restore pyvista/data cache
-        uses: actions/cache/restore@v6
+        uses: ./.github/actions/restore-pyvista-data
         with:
-          path: pyvista-data
           key: ${{ needs.cache-pyvista-data.outputs.key }}
-          enableCrossOsArchive: true
 
       - name: Install tox-uv
         run: pip install tox-uv
