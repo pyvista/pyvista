@@ -4931,6 +4931,104 @@ class DataSetFilters(DataObjectFilters):
             return self
         return output
 
+    def remove_points(  # type: ignore[misc]
+        self: _DataSetType,
+        ind: int | VectorLike[int] | VectorLike[bool],
+        mode: Literal['any', 'all'] = 'any',
+        *,
+        invert: bool = False,
+        pass_point_ids: bool = False,
+        pass_cell_ids: bool = False,
+        inplace: bool = False,
+        progress_bar: bool = False,
+    ):
+        r"""Remove points and their cells from a mesh.
+
+        Cells are removed according to ``mode``, and points which are no longer used
+        by any cell are also removed. The output is :class:`~pyvista.PolyData` for
+        ``PolyData`` input, :class:`~pyvista.PointSet` for ``PointSet`` input, and an
+        :class:`~pyvista.UnstructuredGrid` otherwise.
+
+        .. versionadded:: 0.49
+
+        Parameters
+        ----------
+        ind : int | VectorLike[int] | VectorLike[bool]
+            Point indices to remove. Can be a single ``int`` or a vector of ``int``\ s.
+            A ``bool`` vector is also supported; the vector size should match the number of points.
+
+        mode : 'any' | 'all', default: 'any'
+            Remove cells that use ``'any'`` of the specified points, or only cells
+            whose points are ``'all'`` specified. With ``'all'``, specified points
+            that are still used by a remaining cell are kept.
+
+        invert : bool, default: False
+            Invert the selection and remove all points *except* those specified.
+
+        pass_point_ids : bool, default: False
+            Add a point array ``'vtkOriginalPointIds'`` that identifies the original
+            points the remaining points correspond to.
+
+        pass_cell_ids : bool, default: False
+            Add a cell array ``'vtkOriginalCellIds'`` that identifies the original cells
+            the remaining cells correspond to.
+
+        inplace : bool, default: False
+            Update the mesh in-place. This is only possible when the output has the
+            same type as the input.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        See Also
+        --------
+        extract_points, remove_cells
+
+        Returns
+        -------
+        pyvista.UnstructuredGrid | pyvista.PolyData | pyvista.PointSet
+            Mesh with the specified points removed.
+
+        Examples
+        --------
+        Remove 150 points from a sphere.
+
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
+        >>> reduced_sphere = sphere.remove_points(ind=range(100, 250))
+        >>> reduced_sphere.plot(show_edges=True, line_width=3)
+
+        Remove a point from a mesh of line segments and keep the ids of the remaining
+        points.
+
+        >>> points = [
+        ...     [0.0, 0.0, 0.0],
+        ...     [1.0, 0.0, 0.0],
+        ...     [2.0, 0.0, 0.0],
+        ...     [3.0, 0.0, 0.0],
+        ... ]
+        >>> lines = pv.PolyData(points, lines=[2, 0, 1, 2, 1, 2, 2, 2, 3])
+        >>> reduced = lines.remove_points(ind=0, pass_point_ids=True)
+        >>> reduced['vtkOriginalPointIds'].tolist()
+        [1, 2, 3]
+
+        """
+        _validation.check_contains(['any', 'all'], must_contain=mode, name='mode')
+        output = self.extract_points(
+            ind,
+            adjacent_cells=mode == 'all',
+            include_cells=self.n_cells > 0,
+            invert=not invert,
+            pass_point_ids=pass_point_ids,
+            pass_cell_ids=pass_cell_ids,
+            progress_bar=progress_bar,
+            match_input_type=True,
+        )
+        if inplace:
+            self.copy_from(output, deep=False)
+            return self
+        return output
+
     def split_values(  # type: ignore[misc]
         self: _DataSetType,
         values: (

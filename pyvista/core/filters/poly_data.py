@@ -2892,21 +2892,29 @@ class PolyDataFilters(DataSetFilters):
     @_deprecate_positional_args(allowed=['remove', 'mode'])
     def remove_points(  # noqa: PLR0917
         self,
-        remove,
+        remove=None,
         mode='any',
-        keep_scalars: bool = True,  # noqa: FBT001, FBT002
+        keep_scalars: bool | None = None,  # noqa: FBT001
         inplace: bool = False,  # noqa: FBT001, FBT002
+        *,
+        ind=None,
+        **kwargs,
     ):
         """Rebuild a mesh by removing points.
 
-        Only valid for all-triangle meshes.
+        .. deprecated:: 0.49
+            Returning a ``(mesh, ids)`` tuple is deprecated. Pass the points to remove
+            with ``ind`` instead of ``remove`` to return only the mesh, which also
+            works for meshes that are not all triangles. Use ``pass_point_ids=True``
+            to keep the original point ids as ``'vtkOriginalPointIds'``, and
+            :meth:`~pyvista.DataSet.clear_data` instead of ``keep_scalars``.
 
         Parameters
         ----------
-        remove : sequence[bool | int]
+        remove : sequence[bool | int], optional
             If remove is a ``bool`` array, points that are ``True`` will
             be removed.  Otherwise, it is treated as a list of
-            indices.
+            indices. Only valid for all-triangle meshes.
 
         mode : str, default: "any"
             When ``'all'``, only faces containing all points flagged
@@ -2914,10 +2922,17 @@ class PolyDataFilters(DataSetFilters):
 
         keep_scalars : bool, default: True
             When ``True``, point and cell scalars will be passed on to
-            the new mesh.
+            the new mesh. Cannot be used together with ``ind``.
 
         inplace : bool, default: False
             Updates mesh in-place.
+
+        ind : int | VectorLike[int] | VectorLike[bool], optional
+            Point indices to remove. See :meth:`pyvista.DataSetFilters.remove_points`.
+
+        **kwargs : dict, optional
+            Keyword arguments passed to :meth:`pyvista.DataSetFilters.remove_points`
+            when ``ind`` is used.
 
         Returns
         -------
@@ -2925,18 +2940,37 @@ class PolyDataFilters(DataSetFilters):
             Mesh without the points flagged for removal.
 
         numpy.ndarray
-            Indices of new points relative to the original mesh.
+            Indices of new points relative to the original mesh. Only returned when
+            ``remove`` is used.
 
         Examples
         --------
-        Remove the first 100 points from a sphere.
+        Remove 150 points from a sphere.
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
-        >>> reduced_sphere, ridx = sphere.remove_points(range(100, 250))
+        >>> reduced_sphere = sphere.remove_points(ind=range(100, 250))
         >>> reduced_sphere.plot(show_edges=True, line_width=3)
 
         """
+        if ind is not None:
+            if remove is not None or keep_scalars is not None:
+                msg = '`remove` and `keep_scalars` cannot be used together with `ind`.'
+                raise TypeError(msg)
+            return DataSetFilters.remove_points(self, ind, mode, inplace=inplace, **kwargs)
+
+        assert_empty_kwargs(**kwargs)
+        # deprecated 0.49.0, convert to error in 0.52.0, remove 0.53.0
+        warn_external(
+            '`remove_points` will return only the mesh in a future version instead of a '
+            '`(mesh, ids)` tuple. Pass the points to remove with `ind=` to opt in now, and '
+            "use `pass_point_ids=True` to keep the original point ids as 'vtkOriginalPointIds'.",
+            PyVistaDeprecationWarning,
+        )
+        if remove is None:
+            msg = "remove_points() missing required argument 'ind'"
+            raise TypeError(msg)
+        keep_scalars = True if keep_scalars is None else keep_scalars
         remove = np.asarray(remove)
 
         # np.asarray will eat anything, so we have to weed out bogus inputs

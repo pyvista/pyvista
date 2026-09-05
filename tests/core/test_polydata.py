@@ -1110,6 +1110,12 @@ def test_volume(sphere_dense):
     assert np.isclose(sphere_dense.volume, ideal_volume, rtol=1e-3)
 
 
+REMOVE_POINTS_DEPRECATED = pytest.mark.filterwarnings(
+    'ignore:`remove_points` will return only:pyvista.core.errors.PyVistaDeprecationWarning'
+)
+
+
+@REMOVE_POINTS_DEPRECATED
 def test_remove_points_any(sphere):
     remove_mask = np.zeros(sphere.n_points, np.bool_)
     remove_mask[:3] = True
@@ -1118,6 +1124,7 @@ def test_remove_points_any(sphere):
     assert np.allclose(sphere_mod.points, sphere.points[ind])
 
 
+@REMOVE_POINTS_DEPRECATED
 def test_remove_points_uses_fixed_size_storage(sphere):
     remove_mask = np.zeros(sphere.n_points, np.bool_)
     remove_mask[:3] = True
@@ -1127,6 +1134,7 @@ def test_remove_points_uses_fixed_size_storage(sphere):
         assert sphere_mod.GetPolys().IsStorageFixedSize()
 
 
+@REMOVE_POINTS_DEPRECATED
 def test_remove_points_all(sphere):
     sphere_copy = sphere.copy()
     sphere_copy.cell_data['ind'] = np.arange(sphere_copy.n_faces)
@@ -1136,6 +1144,7 @@ def test_remove_points_all(sphere):
     assert sphere_copy.n_faces == sphere.n_faces - 1
 
 
+@REMOVE_POINTS_DEPRECATED
 def test_remove_points_fail(sphere, plane):
     # not triangles:
     with pytest.raises(NotAllTrianglesError):
@@ -1148,6 +1157,44 @@ def test_remove_points_fail(sphere, plane):
     # invalid mask type
     with pytest.raises(TypeError):
         sphere.remove_points([0.0])
+
+
+def test_remove_points_deprecated(sphere):
+    match = '`remove_points` will return only the mesh in a future version'
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        reduced, ridx = sphere.remove_points([0])
+    assert reduced.n_points == sphere.n_points - 1
+    assert len(ridx) == reduced.n_points
+
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        with pytest.raises(TypeError, match="missing required argument 'ind'"):
+            sphere.remove_points()
+
+    if pv.version_info >= (0, 52):  # pragma: no cover -- fires at the version bump
+        pytest.fail('Convert the `remove_points` tuple return into an error.')
+
+
+def test_remove_points_ind(sphere, plane):
+    remove_mask = np.zeros(sphere.n_points, np.bool_)
+    remove_mask[:3] = True
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        expected, ridx = sphere.remove_points(remove_mask)
+
+    reduced = sphere.remove_points(ind=remove_mask, pass_point_ids=True)
+    assert isinstance(reduced, pv.PolyData)
+    assert np.array_equal(reduced.points, expected.points)
+    assert np.array_equal(reduced.faces, expected.faces)
+    assert np.array_equal(reduced['vtkOriginalPointIds'], ridx)
+
+    # Any mesh is supported
+    reduced = plane.remove_points(ind=[0])
+    assert reduced.n_cells == plane.n_cells - 1
+
+    match = '`remove` and `keep_scalars` cannot be used together with `ind`.'
+    with pytest.raises(TypeError, match=match):
+        sphere.remove_points([0], ind=[0])
+    with pytest.raises(TypeError, match=match):
+        sphere.remove_points(ind=[0], keep_scalars=False)
 
 
 def test_vertice_cells_on_read(tmpdir):

@@ -2548,6 +2548,68 @@ def test_remove_cells_inplace(hexbeam, sphere, struct_grid):
     assert struct_grid.n_cells == n_cells
 
 
+@pytest.mark.parametrize('mode', ['any', 'all'])
+def test_remove_points(datasets, mode):
+    ind = [0, 1, 2]
+    for dataset in datasets:
+        removed = dataset.remove_points(
+            ind=ind, mode=mode, pass_point_ids=True, pass_cell_ids=True
+        )
+        expected_type = (
+            type(dataset)
+            if isinstance(dataset, (pv.PolyData, pv.PointSet))
+            else pv.UnstructuredGrid
+        )
+        assert type(removed) is expected_type
+        assert np.array_equal(removed.points, dataset.points[removed['vtkOriginalPointIds']])
+        assert removed == dataset.extract_points(
+            ind,
+            invert=True,
+            adjacent_cells=mode == 'all',
+            include_cells=dataset.n_cells > 0,
+            match_input_type=True,
+        )
+        if mode == 'any':
+            assert not np.isin(ind, removed['vtkOriginalPointIds']).any()
+        if dataset.n_cells:
+            assert removed.n_points == removed.remove_unused_points().n_points
+
+        # No id arrays by default
+        assert dataset.remove_points(ind=ind).array_names == dataset.array_names
+
+
+@pytest.mark.parametrize('mode', ['any', 'all'])
+def test_remove_points_matches_polydata_filter(sphere, mode):
+    remove = np.zeros(sphere.n_points, dtype=bool)
+    remove[sphere.regular_faces[0]] = True
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        expected, ridx = pv.PolyDataFilters.remove_points(sphere, remove, mode=mode)
+    actual = pv.DataSetFilters.remove_points(sphere, remove, mode=mode, pass_point_ids=True)
+    assert np.array_equal(actual.points, expected.points)
+    assert np.array_equal(actual.faces, expected.faces)
+    assert np.array_equal(actual['vtkOriginalPointIds'], ridx)
+
+
+def test_remove_points_invert_inplace(hexbeam, struct_grid):
+    ind = hexbeam.get_cell(0).point_ids
+    kept = hexbeam.remove_points(ind, invert=True, pass_point_ids=True)
+    assert kept.n_cells == 1
+    assert np.array_equal(kept['vtkOriginalPointIds'], sorted(ind))
+
+    n_points = hexbeam.n_points
+    assert hexbeam.remove_points([0], inplace=True) is hexbeam
+    assert hexbeam.n_points < n_points
+
+    assert isinstance(struct_grid.remove_points([0]), pv.UnstructuredGrid)
+    with pytest.raises(TypeError, match='must be compatible with the one being overwritten'):
+        struct_grid.remove_points([0], inplace=True)
+
+
+def test_remove_points_invalid_mode(hexbeam):
+    with pytest.raises(ValueError, match="mode 'foo' is not valid"):
+        hexbeam.remove_points([0], mode='foo')
+
+
 @pytest.mark.parametrize('preference', ['point', 'cell'])
 @pytest.mark.parametrize('adjacent_fixture', [True, False])
 def test_extract_values_preference(
