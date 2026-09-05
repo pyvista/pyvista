@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
+from typing import cast
 
 import numpy as np
 import pyvista_validation as _validation
@@ -560,12 +561,15 @@ class Texture(DataObject, _vtk.vtkTexture):
             skybox.SetProjectionToSphere()
 
         if floor_plane is not None:
-            valid_floor_plane = _validation.validate_array(
-                floor_plane,
-                must_have_shape=4,
-                dtype_out=float,
-                to_tuple=True,
-                name='floor_plane',
+            valid_floor_plane = cast(
+                'tuple[float, float, float, float]',
+                _validation.validate_array(
+                    floor_plane,
+                    must_have_shape=4,
+                    dtype_out=float,
+                    to_tuple=True,
+                    name='floor_plane',
+                ),
             )
             skybox.SetFloorPlane(*valid_floor_plane)
 

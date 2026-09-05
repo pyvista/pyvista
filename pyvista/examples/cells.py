@@ -3011,7 +3011,7 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
                 )
                 raise ValueError(msg)
         dimension = block_dimensions
-    dims = _validation.validate_array3(dimension, name='block_dimensions')
+    dims = _validation.validate_array3(dimension, dtype_out=int, name='block_dimensions')
     cell_centers = pv.ImageData(dimensions=dims + 1).cell_centers().points
 
     if generator == 'examples':

@@ -446,7 +446,7 @@ class CylinderSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCylinderSourc
 
         """
         valid_center = _validation.validate_array3(center, dtype_out=float, to_tuple=True)
-        self._center = cast('tuple[float, float, float]', valid_center)
+        self._center = valid_center
 
     @property
     def direction(self: CylinderSource) -> tuple[float, float, float]:
@@ -473,7 +473,7 @@ class CylinderSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCylinderSourc
 
         """
         valid_direction = _validation.validate_array3(direction, dtype_out=float, to_tuple=True)
-        self._direction = cast('tuple[float, float, float]', valid_direction)
+        self._direction = valid_direction
 
     @property
     def radius(self: CylinderSource) -> float:
@@ -793,7 +793,7 @@ class Text3DSource(_NoNewAttrMixin):
     @center.setter
     def center(self: Text3DSource, center: VectorLike[float]) -> None:
         valid_center = _validation.validate_array3(center, dtype_out=float, to_tuple=True)
-        self._center = cast('tuple[float, float, float]', valid_center)
+        self._center = valid_center
 
     @property
     def normal(
@@ -809,7 +809,7 @@ class Text3DSource(_NoNewAttrMixin):
     @normal.setter
     def normal(self: Text3DSource, normal: VectorLike[float]) -> None:
         normal_ = _validation.validate_array3(normal, dtype_out=float, to_tuple=True)
-        self._normal = cast('tuple[float, float, float]', normal_)
+        self._normal = normal_
 
     @property
     def width(self: Text3DSource) -> float | None:  # numpydoc ignore=RT01
@@ -3260,6 +3260,7 @@ class AxesGeometrySource(_NoNewAttrMixin):
         self._shaft_length: NumpyArray[float] = _validation.validate_array3(
             length,
             broadcast=True,
+            dtype_out=float,
             must_be_in_range=[0.0, np.inf],
             name='Shaft length',
         )
@@ -3293,6 +3294,7 @@ class AxesGeometrySource(_NoNewAttrMixin):
         self._tip_length: NumpyArray[float] = _validation.validate_array3(
             length,
             broadcast=True,
+            dtype_out=float,
             must_be_in_range=[0.0, np.inf],
             name='Tip length',
         )
@@ -3742,7 +3744,7 @@ class OrthogonalPlanesSource(_NoNewAttrMixin):
     @resolution.setter
     def resolution(self: OrthogonalPlanesSource, resolution: int | VectorLike[int]) -> None:
         valid_resolution = _validation.validate_array3(
-            resolution, broadcast=True, to_tuple=True, name='resolution'
+            resolution, broadcast=True, dtype_out=int, to_tuple=True, name='resolution'
         )
         self._resolution = valid_resolution
 
@@ -3764,8 +3766,11 @@ class OrthogonalPlanesSource(_NoNewAttrMixin):
 
     @bounds.setter
     def bounds(self: OrthogonalPlanesSource, bounds: VectorLike[float]) -> None:
-        bounds_tuple = _validation.validate_array(
-            bounds, dtype_out=float, must_have_length=6, to_tuple=True, name='bounds'
+        bounds_tuple = cast(
+            'tuple[float, float, float, float, float, float]',
+            _validation.validate_array(
+                bounds, dtype_out=float, must_have_length=6, to_tuple=True, name='bounds'
+            ),
         )
         self._bounds = BoundsTuple(*bounds_tuple)
 

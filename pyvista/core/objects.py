@@ -452,7 +452,7 @@ class Table(DataObject, _vtk.vtkTable):
         if arr.size == 0 or not np.issubdtype(arr.dtype, np.number):  # type: ignore[attr-defined]
             return (np.nan, np.nan)
         # Use the array range
-        return np.nanmin(arr), np.nanmax(arr)  # type: ignore[call-overload]
+        return np.nanmin(arr), np.nanmax(arr)
 
     @property
     def is_empty(self) -> bool:  # numpydoc ignore=RT01
