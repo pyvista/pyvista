@@ -156,6 +156,8 @@ if TYPE_CHECKING:
 
     from .opts import PointSpriteShape
 
+    _DistortionState = tuple[tuple[float, ...], tuple[float, float]]
+
 
 SUPPORTED_FORMATS = ['.png', '.jpeg', '.jpg', '.bmp', '.tif', '.tiff']
 FPS_1_OVER_60 = 1 / 60
@@ -590,6 +592,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         self._camera_distortion_coefficients: tuple[float, ...] | None = None
         self._camera_distortion_observers: list[tuple[Renderer, int]] = []
+        self._camera_distortion_sweeps: dict[Renderer, tuple[int, _DistortionState]] = {}
         self._camera_distortion_warned: set[str] = set()
 
         self._initialized = True
@@ -1781,10 +1784,9 @@ class BasePlotter(_BoundsSizeMixin):
         Brown-Conrady distortion is applied by a vertex shader replacement on
         each actor, so it displaces geometry rather than resampling the
         rendered image: geometry that is coarse relative to the distortion
-        does not curve smoothly. Actors are swept before every render, so
-        anything added afterwards is distorted too, including actors a
-        :vtk:`vtkImporter` puts in the scene without going through
-        :func:`~pyvista.Plotter.add_actor`.
+        does not curve smoothly. Anything added to the scene afterwards is
+        distorted too, including actors a :vtk:`vtkImporter` puts there
+        without going through :func:`~pyvista.Plotter.add_actor`.
 
         Two kinds of prop are drawn by shaders with no vertices to displace,
         and are rendered undistorted alongside the rest of the scene, with a
@@ -1883,6 +1885,7 @@ class BasePlotter(_BoundsSizeMixin):
         for renderer, observer in self._camera_distortion_observers:
             renderer.RemoveObserver(observer)
         self._camera_distortion_observers = []
+        self._camera_distortion_sweeps = {}
         for renderer in self.renderers:
             for prop in renderer.actors.values():
                 if getattr(prop, '_camera_distortion_state', None) is None:
@@ -1908,14 +1911,23 @@ class BasePlotter(_BoundsSizeMixin):
             'undistorted alongside any distorted actors.'
         )
 
-    def _apply_camera_distortion(self, *_args) -> None:
-        """Give every actor the distortion shader and keep its uniforms current."""
+    def _apply_camera_distortion(self, caller: Renderer | None = None, *_args) -> None:
+        """Give the actors of ``caller``, or of every renderer, current uniforms."""
         coefficients = self._camera_distortion_coefficients
         if coefficients is None:  # pragma: no cover - disable removes the observer first
             return
-        for renderer in self.renderers:
+        for renderer in self.renderers if caller is None else [caller]:
+            props = renderer.GetViewProps()
             state = (coefficients, _projection_scale(renderer))
-            for prop in renderer.actors.values():
+            # An actor can only enter the scene undistorted by being added to the
+            # collection, so a renderer holding the props the last sweep left in
+            # this state has nothing for another walk to find.
+            sweep = (props.GetMTime(), state)
+            if self._camera_distortion_sweeps.get(renderer) == sweep:
+                continue
+            self._camera_distortion_sweeps[renderer] = sweep
+            for index in range(props.GetNumberOfItems()):
+                prop = props.GetItemAsObject(index)
                 if not isinstance(prop, _vtk.vtkActor):
                     if isinstance(prop, Volume):
                         self._warn_undistorted(
@@ -1932,9 +1944,7 @@ class BasePlotter(_BoundsSizeMixin):
                 if getattr(prop, '_camera_distortion_state', None) != state:
                     self._distort_actor(prop, state)
 
-    def _distort_actor(
-        self, prop: _vtk.vtkActor, state: tuple[tuple[float, ...], tuple[float, float]]
-    ) -> None:
+    def _distort_actor(self, prop: _vtk.vtkActor, state: _DistortionState) -> None:
         """Attach the distortion shader to one actor and set its uniforms."""
         coefficients, projection_scale = state
         if getattr(prop, '_camera_distortion_state', None) is None:

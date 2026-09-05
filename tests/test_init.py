@@ -311,6 +311,20 @@ def test_vtk_import_all_suppressed_ignores_failures(monkeypatch):
     assert calls == ['A', 'SpecialA']
 
 
+@pytest.mark.parametrize(('building_gallery', 'imported'), [('true', True), ('false', False)])
+def test_building_gallery_imports_vtk_eagerly(building_gallery, imported):
+    """A gallery build resolves every mapped VTK class when PyVista is imported."""
+    code = "from pyvista import _vtk; print('vtkOutlineFilter' in vars(_vtk))"
+    result = subprocess.run(
+        [sys.executable, '-c', code],
+        env={**os.environ, 'PYVISTA_BUILDING_GALLERY': building_gallery},
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    assert result.stdout.strip() == str(imported)
+
+
 def test_validation_forward_deprecated():
     import pyvista_validation
 

@@ -449,6 +449,20 @@ def read(  # noqa: PLR0917
     return result
 
 
+def _needs_reader_object(
+    ext: str, *, progress_bar: bool, validate: bool | None, kwargs: dict[str, Any]
+) -> bool:
+    """Return ``True`` when the caller asked for what only a reader object provides.
+
+    A handler takes a path and nothing else, so an override of a built-in
+    extension steps aside rather than dropping arguments it cannot honor.
+    """
+    from pyvista.core.utilities.reader import CLASS_READERS  # noqa: PLC0415
+
+    asked = progress_bar or validate is not None or bool(kwargs)
+    return asked and ext in CLASS_READERS
+
+
 def _read_dispatch(  # noqa: PLR0911
     filename: PathStrSeq,
     *,
@@ -519,7 +533,9 @@ def _read_dispatch(  # noqa: PLR0911
 
     # Check for registered custom extension readers
     ext_handler = _get_ext_handler(ext)
-    if ext_handler is not None:
+    if ext_handler is not None and not _needs_reader_object(
+        ext, progress_bar=progress_bar, validate=validate, kwargs=kwargs
+    ):
         return ext_handler(str(filename))
 
     if (missing := _missing_reader_message(ext, str(filename))) is not None:
@@ -539,11 +555,6 @@ def _read_dispatch(  # noqa: PLR0911
         try:
             return read_meshio(filename)
         except ReadError:
-            if ext == '.pv':  # pragma: no cover
-                msg += (
-                    "\nThe '.pv' extension is supported by the `pyvista-zstd` package. "
-                    'It can be installed with `pyvista[io]`.'
-                )
             raise OSError(msg)
     else:
         _set_reader_attributes(reader, **kwargs)

@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 import atexit
-import importlib
 from importlib.metadata import EntryPoint
 from importlib.metadata import entry_points
-import importlib.util
 from pathlib import Path
 import shutil
 import tempfile
@@ -23,6 +21,12 @@ from typing import overload
 import pooch
 
 from pyvista._warn_external import warn_external
+from pyvista.core.utilities._optional_formats import _READ
+from pyvista.core.utilities._optional_formats import _format_for
+from pyvista.core.utilities._optional_formats import _import_handler
+from pyvista.core.utilities._optional_formats import _installed_extensions
+from pyvista.core.utilities._optional_formats import _missing_message
+from pyvista.core.utilities._optional_formats import _source
 from pyvista.core.utilities._registry_helpers import handler_source
 from pyvista.core.utilities.reader import CLASS_READERS
 from pyvista.core.utilities.reader import BaseReader
@@ -54,29 +58,6 @@ READER_GROUP = 'pyvista.readers'
 # Declaring the intent in metadata is what separates a deliberate replacement
 # from an accidental one, so this group is silent and the other is an error.
 READER_OVERRIDE_GROUP = 'pyvista.readers.override'
-
-
-class _OptionalReader(NamedTuple):
-    """A format served by a companion package rather than by PyVista itself."""
-
-    module: str
-    attr: str
-    distribution: str
-    extra: str
-    describes: str
-    reader_class: str
-
-
-_OPTIONAL_READERS: dict[str, _OptionalReader] = {
-    '.frd': _OptionalReader(
-        module='pyvista_frd',
-        attr='read',
-        distribution='pyvista-frd-reader',
-        extra='pyvista[io]',
-        describes='CalculiX FRD result files',
-        reader_class='pyvista_frd.FRDReader',
-    ),
-}
 
 
 class ReaderRegistration(NamedTuple):
@@ -496,76 +477,26 @@ def _get_ext_reader_class(ext: str) -> type[BaseReader[Any]] | None:
     return _custom_class_readers.get(ext)
 
 
-def _optional_reader_installed(ext: str) -> bool:
-    """Return ``True`` when ``ext`` is an optional format whose package looks importable."""
-    spec = _OPTIONAL_READERS.get(ext)
-    if spec is None:
-        return False
-    try:
-        return importlib.util.find_spec(spec.module) is not None
-    except ImportError:
-        return False
-
-
-def _import_optional_reader(ext: str) -> tuple[ReaderHandler | None, ImportError | None]:
-    """Import the companion package serving ``ext``, returning its handler or the failure."""
-    spec = _OPTIONAL_READERS.get(ext)
-    if spec is None:
-        return None, None
-    try:
-        module = importlib.import_module(spec.module)
-    except ImportError as err:
-        return None, err
-    return cast('ReaderHandler', getattr(module, spec.attr)), None
-
-
 def _missing_reader_message(ext: str, filename: str | None = None) -> str | None:
-    """Return install instructions when ``ext`` needs a companion package PyVista cannot import.
-
-    ``None`` when ``ext`` is not an optional format, or when its package imports cleanly.
-    """
-    spec = _OPTIONAL_READERS.get(ext)
-    if spec is None:
-        return None
-    handler, err = _import_optional_reader(ext)
-    if handler is not None:
-        return None
-    opening = f'Cannot read {filename!r}.\n' if filename is not None else ''
-    installed = not (isinstance(err, ModuleNotFoundError) and err.name == spec.module)
-    if installed:
-        return (
-            f'{opening}Reading {spec.describes} ({ext}) requires the '
-            f'`{spec.distribution}` package, which is installed but failed to import:\n'
-            f'    {err}'
-        )
-    return (
-        f'{opening}Reading {spec.describes} ({ext}) requires the '
-        f'`{spec.distribution}` package, which is not installed.\n'
-        f'\n'
-        f'Install it with:\n'
-        f'    pip install {spec.extra}\n'
-        f'\n'
-        f'or, for just this reader:\n'
-        f'    pip install {spec.distribution}'
-    )
+    """Return install instructions when ``ext`` needs a companion package PyVista cannot import."""
+    return _missing_message(ext, _READ, filename)
 
 
 def _optional_reader_class_name(ext: str) -> str | None:
     """Return the reader class an optional format exposes, when it is importable."""
-    spec = _OPTIONAL_READERS.get(ext)
-    if spec is None:
+    fmt = _format_for(ext, _READ)
+    if fmt is None:
         return None
-    handler, _ = _import_optional_reader(ext)
-    return spec.reader_class if handler is not None else None
+    handler, _ = _import_handler(ext, _READ)
+    return fmt.reader_class if handler is not None else None
 
 
 def _resolve_optional_reader(ext: str) -> bool:
     """Register the companion package serving ``ext``, when it is importable."""
-    handler, _ = _import_optional_reader(ext)
+    handler, _ = _import_handler(ext, _READ)
     if handler is None:
         return False
-    spec = _OPTIONAL_READERS[ext]
-    _register(ext, handler, source=f'{spec.module}:{spec.attr}')
+    _register(ext, cast('ReaderHandler', handler), source=_source(ext, _READ))
     return True
 
 
@@ -713,7 +644,7 @@ def _list_custom_exts() -> list[str]:
     formats. The plugin modules themselves are **not** imported.
     """
     _ensure_entry_points()
-    installed_optional = {ext for ext in _OPTIONAL_READERS if _optional_reader_installed(ext)}
+    installed_optional = _installed_extensions(_READ)
     return list(
         _custom_ext_readers.keys()
         | _custom_class_readers.keys()

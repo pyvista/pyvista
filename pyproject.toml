@@ -41,7 +41,7 @@ readme = 'README.md'
 requires-python = '>=3.10'
 
 [project.optional-dependencies]
-all = ['pyvista[colormaps,io,jupyter]']
+all = ['pyvista[colormaps,io,io-override,jupyter]']
 colormaps = ['cmcrameri', 'cmocean', 'colorcet']
 cvista = ['cvista[all]>=9.7.0.2,<9.8.0']
 io = [
@@ -51,6 +51,7 @@ io = [
   'pyvista-frd-reader>=0.2.1',
   'pyvista-zstd>=0.3.1',
 ]
+io-override = ['pyvista-miniply>=0.5.2', 'pyvista-stl>=0.5.3']
 jupyter = ['ipywidgets', 'nest-asyncio2', 'trame-pyvista']
 
 [dependency-groups]
@@ -104,11 +105,13 @@ test = [
   'pytest-xdist<3.9.0',
   'pytest<9.1.0',
   'pyvista-frd-reader>=0.2.1,<0.3.0',
+  'pyvista-miniply>=0.5.2,<0.6.0',
+  'pyvista-stl>=0.5.3,<0.6.0',
   'pyvista-zstd>=0.3.1,<0.5.0',
   'refleak>=0.2.2,<0.3.0',
   'retry-requests<2.1.0',
   'scipy<1.17.0',
-  'sphinx-autocodelink==0.11.2',
+  'sphinx-autocodelink==0.11.3',
   'sphinx-autoopengraph<0.3',
   'sphinx-book-theme<1.5.0',
   'sphinx-design<0.8.0',
@@ -151,11 +154,13 @@ docs = [
   'pypandoc==1.17',
   'pytest-sphinx==0.7.1',
   'pyvista-frd-reader==0.2.1',
+  'pyvista-miniply==0.5.2',
+  'pyvista-stl==0.5.3',
   'pyvista-zstd==0.4.0',
   'ruamel-yaml<0.20.0',
   'scipy==1.16.3; python_version >= "3.11"',
   'sphinx-autobuild==2025.8.25; python_version >= "3.11"',
-  'sphinx-autocodelink==0.11.2',
+  'sphinx-autocodelink==0.11.3',
   'sphinx-autoopengraph==0.2.1',
   'sphinx-book-theme==1.4.0; python_version >= "3.11"',
   'sphinx-copybutton==0.5.2',

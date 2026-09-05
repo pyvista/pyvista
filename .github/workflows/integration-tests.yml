@@ -14,7 +14,9 @@ on: # zizmor: ignore[cache-poisoning]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Runs started by the schedule or by hand never cancel an in-progress run, so a merge to
+  # `main` always finishes; they queue behind it, and are dropped if another merge arrives.
+  cancel-in-progress: ${{ github.event_name != 'schedule' && github.event_name != 'workflow_dispatch' }}
 
 env:
   ALLOW_PLOTTING: true
