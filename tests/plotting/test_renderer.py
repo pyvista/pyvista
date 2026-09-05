@@ -78,6 +78,20 @@ def test_show_bounds_with_scaling(sphere):
     assert not actor1.GetUseTextActor3D()
 
 
+def test_show_bounds_scale_does_not_scale_cube_axes_actor(sphere):
+    pl = pv.Plotter()
+    pl.set_scale(zscale=2)
+    pl.add_mesh(sphere)
+    cube_axes_actor = pl.show_bounds()
+
+    # `cube_axes_actor`'s bounds are already expressed in scaled world coordinates,
+    # so its own transform must stay untouched by the renderer's scale.
+    assert cube_axes_actor.GetScale() == (1.0, 1.0, 1.0)
+
+    pl.set_scale(zscale=4)
+    assert cube_axes_actor.GetScale() == (1.0, 1.0, 1.0)
+
+
 def test_show_bounds_invalid_axes_ranges():
     pl = pv.Plotter()
 

@@ -1148,8 +1148,11 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             )
         actor.name = name
         actor.SetPickable(pickable)
-        # Apply this renderer's scale to the actor (which can be further scaled)
-        if hasattr(actor, 'SetScale'):
+        # Apply this renderer's scale to the actor (which can be further scaled).
+        # `cube_axes_actor` is excluded since its bounds are already expressed in
+        # scaled world coordinates (see `show_bounds` and `update_bounds_axes`), so
+        # scaling its transform on top would shift its geometry out of place.
+        if hasattr(actor, 'SetScale') and not isinstance(actor, pv.CubeAxesActor):
             actor.SetScale(np.array(actor.GetScale()) * np.array(self.scale))
         self.AddActor(actor)  # must add actor before resetting camera
 
@@ -2160,11 +2163,158 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             padding=padding,
         )
 
+        if grid:
+            grid = 'back' if grid is True else grid
+            if not isinstance(grid, str):
+                msg = f'`grid` must be a str, not {type(grid)}'
+                raise TypeError(msg)
+            grid = grid.lower()
+            if grid in ('front', 'frontface'):
+                cube_axes_actor.SetGridLineLocation(cube_axes_actor.VTK_GRID_LINES_CLOSEST)
+            elif grid in ('both', 'all'):
+                cube_axes_actor.SetGridLineLocation(cube_axes_actor.VTK_GRID_LINES_ALL)
+            elif grid in ('back', True):
+                cube_axes_actor.SetGridLineLocation(cube_axes_actor.VTK_GRID_LINES_FURTHEST)
+            else:
+                msg = f'`grid` must be either "front", "back, or, "all", not {grid}'
+                raise ValueError(msg)
+            # Only show user desired grid lines
+            cube_axes_actor.SetDrawXGridlines(show_xaxis)
+            cube_axes_actor.SetDrawYGridlines(show_yaxis)
+            cube_axes_actor.SetDrawZGridlines(show_zaxis)
+            # Set the colors
+            cube_axes_actor.GetXAxesGridlinesProperty().SetColor(color.float_rgb)
+            cube_axes_actor.GetYAxesGridlinesProperty().SetColor(color.float_rgb)
+            cube_axes_actor.GetZAxesGridlinesProperty().SetColor(color.float_rgb)
+
+        if isinstance(location, str):
+            location = location.lower()
+            if location in ('all'):
+                cube_axes_actor.SetFlyModeToStaticEdges()
+            elif location in ('origin'):
+                cube_axes_actor.SetFlyModeToStaticTriad()
+            elif location in ('outer'):
+                cube_axes_actor.SetFlyModeToOuterEdges()
+            elif location in ('default', 'closest', 'front'):
+                cube_axes_actor.SetFlyModeToClosestTriad()
+            elif location in ('furthest', 'back'):
+                cube_axes_actor.SetFlyModeToFurthestTriad()
+            else:
+                msg = (
+                    f'Value of location ("{location}") should be either "all", "origin",'
+                    ' "outer", "default", "closest", "front", "furthest", or "back".'
+                )
+                raise ValueError(msg)
+        elif location is not None:
+            msg = 'location must be a string'
+            raise TypeError(msg)
+
+        if isinstance(padding, (int, float)) and 0.0 <= padding < 1.0:
+            if not np.any(np.abs(bounds) == np.inf):
+                cushion = (
+                    np.array(
+                        [
+                            np.abs(bounds[1] - bounds[0]),
+                            np.abs(bounds[3] - bounds[2]),
+                            np.abs(bounds[5] - bounds[4]),
+                        ],
+                    )
+                    * padding
+                )
+                bounds[::2] -= cushion
+                bounds[1::2] += cushion
+        else:
+            msg = f'padding ({padding}) not understood. Must be float between 0 and 1'
+            raise ValueError(msg)
+        cube_axes_actor.bounds = bounds
+
+        # set axes ranges if input
+        if axes_ranges is not None:
+            if isinstance(axes_ranges, (Sequence, np.ndarray)):
+                axes_ranges = np.asanyarray(axes_ranges)
+            else:
+                msg = 'Input axes_ranges must be a numeric sequence.'
+                raise TypeError(msg)
+
+            if not np.issubdtype(axes_ranges.dtype, np.number):
+                msg = 'All of the elements of axes_ranges must be numbers.'
+                raise TypeError(msg)
+
+            # set the axes ranges
+            if axes_ranges.shape != (6,):
+                msg = (
+                    '`axes_ranges` must be passed as a '
+                    '(x_min, x_max, y_min, y_max, z_min, z_max) sequence.'
+                )
+                raise ValueError(msg)
+
+            cube_axes_actor.x_axis_range = axes_ranges[0], axes_ranges[1]
+            cube_axes_actor.y_axis_range = axes_ranges[2], axes_ranges[3]
+            cube_axes_actor.z_axis_range = axes_ranges[4], axes_ranges[5]
+
+        # set color
+        cube_axes_actor.GetXAxesLinesProperty().SetColor(color.float_rgb)
+        cube_axes_actor.GetYAxesLinesProperty().SetColor(color.float_rgb)
+        cube_axes_actor.GetZAxesLinesProperty().SetColor(color.float_rgb)
+
+        # set font
+        font_family = parse_font_family(font_family)
+
+        if not use_3d_text or not np.allclose(self.scale, [1.0, 1.0, 1.0]):
+            use_3d_text = False
+            cube_axes_actor.SetUseTextActor3D(False)
+        else:
+            cube_axes_actor.SetUseTextActor3D(True)
+
+        props = [
+            cube_axes_actor.GetTitleTextProperty(0),
+            cube_axes_actor.GetTitleTextProperty(1),
+            cube_axes_actor.GetTitleTextProperty(2),
+            cube_axes_actor.GetLabelTextProperty(0),
+            cube_axes_actor.GetLabelTextProperty(1),
+            cube_axes_actor.GetLabelTextProperty(2),
+        ]
+
+        # For 3D text, use `SetFontSize` to a relatively high value and use `SetScreenSize` to
+        # shrink it back down. This creates a higher-resolution font and makes it appear sharper.
+        # In VTK 9.6+, the 3D font size is also tied to the value set by SetFontSize, so we need
+        # an additional scaling factor.
+        default_screen_size = 10.0
+        default_font_size = 12
+        scaled_font_size = 50
+
+        for prop in props:
+            prop.SetColor(color.float_rgb)
+            prop.SetFontFamily(font_family)
+            prop.SetBold(bold)
+
+            if use_3d_text:
+                # this merely makes the font sharper
+                prop.SetFontSize(scaled_font_size)
+            else:
+                prop.SetFontSize(font_size)
+
+        if use_3d_text:
+            font_size_factor = 1.0 if vtk_less_than_96 else scaled_font_size / default_font_size
+            cube_axes_actor.SetScreenSize(
+                font_size / default_font_size / font_size_factor * default_screen_size
+            )
+        elif vtk_less_than_96:
+            cube_axes_actor.SetScreenSize(font_size / default_font_size * default_screen_size)
+
         if all_edges:
             self.add_bounding_box(color=color, corner_factor=corner_factor)
 
         self.add_actor(cube_axes_actor, reset_camera=False, pickable=False, render=render)
         self.cube_axes_actor = cube_axes_actor
+
+        # Must be set after the actor is fully configured and added to the renderer,
+        # otherwise VTK silently drops the labels and title of any axis that was
+        # scaled (https://github.com/pyvista/pyvista/issues/8687). Note this does not
+        # fix `use_2d_mode` labels vanishing in every subplot but the first one of a
+        # multi-viewport `Plotter`, which reproduces without any scaling at all and
+        # looks like a separate, deeper limitation.
+        cube_axes_actor.use_2d_mode = use_2d or not np.allclose(self.scale, [1.0, 1.0, 1.0])
 
         self.Modified()
         return cube_axes_actor
@@ -3000,9 +3150,12 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             zscale = self.scale[2]
         self.scale = [xscale, yscale, zscale]
 
-        # Reset all actors to match this scale
+        # Reset all actors to match this scale. `cube_axes_actor` is excluded since
+        # its bounds are already expressed in scaled world coordinates (see
+        # `show_bounds` and `update_bounds_axes`), so scaling its transform on top
+        # would shift its geometry out of place.
         for actor in self.actors.values():
-            if hasattr(actor, 'SetScale'):
+            if hasattr(actor, 'SetScale') and not isinstance(actor, pv.CubeAxesActor):
                 actor.SetScale(self.scale)
 
         self.parent.render()
