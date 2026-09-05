@@ -1215,7 +1215,7 @@ Install the regular test requirements with:
 
 .. code-block:: shell
 
-    python -m pip install -e '.[tests]'
+    python -m pip install -e . --group=test
 
 The tests can be executed with:
 
@@ -1252,7 +1252,7 @@ type it should have.
 
     assert_types(pv.wrap(_vtk.vtkPolyData()), pv.PolyData)
     assert_types(pv.wrap(None), None)
-    assert_types(list(multi().recursive_iterator("names")), list[str])
+    assert_types(list(multi().recursive_iterator('names')), list[str])
 
 ``assert_types`` comes from `type-assert <https://github.com/user27182/type-assert>`_
 and is two things at once. To Mypy it is
@@ -1269,14 +1269,14 @@ helpers such as the ``multi()`` above that builds a fresh ``MultiBlock``.
 
 How the Cases Run
 """""""""""""""""
-Each case file is collected as a test file of its own, and every case in it
-becomes two tests, named after the claim it makes rather than after where it
-sits in the file:
+Each case file is collected as a test file of its own. Every case in it becomes
+one runtime test and one static test per configured checker, named after the
+claim it makes rather than after where it sits in the file:
 
 .. code-block:: text
 
     tests/typing/cases/wrap.py::pv.wrap(pv.PolyData()) -> pv.PolyData [runtime]
-    tests/typing/cases/wrap.py::pv.wrap(pv.PolyData()) -> pv.PolyData [static]
+    tests/typing/cases/wrap.py::pv.wrap(pv.PolyData()) -> pv.PolyData [static: mypy]
 
 The runtime half compiles the file's setup, runs it in a namespace of its own
 and then executes that one case against it, so a case cannot reach another
@@ -1298,7 +1298,7 @@ in its own file:
 .. code-block:: python
 
     SKIP_RUNTIME = {
-        "expression exactly as written": "why running it fails here",
+        'pv.wrap(_vtk.vtkExplicitStructuredGrid())': 'VTK segfaults on an empty grid',
     }
 
 Only the runtime half is skipped; Mypy still checks the case. The mapping is
@@ -1310,15 +1310,20 @@ The Framework
 """""""""""""
 The machinery lives in `type-assert <https://github.com/user27182/type-assert>`_,
 a standalone package that knows nothing about PyVista. It registers itself as a
-pytest plugin, so the only wiring here is one setting in ``pyproject.toml``:
+pytest plugin and takes one setting in ``pyproject.toml``:
 
 .. code-block:: toml
 
     type_assert_cases = 'tests/typing/cases'
 
+That setting sits in the shared ``[tool.pytest.ini_options]``, and unknown
+options are errors, so the package belongs in every dependency group whose
+environment runs pytest against this configuration, not only the ones that run
+the typing tests.
+
 The checkers it drives are selectable with ``type_assert_checkers``, which
-defaults to Mypy and accepts more than one. Report anything wrong with the framework itself against that repository
-rather than this one.
+defaults to Mypy and accepts more than one. Report anything wrong with the
+framework itself against that repository rather than this one.
 
 Style Checking
 ~~~~~~~~~~~~~~
