@@ -198,6 +198,7 @@ def _deprecate_positional_args(
 
         @functools.wraps(f)
         def inner_f(*args: P.args, **kwargs: P.kwargs) -> T:
+            # Optimization: nothing to check when every positional argument is an allowed one
             if len(args) <= n_free_positional:
                 return f(*args, **kwargs)
             passed_positional_names = param_names[: len(args)]

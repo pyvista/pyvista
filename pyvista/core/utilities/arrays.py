@@ -317,10 +317,10 @@ def convert_array(  # noqa: PLR0917
         return _vtk_array_to_numpy(cast('_vtk.vtkAbstractArray', arr))
 
     kind = arr.dtype.kind
-    if kind == 'O':
+    if kind == 'O':  # np.object_
         arr = arr.astype('|S')
-        kind = 'S'
-    if kind in 'US':
+        kind = 'S'  # np.bytes_
+    if kind in 'US':  # np.str_ or np.bytes_
         vtk_data: _vtk.vtkAbstractArray = convert_string_array(arr)
     else:
         # A scalar is stored as a single-tuple array; numpy_to_vtk makes the data contiguous
@@ -754,7 +754,7 @@ def convert_string_array(
     if isinstance(arr, np.ndarray):
         flat_list = arr.reshape(-1).tolist()
         # VTK default fonts only support ASCII. See https://gitlab.kitware.com/vtk/vtk/-/issues/16904
-        if arr.dtype.kind == 'U' and not ''.join(flat_list).isascii():  # avoids segfault
+        if arr.dtype.kind == 'U' and not ''.join(flat_list).isascii():  # np.str_, avoids segfault
             msg = 'String array contains non-ASCII characters that are not supported by VTK.'
             raise ValueError(msg)
         vtkarr = _vtk.vtkStringArray()
@@ -763,6 +763,7 @@ def convert_string_array(
             _set_string_scalar_object_name(vtkarr)
 
         vtkarr.SetNumberOfValues(len(flat_list))
+        # Optimization: a zero-length deque drives the map without building a list
         deque(map(vtkarr.SetValue, range(len(flat_list)), flat_list), maxlen=0)
         if isinstance(name, str):
             vtkarr.SetName(name)
@@ -837,6 +838,7 @@ def vtkmatrix_from_array(array: NumpyArray[float]) -> _vtk.vtkMatrix3x3 | _vtk.v
     else:
         msg = f'Invalid shape {array.shape}, must be (3, 3) or (4, 4).'
         raise ValueError(msg)
+    # DeepCopy fills the matrix from a flat sequence of its elements, in row-major order
     matrix.DeepCopy(array.ravel().tolist())
     return matrix
 

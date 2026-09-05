@@ -72,7 +72,7 @@ class pyvista_ndarray(_NoNewAttrMixin, np.ndarray):  # noqa: N801  # numpydoc ig
         association: FieldAssociation = FieldAssociation.NONE,
     ) -> pyvista_ndarray:
         """Allocate the array."""
-        # Write the instance dict directly; attribute assignment goes through _NoNewAttrMixin
+        # Optimization: write the instance dict directly, bypassing _NoNewAttrMixin.__setattr__
         if isinstance(array, _vtk.vtkAbstractArray):
             obj = _vtk_array_to_numpy(array).view(cls)
             obj.__dict__['VTKObject'] = array
@@ -103,6 +103,7 @@ class pyvista_ndarray(_NoNewAttrMixin, np.ndarray):  # noqa: N801  # numpydoc ig
             dataset = obj.dataset
             vtk_object = obj.VTKObject
             association = obj.association
+            # Optimization: an unassociated parent leaves the class defaults in place
             if (
                 dataset is not None
                 or vtk_object is not None

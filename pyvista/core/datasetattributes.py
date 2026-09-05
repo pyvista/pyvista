@@ -502,7 +502,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7])
 
         """
-        if not isinstance(key, str):
+        if not isinstance(key, str):  # the bounds check only applies to an integer index
             self._raise_index_out_of_bounds(index=key)
         # Optimization: call the VTK object directly rather than through __getattr__ forwarding
         vtk_arr = self.VTKObject.GetAbstractArray(key)
@@ -533,6 +533,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
                 narray = narray.view(np.complex128)  # type: ignore[assignment]
             # remove singleton dimensions to match the behavior of the rest of 1D VTK arrays
             return narray.squeeze()  # type: ignore[return-value]
+        # Field data holding a string scalar (np.str_) is returned as the string itself
         if narray.ndim == 0 and association is FieldAssociation.NONE and narray.dtype.kind == 'U':
             return narray.tolist()
         return narray
@@ -771,7 +772,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
             array_len = 1 if data.ndim == 0 else data.shape[0]
 
         kind = data.dtype.kind
-        if data.ndim == 0 and kind == 'U':
+        if data.ndim == 0 and kind == 'U':  # np.str_
             pass  # Do not reshape string scalars
         else:
             # Fixup input array length for scalar input
@@ -816,10 +817,10 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         bitarray_names.discard(name)
         complex_names.discard(name)
 
-        if kind == 'b':
+        if kind == 'b':  # np.bool_
             bitarray_names.add(name)
             data = data.view(np.uint8)
-        elif kind == 'c':
+        elif kind == 'c':  # np.complexfloating
             if data.dtype not in (np.complex64, np.complex128):
                 msg = (
                     'Only numpy.complex64 or numpy.complex128 is supported when '

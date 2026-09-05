@@ -50,7 +50,7 @@ class lookup_table_ndarray(_NoNewAttrMixin, np.ndarray):  # noqa: N801
         obj = convert_array(array).view(cls)
         table_ref = _vtk.vtkWeakReference()
         table_ref.Set(table)
-        # Write the instance dict directly; attribute assignment goes through _NoNewAttrMixin
+        # Optimization: write the instance dict directly, bypassing _NoNewAttrMixin.__setattr__
         obj.__dict__.update(VTKObject=array, table=table_ref)
         return obj
 
