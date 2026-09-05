@@ -10,6 +10,11 @@ on:
   workflow_dispatch:
   pull_request:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # A pushed-over pull request run is cancelled; nightly and manual runs queue instead.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 env:
   ALLOW_PLOTTING: true
   SHELLOPTS: "errexit:pipefail"
@@ -38,6 +43,14 @@ jobs:
         python-version: ["3.14"]
 
     runs-on: ${{ matrix.os }}
+
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/compiler-cache
+      CCACHE_MAXSIZE: 1G
+      # Version string, not mtime: survives a runner-image update that keeps the compiler.
+      CCACHE_COMPILERCHECK: "%compiler% --version"
+      SCCACHE_DIR: ${{ github.workspace }}/compiler-cache
+      SCCACHE_CACHE_SIZE: 1G
 
     steps:
       - name: Checkout VTK master (pinned to nightly date-stamp commit)
@@ -138,18 +151,36 @@ jobs:
             echo "COMPILER_LAUNCHER=ccache" >> "$GITHUB_ENV"
           fi
 
-      - name: Configure ccache (Linux & macOS)
-        if: runner.os != 'Windows'
-        run: echo "CCACHE_DIR=$HOME/.ccache" >> "$GITHUB_ENV"
+      # An artifact, not actions/cache: the repository's shared 10 GB cache quota evicts a
+      # once-a-day entry before the next nightly can restore it.
+      - name: Find the newest compiler cache uploaded from main
+        id: find-compiler-cache
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Newest first. Only runs on main upload one, but filter anyway.
+          if ! run_id="$(gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts?name=compiler-cache-${RUNNER_OS}&per_page=10" \
+            --jq '[.artifacts[] | select((.expired | not) and .workflow_run.head_branch == "main")][0].workflow_run.id // empty')"; then
+            echo "::warning::Could not list the compiler cache artifacts; building cold"
+            run_id=""
+          fi
+          if [ -n "$run_id" ]; then
+            echo "Restoring the compiler cache uploaded by run $run_id"
+          else
+            echo "No compiler cache artifact found; building cold"
+          fi
+          echo "run-id=$run_id" >> "$GITHUB_OUTPUT"
 
-      - name: Restore ccache (Linux & macOS)
-        if: runner.os != 'Windows'
-        uses: actions/cache@v6
+      - name: Restore compiler cache
+        if: steps.find-compiler-cache.outputs.run-id != ''
+        uses: actions/download-artifact@v8
+        continue-on-error: true
         with:
-          path: ${{ env.CCACHE_DIR }}
-          key: vtk-nightly-ccache-${{ runner.os }}-${{ github.run_id }}
-          restore-keys: |
-            vtk-nightly-ccache-${{ runner.os }}-
+          name: compiler-cache-${{ runner.os }}
+          run-id: ${{ steps.find-compiler-cache.outputs.run-id }}
+          github-token: ${{ github.token }}
+          path: compiler-cache
 
       - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
         if: runner.os == 'Windows'
@@ -157,11 +188,6 @@ jobs:
       - name: Set up sccache (Windows)
         if: runner.os == 'Windows'
         uses: mozilla-actions/sccache-action@fc920bf0ec8de6ee65d409111f7ec508035751ba
-
-      - name: Enable sccache GHA backend (Windows)
-        if: runner.os == 'Windows'
-        shell: bash
-        run: echo "SCCACHE_GHA_ENABLED=true" >> "$GITHUB_ENV"
 
       - name: Configure
         shell: bash
@@ -191,6 +217,12 @@ jobs:
             ../vtk-src
           )
 
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            # Same target as VTK's own arm64 wheels. Without it delocate tags the wheel
+            # with the runner's macOS release, which older macOS cannot install.
+            cmake_args+=(-DCMAKE_OSX_DEPLOYMENT_TARGET=11.0)
+          fi
+
           cmake "${cmake_args[@]}"
 
       - name: Build
@@ -213,6 +245,16 @@ jobs:
       - name: Show compiler cache statistics
         shell: bash
         run: $COMPILER_LAUNCHER --show-stats
+
+      - name: Upload compiler cache
+        # Never from a pull request: the nightly restores whichever upload is newest.
+        if: ${{ !cancelled() && github.event_name != 'pull_request' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: compiler-cache-${{ runner.os }}
+          path: compiler-cache
+          compression-level: 0
+          retention-days: 7
 
       - name: Build wheel
         shell: bash
