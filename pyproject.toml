@@ -189,6 +189,7 @@ docs-test = [
   'pytest-xdist<3.9.0',
   'refleak>=0.2.2,<0.3.0', # tests/conftest.py imports it for the leak check
   'trame-pyvista==0.1.7',
+  'type-assert==0.2.1', # registers the type_assert_cases option
   { include-group = 'pinned' },
 ]
 
