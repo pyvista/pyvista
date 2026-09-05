@@ -139,6 +139,10 @@ jobs:
 
   Linux:
     name: Linux Unit Testing (${{ matrix.python-version }}, ${{ matrix.vtk-version }}, ${{ matrix.numpy-version }})
+    # Repeated for a tag only, like the other two. The merge queue's own commit
+    # is the one that lands, so the coverage it uploads is already Codecov's
+    # report for `main` and the push has nothing left to add.
+    if: github.event_name != 'push' || startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-22.04
     needs: cache-github-hosted
     strategy:

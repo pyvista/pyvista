@@ -170,11 +170,6 @@ jobs:
           name: pyvista-notebooks
           path: _notebooks
 
-      - uses: actions/upload-artifact@v7
-        with:
-          name: doc-failed-test-images
-          path: _doc_failed_test_images
-
   # Republishes the matched build under this run, so everything downstream —
   # `publish-notebooks` here, the Netlify deploy over in `netlify-deploy.yml` —
   # keeps reading `docs-build` from the run it was triggered by. The dev wheel
@@ -211,17 +206,6 @@ jobs:
           run-id: ${{ needs.resolve.outputs.run-id }}
           github-token: ${{ github.token }}
 
-      # The doc image report deploys from a push to `main`, and reports on a
-      # green build as well as a failing one, so it needs these carried over.
-      # A run that compared no images uploads nothing, hence the tolerance.
-      - uses: actions/download-artifact@v8
-        continue-on-error: true
-        with:
-          name: doc-failed-test-images
-          path: _doc_failed_test_images
-          run-id: ${{ needs.resolve.outputs.run-id }}
-          github-token: ${{ github.token }}
-
       - name: Rebuild development wheel and simple index
         run: |
           rm -rf doc/_build/html/wheels
@@ -237,11 +221,6 @@ jobs:
         with:
           name: pyvista-notebooks
           path: _notebooks
-
-      - uses: actions/upload-artifact@v7
-        with:
-          name: doc-failed-test-images
-          path: _doc_failed_test_images
 
   test:
     name: Test Documentation
