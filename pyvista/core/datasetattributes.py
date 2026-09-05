@@ -376,8 +376,11 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         self._raise_field_data_no_scalars_vectors_normals()
         scalars = self.VTKObject.GetScalars()  # Optimization: skip the __getattr__ forwarding
         if scalars is not None:
-            array = pyvista_ndarray(scalars, dataset=self.dataset, association=self.association)
-            return self._patch_type(array)
+            dataset, association = self.dataset, self.association
+            array = pyvista_ndarray(scalars, dataset=dataset, association=association)
+            return self._patch_type(
+                array, vtk_arr=scalars, dataset=dataset, association=association
+            )
         return None
 
     @property
@@ -499,44 +502,39 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7])
 
         """
-        self._raise_index_out_of_bounds(index=key)
-        # Optimization: call the VTK object directly; going through the __getattr__
-        # forwarding costs about as much as the VTK call itself
-        vtk_attributes = self.VTKObject
-        vtk_arr = vtk_attributes.GetArray(key)
+        if not isinstance(key, str):
+            self._raise_index_out_of_bounds(index=key)
+        # Optimization: call the VTK object directly rather than through __getattr__ forwarding
+        vtk_arr = self.VTKObject.GetAbstractArray(key)
         if vtk_arr is None:
-            vtk_arr = vtk_attributes.GetAbstractArray(key)
-            if vtk_arr is None:
-                msg = f'{key}'
-                raise KeyError(msg)
-        narray = pyvista_ndarray(vtk_arr, dataset=self.dataset, association=self.association)
-        return self._patch_type(narray)
+            msg = f'{key}'
+            raise KeyError(msg)
+        dataset, association = self.dataset, self.association
+        narray = pyvista_ndarray(vtk_arr, dataset=dataset, association=association)
+        return self._patch_type(narray, vtk_arr=vtk_arr, dataset=dataset, association=association)
 
-    def _patch_type(self: Self, narray: pyvista_ndarray) -> pyvista_ndarray:
-        """Check if array needs to be represented as a different type."""
-        vtk_arr = getattr(narray, 'VTKObject', None)
-        if isinstance(vtk_arr, _vtk.vtkAbstractArray):
-            name = vtk_arr.GetName()
-            dataset = self.dataset
-            association_name = self.association.name
-            if name in dataset._association_bitarray_names[association_name]:  # type: ignore[union-attr]
-                narray = narray.view(np.bool_)  # type: ignore[assignment]
-            elif name in dataset._association_complex_names[association_name]:  # type: ignore[union-attr]
-                if narray.dtype == np.float32:
-                    narray = narray.view(np.complex64)  # type: ignore[assignment]
-                if narray.dtype == np.float64:
-                    narray = narray.view(np.complex128)  # type: ignore[assignment]
-                # remove singleton dimensions to match the behavior of the rest of 1D
-                # VTK arrays
-                narray = narray.squeeze()  # type: ignore[assignment]
-            elif (
-                narray.ndim == 0
-                and narray.association == FieldAssociation.NONE
-                and np.issubdtype(narray.dtype, np.str_)
-            ):
-                # For field data with a string scalar, return the string
-                # itself instead of a scalar array
-                narray = narray.tolist()
+    def _patch_type(
+        self: Self,
+        narray: pyvista_ndarray,
+        *,
+        vtk_arr: _vtk.vtkAbstractArray,
+        dataset: DataSet | _vtk.vtkDataSet,
+        association: FieldAssociation,
+    ) -> pyvista_ndarray:
+        """Return the array viewed as bool or complex, or a scalar field string as ``str``."""
+        name = vtk_arr.GetName()
+        association_name = association.name
+        if name in dataset._association_bitarray_names[association_name]:  # type: ignore[union-attr]
+            return narray.view(np.bool_)  # type: ignore[return-value]
+        if name in dataset._association_complex_names[association_name]:  # type: ignore[union-attr]
+            if narray.dtype == np.float32:
+                narray = narray.view(np.complex64)  # type: ignore[assignment]
+            if narray.dtype == np.float64:
+                narray = narray.view(np.complex128)  # type: ignore[assignment]
+            # remove singleton dimensions to match the behavior of the rest of 1D VTK arrays
+            return narray.squeeze()  # type: ignore[return-value]
+        if narray.ndim == 0 and association is FieldAssociation.NONE and narray.dtype.kind == 'U':
+            return narray.tolist()
         return narray
 
     @_deprecate_positional_args(allowed=['data', 'name'])
@@ -764,14 +762,16 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         data = np.asanyarray(data)
 
         association = self.association
-        if association == FieldAssociation.POINT:
-            array_len = self.dataset.GetNumberOfPoints()
-        elif association == FieldAssociation.CELL:
-            array_len = self.dataset.GetNumberOfCells()
+        dataset = self.dataset
+        if association is FieldAssociation.POINT:
+            array_len = dataset.GetNumberOfPoints()
+        elif association is FieldAssociation.CELL:
+            array_len = dataset.GetNumberOfCells()
         else:
             array_len = 1 if data.ndim == 0 else data.shape[0]
 
-        if data.ndim == 0 and np.issubdtype(data.dtype, np.str_):
+        kind = data.dtype.kind
+        if data.ndim == 0 and kind == 'U':
             pass  # Do not reshape string scalars
         else:
             # Fixup input array length for scalar input
@@ -811,15 +811,15 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
                     return vtk_arr
 
         # reset data association (look the name sets up once, they are reused below)
-        bitarray_names = self.dataset._association_bitarray_names[association.name]  # type: ignore[union-attr]
-        complex_names = self.dataset._association_complex_names[association.name]  # type: ignore[union-attr]
+        bitarray_names = dataset._association_bitarray_names[association.name]  # type: ignore[union-attr]
+        complex_names = dataset._association_complex_names[association.name]  # type: ignore[union-attr]
         bitarray_names.discard(name)
         complex_names.discard(name)
 
-        if data.dtype == np.bool_:
+        if kind == 'b':
             bitarray_names.add(name)
             data = data.view(np.uint8)
-        elif np.issubdtype(data.dtype, np.complexfloating):
+        elif kind == 'c':
             if data.dtype not in (np.complex64, np.complex128):
                 msg = (
                     'Only numpy.complex64 or numpy.complex128 is supported when '
