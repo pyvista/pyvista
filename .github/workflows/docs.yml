@@ -157,7 +157,12 @@ jobs:
     name: Test Documentation
     runs-on: blacksmith-8vcpu-ubuntu-2204
     needs: doc
-    if: ${{ !cancelled() }}
+    # The merge queue tests the docs built from the tree that lands on `main`.
+    # Repeating that after the merge only ever reports a failure the queue
+    # would already have blocked, so a branch push skips it and the doc image
+    # report has nothing to publish. Tag builds are tested: they are what
+    # docs.pyvista.org serves.
+    if: ${{ !cancelled() && (github.event_name != 'push' || startsWith(github.ref, 'refs/tags/')) }}
     env:
       TOX_COLORED: "yes"
     steps:
