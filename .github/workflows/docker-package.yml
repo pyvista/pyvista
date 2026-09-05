@@ -19,14 +19,16 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
-permissions:
-  packages: write
+permissions: {}
 
 jobs:
   build-and-publish:
     name: Build ${{ matrix.target }} image
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write # push the image to ghcr.io
     # For pull requests, run on branches named `docker*` or when the
     # `docker` label is applied. Never runs on forked PRs (needs secrets).
     if: github.event_name == 'push' ||
