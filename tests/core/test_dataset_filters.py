@@ -16,6 +16,7 @@ from hypothesis.strategies import composite
 from hypothesis.strategies import floats
 from hypothesis.strategies import integers
 from hypothesis.strategies import one_of
+from matplotlib.colors import ListedColormap
 import numpy as np
 import pytest
 
@@ -4568,6 +4569,65 @@ def test_color_labels_return_dict(labeled_image, color_type):
         expected_color = getattr(pv.Color(mapping_in[key]), color_type)
         actual_color = mapping_out[key]
         assert actual_color == expected_color
+
+
+@pytest.mark.parametrize(
+    ('negative_indexing', 'label_data', 'expected_keys'),
+    [
+        (True, [0, -1, 2, -6], [0, 2, -1, -6]),
+        # A label equal to the number of colors is allowed but has no color
+        (False, [0, 2, 2, 6], [0, 2]),
+    ],
+)
+def test_color_labels_return_dict_index_mode(negative_indexing, label_data, expected_keys):
+    colors = ['red', 'green', 'blue', 'white', 'black', 'cyan']
+    labels = pv.ImageData(dimensions=(4, 1, 1))
+    labels['data'] = label_data
+    colored, mapping = labels.color_labels(
+        colors, coloring_mode='index', negative_indexing=negative_indexing, return_dict=True
+    )
+    # Only labels present are mapped, positive keys first
+    assert list(mapping.keys()) == expected_keys
+    for key in expected_keys:
+        assert mapping[key] == pv.Color(colors[key]).int_rgb
+    expected_colors = [mapping.get(label, (0, 0, 0)) for label in label_data]
+    assert np.array_equal(colored.active_scalars, expected_colors)
+
+
+def test_color_labels_does_not_modify_colormap():
+    cmap = ListedColormap([(1.0, 0.0, 0.0), (0.0, 1.0, 0.0)])
+    labels = pv.ImageData(dimensions=(3, 1, 1))
+    labels['data'] = [0, -1, 1]
+    kwargs = dict(negative_indexing=True, color_type='float_rgb')
+    first = labels.color_labels(cmap, **kwargs)
+    second = labels.color_labels(cmap, **kwargs)
+    assert len(cmap.colors) == 2
+    assert np.array_equal(first.active_scalars, second.active_scalars)
+
+
+def test_color_labels_return_dict_cycle_mode():
+    labels = pv.ImageData(dimensions=(4, 1, 1))
+    labels['data'] = [3, 1, 3, 7]
+    colored, mapping = labels.color_labels(
+        ['red', 'green'], coloring_mode='cycle', return_dict=True
+    )
+    assert list(mapping.keys()) == [1, 3, 7]
+    assert mapping[1] == mapping[7] == pv.Color('red').int_rgb
+    assert mapping[3] == pv.Color('green').int_rgb
+    expected_colors = [mapping[label] for label in labels['data']]
+    assert np.array_equal(colored.active_scalars, expected_colors)
+
+
+def test_color_labels_cycle_mode_nan_labels():
+    labels = pv.ImageData(dimensions=(3, 1, 1))
+    labels['data'] = [0.0, np.nan, 1.0]
+    colored, mapping = labels.color_labels(
+        ['red', 'green'], coloring_mode='cycle', color_type='float_rgb', return_dict=True
+    )
+    # NaN never matches a label, so it keeps the default color and is not mapped
+    assert list(mapping.keys()) == [0.0, 1.0]
+    assert np.isnan(colored.active_scalars[1]).all()
+    assert np.array_equal(colored.active_scalars[[0, 2]], [mapping[0.0], mapping[1.0]])
 
 
 @pytest.fixture
