@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import sys
-
 import meshio
 import numpy as np
 from trimesh import Trimesh
@@ -29,11 +27,9 @@ def as_meshio_mesh() -> meshio.Mesh:
     return meshio.Mesh(points=np.zeros((3, 3)), cells=[('triangle', np.array([[0, 1, 2]]))])
 
 
-SKIP_RUNTIME = (
-    {'pv.wrap(_vtk.vtkExplicitStructuredGrid())': 'VTK segfaults on an empty grid'}
-    if sys.platform == 'win32'
-    else {}
-)
+SKIP_RUNTIME = {
+    'pv.wrap(_vtk.vtkExplicitStructuredGrid())': 'VTK segfaults on an empty grid',
+}
 
 assert_types(pv.wrap(_vtk.vtkPolyData()), pv.PolyData)
 assert_types(pv.wrap(pv.PolyData()), pv.PolyData)
@@ -41,7 +37,9 @@ assert_types(pv.wrap(pv.PolyData()), pv.PolyData)
 assert_types(pv.wrap(_vtk.vtkStructuredGrid()), pv.StructuredGrid)
 assert_types(pv.wrap(pv.StructuredGrid()), pv.StructuredGrid)
 
-assert_types(pv.wrap(_vtk.vtkExplicitStructuredGrid()), pv.ExplicitStructuredGrid)
+assert_types(
+    pv.wrap(_vtk.vtkExplicitStructuredGrid()), pv.ExplicitStructuredGrid
+)  # pragma: no cover
 assert_types(pv.wrap(examples.load_explicit_structured()), pv.ExplicitStructuredGrid)
 
 assert_types(pv.wrap(_vtk.vtkUnstructuredGrid()), pv.UnstructuredGrid)
