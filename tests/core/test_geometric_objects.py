@@ -35,8 +35,9 @@ def test_quadrilateral_raises(points):
         pv.Quadrilateral(points=points)
 
 
-def test_cylinder():
-    surf = pv.Cylinder(center=[0, 10, 0], direction=[1, 1, 1], radius=1, height=5)
+@pytest.mark.benchmark
+def test_cylinder(benchmark):
+    surf = benchmark(pv.Cylinder, center=[0, 10, 0], direction=[1, 1, 1], radius=1, height=5)
     assert np.any(surf.points)
     assert np.any(surf.faces)
 
@@ -66,8 +67,9 @@ def test_arrow_raises_error():
         pv.Arrow(start=[0, 0, 0], direction=[1, 1, 1], scale='badarg')
 
 
-def test_sphere():
-    surf = pv.Sphere()
+@pytest.mark.benchmark
+def test_sphere(benchmark):
+    surf = benchmark(pv.Sphere)
     assert np.any(surf.points)
     assert np.any(surf.faces)
 
@@ -521,8 +523,9 @@ def test_solid_sphere_tol_angle(radians):
     assert solid_sphere.n_points == reference.n_points
 
 
-def test_plane():
-    surf = pv.Plane()
+@pytest.mark.benchmark
+def test_plane(benchmark):
+    surf = benchmark(pv.Plane)
     assert np.any(surf.points)
     assert np.any(surf.faces)
     assert np.array_equal(surf.center, (0, 0, 0))
@@ -631,8 +634,9 @@ def test_capsule_center(center, direction):
     assert np.allclose(capsule.center, cylinder.center)
 
 
-def test_cube():
-    cube = pv.Cube()
+@pytest.mark.benchmark
+def test_cube(benchmark):
+    cube = benchmark(pv.Cube)
     assert np.any(cube.points)
     assert np.any(cube.faces)
     bounds = (1.0, 3.0, 5.0, 6.0, 7.0, 8.0)

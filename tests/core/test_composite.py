@@ -562,8 +562,9 @@ def test_extract_geometry(multiblock_all_with_nested_and_none):
     assert isinstance(geom, PolyData)
 
 
-def test_combine_filter(multiblock_all_with_nested_and_none):
-    geom = multiblock_all_with_nested_and_none.combine()
+@pytest.mark.benchmark
+def test_combine_filter(multiblock_all_with_nested_and_none, benchmark):
+    geom = benchmark(multiblock_all_with_nested_and_none.combine)
     assert isinstance(geom, pv.UnstructuredGrid)
 
 

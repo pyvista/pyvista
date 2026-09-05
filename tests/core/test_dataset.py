@@ -264,8 +264,9 @@ def test_field_data_bad_value(hexbeam):
         hexbeam.field_data['new_array'] = None
 
 
-def test_copy(hexbeam):
-    grid_copy = hexbeam.copy(deep=True)
+@pytest.mark.benchmark
+def test_copy(hexbeam, benchmark):
+    grid_copy = benchmark(hexbeam.copy, deep=True)
     grid_copy.points[0] = np.nan
     assert not np.any(np.isnan(hexbeam.points[0]))
 
@@ -1343,9 +1344,10 @@ def test_active_normals(sphere):
     assert mesh.active_normals.shape[0] == mesh.n_cells
 
 
-def test_cast_to_pointset(sphere):
+@pytest.mark.benchmark
+def test_cast_to_pointset(sphere, benchmark):
     sphere = sphere.elevation()
-    pointset = sphere.cast_to_pointset()
+    pointset = benchmark(sphere.cast_to_pointset)
     assert isinstance(pointset, pv.PointSet)
 
     assert not np.may_share_memory(sphere.points, pointset.points)
