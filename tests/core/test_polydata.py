@@ -1110,6 +1110,22 @@ def test_volume(sphere_dense):
     assert np.isclose(sphere_dense.volume, ideal_volume, rtol=1e-3)
 
 
+def test_remove_unused_points_keeps_cell_order():
+    points = np.random.default_rng(1).random((10, 3))
+    mesh = pv.PolyData(points, verts=[1, 0, 1, 1], lines=[2, 2, 3, 2, 4, 5], faces=[3, 6, 7, 8])
+    mesh.cell_data['cell_ids'] = np.arange(mesh.n_cells)
+    mesh.cell_data['vtkOriginalCellIds'] = np.arange(mesh.n_cells) * 10
+    mesh.set_active_scalars('cell_ids')
+
+    cleaned = mesh.remove_unused_points()
+    assert cleaned.n_points == mesh.n_points - 1
+    assert cleaned.cell_data['cell_ids'].tolist() == [0, 1, 2, 3, 4]
+    assert cleaned.cell_data['vtkOriginalCellIds'].tolist() == [0, 10, 20, 30, 40]
+    assert cleaned.active_scalars_name == 'cell_ids'
+    for attr in ('verts', 'lines', 'faces'):
+        assert np.array_equal(getattr(cleaned, attr), getattr(mesh, attr))
+
+
 def test_remove_points_any(sphere):
     remove_mask = np.zeros(sphere.n_points, np.bool_)
     remove_mask[:3] = True

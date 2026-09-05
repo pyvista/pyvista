@@ -62,6 +62,9 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import _DataSetType
     from pyvista.core._typing_core import _MultiBlockType
+    from pyvista.core.cell import CellArray
+    from pyvista.core.utilities.arrays import CellLiteral
+    from pyvista.core.utilities.arrays import PointLiteral
     from pyvista.core.utilities.cell_quality import _CellQualityLiteral
 
     _MeshType_co = TypeVar('_MeshType_co', DataSet, MultiBlock, covariant=True)
@@ -5510,6 +5513,46 @@ def _remove_unused_points_post_clip(clip_output, input_bounds):
     )
 
 
+def _reorder_cells(cells: NumpyArray[int], order: NumpyArray[int]) -> CellArray:
+    """Reorder the cells of a legacy cell array."""
+    cell_array = pv.CellArray(cells)
+    offsets = cell_array.cell_offsets
+    sizes = np.diff(offsets)[order]
+    starts = offsets[:-1][order]
+    index = np.repeat(starts - np.cumsum(sizes) + sizes, sizes) + np.arange(sizes.sum())
+    new_offsets = np.concatenate(([0], np.cumsum(sizes)))
+    return pv.CellArray.from_arrays(new_offsets, cell_array.cell_connectivity[index])
+
+
+def _cast_to_polydata(mesh: DataSet) -> PolyData:
+    """Extract the surface as PolyData, keeping the input order of vertex and line cells."""
+    ids_name = 'vtkOriginalCellIds'
+    source = mesh.copy(deep=False)
+    original_ids = source.cell_data.pop(ids_name, None)
+    poly = source.extract_surface(algorithm=None, pass_cellid=True, pass_pointid=False)
+    ids = poly.cell_data.pop(ids_name, None)
+    if ids is None:
+        return poly
+    if original_ids is not None:
+        poly.cell_data[ids_name] = original_ids[ids]
+
+    # vtkGeometryFilter emits the vertex and line cells of an unstructured grid in reverse
+    n_verts, n_lines = poly.n_verts, poly.n_lines
+    perm = np.arange(poly.n_cells)
+    for attr, start, stop in (('verts', 0, n_verts), ('lines', n_verts, n_verts + n_lines)):
+        order = np.argsort(ids[start:stop], kind='stable')
+        if not np.array_equal(order, np.arange(order.size)):
+            perm[start:stop] = start + order
+            setattr(poly, attr, _reorder_cells(getattr(poly, attr), order))
+    if not np.array_equal(perm, np.arange(perm.size)):
+        association, active_name = poly.active_scalars_info
+        for key in poly.cell_data.keys():
+            poly.cell_data[key] = poly.cell_data[key][perm]
+        if active_name is not None:
+            poly.set_active_scalars(active_name, cast('PointLiteral | CellLiteral', association))
+    return poly
+
+
 def _cast_output_to_match_input_type(
     output_mesh: DataSet | MultiBlock, input_mesh: DataSet | MultiBlock
 ):
@@ -5517,7 +5560,7 @@ def _cast_output_to_match_input_type(
 
     def cast_output(mesh_out: DataSet, mesh_in: DataSet):
         if isinstance(mesh_in, pv.PolyData) and not isinstance(mesh_out, pv.PolyData):
-            return mesh_out.extract_surface(algorithm=None, pass_cellid=False, pass_pointid=False)
+            return _cast_to_polydata(mesh_out)
         elif isinstance(mesh_in, pv.PointSet) and not isinstance(mesh_out, pv.PointSet):
             return mesh_out.cast_to_pointset()
         return mesh_out
