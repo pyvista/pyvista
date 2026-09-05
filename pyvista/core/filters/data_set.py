@@ -4838,7 +4838,7 @@ class DataSetFilters(DataObjectFilters):
     ):
         r"""Remove cells from a mesh.
 
-        Points which are no longer used by any cell are also removed. The output is
+        Only points used by a remaining cell are kept. The output is
         :class:`~pyvista.PolyData` for ``PolyData`` input and an
         :class:`~pyvista.UnstructuredGrid` otherwise. With ``invert=True``, this is the
         equivalent of :meth:`extract_cells` that keeps the input type.
@@ -4846,7 +4846,9 @@ class DataSetFilters(DataObjectFilters):
         .. versionchanged:: 0.49
             This filter is available for all datasets, including
             :class:`~pyvista.StructuredGrid`, and the ``invert``, ``pass_point_ids``,
-            ``pass_cell_ids``, and ``progress_bar`` keywords were added. Negative and
+            ``pass_cell_ids``, and ``progress_bar`` keywords were added. Points no
+            remaining cell uses are dropped, the ``'vtkOriginalPointIds'`` and
+            ``'vtkOriginalCellIds'`` arrays are added by default, and negative and
             out-of-range indices raise ``IndexError``.
 
         Parameters
@@ -4927,8 +4929,8 @@ class DataSetFilters(DataObjectFilters):
     ):
         r"""Remove points and their cells from a mesh.
 
-        Cells are removed according to ``mode``, and points which are no longer used
-        by any cell are also removed. The output is :class:`~pyvista.PolyData` for
+        Cells are removed according to ``mode``, and only points used by a remaining
+        cell are kept. The output is :class:`~pyvista.PolyData` for
         ``PolyData`` input, :class:`~pyvista.PointSet` for ``PointSet`` input, and an
         :class:`~pyvista.UnstructuredGrid` otherwise. With ``invert=True`` and
         ``mode='all'``, this is the equivalent of :meth:`extract_points` that keeps
@@ -8773,7 +8775,6 @@ def _cast_extraction(
 def _finish_extraction(output: DataSet, *, pass_point_ids: bool, pass_cell_ids: bool) -> DataSet:
     """Ensure an empty extraction still carries the requested original id arrays."""
     if output.is_empty:
-        # Always include the arrays, even when nothing is extracted
         if pass_point_ids and 'vtkOriginalPointIds' not in output.point_data:
             output.point_data['vtkOriginalPointIds'] = np.array((), dtype=int)
         if pass_cell_ids and 'vtkOriginalCellIds' not in output.cell_data:

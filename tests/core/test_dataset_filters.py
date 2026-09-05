@@ -2562,7 +2562,12 @@ def test_remove_points(datasets, mode):
         if mode == 'any':
             assert not np.isin(ind, removed['vtkOriginalPointIds']).any()
         if dataset.n_cells:
-            assert removed.n_cells < dataset.n_cells
+            # Only cell 0 uses all of its points
+            assert (
+                removed.n_cells == dataset.n_cells - 1
+                if mode == 'all'
+                else removed.n_cells < dataset.n_cells - 1
+            )
             assert removed.n_points == removed.remove_unused_points().n_points
 
         # The id arrays are added by default

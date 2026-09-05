@@ -2923,9 +2923,10 @@ class PolyDataFilters(DataSetFilters):
             When ``'all'``, only faces containing all points flagged
             for removal will be removed.
 
-        keep_scalars : bool, default: True
+        keep_scalars : bool, optional
             When ``True``, point and cell scalars will be passed on to
-            the new mesh. Cannot be used together with ``ind``.
+            the new mesh. Defaults to ``True`` when ``remove`` is used and cannot be
+            used together with ``ind``.
 
         inplace : bool, default: False
             Updates mesh in-place.
