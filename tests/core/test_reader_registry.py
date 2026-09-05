@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import contextlib
+import functools
+from http.server import SimpleHTTPRequestHandler
+from http.server import ThreadingHTTPServer
 from importlib.metadata import EntryPoint
 import importlib.util
 from io import BytesIO
@@ -10,6 +13,7 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+import threading
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 from unittest.mock import patch
@@ -270,6 +274,38 @@ def test_uri_downloads_then_reads_builtin_ext(tmp_path):
     dl.assert_called_once()
     assert isinstance(result, pv.PolyData)
     assert result.n_points == mesh.n_points
+
+
+class _QuietHandler(SimpleHTTPRequestHandler):
+    """Static file handler that keeps request logs out of the test output."""
+
+    def log_message(self, *_args):
+        """Drop the log line."""
+
+
+@pytest.fixture
+def local_http_server(tmp_path):
+    """Serve ``tmp_path`` over HTTP on a random localhost port."""
+    handler = functools.partial(_QuietHandler, directory=str(tmp_path))
+    server = ThreadingHTTPServer(('127.0.0.1', 0), handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    yield f'http://127.0.0.1:{server.server_address[1]}'
+    server.shutdown()
+    server.server_close()
+
+
+def test_uri_downloads_are_not_reused_across_urls(tmp_path, local_http_server):
+    """Two remote files sharing an extension must each be downloaded."""
+    pv.Sphere().save(tmp_path / 'first.vtp')
+    pv.Cube().save(tmp_path / 'second.vtp')
+
+    with patch.dict('sys.modules', {'fsspec': None}):
+        first = pv.read(f'{local_http_server}/first.vtp')
+        second = pv.read(f'{local_http_server}/second.vtp')
+
+    assert first.n_points == pv.Sphere().n_points
+    assert second.n_points == pv.Cube().n_points
 
 
 @pytest.mark.parametrize(
