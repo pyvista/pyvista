@@ -6326,7 +6326,7 @@ def test_camera_distortion(scene_builder, distortion_coeffs):
 
 @pytest.mark.usefixtures('no_images_to_verify')
 def test_camera_distortion_reaches_what_it_can_and_warns_about_the_rest():
-    """The sweep runs before every render over everything the renderer holds.
+    """A sweep covers everything the renderer holds, whatever put it there.
 
     A composite brings its own mapper, text is an overlay rather than geometry,
     and a volume and Gaussian points are drawn by shaders with no vertices to
@@ -6357,6 +6357,33 @@ def test_camera_distortion_reaches_what_it_can_and_warns_about_the_rest():
     # Disabling walks the same props, including the ones it never gave anything to undo.
     pl.disable_camera_distortion()
     assert 'camera_distortion' not in composite._shader_replacements
+    pl.close()
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_camera_distortion_sweeps_only_what_a_render_changed(mocker: MockerFixture):
+    """Walking every actor is what a static scene would pay for on every frame.
+
+    A prop can only enter the scene through the renderer's collection, and the
+    uniforms only go stale when the projection changes, so a render that does
+    neither has nothing to write and must not look for it.
+    """
+    pl = pv.Plotter()
+    sphere = pl.add_mesh(pv.Sphere())
+    pl.enable_camera_distortion((0.18, 0.06, 0.004, -0.003))
+    pl.screenshot()  # the first render is the one that settles the scene
+
+    spy = mocker.spy(pl, '_distort_actor')
+    pl.render()
+    assert spy.call_args_list == []
+
+    late = pl.add_mesh(pv.Cube(), render=False)
+    pl.render()
+    assert [call.args[0] for call in spy.call_args_list] == [late]
+
+    pl.camera.view_angle *= 2  # a new projection scale for every actor to carry
+    pl.render()
+    assert [call.args[0] for call in spy.call_args_list] == [late, sphere, late]
     pl.close()
 
 
