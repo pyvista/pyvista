@@ -1,5 +1,5 @@
 """
-.. _ghost_cells_example:
+.. _remove_cells_example:
 
 Remove Cells
 ~~~~~~~~~~~~
