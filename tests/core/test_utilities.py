@@ -735,6 +735,9 @@ def test_convert_id_list():
 def test_vtkmatrix_from_array_like():
     values = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
     matrix = pv.vtkmatrix_from_array(values)
+    # Pin the row-major convention; a round trip alone would pass on a transposed matrix
+    assert matrix.GetElement(0, 2) == 3
+    assert matrix.GetElement(2, 0) == 7
     assert np.array_equal(pv.array_from_vtkmatrix(matrix), values)
 
     strided = np.asarray(values, dtype=np.float32)[::-1]
@@ -749,6 +752,13 @@ def test_convert_array_scalar_and_strided():
 
     strided = np.arange(10.0)[::2]
     assert np.array_equal(convert_array(convert_array(strided)), strided)
+
+    # Multi-component and non-contiguous, so the component count is read off a copy
+    strided_2d = np.arange(12.0).reshape(3, 4)[:, ::2]
+    assert not strided_2d.flags.c_contiguous
+    roundtrip = convert_array(convert_array(strided_2d))
+    assert roundtrip.shape == (3, 2)
+    assert np.array_equal(roundtrip, strided_2d)
 
     strings = np.array(['a', 'bb', 'ccc', 'dddd'])[::2]
     assert np.array_equal(convert_array(convert_array(strings)), strings)
@@ -3281,6 +3291,14 @@ def test_deprecate_positional_args_allowed():
         assert foo(True, baz=False) == (True, False)
     with pytest.warns(pv.PyVistaDeprecationWarning):
         assert foo(True, False) == (True, False)
+
+    # An allowed argument that is not first still leaves the ones before it deprecated
+    @_deprecate_positional_args(allowed=['baz'])
+    def qux(bar, baz):
+        return bar, baz
+
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        assert qux(True, baz=False) == (True, False)
 
     # Too many allowed args
     match = (

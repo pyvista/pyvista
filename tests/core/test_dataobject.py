@@ -410,6 +410,8 @@ def test_pickle_serialize_deserialize(datasets_no_pointset, pickle_format, capfd
 def test_pickle_drops_cached_vtk_objects(pickle_format):
     pv.set_pickle_format(pickle_format)
     mesh = pv.Sphere()
+    # A bool array is tracked in the instance dict, which must survive the round trip
+    mesh.point_data['flags'] = np.ones(mesh.n_points, dtype=bool)
     mesh.find_closest_point((0.0, 0.0, 0.0))
     assert isinstance(vars(mesh)['_point_locator'], pv._vtk.vtkObjectBase)
     assert mesh.points.dataset.Get() is mesh
@@ -417,6 +419,7 @@ def test_pickle_drops_cached_vtk_objects(pickle_format):
     unpickled = pickle.loads(pickle.dumps(mesh))
     assert not any(isinstance(value, pv._vtk.vtkObjectBase) for value in vars(unpickled).values())
     assert unpickled == mesh
+    assert unpickled.point_data['flags'].dtype == np.bool_
     assert unpickled.points.dataset.Get() is unpickled
 
 
