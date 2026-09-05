@@ -21,6 +21,7 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import PyVistaFutureWarning
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
+from pyvista.core.filters.data_object import _cast_to_polydata
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import get_array
@@ -4600,7 +4601,7 @@ class PolyDataFilters(DataSetFilters):
         """Remove points which are not used by any cells.
 
         This filter is similar to :meth:`clean` but does `not` merge points or convert cells.
-        The point order is also unchanged by this filter.
+        The point and cell order are also unchanged by this filter.
 
         .. versionadded:: 0.46
 
@@ -4653,11 +4654,7 @@ class PolyDataFilters(DataSetFilters):
           N Arrays:   0
 
         """
-        removed = (
-            self.cast_to_unstructured_grid()
-            .remove_unused_points()
-            .extract_surface(algorithm=None, pass_pointid=False, pass_cellid=False)
-        )
+        removed = _cast_to_polydata(self.cast_to_unstructured_grid().remove_unused_points())
         out = self if inplace else type(self)()
         out.copy_from(removed, deep=not inplace)
         return out

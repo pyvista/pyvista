@@ -28,6 +28,7 @@ from pyvista.core.errors import DeprecationError
 from pyvista.core.filters.data_object import _PYVISTA_CELL_STATUS_INFO
 from pyvista.core.filters.data_object import _SENTINEL
 from pyvista.core.filters.data_object import _VTK_CELL_STATUS_INFO
+from pyvista.core.filters.data_object import _cast_to_polydata
 from pyvista.core.filters.data_object import _convex_hull_scipy
 from pyvista.core.filters.data_object import _get_cell_quality_measures
 from pyvista.core.utilities.cell_quality import _CellQualityLiteral
@@ -284,6 +285,30 @@ def test_clip_box_no_unused_points(as_composite):
     )
     clipped = mesh.clip_box(bounds=new_bounds, invert=False)
     assert np.allclose(clipped.bounds, new_bounds)
+
+
+def test_cast_to_polydata_keeps_cell_order():
+    points = np.random.default_rng(1).random((11, 3))
+    mesh = pv.PolyData(
+        points,
+        verts=[1, 0, 1, 1],
+        lines=[2, 2, 3, 3, 4, 5, 6],
+        faces=[3, 7, 8, 9],
+        strips=[3, 8, 9, 10],
+    )
+    mesh.cell_data['cell_ids'] = np.arange(mesh.n_cells)
+    mesh.cell_data['vtkOriginalCellIds'] = np.arange(mesh.n_cells) * 10
+    mesh.set_active_scalars('cell_ids')
+
+    cast = _cast_to_polydata(mesh.cast_to_unstructured_grid())
+    assert cast.cell_data['cell_ids'].tolist() == [0, 1, 2, 3, 4, 5]
+    assert cast.cell_data['vtkOriginalCellIds'].tolist() == [0, 10, 20, 30, 40, 50]
+    assert cast.active_scalars_name == 'cell_ids'
+    assert np.array_equal(cast.points, mesh.points)
+    for attr in ('verts', 'lines', 'faces', 'strips'):
+        assert np.array_equal(getattr(cast, attr), getattr(mesh, attr))
+
+    assert _cast_to_polydata(pv.UnstructuredGrid()).n_cells == 0
 
 
 def test_clip_box_composite(multiblock_all):
