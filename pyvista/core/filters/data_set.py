@@ -4626,10 +4626,11 @@ class DataSetFilters(DataObjectFilters):
         pass_cell_ids: bool = True,  # noqa: FBT001, FBT002
         pass_point_ids: bool = True,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
-        *,
-        match_input_type: bool = False,
     ):
         r"""Return a subset of the grid.
+
+        The output is an :class:`~pyvista.UnstructuredGrid`. Use :meth:`remove_cells`
+        with ``invert=True`` to extract cells while keeping the input type.
 
         .. versionchanged:: 0.49
             Negative and out-of-range indices raise ``IndexError``.
@@ -4658,22 +4659,14 @@ class DataSetFilters(DataObjectFilters):
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
-        match_input_type : bool, default: False
-            If ``True``, return :class:`~pyvista.PolyData` when the input is ``PolyData``.
-            Otherwise, an :class:`~pyvista.UnstructuredGrid` is returned. This has no
-            effect on other input types.
-
-            .. versionadded:: 0.49
-
         See Also
         --------
         extract_points, extract_values, remove_cells
 
         Returns
         -------
-        pyvista.UnstructuredGrid | pyvista.PolyData
-            Subselected cells. ``PolyData`` is only returned when ``match_input_type``
-            is ``True``.
+        pyvista.UnstructuredGrid
+            Subselected grid.
 
         Examples
         --------
@@ -4687,14 +4680,6 @@ class DataSetFilters(DataObjectFilters):
         >>> actor = pl.add_mesh(grid, style='wireframe', line_width=5, color='black')
         >>> actor = pl.add_mesh(subset, color='grey')
         >>> pl.show()
-
-        Extract cells from :class:`~pyvista.PolyData` and match the output type to
-        the input.
-
-        >>> sphere = pv.Sphere()
-        >>> subset = sphere.extract_cells(range(20), match_input_type=True)
-        >>> type(subset)
-        <class 'pyvista.core.pointset.PolyData'>
 
         """
         mask = _validate_extraction_ids(ind, n_items=self.n_cells, name='cells', invert=invert)
@@ -4721,7 +4706,6 @@ class DataSetFilters(DataObjectFilters):
         output = _finish_extraction(
             _get_output(extract),
             self,
-            match_input_type=match_input_type,
             pass_point_ids=pass_point_ids,
             pass_cell_ids=pass_cell_ids,
         )
@@ -4743,9 +4727,12 @@ class DataSetFilters(DataObjectFilters):
         progress_bar: bool = False,  # noqa: FBT001, FBT002
         *,
         invert: bool = False,
-        match_input_type: bool = False,
     ):
         r"""Return a subset of the grid (with cells) that contains any of the given point indices.
+
+        The output is an :class:`~pyvista.UnstructuredGrid`. Use :meth:`remove_points`
+        with ``invert=True`` and ``mode='all'`` to extract points and their cells while
+        keeping the input type.
 
         .. versionchanged:: 0.49
             Negative and out-of-range indices raise ``IndexError``.
@@ -4785,23 +4772,15 @@ class DataSetFilters(DataObjectFilters):
 
             .. versionadded:: 0.49
 
-        match_input_type : bool, default: False
-            If ``True``, return :class:`~pyvista.PolyData` when the input is ``PolyData``.
-            Otherwise, an :class:`~pyvista.UnstructuredGrid` is returned. This has no
-            effect on other input types.
-
-            .. versionadded:: 0.49
-
         See Also
         --------
         extract_cells, extract_values, remove_points
 
         Returns
         -------
-        pyvista.UnstructuredGrid | pyvista.PolyData | pyvista.PointSet
-            Subselected points. A :class:`~pyvista.PointSet` input always returns a
-            ``PointSet``, and ``PolyData`` is only returned when ``match_input_type``
-            is ``True``.
+        pyvista.UnstructuredGrid | pyvista.PointSet
+            Subselected points. A :class:`~pyvista.PointSet` input returns a
+            ``PointSet``.
 
         Examples
         --------
@@ -4846,11 +4825,7 @@ class DataSetFilters(DataObjectFilters):
         if not pass_cell_ids:
             output.cell_data.pop('vtkOriginalCellIds', None)
         return _finish_extraction(
-            output,
-            self,
-            match_input_type=match_input_type,
-            pass_point_ids=pass_point_ids,
-            pass_cell_ids=pass_cell_ids,
+            output, self, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids
         )
 
     @_deprecate_positional_args(allowed=['ind'])
@@ -4868,7 +4843,8 @@ class DataSetFilters(DataObjectFilters):
 
         Points which are no longer used by any cell are also removed. The output is
         :class:`~pyvista.PolyData` for ``PolyData`` input and an
-        :class:`~pyvista.UnstructuredGrid` otherwise.
+        :class:`~pyvista.UnstructuredGrid` otherwise. With ``invert=True``, this is the
+        equivalent of :meth:`extract_cells` that keeps the input type.
 
         .. versionchanged:: 0.49
             This filter is available for all datasets, including
@@ -4935,7 +4911,9 @@ class DataSetFilters(DataObjectFilters):
             pass_point_ids=pass_point_ids,
             pass_cell_ids=pass_cell_ids,
             progress_bar=progress_bar,
-            match_input_type=True,
+        )
+        output = _cast_extraction(
+            output, self, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids
         )
         return _apply_inplace(self, output, inplace=inplace)
 
@@ -4955,7 +4933,9 @@ class DataSetFilters(DataObjectFilters):
         Cells are removed according to ``mode``, and points which are no longer used
         by any cell are also removed. The output is :class:`~pyvista.PolyData` for
         ``PolyData`` input, :class:`~pyvista.PointSet` for ``PointSet`` input, and an
-        :class:`~pyvista.UnstructuredGrid` otherwise.
+        :class:`~pyvista.UnstructuredGrid` otherwise. With ``invert=True`` and
+        ``mode='all'``, this is the equivalent of :meth:`extract_points` that keeps
+        the input type.
 
         .. versionadded:: 0.49
 
@@ -5030,7 +5010,9 @@ class DataSetFilters(DataObjectFilters):
             pass_point_ids=pass_point_ids,
             pass_cell_ids=pass_cell_ids,
             progress_bar=progress_bar,
-            match_input_type=True,
+        )
+        output = _cast_extraction(
+            output, self, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids
         )
         if output.n_cells == self.n_cells and isinstance(
             output, (pv.PolyData, pv.UnstructuredGrid)
@@ -5228,7 +5210,6 @@ class DataSetFilters(DataObjectFilters):
         pass_point_ids: bool = True,
         pass_cell_ids: bool = True,
         progress_bar: bool = False,
-        match_input_type: bool = False,
     ):
         """Return a subset of the mesh based on the values of point or cell data.
 
@@ -5360,13 +5341,6 @@ class DataSetFilters(DataObjectFilters):
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
-        match_input_type : bool, default: False
-            If ``True``, return :class:`~pyvista.PolyData` when the input is ``PolyData``.
-            Otherwise, an :class:`~pyvista.UnstructuredGrid` is returned. This has no
-            effect on other input types.
-
-            .. versionadded:: 0.49
-
         See Also
         --------
         split_values
@@ -5384,10 +5358,8 @@ class DataSetFilters(DataObjectFilters):
 
         Returns
         -------
-        output : pyvista.DataSet | pyvista.MultiBlock
+        output : pyvista.UnstructuredGrid | pyvista.MultiBlock
             An extracted mesh or a composite of extracted meshes, depending on ``split``.
-            The mesh type is an :class:`~pyvista.UnstructuredGrid` unless
-            ``match_input_type`` is ``True``.
 
         Examples
         --------
@@ -5534,7 +5506,6 @@ class DataSetFilters(DataObjectFilters):
             pass_point_ids=pass_point_ids,
             pass_cell_ids=pass_cell_ids,
             progress_bar=progress_bar,
-            match_input_type=match_input_type,
         )
 
         if split:
@@ -5803,7 +5774,6 @@ class DataSetFilters(DataObjectFilters):
         progress_bar,
         pass_point_ids,
         pass_cell_ids,
-        match_input_type,
     ):
         id_mask = self._apply_component_logic_to_array(
             values=values,
@@ -5822,7 +5792,6 @@ class DataSetFilters(DataObjectFilters):
                 pass_point_ids=pass_point_ids,
                 pass_cell_ids=pass_cell_ids,
                 progress_bar=progress_bar,
-                match_input_type=match_input_type,
             )
         else:
             output = self.extract_cells(
@@ -5830,7 +5799,6 @@ class DataSetFilters(DataObjectFilters):
                 pass_point_ids=pass_point_ids,
                 pass_cell_ids=pass_cell_ids,
                 progress_bar=progress_bar,
-                match_input_type=match_input_type,
             )
 
         return output
@@ -8797,17 +8765,20 @@ def _apply_inplace(mesh: DataSet, output: DataSet, *, inplace: bool) -> DataSet:
     return mesh
 
 
-def _finish_extraction(
-    output: DataSet,
-    input_mesh: DataSet,
-    *,
-    match_input_type: bool,
-    pass_point_ids: bool,
-    pass_cell_ids: bool,
+def _cast_extraction(
+    output: DataSet, input_mesh: DataSet, *, pass_point_ids: bool, pass_cell_ids: bool
 ) -> DataSet:
     """Cast an extracted mesh to the input type and keep its original id arrays."""
-    if match_input_type:
-        output = cast('DataSet', _cast_output_to_match_input_type(output, input_mesh))
+    output = cast('DataSet', _cast_output_to_match_input_type(output, input_mesh))
+    return _finish_extraction(
+        output, input_mesh, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids
+    )
+
+
+def _finish_extraction(
+    output: DataSet, input_mesh: DataSet, *, pass_point_ids: bool, pass_cell_ids: bool
+) -> DataSet:
+    """Ensure an empty extraction still carries the requested original id arrays."""
     if output.is_empty:
         # Always include the arrays, even when nothing is extracted
         if pass_point_ids and 'vtkOriginalPointIds' not in output.point_data:

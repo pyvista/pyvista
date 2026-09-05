@@ -2406,51 +2406,53 @@ def test_extract_cells(sphere):
 
 
 @pytest.mark.parametrize('dataset_filter', ['extract_cells', 'extract_points'])
-def test_extract_cells_extract_points_match_input_type(datasets, dataset_filter):
+def test_remove_invert_matches_extract(datasets, dataset_filter):
+    remove_filter = 'remove_cells' if dataset_filter == 'extract_cells' else 'remove_points'
     for dataset in datasets:
+        if isinstance(dataset, pv.PointSet) and dataset_filter == 'extract_cells':
+            continue
         n_items = dataset.n_cells if dataset_filter == 'extract_cells' else dataset.n_points
         ind = np.arange(n_items) < 4
-        kwargs = (
+        extract_kwargs = (
             {} if dataset_filter == 'extract_cells' else dict(include_cells=dataset.n_cells > 0)
         )
-        default = getattr(dataset, dataset_filter)(ind, **kwargs)
-        matched = getattr(dataset, dataset_filter)(ind, match_input_type=True, **kwargs)
+        remove_kwargs = {} if dataset_filter == 'extract_cells' else dict(mode='all')
+        extracted = getattr(dataset, dataset_filter)(ind, **extract_kwargs)
+        removed = getattr(dataset, remove_filter)(ind=ind, invert=True, **remove_kwargs)
 
         is_pointset = isinstance(dataset, pv.PointSet)
-        assert type(default) is (pv.PointSet if is_pointset else pv.UnstructuredGrid)
-        assert type(matched) is (
+        assert type(extracted) is (pv.PointSet if is_pointset else pv.UnstructuredGrid)
+        assert type(removed) is (
             type(dataset)
             if isinstance(dataset, (pv.PolyData, pv.PointSet))
             else pv.UnstructuredGrid
         )
-        assert matched.n_points == default.n_points
-        assert matched.n_cells == default.n_cells
-        assert np.array_equal(matched.points, default.points)
-        assert np.array_equal(matched['vtkOriginalPointIds'], default['vtkOriginalPointIds'])
+        assert removed.n_points == extracted.n_points
+        assert removed.n_cells == extracted.n_cells
+        assert np.array_equal(removed.points, extracted.points)
+        assert np.array_equal(removed['vtkOriginalPointIds'], extracted['vtkOriginalPointIds'])
 
 
-def test_extract_cells_match_input_type_polydata(sphere):
+def test_remove_cells_invert_polydata(sphere):
     sphere.point_data['scalars'] = np.arange(sphere.n_points)
     sphere.set_active_scalars('scalars')
     ind = [0, 5, 10]
-    extracted = sphere.extract_cells(ind, match_input_type=True)
-    assert isinstance(extracted, pv.PolyData)
-    assert extracted.n_cells == len(ind)
-    assert np.array_equal(extracted['vtkOriginalCellIds'], ind)
-    assert np.array_equal(extracted.points, sphere.points[extracted['vtkOriginalPointIds']])
-    assert extracted.active_scalars_name == 'scalars'
+    kept = sphere.remove_cells(ind, invert=True)
+    assert isinstance(kept, pv.PolyData)
+    assert kept.n_cells == len(ind)
+    assert np.array_equal(kept['vtkOriginalCellIds'], ind)
+    assert np.array_equal(kept.points, sphere.points[kept['vtkOriginalPointIds']])
+    assert kept.active_scalars_name == 'scalars'
     assert 'vtkOriginalPointIds' not in sphere.point_data
     assert 'vtkOriginalCellIds' not in sphere.cell_data
 
     # An empty selection keeps the id arrays
-    empty = sphere.extract_cells([], match_input_type=True)
+    empty = sphere.remove_cells([], invert=True)
     assert isinstance(empty, pv.PolyData)
     assert empty.is_empty
     assert empty.point_data.keys() == ['vtkOriginalPointIds']
     assert empty.cell_data.keys() == ['vtkOriginalCellIds']
-    empty = sphere.extract_cells(
-        [], match_input_type=True, pass_point_ids=False, pass_cell_ids=False
-    )
+    empty = sphere.remove_cells([], invert=True, pass_point_ids=False, pass_cell_ids=False)
     assert empty.n_arrays == 0
 
 
@@ -2499,18 +2501,6 @@ def test_extract_cells_extract_points_invalid_ind(sphere, dataset_filter):
     assert dataset_filter([]).n_points == 0
 
 
-def test_extract_values_match_input_type(sphere):
-    sphere['z'] = sphere.points[:, 2]
-    assert isinstance(sphere.extract_values(ranges=[0, 1]), pv.UnstructuredGrid)
-    assert isinstance(sphere.extract_values(ranges=[0, 1], match_input_type=True), pv.PolyData)
-    assert isinstance(sphere.split_values(ranges=[[0, 1]], match_input_type=True)[0], pv.PolyData)
-
-    sphere.cell_data['cell_ids'] = np.arange(sphere.n_cells)
-    extracted = sphere.extract_values(ranges=[0, 10], scalars='cell_ids', match_input_type=True)
-    assert isinstance(extracted, pv.PolyData)
-    assert extracted.n_cells == 11
-
-
 def test_remove_cells(datasets):
     ind = [0, 1, 2]
     for dataset in datasets:
@@ -2526,7 +2516,6 @@ def test_remove_cells(datasets):
         assert removed.n_cells == dataset.n_cells - len(ind)
         assert not np.isin(ind, removed['vtkOriginalCellIds']).any()
         assert np.array_equal(removed.points, dataset.points[removed['vtkOriginalPointIds']])
-        assert removed == dataset.extract_cells(ind, invert=True, match_input_type=True)
         assert removed.n_points == removed.remove_unused_points().n_points
 
         # The id arrays are added by default
@@ -2570,13 +2559,6 @@ def test_remove_points(datasets, mode):
         )
         assert type(removed) is expected_type
         assert np.array_equal(removed.points, dataset.points[removed['vtkOriginalPointIds']])
-        assert removed == dataset.extract_points(
-            ind,
-            invert=True,
-            adjacent_cells=mode == 'all',
-            include_cells=dataset.n_cells > 0,
-            match_input_type=True,
-        )
         if mode == 'any':
             assert not np.isin(ind, removed['vtkOriginalPointIds']).any()
         if dataset.n_cells:
