@@ -726,6 +726,11 @@ def convert_string_array(
 
     If a scalar string is provided, it is converted to a :vtk:`vtkCharArray`
 
+    .. versionchanged:: 0.49
+        A two-dimensional array keeps its second axis, held as the components of
+        the :vtk:`vtkStringArray`. It was previously flattened. An array with more
+        dimensions raises instead of being flattened.
+
     Parameters
     ----------
     arr : numpy.ndarray | str
@@ -747,6 +752,9 @@ def convert_string_array(
     """
     arr = np.array(arr) if isinstance(arr, str) else arr
     if isinstance(arr, np.ndarray):
+        if arr.ndim > 2:
+            msg = f'String array must be at most 2-dimensional, got shape {arr.shape}.'
+            raise ValueError(msg)
         flat_list = arr.reshape(-1).tolist()
         # VTK default fonts only support ASCII. See https://gitlab.kitware.com/vtk/vtk/-/issues/16904
         if arr.dtype.kind == 'U' and not ''.join(flat_list).isascii():  # np.str_, avoids segfault
@@ -756,6 +764,9 @@ def convert_string_array(
         if arr.ndim == 0:
             # The object name marks a scalar input
             _set_string_scalar_object_name(vtkarr)
+        elif arr.ndim == 2:
+            # The second axis is stored as components, as it is for numeric arrays
+            vtkarr.SetNumberOfComponents(arr.shape[1])
 
         vtkarr.SetNumberOfValues(len(flat_list))
         # Optimization: a zero-length deque drives the map without building a list
@@ -773,6 +784,9 @@ def convert_string_array(
             return np.array(''.join(arr_out))
     except AttributeError:
         pass
+    n_components = arr.GetNumberOfComponents()
+    if n_components > 1:
+        return arr_out.reshape(-1, n_components)
     return arr_out
 
 
