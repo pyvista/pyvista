@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from enum import Enum
+from typing import cast
 
 import pyvista as pv
 from pyvista import _vtk
@@ -13,7 +14,7 @@ from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.core.utilities.misc import _NameMixin
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
-from .actor_properties import ActorProperties
+from ._property import Property
 
 
 class AxesActor(
@@ -25,6 +26,10 @@ class AxesActor(
     can define the geometry to use for the shaft or the tip, and the
     user can set the text for the three axes. To see full customization
     options, refer to :vtk:`vtkAxesActor`.
+
+    .. versionchanged:: 0.49
+        The shaft and tip properties are :class:`~pyvista.Property` objects
+        instead of ``ActorProperties``, and each can be assigned.
 
     See Also
     --------
@@ -86,6 +91,18 @@ class AxesActor(
     def __init__(self):
         """Initialize actor."""
         super().__init__()
+
+        actors = _vtk.vtkPropCollection()
+        self.GetActors(actors)
+        self._actors = cast(
+            'list[_vtk.vtkActor]',
+            [actors.GetItemAsObject(i) for i in range(actors.GetNumberOfItems())],
+        )
+        for actor in self._actors:
+            # Copy VTK's defaults so wrapping does not change how the axes render
+            prop = Property()
+            prop.DeepCopy(actor.GetProperty())
+            actor.SetProperty(prop)
 
         self.x_axis_shaft_properties.color = pv.global_theme.axes.x_color.float_rgb
         self.x_axis_tip_properties.color = pv.global_theme.axes.x_color.float_rgb
@@ -526,43 +543,55 @@ class AxesActor(
         self.SetZAxisLabelText(label)
 
     @property
-    def x_axis_shaft_properties(self):  # numpydoc ignore=RT01
+    def x_axis_shaft_properties(self) -> Property:  # numpydoc ignore=RT01
         """Return or set the properties of the x-axis shaft."""
-        return ActorProperties(self.GetXAxisShaftProperty())
+        return cast('Property', self.GetXAxisShaftProperty())
+
+    @x_axis_shaft_properties.setter
+    def x_axis_shaft_properties(self, properties: Property):
+        self._actors[0].SetProperty(properties)
 
     @property
-    def y_axis_shaft_properties(self):  # numpydoc ignore=RT01
+    def y_axis_shaft_properties(self) -> Property:  # numpydoc ignore=RT01
         """Return or set the properties of the y-axis shaft."""
-        return ActorProperties(self.GetYAxisShaftProperty())
+        return cast('Property', self.GetYAxisShaftProperty())
+
+    @y_axis_shaft_properties.setter
+    def y_axis_shaft_properties(self, properties: Property):
+        self._actors[1].SetProperty(properties)
 
     @property
-    def z_axis_shaft_properties(self):  # numpydoc ignore=RT01
+    def z_axis_shaft_properties(self) -> Property:  # numpydoc ignore=RT01
         """Return or set the properties of the z-axis shaft."""
-        return ActorProperties(self.GetZAxisShaftProperty())
+        return cast('Property', self.GetZAxisShaftProperty())
+
+    @z_axis_shaft_properties.setter
+    def z_axis_shaft_properties(self, properties: Property):
+        self._actors[2].SetProperty(properties)
 
     @property
-    def x_axis_tip_properties(self):  # numpydoc ignore=RT01
+    def x_axis_tip_properties(self) -> Property:  # numpydoc ignore=RT01
         """Return or set the properties of the x-axis tip."""
-        return ActorProperties(self.GetXAxisTipProperty())
+        return cast('Property', self.GetXAxisTipProperty())
 
     @x_axis_tip_properties.setter
-    def x_axis_tip_properties(self, properties: ActorProperties):
-        self.x_axis_tip_properties = properties
+    def x_axis_tip_properties(self, properties: Property):
+        self._actors[3].SetProperty(properties)
 
     @property
-    def y_axis_tip_properties(self):  # numpydoc ignore=RT01
+    def y_axis_tip_properties(self) -> Property:  # numpydoc ignore=RT01
         """Return or set the properties of the y-axis tip."""
-        return ActorProperties(self.GetYAxisTipProperty())
+        return cast('Property', self.GetYAxisTipProperty())
 
     @y_axis_tip_properties.setter
-    def y_axis_tip_properties(self, properties: ActorProperties):
-        self.y_axis_tip_properties = properties
+    def y_axis_tip_properties(self, properties: Property):
+        self._actors[4].SetProperty(properties)
 
     @property
-    def z_axis_tip_properties(self):  # numpydoc ignore=RT01
+    def z_axis_tip_properties(self) -> Property:  # numpydoc ignore=RT01
         """Return or set the properties of the z-axis tip."""
-        return ActorProperties(self.GetZAxisTipProperty())
+        return cast('Property', self.GetZAxisTipProperty())
 
     @z_axis_tip_properties.setter
-    def z_axis_tip_properties(self, properties: ActorProperties):
-        self.z_axis_tip_properties = properties
+    def z_axis_tip_properties(self, properties: Property):
+        self._actors[5].SetProperty(properties)

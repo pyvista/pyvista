@@ -238,3 +238,19 @@ def test_property_anisotropy(prop):
     assert isinstance(prop.anisotropy, float)
     prop.anisotropy = value
     assert prop.anisotropy == value
+
+
+def test_property_anisotropy_rotation(prop):
+    assert prop.anisotropy_rotation == 0.0
+    prop.anisotropy_rotation = 0.25
+    assert prop.anisotropy_rotation == 0.25
+    with pytest.raises(ValueError, match='outside the acceptable range'):
+        prop.anisotropy_rotation = 2.0
+
+
+def test_property_index_of_refraction(prop):
+    assert prop.index_of_refraction == 1.5
+    prop.index_of_refraction = 2.0
+    assert prop.index_of_refraction == 2.0
+    with pytest.raises(ValueError, match='outside the acceptable range'):
+        prop.index_of_refraction = 0.5
