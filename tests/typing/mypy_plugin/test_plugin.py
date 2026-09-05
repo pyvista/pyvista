@@ -102,8 +102,7 @@ def _run_mypy_code(code, use_plugin, tmp_path):
     try:
         # Use '--follow-imports=skip' to only analyze the files passed to mypy
         # otherwise it will analyze the entire pyvista library
-        # Run mypy as a module of the running interpreter: a bare 'mypy' is only on
-        # PATH when the environment is activated, and not under `python -m pytest`.
+        # A bare 'mypy' is on PATH only when the environment is activated.
         args = [sys.executable, '-m', 'mypy', '--show-traceback', '--follow-imports=skip']
 
         # Set config file
