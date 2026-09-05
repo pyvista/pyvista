@@ -32,6 +32,7 @@ class ScalarBars(_NoNewAttrMixin):
         self._plotter = weakref.proxy(plotter)
         self._scalar_bar_ranges = {}
         self._scalar_bar_mappers = {}
+        self._resync_titles: set[str] = set()
         self._scalar_bar_actors = {}
         self._scalar_bar_widgets = {}
 
@@ -39,6 +40,7 @@ class ScalarBars(_NoNewAttrMixin):
         """Remove all scalar bars and resets all scalar bar properties."""
         self._scalar_bar_ranges = {}
         self._scalar_bar_mappers = {}
+        self._resync_titles = set()
         self._scalar_bar_actors = {}
         self._scalar_bar_widgets = {}
 
@@ -547,14 +549,18 @@ class ScalarBars(_NoNewAttrMixin):
 
         # Check that this data hasn't already been plotted
         if title in list(self._scalar_bar_ranges.keys()):
-            _clim = list(self._scalar_bar_ranges[title])
+            stored = list(self._scalar_bar_ranges[title])
             newrng = mapper.scalar_range
             oldmappers = self._scalar_bar_mappers[title]
-            # get max for range and reset everything
-            _clim[0] = min(newrng[0], _clim[0])
-            _clim[1] = max(newrng[1], _clim[1])
-            for mh in oldmappers:
-                mh.scalar_range = _clim[0], _clim[1]
+            _clim = [min(newrng[0], stored[0]), max(newrng[1], stored[1])]
+            # Optimization: the old mappers already hold the stored range from the add that
+            # set it, so they are only reset when this mesh widens it, once on the second add
+            # to pin the first mapper's auto range the way the setter pinned the others', or
+            # after ``update_scalar_bar_range`` moved them away from the stored range
+            if _clim != stored or len(oldmappers) == 1 or title in self._resync_titles:
+                for mh in oldmappers:
+                    mh.scalar_range = _clim[0], _clim[1]
+                self._resync_titles.discard(title)
             mapper.scalar_range = _clim[0], _clim[1]
             self._scalar_bar_mappers[title].append(mapper)
             self._scalar_bar_ranges[title] = _clim

@@ -5420,6 +5420,11 @@ class BasePlotter(_BoundsSizeMixin):
                 msg = 'This plotter does not have an active mapper.'
                 raise AttributeError(msg)
             self.mapper.scalar_range = clim
+            self.scalar_bars._resync_titles.update(
+                title
+                for title, mappers in self.scalar_bars._scalar_bar_mappers.items()
+                if self.mapper in mappers
+            )
             return
 
         try:
@@ -5429,6 +5434,7 @@ class BasePlotter(_BoundsSizeMixin):
         except KeyError:
             msg = f'Name ({name!r}) not valid/not found in this plotter.'
             raise ValueError(msg) from None
+        self.scalar_bars._resync_titles.add(name)
 
     def clear_actors(self) -> None:
         """Clear actors from all renderers."""
