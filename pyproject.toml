@@ -646,9 +646,6 @@ pyvista = "pv"
 'pyvista/core/utilities/reader.py' = ['ANN', 'N802']
 'pyvista/demos/*' = ['ANN']
 'pyvista/errors.py' = ['ANN']
-'pyvista/examples/_get_example.py' = [
-  'E501',
-] # generated one-line overloads, unformatted
 'pyvista/examples/cells.py' = ['N802']
 'pyvista/examples/download_3ds.py' = ['ANN']
 'pyvista/examples/downloads.py' = ['ANN202']

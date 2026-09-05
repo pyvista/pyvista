@@ -1,112 +1,29 @@
 from __future__ import annotations
 
 from dataclasses import fields
-import functools
-import inspect
 import os
 from pathlib import Path
 import re
-import textwrap
-from typing import get_args
 import warnings
 
 import pytest
-from typing_extensions import get_overloads
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.examples import _get_example
 from pyvista.examples import downloads
 from pyvista.examples import planets
 from pyvista.examples._dataset_loader import _SingleFileDatasetLoader
 from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
 from pyvista.examples._get_example import _example_names
-from pyvista.examples._get_example import _get_dataset_loader
 from pyvista.examples._get_example import _resolve_paths
 from pyvista.examples._get_example import _supported_modules
 
 _SKIP_DATASETS_WINDOWS = ['biplane']
 
-_OVERLOADS_FILE = Path(_get_example.__file__)
-_GENERATED_START = '# --- generated overloads ---\n'
-_GENERATED_END = '# --- end generated overloads ---\n'
-# the `load=False` half of a function's return annotation, which is not a dataset
-_PATH_TYPES = {'str', 'list[str]', 'tuple[str, ...]'}
-# every other dataset type name is an attribute of `pv`
-_DATASET_TYPE_NAMES = {'ndarray': 'pv.NumpyArray[Any]'}
-_REGENERATE = (
-    'Regenerate the generated block with\n'
-    '  pytest tests/examples/test_get_example.py -k overloads_current '
-    '--test_downloads --regenerate_overloads\n'
-    'and run pre-commit afterwards.'
-)
-
 
 def _all_example_names():
     """Return the name of every example defined across the examples modules."""
     return sorted(name for module in _supported_modules() for name in _example_names(module))
-
-
-def _dataset_annotation(function):
-    """Render the dataset type a type checker resolves for a plain call of ``function``.
-
-    That is the first overload, or the function's own annotation when it has none, less
-    the members which stand for a path.
-    """
-    overloads = get_overloads(function)
-    annotation = inspect.signature(overloads[0] if overloads else function).return_annotation
-    members = [member.strip() for member in str(annotation).split('|')]
-    return ' | '.join(
-        _DATASET_TYPE_NAMES.get(member, f'pv.{member}')
-        for member in members
-        if member not in _PATH_TYPES
-    )
-
-
-def _readers_annotation(example):
-    """Render the exact tuple type of ``example.readers``."""
-    names = ', '.join(f'pv.{type(reader).__name__}' for reader in example.readers)
-    return f'tuple[{names}]' if names else 'tuple[()]'
-
-
-@functools.cache
-def _declared_overloads():
-    """Return ``{name: (dataset, readers)}`` from the ``Literal``-name overloads in place."""
-    declared = {}
-    for stub in get_overloads(examples.get_example):
-        annotations = stub.__annotations__
-        if (name := re.fullmatch(r"Literal\['([^']+)'\]", annotations['name'])) is None:
-            continue
-        returns = re.fullmatch(r'Example\[(.+), (tuple\[.*\])\]', annotations['return'])
-        assert returns is not None, annotations['return']
-        assert name[1] not in declared, f'duplicate overload for {name[1]!r}'
-        declared[name[1]] = (returns[1], returns[2])
-    return declared
-
-
-def _current_overloads():
-    """Return ``{name: (dataset, readers)}`` from the examples themselves (downloads them)."""
-    current = {}
-    with warnings.catch_warnings():
-        warnings.simplefilter('ignore')  # the nefertiti licence, and a few others
-        for name in _all_example_names():
-            example = examples.get_example(name)
-            current[name] = (_dataset_annotation(example.function), _readers_annotation(example))
-    return current
-
-
-def _format_overloads(overloads):
-    """Render the generated block: the ``ExampleName`` literal, then one overload per line."""
-    names = ' '.join(f"'{name}'," for name in sorted(overloads))
-    packed = textwrap.wrap(names, width=90, initial_indent='    ', subsequent_indent='    ')
-    lines = ['ExampleName = Literal[', *packed, ']']
-    for name, (dataset, readers) in sorted(overloads.items()):
-        lines.append('@overload')
-        lines.append(
-            f"def get_example(name: Literal['{name}'], *, download: bool = ...)"
-            f' -> Example[{dataset}, {readers}]: ...'
-        )
-    return '\n'.join(lines) + '\n'
 
 
 @pytest.mark.parametrize(
@@ -242,79 +159,6 @@ def test_get_example_nefertiti_warns_on_every_route():
     with pytest.warns(UserWarning, match='CC BY-NC-SA') as both:
         examples.download_nefertiti()
     assert len(both) == 2
-
-
-def test_get_example_overloads_cover_every_example():
-    """One ``Literal`` overload per example, and none for an example which does not exist."""
-    assert sorted(_declared_overloads()) == _all_example_names(), _REGENERATE
-
-
-@pytest.mark.parametrize('name', _all_example_names())
-def test_get_example_overload_dataset_type_matches_the_function(name):
-    """The overload promises the dataset type the example's own function is annotated with."""
-    _, _, function = _get_dataset_loader(name)
-    assert _declared_overloads()[name][0] == _dataset_annotation(function)
-
-
-@pytest.mark.parametrize('name', _all_example_names())
-def test_get_example_function_overloads_accept_a_plain_call(name):
-    """A function with a ``load`` parameter has overloads, one of which a plain call matches.
-
-    Without them a type checker sees the ``dataset | str`` union for ``load=True``, and
-    the function form of ``get_example`` inherits it.
-    """
-    _, _, function = _get_dataset_loader(name)
-    if 'load' not in inspect.signature(function).parameters:
-        pytest.skip('no `load` parameter')
-    overloads = get_overloads(function)
-    assert overloads, f'{function.__name__} has a `load` parameter but no overloads'
-    assert any(
-        all(p.default is not p.empty for p in inspect.signature(o).parameters.values())
-        for o in overloads
-    ), f'no overload of {function.__name__} accepts a plain call'
-
-
-def test_example_name_literal_lists_every_example():
-    """``ExampleName`` is the ``Literal`` of every example name, so editors can complete it."""
-    assert get_args(_get_example.ExampleName) == tuple(_all_example_names()), _REGENERATE
-
-
-def test_format_overloads_renders_one_line_per_stub():
-    """The generated block is the name literal, then an ``@overload`` and a one-line stub each."""
-    block = _format_overloads(
-        {
-            'cow': ('pv.PolyData', 'tuple[pv.XMLPolyDataReader]'),
-            'ant': ('pv.PolyData', 'tuple[pv.PLYReader]'),
-        }
-    )
-    assert block == (
-        'ExampleName = Literal[\n'
-        "    'ant', 'cow',\n"
-        ']\n'
-        '@overload\n'
-        "def get_example(name: Literal['ant'], *, download: bool = ...)"
-        ' -> Example[pv.PolyData, tuple[pv.PLYReader]]: ...\n'
-        '@overload\n'
-        "def get_example(name: Literal['cow'], *, download: bool = ...)"
-        ' -> Example[pv.PolyData, tuple[pv.XMLPolyDataReader]]: ...\n'
-    )
-
-
-@pytest.mark.needs_download
-def test_get_example_overloads_current(request):
-    """The generated overloads match every example; ``--regenerate_overloads`` rewrites them."""
-    current = _current_overloads()
-    if request.config.getoption('--regenerate_overloads'):  # pragma: no cover -- maintainer path
-        source = _OVERLOADS_FILE.read_text()
-        start = source.index(_GENERATED_START) + len(_GENERATED_START)
-        end = source.index(_GENERATED_END)
-        _OVERLOADS_FILE.write_text(source[:start] + _format_overloads(current) + source[end:])
-        return
-
-    declared = _declared_overloads()
-    stale = sorted(name for name in current if declared.get(name) != current[name])
-    stale += sorted(set(declared) - set(current))
-    assert not stale, f'The generated overloads are stale for: {stale}. {_REGENERATE}'
 
 
 def test_get_example_download_false_uses_local_files():
@@ -475,5 +319,3 @@ def test_get_example_all(name):
     # readers are a subset of the example's own files, never invented
     assert len(example.readers) <= len(example.paths)
     assert {reader.path for reader in example.readers} <= set(example.paths)
-    # the generated overload for this example still promises its exact readers
-    assert _declared_overloads().get(name, (None, None))[1] == _readers_annotation(example)
