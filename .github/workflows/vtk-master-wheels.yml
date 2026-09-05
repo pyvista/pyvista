@@ -14,8 +14,6 @@ env:
   ALLOW_PLOTTING: true
   SHELLOPTS: "errexit:pipefail"
   TOX_COLORED: "yes"
-  CACHE_FOLDER_NAME: pyvista-data
-  PYVISTA_DATA: ${{ github.workspace }}/pyvista-data
 
 jobs:
   check-should-run:
@@ -315,11 +313,9 @@ jobs:
           version: 3.0
 
       - name: Restore pyvista/data cache
-        uses: actions/cache/restore@v6
+        uses: ./.github/actions/restore-pyvista-data
         with:
-          path: ${{ env.CACHE_FOLDER_NAME }}
           key: ${{ needs.cache-github-hosted.outputs.key }}
-          enableCrossOsArchive: true
 
       - name: Install tox-uv
         run: pip install tox-uv
@@ -394,11 +390,9 @@ jobs:
       # ALL STEPS BELOW SHOULD MIMIC THE UNIT TESTING WORKFLOW EXACTLY
 
       - name: Restore pyvista/data cache
-        uses: actions/cache/restore@v6
+        uses: ./.github/actions/restore-pyvista-data
         with:
-          path: ${{ env.CACHE_FOLDER_NAME }}
           key: ${{ needs.cache-github-hosted.outputs.key }}
-          enableCrossOsArchive: true
 
       - name: Install tox-uv
         run: pip install tox-uv
@@ -473,11 +467,9 @@ jobs:
       # ALL STEPS BELOW SHOULD MIMIC THE UNIT TESTING WORKFLOW EXACTLY
 
       - name: Restore pyvista/data cache
-        uses: actions/cache/restore@v6
+        uses: ./.github/actions/restore-pyvista-data
         with:
-          path: ${{ env.CACHE_FOLDER_NAME }}
           key: ${{ needs.cache-github-hosted.outputs.key }}
-          enableCrossOsArchive: true
 
       - name: Set up headless display
         uses: pyvista/setup-headless-display-action@b0bf9f57d62d2b3fee9f1c0e0c7e390f05e97a4e
