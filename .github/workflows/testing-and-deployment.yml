@@ -409,7 +409,8 @@ jobs:
       # id-token: write authorizes OIDC token minting so codecov-action can
       # authenticate to Codecov without a long-lived CODECOV_TOKEN secret.
       id-token: write
-      # actions: read authorizes reading the artifacts of the matched run.
+      # actions: read authorizes downloading the coverage reports through the
+      # API, whether they come from this run or from a matched one.
       actions: read
       contents: read
     steps:

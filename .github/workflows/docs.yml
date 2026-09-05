@@ -190,8 +190,8 @@ jobs:
   # Republishes the matched build under this run, so everything downstream —
   # `publish-notebooks` here, the Netlify deploy over in `netlify-deploy.yml` —
   # keeps reading `docs-build` from the run it was triggered by. The dev wheel
-  # is the one piece that cannot be copied: its version embeds the commit SHA,
-  # so it is rebuilt here against the commit that actually landed.
+  # is rebuilt rather than copied: its version embeds the commit SHA, and two
+  # commits can share a tree.
   reuse:
     name: Reuse Documentation Build
     runs-on: ubuntu-22.04
@@ -242,13 +242,13 @@ jobs:
   test:
     name: Test Documentation
     runs-on: blacksmith-8vcpu-ubuntu-2204
-    needs: doc
-    # The merge queue tests the docs built from the tree that lands on `main`.
-    # Repeating that after the merge only ever reports a failure the queue
-    # would already have blocked, so a branch push skips it and the doc image
-    # report has nothing to publish. Tag builds are tested: they are what
-    # docs.pyvista.org serves.
-    if: ${{ !cancelled() && (github.event_name != 'push' || startsWith(github.ref, 'refs/tags/')) }}
+    needs: [doc, resolve]
+    # The merge queue tests the docs built from the tree that lands on `main`,
+    # so repeating that after the merge only reports a failure the queue would
+    # already have blocked. A push that matched no queue run built its docs
+    # here and is tested, as are tag builds: they are what docs.pyvista.org
+    # serves.
+    if: ${{ !cancelled() && (github.event_name != 'push' || startsWith(github.ref, 'refs/tags/') || needs.resolve.outputs.run-id == '') }}
     env:
       TOX_COLORED: "yes"
     steps:
