@@ -1,35 +1,30 @@
 """
 .. _ghost_cells_example:
 
-Hide Cells With Ghosting
-~~~~~~~~~~~~~~~~~~~~~~~~
+Remove Cells
+~~~~~~~~~~~~
 
-Specify specific cells to hide when plotting.
+Remove specific cells from a mesh.
 
-This is a lightweight alternative to thresholding to quickly hide cells in a
-mesh without creating a new mesh.
-
-Notably, the mesh must be cast to an :class:`pyvista.UnstructuredGrid` type
-for this to work (use the ``cast_to_unstructured_grid`` filter).
+Cells can be removed from any dataset by index or with a boolean mask using
+:meth:`~pyvista.DataSetFilters.remove_cells`. The output is a
+:class:`~pyvista.PolyData` for ``PolyData`` input and an
+:class:`~pyvista.UnstructuredGrid` otherwise.
 
 """
 
-import numpy as np
 from pyvista import examples
 
-vol = examples.load_channels()
-mesh = vol.cast_to_unstructured_grid()
+mesh = examples.load_channels()
 
 # %%
-# Decide which cells are ghosted with a criteria (feel free to adjust this
-# or manually create this array to hide specific cells).
-ghosts = np.argwhere(mesh['facies'] < 1.0)
-
-# This will act on the mesh inplace to mark those cell indices as ghosts
-mesh.remove_cells(ghosts, inplace=True)
+# Decide which cells to remove with a criteria (feel free to adjust this
+# or manually create this array to remove specific cells).
+remove = mesh['facies'] < 1.0
 
 # %%
-# Now we can plot the mesh and those cells will be hidden
+# Remove the cells and plot the result.
+mesh = mesh.remove_cells(remove)
 mesh.plot(clim=[0, 4])
 # %%
 # .. tags:: plot

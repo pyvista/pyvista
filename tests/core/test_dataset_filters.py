@@ -2505,6 +2505,49 @@ def test_extract_values_match_input_type(sphere):
     assert extracted.n_cells == 11
 
 
+def test_remove_cells(datasets):
+    ind = [0, 1, 2]
+    for dataset in datasets:
+        if isinstance(dataset, pv.PointSet):
+            with pytest.raises(pv.PointSetCellOperationError):
+                dataset.remove_cells(ind)
+            continue
+
+        removed = dataset.remove_cells(ind, pass_cell_ids=True, pass_point_ids=True)
+        assert type(removed) is (
+            pv.PolyData if isinstance(dataset, pv.PolyData) else pv.UnstructuredGrid
+        )
+        assert removed.n_cells == dataset.n_cells - len(ind)
+        assert not np.isin(ind, removed['vtkOriginalCellIds']).any()
+        assert np.array_equal(removed.points, dataset.points[removed['vtkOriginalPointIds']])
+        assert removed == dataset.extract_cells(ind, invert=True, match_input_type=True)
+        assert removed.n_points == removed.remove_unused_points().n_points
+
+        # No id arrays by default
+        assert dataset.remove_cells(ind).array_names == dataset.array_names
+
+
+def test_remove_cells_invert(hexbeam):
+    ind = [0, 1, 2]
+    kept = hexbeam.remove_cells(ind, invert=True, pass_cell_ids=True)
+    assert kept.n_cells == len(ind)
+    assert np.array_equal(kept['vtkOriginalCellIds'], ind)
+
+
+def test_remove_cells_inplace(hexbeam, sphere, struct_grid):
+    for mesh in (hexbeam, sphere):
+        n_cells = mesh.n_cells
+        assert mesh.remove_cells([0], inplace=True) is mesh
+        assert mesh.n_cells == n_cells - 1
+
+    # Cells cannot be removed from a structured grid in-place
+    n_cells = struct_grid.n_cells
+    assert isinstance(struct_grid.remove_cells([0]), pv.UnstructuredGrid)
+    with pytest.raises(TypeError, match='must be compatible with the one being overwritten'):
+        struct_grid.remove_cells([0], inplace=True)
+    assert struct_grid.n_cells == n_cells
+
+
 @pytest.mark.parametrize('preference', ['point', 'cell'])
 @pytest.mark.parametrize('adjacent_fixture', [True, False])
 def test_extract_values_preference(

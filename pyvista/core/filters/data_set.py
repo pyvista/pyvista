@@ -4843,6 +4843,94 @@ class DataSetFilters(DataObjectFilters):
             pass_cell_ids=pass_cell_ids,
         )
 
+    @_deprecate_positional_args(allowed=['ind'])
+    def remove_cells(  # type: ignore[misc]
+        self: _DataSetType,
+        ind: int | VectorLike[int] | VectorLike[bool],
+        inplace: bool = False,  # noqa: FBT001, FBT002
+        *,
+        invert: bool = False,
+        pass_point_ids: bool = False,
+        pass_cell_ids: bool = False,
+        progress_bar: bool = False,
+    ):
+        r"""Remove cells from a mesh.
+
+        Points which are no longer used by any cell are also removed. The output is
+        :class:`~pyvista.PolyData` for ``PolyData`` input and an
+        :class:`~pyvista.UnstructuredGrid` otherwise.
+
+        .. versionchanged:: 0.49
+            This filter is available for all datasets, unused points are removed from
+            the output, and the ``invert``, ``pass_point_ids``, ``pass_cell_ids``, and
+            ``progress_bar`` keywords were added.
+
+        Parameters
+        ----------
+        ind : int | VectorLike[int] | VectorLike[bool]
+            Cell indices to remove. Can be a single ``int`` or a vector of ``int``\ s.
+            A ``bool`` vector is also supported; the vector size should match the number of cells.
+
+        inplace : bool, default: False
+            Update the mesh in-place. This is only possible when the output has the
+            same type as the input.
+
+        invert : bool, default: False
+            Invert the selection and remove all cells *except* those specified.
+
+        pass_point_ids : bool, default: False
+            Add a point array ``'vtkOriginalPointIds'`` that identifies the original
+            points the remaining points correspond to.
+
+        pass_cell_ids : bool, default: False
+            Add a cell array ``'vtkOriginalCellIds'`` that identifies the original cells
+            the remaining cells correspond to.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        See Also
+        --------
+        extract_cells, remove_points
+
+        Returns
+        -------
+        pyvista.UnstructuredGrid | pyvista.PolyData
+            Mesh with the specified cells removed.
+
+        Examples
+        --------
+        Remove 20 cells from an unstructured grid.
+
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> hex_mesh = pv.read(examples.hexbeamfile)
+        >>> removed = hex_mesh.remove_cells(range(10, 20))
+        >>> removed.plot(color='lightblue', show_edges=True, line_width=3)
+
+        Remove cells from :class:`~pyvista.PolyData`. The output is also ``PolyData``.
+
+        >>> sphere = pv.Sphere()
+        >>> removed = sphere.remove_cells(range(100))
+        >>> removed.n_cells, sphere.n_cells
+        (1580, 1680)
+        >>> type(removed)
+        <class 'pyvista.core.pointset.PolyData'>
+
+        """
+        output = self.extract_cells(
+            ind,
+            invert=not invert,
+            pass_point_ids=pass_point_ids,
+            pass_cell_ids=pass_cell_ids,
+            progress_bar=progress_bar,
+            match_input_type=True,
+        )
+        if inplace:
+            self.copy_from(output, deep=False)
+            return self
+        return output
+
     def split_values(  # type: ignore[misc]
         self: _DataSetType,
         values: (
