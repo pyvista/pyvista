@@ -122,7 +122,7 @@ test = [
   'tqdm<4.71.0',
   'trame-pyvista<0.2.0',
   'trimesh<5.1.0',
-  'type-assert==0.2.1',
+  'type-assert==0.2.2',
   'typing-extensions<4.17.0',
   { include-group = 'typing' },
 ]
@@ -189,7 +189,7 @@ docs-test = [
   'pytest-xdist<3.9.0',
   'refleak>=0.2.2,<0.3.0', # tests/conftest.py imports it for the leak check
   'trame-pyvista==0.1.7',
-  'type-assert==0.2.1', # registers the type_assert_cases option
+  'type-assert==0.2.2', # registers the type_assert_cases option
   { include-group = 'pinned' },
 ]
 
