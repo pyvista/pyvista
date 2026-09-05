@@ -317,22 +317,15 @@ def test_uri_downloads_are_not_reused_across_urls(tmp_path, local_http_server):
         's3://bucket/evil.pkl',
     ],
 )
-def test_remote_pickle_uri_refused(uri, tmp_path):
+def test_remote_pickle_uri_refused(uri):
     """Remote .pkl/.pickle URIs must be refused before download to prevent RCE."""
-    downloaded = False
-
-    def fake_retrieve(*_args, **_kwargs):
-        nonlocal downloaded
-        downloaded = True
-        return str(tmp_path / 'should-not-be-used')
-
-    with patch('pooch.retrieve', side_effect=fake_retrieve):
+    with patch('pooch.retrieve') as retrieve:
         with pytest.raises(
             ValueError, match='pickle is a Python serialization protocol, not a mesh'
         ):
             pv.read(uri)
 
-    assert downloaded is False, 'remote pickle must be refused before any download'
+    retrieve.assert_not_called()
 
 
 def test_s3_without_fsspec_raises():
