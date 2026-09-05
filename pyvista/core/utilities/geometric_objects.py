@@ -1156,7 +1156,7 @@ def SolidSphereGeneric(  # noqa: PLR0917
         """Index for points not on axis.
 
         Values of ``ir`` and ``iphi`` are relative to the first non-axis values; all
-        three accept scalars or broadcastable index arrays.
+        three accept scalars or index arrays that broadcast together.
         """
         if duplicate_theta:
             ntheta_ = ntheta - 1
