@@ -947,7 +947,7 @@ _VTKSZ_SIZE_EXCEPTIONS_MB = {
     'sphx_glr_connectivity_001': 7,
     'sphx_glr_connectivity_002': 7,
     'sphx_glr_connectivity_003': 7,
-    'sphx_glr_ghost_cells_001': 7,
+    'sphx_glr_remove_cells_001': 7,
     'sphx_glr_openfoam_cooling_002': 7,
     'sphx_glr_openfoam_cooling_003': 8,
     'sphx_glr_pump_bracket_002': 7,

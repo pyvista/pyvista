@@ -2913,7 +2913,9 @@ class ImageDataFilters(DataSetFilters):
                 # Output contains all boundary cells, need to remove cells we don't want
                 is_external = np.any(labels_array == background_value, axis=1)
                 remove = is_external if boundary_style == 'internal' else ~is_external
-                output.remove_cells(remove, inplace=True)
+                output.remove_cells(
+                    remove, inplace=True, pass_point_ids=False, pass_cell_ids=False
+                )
 
         want_external = 'external' in boundary_style
         if simplify_output is None:

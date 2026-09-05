@@ -2405,6 +2405,244 @@ def test_extract_cells(sphere):
         _ = sphere.extract_cells([True, True])
 
 
+@pytest.mark.parametrize('dataset_filter', ['extract_cells', 'extract_points'])
+def test_remove_invert_matches_extract(datasets, dataset_filter):
+    remove_filter = 'remove_cells' if dataset_filter == 'extract_cells' else 'remove_points'
+    for dataset in datasets:
+        if isinstance(dataset, pv.PointSet) and dataset_filter == 'extract_cells':
+            continue
+        n_items = dataset.n_cells if dataset_filter == 'extract_cells' else dataset.n_points
+        ind = np.arange(n_items) < 4
+        extract_kwargs = (
+            {} if dataset_filter == 'extract_cells' else dict(include_cells=dataset.n_cells > 0)
+        )
+        remove_kwargs = {} if dataset_filter == 'extract_cells' else dict(mode='all')
+        extracted = getattr(dataset, dataset_filter)(ind, **extract_kwargs)
+        removed = getattr(dataset, remove_filter)(ind=ind, invert=True, **remove_kwargs)
+
+        is_pointset = isinstance(dataset, pv.PointSet)
+        assert type(extracted) is (pv.PointSet if is_pointset else pv.UnstructuredGrid)
+        assert type(removed) is (
+            type(dataset)
+            if isinstance(dataset, (pv.PolyData, pv.PointSet))
+            else pv.UnstructuredGrid
+        )
+        assert removed.n_points == extracted.n_points
+        assert removed.n_cells == extracted.n_cells
+        assert np.array_equal(removed.points, extracted.points)
+        assert np.array_equal(removed['vtkOriginalPointIds'], extracted['vtkOriginalPointIds'])
+
+
+def test_remove_cells_invert_polydata(sphere):
+    sphere.point_data['scalars'] = np.arange(sphere.n_points)
+    sphere.set_active_scalars('scalars')
+    ind = [0, 5, 10]
+    kept = sphere.remove_cells(ind, invert=True)
+    assert isinstance(kept, pv.PolyData)
+    assert kept.n_cells == len(ind)
+    assert np.array_equal(kept['vtkOriginalCellIds'], ind)
+    assert np.array_equal(kept.points, sphere.points[kept['vtkOriginalPointIds']])
+    assert kept.active_scalars_name == 'scalars'
+    assert 'vtkOriginalPointIds' not in sphere.point_data
+    assert 'vtkOriginalCellIds' not in sphere.cell_data
+
+    # An empty selection keeps the id arrays
+    empty = sphere.remove_cells([], invert=True)
+    assert isinstance(empty, pv.PolyData)
+    assert empty.is_empty
+    assert empty.point_data.keys() == ['vtkOriginalPointIds']
+    assert empty.cell_data.keys() == ['vtkOriginalCellIds']
+    empty = sphere.remove_cells([], invert=True, pass_point_ids=False, pass_cell_ids=False)
+    assert empty.n_arrays == 0
+
+
+def test_extract_cells_column_vector_ind(hexbeam):
+    mask = np.arange(hexbeam.n_cells) < 3
+    assert hexbeam.extract_cells(np.argwhere(mask)) == hexbeam.extract_cells(mask)
+    assert hexbeam.remove_cells(np.argwhere(mask)) == hexbeam.remove_cells(mask)
+
+
+def test_extract_points_invert(sphere):
+    mask = sphere.points[:, 2] > 0
+    kwargs = dict(adjacent_cells=False, pass_point_ids=False, pass_cell_ids=False)
+    assert sphere.extract_points(mask, invert=True, **kwargs) == sphere.extract_points(
+        ~mask, **kwargs
+    )
+
+    ind = [0, 1, 2]
+    inverted = sphere.extract_points(ind, invert=True, include_cells=False)
+    assert inverted.n_points == sphere.n_points - len(ind)
+    assert not np.isin(ind, inverted['vtkOriginalPointIds']).any()
+
+
+@pytest.mark.parametrize('dataset_filter', ['extract_cells', 'extract_points'])
+def test_extract_cells_extract_points_invalid_ind(sphere, dataset_filter):
+    dataset_filter = getattr(sphere, dataset_filter)
+    name = 'cells' if dataset_filter.__name__ == 'extract_cells' else 'points'
+    n_items = sphere.n_cells if name == 'cells' else sphere.n_points
+
+    match = f'Number of bool indices (2) must match the number of {name} ({n_items}).'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        dataset_filter([True, True])
+
+    match = 'Indices must be either a mask or an integer array-like'
+    with pytest.raises(TypeError, match=match):
+        dataset_filter([0.5])
+
+    match = f'Index {n_items} is out of bounds for a mesh with {n_items} {name}.'
+    with pytest.raises(IndexError, match=re.escape(match)):
+        dataset_filter([0, n_items])
+
+    match = f'Index -1 is out of bounds for a mesh with {n_items} {name}.'
+    with pytest.raises(IndexError, match=re.escape(match)):
+        dataset_filter(-1)
+
+    # An empty selection is valid
+    assert dataset_filter([]).n_points == 0
+
+
+def test_remove_cells(datasets):
+    ind = [0, 1, 2]
+    for dataset in datasets:
+        if isinstance(dataset, pv.PointSet):
+            with pytest.raises(pv.PointSetCellOperationError):
+                dataset.remove_cells(ind)
+            continue
+
+        removed = dataset.remove_cells(ind)
+        assert type(removed) is (
+            pv.PolyData if isinstance(dataset, pv.PolyData) else pv.UnstructuredGrid
+        )
+        assert removed.n_cells == dataset.n_cells - len(ind)
+        assert not np.isin(ind, removed['vtkOriginalCellIds']).any()
+        assert np.array_equal(removed.points, dataset.points[removed['vtkOriginalPointIds']])
+        assert removed.n_points == removed.remove_unused_points().n_points
+
+        # The id arrays are added by default
+        assert 'vtkOriginalPointIds' in removed.point_data
+        assert 'vtkOriginalCellIds' in removed.cell_data
+        removed = dataset.remove_cells(ind, pass_point_ids=False, pass_cell_ids=False)
+        assert removed.array_names == dataset.array_names
+
+
+def test_remove_cells_invert(hexbeam):
+    ind = [0, 1, 2]
+    kept = hexbeam.remove_cells(ind, invert=True)
+    assert kept.n_cells == len(ind)
+    assert np.array_equal(kept['vtkOriginalCellIds'], ind)
+
+
+def test_remove_cells_inplace(hexbeam, sphere, struct_grid):
+    for mesh in (hexbeam, sphere):
+        n_cells = mesh.n_cells
+        assert mesh.remove_cells([0], inplace=True) is mesh
+        assert mesh.n_cells == n_cells - 1
+
+    # Cells cannot be removed from a structured grid in-place
+    n_cells = struct_grid.n_cells
+    assert isinstance(struct_grid.remove_cells([0]), pv.UnstructuredGrid)
+    match = 'Cannot update StructuredGrid in-place, the output is UnstructuredGrid.'
+    with pytest.raises(TypeError, match=match):
+        struct_grid.remove_cells([0], inplace=True)
+    assert struct_grid.n_cells == n_cells
+
+
+@pytest.mark.parametrize('mode', ['any', 'all'])
+def test_remove_points(datasets, mode):
+    for dataset in datasets:
+        ind = dataset.get_cell(0).point_ids if dataset.n_cells else [0, 1, 2]
+        removed = dataset.remove_points(ind=ind, mode=mode)
+        expected_type = (
+            type(dataset)
+            if isinstance(dataset, (pv.PolyData, pv.PointSet))
+            else pv.UnstructuredGrid
+        )
+        assert type(removed) is expected_type
+        assert np.array_equal(removed.points, dataset.points[removed['vtkOriginalPointIds']])
+        if mode == 'any':
+            assert not np.isin(ind, removed['vtkOriginalPointIds']).any()
+        if dataset.n_cells:
+            # Only cell 0 uses all of its points
+            assert (
+                removed.n_cells == dataset.n_cells - 1
+                if mode == 'all'
+                else removed.n_cells < dataset.n_cells - 1
+            )
+            assert removed.n_points == removed.remove_unused_points().n_points
+
+        # The id arrays are added by default
+        assert 'vtkOriginalPointIds' in removed.point_data
+        assert ('vtkOriginalCellIds' in removed.cell_data) == bool(dataset.n_cells)
+        removed = dataset.remove_points(ind=ind, pass_point_ids=False, pass_cell_ids=False)
+        assert removed.array_names == dataset.array_names
+
+
+@pytest.mark.parametrize('mode', ['any', 'all'])
+def test_remove_points_matches_polydata_filter(sphere, mode):
+    remove = np.zeros(sphere.n_points, dtype=bool)
+    remove[sphere.regular_faces[0]] = True
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        expected, ridx = pv.PolyDataFilters.remove_points(sphere, remove, mode=mode)
+    actual = pv.DataSetFilters.remove_points(sphere, remove, mode=mode)
+    assert np.array_equal(actual.points, expected.points)
+    assert np.array_equal(actual.faces, expected.faces)
+    assert np.array_equal(actual['vtkOriginalPointIds'], ridx)
+
+
+def test_remove_points_invert_inplace(hexbeam, struct_grid):
+    ind = hexbeam.get_cell(0).point_ids
+    kept = hexbeam.remove_points(ind, invert=True)
+    assert kept.n_cells == 1
+    assert np.array_equal(kept['vtkOriginalPointIds'], sorted(ind))
+
+    n_points = hexbeam.n_points
+    assert hexbeam.remove_points([0], inplace=True) is hexbeam
+    assert hexbeam.n_points < n_points
+
+    assert isinstance(struct_grid.remove_points([0]), pv.UnstructuredGrid)
+    match = 'Cannot update StructuredGrid in-place, the output is UnstructuredGrid.'
+    with pytest.raises(TypeError, match=match):
+        struct_grid.remove_points([0], inplace=True)
+
+
+@pytest.mark.parametrize('mode', ['any', 'all'])
+def test_remove_points_unused_points(mode):
+    points = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [2.0, 0.0, 0.0], [3.0, 0.0, 0.0], [9.0, 9.0, 9.0]]
+    lines = pv.PolyData(points, lines=[2, 0, 1, 2, 1, 2, 2, 2, 3])
+    assert lines.n_points == 5
+
+    # Point 4 is not used by any cell
+    removed = lines.remove_points(ind=4, mode=mode)
+    assert removed['vtkOriginalPointIds'].tolist() == [0, 1, 2, 3]
+    # Point 3 is only removed when its cell is removed too
+    removed = lines.remove_points(ind=[4, 3], mode=mode)
+    expected = [0, 1, 2] if mode == 'any' else [0, 1, 2, 3]
+    assert removed['vtkOriginalPointIds'].tolist() == expected
+
+
+def test_remove_points_polydata_without_cells():
+    points = np.random.default_rng(0).random((5, 3))
+    mesh = pv.PolyData()
+    mesh.points = points
+    assert mesh.n_cells == 0
+
+    removed = mesh.remove_points(ind=0)
+    assert isinstance(removed, pv.PolyData)
+    assert removed.n_points == 4
+    assert removed.n_verts == 4
+    assert np.array_equal(removed.points, points[1:])
+
+    cloud = mesh.cast_to_pointset().remove_points(0)
+    assert isinstance(cloud, pv.PointSet)
+    assert cloud.n_cells == 0
+    assert np.array_equal(cloud.points, points[1:])
+
+
+def test_remove_points_invalid_mode(hexbeam):
+    with pytest.raises(ValueError, match="mode 'foo' is not valid"):
+        hexbeam.remove_points([0], mode='foo')
+
+
 @pytest.mark.parametrize('preference', ['point', 'cell'])
 @pytest.mark.parametrize('adjacent_fixture', [True, False])
 def test_extract_values_preference(

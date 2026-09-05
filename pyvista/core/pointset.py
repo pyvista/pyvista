@@ -149,55 +149,6 @@ class _PointSetBase(DataSet):
             to_copy.SetPoints(_vtk.vtkPoints())
         DataSet.shallow_copy(self, cast('_vtk.vtkDataObject', to_copy))
 
-    @_deprecate_positional_args(allowed=['ind'])
-    def remove_cells(
-        self,
-        ind: VectorLike[bool] | VectorLike[int],
-        inplace: bool = False,  # noqa: FBT001, FBT002
-    ) -> _PointSetBase:
-        """Remove cells.
-
-        Parameters
-        ----------
-        ind : VectorLike[int] | VectorLike[bool]
-            Cell indices to be removed.  The array can also be a
-            boolean array of the same size as the number of cells.
-
-        inplace : bool, default: False
-            Whether to update the mesh in-place.
-
-        Returns
-        -------
-        pyvista.DataSet
-            Same type as the input, but with the specified cells
-            removed.
-
-        Examples
-        --------
-        Remove 20 cells from an unstructured grid.
-
-        >>> from pyvista import examples
-        >>> import pyvista as pv
-        >>> hex_mesh = pv.read(examples.hexbeamfile)
-        >>> removed = hex_mesh.remove_cells(range(10, 20))
-        >>> removed.plot(color='lightblue', show_edges=True, line_width=3)
-
-        """
-        if isinstance(ind, np.ndarray):
-            if ind.dtype == np.bool_ and ind.size != self.n_cells:
-                msg = f'Boolean array size must match the number of cells ({self.n_cells})'
-                raise ValueError(msg)
-        ghost_cells = np.zeros(self.n_cells, np.uint8)
-        ghost_cells[ind] = _vtk.vtkDataSetAttributes.DUPLICATECELL
-
-        target = self if inplace else self.copy()
-        array_name = _vtk.vtkDataSetAttributes.GhostArrayName()
-        target.cell_data[array_name] = ghost_cells
-        target.RemoveGhostCells()
-        with contextlib.suppress(KeyError):
-            del target.cell_data[array_name]
-        return target
-
     def points_to_double(self) -> Self:
         """Convert the points datatype to double precision.
 
