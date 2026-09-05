@@ -2340,31 +2340,6 @@ class DataSetFilters(DataObjectFilters):
                 raise ValueError(msg)
             return np.unique(ids)
 
-        def _post_process_extract_values(before_extraction, extracted):
-            # Output is UnstructuredGrid, so apply vtkRemovePolyData
-            # to input to cast the output as PolyData type instead
-            has_cells = extracted.n_cells != 0
-            if isinstance(before_extraction, pv.PolyData):
-                all_ids = set(range(before_extraction.n_cells))
-
-                ids_to_keep = set()
-                if has_cells:
-                    ids_to_keep |= set(extracted['vtkOriginalCellIds'])
-                ids_to_remove = list(all_ids - ids_to_keep)
-                if len(ids_to_remove) != 0:
-                    remove = _vtk.vtkRemovePolyData()
-                    remove.SetInputData(before_extraction)
-                    remove.SetCellIds(numpy_to_idarr(ids_to_remove))
-                    _update_alg(remove, progress_bar=progress_bar, message='Removing Cells.')
-                    extracted = _get_output(remove)
-                    extracted.clean(
-                        point_merging=False,
-                        inplace=True,
-                        progress_bar=progress_bar,
-                    )  # remove unused points
-
-            return extracted
-
         # Store active scalars info to restore later if needed
         active_field, active_name = self.active_scalars_info
 
@@ -2413,12 +2388,14 @@ class DataSetFilters(DataObjectFilters):
                     # Use extract_values to ensure that cells with at least one
                     # point within the range are kept (this is consistent
                     # with how the filter operates for other modes)
-                    extracted = DataSetFilters.extract_values(
+                    input_mesh = DataSetFilters.extract_values(
                         input_mesh,
                         ranges=scalar_range,
+                        pass_point_ids=False,
+                        pass_cell_ids=False,
+                        match_input_type=True,
                         progress_bar=progress_bar,
                     )
-                    input_mesh = _post_process_extract_values(input_mesh, extracted)
 
         alg = _vtk.vtkConnectivityFilter()
         alg.SetInputDataObject(input_mesh)
@@ -2530,12 +2507,14 @@ class DataSetFilters(DataObjectFilters):
         elif extraction_mode == 'specified':
             # All regions were initially extracted, so extract only the
             # specified regions
-            extracted = DataSetFilters.extract_values(
+            output = DataSetFilters.extract_values(
                 output,
                 values=region_ids,
+                pass_point_ids=False,
+                pass_cell_ids=False,
+                match_input_type=True,
                 progress_bar=progress_bar,
             )
-            output = _post_process_extract_values(output, extracted)
 
             if label_regions:
                 # Extracted regions may not be contiguous and zero-based

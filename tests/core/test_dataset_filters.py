@@ -1297,6 +1297,18 @@ def test_connectivity_label_regions(datasets, dataset_index, extraction_mode):
     assert conn.active_scalars_info[1] == active_scalars_info[1]
 
 
+@pytest.mark.parametrize('extraction_mode', ['all', 'specified'])
+@pytest.mark.parametrize('scalar_range', [None, [0.0, 1.0]])
+def test_connectivity_scalar_range_polydata(sphere, extraction_mode, scalar_range):
+    sphere['z'] = sphere.points[:, 2]
+    scalar_range = sphere.get_data_range() if scalar_range is None else scalar_range
+    conn = sphere.connectivity(extraction_mode, region_ids=[0], scalar_range=scalar_range)
+    assert isinstance(conn, pv.PolyData)
+    assert 'vtkOriginalPointIds' not in conn.point_data
+    assert 'vtkOriginalCellIds' not in conn.cell_data
+    assert conn.n_cells == (sphere.n_cells if scalar_range[0] < 0 else 870)
+
+
 def test_connectivity_raises(
     connected_datasets_single_disconnected_cell,
 ):
