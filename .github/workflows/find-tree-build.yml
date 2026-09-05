@@ -32,7 +32,7 @@ permissions:
 jobs:
   find:
     name: Look up
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     permissions:
       actions: read
     outputs:
@@ -47,8 +47,12 @@ jobs:
           SHA: ${{ github.sha }}
         run: |
           # A lookup that cannot answer answers "no match", so an API blip
-          # costs a rebuild rather than the whole run.
-          tree=$(gh api "repos/${REPO}/commits/${SHA}" --jq '.commit.tree.sha' || true)
+          # costs a rebuild rather than the whole run. It says so out loud,
+          # because a silent miss and a broken lookup both just rebuild.
+          if ! tree=$(gh api "repos/${REPO}/commits/${SHA}" --jq '.commit.tree.sha'); then
+            echo "::warning::Could not read the tree for ${SHA}; rebuilding."
+            tree=""
+          fi
           run_id=$(gh api "repos/${REPO}/actions/artifacts?name=${PREFIX}-${tree:-none}&per_page=100" \
             --jq '[.artifacts[]
                    | select(.expired == false)
