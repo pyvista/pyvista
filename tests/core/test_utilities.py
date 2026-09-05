@@ -571,11 +571,7 @@ REPORT = str(pv.Report(gpu=False))
 
 @pytest.mark.parametrize('package', get_distribution_dependencies('pyvista'))
 def test_report_dependencies(package):
-    if package == 'pyvista[colormaps,io,jupyter]':
-        pytest.xfail('scooby bug: https://github.com/banesullivan/scooby/issues/129')
-    elif package == 'vtk!':
-        pytest.xfail('scooby bug: https://github.com/banesullivan/scooby/issues/133')
-    elif package == 'pyobjc-framework-Cocoa' and sys.platform != 'darwin':
+    if package == 'pyobjc-framework-Cocoa' and sys.platform != 'darwin':
         pytest.xfail('package only available on macOS')
     elif package == 'cvista' and importlib.util.find_spec('cvista') is None:
         # cvista is an alternative VTK backend, installed only in the dedicated
