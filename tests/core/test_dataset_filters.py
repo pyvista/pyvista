@@ -16,6 +16,7 @@ from hypothesis.strategies import composite
 from hypothesis.strategies import floats
 from hypothesis.strategies import integers
 from hypothesis.strategies import one_of
+from matplotlib.colors import ListedColormap
 import numpy as np
 import pytest
 
@@ -4570,21 +4571,38 @@ def test_color_labels_return_dict(labeled_image, color_type):
         assert actual_color == expected_color
 
 
-@pytest.mark.parametrize('negative_indexing', [True, False])
-def test_color_labels_return_dict_index_mode(negative_indexing):
+@pytest.mark.parametrize(
+    ('negative_indexing', 'label_data', 'expected_keys'),
+    [
+        (True, [0, -1, 2, -6], [0, 2, -1, -6]),
+        # A label equal to the number of colors is allowed but has no color
+        (False, [0, 2, 2, 6], [0, 2]),
+    ],
+)
+def test_color_labels_return_dict_index_mode(negative_indexing, label_data, expected_keys):
     colors = ['red', 'green', 'blue', 'white', 'black', 'cyan']
     labels = pv.ImageData(dimensions=(4, 1, 1))
-    labels['data'] = [0, -1, 2, -6] if negative_indexing else [0, 2, 2, 5]
+    labels['data'] = label_data
     colored, mapping = labels.color_labels(
         colors, coloring_mode='index', negative_indexing=negative_indexing, return_dict=True
     )
     # Only labels present are mapped, positive keys first
-    expected_keys = [0, 2, -1, -6] if negative_indexing else [0, 2, 5]
     assert list(mapping.keys()) == expected_keys
     for key in expected_keys:
         assert mapping[key] == pv.Color(colors[key]).int_rgb
-    expected_colors = [mapping[label] for label in labels['data']]
+    expected_colors = [mapping.get(label, (0, 0, 0)) for label in label_data]
     assert np.array_equal(colored.active_scalars, expected_colors)
+
+
+def test_color_labels_does_not_modify_colormap():
+    cmap = ListedColormap([(1.0, 0.0, 0.0), (0.0, 1.0, 0.0)])
+    labels = pv.ImageData(dimensions=(3, 1, 1))
+    labels['data'] = [0, -1, 1]
+    kwargs = dict(negative_indexing=True, color_type='float_rgb')
+    first = labels.color_labels(cmap, **kwargs)
+    second = labels.color_labels(cmap, **kwargs)
+    assert len(cmap.colors) == 2
+    assert np.array_equal(first.active_scalars, second.active_scalars)
 
 
 def test_color_labels_return_dict_cycle_mode():
