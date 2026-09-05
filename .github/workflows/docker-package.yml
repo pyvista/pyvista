@@ -89,8 +89,10 @@ jobs:
       # EGL runtime libraries instead of shipping an image that can import
       # pyvista but cannot actually render.
       - name: Smoke test (render + GPUInfo)
+        env:
+          TARGET: ${{ matrix.target }}
         run: |
-          docker run --rm pyvista-ci:${{ matrix.target }} python -c "
+          docker run --rm "pyvista-ci:$TARGET" python -c "
           import numpy as np
           import pyvista as pv
           print(pv.Report())

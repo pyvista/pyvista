@@ -110,11 +110,15 @@ jobs:
         run: pip install tox-uv
 
       - name: Core Testing (no GL)
-        run: tox run -e py${{ matrix.python-version }}-core
+        env:
+          TOX_ENV: py${{ matrix.python-version }}-core
+        run: tox run -e "$TOX_ENV"
 
       - name: Plotting Testing (uses GL)
         if: ${{ !cancelled() }}
-        run: tox run -e py${{ matrix.python-version }}-plotting
+        env:
+          TOX_ENV: py${{ matrix.python-version }}-plotting
+        run: tox run -e "$TOX_ENV"
 
       - name: Upload Images for Failed Tests
         if: always()
@@ -267,11 +271,15 @@ jobs:
         run: pip install tox-uv
 
       - name: Core Testing (no GL)
-        run: tox run -e py${{ matrix.python-version }}-cov-core-vtk_dev
+        env:
+          TOX_ENV: py${{ matrix.python-version }}-cov-core-vtk_dev
+        run: tox run -e "$TOX_ENV"
 
       - name: Plotting Testing (uses GL)
         if: ${{ !cancelled() }}
-        run: xvfb-run tox run -e py${{ matrix.python-version }}-cov-plotting-vtk_dev
+        env:
+          TOX_ENV: py${{ matrix.python-version }}-cov-plotting-vtk_dev
+        run: xvfb-run tox run -e "$TOX_ENV"
 
       - name: Upload Images for Failed Tests
         if: always()

@@ -75,7 +75,9 @@ jobs:
           persist-credentials: false
 
       - name: Set test timeout
-        run: echo "retry_test_timeout=$(( ${{ matrix.timeout }} / 2 ))" | tee -a "$GITHUB_OUTPUT"
+        env:
+          TIMEOUT: ${{ matrix.timeout }}
+        run: echo "retry_test_timeout=$(( TIMEOUT / 2 ))" | tee -a "$GITHUB_OUTPUT"
         id: set_timeout
 
       - uses: pyvista/setup-headless-display-action@b0bf9f57d62d2b3fee9f1c0e0c7e390f05e97a4e

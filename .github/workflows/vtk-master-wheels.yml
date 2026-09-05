@@ -23,10 +23,11 @@ jobs:
     outputs:
       run: ${{ steps.check.outputs.run }}
     steps:
+      # For PRs, only run this job if the 'vtk-master-testing' label is applied
       - id: check
-        run:
-          | # For PRs, only run this job if the 'vtk-master-testing' label is applied
-          echo "run=${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'vtk-master-testing') }}" >> "$GITHUB_OUTPUT"
+        env:
+          RUN: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'vtk-master-testing') }}
+        run: echo "run=$RUN" >> "$GITHUB_OUTPUT"
 
   build-vtk:
     needs: check-should-run
@@ -302,8 +303,10 @@ jobs:
 
       - name: Skip if wheel build failed
         if: steps.download-wheel.outcome != 'success'
+        env:
+          PYTHON_VERSION: ${{ matrix.python-version }}
         run: |
-          echo "No VTK wheel artifact for ${{ runner.os }}/py${{ matrix.python-version }}"
+          echo "No VTK wheel artifact for $RUNNER_OS/py$PYTHON_VERSION"
           exit 1
 
       # ALL STEPS ABOVE SHOULD BE EXACTLY THE SAME FOR EACH OS
@@ -326,11 +329,15 @@ jobs:
 
       # Teed to a file for the failure-summary upload below.
       - name: Core Testing (no GL)
-        run: tox run -e py${{ matrix.python-version }}-core-vtk_local 2>&1 | tee core-test.log
+        env:
+          TOX_ENV: py${{ matrix.python-version }}-core-vtk_local
+        run: tox run -e "$TOX_ENV" 2>&1 | tee core-test.log
 
       - name: Plotting Testing (uses GL)
         if: ${{ !cancelled() }}
-        run: xvfb-run tox run -e py${{ matrix.python-version }}-plotting-vtk_local 2>&1 | tee plotting-test.log
+        env:
+          TOX_ENV: py${{ matrix.python-version }}-plotting-vtk_local
+        run: xvfb-run tox run -e "$TOX_ENV" 2>&1 | tee plotting-test.log
 
       - name: Upload failure summary
         if: failure()
@@ -386,8 +393,10 @@ jobs:
 
       - name: Skip if wheel build failed
         if: steps.download-wheel.outcome != 'success'
+        env:
+          PYTHON_VERSION: ${{ matrix.python-version }}
         run: |
-          echo "No VTK wheel artifact for ${{ runner.os }}/py${{ matrix.python-version }}"
+          echo "No VTK wheel artifact for $RUNNER_OS/py$PYTHON_VERSION"
           exit 1
 
       # ALL STEPS ABOVE SHOULD BE EXACTLY THE SAME FOR EACH OS
@@ -405,11 +414,15 @@ jobs:
 
       # Teed to a file for the failure-summary upload below.
       - name: Core Testing (no GL)
-        run: tox run -e py${{ matrix.python-version }}-core-vtk_local 2>&1 | tee core-test.log
+        env:
+          TOX_ENV: py${{ matrix.python-version }}-core-vtk_local
+        run: tox run -e "$TOX_ENV" 2>&1 | tee core-test.log
 
       - name: Plotting Testing (uses GL)
         if: ${{ !cancelled() }}
-        run: tox run -e py${{ matrix.python-version }}-plotting-vtk_local 2>&1 | tee plotting-test.log
+        env:
+          TOX_ENV: py${{ matrix.python-version }}-plotting-vtk_local
+        run: tox run -e "$TOX_ENV" 2>&1 | tee plotting-test.log
 
       - name: Upload failure summary
         if: failure()
@@ -465,8 +478,10 @@ jobs:
 
       - name: Skip if wheel build failed
         if: steps.download-wheel.outcome != 'success'
+        env:
+          PYTHON_VERSION: ${{ matrix.python-version }}
         run: |
-          echo "No VTK wheel artifact for ${{ runner.os }}/py${{ matrix.python-version }}"
+          echo "No VTK wheel artifact for $RUNNER_OS/py$PYTHON_VERSION"
           exit 1
 
       # ALL STEPS ABOVE SHOULD BE EXACTLY THE SAME FOR EACH OS
