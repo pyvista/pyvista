@@ -771,8 +771,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         else:
             array_len = 1 if data.ndim == 0 else data.shape[0]
 
-        kind = data.dtype.kind
-        if data.ndim == 0 and kind == 'U':  # np.str_
+        if data.ndim == 0 and data.dtype.kind == 'U':  # np.str_
             pass  # Do not reshape string scalars
         else:
             # Fixup input array length for scalar input
@@ -817,6 +816,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         bitarray_names.discard(name)
         complex_names.discard(name)
 
+        kind = data.dtype.kind
         if kind == 'b':  # np.bool_
             bitarray_names.add(name)
             data = data.view(np.uint8)
