@@ -1770,15 +1770,37 @@ def test_convert_string_array_scalar_string():
 @pytest.mark.parametrize(
     'array', [np.array([['a', 'b'], ['c', 'd']]), np.array([[b'a', b'b'], [b'c', b'd']])]
 )
-def test_convert_string_array_flattens_multidimensional(array):
-    # A vtkStringArray built here has a single component, so the second axis is not kept
+def test_convert_string_array_keeps_second_axis(array):
     vtk_arr = convert_string_array(array)
     assert vtk_arr.GetNumberOfValues() == 4
-    assert vtk_arr.GetNumberOfComponents() == 1
+    assert vtk_arr.GetNumberOfComponents() == 2
+    assert vtk_arr.GetNumberOfTuples() == 2
 
     out = convert_string_array(vtk_arr)
-    assert out.shape == (4,)
-    assert np.array_equal(out, ['a', 'b', 'c', 'd'])
+    assert out.shape == (2, 2)
+    assert np.array_equal(out, [['a', 'b'], ['c', 'd']])
+
+
+def test_convert_string_array_single_column_is_not_flattened():
+    column = np.array([['a'], ['b'], ['c']])
+    vtk_arr = convert_string_array(column)
+    assert vtk_arr.GetNumberOfComponents() == 1
+    # A single component cannot be told apart from a 1D array once stored
+    assert convert_string_array(vtk_arr).shape == (3,)
+
+
+def test_convert_string_array_rejects_more_than_two_dimensions():
+    match = re.escape('String array must be at most 2-dimensional, got shape (2, 2, 2).')
+    with pytest.raises(ValueError, match=match):
+        convert_string_array(np.full((2, 2, 2), 'a'))
+
+
+def test_string_field_data_round_trips_shape():
+    mesh = pv.Sphere()
+    values = np.array([['a', 'bb'], ['ccc', 'dddd'], ['e', 'ff']])
+    mesh.field_data['labels'] = values
+    assert mesh.field_data['labels'].shape == (3, 2)
+    assert np.array_equal(mesh.field_data['labels'], values)
 
 
 def test_convert_string_array_rejects_non_ascii():
