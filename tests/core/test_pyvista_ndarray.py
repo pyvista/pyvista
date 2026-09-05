@@ -12,6 +12,7 @@ from pyvista import _vtk
 from pyvista import examples
 from pyvista import pyvista_ndarray
 from pyvista import vtk_points
+from pyvista.core.utilities.arrays import FieldAssociation
 
 
 @pytest.fixture
@@ -183,3 +184,48 @@ def test_point_data_assignment_does_not_leak_vtk_weak_reference():
     assert after <= before, (
         f'point_data assignment leaked {after - before} vtkWeakReference instance(s)'
     )
+
+
+def test_unassociated_array_stores_no_metadata():
+    arr = pyvista_ndarray([1.0, 2.0, 3.0])
+    assert arr.VTKObject is None
+    assert arr.dataset is None
+    assert arr.association == FieldAssociation.NONE
+    assert not {'VTKObject', 'dataset', 'association'} & set(vars(arr))
+
+
+def test_association_without_dataset_propagates_to_views():
+    arr = pyvista_ndarray([1.0, 2.0, 3.0], association=FieldAssociation.POINT)
+    assert arr[1:].association == FieldAssociation.POINT
+    assert (arr + 1).association == FieldAssociation.NONE
+
+
+def test_copies_and_ufunc_results_are_not_associated():
+    points = pv.Sphere().points
+    assert points.VTKObject is not None
+    for result in (
+        points + 1,
+        points[[0, 1]],
+        points[points[:, 2] > 0],
+        points.astype(np.float64),
+        np.abs(points),
+    ):
+        assert isinstance(result, pyvista_ndarray)
+        assert result.VTKObject is None
+        assert result.dataset is None
+        assert result.association == FieldAssociation.NONE
+    assert points.T.VTKObject is points.VTKObject
+    assert points.reshape(-1).dataset is points.dataset
+
+
+def test_dataset_reference_targets_owner():
+    mesh = pv.Sphere()
+    assert mesh.points.dataset.Get() is mesh
+    assert mesh.point_data['Normals'].dataset.Get() is mesh
+    assert mesh.point_data.active_normals.dataset.Get() is mesh
+
+
+def test_detached_array_attribute_error_names_the_attribute():
+    match = re.escape("'pyvista_ndarray' object has no attribute 'GetNumberOfTuples'")
+    with pytest.raises(AttributeError, match=match):
+        pyvista_ndarray([1.0, 2.0]).GetNumberOfTuples()

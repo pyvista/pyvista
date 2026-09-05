@@ -725,6 +725,43 @@ def test_convert_id_list():
         id_list.SetId(i, v)
     converted = vtk_id_list_to_array(id_list)
     assert np.allclose(converted, ids)
+    assert np.issubdtype(converted.dtype, np.integer)
+
+    empty = vtk_id_list_to_array(_vtk.vtkIdList())
+    assert empty.shape == (0,)
+    assert np.issubdtype(empty.dtype, np.integer)
+
+
+def test_vtkmatrix_from_array_like():
+    values = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+    matrix = pv.vtkmatrix_from_array(values)
+    # Pin the row-major convention; a round trip alone would pass on a transposed matrix
+    assert matrix.GetElement(0, 2) == 3
+    assert matrix.GetElement(2, 0) == 7
+    assert np.array_equal(pv.array_from_vtkmatrix(matrix), values)
+
+    strided = np.asarray(values, dtype=np.float32)[::-1]
+    matrix = pv.vtkmatrix_from_array(strided)
+    assert np.array_equal(pv.array_from_vtkmatrix(matrix), strided)
+
+
+def test_convert_array_scalar_and_strided():
+    vtk_scalar = convert_array(np.array(1.5))
+    assert vtk_scalar.GetNumberOfTuples() == 1
+    assert vtk_scalar.GetValue(0) == 1.5
+
+    strided = np.arange(10.0)[::2]
+    assert np.array_equal(convert_array(convert_array(strided)), strided)
+
+    # Multi-component and non-contiguous, so the component count is read off a copy
+    strided_2d = np.arange(12.0).reshape(3, 4)[:, ::2]
+    assert not strided_2d.flags.c_contiguous
+    roundtrip = convert_array(convert_array(strided_2d))
+    assert roundtrip.shape == (3, 2)
+    assert np.array_equal(roundtrip, strided_2d)
+
+    strings = np.array(['a', 'bb', 'ccc', 'dddd'])[::2]
+    assert np.array_equal(convert_array(convert_array(strings)), strings)
 
 
 def test_progress_monitor():
@@ -1728,6 +1765,20 @@ def test_convert_string_array_scalar_string():
     out = convert_string_array(vtk_arr)
     assert out.ndim == 0
     assert str(out) == 'hello'
+
+
+@pytest.mark.parametrize(
+    'array', [np.array([['a', 'b'], ['c', 'd']]), np.array([[b'a', b'b'], [b'c', b'd']])]
+)
+def test_convert_string_array_flattens_multidimensional(array):
+    # A vtkStringArray built here has a single component, so the second axis is not kept
+    vtk_arr = convert_string_array(array)
+    assert vtk_arr.GetNumberOfValues() == 4
+    assert vtk_arr.GetNumberOfComponents() == 1
+
+    out = convert_string_array(vtk_arr)
+    assert out.shape == (4,)
+    assert np.array_equal(out, ['a', 'b', 'c', 'd'])
 
 
 def test_convert_string_array_rejects_non_ascii():
@@ -3246,9 +3297,22 @@ def test_deprecate_positional_args_post_deprecation():
 def test_deprecate_positional_args_allowed():
     # Test single allowed
     @_deprecate_positional_args(allowed=['bar'])
-    def foo(bar, baz): ...
+    def foo(bar, baz):
+        return bar, baz
 
-    foo(True, baz=True)
+    with warnings.catch_warnings():
+        warnings.simplefilter('error')
+        assert foo(True, baz=False) == (True, False)
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        assert foo(True, False) == (True, False)
+
+    # An allowed argument that is not first still leaves the ones before it deprecated
+    @_deprecate_positional_args(allowed=['baz'])
+    def qux(bar, baz):
+        return bar, baz
+
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        assert qux(True, baz=False) == (True, False)
 
     # Too many allowed args
     match = (

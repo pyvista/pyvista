@@ -510,15 +510,12 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
                          [ 1., -1.,  3.]], dtype=float32)
 
         """
-        _points = self.GetPoints()
-        try:
-            _points = _points.GetData()
-        except AttributeError:
+        vtkpts = self.GetPoints()
+        if vtkpts is None:
             # create an empty array
             vtkpts = vtk_points(np.empty((0, 3)), deep=False)
             self.SetPoints(vtkpts)
-            _points = self.GetPoints().GetData()
-        return pyvista_ndarray(_points, dataset=self)
+        return pyvista_ndarray(vtkpts.GetData(), dataset=self)
 
     @points.setter
     def points(self: Self, points: MatrixLike[float] | _vtk.vtkPoints) -> None:

@@ -303,3 +303,14 @@ def test_to_opacity_tf(lut, clamping):
     tf = lut.to_opacity_tf(clamping=clamping)
     assert isinstance(tf, _vtk.vtkPiecewiseFunction)
     assert tf.GetClamping() == int(clamping)
+
+
+def test_values_views_keep_table(lut):
+    values = lut.values
+    assert values.table.Get() is lut
+    assert values.VTKObject is lut.GetTable()
+    assert values[:2].table is values.table
+    assert values[:2].VTKObject is values.VTKObject
+    assert values.copy().table is None
+    assert values.copy().VTKObject is None
+    assert values.GetNumberOfTuples() == lut.n_values

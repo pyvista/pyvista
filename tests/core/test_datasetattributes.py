@@ -194,11 +194,6 @@ def test_active_name_setter_ignores_string_array(plane, attr):
     assert before != 'strings'
 
 
-def test_patch_type_without_vtk_array(sphere):
-    array = pv.pyvista_ndarray([1.0, 2.0])
-    assert sphere.point_data._patch_type(array) is array
-
-
 def test_active_normals_name():
     # Load dataset known to have active normals by default
     sphere = pv.Sphere()

@@ -13,6 +13,7 @@ import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
+from pyvista.core._vtk_utilities import VTKObjectWrapperCheckSnakeCase
 from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
@@ -36,6 +37,10 @@ class lookup_table_ndarray(_NoNewAttrMixin, np.ndarray):  # noqa: N801
 
     """
 
+    # Metadata of an unassociated array; instances only store what differs
+    table: _vtk.vtkWeakReference | None = None
+    VTKObject: _vtk.vtkAbstractArray | None = None
+
     def __new__(
         cls,
         array,
@@ -43,22 +48,17 @@ class lookup_table_ndarray(_NoNewAttrMixin, np.ndarray):  # noqa: N801
     ):
         """Allocate the array."""
         obj = convert_array(array).view(cls)
-        obj.VTKObject = array
-
-        obj.table = _vtk.vtkWeakReference()
-        obj.table.Set(table)
-
+        table_ref = _vtk.vtkWeakReference()
+        table_ref.Set(table)
+        # Optimization: write the instance dict directly, bypassing _NoNewAttrMixin.__setattr__
+        obj.__dict__.update(VTKObject=array, table=table_ref)
         return obj
 
     def __array_finalize__(self, obj):
         """Finalize array (associate with parent metadata)."""
-        _vtk.VTKArray.__array_finalize__(self, obj)  # type: ignore[arg-type]
-        if np.shares_memory(self, obj):
-            self.table = getattr(obj, 'table', None)
-            self.VTKObject = getattr(obj, 'VTKObject', None)
-        else:
-            self.table = None
-            self.VTKObject = None
+        # Views and slices keep their parent's metadata; copies and ufunc results do not
+        if isinstance(obj, lookup_table_ndarray) and np.may_share_memory(self, obj):
+            self.__dict__.update(table=obj.table, VTKObject=obj.VTKObject)
 
     def __setitem__(self, key, value):
         """Implement [] set operator.
@@ -68,14 +68,15 @@ class lookup_table_ndarray(_NoNewAttrMixin, np.ndarray):  # noqa: N801
         object.
         """
         super().__setitem__(key, value)
-        if self.VTKObject is not None:
-            self.VTKObject.Modified()
+        vtk_object = self.VTKObject
+        if vtk_object is not None:
+            vtk_object.Modified()
 
-        # the associated dataset should also be marked as modified
-        if self.table is not None and self.table.Get():
-            # this creates a new shallow copy and is necessary to update the
-            # internal VTK array
-            self.table.Get().values = self
+        # the associated table should also be marked as modified
+        table = None if self.table is None else self.table.Get()
+        if table is not None:
+            # Reassigning the values updates the table's internal VTK array
+            cast('LookupTable', table).values = self
 
     def __array_wrap__(self, out_arr, context=None, return_scalar: bool = False):  # noqa: FBT001, FBT002
         """Return a NumPy scalar if array is 0d.
@@ -89,7 +90,7 @@ class lookup_table_ndarray(_NoNewAttrMixin, np.ndarray):  # noqa: N801
         # Match numpy's behavior and return a numpy dtype scalar
         return out_arr[()]
 
-    __getattr__ = _vtk.VTKArray.__getattr__
+    __getattr__ = VTKObjectWrapperCheckSnakeCase.__getattr__
 
 
 class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
