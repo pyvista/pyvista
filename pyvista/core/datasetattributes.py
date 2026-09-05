@@ -521,7 +521,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         dataset: DataSet | _vtk.vtkDataSet,
         association: FieldAssociation,
     ) -> pyvista_ndarray:
-        """Return the array viewed as bool or complex, or a scalar field string as ``str``."""
+        """Return the array viewed as ``bool`` or ``complex``, or a scalar string as ``str``."""
         name = vtk_arr.GetName()
         association_name = association.name
         if name in dataset._association_bitarray_names[association_name]:  # type: ignore[union-attr]
