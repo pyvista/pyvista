@@ -392,7 +392,7 @@ def test_multi_block_repr(multiblock_all_with_nested_and_none):
 
 
 def test_multi_block_repr_bounds():
-    empty_poly = pv.PolyData().extract_cells(0)
+    empty_poly = pv.PolyData().extract_cells([])
     poly_x_bounds = repr(empty_poly).splitlines()[3]
     poly_y_bounds = repr(empty_poly).splitlines()[4]
     poly_z_bounds = repr(empty_poly).splitlines()[5]
