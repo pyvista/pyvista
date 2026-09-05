@@ -24,6 +24,11 @@ configure)
 		-DVTK_BUILD_EXAMPLES=OFF
 		# Off in VTK's own wheel builds too; a precompiled header defeats the compiler cache.
 		-DVTK_USE_PCH=OFF
+		# On in VTK's own wheel builds.
+		-DVTK_DISPATCH_SOA_ARRAYS=ON
+		-DVTK_WRAP_SERIALIZATION=ON
+		-DVTK_BUILD_PYI_FILES=ON
+		-DVTK_JPEG_ENABLE_SIMD=ON
 		-DVTK_VERSION_SUFFIX="dev0+g${VTK_NIGHTLY_SHA:0:8}"
 		-DPython3_EXECUTABLE="$("$python" -c 'import sys; print(sys.executable)')"
 		-DCMAKE_C_COMPILER_LAUNCHER="$COMPILER_LAUNCHER"
