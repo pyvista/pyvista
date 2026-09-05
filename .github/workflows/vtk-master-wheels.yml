@@ -263,7 +263,7 @@ jobs:
     needs: check-should-run
     if: needs.check-should-run.outputs.run == 'true'
     name: Cache pyvista/data
-    uses: ./.github/workflows/cache-pyvista-data.yml
+    uses: $/.github/workflows/cache-pyvista-data.yml
     with:
       runs-on: "ubuntu-22.04"
 
@@ -341,7 +341,7 @@ jobs:
 
       - name: Upload failure summary
         if: failure()
-        uses: ./.github/actions/vtk-master-failure-summary
+        uses: $/.github/actions/vtk-master-failure-summary
 
       - name: Upload Images for Failed Tests
         if: always()
@@ -426,7 +426,7 @@ jobs:
 
       - name: Upload failure summary
         if: failure()
-        uses: ./.github/actions/vtk-master-failure-summary
+        uses: $/.github/actions/vtk-master-failure-summary
 
       - name: Upload Images for Failed Tests
         if: always()
@@ -522,7 +522,7 @@ jobs:
 
       - name: Upload failure summary
         if: failure()
-        uses: ./.github/actions/vtk-master-failure-summary
+        uses: $/.github/actions/vtk-master-failure-summary
 
       - name: Upload Images for Failed Tests
         if: always()

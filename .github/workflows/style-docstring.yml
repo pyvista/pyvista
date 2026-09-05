@@ -13,7 +13,7 @@ permissions:
 jobs:
   cache-pyvista-data:
     name: Cache pyvista/data
-    uses: ./.github/workflows/cache-pyvista-data.yml
+    uses: $/.github/workflows/cache-pyvista-data.yml
     with:
       # Runner should match the actual runner used by the docstring job
       runs-on: "blacksmith-4vcpu-ubuntu-2204"

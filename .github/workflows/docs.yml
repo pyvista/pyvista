@@ -44,7 +44,7 @@ jobs:
 
   cache-pyvista-data:
     name: Cache pyvista/data
-    uses: ./.github/workflows/cache-pyvista-data.yml
+    uses: $/.github/workflows/cache-pyvista-data.yml
     with:
       # Runner should match the actual runner used by the build job
       runs-on: blacksmith-8vcpu-ubuntu-2204

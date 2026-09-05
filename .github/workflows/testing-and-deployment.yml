@@ -68,7 +68,7 @@ jobs:
   # GitHub runners too, via enableCrossOsArchive on the restore.
   cache-github-hosted:
     name: Cache pyvista/data
-    uses: ./.github/workflows/cache-pyvista-data.yml
+    uses: $/.github/workflows/cache-pyvista-data.yml
     with:
       runs-on: "ubuntu-22.04"
 
