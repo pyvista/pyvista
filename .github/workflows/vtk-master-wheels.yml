@@ -10,6 +10,11 @@ on:
   workflow_dispatch:
   pull_request:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # A pushed-over pull request run is cancelled; nightly and manual runs queue instead.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 env:
   ALLOW_PLOTTING: true
   SHELLOPTS: "errexit:pipefail"
@@ -37,7 +42,21 @@ jobs:
 
     runs-on: ${{ matrix.os }}
 
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/compiler-cache
+      CCACHE_MAXSIZE: 1G
+      # Version string, not mtime: survives a runner-image update that keeps the compiler.
+      CCACHE_COMPILERCHECK: "%compiler% --version"
+      SCCACHE_DIR: ${{ github.workspace }}/compiler-cache
+      SCCACHE_CACHE_SIZE: 1G
+
     steps:
+      - name: Checkout PyVista build script
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/scripts
+
       - name: Checkout VTK master (pinned to nightly date-stamp commit)
         shell: bash
         run: |
@@ -98,32 +117,29 @@ jobs:
           path: vtk-commit-range.md
 
       - name: Setup Python
+        if: runner.os != 'Linux'
         uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
-          cache: "pip"
-
-      - name: Install Linux build dependencies
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            ccache \
-            libx11-dev \
-            libxt-dev \
-            libgl1-mesa-dev \
-            libxcursor-dev
 
       - name: Install macOS build dependencies
         if: runner.os == 'macOS'
         run: brew install ccache
 
-      - name: Install build tools
+      - name: Install NASM (Windows)
+        if: runner.os == 'Windows'
         shell: bash
         run: |
-          python -m pip install --upgrade pip wheel setuptools
-          pip install ninja matplotlib
-          if [ "$RUNNER_OS" = "Linux" ]; then pip install auditwheel; fi
+          # The pinned download VTK's own Windows wheel builds use, for libjpeg-turbo's SIMD code.
+          cd vtk-src
+          CMAKE_CONFIGURATION=windows cmake -P .gitlab/ci/download_nasm.cmake
+          cygpath -w "$PWD/.gitlab/nasm" >> "$GITHUB_PATH"
+
+      - name: Install build tools
+        if: runner.os != 'Linux'
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip wheel setuptools ninja
           if [ "$RUNNER_OS" = "macOS" ]; then pip install delocate; fi
           if [ "$RUNNER_OS" = "Windows" ]; then pip install delvewheel; fi
 
@@ -136,18 +152,36 @@ jobs:
             echo "COMPILER_LAUNCHER=ccache" >> "$GITHUB_ENV"
           fi
 
-      - name: Configure ccache (Linux & macOS)
-        if: runner.os != 'Windows'
-        run: echo "CCACHE_DIR=$HOME/.ccache" >> "$GITHUB_ENV"
+      # An artifact, not actions/cache: the repository's shared 10 GB cache quota evicts a
+      # once-a-day entry before the next nightly can restore it.
+      - name: Find the newest compiler cache uploaded from main
+        id: find-compiler-cache
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Newest first. Only runs on main upload one, but filter anyway.
+          if ! run_id="$(gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts?name=compiler-cache-${RUNNER_OS}&per_page=10" \
+            --jq '[.artifacts[] | select((.expired | not) and .workflow_run.head_branch == "main")][0].workflow_run.id // empty')"; then
+            echo "::warning::Could not list the compiler cache artifacts; building cold"
+            run_id=""
+          fi
+          if [ -n "$run_id" ]; then
+            echo "Restoring the compiler cache uploaded by run $run_id"
+          else
+            echo "No compiler cache artifact found; building cold"
+          fi
+          echo "run-id=$run_id" >> "$GITHUB_OUTPUT"
 
-      - name: Restore ccache (Linux & macOS)
-        if: runner.os != 'Windows'
-        uses: actions/cache@v6
+      - name: Restore compiler cache
+        if: steps.find-compiler-cache.outputs.run-id != ''
+        uses: actions/download-artifact@v8
+        continue-on-error: true
         with:
-          path: ${{ env.CCACHE_DIR }}
-          key: vtk-nightly-ccache-${{ runner.os }}-${{ github.run_id }}
-          restore-keys: |
-            vtk-nightly-ccache-${{ runner.os }}-
+          name: compiler-cache-${{ runner.os }}
+          run-id: ${{ steps.find-compiler-cache.outputs.run-id }}
+          github-token: ${{ github.token }}
+          path: compiler-cache
 
       - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
         if: runner.os == 'Windows'
@@ -156,94 +190,59 @@ jobs:
         if: runner.os == 'Windows'
         uses: mozilla-actions/sccache-action@fc920bf0ec8de6ee65d409111f7ec508035751ba
 
-      - name: Enable sccache GHA backend (Windows)
-        if: runner.os == 'Windows'
-        shell: bash
-        run: echo "SCCACHE_GHA_ENABLED=true" >> "$GITHUB_ENV"
+      - name: Start manylinux container (Linux)
+        if: runner.os == 'Linux'
+        env:
+          PYTHON_VERSION: ${{ matrix.python-version }}
+        run: |
+          # VTK's own x86_64 wheels build on this image (glibc 2.17), so auditwheel tags
+          # ours manylinux2014 as well. The steps below run through $RUN_IN, which stays
+          # empty on macOS and Windows.
+          py="cp${PYTHON_VERSION//./}"
+          docker run --detach --name manylinux \
+            --volume "$GITHUB_WORKSPACE:/work" --workdir /work \
+            --env RUNNER_OS=Linux --env VTK_NIGHTLY_SHA --env COMPILER_LAUNCHER \
+            --env CCACHE_DIR=/work/compiler-cache --env CCACHE_MAXSIZE --env CCACHE_COMPILERCHECK \
+            --env PYTHON="/opt/python/${py}-${py}/bin/python" \
+            quay.io/pypa/manylinux2014_x86_64 sleep infinity
+          docker exec manylinux bash -euxo pipefail -c '
+            yum install -y --setopt=install_weak_deps=False libX11-devel libXcursor-devel mesa-libGL-devel
+            "$PYTHON" -m pip install --upgrade pip wheel setuptools ninja cmake
+            curl -sSfL -o /tmp/ccache.tar.xz https://github.com/ccache/ccache/releases/download/v4.14/ccache-4.14-linux-x86_64-musl-static.tar.xz
+            echo "888eaf9697919d6eba77be797e9d9c9e40e734d11d67d25a79b075c3f79f6c77  /tmp/ccache.tar.xz" | sha256sum --check
+            tar -xJf /tmp/ccache.tar.xz -C /usr/local/bin --strip-components=1 ccache-4.14-linux-x86_64-musl-static/ccache
+          '
+          echo "RUN_IN=docker exec manylinux" >> "$GITHUB_ENV"
 
       - name: Configure
         shell: bash
-        run: |
-          mkdir vtk-build && cd vtk-build
-
-          cmake_args=(
-            -GNinja
-            -DCMAKE_BUILD_TYPE=Release
-            -DVTK_WHEEL_BUILD=ON
-            -DVTK_WRAP_PYTHON=ON
-            -DVTK_BUILD_TESTING=OFF
-            -DVTK_BUILD_DOCUMENTATION=OFF
-            -DVTK_BUILD_EXAMPLES=OFF
-            -DVTK_VERSION_SUFFIX=dev0+g${VTK_NIGHTLY_SHA:0:8}
-            -DPython3_EXECUTABLE=$(python -c "import sys; print(sys.executable)")
-            -DCMAKE_C_COMPILER_LAUNCHER=$COMPILER_LAUNCHER
-            -DCMAKE_CXX_COMPILER_LAUNCHER=$COMPILER_LAUNCHER
-            -DVTK_MODULE_ENABLE_VTK_FiltersParallelDIY2=YES
-            -DVTK_MODULE_ENABLE_VTK_RenderingMatplotlib=YES
-            -DVTK_MODULE_ENABLE_VTK_IOImport=YES
-            -DVTK_MODULE_ENABLE_VTK_IOParallelExodus=YES
-            -DVTK_MODULE_ENABLE_VTK_IOXdmf2=YES
-            -DVTK_MODULE_ENABLE_VTK_WebCore=YES
-            -DVTK_MODULE_ENABLE_VTK_WebGLExporter=YES
-            -DVTK_MODULE_ENABLE_VTK_WebPython=YES
-            ../vtk-src
-          )
-
-          cmake "${cmake_args[@]}"
+        run: $RUN_IN bash .github/scripts/build-vtk-wheel.sh configure
 
       - name: Build
         shell: bash
-        run: |
-          # MSVC in particular dumps huge multi-line warning/template-instantiation
-          # traces for VTK's ThirdParty code that overwhelm the Actions log viewer.
-          # Stream a filtered view live, but keep the full log to print on failure.
-          noisy_pattern=': warning C[0-9]+:|: note:|^[[:space:]]+(with|\[|\])[[:space:]]*$|^[[:space:]]+[A-Za-z_][A-Za-z0-9_]*='
-          set +e
-          cmake --build vtk-build --parallel 2>&1 | tee build.log | grep -Ev --line-buffered "$noisy_pattern"
-          build_status=${PIPESTATUS[0]}
-          set -e
-          if [ "$build_status" -ne 0 ]; then
-            echo "::error::VTK build failed (exit $build_status); full unfiltered log follows"
-            cat build.log
-            exit "$build_status"
-          fi
+        run: $RUN_IN bash .github/scripts/build-vtk-wheel.sh build
 
       - name: Show compiler cache statistics
         shell: bash
-        run: $COMPILER_LAUNCHER --show-stats
+        run: $RUN_IN $COMPILER_LAUNCHER --show-stats
+
+      - name: Upload compiler cache
+        # Never from a pull request: the nightly restores whichever upload is newest.
+        if: ${{ !cancelled() && github.event_name != 'pull_request' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: compiler-cache-${{ runner.os }}
+          path: compiler-cache
+          compression-level: 0
+          retention-days: 7
 
       - name: Build wheel
         shell: bash
-        run: |
-          cd vtk-build
-          if [ "$RUNNER_OS" = "macOS" ]; then
-            export _PYTHON_HOST_PLATFORM="macosx-11.0-arm64"
-            export ARCHFLAGS="-arch arm64"
-          fi
-          python setup.py bdist_wheel
-
-      - name: Locate macOS VTK dylibs
-        if: runner.os == 'macOS'
-        run: |
-          cd vtk-build
-          LIBDIR="$(dirname "$(find . -name 'libvtksys*.dylib' -print -quit)")"
-          if [ -z "$LIBDIR" ]; then
-            echo "::error::could not locate libvtksys*.dylib anywhere under vtk-build"
-            exit 1
-          fi
-          echo "Found VTK dylibs in: $LIBDIR"
-          echo "VTK_DYLIB_DIR=$LIBDIR" >> "$GITHUB_ENV"
+        run: $RUN_IN bash .github/scripts/build-vtk-wheel.sh wheel
 
       - name: Repair wheel
         shell: bash
-        run: |
-          cd vtk-build
-          mkdir -p wheelhouse
-          case "$RUNNER_OS" in
-            Linux)   auditwheel repair dist/*.whl -w wheelhouse/ ;;
-            macOS)   DYLD_LIBRARY_PATH="$PWD/$VTK_DYLIB_DIR" delocate-wheel --require-archs arm64 -w wheelhouse -v dist/*.whl ;;
-            Windows) delvewheel repair --add-path bin -w wheelhouse dist/*.whl ;;
-          esac
+        run: $RUN_IN bash .github/scripts/build-vtk-wheel.sh repair
 
       - name: Upload VTK wheel
         uses: actions/upload-artifact@v7
