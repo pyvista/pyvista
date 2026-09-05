@@ -604,6 +604,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
     def camera(self, source) -> None:
         self._camera = source
         self.SetActiveCamera(self._camera)
+        if self.cube_axes_actor is not None:
+            self.cube_axes_actor.camera = source
         self.camera_position = CameraPosition(
             scale_point(source, source.position, invert=True),
             scale_point(source, source.focal_point, invert=True),

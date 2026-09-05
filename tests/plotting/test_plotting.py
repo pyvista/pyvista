@@ -1025,6 +1025,24 @@ def test_plot_show_bounds_scaled_bounding_box():
     pl.show()
 
 
+def test_plot_show_bounds_linked_views():
+    """The reproducer from https://github.com/pyvista/pyvista/issues/3082."""
+
+    def add_sphere(pl, sp, text, location='front'):
+        pl.subplot(sp)
+        pl.add_mesh(pv.Sphere(), color='blue')
+        pl.add_text(text, font_size=12)
+        pl.show_bounds(location=location)
+
+    cam_pos = [(2.0, 2.0, 2.0), (0.0, 0.0, 0.0), (0.0, 1.0, 0.0)]
+    pl = pv.Plotter(shape='1|2')
+    add_sphere(pl, 0, 'linked view 0')
+    add_sphere(pl, 1, 'linked view 1')
+    add_sphere(pl, 2, 'linked view 2')
+    pl.link_views()
+    pl.show(cpos=cam_pos)
+
+
 @pytest.mark.parametrize('use_3d_text', [True, False])
 @pytest.mark.parametrize('font_size', [12, 24])
 def test_plot_show_grid_font_size(sphere, use_3d_text, font_size):

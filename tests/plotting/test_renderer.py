@@ -224,6 +224,24 @@ def test_add_floor_scaled(scale_first):
     assert np.allclose(floor_bounds(SCALE), unscaled * np.repeat(SCALE, 2))
 
 
+def test_link_views_moves_bounds_axes_camera():
+    """Axes built before the views were linked follow the shared camera.
+
+    Regression test for https://github.com/pyvista/pyvista/issues/3082.
+    """
+    pl = pv.Plotter(shape=(1, 2))
+    for index in range(2):
+        pl.subplot(0, index)
+        pl.add_mesh(pv.Sphere())
+        pl.show_bounds()
+    pl.link_views()
+    assert pl.renderers[1].camera is pl.renderers[0].camera
+    assert all(r.cube_axes_actor.camera is r.camera for r in pl.renderers)
+    pl.unlink_views()
+    assert pl.renderers[1].camera is not pl.renderers[0].camera
+    assert all(r.cube_axes_actor.camera is r.camera for r in pl.renderers)
+
+
 def test_remove_bounds_axes_forgets_pinned_bounds():
     """Pinned bounds do not outlive the actor they were pinned for."""
     cube = pv.Cube()
