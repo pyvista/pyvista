@@ -545,7 +545,7 @@ def test_plotter_theme_attribute_setter():
     with pytest.raises(pv.core.errors.DeprecationError, match=match):
         pl.theme = my_theme
 
-    if pyvista.version_info >= (0, 50):
+    if pyvista.version_info >= (0, 50):  # pragma: no cover -- fires at the version bump
         pytest.fail('Remove the `theme` setter')
 
 
@@ -561,6 +561,18 @@ def test_load_theme(tmpdir, default_theme):
 
     default_theme.load_theme(filename)
     assert default_theme == pv.plotting.themes.DarkTheme()
+
+
+@pytest.mark.filterwarnings(
+    'ignore:The jupyter_extension_available flag is read only and is automatically '
+    'detected:UserWarning'
+)
+def test_load_theme_unknown_key(default_theme):
+    dict_ = default_theme.to_dict()
+    dict_['a_stale_removed_property'] = True
+    with pytest.warns(UserWarning, match="'Theme' has no attribute 'a_stale_removed_property'"):
+        loaded_theme = Theme.from_dict(dict_)
+    assert loaded_theme == default_theme
 
 
 @pytest.mark.filterwarnings(
@@ -587,7 +599,7 @@ def test_save_before_close_callback(tmpdir, default_theme):
     dark_theme = pv.plotting.themes.DarkTheme()
 
     def fun(plotter):
-        pass
+        """Assigned to the theme, never called: the theme is saved, not used."""
 
     dark_theme.before_close_callback = fun
     assert dark_theme != pv.plotting.themes.DarkTheme()

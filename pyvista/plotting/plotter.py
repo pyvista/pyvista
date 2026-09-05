@@ -30,13 +30,13 @@ import warnings
 import weakref
 
 import numpy as np
+import pyvista_validation as _validation
 import scooby
 
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
-from pyvista.core import _validation
 from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
@@ -156,6 +156,8 @@ if TYPE_CHECKING:
 
     from .opts import PointSpriteShape
 
+    _DistortionState = tuple[tuple[float, ...], tuple[float, float]]
+
 
 SUPPORTED_FORMATS = ['.png', '.jpeg', '.jpg', '.bmp', '.tif', '.tiff']
 FPS_1_OVER_60 = 1 / 60
@@ -193,12 +195,6 @@ float new_y = y * radial + 2.0 * p2 * x * y + p1 * (rSquared + 2.0 * y * y);
 gl_Position.x = new_x * u_distortion_projection_scale.x * clip_w;
 gl_Position.y = new_y * u_distortion_projection_scale.y * clip_w;
 """
-
-if os.environ.get('PYVISTA_KILL_DISPLAY'):  # pragma: no cover
-    from pyvista.core.errors import DeprecationError
-
-    msg = 'PYVISTA_KILL_DISPLAY has been deprecated'
-    DeprecationError(msg)
 
 
 def close_all() -> bool:
@@ -596,6 +592,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         self._camera_distortion_coefficients: tuple[float, ...] | None = None
         self._camera_distortion_observers: list[tuple[Renderer, int]] = []
+        self._camera_distortion_sweeps: dict[Renderer, tuple[int, _DistortionState]] = {}
         self._camera_distortion_warned: set[str] = set()
 
         self._initialized = True
@@ -1787,10 +1784,9 @@ class BasePlotter(_BoundsSizeMixin):
         Brown-Conrady distortion is applied by a vertex shader replacement on
         each actor, so it displaces geometry rather than resampling the
         rendered image: geometry that is coarse relative to the distortion
-        does not curve smoothly. Actors are swept before every render, so
-        anything added afterwards is distorted too, including actors a
-        :vtk:`vtkImporter` puts in the scene without going through
-        :func:`~pyvista.Plotter.add_actor`.
+        does not curve smoothly. Anything added to the scene afterwards is
+        distorted too, including actors a :vtk:`vtkImporter` puts there
+        without going through :func:`~pyvista.Plotter.add_actor`.
 
         Two kinds of prop are drawn by shaders with no vertices to displace,
         and are rendered undistorted alongside the rest of the scene, with a
@@ -1889,6 +1885,7 @@ class BasePlotter(_BoundsSizeMixin):
         for renderer, observer in self._camera_distortion_observers:
             renderer.RemoveObserver(observer)
         self._camera_distortion_observers = []
+        self._camera_distortion_sweeps = {}
         for renderer in self.renderers:
             for prop in renderer.actors.values():
                 if getattr(prop, '_camera_distortion_state', None) is None:
@@ -1914,14 +1911,23 @@ class BasePlotter(_BoundsSizeMixin):
             'undistorted alongside any distorted actors.'
         )
 
-    def _apply_camera_distortion(self, *_args) -> None:
-        """Give every actor the distortion shader and keep its uniforms current."""
+    def _apply_camera_distortion(self, caller: Renderer | None = None, *_args) -> None:
+        """Give the actors of ``caller``, or of every renderer, current uniforms."""
         coefficients = self._camera_distortion_coefficients
         if coefficients is None:  # pragma: no cover - disable removes the observer first
             return
-        for renderer in self.renderers:
+        for renderer in self.renderers if caller is None else [caller]:
+            props = renderer.GetViewProps()
             state = (coefficients, _projection_scale(renderer))
-            for prop in renderer.actors.values():
+            # An actor can only enter the scene undistorted by being added to the
+            # collection, so a renderer holding the props the last sweep left in
+            # this state has nothing for another walk to find.
+            sweep = (props.GetMTime(), state)
+            if self._camera_distortion_sweeps.get(renderer) == sweep:
+                continue
+            self._camera_distortion_sweeps[renderer] = sweep
+            for index in range(props.GetNumberOfItems()):
+                prop = props.GetItemAsObject(index)
                 if not isinstance(prop, _vtk.vtkActor):
                     if isinstance(prop, Volume):
                         self._warn_undistorted(
@@ -1938,9 +1944,7 @@ class BasePlotter(_BoundsSizeMixin):
                 if getattr(prop, '_camera_distortion_state', None) != state:
                     self._distort_actor(prop, state)
 
-    def _distort_actor(
-        self, prop: _vtk.vtkActor, state: tuple[tuple[float, ...], tuple[float, float]]
-    ) -> None:
+    def _distort_actor(self, prop: _vtk.vtkActor, state: _DistortionState) -> None:
         """Attach the distortion shader to one actor and set its uniforms."""
         coefficients, projection_scale = state
         if getattr(prop, '_camera_distortion_state', None) is None:
@@ -2614,11 +2618,11 @@ class BasePlotter(_BoundsSizeMixin):
         if self.iren is not None:
             self.iren.clear_events_for_key(*args, **kwargs)
 
-    def store_mouse_position(self, *args) -> None:  # noqa: ARG002
+    def store_mouse_position(self, *args) -> None:  # noqa: ARG002  # numpydoc ignore=PR01
         """Store mouse position."""
         self.mouse_position = self._get_iren_not_none().get_event_position()
 
-    def store_click_position(self, *args) -> None:  # noqa: ARG002
+    def store_click_position(self, *args) -> None:  # noqa: ARG002  # numpydoc ignore=PR01
         """Store click position in viewport coordinates."""
         self.click_position = self._get_iren_not_none().get_event_position()
         self.mouse_position = self.click_position
@@ -2796,7 +2800,7 @@ class BasePlotter(_BoundsSizeMixin):
         """Wrap RenderWindowInteractor.key_press_event."""
         self._get_iren_not_none().key_press_event(*args, **kwargs)
 
-    def left_button_down(self, *args) -> None:  # noqa: ARG002
+    def left_button_down(self, *args) -> None:  # noqa: ARG002  # numpydoc ignore=PR01
         """Register the event for a left button down click."""
         attr = 'GetRenderFramebuffer'
         if (
@@ -4648,6 +4652,11 @@ class BasePlotter(_BoundsSizeMixin):
             remove_existing_actor=remove_existing_actor,
         )
 
+        if silhouette:
+            # Give the silhouette actor a name to avoid duplicate
+            # silhouettes for the same actor
+            silhouette_actor.name = f'{name}-silhouette'
+
         # hide scalar bar if using special scalars
         if scalar_bar_args.get('title') == '__custom_rgba':
             show_scalar_bar = False
@@ -5567,11 +5576,19 @@ class BasePlotter(_BoundsSizeMixin):
         if render is None:
             kwargs['render'] = not self._first_time
 
-        # check if maper exists
+        # check if mapper, lookup_table, or cmap exists; the three ways of
+        # specifying the mapping. Only use saved mapper if none are specified.
+        # No input validation here; ScalarBars.add_scalar_bar will raise
+        # ValueError if more than one of mapper/lookup_table/cmap is provided.
         mapper = kwargs.get('mapper')
-        if mapper is None:
+        lookup_table = kwargs.get('lookup_table')
+        cmap = kwargs.get('cmap')
+        if mapper is None and lookup_table is None and cmap is None:
             if self.mapper is None:
-                msg = 'Mapper does not exist.  Add a mesh with scalars first.'
+                msg = (
+                    'Neither `cmap`/`clim`, `lookup_table`, or `mapper` provided.'
+                    ' To use an existing Mapper, add a mesh with scalars first.'
+                )
                 raise AttributeError(msg)
             kwargs['mapper'] = self.mapper
 
@@ -5702,6 +5719,10 @@ class BasePlotter(_BoundsSizeMixin):
         if self._before_close_callback is not None:
             self._before_close_callback(self)  # type: ignore[arg-type]
             self._before_close_callback = None
+
+        # Suppress interactor-initiated renders for the rest of teardown.
+        if self.iren is not None and self.iren.interactor is not None:
+            self.iren.interactor.EnableRenderOff()
 
         # Tear down plotter components first (in reverse construction
         # order) so that widgets / pickers release their VTK observers
@@ -8314,6 +8335,24 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         * ``shape="3|1"`` means 3 plots on the left and 1 on the right,
         * ``shape="4/2"`` means 4 plots on top and 2 at the bottom.
 
+    groups : list, optional
+        A list of sequences that defines the grouping of the subplots.
+        Each group is given as ``(rows, cols)``, where each entry is a
+        row/column index or a :class:`slice`, and the group spans from
+        the smallest to the largest index it covers. The subplots in a
+        group are merged into a single renderer. Groups may not
+        overlap. See :ref:`multi_window_example` for a full example.
+
+    row_weights : sequence[float], optional
+        The relative heights of the rows, used to size the subplots
+        when the plot window is resized. Must have one entry per row.
+        Defaults to equal weights.
+
+    col_weights : sequence[float], optional
+        The relative widths of the columns, used to size the subplots
+        when the plot window is resized. Must have one entry per
+        column. Defaults to equal weights.
+
     border : bool | 'interior' | 'exterior', optional
         Draw a border around the plotting area. ``True`` draws both
         an outer frame and lines between subplots; ``False`` draws
@@ -8355,8 +8394,23 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
     line_smoothing : bool, default: False
         If ``True``, enable line smoothing.
 
+    point_smoothing : bool, default: False
+        If ``True``, enable point smoothing.
+
     polygon_smoothing : bool, default: False
         If ``True``, enable polygon smoothing.
+
+    splitting_position : float, optional
+        The position, between ``0`` and ``1``, at which to place the
+        splitting line between plots when ``shape`` is given as a
+        string descriptor such as ``"3|1"``. Defaults to
+        :attr:`pyvista.global_theme.multi_rendering_splitting_position
+        <pyvista.plotting.themes.Theme.multi_rendering_splitting_position>`.
+
+    title : str, optional
+        Title of the plotting window. Defaults to
+        :attr:`pyvista.global_theme.title
+        <pyvista.plotting.themes.Theme.title>`.
 
     lighting : str, default: 'light kit"
         Lighting to set up for the plotter. Accepted options:

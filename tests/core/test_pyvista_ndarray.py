@@ -29,6 +29,13 @@ def test_slices_are_associated():
     assert points[1, :].association == points.association
 
 
+def test_dataset_from_attributes_wrapper():
+    sphere = pv.Sphere()
+    attributes = sphere.point_data
+    array = pv.pyvista_ndarray(attributes.VTKObject.GetArray('Normals'), dataset=attributes)
+    assert array.dataset.Get() is attributes.VTKObject
+
+
 def test_copies_are_not_associated():
     dataset = examples.load_structured()
     points = pyvista_ndarray(dataset.GetPoints().GetData(), dataset=dataset)

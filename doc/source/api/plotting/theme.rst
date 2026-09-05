@@ -1,7 +1,7 @@
 .. _theme_api:
 
 Themes
-~~~~~~
+======
 PyVista plotting parameters can be controlled on a plot by plot basis
 or through a global theme, making it possible to control mesh colors
 and styles through one global configuration.
@@ -17,13 +17,22 @@ PyVista.
 .. autosummary::
    :toctree: _autosummary
 
-   themes.DarkTheme
    themes.Theme
+   themes.DarkTheme
    themes.DocumentTheme
    themes.ParaViewTheme
+
+Each theme groups its settings into the following configuration sections.
+:class:`~pyvista.plotting.themes._ConfigBase` is the base class they share
+with :class:`~pyvista.core.config.Config`.
+
+.. autosummary::
+   :toctree: _autosummary
+
    themes._AxesConfig
    themes._CameraConfig
    themes._ColorbarConfig
+   themes._ConfigBase
    themes._DepthPeelingConfig
    themes._Font
    themes._LightingConfig
@@ -32,8 +41,29 @@ PyVista.
    themes._SliderStyleConfig
    themes._TrameConfig
 
+.. seealso::
+
+   :ref:`userguide_themes`
+      User guide for customizing and applying themes.
+
+   :ref:`configuration`
+      Central reference for all global settings, including the
+      non-plotting counterpart :class:`pyvista.core.config.Config`.
+
+Selecting and Registering Themes
+--------------------------------
+.. currentmodule:: pyvista
+
+.. autosummary::
+   :toctree: _autosummary
+
+   ThemeRegistration
+   load_theme
+   registered_themes
+   set_plot_theme
+
 Custom Interactor Styles
-~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------
 
 Themes can also choose the default interactor style by name through
 ``Theme.interactor_style``. Downstream packages can register

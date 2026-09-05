@@ -15,7 +15,7 @@ sys.path.append(str(Path(__file__).parent))
 # https://github.com/pyvista/pyvista/pull/7747
 warnings.filterwarnings(
     'ignore',
-    message=r'(?s).*PYVISTA_VTK_DATA is not a valid directory.*',
+    message=r'(?s).*PYVISTA(_VTK)?_DATA is not a valid directory.*',
     category=UserWarning,
 )
 
@@ -81,6 +81,8 @@ html_static_path = ['_static']
 
 # -- pyvista configuration ------------------------------------------------
 pv.BUILDING_GALLERY = True
+# Small renders: nothing in these builds asserts on image size.
+pv.global_theme.window_size = [256, 192]
 
 # -- .. pyvista-plot:: directive ----------------------------------------------
 from numpydoc.docscrape_sphinx import SphinxDocString

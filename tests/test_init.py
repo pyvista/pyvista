@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 import subprocess
 import sys
 import textwrap
@@ -105,18 +106,15 @@ def _module_is_loaded(module_to_check: str, module_to_import: str = 'pyvista') -
     ids=['core', 'plotting'],
 )
 def test_minimal_vtkmodules_imported(allowed_modules, module_to_import):
-    vtkmodules_not_allowed = sorted(
-        {
-            module
-            for module in sys.modules
-            if module.startswith('vtkmodules.') and module not in allowed_modules
-        }
+    # Import in a fresh interpreter, since pytest itself has already loaded VTK here
+    code = (
+        f'import {module_to_import}, sys; '
+        "print(*(m for m in sys.modules if m.startswith('vtkmodules.')))"
     )
-    vtkmodules_loaded = {
-        module
-        for module in vtkmodules_not_allowed
-        if _module_is_loaded(module_to_import=module_to_import, module_to_check=module)
-    }
+    imported = subprocess.run(
+        [sys.executable, '-c', code], check=True, capture_output=True, text=True
+    ).stdout.split()
+    vtkmodules_loaded = set(imported) - allowed_modules
 
     error_msg = """
     Disallowed VTK module(s) were loaded at root `import pyvista`.
@@ -311,3 +309,33 @@ def test_vtk_import_all_suppressed_ignores_failures(monkeypatch):
     _vtk.import_all(suppress_import_errors=True)
 
     assert calls == ['A', 'SpecialA']
+
+
+@pytest.mark.parametrize(('building_gallery', 'imported'), [('true', True), ('false', False)])
+def test_building_gallery_imports_vtk_eagerly(building_gallery, imported):
+    """A gallery build resolves every mapped VTK class when PyVista is imported."""
+    code = "from pyvista import _vtk; print('vtkOutlineFilter' in vars(_vtk))"
+    result = subprocess.run(
+        [sys.executable, '-c', code],
+        env={**os.environ, 'PYVISTA_BUILDING_GALLERY': building_gallery},
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    assert result.stdout.strip() == str(imported)
+
+
+def test_validation_forward_deprecated():
+    import pyvista_validation
+
+    import pyvista as pv
+
+    msg = (
+        '`pyvista._validation` has moved to the `pyvista_validation` package; '
+        'use `from pyvista_validation import ...` instead.'
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(msg)):
+        assert pv._validation is pyvista_validation
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(msg)):
+        from pyvista import _validation
+    assert _validation.validate_array3([1, 2, 3]).shape == (3,)

@@ -11,12 +11,12 @@ from typing import cast
 from typing import overload
 
 import numpy as np
+import pyvista_validation as _validation
 from typing_extensions import TypeIs
 
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core import _validation
 
 from . import transformations
 from .fileio import from_meshio

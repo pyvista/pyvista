@@ -21,6 +21,12 @@ from typing import overload
 import pooch
 
 from pyvista._warn_external import warn_external
+from pyvista.core.utilities._optional_formats import _READ
+from pyvista.core.utilities._optional_formats import _format_for
+from pyvista.core.utilities._optional_formats import _import_handler
+from pyvista.core.utilities._optional_formats import _installed_extensions
+from pyvista.core.utilities._optional_formats import _missing_message
+from pyvista.core.utilities._optional_formats import _source
 from pyvista.core.utilities._registry_helpers import handler_source
 from pyvista.core.utilities.reader import CLASS_READERS
 from pyvista.core.utilities.reader import BaseReader
@@ -32,10 +38,10 @@ if TYPE_CHECKING:
 
 
 class ReaderHandler(Protocol):
-    """Callable that reads *path* and returns a :class:`pyvista.DataSet`."""
+    """Callable that reads ``path`` and returns a :class:`pyvista.DataSet`."""
 
     def __call__(self, path: str, /, **kwargs: Any) -> DataSet:
-        """Read *path* and return the resulting dataset."""
+        """Read ``path`` and return the resulting dataset."""
 
 
 # A bare callable, or a BaseReader subclass.
@@ -99,6 +105,8 @@ class ReaderRegistration(NamedTuple):
 
 
 class _RegistryState(TypedDict):
+    """Mutable state of the reader registry."""
+
     ext: dict[str, ReaderHandler]
     classes: dict[str, type[BaseReader[Any]]]
     sources: dict[str, str]
@@ -186,7 +194,7 @@ def _restore_registry_state(state: _RegistryState) -> None:
 
 
 def has_scheme(value: str) -> bool:
-    """Return ``True`` if *value* starts with a URI scheme (for example, ``https://``).
+    """Return ``True`` if ``value`` starts with a URI scheme (for example, ``https://``).
 
     Parameters
     ----------
@@ -196,7 +204,7 @@ def has_scheme(value: str) -> bool:
     Returns
     -------
     bool
-        ``True`` if *value* contains a ``://`` scheme prefix before
+        ``True`` if ``value`` contains a ``://`` scheme prefix before
         the first ``/``.
 
     """
@@ -208,7 +216,7 @@ def has_scheme(value: str) -> bool:
 
 
 def _download_uri(uri: str, ext: str) -> str:
-    """Download a remote URI to a temporary file, preserving *ext*.
+    """Download a remote URI to a temporary file, preserving ``ext``.
 
     Uses ``fsspec`` when available (supports ``s3://``, ``gs://``,
     ``az://``, ``http://``, and any other registered filesystem).
@@ -342,7 +350,7 @@ def register_reader(
     Raises
     ------
     ValueError
-        If ``key`` collides with a built-in VTK reader and *override*
+        If ``key`` collides with a built-in VTK reader and ``override``
         is ``False``.
 
     Warns
@@ -469,6 +477,29 @@ def _get_ext_reader_class(ext: str) -> type[BaseReader[Any]] | None:
     return _custom_class_readers.get(ext)
 
 
+def _missing_reader_message(ext: str, filename: str | None = None) -> str | None:
+    """Return install instructions when ``ext`` needs a companion package PyVista cannot import."""
+    return _missing_message(ext, _READ, filename)
+
+
+def _optional_reader_class_name(ext: str) -> str | None:
+    """Return the reader class an optional format exposes, when it is importable."""
+    fmt = _format_for(ext, _READ)
+    if fmt is None:
+        return None
+    handler, _ = _import_handler(ext, _READ)
+    return fmt.reader_class if handler is not None else None
+
+
+def _resolve_optional_reader(ext: str) -> bool:
+    """Register the companion package serving ``ext``, when it is importable."""
+    handler, _ = _import_handler(ext, _READ)
+    if handler is None:
+        return False
+    _register(ext, cast('ReaderHandler', handler), source=_source(ext, _READ))
+    return True
+
+
 def _resolve_ext(ext: str) -> None:
     """Make sure any plugin claiming *ext* has been imported."""
     if ext in _custom_ext_readers or ext in _custom_class_readers:
@@ -476,6 +507,8 @@ def _resolve_ext(ext: str) -> None:
     _ensure_entry_points()
     if ext in _pending_ext_readers:
         _resolve_pending_reader(ext)
+        return
+    _resolve_optional_reader(ext)
 
 
 def _ensure_entry_points() -> None:
@@ -550,7 +583,7 @@ def _undeclared_override_message(ext: str, ep: EntryPoint) -> str:
 
 
 def _resolve_pending_reader(ext: str) -> bool:
-    """Import the plugin claiming *ext*, if any.
+    """Import the plugin claiming ``ext``, if any.
 
     Returns
     -------
@@ -611,8 +644,12 @@ def _list_custom_exts() -> list[str]:
     formats. The plugin modules themselves are **not** imported.
     """
     _ensure_entry_points()
+    installed_optional = _installed_extensions(_READ)
     return list(
-        _custom_ext_readers.keys() | _custom_class_readers.keys() | _pending_ext_readers.keys()
+        _custom_ext_readers.keys()
+        | _custom_class_readers.keys()
+        | _pending_ext_readers.keys()
+        | installed_optional
     )
 
 

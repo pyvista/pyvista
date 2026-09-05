@@ -177,16 +177,18 @@ can be installed via package managers like ``scoop`` or ``chocolatey``.
 
 .. code-block:: bash
 
-    make sync-deps      # install dev dependencies via uv (includes tox + tox-uv)
-    make lint           # run pre-commit on all files
-    make typecheck      # run mypy via tox
-    make test           # run the full test suite via tox (matches CI flags)
-    make test-core      # run the core test suite via tox (matches CI)
-    make test-plotting  # run the plotting test suite via tox (matches CI)
-    make doctest        # run all docstring tests via tox (matches CI)
-    make docs           # build the full documentation via tox (matches CI)
-    make docs-test      # test the built documentation via tox (matches CI)
-    make integration PROJECT=<name>  # run integration tests for trame/geovista/mne/pyvistaqt/playwright/cvista
+    make sync-deps         # install dev dependencies via uv (includes tox + tox-uv)
+    make lint              # run pre-commit on all files
+    make docstyle          # run Vale (matches CI)
+    make typecheck         # run mypy via tox (matches CI)
+    make test              # run the full test suite via tox (matches CI flags)
+    make test-core         # run the core test suite via tox (matches CI)
+    make test-plotting     # run the plotting test suite via tox (matches CI)
+    make doctest           # run all docstring tests via tox (matches CI)
+    make docs              # build the full documentation via tox (matches CI)
+    make docs-test-build   # sanity-check the built documentation via tox (matches CI)
+    make docs-test-images  # compare documentation images against cached baselines via tox (matches CI)
+    make integration PROJECT=<name>  # run integration tests for trame/geovista/mne/pyvistaqt/playwright/cvista/numpy-nightly
 
 ``make test``, ``make test-core``, and ``make test-plotting`` all
 invoke tox environments defined in ``tox.ini`` so they run with the
@@ -208,9 +210,9 @@ variable, for example:
 These targets are thin wrappers around ``uv``, ``pre-commit``, ``tox``,
 and ``pytest``. If you need more control (for example, running against a
 specific ``vtk`` or ``numpy`` version, or building documentation), see
-the `Unit Testing`_, `Style Checking`_, and `Building the
-Documentation`_ sections below, which document the underlying tools
-directly.
+the `Unit Testing`_, `Docstring Testing`_, `Type Checking`_, `Style
+Checking`_, and `Building the Documentation`_ sections below, which
+document the underlying tools directly.
 
 Continuous Integration Etiquette
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -556,6 +558,10 @@ PyVista follows the ``numpydoc`` style for its docstrings. Please follow the
   out what individual methods do.
 * With optional parameters, use ``default: <value>`` instead of ``optional``
   when the parameter has a default value instead of ``None``.
+* A docstring that is only a one-line summary may omit the ``Returns`` section
+  when the return type is annotated on the signature; the annotation is the
+  source of truth for the type. Docstrings with more than a summary still
+  document ``Returns``.
 
 Sample docstring follows:
 
@@ -839,7 +845,7 @@ The top-level ``Makefile`` also wraps the most common invocations—see
             .. code-block:: bash
 
                 tox run -e py3.11-vtk_9.4.2 # run tests for vtk==9.4.2
-                tox run -e py3.11-vtk_9.4.2_numpy_nightly # run tests for vtk==9.4.2 with nightly numpy
+                tox run -e py3.11-vtk_9.4.2-numpy_nightly # run tests for vtk==9.4.2 with nightly numpy
 
             If you need to tests dependencies that are not predefined in the configuration, you can always override them such
             that:
@@ -856,7 +862,7 @@ The top-level ``Makefile`` also wraps the most common invocations—see
 
                 tox run -e py3.11-core # run core tests (no need for graphics library)
                 tox run -e py3.11-plotting # run plotting tests (requires graphics library)
-                tox rnu -e py3.11-core-plotting # equivalent to 'tox run -e py3.11'
+                tox run -e py3.11-core-plotting # equivalent to 'tox run -e py3.11'
 
             To specify supplementary arguments to the ``pytest`` command line, use ``--`` to separate
             ``tox`` arguments from ``pytest`` ones such that:
@@ -915,7 +921,7 @@ such that:
 
         .. code-block:: bash
 
-            pytest --cov pyvista
+            pytest --cov pyvista --cov tests
 
     .. tab-item:: tox
         :sync: tox
@@ -938,7 +944,7 @@ such that:
 
         .. code-block:: bash
 
-            make coverage # pytest -v --cov pyvista
+            make coverage # pytest -v --cov pyvista --cov tests
             make coverage-html # same, with an HTML report at ./htmlcov
 
 When submitting a PR, it is highly recommended that all modifications are thoroughly tested.
@@ -953,6 +959,40 @@ If needed, code coverage can be deactivated for specific lines by adding the ``#
 for more details.
 However, code coverage exclusion should rarely be used and has to be carefully justified in the PR thread
 if no simple alternative solution has been found.
+
+Test Code Is Covered Too
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+``tests`` is measured alongside ``pyvista``, and the two are uploaded to Codecov as
+separate reports under the ``package`` and ``tests`` flags, so a gain on one cannot hide a
+loss on the other. New and changed test code must be fully covered, and the total may not
+fall: an uncovered line in a test file is a test that does not run the code it appears to,
+and a partly covered branch is a case the suite never reaches. Both usually mean a missing
+assertion rather than a missing ``pragma``.
+
+Reach for ``# pragma: no cover`` when a branch exists in order to prove it is never taken
+-- a callback asserted never to fire, a fallback for a backend no covered environment runs
+-- and say which in the comment. ``# pragma: no branch`` fits a loop or guard that only
+ever goes one way, such as a retry loop whose last attempt always returns or raises.
+
+Some patterns produce dead test code:
+
+- A helper class or fixture whose attributes nothing ever reads. Delete the unused member.
+- A stub body written as ``class Stub: ...``. Coverage counts the one-line form as a
+  partial branch, and ``ruff format`` collapses ``...`` onto the ``class`` line, so write
+  ``pass`` or a docstring instead.
+- A no-op callback whose body is ``pass`` or a bare ``return``, registered somewhere that
+  never calls it. Give it a docstring instead and delete the statement: a docstring is not
+  an executable line, so nothing is left to go uncovered.
+- A class registered or patched but never instantiated, where ``__init__`` only assigns.
+  Drop the ``__init__``, or assert on the instance the test already set up.
+- A branch that only one CI job reaches. Coverage is combined across the matrix, so a
+  ``vtk_version_info`` gate is covered as long as some job takes each side. Only the
+  Linux jobs upload, so a ``sys.platform`` gate for macOS or Windows never is.
+
+Not every file under ``tests`` is measured. The ones run outside a ``-cov`` environment
+(the ``doc_build`` suite, the standalone scripts, the Sphinx projects used as build
+fixtures) are listed under ``report.omit`` in ``pyproject.toml``.
 
 The CI is configured to test multiple vtk versions to ensure sufficient compatibility with vtk.
 If needed, the minimum and/or maximum vtk version needed by a specific test can be controlled with a
@@ -1109,11 +1149,176 @@ Run all code examples in the docstrings with:
 
             tox run -e doctest-modules
 
+    .. tab-item:: make
+        :sync: make
+
+        .. code-block:: bash
+
+            make doctest
+
+        .. note::
+
+            ``make doctest`` runs ``tox run -f doctest``, which runs both the
+            ``doctest-modules`` environment above and the ``doctest-names``
+            environment (``tox run -e doctest-names``). The latter has no
+            ``pytest`` equivalent since it does not run the examples: it
+            statically checks that the names they use are actually defined
+            (see ``tests/check_doctest_names.py``). Pass ``ARGS="-v"`` to list
+            every docstring as it is checked. CI runs the two as separate
+            jobs in ``.github/workflows/style-docstring.yml``.
+
 .. note::
 
     Additional testing is also performed on any images generated
     by the docstring. See `Documentation Image Regression Testing`_.
 
+
+Type Checking
+~~~~~~~~~~~~~
+PyVista uses `mypy <https://mypy.readthedocs.io/>`_ for static type checking. Configuration
+lives in the ``[tool.mypy]`` section of ``pyproject.toml``, so no additional command-line
+flags are required to run it.
+
+.. tab-set::
+    :sync-group: category
+
+    .. tab-item:: mypy
+        :sync: pytest
+
+        .. code-block:: bash
+
+            pip install -e . --group typing
+            mypy
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: bash
+
+            tox run -e mypy
+
+    .. tab-item:: make
+        :sync: make
+
+        .. code-block:: bash
+
+            make typecheck
+
+Typing Tests
+^^^^^^^^^^^^
+Mypy only sees the annotations, so a hint can be wrong without Mypy noticing:
+the annotated type and the type a function actually returns may disagree, and
+complex ``@overload`` definitions may not resolve to the overload they were
+meant to. The typing tests pin both halves, so a mismatch between them fails.
+
+Install the regular test requirements with:
+
+.. code-block:: shell
+
+    python -m pip install -e '.[tests]'
+
+The tests can be executed with:
+
+.. tab-set::
+    :sync-group: category
+
+    .. tab-item:: pytest
+        :sync: pytest
+
+        .. code-block:: bash
+
+            pytest tests/typing
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: bash
+
+            tox run -e py3.11 -- tests/typing
+
+    .. tab-item:: make
+        :sync: make
+
+        .. code-block:: bash
+
+            make test ARGS="tests/typing"
+
+Writing a Case
+""""""""""""""
+Cases live in ``tests/typing/cases``. A case is one line: an expression, and the
+type it should have.
+
+.. code-block:: python
+
+    assert_types(pv.wrap(_vtk.vtkPolyData()), pv.PolyData)
+    assert_types(pv.wrap(None), None)
+    assert_types(list(multi().recursive_iterator("names")), list[str])
+
+``assert_types`` comes from `type-assert <https://github.com/user27182/type-assert>`_
+and is two things at once. To Mypy it is
+`typing_extensions.assert_type <https://typing-extensions.readthedocs.io/en/latest/#typing_extensions.assert_type>`_,
+which requires the expression's inferred type to match the second argument
+*exactly*: a supertype is a failure, not a pass. At runtime it is a checker
+that inspects the value the expression actually produced. Writing the type once
+is enough for both, and a case only passes if the two agree.
+
+Write the expected type as an ordinary expression, such as ``pv.PolyData``,
+``pv.PolyData | pv.ImageData``, ``list[tuple[str, DataSet]]``, rather than as a string.
+Anything in the file that is not an ``assert_types`` line is setup: imports, and
+helpers such as the ``multi()`` above that builds a fresh ``MultiBlock``.
+
+How the Cases Run
+"""""""""""""""""
+Each case file is collected as a test file of its own, and every case in it
+becomes two tests, named after the claim it makes rather than after where it
+sits in the file:
+
+.. code-block:: text
+
+    tests/typing/cases/wrap.py::pv.wrap(pv.PolyData()) -> pv.PolyData [runtime]
+    tests/typing/cases/wrap.py::pv.wrap(pv.PolyData()) -> pv.PolyData [static]
+
+The runtime half compiles the file's setup, runs it in a namespace of its own
+and then executes that one case against it, so a case cannot reach another
+case's state and reordering a file changes nothing. It walks containers
+exhaustively, so it catches a ``None`` at any position in a ``list[DataSet]``,
+not only the first element.
+
+The static half reads a single Mypy run, made once per session in a separate
+process, and reports the diagnostics landing on that case's lines. Mypy failing
+to run fails only these tests. Lines that are not cases are covered by a
+``setup`` test, one per file, so a broken import reads as a broken import.
+
+Skipping a Case
+"""""""""""""""
+A case that cannot run everywhere, because it crashes a platform or needs a
+dependency that is not always present, is named in a ``SKIP_RUNTIME`` mapping
+in its own file:
+
+.. code-block:: python
+
+    SKIP_RUNTIME = {
+        "expression exactly as written": "why running it fails here",
+    }
+
+Only the runtime half is skipped; Mypy still checks the case. The mapping is
+read after the file's setup has run, so making an entry conditional is ordinary
+Python. An entry naming an expression that no case makes fails the ``setup``
+test, so a skip cannot quietly outlive the case it was written for.
+
+The Framework
+"""""""""""""
+The machinery lives in `type-assert <https://github.com/user27182/type-assert>`_,
+a standalone package that knows nothing about PyVista. It registers itself as a
+pytest plugin, so the only wiring here is one setting in ``pyproject.toml``:
+
+.. code-block:: toml
+
+    type_assert_cases = 'tests/typing/cases'
+
+The checkers it drives are selectable with ``type_assert_checkers``, which
+defaults to Mypy and accepts more than one. Report anything wrong with the framework itself against that repository
+rather than this one.
 
 Style Checking
 ~~~~~~~~~~~~~~
@@ -1319,138 +1524,6 @@ See `pytest-pyvista`_ for more details.
     Additional regression testing is also performed on the documentation
     images. See `Documentation Image Regression Testing`_.
 
-Type Checking
-~~~~~~~~~~~~~
-Type checking is used to test ``pyvista`` code both statically and dynamically
-at runtime.
-
-Static Analysis
-^^^^^^^^^^^^^^^
-Mypy is used to analyze and type-check all source code statically. Install
-the typing requirements with
-
-.. code-block:: shell
-
-    python -m pip install -e '.[typing]'
-
-and run ``mypy`` to analyze all ``pyvista`` repository code.
-
-Typing Tests
-^^^^^^^^^^^^
-Mypy only sees the annotations, so a hint can be wrong without Mypy noticing:
-the annotated type and the type a function actually returns may disagree, and
-complex ``@overload`` definitions may not resolve to the overload they were
-meant to. The typing tests pin both halves, so a mismatch between them fails.
-
-Install the regular test requirements with:
-
-.. code-block:: shell
-
-    python -m pip install -e '.[tests]'
-
-The tests can be executed with:
-
-.. tab-set::
-    :sync-group: category
-
-    .. tab-item:: pytest
-        :sync: pytest
-
-        .. code-block:: bash
-
-            pytest tests/typing
-
-    .. tab-item:: tox
-        :sync: tox
-
-        .. code-block:: bash
-
-            tox run -e py3.11 -- tests/typing
-
-    .. tab-item:: make
-        :sync: make
-
-        .. code-block:: bash
-
-            make test ARGS="tests/typing"
-
-Writing a Case
-""""""""""""""
-Cases live in ``tests/typing/cases``. A case is one line: an expression, and the
-type it should have.
-
-.. code-block:: python
-
-    assert_types(pv.wrap(_vtk.vtkPolyData()), pv.PolyData)
-    assert_types(pv.wrap(None), None)
-    assert_types(list(multi().recursive_iterator("names")), list[str])
-
-``assert_types`` comes from `type-assert <https://github.com/user27182/type-assert>`_
-and is two things at once. To Mypy it is
-`typing_extensions.assert_type <https://typing-extensions.readthedocs.io/en/latest/#typing_extensions.assert_type>`_,
-which requires the expression's inferred type to match the second argument
-*exactly*: a supertype is a failure, not a pass. At runtime it is a checker
-that inspects the value the expression actually produced. Writing the type once
-is enough for both, and a case only passes if the two agree.
-
-Write the expected type as an ordinary expression, such as ``pv.PolyData``,
-``pv.PolyData | pv.ImageData``, ``list[tuple[str, DataSet]]``, rather than as a string.
-Anything in the file that is not an ``assert_types`` line is setup: imports, and
-helpers such as the ``multi()`` above that builds a fresh ``MultiBlock``.
-
-How the Cases Run
-"""""""""""""""""
-Each case file is collected as a test file of its own, and every case in it
-becomes two tests, named after the claim it makes rather than after where it
-sits in the file:
-
-.. code-block:: text
-
-    tests/typing/cases/wrap.py::pv.wrap(pv.PolyData()) -> pv.PolyData [runtime]
-    tests/typing/cases/wrap.py::pv.wrap(pv.PolyData()) -> pv.PolyData [static]
-
-The runtime half compiles the file's setup, runs it in a namespace of its own
-and then executes that one case against it, so a case cannot reach another
-case's state and reordering a file changes nothing. It walks containers
-exhaustively, so it catches a ``None`` at any position in a ``list[DataSet]``,
-not only the first element.
-
-The static half reads a single Mypy run, made once per session in a separate
-process, and reports the diagnostics landing on that case's lines. Mypy failing
-to run fails only these tests. Lines that are not cases are covered by a
-``setup`` test, one per file, so a broken import reads as a broken import.
-
-Skipping a Case
-"""""""""""""""
-A case that cannot run everywhere, because it crashes a platform or needs a
-dependency that is not always present, is named in a ``SKIP_RUNTIME`` mapping
-in its own file:
-
-.. code-block:: python
-
-    SKIP_RUNTIME = {
-        "expression exactly as written": "why running it fails here",
-    }
-
-Only the runtime half is skipped; Mypy still checks the case. The mapping is
-read after the file's setup has run, so making an entry conditional is ordinary
-Python. An entry naming an expression that no case makes fails the ``setup``
-test, so a skip cannot quietly outlive the case it was written for.
-
-The Framework
-"""""""""""""
-The machinery lives in `type-assert <https://github.com/user27182/type-assert>`_,
-a standalone package that knows nothing about PyVista. It registers itself as a
-pytest plugin, so the only wiring here is one setting in ``pyproject.toml``:
-
-.. code-block:: toml
-
-    type_assert_cases = 'tests/typing/cases'
-
-The checkers it drives are selectable with ``type_assert_checkers``, which
-defaults to Mypy and accepts more than one. Report anything wrong with the framework itself against that repository
-rather than this one.
-
 Building the Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 Documentation can be build either directly (that is, using Python commands) or with `tox <https://tox.wiki/en/stable/>`_ such that:
@@ -1497,6 +1570,14 @@ Documentation can be build either directly (that is, using Python commands) or w
 
                 tox run -e docs-build -- mini18n-html # for translated languages
 
+    .. tab-item:: make
+        :sync: make
+
+        .. code-block:: bash
+
+            make sync-deps # install dev dependencies via uv
+            make docs      # matches CI
+
 The generated documentation can be found in the ``doc/_build/html``
 directory.
 
@@ -1508,7 +1589,7 @@ To test this locally you need to run a http server in the html directory with:
 
 .. code-block:: bash
 
-   make serve-html
+   make -C doc serve-html
 
 Clearing the Local Build
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1570,14 +1651,14 @@ To test all the images, run tests using either ``pytest`` or ``tox`` such that:
 
         .. code-block:: bash
 
-            tox run -e docs-test
+            tox run -e docs-test-images
 
     .. tab-item:: make
         :sync: make
 
         .. code-block:: bash
 
-            make docs-test
+            make docs-test-images
 
 Note that above commands use the ``doc-mode`` feature implemented in `pytest-pyvista`_.
 When executed, the test will first pre-process the build images. The images are:
@@ -1677,14 +1758,14 @@ To test that interactive plots do not exceed this limit, run:
 
         .. code-block:: bash
 
-            tox run -e docs-test
+            tox run -e docs-test-images
 
     .. tab-item:: make
         :sync: make
 
         .. code-block:: bash
 
-            make docs-test
+            make docs-test-images
 
 
 Note that above commands use the ``doc-mode`` feature implemented in `pytest-pyvista`_
@@ -1944,15 +2025,16 @@ created the following will occur:
 #.  Locally run all tests as outlined in the `Testing
     Section <#testing>`_ and ensure all are passing.
 
-#.  Locally test and build the documentation. Be sure to run ``make clean``
-    to ensure no results are cached.
+#.  Locally test and build the documentation. Be sure to run ``make -C doc clean``
+    to ensure no results are cached. Run these commands from the repository
+    root, using the ``make`` targets from `Quick Development Commands`_ so
+    they match CI:
 
     .. code-block:: bash
 
-       cd doc
-       make clean  # deletes the sphinx-gallery cache
-       tox run -e doctest-modules
-       tox run -e docs-build
+       make -C doc clean  # deletes the sphinx-gallery cache
+       make doctest       # matches CI
+       make docs          # matches CI
 
 #.  After building the documentation, open the local build and examine
     the examples gallery for any obvious issues.
@@ -2081,12 +2163,12 @@ status check label regardless of if it is self hosted.
       matrix:
         include:
           # GitHub-hosted runner configuration
-          - job-name: MacOS Unit Testing (Python 3.9)
-            python-version: "3.9"
-            runner-labels: "macos-13"
-          # Self-hosted runner configurations
           - job-name: MacOS Unit Testing (Python 3.10)
             python-version: "3.10"
+            runner-labels: "macos-15"
+          # Self-hosted runner configurations
+          - job-name: MacOS Unit Testing (Python 3.11)
+            python-version: "3.11"
             runner-labels: "macos-15-self-hosted"
 
 With this approach, a job can be configured to use GitHub's hosted runners simply

@@ -9,10 +9,10 @@ from typing import TYPE_CHECKING
 from typing import Literal
 
 import numpy as np
+import pyvista_validation as _validation
 
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
@@ -202,15 +202,16 @@ class Prop3D(_NoNewAttrMixin, _NameMixin, _BoundsSizeMixin, DisableVtkSnakeCase,
         Orientation angles of the axes which define rotations about the
         world's x-y-z axes. The angles are specified in degrees and in
         x-y-z order. However, the actual rotations are applied in the
-        following order: :func:`~rotate_y` first, then :func:`~rotate_x`
-        and finally :func:`~rotate_z`.
+        following order: :meth:`~pyvista.Prop3D.rotate_y` first, then
+        :meth:`~pyvista.Prop3D.rotate_x` and finally
+        :meth:`~pyvista.Prop3D.rotate_z`.
 
         Rotations are applied about the specified :attr:`~origin`.
 
         See Also
         --------
-        rotation_from
-            Alternative method for setting the :attr:`orientation`.
+        pyvista.Prop3D.rotation_from
+            Alternative method for setting the orientation.
 
         Examples
         --------
@@ -396,7 +397,7 @@ class Prop3D(_NoNewAttrMixin, _NameMixin, _BoundsSizeMixin, DisableVtkSnakeCase,
         *,
         inplace: bool = False,
     ):
-        """Apply a transformation to this object's :attr:`~Prop3D.user_matrix`.
+        """Apply a transformation to this object's :attr:`~pyvista.Prop3D.user_matrix`.
 
         .. note::
 
@@ -461,7 +462,14 @@ class Prop3D(_NoNewAttrMixin, _NameMixin, _BoundsSizeMixin, DisableVtkSnakeCase,
         self: Self,
         deep: bool = True,  # noqa: FBT001, FBT002
     ) -> Self:  # numpydoc ignore=RT01
-        """Return a copy of this prop."""
+        """Return a copy of this prop.
+
+        Parameters
+        ----------
+        deep : bool, default: True
+            Return a deep copy of the prop.
+
+        """
         raise NotImplementedError  # pragma: no cover
 
     @property
@@ -572,8 +580,14 @@ def _orientation_as_rotation_matrix(orientation: VectorLike[float]) -> NumpyArra
 class _Prop3DMixin(_BoundsSizeMixin, ABC):
     """Add 3D transformations to props which do not inherit from :class:`pyvista.Prop3D`.
 
-    Derived classes need to implement the :meth:`_post_set_update` method to define
+    Derived classes need to implement the ``_post_set_update`` method to define
     their behavior, for example, manually apply a transformation.
+
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
+
     """
 
     def __init__(self) -> None:

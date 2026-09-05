@@ -14,13 +14,12 @@ from typing import TypedDict
 from typing import get_args
 
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import BoundsTuple
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core import _validation
-from pyvista.core._validation.validate import _validate_color_sequence
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.geometric_sources import AxesGeometrySource
 from pyvista.core.utilities.geometric_sources import OrthogonalPlanesSource
@@ -33,6 +32,7 @@ from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.transformations import decomposition
 from pyvista.plotting.actor import Actor
 from pyvista.plotting.colors import Color
+from pyvista.plotting.colors import _validate_color_sequence
 from pyvista.plotting.prop3d import Prop3D
 from pyvista.plotting.prop3d import _Prop3DMixin
 from pyvista.plotting.text import Label
@@ -58,6 +58,8 @@ ScaleModeOptions = Literal['default', 'anti_distortion']
 
 
 class _AxesPropTuple(NamedTuple):
+    """A property value for each axis shaft and tip."""
+
     x_shaft: float | str | ColorLike
     y_shaft: float | str | ColorLike
     z_shaft: float | str | ColorLike
@@ -67,25 +69,39 @@ class _AxesPropTuple(NamedTuple):
 
 
 class _OrthogonalPlanesKwargs(TypedDict):
+    """Keyword arguments accepted by the orthogonal planes source."""
+
     bounds: VectorLike[float]
     resolution: int | VectorLike[int]
     normal_sign: Literal['+', '-'] | Sequence[str]
 
 
 class _XYZTuple(NamedTuple):
+    """A value for each of the x, y, and z axes."""
+
     x: Any
     y: Any
     z: Any
 
 
 @abstract_class
-class _XYZAssembly(
+class _XYZAssembly(  # numpydoc ignore=PR01
     _NoNewAttrMixin,
     DisableVtkSnakeCase,
     _Prop3DMixin,
     _NameMixin,
     _vtk.vtkPropAssembly,
 ):
+    """Base class for assemblies of x-y-z actors with labels.
+
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
+
+
+    """
+
     DEFAULT_LABELS = _XYZTuple('X', 'Y', 'Z')
 
     def __init__(
@@ -173,7 +189,8 @@ class _XYZAssembly(
         self._name = name
 
     @property
-    def parts(self):
+    def parts(self):  # numpydoc ignore=RT01
+        """Return the actors and assemblies this assembly is composed of."""
         collection = self.GetParts()
         return tuple(collection.GetItemAsObject(i) for i in range(collection.GetNumberOfItems()))
 
@@ -212,8 +229,7 @@ class _XYZAssembly(
 
     @labels.setter
     @abstractmethod
-    def labels(self, labels):
-        """XYZ labels."""
+    def labels(self, labels): ...
 
     @property
     @abstractmethod
@@ -222,8 +238,7 @@ class _XYZAssembly(
 
     @x_label.setter
     @abstractmethod
-    def x_label(self, label):
-        """Text label for the x-axis."""
+    def x_label(self, label): ...
 
     @property
     @abstractmethod
@@ -232,8 +247,7 @@ class _XYZAssembly(
 
     @y_label.setter
     @abstractmethod
-    def y_label(self, label):
-        """Text label for the y-axis."""
+    def y_label(self, label): ...
 
     @property
     @abstractmethod
@@ -242,8 +256,7 @@ class _XYZAssembly(
 
     @z_label.setter
     @abstractmethod
-    def z_label(self, label):
-        """Text label for the z-axis."""
+    def z_label(self, label): ...
 
     @property
     @abstractmethod
@@ -252,8 +265,7 @@ class _XYZAssembly(
 
     @label_size.setter
     @abstractmethod
-    def label_size(self, size):
-        """Size of the text labels."""
+    def label_size(self, size): ...
 
     @property
     @abstractmethod
@@ -262,8 +274,7 @@ class _XYZAssembly(
 
     @label_position.setter
     @abstractmethod
-    def label_position(self, position):
-        """Position of the text labels."""
+    def label_position(self, position): ...
 
     @property
     def label_color(self) -> Color:  # numpydoc ignore=RT01
@@ -284,8 +295,7 @@ class _XYZAssembly(
 
     @x_color.setter
     @abstractmethod
-    def x_color(self, color):
-        """Color of the x-axis actors."""
+    def x_color(self, color): ...
 
     @property
     @abstractmethod
@@ -294,8 +304,7 @@ class _XYZAssembly(
 
     @y_color.setter
     @abstractmethod
-    def y_color(self, color):
-        """Color of the y-axis actors."""
+    def y_color(self, color): ...
 
     @property
     @abstractmethod
@@ -304,8 +313,7 @@ class _XYZAssembly(
 
     @z_color.setter
     @abstractmethod
-    def z_color(self, color):
-        """Color of the z-axis actors."""
+    def z_color(self, color): ...
 
 
 class AxesAssembly(_XYZAssembly):
@@ -669,7 +677,6 @@ class AxesAssembly(_XYZAssembly):
     @shaft_length.setter
     @functools.wraps(AxesGeometrySource.shaft_length.fset)  # type: ignore[attr-defined]
     def shaft_length(self, length: float | VectorLike[float]) -> None:
-        """Wrap AxesGeometrySource."""
         self._shaft_and_tip_geometry_source.shaft_length = length
         self._shaft_and_tip_geometry_source.update()
 
@@ -682,7 +689,6 @@ class AxesAssembly(_XYZAssembly):
     @tip_length.setter
     @functools.wraps(AxesGeometrySource.tip_length.fset)  # type: ignore[attr-defined]
     def tip_length(self, length: float | VectorLike[float]) -> None:
-        """Wrap AxesGeometrySource."""
         self._shaft_and_tip_geometry_source.tip_length = length
         self._shaft_and_tip_geometry_source.update()
 
@@ -695,7 +701,6 @@ class AxesAssembly(_XYZAssembly):
     @shaft_radius.setter
     @functools.wraps(AxesGeometrySource.shaft_radius.fset)  # type: ignore[attr-defined]
     def shaft_radius(self, radius: float | VectorLike[float]) -> None:
-        """Wrap AxesGeometrySource."""
         self._shaft_and_tip_geometry_source.shaft_radius = radius
         self._shaft_and_tip_geometry_source.update()
 
@@ -708,7 +713,6 @@ class AxesAssembly(_XYZAssembly):
     @tip_radius.setter
     @functools.wraps(AxesGeometrySource.tip_radius.fset)  # type: ignore[attr-defined]
     def tip_radius(self, radius: float | VectorLike[float]) -> None:
-        """Wrap AxesGeometrySource."""
         self._shaft_and_tip_geometry_source.tip_radius = radius
         self._shaft_and_tip_geometry_source.update()
 
@@ -721,7 +725,6 @@ class AxesAssembly(_XYZAssembly):
     @shaft_type.setter
     @functools.wraps(AxesGeometrySource.shaft_type.fset)  # type: ignore[attr-defined]
     def shaft_type(self, shaft_type: AxesGeometrySource.GeometryTypes | DataSet) -> None:
-        """Wrap AxesGeometrySource."""
         self._shaft_and_tip_geometry_source.shaft_type = shaft_type
         self._shaft_and_tip_geometry_source.update()
 
@@ -734,7 +737,6 @@ class AxesAssembly(_XYZAssembly):
     @tip_type.setter
     @functools.wraps(AxesGeometrySource.tip_type.fset)  # type: ignore[attr-defined]
     def tip_type(self, tip_type: AxesGeometrySource.GeometryTypes | DataSet) -> None:
-        """Wrap AxesGeometrySource."""
         self._shaft_and_tip_geometry_source.tip_type = tip_type
         self._shaft_and_tip_geometry_source.update()
 
@@ -747,7 +749,6 @@ class AxesAssembly(_XYZAssembly):
     @scale.setter
     @functools.wraps(Prop3D.scale.fset)  # type: ignore[attr-defined]
     def scale(self, scale: float | VectorLike[float]):
-        """Wrap Prop3D.scale."""
         _Prop3DMixin.scale.fset(self, scale)  # type: ignore[attr-defined]
         self._update_scale()
 
@@ -760,7 +761,6 @@ class AxesAssembly(_XYZAssembly):
     @user_matrix.setter
     @functools.wraps(Prop3D.user_matrix.fset)  # type: ignore[attr-defined]
     def user_matrix(self, value: TransformLike) -> None:
-        """Wrap Prop3D.user_matrix."""
         _Prop3DMixin.user_matrix.fset(self, value)  # type: ignore[attr-defined]
         self._update_scale()
 
@@ -2383,6 +2383,8 @@ class PlanesAssembly(_XYZAssembly):
 
 
 class _AxisActor(DisableVtkSnakeCase, _vtk.vtkAxisActor):
+    """Axis actor which shows only its title."""
+
     def __init__(self):
         super().__init__()
         # Only show the title
@@ -2420,4 +2422,5 @@ class _AxisActor(DisableVtkSnakeCase, _vtk.vtkAxisActor):
 
     @property
     def prop(self) -> TextProperty:
+        """Return the title text property."""
         return self.GetTitleTextProperty()

@@ -7,10 +7,10 @@ from typing import get_args
 import numpy as np
 import pytest
 from pytest_cases import parametrize_with_cases
+from pyvista_validation._cast_array import _cast_to_tuple
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.core._validation._cast_array import _cast_to_tuple
 from pyvista.core.filters.image_data import _InterpolationOptions
 from tests.conftest import NUMPY_VERSION_INFO
 
@@ -221,7 +221,7 @@ def test_contour_labels_boundary_style(
 ALL_LABEL_IDS = {0, 2, 5}
 
 
-@pytest.mark.parametrize('background_value', ALL_LABEL_IDS)
+@pytest.mark.parametrize('background_value', sorted(ALL_LABEL_IDS))
 def test_contour_labels_background_value(labeled_image, background_value):
     assert background_value in labeled_image.active_scalars
 
@@ -1178,14 +1178,14 @@ def test_resample_interpolation(uniform, interpolation, dtype, sample_rate):
 @pytest.mark.parametrize(
     ('interpolation', 'border_mode', 'expected_array'),
     [  # Exact values aren't important, we're just checking the values differ between modes
-        ('cubic', 'wrap', [0.0, 0.1839928, 0.75200433, 1.24799567, 1.8160072, 2.0]),
-        ('cubic', 'mirror', [0.0, 0.25599316, 0.76800391, 1.23199609, 1.74400684, 2.0]),
-        ('cubic', 'clamp', [0.0, 0.32799353, 0.78400348, 1.21599652, 1.67200647, 2.0]),
-        ('bspline', 'wrap', [0.5, 0.50799719, 0.80400287, 1.19599713, 1.49200281, 1.5]),
-        ('bspline', 'mirror', [0.3333333, 0.4719961, 0.8026696, 1.1973304, 1.52800391, 1.6666667]),
-        ('bspline', 'clamp', [0.16666667, 0.435995, 0.80133632, 1.19866368, 1.564005, 1.83333333]),
+        ('cubic', 'wrap', [0.359375, 0.0390625, 0.6796875, 1.3203125, 1.9609375, 1.640625]),
+        ('cubic', 'mirror', [0.109375, 0.109375, 0.703125, 1.296875, 1.890625, 1.890625]),
+        ('cubic', 'clamp', [-0.0703125, 0.1796875, 0.7265625, 1.2734375, 1.8203125, 2.0703125]),
+        ('bspline', 'wrap', [0.40625, -0.078125, 0.515625, 1.484375, 2.078125, 1.59375]),
+        ('bspline', 'mirror', [0.0859375, 0.0859375, 0.6328125, 1.3671875, 1.9140625, 1.9140625]),
+        ('bspline', 'clamp', [-0.115625, 0.184375, 0.703125, 1.296875, 1.815625, 2.115625]),
         ('bspline0', 'clamp', [0.0, 0.0, 1.0, 1.0, 2.0, 2.0]),
-        ('bspline9', 'clamp', [0.326433, 0.55864616, 0.84595512, 1.1540449, 1.44135384, 1.673567]),
+        ('bspline9', 'clamp', [-0.2413581, 0.149598, 0.6956133, 1.3043867, 1.850402, 2.2413581]),
     ],
 )
 def test_resample_border_mode(interpolation, border_mode, expected_array):
@@ -1257,15 +1257,15 @@ def test_resample_dimensions_to_singleton(uniform, dimensions):
 
 
 def test_resample_dimensions_to_singleton_values():
-    # The collapsed axis is sampled (not ignored): a 3D volume flattened to a
-    # single z-slice must contain the values from that slice.
-    image = pv.ImageData(dimensions=(4, 4, 4))
+    # The collapsed axis is sampled at its center: a volume with five z-slices
+    # flattened to a single slice contains the values of the middle slice.
+    image = pv.ImageData(dimensions=(4, 4, 5))
     image['v'] = np.arange(image.n_points, dtype=float)
     resampled = image.resample(dimensions=(4, 4, 1))
     assert np.array_equal(resampled.dimensions, (4, 4, 1))
-    # Nearest interpolation samples the first (z=0) slice of the volume.
-    first_slice = image['v'].reshape(image.dimensions[::-1])[0].ravel()
-    assert np.array_equal(np.sort(resampled.active_scalars), np.sort(first_slice))
+    middle_slice = image['v'].reshape(image.dimensions[::-1])[2].ravel()
+    assert np.array_equal(resampled.active_scalars, middle_slice)
+    assert np.allclose(resampled.origin, (0.0, 0.0, 2.0))
 
 
 def test_resample_inplace(uniform):
@@ -1286,7 +1286,7 @@ def test_resample_raises(uniform):
         uniform.resample(dimensions=(2, 2, 2), reference_image=uniform)
 
     match = (
-        'Cannot specify a sample rate along with `reference_image` or `sample_rate` parameters.\n'
+        'Cannot specify a sample rate along with the `dimensions` parameter.\n'
         '`sample_rate` must define the sampling geometry exclusively.'
     )
     with pytest.raises(ValueError, match=re.escape(match)):
@@ -1296,9 +1296,198 @@ def test_resample_raises(uniform):
     with pytest.raises(ValueError, match=re.escape(match)):
         uniform.resample(scalars='Spatial Cell Data', extend_border=True)
 
-    match = '`extend_border` cannot be set when a `image_reference` is provided.'
+    match = '`extend_border` cannot be set when a `reference_image` is provided.'
     with pytest.raises(ValueError, match=re.escape(match)):
         uniform.resample(reference_image=uniform, extend_border=True)
+
+    match = 'sample_rate must have finite values.'
+    for rate in [np.inf, np.nan]:
+        with pytest.raises(ValueError, match=re.escape(match)):
+            uniform.resample(sample_rate=rate)
+
+
+def test_resample_scalars_not_active():
+    image = pv.ImageData(dimensions=(3, 3, 1))
+    image['active'] = np.zeros(image.n_points)
+    image['other'] = np.arange(image.n_points, dtype=float)
+    image.set_active_scalars('active')
+
+    resampled = image.resample(2, scalars='other')
+    assert resampled.array_names == ['other']
+    assert resampled['other'].max() == image['other'].max()
+    assert image.active_scalars_name == 'active'
+
+
+def test_resample_reference_image_cell_data():
+    image = pv.ImageData(dimensions=(5, 5, 5))
+    image.cell_data['data'] = np.arange(image.n_cells, dtype=float)
+    reference = pv.ImageData(dimensions=(9, 9, 9), spacing=(0.5, 0.5, 0.5), origin=(1, 1, 1))
+
+    resampled = image.resample(reference_image=reference)
+    assert np.array_equal(resampled.dimensions, reference.dimensions)
+    assert np.allclose(resampled.spacing, reference.spacing)
+    assert np.allclose(resampled.origin, reference.origin)
+    assert np.allclose(resampled.bounds, reference.bounds)
+    assert resampled.array_names == ['data']
+
+
+def test_resample_cell_data_dimensions_raises():
+    image = pv.ImageData(dimensions=(5, 5, 5))
+    image.cell_data['data'] = np.arange(image.n_cells, dtype=float)
+    match = (
+        '`dimensions` must be at least 2 along each non-singleton axis when resampling cell data.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        image.resample(dimensions=(1, 5, 5))
+
+    match = (
+        '`reference_image` must have dimensions of at least 2 along each non-singleton axis '
+        'when resampling cell data.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        image.resample(reference_image=pv.ImageData(dimensions=(1, 5, 5)))
+
+
+def test_resample_extend_border_offset():
+    image = pv.ImageData(dimensions=(4, 4, 1), offset=(10, -3, 0))
+    image['data'] = np.arange(image.n_points, dtype=float)
+
+    resampled = image.resample(2)
+    assert np.array_equal(resampled.offset, image.offset)
+    assert np.allclose(resampled.points_to_cells().bounds, image.points_to_cells().bounds)
+
+
+def test_resample_cell_data_offset():
+    image = pv.ImageData(dimensions=(5, 5, 1), offset=(10, -3, 0))
+    image.cell_data['data'] = np.arange(image.n_cells, dtype=float)
+
+    resampled = image.resample(2)
+    assert np.array_equal(resampled.offset, image.offset)
+    assert np.allclose(resampled.bounds, image.bounds)
+
+
+@pytest.mark.parametrize('extend_border', [True, False])
+def test_resample_collapse_axis_spacing(extend_border):
+    image = pv.ImageData(dimensions=(4, 4, 4), spacing=(1, 2, 3))
+    image['data'] = np.arange(image.n_points, dtype=float)
+
+    resampled = image.resample(dimensions=(4, 4, 1), extend_border=extend_border)
+    assert np.array_equal(resampled.dimensions, (4, 4, 1))
+    expected_z_spacing = 12.0 if extend_border else 3.0
+    assert np.allclose(resampled.spacing, (1, 2, expected_z_spacing))
+
+
+@pytest.mark.parametrize('dtype', ['uint8', 'int32', 'uint32', 'int64', 'uint64', 'bool'])
+@pytest.mark.parametrize('interpolation', ['linear', 'bspline'])
+def test_resample_dtype(dtype, interpolation):
+    image = pv.ImageData(dimensions=(4, 4, 4))
+    values = np.arange(image.n_points) % 2 if dtype == 'bool' else np.arange(image.n_points)
+    image['data'] = values.astype(dtype)
+
+    resampled = image.resample(2, interpolation)
+    array = resampled['data']
+    assert array.dtype == dtype
+    if interpolation == 'linear':
+        assert array.min() == values.min()
+        assert array.max() == values.max()
+    else:
+        # B-spline overshoots slightly. Without clamping, an undershoot below zero wraps
+        # around to a huge value for the unsigned types.
+        overshoot = 5
+        assert int(array.min()) >= int(values.min()) - overshoot
+        assert int(array.max()) <= int(values.max()) + overshoot
+
+
+def test_resample_int64_rounding():
+    # 64-bit integers are cast to float for resampling and rounded like the other integers
+    image = pv.ImageData(dimensions=(3, 1, 1))
+    image['data'] = np.array([0, 3, 6], dtype=np.int32)
+    expected = image.resample(2, 'linear')['data']
+    image['data'] = np.array([0, 3, 6], dtype=np.int64)
+    assert np.array_equal(image.resample(2, 'linear')['data'], expected)
+
+
+@pytest.mark.parametrize('border_mode', ['clamp', 'wrap', 'mirror'])
+def test_resample_bspline_interpolates(border_mode):
+    # Cubic B-spline interpolation reproduces the input values at the input points
+    rng = np.random.default_rng(0)
+    image = pv.ImageData(dimensions=(16, 1, 1))
+    image['data'] = rng.random(16)
+    kwargs = dict(dimensions=(31, 1, 1), border_mode=border_mode, extend_border=False)
+
+    resampled = image.resample(interpolation='bspline', **kwargs)
+    assert np.allclose(resampled['data'][::2], image['data'])
+    # The spline degree changes the result
+    resampled5 = image.resample(interpolation='bspline5', **kwargs)
+    assert not np.allclose(resampled5['data'], resampled['data'])
+
+
+def test_resample_anti_aliasing_per_axis():
+    # Only down-sampled axes are blurred
+    image = pv.ImageData(dimensions=(8, 8, 1))
+    image['data'] = np.repeat(np.arange(8.0), 8)  # varies along y only
+
+    def resample(sample_rate, **kwargs):
+        return image.resample(sample_rate, 'linear', **kwargs)['data']
+
+    assert np.allclose(resample((0.5, 1, 1), anti_aliasing=True), resample((0.5, 1, 1)))
+    assert not np.allclose(resample((1, 0.5, 1), anti_aliasing=True), resample((1, 0.5, 1)))
+
+
+def test_resample_values_at_point_locations():
+    # A linear ramp is reproduced exactly at the resampled point locations
+    image = pv.ImageData(dimensions=(3, 1, 1))
+    image['ramp'] = np.arange(3, dtype=float)
+
+    resampled = image.resample(2, 'linear')
+    x = resampled.points[:, 0]
+    assert np.allclose(x, [-0.25, 0.25, 0.75, 1.25, 1.75, 2.25])
+    assert np.allclose(resampled['ramp'], np.clip(x, 0, 2))
+
+
+def test_resample_fractional_dimensions():
+    image = pv.ImageData(dimensions=(233, 171, 1))
+    image['data'] = np.zeros(image.n_points)
+    assert np.array_equal(image.resample(0.5).dimensions, (116, 85, 1))
+    assert np.array_equal(image.resample(0.29).dimensions, (67, 49, 1))
+
+    # A rate whose product is an integer but computes just below it is rounded up
+    image = pv.ImageData(dimensions=(100, 100, 1))
+    image['data'] = np.zeros(image.n_points)
+    assert 100 * 0.29 < 29.0
+    assert np.array_equal(image.resample(0.29).dimensions, (29, 29, 1))
+
+
+def test_resample_anti_aliasing_blur_width():
+    # The blur matches a Gaussian whose width is the sampling ratio's box filter
+    rng = np.random.default_rng(0)
+    image = pv.ImageData(dimensions=(64, 64, 1))
+    image['data'] = rng.random(image.n_points)
+    ratio = 8
+
+    expected = image.gaussian_smooth(
+        std_dev=(ratio / np.sqrt(12), ratio / np.sqrt(12), 0.0), radius_factor=3.0
+    ).resample(1 / ratio, 'linear')
+    actual = image.resample(1 / ratio, 'linear', anti_aliasing=True)
+    assert np.allclose(actual['data'], expected['data'])
+
+    # A fixed blur, as used before, is not equivalent
+    fixed = image.gaussian_smooth(std_dev=(2.0, 2.0, 0.0), radius_factor=3.0).resample(
+        1 / ratio, 'linear'
+    )
+    assert not np.allclose(actual['data'], fixed['data'])
+
+
+def test_resample_cell_data_sample_rate_raises():
+    image = pv.ImageData(dimensions=(5, 5, 5))
+    image.cell_data['data'] = np.arange(image.n_cells, dtype=float)
+
+    match = (
+        '`sample_rate` is too small, it must keep at least one cell along each axis when '
+        'resampling cell data.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        image.resample(0.1)
 
 
 def test_select_values(uniform):
@@ -1332,14 +1521,12 @@ def test_select_values_like_threshold(
 @pytest.mark.parametrize(
     'kwargs',
     [
-        # invert=True excludes the fast path
-        dict(ranges=[10, 20], invert=True),
         # multiple ranges excludes the fast path
         dict(ranges=[[10, 20], [50, 60]]),
-        # ``values`` excludes the fast path
+        dict(ranges=[[10, 20], [50, 60]], invert=True),
+        # multiple values excludes the fast path
         dict(values=[10, 20, 30]),
-        # cell preference excludes the fast path
-        dict(ranges=[10, 20], preference='cell', scalars='Spatial Cell Data'),
+        dict(values=[10, 20], preference='cell', scalars='Spatial Cell Data'),
     ],
 )
 def test_select_values_slow_path(uniform, kwargs):
@@ -1373,6 +1560,100 @@ def test_select_values_fast_and_slow_path_match(uniform):
         np.asarray(slow.active_scalars),
         np.where(expected_mask, 1, -1).astype(slow.active_scalars.dtype),
     )
+
+
+@pytest.mark.parametrize(
+    'kwargs',
+    [
+        dict(ranges=[10, 20]),
+        dict(ranges=[10, 20], invert=True),
+        dict(values=[10]),
+        dict(ranges=[10, 20], scalars='Spatial Cell Data', preference='cell'),
+        dict(ranges=[[10, 20], [50, 60]]),
+        dict(values=[10, 20], scalars='Spatial Cell Data', preference='cell'),
+    ],
+)
+def test_select_values_passes_other_arrays(uniform, kwargs):
+    uniform.point_data['other_point'] = np.arange(uniform.n_points)
+    uniform.cell_data['other_cell'] = np.arange(uniform.n_cells)
+    name = kwargs.get('scalars', 'Spatial Point Data')
+    before = uniform[name].copy()
+
+    selected = uniform.select_values(**kwargs, replacement_value=1, fill_value=0)
+
+    assert set(selected.array_names) == set(uniform.array_names)
+    assert selected.active_scalars_name == name
+    assert np.array_equal(selected['other_point'], uniform['other_point'])
+    assert np.array_equal(selected['other_cell'], uniform['other_cell'])
+    assert np.array_equal(uniform[name], before)
+    assert set(np.unique(selected[name])) <= {0, 1}
+
+
+@pytest.mark.parametrize('replacement_value', [1, None])
+@pytest.mark.parametrize('fill_value', [0, None])
+@pytest.mark.parametrize('preference', ['point', 'cell'])
+def test_select_values_threshold_paths_match(uniform, preference, fill_value, replacement_value):
+    # Single selections use ``image_threshold``, the rest of these use numpy
+    name = 'Spatial Point Data' if preference == 'point' else 'Spatial Cell Data'
+    kwargs = dict(
+        scalars=name,
+        preference=preference,
+        fill_value=fill_value,
+        replacement_value=replacement_value,
+    )
+    lower, upper = 10, 20
+    within = uniform.select_values(ranges=[lower, upper], **kwargs)
+    within_numpy = uniform.select_values(ranges=[[lower, upper], [upper, upper]], **kwargs)
+    assert within == within_numpy
+
+    outside = uniform.select_values(ranges=[lower, upper], invert=True, **kwargs)
+    outside_numpy = uniform.select_values(
+        ranges=[[lower, upper], [upper, upper]], invert=True, **kwargs
+    )
+    assert outside == outside_numpy
+
+    value = uniform[name][0]
+    single = uniform.select_values(values=[value], **kwargs)
+    single_numpy = uniform.select_values(values=[value, value], **kwargs)
+    assert single == single_numpy
+    assert single == uniform.select_values(ranges=[value, value], **kwargs)
+
+
+@pytest.mark.parametrize(
+    ('dtype', 'kwargs', 'match'),
+    [
+        (np.uint16, dict(fill_value=-1), '`fill_value` -1 is out of range for uint16 scalars.'),
+        (
+            np.uint8,
+            dict(replacement_value=300),
+            '`replacement_value` 300 is out of range for uint8 scalars.',
+        ),
+        (
+            np.int8,
+            dict(fill_value=[0, 200]),
+            '`fill_value` [0, 200] is out of range for int8 scalars.',
+        ),
+    ],
+)
+@pytest.mark.parametrize('ranges', [[1, 2], [[1, 2], [3, 4]]])
+def test_select_values_value_out_of_range_raises(dtype, kwargs, match, ranges):
+    image = pv.ImageData(dimensions=(3, 3, 3))
+    image['data'] = np.arange(image.n_points, dtype=dtype)
+    with pytest.raises(ValueError, match=re.escape(match)):
+        image.select_values(ranges=ranges, **kwargs)
+
+
+def test_select_values_multi_component_fill_replacement():
+    image = pv.ImageData(dimensions=(4, 1, 1))
+    image['rgb'] = np.array([[0, 0, 0], [5, 6, 7], [8, 9, 10], [255, 255, 255]], dtype=np.uint8)
+    selected = image.select_values(
+        ranges=[5, 8], component_mode=0, replacement_value=[1, 2, 3], fill_value=[9, 9, 9]
+    )
+    assert selected['rgb'].dtype == np.uint8
+    assert np.array_equal(selected['rgb'], [[9, 9, 9], [1, 2, 3], [1, 2, 3], [9, 9, 9]])
+
+    selected = image.select_values(ranges=[5, 8], component_mode=0, fill_value=None)
+    assert np.array_equal(selected['rgb'], image['rgb'])
 
 
 def test_select_values_split(uniform):

@@ -57,6 +57,8 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
 
+from pyvista._warn_external import warn_external
+
 if TYPE_CHECKING:
     from typing_extensions import Self
 
@@ -82,12 +84,17 @@ class _ConfigBase(metaclass=_ForceSlots):
 
     Provides dict-style item access, ``from_dict`` / ``to_dict`` serialization,
     and equality comparison. Used as the base for both the core
-    :class:`Config` (this module) and every node of the plotting
+    :class:`pyvista.core.config.Config` and every node of the plotting
     :class:`pyvista.plotting.themes.Theme` hierarchy.
 
     Subclasses must list every attribute as an underscore-prefixed entry in
     their ``__slots__`` and expose each one via a public ``@property`` getter
     / setter pair that reads and writes the underscore slot.
+
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
 
     """
 
@@ -107,7 +114,10 @@ class _ConfigBase(metaclass=_ForceSlots):
         dict_ : dict
             Mapping of public attribute name to value, as produced by
             :meth:`to_dict`. Nested config objects are recursively
-            reconstructed via their own ``from_dict``.
+            reconstructed via their own ``from_dict``. A key that is not a
+            valid attribute of ``cls`` is skipped with a warning instead of
+            raising, so a dict saved by a different pyvista version can
+            still be loaded.
 
         Returns
         -------
@@ -117,6 +127,10 @@ class _ConfigBase(metaclass=_ForceSlots):
         """
         inst = cls()
         for key, value in dict_.items():
+            if not hasattr(inst, key):
+                msg = f'{cls.__name__!r} has no attribute {key!r}. Ignoring it.'
+                warn_external(msg)
+                continue
             attr = getattr(inst, key)
             if hasattr(attr, 'from_dict'):
                 setattr(inst, key, attr.from_dict(value))
@@ -132,7 +146,7 @@ class _ConfigBase(metaclass=_ForceSlots):
         dict
             Mapping of public attribute name to its current value. Nested
             config objects are recursively serialized via their own
-            ``to_dict``. Names listed in :attr:`_TO_DICT_SKIP` are omitted.
+            ``to_dict``. Names listed in ``_TO_DICT_SKIP`` are omitted.
 
         """
         skip = type(self)._TO_DICT_SKIP
@@ -183,6 +197,12 @@ class Config(_ConfigBase):
     Holds process-wide settings that affect ``pyvista.core`` behavior. The
     singleton instance is exposed as ``pyvista.global_config``. This is the
     sibling of ``pyvista.global_theme`` for plotting (rendering) settings.
+    See :ref:`configuration` for an overview of all global settings.
+
+    See Also
+    --------
+    pyvista.plotting.themes.Theme
+        Plotting counterpart, exposed as ``pyvista.global_theme``.
 
     Examples
     --------

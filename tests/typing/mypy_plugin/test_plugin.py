@@ -19,7 +19,8 @@ MYPY_CONFIG_FILE_USE_PLUGIN = str(Path(TEST_DIR) / 'mypy_use_plugin.ini')
 @pytest.fixture
 def decorated_single():
     @promote_type(float)
-    class Foo: ...
+    class Foo:
+        pass
 
     return Foo
 
@@ -27,7 +28,8 @@ def decorated_single():
 @pytest.fixture
 def decorated_double():
     @promote_type(float, str)
-    class Foo: ...
+    class Foo:
+        pass
 
     return Foo
 

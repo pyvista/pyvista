@@ -134,7 +134,6 @@ Pyramid, <function Pyramid at 0x1641c0a60>
 QtDeprecationError, <class 'pyvista.plotting.QtDeprecationError'>
 QtInteractor, <class 'pyvista.plotting.QtInteractor'>
 Quadrilateral, <function Quadrilateral at 0x1641c0c10>
-REPR_VOLUME_MAX_CELLS, 1000000.0
 Rectangle, <function Rectangle at 0x1641c0b80>
 RectilinearGrid, <class 'pyvista.core.grid.RectilinearGrid'>
 Renderer, <class 'pyvista.plotting.renderer.Renderer'>
@@ -330,7 +329,6 @@ threaded, <function threaded at 0x163f40dc0>
 # trans_from_matrix, <function trans_from_matrix at 0x163f40670>
 transform_vectors_sph_to_cart, <function transform_vectors_sph_to_cart at 0x1641b38b0>  # DEPRECATED
 # transformations, <module 'pyvista.utilities.transformations' from 'pyvista/pyvista/utilities/transformations.py'>
-translate, <function translate at 0x1641b3f70>
 # try_callback, <function try_callback at 0x163f40ca0>
 utilities, <module 'pyvista.utilities' from 'pyvista/pyvista/utilities/__init__.py'>
 vector_poly_data, <function vector_poly_data at 0x163f405e0>

@@ -720,7 +720,7 @@ def test_rename_array_doesnt_delete():
     mesh = make_mesh()
     was_deleted = [False]
 
-    def on_delete(*_):
+    def on_delete(*_):  # pragma: no cover -- asserted never invoked
         # Would be easier to throw an exception here but even though the exception gets printed to
         # stderr pytest reports the test passing. See #5246 .
         was_deleted[0] = True
@@ -1360,6 +1360,16 @@ def test_cast_to_pointset(sphere):
     assert not np.allclose(sphere.active_scalars, pointset.active_scalars)
 
 
+def test_cast_to_pointset_cell_scalars(sphere):
+    sphere.cell_data['cell_scalars'] = np.arange(sphere.n_cells)
+    sphere.set_active_scalars('cell_scalars')
+    pointset = sphere.cast_to_pointset()
+    assert isinstance(pointset, pv.PointSet)
+    assert pointset.active_scalars_name is None
+    pointset = sphere.cast_to_pointset(pass_cell_data=True)
+    assert pointset.active_scalars_name == 'cell_scalars'
+
+
 def test_cast_to_pointset_implicit(uniform):
     pointset = uniform.cast_to_pointset(pass_cell_data=True)
     assert isinstance(pointset, pv.PointSet)
@@ -1375,6 +1385,17 @@ def test_cast_to_pointset_implicit(uniform):
     for i, name in enumerate(uniform.point_data.keys()):
         pointset[name][:] = i
         assert not np.allclose(uniform[name], pointset[name])
+
+
+def test_cast_to_poly_points_cell_scalars(sphere):
+    sphere.cell_data['cell_scalars'] = np.arange(sphere.n_cells)
+    sphere.set_active_scalars('cell_scalars')
+    points = sphere.cast_to_poly_points()
+    assert isinstance(points, pv.PolyData)
+    assert points.active_scalars_name is None
+    points = sphere.cast_to_poly_points(pass_cell_data=True)
+    assert points.active_scalars_name == 'cell_scalars'
+    assert points.active_scalars_info.association == pv.FieldAssociation.CELL
 
 
 def test_cast_to_poly_points_implicit(uniform):
@@ -1552,11 +1573,24 @@ def test_cell_point_neighbors_ids(grid: DataSet, i0):
         assert neighbor_points.isdisjoint(current_points)
 
 
+# The point ids of every cell's edges or faces, built once per grid since every
+# parametrization below walks all cells of the grid.
+_cell_point_sets_cache: dict[tuple[int, str], list[set[frozenset[int]]]] = {}
+
+
+def _cell_point_sets(grid: DataSet, parts: str) -> list[set[frozenset[int]]]:
+    key = (id(grid), parts)
+    if key not in _cell_point_sets_cache:
+        _cell_point_sets_cache[key] = [
+            {frozenset(part.point_ids) for part in getattr(cell, parts)} for cell in grid.cell
+        ]
+    return _cell_point_sets_cache[key]
+
+
 @pytest.mark.parametrize('grid', grids_cells, ids=ids_cells)
 @pytest.mark.parametrize('i0', i0s)
 def test_cell_edge_neighbors_ids(grid: DataSet, i0):
     cell_ids = grid.cell_neighbors(i0, 'edges')
-    cell = grid.get_cell(i0)
 
     assert isinstance(cell_ids, list)
     assert all(isinstance(id_, int) for id_ in cell_ids)
@@ -1565,30 +1599,15 @@ def test_cell_edge_neighbors_ids(grid: DataSet, i0):
 
     # Check that all the neighbors cells share at least one edge with the
     # current cell
-    current_points = set()
-    current_points.update(frozenset(e.point_ids) for e in cell.edges)
-
+    edge_points = _cell_point_sets(grid, 'edges')
+    current_points = edge_points[i0]
     for i in cell_ids:
-        neighbor_points = set()
-        neighbor_cell = grid.get_cell(i)
-
-        for ie in range(neighbor_cell.n_edges):
-            e = neighbor_cell.get_edge(ie)
-            neighbor_points.add(frozenset(e.point_ids))
-
-        assert not neighbor_points.isdisjoint(current_points)
+        assert not edge_points[i].isdisjoint(current_points)
 
     # Check that other cells do not share an edge with the current cell
     other_ids = [i for i in range(grid.n_cells) if (i not in cell_ids and i != i0)]
     for i in other_ids:
-        neighbor_points = set()
-        neighbor_cell = grid.get_cell(i)
-
-        for ie in range(neighbor_cell.n_edges):
-            e = neighbor_cell.get_edge(ie)
-            neighbor_points.add(frozenset(e.point_ids))
-
-        assert neighbor_points.isdisjoint(current_points)
+        assert edge_points[i].isdisjoint(current_points)
 
 
 # Slice grids since some do not contain faces
@@ -1596,7 +1615,6 @@ def test_cell_edge_neighbors_ids(grid: DataSet, i0):
 @pytest.mark.parametrize('i0', i0s)
 def test_cell_face_neighbors_ids(grid: DataSet, i0):
     cell_ids = grid.cell_neighbors(i0, 'faces')
-    cell = grid.get_cell(i0)
 
     assert isinstance(cell_ids, list)
     assert all(isinstance(id_, int) for id_ in cell_ids)
@@ -1605,30 +1623,15 @@ def test_cell_face_neighbors_ids(grid: DataSet, i0):
 
     # Check that all the neighbors cells share at least one face with the
     # current cell
-    current_points = set()
-    current_points.update(frozenset(f.point_ids) for f in cell.faces)
-
+    face_points = _cell_point_sets(grid, 'faces')
+    current_points = face_points[i0]
     for i in cell_ids:
-        neighbor_points = set()
-        neighbor_cell = grid.get_cell(i)
-
-        for ifa in range(neighbor_cell.n_faces):
-            f = neighbor_cell.get_face(ifa)
-            neighbor_points.add(frozenset(f.point_ids))
-
-        assert not neighbor_points.isdisjoint(current_points)
+        assert not face_points[i].isdisjoint(current_points)
 
     # Check that other cells do not share a face with the current cell
     other_ids = [i for i in range(grid.n_cells) if (i not in cell_ids and i != i0)]
     for i in other_ids:
-        neighbor_points = set()
-        neighbor_cell = grid.get_cell(i)
-
-        for ifa in range(neighbor_cell.n_faces):
-            f = neighbor_cell.get_face(ifa)
-            neighbor_points.add(frozenset(f.point_ids))
-
-        assert neighbor_points.isdisjoint(current_points)
+        assert face_points[i].isdisjoint(current_points)
 
 
 @pytest.mark.parametrize('grid', grids_cells, ids=ids_cells)
@@ -1655,7 +1658,9 @@ def test_cell_neighbors_levels(grid: DataSet, i0, n_levels, connections):
         assert set(cell_ids) == set(grid.cell_neighbors(i0, connections=connections))
 
     else:
-        assert len(list(cell_ids)) == n_levels
+        # `cell_ids` is a generator, so materialize it before asserting on it twice.
+        cell_ids = list(cell_ids)
+        assert len(cell_ids) == n_levels
         for ids in cell_ids:
             assert isinstance(ids, list)
             assert all(isinstance(id_, int) for id_ in ids)
@@ -1679,7 +1684,9 @@ def test_point_neighbors_levels(grid: DataSet, i0, n_levels):
         assert set(point_ids) == set(grid.point_neighbors(i0))
 
     else:
-        assert len(list(point_ids)) == n_levels
+        # `point_ids` is a generator, so materialize it before asserting on it twice.
+        point_ids = list(point_ids)
+        assert len(point_ids) == n_levels
         for ids in point_ids:
             assert isinstance(ids, list)
             assert all(isinstance(id_, int) for id_ in ids)

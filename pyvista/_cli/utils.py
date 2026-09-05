@@ -23,6 +23,7 @@ from cyclopts.help import ColumnSpec
 from cyclopts.help import DefaultFormatter
 from cyclopts.help import HelpEntry
 from cyclopts.help import TableSpec
+import pyvista_validation as _validation
 from rich import box
 from rich.console import Group
 from rich.console import NewLine
@@ -30,7 +31,6 @@ from rich.panel import Panel
 from rich.text import Text
 
 import pyvista as pv
-from pyvista import _validation
 from pyvista.core.utilities.misc import StrEnum  # type: ignore [attr-defined]
 from pyvista.plotting._typing import ThemeOptions
 
@@ -47,22 +47,79 @@ if TYPE_CHECKING:
 
 
 def default(entry: HelpEntry):  # noqa: ANN202
+    """Return the entry's default value, or ``'-'`` when it has none.
+
+    Parameters
+    ----------
+    entry : HelpEntry
+        Help entry to read.
+
+    Returns
+    -------
+    str
+        Default value, or ``'-'`` when the entry has none.
+
+
+    """
     return d if (d := entry.default) is not None else '-'
 
 
 def names(entry: HelpEntry):  # noqa: ANN202
+    """Return the styled option names, marked when the option is required.
+
+    Parameters
+    ----------
+    entry : HelpEntry
+        Help entry to read.
+
+    Returns
+    -------
+    rich.text.Text
+        Styled option names.
+
+
+    """
     strings = (*entry.names, *entry.shorts)
     names = Text(' '.join(strings), style='cyan')
     return (Text('* ', style='red') + names) if entry.required else names
 
 
 def description(entry: HelpEntry):  # noqa: ANN202
+    """Return the entry's description.
+
+    Parameters
+    ----------
+    entry : HelpEntry
+        Help entry to read.
+
+    Returns
+    -------
+    str
+        Description of the entry.
+
+
+    """
     return entry.description
 
 
 class _PyvistaHelpFormatter(DefaultFormatter):
+    """Help formatter which renders the usage line as plain text."""
+
     def render_usage(self, console: Console, options: ConsoleOptions, usage: str) -> None:  # noqa: ARG002
-        """Render the usage line."""
+        """Render the usage line.
+
+        Parameters
+        ----------
+        console : rich.console.Console
+            Console to render to.
+
+        options : rich.console.ConsoleOptions
+            Console render options.
+
+        usage : str
+            Usage line to print.
+
+        """
         if usage:  # pragma: no branch
             console.print(usage)
 
@@ -104,6 +161,18 @@ skip_unreadable = Annotated[
 
 
 def print_error_and_exit(message: str | Group, *, title: str = 'PyVista Error') -> NoReturn:
+    """Print an error panel and exit with a non-zero status.
+
+    Parameters
+    ----------
+    message : str | rich.console.Group
+        Error message to show in the panel.
+
+    title : str, default: "PyVista Error"
+        Title of the panel.
+
+
+    """
     panel = Panel(
         message,
         title=title,
@@ -195,6 +264,11 @@ def validate_paths(paths: list[str]) -> list[Path]:
     """Expand globs, verify existence, and filter MultiBlock sidecar children.
 
     Prints a console message for any sidecar children that were filtered out.
+
+    Parameters
+    ----------
+    paths : list[str]
+        Paths or glob patterns to expand and check.
 
     Returns
     -------

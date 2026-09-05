@@ -39,7 +39,7 @@ _VTK_ROOT = _resolve_vtk_root()
 
 
 def _resolve_root_is_flat(root: str) -> bool:
-    """Return whether *root* exposes VTK classes directly off its package root.
+    """Return whether ``root`` exposes VTK classes directly off its package root.
 
     A flat backend (for example, cvista >=9.6.2.4) resolves public names lazily off the
     root, so PyVista looks classes up by NAME and stays agnostic to module layout.
@@ -640,7 +640,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkImageSinusoidSource',
     ),
     'vtkImagingStencil': (
-        'vtkImageStencil',
+        'vtkImageStencilToImage',
         'vtkPolyDataToImageStencil',
     ),
     'vtkParallelCore': ('vtkDummyController',),
@@ -811,6 +811,9 @@ _OPENGL_MODULES: dict[str, tuple[str, ...]] = {
         'vtkOpenGLRenderer',
         'vtkOpenGLSkybox',
         'vtkOpenGLTexture',
+        'vtkPBRIrradianceTexture',
+        'vtkPBRLUTTexture',
+        'vtkPBRPrefilterTexture',
         'vtkRenderStepsPass',
         'vtkSSAAPass',
         'vtkSSAOPass',
@@ -907,7 +910,7 @@ def __getattr__(name: str):
 
 
 def has_attr(name: str) -> bool:
-    """Return ``True`` if *name* resolves to a VTK class on this build.
+    """Return ``True`` if ``name`` resolves to a VTK class on this build.
 
     ``hasattr(_vtk, 'X')`` does not work as expected because the lazy
     ``__getattr__`` raises ``ImportError`` (not ``AttributeError``) when a
@@ -938,7 +941,14 @@ def has_attr(name: str) -> bool:
 
 
 def import_all(*, suppress_import_errors: bool = True):
-    """Eagerly import all vtk classes used by PyVista."""
+    """Eagerly import all vtk classes used by PyVista.
+
+    Parameters
+    ----------
+    suppress_import_errors : bool, default: True
+        Skip classes that fail to import.
+
+    """
     for name in (*list(_VTK_CLASS_TO_MODULE.keys()), *list(_SPECIAL_LOADERS.keys())):
         if suppress_import_errors:
             # Use has_attr to suppress import errors
@@ -996,3 +1006,10 @@ _SPECIAL_LOADERS: dict[str, Callable[[], type[Any]]] = {
     'vtkRenderPassCollection': _import_vtkRenderPassCollection,
     'vtkSequencePass': _import_vtkSequencePass,
 }
+
+
+# Handing Python a C++ object from a module that has not been imported binds that class
+# name to a base class for the rest of the process, so a documentation build -- whose
+# examples run in worker processes of their own -- resolves every class up front.
+if os.environ.get('PYVISTA_BUILDING_GALLERY', 'false').lower() == 'true':
+    import_all()

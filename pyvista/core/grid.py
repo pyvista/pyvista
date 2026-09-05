@@ -12,11 +12,11 @@ from typing import Literal
 from typing import cast
 
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core import _validation
 from pyvista.core.utilities.writer import BaseWriter
 from pyvista.core.utilities.writer import BMPWriter
 from pyvista.core.utilities.writer import DataSetWriter
@@ -115,7 +115,9 @@ class Grid(DataSet):
 
         See Also
         --------
-        to_quads, to_tetrahedra
+        to_quads
+        pyvista.ImageData.to_tetrahedra
+        pyvista.RectilinearGrid.to_tetrahedra
         pyvista.DataSet.cast_to_unstructured_grid
 
         Examples
@@ -158,7 +160,9 @@ class Grid(DataSet):
 
         See Also
         --------
-        to_hexahedra, to_tetrahedra
+        to_hexahedra
+        pyvista.ImageData.to_tetrahedra
+        pyvista.RectilinearGrid.to_tetrahedra
         pyvista.DataSet.cast_to_unstructured_grid
 
         Examples
@@ -197,20 +201,13 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
 
     Parameters
     ----------
-    uinput : str, pathlib.Path, :vtk:`vtkRectilinearGrid`, numpy.ndarray, optional
-        Filename, dataset, or array to initialize the rectilinear grid from. If a
-        filename is passed, pyvista will attempt to load it as a
-        :class:`RectilinearGrid`. If passed a :vtk:`vtkRectilinearGrid`, it
-        will be wrapped. If a :class:`numpy.ndarray` is passed, this will be
-        loaded as the x range.
-
-    y : numpy.ndarray, optional
-        Coordinates of the points in y direction. If this is passed, ``uinput``
-        must be a :class:`numpy.ndarray`.
-
-    z : numpy.ndarray, optional
-        Coordinates of the points in z direction. If this is passed, ``uinput``
-        and ``y`` must be a :class:`numpy.ndarray`.
+    *args : str, pathlib.Path, :vtk:`vtkRectilinearGrid`, numpy.ndarray, optional
+        Filename, dataset, or up to three point arrays to initialize the
+        rectilinear grid from. If a filename is passed, pyvista will attempt to
+        load it as a :class:`RectilinearGrid`. If passed a
+        :vtk:`vtkRectilinearGrid`, it will be wrapped. If one to three
+        :class:`numpy.ndarray` are passed, they are used as the x, y, and z
+        point coordinates.
 
     check_duplicates : bool, optional
         Check for duplications in any arrays that are passed. Defaults to
@@ -227,6 +224,10 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         combination of fields allowed by ``validate_mesh``.
 
         .. versionadded:: 0.47
+
+    **kwargs : dict, optional
+        Additional keyword arguments passed when reading from a file or loading
+        from arrays.
 
     Examples
     --------
@@ -310,6 +311,9 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
             else:
                 msg = 'Arguments not understood by `RectilinearGrid`.'
                 raise TypeError(msg)
+        elif args:
+            msg = 'Too many args to create RectilinearGrid.'
+            raise ValueError(msg)
 
         if validate:
             self._validate_mesh(validate)
@@ -634,7 +638,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         set, remainder of arguments are ignored.
 
     dimensions : sequence[int], optional
-        :attr:`dimensions` of the uniform grid.
+        :attr:`~pyvista.Grid.dimensions` of the uniform grid.
 
     spacing : sequence[float], default: (1.0, 1.0, 1.0)
         :attr:`spacing` of the uniform grid in each dimension. Must be positive.
@@ -1149,7 +1153,8 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         """Return or set the extent of the ImageData.
 
         The extent is simply the first and last indices for each of the three axes.
-        It encodes information about the image's :attr:`offset` and :attr:`dimensions`.
+        It encodes information about the image's :attr:`offset` and
+        :attr:`~pyvista.Grid.dimensions`.
 
         Examples
         --------
@@ -1164,9 +1169,9 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         >>> grid.extent
         (2, 5, 2, 5, 2, 5)
 
-        Note how this also modifies the grid's :attr:`offset`, :attr:`dimensions`,
-        and :attr:`bounds`. Since we use default spacing of 1 here, the bounds
-        match the extent exactly.
+        Note how this also modifies the grid's :attr:`offset`,
+        :attr:`~pyvista.Grid.dimensions`, and :attr:`~pyvista.DataSet.bounds`. Since
+        we use default spacing of 1 here, the bounds match the extent exactly.
 
         >>> grid.offset
         (2, 2, 2)
