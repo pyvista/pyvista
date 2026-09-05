@@ -406,6 +406,20 @@ def test_pickle_serialize_deserialize(datasets_no_pointset, pickle_format, capfd
             assert arr_have == pytest.approx(arr_expected)
 
 
+@pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
+def test_pickle_drops_cached_vtk_objects(pickle_format):
+    pv.set_pickle_format(pickle_format)
+    mesh = pv.Sphere()
+    mesh.find_closest_point((0.0, 0.0, 0.0))
+    assert isinstance(vars(mesh)['_point_locator'], pv._vtk.vtkObjectBase)
+    assert mesh.points.dataset.Get() is mesh
+
+    unpickled = pickle.loads(pickle.dumps(mesh))
+    assert not any(isinstance(value, pv._vtk.vtkObjectBase) for value in vars(unpickled).values())
+    assert unpickled == mesh
+    assert unpickled.points.dataset.Get() is unpickled
+
+
 def n_points(dataset):
     # used in multiprocessing test
     return dataset.n_points

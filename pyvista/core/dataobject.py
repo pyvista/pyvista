@@ -934,7 +934,9 @@ class DataObject(
             )
             raise TypeError(msg)
         state = self.__dict__.copy()
-        _clear_accessor_cache(state)  # a weak reference cannot be pickled
+        # Cached VTK objects (locators, weak references) and accessors cannot be pickled
+        _clear_vtk_objects_from_dict(state)
+        _clear_accessor_cache(state)
 
         if pv.PICKLE_FORMAT.lower() == 'xml':
             # the generic VTK XML writer `vtkXMLDataSetWriter` currently has a bug where it does
