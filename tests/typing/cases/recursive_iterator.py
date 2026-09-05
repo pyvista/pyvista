@@ -66,3 +66,14 @@ assert_types(list(multi().recursive_iterator('all', node_type='parent', nested_i
 assert_types(list(multi().recursive_iterator('all', node_type='parent', nested_ids=False)),                   list[tuple[int, str, MultiBlock]])
 assert_types(list(multi().recursive_iterator('all', node_type='parent', nested_ids=True, skip_none=False)),   list[tuple[tuple[int, ...], str, MultiBlock]])
 assert_types(list(multi().recursive_iterator('all', node_type='parent', nested_ids=False, skip_none=False)),  list[tuple[int, str, MultiBlock]])
+
+# Options that do not change the return type
+assert_types(list(multi().recursive_iterator('blocks', skip_empty=True)),                   list[DataSet | None])
+assert_types(list(multi().recursive_iterator('names', prepend_names=True)),                 list[str])
+assert_types(list(multi().recursive_iterator('names', prepend_names=True, separator='->')), list[str])
+assert_types(list(multi().recursive_iterator('items', prepend_names=True)),                 list[tuple[str, DataSet | None]])
+assert_types(list(multi().recursive_iterator('all', prepend_names=True)),                   list[tuple[tuple[int, ...], str, DataSet | None]])
+
+# Positional order
+assert_types(list(multi().recursive_iterator('names', 'nested_last')),                      list[str])
+assert_types(list(multi().recursive_iterator('blocks', 'nested_first', skip_none=True)),    list[DataSet])
