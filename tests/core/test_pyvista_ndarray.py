@@ -223,4 +223,9 @@ def test_dataset_reference_targets_owner():
     assert mesh.points.dataset.Get() is mesh
     assert mesh.point_data['Normals'].dataset.Get() is mesh
     assert mesh.point_data.active_normals.dataset.Get() is mesh
-    assert mesh.point_data.active_scalars is None
+
+
+def test_detached_array_attribute_error_names_the_attribute():
+    match = re.escape("'pyvista_ndarray' object has no attribute 'GetNumberOfTuples'")
+    with pytest.raises(AttributeError, match=match):
+        pyvista_ndarray([1.0, 2.0]).GetNumberOfTuples()

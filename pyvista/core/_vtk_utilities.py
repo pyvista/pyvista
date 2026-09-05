@@ -309,9 +309,10 @@ class VTKObjectWrapperCheckSnakeCase(_vtk.VTKObjectWrapper):
     """
 
     def __getattr__(self, name: str):
-        """Forward unknown attribute requests to ``VTKArray``'s ``__getattr__``."""
+        """Forward unknown attribute requests to the wrapped VTK object."""
         if self.VTKObject is not None:
             # Check if forwarding snake_case attributes
             DisableVtkSnakeCase.check_attribute(self.VTKObject, name)
             return getattr(self.VTKObject, name)
-        raise AttributeError
+        msg = f'{type(self).__name__!r} object has no attribute {name!r}'
+        raise AttributeError(msg)
