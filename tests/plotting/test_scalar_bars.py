@@ -164,13 +164,26 @@ def test_add_scalar_bar_shared_range_resync(sphere):
     mid = sphere.copy()
     mid['data'] = np.linspace(0.2, 0.8, mid.n_points)
     high = sphere.copy()
-    high['data'] = np.linspace(0, 5, high.n_points)
+    high['data'] = np.linspace(-1, 5, high.n_points)
     actors = [pl.add_mesh(mesh, scalars='data') for mesh in (low, mid)]
     mappers = pl.scalar_bars._scalar_bar_mappers['data']
     assert [m.scalar_range for m in mappers] == [(0.0, 1.0), (0.0, 1.0)]
     assert not any(m._use_default_scalar_range for m in mappers)
     actors.append(pl.add_mesh(high, scalars='data'))
-    assert [m.scalar_range for m in mappers] == [(0.0, 5.0)] * 3
-    assert [m.lookup_table.scalar_range for m in mappers] == [(0.0, 5.0)] * 3
-    assert list(pl.scalar_bars._scalar_bar_ranges['data']) == [0.0, 5.0]
+    assert [m.scalar_range for m in mappers] == [(-1.0, 5.0)] * 3
+    assert [m.lookup_table.scalar_range for m in mappers] == [(-1.0, 5.0)] * 3
+    assert list(pl.scalar_bars._scalar_bar_ranges['data']) == [-1.0, 5.0]
+    # A mesh inside the shared range leaves every mapper on it
+    actors.append(pl.add_mesh(mid.copy(), scalars='data'))
+    assert [m.scalar_range for m in mappers] == [(-1.0, 5.0)] * 4
+    assert [m.lookup_table.scalar_range for m in mappers] == [(-1.0, 5.0)] * 4
+    assert list(pl.scalar_bars._scalar_bar_ranges['data']) == [-1.0, 5.0]
+    # A manual range update is undone by the next add, as before
+    pl.update_scalar_bar_range([0, 10], name='data')
+    assert [m.scalar_range for m in mappers] == [(0.0, 10.0)] * 4
+    actors.append(pl.add_mesh(mid.copy(), scalars='data'))
+    assert [m.scalar_range for m in mappers] == [(-1.0, 5.0)] * 5
+    pl.update_scalar_bar_range([0, 10])
+    actors.append(pl.add_mesh(mid.copy(), scalars='data'))
+    assert [m.scalar_range for m in mappers] == [(-1.0, 5.0)] * 6
     pl.close()
