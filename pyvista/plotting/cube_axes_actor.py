@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from typing import TYPE_CHECKING
 from typing import cast
 
@@ -40,6 +41,52 @@ def _pad_bounds(bounds: VectorLike[float], *, padding: float) -> np.ndarray:
     return padded
 
 
+# VTK compares its label count against C's ``FLT_EPSILON``
+_FLT_EPSILON = float(np.finfo(np.float32).eps)
+
+
+def _axis_label_values(vmin: float, vmax: float, n: int) -> np.ndarray:
+    """Return up to ``n`` values to label, at coordinates VTK puts major ticks on.
+
+    :vtk:`vtkCubeAxesActor` adopts a spacing of ``(vmax - vmin) / (n - 1)`` only while ``n``
+    stays below the number of ticks it computes for itself. Above that it keeps its own
+    spacing, which starts at ``vmin``, so labels are placed either evenly across the range
+    or on the multiples of that spacing, whichever VTK is going to draw.
+    """
+    span = abs(vmax - vmin)
+    if span == 0.0 or not math.isfinite(span):
+        return np.linspace(vmin, vmax, n)
+    # Mirrors the tick spacing of ``vtkCubeAxesActor::AdjustTicksComputeRange``
+    power = math.log10(span)
+    if power != 0.0:
+        power = math.copysign(abs(power) + 10.0e-10, power)
+    if power < 0.0:
+        power -= 1.0
+    decade = 10.0 ** float(int(power))
+    if decade == 0.0:  # a subnormal span underflows the decade, as ``GetNumTicks`` allows for
+        return np.linspace(vmin, vmax, n)
+    # VTK's ``FRound`` of this count; the rare zero rounds to the same divisor either way
+    ticks = int(span / decade) + 1
+    divisor = 5.0 if ticks <= 2 else 2.0 if ticks < 5 else 1.0
+    major = decade / divisor
+    intervals = span / major
+    # Mirrors the label count of ``vtkCubeAxesActor::BuildLabels``
+    labelled = math.floor(intervals + 2 * _FLT_EPSILON) + 1
+    # VTK only overrides ``major`` while there are fewer labels than its own ticks. Past that
+    # it keeps its spacing, which suits evenly spaced labels only if its last tick is ``vmax``
+    lands_on_vmax = abs(intervals - labelled + 1) <= 1e-9 * (intervals or 1.0)
+    maximum = labelled if lands_on_vmax else int(intervals)
+    if n < maximum:
+        # A count between the two is spaced by neither: VTK builds ``labelled`` labels but is
+        # handed ``n``, and the integer division it indexes them with then floors to zero
+        return np.linspace(vmin, vmax, min(n, int(intervals)))
+    if n >= labelled and abs(vmin / major - round(vmin / major)) <= 1e-9:
+        # VTK's own ticks fall on multiples of the spacing here, which read better than an
+        # even split of a range that does not divide by it
+        return vmin + np.arange(labelled) * math.copysign(major, vmax - vmin)
+    return np.linspace(vmin, vmax, maximum)
+
+
 @_deprecate_positional_args
 def make_axis_labels(vmin, vmax, n, fmt):  # noqa: PLR0917
     """Create axis labels as a :vtk:`vtkStringArray`.
@@ -51,7 +98,9 @@ def make_axis_labels(vmin, vmax, n, fmt):  # noqa: PLR0917
     vmax : float
         The maximum value for the axis labels.
     n : int
-        The number of labels to create.
+        The number of labels to create. Fewer are created, and placed on
+        :vtk:`vtkCubeAxesActor`'s own ticks, if it cannot space that many evenly
+        between ``vmin`` and ``vmax``.
     fmt : str
         A format string for the labels. If the string starts with '%', the label will be formatted
         using the old-style string formatting method.
@@ -64,7 +113,7 @@ def make_axis_labels(vmin, vmax, n, fmt):  # noqa: PLR0917
 
     """
     labels = _vtk.vtkStringArray()
-    for v in np.linspace(vmin, vmax, n):
+    for v in _axis_label_values(vmin, vmax, n):
         label = (fmt % v if fmt.startswith('%') else fmt.format(v)) if fmt else f'{v}'
         labels.InsertNextValue(label)
     return labels
@@ -141,13 +190,22 @@ class CubeAxesActor(
         The visibility of the z-axis labels.
 
     n_xlabels : int, default: 5
-        Number of labels along the x-axis.
+        At most this many labels along the x-axis. Where VTK's own tick
+        spacing fits the range, the labels sit on those ticks and the last may
+        stop short of the upper bound; otherwise fewer are spaced evenly
+        between the bounds.
 
     n_ylabels : int, default: 5
-        Number of labels along the y-axis.
+        At most this many labels along the y-axis. Where VTK's own tick
+        spacing fits the range, the labels sit on those ticks and the last may
+        stop short of the upper bound; otherwise fewer are spaced evenly
+        between the bounds.
 
     n_zlabels : int, default: 5
-        Number of labels along the z-axis.
+        At most this many labels along the z-axis. Where VTK's own tick
+        spacing fits the range, the labels sit on those ticks and the last may
+        stop short of the upper bound; otherwise fewer are spaced evenly
+        between the bounds.
 
     color : ColorLike, optional
         Color of all labels, axis titles, axis lines, and grid lines. Defaults to
@@ -200,7 +258,8 @@ class CubeAxesActor(
         .. versionadded:: 0.49
 
     use_2d_mode : bool, default: False
-        Use the 2D render mode. This can be enabled for smoother plotting.
+        Use the 2D render mode. This can be enabled for smoother plotting. VTK also
+        hides the z-axis in this mode, so it suits a scene viewed down a single axis.
 
         .. versionadded:: 0.49
 
@@ -341,27 +400,24 @@ class CubeAxesActor(
         )
         self._configure_fly_mode(location=location)
 
+        self._padding = padding
+        self._axes_ranges = (
+            None
+            if axes_ranges is None
+            else _validation.validate_array(axes_ranges, must_have_shape=(6,), name='axes_ranges')
+        )
         if bounds is not None:
             self.bounds = _pad_bounds(bounds, padding=padding)
-        if axes_ranges is not None:
-            ranges = _validation.validate_array(
-                axes_ranges, must_have_shape=(6,), name='axes_ranges'
-            )
-            self.x_axis_range = ranges[0], ranges[1]
-            self.y_axis_range = ranges[2], ranges[3]
-            self.z_axis_range = ranges[4], ranges[5]
+        self._apply_axes_ranges()
 
         self.GetXAxesLinesProperty().SetColor(color_.float_rgb)
         self.GetYAxesLinesProperty().SetColor(color_.float_rgb)
         self.GetZAxesLinesProperty().SetColor(color_.float_rgb)
 
-        self._configure_text(
-            color=color_,
-            font_size=font_size,
-            font_family=font_family,
-            bold=bold,
-            use_3d_text=use_3d_text,
+        self._text_config = dict(
+            color=color_, font_size=font_size, font_family=font_family, bold=bold
         )
+        self._configure_text(**self._text_config, use_3d_text=use_3d_text)  # type: ignore[arg-type]
 
     def _configure_grid_lines(
         self, *, grid: bool | str | None, color: Color, visibility: tuple[bool, bool, bool]
@@ -390,6 +446,11 @@ class CubeAxesActor(
         self.GetXAxesGridlinesProperty().SetColor(color.float_rgb)
         self.GetYAxesGridlinesProperty().SetColor(color.float_rgb)
         self.GetZAxesGridlinesProperty().SetColor(color.float_rgb)
+
+    def _disable_3d_text(self) -> None:
+        """Redraw the titles and labels as 2D text actors."""
+        if self.GetUseTextActor3D():
+            self._configure_text(**self._text_config, use_3d_text=False)  # type: ignore[arg-type]
 
     def _configure_text(
         self,
@@ -848,11 +909,18 @@ class CubeAxesActor(
         labels_vtk = cast('_vtk.vtkStringArray', self.GetAxisLabels(2))
         return convert_string_array(labels_vtk).tolist()
 
+    def _apply_axes_ranges(self) -> None:
+        """Restore the axes ranges given to the constructor, if any."""
+        if (ranges := self._axes_ranges) is not None:
+            self.x_axis_range = ranges[0], ranges[1]
+            self.y_axis_range = ranges[2], ranges[3]
+            self.z_axis_range = ranges[4], ranges[5]
+
     def update_bounds(self, bounds):
         """Update the bounds of this actor.
 
-        Unlike the :attr:`CubeAxesActor.bounds` attribute, updating the bounds
-        also updates the axis labels.
+        The ``padding`` and ``axes_ranges`` given to the constructor are applied
+        to the new bounds.
 
         Parameters
         ----------
@@ -860,4 +928,5 @@ class CubeAxesActor(
             Bounds in the form of ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
         """
-        self.bounds = bounds
+        self.bounds = _pad_bounds(bounds, padding=self._padding)
+        self._apply_axes_ranges()

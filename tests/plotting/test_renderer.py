@@ -67,6 +67,218 @@ def test_show_grid_axes_ranges_with_all_edges():
     assert labels_ranges == axes_ranges
 
 
+def test_show_bounds_keeps_explicit_bounds():
+    """Regression test for https://github.com/pyvista/pyvista/issues/8231."""
+    bounds = (1.0, 7.0, 2.0, 5.0, -2.0, 2.0)
+    pl = pv.Plotter()
+    actor = pl.show_bounds(bounds=bounds)
+    pl.add_mesh(pv.Sphere(radius=5))
+    assert actor.bounds == bounds
+
+
+def test_show_bounds_keeps_mesh_bounds():
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere(radius=5))
+    actor = pl.show_bounds(mesh=pv.Cube())
+    pl.add_mesh(pv.Sphere(radius=9))
+    assert actor.bounds == pv.Cube().bounds
+
+
+def test_show_bounds_keeps_axes_ranges():
+    ranges = (0.0, 100.0)
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    actor = pl.show_bounds(axes_ranges=[*ranges, *ranges, *ranges])
+    pl.add_mesh(pv.Cube())
+    assert actor.x_axis_range == ranges
+    assert actor.y_axis_range == ranges
+    assert actor.z_axis_range == ranges
+
+
+def test_show_bounds_keeps_padding():
+    padded = pytest.approx((-0.6, 0.6, -0.6, 0.6, -0.6, 0.6))
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    actor = pl.show_bounds(padding=0.1)
+    pl.add_mesh(pv.Cube())
+    assert actor.bounds == padded
+    # padding must not compound as more actors are added
+    pl.add_mesh(pv.Cube())
+    assert actor.bounds == padded
+
+
+def test_show_bounds_follows_scene():
+    cube = pv.Cube()
+    pl = pv.Plotter()
+    actor = pl.show_bounds()
+    pl.add_mesh(cube)
+    assert actor.bounds == cube.bounds
+
+
+def test_show_bounds_scaled_keeps_zaxis():
+    """Regression test for https://github.com/pyvista/pyvista/issues/8687."""
+    pl = pv.Plotter()
+    pl.set_scale(zscale=2)
+    pl.add_mesh(pv.Sphere())
+    actor = pl.show_bounds(location='outer', grid='back')
+    assert not actor.use_2d_mode
+    assert actor.z_axis_visibility
+    assert len(actor.z_labels) == 5
+
+
+def test_show_bounds_scaled_after_show_keeps_zaxis():
+    """Scaling after the axes exist must not switch them to 2D either.
+
+    Regression test for https://github.com/pyvista/pyvista/issues/4768.
+    """
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    actor = pl.show_bounds(font_size=24)
+    pl.set_scale(1, 1, 2)
+    assert not actor.use_2d_mode
+    assert actor.z_axis_visibility
+    assert not actor.GetUseTextActor3D()
+
+
+def test_show_bounds_keeps_use_2d():
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    actor = pl.show_bounds(use_2d=True)
+    assert actor.use_2d_mode
+    pl.add_mesh(pv.Cube())
+    assert actor.use_2d_mode
+
+
+def test_show_bounds_scaled_drops_3d_text():
+    """3D text is not placed correctly on a scaled renderer, whichever order it is set in."""
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    actor = pl.show_bounds(use_3d_text=True)
+    assert actor.GetUseTextActor3D()
+    pl.set_scale(zscale=2)
+    assert not actor.GetUseTextActor3D()
+
+
+def test_show_bounds_scaled_keeps_text_changes():
+    """Dropping 3D text happens once, not on every actor added afterwards."""
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    actor = pl.show_bounds()
+    pl.set_scale(zscale=2)
+    actor.GetLabelTextProperty(0).SetFontSize(37)
+    pl.add_mesh(pv.Cube())
+    assert actor.GetLabelTextProperty(0).GetFontSize() == 37
+
+
+SCALE = (1.0, 15.0, 5.0)
+
+
+@pytest.mark.parametrize('scale_first', [True, False])
+def test_add_bounding_box_scaled(scale_first):
+    """The box sits on the scene whichever order the scale is set in.
+
+    Regression test for https://github.com/pyvista/pyvista/issues/4695.
+    """
+    pl = pv.Plotter()
+    mesh_actor = pl.add_mesh(pv.Sphere())
+    if scale_first:
+        pl.set_scale(*SCALE)
+    pl.add_bounding_box()
+    if not scale_first:
+        pl.set_scale(*SCALE)
+    assert np.allclose(pl.renderer.bounding_box_actor.GetBounds(), mesh_actor.GetBounds())
+
+
+def test_add_bounding_box_rescaled_keeps_actor():
+    """A scale change moves the box with the scene; only a bigger scene rebuilds it."""
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    box = pl.add_bounding_box()
+    pl.set_scale(*SCALE)
+    assert pl.renderer.bounding_box_actor is box
+    pl.add_mesh(pv.Cube(x_length=3.0))
+    new_box = pl.renderer.bounding_box_actor
+    assert new_box is not box
+    expected = pl.renderer.compute_bounds(ignore_actors=[new_box])
+    assert np.allclose(new_box.GetBounds(), expected)
+
+
+@pytest.mark.parametrize('scale_first', [True, False])
+def test_add_floor_scaled(scale_first):
+    """The floor scales with the scene, padding and offset included.
+
+    Regression test for https://github.com/pyvista/pyvista/issues/4695.
+    """
+
+    def floor_bounds(scale):
+        pl = pv.Plotter()
+        pl.add_mesh(pv.Sphere())
+        if scale_first:
+            pl.set_scale(*scale)
+        floor = pl.add_floor('-z', pad=0.5, offset=0.5)
+        if not scale_first:
+            pl.set_scale(*scale)
+        return np.array(floor.GetBounds())
+
+    unscaled = floor_bounds((1.0, 1.0, 1.0))
+    assert np.allclose(floor_bounds(SCALE), unscaled * np.repeat(SCALE, 2))
+
+
+def test_link_views_moves_bounds_axes_camera():
+    """Axes built before the views were linked follow the shared camera.
+
+    Regression test for https://github.com/pyvista/pyvista/issues/3082.
+    """
+    pl = pv.Plotter(shape=(1, 2))
+    for index in range(2):
+        pl.subplot(0, index)
+        pl.add_mesh(pv.Sphere())
+        pl.show_bounds()
+    pl.link_views()
+    assert pl.renderers[1].camera is pl.renderers[0].camera
+    assert all(r.cube_axes_actor.camera is r.camera for r in pl.renderers)
+    pl.unlink_views()
+    assert pl.renderers[1].camera is not pl.renderers[0].camera
+    assert all(r.cube_axes_actor.camera is r.camera for r in pl.renderers)
+
+
+def test_remove_bounds_axes_forgets_pinned_bounds():
+    """Pinned bounds do not outlive the actor they were pinned for."""
+    cube = pv.Cube()
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    pl.show_bounds(bounds=(0, 1, 0, 1, 0, 1))
+    pl.remove_bounds_axes()
+    pl.renderer.cube_axes_actor = pv.CubeAxesActor(pl.camera, bounds=(0, 1, 0, 1, 0, 1))
+    pl.add_mesh(cube)
+    assert pl.renderer.cube_axes_actor.bounds == cube.bounds
+
+
+def test_show_bounds_actor_assigned_directly_follows_scene():
+    """An actor put on the renderer by hand still tracks the scene."""
+    cube = pv.Cube()
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    pl.renderer.cube_axes_actor = pv.CubeAxesActor(pl.camera, bounds=(0, 1, 0, 1, 0, 1))
+    pl.add_mesh(cube)
+    assert pl.renderer.cube_axes_actor.bounds == cube.bounds
+
+
+def test_update_bounds_reapplies_padding_and_ranges():
+    """The actor keeps what it was built with when its bounds are updated."""
+    ranges = (0.0, 100.0)
+    actor = pv.CubeAxesActor(
+        pv.Plotter().camera,
+        bounds=(0, 1, 0, 1, 0, 1),
+        padding=0.1,
+        axes_ranges=[*ranges, *ranges, *ranges],
+    )
+    actor.update_bounds((-1, 1, -1, 1, -1, 1))
+    assert actor.bounds == pytest.approx((-1.2, 1.2, -1.2, 1.2, -1.2, 1.2))
+    assert actor.x_axis_range == ranges
+    assert actor.z_axis_range == ranges
+
+
 def test_show_bounds_with_scaling(sphere):
     pl = pv.Plotter()
     pl.add_mesh(sphere)
