@@ -44,22 +44,21 @@ def _on_ci():
     return os.environ.get('CI', 'false').lower() == 'true'
 
 
-def _cache_missing():
-    """Test if a cache-miss occurred in CI, inducing that the user
-    env variable is pointing to either an non-existing or empty directory.
-    """
-    if (var_name := examples.downloads._VTK_DATA_VARNAME) not in (env := os.environ):
+def _data_cache_populated():
+    """Return True when the data-source variable points at a non-empty directory."""
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', pv.PyVistaDeprecationWarning)
+        var_name = examples.downloads._get_data_varname()
+    if var_name is None:
         return False
-
-    root = Path(env[var_name])
-    if not root.is_dir():
-        return False
-    return any(root.iterdir())
+    root = Path(os.environ[var_name])
+    return root.is_dir() and any(root.iterdir())
 
 
 @pytest.fixture(scope='module', autouse=True)
 def check_cache_on_ci():
-    if not (_on_ci() and _cache_missing()):
+    """Assert the local data cache is used on CI whenever it is populated."""
+    if not (_on_ci() and _data_cache_populated()):
         return
 
     assert examples.downloads._FILE_CACHE, (
@@ -73,13 +72,31 @@ def requests_fixture(mocker: pytest_mock.MockerFixture):
     """Mock the requests.get method to make sure HTTP requests are not emitted on CI,
     since can cause flakiness dut to GH rate limits.
     """
-    if not (_on_ci() and _cache_missing()):
+    if not (_on_ci() and _data_cache_populated()):
         yield
         return
 
     spy = mocker.spy(requests, 'get')
     yield
     assert spy.call_count == 0, spy.mock_calls
+
+
+@parametrize(
+    var_name=[examples.downloads._DATA_VARNAME, examples.downloads._VTK_DATA_VARNAME],
+)
+def test_data_cache_populated(monkeypatch, tmp_path, var_name):
+    monkeypatch.delenv(examples.downloads._DATA_VARNAME, raising=False)
+    monkeypatch.delenv(examples.downloads._VTK_DATA_VARNAME, raising=False)
+    assert not _data_cache_populated()
+
+    monkeypatch.setenv(var_name, str(tmp_path / 'missing'))
+    assert not _data_cache_populated()
+
+    monkeypatch.setenv(var_name, str(tmp_path))
+    assert not _data_cache_populated()
+
+    (tmp_path / 'Data').mkdir()
+    assert _data_cache_populated()
 
 
 def test_download_single_sphere_animation():
