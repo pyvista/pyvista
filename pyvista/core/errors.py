@@ -265,3 +265,33 @@ class InvalidMeshWarning(Warning):
     .. versionadded:: 0.47
 
     """
+
+
+class PrecisionWarning(Warning):
+    """Warning that points could not be generated at the requested precision.
+
+    Raised when :attr:`pyvista.core.config.Config.points_dtype` asks for a wider
+    dtype than the VTK algorithm that ran can generate. The output points are cast
+    up so that the dtype is the one asked for, but the values they hold have the
+    precision the algorithm produced, and casting cannot bring back digits it
+    already discarded.
+
+    The message names whatever generated the points: the VTK class for a filter, the
+    PyVista class for a source, since a source is its own algorithm, and the library
+    for a hull computed outside VTK.
+
+    Being a warning rather than an error is what keeps the choice with the caller.
+    Escalate it where the fabricated precision is not acceptable::
+
+        warnings.filterwarnings('error', category=pv.PrecisionWarning)
+
+    or silence it where it is::
+
+        warnings.filterwarnings('ignore', category=pv.PrecisionWarning)
+
+    Either can be scoped to a block with :class:`warnings.catch_warnings`, or set
+    for a run from ``-W`` or a test runner's own configuration.
+
+    .. versionadded:: 0.49
+
+    """

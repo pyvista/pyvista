@@ -33,6 +33,7 @@ from .dataset import DataSet
 from .filters import ImageDataFilters
 from .filters import RectilinearGridFilters
 from .filters import _get_output
+from .filters import _points_dtype
 from .utilities.arrays import array_from_vtkmatrix
 from .utilities.arrays import convert_array
 from .utilities.arrays import raise_has_duplicates
@@ -92,6 +93,15 @@ class Grid(DataSet):
     def dimensions(self: Self, dims: VectorLike[int]) -> None:
         self.SetDimensions(*dims)
         self.Modified()
+
+    def _convert_points_precision(self, points: pyvista_ndarray) -> pyvista_ndarray:
+        """Apply :attr:`pyvista.core.config.Config.points_dtype` to points generated on demand."""
+        # `'preserve'` leaves these alone: they are generated rather than stored, so
+        # there is no dtype of the caller's to preserve.
+        dtype = _points_dtype()
+        if dtype is None or points.dtype == dtype:
+            return points
+        return cast('pyvista_ndarray', points.astype(dtype))
 
     def to_hexahedra(self: Self) -> UnstructuredGrid:
         """Convert voxels to hexahedra.
@@ -443,10 +453,11 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
 
         """
         if pv.vtk_version_info >= (9, 4, 0):
-            return convert_array(self.GetPoints().GetData())
-
-        xx, yy, zz = self.meshgrid
-        return np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
+            points = convert_array(self.GetPoints().GetData())
+        else:
+            xx, yy, zz = self.meshgrid
+            points = np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
+        return self._convert_points_precision(points)
 
     @points.setter
     def points(
@@ -906,31 +917,35 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
         """
         if pv.vtk_version_info >= (9, 4, 0):
-            return convert_array(self.GetPoints().GetData())
+            points = convert_array(self.GetPoints().GetData())
 
         # Handle empty case
-        if not all(self.dimensions):
-            return np.zeros((0, 3))
+        elif not all(self.dimensions):
+            points = np.zeros((0, 3))
 
-        # Get grid dimensions
-        nx, ny, nz = self.dimensions
-        nx -= 1
-        ny -= 1
-        nz -= 1
-        # get the points and convert to spacings
-        dx, dy, dz = self.spacing
-        # Now make the cell arrays
-        ox, oy, oz = np.array(self.origin) + self.extent[::2] * np.array([dx, dy, dz])
-        x = np.insert(np.cumsum(np.full(nx, dx)), 0, 0.0) + ox
-        y = np.insert(np.cumsum(np.full(ny, dy)), 0, 0.0) + oy
-        z = np.insert(np.cumsum(np.full(nz, dz)), 0, 0.0) + oz
-        xx, yy, zz = np.meshgrid(x, y, z, indexing='ij')
-        points = np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
+        else:
+            # Get grid dimensions
+            nx, ny, nz = self.dimensions
+            nx -= 1
+            ny -= 1
+            nz -= 1
+            # get the points and convert to spacings
+            dx, dy, dz = self.spacing
+            # Now make the cell arrays
+            ox, oy, oz = np.array(self.origin) + self.extent[::2] * np.array([dx, dy, dz])
+            x = np.insert(np.cumsum(np.full(nx, dx)), 0, 0.0) + ox
+            y = np.insert(np.cumsum(np.full(ny, dy)), 0, 0.0) + oy
+            z = np.insert(np.cumsum(np.full(nz, dz)), 0, 0.0) + oz
+            xx, yy, zz = np.meshgrid(x, y, z, indexing='ij')
+            points = np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
 
-        direction = self.direction_matrix
-        if not np.array_equal(direction, np.eye(3)):
-            return pv.Transform().rotate(direction, point=self.origin).apply(points, copy=False)
-        return points
+            direction = self.direction_matrix
+            if not np.array_equal(direction, np.eye(3)):
+                points = (
+                    pv.Transform().rotate(direction, point=self.origin).apply(points, copy=False)
+                )
+
+        return self._convert_points_precision(points)
 
     @points.setter
     def points(

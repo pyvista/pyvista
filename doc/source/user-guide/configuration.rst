@@ -87,6 +87,13 @@ data array:
 
 .. autoclass:: pyvista.InvalidMeshWarning
 
+The warning emitted when
+:attr:`~pyvista.core.config.Config.points_dtype` asks an algorithm for
+double-precision points it cannot generate, so the output is cast up and
+the dtype ends up wider than the values behind it:
+
+.. autoclass:: pyvista.PrecisionWarning
+
 .. _config_flags:
 
 Module-Level Flags

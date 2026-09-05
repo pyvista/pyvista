@@ -210,6 +210,21 @@ class _PointSetBase(DataSet):
         -----
         This operates in place.
 
+        .. warning::
+
+            Converting up does not recover precision that has already been lost. If a
+            filter computed in single precision, its output holds single-precision
+            values whatever dtype they are given afterwards. See
+            :attr:`pyvista.core.config.Config.points_dtype` for finding out where that
+            happens.
+
+        See Also
+        --------
+        points_to_single
+
+        :attr:`pyvista.core.config.Config.points_dtype`
+            Set the points dtype for a whole session instead of one mesh.
+
         Examples
         --------
         Create a mesh that has points of the type ``float32`` and
@@ -226,6 +241,45 @@ class _PointSetBase(DataSet):
         """
         if self.points.dtype != np.double:
             self.points = self.points.astype(np.double)
+        return self
+
+    def points_to_single(self) -> Self:
+        """Convert the points datatype to single precision.
+
+        .. versionadded:: 0.49
+
+        Returns
+        -------
+        pyvista.PointSet
+            Pointset with points in single precision.
+
+        Notes
+        -----
+        This operates in place.
+
+        See Also
+        --------
+        points_to_double
+
+        :attr:`pyvista.core.config.Config.points_dtype`
+            Set the points dtype for a whole session instead of one mesh.
+
+        Examples
+        --------
+        Create a mesh that has points of the type ``float64`` and
+        convert the points to ``float32``.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.PolyData([[0.0, 0.0, 0.0]])
+        >>> mesh.points.dtype
+        dtype('float64')
+        >>> _ = mesh.points_to_single()
+        >>> mesh.points.dtype
+        dtype('float32')
+
+        """
+        if self.points.dtype != np.single:
+            self.points = self.points.astype(np.single)
         return self
 
 

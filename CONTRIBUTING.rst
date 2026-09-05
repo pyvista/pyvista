@@ -784,6 +784,36 @@ fork that still has an old ``doc`` branch is rejected with ``directory file conf
 Check the remote you push to with ``git ls-remote --heads origin refs/heads/doc``, then
 either use another prefix or delete the stale branch.
 
+Points dtype
+^^^^^^^^^^^^
+
+The ``points`` dtype of a filter's output is decided globally, by
+``pyvista.global_config.points_dtype``, and enforced in ``_update_alg`` and
+``_get_output``. It defaults to ``None``, where PyVista does not intervene at all. A
+filter gets the rest for free by calling those two, and must not add a keyword of its
+own for precision.
+
+- Call ``_update_alg`` rather than ``alg.Update()``. Where the setting is an explicit
+  ``'float32'`` or ``'float64'`` it asks the algorithm for that precision before
+  updating, so the ones supporting ``SetOutputPointsPrecision`` compute in it rather
+  than being cast after the fact. Under ``'preserve'`` it asks for nothing, since VTK's
+  default already matches the input.
+- Call ``_get_output`` rather than wrapping ``alg.GetOutput()``. It casts the output
+  points for the algorithms that ignore the request.
+- Sources have no input to preserve, so they subclass ``_Source``, which requests the
+  precision in ``Update`` and casts in ``_update_and_wrap_output``. Return
+  ``self._update_and_wrap_output()`` from a source's ``output`` property rather than
+  wrapping ``GetOutput()``, which is uncast.
+- Geometry that PyVista builds without a VTK algorithm passes through
+  ``_apply_points_dtype``.
+- Neither helper needs to know whether the algorithm supports double precision. The
+  ones that do not are cast, and every widening cast warns with
+  ``PrecisionWarning`` because it fabricates precision the algorithm discarded --
+  so no filter needs a keyword to opt out of the setting.
+- Under ``'preserve'`` only the meshes that store their points constrain the output.
+  ``ImageData`` and ``RectilinearGrid`` generate theirs, so a filter reading one, or
+  building one as an intermediate, leaves the precision to VTK.
+
 Testing
 ^^^^^^^
 

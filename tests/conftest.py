@@ -11,6 +11,8 @@ import os
 from pathlib import Path
 import platform
 import re
+from types import FunctionType
+from types import ModuleType
 
 import numpy as np
 from numpy.random import default_rng
@@ -236,6 +238,7 @@ def reset_global_state():
     assert pv.allow_new_attributes() is False
 
     pv.PICKLE_FORMAT = 'vtk'
+    pv.global_config.points_dtype = None
 
 
 @pytest.fixture
@@ -937,6 +940,15 @@ def pytest_report_header(config):  # noqa: ARG001
         comma_lst = ', '.join(not_found)
         lines.append(f'optional package{plrl} not found: {comma_lst}')
     return '\n'.join(lines)
+
+
+def _get_module_functions(module: ModuleType) -> dict[str, FunctionType]:
+    """Get all functions defined locally inside a module."""
+
+    def is_local(obj):
+        return type(obj) is FunctionType and obj.__module__ == module.__name__
+
+    return dict(inspect.getmembers(module, predicate=is_local))
 
 
 # Interactive scenes above ``max_vtksz_file_size`` in pyproject.toml fail the docs image

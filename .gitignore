@@ -79,8 +79,8 @@ doc/source/getting-started/external_examples.rst
 **/grid.vtu
 doc/api/
 doc/images
-doc/my_partitions.vtpd
-doc/my_partitions/
+my_partitions.vtpd
+my_partitions/
 examples/02-plot/airplane.png
 examples/02-plot/sphere-shrinking.mp4
 tests/plotting/tinypages/_build

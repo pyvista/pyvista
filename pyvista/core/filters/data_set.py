@@ -30,7 +30,9 @@ from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
+from pyvista.core.filters import _apply_points_dtype
 from pyvista.core.filters import _get_output
+from pyvista.core.filters import _match_points_dtype
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_object import DataObjectFilters
 from pyvista.core.filters.data_object import _cast_output_to_match_input_type
@@ -1262,7 +1264,9 @@ class DataSetFilters(DataObjectFilters):
         alg.SetInputDataObject(self)
         alg.SetGenerateFaces(generate_faces)
         _update_alg(alg, progress_bar=progress_bar, message='Producing an outline')
-        return wrap(alg.GetOutputDataObject(0))
+        output = wrap(alg.GetOutputDataObject(0))
+        _match_points_dtype(output, self, algorithm=alg)
+        return output
 
     @_deprecate_positional_args
     def outline_corners(  # type: ignore[misc]
@@ -1301,7 +1305,7 @@ class DataSetFilters(DataObjectFilters):
         alg.SetInputDataObject(self)
         alg.SetCornerFactor(factor)
         _update_alg(alg, progress_bar=progress_bar, message='Producing an Outline of the Corners')
-        return wrap(alg.GetOutputDataObject(0))
+        return _get_output(alg, keep_pointset=False)
 
     def gaussian_splatting(  # type: ignore[misc]
         self: _DataSetType,
@@ -1924,9 +1928,12 @@ class DataSetFilters(DataObjectFilters):
 
         # Make glyphing geometry if necessary
         if geom is None:
-            arrow = _vtk.vtkArrowSource()
-            _update_alg(arrow, progress_bar=progress_bar, message='Making Arrow')
-            geoms: Sequence[_vtk.vtkDataSet] = [arrow.GetOutput()]
+            arrow_source = _vtk.vtkArrowSource()
+            _update_alg(arrow_source, progress_bar=progress_bar, message='Making Arrow')
+            # No algorithm passed: the template is scaled and copied onto the
+            # user's points, so its own precision is not worth warning about
+            arrow = _apply_points_dtype(pv.wrap(arrow_source.GetOutput()))
+            geoms: Sequence[_vtk.vtkDataSet] = [arrow]
         # Check if a table of geometries was passed
         elif isinstance(geom, (np.ndarray, Sequence)):
             geoms = geom

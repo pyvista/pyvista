@@ -36,6 +36,8 @@ from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output
+from pyvista.core.filters import _match_points_dtype
+from pyvista.core.filters import _points_dtype
 from pyvista.core.filters import _update_alg
 from pyvista.core.utilities.helpers import _NormalsLiteral
 from pyvista.core.utilities.helpers import _validate_plane_origin_and_normal
@@ -2000,10 +2002,11 @@ class DataObjectFilters:
         # vtkTransformFilter truncates the result if the input is an integer type
         # so convert input points and relevant vectors to float
         # (creating a new copy would be harmful much more often)
+        float_dtype = _points_dtype() or np.dtype(np.float32)
         converted_ints = False
         points = self.points
         if not np.issubdtype(points.dtype, np.floating):
-            self.points = points.astype(np.float32)
+            self.points = points.astype(float_dtype)
             converted_ints = True
         # Optimization: build the attribute wrappers once; they refer to the same VTK objects
         # for the whole filter, including after copy_from, so reusing them is safe
@@ -2022,7 +2025,7 @@ class DataObjectFilters:
             # we'll only transform active vectors and normals
             point_vectors = [point_data.active_vectors_name, point_data.active_normals_name]
             cell_vectors = [cell_data.active_vectors_name, cell_data.active_normals_name]
-        # dynamically convert each self.point_data[name] etc. to float32
+        # dynamically convert each self.point_data[name] etc. to the configured float
         all_vectors = [point_vectors, cell_vectors]
         all_dataset_attrs = [point_data, cell_data]
         for vector_names, dataset_attrs in zip(all_vectors, all_dataset_attrs, strict=True):
@@ -2031,13 +2034,13 @@ class DataObjectFilters:
                     continue
                 vector_arr = dataset_attrs[vector_name]
                 if not np.issubdtype(vector_arr.dtype, np.floating):
-                    dataset_attrs[vector_name] = vector_arr.astype(np.float32)
+                    dataset_attrs[vector_name] = vector_arr.astype(float_dtype)
                     converted_ints = True
         if converted_ints:
             warn_external(
                 'Integer points, vector, and normal data (if any) of the input mesh '
-                'have been converted to ``np.float32``. This is necessary in order '
-                'to transform properly.',
+                f'have been converted to ``np.{float_dtype.name}``. '
+                'This is necessary in order to transform properly.',
             )
 
         # vtkTransformFilter doesn't respect active scalars.  We need to track this
@@ -4468,14 +4471,20 @@ class DataObjectFilters:
             else dimensionality
         )
 
+        # Only the points dtype is taken from the setting here; `_get_output` would
+        # also copy the input's metadata over a hull that does not want it.
         if pv.vtk_version_info >= (9, 7, 0):
             alg = _vtk.vtkConvexHull()
             alg.SetInputDataObject(alg_input)
             alg.SetDimension(int(dimensionality_))
             _update_alg(alg, progress_bar=progress_bar)
             output = pv.wrap(alg.GetOutput())
+            _match_points_dtype(output, alg_input, algorithm=alg)
         else:
             output = _convex_hull_scipy(points, dimensionality=dimensionality_)
+            # The hull's points are the input's own, so widening them fabricates
+            # precision exactly as a VTK algorithm's output would
+            _match_points_dtype(output, alg_input, algorithm='scipy.spatial.ConvexHull')
         output.point_data.clear()
         output.cell_data.clear()
         return output

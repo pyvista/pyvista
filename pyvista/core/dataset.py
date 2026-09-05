@@ -33,6 +33,7 @@ from .datasetattributes import _array_names
 from .errors import PyVistaDeprecationWarning
 from .filters import DataSetFilters
 from .filters import _get_output
+from .filters import _update_alg
 from .formatting_html import _data_array_section
 from .formatting_html import _fmt_memory
 from .formatting_html import build_repr_html
@@ -1914,7 +1915,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             input_is_double = isinstance(self, pv.ImageData)
         if input_is_double:
             alg.SetOutputPointsPrecision(_vtk.vtkAlgorithm.DOUBLE_PRECISION)
-        alg.Update()
+        _update_alg(alg)
         return _get_output(alg)
 
     @_deprecate_positional_args

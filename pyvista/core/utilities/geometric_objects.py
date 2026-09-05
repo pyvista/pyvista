@@ -13,6 +13,8 @@ import pyvista_validation as _validation
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core.filters import _apply_points_dtype
+from pyvista.core.filters import _update_alg
 
 from .arrays import _coerce_pointslike_arg
 from .geometric_sources import ArrowSource
@@ -1467,7 +1469,8 @@ def Cube(  # noqa: PLR0917
     z_length: float = 1.0,
     bounds: VectorLike[float] | None = None,
     clean: bool = True,  # noqa: FBT001, FBT002
-    point_dtype: str = 'float32',
+    point_dtype: str | None = None,
+    points_dtype: str | None = None,
 ) -> PolyData:
     """Create a cube.
 
@@ -1510,10 +1513,21 @@ def Cube(  # noqa: PLR0917
 
         .. versionadded:: 0.33.0
 
-    point_dtype : str, default: 'float32'
+    points_dtype : str, optional
         Set the desired output point types. It must be either 'float32' or 'float64'.
+        Ignored unless :attr:`pyvista.core.config.Config.points_dtype` is ``None``, its
+        default, or ``'preserve'``.
+
+        .. versionadded:: 0.49
+
+    point_dtype : str, optional
+        Set the desired output point types.
 
         .. versionadded:: 0.44.0
+
+        .. deprecated:: 0.49
+            Renamed to ``points_dtype``, matching
+            :attr:`pyvista.core.config.Config.points_dtype`.
 
     Returns
     -------
@@ -1536,6 +1550,7 @@ def Cube(  # noqa: PLR0917
         z_length=z_length,
         bounds=bounds,
         point_dtype=point_dtype,
+        points_dtype=points_dtype,
     )
     cube = algo.output
 
@@ -1604,8 +1619,8 @@ def Box(
     if np.all(level_vector == level_vector[0]):
         return BoxSource(level=level_vector[0], quads=quads, bounds=bounds).output
 
-    mesh = pv.ImageData(dimensions=level_vector + 2)
-    mesh = mesh.extract_surface(algorithm=None, pass_pointid=False, pass_cellid=False).resize(
+    image = pv.ImageData(dimensions=level_vector + 2)
+    mesh = image.extract_surface(algorithm=None, pass_pointid=False, pass_cellid=False).resize(
         bounds=bounds
     )
     if not quads:
@@ -2066,22 +2081,21 @@ def CircularArc(  # noqa: PLR0917
     pointb[0] -= 1e-10
     pointb[1] -= 1e-10
 
-    arc = _vtk.vtkArcSource()
-    arc.SetPoint1(*pointa)
-    arc.SetPoint2(*pointb)
-    arc.SetCenter(*center)
-    arc.SetResolution(resolution)
-    arc.SetNegative(negative)
-
-    arc.Update()
-    angle = np.deg2rad(arc.GetAngle())
-    arc = wrap(arc.GetOutput())  # type: ignore[assignment]
+    alg = _vtk.vtkArcSource()
+    alg.SetPoint1(*pointa)
+    alg.SetPoint2(*pointb)
+    alg.SetCenter(*center)
+    alg.SetResolution(resolution)
+    alg.SetNegative(negative)
+    _update_alg(alg)
+    angle = np.deg2rad(alg.GetAngle())
+    arc = _apply_points_dtype(wrap(alg.GetOutput()), algorithm=alg)
     # Compute distance of every point along circular arc
     center = np.array(center).ravel()
-    radius = np.sqrt(np.sum((arc.points[0] - center) ** 2, axis=0))  # type: ignore[attr-defined]
-    angles = np.linspace(0.0, 1.0, arc.n_points) * angle  # type: ignore[attr-defined]
-    arc['Distance'] = radius * angles  # type: ignore[index]
-    return cast('pv.PolyData', arc)
+    radius = np.sqrt(np.sum((arc.points[0] - center) ** 2, axis=0))
+    angles = np.linspace(0.0, 1.0, arc.n_points) * angle
+    arc['Distance'] = radius * angles
+    return arc
 
 
 @_deprecate_positional_args
@@ -2147,24 +2161,24 @@ def CircularArcFromNormal(  # noqa: PLR0917
         polar = [1, 0, 0]
     angle_ = 90.0 if angle is None else angle
 
-    arc = _vtk.vtkArcSource()
-    arc.SetCenter(*center)
-    arc.SetResolution(resolution)
-    arc.UseNormalAndAngleOn()
+    alg = _vtk.vtkArcSource()
+    alg.SetCenter(*center)
+    alg.SetResolution(resolution)
+    alg.UseNormalAndAngleOn()
     check_valid_vector(normal, 'normal')
-    arc.SetNormal(*normal)
+    alg.SetNormal(*normal)
     check_valid_vector(polar, 'polar')
-    arc.SetPolarVector(*polar)
-    arc.SetAngle(angle_)
-    arc.Update()
-    angle_ = np.deg2rad(arc.GetAngle())
-    arc = wrap(arc.GetOutput())  # type: ignore[assignment]
+    alg.SetPolarVector(*polar)
+    alg.SetAngle(angle_)
+    _update_alg(alg)
+    angle_ = np.deg2rad(alg.GetAngle())
+    arc = _apply_points_dtype(wrap(alg.GetOutput()), algorithm=alg)
     # Compute distance of every point along circular arc
     center = np.array(center)
-    radius = np.sqrt(np.sum((arc.points[0] - center) ** 2, axis=0))  # type: ignore[attr-defined]
+    radius = np.sqrt(np.sum((arc.points[0] - center) ** 2, axis=0))
     angles = np.linspace(0.0, angle_, resolution + 1)
-    arc['Distance'] = radius * angles  # type: ignore[index]
-    return cast('pv.PolyData', arc)
+    arc['Distance'] = radius * angles
+    return arc
 
 
 def Pyramid(points: MatrixLike[float] | None = None) -> UnstructuredGrid:
@@ -2226,7 +2240,7 @@ def Pyramid(points: MatrixLike[float] | None = None) -> UnstructuredGrid:
     ug.SetPoints(pv.vtk_points(np.array(points), deep=False))
     ug.InsertNextCell(pyramid.GetCellType(), pyramid.GetPointIds())
 
-    return wrap(ug)
+    return _apply_points_dtype(wrap(ug))
 
 
 def Triangle(points: MatrixLike[float] | None = None) -> PolyData:
@@ -2265,7 +2279,7 @@ def Triangle(points: MatrixLike[float] | None = None) -> PolyData:
     check_valid_vector(points[2], 'points[2]')
 
     cells = np.array([[3, 0, 1, 2]])
-    return wrap(pv.PolyData(points, cells))
+    return _apply_points_dtype(wrap(pv.PolyData(points, cells)))
 
 
 def Rectangle(points: MatrixLike[float] | None = None) -> PolyData:
@@ -2341,7 +2355,7 @@ def Rectangle(points: MatrixLike[float] | None = None) -> PolyData:
         points[3] = point_2 - vec_02 - vec_12
         cells = np.array([[4, 0, 2, 1, 3]])
 
-    return wrap(pv.PolyData(points, cells))
+    return _apply_points_dtype(wrap(pv.PolyData(points, cells)))
 
 
 def Quadrilateral(points: MatrixLike[float] | None = None) -> PolyData:
@@ -2377,7 +2391,7 @@ def Quadrilateral(points: MatrixLike[float] | None = None) -> PolyData:
     points, _ = _coerce_pointslike_arg(points)
 
     cells = np.array([[4, 0, 1, 2, 3]])
-    return wrap(pv.PolyData(points, cells))
+    return _apply_points_dtype(wrap(pv.PolyData(points, cells)))
 
 
 @_deprecate_positional_args
@@ -2416,7 +2430,7 @@ def Circle(radius: float = 0.5, resolution: int = 100) -> PolyData:
     points[:, 0] = radius * np.cos(theta)
     points[:, 1] = radius * np.sin(theta)
     cells = np.array([np.append(np.array([resolution]), np.arange(resolution))])
-    return wrap(pv.PolyData(points, cells))
+    return _apply_points_dtype(wrap(pv.PolyData(points, cells)))
 
 
 @_deprecate_positional_args(allowed=['semi_major_axis', 'semi_minor_axis'])
@@ -2459,7 +2473,7 @@ def Ellipse(
     points[:, 0] = semi_major_axis * np.cos(theta)
     points[:, 1] = semi_minor_axis * np.sin(theta)
     cells = np.array([np.append(np.array([resolution]), np.arange(resolution))])
-    return wrap(pv.PolyData(points, cells))
+    return _apply_points_dtype(wrap(pv.PolyData(points, cells)))
 
 
 @_deprecate_positional_args
@@ -2809,4 +2823,4 @@ def Icosphere(
     # scale to desired radius and translate origin
     dist = np.linalg.norm(mesh.points, axis=1, keepdims=True)  # distance from origin
     mesh.points = mesh.points * (radius / dist) + center
-    return mesh
+    return _apply_points_dtype(mesh)

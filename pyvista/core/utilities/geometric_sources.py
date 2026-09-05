@@ -21,8 +21,15 @@ import pyvista_validation as _validation
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._warn_external import warn_external
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
+from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.filters import DEFAULT_PRECISION
+from pyvista.core.filters import DOUBLE_PRECISION
+from pyvista.core.filters import SINGLE_PRECISION
+from pyvista.core.filters import _apply_points_dtype
+from pyvista.core.filters import _requested_points_precision
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _check_range
@@ -41,8 +48,67 @@ if TYPE_CHECKING:
     from pyvista.core.pointset import PolyData
 
 
-SINGLE_PRECISION = _vtk.vtkAlgorithm.SINGLE_PRECISION
-DOUBLE_PRECISION = _vtk.vtkAlgorithm.DOUBLE_PRECISION
+def _warn_point_dtype_deprecated() -> None:
+    """Warn that the ``point_dtype`` spelling has been renamed."""
+    # Deprecated v0.49, convert to error in v0.52, remove v0.53
+    if pv.version_info >= (0, 52):  # pragma: no cover
+        msg = 'Convert the `point_dtype` deprecation into an error.'
+        raise RuntimeError(msg)
+    msg = (
+        '`point_dtype` is deprecated. Use `points_dtype` instead, which matches\n'
+        '`pyvista.global_config.points_dtype` -- set that to control the dtype for a\n'
+        'whole session rather than one source at a time.'
+    )
+    warn_external(msg, PyVistaDeprecationWarning)
+
+
+def _resolve_points_dtype_kwarg(point_dtype: str | None, points_dtype: str | None) -> str | None:
+    """Fold the deprecated ``point_dtype`` spelling into ``points_dtype``."""
+    if point_dtype is None:
+        return points_dtype
+    if points_dtype is not None:
+        msg = 'Set `points_dtype` or `point_dtype`, not both.'
+        raise TypeError(msg)
+    _warn_point_dtype_deprecated()
+    return point_dtype
+
+
+class _AlgorithmSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkAlgorithm):
+    """Base class for the sources that are themselves a VTK algorithm.
+
+    Each subclass mixes this with the ``vtk*Source`` it wraps, so updating it runs that
+    algorithm, and :attr:`pyvista.core.config.Config.points_dtype` is requested from it
+    and applied to its output. A source has no input, so ``'preserve'`` leaves the dtype
+    VTK generates alone.
+
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
+
+    """
+
+    def Update(self, *args: Any) -> Any:  # noqa: N802
+        """Update the source, requesting the configured points dtype.
+
+        Parameters
+        ----------
+        *args : Any
+            Arguments forwarded to the VTK algorithm's ``Update``.
+
+        Returns
+        -------
+        Any
+            Whatever the VTK algorithm's ``Update`` returns.
+
+        """
+        with _requested_points_precision(self):
+            return super().Update(*args)
+
+    def _update_and_wrap_output(self) -> Any:
+        """Update and return the output with the configured points dtype applied."""
+        self.Update()
+        return _apply_points_dtype(wrap(self.GetOutput()), algorithm=self)
 
 
 def _translate_and_orient(
@@ -90,7 +156,7 @@ def _translate_and_orient(
         surf.points += np.array(center, dtype=surf.points.dtype)
 
 
-class ConeSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkConeSource):
+class ConeSource(_AlgorithmSource, _vtk.vtkConeSource):
     """Cone source algorithm class.
 
     Parameters
@@ -344,11 +410,10 @@ class ConeSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkConeSource):
             Cone surface.
 
         """
-        self.Update()
-        return wrap(self.GetOutput())
+        return self._update_and_wrap_output()
 
 
-class CylinderSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCylinderSource):
+class CylinderSource(_AlgorithmSource, _vtk.vtkCylinderSource):
     """Cylinder source algorithm class.
 
     .. warning::
@@ -607,11 +672,10 @@ class CylinderSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCylinderSourc
             Cylinder surface.
 
         """
-        self.Update()
-        return wrap(self.GetOutput())
+        return self._update_and_wrap_output()
 
 
-class MultipleLinesSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLineSource):
+class MultipleLinesSource(_AlgorithmSource, _vtk.vtkLineSource):
     """Multiple lines source algorithm class.
 
     Parameters
@@ -666,8 +730,7 @@ class MultipleLinesSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLineSour
             Line mesh.
 
         """
-        self.Update()
-        return wrap(self.GetOutput())
+        return self._update_and_wrap_output()
 
 
 class Text3DSource(_NoNewAttrMixin):
@@ -852,12 +915,14 @@ class Text3DSource(_NoNewAttrMixin):
     def update(self: Text3DSource) -> None:
         """Update the output of the source."""
         if self._modified:
+            algorithm: _vtk.vtkAlgorithm
             is_empty_string = self.string == '' or self.string.isspace()
             is_2d = self.depth == 0 or (self.depth is None and self.height == 0)
             if is_empty_string or is_2d:
                 # Do not apply filters
                 self._source.Update()
                 out = self._source.GetOutput()
+                algorithm = self._source
             else:
                 # 3D case, apply filters
                 # Create output filters to make text 3D
@@ -870,6 +935,7 @@ class Text3DSource(_NoNewAttrMixin):
                 tri_filter.SetInputConnection(extrude.GetOutputPort())
                 tri_filter.Update()
                 out = tri_filter.GetOutput()
+                algorithm = tri_filter
 
             # Modify output object
             self._output.copy_from(out)
@@ -880,6 +946,7 @@ class Text3DSource(_NoNewAttrMixin):
                 # Add a single point to 'fix' the bounds
                 self._output.points = (0.0, 0.0, 0.0)
 
+            _apply_points_dtype(self._output, algorithm=algorithm)
             self._transform_output()
             self._modified = False
 
@@ -954,7 +1021,7 @@ class Text3DSource(_NoNewAttrMixin):
             out.points += self.center
 
 
-class CubeSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCubeSource):
+class CubeSource(_AlgorithmSource, _vtk.vtkCubeSource):
     """Cube source algorithm class.
 
     .. versionadded:: 0.44.0
@@ -977,10 +1044,21 @@ class CubeSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCubeSource):
         Specify the bounding box of the cube. If given, all other size
         arguments are ignored. ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
-    point_dtype : str, default: 'float32'
+    points_dtype : str, optional
         Set the desired output point types. It must be either 'float32' or 'float64'.
+        Ignored unless :attr:`pyvista.core.config.Config.points_dtype` is ``None``, its
+        default, or ``'preserve'``.
+
+        .. versionadded:: 0.49
+
+    point_dtype : str, optional
+        Set the desired output point types.
 
         .. versionadded:: 0.44.0
+
+        .. deprecated:: 0.49
+            Renamed to ``points_dtype``, matching
+            :attr:`pyvista.core.config.Config.points_dtype`.
 
     Examples
     --------
@@ -1000,7 +1078,8 @@ class CubeSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCubeSource):
         y_length: float = 1.0,
         z_length: float = 1.0,
         bounds: VectorLike[float] | None = None,
-        point_dtype: str = 'float32',
+        point_dtype: str | None = None,
+        points_dtype: str | None = None,
     ) -> None:
         """Initialize the cube source class."""
         super().__init__()
@@ -1011,7 +1090,8 @@ class CubeSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCubeSource):
             self.x_length = x_length
             self.y_length = y_length
             self.z_length = z_length
-        self.point_dtype = point_dtype
+        if (dtype := _resolve_points_dtype_kwarg(point_dtype, points_dtype)) is not None:
+            self.points_dtype = dtype
 
     @property
     def bounds(self: CubeSource) -> BoundsTuple:  # numpydoc ignore=RT01
@@ -1136,53 +1216,62 @@ class CubeSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCubeSource):
             Cube surface.
 
         """
-        self.Update()
-        return wrap(self.GetOutput())
+        return self._update_and_wrap_output()
 
     @property
-    def point_dtype(self: CubeSource) -> str:
-        """Get the desired output point types.
+    def points_dtype(self: CubeSource) -> str:
+        """Return or set the dtype of the points this source generates.
+
+        It must be either ``'float32'`` or ``'float64'``. Setting
+        :attr:`pyvista.core.config.Config.points_dtype` to anything but ``None`` or
+        ``'preserve'`` overrides it.
+
+        .. versionadded:: 0.49
 
         Returns
         -------
         str
-            Desired output point types.
-            It must be either 'float32' or 'float64'.
+            Dtype of the generated points, ``'float32'`` or ``'float64'``.
 
         """
         precision = self.GetOutputPointsPrecision()
         return {
+            # A source has no input to match, so VTK's default is single precision
+            DEFAULT_PRECISION: 'float32',
             SINGLE_PRECISION: 'float32',
             DOUBLE_PRECISION: 'float64',
         }[precision]  # type: ignore[index]
 
-    @point_dtype.setter
-    def point_dtype(self: CubeSource, point_dtype: str) -> None:
-        """Set the desired output point types.
-
-        Parameters
-        ----------
-        point_dtype : str, default: 'float32'
-            Set the desired output point types.
-            It must be either 'float32' or 'float64'.
-
-        Returns
-        -------
-        point_dtype: str
-            Desired output point types.
-
-        """
-        if point_dtype not in ['float32', 'float64']:
-            msg = "Point dtype must be either 'float32' or 'float64'"
+    @points_dtype.setter
+    def points_dtype(self: CubeSource, points_dtype: str) -> None:
+        if points_dtype not in ['float32', 'float64']:
+            msg = "Points dtype must be either 'float32' or 'float64'"
             raise ValueError(msg)
         precision = {
             'float32': SINGLE_PRECISION,
             'float64': DOUBLE_PRECISION,
-        }[point_dtype]
+        }[points_dtype]
         self.SetOutputPointsPrecision(precision)
 
+    @property
+    def point_dtype(self: CubeSource) -> str:  # numpydoc ignore=RT01
+        """Return or set the dtype of the points this source generates.
 
-class DiscSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkDiskSource):
+        .. deprecated:: 0.49
+            Renamed to :attr:`points_dtype`, matching
+            :attr:`pyvista.core.config.Config.points_dtype`.
+
+        """
+        _warn_point_dtype_deprecated()
+        return self.points_dtype
+
+    @point_dtype.setter
+    def point_dtype(self: CubeSource, point_dtype: str) -> None:
+        _warn_point_dtype_deprecated()
+        self.points_dtype = point_dtype
+
+
+class DiscSource(_AlgorithmSource, _vtk.vtkDiskSource):
     """Disc source algorithm class.
 
     .. versionadded:: 0.44.0
@@ -1362,11 +1451,10 @@ class DiscSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkDiskSource):
             Line mesh.
 
         """
-        self.Update()
-        return wrap(self.GetOutput())
+        return self._update_and_wrap_output()
 
 
-class LineSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLineSource):
+class LineSource(_AlgorithmSource, _vtk.vtkLineSource):
     """Create a line.
 
     .. versionadded:: 0.44
@@ -1481,11 +1569,10 @@ class LineSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLineSource):
             Line mesh.
 
         """
-        self.Update()
-        return wrap(self.GetOutput())
+        return self._update_and_wrap_output()
 
 
-class SphereSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkSphereSource):
+class SphereSource(_AlgorithmSource, _vtk.vtkSphereSource):
     """Sphere source algorithm class.
 
     .. versionadded:: 0.44.0
@@ -1826,8 +1913,7 @@ class SphereSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkSphereSource):
             v = 1.0 - phi / np.pi
             return np.c_[u, v]
 
-        self.Update()
-        out = wrap(self.GetOutput())
+        out = self._update_and_wrap_output()
 
         if self.texture_coordinates:
             partial_phi = not np.isclose(self.end_phi - self.start_phi, 180)
@@ -1884,7 +1970,7 @@ class SphereSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkSphereSource):
         return out
 
 
-class PolygonSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkRegularPolygonSource):
+class PolygonSource(_AlgorithmSource, _vtk.vtkRegularPolygonSource):
     """Polygon source algorithm class.
 
     .. versionadded:: 0.44.0
@@ -2064,11 +2150,10 @@ class PolygonSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkRegularPolygon
             Polygon surface.
 
         """
-        self.Update()
-        return wrap(self.GetOutput())
+        return self._update_and_wrap_output()
 
 
-class PlatonicSolidSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkPlatonicSolidSource):
+class PlatonicSolidSource(_AlgorithmSource, _vtk.vtkPlatonicSolidSource):
     """Platonic solid source algorithm class.
 
     .. versionadded:: 0.44.0
@@ -2165,11 +2250,10 @@ class PlatonicSolidSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkPlatonic
             PlatonicSolid surface.
 
         """
-        self.Update()
-        return wrap(self.GetOutput())
+        return self._update_and_wrap_output()
 
 
-class PlaneSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkPlaneSource):
+class PlaneSource(_AlgorithmSource, _vtk.vtkPlaneSource):
     """Create a plane source.
 
     The plane is defined by specifying an origin point, and then
@@ -2377,8 +2461,7 @@ class PlaneSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkPlaneSource):
             Plane mesh.
 
         """
-        self.Update()
-        return wrap(self.GetOutput())
+        return self._update_and_wrap_output()
 
     @property
     def normal(
@@ -2409,7 +2492,7 @@ class PlaneSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkPlaneSource):
         self.center = (self.center + np.array(self.normal) * distance).tolist()
 
 
-class ArrowSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkArrowSource):
+class ArrowSource(_AlgorithmSource, _vtk.vtkArrowSource):
     """Create a arrow source.
 
     .. versionadded:: 0.44
@@ -2579,11 +2662,10 @@ class ArrowSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkArrowSource):
             Plane mesh.
 
         """
-        self.Update()
-        return wrap(self.GetOutput())
+        return self._update_and_wrap_output()
 
 
-class BoxSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkTessellatedBoxSource):
+class BoxSource(_AlgorithmSource, _vtk.vtkTessellatedBoxSource):
     """Create a box source.
 
     .. versionadded:: 0.44
@@ -2691,11 +2773,10 @@ class BoxSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkTessellatedBoxSour
             Plane mesh.
 
         """
-        self.Update()
-        return wrap(self.GetOutput())
+        return self._update_and_wrap_output()
 
 
-class SuperquadricSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkSuperquadricSource):
+class SuperquadricSource(_AlgorithmSource, _vtk.vtkSuperquadricSource):
     """Create superquadric source.
 
     .. versionadded:: 0.44
@@ -2990,8 +3071,7 @@ class SuperquadricSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkSuperquad
             Plane mesh.
 
         """
-        self.Update()
-        return wrap(self.GetOutput())
+        return self._update_and_wrap_output()
 
 
 class _AxisEnum(IntEnum):
@@ -3926,8 +4006,19 @@ class CubeFacesSource(CubeSource):
     names : sequence[str], default: ('+X','-X','+Y','-Y','+Z','-Z')
         Name of each face in the generated :class:`~pyvista.MultiBlock`.
 
-    point_dtype : str, default: 'float32'
+    points_dtype : str, optional
         Set the desired output point types. It must be either 'float32' or 'float64'.
+        Ignored unless :attr:`pyvista.core.config.Config.points_dtype` is ``None``, its
+        default, or ``'preserve'``.
+
+        .. versionadded:: 0.49
+
+    point_dtype : str, optional
+        Set the desired output point types.
+
+        .. deprecated:: 0.49
+            Renamed to ``points_dtype``, matching
+            :attr:`pyvista.core.config.Config.points_dtype`.
 
     Examples
     --------
@@ -4021,7 +4112,8 @@ class CubeFacesSource(CubeSource):
         shrink_factor: float | None = None,
         explode_factor: float | None = None,
         names: Sequence[str] = ('+X', '-X', '+Y', '-Y', '+Z', '-Z'),
-        point_dtype: str = 'float32',
+        point_dtype: str | None = None,
+        points_dtype: str | None = None,
     ) -> None:
         # Init CubeSource
         super().__init__(
@@ -4030,7 +4122,7 @@ class CubeFacesSource(CubeSource):
             y_length=y_length,
             z_length=z_length,
             bounds=bounds,
-            point_dtype=point_dtype,
+            points_dtype=_resolve_points_dtype_kwarg(point_dtype, points_dtype),
         )
         # Init output
         self._output = pv.MultiBlock([pv.PolyData() for _ in range(6)])

@@ -3798,7 +3798,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetRotationAxis(rotation_axis)  # type: ignore[arg-type]
 
         _update_alg(alg, progress_bar=progress_bar, message='Extruding')
-        output = wrap(alg.GetOutput())
+        output = _get_output(alg)
         if inplace:
             self.copy_from(output, deep=False)  # type: ignore[attr-defined]
             return self
@@ -4415,7 +4415,7 @@ class PolyDataFilters(DataSetFilters):
         mc.SetInputConnection(alg.GetOutputPort())
         mc.SetValue(0, 0.0)
         _update_alg(mc, progress_bar=progress_bar, message='Reconstructing surface')
-        return wrap(mc.GetOutput())
+        return _get_output(mc)
 
     @_deprecate_positional_args
     def triangulate_contours(  # type: ignore[misc]
