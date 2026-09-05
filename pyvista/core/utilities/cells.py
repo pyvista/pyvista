@@ -262,7 +262,6 @@ def _variable_size_cells(
 
     # Ragged case: a sequence of per-cell 1D index arrays.
     per_cell = [np.asarray(cell) for cell in cells_arr]
-    chunks = []
     for cell in per_cell:
         if cell.ndim != 1 or not np.issubdtype(cell.dtype, np.integer) or cell.size == 0:
             msg = (
@@ -270,10 +269,17 @@ def _variable_size_cells(
                 f'integer point indices.'
             )
             raise ValueError(msg)
-        _check_cell_indices(cell, elem_t, nr_points)
-        chunks.append(np.concatenate([[cell.size], cell]).astype(pv.ID_TYPE))
-    types = np.array([elem_t] * len(per_cell), dtype=np.uint8)
-    arr = np.concatenate(chunks) if chunks else np.empty(0, dtype=pv.ID_TYPE)
+    # Optimization: check the indices and build the array for all cells at once instead
+    # of concatenating one cell at a time; each cell's size is inserted ahead of its ids
+    sizes = np.array([cell.size for cell in per_cell], dtype=pv.ID_TYPE)
+    connectivity: NumpyArray[int] = (
+        np.concatenate(per_cell).astype(pv.ID_TYPE, copy=False)
+        if per_cell
+        else np.empty(0, dtype=pv.ID_TYPE)
+    )
+    _check_cell_indices(connectivity, elem_t, nr_points)
+    types = np.full(len(per_cell), elem_t, dtype=np.uint8)
+    arr = np.insert(connectivity, np.cumsum(sizes) - sizes, sizes)
     return types, arr
 
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 import functools
 import inspect
 from pathlib import Path
+import sys
 from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import overload
@@ -188,20 +189,20 @@ def _deprecate_positional_args(
             )
             raise RuntimeError(msg)
 
+        # Optimization: the offending names depend only on how many positional arguments
+        # are passed, so compute them once per count instead of on every call
+        offending_by_count = [
+            tuple(
+                name
+                for name in param_names[:count]
+                if name not in (allowed or []) and name not in ('self', 'cls')
+            )
+            for count in range(len(param_names) + 1)
+        ]
+
         @functools.wraps(f)
         def inner_f(*args: P.args, **kwargs: P.kwargs) -> T:
-            passed_positional_names = param_names[: len(args)]
-
-            # Exclude allowed ones
-            if allowed:
-                offending_args = [name for name in passed_positional_names if name not in allowed]
-            else:
-                offending_args = passed_positional_names
-
-            if 'self' in offending_args:
-                offending_args.remove('self')
-            if 'cls' in offending_args:
-                offending_args.remove('cls')
+            offending_args = offending_by_count[min(len(args), len(param_names))]
 
             if offending_args:
                 # Craft a message to print a warning or raise an error
@@ -222,9 +223,10 @@ def _deprecate_positional_args(
 
                     def call_site() -> str:
                         # Get location where the function is called
-                        frame = inspect.stack()[stack_level]
-                        file = Path(frame.filename).as_posix()
-                        return f'{file}:{frame.lineno}'
+                        # Optimization: ``inspect.stack()`` reads source lines for every frame
+                        frame = sys._getframe(stack_level)
+                        file = Path(frame.f_code.co_filename).as_posix()
+                        return f'{file}:{frame.f_lineno}'
 
                     def warn_positional_args() -> None:
                         from pyvista.core.errors import PyVistaDeprecationWarning  # noqa: PLC0415
