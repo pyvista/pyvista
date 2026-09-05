@@ -715,7 +715,8 @@ pyvista = "pv"
   'PTH118',
   'PTH119',
 ]
-'tests/plotting/tinypages/gallery_src/*' = ['I002'] # rendered verbatim
+# Sphinx-Gallery examples are rendered verbatim, like those under 'examples/'
+'tests/plotting/tinypages/gallery_src/*' = ['I002']
 'tests/typing/cases/*' = ['E501'] # one aligned line per case
 
 [tool.ruff.lint.pylint]
