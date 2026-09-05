@@ -45,8 +45,20 @@ jobs:
           name: pr-info
           path: pr-info/
 
+  # A push to `main` comes out of the merge queue, which has already built the
+  # docs from the same tree on the same paid runner. Find that build so the
+  # push can publish it instead of paying for it twice.
+  resolve:
+    name: Find a matching build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/find-tree-build.yml
+    with:
+      marker-prefix: docs-tree
+
   cache-pyvista-data:
     name: Cache pyvista/data
+    needs: resolve
+    if: ${{ !cancelled() && needs.resolve.outputs.run-id == '' }}
     uses: ./.github/workflows/cache-pyvista-data.yml
     with:
       # Runner should match the actual runner used by the build job
@@ -55,7 +67,8 @@ jobs:
   doc:
     name: Build Documentation
     runs-on: blacksmith-8vcpu-ubuntu-2204
-    needs: cache-pyvista-data
+    needs: [cache-pyvista-data, resolve]
+    if: ${{ !cancelled() && needs.cache-pyvista-data.result == 'success' && needs.resolve.outputs.run-id == '' }}
     env:
       TOX_COLORED: "yes"
       PYVISTA_DATA: ${{ github.workspace }}/pyvista-data
@@ -153,6 +166,75 @@ jobs:
           name: pyvista-notebooks
           path: _notebooks
 
+      # Advertise this build to a later run of the same tree — a push to `main`
+      # out of the merge queue. Recorded only once every upload above has
+      # succeeded, and never for a tag, whose sidebar differs.
+      - name: Record the tree that was built
+        id: tree
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        run: |
+          echo "sha=$(git rev-parse 'HEAD^{tree}')" >> "$GITHUB_OUTPUT"
+          touch tree-marker
+
+      - name: Upload the tree marker
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: docs-tree-${{ steps.tree.outputs.sha }}
+          path: tree-marker
+
+  # Republishes the matched build under this run, so everything downstream —
+  # `publish-notebooks` here, the Netlify deploy over in `netlify-deploy.yml` —
+  # keeps reading `docs-build` from the run it was triggered by. The dev wheel
+  # is the one piece that cannot be copied: its version embeds the commit SHA,
+  # so it is rebuilt here against the commit that actually landed.
+  reuse:
+    name: Reuse Documentation Build
+    runs-on: ubuntu-22.04
+    needs: resolve
+    if: ${{ needs.resolve.outputs.run-id != '' }}
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: 3.14
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: docs-build
+          path: doc/_build/html
+          run-id: ${{ needs.resolve.outputs.run-id }}
+          github-token: ${{ github.token }}
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: pyvista-notebooks
+          path: _notebooks
+          run-id: ${{ needs.resolve.outputs.run-id }}
+          github-token: ${{ github.token }}
+
+      - name: Rebuild development wheel and simple index
+        run: |
+          rm -rf doc/_build/html/wheels
+          python -m pip install --upgrade build
+          python doc/make_dev_wheel.py --html-dir doc/_build/html
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: docs-build
+          path: doc/_build/html/
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: pyvista-notebooks
+          path: _notebooks
+
   test:
     name: Test Documentation
     runs-on: blacksmith-8vcpu-ubuntu-2204
@@ -212,8 +294,8 @@ jobs:
   publish-notebooks:
     name: Publish Notebooks for MyBinder
     runs-on: ubuntu-22.04
-    needs: doc
-    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    needs: [doc, reuse]
+    if: ${{ !cancelled() && (needs.doc.result == 'success' || needs.reuse.result == 'success') && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) }}
     steps:
       - uses: actions/checkout@v7
         with:
