@@ -100,7 +100,6 @@ test = [
   'pytest-cases<3.11.0',
   'pytest-cov<7.2.0',
   'pytest-mock<3.16.0',
-  'pytest-mypy-plugins<4.1.0',
   'pytest-pyvista==0.3.3',
   'pytest-xdist<3.9.0',
   'pytest<9.1.0',
@@ -123,8 +122,9 @@ test = [
   'tqdm<4.71.0',
   'trame-pyvista<0.2.0',
   'trimesh<5.1.0',
+  'type-assert==0.2.2',
   'typing-extensions<4.17.0',
-  { include-group = 'pinned' },
+  { include-group = 'typing' },
 ]
 
 test-playwright = ['playwright<1.63.0', { include-group = 'test' }]
@@ -189,6 +189,7 @@ docs-test = [
   'pytest-xdist<3.9.0',
   'refleak>=0.2.2,<0.3.0', # tests/conftest.py imports it for the leak check
   'trame-pyvista==0.1.7',
+  'type-assert==0.2.2', # registers the type_assert_cases option
   { include-group = 'pinned' },
 ]
 
@@ -290,6 +291,7 @@ filterwarnings = [
   'error',
 
   "ignore:'mode' parameter is deprecated and will be removed in Pillow 13:DeprecationWarning", # matplotlib toolbar icon creation with newer Pillow
+  'ignore:(?i).*_io\.FileIO.*pytest\.EXE:pytest.PytestUnraisableExceptionWarning', # the Windows launcher
   'ignore:.*A NumPy version .* is required for this version of SciPy.*:UserWarning',
   'ignore:.*Given trait value dtype "float64":UserWarning', # bogus numpy ABI warning (see numpy/#432)
   'ignore:.*The NumPy module was reloaded*:UserWarning', # bogus numpy ABI warning (see numpy/#432)
@@ -325,6 +327,7 @@ markers = [
 ]
 minversion = "7"
 testpaths = 'tests'
+type_assert_cases = 'tests/typing/cases'
 xfail_strict = true
 
 # pytest-pyvista options
@@ -714,6 +717,7 @@ pyvista = "pv"
 ]
 # Sphinx-Gallery examples are rendered verbatim, like those under 'examples/'
 'tests/plotting/tinypages/gallery_src/*' = ['I002']
+'tests/typing/cases/*' = ['E501'] # one aligned line per case
 
 [tool.ruff.lint.pylint]
 max-positional-args = 3

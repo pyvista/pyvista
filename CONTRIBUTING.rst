@@ -1204,6 +1204,127 @@ flags are required to run it.
 
             make typecheck
 
+Typing Tests
+^^^^^^^^^^^^
+Mypy only sees the annotations, so a hint can be wrong without Mypy noticing:
+the annotated type and the type a function actually returns may disagree, and
+complex ``@overload`` definitions may not resolve to the overload they were
+meant to. The typing tests pin both halves, so a mismatch between them fails.
+
+Install the regular test requirements with:
+
+.. code-block:: shell
+
+    python -m pip install -e . --group=test
+
+The tests can be executed with:
+
+.. tab-set::
+    :sync-group: category
+
+    .. tab-item:: pytest
+        :sync: pytest
+
+        .. code-block:: bash
+
+            pytest tests/typing
+
+    .. tab-item:: tox
+        :sync: tox
+
+        .. code-block:: bash
+
+            tox run -e py3.11 -- tests/typing
+
+    .. tab-item:: make
+        :sync: make
+
+        .. code-block:: bash
+
+            make test ARGS="tests/typing"
+
+Writing a Case
+""""""""""""""
+Cases live in ``tests/typing/cases``. A case is one line: an expression, and the
+type it should have.
+
+.. code-block:: python
+
+    assert_types(pv.wrap(_vtk.vtkPolyData()), pv.PolyData)
+    assert_types(pv.wrap(None), None)
+    assert_types(list(multi().recursive_iterator('names')), list[str])
+
+``assert_types`` comes from `type-assert <https://github.com/user27182/type-assert>`_
+and is two things at once. To Mypy it is
+`typing_extensions.assert_type <https://typing-extensions.readthedocs.io/en/latest/#typing_extensions.assert_type>`_,
+which requires the expression's inferred type to match the second argument
+*exactly*: a supertype is a failure, not a pass. At runtime it is a checker
+that inspects the value the expression actually produced. Writing the type once
+is enough for both, and a case only passes if the two agree.
+
+Write the expected type as an ordinary expression, such as ``pv.PolyData``,
+``pv.PolyData | pv.ImageData``, ``list[tuple[str, DataSet]]``, rather than as a string.
+Anything in the file that is not an ``assert_types`` line is setup: imports, and
+helpers such as the ``multi()`` above that builds a fresh ``MultiBlock``.
+
+How the Cases Run
+"""""""""""""""""
+Each case file is collected as a test file of its own. Every case in it becomes
+one runtime test and one static test per configured checker, named after the
+claim it makes rather than after where it sits in the file:
+
+.. code-block:: text
+
+    tests/typing/cases/wrap.py::pv.wrap(pv.PolyData()) -> pv.PolyData [runtime]
+    tests/typing/cases/wrap.py::pv.wrap(pv.PolyData()) -> pv.PolyData [static: mypy]
+
+The runtime half compiles the file's setup, runs it in a namespace of its own
+and then executes that one case against it, so a case cannot reach another
+case's state and reordering a file changes nothing. It walks containers
+exhaustively, so it catches a ``None`` at any position in a ``list[DataSet]``,
+not only the first element.
+
+The static half reads a single Mypy run, made once per session in a separate
+process, and reports the diagnostics landing on that case's lines. Mypy failing
+to run fails only these tests. Lines that are not cases are covered by a
+``setup`` test, one per file, so a broken import reads as a broken import.
+
+Skipping a Case
+"""""""""""""""
+A case that cannot run everywhere, because it crashes a platform or needs a
+dependency that is not always present, is named in a ``SKIP_RUNTIME`` mapping
+in its own file:
+
+.. code-block:: python
+
+    SKIP_RUNTIME = {
+        'pv.wrap(_vtk.vtkExplicitStructuredGrid())': 'VTK segfaults on an empty grid',
+    }
+
+Only the runtime half is skipped; Mypy still checks the case. The mapping is
+read after the file's setup has run, so making an entry conditional is ordinary
+Python. An entry naming an expression that no case makes fails the ``setup``
+test, so a skip cannot quietly outlive the case it was written for.
+
+The Framework
+"""""""""""""
+The machinery lives in `type-assert <https://github.com/user27182/type-assert>`_,
+a standalone package that knows nothing about PyVista. It registers itself as a
+pytest plugin and takes one setting in ``pyproject.toml``:
+
+.. code-block:: toml
+
+    type_assert_cases = 'tests/typing/cases'
+
+That setting sits in the shared ``[tool.pytest.ini_options]``, and unknown
+options are errors, so the package belongs in every dependency group whose
+environment runs pytest against this configuration, not only the ones that run
+the typing tests.
+
+The checkers it drives are selectable with ``type_assert_checkers``, which
+defaults to Mypy and accepts more than one. Report anything wrong with the
+framework itself against that repository rather than this one.
+
 Style Checking
 ~~~~~~~~~~~~~~
 PyVista follows PEP8 standard as outlined in the `Coding Style section
