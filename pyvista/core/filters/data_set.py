@@ -4725,7 +4725,7 @@ class DataSetFilters(DataObjectFilters):
         self: _DataSetType,
         ind: int | VectorLike[int] | VectorLike[bool],
         adjacent_cells: bool = True,  # noqa: FBT001, FBT002
-        include_cells: bool = True,  # noqa: FBT001, FBT002
+        include_cells: bool | None = None,  # noqa: FBT001
         pass_cell_ids: bool = True,  # noqa: FBT001, FBT002
         pass_point_ids: bool = True,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
@@ -4743,8 +4743,10 @@ class DataSetFilters(DataObjectFilters):
             contain exclusively points from the extracted points list.
             Has no effect if ``include_cells`` is ``False``.
 
-        include_cells : bool, default: True
-            Specifies if the cells shall be returned or not.
+        include_cells : bool, default: None
+            Specifies if the cells shall be returned or not. By default, this value is
+            ``True`` if the input has at least one cell and ``False`` otherwise, so
+            :class:`~pyvista.PointSet` input returns the selected points.
 
         pass_point_ids : bool, default: True
             Add a point array ``'vtkOriginalPointIds'`` that identifies the original
@@ -4784,6 +4786,8 @@ class DataSetFilters(DataObjectFilters):
 
         """
         ind = np.array(ind)
+        if include_cells is None:
+            include_cells = self.n_cells > 0
         # Create selection objects
         selectionNode = _vtk.vtkSelectionNode()
         selectionNode.SetFieldType(_vtk.vtkSelectionNode.POINT)
