@@ -2438,13 +2438,12 @@ class MultiBlock(
         # Verify array consistency
         dims: set[int] = set()
         dtypes: set[np.dtype[Any]] = set()
-        for _ in self:
-            for field, scalars, _ in data_assoc:
-                # only check for the active field association
-                if field != field_asc:
-                    continue
-                dims.add(scalars.ndim)
-                dtypes.add(scalars.dtype)
+        for field, scalars, _ in data_assoc:
+            # only check for the active field association
+            if field != field_asc:
+                continue
+            dims.add(scalars.ndim)
+            dtypes.add(scalars.dtype)
 
         if len(dims) > 1:
             msg = f'Inconsistent dimensions {dims} in active scalars.'
