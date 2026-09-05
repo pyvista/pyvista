@@ -63,6 +63,16 @@ jobs:
           name: pr-info
           path: pr-info/
 
+  # A push to `main` comes out of the merge queue, which has already run the
+  # Linux matrix against the same tree. Its coverage reports are the only
+  # output the push still needs, so look them up rather than earning them again.
+  resolve:
+    name: Find a matching build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/find-tree-build.yml
+    with:
+      marker-prefix: unit-tests-tree
+
   # Cache pyvista/data for each runner separately
   # Runner labels should match the actual runners used by the different jobs in this file
 
@@ -71,6 +81,8 @@ jobs:
   # GitHub runners too, via enableCrossOsArchive on the restore.
   cache-github-hosted:
     name: Cache pyvista/data
+    needs: resolve
+    if: ${{ !cancelled() && needs.resolve.outputs.run-id == '' }}
     uses: ./.github/workflows/cache-pyvista-data.yml
     with:
       runs-on: "ubuntu-22.04"
@@ -139,8 +151,12 @@ jobs:
 
   Linux:
     name: Linux Unit Testing (${{ matrix.python-version }}, ${{ matrix.vtk-version }}, ${{ matrix.numpy-version }})
+    # Skipped when the merge queue already produced coverage for this tree;
+    # `upload-coverage-` then takes the reports from that run. A push that no
+    # queue run matches — an admin merge, say — still runs the matrix.
+    if: ${{ !cancelled() && needs.cache-github-hosted.result == 'success' && needs.resolve.outputs.run-id == '' }}
     runs-on: ubuntu-22.04
-    needs: cache-github-hosted
+    needs: [cache-github-hosted, resolve]
     strategy:
       fail-fast: false
 
@@ -378,17 +394,19 @@ jobs:
   upload-coverage-:
     name: Upload coverage reports
     runs-on: ubuntu-22.04
-    needs: [Linux, VTK-dev]
+    needs: [Linux, VTK-dev, resolve]
     # `always()` ensures this still runs when VTK-dev is skipped because the
     # 'vtk-dev-testing' label is not applied. When VTK-dev does run, its reports
     # upload under their own flags.
     # Run on push/merge_group as well as pull_request so Codecov's
     # main-branch baseline keeps advancing with every merge.
-    if: always() && needs.Linux.result == 'success'
+    if: always() && (needs.Linux.result == 'success' || needs.resolve.outputs.run-id != '')
     permissions:
       # id-token: write authorizes OIDC token minting so codecov-action can
       # authenticate to Codecov without a long-lived CODECOV_TOKEN secret.
       id-token: write
+      # actions: read authorizes reading the artifacts of the matched run.
+      actions: read
       contents: read
     steps:
       # Needs to checkout only for codecov to match file names
@@ -397,11 +415,16 @@ jobs:
           fetch-depth: 2
           persist-credentials: false
 
+      # A coverage report carries no commit identity of its own, so reports
+      # earned in the merge queue are attributed to whichever commit uploads
+      # them — here, the commit the queue put on `main`.
       - name: Download coverage reports
         uses: actions/download-artifact@v8
         with:
           pattern: coverage_reports-*
           path: coverage_reports
+          run-id: ${{ needs.resolve.outputs.run-id || github.run_id }}
+          github-token: ${{ github.token }}
 
       # Each matrix cell contributes one report per side. Sorting them into their own
       # directories lets each side upload under its own flag. VTK-dev is matched first
@@ -449,6 +472,24 @@ jobs:
           flags: tests-vtk-dev
           fail_ci_if_error: true
           use_oidc: true
+
+      # Advertise this run's coverage reports to a later run of the same tree —
+      # a push to `main` out of the merge queue. Recorded only when this run
+      # earned the reports itself, so the marker never points at a run that was
+      # reusing someone else's.
+      - name: Record the tree these reports cover
+        if: needs.Linux.result == 'success'
+        id: tree
+        run: |
+          echo "sha=$(git rev-parse 'HEAD^{tree}')" >> "$GITHUB_OUTPUT"
+          touch tree-marker
+
+      - name: Upload the tree marker
+        if: needs.Linux.result == 'success'
+        uses: actions/upload-artifact@v7
+        with:
+          name: unit-tests-tree-${{ steps.tree.outputs.sha }}
+          path: tree-marker
 
   # Publish to PyPI using trusted publishing
   release:

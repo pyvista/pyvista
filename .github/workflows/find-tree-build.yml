@@ -1,0 +1,58 @@
+name: Find a matching build
+
+# Finds an earlier run that built the same source tree as this one.
+#
+# A workflow opts in by uploading an artifact named `<marker-prefix>-<tree>`
+# once its expensive jobs have succeeded, where `<tree>` is the git tree SHA of
+# the commit it built. Git tree SHAs are content addresses: an equal SHA means
+# byte-identical sources, down to the workflow files themselves. A push to
+# `main` that comes out of the merge queue therefore matches the queue's own
+# run, and can take that run's artifacts instead of rebuilding them.
+
+on:
+  workflow_call:
+    inputs:
+      marker-prefix:
+        description: Artifact name prefix that completed builds record.
+        required: true
+        type: string
+    outputs:
+      run-id:
+        description: Run that built this tree, or empty when there is none.
+        value: ${{ jobs.find.outputs.run-id }}
+
+permissions:
+  id-token: none
+
+jobs:
+  find:
+    name: Find a matching build
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+    outputs:
+      run-id: ${{ steps.find.outputs.run-id }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Look for a recorded build of this tree
+        id: find
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PREFIX: ${{ inputs.marker-prefix }}
+          REPO: ${{ github.repository }}
+        run: |
+          tree=$(git rev-parse 'HEAD^{tree}')
+          # The artifacts endpoint returns newest first, so the first live
+          # match is the most recent build of this tree.
+          run_id=$(gh api "repos/${REPO}/actions/artifacts?name=${PREFIX}-${tree}&per_page=100" \
+            --jq 'first(.artifacts[] | select(.expired == false) | .workflow_run.id) // empty')
+          echo "run-id=${run_id}" >> "$GITHUB_OUTPUT"
+          if [ -n "${run_id}" ]; then
+            echo "Tree \`${tree}\` was built by run ${run_id}." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Tree \`${tree}\` has no recorded build." >> "$GITHUB_STEP_SUMMARY"
+          fi
