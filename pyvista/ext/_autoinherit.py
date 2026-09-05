@@ -32,6 +32,8 @@ from sphinx.ext.autosummary import extract_summary
 from sphinx.util import logging
 from sphinx.util.docstrings import prepare_docstring
 
+from pyvista.core._vtk_utilities import _VTK_MODULE_PREFIXES
+
 if TYPE_CHECKING:
     from collections.abc import Iterable
     from collections.abc import Sequence
@@ -277,7 +279,8 @@ def _is_vtk(cls: type) -> bool:
     # ``vtkmodules`` also holds pure-Python helpers -- ``VTKObjectWrapper`` in
     # ``numpy_interface`` -- that VTK does not document, so the ``:vtk:`` role, which
     # checks every target against vtk.org, cannot resolve them.
-    return cls.__module__.startswith('vtkmodules.vtk')
+    root, _, module = cls.__module__.partition('.')
+    return f'{root}.' in _VTK_MODULE_PREFIXES and module.startswith('vtk')
 
 
 def _vtk_entry_points(cls: type) -> list[type]:
