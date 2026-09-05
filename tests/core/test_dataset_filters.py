@@ -2620,6 +2620,24 @@ def test_remove_points_unused_points(mode):
     assert removed['vtkOriginalPointIds'].tolist() == expected
 
 
+def test_remove_points_polydata_without_cells():
+    points = np.random.default_rng(0).random((5, 3))
+    mesh = pv.PolyData()
+    mesh.points = points
+    assert mesh.n_cells == 0
+
+    removed = mesh.remove_points(ind=0)
+    assert isinstance(removed, pv.PolyData)
+    assert removed.n_points == 4
+    assert removed.n_verts == 4
+    assert np.array_equal(removed.points, points[1:])
+
+    cloud = mesh.cast_to_pointset().remove_points(0)
+    assert isinstance(cloud, pv.PointSet)
+    assert cloud.n_cells == 0
+    assert np.array_equal(cloud.points, points[1:])
+
+
 def test_remove_points_invalid_mode(hexbeam):
     with pytest.raises(ValueError, match="mode 'foo' is not valid"):
         hexbeam.remove_points([0], mode='foo')

@@ -4936,6 +4936,10 @@ class DataSetFilters(DataObjectFilters):
         ``mode='all'``, this is the equivalent of :meth:`extract_points` that keeps
         the input type.
 
+        A ``PolyData`` without cells returns one vertex cell per remaining point, the
+        same as ``pv.PolyData(points)`` creates. Use :meth:`~pyvista.DataSet.cast_to_pointset`
+        first to remove points from a point cloud without cells.
+
         .. versionadded:: 0.49
 
         Parameters
