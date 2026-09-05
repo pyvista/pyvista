@@ -36,10 +36,11 @@ def test_dataset_from_attributes_wrapper():
     assert array.dataset.Get() is attributes.VTKObject
 
 
-def test_copies_are_not_associated():
+@pytest.mark.benchmark
+def test_copies_are_not_associated(benchmark):
     dataset = examples.load_structured()
     points = pyvista_ndarray(dataset.GetPoints().GetData(), dataset=dataset)
-    points_2 = points.copy()
+    points_2 = benchmark(points.copy)
 
     # check that copies of pyvista_ndarray are dissociated from the original dataset
     assert points_2.VTKObject is None

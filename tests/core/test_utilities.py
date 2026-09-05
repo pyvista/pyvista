@@ -456,11 +456,12 @@ def test_get_array_cell(hexbeam):
     assert np.allclose(carr, data)
 
 
-def test_get_array_point(hexbeam):
+@pytest.mark.benchmark
+def test_get_array_point(hexbeam, benchmark):
     parr = np.random.default_rng().random(hexbeam.n_points)
     hexbeam.point_data.set_array(parr, 'test_data')
 
-    data = get_array(hexbeam, 'test_data', preference='point')
+    data = benchmark(get_array, hexbeam, 'test_data', preference='point')
     assert np.allclose(parr, data)
 
     oarr = np.random.default_rng().random(hexbeam.n_points)

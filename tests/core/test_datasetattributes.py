@@ -372,9 +372,10 @@ def test_add_should_contain_exact_array(insert_arange_narray):
     assert np.array_equal(sample_array, dsa['sample_array'])
 
 
-def test_getters_should_return_same_result(insert_arange_narray):
+@pytest.mark.benchmark
+def test_getters_should_return_same_result(insert_arange_narray, benchmark):
     dsa, _sample_array = insert_arange_narray
-    result_a = dsa.get_array('sample_array')
+    result_a = benchmark(dsa.get_array, 'sample_array')
     result_b = dsa['sample_array']
     assert np.array_equal(result_a, result_b)
 

@@ -562,10 +562,11 @@ def test_extract_all_edges_composite_pointset_raises(multiblock_all):
         multiblock_all.extract_all_edges(progress_bar=True)
 
 
-def test_elevation(uniform):
+@pytest.mark.benchmark
+def test_elevation(uniform, benchmark):
     dataset = uniform
     # Test default params
-    elev = dataset.elevation(progress_bar=True)
+    elev = benchmark(dataset.elevation)
     assert 'Elevation' in elev.array_names
     assert elev.active_scalars_name == 'Elevation'
     assert elev.get_data_range() == (dataset.bounds.z_min, dataset.bounds.z_max)
@@ -688,9 +689,10 @@ def test_cell_centers(datasets):
         assert isinstance(result, pv.PolyData)
 
 
-def test_cell_centers_no_cell_data(cube):
+@pytest.mark.benchmark
+def test_cell_centers_no_cell_data(cube, benchmark):
     # test passing cell data kwarg works
-    assert cube.cell_centers(pass_cell_data=True).cell_data
+    assert benchmark(cube.cell_centers, pass_cell_data=True).cell_data
     assert not cube.cell_centers(pass_cell_data=False).cell_data
 
 
@@ -748,9 +750,10 @@ def test_point_data_to_cell_data_composite_pointset_raises(multiblock_all):
         multiblock_all.point_data_to_cell_data(progress_bar=True)
 
 
-def test_triangulate():
+@pytest.mark.benchmark
+def test_triangulate(benchmark):
     data = examples.load_uniform()
-    tri = data.triangulate(progress_bar=True)
+    tri = benchmark(data.triangulate)
     assert isinstance(tri, pv.UnstructuredGrid)
     assert np.any(tri.cells)
 

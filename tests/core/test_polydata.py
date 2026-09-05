@@ -67,13 +67,15 @@ def test_init_from_pdata(sphere):
 
 
 @pytest.mark.parametrize('faces_is_cell_array', [False, True])
-def test_init_from_arrays(faces_is_cell_array):
+@pytest.mark.benchmark
+def test_init_from_arrays(faces_is_cell_array, benchmark):
     vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0.5, 0.5, -1]])
 
     # mesh faces
     faces = np.hstack([[4, 0, 1, 2, 3], [3, 0, 1, 4], [3, 1, 2, 4]]).astype(np.int8)
 
-    mesh = pv.PolyData(vertices, pv.CellArray(faces) if faces_is_cell_array else faces)
+    faces_arg = pv.CellArray(faces) if faces_is_cell_array else faces
+    mesh = benchmark(pv.PolyData, vertices, faces_arg)
     assert mesh.n_points == 5
     assert mesh.n_cells == 3
 
@@ -904,8 +906,9 @@ def test_extract_feature_edges_no_data():
     assert edges.n_arrays == 0
 
 
-def test_decimate(sphere):
-    mesh = sphere.decimate(0.5, progress_bar=True)
+@pytest.mark.benchmark
+def test_decimate(sphere, benchmark):
+    mesh = benchmark(sphere.decimate, 0.5)
     assert mesh.n_points < sphere.n_points
     assert mesh.n_faces < sphere.n_faces
 
@@ -1077,10 +1080,11 @@ def test_extract_largest(sphere):
     assert mesh.n_faces == sphere.n_faces
 
 
-def test_clean(sphere):
+@pytest.mark.benchmark
+def test_clean(sphere, benchmark):
     mesh = sphere.merge(sphere, merge_points=False).extract_surface(algorithm=None)
     assert mesh.n_points > sphere.n_points
-    cleaned = mesh.clean(merge_tol=1e-5)
+    cleaned = benchmark(mesh.clean, merge_tol=1e-5)
     assert cleaned.n_points == sphere.n_points
 
     mesh.clean(merge_tol=1e-5, inplace=True)
@@ -1437,10 +1441,11 @@ def test_tetrahedron_regular_faces():
 
 
 @pytest.mark.parametrize('deep', [False, True])
-def test_regular_faces(deep):
+@pytest.mark.benchmark
+def test_regular_faces(deep, benchmark):
     points = np.array([[1, 1, 1], [-1, 1, -1], [1, -1, -1], [-1, -1, 1]], dtype=float)
     faces = np.array([[0, 1, 2], [1, 3, 2], [0, 2, 3], [0, 3, 1]])
-    mesh = pv.PolyData.from_regular_faces(points, faces, deep=deep)
+    mesh = benchmark(pv.PolyData.from_regular_faces, points, faces, deep=deep)
     expected_faces = np.hstack([np.full((len(faces), 1), 3), faces]).astype(pv.ID_TYPE).flatten()
     assert np.array_equal(mesh.faces, expected_faces)
     assert np.array_equal(mesh.regular_faces, faces)
