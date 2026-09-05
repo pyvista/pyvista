@@ -739,6 +739,11 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         z = (bnds.z_max + bnds.z_min) / 2
         return x, y, z
 
+    def _unscaled_bounds(self) -> BoundsTuple:
+        """Return the scene bounds as an actor sees them before the renderer scale."""
+        scale = np.repeat(np.array(self.scale, dtype=float), 2)
+        return BoundsTuple(*(np.array(self.bounds) / scale).tolist())
+
     @property
     def background_color(self):  # numpydoc ignore=RT01
         """Return the background color of this renderer."""
@@ -2334,7 +2339,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             box = source
         else:
             box = _vtk.vtkCubeSource()
-        box.SetBounds(self.bounds)
+        box.SetBounds(self._unscaled_bounds())
         box.Update()
         box_object = wrap(box.GetOutput())
         self._bounding_box = box
@@ -2468,36 +2473,37 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             kwargs = locals()
             kwargs.pop('self')
             self._floor_kwargs.append(kwargs)
-        ranges = np.ptp(np.array(self.bounds).reshape(-1, 2), axis=1)
+        bounds = self._unscaled_bounds()
+        ranges = np.ptp(np.array(bounds).reshape(-1, 2), axis=1)
         ranges += ranges * pad
-        center = np.array(self.center)
+        center = np.array(bounds).reshape(-1, 2).mean(axis=1)
         if face.lower() in '-z':
-            center[2] = self.bounds.z_min - (ranges[2] * offset)
+            center[2] = bounds.z_min - (ranges[2] * offset)
             normal = (0, 0, 1)
             i_size = ranges[0]
             j_size = ranges[1]
         elif face.lower() in '-y':
-            center[1] = self.bounds.y_min - (ranges[1] * offset)
+            center[1] = bounds.y_min - (ranges[1] * offset)
             normal = (0, 1, 0)
             i_size = ranges[2]
             j_size = ranges[0]
         elif face.lower() in '-x':
-            center[0] = self.bounds.x_min - (ranges[0] * offset)
+            center[0] = bounds.x_min - (ranges[0] * offset)
             normal = (1, 0, 0)
             i_size = ranges[2]
             j_size = ranges[1]
         elif face.lower() in '+z':
-            center[2] = self.bounds.z_max + (ranges[2] * offset)
+            center[2] = bounds.z_max + (ranges[2] * offset)
             normal = (0, 0, -1)
             i_size = ranges[0]
             j_size = ranges[1]
         elif face.lower() in '+y':
-            center[1] = self.bounds.y_max + (ranges[1] * offset)
+            center[1] = bounds.y_max + (ranges[1] * offset)
             normal = (0, -1, 0)
             i_size = ranges[2]
             j_size = ranges[0]
         elif face.lower() in '+x':
-            center[0] = self.bounds.x_max + (ranges[0] * offset)
+            center[0] = bounds.x_max + (ranges[0] * offset)
             normal = (-1, 0, 0)
             i_size = ranges[2]
             j_size = ranges[1]
@@ -3057,7 +3063,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
     def update_bounds_axes(self) -> None:
         """Update the bounds axes of the render window."""
         if self._box_object is not None and self.bounding_box_actor is not None:
-            if not np.allclose(self._box_object.bounds, self.bounds):
+            if not np.allclose(self._box_object.bounds, self._unscaled_bounds()):
                 color = self.bounding_box_actor.GetProperty().GetColor()
                 self.remove_bounding_box()
                 self.add_bounding_box(color=color)

@@ -170,6 +170,60 @@ def test_show_bounds_scaled_keeps_text_changes():
     assert actor.GetLabelTextProperty(0).GetFontSize() == 37
 
 
+SCALE = (1.0, 15.0, 5.0)
+
+
+@pytest.mark.parametrize('scale_first', [True, False])
+def test_add_bounding_box_scaled(scale_first):
+    """The box sits on the scene whichever order the scale is set in.
+
+    Regression test for https://github.com/pyvista/pyvista/issues/4695.
+    """
+    pl = pv.Plotter()
+    mesh_actor = pl.add_mesh(pv.Sphere())
+    if scale_first:
+        pl.set_scale(*SCALE)
+    pl.add_bounding_box()
+    if not scale_first:
+        pl.set_scale(*SCALE)
+    assert np.allclose(pl.renderer.bounding_box_actor.GetBounds(), mesh_actor.GetBounds())
+
+
+def test_add_bounding_box_rescaled_keeps_actor():
+    """A scale change moves the box with the scene; only a bigger scene rebuilds it."""
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    box = pl.add_bounding_box()
+    pl.set_scale(*SCALE)
+    assert pl.renderer.bounding_box_actor is box
+    pl.add_mesh(pv.Cube(x_length=3.0))
+    new_box = pl.renderer.bounding_box_actor
+    assert new_box is not box
+    expected = pl.renderer.compute_bounds(ignore_actors=[new_box])
+    assert np.allclose(new_box.GetBounds(), expected)
+
+
+@pytest.mark.parametrize('scale_first', [True, False])
+def test_add_floor_scaled(scale_first):
+    """The floor scales with the scene, padding and offset included.
+
+    Regression test for https://github.com/pyvista/pyvista/issues/4695.
+    """
+
+    def floor_bounds(scale):
+        pl = pv.Plotter()
+        pl.add_mesh(pv.Sphere())
+        if scale_first:
+            pl.set_scale(*scale)
+        floor = pl.add_floor('-z', pad=0.5, offset=0.5)
+        if not scale_first:
+            pl.set_scale(*scale)
+        return np.array(floor.GetBounds())
+
+    unscaled = floor_bounds((1.0, 1.0, 1.0))
+    assert np.allclose(floor_bounds(SCALE), unscaled * np.repeat(SCALE, 2))
+
+
 def test_remove_bounds_axes_forgets_pinned_bounds():
     """Pinned bounds do not outlive the actor they were pinned for."""
     cube = pv.Cube()

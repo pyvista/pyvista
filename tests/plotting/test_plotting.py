@@ -1006,6 +1006,25 @@ def test_plot_show_bounds_scaled_subplots():
     pl.show()
 
 
+def test_plot_show_bounds_scaled_bounding_box():
+    """The third reproducer from https://github.com/pyvista/pyvista/issues/4695, on a sphere."""
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere(), smooth_shading=True, specular=1, color='#DDDDDD')
+    pl.set_scale(xscale=1, yscale=15, zscale=5)
+    pl.show_bounds(
+        grid='back',
+        location='outer',
+        xtitle='Easting',
+        ytitle='Northing',
+        ztitle='Depth',
+        bold=False,
+        font_size=5,
+    )
+    pl.add_bounding_box(line_width=5, color='black')
+    pl.show_axes()
+    pl.show()
+
+
 @pytest.mark.parametrize('use_3d_text', [True, False])
 @pytest.mark.parametrize('font_size', [12, 24])
 def test_plot_show_grid_font_size(sphere, use_3d_text, font_size):
