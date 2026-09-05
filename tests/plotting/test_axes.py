@@ -163,8 +163,28 @@ def test_axes_actor_labels_group(axes_actor):
         axes_actor.labels = ['1', '2']
 
 
-def test_axes_actor_properties():
-    prop = pv.ActorProperties(_vtk.vtkProperty())
+@pytest.mark.parametrize('axis', ['x', 'y', 'z'])
+@pytest.mark.parametrize('part', ['shaft', 'tip'])
+def test_axes_actor_properties(axes_actor, axis, part):
+    name = f'{axis}_axis_{part}_properties'
+    vtk_getter = getattr(axes_actor, f'Get{axis.upper()}Axis{part.title()}Property')
+
+    prop = getattr(axes_actor, name)
+    assert isinstance(prop, pv.Property)
+    assert vtk_getter() is prop
+    assert prop.color == getattr(pv.global_theme.axes, f'{axis}_color')
+    assert prop.interpolation == InterpolationType.GOURAUD
+
+    new_prop = pv.Property(color='purple')
+    setattr(axes_actor, name, new_prop)
+    assert getattr(axes_actor, name) is new_prop
+    assert vtk_getter() is new_prop
+
+
+def test_actor_properties_deprecated():
+    assert pv.version_info < (0, 52), 'Convert the `ActorProperties` deprecation to an error.'
+    with pytest.warns(pv.PyVistaDeprecationWarning, match='Use `pyvista.Property` instead'):
+        prop = pv.ActorProperties(_vtk.vtkProperty())
 
     prop.color = (1, 1, 1)
     assert prop.color == (1, 1, 1)

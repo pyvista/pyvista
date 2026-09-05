@@ -49,7 +49,7 @@ _VERSION_CONDITIONAL_UNDOCUMENTED: set[str] = set()
 
 _ALLOWED_UNDOCUMENTED = frozenset(
     {
-        'ActorProperties',  # similar to Property but uses composition - should be deprecated
+        'ActorProperties',  # deprecated in favor of Property
         'AnnotatedIntEnum',  # base class for internal int-enum types
         'BackgroundPlotter',  # deprecated and moved to pyvistaqt
         'BasePlotter',  # abstract base; Plotter subclass is documented
