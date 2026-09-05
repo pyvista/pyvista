@@ -62,6 +62,8 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import _DataObjectType
     from pyvista.core._typing_core import _DataSetType
     from pyvista.core.filters.data_object import _ExtractSurfaceOptions
+    from pyvista.core.utilities.arrays import CellLiteral
+    from pyvista.core.utilities.arrays import PointLiteral
     from pyvista.plotting._typing import ColorLike
     from pyvista.plotting._typing import ColormapOptions
 
@@ -4695,7 +4697,7 @@ class DataSetFilters(DataObjectFilters):
 
         """
         mask = _validate_extraction_ids(ind, n_items=self.n_cells, name='cells', invert=invert)
-        _, indices = numpy_to_idarr(np.flatnonzero(mask), return_ind=True)  # type: ignore[misc]
+        indices = np.flatnonzero(mask).astype(pv.ID_TYPE, copy=False)
 
         # Extract using a shallow copy to avoid the side effect of creating the
         # vtkOriginalPointIds and vtkOriginalCellIds arrays in the input
@@ -4710,7 +4712,7 @@ class DataSetFilters(DataObjectFilters):
 
         extract = _vtk.vtkExtractCells()
         extract.SetInputData(ds_copy)
-        extract.SetCellIds(indices, indices.size)
+        extract.SetCellIds(cast('Sequence[int]', indices), indices.size)
         extract.SetAssumeSortedAndUniqueIds(True)
         # We set the arrays manually earlier
         extract.SetPassThroughCellIds(False)
@@ -4724,9 +4726,9 @@ class DataSetFilters(DataObjectFilters):
         )
 
         # Make active scalars match input
-        info = self.active_scalars_info
-        if info.name is None or info.name in output.array_names:
-            output.set_active_scalars(info.name, info.association)
+        association, name = self.active_scalars_info
+        if name is None or name in output.array_names:
+            output.set_active_scalars(name, cast('PointLiteral | CellLiteral', association))
         return output
 
     @_deprecate_positional_args(allowed=['ind'])

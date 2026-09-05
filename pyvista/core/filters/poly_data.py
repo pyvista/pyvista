@@ -2890,7 +2890,7 @@ class PolyDataFilters(DataSetFilters):
         return pl.show()
 
     @_deprecate_positional_args(allowed=['remove', 'mode'])
-    def remove_points(  # noqa: PLR0917
+    def remove_points(  # type: ignore[override]  # noqa: PLR0917
         self,
         remove=None,
         mode='any',
@@ -2957,7 +2957,9 @@ class PolyDataFilters(DataSetFilters):
             if remove is not None or keep_scalars is not None:
                 msg = '`remove` and `keep_scalars` cannot be used together with `ind`.'
                 raise TypeError(msg)
-            return DataSetFilters.remove_points(self, ind, mode, inplace=inplace, **kwargs)
+            return DataSetFilters.remove_points(
+                cast('PolyData', self), ind, mode, inplace=inplace, **kwargs
+            )
 
         assert_empty_kwargs(**kwargs)
         # deprecated 0.49.0, convert to error in 0.52.0, remove 0.53.0
