@@ -3215,6 +3215,20 @@ def test_deprecate_positional_args_error_messages():
         foo(True, True)
 
 
+def test_deprecate_positional_args_call_site_and_extra_args():
+    @_deprecate_positional_args(version=(1, 2))
+    def foo(bar, baz): ...
+
+    # The warning names this file as the call site
+    match = rf'\n{re.escape(Path(__file__).as_posix())}:\d+: Arguments'
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        foo(True, True)
+
+    # Too many positional arguments still warn, then raise from the function itself
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match), pytest.raises(TypeError):
+        foo(True, True, True)
+
+
 def test_deprecate_positional_args_post_deprecation():
     match = (
         r'Positional arguments are no longer allowed in '

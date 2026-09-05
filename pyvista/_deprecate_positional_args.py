@@ -192,11 +192,11 @@ def _deprecate_positional_args(
         # Optimization: the offending names depend only on how many positional arguments
         # are passed, so compute them once per count instead of on every call
         offending_by_count = [
-            [
+            tuple(
                 name
                 for name in param_names[:count]
                 if name not in (allowed or []) and name not in ('self', 'cls')
-            ]
+            )
             for count in range(len(param_names) + 1)
         ]
 
