@@ -45,9 +45,9 @@ class Example(Generic[_DatasetT_co, _ReadersT_co]):
 
     .. versionadded:: 0.49
 
-    Returned by :func:`~pyvista.examples.get_example`. Every sequence-valued field is
-    a tuple with one entry per path, in the same order, including for single-file
-    examples. The class is generic over the dataset :meth:`load` returns and the
+    Call :func:`~pyvista.examples.get_example` to get an example; this class is not
+    meant to be constructed directly. Every sequence-valued field is a tuple with one
+    entry per path, in the same order, including for single-file examples. The class is generic over the dataset :meth:`load` returns and the
     tuple :attr:`readers` returns, which :func:`~pyvista.examples.get_example`
     resolves statically for every example name.
 
