@@ -457,7 +457,7 @@ extend-select = [
   'RET',
   'RSE',
   'RUF',
-  'S101',
+  'S',
   'SIM',
   'T10',
   'T20',
@@ -497,6 +497,7 @@ ignore = [
   'RET505', # https://github.com/pyvista/pyvista/pull/5911
   'RET506', # https://github.com/pyvista/pyvista/pull/5911
   'RET507', # https://github.com/pyvista/pyvista/pull/5911
+  'S603', # subprocess calls pass argv lists, never a shell string
   'SIM102', # https://github.com/pyvista/pyvista/pull/5877
   'SIM117', # https://github.com/pyvista/pyvista/pull/5888
   'SIM118', # https://github.com/pyvista/pyvista/pull/5837
@@ -584,6 +585,8 @@ pyvista = "pv"
 '.claude/skills/*/scripts/*.py' = ['INP', 'T20']
 '__init__.py' = ['PLC0414']
 'doc/*' = ['ANN', 'INP', 'PLC0415']
+# git is resolved from PATH like every other developer tool
+'doc/make_dev_wheel.py' = ['S607']
 # A command-line script: it reports what it runs, like `make` does.
 'doc/run_vale.py' = ['T20']
 'doc/source/make_tables.py' = [
@@ -637,12 +640,15 @@ pyvista = "pv"
 'pyvista/core/utilities/cell.py' = ['ANN']
 'pyvista/core/utilities/docs.py' = ['ANN']
 'pyvista/core/utilities/features.py' = ['ANN']
+# `pass_data` selects which data arrays to pass through; it is not a password
+'pyvista/core/utilities/fileio.py' = ['S105']
 'pyvista/core/utilities/geometric_objects.py' = ['N802']
 'pyvista/core/utilities/helpers.py' = ['ANN']
 'pyvista/core/utilities/image_sources.py' = ['ANN']
 'pyvista/core/utilities/observers.py' = ['ANN']
 'pyvista/core/utilities/parametric_objects.py' = ['N802']
-'pyvista/core/utilities/reader.py' = ['ANN', 'N802']
+# ElementTree does not resolve external entities, and .pvd files are trusted input
+'pyvista/core/utilities/reader.py' = ['ANN', 'N802', 'S314']
 'pyvista/demos/*' = ['ANN']
 'pyvista/errors.py' = ['ANN']
 'pyvista/examples/cells.py' = ['N802']
@@ -671,7 +677,8 @@ pyvista = "pv"
 'pyvista/plotting/axes_actor.py' = ['ANN']
 'pyvista/plotting/axes_assembly.py' = ['ANN']
 'pyvista/plotting/background_renderer.py' = ['ANN']
-'pyvista/plotting/camera.py' = ['ANN']
+# ElementTree does not resolve external entities, and .pvcc files are trusted input
+'pyvista/plotting/camera.py' = ['ANN', 'S314']
 'pyvista/plotting/charts.py' = ['ANN']
 'pyvista/plotting/colors.py' = ['ANN']
 'pyvista/plotting/composite_mapper.py' = ['ANN']
@@ -694,7 +701,8 @@ pyvista = "pv"
 'pyvista/plotting/text.py' = ['ANN']
 'pyvista/plotting/texture.py' = ['ANN']
 'pyvista/plotting/themes.py' = ['ANN', 'ICN001']
-'pyvista/plotting/tools.py' = ['ANN']
+# pgrep and xset live in distribution-specific directories
+'pyvista/plotting/tools.py' = ['ANN', 'S607']
 'pyvista/plotting/utilities/*.py' = ['ANN']
 'pyvista/plotting/utilities/algorithms.py' = ['N802', 'N803']
 'pyvista/plotting/volume.py' = ['ANN']
@@ -703,6 +711,16 @@ pyvista = "pv"
 'pyvista/report.py' = ['ANN']
 'pyvista/utilities/*' = ['ANN', 'F401'] # deprecated modules
 'tests/*' = ['ANN', 'D', 'FBT', 'INP', 'PLC0415', 'PLR0917', 'S101', 'T20']
+# These tests exercise the in-memory pickle protocol on objects they built themselves
+'tests/core/test_accessor_registry.py' = ['S301']
+'tests/core/test_dataobject.py' = ['S301']
+# `pass_data` selects which data arrays to pass through; it is not a password
+'tests/core/test_helpers.py' = ['S106']
+'tests/core/test_utilities.py' = ['S301']
+# Parses the junit report sphinx-gallery wrote during the docs build
+'tests/doc/doc_build/test_gallery_examples.py' = ['S314']
+# vale is resolved from PATH like every other developer tool
+'tests/doc/vale/check_expected_failures.py' = ['S607']
 'tests/examples/test_dataset_loader.py' = [
   'PTH102',
   'PTH107',
@@ -714,6 +732,7 @@ pyvista = "pv"
 ]
 # Sphinx-Gallery examples are rendered verbatim, like those under 'examples/'
 'tests/plotting/tinypages/gallery_src/*' = ['I002']
+'tests/security/test_pickle_refused.py' = ['S301']
 
 [tool.ruff.lint.pylint]
 max-positional-args = 3
