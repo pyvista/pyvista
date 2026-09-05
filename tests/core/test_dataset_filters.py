@@ -2519,7 +2519,7 @@ def test_remove_cells(datasets):
                 dataset.remove_cells(ind)
             continue
 
-        removed = dataset.remove_cells(ind, pass_cell_ids=True, pass_point_ids=True)
+        removed = dataset.remove_cells(ind)
         assert type(removed) is (
             pv.PolyData if isinstance(dataset, pv.PolyData) else pv.UnstructuredGrid
         )
@@ -2529,13 +2529,16 @@ def test_remove_cells(datasets):
         assert removed == dataset.extract_cells(ind, invert=True, match_input_type=True)
         assert removed.n_points == removed.remove_unused_points().n_points
 
-        # No id arrays by default
-        assert dataset.remove_cells(ind).array_names == dataset.array_names
+        # The id arrays are added by default
+        assert 'vtkOriginalPointIds' in removed.point_data
+        assert 'vtkOriginalCellIds' in removed.cell_data
+        removed = dataset.remove_cells(ind, pass_point_ids=False, pass_cell_ids=False)
+        assert removed.array_names == dataset.array_names
 
 
 def test_remove_cells_invert(hexbeam):
     ind = [0, 1, 2]
-    kept = hexbeam.remove_cells(ind, invert=True, pass_cell_ids=True)
+    kept = hexbeam.remove_cells(ind, invert=True)
     assert kept.n_cells == len(ind)
     assert np.array_equal(kept['vtkOriginalCellIds'], ind)
 
@@ -2559,9 +2562,7 @@ def test_remove_cells_inplace(hexbeam, sphere, struct_grid):
 def test_remove_points(datasets, mode):
     for dataset in datasets:
         ind = dataset.get_cell(0).point_ids if dataset.n_cells else [0, 1, 2]
-        removed = dataset.remove_points(
-            ind=ind, mode=mode, pass_point_ids=True, pass_cell_ids=True
-        )
+        removed = dataset.remove_points(ind=ind, mode=mode)
         expected_type = (
             type(dataset)
             if isinstance(dataset, (pv.PolyData, pv.PointSet))
@@ -2582,8 +2583,11 @@ def test_remove_points(datasets, mode):
             assert removed.n_cells < dataset.n_cells
             assert removed.n_points == removed.remove_unused_points().n_points
 
-        # No id arrays by default
-        assert dataset.remove_points(ind=ind).array_names == dataset.array_names
+        # The id arrays are added by default
+        assert 'vtkOriginalPointIds' in removed.point_data
+        assert ('vtkOriginalCellIds' in removed.cell_data) == bool(dataset.n_cells)
+        removed = dataset.remove_points(ind=ind, pass_point_ids=False, pass_cell_ids=False)
+        assert removed.array_names == dataset.array_names
 
 
 @pytest.mark.parametrize('mode', ['any', 'all'])
@@ -2592,7 +2596,7 @@ def test_remove_points_matches_polydata_filter(sphere, mode):
     remove[sphere.regular_faces[0]] = True
     with pytest.warns(pv.PyVistaDeprecationWarning):
         expected, ridx = pv.PolyDataFilters.remove_points(sphere, remove, mode=mode)
-    actual = pv.DataSetFilters.remove_points(sphere, remove, mode=mode, pass_point_ids=True)
+    actual = pv.DataSetFilters.remove_points(sphere, remove, mode=mode)
     assert np.array_equal(actual.points, expected.points)
     assert np.array_equal(actual.faces, expected.faces)
     assert np.array_equal(actual['vtkOriginalPointIds'], ridx)
@@ -2600,7 +2604,7 @@ def test_remove_points_matches_polydata_filter(sphere, mode):
 
 def test_remove_points_invert_inplace(hexbeam, struct_grid):
     ind = hexbeam.get_cell(0).point_ids
-    kept = hexbeam.remove_points(ind, invert=True, pass_point_ids=True)
+    kept = hexbeam.remove_points(ind, invert=True)
     assert kept.n_cells == 1
     assert np.array_equal(kept['vtkOriginalPointIds'], sorted(ind))
 
@@ -2621,10 +2625,10 @@ def test_remove_points_unused_points(mode):
     assert lines.n_points == 5
 
     # Point 4 is not used by any cell
-    removed = lines.remove_points(ind=4, mode=mode, pass_point_ids=True)
+    removed = lines.remove_points(ind=4, mode=mode)
     assert removed['vtkOriginalPointIds'].tolist() == [0, 1, 2, 3]
     # Point 3 is only removed when its cell is removed too
-    removed = lines.remove_points(ind=[4, 3], mode=mode, pass_point_ids=True)
+    removed = lines.remove_points(ind=[4, 3], mode=mode)
     expected = [0, 1, 2] if mode == 'any' else [0, 1, 2, 3]
     assert removed['vtkOriginalPointIds'].tolist() == expected
 

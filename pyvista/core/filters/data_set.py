@@ -4860,8 +4860,8 @@ class DataSetFilters(DataObjectFilters):
         inplace: bool = False,  # noqa: FBT001, FBT002
         *,
         invert: bool = False,
-        pass_point_ids: bool = False,
-        pass_cell_ids: bool = False,
+        pass_point_ids: bool = True,
+        pass_cell_ids: bool = True,
         progress_bar: bool = False,
     ):
         r"""Remove cells from a mesh.
@@ -4889,11 +4889,11 @@ class DataSetFilters(DataObjectFilters):
         invert : bool, default: False
             Invert the selection and remove all cells *except* those specified.
 
-        pass_point_ids : bool, default: False
+        pass_point_ids : bool, default: True
             Add a point array ``'vtkOriginalPointIds'`` that identifies the original
             points the remaining points correspond to.
 
-        pass_cell_ids : bool, default: False
+        pass_cell_ids : bool, default: True
             Add a cell array ``'vtkOriginalCellIds'`` that identifies the original cells
             the remaining cells correspond to.
 
@@ -4945,8 +4945,8 @@ class DataSetFilters(DataObjectFilters):
         mode: Literal['any', 'all'] = 'any',
         *,
         invert: bool = False,
-        pass_point_ids: bool = False,
-        pass_cell_ids: bool = False,
+        pass_point_ids: bool = True,
+        pass_cell_ids: bool = True,
         inplace: bool = False,
         progress_bar: bool = False,
     ):
@@ -4973,11 +4973,11 @@ class DataSetFilters(DataObjectFilters):
         invert : bool, default: False
             Invert the selection and remove all points *except* those specified.
 
-        pass_point_ids : bool, default: False
+        pass_point_ids : bool, default: True
             Add a point array ``'vtkOriginalPointIds'`` that identifies the original
             points the remaining points correspond to.
 
-        pass_cell_ids : bool, default: False
+        pass_cell_ids : bool, default: True
             Add a cell array ``'vtkOriginalCellIds'`` that identifies the original cells
             the remaining cells correspond to.
 
@@ -5006,8 +5006,8 @@ class DataSetFilters(DataObjectFilters):
         >>> reduced_sphere = sphere.remove_points(ind=range(100, 250))
         >>> reduced_sphere.plot(show_edges=True, line_width=3)
 
-        Remove a point from a mesh of line segments and keep the ids of the remaining
-        points.
+        Remove a point from a mesh of line segments. The ids of the remaining points
+        are kept.
 
         >>> points = [
         ...     [0.0, 0.0, 0.0],
@@ -5016,7 +5016,7 @@ class DataSetFilters(DataObjectFilters):
         ...     [3.0, 0.0, 0.0],
         ... ]
         >>> lines = pv.PolyData(points, lines=[2, 0, 1, 2, 1, 2, 2, 2, 3])
-        >>> reduced = lines.remove_points(ind=0, pass_point_ids=True)
+        >>> reduced = lines.remove_points(ind=0)
         >>> reduced['vtkOriginalPointIds'].tolist()
         [1, 2, 3]
 

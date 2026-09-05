@@ -1170,6 +1170,8 @@ def test_remove_points_deprecated(sphere):
         sphere.remove_points()
     with pytest.raises(TypeError, match='require `ind`'):
         sphere.remove_points([0], invert=True)
+    with pytest.raises(TypeError, match='require `ind`'):
+        sphere.remove_points([0], pass_point_ids=True)
 
     if pv.version_info >= (0, 52):  # pragma: no cover -- fires at the version bump
         pytest.fail('Convert the `remove_points` tuple return into an error.')
@@ -1181,7 +1183,7 @@ def test_remove_points_ind(sphere, plane):
     with pytest.warns(pv.PyVistaDeprecationWarning):
         expected, ridx = sphere.remove_points(remove_mask)
 
-    reduced = sphere.remove_points(ind=remove_mask, pass_point_ids=True)
+    reduced = sphere.remove_points(ind=remove_mask)
     assert isinstance(reduced, pv.PolyData)
     assert np.array_equal(reduced.points, expected.points)
     assert np.array_equal(reduced.faces, expected.faces)
