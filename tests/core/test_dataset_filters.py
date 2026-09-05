@@ -4570,6 +4570,48 @@ def test_color_labels_return_dict(labeled_image, color_type):
         assert actual_color == expected_color
 
 
+@pytest.mark.parametrize('negative_indexing', [True, False])
+def test_color_labels_return_dict_index_mode(negative_indexing):
+    colors = ['red', 'green', 'blue', 'white', 'black', 'cyan']
+    labels = pv.ImageData(dimensions=(4, 1, 1))
+    labels['data'] = [0, -1, 2, -6] if negative_indexing else [0, 2, 2, 5]
+    colored, mapping = labels.color_labels(
+        colors, coloring_mode='index', negative_indexing=negative_indexing, return_dict=True
+    )
+    # Only labels present are mapped, positive keys first
+    expected_keys = [0, 2, -1, -6] if negative_indexing else [0, 2, 5]
+    assert list(mapping.keys()) == expected_keys
+    for key in expected_keys:
+        assert mapping[key] == pv.Color(colors[key]).int_rgb
+    expected_colors = [mapping[label] for label in labels['data']]
+    assert np.array_equal(colored.active_scalars, expected_colors)
+
+
+def test_color_labels_return_dict_cycle_mode():
+    labels = pv.ImageData(dimensions=(4, 1, 1))
+    labels['data'] = [3, 1, 3, 7]
+    colored, mapping = labels.color_labels(
+        ['red', 'green'], coloring_mode='cycle', return_dict=True
+    )
+    assert list(mapping.keys()) == [1, 3, 7]
+    assert mapping[1] == mapping[7] == pv.Color('red').int_rgb
+    assert mapping[3] == pv.Color('green').int_rgb
+    expected_colors = [mapping[label] for label in labels['data']]
+    assert np.array_equal(colored.active_scalars, expected_colors)
+
+
+def test_color_labels_cycle_mode_nan_labels():
+    labels = pv.ImageData(dimensions=(3, 1, 1))
+    labels['data'] = [0.0, np.nan, 1.0]
+    colored, mapping = labels.color_labels(
+        ['red', 'green'], coloring_mode='cycle', color_type='float_rgb', return_dict=True
+    )
+    # NaN never matches a label, so it keeps the default color and is not mapped
+    assert list(mapping.keys()) == [0.0, 1.0]
+    assert np.isnan(colored.active_scalars[1]).all()
+    assert np.array_equal(colored.active_scalars[[0, 2]], [mapping[0.0], mapping[1.0]])
+
+
 @pytest.fixture
 def frog_tissues_image():
     # subsample: contouring and voxelizing the full image takes seconds

@@ -7655,7 +7655,7 @@ class DataSetFilters(DataObjectFilters):
                 # label passes the check above but has no color
                 indices[indices < 0] += n_colors
                 colors_out = np.vstack((table, colors_out[:1]))[indices]
-            elif coloring_mode == 'cycle':
+            else:  # 'cycle', validated above
                 if negative_indexing:
                     msg = "Negative indexing is not supported with 'cycle' mode enabled."
                     raise ValueError(msg)
