@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import itertools
 
+import numpy as np
 import pytest
 
 import pyvista as pv
@@ -153,3 +154,23 @@ def test_unique_scalar_bars(sphere, unique_bar: bool, shape: tuple[int, int]):
         assert len(key_scalar_bars) == shape[0] * shape[1]
     else:
         assert len(key_scalar_bars) == 1
+
+
+def test_add_scalar_bar_shared_range_resync(sphere):
+    # Mappers sharing a scalar bar keep one common range as meshes are added
+    pl = pv.Plotter()
+    low = sphere.copy()
+    low['data'] = np.linspace(0, 1, low.n_points)
+    mid = sphere.copy()
+    mid['data'] = np.linspace(0.2, 0.8, mid.n_points)
+    high = sphere.copy()
+    high['data'] = np.linspace(0, 5, high.n_points)
+    actors = [pl.add_mesh(mesh, scalars='data') for mesh in (low, mid)]
+    mappers = pl.scalar_bars._scalar_bar_mappers['data']
+    assert [m.scalar_range for m in mappers] == [(0.0, 1.0), (0.0, 1.0)]
+    assert not any(m._use_default_scalar_range for m in mappers)
+    actors.append(pl.add_mesh(high, scalars='data'))
+    assert [m.scalar_range for m in mappers] == [(0.0, 5.0)] * 3
+    assert [m.lookup_table.scalar_range for m in mappers] == [(0.0, 5.0)] * 3
+    assert list(pl.scalar_bars._scalar_bar_ranges['data']) == [0.0, 5.0]
+    pl.close()
