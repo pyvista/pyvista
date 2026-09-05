@@ -1043,6 +1043,16 @@ def test_plot_show_bounds_linked_views():
     pl.show(cpos=cam_pos)
 
 
+def test_plot_show_grid_box_crossing_zero():
+    """The reproducer from https://github.com/pyvista/pyvista/issues/7445."""
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Box(bounds=[-2000, 220, -10, 100, 0, 0]), color='red')
+    pl.show_grid(font_size=20, use_3d_text=False, fmt='%.0f')
+    pl.view_xy()
+    pl.camera.zoom(0.85)
+    pl.show()
+
+
 @pytest.mark.parametrize('use_3d_text', [True, False])
 @pytest.mark.parametrize('font_size', [12, 24])
 def test_plot_show_grid_font_size(sphere, use_3d_text, font_size):
