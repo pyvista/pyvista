@@ -189,13 +189,8 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         edge_opacity=None,
     ):
         """Initialize this property."""
-        self._theme = pv.themes.Theme()
-        if theme is None:
-            # copy global theme to ensure local property theme is fixed
-            # after creation.
-            self._theme.load_theme(pv.global_theme)
-        else:
-            self._theme.load_theme(theme)
+        # snapshot the theme so later edits to the source theme do not reach this property
+        self._theme = pv.themes.Theme._from_theme(pv.global_theme if theme is None else theme)
 
         if interpolation is None:
             interpolation = self._theme.lighting_params.interpolation
