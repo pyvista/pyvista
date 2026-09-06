@@ -4728,7 +4728,7 @@ class BasePlotter(_BoundsSizeMixin):
         user_matrix: TransformLike | None = None,
         log_scale: bool = False,  # noqa: FBT001, FBT002
         **kwargs,
-    ) -> Actor | list[Actor]:
+    ) -> Volume | list[Volume]:
         """Add a volume, rendered using a smart mapper by default.
 
         Requires a 3D data type like :class:`numpy.ndarray`,
@@ -4958,8 +4958,8 @@ class BasePlotter(_BoundsSizeMixin):
 
         Returns
         -------
-        pyvista.Actor
-            Actor of the volume.
+        pyvista.Volume
+            Volume actor.
 
         Examples
         --------
@@ -5107,7 +5107,7 @@ class BasePlotter(_BoundsSizeMixin):
                     render=render,
                     show_scalar_bar=show_scalar_bar,
                 )
-                a = cast('Actor', a)
+                a = cast('Volume', a)
 
                 actors.append(a)
             return actors
@@ -5289,7 +5289,7 @@ class BasePlotter(_BoundsSizeMixin):
             self.add_scalar_bar(**scalar_bar_args)  # type: ignore[call-arg]
 
         self.renderer.Modified()
-        return cast('Actor', actor)
+        return cast('Volume', actor)
 
     @_deprecate_positional_args(allowed=['mesh'])
     def add_silhouette(  # noqa: PLR0917
