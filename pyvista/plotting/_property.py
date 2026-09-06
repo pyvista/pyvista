@@ -1223,6 +1223,82 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         _check_range(value, (0, 1), 'anisotropy')
         self.SetAnisotropy(value)
 
+    @property
+    def anisotropy_rotation(self) -> float:  # numpydoc ignore=RT01
+        """Return or set the anisotropy rotation coefficient.
+
+        This value controls the rotation of the direction of the anisotropy.
+        This requires that the :attr:`interpolation` be set to
+        ``'Physically based rendering'``.
+
+        For further details see `PBR Journey Part 2 : Anisotropy model with VTK
+        <https://www.kitware.com/pbr-journey-part-2-anisotropy-model-with-vtk/>`_
+
+        Property has range ``[0.0, 1.0]``.
+
+        .. versionadded:: 0.49
+
+        Examples
+        --------
+        Get the default anisotropy rotation.
+
+        >>> import pyvista as pv
+        >>> prop = pv.Property()
+        >>> prop.anisotropy_rotation
+        0.0
+
+        Set the anisotropy rotation.
+
+        >>> prop.anisotropy_rotation = 0.25
+        >>> prop.anisotropy_rotation
+        0.25
+
+        """
+        return self.GetAnisotropyRotation()
+
+    @anisotropy_rotation.setter
+    def anisotropy_rotation(self, value: float):
+        _check_range(value, (0, 1), 'anisotropy_rotation')
+        self.SetAnisotropyRotation(value)
+
+    @property
+    def index_of_refraction(self) -> float:  # numpydoc ignore=RT01
+        """Return or set the index of refraction of the base layer.
+
+        This value controls the amount of light reflected at normal incidence.
+        This requires that the :attr:`interpolation` be set to
+        ``'Physically based rendering'``.
+
+        For further details see `PBR Journey Part 3 : Clear Coat Model with VTK
+        <https://www.kitware.com/pbr-journey-part-3-clear-coat-model-with-vtk/>`_
+
+        Property has range ``[1.0, inf)``.
+
+        .. versionadded:: 0.49
+
+        Examples
+        --------
+        Get the default index of refraction.
+
+        >>> import pyvista as pv
+        >>> prop = pv.Property()
+        >>> prop.index_of_refraction
+        1.5
+
+        Set the index of refraction.
+
+        >>> prop.index_of_refraction = 2.0
+        >>> prop.index_of_refraction
+        2.0
+
+        """
+        return self.GetBaseIOR()
+
+    @index_of_refraction.setter
+    def index_of_refraction(self, value: float):
+        _check_range(value, (1, float('inf')), 'index_of_refraction')
+        self.SetBaseIOR(value)
+
     def plot(self, **kwargs) -> None:
         """Plot this property on the Stanford Bunny.
 
