@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -11,6 +12,9 @@ from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.utilities.misc import abstract_class
+
+if TYPE_CHECKING:
+    from pyvista import UnstructuredGrid
 
 
 @abstract_class
@@ -25,7 +29,7 @@ class RectilinearGridFilters:
         pass_cell_ids: bool = True,  # noqa: FBT001, FBT002
         pass_data: bool = True,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
-    ):
+    ) -> UnstructuredGrid:
         """Create a tetrahedral mesh structured grid.
 
         Parameters
