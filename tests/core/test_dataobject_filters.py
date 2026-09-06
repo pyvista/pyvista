@@ -660,6 +660,26 @@ def test_slice_image_other_paths(kwargs):
     assert sliced.n_cells
 
 
+def test_slice_image_axis_aligned_keeps_active_attributes():
+    image = _image_for_slicing()
+    n_points = image.n_points
+    image.point_data['vectors'] = np.tile(np.arange(n_points, dtype=float)[:, None], (1, 3))
+    image.point_data['normals'] = np.tile([[0.0, 0.0, 1.0]], (n_points, 1))
+    image.point_data['tcoords'] = np.tile(np.linspace(0, 1, n_points)[:, None], (1, 2))
+    image.point_data['tensors'] = np.tile(np.arange(9, dtype=float), (n_points, 1))
+    image.point_data.active_vectors_name = 'vectors'
+    image.point_data.active_normals_name = 'normals'
+    image.point_data.active_texture_coordinates_name = 'tcoords'
+    image.GetPointData().SetActiveTensors('tensors')
+
+    sliced = image.slice('x')
+    assert sliced.point_data.active_vectors_name == 'vectors'
+    assert sliced.point_data.active_normals_name == 'normals'
+    assert sliced.point_data.active_texture_coordinates_name == 'tcoords'
+    assert sliced.GetPointData().GetTensors().GetName() == 'tensors'
+    assert sliced.point_data.active_scalars_name == 'floats'
+
+
 def test_slice_image_rotated_uses_cutter():
     image = _image_for_slicing()
     image.direction_matrix = pv.Transform().rotate_z(30).matrix[:3, :3]

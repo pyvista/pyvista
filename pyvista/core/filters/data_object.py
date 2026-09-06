@@ -5636,7 +5636,27 @@ def _slice_image_along_axis(
     output.copy_meta_from(image, deep=True)
     output.field_data.update(image.field_data)
     output.set_active_scalars(image.active_scalars_name)
+    _copy_active_attributes(image, output)
     return output
+
+
+def _copy_active_attributes(source: DataSet, target: DataSet) -> None:
+    """Mark the same point and cell arrays active on ``target`` as on ``source``."""
+    for attributes_in, attributes_out in (
+        (source.point_data, target.point_data),
+        (source.cell_data, target.cell_data),
+    ):
+        for attr in (
+            'active_vectors_name',
+            'active_normals_name',
+            'active_texture_coordinates_name',
+        ):
+            name = getattr(attributes_in, attr)
+            if name is not None and name in attributes_out:
+                setattr(attributes_out, attr, name)
+        tensors = attributes_in.GetTensors()
+        if tensors is not None and tensors.GetName() in attributes_out:
+            attributes_out.SetActiveTensors(tensors.GetName())
 
 
 def _box_planes(bounds: NumpyArray[float]) -> list[tuple[VectorLike[float], VectorLike[float]]]:
