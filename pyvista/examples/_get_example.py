@@ -98,8 +98,8 @@ class Example(Generic[_DatasetT_co, _ReadersT_co]):
     file_sizes: tuple[int, ...]
     """Size in bytes of each entry in ``paths``, one per path, folders counted in full."""
 
-    source_urls: tuple[str, ...]
-    """URL of each file which is downloaded, empty for an example which ships with PyVista."""
+    download_urls: tuple[str, ...]
+    """URL each file is downloaded from, empty for an example which ships with PyVista."""
 
     @functools.cached_property
     def _loader(self) -> _DatasetLoader:
@@ -159,7 +159,7 @@ class Example(Generic[_DatasetT_co, _ReadersT_co]):
     def origin_url(self) -> str | None:  # numpydoc ignore=RT01
         """Where the data came from, rather than where PyVista fetches it.
 
-        :attr:`~pyvista.examples.Example.source_urls` is the download location.
+        :attr:`~pyvista.examples.Example.download_urls` is where PyVista fetches it from.
         """
         return None if self._metadata is None else self._metadata.origin_url
 
@@ -911,5 +911,5 @@ def get_example(
         function=function,
         paths=_resolve_paths(loader, dataset_name, download=download),
         file_sizes=loader._file_sizes if isinstance(loader, _FileProps) else (),
-        source_urls=loader.source_urls if isinstance(loader, _DOWNLOADABLE_TYPES) else (),
+        download_urls=loader.source_urls if isinstance(loader, _DOWNLOADABLE_TYPES) else (),
     )
