@@ -5115,7 +5115,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             array = array.reshape((-1, 1))  # type: ignore[assignment]
             array = array.astype(np.uint8)  # type: ignore[assignment]
             array = np.unpackbits(array, axis=1)  # type: ignore[assignment]
-            array = array.sum(axis=1)
+            array = array.sum(axis=1)  # type: ignore[assignment]
             self.cell_data['number_of_connections'] = array
             return self
         else:
