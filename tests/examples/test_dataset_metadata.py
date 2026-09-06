@@ -157,6 +157,21 @@ def test_build_index_reads_every_field(index):
     assert entry.references[0].url is None
 
 
+def test_undetermined_terms_are_not_a_permission():
+    """A licence with no `[license.*]` table grants nothing and requires credit."""
+    document = DOCUMENT.replace(
+        'SPDX-License-Identifier = "CC-BY-4.0"',
+        'SPDX-License-Identifier = "SomeLicenceNobodyDeclared-1.0"',
+        1,
+    )
+    entry = _build_index(_load_toml(document.encode())).match('plain.vtk')
+
+    assert entry.licenses == ()
+    # `all(())` is True, so the obligation properties must not lean on it.
+    assert entry.commercial_use is False
+    assert entry.attribution_required is True
+
+
 def test_license_table_is_resolved(index):
     from pyvista.examples._dataset_metadata import _metadata_base_url
 

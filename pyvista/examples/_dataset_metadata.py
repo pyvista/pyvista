@@ -91,7 +91,7 @@ class ExampleMetadata:
 
     .. versionadded:: 0.49
 
-    Access this through :attr:`~pyvista.examples.Example.metadata`; this class is not
+    Read through the properties of :class:`~pyvista.examples.Example`; this class is not
     meant to be constructed directly. It mirrors one ``[[dataset]]`` block of
     ``DATASETS.toml`` in the `pyvista/data <https://github.com/pyvista/data>`_
     repository, which is the source of truth for every field here.
@@ -176,11 +176,14 @@ class ExampleMetadata:
             ``True`` when the data is cleared for commercial use.
 
         """
-        return all(licence.commercial_use for licence in self.licenses)
+        # No resolved licence means undetermined terms, which are not a permission.
+        return bool(self.licenses) and all(lic.commercial_use for lic in self.licenses)
 
     @property
     def attribution_required(self) -> bool:
         """Return whether any licence named requires the work to be credited.
+
+        Undetermined terms count as requiring it.
 
         Returns
         -------
@@ -188,7 +191,7 @@ class ExampleMetadata:
             ``True`` when credit is required.
 
         """
-        return any(licence.attribution_required for licence in self.licenses)
+        return not self.licenses or any(lic.attribution_required for lic in self.licenses)
 
     @property
     def share_alike(self) -> bool:
