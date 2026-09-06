@@ -318,7 +318,7 @@ def _meshio_info_dict():
                 meshio_info[class_name][format_name] = info
 
         # Store writer info next
-        cls = eval('pv.' + class_name)
+        cls = getattr(pv, class_name)
         writer_extensions = _swap_extension_mapping(cls._WRITERS)
         for writer, extensions in writer_extensions:
             # Check if the format was already added from the reader
