@@ -4137,7 +4137,7 @@ class ImageDataFilters(DataSetFilters):
         dimensions = np.asarray(self.dimensions)  # type: ignore[attr-defined]
         # Build an array of the operation size
         operation_size = _validation.validate_array3(
-            operation_size, reshape=True, broadcast=True, dtype_out=int
+            operation_size, reshape=True, broadcast=True, must_be_integer=True, dtype_out=int
         )
 
         if not isinstance(operation_mask, str) and operation_mask not in [0, 1, 2, 3]:
