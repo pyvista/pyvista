@@ -7,6 +7,12 @@ import operator
 import numpy as np
 
 import pyvista as pv
+from pyvista.core.utilities.points import principal_axes
+
+
+def _chained_transform():
+    """Compose a translation, rotation and scale."""
+    return pv.Transform().translate((1, 2, 3)).rotate_z(30).scale(2).matrix
 
 
 def test_points_get(big_sphere, benchmark):
@@ -48,3 +54,19 @@ def test_copy_from_shallow(sphere, benchmark):
 def test_transform(sphere, benchmark):
     """Transform a mesh by an identity matrix."""
     assert benchmark(sphere.transform, np.eye(4), inplace=False).n_points
+
+
+def test_transform_chain(benchmark):
+    """Compose a translation, rotation and scale into a matrix."""
+    assert benchmark(_chained_transform).shape == (4, 4)
+
+
+def test_dataset_equality(sphere, benchmark):
+    """Compare two equal datasets."""
+    other = sphere.copy()
+    assert benchmark(sphere.__eq__, other)
+
+
+def test_principal_axes(dense_points, benchmark):
+    """Compute the principal axes of a large point set."""
+    assert benchmark(principal_axes, dense_points).shape == (3, 3)

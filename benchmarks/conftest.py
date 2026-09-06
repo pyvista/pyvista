@@ -99,6 +99,48 @@ def string_array():
     return np.array([f'label{i}' for i in range(1000)])
 
 
+@pytest.fixture(scope='session')
+def hex_grid():
+    """Return an unstructured grid of hexahedra."""
+    return pv.ImageData(dimensions=(10, 10, 10)).cast_to_unstructured_grid()
+
+
+@pytest.fixture(scope='session')
+def hex_cell(hex_grid):
+    """Return a single hexahedral cell."""
+    return hex_grid.get_cell(0)
+
+
+@pytest.fixture(scope='session')
+def triangle_cell(sphere):
+    """Return a single triangular cell."""
+    return sphere.get_cell(0)
+
+
+@pytest.fixture(scope='session')
+def ndarray(rng):
+    """Return a pyvista_ndarray detached from any dataset."""
+    return pv.pyvista_ndarray(rng.random(10_000))
+
+
+@pytest.fixture(scope='session')
+def dense_points(rng):
+    """Return a large point array."""
+    return rng.random((200_000, 3))
+
+
+@pytest.fixture(scope='session')
+def blocks():
+    """Return a list of meshes for building a composite."""
+    return [pv.Sphere() for _ in range(50)]
+
+
+@pytest.fixture(scope='session')
+def multiblock(blocks):
+    """Return a composite of meshes."""
+    return pv.MultiBlock(blocks)
+
+
 @pytest.fixture
 def mutable_sphere(rng):
     """Return a sphere a benchmark may write to."""
