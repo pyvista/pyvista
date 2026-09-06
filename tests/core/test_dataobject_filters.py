@@ -404,6 +404,24 @@ def test_clip_box_planes_box_outside_or_containing_mesh(uniform):
     assert uniform.clip_box(far, invert=True).n_cells == uniform.n_cells
 
 
+@pytest.mark.parametrize('invert', [True, False])
+def test_clip_box_pointset(invert):
+    points = pv.PointSet(np.random.default_rng(0).random((200, 3)))
+    points.point_data['ids'] = np.arange(points.n_points)
+    points.field_data['meta'] = [1.0]
+    bounds = (0.0, 0.5, 0.0, 0.5, 0.0, 0.5)
+    inside = np.all((points.points >= 0.0) & (points.points <= 0.5), axis=1)
+
+    clipped = points.clip_box(bounds, invert=invert)
+
+    assert isinstance(clipped, pv.PointSet)
+    assert clipped.n_points == np.count_nonzero(~inside if invert else inside)
+    assert np.array_equal(
+        np.sort(clipped.point_data['ids']), np.flatnonzero(~inside if invert else inside)
+    )
+    assert np.allclose(clipped.field_data['meta'], [1.0])
+
+
 def test_clip_box_merge_points_false_uses_box_filter(uniform):
     clipped = uniform.clip_box(merge_points=False)
     assert set(clipped.celltypes) == {pv.CellType.TETRA}

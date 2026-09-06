@@ -3467,6 +3467,20 @@ class DataObjectFilters:
                 crinkle=crinkle,
             )
 
+        if isinstance(self, pv.PointSet):
+            # vtkBoxClipDataSet clips cells, and a PointSet has none, so clip its vertices
+            return (
+                self.cast_to_poly_points()
+                .clip_box(
+                    bounds_,
+                    invert=invert,
+                    progress_bar=progress_bar,
+                    merge_points=merge_points,
+                    crinkle=crinkle,
+                )
+                .cast_to_pointset()
+            )
+
         source = self
         if crinkle:
             source, active_scalars_info = _Crinkler._add_cell_ids(self)
