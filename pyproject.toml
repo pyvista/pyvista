@@ -143,7 +143,7 @@ docs = [
   'jupyter-sphinx==0.5.3',
   'jupyterlab==4.6.3',
   'lxml==6.1.2',
-  'matplotlib>=3.11; python_version >= "3.11"', # colormap tables read okabe_ito
+  'matplotlib>=3.11; python_version >= "3.11"',
   'meshio==5.3.5',
   'mypy-extensions==1.1.0',
   'mypy==2.3.1',
