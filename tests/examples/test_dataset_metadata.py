@@ -51,7 +51,7 @@ path = ["shark/**"]
 SPDX-License-Identifier = "CC-BY-SA-3.0"
 SPDX-FileCopyrightText = ["2013 someone"]
 provenance = "inferred"
-source_url = "https://www.thingiverse.com/thing:1"
+origin_url = "https://www.thingiverse.com/thing:1"
 collection = "thingiverse"
 authors = ["Someone"]
 attribution = "Shark by Someone."
@@ -67,7 +67,7 @@ description = "Covered by two licences at once."
 path = ["both.vtk"]
 SPDX-License-Identifier = "CC-BY-4.0 AND LicenseRef-Unknown"
 provenance = "verified"
-source_url = "https://example.org/both"
+origin_url = "https://example.org/both"
 
 [[dataset]]
 name = "plain"
@@ -76,7 +76,7 @@ description = "One file, one licence."
 path = ["plain.vtk", "nested/*.vtk"]
 SPDX-License-Identifier = "CC-BY-4.0"
 provenance = "verified"
-source_url = "https://example.org/plain"
+origin_url = "https://example.org/plain"
 attribution = "Plain by Someone."
 """
 
@@ -137,7 +137,7 @@ def test_build_index_reads_every_field(index):
         licenses=(index.licenses['CC-BY-SA-3.0'],),
         provenance='inferred',
         paths=('shark/**',),
-        source_url='https://www.thingiverse.com/thing:1',
+        origin_url='https://www.thingiverse.com/thing:1',
         collection='thingiverse',
         authors=('Someone',),
         copyright=('2013 someone',),
