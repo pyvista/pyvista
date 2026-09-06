@@ -857,8 +857,8 @@ def test_plotter_meshes_from_assembly():
 
     # Ensure all actors with meshes are included in result
     for part in assembly.parts:
-        if isinstance(part, pv.DataObject):
-            assert part in result
+        if isinstance(part, pv.Actor):
+            assert part.mapper.dataset in result
         else:
             assert part not in result
 
@@ -880,8 +880,8 @@ def test_plotter_meshes_from_nested_assembly():
 
     # Ensure all actors with meshes are included in result
     for part in [*assembly.parts, *subassembly.parts]:
-        if isinstance(part, pv.DataObject):
-            assert part in result
+        if isinstance(part, pv.Actor):
+            assert part.mapper.dataset in result
         else:
             assert part not in result
 
