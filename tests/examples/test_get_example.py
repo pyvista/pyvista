@@ -88,7 +88,7 @@ def _current_overloads():
     """Return ``{name: (dataset, readers)}`` from the examples themselves (downloads them)."""
     current = {}
     with warnings.catch_warnings():
-        warnings.simplefilter('ignore')  # the nefertiti licence, and a few others
+        warnings.simplefilter('ignore')  # a few examples warn on their own account
         for name in _all_example_names():
             example = examples.get_example(name)
             current[name] = (_dataset_annotation(example.function), _readers_annotation(example))
@@ -223,25 +223,6 @@ def test_get_example_file_sizes_compare():
     bunny = examples.get_example('bunny')
 
     assert sum(frog.file_sizes) > sum(bunny.file_sizes)
-
-
-@pytest.mark.needs_download
-def test_get_example_nefertiti_warns_on_every_route():
-    """Downloading and loading each warn about the licence, on whichever route reaches them."""
-    with pytest.warns(UserWarning, match='CC BY-NC-SA') as downloaded:
-        examples.download_nefertiti(load=False)  # also caches the files for the routes below
-    assert len(downloaded) == 1
-
-    example = examples.get_example('nefertiti', download=False)
-    with pytest.warns(UserWarning, match='CC BY-NC-SA') as loaded:
-        example.load()
-    assert len(loaded) == 1
-
-    # a call which downloads and then loads performs both, so it warns for each; a user
-    # under the default filters is shown the first and Python suppresses the repeat
-    with pytest.warns(UserWarning, match='CC BY-NC-SA') as both:
-        examples.download_nefertiti()
-    assert len(both) == 2
 
 
 def test_get_example_overloads_cover_every_example():
@@ -447,9 +428,7 @@ def test_get_example_all(name):
         pytest.skip('Error loading on Windows')
 
     with warnings.catch_warnings():
-        # a few examples warn on their own account, and the nefertiti licence fires
-        # from its loader, so it reaches every route taken here
-        warnings.simplefilter('ignore')
+        warnings.simplefilter('ignore')  # a few examples warn on their own account
         try:
             example = examples.get_example(name)
             loaded = example.load()

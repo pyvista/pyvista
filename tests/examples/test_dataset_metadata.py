@@ -245,7 +245,7 @@ def test_example_exposes_the_record_directly(monkeypatch, index):
     monkeypatch.setattr(
         _get_example, '_metadata_for_source_names', lambda _names: index.match('shark/a.stl')
     )
-    example = examples.get_example('bunny', download=False)
+    example = examples.get_example('sphere', download=False)
     assert example.license == 'CC-BY-SA-3.0'
     assert example.share_alike is True
     assert example.commercial_use is True
@@ -263,7 +263,7 @@ def test_example_without_a_record_is_empty(monkeypatch):
     from pyvista.examples import _get_example
 
     monkeypatch.setattr(_get_example, '_metadata_for_source_names', lambda _names: None)
-    example = examples.get_example('bunny', download=False)
+    example = examples.get_example('sphere', download=False)
     assert example.license is None
     assert example.commercial_use is None
     assert example.licenses == ()
