@@ -8924,7 +8924,7 @@ def _validate_extraction_ids(
                 f'Number of bool indices ({ids.size}) must match the number of {name} ({n_items}).'
             )
             raise ValueError(msg)
-        mask = ids
+        mask = ids.astype(bool, copy=False)
     else:
         mask = np.zeros(n_items, dtype=bool)
         if ids.size:
