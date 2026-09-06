@@ -8490,7 +8490,7 @@ class DataSetFilters(DataObjectFilters):
             dimensions_ = _validation.validate_array3(
                 dimensions, must_be_integer=True, dtype_out=int, name='dimensions'
             )
-            dimensions = cast('NumpyArray[int]', dimensions_) - 1
+            dimensions = dimensions_ - 1
 
         binary_mask = self.voxelize_binary_mask(
             background_value=background_value,
@@ -8924,7 +8924,7 @@ def _validate_extraction_ids(
                 f'Number of bool indices ({ids.size}) must match the number of {name} ({n_items}).'
             )
             raise ValueError(msg)
-        mask = ids
+        mask = ids.astype(bool, copy=False)
     else:
         mask = np.zeros(n_items, dtype=bool)
         if ids.size:
