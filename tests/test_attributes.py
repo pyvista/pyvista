@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import Counter
+import contextlib
 from dataclasses import is_dataclass
 from enum import Enum
 import importlib.util
@@ -181,8 +182,12 @@ def pytest_generate_tests(metafunc):
 def try_init_pyvista_object(class_):
     # Init object but skip if abstract
     kwargs = get_default_class_init_kwargs(class_)
+    ctx = contextlib.nullcontext()
+    if class_ is pv.ActorProperties:
+        ctx = pytest.warns(pv.PyVistaDeprecationWarning)
     try:
-        instance = class_(**kwargs)
+        with ctx:
+            instance = class_(**kwargs)
     except (VTKVersionError, ImportError):
         pytest.skip('VTK Version not supported.')
     except TypeError as e:

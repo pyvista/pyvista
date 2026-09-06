@@ -1262,8 +1262,7 @@ def test_actual_memory_size(hexbeam):
 
 
 def test_copy_structure(hexbeam):
-    classname = hexbeam.__class__.__name__
-    copy = eval(f'pv.{classname}')()
+    copy = type(hexbeam)()
     copy.copy_structure(hexbeam)
     assert copy.n_cells == hexbeam.n_cells
     assert copy.n_points == hexbeam.n_points
@@ -1284,8 +1283,7 @@ def test_copy_structure_self(datasets):
 
 
 def test_copy_attributes(hexbeam):
-    classname = hexbeam.__class__.__name__
-    copy = eval(f'pv.{classname}')()
+    copy = type(hexbeam)()
     copy.copy_attributes(hexbeam)
     assert copy.n_cells == 0
     assert copy.n_points == 0
