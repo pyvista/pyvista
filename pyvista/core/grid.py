@@ -828,8 +828,12 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
             index_offset = 0 if index_mode == 'extent' else offset
 
             if isinstance(slicer, (list, tuple)):
-                rng = _validation.validate_arrayN(
-                    slicer, must_have_dtype=int, must_have_length=2, to_list=True
+                rng = _validation.validate_array(
+                    slicer,
+                    must_have_dtype=int,
+                    must_have_ndim=1,
+                    must_have_length=2,
+                    to_list=True,
                 )
                 slicer = slice(*rng)  # noqa: PLW2901
 

@@ -560,8 +560,9 @@ class Texture(DataObject, _vtk.vtkTexture):
             skybox.SetProjectionToSphere()
 
         if floor_plane is not None:
-            valid_floor_plane = _validation.validate_arrayN(
+            valid_floor_plane = _validation.validate_array(
                 floor_plane,
+                must_have_ndim=1,
                 must_have_length=4,
                 dtype_out=float,
                 to_tuple=True,

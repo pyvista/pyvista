@@ -3771,8 +3771,13 @@ class OrthogonalPlanesSource(_NoNewAttrMixin):
 
     @bounds.setter
     def bounds(self: OrthogonalPlanesSource, bounds: VectorLike[float]) -> None:
-        bounds_tuple = _validation.validate_arrayN(
-            bounds, dtype_out=float, must_have_length=6, to_tuple=True, name='bounds'
+        bounds_tuple = _validation.validate_array(
+            bounds,
+            dtype_out=float,
+            must_have_ndim=1,
+            must_have_length=6,
+            to_tuple=True,
+            name='bounds',
         )
         self._bounds = BoundsTuple(*bounds_tuple)
 
