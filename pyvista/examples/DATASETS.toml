@@ -4,13 +4,13 @@
 
 schema_version = 1
 
-[license."BSD-3-Clause"]
+[license."Apache-2.0"]
 attribution_required = true
 commercial_use = true
-file = "https://github.com/pyvista/data/blob/master/LICENSES/BSD-3-Clause.txt"
+file = "https://github.com/pyvista/data/blob/master/LICENSES/Apache-2.0.txt"
 share_alike = false
-title = "BSD 3-Clause \"New\" or \"Revised\" License"
-url = "https://opensource.org/licenses/BSD-3-Clause"
+title = "Apache License 2.0"
+url = "https://www.apache.org/licenses/LICENSE-2.0"
 
 [license."CC-BY-4.0"]
 attribution_required = true
@@ -41,10 +41,10 @@ description = "Datasets authored by the PyVista project and distributed inside t
 title = "PyVista"
 url = "https://github.com/pyvista/pyvista"
 
-[collection."vtk-data"]
-description = "Kitware's test and example data collection for the Visualization Toolkit."
-title = "VTK Data"
-url = "https://gitlab.kitware.com/vtk/vtk-data"
+[collection."vtk-examples"]
+description = "The VTK Examples data collection, published by Bill Lorensen and now maintained by Kitware."
+title = "VTK Examples"
+url = "https://gitlab.kitware.com/vtk/vtk-examples"
 
 [collection."solar-system-scope"]
 description = "Planetary surface and sky textures published by Solar System Scope."
@@ -111,10 +111,9 @@ source_url = "https://www.solarsystemscope.com/textures/"
 title = "Earth day map"
 
 [[dataset]]
-SPDX-FileCopyrightText = ["1993-2008 Ken Martin, Will Schroeder, Bill Lorensen"]
-SPDX-License-Identifier = "BSD-3-Clause"
-attribution = "VTK Data. Copyright (c) 1993-2008 Ken Martin, Will Schroeder, Bill Lorensen. BSD 3-Clause."
-collection = "vtk-data"
+SPDX-License-Identifier = "Apache-2.0"
+attribution = "VTK Examples, licensed under the Apache License 2.0."
+collection = "vtk-examples"
 description = "Tissue segmentation labels for the frog volume, 500 by 470 by 136 voxels with 30 label values."
 modification = "Converted from the MetaImage pair `froggy/frogtissue.mhd` and `froggy/frogtissue.zraw` to VTK XML ImageData."
 modified = true
@@ -122,14 +121,15 @@ name = "frog_tissues"
 notes = """
 The dimensions, spacing, element type and array name all match
 `Data/froggy/frogtissue.mhd` in the pyvista/data repository, so this is a
-conversion of the VTK Data frog volume rather than a separate scan. The same
-caveat applies as to that dataset: Kitware never published per-file
-provenance for it.
+conversion of that volume rather than a separate scan, and it takes the same
+licence. Those files came from `src/Testing/Data/Frog` in
+`lorensen/VTKExamples`, which is published under the Apache License 2.0; no
+per-file provenance for the scan itself was ever published.
 """
 path = ["frog_tissues.vti"]
 provenance = "inferred"
-source_title = "VTK Data"
-source_url = "https://gitlab.kitware.com/vtk/vtk-data"
+source_title = "lorensen/VTKExamples"
+source_url = "https://github.com/lorensen/VTKExamples"
 title = "Frog tissue labels"
 
 [[dataset]]
