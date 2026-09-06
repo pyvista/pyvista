@@ -275,14 +275,14 @@ def reflection(
 def apply_transformation_to_points(
     transformation: NumpyArray[float],
     points: NumpyArray[float],
-    inplace: Literal[True] = True,  # noqa: FBT002
-) -> None: ...
+    inplace: Literal[False] = False,  # noqa: FBT002
+) -> NumpyArray[float]: ...
 @overload
 def apply_transformation_to_points(
     transformation: NumpyArray[float],
     points: NumpyArray[float],
-    inplace: Literal[False] = False,  # noqa: FBT002
-) -> NumpyArray[float]: ...
+    inplace: Literal[True] = True,  # noqa: FBT002
+) -> None: ...
 @overload
 def apply_transformation_to_points(
     transformation: NumpyArray[float],
