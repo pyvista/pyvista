@@ -9,7 +9,7 @@ import pyvista as pv
 from pyvista.core._typing_core import VectorLike
 
 
-def a_count() -> int:
+def a_count() -> int:  # pragma: no cover
     """Return a count typed only as ``int``, so the second overload applies."""
     return 2
 

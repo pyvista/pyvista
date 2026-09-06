@@ -10,7 +10,7 @@ from pyvista.core._typing_core import NumpyArray
 from pyvista.core.utilities.cells import numpy_to_idarr
 
 
-def a_flag() -> bool:
+def a_flag() -> bool:  # pragma: no cover
     """Return a flag typed only as ``bool``, so the catch-all overload applies."""
     return True
 

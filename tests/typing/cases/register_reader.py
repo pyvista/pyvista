@@ -13,7 +13,7 @@ from pyvista import DataSet
 class Provider:
     """Read a path and return a dataset."""
 
-    def __call__(self, path: str, /, **kwargs: Any) -> DataSet:
+    def __call__(self, path: str, /, **kwargs: Any) -> DataSet:  # pragma: no cover
         """Read ``path`` as a mesh."""
         return pv.read(path, cls=pv.PolyData, **kwargs)
 
