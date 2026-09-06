@@ -26,6 +26,7 @@ from typing import ClassVar
 from typing import Literal
 from typing import final
 from typing import get_args
+import urllib.parse
 
 import cmcrameri
 import cmocean
@@ -120,10 +121,12 @@ DATASET_GALLERY_MODULE_BADGE_COLORS: dict[ModuleType, str] = {
 }
 
 # Provenance value -> sphinx-design badge color shown on the dataset card.
+# Outline badges throughout, so provenance never shares a colour with the solid
+# obligation badges next to it. Keep in step with the legend in dataset_gallery.rst.
 DATASET_GALLERY_PROVENANCE_COLORS: dict[str, str] = {
-    'verified': 'success',
-    'inferred': 'secondary',
-    'unknown': 'warning',
+    'verified': 'success-line',
+    'inferred': 'warning-line',
+    'unknown': 'danger-line',
 }
 
 # File size bin edges, in decimal MB (matches `_format_file_size` in
@@ -2173,7 +2176,7 @@ class DatasetCard:
     footer_template = _aligned_dedent(
         """
         |+++
-        |.. dropdown:: Source & License
+        |.. dropdown:: Origin & License
         |   :icon: law
         |
         |   {}
@@ -2654,7 +2657,7 @@ class DatasetCard:
             if metadata.share_alike:
                 add('use', 'ShareAlike')
             if metadata.attribution_required:
-                add('use', 'Credit required')
+                add('use', 'Attribution required')
 
         return ' '.join(classes), labels
 
@@ -2737,7 +2740,9 @@ class DatasetCard:
             fields += [
                 ('License', gen.generate_license_field(metadata)),
                 ('Usage', gen.generate_usage_field(metadata)),
-                ('Source', gen.generate_source_field(metadata)),
+                ('Origin', gen.generate_origin_field(metadata)),
+                ('Collection', metadata.collection),
+                ('Redistributed from', gen.generate_redistributor_field(metadata)),
                 ('Provenance', gen.generate_provenance_field(metadata)),
                 ('Authors', '\n'.join(metadata.authors) or None),
                 ('Copyright', '\n'.join(metadata.copyright) or None),
@@ -2749,9 +2754,9 @@ class DatasetCard:
             parts.append(
                 cls._generate_prose_block(
                     [
-                        ('Credit', metadata.attribution),
-                        ('Modified', metadata.modification if metadata.modified else None),
-                        ('Cite', gen.generate_references_field(metadata)),
+                        ('Attribution', metadata.attribution),
+                        ('Modification', metadata.modification if metadata.modified else None),
+                        ('References', gen.generate_references_field(metadata)),
                     ]
                 )
             )
@@ -2893,7 +2898,7 @@ class DatasetPropsGenerator:
         if metadata.share_alike:
             badges.append(':bdg-warning:`ShareAlike`')
         if metadata.attribution_required:
-            badges.append(':bdg-secondary:`Credit required`')
+            badges.append(':bdg-info:`Attribution required`')
         return ' '.join(badges)
 
     @staticmethod
@@ -2903,14 +2908,25 @@ class DatasetPropsGenerator:
         return f':bdg-{color}:`{metadata.provenance}`'
 
     @staticmethod
-    def generate_source_field(metadata) -> str | None:
-        """Format the source as a link, falling back to the bare URL."""
+    def generate_origin_field(metadata) -> str | None:
+        """Format `origin_url` as a link titled by `origin_title`."""
         if not metadata.origin_url:
             return None
         name = metadata.origin_title or metadata.origin_url
         if not metadata.origin_url.startswith(('http://', 'https://')):
             return f'``{name}``'
         return f'`{name} <{metadata.origin_url}>`_'
+
+    @staticmethod
+    def generate_redistributor_field(metadata) -> str | None:
+        """Format `redistributed_from` as a link, falling back to the bare value."""
+        url = metadata.redistributed_from
+        if not url:
+            return None
+        if not url.startswith(('http://', 'https://')):
+            return f'``{url}``'
+        # The full URL is often long enough to break the nowrap field grid.
+        return f'`{urllib.parse.urlparse(url).netloc.removeprefix("www.")} <{url}>`_'
 
     @staticmethod
     def generate_references_field(metadata) -> str | None:
