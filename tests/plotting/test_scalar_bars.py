@@ -187,3 +187,17 @@ def test_add_scalar_bar_shared_range_resync(sphere):
     actors.append(pl.add_mesh(mid.copy(), scalars='data'))
     assert [m.scalar_range for m in mappers] == [(-1.0, 5.0)] * 6
     pl.close()
+
+
+def test_remove_actor_removes_mapper_from_every_scalar_bar(sphere):
+    """Test that removing an actor clears its mapper from all of its scalar bars."""
+    sphere[KEY] = sphere.points[:, 2]
+    pl = pv.Plotter()
+    actor = pl.add_mesh(sphere, scalars=KEY)
+    pl.add_scalar_bar('Second')
+    mappers = pl.scalar_bars._scalar_bar_mappers
+    assert [title for title, m in mappers.items() if actor.mapper in m] == [KEY, 'Second']
+
+    pl.remove_actor(actor)
+    assert [title for title, m in mappers.items() if actor.mapper in m] == []
+    pl.close()
