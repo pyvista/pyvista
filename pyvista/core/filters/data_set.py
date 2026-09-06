@@ -7976,15 +7976,12 @@ class DataSetFilters(DataObjectFilters):
                         _is_rgb_sequence = True
                     elif color_type == 'float_rgba' and n_channels in (3, 4):
                         color_rgb_sequence = (
-                            cmap_colors if n_channels == 4 else [(*c, 1.0) for c in cmap_colors]  # type: ignore[misc]
+                            cmap_colors if n_channels == 4 else [[*c, 1.0] for c in cmap_colors]
                         )
                         _is_rgb_sequence = True
                     else:
-                        colors = (
-                            cmap_colors.tolist()
-                            if isinstance(cmap_colors, np.ndarray)
-                            else cmap_colors
-                        )
+                        # The colors may be an array, which is not a valid color sequence
+                        colors = np.asarray(cmap_colors).tolist()
 
             table = None
             if not _is_rgb_sequence:
