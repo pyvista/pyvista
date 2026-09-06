@@ -2360,6 +2360,18 @@ def test_extract_points_default(extracted_with_adjacent_true):
     assert np.array_equal(sub_surf_adj.cells, expected_surf.cells)
 
 
+def test_extract_points_pointset(pointset):
+    ind = [0, 1]
+    extracted = pointset.extract_points(ind)
+    assert isinstance(extracted, pv.PointSet)
+    assert extracted.n_points == len(ind)
+    assert np.array_equal(extracted.points, pointset.points[ind])
+    assert extracted['vtkOriginalPointIds'].tolist() == ind
+
+    # Cells can still be requested explicitly, but a point set has none
+    assert pointset.extract_points(ind, include_cells=True).n_points == 0
+
+
 def test_extract_cells(sphere):
     ind = 0
     n_cells = 1

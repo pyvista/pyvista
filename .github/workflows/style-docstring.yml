@@ -11,12 +11,21 @@ permissions:
   id-token: none
 
 jobs:
+  # Blacksmith runners have their own cache, so each docstring job restores an
+  # entry saved by a producer on the same kind of runner.
   cache-pyvista-data:
     name: Cache pyvista/data
-    uses: ./.github/workflows/cache-pyvista-data.yml
+    uses: $/.github/workflows/cache-pyvista-data.yml
     with:
-      # Runner should match the actual runner used by the docstring job
       runs-on: "blacksmith-4vcpu-ubuntu-2204"
+
+  # GitHub-hosted runners can re-use the cache across OS's, so this ubuntu
+  # entry serves the Windows job via enableCrossOsArchive on the restore.
+  cache-github-hosted:
+    name: Cache pyvista/data
+    uses: $/.github/workflows/cache-pyvista-data.yml
+    with:
+      runs-on: "ubuntu-22.04"
 
   docstringcheck:
     strategy:
@@ -31,10 +40,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
 
-    needs: cache-pyvista-data
+    needs: [cache-pyvista-data, cache-github-hosted]
     env:
       TOX_COLORED: "yes"
-      PYVISTA_DATA: ${{ github.workspace }}/pyvista-data
     steps:
       - uses: actions/checkout@v7
         with:
@@ -57,11 +65,9 @@ jobs:
           version: 3.0
 
       - name: Restore pyvista/data cache
-        uses: actions/cache/restore@v6
+        uses: $/.github/actions/restore-pyvista-data
         with:
-          path: pyvista-data
-          key: ${{ needs.cache-pyvista-data.outputs.key }}
-          enableCrossOsArchive: true
+          key: ${{ runner.os == 'Windows' && needs.cache-github-hosted.outputs.key || needs.cache-pyvista-data.outputs.key }}
 
       - name: Install tox-uv
         run: pip install tox-uv
@@ -149,10 +155,13 @@ jobs:
       # headings that must be flagged, and fails if any of them stops being.
       - name: Install Vale
         run: |
-          curl -sSfL https://github.com/errata-ai/vale/releases/download/v${VALE_VERSION}/vale_${VALE_VERSION}_Linux_64-bit.tar.gz \
-            | sudo tar -xz -C /usr/local/bin vale
+          curl -sSfL "https://github.com/errata-ai/vale/releases/download/v${VALE_VERSION}/vale_${VALE_VERSION}_Linux_64-bit.tar.gz" -o vale.tar.gz
+          echo "${VALE_SHA256}  vale.tar.gz" | sha256sum --check
+          sudo tar -xz -C /usr/local/bin -f vale.tar.gz vale
         env:
           VALE_VERSION: 3.18.0
+          # From vale_<version>_checksums.txt on the release page; update both together.
+          VALE_SHA256: a6f71a75a12fe689345b754f2412b90367fe33648abb7d200fa19eaadc2dbf6d
 
       - name: "Check Vale still catches known-bad headings"
         run: python3 tests/doc/vale/check_expected_failures.py
