@@ -178,3 +178,24 @@ def test_update_image_placeholders_existing(monkeypatch, tmp_path):
     make_tables._update_image_placeholders(node)
 
     assert node['uri'].endswith(expected.name)
+
+
+def test_usage_facet_order_lists_every_value_the_cards_emit():
+    """A `use` value missing from the manifest order is dropped from the filter panel.
+
+    `collectFacetValues` in dataset_gallery_filter.js keeps only the values named in
+    `order`, so a slug the cards emit but the manifest omits disappears silently.
+    """
+    emitted = {
+        make_tables._facet_slugify(label)
+        for label in (
+            'Commercial use',
+            'Not for commercial use',
+            'ShareAlike',
+            'Attribution required',
+        )
+    }
+    listed = set(make_tables.DATASET_GALLERY_USE_ORDER)
+
+    # `N/A (not recorded)` is added with an explicit `na` slug, not through the slugifier.
+    assert emitted <= listed

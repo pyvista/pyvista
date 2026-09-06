@@ -123,6 +123,15 @@ DATASET_GALLERY_MODULE_BADGE_COLORS: dict[ModuleType, str] = {
 # Provenance value -> sphinx-design badge color shown on the dataset card.
 # Outline badges throughout, so provenance never shares a colour with the solid
 # obligation badges next to it. Keep in step with the legend in dataset_gallery.rst.
+# Usage filter values, least to most restrictive rather than alphabetical. Every slug
+# the cards emit must appear here or the filter panel silently drops it.
+DATASET_GALLERY_USE_ORDER: tuple[str, ...] = (
+    'commercial-use',
+    'attribution-required',
+    'share-alike',
+    'not-for-commercial-use',
+)
+
 DATASET_GALLERY_PROVENANCE_COLORS: dict[str, str] = {
     'verified': 'success-line',
     'inferred': 'warning-line',
@@ -2778,7 +2787,7 @@ class DatasetCard:
 
     @classmethod
     def _create_footer_block(cls, datasource_links, metadata):
-        """Generate the collapsed Source & License block shown under each card."""
+        """Generate the collapsed Origin & License block shown under each card."""
         gen = DatasetPropsGenerator
         fields: list[tuple[str, str | None]] = []
         if metadata is not None:
@@ -3218,12 +3227,7 @@ class DatasetCardFetcher:
             'labels': cls.FACET_LABELS,
             'order': {
                 'size': [slug for _, _, slug in DATASET_GALLERY_SIZE_BINS],
-                'use': [
-                    'commercial-use',
-                    'credit-required',
-                    'share-alike',
-                    'not-for-commercial-use',
-                ],
+                'use': list(DATASET_GALLERY_USE_ORDER),
             },
         }
         html = (
