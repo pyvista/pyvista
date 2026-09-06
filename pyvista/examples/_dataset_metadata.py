@@ -380,7 +380,7 @@ def _bundled_index() -> _MetadataIndex:
 
 @functools.lru_cache(maxsize=1)
 def _metadata_index() -> _MetadataIndex:
-    """Return the dataset metadata index, reading and parsing it once."""
+    """Return the dataset metadata index, which is read and parsed once."""
     import os  # noqa: PLC0415
     from pathlib import Path  # noqa: PLC0415
 
