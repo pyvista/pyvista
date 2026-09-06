@@ -17,7 +17,7 @@ class StructuredGridFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for structured grid datasets."""
 
     @_deprecate_positional_args(allowed=['voi', 'rate'])
-    def extract_subset(self, voi, rate=(1, 1, 1), boundary: bool = False):  # noqa: FBT001, FBT002
+    def extract_subset(self, voi, rate=(1, 1, 1), boundary: bool = False) -> pv.StructuredGrid:  # noqa: FBT001, FBT002
         r"""Select piece (for example, volume of interest).
 
         To use this filter set the VOI ``ivar`` which are i-j-k min/max
@@ -79,7 +79,7 @@ class StructuredGridFilters(DataSetFilters):
         alg.Update()
         return _get_output(alg)
 
-    def concatenate(self, other, axis, tolerance=0.0):
+    def concatenate(self, other, axis, tolerance=0.0) -> pv.StructuredGrid:
         """Concatenate a structured grid to this grid.
 
         Joins structured grids into a single structured grid.  Grids
@@ -149,7 +149,7 @@ class StructuredGridFilters(DataSetFilters):
         ):
             msg = (
                 f'Grids cannot be joined along axis {axis}, as points '
-                'are not coincident within tolerance of {tolerance}.'
+                f'are not coincident within tolerance of {tolerance}.'
             )
             raise RuntimeError(msg)
 

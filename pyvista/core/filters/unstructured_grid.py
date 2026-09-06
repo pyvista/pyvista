@@ -16,6 +16,7 @@ from pyvista.core.filters.poly_data import PolyDataFilters
 from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:
+    from pyvista import UnstructuredGrid
     from pyvista.core._typing_core._dataset_types import _UnstructuredGridType
 
 
@@ -33,7 +34,7 @@ class UnstructuredGridFilters(DataSetFilters):
         """Wrap ``PolyDataFilters.reconstruct_surface``."""
         return PolyDataFilters.reconstruct_surface(self, *args, **kwargs)  # type: ignore[arg-type]
 
-    def subdivide_tetra(self):
+    def subdivide_tetra(self) -> UnstructuredGrid:
         """Subdivide each tetrahedron into twelve tetrahedrons.
 
         Returns
@@ -69,7 +70,7 @@ class UnstructuredGridFilters(DataSetFilters):
         average_point_data: bool = True,  # noqa: FBT001, FBT002
         merging_array_name=None,
         progress_bar: bool = False,  # noqa: FBT001, FBT002
-    ):
+    ) -> UnstructuredGrid:
         """Merge duplicate points and remove unused points in an UnstructuredGrid.
 
         This filter, merging coincident points as defined by a merging

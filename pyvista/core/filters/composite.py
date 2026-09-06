@@ -23,6 +23,8 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from pyvista import MultiBlock
+    from pyvista import PolyData
+    from pyvista import UnstructuredGrid
     from pyvista.core.composite import _TypeMultiBlockLeaf
 
 
@@ -222,7 +224,7 @@ class CompositeFilters(DataObjectFilters):
                 output.replace(ids, filtered)
         return output
 
-    def extract_geometry(self):
+    def extract_geometry(self) -> PolyData:
         """Extract the surface the geometry of all blocks.
 
         Place this filter at the end of a pipeline before a polydata
@@ -252,7 +254,7 @@ class CompositeFilters(DataObjectFilters):
         return wrap(gf.GetOutputDataObject(0))
 
     @_deprecate_positional_args
-    def combine(self, merge_points: bool = False, tolerance=0.0):  # noqa: FBT001, FBT002
+    def combine(self, merge_points: bool = False, tolerance=0.0) -> UnstructuredGrid:  # noqa: FBT001, FBT002
         """Combine all blocks into a single unstructured grid.
 
         Parameters
@@ -306,7 +308,8 @@ class CompositeFilters(DataObjectFilters):
         alg.SetMergePoints(merge_points)
         alg.SetTolerance(tolerance)
         alg.Update()
-        return wrap(alg.GetOutputDataObject(0))
+        output: _vtk.vtkUnstructuredGrid = alg.GetOutputDataObject(0)
+        return wrap(output)
 
     @_deprecate_positional_args
     def outline(  # type: ignore[misc]
@@ -314,7 +317,7 @@ class CompositeFilters(DataObjectFilters):
         generate_faces: bool = False,  # noqa: FBT001, FBT002
         nested: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
-    ):
+    ) -> PolyData:
         """Produce an outline of the full extent for the all blocks in this composite dataset.
 
         Parameters
@@ -349,7 +352,7 @@ class CompositeFilters(DataObjectFilters):
         factor=0.2,
         nested: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
-    ):
+    ) -> PolyData:
         """Produce an outline of the corners for the all blocks in this composite dataset.
 
         Parameters
