@@ -52,13 +52,13 @@ def ncells_from_cells(cells: NumpyArray[int]) -> int:
 def numpy_to_idarr(
     ind: int | ArrayLike[int],
     deep: bool = ...,  # noqa: FBT001
-    return_ind: Literal[True] = True,  # noqa: FBT002
+    return_ind: Literal[False] = False,  # noqa: FBT002
 ) -> _vtk.vtkIdTypeArray: ...
 @overload
 def numpy_to_idarr(
     ind: int | ArrayLike[int],
     deep: bool = ...,  # noqa: FBT001
-    return_ind: Literal[False] = False,  # noqa: FBT002
+    return_ind: Literal[True] = True,  # noqa: FBT002
 ) -> tuple[_vtk.vtkIdTypeArray, NumpyArray[int]]: ...
 @overload
 def numpy_to_idarr(
