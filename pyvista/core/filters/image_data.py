@@ -449,7 +449,7 @@ class ImageDataFilters(DataSetFilters):
         voi : sequence[int]
             Length 6 iterable of ``int``\ s: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
             These bounds specify the volume of interest in i-j-k min/max
-            indices.
+            indices. Must be within this mesh's :attr:`~pyvista.ImageData.extent`.
 
         rate : sequence[int], default: (1, 1, 1)
             Length 3 iterable of ``int``\ s: ``(xrate, yrate, zrate)``.
@@ -493,6 +493,11 @@ class ImageDataFilters(DataSetFilters):
         crop
 
         """
+        extent = self.extent
+        if np.any(np.not_equal(ImageDataFilters._clip_extent(voi, clip_to=extent), voi)):
+            msg = f'VOI {tuple(voi)} is outside the extent of the input {extent}.'
+            raise ValueError(msg)
+
         alg = _vtk.vtkExtractVOI()
         alg.SetVOI(voi)
         alg.SetInputDataObject(self)
@@ -998,8 +1003,10 @@ class ImageDataFilters(DataSetFilters):
             )
             raise TypeError(msg)
 
+        # Crop to the part of the requested region which the image actually covers
+        voi = ImageDataFilters._clip_extent(voi, clip_to=self.extent)
+
         # Ensure dimensions are all at least one
-        voi = np.array(voi)
         voi[1] = max(voi[0:2])
         voi[3] = max(voi[2:4])
         voi[5] = max(voi[4:6])

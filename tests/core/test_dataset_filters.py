@@ -3674,6 +3674,26 @@ def test_extract_subset(uniform, rebase_coordinates):
     assert cropped == voi
 
 
+@pytest.mark.parametrize(
+    'voi',
+    [(-5, 5, 0, 5, 0, 5), (0, 100, 0, 5, 0, 5), (0, 5, 0, 5, 0, 100)],
+)
+def test_extract_subset_voi_outside_extent_raises(uniform, voi):
+    match = f'VOI {voi} is outside the extent of the input {uniform.extent}.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        uniform.extract_subset(voi)
+
+
+def test_crop_clips_to_the_image_extent(uniform):
+    extent = uniform.extent
+    oversized = (extent[0] - 5, extent[1] + 5, extent[2], extent[3], extent[4], extent[5])
+
+    cropped = uniform.crop(extent=oversized)
+
+    assert cropped.extent == extent
+    assert cropped == uniform.crop(extent=extent)
+
+
 def test_gaussian_smooth_output_type():
     volume = examples.load_uniform()
     volume_smooth = volume.gaussian_smooth()
