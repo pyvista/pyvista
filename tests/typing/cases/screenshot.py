@@ -10,9 +10,9 @@ from pyvista import pyvista_ndarray
 
 def a_plotter() -> pv.Plotter:  # pragma: no cover
     """Return a plotter holding one mesh."""
-    plotter = pv.Plotter()
-    plotter.add_mesh(pv.Sphere())
-    return plotter
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    return pl
 
 
 def a_flag() -> bool:  # pragma: no cover
