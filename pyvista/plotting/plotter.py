@@ -25,6 +25,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
 from typing import cast
+from typing import overload
 import uuid
 import warnings
 import weakref
@@ -4728,7 +4729,7 @@ class BasePlotter(_BoundsSizeMixin):
         user_matrix: TransformLike | None = None,
         log_scale: bool = False,  # noqa: FBT001, FBT002
         **kwargs,
-    ) -> Actor | list[Actor]:
+    ) -> Volume | list[Volume]:
         """Add a volume, rendered using a smart mapper by default.
 
         Requires a 3D data type like :class:`numpy.ndarray`,
@@ -4958,8 +4959,8 @@ class BasePlotter(_BoundsSizeMixin):
 
         Returns
         -------
-        pyvista.Actor
-            Actor of the volume.
+        pyvista.plotting.volume.Volume
+            Volume actor, or one per block for a :class:`~pyvista.MultiBlock`.
 
         Examples
         --------
@@ -5110,7 +5111,7 @@ class BasePlotter(_BoundsSizeMixin):
                     render=render,
                     show_scalar_bar=show_scalar_bar,
                 )
-                a = cast('Actor', a)
+                a = cast('Volume', a)
 
                 actors.append(a)
             return actors
@@ -5292,7 +5293,7 @@ class BasePlotter(_BoundsSizeMixin):
             self.add_scalar_bar(**scalar_bar_args)  # type: ignore[call-arg]
 
         self.renderer.Modified()
-        return cast('Actor', actor)
+        return cast('Volume', actor)
 
     @_deprecate_positional_args(allowed=['mesh'])
     def add_silhouette(  # noqa: PLR0917
@@ -6955,6 +6956,33 @@ class BasePlotter(_BoundsSizeMixin):
             writer.UsePainterSettings()
         writer.Update()
 
+    @overload
+    def screenshot(
+        self,
+        filename: str | Path | BytesIO | bool | None = ...,  # noqa: FBT001
+        transparent_background: bool | None = ...,  # noqa: FBT001
+        return_img: Literal[True] = True,  # noqa: FBT002
+        window_size: Sequence[int] | None = ...,
+        scale: int | None = ...,
+    ) -> pv.pyvista_ndarray: ...
+    @overload
+    def screenshot(
+        self,
+        filename: str | Path | BytesIO | bool | None = ...,  # noqa: FBT001
+        transparent_background: bool | None = ...,  # noqa: FBT001
+        return_img: Literal[False] = False,  # noqa: FBT002
+        window_size: Sequence[int] | None = ...,
+        scale: int | None = ...,
+    ) -> None: ...
+    @overload
+    def screenshot(
+        self,
+        filename: str | Path | BytesIO | bool | None = ...,  # noqa: FBT001
+        transparent_background: bool | None = ...,  # noqa: FBT001
+        return_img: bool = ...,  # noqa: FBT001
+        window_size: Sequence[int] | None = ...,
+        scale: int | None = ...,
+    ) -> pv.pyvista_ndarray | None: ...
     @_deprecate_positional_args(allowed=['filename'])
     def screenshot(  # noqa: PLR0917
         self,
