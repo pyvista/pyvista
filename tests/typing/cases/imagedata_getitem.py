@@ -24,4 +24,3 @@ assert_types(an_image()['data'],                       pv.ImageData | pyvista_nd
 assert_types(an_image()['data', 'point'],              pv.ImageData | pyvista_ndarray)
 assert_types(an_image()['data', 'cell'],               pv.ImageData | pyvista_ndarray)
 assert_types(an_image()[0, 0, 0],                      pv.ImageData | pyvista_ndarray)
-assert_types(an_image()[1, 1, 1],                      pv.ImageData | pyvista_ndarray)

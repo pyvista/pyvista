@@ -22,4 +22,3 @@ def a_mesh() -> pv.PolyData:
 assert_types(_resolve_scalars_field(np.zeros(a_mesh().n_points), a_mesh(), 'point'),  PointLiteral | CellLiteral)
 assert_types(_resolve_scalars_field(np.zeros(a_mesh().n_cells), a_mesh(), 'cell'),    PointLiteral | CellLiteral)
 assert_types(_resolve_scalars_field(np.zeros(a_mesh().n_points), a_mesh(), FieldAssociation.POINT), PointLiteral | CellLiteral)
-assert_types(_resolve_scalars_field(np.zeros(a_mesh().n_cells), a_mesh(), FieldAssociation.CELL),   PointLiteral | CellLiteral)

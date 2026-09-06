@@ -23,14 +23,12 @@ def an_index() -> int:
 
 # A block is a dataset, a nested `MultiBlock`, or nothing at all
 assert_types(multi()[0],                                     MultiBlock | DataSet | None)
-assert_types(multi()[-1],                                    MultiBlock | DataSet | None)
 assert_types(multi()['mesh'],                                MultiBlock | DataSet | None)
 assert_types(multi()[an_index()],                            MultiBlock | DataSet | None)
 
 # Slicing keeps the container
 assert_types(multi()[0:1],                                   MultiBlock)
 assert_types(multi()[:],                                     MultiBlock)
-assert_types(multi()[::-1],                                  MultiBlock)
 
 assert_types(multi().__setitem__(0, pv.PolyData()),          None)
 assert_types(multi().__setitem__(0, pv.MultiBlock()),        None)

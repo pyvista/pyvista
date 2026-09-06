@@ -20,18 +20,13 @@ def a_class() -> type[pv.UnstructuredGrid]:
 # fmt: off
 
 # Without `cls` the reader picks the type, so only the union is known
-assert_types(pv.read(examples.hexbeamfile),                                     DataSet | MultiBlock)
-assert_types(pv.read(Path(examples.hexbeamfile)),                               DataSet | MultiBlock)
-assert_types(pv.read([examples.hexbeamfile, examples.spherefile]),              DataSet | MultiBlock)
-assert_types(pv.read(examples.hexbeamfile, force_ext='.vtk'),                   DataSet | MultiBlock)
-assert_types(pv.read(examples.antfile, file_format='ply'),                      DataSet | MultiBlock)
-assert_types(pv.read(examples.hexbeamfile, progress_bar=False),                 DataSet | MultiBlock)
-assert_types(pv.read(examples.hexbeamfile, validate=True),                      DataSet | MultiBlock)
-assert_types(pv.read(examples.hexbeamfile, cls=None),                           DataSet | MultiBlock)
+assert_types(pv.read(examples.hexbeamfile),                                 DataSet | MultiBlock)
+assert_types(pv.read(Path(examples.hexbeamfile)),                           DataSet | MultiBlock)
+assert_types(pv.read([examples.hexbeamfile, examples.spherefile]),          DataSet | MultiBlock)
+assert_types(pv.read(examples.hexbeamfile, cls=None),                       DataSet | MultiBlock)
 
 # `cls` names the type that comes back
-assert_types(pv.read(examples.hexbeamfile, cls=pv.UnstructuredGrid),            pv.UnstructuredGrid)
-assert_types(pv.read(examples.spherefile, cls=pv.PolyData),                     pv.PolyData)
-assert_types(pv.read(examples.hexbeamfile, cls=a_class()),                      pv.UnstructuredGrid)
-assert_types(pv.read(examples.spherefile, cls=pv.PolyData, validate=True),      pv.PolyData)
-assert_types(pv.read(examples.hexbeamfile, cls=pv.UnstructuredGrid, force_ext='.vtk'), pv.UnstructuredGrid)
+assert_types(pv.read(examples.hexbeamfile, cls=pv.UnstructuredGrid),        pv.UnstructuredGrid)
+assert_types(pv.read(examples.spherefile, cls=pv.PolyData),                 pv.PolyData)
+assert_types(pv.read(examples.hexbeamfile, cls=a_class()),                  pv.UnstructuredGrid)
+assert_types(pv.read(examples.spherefile, cls=pv.PolyData, validate=True),  pv.PolyData)

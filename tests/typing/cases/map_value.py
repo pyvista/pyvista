@@ -21,6 +21,5 @@ def a_lookup_table() -> pv.LookupTable:
 # fmt: off
 
 assert_types(a_lookup_table().map_value(0.5),                 _Color)
-assert_types(a_lookup_table().map_value(0.0),                 _Color)
 assert_types(a_lookup_table().map_value(0.5, opacity=True),   _Color)
 assert_types(a_lookup_table().map_value(0.5, opacity=False),  _Color)

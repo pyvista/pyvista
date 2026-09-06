@@ -4958,8 +4958,8 @@ class BasePlotter(_BoundsSizeMixin):
 
         Returns
         -------
-        pyvista.Volume
-            Volume actor.
+        pyvista.plotting.volume.Volume
+            Volume actor, or one per block for a :class:`~pyvista.MultiBlock`.
 
         Examples
         --------

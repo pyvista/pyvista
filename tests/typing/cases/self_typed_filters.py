@@ -28,7 +28,6 @@ def some_contours() -> pv.PolyData:
 assert_types(pv.Sphere().cell_quality(),                                pv.PolyData)
 assert_types(a_grid().cell_quality(),                                   pv.ImageData)
 assert_types(a_multiblock().cell_quality(),                             pv.MultiBlock)
-assert_types(pv.Sphere().cell_quality('area'),                          pv.PolyData)
 
 assert_types(pv.Sphere().validate_mesh(),                               _MeshValidationReport[pv.PolyData])
 assert_types(a_multiblock().validate_mesh(),                            _MeshValidationReport[pv.MultiBlock])

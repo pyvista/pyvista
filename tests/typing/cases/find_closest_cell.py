@@ -14,7 +14,7 @@ SKIP_RUNTIME = dict.fromkeys(
         'pv.Sphere().find_closest_cell([(0.0, 0.0, 0.0), (1.0, 0.0, 0.0)])',
         'pv.Sphere().find_closest_cell((0.0, 0.0, 0.0), return_closest_point=True)',
     ],
-    'an int64 array is not a `NumpyArray[int]` without the `npt_promote` mypy plugin',
+    'the runtime checker has no `npt_promote`, so an int64 array is not a `NumpyArray[int]`',
 )
 
 # fmt: off

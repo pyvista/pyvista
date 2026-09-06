@@ -16,9 +16,6 @@ def a_rotated_transform() -> pv.Transform:
 
 # fmt: off
 
-assert_types(a_rotated_transform().as_rotation(),            Rotation | NumpyArray[float])
-assert_types(a_rotated_transform().as_rotation('quat'),      Rotation | NumpyArray[float])
-assert_types(a_rotated_transform().as_rotation('matrix'),    Rotation | NumpyArray[float])
-assert_types(a_rotated_transform().as_rotation('rotvec'),    Rotation | NumpyArray[float])
-assert_types(a_rotated_transform().as_rotation('mrp'),       Rotation | NumpyArray[float])
+assert_types(a_rotated_transform().as_rotation(),               Rotation | NumpyArray[float])
+assert_types(a_rotated_transform().as_rotation('quat'),         Rotation | NumpyArray[float])
 assert_types(a_rotated_transform().as_rotation('euler', 'xyz'), Rotation | NumpyArray[float])

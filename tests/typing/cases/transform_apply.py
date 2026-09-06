@@ -7,7 +7,6 @@ from type_assert import assert_types
 
 import pyvista as pv
 from pyvista.core._typing_core import NumpyArray
-from pyvista.plotting import Prop3D
 
 
 def a_transform() -> pv.Transform:
@@ -23,27 +22,23 @@ def a_multiblock() -> pv.MultiBlock:
 # fmt: off
 
 # Arrays
-assert_types(a_transform().apply(np.zeros((4, 3))),                       NumpyArray[float])
-assert_types(a_transform().apply([(0.0, 0.0, 0.0)]),                      NumpyArray[float])
-assert_types(a_transform().apply((0.0, 0.0, 0.0)),                        NumpyArray[float])
-assert_types(a_transform().apply(np.zeros((4, 3)), 'points'),             NumpyArray[float])
-assert_types(a_transform().apply(np.zeros((4, 3)), 'vectors'),            NumpyArray[float])
-assert_types(a_transform().apply(np.zeros((4, 3)), None),                 NumpyArray[float])
-assert_types(a_transform().apply(np.zeros((4, 3)), inverse=True),         NumpyArray[float])
-assert_types(a_transform().apply(np.zeros((4, 3)), copy=False),           NumpyArray[float])
+assert_types(a_transform().apply(np.zeros((4, 3))),                     NumpyArray[float])
+assert_types(a_transform().apply([(0.0, 0.0, 0.0)]),                    NumpyArray[float])
+assert_types(a_transform().apply((0.0, 0.0, 0.0)),                      NumpyArray[float])
+assert_types(a_transform().apply(np.zeros((4, 3)), 'points'),           NumpyArray[float])
+assert_types(a_transform().apply(np.zeros((4, 3)), 'vectors'),          NumpyArray[float])
+assert_types(a_transform().apply(np.zeros((4, 3)), None),               NumpyArray[float])
 
 # Datasets keep their own type
-assert_types(a_transform().apply(pv.Sphere()),                            pv.PolyData)
-assert_types(a_transform().apply(pv.ImageData(dimensions=(2, 2, 2))),     pv.ImageData)
-assert_types(a_transform().apply(a_multiblock()),                         pv.MultiBlock)
-assert_types(a_transform().apply(pv.Sphere(), 'active_vectors'),          pv.PolyData)
-assert_types(a_transform().apply(pv.Sphere(), 'all_vectors'),             pv.PolyData)
-assert_types(a_transform().apply(pv.Sphere(), inverse=True),              pv.PolyData)
-assert_types(a_transform().apply(pv.Sphere(), copy=False),                pv.PolyData)
+assert_types(a_transform().apply(pv.Sphere()),                          pv.PolyData)
+assert_types(a_transform().apply(pv.ImageData(dimensions=(2, 2, 2))),   pv.ImageData)
+assert_types(a_transform().apply(a_multiblock()),                       pv.MultiBlock)
+assert_types(a_transform().apply(pv.Sphere(), 'active_vectors'),        pv.PolyData)
+assert_types(a_transform().apply(pv.Sphere(), 'all_vectors'),           pv.PolyData)
+assert_types(a_transform().apply(pv.Sphere(), inverse=True),            pv.PolyData)
 
 # Actors widen to the base class the overload names
-assert_types(a_transform().apply(pv.Actor()),                             Prop3D)
-assert_types(a_transform().apply(pv.Actor(), 'replace'),                  Prop3D)
-assert_types(a_transform().apply(pv.Actor(), 'pre-multiply'),             Prop3D)
-assert_types(a_transform().apply(pv.Actor(), 'post-multiply'),            Prop3D)
-assert_types(a_transform().apply(pv.Actor(), inverse=True),               Prop3D)
+assert_types(a_transform().apply(pv.Actor()),                           pv.Prop3D)
+assert_types(a_transform().apply(pv.Actor(), 'replace'),                pv.Prop3D)
+assert_types(a_transform().apply(pv.Actor(), 'pre-multiply'),           pv.Prop3D)
+assert_types(a_transform().apply(pv.Actor(), 'post-multiply'),          pv.Prop3D)

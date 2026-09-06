@@ -15,7 +15,7 @@ def an_image() -> pv.ImageData:
 
 SKIP_RUNTIME = {
     'an_image().find_containing_cell([(1.0, 1.0, 1.0), (0.5, 0.5, 0.5)])': (
-        'an int64 array is not a `NumpyArray[int]` without the `npt_promote` mypy plugin'
+        'the runtime checker has no `npt_promote`, so an int64 array is not a `NumpyArray[int]`'
     ),
 }
 

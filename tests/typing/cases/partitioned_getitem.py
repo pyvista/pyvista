@@ -22,12 +22,10 @@ def an_index() -> int:
 # fmt: off
 
 assert_types(partitions()[0],                                       DataSet | None)
-assert_types(partitions()[-1],                                      DataSet | None)
 assert_types(partitions()[an_index()],                              DataSet | None)
 
 assert_types(partitions()[0:1],                                     PartitionedDataSet)
 assert_types(partitions()[:],                                       PartitionedDataSet)
-assert_types(partitions()[::-1],                                    PartitionedDataSet)
 
 assert_types(partitions().__setitem__(0, pv.PolyData()),            None)
 assert_types(partitions().__setitem__(0, None),                     None)

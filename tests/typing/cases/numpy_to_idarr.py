@@ -21,7 +21,7 @@ SKIP_RUNTIME = dict.fromkeys(
         'numpy_to_idarr([0, 1], deep=True, return_ind=True)',
         'numpy_to_idarr([0, 1], return_ind=a_flag())',
     ],
-    'an int64 array is not a `NumpyArray[int]` without the `npt_promote` mypy plugin',
+    'the runtime checker has no `npt_promote`, so an int64 array is not a `NumpyArray[int]`',
 )
 
 # fmt: off

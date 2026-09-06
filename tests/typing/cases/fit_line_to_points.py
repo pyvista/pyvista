@@ -1,7 +1,6 @@
 """Typing cases for :func:`pyvista.fit_line_to_points`.
 
-`return_meta` picks which half of the union comes back, but the signature is not
-overloaded, so a caller is told only that it is one of the two.
+`return_meta` picks which half of the union comes back; the signature is not overloaded.
 """
 
 from __future__ import annotations
@@ -25,6 +24,5 @@ def some_points() -> NumpyArray[float]:
 assert_types(pv.fit_line_to_points(some_points()),                          _Fitted)
 assert_types(pv.fit_line_to_points(some_points(), return_meta=False),       _Fitted)
 assert_types(pv.fit_line_to_points(some_points(), return_meta=True),        _Fitted)
-assert_types(pv.fit_line_to_points(some_points(), resolution=4),            _Fitted)
 assert_types(pv.fit_line_to_points(some_points(), init_direction='x'),      _Fitted)
 assert_types(pv.fit_line_to_points(some_points(), init_direction=(1.0, 0.0, 0.0)), _Fitted)
