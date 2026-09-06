@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from pyvista.examples._dataset_metadata import ExampleMetadata
@@ -234,3 +236,53 @@ def test_override_reports_a_missing_file(tmp_path, monkeypatch):
     with pytest.raises(FileNotFoundError, match='which is not a file'):
         _dataset_metadata._metadata_index()
     _dataset_metadata._metadata_index.cache_clear()
+
+
+def test_example_exposes_the_record_directly(monkeypatch, index):
+    from pyvista import examples
+    from pyvista.examples import _get_example
+
+    monkeypatch.setattr(
+        _get_example, '_metadata_for_source_names', lambda _names: index.match('shark/a.stl')
+    )
+    example = examples.get_example('bunny', download=False)
+    assert example.license == 'CC-BY-SA-3.0'
+    assert example.share_alike is True
+    assert example.commercial_use is True
+    assert example.provenance == 'inferred'
+    assert example.origin_url == 'https://www.thingiverse.com/thing:1'
+    assert example.authors == ('Someone',)
+    assert example.copyright == ('2013 someone',)
+    assert example.modified is True
+    assert example.references[0].doi == '10.1/2'
+    assert not hasattr(example, 'metadata')
+
+
+def test_example_without_a_record_is_empty(monkeypatch):
+    from pyvista import examples
+    from pyvista.examples import _get_example
+
+    monkeypatch.setattr(_get_example, '_metadata_for_source_names', lambda _names: None)
+    example = examples.get_example('bunny', download=False)
+    assert example.license is None
+    assert example.commercial_use is None
+    assert example.licenses == ()
+    assert example.authors == ()
+    assert example.modified is False
+
+
+def test_bundled_table_covers_every_packaged_file():
+    import pyvista as pv
+    from pyvista.examples._dataset_metadata import _bundled_index
+    from pyvista.examples._dataset_metadata import _matches
+
+    directory = Path(pv.examples.__file__).parent
+    packaged = sorted(
+        path.name
+        for path in directory.iterdir()
+        if path.is_file() and path.suffix not in {'.py', '.pyi', '.toml', '.typed'}
+    )
+    entries = _bundled_index().entries
+    for name in packaged:
+        owners = [e.name for e in entries if any(_matches(p, name) for p in e.paths)]
+        assert len(owners) == 1, f'{name} is claimed by {owners}'

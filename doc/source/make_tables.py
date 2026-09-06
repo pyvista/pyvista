@@ -2870,7 +2870,7 @@ class DatasetPropsGenerator:
 
     @staticmethod
     def _dataset_metadata(loader: _DatasetLoader):
-        """Return the ``DATASETS.toml`` entry covering a loader's files, if it has one."""
+        """Return the published record covering a loader's files, if it has one."""
         if not isinstance(loader, _DOWNLOADABLE_TYPES):
             return None
         return _metadata_for_source_names(loader.source_names)

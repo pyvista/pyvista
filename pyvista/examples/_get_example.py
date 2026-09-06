@@ -30,6 +30,9 @@ if TYPE_CHECKING:
 
     from pyvista.examples._dataset_loader import DatasetObject
     from pyvista.examples._dataset_metadata import ExampleMetadata
+    from pyvista.examples._dataset_metadata import License
+    from pyvista.examples._dataset_metadata import Provenance
+    from pyvista.examples._dataset_metadata import Reference
 
 _DatasetT_co = TypeVar('_DatasetT_co', covariant=True, default='DatasetObject')
 _ReadersT_co = TypeVar(
@@ -106,31 +109,107 @@ class Example(Generic[_DatasetT_co, _ReadersT_co]):
         return loader
 
     @functools.cached_property
-    def metadata(self) -> ExampleMetadata | None:
-        """Return where the data came from and how it may be used.
-
-        The metadata is published by the `pyvista/data
-        <https://github.com/pyvista/data>`_ repository and downloaded on first access,
-        then reused. It is ``None`` for an example whose files do not come from there:
-        a built-in dataset, or a glTF sample from the Khronos repository.
-
-        Returns
-        -------
-        ExampleMetadata | None
-            Provenance and licensing for this example, or ``None`` when it has none.
-
-        Examples
-        --------
-        >>> from pyvista import examples
-        >>> shark = examples.get_example('grey_nurse_shark')  # doctest:+SKIP
-        >>> shark.metadata.license_expression  # doctest:+SKIP
-        'CC-BY-SA-3.0'
-
-        """
+    def _metadata(self) -> ExampleMetadata | None:
+        """Return the published record for this example's files, if it has one."""
         loader = self._loader
         if not isinstance(loader, _DOWNLOADABLE_TYPES):
             return None
         return _metadata_for_source_names(loader.source_names)
+
+    @property
+    def title(self) -> str | None:  # numpydoc ignore=RT01
+        """Short human-readable name of the data, such as ``'Grey nurse shark'``."""
+        return None if self._metadata is None else self._metadata.title
+
+    @property
+    def description(self) -> str | None:  # numpydoc ignore=RT01
+        """What the data is, in one or two sentences."""
+        return None if self._metadata is None else self._metadata.description
+
+    @property
+    def license(self) -> str | None:  # numpydoc ignore=RT01
+        """SPDX licence expression, such as ``'CC-BY-4.0'``, or ``None`` when unrecorded."""
+        return None if self._metadata is None else self._metadata.license_expression
+
+    @property
+    def licenses(self) -> tuple[License, ...]:  # numpydoc ignore=RT01
+        """Every licence :attr:`license` names, resolved to its full terms."""
+        return () if self._metadata is None else self._metadata.licenses
+
+    @property
+    def commercial_use(self) -> bool | None:  # numpydoc ignore=RT01
+        """Whether every licence permits use in a product for sale, undetermined counting as not."""
+        return None if self._metadata is None else self._metadata.commercial_use
+
+    @property
+    def attribution_required(self) -> bool | None:  # numpydoc ignore=RT01
+        """Whether any licence requires the work to be credited."""
+        return None if self._metadata is None else self._metadata.attribution_required
+
+    @property
+    def share_alike(self) -> bool | None:  # numpydoc ignore=RT01
+        """Whether any licence requires derivative works to carry it too."""
+        return None if self._metadata is None else self._metadata.share_alike
+
+    @property
+    def provenance(self) -> Provenance | None:  # numpydoc ignore=RT01
+        """Confidence in the origin, not the licence: ``'verified'``, ``'inferred'``, ``'unknown'``."""
+        return None if self._metadata is None else self._metadata.provenance
+
+    @property
+    def origin_url(self) -> str | None:  # numpydoc ignore=RT01
+        """Where the data came from, as opposed to :attr:`source_urls`, which is where PyVista fetches it."""
+        return None if self._metadata is None else self._metadata.source_url
+
+    @property
+    def origin_title(self) -> str | None:  # numpydoc ignore=RT01
+        """Human-readable name of the source behind :attr:`origin_url`."""
+        return None if self._metadata is None else self._metadata.source_title
+
+    @property
+    def collection(self) -> str | None:  # numpydoc ignore=RT01
+        """Upstream collection the data belongs to, when several examples share one."""
+        return None if self._metadata is None else self._metadata.collection
+
+    @property
+    def authors(self) -> tuple[str, ...]:  # numpydoc ignore=RT01
+        """Who made the data."""
+        return () if self._metadata is None else self._metadata.authors
+
+    @property
+    def copyright(self) -> tuple[str, ...]:  # numpydoc ignore=RT01
+        """Copyright notices, in ``SPDX-FileCopyrightText`` form."""
+        return () if self._metadata is None else self._metadata.copyright
+
+    @property
+    def attribution(self) -> str | None:  # numpydoc ignore=RT01
+        """Credit line the licence requires, when it requires one."""
+        return None if self._metadata is None else self._metadata.attribution
+
+    @property
+    def redistributed_from(self) -> str | None:  # numpydoc ignore=RT01
+        """Intermediate redistributor the data reached PyVista through."""
+        return None if self._metadata is None else self._metadata.redistributed_from
+
+    @property
+    def modified(self) -> bool:  # numpydoc ignore=RT01
+        """Whether the data differs from what its source published."""
+        return False if self._metadata is None else self._metadata.modified
+
+    @property
+    def modification(self) -> str | None:  # numpydoc ignore=RT01
+        """What was done to the data after it left its source."""
+        return None if self._metadata is None else self._metadata.modification
+
+    @property
+    def notes(self) -> str | None:  # numpydoc ignore=RT01
+        """What was and was not established about the origin and the terms."""
+        return None if self._metadata is None else self._metadata.notes
+
+    @property
+    def references(self) -> tuple[Reference, ...]:  # numpydoc ignore=RT01
+        """Works the data asks to be cited."""
+        return () if self._metadata is None else self._metadata.references
 
     @functools.cached_property
     def readers(self) -> _ReadersT_co:
