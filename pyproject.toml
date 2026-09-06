@@ -731,7 +731,6 @@ pyvista = "pv"
 # Sphinx-Gallery examples are rendered verbatim, like those under 'examples/'
 'tests/plotting/tinypages/gallery_src/*' = ['I002']
 'tests/security/test_pickle_refused.py' = ['S301'] # unpickles its own objects
-'tests/typing/cases/*' = ['E501'] # one aligned line per case
 
 [tool.ruff.lint.pylint]
 max-positional-args = 3

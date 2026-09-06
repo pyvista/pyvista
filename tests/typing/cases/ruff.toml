@@ -1,0 +1,2 @@
+extend = "../../../pyproject.toml" # everything else comes from the main config
+line-length = 999 # a case is one line, however long, so they read as a list

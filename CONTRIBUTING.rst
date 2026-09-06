@@ -1267,6 +1267,9 @@ Write the expected type as an ordinary expression, such as ``pv.PolyData``,
 Anything in the file that is not an ``assert_types`` line is setup: imports, and
 helpers such as the ``multi()`` above that builds a fresh ``MultiBlock``.
 
+The directory carries its own ``ruff.toml`` raising the line length, so a case stays
+on one line however long it gets.
+
 How the Cases Run
 """""""""""""""""
 Each case file is collected as a test file of its own. Every case in it becomes
