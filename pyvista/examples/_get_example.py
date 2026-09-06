@@ -99,7 +99,7 @@ class Example(Generic[_DatasetT_co, _ReadersT_co]):
     """Size in bytes of each entry in ``paths``, one per path, folders counted in full."""
 
     download_urls: tuple[str, ...]
-    """URL each file is downloaded from, empty for an example which ships with PyVista."""
+    """URL each file is downloaded from, empty for an example generated in memory."""
 
     @functools.cached_property
     def _loader(self) -> _DatasetLoader:
