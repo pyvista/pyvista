@@ -31,6 +31,18 @@ are free, while renaming a variable, reflowing a call across lines, or reorderin
 statements produces a new filename for a pixel-identical render. That is the single most
 common reason this job fails, and it is always a pure rename.
 
+## Slots that hold several baselines
+
+About forty slots are a **directory** rather than a `.jpg`: `sphx_glr_cell_centers_002/`
+holds `0.jpg` and `1.jpg`, `sphx_glr_load_vrml_001_vtksz/` holds `blank.jpg` and
+`rendered.jpg`. pytest-pyvista scores the render against every file in the directory and
+grades on the closest one, so the slot passes when any single variant matches.
+
+The variants are different pictures, not drifted copies — siblings sit hundreds or
+thousands apart, because each covers an environment or an outcome the example can
+legitimately produce. Refresh the **closest** variant and leave the others alone;
+overwriting them all collapses the slot back to a single accepted render.
+
 ## Fetch what the run generated, not what failed
 
 ```bash
@@ -75,6 +87,12 @@ Rename detection is not just byte equality. A render can be identical and still 
 to different bytes, so anything scoring at or below the 200 warning threshold against a
 differently-named cached file counts as a rename. Trust that: a value of 74 against
 another slot means the picture moved, not that it changed.
+
+Check a `RENAME` against the orphan line before reaching for `git mv`. A real rename leaves
+its old name in "cached files the run did not generate"; when the orphan list is empty
+every filename is still in use and nothing moved, and the verdict is an example that
+renders the same view into several slots. On a directory slot the report names the variant
+it matched, and a `REPLACE` says which single variant to overwrite.
 
 ## Apply, in this order
 
@@ -121,6 +139,19 @@ whether the new rendering is what you intended.
 Do not regenerate documentation baselines locally on macOS or Windows. The cache is the
 Linux CI render, and a local full docs build segfaults on macOS regardless.
 
+## Refreshing drift in bulk
+
+A single artifact is not enough to justify refreshing a slot, because a run contains its
+own flaky renders. Download a second `docs.yml` artifact from `main` and refresh only what
+both runs agree on.
+
+When the two runs disagree, read `git log <older-sha>..<newer-sha>` before deciding which
+one is wrong. A commit that deliberately changes output makes the _older_ run stale rather
+than the newer one flaky, and such a commit usually refreshes only the slots it pushed past
+500 and leaves its own collateral sitting in the warning band — `_vtksz` twins especially,
+whose static sibling was updated without them. Settle it by rendering the example either
+side of the suspect commit.
+
 ## Traps
 
 | Trap                                      | Why it bites                                                                         |
@@ -128,6 +159,8 @@ Linux CI render, and a local full docs build segfaults on macOS regardless.
 | Copying `errors/from_test/*` wholesale    | replaces renames with fresh bytes and silently misses slots that passed              |
 | Moving indices in ascending order         | each move lands on a slot still holding the next image                               |
 | Forgetting `_vtksz` and `_thumb`          | they shift with their static sibling and fail on the next run                        |
+| Overwriting a whole directory slot        | its variants are different pictures; only the closest one is yours to refresh        |
+| Trusting one artifact                     | a run has its own flaky renders, so agreement between two runs is the evidence       |
 | Reading a matching `_vtksz` as proof      | judge each file on its own value; the twin says nothing about its static sibling     |
 | Committing with `git add -A`              | sweeps in unrelated generated output; stage `tests/doc/doc_image_cache` explicitly   |
 | Bumping `sphinx_gallery_thumbnail_number` | the thumbnail follows the plot, so check whether it still points at the same picture |
