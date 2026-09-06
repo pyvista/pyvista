@@ -1570,16 +1570,7 @@ class Transform(
         """Return the current number of composed transformations."""
         return self.GetNumberOfConcatenatedTransforms()
 
-    @overload
-    def apply(
-        self: Transform,
-        obj: VectorLike[float] | MatrixLike[float],
-        /,
-        mode: Literal['points', 'vectors'] | None = ...,
-        *,
-        inverse: bool = ...,
-        copy: bool = ...,
-    ) -> NumpyArray[float]: ...
+    # `MultiBlock` also matches the array overload, so it is offered this one first.
     @overload
     def apply(
         self: Transform,
@@ -1590,6 +1581,16 @@ class Transform(
         inverse: bool = ...,
         copy: bool = ...,
     ) -> _DataSetOrMultiBlockType: ...
+    @overload
+    def apply(
+        self: Transform,
+        obj: VectorLike[float] | MatrixLike[float],
+        /,
+        mode: Literal['points', 'vectors'] | None = ...,
+        *,
+        inverse: bool = ...,
+        copy: bool = ...,
+    ) -> NumpyArray[float]: ...
     @overload
     def apply(
         self: Transform,
