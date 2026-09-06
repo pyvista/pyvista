@@ -1,4 +1,10 @@
-"""Provenance and licensing metadata, read from ``pyvista/data``'s ``DATASETS.toml``."""
+"""Provenance and licensing metadata for the example datasets.
+
+Read from the ``DATASETS.toml`` published by `pyvista/data
+<https://github.com/pyvista/data>`_ and from the one bundled in this directory.
+That repository's ``CONTRIBUTING.md`` documents how each entry was established
+and how to check it.
+"""
 
 from __future__ import annotations
 

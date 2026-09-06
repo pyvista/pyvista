@@ -1,5 +1,6 @@
 # Provenance for the example files in this directory, in the same schema as the
-# DATASETS.toml published by pyvista/data. See _dataset_metadata.py.
+# DATASETS.toml published by pyvista/data, whose CONTRIBUTING.md documents how
+# to establish and check an entry. See _dataset_metadata.py for the reader.
 
 schema_version = 1
 
