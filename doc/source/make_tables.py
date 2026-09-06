@@ -1978,6 +1978,51 @@ def _pad_lines(
     return '\n'.join(lines) if is_str else lines
 
 
+_INLINE_CODE_RE = re.compile(r'``.+?``|`[^`]+`', re.DOTALL)
+_BARE_URL_RE = re.compile(r'(?<![`<])\bhttps?://[^\s<>`]+')
+_RST_SPECIAL_RE = re.compile(r'([*_|])')
+
+
+def _wrap_url(match: re.Match[str]) -> str:
+    """Wrap one bare URL as a literal, leaving trailing sentence punctuation outside it."""
+    url = match.group(0)
+    trail = ''
+    while url and url[-1] in '.,;:!?\'"':
+        url, trail = url[:-1], url[-1] + trail
+    while url.endswith(')') and url.count('(') < url.count(')'):
+        url, trail = url[:-1], ')' + trail
+    return f'``{url}``{trail}'
+
+
+def _rst_from_prose(text: str) -> str:
+    """Render prose from `DATASETS.toml` as reStructuredText.
+
+    The text is written in another repository, so anything reStructuredText
+    would read as markup is escaped. Single backticks mean inline code there,
+    which is a double backtick here, and bare URLs become literals so that a
+    trailing underscore cannot be parsed as a reference.
+    """
+
+    def literal(match: re.Match[str]) -> str:
+        span = match.group(0)
+        return span if span.startswith('``') else f'`{span}`'
+
+    def escape(chunk: str) -> str:
+        chunk = _BARE_URL_RE.sub(_wrap_url, chunk)
+        return ''.join(
+            part if part.startswith('``') else _RST_SPECIAL_RE.sub(r'\\\1', part)
+            for part in re.split(r'(``[^`]+``)', chunk)
+        )
+
+    out, last = [], 0
+    for match in _INLINE_CODE_RE.finditer(text):
+        out.append(escape(text[last : match.start()]))
+        out.append(literal(match))
+        last = match.end()
+    out.append(escape(text[last:]))
+    return ''.join(out)
+
+
 def _indent_multi_line_string(
     string: str,
     *,
@@ -2754,14 +2799,23 @@ class DatasetCard:
             parts.append(
                 cls._generate_prose_block(
                     [
-                        ('Attribution', metadata.attribution),
-                        ('Modification', metadata.modification if metadata.modified else None),
+                        # `References` is built as reStructuredText here; the other two
+                        # are prose from the table and are escaped like `notes`.
+                        ('Attribution', _rst_from_prose(metadata.attribution or '') or None),
+                        (
+                            'Modification',
+                            _rst_from_prose(metadata.modification or '')
+                            if metadata.modified
+                            else None,
+                        ),
                         ('References', gen.generate_references_field(metadata)),
                     ]
                 )
             )
             if metadata.notes:
-                notes = _indent_multi_line_string(_strip_trailing(metadata.notes), indent_level=1)
+                notes = _indent_multi_line_string(
+                    _rst_from_prose(_strip_trailing(metadata.notes)), indent_level=1
+                )
                 parts.append(cls.notes_template.format(notes.lstrip()))
         block = '\n\n'.join(part for part in parts if part.strip())
         if not block.strip():
