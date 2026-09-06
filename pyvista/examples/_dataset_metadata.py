@@ -391,14 +391,13 @@ def _metadata_index() -> _MetadataIndex:
 
 def _metadata_for_source_names(source_names: Iterable[str]) -> ExampleMetadata | None:
     """Return the entry claiming these files, or ``None`` when they are not in ``pyvista/data``."""
-    names = list(source_names)
     bundled = _bundled_index()
-    resolved = [bundled.match(name) or _metadata_index().match(name) for name in names]
+    resolved = [bundled.match(name) or _metadata_index().match(name) for name in source_names]
     matched = {entry.name: entry for entry in resolved if entry is not None}
     if not matched:
         return None
     if len(matched) > 1:
-        names = ', '.join(sorted(matched))
-        msg = f'Example files span more than one dataset entry: {names}.'
+        spanned = ', '.join(sorted(matched))
+        msg = f'Example files span more than one dataset entry: {spanned}.'
         raise ValueError(msg)
     return next(iter(matched.values()))
