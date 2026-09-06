@@ -512,8 +512,9 @@ class PolyDataFilters(DataSetFilters):
 
             .. deprecated:: 0.46
 
-                This keyword will be removed in a future version. The main mesh
-                always has priority with VTK 9.5.0 or later.
+                Omit this keyword; the main mesh already has priority. ``False`` raises
+                :class:`ValueError` with VTK 9.5.0 or later and still selects the other
+                mesh with older VTK. It will be removed in a future version.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -2889,53 +2890,127 @@ class PolyDataFilters(DataSetFilters):
         return pl.show()
 
     @_deprecate_positional_args(allowed=['remove', 'mode'])
-    def remove_points(  # noqa: PLR0917
+    def remove_points(  # type: ignore[override]  # noqa: PLR0917
         self,
-        remove,
+        remove=None,
         mode='any',
-        keep_scalars: bool = True,  # noqa: FBT001, FBT002
+        keep_scalars: bool | None = None,  # noqa: FBT001
         inplace: bool = False,  # noqa: FBT001, FBT002
+        *,
+        ind=None,
+        invert: bool | None = None,
+        pass_point_ids: bool | None = None,
+        pass_cell_ids: bool | None = None,
+        progress_bar: bool | None = None,
     ):
         """Rebuild a mesh by removing points.
 
-        Only valid for all-triangle meshes.
+        .. deprecated:: 0.49
+            Returning a ``(mesh, ids)`` tuple is deprecated and only the mesh will be
+            returned in a future version. Until then this filter returns one or the
+            other depending on how it is called:
+
+            - The points passed positionally or as ``remove`` return the tuple, and
+              warn. Only all-triangle meshes are supported.
+            - The points named ``ind``, or any of ``invert``, ``pass_point_ids``,
+              ``pass_cell_ids`` and ``progress_bar``, return only the mesh from
+              :meth:`pyvista.DataSetFilters.remove_points`, for any mesh. The ids that
+              were the second return value are the ``'vtkOriginalPointIds'`` array, and
+              :meth:`~pyvista.DataSet.clear_data` replaces ``keep_scalars``.
 
         Parameters
         ----------
-        remove : sequence[bool | int]
+        remove : sequence[bool | int], optional
             If remove is a ``bool`` array, points that are ``True`` will
             be removed.  Otherwise, it is treated as a list of
-            indices.
+            indices. Only valid for all-triangle meshes.
 
         mode : str, default: "any"
             When ``'all'``, only faces containing all points flagged
             for removal will be removed.
 
-        keep_scalars : bool, default: True
+        keep_scalars : bool, optional
             When ``True``, point and cell scalars will be passed on to
-            the new mesh.
+            the new mesh. Defaults to ``True`` and cannot be used when only the mesh
+            is returned.
 
         inplace : bool, default: False
             Updates mesh in-place.
 
+        ind : int | VectorLike[int] | VectorLike[bool], optional
+            Point indices to remove, the same as ``remove``. Passing this returns only
+            the mesh. See :meth:`pyvista.DataSetFilters.remove_points`.
+
+        invert : bool, default: False
+            Invert the selection. Passing this returns only the mesh.
+
+        pass_point_ids : bool, default: True
+            Add the ``'vtkOriginalPointIds'`` point array. Passing this returns only
+            the mesh.
+
+        pass_cell_ids : bool, default: True
+            Add the ``'vtkOriginalCellIds'`` cell array. Passing this returns only the
+            mesh.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress. Passing this returns only the
+            mesh.
+
         Returns
         -------
-        pyvista.PolyData
-            Mesh without the points flagged for removal.
-
-        numpy.ndarray
-            Indices of new points relative to the original mesh.
+        pyvista.PolyData | tuple[pyvista.PolyData, numpy.ndarray]
+            Mesh without the points flagged for removal, and the indices of its points
+            relative to the original mesh. The indices are returned with the mesh as a
+            deprecated ``(mesh, ids)`` tuple unless one of ``ind``, ``invert``,
+            ``pass_point_ids``, ``pass_cell_ids`` or ``progress_bar`` is passed, in
+            which case only the mesh is returned.
 
         Examples
         --------
-        Remove the first 100 points from a sphere.
+        Remove 150 points from a sphere.
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
-        >>> reduced_sphere, ridx = sphere.remove_points(range(100, 250))
+        >>> reduced_sphere = sphere.remove_points(ind=range(100, 250))
         >>> reduced_sphere.plot(show_edges=True, line_width=3)
 
         """
+        # `ind` and the keywords this filter never had select the new return value
+        if any(
+            arg is not None for arg in (ind, invert, pass_point_ids, pass_cell_ids, progress_bar)
+        ):
+            if ind is not None and remove is not None:
+                msg = 'Pass the points to remove with `ind` or `remove`, not both.'
+                raise TypeError(msg)
+            if keep_scalars is not None:
+                msg = '`keep_scalars` cannot be used with the mesh return. Use `clear_data`.'
+                raise TypeError(msg)
+            ind = remove if ind is None else ind
+            if ind is None:
+                msg = "remove_points() missing required argument 'ind'"
+                raise TypeError(msg)
+            return DataSetFilters.remove_points(
+                cast('PolyData', self),
+                ind,
+                mode,
+                invert=invert is True,
+                pass_point_ids=pass_point_ids is not False,
+                pass_cell_ids=pass_cell_ids is not False,
+                inplace=inplace,
+                progress_bar=progress_bar is True,
+            )
+
+        if remove is None:
+            msg = "remove_points() missing required argument 'ind'"
+            raise TypeError(msg)
+        # deprecated 0.49.0, convert to error in 0.52.0, remove 0.53.0
+        warn_external(
+            '`remove_points` will return only the mesh in a future version instead of a '
+            '`(mesh, ids)` tuple. Pass the points to remove with `ind=` to opt in now; the '
+            "original point ids are then kept as 'vtkOriginalPointIds'.",
+            PyVistaDeprecationWarning,
+        )
+        keep_scalars = True if keep_scalars is None else keep_scalars
         remove = np.asarray(remove)
 
         # np.asarray will eat anything, so we have to weed out bogus inputs

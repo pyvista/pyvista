@@ -512,6 +512,12 @@ def pytest_sessionstart():
 def pytest_addoption(parser):
     parser.addoption('--test_downloads', action='store_true', default=False)
     parser.addoption(
+        '--regenerate_overloads',
+        action='store_true',
+        default=False,
+        help='rewrite the generated `get_example` overloads from the examples themselves',
+    )
+    parser.addoption(
         '--no_check_gc',
         action='store_true',
         default=False,
@@ -947,7 +953,7 @@ _VTKSZ_SIZE_EXCEPTIONS_MB = {
     'sphx_glr_connectivity_001': 7,
     'sphx_glr_connectivity_002': 7,
     'sphx_glr_connectivity_003': 7,
-    'sphx_glr_ghost_cells_001': 7,
+    'sphx_glr_remove_cells_001': 7,
     'sphx_glr_openfoam_cooling_002': 7,
     'sphx_glr_openfoam_cooling_003': 8,
     'sphx_glr_pump_bracket_002': 7,

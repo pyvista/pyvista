@@ -34,7 +34,8 @@ The source code for the plot may be included in one of two ways:
 .. note::
    A ``# doctest: +SKIP`` statement is not executed, but the rest of its code
    block still runs -- matching doctest -- so also mark any statement that
-   depends on a skipped one.
+   depends on a skipped one. Leaving one unmarked warns, which fails a build
+   run with sphinx's ``-W``.
 
 .. note::
    Animations will not be saved, only the last frame will be shown.
@@ -201,6 +202,9 @@ _logger = sphinx_logging.getLogger(__name__)
 
 #: Matches a ``# doctest: +SKIP`` marker, any spacing.
 _DOCTEST_SKIP_RE = re.compile(r'doctest:\s*\+SKIP')
+
+#: Matches a ``#`` comment, or, as group 1, a string literal that may contain one.
+_COMMENT_OR_STRING_RE = re.compile(r"""('(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*")|[ \t]*#[^\n]*""")
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -392,8 +396,8 @@ def _contains_pyvista_plot(text) -> bool:
 
 
 def _strip_comments(code):
-    """Remove comments from a line of python code."""
-    return re.sub(r'(?m)^ *#.*\n?', '', code)
+    """Remove comments from a line of python code, leaving string literals alone."""
+    return _COMMENT_OR_STRING_RE.sub(lambda match: match.group(1) or '', code)
 
 
 def _split_code_at_show(text):
@@ -636,13 +640,13 @@ def render_figures(
                     ns=ns,
                     function_name=function_name,
                 )
-            except PlotError:
+            except PlotError as error:
                 if filtered is None:
                     raise
-                # a failing remainder degrades to a log; names bound so far stay usable
-                _logger.info(
-                    '[pyvista-plot] statements alongside a "# doctest: +SKIP" failed in %s',
-                    code_path,
+                # the piece keeps the names it bound; the error already names the file
+                _logger.warning(
+                    '[pyvista-plot] statements alongside a "# doctest: +SKIP" failed.\n%s',
+                    error,
                 )
 
             images = []

@@ -313,6 +313,7 @@ class Report(scooby.Report):
             'pyvista-frd-reader',
             'pyvista-miniply',
             'pyvista-stl',
+            'pyvista-zstd',
             # colormaps extras
             'cmcrameri',
             'cmocean',

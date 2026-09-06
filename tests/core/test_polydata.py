@@ -627,56 +627,75 @@ def test_merge_active_scalars(input_):
     assert merged.active_scalars_name == 'foo'
 
 
-@pytest.mark.parametrize(
-    'input_', [examples.load_hexbeam(), pv.Plane(i_resolution=1, j_resolution=1)]
-)
-@pytest.mark.parametrize('main_has_priority', [True, False])
-def test_merge_main_has_priority(input_, main_has_priority):
+_MERGE_PRIORITY_INPUTS = [
+    pytest.param(examples.load_hexbeam(), id='hexbeam'),
+    pytest.param(pv.Plane(i_resolution=1, j_resolution=1), id='plane'),
+]
+
+
+def _conflicting_scalars(input_):
+    """Return a mesh and a copy whose shared active scalars have the opposite sign."""
     mesh = input_.copy()
     data_main = np.arange(mesh.n_points, dtype=float)
     mesh.point_data['present_in_both'] = data_main
     mesh.set_active_scalars('present_in_both')
 
     other = mesh.copy()
-    data_other = -data_main
-    other.point_data['present_in_both'] = data_other
+    other.point_data['present_in_both'] = -data_main
     other.set_active_scalars('present_in_both')
+    return mesh, other
 
+
+def _matching_point_data(this, that, scalars_name):
+    """Return True if scalars on two meshes only differ by point order."""
     # note: order of points can change after point merging
-    def matching_point_data(this, that, scalars_name):
-        """Return True if scalars on two meshes only differ by point order."""
-        return all(
-            new_val == this.point_data[scalars_name][j]
-            for point, new_val in zip(that.points, that.point_data[scalars_name], strict=True)
-            for j in (this.points == point).all(-1).nonzero()
-        )
+    return all(
+        new_val == this.point_data[scalars_name][j]
+        for point, new_val in zip(that.points, that.point_data[scalars_name], strict=True)
+        for j in (this.points == point).all(-1).nonzero()
+    )
 
-    if pv.vtk_version_info >= (9, 5, 0):
-        merged = mesh.merge(other)
-        expected_to_match = mesh
-    else:
-        with pytest.warns(
-            pv.PyVistaDeprecationWarning,
-            match="The keyword 'main_has_priority' is deprecated and should not be used",
-        ):
-            merged = mesh.merge(other, main_has_priority=main_has_priority)
-        expected_to_match = mesh if main_has_priority else other
-    assert matching_point_data(merged, expected_to_match, 'present_in_both')
+
+@pytest.mark.parametrize('input_', _MERGE_PRIORITY_INPUTS)
+def test_merge_main_has_priority_by_default(input_):
+    mesh, other = _conflicting_scalars(input_)
+    merged = mesh.merge(other)
+    assert _matching_point_data(merged, mesh, 'present_in_both')
     assert merged.active_scalars_name == 'present_in_both'
 
 
+@pytest.mark.needs_vtk_version(
+    less_than=(9, 5, 0), reason='Main always has priority for vtk >= 9.5.'
+)
+@pytest.mark.parametrize('input_', _MERGE_PRIORITY_INPUTS)
 @pytest.mark.parametrize('main_has_priority', [True, False])
+def test_merge_main_has_priority(input_, main_has_priority):
+    mesh, other = _conflicting_scalars(input_)
+    if main_has_priority:
+        with pytest.warns(pv.PyVistaDeprecationWarning, match='is deprecated'):
+            merged = mesh.merge(other, main_has_priority=main_has_priority)
+    else:
+        merged = mesh.merge(other, main_has_priority=main_has_priority)
+    expected_to_match = mesh if main_has_priority else other
+    assert _matching_point_data(merged, expected_to_match, 'present_in_both')
+    assert merged.active_scalars_name == 'present_in_both'
+
+
+@pytest.mark.parametrize(
+    'main_has_priority', [True, False, 0, pytest.param(np.False_, id='np_False')]
+)
 def test_merge_main_has_priority_deprecated(sphere, main_has_priority):
-    match = (
-        "The keyword 'main_has_priority' is deprecated and should not be used.\n"
-        'The main mesh will always have priority in a future version.'
-    )
-    if main_has_priority is False and pv.vtk_version_info >= (9, 5, 0):
+    if main_has_priority:
+        match = "The keyword 'main_has_priority' is deprecated"
+        with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+            sphere.merge(sphere, main_has_priority=main_has_priority)
+    elif pv.vtk_version_info >= (9, 5, 0):
+        match = re.escape(f'main_has_priority={main_has_priority!r} is not supported')
         with pytest.raises(ValueError, match=match):
             sphere.merge(sphere, main_has_priority=main_has_priority)
     else:
-        with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
-            sphere.merge(sphere, main_has_priority=main_has_priority)
+        # The keyword still selects the winning mesh, so it is not deprecated yet.
+        sphere.merge(sphere, main_has_priority=main_has_priority)
 
 
 @pytest.mark.parametrize('main_has_priority', [True, False])
@@ -689,19 +708,17 @@ def test_merge_field_data(mesh, main_has_priority):
     other = mesh.copy()
     other.field_data[key] = data_other
 
-    match = (
-        "The keyword 'main_has_priority' is deprecated and should not be used.\n"
-        'The main mesh will always have priority in a future version, and this '
-        'keyword will be removed.'
-    )
-    if main_has_priority is False and pv.vtk_version_info >= (9, 5, 0):
-        match += '\nIts value cannot be False for vtk>=9.5.0.'
-        with pytest.raises(ValueError, match=re.escape(match)):
+    if main_has_priority:
+        match = "The keyword 'main_has_priority' is deprecated"
+        with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+            merged = mesh.merge(other, main_has_priority=main_has_priority)
+    elif pv.vtk_version_info >= (9, 5, 0):
+        match = re.escape(f'main_has_priority={main_has_priority!r} is not supported')
+        with pytest.raises(ValueError, match=match):
             mesh.merge(other, main_has_priority=main_has_priority)
         return
     else:
-        with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
-            merged = mesh.merge(other, main_has_priority=main_has_priority)
+        merged = mesh.merge(other, main_has_priority=main_has_priority)
 
     actual = merged.field_data[key]
     expected = data_main if main_has_priority else data_other
@@ -1093,6 +1110,12 @@ def test_volume(sphere_dense):
     assert np.isclose(sphere_dense.volume, ideal_volume, rtol=1e-3)
 
 
+REMOVE_POINTS_DEPRECATED = pytest.mark.filterwarnings(
+    'ignore:`remove_points` will return only:pyvista.core.errors.PyVistaDeprecationWarning'
+)
+
+
+@REMOVE_POINTS_DEPRECATED
 def test_remove_points_any(sphere):
     remove_mask = np.zeros(sphere.n_points, np.bool_)
     remove_mask[:3] = True
@@ -1101,6 +1124,7 @@ def test_remove_points_any(sphere):
     assert np.allclose(sphere_mod.points, sphere.points[ind])
 
 
+@REMOVE_POINTS_DEPRECATED
 def test_remove_points_uses_fixed_size_storage(sphere):
     remove_mask = np.zeros(sphere.n_points, np.bool_)
     remove_mask[:3] = True
@@ -1110,6 +1134,7 @@ def test_remove_points_uses_fixed_size_storage(sphere):
         assert sphere_mod.GetPolys().IsStorageFixedSize()
 
 
+@REMOVE_POINTS_DEPRECATED
 def test_remove_points_all(sphere):
     sphere_copy = sphere.copy()
     sphere_copy.cell_data['ind'] = np.arange(sphere_copy.n_faces)
@@ -1119,6 +1144,7 @@ def test_remove_points_all(sphere):
     assert sphere_copy.n_faces == sphere.n_faces - 1
 
 
+@REMOVE_POINTS_DEPRECATED
 def test_remove_points_fail(sphere, plane):
     # not triangles:
     with pytest.raises(NotAllTrianglesError):
@@ -1131,6 +1157,48 @@ def test_remove_points_fail(sphere, plane):
     # invalid mask type
     with pytest.raises(TypeError):
         sphere.remove_points([0.0])
+
+
+def test_remove_points_deprecated(sphere):
+    match = '`remove_points` will return only the mesh in a future version'
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        reduced, ridx = sphere.remove_points([0])
+    assert reduced.n_points == sphere.n_points - 1
+    assert len(ridx) == reduced.n_points
+
+    with pytest.raises(TypeError, match="missing required argument 'ind'"):
+        sphere.remove_points()
+    # The new keywords select the mesh return, so the index can stay positional
+    for kwargs in [dict(invert=True), dict(pass_point_ids=True), dict(progress_bar=False)]:
+        assert isinstance(sphere.remove_points([0], **kwargs), pv.PolyData)
+
+    if pv.version_info >= (0, 52):  # pragma: no cover -- fires at the version bump
+        pytest.fail('Convert the `remove_points` tuple return into an error.')
+
+
+def test_remove_points_ind(sphere, plane):
+    remove_mask = np.zeros(sphere.n_points, np.bool_)
+    remove_mask[:3] = True
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        expected, ridx = sphere.remove_points(remove_mask)
+
+    reduced = sphere.remove_points(ind=remove_mask)
+    assert isinstance(reduced, pv.PolyData)
+    assert np.array_equal(reduced.points, expected.points)
+    assert np.array_equal(reduced.faces, expected.faces)
+    assert np.array_equal(reduced['vtkOriginalPointIds'], ridx)
+
+    # Any mesh is supported
+    reduced = plane.remove_points(ind=[0])
+    assert reduced.n_cells == plane.n_cells - 1
+
+    match = 'Pass the points to remove with `ind` or `remove`, not both.'
+    with pytest.raises(TypeError, match=re.escape(match)):
+        sphere.remove_points([0], ind=[0])
+
+    match = '`keep_scalars` cannot be used with the mesh return. Use `clear_data`.'
+    with pytest.raises(TypeError, match=re.escape(match)):
+        sphere.remove_points(ind=[0], keep_scalars=False)
 
 
 def test_vertice_cells_on_read(tmpdir):
