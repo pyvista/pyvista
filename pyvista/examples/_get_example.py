@@ -22,12 +22,14 @@ import pyvista as pv
 from pyvista.examples._dataset_loader import _DOWNLOADABLE_TYPES
 from pyvista.examples._dataset_loader import _DatasetLoader
 from pyvista.examples._dataset_loader import _FileProps
+from pyvista.examples._dataset_metadata import _metadata_for_source_names
 
 if TYPE_CHECKING:
     from collections.abc import Callable
     from types import ModuleType
 
     from pyvista.examples._dataset_loader import DatasetObject
+    from pyvista.examples._dataset_metadata import ExampleMetadata
 
 _DatasetT_co = TypeVar('_DatasetT_co', covariant=True, default='DatasetObject')
 _ReadersT_co = TypeVar(
@@ -102,6 +104,33 @@ class Example(Generic[_DatasetT_co, _ReadersT_co]):
         """Return the loader backing this example, resolved from :attr:`function` once."""
         loader, _, _ = _get_dataset_loader(self.function)
         return loader
+
+    @functools.cached_property
+    def metadata(self) -> ExampleMetadata | None:
+        """Return where the data came from and how it may be used.
+
+        The metadata is published by the `pyvista/data
+        <https://github.com/pyvista/data>`_ repository and downloaded on first access,
+        then reused. It is ``None`` for an example whose files do not come from there:
+        a built-in dataset, or a glTF sample from the Khronos repository.
+
+        Returns
+        -------
+        ExampleMetadata | None
+            Provenance and licensing for this example, or ``None`` when it has none.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> shark = examples.get_example('grey_nurse_shark')  # doctest:+SKIP
+        >>> shark.metadata.license_expression  # doctest:+SKIP
+        'CC-BY-SA-3.0'
+
+        """
+        loader = self._loader
+        if not isinstance(loader, _DOWNLOADABLE_TYPES):
+            return None
+        return _metadata_for_source_names(loader.source_names)
 
     @functools.cached_property
     def readers(self) -> _ReadersT_co:

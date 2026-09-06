@@ -69,6 +69,18 @@ files, where they came from, and the readers for them.
    >>> mesh = examples.get_example('bunny').load()
    >>> mesh.plot()
 
+:attr:`~pyvista.examples.Example.metadata` reports where the data came from and
+how it may be used, read from the `pyvista/data
+<https://github.com/pyvista/data>`_ repository:
+
+.. code-block:: python
+
+   >>> shark = examples.get_example('grey_nurse_shark')  # doctest:+SKIP
+   >>> shark.metadata.license_expression  # doctest:+SKIP
+   'CC-BY-SA-3.0'
+   >>> shark.metadata.commercial_use  # doctest:+SKIP
+   True
+
 See the API reference for details:
 
 .. autosummary::
@@ -76,6 +88,9 @@ See the API reference for details:
 
    examples.get_example
    examples.Example
+   examples.ExampleMetadata
+   examples.License
+   examples.Reference
 
 Dataset Gallery
 ---------------
