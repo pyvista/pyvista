@@ -1,0 +1,208 @@
+from __future__ import annotations
+
+import pytest
+
+from pyvista.examples._dataset_metadata import ExampleMetadata
+from pyvista.examples._dataset_metadata import License
+from pyvista.examples._dataset_metadata import _build_index
+from pyvista.examples._dataset_metadata import _license_terms
+from pyvista.examples._dataset_metadata import _load_toml
+from pyvista.examples._dataset_metadata import _matches
+
+DOCUMENT = """
+schema_version = 1
+
+[license."CC-BY-4.0"]
+title = "Creative Commons Attribution 4.0 International"
+url = "https://creativecommons.org/licenses/by/4.0/"
+commercial_use = true
+attribution_required = true
+share_alike = false
+file = "LICENSES/CC-BY-4.0.txt"
+
+[license."CC-BY-SA-3.0"]
+title = "Creative Commons Attribution Share Alike 3.0 Unported"
+url = "https://creativecommons.org/licenses/by-sa/3.0/"
+commercial_use = true
+attribution_required = true
+share_alike = true
+file = "LICENSES/CC-BY-SA-3.0.txt"
+
+[license."LicenseRef-Unknown"]
+title = "Undetermined license"
+url = "https://example.org/unknown"
+commercial_use = false
+attribution_required = false
+share_alike = false
+file = "LICENSES/LicenseRef-Unknown.txt"
+
+[collection."thingiverse"]
+title = "Thingiverse"
+url = "https://www.thingiverse.com/"
+description = "User-contributed models."
+
+[[dataset]]
+name = "shark"
+title = "Shark"
+description = "A shark."
+path = ["shark/**"]
+SPDX-License-Identifier = "CC-BY-SA-3.0"
+SPDX-FileCopyrightText = ["2013 someone"]
+provenance = "inferred"
+source_url = "https://www.thingiverse.com/thing:1"
+collection = "thingiverse"
+authors = ["Someone"]
+attribution = "Shark by Someone."
+modified = true
+modification = "Converted to STL."
+notes = "The page states no version."
+references = [{ citation = "A paper.", doi = "10.1/2" }]
+
+[[dataset]]
+name = "both"
+title = "Two licences"
+description = "Covered by two licences at once."
+path = ["both.vtk"]
+SPDX-License-Identifier = "CC-BY-4.0 AND LicenseRef-Unknown"
+provenance = "verified"
+source_url = "https://example.org/both"
+
+[[dataset]]
+name = "plain"
+title = "Plain"
+description = "One file, one licence."
+path = ["plain.vtk", "nested/*.vtk"]
+SPDX-License-Identifier = "CC-BY-4.0"
+provenance = "verified"
+source_url = "https://example.org/plain"
+attribution = "Plain by Someone."
+"""
+
+
+@pytest.fixture
+def index():
+    return _build_index(_load_toml(DOCUMENT.encode()))
+
+
+@pytest.mark.parametrize(
+    ('pattern', 'path', 'expected'),
+    [
+        ('bunny.ply', 'bunny.ply', True),
+        ('bunny.ply', 'other.ply', False),
+        # `*` stops at a separator and `**` crosses one.
+        ('skybox/*', 'skybox/a.jpg', True),
+        ('skybox/*', 'skybox/nested/a.jpg', False),
+        ('skybox/**', 'skybox/nested/a.jpg', True),
+        ('skybox/**', 'skybox/a.jpg', True),
+        ('skybox/**', 'skyboxes/a.jpg', False),
+        ('*', 'a.vtk', True),
+        ('*', 'dir/a.vtk', False),
+        ('skybox/*.jpg', 'skybox/a.jpg', True),
+        ('skybox/*.jpg', 'skybox/a.png', False),
+        ('sim_?.vtu', 'sim_1.vtu', True),
+        ('sim_?.vtu', 'sim_12.vtu', False),
+        # A dot in the pattern is literal, not a wildcard.
+        ('a.vtk', 'axvtk', False),
+    ],
+)
+def test_matches(pattern, path, expected):
+    assert _matches(pattern, path) is expected
+
+
+@pytest.mark.parametrize(
+    ('expression', 'expected'),
+    [
+        ('MIT', ['MIT']),
+        ('CC-BY-4.0 AND LicenseRef-Unknown', ['CC-BY-4.0', 'LicenseRef-Unknown']),
+        ('MIT OR Apache-2.0', ['MIT', 'Apache-2.0']),
+        # The exception after `WITH` is not itself a licence.
+        ('Apache-2.0 WITH LLVM-exception', ['Apache-2.0']),
+        ('GPL-2.0-only WITH Classpath-exception-2.0 OR MIT', ['GPL-2.0-only', 'MIT']),
+        ('(MIT AND Apache-2.0)', ['MIT', 'Apache-2.0']),
+    ],
+)
+def test_license_terms(expression, expected):
+    assert _license_terms(expression) == expected
+
+
+def test_build_index_reads_every_field(index):
+    entry = index.match('shark/shark.stl')
+    assert entry == ExampleMetadata(
+        name='shark',
+        title='Shark',
+        description='A shark.',
+        license_expression='CC-BY-SA-3.0',
+        licenses=(index.licenses['CC-BY-SA-3.0'],),
+        provenance='inferred',
+        paths=('shark/**',),
+        source_url='https://www.thingiverse.com/thing:1',
+        collection='thingiverse',
+        authors=('Someone',),
+        copyright=('2013 someone',),
+        attribution='Shark by Someone.',
+        modified=True,
+        modification='Converted to STL.',
+        notes='The page states no version.',
+        references=entry.references,
+    )
+    assert entry.references[0].citation == 'A paper.'
+    assert entry.references[0].doi == '10.1/2'
+    assert entry.references[0].url is None
+
+
+def test_license_table_is_resolved(index):
+    assert index.licenses['CC-BY-4.0'] == License(
+        spdx_id='CC-BY-4.0',
+        title='Creative Commons Attribution 4.0 International',
+        url='https://creativecommons.org/licenses/by/4.0/',
+        commercial_use=True,
+        attribution_required=True,
+        share_alike=False,
+    )
+
+
+def test_obligations_combine_across_an_expression(index):
+    plain = index.match('plain.vtk')
+    assert plain.commercial_use
+    assert plain.attribution_required
+    assert not plain.share_alike
+
+    shark = index.match('shark/shark.stl')
+    assert shark.share_alike
+
+    # An undetermined licence makes the whole expression unusable commercially.
+    both = index.match('both.vtk')
+    assert not both.commercial_use
+
+
+def test_match_uses_every_pattern(index):
+    assert index.match('nested/a.vtk').name == 'plain'
+    assert index.match('nested/deep/a.vtk') is None
+
+
+def test_match_returns_none_for_unclaimed_path(index):
+    assert index.match('not/in/the/table.vtk') is None
+
+
+def test_schema_version_must_match():
+    document = _load_toml(b'schema_version = 99')
+    match = 'declares schema_version 99'
+    with pytest.raises(ValueError, match=match):
+        _build_index(document)
+
+
+def test_metadata_for_source_names(index, monkeypatch):
+    from pyvista.examples import _dataset_metadata
+
+    monkeypatch.setattr(_dataset_metadata, '_metadata_index', lambda: index)
+
+    assert _dataset_metadata._metadata_for_source_names(['shark/a.stl']).name == 'shark'
+    # Several files of one example resolve to the single entry claiming them.
+    assert _dataset_metadata._metadata_for_source_names(['shark/a.stl', 'shark/b.stl']).name == (
+        'shark'
+    )
+    assert _dataset_metadata._metadata_for_source_names(['nothing.vtk']) is None
+
+    match = 'span more than one dataset entry: plain, shark'
+    with pytest.raises(ValueError, match=match):
+        _dataset_metadata._metadata_for_source_names(['shark/a.stl', 'plain.vtk'])

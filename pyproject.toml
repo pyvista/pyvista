@@ -26,6 +26,7 @@ dependencies = [
   'pyobjc-framework-Cocoa; sys_platform == "darwin"', # see pyvista/pulls/7828, 8423, and 8832
   'pyvista-validation==0.1.1', # Exact pin: the validation API is still unstable
   'scooby>=0.5.1',
+  'tomli>=1.1.0; python_version < "3.11"', # tomllib is stdlib from 3.11
   'typing-extensions>=4.10',
   'vtk!=9.4.0',
   'vtk!=9.4.1',
