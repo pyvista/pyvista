@@ -1168,10 +1168,9 @@ def test_remove_points_deprecated(sphere):
 
     with pytest.raises(TypeError, match="missing required argument 'ind'"):
         sphere.remove_points()
-    with pytest.raises(TypeError, match='require `ind`'):
-        sphere.remove_points([0], invert=True)
-    with pytest.raises(TypeError, match='require `ind`'):
-        sphere.remove_points([0], pass_point_ids=True)
+    # The new keywords select the mesh return, so the index can stay positional
+    for kwargs in [dict(invert=True), dict(pass_point_ids=True), dict(progress_bar=False)]:
+        assert isinstance(sphere.remove_points([0], **kwargs), pv.PolyData)
 
     if pv.version_info >= (0, 52):  # pragma: no cover -- fires at the version bump
         pytest.fail('Convert the `remove_points` tuple return into an error.')
@@ -1193,10 +1192,12 @@ def test_remove_points_ind(sphere, plane):
     reduced = plane.remove_points(ind=[0])
     assert reduced.n_cells == plane.n_cells - 1
 
-    match = '`remove` and `keep_scalars` cannot be used together with `ind`.'
-    with pytest.raises(TypeError, match=match):
+    match = 'Pass the points to remove with `ind` or `remove`, not both.'
+    with pytest.raises(TypeError, match=re.escape(match)):
         sphere.remove_points([0], ind=[0])
-    with pytest.raises(TypeError, match=match):
+
+    match = '`keep_scalars` cannot be used with the mesh return. Use `clear_data`.'
+    with pytest.raises(TypeError, match=re.escape(match)):
         sphere.remove_points(ind=[0], keep_scalars=False)
 
 

@@ -2898,19 +2898,21 @@ class PolyDataFilters(DataSetFilters):
         inplace: bool = False,  # noqa: FBT001, FBT002
         *,
         ind=None,
-        invert: bool = False,
+        invert: bool | None = None,
         pass_point_ids: bool | None = None,
         pass_cell_ids: bool | None = None,
-        progress_bar: bool = False,
+        progress_bar: bool | None = None,
     ):
         """Rebuild a mesh by removing points.
 
         .. deprecated:: 0.49
-            Returning a ``(mesh, ids)`` tuple is deprecated. Pass the points to remove
-            with ``ind`` instead of ``remove`` to return only the mesh, which also
-            works for meshes that are not all triangles. The original point ids are
-            then kept as ``'vtkOriginalPointIds'``, and
-            :meth:`~pyvista.DataSet.clear_data` replaces ``keep_scalars``.
+            Returning a ``(mesh, ids)`` tuple is deprecated. Name the points to remove
+            ``ind``, or pass any of ``invert``, ``pass_point_ids``, ``pass_cell_ids``
+            or ``progress_bar``, to return only the mesh from
+            :meth:`pyvista.DataSetFilters.remove_points`, which also works for meshes
+            that are not all triangles. The original point ids are then kept as
+            ``'vtkOriginalPointIds'``, and :meth:`~pyvista.DataSet.clear_data` replaces
+            ``keep_scalars``.
 
         Parameters
         ----------
@@ -2925,26 +2927,27 @@ class PolyDataFilters(DataSetFilters):
 
         keep_scalars : bool, optional
             When ``True``, point and cell scalars will be passed on to
-            the new mesh. Defaults to ``True`` when ``remove`` is used and cannot be
-            used together with ``ind``.
+            the new mesh. Defaults to ``True`` and cannot be used when only the mesh
+            is returned.
 
         inplace : bool, default: False
             Updates mesh in-place.
 
         ind : int | VectorLike[int] | VectorLike[bool], optional
-            Point indices to remove. See :meth:`pyvista.DataSetFilters.remove_points`.
+            Point indices to remove, the same as ``remove``. Naming them ``ind``
+            returns only the mesh. See :meth:`pyvista.DataSetFilters.remove_points`.
 
         invert : bool, default: False
-            Invert the selection. Requires ``ind``.
+            Invert the selection. Returns only the mesh.
 
         pass_point_ids : bool, default: True
-            Add the ``'vtkOriginalPointIds'`` point array. Requires ``ind``.
+            Add the ``'vtkOriginalPointIds'`` point array. Returns only the mesh.
 
         pass_cell_ids : bool, default: True
-            Add the ``'vtkOriginalCellIds'`` cell array. Requires ``ind``.
+            Add the ``'vtkOriginalCellIds'`` cell array. Returns only the mesh.
 
         progress_bar : bool, default: False
-            Display a progress bar to indicate progress. Requires ``ind``.
+            Display a progress bar to indicate progress. Returns only the mesh.
 
         Returns
         -------
@@ -2965,26 +2968,33 @@ class PolyDataFilters(DataSetFilters):
         >>> reduced_sphere.plot(show_edges=True, line_width=3)
 
         """
-        if ind is not None:
-            if remove is not None or keep_scalars is not None:
-                msg = '`remove` and `keep_scalars` cannot be used together with `ind`.'
+        # `ind` and the keywords this filter never had select the new return value
+        if any(
+            arg is not None for arg in (ind, invert, pass_point_ids, pass_cell_ids, progress_bar)
+        ):
+            if ind is not None and remove is not None:
+                msg = 'Pass the points to remove with `ind` or `remove`, not both.'
+                raise TypeError(msg)
+            if keep_scalars is not None:
+                msg = '`keep_scalars` cannot be used with the mesh return. Use `clear_data`.'
+                raise TypeError(msg)
+            ind = remove if ind is None else ind
+            if ind is None:
+                msg = "remove_points() missing required argument 'ind'"
                 raise TypeError(msg)
             return DataSetFilters.remove_points(
                 cast('PolyData', self),
                 ind,
                 mode,
-                invert=invert,
+                invert=invert is True,
                 pass_point_ids=pass_point_ids is not False,
                 pass_cell_ids=pass_cell_ids is not False,
                 inplace=inplace,
-                progress_bar=progress_bar,
+                progress_bar=progress_bar is True,
             )
 
         if remove is None:
             msg = "remove_points() missing required argument 'ind'"
-            raise TypeError(msg)
-        if invert or pass_point_ids is not None or pass_cell_ids is not None or progress_bar:
-            msg = '`invert`, `pass_point_ids`, `pass_cell_ids` and `progress_bar` require `ind`.'
             raise TypeError(msg)
         # deprecated 0.49.0, convert to error in 0.52.0, remove 0.53.0
         warn_external(
