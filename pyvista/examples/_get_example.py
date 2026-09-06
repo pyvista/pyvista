@@ -31,7 +31,6 @@ if TYPE_CHECKING:
     from pyvista.examples._dataset_loader import DatasetObject
     from pyvista.examples._dataset_metadata import ExampleMetadata
     from pyvista.examples._dataset_metadata import License
-    from pyvista.examples._dataset_metadata import Provenance
     from pyvista.examples._dataset_metadata import Reference
 
 _DatasetT_co = TypeVar('_DatasetT_co', covariant=True, default='DatasetObject')
@@ -133,7 +132,7 @@ class Example(Generic[_DatasetT_co, _ReadersT_co]):
 
     @property
     def licenses(self) -> tuple[License, ...]:  # numpydoc ignore=RT01
-        """Every licence :attr:`license` names, resolved to its full terms."""
+        """Every licence :attr:`~pyvista.examples.Example.license` names, resolved to its full terms."""
         return () if self._metadata is None else self._metadata.licenses
 
     @property
@@ -152,18 +151,21 @@ class Example(Generic[_DatasetT_co, _ReadersT_co]):
         return None if self._metadata is None else self._metadata.share_alike
 
     @property
-    def provenance(self) -> Provenance | None:  # numpydoc ignore=RT01
+    def provenance(self) -> str | None:  # numpydoc ignore=RT01
         """Confidence in the origin, not the licence: ``'verified'``, ``'inferred'``, ``'unknown'``."""
         return None if self._metadata is None else self._metadata.provenance
 
     @property
     def origin_url(self) -> str | None:  # numpydoc ignore=RT01
-        """Where the data came from, as opposed to :attr:`source_urls`, which is where PyVista fetches it."""
+        """Where the data came from, rather than where PyVista fetches it.
+
+        :attr:`~pyvista.examples.Example.source_urls` is the download location.
+        """
         return None if self._metadata is None else self._metadata.source_url
 
     @property
     def origin_title(self) -> str | None:  # numpydoc ignore=RT01
-        """Human-readable name of the source behind :attr:`origin_url`."""
+        """Human-readable name of the source behind :attr:`~pyvista.examples.Example.origin_url`."""
         return None if self._metadata is None else self._metadata.source_title
 
     @property
