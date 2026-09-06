@@ -185,3 +185,19 @@
 #gallery-next {
   right: 0.5rem;
 }
+
+/* The Source & License footer carries badge groups and links far longer than the
+   numeric values the field grid was built for, so let them wrap. */
+.gallery-card .sd-card-footer .sd-text-nowrap {
+  white-space: normal;
+}
+
+.gallery-card .sd-card-footer .sd-badge {
+  margin: 0.1rem 0.15rem 0.1rem 0;
+}
+
+/* Provenance notes sit inside the footer dropdown, so drop a level of chrome. */
+.gallery-card .sd-card-footer details.sd-dropdown {
+  margin-top: 0.5rem;
+  box-shadow: none;
+}
