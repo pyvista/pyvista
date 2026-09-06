@@ -56,6 +56,7 @@ if TYPE_CHECKING:
     from pyvista import PolyData
     from pyvista import RectilinearGrid
     from pyvista import UnstructuredGrid
+    from pyvista.core._typing_core import ArrayLike
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
@@ -4693,7 +4694,8 @@ class DataSetFilters(DataObjectFilters):
                 mask = np.ones(self.n_cells, bool)
                 mask[ind] = False
                 indices = mask
-        _, indices = numpy_to_idarr(indices, return_ind=True)  # type: ignore[misc, arg-type]
+        # A mask or integer ids, which is what numpy_to_idarr documents but does not type
+        _, indices = numpy_to_idarr(cast('ArrayLike[int]', indices), return_ind=True)
 
         # Extract using a shallow copy to avoid the side effect of creating the
         # vtkOriginalPointIds and vtkOriginalCellIds arrays in the input
