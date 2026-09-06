@@ -56,10 +56,10 @@ jupyter = ['ipywidgets', 'nest-asyncio2', 'trame-pyvista']
 
 [dependency-groups]
 pinned = [ # Pinned versions of core dependencies
-  'cyclopts<4.24.0',
+  'cyclopts<4.25.1',
   'filelock<3.33.0', # not a core dep; serializes parallel example downloads
-  'matplotlib<3.10.10',
-  'numpy<2.5.0',
+  'matplotlib<3.11.2', # docs tables need okabe_ito, added in 3.11
+  'numpy<2.5.4',
   'pillow<12.4.0',
   'pooch<1.10.0',
   'pyobjc-framework-Cocoa<12.3.0; sys_platform == "darwin"',
