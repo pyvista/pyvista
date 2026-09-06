@@ -3490,7 +3490,8 @@ class DataObjectFilters:
         # UnstructuredGrid are clipped plane by plane instead, which keeps their cell types
         # and is faster for it. PolyData and PointSet are already triangulated, so they gain
         # nothing, and only the box filter has a locator to disable for ``merge_points``.
-        if isinstance(self, (pv.PolyData, pv.PointSet)) or not merge_points:
+        use_box_filter = isinstance(self, pv.PolyData) or not merge_points
+        if use_box_filter:
             alg = _vtk.vtkBoxClipDataSet()
             if not merge_points:
                 # vtkBoxClipDataSet uses vtkMergePoints by default
@@ -3513,7 +3514,7 @@ class DataObjectFilters:
 
         if crinkle:
             clipped = _Crinkler._extract_crinkle_cells(source, clipped, None, active_scalars_info)
-        return _remove_unused_points_post_clip(clipped, self.bounds)
+        return _remove_unused_points_post_clip(clipped, self.bounds, force=use_box_filter)
 
     def clip_slab(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
@@ -5727,15 +5728,17 @@ def _clip_by_box_planes(
     return _get_output(append)
 
 
-def _remove_unused_points_post_clip(clip_output, input_bounds):
+def _remove_unused_points_post_clip(clip_output, input_bounds, *, force: bool = False):
     # VTK clip filters are buggy and sometimes retain unused points from the input, e.g.:
     # https://github.com/pyvista/pyvista/issues/6511
     # https://github.com/pyvista/pyvista/issues/7738
 
     def maybe_remove_unused_points(mesh: DataSet):
         # Unused points are correctly removed sometimes, so for performance we only
-        # remove points when the clipped bounds match input bounds
-        if np.allclose(clip_output.bounds, input_bounds) and hasattr(mesh, 'remove_unused_points'):
+        # remove points when the clipped bounds match input bounds, or when the caller
+        # knows its filter always keeps them
+        needed = force or np.allclose(clip_output.bounds, input_bounds)
+        if needed and hasattr(mesh, 'remove_unused_points'):
             return mesh.remove_unused_points()
         return mesh
 

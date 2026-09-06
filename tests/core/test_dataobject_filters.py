@@ -317,6 +317,20 @@ def test_clip_box_no_unused_points(as_composite):
     assert np.allclose(clipped.bounds, new_bounds)
 
 
+@pytest.mark.parametrize('invert', [True, False])
+def test_clip_box_polydata_no_unused_points(invert):
+    mesh = pv.Sphere(theta_resolution=16, phi_resolution=16)
+    clipped = mesh.clip_box([0.1, 1.0, 0.1, 1.0, 0.1, 1.0], invert=invert)
+    assert clipped.n_points == len(np.unique(clipped.cell_connectivity))
+
+
+def test_clip_box_polydata_empty_output_has_no_points():
+    mesh = pv.Sphere(theta_resolution=16, phi_resolution=16)
+    clipped = mesh.clip_box([0.3, 1.0, 0.3, 1.0, 0.3, 1.0], invert=False)
+    assert clipped.n_cells == 0
+    assert clipped.n_points == 0
+
+
 def _box_clip_filter(mesh, bounds, *, invert):
     alg = _vtk.vtkBoxClipDataSet()
     alg.SetInputDataObject(mesh)
