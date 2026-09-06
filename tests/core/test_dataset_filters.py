@@ -4973,8 +4973,7 @@ def test_color_labels_return_dict(labeled_image, color_type):
     ('negative_indexing', 'label_data', 'expected_keys'),
     [
         (True, [0, -1, 2, -6], [0, 2, -1, -6]),
-        # A label equal to the number of colors is allowed but has no color
-        (False, [0, 2, 2, 6], [0, 2]),
+        (False, [0, 2, 2, 5], [0, 2, 5]),
     ],
 )
 def test_color_labels_return_dict_index_mode(negative_indexing, label_data, expected_keys):
@@ -4988,8 +4987,24 @@ def test_color_labels_return_dict_index_mode(negative_indexing, label_data, expe
     assert list(mapping.keys()) == expected_keys
     for key in expected_keys:
         assert mapping[key] == pv.Color(colors[key]).int_rgb
-    expected_colors = [mapping.get(label, (0, 0, 0)) for label in label_data]
+    expected_colors = [mapping[label] for label in label_data]
     assert np.array_equal(colored.active_scalars, expected_colors)
+
+
+def test_color_labels_label_equal_to_number_of_colors():
+    colors = ['red', 'green', 'blue']
+    labels = pv.ImageData(dimensions=(4, 1, 1))
+    labels['data'] = [0, 1, 2, 3]
+
+    # A label equal to the number of colors cannot index the colors
+    match = 'Index coloring mode cannot be used'
+    with pytest.raises(ValueError, match=match):
+        labels.color_labels(colors, coloring_mode='index')
+
+    # Cycle mode is used by default instead, so every label is colored
+    colored, mapping = labels.color_labels(colors, return_dict=True)
+    assert list(mapping.keys()) == [0, 1, 2, 3]
+    assert mapping[3] == pv.Color('red').int_rgb
 
 
 def test_color_labels_does_not_modify_colormap():

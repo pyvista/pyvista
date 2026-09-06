@@ -7893,9 +7893,10 @@ class DataSetFilters(DataObjectFilters):
                 )
                 raise ValueError(msg)
 
-        def _is_index_like(array_, max_value):
-            min_value = -max_value if negative_indexing else 0
-            return (array_ == np.floor(array_)) & (array_ >= min_value) & (array_ <= max_value)
+        def _is_index_like(array_, n_colors_):
+            """Return which values can be used to index ``n_colors_`` colors."""
+            min_value = -n_colors_ if negative_indexing else 0
+            return (array_ == np.floor(array_)) & (array_ >= min_value) & (array_ < n_colors_)
 
         _validation.check_contains(
             ['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'],
@@ -7990,7 +7991,7 @@ class DataSetFilters(DataObjectFilters):
                     color_rgb_sequence = color_rgb_sequence * len(array)
 
             n_colors = len(color_rgb_sequence)
-            index_like = np.all(_is_index_like(array, max_value=n_colors))
+            index_like = np.all(_is_index_like(array, n_colors_=n_colors))
             if coloring_mode is None:
                 coloring_mode = 'index' if index_like else 'cycle'
 
@@ -8019,11 +8020,9 @@ class DataSetFilters(DataObjectFilters):
                     mapping = {
                         label: color_rgb_sequence[label] for label in keys if label in present
                     }
-                # Negative labels index the sequence from the end like the negative keys, and
-                # a label equal to ``n_colors`` passes the check above but has no color
+                # Negative labels index the sequence from the end like the negative keys
                 indices[indices < 0] += n_colors
-                default_row = np.full((1, num_components), default_channel_value, color_dtype)
-                colors_out = np.vstack((table, default_row))[indices]
+                colors_out = table[indices]
             else:  # 'cycle', validated above
                 if negative_indexing:
                     msg = "Negative indexing is not supported with 'cycle' mode enabled."
