@@ -17,6 +17,7 @@ Errors and Warnings
    core.errors.PointSetCellOperationError
    core.errors.PointSetDimensionReductionError
    core.errors.PointSetNotSupported
+   core.errors.PrecisionWarning
    core.errors.PyVistaAttributeError
    core.errors.PyVistaDeprecationWarning
    core.errors.PyVistaEfficiencyWarning

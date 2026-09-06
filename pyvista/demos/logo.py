@@ -25,6 +25,8 @@ import pyvista as pv
 from pyvista import _vtk
 from pyvista import examples
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core.filters import _get_output
+from pyvista.core.filters import _update_alg
 from pyvista.core.utilities.features import _voxelize_legacy
 
 THIS_PATH = str(Path(os.path.realpath(__file__)).parent)
@@ -90,8 +92,8 @@ def text_3d(string, depth=0.5):
 
     tri_filter = _vtk.vtkTriangleFilter()
     tri_filter.SetInputConnection(extrude.GetOutputPort())
-    tri_filter.Update()
-    return pv.wrap(tri_filter.GetOutput())
+    _update_alg(tri_filter)
+    return _get_output(tri_filter)
 
 
 @_deprecate_positional_args
