@@ -2906,13 +2906,17 @@ class PolyDataFilters(DataSetFilters):
         """Rebuild a mesh by removing points.
 
         .. deprecated:: 0.49
-            Returning a ``(mesh, ids)`` tuple is deprecated. Name the points to remove
-            ``ind``, or pass any of ``invert``, ``pass_point_ids``, ``pass_cell_ids``
-            or ``progress_bar``, to return only the mesh from
-            :meth:`pyvista.DataSetFilters.remove_points`, which also works for meshes
-            that are not all triangles. The original point ids are then kept as
-            ``'vtkOriginalPointIds'``, and :meth:`~pyvista.DataSet.clear_data` replaces
-            ``keep_scalars``.
+            Returning a ``(mesh, ids)`` tuple is deprecated and only the mesh will be
+            returned in a future version. Until then this filter returns one or the
+            other depending on how it is called:
+
+            - The points passed positionally or as ``remove`` return the tuple, and
+              warn. Only all-triangle meshes are supported.
+            - The points named ``ind``, or any of ``invert``, ``pass_point_ids``,
+              ``pass_cell_ids`` and ``progress_bar``, return only the mesh from
+              :meth:`pyvista.DataSetFilters.remove_points`, for any mesh. The ids that
+              were the second return value are the ``'vtkOriginalPointIds'`` array, and
+              :meth:`~pyvista.DataSet.clear_data` replaces ``keep_scalars``.
 
         Parameters
         ----------
@@ -2934,29 +2938,32 @@ class PolyDataFilters(DataSetFilters):
             Updates mesh in-place.
 
         ind : int | VectorLike[int] | VectorLike[bool], optional
-            Point indices to remove, the same as ``remove``. Naming them ``ind``
-            returns only the mesh. See :meth:`pyvista.DataSetFilters.remove_points`.
+            Point indices to remove, the same as ``remove``. Passing this returns only
+            the mesh. See :meth:`pyvista.DataSetFilters.remove_points`.
 
         invert : bool, default: False
-            Invert the selection. Returns only the mesh.
+            Invert the selection. Passing this returns only the mesh.
 
         pass_point_ids : bool, default: True
-            Add the ``'vtkOriginalPointIds'`` point array. Returns only the mesh.
+            Add the ``'vtkOriginalPointIds'`` point array. Passing this returns only
+            the mesh.
 
         pass_cell_ids : bool, default: True
-            Add the ``'vtkOriginalCellIds'`` cell array. Returns only the mesh.
+            Add the ``'vtkOriginalCellIds'`` cell array. Passing this returns only the
+            mesh.
 
         progress_bar : bool, default: False
-            Display a progress bar to indicate progress. Returns only the mesh.
+            Display a progress bar to indicate progress. Passing this returns only the
+            mesh.
 
         Returns
         -------
-        pyvista.PolyData
-            Mesh without the points flagged for removal.
-
-        numpy.ndarray
-            Indices of new points relative to the original mesh. Only returned when
-            ``remove`` is used.
+        pyvista.PolyData | tuple[pyvista.PolyData, numpy.ndarray]
+            Mesh without the points flagged for removal, and the indices of its points
+            relative to the original mesh. The indices are returned with the mesh as a
+            deprecated ``(mesh, ids)`` tuple unless one of ``ind``, ``invert``,
+            ``pass_point_ids``, ``pass_cell_ids`` or ``progress_bar`` is passed, in
+            which case only the mesh is returned.
 
         Examples
         --------
