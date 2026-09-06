@@ -25,10 +25,11 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
+      # Pinned exactly: an upstream release shifts every baseline at once.
       - name: Install
         run: |
           pip install uv
-          uv pip install --system . --group test
+          uv pip install --system . --group test 'numpy==2.4.6' 'vtk==9.7.0'
       - uses: CodSpeedHQ/action@373d6868929f444bc08d901fd0eb0ad52a8875ea # v5.2.1
         with:
           mode: simulation
