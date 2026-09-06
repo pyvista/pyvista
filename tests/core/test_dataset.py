@@ -1358,6 +1358,14 @@ def test_cast_to_pointset(sphere):
     assert not np.allclose(sphere.active_scalars, pointset.active_scalars)
 
 
+@pytest.mark.parametrize('cast', ['cast_to_pointset', 'cast_to_poly_points'])
+def test_cast_to_points_keeps_field_data(sphere, cast):
+    sphere.field_data['meta'] = [1.0, 2.0]
+    points = getattr(sphere, cast)()
+    assert np.allclose(points.field_data['meta'], [1.0, 2.0])
+    assert not np.may_share_memory(sphere.field_data['meta'], points.field_data['meta'])
+
+
 def test_cast_to_pointset_cell_scalars(sphere):
     sphere.cell_data['cell_scalars'] = np.arange(sphere.n_cells)
     sphere.set_active_scalars('cell_scalars')
