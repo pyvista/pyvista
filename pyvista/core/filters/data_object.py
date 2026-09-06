@@ -20,6 +20,7 @@ from typing import NamedTuple
 from typing import TypeVar
 from typing import cast
 from typing import get_args
+from typing import overload
 import warnings
 
 import numpy as np
@@ -54,9 +55,11 @@ if TYPE_CHECKING:
     from pyvista import DataSet
     from pyvista import DataSetAttributes
     from pyvista import MultiBlock
+    from pyvista import PointSet
     from pyvista import PolyData
     from pyvista import RotationLike
     from pyvista import TransformLike
+    from pyvista import UnstructuredGrid
     from pyvista import VectorLike
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import NumpyArray
@@ -1540,7 +1543,7 @@ class DataObjectFilters:
         tolerance: float | None = None,
         planarity_tolerance: float | None = None,
         size_tolerance: float | None = None,
-    ):
+    ) -> _DataSetOrMultiBlockType:
         """Check the validity of each cell in this dataset.
 
         The status of each cell is encoded as a bit field cell data array ``'validity_state'``.
@@ -1852,7 +1855,7 @@ class DataObjectFilters:
             post_process(output)
         else:
             output.generic_filter(post_process)
-        return output
+        return cast('_DataSetOrMultiBlockType', output)
 
     @_deprecate_positional_args(allowed=['trans'])
     def transform(  # noqa: PLR0917
@@ -3194,6 +3197,110 @@ class DataObjectFilters:
             clipped = _Crinkler._extract_crinkle_cells(self, clipped, None, active_scalars_info)
         return _maybe_cast_to_point_set(clipped)
 
+    @overload
+    def clip(  # type: ignore[misc]
+        self: PolyData,
+        normal: VectorLike[float] | _NormalsLiteral | None = ...,
+        origin: VectorLike[float] | None = ...,
+        invert: bool = ...,  # noqa: FBT001
+        value: float = ...,
+        inplace: bool = ...,  # noqa: FBT001
+        return_clipped: Literal[False] = False,  # noqa: FBT002
+        progress_bar: bool = ...,  # noqa: FBT001
+        crinkle: bool = ...,  # noqa: FBT001
+        plane: PolyData | None = ...,
+    ) -> PolyData: ...
+    @overload
+    def clip(  # type: ignore[misc]
+        self: PolyData,
+        normal: VectorLike[float] | _NormalsLiteral | None = ...,
+        origin: VectorLike[float] | None = ...,
+        invert: bool = ...,  # noqa: FBT001
+        value: float = ...,
+        inplace: bool = ...,  # noqa: FBT001
+        return_clipped: Literal[True] = True,  # noqa: FBT002
+        progress_bar: bool = ...,  # noqa: FBT001
+        crinkle: bool = ...,  # noqa: FBT001
+        plane: PolyData | None = ...,
+    ) -> tuple[PolyData, PolyData]: ...
+    @overload
+    def clip(  # type: ignore[misc]
+        self: PointSet,
+        normal: VectorLike[float] | _NormalsLiteral | None = ...,
+        origin: VectorLike[float] | None = ...,
+        invert: bool = ...,  # noqa: FBT001
+        value: float = ...,
+        inplace: bool = ...,  # noqa: FBT001
+        return_clipped: Literal[False] = False,  # noqa: FBT002
+        progress_bar: bool = ...,  # noqa: FBT001
+        crinkle: bool = ...,  # noqa: FBT001
+        plane: PolyData | None = ...,
+    ) -> PointSet: ...
+    @overload
+    def clip(  # type: ignore[misc]
+        self: PointSet,
+        normal: VectorLike[float] | _NormalsLiteral | None = ...,
+        origin: VectorLike[float] | None = ...,
+        invert: bool = ...,  # noqa: FBT001
+        value: float = ...,
+        inplace: bool = ...,  # noqa: FBT001
+        return_clipped: Literal[True] = True,  # noqa: FBT002
+        progress_bar: bool = ...,  # noqa: FBT001
+        crinkle: bool = ...,  # noqa: FBT001
+        plane: PolyData | None = ...,
+    ) -> tuple[PointSet, PointSet]: ...
+    @overload
+    def clip(  # type: ignore[misc]
+        self: MultiBlock,
+        normal: VectorLike[float] | _NormalsLiteral | None = ...,
+        origin: VectorLike[float] | None = ...,
+        invert: bool = ...,  # noqa: FBT001
+        value: float = ...,
+        inplace: bool = ...,  # noqa: FBT001
+        return_clipped: Literal[False] = False,  # noqa: FBT002
+        progress_bar: bool = ...,  # noqa: FBT001
+        crinkle: bool = ...,  # noqa: FBT001
+        plane: PolyData | None = ...,
+    ) -> MultiBlock: ...
+    @overload
+    def clip(  # type: ignore[misc]
+        self: MultiBlock,
+        normal: VectorLike[float] | _NormalsLiteral | None = ...,
+        origin: VectorLike[float] | None = ...,
+        invert: bool = ...,  # noqa: FBT001
+        value: float = ...,
+        inplace: bool = ...,  # noqa: FBT001
+        return_clipped: Literal[True] = True,  # noqa: FBT002
+        progress_bar: bool = ...,  # noqa: FBT001
+        crinkle: bool = ...,  # noqa: FBT001
+        plane: PolyData | None = ...,
+    ) -> tuple[MultiBlock, MultiBlock]: ...
+    @overload
+    def clip(  # type: ignore[misc]
+        self: DataSet,
+        normal: VectorLike[float] | _NormalsLiteral | None = ...,
+        origin: VectorLike[float] | None = ...,
+        invert: bool = ...,  # noqa: FBT001
+        value: float = ...,
+        inplace: bool = ...,  # noqa: FBT001
+        return_clipped: Literal[False] = False,  # noqa: FBT002
+        progress_bar: bool = ...,  # noqa: FBT001
+        crinkle: bool = ...,  # noqa: FBT001
+        plane: PolyData | None = ...,
+    ) -> UnstructuredGrid: ...
+    @overload
+    def clip(  # type: ignore[misc]
+        self: DataSet,
+        normal: VectorLike[float] | _NormalsLiteral | None = ...,
+        origin: VectorLike[float] | None = ...,
+        invert: bool = ...,  # noqa: FBT001
+        value: float = ...,
+        inplace: bool = ...,  # noqa: FBT001
+        return_clipped: Literal[True] = True,  # noqa: FBT002
+        progress_bar: bool = ...,  # noqa: FBT001
+        crinkle: bool = ...,  # noqa: FBT001
+        plane: PolyData | None = ...,
+    ) -> tuple[UnstructuredGrid, UnstructuredGrid]: ...
     @_deprecate_positional_args(allowed=['normal'])
     def clip(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
@@ -3326,6 +3433,36 @@ class DataObjectFilters:
                 return self
         return result
 
+    @overload
+    def clip_box(  # type: ignore[misc]
+        self: PointSet,
+        bounds: float | VectorLike[float] | PolyData | None = ...,
+        invert: bool = ...,  # noqa: FBT001
+        factor: float = ...,
+        progress_bar: bool = ...,  # noqa: FBT001
+        merge_points: bool = ...,  # noqa: FBT001
+        crinkle: bool = ...,  # noqa: FBT001
+    ) -> PointSet: ...
+    @overload
+    def clip_box(  # type: ignore[misc]
+        self: MultiBlock,
+        bounds: float | VectorLike[float] | PolyData | None = ...,
+        invert: bool = ...,  # noqa: FBT001
+        factor: float = ...,
+        progress_bar: bool = ...,  # noqa: FBT001
+        merge_points: bool = ...,  # noqa: FBT001
+        crinkle: bool = ...,  # noqa: FBT001
+    ) -> MultiBlock: ...
+    @overload
+    def clip_box(  # type: ignore[misc]
+        self: DataSet,
+        bounds: float | VectorLike[float] | PolyData | None = ...,
+        invert: bool = ...,  # noqa: FBT001
+        factor: float = ...,
+        progress_bar: bool = ...,  # noqa: FBT001
+        merge_points: bool = ...,  # noqa: FBT001
+        crinkle: bool = ...,  # noqa: FBT001
+    ) -> UnstructuredGrid: ...
     @_deprecate_positional_args(allowed=['bounds'])
     def clip_box(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
@@ -3451,6 +3588,54 @@ class DataObjectFilters:
             clipped = _Crinkler._extract_crinkle_cells(self, clipped, None, active_scalars_info)
         return _remove_unused_points_post_clip(clipped, self.bounds)
 
+    @overload
+    def clip_slab(  # type: ignore[misc]
+        self: PolyData,
+        thickness: float,
+        normal: VectorLike[float] | _NormalsLiteral | None = ...,
+        *,
+        origin: VectorLike[float] | None = ...,
+        invert: bool = ...,
+        progress_bar: bool = ...,
+        crinkle: bool = ...,
+        plane: PolyData | None = ...,
+    ) -> PolyData: ...
+    @overload
+    def clip_slab(  # type: ignore[misc]
+        self: PointSet,
+        thickness: float,
+        normal: VectorLike[float] | _NormalsLiteral | None = ...,
+        *,
+        origin: VectorLike[float] | None = ...,
+        invert: bool = ...,
+        progress_bar: bool = ...,
+        crinkle: bool = ...,
+        plane: PolyData | None = ...,
+    ) -> PointSet: ...
+    @overload
+    def clip_slab(  # type: ignore[misc]
+        self: MultiBlock,
+        thickness: float,
+        normal: VectorLike[float] | _NormalsLiteral | None = ...,
+        *,
+        origin: VectorLike[float] | None = ...,
+        invert: bool = ...,
+        progress_bar: bool = ...,
+        crinkle: bool = ...,
+        plane: PolyData | None = ...,
+    ) -> MultiBlock: ...
+    @overload
+    def clip_slab(  # type: ignore[misc]
+        self: DataSet,
+        thickness: float,
+        normal: VectorLike[float] | _NormalsLiteral | None = ...,
+        *,
+        origin: VectorLike[float] | None = ...,
+        invert: bool = ...,
+        progress_bar: bool = ...,
+        crinkle: bool = ...,
+        plane: PolyData | None = ...,
+    ) -> UnstructuredGrid: ...
     def clip_slab(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
         thickness: float,
@@ -3582,6 +3767,22 @@ class DataObjectFilters:
         result = _cast_output_to_match_input_type(result, self)
         return _remove_unused_points_post_clip(result, input_bounds)
 
+    @overload
+    def slice_implicit(  # type: ignore[misc]
+        self: MultiBlock,
+        implicit_function: _vtk.vtkImplicitFunction,
+        generate_triangles: bool = ...,  # noqa: FBT001
+        contour: bool = ...,  # noqa: FBT001
+        progress_bar: bool = ...,  # noqa: FBT001
+    ) -> MultiBlock: ...
+    @overload
+    def slice_implicit(  # type: ignore[misc]
+        self: DataSet,
+        implicit_function: _vtk.vtkImplicitFunction,
+        generate_triangles: bool = ...,  # noqa: FBT001
+        contour: bool = ...,  # noqa: FBT001
+        progress_bar: bool = ...,  # noqa: FBT001
+    ) -> PolyData: ...
     @_deprecate_positional_args(allowed=['implicit_function'])
     def slice_implicit(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
@@ -3664,6 +3865,26 @@ class DataObjectFilters:
             return output.contour()
         return output
 
+    @overload
+    def slice(  # type: ignore[misc]
+        self: MultiBlock,
+        normal: VectorLike[float] | _NormalsLiteral | None = ...,
+        origin: VectorLike[float] | None = ...,
+        generate_triangles: bool = ...,  # noqa: FBT001
+        contour: bool = ...,  # noqa: FBT001
+        progress_bar: bool = ...,  # noqa: FBT001
+        plane: PolyData | None = ...,
+    ) -> MultiBlock: ...
+    @overload
+    def slice(  # type: ignore[misc]
+        self: DataSet,
+        normal: VectorLike[float] | _NormalsLiteral | None = ...,
+        origin: VectorLike[float] | None = ...,
+        generate_triangles: bool = ...,  # noqa: FBT001
+        contour: bool = ...,  # noqa: FBT001
+        progress_bar: bool = ...,  # noqa: FBT001
+        plane: PolyData | None = ...,
+    ) -> PolyData: ...
     @_deprecate_positional_args(allowed=['normal'])
     def slice(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
@@ -3773,7 +3994,7 @@ class DataObjectFilters:
         generate_triangles: bool = False,  # noqa: FBT001, FBT002
         contour: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
-    ):
+    ) -> MultiBlock:
         """Create three orthogonal slices through the dataset on the three Cartesian planes.
 
         Yields a MutliBlock dataset of the three slices.
@@ -3892,7 +4113,7 @@ class DataObjectFilters:
         bounds=None,
         center=None,
         progress_bar: bool = False,  # noqa: FBT001, FBT002
-    ):
+    ) -> MultiBlock:
         """Create many slices of the input dataset along a specified axis.
 
         Parameters
@@ -4030,6 +4251,22 @@ class DataObjectFilters:
             output.append(slc, f'slice{i}')
         return output
 
+    @overload
+    def slice_along_line(  # type: ignore[misc]
+        self: MultiBlock,
+        line: pv.PolyData,
+        generate_triangles: bool = ...,  # noqa: FBT001
+        contour: bool = ...,  # noqa: FBT001
+        progress_bar: bool = ...,  # noqa: FBT001
+    ) -> MultiBlock: ...
+    @overload
+    def slice_along_line(  # type: ignore[misc]
+        self: DataSet,
+        line: pv.PolyData,
+        generate_triangles: bool = ...,  # noqa: FBT001
+        contour: bool = ...,  # noqa: FBT001
+        progress_bar: bool = ...,  # noqa: FBT001
+    ) -> PolyData: ...
     @_deprecate_positional_args(allowed=['line'])
     def slice_along_line(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
@@ -4130,6 +4367,20 @@ class DataObjectFilters:
             return output.contour()
         return output
 
+    @overload
+    def extract_all_edges(  # type: ignore[misc]
+        self: MultiBlock,
+        use_all_points: bool | None = ...,  # noqa: FBT001
+        clear_data: bool = ...,  # noqa: FBT001
+        progress_bar: bool = ...,  # noqa: FBT001
+    ) -> MultiBlock: ...
+    @overload
+    def extract_all_edges(  # type: ignore[misc]
+        self: DataSet,
+        use_all_points: bool | None = ...,  # noqa: FBT001
+        clear_data: bool = ...,  # noqa: FBT001
+        progress_bar: bool = ...,  # noqa: FBT001
+    ) -> PolyData: ...
     @_deprecate_positional_args
     def extract_all_edges(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
@@ -4489,7 +4740,7 @@ class DataObjectFilters:
         preference: Literal['point', 'cell'] = 'point',
         set_active: bool = True,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
-    ):
+    ) -> _DataSetOrMultiBlockType:
         """Generate scalar values on a dataset.
 
         The scalar values lie within a user specified range, and are
@@ -4610,7 +4861,7 @@ class DataObjectFilters:
         volume: bool = True,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
         vertex_count: bool = False,  # noqa: FBT001, FBT002
-    ):
+    ) -> _DataSetOrMultiBlockType:
         """Compute sizes for 0D (vertex count), 1D (length), 2D (area) and 3D (volume) cells.
 
         Parameters
@@ -4697,7 +4948,7 @@ class DataObjectFilters:
             out = self.copy()
             if not isinstance(out, pv.MultiBlock):
                 ensure_arrays_if_empty(out)
-            return out
+            return cast('_DataSetOrMultiBlockType', out)
 
         _raise_if_composite_has_pointset(self, error=pv.core.errors.PointSetCellOperationError)
         alg = _vtk.vtkCellSizeFilter()
@@ -4709,6 +4960,20 @@ class DataObjectFilters:
         _update_alg(alg, progress_bar=progress_bar, message='Computing Cell Sizes')
         return _get_output(alg)
 
+    @overload
+    def cell_centers(  # type: ignore[misc]
+        self: MultiBlock,
+        vertex: bool = ...,  # noqa: FBT001
+        pass_cell_data: bool = ...,  # noqa: FBT001
+        progress_bar: bool = ...,  # noqa: FBT001
+    ) -> MultiBlock: ...
+    @overload
+    def cell_centers(  # type: ignore[misc]
+        self: DataSet,
+        vertex: bool = ...,  # noqa: FBT001
+        pass_cell_data: bool = ...,  # noqa: FBT001
+        progress_bar: bool = ...,  # noqa: FBT001
+    ) -> PolyData: ...
     @_deprecate_positional_args
     def cell_centers(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
@@ -4769,7 +5034,7 @@ class DataObjectFilters:
         self: _DataSetOrMultiBlockType,
         pass_cell_data: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
-    ):
+    ) -> _DataSetOrMultiBlockType:
         """Transform cell data into point data.
 
         Point data are specified per node and cell data specified
@@ -4839,7 +5104,7 @@ class DataObjectFilters:
         pass_cell_data: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
         **kwargs,
-    ):
+    ) -> _DataSetOrMultiBlockType:
         """Transform cell data into point data.
 
         Point data are specified per node and cell data specified
@@ -4866,10 +5131,13 @@ class DataObjectFilters:
             Return type matches input.
 
         """
-        return self.cell_data_to_point_data(
-            pass_cell_data=pass_cell_data,
-            progress_bar=progress_bar,
-            **kwargs,
+        return cast(
+            '_DataSetOrMultiBlockType',
+            self.cell_data_to_point_data(
+                pass_cell_data=pass_cell_data,
+                progress_bar=progress_bar,
+                **kwargs,
+            ),
         )
 
     @_deprecate_positional_args
@@ -4878,7 +5146,7 @@ class DataObjectFilters:
         pass_point_data: bool = False,  # noqa: FBT001, FBT002
         categorical: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
-    ):
+    ) -> _DataSetOrMultiBlockType:
         """Transform point data into cell data.
 
         Point data are specified per node and cell data specified within cells.
@@ -4961,7 +5229,7 @@ class DataObjectFilters:
         pass_point_data: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
         **kwargs,
-    ):
+    ) -> _DataSetOrMultiBlockType:
         """Transform point data into cell data.
 
         Point data are specified per node and cell data specified
@@ -4988,12 +5256,27 @@ class DataObjectFilters:
             Return type matches input.
 
         """
-        return self.point_data_to_cell_data(
-            pass_point_data=pass_point_data,
-            progress_bar=progress_bar,
-            **kwargs,
+        return cast(
+            '_DataSetOrMultiBlockType',
+            self.point_data_to_cell_data(
+                pass_point_data=pass_point_data,
+                progress_bar=progress_bar,
+                **kwargs,
+            ),
         )
 
+    @overload
+    def triangulate(  # type: ignore[misc]
+        self: MultiBlock,
+        inplace: bool = ...,  # noqa: FBT001
+        progress_bar: bool = ...,  # noqa: FBT001
+    ) -> MultiBlock: ...
+    @overload
+    def triangulate(  # type: ignore[misc]
+        self: DataSet,
+        inplace: bool = ...,  # noqa: FBT001
+        progress_bar: bool = ...,  # noqa: FBT001
+    ) -> UnstructuredGrid: ...
     @_deprecate_positional_args
     def triangulate(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
@@ -5057,7 +5340,7 @@ class DataObjectFilters:
         pass_field_data: bool = True,  # noqa: FBT001, FBT002
         mark_blank: bool = True,  # noqa: FBT001, FBT002
         snap_to_closest_point: bool = False,  # noqa: FBT001, FBT002
-    ):
+    ) -> _DataSetOrMultiBlockType:
         """Resample array data from a passed mesh onto this mesh.
 
         For ``mesh1.sample(mesh2)``, the arrays from ``mesh2`` are sampled onto
