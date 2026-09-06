@@ -429,6 +429,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self._shadow_pass = None
         self._render_passes = RenderPasses(self)
         self.cube_axes_actor: CubeAxesActor | None = None
+        self._cube_axes_follow_scene = True
 
         # This is a private variable to keep track of how many colorbars exist
         # This allows us to keep adding colorbars without overlapping
@@ -603,6 +604,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
     def camera(self, source) -> None:
         self._camera = source
         self.SetActiveCamera(self._camera)
+        if self.cube_axes_actor is not None:
+            self.cube_axes_actor.camera = source
         self.camera_position = CameraPosition(
             scale_point(source, source.position, invert=True),
             scale_point(source, source.focal_point, invert=True),
@@ -737,6 +740,11 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         y = (bnds.y_max + bnds.y_min) / 2
         z = (bnds.z_max + bnds.z_min) / 2
         return x, y, z
+
+    def _unscaled_bounds(self) -> BoundsTuple:
+        """Return the scene bounds as an actor sees them before the renderer scale."""
+        scale = np.repeat(np.array(self.scale, dtype=float), 2)
+        return BoundsTuple(*(np.array(self.bounds) / scale).tolist())
 
     @property
     def background_color(self):  # numpydoc ignore=RT01
@@ -1952,16 +1960,26 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Title of the z-axis.  Default ``"Z Axis"``.
 
         n_xlabels : int, default: 5
-            Number of labels for the x-axis.
+            At most this many labels for the x-axis. Where VTK's own tick
+            spacing fits the range, the labels sit on those ticks and the last may
+            stop short of the upper bound; otherwise fewer are spaced evenly
+            between the bounds.
 
         n_ylabels : int, default: 5
-            Number of labels for the y-axis.
+            At most this many labels for the y-axis. Where VTK's own tick
+            spacing fits the range, the labels sit on those ticks and the last may
+            stop short of the upper bound; otherwise fewer are spaced evenly
+            between the bounds.
 
         n_zlabels : int, default: 5
-            Number of labels for the z-axis.
+            At most this many labels for the z-axis. Where VTK's own tick
+            spacing fits the range, the labels sit on those ticks and the last may
+            stop short of the upper bound; otherwise fewer are spaced evenly
+            between the bounds.
 
         use_2d : bool, default: False
-            This can be enabled for smoother plotting.
+            This can be enabled for smoother plotting. VTK also hides the z-axis
+            in this mode, so it suits a scene viewed down a single axis.
 
         grid : bool or str, optional
             Add grid lines to the backface (``True``, ``'back'``, or
@@ -2089,7 +2107,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         if not np.allclose(self.scale, [1.0, 1.0, 1.0]):
             # 3D text is not placed correctly when the renderer is scaled
             use_3d_text = False
-            use_2d = True
         if font_family is None:
             font_family = self._theme.font.family
         if font_size is None:
@@ -2118,7 +2135,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         color = Color(color, default_color=self._theme.font.color)
 
-        if mesh is None and bounds is None:
+        follow_scene = mesh is None and bounds is None
+        if follow_scene:
             # Use the bounds of all data in the rendering window
             bounds = np.array(self.bounds)
         elif bounds is None:
@@ -2165,6 +2183,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         self.add_actor(cube_axes_actor, reset_camera=False, pickable=False, render=render)
         self.cube_axes_actor = cube_axes_actor
+        self._cube_axes_follow_scene = follow_scene
 
         self.Modified()
         return cube_axes_actor
@@ -2322,7 +2341,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             box = source
         else:
             box = _vtk.vtkCubeSource()
-        box.SetBounds(self.bounds)
+        box.SetBounds(self._unscaled_bounds())
         box.Update()
         box_object = wrap(box.GetOutput())
         self._bounding_box = box
@@ -2456,36 +2475,37 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             kwargs = locals()
             kwargs.pop('self')
             self._floor_kwargs.append(kwargs)
-        ranges = np.ptp(np.array(self.bounds).reshape(-1, 2), axis=1)
+        bounds = self._unscaled_bounds()
+        ranges = np.ptp(np.array(bounds).reshape(-1, 2), axis=1)
         ranges += ranges * pad
-        center = np.array(self.center)
+        center = np.array(bounds).reshape(-1, 2).mean(axis=1)
         if face.lower() in '-z':
-            center[2] = self.bounds.z_min - (ranges[2] * offset)
+            center[2] = bounds.z_min - (ranges[2] * offset)
             normal = (0, 0, 1)
             i_size = ranges[0]
             j_size = ranges[1]
         elif face.lower() in '-y':
-            center[1] = self.bounds.y_min - (ranges[1] * offset)
+            center[1] = bounds.y_min - (ranges[1] * offset)
             normal = (0, 1, 0)
             i_size = ranges[2]
             j_size = ranges[0]
         elif face.lower() in '-x':
-            center[0] = self.bounds.x_min - (ranges[0] * offset)
+            center[0] = bounds.x_min - (ranges[0] * offset)
             normal = (1, 0, 0)
             i_size = ranges[2]
             j_size = ranges[1]
         elif face.lower() in '+z':
-            center[2] = self.bounds.z_max + (ranges[2] * offset)
+            center[2] = bounds.z_max + (ranges[2] * offset)
             normal = (0, 0, -1)
             i_size = ranges[0]
             j_size = ranges[1]
         elif face.lower() in '+y':
-            center[1] = self.bounds.y_max + (ranges[1] * offset)
+            center[1] = bounds.y_max + (ranges[1] * offset)
             normal = (0, -1, 0)
             i_size = ranges[2]
             j_size = ranges[0]
         elif face.lower() in '+x':
-            center[0] = self.bounds.x_max + (ranges[0] * offset)
+            center[0] = bounds.x_max + (ranges[0] * offset)
             normal = (-1, 0, 0)
             i_size = ranges[2]
             j_size = ranges[1]
@@ -2589,6 +2609,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         if self.cube_axes_actor is not None:
             self.remove_actor(self.cube_axes_actor)
             self.cube_axes_actor = None
+            self._cube_axes_follow_scene = True
             self.Modified()
 
     def add_light(self, light):
@@ -3044,7 +3065,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
     def update_bounds_axes(self) -> None:
         """Update the bounds axes of the render window."""
         if self._box_object is not None and self.bounding_box_actor is not None:
-            if not np.allclose(self._box_object.bounds, self.bounds):
+            if not np.allclose(self._box_object.bounds, self._unscaled_bounds()):
                 color = self.bounding_box_actor.GetProperty().GetColor()
                 self.remove_bounding_box()
                 self.add_bounding_box(color=color)
@@ -3053,11 +3074,14 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
                     floor_kwargs['store_floor_kwargs'] = False
                     self.add_floor(**floor_kwargs)
         if self.cube_axes_actor is not None:
-            self.cube_axes_actor.update_bounds(self.bounds)
+            if self._cube_axes_follow_scene:
+                # Ignore the axes actor itself, or its padding compounds on every update
+                self.cube_axes_actor.update_bounds(
+                    self.compute_bounds(ignore_actors=[self.cube_axes_actor])
+                )
             if not np.allclose(self.scale, [1.0, 1.0, 1.0]):
-                self.cube_axes_actor.SetUse2DMode(True)
-            else:
-                self.cube_axes_actor.SetUse2DMode(False)
+                # 3D text is not placed correctly when the renderer is scaled
+                self.cube_axes_actor._disable_3d_text()
             self.Modified()
 
     @_deprecate_positional_args
@@ -3915,6 +3939,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self._border_actor_secondary = None
         self._border_requested_width = None
         self.cube_axes_actor = None
+        self._cube_axes_follow_scene = True
         self._render_passes.close()
 
         if self._empty_str is not None:
@@ -3949,6 +3974,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """
         if self.cube_axes_actor is not None:
             self.cube_axes_actor = None
+            self._cube_axes_follow_scene = True
 
         if hasattr(self, 'edl_pass'):
             del self.edl_pass
