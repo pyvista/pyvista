@@ -14,6 +14,11 @@ def multi() -> MultiBlock:
     return pv.MultiBlock([pv.PolyData(), None, pv.MultiBlock([pv.PolyData(), None])])
 
 
+def a_flag() -> bool:
+    """Return a flag typed only as ``bool``, so the widened overloads apply."""
+    return True
+
+
 # Each case builds its own `MultiBlock`, and `list` forces the iterator so that the
 # runtime check can inspect what it yields.
 
@@ -76,3 +81,9 @@ assert_types(list(multi().recursive_iterator('all', prepend_names=True)), list[t
 # Positional order
 assert_types(list(multi().recursive_iterator('names', 'nested_last')), list[str])
 assert_types(list(multi().recursive_iterator('blocks', 'nested_first', skip_none=True)), list[DataSet])
+
+# A flag the caller computed still narrows to what `contents` asked for
+assert_types(list(multi().recursive_iterator('ids', nested_ids=a_flag())), list[int | tuple[int, ...]])
+assert_types(list(multi().recursive_iterator('blocks', skip_none=a_flag())), list[DataSet | None])
+assert_types(list(multi().recursive_iterator('items', skip_none=a_flag())), list[tuple[str, DataSet | None]])
+assert_types(list(multi().recursive_iterator('all', skip_none=a_flag())), list[tuple[int | tuple[int, ...], str, DataSet | None]])

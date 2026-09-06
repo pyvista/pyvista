@@ -391,6 +391,50 @@ class MultiBlock(
         nested_ids: Literal[False],
         **kwargs: Unpack[_RecursiveIteratorNamedKwargs],
     ) -> Iterator[tuple[int, str, MultiBlock]]: ...
+    @overload  # 'ids', nested_ids not known
+    def recursive_iterator(
+        self: MultiBlock,
+        contents: Literal['ids'],
+        order: _OrderLiteral | None = ...,
+        *,
+        node_type: Literal['child'] = ...,
+        skip_none: bool = ...,
+        nested_ids: bool | None = ...,
+        **kwargs: Unpack[_RecursiveIteratorBasicKwargs],
+    ) -> Iterator[int | tuple[int, ...]]: ...
+    @overload  # 'blocks', skip_none not known
+    def recursive_iterator(
+        self: MultiBlock,
+        contents: Literal['blocks'] = ...,
+        order: _OrderLiteral | None = ...,
+        *,
+        node_type: Literal['child'] = ...,
+        skip_none: bool = ...,
+        nested_ids: bool | None = ...,
+        **kwargs: Unpack[_RecursiveIteratorBasicKwargs],
+    ) -> Iterator[DataSet | None]: ...
+    @overload  # 'items', skip_none not known
+    def recursive_iterator(
+        self: MultiBlock,
+        contents: Literal['items'],
+        order: _OrderLiteral | None = ...,
+        *,
+        node_type: Literal['child'] = ...,
+        skip_none: bool = ...,
+        nested_ids: bool | None = ...,
+        **kwargs: Unpack[_RecursiveIteratorNamedKwargs],
+    ) -> Iterator[tuple[str, DataSet | None]]: ...
+    @overload  # 'all', skip_none or nested_ids not known
+    def recursive_iterator(
+        self: MultiBlock,
+        contents: Literal['all'],
+        order: _OrderLiteral | None = ...,
+        *,
+        node_type: Literal['child'] = ...,
+        skip_none: bool = ...,
+        nested_ids: bool | None = ...,
+        **kwargs: Unpack[_RecursiveIteratorNamedKwargs],
+    ) -> Iterator[tuple[int | tuple[int, ...], str, DataSet | None]]: ...
     @overload  # general case
     def recursive_iterator(
         self: MultiBlock,
