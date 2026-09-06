@@ -432,9 +432,10 @@ def pytest_runtest_makereport(item, call):  # noqa: ARG001
 def check_gc(request):
     """Snapshot live VTK objects so leaks from this test can be detected.
 
-    Every test in the repository is covered. ``tests/plotting`` overrides this fixture
-    with one that also watches plotters (a fixture of the same name in a nearer conftest
-    wins), and takes the snapshot this hook's counterpart there checks.
+    Every test collected as a function is covered; plugin-collected items take no
+    fixtures. ``tests/plotting`` overrides this fixture with one that also watches
+    plotters (a fixture of the same name in a nearer conftest wins), and takes the
+    snapshot this hook's counterpart there checks.
     """
     node = request.node
     if (
