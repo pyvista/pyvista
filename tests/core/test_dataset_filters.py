@@ -5019,6 +5019,35 @@ def test_color_labels_does_not_modify_colormap():
     assert np.array_equal(first.active_scalars, second.active_scalars)
 
 
+@pytest.mark.parametrize('as_array', [True, False])
+@pytest.mark.parametrize(
+    ('color_type', 'red', 'opaque'),
+    [
+        ('float_rgb', (1.0, 0.0, 0.0), None),
+        ('float_rgba', (1.0, 0.0, 0.0), 1.0),
+        ('int_rgb', (255, 0, 0), None),
+        ('int_rgba', (255, 0, 0), 255),
+    ],
+)
+def test_color_labels_listed_colormap_colors(as_array, color_type, red, opaque):
+    rgb = [(1.0, 0.0, 0.0), (0.0, 1.0, 0.0)]
+    rgba = [(*color, 0.25) for color in rgb]
+    labels = pv.ImageData(dimensions=(3, 1, 1))
+    labels['data'] = [0, 1, 0]
+
+    def first_color(colors):
+        cmap = ListedColormap(np.array(colors) if as_array else colors)
+        colored = labels.color_labels(cmap, coloring_mode='index', color_type=color_type)
+        return colored.active_scalars[0]
+
+    assert np.allclose(first_color(rgb)[:3], red)
+    assert np.allclose(first_color(rgba)[:3], red)
+    if opaque is not None:
+        assert np.isclose(first_color(rgb)[3], opaque)
+        # The colormap's own alpha is used when it has one
+        assert np.isclose(first_color(rgba)[3], 0.25 * opaque, atol=1)
+
+
 def test_color_labels_return_dict_cycle_mode():
     labels = pv.ImageData(dimensions=(4, 1, 1))
     labels['data'] = [3, 1, 3, 7]

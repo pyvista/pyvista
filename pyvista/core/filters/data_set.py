@@ -7967,14 +7967,24 @@ class DataSetFilters(DataObjectFilters):
                         raise TypeError(msg)
                     # Avoid unnecessary conversion and set color sequence directly in float cases
                     cmap_colors = cast('list[list[float]]', cmap.colors)
-                    if color_type == 'float_rgb':
-                        color_rgb_sequence = cmap_colors
+                    # A listed colormap's colors are RGB or RGBA floats in the range [0, 1]
+                    n_channels = len(cmap_colors[0]) if len(cmap_colors) else 0
+                    if color_type == 'float_rgb' and n_channels in (3, 4):
+                        color_rgb_sequence = (
+                            cmap_colors if n_channels == 3 else [c[:3] for c in cmap_colors]
+                        )
                         _is_rgb_sequence = True
-                    elif color_type == 'float_rgba':
-                        color_rgb_sequence = [(*c, 1.0) for c in cmap_colors]
+                    elif color_type == 'float_rgba' and n_channels in (3, 4):
+                        color_rgb_sequence = (
+                            cmap_colors if n_channels == 4 else [(*c, 1.0) for c in cmap_colors]  # type: ignore[misc]
+                        )
                         _is_rgb_sequence = True
                     else:
-                        colors = cmap_colors
+                        colors = (
+                            cmap_colors.tolist()
+                            if isinstance(cmap_colors, np.ndarray)
+                            else cmap_colors
+                        )
 
             table = None
             if not _is_rgb_sequence:
