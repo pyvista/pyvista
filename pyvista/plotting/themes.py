@@ -3291,6 +3291,18 @@ class Theme(_ConfigBase):
         for attr_name in Theme.__slots__:
             setattr(self, attr_name, getattr(theme, attr_name))
 
+    @classmethod
+    def _from_theme(cls, theme: str | Theme) -> Theme:
+        """Return a new theme holding a copy of the settings of ``theme``.
+
+        Equivalent to ``Theme()`` followed by :meth:`load_theme`.
+        """
+        # Optimization: skip ``__init__`` since ``load_theme`` overwrites every slot it
+        # fills; every plotter, mapper and property takes a theme snapshot this way.
+        new = cls.__new__(cls)
+        new.load_theme(theme)
+        return new
+
     def save(self, filename: str) -> None:
         """Serialize this theme to a ``json`` file.
 

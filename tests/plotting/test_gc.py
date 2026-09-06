@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 from typing import Any
 import weakref
 
@@ -86,7 +87,7 @@ def test_leak_pv() -> None:
     # PYTHONPATH: the copied conftest imports tests.gc_check, which is not
     # importable from tmp_path.
     result = subprocess.run(
-        ['pytest', '-v', str(test_file)],
+        [sys.executable, '-m', 'pytest', '-v', str(test_file)],
         cwd=tmp_path,
         capture_output=True,
         check=False,

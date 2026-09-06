@@ -189,20 +189,31 @@ def _deprecate_positional_args(
             )
             raise RuntimeError(msg)
 
-        # Optimization: the offending names depend only on how many positional arguments
-        # are passed, so compute them once per count instead of on every call
-        offending_by_count = [
-            tuple(
-                name
-                for name in param_names[:count]
-                if name not in (allowed or []) and name not in ('self', 'cls')
-            )
-            for count in range(len(param_names) + 1)
-        ]
+        # Leading parameters that may always be passed positionally
+        n_free_positional = 0
+        for name in param_names:
+            if name in ('self', 'cls') or (allowed and name in allowed):
+                n_free_positional += 1
+            else:
+                break
 
         @functools.wraps(f)
         def inner_f(*args: P.args, **kwargs: P.kwargs) -> T:
-            offending_args = offending_by_count[min(len(args), len(param_names))]
+            # Optimization: nothing to check when every positional argument is an allowed one
+            if len(args) <= n_free_positional:
+                return f(*args, **kwargs)
+            passed_positional_names = param_names[: len(args)]
+
+            # Exclude allowed ones
+            if allowed:
+                offending_args = [name for name in passed_positional_names if name not in allowed]
+            else:
+                offending_args = passed_positional_names
+
+            if 'self' in offending_args:
+                offending_args.remove('self')
+            if 'cls' in offending_args:
+                offending_args.remove('cls')
 
             if offending_args:
                 # Craft a message to print a warning or raise an error

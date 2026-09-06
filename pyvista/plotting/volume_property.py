@@ -67,20 +67,23 @@ class VolumeProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkVolumePropert
 
     Examples
     --------
-    Create a sample dataset from perlin noise and apply a lookup table to the
-    :class:`VolumeProperty`.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> import pyvista as pv
-    >>> noise = pv.perlin_noise(1, (1, 3, 5), (0, 0, 0))
-    >>> grid = pv.sample_function(
-    ...     noise, bounds=[0, 3.0, -0, 1.0, 0, 1.0], dim=(40, 40, 40)
-    ... )
-    >>> pl = pv.Plotter()
-    >>> actor = pl.add_volume(grid, show_scalar_bar=False)
-    >>> lut = actor.mapper.lookup_table
-    >>> lut.cmap = 'bwr'
-    >>> lut.apply_opacity([1.0, 0.0, 0.0, 0.3, 0.0, 0.0, 0.0, 0.3])
-    >>> pl.show()
+        Create a sample dataset from perlin noise and apply a lookup table to the
+        :class:`VolumeProperty`.
+
+        >>> import pyvista as pv
+        >>> noise = pv.perlin_noise(1, (1, 3, 5), (0, 0, 0))
+        >>> grid = pv.sample_function(
+        ...     noise, bounds=[0, 3.0, -0, 1.0, 0, 1.0], dim=(40, 40, 40)
+        ... )
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_volume(grid, show_scalar_bar=False)
+        >>> lut = actor.mapper.lookup_table
+        >>> lut.cmap = 'bwr'
+        >>> lut.apply_opacity([1.0, 0.0, 0.0, 0.3, 0.0, 0.0, 0.0, 0.3])
+        >>> pl.show()
 
     """
 
@@ -166,19 +169,22 @@ class VolumeProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkVolumePropert
 
         Examples
         --------
-        Plot perlin noise volumetrically using a custom lookup table.
+        .. pyvista-plot::
+            :force_static:
 
-        >>> import pyvista as pv
-        >>> noise = pv.perlin_noise(1, (1, 3, 5), (0, 0, 0))
-        >>> grid = pv.sample_function(
-        ...     noise, bounds=[0, 3.0, -0, 1.0, 0, 1.0], dim=(40, 40, 40)
-        ... )
-        >>> pl = pv.Plotter()
-        >>> actor = pl.add_volume(grid, show_scalar_bar=False)
-        >>> lut = actor.mapper.lookup_table
-        >>> lut.cmap = 'bwr'
-        >>> lut.apply_opacity([1.0, 0.0, 0.0, 0.3, 0.0, 0.0, 0.0, 0.3])
-        >>> pl.show()
+            Plot perlin noise volumetrically using a custom lookup table.
+
+            >>> import pyvista as pv
+            >>> noise = pv.perlin_noise(1, (1, 3, 5), (0, 0, 0))
+            >>> grid = pv.sample_function(
+            ...     noise, bounds=[0, 3.0, -0, 1.0, 0, 1.0], dim=(40, 40, 40)
+            ... )
+            >>> pl = pv.Plotter()
+            >>> actor = pl.add_volume(grid, show_scalar_bar=False)
+            >>> lut = actor.mapper.lookup_table
+            >>> lut.cmap = 'bwr'
+            >>> lut.apply_opacity([1.0, 0.0, 0.0, 0.3, 0.0, 0.0, 0.0, 0.3])
+            >>> pl.show()
 
         """
         if not isinstance(lookup_table, pv.LookupTable):
@@ -204,40 +210,43 @@ class VolumeProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkVolumePropert
 
         Examples
         --------
-        Create a sample :class:`pyvista.ImageData` dataset.
+        .. pyvista-plot::
+            :force_static:
 
-        >>> import numpy as np
-        >>> import pyvista as pv
-        >>> n = 21
-        >>> c = -(n - 1) / 2
-        >>> vol = pv.ImageData(dimensions=(n, n, n), origin=(c, c, c))
-        >>> scalars = np.linalg.norm(vol.points, axis=1)
-        >>> scalars *= 255 / scalars.max()
-        >>> vol['scalars'] = scalars
+            Create a sample :class:`pyvista.ImageData` dataset.
 
-        Demonstrate nearest (default) interpolation.
+            >>> import numpy as np
+            >>> import pyvista as pv
+            >>> n = 21
+            >>> c = -(n - 1) / 2
+            >>> vol = pv.ImageData(dimensions=(n, n, n), origin=(c, c, c))
+            >>> scalars = np.linalg.norm(vol.points, axis=1)
+            >>> scalars *= 255 / scalars.max()
+            >>> vol['scalars'] = scalars
 
-        >>> pl = pv.Plotter()
-        >>> actor = pl.add_volume(
-        ...     vol,
-        ...     show_scalar_bar=False,
-        ...     opacity=[0.3, 0.0, 0.05, 0.0, 0.0, 0.0, 1.0, 0.0],
-        ...     cmap='plasma',
-        ... )
-        >>> actor.prop.interpolation_type = 'nearest'
-        >>> pl.show()
+            Demonstrate nearest (default) interpolation.
 
-        Demonstrate linear interpolation.
+            >>> pl = pv.Plotter()
+            >>> actor = pl.add_volume(
+            ...     vol,
+            ...     show_scalar_bar=False,
+            ...     opacity=[0.3, 0.0, 0.05, 0.0, 0.0, 0.0, 1.0, 0.0],
+            ...     cmap='plasma',
+            ... )
+            >>> actor.prop.interpolation_type = 'nearest'
+            >>> pl.show()
 
-        >>> pl = pv.Plotter()
-        >>> actor = pl.add_volume(
-        ...     vol,
-        ...     show_scalar_bar=False,
-        ...     opacity=[0.3, 0.0, 0.05, 0.0, 0.0, 0.0, 1.0, 0.0],
-        ...     cmap='plasma',
-        ... )
-        >>> actor.prop.interpolation_type = 'linear'
-        >>> pl.show()
+            Demonstrate linear interpolation.
+
+            >>> pl = pv.Plotter()
+            >>> actor = pl.add_volume(
+            ...     vol,
+            ...     show_scalar_bar=False,
+            ...     opacity=[0.3, 0.0, 0.05, 0.0, 0.0, 0.0, 1.0, 0.0],
+            ...     cmap='plasma',
+            ... )
+            >>> actor.prop.interpolation_type = 'linear'
+            >>> pl.show()
 
         """
         return self.GetInterpolationTypeAsString().split()[0].lower()

@@ -432,9 +432,10 @@ def pytest_runtest_makereport(item, call):  # noqa: ARG001
 def check_gc(request):
     """Snapshot live VTK objects so leaks from this test can be detected.
 
-    Every test in the repository is covered. ``tests/plotting`` overrides this fixture
-    with one that also watches plotters (a fixture of the same name in a nearer conftest
-    wins), and takes the snapshot this hook's counterpart there checks.
+    Every test collected as a function is covered; plugin-collected items take no
+    fixtures. ``tests/plotting`` overrides this fixture with one that also watches
+    plotters (a fixture of the same name in a nearer conftest wins), and takes the
+    snapshot this hook's counterpart there checks.
     """
     node = request.node
     if (
@@ -511,6 +512,12 @@ def pytest_sessionstart():
 
 def pytest_addoption(parser):
     parser.addoption('--test_downloads', action='store_true', default=False)
+    parser.addoption(
+        '--regenerate_overloads',
+        action='store_true',
+        default=False,
+        help='rewrite the generated `get_example` overloads from the examples themselves',
+    )
     parser.addoption(
         '--no_check_gc',
         action='store_true',
@@ -947,7 +954,7 @@ _VTKSZ_SIZE_EXCEPTIONS_MB = {
     'sphx_glr_connectivity_001': 7,
     'sphx_glr_connectivity_002': 7,
     'sphx_glr_connectivity_003': 7,
-    'sphx_glr_ghost_cells_001': 7,
+    'sphx_glr_remove_cells_001': 7,
     'sphx_glr_openfoam_cooling_002': 7,
     'sphx_glr_openfoam_cooling_003': 8,
     'sphx_glr_pump_bracket_002': 7,
