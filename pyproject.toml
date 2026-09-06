@@ -221,6 +221,7 @@ pyvista = ['py.typed']
 'pyvista.core.static' = ['*.css', '*.svg', 'mesh_icons/*.svg']
 'pyvista.examples' = [
   '2k_earth_daymap.jpg',
+  'DATASETS.toml',
   'airplane.ply',
   'ant.ply',
   'channels.vti',

@@ -364,6 +364,15 @@ def _download_metadata_file() -> str:
 
 
 @functools.lru_cache(maxsize=1)
+def _bundled_index() -> _MetadataIndex:
+    """Return the index for the example files that ship inside this package."""
+    from pathlib import Path  # noqa: PLC0415
+
+    path = Path(__file__).parent / _METADATA_FILENAME
+    return _build_index(_load_toml(path.read_bytes()))
+
+
+@functools.lru_cache(maxsize=1)
 def _metadata_index() -> _MetadataIndex:
     """Return the dataset metadata index, reading and parsing it once."""
     import os  # noqa: PLC0415
@@ -382,11 +391,10 @@ def _metadata_index() -> _MetadataIndex:
 
 def _metadata_for_source_names(source_names: Iterable[str]) -> ExampleMetadata | None:
     """Return the entry claiming these files, or ``None`` when they are not in ``pyvista/data``."""
-    matched = {
-        entry.name: entry
-        for entry in (_metadata_index().match(name) for name in source_names)
-        if entry is not None
-    }
+    names = list(source_names)
+    bundled = _bundled_index()
+    resolved = [bundled.match(name) or _metadata_index().match(name) for name in names]
+    matched = {entry.name: entry for entry in resolved if entry is not None}
     if not matched:
         return None
     if len(matched) > 1:
