@@ -1349,6 +1349,8 @@ class PickingComponent(_NoNewAttrMixin):
                     tri_smesh = smesh.extract_surface(
                         algorithm=None, pass_pointid=False, pass_cellid=False
                     ).triangulate()
+                    # The hardware selector can report ids past the triangulated mesh
+                    cids = cids[cids < tri_smesh.n_cells]
                     cids_to_get = tri_smesh.extract_cells(cids)['original_cell_ids']
                     picked.append(smesh.extract_cells(cids_to_get))
 

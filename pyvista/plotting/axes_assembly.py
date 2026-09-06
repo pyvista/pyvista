@@ -2103,34 +2103,37 @@ class PlanesAssembly(_XYZAssembly):
 
         Examples
         --------
-        Position the labels at the center (along the edges) and plot the assembly.
+        .. pyvista-plot::
+            :force_static:
 
-        >>> import pyvista as pv
-        >>> planes = pv.PlanesAssembly(label_position=0)
-        >>> planes.label_position
-        (0.0, 0.0, 0.0)
+            Position the labels at the center (along the edges) and plot the assembly.
 
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_actor(planes)
-        >>> planes.camera = pl.camera
-        >>> pl.show()
+            >>> import pyvista as pv
+            >>> planes = pv.PlanesAssembly(label_position=0)
+            >>> planes.label_position
+            (0.0, 0.0, 0.0)
 
-        Position the labels at the corners.
+            >>> pl = pv.Plotter()
+            >>> _ = pl.add_actor(planes)
+            >>> planes.camera = pl.camera
+            >>> pl.show()
 
-        >>> planes.label_position = 1.0
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_actor(planes)
-        >>> planes.camera = pl.camera
-        >>> pl.show()
+            Position the labels at the corners.
 
-        Vary the position of the labels independently for each plane. The values may be
-        negative and/or exceed a value of ``1.0``.
+            >>> planes.label_position = 1.0
+            >>> pl = pv.Plotter()
+            >>> _ = pl.add_actor(planes)
+            >>> planes.camera = pl.camera
+            >>> pl.show()
 
-        >>> planes.label_position = (-1.3, -1.0, -0.5)
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_actor(planes)
-        >>> planes.camera = pl.camera
-        >>> pl.show()
+            Vary the position of the labels independently for each plane. The values may be
+            negative and/or exceed a value of ``1.0``.
+
+            >>> planes.label_position = (-1.3, -1.0, -0.5)
+            >>> pl = pv.Plotter()
+            >>> _ = pl.add_actor(planes)
+            >>> planes.camera = pl.camera
+            >>> pl.show()
 
         """
         return self._label_position
@@ -2157,33 +2160,36 @@ class PlanesAssembly(_XYZAssembly):
 
         Examples
         --------
-        Position the labels at the top edge and plot.
+        .. pyvista-plot::
+            :force_static:
 
-        >>> import pyvista as pv
-        >>> planes = pv.PlanesAssembly(label_edge='top')
-        >>> planes.label_edge
-        ('top', 'top', 'top')
+            Position the labels at the top edge and plot.
 
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_actor(planes)
-        >>> planes.camera = pl.camera
-        >>> pl.show()
+            >>> import pyvista as pv
+            >>> planes = pv.PlanesAssembly(label_edge='top')
+            >>> planes.label_edge
+            ('top', 'top', 'top')
 
-        Position the labels at the bottom.
+            >>> pl = pv.Plotter()
+            >>> _ = pl.add_actor(planes)
+            >>> planes.camera = pl.camera
+            >>> pl.show()
 
-        >>> planes.label_edge = 'bottom'
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_actor(planes)
-        >>> planes.camera = pl.camera
-        >>> pl.show()
+            Position the labels at the bottom.
 
-        Vary the edge of the labels independently for each plane.
+            >>> planes.label_edge = 'bottom'
+            >>> pl = pv.Plotter()
+            >>> _ = pl.add_actor(planes)
+            >>> planes.camera = pl.camera
+            >>> pl.show()
 
-        >>> planes.label_edge = ('top', 'right', 'left')
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_actor(planes)
-        >>> planes.camera = pl.camera
-        >>> pl.show()
+            Vary the edge of the labels independently for each plane.
+
+            >>> planes.label_edge = ('top', 'right', 'left')
+            >>> pl = pv.Plotter()
+            >>> _ = pl.add_actor(planes)
+            >>> planes.camera = pl.camera
+            >>> pl.show()
 
         """
         return self._label_edge

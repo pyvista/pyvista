@@ -33,31 +33,26 @@ env:
     !startsWith(github.ref, 'refs/heads/release/') &&
     !startsWith(github.ref, 'refs/heads/main')
     }}
-  CACHE_FOLDER_NAME: pyvista-data
-  PYVISTA_DATA: ${{ github.workspace }}/pyvista-data
 
 permissions:
   id-token: none
 
 jobs:
-  # Save PR metadata as an artifact so the separate deploy workflow (triggered
+  # Save the PR number as an artifact so the separate deploy workflow (triggered
   # via workflow_run) can associate the build with its PR — workflow_run events
-  # do not include pull_request data for fork PRs.
+  # do not include pull_request data for fork PRs. Nothing else goes in here:
+  # the deploy workflow takes the head SHA and fork status from its own event.
   pr-info:
     name: Save PR info
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     steps:
-      - name: Save PR metadata
+      - name: Save PR number
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          IS_FORK: ${{ github.event.pull_request.head.repo.fork }}
         run: |
           mkdir -p pr-info
           printf '%s' "$PR_NUMBER" > pr-info/pr_number.txt
-          printf '%s' "$HEAD_SHA" > pr-info/head_sha.txt
-          printf '%s' "$IS_FORK" > pr-info/is_fork.txt
       - uses: actions/upload-artifact@v7
         with:
           name: pr-info
@@ -71,7 +66,7 @@ jobs:
   # GitHub runners too, via enableCrossOsArchive on the restore.
   cache-github-hosted:
     name: Cache pyvista/data
-    uses: ./.github/workflows/cache-pyvista-data.yml
+    uses: $/.github/workflows/cache-pyvista-data.yml
     with:
       runs-on: "ubuntu-22.04"
 
@@ -79,6 +74,10 @@ jobs:
     # Job names are required status checks on main, so they have to keep
     # rendering exactly as `MacOS Unit Testing (3.10)`.
     name: MacOS Unit Testing (${{ matrix.python-version }})
+    # The merge queue runs this suite against the exact tree that lands, and
+    # nothing downstream of a push to `main` consumes its output, so it is only
+    # repeated for a tag, where `release` gates on it.
+    if: github.event_name != 'push' || startsWith(github.ref, 'refs/tags/')
     runs-on: macos-latest
     # macOS runner minutes bill at ten times the Linux rate, so a hung job is
     # expensive at the 360-minute default. The suite finishes in ~15.
@@ -103,21 +102,23 @@ jobs:
           cache: ${{ env.USE_CACHE == 'true' && 'pip' || '' }}
 
       - name: Restore pyvista/data cache
-        uses: actions/cache/restore@v6
+        uses: $/.github/actions/restore-pyvista-data
         with:
-          path: ${{ env.CACHE_FOLDER_NAME }}
           key: ${{ needs.cache-github-hosted.outputs.key }}
-          enableCrossOsArchive: true
 
       - name: Install tox-uv
         run: pip install tox-uv
 
       - name: Core Testing (no GL)
-        run: tox run -e py${{ matrix.python-version }}-core
+        env:
+          TOX_ENV: py${{ matrix.python-version }}-core
+        run: tox run -e "$TOX_ENV"
 
       - name: Plotting Testing (uses GL)
         if: ${{ !cancelled() }}
-        run: tox run -e py${{ matrix.python-version }}-plotting
+        env:
+          TOX_ENV: py${{ matrix.python-version }}-plotting
+        run: tox run -e "$TOX_ENV"
 
       - name: Upload Images for Failed Tests
         if: always()
@@ -135,6 +136,10 @@ jobs:
 
   Linux:
     name: Linux Unit Testing (${{ matrix.python-version }}, ${{ matrix.vtk-version }}, ${{ matrix.numpy-version }})
+    # Repeated for a tag only, like the other two. The merge queue's own commit
+    # is the one that lands, so the coverage it uploads is already Codecov's
+    # report for `main` and the push has nothing left to add.
+    if: github.event_name != 'push' || startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-22.04
     needs: cache-github-hosted
     strategy:
@@ -180,11 +185,9 @@ jobs:
           version: 3.0
 
       - name: Restore pyvista/data cache
-        uses: actions/cache/restore@v6
+        uses: $/.github/actions/restore-pyvista-data
         with:
-          path: ${{ env.CACHE_FOLDER_NAME }}
           key: ${{ needs.cache-github-hosted.outputs.key }}
-          enableCrossOsArchive: true
 
       - name: Install tox-uv
         run: pip install tox-uv
@@ -260,21 +263,23 @@ jobs:
           version: 3.0
 
       - name: Restore pyvista/data cache
-        uses: actions/cache/restore@v6
+        uses: $/.github/actions/restore-pyvista-data
         with:
-          path: ${{ env.CACHE_FOLDER_NAME }}
           key: ${{ needs.cache-github-hosted.outputs.key }}
-          enableCrossOsArchive: true
 
       - name: Install tox-uv
         run: pip install tox-uv
 
       - name: Core Testing (no GL)
-        run: tox run -e py${{ matrix.python-version }}-cov-core-vtk_dev
+        env:
+          TOX_ENV: py${{ matrix.python-version }}-cov-core-vtk_dev
+        run: tox run -e "$TOX_ENV"
 
       - name: Plotting Testing (uses GL)
         if: ${{ !cancelled() }}
-        run: xvfb-run tox run -e py${{ matrix.python-version }}-cov-plotting-vtk_dev
+        env:
+          TOX_ENV: py${{ matrix.python-version }}-cov-plotting-vtk_dev
+        run: xvfb-run tox run -e "$TOX_ENV"
 
       - name: Upload Images for Failed Tests
         if: always()
@@ -300,6 +305,8 @@ jobs:
 
   windows:
     name: Windows Unit Testing
+    # Repeated for a tag only, for the same reason as the macOS suite.
+    if: github.event_name != 'push' || startsWith(github.ref, 'refs/tags/')
     runs-on: windows-latest
     timeout-minutes: 80
     needs: cache-github-hosted
@@ -322,11 +329,9 @@ jobs:
           cache: "pip"
 
       - name: Restore pyvista/data cache
-        uses: actions/cache/restore@v6
+        uses: $/.github/actions/restore-pyvista-data
         with:
-          path: ${{ env.CACHE_FOLDER_NAME }}
           key: ${{ needs.cache-github-hosted.outputs.key }}
-          enableCrossOsArchive: true
 
       - name: Set up headless display
         uses: pyvista/setup-headless-display-action@b0bf9f57d62d2b3fee9f1c0e0c7e390f05e97a4e

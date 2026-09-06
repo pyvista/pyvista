@@ -22,6 +22,7 @@ import pytest
 
 import pyvista as pv
 from pyvista import _vtk
+from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import MissingDataError
 from pyvista.plotting.errors import RenderWindowUnavailable
 import pyvista.plotting.tools as tools_mod
@@ -171,6 +172,12 @@ def test_plotter_theme_raises():
         match=r'Assigning a theme for a plotter instance is deprecated',
     ):
         pl.theme = pv.themes.DarkTheme()
+
+
+@pytest.mark.parametrize('name', ['check_math_text_support', 'check_matplotlib_vtk_compatibility'])
+def test_moved_check_shims_raise(name):
+    with pytest.raises(DeprecationError, match=f'`pyvista.plotting.{name}`'):
+        getattr(tools_mod, name)()
 
 
 @pytest.mark.parametrize('theme', pv.plotting.themes._NATIVE_THEMES)
@@ -850,8 +857,8 @@ def test_plotter_meshes_from_assembly():
 
     # Ensure all actors with meshes are included in result
     for part in assembly.parts:
-        if isinstance(part, pv.DataObject):
-            assert part in result
+        if isinstance(part, pv.Actor):
+            assert part.mapper.dataset in result
         else:
             assert part not in result
 
@@ -873,8 +880,8 @@ def test_plotter_meshes_from_nested_assembly():
 
     # Ensure all actors with meshes are included in result
     for part in [*assembly.parts, *subassembly.parts]:
-        if isinstance(part, pv.DataObject):
-            assert part in result
+        if isinstance(part, pv.Actor):
+            assert part.mapper.dataset in result
         else:
             assert part not in result
 
@@ -1041,7 +1048,7 @@ def test_off_screen_background_thread_rendering():
             assert img is not None
             assert img.shape[0] > 0
             pl.close()
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:  # noqa: BLE001  # pragma: no cover
             errors.append(e)
 
     t = threading.Thread(target=render_on_thread)

@@ -12,6 +12,7 @@ from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.filters import _apply_points_dtype
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_object import DataObjectFilters
@@ -248,8 +249,8 @@ class CompositeFilters(DataObjectFilters):
     def _composite_geometry_filter(self):
         gf = _vtk.vtkCompositeDataGeometryFilter()
         gf.SetInputData(self)
-        gf.Update()
-        return wrap(gf.GetOutputDataObject(0))
+        _update_alg(gf)
+        return _apply_points_dtype(wrap(gf.GetOutputDataObject(0)), algorithm=gf)
 
     @_deprecate_positional_args
     def combine(self, merge_points: bool = False, tolerance=0.0):  # noqa: FBT001, FBT002
@@ -305,8 +306,8 @@ class CompositeFilters(DataObjectFilters):
             alg.AddInputData(single_block)
         alg.SetMergePoints(merge_points)
         alg.SetTolerance(tolerance)
-        alg.Update()
-        return wrap(alg.GetOutputDataObject(0))
+        _update_alg(alg)
+        return _apply_points_dtype(wrap(alg.GetOutputDataObject(0)), algorithm=alg)
 
     @_deprecate_positional_args
     def outline(  # type: ignore[misc]

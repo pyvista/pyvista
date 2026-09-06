@@ -30,7 +30,9 @@ from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
+from pyvista.core.filters import _apply_points_dtype
 from pyvista.core.filters import _get_output
+from pyvista.core.filters import _match_points_dtype
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_object import DataObjectFilters
 from pyvista.core.filters.data_object import _cast_output_to_match_input_type
@@ -56,18 +58,112 @@ if TYPE_CHECKING:
     from pyvista import PolyData
     from pyvista import RectilinearGrid
     from pyvista import UnstructuredGrid
-    from pyvista.core._typing_core import ArrayLike
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
     from pyvista.core._typing_core import _DataObjectType
     from pyvista.core._typing_core import _DataSetType
     from pyvista.core.filters.data_object import _ExtractSurfaceOptions
+    from pyvista.core.utilities.arrays import CellLiteral
+    from pyvista.core.utilities.arrays import PointLiteral
     from pyvista.plotting._typing import ColorLike
     from pyvista.plotting._typing import ColormapOptions
 
 
 _SelectInteriorPointsOptions = Literal['signed_distance', 'cell_locator']
+
+
+_CLIP_SURFACE_SCALARS = '__pyvista_clip_surface_distance'
+
+
+def _points_inside_surface(image: ImageData, surface: PolyData) -> NumpyArray[np.bool_]:
+    """Return which points of the image a closed surface encloses, from a stencil."""
+    mask = surface.voxelize_binary_mask(reference_volume=image)
+    return np.asarray(mask.point_data['mask']).astype(bool)
+
+
+def _signed_distance_near_surface(
+    dataset: ImageData, surface: PolyData, function: _vtk.vtkImplicitPolyDataDistance
+) -> NumpyArray[float] | None:
+    """Build a signed distance field that is exact on the cells the surface cuts.
+
+    Every point is classified inside (-1) or outside (1) the surface, and the points of
+    cells with corners on both sides get their exact distance so the cut interpolates to
+    the surface. The points of the cells holding the surface's vertices and a sample of
+    all points are evaluated too, and each exact distance is checked against the
+    classification; a disagreement is corrected and the cells are re-examined once, and
+    ``None`` is returned if any remain.
+    """
+    inside = _points_inside_surface(dataset, surface)
+    distance = np.where(inside, -1.0, 1.0)
+    is_exact = np.zeros(dataset.n_points, dtype=bool)
+    points = dataset.points
+
+    def exact_distance(point_ids):
+        values = _vtk.vtkDoubleArray()
+        function.FunctionValue(pv.convert_array(points[point_ids]), values)
+        return pv.convert_array(values)
+
+    # Seeds: the cells holding the surface's vertices and a strided sample, so a
+    # classification that misses a whole region is still checked
+    seeds = np.concatenate(
+        [
+            _points_of_cells_containing(dataset, surface.points),
+            np.arange(0, dataset.n_points, max(1, dataset.n_points // 256)),
+        ]
+    )
+    # Two passes: evaluate, correct wrong classifications, re-examine the cells; then give up
+    for _ in range(2):
+        point_ids = np.union1d(seeds, _points_of_cells_cut_by_sign(dataset, inside))
+        point_ids = point_ids[~is_exact[point_ids]]
+        if point_ids.size == 0:
+            return distance
+        exact = exact_distance(point_ids)
+        distance[point_ids] = exact
+        is_exact[point_ids] = True
+        wrong = point_ids[(exact < 0) != inside[point_ids]]
+        if wrong.size == 0:
+            return distance
+        inside[wrong] = ~inside[wrong]
+    return None  # still disagreeing, so the caller evaluates the distance everywhere
+
+
+def _points_of_cells_containing(image: ImageData, points: NumpyArray[float]) -> NumpyArray[int]:
+    """Return the ids of the points of the image cells that contain the given points."""
+    # Optimization: index arithmetic instead of a cell locator, which VTK 9.7 spends about
+    # a second building for an image of a few million cells
+    index = (np.column_stack([points, np.ones(len(points))]) @ image.physical_to_index_matrix.T)[
+        :, :3
+    ]
+    cell = np.floor(index).astype(int) - np.array(image.offset)
+    n_cells = np.array(image.dimensions) - 1
+    cell = cell[np.all((cell >= 0) & (cell < n_cells), axis=1)]
+    cell_ids = np.unique(cell[:, 0] + n_cells[0] * (cell[:, 1] + n_cells[1] * cell[:, 2]))
+    if cell_ids.size == 0:
+        return np.empty(0, dtype=int)
+    cells = image.extract_cells(cell_ids, pass_point_ids=True, pass_cell_ids=False)
+    return np.asarray(cells.point_data['vtkOriginalPointIds'])
+
+
+def _points_of_cells_cut_by_sign(
+    dataset: ImageData, inside: NumpyArray[np.bool_]
+) -> NumpyArray[int]:
+    """Return the ids of the points of cells that have corners on both sides."""
+    marked = dataset.copy(deep=False)
+    marked.point_data[_CLIP_SURFACE_SCALARS] = inside.astype(np.float32)
+    to_cells = _vtk.vtkPointDataToCellData()
+    to_cells.SetInputData(marked)
+    to_cells.PassPointDataOff()
+    to_cells.ProcessAllArraysOff()
+    to_cells.AddPointDataArray(_CLIP_SURFACE_SCALARS)
+    _update_alg(to_cells, message='Finding Cells Cut by the Surface')
+    fraction = np.asarray(_get_output(to_cells).cell_data[_CLIP_SURFACE_SCALARS])
+    cut = dataset.extract_cells(
+        np.flatnonzero((fraction > 0) & (fraction < 1)), pass_point_ids=True, pass_cell_ids=False
+    )
+    if cut.n_points == 0:
+        return np.empty(0, dtype=int)
+    return np.asarray(cut.point_data['vtkOriginalPointIds'])
 
 
 class _ExtractValuesInputs(NamedTuple):
@@ -646,11 +742,13 @@ class DataSetFilters(DataObjectFilters):
             if both:
                 msg = 'Cannot have both=True for a range clip'
                 raise ValueError(msg)
-        alg.SetInputDataObject(self)
+        # Activate the scalars on a shallow copy so the input's active scalars are untouched
+        source = self.copy(deep=False)
         if scalars is None:
-            set_default_active_scalars(self)
+            set_default_active_scalars(source)
         else:
-            self.set_active_scalars(scalars)
+            source.set_active_scalars(scalars)
+        alg.SetInputDataObject(source)
 
         alg.SetInsideOut(invert)  # invert the clip if needed
         alg.SetGenerateClippedOutput(both)
@@ -710,7 +808,12 @@ class DataSetFilters(DataObjectFilters):
         compute_distance : bool, default: False
             Compute the implicit distance from the mesh onto the input
             dataset.  A new array called ``'implicit_distance'`` will
-            be added to the output clipped mesh.
+            be added to the output clipped mesh. For :class:`~pyvista.ImageData`
+            with a closed surface and ``value=0``, this also makes the clip
+            evaluate the distance at every point instead of classifying points
+            as inside or outside with a stencil and evaluating it only at the
+            points of cells the surface passes through, where the classification
+            is checked against it.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -740,26 +843,54 @@ class DataSetFilters(DataObjectFilters):
         >>> clipped.plot(show_edges=True, cpos='xy', line_width=3)
 
         """
-        if not isinstance(surface, _vtk.vtkPolyData):
-            surface = wrap(surface).extract_surface(
+        surface_ = cast('pv.PolyData', wrap(surface))
+        if not isinstance(surface_, pv.PolyData):
+            surface_ = surface_.extract_surface(  # type: ignore[unreachable]
                 algorithm=None, pass_pointid=False, pass_cellid=False
             )
         function = _vtk.vtkImplicitPolyDataDistance()
-        function.SetInput(surface)
+        function.SetInput(surface_)
+        clip_function: _vtk.vtkImplicitFunction | None = function
+        source = self
         if compute_distance:
             points = pv.convert_array(self.points)
             dists = _vtk.vtkDoubleArray()
             function.FunctionValue(points, dists)
-            self['implicit_distance'] = pv.convert_array(dists)
+            # The array goes on a shallow copy, so it reaches the output but not the input
+            source = self.copy(deep=False)
+            source['implicit_distance'] = pv.convert_array(dists)
+        elif (
+            isinstance(self, pv.ImageData)
+            and value == 0
+            and self.n_cells
+            and surface_.n_faces
+            and surface_.n_open_edges == 0
+        ):
+            # Optimization: vtkImplicitPolyDataDistance evaluates serially (VTK 9.7), so
+            # classify the points with a stencil and evaluate the distance only where the
+            # surface cuts cells. The clip interpolates the same cut, so the output is the
+            # same, and the check below guards against a misclassification.
+            distance = _signed_distance_near_surface(self, surface_, function)
+            if distance is not None:
+                source = self.copy(deep=False)
+                source.point_data[_CLIP_SURFACE_SCALARS] = distance
+                source.set_active_scalars(_CLIP_SURFACE_SCALARS, preference='point')
+                clip_function = None
         # run the clip
         clipped = DataSetFilters._clip_with_function(
-            self,
-            function,
+            source,
+            clip_function,
             invert=invert,
             value=value,
             progress_bar=progress_bar,
             crinkle=crinkle,
         )
+        if clip_function is None:
+            # Drop the working scalars and restore the input's active scalars
+            clipped.point_data.pop(_CLIP_SURFACE_SCALARS, None)
+            info = self.active_scalars_info
+            if info.name is not None and not clipped.is_empty:
+                clipped.set_active_scalars(info.name, preference=info.association)
         return _cast_output_to_match_input_type(clipped, self)
 
     @_deprecate_positional_args(allowed=['value'])
@@ -1263,7 +1394,9 @@ class DataSetFilters(DataObjectFilters):
         alg.SetInputDataObject(self)
         alg.SetGenerateFaces(generate_faces)
         _update_alg(alg, progress_bar=progress_bar, message='Producing an outline')
-        return wrap(alg.GetOutputDataObject(0))
+        output = wrap(alg.GetOutputDataObject(0))
+        _match_points_dtype(output, self, algorithm=alg)
+        return output
 
     @_deprecate_positional_args
     def outline_corners(  # type: ignore[misc]
@@ -1302,7 +1435,7 @@ class DataSetFilters(DataObjectFilters):
         alg.SetInputDataObject(self)
         alg.SetCornerFactor(factor)
         _update_alg(alg, progress_bar=progress_bar, message='Producing an Outline of the Corners')
-        return wrap(alg.GetOutputDataObject(0))
+        return _get_output(alg, keep_pointset=False)
 
     def gaussian_splatting(  # type: ignore[misc]
         self: _DataSetType,
@@ -1925,9 +2058,12 @@ class DataSetFilters(DataObjectFilters):
 
         # Make glyphing geometry if necessary
         if geom is None:
-            arrow = _vtk.vtkArrowSource()
-            _update_alg(arrow, progress_bar=progress_bar, message='Making Arrow')
-            geoms: Sequence[_vtk.vtkDataSet] = [arrow.GetOutput()]
+            arrow_source = _vtk.vtkArrowSource()
+            _update_alg(arrow_source, progress_bar=progress_bar, message='Making Arrow')
+            # No algorithm passed: the template is scaled and copied onto the
+            # user's points, so its own precision is not worth warning about
+            arrow = _apply_points_dtype(pv.wrap(arrow_source.GetOutput()))
+            geoms: Sequence[_vtk.vtkDataSet] = [arrow]
         # Check if a table of geometries was passed
         elif isinstance(geom, (np.ndarray, Sequence)):
             geoms = geom
@@ -4620,7 +4756,7 @@ class DataSetFilters(DataObjectFilters):
     @_deprecate_positional_args(allowed=['ind'])
     def extract_cells(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
-        ind: int | VectorLike[int],
+        ind: int | VectorLike[int] | VectorLike[bool],
         invert: bool = False,  # noqa: FBT001, FBT002
         pass_cell_ids: bool = True,  # noqa: FBT001, FBT002
         pass_point_ids: bool = True,  # noqa: FBT001, FBT002
@@ -4628,9 +4764,21 @@ class DataSetFilters(DataObjectFilters):
     ):
         r"""Return a subset of the grid.
 
+        The output is an :class:`~pyvista.UnstructuredGrid`. Use :meth:`remove_cells`
+        with ``invert=True`` to extract the same cells while keeping the input type::
+
+            # UnstructuredGrid, whatever the input
+            extracted = mesh.extract_cells(ind)
+
+            # PolyData for PolyData input, UnstructuredGrid otherwise
+            extracted = mesh.remove_cells(ind, invert=True)
+
+        .. versionchanged:: 0.49
+            Negative and out-of-range indices raise ``IndexError``.
+
         Parameters
         ----------
-        ind : int | VectorLike[int]
+        ind : int | VectorLike[int] | VectorLike[bool]
             Cell indices to extract. Can be a single ``int`` or a vector of ``int``\ s.
             A ``bool`` vector is also supported; the vector size should match the number of cells.
 
@@ -4654,7 +4802,7 @@ class DataSetFilters(DataObjectFilters):
 
         See Also
         --------
-        extract_points, extract_values
+        extract_points, extract_values, remove_cells
 
         Returns
         -------
@@ -4675,27 +4823,8 @@ class DataSetFilters(DataObjectFilters):
         >>> pl.show()
 
         """
-        indices = _validation.validate_arrayN(ind, must_be_real=False, name='indices')
-        if indices.dtype == bool:
-            assume_sorted_and_unique = True
-            if indices.size != self.n_cells:
-                msg = (
-                    f'Number of bool indices ({indices.size}) '
-                    f'must match the number of cells ({self.n_cells}).'
-                )
-                raise ValueError(msg)
-        else:
-            assume_sorted_and_unique = False
-
-        if invert:
-            if indices.dtype == bool:
-                indices = np.invert(indices)
-            else:
-                mask = np.ones(self.n_cells, bool)
-                mask[ind] = False
-                indices = mask
-        # A mask or integer ids, which is what numpy_to_idarr documents but does not type
-        _, indices = numpy_to_idarr(cast('ArrayLike[int]', indices), return_ind=True)
+        mask = _validate_extraction_ids(ind, n_items=self.n_cells, name='cells', invert=invert)
+        indices = np.flatnonzero(mask).astype(pv.ID_TYPE, copy=False)
 
         # Extract using a shallow copy to avoid the side effect of creating the
         # vtkOriginalPointIds and vtkOriginalCellIds arrays in the input
@@ -4710,34 +4839,53 @@ class DataSetFilters(DataObjectFilters):
 
         extract = _vtk.vtkExtractCells()
         extract.SetInputData(ds_copy)
-        extract.SetCellIds(indices, indices.size)  # type: ignore[arg-type]
-        extract.SetAssumeSortedAndUniqueIds(assume_sorted_and_unique)
+        extract.SetCellIds(cast('Sequence[int]', indices), indices.size)
+        extract.SetAssumeSortedAndUniqueIds(True)
         # We set the arrays manually earlier
         extract.SetPassThroughCellIds(False)
         _update_alg(extract, progress_bar=progress_bar, message='Extracting Cells')
-        subgrid = _get_output(extract)
+        output = _finish_extraction(
+            _get_output(extract), pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids
+        )
 
         # Make active scalars match input
-        info = self.active_scalars_info
-        subgrid.set_active_scalars(info.name, info.association)
-        return subgrid
+        association, name = self.active_scalars_info
+        if name is None or name in output.array_names:
+            output.set_active_scalars(name, cast('PointLiteral | CellLiteral', association))
+        return output
 
     @_deprecate_positional_args(allowed=['ind'])
     def extract_points(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
         ind: int | VectorLike[int] | VectorLike[bool],
         adjacent_cells: bool = True,  # noqa: FBT001, FBT002
-        include_cells: bool = True,  # noqa: FBT001, FBT002
+        include_cells: bool | None = None,  # noqa: FBT001
         pass_cell_ids: bool = True,  # noqa: FBT001, FBT002
         pass_point_ids: bool = True,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
+        *,
+        invert: bool = False,
     ):
-        """Return a subset of the grid (with cells) that contains any of the given point indices.
+        r"""Return a subset of the grid (with cells) that contains any of the given point indices.
+
+        The output is an :class:`~pyvista.UnstructuredGrid`. Use :meth:`remove_points`
+        with ``invert=True`` and ``mode='all'`` to extract the same points and their
+        cells while keeping the input type::
+
+            # UnstructuredGrid, whatever the input
+            extracted = mesh.extract_points(ind)
+
+            # PolyData for PolyData input, PointSet for PointSet input
+            extracted = mesh.remove_points(ind, mode='all', invert=True)
+
+        .. versionchanged:: 0.49
+            Negative and out-of-range indices raise ``IndexError``.
 
         Parameters
         ----------
-        ind : sequence[int]
-            Sequence of point indices to be extracted.
+        ind : int | VectorLike[int] | VectorLike[bool]
+            Point indices to extract. Can be a single ``int`` or a vector of ``int``\ s.
+            A ``bool`` vector is also supported; the vector size should match the number of points.
 
         adjacent_cells : bool, default: True
             If ``True``, extract the cells that contain at least one of
@@ -4745,8 +4893,10 @@ class DataSetFilters(DataObjectFilters):
             contain exclusively points from the extracted points list.
             Has no effect if ``include_cells`` is ``False``.
 
-        include_cells : bool, default: True
-            Specifies if the cells shall be returned or not.
+        include_cells : bool, default: None
+            Specifies if the cells shall be returned or not. By default, this value is
+            ``True`` if the input has at least one cell and ``False`` otherwise, so
+            :class:`~pyvista.PointSet` input returns the selected points.
 
         pass_point_ids : bool, default: True
             Add a point array ``'vtkOriginalPointIds'`` that identifies the original
@@ -4763,14 +4913,20 @@ class DataSetFilters(DataObjectFilters):
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
+        invert : bool, default: False
+            Invert the selection.
+
+            .. versionadded:: 0.49
+
         See Also
         --------
-        extract_cells, extract_values
+        extract_cells, extract_values, remove_points
 
         Returns
         -------
-        pyvista.UnstructuredGrid
-            Subselected grid.
+        pyvista.UnstructuredGrid | pyvista.PointSet
+            Subselected points. A :class:`~pyvista.PointSet` input returns a
+            ``PointSet``.
 
         Examples
         --------
@@ -4785,7 +4941,9 @@ class DataSetFilters(DataObjectFilters):
         >>> extracted.plot()
 
         """
-        ind = np.array(ind)
+        mask = _validate_extraction_ids(ind, n_items=self.n_points, name='points', invert=invert)
+        if include_cells is None:
+            include_cells = self.n_cells > 0
         # Create selection objects
         selectionNode = _vtk.vtkSelectionNode()
         selectionNode.SetFieldType(_vtk.vtkSelectionNode.POINT)
@@ -4793,13 +4951,11 @@ class DataSetFilters(DataObjectFilters):
         if not include_cells:
             adjacent_cells = True
         if not adjacent_cells:
-            # Build array of point indices to be removed.
-            ind_rem = np.ones(self.n_points, dtype='bool')
-            ind_rem[ind] = False
-            ind = np.arange(self.n_points)[ind_rem]
-            # Invert selection
+            # Select the complement and invert the selection so that cells using
+            # any unselected point are dropped
+            mask = np.invert(mask)
             selectionNode.GetProperties().Set(_vtk.vtkSelectionNode.INVERSE(), 1)
-        selectionNode.SetSelectionList(numpy_to_idarr(ind))
+        selectionNode.SetSelectionList(numpy_to_idarr(np.flatnonzero(mask)))
         if include_cells:
             selectionNode.GetProperties().Set(_vtk.vtkSelectionNode.CONTAINING_CELLS(), 1)
 
@@ -4812,20 +4968,224 @@ class DataSetFilters(DataObjectFilters):
         extract_sel.SetInputData(1, selection)
         _update_alg(extract_sel, progress_bar=progress_bar, message='Extracting Points')
         output = _get_output(extract_sel)
+        if not pass_point_ids:
+            output.point_data.pop('vtkOriginalPointIds', None)
+        if not pass_cell_ids:
+            output.cell_data.pop('vtkOriginalCellIds', None)
+        return _finish_extraction(
+            output, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids
+        )
 
-        # Process output arrays
-        if (name := 'vtkOriginalPointIds') in (data := output.point_data) and not pass_point_ids:
-            del data[name]
-        if (name := 'vtkOriginalCellIds') in (data := output.cell_data) and not pass_cell_ids:
-            del data[name]
+    @_deprecate_positional_args(allowed=['ind'])
+    def remove_cells(  # type: ignore[misc]
+        self: _DataSetType,
+        ind: int | VectorLike[int] | VectorLike[bool],
+        inplace: bool = False,  # noqa: FBT001, FBT002
+        *,
+        invert: bool = False,
+        pass_point_ids: bool = True,
+        pass_cell_ids: bool = True,
+        progress_bar: bool = False,
+    ):
+        r"""Remove cells from a mesh.
 
-        # For consistency, ensure there is always an output array
-        if output.is_empty:
-            if pass_point_ids:
-                output.point_data['vtkOriginalPointIds'] = np.array((), dtype=int)
-            if pass_cell_ids:
-                output.cell_data['vtkOriginalCellIds'] = np.array((), dtype=int)
-        return output
+        Only points used by a remaining cell are kept. The output is
+        :class:`~pyvista.PolyData` for ``PolyData`` input and an
+        :class:`~pyvista.UnstructuredGrid` otherwise. With ``invert=True`` this removes
+        every cell `except` those specified, which is :meth:`extract_cells` with the
+        input type kept::
+
+            # UnstructuredGrid, whatever the input
+            extracted = mesh.extract_cells(ind)
+
+            # PolyData for PolyData input, UnstructuredGrid otherwise
+            extracted = mesh.remove_cells(ind, invert=True)
+
+        .. versionchanged:: 0.49
+            This filter is available for all datasets, including
+            :class:`~pyvista.StructuredGrid`, and the ``invert``, ``pass_point_ids``,
+            ``pass_cell_ids``, and ``progress_bar`` keywords were added. Points no
+            remaining cell uses are dropped, the ``'vtkOriginalPointIds'`` and
+            ``'vtkOriginalCellIds'`` arrays are added by default, and negative and
+            out-of-range indices raise ``IndexError``.
+
+        Parameters
+        ----------
+        ind : int | VectorLike[int] | VectorLike[bool]
+            Cell indices to remove. Can be a single ``int`` or a vector of ``int``\ s.
+            A ``bool`` vector is also supported; the vector size should match the number of cells.
+
+        inplace : bool, default: False
+            Update the mesh in-place. This is only possible when the output has the
+            same type as the input.
+
+        invert : bool, default: False
+            Invert the selection and remove all cells *except* those specified.
+
+        pass_point_ids : bool, default: True
+            Add a point array ``'vtkOriginalPointIds'`` that identifies the original
+            points the remaining points correspond to.
+
+        pass_cell_ids : bool, default: True
+            Add a cell array ``'vtkOriginalCellIds'`` that identifies the original cells
+            the remaining cells correspond to.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        See Also
+        --------
+        extract_cells, remove_points
+
+        Returns
+        -------
+        pyvista.UnstructuredGrid | pyvista.PolyData
+            Mesh with the specified cells removed.
+
+        Examples
+        --------
+        Remove 20 cells from an unstructured grid.
+
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> hex_mesh = pv.read(examples.hexbeamfile)
+        >>> removed = hex_mesh.remove_cells(range(10, 20))
+        >>> removed.plot(color='lightblue', show_edges=True, line_width=3)
+
+        Remove cells from :class:`~pyvista.PolyData`. The output is also ``PolyData``.
+
+        >>> sphere = pv.Sphere()
+        >>> removed = sphere.remove_cells(range(100))
+        >>> removed.n_cells, sphere.n_cells
+        (1580, 1680)
+        >>> type(removed)
+        <class 'pyvista.core.pointset.PolyData'>
+
+        """
+        output = self.extract_cells(
+            ind,
+            invert=not invert,
+            pass_point_ids=pass_point_ids,
+            pass_cell_ids=pass_cell_ids,
+            progress_bar=progress_bar,
+        )
+        output = _cast_extraction(
+            output, self, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids
+        )
+        return _apply_inplace(self, output, inplace=inplace)
+
+    def remove_points(  # type: ignore[misc]
+        self: _DataSetType,
+        ind: int | VectorLike[int] | VectorLike[bool],
+        mode: Literal['any', 'all'] = 'any',
+        *,
+        invert: bool = False,
+        pass_point_ids: bool = True,
+        pass_cell_ids: bool = True,
+        inplace: bool = False,
+        progress_bar: bool = False,
+    ):
+        r"""Remove points and their cells from a mesh.
+
+        Cells are removed according to ``mode``, and only points used by a remaining
+        cell are kept. The output is :class:`~pyvista.PolyData` for
+        ``PolyData`` input, :class:`~pyvista.PointSet` for ``PointSet`` input, and an
+        :class:`~pyvista.UnstructuredGrid` otherwise. With ``invert=True`` and
+        ``mode='all'`` this removes every point `except` those specified, which is
+        :meth:`extract_points` with the input type kept::
+
+            # UnstructuredGrid, whatever the input
+            extracted = mesh.extract_points(ind)
+
+            # PolyData for PolyData input, PointSet for PointSet input
+            extracted = mesh.remove_points(ind, mode='all', invert=True)
+
+        A ``PolyData`` without cells returns one vertex cell per remaining point, the
+        same as ``pv.PolyData(points)`` creates. Use :meth:`~pyvista.DataSet.cast_to_pointset`
+        first to remove points from a point cloud without cells.
+
+        .. versionadded:: 0.49
+
+        Parameters
+        ----------
+        ind : int | VectorLike[int] | VectorLike[bool]
+            Point indices to remove. Can be a single ``int`` or a vector of ``int``\ s.
+            A ``bool`` vector is also supported; the vector size should match the number of points.
+
+        mode : 'any' | 'all', default: 'any'
+            Remove cells that use ``'any'`` of the specified points, or only cells
+            whose points are ``'all'`` specified. With ``'all'``, specified points
+            that are still used by a remaining cell are kept.
+
+        invert : bool, default: False
+            Invert the selection and remove all points *except* those specified.
+
+        pass_point_ids : bool, default: True
+            Add a point array ``'vtkOriginalPointIds'`` that identifies the original
+            points the remaining points correspond to.
+
+        pass_cell_ids : bool, default: True
+            Add a cell array ``'vtkOriginalCellIds'`` that identifies the original cells
+            the remaining cells correspond to.
+
+        inplace : bool, default: False
+            Update the mesh in-place. This is only possible when the output has the
+            same type as the input.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        See Also
+        --------
+        extract_points, remove_cells
+
+        Returns
+        -------
+        pyvista.UnstructuredGrid | pyvista.PolyData | pyvista.PointSet
+            Mesh with the specified points removed.
+
+        Examples
+        --------
+        Remove 150 points from a sphere.
+
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
+        >>> reduced_sphere = sphere.remove_points(ind=range(100, 250))
+        >>> reduced_sphere.plot(show_edges=True, line_width=3)
+
+        Remove a point from a mesh of line segments. The ids of the remaining points
+        are kept.
+
+        >>> points = [
+        ...     [0.0, 0.0, 0.0],
+        ...     [1.0, 0.0, 0.0],
+        ...     [2.0, 0.0, 0.0],
+        ...     [3.0, 0.0, 0.0],
+        ... ]
+        >>> lines = pv.PolyData(points, lines=[2, 0, 1, 2, 1, 2, 2, 2, 3])
+        >>> reduced = lines.remove_points(ind=0)
+        >>> reduced['vtkOriginalPointIds'].tolist()
+        [1, 2, 3]
+
+        """
+        _validation.check_contains(['any', 'all'], must_contain=mode, name='mode')
+        output = self.extract_points(
+            ind,
+            adjacent_cells=mode == 'all',
+            invert=not invert,
+            pass_point_ids=pass_point_ids,
+            pass_cell_ids=pass_cell_ids,
+            progress_bar=progress_bar,
+        )
+        output = _cast_extraction(
+            output, self, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids
+        )
+        if output.n_cells == self.n_cells and isinstance(
+            output, (pv.PolyData, pv.UnstructuredGrid)
+        ):
+            # Every cell survived, so the input was passed through with its unused points
+            output = output.remove_unused_points()
+        return _apply_inplace(self, output, inplace=inplace)
 
     def split_values(  # type: ignore[misc]
         self: _DataSetType,
@@ -7564,6 +7924,10 @@ class DataSetFilters(DataObjectFilters):
         output_mesh = self if inplace else self.copy()
         data = output_mesh.point_data if field == FieldAssociation.POINT else output_mesh.cell_data
         array = data[name]
+        colors_out = np.full(
+            (len(array), num_components), default_channel_value, dtype=color_dtype
+        )
+        mapping = {}
 
         if isinstance(colors, dict):
             if coloring_mode is not None:
@@ -7573,7 +7937,12 @@ class DataSetFilters(DataObjectFilters):
                 cast('list[ColorLike]', list(colors.values()))
             )
             color_rgb_sequence = [getattr(c, color_type) for c in colors_]
-            items = zip(colors.keys(), color_rgb_sequence, strict=True)
+            for label, color in zip(colors.keys(), color_rgb_sequence, strict=True):
+                mask = array == label
+                if np.any(mask):
+                    colors_out[mask, :] = color
+                    if return_dict:
+                        mapping[label] = color
 
         else:
             if array.ndim > 1:
@@ -7606,25 +7975,34 @@ class DataSetFilters(DataObjectFilters):
                     else:
                         colors = cmap_colors
 
+            table = None
             if not _is_rgb_sequence:
                 color_rgb_sequence = [
                     getattr(c, color_type)
                     for c in _local_validate_color_sequence(colors)  # type: ignore[arg-type]
                 ]
                 if len(color_rgb_sequence) == 1:
+                    # Optimization: build the color table from the one row before the list is
+                    # repeated for every point; converting the repeated list is far slower
+                    table = np.repeat(
+                        np.asarray(color_rgb_sequence, dtype=color_dtype), len(array), axis=0
+                    )
                     color_rgb_sequence = color_rgb_sequence * len(array)
 
             n_colors = len(color_rgb_sequence)
+            index_like = np.all(_is_index_like(array, max_value=n_colors))
             if coloring_mode is None:
-                coloring_mode = (
-                    'index' if np.all(_is_index_like(array, max_value=n_colors)) else 'cycle'
-                )
+                coloring_mode = 'index' if index_like else 'cycle'
 
             _validation.check_contains(
                 ['index', 'cycle'], must_contain=coloring_mode, name='coloring_mode'
             )
+            # Optimization: color every point with one array lookup instead of scanning the
+            # array once per label
+            if table is None:
+                table = np.asarray(color_rgb_sequence, dtype=color_dtype)
             if coloring_mode == 'index':
-                if not np.all(_is_index_like(array, max_value=n_colors)):
+                if not index_like:
                     msg = (
                         f"Index coloring mode cannot be used with scalars '{name}'. "
                         f'Scalars must be positive integers \n'
@@ -7632,35 +8010,40 @@ class DataSetFilters(DataObjectFilters):
                         f'than the number of colors ({n_colors}).'
                     )
                     raise ValueError(msg)
-                keys: Iterable[float]
-                values: Iterable[Any]
-
-                keys_ = np.arange(n_colors)
-                values_ = color_rgb_sequence
+                keys = np.arange(n_colors)
                 if negative_indexing:
-                    keys_ = np.append(keys_, keys_[::-1] - len(keys_))
-                    values_.extend(values_[::-1])
-                keys = keys_
-                values = values_
-            elif coloring_mode == 'cycle':
+                    keys = np.append(keys, keys[::-1] - len(keys))
+                indices = array.astype(int)
+                if return_dict:
+                    present = set(np.unique(indices).tolist())
+                    mapping = {
+                        label: color_rgb_sequence[label] for label in keys if label in present
+                    }
+                # Negative labels index the sequence from the end like the negative keys, and
+                # a label equal to ``n_colors`` passes the check above but has no color
+                indices[indices < 0] += n_colors
+                default_row = np.full((1, num_components), default_channel_value, color_dtype)
+                colors_out = np.vstack((table, default_row))[indices]
+            else:  # 'cycle', validated above
                 if negative_indexing:
                     msg = "Negative indexing is not supported with 'cycle' mode enabled."
                     raise ValueError(msg)
-                keys = np.unique(array)
-                values = itertools.cycle(color_rgb_sequence)
-
-            items = zip(keys, values, strict=False)
-
-        colors_out = np.full(
-            (len(array), num_components), default_channel_value, dtype=color_dtype
-        )
-        mapping = {}
-        for label, color in items:
-            mask = array == label
-            if np.any(mask):
-                colors_out[mask, :] = color
+                labels = np.unique(array)
+                positions = np.searchsorted(labels, array) % n_colors
+                # NaN never compares equal to a label, so NaN points keep the default color
+                has_color = ~np.isnan(array)
+                colors_out[has_color] = table[positions[has_color]]
                 if return_dict:
-                    mapping[label] = color
+                    mapping = {
+                        label: color
+                        for label, color, is_nan in zip(
+                            labels,
+                            itertools.cycle(color_rgb_sequence),
+                            np.isnan(labels),
+                            strict=False,
+                        )
+                        if not is_nan
+                    }
 
         colors_name = name + scalars_suffix if output_scalars is None else output_scalars
         data[colors_name] = colors_out
@@ -8518,6 +8901,75 @@ def _stencil_binary_mask(
             k_max - k_min + 1, dimensions[1], dimensions[0]
         )
     return mask.ravel()
+
+
+def _validate_extraction_ids(
+    ind: int | VectorLike[int] | VectorLike[bool],
+    *,
+    n_items: int,
+    name: str,
+    invert: bool,
+) -> NumpyArray[bool]:
+    """Return a boolean selection mask from integer ids or a boolean mask."""
+    ids = _validation.validate_array(
+        ind,
+        must_have_shape=[(), -1, (1, -1), (-1, 1)],
+        reshape_to=-1,
+        must_be_real=False,
+        name='indices',
+    )
+    if ids.dtype == bool:
+        if ids.size != n_items:
+            msg = (
+                f'Number of bool indices ({ids.size}) must match the number of {name} ({n_items}).'
+            )
+            raise ValueError(msg)
+        mask = ids
+    else:
+        mask = np.zeros(n_items, dtype=bool)
+        if ids.size:
+            if not np.issubdtype(ids.dtype, np.integer):
+                msg = 'Indices must be either a mask or an integer array-like'
+                raise TypeError(msg)
+            out_of_bounds = ids[(ids < 0) | (ids >= n_items)]
+            if out_of_bounds.size:
+                msg = (
+                    f'Index {out_of_bounds[0]} is out of bounds for a mesh with {n_items} {name}.'
+                )
+                raise IndexError(msg)
+            mask[ids] = True
+    return np.invert(mask) if invert else mask
+
+
+def _apply_inplace(mesh: DataSet, output: DataSet, *, inplace: bool) -> DataSet:
+    """Return the output, or overwrite the input mesh with it in-place."""
+    if not inplace:
+        return output
+    if not isinstance(mesh, type(output)):
+        msg = (
+            f'Cannot update {type(mesh).__name__} in-place, the output is {type(output).__name__}.'
+        )
+        raise TypeError(msg)
+    mesh.copy_from(output, deep=False)
+    return mesh
+
+
+def _cast_extraction(
+    output: DataSet, input_mesh: DataSet, *, pass_point_ids: bool, pass_cell_ids: bool
+) -> DataSet:
+    """Cast an extracted mesh to the input type and keep its original id arrays."""
+    output = cast('DataSet', _cast_output_to_match_input_type(output, input_mesh))
+    return _finish_extraction(output, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids)
+
+
+def _finish_extraction(output: DataSet, *, pass_point_ids: bool, pass_cell_ids: bool) -> DataSet:
+    """Ensure an empty extraction still carries the requested original id arrays."""
+    if output.is_empty:
+        if pass_point_ids and 'vtkOriginalPointIds' not in output.point_data:
+            output.point_data['vtkOriginalPointIds'] = np.array((), dtype=int)
+        if pass_cell_ids and 'vtkOriginalCellIds' not in output.cell_data:
+            output.cell_data['vtkOriginalCellIds'] = np.array((), dtype=int)
+    return output
 
 
 def _set_threshold_limit(alg, *, value, method, invert):

@@ -36,6 +36,8 @@ from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output
+from pyvista.core.filters import _match_points_dtype
+from pyvista.core.filters import _points_dtype
 from pyvista.core.filters import _update_alg
 from pyvista.core.utilities.helpers import _NormalsLiteral
 from pyvista.core.utilities.helpers import _validate_plane_origin_and_normal
@@ -53,6 +55,7 @@ if TYPE_CHECKING:
 
     from pyvista import DataSet
     from pyvista import DataSetAttributes
+    from pyvista import ImageData
     from pyvista import MultiBlock
     from pyvista import PolyData
     from pyvista import RotationLike
@@ -2000,10 +2003,11 @@ class DataObjectFilters:
         # vtkTransformFilter truncates the result if the input is an integer type
         # so convert input points and relevant vectors to float
         # (creating a new copy would be harmful much more often)
+        float_dtype = _points_dtype() or np.dtype(np.float32)
         converted_ints = False
         points = self.points
         if not np.issubdtype(points.dtype, np.floating):
-            self.points = points.astype(np.float32)
+            self.points = points.astype(float_dtype)
             converted_ints = True
         # Optimization: build the attribute wrappers once; they refer to the same VTK objects
         # for the whole filter, including after copy_from, so reusing them is safe
@@ -2022,7 +2026,7 @@ class DataObjectFilters:
             # we'll only transform active vectors and normals
             point_vectors = [point_data.active_vectors_name, point_data.active_normals_name]
             cell_vectors = [cell_data.active_vectors_name, cell_data.active_normals_name]
-        # dynamically convert each self.point_data[name] etc. to float32
+        # dynamically convert each self.point_data[name] etc. to the configured float
         all_vectors = [point_vectors, cell_vectors]
         all_dataset_attrs = [point_data, cell_data]
         for vector_names, dataset_attrs in zip(all_vectors, all_dataset_attrs, strict=True):
@@ -2031,13 +2035,13 @@ class DataObjectFilters:
                     continue
                 vector_arr = dataset_attrs[vector_name]
                 if not np.issubdtype(vector_arr.dtype, np.floating):
-                    dataset_attrs[vector_name] = vector_arr.astype(np.float32)
+                    dataset_attrs[vector_name] = vector_arr.astype(float_dtype)
                     converted_ints = True
         if converted_ints:
             warn_external(
                 'Integer points, vector, and normal data (if any) of the input mesh '
-                'have been converted to ``np.float32``. This is necessary in order '
-                'to transform properly.',
+                f'have been converted to ``np.{float_dtype.name}``. '
+                'This is necessary in order to transform properly.',
             )
 
         # vtkTransformFilter doesn't respect active scalars.  We need to track this
@@ -3146,7 +3150,7 @@ class DataObjectFilters:
 
     def _clip_with_function(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
-        function: _vtk.vtkImplicitFunction,
+        function: _vtk.vtkImplicitFunction | None,
         *,
         invert: bool = True,
         value: float = 0.0,
@@ -3154,9 +3158,10 @@ class DataObjectFilters:
         progress_bar: bool = False,
         crinkle: bool = False,
     ):
-        """Clip using an implicit function (internal helper)."""
+        """Clip using an implicit function, or the active scalars if it is ``None``."""
+        source = self
         if crinkle:
-            active_scalars_info = _Crinkler._add_cell_ids(self)
+            source, active_scalars_info = _Crinkler._add_cell_ids(self)
 
         # Need to cast PointSet to PolyData since vtkTableBasedClipDataSet is broken
         # with vtk 9.4.X, see https://gitlab.kitware.com/vtk/vtk/-/issues/19649
@@ -3165,7 +3170,7 @@ class DataObjectFilters:
             and pv.vtk_version_info >= (9, 4)
             and pv.vtk_version_info < (9, 5)
         )
-        mesh_in = self.cast_to_poly_points() if apply_vtk_94x_patch else self
+        mesh_in = source.cast_to_poly_points() if apply_vtk_94x_patch else source
 
         if isinstance(mesh_in, pv.PolyData):
             alg: _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet = _vtk.vtkClipPolyData()
@@ -3176,7 +3181,9 @@ class DataObjectFilters:
             alg = _vtk.vtkTableBasedClipDataSet()
         alg.SetInputDataObject(mesh_in)  # Use the grid as the data we desire to cut
         alg.SetValue(value)
-        alg.SetClipFunction(function)  # the implicit function
+        # ``None`` clips by the active scalars instead, for a precomputed distance field
+        if function is not None:
+            alg.SetClipFunction(function)  # the implicit function
         alg.SetInsideOut(invert)  # invert the clip if needed
         alg.SetGenerateClippedOutput(return_clipped)
         _update_alg(alg, progress_bar=progress_bar, message='Clipping with Function')
@@ -3188,11 +3195,11 @@ class DataObjectFilters:
             a = _get_output(alg, oport=0)
             b = _get_output(alg, oport=1)
             if crinkle:
-                a, b = _Crinkler._extract_crinkle_cells(self, a, b, active_scalars_info)
+                a, b = _Crinkler._extract_crinkle_cells(source, a, b, active_scalars_info)
             return _maybe_cast_to_point_set(a), _maybe_cast_to_point_set(b)
         clipped = _get_output(alg)
         if crinkle:
-            clipped = _Crinkler._extract_crinkle_cells(self, clipped, None, active_scalars_info)
+            clipped = _Crinkler._extract_crinkle_cells(source, clipped, None, active_scalars_info)
         return _maybe_cast_to_point_set(clipped)
 
     @_deprecate_positional_args(allowed=['normal'])
@@ -3341,6 +3348,24 @@ class DataObjectFilters:
 
         If no bounds are given, a corner of the dataset bounds will be removed.
 
+        :class:`~pyvista.PolyData` and :class:`~pyvista.PointSet` inputs are clipped with
+        :vtk:`vtkBoxClipDataSet`, which splits the output into tetrahedra. All other inputs,
+        that is :class:`~pyvista.ImageData`, :class:`~pyvista.RectilinearGrid`,
+        :class:`~pyvista.StructuredGrid`, :class:`~pyvista.ExplicitStructuredGrid`, and
+        :class:`~pyvista.UnstructuredGrid`, are clipped by the six box planes in turn with
+        the same clipper as :meth:`clip`, which keeps hexahedra and other cell types.
+
+        .. versionchanged:: 0.49
+
+            - :class:`~pyvista.ImageData`, :class:`~pyvista.RectilinearGrid`,
+              :class:`~pyvista.StructuredGrid`, :class:`~pyvista.ExplicitStructuredGrid`, and
+              :class:`~pyvista.UnstructuredGrid` inputs are clipped by the six box planes
+              instead of :vtk:`vtkBoxClipDataSet`, so cells the box does not cut keep their
+              type instead of being split into tetrahedra, and the output normally has fewer
+              cells and points for the same clipped volume. Call
+              :meth:`~pyvista.DataObjectFilters.triangulate` on the output for an
+              all-tetrahedra mesh as before.
+
         Parameters
         ----------
         bounds : sequence[float], optional
@@ -3409,12 +3434,10 @@ class DataObjectFilters:
                 msg = 'The bounds mesh must have only 6 faces.'
                 raise ValueError(msg)
             bounds = []
-            poly.compute_normals(inplace=True)
+            normals = poly.compute_normals(point_normals=False, cell_normals=True).cell_normals
             for cid in range(6):
-                cell = poly.extract_cells(cid)
-                normal = cell['Normals'][0]
-                bounds.append(normal)
-                bounds.append(cell.center)
+                bounds.append(normals[cid])
+                bounds.append(poly.get_cell(cid).center)
         bounds_ = _validation.validate_array(
             bounds,  # type: ignore[arg-type]
             dtype_out=float,
@@ -3433,23 +3456,49 @@ class DataObjectFilters:
                     zmin + bounds_[2],
                 )
             )
+        # Clip block by block so each block takes the path for its own type
+        if isinstance(self, pv.MultiBlock):
+            return self.generic_filter(
+                'clip_box',
+                bounds=bounds_,
+                invert=invert,
+                progress_bar=progress_bar,
+                merge_points=merge_points,
+                crinkle=crinkle,
+            )
+
+        source = self
         if crinkle:
-            active_scalars_info = _Crinkler._add_cell_ids(self)
-        alg = _vtk.vtkBoxClipDataSet()
-        if not merge_points:
-            # vtkBoxClipDataSet uses vtkMergePoints by default
-            alg.SetLocator(_vtk.vtkNonMergingPointLocator())
-        alg.SetInputDataObject(self)
-        alg.SetBoxClip(*bounds_)
-        port = 0
-        if invert:
-            # invert the clip if needed
-            port = 1
-            alg.GenerateClippedOutputOn()
-        _update_alg(alg, progress_bar=progress_bar, message='Clipping a Dataset by a Bounding Box')
-        clipped = _get_output(alg, oport=port)
+            source, active_scalars_info = _Crinkler._add_cell_ids(self)
+
+        # Optimization: vtkBoxClipDataSet splits every cell into tetrahedra (VTK 9.7), so
+        # ImageData, RectilinearGrid, StructuredGrid, ExplicitStructuredGrid, and
+        # UnstructuredGrid are clipped plane by plane instead, which keeps their cell types
+        # and is faster for it. PolyData and PointSet are already triangulated, so they gain
+        # nothing, and only the box filter has a locator to disable for ``merge_points``.
+        if isinstance(self, (pv.PolyData, pv.PointSet)) or not merge_points:
+            alg = _vtk.vtkBoxClipDataSet()
+            if not merge_points:
+                # vtkBoxClipDataSet uses vtkMergePoints by default
+                alg.SetLocator(_vtk.vtkNonMergingPointLocator())
+            alg.SetInputDataObject(source)
+            alg.SetBoxClip(*bounds_)
+            port = 0
+            if invert:
+                # invert the clip if needed
+                port = 1
+                alg.GenerateClippedOutputOn()
+            _update_alg(
+                alg, progress_bar=progress_bar, message='Clipping a Dataset by a Bounding Box'
+            )
+            clipped = _get_output(alg, oport=port)
+        else:
+            clipped = _clip_by_box_planes(
+                source, _box_planes(bounds_), invert=invert, progress_bar=progress_bar
+            )
+
         if crinkle:
-            clipped = _Crinkler._extract_crinkle_cells(self, clipped, None, active_scalars_info)
+            clipped = _Crinkler._extract_crinkle_cells(source, clipped, None, active_scalars_info)
         return _remove_unused_points_post_clip(clipped, self.bounds)
 
     def clip_slab(  # type: ignore[misc]
@@ -3548,11 +3597,7 @@ class DataObjectFilters:
         origin_, normal_ = _validate_plane_origin_and_normal(
             self, origin, normal, plane, default_normal='x'
         )
-        norm = float(np.linalg.norm(normal_))
-        if norm == 0.0:
-            msg = '`normal` must be a non-zero vector.'
-            raise ValueError(msg)
-        unit_normal = normal_ / norm
+        unit_normal = normal_ / np.linalg.norm(normal_)
         half = thickness / 2.0
 
         upper = _vtk.vtkPlane()
@@ -3683,6 +3728,14 @@ class DataObjectFilters:
         If no parameters are given, the slice will occur in the center
         of the dataset along the x-axis.
 
+        .. versionchanged:: 0.49
+
+            Axis-aligned planes through an :class:`~pyvista.ImageData` with an identity
+            :attr:`~pyvista.ImageData.direction_matrix` are sliced directly instead of with
+            :vtk:`vtkCutter`. The points and cells are ordered differently, and integer point
+            data interpolated across a cell can differ from the cutter's by one unit. Use
+            :meth:`slice_implicit` with :func:`~pyvista.generate_plane` for the cutter's output.
+
         Parameters
         ----------
         normal : VectorLike[float] | str, optional
@@ -3710,7 +3763,10 @@ class DataObjectFilters:
                ``generate_triangles=True`` (~5x slowdown). Pass
                ``generate_triangles=True`` for the fast path when the
                output cell shape is not load-bearing for your downstream
-               code.
+               code. This does not apply to the axis-aligned
+               :class:`~pyvista.ImageData` slices described below, which
+               do not use :vtk:`vtkCutter` and are fastest with the
+               default ``False``.
 
         contour : bool, default: False
             If ``True``, apply a ``contour`` filter after slicing.
@@ -3730,6 +3786,13 @@ class DataObjectFilters:
         -------
         pyvista.PolyData
             Sliced dataset.
+
+        Notes
+        -----
+        An axis-aligned plane through an :class:`~pyvista.ImageData` with an identity
+        :attr:`~pyvista.ImageData.direction_matrix` is sliced directly into quads, with
+        point data interpolated between the two neighbouring grid planes. All other
+        inputs use :vtk:`vtkCutter`.
 
         See Also
         --------
@@ -3756,6 +3819,27 @@ class DataObjectFilters:
         origin_, normal_ = _validate_plane_origin_and_normal(
             self, origin, normal, plane, default_normal='x'
         )
+        # Optimization: vtkCutter is much slower when it emits quads than triangles
+        # (VTK 9.7), and an axis-aligned plane through an unrotated image has a closed form,
+        # so build the quads and interpolate the point data directly instead
+        if (
+            isinstance(self, pv.ImageData)
+            and not generate_triangles
+            and np.count_nonzero(normal_) == 1
+            and min(self.dimensions) > 1
+            and np.array_equal(self.direction_matrix, np.eye(3))
+            and all(array.dtype.kind in 'biuf' for array in self.point_data.values())
+        ):
+            axis = int(np.flatnonzero(normal_)[0])
+            output = _slice_image_along_axis(
+                self,
+                axis=axis,
+                coordinate=float(origin_[axis]),
+                sign=float(np.sign(normal_[axis])),
+            )
+            # A plane that misses the image falls through to the cutter for its empty output
+            if output is not None:
+                return output.contour() if contour else output
         # create the plane for clipping
         implicit_function = generate_plane(normal_, origin_)
         return self.slice_implicit(
@@ -4469,14 +4553,20 @@ class DataObjectFilters:
             else dimensionality
         )
 
+        # Only the points dtype is taken from the setting here; `_get_output` would
+        # also copy the input's metadata over a hull that does not want it.
         if pv.vtk_version_info >= (9, 7, 0):
             alg = _vtk.vtkConvexHull()
             alg.SetInputDataObject(alg_input)
             alg.SetDimension(int(dimensionality_))
             _update_alg(alg, progress_bar=progress_bar)
             output = pv.wrap(alg.GetOutput())
+            _match_points_dtype(output, alg_input, algorithm=alg)
         else:
             output = _convex_hull_scipy(points, dimensionality=dimensionality_)
+            # The hull's points are the input's own, so widening them fabricates
+            # precision exactly as a VTK algorithm's output would
+            _match_points_dtype(output, alg_input, algorithm='scipy.spatial.ConvexHull')
         output.point_data.clear()
         output.cell_data.clear()
         return output
@@ -5492,6 +5582,117 @@ def _get_cell_quality_measures() -> dict[str, str]:
     return measures
 
 
+def _slice_image_along_axis(
+    image: ImageData, *, axis: int, coordinate: float, sign: float
+) -> PolyData | None:
+    """Slice an image by an axis-aligned plane without the generic cutter.
+
+    A point is on the kept side of the plane when ``sign * (x - coordinate)`` is not
+    negative, as in :vtk:`vtkCutter`, so a plane on grid plane ``k`` takes its values
+    from that plane. Returns ``None`` when the plane misses the image.
+    """
+    dims = np.array(image.dimensions)
+    spacing = np.array(image.spacing)
+    origin = np.array(image.origin)
+    offset = np.array(image.offset)
+    grids = [origin[ax] + (offset[ax] + np.arange(dims[ax])) * spacing[ax] for ax in range(3)]
+    side = sign * (grids[axis] - coordinate) >= 0
+    crossing = np.flatnonzero(side[:-1] != side[1:])
+
+    if crossing.size == 0:
+        return None
+
+    # The cutter interpolates an edge with t = (0 - s0) / (s1 - s0)
+    k0 = int(crossing[0])
+    s0 = sign * (grids[axis][k0] - coordinate)
+    s1 = sign * (grids[axis][k0 + 1] - coordinate)
+    t = (0.0 - s0) / (s1 - s0)
+    grids[axis] = np.array([grids[axis][k0] + t * (grids[axis][k0 + 1] - grids[axis][k0])])
+    points = np.column_stack(
+        [coords.ravel(order='F') for coords in np.meshgrid(*grids, indexing='ij')]
+    )
+    n_i, n_j = (dims[ax] for ax in range(3) if ax != axis)
+    ii, jj = np.meshgrid(np.arange(n_i - 1), np.arange(n_j - 1), indexing='ij')
+    first = (ii + jj * n_i).ravel(order='F')
+    faces = np.column_stack([first, first + 1, first + 1 + n_i, first + n_i])
+    output = pv.PolyData.from_regular_faces(points, faces)
+
+    def slab(array, k):
+        # The plane of values at index k along the axis, ordered like the points
+        grid_shape = tuple(dims[::-1]) if len(array) == image.n_points else tuple(dims[::-1] - 1)
+        index = [slice(None)] * 3
+        index[2 - axis] = k
+        return array.reshape(grid_shape + array.shape[1:])[tuple(index)].reshape(
+            -1, *array.shape[1:]
+        )
+
+    for name in image.point_data.keys():
+        array = np.asarray(image.point_data[name])
+        lower, upper = slab(array, k0).astype(float), slab(array, k0 + 1).astype(float)
+        output.point_data[name] = (lower * (1.0 - t) + upper * t).astype(array.dtype)
+    for name in image.cell_data.keys():
+        output.cell_data[name] = slab(np.asarray(image.cell_data[name]), k0)
+
+    output.copy_meta_from(image, deep=True)
+    output.field_data.update(image.field_data)
+    output.set_active_scalars(image.active_scalars_name)
+    return output
+
+
+def _box_planes(bounds: NumpyArray[float]) -> list[tuple[VectorLike[float], VectorLike[float]]]:
+    """Return the six ``(outward normal, origin)`` planes of a box clip specification."""
+    if len(bounds) == 12:
+        return [(bounds[i], bounds[i + 1]) for i in range(0, 12, 2)]
+    planes: list[tuple[VectorLike[float], VectorLike[float]]] = []
+    for axis in range(3):
+        for sign, bound in ((-1.0, bounds[2 * axis]), (1.0, bounds[2 * axis + 1])):
+            normal = np.zeros(3)
+            normal[axis] = sign
+            origin = np.zeros(3)
+            origin[axis] = bound
+            planes.append((normal, origin))
+    return planes
+
+
+def _clip_by_box_planes(
+    dataset: DataSet,
+    planes: Sequence[tuple[VectorLike[float], VectorLike[float]]],
+    *,
+    invert: bool,
+    progress_bar: bool,
+) -> DataSet:
+    """Clip by each plane in turn, keeping the inside or appending the outside pieces."""
+    # Each plane keeps the box side of the mesh; with ``invert`` the pieces cut away are
+    # collected and appended instead
+    inside: DataSet = dataset
+    outside = []
+    for normal, origin in planes:
+        result = inside.clip(
+            normal=normal,
+            origin=origin,
+            invert=True,
+            return_clipped=invert,
+            progress_bar=progress_bar,
+        )
+        if invert:
+            inside, piece = result
+            if piece.n_cells:
+                outside.append(piece)
+        else:
+            inside = result
+    if not invert:
+        return inside
+    if not outside:
+        # Nothing lay outside the box, so return an empty clip of the right type
+        return inside.clip(normal=planes[0][0], origin=planes[0][1], invert=False)
+    append = _vtk.vtkAppendFilter()
+    append.MergePointsOn()
+    for piece in outside:
+        append.AddInputData(piece)
+    _update_alg(append, progress_bar=progress_bar, message='Clipping a Dataset by a Bounding Box')
+    return _get_output(append)
+
+
 def _remove_unused_points_post_clip(clip_output, input_bounds):
     # VTK clip filters are buggy and sometimes retain unused points from the input, e.g.:
     # https://github.com/pyvista/pyvista/issues/6511
@@ -5561,14 +5762,21 @@ class _Crinkler:
     @staticmethod
     def _extract_crinkle_cells(dataset, a_, b_, active_scalars_info):  # noqa: PLR0917
         """Extract crinkled cells from the clip output."""
+
+        def clipped_cell_mask(block_, clipped):
+            # Optimization: mark the ids in a boolean array instead of collecting them in
+            # Python sets, whose construction dominated the crinkle clip for large meshes
+            mask = np.zeros(block_.n_cells, dtype=bool)
+            if _Crinkler.CELL_IDS in clipped.cell_data.keys():
+                mask[clipped.cell_data[_Crinkler.CELL_IDS]] = True
+            return mask
+
         if b_ is None:
             # Extract cells when `return_clipped=False`
             def extract_cells_from_block(block_, clipped_a, _, active_scalars_info_):
                 if _Crinkler.CELL_IDS in clipped_a.cell_data.keys():
                     return _Crinkler._extract_cells(
-                        block_,
-                        np.unique(clipped_a.cell_data[_Crinkler.CELL_IDS]),
-                        active_scalars_info_,
+                        block_, clipped_cell_mask(block_, clipped_a), active_scalars_info_
                     )
                 return clipped_a
         else:
@@ -5576,25 +5784,10 @@ class _Crinkler:
             def extract_cells_from_block(  # noqa: PLR0917
                 block_, clipped_a, clipped_b, active_scalars_info_
             ):
-                set_a = (
-                    set(clipped_a.cell_data[_Crinkler.CELL_IDS])
-                    if _Crinkler.CELL_IDS in clipped_a.cell_data.keys()
-                    else set()
-                )
-                set_b = (
-                    set(clipped_b.cell_data[_Crinkler.CELL_IDS])
-                    if _Crinkler.CELL_IDS in clipped_b.cell_data.keys()
-                    else set()
-                )
-                set_b = set_b - set_a
-
-                # Need to cast as int dtype explicitly to ensure empty arrays have
-                # the right type required by extract_cells
-                array_a = np.array(list(set_a), dtype=_Crinkler.INT_DTYPE)
-                array_b = np.array(list(set_b), dtype=_Crinkler.INT_DTYPE)
-
-                clipped_a = _Crinkler._extract_cells(block_, array_a, active_scalars_info_)
-                clipped_b = _Crinkler._extract_cells(block_, array_b, active_scalars_info_)
+                mask_a = clipped_cell_mask(block_, clipped_a)
+                mask_b = clipped_cell_mask(block_, clipped_b) & ~mask_a
+                clipped_a = _Crinkler._extract_cells(block_, mask_a, active_scalars_info_)
+                clipped_b = _Crinkler._extract_cells(block_, mask_b, active_scalars_info_)
                 return clipped_a, clipped_b
 
         def extract_cells_from_multiblock(  # noqa: PLR0917
@@ -5629,14 +5822,17 @@ class _Crinkler:
 
     @staticmethod
     def _add_cell_ids(dataset: DataSet | MultiBlock):
-        """Add cell ID arrays to all blocks and record the active scalars to restore."""
+        """Shallow copy the dataset, add cell ID arrays, and record the active scalars."""
         active_scalars_info = []
+        # Shallow copies keep the cell ids off the caller's dataset and blocks
         if isinstance(dataset, pv.MultiBlock):
+            dataset = dataset.generic_filter(lambda block: block.copy(deep=False))
             blocks: Iterable[DataSet] = dataset.recursive_iterator(
                 'blocks',
                 **_Crinkler.ITER_KWARGS,  # type: ignore[call-overload]
             )
         else:
+            dataset = dataset.copy(deep=False)
             blocks = [dataset]
         for block in blocks:
             active_scalars_info.append(block.active_scalars_info)
@@ -5644,7 +5840,7 @@ class _Crinkler:
                 block.cell_data[_Crinkler.CELL_IDS] = np.arange(
                     block.n_cells, dtype=_Crinkler.INT_DTYPE
                 )
-        return active_scalars_info
+        return dataset, active_scalars_info
 
 
 def _cell_status_docs_insert():
