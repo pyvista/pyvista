@@ -3739,12 +3739,17 @@ class OrthogonalPlanesSource(_NoNewAttrMixin):
         self: OrthogonalPlanesSource,
     ) -> tuple[int, int, int]:  # numpydoc ignore=RT01
         """Return or set the resolution of the planes."""
-        return cast('tuple[int, int, int]', tuple(self._resolution))
+        return self._resolution
 
     @resolution.setter
     def resolution(self: OrthogonalPlanesSource, resolution: int | VectorLike[int]) -> None:
         valid_resolution = _validation.validate_array3(
-            resolution, broadcast=True, dtype_out=int, to_tuple=True, name='resolution'
+            resolution,
+            broadcast=True,
+            must_be_integer=True,
+            dtype_out=int,
+            to_tuple=True,
+            name='resolution',
         )
         self._resolution = valid_resolution
 
@@ -3766,11 +3771,8 @@ class OrthogonalPlanesSource(_NoNewAttrMixin):
 
     @bounds.setter
     def bounds(self: OrthogonalPlanesSource, bounds: VectorLike[float]) -> None:
-        bounds_tuple = cast(
-            'tuple[float, float, float, float, float, float]',
-            _validation.validate_array(
-                bounds, dtype_out=float, must_have_length=6, to_tuple=True, name='bounds'
-            ),
+        bounds_tuple = _validation.validate_arrayN(
+            bounds, dtype_out=float, must_have_length=6, to_tuple=True, name='bounds'
         )
         self._bounds = BoundsTuple(*bounds_tuple)
 
