@@ -30,9 +30,8 @@ def test_wrap_none():
     assert pv.wrap(None) is None
 
 
-@pytest.mark.benchmark
-def test_wrap_pyvista_ndarray(sphere, benchmark):
-    pd = benchmark(pv.wrap, sphere.points)
+def test_wrap_pyvista_ndarray(sphere):
+    pd = pv.wrap(sphere.points)
     assert isinstance(pd, pv.PolyData)
 
 

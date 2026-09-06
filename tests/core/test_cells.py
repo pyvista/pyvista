@@ -175,14 +175,13 @@ def test_cell_point_ids(grid):
     assert len(point_ids) == grid.n_cells
 
 
-@pytest.mark.benchmark
-def test_cell_get_cell(benchmark):
+def test_cell_get_cell():
     hexbeam = grids[0]
     with pytest.raises(IndexError, match='Invalid index'):
         hexbeam.get_cell(hexbeam.n_cells)
     with pytest.raises(IndexError, match='Invalid index'):
         hexbeam.get_cell(-1)
-    assert isinstance(benchmark(hexbeam.get_cell, 0), pv.Cell)
+    assert isinstance(hexbeam.get_cell(0), pv.Cell)
 
 
 @pytest.mark.parametrize('cell', cells, ids=cell_ids)

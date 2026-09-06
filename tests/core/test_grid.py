@@ -172,10 +172,9 @@ def create_hex_example():
     return cells, cell_type, points
 
 
-@pytest.mark.benchmark
-def test_init_from_arrays(benchmark):
+def test_init_from_arrays():
     cells, cell_type, points = create_hex_example()
-    grid = benchmark(pv.UnstructuredGrid, cells, cell_type, points, deep=False)
+    grid = pv.UnstructuredGrid(cells, cell_type, points, deep=False)
 
     assert grid.n_cells == 2
     assert np.allclose(cells, grid.cells)
@@ -668,11 +667,10 @@ def test_extract_cells(hexbeam, invert):
     part_beam = hexbeam.extract_cells(ind)
 
 
-@pytest.mark.benchmark
-def test_merge(hexbeam, benchmark):
+def test_merge(hexbeam):
     grid = hexbeam.copy()
     grid.points[:, 0] += 1
-    unmerged = benchmark(grid.merge, hexbeam, inplace=False, merge_points=False)
+    unmerged = grid.merge(hexbeam, inplace=False, merge_points=False)
 
     grid.merge(hexbeam, inplace=True, merge_points=True)
     assert grid.n_points > hexbeam.n_points

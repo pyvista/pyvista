@@ -251,8 +251,7 @@ def test_clip_scalar_multiple():
         assert np.isclose(mesh_clip_z['z'].max(), 0.0)
 
 
-@pytest.mark.benchmark
-def test_clip_surface(benchmark):
+def test_clip_surface():
     surface = pv.Cone(
         direction=(0, 0, -1),
         height=3.0,
@@ -261,7 +260,7 @@ def test_clip_surface(benchmark):
     )
     xx = yy = zz = 1 - np.linspace(0, 51, 11) * 2 / 50
     dataset = pv.RectilinearGrid(xx, yy, zz)
-    clipped = benchmark(dataset.clip_surface, surface, invert=False)
+    clipped = dataset.clip_surface(surface, invert=False, progress_bar=True)
     assert isinstance(clipped, pv.UnstructuredGrid)
     clipped = dataset.clip_surface(surface, invert=False, compute_distance=True, progress_bar=True)
     assert isinstance(clipped, pv.UnstructuredGrid)
@@ -316,15 +315,14 @@ def test_implicit_distance():
     assert 'implicit_distance' in dataset.point_data
 
 
-@pytest.mark.benchmark
-def test_threshold(datasets, benchmark):
+def test_threshold(datasets):
     for dataset in datasets[0:3]:
         thresh = dataset.threshold(progress_bar=True)
         assert thresh is not None
         assert isinstance(thresh, pv.UnstructuredGrid)
     # Test value ranges
     dataset = examples.load_uniform()  # ImageData
-    thresh = benchmark(dataset.threshold, 100, invert=False)
+    thresh = dataset.threshold(100, invert=False, progress_bar=True)
     assert thresh is not None
     assert isinstance(thresh, pv.UnstructuredGrid)
     thresh = dataset.threshold([100, 500], invert=False, progress_bar=True)
@@ -714,10 +712,9 @@ def test_outline(datasets):
         assert isinstance(outline, pv.PolyData)
 
 
-@pytest.mark.benchmark
-def test_outline_composite(multiblock_all, benchmark):
+def test_outline_composite(multiblock_all):
     # Now test composite data structures
-    output = benchmark(multiblock_all.outline)
+    output = multiblock_all.outline(progress_bar=True)
     assert isinstance(output, pv.PolyData)
     output = multiblock_all.outline(nested=True, progress_bar=True)
 
@@ -802,9 +799,8 @@ def test_delaunay_2d_unstructured():
         'flying_edges',
     ],
 )
-@pytest.mark.benchmark
-def test_contour(uniform, method, benchmark):
-    iso = benchmark(uniform.contour, method=method)
+def test_contour(uniform, method):
+    iso = uniform.contour(method=method, progress_bar=True)
     assert iso is not None
     iso = uniform.contour(isosurfaces=[100, 300, 500], method=method, progress_bar=True)
     assert iso is not None
@@ -1569,10 +1565,9 @@ def test_split_bodies():
         assert np.allclose(body.volume, volumes[i], rtol=0.1)
 
 
-@pytest.mark.benchmark
-def test_warp_by_scalar(benchmark):
+def test_warp_by_scalar():
     data = examples.load_uniform()
-    warped = benchmark(data.warp_by_scalar)
+    warped = data.warp_by_scalar(progress_bar=True)
     assert data.n_points == warped.n_points
     warped = data.warp_by_scalar(scale_factor=3, progress_bar=True)
     assert data.n_points == warped.n_points
@@ -1632,10 +1627,9 @@ def test_delaunay_3d():
     assert np.any(result.points)
 
 
-@pytest.mark.benchmark
-def test_smooth(uniform, benchmark):
+def test_smooth(uniform):
     surf = uniform.extract_surface(algorithm=None).clean()
-    smoothed = benchmark(surf.smooth)
+    smoothed = surf.smooth()
 
     # expect mesh is smoothed, raising mean curvature since it is more "spherelike"
     assert smoothed.triangulate().curvature().mean() > surf.triangulate().curvature().mean()
@@ -2378,13 +2372,12 @@ def test_extract_points_pointset(pointset):
     assert pointset.extract_points(ind, include_cells=True).n_points == 0
 
 
-@pytest.mark.benchmark
-def test_extract_cells(sphere, benchmark):
+def test_extract_cells(sphere):
     ind = 0
     n_cells = 1
     extracted = sphere.extract_cells(ind)
     assert extracted.n_cells == n_cells
-    extracted = benchmark(sphere.extract_cells, ind, invert=True)
+    extracted = sphere.extract_cells(ind, invert=True)
     assert extracted.n_cells == sphere.n_cells - n_cells
 
     assert 'vtkOriginalPointIds' not in sphere.point_data
