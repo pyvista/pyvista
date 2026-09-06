@@ -716,12 +716,12 @@ def test_flaky_test_does_not_retry_an_unlisted_exception():
 @pytest.mark.parametrize(
     ('test_name', 'expected'),
     [
-        ('sphx_glr_ghost_cells_001', _VTKSZ_SIZE_EXCEPTIONS_MB['sphx_glr_ghost_cells_001']),
+        ('sphx_glr_remove_cells_001', _VTKSZ_SIZE_EXCEPTIONS_MB['sphx_glr_remove_cells_001']),
         (
             'pyvista-DataSetFilters-voxelize_binary_mask-9c3aed42d500a348_04_00',
             _VTKSZ_SIZE_EXCEPTIONS_MB['pyvista-DataSetFilters-voxelize_binary_mask_04_00'],
         ),
-        ('sphx_glr_ghost_cells_002', 5),
+        ('sphx_glr_remove_cells_002', 5),
         ('pyvista-DataSetFilters-voxelize_binary_mask-9c3aed42d500a348_00_00', 5),
     ],
 )
