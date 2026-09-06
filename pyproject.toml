@@ -310,7 +310,6 @@ filterwarnings = [
 junit_family = 'legacy'
 log_cli_level = "INFO"
 markers = [
-  'benchmark: measured by CodSpeed. Run with `pytest tests/core --codspeed`.',
   'expect_check_gc_fail: Expect vtk leak. Checked even under --no_check_gc.',
   'needs_doc_build: this test requires the documentation to already be built and must be enabled with the --doc_build CLI flag',
   'needs_download: this test downloads data during execution',
@@ -587,6 +586,7 @@ pyvista = "pv"
 # A command-line script bundled with an agent skill, not an importable package.
 '.claude/skills/*/scripts/*.py' = ['INP', 'T20']
 '__init__.py' = ['PLC0414']
+'benchmarks/*' = ['ANN', 'S101']
 'doc/*' = ['ANN', 'INP', 'PLC0415']
 'doc/make_dev_wheel.py' = ['S607'] # git comes from PATH
 # A command-line script: it reports what it runs, like `make` does.
