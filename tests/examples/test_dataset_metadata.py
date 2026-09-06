@@ -206,3 +206,31 @@ def test_metadata_for_source_names(index, monkeypatch):
     match = 'span more than one dataset entry: plain, shark'
     with pytest.raises(ValueError, match=match):
         _dataset_metadata._metadata_for_source_names(['shark/a.stl', 'plain.vtk'])
+
+
+def test_override_reads_a_local_file(tmp_path, monkeypatch):
+    from pyvista.examples import _dataset_metadata
+
+    path = tmp_path / 'DATASETS.toml'
+    path.write_text(DOCUMENT)
+    monkeypatch.setenv(_dataset_metadata._METADATA_VARNAME, str(path))
+    _dataset_metadata._metadata_index.cache_clear()
+
+    def fail() -> str:
+        msg = 'the override must not download'
+        raise AssertionError(msg)
+
+    monkeypatch.setattr(_dataset_metadata, '_download_metadata_file', fail)
+    assert _dataset_metadata._metadata_index().match('plain.vtk').name == 'plain'
+    _dataset_metadata._metadata_index.cache_clear()
+
+
+def test_override_reports_a_missing_file(tmp_path, monkeypatch):
+    from pyvista.examples import _dataset_metadata
+
+    missing = tmp_path / 'nope.toml'
+    monkeypatch.setenv(_dataset_metadata._METADATA_VARNAME, str(missing))
+    _dataset_metadata._metadata_index.cache_clear()
+    with pytest.raises(FileNotFoundError, match='which is not a file'):
+        _dataset_metadata._metadata_index()
+    _dataset_metadata._metadata_index.cache_clear()

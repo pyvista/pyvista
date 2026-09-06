@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 SCHEMA_VERSION = 1
 
 _METADATA_FILENAME = 'DATASETS.toml'
+_METADATA_VARNAME = 'PYVISTA_DATASETS_TOML'
 
 Provenance = Literal['verified', 'inferred', 'unknown']
 
@@ -364,11 +365,19 @@ def _download_metadata_file() -> str:
 
 @functools.lru_cache(maxsize=1)
 def _metadata_index() -> _MetadataIndex:
-    """Return the dataset metadata index, downloading and parsing it once."""
+    """Return the dataset metadata index, reading and parsing it once."""
+    import os  # noqa: PLC0415
     from pathlib import Path  # noqa: PLC0415
 
-    path = _download_metadata_file()
-    return _build_index(_load_toml(Path(path).read_bytes()))
+    override = os.environ.get(_METADATA_VARNAME)
+    if override:
+        path = Path(override)
+        if not path.is_file():
+            msg = f'{_METADATA_VARNAME} is set to {override!r}, which is not a file.'
+            raise FileNotFoundError(msg)
+    else:
+        path = Path(_download_metadata_file())
+    return _build_index(_load_toml(path.read_bytes()))
 
 
 def _metadata_for_source_names(source_names: Iterable[str]) -> ExampleMetadata | None:
