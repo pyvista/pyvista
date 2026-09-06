@@ -161,12 +161,12 @@ class Example(Generic[_DatasetT_co, _ReadersT_co]):
 
         :attr:`~pyvista.examples.Example.source_urls` is the download location.
         """
-        return None if self._metadata is None else self._metadata.source_url
+        return None if self._metadata is None else self._metadata.origin_url
 
     @property
     def origin_title(self) -> str | None:  # numpydoc ignore=RT01
         """Human-readable name of the source behind :attr:`~pyvista.examples.Example.origin_url`."""
-        return None if self._metadata is None else self._metadata.source_title
+        return None if self._metadata is None else self._metadata.origin_title
 
     @property
     def collection(self) -> str | None:  # numpydoc ignore=RT01

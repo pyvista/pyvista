@@ -2905,12 +2905,12 @@ class DatasetPropsGenerator:
     @staticmethod
     def generate_source_field(metadata) -> str | None:
         """Format the source as a link, falling back to the bare URL."""
-        if not metadata.source_url:
+        if not metadata.origin_url:
             return None
-        name = metadata.source_title or metadata.source_url
-        if not metadata.source_url.startswith(('http://', 'https://')):
+        name = metadata.origin_title or metadata.origin_url
+        if not metadata.origin_url.startswith(('http://', 'https://')):
             return f'``{name}``'
-        return f'`{name} <{metadata.source_url}>`_'
+        return f'`{name} <{metadata.origin_url}>`_'
 
     @staticmethod
     def generate_references_field(metadata) -> str | None:

@@ -128,10 +128,10 @@ class ExampleMetadata:
     paths: tuple[str, ...]
     """Path patterns the entry claims, relative to the ``Data/`` directory."""
 
-    source_url: str | None = None
+    origin_url: str | None = None
     """Where the data came from."""
 
-    source_title: str | None = None
+    origin_title: str | None = None
     """Human-readable name of the source."""
 
     collection: str | None = None
@@ -314,8 +314,8 @@ def _build_index(document: Mapping[str, Any]) -> _MetadataIndex:
             ),
             provenance=entry['provenance'],
             paths=tuple(entry['path']),
-            source_url=entry.get('source_url'),
-            source_title=entry.get('source_title'),
+            origin_url=entry.get('origin_url'),
+            origin_title=entry.get('origin_title'),
             collection=entry.get('collection'),
             authors=tuple(entry.get('authors', ())),
             copyright=tuple(entry.get('SPDX-FileCopyrightText', ())),
