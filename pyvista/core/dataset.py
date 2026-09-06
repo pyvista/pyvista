@@ -2092,6 +2092,24 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             return vtk_id_list_to_array(id_list)
         return locator.FindClosestPoint(point)  # type: ignore[arg-type]
 
+    @overload
+    def find_closest_cell(
+        self: Self,
+        point: VectorLike[float] | MatrixLike[float],
+        return_closest_point: Literal[False] = False,  # noqa: FBT002
+    ) -> int | NumpyArray[int]: ...
+    @overload
+    def find_closest_cell(
+        self: Self,
+        point: VectorLike[float] | MatrixLike[float],
+        return_closest_point: Literal[True] = True,  # noqa: FBT002
+    ) -> tuple[int | NumpyArray[int], NumpyArray[int]]: ...
+    @overload
+    def find_closest_cell(
+        self: Self,
+        point: VectorLike[float] | MatrixLike[float],
+        return_closest_point: bool = ...,  # noqa: FBT001
+    ) -> int | NumpyArray[int] | tuple[int | NumpyArray[int], NumpyArray[int]]: ...
     @_deprecate_positional_args(allowed=['point'])
     def find_closest_cell(
         self: Self,

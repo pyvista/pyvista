@@ -17,8 +17,10 @@ def an_image() -> pv.ImageData:
     return image
 
 
-# A name reads an array, an index reads a subset of the grid
-assert_types(an_image()['data'], pv.ImageData | pyvista_ndarray)
-assert_types(an_image()['data', 'point'], pv.ImageData | pyvista_ndarray)
-assert_types(an_image()['data', 'cell'], pv.ImageData | pyvista_ndarray)
-assert_types(an_image()[0, 0, 0], pv.ImageData | pyvista_ndarray)
+# A name reads an array
+assert_types(an_image()['data'], pyvista_ndarray)
+assert_types(an_image()['data', 'point'], pyvista_ndarray)
+assert_types(an_image()['data', 'cell'], pyvista_ndarray)
+
+# An index reads a subset of the grid
+assert_types(an_image()[0, 0, 0], pv.ImageData)

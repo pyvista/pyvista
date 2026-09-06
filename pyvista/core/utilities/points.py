@@ -199,6 +199,27 @@ def lines_from_points(
     return poly
 
 
+@overload
+def fit_plane_to_points(
+    points: MatrixLike[float],
+    return_meta: Literal[False] = False,  # noqa: FBT002
+    resolution: int = ...,
+    init_normal: VectorLike[float] | str | None = ...,
+) -> PolyData: ...
+@overload
+def fit_plane_to_points(
+    points: MatrixLike[float],
+    return_meta: Literal[True] = True,  # noqa: FBT002
+    resolution: int = ...,
+    init_normal: VectorLike[float] | str | None = ...,
+) -> tuple[PolyData, NumpyArray[np.floating], NumpyArray[np.floating]]: ...
+@overload
+def fit_plane_to_points(
+    points: MatrixLike[float],
+    return_meta: bool = ...,  # noqa: FBT001
+    resolution: int = ...,
+    init_normal: VectorLike[float] | str | None = ...,
+) -> PolyData | tuple[PolyData, NumpyArray[np.floating], NumpyArray[np.floating]]: ...
 @_deprecate_positional_args(allowed=['points'])
 def fit_plane_to_points(  # noqa: PLR0917
     points: MatrixLike[float],
@@ -386,6 +407,30 @@ def fit_plane_to_points(  # noqa: PLR0917
     return plane
 
 
+@overload
+def fit_line_to_points(
+    points: MatrixLike[float],
+    *,
+    resolution: int = ...,
+    init_direction: VectorLike[float] | str | None = ...,
+    return_meta: Literal[False] = False,
+) -> PolyData: ...
+@overload
+def fit_line_to_points(
+    points: MatrixLike[float],
+    *,
+    resolution: int = ...,
+    init_direction: VectorLike[float] | str | None = ...,
+    return_meta: Literal[True],
+) -> tuple[PolyData, float, NumpyArray[float]]: ...
+@overload
+def fit_line_to_points(
+    points: MatrixLike[float],
+    *,
+    resolution: int = ...,
+    init_direction: VectorLike[float] | str | None = ...,
+    return_meta: bool = ...,
+) -> PolyData | tuple[PolyData, float, NumpyArray[float]]: ...
 def fit_line_to_points(
     points: MatrixLike[float],
     *,

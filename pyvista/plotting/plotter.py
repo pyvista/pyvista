@@ -25,6 +25,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
 from typing import cast
+from typing import overload
 import uuid
 import warnings
 import weakref
@@ -7023,6 +7024,33 @@ class BasePlotter(_BoundsSizeMixin):
             writer.UsePainterSettings()
         writer.Update()
 
+    @overload
+    def screenshot(
+        self,
+        filename: str | Path | BytesIO | bool | None = ...,  # noqa: FBT001
+        transparent_background: bool | None = ...,  # noqa: FBT001
+        return_img: Literal[True] = True,  # noqa: FBT002
+        window_size: Sequence[int] | None = ...,
+        scale: int | None = ...,
+    ) -> pv.pyvista_ndarray: ...
+    @overload
+    def screenshot(
+        self,
+        filename: str | Path | BytesIO | bool | None = ...,  # noqa: FBT001
+        transparent_background: bool | None = ...,  # noqa: FBT001
+        return_img: Literal[False] = False,  # noqa: FBT002
+        window_size: Sequence[int] | None = ...,
+        scale: int | None = ...,
+    ) -> None: ...
+    @overload
+    def screenshot(
+        self,
+        filename: str | Path | BytesIO | bool | None = ...,  # noqa: FBT001
+        transparent_background: bool | None = ...,  # noqa: FBT001
+        return_img: bool = ...,  # noqa: FBT001
+        window_size: Sequence[int] | None = ...,
+        scale: int | None = ...,
+    ) -> pv.pyvista_ndarray | None: ...
     @_deprecate_positional_args(allowed=['filename'])
     def screenshot(  # noqa: PLR0917
         self,
