@@ -102,7 +102,7 @@ jobs:
           cache: ${{ env.USE_CACHE == 'true' && 'pip' || '' }}
 
       - name: Restore pyvista/data cache
-        uses: ./.github/actions/restore-pyvista-data
+        uses: $/.github/actions/restore-pyvista-data
         with:
           key: ${{ needs.cache-github-hosted.outputs.key }}
 
@@ -185,7 +185,7 @@ jobs:
           version: 3.0
 
       - name: Restore pyvista/data cache
-        uses: ./.github/actions/restore-pyvista-data
+        uses: $/.github/actions/restore-pyvista-data
         with:
           key: ${{ needs.cache-github-hosted.outputs.key }}
 
@@ -263,7 +263,7 @@ jobs:
           version: 3.0
 
       - name: Restore pyvista/data cache
-        uses: ./.github/actions/restore-pyvista-data
+        uses: $/.github/actions/restore-pyvista-data
         with:
           key: ${{ needs.cache-github-hosted.outputs.key }}
 
@@ -329,7 +329,7 @@ jobs:
           cache: "pip"
 
       - name: Restore pyvista/data cache
-        uses: ./.github/actions/restore-pyvista-data
+        uses: $/.github/actions/restore-pyvista-data
         with:
           key: ${{ needs.cache-github-hosted.outputs.key }}
 

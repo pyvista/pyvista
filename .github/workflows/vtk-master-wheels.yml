@@ -316,7 +316,7 @@ jobs:
           version: 3.0
 
       - name: Restore pyvista/data cache
-        uses: ./.github/actions/restore-pyvista-data
+        uses: $/.github/actions/restore-pyvista-data
         with:
           key: ${{ needs.cache-github-hosted.outputs.key }}
 
@@ -399,7 +399,7 @@ jobs:
       # ALL STEPS BELOW SHOULD MIMIC THE UNIT TESTING WORKFLOW EXACTLY
 
       - name: Restore pyvista/data cache
-        uses: ./.github/actions/restore-pyvista-data
+        uses: $/.github/actions/restore-pyvista-data
         with:
           key: ${{ needs.cache-github-hosted.outputs.key }}
 
@@ -482,7 +482,7 @@ jobs:
       # ALL STEPS BELOW SHOULD MIMIC THE UNIT TESTING WORKFLOW EXACTLY
 
       - name: Restore pyvista/data cache
-        uses: ./.github/actions/restore-pyvista-data
+        uses: $/.github/actions/restore-pyvista-data
         with:
           key: ${{ needs.cache-github-hosted.outputs.key }}
 

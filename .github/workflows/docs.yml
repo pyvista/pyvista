@@ -52,7 +52,7 @@ jobs:
     # `id-token: none`, which zeroes every other scope.
     permissions:
       actions: read
-    uses: ./.github/workflows/find-tree-build.yml
+    uses: $/.github/workflows/find-tree-build.yml
     with:
       marker-prefix: docs-tree
 
@@ -91,7 +91,7 @@ jobs:
           version: 3.0
 
       - name: Restore pyvista/data cache
-        uses: ./.github/actions/restore-pyvista-data
+        uses: $/.github/actions/restore-pyvista-data
         with:
           key: ${{ needs.cache-pyvista-data.outputs.key }}
 
