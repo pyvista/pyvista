@@ -2027,7 +2027,7 @@ class DataSetFilters(DataObjectFilters):
             msg = 'Both ``scale`` and ``orient`` must use point data or cell data.'
             raise ValueError(msg)
 
-        source_data = dataset
+        source_data: DataSet = dataset
         set_actives_on_source_data = False
 
         if (scale and dataset.active_scalars_info.association == FieldAssociation.CELL) or (
@@ -2398,7 +2398,8 @@ class DataSetFilters(DataObjectFilters):
             if field == FieldAssociation.CELL:
                 # Convert to point data with a unique name
                 # The point array will be removed later
-                point_data = input_mesh.cell_data_to_point_data(progress_bar=progress_bar)[name]
+                converted = input_mesh.cell_data_to_point_data(progress_bar=progress_bar)
+                point_data = converted[cast('str', name)]
                 input_mesh.point_data['__point_data'] = point_data
                 input_mesh.set_active_scalars('__point_data')
 
