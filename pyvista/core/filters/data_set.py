@@ -4741,10 +4741,7 @@ class DataSetFilters(DataObjectFilters):
             extracted = mesh.extract_points(ind)
 
             # PolyData for PolyData input, PointSet for PointSet input
-            extracted = mesh.remove_points(ind=ind, mode='all', invert=True)
-
-        The two differ for a :class:`~pyvista.PointSet`, which has no cells to contain
-        the selected points. Set ``include_cells=False`` to extract its points.
+            extracted = mesh.remove_points(ind, mode='all', invert=True)
 
         .. versionchanged:: 0.49
             Negative and out-of-range indices raise ``IndexError``.
@@ -4962,7 +4959,7 @@ class DataSetFilters(DataObjectFilters):
             extracted = mesh.extract_points(ind)
 
             # PolyData for PolyData input, PointSet for PointSet input
-            extracted = mesh.remove_points(ind=ind, mode='all', invert=True)
+            extracted = mesh.remove_points(ind, mode='all', invert=True)
 
         A ``PolyData`` without cells returns one vertex cell per remaining point, the
         same as ``pv.PolyData(points)`` creates. Use :meth:`~pyvista.DataSet.cast_to_pointset`
