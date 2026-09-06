@@ -5005,6 +5005,7 @@ def test_color_labels_label_equal_to_number_of_colors():
     colored, mapping = labels.color_labels(colors, return_dict=True)
     assert list(mapping.keys()) == [0, 1, 2, 3]
     assert mapping[3] == pv.Color('red').int_rgb
+    assert np.array_equal(colored.active_scalars, [mapping[label] for label in labels['data']])
 
 
 def test_color_labels_does_not_modify_colormap():
