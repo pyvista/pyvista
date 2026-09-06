@@ -61,6 +61,11 @@ select_values_vol_outline.cell_data['method'] = np.full(
     (select_values_vol_outline.n_cells), method_map['select_values']
 )
 outlines_mesh += select_values_vol_outline
+
+# sphinx_gallery_start_ignore
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
+
 pl = pv.Plotter()
 pl.add_volume(volume)
 pl.add_volume(thresholded_vol)

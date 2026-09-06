@@ -164,40 +164,43 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
     Examples
     --------
-    Plot the lookup table with the default VTK color map.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> import pyvista as pv
-    >>> lut = pv.LookupTable()
-    >>> lut
-    LookupTable (...)
-      Table Range:                (0.0, 1.0)
-      N Values:                   256
-      Above Range Color:          None
-      Below Range Color:          None
-      NAN Color:                  Color(name='maroon', hex='#800000ff', opacity=255)
-      Log Scale:                  False
-      Color Map:                  "PyVista Lookup Table"
-        Alpha Range:              (1.0, 1.0)
-        Hue Range:                (0.0, 0.66667)
-        Saturation Range          (1.0, 1.0)
-        Value Range               (1.0, 1.0)
-        Ramp                      s-curve
-    >>> lut.plot()
+        Plot the lookup table with the default VTK color map.
 
-    Plot the lookup table with the ``'inferno'`` color map.
+        >>> import pyvista as pv
+        >>> lut = pv.LookupTable()
+        >>> lut
+        LookupTable (...)
+          Table Range:                (0.0, 1.0)
+          N Values:                   256
+          Above Range Color:          None
+          Below Range Color:          None
+          NAN Color:                  Color(name='maroon', hex='#800000ff', opacity=255)
+          Log Scale:                  False
+          Color Map:                  "PyVista Lookup Table"
+            Alpha Range:              (1.0, 1.0)
+            Hue Range:                (0.0, 0.66667)
+            Saturation Range          (1.0, 1.0)
+            Value Range               (1.0, 1.0)
+            Ramp                      s-curve
+        >>> lut.plot()
 
-    >>> import pyvista as pv
-    >>> lut = pv.LookupTable('inferno', n_values=32)
-    >>> lut
-    LookupTable (...)
-      Table Range:                (0.0, 1.0)
-      N Values:                   32
-      Above Range Color:          None
-      Below Range Color:          None
-      NAN Color:                  Color(name='maroon', hex='#800000ff', opacity=255)
-      Log Scale:                  False
-      Color Map:                  "inferno"
-    >>> lut.plot()
+        Plot the lookup table with the ``'inferno'`` color map.
+
+        >>> import pyvista as pv
+        >>> lut = pv.LookupTable('inferno', n_values=32)
+        >>> lut
+        LookupTable (...)
+          Table Range:                (0.0, 1.0)
+          N Values:                   32
+          Above Range Color:          None
+          Below Range Color:          None
+          NAN Color:                  Color(name='maroon', hex='#800000ff', opacity=255)
+          Log Scale:                  False
+          Color Map:                  "inferno"
+        >>> lut.plot()
 
     """
 
@@ -269,20 +272,23 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
         Examples
         --------
-        Show the effect of setting the value range on the default color
-        map.
+        .. pyvista-plot::
+            :force_static:
 
-        >>> import pyvista as pv
-        >>> lut = pv.LookupTable()
-        >>> lut.value_range = (0, 1.0)
-        >>> lut.plot()
+            Show the effect of setting the value range on the default color
+            map.
 
-        Demonstrate a different value range.
+            >>> import pyvista as pv
+            >>> lut = pv.LookupTable()
+            >>> lut.value_range = (0, 1.0)
+            >>> lut.plot()
 
-        >>> import pyvista as pv
-        >>> lut = pv.LookupTable()
-        >>> lut.value_range = (0.5, 0.8)
-        >>> lut.plot()
+            Demonstrate a different value range.
+
+            >>> import pyvista as pv
+            >>> lut = pv.LookupTable()
+            >>> lut.value_range = (0.5, 0.8)
+            >>> lut.plot()
 
         """
         if self._cmap:
@@ -306,20 +312,23 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
         Examples
         --------
-        Set the hue range. This allows you to create a lookup table
-        without setting a color map.
+        .. pyvista-plot::
+            :force_static:
 
-        >>> import pyvista as pv
-        >>> lut = pv.LookupTable()
-        >>> lut.hue_range = (0, 0.1)
-        >>> lut.plot()
+            Set the hue range. This allows you to create a lookup table
+            without setting a color map.
 
-        Create a different color map.
+            >>> import pyvista as pv
+            >>> lut = pv.LookupTable()
+            >>> lut.hue_range = (0, 0.1)
+            >>> lut.plot()
 
-        >>> import pyvista as pv
-        >>> lut = pv.LookupTable()
-        >>> lut.hue_range = (0.5, 0.8)
-        >>> lut.plot()
+            Create a different color map.
+
+            >>> import pyvista as pv
+            >>> lut = pv.LookupTable()
+            >>> lut.hue_range = (0.5, 0.8)
+            >>> lut.plot()
 
         """
         if self._cmap:
@@ -339,19 +348,22 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
         Examples
         --------
-        Apply the single Matplotlib color map ``"Oranges"``.
+        .. pyvista-plot::
+            :force_static:
 
-        >>> import pyvista as pv
-        >>> lut = pv.LookupTable()
-        >>> lut.cmap = 'Oranges'
-        >>> lut.plot()
+            Apply the single Matplotlib color map ``"Oranges"``.
 
-        Apply a list of colors as a colormap.
+            >>> import pyvista as pv
+            >>> lut = pv.LookupTable()
+            >>> lut.cmap = 'Oranges'
+            >>> lut.plot()
 
-        >>> import pyvista as pv
-        >>> lut = pv.LookupTable()
-        >>> lut.cmap = ['black', 'red', 'orange']
-        >>> lut.plot()
+            Apply a list of colors as a colormap.
+
+            >>> import pyvista as pv
+            >>> lut = pv.LookupTable()
+            >>> lut.cmap = ['black', 'red', 'orange']
+            >>> lut.plot()
 
         """
         return self._cmap
@@ -369,13 +381,16 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
         Examples
         --------
-        Use log scale for the lookup table.
+        .. pyvista-plot::
+            :force_static:
 
-        >>> import pyvista as pv
-        >>> lut = pv.LookupTable()
-        >>> lut.log_scale = True
-        >>> lut.scalar_range = (1, 100)
-        >>> lut.plot()
+            Use log scale for the lookup table.
+
+            >>> import pyvista as pv
+            >>> lut = pv.LookupTable()
+            >>> lut.log_scale = True
+            >>> lut.scalar_range = (1, 100)
+            >>> lut.plot()
 
         """
         return bool(self.GetScale())
@@ -440,13 +455,16 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
         Examples
         --------
-        Create a custom "blues" lookup table that decreases in opacity.
+        .. pyvista-plot::
+            :force_static:
 
-        >>> import pyvista as pv
-        >>> lut = pv.LookupTable()
-        >>> lut.hue_range = (0.7, 0.7)
-        >>> lut.alpha_range = (1.0, 0.0)
-        >>> lut.plot(background='grey')
+            Create a custom "blues" lookup table that decreases in opacity.
+
+            >>> import pyvista as pv
+            >>> lut = pv.LookupTable()
+            >>> lut.hue_range = (0.7, 0.7)
+            >>> lut.alpha_range = (1.0, 0.0)
+            >>> lut.plot(background='grey')
 
         """
         if self._cmap:
@@ -470,13 +488,16 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
         Examples
         --------
-        Create a custom "blues" lookup table that increases in saturation.
+        .. pyvista-plot::
+            :force_static:
 
-        >>> import pyvista as pv
-        >>> lut = pv.LookupTable()
-        >>> lut.hue_range = (0.7, 0.7)
-        >>> lut.saturation_range = (0.0, 1.0)
-        >>> lut.plot(background='grey')
+            Create a custom "blues" lookup table that increases in saturation.
+
+            >>> import pyvista as pv
+            >>> lut = pv.LookupTable()
+            >>> lut.hue_range = (0.7, 0.7)
+            >>> lut.saturation_range = (0.0, 1.0)
+            >>> lut.plot(background='grey')
 
         """
         if self._cmap:
@@ -512,12 +533,15 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
         Examples
         --------
-        Set the NAN color to ``'grey'``.
+        .. pyvista-plot::
+            :force_static:
 
-        >>> import pyvista as pv
-        >>> lut = pv.LookupTable()
-        >>> lut.nan_color = 'grey'
-        >>> lut.plot()
+            Set the NAN color to ``'grey'``.
+
+            >>> import pyvista as pv
+            >>> lut = pv.LookupTable()
+            >>> lut.nan_color = 'grey'
+            >>> lut.plot()
 
         """
         return Color(self.GetNanColor())
@@ -536,13 +560,16 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
         Examples
         --------
-        Set the NAN opacity to ``0.5``.
+        .. pyvista-plot::
+            :force_static:
 
-        >>> import pyvista as pv
-        >>> lut = pv.LookupTable()
-        >>> lut.nan_color = 'grey'
-        >>> lut.nan_opacity = 0.5
-        >>> lut.plot()
+            Set the NAN opacity to ``0.5``.
+
+            >>> import pyvista as pv
+            >>> lut = pv.LookupTable()
+            >>> lut.nan_color = 'grey'
+            >>> lut.nan_opacity = 0.5
+            >>> lut.plot()
 
         """
         color = self.nan_color
@@ -580,29 +607,32 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
         Examples
         --------
-        Show the default s-curve ramp.
+        .. pyvista-plot::
+            :force_static:
 
-        >>> import pyvista as pv
-        >>> lut = pv.LookupTable()
-        >>> lut.hue_range = (0.0, 0.33)
-        >>> lut.ramp = 's-curve'
-        >>> lut.plot()
+            Show the default s-curve ramp.
 
-        Plot the linear ramp.
+            >>> import pyvista as pv
+            >>> lut = pv.LookupTable()
+            >>> lut.hue_range = (0.0, 0.33)
+            >>> lut.ramp = 's-curve'
+            >>> lut.plot()
 
-        >>> import pyvista as pv
-        >>> lut = pv.LookupTable()
-        >>> lut.hue_range = (0.0, 0.33)
-        >>> lut.ramp = 'linear'
-        >>> lut.plot()
+            Plot the linear ramp.
 
-        Plot the ``"sqrt"`` ramp.
+            >>> import pyvista as pv
+            >>> lut = pv.LookupTable()
+            >>> lut.hue_range = (0.0, 0.33)
+            >>> lut.ramp = 'linear'
+            >>> lut.plot()
 
-        >>> import pyvista as pv
-        >>> lut = pv.LookupTable()
-        >>> lut.hue_range = (0.0, 0.33)
-        >>> lut.ramp = 'sqrt'
-        >>> lut.plot()
+            Plot the ``"sqrt"`` ramp.
+
+            >>> import pyvista as pv
+            >>> lut = pv.LookupTable()
+            >>> lut.hue_range = (0.0, 0.33)
+            >>> lut.ramp = 'sqrt'
+            >>> lut.plot()
 
         """
         return RAMP_MAP[self.GetRamp()]
@@ -625,19 +655,22 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
         Examples
         --------
-        Enable the usage of the above range color.
+        .. pyvista-plot::
+            :force_static:
 
-        >>> import pyvista as pv
-        >>> lut = pv.LookupTable()
-        >>> lut.above_range_color = 'blue'
-        >>> lut.plot()
+            Enable the usage of the above range color.
 
-        Disable the usage of the above range color.
+            >>> import pyvista as pv
+            >>> lut = pv.LookupTable()
+            >>> lut.above_range_color = 'blue'
+            >>> lut.plot()
 
-        >>> import pyvista as pv
-        >>> lut = pv.LookupTable()
-        >>> lut.above_range_color = None
-        >>> lut.plot()
+            Disable the usage of the above range color.
+
+            >>> import pyvista as pv
+            >>> lut = pv.LookupTable()
+            >>> lut.above_range_color = None
+            >>> lut.plot()
 
         """
         if self.GetUseAboveRangeColor():
@@ -661,13 +694,16 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
         Examples
         --------
-        Set the above range opacity to ``0.5``.
+        .. pyvista-plot::
+            :force_static:
 
-        >>> import pyvista as pv
-        >>> lut = pv.LookupTable()
-        >>> lut.above_range_color = 'grey'
-        >>> lut.above_range_opacity = 0.5
-        >>> lut.plot()
+            Set the above range opacity to ``0.5``.
+
+            >>> import pyvista as pv
+            >>> lut = pv.LookupTable()
+            >>> lut.above_range_color = 'grey'
+            >>> lut.above_range_opacity = 0.5
+            >>> lut.plot()
 
         """
         color = self.above_range_color
@@ -689,19 +725,22 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
         Examples
         --------
-        Enable the usage of the below range color.
+        .. pyvista-plot::
+            :force_static:
 
-        >>> import pyvista as pv
-        >>> lut = pv.LookupTable()
-        >>> lut.below_range_color = 'blue'
-        >>> lut.plot()
+            Enable the usage of the below range color.
 
-        Disable the usage of the below range color.
+            >>> import pyvista as pv
+            >>> lut = pv.LookupTable()
+            >>> lut.below_range_color = 'blue'
+            >>> lut.plot()
 
-        >>> import pyvista as pv
-        >>> lut = pv.LookupTable()
-        >>> lut.below_range_color = None
-        >>> lut.plot()
+            Disable the usage of the below range color.
+
+            >>> import pyvista as pv
+            >>> lut = pv.LookupTable()
+            >>> lut.below_range_color = None
+            >>> lut.plot()
 
         """
         if self.GetUseBelowRangeColor():
@@ -725,13 +764,16 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
         Examples
         --------
-        Set the below range opacity to ``0.5``.
+        .. pyvista-plot::
+            :force_static:
 
-        >>> import pyvista as pv
-        >>> lut = pv.LookupTable()
-        >>> lut.below_range_color = 'grey'
-        >>> lut.below_range_opacity = 0.5
-        >>> lut.plot()
+            Set the below range opacity to ``0.5``.
+
+            >>> import pyvista as pv
+            >>> lut = pv.LookupTable()
+            >>> lut.below_range_color = 'grey'
+            >>> lut.below_range_opacity = 0.5
+            >>> lut.plot()
 
         """
         color = self.below_range_color
@@ -770,12 +812,15 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
         Examples
         --------
-        Apply ``matplotlib``'s ``'cividis'`` color map.
+        .. pyvista-plot::
+            :force_static:
 
-        >>> import pyvista as pv
-        >>> lut = pv.LookupTable()
-        >>> lut.apply_cmap('cividis', n_values=32)
-        >>> lut.plot()
+            Apply ``matplotlib``'s ``'cividis'`` color map.
+
+            >>> import pyvista as pv
+            >>> lut = pv.LookupTable()
+            >>> lut.apply_cmap('cividis', n_values=32)
+            >>> lut.plot()
 
         """
         if isinstance(cmap, list):
@@ -870,22 +915,25 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
         Examples
         --------
-        Create a simple four value lookup table ranging from black to red.
+        .. pyvista-plot::
+            :force_static:
 
-        >>> import pyvista as pv
-        >>> lut = pv.LookupTable()
-        >>> lut.values = [
-        ...     [0, 0, 0, 255],
-        ...     [85, 0, 0, 255],
-        ...     [170, 0, 0, 255],
-        ...     [255, 0, 0, 255],
-        ... ]
-        >>> lut.values
-        lookup_table_ndarray([[  0,   0,   0, 255],
-                              [ 85,   0,   0, 255],
-                              [170,   0,   0, 255],
-                              [255,   0,   0, 255]], dtype=uint8)
-        >>> lut.plot()
+            Create a simple four value lookup table ranging from black to red.
+
+            >>> import pyvista as pv
+            >>> lut = pv.LookupTable()
+            >>> lut.values = [
+            ...     [0, 0, 0, 255],
+            ...     [85, 0, 0, 255],
+            ...     [170, 0, 0, 255],
+            ...     [255, 0, 0, 255],
+            ... ]
+            >>> lut.values
+            lookup_table_ndarray([[  0,   0,   0, 255],
+                                  [ 85,   0,   0, 255],
+                                  [170,   0,   0, 255],
+                                  [255,   0,   0, 255]], dtype=uint8)
+            >>> lut.plot()
 
         """
         return lookup_table_ndarray(self.GetTable(), table=self)
@@ -903,19 +951,22 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
         Examples
         --------
-        Plot the ``"reds"`` colormap with 10 values.
+        .. pyvista-plot::
+            :force_static:
 
-        >>> import pyvista as pv
-        >>> lut = pv.LookupTable('reds')
-        >>> lut.n_values = 10
-        >>> lut.plot()
+            Plot the ``"reds"`` colormap with 10 values.
 
-        Plot the default colormap with 1024 values.
+            >>> import pyvista as pv
+            >>> lut = pv.LookupTable('reds')
+            >>> lut.n_values = 10
+            >>> lut.plot()
 
-        >>> import pyvista as pv
-        >>> lut = pv.LookupTable()
-        >>> lut.n_values = 1024
-        >>> lut.plot()
+            Plot the default colormap with 1024 values.
+
+            >>> import pyvista as pv
+            >>> lut = pv.LookupTable()
+            >>> lut.n_values = 1024
+            >>> lut.plot()
 
         """
         return self.GetNumberOfColors()
@@ -945,12 +996,15 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
         Examples
         --------
-        Assign annotations to the lookup table.
+        .. pyvista-plot::
+            :force_static:
 
-        >>> import pyvista as pv
-        >>> lut = pv.LookupTable('magma')
-        >>> lut.annotations = {0: 'low', 0.5: 'medium', 1: 'high'}
-        >>> lut.plot()
+            Assign annotations to the lookup table.
+
+            >>> import pyvista as pv
+            >>> lut = pv.LookupTable('magma')
+            >>> lut.annotations = {0: 'low', 0.5: 'medium', 1: 'high'}
+            >>> lut.plot()
 
         """
         vtk_values = self.GetAnnotatedValues()
@@ -995,20 +1049,23 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
         Examples
         --------
-        Plot the ``"viridis"`` colormap with the below and above colors.
+        .. pyvista-plot::
+            :force_static:
 
-        >>> import pyvista as pv
-        >>> lut = pv.LookupTable('viridis', n_values=8)
-        >>> lut.below_range_color = 'black'
-        >>> lut.above_range_color = 'grey'
-        >>> lut.nan_color = 'r'
-        >>> lut.plot()
+            Plot the ``"viridis"`` colormap with the below and above colors.
 
-        Plot only ``"blues"`` colormap.
+            >>> import pyvista as pv
+            >>> lut = pv.LookupTable('viridis', n_values=8)
+            >>> lut.below_range_color = 'black'
+            >>> lut.above_range_color = 'grey'
+            >>> lut.nan_color = 'r'
+            >>> lut.plot()
 
-        >>> import pyvista as pv
-        >>> lut = pv.LookupTable('blues', n_values=1024)
-        >>> lut.plot()
+            Plot only ``"blues"`` colormap.
+
+            >>> import pyvista as pv
+            >>> lut = pv.LookupTable('blues', n_values=1024)
+            >>> lut.plot()
 
         """
         # need a trivial polydata for this

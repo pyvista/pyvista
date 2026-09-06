@@ -188,6 +188,10 @@ pl.show()
 # Extract a single 2D slice from a 3D segmentation mask and plot it. Here we use
 # :func:`~pyvista.examples.examples.load_frog_tissues`.
 
+# sphinx_gallery_start_ignore
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
+
 mask = examples.load_frog_tissues()
 sliced = mask.slice_index(k=50)
 colored = sliced.color_labels()
