@@ -103,6 +103,11 @@ def index():
         ('skybox/*.jpg', 'skybox/a.png', False),
         ('sim_?.vtu', 'sim_1.vtu', True),
         ('sim_?.vtu', 'sim_12.vtu', False),
+        # `**` crosses separators where `*` stops at one.
+        ('froggy/**', 'froggy/frog.mhd', True),
+        ('froggy/**', 'froggy/sub/frog.mhd', True),
+        ('froggy/*', 'froggy/sub/frog.mhd', False),
+        ('**/frog.mhd', 'a/b/frog.mhd', True),
         # A dot in the pattern is literal, not a wildcard.
         ('a.vtk', 'axvtk', False),
     ],
@@ -286,3 +291,57 @@ def test_bundled_table_covers_every_packaged_file():
     for name in packaged:
         owners = [e.name for e in entries if any(_matches(p, name) for p in e.paths)]
         assert len(owners) == 1, f'{name} is claimed by {owners}'
+
+
+def test_metadata_base_url_sits_beside_the_data_directory():
+    """The table is published next to `Data/`, not inside it."""
+    from pyvista.examples import _dataset_metadata
+    from pyvista.examples.downloads import SOURCE
+
+    base = _dataset_metadata._metadata_base_url()
+
+    assert SOURCE.endswith('Data/')
+    assert base == SOURCE.removesuffix('Data/')
+    assert not base.endswith('Data/')
+
+
+def test_download_metadata_file_fetches_the_published_table(monkeypatch, tmp_path):
+    """Without an override the table is fetched from where pyvista/data publishes it."""
+    import pooch
+
+    from pyvista.examples import _dataset_metadata
+
+    fetched = tmp_path / _dataset_metadata._METADATA_FILENAME
+    fetched.write_text(DOCUMENT)
+    created = {}
+
+    def fake_create(**kwargs):
+        created.update(kwargs)
+        return 'fetcher'
+
+    def fake_locked_fetch(fetcher, filename, downloader=None):  # noqa: ARG001
+        assert fetcher == 'fetcher'
+        assert filename == _dataset_metadata._METADATA_FILENAME
+        return str(fetched)
+
+    monkeypatch.setattr(pooch, 'create', fake_create)
+    monkeypatch.setattr('pyvista.examples.downloads._locked_fetch', fake_locked_fetch)
+
+    assert _dataset_metadata._download_metadata_file() == str(fetched)
+    assert created['base_url'] == _dataset_metadata._metadata_base_url()
+    assert _dataset_metadata._METADATA_FILENAME in created['registry']
+
+
+def test_metadata_index_reads_the_downloaded_table(monkeypatch, tmp_path):
+    """With no override set, the index is built from the downloaded file."""
+    from pyvista.examples import _dataset_metadata
+
+    path = tmp_path / 'DATASETS.toml'
+    path.write_text(DOCUMENT)
+    monkeypatch.delenv(_dataset_metadata._METADATA_VARNAME, raising=False)
+    monkeypatch.setattr(_dataset_metadata, '_download_metadata_file', lambda: str(path))
+    _dataset_metadata._metadata_index.cache_clear()
+
+    assert _dataset_metadata._metadata_index().match('plain.vtk').name == 'plain'
+
+    _dataset_metadata._metadata_index.cache_clear()
