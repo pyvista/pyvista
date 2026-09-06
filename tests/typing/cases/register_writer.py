@@ -24,12 +24,11 @@ SKIP_RUNTIME = dict.fromkeys(
     'registering a writer mutates the process-wide registry',
 )
 
-# fmt: off
 
 # Without a handler the call only builds the decorator, so nothing is registered yet
-assert_types(pv.register_writer('.type_assert'),                       Callable[[WriterHandler], WriterHandler])
-assert_types(pv.register_writer('.type_assert', override=True),        Callable[[WriterHandler], WriterHandler])
-assert_types(pv.register_writer('.type_assert', None),                 Callable[[WriterHandler], WriterHandler])
+assert_types(pv.register_writer('.type_assert'), Callable[[WriterHandler], WriterHandler])
+assert_types(pv.register_writer('.type_assert', override=True), Callable[[WriterHandler], WriterHandler])
+assert_types(pv.register_writer('.type_assert', None), Callable[[WriterHandler], WriterHandler])
 
-assert_types(pv.register_writer('.type_assert', a_handler),            None)  # pragma: no cover
+assert_types(pv.register_writer('.type_assert', a_handler), None)  # pragma: no cover
 assert_types(pv.register_writer('.type_assert', a_handler, override=True), None)  # pragma: no cover

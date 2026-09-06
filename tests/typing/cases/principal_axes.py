@@ -19,11 +19,9 @@ def a_flag() -> bool:
     return True
 
 
-# fmt: off
-
-assert_types(pv.principal_axes(some_points()),                    NumpyArray[float])
-assert_types(pv.principal_axes(some_points(), return_std=False),  NumpyArray[float])
-assert_types(pv.principal_axes(some_points(), return_std=True),   tuple[NumpyArray[float], NumpyArray[float]])
+assert_types(pv.principal_axes(some_points()), NumpyArray[float])
+assert_types(pv.principal_axes(some_points(), return_std=False), NumpyArray[float])
+assert_types(pv.principal_axes(some_points(), return_std=True), tuple[NumpyArray[float], NumpyArray[float]])
 
 # The catch-all, reached only by a flag widened to `bool`
 assert_types(pv.principal_axes(some_points(), return_std=a_flag()), NumpyArray[float] | tuple[NumpyArray[float], NumpyArray[float]])

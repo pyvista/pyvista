@@ -17,9 +17,8 @@ SKIP_RUNTIME = dict.fromkeys(
     'the runtime checker has no `npt_promote`, so an int64 array is not a `NumpyArray[int]`',
 )
 
-# fmt: off
 
-assert_types(pv.Sphere().find_closest_cell((0.0, 0.0, 0.0)),                              _Found)
-assert_types(pv.Sphere().find_closest_cell([(0.0, 0.0, 0.0), (1.0, 0.0, 0.0)]),           _Found)  # pragma: no cover
-assert_types(pv.Sphere().find_closest_cell((0.0, 0.0, 0.0), return_closest_point=False),  _Found)
-assert_types(pv.Sphere().find_closest_cell((0.0, 0.0, 0.0), return_closest_point=True),   _Found)  # pragma: no cover
+assert_types(pv.Sphere().find_closest_cell((0.0, 0.0, 0.0)), _Found)
+assert_types(pv.Sphere().find_closest_cell([(0.0, 0.0, 0.0), (1.0, 0.0, 0.0)]), _Found)  # pragma: no cover
+assert_types(pv.Sphere().find_closest_cell((0.0, 0.0, 0.0), return_closest_point=False), _Found)
+assert_types(pv.Sphere().find_closest_cell((0.0, 0.0, 0.0), return_closest_point=True), _Found)  # pragma: no cover

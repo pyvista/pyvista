@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import meshio
 import numpy as np
+from trimesh import Trimesh
+from type_assert import assert_types
+
 import pyvista as pv
 from pyvista import _vtk
 from pyvista import examples
-from trimesh import Trimesh
-from type_assert import assert_types
 
 
 def as_data_set() -> _vtk.vtkDataSet:

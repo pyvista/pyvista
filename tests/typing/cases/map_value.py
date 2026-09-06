@@ -18,8 +18,6 @@ def a_lookup_table() -> pv.LookupTable:
     return pv.LookupTable(cmap='viridis', scalar_range=(0.0, 1.0))
 
 
-# fmt: off
-
-assert_types(a_lookup_table().map_value(0.5),                 _Color)
-assert_types(a_lookup_table().map_value(0.5, opacity=True),   _Color)
-assert_types(a_lookup_table().map_value(0.5, opacity=False),  _Color)
+assert_types(a_lookup_table().map_value(0.5), _Color)
+assert_types(a_lookup_table().map_value(0.5, opacity=True), _Color)
+assert_types(a_lookup_table().map_value(0.5, opacity=False), _Color)

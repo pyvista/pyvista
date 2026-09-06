@@ -26,11 +26,9 @@ def a_flag() -> bool:
     return True
 
 
-# fmt: off
-
-assert_types(apply_transformation_to_points(a_transformation(), some_points()),                 NumpyArray[float])
-assert_types(apply_transformation_to_points(a_transformation(), some_points(), inplace=False),  NumpyArray[float])
-assert_types(apply_transformation_to_points(a_transformation(), some_points(), inplace=True),   None)
+assert_types(apply_transformation_to_points(a_transformation(), some_points()), NumpyArray[float])
+assert_types(apply_transformation_to_points(a_transformation(), some_points(), inplace=False), NumpyArray[float])
+assert_types(apply_transformation_to_points(a_transformation(), some_points(), inplace=True), None)
 
 # The catch-all, reached only by a flag widened to `bool`
 assert_types(apply_transformation_to_points(a_transformation(), some_points(), inplace=a_flag()), NumpyArray[float] | None)

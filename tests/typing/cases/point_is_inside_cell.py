@@ -14,7 +14,5 @@ def a_grid() -> pv.ImageData:
     return pv.ImageData(dimensions=(3, 3, 3))
 
 
-# fmt: off
-
-assert_types(a_grid().point_is_inside_cell(0, (0.5, 0.5, 0.5)),                     bool | NumpyArray[np.bool_])
-assert_types(a_grid().point_is_inside_cell(0, [(0.5, 0.5, 0.5), (9.0, 9.0, 9.0)]),  bool | NumpyArray[np.bool_])
+assert_types(a_grid().point_is_inside_cell(0, (0.5, 0.5, 0.5)), bool | NumpyArray[np.bool_])
+assert_types(a_grid().point_is_inside_cell(0, [(0.5, 0.5, 0.5), (9.0, 9.0, 9.0)]), bool | NumpyArray[np.bool_])

@@ -20,9 +20,7 @@ def a_plotter() -> pv.Plotter:
     return pv.Plotter()
 
 
-# fmt: off
-
-assert_types(a_plotter().add_volume(a_volume()),                   pv.Volume | list[pv.Volume])
+assert_types(a_plotter().add_volume(a_volume()), pv.Volume | list[pv.Volume])
 
 # A composite gets one volume per block
-assert_types(a_plotter().add_volume(pv.MultiBlock([a_volume()])),  pv.Volume | list[pv.Volume])
+assert_types(a_plotter().add_volume(pv.MultiBlock([a_volume()])), pv.Volume | list[pv.Volume])

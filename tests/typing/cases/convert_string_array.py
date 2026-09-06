@@ -19,11 +19,9 @@ def a_vtk_string_array() -> _vtk.vtkStringArray:
     return array
 
 
-# fmt: off
+assert_types(convert_string_array(a_vtk_string_array()), npt.NDArray[np.str_])
+assert_types(convert_string_array(a_vtk_string_array(), 'data'), npt.NDArray[np.str_])
 
-assert_types(convert_string_array(a_vtk_string_array()),          npt.NDArray[np.str_])
-assert_types(convert_string_array(a_vtk_string_array(), 'data'),  npt.NDArray[np.str_])
-
-assert_types(convert_string_array('text'),                        _vtk.vtkStringArray)
-assert_types(convert_string_array(np.array(['a', 'b'])),          _vtk.vtkStringArray)
-assert_types(convert_string_array(np.array(['a']), 'data'),       _vtk.vtkStringArray)
+assert_types(convert_string_array('text'), _vtk.vtkStringArray)
+assert_types(convert_string_array(np.array(['a', 'b'])), _vtk.vtkStringArray)
+assert_types(convert_string_array(np.array(['a']), 'data'), _vtk.vtkStringArray)

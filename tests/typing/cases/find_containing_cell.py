@@ -14,12 +14,9 @@ def an_image() -> pv.ImageData:
 
 
 SKIP_RUNTIME = {
-    'an_image().find_containing_cell([(1.0, 1.0, 1.0), (0.5, 0.5, 0.5)])': (
-        'the runtime checker has no `npt_promote`, so an int64 array is not a `NumpyArray[int]`'
-    ),
+    'an_image().find_containing_cell([(1.0, 1.0, 1.0), (0.5, 0.5, 0.5)])': ('the runtime checker has no `npt_promote`, so an int64 array is not a `NumpyArray[int]`'),
 }
 
-# fmt: off
 
-assert_types(an_image().find_containing_cell((1.0, 1.0, 1.0)),                     int | NumpyArray[int])
-assert_types(an_image().find_containing_cell([(1.0, 1.0, 1.0), (0.5, 0.5, 0.5)]),  int | NumpyArray[int])  # pragma: no cover
+assert_types(an_image().find_containing_cell((1.0, 1.0, 1.0)), int | NumpyArray[int])
+assert_types(an_image().find_containing_cell([(1.0, 1.0, 1.0), (0.5, 0.5, 0.5)]), int | NumpyArray[int])  # pragma: no cover

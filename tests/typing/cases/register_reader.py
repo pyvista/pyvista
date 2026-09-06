@@ -28,12 +28,11 @@ SKIP_RUNTIME = dict.fromkeys(
     'registering a reader mutates the process-wide registry',
 )
 
-# fmt: off
 
 # The decorator form hands the provider back unchanged
-assert_types(pv.register_reader('.type_assert')(Provider()),                    Provider)          # pragma: no cover
-assert_types(pv.register_reader('.type_assert')(pv.PLYReader),                  type[pv.PLYReader])  # pragma: no cover
+assert_types(pv.register_reader('.type_assert')(Provider()), Provider)  # pragma: no cover
+assert_types(pv.register_reader('.type_assert')(pv.PLYReader), type[pv.PLYReader])  # pragma: no cover
 
 # Passing the provider outright registers it and returns nothing
-assert_types(pv.register_reader('.type_assert', Provider()),                    None)              # pragma: no cover
-assert_types(pv.register_reader('.type_assert', pv.PLYReader, override=True),   None)              # pragma: no cover
+assert_types(pv.register_reader('.type_assert', Provider()), None)  # pragma: no cover
+assert_types(pv.register_reader('.type_assert', pv.PLYReader, override=True), None)  # pragma: no cover

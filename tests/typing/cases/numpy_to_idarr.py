@@ -24,16 +24,15 @@ SKIP_RUNTIME = dict.fromkeys(
     'the runtime checker has no `npt_promote`, so an int64 array is not a `NumpyArray[int]`',
 )
 
-# fmt: off
 
-assert_types(numpy_to_idarr([0, 1]),                             _vtk.vtkIdTypeArray)
-assert_types(numpy_to_idarr(np.array([0, 1])),                   _vtk.vtkIdTypeArray)
-assert_types(numpy_to_idarr(np.array([True, False])),            _vtk.vtkIdTypeArray)
-assert_types(numpy_to_idarr([0, 1], deep=True),                  _vtk.vtkIdTypeArray)
-assert_types(numpy_to_idarr([0, 1], return_ind=False),           _vtk.vtkIdTypeArray)
+assert_types(numpy_to_idarr([0, 1]), _vtk.vtkIdTypeArray)
+assert_types(numpy_to_idarr(np.array([0, 1])), _vtk.vtkIdTypeArray)
+assert_types(numpy_to_idarr(np.array([True, False])), _vtk.vtkIdTypeArray)
+assert_types(numpy_to_idarr([0, 1], deep=True), _vtk.vtkIdTypeArray)
+assert_types(numpy_to_idarr([0, 1], return_ind=False), _vtk.vtkIdTypeArray)
 
-assert_types(numpy_to_idarr([0, 1], return_ind=True),            tuple[_vtk.vtkIdTypeArray, NumpyArray[int]])  # pragma: no cover
+assert_types(numpy_to_idarr([0, 1], return_ind=True), tuple[_vtk.vtkIdTypeArray, NumpyArray[int]])  # pragma: no cover
 assert_types(numpy_to_idarr([0, 1], deep=True, return_ind=True), tuple[_vtk.vtkIdTypeArray, NumpyArray[int]])  # pragma: no cover
 
 # The catch-all, reached only by a flag widened to `bool`
-assert_types(numpy_to_idarr([0, 1], return_ind=a_flag()),        tuple[_vtk.vtkIdTypeArray, NumpyArray[int]] | _vtk.vtkIdTypeArray)  # pragma: no cover
+assert_types(numpy_to_idarr([0, 1], return_ind=a_flag()), tuple[_vtk.vtkIdTypeArray, NumpyArray[int]] | _vtk.vtkIdTypeArray)  # pragma: no cover

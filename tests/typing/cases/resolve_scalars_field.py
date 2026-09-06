@@ -17,8 +17,6 @@ def a_mesh() -> pv.PolyData:
     return pv.Sphere()
 
 
-# fmt: off
-
-assert_types(_resolve_scalars_field(np.zeros(a_mesh().n_points), a_mesh(), 'point'),  PointLiteral | CellLiteral)
-assert_types(_resolve_scalars_field(np.zeros(a_mesh().n_cells), a_mesh(), 'cell'),    PointLiteral | CellLiteral)
+assert_types(_resolve_scalars_field(np.zeros(a_mesh().n_points), a_mesh(), 'point'), PointLiteral | CellLiteral)
+assert_types(_resolve_scalars_field(np.zeros(a_mesh().n_cells), a_mesh(), 'cell'), PointLiteral | CellLiteral)
 assert_types(_resolve_scalars_field(np.zeros(a_mesh().n_points), a_mesh(), FieldAssociation.POINT), PointLiteral | CellLiteral)

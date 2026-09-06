@@ -19,10 +19,8 @@ def some_points() -> NumpyArray[float]:
     return np.array([[0.0, 0.0, 0.0], [1.0, 0.1, 0.0], [2.0, 0.0, 0.1], [3.0, 0.1, 0.0]])
 
 
-# fmt: off
-
-assert_types(pv.fit_line_to_points(some_points()),                          _Fitted)
-assert_types(pv.fit_line_to_points(some_points(), return_meta=False),       _Fitted)
-assert_types(pv.fit_line_to_points(some_points(), return_meta=True),        _Fitted)
-assert_types(pv.fit_line_to_points(some_points(), init_direction='x'),      _Fitted)
+assert_types(pv.fit_line_to_points(some_points()), _Fitted)
+assert_types(pv.fit_line_to_points(some_points(), return_meta=False), _Fitted)
+assert_types(pv.fit_line_to_points(some_points(), return_meta=True), _Fitted)
+assert_types(pv.fit_line_to_points(some_points(), init_direction='x'), _Fitted)
 assert_types(pv.fit_line_to_points(some_points(), init_direction=(1.0, 0.0, 0.0)), _Fitted)

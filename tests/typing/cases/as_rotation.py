@@ -14,8 +14,6 @@ def a_rotated_transform() -> pv.Transform:
     return pv.Transform().rotate_z(30.0)
 
 
-# fmt: off
-
-assert_types(a_rotated_transform().as_rotation(),               Rotation | NumpyArray[float])
-assert_types(a_rotated_transform().as_rotation('quat'),         Rotation | NumpyArray[float])
+assert_types(a_rotated_transform().as_rotation(), Rotation | NumpyArray[float])
+assert_types(a_rotated_transform().as_rotation('quat'), Rotation | NumpyArray[float])
 assert_types(a_rotated_transform().as_rotation('euler', 'xyz'), Rotation | NumpyArray[float])

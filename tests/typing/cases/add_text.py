@@ -15,11 +15,9 @@ def a_plotter() -> pv.Plotter:
     return pv.Plotter()
 
 
-# fmt: off
-
-assert_types(a_plotter().add_text('a'),                        pv.CornerAnnotation | pv.Text)
+assert_types(a_plotter().add_text('a'), pv.CornerAnnotation | pv.Text)
 assert_types(a_plotter().add_text('a', position='upper_edge'), pv.CornerAnnotation | pv.Text)
-assert_types(a_plotter().add_text('a', position=(0.1, 0.1)),   pv.CornerAnnotation | pv.Text)
-assert_types(a_plotter().add_text('a', position=None),         pv.CornerAnnotation | pv.Text)
+assert_types(a_plotter().add_text('a', position=(0.1, 0.1)), pv.CornerAnnotation | pv.Text)
+assert_types(a_plotter().add_text('a', position=None), pv.CornerAnnotation | pv.Text)
 
-assert_types(a_plotter().add_title('a'),                       pv.CornerAnnotation | pv.Text)
+assert_types(a_plotter().add_title('a'), pv.CornerAnnotation | pv.Text)

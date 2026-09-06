@@ -23,23 +23,21 @@ def some_contours() -> pv.PolyData:
     return pv.Circle().extract_feature_edges()
 
 
-# fmt: off
+assert_types(pv.Sphere().cell_quality(), pv.PolyData)
+assert_types(a_grid().cell_quality(), pv.ImageData)
+assert_types(a_multiblock().cell_quality(), pv.MultiBlock)
 
-assert_types(pv.Sphere().cell_quality(),                                pv.PolyData)
-assert_types(a_grid().cell_quality(),                                   pv.ImageData)
-assert_types(a_multiblock().cell_quality(),                             pv.MultiBlock)
+assert_types(pv.Sphere().validate_mesh(), _MeshValidationReport[pv.PolyData])
+assert_types(a_multiblock().validate_mesh(), _MeshValidationReport[pv.MultiBlock])
 
-assert_types(pv.Sphere().validate_mesh(),                               _MeshValidationReport[pv.PolyData])
-assert_types(a_multiblock().validate_mesh(),                            _MeshValidationReport[pv.MultiBlock])
+assert_types(a_grid().select_interior_points(pv.Sphere()), pv.ImageData)
+assert_types(pv.Sphere().select_interior_points(pv.Sphere()), pv.PolyData)
 
-assert_types(a_grid().select_interior_points(pv.Sphere()),              pv.ImageData)
-assert_types(pv.Sphere().select_interior_points(pv.Sphere()),           pv.PolyData)
+assert_types(some_contours().triangulate_contours(), pv.PolyData)
 
-assert_types(some_contours().triangulate_contours(),                    pv.PolyData)
-
-assert_types(pv.Sphere().remove_unused_points(),                        pv.PolyData)
+assert_types(pv.Sphere().remove_unused_points(), pv.PolyData)
 assert_types(pv.Sphere().cast_to_unstructured_grid().remove_unused_points(), pv.UnstructuredGrid)
 
-assert_types(pv.Transform().apply_to_dataset(pv.Sphere()),              pv.PolyData)
-assert_types(pv.Transform().apply_to_dataset(a_grid()),                 pv.ImageData)
-assert_types(pv.Transform().apply_to_dataset(a_multiblock()),           pv.MultiBlock)
+assert_types(pv.Transform().apply_to_dataset(pv.Sphere()), pv.PolyData)
+assert_types(pv.Transform().apply_to_dataset(a_grid()), pv.ImageData)
+assert_types(pv.Transform().apply_to_dataset(a_multiblock()), pv.MultiBlock)
