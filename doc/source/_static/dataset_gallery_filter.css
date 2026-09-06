@@ -186,7 +186,7 @@
   right: 0.5rem;
 }
 
-/* The Source & License footer carries badge groups and links far longer than the
+/* The Origin & License footer carries badge groups and links far longer than the
    numeric values the field grid was built for, so let them wrap. */
 .gallery-card .sd-card-footer .sd-text-nowrap {
   white-space: normal;
