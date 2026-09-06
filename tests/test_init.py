@@ -83,13 +83,13 @@ PLOTTING_VTKMODULES = CORE_VTKMODULES | {
 
 
 def exec_success(code: str):
-    return os.system(f'{sys.executable} -c "{code}"') == 0
+    return subprocess.run([sys.executable, '-c', code], check=False).returncode == 0
 
 
 def _module_is_loaded(module_to_check: str, module_to_import: str = 'pyvista') -> bool:
     """This function checks if the specified module is loaded after calling `import pyvista`
 
-    We use ``os.system`` because we need to test the import of pyvista
+    We use a subprocess because we need to test the import of pyvista
     outside of the pytest unit test framework as pytest loads vtk.
     """
     exe_str = (

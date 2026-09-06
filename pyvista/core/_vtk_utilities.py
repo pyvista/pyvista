@@ -163,6 +163,9 @@ _SUPPORTS_FIXED_SIZE_STORAGE = vtk_version_info >= (9, 6, 2)
 # alive itself -- see `CellArray._set_data`.
 _SETDATA_TAKES_OWNERSHIP = vtk_version_info >= (9, 6)
 
+# From VTK 9.4, `vtkMatrix3x3/4x4.GetData` return their elements as a tuple, not a pointer.
+_MATRIX_GET_DATA_RETURNS_ELEMENTS = vtk_version_info >= (9, 4)
+
 # VTK 9.4 keeps the polyhedron faces and face locations in two cell arrays, reachable
 # from `GetPolyhedronFaces` and `GetPolyhedronFaceLocations`. Before that a polyhedron
 # is a single padded face stream with no offsets or connectivity of its own, so the
@@ -306,9 +309,10 @@ class VTKObjectWrapperCheckSnakeCase(_vtk.VTKObjectWrapper):
     """
 
     def __getattr__(self, name: str):
-        """Forward unknown attribute requests to ``VTKArray``'s ``__getattr__``."""
+        """Forward unknown attribute requests to the wrapped VTK object."""
         if self.VTKObject is not None:
             # Check if forwarding snake_case attributes
             DisableVtkSnakeCase.check_attribute(self.VTKObject, name)
             return getattr(self.VTKObject, name)
-        raise AttributeError
+        msg = f'{type(self).__name__!r} object has no attribute {name!r}'
+        raise AttributeError(msg)
