@@ -5037,7 +5037,6 @@ class DataSetFilters(DataObjectFilters):
         output = self.extract_points(
             ind,
             adjacent_cells=mode == 'all',
-            include_cells=self.n_cells > 0,
             invert=not invert,
             pass_point_ids=pass_point_ids,
             pass_cell_ids=pass_cell_ids,
