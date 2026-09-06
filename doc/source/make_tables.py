@@ -2936,10 +2936,12 @@ class DatasetPropsGenerator:
 
     @staticmethod
     def generate_license_field(metadata) -> str:
-        """Format the licence as a badge per identifier, linked to its text."""
-        return '\n'.join(
-            f':bdg-link-primary:`{lic.spdx_id} <{lic.url}>`' for lic in metadata.licenses
-        )
+        """Format each licence as a badge linking its text, beside its canonical page."""
+        lines = []
+        for lic in metadata.licenses:
+            badge = f':bdg-link-primary:`{lic.spdx_id} <{lic.text_url or lic.url}>`'
+            lines.append(f'{badge} `{lic.title} <{lic.url}>`_')
+        return '\n'.join(lines)
 
     @staticmethod
     def generate_usage_field(metadata) -> str:

@@ -63,6 +63,9 @@ class License:
     share_alike: bool
     """Whether derivative works must carry the same licence."""
 
+    text_url: str | None = None
+    """URL of the licence text as published beside the dataset table."""
+
 
 @dataclass(frozen=True)
 class Reference:
@@ -280,6 +283,15 @@ def _license_terms(expression: str) -> list[str]:
     return terms
 
 
+def _license_text_url(file: str | None) -> str | None:
+    """Resolve a `[license.*]` `file` value against where the table is published."""
+    if not file:
+        return None
+    if file.startswith(('http://', 'https://')):
+        return file
+    return _metadata_base_url() + file.lstrip('/')
+
+
 def _build_index(document: Mapping[str, Any]) -> _MetadataIndex:
     """Turn a parsed ``DATASETS.toml`` document into a lookup index."""
     version = document.get('schema_version')
@@ -298,6 +310,7 @@ def _build_index(document: Mapping[str, Any]) -> _MetadataIndex:
             commercial_use=table['commercial_use'],
             attribution_required=table['attribution_required'],
             share_alike=table['share_alike'],
+            text_url=_license_text_url(table.get('file')),
         )
         for key, table in document.get('license', {}).items()
     }

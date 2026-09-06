@@ -158,6 +158,8 @@ def test_build_index_reads_every_field(index):
 
 
 def test_license_table_is_resolved(index):
+    from pyvista.examples._dataset_metadata import _metadata_base_url
+
     assert index.licenses['CC-BY-4.0'] == License(
         spdx_id='CC-BY-4.0',
         title='Creative Commons Attribution 4.0 International',
@@ -165,7 +167,20 @@ def test_license_table_is_resolved(index):
         commercial_use=True,
         attribution_required=True,
         share_alike=False,
+        text_url=_metadata_base_url() + 'LICENSES/CC-BY-4.0.txt',
     )
+
+
+def test_license_text_url_resolves_against_the_table():
+    """A relative `file` is published beside the table; an absolute one is left alone."""
+    from pyvista.examples._dataset_metadata import _license_text_url
+    from pyvista.examples._dataset_metadata import _metadata_base_url
+
+    assert _license_text_url(None) is None
+    assert _license_text_url('LICENSES/MIT.txt') == _metadata_base_url() + 'LICENSES/MIT.txt'
+    assert _license_text_url('/LICENSES/MIT.txt') == _metadata_base_url() + 'LICENSES/MIT.txt'
+    absolute = 'https://example.org/MIT.txt'
+    assert _license_text_url(absolute) == absolute
 
 
 def test_obligations_combine_across_an_expression(index):

@@ -33,8 +33,9 @@ can be read back at runtime. Its badges come in two families:
      - Meaning
      - ``Example`` property
    * - :bdg-primary:`CC-BY-4.0`
-     - The licence. On a card it is a link to the full text, and a dataset may
-       carry more than one.
+     - The licence. On a card the badge links the exact text redistributed with
+       the data, and the licence name beside it links the issuing organisation's
+       own page. A dataset may carry more than one.
      - :attr:`~pyvista.examples.Example.license`
    * - :bdg-success:`Commercial use`
      - The licence permits commercial use.
