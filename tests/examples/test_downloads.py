@@ -65,20 +65,14 @@ def url_session():
     )
 
 
-def test_dataset_loader_source_url_blob(test_case: DatasetLoaderTestCase, url_session):
-    try:
-        # Skip test if not loadable
-        sources = test_case.dataset_loader[1].source_url
-    except pv.VTKVersionError as e:
-        reason = e.args[0]
-        pytest.skip(reason)
+def test_dataset_loader_source_urls_blob(test_case: DatasetLoaderTestCase, url_session):
+    sources = test_case.dataset_loader[1].source_urls
 
     def is_valid(url: str) -> bool:
         # Check is_file() in case local cache of pyvista/data is used
         return Path(url).is_file() or _is_valid_url(url_session, url)
 
     # Test valid url; some datasets have dozens of files, so check them concurrently
-    sources = [sources] if isinstance(sources, str) else sources  # Make iterable
     with ThreadPoolExecutor(max_workers=8) as pool:
         valid = pool.map(is_valid, sources)
         invalid = [url for url, ok in zip(sources, valid, strict=True) if not ok]

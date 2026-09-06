@@ -91,7 +91,7 @@ class _Builder:
 def test_offline_viewer_paths_use_builder_target_uri(
     tmp_path, monkeypatch, target_uri, expected_viewer_uri
 ):
-    monkeypatch.setattr(viewer_directive, 'HTML_VIEWER_PATH', '/tmp/viewer.html')
+    monkeypatch.setattr(viewer_directive, 'HTML_VIEWER_PATH', str(tmp_path / 'viewer.html'))
     out_dir = tmp_path / '_build' / 'html'
     dest_file = out_dir / '_images' / 'plot_directive' / 'guide' / 'scene.vtksz'
     dest_file.parent.mkdir(parents=True)
@@ -108,7 +108,7 @@ def test_offline_viewer_paths_use_builder_target_uri(
 
 
 def test_offline_viewer_paths_warns_for_asset_outside_images(tmp_path, monkeypatch, caplog):
-    monkeypatch.setattr(viewer_directive, 'HTML_VIEWER_PATH', '/tmp/viewer.html')
+    monkeypatch.setattr(viewer_directive, 'HTML_VIEWER_PATH', str(tmp_path / 'viewer.html'))
     out_dir = tmp_path / '_build' / 'html'
     dest_file = out_dir / 'plot_directive' / 'guide' / 'scene.vtksz'
     dest_file.parent.mkdir(parents=True)

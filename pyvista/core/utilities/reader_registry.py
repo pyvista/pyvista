@@ -153,13 +153,17 @@ _override_ext_readers: set[str] = set()
 _pending_ext_readers: dict[str, list[EntryPoint]] = {}
 _entry_points_loaded: bool = False
 _temp_files: list[str] = []
+_temp_dirs: list[str] = []
 
 
 def _cleanup_temp_files() -> None:
-    """Remove temporary files created by :func:`_download_uri`."""
+    """Remove temporary files and directories created by :func:`_download_uri`."""
     for path in _temp_files:
         Path(path).unlink(missing_ok=True)
     _temp_files.clear()
+    for path in _temp_dirs:
+        shutil.rmtree(path, ignore_errors=True)
+    _temp_dirs.clear()
 
 
 atexit.register(_cleanup_temp_files)
@@ -253,7 +257,13 @@ def _download_uri(uri: str, ext: str) -> str:
                 f'Install it with: pip install fsspec'
             )
             raise ImportError(msg)
-        result = pooch.retrieve(uri, known_hash=None, fname=f'pyvista_download{suffix}')  # type: ignore[attr-defined]  # pooch doesn't export retrieve in __all__
+        # A fresh directory per call: pooch reuses an existing file of the same name
+        # without checking it came from the same URL.
+        download_dir = tempfile.mkdtemp(prefix='pyvista_download_')
+        _temp_dirs.append(download_dir)
+        result = pooch.retrieve(  # type: ignore[attr-defined]  # pooch doesn't export retrieve in __all__
+            uri, known_hash=None, fname=f'download{suffix}', path=download_dir
+        )
         _temp_files.append(result)
         return result
 
