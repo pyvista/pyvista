@@ -493,9 +493,15 @@ class ImageDataFilters(DataSetFilters):
         crop
 
         """
+        voi = _validation.validate_arrayN(
+            voi, must_have_length=6, must_be_integer=True, dtype_out=int, name='voi'
+        )
         extent = self.extent
         if np.any(np.not_equal(ImageDataFilters._clip_extent(voi, clip_to=extent), voi)):
-            msg = f'VOI {tuple(voi)} is outside the extent of the input {extent}.'
+            msg = (
+                f'The requested volume of interest {tuple(voi.tolist())} '
+                f"is outside the input's extent {extent}."
+            )
             raise ValueError(msg)
 
         alg = _vtk.vtkExtractVOI()
@@ -608,7 +614,8 @@ class ImageDataFilters(DataSetFilters):
 
         extent : VectorLike[int], optional
             Length-6 vector of integers specifying the full :attr:`~pyvista.ImageData.extent` of
-            the cropping region.
+            the cropping region. If the region extends beyond the extents of this mesh, it is
+            clipped to the part this mesh covers.
 
         normalized_bounds : VectorLike[float], optional
             Normalized bounds relative to the input. These are floats between ``0.0`` and ``1.0``
@@ -692,7 +699,7 @@ class ImageDataFilters(DataSetFilters):
             Threshold-like filter which may be used to generate a mask for cropping.
 
         extract_subset
-            Equivalent filter to ``crop(extent=voi, rebase_coordinates=True)``.
+            Similar filter which requires the region to be inside the image.
 
         Examples
         --------
@@ -1003,13 +1010,14 @@ class ImageDataFilters(DataSetFilters):
             )
             raise TypeError(msg)
 
-        # Crop to the part of the requested region which the image actually covers
-        voi = ImageDataFilters._clip_extent(voi, clip_to=self.extent)
-
         # Ensure dimensions are all at least one
+        voi = np.array(voi)
         voi[1] = max(voi[0:2])
         voi[3] = max(voi[2:4])
         voi[5] = max(voi[4:6])
+
+        # Crop to the part of the requested region which the image actually covers
+        voi = ImageDataFilters._clip_extent(voi, clip_to=self.extent)
 
         cropped = self.extract_subset(
             voi, rebase_coordinates=rebase_coordinates, progress_bar=progress_bar

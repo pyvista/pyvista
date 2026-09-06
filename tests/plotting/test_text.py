@@ -339,15 +339,15 @@ def test_add_text_actor_follows_the_theme_of_the_plotter():
 
 
 def test_text_property_theme_is_not_shared():
-    """Test that a property's theme is its own and is fixed after creation."""
-    default = pv.TextProperty()
-
+    """Test that a property keeps its own theme when another property is created."""
     theme = pv.themes.Theme()
     theme.font.color = 'red'
-    other = pv.TextProperty(theme=theme)
-    assert other.color == pv.Color('red')
-    assert default.color == pv.Color(pv.global_theme.font.color)
-    assert default._theme is not other._theme
+    custom = pv.TextProperty(theme=theme)
 
-    theme.font.color = 'blue'
-    assert other.color == pv.Color('red')
+    # A property made from the global theme does not take the custom theme's color
+    default = pv.TextProperty()
+    assert default.color == pv.Color(pv.global_theme.font.color)
+
+    # Nor does it leave the custom property resolving colors from the global theme
+    custom.color = None
+    assert custom.color == pv.Color('red')

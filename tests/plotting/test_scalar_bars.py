@@ -200,4 +200,5 @@ def test_remove_actor_removes_mapper_from_every_scalar_bar(sphere):
 
     pl.remove_actor(actor)
     assert [title for title, m in mappers.items() if actor.mapper in m] == []
+    assert len(pl.scalar_bars) == 0
     pl.close()

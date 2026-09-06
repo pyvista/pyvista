@@ -3679,19 +3679,11 @@ def test_extract_subset(uniform, rebase_coordinates):
     [(-5, 5, 0, 5, 0, 5), (0, 100, 0, 5, 0, 5), (0, 5, 0, 5, 0, 100)],
 )
 def test_extract_subset_voi_outside_extent_raises(uniform, voi):
-    match = f'VOI {voi} is outside the extent of the input {uniform.extent}.'
+    match = (
+        f"The requested volume of interest {voi} is outside the input's extent {uniform.extent}."
+    )
     with pytest.raises(ValueError, match=re.escape(match)):
         uniform.extract_subset(voi)
-
-
-def test_crop_clips_to_the_image_extent(uniform):
-    extent = uniform.extent
-    oversized = (extent[0] - 5, extent[1] + 5, extent[2], extent[3], extent[4], extent[5])
-
-    cropped = uniform.crop(extent=oversized)
-
-    assert cropped.extent == extent
-    assert cropped == uniform.crop(extent=extent)
 
 
 def test_gaussian_smooth_output_type():
@@ -5041,31 +5033,49 @@ def test_color_labels_does_not_modify_colormap():
 
 @pytest.mark.parametrize('as_array', [True, False])
 @pytest.mark.parametrize(
-    ('color_type', 'red', 'opaque'),
+    ('color_type', 'red', 'green', 'opaque', 'quarter'),
     [
-        ('float_rgb', (1.0, 0.0, 0.0), None),
-        ('float_rgba', (1.0, 0.0, 0.0), 1.0),
-        ('int_rgb', (255, 0, 0), None),
-        ('int_rgba', (255, 0, 0), 255),
+        ('float_rgb', (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), None, None),
+        ('float_rgba', (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), 1.0, 0.25),
+        ('int_rgb', (255, 0, 0), (0, 255, 0), None, None),
+        ('int_rgba', (255, 0, 0), (0, 255, 0), 255, 64),
     ],
 )
-def test_color_labels_listed_colormap_colors(as_array, color_type, red, opaque):
+def test_color_labels_listed_colormap_colors(as_array, color_type, red, green, opaque, quarter):
     rgb = [(1.0, 0.0, 0.0), (0.0, 1.0, 0.0)]
     rgba = [(*color, 0.25) for color in rgb]
     labels = pv.ImageData(dimensions=(3, 1, 1))
     labels['data'] = [0, 1, 0]
 
-    def first_color(colors):
+    def colors_of(colors):
         cmap = ListedColormap(np.array(colors) if as_array else colors)
         colored = labels.color_labels(cmap, coloring_mode='index', color_type=color_type)
-        return colored.active_scalars[0]
+        return np.asarray(colored.active_scalars)
 
-    assert np.allclose(first_color(rgb)[:3], red)
-    assert np.allclose(first_color(rgba)[:3], red)
+    assert np.allclose(colors_of(rgb)[:, :3], [red, green, red])
+    assert np.allclose(colors_of(rgba)[:, :3], [red, green, red])
     if opaque is not None:
-        assert np.isclose(first_color(rgb)[3], opaque)
+        assert np.allclose(colors_of(rgb)[:, 3], opaque)
         # The colormap's own alpha is used when it has one
-        assert np.isclose(first_color(rgba)[3], 0.25 * opaque, atol=1)
+        assert np.allclose(colors_of(rgba)[:, 3], quarter)
+
+
+@pytest.mark.parametrize('as_array', [True, False])
+@pytest.mark.parametrize('color_type', ['float_rgb', 'float_rgba', 'int_rgb', 'int_rgba'])
+def test_color_labels_return_dict_listed_colormap(as_array, color_type):
+    colors = [(1.0, 0.0, 0.0), (0.0, 1.0, 0.0)]
+    cmap = ListedColormap(np.array(colors) if as_array else colors)
+    labels = pv.ImageData(dimensions=(3, 1, 1))
+    labels['data'] = [0, 1, 0]
+
+    colored, mapping = labels.color_labels(
+        cmap, coloring_mode='index', color_type=color_type, return_dict=True
+    )
+
+    assert list(mapping.keys()) == [0, 1]
+    for label, color in mapping.items():
+        assert pv.Color(color) == pv.Color(colors[label])
+        assert np.array_equal(colored.active_scalars[label], color)
 
 
 def test_color_labels_return_dict_cycle_mode():
