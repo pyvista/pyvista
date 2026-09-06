@@ -403,6 +403,9 @@ renderers
 repo
 resample
 resampled
+reslice
+resliced
+reslicing
 restrip
 revered
 rfft
