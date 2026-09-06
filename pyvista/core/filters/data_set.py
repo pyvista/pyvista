@@ -4630,7 +4630,13 @@ class DataSetFilters(DataObjectFilters):
         r"""Return a subset of the grid.
 
         The output is an :class:`~pyvista.UnstructuredGrid`. Use :meth:`remove_cells`
-        with ``invert=True`` to extract cells while keeping the input type.
+        with ``invert=True`` to extract the same cells while keeping the input type::
+
+            # UnstructuredGrid, whatever the input
+            extracted = mesh.extract_cells(ind)
+
+            # PolyData for PolyData input, UnstructuredGrid otherwise
+            extracted = mesh.remove_cells(ind, invert=True)
 
         .. versionchanged:: 0.49
             Negative and out-of-range indices raise ``IndexError``.
@@ -4728,8 +4734,17 @@ class DataSetFilters(DataObjectFilters):
         r"""Return a subset of the grid (with cells) that contains any of the given point indices.
 
         The output is an :class:`~pyvista.UnstructuredGrid`. Use :meth:`remove_points`
-        with ``invert=True`` and ``mode='all'`` to extract points and their cells while
-        keeping the input type.
+        with ``invert=True`` and ``mode='all'`` to extract the same points and their
+        cells while keeping the input type::
+
+            # UnstructuredGrid, whatever the input
+            extracted = mesh.extract_points(ind)
+
+            # PolyData for PolyData input, PointSet for PointSet input
+            extracted = mesh.remove_points(ind=ind, mode='all', invert=True)
+
+        The two differ for a :class:`~pyvista.PointSet`, which has no cells to contain
+        the selected points. Set ``include_cells=False`` to extract its points.
 
         .. versionchanged:: 0.49
             Negative and out-of-range indices raise ``IndexError``.
@@ -4840,8 +4855,15 @@ class DataSetFilters(DataObjectFilters):
 
         Only points used by a remaining cell are kept. The output is
         :class:`~pyvista.PolyData` for ``PolyData`` input and an
-        :class:`~pyvista.UnstructuredGrid` otherwise. With ``invert=True``, this is the
-        equivalent of :meth:`extract_cells` that keeps the input type.
+        :class:`~pyvista.UnstructuredGrid` otherwise. With ``invert=True`` this removes
+        every cell `except` those specified, which is :meth:`extract_cells` with the
+        input type kept::
+
+            # UnstructuredGrid, whatever the input
+            extracted = mesh.extract_cells(ind)
+
+            # PolyData for PolyData input, UnstructuredGrid otherwise
+            extracted = mesh.remove_cells(ind, invert=True)
 
         .. versionchanged:: 0.49
             This filter is available for all datasets, including
@@ -4933,8 +4955,14 @@ class DataSetFilters(DataObjectFilters):
         cell are kept. The output is :class:`~pyvista.PolyData` for
         ``PolyData`` input, :class:`~pyvista.PointSet` for ``PointSet`` input, and an
         :class:`~pyvista.UnstructuredGrid` otherwise. With ``invert=True`` and
-        ``mode='all'``, this is the equivalent of :meth:`extract_points` that keeps
-        the input type.
+        ``mode='all'`` this removes every point `except` those specified, which is
+        :meth:`extract_points` with the input type kept::
+
+            # UnstructuredGrid, whatever the input
+            extracted = mesh.extract_points(ind)
+
+            # PolyData for PolyData input, PointSet for PointSet input
+            extracted = mesh.remove_points(ind=ind, mode='all', invert=True)
 
         A ``PolyData`` without cells returns one vertex cell per remaining point, the
         same as ``pv.PolyData(points)`` creates. Use :meth:`~pyvista.DataSet.cast_to_pointset`
