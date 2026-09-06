@@ -336,3 +336,18 @@ def test_add_text_actor_follows_the_theme_of_the_plotter():
     assert actor.prop.color == pv.Color('blue')
     assert actor.prop.font_family == 'times'
     pl.close()
+
+
+def test_text_property_theme_is_not_shared():
+    """Test that a property's theme is its own and is fixed after creation."""
+    default = pv.TextProperty()
+
+    theme = pv.themes.Theme()
+    theme.font.color = 'red'
+    other = pv.TextProperty(theme=theme)
+    assert other.color == pv.Color('red')
+    assert default.color == pv.Color(pv.global_theme.font.color)
+    assert default._theme is not other._theme
+
+    theme.font.color = 'blue'
+    assert other.color == pv.Color('red')

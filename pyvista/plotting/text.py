@@ -537,7 +537,6 @@ class TextProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkTextProperty):
 
     """
 
-    _theme = Theme()
     _color_set = None
     _background_color_set = None
     _font_family = None
@@ -561,12 +560,8 @@ class TextProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkTextProperty):
     ):
         """Initialize text's property."""
         super().__init__()
-        if theme is None:
-            # copy global theme to ensure local property theme is fixed
-            # after creation.
-            self._theme.load_theme(pv.global_theme)
-        else:
-            self._theme.load_theme(theme)
+        # snapshot the theme so later edits to the source theme do not reach this property
+        self._theme = Theme._from_theme(pv.global_theme if theme is None else theme)
         self.color = color
         self.font_family = font_family
         if orientation is not None:
