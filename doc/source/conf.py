@@ -257,6 +257,8 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*NormalsLiteral'),
     (r'py:.*', '.*_CellQualityLiteral'),
     (r'py:.*', '.*_CompressionOptions'),
+    (r'py:.*', '.*_ConnectivityMode'),
+    (r'py:.*', '.*_RegionAssignmentMode'),
     (r'py:.*', '.*_SENTINEL'),
     (r'py:.*', '.*T'),
     (r'py:.*', '.*Options'),

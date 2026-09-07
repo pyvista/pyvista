@@ -14,6 +14,7 @@ from typing import Literal
 from typing import NamedTuple
 from typing import cast
 from typing import get_args
+from typing import overload
 import warnings
 
 import numpy as np
@@ -55,6 +56,7 @@ if TYPE_CHECKING:
     from pyvista import DataSet
     from pyvista import ImageData
     from pyvista import MultiBlock
+    from pyvista import PointSet
     from pyvista import PolyData
     from pyvista import RectilinearGrid
     from pyvista import UnstructuredGrid
@@ -71,6 +73,9 @@ if TYPE_CHECKING:
 
 
 _SelectInteriorPointsOptions = Literal['signed_distance', 'cell_locator']
+
+_ConnectivityMode = Literal['all', 'largest', 'specified', 'cell_seed', 'point_seed', 'closest']
+_RegionAssignmentMode = Literal['ascending', 'descending', 'unspecified']
 
 
 _CLIP_SURFACE_SCALARS = '__pyvista_clip_surface_distance'
@@ -2243,6 +2248,14 @@ class DataSetFilters(DataObjectFilters):
 
         return output
 
+    # fmt: off
+    @overload
+    def connectivity(self: PolyData, extraction_mode: _ConnectivityMode = ..., variable_input: float | VectorLike[float] | VectorLike[int] | VectorLike[bool] | None = ..., scalar_range: VectorLike[float] | None = ..., scalars: str | None = ..., label_regions: bool = ..., region_assignment_mode: _RegionAssignmentMode = ..., region_ids: int | VectorLike[int] | None = ..., point_ids: int | VectorLike[int] | VectorLike[bool] | None = ..., cell_ids: int | VectorLike[int] | VectorLike[bool] | None = ..., closest_point: VectorLike[float] | None = ..., inplace: bool = ..., progress_bar: bool = ..., **kwargs) -> PolyData: ...  # type: ignore[misc]  # noqa: E501, FBT001
+    @overload
+    def connectivity(self: PointSet, extraction_mode: _ConnectivityMode = ..., variable_input: float | VectorLike[float] | VectorLike[int] | VectorLike[bool] | None = ..., scalar_range: VectorLike[float] | None = ..., scalars: str | None = ..., label_regions: bool = ..., region_assignment_mode: _RegionAssignmentMode = ..., region_ids: int | VectorLike[int] | None = ..., point_ids: int | VectorLike[int] | VectorLike[bool] | None = ..., cell_ids: int | VectorLike[int] | VectorLike[bool] | None = ..., closest_point: VectorLike[float] | None = ..., inplace: bool = ..., progress_bar: bool = ..., **kwargs) -> PointSet: ...  # type: ignore[misc]  # noqa: E501, FBT001
+    @overload
+    def connectivity(self: DataSet, extraction_mode: _ConnectivityMode = ..., variable_input: float | VectorLike[float] | VectorLike[int] | VectorLike[bool] | None = ..., scalar_range: VectorLike[float] | None = ..., scalars: str | None = ..., label_regions: bool = ..., region_assignment_mode: _RegionAssignmentMode = ..., region_ids: int | VectorLike[int] | None = ..., point_ids: int | VectorLike[int] | VectorLike[bool] | None = ..., cell_ids: int | VectorLike[int] | VectorLike[bool] | None = ..., closest_point: VectorLike[float] | None = ..., inplace: bool = ..., progress_bar: bool = ..., **kwargs) -> UnstructuredGrid: ...  # type: ignore[misc]  # noqa: E501, FBT001
+    # fmt: on
     @_deprecate_positional_args(allowed=['extraction_mode', 'variable_input'])
     def connectivity(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
@@ -2399,9 +2412,9 @@ class DataSetFilters(DataObjectFilters):
         Returns
         -------
         pyvista.DataSet
-            Dataset with labeled connected regions. Return type is
-            ``pyvista.PolyData`` if input type is ``pyvista.PolyData`` and
-            ``pyvista.UnstructuredGrid`` otherwise.
+            Dataset with labeled connected regions. The return type matches the
+            input for :class:`~pyvista.PolyData` and :class:`~pyvista.PointSet`,
+            and is :class:`~pyvista.UnstructuredGrid` for any other input.
 
         See Also
         --------
@@ -2717,6 +2730,14 @@ class DataSetFilters(DataObjectFilters):
         _warn_if_invalid_data(output)
         return output
 
+    # fmt: off
+    @overload
+    def extract_largest(self: PolyData, inplace: bool = ..., progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc, overload-overlap]  # noqa: E501, FBT001
+    @overload
+    def extract_largest(self: PointSet, inplace: bool = ..., progress_bar: bool = ...) -> PointSet: ...  # type: ignore[misc, overload-overlap]  # noqa: E501, FBT001
+    @overload
+    def extract_largest(self: DataSet, inplace: bool = ..., progress_bar: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]  # noqa: E501, FBT001
+    # fmt: on
     @_deprecate_positional_args
     def extract_largest(  # type: ignore[misc]
         self: _DataSetType,
@@ -2771,7 +2792,7 @@ class DataSetFilters(DataObjectFilters):
         self: _DataSetType,
         label: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
-    ):
+    ) -> MultiBlock:
         """Find, label, and split connected bodies/volumes.
 
         This splits different connected bodies into blocks in a
