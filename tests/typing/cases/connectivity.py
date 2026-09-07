@@ -44,16 +44,10 @@ assert_types(poly().connectivity(extraction_mode='specified', region_ids=0), pv.
 assert_types(poly().connectivity(extraction_mode='specified', region_ids=[0, 1]), pv.PolyData)
 assert_types(poly().connectivity(extraction_mode='cell_seed', cell_ids=0), pv.PolyData)
 assert_types(poly().connectivity(extraction_mode='cell_seed', cell_ids=[0, 1]), pv.PolyData)
-assert_types(
-    poly().connectivity(extraction_mode='cell_seed', cell_ids=np.zeros(96, dtype=bool)),
-    pv.PolyData,
-)
+assert_types(poly().connectivity(extraction_mode='cell_seed', cell_ids=np.zeros(96, dtype=bool)), pv.PolyData)
 assert_types(poly().connectivity(extraction_mode='point_seed', point_ids=0), pv.PolyData)
 assert_types(poly().connectivity(extraction_mode='point_seed', point_ids=[0, 1]), pv.PolyData)
-assert_types(
-    poly().connectivity(extraction_mode='point_seed', point_ids=np.zeros(52, dtype=bool)),
-    pv.PolyData,
-)
+assert_types(poly().connectivity(extraction_mode='point_seed', point_ids=np.zeros(52, dtype=bool)), pv.PolyData)
 assert_types(poly().connectivity(extraction_mode='closest', closest_point=(0.0, 0.0, 0.0)), pv.PolyData)
 assert_types(poly().connectivity(extraction_mode='closest', closest_point=np.zeros(3)), pv.PolyData)
 

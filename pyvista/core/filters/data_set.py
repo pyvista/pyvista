@@ -2248,74 +2248,32 @@ class DataSetFilters(DataObjectFilters):
 
         return output
 
+    # fmt: off
     @overload
-    def connectivity(  # type: ignore[misc]
-        self: PolyData,
-        extraction_mode: _ConnectivityMode = ...,
-        variable_input: (
-            float | VectorLike[float] | VectorLike[int] | VectorLike[bool] | None
-        ) = ...,
-        scalar_range: VectorLike[float] | None = ...,
-        scalars: str | None = ...,
-        label_regions: bool = ...,  # noqa: FBT001
-        region_assignment_mode: _RegionAssignmentMode = ...,
-        region_ids: int | VectorLike[int] | None = ...,
-        point_ids: int | VectorLike[int] | VectorLike[bool] | None = ...,
-        cell_ids: int | VectorLike[int] | VectorLike[bool] | None = ...,
-        closest_point: VectorLike[float] | None = ...,
-        inplace: bool = ...,  # noqa: FBT001
-        progress_bar: bool = ...,  # noqa: FBT001
-        **kwargs,
-    ) -> PolyData: ...
+    def connectivity(self: PolyData, extraction_mode: _ConnectivityMode = ..., variable_input: float | VectorLike[float] | VectorLike[int] | VectorLike[bool] | None = ..., scalar_range: VectorLike[float] | None = ..., scalars: str | None = ..., label_regions: bool = ..., region_assignment_mode: _RegionAssignmentMode = ..., region_ids: int | VectorLike[int] | None = ..., point_ids: int | VectorLike[int] | VectorLike[bool] | None = ..., cell_ids: int | VectorLike[int] | VectorLike[bool] | None = ..., closest_point: VectorLike[float] | None = ..., inplace: bool = ..., progress_bar: bool = ..., **kwargs) -> PolyData: ...  # type: ignore[misc]  # noqa: E501, FBT001
     @overload
-    def connectivity(  # type: ignore[misc]
-        self: PointSet,
-        extraction_mode: _ConnectivityMode = ...,
-        variable_input: (
-            float | VectorLike[float] | VectorLike[int] | VectorLike[bool] | None
-        ) = ...,
-        scalar_range: VectorLike[float] | None = ...,
-        scalars: str | None = ...,
-        label_regions: bool = ...,  # noqa: FBT001
-        region_assignment_mode: _RegionAssignmentMode = ...,
-        region_ids: int | VectorLike[int] | None = ...,
-        point_ids: int | VectorLike[int] | VectorLike[bool] | None = ...,
-        cell_ids: int | VectorLike[int] | VectorLike[bool] | None = ...,
-        closest_point: VectorLike[float] | None = ...,
-        inplace: bool = ...,  # noqa: FBT001
-        progress_bar: bool = ...,  # noqa: FBT001
-        **kwargs,
-    ) -> PointSet: ...
+    def connectivity(self: PointSet, extraction_mode: _ConnectivityMode = ..., variable_input: float | VectorLike[float] | VectorLike[int] | VectorLike[bool] | None = ..., scalar_range: VectorLike[float] | None = ..., scalars: str | None = ..., label_regions: bool = ..., region_assignment_mode: _RegionAssignmentMode = ..., region_ids: int | VectorLike[int] | None = ..., point_ids: int | VectorLike[int] | VectorLike[bool] | None = ..., cell_ids: int | VectorLike[int] | VectorLike[bool] | None = ..., closest_point: VectorLike[float] | None = ..., inplace: bool = ..., progress_bar: bool = ..., **kwargs) -> PointSet: ...  # type: ignore[misc]  # noqa: E501, FBT001
     @overload
-    def connectivity(  # type: ignore[misc]
-        self: DataSet,
-        extraction_mode: _ConnectivityMode = ...,
-        variable_input: (
-            float | VectorLike[float] | VectorLike[int] | VectorLike[bool] | None
-        ) = ...,
-        scalar_range: VectorLike[float] | None = ...,
-        scalars: str | None = ...,
-        label_regions: bool = ...,  # noqa: FBT001
-        region_assignment_mode: _RegionAssignmentMode = ...,
-        region_ids: int | VectorLike[int] | None = ...,
-        point_ids: int | VectorLike[int] | VectorLike[bool] | None = ...,
-        cell_ids: int | VectorLike[int] | VectorLike[bool] | None = ...,
-        closest_point: VectorLike[float] | None = ...,
-        inplace: bool = ...,  # noqa: FBT001
-        progress_bar: bool = ...,  # noqa: FBT001
-        **kwargs,
-    ) -> UnstructuredGrid: ...
+    def connectivity(self: DataSet, extraction_mode: _ConnectivityMode = ..., variable_input: float | VectorLike[float] | VectorLike[int] | VectorLike[bool] | None = ..., scalar_range: VectorLike[float] | None = ..., scalars: str | None = ..., label_regions: bool = ..., region_assignment_mode: _RegionAssignmentMode = ..., region_ids: int | VectorLike[int] | None = ..., point_ids: int | VectorLike[int] | VectorLike[bool] | None = ..., cell_ids: int | VectorLike[int] | VectorLike[bool] | None = ..., closest_point: VectorLike[float] | None = ..., inplace: bool = ..., progress_bar: bool = ..., **kwargs) -> UnstructuredGrid: ...  # type: ignore[misc]  # noqa: E501, FBT001
+    # fmt: on
     @_deprecate_positional_args(allowed=['extraction_mode', 'variable_input'])
     def connectivity(  # type: ignore[misc]  # noqa: PLR0917
-        self: DataSet,
-        extraction_mode: _ConnectivityMode = 'all',
+        self: _DataSetType,
+        extraction_mode: Literal[
+            'all',
+            'largest',
+            'specified',
+            'cell_seed',
+            'point_seed',
+            'closest',
+        ] = 'all',
         variable_input: (
             float | VectorLike[float] | VectorLike[int] | VectorLike[bool] | None
         ) = None,
         scalar_range: VectorLike[float] | None = None,
         scalars: str | None = None,
         label_regions: bool = True,  # noqa: FBT001, FBT002
-        region_assignment_mode: _RegionAssignmentMode = 'descending',
+        region_assignment_mode: Literal['ascending', 'descending', 'unspecified'] = 'descending',
         region_ids: int | VectorLike[int] | None = None,
         point_ids: int | VectorLike[int] | VectorLike[bool] | None = None,
         cell_ids: int | VectorLike[int] | VectorLike[bool] | None = None,
@@ -2772,27 +2730,17 @@ class DataSetFilters(DataObjectFilters):
         _warn_if_invalid_data(output)
         return output
 
+    # fmt: off
     @overload
-    def extract_largest(  # type: ignore[misc, overload-overlap]
-        self: PolyData,
-        inplace: bool = ...,  # noqa: FBT001
-        progress_bar: bool = ...,  # noqa: FBT001
-    ) -> PolyData: ...
+    def extract_largest(self: PolyData, inplace: bool = ..., progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc, overload-overlap]  # noqa: E501, FBT001
     @overload
-    def extract_largest(  # type: ignore[misc, overload-overlap]
-        self: PointSet,
-        inplace: bool = ...,  # noqa: FBT001
-        progress_bar: bool = ...,  # noqa: FBT001
-    ) -> PointSet: ...
+    def extract_largest(self: PointSet, inplace: bool = ..., progress_bar: bool = ...) -> PointSet: ...  # type: ignore[misc, overload-overlap]  # noqa: E501, FBT001
     @overload
-    def extract_largest(  # type: ignore[misc]
-        self: DataSet,
-        inplace: bool = ...,  # noqa: FBT001
-        progress_bar: bool = ...,  # noqa: FBT001
-    ) -> UnstructuredGrid: ...
+    def extract_largest(self: DataSet, inplace: bool = ..., progress_bar: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]  # noqa: E501, FBT001
+    # fmt: on
     @_deprecate_positional_args
     def extract_largest(  # type: ignore[misc]
-        self: DataSet,
+        self: _DataSetType,
         inplace: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ):
@@ -2841,7 +2789,7 @@ class DataSetFilters(DataObjectFilters):
 
     @_deprecate_positional_args
     def split_bodies(  # type: ignore[misc]
-        self: DataSet,
+        self: _DataSetType,
         label: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
     ) -> MultiBlock:
