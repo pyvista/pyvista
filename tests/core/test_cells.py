@@ -22,6 +22,7 @@ from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.celltype import _DEPRECATED_CELL_TYPES
 from pyvista.core.celltype import _RENAMED_CELL_TYPES
 from pyvista.core.errors import CellSizeError
+from pyvista.core.utilities.cells import create_mixed_cells
 from pyvista.core.utilities.cells import numpy_to_idarr
 from pyvista.examples import cells as example_cells
 from pyvista.examples import load_airplane
@@ -1162,3 +1163,16 @@ def test_cell_array_connectivity_outlives_its_source(dtype):
     polydata.SetPolys(pv.CellArray.from_regular_cells(faces.copy()))
     gc.collect()
     assert np.array_equal(pv.wrap(polydata).regular_faces, faces)
+
+
+def test_create_mixed_cells_variable_size():
+    types, cells = create_mixed_cells({pv.CellType.POLYGON: []}, nr_points=10)
+    assert types.size == 0
+    assert cells.size == 0
+    assert cells.dtype == pv.ID_TYPE
+
+    # Each cell's size precedes its point ids
+    cells_in = [[0, 1, 2], np.array([3, 4, 5, 6])]
+    types, cells = create_mixed_cells({pv.CellType.POLYGON: cells_in}, nr_points=10)
+    assert types.tolist() == [pv.CellType.POLYGON] * 2
+    assert cells.tolist() == [3, 0, 1, 2, 4, 3, 4, 5, 6]

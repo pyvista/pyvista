@@ -3,6 +3,7 @@ from __future__ import annotations
 import functools
 import inspect
 from pathlib import Path
+import sys
 from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import overload
@@ -188,8 +189,19 @@ def _deprecate_positional_args(
             )
             raise RuntimeError(msg)
 
+        # Leading parameters that may always be passed positionally
+        n_free_positional = 0
+        for name in param_names:
+            if name in ('self', 'cls') or (allowed and name in allowed):
+                n_free_positional += 1
+            else:
+                break
+
         @functools.wraps(f)
         def inner_f(*args: P.args, **kwargs: P.kwargs) -> T:
+            # Optimization: nothing to check when every positional argument is an allowed one
+            if len(args) <= n_free_positional:
+                return f(*args, **kwargs)
             passed_positional_names = param_names[: len(args)]
 
             # Exclude allowed ones
@@ -222,9 +234,10 @@ def _deprecate_positional_args(
 
                     def call_site() -> str:
                         # Get location where the function is called
-                        frame = inspect.stack()[stack_level]
-                        file = Path(frame.filename).as_posix()
-                        return f'{file}:{frame.lineno}'
+                        # Optimization: ``inspect.stack()`` reads source lines for every frame
+                        frame = sys._getframe(stack_level)
+                        file = Path(frame.f_code.co_filename).as_posix()
+                        return f'{file}:{frame.f_lineno}'
 
                     def warn_positional_args() -> None:
                         from pyvista.core.errors import PyVistaDeprecationWarning  # noqa: PLC0415

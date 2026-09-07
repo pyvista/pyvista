@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 import weakref
-import xml.dom.minidom as md
 from xml.etree import ElementTree as ET
 
 import numpy as np
@@ -16,6 +15,9 @@ from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from .helpers import view_vectors
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
@@ -246,10 +248,8 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
                 e.append(tmp)
                 e.append(ET.Element('Domain', dict(name='bool', id=f'0.{name}.bool')))
 
-        xmlstr = ET.tostring(root).decode()
-        newxml = md.parseString(xmlstr)
-        with Path(filename).open('w') as outfile:
-            outfile.write(newxml.toprettyxml(indent='\t', newl='\n'))
+        ET.indent(root, space='\t')
+        ET.ElementTree(root).write(filename, encoding='utf-8', xml_declaration=True)
 
     @property
     def position(self):  # numpydoc ignore=RT01
@@ -853,23 +853,26 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
 
         Examples
         --------
-        Display the bird image with a tight view.
+        .. pyvista-plot::
+            :force_static:
 
-        >>> import pyvista as pv
-        >>> from pyvista import examples
-        >>> bird = examples.download_bird()
-        >>> pl = pv.Plotter(border=True, border_width=5)
-        >>> _ = pl.add_mesh(bird, rgb=True)
-        >>> pl.camera.tight()
-        >>> pl.show()
+            Display the bird image with a tight view.
 
-        Set the background to blue use a 5% padding around the image.
+            >>> import pyvista as pv
+            >>> from pyvista import examples
+            >>> bird = examples.download_bird()
+            >>> pl = pv.Plotter(border=True, border_width=5)
+            >>> _ = pl.add_mesh(bird, rgb=True)
+            >>> pl.camera.tight()
+            >>> pl.show()
 
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(bird, rgb=True)
-        >>> pl.background_color = 'b'
-        >>> pl.camera.tight(padding=0.05)
-        >>> pl.show()
+            Set the background to blue use a 5% padding around the image.
+
+            >>> pl = pv.Plotter()
+            >>> _ = pl.add_mesh(bird, rgb=True)
+            >>> pl.background_color = 'b'
+            >>> pl.camera.tight(padding=0.05)
+            >>> pl.show()
 
         """
         # Inspired by vedo resetCamera. Thanks @marcomusy.

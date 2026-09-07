@@ -66,7 +66,7 @@ def download_sheen_chair():  # pragma: no cover
             'dict mapping from the `_gltf_loader`'
         )
         raise RuntimeError(msg)
-    return _gltf_loader('sheen_chair').download()
+    return _gltf_loader('sheen_chair').download()[0]
 
 
 def download_gearbox():  # pragma: no cover

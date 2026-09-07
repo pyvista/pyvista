@@ -43,6 +43,7 @@ from pyvista.core._vtk_utilities import is_vtk_attribute
 from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.filters import _update_alg
 from pyvista.core.utilities import cells
+from pyvista.core.utilities import features
 from pyvista.core.utilities import fileio
 from pyvista.core.utilities import fit_line_to_points
 from pyvista.core.utilities import fit_plane_to_points
@@ -118,7 +119,8 @@ def transform():
 
 def test_sample_function_raises(monkeypatch: pytest.MonkeyPatch):
     with monkeypatch.context() as m:
-        m.setattr(os, 'name', 'nt')
+        # Scope the fake to this module: a global os.name breaks pathlib.Path
+        m.setattr(features, 'os', SimpleNamespace(name='nt'))
         with pytest.raises(
             ValueError,
             match='This function on Windows only supports int32 or smaller',
@@ -571,11 +573,7 @@ REPORT = str(pv.Report(gpu=False))
 
 @pytest.mark.parametrize('package', get_distribution_dependencies('pyvista'))
 def test_report_dependencies(package):
-    if package == 'pyvista[colormaps,io,jupyter]':
-        pytest.xfail('scooby bug: https://github.com/banesullivan/scooby/issues/129')
-    elif package == 'vtk!':
-        pytest.xfail('scooby bug: https://github.com/banesullivan/scooby/issues/133')
-    elif package == 'pyobjc-framework-Cocoa' and sys.platform != 'darwin':
+    if package == 'pyobjc-framework-Cocoa' and sys.platform != 'darwin':
         pytest.xfail('package only available on macOS')
     elif package == 'cvista' and importlib.util.find_spec('cvista') is None:
         # cvista is an alternative VTK backend, installed only in the dedicated
@@ -725,6 +723,43 @@ def test_convert_id_list():
         id_list.SetId(i, v)
     converted = vtk_id_list_to_array(id_list)
     assert np.allclose(converted, ids)
+    assert np.issubdtype(converted.dtype, np.integer)
+
+    empty = vtk_id_list_to_array(_vtk.vtkIdList())
+    assert empty.shape == (0,)
+    assert np.issubdtype(empty.dtype, np.integer)
+
+
+def test_vtkmatrix_from_array_like():
+    values = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+    matrix = pv.vtkmatrix_from_array(values)
+    # Pin the row-major convention; a round trip alone would pass on a transposed matrix
+    assert matrix.GetElement(0, 2) == 3
+    assert matrix.GetElement(2, 0) == 7
+    assert np.array_equal(pv.array_from_vtkmatrix(matrix), values)
+
+    strided = np.asarray(values, dtype=np.float32)[::-1]
+    matrix = pv.vtkmatrix_from_array(strided)
+    assert np.array_equal(pv.array_from_vtkmatrix(matrix), strided)
+
+
+def test_convert_array_scalar_and_strided():
+    vtk_scalar = convert_array(np.array(1.5))
+    assert vtk_scalar.GetNumberOfTuples() == 1
+    assert vtk_scalar.GetValue(0) == 1.5
+
+    strided = np.arange(10.0)[::2]
+    assert np.array_equal(convert_array(convert_array(strided)), strided)
+
+    # Multi-component and non-contiguous, so the component count is read off a copy
+    strided_2d = np.arange(12.0).reshape(3, 4)[:, ::2]
+    assert not strided_2d.flags.c_contiguous
+    roundtrip = convert_array(convert_array(strided_2d))
+    assert roundtrip.shape == (3, 2)
+    assert np.array_equal(roundtrip, strided_2d)
+
+    strings = np.array(['a', 'bb', 'ccc', 'dddd'])[::2]
+    assert np.array_equal(convert_array(convert_array(strings)), strings)
 
 
 def test_progress_monitor():
@@ -1728,6 +1763,42 @@ def test_convert_string_array_scalar_string():
     out = convert_string_array(vtk_arr)
     assert out.ndim == 0
     assert str(out) == 'hello'
+
+
+@pytest.mark.parametrize(
+    'array', [np.array([['a', 'b'], ['c', 'd']]), np.array([[b'a', b'b'], [b'c', b'd']])]
+)
+def test_convert_string_array_keeps_second_axis(array):
+    vtk_arr = convert_string_array(array)
+    assert vtk_arr.GetNumberOfValues() == 4
+    assert vtk_arr.GetNumberOfComponents() == 2
+    assert vtk_arr.GetNumberOfTuples() == 2
+
+    out = convert_string_array(vtk_arr)
+    assert out.shape == (2, 2)
+    assert np.array_equal(out, [['a', 'b'], ['c', 'd']])
+
+
+def test_convert_string_array_single_column_is_not_flattened():
+    column = np.array([['a'], ['b'], ['c']])
+    vtk_arr = convert_string_array(column)
+    assert vtk_arr.GetNumberOfComponents() == 1
+    # A single component cannot be told apart from a 1D array once stored
+    assert convert_string_array(vtk_arr).shape == (3,)
+
+
+def test_convert_string_array_rejects_more_than_two_dimensions():
+    match = re.escape('String array must be at most 2-dimensional, got shape (2, 2, 2).')
+    with pytest.raises(ValueError, match=match):
+        convert_string_array(np.full((2, 2, 2), 'a'))
+
+
+def test_string_field_data_round_trips_shape():
+    mesh = pv.Sphere()
+    values = np.array([['a', 'bb'], ['ccc', 'dddd'], ['e', 'ff']])
+    mesh.field_data['labels'] = values
+    assert mesh.field_data['labels'].shape == (3, 2)
+    assert np.array_equal(mesh.field_data['labels'], values)
 
 
 def test_convert_string_array_rejects_non_ascii():
@@ -3215,6 +3286,20 @@ def test_deprecate_positional_args_error_messages():
         foo(True, True)
 
 
+def test_deprecate_positional_args_call_site_and_extra_args():
+    @_deprecate_positional_args(version=(1, 2))
+    def foo(bar, baz): ...
+
+    # The warning names this file as the call site
+    match = rf'\n{re.escape(Path(__file__).as_posix())}:\d+: Arguments'
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        foo(True, True)
+
+    # Too many positional arguments still warn, then raise from the function itself
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match), pytest.raises(TypeError):
+        foo(True, True, True)
+
+
 def test_deprecate_positional_args_post_deprecation():
     match = (
         r'Positional arguments are no longer allowed in '
@@ -3246,9 +3331,22 @@ def test_deprecate_positional_args_post_deprecation():
 def test_deprecate_positional_args_allowed():
     # Test single allowed
     @_deprecate_positional_args(allowed=['bar'])
-    def foo(bar, baz): ...
+    def foo(bar, baz):
+        return bar, baz
 
-    foo(True, baz=True)
+    with warnings.catch_warnings():
+        warnings.simplefilter('error')
+        assert foo(True, baz=False) == (True, False)
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        assert foo(True, False) == (True, False)
+
+    # An allowed argument that is not first still leaves the ones before it deprecated
+    @_deprecate_positional_args(allowed=['baz'])
+    def qux(bar, baz):
+        return bar, baz
+
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        assert qux(True, baz=False) == (True, False)
 
     # Too many allowed args
     match = (

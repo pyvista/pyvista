@@ -32,6 +32,8 @@ from pyvista.core.filters.data_object import _cast_to_polydata
 from pyvista.core.filters.data_object import _convex_hull_scipy
 from pyvista.core.filters.data_object import _get_cell_quality_measures
 from pyvista.core.utilities.cell_quality import _CellQualityLiteral
+from pyvista.core.utilities.helpers import _NORMALS
+from pyvista.core.utilities.helpers import generate_plane
 from tests.core.test_dataset_filters import HYPOTHESIS_MAX_EXAMPLES
 from tests.core.test_dataset_filters import n_numbers
 from tests.core.test_dataset_filters import normals
@@ -133,6 +135,34 @@ def test_clip_filter_empty_inputs(dataset):
     dataset.clip('x')
 
 
+@pytest.mark.parametrize('as_composite', [True, False])
+@pytest.mark.parametrize(
+    'clip',
+    [
+        lambda mesh: mesh.clip(crinkle=True),
+        lambda mesh: mesh.clip(crinkle=True, return_clipped=True),
+        lambda mesh: mesh.clip_box(crinkle=True),
+        lambda mesh: mesh.clip_slab(thickness=1.0, crinkle=True),
+    ],
+)
+def test_clip_crinkle_does_not_modify_input(uniform, as_composite, clip):
+    mesh = pv.MultiBlock([uniform, uniform.copy()]) if as_composite else uniform
+    blocks = list(mesh.recursive_iterator()) if as_composite else [mesh]
+    before = [(block.array_names, block.active_scalars_name) for block in blocks]
+
+    clip(mesh)
+
+    assert [(block.array_names, block.active_scalars_name) for block in blocks] == before
+
+
+def test_clip_box_does_not_modify_bounds_mesh(uniform):
+    box = pv.Cube(center=uniform.center, x_length=3, y_length=3, z_length=3)
+    before = box.copy()
+    clipped = uniform.clip_box(box, invert=False)
+    assert clipped.n_cells
+    assert box == before
+
+
 def test_clip_filter_crinkle_disjoint(uniform):
     def assert_array_names(clipped):
         assert cell_ids in clipped.array_names
@@ -219,8 +249,9 @@ def test_clip_box_output_type(multiblock_all_with_nested_and_none, crinkle):
         assert clp is not None
         assert isinstance(clp, (pv.UnstructuredGrid, pv.MultiBlock, pv.PointSet))
         if isinstance(clp, pv.MultiBlock):
+            # PointSet blocks stay PointSet, like a PointSet input does
             assert all(
-                isinstance(block, pv.UnstructuredGrid)
+                isinstance(block, (pv.UnstructuredGrid, pv.PointSet))
                 for block in clp.recursive_iterator(skip_none=True)
             )
         clp2 = dataset.clip_box(merge_points=False)
@@ -309,6 +340,96 @@ def test_cast_to_polydata_keeps_cell_order():
         assert np.array_equal(getattr(cast, attr), getattr(mesh, attr))
 
     assert _cast_to_polydata(pv.UnstructuredGrid()).n_cells == 0
+def _box_clip_filter(mesh, bounds, *, invert):
+    alg = _vtk.vtkBoxClipDataSet()
+    alg.SetInputDataObject(mesh)
+    alg.SetBoxClip(*bounds)
+    if invert:
+        alg.GenerateClippedOutputOn()
+    alg.Update()
+    return pv.wrap(alg.GetOutputDataObject(1 if invert else 0))
+
+
+@pytest.mark.parametrize('invert', [True, False])
+@pytest.mark.parametrize(
+    ('cast', 'regular'),
+    [
+        pytest.param(lambda mesh: mesh, True, id='image'),
+        pytest.param(lambda mesh: mesh.cast_to_rectilinear_grid(), True, id='rectilinear'),
+        pytest.param(lambda mesh: mesh.cast_to_structured_grid(), True, id='structured'),
+        pytest.param(lambda mesh: mesh.cast_to_unstructured_grid(), True, id='unstructured'),
+        pytest.param(lambda _mesh: examples.load_explicit_structured(), False, id='explicit'),
+    ],
+)
+def test_clip_box_planes_match_box_filter(uniform, invert, cast, regular):
+    mesh = cast(uniform)
+    lower, upper = np.array(mesh.bounds[::2]), np.array(mesh.bounds[1::2])
+    lower = lower + 0.3 * (upper - lower)
+    bounds = [lower[0], upper[0], lower[1], upper[1], lower[2], upper[2]]
+    clipped = mesh.clip_box(bounds, invert=invert)
+    expected = _box_clip_filter(mesh, bounds, invert=invert)
+    assert isinstance(clipped, pv.UnstructuredGrid)
+    assert np.isclose(clipped.volume, expected.volume)
+    # The box filter keeps unused input points, so compare with the box, not its bounds
+    assert np.allclose(clipped.bounds, mesh.bounds if invert else bounds)
+
+    # Whole cells are kept instead of being split into tetrahedra
+    assert set(expected.celltypes) == {pv.CellType.TETRA}
+    assert pv.CellType.HEXAHEDRON in set(clipped.celltypes)
+    if regular:
+        # Cells the box cuts stay hexahedral for a grid with axis-aligned cells
+        assert set(clipped.celltypes) == {pv.CellType.HEXAHEDRON}
+        assert clipped.n_cells < expected.n_cells
+    else:
+        # How VTK splits the cut cells of a curvilinear grid varies by version
+        assert set(clipped.celltypes) <= {
+            pv.CellType.HEXAHEDRON,
+            pv.CellType.POLYHEDRON,
+            pv.CellType.TETRA,
+            pv.CellType.WEDGE,
+            pv.CellType.PYRAMID,
+        }
+
+
+def test_clip_box_planes_invert_is_complement(uniform):
+    bounds = [3.0, 9.0, 2.0, 9.0, 4.0, 9.0]
+    inside = uniform.clip_box(bounds, invert=False)
+    outside = uniform.clip_box(bounds, invert=True)
+    assert np.isclose(inside.volume + outside.volume, uniform.volume)
+    assert np.allclose(inside.bounds, bounds)
+
+
+def test_clip_box_planes_oriented(uniform):
+    box = pv.Cube(center=uniform.center, x_length=5, y_length=5, z_length=5).rotate_z(30)
+    inside = uniform.clip_box(box, invert=False)
+    outside = uniform.clip_box(box, invert=True)
+    assert 0 < inside.volume < uniform.volume
+    assert np.isclose(inside.volume + outside.volume, uniform.volume)
+
+
+@pytest.mark.parametrize('invert', [True, False])
+def test_clip_box_planes_crinkle(uniform, invert):
+    bounds = [3.0, 9.0, 2.0, 9.0, 4.0, 9.0]
+    crinkled = uniform.clip_box(bounds, invert=invert, crinkle=True)
+    assert 'cell_ids' in crinkled.cell_data
+    assert set(crinkled.celltypes) == {pv.CellType.VOXEL}
+    expected = _box_clip_filter(uniform, bounds, invert=invert)
+    assert crinkled.volume >= expected.volume
+
+
+def test_clip_box_planes_box_outside_or_containing_mesh(uniform):
+    bounds = np.array(uniform.bounds)
+    larger = bounds + np.array([-1, 1] * 3)
+    assert uniform.clip_box(larger, invert=False).n_cells == uniform.n_cells
+    assert uniform.clip_box(larger, invert=True).n_cells == 0
+    far = [bounds[1] + 1, bounds[1] + 2, 0, 1, 0, 1]
+    assert uniform.clip_box(far, invert=False).n_cells == 0
+    assert uniform.clip_box(far, invert=True).n_cells == uniform.n_cells
+
+
+def test_clip_box_merge_points_false_uses_box_filter(uniform):
+    clipped = uniform.clip_box(merge_points=False)
+    assert set(clipped.celltypes) == {pv.CellType.TETRA}
 
 
 def test_clip_box_composite(multiblock_all):
@@ -409,6 +530,22 @@ def test_clip_slab_invalid_thickness(thickness):
         mesh.clip_slab(thickness=thickness, normal='x')
 
 
+@pytest.mark.parametrize('normal', [(0, 0, 0), [0.0, 0.0, 0.0]])
+@pytest.mark.parametrize(
+    'method',
+    [
+        pv.DataObjectFilters.clip,
+        pv.DataObjectFilters.slice,
+        pv.DataObjectFilters.clip_slab,
+        pv.PolyDataFilters.clip_closed_surface,
+    ],
+)
+def test_zero_normal_raises(method, normal):
+    kwargs = dict(thickness=1.0) if method is pv.DataObjectFilters.clip_slab else {}
+    with pytest.raises(ValueError, match=re.escape('`normal` must be a non-zero vector.')):
+        method(pv.Sphere(), normal=normal, **kwargs)
+
+
 def test_clip_slab_zero_normal():
     mesh = pv.Sphere()
     with pytest.raises(ValueError, match='non-zero'):
@@ -462,6 +599,108 @@ def test_clip_slab_matches_two_clip_workaround_polydata():
     assert old.n_cells > 0
     assert np.allclose(new.bounds, old.bounds, atol=1e-6)
     assert new.area == pytest.approx(old.area, rel=1e-6)
+
+
+def _image_for_slicing():
+    image = pv.ImageData(dimensions=(9, 7, 6), spacing=(1.0, 1.5, 2.0), origin=(1.0, 2.0, 3.0))
+    image.point_data['ints'] = np.arange(image.n_points, dtype=np.int16) - 100
+    image.point_data['floats'] = np.linspace(-1.0, 1.0, image.n_points) ** 3
+    image.point_data['rgb'] = np.tile(np.arange(image.n_points)[:, None], (1, 3)).astype(np.uint8)
+    image.cell_data['cell'] = np.arange(image.n_cells, dtype=np.int32)
+    image.field_data['meta'] = ['x']
+    image.set_active_scalars('floats')
+    return image
+
+
+def _cutter_slice(mesh, normal, origin):
+    normal = _NORMALS[normal] if isinstance(normal, str) else normal
+    return mesh.slice_implicit(generate_plane(normal, origin))
+
+
+def _assert_slices_match(actual, expected):
+    assert actual.n_points == expected.n_points
+    assert actual.n_cells == expected.n_cells
+    assert actual.array_names == expected.array_names
+    assert actual.active_scalars_name == expected.active_scalars_name
+    assert list(actual.field_data.keys()) == list(expected.field_data.keys())
+    if actual.n_points == 0:
+        return
+    assert set(np.unique(actual.faces[::5])) == {4}
+    order_actual = np.lexsort(np.asarray(actual.points).T[::-1])
+    order_expected = np.lexsort(np.asarray(expected.points).T[::-1])
+    assert np.allclose(actual.points[order_actual], expected.points[order_expected])
+    for name in expected.point_data.keys():
+        got = np.asarray(actual.point_data[name])[order_actual]
+        want = np.asarray(expected.point_data[name])[order_expected]
+        assert got.dtype == want.dtype
+        # Integer values are truncated from a lerp that can differ in the last bit
+        atol = 1 if got.dtype.kind in 'iu' else 1e-12
+        assert np.allclose(got, want, atol=atol)
+    for name in expected.cell_data.keys():
+        assert np.array_equal(
+            np.sort(actual.cell_data[name], axis=0), np.sort(expected.cell_data[name], axis=0)
+        )
+
+
+@pytest.mark.parametrize('normal', ['x', 'y', 'z', (-1, 0, 0), (0, -2, 0), (0, 0, -1)])
+@pytest.mark.parametrize('fraction', [0.0, 0.2, 0.5, 0.731, 1.0])
+def test_slice_image_axis_aligned_matches_cutter(normal, fraction):
+    image = _image_for_slicing()
+    axis = int(np.flatnonzero(_NORMALS[normal] if isinstance(normal, str) else normal)[0])
+    bounds = image.bounds
+    origin = list(image.center)
+    origin[axis] = bounds[2 * axis] + fraction * (bounds[2 * axis + 1] - bounds[2 * axis])
+    _assert_slices_match(image.slice(normal, origin=origin), _cutter_slice(image, normal, origin))
+
+
+def test_slice_image_axis_aligned_on_grid_plane_and_offset():
+    image = _image_for_slicing()
+    image.offset = (3, 4, 5)
+    for k in (0, 1, 4, 8):
+        origin = [image.origin[0] + (image.offset[0] + k) * image.spacing[0], 0.0, 0.0]
+        _assert_slices_match(image.slice('x', origin=origin), _cutter_slice(image, 'x', origin))
+
+
+def test_slice_image_plane_outside_is_empty():
+    image = _image_for_slicing()
+    sliced = image.slice('x', origin=(image.bounds[1] + 1.0, 0.0, 0.0))
+    assert sliced.n_points == 0
+    assert sliced.array_names == image.array_names
+
+
+@pytest.mark.parametrize(
+    'kwargs',
+    [
+        dict(normal=(1, 1, 0)),
+        dict(normal='x', generate_triangles=True),
+        dict(normal='x', contour=True),
+    ],
+)
+def test_slice_image_other_paths(kwargs):
+    image = _image_for_slicing()
+    sliced = image.slice(**kwargs)
+    assert isinstance(sliced, pv.PolyData)
+    assert sliced.n_cells
+
+
+def test_slice_image_rotated_uses_cutter():
+    image = _image_for_slicing()
+    image.direction_matrix = pv.Transform().rotate_z(30).matrix[:3, :3]
+    sliced = image.slice('x')
+    expected = _cutter_slice(image, 'x', image.center)
+    assert sliced.n_points == expected.n_points
+    assert np.allclose(np.sort(sliced.points, axis=0), np.sort(expected.points, axis=0))
+
+
+def test_slice_image_orthogonal_and_along_axis():
+    image = _image_for_slicing()
+    orthogonal = image.slice_orthogonal()
+    assert orthogonal.n_blocks == 3
+    for block, axis in zip(orthogonal, (0, 1, 2), strict=True):
+        assert np.allclose(block.points[:, axis], image.center[axis])
+    along = image.slice_along_axis(n=4, axis='z')
+    assert along.n_blocks == 4
+    assert all(block.n_cells == 8 * 6 for block in along)
 
 
 def test_slice_filter(datasets_no_pointset):

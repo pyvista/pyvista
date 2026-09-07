@@ -33,6 +33,7 @@ from .datasetattributes import _array_names
 from .errors import PyVistaDeprecationWarning
 from .filters import DataSetFilters
 from .filters import _get_output
+from .filters import _update_alg
 from .formatting_html import _data_array_section
 from .formatting_html import _fmt_memory
 from .formatting_html import build_repr_html
@@ -510,15 +511,12 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
                          [ 1., -1.,  3.]], dtype=float32)
 
         """
-        _points = self.GetPoints()
-        try:
-            _points = _points.GetData()
-        except AttributeError:
+        vtkpts = self.GetPoints()
+        if vtkpts is None:
             # create an empty array
             vtkpts = vtk_points(np.empty((0, 3)), deep=False)
             self.SetPoints(vtkpts)
-            _points = self.GetPoints().GetData()
-        return pyvista_ndarray(_points, dataset=self)
+        return pyvista_ndarray(vtkpts.GetData(), dataset=self)
 
     @points.setter
     def points(self: Self, points: MatrixLike[float] | _vtk.vtkPoints) -> None:
@@ -1914,7 +1912,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             input_is_double = isinstance(self, pv.ImageData)
         if input_is_double:
             alg.SetOutputPointsPrecision(_vtk.vtkAlgorithm.DOUBLE_PRECISION)
-        alg.Update()
+        _update_alg(alg)
         return _get_output(alg)
 
     @_deprecate_positional_args

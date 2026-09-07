@@ -4,8 +4,10 @@
 /joss/                                              @pyvista/admin
 /CODE_OF_CONDUCT.md                                 @pyvista/admin
 /CODEOWNERS                                         @pyvista/admin
-/.github/workflows/testing-and-deployment.yml       @pyvista/ci-reviewers
-/.github/workflows/docs.yml                         @pyvista/ci-reviewers
-/.github/workflows/docker-package.yml               @pyvista/ci-reviewers
-/.github/workflows/vtk-pre-test.yml                 @pyvista/ci-reviewers
+/SECURITY.md                                        @pyvista/admin
+/.github/workflows/                                 @pyvista/ci-reviewers
+/.github/actions/                                   @pyvista/ci-reviewers
+/.github/dependabot.yml                             @pyvista/ci-reviewers
+/.github/auto-merge.yml                             @pyvista/ci-reviewers
+/.github/zizmor.yml                                 @pyvista/ci-reviewers
 /tox.ini                                            @pyvista/ci-reviewers

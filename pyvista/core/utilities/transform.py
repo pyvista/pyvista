@@ -604,11 +604,15 @@ class Transform(
                [0., 0., 0., 1.]])
 
         """
-        valid_factor = _validation.validate_array3(
-            factor,  # type: ignore[arg-type]
-            broadcast=True,
-            dtype_out=float,
-            name='scale factor',
+        valid_factor = cast(
+            'tuple[float, float, float]',
+            _validation.validate_array3(
+                factor,  # type: ignore[arg-type]
+                broadcast=True,
+                dtype_out=float,
+                to_tuple=True,
+                name='scale factor',
+            ),
         )
         transform = _vtk.vtkTransform()
         transform.Scale(valid_factor)
@@ -942,10 +946,14 @@ class Transform(
                [0., 0., 0., 1.]])
 
         """
-        valid_vector = _validation.validate_array3(
-            vector,  # type: ignore[arg-type]
-            dtype_out=float,
-            name='translation vector',
+        valid_vector = cast(
+            'tuple[float, float, float]',
+            _validation.validate_array3(
+                vector,  # type: ignore[arg-type]
+                dtype_out=float,
+                to_tuple=True,
+                name='translation vector',
+            ),
         )
         transform = _vtk.vtkTransform()
         transform.Translate(valid_vector)

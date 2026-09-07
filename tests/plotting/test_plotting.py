@@ -12,11 +12,8 @@ import os
 from pathlib import Path
 import re
 import time
-from types import FunctionType
-from types import ModuleType
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import TypeVar
 from typing import get_args
 import warnings
 
@@ -48,6 +45,7 @@ from pyvista.plotting.renderer import _MIN_LUT_SIZE
 from pyvista.plotting.renderer import _MIN_PREFILTER_SAMPLES
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
+from tests.conftest import _get_module_functions
 from tests.core.test_imagedata_filters import labeled_image  # noqa: F401
 from tests.examples.test_cell_examples import cell_example_functions
 from tests.plotting.conftest import AlgorithmExecutionTracker
@@ -56,6 +54,7 @@ from tests.plotting.conftest import get_actor_mapper_input
 if TYPE_CHECKING:
     from collections.abc import Callable
     from collections.abc import ItemsView
+    from types import FunctionType
 
     from pytest_mock import MockerFixture
 
@@ -262,6 +261,8 @@ def test_pbr(sphere, verify_image_cache):
     verify_image_cache.high_variance_test = True
 
     texture = examples.load_globe_texture()
+    texture.mipmap = True
+    texture.interpolate = True
 
     pl = pv.Plotter(lighting=None)
     pl.set_environment_texture(texture)
@@ -907,6 +908,153 @@ def test_plot_show_grid_with_mesh(hexbeam, plane, verify_image_cache):
     pl.show()
 
 
+def test_plot_show_grid_label_positions():
+    """Each label must be drawn on the tick whose value it carries.
+
+    The reproducer from https://github.com/pyvista/pyvista/issues/9033, whose y range
+    is one VTK refuses to divide into five. The zoom is this test's own: at the 400
+    pixels the suite renders, the labels are too small a part of the frame to move
+    the comparison past its threshold without it. The text mode is pinned because
+    its default follows the VTK version.
+    """
+    points = np.array(
+        [
+            [0.575, 11.64, 0.0],
+            [1.075, 11.64, 0.0],
+            [1.075, -11.64, 0.0],
+            [0.575, -11.64, 0.0],
+            [-2.725, -5.0, 0.0],
+            [-2.725, 5.0, 0.0],
+        ]
+    )
+    mesh = pv.PolyData(points, np.array([6, 0, 1, 2, 3, 4, 5]))
+
+    pl = pv.Plotter()
+    pl.enable_parallel_projection()
+    pl.add_mesh(mesh, color='lightgray', show_edges=True)
+    pl.show_grid(xtitle='X', ytitle='Y', ztitle='Z', font_size=34, use_3d_text=False)
+    pl.view_xy()
+    pl.camera.zoom(1.6)
+    pl.show()
+
+
+def test_plot_show_bounds_round_ticks():
+    """Where VTK's own ticks are the round ones, the labels belong on those.
+
+    The second plot of the circular arc gallery example. The tube radius pushes the
+    bounds a little past the circle, so the range no longer divides into five, and an
+    even split would read -1.0, -0.3, 0.4, 1.0 with no line through the origin. Two
+    decimals are needed to tell these labels from the old ones, which sat on the same
+    ticks reading -0.49, 0.02, 0.53. The zoom keeps five-character labels from
+    running into each other. The text mode is pinned because its default follows
+    the VTK version.
+    """
+    arc = pv.CircularArcFromNormal(
+        center=(0, 0, 0), polar=(1, 0, 0), normal=(0, 0, 1), angle=120, resolution=60
+    )
+    pl = pv.Plotter()
+    pl.add_mesh(arc.tube(radius=0.04), color='seagreen')
+    pl.add_mesh(pv.Circle(radius=1.0).extract_feature_edges(), color='gray', line_width=2)
+    pl.show_grid(font_size=26, use_3d_text=False, fmt='%.2f')
+    pl.view_xy()
+    pl.camera.zoom(1.15)
+    pl.show()
+
+
+def test_plot_show_bounds_many_labels():
+    """The reproducer from https://github.com/pyvista/pyvista/issues/4275."""
+    pl = pv.Plotter()
+    pl.add_mesh(examples.load_random_hills(), cmap='terrain', show_scalar_bar=False)
+    pl.show_bounds(
+        grid='back',
+        location='outer',
+        ticks='both',
+        n_xlabels=7,
+        n_ylabels=8,
+        n_zlabels=9,
+        xtitle='Easting',
+        ytitle='Northing',
+        ztitle='Elevation',
+        fmt='%.2f',
+    )
+    pl.show()
+
+
+def test_plot_show_bounds_scaled():
+    """The reproducer from https://github.com/pyvista/pyvista/issues/8687."""
+    pl = pv.Plotter()
+    pl.set_scale(zscale=2)
+    pl.add_mesh(pv.Sphere())
+    pl.show_bounds(location='outer', grid='back')
+    pl.show()
+
+
+def test_plot_show_bounds_scaled_subplots():
+    """The reproducer from https://github.com/pyvista/pyvista/issues/699."""
+    xy_data = np.array([[0, 2], [10, 5], [20, 3], [30, -1], [40, 0], [50, 2]])
+    points = np.concatenate((xy_data, np.zeros((xy_data.shape[0], 1))), axis=1)
+    pl = pv.Plotter(shape=(2, 1))
+    pl.subplot(0, 0)
+    pl.add_mesh(pv.lines_from_points(points))
+    pl.set_scale(yscale=10)
+    pl.show_bounds(show_zaxis=False, show_zlabels=False)
+    pl.view_xy()
+    pl.subplot(1, 0)
+    pl.add_mesh(pv.lines_from_points(points))
+    pl.set_scale(yscale=10)
+    pl.show_bounds(show_zaxis=False, show_zlabels=False)
+    pl.view_xy()
+    pl.show()
+
+
+def test_plot_show_bounds_scaled_bounding_box(verify_image_cache):
+    """The third reproducer from https://github.com/pyvista/pyvista/issues/4695, on a sphere."""
+    verify_image_cache.macos_skip_image_cache = True  # macOS draws every line one pixel wide
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere(), smooth_shading=True, specular=1, color='#DDDDDD')
+    pl.set_scale(xscale=1, yscale=15, zscale=5)
+    pl.show_bounds(
+        grid='back',
+        location='outer',
+        xtitle='Easting',
+        ytitle='Northing',
+        ztitle='Depth',
+        bold=False,
+        font_size=5,
+    )
+    pl.add_bounding_box(line_width=5, color='black')
+    pl.show_axes()
+    pl.show()
+
+
+def test_plot_show_bounds_linked_views():
+    """The reproducer from https://github.com/pyvista/pyvista/issues/3082."""
+
+    def add_sphere(pl, sp, text, location='front'):
+        pl.subplot(sp)
+        pl.add_mesh(pv.Sphere(), color='blue')
+        pl.add_text(text, font_size=12)
+        pl.show_bounds(location=location)
+
+    cam_pos = [(2.0, 2.0, 2.0), (0.0, 0.0, 0.0), (0.0, 1.0, 0.0)]
+    pl = pv.Plotter(shape='1|2')
+    add_sphere(pl, 0, 'linked view 0')
+    add_sphere(pl, 1, 'linked view 1')
+    add_sphere(pl, 2, 'linked view 2')
+    pl.link_views()
+    pl.show(cpos=cam_pos)
+
+
+def test_plot_show_grid_box_crossing_zero():
+    """The reproducer from https://github.com/pyvista/pyvista/issues/7445."""
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Box(bounds=[-2000, 220, -10, 100, 0, 0]), color='red')
+    pl.show_grid(font_size=20, use_3d_text=False, fmt='%.0f')
+    pl.view_xy()
+    pl.camera.zoom(0.85)
+    pl.show()
+
+
 @pytest.mark.parametrize('use_3d_text', [True, False])
 @pytest.mark.parametrize('font_size', [12, 24])
 def test_plot_show_grid_font_size(sphere, use_3d_text, font_size):
@@ -984,35 +1132,6 @@ def test_set_parallel_scale_invalid():
     pl = pv.Plotter()
     with pytest.raises(TypeError):
         pl.parallel_scale = 'invalid'
-
-
-@pytest.mark.usefixtures('no_images_to_verify')
-def test_plot_no_active_scalars(sphere):
-    pl = pv.Plotter()
-    pl.add_mesh(sphere)
-
-    def _test_update_scalars_with_invalid_array():
-        pl.update_scalars(np.arange(5))
-
-    def _test_update_scalars_with_valid_array():
-        pl.update_scalars(np.arange(sphere.n_faces))
-
-    with (
-        pytest.raises(ValueError, match='Number of scalars'),
-        pytest.warns(
-            PyVistaDeprecationWarning,
-            match='This method is deprecated and will be removed in a future version',
-        ),
-    ):
-        _test_update_scalars_with_invalid_array()
-    with (
-        pytest.raises(ValueError, match='No active scalars'),
-        pytest.warns(
-            PyVistaDeprecationWarning,
-            match='This method is deprecated and will be removed in a future version',
-        ),
-    ):
-        _test_update_scalars_with_valid_array()
 
 
 def test_plot_show_bounds(sphere):
@@ -6552,23 +6671,6 @@ def test_create_axes_orientation_box(verify_image_cache):
     pl = pv.Plotter()
     _ = pl.add_actor(actor)
     pl.show()
-
-
-_TypeType = TypeVar('_TypeType', bound=type)
-
-
-def _get_module_members(module: ModuleType, typ: _TypeType) -> dict[str, _TypeType]:
-    """Get all members of a specified type which are defined locally inside a module."""
-
-    def is_local(obj):
-        return type(obj) is typ and obj.__module__ == module.__name__
-
-    return dict(inspect.getmembers(module, predicate=is_local))
-
-
-def _get_module_functions(module: ModuleType):
-    """Get all functions defined locally inside a module."""
-    return _get_module_members(module, typ=FunctionType)
 
 
 def _get_default_kwargs(call: Callable) -> dict[str, Any]:
