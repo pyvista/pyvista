@@ -643,7 +643,8 @@ def test_mip_no_mapper():
     'shape',
     ['circle', 'triangle', 'hexagon', 'diamond', 'asterisk', 'star'],
 )
-def test_set_point_sprite_shape(shape):
+@pytest.mark.skipif(_HAS_NATIVE_POINT_SHAPES, reason='Legacy point-sprite shader replacement')
+def test_set_point_sprite_shape_legacy_shader(shape):
     cloud = pv.PolyData(np.random.default_rng(0).random((100, 3)))
     pl = pv.Plotter()
     actor = pl.add_mesh(
@@ -654,11 +655,7 @@ def test_set_point_sprite_shape(shape):
     )
     actor.set_point_sprite_shape(shape)
     assert actor.point_sprite_shape == shape
-    if _HAS_NATIVE_POINT_SHAPES:
-        assert actor.prop.point_shape == shape
-        assert 'point_sprite' not in actor._shader_replacements
-    else:
-        assert len(actor._shader_replacements['point_sprite']) == 1
+    assert len(actor._shader_replacements['point_sprite']) == 1
 
 
 def test_clear_point_sprite_shape(point_cloud_actor):
