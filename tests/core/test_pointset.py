@@ -94,10 +94,14 @@ def test_cast_to_polydata(pointset, deep):
     data = np.linspace(0, 1, pointset.n_points)
     key = 'key'
     pointset.point_data[key] = data
+    pointset.field_data['meta'] = [1.0, 2.0]
 
     pdata = pointset.cast_to_polydata(deep=deep)
     assert isinstance(pdata, pv.PolyData)
     assert key in pdata.point_data
+    assert np.allclose(pdata.field_data['meta'], [1.0, 2.0])
+    pdata.field_data['meta'][:] = 0
+    assert np.allclose(pointset.field_data['meta'], [1.0, 2.0] if deep else [0.0, 0.0])
     assert np.allclose(pdata.point_data[key], pointset.point_data[key])
     pdata.point_data[key][:] = 0
     if deep:
