@@ -346,6 +346,7 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
         else:
             for key, value in self.point_data.items():
                 pdata.point_data[key] = value
+        pdata.GetFieldData().DeepCopy(self.GetFieldData())
         return pdata
 
     def cast_to_unstructured_grid(self) -> pv.UnstructuredGrid:
