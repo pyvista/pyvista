@@ -4985,8 +4985,7 @@ def test_color_labels_return_dict(labeled_image, color_type):
     ('negative_indexing', 'label_data', 'expected_keys'),
     [
         (True, [0, -1, 2, -6], [0, 2, -1, -6]),
-        # A label equal to the number of colors is allowed but has no color
-        (False, [0, 2, 2, 6], [0, 2]),
+        (False, [0, 2, 2, 5], [0, 2, 5]),
     ],
 )
 def test_color_labels_return_dict_index_mode(negative_indexing, label_data, expected_keys):
@@ -5000,8 +4999,25 @@ def test_color_labels_return_dict_index_mode(negative_indexing, label_data, expe
     assert list(mapping.keys()) == expected_keys
     for key in expected_keys:
         assert mapping[key] == pv.Color(colors[key]).int_rgb
-    expected_colors = [mapping.get(label, (0, 0, 0)) for label in label_data]
+    expected_colors = [mapping[label] for label in label_data]
     assert np.array_equal(colored.active_scalars, expected_colors)
+
+
+def test_color_labels_label_equal_to_number_of_colors():
+    colors = ['red', 'green', 'blue']
+    labels = pv.ImageData(dimensions=(4, 1, 1))
+    labels['data'] = [0, 1, 2, 3]
+
+    # A label equal to the number of colors cannot index the colors
+    match = 'Index coloring mode cannot be used'
+    with pytest.raises(ValueError, match=match):
+        labels.color_labels(colors, coloring_mode='index')
+
+    # Cycle mode is used by default instead, so every label is colored
+    colored, mapping = labels.color_labels(colors, return_dict=True)
+    assert list(mapping.keys()) == [0, 1, 2, 3]
+    assert mapping[3] == pv.Color('red').int_rgb
+    assert np.array_equal(colored.active_scalars, [mapping[label] for label in labels['data']])
 
 
 def test_color_labels_does_not_modify_colormap():
@@ -5013,6 +5029,53 @@ def test_color_labels_does_not_modify_colormap():
     second = labels.color_labels(cmap, **kwargs)
     assert len(cmap.colors) == 2
     assert np.array_equal(first.active_scalars, second.active_scalars)
+
+
+@pytest.mark.parametrize('as_array', [True, False])
+@pytest.mark.parametrize(
+    ('color_type', 'red', 'green', 'opaque', 'quarter'),
+    [
+        ('float_rgb', (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), None, None),
+        ('float_rgba', (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), 1.0, 0.25),
+        ('int_rgb', (255, 0, 0), (0, 255, 0), None, None),
+        ('int_rgba', (255, 0, 0), (0, 255, 0), 255, 64),
+    ],
+)
+def test_color_labels_listed_colormap_colors(as_array, color_type, red, green, opaque, quarter):
+    rgb = [(1.0, 0.0, 0.0), (0.0, 1.0, 0.0)]
+    rgba = [(*color, 0.25) for color in rgb]
+    labels = pv.ImageData(dimensions=(3, 1, 1))
+    labels['data'] = [0, 1, 0]
+
+    def colors_of(colors):
+        cmap = ListedColormap(np.array(colors) if as_array else colors)
+        colored = labels.color_labels(cmap, coloring_mode='index', color_type=color_type)
+        return np.asarray(colored.active_scalars)
+
+    assert np.allclose(colors_of(rgb)[:, :3], [red, green, red])
+    assert np.allclose(colors_of(rgba)[:, :3], [red, green, red])
+    if opaque is not None:
+        assert np.allclose(colors_of(rgb)[:, 3], opaque)
+        # The colormap's own alpha is used when it has one
+        assert np.allclose(colors_of(rgba)[:, 3], quarter)
+
+
+@pytest.mark.parametrize('as_array', [True, False])
+@pytest.mark.parametrize('color_type', ['float_rgb', 'float_rgba', 'int_rgb', 'int_rgba'])
+def test_color_labels_return_dict_listed_colormap(as_array, color_type):
+    colors = [(1.0, 0.0, 0.0), (0.0, 1.0, 0.0)]
+    cmap = ListedColormap(np.array(colors) if as_array else colors)
+    labels = pv.ImageData(dimensions=(3, 1, 1))
+    labels['data'] = [0, 1, 0]
+
+    colored, mapping = labels.color_labels(
+        cmap, coloring_mode='index', color_type=color_type, return_dict=True
+    )
+
+    assert list(mapping.keys()) == [0, 1]
+    for label, color in mapping.items():
+        assert pv.Color(color) == pv.Color(colors[label])
+        assert np.array_equal(colored.active_scalars[label], color)
 
 
 def test_color_labels_return_dict_cycle_mode():
