@@ -648,7 +648,7 @@ class DataSetFilters(DataObjectFilters):
         result.point_data['implicit_distance'] = pv.convert_array(dists)
         return result
 
-    @overload
+    @overload  # PolyData, both=False
     def clip_scalar(  # type: ignore[misc]
         self: PolyData,
         scalars: str | None = ...,
@@ -656,9 +656,9 @@ class DataSetFilters(DataObjectFilters):
         value: float | VectorLike[float] = ...,
         inplace: bool = ...,  # noqa: FBT001
         progress_bar: bool = ...,  # noqa: FBT001
-        both: Literal[False] = False,  # noqa: FBT002
+        both: Literal[False] = ...,
     ) -> PolyData: ...
-    @overload
+    @overload  # PolyData, both=True
     def clip_scalar(  # type: ignore[misc]
         self: PolyData,
         scalars: str | None = ...,
@@ -666,9 +666,19 @@ class DataSetFilters(DataObjectFilters):
         value: float | VectorLike[float] = ...,
         inplace: bool = ...,  # noqa: FBT001
         progress_bar: bool = ...,  # noqa: FBT001
-        both: Literal[True] = True,  # noqa: FBT002
+        both: Literal[True] = ...,
     ) -> tuple[PolyData, PolyData]: ...
-    @overload
+    @overload  # PolyData, both not known
+    def clip_scalar(  # type: ignore[misc]
+        self: PolyData,
+        scalars: str | None = ...,
+        invert: bool = ...,  # noqa: FBT001
+        value: float | VectorLike[float] = ...,
+        inplace: bool = ...,  # noqa: FBT001
+        progress_bar: bool = ...,  # noqa: FBT001
+        both: bool = ...,  # noqa: FBT001
+    ) -> PolyData | tuple[PolyData, PolyData]: ...
+    @overload  # PointSet, both=False
     def clip_scalar(  # type: ignore[misc]
         self: PointSet,
         scalars: str | None = ...,
@@ -676,9 +686,9 @@ class DataSetFilters(DataObjectFilters):
         value: float | VectorLike[float] = ...,
         inplace: bool = ...,  # noqa: FBT001
         progress_bar: bool = ...,  # noqa: FBT001
-        both: Literal[False] = False,  # noqa: FBT002
+        both: Literal[False] = ...,
     ) -> PointSet: ...
-    @overload
+    @overload  # PointSet, both=True
     def clip_scalar(  # type: ignore[misc]
         self: PointSet,
         scalars: str | None = ...,
@@ -686,9 +696,19 @@ class DataSetFilters(DataObjectFilters):
         value: float | VectorLike[float] = ...,
         inplace: bool = ...,  # noqa: FBT001
         progress_bar: bool = ...,  # noqa: FBT001
-        both: Literal[True] = True,  # noqa: FBT002
+        both: Literal[True] = ...,
     ) -> tuple[PointSet, PointSet]: ...
-    @overload
+    @overload  # PointSet, both not known
+    def clip_scalar(  # type: ignore[misc]
+        self: PointSet,
+        scalars: str | None = ...,
+        invert: bool = ...,  # noqa: FBT001
+        value: float | VectorLike[float] = ...,
+        inplace: bool = ...,  # noqa: FBT001
+        progress_bar: bool = ...,  # noqa: FBT001
+        both: bool = ...,  # noqa: FBT001
+    ) -> PointSet | tuple[PointSet, PointSet]: ...
+    @overload  # UnstructuredGrid, both=False
     def clip_scalar(  # type: ignore[misc]
         self: UnstructuredGrid,
         scalars: str | None = ...,
@@ -696,9 +716,9 @@ class DataSetFilters(DataObjectFilters):
         value: float | VectorLike[float] = ...,
         inplace: bool = ...,  # noqa: FBT001
         progress_bar: bool = ...,  # noqa: FBT001
-        both: Literal[False] = False,  # noqa: FBT002
+        both: Literal[False] = ...,
     ) -> UnstructuredGrid: ...
-    @overload
+    @overload  # UnstructuredGrid, both=True
     def clip_scalar(  # type: ignore[misc]
         self: UnstructuredGrid,
         scalars: str | None = ...,
@@ -706,9 +726,19 @@ class DataSetFilters(DataObjectFilters):
         value: float | VectorLike[float] = ...,
         inplace: bool = ...,  # noqa: FBT001
         progress_bar: bool = ...,  # noqa: FBT001
-        both: Literal[True] = True,  # noqa: FBT002
+        both: Literal[True] = ...,
     ) -> tuple[UnstructuredGrid, UnstructuredGrid]: ...
-    @overload
+    @overload  # UnstructuredGrid, both not known
+    def clip_scalar(  # type: ignore[misc]
+        self: UnstructuredGrid,
+        scalars: str | None = ...,
+        invert: bool = ...,  # noqa: FBT001
+        value: float | VectorLike[float] = ...,
+        inplace: bool = ...,  # noqa: FBT001
+        progress_bar: bool = ...,  # noqa: FBT001
+        both: bool = ...,  # noqa: FBT001
+    ) -> UnstructuredGrid | tuple[UnstructuredGrid, UnstructuredGrid]: ...
+    @overload  # DataSet, both=False
     def clip_scalar(  # type: ignore[misc]
         self: DataSet,
         scalars: str | None = ...,
@@ -716,9 +746,9 @@ class DataSetFilters(DataObjectFilters):
         value: float | VectorLike[float] = ...,
         inplace: Literal[False] = ...,
         progress_bar: bool = ...,  # noqa: FBT001
-        both: Literal[False] = False,  # noqa: FBT002
+        both: Literal[False] = ...,
     ) -> UnstructuredGrid: ...
-    @overload
+    @overload  # DataSet, both=True
     def clip_scalar(  # type: ignore[misc]
         self: DataSet,
         scalars: str | None = ...,
@@ -726,8 +756,18 @@ class DataSetFilters(DataObjectFilters):
         value: float | VectorLike[float] = ...,
         inplace: Literal[False] = ...,
         progress_bar: bool = ...,  # noqa: FBT001
-        both: Literal[True] = True,  # noqa: FBT002
+        both: Literal[True] = ...,
     ) -> tuple[UnstructuredGrid, UnstructuredGrid]: ...
+    @overload  # DataSet, both not known
+    def clip_scalar(  # type: ignore[misc]
+        self: DataSet,
+        scalars: str | None = ...,
+        invert: bool = ...,  # noqa: FBT001
+        value: float | VectorLike[float] = ...,
+        inplace: Literal[False] = ...,
+        progress_bar: bool = ...,  # noqa: FBT001
+        both: bool = ...,  # noqa: FBT001
+    ) -> UnstructuredGrid | tuple[UnstructuredGrid, UnstructuredGrid]: ...
     @_deprecate_positional_args
     def clip_scalar(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
@@ -865,7 +905,7 @@ class DataSetFilters(DataObjectFilters):
             return result0, result1
         return result0
 
-    @overload
+    @overload  # PolyData
     def clip_surface(  # type: ignore[misc]
         self: PolyData,
         surface: DataSet | _vtk.vtkDataSet,
@@ -875,7 +915,7 @@ class DataSetFilters(DataObjectFilters):
         progress_bar: bool = ...,  # noqa: FBT001
         crinkle: bool = ...,  # noqa: FBT001
     ) -> PolyData: ...
-    @overload
+    @overload  # PointSet
     def clip_surface(  # type: ignore[misc]
         self: PointSet,
         surface: DataSet | _vtk.vtkDataSet,
@@ -885,7 +925,7 @@ class DataSetFilters(DataObjectFilters):
         progress_bar: bool = ...,  # noqa: FBT001
         crinkle: bool = ...,  # noqa: FBT001
     ) -> PointSet: ...
-    @overload
+    @overload  # DataSet
     def clip_surface(  # type: ignore[misc]
         self: DataSet,
         surface: DataSet | _vtk.vtkDataSet,
