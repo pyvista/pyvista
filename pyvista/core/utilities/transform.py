@@ -2383,12 +2383,12 @@ class Transform(
         translate_before, translate_after = self._get_point_translations(
             point=point, multiply_mode=multiply_mode
         )
-        if translate_before:
+        if translate_before is not None:
             self._compose(translate_before, multiply_mode=multiply_mode)
 
         self._compose(transform, multiply_mode=multiply_mode)
 
-        if translate_after:
+        if translate_after is not None:
             self._compose(translate_after, multiply_mode=multiply_mode)
 
         return self
@@ -2397,12 +2397,15 @@ class Transform(
         self: Transform,
         point: VectorLike[float] | None,
         multiply_mode: Literal['pre', 'post'] | None,
-    ) -> tuple[Transform | None, Transform | None]:
+    ) -> tuple[_vtk.vtkTransform | None, _vtk.vtkTransform | None]:
         point = point if point is not None else self.point
         if point is not None:
             point_array = _validation.validate_array3(point, dtype_out=float, name='point')
-            translate_away = Transform().translate(-point_array)
-            translate_toward = Transform().translate(point_array)
+            # Optimization: plain VTK transforms, which are composed as they are
+            translate_away = _vtk.vtkTransform()
+            translate_away.Translate(*(-point_array))
+            translate_toward = _vtk.vtkTransform()
+            translate_toward.Translate(*point_array)
             if multiply_mode == 'post' or (
                 multiply_mode is None and self._multiply_mode == 'post'
             ):
