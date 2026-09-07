@@ -32,6 +32,7 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.plotting import BackgroundPlotter
 from pyvista.plotting import QtDeprecationError
 from pyvista.plotting import QtInteractor
+from pyvista.plotting._property import _HAS_NATIVE_POINT_SHAPES
 from pyvista.plotting.axes_assembly import ScaleModeOptions
 from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.errors import InvalidCameraError
@@ -7421,7 +7422,7 @@ def test_point_sprite_shape_does_not_apply_to_surface(shape):
     )
     # The shape is persisted on the actor, but the shader replacement
     # must NOT be installed while the representation is 'Surface'.
-    assert actor._point_sprite_shape == shape
+    assert actor.point_sprite_shape == shape
     assert not actor._point_sprite_applied
     assert 'point_sprite' not in actor._shader_replacements
     pl.show()
@@ -7454,6 +7455,7 @@ def test_point_sprite_shape_change_style(shape, verify_image_cache_wrapper):
     pl.show()
 
 
+@pytest.mark.skipif(_HAS_NATIVE_POINT_SHAPES, reason='Legacy shader replacement lifecycle')
 def test_point_sprite_shape_transition_updates_shader(no_images_to_verify):  # noqa: ARG001
     # Regression: if the applied-state is tracked as a boolean, calling
     # set_point_sprite_shape with a new shape while the previous shape
@@ -7475,6 +7477,7 @@ def test_point_sprite_shape_transition_updates_shader(no_images_to_verify):  # n
     assert 'point_sprite' not in actor._shader_replacements
 
 
+@pytest.mark.skipif(_HAS_NATIVE_POINT_SHAPES, reason='Legacy shader replacement lifecycle')
 def test_point_sprite_shape_observer_tracks_representation(no_images_to_verify):  # noqa: ARG001
     # With a shape persisted on the actor, toggling the representation
     # between Points and Surface must install / remove the shader via
@@ -7496,6 +7499,7 @@ def test_point_sprite_shape_observer_tracks_representation(no_images_to_verify):
     assert 'point_sprite' in actor._shader_replacements
 
 
+@pytest.mark.skipif(_HAS_NATIVE_POINT_SHAPES, reason='Legacy shader replacement lifecycle')
 def test_clear_point_sprite_shape_detaches_observer(no_images_to_verify):  # noqa: ARG001
     actor = pv.Actor()
     actor.prop.style = 'points'
@@ -7518,8 +7522,7 @@ def test_set_point_sprite_shape_accepts_enum(no_images_to_verify):  # noqa: ARG0
     actor = pv.Actor()
     actor.prop.style = 'points'
     actor.set_point_sprite_shape(PointSpriteShape.TRIANGLE)
-    assert actor._point_sprite_shape == 'triangle'
-    assert actor._point_sprite_applied == 'triangle'
+    assert actor.point_sprite_shape == 'triangle'
 
 
 @pytest.fixture
