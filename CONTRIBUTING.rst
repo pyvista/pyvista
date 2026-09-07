@@ -476,8 +476,8 @@ If you are on Linux or macOS, ``make docstyle`` runs the same script.
 
 ``doc/run_vale.py`` extracts the ``.rst`` files described below, runs Vale over
 every path CI checks, and then confirms that the rule still rejects the
-headings in ``tests/doc/vale/headings_invalid.rst``. The path list lives in
-that script alone; the workflow reads it with ``--print-files``.
+headings in ``tests/doc/vale/headings_invalid.rst``. CI runs that same script,
+so a local run checks exactly what the workflow does.
 
 Vale cannot parse prose written inside a Python file directly (for example,
 the ``# %%`` cell headings in a gallery example, or a docstring's

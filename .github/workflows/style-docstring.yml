@@ -124,38 +124,11 @@ jobs:
       - name: Install Vale Dependencies
         run: pip install 'docutils<0.22' 'sphinx-gallery<0.22.0'
 
-      # Convert .py examples to .rst so Vale can parse their headings.
-      - name: Extract example RST for Vale
-        run: python3 doc/extract_rst_from_py_for_vale.py examples .vale/examples
-
-      # Same, for docstrings, so Vale can check their prose too.
-      - name: Extract docstring RST for Vale
-        run: python3 doc/extract_rst_from_py_for_vale.py pyvista .vale/pyvista --mode docstrings
-
-      # `doc/run_vale.py` owns the path list; Vale runs here through the action
-      # instead, so that alerts appear inline on the pull request.
-      - name: Collect the paths Vale checks
-        id: vale-paths
-        run: echo "files=$(python3 doc/run_vale.py --print-files)" >> "$GITHUB_OUTPUT"
-
-      - name: "Run Vale"
-        uses: vale-cli/vale-action@518a9136acc6e6668ce7c00d367051e0941e87ff # v3.0.0
-        with:
-          files: ${{ steps.vale-paths.outputs.files }}
-          config: doc/.vale.ini
-          reporter: github-pr-check
-          filter_mode: nofilter
-          # Suggestion-level noise is filtered out by MinAlertLevel in doc/.vale.ini.
-          fail_level: warning
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # A heading in a scanned file has to pass, so nothing above would notice
-      # `Google.Headings` going slack. This runs Vale over a fixture of
-      # headings that must be flagged, and fails if any of them stops being.
+      # Pinned and checksummed rather than installed by `vale-action`, which
+      # downloads both Vale and reviewdog from GitHub releases on every run.
       - name: Install Vale
         run: |
-          curl -sSfL "https://github.com/errata-ai/vale/releases/download/v${VALE_VERSION}/vale_${VALE_VERSION}_Linux_64-bit.tar.gz" -o vale.tar.gz
+          curl -sSfL --retry 5 --retry-delay 5 --retry-all-errors "https://github.com/errata-ai/vale/releases/download/v${VALE_VERSION}/vale_${VALE_VERSION}_Linux_64-bit.tar.gz" -o vale.tar.gz
           echo "${VALE_SHA256}  vale.tar.gz" | sha256sum --check
           sudo tar -xz -C /usr/local/bin -f vale.tar.gz vale
         env:
@@ -163,5 +136,8 @@ jobs:
           # From vale_<version>_checksums.txt on the release page; update both together.
           VALE_SHA256: a6f71a75a12fe689345b754f2412b90367fe33648abb7d200fa19eaadc2dbf6d
 
-      - name: "Check Vale still catches known-bad headings"
-        run: python3 tests/doc/vale/check_expected_failures.py
+      # Extracts the .rst Vale reads, lints every path, and checks that the rules
+      # still reject the fixtures in `tests/doc/vale`; `--annotate` reports each
+      # alert as an annotation on the pull request.
+      - name: Run Vale
+        run: python3 doc/run_vale.py --annotate
