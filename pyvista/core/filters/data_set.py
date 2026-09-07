@@ -2299,7 +2299,7 @@ class DataSetFilters(DataObjectFilters):
             * ``'closest'`` : Extract the region closest to the specified
               point. Use ``closest_point`` to specify the point.
 
-        variable_input : float | sequence[float], optional
+        variable_input : float | VectorLike[float] | VectorLike[bool], optional
             The convenience parameter used for specifying any required input
             values for some values of ``extraction_mode``. Setting
             ``variable_input`` is equivalent to setting:
@@ -2352,7 +2352,7 @@ class DataSetFilters(DataObjectFilters):
                 The default value ``"descending"`` differs from ParaView's, which
                 is set to ``"unspecified"`` (verified for 5.11 and 6.0 versions).
 
-        region_ids : int | sequence[int], optional
+        region_ids : int | VectorLike[int], optional
             Region ids to extract. Ids with no matching region contribute no cells.
             Only used if ``extraction_mode`` is ``specified``.
 
@@ -2488,15 +2488,6 @@ class DataSetFilters(DataObjectFilters):
                 **extract_kwargs,
             )
             return _cast_extraction(extracted, mesh, pass_point_ids=False, pass_cell_ids=False)
-
-        def _rebuild_point_region_ids(mesh):
-            """Derive the point region ids from the cell region ids."""
-            cell_ids = mesh.cell_data.get('RegionId')
-            if cell_ids is None or cell_ids.size != mesh.n_cells:
-                return
-            mesh.point_data.pop('RegionId', None)
-            averaged = mesh.cell_data_to_point_data(progress_bar=progress_bar)['RegionId']
-            mesh.point_data['RegionId'] = averaged.round().astype(cell_ids.dtype)
 
         def _region_ids_match(mesh):
             """Return whether both ``'RegionId'`` arrays are sized to fit the mesh."""
@@ -2670,10 +2661,10 @@ class DataSetFilters(DataObjectFilters):
             # This mode leaves points which no cell references
             output_needs_fixing = True
         elif extraction_mode == 'all':
-            # This mode's arrays only fail to match when it produces no cells
+            # Excluded from the size check below so the repair stays one level deep
             output_needs_fixing = label_regions and output.n_cells == 0
         else:
-            # The seed modes may label many disconnected regions with a single id
+            # These modes may size the arrays to the input rather than the output
             output_needs_fixing = label_regions and not _region_ids_match(output)
 
         if output_needs_fixing:
@@ -2693,7 +2684,7 @@ class DataSetFilters(DataObjectFilters):
         if label_regions:
             if output.n_cells > 0 and not _region_ids_match(output):
                 # vtkConnectivityFilter intermittently omits the point array
-                _rebuild_point_region_ids(output)
+                _rebuild_point_region_ids(output, progress_bar=progress_bar)
             if 'RegionId' in output.point_data:
                 output.set_active_scalars('RegionId', preference='point')
 
@@ -8899,6 +8890,16 @@ def _stencil_binary_mask(
     return mask.ravel()
 
 
+def _rebuild_point_region_ids(mesh: DataSet, *, progress_bar: bool) -> None:
+    """Derive the point region ids from the cell region ids, in place."""
+    cell_ids = mesh.cell_data.get('RegionId')
+    if cell_ids is None or cell_ids.size != mesh.n_cells:
+        return
+    mesh.point_data.pop('RegionId', None)
+    averaged = mesh.cell_data_to_point_data(progress_bar=progress_bar)['RegionId']
+    mesh.point_data['RegionId'] = averaged.round().astype(cell_ids.dtype)
+
+
 def _validate_extraction_ids(
     ind: int | VectorLike[int] | VectorLike[bool],
     *,
@@ -8927,7 +8928,7 @@ def _validate_extraction_ids(
         mask = np.zeros(n_items, dtype=bool)
         if ids.size:
             if not np.issubdtype(ids.dtype, np.integer):
-                msg = 'Indices must be either a mask or an integer array-like'
+                msg = f'{ids_name} must be either a mask or an integer array-like'
                 raise TypeError(msg)
             out_of_bounds = ids[(ids < 0) | (ids >= n_items)]
             if out_of_bounds.size:

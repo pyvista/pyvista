@@ -29,7 +29,9 @@ from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters import _get_output
+from pyvista.core.filters.data_set import _rebuild_point_region_ids
 from pyvista.core.filters.data_set import _swap_axes
+from pyvista.core.utilities.arrays import convert_array
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -1542,6 +1544,37 @@ def _assert_region_ids(conn, *, label_regions):
         assert 'RegionId' not in conn.cell_data
 
 
+@pytest.mark.parametrize('cast_to_ugrid', [True, False])
+def test_rebuild_point_region_ids(cast_to_ugrid):
+    mesh = pv.Sphere(center=(-4, 0, 0), phi_resolution=10, theta_resolution=10) + pv.Sphere(
+        phi_resolution=8, theta_resolution=8
+    )
+    conn = (
+        mesh.cast_to_unstructured_grid().connectivity() if cast_to_ugrid else mesh.connectivity()
+    )
+    expected = np.array(conn.point_data['RegionId'])
+    assert len(np.unique(expected)) == 2
+
+    conn.point_data.pop('RegionId')
+    _rebuild_point_region_ids(conn, progress_bar=False)
+    assert np.array_equal(conn.point_data['RegionId'], expected)
+    assert conn.point_data['RegionId'].dtype == conn.cell_data['RegionId'].dtype
+
+
+def test_rebuild_point_region_ids_keeps_unusable_cell_ids():
+    mesh = pv.Sphere(phi_resolution=6, theta_resolution=6).connectivity()
+    mesh.point_data.pop('RegionId')
+
+    oversized = convert_array(np.zeros(mesh.n_cells + 1, dtype=int), name='RegionId')
+    mesh.GetCellData().AddArray(oversized)
+    _rebuild_point_region_ids(mesh, progress_bar=False)
+    assert 'RegionId' not in mesh.point_data
+
+    mesh.GetCellData().RemoveArray('RegionId')
+    _rebuild_point_region_ids(mesh, progress_bar=False)
+    assert 'RegionId' not in mesh.point_data
+
+
 def test_connectivity_scalars():
     mesh = pv.Sphere(phi_resolution=8, theta_resolution=8)
     mesh.point_data['low'] = mesh.points[:, 1]
@@ -1562,11 +1595,11 @@ def test_connectivity_seed_bool_mask(extraction_mode):
     )
     n_items = mesh.n_cells if extraction_mode == 'cell_seed' else mesh.n_points
     mask = np.zeros(n_items, dtype=bool)
-    mask[0] = True
+    mask[-1] = True
     key = 'cell_ids' if extraction_mode == 'cell_seed' else 'point_ids'
 
     from_mask = mesh.connectivity(extraction_mode, **{key: mask})
-    from_ids = mesh.connectivity(extraction_mode, **{key: [0]})
+    from_ids = mesh.connectivity(extraction_mode, **{key: [n_items - 1]})
     assert from_mask.n_cells == from_ids.n_cells
     assert from_mask.n_cells < mesh.n_cells
 
@@ -2783,7 +2816,7 @@ def test_extract_cells_extract_points_invalid_ind(sphere, dataset_filter):
     with pytest.raises(ValueError, match=re.escape(match)):
         dataset_filter([True, True])
 
-    match = 'Indices must be either a mask or an integer array-like'
+    match = 'indices must be either a mask or an integer array-like'
     with pytest.raises(TypeError, match=match):
         dataset_filter([0.5])
 
