@@ -260,7 +260,7 @@ def _cell_type_meshes():
             np.array([[x, 0.0, 0.0] for x in np.linspace(-1.0, 1.0, 5)]),
             lines=[2, 0, 1, 2, 1, 2, 2, 2, 3, 2, 3, 4],
         ),
-        'PolyData verts': pv.PolyData(np.random.default_rng(0).uniform(-1, 1, (12, 3))),
+        'PolyData verts': pv.PolyData(np.random.default_rng(0).uniform(-0.6, 0.6, (60, 3))),
         'ImageData': image,
         'RectilinearGrid': pv.RectilinearGrid(axis, axis, axis),
         'StructuredGrid': pv.StructuredGrid(x, y, z),
