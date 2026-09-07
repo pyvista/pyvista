@@ -8,6 +8,7 @@ import scipy
 import pyvista as pv
 from pyvista import _vtk
 from pyvista import examples
+from pyvista.plotting._property import _HAS_NATIVE_POINT_SHAPES
 from pyvista.plotting.actor import _POINT_SPRITE_SHADERS
 from pyvista.plotting.prop3d import Prop3D
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
@@ -652,15 +653,21 @@ def test_set_point_sprite_shape(shape):
         point_size=20,
     )
     actor.set_point_sprite_shape(shape)
-    assert 'point_sprite' in actor._shader_replacements
+    assert actor.point_sprite_shape == shape
+    if _HAS_NATIVE_POINT_SHAPES:
+        assert actor.prop.point_shape == shape
+        assert 'point_sprite' not in actor._shader_replacements
+    else:
+        assert len(actor._shader_replacements['point_sprite']) == 1
 
 
 def test_clear_point_sprite_shape(point_cloud_actor):
     actor = point_cloud_actor
     actor.set_point_sprite_shape('circle')
-    assert 'point_sprite' in actor._shader_replacements
+    assert actor.point_sprite_shape == 'circle'
 
     actor.clear_point_sprite_shape()
+    assert actor.point_sprite_shape == 'square'
     assert 'point_sprite' not in actor._shader_replacements
 
 
@@ -678,21 +685,22 @@ def test_add_mesh_point_shape():
     cloud = pv.PolyData(np.random.default_rng(0).random((100, 3)))
     pl = pv.Plotter()
     actor = pl.add_mesh(cloud, style='points', point_shape='circle', point_size=20)
-    assert 'point_sprite' in actor._shader_replacements
+    assert actor.point_sprite_shape == 'circle'
 
 
 def test_add_mesh_point_shape_enum():
     cloud = pv.PolyData(np.random.default_rng(0).random((100, 3)))
     pl = pv.Plotter()
     actor = pl.add_mesh(cloud, style='points', point_shape=pv.PointSpriteShape.STAR, point_size=20)
-    assert 'point_sprite' in actor._shader_replacements
+    assert actor.point_sprite_shape == 'star'
 
 
 def test_set_point_sprite_shape_enum(point_cloud_actor):
     point_cloud_actor.set_point_sprite_shape(pv.PointSpriteShape.HEXAGON)
-    assert 'point_sprite' in point_cloud_actor._shader_replacements
+    assert point_cloud_actor.point_sprite_shape == 'hexagon'
 
 
+@pytest.mark.skipif(_HAS_NATIVE_POINT_SHAPES, reason='Legacy shader/sphere exclusion')
 def test_add_mesh_point_shape_disables_spheres():
     cloud = pv.PolyData(np.random.default_rng(0).random((100, 3)))
     pl = pv.Plotter()
@@ -713,11 +721,12 @@ def test_theme_point_shape():
         pv.global_theme.point_shape = 'hexagon'
         pl = pv.Plotter()
         actor = pl.add_mesh(cloud, style='points')
-        assert 'point_sprite' in actor._shader_replacements
+        assert actor.point_sprite_shape == 'hexagon'
     finally:
         pv.global_theme.point_shape = None
 
 
+@pytest.mark.skipif(_HAS_NATIVE_POINT_SHAPES, reason='Legacy shader/sphere exclusion')
 def test_theme_point_shape_disables_spheres():
     cloud = pv.PolyData(np.random.default_rng(0).random((100, 3)))
     try:
@@ -744,11 +753,11 @@ def test_mip_and_point_sprite_coexist(point_cloud_actor):
     actor.set_point_sprite_shape('circle')
 
     assert 'mip' in actor._shader_replacements
-    assert 'point_sprite' in actor._shader_replacements
+    assert actor.point_sprite_shape == 'circle'
 
     actor.disable_maximum_intensity_projection()
     assert 'mip' not in actor._shader_replacements
-    assert 'point_sprite' in actor._shader_replacements
+    assert actor.point_sprite_shape == 'circle'
 
     actor.enable_maximum_intensity_projection()
     assert 'mip' in actor._shader_replacements
