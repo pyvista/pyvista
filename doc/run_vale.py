@@ -50,6 +50,10 @@ SOURCES = {'.vale/examples': 'examples', '.vale/pyvista': 'pyvista'}
 # GitHub has no `suggestion` level.
 LEVELS = {'error': 'error', 'warning': 'warning', 'suggestion': 'notice'}
 
+# A suggestion is advisory; anything above it fails the run. `MinAlertLevel` in
+# doc/.vale.ini decides which of them Vale reports in the first place.
+FAILING = {'warning', 'error'}
+
 
 def run(command: list[str]) -> int:
     """Echo and run ``command`` from the repository root."""
@@ -105,8 +109,14 @@ def lint(*, annotations: bool) -> int:
     alerts = json.loads(vale.stdout or '{}')
     annotate(alerts)
     total = sum(len(file_alerts) for file_alerts in alerts.values())
-    print(f'{total} alert(s) in {len(alerts)} file(s)')
-    return 1 if total else 0
+    failing = [
+        alert
+        for file_alerts in alerts.values()
+        for alert in file_alerts
+        if alert['Severity'] in FAILING
+    ]
+    print(f'{total} alert(s) in {len(alerts)} file(s), {len(failing)} of them failing')
+    return 1 if failing else 0
 
 
 def main() -> int:
