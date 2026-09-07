@@ -1451,17 +1451,20 @@ def test_connectivity_raises(
 ):
     dataset: pv.DataSet = connected_datasets_single_disconnected_cell[0]['point']
 
-    with pytest.raises(TypeError, match='Scalar range must be'):
+    with pytest.raises(TypeError, match='Object arrays are not supported'):
         dataset.connectivity(scalar_range=dataset)
 
-    with pytest.raises(ValueError, match='Scalar range must have two elements'):
+    with pytest.raises(ValueError, match='Scalar range has shape'):
         dataset.connectivity(scalar_range=[1, 2, 3])
 
-    with pytest.raises(ValueError, match='Scalar range must have two elements'):
+    with pytest.raises(ValueError, match='Scalar range has shape'):
         dataset.connectivity(scalar_range=np.array([[1, 2], [3, 4]]))
 
-    with pytest.raises(ValueError, match='Lower value'):
+    with pytest.raises(ValueError, match='must be sorted in ascending order'):
         dataset.connectivity(scalar_range=[1, 0])
+
+    with pytest.raises(ValueError, match='`scalars` is only used when `scalar_range`'):
+        dataset.connectivity(scalars='data')
 
     with pytest.raises(ValueError, match='Invalid value for `extraction_mode`'):
         dataset.connectivity(extraction_mode='foo')
@@ -1478,14 +1481,102 @@ def test_connectivity_raises(
     with pytest.raises(ValueError, match='`region_ids` must be specified'):
         dataset.connectivity(extraction_mode='specified')
 
-    with pytest.raises(ValueError, match='positive integer values'):
+    with pytest.raises(IndexError, match='Index -1 is out of bounds'):
         dataset.connectivity(extraction_mode='cell_seed', cell_ids=[-1, 2])
 
+    with pytest.raises(IndexError, match=f'out of bounds for a mesh with {dataset.n_cells} cells'):
+        dataset.connectivity(extraction_mode='cell_seed', cell_ids=dataset.n_cells)
+
+    with pytest.raises(
+        IndexError, match=f'out of bounds for a mesh with {dataset.n_points} points'
+    ):
+        dataset.connectivity(extraction_mode='point_seed', point_ids=dataset.n_points)
+
+    with pytest.raises(ValueError, match='region_ids values must all be greater than'):
+        dataset.connectivity(extraction_mode='specified', region_ids=[-1, 2])
+
+    with pytest.raises(ValueError, match='closest_point has shape'):
+        dataset.connectivity(extraction_mode='closest', closest_point=(0, 0))
+
     match = re.escape(
-        "Invalid `region_assignment_mode` 'bar' . Must be in ['ascending', 'descending', 'unspecified']"  # noqa: E501
+        "Invalid `region_assignment_mode` 'bar'. Must be in ['ascending', 'descending', 'unspecified']"  # noqa: E501
     )
     with pytest.raises(ValueError, match=match):
         dataset.connectivity(extraction_mode='all', region_assignment_mode='bar')
+
+
+@pytest.mark.parametrize('extraction_mode', ['all', 'specified'])
+def test_connectivity_polydata_output_type_full_selection(extraction_mode):
+    # Selecting every cell must still return PolyData
+    mesh = pv.Sphere(center=(-4, 0, 0), phi_resolution=8, theta_resolution=8) + pv.Sphere(
+        phi_resolution=6, theta_resolution=6
+    )
+    mesh['data'] = mesh.points[:, 1]
+
+    kwargs = (
+        dict(scalar_range=mesh.get_data_range('data'))
+        if extraction_mode == 'all'
+        else dict(region_ids=[0, 1])
+    )
+    conn = mesh.connectivity(extraction_mode, **kwargs)
+    assert isinstance(conn, pv.PolyData)
+    assert conn.n_cells == mesh.n_cells
+
+
+@pytest.mark.parametrize('extraction_mode', ['specified', 'cell_seed', 'point_seed'])
+@pytest.mark.parametrize('label_regions', [True, False])
+def test_connectivity_empty_output(extraction_mode, label_regions):
+    mesh = pv.Sphere(phi_resolution=6, theta_resolution=6)
+    kwargs = {
+        'specified': dict(region_ids=[99]),
+        'cell_seed': dict(cell_ids=[]),
+        'point_seed': dict(point_ids=[]),
+    }[extraction_mode]
+
+    conn = mesh.connectivity(extraction_mode, label_regions=label_regions, **kwargs)
+    _assert_empty_connectivity(conn, label_regions=label_regions)
+
+
+@pytest.mark.parametrize(
+    'extraction_mode', ['all', 'largest', 'specified', 'cell_seed', 'point_seed', 'closest']
+)
+@pytest.mark.parametrize('label_regions', [True, False])
+def test_connectivity_empty_scalar_range(extraction_mode, label_regions):
+    mesh = pv.Sphere(phi_resolution=8, theta_resolution=8)
+    mesh.point_data['data'] = mesh.points[:, 1]
+    kwargs = {
+        'all': {},
+        'largest': {},
+        'specified': dict(region_ids=[0]),
+        'cell_seed': dict(cell_ids=[0]),
+        'point_seed': dict(point_ids=[0]),
+        'closest': dict(closest_point=(0, 0, 0)),
+    }[extraction_mode]
+
+    conn = mesh.connectivity(
+        extraction_mode,
+        scalar_range=[10.0, 20.0],
+        label_regions=label_regions,
+        **kwargs,
+    )
+    if conn.n_cells == 0:
+        _assert_empty_connectivity(conn, label_regions=label_regions)
+    elif label_regions:
+        assert conn.point_data['RegionId'].size == conn.n_points
+        assert conn.cell_data['RegionId'].size == conn.n_cells
+    else:
+        assert 'RegionId' not in conn.point_data
+        assert 'RegionId' not in conn.cell_data
+
+
+def _assert_empty_connectivity(conn, *, label_regions):
+    assert conn.n_cells == 0
+    if label_regions:
+        assert conn.point_data['RegionId'].size == conn.n_points
+        assert conn.cell_data['RegionId'].size == 0
+    else:
+        assert 'RegionId' not in conn.point_data
+        assert 'RegionId' not in conn.cell_data
 
 
 @pytest.mark.parametrize('dataset_index', list(range(5)))
@@ -2894,7 +2985,10 @@ def labeled_data():
     bounds = np.array((-0.5, 0.5, -0.5, 0.5, -0.5, 0.5))
     small_box = pv.Box(bounds=bounds)
     big_box = pv.Box(bounds=bounds * 2)
-    labeled = append(big_box, small_box).extract_surface(algorithm=None).connectivity()
+    surface = append(big_box, small_box).extract_surface(
+        algorithm=None, pass_pointid=False, pass_cellid=False
+    )
+    labeled = surface.connectivity()
     assert isinstance(labeled, pv.PolyData)
     assert labeled.array_names == ['RegionId', 'RegionId']
     assert np.allclose(small_box.volume, SMALL_VOLUME)
