@@ -1388,6 +1388,44 @@ def test_slice_along_line_composite(multiblock_all):
     assert output.n_blocks == multiblock_all.n_blocks
 
 
+@pytest.mark.parametrize('generate_triangles', [True, False])
+@pytest.mark.parametrize('name', ['slice', 'slice_implicit', 'slice_along_line'])
+def test_slice_contour_of_an_empty_slice(name, generate_triangles):
+    """A plane that cuts nothing has nothing to contour, arrays or not."""
+    points = pv.PolyData(np.random.default_rng(0).uniform(-1, 1, (30, 3)))
+    points.point_data['data'] = np.arange(points.n_points, dtype=float)
+
+    sliced = _output_type_call_with(
+        points, name, generate_triangles=generate_triangles, contour=True
+    )
+
+    assert type(sliced) is pv.PolyData
+    assert sliced.is_empty
+
+
+def _output_type_call_with(mesh, name, **kwargs):
+    """Call one slice filter with arguments valid for every input class."""
+    extra = {
+        'slice_implicit': dict(implicit_function=generate_plane((1.0, 0.0, 0.0), (0.0, 0.0, 0.0))),
+        'slice_along_line': dict(line=pv.Line((-2.0, -2.0, -2.0), (2.0, 2.0, 2.0), resolution=4)),
+    }.get(name, {})
+    return getattr(mesh, name)(**extra, **kwargs)
+
+
+def test_slice_composite_pointset_block_contour():
+    """A PointSet block gives the cutter an empty output with no arrays to contour."""
+    points = pv.PointSet(np.random.default_rng(0).uniform(-1, 1, (30, 3)))
+    points.point_data['data'] = np.arange(points.n_points, dtype=float)
+    image = pv.ImageData(dimensions=(5, 5, 5))
+    image.point_data['data'] = np.linspace(0.0, 1.0, image.n_points)
+    composite = pv.MultiBlock({'image': image, 'points': points})
+
+    sliced = composite.slice(generate_triangles=True, contour=True)
+
+    assert type(sliced['points']) is pv.PolyData
+    assert sliced['points'].is_empty
+
+
 def test_slice_generate_triangles_true_emits_only_triangles():
     grid = examples.load_uniform().cast_to_unstructured_grid()
     out = grid.slice(normal=(1, 1, 1), generate_triangles=True)

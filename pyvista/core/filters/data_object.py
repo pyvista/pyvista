@@ -3758,7 +3758,9 @@ class DataObjectFilters:
         alg.SetGenerateTriangles(generate_triangles)
         _update_alg(alg, progress_bar=progress_bar, message='Slicing')
         output = _get_output(alg)
-        if contour:
+        # There is nothing to contour when the plane misses, and the cutter can leave
+        # an empty output with no arrays for the contour to read
+        if contour and output.n_cells:
             return output.contour()
         return output
 
@@ -3897,7 +3899,7 @@ class DataObjectFilters:
             )
             # A plane that misses the image falls through to the cutter for its empty output
             if output is not None:
-                return output.contour() if contour else output
+                return output.contour() if contour and output.n_cells else output
         # create the plane for clipping
         implicit_function = generate_plane(normal_, origin_)
         return self.slice_implicit(
@@ -4292,7 +4294,9 @@ class DataObjectFilters:
             alg.GenerateTrianglesOff()
         _update_alg(alg, progress_bar=progress_bar, message='Slicing along Line')
         output = _get_output(alg)
-        if contour:
+        # There is nothing to contour when the plane misses, and the cutter can leave
+        # an empty output with no arrays for the contour to read
+        if contour and output.n_cells:
             return output.contour()
         return output
 
