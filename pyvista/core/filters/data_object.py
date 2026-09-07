@@ -3212,13 +3212,7 @@ class DataObjectFilters:
         )
         mesh_in = source.cast_to_poly_points() if apply_vtk_94x_patch else source
 
-        if isinstance(mesh_in, pv.PolyData):
-            alg: _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet = _vtk.vtkClipPolyData()
-        # elif isinstance(self, vtk.vtkImageData):
-        #     alg = vtk.vtkClipVolume()
-        #     alg.SetMixed3DCellGeneration(True)
-        else:
-            alg = _vtk.vtkTableBasedClipDataSet()
+        alg = _vtk.vtkTableBasedClipDataSet()
         alg.SetInputDataObject(mesh_in)  # Use the grid as the data we desire to cut
         alg.SetValue(value)
         # ``None`` clips by the active scalars instead, for a precomputed distance field
@@ -3232,12 +3226,12 @@ class DataObjectFilters:
             return in_.cast_to_pointset() if apply_vtk_94x_patch else in_
 
         if return_clipped:
-            a = _get_output(alg, oport=0)
-            b = _get_output(alg, oport=1)
+            a = _keep_array_structure(_get_output(alg, oport=0), source)
+            b = _keep_array_structure(_get_output(alg, oport=1), source)
             if crinkle:
                 a, b = _Crinkler._extract_crinkle_cells(source, a, b, active_scalars_info)
             return _maybe_cast_to_point_set(a), _maybe_cast_to_point_set(b)
-        clipped = _get_output(alg)
+        clipped = _keep_array_structure(_get_output(alg), source)
         if crinkle:
             clipped = _Crinkler._extract_crinkle_cells(source, clipped, None, active_scalars_info)
         return _maybe_cast_to_point_set(clipped)
@@ -3262,6 +3256,13 @@ class DataObjectFilters:
 
         If no parameters are given, the clip will occur in the center
         of the dataset along the x-axis.
+
+        .. versionchanged:: 0.49
+
+            Points that a :class:`~pyvista.PolyData` input keeps apart are no longer
+            merged, so a surface with coincident points is clipped without losing them.
+            The output has slightly more points where the clip surface passes exactly
+            through a point shared by several cells.
 
         Parameters
         ----------
@@ -3360,15 +3361,15 @@ class DataObjectFilters:
         input_bounds = self.bounds
         if isinstance(result, tuple):
             result = (
-                _cast_output_to_match_input_type(result[0], self),
-                _cast_output_to_match_input_type(result[1], self),
+                _keep_array_structure(_cast_output_to_match_input_type(result[0], self), self),
+                _keep_array_structure(_cast_output_to_match_input_type(result[1], self), self),
             )
             result = (
                 _remove_unused_points_post_clip(result[0], input_bounds),
                 _remove_unused_points_post_clip(result[1], input_bounds),
             )
         else:
-            result = _cast_output_to_match_input_type(result, self)
+            result = _keep_array_structure(_cast_output_to_match_input_type(result, self), self)
             result = _remove_unused_points_post_clip(result, input_bounds)
         if inplace:
             if return_clipped:
@@ -3413,6 +3414,10 @@ class DataObjectFilters:
               all-tetrahedra mesh as before.
             - A :class:`~pyvista.PolyData` input gives a ``PolyData`` instead of an
               :class:`~pyvista.UnstructuredGrid`, with the same points and cells.
+            - ``merge_points`` merges points that share a position, or leaves them
+              apart, for every input class. It no longer gives each cell its own copy
+              of the points it shares with its neighbours; call
+              :meth:`~pyvista.DataSetFilters.separate_cells` on the output for that.
 
         Parameters
         ----------
@@ -3437,10 +3442,8 @@ class DataObjectFilters:
             Display a progress bar to indicate progress.
 
         merge_points : bool, default: True
-            If ``True``, coinciding points of independently defined mesh
-            elements will be merged. It has no effect on the inputs clipped by
-            the box planes when ``invert=False``, which produce no coinciding
-            points to merge.
+            If ``True``, points that share a position are merged into one.
+            If ``False``, points the input kept apart stay apart.
 
         crinkle : bool, default: False
             Crinkle the clip by extracting the entire cells along the
@@ -3573,7 +3576,9 @@ class DataObjectFilters:
         if crinkle:
             clipped = _Crinkler._extract_crinkle_cells(source, clipped, None, active_scalars_info)
         clipped = _remove_unused_points_post_clip(clipped, self.bounds, force=use_box_filter)
-        return _cast_output_to_match_input_type(clipped, self)
+        if merge_points:
+            clipped = _weld_points(clipped)
+        return _keep_array_structure(_cast_output_to_match_input_type(clipped, self), self)
 
     def clip_slab(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
@@ -3700,7 +3705,7 @@ class DataObjectFilters:
         )
 
         input_bounds = self.bounds
-        result = _cast_output_to_match_input_type(result, self)
+        result = _keep_array_structure(_cast_output_to_match_input_type(result, self), self)
         return _remove_unused_points_post_clip(result, input_bounds)
 
     @_deprecate_positional_args(allowed=['implicit_function'])
@@ -5808,6 +5813,33 @@ def _box_planes(bounds: NumpyArray[float]) -> list[tuple[VectorLike[float], Vect
             origin[axis] = bound
             planes.append((normal, origin))
     return planes
+
+
+def _keep_array_structure(
+    output: DataSet | MultiBlock, source: DataSet | MultiBlock
+) -> DataSet | MultiBlock:
+    """Give an empty clip the array names of its input, which VTK drops."""
+    if isinstance(output, pv.MultiBlock) or isinstance(source, pv.MultiBlock):
+        return output
+    if not output.n_points:
+        output.GetPointData().CopyStructure(source.GetPointData())
+        output.GetCellData().CopyStructure(source.GetCellData())
+    return output
+
+
+def _weld_points(mesh: DataSet) -> DataSet:
+    """Merge points that share a position exactly, leaving the cells alone."""
+    if isinstance(mesh, pv.PointSet) or not mesh.n_cells:
+        return mesh
+    alg = _vtk.vtkStaticCleanUnstructuredGrid()
+    alg.SetInputData(
+        mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
+    )
+    alg.ToleranceIsAbsoluteOn()
+    alg.SetAbsoluteTolerance(0.0)
+    alg.RemoveUnusedPointsOn()
+    alg.Update()
+    return _get_output(alg)
 
 
 def _clip_by_box_planes(

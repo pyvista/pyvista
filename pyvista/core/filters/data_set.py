@@ -35,6 +35,7 @@ from pyvista.core.filters import _match_points_dtype
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_object import DataObjectFilters
 from pyvista.core.filters.data_object import _cast_output_to_match_input_type
+from pyvista.core.filters.data_object import _keep_array_structure
 from pyvista.core.filters.data_object import _validate_clip_inplace
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import convert_array
@@ -740,10 +741,7 @@ class DataSetFilters(DataObjectFilters):
         """
         if inplace:
             _validate_clip_inplace(self)
-        if isinstance(self, _vtk.vtkPolyData):
-            alg: _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet = _vtk.vtkClipPolyData()  # type: ignore[unreachable]
-        else:
-            alg = _vtk.vtkTableBasedClipDataSet()
+        alg = _vtk.vtkTableBasedClipDataSet()
 
         if is_single_value := isinstance(value, (float, int)):
             alg.SetValue(value)
@@ -768,14 +766,22 @@ class DataSetFilters(DataObjectFilters):
         alg.SetGenerateClippedOutput(both)
 
         _update_alg(alg, progress_bar=progress_bar, message='Clipping by a Scalar')
-        result0 = _get_output(alg)
+        result0 = cast(
+            'DataSet',
+            _keep_array_structure(_cast_output_to_match_input_type(_get_output(alg), self), self),
+        )
         if inplace:
             self.copy_from(result0, deep=False)
             result0 = self
         if not is_single_value:
             return result0.clip_scalar(scalars=scalars, invert=False, value=lower, inplace=inplace)
         if both:
-            result1 = _get_output(alg, oport=1)
+            result1 = cast(
+                'DataSet',
+                _keep_array_structure(
+                    _cast_output_to_match_input_type(_get_output(alg, oport=1), self), self
+                ),
+            )
             if isinstance(self, _vtk.vtkPolyData):
                 # For some reason vtkClipPolyData with SetGenerateClippedOutput on
                 # leaves unreferenced vertices
@@ -908,7 +914,10 @@ class DataSetFilters(DataObjectFilters):
             info = self.active_scalars_info
             if info.name is not None and not clipped.is_empty:
                 clipped.set_active_scalars(info.name, preference=info.association)
-        return _cast_output_to_match_input_type(clipped, self)
+        return cast(
+            'DataSet',
+            _keep_array_structure(_cast_output_to_match_input_type(clipped, self), self),
+        )
 
     @_deprecate_positional_args(allowed=['value'])
     def threshold(  # type: ignore[misc]  # noqa: PLR0917

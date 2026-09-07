@@ -155,6 +155,81 @@ def test_clip_inplace_raises(mesh):
         mesh.clip(inplace=True)
 
 
+def _seam_polydata():
+    """Two triangles meeting along a diagonal, sharing coordinates but no points."""
+    points = np.array(
+        [[0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]], dtype=float
+    )
+    mesh = pv.PolyData(points, np.array([3, 0, 1, 2, 3, 3, 4, 5]))
+    mesh.cell_data['half'] = np.array([0.0, 1.0])
+    mesh.point_data['height'] = np.array([0.0, 0.0, 0.0, 1.0, 1.0, 1.0])
+    return mesh
+
+
+def _joins_the_halves(mesh):
+    """Whether any point is shared between cells of both halves."""
+    grid = mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
+    half = np.asarray(mesh.cell_data['half'])
+    halves_of_point = {}
+    for i in range(mesh.n_cells):
+        for point_id in grid.get_cell(i).point_ids:
+            halves_of_point.setdefault(point_id, set()).add(round(float(half[i])))
+    return any(len(halves) > 1 for halves in halves_of_point.values())
+
+
+@pytest.mark.parametrize(
+    'name',
+    ['clip', 'clip_slab', 'clip_surface', 'clip_scalar'],
+)
+def test_clip_keeps_coincident_points_apart(name):
+    """A clip that removes nothing must not weld points the input kept apart."""
+    mesh = _seam_polydata()
+    enclosing = pv.Cube(center=mesh.center, x_length=50, y_length=50, z_length=50)
+    clipped = {
+        'clip': lambda: mesh.clip(normal='z', origin=(0, 0, -99), invert=False),
+        'clip_slab': lambda: mesh.clip_slab(thickness=99.0, normal='z'),
+        'clip_surface': lambda: mesh.clip_surface(enclosing),
+        'clip_scalar': lambda: mesh.clip_scalar(scalars='height', value=-99.0, invert=False),
+    }[name]()
+
+    assert type(clipped) is pv.PolyData
+    assert clipped.n_points == mesh.n_points
+    assert not _joins_the_halves(clipped)
+
+
+@pytest.mark.parametrize('invert', [True, False])
+def test_clip_box_merge_points_welds_when_asked(invert):
+    """``merge_points`` decides whether coincident points are joined."""
+    grid = pv.ImageData(dimensions=(5, 5, 5)).cast_to_unstructured_grid()
+    centers = grid.cell_centers().points[:, 2]
+    lower = grid.extract_cells(np.flatnonzero(centers < 2)).cast_to_unstructured_grid()
+    upper = grid.extract_cells(np.flatnonzero(centers > 2)).cast_to_unstructured_grid()
+    lower.cell_data['half'] = np.zeros(lower.n_cells)
+    upper.cell_data['half'] = np.ones(upper.n_cells)
+    seam = lower.merge(upper, merge_points=False)
+    # A box that cuts in x only, so both halves survive either way
+    bounds = [3.0, 99.0, -99.0, 99.0, -99.0, 99.0]
+
+    merged = seam.clip_box(bounds, invert=invert, merge_points=True)
+    unmerged = seam.clip_box(bounds, invert=invert, merge_points=False)
+
+    assert _joins_the_halves(merged)
+    assert not _joins_the_halves(unmerged)
+    assert merged.n_points < unmerged.n_points
+    assert merged.volume == pytest.approx(unmerged.volume)
+
+
+def test_clip_empty_output_keeps_array_names():
+    """An empty clip still says which arrays the input had."""
+    mesh = pv.Plane()
+    mesh.point_data['height'] = mesh.points[:, 2]
+
+    clipped = mesh.clip(normal='z', origin=(0, 0, 99), invert=False)
+
+    assert clipped.is_empty
+    assert sorted(clipped.array_names) == sorted(mesh.array_names)
+
+
 def test_clip_filter_normal(datasets):
     # Test no errors are raised
     for i, dataset in enumerate(datasets):
