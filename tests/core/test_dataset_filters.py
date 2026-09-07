@@ -440,7 +440,8 @@ def test_clip_surface_output_type(datasets, crinkle):
 def test_clip_dataset_only_filters_are_not_composite(name):
     """These clips take a dataset, not a composite."""
     assert hasattr(pv.Sphere(), name)
-    assert not hasattr(pv.MultiBlock([pv.Sphere()]), name)
+    with pytest.raises(AttributeError, match=f"'MultiBlock' object has no attribute '{name}'"):
+        getattr(pv.MultiBlock([pv.Sphere()]), name)()
 
 
 def test_clip_closed_surface():

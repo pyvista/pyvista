@@ -134,8 +134,10 @@ def test_clip_filter_pointset_no_points_removed(pointset, as_composite):
 )
 def test_clip_inplace(mesh):
     mesh = mesh.copy()
+    n_points_in = mesh.n_points
     clipped = mesh.clip(inplace=True)
     assert clipped is mesh
+    assert mesh.n_points < n_points_in
 
 
 @pytest.mark.parametrize(
@@ -501,11 +503,14 @@ def test_clip_box_merge_points_keeps_cell_types(uniform, invert):
     assert set(merged.celltypes) == set(unmerged.celltypes)
     assert merged.n_cells == unmerged.n_cells
     assert merged.volume == pytest.approx(unmerged.volume)
-    assert merged.n_points <= unmerged.n_points
+    if invert:
+        # Only an inverted clip appends pieces that share points
+        assert merged.n_points < unmerged.n_points
+    else:
+        assert merged.n_points == unmerged.n_points
 
 
-@pytest.mark.parametrize('invert', [True, False])
-def test_clip_box_merge_points_false_keeps_coincident_points_apart(invert):
+def test_clip_box_merge_points_false_keeps_coincident_points_apart():
     grid = pv.ImageData(dimensions=(5, 5, 5)).cast_to_unstructured_grid()
     centers = grid.cell_centers().points[:, 2]
     lower = grid.extract_cells(np.flatnonzero(centers < 2)).cast_to_unstructured_grid()
@@ -525,7 +530,9 @@ def test_clip_box_merge_points_false_keeps_coincident_points_apart(invert):
 
     assert shared_across_seam(seam) == 0
     bounds = [2.5, 5.0, 2.5, 5.0, 2.5, 5.0]
-    assert shared_across_seam(seam.clip_box(bounds, invert=invert, merge_points=False)) == 0
+    # An inverted clip appends the pieces outside the box, welding the seam unless asked not to
+    assert shared_across_seam(seam.clip_box(bounds, invert=True)) > 0
+    assert shared_across_seam(seam.clip_box(bounds, invert=True, merge_points=False)) == 0
 
 
 def test_clip_box_composite(multiblock_all):
@@ -777,6 +784,17 @@ def test_slice_image_other_paths(kwargs):
     sliced = image.slice(**kwargs)
     assert isinstance(sliced, pv.PolyData)
     assert sliced.n_cells
+
+
+def test_slice_image_axis_aligned_keeps_active_cell_attributes():
+    image = _image_for_slicing()
+    n_cells = image.n_cells
+    image.cell_data['cell_vectors'] = np.tile(np.arange(n_cells, dtype=float)[:, None], (1, 3))
+    image.cell_data.active_vectors_name = 'cell_vectors'
+
+    sliced = image.slice('x')
+
+    assert sliced.cell_data.active_vectors_name == 'cell_vectors'
 
 
 def test_slice_image_axis_aligned_keeps_active_attributes():
