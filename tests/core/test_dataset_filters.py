@@ -2607,14 +2607,15 @@ def test_remove_cells_invert_polydata(sphere):
     assert 'vtkOriginalPointIds' not in sphere.point_data
     assert 'vtkOriginalCellIds' not in sphere.cell_data
 
-    # An empty selection keeps the id arrays
+    # An empty selection keeps the input's arrays as well as the id arrays
     empty = sphere.remove_cells([], invert=True)
     assert isinstance(empty, pv.PolyData)
     assert empty.is_empty
-    assert empty.point_data.keys() == ['vtkOriginalPointIds']
-    assert empty.cell_data.keys() == ['vtkOriginalCellIds']
+    assert empty.point_data.keys() == [*sphere.point_data.keys(), 'vtkOriginalPointIds']
+    assert empty.cell_data.keys() == [*sphere.cell_data.keys(), 'vtkOriginalCellIds']
     empty = sphere.remove_cells([], invert=True, pass_point_ids=False, pass_cell_ids=False)
-    assert empty.n_arrays == 0
+    assert empty.point_data.keys() == sphere.point_data.keys()
+    assert empty.cell_data.keys() == sphere.cell_data.keys()
 
 
 def test_extract_cells_column_vector_ind(hexbeam):
