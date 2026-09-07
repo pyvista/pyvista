@@ -42,7 +42,7 @@ def test_subclass_registered(cls):
 
 
 def test_subclass_not_registered_without_ipython(monkeypatch):
-    monkeypatch.delitem(sys.modules, 'IPython.core.guarded_eval')
+    monkeypatch.delitem(sys.modules, 'IPython')
 
     class Unregistered(pv.PolyData): ...
 

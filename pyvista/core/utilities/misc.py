@@ -495,7 +495,10 @@ def _allow_ipython_completion(cls: type) -> None:
     VTK subclass does, unless the exact type is allow-listed. Tab completion such
     as ``mesh.point_data['`` depends on that evaluation.
     """
-    guarded_eval = sys.modules.get('IPython.core.guarded_eval')
+    if 'IPython' not in sys.modules:
+        return
+    # IPython 9.17+ loads the completer lazily, so the module has to be imported here
+    guarded_eval = importlib.import_module('IPython.core.guarded_eval')
     policy = getattr(guarded_eval, 'EVALUATION_POLICIES', {}).get('limited')
     for name in ('allowed_getattr', 'allowed_getitem'):
         allowed = getattr(policy, name, None)
