@@ -853,23 +853,26 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
 
         Examples
         --------
-        Display the bird image with a tight view.
+        .. pyvista-plot::
+            :force_static:
 
-        >>> import pyvista as pv
-        >>> from pyvista import examples
-        >>> bird = examples.download_bird()
-        >>> pl = pv.Plotter(border=True, border_width=5)
-        >>> _ = pl.add_mesh(bird, rgb=True)
-        >>> pl.camera.tight()
-        >>> pl.show()
+            Display the bird image with a tight view.
 
-        Set the background to blue use a 5% padding around the image.
+            >>> import pyvista as pv
+            >>> from pyvista import examples
+            >>> bird = examples.download_bird()
+            >>> pl = pv.Plotter(border=True, border_width=5)
+            >>> _ = pl.add_mesh(bird, rgb=True)
+            >>> pl.camera.tight()
+            >>> pl.show()
 
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(bird, rgb=True)
-        >>> pl.background_color = 'b'
-        >>> pl.camera.tight(padding=0.05)
-        >>> pl.show()
+            Set the background to blue use a 5% padding around the image.
+
+            >>> pl = pv.Plotter()
+            >>> _ = pl.add_mesh(bird, rgb=True)
+            >>> pl.background_color = 'b'
+            >>> pl.camera.tight(padding=0.05)
+            >>> pl.show()
 
         """
         # Inspired by vedo resetCamera. Thanks @marcomusy.

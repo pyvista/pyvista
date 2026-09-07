@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import itertools
 import re
+from typing import TYPE_CHECKING
+import warnings
 
 from hypothesis import given
 from hypothesis import strategies as st
@@ -9,6 +11,54 @@ import numpy as np
 import pytest
 
 import pyvista as pv
+from tests.conftest import _get_module_functions
+
+if TYPE_CHECKING:
+    from collections.abc import ItemsView
+    from types import FunctionType
+
+
+def pytest_generate_tests(metafunc):
+    """Generate parametrized tests."""
+    if 'geometric_obj_test_case' in metafunc.fixturenames:
+        functions = _generate_geometric_object_functions()
+        ids = [name for name, _ in functions]
+        metafunc.parametrize('geometric_obj_test_case', functions, ids=ids)
+
+
+def _generate_geometric_object_functions() -> ItemsView[str, FunctionType]:
+    """Generate a list of geometric or parametric object functions which have a direction."""
+    geo_functions = _get_module_functions(pv.core.geometric_objects)
+    para_functions = _get_module_functions(pv.core.parametric_objects)
+    functions: dict[str, FunctionType] = {**geo_functions, **para_functions}
+    return {name: func for name, func in functions.items() if name[0].isupper()}.items()
+
+
+@pytest.mark.parametrize('dtype', ['float32', 'float64'])
+def test_geometric_objects_points_dtype(geometric_obj_test_case, dtype):
+    """Every geometric and parametric object honors the global points dtype."""
+    name, func = geometric_obj_test_case
+
+    # Add required args if needed
+    kwargs = {}
+    if name == 'CircularArc':
+        kwargs['center'] = (0, 0, 0)
+        kwargs['pointa'] = (1, 0, 0)
+        kwargs['pointb'] = (0, 1, 0)
+    elif name == 'CircularArcFromNormal':
+        kwargs['center'] = (0, 0, 0)
+    elif name in ['KochanekSpline', 'Spline']:
+        kwargs['points'] = np.eye(3)
+    elif name == 'Text3D':
+        kwargs['string'] = 'Text3D'
+
+    pv.global_config.points_dtype = dtype
+    with warnings.catch_warnings():
+        # A few of these are built from VTK algorithms that only generate single
+        # precision; they warn under 'float64' but still come back float64
+        warnings.simplefilter('ignore', pv.PrecisionWarning)
+        obj = func(**kwargs)
+    assert obj.points.dtype == np.dtype(dtype)
 
 
 @given(points=st.lists(elements=st.integers()).filter(lambda x: len(x) != 5))
@@ -291,6 +341,73 @@ def test_solid_sphere_generic():
         phi=np.linspace(0, 180, phi_resolution),
     )
     assert sphere == sphere_seq
+
+
+@pytest.mark.parametrize(
+    ('kwargs', 'n_points', 'cells', 'celltypes'),
+    [
+        (
+            dict(radius=[0.25, 0.5], theta=[0, 180, 360], phi=[45, 135]),
+            8,
+            [8, 0, 2, 3, 1, 4, 6, 7, 5, 8, 1, 3, 2, 0, 5, 7, 6, 4],
+            [pv.CellType.HEXAHEDRON] * 2,
+        ),
+        (
+            dict(radius=[0, 0.5], theta=[0, 180, 360], phi=[0, 60, 120, 180]),
+            7,
+            [
+                4,
+                0,
+                1,
+                3,
+                4,
+                4,
+                0,
+                1,
+                4,
+                3,
+                4,
+                0,
+                2,
+                6,
+                5,
+                4,
+                0,
+                2,
+                5,
+                6,
+                5,
+                3,
+                4,
+                6,
+                5,
+                0,
+                5,
+                4,
+                3,
+                5,
+                6,
+                0,
+            ],
+            [pv.CellType.TETRA] * 4 + [pv.CellType.PYRAMID] * 2,
+        ),
+        (
+            dict(radius=[0.25, 0.5], theta=[0, 120, 240, 360], phi=[0, 90]),
+            8,
+            [6, 0, 2, 3, 1, 5, 6, 6, 0, 3, 4, 1, 6, 7, 6, 0, 4, 2, 1, 7, 5],
+            [pv.CellType.WEDGE] * 3,
+        ),
+    ],
+)
+def test_solid_sphere_generic_cell_order(kwargs, n_points, cells, celltypes):
+    # Pin the exact point and cell ordering of the generic solid sphere
+    sphere = pv.SolidSphereGeneric(**kwargs)
+    if pv.vtk_version_info < (9, 7) and celltypes[0] == pv.CellType.WEDGE:
+        # Wedge points 1,2 and 4,5 are swapped for older VTK
+        cells = np.array(cells).reshape(-1, 7)[:, [0, 1, 3, 2, 4, 6, 5]].ravel().tolist()
+    assert sphere.n_points == n_points
+    assert sphere.cells.tolist() == cells
+    assert sphere.celltypes.tolist() == celltypes
 
 
 def test_solid_sphere_theta_start_end():
@@ -647,14 +764,43 @@ def test_cube():
     assert np.allclose(np.abs(normals), expected)
 
 
-@pytest.mark.parametrize(('point_dtype'), (['float32', 'float64', 'invalid']))
-def test_cube_point_dtype(point_dtype):
-    if point_dtype in ['float32', 'float64']:
-        cube = pv.Cube(point_dtype=point_dtype)
-        assert cube.points.dtype == point_dtype
+@pytest.mark.parametrize(('points_dtype'), (['float32', 'float64', 'invalid']))
+def test_cube_points_dtype(points_dtype):
+    if points_dtype in ['float32', 'float64']:
+        cube = pv.Cube(points_dtype=points_dtype)
+        assert cube.points.dtype == points_dtype
     else:
-        with pytest.raises(ValueError, match="Point dtype must be either 'float32' or 'float64'"):
-            _ = pv.Cube(point_dtype=point_dtype)
+        with pytest.raises(ValueError, match="Points dtype must be either 'float32' or 'float64'"):
+            _ = pv.Cube(points_dtype=points_dtype)
+
+
+@pytest.mark.parametrize('source', [pv.Cube, pv.CubeSource, pv.CubeFacesSource])
+def test_point_dtype_deprecated(source):
+    match = r'`point_dtype` is deprecated\. Use `points_dtype` instead'
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        source(point_dtype='float64')
+
+    # the message points at the global as well as the new name
+    with pytest.warns(pv.PyVistaDeprecationWarning, match='pyvista.global_config.points_dtype'):
+        source(point_dtype='float64')
+
+    with pytest.raises(TypeError, match='not both'):
+        source(point_dtype='float64', points_dtype='float64')
+
+
+def test_point_dtype_deprecated_property():
+    src = pv.CubeSource(points_dtype='float64')
+    match = r'`point_dtype` is deprecated'
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        assert src.point_dtype == 'float64'
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        src.point_dtype = 'float32'
+    assert src.points_dtype == 'float32'
+
+
+def test_point_dtype_deprecation_expires():
+    # Deprecated v0.49, convert to error in v0.52, remove v0.53
+    assert pv.version_info < (0, 52), 'Convert the `point_dtype` deprecation into an error.'
 
 
 def test_cone():

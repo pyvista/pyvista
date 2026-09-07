@@ -43,6 +43,7 @@ from pyvista.core._vtk_utilities import is_vtk_attribute
 from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.filters import _update_alg
 from pyvista.core.utilities import cells
+from pyvista.core.utilities import features
 from pyvista.core.utilities import fileio
 from pyvista.core.utilities import fit_line_to_points
 from pyvista.core.utilities import fit_plane_to_points
@@ -118,7 +119,8 @@ def transform():
 
 def test_sample_function_raises(monkeypatch: pytest.MonkeyPatch):
     with monkeypatch.context() as m:
-        m.setattr(os, 'name', 'nt')
+        # Scope the fake to this module: a global os.name breaks pathlib.Path
+        m.setattr(features, 'os', SimpleNamespace(name='nt'))
         with pytest.raises(
             ValueError,
             match='This function on Windows only supports int32 or smaller',
@@ -3284,6 +3286,20 @@ def test_deprecate_positional_args_error_messages():
     )
     with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
         foo(True, True)
+
+
+def test_deprecate_positional_args_call_site_and_extra_args():
+    @_deprecate_positional_args(version=(1, 2))
+    def foo(bar, baz): ...
+
+    # The warning names this file as the call site
+    match = rf'\n{re.escape(Path(__file__).as_posix())}:\d+: Arguments'
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        foo(True, True)
+
+    # Too many positional arguments still warn, then raise from the function itself
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match), pytest.raises(TypeError):
+        foo(True, True, True)
 
 
 def test_deprecate_positional_args_post_deprecation():

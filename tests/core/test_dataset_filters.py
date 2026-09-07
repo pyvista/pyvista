@@ -16,6 +16,7 @@ from hypothesis.strategies import composite
 from hypothesis.strategies import floats
 from hypothesis.strategies import integers
 from hypothesis.strategies import one_of
+from matplotlib.colors import ListedColormap
 import numpy as np
 import pytest
 
@@ -222,6 +223,154 @@ def test_clip_scalar_ranges_imagedata():
     assert vol.n_points < vol2.n_points
 
 
+def test_clip_scalar_does_not_change_active_scalars(uniform):
+    uniform.point_data['other'] = np.arange(uniform.n_points)
+    uniform.set_active_scalars('Spatial Point Data')
+    clipped = uniform.clip_scalar(scalars='other', value=uniform.n_points / 2)
+    assert clipped.n_cells
+    assert uniform.active_scalars_name == 'Spatial Point Data'
+
+
+def _clip_surface_exact(mesh, surface, **kwargs):
+    # The distance-everywhere clip the fast path must reproduce
+    from pyvista.core.filters.data_object import _cast_output_to_match_input_type
+
+    function = _vtk.vtkImplicitPolyDataDistance()
+    function.SetInput(surface)
+    clipped = pv.DataSetFilters._clip_with_function(mesh, function, **kwargs)
+    return _cast_output_to_match_input_type(clipped, mesh)
+
+
+def _clip_surface_case(kind):
+    # Built per test so the cell locator cached on the mesh does not outlive it
+    if kind == 'image':
+        mesh = pv.ImageData(dimensions=(12, 11, 10), spacing=(1.0, 1.5, 2.0), offset=(2, 3, 4))
+        mesh['data'] = np.arange(mesh.n_points, dtype=float)
+        return mesh, pv.Sphere(radius=6, center=mesh.center)
+    if kind == 'rotated_image':
+        mesh = pv.ImageData(dimensions=(12, 11, 10), spacing=(1.0, 1.5, 2.0))
+        mesh['data'] = np.arange(mesh.n_points, dtype=float)
+        mesh.direction_matrix = pv.Transform().rotate_z(30).matrix[:3, :3]
+        return mesh, pv.Sphere(radius=6, center=mesh.center)
+    if kind == 'unstructured':
+        mesh, surface = _clip_surface_case('image')
+        return mesh.cast_to_unstructured_grid(), surface
+    if kind == 'polydata':
+        mesh = pv.Sphere(theta_resolution=40, phi_resolution=40)
+        mesh['z'] = mesh.points[:, 2]
+        return mesh, pv.Cube(x_length=1.2, y_length=0.8, z_length=0.8).triangulate()
+    mesh = pv.PointSet(np.random.default_rng(0).uniform(-1, 1, (500, 3)))
+    mesh['v'] = mesh.points[:, 0]
+    return mesh, pv.Sphere(radius=0.7)
+
+
+@pytest.mark.parametrize(
+    'kind',
+    [
+        'image',
+        pytest.param(
+            'rotated_image',
+            marks=pytest.mark.skipif(
+                pv.vtk_version_info < (9, 4),
+                reason='The implicit function clip ignores the image direction matrix',
+            ),
+        ),
+        'unstructured',
+        'polydata',
+        'pointset',
+    ],
+)
+@pytest.mark.parametrize('kwargs', [dict(invert=True), dict(invert=False), dict(crinkle=True)])
+def test_clip_surface_closed_surface_matches_exact_clip(kind, kwargs):
+    mesh, surface = _clip_surface_case(kind)
+    assert surface.n_open_edges == 0
+    clipped = mesh.clip_surface(surface, **kwargs)
+    expected = _clip_surface_exact(mesh, surface, **kwargs)
+    assert type(clipped) is type(expected)
+    assert clipped.n_points == expected.n_points
+    assert clipped.n_cells == expected.n_cells
+    assert clipped.array_names == expected.array_names
+    assert clipped.active_scalars_name == expected.active_scalars_name
+    assert set(map(tuple, np.round(clipped.points, 6))) == set(
+        map(tuple, np.round(expected.points, 6))
+    )
+
+
+def _wrong_classifier(kind, original):
+    # Corrupt the inside/outside classification the fast path starts from
+    def classify(dataset, surface):
+        inside = original(dataset, surface)
+        if kind == 'inverted':
+            return ~inside
+        if kind == 'all_outside':
+            return np.zeros_like(inside)
+        dims = dataset.dimensions
+        grid = inside.reshape(dims[2], dims[1], dims[0]).copy()
+        if kind == 'streak':
+            grid[2, 3, :] = ~grid[2, 3, :]  # a ray-shaped run of wrong points
+        else:
+            grid[1:5, 1:5, 1:5] = True  # a solid wrong region away from the surface
+        return grid.ravel()
+
+    return classify
+
+
+@pytest.mark.parametrize('kind', ['streak', 'blob', 'inverted', 'all_outside'])
+@pytest.mark.parametrize('invert', [True, False])
+def test_clip_surface_wrong_classification_still_exact(monkeypatch, kind, invert):
+    from pyvista.core.filters import data_set
+
+    image = pv.ImageData(dimensions=(12, 11, 10), spacing=(1.0, 1.5, 2.0))
+    image['data'] = np.arange(image.n_points, dtype=float)
+    surface = pv.Sphere(radius=6, center=(9.0, 12.0, 14.0))
+    original = data_set._points_inside_surface
+    monkeypatch.setattr(data_set, '_points_inside_surface', _wrong_classifier(kind, original))
+
+    clipped = image.clip_surface(surface, invert=invert)
+    expected = _clip_surface_exact(image, surface, invert=invert)
+    assert clipped.n_cells == expected.n_cells
+    assert set(map(tuple, np.round(clipped.points, 6))) == set(
+        map(tuple, np.round(expected.points, 6))
+    )
+
+
+@pytest.mark.parametrize(
+    ('kind', 'verified'), [('streak', True), ('blob', False), ('inverted', False)]
+)
+def test_signed_distance_near_surface_heals_or_gives_up(monkeypatch, kind, verified):
+    from pyvista.core.filters import data_set
+
+    image = pv.ImageData(dimensions=(12, 11, 10), spacing=(1.0, 1.5, 2.0))
+    surface = pv.Sphere(radius=6, center=(9.0, 12.0, 14.0))
+    original = data_set._points_inside_surface
+    monkeypatch.setattr(data_set, '_points_inside_surface', _wrong_classifier(kind, original))
+    function = _vtk.vtkImplicitPolyDataDistance()
+    function.SetInput(surface)
+
+    distance = data_set._signed_distance_near_surface(image, surface, function)
+    assert (distance is not None) == verified
+
+
+@pytest.mark.parametrize(
+    'kwargs', [dict(value=1.0), dict(compute_distance=True), dict(surface=pv.Sphere().clip())]
+)
+def test_clip_surface_falls_back_to_exact_clip(uniform, kwargs):
+    surface = kwargs.pop('surface', pv.Sphere(radius=4, center=uniform.center))
+    clipped = uniform.clip_surface(surface, **kwargs)
+    expected = _clip_surface_exact(uniform, surface, value=kwargs.get('value', 0.0))
+    assert clipped.n_cells == expected.n_cells
+    assert set(map(tuple, np.round(clipped.points, 6))) == set(
+        map(tuple, np.round(expected.points, 6))
+    )
+
+
+def test_clip_surface_compute_distance_does_not_modify_input(uniform):
+    surface = pv.Sphere(radius=3, center=uniform.center)
+    clipped = uniform.clip_surface(surface, compute_distance=True)
+    assert 'implicit_distance' in clipped.point_data
+    assert 'implicit_distance' not in uniform.point_data
+
+
 def test_clip_scalar_errors():
     mesh = pv.Wavelet()
     with pytest.raises(TypeError):
@@ -267,7 +416,7 @@ def test_clip_surface():
     assert 'implicit_distance' in clipped.array_names
     clipped = dataset.clip_surface(surface.cast_to_unstructured_grid(), progress_bar=True)
     assert isinstance(clipped, pv.UnstructuredGrid)
-    assert 'implicit_distance' in clipped.array_names
+    assert 'implicit_distance' not in clipped.array_names
     # Test crinkle
     clipped = dataset.clip_surface(surface, invert=False, progress_bar=True, crinkle=True)
     assert isinstance(clipped, pv.UnstructuredGrid)
@@ -2360,6 +2509,18 @@ def test_extract_points_default(extracted_with_adjacent_true):
     assert np.array_equal(sub_surf_adj.cells, expected_surf.cells)
 
 
+def test_extract_points_pointset(pointset):
+    ind = [0, 1]
+    extracted = pointset.extract_points(ind)
+    assert isinstance(extracted, pv.PointSet)
+    assert extracted.n_points == len(ind)
+    assert np.array_equal(extracted.points, pointset.points[ind])
+    assert extracted['vtkOriginalPointIds'].tolist() == ind
+
+    # Cells can still be requested explicitly, but a point set has none
+    assert pointset.extract_points(ind, include_cells=True).n_points == 0
+
+
 def test_extract_cells(sphere):
     ind = 0
     n_cells = 1
@@ -2403,6 +2564,244 @@ def test_extract_cells(sphere):
     match = 'Number of bool indices (2) must match the number of cells (840).'
     with pytest.raises(ValueError, match=re.escape(match)):
         _ = sphere.extract_cells([True, True])
+
+
+@pytest.mark.parametrize('dataset_filter', ['extract_cells', 'extract_points'])
+def test_remove_invert_matches_extract(datasets, dataset_filter):
+    remove_filter = 'remove_cells' if dataset_filter == 'extract_cells' else 'remove_points'
+    for dataset in datasets:
+        if isinstance(dataset, pv.PointSet) and dataset_filter == 'extract_cells':
+            continue
+        n_items = dataset.n_cells if dataset_filter == 'extract_cells' else dataset.n_points
+        ind = np.arange(n_items) < 4
+        extract_kwargs = (
+            {} if dataset_filter == 'extract_cells' else dict(include_cells=dataset.n_cells > 0)
+        )
+        remove_kwargs = {} if dataset_filter == 'extract_cells' else dict(mode='all')
+        extracted = getattr(dataset, dataset_filter)(ind, **extract_kwargs)
+        removed = getattr(dataset, remove_filter)(ind=ind, invert=True, **remove_kwargs)
+
+        is_pointset = isinstance(dataset, pv.PointSet)
+        assert type(extracted) is (pv.PointSet if is_pointset else pv.UnstructuredGrid)
+        assert type(removed) is (
+            type(dataset)
+            if isinstance(dataset, (pv.PolyData, pv.PointSet))
+            else pv.UnstructuredGrid
+        )
+        assert removed.n_points == extracted.n_points
+        assert removed.n_cells == extracted.n_cells
+        assert np.array_equal(removed.points, extracted.points)
+        assert np.array_equal(removed['vtkOriginalPointIds'], extracted['vtkOriginalPointIds'])
+
+
+def test_remove_cells_invert_polydata(sphere):
+    sphere.point_data['scalars'] = np.arange(sphere.n_points)
+    sphere.set_active_scalars('scalars')
+    ind = [0, 5, 10]
+    kept = sphere.remove_cells(ind, invert=True)
+    assert isinstance(kept, pv.PolyData)
+    assert kept.n_cells == len(ind)
+    assert np.array_equal(kept['vtkOriginalCellIds'], ind)
+    assert np.array_equal(kept.points, sphere.points[kept['vtkOriginalPointIds']])
+    assert kept.active_scalars_name == 'scalars'
+    assert 'vtkOriginalPointIds' not in sphere.point_data
+    assert 'vtkOriginalCellIds' not in sphere.cell_data
+
+    # An empty selection keeps the id arrays
+    empty = sphere.remove_cells([], invert=True)
+    assert isinstance(empty, pv.PolyData)
+    assert empty.is_empty
+    assert empty.point_data.keys() == ['vtkOriginalPointIds']
+    assert empty.cell_data.keys() == ['vtkOriginalCellIds']
+    empty = sphere.remove_cells([], invert=True, pass_point_ids=False, pass_cell_ids=False)
+    assert empty.n_arrays == 0
+
+
+def test_extract_cells_column_vector_ind(hexbeam):
+    mask = np.arange(hexbeam.n_cells) < 3
+    assert hexbeam.extract_cells(np.argwhere(mask)) == hexbeam.extract_cells(mask)
+    assert hexbeam.remove_cells(np.argwhere(mask)) == hexbeam.remove_cells(mask)
+
+
+def test_extract_points_invert(sphere):
+    mask = sphere.points[:, 2] > 0
+    kwargs = dict(adjacent_cells=False, pass_point_ids=False, pass_cell_ids=False)
+    assert sphere.extract_points(mask, invert=True, **kwargs) == sphere.extract_points(
+        ~mask, **kwargs
+    )
+
+    ind = [0, 1, 2]
+    inverted = sphere.extract_points(ind, invert=True, include_cells=False)
+    assert inverted.n_points == sphere.n_points - len(ind)
+    assert not np.isin(ind, inverted['vtkOriginalPointIds']).any()
+
+
+@pytest.mark.parametrize('dataset_filter', ['extract_cells', 'extract_points'])
+def test_extract_cells_extract_points_invalid_ind(sphere, dataset_filter):
+    dataset_filter = getattr(sphere, dataset_filter)
+    name = 'cells' if dataset_filter.__name__ == 'extract_cells' else 'points'
+    n_items = sphere.n_cells if name == 'cells' else sphere.n_points
+
+    match = f'Number of bool indices (2) must match the number of {name} ({n_items}).'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        dataset_filter([True, True])
+
+    match = 'Indices must be either a mask or an integer array-like'
+    with pytest.raises(TypeError, match=match):
+        dataset_filter([0.5])
+
+    match = f'Index {n_items} is out of bounds for a mesh with {n_items} {name}.'
+    with pytest.raises(IndexError, match=re.escape(match)):
+        dataset_filter([0, n_items])
+
+    match = f'Index -1 is out of bounds for a mesh with {n_items} {name}.'
+    with pytest.raises(IndexError, match=re.escape(match)):
+        dataset_filter(-1)
+
+    # An empty selection is valid
+    assert dataset_filter([]).n_points == 0
+
+
+def test_remove_cells(datasets):
+    ind = [0, 1, 2]
+    for dataset in datasets:
+        if isinstance(dataset, pv.PointSet):
+            with pytest.raises(pv.PointSetCellOperationError):
+                dataset.remove_cells(ind)
+            continue
+
+        removed = dataset.remove_cells(ind)
+        assert type(removed) is (
+            pv.PolyData if isinstance(dataset, pv.PolyData) else pv.UnstructuredGrid
+        )
+        assert removed.n_cells == dataset.n_cells - len(ind)
+        assert not np.isin(ind, removed['vtkOriginalCellIds']).any()
+        assert np.array_equal(removed.points, dataset.points[removed['vtkOriginalPointIds']])
+        assert removed.n_points == removed.remove_unused_points().n_points
+
+        # The id arrays are added by default
+        assert 'vtkOriginalPointIds' in removed.point_data
+        assert 'vtkOriginalCellIds' in removed.cell_data
+        removed = dataset.remove_cells(ind, pass_point_ids=False, pass_cell_ids=False)
+        assert removed.array_names == dataset.array_names
+
+
+def test_remove_cells_invert(hexbeam):
+    ind = [0, 1, 2]
+    kept = hexbeam.remove_cells(ind, invert=True)
+    assert kept.n_cells == len(ind)
+    assert np.array_equal(kept['vtkOriginalCellIds'], ind)
+
+
+def test_remove_cells_inplace(hexbeam, sphere, struct_grid):
+    for mesh in (hexbeam, sphere):
+        n_cells = mesh.n_cells
+        assert mesh.remove_cells([0], inplace=True) is mesh
+        assert mesh.n_cells == n_cells - 1
+
+    # Cells cannot be removed from a structured grid in-place
+    n_cells = struct_grid.n_cells
+    assert isinstance(struct_grid.remove_cells([0]), pv.UnstructuredGrid)
+    match = 'Cannot update StructuredGrid in-place, the output is UnstructuredGrid.'
+    with pytest.raises(TypeError, match=match):
+        struct_grid.remove_cells([0], inplace=True)
+    assert struct_grid.n_cells == n_cells
+
+
+@pytest.mark.parametrize('mode', ['any', 'all'])
+def test_remove_points(datasets, mode):
+    for dataset in datasets:
+        ind = dataset.get_cell(0).point_ids if dataset.n_cells else [0, 1, 2]
+        removed = dataset.remove_points(ind=ind, mode=mode)
+        expected_type = (
+            type(dataset)
+            if isinstance(dataset, (pv.PolyData, pv.PointSet))
+            else pv.UnstructuredGrid
+        )
+        assert type(removed) is expected_type
+        assert np.array_equal(removed.points, dataset.points[removed['vtkOriginalPointIds']])
+        if mode == 'any':
+            assert not np.isin(ind, removed['vtkOriginalPointIds']).any()
+        if dataset.n_cells:
+            # Only cell 0 uses all of its points
+            assert (
+                removed.n_cells == dataset.n_cells - 1
+                if mode == 'all'
+                else removed.n_cells < dataset.n_cells - 1
+            )
+            assert removed.n_points == removed.remove_unused_points().n_points
+
+        # The id arrays are added by default
+        assert 'vtkOriginalPointIds' in removed.point_data
+        assert ('vtkOriginalCellIds' in removed.cell_data) == bool(dataset.n_cells)
+        removed = dataset.remove_points(ind=ind, pass_point_ids=False, pass_cell_ids=False)
+        assert removed.array_names == dataset.array_names
+
+
+@pytest.mark.parametrize('mode', ['any', 'all'])
+def test_remove_points_matches_polydata_filter(sphere, mode):
+    remove = np.zeros(sphere.n_points, dtype=bool)
+    remove[sphere.regular_faces[0]] = True
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        expected, ridx = pv.PolyDataFilters.remove_points(sphere, remove, mode=mode)
+    actual = pv.DataSetFilters.remove_points(sphere, remove, mode=mode)
+    assert np.array_equal(actual.points, expected.points)
+    assert np.array_equal(actual.faces, expected.faces)
+    assert np.array_equal(actual['vtkOriginalPointIds'], ridx)
+
+
+def test_remove_points_invert_inplace(hexbeam, struct_grid):
+    ind = hexbeam.get_cell(0).point_ids
+    kept = hexbeam.remove_points(ind, invert=True)
+    assert kept.n_cells == 1
+    assert np.array_equal(kept['vtkOriginalPointIds'], sorted(ind))
+
+    n_points = hexbeam.n_points
+    assert hexbeam.remove_points([0], inplace=True) is hexbeam
+    assert hexbeam.n_points < n_points
+
+    assert isinstance(struct_grid.remove_points([0]), pv.UnstructuredGrid)
+    match = 'Cannot update StructuredGrid in-place, the output is UnstructuredGrid.'
+    with pytest.raises(TypeError, match=match):
+        struct_grid.remove_points([0], inplace=True)
+
+
+@pytest.mark.parametrize('mode', ['any', 'all'])
+def test_remove_points_unused_points(mode):
+    points = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [2.0, 0.0, 0.0], [3.0, 0.0, 0.0], [9.0, 9.0, 9.0]]
+    lines = pv.PolyData(points, lines=[2, 0, 1, 2, 1, 2, 2, 2, 3])
+    assert lines.n_points == 5
+
+    # Point 4 is not used by any cell
+    removed = lines.remove_points(ind=4, mode=mode)
+    assert removed['vtkOriginalPointIds'].tolist() == [0, 1, 2, 3]
+    # Point 3 is only removed when its cell is removed too
+    removed = lines.remove_points(ind=[4, 3], mode=mode)
+    expected = [0, 1, 2] if mode == 'any' else [0, 1, 2, 3]
+    assert removed['vtkOriginalPointIds'].tolist() == expected
+
+
+def test_remove_points_polydata_without_cells():
+    points = np.random.default_rng(0).random((5, 3))
+    mesh = pv.PolyData()
+    mesh.points = points
+    assert mesh.n_cells == 0
+
+    removed = mesh.remove_points(ind=0)
+    assert isinstance(removed, pv.PolyData)
+    assert removed.n_points == 4
+    assert removed.n_verts == 4
+    assert np.array_equal(removed.points, points[1:])
+
+    cloud = mesh.cast_to_pointset().remove_points(0)
+    assert isinstance(cloud, pv.PointSet)
+    assert cloud.n_cells == 0
+    assert np.array_equal(cloud.points, points[1:])
+
+
+def test_remove_points_invalid_mode(hexbeam):
+    with pytest.raises(ValueError, match="mode 'foo' is not valid"):
+        hexbeam.remove_points([0], mode='foo')
 
 
 @pytest.mark.parametrize('preference', ['point', 'cell'])
@@ -4568,6 +4967,65 @@ def test_color_labels_return_dict(labeled_image, color_type):
         expected_color = getattr(pv.Color(mapping_in[key]), color_type)
         actual_color = mapping_out[key]
         assert actual_color == expected_color
+
+
+@pytest.mark.parametrize(
+    ('negative_indexing', 'label_data', 'expected_keys'),
+    [
+        (True, [0, -1, 2, -6], [0, 2, -1, -6]),
+        # A label equal to the number of colors is allowed but has no color
+        (False, [0, 2, 2, 6], [0, 2]),
+    ],
+)
+def test_color_labels_return_dict_index_mode(negative_indexing, label_data, expected_keys):
+    colors = ['red', 'green', 'blue', 'white', 'black', 'cyan']
+    labels = pv.ImageData(dimensions=(4, 1, 1))
+    labels['data'] = label_data
+    colored, mapping = labels.color_labels(
+        colors, coloring_mode='index', negative_indexing=negative_indexing, return_dict=True
+    )
+    # Only labels present are mapped, positive keys first
+    assert list(mapping.keys()) == expected_keys
+    for key in expected_keys:
+        assert mapping[key] == pv.Color(colors[key]).int_rgb
+    expected_colors = [mapping.get(label, (0, 0, 0)) for label in label_data]
+    assert np.array_equal(colored.active_scalars, expected_colors)
+
+
+def test_color_labels_does_not_modify_colormap():
+    cmap = ListedColormap([(1.0, 0.0, 0.0), (0.0, 1.0, 0.0)])
+    labels = pv.ImageData(dimensions=(3, 1, 1))
+    labels['data'] = [0, -1, 1]
+    kwargs = dict(negative_indexing=True, color_type='float_rgb')
+    first = labels.color_labels(cmap, **kwargs)
+    second = labels.color_labels(cmap, **kwargs)
+    assert len(cmap.colors) == 2
+    assert np.array_equal(first.active_scalars, second.active_scalars)
+
+
+def test_color_labels_return_dict_cycle_mode():
+    labels = pv.ImageData(dimensions=(4, 1, 1))
+    labels['data'] = [3, 1, 3, 7]
+    colored, mapping = labels.color_labels(
+        ['red', 'green'], coloring_mode='cycle', return_dict=True
+    )
+    assert list(mapping.keys()) == [1, 3, 7]
+    assert mapping[1] == mapping[7] == pv.Color('red').int_rgb
+    assert mapping[3] == pv.Color('green').int_rgb
+    expected_colors = [mapping[label] for label in labels['data']]
+    assert np.array_equal(colored.active_scalars, expected_colors)
+
+
+def test_color_labels_cycle_mode_nan_labels():
+    labels = pv.ImageData(dimensions=(3, 1, 1))
+    labels['data'] = [0.0, np.nan, 1.0]
+    colored, mapping = labels.color_labels(
+        ['red', 'green'], coloring_mode='cycle', color_type='float_rgb', return_dict=True
+    )
+    # NaN never matches a label, so it keeps the default color and is not mapped
+    assert list(mapping.keys()) == [0.0, 1.0]
+    assert np.isnan(colored.active_scalars[1]).all()
+    assert np.array_equal(colored.active_scalars[[0, 2]], [mapping[0.0], mapping[1.0]])
 
 
 @pytest.fixture

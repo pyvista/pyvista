@@ -11,6 +11,7 @@ import numpy as np
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core.filters import _update_alg
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
 from pyvista.core.utilities.helpers import _NORMALS
@@ -2149,7 +2150,7 @@ class WidgetComponent(_NoNewAttrMixin):
         def _the_callback(widget, _event):
             para_source = _vtk.vtkParametricFunctionSource()
             para_source.SetParametricFunction(widget.GetParametricSpline())
-            para_source.Update()
+            _update_alg(para_source)
             polyline = pv.wrap(para_source.GetOutput())
             ribbon.shallow_copy(polyline.ribbon(normal=(0, 0, 1), angle=90.0))
             if callable(callback):
@@ -2836,35 +2837,38 @@ class WidgetComponent(_NoNewAttrMixin):
 
         Examples
         --------
-        The following example creates a background color switcher.
+        .. pyvista-plot::
+            :force_static:
 
-        >>> import pyvista as pv
-        >>> pl = pv.Plotter()
-        >>> def set_bg(color):
-        ...     def wrapped_callback():
-        ...         pl.background_color = color
-        ...
-        ...     return wrapped_callback
-        >>> _ = pl.add_radio_button_widget(
-        ...     set_bg('white'),
-        ...     'bgcolor',
-        ...     position=(10.0, 200.0),
-        ...     title='White',
-        ...     value=True,
-        ... )
-        >>> _ = pl.add_radio_button_widget(
-        ...     set_bg('lightblue'),
-        ...     'bgcolor',
-        ...     position=(10.0, 140.0),
-        ...     title='Light Blue',
-        ... )
-        >>> _ = pl.add_radio_button_widget(
-        ...     set_bg('pink'),
-        ...     'bgcolor',
-        ...     position=(10.0, 80.0),
-        ...     title='Pink',
-        ... )
-        >>> pl.show()
+            The following example creates a background color switcher.
+
+            >>> import pyvista as pv
+            >>> pl = pv.Plotter()
+            >>> def set_bg(color):
+            ...     def wrapped_callback():
+            ...         pl.background_color = color
+            ...
+            ...     return wrapped_callback
+            >>> _ = pl.add_radio_button_widget(
+            ...     set_bg('white'),
+            ...     'bgcolor',
+            ...     position=(10.0, 200.0),
+            ...     title='White',
+            ...     value=True,
+            ... )
+            >>> _ = pl.add_radio_button_widget(
+            ...     set_bg('lightblue'),
+            ...     'bgcolor',
+            ...     position=(10.0, 140.0),
+            ...     title='Light Blue',
+            ... )
+            >>> _ = pl.add_radio_button_widget(
+            ...     set_bg('pink'),
+            ...     'bgcolor',
+            ...     position=(10.0, 80.0),
+            ...     title='Pink',
+            ... )
+            >>> pl.show()
 
         """
         msg = 'Cannot add a widget to a closed plotter.'

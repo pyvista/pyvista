@@ -750,6 +750,13 @@ def test_orthogonal_planes_source_bounds():
     assert output['zx'].bounds == (xmin, xmax, ymid, ymid, zmin, zmax)
 
 
+@pytest.mark.parametrize('resolution', [2.7, (1, 2, 2.5)])
+def test_orthogonal_planes_source_resolution_rejects_fractions(resolution):
+    # The resolution is cast to an integer dtype, which would otherwise truncate it silently
+    with pytest.raises(ValueError, match='resolution must have integer-like values'):
+        pv.OrthogonalPlanesSource(resolution=resolution)
+
+
 def test_orthogonal_planes_source_names():
     planes_source = pv.OrthogonalPlanesSource(names=['a', 'b', 'c'])
     assert planes_source.names == ('a', 'b', 'c')

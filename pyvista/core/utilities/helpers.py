@@ -173,7 +173,7 @@ def wrap(dataset: _vtk.vtkDataObject, *, validate: bool | None = ...) -> DataObj
 @overload
 def wrap(dataset: NumpyArray[float], *, validate: bool | None = ...) -> PolyData | ImageData: ...
 @overload
-def wrap(dataset: _vtk.vtkAbstractArray, *, validate: bool | None = ...) -> pyvista_ndarray: ...
+def wrap(dataset: _vtk.vtkDataArray, *, validate: bool | None = ...) -> pyvista_ndarray: ...
 @overload
 def wrap(dataset: None, *, validate: bool | None = ...) -> None: ...
 
@@ -441,6 +441,9 @@ def _validate_plane_origin_and_normal(  # noqa: PLR0917
         # find center of data if origin not specified
         origin = mesh.center if origin is None else origin
         origin_ = _validation.validate_array3(origin, dtype_out=float, name='origin')
+    if not np.any(normal_):
+        msg = '`normal` must be a non-zero vector.'
+        raise ValueError(msg)
     return origin_, normal_
 
 
