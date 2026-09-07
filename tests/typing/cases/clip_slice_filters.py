@@ -155,10 +155,7 @@ assert_types(poly_with_scalars().clip_scalar(value=0.0, inplace=True), pv.PolyDa
 assert_types(pointset_with_scalars().clip_scalar(value=0.0), pv.PointSet)
 assert_types(pointset_with_scalars().clip_scalar(value=0.0, both=True), tuple[pv.PointSet, pv.PointSet])
 assert_types(unstructured_with_scalars().clip_scalar(value=0.0), pv.UnstructuredGrid)
-assert_types(
-    unstructured_with_scalars().clip_scalar(value=0.0, both=True),
-    tuple[pv.UnstructuredGrid, pv.UnstructuredGrid],
-)
+assert_types(unstructured_with_scalars().clip_scalar(value=0.0, both=True), tuple[pv.UnstructuredGrid, pv.UnstructuredGrid])
 assert_types(image_with_scalars().clip_scalar(value=0.0), pv.UnstructuredGrid)
 assert_types(image_with_scalars().clip_scalar(value=0.0, both=True), tuple[pv.UnstructuredGrid, pv.UnstructuredGrid])
 assert_types(poly_with_scalars().clip_scalar(value=0.0, both=a_flag()), pv.PolyData | tuple[pv.PolyData, pv.PolyData])
