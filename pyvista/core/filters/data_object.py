@@ -3542,7 +3542,6 @@ class DataObjectFilters:
             source,
             _box_planes(bounds_),
             invert=invert,
-            merge_points=merge_points,
             progress_bar=progress_bar,
         )
 
@@ -5817,7 +5816,7 @@ def _keep_array_structure(
 
 def _weld_points(mesh: DataSet) -> DataSet:
     """Merge points that share a position exactly, leaving the cells alone."""
-    if isinstance(mesh, pv.PointSet) or not mesh.n_cells:
+    if not mesh.n_cells:
         return mesh
     alg = _vtk.vtkStaticCleanUnstructuredGrid()
     alg.SetInputData(
@@ -5835,7 +5834,6 @@ def _clip_by_box_planes(
     planes: Sequence[tuple[VectorLike[float], VectorLike[float]]],
     *,
     invert: bool,
-    merge_points: bool,
     progress_bar: bool,
 ) -> DataSet:
     """Clip by each plane in turn, keeping the inside or appending the outside pieces."""
@@ -5866,8 +5864,9 @@ def _clip_by_box_planes(
     if not outside:
         # Nothing lay outside the box
         return dataset.extract_cells([], pass_cell_ids=False, pass_point_ids=False)
+    # The pieces are merged afterwards if asked, in one pass with everything else
     append = _vtk.vtkAppendFilter()
-    append.SetMergePoints(merge_points)
+    append.MergePointsOff()
     for piece in outside:
         append.AddInputData(piece)
     _update_alg(append, progress_bar=progress_bar, message='Clipping a Dataset by a Bounding Box')
