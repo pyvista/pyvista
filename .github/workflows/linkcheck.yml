@@ -98,3 +98,27 @@ jobs:
         env:
           LYCHEE_EXIT_CODE: ${{ steps.lychee.outputs.exit_code }}
         run: exit "$LYCHEE_EXIT_CODE"
+
+  dataset-urls:
+    # lychee reads files, so it never sees the dataset URLs the example loaders
+    # build at runtime. This job checks those against the real source.
+    name: Example dataset source URLs
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+
+      - name: Install tox-uv
+        run: pip install tox-uv
+
+      - name: Check dataset source URLs
+        run: tox run -e dataset-urls

@@ -65,16 +65,20 @@ def url_session():
     )
 
 
+@pytest.fixture
+def _web_source(monkeypatch):
+    """Point the loaders at the web source, whatever the local cache is set to."""
+    monkeypatch.setattr(downloads, 'SOURCE', downloads._DEFAULT_VTK_DATA_SOURCE)
+
+
+@pytest.mark.needs_dataset_urls
+@pytest.mark.usefixtures('_web_source')
 def test_dataset_loader_source_urls_blob(test_case: DatasetLoaderTestCase, url_session):
     sources = test_case.dataset_loader[1].source_urls
 
-    def is_valid(url: str) -> bool:
-        # Check is_file() in case local cache of pyvista/data is used
-        return Path(url).is_file() or _is_valid_url(url_session, url)
-
     # Test valid url; some datasets have dozens of files, so check them concurrently
     with ThreadPoolExecutor(max_workers=8) as pool:
-        valid = pool.map(is_valid, sources)
+        valid = pool.map(lambda url: _is_valid_url(url_session, url), sources)
         invalid = [url for url, ok in zip(sources, valid, strict=True) if not ok]
     if invalid:  # pragma: no cover -- failure path
         urls = '\n'.join(invalid)
