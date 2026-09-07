@@ -27,7 +27,7 @@ def test_utilities_namespace():
             warnings.simplefilter('always')
             found = hasattr(utilities, name)
         deprecated = any(issubclass(w.category, PyVistaDeprecationWarning) for w in caught)
-        if not (found and deprecated):
+        if not (found and deprecated):  # pragma: no cover -- failure path
             failed.append(name)
     assert not failed, f'Not forwarded with a deprecation warning: {failed}'
 
