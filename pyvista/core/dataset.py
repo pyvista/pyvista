@@ -183,8 +183,8 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Notes
         -----
-        If both cell and point scalars are present and neither has been set
-        active at the dataset level, the point scalars are reported.
+        If the point and cell attributes both have active scalars and neither
+        has been chosen at the dataset level, the point scalars are reported.
 
         Examples
         --------
@@ -215,7 +215,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
                     name = None
 
         if name is None:
-            # Resolved on every read, so an array activated later is still seen
+            # Search on every read so an array activated later is seen
             for association, attributes in (
                 (FieldAssociation.POINT, self.GetPointData()),
                 (FieldAssociation.CELL, self.GetCellData()),
@@ -242,8 +242,8 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Notes
         -----
-        If both cell and point vectors are present and neither has been set
-        active at the dataset level, the point vectors are reported.
+        If the point and cell attributes both have active vectors and neither
+        has been chosen at the dataset level, the point vectors are reported.
 
         Examples
         --------
@@ -272,7 +272,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
                     name = None
 
         if name is None:
-            # Resolved on every read, so an array activated later is still seen
+            # Search on every read so an array activated later is seen
             for association, attributes in (
                 (FieldAssociation.POINT, self.GetPointData()),
                 (FieldAssociation.CELL, self.GetCellData()),
@@ -949,7 +949,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             Deep or shallow copy.
 
         """
-        # The private state throughout, so an unresolved active array stays unresolved
+        # Copy the private tuples, not the properties, which would resolve an unchosen array
         if deep:
             self._association_complex_names = _copy_association_names(
                 ido._association_complex_names
