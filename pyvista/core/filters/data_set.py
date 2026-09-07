@@ -2243,8 +2243,8 @@ class DataSetFilters(DataObjectFilters):
         label_regions: bool = True,  # noqa: FBT001, FBT002
         region_assignment_mode: Literal['ascending', 'descending', 'unspecified'] = 'descending',
         region_ids: VectorLike[int] | None = None,
-        point_ids: VectorLike[int] | None = None,
-        cell_ids: VectorLike[int] | None = None,
+        point_ids: int | VectorLike[int] | VectorLike[bool] | None = None,
+        cell_ids: int | VectorLike[int] | VectorLike[bool] | None = None,
         closest_point: VectorLike[float] | None = None,
         inplace: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
@@ -2273,7 +2273,8 @@ class DataSetFilters(DataObjectFilters):
         .. versionchanged:: 0.49
            Invalid inputs raise instead of being ignored: ``scalars`` requires
            ``scalar_range``, out-of-range ``point_ids`` and ``cell_ids`` raise
-           ``IndexError``, and ``closest_point`` must have three components.
+           ``IndexError``, ``closest_point`` must have three components, and ids
+           must be one-dimensional.
 
         .. deprecated:: 0.43.0
            Parameter ``largest`` is deprecated. Use ``'largest'`` or
@@ -2349,15 +2350,15 @@ class DataSetFilters(DataObjectFilters):
             Region ids to extract. Only used if ``extraction_mode`` is
             ``specified``.
 
-        point_ids : sequence[int], optional
-            Point ids to use as seeds. Only used if ``extraction_mode`` is
-            ``point_seed``.
+        point_ids : int | VectorLike[int] | VectorLike[bool], optional
+            Point ids to use as seeds. A boolean mask sized to the number of points
+            is also supported. Only used if ``extraction_mode`` is ``point_seed``.
 
-        cell_ids : sequence[int], optional
-            Cell ids to use as seeds. Only used if ``extraction_mode`` is
-            ``cell_seed``.
+        cell_ids : int | VectorLike[int] | VectorLike[bool], optional
+            Cell ids to use as seeds. A boolean mask sized to the number of cells is
+            also supported. Only used if ``extraction_mode`` is ``cell_seed``.
 
-        closest_point : sequence[int], optional
+        closest_point : sequence[float], optional
             Point coordinates in ``(x, y, z)``. Only used if
             ``extraction_mode`` is ``closest``.
 
@@ -2482,6 +2483,13 @@ class DataSetFilters(DataObjectFilters):
             )
             return _cast_extraction(extracted, mesh, pass_point_ids=False, pass_cell_ids=False)
 
+        def _rebuild_point_region_ids(mesh):
+            """Derive the point region ids from the cell region ids."""
+            cell_ids = mesh.cell_data['RegionId']
+            mesh.point_data.pop('RegionId', None)
+            averaged = mesh.cell_data_to_point_data(progress_bar=progress_bar)['RegionId']
+            mesh.point_data['RegionId'] = averaged.round().astype(cell_ids.dtype)
+
         def _region_ids_match(mesh):
             """Return whether both ``'RegionId'`` arrays are sized to fit the mesh."""
             point_ids = mesh.point_data.get('RegionId')
@@ -2510,7 +2518,7 @@ class DataSetFilters(DataObjectFilters):
 
         region_ids_: NumpyArray[int] = np.empty(0, dtype=int)
         seed_ids: NumpyArray[int] = np.empty(0, dtype=int)
-        closest_point_: NumpyArray[float] = np.empty(3, dtype=float)
+        closest_point_: NumpyArray[float] = np.zeros(3, dtype=float)
         if extraction_mode in required_input:
             input_name, given_input = required_input[extraction_mode]
             input_value: float | VectorLike[float] | VectorLike[int] | None = given_input
@@ -2590,7 +2598,7 @@ class DataSetFilters(DataObjectFilters):
                 input_mesh.set_active_scalars('__point_data')
 
             if extraction_mode in ('all', 'specified', 'closest'):
-                # Scalar connectivity is unreliable for these modes
+                # The filter's own scalar connectivity is unreliable for these modes
                 scalars_name = input_mesh.active_scalars_name
                 input_mesh = _extract_and_cast(input_mesh, ranges=scalar_range)
                 if scalars_name in input_mesh.point_data:
@@ -2627,7 +2635,7 @@ class DataSetFilters(DataObjectFilters):
             for seed in seed_ids:
                 alg.AddSeed(int(seed))
         else:
-            # 'specified' regions are selected from the output of 'all' below
+            # 'specified' selects from these regions below
             alg.SetExtractionModeToAllRegions()
 
         _update_alg(
@@ -2650,6 +2658,9 @@ class DataSetFilters(DataObjectFilters):
         elif extraction_mode == 'largest' and isinstance(output, pv.PolyData):
             # This mode leaves points which no cell references
             output_needs_fixing = True
+        elif extraction_mode == 'all':
+            # This mode's arrays only fail to match when it produces no cells
+            output_needs_fixing = label_regions and output.n_cells == 0
         else:
             # The seed modes may label many disconnected regions with a single id
             output_needs_fixing = label_regions and not _region_ids_match(output)
@@ -2668,6 +2679,13 @@ class DataSetFilters(DataObjectFilters):
                 output.point_data['RegionId'] = np.zeros(output.n_points, dtype=int)
                 output.cell_data['RegionId'] = np.zeros(output.n_cells, dtype=int)
 
+        if label_regions:
+            if output.n_cells > 0 and not _region_ids_match(output):
+                # Cells sharing a point are always in the same region, so the cell
+                # ids carry the point ids the filter can leave out
+                _rebuild_point_region_ids(output)
+            output.set_active_scalars('RegionId', preference='point')
+
         # Remove temp point array
         with contextlib.suppress(KeyError):
             output.point_data.remove('__point_data')
@@ -2679,6 +2697,9 @@ class DataSetFilters(DataObjectFilters):
             # restore previously active scalars
             if active_name is None or active_name in output.array_names:
                 output.set_active_scalars(active_name, preference=active_field)
+
+        output.cell_data.pop('vtkOriginalCellIds', None)
+        output.point_data.pop('vtkOriginalPointIds', None)
 
         if inplace:
             try:
