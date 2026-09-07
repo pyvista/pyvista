@@ -105,9 +105,6 @@ def _run_mypy_code(code, use_plugin, tmp_path):
         # A bare 'mypy' is on PATH only when the environment is activated.
         args = [sys.executable, '-m', 'mypy', '--show-traceback', '--follow-imports=skip']
 
-        # Its own cache, so concurrent xdist workers do not share mypy's sqlite metastore
-        args.extend(['--cache-dir', str(tmp_path / '.mypy_cache')])
-
         # Set config file
         config = MYPY_CONFIG_FILE_USE_PLUGIN if use_plugin else MYPY_CONFIG_FILE_NO_PLUGIN
         args.extend(['--config-file', config])
