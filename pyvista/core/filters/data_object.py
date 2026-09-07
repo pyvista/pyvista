@@ -3358,6 +3358,7 @@ class DataObjectFilters:
         :class:`~pyvista.StructuredGrid`, :class:`~pyvista.ExplicitStructuredGrid`, and
         :class:`~pyvista.UnstructuredGrid`, are clipped by the six box planes in turn with
         the same clipper as :meth:`clip`, which keeps hexahedra and other cell types.
+        Passing ``merge_points=False`` clips any input with :vtk:`vtkBoxClipDataSet`.
 
         .. versionchanged:: 0.49
 
@@ -3394,7 +3395,8 @@ class DataObjectFilters:
 
         merge_points : bool, default: True
             If ``True``, coinciding points of independently defined mesh
-            elements will be merged.
+            elements will be merged. ``False`` clips with
+            :vtk:`vtkBoxClipDataSet`, whose output is split into tetrahedra.
 
         crinkle : bool, default: False
             Crinkle the clip by extracting the entire cells along the
@@ -3404,8 +3406,10 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.UnstructuredGrid
-            Clipped dataset.
+        pyvista.DataSet | pyvista.MultiBlock
+            Clipped dataset. Output mesh type matches the input type for
+            :class:`~pyvista.PointSet` and :class:`~pyvista.MultiBlock`; otherwise
+            the output type is :class:`~pyvista.UnstructuredGrid`.
 
         Examples
         --------
@@ -3689,8 +3693,9 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.PolyData
-            Sliced dataset.
+        pyvista.PolyData | pyvista.MultiBlock
+            Sliced dataset. A :class:`~pyvista.MultiBlock` input gives a
+            ``MultiBlock`` of :class:`~pyvista.PolyData` blocks.
 
         See Also
         --------
@@ -3803,8 +3808,9 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.PolyData
-            Sliced dataset.
+        pyvista.PolyData | pyvista.MultiBlock
+            Sliced dataset. A :class:`~pyvista.MultiBlock` input gives a
+            ``MultiBlock`` of :class:`~pyvista.PolyData` blocks.
 
         Notes
         -----
@@ -3912,8 +3918,9 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.PolyData
-            Sliced dataset.
+        pyvista.MultiBlock
+            Sliced dataset, with one :class:`~pyvista.PolyData` block per slice. A
+            :class:`~pyvista.MultiBlock` input gives one such ``MultiBlock`` per block.
 
         See Also
         --------
@@ -4045,8 +4052,9 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.PolyData
-            Sliced dataset.
+        pyvista.MultiBlock
+            Sliced dataset, with one :class:`~pyvista.PolyData` block per slice. A
+            :class:`~pyvista.MultiBlock` input gives one such ``MultiBlock`` per block.
 
         See Also
         --------
@@ -4170,8 +4178,9 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.PolyData
-            Sliced dataset.
+        pyvista.PolyData | pyvista.MultiBlock
+            Sliced dataset. A :class:`~pyvista.MultiBlock` input gives a
+            ``MultiBlock`` of :class:`~pyvista.PolyData` blocks.
 
         See Also
         --------

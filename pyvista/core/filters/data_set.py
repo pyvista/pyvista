@@ -685,9 +685,11 @@ class DataSetFilters(DataObjectFilters):
 
         Returns
         -------
-        output : pyvista.PolyData | tuple
+        output : pyvista.DataSet | tuple[pyvista.DataSet, pyvista.DataSet]
             Clipped dataset if ``both=False``.  If ``both=True`` then
-            returns a tuple of both clipped datasets.
+            returns a tuple of both clipped datasets. Output mesh type matches the
+            input type for :class:`~pyvista.PolyData` and :class:`~pyvista.PointSet`;
+            otherwise the output type is :class:`~pyvista.UnstructuredGrid`.
 
         Examples
         --------
@@ -830,9 +832,8 @@ class DataSetFilters(DataObjectFilters):
         -------
         DataSet
             Clipped mesh. Output type matches input type for
-            :class:`~pyvista.PointSet`, :class:`~pyvista.PolyData`, and
-            :class:`~pyvista.MultiBlock`; otherwise the output type is
-            :class:`~pyvista.UnstructuredGrid`.
+            :class:`~pyvista.PointSet` and :class:`~pyvista.PolyData`; otherwise the
+            output type is :class:`~pyvista.UnstructuredGrid`.
 
         Examples
         --------

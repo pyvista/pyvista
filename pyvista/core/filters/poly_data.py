@@ -2122,7 +2122,8 @@ class PolyDataFilters(DataSetFilters):
         Returns
         -------
         pyvista.PolyData
-            The clipped mesh.
+            The clipped mesh. The point and cell data of the input are not
+            carried over to it.
 
         Examples
         --------

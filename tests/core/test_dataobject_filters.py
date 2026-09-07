@@ -1198,6 +1198,38 @@ def test_slice_along_line_composite(multiblock_all):
     assert output.n_blocks == multiblock_all.n_blocks
 
 
+@pytest.mark.parametrize(
+    ('call', 'block_type'),
+    [
+        ('slice', pv.PolyData),
+        ('slice_implicit', pv.PolyData),
+        ('slice_along_line', pv.PolyData),
+        ('slice_orthogonal', pv.MultiBlock),
+        ('slice_along_axis', pv.MultiBlock),
+    ],
+)
+def test_slice_composite_output_type(multiblock_all_no_pointset, call, block_type):
+    bounds = multiblock_all_no_pointset.bounds
+    kwargs = {
+        'slice_implicit': dict(
+            implicit_function=generate_plane((1.0, 0.0, 0.0), multiblock_all_no_pointset.center)
+        ),
+        'slice_along_line': dict(
+            line=pv.Line(
+                (bounds.x_min, bounds.y_min, bounds.z_min),
+                (bounds.x_max, bounds.y_max, bounds.z_max),
+                resolution=10,
+            )
+        ),
+    }.get(call, {})
+
+    output = getattr(multiblock_all_no_pointset, call)(**kwargs)
+
+    assert isinstance(output, pv.MultiBlock)
+    assert output.n_blocks == multiblock_all_no_pointset.n_blocks
+    assert all(isinstance(block, block_type) for block in output)
+
+
 def test_slice_generate_triangles_true_emits_only_triangles():
     grid = examples.load_uniform().cast_to_unstructured_grid()
     out = grid.slice(normal=(1, 1, 1), generate_triangles=True)
