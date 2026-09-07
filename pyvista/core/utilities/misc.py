@@ -487,6 +487,22 @@ class _DataObjectMeta(_AutoFreezeABCMeta):
         raise AttributeError(msg)
 
 
+def _allow_ipython_completion(cls: type) -> None:
+    """Let IPython's default completion policy evaluate instances of ``cls``.
+
+    IPython's ``limited`` evaluation policy refuses attribute and item access on
+    any class that overrides ``__getattribute__`` or ``__getattr__``, which every
+    VTK subclass does, unless the exact type is allow-listed. Tab completion such
+    as ``mesh.point_data['`` depends on that evaluation.
+    """
+    guarded_eval = sys.modules.get('IPython.core.guarded_eval')
+    policy = getattr(guarded_eval, 'EVALUATION_POLICIES', {}).get('limited')
+    for name in ('allowed_getattr', 'allowed_getitem'):
+        allowed = getattr(policy, name, None)
+        if isinstance(allowed, set):
+            allowed.add(cls)
+
+
 class _NoNewAttrMixin(metaclass=_AutoFreezeABCMeta):
     """``Mixin`` to prevent adding new attributes.
 
@@ -494,6 +510,11 @@ class _NoNewAttrMixin(metaclass=_AutoFreezeABCMeta):
     object. It freezes the attributes when called and prevents setting new ones via
     "normal" methods like ``obj.foo = 42``.
     """
+
+    def __init_subclass__(cls, **kwargs) -> None:
+        """Register each subclass with IPython's completion policy."""
+        super().__init_subclass__(**kwargs)
+        _allow_ipython_completion(cls)
 
     def _no_new_attributes(self, this_class: type) -> None:
         """Prevent setting additional attributes."""
