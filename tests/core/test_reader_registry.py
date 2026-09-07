@@ -16,6 +16,7 @@ import sys
 import threading
 from types import SimpleNamespace
 from unittest.mock import MagicMock
+from unittest.mock import call
 from unittest.mock import patch
 import warnings
 
@@ -204,6 +205,101 @@ def test_read_with_custom_extension(tmp_path):
     assert isinstance(result, pv.PolyData)
 
 
+def test_read_forwards_kwargs_to_custom_handler(tmp_path):
+    test_file = tmp_path / 'data.myext'
+    test_file.touch()
+    mock = MagicMock(return_value=pv.PolyData())
+    pv.register_reader('.myext', mock)
+
+    pv.read(test_file, delimiter=',', skiprows=2)
+
+    mock.assert_called_once_with(str(test_file.resolve()), delimiter=',', skiprows=2)
+
+
+def test_custom_handler_kwargs_change_the_result(tmp_path):
+    test_file = tmp_path / 'data.myext'
+    test_file.touch()
+
+    @pv.register_reader('.myext')
+    def _reader(_path, *, theta_resolution=10):
+        return pv.Sphere(theta_resolution=theta_resolution)
+
+    assert pv.read(test_file, theta_resolution=30).n_points > pv.read(test_file).n_points
+
+
+def test_read_forwards_kwargs_to_each_file_in_a_sequence(tmp_path):
+    first = tmp_path / 'a.myext'
+    second = tmp_path / 'b.myext'
+    first.touch()
+    second.touch()
+    mock = MagicMock(return_value=pv.PolyData())
+    pv.register_reader('.myext', mock)
+
+    pv.read([first, second], normals=False)
+
+    assert mock.call_args_list == [
+        call(str(first.resolve()), normals=False),
+        call(str(second.resolve()), normals=False),
+    ]
+
+
+def test_read_forwards_kwargs_to_registered_class_in_a_sequence(tmp_path):
+    """A sequence read reaches the class-reader branch with its kwargs intact."""
+    first = tmp_path / 'a.myclassfmt'
+    second = tmp_path / 'b.myclassfmt'
+    first.touch()
+    second.touch()
+    pv.register_reader('.myclassfmt', _MockReader)
+
+    default = pv.read([first, second])
+    denser = pv.read([first, second], theta_resolution=30)
+
+    assert denser[0].n_points > default[0].n_points
+    assert denser[1].n_points > default[1].n_points
+
+
+def test_progress_bar_and_validate_are_not_forwarded_to_a_handler(tmp_path):
+    """A handler owns the whole read, so reader-object arguments stay behind."""
+    test_file = tmp_path / 'data.myext'
+    test_file.touch()
+    mock = MagicMock(return_value=pv.PolyData())
+    pv.register_reader('.myext', mock)
+
+    pv.read(test_file, progress_bar=True, validate=True)
+
+    mock.assert_called_once_with(str(test_file.resolve()))
+
+
+def test_read_kwargs_fall_back_to_the_builtin_reader(tmp_path):
+    """A handler overriding a built-in does not reinterpret its reader attributes."""
+    test_file = tmp_path / 'mesh.vtp'
+    pv.Sphere().save(test_file)
+    mock = MagicMock(return_value=pv.PolyData())
+    pv.register_reader('.vtp', mock, override=True)
+
+    assert pv.read(test_file).n_points == 0
+    with pytest.raises(AttributeError, match='not_an_attribute'):
+        pv.read(test_file, not_an_attribute=1)
+    mock.assert_called_once_with(str(test_file.resolve()))
+
+
+def test_uri_kwargs_fall_back_to_the_builtin_reader(tmp_path):
+    """The remote path gates the handler on kwargs exactly as the local one does."""
+    vtp_file = tmp_path / 'mesh.vtp'
+    pv.Sphere().save(vtp_file)
+    mock = MagicMock(return_value=pv.PolyData())
+    pv.register_reader('.vtp', mock, override=True)
+
+    with (
+        patch.dict('sys.modules', {'fsspec': None}),
+        patch('pooch.retrieve', return_value=str(vtp_file)),
+        pytest.raises(AttributeError, match='not_an_attribute'),
+    ):
+        pv.read('https://example.com/mesh.vtp', not_an_attribute=1)
+
+    mock.assert_not_called()
+
+
 @pytest.mark.parametrize(
     'uri',
     ['https://example.com/data.myformat', 's3://bucket/data.myformat'],
@@ -213,8 +309,8 @@ def test_uri_forwarded_to_custom_reader(uri):
     mock = MagicMock(return_value=pv.PolyData())
     pv.register_reader('.myformat', mock)
 
-    result = pv.read(uri)
-    mock.assert_called_once_with(uri)
+    result = pv.read(uri, normals=False)
+    mock.assert_called_once_with(uri, normals=False)
     assert isinstance(result, pv.PolyData)
 
 
@@ -225,9 +321,12 @@ def test_uri_fallback_downloads_on_local_file_required(tmp_path):
 
     call_count = 0
 
-    def handler_needs_local(path, **__):
+    seen = []
+
+    def handler_needs_local(path, **kwargs):
         nonlocal call_count
         call_count += 1
+        seen.append(kwargs)
         if pv.has_scheme(path):
             raise pv.LocalFileRequiredError
         return pv.PolyData()
@@ -236,9 +335,10 @@ def test_uri_fallback_downloads_on_local_file_required(tmp_path):
 
     with patch.dict('sys.modules', {'fsspec': None}):
         with patch('pooch.retrieve', return_value=str(fake_file)):
-            result = pv.read('https://example.com/data.myformat')
+            result = pv.read('https://example.com/data.myformat', normals=False)
 
     assert call_count == 2  # first with URI, second with local path
+    assert seen == [{'normals': False}, {'normals': False}]
     assert isinstance(result, pv.PolyData)
 
 
@@ -656,8 +756,7 @@ def test_read_uses_registered_class(custom_file):
 def test_read_forwards_kwargs_to_registered_class(custom_file):
     """A class reader gets ``pv.read`` kwargs as reader attributes.
 
-    This is what a bare callable handler cannot do: ``pv.read`` drops its
-    kwargs on that path.
+    A bare callable handler receives the same kwargs as call arguments.
     """
     pv.register_reader('.myclassfmt', _MockReader)
     default = pv.read(custom_file)

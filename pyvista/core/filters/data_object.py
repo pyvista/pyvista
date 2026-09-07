@@ -14,6 +14,7 @@ import itertools
 import re
 import reprlib
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import Generic
 from typing import Literal
 from typing import NamedTuple
@@ -53,11 +54,13 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
     from typing import ClassVar
 
+    from pyvista import DataObject
     from pyvista import DataSet
     from pyvista import DataSetAttributes
     from pyvista import ImageData
     from pyvista import MultiBlock
     from pyvista import PolyData
+    from pyvista import RectilinearGrid
     from pyvista import RotationLike
     from pyvista import TransformLike
     from pyvista import VectorLike
@@ -69,6 +72,103 @@ if TYPE_CHECKING:
 
     _MeshType_co = TypeVar('_MeshType_co', DataSet, MultiBlock, covariant=True)
     _T = TypeVar('_T')
+
+
+def _rectilinear_transform_components(
+    transform: Transform,
+) -> tuple[NumpyArray[float], NumpyArray[float]]:
+    """Return the translation and scale of a transform a rectilinear grid can represent."""
+    # Follow similar decomposition performed by ImageData.index_to_physical_matrix
+    T, R, N, S, K = transform.decompose()
+
+    if not np.allclose(K, np.eye(3)):
+        msg = (
+            'The transformation has a shear component which is not supported by '
+            'RectilinearGrid.\nCast to StructuredGrid first to support shear '
+            'transformations, or use `Transform.decompose()`\nto remove this component.'
+        )
+        raise ValueError(msg)
+
+    if not np.allclose(np.abs(R), np.eye(3)):
+        msg = (
+            'The transformation has a non-diagonal rotation component which is not '
+            'supported by\nRectilinearGrid. Cast to StructuredGrid first to fully '
+            'support rotations, or use\n`Transform.decompose()` to remove this component.'
+        )
+        raise ValueError(msg)
+
+    # Lump the scale, the reflection, and any reflection from the rotation together
+    return T, S * N * np.diagonal(R)
+
+
+def _transform_vector_names(
+    point_data: DataSetAttributes,
+    cell_data: DataSetAttributes,
+    shape: tuple[int, int],
+    *,
+    all_vectors: bool,
+) -> tuple[list[str | None], list[str | None]]:
+    """Return the point and cell array names which the transform filter treats as vectors."""
+    if all_vectors:
+        n_points, n_cells = shape
+        return (
+            [name for name, data in point_data.items() if data.shape == (n_points, 3)],
+            [name for name, data in cell_data.items() if data.shape == (n_cells, 3)],
+        )
+    return (
+        [point_data.active_vectors_name, point_data.active_normals_name],
+        [cell_data.active_vectors_name, cell_data.active_normals_name],
+    )
+
+
+def _convert_transform_input_to_float(
+    dataset: DataSet,
+    vectors: Sequence[tuple[DataSetAttributes, list[str | None]]],
+    dtype: np.dtype[Any],
+) -> bool:
+    """Convert a dataset's integer points and named vector arrays to float, in place."""
+    converted = False
+    points = dataset.points
+    if not np.issubdtype(points.dtype, np.floating):
+        dataset.points = points.astype(dtype)
+        converted = True
+    for attributes, names in vectors:
+        for name in names:
+            if name is None:
+                continue
+            array = attributes[name]
+            if not np.issubdtype(array.dtype, np.floating):
+                attributes[name] = array.astype(dtype)
+                converted = True
+    return converted
+
+
+def _copy_transformed_arrays(output: DataSet, filtered: DataObject, *, copy: bool) -> None:
+    """Copy the point, cell and field arrays the transform filter produced."""
+    output.point_data.update(filtered.point_data, copy=copy)
+    output.cell_data.update(filtered.cell_data, copy=copy)
+    output.field_data.update(filtered.field_data, copy=copy)
+
+
+def _orient_image_structure(output: ImageData, dataset: ImageData, transform: Transform) -> None:
+    """Give an image the structure of another, oriented by a transformation."""
+    # vtkTransformFilter returns a StructuredGrid, so the structure is transformed here
+    output.copy_structure(dataset)
+    matrix = Transform(output.index_to_physical_matrix).compose(transform).matrix
+    output.index_to_physical_matrix = matrix
+
+
+def _transform_rectilinear_axes(
+    output: RectilinearGrid,
+    dataset: RectilinearGrid,
+    components: tuple[NumpyArray[float], NumpyArray[float]],
+) -> None:
+    """Set a grid's axes to another's, scaled and translated."""
+    # vtkTransformFilter returns a StructuredGrid, so the axes are transformed here instead
+    translation, scale = components
+    output.x = dataset.x * scale[0] + translation[0]
+    output.y = dataset.y * scale[1] + translation[1]
+    output.z = dataset.z * scale[2] + translation[2]
 
 
 class _CellStatusTuple(NamedTuple):
@@ -2000,44 +2100,28 @@ class DataObjectFilters:
             msg = 'Transform element (3,3), the inverse scale term, is zero'
             raise ValueError(msg)
 
-        # vtkTransformFilter truncates the result if the input is an integer type
-        # so convert input points and relevant vectors to float
-        # (creating a new copy would be harmful much more often)
-        float_dtype = _points_dtype() or np.dtype(np.float32)
-        converted_ints = False
-        points = self.points
-        if not np.issubdtype(points.dtype, np.floating):
-            self.points = points.astype(float_dtype)
-            converted_ints = True
+        # Validate before this mesh is modified below
+        rectilinear_components = (
+            _rectilinear_transform_components(t) if isinstance(self, pv.RectilinearGrid) else None
+        )
+
         # Optimization: build the attribute wrappers once; they refer to the same VTK objects
         # for the whole filter, including after copy_from, so reusing them is safe
         point_data = self.point_data
         cell_data = self.cell_data
-        if transform_all_input_vectors:
-            # all vector-shaped data will be transformed
-            n_points, n_cells = self.n_points, self.n_cells
-            point_vectors: list[str | None] = [
-                name for name, data in point_data.items() if data.shape == (n_points, 3)
-            ]
-            cell_vectors: list[str | None] = [
-                name for name, data in cell_data.items() if data.shape == (n_cells, 3)
-            ]
-        else:
-            # we'll only transform active vectors and normals
-            point_vectors = [point_data.active_vectors_name, point_data.active_normals_name]
-            cell_vectors = [cell_data.active_vectors_name, cell_data.active_normals_name]
-        # dynamically convert each self.point_data[name] etc. to the configured float
-        all_vectors = [point_vectors, cell_vectors]
-        all_dataset_attrs = [point_data, cell_data]
-        for vector_names, dataset_attrs in zip(all_vectors, all_dataset_attrs, strict=True):
-            for vector_name in vector_names:
-                if vector_name is None:
-                    continue
-                vector_arr = dataset_attrs[vector_name]
-                if not np.issubdtype(vector_arr.dtype, np.floating):
-                    dataset_attrs[vector_name] = vector_arr.astype(float_dtype)
-                    converted_ints = True
-        if converted_ints:
+        point_vectors, cell_vectors = _transform_vector_names(
+            point_data,
+            cell_data,
+            (self.n_points, self.n_cells),
+            all_vectors=transform_all_input_vectors,
+        )
+
+        # vtkTransformFilter truncates the result if the input is an integer type, so convert
+        # this mesh in place (creating a new copy would be harmful much more often)
+        float_dtype = _points_dtype() or np.dtype(np.float32)
+        if _convert_transform_input_to_float(
+            self, [(point_data, point_vectors), (cell_data, cell_vectors)], float_dtype
+        ):
             warn_external(
                 'Integer points, vector, and normal data (if any) of the input mesh '
                 f'have been converted to ``np.{float_dtype.name}``. '
@@ -2048,88 +2132,44 @@ class DataObjectFilters:
         active_point_scalars_name: str | None = point_data.active_scalars_name
         active_cell_scalars_name: str | None = cell_data.active_scalars_name
 
+        output = self if inplace else self.__class__()
+
         # vtkTransformFilter sometimes doesn't transform all vector arrays
         # when there are active point/cell scalars. Use this workaround
         self.active_scalars_name = None
 
-        f = _vtk.vtkTransformFilter()
-        f.SetInputDataObject(self)
-        f.SetTransform(t)
-        f.SetTransformAllInputVectors(transform_all_input_vectors)
+        try:
+            alg = _vtk.vtkTransformFilter()
+            alg.SetInputDataObject(self)
+            alg.SetTransform(t)
+            alg.SetTransformAllInputVectors(transform_all_input_vectors)
 
-        _update_alg(f, progress_bar=progress_bar, message='Transforming')
-        vtk_filter_output = _get_output(f)
+            _update_alg(alg, progress_bar=progress_bar, message='Transforming')
+            vtk_filter_output = _get_output(alg)
 
-        output = self if inplace else self.__class__()
-
-        if isinstance(output, pv.ImageData):
-            # vtkTransformFilter returns a StructuredGrid for legacy code (before VTK 9)
-            # but VTK 9+ supports oriented images.
-            # To keep an ImageData -> ImageData mapping, we copy the transformed data
-            # from the filter output but manually transform the structure
-            output.copy_structure(self)  # type: ignore[arg-type]
-            current_matrix = output.index_to_physical_matrix
-            new_matrix = pv.Transform(current_matrix).compose(t).matrix
-            output.index_to_physical_matrix = new_matrix
-
-            output.point_data.update(vtk_filter_output.point_data, copy=not inplace)
-            output.cell_data.update(vtk_filter_output.cell_data, copy=not inplace)
-            output.field_data.update(vtk_filter_output.field_data, copy=not inplace)
-
-        elif isinstance(output, pv.RectilinearGrid):
-            # vtkTransformFilter returns a StructuredGrid, but we can return
-            # RectilinearGrid if we ignore shear and rotations
-            # Follow similar decomposition performed by ImageData.index_to_physical_matrix
-            T, R, N, S, K = t.decompose()
-
-            if not np.allclose(K, np.eye(3)):
-                msg = (
-                    'The transformation has a shear component which is not supported by '
-                    'RectilinearGrid.\nCast to StructuredGrid first to support shear '
-                    'transformations, or use `Transform.decompose()`\nto remove this component.'
+            if isinstance(output, pv.ImageData):
+                _orient_image_structure(output, cast('pv.ImageData', self), t)
+                _copy_transformed_arrays(output, vtk_filter_output, copy=not inplace)
+            elif isinstance(output, pv.RectilinearGrid):
+                _transform_rectilinear_axes(
+                    output,
+                    cast('pv.RectilinearGrid', self),
+                    cast('tuple[NumpyArray[float], NumpyArray[float]]', rectilinear_components),
                 )
-                raise ValueError(msg)
-
-            # Lump scale and reflection together
-            scale = S * N
-            if not np.allclose(np.abs(R), np.eye(3)):
-                msg = (
-                    'The transformation has a non-diagonal rotation component which is not '
-                    'supported by\nRectilinearGrid. Cast to StructuredGrid first to fully '
-                    'support rotations, or use\n`Transform.decompose()` to remove this component.'
-                )
-                raise ValueError(msg)
+                _copy_transformed_arrays(output, vtk_filter_output, copy=not inplace)
             else:
-                # Lump any reflections from the rotation into the scale
-                scale *= np.diagonal(R)
+                # A shallow copy leaves the output sharing everything but the points with
+                # the filter's own output, which is only safe when transforming in place
+                output.copy_from(vtk_filter_output, deep=not inplace)
 
-            # Apply transformation to structure
-            tx, ty, tz = T
-            sx, sy, sz = scale
-            output.x = self.x * sx + tx
-            output.y = self.y * sy + ty
-            output.z = self.z * sz + tz
-
-            # Copy data arrays from the vtkTransformFilter's output
-            output.point_data.update(vtk_filter_output.point_data, copy=not inplace)
-            output.cell_data.update(vtk_filter_output.cell_data, copy=not inplace)
-            output.field_data.update(vtk_filter_output.field_data, copy=not inplace)
-
-        elif inplace:
-            output.copy_from(vtk_filter_output, deep=False)
-        else:
-            # The output from the transform filter contains a shallow copy
-            # of the original dataset except for the point arrays.  Here
-            # we perform a copy so the two are completely unlinked.
-            output.copy_from(vtk_filter_output, deep=True)
-
-        # Make the previously active scalars active again
-        point_data.active_scalars_name = active_point_scalars_name
-        if output is not self:
-            output.point_data.active_scalars_name = active_point_scalars_name
-        cell_data.active_scalars_name = active_cell_scalars_name
-        if output is not self:
-            output.cell_data.active_scalars_name = active_cell_scalars_name
+            # Make the previously active scalars of the output active again
+            if output is not self:
+                output.point_data.active_scalars_name = active_point_scalars_name
+                output.cell_data.active_scalars_name = active_cell_scalars_name
+        finally:
+            # Make the previously active scalars of this mesh active again
+            point_data.active_scalars_name = active_point_scalars_name
+            cell_data.active_scalars_name = active_cell_scalars_name
 
         return output
 

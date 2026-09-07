@@ -394,6 +394,13 @@ def read(  # noqa: PLR0917
                 setattr(reader, key, value)
             mesh = reader.read()
 
+        When the extension resolves to a callable registered with
+        :func:`pyvista.register_reader`, ``**kwargs`` is forwarded to that
+        callable as ``handler(path, **kwargs)`` instead. ``progress_bar`` and
+        ``validate`` are never forwarded, and a callable that overrides an
+        extension PyVista already reads is bypassed entirely so that these
+        arguments keep naming attributes of the built-in reader.
+
         .. versionadded:: 0.49
 
     Returns
@@ -452,10 +459,12 @@ def read(  # noqa: PLR0917
 def _needs_reader_object(
     ext: str, *, progress_bar: bool, validate: bool | None, kwargs: dict[str, Any]
 ) -> bool:
-    """Return ``True`` when the caller asked for what only a reader object provides.
+    """Return ``True`` when the caller asked for something a handler cannot serve.
 
-    A handler takes a path and nothing else, so an override of a built-in
-    extension steps aside rather than dropping arguments it cannot honor.
+    ``progress_bar`` and ``validate`` are reader-object features, and for a
+    built-in extension ``kwargs`` name attributes of the built-in reader. An
+    override of such an extension therefore steps aside rather than
+    reinterpreting any of the three.
     """
     from pyvista.core.utilities.reader import CLASS_READERS  # noqa: PLC0415
 
@@ -488,6 +497,7 @@ def _read_dispatch(  # noqa: PLR0911
                     file_format=file_format,
                     progress_bar=progress_bar,
                     validate=validate,
+                    **kwargs,
                 ),
                 name,
             )
@@ -510,12 +520,14 @@ def _read_dispatch(  # noqa: PLR0911
         # natively (e.g. zarr stores on S3). If it fails, fall back to
         # downloading the file and retrying with a local path.
         ext_handler = _get_ext_handler(uri_ext)
-        if ext_handler is not None:
+        if ext_handler is not None and not _needs_reader_object(
+            uri_ext, progress_bar=progress_bar, validate=validate, kwargs=kwargs
+        ):
             try:
-                return ext_handler(filename)
+                return ext_handler(filename, **kwargs)
             except LocalFileRequiredError:
                 filename = _download_uri(filename, uri_ext)
-                return ext_handler(filename)
+                return ext_handler(filename, **kwargs)
         filename = _download_uri(filename, uri_ext)
 
     filename = Path(filename).expanduser().resolve()
@@ -536,7 +548,7 @@ def _read_dispatch(  # noqa: PLR0911
     if ext_handler is not None and not _needs_reader_object(
         ext, progress_bar=progress_bar, validate=validate, kwargs=kwargs
     ):
-        return ext_handler(str(filename))
+        return ext_handler(str(filename), **kwargs)
 
     if (missing := _missing_reader_message(ext, str(filename))) is not None:
         raise ImportError(missing)
