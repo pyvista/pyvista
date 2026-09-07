@@ -1743,9 +1743,12 @@ def test_screenshot(tmpdir):
 
     # check error before first render
     pl = pv.Plotter(off_screen=False)
-    pl.add_mesh(pv.Sphere())
-    with pytest.raises(RuntimeError):
-        pl.screenshot()
+    try:
+        pl.add_mesh(pv.Sphere())
+        with pytest.raises(RuntimeError):
+            pl.screenshot()
+    finally:
+        pl.close()
 
 
 @pytest.mark.usefixtures('no_images_to_verify')
