@@ -92,7 +92,6 @@ class ScalarBars(_NoNewAttrMixin):
                         render=render,
                     )
                     self._plotter._scalar_bar_slots.add(slot)
-            return
 
     @_deprecate_positional_args(allowed=['title'])
     def remove_scalar_bar(self, title=None, render: bool = True):  # noqa: FBT001, FBT002
