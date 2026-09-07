@@ -5,7 +5,6 @@ from __future__ import annotations
 from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Sequence
-import contextlib
 import functools
 import itertools
 import operator
@@ -74,6 +73,7 @@ _SelectInteriorPointsOptions = Literal['signed_distance', 'cell_locator']
 
 
 _CLIP_SURFACE_SCALARS = '__pyvista_clip_surface_distance'
+_CONNECTIVITY_SCALARS = '__pyvista_connectivity_scalars'
 
 
 def _points_inside_surface(image: ImageData, surface: PolyData) -> NumpyArray[np.bool_]:
@@ -2594,10 +2594,10 @@ class DataSetFilters(DataObjectFilters):
                 input_mesh.set_active_scalars(scalars)
             field, name = input_mesh.active_scalars_info
             if field == FieldAssociation.CELL:
-                # The filter requires point data; the array is removed later
-                point_data = input_mesh.cell_data_to_point_data(progress_bar=progress_bar)[name]
-                input_mesh.point_data['__point_data'] = point_data
-                input_mesh.set_active_scalars('__point_data')
+                # The filter reads the active point scalars
+                converted = input_mesh.cell_data_to_point_data(progress_bar=progress_bar)
+                input_mesh.point_data[_CONNECTIVITY_SCALARS] = converted.point_data[name]
+                input_mesh.set_active_scalars(_CONNECTIVITY_SCALARS, preference='point')
 
             if extraction_mode in ('all', 'specified', 'closest'):
                 # The filter's own scalar connectivity is unreliable for these modes
@@ -2688,9 +2688,7 @@ class DataSetFilters(DataObjectFilters):
             if 'RegionId' in output.point_data:
                 output.set_active_scalars('RegionId', preference='point')
 
-        # Remove temp point array
-        with contextlib.suppress(KeyError):
-            output.point_data.remove('__point_data')
+        output.point_data.pop(_CONNECTIVITY_SCALARS, None)
 
         if not label_regions:
             output.point_data.pop('RegionId', None)

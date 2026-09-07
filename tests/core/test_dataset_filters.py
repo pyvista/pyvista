@@ -29,6 +29,7 @@ from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters import _get_output
+from pyvista.core.filters.data_set import _CONNECTIVITY_SCALARS
 from pyvista.core.filters.data_set import _rebuild_point_region_ids
 from pyvista.core.filters.data_set import _swap_axes
 from pyvista.core.utilities.arrays import convert_array
@@ -1573,6 +1574,35 @@ def test_rebuild_point_region_ids_keeps_unusable_cell_ids():
     mesh.GetCellData().RemoveArray('RegionId')
     _rebuild_point_region_ids(mesh)
     assert 'RegionId' not in mesh.point_data
+
+
+@pytest.mark.parametrize(
+    ('extraction_mode', 'kwargs'),
+    [
+        ('all', {}),
+        ('largest', {}),
+        ('specified', dict(region_ids=[0, 1])),
+        ('cell_seed', dict(cell_ids=[0])),
+        ('point_seed', dict(point_ids=[0])),
+        ('closest', dict(closest_point=(0.0, 0.0, 0.0))),
+    ],
+)
+@pytest.mark.parametrize('label_regions', [True, False])
+def test_connectivity_cell_scalars(extraction_mode, kwargs, label_regions):
+    mesh = pv.Sphere(center=(-4, 0, 0), phi_resolution=8, theta_resolution=8) + pv.Sphere(
+        phi_resolution=6, theta_resolution=6
+    )
+    mesh.cell_data['cdata'] = mesh.cell_centers().points[:, 1]
+    mesh.set_active_scalars('cdata')
+    before = sorted(mesh.array_names)
+
+    conn = mesh.connectivity(
+        extraction_mode, scalar_range=[-0.2, 0.2], label_regions=label_regions, **kwargs
+    )
+
+    assert _CONNECTIVITY_SCALARS not in conn.array_names
+    assert 'cdata' in conn.cell_data
+    assert sorted(mesh.array_names) == before
 
 
 def test_connectivity_scalars():
