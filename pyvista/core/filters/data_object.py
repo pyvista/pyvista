@@ -3260,9 +3260,9 @@ class DataObjectFilters:
         .. versionchanged:: 0.49
 
             Points that a :class:`~pyvista.PolyData` input keeps apart are no longer
-            merged, so a surface with coincident points is clipped without losing them.
-            The output has slightly more points where the clip surface passes exactly
-            through a point shared by several cells.
+            merged, unless it holds triangle strips, so a surface with coincident points
+            is clipped without losing them. The output has slightly more points where the
+            clip surface passes exactly through a point shared by several cells.
 
         Parameters
         ----------
@@ -3437,7 +3437,8 @@ class DataObjectFilters:
 
         merge_points : bool, default: True
             If ``True``, points that share a position are merged into one.
-            If ``False``, points the input kept apart stay apart.
+            If ``False``, points the input kept apart stay apart, unless a
+            :class:`~pyvista.PolyData` holds triangle strips.
 
         crinkle : bool, default: False
             Crinkle the clip by extracting the entire cells along the
@@ -3572,6 +3573,11 @@ class DataObjectFilters:
         :meth:`slice`.
 
         .. versionadded:: 0.48
+
+        .. versionchanged:: 0.49
+
+            Points that a :class:`~pyvista.PolyData` input keeps apart are no longer
+            merged, unless it holds triangle strips.
 
         Parameters
         ----------

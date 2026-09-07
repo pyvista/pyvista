@@ -660,6 +660,11 @@ class DataSetFilters(DataObjectFilters):
     ):
         """Clip a dataset by a scalar.
 
+        .. versionchanged:: 0.49
+
+            Points that a :class:`~pyvista.PolyData` input keeps apart are no longer
+            merged, unless it holds triangle strips.
+
         Parameters
         ----------
         scalars : str, optional
@@ -797,6 +802,11 @@ class DataSetFilters(DataObjectFilters):
         crinkle: bool = False,  # noqa: FBT001, FBT002
     ):
         """Clip any mesh type using a :class:`pyvista.PolyData` surface mesh.
+
+        .. versionchanged:: 0.49
+
+            Points that a :class:`~pyvista.PolyData` input keeps apart are no longer
+            merged, unless it holds triangle strips.
 
         The clipped mesh type matches the input type for :class:`~pyvista.PointSet` and
         :class:`~pyvista.PolyData`, otherwise the output type is
