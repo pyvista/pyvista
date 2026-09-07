@@ -71,6 +71,33 @@ if TYPE_CHECKING:
     _T = TypeVar('_T')
 
 
+def _rectilinear_transform_components(
+    transform: Transform,
+) -> tuple[NumpyArray[float], NumpyArray[float]]:
+    """Return the translation and scale of a transform a rectilinear grid can represent."""
+    # Follow similar decomposition performed by ImageData.index_to_physical_matrix
+    T, R, N, S, K = transform.decompose()
+
+    if not np.allclose(K, np.eye(3)):
+        msg = (
+            'The transformation has a shear component which is not supported by '
+            'RectilinearGrid.\nCast to StructuredGrid first to support shear '
+            'transformations, or use `Transform.decompose()`\nto remove this component.'
+        )
+        raise ValueError(msg)
+
+    if not np.allclose(np.abs(R), np.eye(3)):
+        msg = (
+            'The transformation has a non-diagonal rotation component which is not '
+            'supported by\nRectilinearGrid. Cast to StructuredGrid first to fully '
+            'support rotations, or use\n`Transform.decompose()` to remove this component.'
+        )
+        raise ValueError(msg)
+
+    # Lump the scale, the reflection, and any reflection from the rotation together
+    return T, S * N * np.diagonal(R)
+
+
 class _CellStatusTuple(NamedTuple):
     """Value and documentation of a cell status flag."""
 
@@ -2000,6 +2027,11 @@ class DataObjectFilters:
             msg = 'Transform element (3,3), the inverse scale term, is zero'
             raise ValueError(msg)
 
+        # Validate before this mesh is modified below
+        rectilinear_components = (
+            _rectilinear_transform_components(t) if isinstance(self, pv.RectilinearGrid) else None
+        )
+
         # vtkTransformFilter truncates the result if the input is an integer type
         # so convert input points and relevant vectors to float
         # (creating a new copy would be harmful much more often)
@@ -2077,34 +2109,13 @@ class DataObjectFilters:
             output.field_data.update(vtk_filter_output.field_data, copy=not inplace)
 
         elif isinstance(output, pv.RectilinearGrid):
-            # vtkTransformFilter returns a StructuredGrid, but we can return
-            # RectilinearGrid if we ignore shear and rotations
-            # Follow similar decomposition performed by ImageData.index_to_physical_matrix
-            T, R, N, S, K = t.decompose()
-
-            if not np.allclose(K, np.eye(3)):
-                msg = (
-                    'The transformation has a shear component which is not supported by '
-                    'RectilinearGrid.\nCast to StructuredGrid first to support shear '
-                    'transformations, or use `Transform.decompose()`\nto remove this component.'
-                )
-                raise ValueError(msg)
-
-            # Lump scale and reflection together
-            scale = S * N
-            if not np.allclose(np.abs(R), np.eye(3)):
-                msg = (
-                    'The transformation has a non-diagonal rotation component which is not '
-                    'supported by\nRectilinearGrid. Cast to StructuredGrid first to fully '
-                    'support rotations, or use\n`Transform.decompose()` to remove this component.'
-                )
-                raise ValueError(msg)
-            else:
-                # Lump any reflections from the rotation into the scale
-                scale *= np.diagonal(R)
+            # Transform the axes directly, since vtkTransformFilter returns a StructuredGrid
+            translation, scale = cast(
+                'tuple[NumpyArray[float], NumpyArray[float]]', rectilinear_components
+            )
 
             # Apply transformation to structure
-            tx, ty, tz = T
+            tx, ty, tz = translation
             sx, sy, sz = scale
             output.x = self.x * sx + tx
             output.y = self.y * sy + ty

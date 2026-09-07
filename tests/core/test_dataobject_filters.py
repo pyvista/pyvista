@@ -1422,6 +1422,19 @@ def test_transform_rectilinear_raises(rectilinear):
         rectilinear.transform(matrix, inplace=False)
 
 
+def test_transform_rectilinear_raises_leaves_input_unchanged(rectilinear):
+    rectilinear['a'] = np.arange(rectilinear.n_points, dtype=float)
+    rectilinear['b'] = np.arange(rectilinear.n_points, dtype=float)
+    rectilinear.set_active_scalars('a')
+    before = rectilinear.copy()
+
+    with pytest.raises(ValueError, match='non-diagonal rotation component'):
+        rectilinear.transform(pv.Transform().rotate_x(30), inplace=False)
+
+    assert rectilinear.active_scalars_name == 'a'
+    assert rectilinear == before
+
+
 def test_transform_rectilinear(rectilinear):
     # Test that various transformations applied sequentially work
 
