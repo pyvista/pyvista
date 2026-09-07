@@ -5824,19 +5824,24 @@ def _clip_by_box_planes(
     inside: DataSet = dataset
     outside = []
     for normal, origin in planes:
-        result = inside.clip(
-            normal=normal,
-            origin=origin,
-            invert=True,
-            return_clipped=invert,
-            progress_bar=progress_bar,
-        )
         if invert:
-            inside, piece = result
+            inside, piece = inside.clip(
+                normal=normal,
+                origin=origin,
+                invert=True,
+                return_clipped=True,
+                progress_bar=progress_bar,
+            )
             if piece.n_cells:
                 outside.append(piece)
         else:
-            inside = result
+            inside = inside.clip(
+                normal=normal,
+                origin=origin,
+                invert=True,
+                return_clipped=False,
+                progress_bar=progress_bar,
+            )
     if not invert:
         return inside
     if not outside:
