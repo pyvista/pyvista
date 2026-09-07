@@ -1141,6 +1141,10 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         light.cone_angle = vtk_light.GetConeAngle()
         light.attenuation_values = vtk_light.GetAttenuationValues()
         trans = vtk_light.GetTransformMatrix()
+        if trans is not None:
+            matrix = _vtk.vtkMatrix4x4()
+            matrix.DeepCopy(trans)
+            trans = matrix
         light.transform_matrix = trans
         light.shadow_attenuation = vtk_light.GetShadowAttenuation()
 
