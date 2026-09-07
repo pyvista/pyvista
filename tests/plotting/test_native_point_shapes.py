@@ -34,7 +34,7 @@ def test_theme_circle_reaches_rendered_vertex_cells(style):
     theme = pv.themes.Theme()
     theme.point_shape = 'circle'
     theme.multi_samples = 0
-    cloud = pv.PolyData(np.array([[0., 0., 0.]]))
+    cloud = pv.PolyData(np.array([[0.0, 0.0, 0.0]]))
     pl = pv.Plotter(theme=theme, window_size=(200, 200))
     actor = pl.add_mesh(cloud, style=style, point_size=40, lighting=False, color='white')
     pl.background_color = 'black'
@@ -50,7 +50,7 @@ def test_theme_circle_reaches_rendered_vertex_cells(style):
     assert circle[100, 100, 0] == square[100, 100, 0] == 255
     assert circle[82, 82, 0] == 0
     assert square[82, 82, 0] == 255
-    assert .72 < np.count_nonzero(circle) / np.count_nonzero(square) < .84
+    assert 0.72 < np.count_nonzero(circle) / np.count_nonzero(square) < 0.84
 
 
 def test_explicit_spheres_override_theme_circle():
@@ -58,7 +58,7 @@ def test_explicit_spheres_override_theme_circle():
     theme = pv.themes.Theme()
     theme.point_shape = 'circle'
     pl = pv.Plotter(theme=theme)
-    actor = pl.add_mesh(pv.PolyData(np.array([[0., 0., 0.]])), render_points_as_spheres=True)
+    actor = pl.add_mesh(pv.PolyData(np.array([[0.0, 0.0, 0.0]])), render_points_as_spheres=True)
     assert actor.prop.render_points_as_spheres
     assert actor.point_sprite_shape == 'circle'
     pl.close()
