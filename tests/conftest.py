@@ -241,6 +241,28 @@ def reset_global_state():
     pv.global_config.points_dtype = None
 
 
+# Read each example once at import; a lazy cache would land in a test's leak-check window.
+# Only the datasets requested often enough for one read here to beat many reads later.
+_EXAMPLES = {
+    name: getattr(examples, f'load_{name}')()
+    for name in (
+        'airplane',
+        'ant',
+        'hexbeam',
+        'rectilinear',
+        'sphere',
+        'structured',
+        'tetbeam',
+        'uniform',
+    )
+}
+
+
+def _example(name):
+    """Return a fresh copy of a cached example dataset."""
+    return _EXAMPLES[name].copy(deep=True)
+
+
 @pytest.fixture
 def cube():
     return pv.Cube()
@@ -248,27 +270,27 @@ def cube():
 
 @pytest.fixture
 def airplane():
-    return examples.load_airplane()
+    return _example('airplane')
 
 
 @pytest.fixture
 def rectilinear():
-    return examples.load_rectilinear()
+    return _example('rectilinear')
 
 
 @pytest.fixture
 def sphere():
-    return examples.load_sphere()
+    return _example('sphere')
 
 
 @pytest.fixture
 def uniform():
-    return examples.load_uniform()
+    return _example('uniform')
 
 
 @pytest.fixture
 def ant():
-    return examples.load_ant()
+    return _example('ant')
 
 
 @pytest.fixture
@@ -278,12 +300,12 @@ def globe():
 
 @pytest.fixture
 def hexbeam():
-    return examples.load_hexbeam()
+    return _example('hexbeam')
 
 
 @pytest.fixture
 def tetbeam():
-    return examples.load_tetbeam()
+    return _example('tetbeam')
 
 
 @pytest.fixture
@@ -320,11 +342,11 @@ def tri_cylinder():
 @pytest.fixture
 def datasets_no_pointset():
     return [
-        examples.load_uniform(),  # ImageData
-        examples.load_rectilinear(),  # RectilinearGrid
-        examples.load_hexbeam(),  # UnstructuredGrid
-        examples.load_airplane(),  # PolyData
-        examples.load_structured(),  # StructuredGrid
+        _example('uniform'),  # ImageData
+        _example('rectilinear'),  # RectilinearGrid
+        _example('hexbeam'),  # UnstructuredGrid
+        _example('airplane'),  # PolyData
+        _example('structured'),  # StructuredGrid
     ]
 
 
