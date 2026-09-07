@@ -102,6 +102,11 @@ DATASET_GALLERY_IMAGE_EXT_DICT = {
     'single_sphere_animation': '.gif',
     'dual_sphere_animation': '.gif',
 }
+# Substring of the one VTK warning each of these datasets logs with no fix on our side.
+DATASET_EXPECTED_VTK_OUTPUT: dict[str, str] = {
+    'can_crushed_vtu': 'Could not locate key vtkExodusIIReader::GLOBAL_TEMPORAL_VARIABLE',
+}
+
 # If there is no image, a dummy "Not Available" image is used instead.
 DATASET_GALLERY_IMAGE_NOT_AVAILABLE_PATH = os.path.join(DATASET_GALLERY_DIR, 'not_available.png')
 
@@ -2932,23 +2937,26 @@ def _build_dataset_card(module_name: str, dataset_name: str) -> _DatasetCardResu
 
         type_mismatch = _validate_function_annotation(card)
         dataset_loader.clear_dataset()
-    _report_vtk_output(dataset_name, catcher.events)
+    _raise_for_vtk_output(dataset_name, catcher.events)
 
     return _DatasetCardResult(dataset_name, rst, facet_labels, type_mismatch)
 
 
-def _report_vtk_output(dataset_name: str, events: list[pv.VtkEvent]) -> None:
-    """Attribute the VTK errors and warnings logged while a dataset's card was built.
-
-    VTK logs these to stderr with no indication of which dataset produced them, so the
-    build log alone cannot say where they came from.
-    """
-    if not events:
+def _raise_for_vtk_output(dataset_name: str, events: list[pv.VtkEvent]) -> None:
+    """Fail the build when a dataset's card logs VTK output that is not expected."""
+    expected = DATASET_EXPECTED_VTK_OUTPUT.get(dataset_name)
+    unexpected = [
+        event
+        for event in events
+        if expected is None or expected not in ' '.join(str(event).split())
+    ]
+    if not unexpected:
         return
-    counts = Counter(' '.join(str(event).split()) for event in events)
-    header = bold(f'{dataset_name} logged {len(events)} VTK error(s) or warning(s):')
+    counts = Counter(' '.join(str(event).split()) for event in unexpected)
+    header = f'{dataset_name} logged {len(unexpected)} unexpected VTK error(s) or warning(s):'
     body = '\n'.join(f'    {count}x {message}' for message, count in counts.items())
-    print(f'{header}\n{body}', flush=True)
+    msg = f'{header}\n{body}'
+    raise RuntimeError(msg)
 
 
 class DatasetCardFetcher:
