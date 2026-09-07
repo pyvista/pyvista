@@ -376,7 +376,7 @@ def test_clip_surface_compute_distance_does_not_modify_input(uniform):
 
 def test_clip_scalar_errors():
     mesh = pv.Wavelet()
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match='Cannot use inplace=True for ImageData input'):
         mesh.clip_scalar(value=(200, 300), inplace=True)
     with pytest.raises(ValueError, match='Cannot have invert=False for a range clip'):
         mesh.clip_scalar(value=(200, 300), invert=False)
@@ -433,14 +433,18 @@ def test_clip_surface_output_type(datasets, crinkle):
         surface = pv.Sphere(radius=dataset.length, center=dataset.center)
         clp = dataset.clip_surface(surface, crinkle=crinkle)
         assert clp is not None
-        if isinstance(dataset, pv.PointSet):
-            assert isinstance(clp, pv.PointSet)
-        elif isinstance(dataset, pv.PolyData):
-            assert isinstance(clp, pv.PolyData)
-        elif isinstance(dataset, pv.MultiBlock):
-            assert isinstance(clp, pv.MultiBlock)
+        if isinstance(dataset, (pv.PointSet, pv.PolyData)):
+            assert type(clp) is type(dataset)
         else:
-            assert isinstance(clp, pv.UnstructuredGrid)
+            assert type(clp) is pv.UnstructuredGrid
+
+
+@pytest.mark.parametrize('name', ['clip_scalar', 'clip_surface', 'clip_closed_surface'])
+def test_clip_dataset_only_filters_are_not_composite(name):
+    """These clips take a dataset, not a composite."""
+    assert hasattr(pv.Sphere(), name)
+    with pytest.raises(AttributeError, match=f"'MultiBlock' object has no attribute '{name}'"):
+        getattr(pv.MultiBlock([pv.Sphere()]), name)()
 
 
 def test_clip_closed_surface():

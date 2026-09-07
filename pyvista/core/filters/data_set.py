@@ -35,6 +35,7 @@ from pyvista.core.filters import _match_points_dtype
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_object import DataObjectFilters
 from pyvista.core.filters.data_object import _cast_output_to_match_input_type
+from pyvista.core.filters.data_object import _validate_clip_inplace
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.arrays import get_array
@@ -672,7 +673,9 @@ class DataSetFilters(DataObjectFilters):
             The range produces an output similar to an isovolume filter of ParaView.
 
         inplace : bool, default: False
-            Update mesh in-place.
+            Update mesh in-place. Only :class:`~pyvista.PolyData`,
+            :class:`~pyvista.PointSet` and :class:`~pyvista.UnstructuredGrid` inputs
+            support this; any other input raises ``TypeError``.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -682,9 +685,18 @@ class DataSetFilters(DataObjectFilters):
 
         Returns
         -------
-        output : pyvista.PolyData | tuple
+        output : pyvista.DataSet | tuple[pyvista.DataSet, pyvista.DataSet]
             Clipped dataset if ``both=False``.  If ``both=True`` then
-            returns a tuple of both clipped datasets.
+            returns a tuple of both clipped datasets. A :class:`~pyvista.PolyData`
+            gives a ``PolyData`` and a :class:`~pyvista.PointSet` gives a ``PointSet``;
+            every other dataset gives an :class:`~pyvista.UnstructuredGrid`.
+
+        Notes
+        -----
+        This filter is not available on a :class:`~pyvista.MultiBlock`. Use
+        :meth:`~pyvista.DataObjectFilters.clip` or
+        :meth:`~pyvista.DataObjectFilters.clip_box` for a composite, or apply this
+        filter to each block with :meth:`~pyvista.CompositeFilters.generic_filter`.
 
         Examples
         --------
@@ -726,6 +738,8 @@ class DataSetFilters(DataObjectFilters):
         >>> clipped.plot()
 
         """
+        if inplace:
+            _validate_clip_inplace(self)
         if isinstance(self, _vtk.vtkPolyData):
             alg: _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet = _vtk.vtkClipPolyData()  # type: ignore[unreachable]
         else:
@@ -756,9 +770,6 @@ class DataSetFilters(DataObjectFilters):
         _update_alg(alg, progress_bar=progress_bar, message='Clipping by a Scalar')
         result0 = _get_output(alg)
         if inplace:
-            if isinstance(self, pv.core.grid.ImageData):
-                msg = 'Cannot use inplace argument for ImageData type input.'
-                raise TypeError(msg)
             self.copy_from(result0, deep=False)
             result0 = self
         if not is_single_value:
@@ -827,10 +838,16 @@ class DataSetFilters(DataObjectFilters):
         Returns
         -------
         DataSet
-            Clipped mesh. Output type matches input type for
-            :class:`~pyvista.PointSet`, :class:`~pyvista.PolyData`, and
-            :class:`~pyvista.MultiBlock`; otherwise the output type is
-            :class:`~pyvista.UnstructuredGrid`.
+            Clipped mesh. A :class:`~pyvista.PolyData` gives a ``PolyData`` and a
+            :class:`~pyvista.PointSet` gives a ``PointSet``; every other dataset gives
+            an :class:`~pyvista.UnstructuredGrid`.
+
+        Notes
+        -----
+        This filter is not available on a :class:`~pyvista.MultiBlock`. Use
+        :meth:`~pyvista.DataObjectFilters.clip` or
+        :meth:`~pyvista.DataObjectFilters.clip_box` for a composite, or apply this
+        filter to each block with :meth:`~pyvista.CompositeFilters.generic_filter`.
 
         Examples
         --------

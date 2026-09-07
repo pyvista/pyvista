@@ -3283,7 +3283,9 @@ class DataObjectFilters:
             Set the clipping value along the normal direction.
 
         inplace : bool, default: False
-            Updates mesh in-place.
+            Updates mesh in-place. Only :class:`~pyvista.PolyData`,
+            :class:`~pyvista.PointSet` and :class:`~pyvista.UnstructuredGrid` inputs
+            support this; any other input raises ``TypeError``.
 
         return_clipped : bool, default: False
             Return both unclipped and clipped parts of the dataset.
@@ -3308,11 +3310,12 @@ class DataObjectFilters:
         Returns
         -------
         output : DataSet | MultiBlock | tuple[DataSet | MultiBlock, DataSet | MultiBlock]
-            Clipped mesh when ``return_clipped=False`` or a tuple containing the
-            unclipped and clipped meshes. Output mesh type matches input type for
-            :class:`~pyvista.PointSet`, :class:`~pyvista.PolyData`, and
-            :class:`~pyvista.MultiBlock`; otherwise the output type is
-            :class:`~pyvista.UnstructuredGrid`.
+            Clipped mesh when ``return_clipped=False``, or a tuple of the kept and the
+            removed mesh when it is ``True``. A :class:`~pyvista.PolyData` gives a
+            ``PolyData`` and a :class:`~pyvista.PointSet` gives a ``PointSet``; every
+            other dataset gives an :class:`~pyvista.UnstructuredGrid`. A
+            :class:`~pyvista.MultiBlock` gives a ``MultiBlock`` whose blocks each follow
+            that rule, nested blocks included.
 
         Examples
         --------
@@ -3336,6 +3339,8 @@ class DataObjectFilters:
         See :ref:`clip_with_surface_example` for more examples using this filter.
 
         """
+        if inplace:
+            _validate_clip_inplace(self)
         origin_, normal_ = _validate_plane_origin_and_normal(
             self, origin, normal, plane, default_normal='x'
         )
@@ -3388,8 +3393,9 @@ class DataObjectFilters:
 
         If no bounds are given, a corner of the dataset bounds will be removed.
 
-        :class:`~pyvista.PolyData` and :class:`~pyvista.PointSet` inputs are clipped with
-        :vtk:`vtkBoxClipDataSet`, which splits the output into tetrahedra. All other inputs,
+        A :class:`~pyvista.PolyData` is clipped with :vtk:`vtkBoxClipDataSet`, which splits
+        the cells the box cuts into simplices, and a :class:`~pyvista.PointSet` is clipped
+        the same way through its vertices. All other inputs,
         that is :class:`~pyvista.ImageData`, :class:`~pyvista.RectilinearGrid`,
         :class:`~pyvista.StructuredGrid`, :class:`~pyvista.ExplicitStructuredGrid`, and
         :class:`~pyvista.UnstructuredGrid`, are clipped by the six box planes in turn with
@@ -3402,9 +3408,11 @@ class DataObjectFilters:
               :class:`~pyvista.UnstructuredGrid` inputs are clipped by the six box planes
               instead of :vtk:`vtkBoxClipDataSet`, so cells the box does not cut keep their
               type instead of being split into tetrahedra, and the output normally has fewer
-              cells and points for the same clipped volume. Call
-              :meth:`~pyvista.DataObjectFilters.triangulate` on the output for an
+              cells and points for the same clipped volume, whatever ``merge_points`` is.
+              Call :meth:`~pyvista.DataObjectFilters.triangulate` on the output for an
               all-tetrahedra mesh as before.
+            - A :class:`~pyvista.PolyData` input gives a ``PolyData`` instead of an
+              :class:`~pyvista.UnstructuredGrid`, with the same points and cells.
 
         Parameters
         ----------
@@ -3430,7 +3438,9 @@ class DataObjectFilters:
 
         merge_points : bool, default: True
             If ``True``, coinciding points of independently defined mesh
-            elements will be merged.
+            elements will be merged. It has no effect on the inputs clipped by
+            the box planes when ``invert=False``, which produce no coinciding
+            points to merge.
 
         crinkle : bool, default: False
             Crinkle the clip by extracting the entire cells along the
@@ -3440,8 +3450,12 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.UnstructuredGrid
-            Clipped dataset.
+        pyvista.DataSet | pyvista.MultiBlock
+            Clipped dataset. A :class:`~pyvista.PolyData` gives a ``PolyData`` and a
+            :class:`~pyvista.PointSet` gives a ``PointSet``, clipped through its
+            vertices; every other dataset gives an :class:`~pyvista.UnstructuredGrid`. A
+            :class:`~pyvista.MultiBlock` gives a ``MultiBlock`` whose blocks each follow
+            that rule, nested blocks included.
 
         Examples
         --------
@@ -3507,6 +3521,20 @@ class DataObjectFilters:
                 crinkle=crinkle,
             )
 
+        if isinstance(self, pv.PointSet):
+            # vtkBoxClipDataSet clips cells, and a PointSet has none, so clip its vertices
+            return (
+                self.cast_to_poly_points()
+                .clip_box(
+                    bounds_,
+                    invert=invert,
+                    progress_bar=progress_bar,
+                    merge_points=merge_points,
+                    crinkle=crinkle,
+                )
+                .cast_to_pointset()
+            )
+
         source = self
         if crinkle:
             source, active_scalars_info = _Crinkler._add_cell_ids(self)
@@ -3514,9 +3542,10 @@ class DataObjectFilters:
         # Optimization: vtkBoxClipDataSet splits every cell into tetrahedra (VTK 9.7), so
         # ImageData, RectilinearGrid, StructuredGrid, ExplicitStructuredGrid, and
         # UnstructuredGrid are clipped plane by plane instead, which keeps their cell types
-        # and is faster for it. PolyData and PointSet are already triangulated, so they gain
-        # nothing, and only the box filter has a locator to disable for ``merge_points``.
-        if isinstance(self, (pv.PolyData, pv.PointSet)) or not merge_points:
+        # and is faster for it. PolyData, and the vertices a PointSet is clipped as, are
+        # already triangulated and gain nothing from it.
+        use_box_filter = isinstance(self, pv.PolyData)
+        if use_box_filter:
             alg = _vtk.vtkBoxClipDataSet()
             if not merge_points:
                 # vtkBoxClipDataSet uses vtkMergePoints by default
@@ -3534,12 +3563,17 @@ class DataObjectFilters:
             clipped = _get_output(alg, oport=port)
         else:
             clipped = _clip_by_box_planes(
-                source, _box_planes(bounds_), invert=invert, progress_bar=progress_bar
+                source,
+                _box_planes(bounds_),
+                invert=invert,
+                merge_points=merge_points,
+                progress_bar=progress_bar,
             )
 
         if crinkle:
             clipped = _Crinkler._extract_crinkle_cells(source, clipped, None, active_scalars_info)
-        return _remove_unused_points_post_clip(clipped, self.bounds)
+        clipped = _remove_unused_points_post_clip(clipped, self.bounds, force=use_box_filter)
+        return _cast_output_to_match_input_type(clipped, self)
 
     def clip_slab(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
@@ -3602,10 +3636,11 @@ class DataObjectFilters:
         Returns
         -------
         pyvista.DataSet | pyvista.MultiBlock
-            Clipped dataset. Output mesh type matches the input type for
-            :class:`~pyvista.PointSet`, :class:`~pyvista.PolyData`, and
-            :class:`~pyvista.MultiBlock`; otherwise the output type is
-            :class:`~pyvista.UnstructuredGrid`.
+            Clipped dataset. A :class:`~pyvista.PolyData` gives a ``PolyData`` and a
+            :class:`~pyvista.PointSet` gives a ``PointSet``; every other dataset gives
+            an :class:`~pyvista.UnstructuredGrid`. A
+            :class:`~pyvista.MultiBlock` gives a ``MultiBlock`` whose blocks each follow
+            that rule, nested blocks included.
 
         Raises
         ------
@@ -3710,8 +3745,16 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.PolyData
-            Sliced dataset.
+        pyvista.PolyData | pyvista.MultiBlock
+            Sliced dataset. Every dataset gives a :class:`~pyvista.PolyData`, and a
+            :class:`~pyvista.MultiBlock` gives a ``MultiBlock`` of ``PolyData``
+            blocks, nested blocks included.
+
+        Notes
+        -----
+        A :class:`~pyvista.PointSet` has no cells to slice, so slicing one directly
+        raises :class:`~pyvista.core.errors.PointSetDimensionReductionError`. As a block of a
+        :class:`~pyvista.MultiBlock` it gives an empty block instead.
 
         See Also
         --------
@@ -3740,13 +3783,24 @@ class DataObjectFilters:
         >>> slice.plot(show_edges=True, line_width=5)
 
         """
+        if isinstance(self, pv.MultiBlock):
+            return _slice_each_block(
+                self,
+                'slice_implicit',
+                implicit_function,
+                generate_triangles=generate_triangles,
+                contour=contour,
+                progress_bar=progress_bar,
+            )
         alg = _vtk.vtkCutter()  # Construct the cutter object
         alg.SetInputDataObject(self)  # Use the grid as the data we desire to cut
         alg.SetCutFunction(implicit_function)  # the cutter to use the function
         alg.SetGenerateTriangles(generate_triangles)
         _update_alg(alg, progress_bar=progress_bar, message='Slicing')
         output = _get_output(alg)
-        if contour:
+        # There is nothing to contour when the plane misses, and the cutter can leave
+        # an empty output with no arrays for the contour to read
+        if contour and output.n_cells:
             return output.contour()
         return output
 
@@ -3824,8 +3878,10 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.PolyData
-            Sliced dataset.
+        pyvista.PolyData | pyvista.MultiBlock
+            Sliced dataset. Every dataset gives a :class:`~pyvista.PolyData`, and a
+            :class:`~pyvista.MultiBlock` gives a ``MultiBlock`` of ``PolyData``
+            blocks, nested blocks included.
 
         Notes
         -----
@@ -3833,6 +3889,10 @@ class DataObjectFilters:
         :attr:`~pyvista.ImageData.direction_matrix` is sliced directly into quads, with
         point data interpolated between the two neighbouring grid planes. All other
         inputs use :vtk:`vtkCutter`.
+
+        A :class:`~pyvista.PointSet` has no cells to slice, so slicing one directly
+        raises :class:`~pyvista.core.errors.PointSetDimensionReductionError`. As a block of a
+        :class:`~pyvista.MultiBlock` it gives an empty block instead.
 
         See Also
         --------
@@ -3879,7 +3939,7 @@ class DataObjectFilters:
             )
             # A plane that misses the image falls through to the cutter for its empty output
             if output is not None:
-                return output.contour() if contour else output
+                return output.contour() if contour and output.n_cells else output
         # create the plane for clipping
         implicit_function = generate_plane(normal_, origin_)
         return self.slice_implicit(
@@ -3933,8 +3993,16 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.PolyData
-            Sliced dataset.
+        pyvista.MultiBlock
+            Sliced dataset, with one :class:`~pyvista.PolyData` block per slice. A
+            :class:`~pyvista.MultiBlock` gives one such ``MultiBlock`` per block,
+            nested blocks included.
+
+        Notes
+        -----
+        A :class:`~pyvista.PointSet` has no cells to slice, so slicing one directly
+        raises :class:`~pyvista.core.errors.PointSetDimensionReductionError`. As a block of a
+        :class:`~pyvista.MultiBlock` it gives an empty block instead.
 
         See Also
         --------
@@ -3961,22 +4029,17 @@ class DataObjectFilters:
             y = self.center[1]
         if z is None:
             z = self.center[2]
-        output = pv.MultiBlock()
         if isinstance(self, pv.MultiBlock):
-            for i in range(self.n_blocks):
-                data = self[i]
-                output.append(
-                    data.slice_orthogonal(
-                        x=x,
-                        y=y,
-                        z=z,
-                        generate_triangles=generate_triangles,
-                        contour=contour,
-                    )
-                    if data is not None
-                    else data
-                )
-            return output
+            return _slice_each_block(
+                self,
+                'slice_orthogonal',
+                x=x,
+                y=y,
+                z=z,
+                generate_triangles=generate_triangles,
+                contour=contour,
+            )
+        output = pv.MultiBlock()
         output.append(
             self.slice(
                 normal='x',
@@ -4066,8 +4129,16 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.PolyData
-            Sliced dataset.
+        pyvista.MultiBlock
+            Sliced dataset, with one :class:`~pyvista.PolyData` block per slice. A
+            :class:`~pyvista.MultiBlock` gives one such ``MultiBlock`` per block,
+            nested blocks included.
+
+        Notes
+        -----
+        A :class:`~pyvista.PointSet` has no cells to slice, so slicing one directly
+        raises :class:`~pyvista.core.errors.PointSetDimensionReductionError`. As a block of a
+        :class:`~pyvista.MultiBlock` it gives an empty block instead.
 
         See Also
         --------
@@ -4125,24 +4196,19 @@ class DataObjectFilters:
         )
         center = list(center)
         # Make each of the slices
-        output = pv.MultiBlock()
         if isinstance(self, pv.MultiBlock):
-            for i in range(self.n_blocks):
-                data = self[i]
-                output.append(
-                    data.slice_along_axis(
-                        n=n,
-                        axis=ax_label,
-                        tolerance=tolerance,
-                        generate_triangles=generate_triangles,
-                        contour=contour,
-                        bounds=bounds,
-                        center=center,
-                    )
-                    if data is not None
-                    else data
-                )
-            return output
+            return _slice_each_block(
+                self,
+                'slice_along_axis',
+                n=n,
+                axis=ax_label,
+                tolerance=tolerance,
+                generate_triangles=generate_triangles,
+                contour=contour,
+                bounds=bounds,
+                center=center,
+            )
+        output = pv.MultiBlock()
         for i in range(n):
             center[ax_index] = rng[i]
             slc = self.slice(
@@ -4191,8 +4257,16 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.PolyData
-            Sliced dataset.
+        pyvista.PolyData | pyvista.MultiBlock
+            Sliced dataset. Every dataset gives a :class:`~pyvista.PolyData`, and a
+            :class:`~pyvista.MultiBlock` gives a ``MultiBlock`` of ``PolyData``
+            blocks, nested blocks included.
+
+        Notes
+        -----
+        A :class:`~pyvista.PointSet` has no cells to slice, so slicing one directly
+        raises :class:`~pyvista.core.errors.PointSetDimensionReductionError`. As a block of a
+        :class:`~pyvista.MultiBlock` it gives an empty block instead.
 
         See Also
         --------
@@ -4240,6 +4314,15 @@ class DataObjectFilters:
         if not isinstance(polyline, _vtk.vtkPolyLine):
             msg = f'Input line must have a PolyLine cell, not ({type(polyline)})'
             raise TypeError(msg)
+        if isinstance(self, pv.MultiBlock):
+            return _slice_each_block(
+                self,
+                'slice_along_line',
+                line,
+                generate_triangles=generate_triangles,
+                contour=contour,
+                progress_bar=progress_bar,
+            )
         # Generate PolyPlane
         polyplane = _vtk.vtkPolyPlane()
         polyplane.SetPolyLine(polyline)
@@ -4251,7 +4334,9 @@ class DataObjectFilters:
             alg.GenerateTrianglesOff()
         _update_alg(alg, progress_bar=progress_bar, message='Slicing along Line')
         output = _get_output(alg)
-        if contour:
+        # There is nothing to contour when the plane misses, and the cutter can leave
+        # an empty output with no arrays for the contour to read
+        if contour and output.n_cells:
             return output.contour()
         return output
 
@@ -5622,6 +5707,17 @@ def _get_cell_quality_measures() -> dict[str, str]:
     return measures
 
 
+def _slice_each_block(composite: MultiBlock, method: str, /, *args, **kwargs) -> MultiBlock:
+    """Apply a slice filter to every block, slicing a ``PointSet`` as its vertices."""
+
+    def slice_block(block: DataSet):  # numpydoc ignore=PR01
+        """Slice one block through the filter its own type supports."""
+        source = block.cast_to_polydata(deep=False) if isinstance(block, pv.PointSet) else block
+        return getattr(source, method)(*args, **kwargs)
+
+    return composite.generic_filter(slice_block)
+
+
 def _slice_image_along_axis(
     image: ImageData, *, axis: int, coordinate: float, sign: float
 ) -> PolyData | None:
@@ -5676,7 +5772,27 @@ def _slice_image_along_axis(
     output.copy_meta_from(image, deep=True)
     output.field_data.update(image.field_data)
     output.set_active_scalars(image.active_scalars_name)
+    _copy_active_attributes(image, output)
     return output
+
+
+def _copy_active_attributes(source: DataSet, target: DataSet) -> None:
+    """Mark the same point and cell arrays active on ``target`` as on ``source``."""
+    for attributes_in, attributes_out in (
+        (source.point_data, target.point_data),
+        (source.cell_data, target.cell_data),
+    ):
+        for attr in (
+            'active_vectors_name',
+            'active_normals_name',
+            'active_texture_coordinates_name',
+        ):
+            name = getattr(attributes_in, attr)
+            if name is not None and name in attributes_out:
+                setattr(attributes_out, attr, name)
+        tensors = attributes_in.GetTensors()
+        if tensors is not None and tensors.GetName() in attributes_out:
+            attributes_out.SetActiveTensors(tensors.GetName())
 
 
 def _box_planes(bounds: NumpyArray[float]) -> list[tuple[VectorLike[float], VectorLike[float]]]:
@@ -5699,6 +5815,7 @@ def _clip_by_box_planes(
     planes: Sequence[tuple[VectorLike[float], VectorLike[float]]],
     *,
     invert: bool,
+    merge_points: bool,
     progress_bar: bool,
 ) -> DataSet:
     """Clip by each plane in turn, keeping the inside or appending the outside pieces."""
@@ -5726,22 +5843,34 @@ def _clip_by_box_planes(
         # Nothing lay outside the box, so return an empty clip of the right type
         return inside.clip(normal=planes[0][0], origin=planes[0][1], invert=False)
     append = _vtk.vtkAppendFilter()
-    append.MergePointsOn()
+    append.SetMergePoints(merge_points)
     for piece in outside:
         append.AddInputData(piece)
     _update_alg(append, progress_bar=progress_bar, message='Clipping a Dataset by a Bounding Box')
     return _get_output(append)
 
 
-def _remove_unused_points_post_clip(clip_output, input_bounds):
+def _validate_clip_inplace(mesh: DataSet | MultiBlock) -> None:
+    """Raise when a clipped output cannot be copied back into its input mesh."""
+    if not isinstance(mesh, (pv.PolyData, pv.PointSet, pv.UnstructuredGrid)):
+        msg = (
+            f'Cannot use inplace=True for {type(mesh).__name__} input. Only PolyData, '
+            f'PointSet and UnstructuredGrid inputs can be clipped in place.'
+        )
+        raise TypeError(msg)
+
+
+def _remove_unused_points_post_clip(clip_output, input_bounds, *, force: bool = False):
     # VTK clip filters are buggy and sometimes retain unused points from the input, e.g.:
     # https://github.com/pyvista/pyvista/issues/6511
     # https://github.com/pyvista/pyvista/issues/7738
 
     def maybe_remove_unused_points(mesh: DataSet):
         # Unused points are correctly removed sometimes, so for performance we only
-        # remove points when the clipped bounds match input bounds
-        if np.allclose(clip_output.bounds, input_bounds) and hasattr(mesh, 'remove_unused_points'):
+        # remove points when the clipped bounds match input bounds, or when the caller
+        # knows its filter always keeps them
+        needed = force or np.allclose(clip_output.bounds, input_bounds)
+        if needed and hasattr(mesh, 'remove_unused_points'):
             return mesh.remove_unused_points()
         return mesh
 

@@ -1933,8 +1933,8 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Notes
         -----
-        This will produce a deep copy of the points and point/cell data of
-        the original mesh.
+        This will produce a deep copy of the points and of the point, cell and
+        field data of the original mesh.
 
         Examples
         --------
@@ -1949,6 +1949,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         pset.points = self.points.copy()
         out = self.cell_data_to_point_data() if pass_cell_data else self
         pset.GetPointData().DeepCopy(out.GetPointData())
+        pset.GetFieldData().DeepCopy(self.GetFieldData())
         field, name = out.active_scalars_info
         if field == FieldAssociation.POINT:
             pset.active_scalars_name = name
@@ -1972,8 +1973,8 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Notes
         -----
-        This will produce a deep copy of the points and point/cell data of
-        the original mesh.
+        This will produce a deep copy of the points and of the point, cell and
+        field data of the original mesh.
 
         Examples
         --------
@@ -2011,6 +2012,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             cell_data = cell_data.cell_data_to_point_data()
             pset.GetCellData().DeepCopy(cell_data.GetPointData())
         pset.GetPointData().DeepCopy(self.GetPointData())
+        pset.GetFieldData().DeepCopy(self.GetFieldData())
         field, name = self.active_scalars_info
         if field == FieldAssociation.POINT or pass_cell_data:
             pset.active_scalars_name = name
