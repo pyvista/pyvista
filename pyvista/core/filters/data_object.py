@@ -3243,7 +3243,9 @@ class DataObjectFilters:
             Set the clipping value along the normal direction.
 
         inplace : bool, default: False
-            Updates mesh in-place.
+            Updates mesh in-place. Only :class:`~pyvista.PolyData`,
+            :class:`~pyvista.PointSet` and :class:`~pyvista.UnstructuredGrid` inputs
+            support this; any other input raises ``TypeError``.
 
         return_clipped : bool, default: False
             Return both unclipped and clipped parts of the dataset.
@@ -3296,6 +3298,8 @@ class DataObjectFilters:
         See :ref:`clip_with_surface_example` for more examples using this filter.
 
         """
+        if inplace:
+            _validate_clip_inplace(self)
         origin_, normal_ = _validate_plane_origin_and_normal(
             self, origin, normal, plane, default_normal='x'
         )
@@ -5726,6 +5730,16 @@ def _clip_by_box_planes(
         append.AddInputData(piece)
     _update_alg(append, progress_bar=progress_bar, message='Clipping a Dataset by a Bounding Box')
     return _get_output(append)
+
+
+def _validate_clip_inplace(mesh: DataSet | MultiBlock) -> None:
+    """Raise when a clipped output cannot be copied back into its input mesh."""
+    if not isinstance(mesh, (pv.PolyData, pv.PointSet, pv.UnstructuredGrid)):
+        msg = (
+            f'Cannot use inplace=True for {type(mesh).__name__} input. Only PolyData, '
+            f'PointSet and UnstructuredGrid inputs can be clipped in place.'
+        )
+        raise TypeError(msg)
 
 
 def _remove_unused_points_post_clip(clip_output, input_bounds, *, force: bool = False):

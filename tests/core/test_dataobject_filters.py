@@ -123,6 +123,36 @@ def test_clip_filter_pointset_no_points_removed(pointset, as_composite):
     assert n_points_in == n_points_out
 
 
+@pytest.mark.parametrize(
+    'mesh',
+    [
+        pv.Sphere(),
+        pv.PointSet(np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])),
+        pv.ImageData(dimensions=(5, 5, 5)).cast_to_unstructured_grid(),
+    ],
+    ids=['polydata', 'pointset', 'unstructured'],
+)
+def test_clip_inplace(mesh):
+    mesh = mesh.copy()
+    clipped = mesh.clip(inplace=True)
+    assert clipped is mesh
+
+
+@pytest.mark.parametrize(
+    'mesh',
+    [
+        pv.ImageData(dimensions=(5, 5, 5)),
+        pv.RectilinearGrid(*[np.linspace(-1, 1, 5)] * 3),
+        pv.MultiBlock([pv.Sphere()]),
+    ],
+    ids=['image', 'rectilinear', 'composite'],
+)
+def test_clip_inplace_raises(mesh):
+    match = f'Cannot use inplace=True for {type(mesh).__name__} input'
+    with pytest.raises(TypeError, match=match):
+        mesh.clip(inplace=True)
+
+
 def test_clip_filter_normal(datasets):
     # Test no errors are raised
     for i, dataset in enumerate(datasets):

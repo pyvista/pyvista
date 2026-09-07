@@ -373,7 +373,7 @@ def test_clip_surface_compute_distance_does_not_modify_input(uniform):
 
 def test_clip_scalar_errors():
     mesh = pv.Wavelet()
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match='Cannot use inplace=True for ImageData input'):
         mesh.clip_scalar(value=(200, 300), inplace=True)
     with pytest.raises(ValueError, match='Cannot have invert=False for a range clip'):
         mesh.clip_scalar(value=(200, 300), invert=False)
