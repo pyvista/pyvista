@@ -259,18 +259,17 @@ def test_active_scalars_cell(hexbeam):
     assert hexbeam.active_scalars_info[1] == 'sample_cell_scalars'
 
 
-@pytest.mark.parametrize(
-    'observe',
-    [
-        lambda _mesh: None,
-        lambda mesh: mesh.active_scalars_info,
-        lambda mesh: mesh.active_vectors_info,
-        repr,
-        lambda mesh: mesh.copy(deep=True),
-        lambda mesh: mesh.copy(deep=False),
-    ],
-    ids=['nothing', 'scalars_info', 'vectors_info', 'repr', 'deep_copy', 'shallow_copy'],
-)
+OBSERVATIONS = [
+    pytest.param(lambda _mesh: None, id='nothing'),
+    pytest.param(lambda mesh: mesh.active_scalars_info, id='scalars_info'),
+    pytest.param(lambda mesh: mesh.active_vectors_info, id='vectors_info'),
+    pytest.param(lambda mesh: mesh._repr_html_(), id='repr_html'),
+    pytest.param(lambda mesh: mesh.copy(deep=True), id='deep_copy'),
+    pytest.param(lambda mesh: mesh.copy(deep=False), id='shallow_copy'),
+]
+
+
+@pytest.mark.parametrize('observe', OBSERVATIONS)
 def test_active_scalars_is_not_decided_by_reading_it(hexbeam, observe):
     """Reading the active arrays must not decide which array a later one activates."""
     observe(hexbeam)
@@ -281,14 +280,32 @@ def test_active_scalars_is_not_decided_by_reading_it(hexbeam, observe):
     assert hexbeam.active_scalars_info.association == pv.FieldAssociation.POINT
 
 
-def test_active_scalars_keeps_an_explicit_choice(hexbeam):
-    """An array chosen explicitly stays active when a new array is added."""
-    hexbeam.set_active_scalars('sample_cell_scalars', preference='cell')
+@pytest.mark.parametrize('observe', OBSERVATIONS)
+def test_active_vectors_is_not_decided_by_reading_it(hexbeam, observe):
+    """The point vectors win over the cell vectors however late they are activated."""
+    hexbeam.cell_data['cell_vectors'] = np.ones((hexbeam.n_cells, 3))
+    hexbeam.cell_data.active_vectors_name = 'cell_vectors'
+    observe(hexbeam)
+
+    hexbeam.point_data['point_vectors'] = np.ones((hexbeam.n_points, 3))
+    hexbeam.point_data.active_vectors_name = 'point_vectors'
+
+    assert hexbeam.active_vectors_info.name == 'point_vectors'
+    assert hexbeam.active_vectors_info.association == pv.FieldAssociation.POINT
+    assert hexbeam.active_vectors.shape == (hexbeam.n_points, 3)
+
+
+@pytest.mark.parametrize('deep', [True, False], ids=['deep', 'shallow'])
+def test_active_scalars_keeps_an_explicit_choice(hexbeam, deep):
+    """An array chosen explicitly stays active when a new array is added, and is copied."""
+    hexbeam.set_active_scalars('sample_cell_scalars')
 
     hexbeam['new_point_array'] = np.ones(hexbeam.n_points)
+    duplicate = hexbeam.copy(deep=deep)
 
-    assert hexbeam.active_scalars_info.name == 'sample_cell_scalars'
-    assert hexbeam.active_scalars_info.association == pv.FieldAssociation.CELL
+    for mesh in (hexbeam, duplicate):
+        assert mesh.active_scalars_info.name == 'sample_cell_scalars'
+        assert mesh.active_scalars_info.association == pv.FieldAssociation.CELL
 
 
 def test_field_data_bad_value(hexbeam):
@@ -310,6 +327,8 @@ def test_copy_metadata(globe):
     """Ensure metadata is copied correctly."""
     globe.point_data['bitarray'] = np.zeros(globe.n_points, dtype=bool)
     globe.point_data['complex_data'] = np.zeros(globe.n_points, dtype=np.complex128)
+    # chosen, so the active-array assertions below compare a name rather than None
+    globe.set_active_scalars('bitarray')
 
     globe_shallow = globe.copy(deep=False)
     assert globe_shallow._active_scalars_info is globe._active_scalars_info
