@@ -3212,7 +3212,13 @@ class DataObjectFilters:
         )
         mesh_in = source.cast_to_poly_points() if apply_vtk_94x_patch else source
 
-        alg = _vtk.vtkTableBasedClipDataSet()
+        # vtkTableBasedClipDataSet keeps points that the input holds apart, but it does not
+        # support triangle strips and emits the points of a mesh that mixes them twice
+        alg: _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet = (
+            _vtk.vtkClipPolyData()
+            if isinstance(mesh_in, pv.PolyData) and mesh_in.n_strips
+            else _vtk.vtkTableBasedClipDataSet()
+        )
         alg.SetInputDataObject(mesh_in)  # Use the grid as the data we desire to cut
         alg.SetValue(value)
         # ``None`` clips by the active scalars instead, for a precomputed distance field
@@ -3394,29 +3400,23 @@ class DataObjectFilters:
 
         If no bounds are given, a corner of the dataset bounds will be removed.
 
-        A :class:`~pyvista.PolyData` is clipped with :vtk:`vtkBoxClipDataSet`, which splits
-        the cells the box cuts into simplices, and a :class:`~pyvista.PointSet` is clipped
-        the same way through its vertices. All other inputs,
-        that is :class:`~pyvista.ImageData`, :class:`~pyvista.RectilinearGrid`,
-        :class:`~pyvista.StructuredGrid`, :class:`~pyvista.ExplicitStructuredGrid`, and
-        :class:`~pyvista.UnstructuredGrid`, are clipped by the six box planes in turn with
-        the same clipper as :meth:`clip`, which keeps hexahedra and other cell types.
+        Every input is clipped by the six box planes in turn with the same clipper as
+        :meth:`clip`, so the cells the box does not cut keep their type. A
+        :class:`~pyvista.PointSet` is clipped through its vertices.
 
         .. versionchanged:: 0.49
 
-            - :class:`~pyvista.ImageData`, :class:`~pyvista.RectilinearGrid`,
-              :class:`~pyvista.StructuredGrid`, :class:`~pyvista.ExplicitStructuredGrid`, and
-              :class:`~pyvista.UnstructuredGrid` inputs are clipped by the six box planes
-              instead of :vtk:`vtkBoxClipDataSet`, so cells the box does not cut keep their
-              type instead of being split into tetrahedra, and the output normally has fewer
-              cells and points for the same clipped volume, whatever ``merge_points`` is.
-              Call :meth:`~pyvista.DataObjectFilters.triangulate` on the output for an
-              all-tetrahedra mesh as before.
+            - Every input is clipped by the six box planes instead of
+              :vtk:`vtkBoxClipDataSet`, so the cells the box does not cut keep their type
+              instead of being split into simplices, and the output normally has fewer
+              cells and points for the same clipped region. Call
+              :meth:`~pyvista.DataObjectFilters.triangulate` on the output for an
+              all-simplex mesh as before.
             - A :class:`~pyvista.PolyData` input gives a ``PolyData`` instead of an
-              :class:`~pyvista.UnstructuredGrid`, with the same points and cells.
+              :class:`~pyvista.UnstructuredGrid`.
             - ``merge_points`` merges points that share a position, or leaves them
-              apart, for every input class. It no longer gives each cell its own copy
-              of the points it shares with its neighbours; call
+              apart, for every input class. No input now gets a copy of every point per
+              cell; call
               :meth:`~pyvista.DataSetFilters.separate_cells` on the output for that.
 
         Parameters
@@ -3542,40 +3542,19 @@ class DataObjectFilters:
         if crinkle:
             source, active_scalars_info = _Crinkler._add_cell_ids(self)
 
-        # Optimization: vtkBoxClipDataSet splits every cell into tetrahedra (VTK 9.7), so
-        # ImageData, RectilinearGrid, StructuredGrid, ExplicitStructuredGrid, and
-        # UnstructuredGrid are clipped plane by plane instead, which keeps their cell types
-        # and is faster for it. PolyData, and the vertices a PointSet is clipped as, are
-        # already triangulated and gain nothing from it.
-        use_box_filter = isinstance(self, pv.PolyData)
-        if use_box_filter:
-            alg = _vtk.vtkBoxClipDataSet()
-            if not merge_points:
-                # vtkBoxClipDataSet uses vtkMergePoints by default
-                alg.SetLocator(_vtk.vtkNonMergingPointLocator())
-            alg.SetInputDataObject(source)
-            alg.SetBoxClip(*bounds_)
-            port = 0
-            if invert:
-                # invert the clip if needed
-                port = 1
-                alg.GenerateClippedOutputOn()
-            _update_alg(
-                alg, progress_bar=progress_bar, message='Clipping a Dataset by a Bounding Box'
-            )
-            clipped = _get_output(alg, oport=port)
-        else:
-            clipped = _clip_by_box_planes(
-                source,
-                _box_planes(bounds_),
-                invert=invert,
-                merge_points=merge_points,
-                progress_bar=progress_bar,
-            )
+        # Every class is clipped by the six box planes with the same clipper as ``clip``,
+        # which keeps the cell types the box does not cut
+        clipped = _clip_by_box_planes(
+            source,
+            _box_planes(bounds_, hold_off=isinstance(self, pv.PolyData)),
+            invert=invert,
+            merge_points=merge_points,
+            progress_bar=progress_bar,
+        )
 
         if crinkle:
             clipped = _Crinkler._extract_crinkle_cells(source, clipped, None, active_scalars_info)
-        clipped = _remove_unused_points_post_clip(clipped, self.bounds, force=use_box_filter)
+        clipped = _remove_unused_points_post_clip(clipped, self.bounds)
         if merge_points:
             clipped = _weld_points(clipped)
         return _keep_array_structure(_cast_output_to_match_input_type(clipped, self), self)
@@ -5800,10 +5779,20 @@ def _copy_active_attributes(source: DataSet, target: DataSet) -> None:
             attributes_out.SetActiveTensors(tensors.GetName())
 
 
-def _box_planes(bounds: NumpyArray[float]) -> list[tuple[VectorLike[float], VectorLike[float]]]:
+def _box_planes(
+    bounds: NumpyArray[float], *, hold_off: bool = False
+) -> list[tuple[VectorLike[float], VectorLike[float]]]:
     """Return the six ``(outward normal, origin)`` planes of a box clip specification."""
     if len(bounds) == 12:
         return [(bounds[i], bounds[i + 1]) for i in range(0, 12, 2)]
+    if hold_off:
+        # A clip drops a cell lying flat in its plane, so hold the planes off a surface
+        # by a fraction of the box to keep a face the box only touches
+        lengths = np.abs(bounds[1::2] - bounds[::2])
+        bounds = bounds.copy()
+        offset = 1e-9 * np.where(lengths > 0, lengths, 1.0)
+        bounds[::2] -= offset
+        bounds[1::2] += offset
     planes: list[tuple[VectorLike[float], VectorLike[float]]] = []
     for axis in range(3):
         for sign, bound in ((-1.0, bounds[2 * axis]), (1.0, bounds[2 * axis + 1])):
@@ -5819,7 +5808,13 @@ def _keep_array_structure(
     output: DataSet | MultiBlock, source: DataSet | MultiBlock
 ) -> DataSet | MultiBlock:
     """Give an empty clip the array names of its input, which VTK drops."""
-    if isinstance(output, pv.MultiBlock) or isinstance(source, pv.MultiBlock):
+    if isinstance(output, pv.MultiBlock):
+        for (ids, _, block), original in zip(
+            output.recursive_iterator('all', skip_none=True),
+            source.recursive_iterator(skip_none=True),
+            strict=True,
+        ):
+            output.replace(ids, _keep_array_structure(block, original))
         return output
     if not output.n_points:
         output.GetPointData().CopyStructure(source.GetPointData())

@@ -177,6 +177,47 @@ def _joins_the_halves(mesh):
     return any(len(halves) > 1 for halves in halves_of_point.values())
 
 
+@pytest.mark.parametrize('both', [True, False])
+def test_clip_scalar_both_keeps_coincident_points_apart(both):
+    """Both halves of a scalar clip keep the points the input held apart."""
+    mesh = _seam_polydata()
+
+    result = mesh.clip_scalar(scalars='height', value=-99.0, invert=False, both=both)
+    kept = result[0] if both else result
+
+    assert type(kept) is pv.PolyData
+    assert kept.n_points == mesh.n_points
+    assert not _joins_the_halves(kept)
+
+
+def test_clip_strips_does_not_duplicate_points():
+    """A mesh mixing strips with other cells keeps one point per position."""
+    points = np.array([[0, 0, 0], [2, 0, 0], [2, 2, 0], [0, 2, 0], [1, 3, 0]], dtype=float)
+    mesh = pv.PolyData(points, faces=[3, 0, 1, 2], strips=[4, 0, 1, 3, 2])
+
+    clipped = mesh.clip(normal='x', origin=(1.0, 0.0, 0.0))
+
+    positions = {point.tobytes() for point in np.ascontiguousarray(clipped.points)}
+    assert clipped.n_points == len(positions)
+
+
+@pytest.mark.parametrize('name', ['clip', 'clip_slab'])
+def test_clip_composite_empty_block_keeps_array_names(name):
+    """An empty block says which arrays it would have had, as a lone dataset does."""
+    plane = pv.Plane()
+    plane.point_data['height'] = plane.points[:, 2]
+    composite = pv.MultiBlock({'plane': plane, 'empty': None})
+
+    clipped = {
+        'clip': lambda: composite.clip(normal='z', origin=(0, 0, 99), invert=False),
+        'clip_slab': lambda: composite.clip_slab(thickness=0.001, normal='z', origin=(0, 0, 99)),
+    }[name]()
+
+    assert clipped['plane'].is_empty
+    assert sorted(clipped['plane'].array_names) == sorted(plane.array_names)
+    assert clipped['empty'] is None
+
+
 @pytest.mark.parametrize(
     'name',
     ['clip', 'clip_slab', 'clip_surface', 'clip_scalar'],
@@ -222,12 +263,15 @@ def test_clip_box_merge_points_welds_when_asked(invert):
 def test_clip_empty_output_keeps_array_names():
     """An empty clip still says which arrays the input had."""
     mesh = pv.Plane()
-    mesh.point_data['height'] = mesh.points[:, 2]
+    mesh.point_data['height'] = mesh.points[:, 2].astype(np.float32)
+    mesh.cell_data['ids'] = np.arange(mesh.n_cells, dtype=np.uint16)
 
     clipped = mesh.clip(normal='z', origin=(0, 0, 99), invert=False)
 
     assert clipped.is_empty
     assert sorted(clipped.array_names) == sorted(mesh.array_names)
+    assert clipped.point_data['height'].dtype == np.float32
+    assert clipped.cell_data['ids'].dtype == np.uint16
 
 
 def test_clip_filter_normal(datasets):
@@ -434,7 +478,7 @@ def test_clip_box_polydata_no_unused_points(invert):
 
 @pytest.mark.parametrize('invert', [True, False])
 def test_clip_box_polydata_keeps_cells_and_arrays(invert):
-    """The output is the box filter's mesh in a PolyData, not a different mesh."""
+    """The clipped surface covers the same area and keeps its own cell types."""
     mesh = pv.Sphere(theta_resolution=16, phi_resolution=16)
     mesh.point_data['data'] = mesh.points[:, 2]
     mesh.cell_data['cells'] = np.arange(mesh.n_cells, dtype=float)
@@ -444,10 +488,10 @@ def test_clip_box_polydata_keeps_cells_and_arrays(invert):
     expected = _box_clip_filter(mesh, bounds, invert=invert).remove_unused_points()
 
     assert type(clipped) is pv.PolyData
-    assert clipped.n_cells == expected.n_cells
     assert clipped.area == pytest.approx(expected.area)
     assert sorted(clipped.array_names) == sorted(expected.array_names)
-    assert np.allclose(np.sort(clipped.points, axis=0), np.sort(expected.points, axis=0))
+    # The box planes keep the cells the box does not cut, which the box filter splits
+    assert set(clipped.cast_to_unstructured_grid().celltypes) != {pv.CellType.TRIANGLE}
 
 
 def test_clip_box_polydata_empty_is_polydata():

@@ -782,10 +782,6 @@ class DataSetFilters(DataObjectFilters):
                     _cast_output_to_match_input_type(_get_output(alg, oport=1), self), self
                 ),
             )
-            if isinstance(self, _vtk.vtkPolyData):
-                # For some reason vtkClipPolyData with SetGenerateClippedOutput on
-                # leaves unreferenced vertices
-                result0, result1 = (r.clean() for r in (result0, result1))  # type: ignore[unreachable]
             return result0, result1
         return result0
 
