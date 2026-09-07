@@ -782,19 +782,54 @@ def test_slice_filter_composite(multiblock_all):
     assert output.n_blocks == multiblock_all.n_blocks
 
 
-def test_slice_filter_composite_pointset_block_is_empty(multiblock_all):
-    """``slice`` runs through :vtk:`vtkCutter`'s own composite dispatch.
+def _slice_call(mesh, name):
+    """Call one slice filter on a mesh with arguments that suit it."""
+    bounds = mesh.bounds
+    kwargs = {
+        'slice': dict(normal=normals[0]),
+        'slice_implicit': dict(implicit_function=generate_plane((1.0, 0.0, 0.0), mesh.center)),
+        'slice_along_line': dict(
+            line=pv.Line(
+                (bounds.x_min, bounds.y_min, bounds.z_min),
+                (bounds.x_max, bounds.y_max, bounds.z_max),
+                resolution=10,
+            )
+        ),
+        'slice_along_axis': dict(n=2),
+    }.get(name, {})
+    return getattr(mesh, name)(**kwargs)
 
-    Unlike ``slice_orthogonal``/``slice_along_axis`` (which iterate blocks in
-    Python and hit :class:`~pyvista.PointSet`'s ``PointSetDimensionReductionError``
-    guard directly), ``slice`` never calls into the Python-level override for a
-    ``PointSet`` block, so it does not raise. The block is silently empty instead.
-    """
+
+@pytest.mark.parametrize(
+    'name',
+    ['slice', 'slice_implicit', 'slice_along_line', 'slice_orthogonal', 'slice_along_axis'],
+)
+def test_slice_filter_composite_pointset_block_is_empty(multiblock_all, name):
+    """Every slice filter gives an empty block for a ``PointSet``, which has no cells."""
     pointset_index = next(
         i for i, block in enumerate(multiblock_all) if isinstance(block, pv.PointSet)
     )
-    output = multiblock_all.slice(normal=normals[0], progress_bar=True)
-    assert output[pointset_index].is_empty
+    pointset = multiblock_all[pointset_index]
+    pointset.field_data['meta'] = [1.0]
+
+    block = _slice_call(multiblock_all, name)[pointset_index]
+
+    blocks = block if isinstance(block, pv.MultiBlock) else [block]
+    for sliced in blocks:
+        assert isinstance(sliced, pv.PolyData)
+        assert sliced.is_empty
+        assert sliced.array_names == pointset.array_names
+        assert np.allclose(sliced.field_data['meta'], [1.0])
+
+
+@pytest.mark.parametrize(
+    'name',
+    ['slice', 'slice_implicit', 'slice_along_line', 'slice_orthogonal', 'slice_along_axis'],
+)
+def test_slice_filter_pointset_raises(pointset, name):
+    """A ``PointSet`` on its own still refuses to be sliced."""
+    with pytest.raises(pv.PointSetDimensionReductionError):
+        _slice_call(pointset, name)
 
 
 def test_slice_orthogonal_filter(datasets_no_pointset):
@@ -808,15 +843,10 @@ def test_slice_orthogonal_filter(datasets_no_pointset):
             assert isinstance(slc, pv.PolyData)
 
 
-def test_slice_orthogonal_filter_composite(multiblock_all_no_pointset):
+def test_slice_orthogonal_filter_composite(multiblock_all):
     # Now test composite data structures
-    output = multiblock_all_no_pointset.slice_orthogonal(progress_bar=True)
-    assert output.n_blocks == multiblock_all_no_pointset.n_blocks
-
-
-def test_slice_orthogonal_filter_composite_pointset_raises(multiblock_all):
-    with pytest.raises(pv.PointSetDimensionReductionError):
-        multiblock_all.slice_orthogonal(progress_bar=True)
+    output = multiblock_all.slice_orthogonal(progress_bar=True)
+    assert output.n_blocks == multiblock_all.n_blocks
 
 
 def test_slice_along_axis(datasets_no_pointset):
@@ -835,15 +865,10 @@ def test_slice_along_axis(datasets_no_pointset):
         dataset.slice_along_axis(axis='u')
 
 
-def test_slice_along_axis_composite(multiblock_all_no_pointset):
+def test_slice_along_axis_composite(multiblock_all):
     # Now test composite data structures
-    output = multiblock_all_no_pointset.slice_along_axis(progress_bar=True)
-    assert output.n_blocks == multiblock_all_no_pointset.n_blocks
-
-
-def test_slice_along_axis_composite_pointset_raises(multiblock_all):
-    with pytest.raises(pv.PointSetDimensionReductionError):
-        multiblock_all.slice_along_axis(progress_bar=True)
+    output = multiblock_all.slice_along_axis(progress_bar=True)
+    assert output.n_blocks == multiblock_all.n_blocks
 
 
 def test_extract_all_edges(datasets_no_pointset):
@@ -1208,25 +1233,11 @@ def test_slice_along_line_composite(multiblock_all):
         ('slice_along_axis', pv.MultiBlock),
     ],
 )
-def test_slice_composite_output_type(multiblock_all_no_pointset, call, block_type):
-    bounds = multiblock_all_no_pointset.bounds
-    kwargs = {
-        'slice_implicit': dict(
-            implicit_function=generate_plane((1.0, 0.0, 0.0), multiblock_all_no_pointset.center)
-        ),
-        'slice_along_line': dict(
-            line=pv.Line(
-                (bounds.x_min, bounds.y_min, bounds.z_min),
-                (bounds.x_max, bounds.y_max, bounds.z_max),
-                resolution=10,
-            )
-        ),
-    }.get(call, {})
-
-    output = getattr(multiblock_all_no_pointset, call)(**kwargs)
+def test_slice_composite_output_type(multiblock_all, call, block_type):
+    output = _slice_call(multiblock_all, call)
 
     assert isinstance(output, pv.MultiBlock)
-    assert output.n_blocks == multiblock_all_no_pointset.n_blocks
+    assert output.n_blocks == multiblock_all.n_blocks
     assert all(isinstance(block, block_type) for block in output)
 
 

@@ -3725,6 +3725,15 @@ class DataObjectFilters:
         >>> slice.plot(show_edges=True, line_width=5)
 
         """
+        if isinstance(self, pv.MultiBlock):
+            return _slice_each_block(
+                self,
+                'slice_implicit',
+                implicit_function,
+                generate_triangles=generate_triangles,
+                contour=contour,
+                progress_bar=progress_bar,
+            )
         alg = _vtk.vtkCutter()  # Construct the cutter object
         alg.SetInputDataObject(self)  # Use the grid as the data we desire to cut
         alg.SetCutFunction(implicit_function)  # the cutter to use the function
@@ -3948,22 +3957,17 @@ class DataObjectFilters:
             y = self.center[1]
         if z is None:
             z = self.center[2]
-        output = pv.MultiBlock()
         if isinstance(self, pv.MultiBlock):
-            for i in range(self.n_blocks):
-                data = self[i]
-                output.append(
-                    data.slice_orthogonal(
-                        x=x,
-                        y=y,
-                        z=z,
-                        generate_triangles=generate_triangles,
-                        contour=contour,
-                    )
-                    if data is not None
-                    else data
-                )
-            return output
+            return _slice_each_block(
+                self,
+                'slice_orthogonal',
+                x=x,
+                y=y,
+                z=z,
+                generate_triangles=generate_triangles,
+                contour=contour,
+            )
+        output = pv.MultiBlock()
         output.append(
             self.slice(
                 normal='x',
@@ -4113,24 +4117,19 @@ class DataObjectFilters:
         )
         center = list(center)
         # Make each of the slices
-        output = pv.MultiBlock()
         if isinstance(self, pv.MultiBlock):
-            for i in range(self.n_blocks):
-                data = self[i]
-                output.append(
-                    data.slice_along_axis(
-                        n=n,
-                        axis=ax_label,
-                        tolerance=tolerance,
-                        generate_triangles=generate_triangles,
-                        contour=contour,
-                        bounds=bounds,
-                        center=center,
-                    )
-                    if data is not None
-                    else data
-                )
-            return output
+            return _slice_each_block(
+                self,
+                'slice_along_axis',
+                n=n,
+                axis=ax_label,
+                tolerance=tolerance,
+                generate_triangles=generate_triangles,
+                contour=contour,
+                bounds=bounds,
+                center=center,
+            )
+        output = pv.MultiBlock()
         for i in range(n):
             center[ax_index] = rng[i]
             slc = self.slice(
@@ -4221,6 +4220,15 @@ class DataObjectFilters:
         >>> pl.show()
 
         """
+        if isinstance(self, pv.MultiBlock):
+            return _slice_each_block(
+                self,
+                'slice_along_line',
+                line,
+                generate_triangles=generate_triangles,
+                contour=contour,
+                progress_bar=progress_bar,
+            )
         # check that we have a PolyLine cell in the input line
         if line.GetNumberOfCells() != 1:
             msg = 'Input line must have only one cell.'
@@ -5609,6 +5617,17 @@ def _get_cell_quality_measures() -> dict[str, str]:
             measure_name = re.sub(r'([a-z])([A-Z])', r'\1_\2', measure_name).lower()
             measures[measure_name] = attr
     return measures
+
+
+def _slice_each_block(composite: MultiBlock, method: str, /, *args, **kwargs) -> MultiBlock:
+    """Apply a slice filter to every block, slicing a ``PointSet`` as its vertices."""
+
+    def slice_block(block: DataSet):  # numpydoc ignore=PR01
+        """Slice one block through the filter its own type supports."""
+        source = block.cast_to_polydata(deep=False) if isinstance(block, pv.PointSet) else block
+        return getattr(source, method)(*args, **kwargs)
+
+    return composite.generic_filter(slice_block)
 
 
 def _slice_image_along_axis(
