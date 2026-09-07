@@ -1322,6 +1322,16 @@ def test_sample_composite():
     assert 'vtkGhostType' in result[0].point_data
 
 
+@pytest.mark.parametrize('as_composite', [True, False])
+def test_slice_along_line_bad_line_raises(as_composite):
+    mesh = pv.Sphere()
+    mesh = pv.MultiBlock([mesh]) if as_composite else mesh
+    with pytest.raises(ValueError, match='Input line must have only one cell'):
+        mesh.slice_along_line(pv.Line() + pv.Line((1, 1, 1), (2, 2, 2)))
+    with pytest.raises(TypeError, match='Input line must have a PolyLine cell'):
+        mesh.slice_along_line(pv.PolyData([[0.0, 0.0, 0.0]]))
+
+
 def test_slice_along_line():
     model = examples.load_uniform()
     n = 5

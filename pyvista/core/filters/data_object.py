@@ -4264,6 +4264,14 @@ class DataObjectFilters:
         >>> pl.show()
 
         """
+        # check that we have a PolyLine cell in the input line
+        if line.GetNumberOfCells() != 1:
+            msg = 'Input line must have only one cell.'
+            raise ValueError(msg)
+        polyline = line.GetCell(0)
+        if not isinstance(polyline, _vtk.vtkPolyLine):
+            msg = f'Input line must have a PolyLine cell, not ({type(polyline)})'
+            raise TypeError(msg)
         if isinstance(self, pv.MultiBlock):
             return _slice_each_block(
                 self,
@@ -4273,14 +4281,6 @@ class DataObjectFilters:
                 contour=contour,
                 progress_bar=progress_bar,
             )
-        # check that we have a PolyLine cell in the input line
-        if line.GetNumberOfCells() != 1:
-            msg = 'Input line must have only one cell.'
-            raise ValueError(msg)
-        polyline = line.GetCell(0)
-        if not isinstance(polyline, _vtk.vtkPolyLine):
-            msg = f'Input line must have a PolyLine cell, not ({type(polyline)})'
-            raise TypeError(msg)
         # Generate PolyPlane
         polyplane = _vtk.vtkPolyPlane()
         polyplane.SetPolyLine(polyline)
