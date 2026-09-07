@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 import re
-import textwrap
 from typing import TYPE_CHECKING
 
 from hypothesis import HealthCheck
@@ -2026,65 +2025,32 @@ def test_vtu_series_reader():
     assert isinstance(mesh, pv.UnstructuredGrid)
 
 
-def test_forbid_inconsistent_ext_with_parent(tmp_path: Path):
-    expected = textwrap.dedent(
-        """\
-            {
-            "file-series-version" : "1.0",
-            "files" : [
-                { "name" : "ts/mesh_0.vti", "time" : 0.0 },
-                { "name" : "ts/mesh_1.vti", "time" : 1.0 },
-                { "name" : "ts/mesh_2.vti", "time" : 2.0 }
-                ]
-            }
-       """
-    )
+@pytest.mark.parametrize(
+    ('files', 'match'),
+    [
+        pytest.param(
+            '{ "name" : "ts/mesh_0.vti", "time" : 0.0 },\n'
+            '    { "name" : "ts/mesh_1.vti", "time" : 1.0 },\n'
+            '    { "name" : "ts/mesh_2.vti", "time" : 2.0 }',
+            r'Dataset extension .vti does not match series file parent extension',
+            id='inconsistent_with_parent',
+        ),
+        pytest.param(
+            '{ "name" : "ts/mesh_0.vtu", "time" : 0.0 },\n'
+            '    { "name" : "ts/mesh_1.vti", "time" : 1.0 },\n'
+            '    { "name" : "ts/mesh_2.vtp", "time" : 2.0 }',
+            'Datasets in series file have multiple extensions',
+            id='inconsistent_among_children',
+        ),
+        pytest.param('', 'No datasets found in series file', id='empty'),
+    ],
+)
+def test_forbid_invalid_series_file(tmp_path: Path, files, match):
+    """A series file disagreeing with its own name or itself is rejected."""
+    series = f'{{\n"file-series-version" : "1.0",\n"files" : [\n    {files}\n    ]\n}}\n'
+    Path(tmp_path / 'mesh.vtu.series').write_text(series)
 
-    with Path(tmp_path / 'mesh.vtu.series').open('w') as f:
-        f.write(expected)
-
-    with pytest.raises(
-        ValueError, match=r'Dataset extension .vti does not match series file parent extension'
-    ):
-        pv.get_reader(tmp_path / 'mesh.vtu.series')
-
-
-def test_forbid_inconsistent_ext_among_children(tmp_path: Path):
-    expected = textwrap.dedent(
-        """\
-            {
-            "file-series-version" : "1.0",
-            "files" : [
-                { "name" : "ts/mesh_0.vtu", "time" : 0.0 },
-                { "name" : "ts/mesh_1.vti", "time" : 1.0 },
-                { "name" : "ts/mesh_2.vtp", "time" : 2.0 }
-                ]
-            }
-       """
-    )
-
-    with Path(tmp_path / 'mesh.vtu.series').open('w') as f:
-        f.write(expected)
-
-    with pytest.raises(ValueError, match='Datasets in series file have multiple extensions'):
-        pv.get_reader(tmp_path / 'mesh.vtu.series')
-
-
-def test_forbid_empty_series_file(tmp_path: Path):
-    expected = textwrap.dedent(
-        """\
-            {
-            "file-series-version" : "1.0",
-            "files" : [
-                ]
-            }
-       """
-    )
-
-    with Path(tmp_path / 'mesh.vtu.series').open('w') as f:
-        f.write(expected)
-
-    with pytest.raises(ValueError, match='No datasets found in series file'):
+    with pytest.raises(ValueError, match=match):
         pv.get_reader(tmp_path / 'mesh.vtu.series')
 
 

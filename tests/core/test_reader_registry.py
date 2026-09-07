@@ -204,23 +204,17 @@ def test_read_with_custom_extension(tmp_path):
     assert isinstance(result, pv.PolyData)
 
 
-def test_uri_forwarded_to_custom_reader():
-    """Remote URI with a custom extension is passed directly to the handler."""
+@pytest.mark.parametrize(
+    'uri',
+    ['https://example.com/data.myformat', 's3://bucket/data.myformat'],
+)
+def test_uri_forwarded_to_custom_reader(uri):
+    """A remote URI with a custom extension is passed directly to the handler."""
     mock = MagicMock(return_value=pv.PolyData())
     pv.register_reader('.myformat', mock)
 
-    result = pv.read('https://example.com/data.myformat')
-    mock.assert_called_once_with('https://example.com/data.myformat')
-    assert isinstance(result, pv.PolyData)
-
-
-def test_s3_uri_forwarded_to_custom_reader():
-    """s3:// URI with a custom extension is passed directly to the handler."""
-    mock = MagicMock(return_value=pv.PolyData())
-    pv.register_reader('.myformat', mock)
-
-    result = pv.read('s3://bucket/data.myformat')
-    mock.assert_called_once_with('s3://bucket/data.myformat')
+    result = pv.read(uri)
+    mock.assert_called_once_with(uri)
     assert isinstance(result, pv.PolyData)
 
 

@@ -1012,10 +1012,25 @@ def test_rectangle(points):
         assert np.allclose(mesh.points, pt_tuples)
 
 
-def test_rectangle_not_orthognal_entries():
+@pytest.mark.parametrize(
+    ('pointc', 'match'),
+    [
+        pytest.param(
+            [1.0, 1.0, 1.0],
+            'The three points should defined orthogonal vectors',
+            id='not_orthogonal',
+        ),
+        pytest.param(
+            [3.0, 1.0, 1.0],
+            'Unable to build a rectangle with less than three different points',
+            id='two_identical',
+        ),
+    ],
+)
+def test_rectangle_invalid_points(pointc, match):
+    """Points that do not describe a rectangle are rejected with a specific message."""
     pointa = [3.0, 1.0, 1.0]
     pointb = [4.0, 3.0, 1.0]
-    pointc = [1.0, 1.0, 1.0]
 
     # Do a rotation to be in full 3D space with floating point coordinates
     trans = pv.core.utilities.transformations.axis_angle_rotation([1, 1, 1], 30)
@@ -1024,26 +1039,7 @@ def test_rectangle_not_orthognal_entries():
         np.array([pointa, pointb, pointc]),
     )
 
-    with pytest.raises(ValueError, match='The three points should defined orthogonal vectors'):
-        pv.Rectangle(rotated)
-
-
-def test_rectangle_two_identical_points():
-    pointa = [3.0, 1.0, 1.0]
-    pointb = [4.0, 3.0, 1.0]
-    pointc = [3.0, 1.0, 1.0]
-
-    # Do a rotation to be in full 3D space with floating point coordinates
-    trans = pv.core.utilities.transformations.axis_angle_rotation([1, 1, 1], 30)
-    rotated = pv.core.utilities.transformations.apply_transformation_to_points(
-        trans,
-        np.array([pointa, pointb, pointc]),
-    )
-
-    with pytest.raises(
-        ValueError,
-        match='Unable to build a rectangle with less than three different points',
-    ):
+    with pytest.raises(ValueError, match=match):
         pv.Rectangle(rotated)
 
 

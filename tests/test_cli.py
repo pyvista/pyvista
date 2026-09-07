@@ -1704,35 +1704,35 @@ def test_validate_glob_expands_files(
 
 
 @pytest.mark.usefixtures('patch_app_console')
-def test_report_help(capsys: pytest.CaptureFixture):
-    main('report --help')
-
-    expected = textwrap.dedent(
-        """\
-            Usage: pyvista report [ARGS]
-
-            Generate a PyVista software environment report.
-       """
-    )
-    out, err = capture_out_err(capsys)
-    assert err == ''
-    assert expected == '\n'.join(out.split('\n')[:4])
-
-
 @pytest.mark.usefixtures('patch_app_console')
-def test_plot_help(capsys: pytest.CaptureFixture):
-    main('plot --help')
+@pytest.mark.parametrize(
+    ('command', 'usage', 'summary'),
+    [
+        (
+            'report',
+            'Usage: pyvista report [ARGS]',
+            'Generate a PyVista software environment report.',
+        ),
+        (
+            'plot',
+            'Usage: pyvista plot PATH... [OPTIONS]',
+            'Plot one or more mesh files in an interactive window.',
+        ),
+        (
+            'compare',
+            'Usage: pyvista compare PATH... [OPTIONS]',
+            'Compare two or more mesh files side-by-side.',
+        ),
+    ],
+    ids=['report', 'plot', 'compare'],
+)
+def test_command_help(command, usage, summary, capsys: pytest.CaptureFixture):
+    """Each command's help opens with its usage line and its one-line summary."""
+    main(f'{command} --help')
 
-    expected = textwrap.dedent(
-        """\
-        Usage: pyvista plot PATH... [OPTIONS]
-
-        Plot one or more mesh files in an interactive window.
-        """
-    )
     out, err = capture_out_err(capsys)
     assert err == ''
-    assert expected == '\n'.join(out.split('\n')[:4])
+    assert '\n'.join(out.split('\n')[:4]) == f'{usage}\n\n{summary}\n'
 
 
 def test_version(capsys: pytest.CaptureFixture):
@@ -2356,18 +2356,3 @@ def test_compare_raises(tmp_compare_files: list[Path], capsys: pytest.CaptureFix
     assert 'The following exception has been raised when calling  ' in err
     assert 'pv.plot_compare' in err
     assert 'Number of labels (1) must match the number of datasets (2).' in err
-
-
-def test_compare_help(capsys: pytest.CaptureFixture):
-    main('compare --help')
-
-    expected = textwrap.dedent(
-        """\
-        Usage: pyvista compare PATH... [OPTIONS]
-
-        Compare two or more mesh files side-by-side.
-        """
-    )
-    out, err = capture_out_err(capsys)
-    assert err == ''
-    assert expected == '\n'.join(out.split('\n')[:4])
