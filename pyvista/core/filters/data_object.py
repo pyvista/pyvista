@@ -5732,6 +5732,11 @@ def _cast_to_polydata(mesh: DataSet) -> PolyData:
     source = mesh.copy(deep=False)
     original_ids = source.cell_data.pop(ids_name, None)
     poly = source.extract_surface(algorithm=None, pass_cellid=True, pass_pointid=False)
+    if not source.n_points:
+        # The geometry filter returns no arrays at all for an empty mesh
+        poly.GetPointData().ShallowCopy(mesh.GetPointData())
+        poly.GetCellData().ShallowCopy(mesh.GetCellData())
+        return poly
     ids = poly.cell_data.pop(ids_name, None)
     if ids is None:
         return poly

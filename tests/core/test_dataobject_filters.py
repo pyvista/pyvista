@@ -340,6 +340,23 @@ def test_cast_to_polydata_keeps_cell_order():
         assert np.array_equal(getattr(cast, attr), getattr(mesh, attr))
 
     assert _cast_to_polydata(pv.UnstructuredGrid()).n_cells == 0
+
+
+def test_cast_to_polydata_empty_keeps_arrays():
+    """The geometry filter returns no arrays for an empty mesh, so they are put back."""
+    grid = pv.Sphere(theta_resolution=8, phi_resolution=8).cast_to_unstructured_grid()
+    grid.point_data['scalars'] = np.arange(grid.n_points, dtype=float)
+    grid.cell_data['cells'] = np.arange(grid.n_cells, dtype=float)
+    empty = grid.extract_cells([])
+
+    cast = _cast_to_polydata(empty)
+
+    assert isinstance(cast, pv.PolyData)
+    assert cast.is_empty
+    assert cast.point_data.keys() == empty.point_data.keys()
+    assert cast.cell_data.keys() == empty.cell_data.keys()
+
+
 def _box_clip_filter(mesh, bounds, *, invert):
     alg = _vtk.vtkBoxClipDataSet()
     alg.SetInputDataObject(mesh)
