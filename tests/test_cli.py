@@ -1973,7 +1973,6 @@ def test_validate_unsupported_mesh_type(capsys: pytest.CaptureFixture):
 
 
 @parametrize(
-    as_script=[True, False],
     tokens_err_codes=[
         ('--foo', 1),
         ('report --foo', 1),
@@ -1984,20 +1983,33 @@ def test_validate_unsupported_mesh_type(capsys: pytest.CaptureFixture):
         ('--help', 0),
     ],
 )
-def test_cli_entry_point(as_script: bool, tokens_err_codes: tuple[str, int]):
-    args = [sys.executable, '-m', 'pyvista'] if not as_script else ['pyvista']
-
+def test_cli_exit_code(tokens_err_codes: tuple[str, int], capsys: pytest.CaptureFixture):
+    """An unknown command or option exits non-zero; help and a bare call exit clean."""
     argv, exit_code_expected = tokens_err_codes
-    args += [*shlex.split(argv)]
+
+    if exit_code_expected:
+        with pytest.raises(SystemExit) as e:
+            main(shlex.split(argv))
+        assert e.value.code == exit_code_expected
+    else:
+        assert main(shlex.split(argv)) is None
+    capsys.readouterr()
+
+
+@parametrize(as_script=[True, False])
+def test_cli_entry_point(as_script: bool):
+    """Both `pyvista` and `python -m pyvista` reach the same application."""
+    args = ['pyvista'] if as_script else [sys.executable, '-m', 'pyvista']
 
     process = subprocess.run(
-        args,
+        [*args, '--help'],
         check=False,
         capture_output=True,
         encoding='utf-8',
     )
 
-    assert process.returncode == exit_code_expected
+    assert process.returncode == 0
+    assert 'Usage: pyvista COMMAND' in process.stdout
 
 
 @parametrize(func=['plot', 'report'])
