@@ -392,6 +392,34 @@ def test_clip_box_merge_points_true_welds_every_input(mesh_type):
     assert _joins_the_halves(merged)
 
 
+@pytest.mark.parametrize('invert', [True, False])
+@pytest.mark.parametrize(
+    'make',
+    [
+        pytest.param(lambda: (pv.Cube(), list(pv.Cube().bounds)), id='PolyData, six bounds'),
+        pytest.param(lambda: (pv.Cube(), pv.Cube()), id='PolyData, box mesh'),
+        pytest.param(
+            lambda: (pv.Cube().cast_to_unstructured_grid(), list(pv.Cube().bounds)),
+            id='UnstructuredGrid',
+        ),
+        pytest.param(
+            lambda: (
+                pv.Cube(center=(5e6, 0, 0), x_length=0.1, y_length=0.1, z_length=0.1),
+                list(pv.Cube(center=(5e6, 0, 0), x_length=0.1, y_length=0.1, z_length=0.1).bounds),
+            ),
+            id='PolyData far from the origin',
+        ),
+    ],
+)
+def test_clip_box_keeps_a_face_lying_in_a_box_plane(make, invert):
+    """A box that only touches a face keeps it, whichever way the box is given."""
+    mesh, box = make()
+
+    clipped = mesh.clip_box(box, invert=invert)
+
+    assert clipped.n_cells == (0 if invert else mesh.n_cells)
+
+
 def _seam_grid():
     """Two grid halves that touch but share no points."""
     grid = pv.ImageData(dimensions=(5, 5, 5)).cast_to_unstructured_grid()

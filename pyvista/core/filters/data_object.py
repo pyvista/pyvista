@@ -3519,7 +3519,7 @@ class DataObjectFilters:
             )
 
         if isinstance(self, pv.PointSet):
-            # vtkBoxClipDataSet clips cells, and a PointSet has none, so clip its vertices
+            # A PointSet has no cells to clip, so clip its vertices
             return (
                 self.cast_to_poly_points()
                 .clip_box(
@@ -3540,7 +3540,7 @@ class DataObjectFilters:
         # which keeps the cell types the box does not cut
         clipped = _clip_by_box_planes(
             source,
-            _box_planes(bounds_, hold_off=isinstance(self, pv.PolyData)),
+            _box_planes(bounds_),
             invert=invert,
             merge_points=merge_points,
             progress_bar=progress_bar,
@@ -5773,20 +5773,10 @@ def _copy_active_attributes(source: DataSet, target: DataSet) -> None:
             attributes_out.SetActiveTensors(tensors.GetName())
 
 
-def _box_planes(
-    bounds: NumpyArray[float], *, hold_off: bool = False
-) -> list[tuple[VectorLike[float], VectorLike[float]]]:
+def _box_planes(bounds: NumpyArray[float]) -> list[tuple[VectorLike[float], VectorLike[float]]]:
     """Return the six ``(outward normal, origin)`` planes of a box clip specification."""
     if len(bounds) == 12:
         return [(bounds[i], bounds[i + 1]) for i in range(0, 12, 2)]
-    if hold_off:
-        # A clip drops a cell lying flat in its plane, so hold the planes off a surface
-        # by a fraction of the box to keep a face the box only touches
-        lengths = np.abs(bounds[1::2] - bounds[::2])
-        bounds = bounds.copy()
-        offset = 1e-9 * np.where(lengths > 0, lengths, 1.0)
-        bounds[::2] -= offset
-        bounds[1::2] += offset
     planes: list[tuple[VectorLike[float], VectorLike[float]]] = []
     for axis in range(3):
         for sign, bound in ((-1.0, bounds[2 * axis]), (1.0, bounds[2 * axis + 1])):
@@ -5851,27 +5841,31 @@ def _clip_by_box_planes(
     """Clip by each plane in turn, keeping the inside or appending the outside pieces."""
     # Each plane keeps the box side of the mesh; with ``invert`` the pieces cut away are
     # collected and appended instead
+    # A clip keeps the side its normal points to, boundary included, so clipping from the
+    # inside keeps a cell lying flat in a box plane
     inside: DataSet = dataset
     outside = []
     for normal, origin in planes:
-        result = inside.clip(
-            normal=normal,
-            origin=origin,
-            invert=True,
-            return_clipped=invert,
-            progress_bar=progress_bar,
-        )
+        inward = -np.asarray(normal, dtype=float)
         if invert:
-            inside, piece = result
+            inside, piece = inside.clip(
+                normal=inward,
+                origin=origin,
+                invert=False,
+                return_clipped=True,
+                progress_bar=progress_bar,
+            )
             if piece.n_cells:
                 outside.append(piece)
         else:
-            inside = result
+            inside = inside.clip(
+                normal=inward, origin=origin, invert=False, progress_bar=progress_bar
+            )
     if not invert:
         return inside
     if not outside:
-        # Nothing lay outside the box, so return an empty clip of the right type
-        return inside.clip(normal=planes[0][0], origin=planes[0][1], invert=False)
+        # Nothing lay outside the box
+        return dataset.extract_cells([], pass_cell_ids=False, pass_point_ids=False)
     append = _vtk.vtkAppendFilter()
     append.SetMergePoints(merge_points)
     for piece in outside:
