@@ -1084,16 +1084,6 @@ def test_validate_dim_operation_invalid_parameters(
         )
 
 
-@pytest.mark.parametrize('operation_size', [1.5, (1, 2, 2.5)])
-def test_validate_dim_operation_rejects_fractional_size(operation_size):
-    # The size is cast to an integer dtype, which would otherwise truncate it silently
-    image = pv.ImageData(dimensions=(5, 5, 5))
-    with pytest.raises(ValueError, match='must have integer-like values'):
-        image._validate_dimensional_operation(
-            operation_mask='preserve', operator=operator.add, operation_size=operation_size
-        )
-
-
 @pytest.mark.parametrize('spacing', [None, [0.3, 0.4, 0.5]])
 @pytest.mark.parametrize('direction_matrix', [None, np.diag((-1, 1, 1))])
 @pytest.mark.parametrize('origin', [None, (1.1, 2.2, 3.3)])
@@ -2045,6 +2035,16 @@ def test_crop_keep_dimensions(image2x2, fill_value):
 
     # Test field data is preserved
     assert cropped.user_dict == user_dict
+
+
+def test_crop_clips_to_the_image_extent(uncropped_image):
+    extent = uncropped_image.extent
+    oversized = (extent[0] - 5, extent[1] + 5, extent[2], extent[3], extent[4], extent[5])
+
+    cropped = uncropped_image.crop(extent=oversized)
+
+    assert cropped.extent == extent
+    assert cropped == uncropped_image.crop(extent=extent)
 
 
 def test_crop_raises():

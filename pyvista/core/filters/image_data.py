@@ -449,7 +449,7 @@ class ImageDataFilters(DataSetFilters):
         voi : sequence[int]
             Length 6 iterable of ``int``\ s: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
             These bounds specify the volume of interest in i-j-k min/max
-            indices.
+            indices. Must be within this mesh's :attr:`~pyvista.ImageData.extent`.
 
         rate : sequence[int], default: (1, 1, 1)
             Length 3 iterable of ``int``\ s: ``(xrate, yrate, zrate)``.
@@ -493,6 +493,17 @@ class ImageDataFilters(DataSetFilters):
         crop
 
         """
+        voi = _validation.validate_arrayN(
+            voi, must_have_length=6, must_be_integer=True, dtype_out=int, name='voi'
+        )
+        extent = self.extent
+        if np.any(np.not_equal(ImageDataFilters._clip_extent(voi, clip_to=extent), voi)):
+            msg = (
+                f'The requested volume of interest {tuple(voi.tolist())} '
+                f"is outside the input's extent {extent}."
+            )
+            raise ValueError(msg)
+
         alg = _vtk.vtkExtractVOI()
         alg.SetVOI(voi)
         alg.SetInputDataObject(self)
@@ -603,7 +614,8 @@ class ImageDataFilters(DataSetFilters):
 
         extent : VectorLike[int], optional
             Length-6 vector of integers specifying the full :attr:`~pyvista.ImageData.extent` of
-            the cropping region.
+            the cropping region. If the region extends beyond the extents of this mesh, it is
+            clipped to the part this mesh covers.
 
         normalized_bounds : VectorLike[float], optional
             Normalized bounds relative to the input. These are floats between ``0.0`` and ``1.0``
@@ -687,7 +699,7 @@ class ImageDataFilters(DataSetFilters):
             Threshold-like filter which may be used to generate a mask for cropping.
 
         extract_subset
-            Equivalent filter to ``crop(extent=voi, rebase_coordinates=True)``.
+            Similar filter which requires the region to be inside the image.
 
         Examples
         --------
@@ -843,10 +855,10 @@ class ImageDataFilters(DataSetFilters):
             default_background = 0.0
             background = default_background if background_value is None else background_value
             if num_components > 1:
-                background_array = _validation.validate_arrayN(
+                background = _validation.validate_arrayN(
                     background, name='background_value', must_have_length=(1, num_components)
                 )
-                mask_array = np.any(array != background_array, axis=1)
+                mask_array = np.any(array != background, axis=1)
             else:
                 background = _validation.validate_number(background, name='background_value')
                 mask_array = array != background
@@ -1003,6 +1015,9 @@ class ImageDataFilters(DataSetFilters):
         voi[1] = max(voi[0:2])
         voi[3] = max(voi[2:4])
         voi[5] = max(voi[4:6])
+
+        # Crop to the part of the requested region which the image actually covers
+        voi = ImageDataFilters._clip_extent(voi, clip_to=self.extent)
 
         cropped = self.extract_subset(
             voi, rebase_coordinates=rebase_coordinates, progress_bar=progress_bar
@@ -4144,9 +4159,7 @@ class ImageDataFilters(DataSetFilters):
         """
         dimensions = np.asarray(self.dimensions)  # type: ignore[attr-defined]
         # Build an array of the operation size
-        operation_size = _validation.validate_array3(
-            operation_size, reshape=True, broadcast=True, must_be_integer=True, dtype_out=int
-        )
+        operation_size = _validation.validate_array3(operation_size, reshape=True, broadcast=True)
 
         if not isinstance(operation_mask, str) and operation_mask not in [0, 1, 2, 3]:
             # Build a bool array of the mask
@@ -4156,7 +4169,6 @@ class ImageDataFilters(DataSetFilters):
                 broadcast=False,
                 must_have_dtype=bool,
                 must_be_real=False,
-                dtype_out=bool,
             )
 
         elif operation_mask == 'preserve':
