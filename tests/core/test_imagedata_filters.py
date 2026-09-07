@@ -1084,6 +1084,16 @@ def test_validate_dim_operation_invalid_parameters(
         )
 
 
+@pytest.mark.parametrize('operation_size', [1.5, (1, 2, 2.5)])
+def test_validate_dim_operation_rejects_fractional_size(operation_size):
+    # The size is cast to an integer dtype, which would otherwise truncate it silently
+    image = pv.ImageData(dimensions=(5, 5, 5))
+    with pytest.raises(ValueError, match='must have integer-like values'):
+        image._validate_dimensional_operation(
+            operation_mask='preserve', operator=operator.add, operation_size=operation_size
+        )
+
+
 @pytest.mark.parametrize('spacing', [None, [0.3, 0.4, 0.5]])
 @pytest.mark.parametrize('direction_matrix', [None, np.diag((-1, 1, 1))])
 @pytest.mark.parametrize('origin', [None, (1.1, 2.2, 3.3)])
