@@ -30,12 +30,6 @@ def image() -> pv.ImageData:
     return pv.ImageData(dimensions=(5, 5, 5), spacing=(0.25, 0.25, 0.25), origin=(-0.5, -0.5, -0.5))
 
 
-def rectilinear() -> pv.RectilinearGrid:
-    """Return a small rectilinear grid."""
-    axis = np.linspace(-0.5, 0.5, 5)
-    return pv.RectilinearGrid(axis, axis, axis)
-
-
 def structured() -> pv.StructuredGrid:
     """Return a small structured grid."""
     axis = np.linspace(-0.5, 0.5, 5)
