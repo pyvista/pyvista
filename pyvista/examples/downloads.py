@@ -833,6 +833,8 @@ def download_cow(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
 
         :ref:`Cow Head Dataset <cow_head_dataset>`
 
+        :ref:`Procedural Cow Dataset <procedural_cow_dataset>`
+
     """
     return _download_dataset(_dataset_cow, load=load)
 
@@ -872,11 +874,59 @@ def download_cow_head(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT
 
         :ref:`Cow Dataset <cow_dataset>`
 
+        :ref:`Procedural Cow Dataset <procedural_cow_dataset>`
+
     """
     return _download_dataset(_dataset_cow_head, load=load)
 
 
 _dataset_cow_head = _SingleFileDownloadableDatasetLoader('cowHead.vtp')
+
+
+@overload
+def download_procedural_cow(*, load: Literal[True] = True) -> PolyData: ...
+@overload
+def download_procedural_cow(*, load: Literal[False]) -> str: ...
+def download_procedural_cow(*, load: bool = True) -> PolyData | str:
+    """Download a procedurally generated cow.
+
+    A watertight surface of 300,000 triangles with its coat in the active ``'RGB'``
+    point array. Loading requires the ``pyvista-zstd`` package (``pip install
+    pyvista[io]``).
+
+    .. versionadded:: 0.49
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset. When ``False``, return the path to the file.
+
+    Returns
+    -------
+    pyvista.PolyData | str
+        Dataset or path to the file depending on the ``load`` parameter.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_procedural_cow()
+    >>> dataset.plot(rgb=True, smooth_shading=True)
+
+    .. seealso::
+
+        :ref:`Procedural Cow Dataset <procedural_cow_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+        :ref:`procedural_cow_example`
+            Plot this dataset and read the script that generates it.
+
+        :ref:`Cow Dataset <cow_dataset>`
+
+    """
+    return _download_dataset(_dataset_procedural_cow, load=load)
+
+
+_dataset_procedural_cow = _SingleFileDownloadableDatasetLoader('cow/cow.pv')
 
 
 @overload

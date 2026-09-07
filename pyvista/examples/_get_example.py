@@ -272,15 +272,15 @@ ExampleName = Literal[
     'notch_displacement', 'notch_stress', 'nut', 'oblique_cone', 'office',
     'openfoam_tubes', 'owl', 'parallel_exodus', 'parched_canal_4k', 'particles',
     'particles_lethe', 'pepper', 'pine_roots', 'planet', 'planet_rings', 'plastic_vase',
-    'pluto_surface', 'poly_line', 'prism', 'prostar', 'prostate', 'pump_bracket', 'puppy',
-    'puppy_texture', 'quadratic_pyramid', 'random_hills', 'rectilinear',
-    'rectilinear_grid', 'reservoir', 'rgba_texture', 'room_cff', 'room_surface_mesh',
-    'saddle_surface', 'saturn_rings', 'saturn_surface', 'sea_vase', 'sextant', 'shark',
-    'single_sphere_animation', 'sky_box_cube_map', 'sky_box_nz', 'sky_box_nz_texture',
-    'sparse_points', 'sphere', 'sphere_vectors', 'spider', 'spline', 'st_helens',
-    'stars_cloud_hyg', 'stars_sky_background', 'structured', 'structured_grid',
-    'structured_grid_two', 'sun_surface', 't3_grid_0', 'teapot', 'teapot_vrml',
-    'tecplot_ascii', 'tensors', 'tetbeam', 'tetra_dc_mesh', 'tetrahedron',
+    'pluto_surface', 'poly_line', 'prism', 'procedural_cow', 'prostar', 'prostate',
+    'pump_bracket', 'puppy', 'puppy_texture', 'quadratic_pyramid', 'random_hills',
+    'rectilinear', 'rectilinear_grid', 'reservoir', 'rgba_texture', 'room_cff',
+    'room_surface_mesh', 'saddle_surface', 'saturn_rings', 'saturn_surface', 'sea_vase',
+    'sextant', 'shark', 'single_sphere_animation', 'sky_box_cube_map', 'sky_box_nz',
+    'sky_box_nz_texture', 'sparse_points', 'sphere', 'sphere_vectors', 'spider', 'spline',
+    'st_helens', 'stars_cloud_hyg', 'stars_sky_background', 'structured',
+    'structured_grid', 'structured_grid_two', 'sun_surface', 't3_grid_0', 'teapot',
+    'teapot_vrml', 'tecplot_ascii', 'tensors', 'tetbeam', 'tetra_dc_mesh', 'tetrahedron',
     'thermal_probes', 'topo_global', 'topo_land', 'torso', 'tri_quadratic_hexahedron',
     'trumpet', 'turbine_blade', 'uniform', 'unstructured_grid', 'uranus_surface', 'urn',
     'usa', 'usa_texture', 'venus_surface', 'victorian_goblet_face_illusion', 'vtk',
@@ -597,6 +597,8 @@ def get_example(name: Literal['pluto_surface'], *, download: bool = ...) -> Exam
 def get_example(name: Literal['poly_line'], *, download: bool = ...) -> Example[pv.PolyData, tuple[pv.VTKDataSetReader]]: ...
 @overload
 def get_example(name: Literal['prism'], *, download: bool = ...) -> Example[pv.UnstructuredGrid, tuple[pv.GambitReader]]: ...
+@overload
+def get_example(name: Literal['procedural_cow'], *, download: bool = ...) -> Example[pv.PolyData, tuple[()]]: ...
 @overload
 def get_example(name: Literal['prostar'], *, download: bool = ...) -> Example[pv.UnstructuredGrid, tuple[pv.ProStarReader]]: ...
 @overload
