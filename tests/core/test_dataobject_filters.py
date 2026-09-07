@@ -276,11 +276,11 @@ def test_clip_box_output_type(multiblock_all_with_nested_and_none, crinkle):
     for dataset in multiblock_all_with_nested_and_none:
         clp = dataset.clip_box(invert=True, progress_bar=True, crinkle=crinkle)
         assert clp is not None
-        assert isinstance(clp, (pv.UnstructuredGrid, pv.MultiBlock, pv.PointSet))
+        assert isinstance(clp, (pv.UnstructuredGrid, pv.PolyData, pv.MultiBlock, pv.PointSet))
         if isinstance(clp, pv.MultiBlock):
-            # PointSet blocks stay PointSet, like a PointSet input does
+            # Every block keeps the class its own type gives, as a lone input does
             assert all(
-                isinstance(block, (pv.UnstructuredGrid, pv.PointSet))
+                isinstance(block, (pv.UnstructuredGrid, pv.PolyData, pv.PointSet))
                 for block in clp.recursive_iterator(skip_none=True)
             )
         clp2 = dataset.clip_box(merge_points=False)
@@ -351,7 +351,35 @@ def test_clip_box_no_unused_points(as_composite):
 def test_clip_box_polydata_no_unused_points(invert):
     mesh = pv.Sphere(theta_resolution=16, phi_resolution=16)
     clipped = mesh.clip_box([0.1, 1.0, 0.1, 1.0, 0.1, 1.0], invert=invert)
-    assert clipped.n_points == len(np.unique(clipped.cell_connectivity))
+    used = np.unique(clipped.cast_to_unstructured_grid().cell_connectivity)
+    assert clipped.n_points == len(used)
+
+
+@pytest.mark.parametrize('invert', [True, False])
+def test_clip_box_polydata_keeps_cells_and_arrays(invert):
+    """The output is the box filter's mesh in a PolyData, not a different mesh."""
+    mesh = pv.Sphere(theta_resolution=16, phi_resolution=16)
+    mesh.point_data['data'] = mesh.points[:, 2]
+    mesh.cell_data['cells'] = np.arange(mesh.n_cells, dtype=float)
+    bounds = [0.1, 1.0, 0.1, 1.0, 0.1, 1.0]
+
+    clipped = mesh.clip_box(bounds, invert=invert)
+    expected = _box_clip_filter(mesh, bounds, invert=invert).remove_unused_points()
+
+    assert type(clipped) is pv.PolyData
+    assert clipped.n_cells == expected.n_cells
+    assert clipped.area == pytest.approx(expected.area)
+    assert sorted(clipped.array_names) == sorted(expected.array_names)
+    assert np.allclose(np.sort(clipped.points, axis=0), np.sort(expected.points, axis=0))
+
+
+def test_clip_box_polydata_empty_is_polydata():
+    mesh = pv.Sphere(theta_resolution=8, phi_resolution=8)
+
+    clipped = mesh.clip_box([5.0, 6.0, 5.0, 6.0, 5.0, 6.0], invert=False)
+
+    assert type(clipped) is pv.PolyData
+    assert clipped.is_empty
 
 
 def test_clip_box_polydata_empty_output_has_no_points():
@@ -853,7 +881,7 @@ _CLIP_LIKE = {
     'ExplicitStructuredGrid': _GRID,
     'UnstructuredGrid': _GRID,
 }
-_BOX_LIKE = {**_CLIP_LIKE, 'PolyData': _GRID}
+_BOX_LIKE = _CLIP_LIKE
 _SLICE_LIKE = dict.fromkeys(_CLIP_LIKE, _POLY)
 _SLICES_LIKE = dict.fromkeys(_CLIP_LIKE, _MULTI)
 

@@ -3353,8 +3353,9 @@ class DataObjectFilters:
 
         If no bounds are given, a corner of the dataset bounds will be removed.
 
-        :class:`~pyvista.PolyData` and :class:`~pyvista.PointSet` inputs are clipped with
-        :vtk:`vtkBoxClipDataSet`, which splits the output into tetrahedra. All other inputs,
+        A :class:`~pyvista.PolyData` is clipped with :vtk:`vtkBoxClipDataSet`, which splits
+        the cells the box cuts into simplices, and a :class:`~pyvista.PointSet` is clipped
+        the same way through its vertices. All other inputs,
         that is :class:`~pyvista.ImageData`, :class:`~pyvista.RectilinearGrid`,
         :class:`~pyvista.StructuredGrid`, :class:`~pyvista.ExplicitStructuredGrid`, and
         :class:`~pyvista.UnstructuredGrid`, are clipped by the six box planes in turn with
@@ -3367,10 +3368,11 @@ class DataObjectFilters:
               :class:`~pyvista.UnstructuredGrid` inputs are clipped by the six box planes
               instead of :vtk:`vtkBoxClipDataSet`, so cells the box does not cut keep their
               type instead of being split into tetrahedra, and the output normally has fewer
-              cells and points for the same clipped volume. This now also applies with
-              ``merge_points=False``, which no longer changes the cell type. Call
-              :meth:`~pyvista.DataObjectFilters.triangulate` on the output for an
+              cells and points for the same clipped volume, whatever ``merge_points`` is.
+              Call :meth:`~pyvista.DataObjectFilters.triangulate` on the output for an
               all-tetrahedra mesh as before.
+            - A :class:`~pyvista.PolyData` input gives a ``PolyData`` instead of an
+              :class:`~pyvista.UnstructuredGrid`, with the same points and cells.
 
         Parameters
         ----------
@@ -3396,7 +3398,9 @@ class DataObjectFilters:
 
         merge_points : bool, default: True
             If ``True``, coinciding points of independently defined mesh
-            elements will be merged.
+            elements will be merged. It has no effect on the inputs clipped by
+            the box planes when ``invert=False``, which produce no coinciding
+            points to merge.
 
         crinkle : bool, default: False
             Crinkle the clip by extracting the entire cells along the
@@ -3407,9 +3411,9 @@ class DataObjectFilters:
         Returns
         -------
         pyvista.DataSet | pyvista.MultiBlock
-            Clipped dataset. A :class:`~pyvista.PointSet` gives a ``PointSet``, clipped
-            through its vertices; every other dataset, :class:`~pyvista.PolyData`
-            included, gives an :class:`~pyvista.UnstructuredGrid`. A
+            Clipped dataset. A :class:`~pyvista.PolyData` gives a ``PolyData`` and a
+            :class:`~pyvista.PointSet` gives a ``PointSet``, clipped through its
+            vertices; every other dataset gives an :class:`~pyvista.UnstructuredGrid`. A
             :class:`~pyvista.MultiBlock` gives a ``MultiBlock`` whose blocks each follow
             that rule, nested blocks included.
 
@@ -3528,7 +3532,8 @@ class DataObjectFilters:
 
         if crinkle:
             clipped = _Crinkler._extract_crinkle_cells(source, clipped, None, active_scalars_info)
-        return _remove_unused_points_post_clip(clipped, self.bounds, force=use_box_filter)
+        clipped = _remove_unused_points_post_clip(clipped, self.bounds, force=use_box_filter)
+        return _cast_output_to_match_input_type(clipped, self)
 
     def clip_slab(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
