@@ -508,6 +508,8 @@ def test_clip_box_merge_points_keeps_cell_types(uniform, invert):
         assert merged.n_points < unmerged.n_points
     else:
         assert merged.n_points == unmerged.n_points
+    # Neither keeps a separate copy of a point per cell
+    assert unmerged.n_points < unmerged.separate_cells().n_points
 
 
 def test_clip_box_merge_points_false_keeps_coincident_points_apart():

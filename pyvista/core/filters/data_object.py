@@ -3371,6 +3371,10 @@ class DataObjectFilters:
               cells and points for the same clipped volume, whatever ``merge_points`` is.
               Call :meth:`~pyvista.DataObjectFilters.triangulate` on the output for an
               all-tetrahedra mesh as before.
+            - ``merge_points=False`` no longer gives each cell of those inputs its own
+              copy of the points it shares with its neighbours. Call
+              :meth:`~pyvista.DataSetFilters.separate_cells` on the output for a mesh
+              with independent cells.
             - A :class:`~pyvista.PolyData` input gives a ``PolyData`` instead of an
               :class:`~pyvista.UnstructuredGrid`, with the same points and cells.
 
@@ -3398,9 +3402,9 @@ class DataObjectFilters:
 
         merge_points : bool, default: True
             If ``True``, coinciding points of independently defined mesh
-            elements will be merged. It has no effect on the inputs clipped by
-            the box planes when ``invert=False``, which produce no coinciding
-            points to merge.
+            elements will be merged. For the inputs clipped by the box planes
+            this applies only to the pieces an inverted clip appends, so it has
+            no effect on them when ``invert=False``.
 
         crinkle : bool, default: False
             Crinkle the clip by extracting the entire cells along the
