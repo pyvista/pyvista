@@ -1422,6 +1422,35 @@ def test_transform_rectilinear_raises(rectilinear):
         rectilinear.transform(matrix, inplace=False)
 
 
+SHEAR_MATRIX = np.eye(4)
+SHEAR_MATRIX[0, 1] = 0.1
+SHEAR_MATRIX[1, 0] = 0.1
+
+
+@pytest.mark.parametrize('inplace', [True, False])
+@pytest.mark.parametrize(
+    ('grid', 'transformation', 'match'),
+    [
+        ('rectilinear', pv.Transform().rotate_x(30), 'non-diagonal rotation component'),
+        ('rectilinear', SHEAR_MATRIX, 'shear component'),
+        ('uniform', SHEAR_MATRIX, 'shear component'),
+    ],
+    ids=['rectilinear-rotation', 'rectilinear-shear', 'image-shear'],
+)
+def test_transform_raises_leaves_input_unchanged(grid, transformation, match, inplace, request):
+    mesh = request.getfixturevalue(grid)
+    mesh['a'] = np.arange(mesh.n_points, dtype=float)
+    mesh['b'] = np.arange(mesh.n_points, dtype=float)
+    mesh.set_active_scalars('a')
+    before = mesh.copy()
+
+    with pytest.raises(ValueError, match=match):
+        mesh.transform(transformation, inplace=inplace)
+
+    assert mesh.active_scalars_name == 'a'
+    assert mesh == before
+
+
 def test_transform_rectilinear(rectilinear):
     # Test that various transformations applied sequentially work
 
