@@ -803,7 +803,7 @@ own for precision.
 - Sources have no input to preserve, so they subclass ``_Source``, which requests the
   precision in ``Update`` and casts in ``_update_and_wrap_output``. Return
   ``self._update_and_wrap_output()`` from a source's ``output`` property rather than
-  wrapping ``GetOutput()``, which is uncast.
+  wrapping ``GetOutput()``, whose points are not cast.
 - Geometry that PyVista builds without a VTK algorithm passes through
   ``_apply_points_dtype``.
 - Neither helper needs to know whether the algorithm supports double precision. The

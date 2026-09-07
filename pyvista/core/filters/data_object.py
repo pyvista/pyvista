@@ -144,7 +144,7 @@ def _convert_transform_input_to_float(
 
 
 def _copy_transformed_arrays(output: DataSet, filtered: DataObject, *, copy: bool) -> None:
-    """Copy the point, cell and field arrays the transform filter produced."""
+    """Copy the point, cell, and field arrays the transform filter produced."""
     output.point_data.update(filtered.point_data, copy=copy)
     output.cell_data.update(filtered.cell_data, copy=copy)
     output.field_data.update(filtered.field_data, copy=copy)
@@ -163,7 +163,7 @@ def _transform_rectilinear_axes(
     dataset: RectilinearGrid,
     components: tuple[NumpyArray[float], NumpyArray[float]],
 ) -> None:
-    """Set a grid's axes to another's, scaled and translated."""
+    """Scale and translate one grid's axes onto another."""
     # vtkTransformFilter returns a StructuredGrid, so the axes are transformed here instead
     translation, scale = components
     output.x = dataset.x * scale[0] + translation[0]

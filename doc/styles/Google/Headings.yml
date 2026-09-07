@@ -46,6 +46,7 @@ exceptions:
 
   # Terms that carry their own casing
   - ^bit\b # the `-bit` in `(64-bit)`
+  - ^dtype\b # NumPy's attribute name
   - ^glTF\b
   - ^mini\b # Apple's `Mac mini`
   - ^pytest\b
