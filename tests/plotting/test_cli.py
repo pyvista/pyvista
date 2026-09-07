@@ -28,8 +28,8 @@ def _plot_argv(outfile: str) -> str:
     return f'plot {infile} --off-screen --screenshot={outfile}'
 
 
-def _matches_plotter(outfile: str, kwargs: dict) -> bool:
-    """Return whether the screenshot matches the same scene built through the API."""
+def _plotter_difference(outfile: str, kwargs: dict) -> float:
+    """Return the image difference against the same scene built through the API."""
     pl = pv.Plotter()
     if (b := 'background') in kwargs:
         pl.set_background(kwargs[b])
@@ -37,7 +37,7 @@ def _matches_plotter(outfile: str, kwargs: dict) -> bool:
             k: v for k, v in kwargs.items() if k != b
         }  # no del since mutable and shared between tests
     pl.add_mesh(Path(pv.examples.antfile).as_posix(), **kwargs)
-    return pv.compare_images(outfile, pl) < 200
+    return pv.compare_images(outfile, pl)
 
 
 @parametrize(tokens_kwargs=TOKENS_KWARGS, idgen=lambda **a: a['tokens_kwargs'][0])
@@ -54,7 +54,7 @@ def test_plot(
 
     main(f'{_plot_argv(outfile)} {tokens}')
 
-    assert _matches_plotter(outfile, kwargs)
+    assert _plotter_difference(outfile, kwargs) < 200
 
 
 @parametrize(as_script=[True, False])
@@ -73,4 +73,4 @@ def test_plot_entry_point(tmp_path: Path, as_script: bool, monkeypatch: pytest.M
         encoding='utf-8',
     )
 
-    assert _matches_plotter(outfile, kwargs)
+    assert _plotter_difference(outfile, kwargs) < 200

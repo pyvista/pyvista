@@ -75,30 +75,28 @@ def using_mesa():
     return 'Mesa' in regex.findall(gpu_info)[0]
 
 
-class _UsingMesa:
-    """Probe the renderer for Mesa once, when a marker is first evaluated."""
+class _Lazy:
+    """Answer a predicate once, when a marker is first evaluated."""
 
-    _answer: bool | None = None
-
-    def __bool__(self) -> bool:
-        """Return whether the renderer reports a Mesa OpenGL version string."""
-        if _UsingMesa._answer is None:
-            _UsingMesa._answer = using_mesa()
-        return _UsingMesa._answer
-
-
-class _UsingMesaOnWindows:
-    """Truthy only on Windows running Mesa; the renderer is probed nowhere else."""
+    def __init__(self, predicate) -> None:
+        self._predicate = predicate
+        self._answer: bool | None = None
 
     def __bool__(self) -> bool:
-        """Return whether this is Windows with a Mesa renderer."""
-        return os.name == 'nt' and bool(_UsingMesa())
+        """Return the predicate's answer, evaluating it at most once."""
+        if self._answer is None:
+            self._answer = self._predicate()
+        return self._answer
 
 
-# Mesa opengl is always used on Windows CI.
-skip_mesa = pytest.mark.skipif(_UsingMesa(), reason='Does not display correctly within OSMesa')
+# Mesa opengl is always used on Windows CI. The Windows check comes first, so the
+# renderer is never probed on a platform whose answer cannot matter.
+skip_mesa = pytest.mark.skipif(
+    _Lazy(using_mesa), reason='Does not display correctly within OSMesa'
+)
 skip_windows_mesa = pytest.mark.skipif(
-    _UsingMesaOnWindows(), reason='Does not display correctly within OSMesa on Windows'
+    _Lazy(lambda: os.name == 'nt' and using_mesa()),
+    reason='Does not display correctly within OSMesa on Windows',
 )
 skip_lesser_9_4_X = pytest.mark.needs_vtk_version(  # noqa: N816
     9, 4, reason='Functions not implemented before 9.4.X or invalid results prior'

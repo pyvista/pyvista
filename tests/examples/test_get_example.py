@@ -448,8 +448,10 @@ def _size_of(dataset):
         return dataset.n_partitions
     if isinstance(dataset, pv.Texture):
         return min(dataset.dimensions)
+    if isinstance(dataset, pv.PointSet):
+        return dataset.n_points  # the only dataset type carrying no cells
     if isinstance(dataset, pv.DataSet):
-        return dataset.n_points
+        return min(dataset.n_points, dataset.n_cells)
     return np.size(dataset)
 
 
@@ -461,9 +463,9 @@ def test_get_example_all(name):
         pytest.skip('Error loading on Windows')
 
     with warnings.catch_warnings():
-        # a few examples warn on their own account, and the nefertiti licence fires
-        # from its loader, so it reaches every route taken here
-        warnings.simplefilter('ignore')
+        # a few examples warn on their own account, the nefertiti licence among them
+        warnings.simplefilter('ignore', UserWarning)
+        warnings.simplefilter('ignore', pv.PyVistaDeprecationWarning)
         try:
             example = examples.get_example(name)
             loaded = example.load()

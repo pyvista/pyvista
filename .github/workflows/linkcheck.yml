@@ -107,13 +107,18 @@ jobs:
 
     permissions:
       contents: read
+      issues: write # required to open/comment the linkcheck failure issue
+
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
 
     steps:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.14"
 
@@ -121,4 +126,27 @@ jobs:
         run: pip install tox-uv
 
       - name: Check dataset source URLs
+        id: dataset_urls
         run: tox run -e dataset-urls
+
+      - name: "Report Failure"
+        if: failure() && steps.dataset_urls.outcome == 'failure'
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          # Ensure the dedup label exists (idempotent).
+          gh label create linkcheck-failure \
+            --color cbb230 \
+            --description "Tracks the recurring linkcheck failure" \
+            --force || true
+
+          body="A dataset is no longer served from its source URL. See [the run](${RUN_URL}) for which."
+
+          # Post to the single open issue, like the linkcheck job does.
+          existing=$(gh issue list --label "linkcheck-failure" --state open --limit 1 --json number --jq '.[0].number // empty')
+
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "$body"
+          else
+            gh issue create --title "chore: dataset source URL failure" --label "linkcheck-failure" --body "$body"
+          fi

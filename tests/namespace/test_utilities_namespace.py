@@ -54,10 +54,10 @@ UTILITIES_MODULES = [
 ]
 
 
-def test_utilities_modules():
-    """Every recorded `pyvista.utilities` submodule still imports."""
-    for name in UTILITIES_MODULES:
-        importlib.import_module(f'pyvista.utilities.{name}')
+@pytest.mark.parametrize('name', UTILITIES_MODULES)
+def test_utilities_modules(name):
+    # Smoke test to make sure same modules still exist
+    importlib.import_module(f'pyvista.utilities.{name}')
 
 
 def _import_all_utilities():

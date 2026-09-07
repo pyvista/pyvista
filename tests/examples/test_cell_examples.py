@@ -106,9 +106,16 @@ def test_celltype_matches_cell(cell_example):
     assert celltype.is_composite != cell.IsPrimaryCell()
 
 
-# Cell types whose count is only known from a concrete instance.
+_HIGHER_ORDER = tuple(
+    func.__name__
+    for func in cell_example_functions
+    if func.__name__.startswith(('Bezier', 'Lagrange'))
+)
+
+# Per attribute, the cell examples whose count needs a concrete instance.
 NEEDS_AN_INSTANCE = {
     'n_points': (
+        *_HIGHER_ORDER,
         'PolyLine',
         'PolyVertex',
         'Polygon',
@@ -129,24 +136,22 @@ NEEDS_AN_INSTANCE = {
 
 
 @parametrize('cell_example', cell_example_functions)
-def test_celltype_counts(cell_example):
-    """The enum member counts points, edges and faces, or says it cannot."""
+@parametrize('attribute', list(NEEDS_AN_INSTANCE))
+def test_celltype_counts(cell_example, attribute):
+    """The enum member counts points, edges or faces, or says it cannot."""
     cell = next(cell_example().cell)
     celltype = CellType(cell.type)
-    name = cell_example.__name__
-    for attribute, needs_instance in NEEDS_AN_INSTANCE.items():
+
+    if cell_example.__name__ in NEEDS_AN_INSTANCE[attribute]:
         noun = attribute.removeprefix('n_')
-        if name in needs_instance or (
-            attribute == 'n_points' and name.startswith(('Bezier', 'Lagrange'))
-        ):
-            match = (
-                f'Cannot determine number of {noun} for {celltype.name!r} '
-                f'without a concrete cell instance.'
-            )
-            with pytest.raises(ValueError, match=match):
-                getattr(celltype, attribute)
-        else:
-            assert getattr(celltype, attribute) == getattr(cell, attribute)
+        match = (
+            f'Cannot determine number of {noun} for {celltype.name!r} '
+            f'without a concrete cell instance.'
+        )
+        with pytest.raises(ValueError, match=match):
+            getattr(celltype, attribute)
+    else:
+        assert getattr(celltype, attribute) == getattr(cell, attribute)
 
 
 def test_abstract_celltype():

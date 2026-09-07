@@ -1704,7 +1704,6 @@ def test_validate_glob_expands_files(
 
 
 @pytest.mark.usefixtures('patch_app_console')
-@pytest.mark.usefixtures('patch_app_console')
 @pytest.mark.parametrize(
     ('command', 'usage', 'summary'),
     [
@@ -1983,7 +1982,7 @@ def test_validate_unsupported_mesh_type(capsys: pytest.CaptureFixture):
         ('--help', 0),
     ],
 )
-def test_cli_exit_code(tokens_err_codes: tuple[str, int], capsys: pytest.CaptureFixture):
+def test_cli_exit_code(tokens_err_codes: tuple[str, int]):
     """An unknown command or option exits non-zero; help and a bare call exit clean."""
     argv, exit_code_expected = tokens_err_codes
 
@@ -1993,7 +1992,6 @@ def test_cli_exit_code(tokens_err_codes: tuple[str, int], capsys: pytest.Capture
         assert e.value.code == exit_code_expected
     else:
         assert main(shlex.split(argv)) is None
-    capsys.readouterr()
 
 
 @parametrize(as_script=[True, False])

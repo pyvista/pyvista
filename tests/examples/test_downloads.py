@@ -65,16 +65,10 @@ def url_session():
     )
 
 
-@pytest.fixture
-def _web_source(monkeypatch):
-    """Point the loaders at the web source, whatever the local cache is set to."""
-    monkeypatch.setattr(downloads, 'SOURCE', downloads._DEFAULT_VTK_DATA_SOURCE)
-
-
 @pytest.mark.needs_dataset_urls
-@pytest.mark.usefixtures('_web_source')
 def test_dataset_loader_source_urls_blob(test_case: DatasetLoaderTestCase, url_session):
-    sources = test_case.dataset_loader[1].source_urls
+    # `web_urls` stays a URL where a local cache would make `source_urls` a path
+    sources = test_case.dataset_loader[1].web_urls
 
     # Test valid url; some datasets have dozens of files, so check them concurrently
     with ThreadPoolExecutor(max_workers=8) as pool:

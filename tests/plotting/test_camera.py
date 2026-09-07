@@ -345,7 +345,7 @@ CAMERA_REPR_FIELDS = [
 
 
 @pytest.mark.parametrize('render', [repr, str], ids=['repr', 'str'])
-def test_repr(camera, render):
+def test_repr_and_str(camera, render):
     """Both text forms report every camera field."""
     text = render(camera)
     missing = [field for field in CAMERA_REPR_FIELDS if field not in text]
