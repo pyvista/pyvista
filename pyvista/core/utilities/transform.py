@@ -285,7 +285,7 @@ class Transform(
     def __add__(self: Transform, other: VectorLike[float]) -> Transform:
         """:meth:`translate` this transform using post-multiply semantics."""
         try:
-            return self.copy().translate(other, multiply_mode='post')
+            return self._copy_about_origin().translate(other, multiply_mode='post')
         except TypeError:
             msg = (
                 f"Unsupported operand type(s) for +: '{self.__class__.__name__}' "
@@ -304,7 +304,7 @@ class Transform(
     def __radd__(self: Transform, other: VectorLike[float]) -> Transform:
         """:meth:`translate` this transform using pre-multiply semantics."""
         try:
-            return self.copy().translate(other, multiply_mode='pre')
+            return self._copy_about_origin().translate(other, multiply_mode='pre')
         except TypeError:
             msg = (
                 f"Unsupported operand type(s) for +: '{type(other).__name__}' "
@@ -327,8 +327,7 @@ class Transform(
         :meth:`compose` otherwise for transform-like inputs. The operation is applied
         about the origin, not about this transform's :attr:`point`.
         """
-        copied = self.copy()
-        copied.point = None
+        copied = self._copy_about_origin()
         try:
             transform = copied.scale(other, multiply_mode='post')  # type: ignore[arg-type]
         except (ValueError, TypeError):
@@ -352,9 +351,13 @@ class Transform(
         return transform
 
     def __rmul__(self: Transform, other: float | VectorLike[float]) -> Transform:
-        """:meth:`scale` this transform using pre-multiply semantics."""
+        """:meth:`scale` this transform using pre-multiply semantics.
+
+        The operation is applied about the origin, not about this transform's
+        :attr:`point`.
+        """
         try:
-            return self.copy().scale(other, multiply_mode='pre')
+            return self._copy_about_origin().scale(other, multiply_mode='pre')
         except TypeError:
             msg = (
                 f"Unsupported operand type(s) for *: '{type(other).__name__}' "
@@ -369,6 +372,12 @@ class Transform(
                 f'The left-side argument must be a single number or a length-3 vector.'
             )
             raise ValueError(msg)
+
+    def _copy_about_origin(self: Transform) -> Transform:
+        """Return a copy which composes about the origin instead of the point."""
+        copied = self.copy()
+        copied.point = None
+        return copied
 
     def copy(self: Transform) -> Transform:
         """Return a deep copy of the transform.
@@ -2401,7 +2410,7 @@ class Transform(
         point = point if point is not None else self.point
         if point is not None:
             point_array = _validation.validate_array3(point, dtype_out=float, name='point')
-            # Optimization: plain VTK transforms, which are composed as they are
+            # Optimization: a plain vtkTransform is what _compose concatenates anyway
             translate_away = _vtk.vtkTransform()
             translate_away.Translate(*(-point_array))
             translate_toward = _vtk.vtkTransform()

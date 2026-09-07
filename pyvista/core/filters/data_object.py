@@ -2080,67 +2080,69 @@ class DataObjectFilters:
         active_point_scalars_name: str | None = point_data.active_scalars_name
         active_cell_scalars_name: str | None = cell_data.active_scalars_name
 
+        output = self if inplace else self.__class__()
+
         # vtkTransformFilter sometimes doesn't transform all vector arrays
         # when there are active point/cell scalars. Use this workaround
         self.active_scalars_name = None
 
-        f = _vtk.vtkTransformFilter()
-        f.SetInputDataObject(self)
-        f.SetTransform(t)
-        f.SetTransformAllInputVectors(transform_all_input_vectors)
+        try:
+            f = _vtk.vtkTransformFilter()
+            f.SetInputDataObject(self)
+            f.SetTransform(t)
+            f.SetTransformAllInputVectors(transform_all_input_vectors)
 
-        _update_alg(f, progress_bar=progress_bar, message='Transforming')
-        vtk_filter_output = _get_output(f)
+            _update_alg(f, progress_bar=progress_bar, message='Transforming')
+            vtk_filter_output = _get_output(f)
 
-        output = self if inplace else self.__class__()
+            if isinstance(output, pv.ImageData):
+                # vtkTransformFilter returns a StructuredGrid for legacy code (before VTK 9)
+                # but VTK 9+ supports oriented images.
+                # To keep an ImageData -> ImageData mapping, we copy the transformed data
+                # from the filter output but manually transform the structure
+                output.copy_structure(self)  # type: ignore[arg-type]
+                current_matrix = output.index_to_physical_matrix
+                new_matrix = pv.Transform(current_matrix).compose(t).matrix
+                output.index_to_physical_matrix = new_matrix
 
-        if isinstance(output, pv.ImageData):
-            # vtkTransformFilter returns a StructuredGrid for legacy code (before VTK 9)
-            # but VTK 9+ supports oriented images.
-            # To keep an ImageData -> ImageData mapping, we copy the transformed data
-            # from the filter output but manually transform the structure
-            output.copy_structure(self)  # type: ignore[arg-type]
-            current_matrix = output.index_to_physical_matrix
-            new_matrix = pv.Transform(current_matrix).compose(t).matrix
-            output.index_to_physical_matrix = new_matrix
+                output.point_data.update(vtk_filter_output.point_data, copy=not inplace)
+                output.cell_data.update(vtk_filter_output.cell_data, copy=not inplace)
+                output.field_data.update(vtk_filter_output.field_data, copy=not inplace)
 
-            output.point_data.update(vtk_filter_output.point_data, copy=not inplace)
-            output.cell_data.update(vtk_filter_output.cell_data, copy=not inplace)
-            output.field_data.update(vtk_filter_output.field_data, copy=not inplace)
+            elif isinstance(output, pv.RectilinearGrid):
+                # Transform the axes directly, since vtkTransformFilter returns a StructuredGrid
+                translation, scale = cast(
+                    'tuple[NumpyArray[float], NumpyArray[float]]', rectilinear_components
+                )
 
-        elif isinstance(output, pv.RectilinearGrid):
-            # Transform the axes directly, since vtkTransformFilter returns a StructuredGrid
-            translation, scale = cast(
-                'tuple[NumpyArray[float], NumpyArray[float]]', rectilinear_components
-            )
+                # Apply transformation to structure
+                tx, ty, tz = translation
+                sx, sy, sz = scale
+                output.x = self.x * sx + tx
+                output.y = self.y * sy + ty
+                output.z = self.z * sz + tz
 
-            # Apply transformation to structure
-            tx, ty, tz = translation
-            sx, sy, sz = scale
-            output.x = self.x * sx + tx
-            output.y = self.y * sy + ty
-            output.z = self.z * sz + tz
+                # Copy data arrays from the vtkTransformFilter's output
+                output.point_data.update(vtk_filter_output.point_data, copy=not inplace)
+                output.cell_data.update(vtk_filter_output.cell_data, copy=not inplace)
+                output.field_data.update(vtk_filter_output.field_data, copy=not inplace)
 
-            # Copy data arrays from the vtkTransformFilter's output
-            output.point_data.update(vtk_filter_output.point_data, copy=not inplace)
-            output.cell_data.update(vtk_filter_output.cell_data, copy=not inplace)
-            output.field_data.update(vtk_filter_output.field_data, copy=not inplace)
+            elif inplace:
+                output.copy_from(vtk_filter_output, deep=False)
+            else:
+                # The output from the transform filter contains a shallow copy
+                # of the original dataset except for the point arrays.  Here
+                # we perform a copy so the two are completely unlinked.
+                output.copy_from(vtk_filter_output, deep=True)
 
-        elif inplace:
-            output.copy_from(vtk_filter_output, deep=False)
-        else:
-            # The output from the transform filter contains a shallow copy
-            # of the original dataset except for the point arrays.  Here
-            # we perform a copy so the two are completely unlinked.
-            output.copy_from(vtk_filter_output, deep=True)
-
-        # Make the previously active scalars active again
-        point_data.active_scalars_name = active_point_scalars_name
-        if output is not self:
-            output.point_data.active_scalars_name = active_point_scalars_name
-        cell_data.active_scalars_name = active_cell_scalars_name
-        if output is not self:
-            output.cell_data.active_scalars_name = active_cell_scalars_name
+            # Make the previously active scalars of the output active again
+            if output is not self:
+                output.point_data.active_scalars_name = active_point_scalars_name
+                output.cell_data.active_scalars_name = active_cell_scalars_name
+        finally:
+            # Make the previously active scalars of this mesh active again
+            point_data.active_scalars_name = active_point_scalars_name
+            cell_data.active_scalars_name = active_cell_scalars_name
 
         return output
 

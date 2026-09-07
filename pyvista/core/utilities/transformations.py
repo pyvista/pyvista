@@ -26,7 +26,7 @@ if TYPE_CHECKING:
         NumpyArray[float],
     ]
 
-# Optimization: the default tolerances of `numpy.isclose`, applied here without its cost
+# The default tolerances of `numpy.isclose`
 _ATOL = 1e-8
 _RTOL = 1e-5
 
@@ -137,7 +137,7 @@ def axis_angle_rotation(  # noqa: PLR0917
     if axis_norm <= _ATOL:
         msg = 'Cannot rotate around zero vector axis.'
         raise ValueError(msg)
-    if abs(axis_norm - 1.0) > _ATOL + _RTOL:
+    if not abs(axis_norm - 1.0) <= _ATOL + _RTOL:
         axis_ = axis_ / axis_norm
 
     # build Rodrigues' rotation matrix
@@ -258,7 +258,7 @@ def reflection(
     if normal_norm <= _ATOL:
         msg = 'Plane normal cannot be zero.'
         raise ValueError(msg)
-    if abs(normal_norm - 1.0) > _ATOL + _RTOL:
+    if not abs(normal_norm - 1.0) <= _ATOL + _RTOL:
         normal = normal / normal_norm
 
     # build reflection matrix

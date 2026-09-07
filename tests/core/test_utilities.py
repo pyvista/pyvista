@@ -2593,8 +2593,30 @@ def test_transform_copy(multiply_mode):
     assert t2.point == t1.point
     assert t2.check_finite == t1.check_finite
 
-    # The copy composes about the same point as the original
+    # The copy composes about the same point and validates the same way
     assert np.array_equal(t1.scale(SCALE).matrix, t2.scale(SCALE).matrix)
+    t2.compose(np.diag([1.0, np.nan, 1.0, 1.0]))
+
+
+@pytest.mark.parametrize(
+    ('operation', 'expected'),
+    [
+        (lambda t: t * 2, lambda t: t.copy().scale(2)),
+        (lambda t: 2 * t, lambda t: t.copy().scale(2, multiply_mode='pre')),
+        (lambda t: t + (1, 2, 3), lambda t: t.copy().translate((1, 2, 3))),  # noqa: RUF005
+        (lambda t: (1, 2, 3) + t, lambda t: t.copy().translate((1, 2, 3), multiply_mode='pre')),  # noqa: RUF005
+    ],
+    ids=['mul', 'rmul', 'add', 'radd'],
+)
+def test_transform_operators_compose_about_the_origin(operation, expected):
+    with_point = Transform(point=(1, 2, 3))
+    without_point = Transform()
+
+    actual = operation(with_point)
+
+    assert np.array_equal(actual.matrix, operation(without_point).matrix)
+    assert np.array_equal(actual.matrix, expected(without_point).matrix)
+    assert actual.n_transformations == 1
 
 
 def test_transform_repr(transform):
