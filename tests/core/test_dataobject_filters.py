@@ -466,9 +466,38 @@ def test_clip_box_pointset(invert):
     assert np.allclose(clipped.field_data['meta'], [1.0])
 
 
-def test_clip_box_merge_points_false_uses_box_filter(uniform):
-    clipped = uniform.clip_box(merge_points=False)
-    assert set(clipped.celltypes) == {pv.CellType.TETRA}
+@pytest.mark.parametrize('invert', [True, False])
+def test_clip_box_merge_points_keeps_cell_types(uniform, invert):
+    merged = uniform.clip_box(invert=invert)
+    unmerged = uniform.clip_box(invert=invert, merge_points=False)
+    assert set(merged.celltypes) == set(unmerged.celltypes)
+    assert merged.n_cells == unmerged.n_cells
+    assert merged.volume == pytest.approx(unmerged.volume)
+    assert merged.n_points <= unmerged.n_points
+
+
+@pytest.mark.parametrize('invert', [True, False])
+def test_clip_box_merge_points_false_keeps_coincident_points_apart(invert):
+    grid = pv.ImageData(dimensions=(5, 5, 5)).cast_to_unstructured_grid()
+    centers = grid.cell_centers().points[:, 2]
+    lower = grid.extract_cells(np.flatnonzero(centers < 2)).cast_to_unstructured_grid()
+    upper = grid.extract_cells(np.flatnonzero(centers > 2)).cast_to_unstructured_grid()
+    lower.cell_data['half'] = np.zeros(lower.n_cells)
+    upper.cell_data['half'] = np.ones(upper.n_cells)
+    # The halves meet at z == 2 but share no points, so the seam is a discontinuity
+    seam = lower.merge(upper, merge_points=False)
+
+    def shared_across_seam(mesh):
+        half = np.asarray(mesh.cell_data['half'])
+        halves_of_point = {}
+        for i in range(mesh.n_cells):
+            for point_id in mesh.get_cell(i).point_ids:
+                halves_of_point.setdefault(point_id, set()).add(round(float(half[i])))
+        return sum(1 for halves in halves_of_point.values() if len(halves) > 1)
+
+    assert shared_across_seam(seam) == 0
+    bounds = [2.5, 5.0, 2.5, 5.0, 2.5, 5.0]
+    assert shared_across_seam(seam.clip_box(bounds, invert=invert, merge_points=False)) == 0
 
 
 def test_clip_box_composite(multiblock_all):

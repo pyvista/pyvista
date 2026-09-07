@@ -3358,7 +3358,6 @@ class DataObjectFilters:
         :class:`~pyvista.StructuredGrid`, :class:`~pyvista.ExplicitStructuredGrid`, and
         :class:`~pyvista.UnstructuredGrid`, are clipped by the six box planes in turn with
         the same clipper as :meth:`clip`, which keeps hexahedra and other cell types.
-        Passing ``merge_points=False`` clips any input with :vtk:`vtkBoxClipDataSet`.
 
         .. versionchanged:: 0.49
 
@@ -3367,7 +3366,8 @@ class DataObjectFilters:
               :class:`~pyvista.UnstructuredGrid` inputs are clipped by the six box planes
               instead of :vtk:`vtkBoxClipDataSet`, so cells the box does not cut keep their
               type instead of being split into tetrahedra, and the output normally has fewer
-              cells and points for the same clipped volume. Call
+              cells and points for the same clipped volume. This now also applies with
+              ``merge_points=False``, which no longer changes the cell type. Call
               :meth:`~pyvista.DataObjectFilters.triangulate` on the output for an
               all-tetrahedra mesh as before.
 
@@ -3395,8 +3395,7 @@ class DataObjectFilters:
 
         merge_points : bool, default: True
             If ``True``, coinciding points of independently defined mesh
-            elements will be merged. ``False`` clips with
-            :vtk:`vtkBoxClipDataSet`, whose output is split into tetrahedra.
+            elements will be merged.
 
         crinkle : bool, default: False
             Crinkle the clip by extracting the entire cells along the
@@ -3497,9 +3496,8 @@ class DataObjectFilters:
         # ImageData, RectilinearGrid, StructuredGrid, ExplicitStructuredGrid, and
         # UnstructuredGrid are clipped plane by plane instead, which keeps their cell types
         # and is faster for it. PolyData, and the vertices a PointSet is clipped as, are
-        # already triangulated and gain nothing from it, and only the box filter has a
-        # locator to disable for ``merge_points``.
-        use_box_filter = isinstance(self, pv.PolyData) or not merge_points
+        # already triangulated and gain nothing from it.
+        use_box_filter = isinstance(self, pv.PolyData)
         if use_box_filter:
             alg = _vtk.vtkBoxClipDataSet()
             if not merge_points:
@@ -3518,7 +3516,11 @@ class DataObjectFilters:
             clipped = _get_output(alg, oport=port)
         else:
             clipped = _clip_by_box_planes(
-                source, _box_planes(bounds_), invert=invert, progress_bar=progress_bar
+                source,
+                _box_planes(bounds_),
+                invert=invert,
+                merge_points=merge_points,
+                progress_bar=progress_bar,
             )
 
         if crinkle:
@@ -5727,6 +5729,7 @@ def _clip_by_box_planes(
     planes: Sequence[tuple[VectorLike[float], VectorLike[float]]],
     *,
     invert: bool,
+    merge_points: bool,
     progress_bar: bool,
 ) -> DataSet:
     """Clip by each plane in turn, keeping the inside or appending the outside pieces."""
@@ -5754,7 +5757,7 @@ def _clip_by_box_planes(
         # Nothing lay outside the box, so return an empty clip of the right type
         return inside.clip(normal=planes[0][0], origin=planes[0][1], invert=False)
     append = _vtk.vtkAppendFilter()
-    append.MergePointsOn()
+    append.SetMergePoints(merge_points)
     for piece in outside:
         append.AddInputData(piece)
     _update_alg(append, progress_bar=progress_bar, message='Clipping a Dataset by a Bounding Box')
