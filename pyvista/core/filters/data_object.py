@@ -5883,17 +5883,15 @@ def _validate_clip_inplace(mesh: DataSet | MultiBlock) -> None:
         raise TypeError(msg)
 
 
-def _remove_unused_points_post_clip(clip_output, input_bounds, *, force: bool = False):
+def _remove_unused_points_post_clip(clip_output, input_bounds):
     # VTK clip filters are buggy and sometimes retain unused points from the input, e.g.:
     # https://github.com/pyvista/pyvista/issues/6511
     # https://github.com/pyvista/pyvista/issues/7738
 
     def maybe_remove_unused_points(mesh: DataSet):
         # Unused points are correctly removed sometimes, so for performance we only
-        # remove points when the clipped bounds match input bounds, or when the caller
-        # knows its filter always keeps them
-        needed = force or np.allclose(clip_output.bounds, input_bounds)
-        if needed and hasattr(mesh, 'remove_unused_points'):
+        # remove points when the clipped bounds match input bounds
+        if np.allclose(clip_output.bounds, input_bounds) and hasattr(mesh, 'remove_unused_points'):
             return mesh.remove_unused_points()
         return mesh
 
