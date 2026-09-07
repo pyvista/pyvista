@@ -24,6 +24,7 @@ def point_set() -> pv.PointSet:
     return pv.PointSet(np.random.default_rng(0).random((10, 3)))
 
 
+# Only the input class decides the return type
 assert_types(poly().connectivity(), pv.PolyData)
 assert_types(point_set().connectivity(), pv.PointSet)
 assert_types(as_data_set().connectivity(), pv.UnstructuredGrid)
@@ -33,6 +34,7 @@ assert_types(examples.load_rectilinear().connectivity(), pv.UnstructuredGrid)
 assert_types(examples.load_structured().connectivity(), pv.UnstructuredGrid)
 assert_types(examples.load_explicit_structured().connectivity(), pv.UnstructuredGrid)
 
+# Every extraction mode, given positionally
 assert_types(poly().connectivity('all'), pv.PolyData)
 assert_types(poly().connectivity('largest'), pv.PolyData)
 assert_types(poly().connectivity('specified', 0), pv.PolyData)
@@ -40,6 +42,7 @@ assert_types(poly().connectivity('cell_seed', 0), pv.PolyData)
 assert_types(poly().connectivity('point_seed', 0), pv.PolyData)
 assert_types(poly().connectivity('closest', (0.0, 0.0, 0.0)), pv.PolyData)
 
+# The same modes by keyword, in each id form the filter accepts
 assert_types(poly().connectivity(extraction_mode='specified', region_ids=0), pv.PolyData)
 assert_types(poly().connectivity(extraction_mode='specified', region_ids=[0, 1]), pv.PolyData)
 assert_types(poly().connectivity(extraction_mode='cell_seed', cell_ids=0), pv.PolyData)
@@ -51,6 +54,7 @@ assert_types(poly().connectivity(extraction_mode='point_seed', point_ids=np.zero
 assert_types(poly().connectivity(extraction_mode='closest', closest_point=(0.0, 0.0, 0.0)), pv.PolyData)
 assert_types(poly().connectivity(extraction_mode='closest', closest_point=np.zeros(3)), pv.PolyData)
 
+# Keywords which do not change the return type
 assert_types(poly().connectivity(scalar_range=(-1.0, 1.0)), pv.PolyData)
 assert_types(poly().connectivity(scalar_range=[-1.0, 1.0], scalars='Normals'), pv.PolyData)
 assert_types(poly().connectivity(scalar_range=np.array([-1.0, 1.0])), pv.PolyData)
@@ -63,9 +67,11 @@ assert_types(poly().connectivity(inplace=True), pv.PolyData)
 assert_types(poly().connectivity(inplace=False), pv.PolyData)
 assert_types(poly().connectivity(progress_bar=True), pv.PolyData)
 
+# A mode and a keyword together, for the two non-PolyData overloads
 assert_types(as_data_set().connectivity('largest', label_regions=False), pv.UnstructuredGrid)
 assert_types(point_set().connectivity('all', inplace=True), pv.PointSet)
 
+# extract_largest delegates to connectivity and keeps its return type
 assert_types(poly().extract_largest(), pv.PolyData)
 assert_types(point_set().extract_largest(), pv.PointSet)
 assert_types(as_data_set().extract_largest(), pv.UnstructuredGrid)
@@ -73,6 +79,7 @@ assert_types(examples.load_hexbeam().extract_largest(), pv.UnstructuredGrid)
 assert_types(poly().extract_largest(inplace=True), pv.PolyData)
 assert_types(poly().extract_largest(progress_bar=True), pv.PolyData)
 
+# split_bodies is a MultiBlock whatever the input
 assert_types(poly().split_bodies(), pv.MultiBlock)
 assert_types(as_data_set().split_bodies(), pv.MultiBlock)
 assert_types(examples.load_hexbeam().split_bodies(label=True), pv.MultiBlock)
