@@ -45,7 +45,9 @@ def test_dataset_loader_name_matches_download_name(test_case: DatasetLoaderTestC
         pytest.fail(msg)
 
 
-def _is_valid_url(session: requests.Session, url: str) -> bool:
+def _is_valid_url(  # pragma: no cover -- tox -e dataset-urls
+    session: requests.Session, url: str
+) -> bool:
     try:
         # HEAD checks that the file is served without downloading it
         session.head(url, allow_redirects=True).raise_for_status()
@@ -56,7 +58,7 @@ def _is_valid_url(session: requests.Session, url: str) -> bool:
 
 
 @pytest.fixture(scope='module')
-def url_session():
+def url_session():  # pragma: no cover -- tox -e dataset-urls
     """One session for every URL check, so connections are reused across tests."""
     return retry(
         status_to_retry=[500, 502, 504, 403, 429],  # default + GH rate limit (403, 429)
@@ -66,7 +68,9 @@ def url_session():
 
 
 @pytest.mark.needs_dataset_urls
-def test_dataset_loader_source_urls_blob(test_case: DatasetLoaderTestCase, url_session):
+def test_dataset_loader_source_urls_blob(  # pragma: no cover -- tox -e dataset-urls
+    test_case: DatasetLoaderTestCase, url_session
+):
     # `web_urls` stays a URL where a local cache would make `source_urls` a path
     sources = test_case.dataset_loader[1].web_urls
 
