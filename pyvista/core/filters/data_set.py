@@ -2237,12 +2237,14 @@ class DataSetFilters(DataObjectFilters):
             'point_seed',
             'closest',
         ] = 'all',
-        variable_input: float | VectorLike[float] | None = None,
+        variable_input: (
+            float | VectorLike[float] | VectorLike[int] | VectorLike[bool] | None
+        ) = None,
         scalar_range: VectorLike[float] | None = None,
         scalars: str | None = None,
         label_regions: bool = True,  # noqa: FBT001, FBT002
         region_assignment_mode: Literal['ascending', 'descending', 'unspecified'] = 'descending',
-        region_ids: VectorLike[int] | None = None,
+        region_ids: int | VectorLike[int] | None = None,
         point_ids: int | VectorLike[int] | VectorLike[bool] | None = None,
         cell_ids: int | VectorLike[int] | VectorLike[bool] | None = None,
         closest_point: VectorLike[float] | None = None,
@@ -2274,7 +2276,9 @@ class DataSetFilters(DataObjectFilters):
            Invalid inputs raise instead of being ignored: ``scalars`` requires
            ``scalar_range``, out-of-range ``point_ids`` and ``cell_ids`` raise
            ``IndexError``, ``closest_point`` must have three components, and ids
-           must be one-dimensional.
+           must be one-dimensional. ``point_ids`` and ``cell_ids`` also accept a
+           boolean mask, and ``'RegionId'`` is made the active point scalars
+           whenever ``label_regions`` is set.
 
         .. deprecated:: 0.43.0
            Parameter ``largest`` is deprecated. Use ``'largest'`` or
@@ -2310,7 +2314,9 @@ class DataSetFilters(DataObjectFilters):
         scalar_range : sequence[float], optional
             Scalar range in the form ``[min, max]``. If set, the connectivity is
             restricted to cells with at least one point with scalar values in
-            the specified range.
+            the specified range. The ``'largest'``, ``'cell_seed'`` and
+            ``'point_seed'`` modes always keep their seed cells, whether or not
+            those cells have a point in the range.
 
         scalars : str, optional
             Name of scalars to use. Defaults to currently active scalars. Requires
@@ -2346,9 +2352,9 @@ class DataSetFilters(DataObjectFilters):
                 The default value ``"descending"`` differs from ParaView's, which
                 is set to ``"unspecified"`` (verified for 5.11 and 6.0 versions).
 
-        region_ids : sequence[int], optional
-            Region ids to extract. Only used if ``extraction_mode`` is
-            ``specified``.
+        region_ids : int | sequence[int], optional
+            Region ids to extract. Ids with no matching region contribute no cells.
+            Only used if ``extraction_mode`` is ``specified``.
 
         point_ids : int | VectorLike[int] | VectorLike[bool], optional
             Point ids to use as seeds. A boolean mask sized to the number of points
@@ -2485,7 +2491,9 @@ class DataSetFilters(DataObjectFilters):
 
         def _rebuild_point_region_ids(mesh):
             """Derive the point region ids from the cell region ids."""
-            cell_ids = mesh.cell_data['RegionId']
+            cell_ids = mesh.cell_data.get('RegionId')
+            if cell_ids is None or cell_ids.size != mesh.n_cells:
+                return
             mesh.point_data.pop('RegionId', None)
             averaged = mesh.cell_data_to_point_data(progress_bar=progress_bar)['RegionId']
             mesh.point_data['RegionId'] = averaged.round().astype(cell_ids.dtype)
@@ -2521,7 +2529,9 @@ class DataSetFilters(DataObjectFilters):
         closest_point_: NumpyArray[float] = np.zeros(3, dtype=float)
         if extraction_mode in required_input:
             input_name, given_input = required_input[extraction_mode]
-            input_value: float | VectorLike[float] | VectorLike[int] | None = given_input
+            input_value: float | VectorLike[float] | VectorLike[int] | VectorLike[bool] | None = (
+                given_input
+            )
             if input_value is None:
                 if variable_input is None:
                     msg = (
@@ -2676,15 +2686,15 @@ class DataSetFilters(DataObjectFilters):
                     region_assignment_mode=region_assignment_mode,
                 )
             elif label_regions:
-                output.point_data['RegionId'] = np.zeros(output.n_points, dtype=int)
-                output.cell_data['RegionId'] = np.zeros(output.n_cells, dtype=int)
+                output.point_data['RegionId'] = np.zeros(output.n_points, pv.ID_TYPE)
+                output.cell_data['RegionId'] = np.zeros(output.n_cells, pv.ID_TYPE)
 
         if label_regions:
             if output.n_cells > 0 and not _region_ids_match(output):
-                # Cells sharing a point are always in the same region, so the cell
-                # ids carry the point ids the filter can leave out
+                # vtkConnectivityFilter intermittently omits the point array
                 _rebuild_point_region_ids(output)
-            output.set_active_scalars('RegionId', preference='point')
+            if 'RegionId' in output.point_data:
+                output.set_active_scalars('RegionId', preference='point')
 
         # Remove temp point array
         with contextlib.suppress(KeyError):

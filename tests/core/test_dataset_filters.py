@@ -1423,8 +1423,6 @@ def test_connectivity_label_regions(datasets, dataset_index, extraction_mode):
     conn = dataset.connectivity(**common_args, label_regions=True)
     assert 'RegionId' in conn.point_data.keys()
     assert 'RegionId' in conn.cell_data.keys()
-    assert conn.active_scalars_name == 'RegionId'
-    assert conn.active_scalars_info.association == pv.FieldAssociation.POINT
 
     expected_cell_scalars_size = conn.n_cells
     actual_cell_scalars_size = conn.cell_data['RegionId'].size
@@ -1523,6 +1521,7 @@ def test_connectivity_polydata_output_type_full_selection(extraction_mode):
     conn = mesh.connectivity(extraction_mode, **kwargs)
     assert isinstance(conn, pv.PolyData)
     assert conn.n_cells == mesh.n_cells
+    assert mesh.connectivity(extraction_mode, inplace=True, **kwargs) is mesh
 
 
 def _assert_region_ids(conn, *, label_regions):
@@ -1530,9 +1529,40 @@ def _assert_region_ids(conn, *, label_regions):
     if label_regions:
         assert conn.point_data['RegionId'].size == conn.n_points
         assert conn.cell_data['RegionId'].size == conn.n_cells
+        assert conn.active_scalars_name == 'RegionId'
+        assert conn.active_scalars_info.association == pv.FieldAssociation.POINT
     else:
         assert 'RegionId' not in conn.point_data
         assert 'RegionId' not in conn.cell_data
+
+
+def test_connectivity_scalars():
+    mesh = pv.Sphere(phi_resolution=8, theta_resolution=8)
+    mesh.point_data['low'] = mesh.points[:, 1]
+    mesh.point_data['high'] = mesh.points[:, 1] + 10
+    mesh.set_active_scalars('low')
+
+    named = mesh.connectivity('all', scalar_range=[9.0, 11.0], scalars='high')
+    active = mesh.connectivity('all', scalar_range=[9.0, 11.0])
+
+    assert named.n_cells == mesh.n_cells
+    assert active.n_cells == 0
+
+
+@pytest.mark.parametrize('extraction_mode', ['cell_seed', 'point_seed'])
+def test_connectivity_seed_bool_mask(extraction_mode):
+    mesh = pv.Sphere(center=(-4, 0, 0), phi_resolution=8, theta_resolution=8) + pv.Sphere(
+        phi_resolution=6, theta_resolution=6
+    )
+    n_items = mesh.n_cells if extraction_mode == 'cell_seed' else mesh.n_points
+    mask = np.zeros(n_items, dtype=bool)
+    mask[0] = True
+    key = 'cell_ids' if extraction_mode == 'cell_seed' else 'point_ids'
+
+    from_mask = mesh.connectivity(extraction_mode, **{key: mask})
+    from_ids = mesh.connectivity(extraction_mode, **{key: [0]})
+    assert from_mask.n_cells == from_ids.n_cells
+    assert from_mask.n_cells < mesh.n_cells
 
 
 @pytest.mark.parametrize('extraction_mode', ['specified', 'cell_seed', 'point_seed'])
@@ -1552,18 +1582,18 @@ def test_connectivity_empty_output(extraction_mode, label_regions):
 
 
 @pytest.mark.parametrize(
-    ('extraction_mode', 'expected_n_cells'),
+    ('extraction_mode', 'keeps_seed_cells'),
     [
-        ('all', 0),
-        ('largest', 1),
-        ('specified', 0),
-        ('cell_seed', 1),
-        ('point_seed', 8),
-        ('closest', 0),
+        ('all', False),
+        ('largest', True),
+        ('specified', False),
+        ('cell_seed', True),
+        ('point_seed', True),
+        ('closest', False),
     ],
 )
 @pytest.mark.parametrize('label_regions', [True, False])
-def test_connectivity_empty_scalar_range(extraction_mode, expected_n_cells, label_regions):
+def test_connectivity_empty_scalar_range(extraction_mode, keeps_seed_cells, label_regions):
     # Modes which are not filtered beforehand keep cells with no point in the range
     mesh = pv.Sphere(phi_resolution=8, theta_resolution=8)
     mesh.point_data['data'] = mesh.points[:, 1]
@@ -1582,7 +1612,10 @@ def test_connectivity_empty_scalar_range(extraction_mode, expected_n_cells, labe
         label_regions=label_regions,
         **kwargs,
     )
-    assert conn.n_cells == expected_n_cells
+    if keeps_seed_cells:
+        assert conn.n_cells > 0
+    else:
+        assert conn.n_cells == 0
     _assert_region_ids(conn, label_regions=label_regions)
 
 
