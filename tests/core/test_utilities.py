@@ -2584,10 +2584,17 @@ def test_transform_mul_raises():
 def test_transform_copy(multiply_mode):
     t1 = Transform().scale(SCALE)
     t1.multiply_mode = multiply_mode
+    t1.point = (1, 2, 3)
+    t1.check_finite = False
     t2 = t1.copy()
     assert np.array_equal(t1.matrix, t2.matrix)
     assert t1 is not t2
     assert t2.multiply_mode == t1.multiply_mode
+    assert t2.point == t1.point
+    assert t2.check_finite == t1.check_finite
+
+    # The copy composes about the same point as the original
+    assert np.array_equal(t1.scale(SCALE).matrix, t2.scale(SCALE).matrix)
 
 
 def test_transform_repr(transform):

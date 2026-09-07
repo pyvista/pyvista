@@ -324,9 +324,11 @@ class Transform(
         """:meth:`compose` this transform using post-multiply semantics.
 
         Use :meth:`scale` for single numbers and length-3 vector inputs, and
-        :meth:`compose` otherwise for transform-like inputs.
+        :meth:`compose` otherwise for transform-like inputs. The operation is applied
+        about the origin, not about this transform's :attr:`point`.
         """
         copied = self.copy()
+        copied.point = None
         try:
             transform = copied.scale(other, multiply_mode='post')  # type: ignore[arg-type]
         except (ValueError, TypeError):
@@ -406,6 +408,8 @@ class Transform(
 
         # Need to copy other props not stored by vtkTransform
         new_transform.multiply_mode = self.multiply_mode
+        new_transform.point = self.point
+        new_transform.check_finite = self.check_finite
 
         return new_transform
 
