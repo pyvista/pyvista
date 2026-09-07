@@ -224,8 +224,8 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             ):
                 active_name = _active_scalars_name(attributes)
                 if active_name is not None:
-                    self._active_scalars_info = ActiveArrayInfoTuple(association, active_name)
-                    break
+                    # Returned, not recorded, so a later activation is still seen.
+                    return ActiveArrayInfoTuple(association, active_name)
 
         return self._active_scalars_info
 
@@ -283,8 +283,8 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             ):
                 name = _active_vectors_name(attributes)
                 if name is not None:
-                    self._active_vectors_info = ActiveArrayInfoTuple(association, name)
-                    break
+                    # Returned, not recorded, so a later activation is still seen.
+                    return ActiveArrayInfoTuple(association, name)
 
         return self._active_vectors_info
 
@@ -960,16 +960,17 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             self._association_bitarray_names = _copy_association_names(
                 ido._association_bitarray_names
             )
-            self._active_scalars_info = ido.active_scalars_info.copy()
-            self._active_vectors_info = ido.active_vectors_info.copy()
-            self._active_tensors_info = ido.active_tensors_info.copy()
+            # the private state, so an unresolved active array stays unresolved on the copy
+            self._active_scalars_info = ido._active_scalars_info.copy()
+            self._active_vectors_info = ido._active_vectors_info.copy()
+            self._active_tensors_info = ido._active_tensors_info.copy()
         else:
             # pass by reference
             self._association_complex_names = ido._association_complex_names
             self._association_bitarray_names = ido._association_bitarray_names
-            self._active_scalars_info = ido.active_scalars_info
-            self._active_vectors_info = ido.active_vectors_info
-            self._active_tensors_info = ido.active_tensors_info
+            self._active_scalars_info = ido._active_scalars_info
+            self._active_vectors_info = ido._active_vectors_info
+            self._active_tensors_info = ido._active_tensors_info
 
     @property
     def point_data(self: Self) -> DataSetAttributes:

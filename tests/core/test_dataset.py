@@ -259,6 +259,38 @@ def test_active_scalars_cell(hexbeam):
     assert hexbeam.active_scalars_info[1] == 'sample_cell_scalars'
 
 
+@pytest.mark.parametrize(
+    'observe',
+    [
+        lambda _mesh: None,
+        lambda mesh: mesh.active_scalars_info,
+        lambda mesh: mesh.active_vectors_info,
+        repr,
+        lambda mesh: mesh.copy(deep=True),
+        lambda mesh: mesh.copy(deep=False),
+    ],
+    ids=['nothing', 'scalars_info', 'vectors_info', 'repr', 'deep_copy', 'shallow_copy'],
+)
+def test_active_scalars_is_not_decided_by_reading_it(hexbeam, observe):
+    """Reading the active arrays must not decide which array a later one activates."""
+    observe(hexbeam)
+
+    hexbeam['new_point_array'] = np.ones((hexbeam.n_points, 3))
+
+    assert hexbeam.active_scalars_info.name == 'new_point_array'
+    assert hexbeam.active_scalars_info.association == pv.FieldAssociation.POINT
+
+
+def test_active_scalars_keeps_an_explicit_choice(hexbeam):
+    """An array chosen explicitly stays active when a new array is added."""
+    hexbeam.set_active_scalars('sample_cell_scalars', preference='cell')
+
+    hexbeam['new_point_array'] = np.ones(hexbeam.n_points)
+
+    assert hexbeam.active_scalars_info.name == 'sample_cell_scalars'
+    assert hexbeam.active_scalars_info.association == pv.FieldAssociation.CELL
+
+
 def test_field_data_bad_value(hexbeam):
     with pytest.raises(TypeError):
         hexbeam.field_data['new_array'] = None
