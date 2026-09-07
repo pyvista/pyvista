@@ -145,8 +145,8 @@ def _convert_transform_input_to_float(
 
 def _copy_transformed_arrays(output: DataSet, filtered: DataObject, *, copy: bool) -> None:
     """Copy the point, cell and field arrays the transform filter produced."""
-    output.point_data.update(filtered.point_data, copy=copy)  # type: ignore[attr-defined]
-    output.cell_data.update(filtered.cell_data, copy=copy)  # type: ignore[attr-defined]
+    output.point_data.update(filtered.point_data, copy=copy)
+    output.cell_data.update(filtered.cell_data, copy=copy)
     output.field_data.update(filtered.field_data, copy=copy)
 
 
