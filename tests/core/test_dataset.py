@@ -308,6 +308,31 @@ def test_active_scalars_keeps_an_explicit_choice(hexbeam, deep):
         assert mesh.active_scalars_info.association == pv.FieldAssociation.CELL
 
 
+@pytest.mark.parametrize('deep', [True, False], ids=['deep', 'shallow'])
+def test_active_scalars_preference_survives_copy(hexbeam, deep):
+    """The preference between same-named arrays is copied, and the copy can change its own."""
+    hexbeam.point_data['data'] = np.arange(hexbeam.n_points)
+    hexbeam.cell_data['data'] = np.arange(hexbeam.n_cells)
+    hexbeam.set_active_scalars('data', preference='cell')
+
+    duplicate = hexbeam.copy(deep=deep)
+    assert duplicate.active_scalars_info.association == pv.FieldAssociation.CELL
+    duplicate.set_active_scalars('data', preference='point')
+
+    assert hexbeam.active_scalars_info.association == pv.FieldAssociation.CELL
+    assert hexbeam.active_scalars.shape == (hexbeam.n_cells,)
+    assert duplicate.active_scalars_info.association == pv.FieldAssociation.POINT
+    assert duplicate.active_scalars.shape == (duplicate.n_points,)
+
+
+def test_filter_output_resolves_its_own_active_scalars(hexbeam):
+    """A filter output resolves the array the filter activated when the input chose none."""
+    elevated = hexbeam.elevation()
+
+    assert elevated.active_scalars_info.name == 'Elevation'
+    assert elevated.active_scalars_info.association == pv.FieldAssociation.POINT
+
+
 def test_field_data_bad_value(hexbeam):
     with pytest.raises(TypeError):
         hexbeam.field_data['new_array'] = None
