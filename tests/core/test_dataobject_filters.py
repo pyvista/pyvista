@@ -256,7 +256,10 @@ def _cell_type_meshes():
     meshes = {
         'PolyData triangles': pv.Sphere(theta_resolution=8, phi_resolution=8),
         'PolyData quads': pv.Plane(i_resolution=3, j_resolution=3),
-        'PolyData lines': pv.Line((-1, 0, 0), (1, 0, 0), resolution=4),
+        'PolyData lines': pv.PolyData(
+            np.array([[x, 0.0, 0.0] for x in np.linspace(-1.0, 1.0, 5)]),
+            lines=[2, 0, 1, 2, 1, 2, 2, 2, 3, 2, 3, 4],
+        ),
         'PolyData verts': pv.PolyData(np.random.default_rng(0).uniform(-1, 1, (12, 3))),
         'ImageData': image,
         'RectilinearGrid': pv.RectilinearGrid(axis, axis, axis),
@@ -326,19 +329,25 @@ def test_clip_keeps_the_points_it_does_not_cut(mesh_type, name):
 def test_clip_splits_the_mesh_in_two(mesh_type, name):
     """What a clip keeps and what it removes add up to the whole mesh."""
     mesh = _cell_type_meshes()[mesh_type]
-    surface = pv.Sphere(radius=0.7, center=mesh.center, theta_resolution=16, phi_resolution=16)
+    center = np.array(mesh.center)
+    surface = pv.Sphere(
+        radius=0.6,
+        center=(center[0] + 0.3, center[1], center[2]),
+        theta_resolution=16,
+        phi_resolution=16,
+    )
     kept, removed = {
         'clip': lambda: (
-            mesh.clip(normal='z', origin=mesh.center, invert=False),
-            mesh.clip(normal='z', origin=mesh.center, invert=True),
+            mesh.clip(normal='x', origin=center, invert=False),
+            mesh.clip(normal='x', origin=center, invert=True),
         ),
         'clip_box': lambda: (
             mesh.clip_box([-0.4, 0.4] * 3, invert=False),
             mesh.clip_box([-0.4, 0.4] * 3, invert=True),
         ),
         'clip_slab': lambda: (
-            mesh.clip_slab(thickness=0.8, normal='z', origin=mesh.center),
-            mesh.clip_slab(thickness=0.8, normal='z', origin=mesh.center, invert=True),
+            mesh.clip_slab(thickness=0.8, normal='x', origin=center),
+            mesh.clip_slab(thickness=0.8, normal='x', origin=center, invert=True),
         ),
         'clip_surface': lambda: (
             mesh.clip_surface(surface, invert=True),
@@ -350,9 +359,37 @@ def test_clip_splits_the_mesh_in_two(mesh_type, name):
         ),
     }[name]()
 
-    measure = 'area' if isinstance(mesh, pv.PolyData) else 'volume'
-    whole = getattr(mesh, measure)
-    assert getattr(kept, measure) + getattr(removed, measure) == pytest.approx(whole, rel=1e-6)
+    # A split, not a pass-through, on both sides
+    assert kept.n_cells
+    assert removed.n_cells
+    if mesh_type == 'PolyData verts':
+        assert kept.n_cells + removed.n_cells == mesh.n_cells
+        return
+    if mesh_type == 'PolyData lines':
+
+        def measure(part):
+            return part.compute_cell_sizes(length=True)['Length'].sum()
+    else:
+        attr = 'area' if isinstance(mesh, pv.PolyData) else 'volume'
+
+        def measure(part):
+            return getattr(part, attr)
+
+    assert measure(mesh) > 0
+    assert measure(kept) + measure(removed) == pytest.approx(measure(mesh), rel=1e-6)
+
+
+def _seam_grid():
+    """Two grid halves that touch but share no points."""
+    grid = pv.ImageData(dimensions=(5, 5, 5)).cast_to_unstructured_grid()
+    centers = grid.cell_centers().points[:, 2]
+    lower = grid.extract_cells(np.flatnonzero(centers < 2)).cast_to_unstructured_grid()
+    upper = grid.extract_cells(np.flatnonzero(centers > 2)).cast_to_unstructured_grid()
+    lower.cell_data['half'] = np.zeros(lower.n_cells)
+    upper.cell_data['half'] = np.ones(upper.n_cells)
+    seam = lower.merge(upper, merge_points=False)
+    seam.point_data['scalars'] = np.linspace(0.0, 1.0, seam.n_points)
+    return seam
 
 
 @pytest.mark.parametrize(
@@ -418,19 +455,6 @@ def test_clip_box_keeps_a_face_lying_in_a_box_plane(make, invert):
     clipped = mesh.clip_box(box, invert=invert)
 
     assert clipped.n_cells == (0 if invert else mesh.n_cells)
-
-
-def _seam_grid():
-    """Two grid halves that touch but share no points."""
-    grid = pv.ImageData(dimensions=(5, 5, 5)).cast_to_unstructured_grid()
-    centers = grid.cell_centers().points[:, 2]
-    lower = grid.extract_cells(np.flatnonzero(centers < 2)).cast_to_unstructured_grid()
-    upper = grid.extract_cells(np.flatnonzero(centers > 2)).cast_to_unstructured_grid()
-    lower.cell_data['half'] = np.zeros(lower.n_cells)
-    upper.cell_data['half'] = np.ones(upper.n_cells)
-    seam = lower.merge(upper, merge_points=False)
-    seam.point_data['scalars'] = np.linspace(0.0, 1.0, seam.n_points)
-    return seam
 
 
 def test_clip_filter_normal(datasets):
