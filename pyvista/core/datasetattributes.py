@@ -284,6 +284,10 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
             raise TypeError(msg)
         return self.get_array(key)
 
+    def _ipython_key_completions_(self: Self) -> list[str]:
+        """Tab completion of IPython."""
+        return self.keys()
+
     def __setitem__(
         self: Self, key: str, value: ArrayLike[Any]
     ) -> None:  # numpydoc ignore=PR01,RT01

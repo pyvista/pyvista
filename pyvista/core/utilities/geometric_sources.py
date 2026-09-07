@@ -111,6 +111,9 @@ class _AlgorithmSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkAlgorithm):
         return _apply_points_dtype(wrap(self.GetOutput()), algorithm=self)
 
 
+_IDENTITY3 = np.eye(3)
+
+
 def _translate_and_orient(
     surf: DataSet,
     center: VectorLike[float] = (0.0, 0.0, 0.0),
@@ -151,7 +154,9 @@ def _translate_and_orient(
     trans[:3, 2] = normz
     trans[3, 3] = 1
 
-    surf.transform(trans, inplace=True)
+    # Optimization: skip the transform filter for a mesh already facing this direction
+    if not np.array_equal(trans[:3, :3], _IDENTITY3):
+        surf.transform(trans, inplace=True)
     if not np.allclose(center, [0.0, 0.0, 0.0]):
         surf.points += np.array(center, dtype=surf.points.dtype)
 

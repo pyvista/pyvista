@@ -98,6 +98,7 @@ test = [
   'polars<=1.44',
   'pyarrow<26.0.0',
   'pytest-cases<3.11.0',
+  'pytest-codspeed<5.1.0',
   'pytest-cov<7.2.0',
   'pytest-mock<3.16.0',
   'pytest-pyvista==0.3.3',
@@ -589,6 +590,7 @@ pyvista = "pv"
 # A command-line script bundled with an agent skill, not an importable package.
 '.claude/skills/*/scripts/*.py' = ['INP', 'T20']
 '__init__.py' = ['PLC0414']
+'benchmarks/*' = ['ANN', 'S101']
 'doc/*' = ['ANN', 'INP', 'PLC0415']
 'doc/make_dev_wheel.py' = ['S607'] # git comes from PATH
 # A command-line script: it reports what it runs, like `make` does.
