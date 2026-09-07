@@ -11,6 +11,8 @@ import os
 from pathlib import Path
 import platform
 import re
+from types import FunctionType
+from types import ModuleType
 
 import numpy as np
 from numpy.random import default_rng
@@ -236,6 +238,7 @@ def reset_global_state():
     assert pv.allow_new_attributes() is False
 
     pv.PICKLE_FORMAT = 'vtk'
+    pv.global_config.points_dtype = None
 
 
 @pytest.fixture
@@ -432,9 +435,10 @@ def pytest_runtest_makereport(item, call):  # noqa: ARG001
 def check_gc(request):
     """Snapshot live VTK objects so leaks from this test can be detected.
 
-    Every test in the repository is covered. ``tests/plotting`` overrides this fixture
-    with one that also watches plotters (a fixture of the same name in a nearer conftest
-    wins), and takes the snapshot this hook's counterpart there checks.
+    Every test collected as a function is covered; plugin-collected items take no
+    fixtures. ``tests/plotting`` overrides this fixture with one that also watches
+    plotters (a fixture of the same name in a nearer conftest wins), and takes the
+    snapshot this hook's counterpart there checks.
     """
     node = request.node
     if (
@@ -511,6 +515,12 @@ def pytest_sessionstart():
 
 def pytest_addoption(parser):
     parser.addoption('--test_downloads', action='store_true', default=False)
+    parser.addoption(
+        '--regenerate_overloads',
+        action='store_true',
+        default=False,
+        help='rewrite the generated `get_example` overloads from the examples themselves',
+    )
     parser.addoption(
         '--no_check_gc',
         action='store_true',
@@ -939,6 +949,15 @@ def pytest_report_header(config):  # noqa: ARG001
     return '\n'.join(lines)
 
 
+def _get_module_functions(module: ModuleType) -> dict[str, FunctionType]:
+    """Get all functions defined locally inside a module."""
+
+    def is_local(obj):
+        return type(obj) is FunctionType and obj.__module__ == module.__name__
+
+    return dict(inspect.getmembers(module, predicate=is_local))
+
+
 # Interactive scenes above ``max_vtksz_file_size`` in pyproject.toml fail the docs image
 # tests; these are the known exceptions with their own limit in MB, keyed by the vtksz
 # file stem without the plot-directive content hash.
@@ -947,7 +966,7 @@ _VTKSZ_SIZE_EXCEPTIONS_MB = {
     'sphx_glr_connectivity_001': 7,
     'sphx_glr_connectivity_002': 7,
     'sphx_glr_connectivity_003': 7,
-    'sphx_glr_ghost_cells_001': 7,
+    'sphx_glr_remove_cells_001': 7,
     'sphx_glr_openfoam_cooling_002': 7,
     'sphx_glr_openfoam_cooling_003': 8,
     'sphx_glr_pump_bracket_002': 7,

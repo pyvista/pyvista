@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import itertools
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import cast
@@ -13,6 +12,8 @@ import pyvista_validation as _validation
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista.core.filters import _apply_points_dtype
+from pyvista.core.filters import _update_alg
 
 from .arrays import _coerce_pointslike_arg
 from .geometric_sources import ArrowSource
@@ -283,7 +284,7 @@ def CylinderStructured(  # noqa: PLR0917
     dz = height / (z_resolution - 1)
     zz = np.full((X.size, z_resolution), dz)
     zz *= np.arange(z_resolution)
-    zz = zz.ravel(order='f')  # type: ignore[arg-type]
+    zz = zz.ravel(order='f')  # type: ignore[arg-type, assignment]
 
     # Create the grid
     grid = pv.StructuredGrid()
@@ -1104,12 +1105,13 @@ def SolidSphereGeneric(  # noqa: PLR0917
         x, y, z = pv.spherical_to_cartesian(r, phi, theta)
         return np.vstack((x.ravel(), y.ravel(), z.ravel())).transpose()
 
-    points = []
-
+    # Optimization: points and cells are built with array arithmetic rather than per-cell
+    # loops. Block order is part of the output and must not change: origin, +axis, -axis,
+    # then the (r, phi, theta) grid with theta fastest; tetras, pyramids, wedges, hexahedra.
+    point_blocks: list[NumpyArray[float]] = []
     npoints_on_axis = 0
-
     if np.isclose(radius[0], 0.0, rtol=0.0, atol=tol_radius):
-        points.append([0.0, 0.0, 0.0])
+        point_blocks.append(np.zeros((1, 3)))
         include_origin = True
         nr = nr - 1
         radius = radius[1:]
@@ -1124,17 +1126,18 @@ def SolidSphereGeneric(  # noqa: PLR0917
         duplicate_theta = False
 
     if np.isclose(phi[0], 0.0, rtol=0.0, atol=tol_angle_):
-        points.extend(_spherical_to_cartesian(radius, 0.0, theta[0]))
+        point_blocks.append(_spherical_to_cartesian(radius, 0.0, theta[0]))
         positive_axis = True
         phi = phi[1:]
         nphi = nphi - 1
         npoints_on_axis += nr
     else:
         positive_axis = False
+
     npoints_on_pos_axis = npoints_on_axis
 
     if np.isclose(phi[-1], np.pi, rtol=0.0, atol=tol_angle_):
-        points.extend(_spherical_to_cartesian(radius, np.pi, theta[0]))
+        point_blocks.append(_spherical_to_cartesian(radius, np.pi, theta[0]))
         negative_axis = True
         phi = phi[:-1]
         nphi = nphi - 1
@@ -1143,68 +1146,68 @@ def SolidSphereGeneric(  # noqa: PLR0917
         negative_axis = False
 
     # rest of points with theta changing quickest
-    for ir, iphi in itertools.product(radius, phi):
-        points.extend(_spherical_to_cartesian(ir, iphi, theta))
+    point_blocks.append(_spherical_to_cartesian(radius, phi, theta))
+    points = np.vstack(point_blocks)
 
-    cells = []
-    celltypes = []
+    cell_blocks: list[NumpyArray[int]] = []
+    celltype_blocks: list[NumpyArray[np.uint8]] = []
 
-    def _index(ir: int, iphi: int, itheta: int) -> int:
+    def _index(
+        ir: int | NumpyArray[int], iphi: int | NumpyArray[int], itheta: int | NumpyArray[int]
+    ) -> int | NumpyArray[int]:
         """Index for points not on axis.
 
-        Values of ``ir`` and ``iphi`` here are relative to the first non-axis values.
+        Values of ``ir`` and ``iphi`` are relative to the first non-axis values; all
+        three accept scalars or index arrays that broadcast together.
         """
         if duplicate_theta:
             ntheta_ = ntheta - 1
             itheta = itheta % ntheta_
         else:
             ntheta_ = ntheta
-
         return npoints_on_axis + ir * nphi * ntheta_ + iphi * ntheta_ + itheta
 
+    def _add_cells(celltype: pv.CellType, *point_ids: int | NumpyArray[int]) -> None:
+        """Append one block of same-type cells, one row per broadcast element."""
+        ids = np.broadcast_arrays(*point_ids)
+        block = np.stack([np.full_like(ids[0], len(ids)), *ids], axis=-1)
+        cell_blocks.append(block.reshape(-1))
+        celltype_blocks.append(np.full(ids[0].size, celltype, dtype=np.uint8))
+
+    itheta = np.arange(ntheta - 1)
     if include_origin:
         # First make the tetras that form with origin and axis point
         #   origin is 0
         #   first axis point is 1
         #   other points at first phi position off axis
         if positive_axis:
-            for itheta in range(ntheta - 1):
-                cells.append(4)
-                cells.extend([0, 1, _index(0, 0, itheta), _index(0, 0, itheta + 1)])
-                celltypes.append(pv.CellType.TETRA)
+            _add_cells(pv.CellType.TETRA, 0, 1, _index(0, 0, itheta), _index(0, 0, itheta + 1))
 
         # Next tetras that form with origin and bottom axis point
         #   origin is 0
         #   axis point is first in negative dir
         #   other points at last phi position off axis
         if negative_axis:
-            for itheta in range(ntheta - 1):
-                cells.append(4)
-                cells.extend(
-                    [
-                        0,
-                        npoints_on_pos_axis,
-                        _index(0, nphi - 1, itheta + 1),
-                        _index(0, nphi - 1, itheta),
-                    ],
-                )
-                celltypes.append(pv.CellType.TETRA)
+            _add_cells(
+                pv.CellType.TETRA,
+                0,
+                npoints_on_pos_axis,
+                _index(0, nphi - 1, itheta + 1),
+                _index(0, nphi - 1, itheta),
+            )
 
         # Pyramids that form to origin but without an axis point
-        for iphi, itheta in itertools.product(range(nphi - 1), range(ntheta - 1)):
-            cells.append(5)
-            cells.extend(
-                [
-                    _index(0, iphi, itheta),
-                    _index(0, iphi, itheta + 1),
-                    _index(0, iphi + 1, itheta + 1),
-                    _index(0, iphi + 1, itheta),
-                    0,
-                ],
-            )
-            celltypes.append(pv.CellType.PYRAMID)
+        iphi_p, ith_p = np.meshgrid(np.arange(nphi - 1), itheta, indexing='ij')
+        _add_cells(
+            pv.CellType.PYRAMID,
+            _index(0, iphi_p, ith_p),
+            _index(0, iphi_p, ith_p + 1),
+            _index(0, iphi_p + 1, ith_p + 1),
+            _index(0, iphi_p + 1, ith_p),
+            0,
+        )
 
-    def _reorder_wedge(points: list[int]) -> list[int]:
+    def _reorder_wedge(points: list[int | NumpyArray[int]]) -> list[int | NumpyArray[int]]:
         """Swap points 1,2 and 4,5 for wedge cells."""
         points[1], points[2] = points[2], points[1]
         points[4], points[5] = points[5], points[4]
@@ -1213,67 +1216,57 @@ def SolidSphereGeneric(  # noqa: PLR0917
     # Wedges form between two r levels at first and last phi position
     #   At each r level, the triangle is formed with axis point,  two theta positions
     # First go upwards
+    ir_w, ith_w = np.meshgrid(np.arange(nr - 1), itheta, indexing='ij')
     if positive_axis:
-        for ir, itheta in itertools.product(range(nr - 1), range(ntheta - 1)):
-            axis0 = ir + 1 if include_origin else ir
-            axis1 = ir + 2 if include_origin else ir + 1
-
-            raw_points = [
-                axis0,
-                _index(ir, 0, itheta),
-                _index(ir, 0, itheta + 1),
-                axis1,
-                _index(ir + 1, 0, itheta),
-                _index(ir + 1, 0, itheta + 1),
-            ]
-            if pv.vtk_version_info < (9, 7):
-                raw_points = _reorder_wedge(raw_points)
-
-            cells.append(6)
-            cells.extend(raw_points)
-            celltypes.append(pv.CellType.WEDGE)
+        axis0 = ir_w + 1 if include_origin else ir_w
+        raw_points = [
+            axis0,
+            _index(ir_w, 0, ith_w),
+            _index(ir_w, 0, ith_w + 1),
+            axis0 + 1,
+            _index(ir_w + 1, 0, ith_w),
+            _index(ir_w + 1, 0, ith_w + 1),
+        ]
+        if pv.vtk_version_info < (9, 7):
+            raw_points = _reorder_wedge(raw_points)
+        _add_cells(pv.CellType.WEDGE, *raw_points)
 
     # now go downwards
     if negative_axis:
-        for ir, itheta in itertools.product(range(nr - 1), range(ntheta - 1)):
-            axis0 = npoints_on_pos_axis + ir
-            axis1 = npoints_on_pos_axis + ir + 1
-
-            raw_points = [
-                axis0,
-                _index(ir, nphi - 1, itheta + 1),
-                _index(ir, nphi - 1, itheta),
-                axis1,
-                _index(ir + 1, nphi - 1, itheta + 1),
-                _index(ir + 1, nphi - 1, itheta),
-            ]
-            if pv.vtk_version_info < (9, 7):
-                raw_points = _reorder_wedge(raw_points)
-
-            cells.append(6)
-            cells.extend(raw_points)
-            celltypes.append(pv.CellType.WEDGE)
+        axis0 = npoints_on_pos_axis + ir_w
+        raw_points = [
+            axis0,
+            _index(ir_w, nphi - 1, ith_w + 1),
+            _index(ir_w, nphi - 1, ith_w),
+            axis0 + 1,
+            _index(ir_w + 1, nphi - 1, ith_w + 1),
+            _index(ir_w + 1, nphi - 1, ith_w),
+        ]
+        if pv.vtk_version_info < (9, 7):
+            raw_points = _reorder_wedge(raw_points)
+        _add_cells(pv.CellType.WEDGE, *raw_points)
 
     # Form Hexahedra
     # Hexahedra form between two r levels and two phi levels and two theta levels
     #   Order by r levels
-    for ir, iphi, itheta in itertools.product(range(nr - 1), range(nphi - 1), range(ntheta - 1)):
-        cells.append(8)
-        cells.extend(
-            [
-                _index(ir, iphi, itheta),
-                _index(ir, iphi + 1, itheta),
-                _index(ir, iphi + 1, itheta + 1),
-                _index(ir, iphi, itheta + 1),
-                _index(ir + 1, iphi, itheta),
-                _index(ir + 1, iphi + 1, itheta),
-                _index(ir + 1, iphi + 1, itheta + 1),
-                _index(ir + 1, iphi, itheta + 1),
-            ],
-        )
-        celltypes.append(pv.CellType.HEXAHEDRON)
+    ir_h, iphi_h, ith_h = np.meshgrid(
+        np.arange(nr - 1), np.arange(nphi - 1), itheta, indexing='ij'
+    )
+    _add_cells(
+        pv.CellType.HEXAHEDRON,
+        _index(ir_h, iphi_h, ith_h),
+        _index(ir_h, iphi_h + 1, ith_h),
+        _index(ir_h, iphi_h + 1, ith_h + 1),
+        _index(ir_h, iphi_h, ith_h + 1),
+        _index(ir_h + 1, iphi_h, ith_h),
+        _index(ir_h + 1, iphi_h + 1, ith_h),
+        _index(ir_h + 1, iphi_h + 1, ith_h + 1),
+        _index(ir_h + 1, iphi_h, ith_h + 1),
+    )
 
-    mesh = pv.UnstructuredGrid(cells, celltypes, points)
+    mesh = pv.UnstructuredGrid(
+        np.concatenate(cell_blocks), np.concatenate(celltype_blocks), points
+    )
     mesh.rotate_y(90, inplace=True)
     _translate_and_orient(mesh, center, direction)
     return mesh
@@ -1467,7 +1460,8 @@ def Cube(  # noqa: PLR0917
     z_length: float = 1.0,
     bounds: VectorLike[float] | None = None,
     clean: bool = True,  # noqa: FBT001, FBT002
-    point_dtype: str = 'float32',
+    point_dtype: str | None = None,
+    points_dtype: str | None = None,
 ) -> PolyData:
     """Create a cube.
 
@@ -1510,10 +1504,21 @@ def Cube(  # noqa: PLR0917
 
         .. versionadded:: 0.33.0
 
-    point_dtype : str, default: 'float32'
+    points_dtype : str, optional
         Set the desired output point types. It must be either 'float32' or 'float64'.
+        Ignored unless :attr:`pyvista.core.config.Config.points_dtype` is ``None``, its
+        default, or ``'preserve'``.
+
+        .. versionadded:: 0.49
+
+    point_dtype : str, optional
+        Set the desired output point types.
 
         .. versionadded:: 0.44.0
+
+        .. deprecated:: 0.49
+            Renamed to ``points_dtype``, matching
+            :attr:`pyvista.core.config.Config.points_dtype`.
 
     Returns
     -------
@@ -1536,6 +1541,7 @@ def Cube(  # noqa: PLR0917
         z_length=z_length,
         bounds=bounds,
         point_dtype=point_dtype,
+        points_dtype=points_dtype,
     )
     cube = algo.output
 
@@ -1604,8 +1610,8 @@ def Box(
     if np.all(level_vector == level_vector[0]):
         return BoxSource(level=level_vector[0], quads=quads, bounds=bounds).output
 
-    mesh = pv.ImageData(dimensions=level_vector + 2)
-    mesh = mesh.extract_surface(algorithm=None, pass_pointid=False, pass_cellid=False).resize(
+    image = pv.ImageData(dimensions=level_vector + 2)
+    mesh = image.extract_surface(algorithm=None, pass_pointid=False, pass_cellid=False).resize(
         bounds=bounds
     )
     if not quads:
@@ -2066,22 +2072,21 @@ def CircularArc(  # noqa: PLR0917
     pointb[0] -= 1e-10
     pointb[1] -= 1e-10
 
-    arc = _vtk.vtkArcSource()
-    arc.SetPoint1(*pointa)
-    arc.SetPoint2(*pointb)
-    arc.SetCenter(*center)
-    arc.SetResolution(resolution)
-    arc.SetNegative(negative)
-
-    arc.Update()
-    angle = np.deg2rad(arc.GetAngle())
-    arc = wrap(arc.GetOutput())  # type: ignore[assignment]
+    alg = _vtk.vtkArcSource()
+    alg.SetPoint1(*pointa)
+    alg.SetPoint2(*pointb)
+    alg.SetCenter(*center)
+    alg.SetResolution(resolution)
+    alg.SetNegative(negative)
+    _update_alg(alg)
+    angle = np.deg2rad(alg.GetAngle())
+    arc = _apply_points_dtype(wrap(alg.GetOutput()), algorithm=alg)
     # Compute distance of every point along circular arc
     center = np.array(center).ravel()
-    radius = np.sqrt(np.sum((arc.points[0] - center) ** 2, axis=0))  # type: ignore[attr-defined]
-    angles = np.linspace(0.0, 1.0, arc.n_points) * angle  # type: ignore[attr-defined]
-    arc['Distance'] = radius * angles  # type: ignore[index]
-    return cast('pv.PolyData', arc)
+    radius = np.sqrt(np.sum((arc.points[0] - center) ** 2, axis=0))
+    angles = np.linspace(0.0, 1.0, arc.n_points) * angle
+    arc['Distance'] = radius * angles
+    return arc
 
 
 @_deprecate_positional_args
@@ -2147,24 +2152,24 @@ def CircularArcFromNormal(  # noqa: PLR0917
         polar = [1, 0, 0]
     angle_ = 90.0 if angle is None else angle
 
-    arc = _vtk.vtkArcSource()
-    arc.SetCenter(*center)
-    arc.SetResolution(resolution)
-    arc.UseNormalAndAngleOn()
+    alg = _vtk.vtkArcSource()
+    alg.SetCenter(*center)
+    alg.SetResolution(resolution)
+    alg.UseNormalAndAngleOn()
     check_valid_vector(normal, 'normal')
-    arc.SetNormal(*normal)
+    alg.SetNormal(*normal)
     check_valid_vector(polar, 'polar')
-    arc.SetPolarVector(*polar)
-    arc.SetAngle(angle_)
-    arc.Update()
-    angle_ = np.deg2rad(arc.GetAngle())
-    arc = wrap(arc.GetOutput())  # type: ignore[assignment]
+    alg.SetPolarVector(*polar)
+    alg.SetAngle(angle_)
+    _update_alg(alg)
+    angle_ = np.deg2rad(alg.GetAngle())
+    arc = _apply_points_dtype(wrap(alg.GetOutput()), algorithm=alg)
     # Compute distance of every point along circular arc
     center = np.array(center)
-    radius = np.sqrt(np.sum((arc.points[0] - center) ** 2, axis=0))  # type: ignore[attr-defined]
+    radius = np.sqrt(np.sum((arc.points[0] - center) ** 2, axis=0))
     angles = np.linspace(0.0, angle_, resolution + 1)
-    arc['Distance'] = radius * angles  # type: ignore[index]
-    return cast('pv.PolyData', arc)
+    arc['Distance'] = radius * angles
+    return arc
 
 
 def Pyramid(points: MatrixLike[float] | None = None) -> UnstructuredGrid:
@@ -2226,7 +2231,7 @@ def Pyramid(points: MatrixLike[float] | None = None) -> UnstructuredGrid:
     ug.SetPoints(pv.vtk_points(np.array(points), deep=False))
     ug.InsertNextCell(pyramid.GetCellType(), pyramid.GetPointIds())
 
-    return wrap(ug)
+    return _apply_points_dtype(wrap(ug))
 
 
 def Triangle(points: MatrixLike[float] | None = None) -> PolyData:
@@ -2265,7 +2270,7 @@ def Triangle(points: MatrixLike[float] | None = None) -> PolyData:
     check_valid_vector(points[2], 'points[2]')
 
     cells = np.array([[3, 0, 1, 2]])
-    return wrap(pv.PolyData(points, cells))
+    return _apply_points_dtype(wrap(pv.PolyData(points, cells)))
 
 
 def Rectangle(points: MatrixLike[float] | None = None) -> PolyData:
@@ -2341,7 +2346,7 @@ def Rectangle(points: MatrixLike[float] | None = None) -> PolyData:
         points[3] = point_2 - vec_02 - vec_12
         cells = np.array([[4, 0, 2, 1, 3]])
 
-    return wrap(pv.PolyData(points, cells))
+    return _apply_points_dtype(wrap(pv.PolyData(points, cells)))
 
 
 def Quadrilateral(points: MatrixLike[float] | None = None) -> PolyData:
@@ -2377,7 +2382,7 @@ def Quadrilateral(points: MatrixLike[float] | None = None) -> PolyData:
     points, _ = _coerce_pointslike_arg(points)
 
     cells = np.array([[4, 0, 1, 2, 3]])
-    return wrap(pv.PolyData(points, cells))
+    return _apply_points_dtype(wrap(pv.PolyData(points, cells)))
 
 
 @_deprecate_positional_args
@@ -2416,7 +2421,7 @@ def Circle(radius: float = 0.5, resolution: int = 100) -> PolyData:
     points[:, 0] = radius * np.cos(theta)
     points[:, 1] = radius * np.sin(theta)
     cells = np.array([np.append(np.array([resolution]), np.arange(resolution))])
-    return wrap(pv.PolyData(points, cells))
+    return _apply_points_dtype(wrap(pv.PolyData(points, cells)))
 
 
 @_deprecate_positional_args(allowed=['semi_major_axis', 'semi_minor_axis'])
@@ -2459,7 +2464,7 @@ def Ellipse(
     points[:, 0] = semi_major_axis * np.cos(theta)
     points[:, 1] = semi_minor_axis * np.sin(theta)
     cells = np.array([np.append(np.array([resolution]), np.arange(resolution))])
-    return wrap(pv.PolyData(points, cells))
+    return _apply_points_dtype(wrap(pv.PolyData(points, cells)))
 
 
 @_deprecate_positional_args
@@ -2809,4 +2814,4 @@ def Icosphere(
     # scale to desired radius and translate origin
     dist = np.linalg.norm(mesh.points, axis=1, keepdims=True)  # distance from origin
     mesh.points = mesh.points * (radius / dist) + center
-    return mesh
+    return _apply_points_dtype(mesh)

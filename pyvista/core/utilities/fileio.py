@@ -555,11 +555,6 @@ def _read_dispatch(  # noqa: PLR0911
         try:
             return read_meshio(filename)
         except ReadError:
-            if ext == '.pv':  # pragma: no cover
-                msg += (
-                    "\nThe '.pv' extension is supported by the `pyvista-zstd` package. "
-                    'It can be installed with `pyvista[io]`.'
-                )
             raise OSError(msg)
     else:
         _set_reader_attributes(reader, **kwargs)

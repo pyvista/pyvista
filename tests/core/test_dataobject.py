@@ -16,6 +16,7 @@ from pyvista import examples
 from pyvista.core import _vtk_utilities
 from pyvista.core.dataobject import USER_DICT_KEY
 from pyvista.core.utilities.writer import BaseWriter
+from tests.vtk_backend_divergence import INT32_COMPRESSION
 
 
 def test_eq_wrong_type(sphere):
@@ -406,6 +407,23 @@ def test_pickle_serialize_deserialize(datasets_no_pointset, pickle_format, capfd
             assert arr_have == pytest.approx(arr_expected)
 
 
+@pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
+def test_pickle_drops_cached_vtk_objects(pickle_format):
+    pv.set_pickle_format(pickle_format)
+    mesh = pv.Sphere()
+    # A bool array is tracked in the instance dict, which must survive the round trip
+    mesh.point_data['flags'] = np.ones(mesh.n_points, dtype=bool)
+    mesh.find_closest_point((0.0, 0.0, 0.0))
+    assert isinstance(vars(mesh)['_point_locator'], pv._vtk.vtkObjectBase)
+    assert mesh.points.dataset.Get() is mesh
+
+    unpickled = pickle.loads(pickle.dumps(mesh))
+    assert not any(isinstance(value, pv._vtk.vtkObjectBase) for value in vars(unpickled).values())
+    assert unpickled == mesh
+    assert unpickled.point_data['flags'].dtype == np.bool_
+    assert unpickled.points.dataset.Get() is unpickled
+
+
 def n_points(dataset):
     # used in multiprocessing test
     return dataset.n_points
@@ -488,6 +506,7 @@ def test_save_raises_no_writers(monkeypatch: pytest.MonkeyPatch):
         pv.Sphere().save('foo.vtp')
 
 
+@pytest.mark.skip_vtk_backend('cvista', reason=INT32_COMPRESSION)
 def test_save_compression(sphere, tmp_path):
     # int32 indices compress less, so pin the width the ratio below assumes.
     sphere = pv.PolyData(sphere.points, faces=sphere.faces.astype(np.int64))

@@ -40,9 +40,9 @@ from pyvista._warn_external import warn_external
 from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.filters import _update_alg
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
-from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
 from pyvista.core.utilities.arrays import raise_not_matching
@@ -155,6 +155,8 @@ if TYPE_CHECKING:
     from pyvista.plotting.text import VerticalOptions
 
     from .opts import PointSpriteShape
+
+    _DistortionState = tuple[tuple[float, ...], tuple[float, float]]
 
 
 SUPPORTED_FORMATS = ['.png', '.jpeg', '.jpg', '.bmp', '.tif', '.tiff']
@@ -502,13 +504,10 @@ class BasePlotter(_BoundsSizeMixin):
         # 3D location of the last click registered by ``left_button_down``
         self.pickpoint: NumpyArray[float] | None = None
 
-        self._theme = Theme()
-        if theme is None:
-            # copy global theme to ensure local plot theme is fixed
-            # after creation.
-            self._theme.load_theme(pv.global_theme)
-        else:
-            self._theme.load_theme(_resolve_theme_like(theme))
+        # snapshot the theme so later edits to the source theme do not reach this plotter
+        self._theme = Theme._from_theme(
+            pv.global_theme if theme is None else _resolve_theme_like(theme)
+        )
 
         self.image_transparent_background = self._theme.transparent_background
 
@@ -590,6 +589,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         self._camera_distortion_coefficients: tuple[float, ...] | None = None
         self._camera_distortion_observers: list[tuple[Renderer, int]] = []
+        self._camera_distortion_sweeps: dict[Renderer, tuple[int, _DistortionState]] = {}
         self._camera_distortion_warned: set[str] = set()
 
         self._initialized = True
@@ -1251,14 +1251,17 @@ class BasePlotter(_BoundsSizeMixin):
 
         Examples
         --------
-        Return the plotter shape.
+        .. pyvista-plot::
+            :force_static:
 
-        >>> import pyvista as pv
-        >>> pl = pv.Plotter(shape=(2, 2))
-        >>> pl.shape
-        (2, 2)
+            Return the plotter shape.
 
-        >>> pl.show()
+            >>> import pyvista as pv
+            >>> pl = pv.Plotter(shape=(2, 2))
+            >>> pl.shape
+            (2, 2)
+
+            >>> pl.show()
 
         """
         return self.renderers.shape
@@ -1781,10 +1784,9 @@ class BasePlotter(_BoundsSizeMixin):
         Brown-Conrady distortion is applied by a vertex shader replacement on
         each actor, so it displaces geometry rather than resampling the
         rendered image: geometry that is coarse relative to the distortion
-        does not curve smoothly. Actors are swept before every render, so
-        anything added afterwards is distorted too, including actors a
-        :vtk:`vtkImporter` puts in the scene without going through
-        :func:`~pyvista.Plotter.add_actor`.
+        does not curve smoothly. Anything added to the scene afterwards is
+        distorted too, including actors a :vtk:`vtkImporter` puts there
+        without going through :func:`~pyvista.Plotter.add_actor`.
 
         Two kinds of prop are drawn by shaders with no vertices to displace,
         and are rendered undistorted alongside the rest of the scene, with a
@@ -1883,6 +1885,7 @@ class BasePlotter(_BoundsSizeMixin):
         for renderer, observer in self._camera_distortion_observers:
             renderer.RemoveObserver(observer)
         self._camera_distortion_observers = []
+        self._camera_distortion_sweeps = {}
         for renderer in self.renderers:
             for prop in renderer.actors.values():
                 if getattr(prop, '_camera_distortion_state', None) is None:
@@ -1908,14 +1911,23 @@ class BasePlotter(_BoundsSizeMixin):
             'undistorted alongside any distorted actors.'
         )
 
-    def _apply_camera_distortion(self, *_args) -> None:
-        """Give every actor the distortion shader and keep its uniforms current."""
+    def _apply_camera_distortion(self, caller: Renderer | None = None, *_args) -> None:
+        """Give the actors of ``caller``, or of every renderer, current uniforms."""
         coefficients = self._camera_distortion_coefficients
         if coefficients is None:  # pragma: no cover - disable removes the observer first
             return
-        for renderer in self.renderers:
+        for renderer in self.renderers if caller is None else [caller]:
+            props = renderer.GetViewProps()
             state = (coefficients, _projection_scale(renderer))
-            for prop in renderer.actors.values():
+            # An actor can only enter the scene undistorted by being added to the
+            # collection, so a renderer holding the props the last sweep left in
+            # this state has nothing for another walk to find.
+            sweep = (props.GetMTime(), state)
+            if self._camera_distortion_sweeps.get(renderer) == sweep:
+                continue
+            self._camera_distortion_sweeps[renderer] = sweep
+            for index in range(props.GetNumberOfItems()):
+                prop = props.GetItemAsObject(index)
                 if not isinstance(prop, _vtk.vtkActor):
                     if isinstance(prop, Volume):
                         self._warn_undistorted(
@@ -1932,9 +1944,7 @@ class BasePlotter(_BoundsSizeMixin):
                 if getattr(prop, '_camera_distortion_state', None) != state:
                     self._distort_actor(prop, state)
 
-    def _distort_actor(
-        self, prop: _vtk.vtkActor, state: tuple[tuple[float, ...], tuple[float, float]]
-    ) -> None:
+    def _distort_actor(self, prop: _vtk.vtkActor, state: _DistortionState) -> None:
         """Attach the distortion shader to one actor and set its uniforms."""
         coefficients, projection_scale = state
         if getattr(prop, '_camera_distortion_state', None) is None:
@@ -4953,50 +4963,53 @@ class BasePlotter(_BoundsSizeMixin):
 
         Examples
         --------
-        Show a built-in volume example with the ``coolwarm`` colormap.
+        .. pyvista-plot::
+            :force_static:
 
-        >>> from pyvista import examples
-        >>> import pyvista as pv
-        >>> bolt_nut = examples.download_bolt_nut()
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_volume(bolt_nut, cmap='coolwarm')
-        >>> pl.show()
+            Show a built-in volume example with the ``coolwarm`` colormap.
 
-        Create a volume from scratch and plot it using single vector of
-        scalars.
+            >>> from pyvista import examples
+            >>> import pyvista as pv
+            >>> bolt_nut = examples.download_bolt_nut()
+            >>> pl = pv.Plotter()
+            >>> _ = pl.add_volume(bolt_nut, cmap='coolwarm')
+            >>> pl.show()
 
-        >>> import pyvista as pv
-        >>> grid = pv.ImageData(dimensions=(9, 9, 9))
-        >>> grid['scalars'] = -grid.x
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_volume(grid, opacity='linear')
-        >>> pl.show()
+            Create a volume from scratch and plot it using single vector of
+            scalars.
 
-        Plot a volume from scratch using RGBA scalars
+            >>> import pyvista as pv
+            >>> grid = pv.ImageData(dimensions=(9, 9, 9))
+            >>> grid['scalars'] = -grid.x
+            >>> pl = pv.Plotter()
+            >>> _ = pl.add_volume(grid, opacity='linear')
+            >>> pl.show()
 
-        >>> import pyvista as pv
-        >>> import numpy as np
-        >>> grid = pv.ImageData(dimensions=(5, 20, 20))
-        >>> scalars = grid.points - (grid.origin)
-        >>> scalars /= scalars.max()
-        >>> opacity = np.linalg.norm(grid.points - grid.center, axis=1).reshape(-1, 1)
-        >>> opacity /= opacity.max()
-        >>> scalars = np.hstack((scalars, opacity**3))
-        >>> scalars *= 255
-        >>> pl = pv.Plotter()
-        >>> vol = pl.add_volume(grid, scalars=scalars.astype(np.uint8))
-        >>> vol.prop.interpolation_type = 'linear'
-        >>> pl.show()
+            Plot a volume from scratch using RGBA scalars
 
-        Plot an UnstructuredGrid.
+            >>> import pyvista as pv
+            >>> import numpy as np
+            >>> grid = pv.ImageData(dimensions=(5, 20, 20))
+            >>> scalars = grid.points - (grid.origin)
+            >>> scalars /= scalars.max()
+            >>> opacity = np.linalg.norm(grid.points - grid.center, axis=1).reshape(-1, 1)
+            >>> opacity /= opacity.max()
+            >>> scalars = np.hstack((scalars, opacity**3))
+            >>> scalars *= 255
+            >>> pl = pv.Plotter()
+            >>> vol = pl.add_volume(grid, scalars=scalars.astype(np.uint8))
+            >>> vol.prop.interpolation_type = 'linear'
+            >>> pl.show()
 
-        >>> from pyvista import examples
-        >>> import pyvista as pv
-        >>> mesh = examples.download_letter_a()
-        >>> mesh['scalars'] = mesh.points[:, 1]
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_volume(mesh, opacity_unit_distance=0.1)
-        >>> pl.show()
+            Plot an UnstructuredGrid.
+
+            >>> from pyvista import examples
+            >>> import pyvista as pv
+            >>> mesh = examples.download_letter_a()
+            >>> mesh['scalars'] = mesh.points[:, 1]
+            >>> pl = pv.Plotter()
+            >>> _ = pl.add_volume(mesh, opacity_unit_distance=0.1)
+            >>> pl.show()
 
         """
         # Handle default arguments
@@ -5410,6 +5423,11 @@ class BasePlotter(_BoundsSizeMixin):
                 msg = 'This plotter does not have an active mapper.'
                 raise AttributeError(msg)
             self.mapper.scalar_range = clim
+            self.scalar_bars._resync_titles.update(
+                title
+                for title, mappers in self.scalar_bars._scalar_bar_mappers.items()
+                if self.mapper in mappers
+            )
             return
 
         try:
@@ -5419,6 +5437,7 @@ class BasePlotter(_BoundsSizeMixin):
         except KeyError:
             msg = f'Name ({name!r}) not valid/not found in this plotter.'
             raise ValueError(msg) from None
+        self.scalar_bars._resync_titles.add(name)
 
     def clear_actors(self) -> None:
         """Clear actors from all renderers."""
@@ -5594,85 +5613,6 @@ class BasePlotter(_BoundsSizeMixin):
         # by default, use the plotter local theme
         kwargs.setdefault('theme', self._theme)
         return self.scalar_bars.add_scalar_bar(title, **kwargs)
-
-    @_deprecate_positional_args(allowed=['scalars'])
-    def update_scalars(self, scalars, mesh=None, render: bool = True) -> None:  # noqa: ANN001, FBT001, FBT002
-        """Update scalars of an object in the plotter.
-
-        .. deprecated:: 0.43.0
-            This method is deprecated and will be removed in a future version of
-            PyVista. It is functionally equivalent to directly modifying the
-            scalars of a mesh in-place.
-
-            .. code-block:: python
-
-                # Modify the points in place
-                mesh['my scalars'] = values
-                # Explicitly call render if needed
-                pl.render()
-
-        Parameters
-        ----------
-        scalars : sequence
-            Scalars to replace existing scalars.
-
-        mesh : vtk.PolyData | vtk.UnstructuredGrid, optional
-            Object that has already been added to the Plotter.  If
-            None, uses last added mesh.
-
-        render : bool, default: True
-            Force a render when True.
-
-        """
-        # Deprecated on 0.43.0, estimated removal on v0.46.0
-        warn_external(
-            'This method is deprecated and will be removed in a future version of '
-            'PyVista. Directly modify the scalars of a mesh in-place instead.',
-            PyVistaDeprecationWarning,
-        )
-
-        if mesh is None:
-            mesh = self.mesh
-
-        if isinstance(mesh, (Iterable, pv.MultiBlock)):
-            # Recursive if need to update scalars on many meshes
-            for m in mesh:
-                self.update_scalars(scalars, mesh=m, render=False)
-            if render:
-                self.render()
-            return
-
-        if isinstance(scalars, str):
-            # Grab scalars array if name given
-            scalars = get_array(mesh, scalars)
-
-        if scalars is None:
-            if render:
-                self.render()
-            return
-
-        if scalars.shape[0] == mesh.GetNumberOfPoints():
-            data = mesh.GetPointData()
-        elif scalars.shape[0] == mesh.GetNumberOfCells():
-            data = mesh.GetCellData()
-        else:
-            raise_not_matching(scalars, mesh)
-
-        vtk_scalars = data.GetScalars()
-        if vtk_scalars is None:
-            msg = 'No active scalars'
-            raise ValueError(msg)
-        s = convert_array(vtk_scalars)
-        s[:] = scalars
-        vtk_scalars.Modified()
-        data.Modified()
-        with contextlib.suppress(Exception):
-            # Why are the points updated here? Not all datasets have points
-            # and only the scalars array is modified by this function...
-            mesh.GetPoints().Modified()
-
-        if render:
-            self.render()
 
     def _clear_ren_win(self) -> None:
         """Clear the render window."""
@@ -5864,27 +5804,29 @@ class BasePlotter(_BoundsSizeMixin):
 
         Examples
         --------
-        Add blue text to the upper right of the plotter.
+        .. pyvista-plot::
+            :force_static:
 
-        >>> import pyvista as pv
-        >>> pl = pv.Plotter()
-        >>> actor = pl.add_text(
-        ...     'Sample Text',
-        ...     position='upper_right',
-        ...     color='blue',
-        ...     shadow=True,
-        ...     font_size=26,
-        ... )
-        >>> pl.show()
+            Add blue text to the upper right of the plotter.
 
-        Add text and use a custom freetype readable font file.
+            >>> import pyvista as pv
+            >>> pl = pv.Plotter()
+            >>> actor = pl.add_text(
+            ...     'Sample Text',
+            ...     position='upper_right',
+            ...     color='blue',
+            ...     shadow=True,
+            ...     font_size=26,
+            ... )
+            >>> pl.show()
 
-        >>> pl = pv.Plotter()
-        >>> actor = pl.add_text(
-        ...     'Text',
-        ...     font_file='/home/user/Mplus2-Regular.ttf',
-        ... )  # doctest:+SKIP
+            Add text and use a custom freetype readable font file.
 
+            >>> pl = pv.Plotter()
+            >>> actor = pl.add_text(
+            ...     'Text',
+            ...     font_file='/home/user/Mplus2-Regular.ttf',
+            ... )  # doctest:+SKIP
 
         """
         if font_size is None:
@@ -6884,12 +6826,12 @@ class BasePlotter(_BoundsSizeMixin):
         pdata = pv.vector_poly_data(cent, direction)
         # Create arrow object
         arrow = _vtk.vtkArrowSource()
-        arrow.Update()
+        _update_alg(arrow)
         glyph3D = _vtk.vtkGlyph3D()
         glyph3D.SetSourceData(arrow.GetOutput())
         glyph3D.SetInputData(pdata)
         glyph3D.SetVectorModeToUseVector()
-        glyph3D.Update()
+        _update_alg(glyph3D)
 
         arrows = wrap(glyph3D.GetOutput())
         return self.add_mesh(arrows, **kwargs)
@@ -9023,11 +8965,14 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
         Examples
         --------
-        >>> import pyvista as pv
-        >>> pl = pv.Plotter()
-        >>> pl.background_color = 'grey'
-        >>> actor = pl.add_title('Plot Title', font='courier', color='k', font_size=40)
-        >>> pl.show()
+        .. pyvista-plot::
+            :force_static:
+
+            >>> import pyvista as pv
+            >>> pl = pv.Plotter()
+            >>> pl.background_color = 'grey'
+            >>> actor = pl.add_title('Plot Title', font='courier', color='k', font_size=40)
+            >>> pl.show()
 
         """
         # add additional spacing from the top of the figure by default

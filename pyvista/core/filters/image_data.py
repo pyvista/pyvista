@@ -691,86 +691,89 @@ class ImageDataFilters(DataSetFilters):
 
         Examples
         --------
-        .. autoopengraph_thumbnail:: 4
+        .. pyvista-plot::
+            :force_static:
 
-        Load a grayscale image.
+            .. autoopengraph_thumbnail:: 4
 
-        >>> import numpy as np
-        >>> import pyvista as pv
-        >>> from pyvista import examples
-        >>> gray_image = examples.download_yinyang()
-        >>> gray_image.dimensions
-        (512, 342, 1)
+            Load a grayscale image.
 
-        Define a custom plotting helper to show the image as pixel cells.
+            >>> import numpy as np
+            >>> import pyvista as pv
+            >>> from pyvista import examples
+            >>> gray_image = examples.download_yinyang()
+            >>> gray_image.dimensions
+            (512, 342, 1)
 
-        >>> def image_plotter(image):
-        ...     pixel_cells = image.points_to_cells()
-        ...
-        ...     pl = pv.Plotter()
-        ...     pl.add_mesh(
-        ...         pixel_cells,
-        ...         cmap='gray',
-        ...         clim=[0, 255],
-        ...         lighting=False,
-        ...         show_scalar_bar=False,
-        ...     )
-        ...     pl.view_xy()
-        ...     pl.camera.tight()
-        ...     return pl
+            Define a custom plotting helper to show the image as pixel cells.
 
-        Plot the image for context.
+            >>> def image_plotter(image):
+            ...     pixel_cells = image.points_to_cells()
+            ...
+            ...     pl = pv.Plotter()
+            ...     pl.add_mesh(
+            ...         pixel_cells,
+            ...         cmap='gray',
+            ...         clim=[0, 255],
+            ...         lighting=False,
+            ...         show_scalar_bar=False,
+            ...     )
+            ...     pl.view_xy()
+            ...     pl.camera.tight()
+            ...     return pl
 
-        >>> image_plotter(gray_image).show()
+            Plot the image for context.
 
-        Crop the white border around the image using active scalars as a mask. Here we specify a
-        background value of ``255`` to correspond to white pixels. If this was an RGB image, we
-        could also specify ``(255, 255, 255)`` as the background value.
+            >>> image_plotter(gray_image).show()
 
-        >>> cropped = gray_image.crop(mask=True, background_value=255)
-        >>> cropped.dimensions
-        (237, 238, 1)
-        >>> image_plotter(cropped).show()
+            Crop the white border around the image using active scalars as a mask. Here we
+            specify a background value of ``255`` to correspond to white pixels. If this was
+            an RGB image, we could also specify ``(255, 255, 255)`` as the background value.
 
-        Use ``margin`` instead to remove 100 and 20 pixels from each side of the x- and y-axis,
-        respectively.
+            >>> cropped = gray_image.crop(mask=True, background_value=255)
+            >>> cropped.dimensions
+            (237, 238, 1)
+            >>> image_plotter(cropped).show()
 
-        >>> cropped = gray_image.crop(margin=(100, 20))
-        >>> cropped.dimensions
-        (312, 302, 1)
-        >>> image_plotter(cropped).show()
+            Use ``margin`` instead to remove 100 and 20 pixels from each side of the x- and y-axis,
+            respectively.
 
-        Use ``offset`` to select a starting location for the crop (from the origin at the
-        bottom-left corner) along with ``dimensions`` to define the crop size.
+            >>> cropped = gray_image.crop(margin=(100, 20))
+            >>> cropped.dimensions
+            (312, 302, 1)
+            >>> image_plotter(cropped).show()
 
-        >>> cropped = gray_image.crop(offset=(50, 20, 0), dimensions=(300, 200, 1))
-        >>> cropped.dimensions
-        (300, 200, 1)
-        >>> image_plotter(cropped).show()
+            Use ``offset`` to select a starting location for the crop (from the origin at the
+            bottom-left corner) along with ``dimensions`` to define the crop size.
 
-        Use ``extent`` directly instead of using ``dimensions`` and ``offset`` to yield the same
-        result as above.
+            >>> cropped = gray_image.crop(offset=(50, 20, 0), dimensions=(300, 200, 1))
+            >>> cropped.dimensions
+            (300, 200, 1)
+            >>> image_plotter(cropped).show()
 
-        >>> cropped = gray_image.crop(extent=(50, 349, 20, 219, 0, 0))
-        >>> cropped.extent
-        (50, 349, 20, 219, 0, 0)
-        >>> image_plotter(cropped).show()
+            Use ``extent`` directly instead of using ``dimensions`` and ``offset`` to yield
+            the same result as above.
 
-        Use ``factor`` to crop 40% of the image. This `keeps` 40% of the pixels along each axis,
-        and `removes` 60% (that is, 30% from each side).
+            >>> cropped = gray_image.crop(extent=(50, 349, 20, 219, 0, 0))
+            >>> cropped.extent
+            (50, 349, 20, 219, 0, 0)
+            >>> image_plotter(cropped).show()
 
-        >>> cropped = gray_image.crop(factor=0.4)
-        >>> cropped.dimensions
-        (204, 136, 1)
-        >>> image_plotter(cropped).show()
+            Use ``factor`` to crop 40% of the image. This `keeps` 40% of the pixels along
+            each axis, and `removes` 60% (that is, 30% from each side).
 
-        Use ``normalized_bounds`` to crop from 40% to 80% of the image along the x-axis, and
-        from 30% to 90% of the image along the y-axis.
+            >>> cropped = gray_image.crop(factor=0.4)
+            >>> cropped.dimensions
+            (204, 136, 1)
+            >>> image_plotter(cropped).show()
 
-        >>> cropped = gray_image.crop(normalized_bounds=[0.4, 0.8, 0.3, 0.9, 0.0, 1.0])
-        >>> cropped.extent
-        (205, 408, 103, 306, 0, 0)
-        >>> image_plotter(cropped).show()
+            Use ``normalized_bounds`` to crop from 40% to 80% of the image along the x-axis, and
+            from 30% to 90% of the image along the y-axis.
+
+            >>> cropped = gray_image.crop(normalized_bounds=[0.4, 0.8, 0.3, 0.9, 0.0, 1.0])
+            >>> cropped.extent
+            (205, 408, 103, 306, 0, 0)
+            >>> image_plotter(cropped).show()
 
         """
         CORE_METHOD_KWARGS = dict(
@@ -840,10 +843,10 @@ class ImageDataFilters(DataSetFilters):
             default_background = 0.0
             background = default_background if background_value is None else background_value
             if num_components > 1:
-                background = _validation.validate_arrayN(
+                background_array = _validation.validate_arrayN(
                     background, name='background_value', must_have_length=(1, num_components)
                 )
-                mask_array = np.any(array != background, axis=1)
+                mask_array = np.any(array != background_array, axis=1)
             else:
                 background = _validation.validate_number(background, name='background_value')
                 mask_array = array != background
@@ -1715,34 +1718,37 @@ class ImageDataFilters(DataSetFilters):
 
         Examples
         --------
-        Load a binary image: :func:`~pyvista.examples.downloads.download_yinyang()`.
+        .. pyvista-plot::
+            :force_static:
 
-        >>> from pyvista import examples
-        >>> im = examples.download_yinyang()
+            Load a binary image: :func:`~pyvista.examples.downloads.download_yinyang()`.
 
-        Use ``close`` with a relatively small kernel to fill the top black edge of the yinyang.
+            >>> from pyvista import examples
+            >>> im = examples.download_yinyang()
 
-        >>> closed = im.close(kernel_size=5)
-        >>> kwargs = dict(
-        ...     cmap='grey',
-        ...     lighting=False,
-        ...     cpos='xy',
-        ...     zoom='tight',
-        ...     show_axes=False,
-        ...     show_scalar_bar=False,
-        ... )
-        >>> closed.plot(**kwargs)
+            Use ``close`` with a relatively small kernel to fill the top black edge of the yinyang.
 
-        Use a much larger kernel to also fill the small black circle.
+            >>> closed = im.close(kernel_size=5)
+            >>> kwargs = dict(
+            ...     cmap='grey',
+            ...     lighting=False,
+            ...     cpos='xy',
+            ...     zoom='tight',
+            ...     show_axes=False,
+            ...     show_scalar_bar=False,
+            ... )
+            >>> closed.plot(**kwargs)
 
-        >>> closed = im.close(kernel_size=25)
-        >>> closed.plot(**kwargs)
+            Use a much larger kernel to also fill the small black circle.
 
-        Since closing is the inverse of opening, we can alternatively use :meth:`open` to
-        fill the white foreground values instead of the black background.
+            >>> closed = im.close(kernel_size=25)
+            >>> closed.plot(**kwargs)
 
-        >>> opened = im.open(kernel_size=25)
-        >>> opened.plot(**kwargs)
+            Since closing is the inverse of opening, we can alternatively use :meth:`open` to
+            fill the white foreground values instead of the black background.
+
+            >>> opened = im.open(kernel_size=25)
+            >>> opened.plot(**kwargs)
 
         """
         # Closing: dilation followed by erosion
@@ -2913,7 +2919,9 @@ class ImageDataFilters(DataSetFilters):
                 # Output contains all boundary cells, need to remove cells we don't want
                 is_external = np.any(labels_array == background_value, axis=1)
                 remove = is_external if boundary_style == 'internal' else ~is_external
-                output.remove_cells(remove, inplace=True)
+                output.remove_cells(
+                    remove, inplace=True, pass_point_ids=False, pass_cell_ids=False
+                )
 
         want_external = 'external' in boundary_style
         if simplify_output is None:
@@ -4136,7 +4144,9 @@ class ImageDataFilters(DataSetFilters):
         """
         dimensions = np.asarray(self.dimensions)  # type: ignore[attr-defined]
         # Build an array of the operation size
-        operation_size = _validation.validate_array3(operation_size, reshape=True, broadcast=True)
+        operation_size = _validation.validate_array3(
+            operation_size, reshape=True, broadcast=True, must_be_integer=True, dtype_out=int
+        )
 
         if not isinstance(operation_mask, str) and operation_mask not in [0, 1, 2, 3]:
             # Build a bool array of the mask
@@ -4146,6 +4156,7 @@ class ImageDataFilters(DataSetFilters):
                 broadcast=False,
                 must_have_dtype=bool,
                 must_be_real=False,
+                dtype_out=bool,
             )
 
         elif operation_mask == 'preserve':

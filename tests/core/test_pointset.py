@@ -174,6 +174,19 @@ def test_points_to_double():
     assert pset.points_to_double().points.dtype == np.double
 
 
+def test_points_to_single():
+    np_points = np.random.default_rng().random((10, 3))
+    pset = pv.PointSet(np_points)
+    assert pset.points.dtype == np.double
+
+    assert pset.points_to_single() is pset
+    assert pset.points.dtype == np.single
+    assert np.allclose(pset.points, np_points.astype(np.single))
+
+    # idempotent
+    assert pset.points_to_single().points.dtype == np.single
+
+
 def test_translate():
     np_points = np.array([1, 2, 3], np.int64)
     with pytest.warns(UserWarning, match='Points is not a float type'):
