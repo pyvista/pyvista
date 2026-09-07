@@ -28,6 +28,8 @@ pyvista.registered_accessors
 
 from __future__ import annotations
 
+import contextlib
+
 # ICN003 waived: tests patch this module-level name to intercept plugin
 # imports. Patching `importlib.import_module` instead would apply globally,
 # for every importer, for the duration of the test.
@@ -141,6 +143,9 @@ class _AccessorRegistryState(TypedDict):
     # and consumed by ``_resolve_pending_accessor`` on first attribute
     # miss.
     pending: dict[str, str]
+    # Pending names whose import failed, mapped to the failure message. Hidden
+    # from ``__dir__``; retried only by ``registered_accessors``.
+    failed: dict[str, str]
 
 
 # Cached-accessor bookkeeping lives in the instance dict under this prefix. It is
@@ -288,6 +293,7 @@ _registrations: list[AccessorRegistration] = []
 _prior_values: dict[tuple[type, str], Any] = {}
 _entry_points_loaded: bool = False
 _pending_accessors: dict[str, str] = {}
+_failed_accessors: dict[str, str] = {}
 
 
 def _save_registry_state() -> _AccessorRegistryState:
@@ -302,6 +308,7 @@ def _save_registry_state() -> _AccessorRegistryState:
         'attached': attached,
         'entry_points_loaded': _entry_points_loaded,
         'pending': dict(_pending_accessors),
+        'failed': dict(_failed_accessors),
     }
 
 
@@ -350,6 +357,8 @@ def _restore_registry_state(state: _AccessorRegistryState) -> None:
     _entry_points_loaded = state['entry_points_loaded']
     _pending_accessors.clear()
     _pending_accessors.update(state['pending'])
+    _failed_accessors.clear()
+    _failed_accessors.update(state['failed'])
 
 
 def _find_accessor_on_mro(target_cls: type, name: str) -> type | None:
@@ -693,24 +702,26 @@ def _resolve_pending_accessor(name: str) -> bool:
 
     Called from :meth:`pyvista.DataObject.__getattr__` when a normal
     attribute lookup misses. Ensures entry-point metadata has been
-    scanned, pops the pending entry for ``name``, and imports the
-    corresponding plugin module. Importing the module triggers any
-    ``@register_dataset_accessor`` decorators inside it and attaches
-    the accessor as a side effect.
+    scanned and imports the plugin module pending under ``name``.
+    Importing the module triggers any ``@register_dataset_accessor``
+    decorators inside it and attaches the accessor as a side effect;
+    only then is the entry removed from the pending list.
 
     Returns
     -------
     bool
         ``True`` if a plugin was loaded for ``name`` (and the attribute
         lookup should be retried). ``False`` if no pending plugin
-        matches ``name``, or if the plugin failed to import.
+        matches ``name``.
 
-    Notes
-    -----
-    A plugin that fails to import emits a ``UserWarning`` and is
-    dropped from the pending list, so subsequent lookups of the same
-    name fall straight through without re-triggering the import or
-    re-emitting the warning.
+    Raises
+    ------
+    AttributeError
+        If the plugin fails to import. The message names the entry
+        point, its module and the underlying error. The entry stays
+        pending but is marked failed: the first failure also emits a
+        ``UserWarning``, later accesses re-raise the recorded message
+        without re-importing, and :func:`registered_accessors` retries.
 
     """
     if name.startswith('_'):
@@ -718,18 +729,23 @@ def _resolve_pending_accessor(name: str) -> bool:
         # lookups can skip the entry-point scan entirely.
         return False
     _ensure_entry_points()
-    module_path = _pending_accessors.pop(name, None)
+    module_path = _pending_accessors.get(name)
     if module_path is None:
         return False
+    failure = _failed_accessors.get(name)
+    if failure is not None:
+        raise AttributeError(failure)
     try:
         import_module(module_path)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         msg = (
             f'Failed to load {ACCESSOR_ENTRY_POINT_GROUP} entry point '
             f'"{name}" from {module_path}: {exc}'
         )
+        _failed_accessors[name] = msg
         warn_external(msg)
-        return False
+        raise AttributeError(msg) from exc
+    del _pending_accessors[name]
     return True
 
 
@@ -740,10 +756,11 @@ def _pending_accessor_names() -> tuple[str, ...]:
     Jupyter / REPL tab completion surfaces accessors contributed by
     installed plugins even before those plugins have been imported. The
     plugin module itself is **not** loaded—only the entry-point
-    metadata is consulted.
+    metadata is consulted. Names whose plugin failed to import are
+    omitted until :func:`registered_accessors` imports them successfully.
     """
     _ensure_entry_points()
-    return tuple(_pending_accessors)
+    return tuple(name for name in _pending_accessors if name not in _failed_accessors)
 
 
 def registered_accessors() -> tuple[AccessorRegistration, ...]:
@@ -756,6 +773,11 @@ def registered_accessors() -> tuple[AccessorRegistration, ...]:
     still appear in the result.
 
     .. versionadded:: 0.48.0
+
+    .. versionchanged:: 0.49.0
+        A plugin whose import failed stays pending and is retried on
+        every call, so an accessor whose dependency was installed after
+        the failure becomes available again.
 
     Returns
     -------
@@ -776,6 +798,8 @@ def registered_accessors() -> tuple[AccessorRegistration, ...]:
 
     """
     _ensure_entry_points()
+    _failed_accessors.clear()
     for pending_name in list(_pending_accessors):
-        _resolve_pending_accessor(pending_name)
+        with contextlib.suppress(AttributeError):  # the failed import already warned
+            _resolve_pending_accessor(pending_name)
     return tuple(_registrations)
