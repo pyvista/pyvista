@@ -323,9 +323,12 @@ def register_reader(
 
     * A bare **callable** ``handler(path, **kwargs)``. This is the
       lighter form for a format that has no reader-level state to
-      expose. :func:`pyvista.read` calls it directly;
-      :func:`pyvista.get_reader` raises :class:`ValueError` for the
-      extension because there is no reader object to hand back.
+      expose. :func:`pyvista.read` calls it directly, forwarding its
+      ``**kwargs``; :func:`pyvista.get_reader` raises
+      :class:`ValueError` for the extension because there is no reader
+      object to hand back. A callable registered with ``override=True``
+      is the exception: reader arguments for an extension PyVista
+      already reads route to the built-in reader instead.
 
     .. versionadded:: 0.48.0
 
