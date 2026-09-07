@@ -14,6 +14,7 @@ from typing import Literal
 from typing import NamedTuple
 from typing import cast
 from typing import get_args
+from typing import overload
 import warnings
 
 import numpy as np
@@ -55,6 +56,7 @@ if TYPE_CHECKING:
     from pyvista import DataSet
     from pyvista import ImageData
     from pyvista import MultiBlock
+    from pyvista import PointSet
     from pyvista import PolyData
     from pyvista import RectilinearGrid
     from pyvista import UnstructuredGrid
@@ -646,6 +648,86 @@ class DataSetFilters(DataObjectFilters):
         result.point_data['implicit_distance'] = pv.convert_array(dists)
         return result
 
+    @overload
+    def clip_scalar(  # type: ignore[misc]
+        self: PolyData,
+        scalars: str | None = ...,
+        invert: bool = ...,  # noqa: FBT001
+        value: float | VectorLike[float] = ...,
+        inplace: bool = ...,  # noqa: FBT001
+        progress_bar: bool = ...,  # noqa: FBT001
+        both: Literal[False] = False,  # noqa: FBT002
+    ) -> PolyData: ...
+    @overload
+    def clip_scalar(  # type: ignore[misc]
+        self: PolyData,
+        scalars: str | None = ...,
+        invert: bool = ...,  # noqa: FBT001
+        value: float | VectorLike[float] = ...,
+        inplace: bool = ...,  # noqa: FBT001
+        progress_bar: bool = ...,  # noqa: FBT001
+        both: Literal[True] = True,  # noqa: FBT002
+    ) -> tuple[PolyData, PolyData]: ...
+    @overload
+    def clip_scalar(  # type: ignore[misc]
+        self: PointSet,
+        scalars: str | None = ...,
+        invert: bool = ...,  # noqa: FBT001
+        value: float | VectorLike[float] = ...,
+        inplace: bool = ...,  # noqa: FBT001
+        progress_bar: bool = ...,  # noqa: FBT001
+        both: Literal[False] = False,  # noqa: FBT002
+    ) -> PointSet: ...
+    @overload
+    def clip_scalar(  # type: ignore[misc]
+        self: PointSet,
+        scalars: str | None = ...,
+        invert: bool = ...,  # noqa: FBT001
+        value: float | VectorLike[float] = ...,
+        inplace: bool = ...,  # noqa: FBT001
+        progress_bar: bool = ...,  # noqa: FBT001
+        both: Literal[True] = True,  # noqa: FBT002
+    ) -> tuple[PointSet, PointSet]: ...
+    @overload
+    def clip_scalar(  # type: ignore[misc]
+        self: UnstructuredGrid,
+        scalars: str | None = ...,
+        invert: bool = ...,  # noqa: FBT001
+        value: float | VectorLike[float] = ...,
+        inplace: bool = ...,  # noqa: FBT001
+        progress_bar: bool = ...,  # noqa: FBT001
+        both: Literal[False] = False,  # noqa: FBT002
+    ) -> UnstructuredGrid: ...
+    @overload
+    def clip_scalar(  # type: ignore[misc]
+        self: UnstructuredGrid,
+        scalars: str | None = ...,
+        invert: bool = ...,  # noqa: FBT001
+        value: float | VectorLike[float] = ...,
+        inplace: bool = ...,  # noqa: FBT001
+        progress_bar: bool = ...,  # noqa: FBT001
+        both: Literal[True] = True,  # noqa: FBT002
+    ) -> tuple[UnstructuredGrid, UnstructuredGrid]: ...
+    @overload
+    def clip_scalar(  # type: ignore[misc]
+        self: DataSet,
+        scalars: str | None = ...,
+        invert: bool = ...,  # noqa: FBT001
+        value: float | VectorLike[float] = ...,
+        inplace: Literal[False] = ...,
+        progress_bar: bool = ...,  # noqa: FBT001
+        both: Literal[False] = False,  # noqa: FBT002
+    ) -> UnstructuredGrid: ...
+    @overload
+    def clip_scalar(  # type: ignore[misc]
+        self: DataSet,
+        scalars: str | None = ...,
+        invert: bool = ...,  # noqa: FBT001
+        value: float | VectorLike[float] = ...,
+        inplace: Literal[False] = ...,
+        progress_bar: bool = ...,  # noqa: FBT001
+        both: Literal[True] = True,  # noqa: FBT002
+    ) -> tuple[UnstructuredGrid, UnstructuredGrid]: ...
     @_deprecate_positional_args
     def clip_scalar(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
@@ -783,6 +865,36 @@ class DataSetFilters(DataObjectFilters):
             return result0, result1
         return result0
 
+    @overload
+    def clip_surface(  # type: ignore[misc]
+        self: PolyData,
+        surface: DataSet | _vtk.vtkDataSet,
+        invert: bool = ...,  # noqa: FBT001
+        value: float = ...,
+        compute_distance: bool = ...,  # noqa: FBT001
+        progress_bar: bool = ...,  # noqa: FBT001
+        crinkle: bool = ...,  # noqa: FBT001
+    ) -> PolyData: ...
+    @overload
+    def clip_surface(  # type: ignore[misc]
+        self: PointSet,
+        surface: DataSet | _vtk.vtkDataSet,
+        invert: bool = ...,  # noqa: FBT001
+        value: float = ...,
+        compute_distance: bool = ...,  # noqa: FBT001
+        progress_bar: bool = ...,  # noqa: FBT001
+        crinkle: bool = ...,  # noqa: FBT001
+    ) -> PointSet: ...
+    @overload
+    def clip_surface(  # type: ignore[misc]
+        self: DataSet,
+        surface: DataSet | _vtk.vtkDataSet,
+        invert: bool = ...,  # noqa: FBT001
+        value: float = ...,
+        compute_distance: bool = ...,  # noqa: FBT001
+        progress_bar: bool = ...,  # noqa: FBT001
+        crinkle: bool = ...,  # noqa: FBT001
+    ) -> UnstructuredGrid: ...
     @_deprecate_positional_args(allowed=['surface'])
     def clip_surface(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetType,
