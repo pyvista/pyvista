@@ -11,6 +11,7 @@ from pathlib import Path
 import textwrap
 from typing import TYPE_CHECKING
 from typing import ClassVar
+from typing import NoReturn
 from typing import cast
 
 import numpy as np
@@ -459,23 +460,23 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
-    def slice(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
+    def slice(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise dimension reducing operations are not supported."""
         raise PointSetDimensionReductionError
 
-    def slice_along_axis(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
+    def slice_along_axis(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise dimension reducing operations are not supported."""
         raise PointSetDimensionReductionError
 
-    def slice_along_line(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
+    def slice_along_line(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise dimension reducing operations are not supported."""
         raise PointSetDimensionReductionError
 
-    def slice_implicit(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
+    def slice_implicit(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise dimension reducing operations are not supported."""
         raise PointSetDimensionReductionError
 
-    def slice_orthogonal(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
+    def slice_orthogonal(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise dimension reducing operations are not supported."""
         raise PointSetDimensionReductionError
 
