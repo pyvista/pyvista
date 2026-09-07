@@ -3807,11 +3807,18 @@ class BasePlotter(_BoundsSizeMixin):
             Accepts a :class:`pyvista.plotting.opts.PointSpriteShape`
             enum value or a string. Must be one of ``'circle'``,
             ``'triangle'``, ``'hexagon'``, ``'diamond'``, ``'asterisk'``,
-            or ``'star'``. Requires ``style='points'``. If
-            ``render_points_as_spheres`` is ``True`` (explicitly or via
-            theme), it will be automatically disabled with a warning.
+            or ``'star'``. Backends with native point shapes apply the shape
+            to vertex cells in all representation styles. Spheres and
+            Gaussian splats retain their own silhouettes.
+
+            On older backends, requires ``style='points'`` and automatically
+            disables ``render_points_as_spheres`` with a warning.
 
             .. versionadded:: 0.48
+
+            .. versionchanged:: 0.49
+                Native point shapes apply to vertices in all representations
+                and preserve explicit sphere rendering.
 
         render_lines_as_tubes : bool, optional
             Show lines as thick tubes rather than flat lines.  Control

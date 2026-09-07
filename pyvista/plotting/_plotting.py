@@ -13,6 +13,7 @@ from pyvista._warn_external import warn_external
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.misc import assert_empty_kwargs
 
+from ._property import _HAS_NATIVE_POINT_SHAPES
 from .colors import Color
 from .opts import InterpolationType
 from .tools import opacity_transfer_function
@@ -455,7 +456,7 @@ def _common_arg_parser(
     if point_shape is None:
         point_shape = theme.point_shape
 
-    if point_shape is not None and render_points_as_spheres:
+    if point_shape is not None and render_points_as_spheres and not _HAS_NATIVE_POINT_SHAPES:
         warn_external(
             f'point_shape={point_shape!r} requires render_points_as_spheres=False. '
             'Disabling render_points_as_spheres.',
