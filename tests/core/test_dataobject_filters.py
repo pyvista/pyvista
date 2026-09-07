@@ -178,26 +178,17 @@ def _joins_the_halves(mesh):
     return any(len(halves) > 1 for halves in halves_of_point.values())
 
 
-@pytest.mark.parametrize('both', [True, False])
-def test_clip_scalar_both_keeps_coincident_points_apart(both):
-    """Both halves of a scalar clip keep the points the input held apart."""
-    mesh = _seam_polydata()
-
-    result = mesh.clip_scalar(scalars='height', value=-99.0, invert=False, both=both)
-    kept = result[0] if both else result
-
-    assert type(kept) is pv.PolyData
-    assert kept.n_points == mesh.n_points
-    assert not _joins_the_halves(kept)
-
-
-def test_clip_strips_does_not_duplicate_points():
-    """A mesh mixing strips with other cells keeps one point per position."""
+@pytest.mark.parametrize('name', ['clip', 'clip_box', 'clip_slab', 'clip_surface', 'clip_scalar'])
+def test_clip_strips_does_not_duplicate_points(name):
+    """A mesh mixing strips with other cells keeps one point per position, quietly."""
     points = np.array([[0, 0, 0], [2, 0, 0], [2, 2, 0], [0, 2, 0], [1, 3, 0]], dtype=float)
     mesh = pv.PolyData(points, faces=[3, 0, 1, 2], strips=[4, 0, 1, 3, 2])
+    mesh.point_data['scalars'] = np.linspace(0.0, 1.0, mesh.n_points)
 
-    clipped = mesh.clip(normal='x', origin=(1.0, 0.0, 0.0))
+    with pv.VtkErrorCatcher() as catcher:
+        clipped = _clip_that_removes_nothing(mesh, name)
 
+    assert not catcher.events
     positions = {point.tobytes() for point in np.ascontiguousarray(clipped.points)}
     assert clipped.n_points == len(positions)
 
@@ -217,26 +208,6 @@ def test_clip_composite_empty_block_keeps_array_names(name):
     assert clipped['plane'].is_empty
     assert sorted(clipped['plane'].array_names) == sorted(plane.array_names)
     assert clipped['empty'] is None
-
-
-@pytest.mark.parametrize(
-    'name',
-    ['clip', 'clip_slab', 'clip_surface', 'clip_scalar'],
-)
-def test_clip_keeps_coincident_points_apart(name):
-    """A clip that removes nothing must not weld points the input kept apart."""
-    mesh = _seam_polydata()
-    enclosing = pv.Cube(center=mesh.center, x_length=50, y_length=50, z_length=50)
-    clipped = {
-        'clip': lambda: mesh.clip(normal='z', origin=(0, 0, -99), invert=False),
-        'clip_slab': lambda: mesh.clip_slab(thickness=99.0, normal='z'),
-        'clip_surface': lambda: mesh.clip_surface(enclosing),
-        'clip_scalar': lambda: mesh.clip_scalar(scalars='height', value=-99.0, invert=False),
-    }[name]()
-
-    assert type(clipped) is pv.PolyData
-    assert clipped.n_points == mesh.n_points
-    assert not _joins_the_halves(clipped)
 
 
 @pytest.mark.parametrize('invert', [True, False])
@@ -385,7 +356,15 @@ def test_clip_splits_the_mesh_in_two(mesh_type, name):
 
 
 @pytest.mark.parametrize(
-    'name', ['clip', 'clip_slab', 'clip_surface', 'clip_scalar', 'clip_box merge_points=False']
+    'name',
+    [
+        'clip',
+        'clip_slab',
+        'clip_surface',
+        'clip_scalar',
+        'clip_scalar both=True',
+        'clip_box merge_points=False',
+    ],
 )
 @pytest.mark.parametrize('mesh_type', ['PolyData', 'UnstructuredGrid'])
 def test_clip_keeps_coincident_points_apart_for_every_filter(mesh_type, name):
@@ -393,6 +372,8 @@ def test_clip_keeps_coincident_points_apart_for_every_filter(mesh_type, name):
     mesh = _seam_polydata() if mesh_type == 'PolyData' else _seam_grid()
     if name == 'clip_box merge_points=False':
         clipped = mesh.clip_box([-99.0, 99.0] * 3, invert=False, merge_points=False)
+    elif name == 'clip_scalar both=True':
+        clipped = mesh.clip_scalar(scalars='scalars', value=-99.0, invert=False, both=True)[0]
     else:
         clipped = _clip_that_removes_nothing(mesh, name)
 

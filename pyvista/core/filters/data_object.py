@@ -3212,13 +3212,7 @@ class DataObjectFilters:
         )
         mesh_in = source.cast_to_poly_points() if apply_vtk_94x_patch else source
 
-        # vtkTableBasedClipDataSet keeps points that the input holds apart, but it does not
-        # support triangle strips and emits the points of a mesh that mixes them twice
-        alg: _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet = (
-            _vtk.vtkClipPolyData()
-            if isinstance(mesh_in, pv.PolyData) and mesh_in.n_strips
-            else _vtk.vtkTableBasedClipDataSet()
-        )
+        alg = _clipper(mesh_in)
         alg.SetInputDataObject(mesh_in)  # Use the grid as the data we desire to cut
         alg.SetValue(value)
         # ``None`` clips by the active scalars instead, for a precomputed distance field
@@ -5802,6 +5796,15 @@ def _box_planes(
             origin[axis] = bound
             planes.append((normal, origin))
     return planes
+
+
+def _clipper(mesh: DataSet | MultiBlock) -> _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet:
+    """Return the clipper that keeps the points a mesh holds apart."""
+    # vtkTableBasedClipDataSet does not support triangle strips and duplicates the points
+    # of a mesh that mixes them with other cells
+    if isinstance(mesh, pv.PolyData) and mesh.n_strips:
+        return _vtk.vtkClipPolyData()
+    return _vtk.vtkTableBasedClipDataSet()
 
 
 def _keep_array_structure(

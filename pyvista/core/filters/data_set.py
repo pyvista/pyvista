@@ -35,6 +35,7 @@ from pyvista.core.filters import _match_points_dtype
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_object import DataObjectFilters
 from pyvista.core.filters.data_object import _cast_output_to_match_input_type
+from pyvista.core.filters.data_object import _clipper
 from pyvista.core.filters.data_object import _keep_array_structure
 from pyvista.core.filters.data_object import _validate_clip_inplace
 from pyvista.core.utilities.arrays import FieldAssociation
@@ -741,7 +742,7 @@ class DataSetFilters(DataObjectFilters):
         """
         if inplace:
             _validate_clip_inplace(self)
-        alg = _vtk.vtkTableBasedClipDataSet()
+        alg = _clipper(self)
 
         if is_single_value := isinstance(value, (float, int)):
             alg.SetValue(value)
