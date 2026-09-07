@@ -3055,7 +3055,19 @@ def test_validate_mesh_invalid_point_references():
 
 
 @pytest.mark.parametrize('n_points', [3, 131072], ids=['small', 'large'])
-@pytest.mark.parametrize('mesh_type', [pv.PolyData, pv.UnstructuredGrid])
+@pytest.mark.parametrize(
+    'mesh_type',
+    [
+        pytest.param(
+            pv.PolyData,
+            marks=pytest.mark.needs_vtk_version(
+                (9, 5, 0),
+                reason='Casting PolyData to UnstructuredGrid does not preserve invalid ids',
+            ),
+        ),
+        pv.UnstructuredGrid,
+    ],
+)
 def test_validate_mesh_invalid_point_references_is_only_status(mesh_type, n_points):
     # The large mesh is included since reading a point beyond the last one may fault
     points = np.zeros((n_points, 3))
