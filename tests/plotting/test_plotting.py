@@ -87,10 +87,18 @@ class _UsingMesa:
         return _UsingMesa._answer
 
 
-# These tests fail with mesa opengl, which is always set on Windows CI.
+class _UsingMesaOnWindows:
+    """Truthy only on Windows running Mesa; the renderer is probed nowhere else."""
+
+    def __bool__(self) -> bool:
+        """Return whether this is Windows with a Mesa renderer."""
+        return os.name == 'nt' and bool(_UsingMesa())
+
+
+# Mesa opengl is always used on Windows CI.
 skip_mesa = pytest.mark.skipif(_UsingMesa(), reason='Does not display correctly within OSMesa')
-skip_windows_mesa = skip_mesa and pytest.mark.skip_windows(
-    'Does not display correctly within OSMesa on Windows'
+skip_windows_mesa = pytest.mark.skipif(
+    _UsingMesaOnWindows(), reason='Does not display correctly within OSMesa on Windows'
 )
 skip_lesser_9_4_X = pytest.mark.needs_vtk_version(  # noqa: N816
     9, 4, reason='Functions not implemented before 9.4.X or invalid results prior'
