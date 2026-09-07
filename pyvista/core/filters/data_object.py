@@ -3708,7 +3708,7 @@ class DataObjectFilters:
         Notes
         -----
         A :class:`~pyvista.PointSet` has no cells to slice, so slicing one directly
-        raises :class:`~pyvista.PointSetDimensionReductionError`. As a block of a
+        raises :class:`~pyvista.core.errors.PointSetDimensionReductionError`. As a block of a
         :class:`~pyvista.MultiBlock` it gives an empty block instead.
 
         See Also
@@ -3844,7 +3844,7 @@ class DataObjectFilters:
         inputs use :vtk:`vtkCutter`.
 
         A :class:`~pyvista.PointSet` has no cells to slice, so slicing one directly
-        raises :class:`~pyvista.PointSetDimensionReductionError`. As a block of a
+        raises :class:`~pyvista.core.errors.PointSetDimensionReductionError`. As a block of a
         :class:`~pyvista.MultiBlock` it gives an empty block instead.
 
         See Also
@@ -3954,7 +3954,7 @@ class DataObjectFilters:
         Notes
         -----
         A :class:`~pyvista.PointSet` has no cells to slice, so slicing one directly
-        raises :class:`~pyvista.PointSetDimensionReductionError`. As a block of a
+        raises :class:`~pyvista.core.errors.PointSetDimensionReductionError`. As a block of a
         :class:`~pyvista.MultiBlock` it gives an empty block instead.
 
         See Also
@@ -4090,7 +4090,7 @@ class DataObjectFilters:
         Notes
         -----
         A :class:`~pyvista.PointSet` has no cells to slice, so slicing one directly
-        raises :class:`~pyvista.PointSetDimensionReductionError`. As a block of a
+        raises :class:`~pyvista.core.errors.PointSetDimensionReductionError`. As a block of a
         :class:`~pyvista.MultiBlock` it gives an empty block instead.
 
         See Also
@@ -4218,7 +4218,7 @@ class DataObjectFilters:
         Notes
         -----
         A :class:`~pyvista.PointSet` has no cells to slice, so slicing one directly
-        raises :class:`~pyvista.PointSetDimensionReductionError`. As a block of a
+        raises :class:`~pyvista.core.errors.PointSetDimensionReductionError`. As a block of a
         :class:`~pyvista.MultiBlock` it gives an empty block instead.
 
         See Also
