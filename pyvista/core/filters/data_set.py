@@ -35,6 +35,7 @@ from pyvista.core.filters import _match_points_dtype
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_object import DataObjectFilters
 from pyvista.core.filters.data_object import _cast_output_to_match_input_type
+from pyvista.core.filters.data_object import _clip_input
 from pyvista.core.filters.data_object import _clipper
 from pyvista.core.filters.data_object import _keep_array_structure
 from pyvista.core.filters.data_object import _validate_clip_inplace
@@ -761,7 +762,7 @@ class DataSetFilters(DataObjectFilters):
                 msg = 'Cannot have both=True for a range clip'
                 raise ValueError(msg)
         # Activate the scalars on a shallow copy so the input's active scalars are untouched
-        source = self.copy(deep=False)
+        source = cast('DataSet', _clip_input(self)).copy(deep=False)
         if scalars is None:
             set_default_active_scalars(source)
         else:

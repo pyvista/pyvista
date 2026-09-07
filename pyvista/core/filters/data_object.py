@@ -3210,7 +3210,7 @@ class DataObjectFilters:
             and pv.vtk_version_info >= (9, 4)
             and pv.vtk_version_info < (9, 5)
         )
-        mesh_in = source.cast_to_poly_points() if apply_vtk_94x_patch else source
+        mesh_in = source.cast_to_poly_points() if apply_vtk_94x_patch else _clip_input(source)
 
         alg = _clipper(mesh_in)
         alg.SetInputDataObject(mesh_in)  # Use the grid as the data we desire to cut
@@ -5800,6 +5800,16 @@ def _clipper(mesh: DataSet | MultiBlock) -> _vtk.vtkClipPolyData | _vtk.vtkTable
     if isinstance(mesh, pv.PolyData) and mesh.n_strips:
         return _vtk.vtkClipPolyData()
     return _vtk.vtkTableBasedClipDataSet()
+
+
+def _clip_input(mesh: DataSet | MultiBlock) -> DataSet | MultiBlock:
+    """Return the mesh as a class the table-based clipper clips without tetrahedralizing."""
+    if isinstance(mesh, pv.ExplicitStructuredGrid) and pv.vtk_version_info < (9, 5):
+        grid = mesh.cast_to_unstructured_grid()
+        for name in set(grid.cell_data.keys()) - set(mesh.cell_data.keys()):
+            grid.cell_data.remove(name)
+        return grid
+    return mesh
 
 
 def _keep_array_structure(
