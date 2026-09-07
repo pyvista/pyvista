@@ -2684,7 +2684,7 @@ class DataSetFilters(DataObjectFilters):
         if label_regions:
             if output.n_cells > 0 and not _region_ids_match(output):
                 # vtkConnectivityFilter intermittently omits the point array
-                _rebuild_point_region_ids(output, progress_bar=progress_bar)
+                _rebuild_point_region_ids(output)
             if 'RegionId' in output.point_data:
                 output.set_active_scalars('RegionId', preference='point')
 
@@ -8890,14 +8890,16 @@ def _stencil_binary_mask(
     return mask.ravel()
 
 
-def _rebuild_point_region_ids(mesh: DataSet, *, progress_bar: bool) -> None:
+def _rebuild_point_region_ids(mesh: DataSet) -> None:
     """Derive the point region ids from the cell region ids, in place."""
     cell_ids = mesh.cell_data.get('RegionId')
     if cell_ids is None or cell_ids.size != mesh.n_cells:
         return
+    grid = mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
+    point_ids = np.zeros(mesh.n_points, dtype=cell_ids.dtype)
+    point_ids[grid.cell_connectivity] = np.repeat(np.asarray(cell_ids), np.diff(grid.cell_offsets))
     mesh.point_data.pop('RegionId', None)
-    averaged = mesh.cell_data_to_point_data(progress_bar=progress_bar)['RegionId']
-    mesh.point_data['RegionId'] = averaged.round().astype(cell_ids.dtype)
+    mesh.point_data['RegionId'] = point_ids
 
 
 def _validate_extraction_ids(

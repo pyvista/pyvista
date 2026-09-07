@@ -1556,7 +1556,7 @@ def test_rebuild_point_region_ids(cast_to_ugrid):
     assert len(np.unique(expected)) == 2
 
     conn.point_data.pop('RegionId')
-    _rebuild_point_region_ids(conn, progress_bar=False)
+    _rebuild_point_region_ids(conn)
     assert np.array_equal(conn.point_data['RegionId'], expected)
     assert conn.point_data['RegionId'].dtype == conn.cell_data['RegionId'].dtype
 
@@ -1567,11 +1567,11 @@ def test_rebuild_point_region_ids_keeps_unusable_cell_ids():
 
     oversized = convert_array(np.zeros(mesh.n_cells + 1, dtype=int), name='RegionId')
     mesh.GetCellData().AddArray(oversized)
-    _rebuild_point_region_ids(mesh, progress_bar=False)
+    _rebuild_point_region_ids(mesh)
     assert 'RegionId' not in mesh.point_data
 
     mesh.GetCellData().RemoveArray('RegionId')
-    _rebuild_point_region_ids(mesh, progress_bar=False)
+    _rebuild_point_region_ids(mesh)
     assert 'RegionId' not in mesh.point_data
 
 
