@@ -2489,17 +2489,6 @@ class DataSetFilters(DataObjectFilters):
             )
             return _cast_extraction(extracted, mesh, pass_point_ids=False, pass_cell_ids=False)
 
-        def _region_ids_match(mesh):
-            """Return whether both ``'RegionId'`` arrays are sized to fit the mesh."""
-            point_ids = mesh.point_data.get('RegionId')
-            cell_ids = mesh.cell_data.get('RegionId')
-            return (
-                point_ids is not None
-                and cell_ids is not None
-                and point_ids.size == mesh.n_points
-                and cell_ids.size == mesh.n_cells
-            )
-
         # Validate all inputs before doing any work
         required_input = {
             'specified': ('region_ids', region_ids),
@@ -2682,9 +2671,8 @@ class DataSetFilters(DataObjectFilters):
                 output.cell_data['RegionId'] = np.zeros(output.n_cells, pv.ID_TYPE)
 
         if label_regions:
-            if output.n_cells > 0 and not _region_ids_match(output):
-                # vtkConnectivityFilter intermittently omits the point array
-                _rebuild_point_region_ids(output)
+            # vtkConnectivityFilter intermittently omits the point array
+            _rebuild_point_region_ids(output)
             if 'RegionId' in output.point_data:
                 output.set_active_scalars('RegionId', preference='point')
 
@@ -8888,10 +8876,22 @@ def _stencil_binary_mask(
     return mask.ravel()
 
 
+def _region_ids_match(mesh: DataSet) -> bool:
+    """Return whether both ``'RegionId'`` arrays are sized to fit the mesh."""
+    point_ids = mesh.point_data.get('RegionId')
+    cell_ids = mesh.cell_data.get('RegionId')
+    return (
+        point_ids is not None
+        and cell_ids is not None
+        and point_ids.size == mesh.n_points
+        and cell_ids.size == mesh.n_cells
+    )
+
+
 def _rebuild_point_region_ids(mesh: DataSet) -> None:
     """Derive the point region ids from the cell region ids, in place."""
     cell_ids = mesh.cell_data.get('RegionId')
-    if cell_ids is None or cell_ids.size != mesh.n_cells:
+    if _region_ids_match(mesh) or cell_ids is None or cell_ids.size != mesh.n_cells:
         return
     grid = mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
     point_ids = np.zeros(mesh.n_points, dtype=cell_ids.dtype)

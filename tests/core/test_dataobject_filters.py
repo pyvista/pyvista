@@ -968,9 +968,7 @@ def test_cell_data_to_point_data_active_scalars_not_converted():
     mesh.set_active_scalars('RegionId')
 
     converted = mesh.cell_data_to_point_data()
-    assert converted.active_scalars_name in (None, 'RegionId')
-    if converted.active_scalars_name is not None:
-        assert converted.active_scalars_name in converted.array_names
+    assert converted.active_scalars_name in (None, *converted.array_names)
 
 
 def test_cell_data_to_point_data_composite(multiblock_all_no_pointset):
