@@ -1498,6 +1498,12 @@ def test_connectivity_raises(
     with pytest.raises(ValueError, match='closest_point has shape'):
         dataset.connectivity(extraction_mode='closest', closest_point=(0, 0))
 
+    with pytest.raises(ValueError, match='cell_ids has shape'):
+        dataset.connectivity(extraction_mode='cell_seed', cell_ids=[[0, 1], [2, 3]])
+
+    with pytest.raises(ValueError, match='point_ids has shape'):
+        dataset.connectivity(extraction_mode='point_seed', point_ids=[[0, 1], [2, 3]])
+
     match = re.escape(
         "Invalid `region_assignment_mode` 'bar'. Must be in ['ascending', 'descending', 'unspecified']"  # noqa: E501
     )

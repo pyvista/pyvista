@@ -2568,6 +2568,7 @@ class DataSetFilters(DataObjectFilters):
                         n_items=n_items,
                         name=items,
                         invert=False,
+                        ids_name=input_name,
                     )
                 )
 
@@ -8904,6 +8905,7 @@ def _validate_extraction_ids(
     n_items: int,
     name: str,
     invert: bool,
+    ids_name: str = 'indices',
 ) -> NumpyArray[bool]:
     """Return a boolean selection mask from integer ids or a boolean mask."""
     ids = _validation.validate_array(
@@ -8911,12 +8913,13 @@ def _validate_extraction_ids(
         must_have_shape=[(), -1, (1, -1), (-1, 1)],
         reshape_to=-1,
         must_be_real=False,
-        name='indices',
+        name=ids_name,
     )
     if ids.dtype == bool:
         if ids.size != n_items:
             msg = (
-                f'Number of bool indices ({ids.size}) must match the number of {name} ({n_items}).'
+                f'Number of bool {ids_name} ({ids.size}) must match the number of '
+                f'{name} ({n_items}).'
             )
             raise ValueError(msg)
         mask = ids.astype(bool, copy=False)
