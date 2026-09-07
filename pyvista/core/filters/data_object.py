@@ -3270,11 +3270,12 @@ class DataObjectFilters:
         Returns
         -------
         output : DataSet | MultiBlock | tuple[DataSet | MultiBlock, DataSet | MultiBlock]
-            Clipped mesh when ``return_clipped=False`` or a tuple containing the
-            unclipped and clipped meshes. Output mesh type matches input type for
-            :class:`~pyvista.PointSet`, :class:`~pyvista.PolyData`, and
-            :class:`~pyvista.MultiBlock`; otherwise the output type is
-            :class:`~pyvista.UnstructuredGrid`.
+            Clipped mesh when ``return_clipped=False``, or a tuple of the kept and the
+            removed mesh when it is ``True``. A :class:`~pyvista.PolyData` gives a
+            ``PolyData`` and a :class:`~pyvista.PointSet` gives a ``PointSet``; every
+            other dataset gives an :class:`~pyvista.UnstructuredGrid`. A
+            :class:`~pyvista.MultiBlock` gives a ``MultiBlock`` whose blocks each follow
+            that rule, nested blocks included.
 
         Examples
         --------
@@ -3406,9 +3407,11 @@ class DataObjectFilters:
         Returns
         -------
         pyvista.DataSet | pyvista.MultiBlock
-            Clipped dataset. Output mesh type matches the input type for
-            :class:`~pyvista.PointSet` and :class:`~pyvista.MultiBlock`; otherwise
-            the output type is :class:`~pyvista.UnstructuredGrid`.
+            Clipped dataset. A :class:`~pyvista.PointSet` gives a ``PointSet``, clipped
+            through its vertices; every other dataset, :class:`~pyvista.PolyData`
+            included, gives an :class:`~pyvista.UnstructuredGrid`. A
+            :class:`~pyvista.MultiBlock` gives a ``MultiBlock`` whose blocks each follow
+            that rule, nested blocks included.
 
         Examples
         --------
@@ -3588,10 +3591,11 @@ class DataObjectFilters:
         Returns
         -------
         pyvista.DataSet | pyvista.MultiBlock
-            Clipped dataset. Output mesh type matches the input type for
-            :class:`~pyvista.PointSet`, :class:`~pyvista.PolyData`, and
-            :class:`~pyvista.MultiBlock`; otherwise the output type is
-            :class:`~pyvista.UnstructuredGrid`.
+            Clipped dataset. A :class:`~pyvista.PolyData` gives a ``PolyData`` and a
+            :class:`~pyvista.PointSet` gives a ``PointSet``; every other dataset gives
+            an :class:`~pyvista.UnstructuredGrid`. A
+            :class:`~pyvista.MultiBlock` gives a ``MultiBlock`` whose blocks each follow
+            that rule, nested blocks included.
 
         Raises
         ------
@@ -3697,8 +3701,15 @@ class DataObjectFilters:
         Returns
         -------
         pyvista.PolyData | pyvista.MultiBlock
-            Sliced dataset. A :class:`~pyvista.MultiBlock` input gives a
-            ``MultiBlock`` of :class:`~pyvista.PolyData` blocks.
+            Sliced dataset. Every dataset gives a :class:`~pyvista.PolyData`, and a
+            :class:`~pyvista.MultiBlock` gives a ``MultiBlock`` of ``PolyData``
+            blocks, nested blocks included.
+
+        Notes
+        -----
+        A :class:`~pyvista.PointSet` has no cells to slice, so slicing one directly
+        raises :class:`~pyvista.PointSetDimensionReductionError`. As a block of a
+        :class:`~pyvista.MultiBlock` it gives an empty block instead.
 
         See Also
         --------
@@ -3821,8 +3832,9 @@ class DataObjectFilters:
         Returns
         -------
         pyvista.PolyData | pyvista.MultiBlock
-            Sliced dataset. A :class:`~pyvista.MultiBlock` input gives a
-            ``MultiBlock`` of :class:`~pyvista.PolyData` blocks.
+            Sliced dataset. Every dataset gives a :class:`~pyvista.PolyData`, and a
+            :class:`~pyvista.MultiBlock` gives a ``MultiBlock`` of ``PolyData``
+            blocks, nested blocks included.
 
         Notes
         -----
@@ -3830,6 +3842,10 @@ class DataObjectFilters:
         :attr:`~pyvista.ImageData.direction_matrix` is sliced directly into quads, with
         point data interpolated between the two neighbouring grid planes. All other
         inputs use :vtk:`vtkCutter`.
+
+        A :class:`~pyvista.PointSet` has no cells to slice, so slicing one directly
+        raises :class:`~pyvista.PointSetDimensionReductionError`. As a block of a
+        :class:`~pyvista.MultiBlock` it gives an empty block instead.
 
         See Also
         --------
@@ -3932,7 +3948,14 @@ class DataObjectFilters:
         -------
         pyvista.MultiBlock
             Sliced dataset, with one :class:`~pyvista.PolyData` block per slice. A
-            :class:`~pyvista.MultiBlock` input gives one such ``MultiBlock`` per block.
+            :class:`~pyvista.MultiBlock` gives one such ``MultiBlock`` per block,
+            nested blocks included.
+
+        Notes
+        -----
+        A :class:`~pyvista.PointSet` has no cells to slice, so slicing one directly
+        raises :class:`~pyvista.PointSetDimensionReductionError`. As a block of a
+        :class:`~pyvista.MultiBlock` it gives an empty block instead.
 
         See Also
         --------
@@ -4061,7 +4084,14 @@ class DataObjectFilters:
         -------
         pyvista.MultiBlock
             Sliced dataset, with one :class:`~pyvista.PolyData` block per slice. A
-            :class:`~pyvista.MultiBlock` input gives one such ``MultiBlock`` per block.
+            :class:`~pyvista.MultiBlock` gives one such ``MultiBlock`` per block,
+            nested blocks included.
+
+        Notes
+        -----
+        A :class:`~pyvista.PointSet` has no cells to slice, so slicing one directly
+        raises :class:`~pyvista.PointSetDimensionReductionError`. As a block of a
+        :class:`~pyvista.MultiBlock` it gives an empty block instead.
 
         See Also
         --------
@@ -4181,8 +4211,15 @@ class DataObjectFilters:
         Returns
         -------
         pyvista.PolyData | pyvista.MultiBlock
-            Sliced dataset. A :class:`~pyvista.MultiBlock` input gives a
-            ``MultiBlock`` of :class:`~pyvista.PolyData` blocks.
+            Sliced dataset. Every dataset gives a :class:`~pyvista.PolyData`, and a
+            :class:`~pyvista.MultiBlock` gives a ``MultiBlock`` of ``PolyData``
+            blocks, nested blocks included.
+
+        Notes
+        -----
+        A :class:`~pyvista.PointSet` has no cells to slice, so slicing one directly
+        raises :class:`~pyvista.PointSetDimensionReductionError`. As a block of a
+        :class:`~pyvista.MultiBlock` it gives an empty block instead.
 
         See Also
         --------

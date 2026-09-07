@@ -811,54 +811,134 @@ def test_slice_filter_composite(multiblock_all):
     assert output.n_blocks == multiblock_all.n_blocks
 
 
-def _slice_call(mesh, name):
-    """Call one slice filter on a mesh with arguments that suit it."""
-    bounds = mesh.bounds
+def _output_type_meshes():
+    """Return one mesh of every wrappable class, all spanning the same bounds."""
+    axis = np.linspace(-1.0, 1.0, 5)
+    x, y, z = np.meshgrid(axis, axis, axis, indexing='ij')
+    explicit = pv.StructuredGrid(x, y, z)
+    explicit.dimensions = [5, 5, 5]
+    image = pv.ImageData(dimensions=(5, 5, 5), spacing=(0.5, 0.5, 0.5), origin=(-1, -1, -1))
+    return {
+        'PolyData': pv.Sphere(radius=1.0, theta_resolution=8, phi_resolution=8),
+        'PointSet': pv.PointSet(np.random.default_rng(0).uniform(-1, 1, (30, 3))),
+        'ImageData': image,
+        'RectilinearGrid': pv.RectilinearGrid(axis, axis, axis),
+        'StructuredGrid': pv.StructuredGrid(x, y, z),
+        'ExplicitStructuredGrid': explicit.cast_to_explicit_structured_grid(),
+        'UnstructuredGrid': image.cast_to_unstructured_grid(),
+    }
+
+
+def _output_type_call(mesh, name):
+    """Call one clip or slice filter with arguments valid for every input class."""
     kwargs = {
-        'slice': dict(normal=normals[0]),
-        'slice_implicit': dict(implicit_function=generate_plane((1.0, 0.0, 0.0), mesh.center)),
-        'slice_along_line': dict(
-            line=pv.Line(
-                (bounds.x_min, bounds.y_min, bounds.z_min),
-                (bounds.x_max, bounds.y_max, bounds.z_max),
-                resolution=10,
-            )
-        ),
+        'clip_slab': dict(normal='x', thickness=0.8),
+        'slice_implicit': dict(implicit_function=generate_plane((1.0, 0.0, 0.0), (0.0, 0.0, 0.0))),
         'slice_along_axis': dict(n=2),
+        'slice_along_line': dict(line=pv.Line((-2.0, -2.0, -2.0), (2.0, 2.0, 2.0), resolution=4)),
     }.get(name, {})
     return getattr(mesh, name)(**kwargs)
 
 
-@pytest.mark.parametrize(
-    'name',
-    ['slice', 'slice_implicit', 'slice_along_line', 'slice_orthogonal', 'slice_along_axis'],
-)
-def test_slice_filter_composite_pointset_block_is_empty(multiblock_all, name):
-    """Every slice filter gives an empty block for a ``PointSet``, which has no cells."""
-    pointset_index = next(
-        i for i, block in enumerate(multiblock_all) if isinstance(block, pv.PointSet)
+_GRID = pv.UnstructuredGrid
+_POLY = pv.PolyData
+_MULTI = pv.MultiBlock
+
+_CLIP_LIKE = {
+    'PolyData': _POLY,
+    'PointSet': pv.PointSet,
+    'ImageData': _GRID,
+    'RectilinearGrid': _GRID,
+    'StructuredGrid': _GRID,
+    'ExplicitStructuredGrid': _GRID,
+    'UnstructuredGrid': _GRID,
+}
+_BOX_LIKE = {**_CLIP_LIKE, 'PolyData': _GRID}
+_SLICE_LIKE = dict.fromkeys(_CLIP_LIKE, _POLY)
+_SLICES_LIKE = dict.fromkeys(_CLIP_LIKE, _MULTI)
+
+# The class each filter gives back for each input class, as the docstrings state it
+OUTPUT_TYPES = {
+    'clip': _CLIP_LIKE,
+    'clip_slab': _CLIP_LIKE,
+    'clip_box': _BOX_LIKE,
+    'slice': _SLICE_LIKE,
+    'slice_implicit': _SLICE_LIKE,
+    'slice_along_line': _SLICE_LIKE,
+    'slice_orthogonal': _SLICES_LIKE,
+    'slice_along_axis': _SLICES_LIKE,
+}
+
+
+@pytest.mark.parametrize('name', list(OUTPUT_TYPES))
+@pytest.mark.parametrize('mesh_type', list(_CLIP_LIKE))
+def test_clip_slice_output_type(name, mesh_type):
+    """Each filter gives back the class its docstring names, for every input class."""
+    mesh = _output_type_meshes()[mesh_type]
+
+    if mesh_type == 'PointSet' and name.startswith('slice'):
+        with pytest.raises(pv.PointSetDimensionReductionError):
+            _output_type_call(mesh, name)
+        return
+
+    output = _output_type_call(mesh, name)
+
+    expected = OUTPUT_TYPES[name][mesh_type]
+    assert type(output) is expected
+    if expected is _MULTI:
+        assert all(type(block) is _POLY for block in output)
+
+
+@pytest.mark.parametrize('name', list(OUTPUT_TYPES))
+def test_clip_slice_output_type_composite(name):
+    """A composite stays a composite, with every block following the same rule."""
+    meshes = _output_type_meshes()
+    flat, nested = list(meshes)[:3], list(meshes)[3:]
+    composite = pv.MultiBlock(
+        {
+            'flat': pv.MultiBlock({key: meshes[key] for key in flat}),
+            'nested': pv.MultiBlock({key: meshes[key] for key in nested}),
+            'empty': None,
+        }
     )
-    pointset = multiblock_all[pointset_index]
-    pointset.field_data['meta'] = [1.0]
 
-    block = _slice_call(multiblock_all, name)[pointset_index]
+    output = _output_type_call(composite, name)
 
-    blocks = block if isinstance(block, pv.MultiBlock) else [block]
-    for sliced in blocks:
-        assert isinstance(sliced, pv.PolyData)
-        assert sliced.is_empty
-        assert sliced.array_names == pointset.array_names
-        assert np.allclose(sliced.field_data['meta'], [1.0])
+    assert type(output) is _MULTI
+    assert output.keys() == composite.keys()
+    assert output['empty'] is None
+    for group, block_names in (('flat', flat), ('nested', nested)):
+        assert output[group].keys() == block_names
+        for mesh_type in block_names:
+            block = output[group][mesh_type]
+            expected = OUTPUT_TYPES[name][mesh_type]
+            assert type(block) is expected
+            if expected is _MULTI:
+                assert all(type(sub) is _POLY for sub in block)
+            if mesh_type == 'PointSet' and name.startswith('slice'):
+                blocks = block if isinstance(block, _MULTI) else [block]
+                assert all(sub.is_empty for sub in blocks)
 
 
 @pytest.mark.parametrize(
     'name',
     ['slice', 'slice_implicit', 'slice_along_line', 'slice_orthogonal', 'slice_along_axis'],
 )
-def test_slice_filter_pointset_raises(pointset, name):
-    """A ``PointSet`` on its own still refuses to be sliced."""
-    with pytest.raises(pv.PointSetDimensionReductionError):
-        _slice_call(pointset, name)
+def test_slice_composite_pointset_block_keeps_arrays(name):
+    """The empty block a PointSet gives still carries its arrays."""
+    points = pv.PointSet(np.random.default_rng(0).uniform(-1, 1, (30, 3)))
+    points.point_data['data'] = np.arange(points.n_points, dtype=float)
+    points.field_data['meta'] = [1.0]
+    points.set_active_scalars('data')
+
+    block = _output_type_call(pv.MultiBlock({'points': points}), name)['points']
+
+    for sliced in block if isinstance(block, _MULTI) else [block]:
+        assert type(sliced) is _POLY
+        assert sliced.is_empty
+        assert sliced.array_names == points.array_names
+        assert sliced.active_scalars_name == 'data'
+        assert np.allclose(sliced.field_data['meta'], [1.0])
 
 
 def test_slice_orthogonal_filter(datasets_no_pointset):
@@ -1250,24 +1330,6 @@ def test_slice_along_line_composite(multiblock_all):
     line = pv.Line(a, b, resolution=10)
     output = multiblock_all.slice_along_line(line, progress_bar=True)
     assert output.n_blocks == multiblock_all.n_blocks
-
-
-@pytest.mark.parametrize(
-    ('call', 'block_type'),
-    [
-        ('slice', pv.PolyData),
-        ('slice_implicit', pv.PolyData),
-        ('slice_along_line', pv.PolyData),
-        ('slice_orthogonal', pv.MultiBlock),
-        ('slice_along_axis', pv.MultiBlock),
-    ],
-)
-def test_slice_composite_output_type(multiblock_all, call, block_type):
-    output = _slice_call(multiblock_all, call)
-
-    assert isinstance(output, pv.MultiBlock)
-    assert output.n_blocks == multiblock_all.n_blocks
-    assert all(isinstance(block, block_type) for block in output)
 
 
 def test_slice_generate_triangles_true_emits_only_triangles():

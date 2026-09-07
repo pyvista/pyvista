@@ -687,9 +687,16 @@ class DataSetFilters(DataObjectFilters):
         -------
         output : pyvista.DataSet | tuple[pyvista.DataSet, pyvista.DataSet]
             Clipped dataset if ``both=False``.  If ``both=True`` then
-            returns a tuple of both clipped datasets. Output mesh type matches the
-            input type for :class:`~pyvista.PolyData` and :class:`~pyvista.PointSet`;
-            otherwise the output type is :class:`~pyvista.UnstructuredGrid`.
+            returns a tuple of both clipped datasets. A :class:`~pyvista.PolyData`
+            gives a ``PolyData`` and a :class:`~pyvista.PointSet` gives a ``PointSet``;
+            every other dataset gives an :class:`~pyvista.UnstructuredGrid`.
+
+        Notes
+        -----
+        This filter is not available on a :class:`~pyvista.MultiBlock`. Use
+        :meth:`~pyvista.DataObjectFilters.clip` or
+        :meth:`~pyvista.DataObjectFilters.clip_box` for a composite, or apply this
+        filter to each block with :meth:`~pyvista.CompositeFilters.generic_filter`.
 
         Examples
         --------
@@ -831,9 +838,16 @@ class DataSetFilters(DataObjectFilters):
         Returns
         -------
         DataSet
-            Clipped mesh. Output type matches input type for
-            :class:`~pyvista.PointSet` and :class:`~pyvista.PolyData`; otherwise the
-            output type is :class:`~pyvista.UnstructuredGrid`.
+            Clipped mesh. A :class:`~pyvista.PolyData` gives a ``PolyData`` and a
+            :class:`~pyvista.PointSet` gives a ``PointSet``; every other dataset gives
+            an :class:`~pyvista.UnstructuredGrid`.
+
+        Notes
+        -----
+        This filter is not available on a :class:`~pyvista.MultiBlock`. Use
+        :meth:`~pyvista.DataObjectFilters.clip` or
+        :meth:`~pyvista.DataObjectFilters.clip_box` for a composite, or apply this
+        filter to each block with :meth:`~pyvista.CompositeFilters.generic_filter`.
 
         Examples
         --------

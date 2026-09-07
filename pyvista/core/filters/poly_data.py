@@ -2125,6 +2125,13 @@ class PolyDataFilters(DataSetFilters):
             The clipped mesh. The point and cell data of the input are not
             carried over to it.
 
+        Notes
+        -----
+        This filter is not available on a :class:`~pyvista.MultiBlock`. Use
+        :meth:`~pyvista.DataObjectFilters.clip` or
+        :meth:`~pyvista.DataObjectFilters.clip_box` for a composite, or apply this
+        filter to each block with :meth:`~pyvista.CompositeFilters.generic_filter`.
+
         Examples
         --------
         Clip a sphere in the negative Z direction centered at the origin.

@@ -430,14 +430,17 @@ def test_clip_surface_output_type(datasets, crinkle):
         surface = pv.Sphere(radius=dataset.length, center=dataset.center)
         clp = dataset.clip_surface(surface, crinkle=crinkle)
         assert clp is not None
-        if isinstance(dataset, pv.PointSet):
-            assert isinstance(clp, pv.PointSet)
-        elif isinstance(dataset, pv.PolyData):
-            assert isinstance(clp, pv.PolyData)
-        elif isinstance(dataset, pv.MultiBlock):
-            assert isinstance(clp, pv.MultiBlock)
+        if isinstance(dataset, (pv.PointSet, pv.PolyData)):
+            assert type(clp) is type(dataset)
         else:
-            assert isinstance(clp, pv.UnstructuredGrid)
+            assert type(clp) is pv.UnstructuredGrid
+
+
+@pytest.mark.parametrize('name', ['clip_scalar', 'clip_surface', 'clip_closed_surface'])
+def test_clip_dataset_only_filters_are_not_composite(name):
+    """These clips take a dataset, not a composite."""
+    assert hasattr(pv.Sphere(), name)
+    assert not hasattr(pv.MultiBlock([pv.Sphere()]), name)
 
 
 def test_clip_closed_surface():
