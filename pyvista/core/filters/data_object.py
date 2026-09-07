@@ -3496,8 +3496,9 @@ class DataObjectFilters:
         # Optimization: vtkBoxClipDataSet splits every cell into tetrahedra (VTK 9.7), so
         # ImageData, RectilinearGrid, StructuredGrid, ExplicitStructuredGrid, and
         # UnstructuredGrid are clipped plane by plane instead, which keeps their cell types
-        # and is faster for it. PolyData and PointSet are already triangulated, so they gain
-        # nothing, and only the box filter has a locator to disable for ``merge_points``.
+        # and is faster for it. PolyData, and the vertices a PointSet is clipped as, are
+        # already triangulated and gain nothing from it, and only the box filter has a
+        # locator to disable for ``merge_points``.
         use_box_filter = isinstance(self, pv.PolyData) or not merge_points
         if use_box_filter:
             alg = _vtk.vtkBoxClipDataSet()
