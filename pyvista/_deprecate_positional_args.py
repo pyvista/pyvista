@@ -10,7 +10,7 @@ from typing import overload
 
 from typing_extensions import ParamSpec
 
-from pyvista._version import version_info
+from pyvista._version import _is_deprecation_due
 from pyvista._warn_external import warn_external
 
 if TYPE_CHECKING:
@@ -146,7 +146,7 @@ def _deprecate_positional_args(
             raise RuntimeError(msg)
 
         # Raise error post-deprecation
-        if version_info >= version:
+        if _is_deprecation_due(version):
             # Construct expected positional args and signature
             new_parameters = []
             max_args_to_print = actual_n_allowed + 2
@@ -226,7 +226,7 @@ def _deprecate_positional_args(
                     s = 's'
                     this = 'these'
 
-                if version_info < version:
+                if not _is_deprecation_due(version):
                     # Print warning
                     version_str = '.'.join(map(str, version))
                     arg_list = ', '.join(f'{a!r}' for a in offending_args)

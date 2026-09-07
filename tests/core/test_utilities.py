@@ -34,6 +34,7 @@ from scipy.spatial.transform import Rotation
 from scooby.report import get_distribution_dependencies
 
 import pyvista as pv
+from pyvista import _version
 from pyvista import _vtk
 from pyvista import examples as ex
 from pyvista._deprecate_positional_args import _MAX_POSITIONAL_ARGS
@@ -3287,6 +3288,28 @@ def test_is_vtk_attribute_input_type(obj):
 
 
 warnings.simplefilter('always')
+
+
+@pytest.mark.parametrize('version', [(0, 49, 0), (0, 50, 'dev0'), (0, 50, 'dev1')])
+def test_deprecate_positional_args_before_deadline(monkeypatch, version):
+    monkeypatch.setattr(_version, 'version_info', version)
+
+    @_deprecate_positional_args(version=(0, 50))
+    def foo(bar):
+        return bar
+
+    with pytest.warns(pv.PyVistaDeprecationWarning, match='From version 0\\.50,'):
+        assert foo(True) is True
+
+
+@pytest.mark.parametrize('version', [(0, 50, '0rc1'), (0, 50, 0), (0, 51, 'dev0')])
+def test_deprecate_positional_args_at_deadline(monkeypatch, version):
+    monkeypatch.setattr(_version, 'version_info', version)
+
+    with pytest.raises(RuntimeError, match='Positional arguments are no longer allowed'):
+
+        @_deprecate_positional_args(version=(0, 50))
+        def foo(bar): ...
 
 
 def test_deprecate_positional_args_error_messages():

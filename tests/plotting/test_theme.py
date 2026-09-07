@@ -14,6 +14,7 @@ import pytest
 import pyvista as pv
 from pyvista import _vtk
 from pyvista import colors
+from pyvista._version import _is_deprecation_due
 from pyvista.examples.downloads import download_file
 import pyvista.plotting
 from pyvista.plotting._typing import ThemeOptions
@@ -545,7 +546,7 @@ def test_plotter_theme_attribute_setter():
     with pytest.raises(pv.core.errors.DeprecationError, match=match):
         pl.theme = my_theme
 
-    if pyvista.version_info >= (0, 50):  # pragma: no cover -- fires at the version bump
+    if _is_deprecation_due((0, 50)):  # pragma: no cover
         pytest.fail('Remove the `theme` setter')
 
 

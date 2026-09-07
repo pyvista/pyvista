@@ -18,6 +18,7 @@ import numpy as np
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._version import _is_deprecation_due
 from pyvista._warn_external import warn_external
 from pyvista.core._vtk_utilities import _SUPPORTS_POLYHEDRON_FACE_CELL_ARRAYS
 from pyvista.core._vtk_utilities import vtk_version_info
@@ -509,7 +510,7 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
             '`extract_geometry` is deprecated. Use `extract_surface(algorithm=None)` instead.',
             PyVistaDeprecationWarning,
         )
-        if pv.version_info >= (0, 50):  # pragma: no cover
+        if _is_deprecation_due((0, 50)):  # pragma: no cover
             msg = 'Convert this deprecation warning into an error.'
             raise RuntimeError(msg)
         if pv.version_info >= (0, 53):  # pragma: no cover
