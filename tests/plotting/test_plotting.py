@@ -75,9 +75,20 @@ def using_mesa():
     return 'Mesa' in regex.findall(gpu_info)[0]
 
 
-# always set on Windows CI
-# These tests fail with mesa opengl on windows
-skip_mesa = pytest.mark.skipif(using_mesa(), reason='Does not display correctly within OSMesa')
+class _UsingMesa:
+    """Probe the renderer for Mesa once, when a marker is first evaluated."""
+
+    _answer: bool | None = None
+
+    def __bool__(self) -> bool:
+        """Return whether the renderer reports a Mesa OpenGL version string."""
+        if _UsingMesa._answer is None:
+            _UsingMesa._answer = using_mesa()
+        return _UsingMesa._answer
+
+
+# These tests fail with mesa opengl, which is always set on Windows CI.
+skip_mesa = pytest.mark.skipif(_UsingMesa(), reason='Does not display correctly within OSMesa')
 skip_windows_mesa = skip_mesa and pytest.mark.skip_windows(
     'Does not display correctly within OSMesa on Windows'
 )
