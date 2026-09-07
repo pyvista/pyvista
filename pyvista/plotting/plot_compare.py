@@ -324,8 +324,7 @@ def _validate_label_position(label_position: Any) -> TextPositionOptions | None:
 
 def _text_width(text: str, prop: Any, *, size: float, dpi: int, measurer: Any) -> float:
     """Return the width in pixels of the text drawn at the given font size."""
-    # A `pyvista.TextProperty` loads the theme into a property shared by all of them,
-    # which measuring has no business doing, so measure with a plain VTK one
+    # Measure with a plain VTK property, which needs no theme
     measured = _vtk.vtkTextProperty()
     # Copy what the text is drawn with, to measure its font rather than the default
     measured.ShallowCopy(prop)

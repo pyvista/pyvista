@@ -430,7 +430,7 @@ class Label(_Prop3DMixin, Text):
 
     @_label_position.setter
     def _label_position(self, position: VectorLike[float]):
-        valid_position = _validation.validate_array3(position, dtype_out=float, to_tuple=True)
+        valid_position = _validation.validate_array3(position)
         self.GetPositionCoordinate().SetValue(valid_position)
 
     @property
@@ -537,7 +537,6 @@ class TextProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkTextProperty):
 
     """
 
-    _theme = Theme()
     _color_set = None
     _background_color_set = None
     _font_family = None
@@ -561,12 +560,7 @@ class TextProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkTextProperty):
     ):
         """Initialize text's property."""
         super().__init__()
-        if theme is None:
-            # copy global theme to ensure local property theme is fixed
-            # after creation.
-            self._theme.load_theme(pv.global_theme)
-        else:
-            self._theme.load_theme(theme)
+        self._theme = Theme._from_theme(pv.global_theme if theme is None else theme)
         self.color = color
         self.font_family = font_family
         if orientation is not None:
