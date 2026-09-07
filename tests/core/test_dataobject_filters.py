@@ -163,6 +163,7 @@ def _seam_polydata():
     mesh = pv.PolyData(points, np.array([3, 0, 1, 2, 3, 3, 4, 5]))
     mesh.cell_data['half'] = np.array([0.0, 1.0])
     mesh.point_data['height'] = np.array([0.0, 0.0, 0.0, 1.0, 1.0, 1.0])
+    mesh.point_data['scalars'] = mesh.point_data['height']
     return mesh
 
 
@@ -272,6 +273,155 @@ def test_clip_empty_output_keeps_array_names():
     assert sorted(clipped.array_names) == sorted(mesh.array_names)
     assert clipped.point_data['height'].dtype == np.float32
     assert clipped.cell_data['ids'].dtype == np.uint16
+
+
+def _cell_type_meshes():
+    """One mesh per input class and per cell type a clip has to preserve."""
+    axis = np.linspace(-1.0, 1.0, 4)
+    x, y, z = np.meshgrid(axis, axis, axis, indexing='ij')
+    explicit = pv.StructuredGrid(x, y, z)
+    explicit.dimensions = [4, 4, 4]
+    image = pv.ImageData(dimensions=(4, 4, 4), spacing=(0.6, 0.6, 0.6), origin=(-1, -1, -1))
+    meshes = {
+        'PolyData triangles': pv.Sphere(theta_resolution=8, phi_resolution=8),
+        'PolyData quads': pv.Plane(i_resolution=3, j_resolution=3),
+        'PolyData lines': pv.Line((-1, 0, 0), (1, 0, 0), resolution=4),
+        'PolyData verts': pv.PolyData(np.random.default_rng(0).uniform(-1, 1, (12, 3))),
+        'ImageData': image,
+        'RectilinearGrid': pv.RectilinearGrid(axis, axis, axis),
+        'StructuredGrid': pv.StructuredGrid(x, y, z),
+        'ExplicitStructuredGrid': explicit.cast_to_explicit_structured_grid(),
+        'UnstructuredGrid hexahedra': image.cast_to_unstructured_grid(),
+        'UnstructuredGrid tetrahedra': pv.Sphere(
+            theta_resolution=8, phi_resolution=8
+        ).delaunay_3d(),
+    }
+    for mesh in meshes.values():
+        mesh.point_data['scalars'] = np.linspace(0.0, 1.0, mesh.n_points)
+    return meshes
+
+
+def _cell_types(mesh):
+    """The cell types of a mesh, as an unstructured grid reports them."""
+    grid = mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
+    # A voxel is the same eight points as a hexahedron, ordered differently
+    return {
+        pv.CellType.HEXAHEDRON if t == pv.CellType.VOXEL else pv.CellType(t)
+        for t in grid.celltypes
+    }
+
+
+def _clip_that_removes_nothing(mesh, name):
+    """Apply one clip whose region contains the whole mesh."""
+    enclosing = pv.Cube(center=(0, 0, 0), x_length=99, y_length=99, z_length=99)
+    return {
+        'clip': lambda: mesh.clip(normal='z', origin=(0, 0, -99), invert=False),
+        'clip_box': lambda: mesh.clip_box([-99.0, 99.0] * 3, invert=False),
+        'clip_slab': lambda: mesh.clip_slab(thickness=999.0, normal='z'),
+        'clip_surface': lambda: mesh.clip_surface(enclosing),
+        'clip_scalar': lambda: mesh.clip_scalar(scalars='scalars', value=-99.0, invert=False),
+    }[name]()
+
+
+CLIP_FILTERS = ['clip', 'clip_box', 'clip_slab', 'clip_surface', 'clip_scalar']
+
+
+@pytest.mark.parametrize('name', CLIP_FILTERS)
+@pytest.mark.parametrize('mesh_type', list(_cell_type_meshes()))
+def test_clip_keeps_the_cell_types_it_does_not_cut(mesh_type, name):
+    """A clip that removes nothing leaves every cell as the type it was."""
+    mesh = _cell_type_meshes()[mesh_type]
+
+    clipped = _clip_that_removes_nothing(mesh, name)
+
+    assert clipped.n_cells == mesh.n_cells
+    assert _cell_types(clipped) == _cell_types(mesh)
+
+
+@pytest.mark.parametrize('name', CLIP_FILTERS)
+@pytest.mark.parametrize('mesh_type', list(_cell_type_meshes()))
+def test_clip_keeps_the_points_it_does_not_cut(mesh_type, name):
+    """A clip that removes nothing neither adds nor merges points."""
+    mesh = _cell_type_meshes()[mesh_type]
+
+    clipped = _clip_that_removes_nothing(mesh, name)
+
+    assert clipped.n_points == mesh.n_points
+    assert np.allclose(np.sort(clipped.points, axis=0), np.sort(mesh.points, axis=0))
+
+
+@pytest.mark.parametrize('name', CLIP_FILTERS)
+@pytest.mark.parametrize('mesh_type', list(_cell_type_meshes()))
+def test_clip_splits_the_mesh_in_two(mesh_type, name):
+    """What a clip keeps and what it removes add up to the whole mesh."""
+    mesh = _cell_type_meshes()[mesh_type]
+    surface = pv.Sphere(radius=0.7, center=mesh.center, theta_resolution=16, phi_resolution=16)
+    kept, removed = {
+        'clip': lambda: (
+            mesh.clip(normal='z', origin=mesh.center, invert=False),
+            mesh.clip(normal='z', origin=mesh.center, invert=True),
+        ),
+        'clip_box': lambda: (
+            mesh.clip_box([-0.4, 0.4] * 3, invert=False),
+            mesh.clip_box([-0.4, 0.4] * 3, invert=True),
+        ),
+        'clip_slab': lambda: (
+            mesh.clip_slab(thickness=0.8, normal='z', origin=mesh.center),
+            mesh.clip_slab(thickness=0.8, normal='z', origin=mesh.center, invert=True),
+        ),
+        'clip_surface': lambda: (
+            mesh.clip_surface(surface, invert=True),
+            mesh.clip_surface(surface, invert=False),
+        ),
+        'clip_scalar': lambda: (
+            mesh.clip_scalar(scalars='scalars', value=0.5, invert=True),
+            mesh.clip_scalar(scalars='scalars', value=0.5, invert=False),
+        ),
+    }[name]()
+
+    measure = 'area' if isinstance(mesh, pv.PolyData) else 'volume'
+    whole = getattr(mesh, measure)
+    assert getattr(kept, measure) + getattr(removed, measure) == pytest.approx(whole, rel=1e-6)
+
+
+@pytest.mark.parametrize(
+    'name', ['clip', 'clip_slab', 'clip_surface', 'clip_scalar', 'clip_box merge_points=False']
+)
+@pytest.mark.parametrize('mesh_type', ['PolyData', 'UnstructuredGrid'])
+def test_clip_keeps_coincident_points_apart_for_every_filter(mesh_type, name):
+    """No clip welds points the input held apart, except when asked to."""
+    mesh = _seam_polydata() if mesh_type == 'PolyData' else _seam_grid()
+    if name == 'clip_box merge_points=False':
+        clipped = mesh.clip_box([-99.0, 99.0] * 3, invert=False, merge_points=False)
+    else:
+        clipped = _clip_that_removes_nothing(mesh, name)
+
+    assert clipped.n_points == mesh.n_points
+    assert not _joins_the_halves(clipped)
+
+
+@pytest.mark.parametrize('mesh_type', ['PolyData', 'UnstructuredGrid'])
+def test_clip_box_merge_points_true_welds_every_input(mesh_type):
+    """``merge_points=True`` joins points that share a position."""
+    mesh = _seam_polydata() if mesh_type == 'PolyData' else _seam_grid()
+
+    merged = mesh.clip_box([-99.0, 99.0] * 3, invert=False, merge_points=True)
+
+    assert merged.n_points < mesh.n_points
+    assert _joins_the_halves(merged)
+
+
+def _seam_grid():
+    """Two grid halves that touch but share no points."""
+    grid = pv.ImageData(dimensions=(5, 5, 5)).cast_to_unstructured_grid()
+    centers = grid.cell_centers().points[:, 2]
+    lower = grid.extract_cells(np.flatnonzero(centers < 2)).cast_to_unstructured_grid()
+    upper = grid.extract_cells(np.flatnonzero(centers > 2)).cast_to_unstructured_grid()
+    lower.cell_data['half'] = np.zeros(lower.n_cells)
+    upper.cell_data['half'] = np.ones(upper.n_cells)
+    seam = lower.merge(upper, merge_points=False)
+    seam.point_data['scalars'] = np.linspace(0.0, 1.0, seam.n_points)
+    return seam
 
 
 def test_clip_filter_normal(datasets):
