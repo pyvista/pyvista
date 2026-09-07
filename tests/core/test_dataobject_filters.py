@@ -956,6 +956,21 @@ def test_cell_data_to_point_data():
     _ = data.ctp()
 
 
+def test_cell_data_to_point_data_active_scalars_not_converted():
+    # Older VTK declines to convert an id array, so the active name may not survive
+    mesh = pv.Sphere(phi_resolution=8, theta_resolution=8)
+    mesh.clear_data()
+    ids = _vtk.vtkIdTypeArray()
+    ids.SetName('RegionId')
+    ids.SetNumberOfTuples(mesh.n_cells)
+    ids.Fill(0)
+    mesh.GetCellData().AddArray(ids)
+    mesh.set_active_scalars('RegionId')
+
+    converted = mesh.cell_data_to_point_data()
+    assert converted.active_scalars_name in (None, *converted.array_names)
+
+
 def test_cell_data_to_point_data_composite(multiblock_all_no_pointset):
     # Now test composite data structures
     output = multiblock_all_no_pointset.cell_data_to_point_data(progress_bar=True)

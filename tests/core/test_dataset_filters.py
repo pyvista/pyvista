@@ -29,7 +29,10 @@ from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters import _get_output
+from pyvista.core.filters.data_set import _CONNECTIVITY_SCALARS
+from pyvista.core.filters.data_set import _rebuild_point_region_ids
 from pyvista.core.filters.data_set import _swap_axes
+from pyvista.core.utilities.arrays import convert_array
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -1451,17 +1454,20 @@ def test_connectivity_raises(
 ):
     dataset: pv.DataSet = connected_datasets_single_disconnected_cell[0]['point']
 
-    with pytest.raises(TypeError, match='Scalar range must be'):
+    with pytest.raises(TypeError, match='Object arrays are not supported'):
         dataset.connectivity(scalar_range=dataset)
 
-    with pytest.raises(ValueError, match='Scalar range must have two elements'):
+    with pytest.raises(ValueError, match='Scalar range has shape'):
         dataset.connectivity(scalar_range=[1, 2, 3])
 
-    with pytest.raises(ValueError, match='Scalar range must have two elements'):
+    with pytest.raises(ValueError, match='Scalar range has shape'):
         dataset.connectivity(scalar_range=np.array([[1, 2], [3, 4]]))
 
-    with pytest.raises(ValueError, match='Lower value'):
+    with pytest.raises(ValueError, match='must be sorted in ascending order'):
         dataset.connectivity(scalar_range=[1, 0])
+
+    with pytest.raises(ValueError, match='`scalars` is only used when `scalar_range`'):
+        dataset.connectivity(scalars='data')
 
     with pytest.raises(ValueError, match='Invalid value for `extraction_mode`'):
         dataset.connectivity(extraction_mode='foo')
@@ -1478,14 +1484,208 @@ def test_connectivity_raises(
     with pytest.raises(ValueError, match='`region_ids` must be specified'):
         dataset.connectivity(extraction_mode='specified')
 
-    with pytest.raises(ValueError, match='positive integer values'):
+    with pytest.raises(IndexError, match='Index -1 is out of bounds'):
         dataset.connectivity(extraction_mode='cell_seed', cell_ids=[-1, 2])
 
+    with pytest.raises(IndexError, match=f'out of bounds for a mesh with {dataset.n_cells} cells'):
+        dataset.connectivity(extraction_mode='cell_seed', cell_ids=dataset.n_cells)
+
+    with pytest.raises(
+        IndexError, match=f'out of bounds for a mesh with {dataset.n_points} points'
+    ):
+        dataset.connectivity(extraction_mode='point_seed', point_ids=dataset.n_points)
+
+    with pytest.raises(ValueError, match='region_ids values must all be greater than'):
+        dataset.connectivity(extraction_mode='specified', region_ids=[-1, 2])
+
+    with pytest.raises(ValueError, match='closest_point has shape'):
+        dataset.connectivity(extraction_mode='closest', closest_point=(0, 0))
+
+    with pytest.raises(ValueError, match='cell_ids has shape'):
+        dataset.connectivity(extraction_mode='cell_seed', cell_ids=[[0, 1], [2, 3]])
+
+    with pytest.raises(ValueError, match='point_ids has shape'):
+        dataset.connectivity(extraction_mode='point_seed', point_ids=[[0, 1], [2, 3]])
+
     match = re.escape(
-        "Invalid `region_assignment_mode` 'bar' . Must be in ['ascending', 'descending', 'unspecified']"  # noqa: E501
+        "Invalid `region_assignment_mode` 'bar'. Must be in ['ascending', 'descending', 'unspecified']"  # noqa: E501
     )
     with pytest.raises(ValueError, match=match):
         dataset.connectivity(extraction_mode='all', region_assignment_mode='bar')
+
+
+@pytest.mark.parametrize('extraction_mode', ['all', 'specified'])
+def test_connectivity_polydata_output_type_full_selection(extraction_mode):
+    # Selecting every cell must still return PolyData
+    mesh = pv.Sphere(center=(-4, 0, 0), phi_resolution=8, theta_resolution=8) + pv.Sphere(
+        phi_resolution=6, theta_resolution=6
+    )
+    mesh['data'] = mesh.points[:, 1]
+
+    kwargs = (
+        dict(scalar_range=mesh.get_data_range('data'))
+        if extraction_mode == 'all'
+        else dict(region_ids=[0, 1])
+    )
+    conn = mesh.connectivity(extraction_mode, **kwargs)
+    assert isinstance(conn, pv.PolyData)
+    assert conn.n_cells == mesh.n_cells
+    assert mesh.connectivity(extraction_mode, inplace=True, **kwargs) is mesh
+
+
+def _assert_region_ids(conn, *, label_regions):
+    """Assert the region id arrays fit the mesh, or are absent when not requested."""
+    if label_regions:
+        assert conn.point_data['RegionId'].size == conn.n_points
+        assert conn.cell_data['RegionId'].size == conn.n_cells
+        assert conn.active_scalars_name == 'RegionId'
+        assert conn.active_scalars_info.association == pv.FieldAssociation.POINT
+    else:
+        assert 'RegionId' not in conn.point_data
+        assert 'RegionId' not in conn.cell_data
+
+
+@pytest.mark.parametrize('cast_to_ugrid', [True, False])
+def test_rebuild_point_region_ids(cast_to_ugrid):
+    mesh = pv.Sphere(center=(-4, 0, 0), phi_resolution=10, theta_resolution=10) + pv.Sphere(
+        phi_resolution=8, theta_resolution=8
+    )
+    conn = (
+        mesh.cast_to_unstructured_grid().connectivity() if cast_to_ugrid else mesh.connectivity()
+    )
+    expected = np.array(conn.point_data['RegionId'])
+    assert len(np.unique(expected)) == 2
+
+    conn.point_data.pop('RegionId')
+    _rebuild_point_region_ids(conn)
+    assert np.array_equal(conn.point_data['RegionId'], expected)
+    assert conn.point_data['RegionId'].dtype == conn.cell_data['RegionId'].dtype
+
+
+def test_rebuild_point_region_ids_keeps_unusable_cell_ids():
+    mesh = pv.Sphere(phi_resolution=6, theta_resolution=6).connectivity()
+    mesh.point_data.pop('RegionId')
+
+    oversized = convert_array(np.zeros(mesh.n_cells + 1, dtype=int), name='RegionId')
+    mesh.GetCellData().AddArray(oversized)
+    _rebuild_point_region_ids(mesh)
+    assert 'RegionId' not in mesh.point_data
+
+    mesh.GetCellData().RemoveArray('RegionId')
+    _rebuild_point_region_ids(mesh)
+    assert 'RegionId' not in mesh.point_data
+
+
+@pytest.mark.parametrize(
+    ('extraction_mode', 'kwargs'),
+    [
+        ('all', {}),
+        ('largest', {}),
+        ('specified', dict(region_ids=[0, 1])),
+        ('cell_seed', dict(cell_ids=[0])),
+        ('point_seed', dict(point_ids=[0])),
+        ('closest', dict(closest_point=(0.0, 0.0, 0.0))),
+    ],
+)
+@pytest.mark.parametrize('label_regions', [True, False])
+def test_connectivity_cell_scalars(extraction_mode, kwargs, label_regions):
+    mesh = pv.Sphere(center=(-4, 0, 0), phi_resolution=8, theta_resolution=8) + pv.Sphere(
+        phi_resolution=6, theta_resolution=6
+    )
+    mesh.cell_data['cdata'] = mesh.cell_centers().points[:, 1]
+    mesh.set_active_scalars('cdata')
+    before = sorted(mesh.array_names)
+
+    conn = mesh.connectivity(
+        extraction_mode, scalar_range=[-0.2, 0.2], label_regions=label_regions, **kwargs
+    )
+
+    assert _CONNECTIVITY_SCALARS not in conn.array_names
+    assert 'cdata' in conn.cell_data
+    assert sorted(mesh.array_names) == before
+
+
+def test_connectivity_scalars():
+    mesh = pv.Sphere(phi_resolution=8, theta_resolution=8)
+    mesh.point_data['low'] = mesh.points[:, 1]
+    mesh.point_data['high'] = mesh.points[:, 1] + 10
+    mesh.set_active_scalars('low')
+
+    named = mesh.connectivity('all', scalar_range=[9.0, 11.0], scalars='high')
+    active = mesh.connectivity('all', scalar_range=[9.0, 11.0])
+
+    assert named.n_cells == mesh.n_cells
+    assert active.n_cells == 0
+
+
+@pytest.mark.parametrize('extraction_mode', ['cell_seed', 'point_seed'])
+def test_connectivity_seed_bool_mask(extraction_mode):
+    mesh = pv.Sphere(center=(-4, 0, 0), phi_resolution=8, theta_resolution=8) + pv.Sphere(
+        phi_resolution=6, theta_resolution=6
+    )
+    n_items = mesh.n_cells if extraction_mode == 'cell_seed' else mesh.n_points
+    mask = np.zeros(n_items, dtype=bool)
+    mask[-1] = True
+    key = 'cell_ids' if extraction_mode == 'cell_seed' else 'point_ids'
+
+    from_mask = mesh.connectivity(extraction_mode, **{key: mask})
+    from_ids = mesh.connectivity(extraction_mode, **{key: [n_items - 1]})
+    assert from_mask.n_cells == from_ids.n_cells
+    assert from_mask.n_cells < mesh.n_cells
+
+
+@pytest.mark.parametrize('extraction_mode', ['specified', 'cell_seed', 'point_seed'])
+@pytest.mark.parametrize('label_regions', [True, False])
+def test_connectivity_empty_output(extraction_mode, label_regions):
+    mesh = pv.Sphere(phi_resolution=6, theta_resolution=6)
+    kwargs = {
+        'specified': dict(region_ids=[99]),
+        'cell_seed': dict(cell_ids=[]),
+        'point_seed': dict(point_ids=[]),
+    }[extraction_mode]
+
+    conn = mesh.connectivity(extraction_mode, label_regions=label_regions, **kwargs)
+    assert conn.n_cells == 0
+    assert conn.n_points == 0
+    _assert_region_ids(conn, label_regions=label_regions)
+
+
+@pytest.mark.parametrize(
+    ('extraction_mode', 'keeps_seed_cells'),
+    [
+        ('all', False),
+        ('largest', True),
+        ('specified', False),
+        ('cell_seed', True),
+        ('point_seed', True),
+        ('closest', False),
+    ],
+)
+@pytest.mark.parametrize('label_regions', [True, False])
+def test_connectivity_empty_scalar_range(extraction_mode, keeps_seed_cells, label_regions):
+    # Modes which are not filtered beforehand keep cells with no point in the range
+    mesh = pv.Sphere(phi_resolution=8, theta_resolution=8)
+    mesh.point_data['data'] = mesh.points[:, 1]
+    kwargs = {
+        'all': {},
+        'largest': {},
+        'specified': dict(region_ids=[0]),
+        'cell_seed': dict(cell_ids=[0]),
+        'point_seed': dict(point_ids=[0]),
+        'closest': dict(closest_point=(0, 0, 0)),
+    }[extraction_mode]
+
+    conn = mesh.connectivity(
+        extraction_mode,
+        scalar_range=[10.0, 20.0],
+        label_regions=label_regions,
+        **kwargs,
+    )
+    if keeps_seed_cells:
+        assert conn.n_cells > 0
+    else:
+        assert conn.n_cells == 0
+    _assert_region_ids(conn, label_regions=label_regions)
 
 
 @pytest.mark.parametrize('dataset_index', list(range(5)))
@@ -2646,7 +2846,7 @@ def test_extract_cells_extract_points_invalid_ind(sphere, dataset_filter):
     with pytest.raises(ValueError, match=re.escape(match)):
         dataset_filter([True, True])
 
-    match = 'Indices must be either a mask or an integer array-like'
+    match = 'indices must be either a mask or an integer array-like'
     with pytest.raises(TypeError, match=match):
         dataset_filter([0.5])
 
