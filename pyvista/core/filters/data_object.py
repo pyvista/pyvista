@@ -2139,13 +2139,13 @@ class DataObjectFilters:
         self.active_scalars_name = None
 
         try:
-            f = _vtk.vtkTransformFilter()
-            f.SetInputDataObject(self)
-            f.SetTransform(t)
-            f.SetTransformAllInputVectors(transform_all_input_vectors)
+            alg = _vtk.vtkTransformFilter()
+            alg.SetInputDataObject(self)
+            alg.SetTransform(t)
+            alg.SetTransformAllInputVectors(transform_all_input_vectors)
 
-            _update_alg(f, progress_bar=progress_bar, message='Transforming')
-            vtk_filter_output = _get_output(f)
+            _update_alg(alg, progress_bar=progress_bar, message='Transforming')
+            vtk_filter_output = _get_output(alg)
 
             if isinstance(output, pv.ImageData):
                 _orient_image_structure(output, cast('pv.ImageData', self), t)
