@@ -1299,7 +1299,7 @@ Anything in the file that is not an ``assert_types`` line is setup: imports, and
 helpers such as the ``multi()`` above that builds a fresh ``MultiBlock``.
 
 Each file holds the cases of one callable and is named after it: ``clip_scalar.py``,
-``fit_plane_to_points.py``. A method takes its class as a lowercase prefix only when
+``principal_axes.py``. A method takes its class as a lowercase prefix only when
 the bare name would not identify it, as for dunders (``multiblock_getitem.py``,
 ``multiblock_setitem.py``) and names that several classes share (``transform_apply.py``).
 A file carries all the setup it needs, even when another file has the same helper.
@@ -1315,8 +1315,8 @@ claim it makes rather than after where it sits in the file:
 
 .. code-block:: text
 
-    tests/typing/cases/wrap.py::pv.wrap(pv.PolyData()) -> pv.PolyData [runtime]
-    tests/typing/cases/wrap.py::pv.wrap(pv.PolyData()) -> pv.PolyData [static: mypy]
+    tests/typing/cases/core/wrap.py::pv.wrap(pv.PolyData()) -> pv.PolyData [runtime]
+    tests/typing/cases/core/wrap.py::pv.wrap(pv.PolyData()) -> pv.PolyData [static: mypy]
 
 The runtime half compiles the file's setup, runs it in a namespace of its own
 and then executes that one case against it, so a case cannot reach another

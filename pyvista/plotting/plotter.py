@@ -4744,7 +4744,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         Parameters
         ----------
-        volume : 3D numpy.ndarray | DataSet
+        volume : 3D numpy.ndarray | DataSet | MultiBlock
             The input volume to visualize. 3D NumPy arrays are accepted.
 
             .. warning::
@@ -4966,7 +4966,7 @@ class BasePlotter(_BoundsSizeMixin):
         Returns
         -------
         pyvista.plotting.volume.Volume | list[pyvista.plotting.volume.Volume]
-            Volume actor, or one per block for a :class:`~pyvista.MultiBlock`.
+            Volume actor, or one per leaf dataset of a :class:`~pyvista.MultiBlock`.
 
         Examples
         --------
@@ -5118,7 +5118,7 @@ class BasePlotter(_BoundsSizeMixin):
                     render=render,
                     show_scalar_bar=show_scalar_bar,
                 )
-                actors.extend(a if isinstance(a, list) else [a])
+                actors.append(cast('Volume', a))
             return actors
 
         # Make sure structured grids are not less than 3D
@@ -6179,7 +6179,7 @@ class BasePlotter(_BoundsSizeMixin):
                 '`store_image_depth=True` when using `get_image_depth`.'
             )
             raise RuntimeError(msg)
-        self._check_has_ren_win()
+        render_window = self._check_has_ren_win()
 
         # Ensure points in view are within clipping range of renderer?
         if reset_camera_clipping_range:
@@ -6187,7 +6187,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         # Get the z-buffer image
         ifilter = _vtk.vtkWindowToImageFilter()
-        ifilter.SetInput(self.render_window)
+        ifilter.SetInput(render_window)
         ifilter.SetScale(self.image_scale)
         ifilter.ReadFrontBufferOff()
         ifilter.SetInputBufferTypeToZBuffer()

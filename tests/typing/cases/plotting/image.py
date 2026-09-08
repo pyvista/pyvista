@@ -22,7 +22,7 @@ SKIP_RUNTIME = (
         [
             'a_plotter().image',
         ],
-        'the VTK 9.3 wheel renders only through a display, and the core phase has none',
+        'the VTK 9.3 wheel renders only through a display',
     )
     if pv.vtk_version_info < (9, 4)
     else {}
