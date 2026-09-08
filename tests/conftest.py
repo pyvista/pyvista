@@ -576,6 +576,12 @@ _RENDERING_MODULES = frozenset(
         'test_cli.py',
         'examples/test_gltf.py',
         'typing/test_return_type.py',
+        'typing/cases/add_text.py',
+        'typing/cases/add_title.py',
+        'typing/cases/add_volume.py',
+        'typing/cases/map_value.py',
+        'typing/cases/resolve_scalars_field.py',
+        'typing/cases/screenshot.py',
         # These also evaluate plotting symbols at module scope, so on a
         # rendering-free backend they are skipped at collection time (see
         # ``_RENDERING_ONLY_MODULES`` / ``pytest_ignore_collect``).

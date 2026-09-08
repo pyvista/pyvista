@@ -4966,7 +4966,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         Returns
         -------
-        pyvista.plotting.volume.Volume
+        pyvista.plotting.volume.Volume | list[pyvista.plotting.volume.Volume]
             Volume actor, or one per block for a :class:`~pyvista.MultiBlock`.
 
         Examples
@@ -6968,7 +6968,7 @@ class BasePlotter(_BoundsSizeMixin):
     @overload
     def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., transparent_background: bool | None = ..., return_img: Literal[True] = True, window_size: Sequence[int] | None = ..., scale: int | None = ...) -> pv.pyvista_ndarray: ...
     @overload
-    def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., transparent_background: bool | None = ..., return_img: Literal[False] = False, window_size: Sequence[int] | None = ..., scale: int | None = ...) -> None: ...
+    def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., transparent_background: bool | None = ..., return_img: Literal[False] = ..., window_size: Sequence[int] | None = ..., scale: int | None = ...) -> None: ...
     @overload
     def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., transparent_background: bool | None = ..., return_img: bool = ..., window_size: Sequence[int] | None = ..., scale: int | None = ...) -> pv.pyvista_ndarray | None: ...
     # ruff: enable[E501, FBT001, FBT002]

@@ -2097,9 +2097,9 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
     @overload
     def find_closest_cell(self: Self, point: VectorLike[float] | MatrixLike[float], return_closest_point: Literal[False] = False) -> int | NumpyArray[int]: ...
     @overload
-    def find_closest_cell(self: Self, point: VectorLike[float] | MatrixLike[float], return_closest_point: Literal[True] = True) -> tuple[int | NumpyArray[int], NumpyArray[int]]: ...
+    def find_closest_cell(self: Self, point: VectorLike[float] | MatrixLike[float], return_closest_point: Literal[True]) -> tuple[int | NumpyArray[int], NumpyArray[float]]: ...
     @overload
-    def find_closest_cell(self: Self, point: VectorLike[float] | MatrixLike[float], return_closest_point: bool = ...) -> int | NumpyArray[int] | tuple[int | NumpyArray[int], NumpyArray[int]]: ...
+    def find_closest_cell(self: Self, point: VectorLike[float] | MatrixLike[float], return_closest_point: bool = ...) -> int | NumpyArray[int] | tuple[int | NumpyArray[int], NumpyArray[float]]: ...
     # ruff: enable[E501, FBT001, FBT002]
     # fmt: on
     @_deprecate_positional_args(allowed=['point'])
@@ -2107,7 +2107,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         self: Self,
         point: VectorLike[float] | MatrixLike[float],
         return_closest_point: bool = False,  # noqa: FBT001, FBT002
-    ) -> int | NumpyArray[int] | tuple[int | NumpyArray[int], NumpyArray[int]]:
+    ) -> int | NumpyArray[int] | tuple[int | NumpyArray[int], NumpyArray[float]]:
         """Find index of closest cell in this mesh to the given point.
 
         .. warning::
