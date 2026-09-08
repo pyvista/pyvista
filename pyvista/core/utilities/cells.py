@@ -48,24 +48,16 @@ def ncells_from_cells(cells: NumpyArray[int]) -> int:
     return n_cells
 
 
+# fmt: off
+# ruff: disable[E501, FBT001, FBT002]
 @overload
-def numpy_to_idarr(
-    ind: int | ArrayLike[int],
-    deep: bool = ...,  # noqa: FBT001
-    return_ind: Literal[False] = False,  # noqa: FBT002
-) -> _vtk.vtkIdTypeArray: ...
+def numpy_to_idarr(ind: int | ArrayLike[int], deep: bool = ..., return_ind: Literal[False] = False) -> _vtk.vtkIdTypeArray: ...
 @overload
-def numpy_to_idarr(
-    ind: int | ArrayLike[int],
-    deep: bool = ...,  # noqa: FBT001
-    return_ind: Literal[True] = ...,
-) -> tuple[_vtk.vtkIdTypeArray, NumpyArray[int]]: ...
+def numpy_to_idarr(ind: int | ArrayLike[int], deep: bool = ..., return_ind: Literal[True] = ...) -> tuple[_vtk.vtkIdTypeArray, NumpyArray[int]]: ...
 @overload
-def numpy_to_idarr(
-    ind: int | ArrayLike[int],
-    deep: bool = ...,  # noqa: FBT001
-    return_ind: bool = ...,  # noqa: FBT001
-) -> tuple[_vtk.vtkIdTypeArray, NumpyArray[int]] | _vtk.vtkIdTypeArray: ...
+def numpy_to_idarr(ind: int | ArrayLike[int], deep: bool = ..., return_ind: bool = ...) -> tuple[_vtk.vtkIdTypeArray, NumpyArray[int]] | _vtk.vtkIdTypeArray: ...
+# ruff: enable[E501, FBT001, FBT002]
+# fmt: on
 @_deprecate_positional_args(allowed=['ind'])
 def numpy_to_idarr(
     ind: int | ArrayLike[int],

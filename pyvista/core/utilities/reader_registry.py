@@ -283,22 +283,14 @@ def _download_uri(uri: str, ext: str) -> str:
 _T_Provider = TypeVar('_T_Provider', bound=ReaderProvider)
 
 
+# fmt: off
+# ruff: disable[E501]
 @overload
-def register_reader(
-    key: str,
-    handler: None = None,
-    *,
-    override: bool = False,
-) -> Callable[[_T_Provider], _T_Provider]: ...
-
-
+def register_reader(key: str, handler: None = None, *, override: bool = False) -> Callable[[_T_Provider], _T_Provider]: ...
 @overload
-def register_reader(
-    key: str,
-    handler: ReaderProvider,
-    *,
-    override: bool = False,
-) -> None: ...
+def register_reader(key: str, handler: ReaderProvider, *, override: bool = False) -> None: ...
+# ruff: enable[E501]
+# fmt: on
 
 
 def register_reader(
