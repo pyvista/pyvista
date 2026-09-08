@@ -1142,7 +1142,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         actor : :vtk:`vtkActor` | Actor
             The actor.
 
-        actor_properties : :vtk:`vtkProperty` | :vtk:`vtkProperty2D` | :vtk:`vtkVolumeProperty`
+        actor_properties : :vtk:`vtkProperty` | :vtk:`vtkVolumeProperty`
             The property of the actor, or ``None`` if it has none.
 
         """

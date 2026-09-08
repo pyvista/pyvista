@@ -1663,7 +1663,7 @@ class BasePlotter(_BoundsSizeMixin):
     def add_actor(
         self, *args, **kwargs
     ) -> tuple[
-        _vtk.vtkProp, _vtk.vtkProperty | _vtk.vtkProperty2D | _vtk.vtkVolumeProperty | None
+        _vtk.vtkProp, _vtk.vtkProperty | _vtk.vtkVolumeProperty | None
     ]:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_actor``."""
         return self.renderer.add_actor(*args, **kwargs)
