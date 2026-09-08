@@ -20,6 +20,22 @@ def a_window() -> _vtk.vtkRenderWindow:
     return pl.render_window
 
 
+SKIP_RUNTIME = (
+    dict.fromkeys(
+        [
+            'image_from_window(a_window())',
+            'image_from_window(a_window(), as_vtk=False)',
+            'image_from_window(a_window(), ignore_alpha=True, scale=2)',
+            'image_from_window(a_window(), as_vtk=True)',
+            'image_from_window(a_window(), as_vtk=a_flag())',
+        ],
+        'the VTK 9.3 wheel renders only through a display, and the core phase has none',
+    )
+    if pv.vtk_version_info < (9, 4)
+    else {}
+)
+
+
 def a_flag() -> bool:
     """Return a flag typed only as ``bool``, so the catch-all overload applies."""
     return True

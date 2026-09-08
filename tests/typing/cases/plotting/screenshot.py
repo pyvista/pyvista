@@ -17,6 +17,21 @@ def a_plotter() -> pv.Plotter:
     return pl
 
 
+SKIP_RUNTIME = (
+    dict.fromkeys(
+        [
+            'a_plotter().screenshot()',
+            'a_plotter().screenshot(return_img=True)',
+            'a_plotter().screenshot(return_img=False)',
+            'a_plotter().screenshot(return_img=a_flag())',
+        ],
+        'the VTK 9.3 wheel renders only through a display, and the core phase has none',
+    )
+    if pv.vtk_version_info < (9, 4)
+    else {}
+)
+
+
 def a_flag() -> bool:
     """Return a flag typed only as ``bool``, so the catch-all overload applies."""
     return True
