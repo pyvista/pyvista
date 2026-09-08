@@ -7024,6 +7024,9 @@ class BasePlotter(_BoundsSizeMixin):
             * [Window height x Window width x 4] if
               ``transparent_background`` is set to ``True``.
 
+        None
+            If ``return_img`` is ``False``.
+
         See Also
         --------
         :ref:`screenshot_example`

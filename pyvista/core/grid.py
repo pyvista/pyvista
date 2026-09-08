@@ -804,11 +804,18 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
     @overload
     def __getitem__(self, key: tuple[str, Literal['cell', 'point', 'field']] | str) -> pyvista_ndarray: ...
     @overload
-    def __getitem__(self, key: tuple[int, int, int]) -> ImageData: ...
+    def __getitem__(self, key: tuple[int | slice | tuple[int, int], int | slice | tuple[int, int], int | slice | tuple[int, int]]) -> ImageData: ...
     # ruff: enable[E501]
     # fmt: on
     def __getitem__(
-        self, key: tuple[str, Literal['cell', 'point', 'field']] | str | tuple[int, int, int]
+        self,
+        key: tuple[str, Literal['cell', 'point', 'field']]
+        | str
+        | tuple[
+            int | slice | tuple[int, int],
+            int | slice | tuple[int, int],
+            int | slice | tuple[int, int],
+        ],
     ) -> ImageData | pyvista_ndarray:
         """Search for a data array or slice with IJK indexing."""
         # Return point, cell, or field data
