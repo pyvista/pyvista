@@ -51,6 +51,7 @@ from .utilities.cells import get_mixed_cells
 from .utilities.cells import numpy_to_idarr
 from .utilities.fileio import _CompressionOptions
 from .utilities.fileio import get_ext
+from .utilities.misc import _wraps
 from .utilities.misc import abstract_class
 from .utilities.points import vtk_points
 from .utilities.writer import BaseWriter
@@ -388,16 +389,16 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
         kwargs.setdefault('style', 'points')
         return pdata.plot(*args, **kwargs)
 
-    @functools.wraps(PolyDataFilters.threshold)
-    def threshold(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01,PR01
+    @_wraps(PolyDataFilters.threshold)
+    def threshold(self, *args, **kwargs) -> PointSet:  # numpydoc ignore=RT01,PR01
         """Cast to PolyData and threshold.
 
         Need this because cell-wise operations fail for PointSets.
         """
         return self.cast_to_polydata(deep=False).threshold(*args, **kwargs).cast_to_pointset()
 
-    @functools.wraps(PolyDataFilters.threshold_percent)
-    def threshold_percent(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01,PR01
+    @_wraps(PolyDataFilters.threshold_percent)
+    def threshold_percent(self, *args, **kwargs) -> PointSet:  # numpydoc ignore=RT01,PR01
         """Cast to PolyData and threshold.
 
         Need this because cell-wise operations fail for PointSets.
@@ -406,8 +407,8 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
             self.cast_to_polydata(deep=False).threshold_percent(*args, **kwargs).cast_to_pointset()
         )
 
-    @functools.wraps(PolyDataFilters.explode)
-    def explode(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01,PR01
+    @_wraps(PolyDataFilters.explode)
+    def explode(self, *args, **kwargs) -> PointSet:  # numpydoc ignore=RT01,PR01
         """Cast to PolyData and explode.
 
         The explode filter relies on cells.
@@ -415,8 +416,8 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
         """
         return self.cast_to_polydata(deep=False).explode(*args, **kwargs).cast_to_pointset()
 
-    @functools.wraps(PolyDataFilters.delaunay_3d)
-    def delaunay_3d(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01,PR01
+    @_wraps(PolyDataFilters.delaunay_3d)
+    def delaunay_3d(self, *args, **kwargs) -> UnstructuredGrid:  # numpydoc ignore=RT01,PR01
         """Cast to PolyData and run delaunay_3d."""
         return self.cast_to_polydata(deep=False).delaunay_3d(*args, **kwargs)
 
