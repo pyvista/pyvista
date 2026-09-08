@@ -7,13 +7,6 @@ from type_assert import assert_types
 import pyvista as pv
 
 
-def a_plotter() -> pv.Plotter:
-    """Return a plotter holding one mesh, not yet rendered."""
-    pl = pv.Plotter()
-    pl.add_mesh(pv.Sphere())
-    return pl
-
-
 def a_chart_plotter() -> pv.Plotter:
     """Return a plotter holding one chart."""
     pl = pv.Plotter()
