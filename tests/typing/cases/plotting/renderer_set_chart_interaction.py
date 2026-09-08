@@ -15,4 +15,4 @@ def a_renderer() -> pv.Renderer:
 
 
 assert_types(a_renderer().set_chart_interaction(True), list[pv.Chart2D | pv.ChartBox | pv.ChartPie | pv.ChartMPL])
-assert_types(a_renderer().set_chart_interaction(False, toggle=True), list[pv.Chart2D | pv.ChartBox | pv.ChartPie | pv.ChartMPL])
+assert_types(a_renderer().set_chart_interaction(True, toggle=True), list[pv.Chart2D | pv.ChartBox | pv.ChartPie | pv.ChartMPL])

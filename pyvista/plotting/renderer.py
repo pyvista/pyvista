@@ -54,8 +54,8 @@ from .utilities.gl_checks import uses_egl
 if TYPE_CHECKING:
     from pyvista.core._typing_core import RotationLike
     from pyvista.core.pointset import PolyData
-    from pyvista.plotting._typing import Chart
 
+    from ._typing import Chart
     from .cube_axes_actor import CubeAxesActor
     from .lights import Light
 

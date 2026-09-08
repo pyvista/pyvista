@@ -591,9 +591,9 @@ _RENDERING_MODULES = frozenset(
         'typing/cases/plotting/compute_bounds.py',
         'typing/cases/plotting/enable_depth_peeling.py',
         'typing/cases/plotting/get_default_cam_pos.py',
+        'typing/cases/plotting/plotter_set_chart_interaction.py',
         'typing/cases/plotting/remove_actor.py',
         'typing/cases/plotting/renderer_set_chart_interaction.py',
-        'typing/cases/plotting/set_chart_interaction.py',
         'typing/cases/plotting/show_bounds.py',
         'typing/cases/plotting/show_grid.py',
         # These also evaluate plotting symbols at module scope, so on a

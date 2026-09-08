@@ -40,6 +40,7 @@ from .errors import CellSizeError
 from .errors import PointSetCellOperationError
 from .errors import PointSetDimensionReductionError
 from .errors import PointSetNotSupported
+from .filters import DataSetFilters
 from .filters import PolyDataFilters
 from .filters import StructuredGridFilters
 from .filters import UnstructuredGridFilters
@@ -389,7 +390,7 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
         kwargs.setdefault('style', 'points')
         return pdata.plot(*args, **kwargs)
 
-    @_wraps(PolyDataFilters.threshold)
+    @_wraps(DataSetFilters.threshold)
     def threshold(self, *args, **kwargs) -> PointSet:  # numpydoc ignore=RT01,PR01
         """Cast to PolyData and threshold.
 
@@ -397,7 +398,7 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
         """
         return self.cast_to_polydata(deep=False).threshold(*args, **kwargs).cast_to_pointset()
 
-    @_wraps(PolyDataFilters.threshold_percent)
+    @_wraps(DataSetFilters.threshold_percent)
     def threshold_percent(self, *args, **kwargs) -> PointSet:  # numpydoc ignore=RT01,PR01
         """Cast to PolyData and threshold.
 
@@ -407,7 +408,7 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
             self.cast_to_polydata(deep=False).threshold_percent(*args, **kwargs).cast_to_pointset()
         )
 
-    @_wraps(PolyDataFilters.explode)
+    @_wraps(DataSetFilters.explode)
     def explode(self, *args, **kwargs) -> PointSet:  # numpydoc ignore=RT01,PR01
         """Cast to PolyData and explode.
 
@@ -416,7 +417,7 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
         """
         return self.cast_to_polydata(deep=False).explode(*args, **kwargs).cast_to_pointset()
 
-    @_wraps(PolyDataFilters.delaunay_3d)
+    @_wraps(DataSetFilters.delaunay_3d)
     def delaunay_3d(self, *args, **kwargs) -> UnstructuredGrid:  # numpydoc ignore=RT01,PR01
         """Cast to PolyData and run delaunay_3d."""
         return self.cast_to_polydata(deep=False).delaunay_3d(*args, **kwargs)
