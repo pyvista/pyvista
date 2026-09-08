@@ -2066,7 +2066,7 @@ class PolyDataFilters(DataSetFilters):
         inplace: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
         plane: PolyData | None = None,
-    ):
+    ) -> PolyData:
         """Clip a closed polydata surface with a plane.
 
         The origin and normal may be set explicitly or implicitly using a

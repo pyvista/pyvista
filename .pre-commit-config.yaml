@@ -58,14 +58,14 @@ repos:
         files: ^(\.dockerignore|doc/styles/config/vocabularies/pyvista/accept\.txt)$
 
   - repo: https://github.com/scientific-python/cookie
-    rev: 2026.06.18
+    rev: 2026.08.14
     hooks:
       - id: sp-repo-review
         args: ["--show=errskip"]
 
   # this validates our github workflow files
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.37.4
+    rev: 0.38.0
     hooks:
       - id: check-github-workflows
       - id: check-jsonschema
@@ -74,7 +74,7 @@ repos:
         args: ["--schemafile", ".github/schemas/context7.json"]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.16.1
+    rev: v0.16.6
     hooks:
       - id: ruff-format
       - id: ruff-check
