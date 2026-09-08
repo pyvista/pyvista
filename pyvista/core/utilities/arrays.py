@@ -67,22 +67,20 @@ _FIELD_CHOICES: dict[str, FieldAssociation] = {
 }
 
 
+# fmt: off
+# ruff: disable[E501]
 @overload
-def parse_field_choice(
-    field: PointLiteral | Literal['p', 'points'],
-) -> Literal[FieldAssociation.POINT]: ...
+def parse_field_choice(field: PointLiteral | Literal['p', 'points']) -> Literal[FieldAssociation.POINT]: ...
 @overload
-def parse_field_choice(
-    field: CellLiteral | Literal['c', 'cells'],
-) -> Literal[FieldAssociation.CELL]: ...
+def parse_field_choice(field: CellLiteral | Literal['c', 'cells']) -> Literal[FieldAssociation.CELL]: ...
 @overload
-def parse_field_choice(
-    field: FieldLiteral | Literal['f', 'fields'],
-) -> Literal[FieldAssociation.NONE]: ...
+def parse_field_choice(field: FieldLiteral | Literal['f', 'fields']) -> Literal[FieldAssociation.NONE]: ...
 @overload
 def parse_field_choice(field: RowLiteral | Literal['r']) -> Literal[FieldAssociation.ROW]: ...
 @overload
 def parse_field_choice(field: FieldAssociation) -> FieldAssociation: ...
+# ruff: enable[E501]
+# fmt: on
 def parse_field_choice(
     field: FieldAssociation
     | PointLiteral
@@ -254,27 +252,16 @@ def raise_has_duplicates(arr: NumpyArray[Any]) -> None:
         raise ValueError(msg)
 
 
+# fmt: off
+# ruff: disable[E501, FBT001]
 @overload
-def convert_array(
-    arr: _vtk.vtkAbstractArray,
-    name: str | None = ...,
-    deep: bool = ...,  # noqa: FBT001
-    array_type: int | None = None,
-) -> npt.NDArray[Any]: ...
+def convert_array(arr: _vtk.vtkAbstractArray, name: str | None = ..., deep: bool = ..., array_type: int | None = None) -> npt.NDArray[Any]: ...
 @overload
-def convert_array(
-    arr: npt.ArrayLike,
-    name: str | None = ...,
-    deep: bool = ...,  # noqa: FBT001
-    array_type: int | None = None,
-) -> _vtk.vtkAbstractArray: ...
+def convert_array(arr: npt.ArrayLike, name: str | None = ..., deep: bool = ..., array_type: int | None = None) -> _vtk.vtkAbstractArray: ...
 @overload
-def convert_array(
-    arr: None,
-    name: str | None = ...,
-    deep: bool = ...,  # noqa: FBT001
-    array_type: int | None = ...,
-) -> None: ...
+def convert_array(arr: None, name: str | None = ..., deep: bool = ..., array_type: int | None = ...) -> None: ...
+# ruff: enable[E501, FBT001]
+# fmt: on
 @_deprecate_positional_args(allowed=['arr', 'name'])
 def convert_array(  # noqa: PLR0917
     arr: npt.ArrayLike | _vtk.vtkAbstractArray | None,
@@ -711,14 +698,14 @@ def _set_string_scalar_object_name(vtkarr: _vtk.vtkStringArray) -> None:
         vtkarr.GetObjectName = lambda: 'scalar'  # type: ignore[method-assign]
 
 
+# fmt: off
+# ruff: disable[E501]
 @overload
-def convert_string_array(
-    arr: _vtk.vtkStringArray, name: str | None = ...
-) -> npt.NDArray[np.str_]: ...
+def convert_string_array(arr: _vtk.vtkStringArray, name: str | None = ...) -> npt.NDArray[np.str_]: ...
 @overload
-def convert_string_array(
-    arr: str | npt.NDArray[np.str_], name: str | None = ...
-) -> _vtk.vtkStringArray: ...
+def convert_string_array(arr: str | npt.NDArray[np.str_], name: str | None = ...) -> _vtk.vtkStringArray: ...
+# ruff: enable[E501]
+# fmt: on
 def convert_string_array(
     arr: str | npt.NDArray[np.str_] | _vtk.vtkStringArray, name: str | None = None
 ) -> npt.NDArray[np.str_] | _vtk.vtkStringArray:

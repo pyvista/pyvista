@@ -2015,12 +2015,14 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             pset.active_scalars_name = name
         return pset
 
+    # fmt: off
+    # ruff: disable[E501]
     @overload
     def find_closest_point(self: Self, point: Iterable[float], n: Literal[1] = 1) -> int: ...
     @overload
-    def find_closest_point(
-        self: Self, point: Iterable[float], n: int = ...
-    ) -> VectorLike[int]: ...
+    def find_closest_point(self: Self, point: Iterable[float], n: int = ...) -> VectorLike[int]: ...
+    # ruff: enable[E501]
+    # fmt: on
     def find_closest_point(
         self: Self, point: Iterable[float], n: int = 1
     ) -> int | VectorLike[int]:

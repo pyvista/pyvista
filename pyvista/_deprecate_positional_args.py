@@ -23,18 +23,14 @@ P = ParamSpec('P')
 T = TypeVar('T')
 
 
+# fmt: off
+# ruff: disable[E501]
 @overload
-def _deprecate_positional_args(
-    func: Callable[P, T],
-    *,
-    version: tuple[int, int] = ...,
-    allowed: list[str] | None = ...,
-    n_allowed: int = ...,
-) -> Callable[P, T]: ...
+def _deprecate_positional_args(func: Callable[P, T], *, version: tuple[int, int] = ..., allowed: list[str] | None = ..., n_allowed: int = ...) -> Callable[P, T]: ...
 @overload
-def _deprecate_positional_args(
-    *, version: tuple[int, int] = ..., allowed: list[str] | None = ..., n_allowed: int = ...
-) -> Callable[[Callable[P, T]], Callable[P, T]]: ...
+def _deprecate_positional_args(*, version: tuple[int, int] = ..., allowed: list[str] | None = ..., n_allowed: int = ...) -> Callable[[Callable[P, T]], Callable[P, T]]: ...
+# ruff: enable[E501]
+# fmt: on
 def _deprecate_positional_args(
     func: Callable[..., T] | None = None,
     *,
