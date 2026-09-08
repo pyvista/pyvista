@@ -1592,36 +1592,16 @@ class Transform(
         return self.GetNumberOfConcatenatedTransforms()
 
     # `MultiBlock` also matches the array overload, so it is offered this one first.
+    # fmt: off
+    # ruff: disable[E501]
     @overload
-    def apply(
-        self: Transform,
-        obj: _DataSetOrMultiBlockType,
-        /,
-        mode: Literal['active_vectors', 'all_vectors'] = ...,
-        *,
-        inverse: bool = ...,
-        copy: bool = ...,
-    ) -> _DataSetOrMultiBlockType: ...
+    def apply(self: Transform, obj: _DataSetOrMultiBlockType, /, mode: Literal['active_vectors', 'all_vectors'] = ..., *, inverse: bool = ..., copy: bool = ...) -> _DataSetOrMultiBlockType: ...
     @overload
-    def apply(
-        self: Transform,
-        obj: VectorLike[float] | MatrixLike[float],
-        /,
-        mode: Literal['points', 'vectors'] | None = ...,
-        *,
-        inverse: bool = ...,
-        copy: bool = ...,
-    ) -> NumpyArray[float]: ...
+    def apply(self: Transform, obj: VectorLike[float] | MatrixLike[float], /, mode: Literal['points', 'vectors'] | None = ..., *, inverse: bool = ..., copy: bool = ...) -> NumpyArray[float]: ...
     @overload
-    def apply(
-        self: Transform,
-        obj: Prop3D,
-        /,
-        mode: Literal['replace', 'pre-multiply', 'post-multiply'] = ...,
-        *,
-        inverse: bool = ...,
-        copy: bool = ...,
-    ) -> Prop3D: ...
+    def apply(self: Transform, obj: Prop3D, /, mode: Literal['replace', 'pre-multiply', 'post-multiply'] = ..., *, inverse: bool = ..., copy: bool = ...) -> Prop3D: ...
+    # ruff: enable[E501]
+    # fmt: on
     def apply(
         self: Transform,
         obj: VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock | Prop3D,
@@ -2738,23 +2718,16 @@ class Transform(
         """  # noqa: E501
         return not np.allclose(self.shear_matrix, np.eye(3))
 
+    # fmt: off
+    # ruff: disable[E501]
     @overload
     def as_rotation(self, representation: None = ..., *args, **kwargs) -> Rotation: ...
     @overload
-    def as_rotation(
-        self,
-        representation: Literal['quat', 'matrix', 'rotvec', 'mrp', 'euler', 'davenport'],
-        *args,
-        **kwargs,
-    ) -> NumpyArray[float]: ...
+    def as_rotation(self, representation: Literal['quat', 'matrix', 'rotvec', 'mrp', 'euler', 'davenport'], *args, **kwargs) -> NumpyArray[float]: ...
     @overload
-    def as_rotation(
-        self,
-        representation: Literal['quat', 'matrix', 'rotvec', 'mrp', 'euler', 'davenport']
-        | None = ...,
-        *args,
-        **kwargs,
-    ) -> Rotation | NumpyArray[float]: ...
+    def as_rotation(self, representation: Literal['quat', 'matrix', 'rotvec', 'mrp', 'euler', 'davenport'] | None = ..., *args, **kwargs) -> Rotation | NumpyArray[float]: ...
+    # ruff: enable[E501]
+    # fmt: on
     def as_rotation(
         self,
         representation: Literal['quat', 'matrix', 'rotvec', 'mrp', 'euler', 'davenport']

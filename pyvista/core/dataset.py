@@ -2092,24 +2092,16 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             return vtk_id_list_to_array(id_list)
         return locator.FindClosestPoint(point)  # type: ignore[arg-type]
 
+    # fmt: off
+    # ruff: disable[E501, FBT001, FBT002]
     @overload
-    def find_closest_cell(
-        self: Self,
-        point: VectorLike[float] | MatrixLike[float],
-        return_closest_point: Literal[False] = False,  # noqa: FBT002
-    ) -> int | NumpyArray[int]: ...
+    def find_closest_cell(self: Self, point: VectorLike[float] | MatrixLike[float], return_closest_point: Literal[False] = False) -> int | NumpyArray[int]: ...
     @overload
-    def find_closest_cell(
-        self: Self,
-        point: VectorLike[float] | MatrixLike[float],
-        return_closest_point: Literal[True] = True,  # noqa: FBT002
-    ) -> tuple[int | NumpyArray[int], NumpyArray[int]]: ...
+    def find_closest_cell(self: Self, point: VectorLike[float] | MatrixLike[float], return_closest_point: Literal[True] = True) -> tuple[int | NumpyArray[int], NumpyArray[int]]: ...
     @overload
-    def find_closest_cell(
-        self: Self,
-        point: VectorLike[float] | MatrixLike[float],
-        return_closest_point: bool = ...,  # noqa: FBT001
-    ) -> int | NumpyArray[int] | tuple[int | NumpyArray[int], NumpyArray[int]]: ...
+    def find_closest_cell(self: Self, point: VectorLike[float] | MatrixLike[float], return_closest_point: bool = ...) -> int | NumpyArray[int] | tuple[int | NumpyArray[int], NumpyArray[int]]: ...
+    # ruff: enable[E501, FBT001, FBT002]
+    # fmt: on
     @_deprecate_positional_args(allowed=['point'])
     def find_closest_cell(
         self: Self,
