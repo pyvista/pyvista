@@ -17,4 +17,16 @@ def a_plotter() -> pv.Plotter:
     return pl
 
 
+SKIP_RUNTIME = (
+    dict.fromkeys(
+        [
+            'a_plotter().image',
+        ],
+        'the VTK 9.3 wheel renders only through a display, and the core phase has none',
+    )
+    if pv.vtk_version_info < (9, 4)
+    else {}
+)
+
+
 assert_types(a_plotter().image, NumpyArray[np.uint8])
