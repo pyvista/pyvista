@@ -1142,8 +1142,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         actor : :vtk:`vtkActor` | Actor
             The actor.
 
-        actor_properties : vtk.Properties
-            Actor properties.
+        actor_properties : :vtk:`vtkProperty` | :vtk:`vtkProperty2D` | :vtk:`vtkVolumeProperty`
+            The property of the actor, or ``None`` if it has none.
 
         """
         # Remove actor by that name if present
@@ -1718,7 +1718,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         Returns
         -------
-        :vtk:`vtkAnnotatedCubeActor`
+        :vtk:`vtkPropAssembly`
             Axes actor.
 
         See Also
@@ -2698,7 +2698,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self._scalar_bar_slots = set(range(MAX_N_COLOR_BARS))
         self._scalar_bar_slot_lookup = {}
 
-    def set_focus(self, point, render=True) -> None:  # noqa: FBT002
+    def set_focus(self, point, *, render=True) -> None:
         """Set focus to a point.
 
         Parameters
@@ -2709,6 +2709,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         render : bool, default: True
             If the render window is being shown, trigger a render
             after setting the focus.
+
+            .. versionadded:: 0.50
 
         Examples
         --------
@@ -4637,8 +4639,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         Returns
         -------
-        :vtk:`vtkActor`
-            The actor for the added :vtk:`vtkLegendScaleActor`.
+        tuple[:vtk:`vtkLegendScaleActor`, None]
+            The added actor and ``None``, since it carries no property.
 
         Warnings
         --------

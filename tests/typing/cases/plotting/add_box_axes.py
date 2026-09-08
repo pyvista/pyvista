@@ -20,7 +20,7 @@ SKIP_RUNTIME = (
         [
             'a_plotter().add_box_axes()',
         ],
-        'enabling a widget renders, the VTK 9.3 wheel renders only through a display, and the core phase has none',
+        'enabling a widget renders, and the VTK 9.3 wheel renders only through a display',
     )
     if pv.vtk_version_info < (9, 4)
     else {}

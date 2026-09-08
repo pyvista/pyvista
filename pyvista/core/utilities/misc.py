@@ -143,7 +143,7 @@ _R = TypeVar('_R')
 def _wraps(
     target: Callable[Concatenate[Any, _P], Any],
 ) -> Callable[[Callable[..., _R]], Callable[Concatenate[Any, _P], _R]]:
-    """Give a forwarding method `target`'s docstring, name and signature."""
+    """Give a forwarding method ``target``'s docstring, name and signature."""
 
     def decorate(method: Callable[..., _R]) -> Callable[Concatenate[Any, _P], _R]:
         functools.update_wrapper(method, target)
