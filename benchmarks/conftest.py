@@ -35,6 +35,15 @@ def sphere(rng):
 
 
 @pytest.fixture(scope='session')
+def unchosen_sphere(rng):
+    """Return a sphere whose active arrays are resolved per read, none having been chosen."""
+    mesh = pv.Sphere()
+    mesh.point_data['data'] = rng.random(mesh.n_points)
+    mesh.point_data['vec'] = rng.random((mesh.n_points, 3))
+    return mesh
+
+
+@pytest.fixture(scope='session')
 def big_sphere(rng):
     """Return a sphere large enough that array traffic dominates per-call overhead."""
     mesh = pv.Sphere(theta_resolution=200, phi_resolution=200)

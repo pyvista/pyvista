@@ -183,9 +183,8 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Notes
         -----
-        If both cell and point scalars are present and neither have
-        been set active within at the dataset level, point scalars
-        will be made active.
+        If the point and cell attributes both have active scalars and neither
+        has been chosen at the dataset level, the point scalars are reported.
 
         Examples
         --------
@@ -216,16 +215,15 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
                     name = None
 
         if name is None:
-            # check for the active scalars in point or cell arrays
-            self._active_scalars_info = ActiveArrayInfoTuple(field, None)
+            # Search on every read so an array activated later is seen
             for association, attributes in (
                 (FieldAssociation.POINT, self.GetPointData()),
                 (FieldAssociation.CELL, self.GetCellData()),
             ):
                 active_name = _active_scalars_name(attributes)
                 if active_name is not None:
-                    self._active_scalars_info = ActiveArrayInfoTuple(association, active_name)
-                    break
+                    return ActiveArrayInfoTuple(association, active_name)
+            return ActiveArrayInfoTuple(field, None)
 
         return self._active_scalars_info
 
@@ -244,9 +242,8 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Notes
         -----
-        If both cell and point vectors are present and neither have
-        been set active within at the dataset level, point vectors
-        will be made active.
+        If the point and cell attributes both have active vectors and neither
+        has been chosen at the dataset level, the point vectors are reported.
 
         Examples
         --------
@@ -275,16 +272,15 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
                     name = None
 
         if name is None:
-            # check for the active vectors in point or cell arrays
-            self._active_vectors_info = ActiveArrayInfoTuple(field, None)
+            # Search on every read so an array activated later is seen
             for association, attributes in (
                 (FieldAssociation.POINT, self.GetPointData()),
                 (FieldAssociation.CELL, self.GetCellData()),
             ):
                 name = _active_vectors_name(attributes)
                 if name is not None:
-                    self._active_vectors_info = ActiveArrayInfoTuple(association, name)
-                    break
+                    return ActiveArrayInfoTuple(association, name)
+            return ActiveArrayInfoTuple(field, None)
 
         return self._active_vectors_info
 
@@ -953,6 +949,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             Deep or shallow copy.
 
         """
+        # Copy the private tuples, not the properties, which would resolve an unchosen array
         if deep:
             self._association_complex_names = _copy_association_names(
                 ido._association_complex_names
@@ -960,16 +957,16 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             self._association_bitarray_names = _copy_association_names(
                 ido._association_bitarray_names
             )
-            self._active_scalars_info = ido.active_scalars_info.copy()
-            self._active_vectors_info = ido.active_vectors_info.copy()
-            self._active_tensors_info = ido.active_tensors_info.copy()
+            self._active_scalars_info = ido._active_scalars_info.copy()
+            self._active_vectors_info = ido._active_vectors_info.copy()
+            self._active_tensors_info = ido._active_tensors_info.copy()
         else:
             # pass by reference
             self._association_complex_names = ido._association_complex_names
             self._association_bitarray_names = ido._association_bitarray_names
-            self._active_scalars_info = ido.active_scalars_info
-            self._active_vectors_info = ido.active_vectors_info
-            self._active_tensors_info = ido.active_tensors_info
+            self._active_scalars_info = ido._active_scalars_info
+            self._active_vectors_info = ido._active_vectors_info
+            self._active_tensors_info = ido._active_tensors_info
 
     @property
     def point_data(self: Self) -> DataSetAttributes:
