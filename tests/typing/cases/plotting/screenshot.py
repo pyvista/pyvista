@@ -17,20 +17,15 @@ def a_plotter() -> pv.Plotter:
     return pl
 
 
-SKIP_RUNTIME = (
-    dict.fromkeys(
-        [
-            'a_plotter().screenshot()',
-            'a_plotter().screenshot(return_img=True)',
-            'a_plotter().screenshot(return_img=False)',
-        ],
-        'the VTK 9.3 wheel renders only through a display',
-    )
-    if pv.vtk_version_info < (9, 4)
-    else {}
-)
+def a_flag() -> bool:
+    """Return a flag typed only as ``bool``, so the catch-all overload applies."""
+    return True
 
-# A plain array of pixels, or nothing
-assert_types(a_plotter().screenshot(), NumpyArray[np.uint8] | None)
-assert_types(a_plotter().screenshot(return_img=True), NumpyArray[np.uint8] | None)
-assert_types(a_plotter().screenshot(return_img=False), NumpyArray[np.uint8] | None)
+
+assert_types(a_plotter().screenshot(), NumpyArray[np.uint8])
+assert_types(a_plotter().screenshot(return_img=True), NumpyArray[np.uint8])
+
+assert_types(a_plotter().screenshot(return_img=False), None)
+
+# The catch-all, reached only by a flag widened to `bool`
+assert_types(a_plotter().screenshot(return_img=a_flag()), NumpyArray[np.uint8] | None)
