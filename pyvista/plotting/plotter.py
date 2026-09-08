@@ -25,7 +25,6 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
 from typing import cast
-from typing import overload
 import uuid
 import warnings
 import weakref
@@ -4703,16 +4702,6 @@ class BasePlotter(_BoundsSizeMixin):
         addr = actor.GetAddressAsString('')
         self.renderer._labels[addr] = (poly, label, color)
 
-    # fmt: off
-    # ruff: disable[E501, FBT001]
-    @overload
-    def add_volume(self, volume: MultiBlock, scalars: str | NumpyArray[float] | None = ..., clim: float | tuple[float, float] | None = ..., resolution: VectorLike[float] | None = ..., opacity: OpacityOptions | NumpyArray[float] = ..., n_colors: int = ..., cmap: ColormapOptions | LookupTable | None = ..., flip_scalars: bool = ..., reset_camera: bool | None = ..., name: str | None = ..., ambient: float | None = ..., categories: bool | int = ..., culling: CullingOptions | bool = ..., multi_colors: bool = ..., blending: Literal['additive', 'maximum', 'minimum', 'composite', 'average'] = ..., mapper: Literal['fixed_point', 'gpu', 'open_gl', 'smart', 'ugrid'] | None = ..., scalar_bar_args: ScalarBarArgs | None = ..., show_scalar_bar: bool | None = ..., annotations: dict[float, str] | None = ..., pickable: bool = ..., preference: PointLiteral | CellLiteral = ..., opacity_unit_distance: float | None = ..., shade: bool = ..., diffuse: float = ..., specular: float = ..., specular_power: float = ..., render: bool | None = ..., user_matrix: TransformLike | None = ..., log_scale: bool = ..., **kwargs) -> list[Volume]: ...
-    @overload
-    def add_volume(self, volume: DataSet | NumpyArray[float], scalars: str | NumpyArray[float] | None = ..., clim: float | tuple[float, float] | None = ..., resolution: VectorLike[float] | None = ..., opacity: OpacityOptions | NumpyArray[float] = ..., n_colors: int = ..., cmap: ColormapOptions | LookupTable | None = ..., flip_scalars: bool = ..., reset_camera: bool | None = ..., name: str | None = ..., ambient: float | None = ..., categories: bool | int = ..., culling: CullingOptions | bool = ..., multi_colors: bool = ..., blending: Literal['additive', 'maximum', 'minimum', 'composite', 'average'] = ..., mapper: Literal['fixed_point', 'gpu', 'open_gl', 'smart', 'ugrid'] | None = ..., scalar_bar_args: ScalarBarArgs | None = ..., show_scalar_bar: bool | None = ..., annotations: dict[float, str] | None = ..., pickable: bool = ..., preference: PointLiteral | CellLiteral = ..., opacity_unit_distance: float | None = ..., shade: bool = ..., diffuse: float = ..., specular: float = ..., specular_power: float = ..., render: bool | None = ..., user_matrix: TransformLike | None = ..., log_scale: bool = ..., **kwargs) -> Volume: ...
-    @overload
-    def add_volume(self, volume: DataSet | MultiBlock | NumpyArray[float], scalars: str | NumpyArray[float] | None = ..., clim: float | tuple[float, float] | None = ..., resolution: VectorLike[float] | None = ..., opacity: OpacityOptions | NumpyArray[float] = ..., n_colors: int = ..., cmap: ColormapOptions | LookupTable | None = ..., flip_scalars: bool = ..., reset_camera: bool | None = ..., name: str | None = ..., ambient: float | None = ..., categories: bool | int = ..., culling: CullingOptions | bool = ..., multi_colors: bool = ..., blending: Literal['additive', 'maximum', 'minimum', 'composite', 'average'] = ..., mapper: Literal['fixed_point', 'gpu', 'open_gl', 'smart', 'ugrid'] | None = ..., scalar_bar_args: ScalarBarArgs | None = ..., show_scalar_bar: bool | None = ..., annotations: dict[float, str] | None = ..., pickable: bool = ..., preference: PointLiteral | CellLiteral = ..., opacity_unit_distance: float | None = ..., shade: bool = ..., diffuse: float = ..., specular: float = ..., specular_power: float = ..., render: bool | None = ..., user_matrix: TransformLike | None = ..., log_scale: bool = ..., **kwargs) -> Volume | list[Volume]: ...
-    # ruff: enable[E501, FBT001]
-    # fmt: on
     @_deprecate_positional_args(allowed=['volume'])
     def add_volume(  # noqa: PLR0917
         self,
@@ -5129,7 +5118,7 @@ class BasePlotter(_BoundsSizeMixin):
                     render=render,
                     show_scalar_bar=show_scalar_bar,
                 )
-                actors.append(a)
+                actors.extend(a if isinstance(a, list) else [a])
             return actors
 
         # Make sure structured grids are not less than 3D
@@ -5724,16 +5713,6 @@ class BasePlotter(_BoundsSizeMixin):
         self.volume = None
         self.text = None
 
-    # fmt: off
-    # ruff: disable[E501, FBT001]
-    @overload
-    def add_text(self, text: str, position: TextPositionOptions = ..., font_size: int | None = ..., color: ColorLike | None = ..., font: FontFamilyOptions | None = ..., shadow: bool = ..., name: str | None = ..., viewport: bool = ..., orientation: float = ..., font_file: str | None = ..., *, render: bool = ...) -> CornerAnnotation: ...
-    @overload
-    def add_text(self, text: str, position: Sequence[float] | None, font_size: int | None = ..., color: ColorLike | None = ..., font: FontFamilyOptions | None = ..., shadow: bool = ..., name: str | None = ..., viewport: bool = ..., orientation: float = ..., font_file: str | None = ..., *, render: bool = ...) -> Text: ...
-    @overload
-    def add_text(self, text: str, position: TextPositionOptions | Sequence[float] | None = ..., font_size: int | None = ..., color: ColorLike | None = ..., font: FontFamilyOptions | None = ..., shadow: bool = ..., name: str | None = ..., viewport: bool = ..., orientation: float = ..., font_file: str | None = ..., *, render: bool = ...) -> CornerAnnotation | Text: ...
-    # ruff: enable[E501, FBT001]
-    # fmt: on
     @_deprecate_positional_args(allowed=['text'])
     def add_text(  # noqa: PLR0917
         self,
@@ -6971,16 +6950,6 @@ class BasePlotter(_BoundsSizeMixin):
             writer.UsePainterSettings()
         writer.Update()
 
-    # fmt: off
-    # ruff: disable[E501, FBT001, FBT002]
-    @overload
-    def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., transparent_background: bool | None = ..., return_img: Literal[True] = True, window_size: Sequence[int] | None = ..., scale: int | None = ...) -> NumpyArray[np.uint8]: ...
-    @overload
-    def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., transparent_background: bool | None = ..., return_img: Literal[False] = ..., window_size: Sequence[int] | None = ..., scale: int | None = ...) -> None: ...
-    @overload
-    def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., transparent_background: bool | None = ..., return_img: bool = ..., window_size: Sequence[int] | None = ..., scale: int | None = ...) -> NumpyArray[np.uint8] | None: ...
-    # ruff: enable[E501, FBT001, FBT002]
-    # fmt: on
     @_deprecate_positional_args(allowed=['filename'])
     def screenshot(  # noqa: PLR0917
         self,
@@ -8954,7 +8923,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         color: ColorLike | None = None,
         font: FontFamilyOptions | None = None,
         shadow: bool = False,  # noqa: FBT001, FBT002
-    ) -> CornerAnnotation:
+    ) -> CornerAnnotation | Text:
         """Add text to the top center of the plot.
 
         This is merely a convenience method that calls ``add_text``
@@ -8986,7 +8955,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
         Returns
         -------
-        output : CornerAnnotation
+        output : CornerAnnotation | Text
             Text actor added to plot.
 
         Examples

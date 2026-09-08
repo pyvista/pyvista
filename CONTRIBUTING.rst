@@ -1300,7 +1300,7 @@ helpers such as the ``multi()`` above that builds a fresh ``MultiBlock``.
 
 Each file holds the cases of one callable and is named after it: ``clip_scalar.py``,
 ``fit_plane_to_points.py``. A method takes its class as a lowercase prefix only when
-the bare name would not identify it, as for dunders (``imagedata_getitem.py``,
+the bare name would not identify it, as for dunders (``multiblock_getitem.py``,
 ``multiblock_setitem.py``) and names that several classes share (``transform_apply.py``).
 A file carries all the setup it needs, even when another file has the same helper.
 

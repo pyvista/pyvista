@@ -4,9 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Literal
 from typing import cast
-from typing import overload
 
 import matplotlib as mpl
 import numpy as np
@@ -1179,16 +1177,6 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
             opacity_tf.AddPoint(value, alpha)
         return opacity_tf
 
-    # fmt: off
-    # ruff: disable[E501, FBT001, FBT002]
-    @overload
-    def map_value(self, value: float, opacity: Literal[True] = True) -> tuple[float, float, float, float]: ...
-    @overload
-    def map_value(self, value: float, opacity: Literal[False]) -> tuple[float, float, float]: ...
-    @overload
-    def map_value(self, value: float, opacity: bool = ...) -> tuple[float, float, float] | tuple[float, float, float, float]: ...
-    # ruff: enable[E501, FBT001, FBT002]
-    # fmt: on
     @_deprecate_positional_args(allowed=['value'])
     def map_value(
         self,

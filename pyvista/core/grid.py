@@ -10,7 +10,6 @@ from typing import Any
 from typing import ClassVar
 from typing import Literal
 from typing import cast
-from typing import overload
 
 import numpy as np
 import pyvista_validation as _validation
@@ -799,15 +798,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         """Return the default str representation."""
         return DataSet.__str__(self)
 
-    # fmt: off
-    # ruff: disable[E501]
-    @overload
-    def __getitem__(self, key: tuple[str, Literal['cell', 'point', 'field']] | str) -> pyvista_ndarray: ...
-    @overload
-    def __getitem__(self, key: tuple[int, int, int]) -> ImageData: ...
-    # ruff: enable[E501]
-    # fmt: on
-    def __getitem__(
+    def __getitem__(  # type: ignore[override]
         self, key: tuple[str, Literal['cell', 'point', 'field']] | str | tuple[int, int, int]
     ) -> ImageData | pyvista_ndarray:
         """Search for a data array or slice with IJK indexing."""

@@ -2718,16 +2718,6 @@ class Transform(
         """  # noqa: E501
         return not np.allclose(self.shear_matrix, np.eye(3))
 
-    # fmt: off
-    # ruff: disable[E501]
-    @overload
-    def as_rotation(self, representation: None = ..., *args, **kwargs) -> Rotation: ...
-    @overload
-    def as_rotation(self, representation: Literal['quat', 'matrix', 'rotvec', 'mrp', 'euler', 'davenport'], *args, **kwargs) -> NumpyArray[float]: ...
-    @overload
-    def as_rotation(self, representation: Literal['quat', 'matrix', 'rotvec', 'mrp', 'euler', 'davenport'] | None = ..., *args, **kwargs) -> Rotation | NumpyArray[float]: ...
-    # ruff: enable[E501]
-    # fmt: on
     def as_rotation(
         self,
         representation: Literal['quat', 'matrix', 'rotvec', 'mrp', 'euler', 'davenport']
