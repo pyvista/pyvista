@@ -1275,8 +1275,9 @@ The tests can be executed with:
 
 Writing a Case
 """"""""""""""
-Cases live in ``tests/typing/cases``. A case is one line: an expression, and the
-type it should have.
+Cases live in ``tests/typing/cases``, under ``core`` or ``plotting`` after the
+subpackage of the callable they exercise. A case is one line: an expression, and
+the type it should have.
 
 .. code-block:: python
 

@@ -12,4 +12,4 @@ def a_plotter() -> pv.Plotter:
     return pv.Plotter()
 
 
-assert_types(a_plotter().add_title('a'), pv.CornerAnnotation | pv.Text)
+assert_types(a_plotter().add_title('a'), pv.CornerAnnotation)
