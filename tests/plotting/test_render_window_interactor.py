@@ -257,6 +257,50 @@ def test_timer():
     assert len(events) == E
 
 
+def test_timer_ignores_events_before_its_own_duration_elapses():
+    # https://github.com/pyvista/pyvista/issues/7962
+    # `TimerEvent` is observed on the interactor itself, so every active
+    # timer's `execute` fires whenever *any* timer does -- e.g. a fast
+    # timer's event would also land on a slower timer's `execute`. Verify
+    # the slower timer ignores an event that arrives before its own
+    # duration has elapsed, using a fake interactor rather than two real,
+    # simultaneously-firing native timers: driving that scenario through
+    # `vtkXRenderWindowInteractor` segfaults VTK 9.3.1 when two repeating
+    # timers are both active.
+    calls = []
+    timer = pv.plotting.render_window_interactor.Timer(
+        max_steps=10, callback=calls.append, duration=1000
+    )
+    timer.id = 1
+
+    class _FakeRenderWindow:
+        def Render(self):  # noqa: N802
+            pass
+
+    class _FakeInteractor:
+        def GetRenderWindow(self):  # noqa: N802
+            return _FakeRenderWindow()
+
+    fake_iren = _FakeInteractor()
+
+    # Its own duration has already elapsed since construction, so this event
+    # is the one that actually belongs to it.
+    timer._last_fire_time -= 2  # 2 s, comfortably past the 1000 ms duration
+    timer.execute(fake_iren, 'TimerEvent')
+    assert calls == [0]
+
+    # A second event lands immediately after, as if a much faster timer had
+    # fired -- well within this timer's own 1000 ms duration.
+    timer.execute(fake_iren, 'TimerEvent')
+    assert calls == [0]
+
+
+def test_add_timer_event_forwards_duration_to_timer():
+    pl = pv.Plotter()
+    pl.iren.add_timer_event(max_steps=5, duration=250, callback=lambda step: None)  # noqa: ARG005
+    assert pl.iren._timer.duration == 250
+
+
 def test_add_timer_event():
     sphere = pv.Sphere()
 
@@ -264,7 +308,7 @@ def test_add_timer_event():
     actor = pl.add_mesh(sphere)
 
     def callback(step):
-        actor.position = [step / 100.0, step / 100.0, 0]
+        actor.position = [step / 100.0, step / 100.0, 0]  # pragma: no cover
 
     pl.add_timer_event(max_steps=200, duration=500, callback=callback)
 
