@@ -1326,7 +1326,7 @@ class BasePlotter(_BoundsSizeMixin):
     @_wraps(Renderer.add_legend_scale)
     def add_legend_scale(
         self, *args, **kwargs
-    ) -> tuple[_vtk.vtkLegendScaleActor, _vtk.vtkProperty | None]:  # numpydoc ignore=PR01,RT01
+    ) -> tuple[_vtk.vtkLegendScaleActor, None]:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_legend_scale``."""
         return self.renderer.add_legend_scale(*args, **kwargs)
 
@@ -1613,20 +1613,12 @@ class BasePlotter(_BoundsSizeMixin):
         return self.renderer.add_orientation_widget(*args, **kwargs)
 
     @_wraps(Renderer.add_axes)
-    def add_axes(
-        self, *args, **kwargs
-    ) -> (
-        _vtk.vtkAxesActor | _vtk.vtkPropAssembly | _vtk.vtkAnnotatedCubeActor
-    ):  # numpydoc ignore=PR01,RT01
+    def add_axes(self, *args, **kwargs) -> _vtk.vtkAxesActor:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_axes``."""
         return self.renderer.add_axes(*args, **kwargs)
 
     @_wraps(Renderer.add_box_axes)
-    def add_box_axes(
-        self, *args, **kwargs
-    ) -> (
-        _vtk.vtkAxesActor | _vtk.vtkPropAssembly | _vtk.vtkAnnotatedCubeActor
-    ):  # numpydoc ignore=PR01,RT01
+    def add_box_axes(self, *args, **kwargs) -> _vtk.vtkPropAssembly:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_box_axes``."""
         return self.renderer.add_box_axes(*args, **kwargs)
 
@@ -1670,7 +1662,9 @@ class BasePlotter(_BoundsSizeMixin):
     @_wraps(Renderer.add_actor)
     def add_actor(
         self, *args, **kwargs
-    ) -> tuple[_vtk.vtkProp, _vtk.vtkProperty | None]:  # numpydoc ignore=PR01,RT01
+    ) -> tuple[
+        _vtk.vtkProp, _vtk.vtkProperty | _vtk.vtkProperty2D | _vtk.vtkVolumeProperty | None
+    ]:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_actor``."""
         return self.renderer.add_actor(*args, **kwargs)
 
@@ -5588,7 +5582,7 @@ class BasePlotter(_BoundsSizeMixin):
     @_wraps(ScalarBars.add_scalar_bar)
     def add_scalar_bar(
         self, title: str = '', **kwargs
-    ) -> _vtk.vtkScalarBarActor:  # numpydoc ignore=PR01,RT01
+    ) -> _vtk.vtkScalarBarActor | None:  # numpydoc ignore=PR01,RT01
         """Wrap for ``ScalarBars.add_scalar_bar``."""
         # only render when the plotter has already been shown
         render = kwargs.get('render')

@@ -15,4 +15,4 @@ def a_plotter() -> pv.Plotter:
     return pl
 
 
-assert_types(a_plotter().add_legend_scale(), tuple[_vtk.vtkLegendScaleActor, _vtk.vtkProperty | None])
+assert_types(a_plotter().add_legend_scale(), tuple[_vtk.vtkLegendScaleActor, None])

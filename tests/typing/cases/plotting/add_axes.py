@@ -27,4 +27,4 @@ SKIP_RUNTIME = (
 )
 
 
-assert_types(a_plotter().add_axes(), _vtk.vtkAxesActor | _vtk.vtkPropAssembly | _vtk.vtkAnnotatedCubeActor)
+assert_types(a_plotter().add_axes(), _vtk.vtkAxesActor)

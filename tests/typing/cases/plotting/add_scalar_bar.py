@@ -15,4 +15,13 @@ def a_plotter() -> pv.Plotter:
     return pl
 
 
-assert_types(a_plotter().add_scalar_bar('height'), _vtk.vtkScalarBarActor)
+def a_plotter_with_bar() -> pv.Plotter:
+    """Return a plotter already showing the bar titled ``height``."""
+    pl = a_plotter()
+    pl.add_scalar_bar('height')
+    return pl
+
+
+# A title already shown reuses its bar and hands back nothing
+assert_types(a_plotter().add_scalar_bar('height'), _vtk.vtkScalarBarActor | None)
+assert_types(a_plotter_with_bar().add_scalar_bar('height'), _vtk.vtkScalarBarActor | None)
