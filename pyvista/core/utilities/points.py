@@ -266,10 +266,10 @@ def fit_plane_to_points(  # noqa: PLR0917
     pyvista.PolyData
         Plane mesh.
 
-    numpy.ndarray
+    pyvista.pyvista_ndarray
         Plane center if ``return_meta=True``.
 
-    numpy.ndarray
+    pyvista.pyvista_ndarray
         Plane normal if ``return_meta=True``.
 
     See Also
