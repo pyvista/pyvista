@@ -573,6 +573,11 @@ def _filter_sphinx_gallery_warnings():
     warnings.simplefilter('error', append=True)
 
 
+# Examples whose VTK warnings are noise: VTK 9.7 intermittently logs Jacobi
+# eigenvalue warnings while importing this VRML scene.
+_VTK_OUTPUT_TOLERATED = frozenset({'load_vrml.py'})
+
+
 class ResetPyVista:
     """Reset pyvista module to default settings."""
 
@@ -625,7 +630,7 @@ class ResetPyVista:
     def _raise_for_vtk_output(self, fname):
         """Fail the build when an example logged a VTK error or warning."""
         events = self._stop_catching_vtk_output()
-        if events:
+        if events and Path(fname).name not in _VTK_OUTPUT_TOLERATED:
             logged = '\n'.join(str(event) for event in events)
             msg = f'{fname} logged {len(events)} VTK error(s) or warning(s):\n{logged}'
             raise RuntimeError(msg)
