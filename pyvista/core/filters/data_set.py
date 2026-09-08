@@ -810,11 +810,12 @@ class DataSetFilters(DataObjectFilters):
             'DataSet',
             _keep_array_structure(_cast_output_to_match_input_type(_get_output(alg), self), self),
         )
+        if not is_single_value:
+            # Keep what lies above the lower value as well
+            result0 = result0.clip_scalar(scalars=scalars, invert=False, value=lower)
         if inplace:
             self.copy_from(result0, deep=False)
             result0 = self
-        if not is_single_value:
-            return result0.clip_scalar(scalars=scalars, invert=False, value=lower, inplace=inplace)
         if both:
             result1 = cast(
                 'DataSet',
