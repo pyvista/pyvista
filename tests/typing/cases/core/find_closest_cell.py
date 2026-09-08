@@ -15,5 +15,5 @@ SKIP_RUNTIME = {
 
 # The closest point comes back as floats, whichever half of the union is taken
 assert_types(pv.Sphere().find_closest_cell((0.0, 0.0, 0.0)), _Result)
-assert_types(pv.Sphere().find_closest_cell([(0.0, 0.0, 0.0), (1.0, 0.0, 0.0)]), _Result)
+assert_types(pv.Sphere().find_closest_cell([(0.0, 0.0, 0.0), (1.0, 0.0, 0.0)]), _Result)  # pragma: no cover
 assert_types(pv.Sphere().find_closest_cell((0.0, 0.0, 0.0), return_closest_point=True), _Result)
