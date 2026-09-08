@@ -23,10 +23,7 @@ import threading
 import time
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Concatenate
 from typing import Literal
-from typing import ParamSpec
-from typing import TypeVar
 from typing import cast
 import uuid
 import warnings
@@ -53,6 +50,7 @@ from pyvista.core.utilities.helpers import is_pyvista_dataset
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.core.utilities.misc import _NoNewAttrMixin
+from pyvista.core.utilities.misc import _wraps
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import try_callback
@@ -367,22 +365,6 @@ def _projection_scale(renderer: Renderer) -> tuple[float, float]:
     if renderer.camera.parallel_projection:
         return x_scale / y_scale, 1.0
     return x_scale, y_scale
-
-
-_P = ParamSpec('_P')
-_R = TypeVar('_R')
-
-
-def _wraps(
-    target: Callable[Concatenate[Any, _P], Any],
-) -> Callable[[Callable[..., _R]], Callable[Concatenate[Any, _P], _R]]:
-    """Give a forwarding method `target`'s docstring, name and signature."""
-
-    def decorate(method: Callable[..., _R]) -> Callable[Concatenate[Any, _P], _R]:
-        functools.update_wrapper(method, target)
-        return method
-
-    return decorate
 
 
 @abstract_class
