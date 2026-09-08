@@ -1297,6 +1297,12 @@ Write the expected type as an ordinary expression, such as ``pv.PolyData``,
 Anything in the file that is not an ``assert_types`` line is setup: imports, and
 helpers such as the ``multi()`` above that builds a fresh ``MultiBlock``.
 
+Each file holds the cases of one callable and is named after it: ``clip_scalar.py``,
+``fit_plane_to_points.py``. A method takes its class as a lowercase prefix only when
+the bare name would not identify it, as for dunders (``imagedata_getitem.py``,
+``multiblock_setitem.py``) and names that several classes share (``transform_apply.py``).
+A file carries all the setup it needs, even when another file has the same helper.
+
 The directory carries its own ``ruff.toml`` raising the line length, so a case stays
 on one line however long it gets.
 

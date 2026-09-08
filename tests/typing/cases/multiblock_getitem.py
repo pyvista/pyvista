@@ -1,4 +1,4 @@
-"""Typing cases for :meth:`pyvista.MultiBlock.__getitem__` and ``__setitem__``."""
+"""Typing cases for :meth:`pyvista.MultiBlock.__getitem__`."""
 
 from __future__ import annotations
 
@@ -27,9 +27,3 @@ assert_types(multi()[an_index()], MultiBlock | DataSet | None)
 # Slicing keeps the container
 assert_types(multi()[0:1], MultiBlock)
 assert_types(multi()[:], MultiBlock)
-
-assert_types(multi().__setitem__(0, pv.PolyData()), None)
-assert_types(multi().__setitem__(0, pv.MultiBlock()), None)
-assert_types(multi().__setitem__(0, None), None)
-assert_types(multi().__setitem__('mesh', pv.PolyData()), None)
-assert_types(multi().__setitem__(slice(0, 1), [pv.PolyData()]), None)

@@ -1,7 +1,4 @@
-"""Typing cases for :meth:`pyvista.Plotter.add_text` and :meth:`~pyvista.Plotter.add_title`.
-
-A named position gives a `CornerAnnotation` and a coordinate pair gives a `Text`.
-"""
+"""Typing cases for :meth:`pyvista.Plotter.add_text`."""
 
 from __future__ import annotations
 
@@ -19,5 +16,3 @@ assert_types(a_plotter().add_text('a'), pv.CornerAnnotation | pv.Text)
 assert_types(a_plotter().add_text('a', position='upper_edge'), pv.CornerAnnotation | pv.Text)
 assert_types(a_plotter().add_text('a', position=(0.1, 0.1)), pv.CornerAnnotation | pv.Text)
 assert_types(a_plotter().add_text('a', position=None), pv.CornerAnnotation | pv.Text)
-
-assert_types(a_plotter().add_title('a'), pv.CornerAnnotation | pv.Text)

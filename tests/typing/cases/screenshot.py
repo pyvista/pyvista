@@ -27,7 +27,7 @@ SKIP_RUNTIME = dict.fromkeys(
         'a_plotter().screenshot(return_img=False)',
         'a_plotter().screenshot(return_img=a_flag())',
     ],
-    'taking a screenshot renders, and the cases run in the phase without GL',
+    'the array `screenshot` returns is a plain `numpy.ndarray`, not the annotated `pyvista_ndarray`',
 )
 
 assert_types(a_plotter().screenshot(), pyvista_ndarray)  # pragma: no cover

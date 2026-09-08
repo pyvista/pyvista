@@ -1,4 +1,4 @@
-"""Typing cases for :meth:`pyvista.PartitionedDataSet.__getitem__` and ``__setitem__``."""
+"""Typing cases for :meth:`pyvista.PartitionedDataSet.__getitem__`."""
 
 from __future__ import annotations
 
@@ -24,7 +24,3 @@ assert_types(partitions()[an_index()], DataSet | None)
 
 assert_types(partitions()[0:1], PartitionedDataSet)
 assert_types(partitions()[:], PartitionedDataSet)
-
-assert_types(partitions().__setitem__(0, pv.PolyData()), None)
-assert_types(partitions().__setitem__(0, None), None)
-assert_types(partitions().__setitem__(slice(0, 1), [pv.PolyData()]), None)
