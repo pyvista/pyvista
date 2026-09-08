@@ -155,6 +155,308 @@ def test_clip_inplace_raises(mesh):
         mesh.clip(inplace=True)
 
 
+def _seam_polydata():
+    """Two triangles meeting along a diagonal, sharing coordinates but no points."""
+    points = np.array(
+        [[0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]], dtype=float
+    )
+    mesh = pv.PolyData(points, np.array([3, 0, 1, 2, 3, 3, 4, 5]))
+    mesh.cell_data['half'] = np.array([0.0, 1.0])
+    mesh.point_data['height'] = np.array([0.0, 0.0, 0.0, 1.0, 1.0, 1.0])
+    mesh.point_data['scalars'] = mesh.point_data['height']
+    return mesh
+
+
+def _joins_the_halves(mesh):
+    """Whether any point is shared between cells of both halves."""
+    grid = mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
+    half = np.asarray(mesh.cell_data['half'])
+    halves_of_point = {}
+    for i in range(mesh.n_cells):
+        for point_id in grid.get_cell(i).point_ids:
+            halves_of_point.setdefault(point_id, set()).add(round(float(half[i])))
+    return any(len(halves) > 1 for halves in halves_of_point.values())
+
+
+@pytest.mark.parametrize('name', ['clip', 'clip_box', 'clip_slab', 'clip_surface', 'clip_scalar'])
+def test_clip_strips_does_not_duplicate_points(name):
+    """A mesh mixing strips with other cells keeps one point per position, quietly."""
+    points = np.array([[0, 0, 0], [2, 0, 0], [2, 2, 0], [0, 2, 0], [1, 3, 0]], dtype=float)
+    mesh = pv.PolyData(points, faces=[3, 0, 1, 2], strips=[4, 0, 1, 3, 2])
+    mesh.point_data['scalars'] = np.linspace(0.0, 1.0, mesh.n_points)
+
+    with pv.VtkErrorCatcher() as catcher:
+        clipped = _clip_that_removes_nothing(mesh, name)
+
+    assert not catcher.events
+    positions = {point.tobytes() for point in np.ascontiguousarray(clipped.points)}
+    assert clipped.n_points == len(positions)
+
+
+@pytest.mark.parametrize('name', ['clip', 'clip_slab'])
+def test_clip_composite_empty_block_keeps_array_names(name):
+    """An empty block says which arrays it would have had, as a lone dataset does."""
+    plane = pv.Plane()
+    plane.point_data['height'] = plane.points[:, 2]
+    composite = pv.MultiBlock({'plane': plane, 'empty': None})
+
+    clipped = {
+        'clip': lambda: composite.clip(normal='z', origin=(0, 0, 99), invert=False),
+        'clip_slab': lambda: composite.clip_slab(thickness=0.001, normal='z', origin=(0, 0, 99)),
+    }[name]()
+
+    assert clipped['plane'].is_empty
+    assert sorted(clipped['plane'].array_names) == sorted(plane.array_names)
+    assert clipped['empty'] is None
+
+
+@pytest.mark.parametrize('invert', [True, False])
+def test_clip_box_merge_points_welds_when_asked(invert):
+    """``merge_points`` decides whether coincident points are joined."""
+    grid = pv.ImageData(dimensions=(5, 5, 5)).cast_to_unstructured_grid()
+    centers = grid.cell_centers().points[:, 2]
+    lower = grid.extract_cells(np.flatnonzero(centers < 2)).cast_to_unstructured_grid()
+    upper = grid.extract_cells(np.flatnonzero(centers > 2)).cast_to_unstructured_grid()
+    lower.cell_data['half'] = np.zeros(lower.n_cells)
+    upper.cell_data['half'] = np.ones(upper.n_cells)
+    seam = lower.merge(upper, merge_points=False)
+    # A box that cuts in x only, so both halves survive either way
+    bounds = [3.0, 99.0, -99.0, 99.0, -99.0, 99.0]
+
+    merged = seam.clip_box(bounds, invert=invert, merge_points=True)
+    unmerged = seam.clip_box(bounds, invert=invert, merge_points=False)
+
+    assert _joins_the_halves(merged)
+    assert not _joins_the_halves(unmerged)
+    assert merged.n_points < unmerged.n_points
+    assert merged.volume == pytest.approx(unmerged.volume)
+
+
+def test_clip_empty_output_keeps_array_names():
+    """An empty clip still says which arrays the input had."""
+    mesh = pv.Plane()
+    mesh.point_data['height'] = mesh.points[:, 2].astype(np.float32)
+    mesh.cell_data['ids'] = np.arange(mesh.n_cells, dtype=np.uint16)
+
+    clipped = mesh.clip(normal='z', origin=(0, 0, 99), invert=False)
+
+    assert clipped.is_empty
+    assert sorted(clipped.array_names) == sorted(mesh.array_names)
+    assert clipped.point_data['height'].dtype == np.float32
+    assert clipped.cell_data['ids'].dtype == np.uint16
+
+
+def _cell_type_meshes():
+    """One mesh per input class and per cell type a clip has to preserve."""
+    axis = np.linspace(-1.0, 1.0, 4)
+    x, y, z = np.meshgrid(axis, axis, axis, indexing='ij')
+    explicit = pv.StructuredGrid(x, y, z)
+    explicit.dimensions = [4, 4, 4]
+    image = pv.ImageData(dimensions=(4, 4, 4), spacing=(0.6, 0.6, 0.6), origin=(-1, -1, -1))
+    meshes = {
+        'PolyData triangles': pv.Sphere(theta_resolution=8, phi_resolution=8),
+        'PolyData quads': pv.Plane(i_resolution=3, j_resolution=3),
+        'PolyData lines': pv.PolyData(
+            np.array([[x, 0.0, 0.0] for x in np.linspace(-1.0, 1.0, 5)]),
+            lines=[2, 0, 1, 2, 1, 2, 2, 2, 3, 2, 3, 4],
+        ),
+        'PolyData verts': pv.PolyData(np.random.default_rng(0).uniform(-0.6, 0.6, (60, 3))),
+        'ImageData': image,
+        'RectilinearGrid': pv.RectilinearGrid(axis, axis, axis),
+        'StructuredGrid': pv.StructuredGrid(x, y, z),
+        'ExplicitStructuredGrid': explicit.cast_to_explicit_structured_grid(),
+        'UnstructuredGrid hexahedra': image.cast_to_unstructured_grid(),
+        'UnstructuredGrid tetrahedra': pv.Sphere(
+            theta_resolution=8, phi_resolution=8
+        ).delaunay_3d(),
+    }
+    for mesh in meshes.values():
+        mesh.point_data['scalars'] = np.linspace(0.0, 1.0, mesh.n_points)
+    return meshes
+
+
+def _cell_types(mesh):
+    """The cell types of a mesh, as an unstructured grid reports them."""
+    grid = mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
+    # A voxel is the same eight points as a hexahedron, ordered differently
+    return {
+        pv.CellType.HEXAHEDRON if t == pv.CellType.VOXEL else pv.CellType(t)
+        for t in grid.celltypes
+    }
+
+
+def _clip_that_removes_nothing(mesh, name):
+    """Apply one clip whose region contains the whole mesh."""
+    enclosing = pv.Cube(center=(0, 0, 0), x_length=99, y_length=99, z_length=99)
+    return {
+        'clip': lambda: mesh.clip(normal='z', origin=(0, 0, -99), invert=False),
+        'clip_box': lambda: mesh.clip_box([-99.0, 99.0] * 3, invert=False),
+        'clip_slab': lambda: mesh.clip_slab(thickness=999.0, normal='z'),
+        'clip_surface': lambda: mesh.clip_surface(enclosing),
+        'clip_scalar': lambda: mesh.clip_scalar(scalars='scalars', value=-99.0, invert=False),
+    }[name]()
+
+
+CLIP_FILTERS = ['clip', 'clip_box', 'clip_slab', 'clip_surface', 'clip_scalar']
+
+
+@pytest.mark.parametrize('name', CLIP_FILTERS)
+@pytest.mark.parametrize('mesh_type', list(_cell_type_meshes()))
+def test_clip_keeps_the_cell_types_it_does_not_cut(mesh_type, name):
+    """A clip that removes nothing leaves every cell as the type it was."""
+    mesh = _cell_type_meshes()[mesh_type]
+
+    clipped = _clip_that_removes_nothing(mesh, name)
+
+    assert clipped.n_cells == mesh.n_cells
+    assert _cell_types(clipped) == _cell_types(mesh)
+
+
+@pytest.mark.parametrize('name', CLIP_FILTERS)
+@pytest.mark.parametrize('mesh_type', list(_cell_type_meshes()))
+def test_clip_keeps_the_points_it_does_not_cut(mesh_type, name):
+    """A clip that removes nothing neither adds nor merges points."""
+    mesh = _cell_type_meshes()[mesh_type]
+
+    clipped = _clip_that_removes_nothing(mesh, name)
+
+    assert clipped.n_points == mesh.n_points
+    assert np.allclose(np.sort(clipped.points, axis=0), np.sort(mesh.points, axis=0))
+
+
+@pytest.mark.parametrize('name', CLIP_FILTERS)
+@pytest.mark.parametrize('mesh_type', list(_cell_type_meshes()))
+def test_clip_splits_the_mesh_in_two(mesh_type, name):
+    """What a clip keeps and what it removes add up to the whole mesh."""
+    mesh = _cell_type_meshes()[mesh_type]
+    center = np.array(mesh.center)
+    surface = pv.Sphere(
+        radius=0.6,
+        center=(center[0] + 0.3, center[1], center[2]),
+        theta_resolution=16,
+        phi_resolution=16,
+    )
+    kept, removed = {
+        'clip': lambda: (
+            mesh.clip(normal='x', origin=center, invert=False),
+            mesh.clip(normal='x', origin=center, invert=True),
+        ),
+        'clip_box': lambda: (
+            mesh.clip_box([-0.4, 0.4] * 3, invert=False),
+            mesh.clip_box([-0.4, 0.4] * 3, invert=True),
+        ),
+        'clip_slab': lambda: (
+            mesh.clip_slab(thickness=0.8, normal='x', origin=center),
+            mesh.clip_slab(thickness=0.8, normal='x', origin=center, invert=True),
+        ),
+        'clip_surface': lambda: (
+            mesh.clip_surface(surface, invert=True),
+            mesh.clip_surface(surface, invert=False),
+        ),
+        'clip_scalar': lambda: (
+            mesh.clip_scalar(scalars='scalars', value=0.5, invert=True),
+            mesh.clip_scalar(scalars='scalars', value=0.5, invert=False),
+        ),
+    }[name]()
+
+    # A split, not a pass-through, on both sides
+    assert kept.n_cells
+    assert removed.n_cells
+    if mesh_type == 'PolyData verts':
+        assert kept.n_cells + removed.n_cells == mesh.n_cells
+        return
+    if mesh_type == 'PolyData lines':
+
+        def measure(part):
+            return part.compute_cell_sizes(length=True)['Length'].sum()
+    else:
+        attr = 'area' if isinstance(mesh, pv.PolyData) else 'volume'
+
+        def measure(part):
+            return getattr(part, attr)
+
+    assert measure(mesh) > 0
+    assert measure(kept) + measure(removed) == pytest.approx(measure(mesh), rel=1e-6)
+
+
+def _seam_grid():
+    """Two grid halves that touch but share no points."""
+    grid = pv.ImageData(dimensions=(5, 5, 5)).cast_to_unstructured_grid()
+    centers = grid.cell_centers().points[:, 2]
+    lower = grid.extract_cells(np.flatnonzero(centers < 2)).cast_to_unstructured_grid()
+    upper = grid.extract_cells(np.flatnonzero(centers > 2)).cast_to_unstructured_grid()
+    lower.cell_data['half'] = np.zeros(lower.n_cells)
+    upper.cell_data['half'] = np.ones(upper.n_cells)
+    seam = lower.merge(upper, merge_points=False)
+    seam.point_data['scalars'] = np.linspace(0.0, 1.0, seam.n_points)
+    return seam
+
+
+@pytest.mark.parametrize(
+    'name',
+    [
+        'clip',
+        'clip_slab',
+        'clip_surface',
+        'clip_scalar',
+        'clip_scalar both=True',
+        'clip_box merge_points=False',
+    ],
+)
+@pytest.mark.parametrize('mesh_type', ['PolyData', 'UnstructuredGrid'])
+def test_clip_keeps_coincident_points_apart_for_every_filter(mesh_type, name):
+    """No clip welds points the input held apart, except when asked to."""
+    mesh = _seam_polydata() if mesh_type == 'PolyData' else _seam_grid()
+    if name == 'clip_box merge_points=False':
+        clipped = mesh.clip_box([-99.0, 99.0] * 3, invert=False, merge_points=False)
+    elif name == 'clip_scalar both=True':
+        clipped = mesh.clip_scalar(scalars='scalars', value=-99.0, invert=False, both=True)[0]
+    else:
+        clipped = _clip_that_removes_nothing(mesh, name)
+
+    assert clipped.n_points == mesh.n_points
+    assert not _joins_the_halves(clipped)
+
+
+@pytest.mark.parametrize('mesh_type', ['PolyData', 'UnstructuredGrid'])
+def test_clip_box_merge_points_true_welds_every_input(mesh_type):
+    """``merge_points=True`` joins points that share a position."""
+    mesh = _seam_polydata() if mesh_type == 'PolyData' else _seam_grid()
+
+    merged = mesh.clip_box([-99.0, 99.0] * 3, invert=False, merge_points=True)
+
+    assert merged.n_points < mesh.n_points
+    assert _joins_the_halves(merged)
+
+
+@pytest.mark.parametrize('invert', [True, False])
+@pytest.mark.parametrize(
+    'make',
+    [
+        pytest.param(lambda: (pv.Cube(), list(pv.Cube().bounds)), id='PolyData, six bounds'),
+        pytest.param(lambda: (pv.Cube(), pv.Cube()), id='PolyData, box mesh'),
+        pytest.param(
+            lambda: (pv.Cube().cast_to_unstructured_grid(), list(pv.Cube().bounds)),
+            id='UnstructuredGrid',
+        ),
+        pytest.param(
+            lambda: (
+                pv.Cube(center=(5e6, 0, 0), x_length=0.1, y_length=0.1, z_length=0.1),
+                list(pv.Cube(center=(5e6, 0, 0), x_length=0.1, y_length=0.1, z_length=0.1).bounds),
+            ),
+            id='PolyData far from the origin',
+        ),
+    ],
+)
+def test_clip_box_keeps_a_face_lying_in_a_box_plane(make, invert):
+    """A box that only touches a face keeps it, whichever way the box is given."""
+    mesh, box = make()
+
+    clipped = mesh.clip_box(box, invert=invert)
+
+    assert clipped.n_cells == (0 if invert else mesh.n_cells)
+
+
 def test_clip_filter_normal(datasets):
     # Test no errors are raised
     for i, dataset in enumerate(datasets):
@@ -359,7 +661,7 @@ def test_clip_box_polydata_no_unused_points(invert):
 
 @pytest.mark.parametrize('invert', [True, False])
 def test_clip_box_polydata_keeps_cells_and_arrays(invert):
-    """The output is the box filter's mesh in a PolyData, not a different mesh."""
+    """The clipped surface covers the same area and keeps its own cell types."""
     mesh = pv.Sphere(theta_resolution=16, phi_resolution=16)
     mesh.point_data['data'] = mesh.points[:, 2]
     mesh.cell_data['cells'] = np.arange(mesh.n_cells, dtype=float)
@@ -369,10 +671,10 @@ def test_clip_box_polydata_keeps_cells_and_arrays(invert):
     expected = _box_clip_filter(mesh, bounds, invert=invert).remove_unused_points()
 
     assert type(clipped) is pv.PolyData
-    assert clipped.n_cells == expected.n_cells
     assert clipped.area == pytest.approx(expected.area)
     assert sorted(clipped.array_names) == sorted(expected.array_names)
-    assert np.allclose(np.sort(clipped.points, axis=0), np.sort(expected.points, axis=0))
+    # The box planes keep the cells the box does not cut, which the box filter splits
+    assert set(clipped.cast_to_unstructured_grid().celltypes) != {pv.CellType.TRIANGLE}
 
 
 def test_clip_box_polydata_empty_is_polydata():

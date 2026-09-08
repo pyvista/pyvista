@@ -37,6 +37,9 @@ from pyvista.core.filters import _match_points_dtype
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_object import DataObjectFilters
 from pyvista.core.filters.data_object import _cast_output_to_match_input_type
+from pyvista.core.filters.data_object import _clip_input
+from pyvista.core.filters.data_object import _clipper
+from pyvista.core.filters.data_object import _keep_array_structure
 from pyvista.core.filters.data_object import _validate_clip_inplace
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import convert_array
@@ -692,6 +695,11 @@ class DataSetFilters(DataObjectFilters):
     ):
         """Clip a dataset by a scalar.
 
+        .. versionchanged:: 0.49
+
+            Points that a :class:`~pyvista.PolyData` input keeps apart are no longer
+            merged, unless it holds triangle strips.
+
         Parameters
         ----------
         scalars : str, optional
@@ -774,10 +782,7 @@ class DataSetFilters(DataObjectFilters):
         """
         if inplace:
             _validate_clip_inplace(self)
-        if isinstance(self, _vtk.vtkPolyData):
-            alg: _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet = _vtk.vtkClipPolyData()  # type: ignore[unreachable]
-        else:
-            alg = _vtk.vtkTableBasedClipDataSet()
+        alg = _clipper(self)
 
         if is_single_value := isinstance(value, (float, int)):
             alg.SetValue(value)
@@ -791,7 +796,7 @@ class DataSetFilters(DataObjectFilters):
                 msg = 'Cannot have both=True for a range clip'
                 raise ValueError(msg)
         # Activate the scalars on a shallow copy so the input's active scalars are untouched
-        source = self.copy(deep=False)
+        source = cast('DataSet', _clip_input(self)).copy(deep=False)
         if scalars is None:
             set_default_active_scalars(source)
         else:
@@ -802,18 +807,23 @@ class DataSetFilters(DataObjectFilters):
         alg.SetGenerateClippedOutput(both)
 
         _update_alg(alg, progress_bar=progress_bar, message='Clipping by a Scalar')
-        result0 = _get_output(alg)
+        result0 = cast(
+            'DataSet',
+            _keep_array_structure(_cast_output_to_match_input_type(_get_output(alg), self), self),
+        )
+        if not is_single_value:
+            # Keep what lies above the lower value as well
+            result0 = result0.clip_scalar(scalars=scalars, invert=False, value=lower)
         if inplace:
             self.copy_from(result0, deep=False)
             result0 = self
-        if not is_single_value:
-            return result0.clip_scalar(scalars=scalars, invert=False, value=lower, inplace=inplace)
         if both:
-            result1 = _get_output(alg, oport=1)
-            if isinstance(self, _vtk.vtkPolyData):
-                # For some reason vtkClipPolyData with SetGenerateClippedOutput on
-                # leaves unreferenced vertices
-                result0, result1 = (r.clean() for r in (result0, result1))  # type: ignore[unreachable]
+            result1 = cast(
+                'DataSet',
+                _keep_array_structure(
+                    _cast_output_to_match_input_type(_get_output(alg, oport=1), self), self
+                ),
+            )
             return result0, result1
         return result0
 
@@ -838,6 +848,11 @@ class DataSetFilters(DataObjectFilters):
         crinkle: bool = False,  # noqa: FBT001, FBT002
     ):
         """Clip any mesh type using a :class:`pyvista.PolyData` surface mesh.
+
+        .. versionchanged:: 0.49
+
+            Points that a :class:`~pyvista.PolyData` input keeps apart are no longer
+            merged, unless it holds triangle strips.
 
         The clipped mesh type matches the input type for :class:`~pyvista.PointSet` and
         :class:`~pyvista.PolyData`, otherwise the output type is
@@ -952,7 +967,10 @@ class DataSetFilters(DataObjectFilters):
             info = self.active_scalars_info
             if info.name is not None and not clipped.is_empty:
                 clipped.set_active_scalars(info.name, preference=info.association)
-        return _cast_output_to_match_input_type(clipped, self)
+        return cast(
+            'DataSet',
+            _keep_array_structure(_cast_output_to_match_input_type(clipped, self), self),
+        )
 
     @_deprecate_positional_args(allowed=['value'])
     def threshold(  # type: ignore[misc]  # noqa: PLR0917
