@@ -23,6 +23,7 @@ import pyvista_validation as _validation
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._version import _is_deprecation_due
 from pyvista._warn_external import warn_external
 from pyvista.core._vtk_utilities import vtk_version_info
 from pyvista.core.errors import AmbiguousDataError
@@ -1623,7 +1624,7 @@ class DataSetFilters(DataObjectFilters):
         """
         msg = '`extract_geometry` is deprecated. Use `extract_surface(algorithm=None)` instead.'
         warn_external(msg, PyVistaDeprecationWarning)
-        if pv.version_info >= (0, 50):  # pragma: no cover
+        if _is_deprecation_due((0, 50)):  # pragma: no cover
             msg = 'Convert this deprecation warning into an error.'
             raise RuntimeError(msg)
         if pv.version_info >= (0, 53):  # pragma: no cover
@@ -3226,7 +3227,7 @@ class DataSetFilters(DataObjectFilters):
         >>> pl.show()  # doctest:+SKIP
 
         """
-        if pv.version_info >= (0, 50):  # pragma: no cover
+        if _is_deprecation_due((0, 50)):  # pragma: no cover
             msg = 'Convert this deprecation warning into an error.'
             raise RuntimeError(msg)
         if pv.version_info >= (0, 51):  # pragma: no cover

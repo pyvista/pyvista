@@ -10,7 +10,7 @@ from typing import overload
 
 from typing_extensions import ParamSpec
 
-from pyvista._version import version_info
+from pyvista._version import _is_deprecation_due
 from pyvista._warn_external import warn_external
 
 if TYPE_CHECKING:
@@ -146,7 +146,7 @@ def _deprecate_positional_args(
             raise RuntimeError(msg)
 
         # Raise error post-deprecation
-        if version_info >= version:
+        if _is_deprecation_due(version):
             # Construct expected positional args and signature
             new_parameters = []
             max_args_to_print = actual_n_allowed + 2
@@ -226,32 +226,31 @@ def _deprecate_positional_args(
                     s = 's'
                     this = 'these'
 
-                if version_info < version:
-                    # Print warning
-                    version_str = '.'.join(map(str, version))
-                    arg_list = ', '.join(f'{a!r}' for a in offending_args)
-                    stack_level = 3
+                # Print warning
+                version_str = '.'.join(map(str, version))
+                arg_list = ', '.join(f'{a!r}' for a in offending_args)
+                stack_level = 3
 
-                    def call_site() -> str:
-                        # Get location where the function is called
-                        # Optimization: ``inspect.stack()`` reads source lines for every frame
-                        frame = sys._getframe(stack_level)
-                        file = Path(frame.f_code.co_filename).as_posix()
-                        return f'{file}:{frame.f_lineno}'
+                def call_site() -> str:
+                    # Get location where the function is called
+                    # Optimization: ``inspect.stack()`` reads source lines for every frame
+                    frame = sys._getframe(stack_level)
+                    file = Path(frame.f_code.co_filename).as_posix()
+                    return f'{file}:{frame.f_lineno}'
 
-                    def warn_positional_args() -> None:
-                        from pyvista.core.errors import PyVistaDeprecationWarning  # noqa: PLC0415
+                def warn_positional_args() -> None:
+                    from pyvista.core.errors import PyVistaDeprecationWarning  # noqa: PLC0415
 
-                        msg = (
-                            f'\n{call_site()}: '
-                            f'Argument{s} {arg_list} must be passed as{a}keyword argument{s} '
-                            f'to function {qualified_name()!r}.\n'
-                            f'From version {version_str}, passing {this} as{a}positional '
-                            f'argument{s} will result in a TypeError.'
-                        )
-                        warn_external(msg, PyVistaDeprecationWarning)
+                    msg = (
+                        f'\n{call_site()}: '
+                        f'Argument{s} {arg_list} must be passed as{a}keyword argument{s} '
+                        f'to function {qualified_name()!r}.\n'
+                        f'From version {version_str}, passing {this} as{a}positional '
+                        f'argument{s} will result in a TypeError.'
+                    )
+                    warn_external(msg, PyVistaDeprecationWarning)
 
-                    warn_positional_args()
+                warn_positional_args()
 
             return f(*args, **kwargs)
 

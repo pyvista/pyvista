@@ -30,6 +30,7 @@ import pyvista_validation as _validation
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._version import _is_deprecation_due
 from pyvista._version import version_info
 from pyvista._warn_external import warn_external
 from pyvista.core._typing_core import _DataSetOrMultiBlockType
@@ -4618,7 +4619,7 @@ class DataObjectFilters:
 
         def warn_future():
             # Deprecated v0.47, convert to error in v0.50, remove v0.51
-            if pv.version_info >= (0, 50):  # pragma: no cover
+            if _is_deprecation_due((0, 50)):  # pragma: no cover
                 msg = (
                     'Convert this future warning into an error '
                     'and update the docstring default value to None.'
