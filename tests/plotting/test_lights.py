@@ -314,6 +314,12 @@ def test_from_vtk():
         else:
             assert getattr(light, pvname) == value
 
+    # the transformation matrix is copied, not shared with the source light
+    source_matrix = vtk_light.GetTransformMatrix()
+    assert light.transform_matrix is not source_matrix
+    source_matrix.SetElement(0, 3, 42.0)
+    assert light.transform_matrix.GetElement(0, 3) != 42.0
+
     # invalid case
     with pytest.raises(TypeError):
         pv.Light.from_vtk('invalid')

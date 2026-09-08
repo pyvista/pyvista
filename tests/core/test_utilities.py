@@ -34,6 +34,7 @@ from scipy.spatial.transform import Rotation
 from scooby.report import get_distribution_dependencies
 
 import pyvista as pv
+from pyvista import _version
 from pyvista import _vtk
 from pyvista import examples as ex
 from pyvista._deprecate_positional_args import _MAX_POSITIONAL_ARGS
@@ -43,6 +44,7 @@ from pyvista.core._vtk_utilities import is_vtk_attribute
 from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.filters import _update_alg
 from pyvista.core.utilities import cells
+from pyvista.core.utilities import features
 from pyvista.core.utilities import fileio
 from pyvista.core.utilities import fit_line_to_points
 from pyvista.core.utilities import fit_plane_to_points
@@ -118,7 +120,8 @@ def transform():
 
 def test_sample_function_raises(monkeypatch: pytest.MonkeyPatch):
     with monkeypatch.context() as m:
-        m.setattr(os, 'name', 'nt')
+        # Scope the fake to this module: a global os.name breaks pathlib.Path
+        m.setattr(features, 'os', SimpleNamespace(name='nt'))
         with pytest.raises(
             ValueError,
             match='This function on Windows only supports int32 or smaller',
@@ -2582,10 +2585,39 @@ def test_transform_mul_raises():
 def test_transform_copy(multiply_mode):
     t1 = Transform().scale(SCALE)
     t1.multiply_mode = multiply_mode
+    t1.point = (1, 2, 3)
+    t1.check_finite = False
     t2 = t1.copy()
     assert np.array_equal(t1.matrix, t2.matrix)
     assert t1 is not t2
     assert t2.multiply_mode == t1.multiply_mode
+    assert t2.point == t1.point
+    assert t2.check_finite == t1.check_finite
+
+    # The copy composes about the same point and validates the same way
+    assert np.array_equal(t1.scale(SCALE).matrix, t2.scale(SCALE).matrix)
+    t2.compose(np.diag([1.0, np.nan, 1.0, 1.0]))
+
+
+@pytest.mark.parametrize(
+    ('operation', 'expected'),
+    [
+        (lambda t: t * 2, lambda t: t.copy().scale(2)),
+        (lambda t: 2 * t, lambda t: t.copy().scale(2, multiply_mode='pre')),
+        (lambda t: t + (1, 2, 3), lambda t: t.copy().translate((1, 2, 3))),  # noqa: RUF005
+        (lambda t: (1, 2, 3) + t, lambda t: t.copy().translate((1, 2, 3), multiply_mode='pre')),  # noqa: RUF005
+    ],
+    ids=['mul', 'rmul', 'add', 'radd'],
+)
+def test_transform_operators_compose_about_the_origin(operation, expected):
+    with_point = Transform(point=(1, 2, 3))
+    without_point = Transform()
+
+    actual = operation(with_point)
+
+    assert np.array_equal(actual.matrix, operation(without_point).matrix)
+    assert np.array_equal(actual.matrix, expected(without_point).matrix)
+    assert actual.n_transformations == 1
 
 
 def test_transform_repr(transform):
@@ -3258,6 +3290,28 @@ def test_is_vtk_attribute_input_type(obj):
 warnings.simplefilter('always')
 
 
+@pytest.mark.parametrize('version', [(0, 49, 0), (0, 50, 'dev0'), (0, 50, 'dev1')])
+def test_deprecate_positional_args_before_deadline(monkeypatch, version):
+    monkeypatch.setattr(_version, 'version_info', version)
+
+    @_deprecate_positional_args(version=(0, 50))
+    def foo(bar):
+        return bar
+
+    with pytest.warns(pv.PyVistaDeprecationWarning, match='From version 0\\.50,'):
+        assert foo(True) is True
+
+
+@pytest.mark.parametrize('version', [(0, 50, '0rc1'), (0, 50, 0), (0, 51, 'dev0')])
+def test_deprecate_positional_args_at_deadline(monkeypatch, version):
+    monkeypatch.setattr(_version, 'version_info', version)
+
+    with pytest.raises(RuntimeError, match='Positional arguments are no longer allowed'):
+
+        @_deprecate_positional_args(version=(0, 50))
+        def foo(bar): ...
+
+
 def test_deprecate_positional_args_error_messages():
     # Test single arg
     @_deprecate_positional_args
@@ -3282,6 +3336,20 @@ def test_deprecate_positional_args_error_messages():
     )
     with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
         foo(True, True)
+
+
+def test_deprecate_positional_args_call_site_and_extra_args():
+    @_deprecate_positional_args(version=(1, 2))
+    def foo(bar, baz): ...
+
+    # The warning names this file as the call site
+    match = rf'\n{re.escape(Path(__file__).as_posix())}:\d+: Arguments'
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        foo(True, True)
+
+    # Too many positional arguments still warn, then raise from the function itself
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match), pytest.raises(TypeError):
+        foo(True, True, True)
 
 
 def test_deprecate_positional_args_post_deprecation():

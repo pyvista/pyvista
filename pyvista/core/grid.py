@@ -847,7 +847,11 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
             if isinstance(slicer, (list, tuple)):
                 rng = _validation.validate_array(
-                    slicer, must_have_dtype=int, must_have_length=2, to_list=True
+                    slicer,
+                    must_have_dtype=int,
+                    must_have_ndim=1,
+                    must_have_length=2,
+                    to_list=True,
                 )
                 slicer = slice(*rng)  # noqa: PLW2901
 
