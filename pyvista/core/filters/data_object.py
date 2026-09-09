@@ -1722,8 +1722,11 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet
+        DataSet | MultiBlock
             Dataset with field data of cell validity.
+            Return type matches the input: a :class:`~pyvista.MultiBlock` gives a
+            ``MultiBlock`` whose blocks each follow the same rule, nested blocks
+            included, and every other class gives back its own class.
 
         See Also
         --------
@@ -4452,8 +4455,10 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.PolyData
-            Edges extracted from the dataset.
+        pyvista.PolyData | pyvista.MultiBlock
+            Edges extracted from the dataset. Every dataset gives a
+            :class:`~pyvista.PolyData`, and a :class:`~pyvista.MultiBlock` gives a
+            ``MultiBlock`` of ``PolyData`` blocks, nested blocks included.
 
         Examples
         --------
@@ -4840,6 +4845,9 @@ class DataObjectFilters:
         output : DataSet | MultiBlock
             Dataset containing elevation scalars in the
             ``"Elevation"`` array in ``point_data``.
+            Return type matches the input: a :class:`~pyvista.MultiBlock` gives a
+            ``MultiBlock`` whose blocks each follow the same rule, nested blocks
+            included, and every other class gives back its own class.
 
         Examples
         --------
@@ -4877,16 +4885,20 @@ class DataObjectFilters:
         else:
             scalar_range_ = _validation.validate_data_range(scalar_range)
 
-        if pv.vtk_version_info < (9, 4) and _composite_has_pointset(self):
-            # vtkElevationFilter's composite dispatch segfaults on VTK 9.3 when
-            # a block is a cell-less PointSet, even though elevation is
-            # otherwise perfectly valid on a standalone PointSet. Raise instead
-            # of taking down the interpreter; this is fixed by VTK 9.4.
-            msg = (
-                'Cannot compute elevation for a MultiBlock containing a PointSet '
-                'on VTK < 9.4 due to a VTK bug that crashes the interpreter.'
+        # Elevate block by block so each block takes the path for its own type
+        if isinstance(self, pv.MultiBlock):
+            return cast(
+                '_DataSetOrMultiBlockType',
+                self.generic_filter(
+                    'elevation',
+                    low_point=low_point_,
+                    high_point=high_point_,
+                    scalar_range=scalar_range_,
+                    preference=preference,
+                    set_active=set_active,
+                    progress_bar=progress_bar,
+                ),
             )
-            raise pv.core.errors.PointSetNotSupported(msg)
 
         # Construct the filter
         alg = _vtk.vtkElevationFilter()
@@ -4941,7 +4953,10 @@ class DataObjectFilters:
         output : DataSet | MultiBlock
             Dataset with ``cell_data`` containing the ``"VertexCount"``,
             ``"Length"``, ``"Area"``, and ``"Volume"`` arrays if set
-            in the parameters.  Return type matches input.
+            in the parameters.
+            Return type matches the input: a :class:`~pyvista.MultiBlock` gives a
+            ``MultiBlock`` whose blocks each follow the same rule, nested blocks
+            included, and every other class gives back its own class.
 
         Notes
         -----
@@ -5042,9 +5057,10 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.PolyData
-            Polydata where the points are the cell centers of the
-            original dataset.
+        pyvista.PolyData | pyvista.MultiBlock
+            Points at the cell centers of the original dataset. Every dataset
+            gives a :class:`~pyvista.PolyData`, and a :class:`~pyvista.MultiBlock`
+            gives a ``MultiBlock`` of ``PolyData`` blocks, nested blocks included.
 
         Examples
         --------
@@ -5100,8 +5116,10 @@ class DataObjectFilters:
         Returns
         -------
         output : DataSet | MultiBlock
-            Dataset with the point data transformed into cell data.
-            Return type matches input.
+            Dataset with the cell data transformed into point data.
+            Return type matches the input: a :class:`~pyvista.MultiBlock` gives a
+            ``MultiBlock`` whose blocks each follow the same rule, nested blocks
+            included, and every other class gives back its own class.
 
         See Also
         --------
@@ -5221,7 +5239,9 @@ class DataObjectFilters:
         -------
         output : DataSet | MultiBlock
             Dataset with the point data transformed into cell data.
-            Return type matches input.
+            Return type matches the input: a :class:`~pyvista.MultiBlock` gives a
+            ``MultiBlock`` whose blocks each follow the same rule, nested blocks
+            included, and every other class gives back its own class.
 
         See Also
         --------
@@ -5337,8 +5357,13 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.PolyData
-            Mesh containing only triangles.
+        pyvista.UnstructuredGrid | pyvista.MultiBlock
+            Mesh containing only linear cells. A :class:`~pyvista.PolyData` gives a
+            ``PolyData`` of triangles through
+            :meth:`~pyvista.PolyDataFilters.triangulate`; every other dataset gives an
+            :class:`~pyvista.UnstructuredGrid`, and a :class:`~pyvista.MultiBlock`
+            gives a ``MultiBlock`` whose blocks each follow that rule, nested blocks
+            included.
 
         Examples
         --------
@@ -5355,6 +5380,11 @@ class DataObjectFilters:
         >>> mesh.plot(show_edges=True, line_width=5)
 
         """
+        _raise_if_composite_has_pointset(self, error=pv.core.errors.PointSetCellOperationError)
+        # Triangulate block by block so each block takes the path for its own type
+        if isinstance(self, pv.MultiBlock):
+            return self.generic_filter('triangulate', inplace=inplace, progress_bar=progress_bar)
+
         alg = _vtk.vtkDataSetTriangleFilter()
         alg.SetInputData(self)
         _update_alg(alg, progress_bar=progress_bar, message='Converting to triangle mesh')
@@ -5447,6 +5477,9 @@ class DataObjectFilters:
         -------
         output : DataSet | MultiBlock
             Dataset containing resampled data.
+            Return type matches the input: a :class:`~pyvista.MultiBlock` gives a
+            ``MultiBlock`` whose blocks each follow the same rule, nested blocks
+            included, and every other class gives back its own class.
 
         See Also
         --------
@@ -5479,6 +5512,25 @@ class DataObjectFilters:
         pyvista_ndarray([ 46.5 , 225.12])
 
         """
+        # Sample block by block so each block takes the path for its own type
+        if isinstance(self, pv.MultiBlock):
+            return cast(
+                '_DataSetOrMultiBlockType',
+                self.generic_filter(
+                    'sample',
+                    target=target,
+                    tolerance=tolerance,
+                    pass_cell_data=pass_cell_data,
+                    pass_point_data=pass_point_data,
+                    categorical=categorical,
+                    progress_bar=progress_bar,
+                    locator=locator,
+                    pass_field_data=pass_field_data,
+                    mark_blank=mark_blank,
+                    snap_to_closest_point=snap_to_closest_point,
+                ),
+            )
+
         alg = _vtk.vtkResampleWithDataSet()  # Construct the ResampleWithDataSet object
         alg.SetInputData(
             self
