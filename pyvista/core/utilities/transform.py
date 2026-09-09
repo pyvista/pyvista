@@ -1591,36 +1591,17 @@ class Transform(
         """Return the current number of composed transformations."""
         return self.GetNumberOfConcatenatedTransforms()
 
+    # `MultiBlock` also matches the array overload, so it is offered this one first.
+    # fmt: off
+    # ruff: disable[E501]
     @overload
-    def apply(
-        self: Transform,
-        obj: VectorLike[float] | MatrixLike[float],
-        /,
-        mode: Literal['points', 'vectors'] | None = ...,
-        *,
-        inverse: bool = ...,
-        copy: bool = ...,
-    ) -> NumpyArray[float]: ...
+    def apply(self: Transform, obj: _DataSetOrMultiBlockType, /, mode: Literal['active_vectors', 'all_vectors'] = ..., *, inverse: bool = ..., copy: bool = ...) -> _DataSetOrMultiBlockType: ...
     @overload
-    def apply(
-        self: Transform,
-        obj: _DataSetOrMultiBlockType,
-        /,
-        mode: Literal['active_vectors', 'all_vectors'] = ...,
-        *,
-        inverse: bool = ...,
-        copy: bool = ...,
-    ) -> _DataSetOrMultiBlockType: ...
+    def apply(self: Transform, obj: VectorLike[float] | MatrixLike[float], /, mode: Literal['points', 'vectors'] | None = ..., *, inverse: bool = ..., copy: bool = ...) -> NumpyArray[float]: ...
     @overload
-    def apply(
-        self: Transform,
-        obj: Prop3D,
-        /,
-        mode: Literal['replace', 'pre-multiply', 'post-multiply'] = ...,
-        *,
-        inverse: bool = ...,
-        copy: bool = ...,
-    ) -> Prop3D: ...
+    def apply(self: Transform, obj: Prop3D, /, mode: Literal['replace', 'pre-multiply', 'post-multiply'] = ..., *, inverse: bool = ..., copy: bool = ...) -> Prop3D: ...
+    # ruff: enable[E501]
+    # fmt: on
     def apply(
         self: Transform,
         obj: VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock | Prop3D,

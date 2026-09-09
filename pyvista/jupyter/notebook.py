@@ -22,11 +22,12 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from IPython.lib.display import IFrame
+    import numpy as np
     from PIL.Image import Image
     from trame_pyvista.jupyter import EmbeddableWidget
     from trame_pyvista.jupyter import Widget
 
-    from pyvista import pyvista_ndarray
+    from pyvista.core._typing_core import NumpyArray
     from pyvista.jupyter import JupyterBackendOptions
     from pyvista.plotting.plotter import Plotter
 
@@ -134,5 +135,4 @@ def show_static_image(
         # Must render here, otherwise plotter will segfault.
         plotter.render()
         plotter.last_image = plotter.screenshot(screenshot, return_img=True)
-    last_image = cast('pyvista_ndarray', plotter.last_image)
-    return PIL.Image.fromarray(last_image)
+    return PIL.Image.fromarray(cast('NumpyArray[np.uint8]', plotter.last_image))

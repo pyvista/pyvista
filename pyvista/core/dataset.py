@@ -2097,7 +2097,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         self: Self,
         point: VectorLike[float] | MatrixLike[float],
         return_closest_point: bool = False,  # noqa: FBT001, FBT002
-    ) -> int | NumpyArray[int] | tuple[int | NumpyArray[int], NumpyArray[int]]:
+    ) -> int | NumpyArray[int] | tuple[int | NumpyArray[int], NumpyArray[float]]:
         """Find index of closest cell in this mesh to the given point.
 
         .. warning::

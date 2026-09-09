@@ -204,8 +204,8 @@ def fit_plane_to_points(  # noqa: PLR0917
     points: MatrixLike[float],
     return_meta: bool = False,  # noqa: FBT001, FBT002
     resolution: int = 10,
-    init_normal: VectorLike[float] | None = None,
-) -> PolyData | tuple[PolyData, NumpyArray[np.float64], NumpyArray[np.float64]]:
+    init_normal: VectorLike[float] | str | None = None,
+) -> PolyData | tuple[PolyData, NumpyArray[np.floating], NumpyArray[np.floating]]:
     """Fit a plane to points using its :func:`principal_axes`.
 
     The plane is automatically sized and oriented to fit the extents of
@@ -390,7 +390,7 @@ def fit_line_to_points(
     points: MatrixLike[float],
     *,
     resolution: int = 1,
-    init_direction: VectorLike[float] | None = None,
+    init_direction: VectorLike[float] | str | None = None,
     return_meta: bool = False,
 ) -> PolyData | tuple[PolyData, float, NumpyArray[float]]:
     """Fit a line to points using its :func:`principal_axes`.
@@ -408,7 +408,7 @@ def fit_line_to_points(
     resolution : int, default: 1
         Number of pieces to divide the line into.
 
-    init_direction : VectorLike[float], optional
+    init_direction : VectorLike[float] | str, optional
         Flip the direction of the line's points such that it best aligns with this
         vector. Can be a vector or string specifying the axis by name (for example, ``'x'``
         or ``'-x'``, etc.).

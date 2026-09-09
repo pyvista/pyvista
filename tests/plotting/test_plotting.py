@@ -2495,6 +2495,17 @@ def test_volume_rendering_mappers_image_data(mapper):
 
 
 @pytest.mark.skip_windows
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_add_volume_nested_multiblock_gives_one_volume_per_leaf():
+    grid = pv.ImageData(dimensions=(4, 4, 4))
+    grid.point_data['values'] = np.linspace(0.0, 1.0, grid.n_points)
+    nested = pv.MultiBlock([grid.copy(), pv.MultiBlock([None, grid.copy()])])
+    pl = pv.Plotter()
+    volumes = pl.add_volume(nested, name='vol')
+    assert [type(volume) for volume in volumes] == [pv.Volume, pv.Volume]
+    assert {'vol-0', 'vol-1'} <= set(pl.renderer.actors)
+
+
 def test_multiblock_volume_rendering(uniform):
     ds_a = uniform.copy()
     ds_b = uniform.copy()
