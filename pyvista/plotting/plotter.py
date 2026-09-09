@@ -2405,17 +2405,16 @@ class BasePlotter(_BoundsSizeMixin):
                 'Consider setting ``off_screen=True`` '
                 'for off screen rendering.\n'
             )
-            raise AttributeError(msg)
+            raise RuntimeError(msg)
 
-    def _check_has_ren_win(self) -> _vtk.vtkRenderWindow:
-        """Return the render window, raising if there is none or it is not current."""
+    def _check_has_ren_win(self) -> None:
+        """Check if render window attribute exists and raise an exception if not."""
         if self.render_window is None:
             msg = 'Render window is not available.'
             raise RenderWindowUnavailable(msg)
         if not self.render_window.IsCurrent():
             msg = 'Render window is not current.'
             raise RenderWindowUnavailable(msg)
-        return self.render_window
 
     def _make_render_window_current(self) -> None:
         if self.render_window is None:
@@ -2443,6 +2442,10 @@ class BasePlotter(_BoundsSizeMixin):
     def image(self) -> NumpyArray[np.uint8]:  # numpydoc ignore=RT01
         """Return an image array of current render window.
 
+        .. versionchanged:: 0.50
+            A :class:`RuntimeError` is raised instead of an
+            :class:`AttributeError` when the plotter has not been rendered.
+
         Returns
         -------
         numpy.ndarray
@@ -2461,7 +2464,8 @@ class BasePlotter(_BoundsSizeMixin):
             return self.last_image
 
         self._check_rendered()
-        render_window = self._check_has_ren_win()
+        self._check_has_ren_win()
+        render_window = cast('_vtk.vtkRenderWindow', self.render_window)
 
         return image_from_window(
             render_window,
@@ -6148,6 +6152,10 @@ class BasePlotter(_BoundsSizeMixin):
     ) -> NumpyArray[np.float32]:
         """Return a depth image representing current render window.
 
+        .. versionchanged:: 0.50
+            A :class:`RuntimeError` is raised instead of an
+            :class:`AttributeError` when the plotter has not been rendered.
+
         .. versionchanged:: 0.47
             The last image depth is no longer automatically stored. You must
             enable ``store_image_depth=True`` within :meth:`Plotter.show` to
@@ -6197,7 +6205,8 @@ class BasePlotter(_BoundsSizeMixin):
                 '`store_image_depth=True` when using `get_image_depth`.'
             )
             raise RuntimeError(msg)
-        render_window = self._check_has_ren_win()
+        self._check_has_ren_win()
+        render_window = cast('_vtk.vtkRenderWindow', self.render_window)
 
         # Ensure points in view are within clipping range of renderer?
         if reset_camera_clipping_range:
