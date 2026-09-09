@@ -56,18 +56,26 @@ jobs:
     with:
       marker-prefix: docs-tree
 
+  # The `blacksmith` label moves a pull request's cache, build and test jobs to
+  # paid Blacksmith runners. Blacksmith keeps its own cache, so the producer
+  # here has to run on the same kind of runner as the build job.
   cache-pyvista-data:
     name: Cache pyvista/data
     needs: resolve
     if: ${{ !cancelled() && needs.resolve.outputs.run-id == '' }}
     uses: $/.github/workflows/cache-pyvista-data.yml
     with:
-      # Runner should match the actual runner used by the build job
-      runs-on: ubuntu-22.04
+      runs-on: >-
+        ${{ github.event_name == 'pull_request'
+        && contains(github.event.pull_request.labels.*.name, 'blacksmith')
+        && 'blacksmith-8vcpu-ubuntu-2204' || 'ubuntu-22.04' }}
 
   doc:
     name: Build Documentation
-    runs-on: ubuntu-22.04
+    runs-on: >-
+      ${{ github.event_name == 'pull_request'
+      && contains(github.event.pull_request.labels.*.name, 'blacksmith')
+      && 'blacksmith-8vcpu-ubuntu-2204' || 'ubuntu-22.04' }}
     needs: [cache-pyvista-data, resolve]
     if: ${{ !cancelled() && needs.cache-pyvista-data.result == 'success' && needs.resolve.outputs.run-id == '' }}
     env:
@@ -218,7 +226,10 @@ jobs:
 
   test:
     name: Test Documentation
-    runs-on: ubuntu-22.04
+    runs-on: >-
+      ${{ github.event_name == 'pull_request'
+      && contains(github.event.pull_request.labels.*.name, 'blacksmith')
+      && 'blacksmith-8vcpu-ubuntu-2204' || 'ubuntu-22.04' }}
     needs: [doc, resolve]
     # The merge queue tests the docs built from the tree that lands on `main`,
     # so repeating that after the merge only reports a failure the queue would

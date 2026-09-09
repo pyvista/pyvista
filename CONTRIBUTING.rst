@@ -221,9 +221,14 @@ Opening a pull request, and every push to it afterwards, starts the full
 continuous integration suite: unit tests on Linux, macOS, and Windows across
 every supported Python version, a separate VTK version matrix, the
 documentation build, the integration tests, type checking, and the style and
-docstring jobs. Every one of those runs costs the project paid runner time.
-Push when the change is ready, and use the local gates rather than CI to find
-out whether it works.
+docstring jobs. Every one of those runs costs runner time. Push when the
+change is ready, and use the local gates rather than CI to find out whether it
+works.
+
+The documentation build is the slowest of those jobs. Applying the
+``blacksmith`` label to a pull request moves its documentation cache, build and
+test jobs to Blacksmith runners, which finish sooner but are paid for by the
+project. The label takes effect on the next push to the pull request.
 
 Before you push:
 
