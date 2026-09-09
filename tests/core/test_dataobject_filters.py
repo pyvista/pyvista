@@ -1292,7 +1292,6 @@ DATA_OBJECT_OUTPUT_TYPES = {
     'sample': _SAME_CLASS,
 }
 
-# The filters a `PointSet` rejects, since it has no cells
 # The filters a bare `PointSet` rejects, since it has no cells
 _POINTSET_REJECTS = frozenset(DATA_OBJECT_OUTPUT_TYPES) - {'cell_centers', 'elevation', 'sample'}
 
@@ -1490,8 +1489,6 @@ def test_elevation(uniform):
 
 
 def test_elevation_composite(multiblock_all):
-    # Each block is elevated on its own, so a cell-less PointSet block is fine
-    # on every VTK version
     output = multiblock_all.elevation(progress_bar=True)
     assert output.n_blocks == multiblock_all.n_blocks
     assert [type(block) for block in output] == [type(block) for block in multiblock_all]
@@ -1655,8 +1652,7 @@ def test_triangulate():
 
 
 def test_triangulate_composite(multiblock_all):
-    # A cell-less PointSet block has nothing to triangulate, so it passes through
-    # rather than failing the whole composite
+    # A cell-less PointSet block has nothing to triangulate, so it passes through unchanged
     output = multiblock_all.triangulate(progress_bar=True)
     assert output.n_blocks == multiblock_all.n_blocks
     for block, source in zip(output, multiblock_all, strict=True):

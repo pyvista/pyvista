@@ -1724,9 +1724,7 @@ class DataObjectFilters:
         -------
         DataSet | MultiBlock
             Dataset with field data of cell validity.
-            Return type matches the input: a :class:`~pyvista.MultiBlock` gives a
-            ``MultiBlock`` whose blocks each follow the same rule, nested blocks
-            included, and every other class gives back its own class.
+            Return type matches input.
 
         See Also
         --------
@@ -4845,9 +4843,7 @@ class DataObjectFilters:
         output : DataSet | MultiBlock
             Dataset containing elevation scalars in the
             ``"Elevation"`` array in ``point_data``.
-            Return type matches the input: a :class:`~pyvista.MultiBlock` gives a
-            ``MultiBlock`` whose blocks each follow the same rule, nested blocks
-            included, and every other class gives back its own class.
+            Return type matches input.
 
         Examples
         --------
@@ -4954,9 +4950,7 @@ class DataObjectFilters:
             Dataset with ``cell_data`` containing the ``"VertexCount"``,
             ``"Length"``, ``"Area"``, and ``"Volume"`` arrays if set
             in the parameters.
-            Return type matches the input: a :class:`~pyvista.MultiBlock` gives a
-            ``MultiBlock`` whose blocks each follow the same rule, nested blocks
-            included, and every other class gives back its own class.
+            Return type matches input.
 
         Notes
         -----
@@ -5117,9 +5111,7 @@ class DataObjectFilters:
         -------
         output : DataSet | MultiBlock
             Dataset with the cell data transformed into point data.
-            Return type matches the input: a :class:`~pyvista.MultiBlock` gives a
-            ``MultiBlock`` whose blocks each follow the same rule, nested blocks
-            included, and every other class gives back its own class.
+            Return type matches input.
 
         See Also
         --------
@@ -5239,9 +5231,7 @@ class DataObjectFilters:
         -------
         output : DataSet | MultiBlock
             Dataset with the point data transformed into cell data.
-            Return type matches the input: a :class:`~pyvista.MultiBlock` gives a
-            ``MultiBlock`` whose blocks each follow the same rule, nested blocks
-            included, and every other class gives back its own class.
+            Return type matches input.
 
         See Also
         --------
@@ -5490,9 +5480,7 @@ class DataObjectFilters:
         -------
         output : DataSet | MultiBlock
             Dataset containing resampled data.
-            Return type matches the input: a :class:`~pyvista.MultiBlock` gives a
-            ``MultiBlock`` whose blocks each follow the same rule, nested blocks
-            included, and every other class gives back its own class.
+            Return type matches input.
 
         See Also
         --------

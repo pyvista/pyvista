@@ -29,5 +29,4 @@ assert_types(unstructured().ctp(), pv.UnstructuredGrid)
 assert_types(explicit_structured().ctp(), pv.ExplicitStructuredGrid)
 assert_types(multiblock().ctp(), pv.MultiBlock)
 
-# A `PointSet` is rejected outright, so the call never returns
 assert_types(pointset().ctp(), Never)

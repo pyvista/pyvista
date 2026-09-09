@@ -29,5 +29,4 @@ assert_types(unstructured().compute_cell_sizes(), pv.UnstructuredGrid)
 assert_types(explicit_structured().compute_cell_sizes(), pv.ExplicitStructuredGrid)
 assert_types(multiblock().compute_cell_sizes(), pv.MultiBlock)
 
-# A `PointSet` is rejected outright, so the call never returns
 assert_types(pointset().compute_cell_sizes(), Never)
