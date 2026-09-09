@@ -1486,15 +1486,11 @@ def test_elevation(uniform):
 
 
 def test_elevation_composite(multiblock_all):
-    # Now test composite data structures
-    if pv.vtk_version_info < (9, 4):
-        # VTK bug: computing elevation on a MultiBlock containing a PointSet
-        # segfaults the interpreter on VTK < 9.4, so PyVista raises instead.
-        with pytest.raises(pv.PointSetNotSupported):
-            multiblock_all.elevation(progress_bar=True)
-        return
+    # Each block is elevated on its own, so a cell-less PointSet block is fine
+    # on every VTK version
     output = multiblock_all.elevation(progress_bar=True)
     assert output.n_blocks == multiblock_all.n_blocks
+    assert [type(block) for block in output] == [type(block) for block in multiblock_all]
 
 
 def test_compute_cell_sizes(datasets_no_pointset):
