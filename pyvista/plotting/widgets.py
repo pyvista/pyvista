@@ -315,6 +315,7 @@ class WidgetComponent(_NoNewAttrMixin):
     @_deprecate_positional_args(allowed=['mesh'])
     def add_mesh_clip_box(  # noqa: PLR0917
         self,
+        /,
         mesh,
         invert: bool = False,  # noqa: FBT001, FBT002
         rotation_enabled: bool = True,  # noqa: FBT001, FBT002
@@ -713,6 +714,7 @@ class WidgetComponent(_NoNewAttrMixin):
     @_deprecate_positional_args(allowed=['mesh'])
     def add_mesh_clip_plane(  # noqa: PLR0917
         self,
+        /,
         mesh,
         normal='x',
         invert: bool = False,  # noqa: FBT001, FBT002
@@ -899,6 +901,7 @@ class WidgetComponent(_NoNewAttrMixin):
     @_deprecate_positional_args(allowed=['volume'])
     def add_volume_clip_plane(  # noqa: PLR0917
         self,
+        /,
         volume,
         normal='x',
         invert: bool = False,  # noqa: ARG002, FBT001, FBT002
@@ -1037,6 +1040,7 @@ class WidgetComponent(_NoNewAttrMixin):
     @_deprecate_positional_args(allowed=['mesh'])
     def add_mesh_slice(  # noqa: PLR0917
         self,
+        /,
         mesh,
         normal='x',
         generate_triangles: bool = False,  # noqa: FBT001, FBT002
@@ -1195,6 +1199,7 @@ class WidgetComponent(_NoNewAttrMixin):
     @_deprecate_positional_args(allowed=['mesh'])
     def add_mesh_slice_orthogonal(  # noqa: PLR0917
         self,
+        /,
         mesh,
         generate_triangles: bool = False,  # noqa: FBT001, FBT002
         widget_color=None,
@@ -1723,6 +1728,7 @@ class WidgetComponent(_NoNewAttrMixin):
     @_deprecate_positional_args(allowed=['mesh'])
     def add_mesh_threshold(  # noqa: PLR0917
         self,
+        /,
         mesh,
         scalars=None,
         invert: bool = False,  # noqa: FBT001, FBT002
@@ -1883,6 +1889,7 @@ class WidgetComponent(_NoNewAttrMixin):
     @_deprecate_positional_args(allowed=['mesh'])
     def add_mesh_isovalue(  # noqa: PLR0917
         self,
+        /,
         mesh,
         scalars=None,
         compute_normals: bool = False,  # noqa: FBT001, FBT002
@@ -2194,6 +2201,7 @@ class WidgetComponent(_NoNewAttrMixin):
     @_deprecate_positional_args(allowed=['mesh'])
     def add_mesh_slice_spline(  # noqa: PLR0917
         self,
+        /,
         mesh,
         generate_triangles: bool = False,  # noqa: FBT001, FBT002
         factor=1.25,

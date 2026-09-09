@@ -219,7 +219,7 @@ def orientation_plotter():
     pl.add_mesh(ocube['y_n'], color='green')
     pl.add_mesh(ocube['z_p'], color='red')
     pl.add_mesh(ocube['z_n'], color='red')
-    pl.show_axes()  # type: ignore[call-arg]
+    pl.show_axes()
     return pl
 
 
