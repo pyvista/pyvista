@@ -1847,6 +1847,7 @@ class DataObjectFilters:
         if skip_validator:
             output = self.copy(deep=False)
         else:
+            _raise_if_composite_has_pointset(self, error=pv.core.errors.PointSetCellOperationError)
             cell_validator = _vtk.vtkCellValidator()
             cell_validator.SetInputData(self)
             cell_validator.SetTolerance(tol)
@@ -5881,7 +5882,8 @@ def _raise_if_composite_has_pointset(
     """Raise if a MultiBlock (recursively) contains a PointSet block.
 
     Several filters (``cell_data_to_point_data``, ``point_data_to_cell_data``,
-    ``extract_all_edges``, ``compute_cell_sizes``) hand a MultiBlock straight
+    ``extract_all_edges``, ``compute_cell_sizes``, ``cell_validator``) hand a
+    MultiBlock straight
     to the underlying :vtk:`vtkAlgorithm`, relying on VTK's own
     composite-dataset dispatch rather than iterating blocks in Python. On
     some VTK versions, running these filters on a composite containing a

@@ -1441,6 +1441,11 @@ def test_extract_all_edges_composite(multiblock_all_no_pointset):
     assert output.n_blocks == multiblock_all_no_pointset.n_blocks
 
 
+def test_cell_validator_composite_pointset_raises(multiblock_all):
+    with pytest.raises(pv.PointSetCellOperationError):
+        multiblock_all.cell_validator()
+
+
 def test_extract_all_edges_composite_pointset_raises(multiblock_all):
     # extract_all_edges hands the whole composite to the underlying VTK
     # algorithm; on some VTK versions this segfaults instead of raising if a
