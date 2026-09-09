@@ -47,7 +47,7 @@ jobs:
       # OpenGL backends. Without a headless display those imports segfault,
       # so set one up before the tox envs run.
       - name: Set up headless display
-        uses: pyvista/setup-headless-display-action@b0bf9f57d62d2b3fee9f1c0e0c7e390f05e97a4e
+        uses: pyvista/setup-headless-display-action@c103a2ff45650d38cb71684b5dc6cdfeb9442c79
 
       # `make sync-deps` is not a "dry-run" — we need the dev group installed
       # so the subsequent `uv run` invocations resolve without re-bootstrapping.
