@@ -106,6 +106,12 @@ class RectilinearGridFilters:
             elif not isinstance(mixed, bool):
                 msg = '`mixed` must be either a sequence of ints or bool'  # type: ignore[unreachable]
                 raise TypeError(msg)
+            elif self.cell_data.active_scalars_name is None:  # type: ignore[attr-defined]
+                msg = (
+                    '`mixed=True` reads the active cell scalars to choose 5 or 12 tetrahedra '
+                    'per cell, but this grid has no active cell scalars.'
+                )
+                raise ValueError(msg)
             alg.SetTetraPerCellTo5And12()
         else:
             if tetra_per_cell not in [5, 6, 12]:
