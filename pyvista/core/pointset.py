@@ -445,11 +445,11 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
         msg = 'PointSets contain no cells or cell data.'
         raise PointSetNotSupported(msg)
 
-    def ctp(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
+    def ctp(self, *args, **kwargs) -> NoReturn:  # numpydoc ignore=PR01
         """Raise PointSets do not have cells."""
         self.cell_data_to_point_data(*args, **kwargs)
 
-    def ptc(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
+    def ptc(self, *args, **kwargs) -> NoReturn:  # numpydoc ignore=PR01
         """Raise PointSets do not have cells."""
         self.point_data_to_cell_data(*args, **kwargs)
 
