@@ -437,17 +437,25 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
         msg = 'Contour and other dimension reducing filters are not supported on PointSets'
         raise PointSetNotSupported(msg)
 
-    def cell_data_to_point_data(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
+    def cell_data_to_point_data(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise PointSets do not have cells."""
         msg = 'PointSets contain no cells or cell data.'
         raise PointSetNotSupported(msg)
 
-    def point_data_to_cell_data(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
+    def point_data_to_cell_data(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise PointSets do not have cells."""
         msg = 'PointSets contain no cells or cell data.'
         raise PointSetNotSupported(msg)
 
-    def triangulate(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
+    def ctp(self, *args, **kwargs) -> NoReturn:  # numpydoc ignore=PR01
+        """Raise PointSets do not have cells."""
+        self.cell_data_to_point_data(*args, **kwargs)
+
+    def ptc(self, *args, **kwargs) -> NoReturn:  # numpydoc ignore=PR01
+        """Raise PointSets do not have cells."""
+        self.point_data_to_cell_data(*args, **kwargs)
+
+    def triangulate(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
@@ -521,15 +529,15 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
             raise RuntimeError(msg)
         raise PointSetCellOperationError
 
-    def cell_validator(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
+    def cell_validator(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
-    def extract_all_edges(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
+    def extract_all_edges(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise extract all edges are not supported."""
         raise PointSetCellOperationError
 
-    def compute_cell_sizes(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
+    def compute_cell_sizes(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise extract all edges are not supported."""
         raise PointSetCellOperationError
 

@@ -801,7 +801,7 @@ class PolyDataFilters(DataSetFilters):
         pass_lines: bool = False,
         inplace: bool = False,
         progress_bar: bool = False,
-    ):
+    ) -> PolyData:
         """Return an all triangle mesh.
 
         More complex polygons will be broken down into triangles.
@@ -853,7 +853,7 @@ class PolyDataFilters(DataSetFilters):
         mesh = _get_output(trifilter)
         if inplace:
             self.copy_from(mesh, deep=False)  # type: ignore[attr-defined]
-            return self
+            return cast('PolyData', self)
         return mesh
 
     @_deprecate_positional_args

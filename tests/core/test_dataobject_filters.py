@@ -25,6 +25,8 @@ from pyvista import _vtk
 from pyvista import examples
 from pyvista.core.cell import _get_connectivity_array
 from pyvista.core.errors import DeprecationError
+from pyvista.core.errors import PointSetCellOperationError
+from pyvista.core.errors import PointSetNotSupported
 from pyvista.core.filters.data_object import _PYVISTA_CELL_STATUS_INFO
 from pyvista.core.filters.data_object import _SENTINEL
 from pyvista.core.filters.data_object import _VTK_CELL_STATUS_INFO
@@ -1268,6 +1270,83 @@ def test_clip_slice_output_type_composite(name):
                 assert all(sub.is_empty for sub in blocks)
 
 
+_SAME_CLASS = {name: getattr(pv, name) for name in _CLIP_LIKE}
+_TO_POLY = dict.fromkeys(_CLIP_LIKE, _POLY)
+
+# The class each filter gives back for each input class, as the docstrings state it
+DATA_OBJECT_OUTPUT_TYPES = {
+    'cell_centers': _TO_POLY,
+    'extract_all_edges': _TO_POLY,
+    'triangulate': {
+        **dict.fromkeys(_CLIP_LIKE, _GRID),
+        'PolyData': _POLY,
+        'PointSet': pv.PointSet,
+    },
+    'elevation': _SAME_CLASS,
+    'compute_cell_sizes': _SAME_CLASS,
+    'cell_validator': _SAME_CLASS,
+    'cell_data_to_point_data': _SAME_CLASS,
+    'ctp': _SAME_CLASS,
+    'point_data_to_cell_data': _SAME_CLASS,
+    'ptc': _SAME_CLASS,
+    'sample': _SAME_CLASS,
+}
+
+# The filters a `PointSet` rejects, since it has no cells
+_POINTSET_REJECTS = frozenset(DATA_OBJECT_OUTPUT_TYPES) - {'cell_centers', 'elevation', 'sample'}
+
+
+def _data_object_call(mesh, name):
+    """Call one `DataObjectFilters` filter with arguments valid for every input class."""
+    kwargs = {'sample': dict(target=_output_type_meshes()['ImageData'])}.get(name, {})
+    return getattr(mesh, name)(**kwargs)
+
+
+@pytest.mark.parametrize('name', list(DATA_OBJECT_OUTPUT_TYPES))
+@pytest.mark.parametrize('mesh_type', list(_CLIP_LIKE))
+def test_data_object_filter_output_type(name, mesh_type):
+    """Each filter gives back the class its docstring names, for every input class."""
+    mesh = _output_type_meshes()[mesh_type]
+
+    if mesh_type == 'PointSet' and name in _POINTSET_REJECTS:
+        with pytest.raises((PointSetCellOperationError, PointSetNotSupported)):
+            _data_object_call(mesh, name)
+        return
+
+    output = _data_object_call(mesh, name)
+
+    assert type(output) is DATA_OBJECT_OUTPUT_TYPES[name][mesh_type]
+
+
+@pytest.mark.parametrize('name', list(DATA_OBJECT_OUTPUT_TYPES))
+def test_data_object_filter_output_type_composite(name):
+    """A composite stays a composite, with every block following the same rule."""
+    meshes = {
+        key: mesh
+        for key, mesh in _output_type_meshes().items()
+        if not (key == 'PointSet' and name in _POINTSET_REJECTS)
+    }
+    expected_types = DATA_OBJECT_OUTPUT_TYPES[name]
+    flat, nested = list(meshes)[:3], list(meshes)[3:]
+    composite = pv.MultiBlock(
+        {
+            'flat': pv.MultiBlock({key: meshes[key] for key in flat}),
+            'nested': pv.MultiBlock({key: meshes[key] for key in nested}),
+            'empty': None,
+        }
+    )
+
+    output = _data_object_call(composite, name)
+
+    assert type(output) is _MULTI
+    assert output.keys() == composite.keys()
+    assert output['empty'] is None
+    for group, block_names in (('flat', flat), ('nested', nested)):
+        assert output[group].keys() == block_names
+        for mesh_type in block_names:
+            assert type(output[group][mesh_type]) is expected_types[mesh_type]
+
+
 @pytest.mark.parametrize(
     'name',
     ['slice', 'slice_implicit', 'slice_along_line', 'slice_orthogonal', 'slice_along_axis'],
@@ -1407,15 +1486,11 @@ def test_elevation(uniform):
 
 
 def test_elevation_composite(multiblock_all):
-    # Now test composite data structures
-    if pv.vtk_version_info < (9, 4):
-        # VTK bug: computing elevation on a MultiBlock containing a PointSet
-        # segfaults the interpreter on VTK < 9.4, so PyVista raises instead.
-        with pytest.raises(pv.PointSetNotSupported):
-            multiblock_all.elevation(progress_bar=True)
-        return
+    # Each block is elevated on its own, so a cell-less PointSet block is fine
+    # on every VTK version
     output = multiblock_all.elevation(progress_bar=True)
     assert output.n_blocks == multiblock_all.n_blocks
+    assert [type(block) for block in output] == [type(block) for block in multiblock_all]
 
 
 def test_compute_cell_sizes(datasets_no_pointset):
@@ -1575,10 +1650,17 @@ def test_triangulate():
     assert np.any(tri.cells)
 
 
-def test_triangulate_composite(multiblock_all):
+def test_triangulate_composite(multiblock_all_no_pointset):
     # Now test composite data structures
-    output = multiblock_all.triangulate(progress_bar=True)
-    assert output.n_blocks == multiblock_all.n_blocks
+    output = multiblock_all_no_pointset.triangulate(progress_bar=True)
+    assert output.n_blocks == multiblock_all_no_pointset.n_blocks
+
+
+def test_triangulate_composite_pointset_raises(multiblock_all):
+    # Each block takes its own path, so a cell-less PointSet block raises
+    # exactly as it does on its own
+    with pytest.raises(pv.PointSetCellOperationError):
+        multiblock_all.triangulate(progress_bar=True)
 
 
 def test_sample():
