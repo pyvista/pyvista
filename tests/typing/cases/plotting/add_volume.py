@@ -20,7 +20,16 @@ def a_plotter() -> pv.Plotter:
     return pv.Plotter()
 
 
-# A volume, not an actor, whatever went in
-assert_types(a_plotter().add_volume(a_volume()), pv.Volume | list[pv.Volume])
-assert_types(a_plotter().add_volume(np.zeros((10, 10, 10))), pv.Volume | list[pv.Volume])
-assert_types(a_plotter().add_volume(pv.MultiBlock([a_volume()])), pv.Volume | list[pv.Volume])
+def a_volume_or_composite() -> pv.DataSet | pv.MultiBlock:
+    """Return a volume typed as either kind of input, so the catch-all overload applies."""
+    return a_volume()
+
+
+assert_types(a_plotter().add_volume(a_volume()), pv.Volume)
+assert_types(a_plotter().add_volume(np.zeros((10, 10, 10))), pv.Volume)
+
+# A composite gets one volume per block
+assert_types(a_plotter().add_volume(pv.MultiBlock([a_volume()])), list[pv.Volume])
+
+# The catch-all, reached only by an input widened to both kinds
+assert_types(a_plotter().add_volume(a_volume_or_composite()), pv.Volume | list[pv.Volume])

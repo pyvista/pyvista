@@ -4,8 +4,10 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Literal
 from typing import TypeAlias
 from typing import cast
+from typing import overload
 
 import numpy as np
 
@@ -122,13 +124,23 @@ def run_image_filter(imfilter: _vtk.vtkWindowToImageFilter) -> _Pixels:
     return cast('_Pixels', np.ascontiguousarray(img_array.reshape(tgt_size)[::-1]))
 
 
+# fmt: off
+# ruff: disable[E501, FBT001, FBT002]
+@overload
+def image_from_window(render_window: _vtk.vtkRenderWindow, as_vtk: Literal[False] = False, ignore_alpha: bool = ..., scale: int = ...) -> NumpyArray[np.uint8]: ...
+@overload
+def image_from_window(render_window: _vtk.vtkRenderWindow, as_vtk: Literal[True], ignore_alpha: bool = ..., scale: int = ...) -> ImageData: ...
+@overload
+def image_from_window(render_window: _vtk.vtkRenderWindow, as_vtk: bool = ..., ignore_alpha: bool = ..., scale: int = ...) -> NumpyArray[np.uint8] | ImageData: ...
+# ruff: enable[E501, FBT001, FBT002]
+# fmt: on
 @_deprecate_positional_args(allowed=['render_window'])
 def image_from_window(  # noqa: PLR0917
-    render_window,
+    render_window: _vtk.vtkRenderWindow,
     as_vtk: bool = False,  # noqa: FBT001, FBT002
     ignore_alpha: bool = False,  # noqa: FBT001, FBT002
-    scale=1,
-):
+    scale: int = 1,
+) -> NumpyArray[np.uint8] | ImageData:
     """Extract the image from the render window as an array.
 
     Parameters

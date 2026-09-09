@@ -577,9 +577,12 @@ _RENDERING_MODULES = frozenset(
         'examples/test_gltf.py',
         'typing/test_return_type.py',
         'typing/cases/plotting/add_text.py',
+        'typing/cases/plotting/add_title.py',
         'typing/cases/plotting/add_volume.py',
         'typing/cases/plotting/get_image_depth.py',
         'typing/cases/plotting/image.py',
+        'typing/cases/plotting/image_from_window.py',
+        'typing/cases/plotting/map_value.py',
         'typing/cases/plotting/resolve_scalars_field.py',
         'typing/cases/plotting/screenshot.py',
         # These also evaluate plotting symbols at module scope, so on a
