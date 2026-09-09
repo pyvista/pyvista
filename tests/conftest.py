@@ -598,10 +598,11 @@ _RENDERING_MODULES = frozenset(
         'typing/cases/plotting/image.py',
         'typing/cases/plotting/image_from_window.py',
         'typing/cases/plotting/map_value.py',
+        'typing/cases/plotting/plotter_set_chart_interaction.py',
         'typing/cases/plotting/remove_actor.py',
+        'typing/cases/plotting/renderer_set_chart_interaction.py',
         'typing/cases/plotting/resolve_scalars_field.py',
         'typing/cases/plotting/screenshot.py',
-        'typing/cases/plotting/set_chart_interaction.py',
         'typing/cases/plotting/show_bounds.py',
         'typing/cases/plotting/show_grid.py',
         # These also evaluate plotting symbols at module scope, so on a

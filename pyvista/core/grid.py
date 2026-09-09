@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-import functools
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
@@ -39,6 +38,7 @@ from .utilities.arrays import array_from_vtkmatrix
 from .utilities.arrays import convert_array
 from .utilities.arrays import raise_has_duplicates
 from .utilities.arrays import vtkmatrix_from_array
+from .utilities.misc import _wraps
 from .utilities.misc import abstract_class
 
 if TYPE_CHECKING:
@@ -1296,7 +1296,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
             offset_[2] + dims[2] - 1,
         )
 
-    @functools.wraps(RectilinearGridFilters.to_tetrahedra)
+    @_wraps(RectilinearGridFilters.to_tetrahedra)
     def to_tetrahedra(
         self: Self, *args, **kwargs
     ) -> UnstructuredGrid:  # numpydoc ignore=PR01,RT01

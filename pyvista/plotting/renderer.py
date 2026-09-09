@@ -30,6 +30,7 @@ from pyvista.core.formatting_html import _metadata_html
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.core.utilities.misc import _NoNewAttrMixin
+from pyvista.core.utilities.misc import _wraps
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import try_callback
 
@@ -54,6 +55,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import RotationLike
     from pyvista.core.pointset import PolyData
 
+    from ._typing import Chart
     from .cube_axes_actor import CubeAxesActor
     from .lights import Light
 
@@ -1017,18 +1019,18 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """
         return [*self._charts] if self.has_charts else []  # type: ignore[misc]
 
-    @functools.wraps(Charts.set_interaction)
+    @_wraps(Charts.set_interaction)
     @_deprecate_positional_args(allowed=['interactive'])
     def set_chart_interaction(  # numpydoc ignore=PR01,RT01
         self,
         interactive,
         toggle=False,  # noqa: FBT002
-    ):
+    ) -> list[Chart]:
         """Wrap ``Charts.set_interaction``."""
         return self._charts.set_interaction(interactive, toggle=toggle) if self.has_charts else []  # type: ignore[union-attr]
 
-    @functools.wraps(Charts.get_charts_by_pos)
-    def _get_charts_by_pos(self, pos):
+    @_wraps(Charts.get_charts_by_pos)
+    def _get_charts_by_pos(self, pos) -> list[Chart]:
         """Wrap ``Charts.get_charts_by_pos``."""
         return self._charts.get_charts_by_pos(pos) if self.has_charts else []  # type: ignore[union-attr]
 
