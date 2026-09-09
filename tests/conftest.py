@@ -576,6 +576,7 @@ _RENDERING_MODULES = frozenset(
         'test_cli.py',
         'examples/test_gltf.py',
         'typing/test_return_type.py',
+<<<<<<< HEAD
         'typing/cases/plotting/add_actor.py',
         'typing/cases/plotting/add_axes.py',
         'typing/cases/plotting/add_axes_at_origin.py',
@@ -594,10 +595,16 @@ _RENDERING_MODULES = frozenset(
         'typing/cases/plotting/compute_bounds.py',
         'typing/cases/plotting/enable_depth_peeling.py',
         'typing/cases/plotting/get_default_cam_pos.py',
+=======
+        'typing/cases/plotting/add_text.py',
+        'typing/cases/plotting/add_title.py',
+        'typing/cases/plotting/add_volume.py',
+>>>>>>> origin/main
         'typing/cases/plotting/get_image_depth.py',
         'typing/cases/plotting/image.py',
         'typing/cases/plotting/image_from_window.py',
         'typing/cases/plotting/map_value.py',
+<<<<<<< HEAD
         'typing/cases/plotting/plotter_set_chart_interaction.py',
         'typing/cases/plotting/remove_actor.py',
         'typing/cases/plotting/renderer_set_chart_interaction.py',
@@ -605,6 +612,10 @@ _RENDERING_MODULES = frozenset(
         'typing/cases/plotting/screenshot.py',
         'typing/cases/plotting/show_bounds.py',
         'typing/cases/plotting/show_grid.py',
+=======
+        'typing/cases/plotting/resolve_scalars_field.py',
+        'typing/cases/plotting/screenshot.py',
+>>>>>>> origin/main
         # These also evaluate plotting symbols at module scope, so on a
         # rendering-free backend they are skipped at collection time (see
         # ``_RENDERING_ONLY_MODULES`` / ``pytest_ignore_collect``).
