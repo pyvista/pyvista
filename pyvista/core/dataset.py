@@ -2015,12 +2015,14 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             pset.active_scalars_name = name
         return pset
 
+    # fmt: off
+    # ruff: disable[E501]
     @overload
     def find_closest_point(self: Self, point: Iterable[float], n: Literal[1] = 1) -> int: ...
     @overload
-    def find_closest_point(
-        self: Self, point: Iterable[float], n: int = ...
-    ) -> VectorLike[int]: ...
+    def find_closest_point(self: Self, point: Iterable[float], n: int = ...) -> VectorLike[int]: ...
+    # ruff: enable[E501]
+    # fmt: on
     def find_closest_point(
         self: Self, point: Iterable[float], n: int = 1
     ) -> int | VectorLike[int]:
@@ -2092,12 +2094,22 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             return vtk_id_list_to_array(id_list)
         return locator.FindClosestPoint(point)  # type: ignore[arg-type]
 
+    # fmt: off
+    # ruff: disable[E501, FBT001, FBT002]
+    @overload
+    def find_closest_cell(self: Self, point: VectorLike[float] | MatrixLike[float], return_closest_point: Literal[False] = False) -> int | NumpyArray[int]: ...
+    @overload
+    def find_closest_cell(self: Self, point: VectorLike[float] | MatrixLike[float], return_closest_point: Literal[True]) -> tuple[int | NumpyArray[int], NumpyArray[float]]: ...
+    @overload
+    def find_closest_cell(self: Self, point: VectorLike[float] | MatrixLike[float], return_closest_point: bool = ...) -> int | NumpyArray[int] | tuple[int | NumpyArray[int], NumpyArray[float]]: ...
+    # ruff: enable[E501, FBT001, FBT002]
+    # fmt: on
     @_deprecate_positional_args(allowed=['point'])
     def find_closest_cell(
         self: Self,
         point: VectorLike[float] | MatrixLike[float],
         return_closest_point: bool = False,  # noqa: FBT001, FBT002
-    ) -> int | NumpyArray[int] | tuple[int | NumpyArray[int], NumpyArray[int]]:
+    ) -> int | NumpyArray[int] | tuple[int | NumpyArray[int], NumpyArray[float]]:
         """Find index of closest cell in this mesh to the given point.
 
         .. warning::

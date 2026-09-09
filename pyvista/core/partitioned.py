@@ -109,13 +109,14 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
                 index = self.n_partitions + index
             return wrap(self.GetPartition(index))
 
+    # fmt: off
+    # ruff: disable[E501]
     @overload
     def __setitem__(self, index: int, data: DataSet | None) -> None: ...  # pragma: no cover
-
     @overload
-    def __setitem__(
-        self, index: slice, data: Iterable[DataSet | None]
-    ) -> None: ...  # pragma: no cover
+    def __setitem__(self, index: slice, data: Iterable[DataSet | None]) -> None: ...  # pragma: no cover
+    # ruff: enable[E501]
+    # fmt: on
 
     def __setitem__(
         self,
