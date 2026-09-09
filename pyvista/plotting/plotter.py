@@ -2408,7 +2408,7 @@ class BasePlotter(_BoundsSizeMixin):
                 'Consider setting ``off_screen=True`` '
                 'for off screen rendering.\n'
             )
-            raise AttributeError(msg)
+            raise RuntimeError(msg)
 
     def _check_has_ren_win(self) -> None:
         """Check if render window attribute exists and raise an exception if not."""
@@ -2444,6 +2444,10 @@ class BasePlotter(_BoundsSizeMixin):
     @property
     def image(self) -> NumpyArray[np.uint8]:  # numpydoc ignore=RT01
         """Return an image array of current render window.
+
+        .. versionchanged:: 0.50
+            A :class:`RuntimeError` is raised instead of an
+            :class:`AttributeError` when the plotter has not been rendered.
 
         Returns
         -------
@@ -6150,6 +6154,10 @@ class BasePlotter(_BoundsSizeMixin):
         reset_camera_clipping_range: bool = True,  # noqa: FBT001, FBT002
     ) -> NumpyArray[np.float32]:
         """Return a depth image representing current render window.
+
+        .. versionchanged:: 0.50
+            A :class:`RuntimeError` is raised instead of an
+            :class:`AttributeError` when the plotter has not been rendered.
 
         .. versionchanged:: 0.47
             The last image depth is no longer automatically stored. You must

@@ -38,8 +38,27 @@ if TYPE_CHECKING:
 @pytest.mark.skip_egl('OSMesa/EGL builds will not fail.')
 def test_plotter_image_before_show():
     pl = pv.Plotter()
-    with pytest.raises(AttributeError, match='not yet been set up'):
+    with pytest.raises(RuntimeError, match='not yet been set up'):
         _ = pl.image
+
+
+@pytest.mark.skip_egl('OSMesa/EGL builds will not fail.')
+def test_plotter_image_before_show_subclass_getattr():
+    """A subclass ``__getattr__`` must not mask what the property raises."""
+
+    class _SubPlotter(pv.Plotter):
+        """Plotter that reports every unresolved attribute as missing."""
+
+        def __getattr__(self, name):
+            """Raise for an attribute found neither on the instance nor the class."""
+            msg = f'{type(self).__name__} has no attribute {name!r}'
+            raise AttributeError(msg)
+
+    pl = _SubPlotter()
+    with pytest.raises(RuntimeError, match='not yet been set up'):
+        _ = pl.image
+    with pytest.raises(RuntimeError, match='not yet been set up'):
+        _ = pl.image_depth
 
 
 def test_has_render_window_fail():
