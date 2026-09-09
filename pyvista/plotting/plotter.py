@@ -25,6 +25,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
 from typing import cast
+from typing import overload
 import uuid
 import warnings
 import weakref
@@ -127,7 +128,6 @@ if TYPE_CHECKING:
     from pyvista import MultiBlock
     from pyvista import PolyData
     from pyvista import Texture
-    from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import BoundsTuple
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
@@ -576,8 +576,8 @@ class BasePlotter(_BoundsSizeMixin):
 
         self._image_depth_null: NumpyArray[bool] | None = None
         self._window_size_unset = False
-        self.last_image_depth: pv.pyvista_ndarray | None = None
-        self.last_image: pv.pyvista_ndarray | None = None
+        self.last_image_depth: NumpyArray[np.float32] | None = None
+        self.last_image: NumpyArray[np.uint8] | None = None
         self.last_vtksz: str | Path | None = None
         self._has_background_layer = False
         if image_scale is None:
@@ -2388,7 +2388,7 @@ class BasePlotter(_BoundsSizeMixin):
                 self.window_size = size_before
 
     @property
-    def image_depth(self) -> pv.pyvista_ndarray:  # numpydoc ignore=RT01
+    def image_depth(self) -> NumpyArray[np.float32]:  # numpydoc ignore=RT01
         """Return a depth image representing current render window.
 
         Helper attribute for ``get_image_depth``.
@@ -2407,14 +2407,15 @@ class BasePlotter(_BoundsSizeMixin):
             )
             raise AttributeError(msg)
 
-    def _check_has_ren_win(self) -> None:
-        """Check if render window attribute exists and raise an exception if not."""
+    def _check_has_ren_win(self) -> _vtk.vtkRenderWindow:
+        """Return the render window, raising if there is none or it is not current."""
         if self.render_window is None:
             msg = 'Render window is not available.'
             raise RenderWindowUnavailable(msg)
         if not self.render_window.IsCurrent():
             msg = 'Render window is not current.'
             raise RenderWindowUnavailable(msg)
+        return self.render_window
 
     def _make_render_window_current(self) -> None:
         if self.render_window is None:
@@ -2439,12 +2440,12 @@ class BasePlotter(_BoundsSizeMixin):
         self.render_window.StereoUpdate()
 
     @property
-    def image(self) -> pv.pyvista_ndarray:  # numpydoc ignore=RT01
+    def image(self) -> NumpyArray[np.uint8]:  # numpydoc ignore=RT01
         """Return an image array of current render window.
 
         Returns
         -------
-        pyvista.pyvista_ndarray
+        numpy.ndarray
             Image array of current render window.
 
         Examples
@@ -2460,10 +2461,10 @@ class BasePlotter(_BoundsSizeMixin):
             return self.last_image
 
         self._check_rendered()
-        self._check_has_ren_win()
+        render_window = self._check_has_ren_win()
 
         return image_from_window(
-            self.render_window,
+            render_window,
             scale=self.image_scale,
             ignore_alpha=not self.image_transparent_background,
         )
@@ -4699,6 +4700,16 @@ class BasePlotter(_BoundsSizeMixin):
         addr = actor.GetAddressAsString('')
         self.renderer._labels[addr] = (poly, label, color)
 
+    # fmt: off
+    # ruff: disable[E501, FBT001]
+    @overload
+    def add_volume(self, volume: MultiBlock, scalars: str | NumpyArray[float] | None = ..., clim: float | tuple[float, float] | None = ..., resolution: VectorLike[float] | None = ..., opacity: OpacityOptions | NumpyArray[float] = ..., n_colors: int = ..., cmap: ColormapOptions | LookupTable | None = ..., flip_scalars: bool = ..., reset_camera: bool | None = ..., name: str | None = ..., ambient: float | None = ..., categories: bool | int = ..., culling: CullingOptions | bool = ..., multi_colors: bool = ..., blending: Literal['additive', 'maximum', 'minimum', 'composite', 'average'] = ..., mapper: Literal['fixed_point', 'gpu', 'open_gl', 'smart', 'ugrid'] | None = ..., scalar_bar_args: ScalarBarArgs | None = ..., show_scalar_bar: bool | None = ..., annotations: dict[float, str] | None = ..., pickable: bool = ..., preference: PointLiteral | CellLiteral = ..., opacity_unit_distance: float | None = ..., shade: bool = ..., diffuse: float = ..., specular: float = ..., specular_power: float = ..., render: bool | None = ..., user_matrix: TransformLike | None = ..., log_scale: bool = ..., **kwargs) -> list[Volume]: ...
+    @overload
+    def add_volume(self, volume: DataSet | NumpyArray[float], scalars: str | NumpyArray[float] | None = ..., clim: float | tuple[float, float] | None = ..., resolution: VectorLike[float] | None = ..., opacity: OpacityOptions | NumpyArray[float] = ..., n_colors: int = ..., cmap: ColormapOptions | LookupTable | None = ..., flip_scalars: bool = ..., reset_camera: bool | None = ..., name: str | None = ..., ambient: float | None = ..., categories: bool | int = ..., culling: CullingOptions | bool = ..., multi_colors: bool = ..., blending: Literal['additive', 'maximum', 'minimum', 'composite', 'average'] = ..., mapper: Literal['fixed_point', 'gpu', 'open_gl', 'smart', 'ugrid'] | None = ..., scalar_bar_args: ScalarBarArgs | None = ..., show_scalar_bar: bool | None = ..., annotations: dict[float, str] | None = ..., pickable: bool = ..., preference: PointLiteral | CellLiteral = ..., opacity_unit_distance: float | None = ..., shade: bool = ..., diffuse: float = ..., specular: float = ..., specular_power: float = ..., render: bool | None = ..., user_matrix: TransformLike | None = ..., log_scale: bool = ..., **kwargs) -> Volume: ...
+    @overload
+    def add_volume(self, volume: DataSet | MultiBlock | NumpyArray[float], scalars: str | NumpyArray[float] | None = ..., clim: float | tuple[float, float] | None = ..., resolution: VectorLike[float] | None = ..., opacity: OpacityOptions | NumpyArray[float] = ..., n_colors: int = ..., cmap: ColormapOptions | LookupTable | None = ..., flip_scalars: bool = ..., reset_camera: bool | None = ..., name: str | None = ..., ambient: float | None = ..., categories: bool | int = ..., culling: CullingOptions | bool = ..., multi_colors: bool = ..., blending: Literal['additive', 'maximum', 'minimum', 'composite', 'average'] = ..., mapper: Literal['fixed_point', 'gpu', 'open_gl', 'smart', 'ugrid'] | None = ..., scalar_bar_args: ScalarBarArgs | None = ..., show_scalar_bar: bool | None = ..., annotations: dict[float, str] | None = ..., pickable: bool = ..., preference: PointLiteral | CellLiteral = ..., opacity_unit_distance: float | None = ..., shade: bool = ..., diffuse: float = ..., specular: float = ..., specular_power: float = ..., render: bool | None = ..., user_matrix: TransformLike | None = ..., log_scale: bool = ..., **kwargs) -> Volume | list[Volume]: ...
+    # ruff: enable[E501, FBT001]
+    # fmt: on
     @_deprecate_positional_args(allowed=['volume'])
     def add_volume(  # noqa: PLR0917
         self,
@@ -4732,7 +4743,7 @@ class BasePlotter(_BoundsSizeMixin):
         user_matrix: TransformLike | None = None,
         log_scale: bool = False,  # noqa: FBT001, FBT002
         **kwargs,
-    ) -> Actor | list[Actor]:
+    ) -> Volume | list[Volume]:
         """Add a volume, rendered using a smart mapper by default.
 
         Requires a 3D data type like :class:`numpy.ndarray`,
@@ -4741,7 +4752,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         Parameters
         ----------
-        volume : 3D numpy.ndarray | DataSet
+        volume : 3D numpy.ndarray | DataSet | MultiBlock
             The input volume to visualize. 3D NumPy arrays are accepted.
 
             .. warning::
@@ -4962,8 +4973,8 @@ class BasePlotter(_BoundsSizeMixin):
 
         Returns
         -------
-        pyvista.Actor
-            Actor of the volume.
+        pyvista.plotting.volume.Volume | list[pyvista.plotting.volume.Volume]
+            Volume actor, or one per leaf dataset of a :class:`~pyvista.MultiBlock`.
 
         Examples
         --------
@@ -5072,31 +5083,32 @@ class BasePlotter(_BoundsSizeMixin):
             name = f'{type(volume).__name__}({volume.memory_address})'
 
         if isinstance(volume, pv.MultiBlock):
-            cycler = itertools.cycle(['Reds', 'Greens', 'Blues', 'Greys', 'Oranges', 'Purples'])
+            cmaps: list[ColormapOptions] = [
+                'Reds',
+                'Greens',
+                'Blues',
+                'Greys',
+                'Oranges',
+                'Purples',
+            ]
+            cycler = itertools.cycle(cmaps)
             # Now iteratively plot each element of the multiblock dataset
-            actors = []
-            for idx, block in enumerate(volume):
-                if block is None:
-                    continue
+            actors: list[Volume] = []
+            for idx, block in enumerate(volume.recursive_iterator(skip_none=True)):
                 # Get a good name to use
                 next_name = f'{name}-{idx}'
-                # Get the data object
-                wrapped = wrap(block)
-                if resolution is None:
-                    try:
-                        block_resolution = wrapped.GetSpacing()
-                    except AttributeError:
-                        block_resolution = resolution
+                if resolution is None and isinstance(block, pv.ImageData):
+                    block_resolution: VectorLike[float] | None = block.spacing
                 else:
                     block_resolution = resolution
                 color = next(cycler) if multi_colors else cmap
 
                 a = self.add_volume(
-                    wrapped,
+                    block,
                     resolution=block_resolution,
                     opacity=opacity,
                     n_colors=n_colors,
-                    cmap=color,  # type: ignore[arg-type]
+                    cmap=color,
                     flip_scalars=flip_scalars,
                     reset_camera=reset_camera,
                     name=next_name,
@@ -5114,8 +5126,6 @@ class BasePlotter(_BoundsSizeMixin):
                     render=render,
                     show_scalar_bar=show_scalar_bar,
                 )
-                a = cast('Actor', a)
-
                 actors.append(a)
             return actors
 
@@ -5296,7 +5306,7 @@ class BasePlotter(_BoundsSizeMixin):
             self.add_scalar_bar(**scalar_bar_args)
 
         self.renderer.Modified()
-        return cast('Actor', actor)
+        return cast('Volume', actor)
 
     @_deprecate_positional_args(allowed=['mesh'])
     def add_silhouette(  # noqa: PLR0917
@@ -5711,22 +5721,21 @@ class BasePlotter(_BoundsSizeMixin):
         self.volume = None
         self.text = None
 
+    # fmt: off
+    # ruff: disable[E501, FBT001]
+    @overload
+    def add_text(self, text: str, position: TextPositionOptions = ..., font_size: int | None = ..., color: ColorLike | None = ..., font: FontFamilyOptions | None = ..., shadow: bool = ..., name: str | None = ..., viewport: bool = ..., orientation: float = ..., font_file: str | None = ..., *, render: bool = ...) -> CornerAnnotation: ...
+    @overload
+    def add_text(self, text: str, position: Sequence[float] | None, font_size: int | None = ..., color: ColorLike | None = ..., font: FontFamilyOptions | None = ..., shadow: bool = ..., name: str | None = ..., viewport: bool = ..., orientation: float = ..., font_file: str | None = ..., *, render: bool = ...) -> Text: ...
+    @overload
+    def add_text(self, text: str, position: TextPositionOptions | Sequence[float] | None = ..., font_size: int | None = ..., color: ColorLike | None = ..., font: FontFamilyOptions | None = ..., shadow: bool = ..., name: str | None = ..., viewport: bool = ..., orientation: float = ..., font_file: str | None = ..., *, render: bool = ...) -> CornerAnnotation | Text: ...
+    # ruff: enable[E501, FBT001]
+    # fmt: on
     @_deprecate_positional_args(allowed=['text'])
     def add_text(  # noqa: PLR0917
         self,
         text: str,
-        position: Literal[
-            'lower_left',
-            'lower_right',
-            'upper_left',
-            'upper_right',
-            'lower_edge',
-            'upper_edge',
-            'right_edge',
-            'left_edge',
-        ]
-        | Sequence[float]
-        | None = 'upper_left',
+        position: TextPositionOptions | Sequence[float] | None = 'upper_left',
         font_size: int | None = 18,
         color: ColorLike | None = None,
         font: FontFamilyOptions | None = None,
@@ -6136,7 +6145,7 @@ class BasePlotter(_BoundsSizeMixin):
         self,
         fill_value: float | None = np.nan,
         reset_camera_clipping_range: bool = True,  # noqa: FBT001, FBT002
-    ) -> pv.pyvista_ndarray:
+    ) -> NumpyArray[np.float32]:
         """Return a depth image representing current render window.
 
         .. versionchanged:: 0.47
@@ -6156,7 +6165,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         Returns
         -------
-        pyvista.pyvista_ndarray
+        numpy.ndarray
             Image of depth values from camera orthogonal to image
             plane.
 
@@ -6188,7 +6197,7 @@ class BasePlotter(_BoundsSizeMixin):
                 '`store_image_depth=True` when using `get_image_depth`.'
             )
             raise RuntimeError(msg)
-        self._check_has_ren_win()
+        render_window = self._check_has_ren_win()
 
         # Ensure points in view are within clipping range of renderer?
         if reset_camera_clipping_range:
@@ -6196,11 +6205,11 @@ class BasePlotter(_BoundsSizeMixin):
 
         # Get the z-buffer image
         ifilter = _vtk.vtkWindowToImageFilter()
-        ifilter.SetInput(self.render_window)
+        ifilter.SetInput(render_window)
         ifilter.SetScale(self.image_scale)
         ifilter.ReadFrontBufferOff()
         ifilter.SetInputBufferTypeToZBuffer()
-        zbuff = run_image_filter(ifilter)[:, :, 0]
+        zbuff = cast('NumpyArray[np.float32]', run_image_filter(ifilter))[:, :, 0]
 
         # Convert z-buffer values to depth from camera
         with warnings.catch_warnings():
@@ -6842,10 +6851,10 @@ class BasePlotter(_BoundsSizeMixin):
 
     @staticmethod
     def _save_image(
-        image: pv.pyvista_ndarray,
+        image: NumpyArray[np.uint8],
         filename: str | Path | BytesIO | bool | None,  # noqa: FBT001
         return_img: bool,  # noqa: FBT001
-    ) -> pv.pyvista_ndarray | None:
+    ) -> NumpyArray[np.uint8] | None:
         """Save to file and/or return a NumPy image array.
 
         This is an internal helper.
@@ -6959,6 +6968,16 @@ class BasePlotter(_BoundsSizeMixin):
             writer.UsePainterSettings()
         writer.Update()
 
+    # fmt: off
+    # ruff: disable[E501, FBT001, FBT002]
+    @overload
+    def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., transparent_background: bool | None = ..., return_img: Literal[True] = True, window_size: Sequence[int] | None = ..., scale: int | None = ...) -> NumpyArray[np.uint8]: ...
+    @overload
+    def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., transparent_background: bool | None = ..., return_img: Literal[False] = ..., window_size: Sequence[int] | None = ..., scale: int | None = ...) -> None: ...
+    @overload
+    def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., transparent_background: bool | None = ..., return_img: bool = ..., window_size: Sequence[int] | None = ..., scale: int | None = ...) -> NumpyArray[np.uint8] | None: ...
+    # ruff: enable[E501, FBT001, FBT002]
+    # fmt: on
     @_deprecate_positional_args(allowed=['filename'])
     def screenshot(  # noqa: PLR0917
         self,
@@ -6967,7 +6986,7 @@ class BasePlotter(_BoundsSizeMixin):
         return_img: bool = True,  # noqa: FBT001, FBT002
         window_size: Sequence[int] | None = None,
         scale: int | None = None,
-    ) -> pv.pyvista_ndarray | None:
+    ) -> NumpyArray[np.uint8] | None:
         """Take screenshot at current camera position.
 
         Parameters
@@ -6994,13 +7013,16 @@ class BasePlotter(_BoundsSizeMixin):
 
         Returns
         -------
-        pyvista.pyvista_ndarray
+        numpy.ndarray
             Array containing pixel RGB and alpha.  Sized:
 
             * [Window height x Window width x 3] if
               ``transparent_background`` is set to ``False``.
             * [Window height x Window width x 4] if
               ``transparent_background`` is set to ``True``.
+
+        None
+            If ``return_img`` is ``False``.
 
         See Also
         --------
@@ -8567,13 +8589,13 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         **kwargs,
     ) -> (
         CameraPosition
-        | pyvista_ndarray
+        | NumpyArray[np.uint8]
         | EmbeddableWidget
         | Widget
         | IFrame
         | Image
         | tuple[
-            CameraPosition | EmbeddableWidget | Widget | pyvista_ndarray | IFrame | Image,
+            CameraPosition | EmbeddableWidget | Widget | NumpyArray[np.uint8] | IFrame | Image,
             ...,
         ]
         | None
@@ -8932,7 +8954,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         color: ColorLike | None = None,
         font: FontFamilyOptions | None = None,
         shadow: bool = False,  # noqa: FBT001, FBT002
-    ) -> CornerAnnotation | Text:
+    ) -> CornerAnnotation:
         """Add text to the top center of the plot.
 
         This is merely a convenience method that calls ``add_text``
@@ -8964,7 +8986,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
         Returns
         -------
-        output : CornerAnnotation | Text
+        output : CornerAnnotation
             Text actor added to plot.
 
         Examples

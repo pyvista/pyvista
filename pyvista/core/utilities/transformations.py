@@ -275,24 +275,16 @@ def reflection(
     return augmented
 
 
+# fmt: off
+# ruff: disable[E501, FBT001, FBT002]
 @overload
-def apply_transformation_to_points(
-    transformation: NumpyArray[float],
-    points: NumpyArray[float],
-    inplace: Literal[True] = True,  # noqa: FBT002
-) -> None: ...
+def apply_transformation_to_points(transformation: NumpyArray[float], points: NumpyArray[float], inplace: Literal[False] = False) -> NumpyArray[float]: ...
 @overload
-def apply_transformation_to_points(
-    transformation: NumpyArray[float],
-    points: NumpyArray[float],
-    inplace: Literal[False] = False,  # noqa: FBT002
-) -> NumpyArray[float]: ...
+def apply_transformation_to_points(transformation: NumpyArray[float], points: NumpyArray[float], inplace: Literal[True]) -> None: ...
 @overload
-def apply_transformation_to_points(
-    transformation: NumpyArray[float],
-    points: NumpyArray[float],
-    inplace: bool = ...,  # noqa: FBT001
-) -> NumpyArray[float] | None: ...
+def apply_transformation_to_points(transformation: NumpyArray[float], points: NumpyArray[float], inplace: bool = ...) -> NumpyArray[float] | None: ...
+# ruff: enable[E501, FBT001, FBT002]
+# fmt: on
 @_deprecate_positional_args(allowed=['transformation', 'points'])
 def apply_transformation_to_points(
     transformation: NumpyArray[float],
