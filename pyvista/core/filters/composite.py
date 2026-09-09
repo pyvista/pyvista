@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import functools
 from typing import TYPE_CHECKING
+from typing import Literal
+from typing import overload
 
 import numpy as np
 
@@ -356,13 +358,23 @@ class CompositeFilters(DataObjectFilters):
         box = pv.Box(bounds=self.bounds)
         return box.outline(generate_faces=generate_faces, progress_bar=progress_bar)
 
+    # fmt: off
+    # ruff: disable[E501, FBT001, FBT002]
+    @overload
+    def outline_corners(self: MultiBlock, factor: float = ..., nested: Literal[False] = False, progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc]
+    @overload
+    def outline_corners(self: MultiBlock, factor: float = ..., nested: Literal[True] = ..., progress_bar: bool = ...) -> MultiBlock: ...  # type: ignore[misc]
+    @overload
+    def outline_corners(self: MultiBlock, factor: float = ..., nested: bool = ..., progress_bar: bool = ...) -> PolyData | MultiBlock: ...  # type: ignore[misc]
+    # ruff: enable[E501, FBT001, FBT002]
+    # fmt: on
     @_deprecate_positional_args
     def outline_corners(  # type: ignore[misc]
         self: MultiBlock,
         factor=0.2,
         nested: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
-    ) -> PolyData:
+    ):
         """Produce an outline of the corners for the all blocks in this composite dataset.
 
         Parameters
@@ -379,20 +391,14 @@ class CompositeFilters(DataObjectFilters):
 
         Returns
         -------
-        pyvista.PolyData
-            Mesh containing outlined corners.
+        pyvista.PolyData | pyvista.MultiBlock
+            Mesh containing outlined corners. One mesh for the whole composite,
+            or a :class:`~pyvista.MultiBlock` holding one outline per block when
+            ``nested=True``.
 
         """
         if nested:
-            # VTK gives one outline per block here, unlike `outline`, so merge them
-            corners = DataSetFilters.outline_corners(
-                self, factor=factor, progress_bar=progress_bar
-            )
-            return (
-                corners.combine().extract_surface()
-                if isinstance(corners, pv.MultiBlock)
-                else corners
-            )
+            return DataSetFilters.outline_corners(self, factor=factor, progress_bar=progress_bar)
         box = pv.Box(bounds=self.bounds)
         return box.outline_corners(factor=factor, progress_bar=progress_bar)
 

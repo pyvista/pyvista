@@ -44,6 +44,12 @@ def test_to_tetrahedra_mixed(tiny_rectilinear):
         tet_grid = tiny_rectilinear.to_tetrahedra(mixed=123)
 
 
+def test_to_tetrahedra_mixed_without_cell_scalars_raises(tiny_rectilinear):
+    match = 'reads the active cell scalars'
+    with pytest.raises(ValueError, match=match):
+        tiny_rectilinear.to_tetrahedra(mixed=True)
+
+
 def test_to_tetrahedra_edge_case():
     with pytest.raises(RuntimeError, match='is 1'):
         pv.ImageData(dimensions=(1, 2, 2)).to_tetrahedra(tetra_per_cell=12)

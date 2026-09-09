@@ -567,6 +567,28 @@ def test_combine_filter(multiblock_all_with_nested_and_none):
     assert isinstance(geom, pv.UnstructuredGrid)
 
 
+def test_combine_filter_without_datasets():
+    # Nothing to append, so the result is empty rather than a VTK pipeline error
+    for multi in (pv.MultiBlock(), pv.MultiBlock({'a': None})):
+        combined = multi.combine()
+        assert isinstance(combined, pv.UnstructuredGrid)
+        assert combined.n_cells == 0
+
+
+@pytest.mark.parametrize('nested', [True, False])
+def test_outline_filters_output_type(multiblock_all_with_nested_and_none, nested):
+    # `vtkOutlineFilter` handles a composite itself and always gives one mesh,
+    # while `vtkOutlineCornerFilter` is run per block and gives one outline each
+    multi = multiblock_all_with_nested_and_none
+    assert isinstance(multi.outline(nested=nested), PolyData)
+    corners = multi.outline_corners(nested=nested)
+    if nested:
+        assert isinstance(corners, pv.MultiBlock)
+        assert corners.n_blocks == multi.n_blocks
+    else:
+        assert isinstance(corners, PolyData)
+
+
 @pytest.mark.parametrize('inplace', [True, False])
 def test_transform_filter(ant, sphere, airplane, tetbeam, inplace):
     # Set up
