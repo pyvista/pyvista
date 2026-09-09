@@ -12,6 +12,7 @@ from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 
+from ._property import _HAS_NATIVE_POINT_SHAPES
 from ._property import Property
 from .opts import PointSpriteShape
 from .opts import ShaderType
@@ -844,6 +845,28 @@ class Actor(Prop3D, _vtk.vtkActor):
         """
         self.clear_shader_replacements(_feature_name='mip')
 
+    @property
+    def point_sprite_shape(self) -> str:  # numpydoc ignore=RT01
+        """Return the requested point shape, including ``'square'``.
+
+        The shape is retained when another representation or sphere rendering
+        makes it inactive.
+
+        .. versionadded:: 0.49
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> actor = pv.Actor()
+        >>> actor.set_point_sprite_shape('circle')
+        >>> actor.point_sprite_shape
+        'circle'
+
+        """
+        if _HAS_NATIVE_POINT_SHAPES:
+            return self.prop.point_shape
+        return self._point_sprite_shape or 'square'
+
     def set_point_sprite_shape(self, shape: PointSpriteShape | str) -> None:
         """Set a custom point sprite shape via fragment shader.
 
@@ -853,15 +876,12 @@ class Actor(Prop3D, _vtk.vtkActor):
         defined by a GLSL fragment shader. This uses the ``discard``
         instruction to clip fragments outside the desired shape boundary.
 
-        The chosen shape is **persisted on the actor** and is only
-        injected into the fragment shader while the actor's
-        :attr:`~pyvista.Property.style` is ``'points'``. When the style
-        is ``'surface'`` or ``'wireframe'`` the shader replacement is
-        transparently removed, because the underlying GLSL relies on
-        ``gl_PointCoord`` which is undefined for non-point primitives
-        and would otherwise corrupt the rendering. Switching
-        ``prop.style`` back to ``'points'`` later will re-install the
-        shader automatically.
+        With native point-shape support, the shape is stored on
+        :attr:`pyvista.Property.point_shape` and applies to point primitives
+        in every representation, including vertex cells in surfaces.
+        Sphere rendering takes precedence while enabled. Older backends use
+        a shader replacement active only in ``'points'`` representation.
+        The requested shape can be read from :attr:`point_sprite_shape`.
 
         Parameters
         ----------
@@ -914,6 +934,9 @@ class Actor(Prop3D, _vtk.vtkActor):
             msg = f'Invalid point sprite shape {shape!r}. Must be one of: {valid}'
             raise ValueError(msg)
 
+        if _HAS_NATIVE_POINT_SHAPES:
+            self.prop.point_shape = shape
+            return
         self._point_sprite_shape = shape.value if isinstance(shape, PointSpriteShape) else shape
         self._install_point_sprite_observer()
         self._sync_point_sprite_shader()
@@ -938,6 +961,9 @@ class Actor(Prop3D, _vtk.vtkActor):
         >>> actor.clear_point_sprite_shape()
 
         """
+        if _HAS_NATIVE_POINT_SHAPES:
+            self.prop.point_shape = 'square'
+            return
         self._point_sprite_shape = None
         if self._point_sprite_observer is not None:
             self.prop.RemoveObserver(self._point_sprite_observer)

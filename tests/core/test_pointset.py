@@ -94,10 +94,14 @@ def test_cast_to_polydata(pointset, deep):
     data = np.linspace(0, 1, pointset.n_points)
     key = 'key'
     pointset.point_data[key] = data
+    pointset.field_data['meta'] = [1.0, 2.0]
 
     pdata = pointset.cast_to_polydata(deep=deep)
     assert isinstance(pdata, pv.PolyData)
     assert key in pdata.point_data
+    assert np.allclose(pdata.field_data['meta'], [1.0, 2.0])
+    pdata.field_data['meta'][:] = 0
+    assert np.allclose(pointset.field_data['meta'], [1.0, 2.0] if deep else [0.0, 0.0])
     assert np.allclose(pdata.point_data[key], pointset.point_data[key])
     pdata.point_data[key][:] = 0
     if deep:
@@ -172,6 +176,19 @@ def test_points_to_double():
     np_points = np.array([[1, 2, 3]], np.int64)
     pset = pv.PointSet(np_points, force_float=False)
     assert pset.points_to_double().points.dtype == np.double
+
+
+def test_points_to_single():
+    np_points = np.random.default_rng().random((10, 3))
+    pset = pv.PointSet(np_points)
+    assert pset.points.dtype == np.double
+
+    assert pset.points_to_single() is pset
+    assert pset.points.dtype == np.single
+    assert np.allclose(pset.points, np_points.astype(np.single))
+
+    # idempotent
+    assert pset.points_to_single().points.dtype == np.single
 
 
 def test_translate():

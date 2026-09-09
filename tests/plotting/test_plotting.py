@@ -12,11 +12,8 @@ import os
 from pathlib import Path
 import re
 import time
-from types import FunctionType
-from types import ModuleType
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import TypeVar
 from typing import get_args
 import warnings
 
@@ -35,6 +32,7 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.plotting import BackgroundPlotter
 from pyvista.plotting import QtDeprecationError
 from pyvista.plotting import QtInteractor
+from pyvista.plotting._property import _HAS_NATIVE_POINT_SHAPES
 from pyvista.plotting.axes_assembly import ScaleModeOptions
 from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.errors import InvalidCameraError
@@ -48,6 +46,7 @@ from pyvista.plotting.renderer import _MIN_LUT_SIZE
 from pyvista.plotting.renderer import _MIN_PREFILTER_SAMPLES
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
+from tests.conftest import _get_module_functions
 from tests.core.test_imagedata_filters import labeled_image  # noqa: F401
 from tests.examples.test_cell_examples import cell_example_functions
 from tests.plotting.conftest import AlgorithmExecutionTracker
@@ -56,6 +55,7 @@ from tests.plotting.conftest import get_actor_mapper_input
 if TYPE_CHECKING:
     from collections.abc import Callable
     from collections.abc import ItemsView
+    from types import FunctionType
 
     from pytest_mock import MockerFixture
 
@@ -262,6 +262,8 @@ def test_pbr(sphere, verify_image_cache):
     verify_image_cache.high_variance_test = True
 
     texture = examples.load_globe_texture()
+    texture.mipmap = True
+    texture.interpolate = True
 
     pl = pv.Plotter(lighting=None)
     pl.set_environment_texture(texture)
@@ -6672,23 +6674,6 @@ def test_create_axes_orientation_box(verify_image_cache):
     pl.show()
 
 
-_TypeType = TypeVar('_TypeType', bound=type)
-
-
-def _get_module_members(module: ModuleType, typ: _TypeType) -> dict[str, _TypeType]:
-    """Get all members of a specified type which are defined locally inside a module."""
-
-    def is_local(obj):
-        return type(obj) is typ and obj.__module__ == module.__name__
-
-    return dict(inspect.getmembers(module, predicate=is_local))
-
-
-def _get_module_functions(module: ModuleType):
-    """Get all functions defined locally inside a module."""
-    return _get_module_members(module, typ=FunctionType)
-
-
 def _get_default_kwargs(call: Callable) -> dict[str, Any]:
     """Get all args/kwargs and their default value"""
     params = dict(inspect.signature(call).parameters)
@@ -7437,7 +7422,7 @@ def test_point_sprite_shape_does_not_apply_to_surface(shape):
     )
     # The shape is persisted on the actor, but the shader replacement
     # must NOT be installed while the representation is 'Surface'.
-    assert actor._point_sprite_shape == shape
+    assert actor.point_sprite_shape == shape
     assert not actor._point_sprite_applied
     assert 'point_sprite' not in actor._shader_replacements
     pl.show()
@@ -7470,6 +7455,7 @@ def test_point_sprite_shape_change_style(shape, verify_image_cache_wrapper):
     pl.show()
 
 
+@pytest.mark.skipif(_HAS_NATIVE_POINT_SHAPES, reason='Legacy shader replacement lifecycle')
 def test_point_sprite_shape_transition_updates_shader(no_images_to_verify):  # noqa: ARG001
     # Regression: if the applied-state is tracked as a boolean, calling
     # set_point_sprite_shape with a new shape while the previous shape
@@ -7491,6 +7477,7 @@ def test_point_sprite_shape_transition_updates_shader(no_images_to_verify):  # n
     assert 'point_sprite' not in actor._shader_replacements
 
 
+@pytest.mark.skipif(_HAS_NATIVE_POINT_SHAPES, reason='Legacy shader replacement lifecycle')
 def test_point_sprite_shape_observer_tracks_representation(no_images_to_verify):  # noqa: ARG001
     # With a shape persisted on the actor, toggling the representation
     # between Points and Surface must install / remove the shader via
@@ -7512,6 +7499,7 @@ def test_point_sprite_shape_observer_tracks_representation(no_images_to_verify):
     assert 'point_sprite' in actor._shader_replacements
 
 
+@pytest.mark.skipif(_HAS_NATIVE_POINT_SHAPES, reason='Legacy shader replacement lifecycle')
 def test_clear_point_sprite_shape_detaches_observer(no_images_to_verify):  # noqa: ARG001
     actor = pv.Actor()
     actor.prop.style = 'points'
@@ -7534,8 +7522,7 @@ def test_set_point_sprite_shape_accepts_enum(no_images_to_verify):  # noqa: ARG0
     actor = pv.Actor()
     actor.prop.style = 'points'
     actor.set_point_sprite_shape(PointSpriteShape.TRIANGLE)
-    assert actor._point_sprite_shape == 'triangle'
-    assert actor._point_sprite_applied == 'triangle'
+    assert actor.point_sprite_shape == 'triangle'
 
 
 @pytest.fixture

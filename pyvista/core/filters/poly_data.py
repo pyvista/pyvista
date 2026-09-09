@@ -2066,7 +2066,7 @@ class PolyDataFilters(DataSetFilters):
         inplace: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
         plane: PolyData | None = None,
-    ):
+    ) -> PolyData:
         """Clip a closed polydata surface with a plane.
 
         The origin and normal may be set explicitly or implicitly using a
@@ -2122,7 +2122,15 @@ class PolyDataFilters(DataSetFilters):
         Returns
         -------
         pyvista.PolyData
-            The clipped mesh.
+            The clipped mesh. The point and cell data of the input are not
+            carried over to it.
+
+        Notes
+        -----
+        This filter is not available on a :class:`~pyvista.MultiBlock`. Use
+        :meth:`~pyvista.DataObjectFilters.clip` or
+        :meth:`~pyvista.DataObjectFilters.clip_box` for a composite, or apply this
+        filter to each block with :meth:`~pyvista.CompositeFilters.generic_filter`.
 
         Examples
         --------
@@ -3872,7 +3880,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetRotationAxis(rotation_axis)  # type: ignore[arg-type]
 
         _update_alg(alg, progress_bar=progress_bar, message='Extruding')
-        output = wrap(alg.GetOutput())
+        output = _get_output(alg)
         if inplace:
             self.copy_from(output, deep=False)  # type: ignore[attr-defined]
             return self
@@ -4489,7 +4497,7 @@ class PolyDataFilters(DataSetFilters):
         mc.SetInputConnection(alg.GetOutputPort())
         mc.SetValue(0, 0.0)
         _update_alg(mc, progress_bar=progress_bar, message='Reconstructing surface')
-        return wrap(mc.GetOutput())
+        return _get_output(mc)
 
     @_deprecate_positional_args
     def triangulate_contours(  # type: ignore[misc]
