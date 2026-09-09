@@ -51,6 +51,24 @@ def test_has_render_window_fail():
         pl._make_render_window_current()
 
 
+def test_image_with_overridden_check_has_ren_win(sphere):
+    """A subclass may override the check, so its return value must not be used."""
+
+    class _SubPlotter(pv.Plotter):
+        """Plotter whose render window check returns ``None``."""
+
+        def _check_has_ren_win(self) -> None:
+            """Check the render window with the base class implementation."""
+            pv.Plotter._check_has_ren_win(self)
+
+    pl = _SubPlotter()
+    pl.add_mesh(sphere)
+    pl.show(auto_close=False)
+    assert pl.image.ndim == 3
+    assert pl.image_depth.ndim == 2
+    pl.close()
+
+
 def test_render_lines_as_tubes_show_edges_warning(sphere):
     pl = pv.Plotter()
     with pytest.warns(UserWarning, match='not supported'):

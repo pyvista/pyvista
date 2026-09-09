@@ -2410,15 +2410,14 @@ class BasePlotter(_BoundsSizeMixin):
             )
             raise AttributeError(msg)
 
-    def _check_has_ren_win(self) -> _vtk.vtkRenderWindow:
-        """Return the render window, raising if there is none or it is not current."""
+    def _check_has_ren_win(self) -> None:
+        """Check if render window attribute exists and raise an exception if not."""
         if self.render_window is None:
             msg = 'Render window is not available.'
             raise RenderWindowUnavailable(msg)
         if not self.render_window.IsCurrent():
             msg = 'Render window is not current.'
             raise RenderWindowUnavailable(msg)
-        return self.render_window
 
     def _make_render_window_current(self) -> None:
         if self.render_window is None:
@@ -2464,7 +2463,8 @@ class BasePlotter(_BoundsSizeMixin):
             return self.last_image
 
         self._check_rendered()
-        render_window = self._check_has_ren_win()
+        self._check_has_ren_win()
+        render_window = cast('_vtk.vtkRenderWindow', self.render_window)
 
         return image_from_window(
             render_window,
@@ -6200,7 +6200,8 @@ class BasePlotter(_BoundsSizeMixin):
                 '`store_image_depth=True` when using `get_image_depth`.'
             )
             raise RuntimeError(msg)
-        render_window = self._check_has_ren_win()
+        self._check_has_ren_win()
+        render_window = cast('_vtk.vtkRenderWindow', self.render_window)
 
         # Ensure points in view are within clipping range of renderer?
         if reset_camera_clipping_range:
