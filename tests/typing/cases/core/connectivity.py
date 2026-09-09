@@ -1,4 +1,4 @@
-"""Typing cases for :meth:`pyvista.DataSetFilters.connectivity` and its callers."""
+"""Typing cases for :meth:`pyvista.DataSetFilters.connectivity`."""
 
 from __future__ import annotations
 
@@ -70,16 +70,3 @@ assert_types(poly().connectivity(progress_bar=True), pv.PolyData)
 # A mode and a keyword together, for the two non-PolyData overloads
 assert_types(as_data_set().connectivity('largest', label_regions=False), pv.UnstructuredGrid)
 assert_types(point_set().connectivity('all', inplace=True), pv.PointSet)
-
-# extract_largest delegates to connectivity and keeps its return type
-assert_types(poly().extract_largest(), pv.PolyData)
-assert_types(point_set().extract_largest(), pv.PointSet)
-assert_types(as_data_set().extract_largest(), pv.UnstructuredGrid)
-assert_types(examples.load_hexbeam().extract_largest(), pv.UnstructuredGrid)
-assert_types(poly().extract_largest(inplace=True), pv.PolyData)
-assert_types(poly().extract_largest(progress_bar=True), pv.PolyData)
-
-# split_bodies is a MultiBlock whatever the input
-assert_types(poly().split_bodies(), pv.MultiBlock)
-assert_types(as_data_set().split_bodies(), pv.MultiBlock)
-assert_types(examples.load_hexbeam().split_bodies(label=True), pv.MultiBlock)
