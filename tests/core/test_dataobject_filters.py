@@ -1280,7 +1280,7 @@ DATA_OBJECT_OUTPUT_TYPES = {
     'triangulate': {
         **dict.fromkeys(_CLIP_LIKE, _GRID),
         'PolyData': _POLY,
-        'PointSet': _POLY,
+        'PointSet': pv.PointSet,
     },
     'elevation': _SAME_CLASS,
     'compute_cell_sizes': _SAME_CLASS,
@@ -1296,7 +1296,7 @@ DATA_OBJECT_OUTPUT_TYPES = {
 # The filters a bare `PointSet` rejects, since it has no cells
 _POINTSET_REJECTS = frozenset(DATA_OBJECT_OUTPUT_TYPES) - {'cell_centers', 'elevation', 'sample'}
 
-# As a block of a composite, `triangulate` takes it as its vertices instead of rejecting it
+# As a block of a composite, `triangulate` passes it through instead of rejecting it
 _POINTSET_REJECTS_AS_BLOCK = _POINTSET_REJECTS - {'triangulate'}
 
 
@@ -1655,14 +1655,14 @@ def test_triangulate():
 
 
 def test_triangulate_composite(multiblock_all):
-    # A cell-less PointSet block gives an empty block, as it does for the slice
-    # filters, rather than failing the whole composite
+    # A cell-less PointSet block has nothing to triangulate, so it passes through
+    # rather than failing the whole composite
     output = multiblock_all.triangulate(progress_bar=True)
     assert output.n_blocks == multiblock_all.n_blocks
     for block, source in zip(output, multiblock_all, strict=True):
         if isinstance(source, pv.PointSet):
-            assert type(block) is pv.PolyData
-            assert block.n_cells == 0
+            assert type(block) is pv.PointSet
+            assert block.n_points == source.n_points
         elif isinstance(source, pv.PolyData):
             assert type(block) is pv.PolyData
         else:

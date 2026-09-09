@@ -3848,7 +3848,7 @@ class DataObjectFilters:
 
         """
         if isinstance(self, pv.MultiBlock):
-            return _filter_each_block(
+            return _slice_each_block(
                 self,
                 'slice_implicit',
                 implicit_function,
@@ -4102,7 +4102,7 @@ class DataObjectFilters:
         if z is None:
             z = self.center[2]
         if isinstance(self, pv.MultiBlock):
-            return _filter_each_block(
+            return _slice_each_block(
                 self,
                 'slice_orthogonal',
                 x=x,
@@ -4269,7 +4269,7 @@ class DataObjectFilters:
         center = list(center)
         # Make each of the slices
         if isinstance(self, pv.MultiBlock):
-            return _filter_each_block(
+            return _slice_each_block(
                 self,
                 'slice_along_axis',
                 n=n,
@@ -4395,7 +4395,7 @@ class DataObjectFilters:
             msg = f'Input line must have a PolyLine cell, not ({type(polyline)})'
             raise TypeError(msg)
         if isinstance(self, pv.MultiBlock):
-            return _filter_each_block(
+            return _slice_each_block(
                 self,
                 'slice_along_line',
                 line,
@@ -5369,8 +5369,8 @@ class DataObjectFilters:
         -----
         A :class:`~pyvista.PointSet` has no cells to triangulate, so triangulating one
         directly raises :class:`~pyvista.core.errors.PointSetCellOperationError`. As a
-        block of a :class:`~pyvista.MultiBlock` it gives an empty block instead, without
-        warning or raising.
+        block of a :class:`~pyvista.MultiBlock` it is left unchanged instead, without
+        warning or raising, since there is nothing to triangulate.
 
         Examples
         --------
@@ -5389,9 +5389,14 @@ class DataObjectFilters:
         """
         # Triangulate block by block so each block takes the path for its own type
         if isinstance(self, pv.MultiBlock):
-            return _filter_each_block(
-                self, 'triangulate', inplace=inplace, progress_bar=progress_bar
-            )
+
+            def triangulate_block(block: DataSet):  # numpydoc ignore=PR01
+                """Triangulate one block, leaving a cell-less point cloud alone."""
+                if isinstance(block, pv.PointSet):
+                    return block
+                return block.triangulate(inplace=inplace, progress_bar=progress_bar)
+
+            return self.generic_filter(triangulate_block)
 
         alg = _vtk.vtkDataSetTriangleFilter()
         alg.SetInputData(self)
@@ -5916,15 +5921,15 @@ def _get_cell_quality_measures() -> dict[str, str]:
     return measures
 
 
-def _filter_each_block(composite: MultiBlock, method: str, /, *args, **kwargs) -> MultiBlock:
-    """Apply a cell filter to every block, taking a ``PointSet`` as its vertices."""
+def _slice_each_block(composite: MultiBlock, method: str, /, *args, **kwargs) -> MultiBlock:
+    """Apply a slice filter to every block, slicing a ``PointSet`` as its vertices."""
 
-    def filter_block(block: DataSet):  # numpydoc ignore=PR01
-        """Filter one block through the path its own type supports."""
+    def slice_block(block: DataSet):  # numpydoc ignore=PR01
+        """Slice one block through the filter its own type supports."""
         source = block.cast_to_polydata(deep=False) if isinstance(block, pv.PointSet) else block
         return getattr(source, method)(*args, **kwargs)
 
-    return composite.generic_filter(filter_block)
+    return composite.generic_filter(slice_block)
 
 
 def _slice_image_along_axis(
