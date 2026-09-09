@@ -376,7 +376,15 @@ class CompositeFilters(DataObjectFilters):
 
         """
         if nested:
-            return DataSetFilters.outline_corners(self, factor=factor, progress_bar=progress_bar)
+            # VTK gives one outline per block here, unlike `outline`, so merge them
+            corners = DataSetFilters.outline_corners(
+                self, factor=factor, progress_bar=progress_bar
+            )
+            return (
+                corners.combine().extract_surface()
+                if isinstance(corners, pv.MultiBlock)
+                else corners
+            )
         box = pv.Box(bounds=self.bounds)
         return box.outline_corners(factor=factor, progress_bar=progress_bar)
 
