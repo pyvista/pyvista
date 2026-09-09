@@ -2804,7 +2804,7 @@ class PolyDataFilters(DataSetFilters):
             line_width=line_width,
         )
         pl.add_mesh(self, label='Mesh', **kwargs)
-        pl.add_legend()  # type: ignore[call-arg]
+        pl.add_legend()
         return pl.show()
 
     @_deprecate_positional_args

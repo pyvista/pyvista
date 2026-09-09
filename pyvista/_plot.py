@@ -58,7 +58,7 @@ def _set_background(pl: Plotter, background: ColorLike | None) -> None:
     the same reason, since ``set_background`` only takes a color and raises otherwise.
     """
     try:
-        pl.set_background(background)  # type: ignore[arg-type]
+        pl.set_background(background)
     except (ValueError, TypeError):
         if isinstance(background, (str, Path)):
             path = Path(background)

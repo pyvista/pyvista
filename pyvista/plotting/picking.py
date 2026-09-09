@@ -492,6 +492,7 @@ class PickingComponent(_NoNewAttrMixin):
     @_deprecate_positional_args(allowed=['callback'])
     def enable_point_picking(  # noqa: PLR0917
         self,
+        /,
         callback=None,
         tolerance=0.025,
         left_clicking=False,  # noqa: FBT002
@@ -663,6 +664,7 @@ class PickingComponent(_NoNewAttrMixin):
     @_deprecate_positional_args(allowed=['callback'])
     def enable_rectangle_picking(  # noqa: PLR0917
         self,
+        /,
         callback=None,
         show_message=True,  # noqa: FBT002
         font_size=18,
@@ -789,6 +791,7 @@ class PickingComponent(_NoNewAttrMixin):
     @_deprecate_positional_args(allowed=['callback'])
     def enable_surface_point_picking(  # noqa: PLR0917
         self,
+        /,
         callback=None,
         show_message=True,  # noqa: FBT002
         font_size=18,
@@ -946,6 +949,7 @@ class PickingComponent(_NoNewAttrMixin):
     @_deprecate_positional_args(allowed=['callback'])
     def enable_mesh_picking(  # noqa: PLR0917
         self,
+        /,
         callback=None,
         show=True,  # noqa: FBT002
         show_message=True,  # noqa: FBT002
@@ -1100,6 +1104,7 @@ class PickingComponent(_NoNewAttrMixin):
     @_deprecate_positional_args(allowed=['callback'])
     def enable_rectangle_through_picking(  # noqa: PLR0917
         self,
+        /,
         callback=None,
         show=True,  # noqa: FBT002
         style='wireframe',
@@ -1229,6 +1234,7 @@ class PickingComponent(_NoNewAttrMixin):
     @_deprecate_positional_args(allowed=['callback'])
     def enable_rectangle_visible_picking(  # noqa: PLR0917
         self,
+        /,
         callback=None,
         show=True,  # noqa: FBT002
         style='wireframe',
@@ -1380,6 +1386,7 @@ class PickingComponent(_NoNewAttrMixin):
     @_deprecate_positional_args(allowed=['callback'])
     def enable_cell_picking(  # noqa: PLR0917
         self,
+        /,
         callback=None,
         through=True,  # noqa: FBT002
         show=True,  # noqa: FBT002
@@ -1490,6 +1497,7 @@ class PickingComponent(_NoNewAttrMixin):
     @_deprecate_positional_args(allowed=['callback'])
     def enable_element_picking(  # noqa: PLR0917
         self,
+        /,
         callback=None,
         mode='cell',
         show=True,  # noqa: FBT002
@@ -1745,6 +1753,7 @@ class PickingComponent(_NoNewAttrMixin):
     @_deprecate_positional_args(allowed=['callback'])
     def enable_path_picking(  # noqa: PLR0917
         self,
+        /,
         callback=None,
         show_message=True,  # noqa: FBT002
         font_size=18,
@@ -1863,6 +1872,7 @@ class PickingComponent(_NoNewAttrMixin):
     @_deprecate_positional_args(allowed=['callback'])
     def enable_geodesic_picking(  # noqa: PLR0917
         self,
+        /,
         callback=None,
         show_message=True,  # noqa: FBT002
         font_size=18,
@@ -2015,6 +2025,7 @@ class PickingComponent(_NoNewAttrMixin):
     @_deprecate_positional_args(allowed=['callback'])
     def enable_horizon_picking(  # noqa: PLR0917
         self,
+        /,
         callback=None,
         normal=(0.0, 0.0, 1.0),
         width=None,

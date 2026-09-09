@@ -30,6 +30,7 @@ from pyvista.core.formatting_html import _metadata_html
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.core.utilities.misc import _NoNewAttrMixin
+from pyvista.core.utilities.misc import _wraps
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import try_callback
 
@@ -54,6 +55,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import RotationLike
     from pyvista.core.pointset import PolyData
 
+    from ._typing import Chart
     from .cube_axes_actor import CubeAxesActor
     from .lights import Light
 
@@ -1017,18 +1019,18 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """
         return [*self._charts] if self.has_charts else []  # type: ignore[misc]
 
-    @functools.wraps(Charts.set_interaction)
+    @_wraps(Charts.set_interaction)
     @_deprecate_positional_args(allowed=['interactive'])
     def set_chart_interaction(  # numpydoc ignore=PR01,RT01
         self,
         interactive,
         toggle=False,  # noqa: FBT002
-    ):
+    ) -> list[Chart]:
         """Wrap ``Charts.set_interaction``."""
         return self._charts.set_interaction(interactive, toggle=toggle) if self.has_charts else []  # type: ignore[union-attr]
 
-    @functools.wraps(Charts.get_charts_by_pos)
-    def _get_charts_by_pos(self, pos):
+    @_wraps(Charts.get_charts_by_pos)
+    def _get_charts_by_pos(self, pos) -> list[Chart]:
         """Wrap ``Charts.get_charts_by_pos``."""
         return self._charts.get_charts_by_pos(pos) if self.has_charts else []  # type: ignore[union-attr]
 
@@ -1142,8 +1144,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         actor : :vtk:`vtkActor` | Actor
             The actor.
 
-        actor_properties : vtk.Properties
-            Actor properties.
+        actor_properties : :vtk:`vtkProperty` | :vtk:`vtkVolumeProperty`
+            The property of the actor, or ``None`` if it has none.
 
         """
         # Remove actor by that name if present
@@ -1373,6 +1375,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
     @_deprecate_positional_args
     def add_axes(  # noqa: PLR0917
         self,
+        /,
         interactive=None,
         line_width=2,
         color=None,
@@ -1717,7 +1720,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         Returns
         -------
-        :vtk:`vtkAnnotatedCubeActor`
+        :vtk:`vtkPropAssembly`
             Axes actor.
 
         See Also
@@ -1858,6 +1861,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
     @_deprecate_positional_args
     def show_bounds(  # noqa: PLR0917
         self,
+        /,
         mesh=None,
         bounds=None,
         axes_ranges=None,
@@ -2194,7 +2198,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.Modified()
         return cube_axes_actor
 
-    def show_grid(self, **kwargs):
+    def show_grid(self, /, **kwargs):
         """Show grid lines and bounds axes labels.
 
         A wrapped implementation of :func:`show_bounds()
@@ -2696,13 +2700,19 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self._scalar_bar_slots = set(range(MAX_N_COLOR_BARS))
         self._scalar_bar_slot_lookup = {}
 
-    def set_focus(self, point) -> None:
+    def set_focus(self, point, *, render=True) -> None:
         """Set focus to a point.
 
         Parameters
         ----------
         point : sequence[float]
             Cartesian point to focus on in the form of ``[x, y, z]``.
+
+        render : bool, default: True
+            If the render window is being shown, trigger a render
+            after setting the focus.
+
+            .. versionadded:: 0.50
 
         Examples
         --------
@@ -2721,6 +2731,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.camera.focal_point = scale_point(self.camera, point, invert=False)
         self.camera_set = True
         self.Modified()
+        if render:
+            self.parent.render()
 
     @_deprecate_positional_args(allowed=['point'])
     def set_position(self, point, reset=False, render=True) -> None:  # noqa: FBT002
@@ -4629,8 +4641,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         Returns
         -------
-        :vtk:`vtkActor`
-            The actor for the added :vtk:`vtkLegendScaleActor`.
+        tuple[:vtk:`vtkLegendScaleActor`, None]
+            The added actor and ``None``, since it carries no property.
 
         Warnings
         --------

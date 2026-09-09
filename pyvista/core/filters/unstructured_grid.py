@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import functools
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -13,24 +12,26 @@ from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.filters.poly_data import PolyDataFilters
+from pyvista.core.utilities.misc import _wraps
 from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:
     from pyvista import UnstructuredGrid
     from pyvista.core._typing_core._dataset_types import _UnstructuredGridType
+    from pyvista.core.pointset import PolyData
 
 
 @abstract_class
 class UnstructuredGridFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for unstructured grid datasets."""
 
-    @functools.wraps(PolyDataFilters.delaunay_2d)  # type: ignore[has-type]
-    def delaunay_2d(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
+    @_wraps(PolyDataFilters.delaunay_2d)  # type: ignore[has-type]
+    def delaunay_2d(self, *args, **kwargs) -> PolyData:  # numpydoc ignore=PR01,RT01
         """Wrap ``PolyDataFilters.delaunay_2d``."""
         return PolyDataFilters.delaunay_2d(self, *args, **kwargs)  # type: ignore[arg-type]
 
-    @functools.wraps(PolyDataFilters.reconstruct_surface)  # type: ignore[has-type]
-    def reconstruct_surface(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
+    @_wraps(PolyDataFilters.reconstruct_surface)  # type: ignore[has-type]
+    def reconstruct_surface(self, *args, **kwargs) -> PolyData:  # numpydoc ignore=PR01,RT01
         """Wrap ``PolyDataFilters.reconstruct_surface``."""
         return PolyDataFilters.reconstruct_surface(self, *args, **kwargs)  # type: ignore[arg-type]
 
