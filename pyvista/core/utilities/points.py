@@ -705,24 +705,18 @@ def vector_poly_data(
     return pv.PolyData(pdata)
 
 
+# fmt: off
+# ruff: disable[E501]
 @overload
 def principal_axes(points: MatrixLike[float]) -> NumpyArray[float]: ...
 @overload
-def principal_axes(
-    points: MatrixLike[float],
-    *,
-    return_std: Literal[True] = True,
-) -> tuple[NumpyArray[float], NumpyArray[float]]: ...
+def principal_axes(points: MatrixLike[float], *, return_std: Literal[True] = True) -> tuple[NumpyArray[float], NumpyArray[float]]: ...
 @overload
-def principal_axes(
-    points: MatrixLike[float],
-    *,
-    return_std: Literal[False] = False,
-) -> NumpyArray[float]: ...
+def principal_axes(points: MatrixLike[float], *, return_std: Literal[False] = False) -> NumpyArray[float]: ...
 @overload
-def principal_axes(
-    points: MatrixLike[float], *, return_std: bool = ...
-) -> NumpyArray[float] | tuple[NumpyArray[float], NumpyArray[float]]: ...
+def principal_axes(points: MatrixLike[float], *, return_std: bool = ...) -> NumpyArray[float] | tuple[NumpyArray[float], NumpyArray[float]]: ...
+# ruff: enable[E501]
+# fmt: on
 def principal_axes(
     points: MatrixLike[float], *, return_std: bool = False
 ) -> NumpyArray[float] | tuple[NumpyArray[float], NumpyArray[float]]:
