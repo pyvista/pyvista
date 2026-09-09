@@ -52,6 +52,7 @@ import make_tables
 import pyvista as pv
 from pyvista import _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.errors import PyVistaFutureWarning
 from pyvista.core.utilities.docs import linkcode_resolve  # noqa: F401
 from pyvista.core.utilities.docs import pv_html_page_context
 from pyvista.ext._autoenum import instance_property_names
@@ -104,10 +105,14 @@ warnings.filterwarnings(
     ),
 )
 
-# Prevent deprecated features from being used in examples
+# Prevent deprecated features and changing defaults from being used in examples
 warnings.filterwarnings(
     'error',
     category=PyVistaDeprecationWarning,
+)
+warnings.filterwarnings(
+    'error',
+    category=PyVistaFutureWarning,
 )
 warnings.filterwarnings(
     'always',

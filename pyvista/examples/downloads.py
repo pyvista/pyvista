@@ -5744,14 +5744,14 @@ def _read_drill(path: str) -> PolyData:
 _dataset_drill = _SingleFileDownloadableDatasetLoader('drill.obj', read_func=_read_drill)
 
 
+# fmt: off
+# ruff: disable[E501, FBT002]
 @overload
-def download_action_figure(
-    load: Literal[True] = True,  # noqa: FBT002
-    *,
-    high_resolution: bool = False,
-) -> PolyData: ...
+def download_action_figure(load: Literal[True] = True, *, high_resolution: bool = False) -> PolyData: ...
 @overload
 def download_action_figure(load: Literal[False], *, high_resolution: bool = False) -> str: ...
+# ruff: enable[E501, FBT002]
+# fmt: on
 @_deprecate_positional_args
 def download_action_figure(load: bool = True, *, high_resolution: bool = False) -> PolyData | str:  # noqa: FBT001, FBT002
     """Download scan of an action figure.
@@ -7687,14 +7687,14 @@ _dataset_fea_hertzian_contact_cylinder = _SingleFileDownloadableDatasetLoader(
 )
 
 
+# fmt: off
+# ruff: disable[E501, FBT002]
 @overload
-def download_black_vase(
-    load: Literal[True] = True,  # noqa: FBT002
-    *,
-    high_resolution: bool = False,
-) -> PolyData: ...
+def download_black_vase(load: Literal[True] = True, *, high_resolution: bool = False) -> PolyData: ...
 @overload
 def download_black_vase(load: Literal[False], *, high_resolution: bool = False) -> str: ...
+# ruff: enable[E501, FBT002]
+# fmt: on
 @_deprecate_positional_args
 def download_black_vase(load: bool = True, *, high_resolution: bool = False) -> PolyData | str:  # noqa: FBT001, FBT002
     """Download a black vase scan created by Ivan Nikolov.
@@ -7772,14 +7772,14 @@ __dataset_black_vase_high_res = _SingleFileDownloadableDatasetLoader(
 )
 
 
+# fmt: off
+# ruff: disable[E501, FBT002]
 @overload
-def download_ivan_angel(
-    load: Literal[True] = True,  # noqa: FBT002
-    *,
-    high_resolution: bool = False,
-) -> PolyData: ...
+def download_ivan_angel(load: Literal[True] = True, *, high_resolution: bool = False) -> PolyData: ...
 @overload
 def download_ivan_angel(load: Literal[False], *, high_resolution: bool = False) -> str: ...
+# ruff: enable[E501, FBT002]
+# fmt: on
 @_deprecate_positional_args
 def download_ivan_angel(load: bool = True, *, high_resolution: bool = False) -> PolyData | str:  # noqa: FBT001, FBT002
     """Download a scan of an angel statue created by Ivan Nikolov.
@@ -7863,14 +7863,14 @@ __dataset_ivan_angel_high_res = _SingleFileDownloadableDatasetLoader(
 )
 
 
+# fmt: off
+# ruff: disable[E501, FBT002]
 @overload
-def download_bird_bath(
-    load: Literal[True] = True,  # noqa: FBT002
-    *,
-    high_resolution: bool = False,
-) -> PolyData: ...
+def download_bird_bath(load: Literal[True] = True, *, high_resolution: bool = False) -> PolyData: ...
 @overload
 def download_bird_bath(load: Literal[False], *, high_resolution: bool = False) -> str: ...
+# ruff: enable[E501, FBT002]
+# fmt: on
 @_deprecate_positional_args
 def download_bird_bath(load: bool = True, *, high_resolution: bool = False) -> PolyData | str:  # noqa: FBT001, FBT002
     """Download a scan of a bird bath created by Ivan Nikolov.
@@ -8030,14 +8030,14 @@ __dataset_owl_high_res = _SingleFileDownloadableDatasetLoader(
 )
 
 
+# fmt: off
+# ruff: disable[E501, FBT002]
 @overload
-def download_plastic_vase(
-    load: Literal[True] = True,  # noqa: FBT002
-    *,
-    high_resolution: bool = False,
-) -> PolyData: ...
+def download_plastic_vase(load: Literal[True] = True, *, high_resolution: bool = False) -> PolyData: ...
 @overload
 def download_plastic_vase(load: Literal[False], *, high_resolution: bool = False) -> str: ...
+# ruff: enable[E501, FBT002]
+# fmt: on
 @_deprecate_positional_args
 def download_plastic_vase(load: bool = True, *, high_resolution: bool = False) -> PolyData | str:  # noqa: FBT001, FBT002
     """Download a scan of a plastic vase created by Ivan Nikolov.
@@ -8115,14 +8115,14 @@ __dataset_plastic_vase_high_res = _SingleFileDownloadableDatasetLoader(
 )
 
 
+# fmt: off
+# ruff: disable[E501, FBT002]
 @overload
-def download_sea_vase(
-    load: Literal[True] = True,  # noqa: FBT002
-    *,
-    high_resolution: bool = False,
-) -> PolyData: ...
+def download_sea_vase(load: Literal[True] = True, *, high_resolution: bool = False) -> PolyData: ...
 @overload
 def download_sea_vase(load: Literal[False], *, high_resolution: bool = False) -> str: ...
+# ruff: enable[E501, FBT002]
+# fmt: on
 @_deprecate_positional_args
 def download_sea_vase(load: bool = True, *, high_resolution: bool = False) -> PolyData | str:  # noqa: FBT001, FBT002
     """Download a scan of a sea vase created by Ivan Nikolov.
@@ -8701,14 +8701,14 @@ _dataset_reservoir = _SingleFileDownloadableDatasetLoader(
 )
 
 
+# fmt: off
+# ruff: disable[E501, FBT002]
 @overload
-def download_whole_body_ct_male(
-    load: Literal[True] = True,  # noqa: FBT002
-    *,
-    high_resolution: bool = False,
-) -> MultiBlock: ...
+def download_whole_body_ct_male(load: Literal[True] = True, *, high_resolution: bool = False) -> MultiBlock: ...
 @overload
 def download_whole_body_ct_male(load: Literal[False], *, high_resolution: bool = False) -> str: ...
+# ruff: enable[E501, FBT002]
+# fmt: on
 @_deprecate_positional_args
 def download_whole_body_ct_male(
     load: bool = True,  # noqa: FBT001, FBT002
@@ -9044,16 +9044,14 @@ __dataset_whole_body_ct_male_high_res = _MultiFileDownloadableDatasetLoader(
 )
 
 
+# fmt: off
+# ruff: disable[E501, FBT002]
 @overload
-def download_whole_body_ct_female(
-    load: Literal[True] = True,  # noqa: FBT002
-    *,
-    high_resolution: bool = False,
-) -> MultiBlock: ...
+def download_whole_body_ct_female(load: Literal[True] = True, *, high_resolution: bool = False) -> MultiBlock: ...
 @overload
-def download_whole_body_ct_female(
-    load: Literal[False], *, high_resolution: bool = False
-) -> str: ...
+def download_whole_body_ct_female(load: Literal[False], *, high_resolution: bool = False) -> str: ...
+# ruff: enable[E501, FBT002]
+# fmt: on
 @_deprecate_positional_args
 def download_whole_body_ct_female(
     load: bool = True,  # noqa: FBT001, FBT002

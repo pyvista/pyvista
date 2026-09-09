@@ -275,26 +275,14 @@ def get_ext(filename: str | Path) -> str:
     return ext
 
 
+# fmt: off
+# ruff: disable[E501, FBT001]
 @overload
-def read(
-    filename: PathStrSeq,
-    force_ext: str | None = ...,
-    file_format: str | None = ...,
-    progress_bar: bool = ...,  # noqa: FBT001
-    *,
-    cls: type[_ReadReturnT],
-    validate: bool | None = ...,
-) -> _ReadReturnT: ...
+def read(filename: PathStrSeq, force_ext: str | None = ..., file_format: str | None = ..., progress_bar: bool = ..., *, cls: type[_ReadReturnT], validate: bool | None = ...) -> _ReadReturnT: ...
 @overload
-def read(
-    filename: PathStrSeq,
-    force_ext: str | None = ...,
-    file_format: str | None = ...,
-    progress_bar: bool = ...,  # noqa: FBT001
-    *,
-    cls: None = ...,
-    validate: bool | None = ...,
-) -> DataSet | MultiBlock: ...
+def read(filename: PathStrSeq, force_ext: str | None = ..., file_format: str | None = ..., progress_bar: bool = ..., *, cls: None = ..., validate: bool | None = ...) -> DataSet | MultiBlock: ...
+# ruff: enable[E501, FBT001]
+# fmt: on
 @_deprecate_positional_args(allowed=['filename'])
 def read(  # noqa: PLR0917
     filename: PathStrSeq,
@@ -824,16 +812,16 @@ def _read_grdecl(
         'ZONES',
     )
 
+    # fmt: off
+    # ruff: disable[E501, FBT001, FBT002]
     @overload
-    def read_keyword(
-        f: TextIO,
-        split: Literal[True] = True,  # noqa: FBT002
-        converter: type = ...,
-    ) -> list[str]: ...
+    def read_keyword(f: TextIO, split: Literal[True] = True, converter: type = ...) -> list[str]: ...
     @overload
-    def read_keyword(f: TextIO, split: Literal[False] = False, converter: type = ...) -> str: ...  # noqa: FBT002
+    def read_keyword(f: TextIO, split: Literal[False] = False, converter: type = ...) -> str: ...
     @overload
-    def read_keyword(f: TextIO, split: bool = ..., converter: type = ...) -> list[str]: ...  # noqa: FBT001
+    def read_keyword(f: TextIO, split: bool = ..., converter: type = ...) -> list[str]: ...
+    # ruff: enable[E501, FBT001, FBT002]
+    # fmt: on
     @_deprecate_positional_args(allowed=['f'])
     def read_keyword(
         f: TextIO,
