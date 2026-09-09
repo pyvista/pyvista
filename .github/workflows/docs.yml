@@ -56,9 +56,10 @@ jobs:
     with:
       marker-prefix: docs-tree
 
-  # The `blacksmith` label moves a pull request's cache, build and test jobs to
-  # paid Blacksmith runners. Blacksmith keeps its own cache, so the producer
-  # here has to run on the same kind of runner as the build job.
+  # The cache, build and test jobs run on paid Blacksmith runners, except on a
+  # pull request without the `blacksmith` label. Blacksmith keeps its own
+  # cache, so the producer here has to run on the same kind of runner as the
+  # build job.
   cache-pyvista-data:
     name: Cache pyvista/data
     needs: resolve
@@ -66,15 +67,15 @@ jobs:
     uses: $/.github/workflows/cache-pyvista-data.yml
     with:
       runs-on: >-
-        ${{ github.event_name == 'pull_request'
-        && contains(github.event.pull_request.labels.*.name, 'blacksmith')
+        ${{ (github.event_name != 'pull_request'
+        || contains(github.event.pull_request.labels.*.name, 'blacksmith'))
         && 'blacksmith-8vcpu-ubuntu-2204' || 'ubuntu-22.04' }}
 
   doc:
     name: Build Documentation
     runs-on: >-
-      ${{ github.event_name == 'pull_request'
-      && contains(github.event.pull_request.labels.*.name, 'blacksmith')
+      ${{ (github.event_name != 'pull_request'
+      || contains(github.event.pull_request.labels.*.name, 'blacksmith'))
       && 'blacksmith-8vcpu-ubuntu-2204' || 'ubuntu-22.04' }}
     needs: [cache-pyvista-data, resolve]
     if: ${{ !cancelled() && needs.cache-pyvista-data.result == 'success' && needs.resolve.outputs.run-id == '' }}
@@ -227,8 +228,8 @@ jobs:
   test:
     name: Test Documentation
     runs-on: >-
-      ${{ github.event_name == 'pull_request'
-      && contains(github.event.pull_request.labels.*.name, 'blacksmith')
+      ${{ (github.event_name != 'pull_request'
+      || contains(github.event.pull_request.labels.*.name, 'blacksmith'))
       && 'blacksmith-8vcpu-ubuntu-2204' || 'ubuntu-22.04' }}
     needs: [doc, resolve]
     # The merge queue tests the docs built from the tree that lands on `main`,

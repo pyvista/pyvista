@@ -225,10 +225,11 @@ docstring jobs. Every one of those runs costs runner time. Push when the
 change is ready, and use the local gates rather than CI to find out whether it
 works.
 
-The documentation build is the slowest of those jobs. Applying the
-``blacksmith`` label to a pull request moves its documentation cache, build and
-test jobs to Blacksmith runners, which finish sooner but are paid for by the
-project. The label takes effect on the next push to the pull request.
+The documentation build is the slowest of those jobs, and on a pull request it
+runs on GitHub-hosted runners. Applying the ``blacksmith`` label moves the
+documentation cache, build and test jobs to the Blacksmith runners the merge
+queue uses, which finish sooner but are paid for by the project. The label
+takes effect on the next push to the pull request.
 
 Before you push:
 
