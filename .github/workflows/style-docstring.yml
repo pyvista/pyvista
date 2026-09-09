@@ -11,17 +11,9 @@ permissions:
   id-token: none
 
 jobs:
-  # Blacksmith runners have their own cache, so each docstring job restores an
-  # entry saved by a producer on the same kind of runner.
-  cache-pyvista-data:
-    name: Cache pyvista/data
-    uses: $/.github/workflows/cache-pyvista-data.yml
-    with:
-      runs-on: "blacksmith-4vcpu-ubuntu-2204"
-
   # GitHub-hosted runners can re-use the cache across OS's, so this ubuntu
   # entry serves the Windows job via enableCrossOsArchive on the restore.
-  cache-github-hosted:
+  cache-pyvista-data:
     name: Cache pyvista/data
     uses: $/.github/workflows/cache-pyvista-data.yml
     with:
@@ -32,7 +24,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: blacksmith-4vcpu-ubuntu-2204
+          - os: ubuntu-22.04
             python-version: "3.14" # Should be the latest version supported
           - os: windows-latest
             python-version: "3.10" # Should be the oldest version supported
@@ -40,7 +32,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
 
-    needs: [cache-pyvista-data, cache-github-hosted]
+    needs: cache-pyvista-data
     env:
       TOX_COLORED: "yes"
     steps:
@@ -67,7 +59,7 @@ jobs:
       - name: Restore pyvista/data cache
         uses: $/.github/actions/restore-pyvista-data
         with:
-          key: ${{ runner.os == 'Windows' && needs.cache-github-hosted.outputs.key || needs.cache-pyvista-data.outputs.key }}
+          key: ${{ needs.cache-pyvista-data.outputs.key }}
 
       - name: Install tox-uv
         run: pip install tox-uv

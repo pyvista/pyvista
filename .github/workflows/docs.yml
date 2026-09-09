@@ -43,8 +43,8 @@ jobs:
           path: pr-info/
 
   # A push to `main` comes out of the merge queue, which has already built the
-  # docs from the same tree on the same paid runner. Find that build so the
-  # push can publish it instead of paying for it twice.
+  # docs from the same tree. Find that build so the push can publish it
+  # instead of building it twice.
   resolve:
     name: Find a matching build
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -63,11 +63,11 @@ jobs:
     uses: $/.github/workflows/cache-pyvista-data.yml
     with:
       # Runner should match the actual runner used by the build job
-      runs-on: blacksmith-8vcpu-ubuntu-2204
+      runs-on: ubuntu-22.04
 
   doc:
     name: Build Documentation
-    runs-on: blacksmith-8vcpu-ubuntu-2204
+    runs-on: ubuntu-22.04
     needs: [cache-pyvista-data, resolve]
     if: ${{ !cancelled() && needs.cache-pyvista-data.result == 'success' && needs.resolve.outputs.run-id == '' }}
     env:
@@ -218,7 +218,7 @@ jobs:
 
   test:
     name: Test Documentation
-    runs-on: blacksmith-8vcpu-ubuntu-2204
+    runs-on: ubuntu-22.04
     needs: [doc, resolve]
     # The merge queue tests the docs built from the tree that lands on `main`,
     # so repeating that after the merge only reports a failure the queue would
