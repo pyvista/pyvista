@@ -55,6 +55,8 @@ def test_plotter_image_before_show_subclass_getattr():
             raise AttributeError(msg)
 
     pl = _SubPlotter()
+    with pytest.raises(AttributeError, match='has no attribute'):
+        _ = pl.not_an_attribute
     with pytest.raises(RuntimeError, match='not yet been set up'):
         _ = pl.image
     with pytest.raises(RuntimeError, match='not yet been set up'):
