@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Sequence
@@ -101,6 +102,11 @@ DATASET_GALLERY_IMAGE_EXT_DICT = {
     'single_sphere_animation': '.gif',
     'dual_sphere_animation': '.gif',
 }
+# Substring of the one VTK warning each of these datasets logs with no fix on our side.
+DATASET_EXPECTED_VTK_OUTPUT: dict[str, str] = {
+    'can_crushed_vtu': 'Could not locate key vtkExodusIIReader::GLOBAL_TEMPORAL_VARIABLE',
+}
+
 # If there is no image, a dummy "Not Available" image is used instead.
 DATASET_GALLERY_IMAGE_NOT_AVAILABLE_PATH = os.path.join(DATASET_GALLERY_DIR, 'not_available.png')
 
@@ -2917,21 +2923,40 @@ def _build_dataset_card(module_name: str, dataset_name: str) -> _DatasetCardResu
     module_display = module_name.removeprefix('pyvista.')
     summary = bold(f'generating rst for {module_display}...')
     print(f'{summary} {darkgreen(dataset_name)}', flush=True)
-    if isinstance(dataset_loader, _DOWNLOADABLE_TYPES):
-        dataset_loader.download()
-    dataset_loader.load_and_store_dataset()
-    assert dataset_loader.dataset is not None
+    with pv.VtkErrorCatcher(send_to_logging=False) as catcher:
+        if isinstance(dataset_loader, _DOWNLOADABLE_TYPES):
+            dataset_loader.download()
+        dataset_loader.load_and_store_dataset()
+        assert dataset_loader.dataset is not None
 
-    card = DatasetCard(dataset_name, dataset_loader, module=module, function=function)
-    # indent one level from the carousel header directive
-    DatasetCardFetcher.FACET_LABELS.clear()
-    rst = _pad_lines(card.generate(), pad_left='   ')
-    facet_labels = dict(DatasetCardFetcher.FACET_LABELS)
+        card = DatasetCard(dataset_name, dataset_loader, module=module, function=function)
+        # indent one level from the carousel header directive
+        DatasetCardFetcher.FACET_LABELS.clear()
+        rst = _pad_lines(card.generate(), pad_left='   ')
+        facet_labels = dict(DatasetCardFetcher.FACET_LABELS)
 
-    type_mismatch = _validate_function_annotation(card)
-    dataset_loader.clear_dataset()
+        type_mismatch = _validate_function_annotation(card)
+        dataset_loader.clear_dataset()
+    _raise_for_vtk_output(dataset_name, catcher.events)
 
     return _DatasetCardResult(dataset_name, rst, facet_labels, type_mismatch)
+
+
+def _raise_for_vtk_output(dataset_name: str, events: list[pv.VtkEvent]) -> None:
+    """Fail the build when a dataset's card logs VTK output that is not expected."""
+    expected = DATASET_EXPECTED_VTK_OUTPUT.get(dataset_name)
+    unexpected = [
+        event
+        for event in events
+        if expected is None or expected not in ' '.join(str(event).split())
+    ]
+    if not unexpected:
+        return
+    counts = Counter(' '.join(str(event).split()) for event in unexpected)
+    header = f'{dataset_name} logged {len(unexpected)} unexpected VTK error(s) or warning(s):'
+    body = '\n'.join(f'    {count}x {message}' for message, count in counts.items())
+    msg = f'{header}\n{body}'
+    raise RuntimeError(msg)
 
 
 class DatasetCardFetcher:

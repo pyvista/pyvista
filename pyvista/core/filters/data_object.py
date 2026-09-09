@@ -14,12 +14,14 @@ import itertools
 import re
 import reprlib
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import Generic
 from typing import Literal
 from typing import NamedTuple
 from typing import TypeVar
 from typing import cast
 from typing import get_args
+from typing import overload
 import warnings
 
 import numpy as np
@@ -28,6 +30,7 @@ import pyvista_validation as _validation
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._version import _is_deprecation_due
 from pyvista._version import version_info
 from pyvista._warn_external import warn_external
 from pyvista.core._typing_core import _DataSetOrMultiBlockType
@@ -36,6 +39,8 @@ from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output
+from pyvista.core.filters import _match_points_dtype
+from pyvista.core.filters import _points_dtype
 from pyvista.core.filters import _update_alg
 from pyvista.core.utilities.helpers import _NormalsLiteral
 from pyvista.core.utilities.helpers import _validate_plane_origin_and_normal
@@ -51,13 +56,17 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
     from typing import ClassVar
 
+    from pyvista import DataObject
     from pyvista import DataSet
     from pyvista import DataSetAttributes
     from pyvista import ImageData
     from pyvista import MultiBlock
+    from pyvista import PointSet
     from pyvista import PolyData
+    from pyvista import RectilinearGrid
     from pyvista import RotationLike
     from pyvista import TransformLike
+    from pyvista import UnstructuredGrid
     from pyvista import VectorLike
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import NumpyArray
@@ -67,6 +76,103 @@ if TYPE_CHECKING:
 
     _MeshType_co = TypeVar('_MeshType_co', DataSet, MultiBlock, covariant=True)
     _T = TypeVar('_T')
+
+
+def _rectilinear_transform_components(
+    transform: Transform,
+) -> tuple[NumpyArray[float], NumpyArray[float]]:
+    """Return the translation and scale of a transform a rectilinear grid can represent."""
+    # Follow similar decomposition performed by ImageData.index_to_physical_matrix
+    T, R, N, S, K = transform.decompose()
+
+    if not np.allclose(K, np.eye(3)):
+        msg = (
+            'The transformation has a shear component which is not supported by '
+            'RectilinearGrid.\nCast to StructuredGrid first to support shear '
+            'transformations, or use `Transform.decompose()`\nto remove this component.'
+        )
+        raise ValueError(msg)
+
+    if not np.allclose(np.abs(R), np.eye(3)):
+        msg = (
+            'The transformation has a non-diagonal rotation component which is not '
+            'supported by\nRectilinearGrid. Cast to StructuredGrid first to fully '
+            'support rotations, or use\n`Transform.decompose()` to remove this component.'
+        )
+        raise ValueError(msg)
+
+    # Lump the scale, the reflection, and any reflection from the rotation together
+    return T, S * N * np.diagonal(R)
+
+
+def _transform_vector_names(
+    point_data: DataSetAttributes,
+    cell_data: DataSetAttributes,
+    shape: tuple[int, int],
+    *,
+    all_vectors: bool,
+) -> tuple[list[str | None], list[str | None]]:
+    """Return the point and cell array names which the transform filter treats as vectors."""
+    if all_vectors:
+        n_points, n_cells = shape
+        return (
+            [name for name, data in point_data.items() if data.shape == (n_points, 3)],
+            [name for name, data in cell_data.items() if data.shape == (n_cells, 3)],
+        )
+    return (
+        [point_data.active_vectors_name, point_data.active_normals_name],
+        [cell_data.active_vectors_name, cell_data.active_normals_name],
+    )
+
+
+def _convert_transform_input_to_float(
+    dataset: DataSet,
+    vectors: Sequence[tuple[DataSetAttributes, list[str | None]]],
+    dtype: np.dtype[Any],
+) -> bool:
+    """Convert a dataset's integer points and named vector arrays to float, in place."""
+    converted = False
+    points = dataset.points
+    if not np.issubdtype(points.dtype, np.floating):
+        dataset.points = points.astype(dtype)
+        converted = True
+    for attributes, names in vectors:
+        for name in names:
+            if name is None:
+                continue
+            array = attributes[name]
+            if not np.issubdtype(array.dtype, np.floating):
+                attributes[name] = array.astype(dtype)
+                converted = True
+    return converted
+
+
+def _copy_transformed_arrays(output: DataSet, filtered: DataObject, *, copy: bool) -> None:
+    """Copy the point, cell and field arrays the transform filter produced."""
+    output.point_data.update(filtered.point_data, copy=copy)
+    output.cell_data.update(filtered.cell_data, copy=copy)
+    output.field_data.update(filtered.field_data, copy=copy)
+
+
+def _orient_image_structure(output: ImageData, dataset: ImageData, transform: Transform) -> None:
+    """Give an image the structure of another, oriented by a transformation."""
+    # vtkTransformFilter returns a StructuredGrid, so the structure is transformed here
+    output.copy_structure(dataset)
+    matrix = Transform(output.index_to_physical_matrix).compose(transform).matrix
+    output.index_to_physical_matrix = matrix
+
+
+def _transform_rectilinear_axes(
+    output: RectilinearGrid,
+    dataset: RectilinearGrid,
+    components: tuple[NumpyArray[float], NumpyArray[float]],
+) -> None:
+    """Set a grid's axes to another's, scaled and translated."""
+    # vtkTransformFilter returns a StructuredGrid, so the axes are transformed here instead
+    translation, scale = components
+    output.x = dataset.x * scale[0] + translation[0]
+    output.y = dataset.y * scale[1] + translation[1]
+    output.z = dataset.z * scale[2] + translation[2]
 
 
 class _CellStatusTuple(NamedTuple):
@@ -597,7 +703,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         def get_message(array_):
             if array_:
                 # Create separate message of each cell type
-                cell_types = sorted(mesh.distinct_cell_types)
+                cell_types = sorted(_distinct_cell_types(mesh))
                 if len(cell_types) > 1:
                     all_cell_types = mesh.cast_to_unstructured_grid().celltypes
                     arrays = []
@@ -1051,17 +1157,13 @@ class _MeshValidationReport(_NoNewAttrMixin, Generic[_DataSetOrMultiBlockType]):
             mesh_items['N Points'] = mesh.n_points
             mesh_items['N Cells'] = mesh.n_cells
 
-            # Get distinct cell types
-            if pv.vtk_version_info < (9, 5, 0):
-                # This may cast to unstructured grid, which will warn if arrays are invalid
-                with warnings.catch_warnings():
-                    warnings.filterwarnings(
-                        'ignore',
-                        category=pv.InvalidMeshWarning,
-                    )
-                    cell_types_ = mesh.distinct_cell_types
-            else:
-                cell_types_ = mesh.distinct_cell_types
+            # This may cast to unstructured grid, which will warn if arrays are invalid
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    'ignore',
+                    category=pv.InvalidMeshWarning,
+                )
+                cell_types_ = _distinct_cell_types(mesh)
 
             # Use a list to preserve order, but we format it to look like a set
             cell_types = sorted(cell_types_)
@@ -1552,6 +1654,11 @@ class DataObjectFilters:
         Internally, :vtk:`vtkCellValidator` is first used to determine the initial status of each
         cell, then additional PyVista-exclusive checks are made and encoded in the validity state.
 
+        .. note::
+            When any cell of the mesh references a point id which does not exist, only the
+            :attr:`~pyvista.CellStatus.INVALID_POINT_REFERENCES` and
+            :attr:`~pyvista.CellStatus.COINCIDENT_POINTS` statuses are checked.
+
         For convenience, a field data array for each status is also appended:
 
         - Each field data array contains the indices of cells with the specified status.
@@ -1730,8 +1837,12 @@ class DataObjectFilters:
             msg = 'Planarity tolerance requires VTK 9.6 or later.'
             raise pv.VTKVersionError(msg)
 
+        # A cell referencing a point id which does not exist makes VTK read out of bounds,
+        # so skip the checks which dereference cell points when the connectivity is invalid
+        invalid_references = _has_invalid_point_references(self)
+
         # Skip to avoid crash with ImageData/RectilinearGrid, see https://gitlab.kitware.com/vtk/vtk/-/work_items/20096
-        skip_validator = isinstance(self, pv.Grid)
+        skip_validator = isinstance(self, pv.Grid) or invalid_references
         if skip_validator:
             output = self.copy(deep=False)
         else:
@@ -1751,7 +1862,7 @@ class DataObjectFilters:
             # Make scalars 64-bit, rename, and make them active
             # We only need 32 bits for the state, but the CellStatus enum requires 64-bit
             if skip_validator:
-                validity_state = np.zeros(shape=(self.n_cells,), dtype=np.int64)
+                validity_state = np.zeros(shape=(mesh.n_cells,), dtype=np.int64)
             else:
                 validity_state = np.array(
                     mesh.cell_data['ValidityState'],
@@ -1773,28 +1884,31 @@ class DataObjectFilters:
                 mesh.field_data[status.name.lower()] = np.where(validity_state & status.value)[0]
 
         def set_pyvista_validity_state(mesh: DataSet):
-            # Use points dtype eps by default
-            size_tol: float = (
-                size_tolerance if size_tolerance is not None else np.finfo(mesh.points.dtype).eps
-            )
-
             state = mesh.cell_data['validity_state']
 
-            size_data = mesh.compute_cell_sizes(
-                vertex_count=True, length=True, area=True, volume=True
-            ).cell_data
-            size = (
-                size_data['VertexCount']
-                + size_data['Length']
-                + size_data['Area']
-                + size_data['Volume']
-            )
+            # A cell's size cannot be computed when its points do not exist
+            if not invalid_references:
+                # Use points dtype eps by default
+                size_tol: float = (
+                    size_tolerance
+                    if size_tolerance is not None
+                    else np.finfo(mesh.points.dtype).eps
+                )
+                size_data = mesh.compute_cell_sizes(
+                    vertex_count=True, length=True, area=True, volume=True
+                ).cell_data
+                size = (
+                    size_data['VertexCount']
+                    + size_data['Length']
+                    + size_data['Area']
+                    + size_data['Volume']
+                )
 
-            # NEGATIVE_SIZE
-            state[size < -size_tol] |= CellStatus.NEGATIVE_SIZE
+                # NEGATIVE_SIZE
+                state[size < -size_tol] |= CellStatus.NEGATIVE_SIZE
 
-            # ZERO_SIZE
-            state[np.abs(size) <= size_tol] |= CellStatus.ZERO_SIZE
+                # ZERO_SIZE
+                state[np.abs(size) <= size_tol] |= CellStatus.ZERO_SIZE
 
             # COINCIDENT_POINTS
             # Skip remaining checks for datasets where cell connectivity cannot be invalid
@@ -1998,135 +2112,76 @@ class DataObjectFilters:
             msg = 'Transform element (3,3), the inverse scale term, is zero'
             raise ValueError(msg)
 
-        # vtkTransformFilter truncates the result if the input is an integer type
-        # so convert input points and relevant vectors to float
-        # (creating a new copy would be harmful much more often)
-        converted_ints = False
-        points = self.points
-        if not np.issubdtype(points.dtype, np.floating):
-            self.points = points.astype(np.float32)
-            converted_ints = True
+        # Validate before this mesh is modified below
+        rectilinear_components = (
+            _rectilinear_transform_components(t) if isinstance(self, pv.RectilinearGrid) else None
+        )
+
         # Optimization: build the attribute wrappers once; they refer to the same VTK objects
         # for the whole filter, including after copy_from, so reusing them is safe
         point_data = self.point_data
         cell_data = self.cell_data
-        if transform_all_input_vectors:
-            # all vector-shaped data will be transformed
-            n_points, n_cells = self.n_points, self.n_cells
-            point_vectors: list[str | None] = [
-                name for name, data in point_data.items() if data.shape == (n_points, 3)
-            ]
-            cell_vectors: list[str | None] = [
-                name for name, data in cell_data.items() if data.shape == (n_cells, 3)
-            ]
-        else:
-            # we'll only transform active vectors and normals
-            point_vectors = [point_data.active_vectors_name, point_data.active_normals_name]
-            cell_vectors = [cell_data.active_vectors_name, cell_data.active_normals_name]
-        # dynamically convert each self.point_data[name] etc. to float32
-        all_vectors = [point_vectors, cell_vectors]
-        all_dataset_attrs = [point_data, cell_data]
-        for vector_names, dataset_attrs in zip(all_vectors, all_dataset_attrs, strict=True):
-            for vector_name in vector_names:
-                if vector_name is None:
-                    continue
-                vector_arr = dataset_attrs[vector_name]
-                if not np.issubdtype(vector_arr.dtype, np.floating):
-                    dataset_attrs[vector_name] = vector_arr.astype(np.float32)
-                    converted_ints = True
-        if converted_ints:
+        point_vectors, cell_vectors = _transform_vector_names(
+            point_data,
+            cell_data,
+            (self.n_points, self.n_cells),
+            all_vectors=transform_all_input_vectors,
+        )
+
+        # vtkTransformFilter truncates the result if the input is an integer type, so convert
+        # this mesh in place (creating a new copy would be harmful much more often)
+        float_dtype = _points_dtype() or np.dtype(np.float32)
+        if _convert_transform_input_to_float(
+            self, [(point_data, point_vectors), (cell_data, cell_vectors)], float_dtype
+        ):
             warn_external(
                 'Integer points, vector, and normal data (if any) of the input mesh '
-                'have been converted to ``np.float32``. This is necessary in order '
-                'to transform properly.',
+                f'have been converted to ``np.{float_dtype.name}``. '
+                'This is necessary in order to transform properly.',
             )
 
         # vtkTransformFilter doesn't respect active scalars.  We need to track this
         active_point_scalars_name: str | None = point_data.active_scalars_name
         active_cell_scalars_name: str | None = cell_data.active_scalars_name
 
+        output = self if inplace else self.__class__()
+
         # vtkTransformFilter sometimes doesn't transform all vector arrays
         # when there are active point/cell scalars. Use this workaround
         self.active_scalars_name = None
 
-        f = _vtk.vtkTransformFilter()
-        f.SetInputDataObject(self)
-        f.SetTransform(t)
-        f.SetTransformAllInputVectors(transform_all_input_vectors)
+        try:
+            alg = _vtk.vtkTransformFilter()
+            alg.SetInputDataObject(self)
+            alg.SetTransform(t)
+            alg.SetTransformAllInputVectors(transform_all_input_vectors)
 
-        _update_alg(f, progress_bar=progress_bar, message='Transforming')
-        vtk_filter_output = _get_output(f)
+            _update_alg(alg, progress_bar=progress_bar, message='Transforming')
+            vtk_filter_output = _get_output(alg)
 
-        output = self if inplace else self.__class__()
-
-        if isinstance(output, pv.ImageData):
-            # vtkTransformFilter returns a StructuredGrid for legacy code (before VTK 9)
-            # but VTK 9+ supports oriented images.
-            # To keep an ImageData -> ImageData mapping, we copy the transformed data
-            # from the filter output but manually transform the structure
-            output.copy_structure(self)  # type: ignore[arg-type]
-            current_matrix = output.index_to_physical_matrix
-            new_matrix = pv.Transform(current_matrix).compose(t).matrix
-            output.index_to_physical_matrix = new_matrix
-
-            output.point_data.update(vtk_filter_output.point_data, copy=not inplace)
-            output.cell_data.update(vtk_filter_output.cell_data, copy=not inplace)
-            output.field_data.update(vtk_filter_output.field_data, copy=not inplace)
-
-        elif isinstance(output, pv.RectilinearGrid):
-            # vtkTransformFilter returns a StructuredGrid, but we can return
-            # RectilinearGrid if we ignore shear and rotations
-            # Follow similar decomposition performed by ImageData.index_to_physical_matrix
-            T, R, N, S, K = t.decompose()
-
-            if not np.allclose(K, np.eye(3)):
-                msg = (
-                    'The transformation has a shear component which is not supported by '
-                    'RectilinearGrid.\nCast to StructuredGrid first to support shear '
-                    'transformations, or use `Transform.decompose()`\nto remove this component.'
+            if isinstance(output, pv.ImageData):
+                _orient_image_structure(output, cast('pv.ImageData', self), t)
+                _copy_transformed_arrays(output, vtk_filter_output, copy=not inplace)
+            elif isinstance(output, pv.RectilinearGrid):
+                _transform_rectilinear_axes(
+                    output,
+                    cast('pv.RectilinearGrid', self),
+                    cast('tuple[NumpyArray[float], NumpyArray[float]]', rectilinear_components),
                 )
-                raise ValueError(msg)
-
-            # Lump scale and reflection together
-            scale = S * N
-            if not np.allclose(np.abs(R), np.eye(3)):
-                msg = (
-                    'The transformation has a non-diagonal rotation component which is not '
-                    'supported by\nRectilinearGrid. Cast to StructuredGrid first to fully '
-                    'support rotations, or use\n`Transform.decompose()` to remove this component.'
-                )
-                raise ValueError(msg)
+                _copy_transformed_arrays(output, vtk_filter_output, copy=not inplace)
             else:
-                # Lump any reflections from the rotation into the scale
-                scale *= np.diagonal(R)
+                # A shallow copy leaves the output sharing everything but the points with
+                # the filter's own output, which is only safe when transforming in place
+                output.copy_from(vtk_filter_output, deep=not inplace)
 
-            # Apply transformation to structure
-            tx, ty, tz = T
-            sx, sy, sz = scale
-            output.x = self.x * sx + tx
-            output.y = self.y * sy + ty
-            output.z = self.z * sz + tz
-
-            # Copy data arrays from the vtkTransformFilter's output
-            output.point_data.update(vtk_filter_output.point_data, copy=not inplace)
-            output.cell_data.update(vtk_filter_output.cell_data, copy=not inplace)
-            output.field_data.update(vtk_filter_output.field_data, copy=not inplace)
-
-        elif inplace:
-            output.copy_from(vtk_filter_output, deep=False)
-        else:
-            # The output from the transform filter contains a shallow copy
-            # of the original dataset except for the point arrays.  Here
-            # we perform a copy so the two are completely unlinked.
-            output.copy_from(vtk_filter_output, deep=True)
-
-        # Make the previously active scalars active again
-        point_data.active_scalars_name = active_point_scalars_name
-        if output is not self:
-            output.point_data.active_scalars_name = active_point_scalars_name
-        cell_data.active_scalars_name = active_cell_scalars_name
-        if output is not self:
-            output.cell_data.active_scalars_name = active_cell_scalars_name
+            # Make the previously active scalars of the output active again
+            if output is not self:
+                output.point_data.active_scalars_name = active_point_scalars_name
+                output.cell_data.active_scalars_name = active_cell_scalars_name
+        finally:
+            # Make the previously active scalars of this mesh active again
+            point_data.active_scalars_name = active_point_scalars_name
+            cell_data.active_scalars_name = active_cell_scalars_name
 
         return output
 
@@ -2855,19 +2910,20 @@ class DataObjectFilters:
             target_center = np.mean(target_bounds3x2, axis=1)
 
         else:
-            ensure_positive = dict(must_be_in_range=[0, np.inf], strict_lower_bound=True)
             if bounds_size is not None:
                 target_size = _validation.validate_array3(
                     bounds_size,
                     broadcast=True,
                     name='bounds_size',
-                    **ensure_positive,  # type: ignore[arg-type]
+                    must_be_in_range=[0, np.inf],
+                    strict_lower_bound=True,
                 )
             else:
                 valid_length = _validation.validate_number(
                     cast('float', length),
                     name='length',
-                    **ensure_positive,  # type: ignore[arg-type]
+                    must_be_in_range=[0, np.inf],
+                    strict_lower_bound=True,
                 )
                 target_size = np.array(self.bounds_size) * valid_length / self.length
             current_center = np.array(self.center)
@@ -3166,15 +3222,9 @@ class DataObjectFilters:
             and pv.vtk_version_info >= (9, 4)
             and pv.vtk_version_info < (9, 5)
         )
-        mesh_in = source.cast_to_poly_points() if apply_vtk_94x_patch else source
+        mesh_in = source.cast_to_poly_points() if apply_vtk_94x_patch else _clip_input(source)
 
-        if isinstance(mesh_in, pv.PolyData):
-            alg: _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet = _vtk.vtkClipPolyData()
-        # elif isinstance(self, vtk.vtkImageData):
-        #     alg = vtk.vtkClipVolume()
-        #     alg.SetMixed3DCellGeneration(True)
-        else:
-            alg = _vtk.vtkTableBasedClipDataSet()
+        alg = _clipper(mesh_in)
         alg.SetInputDataObject(mesh_in)  # Use the grid as the data we desire to cut
         alg.SetValue(value)
         # ``None`` clips by the active scalars instead, for a precomputed distance field
@@ -3188,16 +3238,50 @@ class DataObjectFilters:
             return in_.cast_to_pointset() if apply_vtk_94x_patch else in_
 
         if return_clipped:
-            a = _get_output(alg, oport=0)
-            b = _get_output(alg, oport=1)
+            a = _keep_array_structure(_get_output(alg, oport=0), source)
+            b = _keep_array_structure(_get_output(alg, oport=1), source)
             if crinkle:
                 a, b = _Crinkler._extract_crinkle_cells(source, a, b, active_scalars_info)
             return _maybe_cast_to_point_set(a), _maybe_cast_to_point_set(b)
-        clipped = _get_output(alg)
+        clipped = _keep_array_structure(_get_output(alg), source)
         if crinkle:
             clipped = _Crinkler._extract_crinkle_cells(source, clipped, None, active_scalars_info)
         return _maybe_cast_to_point_set(clipped)
 
+    # fmt: off
+    # ruff: disable[E501, FBT001]
+    @overload  # PolyData, return_clipped=False
+    def clip(self: PolyData, normal: VectorLike[float] | _NormalsLiteral | None = ..., origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: bool = ..., return_clipped: Literal[False] = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> PolyData: ...  # type: ignore[misc]
+    @overload  # PolyData, return_clipped=True
+    def clip(self: PolyData, normal: VectorLike[float] | _NormalsLiteral | None = ..., origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: bool = ..., return_clipped: Literal[True] = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> tuple[PolyData, PolyData]: ...  # type: ignore[misc]
+    @overload  # PolyData, return_clipped not known
+    def clip(self: PolyData, normal: VectorLike[float] | _NormalsLiteral | None = ..., origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: bool = ..., return_clipped: bool = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> PolyData | tuple[PolyData, PolyData]: ...  # type: ignore[misc]
+    @overload  # PointSet, return_clipped=False
+    def clip(self: PointSet, normal: VectorLike[float] | _NormalsLiteral | None = ..., origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: bool = ..., return_clipped: Literal[False] = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> PointSet: ...  # type: ignore[misc]
+    @overload  # PointSet, return_clipped=True
+    def clip(self: PointSet, normal: VectorLike[float] | _NormalsLiteral | None = ..., origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: bool = ..., return_clipped: Literal[True] = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> tuple[PointSet, PointSet]: ...  # type: ignore[misc]
+    @overload  # PointSet, return_clipped not known
+    def clip(self: PointSet, normal: VectorLike[float] | _NormalsLiteral | None = ..., origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: bool = ..., return_clipped: bool = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> PointSet | tuple[PointSet, PointSet]: ...  # type: ignore[misc]
+    @overload  # UnstructuredGrid, return_clipped=False
+    def clip(self: UnstructuredGrid, normal: VectorLike[float] | _NormalsLiteral | None = ..., origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: bool = ..., return_clipped: Literal[False] = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
+    @overload  # UnstructuredGrid, return_clipped=True
+    def clip(self: UnstructuredGrid, normal: VectorLike[float] | _NormalsLiteral | None = ..., origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: bool = ..., return_clipped: Literal[True] = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> tuple[UnstructuredGrid, UnstructuredGrid]: ...  # type: ignore[misc]
+    @overload  # UnstructuredGrid, return_clipped not known
+    def clip(self: UnstructuredGrid, normal: VectorLike[float] | _NormalsLiteral | None = ..., origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: bool = ..., return_clipped: bool = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> UnstructuredGrid | tuple[UnstructuredGrid, UnstructuredGrid]: ...  # type: ignore[misc]
+    @overload  # MultiBlock, return_clipped=False
+    def clip(self: MultiBlock, normal: VectorLike[float] | _NormalsLiteral | None = ..., origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: Literal[False] = ..., return_clipped: Literal[False] = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> MultiBlock: ...  # type: ignore[misc]
+    @overload  # MultiBlock, return_clipped=True
+    def clip(self: MultiBlock, normal: VectorLike[float] | _NormalsLiteral | None = ..., origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: Literal[False] = ..., return_clipped: Literal[True] = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> tuple[MultiBlock, MultiBlock]: ...  # type: ignore[misc]
+    @overload  # MultiBlock, return_clipped not known
+    def clip(self: MultiBlock, normal: VectorLike[float] | _NormalsLiteral | None = ..., origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: Literal[False] = ..., return_clipped: bool = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> MultiBlock | tuple[MultiBlock, MultiBlock]: ...  # type: ignore[misc]
+    @overload  # DataSet, return_clipped=False
+    def clip(self: DataSet, normal: VectorLike[float] | _NormalsLiteral | None = ..., origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: Literal[False] = ..., return_clipped: Literal[False] = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
+    @overload  # DataSet, return_clipped=True
+    def clip(self: DataSet, normal: VectorLike[float] | _NormalsLiteral | None = ..., origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: Literal[False] = ..., return_clipped: Literal[True] = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> tuple[UnstructuredGrid, UnstructuredGrid]: ...  # type: ignore[misc]
+    @overload  # DataSet, return_clipped not known
+    def clip(self: DataSet, normal: VectorLike[float] | _NormalsLiteral | None = ..., origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: Literal[False] = ..., return_clipped: bool = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> UnstructuredGrid | tuple[UnstructuredGrid, UnstructuredGrid]: ...  # type: ignore[misc]
+    # ruff: enable[E501, FBT001]
+    # fmt: on
     @_deprecate_positional_args(allowed=['normal'])
     def clip(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
@@ -3219,6 +3303,13 @@ class DataObjectFilters:
         If no parameters are given, the clip will occur in the center
         of the dataset along the x-axis.
 
+        .. versionchanged:: 0.49
+
+            Points that a :class:`~pyvista.PolyData` input keeps apart are no longer
+            merged, unless it holds triangle strips, so a surface with coincident points
+            is clipped without losing them. The output has slightly more points where the
+            clip surface passes exactly through a point shared by several cells.
+
         Parameters
         ----------
         normal : VectorLike[float] | str, optional
@@ -3239,7 +3330,9 @@ class DataObjectFilters:
             Set the clipping value along the normal direction.
 
         inplace : bool, default: False
-            Updates mesh in-place.
+            Updates mesh in-place. Only :class:`~pyvista.PolyData`,
+            :class:`~pyvista.PointSet` and :class:`~pyvista.UnstructuredGrid` inputs
+            support this; any other input raises ``TypeError``.
 
         return_clipped : bool, default: False
             Return both unclipped and clipped parts of the dataset.
@@ -3264,11 +3357,12 @@ class DataObjectFilters:
         Returns
         -------
         output : DataSet | MultiBlock | tuple[DataSet | MultiBlock, DataSet | MultiBlock]
-            Clipped mesh when ``return_clipped=False`` or a tuple containing the
-            unclipped and clipped meshes. Output mesh type matches input type for
-            :class:`~pyvista.PointSet`, :class:`~pyvista.PolyData`, and
-            :class:`~pyvista.MultiBlock`; otherwise the output type is
-            :class:`~pyvista.UnstructuredGrid`.
+            Clipped mesh when ``return_clipped=False``, or a tuple of the kept and the
+            removed mesh when it is ``True``. A :class:`~pyvista.PolyData` gives a
+            ``PolyData`` and a :class:`~pyvista.PointSet` gives a ``PointSet``; every
+            other dataset gives an :class:`~pyvista.UnstructuredGrid`. A
+            :class:`~pyvista.MultiBlock` gives a ``MultiBlock`` whose blocks each follow
+            that rule, nested blocks included.
 
         Examples
         --------
@@ -3292,6 +3386,8 @@ class DataObjectFilters:
         See :ref:`clip_with_surface_example` for more examples using this filter.
 
         """
+        if inplace:
+            _validate_clip_inplace(self)
         origin_, normal_ = _validate_plane_origin_and_normal(
             self, origin, normal, plane, default_normal='x'
         )
@@ -3311,15 +3407,15 @@ class DataObjectFilters:
         input_bounds = self.bounds
         if isinstance(result, tuple):
             result = (
-                _cast_output_to_match_input_type(result[0], self),
-                _cast_output_to_match_input_type(result[1], self),
+                _keep_array_structure(_cast_output_to_match_input_type(result[0], self), self),
+                _keep_array_structure(_cast_output_to_match_input_type(result[1], self), self),
             )
             result = (
                 _remove_unused_points_post_clip(result[0], input_bounds),
                 _remove_unused_points_post_clip(result[1], input_bounds),
             )
         else:
-            result = _cast_output_to_match_input_type(result, self)
+            result = _keep_array_structure(_cast_output_to_match_input_type(result, self), self)
             result = _remove_unused_points_post_clip(result, input_bounds)
         if inplace:
             if return_clipped:
@@ -3330,6 +3426,18 @@ class DataObjectFilters:
                 return self
         return result
 
+    # fmt: off
+    # ruff: disable[E501, FBT001]
+    @overload  # PolyData
+    def clip_box(self: PolyData, bounds: float | VectorLike[float] | PolyData | None = ..., invert: bool = ..., factor: float = ..., progress_bar: bool = ..., merge_points: bool = ..., crinkle: bool = ...) -> PolyData: ...  # type: ignore[misc]
+    @overload  # PointSet
+    def clip_box(self: PointSet, bounds: float | VectorLike[float] | PolyData | None = ..., invert: bool = ..., factor: float = ..., progress_bar: bool = ..., merge_points: bool = ..., crinkle: bool = ...) -> PointSet: ...  # type: ignore[misc]
+    @overload  # MultiBlock
+    def clip_box(self: MultiBlock, bounds: float | VectorLike[float] | PolyData | None = ..., invert: bool = ..., factor: float = ..., progress_bar: bool = ..., merge_points: bool = ..., crinkle: bool = ...) -> MultiBlock: ...  # type: ignore[misc]
+    @overload  # DataSet
+    def clip_box(self: DataSet, bounds: float | VectorLike[float] | PolyData | None = ..., invert: bool = ..., factor: float = ..., progress_bar: bool = ..., merge_points: bool = ..., crinkle: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
+    # ruff: enable[E501, FBT001]
+    # fmt: on
     @_deprecate_positional_args(allowed=['bounds'])
     def clip_box(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
@@ -3344,23 +3452,24 @@ class DataObjectFilters:
 
         If no bounds are given, a corner of the dataset bounds will be removed.
 
-        :class:`~pyvista.PolyData` and :class:`~pyvista.PointSet` inputs are clipped with
-        :vtk:`vtkBoxClipDataSet`, which splits the output into tetrahedra. All other inputs,
-        that is :class:`~pyvista.ImageData`, :class:`~pyvista.RectilinearGrid`,
-        :class:`~pyvista.StructuredGrid`, :class:`~pyvista.ExplicitStructuredGrid`, and
-        :class:`~pyvista.UnstructuredGrid`, are clipped by the six box planes in turn with
-        the same clipper as :meth:`clip`, which keeps hexahedra and other cell types.
+        Every input is clipped by the six box planes in turn with the same clipper as
+        :meth:`clip`, so the cells the box does not cut keep their type. A
+        :class:`~pyvista.PointSet` is clipped through its vertices.
 
         .. versionchanged:: 0.49
 
-            - :class:`~pyvista.ImageData`, :class:`~pyvista.RectilinearGrid`,
-              :class:`~pyvista.StructuredGrid`, :class:`~pyvista.ExplicitStructuredGrid`, and
-              :class:`~pyvista.UnstructuredGrid` inputs are clipped by the six box planes
-              instead of :vtk:`vtkBoxClipDataSet`, so cells the box does not cut keep their
-              type instead of being split into tetrahedra, and the output normally has fewer
-              cells and points for the same clipped volume. Call
+            - Every input is clipped by the six box planes instead of
+              :vtk:`vtkBoxClipDataSet`, so the cells the box does not cut keep their type
+              instead of being split into simplices, and the output normally has fewer
+              cells and points for the same clipped region. Call
               :meth:`~pyvista.DataObjectFilters.triangulate` on the output for an
-              all-tetrahedra mesh as before.
+              all-simplex mesh as before.
+            - A :class:`~pyvista.PolyData` input gives a ``PolyData`` instead of an
+              :class:`~pyvista.UnstructuredGrid`.
+            - ``merge_points`` merges points that share a position, or leaves them
+              apart, for every input class. No input now gets a copy of every point per
+              cell; call
+              :meth:`~pyvista.DataSetFilters.separate_cells` on the output for that.
 
         Parameters
         ----------
@@ -3385,8 +3494,9 @@ class DataObjectFilters:
             Display a progress bar to indicate progress.
 
         merge_points : bool, default: True
-            If ``True``, coinciding points of independently defined mesh
-            elements will be merged.
+            If ``True``, points that share a position are merged into one.
+            If ``False``, points the input kept apart stay apart, unless a
+            :class:`~pyvista.PolyData` holds triangle strips.
 
         crinkle : bool, default: False
             Crinkle the clip by extracting the entire cells along the
@@ -3396,8 +3506,12 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.UnstructuredGrid
-            Clipped dataset.
+        pyvista.DataSet | pyvista.MultiBlock
+            Clipped dataset. A :class:`~pyvista.PolyData` gives a ``PolyData`` and a
+            :class:`~pyvista.PointSet` gives a ``PointSet``, clipped through its
+            vertices; every other dataset gives an :class:`~pyvista.UnstructuredGrid`. A
+            :class:`~pyvista.MultiBlock` gives a ``MultiBlock`` whose blocks each follow
+            that rule, nested blocks included.
 
         Examples
         --------
@@ -3463,40 +3577,52 @@ class DataObjectFilters:
                 crinkle=crinkle,
             )
 
+        if isinstance(self, pv.PointSet):
+            # A PointSet has no cells to clip, so clip its vertices
+            return (
+                self.cast_to_poly_points()
+                .clip_box(
+                    bounds_,
+                    invert=invert,
+                    progress_bar=progress_bar,
+                    merge_points=merge_points,
+                    crinkle=crinkle,
+                )
+                .cast_to_pointset()
+            )
+
         source = self
         if crinkle:
             source, active_scalars_info = _Crinkler._add_cell_ids(self)
 
-        # Optimization: vtkBoxClipDataSet splits every cell into tetrahedra (VTK 9.7), so
-        # ImageData, RectilinearGrid, StructuredGrid, ExplicitStructuredGrid, and
-        # UnstructuredGrid are clipped plane by plane instead, which keeps their cell types
-        # and is faster for it. PolyData and PointSet are already triangulated, so they gain
-        # nothing, and only the box filter has a locator to disable for ``merge_points``.
-        if isinstance(self, (pv.PolyData, pv.PointSet)) or not merge_points:
-            alg = _vtk.vtkBoxClipDataSet()
-            if not merge_points:
-                # vtkBoxClipDataSet uses vtkMergePoints by default
-                alg.SetLocator(_vtk.vtkNonMergingPointLocator())
-            alg.SetInputDataObject(source)
-            alg.SetBoxClip(*bounds_)
-            port = 0
-            if invert:
-                # invert the clip if needed
-                port = 1
-                alg.GenerateClippedOutputOn()
-            _update_alg(
-                alg, progress_bar=progress_bar, message='Clipping a Dataset by a Bounding Box'
-            )
-            clipped = _get_output(alg, oport=port)
-        else:
-            clipped = _clip_by_box_planes(
-                source, _box_planes(bounds_), invert=invert, progress_bar=progress_bar
-            )
+        # Every class is clipped by the six box planes with the same clipper as ``clip``,
+        # which keeps the cell types the box does not cut
+        clipped = _clip_by_box_planes(
+            source,
+            _box_planes(bounds_),
+            invert=invert,
+            progress_bar=progress_bar,
+        )
 
         if crinkle:
             clipped = _Crinkler._extract_crinkle_cells(source, clipped, None, active_scalars_info)
-        return _remove_unused_points_post_clip(clipped, self.bounds)
+        clipped = _remove_unused_points_post_clip(clipped, self.bounds)
+        if merge_points:
+            clipped = _weld_points(clipped)
+        return _keep_array_structure(_cast_output_to_match_input_type(clipped, self), self)
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # PolyData
+    def clip_slab(self: PolyData, thickness: float, normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> PolyData: ...  # type: ignore[misc]
+    @overload  # PointSet
+    def clip_slab(self: PointSet, thickness: float, normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> PointSet: ...  # type: ignore[misc]
+    @overload  # MultiBlock
+    def clip_slab(self: MultiBlock, thickness: float, normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> MultiBlock: ...  # type: ignore[misc]
+    @overload  # DataSet
+    def clip_slab(self: DataSet, thickness: float, normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def clip_slab(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
         thickness: float,
@@ -3517,6 +3643,11 @@ class DataObjectFilters:
         :meth:`slice`.
 
         .. versionadded:: 0.48
+
+        .. versionchanged:: 0.49
+
+            Points that a :class:`~pyvista.PolyData` input keeps apart are no longer
+            merged, unless it holds triangle strips.
 
         Parameters
         ----------
@@ -3558,10 +3689,11 @@ class DataObjectFilters:
         Returns
         -------
         pyvista.DataSet | pyvista.MultiBlock
-            Clipped dataset. Output mesh type matches the input type for
-            :class:`~pyvista.PointSet`, :class:`~pyvista.PolyData`, and
-            :class:`~pyvista.MultiBlock`; otherwise the output type is
-            :class:`~pyvista.UnstructuredGrid`.
+            Clipped dataset. A :class:`~pyvista.PolyData` gives a ``PolyData`` and a
+            :class:`~pyvista.PointSet` gives a ``PointSet``; every other dataset gives
+            an :class:`~pyvista.UnstructuredGrid`. A
+            :class:`~pyvista.MultiBlock` gives a ``MultiBlock`` whose blocks each follow
+            that rule, nested blocks included.
 
         Raises
         ------
@@ -3621,9 +3753,17 @@ class DataObjectFilters:
         )
 
         input_bounds = self.bounds
-        result = _cast_output_to_match_input_type(result, self)
+        result = _keep_array_structure(_cast_output_to_match_input_type(result, self), self)
         return _remove_unused_points_post_clip(result, input_bounds)
 
+    # fmt: off
+    # ruff: disable[E501, FBT001]
+    @overload  # MultiBlock
+    def slice_implicit(self: MultiBlock, implicit_function: _vtk.vtkImplicitFunction, generate_triangles: bool = ..., contour: bool = ..., progress_bar: bool = ...) -> MultiBlock: ...  # type: ignore[misc]
+    @overload  # DataSet
+    def slice_implicit(self: DataSet, implicit_function: _vtk.vtkImplicitFunction, generate_triangles: bool = ..., contour: bool = ..., progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc]
+    # ruff: enable[E501, FBT001]
+    # fmt: on
     @_deprecate_positional_args(allowed=['implicit_function'])
     def slice_implicit(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
@@ -3666,8 +3806,16 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.PolyData
-            Sliced dataset.
+        pyvista.PolyData | pyvista.MultiBlock
+            Sliced dataset. Every dataset gives a :class:`~pyvista.PolyData`, and a
+            :class:`~pyvista.MultiBlock` gives a ``MultiBlock`` of ``PolyData``
+            blocks, nested blocks included.
+
+        Notes
+        -----
+        A :class:`~pyvista.PointSet` has no cells to slice, so slicing one directly
+        raises :class:`~pyvista.core.errors.PointSetDimensionReductionError`. As a block of a
+        :class:`~pyvista.MultiBlock` it gives an empty block instead.
 
         See Also
         --------
@@ -3696,16 +3844,35 @@ class DataObjectFilters:
         >>> slice.plot(show_edges=True, line_width=5)
 
         """
+        if isinstance(self, pv.MultiBlock):
+            return _slice_each_block(
+                self,
+                'slice_implicit',
+                implicit_function,
+                generate_triangles=generate_triangles,
+                contour=contour,
+                progress_bar=progress_bar,
+            )
         alg = _vtk.vtkCutter()  # Construct the cutter object
         alg.SetInputDataObject(self)  # Use the grid as the data we desire to cut
         alg.SetCutFunction(implicit_function)  # the cutter to use the function
         alg.SetGenerateTriangles(generate_triangles)
         _update_alg(alg, progress_bar=progress_bar, message='Slicing')
         output = _get_output(alg)
-        if contour:
+        # There is nothing to contour when the plane misses, and the cutter can leave
+        # an empty output with no arrays for the contour to read
+        if contour and output.n_cells:
             return output.contour()
         return output
 
+    # fmt: off
+    # ruff: disable[E501, FBT001]
+    @overload  # MultiBlock
+    def slice(self: MultiBlock, normal: VectorLike[float] | _NormalsLiteral | None = ..., origin: VectorLike[float] | None = ..., generate_triangles: bool = ..., contour: bool = ..., progress_bar: bool = ..., plane: PolyData | None = ...) -> MultiBlock: ...  # type: ignore[misc]
+    @overload  # DataSet
+    def slice(self: DataSet, normal: VectorLike[float] | _NormalsLiteral | None = ..., origin: VectorLike[float] | None = ..., generate_triangles: bool = ..., contour: bool = ..., progress_bar: bool = ..., plane: PolyData | None = ...) -> PolyData: ...  # type: ignore[misc]
+    # ruff: enable[E501, FBT001]
+    # fmt: on
     @_deprecate_positional_args(allowed=['normal'])
     def slice(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
@@ -3780,8 +3947,10 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.PolyData
-            Sliced dataset.
+        pyvista.PolyData | pyvista.MultiBlock
+            Sliced dataset. Every dataset gives a :class:`~pyvista.PolyData`, and a
+            :class:`~pyvista.MultiBlock` gives a ``MultiBlock`` of ``PolyData``
+            blocks, nested blocks included.
 
         Notes
         -----
@@ -3789,6 +3958,10 @@ class DataObjectFilters:
         :attr:`~pyvista.ImageData.direction_matrix` is sliced directly into quads, with
         point data interpolated between the two neighbouring grid planes. All other
         inputs use :vtk:`vtkCutter`.
+
+        A :class:`~pyvista.PointSet` has no cells to slice, so slicing one directly
+        raises :class:`~pyvista.core.errors.PointSetDimensionReductionError`. As a block of a
+        :class:`~pyvista.MultiBlock` it gives an empty block instead.
 
         See Also
         --------
@@ -3835,7 +4008,7 @@ class DataObjectFilters:
             )
             # A plane that misses the image falls through to the cutter for its empty output
             if output is not None:
-                return output.contour() if contour else output
+                return output.contour() if contour and output.n_cells else output
         # create the plane for clipping
         implicit_function = generate_plane(normal_, origin_)
         return self.slice_implicit(
@@ -3854,7 +4027,7 @@ class DataObjectFilters:
         generate_triangles: bool = False,  # noqa: FBT001, FBT002
         contour: bool = False,  # noqa: FBT001, FBT002
         progress_bar: bool = False,  # noqa: FBT001, FBT002
-    ):
+    ) -> MultiBlock:
         """Create three orthogonal slices through the dataset on the three Cartesian planes.
 
         Yields a MutliBlock dataset of the three slices.
@@ -3889,8 +4062,16 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.PolyData
-            Sliced dataset.
+        pyvista.MultiBlock
+            Sliced dataset, with one :class:`~pyvista.PolyData` block per slice. A
+            :class:`~pyvista.MultiBlock` gives one such ``MultiBlock`` per block,
+            nested blocks included.
+
+        Notes
+        -----
+        A :class:`~pyvista.PointSet` has no cells to slice, so slicing one directly
+        raises :class:`~pyvista.core.errors.PointSetDimensionReductionError`. As a block of a
+        :class:`~pyvista.MultiBlock` it gives an empty block instead.
 
         See Also
         --------
@@ -3917,22 +4098,17 @@ class DataObjectFilters:
             y = self.center[1]
         if z is None:
             z = self.center[2]
-        output = pv.MultiBlock()
         if isinstance(self, pv.MultiBlock):
-            for i in range(self.n_blocks):
-                data = self[i]
-                output.append(
-                    data.slice_orthogonal(
-                        x=x,
-                        y=y,
-                        z=z,
-                        generate_triangles=generate_triangles,
-                        contour=contour,
-                    )
-                    if data is not None
-                    else data
-                )
-            return output
+            return _slice_each_block(
+                self,
+                'slice_orthogonal',
+                x=x,
+                y=y,
+                z=z,
+                generate_triangles=generate_triangles,
+                contour=contour,
+            )
+        output = pv.MultiBlock()
         output.append(
             self.slice(
                 normal='x',
@@ -3973,7 +4149,7 @@ class DataObjectFilters:
         bounds=None,
         center=None,
         progress_bar: bool = False,  # noqa: FBT001, FBT002
-    ):
+    ) -> MultiBlock:
         """Create many slices of the input dataset along a specified axis.
 
         Parameters
@@ -4022,8 +4198,16 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.PolyData
-            Sliced dataset.
+        pyvista.MultiBlock
+            Sliced dataset, with one :class:`~pyvista.PolyData` block per slice. A
+            :class:`~pyvista.MultiBlock` gives one such ``MultiBlock`` per block,
+            nested blocks included.
+
+        Notes
+        -----
+        A :class:`~pyvista.PointSet` has no cells to slice, so slicing one directly
+        raises :class:`~pyvista.core.errors.PointSetDimensionReductionError`. As a block of a
+        :class:`~pyvista.MultiBlock` it gives an empty block instead.
 
         See Also
         --------
@@ -4081,24 +4265,19 @@ class DataObjectFilters:
         )
         center = list(center)
         # Make each of the slices
-        output = pv.MultiBlock()
         if isinstance(self, pv.MultiBlock):
-            for i in range(self.n_blocks):
-                data = self[i]
-                output.append(
-                    data.slice_along_axis(
-                        n=n,
-                        axis=ax_label,
-                        tolerance=tolerance,
-                        generate_triangles=generate_triangles,
-                        contour=contour,
-                        bounds=bounds,
-                        center=center,
-                    )
-                    if data is not None
-                    else data
-                )
-            return output
+            return _slice_each_block(
+                self,
+                'slice_along_axis',
+                n=n,
+                axis=ax_label,
+                tolerance=tolerance,
+                generate_triangles=generate_triangles,
+                contour=contour,
+                bounds=bounds,
+                center=center,
+            )
+        output = pv.MultiBlock()
         for i in range(n):
             center[ax_index] = rng[i]
             slc = self.slice(
@@ -4111,6 +4290,14 @@ class DataObjectFilters:
             output.append(slc, f'slice{i}')
         return output
 
+    # fmt: off
+    # ruff: disable[E501, FBT001]
+    @overload  # MultiBlock
+    def slice_along_line(self: MultiBlock, line: PolyData, generate_triangles: bool = ..., contour: bool = ..., progress_bar: bool = ...) -> MultiBlock: ...  # type: ignore[misc]
+    @overload  # DataSet
+    def slice_along_line(self: DataSet, line: PolyData, generate_triangles: bool = ..., contour: bool = ..., progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc]
+    # ruff: enable[E501, FBT001]
+    # fmt: on
     @_deprecate_positional_args(allowed=['line'])
     def slice_along_line(  # type: ignore[misc]  # noqa: PLR0917
         self: _DataSetOrMultiBlockType,
@@ -4147,8 +4334,16 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.PolyData
-            Sliced dataset.
+        pyvista.PolyData | pyvista.MultiBlock
+            Sliced dataset. Every dataset gives a :class:`~pyvista.PolyData`, and a
+            :class:`~pyvista.MultiBlock` gives a ``MultiBlock`` of ``PolyData``
+            blocks, nested blocks included.
+
+        Notes
+        -----
+        A :class:`~pyvista.PointSet` has no cells to slice, so slicing one directly
+        raises :class:`~pyvista.core.errors.PointSetDimensionReductionError`. As a block of a
+        :class:`~pyvista.MultiBlock` it gives an empty block instead.
 
         See Also
         --------
@@ -4196,6 +4391,15 @@ class DataObjectFilters:
         if not isinstance(polyline, _vtk.vtkPolyLine):
             msg = f'Input line must have a PolyLine cell, not ({type(polyline)})'
             raise TypeError(msg)
+        if isinstance(self, pv.MultiBlock):
+            return _slice_each_block(
+                self,
+                'slice_along_line',
+                line,
+                generate_triangles=generate_triangles,
+                contour=contour,
+                progress_bar=progress_bar,
+            )
         # Generate PolyPlane
         polyplane = _vtk.vtkPolyPlane()
         polyplane.SetPolyLine(polyline)
@@ -4207,7 +4411,9 @@ class DataObjectFilters:
             alg.GenerateTrianglesOff()
         _update_alg(alg, progress_bar=progress_bar, message='Slicing along Line')
         output = _get_output(alg)
-        if contour:
+        # There is nothing to contour when the plane misses, and the cutter can leave
+        # an empty output with no arrays for the contour to read
+        if contour and output.n_cells:
             return output.contour()
         return output
 
@@ -4396,7 +4602,7 @@ class DataObjectFilters:
 
         def warn_future():
             # Deprecated v0.47, convert to error in v0.50, remove v0.51
-            if pv.version_info >= (0, 50):  # pragma: no cover
+            if _is_deprecation_due((0, 50)):  # pragma: no cover
                 msg = (
                     'Convert this future warning into an error '
                     'and update the docstring default value to None.'
@@ -4549,14 +4755,20 @@ class DataObjectFilters:
             else dimensionality
         )
 
+        # Only the points dtype is taken from the setting here; `_get_output` would
+        # also copy the input's metadata over a hull that does not want it.
         if pv.vtk_version_info >= (9, 7, 0):
             alg = _vtk.vtkConvexHull()
             alg.SetInputDataObject(alg_input)
             alg.SetDimension(int(dimensionality_))
             _update_alg(alg, progress_bar=progress_bar)
             output = pv.wrap(alg.GetOutput())
+            _match_points_dtype(output, alg_input, algorithm=alg)
         else:
             output = _convex_hull_scipy(points, dimensionality=dimensionality_)
+            # The hull's points are the input's own, so widening them fabricates
+            # precision exactly as a VTK algorithm's output would
+            _match_points_dtype(output, alg_input, algorithm='scipy.spatial.ConvexHull')
         output.point_data.clear()
         output.cell_data.clear()
         return output
@@ -4643,12 +4855,12 @@ class DataObjectFilters:
             low_point_ = list(self.center)
             low_point_[2] = self.bounds.z_min
         else:
-            low_point_ = _validation.validate_array3(low_point)
+            low_point_ = _validation.validate_array3(low_point, dtype_out=float, to_list=True)
         if high_point is None:
             high_point_ = list(self.center)
             high_point_[2] = self.bounds.z_max
         else:
-            high_point_ = _validation.validate_array3(high_point)
+            high_point_ = _validation.validate_array3(high_point, dtype_out=float, to_list=True)
         # Fix scalar_range:
         if scalar_range is None:
             scalar_range_ = (low_point_[2], high_point_[2])
@@ -5530,6 +5742,48 @@ def _convex_hull_scipy(points: NumpyArray[float], dimensionality: Literal[1, 2, 
     return pv.PolyData.from_regular_faces(hull_points, faces)
 
 
+def _distinct_cell_types(mesh: DataSet) -> set[CellType]:
+    """Return the mesh's distinct cell types without reading the points of its cells.
+
+    :attr:`~pyvista.DataSet.distinct_cell_types` builds every cell, so a cell referencing a
+    point id which does not exist makes VTK read out of bounds.
+    """
+    if not isinstance(mesh, (pv.PolyData, pv.UnstructuredGrid)):
+        # Connectivity is implicit and cannot reference an invalid point id
+        return mesh.distinct_cell_types
+    grid = mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
+    cell_types = {CellType(cell_type) for cell_type in np.unique(grid.celltypes)}
+    if mesh._has_hidden_cells:
+        cell_types.add(CellType.EMPTY_CELL)
+    return cell_types
+
+
+def _has_invalid_point_references(dataset: DataSet | MultiBlock) -> bool:
+    """Return ``True`` if any cell of a mesh or of its blocks references a missing point id."""
+    blocks = (
+        dataset.recursive_iterator(skip_none=True)
+        if isinstance(dataset, pv.MultiBlock)
+        else [dataset]
+    )
+    for mesh in blocks:
+        if isinstance(mesh, pv.PolyData):
+            arrays = [
+                mesh.vert_connectivity,
+                mesh.line_connectivity,
+                mesh.face_connectivity,
+                mesh.strip_connectivity,
+            ]
+        elif isinstance(mesh, pv.UnstructuredGrid):
+            arrays = [mesh.cell_connectivity]
+        else:
+            # Connectivity is implicit and cannot reference an invalid point id
+            continue
+        n_points = mesh.n_points
+        if any(np.any((ids < 0) | (ids >= n_points)) for ids in arrays):
+            return True
+    return False
+
+
 def _composite_has_pointset(dataset: DataSet | MultiBlock) -> bool:
     """Return ``True`` if a MultiBlock (recursively) contains a PointSet block."""
     return isinstance(dataset, pv.MultiBlock) and any(
@@ -5570,6 +5824,17 @@ def _get_cell_quality_measures() -> dict[str, str]:
             measure_name = re.sub(r'([a-z])([A-Z])', r'\1_\2', measure_name).lower()
             measures[measure_name] = attr
     return measures
+
+
+def _slice_each_block(composite: MultiBlock, method: str, /, *args, **kwargs) -> MultiBlock:
+    """Apply a slice filter to every block, slicing a ``PointSet`` as its vertices."""
+
+    def slice_block(block: DataSet):  # numpydoc ignore=PR01
+        """Slice one block through the filter its own type supports."""
+        source = block.cast_to_polydata(deep=False) if isinstance(block, pv.PointSet) else block
+        return getattr(source, method)(*args, **kwargs)
+
+    return composite.generic_filter(slice_block)
 
 
 def _slice_image_along_axis(
@@ -5626,7 +5891,27 @@ def _slice_image_along_axis(
     output.copy_meta_from(image, deep=True)
     output.field_data.update(image.field_data)
     output.set_active_scalars(image.active_scalars_name)
+    _copy_active_attributes(image, output)
     return output
+
+
+def _copy_active_attributes(source: DataSet, target: DataSet) -> None:
+    """Mark the same point and cell arrays active on ``target`` as on ``source``."""
+    for attributes_in, attributes_out in (
+        (source.point_data, target.point_data),
+        (source.cell_data, target.cell_data),
+    ):
+        for attr in (
+            'active_vectors_name',
+            'active_normals_name',
+            'active_texture_coordinates_name',
+        ):
+            name = getattr(attributes_in, attr)
+            if name is not None and name in attributes_out:
+                setattr(attributes_out, attr, name)
+        tensors = attributes_in.GetTensors()
+        if tensors is not None and tensors.GetName() in attributes_out:
+            attributes_out.SetActiveTensors(tensors.GetName())
 
 
 def _box_planes(bounds: NumpyArray[float]) -> list[tuple[VectorLike[float], VectorLike[float]]]:
@@ -5644,6 +5929,58 @@ def _box_planes(bounds: NumpyArray[float]) -> list[tuple[VectorLike[float], Vect
     return planes
 
 
+def _clipper(mesh: DataSet | MultiBlock) -> _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet:
+    """Return the clipper that keeps the points a mesh holds apart."""
+    # vtkTableBasedClipDataSet does not support triangle strips and duplicates the points
+    # of a mesh that mixes them with other cells
+    if isinstance(mesh, pv.PolyData) and mesh.n_strips:
+        return _vtk.vtkClipPolyData()
+    return _vtk.vtkTableBasedClipDataSet()
+
+
+def _clip_input(mesh: DataSet | MultiBlock) -> DataSet | MultiBlock:
+    """Return the mesh as a class the table-based clipper clips without tetrahedralizing."""
+    if isinstance(mesh, pv.ExplicitStructuredGrid) and pv.vtk_version_info < (9, 5):
+        grid = mesh.cast_to_unstructured_grid()
+        for name in set(grid.cell_data.keys()) - set(mesh.cell_data.keys()):
+            grid.cell_data.remove(name)
+        return grid
+    return mesh
+
+
+def _keep_array_structure(
+    output: DataSet | MultiBlock, source: DataSet | MultiBlock
+) -> DataSet | MultiBlock:
+    """Give an empty clip the array names of its input, which VTK drops."""
+    if isinstance(output, pv.MultiBlock):
+        for (ids, _, block), original in zip(
+            output.recursive_iterator('all', skip_none=True),
+            source.recursive_iterator(skip_none=True),
+            strict=True,
+        ):
+            output.replace(ids, _keep_array_structure(block, original))
+        return output
+    if not output.n_points:
+        output.GetPointData().CopyStructure(source.GetPointData())
+        output.GetCellData().CopyStructure(source.GetCellData())
+    return output
+
+
+def _weld_points(mesh: DataSet) -> DataSet:
+    """Merge points that share a position exactly, leaving the cells alone."""
+    if not mesh.n_cells:
+        return mesh
+    alg = _vtk.vtkStaticCleanUnstructuredGrid()
+    alg.SetInputData(
+        mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
+    )
+    alg.ToleranceIsAbsoluteOn()
+    alg.SetAbsoluteTolerance(0.0)
+    alg.RemoveUnusedPointsOn()
+    alg.Update()
+    return _get_output(alg)
+
+
 def _clip_by_box_planes(
     dataset: DataSet,
     planes: Sequence[tuple[VectorLike[float], VectorLike[float]]],
@@ -5654,33 +5991,48 @@ def _clip_by_box_planes(
     """Clip by each plane in turn, keeping the inside or appending the outside pieces."""
     # Each plane keeps the box side of the mesh; with ``invert`` the pieces cut away are
     # collected and appended instead
+    # A clip keeps the side its normal points to, boundary included, so clipping from the
+    # inside keeps a cell lying flat in a box plane
     inside: DataSet = dataset
     outside = []
     for normal, origin in planes:
-        result = inside.clip(
-            normal=normal,
-            origin=origin,
-            invert=True,
-            return_clipped=invert,
-            progress_bar=progress_bar,
-        )
+        inward = -np.asarray(normal, dtype=float)
         if invert:
-            inside, piece = result
+            inside, piece = inside.clip(
+                normal=inward,
+                origin=origin,
+                invert=False,
+                return_clipped=True,
+                progress_bar=progress_bar,
+            )
             if piece.n_cells:
                 outside.append(piece)
         else:
-            inside = result
+            inside = inside.clip(
+                normal=inward, origin=origin, invert=False, progress_bar=progress_bar
+            )
     if not invert:
         return inside
     if not outside:
-        # Nothing lay outside the box, so return an empty clip of the right type
-        return inside.clip(normal=planes[0][0], origin=planes[0][1], invert=False)
+        # Nothing lay outside the box
+        return dataset.extract_cells([], pass_cell_ids=False, pass_point_ids=False)
+    # The pieces are merged afterwards if asked, in one pass with everything else
     append = _vtk.vtkAppendFilter()
-    append.MergePointsOn()
+    append.MergePointsOff()
     for piece in outside:
         append.AddInputData(piece)
     _update_alg(append, progress_bar=progress_bar, message='Clipping a Dataset by a Bounding Box')
     return _get_output(append)
+
+
+def _validate_clip_inplace(mesh: DataSet | MultiBlock) -> None:
+    """Raise when a clipped output cannot be copied back into its input mesh."""
+    if not isinstance(mesh, (pv.PolyData, pv.PointSet, pv.UnstructuredGrid)):
+        msg = (
+            f'Cannot use inplace=True for {type(mesh).__name__} input. Only PolyData, '
+            f'PointSet and UnstructuredGrid inputs can be clipped in place.'
+        )
+        raise TypeError(msg)
 
 
 def _remove_unused_points_post_clip(clip_output, input_bounds):

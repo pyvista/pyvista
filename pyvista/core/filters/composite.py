@@ -10,8 +10,10 @@ import numpy as np
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._version import _is_deprecation_due
 from pyvista._warn_external import warn_external
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.filters import _apply_points_dtype
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_object import DataObjectFilters
@@ -239,7 +241,7 @@ class CompositeFilters(DataObjectFilters):
         """
         msg = '`extract_geometry` is deprecated. Use `extract_surface(algorithm=None)` instead.'
         warn_external(msg, PyVistaDeprecationWarning)
-        if pv.version_info >= (0, 50):  # pragma: no cover
+        if _is_deprecation_due((0, 50)):  # pragma: no cover
             msg = 'Convert this deprecation warning into an error.'
             raise RuntimeError(msg)
         if pv.version_info >= (0, 51):  # pragma: no cover
@@ -250,8 +252,8 @@ class CompositeFilters(DataObjectFilters):
     def _composite_geometry_filter(self):
         gf = _vtk.vtkCompositeDataGeometryFilter()
         gf.SetInputData(self)
-        gf.Update()
-        return wrap(gf.GetOutputDataObject(0))
+        _update_alg(gf)
+        return _apply_points_dtype(wrap(gf.GetOutputDataObject(0)), algorithm=gf)
 
     @_deprecate_positional_args
     def combine(self, merge_points: bool = False, tolerance=0.0) -> UnstructuredGrid:  # noqa: FBT001, FBT002
@@ -307,9 +309,9 @@ class CompositeFilters(DataObjectFilters):
             alg.AddInputData(single_block)
         alg.SetMergePoints(merge_points)
         alg.SetTolerance(tolerance)
-        alg.Update()
+        _update_alg(alg)
         output: _vtk.vtkUnstructuredGrid = alg.GetOutputDataObject(0)
-        return wrap(output)
+        return _apply_points_dtype(wrap(output), algorithm=alg)
 
     @_deprecate_positional_args
     def outline(  # type: ignore[misc]

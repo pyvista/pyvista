@@ -11,6 +11,7 @@ from pathlib import Path
 import textwrap
 from typing import TYPE_CHECKING
 from typing import ClassVar
+from typing import NoReturn
 from typing import cast
 
 import numpy as np
@@ -18,6 +19,7 @@ import numpy as np
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._version import _is_deprecation_due
 from pyvista._warn_external import warn_external
 from pyvista.core._vtk_utilities import _SUPPORTS_POLYHEDRON_FACE_CELL_ARRAYS
 from pyvista.core._vtk_utilities import vtk_version_info
@@ -161,6 +163,21 @@ class _PointSetBase(DataSet):
         -----
         This operates in place.
 
+        .. warning::
+
+            Converting up does not recover precision that has already been lost. If a
+            filter computed in single precision, its output holds single-precision
+            values whatever dtype they are given afterwards. See
+            :attr:`pyvista.core.config.Config.points_dtype` for finding out where that
+            happens.
+
+        See Also
+        --------
+        points_to_single
+
+        :attr:`pyvista.core.config.Config.points_dtype`
+            Set the points dtype for a whole session instead of one mesh.
+
         Examples
         --------
         Create a mesh that has points of the type ``float32`` and
@@ -177,6 +194,45 @@ class _PointSetBase(DataSet):
         """
         if self.points.dtype != np.double:
             self.points = self.points.astype(np.double)
+        return self
+
+    def points_to_single(self) -> Self:
+        """Convert the points datatype to single precision.
+
+        .. versionadded:: 0.49
+
+        Returns
+        -------
+        pyvista.PointSet
+            Pointset with points in single precision.
+
+        Notes
+        -----
+        This operates in place.
+
+        See Also
+        --------
+        points_to_double
+
+        :attr:`pyvista.core.config.Config.points_dtype`
+            Set the points dtype for a whole session instead of one mesh.
+
+        Examples
+        --------
+        Create a mesh that has points of the type ``float64`` and
+        convert the points to ``float32``.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.PolyData([[0.0, 0.0, 0.0]])
+        >>> mesh.points.dtype
+        dtype('float64')
+        >>> _ = mesh.points_to_single()
+        >>> mesh.points.dtype
+        dtype('float32')
+
+        """
+        if self.points.dtype != np.single:
+            self.points = self.points.astype(np.single)
         return self
 
 
@@ -292,6 +348,10 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
         else:
             for key, value in self.point_data.items():
                 pdata.point_data[key] = value
+        if deep:
+            pdata.GetFieldData().DeepCopy(self.GetFieldData())
+        else:
+            pdata.GetFieldData().ShallowCopy(self.GetFieldData())
         return pdata
 
     def cast_to_unstructured_grid(self) -> pv.UnstructuredGrid:
@@ -401,23 +461,23 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
-    def slice(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
+    def slice(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise dimension reducing operations are not supported."""
         raise PointSetDimensionReductionError
 
-    def slice_along_axis(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
+    def slice_along_axis(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise dimension reducing operations are not supported."""
         raise PointSetDimensionReductionError
 
-    def slice_along_line(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
+    def slice_along_line(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise dimension reducing operations are not supported."""
         raise PointSetDimensionReductionError
 
-    def slice_implicit(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
+    def slice_implicit(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise dimension reducing operations are not supported."""
         raise PointSetDimensionReductionError
 
-    def slice_orthogonal(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
+    def slice_orthogonal(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise dimension reducing operations are not supported."""
         raise PointSetDimensionReductionError
 
@@ -451,7 +511,7 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
             '`extract_geometry` is deprecated. Use `extract_surface(algorithm=None)` instead.',
             PyVistaDeprecationWarning,
         )
-        if pv.version_info >= (0, 50):  # pragma: no cover
+        if _is_deprecation_due((0, 50)):  # pragma: no cover
             msg = 'Convert this deprecation warning into an error.'
             raise RuntimeError(msg)
         if pv.version_info >= (0, 53):  # pragma: no cover

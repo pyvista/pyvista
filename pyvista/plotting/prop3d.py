@@ -569,7 +569,10 @@ def _orientation_as_rotation_matrix(orientation: VectorLike[float]) -> NumpyArra
         3x3 rotation matrix.
 
     """
-    valid_orientation = _validation.validate_array3(orientation, name='orientation')
+    # SetOrientation takes a mutable sequence
+    valid_orientation = _validation.validate_array3(
+        orientation, dtype_out=float, to_list=True, name='orientation'
+    )
     prop = _vtk.vtkActor()
     prop.SetOrientation(valid_orientation)
     matrix = _vtk.vtkMatrix4x4()

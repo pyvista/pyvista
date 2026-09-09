@@ -24,7 +24,7 @@ dependencies = [
   'pillow',
   'pooch',
   'pyobjc-framework-Cocoa; sys_platform == "darwin"', # see pyvista/pulls/7828, 8423, and 8832
-  'pyvista-validation==0.1.1', # Exact pin: the validation API is still unstable
+  'pyvista-validation==0.2.2', # Exact pin: the validation API is still unstable
   'scooby>=0.5.1',
   'typing-extensions>=4.10',
   'vtk!=9.4.0',
@@ -56,10 +56,10 @@ jupyter = ['ipywidgets', 'nest-asyncio2', 'trame-pyvista']
 
 [dependency-groups]
 pinned = [ # Pinned versions of core dependencies
-  'cyclopts<4.24.0',
+  'cyclopts<4.25.1',
   'filelock<3.33.0', # not a core dep; serializes parallel example downloads
-  'matplotlib<3.10.10',
-  'numpy<2.5.0',
+  'matplotlib<3.11.2',
+  'numpy<2.5.4',
   'pillow<12.4.0',
   'pooch<1.10.0',
   'pyobjc-framework-Cocoa<12.3.0; sys_platform == "darwin"',
@@ -98,9 +98,11 @@ test = [
   'polars<=1.44',
   'pyarrow<26.0.0',
   'pytest-cases<3.11.0',
+  'pytest-codspeed<5.1.0',
   'pytest-cov<7.2.0',
   'pytest-mock<3.16.0',
   'pytest-pyvista==0.3.3',
+  'pytest-timeout<2.5.0',
   'pytest-xdist<3.9.0',
   'pytest<9.1.0',
   'pyvista-frd-reader>=0.2.1,<0.3.0',
@@ -143,6 +145,7 @@ docs = [
   'jupyter-sphinx==0.5.3',
   'jupyterlab==4.6.3',
   'lxml==6.1.2',
+  'matplotlib>=3.11; python_version >= "3.11"',
   'meshio==5.3.5',
   'mypy-extensions==1.1.0',
   'mypy==2.3.1',
@@ -588,6 +591,7 @@ pyvista = "pv"
 # A command-line script bundled with an agent skill, not an importable package.
 '.claude/skills/*/scripts/*.py' = ['INP', 'T20']
 '__init__.py' = ['PLC0414']
+'benchmarks/*' = ['ANN', 'S101']
 'doc/*' = ['ANN', 'INP', 'PLC0415']
 'doc/make_dev_wheel.py' = ['S607'] # git comes from PATH
 # A command-line script: it reports what it runs, like `make` does.

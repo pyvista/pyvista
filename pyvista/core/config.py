@@ -46,7 +46,7 @@ Show the VTK-inherited API in :func:`dir` (and IDE tab-completion):
 Dump the current config to a plain dict (useful for logging or round-tripping):
 
 >>> pv.global_config.to_dict()
-{'show_vtk_api': False, 'validate_on_wrap': True}
+{'points_dtype': None, 'show_vtk_api': False, 'validate_on_wrap': True}
 
 """
 
@@ -56,11 +56,18 @@ import itertools
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
+from typing import Literal
+from typing import cast
+
+import numpy as np
 
 from pyvista._warn_external import warn_external
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
     from typing_extensions import Self
+
+_PointsDtypeOptions = Literal['preserve', 'float32', 'float64'] | None
 
 
 # Mostly from https://stackoverflow.com/questions/56579348/how-can-i-force-subclasses-to-have-slots
@@ -214,11 +221,12 @@ class Config(_ConfigBase):
 
     """
 
-    __slots__ = ['_show_vtk_api', '_validate_on_wrap']
+    __slots__ = ['_points_dtype', '_show_vtk_api', '_validate_on_wrap']
 
     def __init__(self) -> None:
         self._validate_on_wrap: bool = True
         self._show_vtk_api: bool = False
+        self._points_dtype: _PointsDtypeOptions = None
 
     def __repr__(self) -> str:
         header = 'PyVista Config'
@@ -268,6 +276,160 @@ class Config(_ConfigBase):
             msg = f'`validate_on_wrap` must be a bool, got {type(value).__name__}.'  # type: ignore[unreachable]
             raise TypeError(msg)
         self._validate_on_wrap = value
+
+    @property
+    def points_dtype(self) -> _PointsDtypeOptions:  # numpydoc ignore=RT01
+        """Return or set the :attr:`~pyvista.DataSet.points` dtype used by filters and sources.
+
+        Many VTK algorithms generate single-precision points even when the input has
+        double-precision points, and a few do the reverse, so the ``points`` dtype can
+        change underneath you partway through a pipeline. This setting makes the dtype a
+        property of the session rather than of whichever algorithm happens to run.
+
+        Where it is not ``None`` it is enforced everywhere PyVista wraps the output of a
+        VTK algorithm, which covers every filter, every geometry and parametric source,
+        and the generated points of :class:`~pyvista.ImageData` and
+        :class:`~pyvista.RectilinearGrid`. Constructing a dataset keeps the array you
+        pass, so ``pv.PolyData(points)`` has the dtype of ``points``; the geometry
+        factories are sources, so ``pv.Triangle(points)`` follows the setting.
+
+        ``None``
+            The default. PyVista does not intervene and each algorithm produces
+            whatever dtype it produces, which is the behavior of every release before
+            0.49.
+
+        ``'preserve'``
+            A filter's output points have the same dtype as its input points, so a
+            filter never changes the dtype. This covers the meshes that store their
+            points; :class:`~pyvista.ImageData` and :class:`~pyvista.RectilinearGrid`
+            generate theirs from the origin and spacing, or from the coordinate arrays,
+            so they constrain nothing. Sources have no input either, and keep the dtype
+            VTK generates. A filter that builds one of those as an intermediate takes
+            the dtype from it rather than from the input, so
+            :meth:`~pyvista.DataSetFilters.voxelize` and
+            :meth:`~pyvista.PolyDataFilters.reconstruct_surface` still produce single
+            precision from a double-precision mesh. Ask for ``'float64'`` where the
+            output dtype has to be certain.
+
+        ``'float32'``
+            Every source and filter generates single-precision points, including the
+            ones that would otherwise generate double precision.
+
+        ``'float64'``
+            Every source and filter generates double-precision points.
+
+        Copying or recasting a dataset is not a source and keeps the points it was
+        given, so ``mesh.copy()`` and ``mesh.cast_to_pointset()`` never change dtype.
+
+        .. warning::
+
+            A dtype can always be delivered; the precision behind it cannot. Some
+            algorithms cannot run in double at all -- :vtk:`vtkShrinkFilter` has no
+            precision setting -- so they compute in single and their output is cast
+            back up. The points are then ``float64`` holding values that are only
+            single precision, and calling
+            :meth:`~pyvista.core.pointset._PointSetBase.points_to_double` on them
+            recovers nothing: the digits went when the filter ran. A ``float64``
+            points array is not on its own evidence of double-precision values.
+
+            Every such cast warns with :class:`~pyvista.PrecisionWarning`,
+            naming the algorithm, so the fabrication is never silent. Casting the other
+            way does not warn: discarding digits below the input's own representation
+            error loses nothing that was there.
+
+        The setter accepts ``'preserve'``, ``None``, and anything
+        :class:`numpy.dtype` resolves to ``numpy.float32`` or ``numpy.float64`` (for
+        example ``np.float64``, ``'double'``, or ``float``).
+
+        Notes
+        -----
+        An explicit ``'float32'`` or ``'float64'`` is requested from the algorithm
+        first, via ``SetOutputPointsPrecision``, so the computation itself is done in
+        that precision wherever VTK supports it, and only the algorithms that ignore
+        the request need their output cast afterwards. ``'preserve'`` asks for nothing:
+        VTK's own default already matches the input for all but a handful, and
+        requesting it anyway would widen more than the points for some filters.
+
+        That request reaches whatever else the algorithm generates at the same
+        precision, so an explicit dtype is not confined to the points. Transforming a
+        mesh with :meth:`~pyvista.DataObjectFilters.transform` and
+        ``transform_all_input_vectors=True`` under ``'float64'`` gives the transformed
+        vector arrays ``float64`` as well, doubling their memory. Arrays the filter
+        does not transform keep the dtype they had.
+
+        .. versionadded:: 0.49
+
+        Examples
+        --------
+        By default a filter produces whatever VTK produces, and
+        :vtk:`vtkShrinkFilter` produces single precision.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.cells.Hexahedron()
+        >>> mesh.points.dtype
+        dtype('float64')
+        >>> mesh.shrink(1.0).points.dtype
+        dtype('float32')
+
+        Ask for the dtype to survive the filter instead. It does, and because this
+        filter cannot compute in double, the widened points are reported as holding
+        single-precision values.
+
+        >>> import warnings
+        >>> pv.global_config.points_dtype = 'preserve'
+        >>> with warnings.catch_warnings(record=True) as caught:
+        ...     warnings.simplefilter('always')
+        ...     shrunk = mesh.shrink(1.0)
+        >>> shrunk.points.dtype
+        dtype('float64')
+        >>> print(caught[0].message)
+        vtkShrinkFilter generated float32 points, and cannot generate the float64...
+        The output points are cast to float64, but hold float32 values.
+
+        Treat that as an error instead wherever the fabricated precision is not
+        acceptable. This is a standard warnings filter, so it can be scoped to a
+        block, a module, or a whole session, and set from ``-W`` or pytest as well.
+
+        >>> with warnings.catch_warnings():
+        ...     warnings.filterwarnings('error', category=pv.PrecisionWarning)
+        ...     try:
+        ...         _ = mesh.shrink(1.0)
+        ...     except pv.PrecisionWarning as error:
+        ...         print(f'raised: {type(error).__name__}')
+        raised: PrecisionWarning
+
+        Sources follow the setting too.
+
+        >>> pv.global_config.points_dtype = 'float64'
+        >>> pv.Sphere().points.dtype
+        dtype('float64')
+
+        >>> pv.global_config.points_dtype = None  # restore default
+
+        """
+        return self._points_dtype
+
+    @points_dtype.setter
+    def points_dtype(self, value: _PointsDtypeOptions | npt.DTypeLike) -> None:
+        if value is None:
+            self._points_dtype = None
+            return
+        if isinstance(value, str) and value == 'preserve':
+            self._points_dtype = 'preserve'
+            return
+        # `np.dtype(None)` is float64, so a value that is not a dtype at all must not
+        # reach `np.dtype` as a stand-in for "unset".
+        msg = f"`points_dtype` must be None, 'preserve', 'float32', or 'float64', got {value!r}."
+        try:
+            name = np.dtype(value).name
+        except TypeError:
+            # Names no dtype at all, so it is the wrong kind of value rather than the
+            # wrong dtype, as it is for `numpy.dtype` itself.
+            raise TypeError(msg) from None
+        if name not in ('float32', 'float64'):
+            raise ValueError(msg)
+        self._points_dtype = cast('_PointsDtypeOptions', name)
 
     @property
     def show_vtk_api(self) -> bool:  # numpydoc ignore=RT01

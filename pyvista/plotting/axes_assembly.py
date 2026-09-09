@@ -934,7 +934,7 @@ class AxesAssembly(_XYZAssembly):
         value = self._shaft_and_tip_geometry_source.shaft_length if position is None else position
         if self.scale_mode == 'anti_distortion':
             factor = self._shaft_and_tip_geometry_source._anti_distortion_factor
-            value += self.tip_length * (1 - factor)
+            value = tuple(np.add(value, self.tip_length * (1 - factor)).tolist())
         return value
 
     @label_position.setter
