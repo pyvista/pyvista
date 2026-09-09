@@ -336,6 +336,12 @@ jobs:
       - name: Set up headless display
         uses: pyvista/setup-headless-display-action@b0bf9f57d62d2b3fee9f1c0e0c7e390f05e97a4e
 
+      # llvmpipe's rasterizer teardown deadlocks at process exit on Windows.
+      - name: Disable llvmpipe threads
+        if: runner.os == 'Windows'
+        shell: bash
+        run: echo "LP_NUM_THREADS=0" >> "$GITHUB_ENV"
+
       - name: Install tox-uv
         run: pip install tox-uv
 
