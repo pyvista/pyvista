@@ -2,14 +2,12 @@
 
 The set of paths Vale checks is defined here and nowhere else: `make docstyle`,
 `CONTRIBUTING.rst` and the `Style and Docstring Check` workflow all reach it
-through this file, so adding a path is a one-line change. The workflow reads
-the list with ``--print-files`` rather than repeating it, because it runs Vale
-through `vale-action` to get inline annotations on the pull request.
+through this file, so adding a path is a one-line change.
 
 Usage::
 
-    python3 doc/run_vale.py                # extract, lint, check the fixtures
-    python3 doc/run_vale.py --print-files  # the path list, as JSON
+    python3 doc/run_vale.py             # extract, lint, check the fixtures
+    python3 doc/run_vale.py --annotate  # the same, with GitHub annotations
 """
 
 from __future__ import annotations
@@ -45,6 +43,17 @@ EXTRACT = [
     ['pyvista', '.vale/pyvista', '--mode', 'docstrings'],
 ]
 
+# An extracted file mirrors its source line for line, so an annotation can point
+# at the `.py` the reader has to edit rather than at the generated `.rst`.
+SOURCES = {'.vale/examples': 'examples', '.vale/pyvista': 'pyvista'}
+
+# GitHub has no `suggestion` level.
+LEVELS = {'error': 'error', 'warning': 'warning', 'suggestion': 'notice'}
+
+# A suggestion is advisory; anything above it fails the run. `MinAlertLevel` in
+# doc/.vale.ini decides which of them Vale reports in the first place.
+FAILING = {'warning', 'error'}
+
 
 def run(command: list[str]) -> int:
     """Echo and run ``command`` from the repository root."""
@@ -52,19 +61,73 @@ def run(command: list[str]) -> int:
     return subprocess.run(command, cwd=ROOT, check=False).returncode
 
 
+def escape(value: str, *, is_property: bool = False) -> str:
+    """Escape ``value`` for a GitHub workflow command."""
+    escaped = value.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+    if is_property:
+        escaped = escaped.replace(':', '%3A').replace(',', '%2C')
+    return escaped
+
+
+def source_of(path: str) -> str:
+    """Return the file an alert's reader has to edit, given the file Vale read."""
+    for extracted, source in SOURCES.items():
+        if path.startswith(extracted + '/'):
+            return source + path[len(extracted) : -len('.rst')] + '.py'
+    return path
+
+
+def annotate(alerts: dict[str, list[dict]]) -> None:
+    """Print one GitHub annotation per alert."""
+    for path, file_alerts in sorted(alerts.items()):
+        source = escape(source_of(path), is_property=True)
+        for alert in file_alerts:
+            level = LEVELS.get(alert['Severity'], 'error')
+            start, end = alert['Span']
+            title = escape(f'Vale: {alert["Check"]}', is_property=True)
+            print(
+                f'::{level} file={source},line={alert["Line"]},'
+                f'col={start},endColumn={end},title={title}'
+                f'::{escape(alert["Message"])}'
+            )
+
+
+def lint(*, annotations: bool) -> int:
+    """Run Vale over ``PATHS``; return an exit status."""
+    command = ['vale', '--config', str(CONFIG.relative_to(ROOT))]
+    if not annotations:
+        return run([*command, *PATHS])
+
+    command += ['--output=JSON', *PATHS]
+    print('+', ' '.join(command))
+    vale = subprocess.run(command, cwd=ROOT, capture_output=True, text=True, check=False)
+    print(vale.stderr, end='')
+    if vale.returncode > 1:  # Vale itself failed, and reported that instead of alerts
+        print(vale.stdout, end='')
+        return vale.returncode
+
+    alerts = json.loads(vale.stdout or '{}')
+    annotate(alerts)
+    total = sum(len(file_alerts) for file_alerts in alerts.values())
+    failing = [
+        alert
+        for file_alerts in alerts.values()
+        for alert in file_alerts
+        if alert['Severity'] in FAILING
+    ]
+    print(f'{total} alert(s) in {len(alerts)} file(s), {len(failing)} of them failing')
+    return 1 if failing else 0
+
+
 def main() -> int:
     """Extract, lint, and check the fixtures; return an exit status."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        '--print-files',
+        '--annotate',
         action='store_true',
-        help='print the paths Vale checks as a JSON array, then exit',
+        help='report each alert as a GitHub Actions annotation',
     )
     args = parser.parse_args()
-
-    if args.print_files:
-        print(json.dumps(PATHS))
-        return 0
 
     if shutil.which('vale') is None:
         print("vale is not installed: pip install vale 'docutils<0.22' 'sphinx-gallery<0.22.0'")
@@ -75,7 +138,7 @@ def main() -> int:
         if code:
             return code
 
-    code = run(['vale', '--config', str(CONFIG.relative_to(ROOT)), *PATHS])
+    code = lint(annotations=args.annotate)
     if code:
         return code
 

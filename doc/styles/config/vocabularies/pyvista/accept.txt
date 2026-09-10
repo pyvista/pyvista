@@ -248,6 +248,7 @@ docstrings
 doctest
 doctests
 doi
+dtype
 dunder
 eigen
 eigenmode
