@@ -9,10 +9,6 @@ from type_assert import assert_types
 from pyvista import _vtk
 from pyvista.core.utilities.arrays import convert_string_array
 
-SKIP_RUNTIME = {
-    "convert_string_array('text')": 'converting a scalar string is deprecated',
-}
-
 
 def a_vtk_string_array() -> _vtk.vtkStringArray:
     """Return a two-value VTK string array."""
@@ -26,6 +22,5 @@ def a_vtk_string_array() -> _vtk.vtkStringArray:
 assert_types(convert_string_array(a_vtk_string_array()), npt.NDArray[np.str_])
 assert_types(convert_string_array(a_vtk_string_array(), 'data'), npt.NDArray[np.str_])
 
-assert_types(convert_string_array('text'), _vtk.vtkStringArray)  # pragma: no cover
 assert_types(convert_string_array(np.array(['a', 'b'])), _vtk.vtkStringArray)
 assert_types(convert_string_array(np.array(['a']), 'data'), _vtk.vtkStringArray)
