@@ -46,6 +46,19 @@ def test_lookup_table(composite_mapper):
     assert composite_mapper.lookup_table is table
 
 
+def test_scalar_range_sets_lookup_table_range(multiblock_poly):
+    pl = pv.Plotter()
+    _actor, mapper = pl.add_composite(multiblock_poly, scalars='data_a', clim=[0.2, 10])
+    assert mapper.scalar_range == (0.2, 10.0)
+    assert mapper.lookup_table.scalar_range == (0.2, 10.0)
+    assert pl.scalar_bar.GetLookupTable().GetRange() == (0.2, 10.0)
+    mapper.scalar_range = (-1, 1)
+    assert mapper.lookup_table.scalar_range == (-1.0, 1.0)
+    pl.update_scalar_bar_range([3, 4])
+    assert mapper.lookup_table.scalar_range == (3.0, 4.0)
+    pl.close()
+
+
 def test_scalar_visibility(composite_mapper):
     isinstance(composite_mapper.scalar_visibility, bool)
 

@@ -154,6 +154,7 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
     @scalar_range.setter
     def scalar_range(self, clim) -> None:
         self.SetScalarRange(*clim)
+        self.lookup_table.scalar_range = clim
 
     @property
     def lookup_table(self) -> LookupTable:  # numpydoc ignore=RT01
