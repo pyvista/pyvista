@@ -151,6 +151,59 @@ def test_background_color_fill(sphere):
     pl.show()
 
 
+@pytest.mark.usefixtures('verify_image_cache')
+def test_background_color_keeps_out_of_range_colors(sphere):
+    sphere[KEY] = sphere.points[:, 2]
+    pl = pv.Plotter()
+    actor = pl.add_mesh(
+        sphere,
+        clim=[-0.2, 0.2],
+        below_color='magenta',
+        above_color='red',
+        scalar_bar_args={
+            'background_color': 'cyan',
+            'fill': True,
+            'width': 0.8,
+            'height': 0.3,
+            'position_x': 0.1,
+            'position_y': 0.05,
+            'label_font_size': 40,
+            'title_font_size': 40,
+        },
+    )
+    lut = pl.scalar_bar.GetLookupTable()
+    assert lut is actor.mapper.lookup_table
+    assert lut.below_range_color == pv.Color('magenta')
+    assert lut.above_range_color == pv.Color('red')
+    pl.show()
+
+
+@pytest.mark.usefixtures('verify_image_cache')
+def test_background_color_composite_range(multiblock_poly):
+    pl = pv.Plotter()
+    pl.add_composite(
+        multiblock_poly,
+        scalars='data_a',
+        clim=[0.2, 10],
+        scalar_bar_args={
+            'background_color': 'white',
+            'color': 'black',
+            'fill': True,
+            'outline': True,
+            'width': 0.8,
+            'height': 0.3,
+            'position_x': 0.1,
+            'position_y': 0.05,
+            'label_font_size': 40,
+            'title_font_size': 40,
+        },
+    )
+    assert pl.scalar_bar.GetLookupTable().GetRange() == (0.2, 10.0)
+    pl.update_scalar_bar_range([1, 5])
+    assert pl.scalar_bar.GetLookupTable().GetRange() == (1.0, 5.0)
+    pl.show()
+
+
 def test_too_many_scalar_bars():
     pl = pv.Plotter()
     with pytest.raises(RuntimeError, match='Maximum number of color'):  # noqa: PT012

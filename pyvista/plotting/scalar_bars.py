@@ -5,8 +5,6 @@ from __future__ import annotations
 import contextlib
 import weakref
 
-import numpy as np
-
 import pyvista as pv
 from pyvista import MAX_N_COLOR_BARS
 from pyvista import _vtk
@@ -597,23 +595,11 @@ class ScalarBars(_NoNewAttrMixin):
         # self._scalar_bars.append(scalar_bar)
 
         if background_color is not None:
-            background_color = Color(background_color)
-            scalar_bar.GetBackgroundProperty().SetColor(background_color.float_rgb)
-
+            scalar_bar.GetBackgroundProperty().SetColor(Color(background_color).float_rgb)
             if fill:
                 scalar_bar.DrawBackgroundOn()
 
-            lut = pv.LookupTable()
-            lut.DeepCopy(mapper.lookup_table)
-            ctable = _vtk.vtk_to_numpy(lut.GetTable())
-            alphas = ctable[:, -1][:, np.newaxis] / 255.0
-            use_table = ctable.copy()
-            use_table[:, -1] = 255.0
-            ctable = (use_table * alphas) + np.array(background_color.int_rgba) * (1 - alphas)
-            lut.SetTable(_vtk.numpy_to_vtk(ctable, array_type=_vtk.VTK_UNSIGNED_CHAR))
-        else:
-            lut = mapper.lookup_table
-
+        lut = mapper.lookup_table
         scalar_bar.SetLookupTable(lut)
         if n_colors is None:
             # ensure the number of colors in the scalarbar's lookup table is at
