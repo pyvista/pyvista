@@ -661,7 +661,7 @@ shape. You can even add string arrays in the field data:
 Note that the field data is automatically transferred to VTK C-style
 arrays and then represented as a numpy data format. Field data always
 holds arrays. To attach scalar metadata such as a name, use
-:attr:`user_dict <pyvista.DataObject.user_dict>` instead.
+:attr:`~pyvista.DataObject.user_dict` instead.
 
 When listing the current field data, note that the association is "NONE":
 
