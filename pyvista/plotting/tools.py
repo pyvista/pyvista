@@ -13,7 +13,6 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.errors import DeprecationError
 
 from .colors import Color
@@ -194,8 +193,8 @@ def _update_axes_label_color(axes_actor, color=None):
         axes_actor.GetTextEdgesProperty().SetColor(color.float_rgb)
 
 
-@_deprecate_positional_args
-def create_axes_marker(  # noqa: PLR0917
+def create_axes_marker(
+    *,
     label_color=None,
     x_color=None,
     y_color=None,
@@ -203,7 +202,7 @@ def create_axes_marker(  # noqa: PLR0917
     xlabel='X',
     ylabel='Y',
     zlabel='Z',
-    labels_off: bool = False,  # noqa: FBT001, FBT002
+    labels_off: bool = False,
     line_width=2,
     cone_radius=0.4,
     shaft_length=0.8,
@@ -336,8 +335,8 @@ def create_axes_marker(  # noqa: PLR0917
     return axes_actor
 
 
-@_deprecate_positional_args
-def create_axes_orientation_box(  # noqa: PLR0917
+def create_axes_orientation_box(
+    *,
     line_width=1,
     text_scale=0.366667,
     edge_color='black',
@@ -350,11 +349,11 @@ def create_axes_orientation_box(  # noqa: PLR0917
     x_face_color='red',
     y_face_color='green',
     z_face_color='blue',
-    color_box: bool = False,  # noqa: FBT001, FBT002
+    color_box: bool = False,
     label_color=None,
-    labels_off: bool = False,  # noqa: FBT001, FBT002
+    labels_off: bool = False,
     opacity=0.5,
-    show_text_edges: bool = False,  # noqa: FBT001, FBT002
+    show_text_edges: bool = False,
 ):
     """Create a Box axes orientation widget with labels.
 
@@ -613,11 +612,11 @@ def normalize(x, minimum=None, maximum=None):
     return (x - minimum) / (maximum - minimum)
 
 
-@_deprecate_positional_args(allowed=['mapping', 'n_colors'])
-def opacity_transfer_function(  # noqa: PLR0917
+def opacity_transfer_function(
     mapping,
     n_colors,
-    interpolate: bool = True,  # noqa: FBT001, FBT002
+    *,
+    interpolate: bool = True,
     kind='linear',
 ):
     """Get the opacity transfer function for a mapping.

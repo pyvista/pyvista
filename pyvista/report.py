@@ -10,7 +10,6 @@ from types import ModuleType  # noqa: TC003
 
 import scooby
 
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._vtk import _VTK_ROOT
 
 # ``{pkg}`` is filled with the selected VTK backend (vtkmodules or cvista) in `_run`.
@@ -179,7 +178,6 @@ class GPUInfo:
         return content
 
 
-@_deprecate_positional_args
 class Report(scooby.Report):
     """Generate a PyVista software environment report.
 
@@ -269,15 +267,16 @@ class Report(scooby.Report):
 
     """
 
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
         additional: list[str | ModuleType] | None = None,
+        *,
         ncol: int = 3,
         text_width: int = 80,
-        sort: bool = False,  # noqa: FBT001, FBT002
-        gpu: bool = True,  # noqa: FBT001, FBT002
-        downloads: bool = False,  # noqa: FBT001, FBT002
-        env_vars: bool = False,  # noqa: FBT001, FBT002
+        sort: bool = False,
+        gpu: bool = True,
+        downloads: bool = False,
+        env_vars: bool = False,
     ):
         """Generate a :class:`scooby.Report` instance."""
         # Mandatory packages

@@ -18,7 +18,6 @@ import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import MissingDataError
@@ -84,13 +83,13 @@ _ConcatenateComponentPolicyOptions = Literal['strict', 'promote_rgba']
 class ImageDataFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for uniform grid datasets."""
 
-    @_deprecate_positional_args
-    def gaussian_smooth(  # noqa: PLR0917
+    def gaussian_smooth(
         self,
+        *,
         radius_factor=1.5,
         std_dev=2.0,
         scalars=None,
-        progress_bar: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,
     ):
         """Smooth the data with a Gaussian kernel.
 
@@ -172,13 +171,13 @@ class ImageDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar=progress_bar, message='Performing Gaussian Smoothing')
         return _get_output(alg)
 
-    @_deprecate_positional_args
-    def median_smooth(  # noqa: PLR0917
+    def median_smooth(
         self,
+        *,
         kernel_size=(3, 3, 3),
         scalars=None,
         preference='point',
-        progress_bar: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,
     ):
         """Smooth data using a median filter.
 
@@ -424,14 +423,14 @@ class ImageDataFilters(DataSetFilters):
             voi, rebase_coordinates=rebase_coordinates, progress_bar=progress_bar
         )
 
-    @_deprecate_positional_args(allowed=['voi', 'rate'])
-    def extract_subset(  # type: ignore[misc] # noqa: PLR0917
+    def extract_subset(  # type: ignore[misc]
         self: ImageData,
         voi,
         rate=(1, 1, 1),
-        boundary: bool = False,  # noqa: FBT001, FBT002
-        rebase_coordinates: bool = True,  # noqa: FBT001, FBT002
-        progress_bar: bool = False,  # noqa: FBT001, FBT002
+        *,
+        boundary: bool = False,
+        rebase_coordinates: bool = True,
+        progress_bar: bool = False,
     ):
         r"""Select piece (for example, volume of interest).
 
@@ -1053,14 +1052,14 @@ class ImageDataFilters(DataSetFilters):
         result.cell_data.update(self.cell_data)
         return result
 
-    @_deprecate_positional_args(allowed=['dilate_value', 'erode_value'])
-    def image_dilate_erode(  # noqa: PLR0917
+    def image_dilate_erode(
         self,
         dilate_value=1.0,
         erode_value=0.0,
+        *,
         kernel_size=(3, 3, 3),
         scalars=None,
-        progress_bar: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,
     ):
         """Dilates one value and erodes another.
 
@@ -1798,15 +1797,15 @@ class ImageDataFilters(DataSetFilters):
             erosion_alg, progress_bar=progress_bar, operation=dilation
         )
 
-    @_deprecate_positional_args(allowed=['threshold'])
-    def image_threshold(  # type: ignore[misc] # noqa: PLR0917
+    def image_threshold(  # type: ignore[misc]
         self: ImageData,
         threshold,
+        *,
         in_value=1.0,
         out_value=0.0,
         scalars=None,
         preference='point',
-        progress_bar: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,
     ):
         """Apply a threshold to scalar values in a uniform grid.
 
@@ -1995,8 +1994,7 @@ class ImageDataFilters(DataSetFilters):
             return cell_output
         return output
 
-    @_deprecate_positional_args
-    def fft(self, output_scalars_name=None, progress_bar: bool = False):  # noqa: FBT001, FBT002
+    def fft(self, *, output_scalars_name=None, progress_bar: bool = False):
         """Apply a fast Fourier transform (FFT) to the active scalars.
 
         The input can be real or complex data, but the output is always
@@ -2077,8 +2075,7 @@ class ImageDataFilters(DataSetFilters):
         )
         return output
 
-    @_deprecate_positional_args
-    def rfft(self, output_scalars_name=None, progress_bar: bool = False):  # noqa: FBT001, FBT002
+    def rfft(self, *, output_scalars_name=None, progress_bar: bool = False):
         """Apply a reverse fast Fourier transform (RFFT) to the active scalars.
 
         The input can be real or complex data, but the output is always
@@ -2150,15 +2147,15 @@ class ImageDataFilters(DataSetFilters):
         )
         return output
 
-    @_deprecate_positional_args(allowed=['x_cutoff', 'y_cutoff', 'z_cutoff'])
-    def low_pass(  # noqa: PLR0917
+    def low_pass(
         self,
         x_cutoff,
         y_cutoff,
         z_cutoff,
+        *,
         order=1,
         output_scalars_name=None,
-        progress_bar: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,
     ):
         """Perform a Butterworth low pass filter in the frequency domain.
 
@@ -2227,15 +2224,15 @@ class ImageDataFilters(DataSetFilters):
         )
         return output
 
-    @_deprecate_positional_args(allowed=['x_cutoff', 'y_cutoff', 'z_cutoff'])
-    def high_pass(  # noqa: PLR0917
+    def high_pass(
         self,
         x_cutoff,
         y_cutoff,
         z_cutoff,
+        *,
         order=1,
         output_scalars_name=None,
-        progress_bar: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,
     ):
         """Perform a Butterworth high pass filter in the frequency domain.
 

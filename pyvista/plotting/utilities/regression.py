@@ -13,7 +13,6 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.arrays import point_array
 
 if TYPE_CHECKING:
@@ -125,20 +124,20 @@ def run_image_filter(imfilter: _vtk.vtkWindowToImageFilter) -> _Pixels:
 
 
 # fmt: off
-# ruff: disable[E501, FBT001, FBT002]
+# ruff: disable[E501]
 @overload
-def image_from_window(render_window: _vtk.vtkRenderWindow, as_vtk: Literal[False] = False, ignore_alpha: bool = ..., scale: int = ...) -> NumpyArray[np.uint8]: ...
+def image_from_window(render_window: _vtk.vtkRenderWindow, *, as_vtk: Literal[False] = False, ignore_alpha: bool = ..., scale: int = ...) -> NumpyArray[np.uint8]: ...
 @overload
-def image_from_window(render_window: _vtk.vtkRenderWindow, as_vtk: Literal[True], ignore_alpha: bool = ..., scale: int = ...) -> ImageData: ...
+def image_from_window(render_window: _vtk.vtkRenderWindow, *, as_vtk: Literal[True], ignore_alpha: bool = ..., scale: int = ...) -> ImageData: ...
 @overload
-def image_from_window(render_window: _vtk.vtkRenderWindow, as_vtk: bool = ..., ignore_alpha: bool = ..., scale: int = ...) -> NumpyArray[np.uint8] | ImageData: ...
-# ruff: enable[E501, FBT001, FBT002]
+def image_from_window(render_window: _vtk.vtkRenderWindow, *, as_vtk: bool = ..., ignore_alpha: bool = ..., scale: int = ...) -> NumpyArray[np.uint8] | ImageData: ...
+# ruff: enable[E501]
 # fmt: on
-@_deprecate_positional_args(allowed=['render_window'])
-def image_from_window(  # noqa: PLR0917
+def image_from_window(
     render_window: _vtk.vtkRenderWindow,
-    as_vtk: bool = False,  # noqa: FBT001, FBT002
-    ignore_alpha: bool = False,  # noqa: FBT001, FBT002
+    *,
+    as_vtk: bool = False,
+    ignore_alpha: bool = False,
     scale: int = 1,
 ) -> NumpyArray[np.uint8] | ImageData:
     """Extract the image from the render window as an array.
@@ -197,12 +196,12 @@ def image_from_window(  # noqa: PLR0917
     return data
 
 
-@_deprecate_positional_args(allowed=['im1', 'im2'])
-def compare_images(  # noqa: PLR0917
+def compare_images(
     im1: ImageCompareType,
     im2: ImageCompareType,
+    *,
     threshold: int = 1,
-    use_vtk: bool = True,  # noqa: FBT001, FBT002
+    use_vtk: bool = True,
 ) -> float:
     """Compare two different images of the same size.
 
@@ -272,7 +271,7 @@ def compare_images(  # noqa: PLR0917
                 raise RuntimeError(msg)
             return image_from_window(img.render_window, as_vtk=True, ignore_alpha=True)
         else:
-            msg = (
+            msg = (  # type: ignore[unreachable]
                 f'Unsupported data type {type(img)}.  Should be '
                 'either a np.ndarray, pyvista.Plotter, or vtk.vtkImageData'
             )

@@ -9,7 +9,6 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core._vtk_utilities import _SETDATA_TAKES_OWNERSHIP
 from pyvista.core._vtk_utilities import _SUPPORTS_FIXED_SIZE_STORAGE
@@ -131,12 +130,12 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
 
     """
 
-    @_deprecate_positional_args(allowed=['vtk_cell', 'cell_type'])
     def __init__(
         self: Self,
         vtk_cell: _vtk.vtkCell | None = None,
         cell_type: CellType | None = None,
-        deep: bool = False,  # noqa: FBT001, FBT002
+        *,
+        deep: bool = False,
     ) -> None:
         """Initialize the cell."""
         super().__init__()
@@ -621,8 +620,7 @@ class Cell(_BoundsSizeMixin, DataObject, _vtk.vtkGenericCell):
         """Return the object string representation."""
         return self.head(display=False, html=False)
 
-    @_deprecate_positional_args
-    def copy(self: Self, deep: bool = True) -> Self:  # noqa: FBT001, FBT002
+    def copy(self: Self, *, deep: bool = True) -> Self:
         """Return a copy of the cell.
 
         Parameters
@@ -994,11 +992,11 @@ class CellArray(
         self.SetData(cell_size, vtk_connectivity)
 
     @staticmethod
-    @_deprecate_positional_args(allowed=['offsets', 'connectivity'])
     def from_arrays(
         offsets: MatrixLike[int],
         connectivity: MatrixLike[int],
-        deep: bool = False,  # noqa: FBT001, FBT002
+        *,
+        deep: bool = False,
     ) -> CellArray:
         """Construct a CellArray from offsets and connectivity arrays.
 
@@ -1042,11 +1040,11 @@ class CellArray(
         return _get_regular_cells(self)
 
     @classmethod
-    @_deprecate_positional_args(allowed=['cells'])
     def from_regular_cells(
         cls: type[CellArray],
         cells: MatrixLike[int],
-        deep: bool = False,  # noqa: FBT001, FBT002
+        *,
+        deep: bool = False,
     ) -> CellArray:
         """Construct a ``CellArray`` from cells which all have the same size.
 

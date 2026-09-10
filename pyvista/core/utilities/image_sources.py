@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
@@ -269,9 +268,9 @@ class ImageNoiseSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageNoiseS
 
     """
 
-    @_deprecate_positional_args
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
+        *,
         whole_extent=(0, 255, 0, 255, 0, 0),
         minimum=0.0,
         maximum=1.0,
@@ -423,9 +422,9 @@ class ImageSinusoidSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageSin
 
     """
 
-    @_deprecate_positional_args
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
+        *,
         whole_extent=None,
         direction=None,
         period=None,
@@ -620,10 +619,7 @@ class ImageGaussianSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageGau
 
     """
 
-    @_deprecate_positional_args
-    def __init__(  # noqa: PLR0917
-        self, center=None, whole_extent=None, maximum=None, std=None
-    ) -> None:
+    def __init__(self, *, center=None, whole_extent=None, maximum=None, std=None) -> None:
         super().__init__()
         if center is not None:
             self.center = center

@@ -16,7 +16,6 @@ import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.writer import BaseWriter
 from pyvista.core.utilities.writer import BMPWriter
 from pyvista.core.utilities.writer import DataSetWriter
@@ -741,17 +740,16 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         '.vti': XMLImageDataWriter,
     }
 
-    @_deprecate_positional_args(allowed=['uinput'])
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self: Self,
         uinput: ImageData | str | Path | None = None,
+        *,
         dimensions: VectorLike[int] | None = None,
         spacing: VectorLike[float] = (1.0, 1.0, 1.0),
         origin: VectorLike[float] = (0.0, 0.0, 0.0),
-        deep: bool = False,  # noqa: FBT001, FBT002
+        deep: bool = False,
         direction_matrix: RotationLike | None = None,
         offset: int | VectorLike[int] | None = None,
-        *,
         validate: bool | _NestedMeshValidationFields = False,
     ) -> None:
         """Initialize the uniform grid."""

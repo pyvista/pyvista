@@ -8,7 +8,6 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import examples
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 from .logo import text_3d
 
@@ -223,8 +222,7 @@ def orientation_plotter():
     return pl
 
 
-@_deprecate_positional_args
-def plot_wave(fps=30, frequency=1, wavetime=3, notebook=None):  # noqa: PLR0917
+def plot_wave(*, fps=30, frequency=1, wavetime=3, notebook=None):
     """Plot a 3D moving wave in a render window.
 
     Parameters

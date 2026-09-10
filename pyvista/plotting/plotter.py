@@ -36,7 +36,6 @@ import scooby
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import MissingDataError
@@ -466,10 +465,10 @@ class BasePlotter(_BoundsSizeMixin):
     mouse_position: tuple[int, int] | None = None
     click_position: tuple[int, int] | None = None
 
-    @_deprecate_positional_args(allowed=['shape'])
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
         shape: Sequence[int] | str = (1, 1),
+        *,
         border: BorderOptions | None = None,
         border_color: ColorLike | None = None,
         border_width: float | None = None,
@@ -513,7 +512,7 @@ class BasePlotter(_BoundsSizeMixin):
         self.image_transparent_background = self._theme.transparent_background
 
         # optional function to be called prior to closing
-        self.__before_close_callback = None
+        self.__before_close_callback: weakref.ref[Callable[[Plotter], None]] | None = None
         # background thread (and its cancellation event) started by a threaded
         # `orbit_on_path()` call, if any; used by `close()` to stop it cleanly
         self._orbit_thread: threading.Thread | None = None
@@ -705,8 +704,7 @@ class BasePlotter(_BoundsSizeMixin):
         )
         raise DeprecationError(msg)
 
-    @_deprecate_positional_args(allowed=['filename'])
-    def import_gltf(self, filename: str | Path, set_camera: bool = True) -> None:  # noqa: FBT001, FBT002
+    def import_gltf(self, filename: str | Path, *, set_camera: bool = True) -> None:
         """Import a glTF file into the plotter.
 
         See https://www.khronos.org/gltf/ for more information.
@@ -982,13 +980,13 @@ class BasePlotter(_BoundsSizeMixin):
             raise RuntimeError(msg)
         return component
 
-    @_deprecate_positional_args(allowed=['filename'])
-    def export_gltf(  # noqa: PLR0917
+    def export_gltf(
         self,
         filename: str,
-        inline_data: bool = True,  # noqa: FBT001, FBT002
-        rotate_scene: bool = True,  # noqa: FBT001, FBT002
-        save_normals: bool = True,  # noqa: FBT001, FBT002
+        *,
+        inline_data: bool = True,
+        rotate_scene: bool = True,
+        save_normals: bool = True,
     ) -> None:
         """Export the current rendering scene as a glTF file.
 
@@ -1144,8 +1142,7 @@ class BasePlotter(_BoundsSizeMixin):
         exporter.SetRenderWindow(self.render_window)
         exporter.Write()
 
-    @_deprecate_positional_args
-    def enable_hidden_line_removal(self, all_renderers: bool = True) -> None:  # noqa: FBT001, FBT002
+    def enable_hidden_line_removal(self, *, all_renderers: bool = True) -> None:
         """Enable hidden line removal.
 
         Wireframe geometry will be drawn using hidden line removal if
@@ -1185,8 +1182,7 @@ class BasePlotter(_BoundsSizeMixin):
         else:
             self.renderer.enable_hidden_line_removal()
 
-    @_deprecate_positional_args
-    def disable_hidden_line_removal(self, all_renderers: bool = True) -> None:  # noqa: FBT001, FBT002
+    def disable_hidden_line_removal(self, *, all_renderers: bool = True) -> None:
         """Disable hidden line removal.
 
         Enable again with :func:`enable_hidden_line_removal
@@ -1365,8 +1361,7 @@ class BasePlotter(_BoundsSizeMixin):
         """Wrap ``Renderer.remove_floors``."""
         return self.renderer.remove_floors(*args, **kwargs)
 
-    @_deprecate_positional_args
-    def enable_3_lights(self, only_active: bool = False) -> None:  # noqa: FBT001, FBT002
+    def enable_3_lights(self, *, only_active: bool = False) -> None:
         """Enable 3-lights illumination.
 
         This will replace all pre-existing lights in the scene.
@@ -1418,8 +1413,7 @@ class BasePlotter(_BoundsSizeMixin):
         msg = 'DEPRECATED: Please use ``enable_lightkit``'
         raise DeprecationError(msg)
 
-    @_deprecate_positional_args
-    def enable_lightkit(self, only_active: bool = False) -> None:  # noqa: FBT001, FBT002
+    def enable_lightkit(self, *, only_active: bool = False) -> None:
         """Enable the default light-kit lighting.
 
         See:
@@ -1462,12 +1456,12 @@ class BasePlotter(_BoundsSizeMixin):
                 renderer.add_light(light)
             renderer.LightFollowCameraOn()
 
-    @_deprecate_positional_args(allowed=['aa_type'])
     def enable_anti_aliasing(
         self,
         aa_type: Literal['ssaa', 'msaa', 'fxaa'] = 'ssaa',
+        *,
         multi_samples: int | None = None,
-        all_renderers: bool = True,  # noqa: FBT001, FBT002
+        all_renderers: bool = True,
     ) -> None:
         """Enable anti-aliasing.
 
@@ -1551,8 +1545,7 @@ class BasePlotter(_BoundsSizeMixin):
         else:
             self.renderer.enable_anti_aliasing(aa_type)
 
-    @_deprecate_positional_args
-    def disable_anti_aliasing(self, all_renderers: bool = True) -> None:  # noqa: FBT001, FBT002
+    def disable_anti_aliasing(self, *, all_renderers: bool = True) -> None:
         """Disable anti-aliasing.
 
         Parameters
@@ -2570,11 +2563,11 @@ class BasePlotter(_BoundsSizeMixin):
         for callback in self._on_render_callbacks:
             callback(self)
 
-    @_deprecate_positional_args(allowed=['callback'])
     def add_on_render_callback(
         self,
         callback: Callable[[BasePlotter], None],
-        render_event: bool = False,  # noqa: FBT001, FBT002
+        *,
+        render_event: bool = False,
     ) -> None:
         """Add a method to be called post-render.
 
@@ -2972,8 +2965,7 @@ class BasePlotter(_BoundsSizeMixin):
             renderer = self.renderer
         renderer.view_isometric()
 
-    @_deprecate_positional_args(allowed=['stime'])
-    def update(self, stime: int = 1, force_redraw: bool = True) -> None:  # noqa: FBT001, FBT002
+    def update(self, stime: int = 1, *, force_redraw: bool = True) -> None:
         """Update window, redraw, process messages query.
 
         Parameters
@@ -3006,59 +2998,59 @@ class BasePlotter(_BoundsSizeMixin):
         if force_redraw:
             self.render()
 
-    @_deprecate_positional_args(allowed=['dataset'])
-    def add_composite(  # noqa: PLR0917
+    def add_composite(
         self,
         dataset: MultiBlock,
+        *,
         color: ColorLike | None = None,
         style: StyleOptions | None = None,
         scalars: str | None = None,
         clim: Sequence[float] | None = None,
-        show_edges: bool | None = None,  # noqa: FBT001
+        show_edges: bool | None = None,
         edge_color: ColorLike | None = None,
         point_size: float | None = None,
         line_width: float | None = None,
         opacity: float | None = 1.0,
-        flip_scalars: bool = False,  # noqa: FBT001, FBT002
-        lighting: bool | None = None,  # noqa: FBT001
+        flip_scalars: bool = False,
+        lighting: bool | None = None,
         n_colors: int = 256,
-        interpolate_before_map: bool | None = True,  # noqa: FBT001, FBT002
+        interpolate_before_map: bool | None = True,
         cmap: ColormapOptions | LookupTable | None = None,
         label: str | None = None,
-        reset_camera: bool | None = None,  # noqa: FBT001
+        reset_camera: bool | None = None,
         scalar_bar_args: ScalarBarArgs | None = None,
-        show_scalar_bar: bool | None = None,  # noqa: FBT001
-        multi_colors: bool | str | cycler.Cycler[str, ColorLike] | Sequence[ColorLike] = False,  # noqa: FBT001, FBT002
+        show_scalar_bar: bool | None = None,
+        multi_colors: bool | str | cycler.Cycler[str, ColorLike] | Sequence[ColorLike] = False,
         name: str | None = None,
-        render_points_as_spheres: bool | None = None,  # noqa: FBT001
-        render_lines_as_tubes: bool | None = None,  # noqa: FBT001
-        smooth_shading: bool | None = None,  # noqa: FBT001
-        split_sharp_edges: bool | None = None,  # noqa: FBT001
+        render_points_as_spheres: bool | None = None,
+        render_lines_as_tubes: bool | None = None,
+        smooth_shading: bool | None = None,
+        split_sharp_edges: bool | None = None,
         ambient: float | None = None,
         diffuse: float | None = None,
         specular: float | None = None,
         specular_power: float | None = None,
         nan_color: ColorLike | None = None,
         nan_opacity: float = 1.0,
-        culling: CullingOptions | bool | None = None,  # noqa: FBT001
-        rgb: bool | None = None,  # noqa: FBT001
+        culling: CullingOptions | bool | None = None,
+        rgb: bool | None = None,
         below_color: ColorLike | None = None,
         above_color: ColorLike | None = None,
         annotations: dict[float, str] | None = None,
-        pickable: bool = True,  # noqa: FBT001, FBT002
+        pickable: bool = True,
         preference: PointLiteral | CellLiteral = 'point',
-        log_scale: bool = False,  # noqa: FBT001, FBT002
-        pbr: bool | None = None,  # noqa: FBT001
+        log_scale: bool = False,
+        pbr: bool | None = None,
         metallic: float | None = None,
         roughness: float | None = None,
-        render: bool = True,  # noqa: FBT001, FBT002
-        static: bool = False,  # noqa: FBT001, FBT002
+        render: bool = True,
+        static: bool = False,
         component: int | None = None,
-        color_missing_with_nan: bool = False,  # noqa: FBT001, FBT002
-        copy_mesh: bool = False,  # noqa: FBT001, FBT002
-        show_vertices: bool | None = None,  # noqa: FBT001
+        color_missing_with_nan: bool = False,
+        copy_mesh: bool = False,
+        show_vertices: bool | None = None,
         edge_opacity: float | None = None,
-        force_opaque: bool = False,  # noqa: FBT001, FBT002
+        force_opaque: bool = False,
         **kwargs,
     ) -> tuple[Actor, CompositePolyDataMapper]:
         """Add a composite dataset to the plotter.
@@ -3567,67 +3559,67 @@ class BasePlotter(_BoundsSizeMixin):
 
         return actor, mapper
 
-    @_deprecate_positional_args(allowed=['mesh'])
-    def add_mesh(  # noqa: PLR0917
+    def add_mesh(
         self,
         mesh: MatrixLike[float] | PlottableType | _vtk.vtkAlgorithm,
+        *,
         color: ColorLike | None = None,
         style: StyleOptions | None = None,
         scalars: str | NumpyArray[float] | None = None,
         clim: Sequence[float] | None = None,
-        show_edges: bool | None = None,  # noqa: FBT001
+        show_edges: bool | None = None,
         edge_color: ColorLike | None = None,
         point_size: float | None = None,
         line_width: float | None = None,
         opacity: float | OpacityOptions | Sequence[float] | None = None,
-        flip_scalars: bool = False,  # noqa: FBT001, FBT002
-        lighting: bool | None = None,  # noqa: FBT001
+        flip_scalars: bool = False,
+        lighting: bool | None = None,
         n_colors: int = 256,
-        interpolate_before_map: bool | None = None,  # noqa: FBT001
+        interpolate_before_map: bool | None = None,
         cmap: ColormapOptions | LookupTable | None = None,
         label: str | None = None,
-        reset_camera: bool | None = None,  # noqa: FBT001
+        reset_camera: bool | None = None,
         scalar_bar_args: ScalarBarArgs | None = None,
-        show_scalar_bar: bool | None = None,  # noqa: FBT001
-        multi_colors: bool = False,  # noqa: FBT001, FBT002
+        show_scalar_bar: bool | None = None,
+        multi_colors: bool = False,
         name: str | None = None,
         texture: Texture | NumpyArray[float] | None = None,
-        render_points_as_spheres: bool | None = None,  # noqa: FBT001
+        render_points_as_spheres: bool | None = None,
         point_shape: PointSpriteShape | str | None = None,
-        render_lines_as_tubes: bool | None = None,  # noqa: FBT001
-        smooth_shading: bool | None = None,  # noqa: FBT001
-        split_sharp_edges: bool | None = None,  # noqa: FBT001
+        render_lines_as_tubes: bool | None = None,
+        smooth_shading: bool | None = None,
+        split_sharp_edges: bool | None = None,
         ambient: float | None = None,
         diffuse: float | None = None,
         specular: float | None = None,
         specular_power: float | None = None,
         nan_color: ColorLike | None = None,
         nan_opacity: float = 1.0,
-        culling: CullingOptions | bool | None = None,  # noqa: FBT001
-        rgb: bool | None = None,  # noqa: FBT001
-        categories: bool = False,  # noqa: FBT001, FBT002
-        silhouette: SilhouetteArgs | bool | None = None,  # noqa: FBT001
-        use_transparency: bool = False,  # noqa: FBT001, FBT002
+        culling: CullingOptions | bool | None = None,
+        rgb: bool | None = None,
+        categories: bool = False,
+        silhouette: SilhouetteArgs | bool | None = None,
+        use_transparency: bool = False,
         below_color: ColorLike | None = None,
         above_color: ColorLike | None = None,
         annotations: dict[float, str] | None = None,
-        pickable: bool = True,  # noqa: FBT001, FBT002
+        pickable: bool = True,
         preference: PointLiteral | CellLiteral = 'point',
-        log_scale: bool = False,  # noqa: FBT001, FBT002
-        pbr: bool | None = None,  # noqa: FBT001
+        log_scale: bool = False,
+        pbr: bool | None = None,
         metallic: float | None = None,
         roughness: float | None = None,
-        render: bool = True,  # noqa: FBT001, FBT002
-        static: bool = False,  # noqa: FBT001, FBT002
+        render: bool = True,
+        static: bool = False,
         user_matrix: TransformLike | None = None,
         component: int | None = None,
-        emissive: bool | None = None,  # noqa: FBT001
-        copy_mesh: bool = False,  # noqa: FBT001, FBT002
+        emissive: bool | None = None,
+        copy_mesh: bool = False,
         backface_params: BackfaceArgs | Property | None = None,
-        show_vertices: bool | None = None,  # noqa: FBT001
+        show_vertices: bool | None = None,
         edge_opacity: float | None = None,
-        remove_existing_actor: bool | None = None,  # noqa: FBT001
-        force_opaque: bool = False,  # noqa: FBT001, FBT002
+        remove_existing_actor: bool | None = None,
+        force_opaque: bool = False,
         **kwargs,
     ) -> Actor:
         """Add any PyVista/VTK mesh or dataset that PyVista can wrap to the scene.
@@ -4705,47 +4697,47 @@ class BasePlotter(_BoundsSizeMixin):
         self.renderer._labels[addr] = (poly, label, color)
 
     # fmt: off
-    # ruff: disable[E501, FBT001]
+    # ruff: disable[E501]
     @overload
-    def add_volume(self, volume: MultiBlock, scalars: str | NumpyArray[float] | None = ..., clim: float | tuple[float, float] | None = ..., resolution: VectorLike[float] | None = ..., opacity: OpacityOptions | NumpyArray[float] = ..., n_colors: int = ..., cmap: ColormapOptions | LookupTable | None = ..., flip_scalars: bool = ..., reset_camera: bool | None = ..., name: str | None = ..., ambient: float | None = ..., categories: bool | int = ..., culling: CullingOptions | bool = ..., multi_colors: bool = ..., blending: Literal['additive', 'maximum', 'minimum', 'composite', 'average'] = ..., mapper: Literal['fixed_point', 'gpu', 'open_gl', 'smart', 'ugrid'] | None = ..., scalar_bar_args: ScalarBarArgs | None = ..., show_scalar_bar: bool | None = ..., annotations: dict[float, str] | None = ..., pickable: bool = ..., preference: PointLiteral | CellLiteral = ..., opacity_unit_distance: float | None = ..., shade: bool = ..., diffuse: float = ..., specular: float = ..., specular_power: float = ..., render: bool | None = ..., user_matrix: TransformLike | None = ..., log_scale: bool = ..., **kwargs) -> list[Volume]: ...
+    def add_volume(self, volume: MultiBlock, *, scalars: str | NumpyArray[float] | None = ..., clim: float | tuple[float, float] | None = ..., resolution: VectorLike[float] | None = ..., opacity: OpacityOptions | NumpyArray[float] = ..., n_colors: int = ..., cmap: ColormapOptions | LookupTable | None = ..., flip_scalars: bool = ..., reset_camera: bool | None = ..., name: str | None = ..., ambient: float | None = ..., categories: bool | int = ..., culling: CullingOptions | bool = ..., multi_colors: bool = ..., blending: Literal['additive', 'maximum', 'minimum', 'composite', 'average'] = ..., mapper: Literal['fixed_point', 'gpu', 'open_gl', 'smart', 'ugrid'] | None = ..., scalar_bar_args: ScalarBarArgs | None = ..., show_scalar_bar: bool | None = ..., annotations: dict[float, str] | None = ..., pickable: bool = ..., preference: PointLiteral | CellLiteral = ..., opacity_unit_distance: float | None = ..., shade: bool = ..., diffuse: float = ..., specular: float = ..., specular_power: float = ..., render: bool | None = ..., user_matrix: TransformLike | None = ..., log_scale: bool = ..., **kwargs) -> list[Volume]: ...
     @overload
-    def add_volume(self, volume: DataSet | NumpyArray[float], scalars: str | NumpyArray[float] | None = ..., clim: float | tuple[float, float] | None = ..., resolution: VectorLike[float] | None = ..., opacity: OpacityOptions | NumpyArray[float] = ..., n_colors: int = ..., cmap: ColormapOptions | LookupTable | None = ..., flip_scalars: bool = ..., reset_camera: bool | None = ..., name: str | None = ..., ambient: float | None = ..., categories: bool | int = ..., culling: CullingOptions | bool = ..., multi_colors: bool = ..., blending: Literal['additive', 'maximum', 'minimum', 'composite', 'average'] = ..., mapper: Literal['fixed_point', 'gpu', 'open_gl', 'smart', 'ugrid'] | None = ..., scalar_bar_args: ScalarBarArgs | None = ..., show_scalar_bar: bool | None = ..., annotations: dict[float, str] | None = ..., pickable: bool = ..., preference: PointLiteral | CellLiteral = ..., opacity_unit_distance: float | None = ..., shade: bool = ..., diffuse: float = ..., specular: float = ..., specular_power: float = ..., render: bool | None = ..., user_matrix: TransformLike | None = ..., log_scale: bool = ..., **kwargs) -> Volume: ...
+    def add_volume(self, volume: DataSet | NumpyArray[float], *, scalars: str | NumpyArray[float] | None = ..., clim: float | tuple[float, float] | None = ..., resolution: VectorLike[float] | None = ..., opacity: OpacityOptions | NumpyArray[float] = ..., n_colors: int = ..., cmap: ColormapOptions | LookupTable | None = ..., flip_scalars: bool = ..., reset_camera: bool | None = ..., name: str | None = ..., ambient: float | None = ..., categories: bool | int = ..., culling: CullingOptions | bool = ..., multi_colors: bool = ..., blending: Literal['additive', 'maximum', 'minimum', 'composite', 'average'] = ..., mapper: Literal['fixed_point', 'gpu', 'open_gl', 'smart', 'ugrid'] | None = ..., scalar_bar_args: ScalarBarArgs | None = ..., show_scalar_bar: bool | None = ..., annotations: dict[float, str] | None = ..., pickable: bool = ..., preference: PointLiteral | CellLiteral = ..., opacity_unit_distance: float | None = ..., shade: bool = ..., diffuse: float = ..., specular: float = ..., specular_power: float = ..., render: bool | None = ..., user_matrix: TransformLike | None = ..., log_scale: bool = ..., **kwargs) -> Volume: ...
     @overload
-    def add_volume(self, volume: DataSet | MultiBlock | NumpyArray[float], scalars: str | NumpyArray[float] | None = ..., clim: float | tuple[float, float] | None = ..., resolution: VectorLike[float] | None = ..., opacity: OpacityOptions | NumpyArray[float] = ..., n_colors: int = ..., cmap: ColormapOptions | LookupTable | None = ..., flip_scalars: bool = ..., reset_camera: bool | None = ..., name: str | None = ..., ambient: float | None = ..., categories: bool | int = ..., culling: CullingOptions | bool = ..., multi_colors: bool = ..., blending: Literal['additive', 'maximum', 'minimum', 'composite', 'average'] = ..., mapper: Literal['fixed_point', 'gpu', 'open_gl', 'smart', 'ugrid'] | None = ..., scalar_bar_args: ScalarBarArgs | None = ..., show_scalar_bar: bool | None = ..., annotations: dict[float, str] | None = ..., pickable: bool = ..., preference: PointLiteral | CellLiteral = ..., opacity_unit_distance: float | None = ..., shade: bool = ..., diffuse: float = ..., specular: float = ..., specular_power: float = ..., render: bool | None = ..., user_matrix: TransformLike | None = ..., log_scale: bool = ..., **kwargs) -> Volume | list[Volume]: ...
-    # ruff: enable[E501, FBT001]
+    def add_volume(self, volume: DataSet | MultiBlock | NumpyArray[float], *, scalars: str | NumpyArray[float] | None = ..., clim: float | tuple[float, float] | None = ..., resolution: VectorLike[float] | None = ..., opacity: OpacityOptions | NumpyArray[float] = ..., n_colors: int = ..., cmap: ColormapOptions | LookupTable | None = ..., flip_scalars: bool = ..., reset_camera: bool | None = ..., name: str | None = ..., ambient: float | None = ..., categories: bool | int = ..., culling: CullingOptions | bool = ..., multi_colors: bool = ..., blending: Literal['additive', 'maximum', 'minimum', 'composite', 'average'] = ..., mapper: Literal['fixed_point', 'gpu', 'open_gl', 'smart', 'ugrid'] | None = ..., scalar_bar_args: ScalarBarArgs | None = ..., show_scalar_bar: bool | None = ..., annotations: dict[float, str] | None = ..., pickable: bool = ..., preference: PointLiteral | CellLiteral = ..., opacity_unit_distance: float | None = ..., shade: bool = ..., diffuse: float = ..., specular: float = ..., specular_power: float = ..., render: bool | None = ..., user_matrix: TransformLike | None = ..., log_scale: bool = ..., **kwargs) -> Volume | list[Volume]: ...
+    # ruff: enable[E501]
     # fmt: on
-    @_deprecate_positional_args(allowed=['volume'])
-    def add_volume(  # noqa: PLR0917
+    def add_volume(
         self,
         volume: DataSet | MultiBlock | NumpyArray[float],
+        *,
         scalars: str | NumpyArray[float] | None = None,
         clim: float | tuple[float, float] | None = None,
         resolution: VectorLike[float] | None = None,
         opacity: OpacityOptions | NumpyArray[float] = 'linear',
         n_colors: int = 256,
         cmap: ColormapOptions | LookupTable | None = None,
-        flip_scalars: bool = False,  # noqa: FBT001, FBT002
-        reset_camera: bool | None = None,  # noqa: FBT001
+        flip_scalars: bool = False,
+        reset_camera: bool | None = None,
         name: str | None = None,
         ambient: float | None = None,
-        categories: bool | int = False,  # noqa: FBT001, FBT002
-        culling: CullingOptions | bool = False,  # noqa: FBT001, FBT002
-        multi_colors: bool = False,  # noqa: FBT001, FBT002
+        categories: bool | int = False,
+        culling: CullingOptions | bool = False,
+        multi_colors: bool = False,
         blending: Literal['additive', 'maximum', 'minimum', 'composite', 'average'] = 'composite',
         mapper: Literal['fixed_point', 'gpu', 'open_gl', 'smart', 'ugrid'] | None = None,
         scalar_bar_args: ScalarBarArgs | None = None,
-        show_scalar_bar: bool | None = None,  # noqa: FBT001
+        show_scalar_bar: bool | None = None,
         annotations: dict[float, str] | None = None,
-        pickable: bool = True,  # noqa: FBT001, FBT002
+        pickable: bool = True,
         preference: PointLiteral | CellLiteral = 'point',
         opacity_unit_distance: float | None = None,
-        shade: bool = False,  # noqa: FBT001, FBT002
+        shade: bool = False,
         diffuse: float = 0.7,  # TODO: different default for volumes
         specular: float = 0.2,  # TODO: different default for volumes
         specular_power: float = 10.0,  # TODO: different default for volumes
-        render: bool | None = True,  # noqa: FBT001, FBT002
+        render: bool | None = True,
         user_matrix: TransformLike | None = None,
-        log_scale: bool = False,  # noqa: FBT001, FBT002
+        log_scale: bool = False,
         **kwargs,
     ) -> Volume | list[Volume]:
         """Add a volume, rendered using a smart mapper by default.
@@ -5312,14 +5304,14 @@ class BasePlotter(_BoundsSizeMixin):
         self.renderer.Modified()
         return cast('Volume', actor)
 
-    @_deprecate_positional_args(allowed=['mesh'])
-    def add_silhouette(  # noqa: PLR0917
+    def add_silhouette(
         self,
         mesh: NumpyArray[float]
         | DataSet
         | MultiBlock
         | _vtk.vtkAlgorithm
         | _vtk.vtkAlgorithmOutput,
+        *,
         color: ColorLike | None = None,
         line_width: float | None = None,
         opacity: float | None = None,
@@ -5726,29 +5718,28 @@ class BasePlotter(_BoundsSizeMixin):
         self.text = None
 
     # fmt: off
-    # ruff: disable[E501, FBT001]
+    # ruff: disable[E501]
     @overload
-    def add_text(self, text: str, position: TextPositionOptions = ..., font_size: int | None = ..., color: ColorLike | None = ..., font: FontFamilyOptions | None = ..., shadow: bool = ..., name: str | None = ..., viewport: bool = ..., orientation: float = ..., font_file: str | None = ..., *, render: bool = ...) -> CornerAnnotation: ...
+    def add_text(self, text: str, *, position: TextPositionOptions = ..., font_size: int | None = ..., color: ColorLike | None = ..., font: FontFamilyOptions | None = ..., shadow: bool = ..., name: str | None = ..., viewport: bool = ..., orientation: float = ..., font_file: str | None = ..., render: bool = ...) -> CornerAnnotation: ...
     @overload
-    def add_text(self, text: str, position: Sequence[float] | None, font_size: int | None = ..., color: ColorLike | None = ..., font: FontFamilyOptions | None = ..., shadow: bool = ..., name: str | None = ..., viewport: bool = ..., orientation: float = ..., font_file: str | None = ..., *, render: bool = ...) -> Text: ...
+    def add_text(self, text: str, *, position: Sequence[float] | None, font_size: int | None = ..., color: ColorLike | None = ..., font: FontFamilyOptions | None = ..., shadow: bool = ..., name: str | None = ..., viewport: bool = ..., orientation: float = ..., font_file: str | None = ..., render: bool = ...) -> Text: ...
     @overload
-    def add_text(self, text: str, position: TextPositionOptions | Sequence[float] | None = ..., font_size: int | None = ..., color: ColorLike | None = ..., font: FontFamilyOptions | None = ..., shadow: bool = ..., name: str | None = ..., viewport: bool = ..., orientation: float = ..., font_file: str | None = ..., *, render: bool = ...) -> CornerAnnotation | Text: ...
-    # ruff: enable[E501, FBT001]
+    def add_text(self, text: str, *, position: TextPositionOptions | Sequence[float] | None = ..., font_size: int | None = ..., color: ColorLike | None = ..., font: FontFamilyOptions | None = ..., shadow: bool = ..., name: str | None = ..., viewport: bool = ..., orientation: float = ..., font_file: str | None = ..., render: bool = ...) -> CornerAnnotation | Text: ...
+    # ruff: enable[E501]
     # fmt: on
-    @_deprecate_positional_args(allowed=['text'])
-    def add_text(  # noqa: PLR0917
+    def add_text(
         self,
         text: str,
+        *,
         position: TextPositionOptions | Sequence[float] | None = 'upper_left',
         font_size: int | None = 18,
         color: ColorLike | None = None,
         font: FontFamilyOptions | None = None,
-        shadow: bool = False,  # noqa: FBT001, FBT002
+        shadow: bool = False,
         name: str | None = None,
-        viewport: bool = False,  # noqa: FBT001, FBT002
+        viewport: bool = False,
         orientation: float = 0.0,
         font_file: str | None = None,
-        *,
         render: bool = True,
     ) -> CornerAnnotation | Text:
         """Add text to plot object in the top left corner by default.
@@ -6038,14 +6029,14 @@ class BasePlotter(_BoundsSizeMixin):
             filename = Path(pv.FIGURE_PATH) / filename
         self.mwriter = get_writer(filename, fps=framerate, quality=quality, **kwargs)
 
-    @_deprecate_positional_args(allowed=['filename'])
-    def open_gif(  # noqa: PLR0917
+    def open_gif(
         self,
         filename: str | Path,
+        *,
         loop: int = 0,
         fps: float = 10,
         palettesize: int = 256,
-        subrectangles: bool = False,  # noqa: FBT001, FBT002
+        subrectangles: bool = False,
         **kwargs,
     ) -> None:
         """Open a gif file.
@@ -6144,11 +6135,11 @@ class BasePlotter(_BoundsSizeMixin):
         self.update()
         mwriter.append_data(self.image)
 
-    @_deprecate_positional_args
     def get_image_depth(
         self,
+        *,
         fill_value: float | None = np.nan,
-        reset_camera_clipping_range: bool = True,  # noqa: FBT001, FBT002
+        reset_camera_clipping_range: bool = True,
     ) -> NumpyArray[np.float32]:
         """Return a depth image representing current render window.
 
@@ -6237,15 +6228,15 @@ class BasePlotter(_BoundsSizeMixin):
 
         return zval
 
-    @_deprecate_positional_args(allowed=['lines'])
-    def add_lines(  # noqa: PLR0917
+    def add_lines(
         self,
         lines: NumpyArray[float],
+        *,
         color: ColorLike = 'w',
         width: float = 5,
         label: str | None = None,
         name: str | None = None,
-        connected: bool = False,  # noqa: FBT001, FBT002
+        connected: bool = False,
     ) -> Actor:
         """Add lines to the plotting object.
 
@@ -6343,33 +6334,33 @@ class BasePlotter(_BoundsSizeMixin):
         """Remove the active scalar bar."""
         self.scalar_bars.remove_scalar_bar(*args, **kwargs)
 
-    @_deprecate_positional_args(allowed=['points', 'labels'])
-    def add_point_labels(  # noqa: PLR0917
+    def add_point_labels(
         self,
         points: MatrixLike[float] | VectorLike[float] | DataSet | _vtk.vtkAlgorithm,
         labels: Sequence[str | int] | str,
-        italic: bool = False,  # noqa: FBT001, FBT002
-        bold: bool = True,  # noqa: FBT001, FBT002
+        *,
+        italic: bool = False,
+        bold: bool = True,
         font_size: int | None = None,
         text_color: ColorLike | None = None,
         font_family: FontFamilyOptions | None = None,
         font_file: str | None = None,
-        shadow: bool = False,  # noqa: FBT001, FBT002
-        show_points: bool = True,  # noqa: FBT001, FBT002
+        shadow: bool = False,
+        show_points: bool = True,
         point_color: ColorLike | None = None,
         point_size: float | None = None,
         name: str | None = None,
         shape_color: ColorLike = 'grey',
         shape: Literal['rect', 'rounded_rect'] | None = 'rounded_rect',
-        fill_shape: bool = True,  # noqa: FBT001, FBT002
+        fill_shape: bool = True,
         margin: int = 3,
         shape_opacity: float = 1.0,
-        pickable: bool = False,  # noqa: FBT001, FBT002
-        render_points_as_spheres: bool = False,  # noqa: FBT001, FBT002
+        pickable: bool = False,
+        render_points_as_spheres: bool = False,
         tolerance: float = 0.001,
-        reset_camera: bool | None = None,  # noqa: FBT001
-        always_visible: bool = False,  # noqa: FBT001, FBT002
-        render: bool = True,  # noqa: FBT001, FBT002
+        reset_camera: bool | None = None,
+        always_visible: bool = False,
+        render: bool = True,
         justification_horizontal: HorizontalOptions | None = None,
         justification_vertical: VerticalOptions | None = None,
         background_color: ColorLike | None = None,
@@ -6653,11 +6644,11 @@ class BasePlotter(_BoundsSizeMixin):
         )
         return label_actor
 
-    @_deprecate_positional_args(allowed=['points', 'labels'])
-    def add_point_scalar_labels(  # noqa: PLR0917
+    def add_point_scalar_labels(
         self,
         points: MatrixLike[float] | VectorLike[float] | DataSet,
         labels: list[str | int] | str,
+        *,
         fmt: str | None = None,
         preamble: str = '',
         **kwargs,
@@ -6895,13 +6886,13 @@ class BasePlotter(_BoundsSizeMixin):
         # return image array if requested
         return image if return_img else None
 
-    @_deprecate_positional_args(allowed=['filename'])
-    def save_graphic(  # noqa: PLR0917
+    def save_graphic(
         self,
         filename: str | Path,
+        *,
         title: str = 'PyVista Export',
-        raster: bool = True,  # noqa: FBT001, FBT002
-        painter: bool = True,  # noqa: FBT001, FBT002
+        raster: bool = True,
+        painter: bool = True,
     ) -> None:
         """Save a screenshot of the rendering window as a graphic file.
 
@@ -6978,21 +6969,21 @@ class BasePlotter(_BoundsSizeMixin):
         writer.Update()
 
     # fmt: off
-    # ruff: disable[E501, FBT001, FBT002]
+    # ruff: disable[E501, FBT001]
     @overload
-    def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., transparent_background: bool | None = ..., return_img: Literal[True] = True, window_size: Sequence[int] | None = ..., scale: int | None = ...) -> NumpyArray[np.uint8]: ...
+    def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., *, transparent_background: bool | None = ..., return_img: Literal[True] = True, window_size: Sequence[int] | None = ..., scale: int | None = ...) -> NumpyArray[np.uint8]: ...
     @overload
-    def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., transparent_background: bool | None = ..., return_img: Literal[False] = ..., window_size: Sequence[int] | None = ..., scale: int | None = ...) -> None: ...
+    def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., *, transparent_background: bool | None = ..., return_img: Literal[False] = ..., window_size: Sequence[int] | None = ..., scale: int | None = ...) -> None: ...
     @overload
-    def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., transparent_background: bool | None = ..., return_img: bool = ..., window_size: Sequence[int] | None = ..., scale: int | None = ...) -> NumpyArray[np.uint8] | None: ...
-    # ruff: enable[E501, FBT001, FBT002]
+    def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., *, transparent_background: bool | None = ..., return_img: bool = ..., window_size: Sequence[int] | None = ..., scale: int | None = ...) -> NumpyArray[np.uint8] | None: ...
+    # ruff: enable[E501, FBT001]
     # fmt: on
-    @_deprecate_positional_args(allowed=['filename'])
-    def screenshot(  # noqa: PLR0917
+    def screenshot(
         self,
         filename: str | Path | BytesIO | bool | None = None,  # noqa: FBT001
-        transparent_background: bool | None = None,  # noqa: FBT001
-        return_img: bool = True,  # noqa: FBT001, FBT002
+        *,
+        transparent_background: bool | None = None,
+        return_img: bool = True,
         window_size: Sequence[int] | None = None,
         scale: int | None = None,
     ) -> NumpyArray[np.uint8] | None:
@@ -7121,9 +7112,9 @@ class BasePlotter(_BoundsSizeMixin):
         """Wrap ``Renderers.set_color_cycler``."""
         self.renderers.set_color_cycler(*args, **kwargs)
 
-    @_deprecate_positional_args
-    def generate_orbital_path(  # noqa: PLR0917
+    def generate_orbital_path(
         self,
+        *,
         factor: float = 3.0,
         n_points: int = 20,
         viewup: Sequence[float] | None = None,
@@ -7202,16 +7193,16 @@ class BasePlotter(_BoundsSizeMixin):
         """
         self._get_iren_not_none().fly_to(self.renderer, point)
 
-    @_deprecate_positional_args(allowed=['path'])
-    def orbit_on_path(  # noqa: PLR0917
+    def orbit_on_path(
         self,
         path: pv.PolyData | None = None,
+        *,
         focus: Sequence[float] | None = None,
         step: float = 0.5,
         viewup: Sequence[float] | None = None,
-        write_frames: bool = False,  # noqa: FBT001, FBT002
-        threaded: bool = False,  # noqa: FBT001, FBT002
-        progress_bar: bool = False,  # noqa: FBT001, FBT002
+        write_frames: bool = False,
+        threaded: bool = False,
+        progress_bar: bool = False,
     ) -> None:
         """Orbit on the given path focusing on the focus point.
 
@@ -7394,13 +7385,13 @@ class BasePlotter(_BoundsSizeMixin):
         if self._initialized:
             del self.renderers
 
-    @_deprecate_positional_args(allowed=['image_path'])
-    def add_background_image(  # noqa: PLR0917
+    def add_background_image(
         self,
         image_path: str | Path,
+        *,
         scale: float = 1.0,
-        auto_resize: bool = True,  # noqa: FBT001, FBT002
-        as_global: bool = True,  # noqa: FBT001, FBT002
+        auto_resize: bool = True,
+        as_global: bool = True,
     ) -> None:
         """Add a background image to a plot.
 
@@ -7491,8 +7482,7 @@ class BasePlotter(_BoundsSizeMixin):
         """
         self.renderer.ResetCameraClippingRange()
 
-    @_deprecate_positional_args(allowed=['light'])
-    def add_light(self, light: _vtk.vtkLight, only_active: bool = False) -> None:  # noqa: FBT001, FBT002
+    def add_light(self, light: _vtk.vtkLight, *, only_active: bool = False) -> None:
         """Add a Light to the scene.
 
         Parameters
@@ -7523,8 +7513,7 @@ class BasePlotter(_BoundsSizeMixin):
         for renderer in renderers:
             renderer.add_light(light)
 
-    @_deprecate_positional_args
-    def remove_all_lights(self, only_active: bool = False) -> None:  # noqa: FBT001, FBT002
+    def remove_all_lights(self, *, only_active: bool = False) -> None:
         """Remove all lights from the scene.
 
         Parameters
@@ -8420,11 +8409,11 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
     last_update_time = 0.0
 
-    @_deprecate_positional_args
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
-        off_screen: bool | None = None,  # noqa: FBT001
-        notebook: bool | None = None,  # noqa: FBT001
+        *,
+        off_screen: bool | None = None,
+        notebook: bool | None = None,
         shape: Sequence[int] | str = (1, 1),
         groups: Sequence[int] | None = None,
         row_weights: Sequence[int] | None = None,
@@ -8433,15 +8422,15 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         border_color: ColorLike | None = None,
         border_width: float | None = None,
         window_size: list[int] | None = None,
-        line_smoothing: bool = False,  # noqa: FBT001, FBT002
-        point_smoothing: bool = False,  # noqa: FBT001, FBT002
-        polygon_smoothing: bool = False,  # noqa: FBT001, FBT002
+        line_smoothing: bool = False,
+        point_smoothing: bool = False,
+        polygon_smoothing: bool = False,
         splitting_position: float | None = None,
         title: str | None = None,
         lighting: LightingOptions | None = 'light kit',
         theme: Theme | ThemeOptions | str | None = None,
         image_scale: int | None = None,
-        stereo: StereoType | bool = False,  # noqa: FBT001, FBT002
+        stereo: StereoType | bool = False,
     ) -> None:
         """Initialize a vtk plotting object."""
         super().__init__(
@@ -8578,23 +8567,23 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         self._initialized = True
         log.debug('Plotter init stop')
 
-    @_deprecate_positional_args
-    def show(  # noqa: PLR0917
+    def show(
         self,
+        *,
         title: str | None = None,
         window_size: Sequence[int] | None = None,
-        interactive: bool = True,  # noqa: FBT001, FBT002
-        auto_close: bool | None = None,  # noqa: FBT001
-        interactive_update: bool = False,  # noqa: FBT001, FBT002
-        full_screen: bool | None = None,  # noqa: FBT001
-        screenshot: str | Path | BytesIO | bool = False,  # noqa: FBT001, FBT002
-        return_img: bool = False,  # noqa: FBT001, FBT002
+        interactive: bool = True,
+        auto_close: bool | None = None,
+        interactive_update: bool = False,
+        full_screen: bool | None = None,
+        screenshot: str | Path | BytesIO | bool = False,
+        return_img: bool = False,
         cpos: CameraPositionOptions | None = None,
         jupyter_backend: JupyterBackendOptions | str | None = None,
-        return_viewer: bool = False,  # noqa: FBT001, FBT002
-        return_cpos: bool | None = None,  # noqa: FBT001
+        return_viewer: bool = False,
+        return_cpos: bool | None = None,
         before_close_callback: Callable[[Plotter], None] | None = None,
-        store_image_depth: bool = False,  # noqa: FBT001, FBT002
+        store_image_depth: bool = False,
         **kwargs,
     ) -> (
         CameraPosition
@@ -8955,14 +8944,14 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
             return return_values[0]
         return return_values or None
 
-    @_deprecate_positional_args(allowed=['title'])
-    def add_title(  # noqa: PLR0917
+    def add_title(
         self,
         title: str,
+        *,
         font_size: int = 18,
         color: ColorLike | None = None,
         font: FontFamilyOptions | None = None,
-        shadow: bool = False,  # noqa: FBT001, FBT002
+        shadow: bool = False,
     ) -> CornerAnnotation:
         """Add text to the top center of the plot.
 

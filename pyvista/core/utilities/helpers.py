@@ -16,7 +16,6 @@ from typing_extensions import TypeIs
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 from . import transformations
 from .fileio import from_meshio
@@ -433,12 +432,12 @@ def _validate_plane_origin_and_normal(  # noqa: PLR0917
     return origin_, normal_
 
 
-@_deprecate_positional_args(allowed=['points', 'angle'])
-def axis_rotation(  # noqa: PLR0917
+def axis_rotation(
     points: NumpyArray[float],
     angle: float,
-    inplace: bool = False,  # noqa: FBT001, FBT002
-    deg: bool = True,  # noqa: FBT001, FBT002
+    *,
+    inplace: bool = False,
+    deg: bool = True,
     axis='z',
 ):
     """Rotate points by angle about an axis.
