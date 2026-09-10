@@ -651,6 +651,15 @@ class ScalarBars(_NoNewAttrMixin):
 
         label_text = scalar_bar.GetLabelTextProperty()
         anno_text = scalar_bar.GetAnnotationTextProperty()
+        # Preset the justification the layout applies after measuring each label
+        if vertical:
+            label_text.SetJustificationToLeft()
+            anno_text.SetJustificationToRight()
+            anno_text.SetVerticalJustificationToCentered()
+        else:
+            label_text.SetJustificationToCentered()
+            anno_text.SetJustificationToCentered()
+            anno_text.SetVerticalJustificationToTop()
         label_text.SetColor(color.float_rgb)
         anno_text.SetColor(color.float_rgb)
         label_text.SetShadow(shadow)

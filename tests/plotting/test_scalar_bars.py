@@ -204,6 +204,27 @@ def test_background_color_composite_range(multiblock_poly):
     pl.show()
 
 
+@pytest.mark.usefixtures('verify_image_cache')
+def test_labels_centered_with_translucent_actor(sphere):
+    sphere[KEY] = sphere.points[:, 2]
+    pl = pv.Plotter()
+    pl.add_mesh(
+        sphere,
+        scalar_bar_args={
+            'vertical': False,
+            'n_labels': 3,
+            'width': 0.8,
+            'height': 0.3,
+            'position_x': 0.1,
+            'position_y': 0.05,
+            'label_font_size': 40,
+            'title_font_size': 40,
+        },
+    )
+    pl.add_mesh(pv.Cube(center=(2, 0, 0)), opacity=0.5)
+    pl.show()
+
+
 def test_too_many_scalar_bars():
     pl = pv.Plotter()
     with pytest.raises(RuntimeError, match='Maximum number of color'):  # noqa: PT012
