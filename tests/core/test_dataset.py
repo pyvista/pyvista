@@ -203,35 +203,27 @@ def test_field_data(hexbeam):
 
 
 def test_field_data_string(hexbeam):
-    # test `mesh.field_data`
-    field_name = 'foo'
-    field_value = 'bar'
-    hexbeam.field_data[field_name] = field_value
-    returned = hexbeam.field_data[field_name]
-    assert returned == field_value
-    assert isinstance(returned, str)
-
-    # test `mesh.add_field_data`
-    field_name = 'eggs'
-    field_value = 'ham'
-    hexbeam.add_field_data(array=field_value, name=field_name)
-    returned = hexbeam.field_data[field_name]
-    assert returned == field_value
-    assert isinstance(returned, str)
-
-    # test `mesh[name] = data`
-    field_name = 'baz'
-    field_value = 'a' * hexbeam.n_points
-    hexbeam[field_name] = field_value
-    returned = hexbeam.field_data[field_name]
-    assert returned == field_value
-    assert isinstance(returned, str)
-
-    # a sequence of strings, not only a single one
-    field_name = 'spam'
     field_value = ['I could', 'write', 'notes', 'here']
-    hexbeam.add_field_data(field_value, field_name)
-    assert hexbeam.field_data[field_name].tolist() == field_value
+    hexbeam.add_field_data(field_value, 'spam')
+    assert hexbeam.field_data['spam'].tolist() == field_value
+
+    hexbeam.field_data['foo'] = ['bar']
+    returned = hexbeam.field_data['foo']
+    assert isinstance(returned, np.ndarray)
+    assert returned.tolist() == ['bar']
+
+
+def test_field_data_scalar_string_raises(hexbeam):
+    match = "Array 'foo' cannot be a scalar string"
+    with pytest.raises(TypeError, match=match):
+        hexbeam.field_data['foo'] = 'bar'
+    with pytest.raises(TypeError, match=match):
+        hexbeam.add_field_data('bar', 'foo')
+    with pytest.raises(TypeError, match=match):
+        hexbeam.point_data['foo'] = 'bar'
+    with pytest.raises(ValueError, match='Number of scalars'):
+        hexbeam['foo'] = 'bar'
+    assert 'foo' not in hexbeam.array_names
 
 
 @pytest.mark.parametrize('field', [range(5), np.ones((3, 3))[:, 0]])
@@ -502,10 +494,8 @@ def test_html_repr(hexbeam):
     assert hexbeam._repr_html_() is not None
 
 
-def test_html_repr_string_scalar(hexbeam):
-    array_data = 'data'
-    array_name = 'name'
-    hexbeam.add_field_data(array_data, array_name)
+def test_html_repr_string_array(hexbeam):
+    hexbeam.add_field_data(['data'], 'name')
     assert hexbeam._repr_html_() is not None
 
 

@@ -188,7 +188,7 @@ def test_metadata_save(hexbeam, tmpdir):
 def test_save_nested_multiblock_field_data(tmp_path, file_ext):
     filename = 'mesh' + file_ext
     nested = pv.MultiBlock()
-    nested.field_data['foo'] = 'bar'
+    nested.field_data['foo'] = ['bar']
     root = pv.MultiBlock([nested])
 
     # Save the multiblock and expect a warning
@@ -222,12 +222,12 @@ def test_user_dict(data_object_type):
     new_dict = dict(ham='eggs')
     data_object.user_dict = new_dict
     assert data_object.user_dict == new_dict
-    assert data_object.field_data[USER_DICT_KEY] == json.dumps(new_dict)
+    assert data_object.field_data[USER_DICT_KEY].tolist() == [json.dumps(new_dict)]
 
     new_dict = UserDict(test='string')
     data_object.user_dict = new_dict
     assert data_object.user_dict == new_dict
-    assert data_object.field_data[USER_DICT_KEY] == json.dumps(new_dict.data)
+    assert data_object.field_data[USER_DICT_KEY].tolist() == [json.dumps(new_dict.data)]
 
     match = (
         "User dict can only be set with type <class 'dict'> or <class 'collections.UserDict'>."
@@ -312,9 +312,7 @@ def test_user_dict_write_read(tmp_path, make_data_object, ext):
     dict_data = dict(foo='bar')
     data_object.user_dict = dict_data
 
-    dict_field_str = str(data_object.user_dict)
-    field_data_repr = repr(data_object.field_data)
-    assert dict_field_str in field_data_repr
+    assert USER_DICT_KEY in repr(data_object.field_data)
 
     filepath = tmp_path / ('data_object' + ext)
     data_object.save(filepath)
@@ -322,10 +320,16 @@ def test_user_dict_write_read(tmp_path, make_data_object, ext):
     data_object_read = pv.read(filepath)
 
     assert data_object_read.user_dict == dict_data
+    assert USER_DICT_KEY in repr(data_object_read.field_data)
 
-    dict_field_str = str(data_object.user_dict)
-    field_data_repr = repr(data_object.field_data)
-    assert dict_field_str in field_data_repr
+
+def test_user_dict_shallow_copy_of_empty_dict():
+    source = pv.Sphere()
+    assert source.user_dict == {}
+    shallow = source.copy(deep=False)
+    shallow.user_dict['name'] = 'copy'
+    assert shallow.user_dict == {'name': 'copy'}
+    assert source.user_dict == {}
 
 
 def test_user_dict_persists_with_merge_filter():

@@ -483,10 +483,9 @@ def test_dataset_repr_active_tcoords_badge():
 
 
 def test_dataset_repr_string_field_data():
-    """String field data exercises the isinstance(arr, str) coercion path
-    and must not crash."""
+    """String field data has no numeric range and must not crash the repr."""
     mesh = pv.Sphere()
-    mesh.field_data['name'] = 'test_string'
+    mesh.field_data['name'] = ['test_string']
     html = mesh._repr_html_()
     assert 'Field Data' in html
     assert 'name' in html

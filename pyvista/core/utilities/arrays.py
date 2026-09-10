@@ -689,15 +689,6 @@ def vtk_id_list_to_array(vtk_id_list: _vtk.vtkIdList) -> NumpyArray[int]:
     return np.fromiter(map(vtk_id_list.GetId, range(n_ids)), dtype=int, count=n_ids)
 
 
-def _set_string_scalar_object_name(vtkarr: _vtk.vtkStringArray) -> None:
-    """Set object name for scalar string arrays."""
-    # This is used as a flag so that scalar arrays can be reshaped later.
-    try:
-        vtkarr.SetObjectName('scalar')
-    except AttributeError:
-        vtkarr.GetObjectName = lambda: 'scalar'  # type: ignore[method-assign]
-
-
 # fmt: off
 # ruff: disable[E501]
 @overload
@@ -711,12 +702,15 @@ def convert_string_array(
 ) -> npt.NDArray[np.str_] | _vtk.vtkStringArray:
     """Convert a NumPy array of strings to a :vtk:`vtkStringArray` or vice versa.
 
-    If a scalar string is provided, it is converted to a :vtk:`vtkCharArray`
+    A scalar string is stored as an array with a single value.
 
     .. versionchanged:: 0.49
         A two-dimensional array keeps its second axis, held as the components of
         the :vtk:`vtkStringArray`. It was previously flattened. An array with more
         dimensions raises instead of being flattened.
+
+    .. versionchanged:: 0.50
+        A scalar string is converted back as a one-element array instead of a scalar.
 
     Parameters
     ----------
@@ -748,10 +742,7 @@ def convert_string_array(
             msg = 'String array contains non-ASCII characters that are not supported by VTK.'
             raise ValueError(msg)
         vtkarr = _vtk.vtkStringArray()
-        if arr.ndim == 0:
-            # The object name marks a scalar input
-            _set_string_scalar_object_name(vtkarr)
-        elif arr.ndim == 2:
+        if arr.ndim == 2:
             # The second axis is stored as components, as it is for numeric arrays
             vtkarr.SetNumberOfComponents(arr.shape[1])
 
@@ -766,11 +757,6 @@ def convert_string_array(
     # longest value; passing dtype='|U' to np.empty defaults to width 1
     # which truncates strings.
     arr_out = np.array(list(map(arr.GetValue, range(arr.GetNumberOfValues()))), dtype='|U')
-    try:
-        if arr.GetObjectName() == 'scalar':
-            return np.array(''.join(arr_out))
-    except AttributeError:
-        pass
     n_components = arr.GetNumberOfComponents()
     if n_components > 1:
         return arr_out.reshape(-1, n_components)
@@ -1057,11 +1043,6 @@ class _SerializedDictArray(DisableVtkSnakeCase, UserDict, _vtk.vtkStringArray): 
         # Init UserDict
         super().__init__(dict_, **kwargs)  # type: ignore[arg-type]
         self._update_string()
-
-        # Flag self as a scalar string
-        # This is only needed so that the Field DatasetAttributes repr
-        # shows this array as `str`
-        _set_string_scalar_object_name(self)
 
     def __getstate__(self: _SerializedDictArray) -> None:
         """Support pickling.

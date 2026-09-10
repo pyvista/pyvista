@@ -1293,7 +1293,7 @@ def test_move_nested_field_data_to_root_check_duplicate_keys():
 
     # Test nested field data key overrides root field data key
     root = _make_nested_multiblock(
-        root_field_data={NAME1: VALUE1}, nested1_field_data={NAME1: VALUE1}
+        root_field_data={NAME1: [VALUE1]}, nested1_field_data={NAME1: [VALUE1]}
     )
     match = (
         "The field data array 'name1' from nested MultiBlock at index [0] with name 'Block-00'\n"

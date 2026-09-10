@@ -213,17 +213,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
                 if self.association in [FieldAssociation.POINT, FieldAssociation.CELL]:
                     if name == self.active_vectors_name:
                         arr_type = 'VECTORS'
-                # special treatment for string field data
-                if self.association == FieldAssociation.NONE and isinstance(array, str):  # type: ignore[unreachable]
-                    dtype = 'str'  # type: ignore[unreachable]
-                    # Show the string value itself with a max of 20 characters,
-                    # 18 for string and 2 for quotes
-                    val = f'{array[:15]}...' if len(array) > 18 else array
-                    line = f'{name[:23]:<24}{dtype!s:<11}"{val}"'
-                else:
-                    line = (
-                        f'{name[:23]:<24}{array.dtype!s:<11}{array.shape!s:<20} {arr_type}'.strip()
-                    )
+                line = f'{name[:23]:<24}{array.dtype!s:<11}{array.shape!s:<20} {arr_type}'.strip()
                 lines.append(line)
             array_info = '\n    ' + '\n    '.join(lines)
 
@@ -525,7 +515,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         dataset: DataSet | _vtk.vtkDataSet,
         association: FieldAssociation,
     ) -> pyvista_ndarray:
-        """Return the array viewed as ``bool`` or ``complex``, or a scalar string as ``str``."""
+        """Return the array viewed as ``bool`` or ``complex``."""
         name = vtk_arr.GetName()
         association_name = association.name
         if name in dataset._association_bitarray_names[association_name]:  # type: ignore[union-attr]
@@ -537,9 +527,6 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
                 narray = narray.view(np.complex128)  # type: ignore[assignment]
             # remove singleton dimensions to match the behavior of the rest of 1D VTK arrays
             return narray.squeeze()  # type: ignore[return-value]
-        # Field data holding a string scalar (np.str_) is returned as the string itself
-        if narray.ndim == 0 and association is FieldAssociation.NONE and narray.dtype.kind == 'U':
-            return narray.tolist()
         return narray
 
     @_deprecate_positional_args(allowed=['data', 'name'])
@@ -775,26 +762,27 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         else:
             array_len = 1 if data.ndim == 0 else data.shape[0]
 
-        if data.ndim == 0 and data.dtype.kind == 'U':  # np.str_
-            pass  # Do not reshape string scalars
-        else:
+        if data.ndim == 0:
+            if data.dtype.kind == 'U':  # np.str_
+                msg = (
+                    f"Array '{name}' cannot be a scalar string. Use a list of strings "
+                    'to store a string array, or use `user_dict` to store string metadata.'
+                )
+                raise TypeError(msg)
             # Fixup input array length for scalar input
-            if data.ndim == 0:
-                tmparray = np.empty(array_len, dtype=data.dtype)
-                tmparray.fill(data)
-                data = tmparray
-            if data.shape[0] != array_len:
-                msg = (
-                    f"Invalid array shape. Array '{name}' has length ({data.shape[0]}) "
-                    f'but a length of ({array_len}) was expected.'
-                )
-                raise ValueError(msg)
-            if any(data.shape) and data.size == 0:
-                msg = (
-                    f'Invalid array shape. Empty arrays are not allowed. '
-                    f"Array '{name}' cannot have shape {data.shape}."
-                )
-                raise ValueError(msg)
+            data = np.full(array_len, data)
+        if data.shape[0] != array_len:
+            msg = (
+                f"Invalid array shape. Array '{name}' has length ({data.shape[0]}) "
+                f'but a length of ({array_len}) was expected.'
+            )
+            raise ValueError(msg)
+        if any(data.shape) and data.size == 0:
+            msg = (
+                f'Invalid array shape. Empty arrays are not allowed. '
+                f"Array '{name}' cannot have shape {data.shape}."
+            )
+            raise ValueError(msg)
         # attempt to reuse the existing pointer to underlying VTK data
         if isinstance(data, pyvista_ndarray):
             # pyvista_ndarray already contains the reference to the vtk object

@@ -1120,12 +1120,14 @@ def test_convert_array():
     arr4 = pv.core.utilities.arrays.convert_array(my_list)
     assert arr4.GetNumberOfValues() == len(my_list)
 
-    # test string scalar is converted to string array with length on
+    # a scalar string round-trips as a one-element array
     my_str = 'abc'
     arr5 = pv.core.utilities.arrays.convert_array(my_str)
     assert arr5.GetNumberOfValues() == 1
+    assert pv.core.utilities.arrays.convert_array(arr5).tolist() == [my_str]
     arr6 = pv.core.utilities.arrays.convert_array(np.array(my_str))
     assert arr6.GetNumberOfValues() == 1
+    assert pv.core.utilities.arrays.convert_array(arr6).tolist() == [my_str]
 
 
 def test_has_duplicates():
@@ -1757,13 +1759,13 @@ def test_convert_string_array_roundtrip():
 
 
 def test_convert_string_array_scalar_string():
-    """A bare Python str round-trips back to a 0-d numpy array of the original."""
+    """A bare Python str round-trips back as a one-element array."""
     vtk_arr = convert_string_array('hello')
     assert vtk_arr.GetNumberOfValues() == 1
     assert vtk_arr.GetValue(0) == 'hello'
     out = convert_string_array(vtk_arr)
-    assert out.ndim == 0
-    assert str(out) == 'hello'
+    assert out.shape == (1,)
+    assert out.tolist() == ['hello']
 
 
 @pytest.mark.parametrize(
