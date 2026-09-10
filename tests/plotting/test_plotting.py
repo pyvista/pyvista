@@ -6085,6 +6085,26 @@ def test_update_scalar_bar_range_shared_mappers():
     pl.show()
 
 
+def test_scaled_screenshot_scalar_bar_layout(sphere, no_images_to_verify):  # noqa: ARG001
+    sphere['z'] = sphere.points[:, 2]
+    pl = pv.Plotter()
+    pl.add_mesh(
+        sphere,
+        scalar_bar_args={
+            'title': 'Scalar bar title',
+            'title_font_size': 30,
+            'label_font_size': 30,
+        },
+    )
+    first = pl.screenshot(None, scale=2)
+    pl.camera.azimuth += 20
+    pl.reset_camera()
+    second = pl.screenshot(None, scale=2)
+    bottom = int(0.8 * first.shape[0])
+    assert np.array_equal(first[bottom:], second[bottom:])
+    pl.close()
+
+
 def test_add_remove_scalar_bar(sphere):
     """Verify a scalar bar can be added and removed."""
     pl = pv.Plotter()
