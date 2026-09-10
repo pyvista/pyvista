@@ -159,9 +159,8 @@ def test_set_scalars_replaces_digitized_array():
 def test_string_scalars_replot():
     mesh = pv.RectilinearGrid([0.0, 1.0, 2.0], [0.0, 1.0], [0.0])
     pl = pv.Plotter()
-    pl.add_mesh(mesh, scalars=['CellA', 'CellA'])
-    pl.close()
-    pl = pv.Plotter()
+    actor = pl.add_mesh(mesh, scalars=['CellA', 'CellA'])
+    pl.remove_actor(actor)
     pl.add_mesh(
         mesh,
         scalars=['CellA', 'CellB'],
