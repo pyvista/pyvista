@@ -539,12 +539,6 @@ def pytest_addoption(parser):
         default=False,
         help='run tests that require the documentation to already be built',
     )
-    parser.addoption(
-        '--test_dataset_urls',
-        action='store_true',
-        default=False,
-        help='check that every example dataset is still served from its source URL',
-    )
 
 
 # --- core-only test selection --------------------------------------------------
@@ -906,10 +900,6 @@ def pytest_runtest_setup(item: pytest.Item):
     doc_build = item.config.getoption(flag := '--doc_build')
     if item.get_closest_marker('needs_doc_build') and not doc_build:
         pytest.skip(f'Documentation build required, not enabled with {flag}')
-
-    dataset_urls = item.config.getoption(flag := '--test_dataset_urls')
-    if item.get_closest_marker('needs_dataset_urls') and not dataset_urls:
-        pytest.skip(f'Dataset URL check not enabled with {flag}')
 
 
 def pytest_report_header(config):  # noqa: ARG001
