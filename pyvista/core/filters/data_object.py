@@ -5348,7 +5348,7 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.UnstructuredGrid | pyvista.MultiBlock
+        pyvista.PolyData | pyvista.UnstructuredGrid | pyvista.MultiBlock
             Mesh containing only linear cells. A :class:`~pyvista.PolyData` gives a
             ``PolyData`` of triangles through
             :meth:`~pyvista.PolyDataFilters.triangulate`; every other dataset gives an
