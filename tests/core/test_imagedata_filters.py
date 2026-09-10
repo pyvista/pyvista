@@ -27,9 +27,9 @@ def beach():
 
 def variable_dimensionality_image(dimensions):
     image = pv.ImageData(dimensions=dimensions)
-    image.point_data['image'] = 99
-    image.point_data['other'] = 42
-    image.cell_data['data'] = 142
+    image.point_data['image'] = np.full(image.n_points, 99)
+    image.point_data['other'] = np.full(image.n_points, 42)
+    image.cell_data['data'] = np.full(image.n_cells, 142)
     return image
 
 

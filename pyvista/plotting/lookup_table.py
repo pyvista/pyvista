@@ -1238,7 +1238,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
             if isinstance(value, _vtk.vtkDataArray):
                 vtk_values = value
             else:
-                values = np.asarray(value)
+                values = np.atleast_1d(value)
                 if values.dtype == np.bool_:
                     values = values.astype(np.uint8)
                 vtk_values = convert_array(values)

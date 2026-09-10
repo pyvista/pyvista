@@ -44,6 +44,7 @@ from .utilities.arrays import FieldAssociation
 from .utilities.arrays import FieldLiteral
 from .utilities.arrays import PointLiteral
 from .utilities.arrays import _coerce_pointslike_arg
+from .utilities.arrays import _warn_scalar_array
 from .utilities.arrays import get_array
 from .utilities.arrays import get_array_association
 from .utilities.arrays import parse_field_choice
@@ -1581,10 +1582,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             scalars = np.asanyarray(scalars)
 
         if scalars.ndim == 0:
-            if np.issubdtype(scalars.dtype, np.str_):
-                # Always set scalar strings as field data
-                self.field_data[name] = scalars
-                return
+            _warn_scalar_array(name, None)
             # reshape single scalar values from 0D to 1D so that shape[0] can be indexed
             scalars = scalars.reshape((1,))
 
@@ -1597,7 +1595,6 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             # Field data must be set explicitly as it could be a point of
             # confusion for new users
             raise_not_matching(scalars, self)
-        return
 
     @property
     def n_arrays(self: Self) -> int:
@@ -1736,18 +1733,14 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             fmt = pv.FLOAT_FORMAT
             result: list[tuple[str, int, str, str, str]] = []
             for name, arr in attrs.items():
-                # Field data can contain str values at runtime despite
-                # DataSetAttributes.items() being typed as -> pyvista_ndarray.
-                # Wrap str so .shape / .dtype are available.
-                coerced = pv.pyvista_ndarray(arr) if isinstance(arr, str) else arr  # type: ignore[redundant-expr,unreachable]
-                ncomp = coerced.shape[1] if coerced.ndim > 1 else 1
-                shape = str(tuple(coerced.shape)) if show_shape else ''
+                ncomp = arr.shape[1] if arr.ndim > 1 else 1
+                shape = str(tuple(arr.shape)) if show_shape else ''
                 range_str = ''
-                if show_range and coerced.size > 0 and np.issubdtype(coerced.dtype, np.number):
-                    lo = fmt.format(np.nanmin(coerced))
-                    hi = fmt.format(np.nanmax(coerced))
+                if show_range and arr.size > 0 and np.issubdtype(arr.dtype, np.number):
+                    lo = fmt.format(np.nanmin(arr))
+                    hi = fmt.format(np.nanmax(arr))
                     range_str = f'[{lo}, {hi}]'
-                result.append((name, ncomp, str(coerced.dtype), shape, range_str))
+                result.append((name, ncomp, str(arr.dtype), shape, range_str))
             return result
 
         vec_assoc = self.active_vectors_info.association

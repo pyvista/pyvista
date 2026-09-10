@@ -20,7 +20,6 @@ from pyvista.core._vtk_utilities import vtkPyVistaOverride
 from pyvista.typing.mypy_plugin import promote_type
 
 from .datasetattributes import DataSetAttributes
-from .pyvista_ndarray import pyvista_ndarray
 from .utilities.accessor_registry import _clear_accessor_cache
 from .utilities.accessor_registry import _pending_accessor_names
 from .utilities.accessor_registry import _resolve_pending_accessor
@@ -547,6 +546,10 @@ class DataObject(
     def add_field_data(self: Self, array: ArrayLike[Any], name: str, deep: bool = True) -> None:  # noqa: FBT001, FBT002
         """Add field data.
 
+        .. deprecated:: 0.50
+            Setting a scalar is deprecated. Use
+            :attr:`~pyvista.DataObject.user_dict` to store scalar metadata.
+
         Use field data when size of the data you wish to associate
         with the dataset does not match the number of points or cells
         of the dataset.
@@ -734,7 +737,7 @@ class DataObject(
         pyvista DataSetAttributes
         Association     : NONE
         Contains arrays :
-            _PYVISTA_USER_DICT      str        "{"name": "ant",..."
+            _PYVISTA_USER_DICT      <U75       (1,)
 
         Since it's field data, the user dict can be saved to file along with the
         mesh and retrieved later.
@@ -775,32 +778,22 @@ class DataObject(
 
     def _config_user_dict(self: Self) -> None:
         """Init serialized dict array and ensure it is added to ``field_data``."""
-        field_data = self.field_data
-
-        if not hasattr(self, '_user_dict'):
-            # Init
-            object.__setattr__(self, '_user_dict', _SerializedDictArray())
-
-        if USER_DICT_KEY in field_data.keys():
-            if isinstance(array := field_data[USER_DICT_KEY], pyvista_ndarray):
-                # When loaded from file, field will be cast as pyvista ndarray
-                # Convert to string and initialize new user dict object from it
-                self._user_dict = _SerializedDictArray(''.join(array))
-            elif isinstance(array, str) and str(self._user_dict) != array:  # type: ignore[unreachable]
-                # Filters may update the field data block separately, e.g.
-                # when copying field data, so we need to capture the new
-                # string and re-init
-                self._user_dict = _SerializedDictArray(array)
-            else:
-                # User dict is correctly configured, do nothing
-                return
-
-        # Set field data array directly instead of calling 'set_array'
-        # This skips the call to '_prepare_array' which will otherwise
-        # do all kinds of casting/conversions and mangle this array
-        self._user_dict.SetName(USER_DICT_KEY)
-        field_data.VTKObject.AddArray(self._user_dict)
-        field_data.VTKObject.Modified()
+        field_data = self.field_data.VTKObject
+        user_dict = getattr(self, '_user_dict', None)
+        array = field_data.GetAbstractArray(USER_DICT_KEY)
+        if array is not None and array is user_dict:
+            return
+        if array is not None:
+            # A loaded or copied array holds the JSON as one value or as one character per value
+            json_str = ''.join(map(array.GetValue, range(array.GetNumberOfValues())))
+            user_dict = _SerializedDictArray(json_str)
+        elif user_dict is None:
+            user_dict = _SerializedDictArray()
+        # Add the array directly so that ``_prepare_array`` does not convert it
+        user_dict.SetName(USER_DICT_KEY)
+        field_data.AddArray(user_dict)
+        field_data.Modified()
+        object.__setattr__(self, '_user_dict', user_dict)
 
     @property
     def memory_address(self: Self) -> str:
