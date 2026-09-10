@@ -1295,8 +1295,8 @@ DATA_OBJECT_OUTPUT_TYPES = {
 # The filters a bare `PointSet` rejects, since it has no cells
 _POINTSET_REJECTS = frozenset(DATA_OBJECT_OUTPUT_TYPES) - {'cell_centers', 'elevation', 'sample'}
 
-# As a block of a composite, these take it as it is instead of rejecting it
-_POINTSET_REJECTS_AS_BLOCK = _POINTSET_REJECTS - {'triangulate', 'cell_validator'}
+# As a block of a composite, `triangulate` passes it through instead of rejecting it
+_POINTSET_REJECTS_AS_BLOCK = _POINTSET_REJECTS - {'triangulate'}
 
 
 def _data_object_call(mesh, name):
@@ -1441,16 +1441,9 @@ def test_extract_all_edges_composite(multiblock_all_no_pointset):
     assert output.n_blocks == multiblock_all_no_pointset.n_blocks
 
 
-def test_cell_validator_composite(multiblock_all):
-    # A cell-less PointSet block has nothing to validate, so it gets empty validity arrays
-    output = multiblock_all.cell_validator()
-    assert output.n_blocks == multiblock_all.n_blocks
-    for block, source in zip(output, multiblock_all, strict=True):
-        assert type(block) is type(source)
-        assert block.n_points == source.n_points
-        assert block.active_scalars_name == 'validity_state'
-        assert block.cell_data['validity_state'].shape == (source.n_cells,)
-        assert block.field_data['invalid'].size == 0
+def test_cell_validator_composite_pointset_raises(multiblock_all):
+    with pytest.raises(pv.PointSetCellOperationError):
+        multiblock_all.cell_validator()
 
 
 def test_extract_all_edges_composite_pointset_raises(multiblock_all):
