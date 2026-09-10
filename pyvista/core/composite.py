@@ -32,7 +32,6 @@ from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import vtk_version_info
 
 from ._typing_core import BoundsTuple
-from .dataobject import USER_DICT_KEY
 from .dataobject import DataObject
 from .dataset import DataSet
 from .filters.composite import CompositeFilters
@@ -41,6 +40,7 @@ from .formatting_html import _children_section
 from .formatting_html import _fmt_memory
 from .formatting_html import build_repr_html
 from .pyvista_ndarray import pyvista_ndarray
+from .utilities.arrays import USER_DICT_KEY
 from .utilities.arrays import CellLiteral
 from .utilities.arrays import FieldAssociation
 from .utilities.arrays import FieldLiteral
@@ -2172,6 +2172,7 @@ class MultiBlock(
 
         """
         self.CompositeShallowCopy(to_copy)
+        self._sync_user_dict()
         self.wrap_nested()
 
         # Shallow copy creates new instances of nested multiblocks

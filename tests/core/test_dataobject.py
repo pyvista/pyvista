@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from collections import UserDict
+import copy
+import gc
 import json
 import multiprocessing
 import pickle
@@ -15,6 +17,7 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.core import _vtk_utilities
 from pyvista.core.dataobject import USER_DICT_KEY
+from pyvista.core.utilities.arrays import _SerializedDictArray
 from pyvista.core.utilities.writer import BaseWriter
 from tests.vtk_backend_divergence import INT32_COMPRESSION
 
@@ -263,13 +266,15 @@ def test_user_dict_removal(data_object_type, method):
 
     # Set user dict
     data_object.user_dict = actual_dict
-    assert data_object.user_dict == expected_dict
+    handle = data_object.user_dict
+    assert handle == expected_dict
 
     # Clear it
     clear_user_dict()
 
     assert USER_DICT_KEY not in data_object.field_data.keys()
     assert data_object.user_dict == {}
+    assert data_object.user_dict is handle
     assert actual_dict == expected_dict
 
 
@@ -280,6 +285,11 @@ def test_user_dict_values(ant, value):
     ant.user_dict['key'] = value
     with pytest.raises(TypeError, match='not JSON serializable'):
         ant.user_dict['key'] = np.array(value)
+    assert ant.user_dict['key'] == value
+    with pytest.raises(TypeError, match='not JSON serializable'):
+        ant.user_dict.update(other=1, key=np.array(value))
+    assert 'other' not in ant.user_dict
+    ant.user_dict['after'] = 1
 
     retrieved_value = json.loads(str(ant.user_dict))['key']
 
@@ -323,50 +333,262 @@ def test_user_dict_write_read(tmp_path, make_data_object, ext):
     assert USER_DICT_KEY in repr(data_object_read.field_data)
 
 
-def test_user_dict_shallow_copy_of_empty_dict():
-    source = pv.Sphere()
-    assert source.user_dict == {}
-    shallow = source.copy(deep=False)
-    shallow.user_dict['name'] = 'copy'
-    assert shallow.user_dict == {'name': 'copy'}
-    assert source.user_dict == {}
+def _labelled_image():
+    image = pv.ImageData(dimensions=(3, 3, 3))
+    image['labels'] = np.arange(image.n_points) % 3
+    return image
 
 
-def test_user_dict_persists_with_merge_filter():
-    sphere1 = pv.Sphere()
-    sphere1.user_dict['name'] = 'sphere1'
-
-    sphere2 = pv.Sphere()
-    sphere2.user_dict['name'] = 'sphere2'
-
-    merged = sphere1 + sphere2
-    assert merged.user_dict['name'] == 'sphere1'
+def _other_with_dict():
+    other = pv.Cube()
+    other.user_dict['name'] = 'other'
+    return other
 
 
-def test_user_dict_persists_with_threshold_filter(uniform):
-    uniform.user_dict['name'] = 'uniform'
-    uniform = uniform.threshold(0.5)
-    assert uniform.user_dict['name'] == 'uniform'
+def _pickled(mesh):
+    return pickle.loads(pickle.dumps(mesh))
 
 
-def test_user_dict_persists_with_pack_labels_filter():
-    image = pv.ImageData(dimensions=(2, 2, 2))
-    image['labels'] = [0, 3, 3, 3, 3, 0, 2, 2]
-    image.user_dict['name'] = 'image'
-    image = image.pack_labels()
-    assert image.user_dict['name'] == 'image'
+USER_DICT_OPERATIONS = [
+    pytest.param(pv.Sphere, lambda m: m.copy(), id='copy'),
+    pytest.param(pv.Sphere, lambda m: m.copy(deep=False), id='shallow_copy'),
+    pytest.param(pv.Sphere, _pickled, id='pickle'),
+    pytest.param(pv.Sphere, lambda m: m.clip(), id='clip'),
+    pytest.param(pv.Sphere, lambda m: m.slice(), id='slice'),
+    pytest.param(pv.Sphere, lambda m: m.extract_surface(algorithm=None), id='extract_surface'),
+    pytest.param(pv.Sphere, lambda m: m.triangulate(), id='triangulate'),
+    pytest.param(pv.Sphere, lambda m: m.decimate(0.5), id='decimate'),
+    pytest.param(pv.Sphere, lambda m: m.smooth(), id='smooth'),
+    pytest.param(pv.Sphere, lambda m: m.subdivide(1), id='subdivide'),
+    pytest.param(pv.Sphere, lambda m: m.compute_normals(), id='compute_normals'),
+    pytest.param(pv.Sphere, lambda m: m.elevation(), id='elevation'),
+    pytest.param(pv.Sphere, lambda m: m.elevation().warp_by_scalar(), id='warp_by_scalar'),
+    pytest.param(pv.Sphere, lambda m: m.connectivity(), id='connectivity'),
+    pytest.param(pv.Sphere, lambda m: m.extract_cells(range(10)), id='extract_cells'),
+    pytest.param(pv.Sphere, lambda m: m.delaunay_2d(), id='delaunay_2d'),
+    pytest.param(pv.Sphere, lambda m: m.clean(), id='clean'),
+    pytest.param(pv.Sphere, lambda m: m.flip_faces(), id='flip_faces'),
+    pytest.param(pv.Sphere, lambda m: m.reflect((1, 0, 0)), id='reflect'),
+    pytest.param(pv.Sphere, lambda m: m.rotate_x(90), id='rotate_x'),
+    pytest.param(pv.Sphere, lambda m: m.transform(np.eye(4), inplace=False), id='transform'),
+    pytest.param(pv.Sphere, lambda m: m.sample(pv.Cube()), id='sample'),
+    pytest.param(
+        pv.Sphere, lambda m: m.cast_to_unstructured_grid(), id='cast_to_unstructured_grid'
+    ),
+    pytest.param(pv.Sphere, lambda m: m + _other_with_dict(), id='merge'),
+    pytest.param(examples.load_uniform, lambda m: m.threshold(0.5), id='threshold'),
+    pytest.param(examples.load_uniform, lambda m: m.contour(), id='contour'),
+    pytest.param(examples.load_uniform, lambda m: m.gaussian_smooth(), id='gaussian_smooth'),
+    pytest.param(examples.load_uniform, lambda m: m.points_to_cells(), id='points_to_cells'),
+    pytest.param(examples.load_uniform, lambda m: m.cells_to_points(), id='cells_to_points'),
+    pytest.param(
+        examples.load_uniform, lambda m: m.cell_data_to_point_data(), id='cell_data_to_point_data'
+    ),
+    pytest.param(
+        examples.load_uniform, lambda m: m.point_data_to_cell_data(), id='point_data_to_cell_data'
+    ),
+    pytest.param(
+        examples.load_uniform, lambda m: m.extract_subset((0, 3, 0, 3, 0, 3)), id='extract_subset'
+    ),
+    pytest.param(_labelled_image, lambda m: m.pack_labels(), id='pack_labels'),
+    pytest.param(lambda: pv.MultiBlock([pv.Sphere()]), lambda m: m.copy(), id='multiblock_copy'),
+    pytest.param(
+        lambda: pv.MultiBlock([pv.Sphere()]),
+        lambda m: m.copy(deep=False),
+        id='multiblock_shallow_copy',
+    ),
+    pytest.param(lambda: pv.MultiBlock([pv.Sphere()]), _pickled, id='multiblock_pickle'),
+]
 
 
-def test_user_dict_persists_with_points_to_cells(uniform):
-    uniform.user_dict['name'] = 'image'
-    uniform.cells_to_points()
-    assert uniform.user_dict['name'] == 'image'
+@pytest.mark.parametrize(('make_input', 'operation'), USER_DICT_OPERATIONS)
+def test_user_dict_survives_operation(make_input, operation):
+    mesh = make_input()
+    handle = mesh.user_dict
+    handle['name'] = 'input'
+
+    out = operation(mesh)
+    assert out is not mesh
+    assert out.user_dict == {'name': 'input'}
+
+    # The output owns its dict, whichever side is written first
+    out.user_dict['out'] = 1
+    assert mesh.user_dict == {'name': 'input'}
+    handle['in'] = 2
+    assert out.user_dict == {'name': 'input', 'out': 1}
+    assert mesh.user_dict is handle
 
 
-def test_user_dict_persists_with_cells_to_points(uniform):
-    uniform.user_dict['name'] = 'image'
-    uniform.points_to_cells()
-    assert uniform.user_dict['name'] == 'image'
+def test_user_dict_survives_source_deletion():
+    mesh = pv.Sphere()
+    mesh.user_dict['name'] = 'input'
+    out = mesh.clip()
+    del mesh
+    gc.collect()
+    assert out.user_dict == {'name': 'input'}
+    out.user_dict['out'] = 1
+    assert out.field_data[USER_DICT_KEY].tolist() == [json.dumps({'name': 'input', 'out': 1})]
+
+
+@pytest.mark.parametrize(
+    ('operation', 'expected'),
+    [
+        pytest.param(lambda m: m.clip(inplace=True), {'name': 'input'}, id='clip_inplace'),
+        pytest.param(lambda m: m.point_data.clear(), {'name': 'input'}, id='point_data_clear'),
+        pytest.param(lambda m: m.copy_from(pv.Cube()), {}, id='copy_from'),
+        pytest.param(
+            lambda m: m.copy_from(_other_with_dict()), {'name': 'other'}, id='copy_from_dict'
+        ),
+        pytest.param(
+            lambda m: m.copy_from(_other_with_dict(), deep=False),
+            {'name': 'other'},
+            id='copy_from_dict_shallow',
+        ),
+        pytest.param(lambda m: m.clear_field_data(), {}, id='clear_field_data'),
+        pytest.param(lambda m: m.field_data.clear(), {}, id='field_data_clear'),
+        pytest.param(lambda m: m.field_data.remove(USER_DICT_KEY), {}, id='field_data_remove'),
+        pytest.param(
+            lambda m: m.field_data.__setitem__(USER_DICT_KEY, ['{"z": 9}']),
+            {'z': 9},
+            id='direct_write',
+        ),
+        pytest.param(lambda m: setattr(m, 'user_dict', None), {}, id='set_none'),
+        pytest.param(lambda m: setattr(m, 'user_dict', {'x': 1}), {'x': 1}, id='set_dict'),
+    ],
+)
+def test_user_dict_handle_persists(operation, expected):
+    mesh = pv.Sphere()
+    handle = mesh.user_dict
+    handle['name'] = 'input'
+
+    operation(mesh)
+    assert mesh.user_dict is handle
+    assert handle == expected
+
+    handle['later'] = 1
+    expected = {**expected, 'later': 1}
+    assert mesh.user_dict == expected
+    assert mesh.field_data[USER_DICT_KEY].tolist() == [json.dumps(expected)]
+
+
+def test_user_dict_read_does_not_add_field_data():
+    mesh = pv.Sphere()
+    assert mesh.user_dict == {}
+    assert 'name' not in mesh.user_dict
+    assert USER_DICT_KEY not in mesh.field_data
+    assert mesh == pv.Sphere()
+
+    mesh.user_dict['name'] = 'input'
+    assert USER_DICT_KEY in mesh.field_data
+
+
+def test_user_dict_setter_copies_input():
+    source = {'a': 1}
+    mesh = pv.Sphere()
+    mesh.user_dict = source
+    mesh.user_dict['b'] = 2
+    assert source == {'a': 1}
+    source['c'] = 3
+    assert mesh.user_dict == {'a': 1, 'b': 2}
+
+
+@pytest.mark.parametrize(
+    'write',
+    [
+        pytest.param(lambda d: d.__setitem__(1, 'x'), id='setitem'),
+        pytest.param(lambda d: d.__setitem__('a', {1: 'x'}), id='nested'),
+        pytest.param(lambda d: d.update({1: 'x'}), id='update'),
+        pytest.param(lambda d: d.setdefault(1, 'x'), id='setdefault'),
+    ],
+)
+def test_user_dict_keys_must_be_str(write):
+    mesh = pv.Sphere()
+    with pytest.raises(TypeError, match='user_dict keys must be str, got int'):
+        write(mesh.user_dict)
+    assert mesh.user_dict == {}
+    with pytest.raises(TypeError, match='user_dict keys must be str, got int'):
+        mesh.user_dict = {1: 'x'}
+
+
+@pytest.mark.parametrize(
+    'make_copy', [copy.copy, copy.deepcopy, lambda d: d.copy()], ids=['copy', 'deepcopy', 'method']
+)
+def test_user_dict_copy_is_detached(make_copy):
+    mesh = pv.Sphere()
+    mesh.user_dict['name'] = 'input'
+    copied = make_copy(mesh.user_dict)
+    assert isinstance(copied, _SerializedDictArray)
+    assert copied == {'name': 'input'}
+    assert str(copied) == str(mesh.user_dict)
+
+    copied['copy'] = 1
+    mesh.user_dict['mesh'] = 2
+    assert mesh.user_dict == {'name': 'input', 'mesh': 2}
+    assert copied == {'name': 'input', 'copy': 1}
+    assert USER_DICT_KEY in mesh.field_data
+    assert mesh.field_data.VTKObject.GetAbstractArray(USER_DICT_KEY) is mesh.user_dict
+
+
+def test_user_dict_dict_api():
+    mesh = pv.Sphere()
+    user_dict = mesh.user_dict
+
+    def check(expected):
+        assert user_dict == expected
+        assert str(user_dict) == json.dumps(expected)
+        assert mesh.field_data[USER_DICT_KEY].tolist() == [json.dumps(expected)]
+
+    user_dict.update({'a': 1}, b=2)
+    check({'a': 1, 'b': 2})
+    user_dict.update([('c', 3)])
+    check({'a': 1, 'b': 2, 'c': 3})
+    user_dict |= {'d': 4}
+    check({'a': 1, 'b': 2, 'c': 3, 'd': 4})
+
+    assert user_dict.pop('d') == 4
+    assert user_dict.pop('missing', None) is None
+    with pytest.raises(KeyError):
+        user_dict.pop('missing')
+    check({'a': 1, 'b': 2, 'c': 3})
+
+    assert user_dict.setdefault('e', 5) == 5
+    assert user_dict.setdefault('e', 6) == 5
+    check({'a': 1, 'b': 2, 'c': 3, 'e': 5})
+
+    assert user_dict.popitem() == ('a', 1)
+    del user_dict['b']
+    check({'c': 3, 'e': 5})
+
+    merged = user_dict | {'f': 6}
+    assert isinstance(merged, _SerializedDictArray)
+    assert merged == {'c': 3, 'e': 5, 'f': 6}
+    check({'c': 3, 'e': 5})
+
+    user_dict.clear()
+    check({})
+
+
+def test_user_dict_serializes_once_per_call(monkeypatch):
+    calls = []
+    original = _SerializedDictArray._serialize
+
+    def counting(self):
+        calls.append(1)
+        original(self)
+
+    monkeypatch.setattr(_SerializedDictArray, '_serialize', counting)
+    mesh = pv.Sphere()
+    user_dict = mesh.user_dict
+    calls.clear()
+
+    user_dict.update({f'k{i}': i for i in range(20)})
+    assert len(calls) == 1
+    calls.clear()
+    user_dict.clear()
+    assert len(calls) == 1
+    calls.clear()
+    mesh.user_dict = {'a': 1}
+    assert len(calls) == 1
 
 
 def test_default_pickle_format():
