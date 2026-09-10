@@ -1359,11 +1359,23 @@ def test_extract_all_edges_composite(multiblock_all_no_pointset):
     assert output.n_blocks == multiblock_all_no_pointset.n_blocks
 
 
+def test_cell_validator_composite(multiblock_all_no_pointset):
+    output = multiblock_all_no_pointset.cell_validator()
+    assert output.n_blocks == multiblock_all_no_pointset.n_blocks
+    for block, source in zip(output, multiblock_all_no_pointset, strict=True):
+        assert type(block) is type(source)
+        assert block.active_scalars_name == 'validity_state'
+        assert block.cell_data['validity_state'].shape == (source.n_cells,)
+        assert block.field_data['invalid'].size == 0
+
+
+def test_cell_validator_composite_pointset_raises(multiblock_all):
+    with pytest.raises(pv.PointSetCellOperationError, match='type PointSet'):
+        multiblock_all.cell_validator()
+
+
 def test_extract_all_edges_composite_pointset_raises(multiblock_all):
-    # extract_all_edges hands the whole composite to the underlying VTK
-    # algorithm; on some VTK versions this segfaults instead of raising if a
-    # block is a cell-less PointSet, so PyVista guards against it explicitly.
-    with pytest.raises(pv.PointSetCellOperationError):
+    with pytest.raises(pv.PointSetCellOperationError, match='type PointSet'):
         multiblock_all.extract_all_edges(progress_bar=True)
 
 
@@ -1479,10 +1491,7 @@ def test_compute_cell_sizes_composite(multiblock_all_no_pointset):
 
 
 def test_compute_cell_sizes_composite_pointset_raises(multiblock_all):
-    # compute_cell_sizes hands the whole composite to the underlying VTK
-    # algorithm; on some VTK versions this segfaults instead of raising if a
-    # block is a cell-less PointSet, so PyVista guards against it explicitly.
-    with pytest.raises(pv.PointSetCellOperationError):
+    with pytest.raises(pv.PointSetCellOperationError, match='type PointSet'):
         multiblock_all.compute_cell_sizes(progress_bar=True)
 
 
@@ -1542,10 +1551,7 @@ def test_cell_data_to_point_data_composite(multiblock_all_no_pointset):
 
 
 def test_cell_data_to_point_data_composite_pointset_raises(multiblock_all):
-    # cell_data_to_point_data hands the whole composite to the underlying VTK
-    # algorithm; on some VTK versions this segfaults instead of raising if a
-    # block is a cell-less PointSet, so PyVista guards against it explicitly.
-    with pytest.raises(pv.PointSetNotSupported):
+    with pytest.raises(pv.PointSetNotSupported, match='type PointSet'):
         multiblock_all.cell_data_to_point_data(progress_bar=True)
 
 
@@ -1564,7 +1570,7 @@ def test_point_data_to_cell_data_composite(multiblock_all_no_pointset):
 
 
 def test_point_data_to_cell_data_composite_pointset_raises(multiblock_all):
-    with pytest.raises(pv.PointSetNotSupported):
+    with pytest.raises(pv.PointSetNotSupported, match='type PointSet'):
         multiblock_all.point_data_to_cell_data(progress_bar=True)
 
 

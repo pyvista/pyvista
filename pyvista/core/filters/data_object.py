@@ -1837,6 +1837,15 @@ class DataObjectFilters:
             msg = 'Planarity tolerance requires VTK 9.6 or later.'
             raise pv.VTKVersionError(msg)
 
+        # Validate block by block so each block takes the path for its own type
+        if isinstance(self, pv.MultiBlock):
+            return self.generic_filter(
+                'cell_validator',
+                tolerance=tolerance,
+                planarity_tolerance=planarity_tolerance,
+                size_tolerance=size_tolerance,
+            )
+
         # A cell referencing a point id which does not exist makes VTK read out of bounds,
         # so skip the checks which dereference cell points when the connectivity is invalid
         invalid_references = _has_invalid_point_references(self)
@@ -1963,10 +1972,7 @@ class DataObjectFilters:
             state[is_invalid] |= CellStatus.INVALID_POINT_REFERENCES
             return
 
-        if isinstance(output, pv.DataSet):
-            post_process(output)
-        else:
-            output.generic_filter(post_process)
+        post_process(output)
         return output
 
     @_deprecate_positional_args(allowed=['trans'])
@@ -4466,7 +4472,12 @@ class DataObjectFilters:
                 PyVistaDeprecationWarning,
             )
 
-        _raise_if_composite_has_pointset(self, error=pv.core.errors.PointSetCellOperationError)
+        # Extract block by block so each block takes the path for its own type
+        if isinstance(self, pv.MultiBlock):
+            return self.generic_filter(
+                'extract_all_edges', clear_data=clear_data, progress_bar=progress_bar
+            )
+
         alg = _vtk.vtkExtractEdges()
         alg.SetInputDataObject(self)
         # Always use all points since VTK >= 9.2 is required
@@ -4984,15 +4995,24 @@ class DataObjectFilters:
             if volume:
                 dataset.cell_data['Volume'] = np.empty(shape=(0,))
 
+        # Compute block by block so each block takes the path for its own type
+        if isinstance(self, pv.MultiBlock):
+            return self.generic_filter(
+                'compute_cell_sizes',
+                length=length,
+                area=area,
+                volume=volume,
+                progress_bar=progress_bar,
+                vertex_count=vertex_count,
+            )
+
         if self.is_empty:
             # Ensure outputs have arrays so things like `mesh.area` and `mesh.volume` still work
             # Also guard against seg fault https://gitlab.kitware.com/vtk/vtk/-/issues/19978
             out = self.copy()
-            if not isinstance(out, pv.MultiBlock):
-                ensure_arrays_if_empty(out)
+            ensure_arrays_if_empty(out)
             return out
 
-        _raise_if_composite_has_pointset(self, error=pv.core.errors.PointSetCellOperationError)
         alg = _vtk.vtkCellSizeFilter()
         alg.SetInputDataObject(self)
         alg.SetComputeArea(area)
@@ -5114,17 +5134,19 @@ class DataObjectFilters:
         >>> surf.plot(scalars='Area')
 
         """
-        _raise_if_composite_has_pointset(self)
+        # Convert block by block so each block takes the path for its own type
+        if isinstance(self, pv.MultiBlock):
+            return self.generic_filter(
+                'cell_data_to_point_data', pass_cell_data=pass_cell_data, progress_bar=progress_bar
+            )
+
         alg = _vtk.vtkCellDataToPointData()
         alg.SetInputDataObject(self)
         alg.SetPassCellData(pass_cell_data)
         _update_alg(
             alg, progress_bar=progress_bar, message='Transforming cell data into point data.'
         )
-        active_scalars = None
-        if not isinstance(self, pv.MultiBlock):
-            active_scalars = self.active_scalars_name
-        return _get_output(alg, active_scalars=active_scalars)
+        return _get_output(alg, active_scalars=self.active_scalars_name)
 
     @_deprecate_positional_args
     def ctp(  # type: ignore[misc]
@@ -5235,7 +5257,15 @@ class DataObjectFilters:
         >>> sphere.plot()
 
         """
-        _raise_if_composite_has_pointset(self)
+        # Convert block by block so each block takes the path for its own type
+        if isinstance(self, pv.MultiBlock):
+            return self.generic_filter(
+                'point_data_to_cell_data',
+                pass_point_data=pass_point_data,
+                categorical=categorical,
+                progress_bar=progress_bar,
+            )
+
         alg = _vtk.vtkPointDataToCellData()
         alg.SetInputDataObject(self)
         alg.SetPassPointData(pass_point_data)
@@ -5243,10 +5273,7 @@ class DataObjectFilters:
         _update_alg(
             alg, progress_bar=progress_bar, message='Transforming point data into cell data'
         )
-        active_scalars = None
-        if not isinstance(self, pv.MultiBlock):
-            active_scalars = self.active_scalars_name
-        return _get_output(alg, active_scalars=active_scalars)
+        return _get_output(alg, active_scalars=self.active_scalars_name)
 
     @_deprecate_positional_args
     def ptc(  # type: ignore[misc]
@@ -5789,25 +5816,6 @@ def _composite_has_pointset(dataset: DataSet | MultiBlock) -> bool:
     return isinstance(dataset, pv.MultiBlock) and any(
         isinstance(block, pv.PointSet) for block in dataset.recursive_iterator(skip_none=True)
     )
-
-
-def _raise_if_composite_has_pointset(
-    dataset: DataSet | MultiBlock,
-    error: type[Exception] | None = None,
-) -> None:
-    """Raise if a MultiBlock (recursively) contains a PointSet block.
-
-    Several filters (``cell_data_to_point_data``, ``point_data_to_cell_data``,
-    ``extract_all_edges``, ``compute_cell_sizes``) hand a MultiBlock straight
-    to the underlying :vtk:`vtkAlgorithm`, relying on VTK's own
-    composite-dataset dispatch rather than iterating blocks in Python. On
-    some VTK versions, running these filters on a composite containing a
-    cell-less PointSet block segfaults instead of raising, so guard against
-    it here before ever reaching the algorithm.
-    """
-    if _composite_has_pointset(dataset):
-        error_type = error or pv.core.errors.PointSetNotSupported
-        raise error_type()
 
 
 def _get_cell_quality_measures() -> dict[str, str]:
