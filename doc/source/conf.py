@@ -709,7 +709,7 @@ autocodelink_autodoc_backrefs = True
 # Rename backreferences group headings.
 autocodelink_category_labels = {
     'Sphinx Gallery': 'Gallery Examples',
-    'Docstring Examples': 'Docstring Examples',
+    'Docstring Examples': 'API Examples',
     'Documentation': 'Guides',
 }
 
