@@ -251,21 +251,8 @@ jobs:
           name: vtk-wheel-${{ runner.os }}-py${{ matrix.python-version }}
           path: vtk-build/wheelhouse/*.whl
 
-  # Cache pyvista/data for each runner separately
-  # Runner labels should match the actual runners used by the different jobs in this file
-
-  # GitHub-hosted runners can re-use the cache across OS's.
-  # Here we run the cache on ubuntu, but it's usable by windows GitHub runners too
-  cache-github-hosted:
-    needs: check-should-run
-    if: needs.check-should-run.outputs.run == 'true'
-    name: Cache pyvista/data
-    uses: $/.github/workflows/cache-pyvista-data.yml
-    with:
-      runs-on: "ubuntu-22.04"
-
   test-linux:
-    needs: [check-should-run, build-vtk, cache-github-hosted]
+    needs: [check-should-run, build-vtk]
     if: ${{ !cancelled() && needs.check-should-run.outputs.run == 'true' }}
     strategy:
       fail-fast: false
@@ -314,10 +301,8 @@ jobs:
           packages: xvfb libgl1 libglx-mesa0 libosmesa6
           version: 3.0
 
-      - name: Restore pyvista/data cache
-        uses: $/.github/actions/restore-pyvista-data
-        with:
-          key: ${{ needs.cache-github-hosted.outputs.key }}
+      - name: Fetch pyvista/data
+        uses: $/.github/actions/fetch-pyvista-data
 
       - name: Install tox-uv
         run: pip install tox-uv
@@ -353,7 +338,7 @@ jobs:
           path: _generated_test_images
 
   test-macOS:
-    needs: [check-should-run, build-vtk, cache-github-hosted]
+    needs: [check-should-run, build-vtk]
     if: ${{ !cancelled() && needs.check-should-run.outputs.run == 'true' }}
     strategy:
       fail-fast: false
@@ -397,10 +382,8 @@ jobs:
       # ALL STEPS ABOVE SHOULD BE EXACTLY THE SAME FOR EACH OS
       # ALL STEPS BELOW SHOULD MIMIC THE UNIT TESTING WORKFLOW EXACTLY
 
-      - name: Restore pyvista/data cache
-        uses: $/.github/actions/restore-pyvista-data
-        with:
-          key: ${{ needs.cache-github-hosted.outputs.key }}
+      - name: Fetch pyvista/data
+        uses: $/.github/actions/fetch-pyvista-data
 
       - name: Install tox-uv
         run: pip install tox-uv
@@ -436,7 +419,7 @@ jobs:
           path: _generated_test_images
 
   test-windows:
-    needs: [check-should-run, build-vtk, cache-github-hosted]
+    needs: [check-should-run, build-vtk]
     if: ${{ !cancelled() && needs.check-should-run.outputs.run == 'true' }}
     strategy:
       fail-fast: false
@@ -480,10 +463,8 @@ jobs:
       # ALL STEPS ABOVE SHOULD BE EXACTLY THE SAME FOR EACH OS
       # ALL STEPS BELOW SHOULD MIMIC THE UNIT TESTING WORKFLOW EXACTLY
 
-      - name: Restore pyvista/data cache
-        uses: $/.github/actions/restore-pyvista-data
-        with:
-          key: ${{ needs.cache-github-hosted.outputs.key }}
+      - name: Fetch pyvista/data
+        uses: $/.github/actions/fetch-pyvista-data
 
       - name: Set up headless display
         uses: pyvista/setup-headless-display-action@c103a2ff45650d38cb71684b5dc6cdfeb9442c79
@@ -530,15 +511,7 @@ jobs:
           path: _generated_test_images
 
   alert-on-failure:
-    needs:
-      [
-        check-should-run,
-        build-vtk,
-        cache-github-hosted,
-        test-linux,
-        test-macOS,
-        test-windows,
-      ]
+    needs: [check-should-run, build-vtk, test-linux, test-macOS, test-windows]
     if: >-
       failure() &&
       needs.check-should-run.outputs.run == 'true' &&

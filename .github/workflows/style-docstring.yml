@@ -11,14 +11,6 @@ permissions:
   id-token: none
 
 jobs:
-  # GitHub-hosted runners can re-use the cache across OS's, so this ubuntu
-  # entry serves the Windows job via enableCrossOsArchive on the restore.
-  cache-pyvista-data:
-    name: Cache pyvista/data
-    uses: $/.github/workflows/cache-pyvista-data.yml
-    with:
-      runs-on: "ubuntu-22.04"
-
   docstringcheck:
     strategy:
       fail-fast: false
@@ -31,8 +23,6 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
-
-    needs: cache-pyvista-data
     env:
       TOX_COLORED: "yes"
     steps:
@@ -56,10 +46,8 @@ jobs:
           packages: xvfb libgl1 libglx-mesa0 libosmesa6
           version: 3.0
 
-      - name: Restore pyvista/data cache
-        uses: $/.github/actions/restore-pyvista-data
-        with:
-          key: ${{ needs.cache-pyvista-data.outputs.key }}
+      - name: Fetch pyvista/data
+        uses: $/.github/actions/fetch-pyvista-data
 
       - name: Install tox-uv
         run: pip install tox-uv
