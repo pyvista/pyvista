@@ -29,4 +29,4 @@ assert_types(unstructured().compute_cell_sizes(), pv.UnstructuredGrid)
 assert_types(explicit_structured().compute_cell_sizes(), pv.ExplicitStructuredGrid)
 assert_types(multiblock().compute_cell_sizes(), pv.MultiBlock)
 
-assert_types(pointset().compute_cell_sizes(), Never)
+assert_types(pointset().compute_cell_sizes(), Never)  # pragma: no cover

@@ -29,4 +29,4 @@ assert_types(unstructured().cell_data_to_point_data(), pv.UnstructuredGrid)
 assert_types(explicit_structured().cell_data_to_point_data(), pv.ExplicitStructuredGrid)
 assert_types(multiblock().cell_data_to_point_data(), pv.MultiBlock)
 
-assert_types(pointset().cell_data_to_point_data(), Never)
+assert_types(pointset().cell_data_to_point_data(), Never)  # pragma: no cover

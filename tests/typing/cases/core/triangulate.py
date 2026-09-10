@@ -29,4 +29,4 @@ assert_types(unstructured().triangulate(), pv.UnstructuredGrid)
 assert_types(explicit_structured().triangulate(), pv.UnstructuredGrid)
 assert_types(multiblock().triangulate(), pv.MultiBlock)
 
-assert_types(pointset().triangulate(), Never)
+assert_types(pointset().triangulate(), Never)  # pragma: no cover

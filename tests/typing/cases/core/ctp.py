@@ -29,4 +29,4 @@ assert_types(unstructured().ctp(), pv.UnstructuredGrid)
 assert_types(explicit_structured().ctp(), pv.ExplicitStructuredGrid)
 assert_types(multiblock().ctp(), pv.MultiBlock)
 
-assert_types(pointset().ctp(), Never)
+assert_types(pointset().ctp(), Never)  # pragma: no cover

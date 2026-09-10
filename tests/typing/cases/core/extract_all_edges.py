@@ -29,4 +29,4 @@ assert_types(unstructured().extract_all_edges(), pv.PolyData)
 assert_types(explicit_structured().extract_all_edges(), pv.PolyData)
 assert_types(multiblock().extract_all_edges(), pv.MultiBlock)
 
-assert_types(pointset().extract_all_edges(), Never)
+assert_types(pointset().extract_all_edges(), Never)  # pragma: no cover
