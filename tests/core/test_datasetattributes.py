@@ -19,6 +19,7 @@ import pytest
 
 import pyvista as pv
 from pyvista import _vtk
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import convert_array
 
@@ -209,7 +210,7 @@ def test_active_normals_name():
 
 
 def test_set_scalars(sphere):
-    scalars = np.array(sphere.n_points)
+    scalars = np.arange(sphere.n_points)
     key = 'scalars'
     sphere.point_data.set_scalars(scalars, key)
     assert sphere.point_data.active_scalars_name == key
@@ -403,13 +404,15 @@ def test_set_array_catch(hexbeam):
 @settings(max_examples=20, suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(scalar=integers(min_value=-sys.maxsize - 1, max_value=sys.maxsize))
 def test_set_array_should_accept_scalar_value(scalar, hexbeam_point_attributes):
-    hexbeam_point_attributes.set_array(scalar, name='int_array')
+    with pytest.warns(PyVistaDeprecationWarning, match='from a scalar is deprecated'):
+        hexbeam_point_attributes.set_array(scalar, name='int_array')
 
 
 @settings(max_examples=20, suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(scalar=integers(min_value=-sys.maxsize - 1, max_value=sys.maxsize))
 def test_set_array_scalar_value_should_give_array(scalar, hexbeam_point_attributes):
-    hexbeam_point_attributes.set_array(scalar, name='int_array')
+    with pytest.warns(PyVistaDeprecationWarning, match='from a scalar is deprecated'):
+        hexbeam_point_attributes.set_array(scalar, name='int_array')
     expected = np.full(hexbeam_point_attributes.dataset.n_points, scalar)
     assert np.array_equal(expected, hexbeam_point_attributes['int_array'])
 
