@@ -78,10 +78,14 @@ class CompositeFilters(DataObjectFilters):
 
         Raises
         ------
-        RuntimeError
-            Raised if the filter cannot be applied to any block for any reason. This
-            overrides ``TypeError``, ``ValueError``, ``AttributeError`` errors when
-            filtering.
+        Exception
+            The error a block raises is re-raised as is, with the index, name and
+            type of that block added to its message.
+
+            .. versionchanged:: 0.50
+
+                The error keeps its own class. Previously every error was replaced by
+                a ``RuntimeError``.
 
         See Also
         --------
@@ -147,8 +151,9 @@ class CompositeFilters(DataObjectFilters):
         :class:`~pyvista.ImageData`.
 
         >>> multi.generic_filter('resample', 0.5)  # doctest:+SKIP
-        RuntimeError: The filter 'resample' could not be applied to the block at index 1 with
-        name 'Block-01' and type PolyData.
+        AttributeError: The filter 'resample'
+        could not be applied to the block at index 1 with name 'Block-01' and type PolyData:
+        'PolyData' object has no attribute 'resample'
 
         Use a custom function instead to apply the generic filter conditionally. Here we
         filter the image blocks but simply pass-through a copy of any other blocks.
@@ -181,8 +186,8 @@ class CompositeFilters(DataObjectFilters):
                     else functools.partial(function_, block_)
                 )
                 output_ = function_(**kwargs) if len(args) == 0 else function_(*args, **kwargs)
-            except (AttributeError, ValueError, TypeError, RuntimeError) as e:
-                # Construct a helpful error message
+            except Exception as e:
+                # Name the block in the error, keeping the error's own class
                 func_name = (
                     function_.func if isinstance(function_, functools.partial) else function_
                 )
@@ -196,9 +201,10 @@ class CompositeFilters(DataObjectFilters):
                 msg = (
                     f"The filter '{func_name}'\n"
                     f'could not be applied to the{nested}block at index {index} with '
-                    f"name '{name_}' and type {obj_name}."
+                    f"name '{name_}' and type {obj_name}"
                 )
-                raise RuntimeError(msg) from e
+                e.args = (f'{msg}:\n{e}' if str(e) else f'{msg}.', *e.args[1:])
+                raise
             return output_
 
         def get_iterator(multi, skip_none_, skip_empty_):

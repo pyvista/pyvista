@@ -331,7 +331,7 @@ def test_plotter_add_volume_resolution_raises(mocker: MockerFixture):
 def test_plotter_add_volume_mapper_raises():
     pl = pv.Plotter()
     im = pv.ImageData(dimensions=(10, 10, 10))
-    im.point_data['foo'] = 1
+    im.point_data['foo'] = np.ones(im.n_points)
     match = re.escape(
         'Mapper (foo) unknown. Available volume mappers include: '
         'fixed_point, gpu, open_gl, smart, ugrid'
