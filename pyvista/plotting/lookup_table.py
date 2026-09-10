@@ -1009,7 +1009,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
         """
         n_items = self.GetNumberOfAnnotatedValues()
-        keys = [self.GetAnnotatedValue(ii).ToFloat() for ii in range(n_items)]
+        keys = [self.GetAnnotatedValue(ii).ToDouble() for ii in range(n_items)]
         values = [self.GetAnnotation(ii) for ii in range(n_items)]
         return dict(zip(keys, values, strict=True))
 
