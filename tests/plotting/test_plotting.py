@@ -1772,6 +1772,20 @@ def test_screenshot_scaled():
 
 
 @pytest.mark.usefixtures('no_images_to_verify')
+def test_screenshot_scaled_restores_window(sphere):
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, scalars=np.arange(sphere.n_points))
+    before = pl.screenshot()
+    assert pl.screenshot(scale=3).shape[:2] == tuple(3 * n for n in before.shape[:2])
+    assert np.array_equal(pl.screenshot(), before)
+    pl.image_scale = 2
+    assert pl.get_image_depth().shape == tuple(2 * n for n in before.shape[:2])
+    pl.image_scale = 1
+    assert np.array_equal(pl.image, before)
+    pl.close()
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_screenshot_altered_window_size(sphere):
     pl = pv.Plotter()
     pl.add_mesh(sphere)
