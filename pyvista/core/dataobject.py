@@ -546,6 +546,10 @@ class DataObject(
     def add_field_data(self: Self, array: ArrayLike[Any], name: str, deep: bool = True) -> None:  # noqa: FBT001, FBT002
         """Add field data.
 
+        .. deprecated:: 0.50
+            Setting a scalar is deprecated. Use
+            :attr:`~pyvista.DataObject.user_dict` to store scalar metadata.
+
         Use field data when size of the data you wish to associate
         with the dataset does not match the number of points or cells
         of the dataset.

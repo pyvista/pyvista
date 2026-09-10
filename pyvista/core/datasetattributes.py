@@ -18,6 +18,7 @@ from pyvista.core._vtk_utilities import VTKObjectWrapperCheckSnakeCase
 
 from .pyvista_ndarray import pyvista_ndarray
 from .utilities.arrays import FieldAssociation
+from .utilities.arrays import _warn_scalar_array
 from .utilities.arrays import convert_array
 from .utilities.arrays import copy_vtk_array
 from .utilities.misc import _NoNewAttrMixin
@@ -542,6 +543,11 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         * :attr:`active_normals_name`
         * :attr:`active_texture_coordinates_name`
 
+        .. deprecated:: 0.50
+            Setting a scalar is deprecated. Broadcast the value with
+            :func:`numpy.full` to set point or cell data, or use
+            :attr:`~pyvista.DataObject.user_dict` to store scalar metadata.
+
         Parameters
         ----------
         data : ArrayLike[float]
@@ -763,13 +769,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
             array_len = 1 if data.ndim == 0 else data.shape[0]
 
         if data.ndim == 0:
-            if data.dtype.kind == 'U':  # np.str_
-                msg = (
-                    f"Array '{name}' cannot be a scalar string. Use a list of strings "
-                    'to store a string array, or use `user_dict` to store string metadata.'
-                )
-                raise TypeError(msg)
-            # Fixup input array length for scalar input
+            _warn_scalar_array(name, association)
             data = np.full(array_len, data)
         if data.shape[0] != array_len:
             msg = (

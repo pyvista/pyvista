@@ -20,10 +20,13 @@ import numpy.typing as npt
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._version import _is_deprecation_due
+from pyvista._warn_external import warn_external
 from pyvista.core._vtk_utilities import _MATRIX_GET_DATA_RETURNS_ELEMENTS
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import MissingDataError
+from pyvista.core.errors import PyVistaDeprecationWarning
 
 if TYPE_CHECKING:
     from pyvista import DataSet
@@ -271,6 +274,10 @@ def convert_array(  # noqa: PLR0917
 ) -> npt.NDArray[Any] | _vtk.vtkAbstractArray | None:
     """Convert a NumPy array to a :vtk:`vtkDataArray` or vice versa.
 
+    .. deprecated:: 0.50
+        Converting a scalar is deprecated. Pass an array with at least one
+        dimension instead.
+
     Parameters
     ----------
     arr : np.ndarray | :vtk:`vtkDataArray`
@@ -297,6 +304,9 @@ def convert_array(  # noqa: PLR0917
     if not isinstance(arr, np.ndarray):
         # Otherwise input must be a vtkDataArray
         return _vtk_array_to_numpy(cast('_vtk.vtkAbstractArray', arr))
+    if arr.ndim == 0:
+        _warn_scalar_array()
+        arr = arr.reshape(1)
 
     kind = arr.dtype.kind
     if kind == 'O':  # np.object_
@@ -305,9 +315,7 @@ def convert_array(  # noqa: PLR0917
     if kind in 'US':  # np.str_ or np.bytes_
         vtk_data: _vtk.vtkAbstractArray = convert_string_array(arr)
     else:
-        # A scalar is stored as a single-tuple array; numpy_to_vtk makes the data contiguous
-        if arr.ndim == 0:
-            arr = arr.reshape(1)
+        # numpy_to_vtk makes the data contiguous
         vtk_data = _vtk.numpy_to_vtk(num_array=arr, deep=deep, array_type=array_type)
     if isinstance(name, str):
         vtk_data.SetName(name)
@@ -467,6 +475,47 @@ def get_array_association(  # noqa: PLR0917
         return preference_field
     # otherwise return first in order of point -> cell -> field
     return matches[0]
+
+
+_SCALAR_ARRAY_HINTS = {
+    FieldAssociation.POINT: (
+        'Use numpy.full or numpy.broadcast_to to create an array with one value per point.'
+    ),
+    FieldAssociation.CELL: (
+        'Use numpy.full or numpy.broadcast_to to create an array with one value per cell.'
+    ),
+    FieldAssociation.ROW: (
+        'Use numpy.full or numpy.broadcast_to to create an array with one value per row.'
+    ),
+    FieldAssociation.NONE: (
+        'Use user_dict to store scalar metadata, or pass [value] to store a one-element array.'
+    ),
+    None: (
+        'Use numpy.full or numpy.broadcast_to to set point or cell data, '
+        'or use user_dict to store scalar metadata.'
+    ),
+}
+
+
+def _warn_scalar_array(
+    name: str | None = None, association: FieldAssociation | None = None
+) -> None:
+    """Warn that a scalar was given where an array is required."""
+    # deprecated 0.50.0, convert to error in 0.53.0
+    if _is_deprecation_due((0, 53)):  # pragma: no cover
+        msg = 'Convert this deprecation warning into an error.'
+        raise RuntimeError(msg)
+    if name is None:
+        msg = (
+            'Converting a scalar to a VTK array is deprecated. '
+            'Pass an array with at least one dimension instead.'
+        )
+    else:
+        msg = (
+            f"Setting array '{name}' from a scalar is deprecated. "
+            f'{_SCALAR_ARRAY_HINTS[association]}'
+        )
+    warn_external(msg, PyVistaDeprecationWarning)
 
 
 def raise_not_matching(scalars: npt.NDArray[Any], dataset: DataSet | Table) -> None:
@@ -702,15 +751,14 @@ def convert_string_array(
 ) -> npt.NDArray[np.str_] | _vtk.vtkStringArray:
     """Convert a NumPy array of strings to a :vtk:`vtkStringArray` or vice versa.
 
-    A scalar string is stored as an array with a single value.
-
     .. versionchanged:: 0.49
         A two-dimensional array keeps its second axis, held as the components of
         the :vtk:`vtkStringArray`. It was previously flattened. An array with more
         dimensions raises instead of being flattened.
 
-    .. versionchanged:: 0.50
-        A scalar string is converted back as a one-element array instead of a scalar.
+    .. deprecated:: 0.50
+        Converting a scalar string is deprecated. It is stored as a one-element
+        array and converted back as one. Pass a one-dimensional array instead.
 
     Parameters
     ----------
@@ -733,6 +781,9 @@ def convert_string_array(
     """
     arr = np.array(arr) if isinstance(arr, str) else arr
     if isinstance(arr, np.ndarray):
+        if arr.ndim == 0:
+            _warn_scalar_array()
+            arr = arr.reshape(1)
         if arr.ndim > 2:
             msg = f'String array must be at most 2-dimensional, got shape {arr.shape}.'
             raise ValueError(msg)

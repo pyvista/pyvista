@@ -14,6 +14,7 @@ import pyvista as pv
 from pyvista import _vtk
 from pyvista import examples
 from pyvista.core import dataset as dataset_module
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.examples import load_airplane
 from pyvista.examples import load_explicit_structured
 from pyvista.examples import load_hexbeam
@@ -164,13 +165,6 @@ def test_point_cell_field_data_empty_array(uniform, attribute, empty_shape, mesh
             data['new_array'] = empty_array
 
 
-def test_point_cell_data_single_scalar_no_exception_raised():
-    m = pv.PolyData([0, 0, 0.0])
-    m.point_data['foo'] = 1
-    m.cell_data['bar'] = 1
-    m['baz'] = 1
-
-
 def test_field_data(hexbeam):
     key = 'test_array_field'
     # Add array of length not equal to n_cells or n_points
@@ -213,17 +207,61 @@ def test_field_data_string(hexbeam):
     assert returned.tolist() == ['bar']
 
 
-def test_field_data_scalar_string_raises(hexbeam):
-    match = "Array 'foo' cannot be a scalar string"
-    with pytest.raises(TypeError, match=match):
-        hexbeam.field_data['foo'] = 'bar'
-    with pytest.raises(TypeError, match=match):
-        hexbeam.add_field_data('bar', 'foo')
-    with pytest.raises(TypeError, match=match):
-        hexbeam.point_data['foo'] = 'bar'
-    with pytest.raises(ValueError, match='Number of scalars'):
-        hexbeam['foo'] = 'bar'
+SCALAR_VALUES = [1, 1.5, True, 'bar', np.float32(2.0), np.array(3)]
+BROADCAST_HINT = 'Use numpy.full or numpy.broadcast_to to create an array with one value per '
+
+
+@pytest.mark.parametrize('value', SCALAR_VALUES)
+@pytest.mark.parametrize(
+    ('attribute', 'hint'),
+    [
+        ('point_data', BROADCAST_HINT + 'point.'),
+        ('cell_data', BROADCAST_HINT + 'cell.'),
+        (
+            'field_data',
+            (
+                'Use user_dict to store scalar metadata, '
+                'or pass [value] to store a one-element array.'
+            ),
+        ),
+    ],
+)
+def test_set_scalar_deprecated(hexbeam, attribute, hint, value):
+    data = getattr(hexbeam, attribute)
+    match = f"Setting array 'foo' from a scalar is deprecated. {hint}"
+    with pytest.warns(PyVistaDeprecationWarning, match=re.escape(match)):
+        data['foo'] = value
+    expected_len = 1 if attribute == 'field_data' else data.valid_array_len
+    assert data['foo'].shape == (expected_len,)
+    assert np.all(data['foo'] == value)
+
+
+@pytest.mark.parametrize('value', SCALAR_VALUES)
+def test_add_field_data_scalar_deprecated(hexbeam, value):
+    match = (
+        "Setting array 'foo' from a scalar is deprecated. Use user_dict to store scalar "
+        'metadata, or pass [value] to store a one-element array.'
+    )
+    with pytest.warns(PyVistaDeprecationWarning, match=re.escape(match)):
+        hexbeam.add_field_data(value, 'foo')
+    assert hexbeam.field_data['foo'].tolist() == [value]
+
+
+@pytest.mark.parametrize('value', SCALAR_VALUES)
+def test_setitem_scalar_deprecated(hexbeam, value):
+    match = (
+        "Setting array 'foo' from a scalar is deprecated. Use numpy.full or numpy.broadcast_to "
+        'to set point or cell data, or use user_dict to store scalar metadata.'
+    )
+    with pytest.warns(PyVistaDeprecationWarning, match=re.escape(match)):
+        with pytest.raises(ValueError, match='Number of scalars'):
+            hexbeam['foo'] = value
     assert 'foo' not in hexbeam.array_names
+
+    single_point = pv.PolyData([0.0, 0.0, 0.0])
+    with pytest.warns(PyVistaDeprecationWarning, match=re.escape(match)):
+        single_point['foo'] = value
+    assert single_point.point_data['foo'].tolist() == [value]
 
 
 @pytest.mark.parametrize('field', [range(5), np.ones((3, 3))[:, 0]])

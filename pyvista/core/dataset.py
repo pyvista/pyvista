@@ -44,6 +44,7 @@ from .utilities.arrays import FieldAssociation
 from .utilities.arrays import FieldLiteral
 from .utilities.arrays import PointLiteral
 from .utilities.arrays import _coerce_pointslike_arg
+from .utilities.arrays import _warn_scalar_array
 from .utilities.arrays import get_array
 from .utilities.arrays import get_array_association
 from .utilities.arrays import parse_field_choice
@@ -1581,6 +1582,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             scalars = np.asanyarray(scalars)
 
         if scalars.ndim == 0:
+            _warn_scalar_array(name, None)
             # reshape single scalar values from 0D to 1D so that shape[0] can be indexed
             scalars = scalars.reshape((1,))
 
