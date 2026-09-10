@@ -597,8 +597,8 @@ class ScalarBars(_NoNewAttrMixin):
         # self._scalar_bars.append(scalar_bar)
 
         if background_color is not None:
-            background_color = np.array(Color(background_color).int_rgba)
-            scalar_bar.GetBackgroundProperty().SetColor(background_color[0:3])
+            background_color = Color(background_color)
+            scalar_bar.GetBackgroundProperty().SetColor(background_color.float_rgb)
 
             if fill:
                 scalar_bar.DrawBackgroundOn()
@@ -609,7 +609,7 @@ class ScalarBars(_NoNewAttrMixin):
             alphas = ctable[:, -1][:, np.newaxis] / 255.0
             use_table = ctable.copy()
             use_table[:, -1] = 255.0
-            ctable = (use_table * alphas) + background_color * (1 - alphas)
+            ctable = (use_table * alphas) + np.array(background_color.int_rgba) * (1 - alphas)
             lut.SetTable(_vtk.numpy_to_vtk(ctable, array_type=_vtk.VTK_UNSIGNED_CHAR))
         else:
             lut = mapper.lookup_table

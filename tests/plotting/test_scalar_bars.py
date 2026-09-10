@@ -128,6 +128,29 @@ def test_update_title_image(sphere, verify_image_cache):
     pl.show()
 
 
+@pytest.mark.usefixtures('verify_image_cache')
+def test_background_color_fill(sphere):
+    sphere[KEY] = sphere.points[:, 2]
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    scalar_bar = pl.add_scalar_bar(
+        KEY,
+        background_color='gray',
+        fill=True,
+        outline=True,
+        width=0.8,
+        height=0.3,
+        position_x=0.1,
+        position_y=0.05,
+        label_font_size=40,
+        title_font_size=40,
+    )
+    assert scalar_bar.GetBackgroundProperty().GetColor() == pytest.approx(
+        pv.Color('gray').float_rgb
+    )
+    pl.show()
+
+
 def test_too_many_scalar_bars():
     pl = pv.Plotter()
     with pytest.raises(RuntimeError, match='Maximum number of color'):  # noqa: PT012
