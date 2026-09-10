@@ -1843,7 +1843,7 @@ def test_cell_quality_composite(
     multiblock_all_with_nested_and_none, multiblock_all_no_pointset_with_nested_and_none
 ):
     match = "could not be applied to the block at index 5 with name 'Block-05' and type PointSet"
-    with pytest.raises(RuntimeError, match=match):
+    with pytest.raises(pv.PointSetCellOperationError, match=match):
         qual = multiblock_all_with_nested_and_none.cell_quality([SHAPE])
 
     qual = multiblock_all_no_pointset_with_nested_and_none.cell_quality([SHAPE])
@@ -4077,15 +4077,10 @@ def test_extract_surface_nonlinear(as_multiblock):
     with pytest.raises(ValueError, match=match):
         grid.extract_surface(algorithm='geometry', nonlinear_subdivision=5)
 
+    match = 'Mesh contains non-linear cells which cannot be processed by the geometry algorithm.'
     if as_multiblock:
-        expected_error = RuntimeError
-        match = 'could not be applied to the block at index 0'
-    else:
-        expected_error = ValueError
-        match = (
-            'Mesh contains non-linear cells which cannot be processed by the geometry algorithm.'
-        )
-    with pytest.raises(expected_error, match=match):
+        match = '(?s)could not be applied to the block at index 0.*' + match
+    with pytest.raises(ValueError, match=match):
         grid.extract_surface(algorithm='geometry')
 
     # No subdivision, expect one face per cell
