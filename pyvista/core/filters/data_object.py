@@ -1732,6 +1732,13 @@ class DataObjectFilters:
         :meth:`~pyvista.DataObjectFilters.cell_quality`
         :ref:`mesh_validation_example`
 
+        Notes
+        -----
+        A :class:`~pyvista.PointSet` has no cells to validate, so validating one
+        directly raises :class:`~pyvista.core.errors.PointSetCellOperationError`. As a
+        block of a :class:`~pyvista.MultiBlock` it is given empty validity arrays
+        instead, without warning or raising, since there is nothing to validate.
+
         Examples
         --------
         Load a mesh with invalid cells.
@@ -1838,16 +1845,32 @@ class DataObjectFilters:
             msg = 'Planarity tolerance requires VTK 9.6 or later.'
             raise pv.VTKVersionError(msg)
 
+        # Validate block by block so each block takes the path for its own type
+        if isinstance(self, pv.MultiBlock):
+
+            def validate_block(block: DataSet):  # numpydoc ignore=PR01
+                """Validate one block, giving a cell-less point cloud empty validity arrays."""
+                return DataObjectFilters.cell_validator(
+                    block,
+                    tolerance=tolerance,
+                    planarity_tolerance=planarity_tolerance,
+                    size_tolerance=size_tolerance,
+                )
+
+            return cast('_DataSetOrMultiBlockType', self.generic_filter(validate_block))
+
         # A cell referencing a point id which does not exist makes VTK read out of bounds,
         # so skip the checks which dereference cell points when the connectivity is invalid
         invalid_references = _has_invalid_point_references(self)
 
+        # A point cloud has no cells to check, so it only gets the empty validity arrays
+        no_cells = isinstance(self, pv.PointSet)
+
         # Skip to avoid crash with ImageData/RectilinearGrid, see https://gitlab.kitware.com/vtk/vtk/-/work_items/20096
-        skip_validator = isinstance(self, pv.Grid) or invalid_references
+        skip_validator = isinstance(self, pv.Grid) or invalid_references or no_cells
         if skip_validator:
             output = self.copy(deep=False)
         else:
-            _raise_if_composite_has_pointset(self, error=pv.core.errors.PointSetCellOperationError)
             cell_validator = _vtk.vtkCellValidator()
             cell_validator.SetInputData(self)
             cell_validator.SetTolerance(tol)
@@ -1889,7 +1912,7 @@ class DataObjectFilters:
             state = mesh.cell_data['validity_state']
 
             # A cell's size cannot be computed when its points do not exist
-            if not invalid_references:
+            if not (invalid_references or no_cells):
                 # Use points dtype eps by default
                 size_tol: float = (
                     size_tolerance
@@ -1915,7 +1938,7 @@ class DataObjectFilters:
             # COINCIDENT_POINTS
             # Skip remaining checks for datasets where cell connectivity cannot be invalid
             # Do not skip types StructuredGrid where coincident points are possible
-            if isinstance(mesh, pv.Grid):
+            if isinstance(mesh, (pv.Grid, pv.PointSet)):
                 return
 
             ugrid = (
@@ -1965,10 +1988,7 @@ class DataObjectFilters:
             state[is_invalid] |= CellStatus.INVALID_POINT_REFERENCES
             return
 
-        if isinstance(output, pv.DataSet):
-            post_process(output)
-        else:
-            output.generic_filter(post_process)
+        post_process(output)
         return cast('_DataSetOrMultiBlockType', output)
 
     @_deprecate_positional_args(allowed=['trans'])
@@ -5882,8 +5902,7 @@ def _raise_if_composite_has_pointset(
     """Raise if a MultiBlock (recursively) contains a PointSet block.
 
     Several filters (``cell_data_to_point_data``, ``point_data_to_cell_data``,
-    ``extract_all_edges``, ``compute_cell_sizes``, ``cell_validator``) hand a
-    MultiBlock straight
+    ``extract_all_edges``, ``compute_cell_sizes``) hand a MultiBlock straight
     to the underlying :vtk:`vtkAlgorithm`, relying on VTK's own
     composite-dataset dispatch rather than iterating blocks in Python. On
     some VTK versions, running these filters on a composite containing a
