@@ -6061,6 +6061,30 @@ def test_update_scalar_bar_range(sphere):
     pl.show()
 
 
+def test_update_scalar_bar_range_shared_mappers():
+    left = pv.Sphere(center=(0, 0, 0))
+    right = pv.Sphere(center=(1.5, 0, 0))
+    left['Scalar'] = left.points[:, 2]
+    right['Scalar'] = right.points[:, 2]
+    pl = pv.Plotter()
+    sargs = {
+        'width': 0.8,
+        'height': 0.3,
+        'position_x': 0.1,
+        'position_y': 0.05,
+        'label_font_size': 40,
+        'title_font_size': 40,
+    }
+    left_actor = pl.add_mesh(left, scalar_bar_args=sargs)
+    right_actor = pl.add_mesh(right)
+    right_actor.visibility = False
+    pl.update_scalar_bar_range([-100, 0])
+    assert left_actor.mapper.scalar_range == (-100.0, 0.0)
+    assert right_actor.mapper.scalar_range == (-100.0, 0.0)
+    assert pl.scalar_bar.GetLookupTable().GetRange() == (-100.0, 0.0)
+    pl.show()
+
+
 def test_add_remove_scalar_bar(sphere):
     """Verify a scalar bar can be added and removed."""
     pl = pv.Plotter()
