@@ -495,19 +495,23 @@ def test_user_dict_setter_copies_input():
 @pytest.mark.parametrize(
     'write',
     [
-        pytest.param(lambda d: d.__setitem__(1, 'x'), id='setitem'),
-        pytest.param(lambda d: d.__setitem__('a', {1: 'x'}), id='nested'),
-        pytest.param(lambda d: d.update({1: 'x'}), id='update'),
-        pytest.param(lambda d: d.setdefault(1, 'x'), id='setdefault'),
+        pytest.param(lambda d: d.__setitem__((1, 2), 'x'), id='setitem'),
+        pytest.param(lambda d: d.__setitem__('a', {(1, 2): 'x'}), id='nested'),
+        pytest.param(lambda d: d.update({(1, 2): 'x'}), id='update'),
+        pytest.param(lambda d: d.setdefault((1, 2), 'x'), id='setdefault'),
     ],
 )
-def test_user_dict_keys_must_be_str(write):
+def test_user_dict_keys_follow_json(write):
     mesh = pv.Sphere()
-    with pytest.raises(TypeError, match='user_dict keys must be str, got int'):
+    with pytest.raises(TypeError, match='keys must be str, int, float, bool or None'):
         write(mesh.user_dict)
     assert mesh.user_dict == {}
-    with pytest.raises(TypeError, match='user_dict keys must be str, got int'):
-        mesh.user_dict = {1: 'x'}
+    with pytest.raises(TypeError, match='keys must be str, int, float, bool or None'):
+        mesh.user_dict = {(1, 2): 'x'}
+
+    mesh.user_dict[1] = {2: 'x'}
+    assert mesh.user_dict == {1: {2: 'x'}}
+    assert json.loads(str(mesh.user_dict)) == {'1': {'2': 'x'}}
 
 
 @pytest.mark.parametrize(

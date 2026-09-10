@@ -1260,15 +1260,5 @@ class _SerializedDictArray(DisableVtkSnakeCase, UserDict, _vtk.vtkStringArray): 
 
 
 def _check_json(obj: Any) -> None:
-    """Raise if ``obj`` has a non-string key or a value JSON cannot serialize."""
-    if isinstance(obj, dict):
-        for key, value in obj.items():
-            if not isinstance(key, str):
-                msg = f'user_dict keys must be str, got {type(key).__name__}.'
-                raise TypeError(msg)
-            _check_json(value)
-    elif isinstance(obj, (list, tuple)):
-        for value in obj:
-            _check_json(value)
-    else:
-        json.dumps(obj)
+    """Raise if JSON cannot serialize ``obj``."""
+    json.dumps(obj)

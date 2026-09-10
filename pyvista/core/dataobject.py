@@ -685,7 +685,7 @@ class DataObject(
         to it updates this data object, and it reflects field data that is loaded,
         copied in with :meth:`~pyvista.DataSet.copy_from`, or cleared. Copies and filter outputs
         start with their own copy of the dict. The field data array is created on
-        the first write, and keys must be strings.
+        the first write.
 
         .. versionchanged:: 0.50
             Copies and filter outputs no longer share the dict with their source,
