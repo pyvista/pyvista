@@ -17,6 +17,7 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.core import _vtk_utilities
 from pyvista.core.dataobject import USER_DICT_KEY
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.arrays import _SerializedDictArray
 from pyvista.core.utilities.writer import BaseWriter
 from tests.vtk_backend_divergence import INT32_COMPRESSION
@@ -495,23 +496,39 @@ def test_user_dict_setter_copies_input():
 @pytest.mark.parametrize(
     'write',
     [
-        pytest.param(lambda d: d.__setitem__((1, 2), 'x'), id='setitem'),
-        pytest.param(lambda d: d.__setitem__('a', {(1, 2): 'x'}), id='nested'),
-        pytest.param(lambda d: d.update({(1, 2): 'x'}), id='update'),
-        pytest.param(lambda d: d.setdefault((1, 2), 'x'), id='setdefault'),
+        pytest.param(lambda d, k: d.__setitem__(k, 'x'), id='setitem'),
+        pytest.param(lambda d, k: d.__setitem__('a', {k: 'x'}), id='nested'),
+        pytest.param(lambda d, k: d.__setitem__('a', [{k: 'x'}]), id='nested_in_list'),
+        pytest.param(lambda d, k: d.update({k: 'x'}), id='update'),
+        pytest.param(lambda d, k: d.setdefault(k, 'x'), id='setdefault'),
+        pytest.param(lambda d, k: setattr(d, 'data', {k: 'x'}), id='data'),
     ],
 )
-def test_user_dict_keys_follow_json(write):
+@pytest.mark.parametrize('key', [1, 1.5, True, None])
+def test_user_dict_non_string_key_deprecated(write, key):
+    mesh = pv.Sphere()
+    match = (
+        f'The user_dict key {key!r} is not a string, which is deprecated. '
+        f'JSON stores keys as strings, so use {json.dumps(key)!r} instead.'
+    )
+    with pytest.warns(PyVistaDeprecationWarning, match=re.escape(match)):
+        write(mesh.user_dict, key)
+    assert f'"{json.dumps(key)}"' in str(mesh.user_dict)
+
+
+def test_user_dict_setter_non_string_key_deprecated():
+    mesh = pv.Sphere()
+    with pytest.warns(PyVistaDeprecationWarning, match='is not a string'):
+        mesh.user_dict = {1: 'x'}
+    assert mesh.user_dict == {1: 'x'}
+    assert mesh.copy().user_dict == {'1': 'x'}
+
+
+def test_user_dict_keys_must_be_json_keys():
     mesh = pv.Sphere()
     with pytest.raises(TypeError, match='keys must be str, int, float, bool or None'):
-        write(mesh.user_dict)
+        mesh.user_dict[(1, 2)] = 'x'
     assert mesh.user_dict == {}
-    with pytest.raises(TypeError, match='keys must be str, int, float, bool or None'):
-        mesh.user_dict = {(1, 2): 'x'}
-
-    mesh.user_dict[1] = {2: 'x'}
-    assert mesh.user_dict == {1: {2: 'x'}}
-    assert json.loads(str(mesh.user_dict)) == {'1': {'2': 'x'}}
 
 
 @pytest.mark.parametrize(

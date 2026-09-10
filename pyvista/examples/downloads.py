@@ -8929,9 +8929,8 @@ class _WholeBodyCTUtilities:
         names_to_ids = {key: i + 1 for i, key in enumerate(label_names)}
         dataset.user_dict['names_to_colors'] = names_to_colors
         dataset.user_dict['names_to_ids'] = names_to_ids
-        dataset.user_dict['ids_to_colors'] = dict(
-            sorted({names_to_ids[name]: names_to_colors[name] for name in label_names}.items())
-        )
+        ids_to_colors = sorted((names_to_ids[name], names_to_colors[name]) for name in label_names)
+        dataset.user_dict['ids_to_colors'] = {str(id_): color for id_, color in ids_to_colors}
 
     @staticmethod
     def label_map_from_masks(masks: MultiBlock) -> ImageData:

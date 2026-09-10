@@ -1259,6 +1259,38 @@ class _SerializedDictArray(DisableVtkSnakeCase, UserDict, _vtk.vtkStringArray): 
         return type(self)(copylib.deepcopy(self.data, memo))
 
 
+_NO_KEY = object()
+
+
+def _non_string_key(obj: Any) -> Any:
+    """Return the first key in ``obj`` that is not a string, or ``_NO_KEY``."""
+    if isinstance(obj, dict):
+        for key, value in obj.items():
+            if not isinstance(key, str):
+                return key
+            found = _non_string_key(value)
+            if found is not _NO_KEY:
+                return found
+    elif isinstance(obj, (list, tuple)):
+        for value in obj:
+            found = _non_string_key(value)
+            if found is not _NO_KEY:
+                return found
+    return _NO_KEY
+
+
 def _check_json(obj: Any) -> None:
-    """Raise if JSON cannot serialize ``obj``."""
+    """Raise if JSON cannot serialize ``obj`` and warn on keys JSON stores as strings."""
     json.dumps(obj)
+    key = _non_string_key(obj)
+    if key is _NO_KEY:
+        return
+    # deprecated 0.50.0, convert to error in 0.53.0
+    if _is_deprecation_due((0, 53)):  # pragma: no cover
+        msg = 'Convert this deprecation warning into an error.'
+        raise RuntimeError(msg)
+    msg = (
+        f'The user_dict key {key!r} is not a string, which is deprecated. '
+        f'JSON stores keys as strings, so use {json.dumps(key)!r} instead.'
+    )
+    warn_external(msg, PyVistaDeprecationWarning)
