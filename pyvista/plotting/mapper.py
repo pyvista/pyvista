@@ -789,6 +789,7 @@ class _BaseDataSetMapper(_BaseMapper):
         scalars_name,
         preference,
         direct_scalars_color_mode,
+        overwrite: bool = False,
     ) -> None:
         """Configure scalar mode.
 
@@ -809,6 +810,9 @@ class _BaseDataSetMapper(_BaseMapper):
             When ``True``, scalars are treated as RGB colors. When
             ``False``, scalars are mapped to the color table.
 
+        overwrite : bool, default: False
+            Replace an existing array named ``scalars_name`` with ``scalars``.
+
         """
         dataset = self.dataset
         if dataset is not None:
@@ -825,7 +829,8 @@ class _BaseDataSetMapper(_BaseMapper):
             # active (see https://github.com/pyvista/pyvista/issues/542).
             if use_points:
                 if (
-                    scalars_name not in dataset.point_data
+                    overwrite
+                    or scalars_name not in dataset.point_data
                     or scalars_name == pv.DEFAULT_SCALARS_NAME
                 ):
                     dataset.point_data.set_array(scalars, scalars_name, deep_copy=False)
@@ -833,7 +838,8 @@ class _BaseDataSetMapper(_BaseMapper):
                 self.scalar_map_mode = 'point'
             elif use_cells:
                 if (
-                    scalars_name not in dataset.cell_data
+                    overwrite
+                    or scalars_name not in dataset.cell_data
                     or scalars_name == pv.DEFAULT_SCALARS_NAME
                 ):
                     dataset.cell_data.set_array(scalars, scalars_name, deep_copy=False)
@@ -974,7 +980,8 @@ class _BaseDataSetMapper(_BaseMapper):
         if not isinstance(scalars, np.ndarray):
             scalars = np.asarray(scalars)
 
-        # Set the array title for when it is added back to the mesh
+        # Arrays derived here replace any stale copy already on the dataset
+        derived = custom_opac
         if custom_opac:
             scalars_name = '__custom_rgba'
 
@@ -993,6 +1000,7 @@ class _BaseDataSetMapper(_BaseMapper):
                 values = np.unique(scalars)
                 clim = [np.min(values) - 0.5, np.max(values) + 0.5]
                 scalars_name = f'{scalars_name}-digitized'
+                derived = True
 
             n_colors = len(cats)
             scalar_bar_args.setdefault('n_labels', 0)
@@ -1003,6 +1011,7 @@ class _BaseDataSetMapper(_BaseMapper):
         if np.issubdtype(scalars.dtype, np.complexfloating):
             scalars = scalars.astype(float)
             scalars_name = f'{scalars_name}-real'
+            derived = True
 
         if scalars.ndim != 1:
             if rgb:
@@ -1012,6 +1021,7 @@ class _BaseDataSetMapper(_BaseMapper):
                 or scalars.shape[0] == self.dataset.n_cells  # type: ignore[union-attr]
             ):
                 scalars, scalars_name = reduce_component_scalars(scalars, scalars_name, component)
+                derived = True
             else:
                 scalars = scalars.ravel()
 
@@ -1085,6 +1095,7 @@ class _BaseDataSetMapper(_BaseMapper):
             scalars_name=scalars_name,
             preference=preference,
             direct_scalars_color_mode=rgb or custom_opac,
+            overwrite=derived,
         )
 
         if isinstance(self, PointGaussianMapper):

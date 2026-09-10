@@ -144,6 +144,32 @@ def test_mapper_set_scalars_does_not_mutate_mesh(sphere):
     assert sphere.active_scalars_name == 'data_a'
 
 
+def test_set_scalars_replaces_digitized_array():
+    mesh = pv.RectilinearGrid([0.0, 1.0, 2.0], [0.0, 1.0], [0.0])
+    mapper = DataSetMapper(mesh)
+    mapper.set_scalars(np.array(['CellA', 'CellA']), 'Data')
+    assert list(mesh.cell_data['Data-digitized']) == [0, 0]
+    mapper.set_scalars(np.array(['CellA', 'CellB']), 'Data')
+    assert list(mesh.cell_data['Data-digitized']) == [0, 1]
+    assert mapper.lookup_table.annotations == {0.0: 'CellA', 1.0: 'CellB'}
+    assert mapper.scalar_range == (-0.5, 1.5)
+
+
+@pytest.mark.usefixtures('verify_image_cache')
+def test_string_scalars_replot():
+    mesh = pv.RectilinearGrid([0.0, 1.0, 2.0], [0.0, 1.0], [0.0])
+    pl = pv.Plotter()
+    pl.add_mesh(mesh, scalars=['CellA', 'CellA'])
+    pl.close()
+    pl = pv.Plotter()
+    pl.add_mesh(
+        mesh,
+        scalars=['CellA', 'CellB'],
+        scalar_bar_args={'width': 0.8, 'height': 0.3, 'label_font_size': 40},
+    )
+    pl.show()
+
+
 def test_mapper_pipeline_output_active_scalars(sphere):
     """Verify the mapper's pipeline produces the correct active scalars."""
     sphere['data_a'] = sphere.points[:, 0]
