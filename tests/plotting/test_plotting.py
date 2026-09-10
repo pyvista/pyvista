@@ -1777,11 +1777,12 @@ def test_screenshot_scaled_restores_window(sphere):
     pl.add_mesh(sphere, scalars=np.arange(sphere.n_points))
     before = pl.screenshot()
     assert pl.screenshot(scale=3).shape[:2] == tuple(3 * n for n in before.shape[:2])
-    assert np.array_equal(pl.screenshot(), before)
+    # Tolerate sub-LSB pixel noise from non-deterministic renderers.
+    assert pv.compare_images(pl.screenshot(), before) < 1.0
     pl.image_scale = 2
     assert pl.get_image_depth().shape == tuple(2 * n for n in before.shape[:2])
     pl.image_scale = 1
-    assert np.array_equal(pl.image, before)
+    assert pv.compare_images(pl.image, before) < 1.0
     pl.close()
 
 
