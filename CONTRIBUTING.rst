@@ -2208,7 +2208,6 @@ status check label regardless of if it is self hosted.
 
   macOS:
     name: ${{ matrix.job-name }}
-    needs: cache-pyvista-data
     strategy:
       fail-fast: false
       matrix:

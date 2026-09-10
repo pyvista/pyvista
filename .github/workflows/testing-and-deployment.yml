@@ -58,18 +58,6 @@ jobs:
           name: pr-info
           path: pr-info/
 
-  # Cache pyvista/data for each runner separately
-  # Runner labels should match the actual runners used by the different jobs in this file
-
-  # GitHub-hosted runners can re-use the cache across OS's.
-  # Here we run the cache on ubuntu, but it's usable by the Windows and macOS
-  # GitHub runners too, via enableCrossOsArchive on the restore.
-  cache-github-hosted:
-    name: Cache pyvista/data
-    uses: $/.github/workflows/cache-pyvista-data.yml
-    with:
-      runs-on: "ubuntu-22.04"
-
   macOS:
     # Job names are required status checks on main, so they have to keep
     # rendering exactly as `MacOS Unit Testing (3.10)`.
@@ -82,7 +70,6 @@ jobs:
     # macOS runner minutes bill at ten times the Linux rate, so a hung job is
     # expensive at the 360-minute default. The suite finishes in ~15.
     timeout-minutes: 80
-    needs: cache-github-hosted
     env:
       PARALLEL: "-n auto" # Use all available cores on the selected runner
     strategy:
@@ -101,10 +88,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: ${{ env.USE_CACHE == 'true' && 'pip' || '' }}
 
-      - name: Restore pyvista/data cache
-        uses: $/.github/actions/restore-pyvista-data
-        with:
-          key: ${{ needs.cache-github-hosted.outputs.key }}
+      - name: Fetch pyvista/data
+        uses: $/.github/actions/fetch-pyvista-data
 
       - name: Install tox-uv
         run: pip install tox-uv
@@ -141,7 +126,6 @@ jobs:
     # report for `main` and the push has nothing left to add.
     if: github.event_name != 'push' || startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-22.04
-    needs: cache-github-hosted
     strategy:
       fail-fast: false
 
@@ -184,10 +168,8 @@ jobs:
           packages: xvfb libgl1 libglx-mesa0 libosmesa6
           version: 3.0
 
-      - name: Restore pyvista/data cache
-        uses: $/.github/actions/restore-pyvista-data
-        with:
-          key: ${{ needs.cache-github-hosted.outputs.key }}
+      - name: Fetch pyvista/data
+        uses: $/.github/actions/fetch-pyvista-data
 
       - name: Install tox-uv
         run: pip install tox-uv
@@ -240,7 +222,6 @@ jobs:
     permissions:
       contents: read
     runs-on: ubuntu-22.04
-    needs: cache-github-hosted
     strategy:
       fail-fast: false
       matrix:
@@ -262,10 +243,8 @@ jobs:
           packages: xvfb libgl1 libglx-mesa0 libosmesa6
           version: 3.0
 
-      - name: Restore pyvista/data cache
-        uses: $/.github/actions/restore-pyvista-data
-        with:
-          key: ${{ needs.cache-github-hosted.outputs.key }}
+      - name: Fetch pyvista/data
+        uses: $/.github/actions/fetch-pyvista-data
 
       - name: Install tox-uv
         run: pip install tox-uv
@@ -309,7 +288,6 @@ jobs:
     if: github.event_name != 'push' || startsWith(github.ref, 'refs/tags/')
     runs-on: windows-latest
     timeout-minutes: 80
-    needs: cache-github-hosted
     env:
       CI_WINDOWS: true
       PARALLEL: "-n auto" # Use all available cores on the selected runner
@@ -328,10 +306,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
 
-      - name: Restore pyvista/data cache
-        uses: $/.github/actions/restore-pyvista-data
-        with:
-          key: ${{ needs.cache-github-hosted.outputs.key }}
+      - name: Fetch pyvista/data
+        uses: $/.github/actions/fetch-pyvista-data
 
       - name: Set up headless display
         uses: pyvista/setup-headless-display-action@c103a2ff45650d38cb71684b5dc6cdfeb9442c79

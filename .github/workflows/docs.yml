@@ -56,29 +56,16 @@ jobs:
     with:
       marker-prefix: docs-tree
 
-  # The cache, build and test jobs run on paid Blacksmith runners, except on a
-  # pull request without the `blacksmith` label. Blacksmith keeps its own
-  # cache, so the producer here has to run on the same kind of runner as the
-  # build job.
-  cache-pyvista-data:
-    name: Cache pyvista/data
-    needs: resolve
-    if: ${{ !cancelled() && needs.resolve.outputs.run-id == '' }}
-    uses: $/.github/workflows/cache-pyvista-data.yml
-    with:
-      runs-on: >-
-        ${{ (github.event_name != 'pull_request'
-        || contains(github.event.pull_request.labels.*.name, 'blacksmith'))
-        && 'blacksmith-8vcpu-ubuntu-2204' || 'ubuntu-22.04' }}
-
+  # The build and test jobs run on paid Blacksmith runners, except on a pull
+  # request without the `blacksmith` label.
   doc:
     name: Build Documentation
     runs-on: >-
       ${{ (github.event_name != 'pull_request'
       || contains(github.event.pull_request.labels.*.name, 'blacksmith'))
       && 'blacksmith-8vcpu-ubuntu-2204' || 'ubuntu-22.04' }}
-    needs: [cache-pyvista-data, resolve]
-    if: ${{ !cancelled() && needs.cache-pyvista-data.result == 'success' && needs.resolve.outputs.run-id == '' }}
+    needs: resolve
+    if: ${{ !cancelled() && needs.resolve.outputs.run-id == '' }}
     env:
       TOX_COLORED: "yes"
       # Tag builds are the docs published to docs.pyvista.org; `conf.py` expands
@@ -99,10 +86,8 @@ jobs:
           packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime xvfb
           version: 3.0
 
-      - name: Restore pyvista/data cache
-        uses: $/.github/actions/restore-pyvista-data
-        with:
-          key: ${{ needs.cache-pyvista-data.outputs.key }}
+      - name: Fetch pyvista/data
+        uses: $/.github/actions/fetch-pyvista-data
 
       - name: Install tox-uv
         run: pip install tox-uv
