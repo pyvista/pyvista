@@ -1015,7 +1015,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
     @annotations.setter
     def annotations(self, values: dict[float, str] | None):
-        self.SetAnnotations(None, None)
+        self.SetAnnotations(None, None)  # type: ignore[arg-type]
         if values is not None:
             for val, anno in values.items():
                 self.SetAnnotation(float(val), str(anno))  # type: ignore[call-overload]
