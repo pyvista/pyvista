@@ -296,7 +296,10 @@ class ImageNoiseSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageNoiseS
           The extent of the whole output image.
 
         """
-        return self._whole_extent
+        self.UpdateInformation()
+        return self.GetOutputInformation(0).Get(
+            _vtk.vtkStreamingDemandDrivenPipeline.WHOLE_EXTENT()
+        )
 
     @whole_extent.setter
     def whole_extent(self, whole_extent: Sequence[int]) -> None:
@@ -308,7 +311,6 @@ class ImageNoiseSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageNoiseS
           The extent of the whole output image.
 
         """
-        self._whole_extent = whole_extent
         self.SetWholeExtent(whole_extent)
 
     @property
@@ -400,7 +402,7 @@ class ImageSinusoidSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageSin
     period : float
         The period of the sinusoid in pixel.
 
-    phase : tuple
+    phase : float
         The phase of the sinusoid in pixel.
 
     amplitude : float
@@ -453,7 +455,10 @@ class ImageSinusoidSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageSin
             The extent of the whole output image.
 
         """
-        return self._whole_extent
+        self.UpdateInformation()
+        return self.GetOutputInformation(0).Get(
+            _vtk.vtkStreamingDemandDrivenPipeline.WHOLE_EXTENT()
+        )
 
     @whole_extent.setter
     def whole_extent(self, whole_extent: Sequence[int]) -> None:
@@ -465,7 +470,6 @@ class ImageSinusoidSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageSin
             The extent of the whole output image.
 
         """
-        self._whole_extent = whole_extent
         self.SetWholeExtent(
             whole_extent[0],
             whole_extent[1],
@@ -524,28 +528,28 @@ class ImageSinusoidSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageSin
         self.SetPeriod(period)
 
     @property
-    def phase(self) -> Sequence[float]:
+    def phase(self) -> float:
         """Get the phase of the sinusoid.
 
         Returns
         -------
-        sequence[float]
+        float
             The phase of the sinusoid in pixel.
 
         """
-        return self.GetPhase()  # type: ignore[return-value]
+        return self.GetPhase()
 
     @phase.setter
-    def phase(self, phase: Sequence[float]) -> None:
+    def phase(self, phase: float) -> None:
         """Set the phase of the sinusoid.
 
         Parameters
         ----------
-        phase : sequence[float]
+        phase : float
             The phase of the sinusoid in pixel.
 
         """
-        self.SetPhase(phase)  # type: ignore[arg-type]
+        self.SetPhase(phase)
 
     @property
     def amplitude(self) -> float:
@@ -601,7 +605,7 @@ class ImageGaussianSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageGau
     maximum : float
         The maximum value of the Gaussian.
 
-    std : sequence[float]
+    std : float
         The standard deviation of the Gaussian.
 
     Examples
@@ -664,7 +668,10 @@ class ImageGaussianSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageGau
           The extent of the whole output image.
 
         """
-        return self._whole_extent
+        self.UpdateInformation()
+        return self.GetOutputInformation(0).Get(
+            _vtk.vtkStreamingDemandDrivenPipeline.WHOLE_EXTENT()
+        )
 
     @whole_extent.setter
     def whole_extent(self, whole_extent: Sequence[int]) -> None:
@@ -676,7 +683,6 @@ class ImageGaussianSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageGau
           The extent of the whole output image.
 
         """
-        self._whole_extent = whole_extent
         self.SetWholeExtent(
             whole_extent[0],
             whole_extent[1],
@@ -755,7 +761,7 @@ class ImageGridSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageGridSou
 
     Parameters
     ----------
-    origin : sequence[float]
+    origin : sequence[int]
         The origin of the grid.
 
     extent : sequence[int]
@@ -787,28 +793,28 @@ class ImageGridSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageGridSou
             self.spacing = spacing
 
     @property
-    def origin(self) -> Sequence[float]:
+    def origin(self) -> Sequence[int]:
         """Get the origin of the data.
 
         Returns
         -------
-        sequence[float]
+        sequence[int]
             The origin of the grid.
 
         """
         return self.GetGridOrigin()
 
     @origin.setter
-    def origin(self, origin: Sequence[float]) -> None:
+    def origin(self, origin: Sequence[int]) -> None:
         """Set the origin of the data.
 
         Parameters
         ----------
-        origin : sequence[float]
+        origin : sequence[int]
             The origin of the grid.
 
         """
-        self.SetGridOrigin(origin)  # type: ignore[arg-type]
+        self.SetGridOrigin(origin)
 
     @property
     def extent(self) -> Sequence[int]:

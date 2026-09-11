@@ -53,6 +53,8 @@ def test_image_noise_source():
     output_same_seed = pv.ImageNoiseSource(seed=0).output
     assert np.array_equal(output_same_seed.active_scalars, output_seed.active_scalars)
 
+    assert pv.ImageNoiseSource(whole_extent=None).whole_extent == (0, 255, 0, 255, 0, 0)
+
 
 def test_image_mandelbrot_source():
     whole_extent = (0, 20, 0, 20, 0, 0)
@@ -101,6 +103,8 @@ def test_image_gradient_source():
     assert source.std == std
     assert isinstance(source.output, pv.ImageData)
 
+    assert pv.ImageGaussianSource().whole_extent == (0, 255, 0, 255, 0, 0)
+
 
 def test_image_sinusolid_source():
     whole_extent = (0, 20, 0, 20, 0, 0)
@@ -136,6 +140,8 @@ def test_image_sinusolid_source():
     assert source.amplitude == amplitude
     assert source.direction == direction
     assert isinstance(source.output, pv.ImageData)
+
+    assert pv.ImageSinusoidSource().whole_extent == (0, 255, 0, 255, 0, 0)
 
 
 def test_image_grid_source():

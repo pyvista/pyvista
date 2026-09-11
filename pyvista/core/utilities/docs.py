@@ -28,8 +28,8 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
 
     Returns
     -------
-    str
-        The code URL. Empty string if there is no valid link.
+    str | None
+        The code URL. ``None`` if there is no valid link.
 
     Notes
     -----
@@ -83,10 +83,6 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
         fn = None
 
     if not fn:  # pragma: no cover
-        try:
-            fn = inspect.getsourcefile(sys.modules[obj.__module__])
-        except Exception:  # noqa: BLE001
-            return None
         return None
 
     fn = op.relpath(fn, start=op.dirname(pv.__file__))  # noqa: PTH120

@@ -761,6 +761,21 @@ def test_progress_monitor():
     assert isinstance(ugrid, pv.PolyData)
 
 
+def test_progress_monitor_interrupt_without_abort_execute():
+    from pyvista.core.utilities.reader import _PVDReader
+
+    algorithm = _vtk.vtkSphereSource()
+    monitor = ProgressMonitor(algorithm)
+    monitor._interrupt_signal_received = True
+    monitor(algorithm)
+    assert algorithm.GetAbortExecute()
+
+    reader = _PVDReader()
+    monitor = ProgressMonitor(reader)
+    monitor._interrupt_signal_received = True
+    monitor(reader)
+
+
 def test_observer():
     msg = 'KIND: In PATH, line 0\nfoo (0x000000): ALERT'
     obs = Observer()
@@ -803,6 +818,20 @@ def test_observer_default_event():
     assert ret.alert == msg
 
     assert str(ret) == msg
+
+
+def test_observer_called_without_message():
+    from pyvista.core.utilities.reader import _PVDReader
+
+    obs = Observer(event_type='ProgressEvent', log=False, store_history=True)
+    reader = _PVDReader()
+    reader.AddObserver(obs.event_type, obs)
+
+    reader.UpdateObservers(obs.event_type)
+
+    assert obs.has_event_occurred()
+    assert obs.get_message() == ''
+    assert obs.event_history[-1].alert == ''
 
 
 @pytest.mark.parametrize('point', [1, object(), None])
@@ -1064,6 +1093,9 @@ def test_merge(sphere, cube, datasets):
 
     with pytest.raises(TypeError, match=r'Expected pyvista.DataSet'):
         pv.merge([None, sphere])
+
+    with pytest.raises(TypeError, match=r'Expected pyvista.DataSet, not NoneType at index 1'):
+        pv.merge([sphere, None])
 
     # check polydata
     merged_poly = pv.merge([sphere, cube])
