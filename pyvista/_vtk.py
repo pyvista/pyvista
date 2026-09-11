@@ -122,6 +122,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'VTK_DOUBLE_MAX',
         'VTK_DOUBLE_MIN',
         'VTK_FONT_FILE',
+        'VTK_STRING',
         'VTK_TIMES',
         'VTK_UNSIGNED_CHAR',
         'buffer_shared',

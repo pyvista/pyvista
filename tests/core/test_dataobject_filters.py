@@ -1622,6 +1622,157 @@ def test_point_data_to_cell_data():
     _ = data.ptc()
 
 
+@pytest.mark.parametrize('pass_point_data', [False, True])
+@pytest.mark.parametrize('categorical', [False, True])
+@pytest.mark.parametrize('dtype', ['U', 'S'])
+@pytest.mark.parametrize('unstructured', [False, True])
+def test_point_data_to_cell_data_strings(pass_point_data, categorical, dtype, unstructured):
+    mesh = pv.ImageData(dimensions=(2, 2, 2))
+    if unstructured:
+        mesh = mesh.cast_to_unstructured_grid()
+    mesh.point_data['values'] = np.array([0, 0, 0, 0, 1, 2, 3, 4], dtype=float)
+    mesh.point_data['labels'] = np.arange(mesh.n_points).astype(dtype)
+    mesh.point_data['names'] = np.full(mesh.n_points, 'name', dtype=dtype)
+    mesh.cell_data['existing'] = [42]
+    mesh.field_data['description'] = ['metadata']
+    original = mesh.copy()
+
+    with pytest.warns(UserWarning, match='Dropping string array') as caught:
+        result = mesh.point_data_to_cell_data(
+            pass_point_data=pass_point_data, categorical=categorical
+        )
+
+    assert len(caught) == 2
+    assert "'labels'" in str(caught[0].message)
+    assert "'names'" in str(caught[1].message)
+    assert result.cell_data.keys() == ['existing', 'values']
+    assert result.cell_data['values'][0] == (0 if categorical else 1.25)
+    assert result.cell_data['existing'][0] == 42
+    assert result.field_data == original.field_data
+    assert result.point_data.keys() == (original.point_data.keys() if pass_point_data else [])
+    if pass_point_data:
+        assert result.point_data == original.point_data
+        assert np.shares_memory(result.point_data['values'], mesh.point_data['values'])
+    assert mesh == original
+
+
+@pytest.mark.parametrize('categorical', [False, True])
+def test_point_data_to_cell_data_strings_no_copies(monkeypatch, categorical):
+    mesh = pv.ImageData(dimensions=(2, 2, 2)).cast_to_unstructured_grid()
+    mesh.point_data['values'] = np.array([0, 0, 0, 0, 1, 2, 3, 4], dtype=float)
+    mesh.point_data['labels'] = np.arange(mesh.n_points).astype(str)
+    original_copy = pv.DataObject.copy
+    copies = []
+
+    def check_copy(self, deep=True):
+        assert categorical
+        assert deep is False
+        copied = original_copy(self, deep=deep)
+        copies.append(copied)
+        return copied
+
+    def forbid_copy(*_args, **_kwargs):
+        pytest.fail('Conversion must not copy the input or materialize string values.')
+
+    with monkeypatch.context() as patch:
+        patch.setattr(pv.DataObject, 'copy', check_copy)
+        patch.setattr(pv.core.utilities.arrays, 'convert_string_array', forbid_copy)
+        with pytest.warns(UserWarning, match="Dropping string array 'labels'"):
+            result = mesh.point_data_to_cell_data(pass_point_data=True, categorical=categorical)
+
+    assert len(copies) == int(categorical)
+    for copied in copies:
+        assert np.shares_memory(copied.points, mesh.points)
+        assert np.shares_memory(copied.point_data['values'], mesh.point_data['values'])
+    assert np.shares_memory(result.points, mesh.points)
+    assert np.shares_memory(result.point_data['values'], mesh.point_data['values'])
+    assert result.cell_data['values'][0] == (0 if categorical else 1.25)
+
+
+@pytest.mark.parametrize('categorical', [False, True])
+@pytest.mark.parametrize('unnamed_string', [False, True])
+@pytest.mark.parametrize('name', [None, ''])
+def test_point_data_to_cell_data_unnamed_arrays(categorical, unnamed_string, name):
+    mesh = pv.ImageData(dimensions=(2, 2, 2))
+    mesh.point_data['values'] = np.arange(mesh.n_points, dtype=float)
+    mesh.point_data['labels'] = np.arange(mesh.n_points).astype(str)
+    index = int(unnamed_string)
+    unnamed = mesh.point_data.VTKObject.GetAbstractArray(index)
+    unnamed.SetName(name)
+    with pytest.raises(ValueError, match='Name all point arrays'):
+        mesh.point_data_to_cell_data(categorical=categorical)
+    assert unnamed.GetName() == name
+    assert mesh.point_data.VTKObject.GetNumberOfArrays() == 2
+
+
+@pytest.mark.parametrize('role', ['GLOBALIDS', 'PEDIGREEIDS', 'PROCESSIDS'])
+def test_point_data_to_cell_data_attribute_exclusions(role):
+    mesh = pv.ImageData(dimensions=(2, 2, 2))
+    mesh.point_data['values'] = np.arange(mesh.n_points, dtype=float)
+    mesh.point_data['ids'] = np.arange(mesh.n_points)
+    mesh.cell_data['ids'] = [42]
+    mesh.point_data.VTKObject.SetActiveAttribute('ids', getattr(_vtk.vtkDataSetAttributes, role))
+    expected = mesh.point_data_to_cell_data()
+    assert expected.cell_data['ids'][0] == 42
+    mesh.point_data['labels'] = np.arange(mesh.n_points).astype(str)
+    with pytest.warns(UserWarning, match="Dropping string array 'labels'"):
+        result = mesh.point_data_to_cell_data()
+    assert result == expected
+    assert (
+        result.cell_data.VTKObject.GetAbstractAttribute(getattr(_vtk.vtkDataSetAttributes, role))
+        is None
+    )
+
+
+@pytest.mark.parametrize('with_strings', [False, True])
+@pytest.mark.parametrize(
+    'role', ['active_vectors_name', 'active_normals_name', 'active_texture_coordinates_name']
+)
+def test_point_data_to_cell_data_active_roles(with_strings, role):
+    mesh = pv.Sphere(phi_resolution=8, theta_resolution=8)
+    mesh.point_data['values'] = np.arange(mesh.n_points, dtype=float)
+    mesh.point_data['vectors'] = mesh.points
+    mesh.point_data['texture'] = mesh.points[:, :2]
+    mesh.point_data.active_vectors_name = 'vectors'
+    mesh.point_data.active_texture_coordinates_name = 'texture'
+    expected = getattr(mesh.point_data, role)
+    assert expected is not None
+    if with_strings:
+        mesh.point_data['labels'] = np.arange(mesh.n_points).astype(str)
+        with pytest.warns(UserWarning, match="Dropping string array 'labels'"):
+            result = mesh.point_data_to_cell_data()
+    else:
+        result = mesh.point_data_to_cell_data()
+    assert getattr(result.cell_data, role) == expected
+    assert getattr(mesh.point_data, role) == expected
+
+
+@pytest.mark.parametrize('pass_point_data', [False, True])
+def test_point_data_to_cell_data_only_strings(pass_point_data):
+    mesh = pv.ImageData(dimensions=(2, 2, 2))
+    mesh.point_data['labels'] = np.arange(mesh.n_points).astype(str)
+    with pytest.warns(UserWarning, match="Dropping string array 'labels'"):
+        result = mesh.ptc(pass_point_data=pass_point_data)
+    assert not result.cell_data
+    assert result.point_data.keys() == (['labels'] if pass_point_data else [])
+    assert mesh.point_data.keys() == ['labels']
+
+
+def test_point_data_to_cell_data_strings_composite():
+    numeric = pv.ImageData(dimensions=(2, 2, 2))
+    numeric.point_data['values'] = np.arange(numeric.n_points, dtype=float)
+    strings = numeric.copy()
+    strings.point_data['values'] = np.arange(strings.n_points).astype(str)
+    mesh = pv.MultiBlock({'numeric': numeric, 'nested': pv.MultiBlock([strings, None])})
+    original = mesh.copy()
+    with pytest.warns(UserWarning, match="Dropping string array 'values'"):
+        result = mesh.point_data_to_cell_data()
+    assert result['numeric'].cell_data['values'][0] == 3.5
+    assert not result['nested'][0].cell_data
+    assert result['nested'][1] is None
+    assert mesh == original
+
+
 def test_point_data_to_cell_data_composite(multiblock_all_no_pointset):
     # Now test composite data structures
     output = multiblock_all_no_pointset.point_data_to_cell_data(progress_bar=True)
