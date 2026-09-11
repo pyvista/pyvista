@@ -9,7 +9,6 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 
 from ._property import _HAS_NATIVE_POINT_SHAPES
@@ -447,8 +446,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         pl.add_actor(self)
         pl.show(**kwargs)
 
-    @_deprecate_positional_args
-    def copy(self: Self, deep: bool = True) -> Self:  # noqa: FBT001, FBT002
+    def copy(self: Self, *, deep: bool = True) -> Self:
         """Create a copy of this actor.
 
         Parameters

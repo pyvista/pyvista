@@ -106,6 +106,7 @@ CameraPositionOptions = (
     Literal['xy', 'xz', 'yz', 'yx', 'zx', 'zy', 'iso']
     | VectorLike[float]
     | MatrixLike[float]
+    | Sequence[VectorLike[float]]
     | CameraPosition
 )
 

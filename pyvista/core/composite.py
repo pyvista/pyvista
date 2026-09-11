@@ -28,11 +28,9 @@ from typing_extensions import Unpack
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import vtk_version_info
 
 from ._typing_core import BoundsTuple
-from .dataobject import USER_DICT_KEY
 from .dataobject import DataObject
 from .dataset import DataSet
 from .filters.composite import CompositeFilters
@@ -41,6 +39,7 @@ from .formatting_html import _children_section
 from .formatting_html import _fmt_memory
 from .formatting_html import build_repr_html
 from .pyvista_ndarray import pyvista_ndarray
+from .utilities.arrays import USER_DICT_KEY
 from .utilities.arrays import CellLiteral
 from .utilities.arrays import FieldAssociation
 from .utilities.arrays import FieldLiteral
@@ -1299,11 +1298,11 @@ class MultiBlock(
         """
         return sum(block.volume for block in self if block)
 
-    @_deprecate_positional_args(allowed=['name'])
     def get_data_range(  # type: ignore[override]
         self: MultiBlock,
         name: str | None,
-        allow_missing: bool = False,  # noqa: FBT001, FBT002
+        *,
+        allow_missing: bool = False,
         preference: PointLiteral | CellLiteral | FieldLiteral = 'cell',
     ) -> tuple[float, float]:
         """Get the min/max of an array given its name across all blocks.
@@ -1982,8 +1981,7 @@ class MultiBlock(
         for i, name in enumerate(reversed(names)):
             self.set_block_name(i, name)
 
-    @_deprecate_positional_args
-    def clean(self: MultiBlock, empty: bool = True) -> None:  # noqa: FBT001, FBT002
+    def clean(self: MultiBlock, *, empty: bool = True) -> None:
         """Remove any null blocks in place.
 
         Parameters
@@ -2104,19 +2102,18 @@ class MultiBlock(
         """Return the number of blocks."""
         return self.n_blocks
 
-    @_deprecate_positional_args(allowed=['ido'])
     def copy_meta_from(
         self: MultiBlock,
         ido: MultiBlock,
-        deep: bool,  # noqa: FBT001
+        *,
+        deep: bool,
     ) -> None:  # numpydoc ignore=PR01
         """Copy pyvista meta data onto this object from another object."""
         # Note that `pyvista.MultiBlock` datasets currently don't have any meta.
         # This method is here for consistency with the rest of the API and
         # in case we add meta data to this pbject down the road.
 
-    @_deprecate_positional_args
-    def copy(self: Self, deep: bool = True) -> Self:  # noqa: FBT001, FBT002
+    def copy(self: Self, *, deep: bool = True) -> Self:
         """Return a copy of the multiblock.
 
         Parameters
@@ -2152,11 +2149,11 @@ class MultiBlock(
         newobject.copy_meta_from(self, deep=deep)
         return newobject
 
-    @_deprecate_positional_args(allowed=['to_copy'])
     def shallow_copy(  # type: ignore[override]
         self: MultiBlock,
         to_copy: _vtk.vtkMultiBlockDataSet,
-        recursive: bool = False,  # noqa: FBT001, FBT002
+        *,
+        recursive: bool = False,
     ) -> None:
         """Shallow copy the given multiblock to this multiblock.
 
@@ -2172,6 +2169,7 @@ class MultiBlock(
 
         """
         self.CompositeShallowCopy(to_copy)
+        self._sync_user_dict()
         self.wrap_nested()
 
         # Shallow copy creates new instances of nested multiblocks
@@ -2214,12 +2212,12 @@ class MultiBlock(
 
         _set_name_for_none_blocks(self, to_copy)
 
-    @_deprecate_positional_args(allowed=['name'])
     def set_active_scalars(
         self: MultiBlock,
         name: str | None,
+        *,
         preference: PointLiteral | CellLiteral = 'cell',
-        allow_missing: bool = False,  # noqa: FBT001, FBT002
+        allow_missing: bool = False,
     ) -> tuple[FieldAssociation, NumpyArray[float]]:
         """Find the scalars by name and appropriately set it as active.
 
@@ -2318,8 +2316,7 @@ class MultiBlock(
 
         return field_asc, scalars
 
-    @_deprecate_positional_args
-    def as_polydata_blocks(self: MultiBlock, copy: bool = False) -> MultiBlock:  # noqa: FBT001, FBT002
+    def as_polydata_blocks(self: MultiBlock, *, copy: bool = False) -> MultiBlock:
         """Convert all the datasets within this MultiBlock to :class:`~pyvista.PolyData`.
 
         Parameters
@@ -2364,8 +2361,7 @@ class MultiBlock(
 
         return self.generic_filter(block_filter, _skip_none=False)
 
-    @_deprecate_positional_args
-    def as_unstructured_grid_blocks(self: MultiBlock, copy: bool = False) -> MultiBlock:  # noqa: FBT001, FBT002
+    def as_unstructured_grid_blocks(self: MultiBlock, *, copy: bool = False) -> MultiBlock:
         """Convert all the datasets within this MultiBlock to :class:`~pyvista.UnstructuredGrid`.
 
         .. versionadded:: 0.45

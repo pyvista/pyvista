@@ -13,7 +13,6 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core._vtk_utilities import VTKObjectWrapperCheckSnakeCase
 from pyvista.core.utilities.arrays import convert_array
@@ -26,6 +25,7 @@ from .tools import opacity_transfer_function
 if TYPE_CHECKING:
     from ._typing import ColorLike
     from ._typing import ColormapOptions
+    from ._typing import ScalarBarArgs
 
 RAMP_MAP = {0: 'linear', 1: 's-curve', 2: 'sqrt'}
 RAMP_MAP_INV = {k: v for v, k in RAMP_MAP.items()}
@@ -211,12 +211,12 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
     _values_manual = False
     _opacity_parm: tuple[Any, bool, str] = (None, False, 'quadratic')
 
-    @_deprecate_positional_args(allowed=['cmap', 'n_values'])
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
         cmap=None,
         n_values=256,
-        flip: bool = False,  # noqa: FBT001, FBT002
+        *,
+        flip: bool = False,
         values=None,
         value_range=None,
         hue_range=None,
@@ -788,12 +788,12 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
             color = Color(pv.global_theme.below_range_color)
         self.below_range_color = Color(color, opacity=value)
 
-    @_deprecate_positional_args(allowed=['cmap', 'n_values'])
     def apply_cmap(
         self,
         cmap: ColormapOptions,
         n_values: int = 256,
-        flip: bool = False,  # noqa: FBT001, FBT002
+        *,
+        flip: bool = False,
     ):
         """Assign a colormap to this lookup table.
 
@@ -843,8 +843,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
         self._cmap = cmap_obj
 
-    @_deprecate_positional_args(allowed=['opacity'])
-    def apply_opacity(self, opacity, interpolate: bool = True, kind: str = 'quadratic'):  # noqa: FBT001, FBT002
+    def apply_opacity(self, opacity, *, interpolate: bool = True, kind: str = 'quadratic'):
         """Assign custom opacity to this lookup table.
 
         Parameters
@@ -1079,7 +1078,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         actor.mapper.lookup_table = self
         actor.visibility = False
 
-        scalar_bar_kwargs = {
+        scalar_bar_kwargs: ScalarBarArgs = {
             'color': 'k',
             'title': self._lookup_type + '\n',
             'outline': False,
@@ -1095,7 +1094,8 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
         label_level += self._nan_color_set
 
-        scalar_bar = pl.add_scalar_bar(**scalar_bar_kwargs)
+        pl.add_scalar_bar(**scalar_bar_kwargs)
+        scalar_bar = pl.scalar_bar
         scalar_bar.SetLookupTable(self)
         scalar_bar.SetMaximumNumberOfColors(self.n_values)
         scalar_bar.SetPosition(0.03, 0.1 + label_level * 0.1)
@@ -1131,10 +1131,10 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
             color_tf.AddRGBPoint(value, *self.map_value(value, opacity=False))
         return color_tf
 
-    @_deprecate_positional_args
     def to_opacity_tf(
         self,
-        clamping: bool = True,  # noqa: FBT001, FBT002
+        *,
+        clamping: bool = True,
         max_clip: float = 0.998,
     ) -> _vtk.vtkPiecewiseFunction:
         """Return the opacity transfer function of this table.
@@ -1180,20 +1180,20 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         return opacity_tf
 
     # fmt: off
-    # ruff: disable[E501, FBT001, FBT002]
+    # ruff: disable[E501]
     @overload
-    def map_value(self, value: float, opacity: Literal[True] = True) -> tuple[float, float, float, float]: ...
+    def map_value(self, value: float, *, opacity: Literal[True] = True) -> tuple[float, float, float, float]: ...
     @overload
-    def map_value(self, value: float, opacity: Literal[False]) -> tuple[float, float, float]: ...
+    def map_value(self, value: float, *, opacity: Literal[False]) -> tuple[float, float, float]: ...
     @overload
-    def map_value(self, value: float, opacity: bool = ...) -> tuple[float, float, float] | tuple[float, float, float, float]: ...
-    # ruff: enable[E501, FBT001, FBT002]
+    def map_value(self, value: float, *, opacity: bool = ...) -> tuple[float, float, float] | tuple[float, float, float, float]: ...
+    # ruff: enable[E501]
     # fmt: on
-    @_deprecate_positional_args(allowed=['value'])
     def map_value(
         self,
         value: float,
-        opacity: bool = True,  # noqa: FBT001, FBT002
+        *,
+        opacity: bool = True,
     ) -> tuple[float, float, float] | tuple[float, float, float, float]:
         """Map a single value through the lookup table, returning an RBG(A) color.
 
@@ -1238,7 +1238,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
             if isinstance(value, _vtk.vtkDataArray):
                 vtk_values = value
             else:
-                values = np.asarray(value)
+                values = np.atleast_1d(value)
                 if values.dtype == np.bool_:
                     values = values.astype(np.uint8)
                 vtk_values = convert_array(values)

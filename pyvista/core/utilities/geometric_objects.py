@@ -11,7 +11,6 @@ import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.filters import _apply_points_dtype
 from pyvista.core.filters import _update_alg
 
@@ -44,8 +43,8 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLike
 
 
-@_deprecate_positional_args
-def Capsule(  # noqa: PLR0917
+def Capsule(
+    *,
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     direction: VectorLike[float] = (1.0, 0.0, 0.0),
     radius: float = 0.5,
@@ -116,14 +115,14 @@ def Capsule(  # noqa: PLR0917
     return output
 
 
-@_deprecate_positional_args
-def Cylinder(  # noqa: PLR0917
+def Cylinder(
+    *,
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     direction: VectorLike[float] = (1.0, 0.0, 0.0),
     radius: float = 0.5,
     height: float = 1.0,
     resolution: int = 100,
-    capping: bool = True,  # noqa: FBT001, FBT002
+    capping: bool = True,
 ) -> PolyData:
     """Create the surface of a cylinder.
 
@@ -194,8 +193,8 @@ def Cylinder(  # noqa: PLR0917
     return output
 
 
-@_deprecate_positional_args
-def CylinderStructured(  # noqa: PLR0917
+def CylinderStructured(
+    *,
     radius: float | VectorLike[float] = 0.5,
     height: float = 1.0,
     center: VectorLike[float] = (0.0, 0.0, 0.0),
@@ -305,8 +304,8 @@ def CylinderStructured(  # noqa: PLR0917
     return grid
 
 
-@_deprecate_positional_args
-def Arrow(  # noqa: PLR0917
+def Arrow(
+    *,
     start: VectorLike[float] = (0.0, 0.0, 0.0),
     direction: VectorLike[float] = (1.0, 0.0, 0.0),
     tip_length: float = 0.25,
@@ -380,8 +379,8 @@ def Arrow(  # noqa: PLR0917
     return surf
 
 
-@_deprecate_positional_args
-def Sphere(  # noqa: PLR0917
+def Sphere(
+    *,
     radius: float = 0.5,
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     direction: VectorLike[float] = (0.0, 0.0, 1.0),
@@ -392,7 +391,7 @@ def Sphere(  # noqa: PLR0917
     start_phi: float = 0.0,
     end_phi: float = 180.0,
     tessellation: Literal['triangle', 'phi_theta'] = 'triangle',
-    texture_coordinates: bool = False,  # noqa: FBT001, FBT002
+    texture_coordinates: bool = False,
 ) -> PolyData:
     """Create a sphere.
 
@@ -738,8 +737,8 @@ def StructuredSphere(
     return sphere
 
 
-@_deprecate_positional_args
-def SolidSphere(  # noqa: PLR0917
+def SolidSphere(
+    *,
     outer_radius: float = 0.5,
     inner_radius: float = 0.0,
     radius_resolution: int = 5,
@@ -751,7 +750,7 @@ def SolidSphere(  # noqa: PLR0917
     phi_resolution: int = 30,
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     direction: VectorLike[float] = (0.0, 0.0, 1.0),
-    radians: bool = False,  # noqa: FBT001, FBT002
+    radians: bool = False,
     tol_radius: float = 1.0e-8,
     tol_angle: float | None = None,
 ) -> UnstructuredGrid:
@@ -899,14 +898,14 @@ def SolidSphere(  # noqa: PLR0917
     )
 
 
-@_deprecate_positional_args
-def SolidSphereGeneric(  # noqa: PLR0917
+def SolidSphereGeneric(
+    *,
     radius: VectorLike[float] | None = None,
     theta: VectorLike[float] | None = None,
     phi: VectorLike[float] | None = None,
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     direction: VectorLike[float] = (0.0, 0.0, 1.0),
-    radians: bool = False,  # noqa: FBT001, FBT002
+    radians: bool = False,
     tol_radius: float = 1.0e-8,
     tol_angle: float | None = None,
 ) -> UnstructuredGrid:
@@ -1272,8 +1271,8 @@ def SolidSphereGeneric(  # noqa: PLR0917
     return mesh
 
 
-@_deprecate_positional_args
-def Plane(  # noqa: PLR0917
+def Plane(
+    *,
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     direction: VectorLike[float] = (0.0, 0.0, 1.0),
     i_size: float = 1.0,
@@ -1328,10 +1327,10 @@ def Plane(  # noqa: PLR0917
     return surf
 
 
-@_deprecate_positional_args(allowed=['pointa', 'pointb'])
 def Line(
     pointa: VectorLike[float] = (-0.5, 0.0, 0.0),
     pointb: VectorLike[float] = (0.5, 0.0, 0.0),
+    *,
     resolution: int = 1,
 ) -> PolyData:
     """Create a line.
@@ -1401,14 +1400,14 @@ def MultipleLines(points: MatrixLike[float] | None = None) -> PolyData:
     return MultipleLinesSource(points=points).output
 
 
-@_deprecate_positional_args
-def Tube(  # noqa: PLR0917
+def Tube(
+    *,
     pointa: VectorLike[float] = (-0.5, 0.0, 0.0),
     pointb: VectorLike[float] = (0.5, 0.0, 0.0),
     resolution: int = 1,
     radius: float = 1.0,
     n_sides: int = 15,
-    capping: bool = False,  # noqa: FBT001, FBT002
+    capping: bool = False,
 ) -> PolyData:
     """Create a tube.
 
@@ -1452,14 +1451,14 @@ def Tube(  # noqa: PLR0917
     return line_src.output.tube(radius=radius, n_sides=n_sides, capping=capping)
 
 
-@_deprecate_positional_args
-def Cube(  # noqa: PLR0917
+def Cube(
+    *,
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     x_length: float = 1.0,
     y_length: float = 1.0,
     z_length: float = 1.0,
     bounds: VectorLike[float] | None = None,
-    clean: bool = True,  # noqa: FBT001, FBT002
+    clean: bool = True,
     point_dtype: str | None = None,
     points_dtype: str | None = None,
 ) -> PolyData:
@@ -1560,11 +1559,11 @@ def Cube(  # noqa: PLR0917
     return cube
 
 
-@_deprecate_positional_args(allowed=['bounds'])
 def Box(
     bounds: VectorLike[float] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
+    *,
     level: int | VectorLike[int] = 0,
-    quads: bool = True,  # noqa: FBT001, FBT002
+    quads: bool = True,
 ) -> PolyData:
     """Create a box with solid faces for the given bounds.
 
@@ -1619,13 +1618,13 @@ def Box(
     return mesh
 
 
-@_deprecate_positional_args
-def Cone(  # noqa: PLR0917
+def Cone(
+    *,
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     direction: VectorLike[float] = (1.0, 0.0, 0.0),
     height: float = 1.0,
     radius: float | None = None,
-    capping: bool = True,  # noqa: FBT001, FBT002
+    capping: bool = True,
     angle: float | None = None,
     resolution: int = 6,
 ) -> PolyData:
@@ -1684,13 +1683,13 @@ def Cone(  # noqa: PLR0917
     return algo.output
 
 
-@_deprecate_positional_args
-def Polygon(  # noqa: PLR0917
+def Polygon(
+    *,
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     radius: float = 1.0,
     normal: VectorLike[float] = (0.0, 0.0, 1.0),
     n_sides: int = 6,
-    fill: bool = True,  # noqa: FBT001, FBT002
+    fill: bool = True,
 ) -> PolyData:
     """Create a polygon.
 
@@ -1730,8 +1729,8 @@ def Polygon(  # noqa: PLR0917
     return src.output
 
 
-@_deprecate_positional_args
-def Disc(  # noqa: PLR0917
+def Disc(
+    *,
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     inner: float = 0.25,
     outer: float = 0.5,
@@ -1788,9 +1787,9 @@ def Disc(  # noqa: PLR0917
     return surf
 
 
-@_deprecate_positional_args(allowed=['string'])
-def Text3D(  # noqa: PLR0917
+def Text3D(
     string: str,
+    *,
     depth: float | None = None,
     width: float | None = None,
     height: float | None = None,
@@ -1900,8 +1899,8 @@ def Text3D(  # noqa: PLR0917
     ).output
 
 
-@_deprecate_positional_args
-def Wavelet(  # noqa: PLR0917
+def Wavelet(
+    *,
     extent: VectorLike[float] = (-10, 10, -10, 10, -10, 10),
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     maximum: float = 255.0,
@@ -2002,13 +2001,13 @@ def Wavelet(  # noqa: PLR0917
     return cast('pv.ImageData', wrap(wavelet_source.GetOutput()))
 
 
-@_deprecate_positional_args
-def CircularArc(  # noqa: PLR0917
+def CircularArc(
+    *,
     pointa: VectorLike[float],
     pointb: VectorLike[float],
     center: VectorLike[float],
     resolution: int = 100,
-    negative: bool = False,  # noqa: FBT001, FBT002
+    negative: bool = False,
 ) -> PolyData:
     """Create a circular arc defined by two endpoints and a center.
 
@@ -2089,8 +2088,8 @@ def CircularArc(  # noqa: PLR0917
     return arc
 
 
-@_deprecate_positional_args
-def CircularArcFromNormal(  # noqa: PLR0917
+def CircularArcFromNormal(
+    *,
     center: VectorLike[float],
     resolution: int = 100,
     normal: VectorLike[float] | None = None,
@@ -2385,8 +2384,7 @@ def Quadrilateral(points: MatrixLike[float] | None = None) -> PolyData:
     return _apply_points_dtype(wrap(pv.PolyData(points, cells)))
 
 
-@_deprecate_positional_args
-def Circle(radius: float = 0.5, resolution: int = 100) -> PolyData:
+def Circle(*, radius: float = 0.5, resolution: int = 100) -> PolyData:
     """Create a single PolyData circle defined by radius in the XY plane.
 
     Parameters
@@ -2424,9 +2422,8 @@ def Circle(radius: float = 0.5, resolution: int = 100) -> PolyData:
     return _apply_points_dtype(wrap(pv.PolyData(points, cells)))
 
 
-@_deprecate_positional_args(allowed=['semi_major_axis', 'semi_minor_axis'])
 def Ellipse(
-    semi_major_axis: float = 0.5, semi_minor_axis: float = 0.2, resolution: int = 100
+    semi_major_axis: float = 0.5, semi_minor_axis: float = 0.2, *, resolution: int = 100
 ) -> PolyData:
     """Create a single ellipse defined by the Semi-major and Semi-minor axes in the XY plane.
 
@@ -2467,8 +2464,8 @@ def Ellipse(
     return _apply_points_dtype(wrap(pv.PolyData(points, cells)))
 
 
-@_deprecate_positional_args
-def Superquadric(  # noqa: PLR0917
+def Superquadric(
+    *,
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     scale: VectorLike[float] = (1.0, 1.0, 1.0),
     size: float = 0.5,
@@ -2476,7 +2473,7 @@ def Superquadric(  # noqa: PLR0917
     phi_roundness: float = 1.0,
     theta_resolution: int = 16,
     phi_resolution: int = 16,
-    toroidal: bool = False,  # noqa: FBT001, FBT002
+    toroidal: bool = False,
     thickness: float = 1 / 3,
 ) -> PolyData:
     """Create a superquadric.
@@ -2553,9 +2550,8 @@ def Superquadric(  # noqa: PLR0917
     return source.output
 
 
-@_deprecate_positional_args(allowed=['kind'])
 def PlatonicSolid(
-    kind: str = 'tetrahedron', radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0)
+    kind: str = 'tetrahedron', *, radius: float = 1.0, center: VectorLike[float] = (0.0, 0.0, 0.0)
 ) -> PolyData:
     """Create a Platonic solid of a given size.
 

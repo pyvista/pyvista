@@ -5044,6 +5044,12 @@ def test_color_labels_inputs(labeled_image, color_input, expected_rgb):
         assert np.allclose(color_scalars[label_scalars == id_], expected_rgb[id_])
 
 
+def test_color_labels_string_keys(labeled_image):
+    from_ints = labeled_image.color_labels({0: RED_RGB, 2: BLUE})
+    from_strings = labeled_image.color_labels({'0': RED_RGB, '2': BLUE})
+    assert np.array_equal(from_strings.active_scalars, from_ints.active_scalars)
+
+
 @pytest.mark.parametrize('color_type', ['int_rgb', 'int_rgba', 'float_rgb', 'float_rgba'])
 def test_color_labels_color_type_partial_dict(labeled_image, color_type):
     input_scalars_name = labeled_image.active_scalars_name

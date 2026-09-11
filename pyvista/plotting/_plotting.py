@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.misc import assert_empty_kwargs
@@ -316,8 +315,7 @@ def _get_generated_scalars_name(mesh: DataSet, base_name: str) -> str:
     return next(f'{base_name}-{i}' for i in itertools.count(1) if _is_free(f'{base_name}-{i}'))
 
 
-@_deprecate_positional_args
-def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparency):  # noqa: PLR0917
+def process_opacity(*, mesh, opacity, preference, n_colors, scalars, use_transparency):
     """Process opacity.
 
     This function accepts an opacity string or array and always

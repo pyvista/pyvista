@@ -11,17 +11,9 @@ permissions:
   id-token: none
 
 jobs:
-  # Blacksmith runners have their own cache, so each docstring job restores an
-  # entry saved by a producer on the same kind of runner.
-  cache-pyvista-data:
-    name: Cache pyvista/data
-    uses: $/.github/workflows/cache-pyvista-data.yml
-    with:
-      runs-on: "blacksmith-4vcpu-ubuntu-2204"
-
   # GitHub-hosted runners can re-use the cache across OS's, so this ubuntu
   # entry serves the Windows job via enableCrossOsArchive on the restore.
-  cache-github-hosted:
+  cache-pyvista-data:
     name: Cache pyvista/data
     uses: $/.github/workflows/cache-pyvista-data.yml
     with:
@@ -32,7 +24,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: blacksmith-4vcpu-ubuntu-2204
+          - os: ubuntu-22.04
             python-version: "3.14" # Should be the latest version supported
           - os: windows-latest
             python-version: "3.10" # Should be the oldest version supported
@@ -40,7 +32,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
 
-    needs: [cache-pyvista-data, cache-github-hosted]
+    needs: cache-pyvista-data
     env:
       TOX_COLORED: "yes"
     steps:
@@ -54,30 +46,24 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
 
-      - name: Setup headless display on Windows
-        if: runner.os == 'Windows'
-        uses: pyvista/setup-headless-display-action@b0bf9f57d62d2b3fee9f1c0e0c7e390f05e97a4e
+      - name: Set up headless display
+        uses: pyvista/setup-headless-display-action@c103a2ff45650d38cb71684b5dc6cdfeb9442c79
 
       - uses: awalsh128/cache-apt-pkgs-action@553a35bb8ebd9fcabcb1c9451aa4c98e1b4ca8a9
         if: runner.os == 'Linux'
         with:
-          packages: xvfb libgl1 libglx-mesa0 libosmesa6
+          packages: libosmesa6
           version: 3.0
 
       - name: Restore pyvista/data cache
         uses: $/.github/actions/restore-pyvista-data
         with:
-          key: ${{ runner.os == 'Windows' && needs.cache-github-hosted.outputs.key || needs.cache-pyvista-data.outputs.key }}
+          key: ${{ needs.cache-pyvista-data.outputs.key }}
 
       - name: Install tox-uv
         run: pip install tox-uv
 
-      - name: Test Package Docstrings (Linux)
-        if: runner.os == 'Linux'
-        run: xvfb-run -a tox run -e doctest-modules
-
-      - name: Test Package Docstrings (Windows)
-        if: runner.os == 'Windows'
+      - name: Test Package Docstrings
         run: tox run -e doctest-modules
 
   doctest-names:

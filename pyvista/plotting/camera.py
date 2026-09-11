@@ -10,7 +10,6 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
@@ -58,7 +57,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
                 raise TypeError(msg)
             self._renderer = weakref.proxy(renderer)
         else:
-            self._renderer = None  # type: ignore[assignment]
+            self._renderer = None
 
     def __eq__(self, other) -> bool:
         """Compare whether the relevant attributes of two cameras are equal."""
@@ -273,7 +272,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         self.SetPosition(value)
         self._elevation = 0.0
         self._azimuth = 0.0
-        if self._renderer:  # type: ignore[truthy-bool]
+        if self._renderer:
             self.reset_clipping_range()
         self.is_set = True
 
@@ -291,7 +290,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
 
         """
         if self._renderer is None:
-            msg = 'Camera is must be associated with a renderer to reset its clipping range.'  # type: ignore[unreachable]
+            msg = 'Camera is must be associated with a renderer to reset its clipping range.'
             raise AttributeError(msg)
         self._renderer.reset_camera_clipping_range()
 
@@ -812,13 +811,13 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
 
         return new_camera
 
-    @_deprecate_positional_args
-    def tight(  # noqa: PLR0917
+    def tight(
         self,
+        *,
         padding=0.0,
-        adjust_render_window: bool = True,  # noqa: FBT001, FBT002
+        adjust_render_window: bool = True,
         view='xy',
-        negative: bool = False,  # noqa: FBT001, FBT002
+        negative: bool = False,
     ):
         """Adjust the camera position so that the actors fill the entire renderer.
 

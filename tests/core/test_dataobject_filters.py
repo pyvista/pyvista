@@ -1438,11 +1438,23 @@ def test_extract_all_edges_composite(multiblock_all_no_pointset):
     assert output.n_blocks == multiblock_all_no_pointset.n_blocks
 
 
+def test_cell_validator_composite(multiblock_all_no_pointset):
+    output = multiblock_all_no_pointset.cell_validator()
+    assert output.n_blocks == multiblock_all_no_pointset.n_blocks
+    for block, source in zip(output, multiblock_all_no_pointset, strict=True):
+        assert type(block) is type(source)
+        assert block.active_scalars_name == 'validity_state'
+        assert block.cell_data['validity_state'].shape == (source.n_cells,)
+        assert block.field_data['invalid'].size == 0
+
+
+def test_cell_validator_composite_pointset_raises(multiblock_all):
+    with pytest.raises(pv.PointSetCellOperationError, match='type PointSet'):
+        multiblock_all.cell_validator()
+
+
 def test_extract_all_edges_composite_pointset_raises(multiblock_all):
-    # extract_all_edges hands the whole composite to the underlying VTK
-    # algorithm; on some VTK versions this segfaults instead of raising if a
-    # block is a cell-less PointSet, so PyVista guards against it explicitly.
-    with pytest.raises(pv.PointSetCellOperationError):
+    with pytest.raises(pv.PointSetCellOperationError, match='type PointSet'):
         multiblock_all.extract_all_edges(progress_bar=True)
 
 
@@ -1554,10 +1566,7 @@ def test_compute_cell_sizes_composite(multiblock_all_no_pointset):
 
 
 def test_compute_cell_sizes_composite_pointset_raises(multiblock_all):
-    # compute_cell_sizes hands the whole composite to the underlying VTK
-    # algorithm; on some VTK versions this segfaults instead of raising if a
-    # block is a cell-less PointSet, so PyVista guards against it explicitly.
-    with pytest.raises(pv.PointSetCellOperationError):
+    with pytest.raises(pv.PointSetCellOperationError, match='type PointSet'):
         multiblock_all.compute_cell_sizes(progress_bar=True)
 
 
@@ -1617,10 +1626,7 @@ def test_cell_data_to_point_data_composite(multiblock_all_no_pointset):
 
 
 def test_cell_data_to_point_data_composite_pointset_raises(multiblock_all):
-    # cell_data_to_point_data hands the whole composite to the underlying VTK
-    # algorithm; on some VTK versions this segfaults instead of raising if a
-    # block is a cell-less PointSet, so PyVista guards against it explicitly.
-    with pytest.raises(pv.PointSetNotSupported):
+    with pytest.raises(pv.PointSetNotSupported, match='type PointSet'):
         multiblock_all.cell_data_to_point_data(progress_bar=True)
 
 
@@ -1639,7 +1645,7 @@ def test_point_data_to_cell_data_composite(multiblock_all_no_pointset):
 
 
 def test_point_data_to_cell_data_composite_pointset_raises(multiblock_all):
-    with pytest.raises(pv.PointSetNotSupported):
+    with pytest.raises(pv.PointSetNotSupported, match='type PointSet'):
         multiblock_all.point_data_to_cell_data(progress_bar=True)
 
 
@@ -1925,7 +1931,7 @@ def test_cell_quality_composite(
     multiblock_all_with_nested_and_none, multiblock_all_no_pointset_with_nested_and_none
 ):
     match = "could not be applied to the block at index 5 with name 'Block-05' and type PointSet"
-    with pytest.raises(RuntimeError, match=match):
+    with pytest.raises(pv.PointSetCellOperationError, match=match):
         qual = multiblock_all_with_nested_and_none.cell_quality([SHAPE])
 
     qual = multiblock_all_no_pointset_with_nested_and_none.cell_quality([SHAPE])
@@ -4159,15 +4165,10 @@ def test_extract_surface_nonlinear(as_multiblock):
     with pytest.raises(ValueError, match=match):
         grid.extract_surface(algorithm='geometry', nonlinear_subdivision=5)
 
+    match = 'Mesh contains non-linear cells which cannot be processed by the geometry algorithm.'
     if as_multiblock:
-        expected_error = RuntimeError
-        match = 'could not be applied to the block at index 0'
-    else:
-        expected_error = ValueError
-        match = (
-            'Mesh contains non-linear cells which cannot be processed by the geometry algorithm.'
-        )
-    with pytest.raises(expected_error, match=match):
+        match = '(?s)could not be applied to the block at index 0.*' + match
+    with pytest.raises(ValueError, match=match):
         grid.extract_surface(algorithm='geometry')
 
     # No subdivision, expect one face per cell

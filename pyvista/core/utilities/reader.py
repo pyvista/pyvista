@@ -27,7 +27,6 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import VersionInfo
 
 from .fileio import _FileIOBase
@@ -2989,7 +2988,7 @@ class _GIFReader(BaseVTKReader):
         for i, frame in enumerate(ImageSequence.Iterator(img)):
             self._current_frame = i
             data = np.array(pillow_get_data(frame.convert('RGB')), dtype=np.uint8)
-            self._data_object.point_data.set_array(data, f'frame{i}')
+            self._data_object.point_data.set_array(data, f'frame{i}')  # type: ignore[arg-type]
             self.UpdateObservers(6)
 
         if 'frame0' in self._data_object.point_data:
@@ -3316,11 +3315,10 @@ class GaussianCubeReader(BaseReader['DataSet']):
     _vtk_class_name = 'vtkGaussianCubeReader'
     _output_types = ('ImageData', 'PolyData')
 
-    @_deprecate_positional_args
     def read(
         self,
-        grid: bool = True,  # noqa: FBT001, FBT002
         *,
+        grid: bool = True,
         validate: bool | None = None,
     ) -> pv.DataSet:
         """Read the file and return the output.
