@@ -9,7 +9,6 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._version import _is_deprecation_due
 from pyvista._warn_external import warn_external
 from pyvista.core.errors import PyVistaDeprecationWarning
@@ -259,8 +258,7 @@ class CompositeFilters(DataObjectFilters):
         _update_alg(gf)
         return _apply_points_dtype(wrap(gf.GetOutputDataObject(0)), algorithm=gf)
 
-    @_deprecate_positional_args
-    def combine(self, merge_points: bool = False, tolerance=0.0):  # noqa: FBT001, FBT002
+    def combine(self, *, merge_points: bool = False, tolerance=0.0):
         """Combine all blocks into a single unstructured grid.
 
         Parameters
@@ -316,12 +314,12 @@ class CompositeFilters(DataObjectFilters):
         _update_alg(alg)
         return _apply_points_dtype(wrap(alg.GetOutputDataObject(0)), algorithm=alg)
 
-    @_deprecate_positional_args
     def outline(  # type: ignore[misc]
         self: MultiBlock,
-        generate_faces: bool = False,  # noqa: FBT001, FBT002
-        nested: bool = False,  # noqa: FBT001, FBT002
-        progress_bar: bool = False,  # noqa: FBT001, FBT002
+        *,
+        generate_faces: bool = False,
+        nested: bool = False,
+        progress_bar: bool = False,
     ):
         """Produce an outline of the full extent for the all blocks in this composite dataset.
 
@@ -351,12 +349,12 @@ class CompositeFilters(DataObjectFilters):
         box = pv.Box(bounds=self.bounds)
         return box.outline(generate_faces=generate_faces, progress_bar=progress_bar)
 
-    @_deprecate_positional_args
     def outline_corners(  # type: ignore[misc]
         self: MultiBlock,
+        *,
         factor=0.2,
-        nested: bool = False,  # noqa: FBT001, FBT002
-        progress_bar: bool = False,  # noqa: FBT001, FBT002
+        nested: bool = False,
+        progress_bar: bool = False,
     ):
         """Produce an outline of the corners for the all blocks in this composite dataset.
 
@@ -383,19 +381,19 @@ class CompositeFilters(DataObjectFilters):
         box = pv.Box(bounds=self.bounds)
         return box.outline_corners(factor=factor, progress_bar=progress_bar)
 
-    @_deprecate_positional_args
-    def _compute_normals(  # noqa: PLR0917
+    def _compute_normals(
         self,
-        cell_normals: bool = True,  # noqa: FBT001, FBT002
-        point_normals: bool = True,  # noqa: FBT001, FBT002
-        split_vertices: bool = False,  # noqa: FBT001, FBT002
-        flip_normals: bool = False,  # noqa: FBT001, FBT002
-        consistent_normals: bool = True,  # noqa: FBT001, FBT002
-        auto_orient_normals: bool = False,  # noqa: FBT001, FBT002
-        non_manifold_traversal: bool = True,  # noqa: FBT001, FBT002
+        *,
+        cell_normals: bool = True,
+        point_normals: bool = True,
+        split_vertices: bool = False,
+        flip_normals: bool = False,
+        consistent_normals: bool = True,
+        auto_orient_normals: bool = False,
+        non_manifold_traversal: bool = True,
         feature_angle=30.0,
-        track_vertices: bool = False,  # noqa: FBT001, FBT002
-        progress_bar: bool = False,  # noqa: FBT001, FBT002
+        track_vertices: bool = False,
+        progress_bar: bool = False,
     ):
         """Compute point and/or cell normals for a multi-block dataset."""
         if not self.is_all_polydata:  # type: ignore[attr-defined]

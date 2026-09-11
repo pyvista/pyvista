@@ -23,7 +23,6 @@ import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import _classproperty
@@ -276,20 +275,19 @@ def get_ext(filename: str | Path) -> str:
 
 
 # fmt: off
-# ruff: disable[E501, FBT001]
+# ruff: disable[E501]
 @overload
-def read(filename: PathStrSeq, force_ext: str | None = ..., file_format: str | None = ..., progress_bar: bool = ..., *, cls: type[_ReadReturnT], validate: bool | None = ...) -> _ReadReturnT: ...
+def read(filename: PathStrSeq, *, force_ext: str | None = ..., file_format: str | None = ..., progress_bar: bool = ..., cls: type[_ReadReturnT], validate: bool | None = ...) -> _ReadReturnT: ...
 @overload
-def read(filename: PathStrSeq, force_ext: str | None = ..., file_format: str | None = ..., progress_bar: bool = ..., *, cls: None = ..., validate: bool | None = ...) -> DataSet | MultiBlock: ...
-# ruff: enable[E501, FBT001]
+def read(filename: PathStrSeq, *, force_ext: str | None = ..., file_format: str | None = ..., progress_bar: bool = ..., cls: None = ..., validate: bool | None = ...) -> DataSet | MultiBlock: ...
+# ruff: enable[E501]
 # fmt: on
-@_deprecate_positional_args(allowed=['filename'])
-def read(  # noqa: PLR0917
+def read(
     filename: PathStrSeq,
+    *,
     force_ext: str | None = None,
     file_format: str | None = None,
-    progress_bar: bool = False,  # noqa: FBT001, FBT002
-    *,
+    progress_bar: bool = False,
     cls: type[DataObject] | None = None,
     validate: bool | None = None,
     **kwargs,
@@ -596,8 +594,7 @@ def _set_reader_attributes(reader: BaseReader[Any], **kwargs) -> None:
         setattr(reader, name, value)
 
 
-@_deprecate_positional_args(allowed=['filename'])
-def read_texture(filename: str | Path, progress_bar: bool = False) -> Texture:  # noqa: FBT001, FBT002
+def read_texture(filename: str | Path, *, progress_bar: bool = False) -> Texture:
     """Load a texture from an image file.
 
     Will attempt to read any file type supported by ``vtk``, however
@@ -646,14 +643,14 @@ def read_texture(filename: str | Path, progress_bar: bool = False) -> Texture:  
     return pv.Texture(_try_imageio_imread(filename))  # pragma: no cover
 
 
-@_deprecate_positional_args(allowed=['filename'])
-def read_exodus(  # noqa: PLR0917
+def read_exodus(
     filename: str | Path,
-    animate_mode_shapes: bool = True,  # noqa: FBT001, FBT002
-    apply_displacements: bool = True,  # noqa: FBT001, FBT002
+    *,
+    animate_mode_shapes: bool = True,
+    apply_displacements: bool = True,
     displacement_magnitude: float = 1.0,
-    read_point_data: bool = True,  # noqa: FBT001, FBT002
-    read_cell_data: bool = True,  # noqa: FBT001, FBT002
+    read_point_data: bool = True,
+    read_cell_data: bool = True,
     enabled_sidesets: Iterable[str | int] | None = None,
 ) -> DataSet | MultiBlock:
     """Read an ExodusII file (``'.e'`` or ``'.exo'``).
@@ -744,10 +741,10 @@ def read_exodus(  # noqa: PLR0917
     return cast('pv.DataSet', wrap(reader.GetOutput()))
 
 
-@_deprecate_positional_args(allowed=['filename'])
 def read_grdecl(
     filename: str | Path,
-    elevation: bool = True,  # noqa: FBT001, FBT002
+    *,
+    elevation: bool = True,
     other_keywords: Sequence[str] | None = None,
 ) -> ExplicitStructuredGrid:
     """Read a GRDECL file (``'.GRDECL'``).
@@ -813,19 +810,19 @@ def _read_grdecl(
     )
 
     # fmt: off
-    # ruff: disable[E501, FBT001, FBT002]
+    # ruff: disable[E501]
     @overload
-    def read_keyword(f: TextIO, split: Literal[True] = True, converter: type = ...) -> list[str]: ...
+    def read_keyword(f: TextIO, *, split: Literal[True] = True, converter: type = ...) -> list[str]: ...
     @overload
-    def read_keyword(f: TextIO, split: Literal[False] = False, converter: type = ...) -> str: ...
+    def read_keyword(f: TextIO, *, split: Literal[False] = False, converter: type = ...) -> str: ...
     @overload
-    def read_keyword(f: TextIO, split: bool = ..., converter: type = ...) -> list[str]: ...
-    # ruff: enable[E501, FBT001, FBT002]
+    def read_keyword(f: TextIO, *, split: bool = ..., converter: type = ...) -> list[str]: ...
+    # ruff: enable[E501]
     # fmt: on
-    @_deprecate_positional_args(allowed=['f'])
     def read_keyword(
         f: TextIO,
-        split: bool = True,  # noqa: FBT001, FBT002
+        *,
+        split: bool = True,
         converter: type | None = None,
     ) -> str | list[str]:
         """Read a keyword.

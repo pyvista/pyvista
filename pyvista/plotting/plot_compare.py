@@ -1004,7 +1004,7 @@ def plot_compare(  # noqa: ANN201
         )
 
     return pl.show(
-        screenshot=screenshot,
+        screenshot=False if screenshot is None else screenshot,
         full_screen=full_screen,
         interactive=interactive,
         return_img=return_img,

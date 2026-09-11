@@ -11,7 +11,6 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.arrays import FieldAssociation
@@ -844,26 +843,26 @@ class _BaseDataSetMapper(_BaseMapper):
 
             self.color_mode = 'direct' if direct_scalars_color_mode else 'map'
 
-    @_deprecate_positional_args(allowed=['scalars', 'scalars_name'])
-    def set_scalars(  # noqa: PLR0917
+    def set_scalars(
         self,
         scalars,
         scalars_name,
+        *,
         n_colors=256,
         scalar_bar_args=None,
         rgb=None,
         component=None,
         preference='point',
-        custom_opac: bool = False,  # noqa: FBT001, FBT002
+        custom_opac: bool = False,
         annotations=None,
-        log_scale: bool = False,  # noqa: FBT001, FBT002
+        log_scale: bool = False,
         nan_color=None,
         above_color=None,
         below_color=None,
         cmap=None,
-        flip_scalars: bool = False,  # noqa: FBT001, FBT002
+        flip_scalars: bool = False,
         opacity=None,
-        categories: bool | int = False,  # noqa: FBT001, FBT002
+        categories: bool | int = False,
         clim=None,
     ):
         """Set the scalars on this mapper.
@@ -1158,10 +1157,7 @@ class _BaseDataSetMapper(_BaseMapper):
             msg = 'Resolve must be either "off", "polygon_offset" or "shift_zbuffer"'
             raise ValueError(msg)
 
-    @_deprecate_positional_args(allowed=['opacity'])
-    def set_custom_opacity(  # noqa: PLR0917
-        self, opacity, color, n_colors, preference='point'
-    ):
+    def set_custom_opacity(self, opacity, *, color, n_colors, preference='point'):
         """Set custom opacity.
 
         Parameters

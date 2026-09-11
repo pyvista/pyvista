@@ -11,7 +11,6 @@ import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.arrays import convert_string_array
@@ -87,8 +86,7 @@ def _axis_label_values(vmin: float, vmax: float, n: int) -> np.ndarray:
     return np.linspace(vmin, vmax, maximum)
 
 
-@_deprecate_positional_args
-def make_axis_labels(vmin, vmax, n, fmt):  # noqa: PLR0917
+def make_axis_labels(*, vmin, vmax, n, fmt):
     """Create axis labels as a :vtk:`vtkStringArray`.
 
     Parameters
@@ -302,35 +300,35 @@ class CubeAxesActor(
 
     """
 
-    @_deprecate_positional_args(allowed=['camera'])
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
         camera,
-        minor_ticks: bool = False,  # noqa: FBT001, FBT002
+        *,
+        minor_ticks: bool = False,
         tick_location=None,
         x_title='X Axis',
         y_title='Y Axis',
         z_title='Z Axis',
-        x_axis_visibility: bool = True,  # noqa: FBT001, FBT002
-        y_axis_visibility: bool = True,  # noqa: FBT001, FBT002
-        z_axis_visibility: bool = True,  # noqa: FBT001, FBT002
+        x_axis_visibility: bool = True,
+        y_axis_visibility: bool = True,
+        z_axis_visibility: bool = True,
         x_label_format=None,
         y_label_format=None,
         z_label_format=None,
-        x_label_visibility: bool = True,  # noqa: FBT001, FBT002
-        y_label_visibility: bool = True,  # noqa: FBT001, FBT002
-        z_label_visibility: bool = True,  # noqa: FBT001, FBT002
+        x_label_visibility: bool = True,
+        y_label_visibility: bool = True,
+        z_label_visibility: bool = True,
         n_xlabels=5,
         n_ylabels=5,
         n_zlabels=5,
         color: ColorLike | None = None,
-        grid: bool | str | None = None,  # noqa: FBT001
+        grid: bool | str | None = None,
         location: str | None = 'closest',
         font_size: float | None = None,
         font_family: str | None = None,
-        bold: bool = True,  # noqa: FBT001, FBT002
-        use_3d_text: bool | None = None,  # noqa: FBT001
-        use_2d_mode: bool = False,  # noqa: FBT001, FBT002
+        bold: bool = True,
+        use_3d_text: bool | None = None,
+        use_2d_mode: bool = False,
         bounds: VectorLike[float] | None = None,
         axes_ranges: VectorLike[float] | None = None,
         padding: float = 0.0,

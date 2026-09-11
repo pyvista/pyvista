@@ -12,7 +12,6 @@ import numpy as np
 import numpy.typing as npt
 
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core._vtk_utilities import VTKObjectWrapperCheckSnakeCase
 
@@ -530,8 +529,9 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
             return narray.squeeze()  # type: ignore[return-value]
         return narray
 
-    @_deprecate_positional_args(allowed=['data', 'name'])
-    def set_array(self: Self, data: ArrayLike[float], name: str, deep_copy: bool = False) -> None:  # noqa: FBT001, FBT002
+    def set_array(
+        self: Self, data: ArrayLike[float], name: str, *, deep_copy: bool = False
+    ) -> None:
         """Add an array to this object.
 
         Use this method when adding arrays to the DataSet.  If
@@ -600,12 +600,12 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         self.VTKObject.AddArray(vtk_arr)
         self.VTKObject.Modified()
 
-    @_deprecate_positional_args(allowed=['scalars', 'name'])
     def set_scalars(
         self: Self,
         scalars: ArrayLike[float],
         name: str = 'scalars',
-        deep_copy: bool = False,  # noqa: FBT001, FBT002
+        *,
+        deep_copy: bool = False,
     ) -> None:
         """Set the active scalars of the dataset with an array.
 
@@ -658,12 +658,12 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         self.VTKObject.SetScalars(vtk_arr)
         self.VTKObject.Modified()
 
-    @_deprecate_positional_args(allowed=['vectors', 'name'])
     def set_vectors(
         self: Self,
         vectors: MatrixLike[float],
         name: str,
-        deep_copy: bool = False,  # noqa: FBT001, FBT002
+        *,
+        deep_copy: bool = False,
     ) -> None:
         """Set the active vectors of this data attribute.
 
@@ -1202,11 +1202,11 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         for array_name in self.keys():
             self.remove(key=array_name)
 
-    @_deprecate_positional_args(allowed=['array_dict'])
     def update(
         self: Self,
         array_dict: dict[str, NumpyArray[float]] | DataSetAttributes,
-        copy: bool = True,  # noqa: FBT001, FBT002
+        *,
+        copy: bool = True,
     ) -> None:
         """Update arrays in this object from another dictionary or dataset attributes.
 

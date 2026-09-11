@@ -7,7 +7,6 @@ from collections.abc import Sequence
 import numpy as np
 
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.utilities.misc import abstract_class
@@ -17,14 +16,14 @@ from pyvista.core.utilities.misc import abstract_class
 class RectilinearGridFilters:
     """An internal class to manage filters/algorithms for rectilinear grid datasets."""
 
-    @_deprecate_positional_args(allowed=['tetra_per_cell'])
-    def to_tetrahedra(  # noqa: PLR0917
+    def to_tetrahedra(
         self,
         tetra_per_cell: int = 5,
-        mixed: str | Sequence[int] | bool = False,  # noqa: FBT001, FBT002
-        pass_cell_ids: bool = True,  # noqa: FBT001, FBT002
-        pass_data: bool = True,  # noqa: FBT001, FBT002
-        progress_bar: bool = False,  # noqa: FBT001, FBT002
+        *,
+        mixed: str | Sequence[int] | bool = False,
+        pass_cell_ids: bool = True,
+        pass_data: bool = True,
+        progress_bar: bool = False,
     ):
         """Create a tetrahedral mesh structured grid.
 
