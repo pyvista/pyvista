@@ -623,7 +623,9 @@ class ScalarBars(_NoNewAttrMixin):
         if n_labels < 1:
             scalar_bar.SetDrawTickLabels(False)
         elif tick_locations is not None:
-            labels = _validation.validate_arrayN(tick_locations, dtype_out=float, name='tick_locations')
+            labels = _validation.validate_arrayN(
+                tick_locations, dtype_out=float, name='tick_locations'
+            )
             scalar_bar.SetDrawTickLabels(True)
             scalar_bar.SetCustomLabels(convert_array(labels))
             scalar_bar.UseCustomLabelsOn()
