@@ -780,7 +780,7 @@ class ImageGridSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageGridSou
     Parameters
     ----------
     origin : sequence[int]
-        The origin of the grid.
+        The origin of the grid lines in pixels.
 
     extent : sequence[int]
         The extent of the whole output image, Default: (0,255,0,255,0,0).
@@ -817,24 +817,24 @@ class ImageGridSource(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkImageGridSou
 
     @property
     def origin(self) -> Sequence[int]:
-        """Get the origin of the data.
+        """Get the origin of the grid lines.
 
         Returns
         -------
         sequence[int]
-            The origin of the grid.
+            The origin of the grid lines in pixels.
 
         """
         return self.GetGridOrigin()
 
     @origin.setter
     def origin(self, origin: Sequence[int]) -> None:
-        """Set the origin of the data.
+        """Set the origin of the grid lines.
 
         Parameters
         ----------
         origin : sequence[int]
-            The origin of the grid.
+            The origin of the grid lines in pixels.
 
         """
         self.SetGridOrigin(origin)

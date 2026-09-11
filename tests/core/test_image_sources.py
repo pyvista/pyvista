@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 import pyvista as pv
 
@@ -162,3 +163,16 @@ def test_image_grid_source():
     assert source.extent == extent
     assert source.spacing == spacing
     assert isinstance(source.output, pv.ImageData)
+
+
+def test_image_grid_source_origin_shifts_grid_lines():
+    extent = (0, 9, 0, 9, 0, 0)
+    shifted = pv.ImageGridSource(origin=(2, 3, 0), extent=extent).output
+    unshifted = pv.ImageGridSource(origin=(0, 0, 0), extent=extent).output
+    assert not np.array_equal(shifted.active_scalars, unshifted.active_scalars)
+    assert shifted.origin == unshifted.origin
+
+
+def test_image_grid_source_origin_rejects_float():
+    with pytest.raises(TypeError, match='SetGridOrigin'):
+        pv.ImageGridSource(origin=(0.5, 0.5, 0.5))
