@@ -5392,13 +5392,6 @@ class DataObjectFilters:
             gives a ``MultiBlock`` whose blocks each follow that rule, nested blocks
             included.
 
-        Notes
-        -----
-        A :class:`~pyvista.PointSet` has no cells to triangulate, so triangulating one
-        directly raises :class:`~pyvista.core.errors.PointSetCellOperationError`. As a
-        block of a :class:`~pyvista.MultiBlock` it is left unchanged instead, without
-        warning or raising, since there is nothing to triangulate.
-
         Examples
         --------
         Generate a mesh with quadrilateral faces.
@@ -5416,14 +5409,7 @@ class DataObjectFilters:
         """
         # Triangulate block by block so each block takes the path for its own type
         if isinstance(self, pv.MultiBlock):
-
-            def triangulate_block(block: DataSet):  # numpydoc ignore=PR01
-                """Triangulate one block, leaving a cell-less point cloud alone."""
-                if isinstance(block, pv.PointSet):
-                    return block
-                return block.triangulate(inplace=inplace, progress_bar=progress_bar)
-
-            return self.generic_filter(triangulate_block)
+            return self.generic_filter('triangulate', inplace=inplace, progress_bar=progress_bar)
 
         alg = _vtk.vtkDataSetTriangleFilter()
         alg.SetInputData(self)
