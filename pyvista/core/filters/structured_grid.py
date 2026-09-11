@@ -173,7 +173,7 @@ class StructuredGridFilters(DataSetFilters):
             ):
                 msg = (
                     f'Grids cannot be joined along axis {axis}, as field '
-                    '`{name}` is not identical along the seam.'
+                    f'`{name}` is not identical along the seam.'
                 )
                 raise RuntimeError(msg)
             new_point_data[name] = np.concatenate((arr_1[slice_spec], arr_2), axis=axis).ravel(

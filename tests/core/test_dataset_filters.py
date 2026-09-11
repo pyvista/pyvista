@@ -4240,7 +4240,7 @@ def test_concatenate_structured_bad_inputs(structured_grids_split_coincident):
 def test_concatenate_structured_bad_point_data(structured_grids_split_coincident):
     voi_1, voi_2, _structured = structured_grids_split_coincident
     voi_1['point_data'] = voi_1['point_data'] * 2.0
-    with pytest.raises(RuntimeError):
+    with pytest.raises(RuntimeError, match='`point_data` is not identical'):
         voi_1.concatenate(voi_2, axis=1)
 
 
