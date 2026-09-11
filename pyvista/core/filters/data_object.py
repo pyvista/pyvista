@@ -1841,11 +1841,14 @@ class DataObjectFilters:
 
         # Validate block by block so each block takes the path for its own type
         if isinstance(self, pv.MultiBlock):
-            return self.generic_filter(
-                'cell_validator',
-                tolerance=tolerance,
-                planarity_tolerance=planarity_tolerance,
-                size_tolerance=size_tolerance,
+            return cast(
+                '_DataSetOrMultiBlockType',
+                self.generic_filter(
+                    'cell_validator',
+                    tolerance=tolerance,
+                    planarity_tolerance=planarity_tolerance,
+                    size_tolerance=size_tolerance,
+                ),
             )
 
         # A cell referencing a point id which does not exist makes VTK read out of bounds,
@@ -5016,13 +5019,16 @@ class DataObjectFilters:
 
         # Compute block by block so each block takes the path for its own type
         if isinstance(self, pv.MultiBlock):
-            return self.generic_filter(
-                'compute_cell_sizes',
-                length=length,
-                area=area,
-                volume=volume,
-                progress_bar=progress_bar,
-                vertex_count=vertex_count,
+            return cast(
+                '_DataSetOrMultiBlockType',
+                self.generic_filter(
+                    'compute_cell_sizes',
+                    length=length,
+                    area=area,
+                    volume=volume,
+                    progress_bar=progress_bar,
+                    vertex_count=vertex_count,
+                ),
             )
 
         if self.is_empty:
@@ -5166,8 +5172,13 @@ class DataObjectFilters:
         """
         # Convert block by block so each block takes the path for its own type
         if isinstance(self, pv.MultiBlock):
-            return self.generic_filter(
-                'cell_data_to_point_data', pass_cell_data=pass_cell_data, progress_bar=progress_bar
+            return cast(
+                '_DataSetOrMultiBlockType',
+                self.generic_filter(
+                    'cell_data_to_point_data',
+                    pass_cell_data=pass_cell_data,
+                    progress_bar=progress_bar,
+                ),
             )
 
         alg = _vtk.vtkCellDataToPointData()
@@ -5294,11 +5305,14 @@ class DataObjectFilters:
         """
         # Convert block by block so each block takes the path for its own type
         if isinstance(self, pv.MultiBlock):
-            return self.generic_filter(
-                'point_data_to_cell_data',
-                pass_point_data=pass_point_data,
-                categorical=categorical,
-                progress_bar=progress_bar,
+            return cast(
+                '_DataSetOrMultiBlockType',
+                self.generic_filter(
+                    'point_data_to_cell_data',
+                    pass_point_data=pass_point_data,
+                    categorical=categorical,
+                    progress_bar=progress_bar,
+                ),
             )
 
         alg = _vtk.vtkPointDataToCellData()

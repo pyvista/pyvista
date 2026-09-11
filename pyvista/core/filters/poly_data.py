@@ -788,7 +788,7 @@ class PolyDataFilters(DataSetFilters):
         kwargs.setdefault('scalar_bar_args', {'title': f'{curv_type.capitalize()} Curvature'})
         return self.plot(scalars=self.curvature(curv_type), **kwargs)  # type: ignore[attr-defined]
 
-    def triangulate(
+    def triangulate(  # type: ignore[override]
         self,
         *,
         pass_verts: bool = False,
