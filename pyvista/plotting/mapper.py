@@ -1146,7 +1146,7 @@ class _BaseDataSetMapper(_BaseMapper):
                 labels = self._apply_categories(
                     category_values, annotations, centered=centered_categories
                 )
-                scalar_bar_args.setdefault('tick_labels', labels)
+                scalar_bar_args.setdefault('tick_locations', labels)
                 integral = np.array_equal(category_values, np.round(category_values))
                 scalar_bar_args.setdefault('fmt', '%.0f' if integral else '%g')
             elif isinstance(annotations, dict):

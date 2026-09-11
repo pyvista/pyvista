@@ -229,7 +229,7 @@ def test_labels_centered_with_translucent_actor(sphere):
 def test_ticks_off(sphere):
     pl = pv.Plotter()
     pl.add_mesh(sphere, scalars=sphere.points[:, 2], show_scalar_bar=False)
-    bar = pl.add_scalar_bar(tick_labels=[-0.4, 0.0, 0.4], n_labels=0)
+    bar = pl.add_scalar_bar(tick_locations=[-0.4, 0.0, 0.4], n_labels=0)
     assert not bar.GetDrawTickLabels()
 
 
@@ -240,7 +240,7 @@ def test_ticks(sphere):
     pl.add_mesh(sphere, show_scalar_bar=False)
     scalar_bar = pl.add_scalar_bar(
         KEY,
-        tick_labels=[-100, 25, 110],
+        tick_locations=[-100, 25, 110],
         fmt='%.0f',
         width=0.8,
         height=0.3,
