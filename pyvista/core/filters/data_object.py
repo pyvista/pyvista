@@ -1642,7 +1642,7 @@ class DataObjectFilters:
         tolerance: float | None = None,
         planarity_tolerance: float | None = None,
         size_tolerance: float | None = None,
-    ):
+    ) -> _DataSetOrMultiBlockType:
         """Check the validity of each cell in this dataset.
 
         The status of each cell is encoded as a bit field cell data array ``'validity_state'``.
@@ -1721,8 +1721,9 @@ class DataObjectFilters:
 
         Returns
         -------
-        DataSet
+        DataSet | MultiBlock
             Dataset with field data of cell validity.
+            Return type matches input.
 
         See Also
         --------
@@ -1838,11 +1839,14 @@ class DataObjectFilters:
 
         # Validate block by block so each block takes the path for its own type
         if isinstance(self, pv.MultiBlock):
-            return self.generic_filter(
-                'cell_validator',
-                tolerance=tolerance,
-                planarity_tolerance=planarity_tolerance,
-                size_tolerance=size_tolerance,
+            return cast(
+                '_DataSetOrMultiBlockType',
+                self.generic_filter(
+                    'cell_validator',
+                    tolerance=tolerance,
+                    planarity_tolerance=planarity_tolerance,
+                    size_tolerance=size_tolerance,
+                ),
             )
 
         # A cell referencing a point id which does not exist makes VTK read out of bounds,
@@ -1972,7 +1976,7 @@ class DataObjectFilters:
             return
 
         post_process(output)
-        return output
+        return cast('_DataSetOrMultiBlockType', output)
 
     def transform(  # type: ignore[misc]
         self: _MeshType_co,
@@ -4419,6 +4423,14 @@ class DataObjectFilters:
             return output.contour()
         return output
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # MultiBlock
+    def extract_all_edges(self: MultiBlock, *, use_all_points: bool | None = ..., clear_data: bool = ..., progress_bar: bool = ...) -> MultiBlock: ...  # type: ignore[misc]
+    @overload  # DataSet
+    def extract_all_edges(self: DataSet, *, use_all_points: bool | None = ..., clear_data: bool = ..., progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def extract_all_edges(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
         *,
@@ -4446,8 +4458,10 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.PolyData
-            Edges extracted from the dataset.
+        pyvista.PolyData | pyvista.MultiBlock
+            Edges extracted from the dataset. Every dataset gives a
+            :class:`~pyvista.PolyData`, and a :class:`~pyvista.MultiBlock` gives a
+            ``MultiBlock`` of ``PolyData`` blocks, nested blocks included.
 
         Examples
         --------
@@ -4789,7 +4803,7 @@ class DataObjectFilters:
         preference: Literal['point', 'cell'] = 'point',
         set_active: bool = True,
         progress_bar: bool = False,
-    ):
+    ) -> _DataSetOrMultiBlockType:
         """Generate scalar values on a dataset.
 
         The scalar values lie within a user specified range, and are
@@ -4839,6 +4853,7 @@ class DataObjectFilters:
         output : DataSet | MultiBlock
             Dataset containing elevation scalars in the
             ``"Elevation"`` array in ``point_data``.
+            Return type matches input.
 
         Examples
         --------
@@ -4876,16 +4891,20 @@ class DataObjectFilters:
         else:
             scalar_range_ = _validation.validate_data_range(scalar_range)
 
-        if pv.vtk_version_info < (9, 4) and _composite_has_pointset(self):
-            # vtkElevationFilter's composite dispatch segfaults on VTK 9.3 when
-            # a block is a cell-less PointSet, even though elevation is
-            # otherwise perfectly valid on a standalone PointSet. Raise instead
-            # of taking down the interpreter; this is fixed by VTK 9.4.
-            msg = (
-                'Cannot compute elevation for a MultiBlock containing a PointSet '
-                'on VTK < 9.4 due to a VTK bug that crashes the interpreter.'
+        # Elevate block by block so each block takes the path for its own type
+        if isinstance(self, pv.MultiBlock):
+            return cast(
+                '_DataSetOrMultiBlockType',
+                self.generic_filter(
+                    'elevation',
+                    low_point=low_point_,
+                    high_point=high_point_,
+                    scalar_range=scalar_range_,
+                    preference=preference,
+                    set_active=set_active,
+                    progress_bar=progress_bar,
+                ),
             )
-            raise pv.core.errors.PointSetNotSupported(msg)
 
         # Construct the filter
         alg = _vtk.vtkElevationFilter()
@@ -4910,7 +4929,7 @@ class DataObjectFilters:
         volume: bool = True,
         progress_bar: bool = False,
         vertex_count: bool = False,
-    ):
+    ) -> _DataSetOrMultiBlockType:
         """Compute sizes for 0D (vertex count), 1D (length), 2D (area) and 3D (volume) cells.
 
         Parameters
@@ -4940,7 +4959,8 @@ class DataObjectFilters:
         output : DataSet | MultiBlock
             Dataset with ``cell_data`` containing the ``"VertexCount"``,
             ``"Length"``, ``"Area"``, and ``"Volume"`` arrays if set
-            in the parameters.  Return type matches input.
+            in the parameters.
+            Return type matches input.
 
         Notes
         -----
@@ -4993,13 +5013,16 @@ class DataObjectFilters:
 
         # Compute block by block so each block takes the path for its own type
         if isinstance(self, pv.MultiBlock):
-            return self.generic_filter(
-                'compute_cell_sizes',
-                length=length,
-                area=area,
-                volume=volume,
-                progress_bar=progress_bar,
-                vertex_count=vertex_count,
+            return cast(
+                '_DataSetOrMultiBlockType',
+                self.generic_filter(
+                    'compute_cell_sizes',
+                    length=length,
+                    area=area,
+                    volume=volume,
+                    progress_bar=progress_bar,
+                    vertex_count=vertex_count,
+                ),
             )
 
         if self.is_empty:
@@ -5007,7 +5030,7 @@ class DataObjectFilters:
             # Also guard against seg fault https://gitlab.kitware.com/vtk/vtk/-/issues/19978
             out = self.copy()
             ensure_arrays_if_empty(out)
-            return out
+            return cast('_DataSetOrMultiBlockType', out)
 
         alg = _vtk.vtkCellSizeFilter()
         alg.SetInputDataObject(self)
@@ -5018,6 +5041,14 @@ class DataObjectFilters:
         _update_alg(alg, progress_bar=progress_bar, message='Computing Cell Sizes')
         return _get_output(alg)
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # MultiBlock
+    def cell_centers(self: MultiBlock, *, vertex: bool = ..., pass_cell_data: bool = ..., progress_bar: bool = ...) -> MultiBlock: ...  # type: ignore[misc]
+    @overload  # DataSet
+    def cell_centers(self: DataSet, *, vertex: bool = ..., pass_cell_data: bool = ..., progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def cell_centers(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
         *,
@@ -5042,9 +5073,10 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.PolyData
-            Polydata where the points are the cell centers of the
-            original dataset.
+        pyvista.PolyData | pyvista.MultiBlock
+            Points at the cell centers of the original dataset. Every dataset
+            gives a :class:`~pyvista.PolyData`, and a :class:`~pyvista.MultiBlock`
+            gives a ``MultiBlock`` of ``PolyData`` blocks, nested blocks included.
 
         Examples
         --------
@@ -5078,7 +5110,7 @@ class DataObjectFilters:
         *,
         pass_cell_data: bool = False,
         progress_bar: bool = False,
-    ):
+    ) -> _DataSetOrMultiBlockType:
         """Transform cell data into point data.
 
         Point data are specified per node and cell data specified
@@ -5100,7 +5132,7 @@ class DataObjectFilters:
         Returns
         -------
         output : DataSet | MultiBlock
-            Dataset with the point data transformed into cell data.
+            Dataset with the cell data transformed into point data.
             Return type matches input.
 
         See Also
@@ -5132,8 +5164,13 @@ class DataObjectFilters:
         """
         # Convert block by block so each block takes the path for its own type
         if isinstance(self, pv.MultiBlock):
-            return self.generic_filter(
-                'cell_data_to_point_data', pass_cell_data=pass_cell_data, progress_bar=progress_bar
+            return cast(
+                '_DataSetOrMultiBlockType',
+                self.generic_filter(
+                    'cell_data_to_point_data',
+                    pass_cell_data=pass_cell_data,
+                    progress_bar=progress_bar,
+                ),
             )
 
         alg = _vtk.vtkCellDataToPointData()
@@ -5150,7 +5187,7 @@ class DataObjectFilters:
         pass_cell_data: bool = False,
         progress_bar: bool = False,
         **kwargs,
-    ):
+    ) -> _DataSetOrMultiBlockType:
         """Transform cell data into point data.
 
         Point data are specified per node and cell data specified
@@ -5177,10 +5214,13 @@ class DataObjectFilters:
             Return type matches input.
 
         """
-        return self.cell_data_to_point_data(
-            pass_cell_data=pass_cell_data,
-            progress_bar=progress_bar,
-            **kwargs,
+        return cast(
+            '_DataSetOrMultiBlockType',
+            self.cell_data_to_point_data(
+                pass_cell_data=pass_cell_data,
+                progress_bar=progress_bar,
+                **kwargs,
+            ),
         )
 
     def point_data_to_cell_data(  # type: ignore[misc]
@@ -5189,7 +5229,7 @@ class DataObjectFilters:
         pass_point_data: bool = False,
         categorical: bool = False,
         progress_bar: bool = False,
-    ):
+    ) -> _DataSetOrMultiBlockType:
         """Transform point data into cell data.
 
         Point data are specified per node and cell data specified within cells.
@@ -5255,11 +5295,14 @@ class DataObjectFilters:
         """
         # Convert block by block so each block takes the path for its own type
         if isinstance(self, pv.MultiBlock):
-            return self.generic_filter(
-                'point_data_to_cell_data',
-                pass_point_data=pass_point_data,
-                categorical=categorical,
-                progress_bar=progress_bar,
+            return cast(
+                '_DataSetOrMultiBlockType',
+                self.generic_filter(
+                    'point_data_to_cell_data',
+                    pass_point_data=pass_point_data,
+                    categorical=categorical,
+                    progress_bar=progress_bar,
+                ),
             )
 
         alg = _vtk.vtkPointDataToCellData()
@@ -5277,7 +5320,7 @@ class DataObjectFilters:
         pass_point_data: bool = False,
         progress_bar: bool = False,
         **kwargs,
-    ):
+    ) -> _DataSetOrMultiBlockType:
         """Transform point data into cell data.
 
         Point data are specified per node and cell data specified
@@ -5304,12 +5347,23 @@ class DataObjectFilters:
             Return type matches input.
 
         """
-        return self.point_data_to_cell_data(
-            pass_point_data=pass_point_data,
-            progress_bar=progress_bar,
-            **kwargs,
+        return cast(
+            '_DataSetOrMultiBlockType',
+            self.point_data_to_cell_data(
+                pass_point_data=pass_point_data,
+                progress_bar=progress_bar,
+                **kwargs,
+            ),
         )
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # MultiBlock
+    def triangulate(self: MultiBlock, *, inplace: bool = ..., progress_bar: bool = ...) -> MultiBlock: ...  # type: ignore[misc]
+    @overload  # DataSet
+    def triangulate(self: DataSet, *, inplace: bool = ..., progress_bar: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def triangulate(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
         *,
@@ -5330,8 +5384,13 @@ class DataObjectFilters:
 
         Returns
         -------
-        pyvista.PolyData
-            Mesh containing only triangles.
+        pyvista.PolyData | pyvista.UnstructuredGrid | pyvista.MultiBlock
+            Mesh containing only linear cells. A :class:`~pyvista.PolyData` gives a
+            ``PolyData`` of triangles through
+            :meth:`~pyvista.PolyDataFilters.triangulate`; every other dataset gives an
+            :class:`~pyvista.UnstructuredGrid`, and a :class:`~pyvista.MultiBlock`
+            gives a ``MultiBlock`` whose blocks each follow that rule, nested blocks
+            included.
 
         Examples
         --------
@@ -5348,6 +5407,10 @@ class DataObjectFilters:
         >>> mesh.plot(show_edges=True, line_width=5)
 
         """
+        # Triangulate block by block so each block takes the path for its own type
+        if isinstance(self, pv.MultiBlock):
+            return self.generic_filter('triangulate', inplace=inplace, progress_bar=progress_bar)
+
         alg = _vtk.vtkDataSetTriangleFilter()
         alg.SetInputData(self)
         _update_alg(alg, progress_bar=progress_bar, message='Converting to triangle mesh')
@@ -5373,7 +5436,7 @@ class DataObjectFilters:
         pass_field_data: bool = True,
         mark_blank: bool = True,
         snap_to_closest_point: bool = False,
-    ):
+    ) -> _DataSetOrMultiBlockType:
         """Resample array data from a passed mesh onto this mesh.
 
         For ``mesh1.sample(mesh2)``, the arrays from ``mesh2`` are sampled onto
@@ -5440,6 +5503,7 @@ class DataObjectFilters:
         -------
         output : DataSet | MultiBlock
             Dataset containing resampled data.
+            Return type matches input.
 
         See Also
         --------
@@ -5472,6 +5536,25 @@ class DataObjectFilters:
         pyvista_ndarray([ 46.5 , 225.12])
 
         """
+        # Sample block by block so each block takes the path for its own type
+        if isinstance(self, pv.MultiBlock):
+            return cast(
+                '_DataSetOrMultiBlockType',
+                self.generic_filter(
+                    'sample',
+                    target=target,
+                    tolerance=tolerance,
+                    pass_cell_data=pass_cell_data,
+                    pass_point_data=pass_point_data,
+                    categorical=categorical,
+                    progress_bar=progress_bar,
+                    locator=locator,
+                    pass_field_data=pass_field_data,
+                    mark_blank=mark_blank,
+                    snap_to_closest_point=snap_to_closest_point,
+                ),
+            )
+
         alg = _vtk.vtkResampleWithDataSet()  # Construct the ResampleWithDataSet object
         alg.SetInputData(
             self
@@ -5805,13 +5888,6 @@ def _has_invalid_point_references(dataset: DataSet | MultiBlock) -> bool:
         if any(np.any((ids < 0) | (ids >= n_points)) for ids in arrays):
             return True
     return False
-
-
-def _composite_has_pointset(dataset: DataSet | MultiBlock) -> bool:
-    """Return ``True`` if a MultiBlock (recursively) contains a PointSet block."""
-    return isinstance(dataset, pv.MultiBlock) and any(
-        isinstance(block, pv.PointSet) for block in dataset.recursive_iterator(skip_none=True)
-    )
 
 
 def _get_cell_quality_measures() -> dict[str, str]:
