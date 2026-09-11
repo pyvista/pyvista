@@ -764,6 +764,7 @@ def _reset_entry_point_state(monkeypatch, eps: list):
     monkeypatch.setattr(_reg_mod, '_entry_points_loaded', False)
     _reg_mod._pending_accessors.clear()
     _reg_mod._failed_accessors.clear()
+    _reg_mod._resolving_accessors.clear()
     monkeypatch.setattr(
         'pyvista.core.utilities.accessor_registry.entry_points',
         lambda **_: eps,
@@ -1364,6 +1365,7 @@ def test_plugin_querying_registry_during_its_own_import(monkeypatch, trigger):
         trigger()
         assert pv.Sphere().ep_reentrant.value() == 42
         assert _reg_mod._pending_accessors == {}
+        assert _reg_mod._resolving_accessors == set()
     finally:
         with contextlib.suppress(ValueError):
             pv.unregister_dataset_accessor('ep_reentrant', pv.PolyData)
@@ -1397,6 +1399,7 @@ def test_failed_plugin_that_accessed_itself_stays_pending(monkeypatch):
             with pytest.raises(AttributeError, match='missing dep'):
                 _ = pv.Sphere().ep_self_fail
         assert _reg_mod._pending_accessors == {'ep_self_fail': plugin_name}
+        assert _reg_mod._resolving_accessors == set()
         assert plugin_name not in sys.modules
     finally:
         sys.modules.pop(plugin_name, None)
