@@ -802,6 +802,7 @@ _OPENGL_MODULES: dict[str, tuple[str, ...]] = {
         'vtkCameraPass',
         'vtkCompositePolyDataMapper2',  # optional (contextlib.suppress)
         'vtkDepthOfFieldPass',
+        'vtkDualDepthPeelingPass',
         'vtkEDLShading',
         'vtkEGLRenderWindow',  # optional (Linux EGL builds)
         'vtkGaussianBlurPass',
@@ -818,6 +819,8 @@ _OPENGL_MODULES: dict[str, tuple[str, ...]] = {
         'vtkSSAOPass',
         'vtkShader',
         'vtkShadowMapPass',
+        'vtkToneMappingPass',
+        'vtkTranslucentPass',
         'vtkXOpenGLRenderWindow',  # optional (Linux X11 builds)
     ),
     'vtkRenderingVolumeOpenGL2': (

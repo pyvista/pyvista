@@ -49,7 +49,6 @@ from .tools import create_axes_orientation_box
 from .tools import create_north_arrow
 from .tools import parse_font_family
 from .utilities.gl_checks import check_depth_peeling
-from .utilities.gl_checks import uses_egl
 
 if TYPE_CHECKING:
     from pyvista.core._typing_core import RotationLike
@@ -767,6 +766,10 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
     def enable_depth_peeling(self, number_of_peels=None, occlusion_ratio=None):
         """Enable depth peeling to improve rendering of translucent geometry.
 
+        .. versionchanged:: 0.50
+            Retain depth peeling when image passes are enabled. Combining depth
+            peeling with depth of field raises an error.
+
         Parameters
         ----------
         number_of_peels : int, optional
@@ -789,6 +792,9 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             If depth peeling is supported.
 
         """
+        self._render_passes._check_closed()
+        self._render_passes._update_base_pass()
+        self._render_passes._check_compatible('vtkDualDepthPeelingPass')
         if number_of_peels is None:
             number_of_peels = self._theme.depth_peeling.number_of_peels
         if occlusion_ratio is None:
@@ -798,16 +804,24 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             self.SetUseDepthPeeling(True)
             self.SetMaximumNumberOfPeels(number_of_peels)
             self.SetOcclusionRatio(occlusion_ratio)
+            self._render_passes._update_passes()
         self.Modified()
         return depth_peeling_supported
 
     def disable_depth_peeling(self) -> None:
         """Disable depth peeling."""
+        self._render_passes._check_closed()
+        self._render_passes._update_base_pass()
         self.SetUseDepthPeeling(False)
+        self._render_passes._update_passes()
         self.Modified()
 
     def enable_anti_aliasing(self, aa_type='ssaa'):
         """Enable anti-aliasing.
+
+        .. versionchanged:: 0.50
+            Compose FXAA with active image passes, including on EGL windows.
+            Selecting FXAA does not substitute SSAA.
 
         Parameters
         ----------
@@ -821,18 +835,11 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         aa_type = aa_type.lower()
 
         if aa_type == 'fxaa':
-            if uses_egl():  # pragma: no cover
-                # only display the warning when not building documentation
-                if not pv.BUILDING_GALLERY:
-                    warn_external(
-                        'VTK compiled with OSMesa/EGL does not properly support '
-                        'FXAA anti-aliasing and SSAA will be used instead.',
-                    )
-                self._render_passes.enable_ssaa_pass()
-                return
+            self._render_passes.disable_ssaa_pass()
             self._enable_fxaa()
 
         elif aa_type == 'ssaa':
+            self._disable_fxaa()
             self._render_passes.enable_ssaa_pass()
 
         else:
@@ -842,17 +849,22 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
     def disable_anti_aliasing(self) -> None:
         """Disable all anti-aliasing."""
         self._render_passes.disable_ssaa_pass()
-        self.SetUseFXAA(False)
-        self.Modified()
+        self._disable_fxaa()
 
     def _enable_fxaa(self) -> None:
         """Enable FXAA anti-aliasing."""
+        self._render_passes._check_closed()
+        self._render_passes._update_base_pass()
         self.SetUseFXAA(True)
+        self._render_passes._update_passes()
         self.Modified()
 
     def _disable_fxaa(self) -> None:
         """Disable FXAA anti-aliasing."""
+        self._render_passes._check_closed()
+        self._render_passes._update_base_pass()
         self.SetUseFXAA(False)
+        self._render_passes._update_passes()
         self.Modified()
 
     def add_border(self, color='white', width=1.0, edges=None):
@@ -3465,6 +3477,11 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
     def enable_depth_of_field(self, automatic_focal_distance=True) -> None:  # noqa: FBT002
         """Enable depth of field plotting.
 
+        .. versionchanged:: 0.50
+            Raise an error when combined with shadows or depth peeling, including
+            externally installed passes. These combinations cannot provide the
+            depth buffer required by this effect.
+
         Parameters
         ----------
         automatic_focal_distance : bool, default: True
@@ -3549,6 +3566,11 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
     def enable_shadows(self) -> None:
         """Enable shadows.
 
+        .. versionchanged:: 0.50
+            Render shadows before translucent geometry. Combining shadows with
+            depth of field raises an error. An external geometry pipeline must
+            use :vtk:`vtkRenderStepsPass` to expose its opaque stage.
+
         Examples
         --------
         First, plot without shadows enabled (default)
@@ -3624,6 +3646,15 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         blur : bool, default: True
             Controls if occlusion buffer should be blurred before combining it
             with the color buffer.
+
+        Notes
+        -----
+        Calling this method again updates the settings of the existing SSAO pass.
+        With depth peeling enabled, SSAO processes opaque geometry before
+        translucent geometry is composited.
+
+        .. versionchanged:: 0.50
+            Repeated calls update the SSAO settings.
 
         Examples
         --------
