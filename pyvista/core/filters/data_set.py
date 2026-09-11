@@ -7661,7 +7661,7 @@ class DataSetFilters(DataObjectFilters):
         colors: str
         | ColorLike
         | Sequence[ColorLike]
-        | dict[float, ColorLike]
+        | dict[float | str, ColorLike]
         | ColormapOptions = 'glasbey_category10',
         *,
         coloring_mode: Literal['index', 'cycle'] | None = None,
@@ -7721,9 +7721,10 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        colors : str | ColorLike | Sequence[ColorLike] | dict[float, ColorLike],
+        colors : str | ColorLike | Sequence[ColorLike] | dict[float | str, ColorLike],
             Colors to use. Specify a dictionary to explicitly control the mapping
-            from label values to colors. Alternatively, specify colors only using a
+            from label values to colors. A string key is converted to the data type
+            of the label array. Alternatively, specify colors only using a
             colormap or a sequence of colors and use ``coloring_mode`` to implicitly
             control the mapping. A single color is also supported to color the entire
             mesh with one color.
@@ -8004,6 +8005,8 @@ class DataSetFilters(DataObjectFilters):
             )
             color_rgb_sequence = [getattr(c, color_type) for c in colors_]
             for label, color in zip(colors.keys(), color_rgb_sequence, strict=True):
+                if isinstance(label, str):
+                    label = array.dtype.type(label)  # noqa: PLW2901
                 mask = array == label
                 if np.any(mask):
                     colors_out[mask, :] = color

@@ -687,6 +687,11 @@ class DataObject(
             Copies and filter outputs no longer share the dict with their source,
             and reading ``user_dict`` no longer adds an array to the field data.
 
+        .. deprecated:: 0.50
+            Keys that are not strings are deprecated. JSON stores keys as strings,
+            so a key of another type is read back as a string from a copy, a filter
+            output, or a file.
+
         .. note::
 
             The user dict is a convenience property intended for metadata storage.
