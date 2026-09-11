@@ -10,7 +10,6 @@ import numpy as np
 import pyvista as pv
 from pyvista import MAX_N_COLOR_BARS
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from .colors import Color
@@ -58,12 +57,12 @@ class ScalarBars(_NoNewAttrMixin):
             lines.append(f'{title_quotes:20} {interactive!s:5}')
         return '\n'.join(lines)
 
-    @_deprecate_positional_args(allowed=['actor'])
     def _remove_mapper_from_plotter(
         self,
         actor,
-        reset_camera: bool = False,  # noqa: FBT001, FBT002
-        render: bool = False,  # noqa: FBT001, FBT002
+        *,
+        reset_camera: bool = False,
+        render: bool = False,
     ):  # numpydoc ignore=PR01,RT01
         """Remove an actor's mapper from the given plotter's ``_scalar_bar_mappers``.
 
@@ -92,10 +91,8 @@ class ScalarBars(_NoNewAttrMixin):
                         render=render,
                     )
                     self._plotter._scalar_bar_slots.add(slot)
-            return
 
-    @_deprecate_positional_args(allowed=['title'])
-    def remove_scalar_bar(self, title=None, render: bool = True):  # noqa: FBT001, FBT002
+    def remove_scalar_bar(self, title=None, *, render: bool = True):
         """Remove a scalar bar.
 
         Parameters
@@ -236,22 +233,22 @@ class ScalarBars(_NoNewAttrMixin):
         if render:
             self._plotter.render()
 
-    @_deprecate_positional_args(allowed=['title'])
-    def add_scalar_bar(  # noqa: PLR0917
+    def add_scalar_bar(
         self,
         title='',
+        *,
         mapper=None,
         lookup_table=None,
         cmap=None,
         clim=None,
         n_labels=5,
-        italic: bool = False,  # noqa: FBT001, FBT002
-        bold: bool = False,  # noqa: FBT001, FBT002
+        italic: bool = False,
+        bold: bool = False,
         title_font_size=None,
         label_font_size=None,
         color=None,
         font_family=None,
-        shadow: bool = False,  # noqa: FBT001, FBT002
+        shadow: bool = False,
         width=None,
         height=None,
         position_x=None,
@@ -259,18 +256,18 @@ class ScalarBars(_NoNewAttrMixin):
         vertical=None,
         interactive=None,
         fmt=None,
-        use_opacity: bool = True,  # noqa: FBT001, FBT002
-        outline: bool = False,  # noqa: FBT001, FBT002
-        nan_annotation: bool = False,  # noqa: FBT001, FBT002
+        use_opacity: bool = True,
+        outline: bool = False,
+        nan_annotation: bool = False,
         below_label=None,
         above_label=None,
         background_color=None,
         n_colors=None,
-        fill: bool = False,  # noqa: FBT001, FBT002
-        render: bool = False,  # noqa: FBT001, FBT002
+        fill: bool = False,
+        render: bool = False,
         theme=None,
-        unconstrained_font_size: bool = False,  # noqa: FBT001, FBT002
-        unique_bar: bool = False,  # noqa: FBT001, FBT002
+        unconstrained_font_size: bool = False,
+        unique_bar: bool = False,
     ):
         """Create a scalar bar.
 

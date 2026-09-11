@@ -29,7 +29,10 @@ from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters import _get_output
+from pyvista.core.filters.data_set import _CONNECTIVITY_SCALARS
+from pyvista.core.filters.data_set import _rebuild_point_region_ids
 from pyvista.core.filters.data_set import _swap_axes
+from pyvista.core.utilities.arrays import convert_array
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -373,7 +376,7 @@ def test_clip_surface_compute_distance_does_not_modify_input(uniform):
 
 def test_clip_scalar_errors():
     mesh = pv.Wavelet()
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match='Cannot use inplace=True for ImageData input'):
         mesh.clip_scalar(value=(200, 300), inplace=True)
     with pytest.raises(ValueError, match='Cannot have invert=False for a range clip'):
         mesh.clip_scalar(value=(200, 300), invert=False)
@@ -392,12 +395,8 @@ def test_clip_scalar_multiple():
     mesh_clip_y = mesh.clip_scalar(scalars='y', value=0.0)
     assert np.isclose(mesh_clip_y['y'].max(), 0.0)
     mesh_clip_z = mesh.clip_scalar(scalars='z', value=0.0)
-    if pv.vtk_version_info >= (9, 7):
-        # Behavior change with vtkClipPolyData where the isovalue itself is no longer included
-        # in the inside-out mesh https://gitlab.kitware.com/vtk/vtk/-/work_items/20017
-        assert mesh_clip_z['z'].size == 0
-    else:
-        assert np.isclose(mesh_clip_z['z'].max(), 0.0)
+    # A scalar at the value itself is not below it
+    assert mesh_clip_z['z'].size == 0
 
 
 def test_clip_surface():
@@ -430,14 +429,18 @@ def test_clip_surface_output_type(datasets, crinkle):
         surface = pv.Sphere(radius=dataset.length, center=dataset.center)
         clp = dataset.clip_surface(surface, crinkle=crinkle)
         assert clp is not None
-        if isinstance(dataset, pv.PointSet):
-            assert isinstance(clp, pv.PointSet)
-        elif isinstance(dataset, pv.PolyData):
-            assert isinstance(clp, pv.PolyData)
-        elif isinstance(dataset, pv.MultiBlock):
-            assert isinstance(clp, pv.MultiBlock)
+        if isinstance(dataset, (pv.PointSet, pv.PolyData)):
+            assert type(clp) is type(dataset)
         else:
-            assert isinstance(clp, pv.UnstructuredGrid)
+            assert type(clp) is pv.UnstructuredGrid
+
+
+@pytest.mark.parametrize('name', ['clip_scalar', 'clip_surface', 'clip_closed_surface'])
+def test_clip_dataset_only_filters_are_not_composite(name):
+    """These clips take a dataset, not a composite."""
+    assert hasattr(pv.Sphere(), name)
+    with pytest.raises(AttributeError, match=f"'MultiBlock' object has no attribute '{name}'"):
+        getattr(pv.MultiBlock([pv.Sphere()]), name)()
 
 
 def test_clip_closed_surface():
@@ -1451,17 +1454,20 @@ def test_connectivity_raises(
 ):
     dataset: pv.DataSet = connected_datasets_single_disconnected_cell[0]['point']
 
-    with pytest.raises(TypeError, match='Scalar range must be'):
+    with pytest.raises(TypeError, match='Object arrays are not supported'):
         dataset.connectivity(scalar_range=dataset)
 
-    with pytest.raises(ValueError, match='Scalar range must have two elements'):
+    with pytest.raises(ValueError, match='Scalar range has shape'):
         dataset.connectivity(scalar_range=[1, 2, 3])
 
-    with pytest.raises(ValueError, match='Scalar range must have two elements'):
+    with pytest.raises(ValueError, match='Scalar range has shape'):
         dataset.connectivity(scalar_range=np.array([[1, 2], [3, 4]]))
 
-    with pytest.raises(ValueError, match='Lower value'):
+    with pytest.raises(ValueError, match='must be sorted in ascending order'):
         dataset.connectivity(scalar_range=[1, 0])
+
+    with pytest.raises(ValueError, match='`scalars` is only used when `scalar_range`'):
+        dataset.connectivity(scalars='data')
 
     with pytest.raises(ValueError, match='Invalid value for `extraction_mode`'):
         dataset.connectivity(extraction_mode='foo')
@@ -1478,14 +1484,208 @@ def test_connectivity_raises(
     with pytest.raises(ValueError, match='`region_ids` must be specified'):
         dataset.connectivity(extraction_mode='specified')
 
-    with pytest.raises(ValueError, match='positive integer values'):
+    with pytest.raises(IndexError, match='Index -1 is out of bounds'):
         dataset.connectivity(extraction_mode='cell_seed', cell_ids=[-1, 2])
 
+    with pytest.raises(IndexError, match=f'out of bounds for a mesh with {dataset.n_cells} cells'):
+        dataset.connectivity(extraction_mode='cell_seed', cell_ids=dataset.n_cells)
+
+    with pytest.raises(
+        IndexError, match=f'out of bounds for a mesh with {dataset.n_points} points'
+    ):
+        dataset.connectivity(extraction_mode='point_seed', point_ids=dataset.n_points)
+
+    with pytest.raises(ValueError, match='region_ids values must all be greater than'):
+        dataset.connectivity(extraction_mode='specified', region_ids=[-1, 2])
+
+    with pytest.raises(ValueError, match='closest_point has shape'):
+        dataset.connectivity(extraction_mode='closest', closest_point=(0, 0))
+
+    with pytest.raises(ValueError, match='cell_ids has shape'):
+        dataset.connectivity(extraction_mode='cell_seed', cell_ids=[[0, 1], [2, 3]])
+
+    with pytest.raises(ValueError, match='point_ids has shape'):
+        dataset.connectivity(extraction_mode='point_seed', point_ids=[[0, 1], [2, 3]])
+
     match = re.escape(
-        "Invalid `region_assignment_mode` 'bar' . Must be in ['ascending', 'descending', 'unspecified']"  # noqa: E501
+        "Invalid `region_assignment_mode` 'bar'. Must be in ['ascending', 'descending', 'unspecified']"  # noqa: E501
     )
     with pytest.raises(ValueError, match=match):
         dataset.connectivity(extraction_mode='all', region_assignment_mode='bar')
+
+
+@pytest.mark.parametrize('extraction_mode', ['all', 'specified'])
+def test_connectivity_polydata_output_type_full_selection(extraction_mode):
+    # Selecting every cell must still return PolyData
+    mesh = pv.Sphere(center=(-4, 0, 0), phi_resolution=8, theta_resolution=8) + pv.Sphere(
+        phi_resolution=6, theta_resolution=6
+    )
+    mesh['data'] = mesh.points[:, 1]
+
+    kwargs = (
+        dict(scalar_range=mesh.get_data_range('data'))
+        if extraction_mode == 'all'
+        else dict(region_ids=[0, 1])
+    )
+    conn = mesh.connectivity(extraction_mode, **kwargs)
+    assert isinstance(conn, pv.PolyData)
+    assert conn.n_cells == mesh.n_cells
+    assert mesh.connectivity(extraction_mode, inplace=True, **kwargs) is mesh
+
+
+def _assert_region_ids(conn, *, label_regions):
+    """Assert the region id arrays fit the mesh, or are absent when not requested."""
+    if label_regions:
+        assert conn.point_data['RegionId'].size == conn.n_points
+        assert conn.cell_data['RegionId'].size == conn.n_cells
+        assert conn.active_scalars_name == 'RegionId'
+        assert conn.active_scalars_info.association == pv.FieldAssociation.POINT
+    else:
+        assert 'RegionId' not in conn.point_data
+        assert 'RegionId' not in conn.cell_data
+
+
+@pytest.mark.parametrize('cast_to_ugrid', [True, False])
+def test_rebuild_point_region_ids(cast_to_ugrid):
+    mesh = pv.Sphere(center=(-4, 0, 0), phi_resolution=10, theta_resolution=10) + pv.Sphere(
+        phi_resolution=8, theta_resolution=8
+    )
+    conn = (
+        mesh.cast_to_unstructured_grid().connectivity() if cast_to_ugrid else mesh.connectivity()
+    )
+    expected = np.array(conn.point_data['RegionId'])
+    assert len(np.unique(expected)) == 2
+
+    conn.point_data.pop('RegionId')
+    _rebuild_point_region_ids(conn)
+    assert np.array_equal(conn.point_data['RegionId'], expected)
+    assert conn.point_data['RegionId'].dtype == conn.cell_data['RegionId'].dtype
+
+
+def test_rebuild_point_region_ids_keeps_unusable_cell_ids():
+    mesh = pv.Sphere(phi_resolution=6, theta_resolution=6).connectivity()
+    mesh.point_data.pop('RegionId')
+
+    oversized = convert_array(np.zeros(mesh.n_cells + 1, dtype=int), name='RegionId')
+    mesh.GetCellData().AddArray(oversized)
+    _rebuild_point_region_ids(mesh)
+    assert 'RegionId' not in mesh.point_data
+
+    mesh.GetCellData().RemoveArray('RegionId')
+    _rebuild_point_region_ids(mesh)
+    assert 'RegionId' not in mesh.point_data
+
+
+@pytest.mark.parametrize(
+    ('extraction_mode', 'kwargs'),
+    [
+        ('all', {}),
+        ('largest', {}),
+        ('specified', dict(region_ids=[0, 1])),
+        ('cell_seed', dict(cell_ids=[0])),
+        ('point_seed', dict(point_ids=[0])),
+        ('closest', dict(closest_point=(0.0, 0.0, 0.0))),
+    ],
+)
+@pytest.mark.parametrize('label_regions', [True, False])
+def test_connectivity_cell_scalars(extraction_mode, kwargs, label_regions):
+    mesh = pv.Sphere(center=(-4, 0, 0), phi_resolution=8, theta_resolution=8) + pv.Sphere(
+        phi_resolution=6, theta_resolution=6
+    )
+    mesh.cell_data['cdata'] = mesh.cell_centers().points[:, 1]
+    mesh.set_active_scalars('cdata')
+    before = sorted(mesh.array_names)
+
+    conn = mesh.connectivity(
+        extraction_mode, scalar_range=[-0.2, 0.2], label_regions=label_regions, **kwargs
+    )
+
+    assert _CONNECTIVITY_SCALARS not in conn.array_names
+    assert 'cdata' in conn.cell_data
+    assert sorted(mesh.array_names) == before
+
+
+def test_connectivity_scalars():
+    mesh = pv.Sphere(phi_resolution=8, theta_resolution=8)
+    mesh.point_data['low'] = mesh.points[:, 1]
+    mesh.point_data['high'] = mesh.points[:, 1] + 10
+    mesh.set_active_scalars('low')
+
+    named = mesh.connectivity('all', scalar_range=[9.0, 11.0], scalars='high')
+    active = mesh.connectivity('all', scalar_range=[9.0, 11.0])
+
+    assert named.n_cells == mesh.n_cells
+    assert active.n_cells == 0
+
+
+@pytest.mark.parametrize('extraction_mode', ['cell_seed', 'point_seed'])
+def test_connectivity_seed_bool_mask(extraction_mode):
+    mesh = pv.Sphere(center=(-4, 0, 0), phi_resolution=8, theta_resolution=8) + pv.Sphere(
+        phi_resolution=6, theta_resolution=6
+    )
+    n_items = mesh.n_cells if extraction_mode == 'cell_seed' else mesh.n_points
+    mask = np.zeros(n_items, dtype=bool)
+    mask[-1] = True
+    key = 'cell_ids' if extraction_mode == 'cell_seed' else 'point_ids'
+
+    from_mask = mesh.connectivity(extraction_mode, **{key: mask})
+    from_ids = mesh.connectivity(extraction_mode, **{key: [n_items - 1]})
+    assert from_mask.n_cells == from_ids.n_cells
+    assert from_mask.n_cells < mesh.n_cells
+
+
+@pytest.mark.parametrize('extraction_mode', ['specified', 'cell_seed', 'point_seed'])
+@pytest.mark.parametrize('label_regions', [True, False])
+def test_connectivity_empty_output(extraction_mode, label_regions):
+    mesh = pv.Sphere(phi_resolution=6, theta_resolution=6)
+    kwargs = {
+        'specified': dict(region_ids=[99]),
+        'cell_seed': dict(cell_ids=[]),
+        'point_seed': dict(point_ids=[]),
+    }[extraction_mode]
+
+    conn = mesh.connectivity(extraction_mode, label_regions=label_regions, **kwargs)
+    assert conn.n_cells == 0
+    assert conn.n_points == 0
+    _assert_region_ids(conn, label_regions=label_regions)
+
+
+@pytest.mark.parametrize(
+    ('extraction_mode', 'keeps_seed_cells'),
+    [
+        ('all', False),
+        ('largest', True),
+        ('specified', False),
+        ('cell_seed', True),
+        ('point_seed', True),
+        ('closest', False),
+    ],
+)
+@pytest.mark.parametrize('label_regions', [True, False])
+def test_connectivity_empty_scalar_range(extraction_mode, keeps_seed_cells, label_regions):
+    # Modes which are not filtered beforehand keep cells with no point in the range
+    mesh = pv.Sphere(phi_resolution=8, theta_resolution=8)
+    mesh.point_data['data'] = mesh.points[:, 1]
+    kwargs = {
+        'all': {},
+        'largest': {},
+        'specified': dict(region_ids=[0]),
+        'cell_seed': dict(cell_ids=[0]),
+        'point_seed': dict(point_ids=[0]),
+        'closest': dict(closest_point=(0, 0, 0)),
+    }[extraction_mode]
+
+    conn = mesh.connectivity(
+        extraction_mode,
+        scalar_range=[10.0, 20.0],
+        label_regions=label_regions,
+        **kwargs,
+    )
+    if keeps_seed_cells:
+        assert conn.n_cells > 0
+    else:
+        assert conn.n_cells == 0
+    _assert_region_ids(conn, label_regions=label_regions)
 
 
 @pytest.mark.parametrize('dataset_index', list(range(5)))
@@ -2646,7 +2846,7 @@ def test_extract_cells_extract_points_invalid_ind(sphere, dataset_filter):
     with pytest.raises(ValueError, match=re.escape(match)):
         dataset_filter([True, True])
 
-    match = 'Indices must be either a mask or an integer array-like'
+    match = 'indices must be either a mask or an integer array-like'
     with pytest.raises(TypeError, match=match):
         dataset_filter([0.5])
 
@@ -3672,6 +3872,18 @@ def test_extract_subset(uniform, rebase_coordinates):
     # Test same output as using crop
     cropped = uniform.crop(extent=extent, rebase_coordinates=rebase_coordinates)
     assert cropped == voi
+
+
+@pytest.mark.parametrize(
+    'voi',
+    [(-5, 5, 0, 5, 0, 5), (0, 100, 0, 5, 0, 5), (0, 5, 0, 5, 0, 100)],
+)
+def test_extract_subset_voi_outside_extent_raises(uniform, voi):
+    match = (
+        f"The requested volume of interest {voi} is outside the input's extent {uniform.extent}."
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        uniform.extract_subset(voi)
 
 
 def test_gaussian_smooth_output_type():
@@ -4832,6 +5044,12 @@ def test_color_labels_inputs(labeled_image, color_input, expected_rgb):
         assert np.allclose(color_scalars[label_scalars == id_], expected_rgb[id_])
 
 
+def test_color_labels_string_keys(labeled_image):
+    from_ints = labeled_image.color_labels({0: RED_RGB, 2: BLUE})
+    from_strings = labeled_image.color_labels({'0': RED_RGB, '2': BLUE})
+    assert np.array_equal(from_strings.active_scalars, from_ints.active_scalars)
+
+
 @pytest.mark.parametrize('color_type', ['int_rgb', 'int_rgba', 'float_rgb', 'float_rgba'])
 def test_color_labels_color_type_partial_dict(labeled_image, color_type):
     input_scalars_name = labeled_image.active_scalars_name
@@ -4973,8 +5191,7 @@ def test_color_labels_return_dict(labeled_image, color_type):
     ('negative_indexing', 'label_data', 'expected_keys'),
     [
         (True, [0, -1, 2, -6], [0, 2, -1, -6]),
-        # A label equal to the number of colors is allowed but has no color
-        (False, [0, 2, 2, 6], [0, 2]),
+        (False, [0, 2, 2, 5], [0, 2, 5]),
     ],
 )
 def test_color_labels_return_dict_index_mode(negative_indexing, label_data, expected_keys):
@@ -4988,8 +5205,25 @@ def test_color_labels_return_dict_index_mode(negative_indexing, label_data, expe
     assert list(mapping.keys()) == expected_keys
     for key in expected_keys:
         assert mapping[key] == pv.Color(colors[key]).int_rgb
-    expected_colors = [mapping.get(label, (0, 0, 0)) for label in label_data]
+    expected_colors = [mapping[label] for label in label_data]
     assert np.array_equal(colored.active_scalars, expected_colors)
+
+
+def test_color_labels_label_equal_to_number_of_colors():
+    colors = ['red', 'green', 'blue']
+    labels = pv.ImageData(dimensions=(4, 1, 1))
+    labels['data'] = [0, 1, 2, 3]
+
+    # A label equal to the number of colors cannot index the colors
+    match = 'Index coloring mode cannot be used'
+    with pytest.raises(ValueError, match=match):
+        labels.color_labels(colors, coloring_mode='index')
+
+    # Cycle mode is used by default instead, so every label is colored
+    colored, mapping = labels.color_labels(colors, return_dict=True)
+    assert list(mapping.keys()) == [0, 1, 2, 3]
+    assert mapping[3] == pv.Color('red').int_rgb
+    assert np.array_equal(colored.active_scalars, [mapping[label] for label in labels['data']])
 
 
 def test_color_labels_does_not_modify_colormap():
@@ -5001,6 +5235,53 @@ def test_color_labels_does_not_modify_colormap():
     second = labels.color_labels(cmap, **kwargs)
     assert len(cmap.colors) == 2
     assert np.array_equal(first.active_scalars, second.active_scalars)
+
+
+@pytest.mark.parametrize('as_array', [True, False])
+@pytest.mark.parametrize(
+    ('color_type', 'red', 'green', 'opaque', 'quarter'),
+    [
+        ('float_rgb', (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), None, None),
+        ('float_rgba', (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), 1.0, 0.25),
+        ('int_rgb', (255, 0, 0), (0, 255, 0), None, None),
+        ('int_rgba', (255, 0, 0), (0, 255, 0), 255, 64),
+    ],
+)
+def test_color_labels_listed_colormap_colors(as_array, color_type, red, green, opaque, quarter):
+    rgb = [(1.0, 0.0, 0.0), (0.0, 1.0, 0.0)]
+    rgba = [(*color, 0.25) for color in rgb]
+    labels = pv.ImageData(dimensions=(3, 1, 1))
+    labels['data'] = [0, 1, 0]
+
+    def colors_of(colors):
+        cmap = ListedColormap(np.array(colors) if as_array else colors)
+        colored = labels.color_labels(cmap, coloring_mode='index', color_type=color_type)
+        return np.asarray(colored.active_scalars)
+
+    assert np.allclose(colors_of(rgb)[:, :3], [red, green, red])
+    assert np.allclose(colors_of(rgba)[:, :3], [red, green, red])
+    if opaque is not None:
+        assert np.allclose(colors_of(rgb)[:, 3], opaque)
+        # The colormap's own alpha is used when it has one
+        assert np.allclose(colors_of(rgba)[:, 3], quarter)
+
+
+@pytest.mark.parametrize('as_array', [True, False])
+@pytest.mark.parametrize('color_type', ['float_rgb', 'float_rgba', 'int_rgb', 'int_rgba'])
+def test_color_labels_return_dict_listed_colormap(as_array, color_type):
+    colors = [(1.0, 0.0, 0.0), (0.0, 1.0, 0.0)]
+    cmap = ListedColormap(np.array(colors) if as_array else colors)
+    labels = pv.ImageData(dimensions=(3, 1, 1))
+    labels['data'] = [0, 1, 0]
+
+    colored, mapping = labels.color_labels(
+        cmap, coloring_mode='index', color_type=color_type, return_dict=True
+    )
+
+    assert list(mapping.keys()) == [0, 1]
+    for label, color in mapping.items():
+        assert pv.Color(color) == pv.Color(colors[label])
+        assert np.array_equal(colored.active_scalars[label], color)
 
 
 def test_color_labels_return_dict_cycle_mode():

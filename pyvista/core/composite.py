@@ -28,11 +28,9 @@ from typing_extensions import Unpack
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import vtk_version_info
 
 from ._typing_core import BoundsTuple
-from .dataobject import USER_DICT_KEY
 from .dataobject import DataObject
 from .dataset import DataSet
 from .filters.composite import CompositeFilters
@@ -41,6 +39,7 @@ from .formatting_html import _children_section
 from .formatting_html import _fmt_memory
 from .formatting_html import build_repr_html
 from .pyvista_ndarray import pyvista_ndarray
+from .utilities.arrays import USER_DICT_KEY
 from .utilities.arrays import CellLiteral
 from .utilities.arrays import FieldAssociation
 from .utilities.arrays import FieldLiteral
@@ -226,232 +225,50 @@ class MultiBlock(
         prepend_names: bool
         separator: str
 
+    # fmt: off
+    # ruff: disable[E501]
     @overload  # 'ids', nested_ids=True
-    def recursive_iterator(
-        self: MultiBlock,
-        contents: Literal['ids'],
-        order: _OrderLiteral | None = ...,
-        *,
-        node_type: Literal['parent', 'child'] = ...,
-        skip_none: bool = ...,
-        nested_ids: Literal[True] | None = ...,
-        **kwargs: Unpack[_RecursiveIteratorBasicKwargs],
-    ) -> Iterator[tuple[int, ...]]: ...
+    def recursive_iterator(self: MultiBlock, contents: Literal['ids'], order: _OrderLiteral | None = ..., *, node_type: Literal['parent', 'child'] = ..., skip_none: bool = ..., nested_ids: Literal[True] | None = ..., **kwargs: Unpack[_RecursiveIteratorBasicKwargs]) -> Iterator[tuple[int, ...]]: ...
     @overload  # 'ids', nested_ids=False
-    def recursive_iterator(
-        self: MultiBlock,
-        contents: Literal['ids'],
-        order: _OrderLiteral | None = ...,
-        *,
-        node_type: Literal['parent', 'child'] = ...,
-        skip_none: bool = ...,
-        nested_ids: Literal[False],
-        **kwargs: Unpack[_RecursiveIteratorBasicKwargs],
-    ) -> Iterator[int]: ...
+    def recursive_iterator(self: MultiBlock, contents: Literal['ids'], order: _OrderLiteral | None = ..., *, node_type: Literal['parent', 'child'] = ..., skip_none: bool = ..., nested_ids: Literal[False], **kwargs: Unpack[_RecursiveIteratorBasicKwargs]) -> Iterator[int]: ...
     @overload  # 'names'
-    def recursive_iterator(
-        self: MultiBlock,
-        contents: Literal['names'],
-        order: _OrderLiteral | None = ...,
-        *,
-        node_type: Literal['parent', 'child'] = ...,
-        skip_none: bool = ...,
-        nested_ids: bool | None = ...,
-        **kwargs: Unpack[_RecursiveIteratorNamedKwargs],
-    ) -> Iterator[str]: ...
+    def recursive_iterator(self: MultiBlock, contents: Literal['names'], order: _OrderLiteral | None = ..., *, node_type: Literal['parent', 'child'] = ..., skip_none: bool = ..., nested_ids: bool | None = ..., **kwargs: Unpack[_RecursiveIteratorNamedKwargs]) -> Iterator[str]: ...
     @overload  # 'items', node_type='child', skip_none=False
-    def recursive_iterator(
-        self: MultiBlock,
-        contents: Literal['items'],
-        order: _OrderLiteral | None = ...,
-        *,
-        node_type: Literal['child'] = ...,
-        skip_none: Literal[False] = ...,
-        nested_ids: bool | None = ...,
-        **kwargs: Unpack[_RecursiveIteratorNamedKwargs],
-    ) -> Iterator[tuple[str, DataSet | None]]: ...
+    def recursive_iterator(self: MultiBlock, contents: Literal['items'], order: _OrderLiteral | None = ..., *, node_type: Literal['child'] = ..., skip_none: Literal[False] = ..., nested_ids: bool | None = ..., **kwargs: Unpack[_RecursiveIteratorNamedKwargs]) -> Iterator[tuple[str, DataSet | None]]: ...
     @overload  # 'items', node_type='child', skip_none=True
-    def recursive_iterator(
-        self: MultiBlock,
-        contents: Literal['items'],
-        order: _OrderLiteral | None = ...,
-        *,
-        node_type: Literal['child'] = ...,
-        skip_none: Literal[True],
-        nested_ids: bool | None = ...,
-        **kwargs: Unpack[_RecursiveIteratorNamedKwargs],
-    ) -> Iterator[tuple[str, DataSet]]: ...
+    def recursive_iterator(self: MultiBlock, contents: Literal['items'], order: _OrderLiteral | None = ..., *, node_type: Literal['child'] = ..., skip_none: Literal[True], nested_ids: bool | None = ..., **kwargs: Unpack[_RecursiveIteratorNamedKwargs]) -> Iterator[tuple[str, DataSet]]: ...
     @overload  # 'blocks', node_type='child', skip_None=True
-    def recursive_iterator(
-        self: MultiBlock,
-        contents: Literal['blocks'] = ...,
-        order: _OrderLiteral | None = ...,
-        *,
-        node_type: Literal['child'] = ...,
-        skip_none: Literal[True],
-        nested_ids: bool | None = ...,
-        **kwargs: Unpack[_RecursiveIteratorBasicKwargs],
-    ) -> Iterator[DataSet]: ...
+    def recursive_iterator(self: MultiBlock, contents: Literal['blocks'] = ..., order: _OrderLiteral | None = ..., *, node_type: Literal['child'] = ..., skip_none: Literal[True], nested_ids: bool | None = ..., **kwargs: Unpack[_RecursiveIteratorBasicKwargs]) -> Iterator[DataSet]: ...
     @overload  # 'blocks', node_type='child', skip_None=False
-    def recursive_iterator(
-        self: MultiBlock,
-        contents: Literal['blocks'] = ...,
-        order: _OrderLiteral | None = ...,
-        *,
-        node_type: Literal['child'] = ...,
-        skip_none: Literal[False] = ...,
-        nested_ids: bool | None = ...,
-        **kwargs: Unpack[_RecursiveIteratorBasicKwargs],
-    ) -> Iterator[DataSet | None]: ...
+    def recursive_iterator(self: MultiBlock, contents: Literal['blocks'] = ..., order: _OrderLiteral | None = ..., *, node_type: Literal['child'] = ..., skip_none: Literal[False] = ..., nested_ids: bool | None = ..., **kwargs: Unpack[_RecursiveIteratorBasicKwargs]) -> Iterator[DataSet | None]: ...
     @overload  # 'all', node_type='child', skip_none=True, nested_ids=True
-    def recursive_iterator(
-        self: MultiBlock,
-        contents: Literal['all'],
-        order: _OrderLiteral | None = ...,
-        *,
-        node_type: Literal['child'] = ...,
-        skip_none: Literal[True],
-        nested_ids: Literal[True] | None = ...,
-        **kwargs: Unpack[_RecursiveIteratorNamedKwargs],
-    ) -> Iterator[tuple[tuple[int, ...], str, DataSet]]: ...
+    def recursive_iterator(self: MultiBlock, contents: Literal['all'], order: _OrderLiteral | None = ..., *, node_type: Literal['child'] = ..., skip_none: Literal[True], nested_ids: Literal[True] | None = ..., **kwargs: Unpack[_RecursiveIteratorNamedKwargs]) -> Iterator[tuple[tuple[int, ...], str, DataSet]]: ...
     @overload  # 'all', node_type='child', skip_none=False, nested_ids=True
-    def recursive_iterator(
-        self: MultiBlock,
-        contents: Literal['all'],
-        order: _OrderLiteral | None = ...,
-        *,
-        node_type: Literal['child'] = ...,
-        skip_none: Literal[False] = ...,
-        nested_ids: Literal[True] | None = ...,
-        **kwargs: Unpack[_RecursiveIteratorNamedKwargs],
-    ) -> Iterator[tuple[tuple[int, ...], str, DataSet | None]]: ...
+    def recursive_iterator(self: MultiBlock, contents: Literal['all'], order: _OrderLiteral | None = ..., *, node_type: Literal['child'] = ..., skip_none: Literal[False] = ..., nested_ids: Literal[True] | None = ..., **kwargs: Unpack[_RecursiveIteratorNamedKwargs]) -> Iterator[tuple[tuple[int, ...], str, DataSet | None]]: ...
     @overload  # 'all', node_type='child', skip_none=True, nested_ids=False
-    def recursive_iterator(
-        self: MultiBlock,
-        contents: Literal['all'],
-        order: _OrderLiteral | None = ...,
-        *,
-        node_type: Literal['child'] = ...,
-        skip_none: Literal[True],
-        nested_ids: Literal[False],
-        **kwargs: Unpack[_RecursiveIteratorNamedKwargs],
-    ) -> Iterator[tuple[int, str, DataSet]]: ...
+    def recursive_iterator(self: MultiBlock, contents: Literal['all'], order: _OrderLiteral | None = ..., *, node_type: Literal['child'] = ..., skip_none: Literal[True], nested_ids: Literal[False], **kwargs: Unpack[_RecursiveIteratorNamedKwargs]) -> Iterator[tuple[int, str, DataSet]]: ...
     @overload  # 'all', node_type='child', skip_none=False, nested_ids=False
-    def recursive_iterator(
-        self: MultiBlock,
-        contents: Literal['all'],
-        order: _OrderLiteral | None = ...,
-        *,
-        node_type: Literal['child'] = ...,
-        skip_none: Literal[False] = ...,
-        nested_ids: Literal[False],
-        **kwargs: Unpack[_RecursiveIteratorNamedKwargs],
-    ) -> Iterator[tuple[int, str, DataSet | None]]: ...
+    def recursive_iterator(self: MultiBlock, contents: Literal['all'], order: _OrderLiteral | None = ..., *, node_type: Literal['child'] = ..., skip_none: Literal[False] = ..., nested_ids: Literal[False], **kwargs: Unpack[_RecursiveIteratorNamedKwargs]) -> Iterator[tuple[int, str, DataSet | None]]: ...
     @overload  # 'items', node_type='parent'
-    def recursive_iterator(
-        self: MultiBlock,
-        contents: Literal['items'],
-        order: _OrderLiteral | None = ...,
-        *,
-        node_type: Literal['parent'],
-        skip_none: bool = ...,
-        nested_ids: bool | None = ...,
-        **kwargs: Unpack[_RecursiveIteratorNamedKwargs],
-    ) -> Iterator[tuple[str, MultiBlock]]: ...
+    def recursive_iterator(self: MultiBlock, contents: Literal['items'], order: _OrderLiteral | None = ..., *, node_type: Literal['parent'], skip_none: bool = ..., nested_ids: bool | None = ..., **kwargs: Unpack[_RecursiveIteratorNamedKwargs]) -> Iterator[tuple[str, MultiBlock]]: ...
     @overload  # 'blocks', node_type='parent'
-    def recursive_iterator(
-        self: MultiBlock,
-        contents: Literal['blocks'] = ...,
-        order: _OrderLiteral | None = ...,
-        *,
-        node_type: Literal['parent'],
-        skip_none: Literal[False] = ...,
-        nested_ids: bool | None = ...,
-        **kwargs: Unpack[_RecursiveIteratorBasicKwargs],
-    ) -> Iterator[MultiBlock]: ...
+    def recursive_iterator(self: MultiBlock, contents: Literal['blocks'] = ..., order: _OrderLiteral | None = ..., *, node_type: Literal['parent'], skip_none: Literal[False] = ..., nested_ids: bool | None = ..., **kwargs: Unpack[_RecursiveIteratorBasicKwargs]) -> Iterator[MultiBlock]: ...
     @overload  # 'all', node_type='parent', nested_ids=True
-    def recursive_iterator(
-        self: MultiBlock,
-        contents: Literal['all'],
-        order: _OrderLiteral | None = ...,
-        *,
-        node_type: Literal['parent'],
-        skip_none: Literal[False] = ...,
-        nested_ids: Literal[True] | None = ...,
-        **kwargs: Unpack[_RecursiveIteratorNamedKwargs],
-    ) -> Iterator[tuple[tuple[int, ...], str, MultiBlock]]: ...
+    def recursive_iterator(self: MultiBlock, contents: Literal['all'], order: _OrderLiteral | None = ..., *, node_type: Literal['parent'], skip_none: Literal[False] = ..., nested_ids: Literal[True] | None = ..., **kwargs: Unpack[_RecursiveIteratorNamedKwargs]) -> Iterator[tuple[tuple[int, ...], str, MultiBlock]]: ...
     @overload  # 'all', node_type='parent', nested_ids=False
-    def recursive_iterator(
-        self: MultiBlock,
-        contents: Literal['all'],
-        order: _OrderLiteral | None = ...,
-        *,
-        node_type: Literal['parent'],
-        skip_none: Literal[False] = ...,
-        nested_ids: Literal[False],
-        **kwargs: Unpack[_RecursiveIteratorNamedKwargs],
-    ) -> Iterator[tuple[int, str, MultiBlock]]: ...
+    def recursive_iterator(self: MultiBlock, contents: Literal['all'], order: _OrderLiteral | None = ..., *, node_type: Literal['parent'], skip_none: Literal[False] = ..., nested_ids: Literal[False], **kwargs: Unpack[_RecursiveIteratorNamedKwargs]) -> Iterator[tuple[int, str, MultiBlock]]: ...
     @overload  # 'ids', nested_ids not known
-    def recursive_iterator(
-        self: MultiBlock,
-        contents: Literal['ids'],
-        order: _OrderLiteral | None = ...,
-        *,
-        node_type: Literal['child'] = ...,
-        skip_none: bool = ...,
-        nested_ids: bool | None = ...,
-        **kwargs: Unpack[_RecursiveIteratorBasicKwargs],
-    ) -> Iterator[int | tuple[int, ...]]: ...
+    def recursive_iterator(self: MultiBlock, contents: Literal['ids'], order: _OrderLiteral | None = ..., *, node_type: Literal['child'] = ..., skip_none: bool = ..., nested_ids: bool | None = ..., **kwargs: Unpack[_RecursiveIteratorBasicKwargs]) -> Iterator[int | tuple[int, ...]]: ...
     @overload  # 'blocks', skip_none not known
-    def recursive_iterator(
-        self: MultiBlock,
-        contents: Literal['blocks'] = ...,
-        order: _OrderLiteral | None = ...,
-        *,
-        node_type: Literal['child'] = ...,
-        skip_none: bool = ...,
-        nested_ids: bool | None = ...,
-        **kwargs: Unpack[_RecursiveIteratorBasicKwargs],
-    ) -> Iterator[DataSet | None]: ...
+    def recursive_iterator(self: MultiBlock, contents: Literal['blocks'] = ..., order: _OrderLiteral | None = ..., *, node_type: Literal['child'] = ..., skip_none: bool = ..., nested_ids: bool | None = ..., **kwargs: Unpack[_RecursiveIteratorBasicKwargs]) -> Iterator[DataSet | None]: ...
     @overload  # 'items', skip_none not known
-    def recursive_iterator(
-        self: MultiBlock,
-        contents: Literal['items'],
-        order: _OrderLiteral | None = ...,
-        *,
-        node_type: Literal['child'] = ...,
-        skip_none: bool = ...,
-        nested_ids: bool | None = ...,
-        **kwargs: Unpack[_RecursiveIteratorNamedKwargs],
-    ) -> Iterator[tuple[str, DataSet | None]]: ...
+    def recursive_iterator(self: MultiBlock, contents: Literal['items'], order: _OrderLiteral | None = ..., *, node_type: Literal['child'] = ..., skip_none: bool = ..., nested_ids: bool | None = ..., **kwargs: Unpack[_RecursiveIteratorNamedKwargs]) -> Iterator[tuple[str, DataSet | None]]: ...
     @overload  # 'all', skip_none or nested_ids not known
-    def recursive_iterator(
-        self: MultiBlock,
-        contents: Literal['all'],
-        order: _OrderLiteral | None = ...,
-        *,
-        node_type: Literal['child'] = ...,
-        skip_none: bool = ...,
-        nested_ids: bool | None = ...,
-        **kwargs: Unpack[_RecursiveIteratorNamedKwargs],
-    ) -> Iterator[tuple[int | tuple[int, ...], str, DataSet | None]]: ...
+    def recursive_iterator(self: MultiBlock, contents: Literal['all'], order: _OrderLiteral | None = ..., *, node_type: Literal['child'] = ..., skip_none: bool = ..., nested_ids: bool | None = ..., **kwargs: Unpack[_RecursiveIteratorNamedKwargs]) -> Iterator[tuple[int | tuple[int, ...], str, DataSet | None]]: ...
     @overload  # general case
-    def recursive_iterator(
-        self: MultiBlock,
-        contents: Literal['ids', 'names', 'blocks', 'items', 'all'] = ...,
-        order: _OrderLiteral | None = ...,
-        *,
-        node_type: Literal['parent', 'child'] = ...,
-        skip_none: bool = ...,
-        skip_empty: bool = ...,
-        nested_ids: bool | None = ...,
-        prepend_names: bool = ...,
-        separator: str = ...,
-    ) -> (
-        Iterator[int | tuple[int, ...] | str | _TypeMultiBlockLeaf]
-        | Iterator[tuple[str, _TypeMultiBlockLeaf]]
-        | Iterator[tuple[int | tuple[int, ...], str, _TypeMultiBlockLeaf]]
-    ): ...
+    def recursive_iterator(self: MultiBlock, contents: Literal['ids', 'names', 'blocks', 'items', 'all'] = ..., order: _OrderLiteral | None = ..., *, node_type: Literal['parent', 'child'] = ..., skip_none: bool = ..., skip_empty: bool = ..., nested_ids: bool | None = ..., prepend_names: bool = ..., separator: str = ...) -> Iterator[int | tuple[int, ...] | str | _TypeMultiBlockLeaf] | Iterator[tuple[str, _TypeMultiBlockLeaf]] | Iterator[tuple[int | tuple[int, ...], str, _TypeMultiBlockLeaf]]: ...
+    # ruff: enable[E501]
+    # fmt: on
     def recursive_iterator(
         self: MultiBlock,
         contents: Literal['ids', 'names', 'blocks', 'items', 'all'] = 'blocks',
@@ -1481,11 +1298,11 @@ class MultiBlock(
         """
         return sum(block.volume for block in self if block)
 
-    @_deprecate_positional_args(allowed=['name'])
     def get_data_range(  # type: ignore[override]
         self: MultiBlock,
         name: str | None,
-        allow_missing: bool = False,  # noqa: FBT001, FBT002
+        *,
+        allow_missing: bool = False,
         preference: PointLiteral | CellLiteral | FieldLiteral = 'cell',
     ) -> tuple[float, float]:
         """Get the min/max of an array given its name across all blocks.
@@ -1562,14 +1379,14 @@ class MultiBlock(
         msg = f'Block name ({name}) not found'
         raise KeyError(msg)
 
+    # fmt: off
+    # ruff: disable[E501]
     @overload
-    def __getitem__(
-        self: MultiBlock,
-        index: int | str,
-    ) -> _TypeMultiBlockLeaf: ...  # pragma: no cover
-
+    def __getitem__(self: MultiBlock, index: int | str) -> _TypeMultiBlockLeaf: ...  # pragma: no cover
     @overload
     def __getitem__(self: MultiBlock, index: slice) -> MultiBlock: ...  # pragma: no cover
+    # ruff: enable[E501]
+    # fmt: on
 
     def __getitem__(self: MultiBlock, index):
         """Get a block by its index or name.
@@ -1936,19 +1753,14 @@ class MultiBlock(
             raise IndexError(msg)
         return target, indices[-1]
 
+    # fmt: off
+    # ruff: disable[E501]
     @overload
-    def __setitem__(
-        self: MultiBlock,
-        index: int | str,
-        data: _TypeMultiBlockLeaf,
-    ) -> None: ...  # pragma: no cover
-
+    def __setitem__(self: MultiBlock, index: int | str, data: _TypeMultiBlockLeaf) -> None: ...  # pragma: no cover
     @overload
-    def __setitem__(
-        self: MultiBlock,
-        index: slice,
-        data: Iterable[_TypeMultiBlockLeaf],
-    ) -> None: ...  # pragma: no cover
+    def __setitem__(self: MultiBlock, index: slice, data: Iterable[_TypeMultiBlockLeaf]) -> None: ...  # pragma: no cover
+    # ruff: enable[E501]
+    # fmt: on
 
     def __setitem__(
         self: MultiBlock,
@@ -2169,8 +1981,7 @@ class MultiBlock(
         for i, name in enumerate(reversed(names)):
             self.set_block_name(i, name)
 
-    @_deprecate_positional_args
-    def clean(self: MultiBlock, empty: bool = True) -> None:  # noqa: FBT001, FBT002
+    def clean(self: MultiBlock, *, empty: bool = True) -> None:
         """Remove any null blocks in place.
 
         Parameters
@@ -2291,19 +2102,18 @@ class MultiBlock(
         """Return the number of blocks."""
         return self.n_blocks
 
-    @_deprecate_positional_args(allowed=['ido'])
     def copy_meta_from(
         self: MultiBlock,
         ido: MultiBlock,
-        deep: bool,  # noqa: FBT001
+        *,
+        deep: bool,
     ) -> None:  # numpydoc ignore=PR01
         """Copy pyvista meta data onto this object from another object."""
         # Note that `pyvista.MultiBlock` datasets currently don't have any meta.
         # This method is here for consistency with the rest of the API and
         # in case we add meta data to this pbject down the road.
 
-    @_deprecate_positional_args
-    def copy(self: Self, deep: bool = True) -> Self:  # noqa: FBT001, FBT002
+    def copy(self: Self, *, deep: bool = True) -> Self:
         """Return a copy of the multiblock.
 
         Parameters
@@ -2339,11 +2149,11 @@ class MultiBlock(
         newobject.copy_meta_from(self, deep=deep)
         return newobject
 
-    @_deprecate_positional_args(allowed=['to_copy'])
     def shallow_copy(  # type: ignore[override]
         self: MultiBlock,
         to_copy: _vtk.vtkMultiBlockDataSet,
-        recursive: bool = False,  # noqa: FBT001, FBT002
+        *,
+        recursive: bool = False,
     ) -> None:
         """Shallow copy the given multiblock to this multiblock.
 
@@ -2359,6 +2169,7 @@ class MultiBlock(
 
         """
         self.CompositeShallowCopy(to_copy)
+        self._sync_user_dict()
         self.wrap_nested()
 
         # Shallow copy creates new instances of nested multiblocks
@@ -2401,12 +2212,12 @@ class MultiBlock(
 
         _set_name_for_none_blocks(self, to_copy)
 
-    @_deprecate_positional_args(allowed=['name'])
     def set_active_scalars(
         self: MultiBlock,
         name: str | None,
+        *,
         preference: PointLiteral | CellLiteral = 'cell',
-        allow_missing: bool = False,  # noqa: FBT001, FBT002
+        allow_missing: bool = False,
     ) -> tuple[FieldAssociation, NumpyArray[float]]:
         """Find the scalars by name and appropriately set it as active.
 
@@ -2505,8 +2316,7 @@ class MultiBlock(
 
         return field_asc, scalars
 
-    @_deprecate_positional_args
-    def as_polydata_blocks(self: MultiBlock, copy: bool = False) -> MultiBlock:  # noqa: FBT001, FBT002
+    def as_polydata_blocks(self: MultiBlock, *, copy: bool = False) -> MultiBlock:
         """Convert all the datasets within this MultiBlock to :class:`~pyvista.PolyData`.
 
         Parameters
@@ -2551,8 +2361,7 @@ class MultiBlock(
 
         return self.generic_filter(block_filter, _skip_none=False)
 
-    @_deprecate_positional_args
-    def as_unstructured_grid_blocks(self: MultiBlock, copy: bool = False) -> MultiBlock:  # noqa: FBT001, FBT002
+    def as_unstructured_grid_blocks(self: MultiBlock, *, copy: bool = False) -> MultiBlock:
         """Convert all the datasets within this MultiBlock to :class:`~pyvista.UnstructuredGrid`.
 
         .. versionadded:: 0.45

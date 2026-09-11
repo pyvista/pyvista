@@ -11,7 +11,10 @@ import sys
 import threading
 import traceback
 from typing import TYPE_CHECKING
+from typing import Any
+from typing import Concatenate
 from typing import Literal
+from typing import ParamSpec
 from typing import TypeVar
 import warnings
 
@@ -23,7 +26,7 @@ from pyvista._warn_external import warn_external
 from pyvista.core.utilities.accessor_registry import _resolve_pending_accessor
 
 if TYPE_CHECKING:
-    from typing import Any
+    from collections.abc import Callable
 
     from pyvista._typing_core import ArrayLike
     from pyvista._typing_core import NumpyArray
@@ -131,6 +134,22 @@ def abstract_class(cls_):  # noqa: ANN001, ANN201 # numpydoc ignore=RT01
 
     cls_.__new__ = __new__
     return cls_
+
+
+_P = ParamSpec('_P')
+_R = TypeVar('_R')
+
+
+def _wraps(
+    target: Callable[Concatenate[Any, _P], Any],
+) -> Callable[[Callable[..., _R]], Callable[Concatenate[Any, _P], _R]]:
+    """Give a forwarding method ``target``'s docstring, name and signature."""
+
+    def decorate(method: Callable[..., _R]) -> Callable[Concatenate[Any, _P], _R]:
+        functools.update_wrapper(method, target)
+        return method
+
+    return decorate
 
 
 class AnnotatedIntEnum(int, Enum):

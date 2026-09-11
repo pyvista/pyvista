@@ -236,7 +236,7 @@ def _get_output(
         # Optimization: ask VTK directly instead of building DataSetAttributes wrappers
         if not data.GetFieldData().GetNumberOfArrays() and ido.GetFieldData().GetNumberOfArrays():
             data.field_data.update(ido.field_data)
-        if active_scalars is not None:
+        if active_scalars is not None and active_scalars in data.array_names:
             data.set_active_scalars(active_scalars, preference=active_scalars_field)
     # return a PointSet if input is a pointset, unless the algorithm generates
     # cells (e.g. glyph), in which case flattening to a PointSet would drop them

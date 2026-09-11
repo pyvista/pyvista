@@ -32,6 +32,7 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.plotting import BackgroundPlotter
 from pyvista.plotting import QtDeprecationError
 from pyvista.plotting import QtInteractor
+from pyvista.plotting._property import _HAS_NATIVE_POINT_SHAPES
 from pyvista.plotting.axes_assembly import ScaleModeOptions
 from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.errors import InvalidCameraError
@@ -1771,6 +1772,21 @@ def test_screenshot_scaled():
 
 
 @pytest.mark.usefixtures('no_images_to_verify')
+def test_screenshot_scaled_restores_window(sphere):
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, scalars=np.arange(sphere.n_points))
+    before = pl.screenshot()
+    assert pl.screenshot(scale=3).shape[:2] == tuple(3 * n for n in before.shape[:2])
+    # Tolerate sub-LSB pixel noise from non-deterministic renderers.
+    assert pv.compare_images(pl.screenshot(), before) < 1.0
+    pl.image_scale = 2
+    assert pl.get_image_depth().shape == tuple(2 * n for n in before.shape[:2])
+    pl.image_scale = 1
+    assert pv.compare_images(pl.image, before) < 1.0
+    pl.close()
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_screenshot_altered_window_size(sphere):
     pl = pv.Plotter()
     pl.add_mesh(sphere)
@@ -2494,6 +2510,17 @@ def test_volume_rendering_mappers_image_data(mapper):
 
 
 @pytest.mark.skip_windows
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_add_volume_nested_multiblock_gives_one_volume_per_leaf():
+    grid = pv.ImageData(dimensions=(4, 4, 4))
+    grid.point_data['values'] = np.linspace(0.0, 1.0, grid.n_points)
+    nested = pv.MultiBlock([grid.copy(), pv.MultiBlock([None, grid.copy()])])
+    pl = pv.Plotter()
+    volumes = pl.add_volume(nested, name='vol')
+    assert [type(volume) for volume in volumes] == [pv.Volume, pv.Volume]
+    assert {'vol-0', 'vol-1'} <= set(pl.renderer.actors)
+
+
 def test_multiblock_volume_rendering(uniform):
     ds_a = uniform.copy()
     ds_b = uniform.copy()
@@ -7421,7 +7448,7 @@ def test_point_sprite_shape_does_not_apply_to_surface(shape):
     )
     # The shape is persisted on the actor, but the shader replacement
     # must NOT be installed while the representation is 'Surface'.
-    assert actor._point_sprite_shape == shape
+    assert actor.point_sprite_shape == shape
     assert not actor._point_sprite_applied
     assert 'point_sprite' not in actor._shader_replacements
     pl.show()
@@ -7454,6 +7481,7 @@ def test_point_sprite_shape_change_style(shape, verify_image_cache_wrapper):
     pl.show()
 
 
+@pytest.mark.skipif(_HAS_NATIVE_POINT_SHAPES, reason='Legacy shader replacement lifecycle')
 def test_point_sprite_shape_transition_updates_shader(no_images_to_verify):  # noqa: ARG001
     # Regression: if the applied-state is tracked as a boolean, calling
     # set_point_sprite_shape with a new shape while the previous shape
@@ -7475,6 +7503,7 @@ def test_point_sprite_shape_transition_updates_shader(no_images_to_verify):  # n
     assert 'point_sprite' not in actor._shader_replacements
 
 
+@pytest.mark.skipif(_HAS_NATIVE_POINT_SHAPES, reason='Legacy shader replacement lifecycle')
 def test_point_sprite_shape_observer_tracks_representation(no_images_to_verify):  # noqa: ARG001
     # With a shape persisted on the actor, toggling the representation
     # between Points and Surface must install / remove the shader via
@@ -7496,6 +7525,7 @@ def test_point_sprite_shape_observer_tracks_representation(no_images_to_verify):
     assert 'point_sprite' in actor._shader_replacements
 
 
+@pytest.mark.skipif(_HAS_NATIVE_POINT_SHAPES, reason='Legacy shader replacement lifecycle')
 def test_clear_point_sprite_shape_detaches_observer(no_images_to_verify):  # noqa: ARG001
     actor = pv.Actor()
     actor.prop.style = 'points'
@@ -7518,8 +7548,7 @@ def test_set_point_sprite_shape_accepts_enum(no_images_to_verify):  # noqa: ARG0
     actor = pv.Actor()
     actor.prop.style = 'points'
     actor.set_point_sprite_shape(PointSpriteShape.TRIANGLE)
-    assert actor._point_sprite_shape == 'triangle'
-    assert actor._point_sprite_applied == 'triangle'
+    assert actor.point_sprite_shape == 'triangle'
 
 
 @pytest.fixture

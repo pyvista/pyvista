@@ -29,6 +29,12 @@ def test_cmap_values_raises():
         LookupTable(cmap='foo', values='bar')
 
 
+def test_call_numpy_scalar(lut: LookupTable):
+    rgba = lut(np.float32(0.5))
+    assert rgba.shape == (1, 4)
+    assert np.array_equal(rgba, lut([0.5]))
+
+
 def test_call_raises(lut: LookupTable):
     with pytest.raises(
         TypeError,

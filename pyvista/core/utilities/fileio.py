@@ -23,7 +23,6 @@ import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import _classproperty
@@ -275,33 +274,20 @@ def get_ext(filename: str | Path) -> str:
     return ext
 
 
+# fmt: off
+# ruff: disable[E501]
 @overload
+def read(filename: PathStrSeq, *, force_ext: str | None = ..., file_format: str | None = ..., progress_bar: bool = ..., cls: type[_ReadReturnT], validate: bool | None = ...) -> _ReadReturnT: ...
+@overload
+def read(filename: PathStrSeq, *, force_ext: str | None = ..., file_format: str | None = ..., progress_bar: bool = ..., cls: None = ..., validate: bool | None = ...) -> DataSet | MultiBlock: ...
+# ruff: enable[E501]
+# fmt: on
 def read(
     filename: PathStrSeq,
-    force_ext: str | None = ...,
-    file_format: str | None = ...,
-    progress_bar: bool = ...,  # noqa: FBT001
     *,
-    cls: type[_ReadReturnT],
-    validate: bool | None = ...,
-) -> _ReadReturnT: ...
-@overload
-def read(
-    filename: PathStrSeq,
-    force_ext: str | None = ...,
-    file_format: str | None = ...,
-    progress_bar: bool = ...,  # noqa: FBT001
-    *,
-    cls: None = ...,
-    validate: bool | None = ...,
-) -> DataSet | MultiBlock: ...
-@_deprecate_positional_args(allowed=['filename'])
-def read(  # noqa: PLR0917
-    filename: PathStrSeq,
     force_ext: str | None = None,
     file_format: str | None = None,
-    progress_bar: bool = False,  # noqa: FBT001, FBT002
-    *,
+    progress_bar: bool = False,
     cls: type[DataObject] | None = None,
     validate: bool | None = None,
     **kwargs,
@@ -394,6 +380,13 @@ def read(  # noqa: PLR0917
                 setattr(reader, key, value)
             mesh = reader.read()
 
+        When the extension resolves to a callable registered with
+        :func:`pyvista.register_reader`, ``**kwargs`` is forwarded to that
+        callable as ``handler(path, **kwargs)`` instead. ``progress_bar`` and
+        ``validate`` are never forwarded, and a callable that overrides an
+        extension PyVista already reads is bypassed entirely so that these
+        arguments keep naming attributes of the built-in reader.
+
         .. versionadded:: 0.49
 
     Returns
@@ -452,10 +445,12 @@ def read(  # noqa: PLR0917
 def _needs_reader_object(
     ext: str, *, progress_bar: bool, validate: bool | None, kwargs: dict[str, Any]
 ) -> bool:
-    """Return ``True`` when the caller asked for what only a reader object provides.
+    """Return ``True`` when the caller asked for something a handler cannot serve.
 
-    A handler takes a path and nothing else, so an override of a built-in
-    extension steps aside rather than dropping arguments it cannot honor.
+    ``progress_bar`` and ``validate`` are reader-object features, and for a
+    built-in extension ``kwargs`` name attributes of the built-in reader. An
+    override of such an extension therefore steps aside rather than
+    reinterpreting any of the three.
     """
     from pyvista.core.utilities.reader import CLASS_READERS  # noqa: PLC0415
 
@@ -488,6 +483,7 @@ def _read_dispatch(  # noqa: PLR0911
                     file_format=file_format,
                     progress_bar=progress_bar,
                     validate=validate,
+                    **kwargs,
                 ),
                 name,
             )
@@ -510,12 +506,14 @@ def _read_dispatch(  # noqa: PLR0911
         # natively (e.g. zarr stores on S3). If it fails, fall back to
         # downloading the file and retrying with a local path.
         ext_handler = _get_ext_handler(uri_ext)
-        if ext_handler is not None:
+        if ext_handler is not None and not _needs_reader_object(
+            uri_ext, progress_bar=progress_bar, validate=validate, kwargs=kwargs
+        ):
             try:
-                return ext_handler(filename)
+                return ext_handler(filename, **kwargs)
             except LocalFileRequiredError:
                 filename = _download_uri(filename, uri_ext)
-                return ext_handler(filename)
+                return ext_handler(filename, **kwargs)
         filename = _download_uri(filename, uri_ext)
 
     filename = Path(filename).expanduser().resolve()
@@ -536,7 +534,7 @@ def _read_dispatch(  # noqa: PLR0911
     if ext_handler is not None and not _needs_reader_object(
         ext, progress_bar=progress_bar, validate=validate, kwargs=kwargs
     ):
-        return ext_handler(str(filename))
+        return ext_handler(str(filename), **kwargs)
 
     if (missing := _missing_reader_message(ext, str(filename))) is not None:
         raise ImportError(missing)
@@ -596,8 +594,7 @@ def _set_reader_attributes(reader: BaseReader[Any], **kwargs) -> None:
         setattr(reader, name, value)
 
 
-@_deprecate_positional_args(allowed=['filename'])
-def read_texture(filename: str | Path, progress_bar: bool = False) -> Texture:  # noqa: FBT001, FBT002
+def read_texture(filename: str | Path, *, progress_bar: bool = False) -> Texture:
     """Load a texture from an image file.
 
     Will attempt to read any file type supported by ``vtk``, however
@@ -646,14 +643,14 @@ def read_texture(filename: str | Path, progress_bar: bool = False) -> Texture:  
     return pv.Texture(_try_imageio_imread(filename))  # pragma: no cover
 
 
-@_deprecate_positional_args(allowed=['filename'])
-def read_exodus(  # noqa: PLR0917
+def read_exodus(
     filename: str | Path,
-    animate_mode_shapes: bool = True,  # noqa: FBT001, FBT002
-    apply_displacements: bool = True,  # noqa: FBT001, FBT002
+    *,
+    animate_mode_shapes: bool = True,
+    apply_displacements: bool = True,
     displacement_magnitude: float = 1.0,
-    read_point_data: bool = True,  # noqa: FBT001, FBT002
-    read_cell_data: bool = True,  # noqa: FBT001, FBT002
+    read_point_data: bool = True,
+    read_cell_data: bool = True,
     enabled_sidesets: Iterable[str | int] | None = None,
 ) -> DataSet | MultiBlock:
     """Read an ExodusII file (``'.e'`` or ``'.exo'``).
@@ -744,10 +741,10 @@ def read_exodus(  # noqa: PLR0917
     return cast('pv.DataSet', wrap(reader.GetOutput()))
 
 
-@_deprecate_positional_args(allowed=['filename'])
 def read_grdecl(
     filename: str | Path,
-    elevation: bool = True,  # noqa: FBT001, FBT002
+    *,
+    elevation: bool = True,
     other_keywords: Sequence[str] | None = None,
 ) -> ExplicitStructuredGrid:
     """Read a GRDECL file (``'.GRDECL'``).
@@ -812,20 +809,20 @@ def _read_grdecl(
         'ZONES',
     )
 
+    # fmt: off
+    # ruff: disable[E501]
     @overload
+    def read_keyword(f: TextIO, *, split: Literal[True] = True, converter: type = ...) -> list[str]: ...
+    @overload
+    def read_keyword(f: TextIO, *, split: Literal[False] = False, converter: type = ...) -> str: ...
+    @overload
+    def read_keyword(f: TextIO, *, split: bool = ..., converter: type = ...) -> list[str]: ...
+    # ruff: enable[E501]
+    # fmt: on
     def read_keyword(
         f: TextIO,
-        split: Literal[True] = True,  # noqa: FBT002
-        converter: type = ...,
-    ) -> list[str]: ...
-    @overload
-    def read_keyword(f: TextIO, split: Literal[False] = False, converter: type = ...) -> str: ...  # noqa: FBT002
-    @overload
-    def read_keyword(f: TextIO, split: bool = ..., converter: type = ...) -> list[str]: ...  # noqa: FBT001
-    @_deprecate_positional_args(allowed=['f'])
-    def read_keyword(
-        f: TextIO,
-        split: bool = True,  # noqa: FBT001, FBT002
+        *,
+        split: bool = True,
         converter: type | None = None,
     ) -> str | list[str]:
         """Read a keyword.
@@ -1684,7 +1681,7 @@ def to_trimesh(  # numpydoc ignore=RT01
         raise ImportError(msg)
 
     # Avoid circular import
-    from pyvista.core.dataobject import USER_DICT_KEY  # noqa: PLC0415
+    from pyvista.core.utilities.arrays import USER_DICT_KEY  # noqa: PLC0415
 
     _validation.check_instance(mesh, pv.DataSet, name='mesh')
 

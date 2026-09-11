@@ -27,9 +27,9 @@ def beach():
 
 def variable_dimensionality_image(dimensions):
     image = pv.ImageData(dimensions=dimensions)
-    image.point_data['image'] = 99
-    image.point_data['other'] = 42
-    image.cell_data['data'] = 142
+    image.point_data['image'] = np.full(image.n_points, 99)
+    image.point_data['other'] = np.full(image.n_points, 42)
+    image.cell_data['data'] = np.full(image.n_cells, 142)
     return image
 
 
@@ -2045,6 +2045,16 @@ def test_crop_keep_dimensions(image2x2, fill_value):
 
     # Test field data is preserved
     assert cropped.user_dict == user_dict
+
+
+def test_crop_clips_to_the_image_extent(uncropped_image):
+    extent = uncropped_image.extent
+    oversized = (extent[0] - 5, extent[1] + 5, extent[2], extent[3], extent[4], extent[5])
+
+    cropped = uncropped_image.crop(extent=oversized)
+
+    assert cropped.extent == extent
+    assert cropped == uncropped_image.crop(extent=extent)
 
 
 def test_crop_raises():

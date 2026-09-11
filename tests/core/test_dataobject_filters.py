@@ -123,6 +123,340 @@ def test_clip_filter_pointset_no_points_removed(pointset, as_composite):
     assert n_points_in == n_points_out
 
 
+@pytest.mark.parametrize(
+    'mesh',
+    [
+        pv.Sphere(),
+        pv.PointSet(np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])),
+        pv.ImageData(dimensions=(5, 5, 5)).cast_to_unstructured_grid(),
+    ],
+    ids=['polydata', 'pointset', 'unstructured'],
+)
+def test_clip_inplace(mesh):
+    mesh = mesh.copy()
+    n_points_in = mesh.n_points
+    clipped = mesh.clip(inplace=True)
+    assert clipped is mesh
+    assert mesh.n_points < n_points_in
+
+
+@pytest.mark.parametrize(
+    'mesh',
+    [
+        pv.ImageData(dimensions=(5, 5, 5)),
+        pv.RectilinearGrid(*[np.linspace(-1, 1, 5)] * 3),
+        pv.MultiBlock([pv.Sphere()]),
+    ],
+    ids=['image', 'rectilinear', 'composite'],
+)
+def test_clip_inplace_raises(mesh):
+    match = f'Cannot use inplace=True for {type(mesh).__name__} input'
+    with pytest.raises(TypeError, match=match):
+        mesh.clip(inplace=True)
+
+
+def _seam_polydata():
+    """Two triangles meeting along a diagonal, sharing coordinates but no points."""
+    points = np.array(
+        [[0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]], dtype=float
+    )
+    mesh = pv.PolyData(points, np.array([3, 0, 1, 2, 3, 3, 4, 5]))
+    mesh.cell_data['half'] = np.array([0.0, 1.0])
+    mesh.point_data['height'] = np.array([0.0, 0.0, 0.0, 1.0, 1.0, 1.0])
+    mesh.point_data['scalars'] = mesh.point_data['height']
+    return mesh
+
+
+def _joins_the_halves(mesh):
+    """Whether any point is shared between cells of both halves."""
+    grid = mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
+    half = np.asarray(mesh.cell_data['half'])
+    halves_of_point = {}
+    for i in range(mesh.n_cells):
+        for point_id in grid.get_cell(i).point_ids:
+            halves_of_point.setdefault(point_id, set()).add(round(float(half[i])))
+    return any(len(halves) > 1 for halves in halves_of_point.values())
+
+
+@pytest.mark.parametrize('name', ['clip', 'clip_box', 'clip_slab', 'clip_surface', 'clip_scalar'])
+def test_clip_strips_does_not_duplicate_points(name):
+    """A mesh mixing strips with other cells keeps one point per position, quietly."""
+    points = np.array([[0, 0, 0], [2, 0, 0], [2, 2, 0], [0, 2, 0], [1, 3, 0]], dtype=float)
+    mesh = pv.PolyData(points, faces=[3, 0, 1, 2], strips=[4, 0, 1, 3, 2])
+    mesh.point_data['scalars'] = np.linspace(0.0, 1.0, mesh.n_points)
+
+    with pv.VtkErrorCatcher() as catcher:
+        clipped = _clip_that_removes_nothing(mesh, name)
+
+    assert not catcher.events
+    positions = {point.tobytes() for point in np.ascontiguousarray(clipped.points)}
+    assert clipped.n_points == len(positions)
+
+
+@pytest.mark.parametrize('name', ['clip', 'clip_slab'])
+def test_clip_composite_empty_block_keeps_array_names(name):
+    """An empty block says which arrays it would have had, as a lone dataset does."""
+    plane = pv.Plane()
+    plane.point_data['height'] = plane.points[:, 2]
+    composite = pv.MultiBlock({'plane': plane, 'empty': None})
+
+    clipped = {
+        'clip': lambda: composite.clip(normal='z', origin=(0, 0, 99), invert=False),
+        'clip_slab': lambda: composite.clip_slab(thickness=0.001, normal='z', origin=(0, 0, 99)),
+    }[name]()
+
+    assert clipped['plane'].is_empty
+    assert sorted(clipped['plane'].array_names) == sorted(plane.array_names)
+    assert clipped['empty'] is None
+
+
+@pytest.mark.parametrize('invert', [True, False])
+def test_clip_box_merge_points_welds_when_asked(invert):
+    """``merge_points`` decides whether coincident points are joined."""
+    grid = pv.ImageData(dimensions=(5, 5, 5)).cast_to_unstructured_grid()
+    centers = grid.cell_centers().points[:, 2]
+    lower = grid.extract_cells(np.flatnonzero(centers < 2)).cast_to_unstructured_grid()
+    upper = grid.extract_cells(np.flatnonzero(centers > 2)).cast_to_unstructured_grid()
+    lower.cell_data['half'] = np.zeros(lower.n_cells)
+    upper.cell_data['half'] = np.ones(upper.n_cells)
+    seam = lower.merge(upper, merge_points=False)
+    # A box that cuts in x only, so both halves survive either way
+    bounds = [3.0, 99.0, -99.0, 99.0, -99.0, 99.0]
+
+    merged = seam.clip_box(bounds, invert=invert, merge_points=True)
+    unmerged = seam.clip_box(bounds, invert=invert, merge_points=False)
+
+    assert _joins_the_halves(merged)
+    assert not _joins_the_halves(unmerged)
+    assert merged.n_points < unmerged.n_points
+    assert merged.volume == pytest.approx(unmerged.volume)
+
+
+def test_clip_empty_output_keeps_array_names():
+    """An empty clip still says which arrays the input had."""
+    mesh = pv.Plane()
+    mesh.point_data['height'] = mesh.points[:, 2].astype(np.float32)
+    mesh.cell_data['ids'] = np.arange(mesh.n_cells, dtype=np.uint16)
+
+    clipped = mesh.clip(normal='z', origin=(0, 0, 99), invert=False)
+
+    assert clipped.is_empty
+    assert sorted(clipped.array_names) == sorted(mesh.array_names)
+    assert clipped.point_data['height'].dtype == np.float32
+    assert clipped.cell_data['ids'].dtype == np.uint16
+
+
+def _cell_type_meshes():
+    """One mesh per input class and per cell type a clip has to preserve."""
+    axis = np.linspace(-1.0, 1.0, 4)
+    x, y, z = np.meshgrid(axis, axis, axis, indexing='ij')
+    explicit = pv.StructuredGrid(x, y, z)
+    explicit.dimensions = [4, 4, 4]
+    image = pv.ImageData(dimensions=(4, 4, 4), spacing=(0.6, 0.6, 0.6), origin=(-1, -1, -1))
+    meshes = {
+        'PolyData triangles': pv.Sphere(theta_resolution=8, phi_resolution=8),
+        'PolyData quads': pv.Plane(i_resolution=3, j_resolution=3),
+        'PolyData lines': pv.PolyData(
+            np.array([[x, 0.0, 0.0] for x in np.linspace(-1.0, 1.0, 5)]),
+            lines=[2, 0, 1, 2, 1, 2, 2, 2, 3, 2, 3, 4],
+        ),
+        'PolyData verts': pv.PolyData(np.random.default_rng(0).uniform(-0.6, 0.6, (60, 3))),
+        'ImageData': image,
+        'RectilinearGrid': pv.RectilinearGrid(axis, axis, axis),
+        'StructuredGrid': pv.StructuredGrid(x, y, z),
+        'ExplicitStructuredGrid': explicit.cast_to_explicit_structured_grid(),
+        'UnstructuredGrid hexahedra': image.cast_to_unstructured_grid(),
+        'UnstructuredGrid tetrahedra': pv.Sphere(
+            theta_resolution=8, phi_resolution=8
+        ).delaunay_3d(),
+    }
+    for mesh in meshes.values():
+        mesh.point_data['scalars'] = np.linspace(0.0, 1.0, mesh.n_points)
+    return meshes
+
+
+def _cell_types(mesh):
+    """The cell types of a mesh, as an unstructured grid reports them."""
+    grid = mesh if isinstance(mesh, pv.UnstructuredGrid) else mesh.cast_to_unstructured_grid()
+    # A voxel is the same eight points as a hexahedron, ordered differently
+    return {
+        pv.CellType.HEXAHEDRON if t == pv.CellType.VOXEL else pv.CellType(t)
+        for t in grid.celltypes
+    }
+
+
+def _clip_that_removes_nothing(mesh, name):
+    """Apply one clip whose region contains the whole mesh."""
+    enclosing = pv.Cube(center=(0, 0, 0), x_length=99, y_length=99, z_length=99)
+    return {
+        'clip': lambda: mesh.clip(normal='z', origin=(0, 0, -99), invert=False),
+        'clip_box': lambda: mesh.clip_box([-99.0, 99.0] * 3, invert=False),
+        'clip_slab': lambda: mesh.clip_slab(thickness=999.0, normal='z'),
+        'clip_surface': lambda: mesh.clip_surface(enclosing),
+        'clip_scalar': lambda: mesh.clip_scalar(scalars='scalars', value=-99.0, invert=False),
+    }[name]()
+
+
+CLIP_FILTERS = ['clip', 'clip_box', 'clip_slab', 'clip_surface', 'clip_scalar']
+
+
+@pytest.mark.parametrize('name', CLIP_FILTERS)
+@pytest.mark.parametrize('mesh_type', list(_cell_type_meshes()))
+def test_clip_keeps_the_cell_types_it_does_not_cut(mesh_type, name):
+    """A clip that removes nothing leaves every cell as the type it was."""
+    mesh = _cell_type_meshes()[mesh_type]
+
+    clipped = _clip_that_removes_nothing(mesh, name)
+
+    assert clipped.n_cells == mesh.n_cells
+    assert _cell_types(clipped) == _cell_types(mesh)
+
+
+@pytest.mark.parametrize('name', CLIP_FILTERS)
+@pytest.mark.parametrize('mesh_type', list(_cell_type_meshes()))
+def test_clip_keeps_the_points_it_does_not_cut(mesh_type, name):
+    """A clip that removes nothing neither adds nor merges points."""
+    mesh = _cell_type_meshes()[mesh_type]
+
+    clipped = _clip_that_removes_nothing(mesh, name)
+
+    assert clipped.n_points == mesh.n_points
+    assert np.allclose(np.sort(clipped.points, axis=0), np.sort(mesh.points, axis=0))
+
+
+@pytest.mark.parametrize('name', CLIP_FILTERS)
+@pytest.mark.parametrize('mesh_type', list(_cell_type_meshes()))
+def test_clip_splits_the_mesh_in_two(mesh_type, name):
+    """What a clip keeps and what it removes add up to the whole mesh."""
+    mesh = _cell_type_meshes()[mesh_type]
+    center = np.array(mesh.center)
+    surface = pv.Sphere(
+        radius=0.6,
+        center=(center[0] + 0.3, center[1], center[2]),
+        theta_resolution=16,
+        phi_resolution=16,
+    )
+    kept, removed = {
+        'clip': lambda: (
+            mesh.clip(normal='x', origin=center, invert=False),
+            mesh.clip(normal='x', origin=center, invert=True),
+        ),
+        'clip_box': lambda: (
+            mesh.clip_box([-0.4, 0.4] * 3, invert=False),
+            mesh.clip_box([-0.4, 0.4] * 3, invert=True),
+        ),
+        'clip_slab': lambda: (
+            mesh.clip_slab(thickness=0.8, normal='x', origin=center),
+            mesh.clip_slab(thickness=0.8, normal='x', origin=center, invert=True),
+        ),
+        'clip_surface': lambda: (
+            mesh.clip_surface(surface, invert=True),
+            mesh.clip_surface(surface, invert=False),
+        ),
+        'clip_scalar': lambda: (
+            mesh.clip_scalar(scalars='scalars', value=0.5, invert=True),
+            mesh.clip_scalar(scalars='scalars', value=0.5, invert=False),
+        ),
+    }[name]()
+
+    # A split, not a pass-through, on both sides
+    assert kept.n_cells
+    assert removed.n_cells
+    if mesh_type == 'PolyData verts':
+        assert kept.n_cells + removed.n_cells == mesh.n_cells
+        return
+    if mesh_type == 'PolyData lines':
+
+        def measure(part):
+            return part.compute_cell_sizes(length=True)['Length'].sum()
+    else:
+        attr = 'area' if isinstance(mesh, pv.PolyData) else 'volume'
+
+        def measure(part):
+            return getattr(part, attr)
+
+    assert measure(mesh) > 0
+    assert measure(kept) + measure(removed) == pytest.approx(measure(mesh), rel=1e-6)
+
+
+def _seam_grid():
+    """Two grid halves that touch but share no points."""
+    grid = pv.ImageData(dimensions=(5, 5, 5)).cast_to_unstructured_grid()
+    centers = grid.cell_centers().points[:, 2]
+    lower = grid.extract_cells(np.flatnonzero(centers < 2)).cast_to_unstructured_grid()
+    upper = grid.extract_cells(np.flatnonzero(centers > 2)).cast_to_unstructured_grid()
+    lower.cell_data['half'] = np.zeros(lower.n_cells)
+    upper.cell_data['half'] = np.ones(upper.n_cells)
+    seam = lower.merge(upper, merge_points=False)
+    seam.point_data['scalars'] = np.linspace(0.0, 1.0, seam.n_points)
+    return seam
+
+
+@pytest.mark.parametrize(
+    'name',
+    [
+        'clip',
+        'clip_slab',
+        'clip_surface',
+        'clip_scalar',
+        'clip_scalar both=True',
+        'clip_box merge_points=False',
+    ],
+)
+@pytest.mark.parametrize('mesh_type', ['PolyData', 'UnstructuredGrid'])
+def test_clip_keeps_coincident_points_apart_for_every_filter(mesh_type, name):
+    """No clip welds points the input held apart, except when asked to."""
+    mesh = _seam_polydata() if mesh_type == 'PolyData' else _seam_grid()
+    if name == 'clip_box merge_points=False':
+        clipped = mesh.clip_box([-99.0, 99.0] * 3, invert=False, merge_points=False)
+    elif name == 'clip_scalar both=True':
+        clipped = mesh.clip_scalar(scalars='scalars', value=-99.0, invert=False, both=True)[0]
+    else:
+        clipped = _clip_that_removes_nothing(mesh, name)
+
+    assert clipped.n_points == mesh.n_points
+    assert not _joins_the_halves(clipped)
+
+
+@pytest.mark.parametrize('mesh_type', ['PolyData', 'UnstructuredGrid'])
+def test_clip_box_merge_points_true_welds_every_input(mesh_type):
+    """``merge_points=True`` joins points that share a position."""
+    mesh = _seam_polydata() if mesh_type == 'PolyData' else _seam_grid()
+
+    merged = mesh.clip_box([-99.0, 99.0] * 3, invert=False, merge_points=True)
+
+    assert merged.n_points < mesh.n_points
+    assert _joins_the_halves(merged)
+
+
+@pytest.mark.parametrize('invert', [True, False])
+@pytest.mark.parametrize(
+    'make',
+    [
+        pytest.param(lambda: (pv.Cube(), list(pv.Cube().bounds)), id='PolyData, six bounds'),
+        pytest.param(lambda: (pv.Cube(), pv.Cube()), id='PolyData, box mesh'),
+        pytest.param(
+            lambda: (pv.Cube().cast_to_unstructured_grid(), list(pv.Cube().bounds)),
+            id='UnstructuredGrid',
+        ),
+        pytest.param(
+            lambda: (
+                pv.Cube(center=(5e6, 0, 0), x_length=0.1, y_length=0.1, z_length=0.1),
+                list(pv.Cube(center=(5e6, 0, 0), x_length=0.1, y_length=0.1, z_length=0.1).bounds),
+            ),
+            id='PolyData far from the origin',
+        ),
+    ],
+)
+def test_clip_box_keeps_a_face_lying_in_a_box_plane(make, invert):
+    """A box that only touches a face keeps it, whichever way the box is given."""
+    mesh, box = make()
+
+    clipped = mesh.clip_box(box, invert=invert)
+
+    assert clipped.n_cells == (0 if invert else mesh.n_cells)
+
+
 def test_clip_filter_normal(datasets):
     # Test no errors are raised
     for i, dataset in enumerate(datasets):
@@ -246,11 +580,11 @@ def test_clip_box_output_type(multiblock_all_with_nested_and_none, crinkle):
     for dataset in multiblock_all_with_nested_and_none:
         clp = dataset.clip_box(invert=True, progress_bar=True, crinkle=crinkle)
         assert clp is not None
-        assert isinstance(clp, (pv.UnstructuredGrid, pv.MultiBlock, pv.PointSet))
+        assert isinstance(clp, (pv.UnstructuredGrid, pv.PolyData, pv.MultiBlock, pv.PointSet))
         if isinstance(clp, pv.MultiBlock):
-            # PointSet blocks stay PointSet, like a PointSet input does
+            # Every block keeps the class its own type gives, as a lone input does
             assert all(
-                isinstance(block, (pv.UnstructuredGrid, pv.PointSet))
+                isinstance(block, (pv.UnstructuredGrid, pv.PolyData, pv.PointSet))
                 for block in clp.recursive_iterator(skip_none=True)
             )
         clp2 = dataset.clip_box(merge_points=False)
@@ -315,6 +649,48 @@ def test_clip_box_no_unused_points(as_composite):
     )
     clipped = mesh.clip_box(bounds=new_bounds, invert=False)
     assert np.allclose(clipped.bounds, new_bounds)
+
+
+@pytest.mark.parametrize('invert', [True, False])
+def test_clip_box_polydata_no_unused_points(invert):
+    mesh = pv.Sphere(theta_resolution=16, phi_resolution=16)
+    clipped = mesh.clip_box([0.1, 1.0, 0.1, 1.0, 0.1, 1.0], invert=invert)
+    used = np.unique(clipped.cast_to_unstructured_grid().cell_connectivity)
+    assert clipped.n_points == len(used)
+
+
+@pytest.mark.parametrize('invert', [True, False])
+def test_clip_box_polydata_keeps_cells_and_arrays(invert):
+    """The clipped surface covers the same area and keeps its own cell types."""
+    mesh = pv.Sphere(theta_resolution=16, phi_resolution=16)
+    mesh.point_data['data'] = mesh.points[:, 2]
+    mesh.cell_data['cells'] = np.arange(mesh.n_cells, dtype=float)
+    bounds = [0.1, 1.0, 0.1, 1.0, 0.1, 1.0]
+
+    clipped = mesh.clip_box(bounds, invert=invert)
+    expected = _box_clip_filter(mesh, bounds, invert=invert).remove_unused_points()
+
+    assert type(clipped) is pv.PolyData
+    assert clipped.area == pytest.approx(expected.area)
+    assert sorted(clipped.array_names) == sorted(expected.array_names)
+    # The box planes keep the cells the box does not cut, which the box filter splits
+    assert set(clipped.cast_to_unstructured_grid().celltypes) != {pv.CellType.TRIANGLE}
+
+
+def test_clip_box_polydata_empty_is_polydata():
+    mesh = pv.Sphere(theta_resolution=8, phi_resolution=8)
+
+    clipped = mesh.clip_box([5.0, 6.0, 5.0, 6.0, 5.0, 6.0], invert=False)
+
+    assert type(clipped) is pv.PolyData
+    assert clipped.is_empty
+
+
+def test_clip_box_polydata_empty_output_has_no_points():
+    mesh = pv.Sphere(theta_resolution=16, phi_resolution=16)
+    clipped = mesh.clip_box([0.3, 1.0, 0.3, 1.0, 0.3, 1.0], invert=False)
+    assert clipped.n_cells == 0
+    assert clipped.n_points == 0
 
 
 def _box_clip_filter(mesh, bounds, *, invert):
@@ -404,9 +780,61 @@ def test_clip_box_planes_box_outside_or_containing_mesh(uniform):
     assert uniform.clip_box(far, invert=True).n_cells == uniform.n_cells
 
 
-def test_clip_box_merge_points_false_uses_box_filter(uniform):
-    clipped = uniform.clip_box(merge_points=False)
-    assert set(clipped.celltypes) == {pv.CellType.TETRA}
+@pytest.mark.parametrize('invert', [True, False])
+def test_clip_box_pointset(invert):
+    points = pv.PointSet(np.random.default_rng(0).random((200, 3)))
+    points.point_data['ids'] = np.arange(points.n_points)
+    points.field_data['meta'] = [1.0]
+    bounds = (0.0, 0.5, 0.0, 0.5, 0.0, 0.5)
+    inside = np.all((points.points >= 0.0) & (points.points <= 0.5), axis=1)
+
+    clipped = points.clip_box(bounds, invert=invert)
+
+    assert isinstance(clipped, pv.PointSet)
+    assert clipped.n_points == np.count_nonzero(~inside if invert else inside)
+    assert np.array_equal(
+        np.sort(clipped.point_data['ids']), np.flatnonzero(~inside if invert else inside)
+    )
+    assert np.allclose(clipped.field_data['meta'], [1.0])
+
+
+@pytest.mark.parametrize('invert', [True, False])
+def test_clip_box_merge_points_keeps_cell_types(uniform, invert):
+    merged = uniform.clip_box(invert=invert)
+    unmerged = uniform.clip_box(invert=invert, merge_points=False)
+    assert set(merged.celltypes) == set(unmerged.celltypes)
+    assert merged.n_cells == unmerged.n_cells
+    assert merged.volume == pytest.approx(unmerged.volume)
+    if invert:
+        # Only an inverted clip appends pieces that share points
+        assert merged.n_points < unmerged.n_points
+    else:
+        assert merged.n_points == unmerged.n_points
+
+
+def test_clip_box_merge_points_false_keeps_coincident_points_apart():
+    grid = pv.ImageData(dimensions=(5, 5, 5)).cast_to_unstructured_grid()
+    centers = grid.cell_centers().points[:, 2]
+    lower = grid.extract_cells(np.flatnonzero(centers < 2)).cast_to_unstructured_grid()
+    upper = grid.extract_cells(np.flatnonzero(centers > 2)).cast_to_unstructured_grid()
+    lower.cell_data['half'] = np.zeros(lower.n_cells)
+    upper.cell_data['half'] = np.ones(upper.n_cells)
+    # The halves meet at z == 2 but share no points, so the seam is a discontinuity
+    seam = lower.merge(upper, merge_points=False)
+
+    def shared_across_seam(mesh):
+        half = np.asarray(mesh.cell_data['half'])
+        halves_of_point = {}
+        for i in range(mesh.n_cells):
+            for point_id in mesh.get_cell(i).point_ids:
+                halves_of_point.setdefault(point_id, set()).add(round(float(half[i])))
+        return sum(1 for halves in halves_of_point.values() if len(halves) > 1)
+
+    assert shared_across_seam(seam) == 0
+    bounds = [2.5, 5.0, 2.5, 5.0, 2.5, 5.0]
+    # An inverted clip appends the pieces outside the box, welding the seam unless asked not to
+    assert shared_across_seam(seam.clip_box(bounds, invert=True)) > 0
+    assert shared_across_seam(seam.clip_box(bounds, invert=True, merge_points=False)) == 0
 
 
 def test_clip_box_composite(multiblock_all):
@@ -660,6 +1088,37 @@ def test_slice_image_other_paths(kwargs):
     assert sliced.n_cells
 
 
+def test_slice_image_axis_aligned_keeps_active_cell_attributes():
+    image = _image_for_slicing()
+    n_cells = image.n_cells
+    image.cell_data['cell_vectors'] = np.tile(np.arange(n_cells, dtype=float)[:, None], (1, 3))
+    image.cell_data.active_vectors_name = 'cell_vectors'
+
+    sliced = image.slice('x')
+
+    assert sliced.cell_data.active_vectors_name == 'cell_vectors'
+
+
+def test_slice_image_axis_aligned_keeps_active_attributes():
+    image = _image_for_slicing()
+    n_points = image.n_points
+    image.point_data['vectors'] = np.tile(np.arange(n_points, dtype=float)[:, None], (1, 3))
+    image.point_data['normals'] = np.tile([[0.0, 0.0, 1.0]], (n_points, 1))
+    image.point_data['tcoords'] = np.tile(np.linspace(0, 1, n_points)[:, None], (1, 2))
+    image.point_data['tensors'] = np.tile(np.arange(9, dtype=float), (n_points, 1))
+    image.point_data.active_vectors_name = 'vectors'
+    image.point_data.active_normals_name = 'normals'
+    image.point_data.active_texture_coordinates_name = 'tcoords'
+    image.GetPointData().SetActiveTensors('tensors')
+
+    sliced = image.slice('x')
+    assert sliced.point_data.active_vectors_name == 'vectors'
+    assert sliced.point_data.active_normals_name == 'normals'
+    assert sliced.point_data.active_texture_coordinates_name == 'tcoords'
+    assert sliced.GetPointData().GetTensors().GetName() == 'tensors'
+    assert sliced.point_data.active_scalars_name == 'floats'
+
+
 def test_slice_image_rotated_uses_cutter():
     image = _image_for_slicing()
     image.direction_matrix = pv.Transform().rotate_z(30).matrix[:3, :3]
@@ -700,19 +1159,134 @@ def test_slice_filter_composite(multiblock_all):
     assert output.n_blocks == multiblock_all.n_blocks
 
 
-def test_slice_filter_composite_pointset_block_is_empty(multiblock_all):
-    """``slice`` runs through :vtk:`vtkCutter`'s own composite dispatch.
+def _output_type_meshes():
+    """Return one mesh of every wrappable class, all spanning the same bounds."""
+    axis = np.linspace(-1.0, 1.0, 5)
+    x, y, z = np.meshgrid(axis, axis, axis, indexing='ij')
+    explicit = pv.StructuredGrid(x, y, z)
+    explicit.dimensions = [5, 5, 5]
+    image = pv.ImageData(dimensions=(5, 5, 5), spacing=(0.5, 0.5, 0.5), origin=(-1, -1, -1))
+    return {
+        'PolyData': pv.Sphere(radius=1.0, theta_resolution=8, phi_resolution=8),
+        'PointSet': pv.PointSet(np.random.default_rng(0).uniform(-1, 1, (30, 3))),
+        'ImageData': image,
+        'RectilinearGrid': pv.RectilinearGrid(axis, axis, axis),
+        'StructuredGrid': pv.StructuredGrid(x, y, z),
+        'ExplicitStructuredGrid': explicit.cast_to_explicit_structured_grid(),
+        'UnstructuredGrid': image.cast_to_unstructured_grid(),
+    }
 
-    Unlike ``slice_orthogonal``/``slice_along_axis`` (which iterate blocks in
-    Python and hit :class:`~pyvista.PointSet`'s ``PointSetDimensionReductionError``
-    guard directly), ``slice`` never calls into the Python-level override for a
-    ``PointSet`` block, so it does not raise. The block is silently empty instead.
-    """
-    pointset_index = next(
-        i for i, block in enumerate(multiblock_all) if isinstance(block, pv.PointSet)
+
+def _output_type_call(mesh, name):
+    """Call one clip or slice filter with arguments valid for every input class."""
+    kwargs = {
+        'clip_slab': dict(normal='x', thickness=0.8),
+        'slice_implicit': dict(implicit_function=generate_plane((1.0, 0.0, 0.0), (0.0, 0.0, 0.0))),
+        'slice_along_axis': dict(n=2),
+        'slice_along_line': dict(line=pv.Line((-2.0, -2.0, -2.0), (2.0, 2.0, 2.0), resolution=4)),
+    }.get(name, {})
+    return getattr(mesh, name)(**kwargs)
+
+
+_GRID = pv.UnstructuredGrid
+_POLY = pv.PolyData
+_MULTI = pv.MultiBlock
+
+_CLIP_LIKE = {
+    'PolyData': _POLY,
+    'PointSet': pv.PointSet,
+    'ImageData': _GRID,
+    'RectilinearGrid': _GRID,
+    'StructuredGrid': _GRID,
+    'ExplicitStructuredGrid': _GRID,
+    'UnstructuredGrid': _GRID,
+}
+_BOX_LIKE = _CLIP_LIKE
+_SLICE_LIKE = dict.fromkeys(_CLIP_LIKE, _POLY)
+_SLICES_LIKE = dict.fromkeys(_CLIP_LIKE, _MULTI)
+
+# The class each filter gives back for each input class, as the docstrings state it
+OUTPUT_TYPES = {
+    'clip': _CLIP_LIKE,
+    'clip_slab': _CLIP_LIKE,
+    'clip_box': _BOX_LIKE,
+    'slice': _SLICE_LIKE,
+    'slice_implicit': _SLICE_LIKE,
+    'slice_along_line': _SLICE_LIKE,
+    'slice_orthogonal': _SLICES_LIKE,
+    'slice_along_axis': _SLICES_LIKE,
+}
+
+
+@pytest.mark.parametrize('name', list(OUTPUT_TYPES))
+@pytest.mark.parametrize('mesh_type', list(_CLIP_LIKE))
+def test_clip_slice_output_type(name, mesh_type):
+    """Each filter gives back the class its docstring names, for every input class."""
+    mesh = _output_type_meshes()[mesh_type]
+
+    if mesh_type == 'PointSet' and name.startswith('slice'):
+        with pytest.raises(pv.PointSetDimensionReductionError):
+            _output_type_call(mesh, name)
+        return
+
+    output = _output_type_call(mesh, name)
+
+    expected = OUTPUT_TYPES[name][mesh_type]
+    assert type(output) is expected
+    if expected is _MULTI:
+        assert all(type(block) is _POLY for block in output)
+
+
+@pytest.mark.parametrize('name', list(OUTPUT_TYPES))
+def test_clip_slice_output_type_composite(name):
+    """A composite stays a composite, with every block following the same rule."""
+    meshes = _output_type_meshes()
+    flat, nested = list(meshes)[:3], list(meshes)[3:]
+    composite = pv.MultiBlock(
+        {
+            'flat': pv.MultiBlock({key: meshes[key] for key in flat}),
+            'nested': pv.MultiBlock({key: meshes[key] for key in nested}),
+            'empty': None,
+        }
     )
-    output = multiblock_all.slice(normal=normals[0], progress_bar=True)
-    assert output[pointset_index].is_empty
+
+    output = _output_type_call(composite, name)
+
+    assert type(output) is _MULTI
+    assert output.keys() == composite.keys()
+    assert output['empty'] is None
+    for group, block_names in (('flat', flat), ('nested', nested)):
+        assert output[group].keys() == block_names
+        for mesh_type in block_names:
+            block = output[group][mesh_type]
+            expected = OUTPUT_TYPES[name][mesh_type]
+            assert type(block) is expected
+            if expected is _MULTI:
+                assert all(type(sub) is _POLY for sub in block)
+            if mesh_type == 'PointSet' and name.startswith('slice'):
+                blocks = block if isinstance(block, _MULTI) else [block]
+                assert all(sub.is_empty for sub in blocks)
+
+
+@pytest.mark.parametrize(
+    'name',
+    ['slice', 'slice_implicit', 'slice_along_line', 'slice_orthogonal', 'slice_along_axis'],
+)
+def test_slice_composite_pointset_block_keeps_arrays(name):
+    """The empty block a PointSet gives still carries its arrays."""
+    points = pv.PointSet(np.random.default_rng(0).uniform(-1, 1, (30, 3)))
+    points.point_data['data'] = np.arange(points.n_points, dtype=float)
+    points.field_data['meta'] = [1.0]
+    points.set_active_scalars('data')
+
+    block = _output_type_call(pv.MultiBlock({'points': points}), name)['points']
+
+    for sliced in block if isinstance(block, _MULTI) else [block]:
+        assert type(sliced) is _POLY
+        assert sliced.is_empty
+        assert sliced.array_names == points.array_names
+        assert sliced.active_scalars_name == 'data'
+        assert np.allclose(sliced.field_data['meta'], [1.0])
 
 
 def test_slice_orthogonal_filter(datasets_no_pointset):
@@ -726,15 +1300,10 @@ def test_slice_orthogonal_filter(datasets_no_pointset):
             assert isinstance(slc, pv.PolyData)
 
 
-def test_slice_orthogonal_filter_composite(multiblock_all_no_pointset):
+def test_slice_orthogonal_filter_composite(multiblock_all):
     # Now test composite data structures
-    output = multiblock_all_no_pointset.slice_orthogonal(progress_bar=True)
-    assert output.n_blocks == multiblock_all_no_pointset.n_blocks
-
-
-def test_slice_orthogonal_filter_composite_pointset_raises(multiblock_all):
-    with pytest.raises(pv.PointSetDimensionReductionError):
-        multiblock_all.slice_orthogonal(progress_bar=True)
+    output = multiblock_all.slice_orthogonal(progress_bar=True)
+    assert output.n_blocks == multiblock_all.n_blocks
 
 
 def test_slice_along_axis(datasets_no_pointset):
@@ -753,15 +1322,10 @@ def test_slice_along_axis(datasets_no_pointset):
         dataset.slice_along_axis(axis='u')
 
 
-def test_slice_along_axis_composite(multiblock_all_no_pointset):
+def test_slice_along_axis_composite(multiblock_all):
     # Now test composite data structures
-    output = multiblock_all_no_pointset.slice_along_axis(progress_bar=True)
-    assert output.n_blocks == multiblock_all_no_pointset.n_blocks
-
-
-def test_slice_along_axis_composite_pointset_raises(multiblock_all):
-    with pytest.raises(pv.PointSetDimensionReductionError):
-        multiblock_all.slice_along_axis(progress_bar=True)
+    output = multiblock_all.slice_along_axis(progress_bar=True)
+    assert output.n_blocks == multiblock_all.n_blocks
 
 
 def test_extract_all_edges(datasets_no_pointset):
@@ -795,11 +1359,23 @@ def test_extract_all_edges_composite(multiblock_all_no_pointset):
     assert output.n_blocks == multiblock_all_no_pointset.n_blocks
 
 
+def test_cell_validator_composite(multiblock_all_no_pointset):
+    output = multiblock_all_no_pointset.cell_validator()
+    assert output.n_blocks == multiblock_all_no_pointset.n_blocks
+    for block, source in zip(output, multiblock_all_no_pointset, strict=True):
+        assert type(block) is type(source)
+        assert block.active_scalars_name == 'validity_state'
+        assert block.cell_data['validity_state'].shape == (source.n_cells,)
+        assert block.field_data['invalid'].size == 0
+
+
+def test_cell_validator_composite_pointset_raises(multiblock_all):
+    with pytest.raises(pv.PointSetCellOperationError, match='type PointSet'):
+        multiblock_all.cell_validator()
+
+
 def test_extract_all_edges_composite_pointset_raises(multiblock_all):
-    # extract_all_edges hands the whole composite to the underlying VTK
-    # algorithm; on some VTK versions this segfaults instead of raising if a
-    # block is a cell-less PointSet, so PyVista guards against it explicitly.
-    with pytest.raises(pv.PointSetCellOperationError):
+    with pytest.raises(pv.PointSetCellOperationError, match='type PointSet'):
         multiblock_all.extract_all_edges(progress_bar=True)
 
 
@@ -915,10 +1491,7 @@ def test_compute_cell_sizes_composite(multiblock_all_no_pointset):
 
 
 def test_compute_cell_sizes_composite_pointset_raises(multiblock_all):
-    # compute_cell_sizes hands the whole composite to the underlying VTK
-    # algorithm; on some VTK versions this segfaults instead of raising if a
-    # block is a cell-less PointSet, so PyVista guards against it explicitly.
-    with pytest.raises(pv.PointSetCellOperationError):
+    with pytest.raises(pv.PointSetCellOperationError, match='type PointSet'):
         multiblock_all.compute_cell_sizes(progress_bar=True)
 
 
@@ -956,6 +1529,21 @@ def test_cell_data_to_point_data():
     _ = data.ctp()
 
 
+def test_cell_data_to_point_data_active_scalars_not_converted():
+    # Older VTK declines to convert an id array, so the active name may not survive
+    mesh = pv.Sphere(phi_resolution=8, theta_resolution=8)
+    mesh.clear_data()
+    ids = _vtk.vtkIdTypeArray()
+    ids.SetName('RegionId')
+    ids.SetNumberOfTuples(mesh.n_cells)
+    ids.Fill(0)
+    mesh.GetCellData().AddArray(ids)
+    mesh.set_active_scalars('RegionId')
+
+    converted = mesh.cell_data_to_point_data()
+    assert converted.active_scalars_name in (None, *converted.array_names)
+
+
 def test_cell_data_to_point_data_composite(multiblock_all_no_pointset):
     # Now test composite data structures
     output = multiblock_all_no_pointset.cell_data_to_point_data(progress_bar=True)
@@ -963,10 +1551,7 @@ def test_cell_data_to_point_data_composite(multiblock_all_no_pointset):
 
 
 def test_cell_data_to_point_data_composite_pointset_raises(multiblock_all):
-    # cell_data_to_point_data hands the whole composite to the underlying VTK
-    # algorithm; on some VTK versions this segfaults instead of raising if a
-    # block is a cell-less PointSet, so PyVista guards against it explicitly.
-    with pytest.raises(pv.PointSetNotSupported):
+    with pytest.raises(pv.PointSetNotSupported, match='type PointSet'):
         multiblock_all.cell_data_to_point_data(progress_bar=True)
 
 
@@ -985,7 +1570,7 @@ def test_point_data_to_cell_data_composite(multiblock_all_no_pointset):
 
 
 def test_point_data_to_cell_data_composite_pointset_raises(multiblock_all):
-    with pytest.raises(pv.PointSetNotSupported):
+    with pytest.raises(pv.PointSetNotSupported, match='type PointSet'):
         multiblock_all.point_data_to_cell_data(progress_bar=True)
 
 
@@ -1078,6 +1663,16 @@ def test_sample_composite():
     assert 'vtkGhostType' in result[0].point_data
 
 
+@pytest.mark.parametrize('as_composite', [True, False])
+def test_slice_along_line_bad_line_raises(as_composite):
+    mesh = pv.Sphere()
+    mesh = pv.MultiBlock([mesh]) if as_composite else mesh
+    with pytest.raises(ValueError, match='Input line must have only one cell'):
+        mesh.slice_along_line(pv.Line() + pv.Line((1, 1, 1), (2, 2, 2)))
+    with pytest.raises(TypeError, match='Input line must have a PolyLine cell'):
+        mesh.slice_along_line(pv.PolyData([[0.0, 0.0, 0.0]]))
+
+
 def test_slice_along_line():
     model = examples.load_uniform()
     n = 5
@@ -1114,6 +1709,44 @@ def test_slice_along_line_composite(multiblock_all):
     line = pv.Line(a, b, resolution=10)
     output = multiblock_all.slice_along_line(line, progress_bar=True)
     assert output.n_blocks == multiblock_all.n_blocks
+
+
+@pytest.mark.parametrize('generate_triangles', [True, False])
+@pytest.mark.parametrize('name', ['slice', 'slice_implicit', 'slice_along_line'])
+def test_slice_contour_of_an_empty_slice(name, generate_triangles):
+    """A plane that cuts nothing has nothing to contour, arrays or not."""
+    points = pv.PolyData(np.random.default_rng(0).uniform(-1, 1, (30, 3)))
+    points.point_data['data'] = np.arange(points.n_points, dtype=float)
+
+    sliced = _output_type_call_with(
+        points, name, generate_triangles=generate_triangles, contour=True
+    )
+
+    assert type(sliced) is pv.PolyData
+    assert sliced.is_empty
+
+
+def _output_type_call_with(mesh, name, **kwargs):
+    """Call one slice filter with arguments valid for every input class."""
+    extra = {
+        'slice_implicit': dict(implicit_function=generate_plane((1.0, 0.0, 0.0), (0.0, 0.0, 0.0))),
+        'slice_along_line': dict(line=pv.Line((-2.0, -2.0, -2.0), (2.0, 2.0, 2.0), resolution=4)),
+    }.get(name, {})
+    return getattr(mesh, name)(**extra, **kwargs)
+
+
+def test_slice_composite_pointset_block_contour():
+    """A PointSet block gives the cutter an empty output with no arrays to contour."""
+    points = pv.PointSet(np.random.default_rng(0).uniform(-1, 1, (30, 3)))
+    points.point_data['data'] = np.arange(points.n_points, dtype=float)
+    image = pv.ImageData(dimensions=(5, 5, 5))
+    image.point_data['data'] = np.linspace(0.0, 1.0, image.n_points)
+    composite = pv.MultiBlock({'image': image, 'points': points})
+
+    sliced = composite.slice(generate_triangles=True, contour=True)
+
+    assert type(sliced['points']) is pv.PolyData
+    assert sliced['points'].is_empty
 
 
 def test_slice_generate_triangles_true_emits_only_triangles():
@@ -1216,7 +1849,7 @@ def test_cell_quality_composite(
     multiblock_all_with_nested_and_none, multiblock_all_no_pointset_with_nested_and_none
 ):
     match = "could not be applied to the block at index 5 with name 'Block-05' and type PointSet"
-    with pytest.raises(RuntimeError, match=match):
+    with pytest.raises(pv.PointSetCellOperationError, match=match):
         qual = multiblock_all_with_nested_and_none.cell_quality([SHAPE])
 
     qual = multiblock_all_no_pointset_with_nested_and_none.cell_quality([SHAPE])
@@ -1420,6 +2053,35 @@ def test_transform_rectilinear_raises(rectilinear):
 
     with pytest.raises(ValueError, match=match):
         rectilinear.transform(matrix, inplace=False)
+
+
+SHEAR_MATRIX = np.eye(4)
+SHEAR_MATRIX[0, 1] = 0.1
+SHEAR_MATRIX[1, 0] = 0.1
+
+
+@pytest.mark.parametrize('inplace', [True, False])
+@pytest.mark.parametrize(
+    ('grid', 'transformation', 'match'),
+    [
+        ('rectilinear', pv.Transform().rotate_x(30), 'non-diagonal rotation component'),
+        ('rectilinear', SHEAR_MATRIX, 'shear component'),
+        ('uniform', SHEAR_MATRIX, 'shear component'),
+    ],
+    ids=['rectilinear-rotation', 'rectilinear-shear', 'image-shear'],
+)
+def test_transform_raises_leaves_input_unchanged(grid, transformation, match, inplace, request):
+    mesh = request.getfixturevalue(grid)
+    mesh['a'] = np.arange(mesh.n_points, dtype=float)
+    mesh['b'] = np.arange(mesh.n_points, dtype=float)
+    mesh.set_active_scalars('a')
+    before = mesh.copy()
+
+    with pytest.raises(ValueError, match=match):
+        mesh.transform(transformation, inplace=inplace)
+
+    assert mesh.active_scalars_name == 'a'
+    assert mesh == before
 
 
 def test_transform_rectilinear(rectilinear):
@@ -3054,6 +3716,43 @@ def test_validate_mesh_invalid_point_references():
     assert report.invalid_point_references == expected_cell_ids
 
 
+@pytest.mark.parametrize('n_points', [3, 131072], ids=['small', 'large'])
+@pytest.mark.parametrize(
+    'mesh_type',
+    [
+        pytest.param(
+            pv.PolyData,
+            marks=pytest.mark.needs_vtk_version(
+                (9, 5, 0),
+                reason='Casting PolyData to UnstructuredGrid does not preserve invalid ids',
+            ),
+        ),
+        pv.UnstructuredGrid,
+    ],
+)
+def test_validate_mesh_invalid_point_references_is_only_status(mesh_type, n_points):
+    # The large mesh is included since reading a point beyond the last one may fault
+    points = np.zeros((n_points, 3))
+    cells = [3, 0, 1, n_points]
+    mesh = (
+        pv.PolyData(points, faces=cells)
+        if mesh_type is pv.PolyData
+        else pv.UnstructuredGrid(cells, [pv.CellType.TRIANGLE], points)
+    )
+
+    validated = mesh.cell_validator()
+    assert validated.cell_data['validity_state'][0] == pv.CellStatus.INVALID_POINT_REFERENCES
+    assert validated.field_data['invalid'].tolist() == [0]
+    for name in CELL_STATUS_ARRAY_NAMES:
+        expected = [0] if name == 'invalid_point_references' else []
+        assert validated.field_data[name].tolist() == expected
+
+    report = mesh.validate_mesh(exclude_fields=['unused_points'])
+    assert report.invalid_fields == ('invalid_point_references',)
+    assert 'TRIANGLE cell with invalid point references' in report.message
+    assert '{TRIANGLE}' in str(report)
+
+
 @pytest.fixture
 def invalid_hexahedron():
     points = [
@@ -3384,15 +4083,10 @@ def test_extract_surface_nonlinear(as_multiblock):
     with pytest.raises(ValueError, match=match):
         grid.extract_surface(algorithm='geometry', nonlinear_subdivision=5)
 
+    match = 'Mesh contains non-linear cells which cannot be processed by the geometry algorithm.'
     if as_multiblock:
-        expected_error = RuntimeError
-        match = 'could not be applied to the block at index 0'
-    else:
-        expected_error = ValueError
-        match = (
-            'Mesh contains non-linear cells which cannot be processed by the geometry algorithm.'
-        )
-    with pytest.raises(expected_error, match=match):
+        match = '(?s)could not be applied to the block at index 0.*' + match
+    with pytest.raises(ValueError, match=match):
         grid.extract_surface(algorithm='geometry')
 
     # No subdivision, expect one face per cell

@@ -19,7 +19,6 @@ import pyvista as pv
 from pyvista import MAX_N_COLOR_BARS
 from pyvista import _vtk
 from pyvista import vtk_version_info
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
@@ -30,6 +29,7 @@ from pyvista.core.formatting_html import _metadata_html
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.core.utilities.misc import _NoNewAttrMixin
+from pyvista.core.utilities.misc import _wraps
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import try_callback
 
@@ -54,6 +54,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import RotationLike
     from pyvista.core.pointset import PolyData
 
+    from ._typing import Chart
     from .cube_axes_actor import CubeAxesActor
     from .lights import Light
 
@@ -205,8 +206,7 @@ def make_legend_face(face) -> PolyData:
     return legendface
 
 
-@_deprecate_positional_args(allowed=['camera', 'point'])
-def scale_point(camera, point, invert=False):  # noqa: FBT002
+def scale_point(camera, point, *, invert=False):
     """Scale a point using the camera's transform matrix.
 
     Parameters
@@ -394,11 +394,11 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         'iso': 'view_isometric',
     }
 
-    @_deprecate_positional_args(allowed=['parent'])
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
         parent,
-        border=True,  # noqa: FBT002
+        *,
+        border=True,
         border_color='w',
         border_width=1.0,
     ) -> None:  # numpydoc ignore=PR01,RT01
@@ -1017,18 +1017,18 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """
         return [*self._charts] if self.has_charts else []  # type: ignore[misc]
 
-    @functools.wraps(Charts.set_interaction)
-    @_deprecate_positional_args(allowed=['interactive'])
+    @_wraps(Charts.set_interaction)
     def set_chart_interaction(  # numpydoc ignore=PR01,RT01
         self,
         interactive,
-        toggle=False,  # noqa: FBT002
-    ):
+        *,
+        toggle=False,
+    ) -> list[Chart]:
         """Wrap ``Charts.set_interaction``."""
         return self._charts.set_interaction(interactive, toggle=toggle) if self.has_charts else []  # type: ignore[union-attr]
 
-    @functools.wraps(Charts.get_charts_by_pos)
-    def _get_charts_by_pos(self, pos):
+    @_wraps(Charts.get_charts_by_pos)
+    def _get_charts_by_pos(self, pos) -> list[Chart]:
         """Wrap ``Charts.get_charts_by_pos``."""
         return self._charts.get_charts_by_pos(pos) if self.has_charts else []  # type: ignore[union-attr]
 
@@ -1093,16 +1093,16 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             return {}
         return dict(self._actors.items())
 
-    @_deprecate_positional_args(allowed=['actor'])
-    def add_actor(  # noqa: PLR0917
+    def add_actor(
         self,
         actor,
-        reset_camera=False,  # noqa: FBT002
+        *,
+        reset_camera=False,
         name=None,
-        culling=False,  # noqa: FBT002
-        pickable=True,  # noqa: FBT002
-        render=True,  # noqa: FBT002
-        remove_existing_actor=True,  # noqa: FBT002
+        culling=False,
+        pickable=True,
+        render=True,
+        remove_existing_actor=True,
     ):
         """Add an actor to render window.
 
@@ -1142,8 +1142,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         actor : :vtk:`vtkActor` | Actor
             The actor.
 
-        actor_properties : vtk.Properties
-            Actor properties.
+        actor_properties : :vtk:`vtkProperty` | :vtk:`vtkVolumeProperty`
+            The property of the actor, or ``None`` if it has none.
 
         """
         # Remove actor by that name if present
@@ -1196,9 +1196,9 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         return actor, prop
 
-    @_deprecate_positional_args
-    def add_axes_at_origin(  # noqa: PLR0917
+    def add_axes_at_origin(
         self,
+        *,
         x_color=None,
         y_color=None,
         z_color=None,
@@ -1206,7 +1206,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         ylabel='Y',
         zlabel='Z',
         line_width=2,
-        labels_off=False,  # noqa: FBT002
+        labels_off=False,
     ):
         """Add axes actor at origin.
 
@@ -1284,10 +1284,10 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             self.Modified()
             self.axes_widget = None
 
-    @_deprecate_positional_args(allowed=['actor'])
-    def add_orientation_widget(  # noqa: PLR0917
+    def add_orientation_widget(
         self,
         actor,
+        *,
         interactive=None,
         color=None,
         opacity=1.0,
@@ -1370,9 +1370,10 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.Modified()
         return axes_widget
 
-    @_deprecate_positional_args
-    def add_axes(  # noqa: PLR0917
+    def add_axes(
         self,
+        /,
+        *,
         interactive=None,
         line_width=2,
         color=None,
@@ -1382,7 +1383,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         xlabel='X',
         ylabel='Y',
         zlabel='Z',
-        labels_off=False,  # noqa: FBT002
+        labels_off=False,
         viewport=(0, 0, 0.2, 0.2),
         **kwargs,
     ):
@@ -1499,17 +1500,16 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         axes_widget.SetViewport(viewport)
         return self.axes_actor
 
-    @_deprecate_positional_args
-    def add_north_arrow_widget(  # noqa: PLR0917
+    def add_north_arrow_widget(
         self,
+        *,
         interactive=None,
         color='#4169E1',
         opacity=1.0,
         line_width=2,
         edge_color=None,
-        lighting=False,  # noqa: FBT002
+        lighting=False,
         viewport=(0, 0, 0.1, 0.1),
-        *,
         top_color=None,
         bottom_color=None,
     ):
@@ -1717,7 +1717,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         Returns
         -------
-        :vtk:`vtkAnnotatedCubeActor`
+        :vtk:`vtkPropAssembly`
             Axes actor.
 
         See Also
@@ -1855,19 +1855,20 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             return bool(self.axes_widget.GetEnabled())
         return False
 
-    @_deprecate_positional_args
-    def show_bounds(  # noqa: PLR0917
+    def show_bounds(
         self,
+        /,
+        *,
         mesh=None,
         bounds=None,
         axes_ranges=None,
-        show_xaxis=True,  # noqa: FBT002
-        show_yaxis=True,  # noqa: FBT002
-        show_zaxis=True,  # noqa: FBT002
-        show_xlabels=True,  # noqa: FBT002
-        show_ylabels=True,  # noqa: FBT002
-        show_zlabels=True,  # noqa: FBT002
-        bold=True,  # noqa: FBT002
+        show_xaxis=True,
+        show_yaxis=True,
+        show_zaxis=True,
+        show_xlabels=True,
+        show_ylabels=True,
+        show_zlabels=True,
+        bold=True,
         font_size=None,
         font_family=None,
         color=None,
@@ -1877,16 +1878,16 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         n_xlabels=5,
         n_ylabels=5,
         n_zlabels=5,
-        use_2d=False,  # noqa: FBT002
+        use_2d=False,
         grid=None,
         location='closest',
         ticks=None,
-        all_edges=False,  # noqa: FBT002
+        all_edges=False,
         corner_factor=0.5,
         fmt=None,
-        minor_ticks=False,  # noqa: FBT002
+        minor_ticks=False,
         padding=0.0,
-        use_3d_text: bool | None = None,  # noqa: FBT001
+        use_3d_text: bool | None = None,
         render=None,
         **kwargs,
     ):
@@ -2194,7 +2195,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.Modified()
         return cube_axes_actor
 
-    def show_grid(self, **kwargs):
+    def show_grid(self, /, **kwargs):
         """Show grid lines and bounds axes labels.
 
         A wrapped implementation of :func:`show_bounds()
@@ -2235,8 +2236,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         kwargs.setdefault('ticks', 'both')
         return self.show_bounds(**kwargs)
 
-    @_deprecate_positional_args
-    def remove_bounding_box(self, render=True) -> None:  # noqa: FBT002
+    def remove_bounding_box(self, *, render=True) -> None:
         """Remove bounding box.
 
         Parameters
@@ -2259,17 +2259,17 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             self.remove_actor(actor, reset_camera=False, render=render)
             self.Modified()
 
-    @_deprecate_positional_args
-    def add_bounding_box(  # noqa: PLR0917
+    def add_bounding_box(
         self,
+        *,
         color='grey',
         corner_factor=0.5,
         line_width=None,
         opacity=1.0,
-        render_lines_as_tubes=False,  # noqa: FBT002
+        render_lines_as_tubes=False,
         lighting=None,
         reset_camera=None,
-        outline=True,  # noqa: FBT002
+        outline=True,
         culling='front',
     ):
         """Add an unlabeled and unticked box at the boundaries of plot.
@@ -2381,23 +2381,23 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.Modified()
         return self.bounding_box_actor
 
-    @_deprecate_positional_args(allowed=['face'])
-    def add_floor(  # noqa: PLR0917
+    def add_floor(
         self,
         face='-z',
+        *,
         i_resolution=10,
         j_resolution=10,
         color=None,
         line_width=None,
         opacity=1.0,
-        show_edges=False,  # noqa: FBT002
-        lighting=False,  # noqa: FBT002
+        show_edges=False,
+        lighting=False,
         edge_color=None,
         reset_camera=None,
         pad=0.0,
         offset=0.0,
-        pickable=False,  # noqa: FBT002
-        store_floor_kwargs=True,  # noqa: FBT002
+        pickable=False,
+        store_floor_kwargs=True,
     ):
         """Show a floor mesh.
 
@@ -2562,8 +2562,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self._floors.append(actor)
         return actor
 
-    @_deprecate_positional_args
-    def remove_floors(self, clear_kwargs=True, render=True) -> None:  # noqa: FBT002
+    def remove_floors(self, *, clear_kwargs=True, render=True) -> None:
         """Remove all floor actors.
 
         Parameters
@@ -2696,13 +2695,19 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self._scalar_bar_slots = set(range(MAX_N_COLOR_BARS))
         self._scalar_bar_slot_lookup = {}
 
-    def set_focus(self, point) -> None:
+    def set_focus(self, point, *, render=True) -> None:
         """Set focus to a point.
 
         Parameters
         ----------
         point : sequence[float]
             Cartesian point to focus on in the form of ``[x, y, z]``.
+
+        render : bool, default: True
+            If the render window is being shown, trigger a render
+            after setting the focus.
+
+            .. versionadded:: 0.50
 
         Examples
         --------
@@ -2721,9 +2726,10 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.camera.focal_point = scale_point(self.camera, point, invert=False)
         self.camera_set = True
         self.Modified()
+        if render:
+            self.parent.render()
 
-    @_deprecate_positional_args(allowed=['point'])
-    def set_position(self, point, reset=False, render=True) -> None:  # noqa: FBT002
+    def set_position(self, point, *, reset=False, render=True) -> None:
         """Set camera position to a point.
 
         Parameters
@@ -2759,8 +2765,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.camera_set = True
         self.Modified()
 
-    @_deprecate_positional_args(allowed=['vector'])
-    def set_viewup(self, vector, reset=True, render=True) -> None:  # noqa: FBT002
+    def set_viewup(self, vector, *, reset=True, render=True) -> None:
         """Set camera ``viewup`` vector.
 
         Parameters
@@ -2889,8 +2894,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.camera.parallel_scale = value
         self.Modified()
 
-    @_deprecate_positional_args(allowed=['actor'])
-    def remove_actor(self, actor, reset_camera=False, render=True):  # noqa: FBT002
+    def remove_actor(self, actor, *, reset_camera=False, render=True):
         """Remove an actor from the Renderer.
 
         Parameters
@@ -2966,14 +2970,14 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.Modified()
         return True
 
-    @_deprecate_positional_args(allowed=['xscale', 'yscale', 'zscale'])
-    def set_scale(  # noqa: PLR0917
+    def set_scale(
         self,
         xscale=None,
         yscale=None,
         zscale=None,
-        reset_camera=True,  # noqa: FBT002
-        render=True,  # noqa: FBT002
+        *,
+        reset_camera=True,
+        render=True,
     ) -> None:
         """Scale all the actors in the scene.
 
@@ -3038,8 +3042,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             self.reset_camera(render=render)
         self.Modified()
 
-    @_deprecate_positional_args
-    def get_default_cam_pos(self, negative=False):  # noqa: FBT002
+    def get_default_cam_pos(self, *, negative=False):
         """Return the default focal points and ``viewup``.
 
         Uses ResetCamera to make a useful view.
@@ -3090,8 +3093,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
                 self.cube_axes_actor._disable_3d_text()
             self.Modified()
 
-    @_deprecate_positional_args
-    def reset_camera(self, render=True, bounds=None) -> None:  # noqa: FBT002
+    def reset_camera(self, *, render=True, bounds=None) -> None:
         """Reset the camera of the active render window.
 
         The camera slides along the vector defined from camera
@@ -3138,8 +3140,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """
         self.view_isometric()
 
-    @_deprecate_positional_args
-    def view_isometric(self, negative=False, render=True, bounds=None) -> None:  # noqa: FBT002
+    def view_isometric(self, *, negative=False, render=True, bounds=None) -> None:
         """Reset the camera to a default isometric view.
 
         The view will show all the actors in the scene.
@@ -3179,12 +3180,12 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.camera_set = negative
         self.reset_camera(render=render, bounds=bounds)
 
-    @_deprecate_positional_args(allowed=['vector', 'viewup'])
-    def view_vector(  # noqa: PLR0917
+    def view_vector(
         self,
         vector,
         viewup=None,
-        render=True,  # noqa: FBT002
+        *,
+        render=True,
         bounds=None,
     ) -> None:
         """Point the camera in the direction of the given vector.
@@ -3213,8 +3214,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.camera_position = cpos
         self.reset_camera(render=render, bounds=bounds)
 
-    @_deprecate_positional_args
-    def view_xy(self, negative=False, render=True, bounds=None) -> None:  # noqa: FBT002
+    def view_xy(self, *, negative=False, render=True, bounds=None) -> None:
         """View the XY plane.
 
         Parameters
@@ -3245,8 +3245,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """
         self.view_vector(*view_vectors('xy', negative=negative), render=render, bounds=bounds)
 
-    @_deprecate_positional_args
-    def view_yx(self, negative=False, render=True, bounds=None) -> None:  # noqa: FBT002
+    def view_yx(self, *, negative=False, render=True, bounds=None) -> None:
         """View the YX plane.
 
         Parameters
@@ -3277,8 +3276,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """
         self.view_vector(*view_vectors('yx', negative=negative), render=render, bounds=bounds)
 
-    @_deprecate_positional_args
-    def view_xz(self, negative=False, render=True, bounds=None) -> None:  # noqa: FBT002
+    def view_xz(self, *, negative=False, render=True, bounds=None) -> None:
         """View the XZ plane.
 
         Parameters
@@ -3309,8 +3307,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """
         self.view_vector(*view_vectors('xz', negative=negative), render=render, bounds=bounds)
 
-    @_deprecate_positional_args
-    def view_zx(self, negative=False, render=True, bounds=None) -> None:  # noqa: FBT002
+    def view_zx(self, *, negative=False, render=True, bounds=None) -> None:
         """View the ZX plane.
 
         Parameters
@@ -3341,8 +3338,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """
         self.view_vector(*view_vectors('zx', negative=negative), render=render, bounds=bounds)
 
-    @_deprecate_positional_args
-    def view_yz(self, negative=False, render=True, bounds=None) -> None:  # noqa: FBT002
+    def view_yz(self, *, negative=False, render=True, bounds=None) -> None:
         """View the YZ plane.
 
         Parameters
@@ -3373,8 +3369,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """
         self.view_vector(*view_vectors('yz', negative=negative), render=render, bounds=bounds)
 
-    @_deprecate_positional_args
-    def view_zy(self, negative=False, render=True, bounds=None) -> None:  # noqa: FBT002
+    def view_zy(self, *, negative=False, render=True, bounds=None) -> None:
         """View the ZY plane.
 
         Parameters
@@ -3449,8 +3444,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """
         self._render_passes.remove_blur_pass()
 
-    @_deprecate_positional_args
-    def enable_depth_of_field(self, automatic_focal_distance=True) -> None:  # noqa: FBT002
+    def enable_depth_of_field(self, *, automatic_focal_distance=True) -> None:
         """Enable depth of field plotting.
 
         Parameters
@@ -3579,13 +3573,13 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """
         self._render_passes.disable_shadow_pass()
 
-    @_deprecate_positional_args
-    def enable_ssao(  # noqa: PLR0917
+    def enable_ssao(
         self,
+        *,
         radius=0.5,
         bias=0.005,
         kernel_size=256,
-        blur=True,  # noqa: FBT002
+        blur=True,
     ) -> None:
         """Enable surface space ambient occlusion (SSAO).
 
@@ -3654,10 +3648,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         y1 = int(self.GetPickY2())
         return x0, y0, x1, y1
 
-    @_deprecate_positional_args(allowed=['color'])
-    def set_background(  # noqa: PLR0917
-        self, color, top=None, right=None, side=None, corner=None
-    ):
+    def set_background(self, color, *, top=None, right=None, side=None, corner=None):
         """Set the background color of this renderer.
 
         Parameters
@@ -3736,14 +3727,14 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             self.SetGradientBackground(False)
         self.Modified()
 
-    @_deprecate_positional_args(allowed=['texture'])
-    def set_environment_texture(  # noqa: PLR0917
+    def set_environment_texture(
         self,
         texture,
-        is_srgb=False,  # noqa: FBT002
-        resample: bool | float | None = None,  # noqa: FBT001
+        *,
+        is_srgb=False,
+        resample: bool | float | None = None,
         rotation: RotationLike | None = None,
-        show_background=True,  # noqa: FBT002
+        show_background=True,
     ) -> None:
         """Set the environment texture used for image based lighting.
 
@@ -3967,8 +3958,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
                 # Notify Charts that plotter.render() is called
                 chart._render_event(plotter_render=True)
 
-    @_deprecate_positional_args
-    def deep_clean(self, render=False) -> None:  # noqa: FBT002
+    def deep_clean(self, *, render=False) -> None:
         """Clean the renderer of the memory.
 
         Parameters
@@ -4082,12 +4072,12 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         _, ymin, _, ymax = self.viewport
         return self.parent.window_size[1] * (ymax - ymin)
 
-    @_deprecate_positional_args(allowed=['labels'])
-    def add_legend(  # noqa: PLR0917
+    def add_legend(
         self,
         labels=None,
+        *,
         bcolor=None,
-        border=False,  # noqa: FBT002
+        border=False,
         size=(0.2, 0.2),
         name=None,
         loc='upper right',
@@ -4321,8 +4311,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.add_actor(self._legend, reset_camera=False, name=name, pickable=False)
         return self._legend
 
-    @_deprecate_positional_args
-    def remove_legend(self, render=True) -> None:  # noqa: FBT002
+    def remove_legend(self, *, render=True) -> None:
         """Remove the legend actor.
 
         Parameters
@@ -4350,14 +4339,14 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """Legend actor."""
         return self._legend
 
-    @_deprecate_positional_args(allowed=['pointa', 'pointb'])
-    def add_ruler(  # noqa: PLR0917
+    def add_ruler(
         self,
         pointa,
         pointb,
-        flip_range=False,  # noqa: FBT002
+        *,
+        flip_range=False,
         number_labels=None,
-        show_labels=True,  # noqa: FBT002
+        show_labels=True,
         font_size_factor=0.6,
         label_size_factor=1.0,
         label_format=None,
@@ -4365,7 +4354,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         number_minor_ticks=0,
         tick_length=5,
         minor_tick_length=3,
-        show_ticks=True,  # noqa: FBT002
+        show_ticks=True,
         tick_label_offset=2,
         label_color=None,
         tick_color=None,
@@ -4521,21 +4510,21 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.add_actor(ruler, reset_camera=True, pickable=False)
         return ruler
 
-    @_deprecate_positional_args
-    def add_legend_scale(  # noqa: PLR0917
+    def add_legend_scale(
         self,
+        *,
         corner_offset_factor=2.0,
         bottom_border_offset=30,
         top_border_offset=30,
         left_border_offset=30,
         right_border_offset=30,
-        bottom_axis_visibility=True,  # noqa: FBT002
-        top_axis_visibility=True,  # noqa: FBT002
-        left_axis_visibility=True,  # noqa: FBT002
-        right_axis_visibility=True,  # noqa: FBT002
-        legend_visibility=True,  # noqa: FBT002
-        xy_label_mode=False,  # noqa: FBT002
-        render=True,  # noqa: FBT002
+        bottom_axis_visibility=True,
+        top_axis_visibility=True,
+        left_axis_visibility=True,
+        right_axis_visibility=True,
+        legend_visibility=True,
+        xy_label_mode=False,
+        render=True,
         color=None,
         font_size_factor=0.6,
         label_size_factor=1.0,
@@ -4543,7 +4532,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         number_minor_ticks=0,
         tick_length=5,
         minor_tick_length=3,
-        show_ticks=True,  # noqa: FBT002
+        show_ticks=True,
         tick_label_offset=2,
     ):
         """Annotate the render window with scale and distance information.
@@ -4629,8 +4618,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         Returns
         -------
-        :vtk:`vtkActor`
-            The actor for the added :vtk:`vtkLegendScaleActor`.
+        tuple[:vtk:`vtkLegendScaleActor`, None]
+            The added actor and ``None``, since it carries no property.
 
         Warnings
         --------

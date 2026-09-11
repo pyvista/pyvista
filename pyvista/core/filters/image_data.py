@@ -18,7 +18,6 @@ import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import MissingDataError
@@ -84,13 +83,13 @@ _ConcatenateComponentPolicyOptions = Literal['strict', 'promote_rgba']
 class ImageDataFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for uniform grid datasets."""
 
-    @_deprecate_positional_args
-    def gaussian_smooth(  # noqa: PLR0917
+    def gaussian_smooth(
         self,
+        *,
         radius_factor=1.5,
         std_dev=2.0,
         scalars=None,
-        progress_bar: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,
     ):
         """Smooth the data with a Gaussian kernel.
 
@@ -172,13 +171,13 @@ class ImageDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar=progress_bar, message='Performing Gaussian Smoothing')
         return _get_output(alg)
 
-    @_deprecate_positional_args
-    def median_smooth(  # noqa: PLR0917
+    def median_smooth(
         self,
+        *,
         kernel_size=(3, 3, 3),
         scalars=None,
         preference='point',
-        progress_bar: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,
     ):
         """Smooth data using a median filter.
 
@@ -424,14 +423,14 @@ class ImageDataFilters(DataSetFilters):
             voi, rebase_coordinates=rebase_coordinates, progress_bar=progress_bar
         )
 
-    @_deprecate_positional_args(allowed=['voi', 'rate'])
-    def extract_subset(  # type: ignore[misc] # noqa: PLR0917
+    def extract_subset(  # type: ignore[misc]
         self: ImageData,
         voi,
         rate=(1, 1, 1),
-        boundary: bool = False,  # noqa: FBT001, FBT002
-        rebase_coordinates: bool = True,  # noqa: FBT001, FBT002
-        progress_bar: bool = False,  # noqa: FBT001, FBT002
+        *,
+        boundary: bool = False,
+        rebase_coordinates: bool = True,
+        progress_bar: bool = False,
     ):
         r"""Select piece (for example, volume of interest).
 
@@ -449,7 +448,7 @@ class ImageDataFilters(DataSetFilters):
         voi : sequence[int]
             Length 6 iterable of ``int``\ s: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
             These bounds specify the volume of interest in i-j-k min/max
-            indices.
+            indices. Must be within this mesh's :attr:`~pyvista.ImageData.extent`.
 
         rate : sequence[int], default: (1, 1, 1)
             Length 3 iterable of ``int``\ s: ``(xrate, yrate, zrate)``.
@@ -493,6 +492,17 @@ class ImageDataFilters(DataSetFilters):
         crop
 
         """
+        voi = _validation.validate_arrayN(
+            voi, must_have_length=6, must_be_integer=True, dtype_out=int, name='voi'
+        )
+        extent = self.extent
+        if np.any(np.not_equal(ImageDataFilters._clip_extent(voi, clip_to=extent), voi)):
+            msg = (
+                f'The requested volume of interest {tuple(voi.tolist())} '
+                f"is outside the input's extent {extent}."
+            )
+            raise ValueError(msg)
+
         alg = _vtk.vtkExtractVOI()
         alg.SetVOI(voi)
         alg.SetInputDataObject(self)
@@ -603,7 +613,8 @@ class ImageDataFilters(DataSetFilters):
 
         extent : VectorLike[int], optional
             Length-6 vector of integers specifying the full :attr:`~pyvista.ImageData.extent` of
-            the cropping region.
+            the cropping region. If the region extends beyond the extents of this mesh, it is
+            clipped to the part this mesh covers.
 
         normalized_bounds : VectorLike[float], optional
             Normalized bounds relative to the input. These are floats between ``0.0`` and ``1.0``
@@ -687,7 +698,7 @@ class ImageDataFilters(DataSetFilters):
             Threshold-like filter which may be used to generate a mask for cropping.
 
         extract_subset
-            Equivalent filter to ``crop(extent=voi, rebase_coordinates=True)``.
+            Similar filter which requires the region to be inside the image.
 
         Examples
         --------
@@ -1004,6 +1015,9 @@ class ImageDataFilters(DataSetFilters):
         voi[3] = max(voi[2:4])
         voi[5] = max(voi[4:6])
 
+        # Crop to the part of the requested region which the image actually covers
+        voi = ImageDataFilters._clip_extent(voi, clip_to=self.extent)
+
         cropped = self.extract_subset(
             voi, rebase_coordinates=rebase_coordinates, progress_bar=progress_bar
         )
@@ -1038,14 +1052,14 @@ class ImageDataFilters(DataSetFilters):
         result.cell_data.update(self.cell_data)
         return result
 
-    @_deprecate_positional_args(allowed=['dilate_value', 'erode_value'])
-    def image_dilate_erode(  # noqa: PLR0917
+    def image_dilate_erode(
         self,
         dilate_value=1.0,
         erode_value=0.0,
+        *,
         kernel_size=(3, 3, 3),
         scalars=None,
-        progress_bar: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,
     ):
         """Dilates one value and erodes another.
 
@@ -1783,15 +1797,15 @@ class ImageDataFilters(DataSetFilters):
             erosion_alg, progress_bar=progress_bar, operation=dilation
         )
 
-    @_deprecate_positional_args(allowed=['threshold'])
-    def image_threshold(  # type: ignore[misc] # noqa: PLR0917
+    def image_threshold(  # type: ignore[misc]
         self: ImageData,
         threshold,
+        *,
         in_value=1.0,
         out_value=0.0,
         scalars=None,
         preference='point',
-        progress_bar: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,
     ):
         """Apply a threshold to scalar values in a uniform grid.
 
@@ -1980,8 +1994,7 @@ class ImageDataFilters(DataSetFilters):
             return cell_output
         return output
 
-    @_deprecate_positional_args
-    def fft(self, output_scalars_name=None, progress_bar: bool = False):  # noqa: FBT001, FBT002
+    def fft(self, *, output_scalars_name=None, progress_bar: bool = False):
         """Apply a fast Fourier transform (FFT) to the active scalars.
 
         The input can be real or complex data, but the output is always
@@ -2062,8 +2075,7 @@ class ImageDataFilters(DataSetFilters):
         )
         return output
 
-    @_deprecate_positional_args
-    def rfft(self, output_scalars_name=None, progress_bar: bool = False):  # noqa: FBT001, FBT002
+    def rfft(self, *, output_scalars_name=None, progress_bar: bool = False):
         """Apply a reverse fast Fourier transform (RFFT) to the active scalars.
 
         The input can be real or complex data, but the output is always
@@ -2135,15 +2147,15 @@ class ImageDataFilters(DataSetFilters):
         )
         return output
 
-    @_deprecate_positional_args(allowed=['x_cutoff', 'y_cutoff', 'z_cutoff'])
-    def low_pass(  # noqa: PLR0917
+    def low_pass(
         self,
         x_cutoff,
         y_cutoff,
         z_cutoff,
+        *,
         order=1,
         output_scalars_name=None,
-        progress_bar: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,
     ):
         """Perform a Butterworth low pass filter in the frequency domain.
 
@@ -2212,15 +2224,15 @@ class ImageDataFilters(DataSetFilters):
         )
         return output
 
-    @_deprecate_positional_args(allowed=['x_cutoff', 'y_cutoff', 'z_cutoff'])
-    def high_pass(  # noqa: PLR0917
+    def high_pass(
         self,
         x_cutoff,
         y_cutoff,
         z_cutoff,
+        *,
         order=1,
         output_scalars_name=None,
-        progress_bar: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,
     ):
         """Perform a Butterworth high pass filter in the frequency domain.
 

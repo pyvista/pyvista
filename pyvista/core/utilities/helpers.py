@@ -16,7 +16,6 @@ from typing_extensions import TypeIs
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 from . import transformations
 from .fileio import from_meshio
@@ -126,22 +125,16 @@ def _warn_if_invalid_data(obj: DataObject) -> None:
 # vtkDataSet overloads
 # Overload types should match the mappings in the `pyvista._wrappers` dict
 # Overloads should be ordered from narrow types (child class) to general types (parent class)
+# fmt: off
+# ruff: disable[E501]
 @overload
 def wrap(dataset: _vtk.vtkPolyData, *, validate: bool | None = ...) -> PolyData: ...  # type: ignore[overload-overlap]
 @overload
 def wrap(dataset: _vtk.vtkStructuredGrid, *, validate: bool | None = ...) -> StructuredGrid: ...  # type: ignore[overload-overlap]
 @overload
-def wrap(  # type: ignore[overload-overlap]
-    dataset: _vtk.vtkExplicitStructuredGrid,
-    *,
-    validate: bool | None = ...,
-) -> ExplicitStructuredGrid: ...
+def wrap(dataset: _vtk.vtkExplicitStructuredGrid, *, validate: bool | None = ...) -> ExplicitStructuredGrid: ...  # type: ignore[overload-overlap]
 @overload
-def wrap(  # type: ignore[overload-overlap]
-    dataset: _vtk.vtkUnstructuredGrid,
-    *,
-    validate: bool | None = ...,
-) -> UnstructuredGrid: ...
+def wrap(dataset: _vtk.vtkUnstructuredGrid, *, validate: bool | None = ...) -> UnstructuredGrid: ...  # type: ignore[overload-overlap]
 @overload
 def wrap(dataset: _vtk.vtkPointSet, *, validate: bool | None = ...) -> PointSet: ...
 @overload
@@ -155,20 +148,12 @@ def wrap(dataset: _vtk.vtkMultiBlockDataSet, *, validate: bool | None = ...) -> 
 @overload
 def wrap(dataset: _vtk.vtkTable, *, validate: bool | None = ...) -> Table: ...
 @overload
-def wrap(
-    dataset: _vtk.vtkPartitionedDataSet,
-    *,
-    validate: bool | None = ...,
-) -> PartitionedDataSet: ...
-
-
+def wrap(dataset: _vtk.vtkPartitionedDataSet, *, validate: bool | None = ...) -> PartitionedDataSet: ...
 # General catch-all cases
 @overload
 def wrap(dataset: _vtk.vtkDataSet, *, validate: bool | None = ...) -> DataSet: ...
 @overload
 def wrap(dataset: _vtk.vtkDataObject, *, validate: bool | None = ...) -> DataObject: ...
-
-
 # Misc overloads
 @overload
 def wrap(dataset: NumpyArray[float], *, validate: bool | None = ...) -> PolyData | ImageData: ...
@@ -176,13 +161,13 @@ def wrap(dataset: NumpyArray[float], *, validate: bool | None = ...) -> PolyData
 def wrap(dataset: _vtk.vtkDataArray, *, validate: bool | None = ...) -> pyvista_ndarray: ...
 @overload
 def wrap(dataset: None, *, validate: bool | None = ...) -> None: ...
-
-
 # Third-party meshes
 @overload
 def wrap(dataset: trimesh.Trimesh, *, validate: bool | None = ...) -> PolyData: ...
 @overload
 def wrap(dataset: meshio.Mesh, *, validate: bool | None = ...) -> UnstructuredGrid: ...
+# ruff: enable[E501]
+# fmt: on
 def wrap(  # noqa: PLR0911
     dataset: _WrappableVTKDataObjectType
     | DataObject
@@ -447,12 +432,12 @@ def _validate_plane_origin_and_normal(  # noqa: PLR0917
     return origin_, normal_
 
 
-@_deprecate_positional_args(allowed=['points', 'angle'])
-def axis_rotation(  # noqa: PLR0917
+def axis_rotation(
     points: NumpyArray[float],
     angle: float,
-    inplace: bool = False,  # noqa: FBT001, FBT002
-    deg: bool = True,  # noqa: FBT001, FBT002
+    *,
+    inplace: bool = False,
+    deg: bool = True,
     axis='z',
 ):
     """Rotate points by angle about an axis.

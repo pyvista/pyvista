@@ -3,20 +3,19 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-import functools
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
 from typing import Literal
 from typing import cast
+from typing import overload
 
 import numpy as np
 import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.writer import BaseWriter
 from pyvista.core.utilities.writer import BMPWriter
 from pyvista.core.utilities.writer import DataSetWriter
@@ -38,6 +37,7 @@ from .utilities.arrays import array_from_vtkmatrix
 from .utilities.arrays import convert_array
 from .utilities.arrays import raise_has_duplicates
 from .utilities.arrays import vtkmatrix_from_array
+from .utilities.misc import _wraps
 from .utilities.misc import abstract_class
 
 if TYPE_CHECKING:
@@ -740,17 +740,16 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         '.vti': XMLImageDataWriter,
     }
 
-    @_deprecate_positional_args(allowed=['uinput'])
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self: Self,
         uinput: ImageData | str | Path | None = None,
+        *,
         dimensions: VectorLike[int] | None = None,
         spacing: VectorLike[float] = (1.0, 1.0, 1.0),
         origin: VectorLike[float] = (0.0, 0.0, 0.0),
-        deep: bool = False,  # noqa: FBT001, FBT002
+        deep: bool = False,
         direction_matrix: RotationLike | None = None,
         offset: int | VectorLike[int] | None = None,
-        *,
         validate: bool | _NestedMeshValidationFields = False,
     ) -> None:
         """Initialize the uniform grid."""
@@ -798,8 +797,23 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         """Return the default str representation."""
         return DataSet.__str__(self)
 
-    def __getitem__(  # type: ignore[override]
-        self, key: tuple[str, Literal['cell', 'point', 'field']] | str | tuple[int, int, int]
+    # fmt: off
+    # ruff: disable[E501]
+    @overload
+    def __getitem__(self, key: tuple[str, Literal['cell', 'point', 'field']] | str) -> pyvista_ndarray: ...
+    @overload
+    def __getitem__(self, key: tuple[int | slice | tuple[int, int], int | slice | tuple[int, int], int | slice | tuple[int, int]]) -> ImageData: ...
+    # ruff: enable[E501]
+    # fmt: on
+    def __getitem__(
+        self,
+        key: tuple[str, Literal['cell', 'point', 'field']]
+        | str
+        | tuple[
+            int | slice | tuple[int, int],
+            int | slice | tuple[int, int],
+            int | slice | tuple[int, int],
+        ],
     ) -> ImageData | pyvista_ndarray:
         """Search for a data array or slice with IJK indexing."""
         # Return point, cell, or field data
@@ -1280,7 +1294,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
             offset_[2] + dims[2] - 1,
         )
 
-    @functools.wraps(RectilinearGridFilters.to_tetrahedra)
+    @_wraps(RectilinearGridFilters.to_tetrahedra)
     def to_tetrahedra(
         self: Self, *args, **kwargs
     ) -> UnstructuredGrid:  # numpydoc ignore=PR01,RT01

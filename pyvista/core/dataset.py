@@ -20,7 +20,6 @@ import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.typing.mypy_plugin import promote_type
 
@@ -44,6 +43,7 @@ from .utilities.arrays import FieldAssociation
 from .utilities.arrays import FieldLiteral
 from .utilities.arrays import PointLiteral
 from .utilities.arrays import _coerce_pointslike_arg
+from .utilities.arrays import _warn_scalar_array
 from .utilities.arrays import get_array
 from .utilities.arrays import get_array_association
 from .utilities.arrays import parse_field_choice
@@ -183,9 +183,8 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Notes
         -----
-        If both cell and point scalars are present and neither have
-        been set active within at the dataset level, point scalars
-        will be made active.
+        If the point and cell attributes both have active scalars and neither
+        has been chosen at the dataset level, the point scalars are reported.
 
         Examples
         --------
@@ -216,16 +215,15 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
                     name = None
 
         if name is None:
-            # check for the active scalars in point or cell arrays
-            self._active_scalars_info = ActiveArrayInfoTuple(field, None)
+            # Search on every read so an array activated later is seen
             for association, attributes in (
                 (FieldAssociation.POINT, self.GetPointData()),
                 (FieldAssociation.CELL, self.GetCellData()),
             ):
                 active_name = _active_scalars_name(attributes)
                 if active_name is not None:
-                    self._active_scalars_info = ActiveArrayInfoTuple(association, active_name)
-                    break
+                    return ActiveArrayInfoTuple(association, active_name)
+            return ActiveArrayInfoTuple(field, None)
 
         return self._active_scalars_info
 
@@ -244,9 +242,8 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Notes
         -----
-        If both cell and point vectors are present and neither have
-        been set active within at the dataset level, point vectors
-        will be made active.
+        If the point and cell attributes both have active vectors and neither
+        has been chosen at the dataset level, the point vectors are reported.
 
         Examples
         --------
@@ -275,16 +272,15 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
                     name = None
 
         if name is None:
-            # check for the active vectors in point or cell arrays
-            self._active_vectors_info = ActiveArrayInfoTuple(field, None)
+            # Search on every read so an array activated later is seen
             for association, attributes in (
                 (FieldAssociation.POINT, self.GetPointData()),
                 (FieldAssociation.CELL, self.GetCellData()),
             ):
                 name = _active_vectors_name(attributes)
                 if name is not None:
-                    self._active_vectors_info = ActiveArrayInfoTuple(association, name)
-                    break
+                    return ActiveArrayInfoTuple(association, name)
+            return ActiveArrayInfoTuple(field, None)
 
         return self._active_vectors_info
 
@@ -940,8 +936,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         # Use the array range
         return np.nanmin(arr), np.nanmax(arr)
 
-    @_deprecate_positional_args(allowed=['ido'])
-    def copy_meta_from(self: Self, ido: DataSet, deep: bool = True) -> None:  # noqa: FBT001, FBT002
+    def copy_meta_from(self: Self, ido: DataSet, *, deep: bool = True) -> None:
         """Copy pyvista meta data onto this object from another object.
 
         Parameters
@@ -953,6 +948,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             Deep or shallow copy.
 
         """
+        # Copy the private tuples, not the properties, which would resolve an unchosen array
         if deep:
             self._association_complex_names = _copy_association_names(
                 ido._association_complex_names
@@ -960,16 +956,16 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             self._association_bitarray_names = _copy_association_names(
                 ido._association_bitarray_names
             )
-            self._active_scalars_info = ido.active_scalars_info.copy()
-            self._active_vectors_info = ido.active_vectors_info.copy()
-            self._active_tensors_info = ido.active_tensors_info.copy()
+            self._active_scalars_info = ido._active_scalars_info.copy()
+            self._active_vectors_info = ido._active_vectors_info.copy()
+            self._active_tensors_info = ido._active_tensors_info.copy()
         else:
             # pass by reference
             self._association_complex_names = ido._association_complex_names
             self._association_bitarray_names = ido._association_bitarray_names
-            self._active_scalars_info = ido.active_scalars_info
-            self._active_vectors_info = ido.active_vectors_info
-            self._active_tensors_info = ido.active_tensors_info
+            self._active_scalars_info = ido._active_scalars_info
+            self._active_vectors_info = ido._active_vectors_info
+            self._active_tensors_info = ido._active_tensors_info
 
     @property
     def point_data(self: Self) -> DataSetAttributes:
@@ -1584,10 +1580,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             scalars = np.asanyarray(scalars)
 
         if scalars.ndim == 0:
-            if np.issubdtype(scalars.dtype, np.str_):
-                # Always set scalar strings as field data
-                self.field_data[name] = scalars
-                return
+            _warn_scalar_array(name, None)
             # reshape single scalar values from 0D to 1D so that shape[0] can be indexed
             scalars = scalars.reshape((1,))
 
@@ -1600,7 +1593,6 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             # Field data must be set explicitly as it could be a point of
             # confusion for new users
             raise_not_matching(scalars, self)
-        return
 
     @property
     def n_arrays(self: Self) -> int:
@@ -1739,18 +1731,14 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             fmt = pv.FLOAT_FORMAT
             result: list[tuple[str, int, str, str, str]] = []
             for name, arr in attrs.items():
-                # Field data can contain str values at runtime despite
-                # DataSetAttributes.items() being typed as -> pyvista_ndarray.
-                # Wrap str so .shape / .dtype are available.
-                coerced = pv.pyvista_ndarray(arr) if isinstance(arr, str) else arr  # type: ignore[redundant-expr,unreachable]
-                ncomp = coerced.shape[1] if coerced.ndim > 1 else 1
-                shape = str(tuple(coerced.shape)) if show_shape else ''
+                ncomp = arr.shape[1] if arr.ndim > 1 else 1
+                shape = str(tuple(arr.shape)) if show_shape else ''
                 range_str = ''
-                if show_range and coerced.size > 0 and np.issubdtype(coerced.dtype, np.number):
-                    lo = fmt.format(np.nanmin(coerced))
-                    hi = fmt.format(np.nanmax(coerced))
+                if show_range and arr.size > 0 and np.issubdtype(arr.dtype, np.number):
+                    lo = fmt.format(np.nanmin(arr))
+                    hi = fmt.format(np.nanmax(arr))
                     range_str = f'[{lo}, {hi}]'
-                result.append((name, ncomp, str(coerced.dtype), shape, range_str))
+                result.append((name, ncomp, str(arr.dtype), shape, range_str))
             return result
 
         vec_assoc = self.active_vectors_info.association
@@ -1812,8 +1800,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         """Return the object string representation."""
         return self.head(display=False, html=False)
 
-    @_deprecate_positional_args(allowed=['mesh'])
-    def copy_from(self: Self, mesh: _vtk.vtkDataSet, deep: bool = True) -> None:  # noqa: FBT001, FBT002
+    def copy_from(self: Self, mesh: _vtk.vtkDataSet, *, deep: bool = True) -> None:
         """Overwrite this dataset in-place with the new dataset's geometries and data.
 
         Parameters
@@ -1915,8 +1902,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         _update_alg(alg)
         return _get_output(alg)
 
-    @_deprecate_positional_args
-    def cast_to_pointset(self: Self, pass_cell_data: bool = False) -> PointSet:  # noqa: FBT001, FBT002
+    def cast_to_pointset(self: Self, *, pass_cell_data: bool = False) -> PointSet:
         """Extract the points of this dataset and return a :class:`pyvista.PointSet`.
 
         Parameters
@@ -1933,8 +1919,8 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Notes
         -----
-        This will produce a deep copy of the points and point/cell data of
-        the original mesh.
+        This will produce a deep copy of the points and of the point, cell and
+        field data of the original mesh.
 
         Examples
         --------
@@ -1949,13 +1935,13 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         pset.points = self.points.copy()
         out = self.cell_data_to_point_data() if pass_cell_data else self
         pset.GetPointData().DeepCopy(out.GetPointData())
+        pset.GetFieldData().DeepCopy(self.GetFieldData())
         field, name = out.active_scalars_info
         if field == FieldAssociation.POINT:
             pset.active_scalars_name = name
         return pset
 
-    @_deprecate_positional_args
-    def cast_to_poly_points(self: Self, pass_cell_data: bool = False) -> pv.PolyData:  # noqa: FBT001, FBT002
+    def cast_to_poly_points(self: Self, *, pass_cell_data: bool = False) -> pv.PolyData:
         """Extract the points of this dataset and return a :class:`pyvista.PolyData`.
 
         Parameters
@@ -1972,8 +1958,8 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Notes
         -----
-        This will produce a deep copy of the points and point/cell data of
-        the original mesh.
+        This will produce a deep copy of the points and of the point, cell and
+        field data of the original mesh.
 
         Examples
         --------
@@ -2011,17 +1997,20 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             cell_data = cell_data.cell_data_to_point_data()
             pset.GetCellData().DeepCopy(cell_data.GetPointData())
         pset.GetPointData().DeepCopy(self.GetPointData())
+        pset.GetFieldData().DeepCopy(self.GetFieldData())
         field, name = self.active_scalars_info
         if field == FieldAssociation.POINT or pass_cell_data:
             pset.active_scalars_name = name
         return pset
 
+    # fmt: off
+    # ruff: disable[E501]
     @overload
     def find_closest_point(self: Self, point: Iterable[float], n: Literal[1] = 1) -> int: ...
     @overload
-    def find_closest_point(
-        self: Self, point: Iterable[float], n: int = ...
-    ) -> VectorLike[int]: ...
+    def find_closest_point(self: Self, point: Iterable[float], n: int = ...) -> VectorLike[int]: ...
+    # ruff: enable[E501]
+    # fmt: on
     def find_closest_point(
         self: Self, point: Iterable[float], n: int = 1
     ) -> int | VectorLike[int]:
@@ -2093,12 +2082,22 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             return vtk_id_list_to_array(id_list)
         return locator.FindClosestPoint(point)  # type: ignore[arg-type]
 
-    @_deprecate_positional_args(allowed=['point'])
+    # fmt: off
+    # ruff: disable[E501]
+    @overload
+    def find_closest_cell(self: Self, point: VectorLike[float] | MatrixLike[float], *, return_closest_point: Literal[False] = False) -> int | NumpyArray[int]: ...
+    @overload
+    def find_closest_cell(self: Self, point: VectorLike[float] | MatrixLike[float], *, return_closest_point: Literal[True]) -> tuple[int | NumpyArray[int], NumpyArray[float]]: ...
+    @overload
+    def find_closest_cell(self: Self, point: VectorLike[float] | MatrixLike[float], *, return_closest_point: bool = ...) -> int | NumpyArray[int] | tuple[int | NumpyArray[int], NumpyArray[float]]: ...
+    # ruff: enable[E501]
+    # fmt: on
     def find_closest_cell(
         self: Self,
         point: VectorLike[float] | MatrixLike[float],
-        return_closest_point: bool = False,  # noqa: FBT001, FBT002
-    ) -> int | NumpyArray[int] | tuple[int | NumpyArray[int], NumpyArray[int]]:
+        *,
+        return_closest_point: bool = False,
+    ) -> int | NumpyArray[int] | tuple[int | NumpyArray[int], NumpyArray[float]]:
         """Find index of closest cell in this mesh to the given point.
 
         .. warning::
@@ -2685,7 +2684,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         # Note: we have to use vtkGenericCell here since
         # GetCell(vtkIdType cellId, vtkGenericCell* cell) is thread-safe,
         # while GetCell(vtkIdType cellId) is not.
-        cell = pv.Cell()
+        cell = pv.Cell()  # type: ignore[abstract]
         self.GetCell(index, cell)
         cell.SetCellType(self.GetCellType(index))
         return cell

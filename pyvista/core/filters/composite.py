@@ -9,7 +9,7 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._version import _is_deprecation_due
 from pyvista._warn_external import warn_external
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters import _apply_points_dtype
@@ -78,10 +78,14 @@ class CompositeFilters(DataObjectFilters):
 
         Raises
         ------
-        RuntimeError
-            Raised if the filter cannot be applied to any block for any reason. This
-            overrides ``TypeError``, ``ValueError``, ``AttributeError`` errors when
-            filtering.
+        Exception
+            The error a block raises is re-raised as is, with the index, name and
+            type of that block added to its message.
+
+            .. versionchanged:: 0.50
+
+                The error keeps its own class. Previously every error was replaced by
+                a ``RuntimeError``.
 
         See Also
         --------
@@ -147,8 +151,9 @@ class CompositeFilters(DataObjectFilters):
         :class:`~pyvista.ImageData`.
 
         >>> multi.generic_filter('resample', 0.5)  # doctest:+SKIP
-        RuntimeError: The filter 'resample' could not be applied to the block at index 1 with
-        name 'Block-01' and type PolyData.
+        AttributeError: The filter 'resample'
+        could not be applied to the block at index 1 with name 'Block-01' and type PolyData:
+        'PolyData' object has no attribute 'resample'
 
         Use a custom function instead to apply the generic filter conditionally. Here we
         filter the image blocks but simply pass-through a copy of any other blocks.
@@ -181,8 +186,8 @@ class CompositeFilters(DataObjectFilters):
                     else functools.partial(function_, block_)
                 )
                 output_ = function_(**kwargs) if len(args) == 0 else function_(*args, **kwargs)
-            except (AttributeError, ValueError, TypeError, RuntimeError) as e:
-                # Construct a helpful error message
+            except Exception as e:
+                # Name the block in the error, keeping the error's own class
                 func_name = (
                     function_.func if isinstance(function_, functools.partial) else function_
                 )
@@ -196,9 +201,10 @@ class CompositeFilters(DataObjectFilters):
                 msg = (
                     f"The filter '{func_name}'\n"
                     f'could not be applied to the{nested}block at index {index} with '
-                    f"name '{name_}' and type {obj_name}."
+                    f"name '{name_}' and type {obj_name}"
                 )
-                raise RuntimeError(msg) from e
+                e.args = (f'{msg}:\n{e}' if str(e) else f'{msg}.', *e.args[1:])
+                raise
             return output_
 
         def get_iterator(multi, skip_none_, skip_empty_):
@@ -238,7 +244,7 @@ class CompositeFilters(DataObjectFilters):
         """
         msg = '`extract_geometry` is deprecated. Use `extract_surface(algorithm=None)` instead.'
         warn_external(msg, PyVistaDeprecationWarning)
-        if pv.version_info >= (0, 50):  # pragma: no cover
+        if _is_deprecation_due((0, 50)):  # pragma: no cover
             msg = 'Convert this deprecation warning into an error.'
             raise RuntimeError(msg)
         if pv.version_info >= (0, 51):  # pragma: no cover
@@ -252,8 +258,7 @@ class CompositeFilters(DataObjectFilters):
         _update_alg(gf)
         return _apply_points_dtype(wrap(gf.GetOutputDataObject(0)), algorithm=gf)
 
-    @_deprecate_positional_args
-    def combine(self, merge_points: bool = False, tolerance=0.0):  # noqa: FBT001, FBT002
+    def combine(self, *, merge_points: bool = False, tolerance=0.0):
         """Combine all blocks into a single unstructured grid.
 
         Parameters
@@ -309,12 +314,12 @@ class CompositeFilters(DataObjectFilters):
         _update_alg(alg)
         return _apply_points_dtype(wrap(alg.GetOutputDataObject(0)), algorithm=alg)
 
-    @_deprecate_positional_args
     def outline(  # type: ignore[misc]
         self: MultiBlock,
-        generate_faces: bool = False,  # noqa: FBT001, FBT002
-        nested: bool = False,  # noqa: FBT001, FBT002
-        progress_bar: bool = False,  # noqa: FBT001, FBT002
+        *,
+        generate_faces: bool = False,
+        nested: bool = False,
+        progress_bar: bool = False,
     ):
         """Produce an outline of the full extent for the all blocks in this composite dataset.
 
@@ -344,12 +349,12 @@ class CompositeFilters(DataObjectFilters):
         box = pv.Box(bounds=self.bounds)
         return box.outline(generate_faces=generate_faces, progress_bar=progress_bar)
 
-    @_deprecate_positional_args
     def outline_corners(  # type: ignore[misc]
         self: MultiBlock,
+        *,
         factor=0.2,
-        nested: bool = False,  # noqa: FBT001, FBT002
-        progress_bar: bool = False,  # noqa: FBT001, FBT002
+        nested: bool = False,
+        progress_bar: bool = False,
     ):
         """Produce an outline of the corners for the all blocks in this composite dataset.
 
@@ -376,19 +381,19 @@ class CompositeFilters(DataObjectFilters):
         box = pv.Box(bounds=self.bounds)
         return box.outline_corners(factor=factor, progress_bar=progress_bar)
 
-    @_deprecate_positional_args
-    def _compute_normals(  # noqa: PLR0917
+    def _compute_normals(
         self,
-        cell_normals: bool = True,  # noqa: FBT001, FBT002
-        point_normals: bool = True,  # noqa: FBT001, FBT002
-        split_vertices: bool = False,  # noqa: FBT001, FBT002
-        flip_normals: bool = False,  # noqa: FBT001, FBT002
-        consistent_normals: bool = True,  # noqa: FBT001, FBT002
-        auto_orient_normals: bool = False,  # noqa: FBT001, FBT002
-        non_manifold_traversal: bool = True,  # noqa: FBT001, FBT002
+        *,
+        cell_normals: bool = True,
+        point_normals: bool = True,
+        split_vertices: bool = False,
+        flip_normals: bool = False,
+        consistent_normals: bool = True,
+        auto_orient_normals: bool = False,
+        non_manifold_traversal: bool = True,
         feature_angle=30.0,
-        track_vertices: bool = False,  # noqa: FBT001, FBT002
-        progress_bar: bool = False,  # noqa: FBT001, FBT002
+        track_vertices: bool = False,
+        progress_bar: bool = False,
     ):
         """Compute point and/or cell normals for a multi-block dataset."""
         if not self.is_all_polydata:  # type: ignore[attr-defined]
