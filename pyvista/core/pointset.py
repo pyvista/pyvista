@@ -11,8 +11,10 @@ from pathlib import Path
 import textwrap
 from typing import TYPE_CHECKING
 from typing import ClassVar
+from typing import Literal
 from typing import NoReturn
 from typing import cast
+from typing import overload
 
 import numpy as np
 
@@ -74,6 +76,8 @@ if TYPE_CHECKING:
     from typing import Any
 
     from typing_extensions import Self
+
+    from pyvista import MultiBlock
 
     from ._typing_core import ArrayLike
     from ._typing_core import BoundsTuple
@@ -415,7 +419,17 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
             self.cast_to_polydata(deep=False).remove_nan_cells(*args, **kwargs).cast_to_pointset()
         )
 
-    @_wraps(DataSetFilters.partition)
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # type: ignore[override]  # as_composite=True
+    def partition(self, n_partitions: int, *, generate_global_id: bool = ..., as_composite: Literal[True] = ...) -> MultiBlock: ...
+    @overload  # as_composite=False
+    def partition(self, n_partitions: int, *, generate_global_id: bool = ..., as_composite: Literal[False] = ...) -> PointSet: ...
+    @overload  # as_composite not known
+    def partition(self, n_partitions: int, *, generate_global_id: bool = ..., as_composite: bool = ...) -> MultiBlock | PointSet: ...
+    # ruff: enable[E501]
+    # fmt: on
+    @_wraps(DataSetFilters.partition)  # type: ignore[misc]
     def partition(self, *args, **kwargs):  # numpydoc ignore=RT01,PR01
         """Cast to PolyData and partition.
 
