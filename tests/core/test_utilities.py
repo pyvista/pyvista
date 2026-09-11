@@ -3191,17 +3191,6 @@ def _compute_unit_cell_quality(
     return qual.active_scalars[0]
 
 
-@parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
-def test_cell_quality_info_valid_measures(info):
-    # Ensure the computed measure is not null
-    null_value = -1
-    qual_value = _compute_unit_cell_quality(info, null_value)
-    if np.isclose(qual_value, null_value):  # pragma: no cover -- failure path
-        pytest.fail(
-            f'Measure {info.quality_measure!r} is not valid for cell type {info.cell_type.name!r}'
-        )
-
-
 def xfail_wedge_negative_volume(info):
     if info.cell_type == pv.CellType.WEDGE and info.quality_measure == 'volume':
         pytest.xfail(
@@ -3221,25 +3210,17 @@ def xfail_distortion_returns_one(info):
 
 @parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
 def test_cell_quality_info_unit_cell_value(info):
-    """Test that the actual computed measure for a unit cell matches the reported value."""
+    """Test that the measure is valid for the cell type and matches the reported value."""
+    null_value = -1
+    qual_value = _compute_unit_cell_quality(info, null_value)
+    if np.isclose(qual_value, null_value):  # pragma: no cover -- failure path
+        pytest.fail(
+            f'Measure {info.quality_measure!r} is not valid for cell type {info.cell_type.name!r}'
+        )
+
     xfail_wedge_negative_volume(info)
 
-    unit_cell_value = info.unit_cell_value
-    qual_value = _compute_unit_cell_quality(info)
-    assert np.isclose(qual_value, unit_cell_value)
-
-
-@parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
-def test_cell_quality_info_acceptable_range(info):
-    """Test that the unit cell value is within the acceptable range."""
-    # Some cells / measures have bugs and return invalid values and are expected to fail
-    xfail_wedge_negative_volume(info)
-
-    acceptable_range = info.acceptable_range
-    unit_cell_value = info.unit_cell_value
-
-    assert unit_cell_value >= acceptable_range[0]
-    assert unit_cell_value <= acceptable_range[1]
+    assert np.isclose(qual_value, info.unit_cell_value)
 
 
 def _replace_range_infinity(rng):
@@ -3253,23 +3234,22 @@ def _replace_range_infinity(rng):
 
 
 @parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
-def test_cell_quality_info_normal_range(info):
-    """Test that the normal range is broader than the acceptable range."""
+def test_cell_quality_info_ranges(info):
+    """Test that each range contains the next, and the unit cell value is acceptable."""
     acceptable_range = _replace_range_infinity(info.acceptable_range)
-    normal_range = _replace_range_infinity(info.normal_range)
-
-    assert normal_range[0] <= acceptable_range[0]
-    assert normal_range[1] >= acceptable_range[1]
-
-
-@parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
-def test_cell_quality_info_full_range(info):
-    """Test that the full range is broader than the normal range."""
     normal_range = _replace_range_infinity(info.normal_range)
     full_range = _replace_range_infinity(info.full_range)
 
+    assert normal_range[0] <= acceptable_range[0]
+    assert normal_range[1] >= acceptable_range[1]
     assert full_range[0] <= normal_range[0]
     assert full_range[1] >= normal_range[1]
+
+    # last, so a measure xfailing here is still checked for range nesting above
+    xfail_wedge_negative_volume(info)
+
+    assert info.unit_cell_value >= info.acceptable_range[0]
+    assert info.unit_cell_value <= info.acceptable_range[1]
 
 
 @parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
