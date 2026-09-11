@@ -405,6 +405,29 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
             self.cast_to_polydata(deep=False).threshold_percent(*args, **kwargs).cast_to_pointset()
         )
 
+    @_wraps(DataSetFilters.remove_nan_cells)
+    def remove_nan_cells(self, *args, **kwargs) -> PointSet:  # type: ignore[override]  # numpydoc ignore=RT01,PR01
+        """Cast to PolyData and remove the NaN points.
+
+        Need this because cell-wise operations fail for PointSets.
+        """
+        return (
+            self.cast_to_polydata(deep=False).remove_nan_cells(*args, **kwargs).cast_to_pointset()
+        )
+
+    @_wraps(DataSetFilters.partition)
+    def partition(self, *args, **kwargs):  # numpydoc ignore=RT01,PR01
+        """Cast to PolyData and partition.
+
+        Need this because cell-wise operations fail for PointSets.
+        """
+        output = self.cast_to_polydata(deep=False).partition(*args, **kwargs)
+        if isinstance(output, pv.MultiBlock):
+            for index, block in enumerate(output):
+                output[index] = None if block is None else block.cast_to_pointset()
+            return output
+        return output.cast_to_pointset()
+
     @_wraps(DataSetFilters.explode)
     def explode(self, *args, **kwargs) -> PointSet:  # numpydoc ignore=RT01,PR01
         """Cast to PolyData and explode.
@@ -531,14 +554,6 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
         raise PointSetCellOperationError
 
     def surface_indices(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
-        """Raise, since a point cloud has no cells."""
-        raise PointSetCellOperationError
-
-    def partition(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
-        """Raise, since a point cloud has no cells."""
-        raise PointSetCellOperationError
-
-    def remove_nan_cells(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise, since a point cloud has no cells."""
         raise PointSetCellOperationError
 
