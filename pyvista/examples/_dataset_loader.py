@@ -393,12 +393,13 @@ class _SingleFileDatasetLoader(_SingleFile, _DatasetLoader):
 
     @property
     def _readers(self) -> tuple[pv.BaseReader[Any] | None, ...]:
+        """Return the reader resolved for the file, or ``None`` when it has none."""
         # TODO: return the actual reader used, and not just a lookup
         #       (this will require an update to the 'read_func' API)
         try:
             return (pv.get_reader(self._path),)
-        except (FileNotFoundError, ValueError):
-            # Missing, or cannot be read directly (requires custom reader)
+        except (FileNotFoundError, ImportError, ValueError):
+            # Missing, read by a custom reader, or served by a package PyVista cannot import
             return (None,)
 
     @property
