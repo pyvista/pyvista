@@ -41,6 +41,7 @@ class EmbedPyFileDirective(Directive):
 
         node = nodes.literal_block(text, text)
         node['language'] = 'python'
+        node['classes'].append('no-search')
         set_source_info(self, node)
         return [node]
 

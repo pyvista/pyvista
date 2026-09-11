@@ -27,7 +27,7 @@ class _StubApp:
 
 @pytest.fixture
 def build(tmp_path, monkeypatch):
-    """Return a callable that builds a one-page project and returns (html, warnings, app)."""
+    """Return a callable building a one-page project; yields (html, warnings, app, search)."""
 
     def _build(body, downloader):
         monkeypatch.setattr(_embed_py_file, 'download_file', downloader)
@@ -50,7 +50,8 @@ def build(tmp_path, monkeypatch):
             )
             app.build()
         html = (out / 'index.html').read_text(encoding='utf-8')
-        return html, warnings.getvalue(), app
+        search = (out / 'searchindex.js').read_text(encoding='utf-8')
+        return html, warnings.getvalue(), app, search
 
     return _build
 
@@ -59,7 +60,7 @@ def test_embeds_the_downloaded_file_as_python(build, tmp_path):
     script = tmp_path / 'sample.py'
     script.write_text(SCRIPT, encoding='utf-8')
 
-    html, warnings, _ = build(
+    html, warnings, _, _ = build(
         'Page\n====\n\n.. embed-py-file:: sample/sample.py\n', lambda name: str(script)
     )
 
@@ -72,7 +73,7 @@ def test_embedded_file_is_a_build_dependency(build, tmp_path):
     script = tmp_path / 'sample.py'
     script.write_text(SCRIPT, encoding='utf-8')
 
-    _, _, app = build(
+    _, _, app, _ = build(
         'Page\n====\n\n.. embed-py-file:: sample/sample.py\n', lambda name: str(script)
     )
 
@@ -85,11 +86,23 @@ def test_download_failure_warns_and_embeds_nothing(build):
         msg = f'no such file: {name}'
         raise FileNotFoundError(msg)
 
-    html, warnings, _ = build('Page\n====\n\n.. embed-py-file:: sample/gone.py\n', _fail)
+    html, warnings, _, _ = build('Page\n====\n\n.. embed-py-file:: sample/gone.py\n', _fail)
 
     assert 'Failed to embed sample/gone.py' in warnings
     assert 'no such file' in warnings
     assert 'highlight-python' not in html
+
+
+def test_embedded_file_is_kept_out_of_the_search_index(build, tmp_path):
+    script = tmp_path / 'sample.py'
+    script.write_text('MOOOOSE = 1\n', encoding='utf-8')
+
+    html, _, _, search = build(
+        'Page\n====\n\n.. embed-py-file:: sample/sample.py\n', lambda name: str(script)
+    )
+
+    assert 'MOOOOSE' in html
+    assert 'moooose' not in search.lower()
 
 
 def test_setup_registers_the_directive():
