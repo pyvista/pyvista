@@ -5,10 +5,15 @@ import cmocean
 from colorcet import all_original_names
 from colorcet import get_aliases
 import docutils.nodes
+from docutils.parsers.rst.directives import class_option
 import matplotlib as mpl
 import pytest
 
 from doc.source import make_tables
+import pyvista as pv
+from pyvista.examples._dataset_loader import _DatasetLoader
+from pyvista.examples._dataset_loader import _MultiFileDatasetLoader
+from pyvista.examples._dataset_loader import _SingleFileDatasetLoader
 
 CMAP_SET_MISMATCH_ERROR_MSG = (
     'Colormaps in documentation differ from colormaps available. '
@@ -178,3 +183,64 @@ def test_update_image_placeholders_existing(monkeypatch, tmp_path):
     make_tables._update_image_placeholders(node)
 
     assert node['uri'].endswith(expected.name)
+
+
+@pytest.mark.parametrize(
+    ('filename', 'field', 'slug', 'label'),
+    [
+        (
+            'mesh.vtp',
+            ':class:`~pyvista.core.utilities.reader.XMLPolyDataReader`',
+            'reader-xml-poly-data-reader',
+            'XMLPolyDataReader',
+        ),
+        (
+            'mesh.frd',
+            '``pyvista_frd.FRDReader``',
+            'reader-pyvista-frd-frd-reader',
+            'pyvista_frd.FRDReader',
+        ),
+        ('mesh.npy', '``N/A (read in code)``', 'reader-na-read-in-code', 'N/A (read in code)'),
+        ('cubemap/', '``N/A (read in code)``', 'reader-na-read-in-code', 'N/A (read in code)'),
+        (None, '``N/A (generated in code)``', 'reader-na', 'N/A (generated in code)'),
+    ],
+)
+def test_dataset_card_reader_field(tmp_path, filename, field, slug, label):
+    """Each reader state gets its own card field, facet slug and facet label."""
+    if filename is None:
+        loader = _DatasetLoader(pv.Sphere)
+    else:
+        path = tmp_path / filename
+        if filename.endswith('/'):
+            path.mkdir()
+            (path / 'posx.jpg').touch()
+        else:
+            path.touch()
+        loader = _SingleFileDatasetLoader(str(path))
+
+    assert make_tables.DatasetPropsGenerator.generate_reader_type(loader) == field
+
+    classes, labels = make_tables.DatasetCard._generate_facet_classes(loader, pv.examples.examples)
+    reader_classes = [cls for cls in classes.split() if cls.startswith('reader-')]
+    assert reader_classes == [slug]
+    assert labels[slug] == label
+    assert class_option(slug) == [slug]
+
+
+def test_dataset_card_reader_field_mixed(tmp_path):
+    """A loader with both kinds of file lists both readers rather than one N/A."""
+    paths = [tmp_path / 'mesh.vtp', tmp_path / 'mesh.frd']
+    for path in paths:
+        path.touch()
+
+    def _files_func():
+        return tuple(_SingleFileDatasetLoader(str(path)) for path in paths)
+
+    loader = _MultiFileDatasetLoader(_files_func)
+    assert make_tables.DatasetPropsGenerator.generate_reader_type(loader) == (
+        ':class:`~pyvista.core.utilities.reader.XMLPolyDataReader`\n``pyvista_frd.FRDReader``'
+    )
+
+    classes, _ = make_tables.DatasetCard._generate_facet_classes(loader, pv.examples.examples)
+    reader_classes = [cls for cls in classes.split() if cls.startswith('reader-')]
+    assert reader_classes == ['reader-xml-poly-data-reader', 'reader-pyvista-frd-frd-reader']

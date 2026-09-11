@@ -2242,7 +2242,7 @@ class DataSetFilters(DataObjectFilters):
             msg = 'Both ``scale`` and ``orient`` must use point data or cell data.'
             raise ValueError(msg)
 
-        source_data = dataset
+        source_data: DataSet = dataset
         set_actives_on_source_data = False
 
         if (scale and dataset.active_scalars_info.association == FieldAssociation.CELL) or (
@@ -2671,7 +2671,9 @@ class DataSetFilters(DataObjectFilters):
             if field == FieldAssociation.CELL:
                 # The filter reads the active point scalars
                 converted = input_mesh.cell_data_to_point_data(progress_bar=progress_bar)
-                input_mesh.point_data[_CONNECTIVITY_SCALARS] = converted.point_data[name]
+                input_mesh.point_data[_CONNECTIVITY_SCALARS] = converted.point_data[
+                    cast('str', name)
+                ]
                 input_mesh.set_active_scalars(_CONNECTIVITY_SCALARS, preference='point')
 
             if extraction_mode in ('all', 'specified', 'closest'):
