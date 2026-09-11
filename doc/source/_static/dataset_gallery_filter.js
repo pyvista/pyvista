@@ -23,13 +23,16 @@
         }
       });
     });
-    // "na" is always first, if present - the explicit order list only covers real values.
-    const rest = Array.from(present).filter((v) => v !== "na");
+    // "na" slugs are always first - the explicit order list only covers real values.
+    const isNa = (v) => v === "na" || v.indexOf("na-") === 0;
+    const values = Array.from(present);
+    const na = values.filter(isNa).sort();
+    const rest = values.filter((v) => !isNa(v));
     const explicitOrder = order[facet];
     const ordered = explicitOrder
       ? explicitOrder.filter((v) => rest.includes(v))
       : rest.sort();
-    return present.has("na") ? ["na", ...ordered] : ordered;
+    return [...na, ...ordered];
   }
 
   function buildPanel(dropdown, facet, values, labels, onChange) {
