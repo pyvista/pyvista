@@ -38,8 +38,11 @@ if TYPE_CHECKING:
     from pyvista.themes import Theme
 
 
+# Most values labelled under a categorical scalar bar
 _MAX_CATEGORY_LABELS = 10
+# Largest table built when every category value gets its own entry
 _MAX_CATEGORY_TABLE_SIZE = 65536
+# Table size used when the category values are not evenly spaced
 _CATEGORY_BAND_TABLE_SIZE = 4096
 
 
@@ -1001,8 +1004,9 @@ class _BaseDataSetMapper(_BaseMapper):
 
         categories : bool | int, default: False
             If ``True``, each unique value in the scalar array gets its own
-            color and is labelled on the scalar bar. An integer is used as
-            the ``n_colors`` argument instead.
+            color and is labelled on the scalar bar, and values between them
+            take the NaN color. An integer is used as the ``n_colors``
+            argument instead.
 
             .. versionchanged:: 0.50
                 ``True`` gives every unique value its own color even when
@@ -1108,7 +1112,7 @@ class _BaseDataSetMapper(_BaseMapper):
             # have to add the attribute to pass it onward to some classes
             if isinstance(cmap, str):
                 self._cmap = cmap
-            if categories and categories is not True:
+            if categories and categories is not True and isinstance(categories, int):
                 n_colors = categories
 
             self.lookup_table.apply_cmap(cmap, n_colors)
@@ -1143,7 +1147,8 @@ class _BaseDataSetMapper(_BaseMapper):
                     category_values, annotations, centered=centered_categories
                 )
                 scalar_bar_args.setdefault('tick_labels', labels)
-                scalar_bar_args.setdefault('fmt', '%.10g')
+                integral = np.array_equal(category_values, np.round(category_values))
+                scalar_bar_args.setdefault('fmt', '%.0f' if integral else '%g')
             elif isinstance(annotations, dict):
                 self.lookup_table.annotations = annotations
             self.lookup_table.log_scale = log_scale

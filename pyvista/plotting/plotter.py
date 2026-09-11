@@ -3602,7 +3602,7 @@ class BasePlotter(_BoundsSizeMixin):
         nan_opacity: float = 1.0,
         culling: CullingOptions | bool | None = None,
         rgb: bool | None = None,
-        categories: bool = False,
+        categories: bool | int = False,
         silhouette: SilhouetteArgs | bool | None = None,
         use_transparency: bool = False,
         below_color: ColorLike | None = None,
@@ -3877,8 +3877,9 @@ class BasePlotter(_BoundsSizeMixin):
 
         categories : bool | int, optional
             If ``True``, each unique value in the scalar array gets its
-            own color and is labelled on the scalar bar. An integer is
-            used as the ``n_colors`` argument instead.
+            own color and is labelled on the scalar bar, and values between
+            them take the NaN color. An integer is used as the ``n_colors``
+            argument instead.
 
             .. versionchanged:: 0.50
                 ``True`` gives every unique value its own color even when
