@@ -1375,7 +1375,8 @@ class DataSetFilters(DataObjectFilters):
         Returns
         -------
         pyvista.UnstructuredGrid
-            Dataset with NaN cells removed.
+            Dataset with NaN cells removed. A :class:`~pyvista.PointSet` gives a ``PointSet``
+            with its NaN points removed.
 
         See Also
         --------
@@ -1386,15 +1387,6 @@ class DataSetFilters(DataObjectFilters):
             Extract a subset of cells by index.
         :meth:`~pyvista.DataSetFilters.extract_values`
             Threshold-like filter for extracting specific values and ranges.
-
-        Notes
-        -----
-        A :class:`~pyvista.PointSet` has no cells, so filtering one raises
-        :class:`~pyvista.core.errors.PointSetCellOperationError`.
-
-        .. versionchanged:: 0.50
-
-            A ``PointSet`` raises instead of giving an empty dataset.
 
         Examples
         --------
@@ -6852,16 +6844,9 @@ class DataSetFilters(DataObjectFilters):
         Returns
         -------
         output : pyvista.MultiBlock | pyvista.UnstructuredGrid
-            UnStructuredGrid if ``as_composite=False`` and MultiBlock when ``True``.
-
-        Notes
-        -----
-        A :class:`~pyvista.PointSet` has no cells, so partitioning one raises
-        :class:`~pyvista.core.errors.PointSetCellOperationError`.
-
-        .. versionchanged:: 0.50
-
-            A ``PointSet`` raises instead of giving an empty composite.
+            UnStructuredGrid if ``as_composite=False`` and MultiBlock when ``True``. A
+            :class:`~pyvista.PointSet` is partitioned by its points and gives ``PointSet``
+            blocks.
 
         Examples
         --------
