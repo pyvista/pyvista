@@ -1157,6 +1157,13 @@ class _BaseDataSetMapper(_BaseMapper):
     def _apply_categories(self, values, annotations):
         """Give each category value its own table color and return the values to label."""
         lut = self.lookup_table
+        if len(lut.values) < len(values):
+            msg = (
+                f'The colormap has {len(lut.values)} colors but the scalars have '
+                f'{len(values)} categories. Use a colormap with at least '
+                f'{len(values)} colors.'
+            )
+            raise ValueError(msg)
         colors = lut.values[: len(values)].copy()
         nan_color = np.array(Color(lut.nan_color).int_rgba)
         low, high = lut.scalar_range

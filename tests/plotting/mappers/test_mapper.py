@@ -190,6 +190,15 @@ def test_set_scalars_categories_integer_dtype():
     assert len(colors) == 3
 
 
+def test_set_scalars_categories_short_cmap():
+    mesh = pv.RectilinearGrid([0.0, 1.0, 2.0, 3.0, 4.0], [0.0, 1.0], [0.0])
+    mesh['labels'] = [0.0, 1.0, 2.0, 3.0]
+    mapper = DataSetMapper(mesh)
+    match = 'The colormap has 3 colors but the scalars have 4 categories.'
+    with pytest.raises(ValueError, match=match):
+        mapper.set_scalars(mesh['labels'], 'labels', categories=True, cmap=['r', 'g', 'b'])
+
+
 def test_set_scalars_categories_uneven_spacing():
     mesh = pv.RectilinearGrid([0.0, 1.0, 2.0, 3.0], [0.0, 1.0], [0.0])
     mesh['labels'] = [0.1, 0.33, 0.7]
