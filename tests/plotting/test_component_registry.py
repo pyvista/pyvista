@@ -33,7 +33,11 @@ def _fake_importer(name, body):
         module = ModuleType(name)
         module.__file__ = f'<fake {name}>'
         sys.modules[name] = module
-        exec(compiled, module.__dict__)  # noqa: S102
+        try:
+            exec(compiled, module.__dict__)  # noqa: S102
+        except BaseException:
+            del sys.modules[name]
+            raise
         return module
 
     return _import
@@ -727,25 +731,15 @@ def test_plugin_querying_registry_during_its_own_import(monkeypatch):
         '    def value(self):\n'
         '        return 42\n'
     )
-    compiled = compile(body, f'<fake {plugin_name}>', 'exec')
-
-    def _import(module_path):
-        """Mimic ``import_module``: a re-entrant import returns the partial module."""
-        cached = sys.modules.get(module_path)
-        if cached is not None:
-            return cached
-        module = ModuleType(module_path)
-        module.__file__ = f'<fake {module_path}>'
-        sys.modules[module_path] = module
-        exec(compiled, module.__dict__)  # noqa: S102
-        return module
-
     ep = MagicMock()
     ep.name = 'ep_reentrant'
     ep.value = plugin_name
 
     _reset_entry_point_state(monkeypatch, [ep])
-    monkeypatch.setattr('pyvista.plotting.component_registry.import_module', _import)
+    monkeypatch.setattr(
+        'pyvista.plotting.component_registry.import_module',
+        _fake_importer(plugin_name, body),
+    )
 
     try:
         assert pv.Plotter().ep_reentrant.value() == 42
@@ -768,29 +762,15 @@ def test_failed_plugin_that_accessed_itself_stays_pending(monkeypatch):
         '    pv.Plotter().ep_self_fail\n'
         "raise ImportError('missing dep')\n"
     )
-    compiled = compile(body, f'<fake {plugin_name}>', 'exec')
-
-    def _import(module_path):
-        """Mimic ``import_module``, including its cleanup when the body raises."""
-        cached = sys.modules.get(module_path)
-        if cached is not None:
-            return cached
-        module = ModuleType(module_path)
-        module.__file__ = f'<fake {module_path}>'
-        sys.modules[module_path] = module
-        try:
-            exec(compiled, module.__dict__)  # noqa: S102
-        except BaseException:
-            del sys.modules[module_path]
-            raise
-        return module
-
     ep = MagicMock()
     ep.name = 'ep_self_fail'
     ep.value = plugin_name
 
     _reset_entry_point_state(monkeypatch, [ep])
-    monkeypatch.setattr('pyvista.plotting.component_registry.import_module', _import)
+    monkeypatch.setattr(
+        'pyvista.plotting.component_registry.import_module',
+        _fake_importer(plugin_name, body),
+    )
 
     try:
         with pytest.warns(UserWarning, match='entry point "ep_self_fail"'):

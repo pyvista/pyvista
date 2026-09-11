@@ -242,7 +242,7 @@ def test_failed_writer_is_not_offered_in_the_invalid_extension_message():
     assert '.broken' not in str(excinfo.value).split('Must be one of')[1]
 
 
-def test_plugin_querying_the_registry_during_its_own_load():
+def test_plugin_querying_the_registry_during_its_own_load(tmp_path):
     """A writer plugin that reaches back into the registry while it is
     still loading resolves without a spurious failure."""
 
@@ -263,7 +263,10 @@ def test_plugin_querying_the_registry_during_its_own_load():
     with _only_pending([ep]):
         with warnings.catch_warnings(record=True) as captured:
             warnings.simplefilter('always')
-            assert _reg_mod._get_ext_handler('.reentrant') is _plugin_writer
+            handler = _reg_mod._get_ext_handler('.reentrant')
+        assert handler is _plugin_writer
+        handler(pv.Sphere(), str(tmp_path / 'mesh.reentrant'))
+        assert (tmp_path / 'mesh.reentrant').exists()
         assert [w for w in captured if 'Failed to load' in str(w.message)] == []
 
     assert _reg_mod._failed_ext_writers == {}
@@ -285,6 +288,7 @@ def test_registered_writers_retries_a_recovered_plugin():
 
         assert '.recovers' in {r.extension for r in pv.registered_writers()}
         assert _reg_mod._get_ext_handler('.recovers') is _noop_writer
+        _reg_mod._get_ext_handler('.recovers')(pv.Sphere(), 'mesh.recovers')
 
     assert recovered.load.call_count == 2
     assert '.recovers' not in _reg_mod._pending_ext_writers

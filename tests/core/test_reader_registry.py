@@ -252,7 +252,9 @@ def test_failed_plugin_still_falls_back_to_the_optional_companion():
     ):
         with pytest.warns(UserWarning, match='Failed to load'):
             assert _reg_mod._get_ext_handler('.pv') is _companion
-        assert _reg_mod._get_ext_handler('.pv') is _companion
+        handler = _reg_mod._get_ext_handler('.pv')
+        assert handler is _companion
+        assert handler('mesh.pv').n_points > 0
 
 
 def test_plugin_querying_the_registry_during_its_own_load():
@@ -276,7 +278,9 @@ def test_plugin_querying_the_registry_during_its_own_load():
     with _only_pending([ep]):
         with warnings.catch_warnings(record=True) as captured:
             warnings.simplefilter('always')
-            assert _reg_mod._get_ext_handler('.reentrant') is _plugin_reader
+            handler = _reg_mod._get_ext_handler('.reentrant')
+        assert handler is _plugin_reader
+        assert handler('mesh.reentrant').n_points > 0
         assert [w for w in captured if 'Failed to load' in str(w.message)] == []
 
     assert _reg_mod._failed_ext_readers == {}
@@ -301,7 +305,9 @@ def test_registered_readers_retries_a_recovered_plugin():
             assert _reg_mod._get_ext_handler('.recovers') is None
 
         assert '.recovers' in {r.extension for r in pv.registered_readers()}
-        assert _reg_mod._get_ext_handler('.recovers') is _recovered_reader
+        handler = _reg_mod._get_ext_handler('.recovers')
+        assert handler is _recovered_reader
+        assert handler('mesh.recovers').n_points > 0
 
     assert recovered.load.call_count == 2
     assert '.recovers' not in _reg_mod._pending_ext_readers
