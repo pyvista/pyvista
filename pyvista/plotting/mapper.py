@@ -154,6 +154,7 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
     @scalar_range.setter
     def scalar_range(self, clim) -> None:
         self.SetScalarRange(*clim)
+        self.lookup_table.SetRange(*clim)
 
     @property
     def lookup_table(self) -> LookupTable:  # numpydoc ignore=RT01
@@ -788,6 +789,7 @@ class _BaseDataSetMapper(_BaseMapper):
         scalars_name,
         preference,
         direct_scalars_color_mode,
+        overwrite: bool = False,
     ) -> None:
         """Configure scalar mode.
 
@@ -808,6 +810,9 @@ class _BaseDataSetMapper(_BaseMapper):
             When ``True``, scalars are treated as RGB colors. When
             ``False``, scalars are mapped to the color table.
 
+        overwrite : bool, default: False
+            Replace an existing array named ``scalars_name`` with ``scalars``.
+
         """
         dataset = self.dataset
         if dataset is not None:
@@ -824,7 +829,8 @@ class _BaseDataSetMapper(_BaseMapper):
             # active (see https://github.com/pyvista/pyvista/issues/542).
             if use_points:
                 if (
-                    scalars_name not in dataset.point_data
+                    overwrite
+                    or scalars_name not in dataset.point_data
                     or scalars_name == pv.DEFAULT_SCALARS_NAME
                 ):
                     dataset.point_data.set_array(scalars, scalars_name, deep_copy=False)
@@ -832,7 +838,8 @@ class _BaseDataSetMapper(_BaseMapper):
                 self.scalar_map_mode = 'point'
             elif use_cells:
                 if (
-                    scalars_name not in dataset.cell_data
+                    overwrite
+                    or scalars_name not in dataset.cell_data
                     or scalars_name == pv.DEFAULT_SCALARS_NAME
                 ):
                     dataset.cell_data.set_array(scalars, scalars_name, deep_copy=False)
@@ -973,7 +980,8 @@ class _BaseDataSetMapper(_BaseMapper):
         if not isinstance(scalars, np.ndarray):
             scalars = np.asarray(scalars)
 
-        # Set the array title for when it is added back to the mesh
+        # An array derived here is renamed, and replaces any stale copy of that name
+        original_scalars_name = scalars_name
         if custom_opac:
             scalars_name = '__custom_rgba'
 
@@ -1084,6 +1092,7 @@ class _BaseDataSetMapper(_BaseMapper):
             scalars_name=scalars_name,
             preference=preference,
             direct_scalars_color_mode=rgb or custom_opac,
+            overwrite=scalars_name != original_scalars_name,
         )
 
         if isinstance(self, PointGaussianMapper):
