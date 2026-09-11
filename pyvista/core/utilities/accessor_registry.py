@@ -294,7 +294,6 @@ _prior_values: dict[tuple[type, str], Any] = {}
 _entry_points_loaded: bool = False
 _pending_accessors: dict[str, str] = {}
 _failed_accessors: dict[str, str] = {}
-_resolving_accessors: set[str] = set()
 
 
 def _save_registry_state() -> _AccessorRegistryState:
@@ -703,18 +702,17 @@ def _resolve_pending_accessor(name: str) -> bool:
 
     Called from :meth:`pyvista.DataObject.__getattr__` when a normal
     attribute lookup misses. Ensures entry-point metadata has been
-    scanned and imports the plugin module pending under ``name``.
-    Importing the module triggers any ``@register_dataset_accessor``
-    decorators inside it and attaches the accessor as a side effect;
-    only then is the entry removed from the pending list.
+    scanned, removes the pending entry for ``name``, and imports the
+    corresponding plugin module. Importing the module triggers any
+    ``@register_dataset_accessor`` decorators inside it and attaches the
+    accessor as a side effect. A failed import puts the entry back.
 
     Returns
     -------
     bool
         ``True`` if a plugin was loaded for ``name`` (and the attribute
         lookup should be retried). ``False`` if no pending plugin
-        matches ``name``, or if the plugin for ``name`` is already being
-        imported further up the stack.
+        matches ``name``.
 
     Raises
     ------
@@ -734,13 +732,11 @@ def _resolve_pending_accessor(name: str) -> bool:
     module_path = _pending_accessors.get(name)
     if module_path is None:
         return False
-    if name in _resolving_accessors:
-        # The plugin module is still executing, so its accessor is not attached yet.
-        return False
     failure = _failed_accessors.get(name)
     if failure is not None:
         raise AttributeError(failure)
-    _resolving_accessors.add(name)
+    # Dropped before the import so a re-entrant lookup finds nothing pending.
+    del _pending_accessors[name]
     try:
         import_module(module_path)
     except Exception as exc:
@@ -748,12 +744,10 @@ def _resolve_pending_accessor(name: str) -> bool:
             f'Failed to load {ACCESSOR_ENTRY_POINT_GROUP} entry point '
             f'"{name}" from {module_path}: {exc}'
         )
+        _pending_accessors[name] = module_path
         _failed_accessors[name] = msg
         warn_external(msg)
         raise AttributeError(msg) from exc
-    finally:
-        _resolving_accessors.discard(name)
-    _pending_accessors.pop(name, None)
     return True
 
 
