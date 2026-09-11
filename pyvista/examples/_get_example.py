@@ -111,8 +111,9 @@ class Example(Generic[_DatasetT_co, _ReadersT_co]):
         the objects :meth:`load` reads through, so configuring one does not change what
         :meth:`load` returns. They are resolved on first access and reused.
 
-        Empty for examples read with a custom function or generated in memory, and
-        shorter than :attr:`paths` when only some files are read directly.
+        Empty for examples generated in memory, read with a custom function, or read
+        by a companion package, and shorter than :attr:`paths` when only some files
+        are read directly.
 
         Returns
         -------
