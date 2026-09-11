@@ -1072,6 +1072,7 @@ class _BaseDataSetMapper(_BaseMapper):
             scalars = scalars.astype(np.float64)
 
         category_values = None
+        centered_categories = False
         if (
             categories is True
             and not digitized
@@ -1081,7 +1082,9 @@ class _BaseDataSetMapper(_BaseMapper):
             category_values = np.unique(scalars[~np.isnan(scalars)]).astype(float)
             if category_values.size:
                 n_colors = len(category_values)
-                clim = _category_range(category_values)
+                centered_categories = clim is None
+                if centered_categories:
+                    clim = _category_range(category_values)
             else:
                 category_values = None
 
@@ -1141,7 +1144,9 @@ class _BaseDataSetMapper(_BaseMapper):
                 self.lookup_table.below_range_color = below_color
                 scalar_bar_args.setdefault('below_label', 'below')
             if category_values is not None:
-                ticks = self._apply_categories(category_values, annotations)
+                ticks = self._apply_categories(
+                    category_values, annotations, centered=centered_categories
+                )
                 scalar_bar_args.setdefault('ticks', ticks)
                 scalar_bar_args.setdefault('fmt', '%.10g')
             elif isinstance(annotations, dict):
@@ -1159,7 +1164,7 @@ class _BaseDataSetMapper(_BaseMapper):
         if isinstance(self, PointGaussianMapper):
             self.as_rgba()
 
-    def _apply_categories(self, values, annotations):
+    def _apply_categories(self, values, annotations, *, centered):
         """Give each category value its own table color and return the values to label."""
         lut = self.lookup_table
         if len(lut.values) < len(values):
@@ -1172,7 +1177,7 @@ class _BaseDataSetMapper(_BaseMapper):
         colors = lut.values[: len(values)].copy()
         nan_color = np.array(Color(lut.nan_color).int_rgba)
         low, high = lut.scalar_range
-        indices = _category_indices(values)
+        indices = _category_indices(values) if centered else None
         if indices is None:
             n_table = _CATEGORY_BAND_TABLE_SIZE
             centers = low + (np.arange(n_table) + 0.5) / n_table * (high - low)
