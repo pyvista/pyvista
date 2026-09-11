@@ -1139,10 +1139,10 @@ class _BaseDataSetMapper(_BaseMapper):
                 self.lookup_table.below_range_color = below_color
                 scalar_bar_args.setdefault('below_label', 'below')
             if category_values is not None:
-                ticks = self._apply_categories(
+                labels = self._apply_categories(
                     category_values, annotations, centered=centered_categories
                 )
-                scalar_bar_args.setdefault('ticks', ticks)
+                scalar_bar_args.setdefault('tick_labels', labels)
                 scalar_bar_args.setdefault('fmt', '%.10g')
             elif isinstance(annotations, dict):
                 self.lookup_table.annotations = annotations
