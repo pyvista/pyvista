@@ -163,7 +163,7 @@ def test_set_scalars_categories_true():
     mapper.set_scalars(mesh['labels'], 'labels', categories=True, scalar_bar_args=sargs)
     assert mesh.cell_data.keys() == ['labels']
     assert mapper.scalar_range == (-1.0, 9.0)
-    assert sargs == {'tick_labels': [0.0, 2.0, 8.0], 'fmt': '%.10g'}
+    assert sargs == {'tick_labels': [0.0, 2.0, 8.0], 'fmt': '%.0f'}
     lut = mapper.lookup_table
     assert lut.n_values == 5
     assert lut.annotations == {}
@@ -213,7 +213,9 @@ def test_set_scalars_categories_uneven_spacing():
     mesh = pv.RectilinearGrid([0.0, 1.0, 2.0, 3.0], [0.0, 1.0], [0.0])
     mesh['labels'] = [0.1, 0.33, 0.7]
     mapper = DataSetMapper(mesh)
-    mapper.set_scalars(mesh['labels'], 'labels', categories=True)
+    sargs = {}
+    mapper.set_scalars(mesh['labels'], 'labels', categories=True, scalar_bar_args=sargs)
+    assert sargs['fmt'] == '%g'
     lut = mapper.lookup_table
     assert lut.n_values == 4096
     assert mapper.scalar_range == pytest.approx((-0.015, 0.815))
