@@ -20,7 +20,7 @@ SKIP_RUNTIME = {
 }
 
 
-assert_types(poly().tessellate(), pv.UnstructuredGrid)
+assert_types(poly().tessellate(), pv.UnstructuredGrid)  # pragma: no cover
 assert_types(image().tessellate(), pv.UnstructuredGrid)
 assert_types(rectilinear().tessellate(), pv.UnstructuredGrid)
 assert_types(structured().tessellate(), pv.UnstructuredGrid)
