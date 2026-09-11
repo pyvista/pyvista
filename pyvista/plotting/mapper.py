@@ -69,14 +69,6 @@ def _category_range(values):
     return [values[0] - step / 2, values[-1] + step / 2]
 
 
-def _category_indices(values):
-    """Return the table index of each category value, or ``None`` for unevenly spaced values."""
-    step = _category_step(values)
-    if step is None:
-        return None
-    return np.round((values - values[0]) / step).astype(int)
-
-
 @abstract_class
 class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkAbstractMapper):
     """Base Mapper with methods common to other mappers.
@@ -232,6 +224,41 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
     @lookup_table.setter
     def lookup_table(self, table) -> None:
         self.SetLookupTable(table)
+
+    def _apply_categories(self, values, annotations):
+        """Give each category value its own table color and return the values to label."""
+        lut = self.lookup_table
+        if len(lut.values) < len(values):
+            msg = (
+                f'The colormap has {len(lut.values)} colors but the scalars have '
+                f'{len(values)} categories. Use a colormap with at least '
+                f'{len(values)} colors.'
+            )
+            raise ValueError(msg)
+        colors = lut.values[: len(values)].copy()
+        nan_color = np.array(Color(lut.nan_color).int_rgba)
+        low, high = lut.scalar_range
+        step = _category_step(values)
+        slots = None if step is None else round((high - low) / step)
+        if slots is None or not 0 < slots <= _MAX_CATEGORY_TABLE_SIZE:
+            step = None
+            n_table = _CATEGORY_BAND_TABLE_SIZE
+        else:
+            n_table = slots * max(
+                1, min(_CATEGORY_BAND_TABLE_SIZE // slots, _CATEGORY_ENTRIES_PER_VALUE)
+            )
+        centers = low + (np.arange(n_table) + 0.5) / n_table * (high - low)
+        owner = np.searchsorted((values[:-1] + values[1:]) / 2, centers)
+        table = colors[owner]
+        if step is not None:
+            # Only the band within half a step of a value keeps that value's color
+            table[np.abs(centers - values[owner]) > step / 2] = nan_color
+        lut.values = table
+
+        annotated = {float(v): str(text) for v, text in annotations.items()} if annotations else {}
+        lut.annotations = annotated
+        stride = -(-len(values) // _MAX_CATEGORY_LABELS)
+        return [float(v) for v in values[::stride] if float(v) not in annotated]
 
     @property
     def color_mode(self) -> str:  # numpydoc ignore=RT01
@@ -1011,8 +1038,8 @@ class _BaseDataSetMapper(_BaseMapper):
             argument instead.
 
             .. versionchanged:: 0.50
-                ``True`` gives every unique value its own color even when
-                the values are not evenly spaced.
+                ``True`` gives every unique value its own color instead of
+                spreading the colormap evenly over the scalar range.
 
         clim : Sequence, optional
             Color bar range for scalars.  Defaults to minimum and
@@ -1073,7 +1100,6 @@ class _BaseDataSetMapper(_BaseMapper):
             scalars = scalars.astype(np.float64)
 
         category_values = None
-        centered_categories = False
         if (
             categories is True
             and not digitized
@@ -1083,8 +1109,7 @@ class _BaseDataSetMapper(_BaseMapper):
             category_values = np.unique(scalars[~np.isnan(scalars)]).astype(float)
             if category_values.size:
                 n_colors = len(category_values)
-                centered_categories = clim is None
-                if centered_categories:
+                if clim is None:
                     clim = _category_range(category_values)
             else:
                 category_values = None
@@ -1145,9 +1170,7 @@ class _BaseDataSetMapper(_BaseMapper):
                 self.lookup_table.below_range_color = below_color
                 scalar_bar_args.setdefault('below_label', 'below')
             if category_values is not None:
-                labels = self._apply_categories(
-                    category_values, annotations, centered=centered_categories
-                )
+                labels = self._apply_categories(category_values, annotations)
                 scalar_bar_args.setdefault('tick_locations', labels)
                 integral = np.array_equal(category_values, np.round(category_values))
                 scalar_bar_args.setdefault('fmt', '%.0f' if integral else '%g')
@@ -1165,40 +1188,6 @@ class _BaseDataSetMapper(_BaseMapper):
 
         if isinstance(self, PointGaussianMapper):
             self.as_rgba()
-
-    def _apply_categories(self, values, annotations, *, centered):
-        """Give each category value its own table color and return the values to label."""
-        lut = self.lookup_table
-        if len(lut.values) < len(values):
-            msg = (
-                f'The colormap has {len(lut.values)} colors but the scalars have '
-                f'{len(values)} categories. Use a colormap with at least '
-                f'{len(values)} colors.'
-            )
-            raise ValueError(msg)
-        colors = lut.values[: len(values)].copy()
-        nan_color = np.array(Color(lut.nan_color).int_rgba)
-        low, high = lut.scalar_range
-        indices = _category_indices(values) if centered else None
-        if indices is None:
-            n_table = _CATEGORY_BAND_TABLE_SIZE
-        else:
-            slots = int(indices[-1]) + 1
-            n_table = slots * max(
-                1, min(_CATEGORY_BAND_TABLE_SIZE // slots, _CATEGORY_ENTRIES_PER_VALUE)
-            )
-        centers = low + (np.arange(n_table) + 0.5) / n_table * (high - low)
-        owner = np.searchsorted((values[:-1] + values[1:]) / 2, centers)
-        table = colors[owner]
-        if indices is not None:
-            # Only the band within half a step of a value keeps that value's color
-            table[np.abs(centers - values[owner]) > (high - low) / slots / 2] = nan_color
-        lut.values = table
-
-        annotated = {float(v): str(text) for v, text in annotations.items()} if annotations else {}
-        lut.annotations = annotated
-        stride = -(-len(values) // _MAX_CATEGORY_LABELS)
-        return [float(v) for v in values[::stride] if float(v) not in annotated]
 
     @property
     def cmap(self) -> str | None:  # numpydoc ignore=RT01

@@ -5247,6 +5247,47 @@ def test_plotter_volume_opacity_n_colors():
 
 
 @skip_windows_mesa  # due to opacity
+def test_add_volume_categories_true(no_images_to_verify):  # noqa: ARG001
+    grid = pv.ImageData(dimensions=(5, 2, 2))
+    grid.point_data['labels'] = np.tile([0.0, 3.0, 12.0, 24.0, 27.0], 4)
+    pl = pv.Plotter()
+    pl.add_volume(grid, scalars='labels', categories=True)
+    lut = pl.mapper.lookup_table
+    assert pl.mapper.scalar_range == (-1.5, 28.5)
+    colors = {lut.map_value(value)[:3] for value in (0, 3, 12, 24, 27)}
+    assert len(colors) == 5
+    assert lut.map_value(6) == lut.nan_color.float_rgba
+    bar = pl.scalar_bar
+    assert bar.GetUseCustomLabels()
+    assert list(pv.convert_array(bar.GetCustomLabels())) == [0.0, 3.0, 12.0, 24.0, 27.0]
+    assert bar.GetLabelFormat() == '%.0f'
+    pl.close()
+
+
+def test_add_volume_categories_survives_transfer_function(no_images_to_verify):  # noqa: ARG001
+    grid = pv.ImageData(dimensions=(5, 2, 2))
+    grid.point_data['labels'] = np.tile([0.0, 3.0, 12.0, 24.0, 27.0], 4)
+    pl = pv.Plotter()
+    pl.add_volume(grid, scalars='labels', categories=True)
+    lut = pl.mapper.lookup_table
+    transfer_function = lut.to_color_tf()
+    for value in (0, 3, 12, 24, 27):
+        assert transfer_function.GetColor(float(value)) == pytest.approx(
+            lut.map_value(value)[:3], abs=1 / 255
+        )
+    pl.close()
+
+
+def test_add_volume_categories_int(no_images_to_verify):  # noqa: ARG001
+    grid = pv.ImageData(dimensions=(5, 2, 2))
+    grid.point_data['labels'] = np.tile([0.0, 3.0, 12.0, 24.0, 27.0], 4)
+    pl = pv.Plotter()
+    pl.add_volume(grid, scalars='labels', categories=3)
+    assert pl.mapper.lookup_table.n_values == 3
+    assert pl.mapper.scalar_range == (0.0, 27.0)
+    pl.close()
+
+
 def test_plotter_volume_clim():
     # Validate that we can use clim with volume rendering
     grid = pv.ImageData(dimensions=(9, 9, 9))

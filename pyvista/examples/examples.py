@@ -770,7 +770,7 @@ def load_frog_tissues() -> ImageData:
         >>> # Configure colors / color bar
         >>> clim = data.get_data_range()  # Set color bar limits to match data
         >>> cmap = 'glasbey'  # Use a categorical colormap
-        >>> categories = True  # Ensure n_colors matches number of labels
+        >>> categories = True  # Give every tissue label its own color
         >>> opacity = 'foreground'  # Make foreground opaque, background transparent
         >>> opacity_unit_distance = 1
 
