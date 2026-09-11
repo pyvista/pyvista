@@ -12,6 +12,7 @@ from tests.typing.meshes import rectilinear
 from tests.typing.meshes import structured
 from tests.typing.meshes import unstructured
 
+# A PolyData resolves to PolyDataFilters.remove_points, which is not typed
 assert_types(image().remove_points([0]), pv.UnstructuredGrid)
 assert_types(rectilinear().remove_points([0]), pv.UnstructuredGrid)
 assert_types(structured().remove_points([0]), pv.UnstructuredGrid)

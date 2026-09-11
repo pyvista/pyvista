@@ -21,6 +21,10 @@ assert_types(unstructured().merge(pv.Sphere()), pv.UnstructuredGrid)
 assert_types(explicit_structured().merge(pv.Sphere()), pv.UnstructuredGrid)
 assert_types(pointset().merge(pv.Sphere()), pv.UnstructuredGrid)
 
+# A PolyData stays a PolyData only when everything merged in is a PolyData
+assert_types(poly().merge(image()), pv.UnstructuredGrid)
+assert_types(poly().merge([pv.Sphere(), pv.Sphere()]), pv.PolyData)
+
 assert_types(image().merge(), pv.UnstructuredGrid)
 assert_types(rectilinear().merge(), pv.UnstructuredGrid)
 assert_types(structured().merge(), pv.UnstructuredGrid)

@@ -6,6 +6,7 @@ from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import cast
+from typing import overload
 
 import numpy as np
 import pyvista_validation as _validation
@@ -35,7 +36,9 @@ from pyvista.core.utilities.misc import assert_empty_kwargs
 
 if TYPE_CHECKING:
     from pyvista import DataSet
+    from pyvista import MultiBlock
     from pyvista import PolyData
+    from pyvista import UnstructuredGrid
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
     from pyvista.core._typing_core._dataset_types import _PolyDataType
@@ -429,7 +432,15 @@ class PolyDataFilters(DataSetFilters):
 
         return merged
 
-    def merge(  # type: ignore[override, misc]
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # type: ignore[override]  # PolyData with polydata
+    def merge(self: PolyData, dataset: PolyData | Sequence[PolyData], *, merge_points: bool = ..., tolerance: float = ..., inplace: bool = ..., main_has_priority: bool | None = ..., progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc, overload-overlap]
+    @overload  # PolyData with anything else
+    def merge(self: PolyData, dataset: DataSet | _vtk.vtkDataSet | MultiBlock | Sequence[DataSet | _vtk.vtkDataSet], *, merge_points: bool = ..., tolerance: float = ..., inplace: bool = ..., main_has_priority: bool | None = ..., progress_bar: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
+    def merge(  # type: ignore[misc]
         self: PolyData,
         dataset,
         *,
@@ -438,7 +449,7 @@ class PolyDataFilters(DataSetFilters):
         inplace: bool = False,
         main_has_priority: bool | None = None,
         progress_bar: bool = False,
-    ) -> PolyData:
+    ):
         """Merge this mesh with one or more datasets.
 
         .. note::
@@ -519,7 +530,7 @@ class PolyDataFilters(DataSetFilters):
         -------
         pyvista.DataSet
             :class:`pyvista.PolyData` if ``dataset`` is a
-            :class:`pyvista.PolyData`, otherwise a
+            :class:`pyvista.PolyData` or a sequence of them, otherwise a
             :class:`pyvista.UnstructuredGrid`.
 
         Examples
@@ -597,7 +608,7 @@ class PolyDataFilters(DataSetFilters):
             self.deep_copy(merged)
             return self
 
-        return cast('PolyData', merged)
+        return merged
 
     def intersection(
         self,

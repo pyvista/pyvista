@@ -16,7 +16,7 @@ from tests.typing.meshes import unstructured
 from tests.typing.meshes import with_arrays
 
 SKIP_RUNTIME = {
-    "with_arrays(pointset()).contour(scalars='s')": 'a `PointSet` has no cells, so the call raises',
+    "with_arrays(pointset()).contour(scalars='s')": 'contouring a `PointSet` is not supported, so the call raises',
 }
 
 

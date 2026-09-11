@@ -38,3 +38,11 @@ assert_types(structured().oriented_bounding_box(return_meta=True), tuple[pv.Mult
 assert_types(unstructured().oriented_bounding_box(return_meta=True), tuple[pv.MultiBlock, NumpyArray[np.floating], NumpyArray[np.floating]])
 assert_types(explicit_structured().oriented_bounding_box(return_meta=True), tuple[pv.MultiBlock, NumpyArray[np.floating], NumpyArray[np.floating]])
 assert_types(pointset().oriented_bounding_box(return_meta=True), tuple[pv.MultiBlock, NumpyArray[np.floating], NumpyArray[np.floating]])
+
+assert_types(poly().oriented_bounding_box(as_composite=False, return_meta=True), tuple[pv.PolyData, NumpyArray[np.floating], NumpyArray[np.floating]])
+assert_types(image().oriented_bounding_box(as_composite=False, return_meta=True), tuple[pv.PolyData, NumpyArray[np.floating], NumpyArray[np.floating]])
+assert_types(rectilinear().oriented_bounding_box(as_composite=False, return_meta=True), tuple[pv.PolyData, NumpyArray[np.floating], NumpyArray[np.floating]])
+assert_types(structured().oriented_bounding_box(as_composite=False, return_meta=True), tuple[pv.PolyData, NumpyArray[np.floating], NumpyArray[np.floating]])
+assert_types(unstructured().oriented_bounding_box(as_composite=False, return_meta=True), tuple[pv.PolyData, NumpyArray[np.floating], NumpyArray[np.floating]])
+assert_types(explicit_structured().oriented_bounding_box(as_composite=False, return_meta=True), tuple[pv.PolyData, NumpyArray[np.floating], NumpyArray[np.floating]])
+assert_types(pointset().oriented_bounding_box(as_composite=False, return_meta=True), tuple[pv.PolyData, NumpyArray[np.floating], NumpyArray[np.floating]])

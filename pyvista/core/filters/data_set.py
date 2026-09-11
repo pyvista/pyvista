@@ -7506,9 +7506,9 @@ class DataSetFilters(DataObjectFilters):
         >>> exploded.plot(show_edges=True)
 
         """
-        split = self.separate_cells()
+        split: DataSet = self.separate_cells()
         if not isinstance(split, pv.UnstructuredGrid):
-            split = split.cast_to_unstructured_grid()  # type: ignore[unreachable]
+            split = split.cast_to_unstructured_grid()
 
         vec = (split.cell_centers().points - split.center) * factor
         split.points += np.repeat(vec, np.diff(split.cell_offsets), axis=0)
@@ -7516,9 +7516,9 @@ class DataSetFilters(DataObjectFilters):
 
     # fmt: off
     @overload  # PolyData
-    def separate_cells(self: PolyData ) -> PolyData: ...  # type: ignore[misc, overload-overlap]
+    def separate_cells(self: PolyData) -> PolyData: ...  # type: ignore[misc, overload-overlap]
     @overload  # DataSet
-    def separate_cells(self: DataSet ) -> UnstructuredGrid: ...  # type: ignore[misc]
+    def separate_cells(self: DataSet) -> UnstructuredGrid: ...  # type: ignore[misc]
     # fmt: on
     def separate_cells(  # type: ignore[misc]
         self: _DataSetType,
@@ -7998,9 +7998,6 @@ class DataSetFilters(DataObjectFilters):
         -------
         pyvista.DataSet
             Dataset with RGB(A) scalars. Output type matches input type.
-
-        dict[float, Color]
-            The label to color mapping, if ``return_dict`` is ``True``.
 
         dict[numpy.integer | numpy.floating, ColorLike]
             The label to color mapping, if ``return_dict`` is ``True``.

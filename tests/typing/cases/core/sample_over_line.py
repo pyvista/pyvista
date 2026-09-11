@@ -13,15 +13,10 @@ from tests.typing.meshes import rectilinear
 from tests.typing.meshes import structured
 from tests.typing.meshes import unstructured
 
-SKIP_RUNTIME = {
-    'pointset().sample_over_line((-1, 0, 0), (1, 0, 0))': 'resolution defaults to the cell count, which is zero',
-}
-
-
-assert_types(poly().sample_over_line((-1, 0, 0), (1, 0, 0)), pv.PolyData)
-assert_types(image().sample_over_line((-1, 0, 0), (1, 0, 0)), pv.PolyData)
-assert_types(rectilinear().sample_over_line((-1, 0, 0), (1, 0, 0)), pv.PolyData)
-assert_types(structured().sample_over_line((-1, 0, 0), (1, 0, 0)), pv.PolyData)
-assert_types(unstructured().sample_over_line((-1, 0, 0), (1, 0, 0)), pv.PolyData)
-assert_types(explicit_structured().sample_over_line((-1, 0, 0), (1, 0, 0)), pv.PolyData)
-assert_types(pointset().sample_over_line((-1, 0, 0), (1, 0, 0)), pv.PolyData)
+assert_types(poly().sample_over_line((-1, 0, 0), (1, 0, 0), resolution=10), pv.PolyData)
+assert_types(image().sample_over_line((-1, 0, 0), (1, 0, 0), resolution=10), pv.PolyData)
+assert_types(rectilinear().sample_over_line((-1, 0, 0), (1, 0, 0), resolution=10), pv.PolyData)
+assert_types(structured().sample_over_line((-1, 0, 0), (1, 0, 0), resolution=10), pv.PolyData)
+assert_types(unstructured().sample_over_line((-1, 0, 0), (1, 0, 0), resolution=10), pv.PolyData)
+assert_types(explicit_structured().sample_over_line((-1, 0, 0), (1, 0, 0), resolution=10), pv.PolyData)
+assert_types(pointset().sample_over_line((-1, 0, 0), (1, 0, 0), resolution=10), pv.PolyData)
