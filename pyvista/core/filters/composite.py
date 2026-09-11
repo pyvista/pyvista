@@ -229,7 +229,7 @@ class CompositeFilters(DataObjectFilters):
                 output.replace(ids, filtered)
         return output
 
-    def extract_geometry(self: MultiBlock):  # type: ignore[misc]
+    def extract_geometry(self):
         """Extract the surface the geometry of all blocks.
 
         Place this filter at the end of a pipeline before a polydata
@@ -250,9 +250,7 @@ class CompositeFilters(DataObjectFilters):
         if pv.version_info >= (0, 51):  # pragma: no cover
             msg = 'Remove this deprecated filter.'
             raise RuntimeError(msg)
-        return self.extract_surface(
-            algorithm='dataset_surface', pass_cellid=False, pass_pointid=False
-        )
+        return self._composite_geometry_filter()
 
     def _composite_geometry_filter(self):
         gf = _vtk.vtkCompositeDataGeometryFilter()

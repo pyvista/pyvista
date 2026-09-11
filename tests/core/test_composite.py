@@ -555,10 +555,10 @@ def test_multi_io_erros(tmpdir):
         _ = MultiBlock(bad_ext_name)
 
 
-def test_extract_geometry(multiblock_all_no_pointset_with_nested_and_none):
+def test_extract_geometry(multiblock_all_with_nested_and_none):
     match = '`extract_geometry` is deprecated. Use `extract_surface(algorithm=None)` instead.'
     with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(match)):
-        geom = multiblock_all_no_pointset_with_nested_and_none.extract_geometry()
+        geom = multiblock_all_with_nested_and_none.extract_geometry()
     assert isinstance(geom, PolyData)
 
 
