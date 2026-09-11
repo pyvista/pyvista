@@ -19,11 +19,13 @@ import numpy.typing as npt
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._version import _is_deprecation_due
+from pyvista._warn_external import warn_external
 from pyvista.core._vtk_utilities import _MATRIX_GET_DATA_RETURNS_ELEMENTS
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import MissingDataError
+from pyvista.core.errors import PyVistaDeprecationWarning
 
 if TYPE_CHECKING:
     from pyvista import DataSet
@@ -169,8 +171,7 @@ def _coerce_pointslike_arg(
     return points, singular
 
 
-@_deprecate_positional_args(allowed=['array'])
-def copy_vtk_array(array: _vtk.vtkAbstractArray, deep: bool = True) -> _vtk.vtkAbstractArray:  # noqa: FBT001, FBT002
+def copy_vtk_array(array: _vtk.vtkAbstractArray, *, deep: bool = True) -> _vtk.vtkAbstractArray:
     """Create a deep or shallow copy of a VTK array.
 
     Parameters
@@ -253,23 +254,27 @@ def raise_has_duplicates(arr: NumpyArray[Any]) -> None:
 
 
 # fmt: off
-# ruff: disable[E501, FBT001]
+# ruff: disable[E501]
 @overload
-def convert_array(arr: _vtk.vtkAbstractArray, name: str | None = ..., deep: bool = ..., array_type: int | None = None) -> npt.NDArray[Any]: ...
+def convert_array(arr: _vtk.vtkAbstractArray, name: str | None = ..., *, deep: bool = ..., array_type: int | None = None) -> npt.NDArray[Any]: ...
 @overload
-def convert_array(arr: npt.ArrayLike, name: str | None = ..., deep: bool = ..., array_type: int | None = None) -> _vtk.vtkAbstractArray: ...
+def convert_array(arr: npt.ArrayLike, name: str | None = ..., *, deep: bool = ..., array_type: int | None = None) -> _vtk.vtkAbstractArray: ...
 @overload
-def convert_array(arr: None, name: str | None = ..., deep: bool = ..., array_type: int | None = ...) -> None: ...
-# ruff: enable[E501, FBT001]
+def convert_array(arr: None, name: str | None = ..., *, deep: bool = ..., array_type: int | None = ...) -> None: ...
+# ruff: enable[E501]
 # fmt: on
-@_deprecate_positional_args(allowed=['arr', 'name'])
-def convert_array(  # noqa: PLR0917
+def convert_array(
     arr: npt.ArrayLike | _vtk.vtkAbstractArray | None,
     name: str | None = None,
-    deep: bool = False,  # noqa: FBT001, FBT002
+    *,
+    deep: bool = False,
     array_type: int | None = None,
 ) -> npt.NDArray[Any] | _vtk.vtkAbstractArray | None:
     """Convert a NumPy array to a :vtk:`vtkDataArray` or vice versa.
+
+    .. deprecated:: 0.50
+        Converting a scalar is deprecated. Pass an array with at least one
+        dimension instead.
 
     Parameters
     ----------
@@ -297,6 +302,9 @@ def convert_array(  # noqa: PLR0917
     if not isinstance(arr, np.ndarray):
         # Otherwise input must be a vtkDataArray
         return _vtk_array_to_numpy(cast('_vtk.vtkAbstractArray', arr))
+    if arr.ndim == 0:
+        _warn_scalar_array()
+        arr = arr.reshape(1)
 
     kind = arr.dtype.kind
     if kind == 'O':  # np.object_
@@ -305,9 +313,7 @@ def convert_array(  # noqa: PLR0917
     if kind in 'US':  # np.str_ or np.bytes_
         vtk_data: _vtk.vtkAbstractArray = convert_string_array(arr)
     else:
-        # A scalar is stored as a single-tuple array; numpy_to_vtk makes the data contiguous
-        if arr.ndim == 0:
-            arr = arr.reshape(1)
+        # numpy_to_vtk makes the data contiguous
         vtk_data = _vtk.numpy_to_vtk(num_array=arr, deep=deep, array_type=array_type)
     if isinstance(name, str):
         vtk_data.SetName(name)
@@ -326,12 +332,12 @@ def _vtk_array_to_numpy(arr: _vtk.vtkAbstractArray) -> npt.NDArray[Any]:
     raise TypeError(msg)
 
 
-@_deprecate_positional_args(allowed=['mesh', 'name'])
-def get_array(  # noqa: PLR0917
+def get_array(
     mesh: DataSet | _vtk.vtkDataSet | _vtk.vtkTable,
     name: str,
+    *,
     preference: PointLiteral | CellLiteral | FieldLiteral | RowLiteral = 'cell',
-    err: bool = False,  # noqa: FBT001, FBT002
+    err: bool = False,
 ) -> pyvista_ndarray | None:
     """Search point, cell, and field data for an array.
 
@@ -403,12 +409,12 @@ def get_array(  # noqa: PLR0917
         return out
 
 
-@_deprecate_positional_args(allowed=['mesh', 'name'])
-def get_array_association(  # noqa: PLR0917
+def get_array_association(
     mesh: DataSet | _vtk.vtkDataSet | _vtk.vtkTable,
     name: str,
+    *,
     preference: PointLiteral | CellLiteral | FieldLiteral | RowLiteral = 'cell',
-    err: bool = False,  # noqa: FBT001, FBT002
+    err: bool = False,
 ) -> FieldAssociation:
     """Return the array association.
 
@@ -467,6 +473,47 @@ def get_array_association(  # noqa: PLR0917
         return preference_field
     # otherwise return first in order of point -> cell -> field
     return matches[0]
+
+
+_SCALAR_ARRAY_HINTS = {
+    FieldAssociation.POINT: (
+        'Use numpy.full or numpy.broadcast_to to create an array with one value per point.'
+    ),
+    FieldAssociation.CELL: (
+        'Use numpy.full or numpy.broadcast_to to create an array with one value per cell.'
+    ),
+    FieldAssociation.ROW: (
+        'Use numpy.full or numpy.broadcast_to to create an array with one value per row.'
+    ),
+    FieldAssociation.NONE: (
+        'Use user_dict to store scalar metadata, or pass [value] to store a one-element array.'
+    ),
+    None: (
+        'Use numpy.full or numpy.broadcast_to to set point or cell data, '
+        'or use user_dict to store scalar metadata.'
+    ),
+}
+
+
+def _warn_scalar_array(
+    name: str | None = None, association: FieldAssociation | None = None
+) -> None:
+    """Warn that a scalar was given where an array is required."""
+    # deprecated 0.50.0, convert to error in 0.53.0
+    if _is_deprecation_due((0, 53)):  # pragma: no cover
+        msg = 'Convert this deprecation warning into an error.'
+        raise RuntimeError(msg)
+    if name is None:
+        msg = (
+            'Converting a scalar to a VTK array is deprecated. '
+            'Pass an array with at least one dimension instead.'
+        )
+    else:
+        msg = (
+            f"Setting array '{name}' from a scalar is deprecated. "
+            f'{_SCALAR_ARRAY_HINTS[association]}'
+        )
+    warn_external(msg, PyVistaDeprecationWarning)
 
 
 def raise_not_matching(scalars: npt.NDArray[Any], dataset: DataSet | Table) -> None:
@@ -689,15 +736,6 @@ def vtk_id_list_to_array(vtk_id_list: _vtk.vtkIdList) -> NumpyArray[int]:
     return np.fromiter(map(vtk_id_list.GetId, range(n_ids)), dtype=int, count=n_ids)
 
 
-def _set_string_scalar_object_name(vtkarr: _vtk.vtkStringArray) -> None:
-    """Set object name for scalar string arrays."""
-    # This is used as a flag so that scalar arrays can be reshaped later.
-    try:
-        vtkarr.SetObjectName('scalar')
-    except AttributeError:
-        vtkarr.GetObjectName = lambda: 'scalar'  # type: ignore[method-assign]
-
-
 # fmt: off
 # ruff: disable[E501]
 @overload
@@ -711,12 +749,14 @@ def convert_string_array(
 ) -> npt.NDArray[np.str_] | _vtk.vtkStringArray:
     """Convert a NumPy array of strings to a :vtk:`vtkStringArray` or vice versa.
 
-    If a scalar string is provided, it is converted to a :vtk:`vtkCharArray`
-
     .. versionchanged:: 0.49
         A two-dimensional array keeps its second axis, held as the components of
         the :vtk:`vtkStringArray`. It was previously flattened. An array with more
         dimensions raises instead of being flattened.
+
+    .. deprecated:: 0.50
+        Converting a scalar string is deprecated. It is stored as a one-element
+        array and converted back as one. Pass a one-dimensional array instead.
 
     Parameters
     ----------
@@ -739,6 +779,9 @@ def convert_string_array(
     """
     arr = np.array(arr) if isinstance(arr, str) else arr
     if isinstance(arr, np.ndarray):
+        if arr.ndim == 0:
+            _warn_scalar_array()
+            arr = arr.reshape(1)
         if arr.ndim > 2:
             msg = f'String array must be at most 2-dimensional, got shape {arr.shape}.'
             raise ValueError(msg)
@@ -748,10 +791,7 @@ def convert_string_array(
             msg = 'String array contains non-ASCII characters that are not supported by VTK.'
             raise ValueError(msg)
         vtkarr = _vtk.vtkStringArray()
-        if arr.ndim == 0:
-            # The object name marks a scalar input
-            _set_string_scalar_object_name(vtkarr)
-        elif arr.ndim == 2:
+        if arr.ndim == 2:
             # The second axis is stored as components, as it is for numeric arrays
             vtkarr.SetNumberOfComponents(arr.shape[1])
 
@@ -766,11 +806,6 @@ def convert_string_array(
     # longest value; passing dtype='|U' to np.empty defaults to width 1
     # which truncates strings.
     arr_out = np.array(list(map(arr.GetValue, range(arr.GetNumberOfValues()))), dtype='|U')
-    try:
-        if arr.GetObjectName() == 'scalar':
-            return np.array(''.join(arr_out))
-    except AttributeError:
-        pass
     n_components = arr.GetNumberOfComponents()
     if n_components > 1:
         return arr_out.reshape(-1, n_components)
@@ -1057,11 +1092,6 @@ class _SerializedDictArray(DisableVtkSnakeCase, UserDict, _vtk.vtkStringArray): 
         # Init UserDict
         super().__init__(dict_, **kwargs)  # type: ignore[arg-type]
         self._update_string()
-
-        # Flag self as a scalar string
-        # This is only needed so that the Field DatasetAttributes repr
-        # shows this array as `str`
-        _set_string_scalar_object_name(self)
 
     def __getstate__(self: _SerializedDictArray) -> None:
         """Support pickling.

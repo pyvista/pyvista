@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 import pyvista as pv
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.helpers import is_pyvista_dataset
@@ -65,12 +64,12 @@ def plot_arrows(cent, direction, **kwargs):
     return pv.plot([cent, direction], **kwargs)
 
 
-@_deprecate_positional_args(allowed=['data_a', 'data_b', 'data_c', 'data_d'], n_allowed=4)
 def plot_compare_four(  # noqa: PLR0917  # pragma: no cover
     data_a,
     data_b,
     data_c,
     data_d,
+    *,
     display_kwargs=None,
     plotter_kwargs=None,
     show_kwargs=None,
@@ -79,7 +78,7 @@ def plot_compare_four(  # noqa: PLR0917  # pragma: no cover
     outline=None,
     outline_color='k',
     labels=('A', 'B', 'C', 'D'),
-    link: bool = True,  # noqa: FBT001, FBT002
+    link: bool = True,
     notebook=None,
 ):
     """Plot a 2 by 2 comparison of data objects.
@@ -191,8 +190,7 @@ def plot_compare_four(  # noqa: PLR0917  # pragma: no cover
     return pl.show(screenshot=screenshot, **show_kwargs)
 
 
-@_deprecate_positional_args(allowed=['view'])
-def view_vectors(view: str, negative: bool = False) -> tuple[NumpyArray[int], NumpyArray[int]]:  # noqa: FBT001, FBT002
+def view_vectors(view: str, *, negative: bool = False) -> tuple[NumpyArray[int], NumpyArray[int]]:
     """Given a plane to view, return vectors for setting up camera.
 
     Parameters

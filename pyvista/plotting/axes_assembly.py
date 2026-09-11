@@ -19,7 +19,6 @@ import pyvista_validation as _validation
 import pyvista as pv
 from pyvista import BoundsTuple
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.geometric_sources import AxesGeometrySource
 from pyvista.core.utilities.geometric_sources import OrthogonalPlanesSource
@@ -980,11 +979,11 @@ class AxesAssembly(_XYZAssembly):
     def z_color(self, color: ColorLike | Sequence[ColorLike]):
         self.set_actor_prop('color', color, axis=_AxisEnum.z.value)  # type: ignore[arg-type]
 
-    @_deprecate_positional_args(allowed=['name', 'value'])
-    def set_actor_prop(  # noqa: PLR0917
+    def set_actor_prop(
         self,
         name: str,
         value: float | str | ColorLike | Sequence[float | str | ColorLike],
+        *,
         axis: Literal['x', 'y', 'z', 'all'] = 'all',
         part: Literal['shaft', 'tip', 'all'] = 'all',
     ):

@@ -14,6 +14,7 @@ import pyvista as pv
 from pyvista import _vtk
 from pyvista import examples
 from pyvista.core import dataset as dataset_module
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.examples import load_airplane
 from pyvista.examples import load_explicit_structured
 from pyvista.examples import load_hexbeam
@@ -164,13 +165,6 @@ def test_point_cell_field_data_empty_array(uniform, attribute, empty_shape, mesh
             data['new_array'] = empty_array
 
 
-def test_point_cell_data_single_scalar_no_exception_raised():
-    m = pv.PolyData([0, 0, 0.0])
-    m.point_data['foo'] = 1
-    m.cell_data['bar'] = 1
-    m['baz'] = 1
-
-
 def test_field_data(hexbeam):
     key = 'test_array_field'
     # Add array of length not equal to n_cells or n_points
@@ -203,35 +197,71 @@ def test_field_data(hexbeam):
 
 
 def test_field_data_string(hexbeam):
-    # test `mesh.field_data`
-    field_name = 'foo'
-    field_value = 'bar'
-    hexbeam.field_data[field_name] = field_value
-    returned = hexbeam.field_data[field_name]
-    assert returned == field_value
-    assert isinstance(returned, str)
-
-    # test `mesh.add_field_data`
-    field_name = 'eggs'
-    field_value = 'ham'
-    hexbeam.add_field_data(array=field_value, name=field_name)
-    returned = hexbeam.field_data[field_name]
-    assert returned == field_value
-    assert isinstance(returned, str)
-
-    # test `mesh[name] = data`
-    field_name = 'baz'
-    field_value = 'a' * hexbeam.n_points
-    hexbeam[field_name] = field_value
-    returned = hexbeam.field_data[field_name]
-    assert returned == field_value
-    assert isinstance(returned, str)
-
-    # a sequence of strings, not only a single one
-    field_name = 'spam'
     field_value = ['I could', 'write', 'notes', 'here']
-    hexbeam.add_field_data(field_value, field_name)
-    assert hexbeam.field_data[field_name].tolist() == field_value
+    hexbeam.add_field_data(field_value, 'spam')
+    assert hexbeam.field_data['spam'].tolist() == field_value
+
+    hexbeam.field_data['foo'] = ['bar']
+    returned = hexbeam.field_data['foo']
+    assert isinstance(returned, np.ndarray)
+    assert returned.tolist() == ['bar']
+
+
+SCALAR_VALUES = [1, 1.5, True, 'bar', np.float32(2.0), np.array(3)]
+BROADCAST_HINT = 'Use numpy.full or numpy.broadcast_to to create an array with one value per '
+
+
+@pytest.mark.parametrize('value', SCALAR_VALUES)
+@pytest.mark.parametrize(
+    ('attribute', 'hint'),
+    [
+        ('point_data', BROADCAST_HINT + 'point.'),
+        ('cell_data', BROADCAST_HINT + 'cell.'),
+        (
+            'field_data',
+            (
+                'Use user_dict to store scalar metadata, '
+                'or pass [value] to store a one-element array.'
+            ),
+        ),
+    ],
+)
+def test_set_scalar_deprecated(hexbeam, attribute, hint, value):
+    data = getattr(hexbeam, attribute)
+    match = f"Setting array 'foo' from a scalar is deprecated. {hint}"
+    with pytest.warns(PyVistaDeprecationWarning, match=re.escape(match)):
+        data['foo'] = value
+    expected_len = 1 if attribute == 'field_data' else data.valid_array_len
+    assert data['foo'].shape == (expected_len,)
+    assert np.all(data['foo'] == value)
+
+
+@pytest.mark.parametrize('value', SCALAR_VALUES)
+def test_add_field_data_scalar_deprecated(hexbeam, value):
+    match = (
+        "Setting array 'foo' from a scalar is deprecated. Use user_dict to store scalar "
+        'metadata, or pass [value] to store a one-element array.'
+    )
+    with pytest.warns(PyVistaDeprecationWarning, match=re.escape(match)):
+        hexbeam.add_field_data(value, 'foo')
+    assert hexbeam.field_data['foo'].tolist() == [value]
+
+
+@pytest.mark.parametrize('value', SCALAR_VALUES)
+def test_setitem_scalar_deprecated(hexbeam, value):
+    match = (
+        "Setting array 'foo' from a scalar is deprecated. Use numpy.full or numpy.broadcast_to "
+        'to set point or cell data, or use user_dict to store scalar metadata.'
+    )
+    with pytest.warns(PyVistaDeprecationWarning, match=re.escape(match)):
+        with pytest.raises(ValueError, match='Number of scalars'):
+            hexbeam['foo'] = value
+    assert 'foo' not in hexbeam.array_names
+
+    single_point = pv.PolyData([0.0, 0.0, 0.0])
+    with pytest.warns(PyVistaDeprecationWarning, match=re.escape(match)):
+        single_point['foo'] = value
+    assert single_point.point_data['foo'].tolist() == [value]
 
 
 @pytest.mark.parametrize('field', [range(5), np.ones((3, 3))[:, 0]])
@@ -502,10 +532,8 @@ def test_html_repr(hexbeam):
     assert hexbeam._repr_html_() is not None
 
 
-def test_html_repr_string_scalar(hexbeam):
-    array_data = 'data'
-    array_name = 'name'
-    hexbeam.add_field_data(array_data, array_name)
+def test_html_repr_string_array(hexbeam):
+    hexbeam.add_field_data(['data'], 'name')
     assert hexbeam._repr_html_() is not None
 
 
@@ -592,7 +620,7 @@ def test_arrows_ndim_raises(mocker: MockerFixture):
 
 def test_set_active_scalars_raises(mocker: MockerFixture):
     sphere = pv.Sphere(radius=math.pi)
-    sphere.point_data[(f := 'foo')] = 1
+    sphere.point_data[(f := 'foo')] = np.ones(sphere.n_points)
 
     m = mocker.patch.object(dataset_module, 'get_array_association')
     m.return_value = 1
@@ -606,7 +634,7 @@ def test_set_active_scalars_raises(mocker: MockerFixture):
 
 def test_set_active_scalars_raises_vtk(mocker: MockerFixture):
     sphere = pv.Sphere(radius=math.pi)
-    sphere.point_data[(f := 'foo')] = 1
+    sphere.point_data[(f := 'foo')] = np.ones(sphere.n_points)
 
     m = mocker.patch.object(sphere, 'GetPointData')
     m().SetActiveScalars.return_value = -1

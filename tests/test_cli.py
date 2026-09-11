@@ -220,7 +220,7 @@ class CasesReport:
         return '"foo" "bar"', (['foo', 'bar'],), {}
 
     def case_additional_ncol(self):
-        return '"foo" --ncol 2', (['foo'], 2), {}
+        return '"foo" --ncol 2', (['foo'],), dict(ncol=2)
 
     def case_additional_textwidth(self):
         # `textwidth` is keyword whereas `additional` is positional since inspect.BoundArguments

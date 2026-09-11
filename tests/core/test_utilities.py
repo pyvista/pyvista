@@ -42,6 +42,7 @@ from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import _SUPPORTS_FIXED_SIZE_STORAGE
 from pyvista.core._vtk_utilities import is_vtk_attribute
 from pyvista.core.celltype import _CELL_TYPE_INFO
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters import _update_alg
 from pyvista.core.utilities import cells
 from pyvista.core.utilities import features
@@ -564,11 +565,6 @@ def test_report():
     assert 'User Data Path' not in report.__repr__()
 
 
-def test_report_warnings():
-    with pytest.warns(pv.PyVistaDeprecationWarning):
-        pv.Report('vtk', 4, 90, True)
-
-
 REPORT = str(pv.Report(gpu=False))
 
 
@@ -744,11 +740,7 @@ def test_vtkmatrix_from_array_like():
     assert np.array_equal(pv.array_from_vtkmatrix(matrix), strided)
 
 
-def test_convert_array_scalar_and_strided():
-    vtk_scalar = convert_array(np.array(1.5))
-    assert vtk_scalar.GetNumberOfTuples() == 1
-    assert vtk_scalar.GetValue(0) == 1.5
-
+def test_convert_array_strided():
     strided = np.arange(10.0)[::2]
     assert np.array_equal(convert_array(convert_array(strided)), strided)
 
@@ -1120,12 +1112,25 @@ def test_convert_array():
     arr4 = pv.core.utilities.arrays.convert_array(my_list)
     assert arr4.GetNumberOfValues() == len(my_list)
 
-    # test string scalar is converted to string array with length on
-    my_str = 'abc'
-    arr5 = pv.core.utilities.arrays.convert_array(my_str)
-    assert arr5.GetNumberOfValues() == 1
-    arr6 = pv.core.utilities.arrays.convert_array(np.array(my_str))
-    assert arr6.GetNumberOfValues() == 1
+
+CONVERT_SCALAR_MATCH = (
+    'Converting a scalar to a VTK array is deprecated. '
+    'Pass an array with at least one dimension instead.'
+)
+
+
+@pytest.mark.parametrize('value', [1.5, np.array(2), 'abc', np.array('abc')])
+def test_convert_array_scalar_deprecated(value):
+    with pytest.warns(PyVistaDeprecationWarning, match=CONVERT_SCALAR_MATCH):
+        vtk_arr = pv.core.utilities.arrays.convert_array(np.asarray(value))
+    assert vtk_arr.GetNumberOfTuples() == 1
+    assert pv.core.utilities.arrays.convert_array(vtk_arr).tolist() == [np.asarray(value).item()]
+
+
+def test_convert_array_str_deprecated():
+    with pytest.warns(PyVistaDeprecationWarning, match=CONVERT_SCALAR_MATCH):
+        vtk_arr = pv.core.utilities.arrays.convert_array('abc')
+    assert vtk_arr.GetNumberOfValues() == 1
 
 
 def test_has_duplicates():
@@ -1756,14 +1761,15 @@ def test_convert_string_array_roundtrip():
     assert np.array_equal(out, arr)
 
 
-def test_convert_string_array_scalar_string():
-    """A bare Python str round-trips back to a 0-d numpy array of the original."""
-    vtk_arr = convert_string_array('hello')
+@pytest.mark.parametrize('value', ['hello', np.array('hello')])
+def test_convert_string_array_scalar_deprecated(value):
+    with pytest.warns(PyVistaDeprecationWarning, match=CONVERT_SCALAR_MATCH):
+        vtk_arr = convert_string_array(value)
     assert vtk_arr.GetNumberOfValues() == 1
     assert vtk_arr.GetValue(0) == 'hello'
     out = convert_string_array(vtk_arr)
-    assert out.ndim == 0
-    assert str(out) == 'hello'
+    assert out.shape == (1,)
+    assert out.tolist() == ['hello']
 
 
 @pytest.mark.parametrize(

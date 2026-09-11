@@ -20,7 +20,6 @@ import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.typing.mypy_plugin import promote_type
 
@@ -44,6 +43,7 @@ from .utilities.arrays import FieldAssociation
 from .utilities.arrays import FieldLiteral
 from .utilities.arrays import PointLiteral
 from .utilities.arrays import _coerce_pointslike_arg
+from .utilities.arrays import _warn_scalar_array
 from .utilities.arrays import get_array
 from .utilities.arrays import get_array_association
 from .utilities.arrays import parse_field_choice
@@ -936,8 +936,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         # Use the array range
         return np.nanmin(arr), np.nanmax(arr)
 
-    @_deprecate_positional_args(allowed=['ido'])
-    def copy_meta_from(self: Self, ido: DataSet, deep: bool = True) -> None:  # noqa: FBT001, FBT002
+    def copy_meta_from(self: Self, ido: DataSet, *, deep: bool = True) -> None:
         """Copy pyvista meta data onto this object from another object.
 
         Parameters
@@ -1581,10 +1580,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             scalars = np.asanyarray(scalars)
 
         if scalars.ndim == 0:
-            if np.issubdtype(scalars.dtype, np.str_):
-                # Always set scalar strings as field data
-                self.field_data[name] = scalars
-                return
+            _warn_scalar_array(name, None)
             # reshape single scalar values from 0D to 1D so that shape[0] can be indexed
             scalars = scalars.reshape((1,))
 
@@ -1597,7 +1593,6 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             # Field data must be set explicitly as it could be a point of
             # confusion for new users
             raise_not_matching(scalars, self)
-        return
 
     @property
     def n_arrays(self: Self) -> int:
@@ -1736,18 +1731,14 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             fmt = pv.FLOAT_FORMAT
             result: list[tuple[str, int, str, str, str]] = []
             for name, arr in attrs.items():
-                # Field data can contain str values at runtime despite
-                # DataSetAttributes.items() being typed as -> pyvista_ndarray.
-                # Wrap str so .shape / .dtype are available.
-                coerced = pv.pyvista_ndarray(arr) if isinstance(arr, str) else arr  # type: ignore[redundant-expr,unreachable]
-                ncomp = coerced.shape[1] if coerced.ndim > 1 else 1
-                shape = str(tuple(coerced.shape)) if show_shape else ''
+                ncomp = arr.shape[1] if arr.ndim > 1 else 1
+                shape = str(tuple(arr.shape)) if show_shape else ''
                 range_str = ''
-                if show_range and coerced.size > 0 and np.issubdtype(coerced.dtype, np.number):
-                    lo = fmt.format(np.nanmin(coerced))
-                    hi = fmt.format(np.nanmax(coerced))
+                if show_range and arr.size > 0 and np.issubdtype(arr.dtype, np.number):
+                    lo = fmt.format(np.nanmin(arr))
+                    hi = fmt.format(np.nanmax(arr))
                     range_str = f'[{lo}, {hi}]'
-                result.append((name, ncomp, str(coerced.dtype), shape, range_str))
+                result.append((name, ncomp, str(arr.dtype), shape, range_str))
             return result
 
         vec_assoc = self.active_vectors_info.association
@@ -1809,8 +1800,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         """Return the object string representation."""
         return self.head(display=False, html=False)
 
-    @_deprecate_positional_args(allowed=['mesh'])
-    def copy_from(self: Self, mesh: _vtk.vtkDataSet, deep: bool = True) -> None:  # noqa: FBT001, FBT002
+    def copy_from(self: Self, mesh: _vtk.vtkDataSet, *, deep: bool = True) -> None:
         """Overwrite this dataset in-place with the new dataset's geometries and data.
 
         Parameters
@@ -1912,8 +1902,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         _update_alg(alg)
         return _get_output(alg)
 
-    @_deprecate_positional_args
-    def cast_to_pointset(self: Self, pass_cell_data: bool = False) -> PointSet:  # noqa: FBT001, FBT002
+    def cast_to_pointset(self: Self, *, pass_cell_data: bool = False) -> PointSet:
         """Extract the points of this dataset and return a :class:`pyvista.PointSet`.
 
         Parameters
@@ -1952,8 +1941,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             pset.active_scalars_name = name
         return pset
 
-    @_deprecate_positional_args
-    def cast_to_poly_points(self: Self, pass_cell_data: bool = False) -> pv.PolyData:  # noqa: FBT001, FBT002
+    def cast_to_poly_points(self: Self, *, pass_cell_data: bool = False) -> pv.PolyData:
         """Extract the points of this dataset and return a :class:`pyvista.PolyData`.
 
         Parameters
@@ -2095,20 +2083,20 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         return locator.FindClosestPoint(point)  # type: ignore[arg-type]
 
     # fmt: off
-    # ruff: disable[E501, FBT001, FBT002]
+    # ruff: disable[E501]
     @overload
-    def find_closest_cell(self: Self, point: VectorLike[float] | MatrixLike[float], return_closest_point: Literal[False] = False) -> int | NumpyArray[int]: ...
+    def find_closest_cell(self: Self, point: VectorLike[float] | MatrixLike[float], *, return_closest_point: Literal[False] = False) -> int | NumpyArray[int]: ...
     @overload
-    def find_closest_cell(self: Self, point: VectorLike[float] | MatrixLike[float], return_closest_point: Literal[True]) -> tuple[int | NumpyArray[int], NumpyArray[float]]: ...
+    def find_closest_cell(self: Self, point: VectorLike[float] | MatrixLike[float], *, return_closest_point: Literal[True]) -> tuple[int | NumpyArray[int], NumpyArray[float]]: ...
     @overload
-    def find_closest_cell(self: Self, point: VectorLike[float] | MatrixLike[float], return_closest_point: bool = ...) -> int | NumpyArray[int] | tuple[int | NumpyArray[int], NumpyArray[float]]: ...
-    # ruff: enable[E501, FBT001, FBT002]
+    def find_closest_cell(self: Self, point: VectorLike[float] | MatrixLike[float], *, return_closest_point: bool = ...) -> int | NumpyArray[int] | tuple[int | NumpyArray[int], NumpyArray[float]]: ...
+    # ruff: enable[E501]
     # fmt: on
-    @_deprecate_positional_args(allowed=['point'])
     def find_closest_cell(
         self: Self,
         point: VectorLike[float] | MatrixLike[float],
-        return_closest_point: bool = False,  # noqa: FBT001, FBT002
+        *,
+        return_closest_point: bool = False,
     ) -> int | NumpyArray[int] | tuple[int | NumpyArray[int], NumpyArray[float]]:
         """Find index of closest cell in this mesh to the given point.
 
@@ -2696,7 +2684,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         # Note: we have to use vtkGenericCell here since
         # GetCell(vtkIdType cellId, vtkGenericCell* cell) is thread-safe,
         # while GetCell(vtkIdType cellId) is not.
-        cell = pv.Cell()
+        cell = pv.Cell()  # type: ignore[abstract]
         self.GetCell(index, cell)
         cell.SetCellType(self.GetCellType(index))
         return cell

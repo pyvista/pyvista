@@ -12,7 +12,6 @@ import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from .background_renderer import BackgroundRenderer
@@ -202,10 +201,10 @@ class Renderers(_NoNewAttrMixin):
 
     """
 
-    @_deprecate_positional_args(allowed=['plotter'])
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
         plotter,
+        *,
         shape=(1, 1),
         splitting_position=None,
         row_weights=None,
@@ -600,8 +599,7 @@ class Renderers(_NoNewAttrMixin):
             raise IndexError(msg)
         self._active_index = self.loc_to_index((index_row, index_column))
 
-    @_deprecate_positional_args(allowed=['interactive'])
-    def set_chart_interaction(self, interactive, toggle: bool = False):  # noqa: FBT001, FBT002
+    def set_chart_interaction(self, interactive, *, toggle: bool = False):
         """Set or toggle interaction with charts for the active renderer.
 
         Interaction with other charts in other renderers is disabled.
@@ -823,15 +821,15 @@ class Renderers(_NoNewAttrMixin):
         overlay._border_requested_width = border_width
         return overlay
 
-    @_deprecate_positional_args(allowed=['color'])
-    def set_background(  # noqa: PLR0917
+    def set_background(
         self,
         color,
+        *,
         top=None,
         right=None,
         side=None,
         corner=None,
-        all_renderers: bool = True,  # noqa: FBT001, FBT002
+        all_renderers: bool = True,
     ):
         """Set the background color.
 
@@ -904,8 +902,7 @@ class Renderers(_NoNewAttrMixin):
                 corner=corner,
             )
 
-    @_deprecate_positional_args(allowed=['color_cycler'])
-    def set_color_cycler(self, color_cycler, all_renderers: bool = True):  # noqa: FBT001, FBT002
+    def set_color_cycler(self, color_cycler, *, all_renderers: bool = True):
         """Set or reset the color cycler.
 
         This color cycler is iterated over by each sequential :class:`~pyvista.Plotter.add_mesh`

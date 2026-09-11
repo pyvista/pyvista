@@ -12,12 +12,12 @@ import numpy as np
 import numpy.typing as npt
 
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core._vtk_utilities import VTKObjectWrapperCheckSnakeCase
 
 from .pyvista_ndarray import pyvista_ndarray
 from .utilities.arrays import FieldAssociation
+from .utilities.arrays import _warn_scalar_array
 from .utilities.arrays import convert_array
 from .utilities.arrays import copy_vtk_array
 from .utilities.misc import _NoNewAttrMixin
@@ -213,17 +213,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
                 if self.association in [FieldAssociation.POINT, FieldAssociation.CELL]:
                     if name == self.active_vectors_name:
                         arr_type = 'VECTORS'
-                # special treatment for string field data
-                if self.association == FieldAssociation.NONE and isinstance(array, str):  # type: ignore[unreachable]
-                    dtype = 'str'  # type: ignore[unreachable]
-                    # Show the string value itself with a max of 20 characters,
-                    # 18 for string and 2 for quotes
-                    val = f'{array[:15]}...' if len(array) > 18 else array
-                    line = f'{name[:23]:<24}{dtype!s:<11}"{val}"'
-                else:
-                    line = (
-                        f'{name[:23]:<24}{array.dtype!s:<11}{array.shape!s:<20} {arr_type}'.strip()
-                    )
+                line = f'{name[:23]:<24}{array.dtype!s:<11}{array.shape!s:<20} {arr_type}'.strip()
                 lines.append(line)
             array_info = '\n    ' + '\n    '.join(lines)
 
@@ -525,7 +515,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         dataset: DataSet | _vtk.vtkDataSet,
         association: FieldAssociation,
     ) -> pyvista_ndarray:
-        """Return the array viewed as ``bool`` or ``complex``, or a scalar string as ``str``."""
+        """Return the array viewed as ``bool`` or ``complex``."""
         name = vtk_arr.GetName()
         association_name = association.name
         if name in dataset._association_bitarray_names[association_name]:  # type: ignore[union-attr]
@@ -537,13 +527,11 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
                 narray = narray.view(np.complex128)  # type: ignore[assignment]
             # remove singleton dimensions to match the behavior of the rest of 1D VTK arrays
             return narray.squeeze()  # type: ignore[return-value]
-        # Field data holding a string scalar (np.str_) is returned as the string itself
-        if narray.ndim == 0 and association is FieldAssociation.NONE and narray.dtype.kind == 'U':
-            return narray.tolist()
         return narray
 
-    @_deprecate_positional_args(allowed=['data', 'name'])
-    def set_array(self: Self, data: ArrayLike[float], name: str, deep_copy: bool = False) -> None:  # noqa: FBT001, FBT002
+    def set_array(
+        self: Self, data: ArrayLike[float], name: str, *, deep_copy: bool = False
+    ) -> None:
         """Add an array to this object.
 
         Use this method when adding arrays to the DataSet.  If
@@ -554,6 +542,11 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         * :attr:`active_vectors_name`
         * :attr:`active_normals_name`
         * :attr:`active_texture_coordinates_name`
+
+        .. deprecated:: 0.50
+            Setting a scalar is deprecated. Broadcast the value with
+            :func:`numpy.full` to set point or cell data, or use
+            :attr:`~pyvista.DataObject.user_dict` to store scalar metadata.
 
         Parameters
         ----------
@@ -607,12 +600,12 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         self.VTKObject.AddArray(vtk_arr)
         self.VTKObject.Modified()
 
-    @_deprecate_positional_args(allowed=['scalars', 'name'])
     def set_scalars(
         self: Self,
         scalars: ArrayLike[float],
         name: str = 'scalars',
-        deep_copy: bool = False,  # noqa: FBT001, FBT002
+        *,
+        deep_copy: bool = False,
     ) -> None:
         """Set the active scalars of the dataset with an array.
 
@@ -665,12 +658,12 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         self.VTKObject.SetScalars(vtk_arr)
         self.VTKObject.Modified()
 
-    @_deprecate_positional_args(allowed=['vectors', 'name'])
     def set_vectors(
         self: Self,
         vectors: MatrixLike[float],
         name: str,
-        deep_copy: bool = False,  # noqa: FBT001, FBT002
+        *,
+        deep_copy: bool = False,
     ) -> None:
         """Set the active vectors of this data attribute.
 
@@ -775,26 +768,21 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         else:
             array_len = 1 if data.ndim == 0 else data.shape[0]
 
-        if data.ndim == 0 and data.dtype.kind == 'U':  # np.str_
-            pass  # Do not reshape string scalars
-        else:
-            # Fixup input array length for scalar input
-            if data.ndim == 0:
-                tmparray = np.empty(array_len, dtype=data.dtype)
-                tmparray.fill(data)
-                data = tmparray
-            if data.shape[0] != array_len:
-                msg = (
-                    f"Invalid array shape. Array '{name}' has length ({data.shape[0]}) "
-                    f'but a length of ({array_len}) was expected.'
-                )
-                raise ValueError(msg)
-            if any(data.shape) and data.size == 0:
-                msg = (
-                    f'Invalid array shape. Empty arrays are not allowed. '
-                    f"Array '{name}' cannot have shape {data.shape}."
-                )
-                raise ValueError(msg)
+        if data.ndim == 0:
+            _warn_scalar_array(name, association)
+            data = np.full(array_len, data)
+        if data.shape[0] != array_len:
+            msg = (
+                f"Invalid array shape. Array '{name}' has length ({data.shape[0]}) "
+                f'but a length of ({array_len}) was expected.'
+            )
+            raise ValueError(msg)
+        if any(data.shape) and data.size == 0:
+            msg = (
+                f'Invalid array shape. Empty arrays are not allowed. '
+                f"Array '{name}' cannot have shape {data.shape}."
+            )
+            raise ValueError(msg)
         # attempt to reuse the existing pointer to underlying VTK data
         if isinstance(data, pyvista_ndarray):
             # pyvista_ndarray already contains the reference to the vtk object
@@ -1214,11 +1202,11 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         for array_name in self.keys():
             self.remove(key=array_name)
 
-    @_deprecate_positional_args(allowed=['array_dict'])
     def update(
         self: Self,
         array_dict: dict[str, NumpyArray[float]] | DataSetAttributes,
-        copy: bool = True,  # noqa: FBT001, FBT002
+        *,
+        copy: bool = True,
     ) -> None:
         """Update arrays in this object from another dictionary or dataset attributes.
 
