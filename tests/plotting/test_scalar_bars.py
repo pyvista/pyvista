@@ -225,6 +225,27 @@ def test_labels_centered_with_translucent_actor(sphere):
     pl.show()
 
 
+@pytest.mark.usefixtures('verify_image_cache')
+def test_ticks(sphere):
+    sphere[KEY] = sphere.points[:, 2]
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    scalar_bar = pl.add_scalar_bar(
+        KEY,
+        ticks=[-100, 25, 110],
+        fmt='%.0f',
+        width=0.8,
+        height=0.3,
+        position_x=0.1,
+        position_y=0.05,
+        label_font_size=40,
+        title_font_size=40,
+    )
+    assert scalar_bar.GetUseCustomLabels()
+    assert list(pv.convert_array(scalar_bar.GetCustomLabels())) == [-100.0, 25.0, 110.0]
+    pl.show()
+
+
 def test_too_many_scalar_bars():
     pl = pv.Plotter()
     with pytest.raises(RuntimeError, match='Maximum number of color'):  # noqa: PT012
