@@ -884,7 +884,13 @@ def _load_and_merge(files: Sequence[_SingleFile]) -> DatasetObject:
     if len(loaded) == 0:
         msg = 'No loadable files were found to merge.'
         raise ValueError(msg)
-    return pv.merge(loaded)
+    datasets: list[pv.DataSet] = []
+    for dataset in loaded:
+        if not isinstance(dataset, pv.DataSet):
+            msg = f'Only DataSet objects can be merged. Got {type(dataset)}.'
+            raise TypeError(msg)
+        datasets.append(dataset)
+    return pv.merge(datasets)
 
 
 def _get_file_or_folder_size(filepath: str) -> int:

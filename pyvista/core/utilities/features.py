@@ -5,6 +5,9 @@ from __future__ import annotations
 from collections.abc import Sequence
 import os
 import sys
+from typing import TYPE_CHECKING
+from typing import NoReturn
+from typing import cast
 import warnings
 
 import numpy as np
@@ -14,8 +17,19 @@ from pyvista import _vtk
 from pyvista.core.errors import DeprecationError
 from pyvista.core.utilities.helpers import wrap
 
+if TYPE_CHECKING:
+    from pyvista import DataSet
+    from pyvista import ImageData
+    from pyvista import StructuredGrid
+    from pyvista import UnstructuredGrid
+    from pyvista.core._typing_core import ArrayLike
+    from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import VectorLike
 
-def _padded_bins(mesh, density):
+
+def _padded_bins(
+    mesh: DataSet, density: NumpyArray[float] | Sequence[float]
+) -> list[NumpyArray[float]]:
     """Construct bin edges for voxelization.
 
     Parameters
@@ -47,13 +61,13 @@ def _padded_bins(mesh, density):
 
 
 def voxelize(
-    mesh,  # noqa: ARG001
+    mesh: DataSet,  # noqa: ARG001
     *,
-    density=None,  # noqa: ARG001
+    density: float | VectorLike[float] | None = None,  # noqa: ARG001
     check_surface: bool = True,  # noqa: ARG001
     enclosed: bool = False,  # noqa: ARG001
     fit_bounds: bool = False,  # noqa: ARG001
-):
+) -> NoReturn:
     """Voxelize mesh to UnstructuredGrid.
 
     .. deprecated:: 0.46
@@ -161,13 +175,13 @@ def voxelize(
 
 
 def _voxelize_legacy(
-    mesh,
+    mesh: DataSet | _vtk.vtkDataSet,
     *,
-    density=None,
+    density: float | NumpyArray[float] | Sequence[float] | None = None,
     check_surface: bool = True,
     enclosed: bool = False,
     fit_bounds: bool = False,
-):
+) -> UnstructuredGrid:
     """Voxelize mesh to UnstructuredGrid.
 
     The public :func:`~pyvista.voxelize` function is deprecated but we need to keep it for
@@ -183,7 +197,7 @@ def _voxelize_legacy(
     elif isinstance(density, (Sequence, np.ndarray)):
         density_x, density_y, density_z = density
     else:
-        msg = f'Invalid density {density!r}, expected number or array-like.'
+        msg = f'Invalid density {density!r}, expected number or array-like.'  # type: ignore[unreachable]
         raise TypeError(msg)
 
     # check and pre-process input mesh
@@ -215,9 +229,9 @@ def _voxelize_legacy(
             y = np.linspace(y_min, y_max, nof_voxels_y + 1)
             z = np.linspace(z_min, z_max, nof_voxels_z + 1)
         else:
-            x = np.arange(x_min, x_max, density_x)  # type: ignore[arg-type]
-            y = np.arange(y_min, y_max, density_y)  # type: ignore[arg-type]
-            z = np.arange(z_min, z_max, density_z)  # type: ignore[arg-type]
+            x = np.arange(x_min, x_max, density_x)
+            y = np.arange(y_min, y_max, density_y)
+            z = np.arange(z_min, z_max, density_z)
 
     x, y, z = np.meshgrid(x, y, z, indexing='ij')
     # indexing='ij' is used here in order to make grid and ugrid with x-y-z ordering,
@@ -252,13 +266,13 @@ def _voxelize_legacy(
 
 
 def voxelize_volume(
-    mesh,  # noqa: ARG001
+    mesh: DataSet,  # noqa: ARG001
     *,
-    density=None,  # noqa: ARG001
+    density: float | VectorLike[float] | None = None,  # noqa: ARG001
     check_surface: bool = True,  # noqa: ARG001
     enclosed: bool = False,  # noqa: ARG001
     fit_bounds: bool = False,  # noqa: ARG001
-):
+) -> NoReturn:
     """Voxelize mesh to create a RectilinearGrid voxel volume.
 
     Creates a voxel volume that encloses the input mesh and discretizes the cells
@@ -392,7 +406,9 @@ def voxelize_volume(
     raise DeprecationError(msg)
 
 
-def create_grid(dataset, dimensions=(101, 101, 101)):
+def create_grid(
+    dataset: DataSet, dimensions: VectorLike[int] | None = (101, 101, 101)
+) -> ImageData:
     """Create a uniform grid surrounding the given dataset.
 
     The output grid will have the specified dimensions and is commonly used
@@ -438,7 +454,9 @@ def create_grid(dataset, dimensions=(101, 101, 101)):
     return image
 
 
-def grid_from_sph_coords(theta, phi, r):
+def grid_from_sph_coords(
+    theta: VectorLike[float], phi: VectorLike[float], r: VectorLike[float]
+) -> StructuredGrid:
     """Create a structured grid from arrays of spherical coordinates.
 
     Parameters
@@ -474,7 +492,15 @@ def grid_from_sph_coords(theta, phi, r):
     return pv.StructuredGrid(x_cart, y_cart, z_cart)
 
 
-def transform_vectors_sph_to_cart(*, theta, phi, r, u, v, w):  # numpydoc ignore=RT02
+def transform_vectors_sph_to_cart(  # numpydoc ignore=RT02
+    *,
+    theta: VectorLike[float],
+    phi: VectorLike[float],
+    r: VectorLike[float],
+    u: ArrayLike[float],
+    v: ArrayLike[float],
+    w: ArrayLike[float],
+) -> tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float]]:
     """Transform vectors from spherical (r, phi, theta) to Cartesian coordinates (z, y, x).
 
     Note the "reverse" order of arrays's axes, commonly used in geosciences.
@@ -512,7 +538,9 @@ def transform_vectors_sph_to_cart(*, theta, phi, r, u, v, w):  # numpydoc ignore
     return u_t, v_t, w_t
 
 
-def cartesian_to_spherical(x, y, z):
+def cartesian_to_spherical(
+    x: NumpyArray[float], y: NumpyArray[float], z: NumpyArray[float]
+) -> tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float]]:
     """Convert 3D Cartesian coordinates to spherical coordinates.
 
     Parameters
@@ -550,19 +578,21 @@ def cartesian_to_spherical(x, y, z):
     return r, phi, theta
 
 
-def spherical_to_cartesian(r, phi, theta):
+def spherical_to_cartesian(
+    r: ArrayLike[float], phi: ArrayLike[float], theta: ArrayLike[float]
+) -> tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float]]:
     """Convert Spherical coordinates to 3D Cartesian coordinates.
 
     Parameters
     ----------
-    r : numpy.ndarray
+    r : array_like[float]
         Radial distance.
 
-    phi : numpy.ndarray
+    phi : array_like[float]
         Angle (radians) with respect to the polar axis. Also known
         as polar angle.
 
-    theta : numpy.ndarray
+    theta : array_like[float]
         Angle (radians) of rotation from the initial meridian plane.
         Also known as azimuthal angle.
 
@@ -580,12 +610,12 @@ def spherical_to_cartesian(r, phi, theta):
 
 
 def merge(
-    datasets,
+    datasets: Sequence[DataSet],
     *,
     merge_points: bool = True,
     main_has_priority: bool | None = None,
     progress_bar: bool = False,
-):
+) -> DataSet:
     """Merge several datasets.
 
     .. note::
@@ -645,7 +675,7 @@ def merge(
 
     """
     if not isinstance(datasets, Sequence):
-        msg = f'Expected a sequence, got {type(datasets).__name__}'
+        msg = f'Expected a sequence, got {type(datasets).__name__}'  # type: ignore[unreachable]
         raise TypeError(msg)
 
     if len(datasets) < 1:
@@ -654,7 +684,9 @@ def merge(
 
     for i, dataset in enumerate(datasets):
         if not isinstance(dataset, pv.DataSet):
-            msg = f'Expected pyvista.DataSet, not {type(dataset).__name__} at index {i}'
+            msg = (  # type: ignore[unreachable]
+                f'Expected pyvista.DataSet, not {type(dataset).__name__} at index {i}'
+            )
             raise TypeError(msg)
 
     return datasets[0].merge(
@@ -665,7 +697,9 @@ def merge(
     )
 
 
-def perlin_noise(amplitude, freq: Sequence[float], phase: Sequence[float]):
+def perlin_noise(
+    amplitude: float, freq: Sequence[float], phase: Sequence[float]
+) -> _vtk.vtkPerlinNoise:
     """Return the implicit function that implements Perlin noise.
 
     Uses :vtk:`vtkPerlinNoise` and computes a Perlin noise field as
@@ -741,7 +775,7 @@ def sample_function(
     scalar_arr_name: str = 'scalars',
     normal_arr_name: str = 'normals',
     progress_bar: bool = False,
-):
+) -> ImageData:
     """Sample an implicit function over a structured point set.
 
     Uses :vtk:`vtkSampleFunction`
@@ -870,4 +904,4 @@ def sample_function(
         raise ValueError(msg)
 
     _update_alg(samp, progress_bar=progress_bar, message='Sampling')
-    return wrap(samp.GetOutput())
+    return cast('ImageData', wrap(samp.GetOutput()))

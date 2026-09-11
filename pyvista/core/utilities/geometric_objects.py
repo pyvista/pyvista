@@ -696,6 +696,7 @@ def StructuredSphere(
     """
     r = _validation.validate_arrayN(
         radius,
+        dtype_out=float,
         must_be_in_range=[0.0, np.inf],
         strict_lower_bound=True,
         must_be_sorted={'ascending': True, 'strict': True},
