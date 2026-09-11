@@ -34,6 +34,7 @@ from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 
 if TYPE_CHECKING:
+    from pyvista import DataSet
     from pyvista import PolyData
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
@@ -437,7 +438,7 @@ class PolyDataFilters(DataSetFilters):
         inplace: bool = False,
         main_has_priority: bool | None = None,
         progress_bar: bool = False,
-    ):
+    ) -> PolyData:
         """Merge this mesh with one or more datasets.
 
         .. note::
@@ -540,7 +541,7 @@ class PolyDataFilters(DataSetFilters):
             msg = 'In-place merge requires both input datasets to be PolyData.'
             raise TypeError(msg)
 
-        merged = DataSetFilters.merge(
+        merged: DataSet = DataSetFilters.merge(
             self,
             dataset,
             merge_points=merge_points,
@@ -596,7 +597,7 @@ class PolyDataFilters(DataSetFilters):
             self.deep_copy(merged)
             return self
 
-        return merged
+        return cast('PolyData', merged)
 
     def intersection(
         self,

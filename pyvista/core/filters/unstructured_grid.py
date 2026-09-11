@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import cast
 
 import numpy as np
 
@@ -234,9 +235,11 @@ class UnstructuredGridFilters(DataSetFilters):
         cell_array.InsertNextCell(1)
 
         # Extract all the cells, except for the dummy cell
-        out = out.extract_cells(np.arange(self.n_cells), pass_point_ids=False, pass_cell_ids=False)
+        extracted = out.extract_cells(
+            np.arange(self.n_cells), pass_point_ids=False, pass_cell_ids=False
+        )
 
         if inplace:
-            self.copy_from(out)
+            self.copy_from(extracted)
             return self
-        return out
+        return cast('_UnstructuredGridType', extracted)
