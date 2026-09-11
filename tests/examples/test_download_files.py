@@ -227,6 +227,17 @@ def test_download_cow_head():
     assert data.n_cells
 
 
+def test_download_procedural_cow():
+    filename = examples.download_procedural_cow(load=False)
+    assert (path := Path(filename)).is_file()
+    assert path.suffix == '.pv'
+
+    mesh = examples.download_procedural_cow()
+    assert isinstance(mesh, pv.PolyData)
+    assert mesh.n_cells == 300_000
+    assert mesh.active_scalars_name == 'RGB'
+
+
 def test_download_knee_full():
     data = examples.download_knee_full()
     assert data.n_cells
