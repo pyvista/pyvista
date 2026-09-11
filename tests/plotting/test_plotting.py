@@ -90,15 +90,11 @@ class _Lazy:
         return self._answer
 
 
-# Mesa opengl is always used on Windows CI. The Windows check comes first, so the
-# renderer is never probed on a platform whose answer cannot matter.
+# Mesa opengl is always used on Windows CI, so the Windows skip is the Mesa skip there.
 skip_mesa = pytest.mark.skipif(
     _Lazy(using_mesa), reason='Does not display correctly within OSMesa'
 )
-skip_windows_mesa = pytest.mark.skipif(
-    _Lazy(lambda: os.name == 'nt' and using_mesa()),
-    reason='Does not display correctly within OSMesa on Windows',
-)
+skip_windows_mesa = pytest.mark.skip_windows('Does not display correctly within OSMesa on Windows')
 skip_lesser_9_4_X = pytest.mark.needs_vtk_version(  # noqa: N816
     9, 4, reason='Functions not implemented before 9.4.X or invalid results prior'
 )
