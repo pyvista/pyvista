@@ -358,6 +358,33 @@ def test_raise_unsupported(pointset):
         pointset.cell_validator()
 
     with pytest.raises(PointSetCellOperationError):
+        pointset.extract_cells([0])
+
+    with pytest.raises(PointSetCellOperationError):
+        pointset.extract_cells_by_type([pv.CellType.VERTEX])
+
+    with pytest.raises(PointSetCellOperationError):
+        pointset.surface_indices()
+
+    with pytest.raises(PointSetCellOperationError):
+        pointset.partition(2)
+
+    with pytest.raises(PointSetCellOperationError):
+        pointset.remove_nan_cells()
+
+    with pytest.raises(PointSetCellOperationError):
+        pointset.compute_boundary_mesh_quality()
+
+    with pytest.raises(PointSetCellOperationError):
+        pointset.voxelize()
+
+    with pytest.raises(PointSetCellOperationError):
+        pointset.voxelize_binary_mask()
+
+    with pytest.raises(PointSetCellOperationError):
+        pointset.voxelize_rectilinear()
+
+    with pytest.raises(PointSetCellOperationError):
         pointset.extract_all_edges()
 
     with pytest.raises(PointSetCellOperationError):

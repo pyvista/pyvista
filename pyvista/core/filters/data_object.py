@@ -6206,6 +6206,8 @@ class _Crinkler:
             def extract_cells_from_block(  # noqa: PLR0917
                 block_, clipped_a, clipped_b, active_scalars_info_
             ):
+                if _Crinkler.CELL_IDS not in clipped_a.cell_data.keys():
+                    return clipped_a, clipped_b
                 mask_a = clipped_cell_mask(block_, clipped_a)
                 mask_b = clipped_cell_mask(block_, clipped_b) & ~mask_a
                 clipped_a = _Crinkler._extract_cells(block_, mask_a, active_scalars_info_)

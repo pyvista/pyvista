@@ -1588,7 +1588,7 @@ class DataSetFilters(DataObjectFilters):
         alg.SetSampleDimensions(list(dimensions_))
         message = 'Splatting Points with Gaussian Distribution'
         _update_alg(alg, progress_bar=progress_bar, message=message)
-        return _get_output(alg)
+        return _get_output(alg, keep_pointset=False)
 
     def extract_geometry(  # type: ignore[misc]
         self: _DataSetType,
@@ -3155,7 +3155,7 @@ class DataSetFilters(DataObjectFilters):
 
         """
         alg = _vtk.vtkDelaunay3D()
-        alg.SetInputData(self)
+        alg.SetInputData(self.cast_to_unstructured_grid() if isinstance(self, pv.Grid) else self)
         alg.SetAlpha(alpha)
         alg.SetTolerance(tol)
         alg.SetOffset(offset)
@@ -3908,7 +3908,7 @@ class DataSetFilters(DataObjectFilters):
 
         # run the algorithm
         _update_alg(alg, progress_bar=progress_bar, message='Generating Streamlines')
-        return _get_output(alg)
+        return _get_output(alg, keep_pointset=False)
 
     def streamlines_evenly_spaced_2D(  # type: ignore[misc]  # noqa: N802
         self: _DataSetType,
@@ -4096,7 +4096,7 @@ class DataSetFilters(DataObjectFilters):
             progress_bar=progress_bar,
             message='Generating Evenly Spaced Streamlines on a 2D Dataset',
         )
-        return _get_output(alg)
+        return _get_output(alg, keep_pointset=False)
 
     def decimate_boundary(  # type: ignore[misc]
         self: _DataSetType,
@@ -6260,7 +6260,11 @@ class DataSetFilters(DataObjectFilters):
         # Create a second mesh with points. This is required for the merge
         # to work correctly. Additional points are not required for PolyData inputs
         other_points = None if isinstance(self, pv.PolyData) else self.points
-        other_mesh = pv.PolyData(other_points)
+        other_mesh = (
+            pv.PointSet(other_points)
+            if isinstance(self, pv.PointSet)
+            else pv.PolyData(other_points)
+        )
         return self.merge(
             other_mesh,
             merge_points=True,
@@ -6404,7 +6408,14 @@ class DataSetFilters(DataObjectFilters):
             append_filter.AddInputData(self)
 
         _update_alg(append_filter, progress_bar=progress_bar, message='Merging')
-        merged = _get_output(append_filter)
+        merged = _get_output(append_filter, keep_pointset=False)
+        # Only a merge of point clouds is still a point cloud
+        if isinstance(self, pv.PointSet):
+            others = (
+                [] if grid is None else [grid] if isinstance(grid, _vtk.vtkDataSet) else list(grid)
+            )
+            if all(isinstance(other, pv.PointSet) for other in others):
+                merged = merged.cast_to_pointset()
 
         if not vtk_at_least_95:
             # Update field data
@@ -6493,7 +6504,9 @@ class DataSetFilters(DataObjectFilters):
 
         """
         alg = _vtk.vtkBoundaryMeshQuality()
-        alg.SetInputData(self)
+        alg.SetInputData(
+            self.cast_to_unstructured_grid() if isinstance(self, pv.PolyData) else self
+        )
         _update_alg(alg, progress_bar=progress_bar, message='Compute Boundary Mesh Quality')
         return _get_output(alg)
 
@@ -6780,7 +6793,7 @@ class DataSetFilters(DataObjectFilters):
         alg.SetInputData(self)
         alg.SetDivideAllCellDataByVolume(False)
         _update_alg(alg, progress_bar=progress_bar, message='Integrating Variables')
-        return _get_output(alg)
+        return _get_output(alg, keep_pointset=False)
 
     def partition(  # type: ignore[misc]
         self: _DataSetType,
