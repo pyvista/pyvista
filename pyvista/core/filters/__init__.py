@@ -28,6 +28,7 @@ from __future__ import annotations
 import contextlib
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import TypeVar
 from typing import cast
 
 import numpy as np
@@ -211,7 +212,12 @@ def _match_points_dtype(
     _enforce_points_dtype(mesh_out, _points_dtype(mesh_in), algorithm=algorithm)
 
 
-def _apply_points_dtype(mesh: Any, *, algorithm: _vtk.vtkAlgorithm | str | None = None) -> Any:
+_MeshT = TypeVar('_MeshT')
+
+
+def _apply_points_dtype(
+    mesh: _MeshT, *, algorithm: _vtk.vtkAlgorithm | str | None = None
+) -> _MeshT:
     """Apply the configured dtype to a mesh wrapped without ``_get_output``."""
     _enforce_points_dtype(mesh, _points_dtype(), algorithm=algorithm)
     return mesh
