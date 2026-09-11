@@ -788,14 +788,14 @@ class PolyDataFilters(DataSetFilters):
         kwargs.setdefault('scalar_bar_args', {'title': f'{curv_type.capitalize()} Curvature'})
         return self.plot(scalars=self.curvature(curv_type), **kwargs)  # type: ignore[attr-defined]
 
-    def triangulate(
+    def triangulate(  # type: ignore[override]
         self,
         *,
         pass_verts: bool = False,
         pass_lines: bool = False,
         inplace: bool = False,
         progress_bar: bool = False,
-    ):
+    ) -> PolyData:
         """Return an all triangle mesh.
 
         More complex polygons will be broken down into triangles.
@@ -847,7 +847,7 @@ class PolyDataFilters(DataSetFilters):
         mesh = _get_output(trifilter)
         if inplace:
             self.copy_from(mesh, deep=False)  # type: ignore[attr-defined]
-            return self
+            return cast('PolyData', self)
         return mesh
 
     def smooth(
