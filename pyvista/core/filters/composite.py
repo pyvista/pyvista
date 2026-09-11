@@ -318,8 +318,7 @@ class CompositeFilters(DataObjectFilters):
             alg.AddInputData(single_block)
             n_inputs += 1
         if n_inputs == 0:
-            # The filter has no input to run on, and the other composite filters
-            # give back an empty mesh here rather than failing
+            # Nothing to append, so give back an empty grid
             return pv.UnstructuredGrid()
         alg.SetMergePoints(merge_points)
         alg.SetTolerance(tolerance)
