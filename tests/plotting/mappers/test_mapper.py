@@ -199,6 +199,16 @@ def test_set_scalars_categories_short_cmap():
         mapper.set_scalars(mesh['labels'], 'labels', categories=True, cmap=['r', 'g', 'b'])
 
 
+def test_set_scalars_categories_keeps_clim():
+    mesh = pv.RectilinearGrid([0.0, 1.0, 2.0, 3.0], [0.0, 1.0], [0.0])
+    mesh['labels'] = [0.0, 5.0, 10.0]
+    mapper = DataSetMapper(mesh)
+    mapper.set_scalars(mesh['labels'], 'labels', categories=True, clim=(0, 100))
+    assert mapper.scalar_range == (0.0, 100.0)
+    colors = {mapper.lookup_table.map_value(value)[:3] for value in (0, 5, 10)}
+    assert len(colors) == 3
+
+
 def test_set_scalars_categories_uneven_spacing():
     mesh = pv.RectilinearGrid([0.0, 1.0, 2.0, 3.0], [0.0, 1.0], [0.0])
     mesh['labels'] = [0.1, 0.33, 0.7]
