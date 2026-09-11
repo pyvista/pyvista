@@ -43,6 +43,7 @@ def _reset_entry_point_state(monkeypatch, eps):
     monkeypatch.setattr(_reg_mod, '_entry_points_loaded', False)
     _reg_mod._pending_components.clear()
     _reg_mod._failed_components.clear()
+    _reg_mod._resolving_components.clear()
     monkeypatch.setattr(
         'pyvista.plotting.component_registry.entry_points',
         lambda **_: eps,
@@ -709,6 +710,96 @@ def test_save_restore_round_trip_preserves_failed(monkeypatch):
     _reg_mod._restore_registry_state(state)
     assert _reg_mod._failed_components == {}
     assert 'broken' in _reg_mod._pending_component_names()
+
+
+def test_plugin_querying_registry_during_its_own_import(monkeypatch):
+    """A plugin module that calls ``registered_plotter_components()`` while
+    it is still being imported re-enters resolution for its own
+    still-pending name, and must resolve without raising."""
+    plugin_name = 'reentrant_pc_module'
+    body = (
+        'import pyvista as pv\n'
+        'pv.registered_plotter_components()\n'
+        "@pv.register_plotter_component('ep_reentrant')\n"
+        'class EpReentrantComponent:\n'
+        '    def __init__(self, plotter):\n'
+        '        self._plotter = plotter\n'
+        '    def value(self):\n'
+        '        return 42\n'
+    )
+    compiled = compile(body, f'<fake {plugin_name}>', 'exec')
+
+    def _import(module_path):
+        """Mimic ``import_module``: a re-entrant import returns the partial module."""
+        cached = sys.modules.get(module_path)
+        if cached is not None:
+            return cached
+        module = ModuleType(module_path)
+        module.__file__ = f'<fake {module_path}>'
+        sys.modules[module_path] = module
+        exec(compiled, module.__dict__)  # noqa: S102
+        return module
+
+    ep = MagicMock()
+    ep.name = 'ep_reentrant'
+    ep.value = plugin_name
+
+    _reset_entry_point_state(monkeypatch, [ep])
+    monkeypatch.setattr('pyvista.plotting.component_registry.import_module', _import)
+
+    try:
+        assert pv.Plotter().ep_reentrant.value() == 42
+        assert _reg_mod._pending_components == {}
+        assert _reg_mod._resolving_components == set()
+    finally:
+        with contextlib.suppress(ValueError):
+            pv.unregister_plotter_component('ep_reentrant')
+        sys.modules.pop(plugin_name, None)
+
+
+def test_failed_plugin_that_accessed_itself_stays_pending(monkeypatch):
+    """A plugin whose body reaches its own component and then fails to
+    import stays pending, so ``registered_plotter_components()`` retries it."""
+    plugin_name = 'self_then_fail_pc_module'
+    body = (
+        'import contextlib\n'
+        'import pyvista as pv\n'
+        'with contextlib.suppress(AttributeError):\n'
+        '    pv.Plotter().ep_self_fail\n'
+        "raise ImportError('missing dep')\n"
+    )
+    compiled = compile(body, f'<fake {plugin_name}>', 'exec')
+
+    def _import(module_path):
+        """Mimic ``import_module``, including its cleanup when the body raises."""
+        cached = sys.modules.get(module_path)
+        if cached is not None:
+            return cached
+        module = ModuleType(module_path)
+        module.__file__ = f'<fake {module_path}>'
+        sys.modules[module_path] = module
+        try:
+            exec(compiled, module.__dict__)  # noqa: S102
+        except BaseException:
+            del sys.modules[module_path]
+            raise
+        return module
+
+    ep = MagicMock()
+    ep.name = 'ep_self_fail'
+    ep.value = plugin_name
+
+    _reset_entry_point_state(monkeypatch, [ep])
+    monkeypatch.setattr('pyvista.plotting.component_registry.import_module', _import)
+
+    try:
+        with pytest.warns(UserWarning, match='entry point "ep_self_fail"'):
+            with pytest.raises(AttributeError, match='missing dep'):
+                _ = pv.Plotter().ep_self_fail
+        assert _reg_mod._pending_components == {'ep_self_fail': plugin_name}
+        assert _reg_mod._resolving_components == set()
+    finally:
+        sys.modules.pop(plugin_name, None)
 
 
 def test_decorator_wins_over_pending_entry_point(monkeypatch):

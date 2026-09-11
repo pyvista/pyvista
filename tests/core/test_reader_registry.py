@@ -223,6 +223,62 @@ def test_broken_plugin_warns_once_and_stays_pending():
     assert list(_reg_mod._failed_ext_readers) == ['.broken']
 
 
+def test_failed_plugin_still_falls_back_to_the_optional_companion():
+    """A broken plugin claiming an extension an optional companion package
+    also serves must not block the companion on later lookups."""
+    _reg_mod._entry_points_loaded = False
+
+    def _companion(_path, **__):
+        """Handler the optional companion package would supply."""
+        return pv.Sphere()
+
+    broken = MagicMock()
+    broken.name = '.pv'
+    broken.value = 'package:broken'
+    broken.load.side_effect = RuntimeError('broken plugin')
+
+    with (
+        patch('pyvista.core.utilities.reader_registry.entry_points', return_value=[broken]),
+        patch(
+            'pyvista.core.utilities.reader_registry._resolve_optional_reader',
+            side_effect=lambda ext: _reg_mod._custom_ext_readers.__setitem__(ext, _companion),
+        ),
+    ):
+        with pytest.warns(UserWarning, match='Failed to load'):
+            assert _reg_mod._get_ext_handler('.pv') is _companion
+        assert _reg_mod._get_ext_handler('.pv') is _companion
+
+
+def test_plugin_querying_the_registry_during_its_own_load():
+    """A reader plugin that reaches back into the registry while it is
+    still loading resolves without a spurious failure."""
+    _reg_mod._entry_points_loaded = False
+
+    def _plugin_reader(_path, **__):
+        """Stand-in reader supplied by the plugin."""
+        return pv.Sphere()
+
+    def _loader():
+        """Query the registry from inside the plugin's own import."""
+        _reg_mod._resolve_pending_reader('.reentrant')
+        return _plugin_reader
+
+    ep = MagicMock()
+    ep.name = '.reentrant'
+    ep.value = 'package:reentrant'
+    ep.load = _loader
+
+    with patch('pyvista.core.utilities.reader_registry.entry_points', return_value=[ep]):
+        with warnings.catch_warnings(record=True) as captured:
+            warnings.simplefilter('always')
+            assert _reg_mod._get_ext_handler('.reentrant') is _plugin_reader
+        assert [w for w in captured if 'Failed to load' in str(w.message)] == []
+
+    assert _reg_mod._failed_ext_readers == {}
+    assert '.reentrant' not in _reg_mod._pending_ext_readers
+    assert _reg_mod._resolving_ext_readers == set()
+
+
 def test_registered_readers_retries_a_recovered_plugin():
     """``registered_readers()`` retries a failed plugin, so a reader whose
     dependency arrives later becomes available."""

@@ -153,6 +153,7 @@ _override_ext_readers: set[str] = set()
 # plugin import cost.
 _pending_ext_readers: dict[str, list[EntryPoint]] = {}
 _failed_ext_readers: dict[str, str] = {}
+_resolving_ext_readers: set[str] = set()
 _entry_points_loaded: bool = False
 _temp_files: list[str] = []
 _temp_dirs: list[str] = []
@@ -515,8 +516,7 @@ def _resolve_ext(ext: str) -> None:
     if ext in _custom_ext_readers or ext in _custom_class_readers:
         return
     _ensure_entry_points()
-    if ext in _pending_ext_readers:
-        _resolve_pending_reader(ext)
+    if ext in _pending_ext_readers and _resolve_pending_reader(ext):
         return
     _resolve_optional_reader(ext)
 
@@ -620,8 +620,9 @@ def _resolve_pending_reader(ext: str) -> bool:
     if ext in CLASS_READERS and ext not in _override_ext_readers:
         # The entry survives, so a second read raises too.
         raise ValueError(_undeclared_override_message(ext, winner))
-    if ext in _failed_ext_readers:
+    if ext in _failed_ext_readers or ext in _resolving_ext_readers:
         return False
+    _resolving_ext_readers.add(ext)
     try:
         # ep.load() runs third-party import machinery—it can raise
         # literally anything. Convert to a warning so one broken plugin
@@ -632,7 +633,9 @@ def _resolve_pending_reader(ext: str) -> bool:
         _failed_ext_readers[ext] = msg
         warn_external(msg)
         return False
-    del _pending_ext_readers[ext]
+    finally:
+        _resolving_ext_readers.discard(ext)
+    _pending_ext_readers.pop(ext, None)
     if _is_reader_class(handler):
         _custom_class_readers[ext] = handler
     else:

@@ -213,6 +213,53 @@ def test_broken_plugin_warns_once_and_stays_pending():
     assert broken.load.call_count == 1
     assert '.broken' in _reg_mod._pending_ext_writers
     assert list(_reg_mod._failed_ext_writers) == ['.broken']
+    assert '.broken' not in _reg_mod._list_custom_exts()
+
+
+def test_failed_writer_is_not_offered_in_the_invalid_extension_message():
+    """The error for an unsupported extension must not list the extension
+    it just refused."""
+    broken = MagicMock()
+    broken.name = '.broken'
+    broken.value = 'package:broken'
+    broken.load.side_effect = RuntimeError('broken plugin')
+
+    with patch('pyvista.core.utilities.writer_registry.entry_points', return_value=[broken]):
+        with pytest.warns(UserWarning, match='Failed to load'):
+            assert _reg_mod._get_ext_handler('.broken') is None
+        with pytest.raises(ValueError, match='Invalid file extension') as excinfo:
+            pv.Sphere().save('mesh.broken')
+
+    assert '.broken' not in str(excinfo.value).split('Must be one of')[1]
+
+
+def test_plugin_querying_the_registry_during_its_own_load():
+    """A writer plugin that reaches back into the registry while it is
+    still loading resolves without a spurious failure."""
+
+    def _plugin_writer(_dataset, path, **__):
+        """Stand-in writer supplied by the plugin."""
+        Path(path).touch()
+
+    def _loader():
+        """Query the registry from inside the plugin's own import."""
+        _reg_mod._resolve_pending_writer('.reentrant')
+        return _plugin_writer
+
+    ep = MagicMock()
+    ep.name = '.reentrant'
+    ep.value = 'package:reentrant'
+    ep.load = _loader
+
+    with patch('pyvista.core.utilities.writer_registry.entry_points', return_value=[ep]):
+        with warnings.catch_warnings(record=True) as captured:
+            warnings.simplefilter('always')
+            assert _reg_mod._get_ext_handler('.reentrant') is _plugin_writer
+        assert [w for w in captured if 'Failed to load' in str(w.message)] == []
+
+    assert _reg_mod._failed_ext_writers == {}
+    assert '.reentrant' not in _reg_mod._pending_ext_writers
+    assert _reg_mod._resolving_ext_writers == set()
 
 
 def test_registered_writers_retries_a_recovered_plugin():

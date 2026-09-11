@@ -80,6 +80,7 @@ _discovered_entry_point_sources: dict[str, str] = {}
 # for built-in themes free of third-party plugin import cost.
 _pending_ep_themes: dict[str, list[EntryPoint]] = {}
 _failed_ep_themes: dict[str, str] = {}
+_resolving_ep_themes: set[str] = set()
 _entry_points_loaded: bool = False
 
 
@@ -408,10 +409,11 @@ def _resolve_pending_theme(name: str) -> bool:
     eps = _pending_ep_themes.get(name)
     if not eps:
         return False
-    if name in _failed_ep_themes:
+    if name in _failed_ep_themes or name in _resolving_ep_themes:
         return False
     winner = eps[0]
     source = winner.value
+    _resolving_ep_themes.add(name)
     try:
         # ep.load() runs third-party import machinery—it can raise
         # literally anything. Convert to a warning so one broken plugin
@@ -425,7 +427,9 @@ def _resolve_pending_theme(name: str) -> bool:
         _failed_ep_themes[name] = msg
         warn_external(msg)
         return False
-    del _pending_ep_themes[name]
+    finally:
+        _resolving_ep_themes.discard(name)
+    _pending_ep_themes.pop(name, None)
 
     if isinstance(loaded, Mapping):
         for theme_name, theme_obj in loaded.items():

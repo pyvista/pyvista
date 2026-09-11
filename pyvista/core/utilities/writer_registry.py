@@ -75,6 +75,7 @@ _custom_ext_writer_sources: dict[str, str] = {}
 # calls for built-in formats free of third-party plugin import cost.
 _pending_ext_writers: dict[str, list[EntryPoint]] = {}
 _failed_ext_writers: dict[str, str] = {}
+_resolving_ext_writers: set[str] = set()
 _entry_points_loaded: bool = False
 _builtin_writer_exts: frozenset[str] | None = None
 
@@ -334,9 +335,10 @@ def _resolve_pending_writer(ext: str) -> bool:
     eps = _pending_ext_writers.get(ext)
     if not eps:
         return False
-    if ext in _failed_ext_writers:
+    if ext in _failed_ext_writers or ext in _resolving_ext_writers:
         return False
     winner = eps[0]
+    _resolving_ext_writers.add(ext)
     try:
         # ep.load() runs third-party import machinery—it can raise
         # literally anything. Convert to a warning so one broken plugin
@@ -347,7 +349,9 @@ def _resolve_pending_writer(ext: str) -> bool:
         _failed_ext_writers[ext] = msg
         warn_external(msg)
         return False
-    del _pending_ext_writers[ext]
+    finally:
+        _resolving_ext_writers.discard(ext)
+    _pending_ext_writers.pop(ext, None)
     _custom_ext_writers[ext] = handler
     _custom_ext_writer_sources[ext] = winner.value
     if len(eps) > 1:
@@ -368,7 +372,9 @@ def _list_custom_exts() -> list[str]:
     imported.
     """
     _ensure_entry_points()
-    return list(_custom_ext_writers.keys() | _pending_ext_writers.keys())
+    return list(
+        _custom_ext_writers.keys() | (_pending_ext_writers.keys() - _failed_ext_writers.keys())
+    )
 
 
 def registered_writers() -> tuple[WriterRegistration, ...]:

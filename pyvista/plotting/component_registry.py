@@ -254,6 +254,7 @@ _prior_values: dict[tuple[type, str], Any] = {}
 _entry_points_loaded: bool = False
 _pending_components: dict[str, str] = {}
 _failed_components: dict[str, str] = {}
+_resolving_components: set[str] = set()
 
 
 def _save_registry_state() -> _ComponentRegistryState:
@@ -658,9 +659,13 @@ def _resolve_pending_component(name: str) -> bool:
     module_path = _pending_components.get(name)
     if module_path is None:
         return False
+    if name in _resolving_components:
+        # The plugin module is still executing, so its component is not attached yet.
+        return False
     failure = _failed_components.get(name)
     if failure is not None:
         raise AttributeError(failure)
+    _resolving_components.add(name)
     try:
         import_module(module_path)
     except Exception as exc:
@@ -671,7 +676,9 @@ def _resolve_pending_component(name: str) -> bool:
         _failed_components[name] = msg
         warn_external(msg)
         raise AttributeError(msg) from exc
-    del _pending_components[name]
+    finally:
+        _resolving_components.discard(name)
+    _pending_components.pop(name, None)
     return True
 
 

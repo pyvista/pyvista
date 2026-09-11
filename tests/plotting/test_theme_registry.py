@@ -371,6 +371,36 @@ def test_registered_themes_retries_a_recovered_plugin():
 
     assert ep.load.call_count == 2
     assert _reg_mod._failed_ep_themes == {}
+    assert 'recovered_theme' not in _reg_mod._pending_ep_themes
+
+
+def test_plugin_querying_the_registry_during_its_own_load():
+    """A theme plugin that reaches back into the registry while it is still
+    loading resolves without a spurious failure."""
+
+    class ReentrantTheme(pv.plotting.themes.Theme):
+        """Theme supplied by a plugin that queries the registry as it loads."""
+
+    def _loader():
+        """Query the registry from inside the plugin's own import."""
+        _reg_mod._resolve_pending_theme('reentrant_theme')
+        return ReentrantTheme
+
+    ep = MagicMock()
+    ep.name = 'reentrant_theme'
+    ep.value = 'pkg:reentrant'
+    ep.load = _loader
+
+    _reg_mod._entry_points_loaded = False
+    with patch('pyvista.plotting.theme_registry.entry_points', return_value=[ep]):
+        with warnings.catch_warnings(record=True) as captured:
+            warnings.simplefilter('always')
+            resolved = _reg_mod._resolve_theme('reentrant_theme')
+        assert [w for w in captured if 'Failed to load' in str(w.message)] == []
+
+    assert isinstance(resolved, ReentrantTheme)
+    assert _reg_mod._failed_ep_themes == {}
+    assert _reg_mod._resolving_ep_themes == set()
 
 
 def test_entry_point_non_theme_warns():
