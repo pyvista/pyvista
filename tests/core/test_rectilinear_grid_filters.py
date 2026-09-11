@@ -50,6 +50,23 @@ def test_to_tetrahedra_mixed_without_cell_scalars_raises(tiny_rectilinear):
         tiny_rectilinear.to_tetrahedra(mixed=True)
 
 
+def test_to_tetrahedra_mixed_sequence_overrides_active_scalars(tiny_rectilinear):
+    tiny_rectilinear.cell_data['other'] = np.full(tiny_rectilinear.n_cells, 5)
+    tet_grid = tiny_rectilinear.to_tetrahedra(mixed=[12] * tiny_rectilinear.n_cells)
+    assert tet_grid.n_cells == tiny_rectilinear.n_cells * 12
+
+
+@pytest.mark.parametrize('mixed', ['other', [12] * 60])
+def test_to_tetrahedra_mixed_does_not_modify_input(tiny_rectilinear, mixed):
+    tiny_rectilinear.cell_data['active'] = np.full(tiny_rectilinear.n_cells, 5)
+    tiny_rectilinear.cell_data.set_array(np.full(tiny_rectilinear.n_cells, 12), 'other')
+
+    tiny_rectilinear.to_tetrahedra(mixed=mixed)
+
+    assert tiny_rectilinear.cell_data.keys() == ['active', 'other']
+    assert tiny_rectilinear.cell_data.active_scalars_name == 'active'
+
+
 def test_to_tetrahedra_edge_case():
     with pytest.raises(RuntimeError, match='is 1'):
         pv.ImageData(dimensions=(1, 2, 2)).to_tetrahedra(tetra_per_cell=12)

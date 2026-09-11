@@ -97,11 +97,16 @@ class RectilinearGridFilters:
         """
         alg = _vtk.vtkRectilinearGridToTetrahedra()
         alg.SetRememberVoxelId(pass_cell_ids or pass_data)
+        # The filter reads 5 or 12 from the active cell scalars, so name the array on a copy
+        mesh = self
         if mixed is not False:
             if isinstance(mixed, str):
-                self.cell_data.active_scalars_name = mixed  # type: ignore[attr-defined]
+                mesh = self.copy(deep=False)  # type: ignore[attr-defined]
+                mesh.cell_data.active_scalars_name = mixed
             elif isinstance(mixed, (np.ndarray, Sequence)):
-                self.cell_data['_MIXED_CELLS_'] = mixed  # type: ignore[attr-defined]
+                mesh = self.copy(deep=False)  # type: ignore[attr-defined]
+                mesh.cell_data['_MIXED_CELLS_'] = mixed
+                mesh.cell_data.active_scalars_name = '_MIXED_CELLS_'
             elif not isinstance(mixed, bool):
                 msg = '`mixed` must be either a sequence of ints or bool'  # type: ignore[unreachable]
                 raise TypeError(msg)
@@ -128,7 +133,7 @@ class RectilinearGridFilters:
 
             alg.SetTetraPerCell(tetra_per_cell)
 
-        alg.SetInputData(self)
+        alg.SetInputData(mesh)
         _update_alg(alg, progress_bar=progress_bar, message='Converting to tetrahedra')
         out = _get_output(alg)
 
