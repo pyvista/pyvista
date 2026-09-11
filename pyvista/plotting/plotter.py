@@ -5419,6 +5419,8 @@ class BasePlotter(_BoundsSizeMixin):
     ) -> None:
         """Update the value range of the active or named scalar bar.
 
+        Every mapper sharing the scalar bar follows the new range.
+
         Parameters
         ----------
         clim : sequence[float]
