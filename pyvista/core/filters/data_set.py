@@ -6485,8 +6485,7 @@ class DataSetFilters(DataObjectFilters):
         Returns
         -------
         pyvista.PolyData
-            Boundary faces of the 3D cells with the computed metrics in
-            ``cell_data`` as the ``"CellQuality"`` array.
+            Boundary faces of the 3D cells, with the computed metrics in ``cell_data``.
 
         Examples
         --------
