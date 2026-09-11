@@ -1681,7 +1681,7 @@ def to_trimesh(  # numpydoc ignore=RT01
         raise ImportError(msg)
 
     # Avoid circular import
-    from pyvista.core.dataobject import USER_DICT_KEY  # noqa: PLC0415
+    from pyvista.core.utilities.arrays import USER_DICT_KEY  # noqa: PLC0415
 
     _validation.check_instance(mesh, pv.DataSet, name='mesh')
 

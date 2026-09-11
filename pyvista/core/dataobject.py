@@ -22,6 +22,7 @@ from .datasetattributes import DataSetAttributes
 from .utilities.accessor_registry import _clear_accessor_cache
 from .utilities.accessor_registry import _pending_accessor_names
 from .utilities.accessor_registry import _resolve_pending_accessor
+from .utilities.arrays import USER_DICT_KEY
 from .utilities.arrays import FieldAssociation
 from .utilities.arrays import _JSONValueType
 from .utilities.arrays import _SerializedDictArray
@@ -54,7 +55,6 @@ if TYPE_CHECKING:
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
-USER_DICT_KEY = '_PYVISTA_USER_DICT'
 
 
 def _raise_unexpected_writer_kwargs(
@@ -144,6 +144,7 @@ class DataObject(
 
         """
         self.ShallowCopy(to_copy)
+        self._sync_user_dict()
 
     def deep_copy(self: Self, to_copy: Self | _vtk.vtkDataObject) -> None:
         """Overwrite this data object with another data object as a deep copy.
@@ -155,6 +156,7 @@ class DataObject(
 
         """
         self.DeepCopy(to_copy)
+        self._sync_user_dict()
 
     def _from_file(self: Self, filename: str | Path, **kwargs) -> None:
         """Read data objects from file."""
@@ -675,6 +677,16 @@ class DataObject(
         To completely remove the user dict string from the dataset's field data,
         set its value to ``None``.
 
+        The returned object belongs to this data object for its lifetime. Writing
+        to it updates this data object, and it reflects field data that is loaded,
+        copied in with :meth:`~pyvista.DataSet.copy_from`, or cleared. Copies and filter outputs
+        start with their own copy of the dict. The field data array is created on
+        the first write.
+
+        .. versionchanged:: 0.50
+            Copies and filter outputs no longer share the dict with their source,
+            and reading ``user_dict`` no longer adds an array to the field data.
+
         .. note::
 
             The user dict is a convenience property intended for metadata storage.
@@ -744,52 +756,45 @@ class DataObject(
         {"name": "ant", "num_legs": 6, "body_parts": ["head", "thorax", "abdomen"]}
 
         """
-        self._config_user_dict()
-        return self._user_dict
+        return self._config_user_dict()
 
     @user_dict.setter
     def user_dict(
         self: Self,
         dict_: dict[str, _JSONValueType] | UserDict[str, _JSONValueType] | None,
     ) -> None:
-        # Setting None removes the field data array
+        user_dict = self._config_user_dict()
         if dict_ is None:
-            if hasattr(self, '_user_dict'):
-                del self._user_dict
-            if USER_DICT_KEY in self.field_data.keys():
-                del self.field_data[USER_DICT_KEY]
+            field_data = self.GetFieldData()
+            if field_data.GetAbstractArray(USER_DICT_KEY) is not None:
+                field_data.RemoveArray(USER_DICT_KEY)
+                field_data.Modified()
+            user_dict._replace(None)
             return
-
-        self._config_user_dict()
-        if isinstance(dict_, dict):
-            self._user_dict.data = dict_
-        elif isinstance(dict_, UserDict):
-            self._user_dict.data = dict_.data
-        else:
+        if isinstance(dict_, UserDict):
+            dict_ = dict_.data
+        if not isinstance(dict_, dict):
             msg = (  # type: ignore[unreachable]
                 f'User dict can only be set with type {dict} or {UserDict}.\n'
                 f'Got {type(dict_)} instead.'
             )
             raise TypeError(msg)
+        user_dict.data = dict_
 
-    def _config_user_dict(self: Self) -> None:
-        """Init serialized dict array and ensure it is added to ``field_data``."""
-        field_data = self.field_data.VTKObject
-        user_dict = getattr(self, '_user_dict', None)
-        array = field_data.GetAbstractArray(USER_DICT_KEY)
-        if array is not None and array is user_dict:
-            return
-        if array is not None:
-            # A loaded or copied array holds the JSON as one value or as one character per value
-            json_str = ''.join(map(array.GetValue, range(array.GetNumberOfValues())))
-            user_dict = _SerializedDictArray(json_str)
-        elif user_dict is None:
-            user_dict = _SerializedDictArray()
-        # Add the array directly so that ``_prepare_array`` does not convert it
-        user_dict.SetName(USER_DICT_KEY)
-        field_data.AddArray(user_dict)
-        field_data.Modified()
-        object.__setattr__(self, '_user_dict', user_dict)
+    def _config_user_dict(self: Self) -> _SerializedDictArray:
+        """Return the user dict, synced with the array under its key in field data."""
+        user_dict = self.__dict__.get('_user_dict')
+        if user_dict is None:
+            user_dict = _SerializedDictArray(owner=self)
+            object.__setattr__(self, '_user_dict', user_dict)
+        user_dict._sync()
+        return user_dict
+
+    def _sync_user_dict(self: Self) -> None:
+        """Give this object its own user dict when it has one or shares another's."""
+        array = self.GetFieldData().GetAbstractArray(USER_DICT_KEY)
+        if '_user_dict' in self.__dict__ or isinstance(array, _SerializedDictArray):
+            self._config_user_dict()
 
     @property
     def memory_address(self: Self) -> str:
