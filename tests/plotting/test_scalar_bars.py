@@ -226,6 +226,13 @@ def test_labels_centered_with_translucent_actor(sphere):
     pl.show()
 
 
+def test_ticks_off(sphere):
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, scalars=sphere.points[:, 2], show_scalar_bar=False)
+    bar = pl.add_scalar_bar(ticks=[-0.4, 0.0, 0.4], n_labels=0)
+    assert not bar.GetDrawTickLabels()
+
+
 @pytest.mark.usefixtures('verify_image_cache')
 def test_ticks(sphere):
     sphere[KEY] = sphere.points[:, 2]

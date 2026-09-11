@@ -618,12 +618,12 @@ class ScalarBars(_NoNewAttrMixin):
 
         scalar_bar.SetMaximumNumberOfColors(n_colors)
 
-        if ticks is not None:
+        if n_labels < 1:
+            scalar_bar.SetDrawTickLabels(False)
+        elif ticks is not None:
             scalar_bar.SetDrawTickLabels(True)
             scalar_bar.SetCustomLabels(convert_array(np.asarray(ticks, dtype=float)))
             scalar_bar.UseCustomLabelsOn()
-        elif n_labels < 1:
-            scalar_bar.SetDrawTickLabels(False)
         else:
             scalar_bar.SetDrawTickLabels(True)
             scalar_bar.SetNumberOfLabels(n_labels)
