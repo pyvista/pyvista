@@ -1,17 +1,53 @@
-"""Tests for pyvista.ext._embed_py_file."""
+"""Tests for pyvista.ext._embed_py_file.
+
+Builds run in a subprocess; an in-process one leaves the ``sphinx`` logger taken over
+for the rest of the session.
+"""
 
 from __future__ import annotations
 
-from io import StringIO
-from pathlib import Path
+import os
+import subprocess
+import sys
+from typing import TYPE_CHECKING
 
 import pytest
-from sphinx.application import Sphinx
-from sphinx.util.docutils import docutils_namespace
 
 from pyvista.ext import _embed_py_file
 
-SCRIPT = 'import pyvista as pv\n\nMESH = pv.Sphere()\n'
+if TYPE_CHECKING:
+    from pathlib import Path
+
+TARGET_VARNAME = 'PYVISTA_TEST_EMBED_TARGET'
+
+CONF = '''\
+"""Minimal Sphinx project for building a page via pyvista.ext._embed_py_file."""
+
+from __future__ import annotations
+
+import os
+
+from pyvista.ext import _embed_py_file
+
+extensions = ['pyvista.ext._embed_py_file']
+
+_target = os.environ.get('PYVISTA_TEST_EMBED_TARGET')
+
+
+def _download(name):
+    """Return a local file instead of downloading one."""
+    if _target is None:
+        msg = f'no such file: {name}'
+        raise FileNotFoundError(msg)
+    return _target
+
+
+_embed_py_file.download_file = _download
+'''
+
+INDEX = 'Page\n====\n\n.. embed-py-file:: sample/sample.py\n'
+
+SCRIPT = 'import pyvista as pv\n\nMOOOOSE = pv.Sphere()\n'
 
 
 class _StubApp:
@@ -25,84 +61,78 @@ class _StubApp:
         self.directives[name] = cls
 
 
-@pytest.fixture
-def build(tmp_path, monkeypatch):
-    """Return a callable building a one-page project; yields (html, warnings, app, search)."""
-
-    def _build(body, downloader):
-        monkeypatch.setattr(_embed_py_file, 'download_file', downloader)
-        src = tmp_path / 'src'
-        src.mkdir()
-        (src / 'conf.py').write_text("extensions = ['pyvista.ext._embed_py_file']\n")
-        (src / 'index.rst').write_text(body, encoding='utf-8')
-        out = tmp_path / 'out'
-        warnings = StringIO()
-        with docutils_namespace():
-            app = Sphinx(
-                srcdir=str(src),
-                confdir=str(src),
-                outdir=str(out),
-                doctreedir=str(out / '.doctrees'),
-                buildername='html',
-                status=None,
-                warning=warnings,
-                freshenv=True,
-            )
-            app.build()
-        html = (out / 'index.html').read_text(encoding='utf-8')
-        search = (out / 'searchindex.js').read_text(encoding='utf-8')
-        return html, warnings.getvalue(), app, search
-
-    return _build
+def _build(src: Path, out: Path, target: Path | None) -> subprocess.CompletedProcess:
+    """Build the one-page project, embedding ``target`` when one is given."""
+    src.mkdir(parents=True, exist_ok=True)
+    (src / 'conf.py').write_text(CONF, encoding='utf-8')
+    (src / 'index.rst').write_text(INDEX, encoding='utf-8')
+    env = dict(os.environ)
+    env.pop(TARGET_VARNAME, None)
+    if target is not None:
+        env[TARGET_VARNAME] = str(target)
+    return subprocess.run(
+        [sys.executable, '-msphinx', '-b', 'html', str(src), str(out)],
+        capture_output=True,
+        text=True,
+        check=False,
+        env=env,
+    )
 
 
-def test_embeds_the_downloaded_file_as_python(build, tmp_path):
+@pytest.fixture(scope='module')
+def embedded(tmp_path_factory):
+    """Build the project once with a file to embed; return (process, html dir)."""
+    tmp_path = tmp_path_factory.mktemp('embed_py_file')
     script = tmp_path / 'sample.py'
     script.write_text(SCRIPT, encoding='utf-8')
+    out = tmp_path / 'out'
+    proc = _build(tmp_path / 'src', out, script)
+    assert proc.returncode == 0, proc.stderr
+    return proc, out
 
-    html, warnings, _, _ = build(
-        'Page\n====\n\n.. embed-py-file:: sample/sample.py\n', lambda _name: str(script)
-    )
+
+def test_embeds_the_downloaded_file_as_python(embedded):
+    proc, out = embedded
+    html = (out / 'index.html').read_text(encoding='utf-8')
 
     assert 'highlight-python' in html
-    assert 'MESH' in html
-    assert warnings == ''
+    assert 'MOOOOSE' in html
+    assert proc.stderr == ''
 
 
-def test_embedded_file_is_a_build_dependency(build, tmp_path):
+def test_embedded_file_is_kept_out_of_the_search_index(embedded):
+    _, out = embedded
+    search = (out / 'searchindex.js').read_text(encoding='utf-8')
+
+    assert 'moooose' not in search.lower()
+
+
+def test_download_failure_warns_and_embeds_nothing(tmp_path):
+    out = tmp_path / 'out'
+    proc = _build(tmp_path / 'src', out, None)
+
+    assert proc.returncode == 0, proc.stderr
+    assert 'Failed to embed sample/sample.py' in proc.stderr
+    assert 'no such file' in proc.stderr
+    assert 'highlight-python' not in (out / 'index.html').read_text(encoding='utf-8')
+
+
+def test_rebuild_picks_up_a_changed_file(tmp_path):
     script = tmp_path / 'sample.py'
     script.write_text(SCRIPT, encoding='utf-8')
+    src = tmp_path / 'src'
+    out = tmp_path / 'out'
+    assert _build(src, out, script).returncode == 0
 
-    _, _, app, _ = build(
-        'Page\n====\n\n.. embed-py-file:: sample/sample.py\n', lambda _name: str(script)
-    )
+    script.write_text('BUFFALO = 1\n', encoding='utf-8')
+    stat = script.stat()
+    os.utime(script, (stat.st_atime + 10, stat.st_mtime + 10))
+    proc = _build(src, out, script)
 
-    deps = {Path(dep).resolve() for dep in app.env.dependencies['index']}
-    assert script.resolve() in deps
-
-
-def test_download_failure_warns_and_embeds_nothing(build):
-    def _fail(name):
-        msg = f'no such file: {name}'
-        raise FileNotFoundError(msg)
-
-    html, warnings, _, _ = build('Page\n====\n\n.. embed-py-file:: sample/gone.py\n', _fail)
-
-    assert 'Failed to embed sample/gone.py' in warnings
-    assert 'no such file' in warnings
-    assert 'highlight-python' not in html
-
-
-def test_embedded_file_is_kept_out_of_the_search_index(build, tmp_path):
-    script = tmp_path / 'sample.py'
-    script.write_text('MOOOOSE = 1\n', encoding='utf-8')
-
-    html, _, _, search = build(
-        'Page\n====\n\n.. embed-py-file:: sample/sample.py\n', lambda _name: str(script)
-    )
-
-    assert 'MOOOOSE' in html
-    assert 'moooose' not in search.lower()
+    assert proc.returncode == 0, proc.stderr
+    html = (out / 'index.html').read_text(encoding='utf-8')
+    assert 'BUFFALO' in html
+    assert 'MOOOOSE' not in html
 
 
 def test_setup_registers_the_directive():
