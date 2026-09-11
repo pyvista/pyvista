@@ -191,6 +191,50 @@ def test_entry_point_load_failure_warns_and_returns_none():
     assert 'broken plugin' in message
 
 
+def test_broken_plugin_warns_once_and_stays_pending():
+    """A failed load warns once, falls through on later lookups without
+    re-importing, and leaves the entry pending for ``registered_writers``
+    to retry."""
+    broken = MagicMock()
+    broken.name = '.broken'
+    broken.value = 'package:broken'
+    broken.load.side_effect = RuntimeError('broken plugin')
+
+    with patch('pyvista.core.utilities.writer_registry.entry_points', return_value=[broken]):
+        with pytest.warns(UserWarning, match='Failed to load pyvista.writers entry point'):
+            assert _reg_mod._get_ext_handler('.broken') is None
+
+        with warnings.catch_warnings(record=True) as captured:
+            warnings.simplefilter('always')
+            for _ in range(3):
+                assert _reg_mod._get_ext_handler('.broken') is None
+        assert [w for w in captured if 'Failed to load' in str(w.message)] == []
+
+    assert broken.load.call_count == 1
+    assert '.broken' in _reg_mod._pending_ext_writers
+    assert list(_reg_mod._failed_ext_writers) == ['.broken']
+
+
+def test_registered_writers_retries_a_recovered_plugin():
+    """``registered_writers()`` retries a failed plugin, so a writer whose
+    dependency arrives later becomes available."""
+    recovered = MagicMock()
+    recovered.name = '.recovers'
+    recovered.value = 'package:recovers'
+    recovered.load.side_effect = [RuntimeError('missing dep'), _noop_writer]
+
+    with patch('pyvista.core.utilities.writer_registry.entry_points', return_value=[recovered]):
+        with pytest.warns(UserWarning, match='Failed to load'):
+            assert _reg_mod._get_ext_handler('.recovers') is None
+
+        assert '.recovers' in {r.extension for r in pv.registered_writers()}
+        assert _reg_mod._get_ext_handler('.recovers') is _noop_writer
+
+    assert recovered.load.call_count == 2
+    assert '.recovers' not in _reg_mod._pending_ext_writers
+    assert _reg_mod._failed_ext_writers == {}
+
+
 def test_entry_points_loaded_persists_across_lookups():
     with patch(
         'pyvista.core.utilities.writer_registry.entry_points', return_value=[]
