@@ -1408,6 +1408,15 @@ class DataSetFilters(DataObjectFilters):
         :meth:`~pyvista.DataSetFilters.extract_values`
             Threshold-like filter for extracting specific values and ranges.
 
+        Notes
+        -----
+        A :class:`~pyvista.PointSet` has no cells, so filtering one raises
+        :class:`~pyvista.core.errors.PointSetCellOperationError`.
+
+        .. versionchanged:: 0.50
+
+            A ``PointSet`` raises instead of giving an empty dataset.
+
         Examples
         --------
         Create a small grid with some NaN point values and remove the
@@ -6985,6 +6994,15 @@ class DataSetFilters(DataObjectFilters):
         output : pyvista.MultiBlock | pyvista.UnstructuredGrid
             UnStructuredGrid if ``as_composite=False`` and MultiBlock when ``True``.
 
+        Notes
+        -----
+        A :class:`~pyvista.PointSet` has no cells, so partitioning one raises
+        :class:`~pyvista.core.errors.PointSetCellOperationError`.
+
+        .. versionchanged:: 0.50
+
+            A ``PointSet`` raises instead of giving an empty composite.
+
         Examples
         --------
         Partition a simple ImageData into a :class:`pyvista.MultiBlock`
@@ -7595,6 +7613,13 @@ class DataSetFilters(DataObjectFilters):
         Unlike :func:`pyvista.DataSetFilters.extract_cells` which always
         produces a :class:`pyvista.UnstructuredGrid` output, this filter
         produces the same output type as input type.
+
+        A :class:`~pyvista.PointSet` has no cells, so extracting from one raises
+        :class:`~pyvista.core.errors.PointSetCellOperationError`.
+
+        .. versionchanged:: 0.50
+
+            A ``PointSet`` raises instead of giving an empty dataset.
 
         Examples
         --------
