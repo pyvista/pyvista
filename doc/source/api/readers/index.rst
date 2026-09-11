@@ -367,6 +367,14 @@ and the install command when it is not.
      - PyVista's native ``zstd``-compressed format
      - read, write
      - `pyvista-zstd <https://github.com/pyvista/pyvista-zstd>`_
+   * - ``.zvtk``
+     - Legacy ``zstd``-compressed files
+     - read
+     - `pyvista-zstd <https://github.com/pyvista/pyvista-zstd>`_
+
+``.zvtk`` is the same format under its former extension.  Reading it works as
+``.pv`` does; ``pyvista-zstd`` still writes it, with a :class:`FutureWarning`
+pointing at ``.pv``.
 
 All of them are included in the ``io`` extra::
 
@@ -398,7 +406,7 @@ selection is needed::
 
 The error :func:`pyvista.get_reader` raises names that class, so it
 says where to go: ``pyvista_frd.FRDReader`` for ``.frd`` and
-``pyvista_zstd.Reader`` for ``.pv``.
+``pyvista_zstd.Reader`` for ``.pv`` and ``.zvtk``.
 
 Keyword arguments beyond those :meth:`~pyvista.DataObject.save`
 documents are forwarded to the package's writer, so format-specific
