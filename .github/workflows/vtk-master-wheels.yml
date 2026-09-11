@@ -309,9 +309,12 @@ jobs:
       # ALL STEPS ABOVE SHOULD BE EXACTLY THE SAME FOR EACH OS
       # ALL STEPS BELOW SHOULD MIMIC THE UNIT TESTING WORKFLOW EXACTLY
 
+      - name: Set up headless display
+        uses: pyvista/setup-headless-display-action@c103a2ff45650d38cb71684b5dc6cdfeb9442c79
+
       - uses: awalsh128/cache-apt-pkgs-action@553a35bb8ebd9fcabcb1c9451aa4c98e1b4ca8a9
         with:
-          packages: xvfb libgl1 libglx-mesa0 libosmesa6
+          packages: libosmesa6
           version: 3.0
 
       - name: Restore pyvista/data cache
@@ -332,7 +335,7 @@ jobs:
         if: ${{ !cancelled() }}
         env:
           TOX_ENV: py${{ matrix.python-version }}-plotting-vtk_local
-        run: xvfb-run tox run -e "$TOX_ENV" 2>&1 | tee plotting-test.log
+        run: tox run -e "$TOX_ENV" 2>&1 | tee plotting-test.log
 
       - name: Upload failure summary
         if: failure()
