@@ -434,10 +434,12 @@ class PolyDataFilters(DataSetFilters):
 
     # fmt: off
     # ruff: disable[E501]
-    @overload  # type: ignore[override]  # PolyData with polydata
+    @overload  # type: ignore[override]  # PolyData with a composite, whose blocks decide
+    def merge(self: PolyData, dataset: MultiBlock, *, merge_points: bool = ..., tolerance: float = ..., inplace: bool = ..., main_has_priority: bool | None = ..., progress_bar: bool = ...) -> PolyData | UnstructuredGrid: ...  # type: ignore[misc]
+    @overload  # PolyData with polydata
     def merge(self: PolyData, dataset: PolyData | Sequence[PolyData], *, merge_points: bool = ..., tolerance: float = ..., inplace: bool = ..., main_has_priority: bool | None = ..., progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc, overload-overlap]
     @overload  # PolyData with anything else
-    def merge(self: PolyData, dataset: DataSet | _vtk.vtkDataSet | MultiBlock | Sequence[DataSet | _vtk.vtkDataSet], *, merge_points: bool = ..., tolerance: float = ..., inplace: bool = ..., main_has_priority: bool | None = ..., progress_bar: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
+    def merge(self: PolyData, dataset: DataSet | _vtk.vtkDataSet | Sequence[DataSet | _vtk.vtkDataSet], *, merge_points: bool = ..., tolerance: float = ..., inplace: bool = ..., main_has_priority: bool | None = ..., progress_bar: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
     # ruff: enable[E501]
     # fmt: on
     def merge(  # type: ignore[misc]

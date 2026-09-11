@@ -6389,10 +6389,12 @@ class DataSetFilters(DataObjectFilters):
 
     # fmt: off
     # ruff: disable[E501]
+    @overload  # PointSet with a composite, whose blocks decide
+    def merge(self: PointSet, grid: MultiBlock, *, merge_points: bool = ..., tolerance: float = ..., inplace: bool = ..., main_has_priority: bool | None = ..., progress_bar: bool = ...) -> PointSet | UnstructuredGrid: ...  # type: ignore[misc]
     @overload  # PointSet with point clouds
     def merge(self: PointSet, grid: PointSet | Sequence[PointSet] | None = ..., *, merge_points: bool = ..., tolerance: float = ..., inplace: bool = ..., main_has_priority: bool | None = ..., progress_bar: bool = ...) -> PointSet: ...  # type: ignore[misc, overload-overlap]
     @overload  # PointSet with anything else
-    def merge(self: PointSet, grid: DataSet | _vtk.vtkDataSet | MultiBlock | Sequence[DataSet | _vtk.vtkDataSet] | None = ..., *, merge_points: bool = ..., tolerance: float = ..., inplace: bool = ..., main_has_priority: bool | None = ..., progress_bar: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
+    def merge(self: PointSet, grid: DataSet | _vtk.vtkDataSet | Sequence[DataSet | _vtk.vtkDataSet] | None = ..., *, merge_points: bool = ..., tolerance: float = ..., inplace: bool = ..., main_has_priority: bool | None = ..., progress_bar: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
     @overload  # DataSet
     def merge(self: DataSet, grid: DataSet | _vtk.vtkDataSet | MultiBlock | Sequence[DataSet | _vtk.vtkDataSet] | None = ..., *, merge_points: bool = ..., tolerance: float = ..., inplace: bool = ..., main_has_priority: bool | None = ..., progress_bar: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
     # ruff: enable[E501]
@@ -6604,8 +6606,7 @@ class DataSetFilters(DataObjectFilters):
         Returns
         -------
         pyvista.PolyData
-            Boundary faces of the 3D cells with the computed metrics in
-            ``cell_data`` as the ``"CellQuality"`` array.
+            Boundary faces of the 3D cells, with the computed metrics in ``cell_data``.
 
         Examples
         --------
@@ -7852,11 +7853,11 @@ class DataSetFilters(DataObjectFilters):
     # fmt: off
     # ruff: disable[E501]
     @overload  # return_dict=False
-    def color_labels(self: _DataSetType, colors: str | ColorLike | Sequence[ColorLike] | dict[float, ColorLike] | ColormapOptions = ..., *, coloring_mode: Literal['index', 'cycle'] | None = ..., color_type: Literal['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'] = ..., negative_indexing: bool = ..., scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., output_scalars: str | None = ..., return_dict: Literal[False] = ..., inplace: bool = ...) -> _DataSetType: ...  # type: ignore[misc]
+    def color_labels(self: _DataSetType, colors: str | ColorLike | Sequence[ColorLike] | dict[float | str, ColorLike] | ColormapOptions = ..., *, coloring_mode: Literal['index', 'cycle'] | None = ..., color_type: Literal['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'] = ..., negative_indexing: bool = ..., scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., output_scalars: str | None = ..., return_dict: Literal[False] = ..., inplace: bool = ...) -> _DataSetType: ...  # type: ignore[misc]
     @overload  # return_dict=True
-    def color_labels(self: _DataSetType, colors: str | ColorLike | Sequence[ColorLike] | dict[float, ColorLike] | ColormapOptions = ..., *, coloring_mode: Literal['index', 'cycle'] | None = ..., color_type: Literal['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'] = ..., negative_indexing: bool = ..., scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., output_scalars: str | None = ..., return_dict: Literal[True] = ..., inplace: bool = ...) -> tuple[_DataSetType, dict[np.integer | np.floating, ColorLike]]: ...  # type: ignore[misc]
+    def color_labels(self: _DataSetType, colors: str | ColorLike | Sequence[ColorLike] | dict[float | str, ColorLike] | ColormapOptions = ..., *, coloring_mode: Literal['index', 'cycle'] | None = ..., color_type: Literal['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'] = ..., negative_indexing: bool = ..., scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., output_scalars: str | None = ..., return_dict: Literal[True] = ..., inplace: bool = ...) -> tuple[_DataSetType, dict[float | np.integer | np.floating, ColorLike]]: ...  # type: ignore[misc]
     @overload  # return_dict not known
-    def color_labels(self: _DataSetType, colors: str | ColorLike | Sequence[ColorLike] | dict[float, ColorLike] | ColormapOptions = ..., *, coloring_mode: Literal['index', 'cycle'] | None = ..., color_type: Literal['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'] = ..., negative_indexing: bool = ..., scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., output_scalars: str | None = ..., return_dict: bool = ..., inplace: bool = ...) -> _DataSetType | tuple[_DataSetType, dict[np.integer | np.floating, ColorLike]]: ...  # type: ignore[misc]
+    def color_labels(self: _DataSetType, colors: str | ColorLike | Sequence[ColorLike] | dict[float | str, ColorLike] | ColormapOptions = ..., *, coloring_mode: Literal['index', 'cycle'] | None = ..., color_type: Literal['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'] = ..., negative_indexing: bool = ..., scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., output_scalars: str | None = ..., return_dict: bool = ..., inplace: bool = ...) -> _DataSetType | tuple[_DataSetType, dict[float | np.integer | np.floating, ColorLike]]: ...  # type: ignore[misc]
     # ruff: enable[E501]
     # fmt: on
     def color_labels(  # type: ignore[misc]
@@ -8000,7 +8001,7 @@ class DataSetFilters(DataObjectFilters):
         pyvista.DataSet
             Dataset with RGB(A) scalars. Output type matches input type.
 
-        dict[numpy.integer | numpy.floating, ColorLike]
+        dict[float | numpy.integer | numpy.floating, ColorLike]
             The label to color mapping, if ``return_dict`` is ``True``.
 
         Examples
