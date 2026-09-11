@@ -191,6 +191,110 @@ def test_entry_point_load_failure_warns_and_returns_none():
     assert 'broken plugin' in message
 
 
+def _only_pending(eps):
+    """Make *eps* the only pending writer entry points, ignoring installed plugins."""
+    _reg_mod._entry_points_loaded = False
+    _reg_mod._pending_ext_writers.clear()
+    _reg_mod._failed_ext_writers.clear()
+    _reg_mod._resolving_ext_writers.clear()
+    return patch('pyvista.core.utilities.writer_registry.entry_points', return_value=eps)
+
+
+def test_broken_plugin_warns_once_and_stays_pending():
+    """A failed load warns once, falls through on later lookups without
+    re-importing, and leaves the entry pending for ``registered_writers``
+    to retry."""
+    broken = MagicMock()
+    broken.name = '.broken'
+    broken.value = 'package:broken'
+    broken.load.side_effect = RuntimeError('broken plugin')
+
+    with _only_pending([broken]):
+        with pytest.warns(UserWarning, match='Failed to load pyvista.writers entry point'):
+            assert _reg_mod._get_ext_handler('.broken') is None
+
+        with warnings.catch_warnings(record=True) as captured:
+            warnings.simplefilter('always')
+            for _ in range(3):
+                assert _reg_mod._get_ext_handler('.broken') is None
+        assert [w for w in captured if 'Failed to load' in str(w.message)] == []
+
+    assert broken.load.call_count == 1
+    assert '.broken' in _reg_mod._pending_ext_writers
+    assert list(_reg_mod._failed_ext_writers) == ['.broken']
+    assert '.broken' not in _reg_mod._list_custom_exts()
+
+
+def test_failed_writer_is_not_offered_in_the_invalid_extension_message():
+    """The error for an unsupported extension must not list the extension
+    it just refused."""
+    broken = MagicMock()
+    broken.name = '.broken'
+    broken.value = 'package:broken'
+    broken.load.side_effect = RuntimeError('broken plugin')
+
+    with _only_pending([broken]):
+        with pytest.warns(UserWarning, match='Failed to load'):
+            assert _reg_mod._get_ext_handler('.broken') is None
+        with pytest.raises(ValueError, match='Invalid file extension') as excinfo:
+            pv.Sphere().save('mesh.broken')
+
+    assert '.broken' not in str(excinfo.value).split('Must be one of')[1]
+
+
+def test_plugin_querying_the_registry_during_its_own_load(tmp_path):
+    """A writer plugin that reaches back into the registry while it is
+    still loading resolves without a spurious failure."""
+
+    def _plugin_writer(_dataset, path, **__):
+        """Stand-in writer supplied by the plugin."""
+        Path(path).touch()
+
+    def _loader():
+        """Query the registry from inside the plugin's own import."""
+        _reg_mod._resolve_pending_writer('.reentrant')
+        return _plugin_writer
+
+    ep = MagicMock()
+    ep.name = '.reentrant'
+    ep.value = 'package:reentrant'
+    ep.load = _loader
+
+    with _only_pending([ep]):
+        with warnings.catch_warnings(record=True) as captured:
+            warnings.simplefilter('always')
+            handler = _reg_mod._get_ext_handler('.reentrant')
+        assert handler is _plugin_writer
+        handler(pv.Sphere(), str(tmp_path / 'mesh.reentrant'))
+        assert (tmp_path / 'mesh.reentrant').exists()
+        assert [w for w in captured if 'Failed to load' in str(w.message)] == []
+
+    assert _reg_mod._failed_ext_writers == {}
+    assert '.reentrant' not in _reg_mod._pending_ext_writers
+    assert _reg_mod._resolving_ext_writers == set()
+
+
+def test_registered_writers_retries_a_recovered_plugin():
+    """``registered_writers()`` retries a failed plugin, so a writer whose
+    dependency arrives later becomes available."""
+    recovered = MagicMock()
+    recovered.name = '.recovers'
+    recovered.value = 'package:recovers'
+    recovered.load.side_effect = [RuntimeError('missing dep'), _noop_writer]
+
+    with _only_pending([recovered]):
+        with pytest.warns(UserWarning, match='Failed to load'):
+            assert _reg_mod._get_ext_handler('.recovers') is None
+
+        assert '.recovers' in {r.extension for r in pv.registered_writers()}
+        assert _reg_mod._get_ext_handler('.recovers') is _noop_writer
+        _reg_mod._get_ext_handler('.recovers')(pv.Sphere(), 'mesh.recovers')
+
+    assert recovered.load.call_count == 2
+    assert '.recovers' not in _reg_mod._pending_ext_writers
+    assert _reg_mod._failed_ext_writers == {}
+
+
 def test_entry_points_loaded_persists_across_lookups():
     with patch(
         'pyvista.core.utilities.writer_registry.entry_points', return_value=[]

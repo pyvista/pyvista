@@ -732,6 +732,9 @@ def _fake_importer(name: str, body: str):
     deferred to the moment ``_ensure_entry_points`` actually imports
     the module — inside whatever ``pytest.warns`` / ``catch_warnings``
     context the test wraps around it.
+
+    A body that raises leaves nothing in ``sys.modules``, the way
+    ``import_module`` does, so a later retry re-executes it.
     """
     compiled = compile(body, f'<fake {name}>', 'exec')
 
@@ -740,7 +743,11 @@ def _fake_importer(name: str, body: str):
         module = ModuleType(name)
         module.__file__ = f'<fake {name}>'
         sys.modules[name] = module
-        exec(compiled, module.__dict__)  # noqa: S102
+        try:
+            exec(compiled, module.__dict__)  # noqa: S102
+        except BaseException:
+            del sys.modules[name]
+            raise
         return module
 
     return _import
@@ -752,6 +759,7 @@ def _reset_entry_point_state(monkeypatch, eps: list):
     monkeypatch.setattr(_reg_mod, '_entry_points_loaded', False)
     _reg_mod._pending_accessors.clear()
     _reg_mod._failed_accessors.clear()
+    _reg_mod._resolving_accessors.clear()
     monkeypatch.setattr(
         'pyvista.core.utilities.accessor_registry.entry_points',
         lambda **_: eps,
@@ -1314,3 +1322,79 @@ def test_private_name_skips_entry_point_scan(monkeypatch):
 
     assert not _reg_mod._resolve_pending_accessor('public')
     assert scan_count == 1
+
+
+@pytest.mark.parametrize(
+    'trigger',
+    [pv.registered_accessors, lambda: pv.Sphere().ep_reentrant],
+    ids=['registered_accessors', 'attribute_access'],
+)
+def test_plugin_querying_registry_during_its_own_import(monkeypatch, trigger):
+    """A plugin module that calls ``registered_accessors()`` while it is
+    still being imported re-enters resolution for its own still-pending
+    name. Both the outer and inner resolution must complete without
+    raising, and the accessor must end up attached."""
+    plugin_name = 'fake_ep_plugin_reentrant'
+    fake_import = _fake_importer(
+        plugin_name,
+        'import pyvista as pv\n'
+        'pv.registered_accessors()\n'
+        "@pv.register_dataset_accessor('ep_reentrant', pv.PolyData)\n"
+        'class EpReentrantAccessor:\n'
+        '    def __init__(self, mesh):\n'
+        '        self._mesh = mesh\n'
+        '    def value(self):\n'
+        '        return 42\n',
+    )
+    ep = MagicMock()
+    ep.name = 'ep_reentrant'
+    ep.value = plugin_name
+
+    _reset_entry_point_state(monkeypatch, [ep])
+    monkeypatch.setattr(
+        'pyvista.core.utilities.accessor_registry.import_module',
+        fake_import,
+    )
+
+    try:
+        trigger()
+        assert pv.Sphere().ep_reentrant.value() == 42
+        assert _reg_mod._pending_accessors == {}
+        assert _reg_mod._resolving_accessors == set()
+    finally:
+        with contextlib.suppress(ValueError):
+            pv.unregister_dataset_accessor('ep_reentrant', pv.PolyData)
+        sys.modules.pop(plugin_name, None)
+
+
+def test_failed_plugin_that_accessed_itself_stays_pending(monkeypatch):
+    """A plugin whose body reaches its own accessor and then fails to
+    import stays pending, so ``registered_accessors()`` retries it."""
+    plugin_name = 'fake_ep_plugin_self_then_fail'
+    fake_import = _fake_importer(
+        plugin_name,
+        'import contextlib\n'
+        'import pyvista as pv\n'
+        'with contextlib.suppress(AttributeError):\n'
+        '    pv.Sphere().ep_self_fail\n'
+        "raise ImportError('missing dep')\n",
+    )
+    ep = MagicMock()
+    ep.name = 'ep_self_fail'
+    ep.value = plugin_name
+
+    _reset_entry_point_state(monkeypatch, [ep])
+    monkeypatch.setattr(
+        'pyvista.core.utilities.accessor_registry.import_module',
+        fake_import,
+    )
+
+    try:
+        with pytest.warns(UserWarning, match='entry point "ep_self_fail"'):
+            with pytest.raises(AttributeError, match='missing dep'):
+                _ = pv.Sphere().ep_self_fail
+        assert _reg_mod._pending_accessors == {'ep_self_fail': plugin_name}
+        assert _reg_mod._resolving_accessors == set()
+        assert plugin_name not in sys.modules
+    finally:
+        sys.modules.pop(plugin_name, None)

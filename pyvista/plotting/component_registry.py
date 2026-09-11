@@ -150,6 +150,8 @@ class _ComponentRegistryState(TypedDict):
     attached: dict[tuple[type, str], Any]
     entry_points_loaded: bool
     pending: dict[str, str]
+    # Pending names whose import failed, mapped to the failure message.
+    failed: dict[str, str]
 
 
 class _CachedComponent:
@@ -251,6 +253,8 @@ _registrations: list[ComponentRegistration] = []
 _prior_values: dict[tuple[type, str], Any] = {}
 _entry_points_loaded: bool = False
 _pending_components: dict[str, str] = {}
+_failed_components: dict[str, str] = {}
+_resolving_components: set[str] = set()
 
 
 def _save_registry_state() -> _ComponentRegistryState:
@@ -265,6 +269,7 @@ def _save_registry_state() -> _ComponentRegistryState:
         'attached': attached,
         'entry_points_loaded': _entry_points_loaded,
         'pending': dict(_pending_components),
+        'failed': dict(_failed_components),
     }
 
 
@@ -309,6 +314,8 @@ def _restore_registry_state(state: _ComponentRegistryState) -> None:
     _entry_points_loaded = state['entry_points_loaded']
     _pending_components.clear()
     _pending_components.update(state['pending'])
+    _failed_components.clear()
+    _failed_components.update(state['failed'])
 
 
 def _find_component_on_mro(target_cls: type, name: str) -> type | None:
@@ -625,39 +632,64 @@ def _resolve_pending_component(name: str) -> bool:
 
     Called from :meth:`pyvista.BasePlotter.__getattr__` when a normal
     attribute lookup misses. Ensures entry-point metadata has been
-    scanned, pops the pending entry for ``name``, and imports the
-    corresponding plugin module. Importing the module triggers any
-    ``@register_plotter_component`` decorators inside it and attaches
-    the component as a side effect.
+    scanned and imports the plugin module pending under ``name``.
+    Importing the module triggers any ``@register_plotter_component``
+    decorators inside it and attaches the component as a side effect;
+    only then is the entry removed from the pending list.
 
     Returns
     -------
     bool
         ``True`` if a plugin was loaded for ``name`` (and the attribute
         lookup should be retried). ``False`` if no pending plugin
-        matches ``name``, or if the plugin failed to import.
+        matches ``name``.
+
+    Raises
+    ------
+    AttributeError
+        If the plugin fails to import. The message names the entry
+        point, its module and the underlying error. The entry stays
+        pending but is marked failed: the first failure also emits a
+        ``UserWarning``, later accesses re-raise the recorded message
+        without re-importing, and
+        :func:`registered_plotter_components` retries.
 
     """
     _ensure_entry_points()
-    module_path = _pending_components.pop(name, None)
+    module_path = _pending_components.get(name)
     if module_path is None:
         return False
+    if name in _resolving_components:
+        # The plugin module is still executing, so its component is not attached yet.
+        return False
+    failure = _failed_components.get(name)
+    if failure is not None:
+        raise AttributeError(failure)
+    _resolving_components.add(name)
     try:
         import_module(module_path)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         msg = (
             f'Failed to load {COMPONENT_ENTRY_POINT_GROUP} entry point '
             f'"{name}" from {module_path}: {exc}'
         )
+        _failed_components[name] = msg
         warn_external(msg)
-        return False
+        raise AttributeError(msg) from exc
+    finally:
+        _resolving_components.discard(name)
+    _pending_components.pop(name, None)
     return True
 
 
 def _pending_component_names() -> tuple[str, ...]:
-    """Return every pending component name without importing any plugin."""
+    """Return every pending component name without importing any plugin.
+
+    Names whose plugin failed to import are omitted until
+    :func:`registered_plotter_components` imports them successfully.
+    """
     _ensure_entry_points()
-    return tuple(_pending_components)
+    return tuple(name for name in _pending_components if name not in _failed_components)
 
 
 def registered_plotter_components() -> tuple[ComponentRegistration, ...]:
@@ -670,6 +702,11 @@ def registered_plotter_components() -> tuple[ComponentRegistration, ...]:
     still appear in the result.
 
     .. versionadded:: 0.48.0
+
+    .. versionchanged:: 0.50.0
+        A plugin whose import failed stays pending and is retried on
+        every call, so a component whose dependency was installed after
+        the failure becomes available again.
 
     Returns
     -------
@@ -694,6 +731,8 @@ def registered_plotter_components() -> tuple[ComponentRegistration, ...]:
 
     """
     _ensure_entry_points()
+    _failed_components.clear()
     for pending_name in list(_pending_components):
-        _resolve_pending_component(pending_name)
+        with contextlib.suppress(AttributeError):  # the failed import already warned
+            _resolve_pending_component(pending_name)
     return tuple(_registrations)
