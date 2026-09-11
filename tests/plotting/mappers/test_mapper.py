@@ -209,6 +209,27 @@ def test_set_scalars_categories_keeps_clim():
     assert len(colors) == 3
 
 
+def test_set_scalars_categories_single_value():
+    mesh = pv.RectilinearGrid([0.0, 1.0, 2.0], [0.0, 1.0], [0.0])
+    mesh['labels'] = [3.0, 3.0]
+    mapper = DataSetMapper(mesh)
+    sargs = {}
+    mapper.set_scalars(mesh['labels'], 'labels', categories=True, scalar_bar_args=sargs)
+    assert mapper.scalar_range == (2.5, 3.5)
+    assert mapper.lookup_table.n_values == 1
+    assert sargs['tick_labels'] == [3.0]
+
+
+def test_set_scalars_categories_all_nan():
+    mesh = pv.RectilinearGrid([0.0, 1.0, 2.0], [0.0, 1.0], [0.0])
+    mesh['labels'] = [np.nan, np.nan]
+    mapper = DataSetMapper(mesh)
+    sargs = {}
+    with pytest.warns(RuntimeWarning, match='All-NaN axis encountered'):
+        mapper.set_scalars(mesh['labels'], 'labels', categories=True, scalar_bar_args=sargs)
+    assert 'tick_labels' not in sargs
+
+
 def test_set_scalars_categories_uneven_spacing():
     mesh = pv.RectilinearGrid([0.0, 1.0, 2.0, 3.0], [0.0, 1.0], [0.0])
     mesh['labels'] = [0.1, 0.33, 0.7]
