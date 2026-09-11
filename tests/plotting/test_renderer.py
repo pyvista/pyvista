@@ -1225,3 +1225,288 @@ def test_init_renderers_shape_descriptor_positive_raises(shape):
     match = f'"shape" must contain only positive integers. Got {shape!r}.'
     with pytest.raises(ValueError, match=re.escape(match)):
         pv.Plotter(shape=shape)
+
+
+def test_ssao_settings_update():
+    """Repeated calls update the active pass and retain the API defaults."""
+    pl = pv.Plotter()
+    pl.enable_ssao()
+    ssao = pl.renderer._render_passes._ssao_pass
+    assert ssao.GetRadius() == 0.5
+    assert ssao.GetBias() == 0.005
+    assert ssao.GetKernelSize() == 256
+    assert ssao.GetBlur()
+    pl.enable_ssao(radius=2.5, bias=0.03, blur=False)
+    assert pl.renderer._render_passes._ssao_pass is ssao
+    assert ssao.GetRadius() == 2.5
+    assert ssao.GetBias() == 0.03
+    assert ssao.GetKernelSize() == 256
+    assert not ssao.GetBlur()
+    pl.close()
+
+
+@pytest.mark.parametrize('effect', ['blur', 'edl', 'ssaa'])
+@pytest.mark.parametrize('ssao_first', [False, True])
+def test_ssao_with_image_passes(effect, ssao_first):
+    """Image filters retain SSAO's geometry buffers regardless of call order."""
+    pl = pv.Plotter(window_size=(300, 300))
+    mesh = pv.ImageData(dimensions=(3, 2, 2)).to_tetrahedra(12).explode()
+    pl.add_mesh(mesh, color='white', smooth_shading=False)
+    if ssao_first:
+        pl.enable_ssao()
+    if effect == 'blur':
+        pl.add_blurring()
+    elif effect == 'edl':
+        pl.enable_eye_dome_lighting()
+    else:
+        pl.enable_anti_aliasing(effect)
+    if not ssao_first:
+        pl.enable_ssao()
+    passes = pl.renderer._render_passes
+    assert passes._ssao_pass.GetDelegatePass() is passes._camera_pass
+    pl.camera_position = 'iso'
+    pl.show(auto_close=False)
+    with_ssao = pl.screenshot().astype(float)
+    pl.disable_ssao()
+    pl.render()
+    without_ssao = pl.screenshot().astype(float)
+    assert np.abs(with_ssao - without_ssao).mean() > 1.0
+    pl.close()
+
+
+@pytest.mark.parametrize('external', [False, True])
+def test_depth_peeling_with_image_pass(external):
+    """Translucent geometry is actually rendered through the peeling pass."""
+    pl = pv.Plotter(window_size=(300, 300))
+    pl.ren_win.SetMultiSamples(0)
+    pl.add_mesh(pv.Cube(), color='red', opacity=0.4)
+    pl.add_mesh(pv.Sphere(center=(0.4, 0.1, 0.3)), color='blue', opacity=0.5)
+    if external:
+        steps = pv._vtk.vtkRenderStepsPass()
+        peeling = pv._vtk.vtkDualDepthPeelingPass()
+        peeling.SetTranslucentPass(pv._vtk.vtkTranslucentPass())
+        steps.SetTranslucentPass(peeling)
+        pl.renderer.SetPass(steps)
+    else:
+        assert pl.enable_depth_peeling()
+    pl.enable_ssao()
+    pl.camera_position = 'iso'
+    pl.show(auto_close=False)
+    if not external:
+        peeling = pl.renderer._render_passes._depth_peeling_pass
+    assert peeling.GetNumberOfRenderedProps() == 2
+    pl.disable_ssao()
+    if external:
+        assert pl.renderer.GetPass() is steps
+        assert steps.GetTranslucentPass() is peeling
+    else:
+        assert pl.renderer.GetPass() is None
+        assert pl.renderer.GetUseDepthPeeling()
+    pl.close()
+
+
+@pytest.mark.parametrize('fxaa_first', [False, True])
+def test_fxaa_with_custom_pass(fxaa_first):
+    """FXAA affects edge pixels while retaining the requested AA algorithm."""
+    pl = pv.Plotter(window_size=(300, 300))
+    pl.background_color = 'black'
+    pl.add_mesh(pv.Cube().rotate_z(23), color='white', lighting=False)
+    if fxaa_first:
+        pl.enable_anti_aliasing('fxaa')
+    pl.enable_ssao(radius=0.0)
+    pl.camera_position = 'iso'
+    pl.show(auto_close=False)
+    pl.renderer._disable_fxaa()
+    pl.render()
+    before = pl.screenshot().astype(float)
+    pl.enable_anti_aliasing('fxaa')
+    pl.render()
+    after = pl.screenshot().astype(float)
+    passes = pl.renderer._render_passes
+    assert passes._ssaa_pass is None
+    assert passes._fxaa_pass.GetFXAAOptions() is pl.renderer.GetFXAAOptions()
+    assert np.count_nonzero(np.any(before != after, axis=2)) > 100
+    assert np.any((after[:, :, 0] > 0) & (after[:, :, 0] < 255))
+    pl.disable_ssao()
+    assert pl.renderer.GetPass() is None
+    assert pl.renderer.GetUseFXAA()
+    pl.close()
+
+
+def test_tone_mapping_with_ssaa():
+    """Tone mapping processes the full final viewport when combined with SSAA."""
+    pl = pv.Plotter(window_size=(300, 240))
+    pl.background_color = 'white'
+    pl.add_mesh(pv.Cube().rotate_z(23), color='tomato')
+    steps = pv._vtk.vtkRenderStepsPass()
+    tone = pv._vtk.vtkToneMappingPass()
+    tone.SetDelegatePass(steps)
+    pl.renderer.SetPass(tone)
+    pl.enable_anti_aliasing('ssaa')
+    pl.show(auto_close=False)
+    image = pl.screenshot()
+    assert (image[0] > 100).all()
+    assert (image[-1] > 100).all()
+    assert (image[:, 0] > 100).all()
+    assert (image[:, -1] > 100).all()
+    pl.disable_anti_aliasing()
+    assert pl.renderer.GetPass() is tone
+    assert tone.GetDelegatePass() is steps
+    pl.close()
+
+
+@pytest.mark.parametrize('samples', [0, 8])
+def test_msaa_depth_capture(samples):
+    """A tilted plane bounds depth error to less than a pixel's depth variation."""
+    pl = pv.Plotter(window_size=(137, 103))
+    pl.add_mesh(pv.Plane(direction=(0.2, 0.3, 1), i_size=12, j_size=12))
+    pl.camera_position = [(0, 0, 10), (0, 0, 0), (0, 1, 0)]
+    pl.camera.parallel_projection = True
+    pl.camera.parallel_scale = 2
+    pl.enable_anti_aliasing('msaa', multi_samples=samples)
+    pl.show(auto_close=False)
+    active_samples = pl.ren_win.GetMultiSamples()
+    depth = pl.get_image_depth(reset_camera_clipping_range=False)
+    y, x = np.indices(depth.shape)
+    expected = -10 - 0.2 * ((x + 0.5 - 137 / 2) * 4 / 103)
+    expected -= 0.3 * ((103 / 2 - y - 0.5) * 4 / 103)
+    assert np.isfinite(depth).all()
+    # Multisampling selects a covered subpixel, rather than the pixel center.
+    np.testing.assert_allclose(depth, expected, atol=(0.2 + 0.3) * 4 / 103)
+    near, far = pl.camera.clipping_range
+    center = -(pl.renderer.GetZ(68, 51) * (far - near) + near)
+    assert abs(center + 10) < (0.2 + 0.3) * 4 / 103
+    assert pl.ren_win.GetMultiSamples() == active_samples
+    assert (active_samples > 0) == (samples > 0)
+    pl.close()
+
+
+def test_depth_peeling_rejects_depth_of_field():
+    """An unsupported combination fails without enabling native peeling."""
+    pl = pv.Plotter()
+    pl.enable_depth_of_field()
+    with pytest.raises(RuntimeError, match='incompatible'):
+        pl.enable_depth_peeling()
+    assert not pl.renderer.GetUseDepthPeeling()
+    pl.close()
+
+
+def test_shadows_reenable_with_translucency():
+    """Shadows return after toggling and retain translucent geometry in front."""
+    pl = pv.Plotter(window_size=(320, 240), lighting=None)
+    pl.background_color = 'white'
+    pl.add_mesh(pv.Plane(i_size=6, j_size=6), color='white')
+    pl.add_mesh(pv.Cube(center=(0, 0, 0.6)), color='tomato')
+    sphere = pl.add_mesh(pv.Sphere(center=(1, -1, 1)), color='blue', opacity=0.5)
+    pl.add_light(
+        pv.Light(position=(-3, -4, 6), focal_point=(0, 0, 0), positional=True, cone_angle=50)
+    )
+    pl.camera_position = [(5, -7, 6), (0, 0, 0.2), (0, 0, 1)]
+    pl.enable_shadows()
+    pl.show(auto_close=False)
+    first = pl.screenshot().astype(float)
+    # The receiver must remain illuminated outside the cast shadow.
+    gray = first[:, :, 0]
+    lit_receiver = (gray > 100) & (gray < 250) & (first[:, :, 0] == first[:, :, 1])
+    assert np.count_nonzero(lit_receiver) > 100
+    sphere.visibility = False
+    pl.render()
+    without_translucency = pl.screenshot().astype(float)
+    assert np.abs(first - without_translucency).mean() > 0.5
+    sphere.visibility = True
+    pl.disable_shadows()
+    pl.render()
+    without_shadows = pl.screenshot().astype(float)
+    assert np.abs(first - without_shadows).mean() > 1.0
+    pl.enable_shadows()
+    pl.render()
+    restored = pl.screenshot().astype(float)
+    np.testing.assert_allclose(first, restored, atol=1)
+    pl.close()
+
+
+@pytest.mark.parametrize('keep_blur', [False, True])
+def test_external_shadow_toggle_does_not_retain_cached_shadow(keep_blur):
+    """Switching from shadows to DOF does not require an intermediate render."""
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Cube())
+    steps = pv._vtk.vtkRenderStepsPass()
+    pl.renderer.SetPass(steps)
+    if keep_blur:
+        pl.add_blurring()
+    pl.enable_shadows()
+    pl.show(auto_close=False)
+    pl.disable_shadows()
+    pl.enable_depth_of_field()
+    assert pl.renderer._render_passes._dof_pass is not None
+    pl.disable_depth_of_field()
+    if keep_blur:
+        pl.remove_blurring()
+    assert pl.renderer.GetPass() is steps
+    pl.close()
+
+
+def test_native_depth_peeling_with_external_base_after_toggle():
+    """Native peeling stays active on an external base when SSAO is removed."""
+    pl = pv.Plotter()
+    pl.ren_win.SetMultiSamples(0)
+    pl.add_mesh(pv.Cube(), opacity=0.4)
+    steps = pv._vtk.vtkRenderStepsPass()
+    original = steps.GetTranslucentPass()
+    pl.renderer.SetPass(steps)
+    assert pl.enable_depth_peeling()
+    pl.enable_ssao()
+    pl.show(auto_close=False)
+    pl.disable_ssao()
+    pl.render()
+    peeling = steps.GetTranslucentPass()
+    assert peeling.IsA('vtkDualDepthPeelingPass')
+    assert peeling.GetNumberOfRenderedProps() == 1
+    pl.disable_depth_peeling()
+    assert steps.GetTranslucentPass() is original
+    assert pl.renderer.GetPass() is steps
+    pl.close()
+
+
+@pytest.mark.parametrize('external', [False, True])
+@pytest.mark.parametrize('ssao_first', [False, True])
+def test_ssao_depth_peeling_preserves_colors(external, ssao_first):
+    """Peeling retains material colors while SSAO darkens opaque contacts."""
+    pl = pv.Plotter(window_size=(320, 240), lighting=None)
+    pl.add_light(pv.Light(light_type='headlight'))
+    pl.background_color = 'white'
+    pl.ren_win.SetMultiSamples(0)
+    pl.add_mesh(pv.Cube(center=(0, 0, 0.5)), color='white', smooth_shading=False)
+    pl.add_mesh(pv.Plane(i_size=4, j_size=4), color='white')
+    pl.add_mesh(pv.Sphere(center=(1, -0.5, 1)), color='blue', opacity=0.4)
+    pl.camera_position = [(5, -7, 6), (0, 0, 0.2), (0, 0, 1)]
+    if ssao_first:
+        pl.enable_ssao()
+        pl.show(auto_close=False)
+    if external:
+        steps = pv._vtk.vtkRenderStepsPass()
+        peeling = pv._vtk.vtkDualDepthPeelingPass()
+        peeling.SetTranslucentPass(pv._vtk.vtkTranslucentPass())
+        steps.SetTranslucentPass(peeling)
+        pl.renderer.SetPass(steps)
+    else:
+        assert pl.enable_depth_peeling()
+    if not ssao_first:
+        # Exercise geometry already cached for a non-SSAO framebuffer.
+        pl.show(auto_close=False)
+    for _ in range(2):
+        pl.enable_ssao()
+        pl.render()
+        enabled = pl.screenshot().astype(float)
+        # White geometry and blue transparency cannot produce red/green hues.
+        np.testing.assert_allclose(enabled[:, :, 0], enabled[:, :, 1], atol=1)
+        assert np.all(enabled[:, :, 2] >= enabled[:, :, 0] - 1)
+        assert np.count_nonzero(enabled[:, :, 2] > enabled[:, :, 0] + 20) > 100
+        pl.disable_ssao()
+        pl.render()
+        disabled = pl.screenshot().astype(float)
+        assert np.abs(enabled - disabled).mean() > 0.2
+        if external:
+            assert pl.renderer.GetPass() is steps
+            assert steps.GetTranslucentPass() is peeling
+    pl.close()
