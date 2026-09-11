@@ -191,9 +191,7 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
     @scalar_range.setter
     def scalar_range(self, clim) -> None:
         self.SetScalarRange(*clim)
-        lookup_table = self.lookup_table
-        if isinstance(lookup_table, LookupTable):
-            lookup_table.scalar_range = clim
+        self.lookup_table.SetRange(*clim)
 
     @property
     def lookup_table(self) -> LookupTable:  # numpydoc ignore=RT01
@@ -1025,8 +1023,8 @@ class _BaseDataSetMapper(_BaseMapper):
         if not isinstance(scalars, np.ndarray):
             scalars = np.asarray(scalars)
 
-        # Arrays derived here replace any stale copy already on the dataset
-        derived = custom_opac
+        # An array derived here is renamed, and replaces any stale copy of that name
+        original_scalars_name = scalars_name
         if custom_opac:
             scalars_name = '__custom_rgba'
 
@@ -1047,7 +1045,6 @@ class _BaseDataSetMapper(_BaseMapper):
                 values = np.unique(scalars)
                 clim = [np.min(values) - 0.5, np.max(values) + 0.5]
                 scalars_name = f'{scalars_name}-digitized'
-                derived = True
 
             n_colors = len(cats)
             scalar_bar_args.setdefault('n_labels', 0)
@@ -1058,7 +1055,6 @@ class _BaseDataSetMapper(_BaseMapper):
         if np.issubdtype(scalars.dtype, np.complexfloating):
             scalars = scalars.astype(float)
             scalars_name = f'{scalars_name}-real'
-            derived = True
 
         if scalars.ndim != 1:
             if rgb:
@@ -1068,7 +1064,6 @@ class _BaseDataSetMapper(_BaseMapper):
                 or scalars.shape[0] == self.dataset.n_cells  # type: ignore[union-attr]
             ):
                 scalars, scalars_name = reduce_component_scalars(scalars, scalars_name, component)
-                derived = True
             else:
                 scalars = scalars.ravel()
 
@@ -1163,7 +1158,7 @@ class _BaseDataSetMapper(_BaseMapper):
             scalars_name=scalars_name,
             preference=preference,
             direct_scalars_color_mode=rgb or custom_opac,
-            overwrite=derived,
+            overwrite=scalars_name != original_scalars_name,
         )
 
         if isinstance(self, PointGaussianMapper):

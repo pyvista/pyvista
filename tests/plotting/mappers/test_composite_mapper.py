@@ -56,6 +56,9 @@ def test_scalar_range_sets_lookup_table_range(multiblock_poly):
     assert mapper.lookup_table.scalar_range == (-1.0, 1.0)
     pl.update_scalar_bar_range([3, 4])
     assert mapper.lookup_table.scalar_range == (3.0, 4.0)
+    mapper.lookup_table = _vtk.vtkLookupTable()
+    mapper.scalar_range = (5, 6)
+    assert mapper.lookup_table.GetRange() == (5.0, 6.0)
     pl.close()
 
 

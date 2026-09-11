@@ -1008,13 +1008,14 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
             >>> lut.plot()
 
         """
-        n_items = self.GetNumberOfAnnotatedValues()
-        keys = [self.GetAnnotatedValue(ii).ToDouble() for ii in range(n_items)]
-        values = [self.GetAnnotation(ii) for ii in range(n_items)]
-        return dict(zip(keys, values, strict=True))
+        return {
+            self.GetAnnotatedValue(ii).ToDouble(): self.GetAnnotation(ii)
+            for ii in range(self.GetNumberOfAnnotatedValues())
+        }
 
     @annotations.setter
     def annotations(self, values: dict[float, str] | None):
+        # Drop the arrays so a typed annotated-values array cannot truncate new keys
         self.SetAnnotations(None, None)  # type: ignore[arg-type]
         if values is not None:
             for val, anno in values.items():

@@ -221,6 +221,7 @@ def test_labels_centered_with_translucent_actor(sphere):
             'title_font_size': 40,
         },
     )
+    # The translucent actor makes VTK lay out the labels from a stale justification
     pl.add_mesh(pv.Cube(center=(2, 0, 0)), opacity=0.5)
     pl.show()
 
@@ -311,6 +312,15 @@ def test_add_scalar_bar_shared_range_resync(sphere):
     pl.update_scalar_bar_range([0, 10])
     actors.append(pl.add_mesh(mid.copy(), scalars='data'))
     assert [m.scalar_range for m in mappers] == [(-1.0, 5.0)] * 6
+    pl.close()
+
+
+def test_update_scalar_bar_range_without_a_bar(sphere):
+    sphere['data'] = sphere.points[:, 2]
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, scalars='data', show_scalar_bar=False)
+    pl.update_scalar_bar_range([-1, 1])
+    assert pl.mapper.scalar_range == (-1.0, 1.0)
     pl.close()
 
 

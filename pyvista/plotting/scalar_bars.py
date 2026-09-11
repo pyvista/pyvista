@@ -403,7 +403,8 @@ class ScalarBars(_NoNewAttrMixin):
             String annotation for values above the scalars range.
 
         background_color : ColorLike, optional
-            The color used for the background in RGB format.
+            The color used for the background in RGB format. Only drawn when
+            ``fill`` is ``True``.
 
         n_colors : int, optional
             The maximum number of color displayed in the scalar bar.
@@ -667,7 +668,7 @@ class ScalarBars(_NoNewAttrMixin):
 
         label_text = scalar_bar.GetLabelTextProperty()
         anno_text = scalar_bar.GetAnnotationTextProperty()
-        # Preset the justification the layout applies after measuring each label
+        # Preset the justification the layout applies to the medial label after measuring it
         if vertical:
             label_text.SetJustificationToLeft()
             anno_text.SetJustificationToRight()
