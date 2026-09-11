@@ -7,7 +7,6 @@ import weakref
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
@@ -87,9 +86,9 @@ class VolumeProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkVolumePropert
 
     """
 
-    @_deprecate_positional_args
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
+        *,
         lookup_table=None,
         interpolation_type=None,
         ambient=None,
@@ -188,7 +187,7 @@ class VolumeProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkVolumePropert
 
         """
         if not isinstance(lookup_table, pv.LookupTable):
-            msg = '`lookup_table` must be a `pyvista.LookupTable`'
+            msg = '`lookup_table` must be a `pyvista.LookupTable`'  # type: ignore[unreachable]
             raise TypeError(msg)
         if self._lookup_table != lookup_table:
             self._lookup_table = lookup_table

@@ -4,20 +4,23 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Literal
 from typing import TypeAlias
 from typing import cast
+from typing import overload
 
 import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.arrays import point_array
 
 if TYPE_CHECKING:
     from pyvista import ImageData
     from pyvista import Plotter
     from pyvista.core._typing_core import NumpyArray
+
+    _Pixels: TypeAlias = NumpyArray[np.uint8] | NumpyArray[np.float32]
 
     ImageCompareType: TypeAlias = str | Path | np.ndarray | Plotter | _vtk.vtkImageData
 
@@ -83,7 +86,7 @@ def wrap_image_array(arr):
     return wrap_img
 
 
-def run_image_filter(imfilter: _vtk.vtkWindowToImageFilter) -> NumpyArray[float]:
+def run_image_filter(imfilter: _vtk.vtkWindowToImageFilter) -> _Pixels:
     """Run a :vtk:`vtkWindowToImageFilter` and get output as array.
 
     Parameters
@@ -106,27 +109,40 @@ def run_image_filter(imfilter: _vtk.vtkWindowToImageFilter) -> NumpyArray[float]
     # Update filter and grab pixels
     imfilter.Modified()
     imfilter.Update()
+    if max(imfilter.GetScale()) > 1:
+        # The tiled capture leaves its last tile in the front buffer.
+        imfilter.GetInput().Render()
     image = cast('ImageData | None', pv.wrap(imfilter.GetOutput()))
     if image is None:
-        return np.empty((0, 0, 0))
+        return np.empty((0, 0, 0), dtype=np.uint8)
     img_size = image.dimensions
-    img_array = cast('NumpyArray[float]', point_array(image, 'ImageScalars'))
+    img_array = cast('_Pixels', point_array(image, 'ImageScalars'))
     # Reshape and flip vertically (VTK stores rows bottom-up). The flip via
     # ``[::-1]`` produces a negative row stride, so wrap in
     # ``ascontiguousarray`` to materialize a packed C-contiguous buffer that
     # downstream consumers (image libs, encoders) can use without an implicit
     # per-pixel copy.
     tgt_size = (img_size[1], img_size[0], -1)
-    return np.ascontiguousarray(img_array.reshape(tgt_size)[::-1])
+    return cast('_Pixels', np.ascontiguousarray(img_array.reshape(tgt_size)[::-1]))
 
 
-@_deprecate_positional_args(allowed=['render_window'])
-def image_from_window(  # noqa: PLR0917
-    render_window,
-    as_vtk: bool = False,  # noqa: FBT001, FBT002
-    ignore_alpha: bool = False,  # noqa: FBT001, FBT002
-    scale=1,
-):
+# fmt: off
+# ruff: disable[E501]
+@overload
+def image_from_window(render_window: _vtk.vtkRenderWindow, *, as_vtk: Literal[False] = False, ignore_alpha: bool = ..., scale: int = ...) -> NumpyArray[np.uint8]: ...
+@overload
+def image_from_window(render_window: _vtk.vtkRenderWindow, *, as_vtk: Literal[True], ignore_alpha: bool = ..., scale: int = ...) -> ImageData: ...
+@overload
+def image_from_window(render_window: _vtk.vtkRenderWindow, *, as_vtk: bool = ..., ignore_alpha: bool = ..., scale: int = ...) -> NumpyArray[np.uint8] | ImageData: ...
+# ruff: enable[E501]
+# fmt: on
+def image_from_window(
+    render_window: _vtk.vtkRenderWindow,
+    *,
+    as_vtk: bool = False,
+    ignore_alpha: bool = False,
+    scale: int = 1,
+) -> NumpyArray[np.uint8] | ImageData:
     """Extract the image from the render window as an array.
 
     Parameters
@@ -147,8 +163,8 @@ def image_from_window(  # noqa: PLR0917
 
     Returns
     -------
-    output : ndarray | :vtk:`vtkImageData`
-        The image as an array or as a VTK object depending on the ``as_vtk`` parameter.
+    output : numpy.ndarray | pyvista.ImageData
+        The image as an array or as an image depending on the ``as_vtk`` parameter.
 
     """
     off = not render_window.GetInteractor().GetEnableRender()
@@ -174,7 +190,7 @@ def image_from_window(  # noqa: PLR0917
     # anti-aliased edge pixel, by enough to fail image regression.  Reported upstream at
     # https://gitlab.kitware.com/vtk/vtk/-/work_items/20138
     imfilter.ReadFrontBufferOn()
-    data = run_image_filter(imfilter)
+    data = cast('NumpyArray[np.uint8]', run_image_filter(imfilter))
     if off:
         # Critical for Trame and other offscreen tools
         render_window.GetInteractor().EnableRenderOff()
@@ -183,12 +199,12 @@ def image_from_window(  # noqa: PLR0917
     return data
 
 
-@_deprecate_positional_args(allowed=['im1', 'im2'])
-def compare_images(  # noqa: PLR0917
+def compare_images(
     im1: ImageCompareType,
     im2: ImageCompareType,
+    *,
     threshold: int = 1,
-    use_vtk: bool = True,  # noqa: FBT001, FBT002
+    use_vtk: bool = True,
 ) -> float:
     """Compare two different images of the same size.
 
@@ -258,7 +274,7 @@ def compare_images(  # noqa: PLR0917
                 raise RuntimeError(msg)
             return image_from_window(img.render_window, as_vtk=True, ignore_alpha=True)
         else:
-            msg = (
+            msg = (  # type: ignore[unreachable]
                 f'Unsupported data type {type(img)}.  Should be '
                 'either a np.ndarray, pyvista.Plotter, or vtk.vtkImageData'
             )

@@ -10,7 +10,6 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.filters import _update_alg
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
@@ -172,17 +171,17 @@ class WidgetComponent(_NoNewAttrMixin):
         self.logo_widgets = []
         self.camera3d_widgets = []
 
-    @_deprecate_positional_args(allowed=['callback'])
-    def add_box_widget(  # noqa: PLR0917
+    def add_box_widget(
         self,
         callback,
+        *,
         bounds=None,
         factor=1.25,
-        rotation_enabled: bool = True,  # noqa: FBT001, FBT002
+        rotation_enabled: bool = True,
         color=None,
-        use_planes: bool = False,  # noqa: FBT001, FBT002
-        outline_translation: bool = True,  # noqa: FBT001, FBT002
-        pass_widget: bool = False,  # noqa: FBT001, FBT002
+        use_planes: bool = False,
+        outline_translation: bool = True,
+        pass_widget: bool = False,
         interaction_event: InteractionEventType = 'end',
     ):
         """Add a box widget to the scene.
@@ -312,16 +311,17 @@ class WidgetComponent(_NoNewAttrMixin):
             box_widget.Off()
         self.box_widgets.clear()
 
-    @_deprecate_positional_args(allowed=['mesh'])
-    def add_mesh_clip_box(  # noqa: PLR0917
+    def add_mesh_clip_box(
         self,
+        /,
         mesh,
-        invert: bool = False,  # noqa: FBT001, FBT002
-        rotation_enabled: bool = True,  # noqa: FBT001, FBT002
+        *,
+        invert: bool = False,
+        rotation_enabled: bool = True,
         widget_color=None,
-        outline_translation: bool = True,  # noqa: FBT001, FBT002
-        merge_points: bool = True,  # noqa: FBT001, FBT002
-        crinkle: bool = False,  # noqa: FBT001, FBT002
+        outline_translation: bool = True,
+        merge_points: bool = True,
+        crinkle: bool = False,
         interaction_event: InteractionEventType = 'end',
         factor=1.25,
         **kwargs,
@@ -460,23 +460,23 @@ class WidgetComponent(_NoNewAttrMixin):
             return self._plotter.add_mesh(crinkler, reset_camera=False, **kwargs)
         return self._plotter.add_mesh(clipper.GetOutputPort(port), reset_camera=False, **kwargs)
 
-    @_deprecate_positional_args(allowed=['callback'])
-    def add_plane_widget(  # noqa: PLR0917
+    def add_plane_widget(
         self,
         callback,
+        *,
         normal='x',
         origin=None,
         bounds=None,
         factor=1.25,
         color=None,
         assign_to_axis=None,
-        tubing: bool = False,  # noqa: FBT001, FBT002
-        outline_translation: bool = False,  # noqa: FBT001, FBT002
-        origin_translation: bool = True,  # noqa: FBT001, FBT002
-        implicit: bool = True,  # noqa: FBT001, FBT002
-        pass_widget: bool = False,  # noqa: FBT001, FBT002
-        test_callback: bool = True,  # noqa: FBT001, FBT002
-        normal_rotation: bool = True,  # noqa: FBT001, FBT002
+        tubing: bool = False,
+        outline_translation: bool = False,
+        origin_translation: bool = True,
+        implicit: bool = True,
+        pass_widget: bool = False,
+        test_callback: bool = True,
+        normal_rotation: bool = True,
         interaction_event: InteractionEventType = 'end',
         outline_opacity=None,
     ):
@@ -710,22 +710,23 @@ class WidgetComponent(_NoNewAttrMixin):
             plane_widget.Off()
         self.plane_widgets.clear()
 
-    @_deprecate_positional_args(allowed=['mesh'])
-    def add_mesh_clip_plane(  # noqa: PLR0917
+    def add_mesh_clip_plane(
         self,
+        /,
         mesh,
+        *,
         normal='x',
-        invert: bool = False,  # noqa: FBT001, FBT002
+        invert: bool = False,
         widget_color=None,
         value=0.0,
         factor=1.25,
         assign_to_axis=None,
-        tubing: bool = False,  # noqa: FBT001, FBT002
-        origin_translation: bool = True,  # noqa: FBT001, FBT002
-        outline_translation: bool = False,  # noqa: FBT001, FBT002
-        implicit: bool = True,  # noqa: FBT001, FBT002
-        normal_rotation: bool = True,  # noqa: FBT001, FBT002
-        crinkle: bool = False,  # noqa: FBT001, FBT002
+        tubing: bool = False,
+        origin_translation: bool = True,
+        outline_translation: bool = False,
+        implicit: bool = True,
+        normal_rotation: bool = True,
+        crinkle: bool = False,
         interaction_event: InteractionEventType = 'end',
         origin=None,
         outline_opacity=None,
@@ -896,21 +897,22 @@ class WidgetComponent(_NoNewAttrMixin):
             return self._plotter.add_mesh(crinkler, **kwargs)
         return self._plotter.add_mesh(clipper, **kwargs)
 
-    @_deprecate_positional_args(allowed=['volume'])
-    def add_volume_clip_plane(  # noqa: PLR0917
+    def add_volume_clip_plane(
         self,
+        /,
         volume,
+        *,
         normal='x',
-        invert: bool = False,  # noqa: ARG002, FBT001, FBT002
+        invert: bool = False,  # noqa: ARG002
         widget_color=None,
         value=0.0,  # noqa: ARG002
         factor=1.25,
         assign_to_axis=None,
-        tubing: bool = False,  # noqa: FBT001, FBT002
-        origin_translation: bool = True,  # noqa: FBT001, FBT002
-        outline_translation: bool = False,  # noqa: FBT001, FBT002
-        implicit: bool = True,  # noqa: FBT001, FBT002
-        normal_rotation: bool = True,  # noqa: FBT001, FBT002
+        tubing: bool = False,
+        origin_translation: bool = True,
+        outline_translation: bool = False,
+        implicit: bool = True,
+        normal_rotation: bool = True,
         interaction_event: InteractionEventType = 'end',
         origin=None,
         outline_opacity=None,
@@ -1034,20 +1036,21 @@ class WidgetComponent(_NoNewAttrMixin):
 
         return widget
 
-    @_deprecate_positional_args(allowed=['mesh'])
-    def add_mesh_slice(  # noqa: PLR0917
+    def add_mesh_slice(
         self,
+        /,
         mesh,
+        *,
         normal='x',
-        generate_triangles: bool = False,  # noqa: FBT001, FBT002
+        generate_triangles: bool = False,
         widget_color=None,
         assign_to_axis=None,
-        tubing: bool = False,  # noqa: FBT001, FBT002
+        tubing: bool = False,
         factor: float = 1.25,
-        origin_translation: bool = True,  # noqa: FBT001, FBT002
-        outline_translation: bool = False,  # noqa: FBT001, FBT002
-        implicit: bool = True,  # noqa: FBT001, FBT002
-        normal_rotation: bool = True,  # noqa: FBT001, FBT002
+        origin_translation: bool = True,
+        outline_translation: bool = False,
+        implicit: bool = True,
+        normal_rotation: bool = True,
         interaction_event: InteractionEventType = 'end',
         origin=None,
         outline_opacity=None,
@@ -1192,13 +1195,14 @@ class WidgetComponent(_NoNewAttrMixin):
 
         return self._plotter.add_mesh(alg, **kwargs)
 
-    @_deprecate_positional_args(allowed=['mesh'])
-    def add_mesh_slice_orthogonal(  # noqa: PLR0917
+    def add_mesh_slice_orthogonal(
         self,
+        /,
         mesh,
-        generate_triangles: bool = False,  # noqa: FBT001, FBT002
+        *,
+        generate_triangles: bool = False,
         widget_color=None,
-        tubing: bool = False,  # noqa: FBT001, FBT002
+        tubing: bool = False,
         interaction_event: InteractionEventType = 'end',
         **kwargs,
     ):
@@ -1278,16 +1282,16 @@ class WidgetComponent(_NoNewAttrMixin):
 
         return actors
 
-    @_deprecate_positional_args(allowed=['callback'])
-    def add_line_widget(  # noqa: PLR0917
+    def add_line_widget(
         self,
         callback,
+        *,
         bounds=None,
         factor=1.25,
         resolution=100,
         color=None,
-        use_vertices: bool = False,  # noqa: FBT001, FBT002
-        pass_widget: bool = False,  # noqa: FBT001, FBT002
+        use_vertices: bool = False,
+        pass_widget: bool = False,
         interaction_event: InteractionEventType = 'end',
     ):
         """Add a line widget to the scene.
@@ -1399,11 +1403,11 @@ class WidgetComponent(_NoNewAttrMixin):
             line_widget.Off()
         self.line_widgets.clear()
 
-    @_deprecate_positional_args(allowed=['callback', 'data'])
-    def add_text_slider_widget(  # noqa: PLR0917
+    def add_text_slider_widget(
         self,
         callback,
         data,
+        *,
         value=None,
         pointa=(0.4, 0.9),
         pointb=(0.9, 0.9),
@@ -1510,17 +1514,17 @@ class WidgetComponent(_NoNewAttrMixin):
         title_callback(slider_widget, None)
         return slider_widget
 
-    @_deprecate_positional_args(allowed=['callback', 'rng'])
-    def add_slider_widget(  # noqa: PLR0917
+    def add_slider_widget(
         self,
         callback,
         rng,
+        *,
         value=None,
         title=None,
         pointa=(0.4, 0.9),
         pointb=(0.9, 0.9),
         color=None,
-        pass_widget: bool = False,  # noqa: FBT001, FBT002
+        pass_widget: bool = False,
         interaction_event: InteractionEventType = 'end',
         style=None,
         title_height=0.03,
@@ -1720,19 +1724,20 @@ class WidgetComponent(_NoNewAttrMixin):
             slider_widget.Off()
         self.slider_widgets.clear()
 
-    @_deprecate_positional_args(allowed=['mesh'])
-    def add_mesh_threshold(  # noqa: PLR0917
+    def add_mesh_threshold(
         self,
+        /,
         mesh,
+        *,
         scalars=None,
-        invert: bool = False,  # noqa: FBT001, FBT002
+        invert: bool = False,
         widget_color=None,
         preference='cell',
         title=None,
         pointa=(0.4, 0.9),
         pointb=(0.9, 0.9),
-        continuous: bool = False,  # noqa: FBT001, FBT002
-        all_scalars: bool = False,  # noqa: FBT001, FBT002
+        continuous: bool = False,
+        all_scalars: bool = False,
         method='upper',
         **kwargs,
     ):
@@ -1880,14 +1885,15 @@ class WidgetComponent(_NoNewAttrMixin):
         kwargs.setdefault('reset_camera', False)
         return self._plotter.add_mesh(alg, scalars=scalars, **kwargs)
 
-    @_deprecate_positional_args(allowed=['mesh'])
-    def add_mesh_isovalue(  # noqa: PLR0917
+    def add_mesh_isovalue(
         self,
+        /,
         mesh,
+        *,
         scalars=None,
-        compute_normals: bool = False,  # noqa: FBT001, FBT002
-        compute_gradients: bool = False,  # noqa: FBT001, FBT002
-        compute_scalars: bool = True,  # noqa: FBT001, FBT002
+        compute_normals: bool = False,
+        compute_gradients: bool = False,
+        compute_scalars: bool = True,
         preference='point',
         title=None,
         pointa=(0.4, 0.9),
@@ -2046,20 +2052,20 @@ class WidgetComponent(_NoNewAttrMixin):
         kwargs.setdefault('reset_camera', False)
         return self._plotter.add_mesh(alg, scalars=scalars, **kwargs)
 
-    @_deprecate_positional_args(allowed=['callback'])
-    def add_spline_widget(  # noqa: PLR0917
+    def add_spline_widget(
         self,
         callback,
+        *,
         bounds=None,
         factor=1.25,
         n_handles=5,
         resolution=25,
         color='yellow',
-        show_ribbon: bool = False,  # noqa: FBT001, FBT002
+        show_ribbon: bool = False,
         ribbon_color='pink',
         ribbon_opacity=0.5,
-        pass_widget: bool = False,  # noqa: FBT001, FBT002
-        closed: bool = False,  # noqa: FBT001, FBT002
+        pass_widget: bool = False,
+        closed: bool = False,
         initial_points=None,
         interaction_event: InteractionEventType = 'end',
     ):
@@ -2191,20 +2197,21 @@ class WidgetComponent(_NoNewAttrMixin):
             spline_widget.Off()
         self.spline_widgets.clear()
 
-    @_deprecate_positional_args(allowed=['mesh'])
-    def add_mesh_slice_spline(  # noqa: PLR0917
+    def add_mesh_slice_spline(
         self,
+        /,
         mesh,
-        generate_triangles: bool = False,  # noqa: FBT001, FBT002
+        *,
+        generate_triangles: bool = False,
         factor=1.25,
         n_handles=5,
         resolution=25,
         widget_color=None,
-        show_ribbon: bool = False,  # noqa: FBT001, FBT002
+        show_ribbon: bool = False,
         ribbon_color='pink',
         ribbon_opacity=0.5,
         initial_points=None,
-        closed: bool = False,  # noqa: FBT001, FBT002
+        closed: bool = False,
         interaction_event: InteractionEventType = 'end',
         **kwargs,
     ):
@@ -2410,10 +2417,10 @@ class WidgetComponent(_NoNewAttrMixin):
             distance_widget.Off()
         self.distance_widgets.clear()
 
-    @_deprecate_positional_args(allowed=['callback'])
-    def add_sphere_widget(  # noqa: PLR0917
+    def add_sphere_widget(
         self,
         callback,
+        *,
         center=(0, 0, 0),
         radius=0.5,
         theta_resolution=30,
@@ -2422,8 +2429,8 @@ class WidgetComponent(_NoNewAttrMixin):
         style='surface',
         selected_color='pink',
         indices=None,
-        pass_widget: bool = False,  # noqa: FBT001, FBT002
-        test_callback: bool = True,  # noqa: FBT001, FBT002
+        pass_widget: bool = False,
+        test_callback: bool = True,
         interaction_event: InteractionEventType = 'end',
     ):
         """Add one or many sphere widgets to a scene.
@@ -2561,15 +2568,15 @@ class WidgetComponent(_NoNewAttrMixin):
             sphere_widget.Off()
         self.sphere_widgets.clear()
 
-    @_deprecate_positional_args(allowed=['actor'])
-    def add_affine_transform_widget(  # noqa: PLR0917
+    def add_affine_transform_widget(
         self,
         actor,
+        *,
         origin=None,
-        start: bool = True,  # noqa: FBT001, FBT002
+        start: bool = True,
         scale=0.15,
         line_radius=0.02,
-        always_visible: bool = True,  # noqa: FBT001, FBT002
+        always_visible: bool = True,
         axes_colors=None,
         axes=None,
         release_callback=None,
@@ -2655,11 +2662,11 @@ class WidgetComponent(_NoNewAttrMixin):
             interact_callback=interact_callback,
         )
 
-    @_deprecate_positional_args(allowed=['callback'])
-    def add_checkbox_button_widget(  # noqa: PLR0917
+    def add_checkbox_button_widget(
         self,
         callback,
-        value: bool = False,  # noqa: FBT001, FBT002
+        *,
+        value: bool = False,
         position=(10.0, 10.0),
         size=50,
         border_size=5,
@@ -2772,12 +2779,12 @@ class WidgetComponent(_NoNewAttrMixin):
         self.button_widgets.append(button_widget)
         return button_widget
 
-    @_deprecate_positional_args(allowed=['callback', 'radio_button_group'])
-    def add_radio_button_widget(  # noqa: PLR0917
+    def add_radio_button_widget(
         self,
         callback,
         radio_button_group,
-        value: bool = False,  # noqa: FBT001, FBT002
+        *,
+        value: bool = False,
         title=None,
         position=(10.0, 10.0),
         size=50,
@@ -2979,8 +2986,7 @@ class WidgetComponent(_NoNewAttrMixin):
                 title.VisibilityOff()
         self.radio_button_title_dict.clear()
 
-    @_deprecate_positional_args
-    def add_camera_orientation_widget(self, animate: bool = True, n_frames=20):  # noqa: FBT001, FBT002
+    def add_camera_orientation_widget(self, *, animate: bool = True, n_frames=20):
         """Add a camera orientation widget to the active renderer.
 
         Parameters
@@ -3036,10 +3042,10 @@ class WidgetComponent(_NoNewAttrMixin):
             button_widget.Off()
         self.button_widgets.clear()
 
-    @_deprecate_positional_args(allowed=['logo'])
-    def add_logo_widget(  # noqa: PLR0917
+    def add_logo_widget(
         self,
         logo: ImageData | str | Path | None = None,
+        *,
         position: VectorLike[float] = (0.75, 0.8),
         size: VectorLike[float] = (0.2, 0.2),
         opacity: float = 1.0,

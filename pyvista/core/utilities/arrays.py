@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections import UserDict
 from collections import deque
 from collections.abc import Sequence
+import copy as copylib
 from enum import Enum
 import itertools
 import json
@@ -19,13 +20,18 @@ import numpy.typing as npt
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._version import _is_deprecation_due
+from pyvista._warn_external import warn_external
 from pyvista.core._vtk_utilities import _MATRIX_GET_DATA_RETURNS_ELEMENTS
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import MissingDataError
+from pyvista.core.errors import PyVistaDeprecationWarning
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
+    from pyvista import DataObject
     from pyvista import DataSet
     from pyvista import Table
     from pyvista import pyvista_ndarray
@@ -33,6 +39,9 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
     from pyvista.core.dataset import _ActiveArrayExistsInfoTuple
+
+
+USER_DICT_KEY = '_PYVISTA_USER_DICT'
 
 
 class FieldAssociation(Enum):
@@ -67,22 +76,20 @@ _FIELD_CHOICES: dict[str, FieldAssociation] = {
 }
 
 
+# fmt: off
+# ruff: disable[E501]
 @overload
-def parse_field_choice(
-    field: PointLiteral | Literal['p', 'points'],
-) -> Literal[FieldAssociation.POINT]: ...
+def parse_field_choice(field: PointLiteral | Literal['p', 'points']) -> Literal[FieldAssociation.POINT]: ...
 @overload
-def parse_field_choice(
-    field: CellLiteral | Literal['c', 'cells'],
-) -> Literal[FieldAssociation.CELL]: ...
+def parse_field_choice(field: CellLiteral | Literal['c', 'cells']) -> Literal[FieldAssociation.CELL]: ...
 @overload
-def parse_field_choice(
-    field: FieldLiteral | Literal['f', 'fields'],
-) -> Literal[FieldAssociation.NONE]: ...
+def parse_field_choice(field: FieldLiteral | Literal['f', 'fields']) -> Literal[FieldAssociation.NONE]: ...
 @overload
 def parse_field_choice(field: RowLiteral | Literal['r']) -> Literal[FieldAssociation.ROW]: ...
 @overload
 def parse_field_choice(field: FieldAssociation) -> FieldAssociation: ...
+# ruff: enable[E501]
+# fmt: on
 def parse_field_choice(
     field: FieldAssociation
     | PointLiteral
@@ -171,8 +178,7 @@ def _coerce_pointslike_arg(
     return points, singular
 
 
-@_deprecate_positional_args(allowed=['array'])
-def copy_vtk_array(array: _vtk.vtkAbstractArray, deep: bool = True) -> _vtk.vtkAbstractArray:  # noqa: FBT001, FBT002
+def copy_vtk_array(array: _vtk.vtkAbstractArray, *, deep: bool = True) -> _vtk.vtkAbstractArray:
     """Create a deep or shallow copy of a VTK array.
 
     Parameters
@@ -254,35 +260,28 @@ def raise_has_duplicates(arr: NumpyArray[Any]) -> None:
         raise ValueError(msg)
 
 
+# fmt: off
+# ruff: disable[E501]
 @overload
-def convert_array(
-    arr: _vtk.vtkAbstractArray,
-    name: str | None = ...,
-    deep: bool = ...,  # noqa: FBT001
-    array_type: int | None = None,
-) -> npt.NDArray[Any]: ...
+def convert_array(arr: _vtk.vtkAbstractArray, name: str | None = ..., *, deep: bool = ..., array_type: int | None = None) -> npt.NDArray[Any]: ...
 @overload
-def convert_array(
-    arr: npt.ArrayLike,
-    name: str | None = ...,
-    deep: bool = ...,  # noqa: FBT001
-    array_type: int | None = None,
-) -> _vtk.vtkAbstractArray: ...
+def convert_array(arr: npt.ArrayLike, name: str | None = ..., *, deep: bool = ..., array_type: int | None = None) -> _vtk.vtkAbstractArray: ...
 @overload
+def convert_array(arr: None, name: str | None = ..., *, deep: bool = ..., array_type: int | None = ...) -> None: ...
+# ruff: enable[E501]
+# fmt: on
 def convert_array(
-    arr: None,
-    name: str | None = ...,
-    deep: bool = ...,  # noqa: FBT001
-    array_type: int | None = ...,
-) -> None: ...
-@_deprecate_positional_args(allowed=['arr', 'name'])
-def convert_array(  # noqa: PLR0917
     arr: npt.ArrayLike | _vtk.vtkAbstractArray | None,
     name: str | None = None,
-    deep: bool = False,  # noqa: FBT001, FBT002
+    *,
+    deep: bool = False,
     array_type: int | None = None,
 ) -> npt.NDArray[Any] | _vtk.vtkAbstractArray | None:
     """Convert a NumPy array to a :vtk:`vtkDataArray` or vice versa.
+
+    .. deprecated:: 0.50
+        Converting a scalar is deprecated. Pass an array with at least one
+        dimension instead.
 
     Parameters
     ----------
@@ -310,6 +309,9 @@ def convert_array(  # noqa: PLR0917
     if not isinstance(arr, np.ndarray):
         # Otherwise input must be a vtkDataArray
         return _vtk_array_to_numpy(cast('_vtk.vtkAbstractArray', arr))
+    if arr.ndim == 0:
+        _warn_scalar_array()
+        arr = arr.reshape(1)
 
     kind = arr.dtype.kind
     if kind == 'O':  # np.object_
@@ -318,9 +320,7 @@ def convert_array(  # noqa: PLR0917
     if kind in 'US':  # np.str_ or np.bytes_
         vtk_data: _vtk.vtkAbstractArray = convert_string_array(arr)
     else:
-        # A scalar is stored as a single-tuple array; numpy_to_vtk makes the data contiguous
-        if arr.ndim == 0:
-            arr = arr.reshape(1)
+        # numpy_to_vtk makes the data contiguous
         vtk_data = _vtk.numpy_to_vtk(num_array=arr, deep=deep, array_type=array_type)
     if isinstance(name, str):
         vtk_data.SetName(name)
@@ -339,12 +339,12 @@ def _vtk_array_to_numpy(arr: _vtk.vtkAbstractArray) -> npt.NDArray[Any]:
     raise TypeError(msg)
 
 
-@_deprecate_positional_args(allowed=['mesh', 'name'])
-def get_array(  # noqa: PLR0917
+def get_array(
     mesh: DataSet | _vtk.vtkDataSet | _vtk.vtkTable,
     name: str,
+    *,
     preference: PointLiteral | CellLiteral | FieldLiteral | RowLiteral = 'cell',
-    err: bool = False,  # noqa: FBT001, FBT002
+    err: bool = False,
 ) -> pyvista_ndarray | None:
     """Search point, cell, and field data for an array.
 
@@ -416,12 +416,12 @@ def get_array(  # noqa: PLR0917
         return out
 
 
-@_deprecate_positional_args(allowed=['mesh', 'name'])
-def get_array_association(  # noqa: PLR0917
+def get_array_association(
     mesh: DataSet | _vtk.vtkDataSet | _vtk.vtkTable,
     name: str,
+    *,
     preference: PointLiteral | CellLiteral | FieldLiteral | RowLiteral = 'cell',
-    err: bool = False,  # noqa: FBT001, FBT002
+    err: bool = False,
 ) -> FieldAssociation:
     """Return the array association.
 
@@ -480,6 +480,47 @@ def get_array_association(  # noqa: PLR0917
         return preference_field
     # otherwise return first in order of point -> cell -> field
     return matches[0]
+
+
+_SCALAR_ARRAY_HINTS = {
+    FieldAssociation.POINT: (
+        'Use numpy.full or numpy.broadcast_to to create an array with one value per point.'
+    ),
+    FieldAssociation.CELL: (
+        'Use numpy.full or numpy.broadcast_to to create an array with one value per cell.'
+    ),
+    FieldAssociation.ROW: (
+        'Use numpy.full or numpy.broadcast_to to create an array with one value per row.'
+    ),
+    FieldAssociation.NONE: (
+        'Use user_dict to store scalar metadata, or pass [value] to store a one-element array.'
+    ),
+    None: (
+        'Use numpy.full or numpy.broadcast_to to set point or cell data, '
+        'or use user_dict to store scalar metadata.'
+    ),
+}
+
+
+def _warn_scalar_array(
+    name: str | None = None, association: FieldAssociation | None = None
+) -> None:
+    """Warn that a scalar was given where an array is required."""
+    # deprecated 0.50.0, convert to error in 0.53.0
+    if _is_deprecation_due((0, 53)):  # pragma: no cover
+        msg = 'Convert this deprecation warning into an error.'
+        raise RuntimeError(msg)
+    if name is None:
+        msg = (
+            'Converting a scalar to a VTK array is deprecated. '
+            'Pass an array with at least one dimension instead.'
+        )
+    else:
+        msg = (
+            f"Setting array '{name}' from a scalar is deprecated. "
+            f'{_SCALAR_ARRAY_HINTS[association]}'
+        )
+    warn_external(msg, PyVistaDeprecationWarning)
 
 
 def raise_not_matching(scalars: npt.NDArray[Any], dataset: DataSet | Table) -> None:
@@ -702,34 +743,27 @@ def vtk_id_list_to_array(vtk_id_list: _vtk.vtkIdList) -> NumpyArray[int]:
     return np.fromiter(map(vtk_id_list.GetId, range(n_ids)), dtype=int, count=n_ids)
 
 
-def _set_string_scalar_object_name(vtkarr: _vtk.vtkStringArray) -> None:
-    """Set object name for scalar string arrays."""
-    # This is used as a flag so that scalar arrays can be reshaped later.
-    try:
-        vtkarr.SetObjectName('scalar')
-    except AttributeError:
-        vtkarr.GetObjectName = lambda: 'scalar'  # type: ignore[method-assign]
-
-
+# fmt: off
+# ruff: disable[E501]
 @overload
-def convert_string_array(
-    arr: _vtk.vtkStringArray, name: str | None = ...
-) -> npt.NDArray[np.str_]: ...
+def convert_string_array(arr: _vtk.vtkStringArray, name: str | None = ...) -> npt.NDArray[np.str_]: ...
 @overload
-def convert_string_array(
-    arr: str | npt.NDArray[np.str_], name: str | None = ...
-) -> _vtk.vtkStringArray: ...
+def convert_string_array(arr: str | npt.NDArray[np.str_], name: str | None = ...) -> _vtk.vtkStringArray: ...
+# ruff: enable[E501]
+# fmt: on
 def convert_string_array(
     arr: str | npt.NDArray[np.str_] | _vtk.vtkStringArray, name: str | None = None
 ) -> npt.NDArray[np.str_] | _vtk.vtkStringArray:
     """Convert a NumPy array of strings to a :vtk:`vtkStringArray` or vice versa.
 
-    If a scalar string is provided, it is converted to a :vtk:`vtkCharArray`
-
     .. versionchanged:: 0.49
         A two-dimensional array keeps its second axis, held as the components of
         the :vtk:`vtkStringArray`. It was previously flattened. An array with more
         dimensions raises instead of being flattened.
+
+    .. deprecated:: 0.50
+        Converting a scalar string is deprecated. It is stored as a one-element
+        array and converted back as one. Pass a one-dimensional array instead.
 
     Parameters
     ----------
@@ -752,6 +786,9 @@ def convert_string_array(
     """
     arr = np.array(arr) if isinstance(arr, str) else arr
     if isinstance(arr, np.ndarray):
+        if arr.ndim == 0:
+            _warn_scalar_array()
+            arr = arr.reshape(1)
         if arr.ndim > 2:
             msg = f'String array must be at most 2-dimensional, got shape {arr.shape}.'
             raise ValueError(msg)
@@ -761,10 +798,7 @@ def convert_string_array(
             msg = 'String array contains non-ASCII characters that are not supported by VTK.'
             raise ValueError(msg)
         vtkarr = _vtk.vtkStringArray()
-        if arr.ndim == 0:
-            # The object name marks a scalar input
-            _set_string_scalar_object_name(vtkarr)
-        elif arr.ndim == 2:
+        if arr.ndim == 2:
             # The second axis is stored as components, as it is for numeric arrays
             vtkarr.SetNumberOfComponents(arr.shape[1])
 
@@ -779,11 +813,6 @@ def convert_string_array(
     # longest value; passing dtype='|U' to np.empty defaults to width 1
     # which truncates strings.
     arr_out = np.array(list(map(arr.GetValue, range(arr.GetNumberOfValues()))), dtype='|U')
-    try:
-        if arr.GetObjectName() == 'scalar':
-            return np.array(''.join(arr_out))
-    except AttributeError:
-        pass
     n_components = arr.GetNumberOfComponents()
     if n_components > 1:
         return arr_out.reshape(-1, n_components)
@@ -1010,6 +1039,9 @@ class _SerializedDictArray(DisableVtkSnakeCase, UserDict, _vtk.vtkStringArray): 
     dict_ : str | dict | UserDict, optional
         Initial data. A JSON string is parsed first.
 
+    owner : DataObject, optional
+        Data object whose field data receives this array on the first write.
+
     **kwargs : dict, optional
         Additional key-value pairs, as for :class:`dict`.
 
@@ -1021,12 +1053,29 @@ class _SerializedDictArray(DisableVtkSnakeCase, UserDict, _vtk.vtkStringArray): 
 
     """
 
+    def __init__(
+        self: _SerializedDictArray,
+        dict_: str | dict[str, _JSONValueType] | UserDict[str, _JSONValueType] | None = None,
+        /,
+        owner: DataObject | None = None,
+        **kwargs,
+    ) -> None:
+        data = json.loads(dict_) if isinstance(dict_, str) else dict(dict_ or {})
+        data.update(kwargs)
+        _check_json(data)
+        object.__setattr__(self, 'data', data)
+        reference = None
+        if owner is not None:
+            reference = _vtk.vtkWeakReference()
+            reference.Set(owner)
+        object.__setattr__(self, '_owner', reference)
+        self.SetName(USER_DICT_KEY)
+        self._serialize()
+
     @property
     def _string(self: _SerializedDictArray) -> str:
         """Get the :vtk:`vtkStringArray` string."""
-        # Joining all values handles both the historical char-per-value
-        # format (read from older saved files) and the current
-        # whole-string-as-one-value format below.
+        # Older files hold one character per value, so join them all
         n = self.GetNumberOfValues()
         if n == 1:
             return self.GetValue(0)
@@ -1035,19 +1084,53 @@ class _SerializedDictArray(DisableVtkSnakeCase, UserDict, _vtk.vtkStringArray): 
     @_string.setter
     def _string(self: _SerializedDictArray, str_: str) -> None:
         """Set the :vtk:`vtkStringArray` to a specified string."""
-        # Store the entire string as a single value rather than one
-        # character per value. This avoids O(len(str_)) Python<->C
-        # crossings and matches how every other VTK string field stores
-        # text. Reading still works for the legacy char-per-value format
-        # because the getter joins all values.
         self.SetNumberOfValues(1)
         self.SetValue(0, str_)
 
-    def _update_string(self: _SerializedDictArray) -> None:
-        """Format dict data as JSON and update the :vtk:`vtkStringArray`."""
+    def _serialize(self: _SerializedDictArray) -> None:
+        """Write the dict as JSON to the :vtk:`vtkStringArray`."""
         data_str = json.dumps(self.data)
         if data_str != self._string:
             self._string = data_str
+
+    def _install(self: _SerializedDictArray) -> None:
+        """Make this array the one under its name in the owner's field data."""
+        owner = self._owner.Get() if self._owner is not None else None
+        if owner is None:
+            return
+        field_data = owner.GetFieldData()
+        if field_data.GetAbstractArray(USER_DICT_KEY) is not self:
+            field_data.AddArray(self)
+            field_data.Modified()
+
+    def _update_string(self: _SerializedDictArray) -> None:
+        """Serialize after a mutation and install the array in the owner."""
+        self._serialize()
+        self._install()
+
+    def _sync(self: _SerializedDictArray) -> None:
+        """Adopt the contents of the owner's array under this name if it is another array."""
+        owner = self._owner.Get() if self._owner is not None else None
+        if owner is None:
+            return
+        array = owner.GetFieldData().GetAbstractArray(USER_DICT_KEY)
+        if array is self or (array is None and not self.data):
+            return
+        if array is None:
+            self._replace(None)
+        else:
+            # Older files hold one character per value, so join them all
+            self._replace(''.join(map(array.GetValue, range(array.GetNumberOfValues()))))
+            self._install()
+
+    def _replace(
+        self: _SerializedDictArray, dict_: str | dict[str, _JSONValueType] | None
+    ) -> None:
+        """Replace the contents without installing the array in the owner."""
+        data = json.loads(dict_) if isinstance(dict_, str) else dict(dict_ or {})
+        _check_json(data)
+        object.__setattr__(self, 'data', data)
+        self._serialize()
 
     def __str__(self: _SerializedDictArray) -> str:
         """Return JSON-formatted dict representation."""
@@ -1057,56 +1140,36 @@ class _SerializedDictArray(DisableVtkSnakeCase, UserDict, _vtk.vtkStringArray): 
         """Return JSON-formatted dict representation."""
         return str(self)
 
-    def __init__(
-        self: _SerializedDictArray,
-        dict_: str | dict[str, _JSONValueType] | UserDict[str, _JSONValueType] | None = None,
-        /,
-        **kwargs,
-    ) -> None:
-        # Init from JSON string
-        if isinstance(dict_, str):
-            dict_ = json.loads(dict_)
-
-        # Init UserDict
-        super().__init__(dict_, **kwargs)  # type: ignore[arg-type]
-        self._update_string()
-
-        # Flag self as a scalar string
-        # This is only needed so that the Field DatasetAttributes repr
-        # shows this array as `str`
-        _set_string_scalar_object_name(self)
-
     def __getstate__(self: _SerializedDictArray) -> None:
-        """Support pickling.
-
-        This method does nothing. It only exists to make the pickle library happy.
-        Classes that store an instance of this class must pickle this array directly.
-        For example, DataObjects can support this by storing this array as field data
-        """
+        """Pickle no state; the owner pickles this array as field data."""
 
     def __setstate__(self: _SerializedDictArray, state: Any) -> None:
-        """Support pickling.
+        """Restore no state; the owner restores this array from field data."""
 
-        This method does nothing. It only exists to make the pickle library happy.
-        Classes that store an instance of this class must pickle this array directly.
-        For example, DataObjects can support this by storing this array as field data
-        """
+    def __setattr__(self: _SerializedDictArray, key: Any, value: Any) -> None:
+        if key == 'data':
+            _check_json(value)
+            value = dict(value)
+        object.__setattr__(self, key, value)
+        if key == 'data':
+            self._update_string()
 
-    # Override any/all `UserDict` or `MutableMapping` methods which mutate
-    # the dictionary. This ensures the serialized string is also updated
-    # and synced with the dict
+    # Every mutating method syncs, validates, mutates, then serializes exactly once
 
     def __setitem__(self: _SerializedDictArray, key: Any, item: Any) -> None:
-        super().__setitem__(key, item)
+        self._sync()
+        _check_json({key: item})
+        self.data[key] = item
         self._update_string()
 
     def __delitem__(self: _SerializedDictArray, key: Any) -> None:
-        super().__delitem__(key)
+        self._sync()
+        del self.data[key]
         self._update_string()
 
-    def __setattr__(self: _SerializedDictArray, key: Any, value: Any) -> None:
-        object.__setattr__(self, key, value)
-        self._update_string() if key != '_string' else None
+    def __ior__(self, other: Any) -> Self:  # type: ignore[misc]
+        self.update(other)
+        return self
 
     def update(self: _SerializedDictArray, *args, **kwargs) -> None:
         """Update the dictionary and re-serialize.
@@ -1119,53 +1182,113 @@ class _SerializedDictArray(DisableVtkSnakeCase, UserDict, _vtk.vtkStringArray): 
         **kwargs : dict, optional
             Keyword arguments of :meth:`dict.update`.
 
+        """
+        self._sync()
+        new = dict(*args, **kwargs)
+        _check_json(new)
+        self.data.update(new)
+        self._update_string()
+
+    def setdefault(self: _SerializedDictArray, key: Any, default: Any = None) -> Any:
+        """Insert a default value if the key is missing and return the value.
+
+        Parameters
+        ----------
+        key : Any
+            Key to look up.
+
+        default : Any, optional
+            Value stored under ``key`` if it is missing.
+
+        Returns
+        -------
+        Any
+            Value stored under ``key``.
 
         """
-        super().update(*args, **kwargs)
-        self._update_string()
+        self._sync()
+        if key not in self.data:
+            self[key] = default
+        return self.data[key]
 
-    def popitem(self: _SerializedDictArray) -> Any:
-        """Pop the last item and re-serialize."""
-        item = super().popitem()
-        self._update_string()
-        return item
-
-    def pop(self: _SerializedDictArray, __key: Any) -> Any:  # type: ignore[override]  # noqa: PYI063
+    def pop(self: _SerializedDictArray, key: Any, *args: Any) -> Any:
         """Pop an item by key and re-serialize.
 
         Parameters
         ----------
-        __key : Any
+        key : Any
             Key to remove.
+
+        *args : Any, optional
+            Value returned if ``key`` is missing, as for :meth:`dict.pop`.
 
         Returns
         -------
         Any
             Removed value.
 
-
         """
-        item = super().pop(__key)
+        self._sync()
+        item = self.data.pop(key, *args)
+        self._update_string()
+        return item
+
+    def popitem(self: _SerializedDictArray) -> Any:
+        """Pop the first item and re-serialize."""
+        self._sync()
+        key = next(iter(self.data))
+        item = (key, self.data.pop(key))
         self._update_string()
         return item
 
     def clear(self: _SerializedDictArray) -> None:
         """Clear the dictionary and re-serialize."""
-        super().clear()
+        self._sync()
+        self.data.clear()
         self._update_string()
 
-    def setdefault(self: _SerializedDictArray, *args, **kwargs) -> None:
-        """Insert a default value and re-serialize.
+    def copy(self: _SerializedDictArray) -> _SerializedDictArray:
+        """Return a copy that belongs to no data object."""
+        return type(self)(self.data)
 
-        Parameters
-        ----------
-        *args : tuple, optional
-            Arguments of :meth:`dict.setdefault`.
+    __copy__ = copy
 
-        **kwargs : dict, optional
-            Keyword arguments of :meth:`dict.setdefault`.
+    def __deepcopy__(self: _SerializedDictArray, memo: dict[int, Any]) -> _SerializedDictArray:
+        return type(self)(copylib.deepcopy(self.data, memo))
 
 
-        """
-        super().setdefault(*args, **kwargs)
-        self._update_string()
+_NO_KEY = object()
+
+
+def _non_string_key(obj: Any) -> Any:
+    """Return the first key in ``obj`` that is not a string, or ``_NO_KEY``."""
+    if isinstance(obj, dict):
+        for key, value in obj.items():
+            if not isinstance(key, str):
+                return key
+            found = _non_string_key(value)
+            if found is not _NO_KEY:
+                return found
+    elif isinstance(obj, (list, tuple)):
+        for value in obj:
+            found = _non_string_key(value)
+            if found is not _NO_KEY:
+                return found
+    return _NO_KEY
+
+
+def _check_json(obj: Any) -> None:
+    """Raise if JSON cannot serialize ``obj`` and warn on keys JSON stores as strings."""
+    json.dumps(obj)
+    key = _non_string_key(obj)
+    if key is _NO_KEY:
+        return
+    # deprecated 0.50.0, convert to error in 0.53.0
+    if _is_deprecation_due((0, 53)):  # pragma: no cover
+        msg = 'Convert this deprecation warning into an error.'
+        raise RuntimeError(msg)
+    msg = (
+        f'The user_dict key {key!r} is not a string, which is deprecated. '
+        f'JSON stores keys as strings, so use {json.dumps(key)!r} instead.'
+    )
+    warn_external(msg, PyVistaDeprecationWarning)

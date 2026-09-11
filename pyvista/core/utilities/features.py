@@ -11,7 +11,6 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.errors import DeprecationError
 from pyvista.core.utilities.helpers import wrap
 
@@ -47,13 +46,13 @@ def _padded_bins(mesh, density):
     ]
 
 
-@_deprecate_positional_args(allowed=['mesh'])
-def voxelize(  # noqa: PLR0917
+def voxelize(
     mesh,  # noqa: ARG001
+    *,
     density=None,  # noqa: ARG001
-    check_surface: bool = True,  # noqa: ARG001, FBT001, FBT002
-    enclosed: bool = False,  # noqa: ARG001, FBT001, FBT002
-    fit_bounds: bool = False,  # noqa: ARG001, FBT001, FBT002
+    check_surface: bool = True,  # noqa: ARG001
+    enclosed: bool = False,  # noqa: ARG001
+    fit_bounds: bool = False,  # noqa: ARG001
 ):
     """Voxelize mesh to UnstructuredGrid.
 
@@ -252,13 +251,13 @@ def _voxelize_legacy(
     return ugrid.extract_points(mask)
 
 
-@_deprecate_positional_args(allowed=['mesh'])
-def voxelize_volume(  # noqa: PLR0917
+def voxelize_volume(
     mesh,  # noqa: ARG001
+    *,
     density=None,  # noqa: ARG001
-    check_surface: bool = True,  # noqa: ARG001, FBT001, FBT002
-    enclosed: bool = False,  # noqa: ARG001, FBT001, FBT002
-    fit_bounds: bool = False,  # noqa: ARG001, FBT001, FBT002
+    check_surface: bool = True,  # noqa: ARG001
+    enclosed: bool = False,  # noqa: ARG001
+    fit_bounds: bool = False,  # noqa: ARG001
 ):
     """Voxelize mesh to create a RectilinearGrid voxel volume.
 
@@ -475,8 +474,7 @@ def grid_from_sph_coords(theta, phi, r):
     return pv.StructuredGrid(x_cart, y_cart, z_cart)
 
 
-@_deprecate_positional_args
-def transform_vectors_sph_to_cart(theta, phi, r, u, v, w):  # noqa: PLR0917  # numpydoc ignore=RT02
+def transform_vectors_sph_to_cart(*, theta, phi, r, u, v, w):  # numpydoc ignore=RT02
     """Transform vectors from spherical (r, phi, theta) to Cartesian coordinates (z, y, x).
 
     Note the "reverse" order of arrays's axes, commonly used in geosciences.
@@ -581,12 +579,12 @@ def spherical_to_cartesian(r, phi, theta):
     return x, y, z
 
 
-@_deprecate_positional_args(allowed=['datasets'])
-def merge(  # noqa: PLR0917
+def merge(
     datasets,
-    merge_points: bool = True,  # noqa: FBT001, FBT002
-    main_has_priority: bool | None = None,  # noqa: FBT001
-    progress_bar: bool = False,  # noqa: FBT001, FBT002
+    *,
+    merge_points: bool = True,
+    main_has_priority: bool | None = None,
+    progress_bar: bool = False,
 ):
     """Merge several datasets.
 
@@ -731,18 +729,18 @@ def perlin_noise(amplitude, freq: Sequence[float], phase: Sequence[float]):
     return noise
 
 
-@_deprecate_positional_args(allowed=['function'])
-def sample_function(  # noqa: PLR0917
+def sample_function(
     function: _vtk.vtkImplicitFunction,
+    *,
     bounds: Sequence[float] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
     dim: Sequence[int] = (50, 50, 50),
-    compute_normals: bool = False,  # noqa: FBT001, FBT002
+    compute_normals: bool = False,
     output_type: np.dtype = np.double,  # type: ignore[assignment]
-    capping: bool = False,  # noqa: FBT001, FBT002
+    capping: bool = False,
     cap_value: float = sys.float_info.max,
     scalar_arr_name: str = 'scalars',
     normal_arr_name: str = 'normals',
-    progress_bar: bool = False,  # noqa: FBT001, FBT002
+    progress_bar: bool = False,
 ):
     """Sample an implicit function over a structured point set.
 

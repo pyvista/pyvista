@@ -221,9 +221,15 @@ Opening a pull request, and every push to it afterwards, starts the full
 continuous integration suite: unit tests on Linux, macOS, and Windows across
 every supported Python version, a separate VTK version matrix, the
 documentation build, the integration tests, type checking, and the style and
-docstring jobs. Every one of those runs costs the project paid runner time.
-Push when the change is ready, and use the local gates rather than CI to find
-out whether it works.
+docstring jobs. Every one of those runs costs runner time. Push when the
+change is ready, and use the local gates rather than CI to find out whether it
+works.
+
+The documentation build is the slowest of those jobs, and on a pull request it
+runs on GitHub-hosted runners. Applying the ``blacksmith`` label moves the
+documentation cache, build and test jobs to the Blacksmith runners the merge
+queue uses, which finish sooner but are paid for by the project. The label
+takes effect on the next push to the pull request.
 
 Before you push:
 
@@ -1275,8 +1281,9 @@ The tests can be executed with:
 
 Writing a Case
 """"""""""""""
-Cases live in ``tests/typing/cases``. A case is one line: an expression, and the
-type it should have.
+Cases live in ``tests/typing/cases``, under ``core`` or ``plotting`` after the
+subpackage of the callable they exercise. A case is one line: an expression, and
+the type it should have.
 
 .. code-block:: python
 
@@ -1297,6 +1304,12 @@ Write the expected type as an ordinary expression, such as ``pv.PolyData``,
 Anything in the file that is not an ``assert_types`` line is setup: imports, and
 helpers such as the ``multi()`` above that builds a fresh ``MultiBlock``.
 
+Each file holds the cases of one callable and is named after it: ``clip_scalar.py``,
+``principal_axes.py``. A method takes its class as a lowercase prefix only when
+the bare name would not identify it, as for dunders (``multiblock_getitem.py``,
+``multiblock_setitem.py``) and names that several classes share (``transform_apply.py``).
+A file carries all the setup it needs, even when another file has the same helper.
+
 The directory carries its own ``ruff.toml`` raising the line length, so a case stays
 on one line however long it gets.
 
@@ -1308,8 +1321,8 @@ claim it makes rather than after where it sits in the file:
 
 .. code-block:: text
 
-    tests/typing/cases/wrap.py::pv.wrap(pv.PolyData()) -> pv.PolyData [runtime]
-    tests/typing/cases/wrap.py::pv.wrap(pv.PolyData()) -> pv.PolyData [static: mypy]
+    tests/typing/cases/core/wrap.py::pv.wrap(pv.PolyData()) -> pv.PolyData [runtime]
+    tests/typing/cases/core/wrap.py::pv.wrap(pv.PolyData()) -> pv.PolyData [static: mypy]
 
 The runtime half compiles the file's setup, runs it in a namespace of its own
 and then executes that one case against it, so a case cannot reach another

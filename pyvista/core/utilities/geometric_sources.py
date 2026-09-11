@@ -20,7 +20,6 @@ import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
@@ -201,14 +200,14 @@ class ConeSource(_AlgorithmSource, _vtk.vtkConeSource):
 
     """
 
-    @_deprecate_positional_args
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self: ConeSource,
+        *,
         center: VectorLike[float] = (0.0, 0.0, 0.0),
         direction: VectorLike[float] = (1.0, 0.0, 0.0),
         height: float = 1.0,
         radius: float | None = None,
-        capping: bool = True,  # noqa: FBT001, FBT002
+        capping: bool = True,
         angle: float | None = None,
         resolution: int = 6,
     ) -> None:
@@ -472,14 +471,14 @@ class CylinderSource(_AlgorithmSource, _vtk.vtkCylinderSource):
 
     """
 
-    @_deprecate_positional_args
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self: CylinderSource,
+        *,
         center: VectorLike[float] = (0.0, 0.0, 0.0),
         direction: VectorLike[float] = (1.0, 0.0, 0.0),
         radius: float = 0.5,
         height: float = 1.0,
-        capping: bool = True,  # noqa: FBT001, FBT002
+        capping: bool = True,
         resolution: int = 100,
     ) -> None:
         """Initialize the cylinder source class."""
@@ -783,16 +782,16 @@ class Text3DSource(_NoNewAttrMixin):
 
     """
 
-    @_deprecate_positional_args(allowed=['string'])
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self: Text3DSource,
         string: str | None = None,
+        *,
         depth: float | None = None,
         width: float | None = None,
         height: float | None = None,
         center: VectorLike[float] = (0.0, 0.0, 0.0),
         normal: VectorLike[float] = (0.0, 0.0, 1.0),
-        process_empty_string: bool = True,  # noqa: FBT001, FBT002
+        process_empty_string: bool = True,
     ) -> None:
         """Initialize source."""
         super().__init__()
@@ -949,7 +948,7 @@ class Text3DSource(_NoNewAttrMixin):
             # become uninitialized (+/- VTK_DOUBLE_MAX) if set to empty a second time
             if is_empty_string and self.process_empty_string:
                 # Add a single point to 'fix' the bounds
-                self._output.points = (0.0, 0.0, 0.0)
+                self._output.points = [[0.0, 0.0, 0.0]]
 
             _apply_points_dtype(self._output, algorithm=algorithm)
             self._transform_output()
@@ -1075,9 +1074,9 @@ class CubeSource(_AlgorithmSource, _vtk.vtkCubeSource):
 
     """
 
-    @_deprecate_positional_args
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self: CubeSource,
+        *,
         center: VectorLike[float] = (0.0, 0.0, 0.0),
         x_length: float = 1.0,
         y_length: float = 1.0,
@@ -1308,9 +1307,9 @@ class DiscSource(_AlgorithmSource, _vtk.vtkDiskSource):
 
     """
 
-    @_deprecate_positional_args
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self: DiscSource,
+        *,
         center: VectorLike[float] | None = None,
         inner: float = 0.25,
         outer: float = 0.5,
@@ -1654,9 +1653,9 @@ class SphereSource(_AlgorithmSource, _vtk.vtkSphereSource):
 
     """
 
-    @_deprecate_positional_args
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self: SphereSource,
+        *,
         radius: float = 0.5,
         center: VectorLike[float] | None = None,
         theta_resolution: int = 30,
@@ -1666,7 +1665,7 @@ class SphereSource(_AlgorithmSource, _vtk.vtkSphereSource):
         start_phi: float = 0.0,
         end_phi: float = 180.0,
         tessellation: Literal['triangle', 'phi_theta'] = 'triangle',
-        texture_coordinates: bool = False,  # noqa: FBT001, FBT002
+        texture_coordinates: bool = False,
     ) -> None:
         """Initialize the sphere source class."""
         super().__init__()
@@ -2008,14 +2007,14 @@ class PolygonSource(_AlgorithmSource, _vtk.vtkRegularPolygonSource):
 
     """
 
-    @_deprecate_positional_args
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self: PolygonSource,
+        *,
         center: VectorLike[float] = (0.0, 0.0, 0.0),
         radius: float = 1.0,
         normal: VectorLike[float] = (0.0, 0.0, 1.0),
         n_sides: int = 6,
-        fill: bool = True,  # noqa: FBT001, FBT002
+        fill: bool = True,
     ) -> None:
         """Initialize the polygon source class."""
         super().__init__()
@@ -2291,9 +2290,9 @@ class PlaneSource(_AlgorithmSource, _vtk.vtkPlaneSource):
 
     """
 
-    @_deprecate_positional_args
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self: PlaneSource,
+        *,
         i_resolution: int = 10,
         j_resolution: int = 10,
         center: VectorLike[float] = (0.0, 0.0, 0.0),
@@ -2521,9 +2520,9 @@ class ArrowSource(_AlgorithmSource, _vtk.vtkArrowSource):
 
     """
 
-    @_deprecate_positional_args
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self: ArrowSource,
+        *,
         tip_length: float = 0.25,
         tip_radius: float = 0.1,
         tip_resolution: int = 20,
@@ -2690,12 +2689,12 @@ class BoxSource(_AlgorithmSource, _vtk.vtkTessellatedBoxSource):
 
     """
 
-    @_deprecate_positional_args(allowed=['bounds'])
     def __init__(
         self: BoxSource,
         bounds: VectorLike[float] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
+        *,
         level: int = 0,
-        quads: bool = True,  # noqa: FBT001, FBT002
+        quads: bool = True,
     ) -> None:
         """Initialize source."""
         super().__init__()
@@ -2823,9 +2822,9 @@ class SuperquadricSource(_AlgorithmSource, _vtk.vtkSuperquadricSource):
 
     """
 
-    @_deprecate_positional_args
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self: SuperquadricSource,
+        *,
         center: VectorLike[float] = (0.0, 0.0, 0.0),
         scale: VectorLike[float] = (1.0, 1.0, 1.0),
         size: float = 0.5,
@@ -2833,7 +2832,7 @@ class SuperquadricSource(_AlgorithmSource, _vtk.vtkSuperquadricSource):
         phi_roundness: float = 1.0,
         theta_resolution: int = 16,
         phi_resolution: int = 16,
-        toroidal: bool = False,  # noqa: FBT001, FBT002
+        toroidal: bool = False,
         thickness: float = 1 / 3,
     ) -> None:
         """Initialize source."""

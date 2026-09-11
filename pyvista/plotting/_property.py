@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.utilities.misc import _check_range
@@ -12,7 +11,10 @@ from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from .colors import Color
 from .opts import InterpolationType
+from .opts import PointSpriteShape
 from .opts import RepresentationType
+
+_HAS_NATIVE_POINT_SHAPES = hasattr(getattr(_vtk.vtkProperty, 'Point2DShapeType', None), 'Star')
 
 
 class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
@@ -164,10 +166,10 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
     _theme = None
     _color_set = None
 
-    @_deprecate_positional_args(allowed=['theme'])
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
         theme=None,
+        *,
         interpolation=None,
         color=None,
         style='surface',
@@ -212,6 +214,8 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         if point_size is None:
             point_size = self._theme.point_size
         self.point_size = point_size
+        if _HAS_NATIVE_POINT_SHAPES:
+            self.point_shape = self._theme.point_shape or 'square'
         if opacity is None:
             opacity = self._theme.opacity
         self.opacity = opacity
@@ -249,6 +253,52 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         if edge_opacity is None:
             edge_opacity = self._theme.edge_opacity
         self.edge_opacity = edge_opacity
+
+    @property
+    def point_shape(self) -> str:  # numpydoc ignore=RT01
+        """Return or set the shape of flat point primitives.
+
+        Shapes are ``'square'``, ``'circle'``, ``'triangle'``, ``'hexagon'``,
+        ``'diamond'``, ``'asterisk'``, and ``'star'``. The shape applies to
+        vertex cells in surface and wireframe representations as well as
+        points representation. Sphere rendering takes precedence while enabled.
+
+        .. versionadded:: 0.49
+
+        .. note::
+            Setting this property requires a graphics backend with native
+            point-shape support. :meth:`pyvista.Actor.set_point_sprite_shape`
+            also supports older backends in points representation.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> prop = pv.Property()
+        >>> prop.point_shape
+        'square'
+
+        """
+        if not _HAS_NATIVE_POINT_SHAPES:
+            return 'square'
+        shape = self.GetPoint2DShape()
+        for name in ('square', *(item.value for item in PointSpriteShape)):
+            native_name = 'Round' if name == 'circle' else name.capitalize()
+            if shape == getattr(self.Point2DShapeType, native_name, None):
+                return name
+        msg = f'Unknown native point shape {shape!r}.'
+        raise ValueError(msg)
+
+    @point_shape.setter
+    def point_shape(self, shape: PointSpriteShape | str) -> None:
+        if shape not in ('square', *PointSpriteShape):
+            msg = f'Invalid point sprite shape {shape!r}.'
+            raise ValueError(msg)
+        if not _HAS_NATIVE_POINT_SHAPES:
+            msg = 'This graphics backend does not support native point shapes.'
+            raise VTKVersionError(msg)
+        name = shape.value if isinstance(shape, PointSpriteShape) else shape
+        native_name = 'Round' if name == 'circle' else name.capitalize()
+        self.SetPoint2DShape(getattr(self.Point2DShapeType, native_name))
 
     @property
     def style(self) -> str:  # numpydoc ignore=RT01

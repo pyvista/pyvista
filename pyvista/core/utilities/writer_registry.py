@@ -124,22 +124,14 @@ def _get_builtin_writer_exts() -> frozenset[str]:
     return _builtin_writer_exts
 
 
+# fmt: off
+# ruff: disable[E501]
 @overload
-def register_writer(
-    key: str,
-    handler: None = None,
-    *,
-    override: bool = False,
-) -> Callable[[WriterHandler], WriterHandler]: ...
-
-
+def register_writer(key: str, handler: None = None, *, override: bool = False) -> Callable[[WriterHandler], WriterHandler]: ...
 @overload
-def register_writer(
-    key: str,
-    handler: WriterHandler,
-    *,
-    override: bool = False,
-) -> None: ...
+def register_writer(key: str, handler: WriterHandler, *, override: bool = False) -> None: ...
+# ruff: enable[E501]
+# fmt: on
 
 
 def register_writer(

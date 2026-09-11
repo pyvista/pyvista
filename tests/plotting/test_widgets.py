@@ -94,7 +94,7 @@ def test_add_mesh_isovalue_raises():
 
     pl = pv.Plotter()
     sp = pv.Sphere()
-    sp.cell_data['foo'] = 1
+    sp.cell_data['foo'] = np.ones(sp.n_cells)
     match = re.escape('Contour filter only works on Point data. Array (foo) is in the Cell data.')
     with pytest.raises(TypeError, match=match):
         pl.add_mesh_isovalue(mesh=sp, scalars='foo')

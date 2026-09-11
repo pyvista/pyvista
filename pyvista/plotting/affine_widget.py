@@ -9,7 +9,6 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import try_callback
 
@@ -85,8 +84,7 @@ def get_angle(v1, v2):
     return np.rad2deg(np.arccos(np.clip(np.dot(v1, v2), -1.0, 1.0)))
 
 
-@_deprecate_positional_args
-def ray_plane_intersection(start_point, direction, plane_point, normal):  # noqa: PLR0917
+def ray_plane_intersection(*, start_point, direction, plane_point, normal):
     """Compute the intersection between a ray and a plane.
 
     Parameters
@@ -175,16 +173,16 @@ class AffineWidget3D(_NoNewAttrMixin):
 
     """
 
-    @_deprecate_positional_args(allowed=['plotter', 'actor'])
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
         plotter,
         actor,
+        *,
         origin=None,
-        start: bool = True,  # noqa: FBT001, FBT002
+        start: bool = True,
         scale=0.15,
         line_radius=0.02,
-        always_visible: bool = True,  # noqa: FBT001, FBT002
+        always_visible: bool = True,
         axes_colors=None,
         axes=None,
         release_callback=None,

@@ -52,6 +52,7 @@ import make_tables
 import pyvista as pv
 from pyvista import _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.errors import PyVistaFutureWarning
 from pyvista.core.utilities.docs import linkcode_resolve  # noqa: F401
 from pyvista.core.utilities.docs import pv_html_page_context
 from pyvista.ext._autoenum import instance_property_names
@@ -104,10 +105,14 @@ warnings.filterwarnings(
     ),
 )
 
-# Prevent deprecated features from being used in examples
+# Prevent deprecated features and changing defaults from being used in examples
 warnings.filterwarnings(
     'error',
     category=PyVistaDeprecationWarning,
+)
+warnings.filterwarnings(
+    'error',
+    category=PyVistaFutureWarning,
 )
 warnings.filterwarnings(
     'always',
@@ -257,6 +262,8 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*NormalsLiteral'),
     (r'py:.*', '.*_CellQualityLiteral'),
     (r'py:.*', '.*_CompressionOptions'),
+    (r'py:.*', '.*_ConnectivityMode'),
+    (r'py:.*', '.*_RegionAssignmentMode'),
     (r'py:.*', '.*_SENTINEL'),
     (r'py:.*', '.*T'),
     (r'py:.*', '.*Options'),
@@ -571,6 +578,11 @@ def _filter_sphinx_gallery_warnings():
     warnings.simplefilter('error', append=True)
 
 
+# Examples whose VTK warnings are noise: VTK 9.7 intermittently logs Jacobi
+# eigenvalue warnings while importing this VRML scene.
+_VTK_OUTPUT_TOLERATED = frozenset({'load_vrml.py'})
+
+
 class ResetPyVista:
     """Reset pyvista module to default settings."""
 
@@ -623,7 +635,7 @@ class ResetPyVista:
     def _raise_for_vtk_output(self, fname):
         """Fail the build when an example logged a VTK error or warning."""
         events = self._stop_catching_vtk_output()
-        if events:
+        if events and Path(fname).name not in _VTK_OUTPUT_TOLERATED:
             logged = '\n'.join(str(event) for event in events)
             msg = f'{fname} logged {len(events)} VTK error(s) or warning(s):\n{logged}'
             raise RuntimeError(msg)
@@ -697,7 +709,7 @@ autocodelink_autodoc_backrefs = True
 # Rename backreferences group headings.
 autocodelink_category_labels = {
     'Sphinx Gallery': 'Gallery Examples',
-    'Docstring Examples': 'Docstring Examples',
+    'Docstring Examples': 'API Examples',
     'Documentation': 'Guides',
 }
 

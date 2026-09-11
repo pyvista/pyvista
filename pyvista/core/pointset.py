@@ -11,13 +11,14 @@ from pathlib import Path
 import textwrap
 from typing import TYPE_CHECKING
 from typing import ClassVar
+from typing import NoReturn
 from typing import cast
 
 import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._version import _is_deprecation_due
 from pyvista._warn_external import warn_external
 from pyvista.core._vtk_utilities import _SUPPORTS_POLYHEDRON_FACE_CELL_ARRAYS
 from pyvista.core._vtk_utilities import vtk_version_info
@@ -38,6 +39,7 @@ from .errors import CellSizeError
 from .errors import PointSetCellOperationError
 from .errors import PointSetDimensionReductionError
 from .errors import PointSetNotSupported
+from .filters import DataSetFilters
 from .filters import PolyDataFilters
 from .filters import StructuredGridFilters
 from .filters import UnstructuredGridFilters
@@ -49,6 +51,7 @@ from .utilities.cells import get_mixed_cells
 from .utilities.cells import numpy_to_idarr
 from .utilities.fileio import _CompressionOptions
 from .utilities.fileio import get_ext
+from .utilities.misc import _wraps
 from .utilities.misc import abstract_class
 from .utilities.points import vtk_points
 from .utilities.writer import BaseWriter
@@ -105,8 +108,7 @@ class _PointSetBase(DataSet):
         '.xyz': SimplePointsWriter,
     }
 
-    @_deprecate_positional_args
-    def center_of_mass(self, scalars_weight: bool = False) -> NumpyArray[float]:  # noqa: FBT001, FBT002
+    def center_of_mass(self, *, scalars_weight: bool = False) -> NumpyArray[float]:
         """Return the coordinates for the center of mass of the mesh.
 
         Parameters
@@ -289,13 +291,12 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
 
     """
 
-    @_deprecate_positional_args(allowed=['var_inp'])
     def __init__(
         self,
         var_inp=None,
-        deep: bool = False,  # noqa: FBT001, FBT002
-        force_float: bool = True,  # noqa: FBT001, FBT002
         *,
+        deep: bool = False,
+        force_float: bool = True,
         validate: bool | _NestedMeshValidationFields = False,
     ) -> None:
         """Initialize the pointset."""
@@ -322,8 +323,7 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
         """Return the standard str representation."""
         return DataSet.__str__(self)
 
-    @_deprecate_positional_args
-    def cast_to_polydata(self, deep: bool = True):  # noqa: FBT001, FBT002
+    def cast_to_polydata(self, *, deep: bool = True):
         """Cast this dataset to polydata.
 
         Parameters
@@ -346,6 +346,11 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
         else:
             for key, value in self.point_data.items():
                 pdata.point_data[key] = value
+        if deep:
+            pdata.GetFieldData().DeepCopy(self.GetFieldData())
+        else:
+            pdata.GetFieldData().ShallowCopy(self.GetFieldData())
+        pdata._sync_user_dict()
         return pdata
 
     def cast_to_unstructured_grid(self) -> pv.UnstructuredGrid:
@@ -382,16 +387,16 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
         kwargs.setdefault('style', 'points')
         return pdata.plot(*args, **kwargs)
 
-    @functools.wraps(PolyDataFilters.threshold)
-    def threshold(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01,PR01
+    @_wraps(DataSetFilters.threshold)
+    def threshold(self, *args, **kwargs) -> PointSet:  # numpydoc ignore=RT01,PR01
         """Cast to PolyData and threshold.
 
         Need this because cell-wise operations fail for PointSets.
         """
         return self.cast_to_polydata(deep=False).threshold(*args, **kwargs).cast_to_pointset()
 
-    @functools.wraps(PolyDataFilters.threshold_percent)
-    def threshold_percent(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01,PR01
+    @_wraps(DataSetFilters.threshold_percent)
+    def threshold_percent(self, *args, **kwargs) -> PointSet:  # numpydoc ignore=RT01,PR01
         """Cast to PolyData and threshold.
 
         Need this because cell-wise operations fail for PointSets.
@@ -400,8 +405,8 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
             self.cast_to_polydata(deep=False).threshold_percent(*args, **kwargs).cast_to_pointset()
         )
 
-    @functools.wraps(PolyDataFilters.explode)
-    def explode(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01,PR01
+    @_wraps(DataSetFilters.explode)
+    def explode(self, *args, **kwargs) -> PointSet:  # numpydoc ignore=RT01,PR01
         """Cast to PolyData and explode.
 
         The explode filter relies on cells.
@@ -409,8 +414,8 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
         """
         return self.cast_to_polydata(deep=False).explode(*args, **kwargs).cast_to_pointset()
 
-    @functools.wraps(PolyDataFilters.delaunay_3d)
-    def delaunay_3d(self, *args, **kwargs):  # type: ignore[override]  # numpydoc ignore=RT01,PR01
+    @_wraps(DataSetFilters.delaunay_3d)
+    def delaunay_3d(self, *args, **kwargs) -> UnstructuredGrid:  # numpydoc ignore=RT01,PR01
         """Cast to PolyData and run delaunay_3d."""
         return self.cast_to_polydata(deep=False).delaunay_3d(*args, **kwargs)
 
@@ -455,23 +460,23 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
-    def slice(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
+    def slice(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise dimension reducing operations are not supported."""
         raise PointSetDimensionReductionError
 
-    def slice_along_axis(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
+    def slice_along_axis(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise dimension reducing operations are not supported."""
         raise PointSetDimensionReductionError
 
-    def slice_along_line(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
+    def slice_along_line(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise dimension reducing operations are not supported."""
         raise PointSetDimensionReductionError
 
-    def slice_implicit(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
+    def slice_implicit(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise dimension reducing operations are not supported."""
         raise PointSetDimensionReductionError
 
-    def slice_orthogonal(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
+    def slice_orthogonal(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise dimension reducing operations are not supported."""
         raise PointSetDimensionReductionError
 
@@ -505,7 +510,7 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
             '`extract_geometry` is deprecated. Use `extract_surface(algorithm=None)` instead.',
             PyVistaDeprecationWarning,
         )
-        if pv.version_info >= (0, 50):  # pragma: no cover
+        if _is_deprecation_due((0, 50)):  # pragma: no cover
             msg = 'Convert this deprecation warning into an error.'
             raise RuntimeError(msg)
         if pv.version_info >= (0, 53):  # pragma: no cover
@@ -770,18 +775,17 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
     if vtk_version_info >= (9, 4):
         _WRITERS.update({'.vtkhdf': HDFWriter})
 
-    @_deprecate_positional_args(allowed=['var_inp', 'faces'])
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
         var_inp: _vtk.vtkPolyData | str | Path | MatrixLike[float] | None = None,
         faces: CellArrayLike | None = None,
+        *,
         lines: CellArrayLike | None = None,
         strips: CellArrayLike | None = None,
-        deep: bool = False,  # noqa: FBT001, FBT002
+        deep: bool = False,
         force_ext: str | None = None,
-        force_float: bool = True,  # noqa: FBT001, FBT002
+        force_float: bool = True,
         verts: CellArrayLike | None = None,
-        *,
         validate: bool | _NestedMeshValidationFields = False,
     ) -> None:
         """Initialize the polydata."""
@@ -1140,12 +1144,12 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
         self.faces = CellArray.from_regular_cells(faces)
 
     @classmethod
-    @_deprecate_positional_args(allowed=['points', 'faces'])
     def from_regular_faces(
         cls,
         points: MatrixLike[float],
         faces: MatrixLike[int],
-        deep: bool = False,  # noqa: FBT001, FBT002
+        *,
+        deep: bool = False,
     ):
         """Alternate :class:`pyvista.PolyData` constructor from points and regular face arrays.
 
@@ -2196,13 +2200,13 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
         )
         return self.GetNumberOfPolys()
 
-    @_deprecate_positional_args(allowed=['filename'])
-    def save(  # type: ignore[override]  # noqa: PLR0917
+    def save(
         self,
         filename: Path | str,
-        binary: bool = True,  # noqa: FBT001, FBT002
+        *,
+        binary: bool = True,
         texture: NumpyArray[np.uint8] | str | None = None,
-        recompute_normals: bool = True,  # noqa: FBT001, FBT002
+        recompute_normals: bool = True,
         compression: _CompressionOptions = 'zlib',
         **writer_kwargs: Any,
     ) -> None:
@@ -3576,8 +3580,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
         self.SetCells(self._get_cell_types_array(), cell_array)
 
-    @_deprecate_positional_args
-    def linear_copy(self, deep: bool = False):  # noqa: FBT001, FBT002
+    def linear_copy(self, *, deep: bool = False):
         """Return a copy of the unstructured grid containing only linear cells.
 
         Converts the following cell types to their linear equivalents.
@@ -4076,8 +4079,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
 
         return self.extract_subset(voi, rate, boundary=False)
 
-    @_deprecate_positional_args(allowed=['ind'])
-    def hide_cells(self, ind, inplace: bool = False) -> Self:  # noqa: FBT001, FBT002
+    def hide_cells(self, ind, *, inplace: bool = False) -> Self:
         """Hide cells without deleting them.
 
         Hides cells by setting the ``ghost_cells`` array to ``HIDDENCELL``.
@@ -4480,15 +4482,15 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         ugrid.copy_attributes(self)  # copy ghost cell array and other arrays
         return ugrid
 
-    @_deprecate_positional_args
-    def clean(  # noqa: PLR0917
+    def clean(
         self,
+        *,
         tolerance=0,
-        remove_unused_points: bool = True,  # noqa: FBT001, FBT002
-        produce_merge_map: bool = True,  # noqa: FBT001, FBT002
-        average_point_data: bool = True,  # noqa: FBT001, FBT002
+        remove_unused_points: bool = True,
+        produce_merge_map: bool = True,
+        average_point_data: bool = True,
         merging_array_name=None,
-        progress_bar: bool = False,  # noqa: FBT001, FBT002
+        progress_bar: bool = False,
     ) -> ExplicitStructuredGrid:
         """Merge duplicate points and remove unused points in an ExplicitStructuredGrid.
 
@@ -4560,11 +4562,11 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
 
         return grid
 
-    @_deprecate_positional_args(allowed=['filename'])
-    def save(  # noqa: PLR0917
+    def save(
         self,
         filename: Path | str,
-        binary: bool = True,  # noqa: FBT001, FBT002
+        *,
+        binary: bool = True,
         texture: NumpyArray[np.uint8] | str | None = None,
         compression: _CompressionOptions = 'zlib',
         **writer_kwargs: Any,
@@ -4627,8 +4629,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         grid = self.cast_to_unstructured_grid()
         grid.save(filename, binary=binary, compression=compression, **writer_kwargs)
 
-    @_deprecate_positional_args(allowed=['ind'])
-    def hide_cells(self, ind: VectorLike[int], inplace: bool = False) -> Self:  # noqa: FBT001, FBT002
+    def hide_cells(self, ind: VectorLike[int], *, inplace: bool = False) -> Self:
         """Hide specific cells.
 
         Hides cells by setting the ghost cell array to ``HIDDENCELL``.
@@ -4671,8 +4672,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         grid.hide_cells(ind, inplace=True)
         return grid
 
-    @_deprecate_positional_args
-    def show_cells(self, inplace: bool = False) -> Self:  # noqa: FBT001, FBT002
+    def show_cells(self, *, inplace: bool = False) -> Self:
         """Show hidden cells.
 
         Shows hidden cells by setting the ghost cell array to ``0``
@@ -5030,8 +5030,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             indices.update(rel_func(i))
         return sorted(indices)
 
-    @_deprecate_positional_args
-    def compute_connectivity(self, inplace: bool = False) -> Self:  # noqa: FBT001, FBT002
+    def compute_connectivity(self, *, inplace: bool = False) -> Self:
         """Compute the faces connectivity flags array.
 
         This method checks the faces connectivity of the cells with
@@ -5079,8 +5078,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             grid.compute_connectivity(inplace=True)
             return grid
 
-    @_deprecate_positional_args
-    def compute_connections(self, inplace: bool = False) -> Self:  # noqa: FBT001, FBT002
+    def compute_connections(self, *, inplace: bool = False) -> Self:
         """Compute an array with the number of connected cell faces.
 
         This method calculates the number of topological cell

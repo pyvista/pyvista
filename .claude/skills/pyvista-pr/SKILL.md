@@ -125,6 +125,10 @@ time, so ask for one because the change touches what it covers, not by default:
 | `integration-testing` | mne, trame, pyvistaqt, geovista, playwright | public API behavior, object lifetimes, plotting defaults -- what downstream sits on     |
 | `docker`              | the Docker image build                      | packaging, or a dependency the image installs                                           |
 
+A fifth label, `blacksmith`, starts nothing extra: it moves the documentation cache,
+build and test jobs onto the paid Blacksmith runners the merge queue uses, which finish
+sooner. Ask for it when the documentation build is what the pull request is waiting on.
+
 A label only takes effect on the next run, so it goes on before the final push, or the
 branch gets pushed again afterwards; `CONTRIBUTING.rst` says the same for the VTK labels.
 You cannot apply labels yourself, so name the ones the change warrants when you hand the
