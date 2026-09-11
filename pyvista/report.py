@@ -297,6 +297,7 @@ class Report(scooby.Report):
         optional = [
             # cvista extra (alternative VTK backend)
             'cvista',
+            'tomli',  # required below 3.11, where tomllib became stdlib
             # Misc.
             'pyobjc-framework-Cocoa',
             'pytest-pyvista',

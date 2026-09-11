@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from dataclasses import replace
+from io import StringIO
+
 import cmcrameri
 import cmocean
 from colorcet import all_original_names
@@ -178,3 +181,147 @@ def test_update_image_placeholders_existing(monkeypatch, tmp_path):
     make_tables._update_image_placeholders(node)
 
     assert node['uri'].endswith(expected.name)
+
+
+def test_usage_facet_order_lists_every_value_the_cards_emit():
+    """A `use` value missing from the manifest order is dropped from the filter panel.
+
+    `collectFacetValues` in dataset_gallery_filter.js keeps only the values named in
+    `order`, so a slug the cards emit but the manifest omits disappears silently.
+    """
+    emitted = {
+        make_tables._facet_slugify(label)
+        for label in (
+            'Commercial use',
+            'Not for commercial use',
+            'ShareAlike',
+            'Attribution required',
+        )
+    }
+    listed = set(make_tables.DATASET_GALLERY_USE_ORDER)
+
+    # `N/A (not recorded)` is added with an explicit `na` slug, not through the slugifier.
+    assert emitted <= listed
+
+
+@pytest.mark.parametrize(
+    ('prose', 'expected'),
+    [
+        ('plain text', 'plain text'),
+        ('a `code` span', 'a ``code`` span'),
+        ('already ``literal``', 'already ``literal``'),
+        ('a_b and *star*', r'a\_b and \*star\*'),
+        ('see https://example.org/a_b', 'see ``https://example.org/a_b``'),
+        # A trailing underscore in a URL is a reStructuredText reference otherwise.
+        (
+            'see https://web.archive.org/web/2024id_/https://x.org/y',
+            'see ``https://web.archive.org/web/2024id_/https://x.org/y``',
+        ),
+        ('(https://example.org/x), next', '(``https://example.org/x``), next'),
+        ('ends https://example.org/x.', 'ends ``https://example.org/x``.'),
+        ('wiki https://e.org/Foo_(bar) here', 'wiki ``https://e.org/Foo_(bar)`` here'),
+    ],
+)
+def test_rst_from_prose(prose, expected):
+    assert make_tables._rst_from_prose(prose) == expected
+
+
+def test_rst_from_prose_output_parses_as_rst():
+    """The escaping exists to keep the docs build green, so parse the result."""
+    from docutils.core import publish_doctree
+
+    hostile = 'Trailing https://web.archive.org/web/2020id_/http://x.org/y and a_b *and* `c`.'
+    errors = StringIO()
+    publish_doctree(
+        make_tables._rst_from_prose(hostile),
+        settings_overrides={
+            'report_level': 2,
+            'halt_level': 5,
+            'warning_stream': errors,
+            'file_insertion_enabled': False,
+        },
+    )
+
+    assert 'ERROR' not in errors.getvalue()
+    assert 'WARNING' not in errors.getvalue()
+
+
+@pytest.fixture
+def metadata():
+    """A record covering every field the gallery renders."""
+    from pyvista.examples._dataset_metadata import ExampleMetadata
+    from pyvista.examples._dataset_metadata import License
+
+    return ExampleMetadata(
+        name='thing',
+        title='Thing',
+        description='A thing.',
+        paths=('thing.vtk',),
+        license_expression='CC-BY-3.0',
+        licenses=(
+            License(
+                spdx_id='CC-BY-3.0',
+                title='Creative Commons Attribution 3.0 Unported',
+                url='https://creativecommons.org/licenses/by/3.0/',
+                commercial_use=True,
+                attribution_required=True,
+                share_alike=False,
+                text_url='https://example.org/LICENSES/CC-BY-3.0.txt',
+            ),
+        ),
+        provenance='verified',
+        origin_url='https://humus.name/',
+        origin_title='Humus texture library',
+        redistributed_from='https://gitlab.kitware.com/vtk/vtk-examples/-/tree/master/x',
+    )
+
+
+def test_license_field_links_the_text_and_the_issuer(metadata):
+    field = make_tables.DatasetPropsGenerator.generate_license_field(metadata)
+
+    assert ':bdg-link-primary:`CC-BY-3.0 <https://example.org/LICENSES/CC-BY-3.0.txt>`' in field
+    assert '`Creative Commons Attribution 3.0 Unported <https://creativecommons.org/' in field
+
+
+def test_usage_and_provenance_badges_do_not_share_a_colour(metadata):
+    usage = make_tables.DatasetPropsGenerator.generate_usage_field(metadata)
+    provenance = make_tables.DatasetPropsGenerator.generate_provenance_field(metadata)
+
+    sa = replace(metadata.licenses[0], share_alike=True)
+    restricted = make_tables.DatasetPropsGenerator.generate_usage_field(
+        replace(metadata, licenses=(sa,))
+    )
+
+    assert ':bdg-success:`Commercial use`' in usage
+    assert ':bdg-info:`Attribution required`' in usage
+    assert ':bdg-warning:`ShareAlike`' in restricted
+    # Solid marks an obligation, outlined marks confidence; they must stay distinct.
+    assert provenance == ':bdg-success-line:`verified`'
+
+
+def test_redistributor_shows_the_host_not_the_whole_url(metadata):
+    field = make_tables.DatasetPropsGenerator.generate_redistributor_field(metadata)
+    bare = make_tables.DatasetPropsGenerator.generate_redistributor_field(
+        replace(metadata, redistributed_from='a private archive')
+    )
+    missing = make_tables.DatasetPropsGenerator.generate_redistributor_field(
+        replace(metadata, redistributed_from=None)
+    )
+
+    assert field.startswith('`gitlab.kitware.com <https://gitlab.kitware.com/')
+    assert bare == '``a private archive``'
+    assert missing is None
+
+
+def test_origin_field_falls_back_to_a_literal_for_a_non_url(metadata):
+    linked = make_tables.DatasetPropsGenerator.generate_origin_field(metadata)
+    bare = make_tables.DatasetPropsGenerator.generate_origin_field(
+        replace(metadata, origin_url='OnScale Solve')
+    )
+    missing = make_tables.DatasetPropsGenerator.generate_origin_field(
+        replace(metadata, origin_url=None)
+    )
+
+    assert linked == '`Humus texture library <https://humus.name/>`_'
+    assert bare == '``Humus texture library``'
+    assert missing is None

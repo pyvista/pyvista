@@ -27,6 +27,7 @@ from typing import ClassVar
 from typing import Literal
 from typing import final
 from typing import get_args
+import urllib.parse
 
 import cmcrameri
 import cmocean
@@ -59,6 +60,7 @@ from pyvista.examples import cells
 from pyvista.examples._dataset_loader import _DOWNLOADABLE_TYPES
 from pyvista.examples._dataset_loader import _DatasetLoader
 from pyvista.examples._dataset_loader import _FileProps
+from pyvista.examples._dataset_metadata import _metadata_for_source_names
 from pyvista.examples._get_example import _example_loader
 from pyvista.examples._get_example import _public_function
 from pyvista.plotting.colors import _CSS_COLORS
@@ -122,6 +124,24 @@ DATASET_GALLERY_MODULE_BADGE_COLORS: dict[ModuleType, str] = {
     pv.examples.examples: 'primary',
     pv.examples.downloads: 'secondary',
     pv.examples.planets: 'success',
+}
+
+# Provenance value -> sphinx-design badge color shown on the dataset card.
+# Outline badges throughout, so provenance never shares a colour with the solid
+# obligation badges next to it. Keep in step with the legend in dataset_gallery.rst.
+# Usage filter values, least to most restrictive rather than alphabetical. Every slug
+# the cards emit must appear here or the filter panel silently drops it.
+DATASET_GALLERY_USE_ORDER: tuple[str, ...] = (
+    'commercial-use',
+    'attribution-required',
+    'share-alike',
+    'not-for-commercial-use',
+)
+
+DATASET_GALLERY_PROVENANCE_COLORS: dict[str, str] = {
+    'verified': 'success-line',
+    'inferred': 'warning-line',
+    'unknown': 'danger-line',
 }
 
 # File size bin edges, in decimal MB (matches `_format_file_size` in
@@ -1883,6 +1903,11 @@ def _get_fullname(typ: type[Any]) -> str:
     return f'{typ.__module__}.{typ.__qualname__}'
 
 
+def _strip_trailing(text: str) -> str:
+    """Strip trailing whitespace from every line, which sphinx-lint rejects."""
+    return '\n'.join(line.rstrip() for line in text.strip().splitlines())
+
+
 def _facet_slugify(text: str) -> str:
     """Turn a facet label into a CSS-class-safe slug, e.g. ``POLY_LINE`` -> ``poly-line``.
 
@@ -1966,6 +1991,51 @@ def _pad_lines(
         lines = '\n'.join(lines) if is_str else lines
         return lines, width, height
     return '\n'.join(lines) if is_str else lines
+
+
+_INLINE_CODE_RE = re.compile(r'``.+?``|`[^`]+`', re.DOTALL)
+_BARE_URL_RE = re.compile(r'(?<![`<])\bhttps?://[^\s<>`]+')
+_RST_SPECIAL_RE = re.compile(r'([*_|])')
+
+
+def _wrap_url(match: re.Match[str]) -> str:
+    """Wrap one bare URL as a literal, leaving trailing sentence punctuation outside it."""
+    url = match.group(0)
+    trail = ''
+    while url and url[-1] in '.,;:!?\'"':
+        url, trail = url[:-1], url[-1] + trail
+    while url.endswith(')') and url.count('(') < url.count(')'):
+        url, trail = url[:-1], ')' + trail
+    return f'``{url}``{trail}'
+
+
+def _rst_from_prose(text: str) -> str:
+    """Render prose from `DATASETS.toml` as reStructuredText.
+
+    The text is written in another repository, so anything reStructuredText
+    would read as markup is escaped. Single backticks mean inline code there,
+    which is a double backtick here, and bare URLs become literals so that a
+    trailing underscore cannot be parsed as a reference.
+    """
+
+    def literal(match: re.Match[str]) -> str:
+        span = match.group(0)
+        return span if span.startswith('``') else f'`{span}`'
+
+    def escape(chunk: str) -> str:
+        chunk = _BARE_URL_RE.sub(_wrap_url, chunk)
+        return ''.join(
+            part if part.startswith('``') else _RST_SPECIAL_RE.sub(r'\\\1', part)
+            for part in re.split(r'(``[^`]+``)', chunk)
+        )
+
+    out, last = [], 0
+    for match in _INLINE_CODE_RE.finditer(text):
+        out.append(escape(text[last : match.start()]))
+        out.append(literal(match))
+        last = match.end()
+    out.append(escape(text[last:]))
+    return ''.join(out)
 
 
 def _indent_multi_line_string(
@@ -2166,8 +2236,18 @@ class DatasetCard:
     footer_template = _aligned_dedent(
         """
         |+++
-        |.. dropdown:: Data Source
-        |   :icon: mark-github
+        |.. dropdown:: Origin & License
+        |   :icon: law
+        |
+        |   {}
+        """,
+    )[1:-1]
+
+    # Notes are the only field long enough to need collapsing on their own.
+    notes_template = _aligned_dedent(
+        """
+        |.. dropdown:: Provenance notes
+        |   :icon: info
         |
         |   {}
         """,
@@ -2291,6 +2371,7 @@ class DatasetCard:
             dimensions,
             spacing,
             n_arrays,
+            dataset_metadata,
         ) = DatasetCard._generate_dataset_properties(self.loader, self.module)
 
         # Get cross-references from docs
@@ -2323,7 +2404,7 @@ class DatasetCard:
             importer_method=importer_meth,
         )
         seealso_block = self._create_seealso_block(cross_references)
-        footer_block = self._create_footer_block(datasource_links)
+        footer_block = self._create_footer_block(datasource_links, dataset_metadata)
 
         return self.card_template.format(
             class_card,
@@ -2361,6 +2442,7 @@ class DatasetCard:
         dimensions = DatasetPropsGenerator.generate_dimensions(loader)
         spacing = DatasetPropsGenerator.generate_spacing(loader)
         n_arrays = DatasetPropsGenerator.generate_n_arrays(loader)
+        dataset_metadata = DatasetPropsGenerator._dataset_metadata(loader)
 
         return (
             file_size,
@@ -2378,6 +2460,7 @@ class DatasetCard:
             dimensions,
             spacing,
             n_arrays,
+            dataset_metadata,
         )
 
     def _generate_dataset_name(self):
@@ -2523,6 +2606,17 @@ class DatasetCard:
         block = '\n'.join([grid for grid in field_grids if grid])
         return _indent_multi_line_string(block, indent_level=indent_level)
 
+    @staticmethod
+    def _generate_prose_block(fields: list[tuple[str, str | None]]) -> str:
+        """Render label-and-paragraph fields whose text is too long for the field grid."""
+        blocks = []
+        for name, value in fields:
+            if not value:
+                continue
+            body = '\n\n'.join(line for line in value.splitlines() if line.strip())
+            blocks.append(f'**{name}**\n\n{body}')
+        return '\n\n'.join(blocks)
+
     @classmethod
     def _create_header_block(cls, index_name, header_name, module_badge):
         """Generate header rst block with a reference target and module badge."""
@@ -2604,6 +2698,27 @@ class DatasetCard:
         size_label, size_slug = size_bin or ('N/A (no file)', 'na')
         add('size', size_label, slug=size_slug)
 
+        metadata = DatasetPropsGenerator._dataset_metadata(loader)
+        if metadata is None:
+            add('license', 'N/A (not recorded)', slug='na')
+            add('use', 'N/A (not recorded)', slug='na')
+        else:
+            for licence in metadata.licenses:
+                # SPDX identifiers carry dots, which docutils rewrites in a class name.
+                add(
+                    'license',
+                    licence.spdx_id,
+                    slug=_facet_slugify(licence.spdx_id).replace('.', '-'),
+                )
+            add(
+                'use',
+                'Commercial use' if metadata.commercial_use else 'Not for commercial use',
+            )
+            if metadata.share_alike:
+                add('use', 'ShareAlike')
+            if metadata.attribution_required:
+                add('use', 'Attribution required')
+
         return ' '.join(classes), labels
 
     @classmethod
@@ -2677,17 +2792,54 @@ class DatasetCard:
         return ''
 
     @classmethod
-    def _create_footer_block(cls, datasource_links):
-        if datasource_links:
-            # indent links one level from the dropdown directive in template
-            datasource_links = _indent_multi_line_string(datasource_links, indent_level=1)
-            return cls._format_and_indent_from_template(
-                datasource_links,
-                template=cls.footer_template,
-                indent_level=cls.HEADER_FOOTER_INDENT_LEVEL,
+    def _create_footer_block(cls, datasource_links, metadata):
+        """Generate the collapsed Origin & License block shown under each card."""
+        gen = DatasetPropsGenerator
+        fields: list[tuple[str, str | None]] = []
+        if metadata is not None:
+            fields += [
+                ('License', gen.generate_license_field(metadata)),
+                ('Usage', gen.generate_usage_field(metadata)),
+                ('Origin', gen.generate_origin_field(metadata)),
+                ('Collection', metadata.collection),
+                ('Redistributed from', gen.generate_redistributor_field(metadata)),
+                ('Provenance', gen.generate_provenance_field(metadata)),
+                ('Authors', '\n'.join(metadata.authors) or None),
+                ('Copyright', '\n'.join(metadata.copyright) or None),
+            ]
+        fields.append(('Files', datasource_links))
+        parts = [cls._generate_field_block(fields)]
+        if metadata is not None:
+            # Prose wraps; the two-column field grid is `sd-text-nowrap` and would not.
+            parts.append(
+                cls._generate_prose_block(
+                    [
+                        # `References` is built as reStructuredText here; the other two
+                        # are prose from the table and are escaped like `notes`.
+                        ('Attribution', _rst_from_prose(metadata.attribution or '') or None),
+                        (
+                            'Modification',
+                            _rst_from_prose(metadata.modification or '')
+                            if metadata.modified
+                            else None,
+                        ),
+                        ('References', gen.generate_references_field(metadata)),
+                    ]
+                )
             )
-        # Return empty footer content
-        return ''
+            if metadata.notes:
+                notes = _indent_multi_line_string(
+                    _rst_from_prose(_strip_trailing(metadata.notes)), indent_level=1
+                )
+                parts.append(cls.notes_template.format(notes.lstrip()))
+        block = '\n\n'.join(part for part in parts if part.strip())
+        if not block.strip():
+            return ''
+        return cls._format_and_indent_from_template(
+            _indent_multi_line_string(block, indent_level=1),
+            template=cls.footer_template,
+            indent_level=cls.HEADER_FOOTER_INDENT_LEVEL,
+        )
 
 
 class DatasetPropsGenerator:
@@ -2789,6 +2941,78 @@ class DatasetPropsGenerator:
             string=dataset_repr,
         )
         return _indent_multi_line_string(dataset_repr, indent_size=3, indent_level=indent_level)
+
+    @staticmethod
+    def _dataset_metadata(loader: _DatasetLoader):
+        """Return the published record covering a loader's files, if it has one."""
+        if not isinstance(loader, _DOWNLOADABLE_TYPES):
+            return None
+        return _metadata_for_source_names(loader.source_names)
+
+    @staticmethod
+    def generate_license_field(metadata) -> str:
+        """Format each licence as a badge linking its text, beside its canonical page."""
+        lines = []
+        for lic in metadata.licenses:
+            badge = f':bdg-link-primary:`{lic.spdx_id} <{lic.text_url or lic.url}>`'
+            lines.append(f'{badge} `{lic.title} <{lic.url}>`_')
+        return '\n'.join(lines)
+
+    @staticmethod
+    def generate_usage_field(metadata) -> str:
+        """Format the obligations a licence attaches as badges."""
+        badges = [
+            ':bdg-success:`Commercial use`'
+            if metadata.commercial_use
+            else ':bdg-danger:`Not for commercial use`'
+        ]
+        if metadata.share_alike:
+            badges.append(':bdg-warning:`ShareAlike`')
+        if metadata.attribution_required:
+            badges.append(':bdg-info:`Attribution required`')
+        return ' '.join(badges)
+
+    @staticmethod
+    def generate_provenance_field(metadata) -> str:
+        """Format the provenance of the recorded origin as a badge."""
+        color = DATASET_GALLERY_PROVENANCE_COLORS.get(metadata.provenance, 'secondary')
+        return f':bdg-{color}:`{metadata.provenance}`'
+
+    @staticmethod
+    def generate_origin_field(metadata) -> str | None:
+        """Format `origin_url` as a link titled by `origin_title`."""
+        if not metadata.origin_url:
+            return None
+        name = metadata.origin_title or metadata.origin_url
+        if not metadata.origin_url.startswith(('http://', 'https://')):
+            return f'``{name}``'
+        return f'`{name} <{metadata.origin_url}>`_'
+
+    @staticmethod
+    def generate_redistributor_field(metadata) -> str | None:
+        """Format `redistributed_from` as a link, falling back to the bare value."""
+        url = metadata.redistributed_from
+        if not url:
+            return None
+        if not url.startswith(('http://', 'https://')):
+            return f'``{url}``'
+        # The full URL is often long enough to break the nowrap field grid.
+        return f'`{urllib.parse.urlparse(url).netloc.removeprefix("www.")} <{url}>`_'
+
+    @staticmethod
+    def generate_references_field(metadata) -> str | None:
+        """Format each work the dataset asks to be cited, one per line."""
+        if not metadata.references:
+            return None
+        lines = []
+        for reference in metadata.references:
+            if reference.doi:
+                lines.append(f'`{reference.citation} <https://doi.org/{reference.doi}>`_')
+            elif reference.url:
+                lines.append(f'`{reference.citation} <{reference.url}>`_')
+            else:
+                lines.append(reference.citation)
+        return '\n'.join(lines)
 
     @staticmethod
     def generate_datasource_links(loader: _DatasetLoader) -> str | None:
@@ -3009,6 +3233,8 @@ class DatasetCardFetcher:
             ('ctype', 'Cell Type'),
             ('reader', 'Reader'),
             ('size', 'File Size'),
+            ('license', 'License'),
+            ('use', 'Usage'),
         ]
         group_html = '\n'.join(
             f'  <div class="facet-dropdown" data-facet="{facet}">\n'
@@ -3020,10 +3246,14 @@ class DatasetCardFetcher:
             f'  </div>'
             for facet, label in groups
         )
-        # Fixes File Size's bin order to be numeric rather than alphabetical.
+        # File Size sorts numerically rather than alphabetically, and Usage reads
+        # from least to most restrictive rather than alphabetically.
         manifest = {
             'labels': cls.FACET_LABELS,
-            'order': {'size': [slug for _, _, slug in DATASET_GALLERY_SIZE_BINS]},
+            'order': {
+                'size': [slug for _, _, slug in DATASET_GALLERY_SIZE_BINS],
+                'use': list(DATASET_GALLERY_USE_ORDER),
+            },
         }
         html = (
             '<div class="gallery-toolbar-wrap">\n'

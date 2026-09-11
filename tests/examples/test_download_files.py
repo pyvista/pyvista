@@ -180,12 +180,10 @@ def test_download_fea_hertzian_contact_cylinder():
 
 
 def test_download_nefertiti():
-    with pytest.warns(UserWarning, match='CC BY-NC-SA'):
-        filename = examples.download_nefertiti(load=False)
+    filename = examples.download_nefertiti(load=False)
     assert Path(filename).is_file()
 
-    with pytest.warns(UserWarning, match='CC BY-NC-SA'):
-        data = examples.download_nefertiti()
+    data = examples.download_nefertiti()
     assert data.n_cells
 
 

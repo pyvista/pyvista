@@ -1427,26 +1427,14 @@ def download_nefertiti(*, load: Literal[False]) -> str: ...
 def download_nefertiti(*, load: bool = True) -> PolyData | str:
     """Download mesh of Queen Nefertiti.
 
-    .. warning::
-
-        **Non-commercial license.** This dataset is "The Other Nefertiti"
-        (2016) by Nora Al-Badri and Jan Nikolai Nelles, released under
-        `CC BY-NC-SA 4.0 <https://creativecommons.org/licenses/by-nc-sa/4.0/>`_.
-        The license prohibits commercial use and imposes a ShareAlike
-        requirement on derivative works. Do not use this dataset in
-        commercial products or in any distribution that is incompatible
-        with the NonCommercial or ShareAlike clauses.
-
-        The official Neues Museum / Staatliche Museen zu Berlin scan is
-        also non-commercial (CC BY-NC-SA 3.0 DE). No permissively licensed
-        Nefertiti scan is currently known to exist.
+    This dataset is "The Other Nefertiti" (2016) by Nora Al-Badri and Jan
+    Nikolai Nelles, released under `CC BY-SA 4.0
+    <https://creativecommons.org/licenses/by-sa/4.0/>`_. The ShareAlike clause
+    propagates: a work derived from this scan must be shared under the same
+    license.
 
     Required attribution: *Nora Al-Badri and Jan Nikolai Nelles,
-    The Other Nefertiti (2016), CC BY-NC-SA 4.0*.
-
-    For a permissively licensed bust suitable for commercial use, see
-    :func:`download_washington_bust` or :func:`download_lincoln_life_mask`,
-    both released under CC0 by the Smithsonian.
+    The Other Nefertiti (2016), CC BY-SA 4.0*.
 
     Parameters
     ----------
@@ -1486,33 +1474,7 @@ def download_nefertiti(*, load: bool = True) -> PolyData | str:
     return _download_dataset(_dataset_nefertiti, load=load)
 
 
-class _NefertitiDatasetLoader(_SingleFileDownloadableDatasetLoader):
-    """Loader which reports the dataset's licence wherever the data is reached."""
-
-    @staticmethod
-    def _warn_licence() -> None:
-        """Warn that the dataset is not licensed for commercial use."""
-        warn_external(
-            'The nefertiti dataset is licensed under CC BY-NC-SA 4.0 '
-            '("The Other Nefertiti" by Al-Badri and Nelles, 2016). It may not be '
-            'used for commercial purposes, and derivative works must be shared '
-            'under the same license. For a CC0 alternative suitable for commercial '
-            'use, see download_washington_bust or download_lincoln_life_mask.',
-            UserWarning,
-        )
-
-    def download(self) -> tuple[str, ...]:
-        """Warn about the licence, then download as usual."""
-        self._warn_licence()
-        return super().download()
-
-    def load(self) -> Any:
-        """Warn about the licence, then load as usual."""
-        self._warn_licence()
-        return super().load()
-
-
-_dataset_nefertiti = _NefertitiDatasetLoader(
+_dataset_nefertiti = _SingleFileDownloadableDatasetLoader(
     'nefertiti.ply.zip',
     target_file='nefertiti.ply',
 )

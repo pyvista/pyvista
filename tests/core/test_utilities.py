@@ -572,6 +572,8 @@ REPORT = str(pv.Report(gpu=False))
 def test_report_dependencies(package):
     if package == 'pyobjc-framework-Cocoa' and sys.platform != 'darwin':
         pytest.xfail('package only available on macOS')
+    elif package == 'tomli' and sys.version_info >= (3, 11):
+        pytest.skip('tomli is only required below 3.11, where tomllib is in the standard library')
     elif package == 'cvista' and importlib.util.find_spec('cvista') is None:
         # cvista is an alternative VTK backend, installed only in the dedicated
         # vtk_cvista CI env (see tox.ini). The report covers it there.

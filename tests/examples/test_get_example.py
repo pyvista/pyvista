@@ -88,7 +88,7 @@ def _current_overloads():
     """Return ``{name: (dataset, readers)}`` from the examples themselves (downloads them)."""
     current = {}
     with warnings.catch_warnings():
-        warnings.simplefilter('ignore')  # the nefertiti licence, and a few others
+        warnings.simplefilter('ignore')  # a few examples warn on their own account
         for name in _all_example_names():
             example = examples.get_example(name)
             current[name] = (_dataset_annotation(example.function), _readers_annotation(example))
@@ -150,10 +150,10 @@ def test_get_example_fields():
     example = examples.get_example('uniform')
 
     assert example.function is examples.load_uniform
-    assert example.source_urls == (
+    assert example.download_urls == (
         'https://github.com/pyvista/pyvista/raw/main/pyvista/examples/uniform.vtk',
     )
-    assert len(example.file_sizes) == len(example.source_urls) == len(example.paths) == 1
+    assert len(example.file_sizes) == len(example.download_urls) == len(example.paths) == 1
     assert example.file_sizes[0] == Path(example.paths[0]).stat().st_size
 
 
@@ -161,7 +161,7 @@ def test_get_example_in_memory():
     """An example generated in memory has no files, and still loads."""
     example = examples.get_example('structured')
 
-    for empty in (example.paths, example.file_sizes, example.source_urls, example.readers):
+    for empty in (example.paths, example.file_sizes, example.download_urls, example.readers):
         assert empty == ()
     assert isinstance(example.load(), pv.StructuredGrid)
 
@@ -223,25 +223,6 @@ def test_get_example_file_sizes_compare():
     bunny = examples.get_example('bunny')
 
     assert sum(frog.file_sizes) > sum(bunny.file_sizes)
-
-
-@pytest.mark.needs_download
-def test_get_example_nefertiti_warns_on_every_route():
-    """Downloading and loading each warn about the licence, on whichever route reaches them."""
-    with pytest.warns(UserWarning, match='CC BY-NC-SA') as downloaded:
-        examples.download_nefertiti(load=False)  # also caches the files for the routes below
-    assert len(downloaded) == 1
-
-    example = examples.get_example('nefertiti', download=False)
-    with pytest.warns(UserWarning, match='CC BY-NC-SA') as loaded:
-        example.load()
-    assert len(loaded) == 1
-
-    # a call which downloads and then loads performs both, so it warns for each; a user
-    # under the default filters is shown the first and Python suppresses the repeat
-    with pytest.warns(UserWarning, match='CC BY-NC-SA') as both:
-        examples.download_nefertiti()
-    assert len(both) == 2
 
 
 def test_get_example_overloads_cover_every_example():
@@ -387,7 +368,7 @@ def test_example_has_no_private_loader_field():
         'function',
         'paths',
         'file_sizes',
-        'source_urls',
+        'download_urls',
     }
 
 
@@ -447,9 +428,7 @@ def test_get_example_all(name):
         pytest.skip('Error loading on Windows')
 
     with warnings.catch_warnings():
-        # a few examples warn on their own account, and the nefertiti licence fires
-        # from its loader, so it reaches every route taken here
-        warnings.simplefilter('ignore')
+        warnings.simplefilter('ignore')  # a few examples warn on their own account
         try:
             example = examples.get_example(name)
             loaded = example.load()
@@ -469,7 +448,7 @@ def test_get_example_all(name):
     assert type(loaded) is type(from_function)
     # every tuple field is one entry per path, including the filtered one
     assert len(example.file_sizes) == len(example.paths)
-    assert len(example.source_urls) == len(example.paths)
+    assert len(example.download_urls) == len(example.paths)
     assert all(Path(path).is_absolute() for path in example.paths)
     assert all(Path(path).is_file() or Path(path).is_dir() for path in example.paths)
     # readers are a subset of the example's own files, never invented
