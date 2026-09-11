@@ -4548,6 +4548,19 @@ def test_plot_categories_true(sphere):
     pl.show()
 
 
+def test_string_scalars_replot():
+    mesh = pv.RectilinearGrid([0.0, 1.0, 2.0], [0.0, 1.0], [0.0])
+    pl = pv.Plotter()
+    actor = pl.add_mesh(mesh, scalars=['CellA', 'CellA'])
+    pl.remove_actor(actor)
+    pl.add_mesh(
+        mesh,
+        scalars=['CellA', 'CellB'],
+        scalar_bar_args={'width': 0.8, 'height': 0.3, 'label_font_size': 40},
+    )
+    pl.show()
+
+
 @pytest.mark.skip_windows
 def test_depth_of_field():
     pl = pv.Plotter()

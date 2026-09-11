@@ -155,20 +155,6 @@ def test_set_scalars_replaces_digitized_array():
     assert mapper.scalar_range == (-0.5, 1.5)
 
 
-@pytest.mark.usefixtures('verify_image_cache')
-def test_string_scalars_replot():
-    mesh = pv.RectilinearGrid([0.0, 1.0, 2.0], [0.0, 1.0], [0.0])
-    pl = pv.Plotter()
-    actor = pl.add_mesh(mesh, scalars=['CellA', 'CellA'])
-    pl.remove_actor(actor)
-    pl.add_mesh(
-        mesh,
-        scalars=['CellA', 'CellB'],
-        scalar_bar_args={'width': 0.8, 'height': 0.3, 'label_font_size': 40},
-    )
-    pl.show()
-
-
 def test_mapper_pipeline_output_active_scalars(sphere):
     """Verify the mapper's pipeline produces the correct active scalars."""
     sphere['data_a'] = sphere.points[:, 0]
