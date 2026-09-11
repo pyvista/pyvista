@@ -191,6 +191,15 @@ def test_entry_point_load_failure_warns_and_returns_none():
     assert 'broken plugin' in message
 
 
+def _only_pending(eps):
+    """Make *eps* the only pending writer entry points, ignoring installed plugins."""
+    _reg_mod._entry_points_loaded = False
+    _reg_mod._pending_ext_writers.clear()
+    _reg_mod._failed_ext_writers.clear()
+    _reg_mod._resolving_ext_writers.clear()
+    return patch('pyvista.core.utilities.writer_registry.entry_points', return_value=eps)
+
+
 def test_broken_plugin_warns_once_and_stays_pending():
     """A failed load warns once, falls through on later lookups without
     re-importing, and leaves the entry pending for ``registered_writers``
@@ -200,7 +209,7 @@ def test_broken_plugin_warns_once_and_stays_pending():
     broken.value = 'package:broken'
     broken.load.side_effect = RuntimeError('broken plugin')
 
-    with patch('pyvista.core.utilities.writer_registry.entry_points', return_value=[broken]):
+    with _only_pending([broken]):
         with pytest.warns(UserWarning, match='Failed to load pyvista.writers entry point'):
             assert _reg_mod._get_ext_handler('.broken') is None
 
@@ -224,7 +233,7 @@ def test_failed_writer_is_not_offered_in_the_invalid_extension_message():
     broken.value = 'package:broken'
     broken.load.side_effect = RuntimeError('broken plugin')
 
-    with patch('pyvista.core.utilities.writer_registry.entry_points', return_value=[broken]):
+    with _only_pending([broken]):
         with pytest.warns(UserWarning, match='Failed to load'):
             assert _reg_mod._get_ext_handler('.broken') is None
         with pytest.raises(ValueError, match='Invalid file extension') as excinfo:
@@ -251,7 +260,7 @@ def test_plugin_querying_the_registry_during_its_own_load():
     ep.value = 'package:reentrant'
     ep.load = _loader
 
-    with patch('pyvista.core.utilities.writer_registry.entry_points', return_value=[ep]):
+    with _only_pending([ep]):
         with warnings.catch_warnings(record=True) as captured:
             warnings.simplefilter('always')
             assert _reg_mod._get_ext_handler('.reentrant') is _plugin_writer
@@ -270,7 +279,7 @@ def test_registered_writers_retries_a_recovered_plugin():
     recovered.value = 'package:recovers'
     recovered.load.side_effect = [RuntimeError('missing dep'), _noop_writer]
 
-    with patch('pyvista.core.utilities.writer_registry.entry_points', return_value=[recovered]):
+    with _only_pending([recovered]):
         with pytest.warns(UserWarning, match='Failed to load'):
             assert _reg_mod._get_ext_handler('.recovers') is None
 

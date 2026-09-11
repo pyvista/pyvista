@@ -195,18 +195,25 @@ def test_entry_point_load_failure_warns_and_returns_none():
     assert 'broken plugin' in message
 
 
+def _only_pending(eps):
+    """Make *eps* the only pending reader entry points, ignoring installed plugins."""
+    _reg_mod._entry_points_loaded = False
+    _reg_mod._pending_ext_readers.clear()
+    _reg_mod._failed_ext_readers.clear()
+    _reg_mod._resolving_ext_readers.clear()
+    return patch('pyvista.core.utilities.reader_registry.entry_points', return_value=eps)
+
+
 def test_broken_plugin_warns_once_and_stays_pending():
     """A failed load warns once, falls through on later lookups without
     re-importing, and leaves the entry pending for ``registered_readers``
     to retry. The extension stops being advertised while it is failing."""
-    _reg_mod._entry_points_loaded = False
-
     broken = MagicMock()
     broken.name = '.broken'
     broken.value = 'package:broken'
     broken.load.side_effect = RuntimeError('broken plugin')
 
-    with patch('pyvista.core.utilities.reader_registry.entry_points', return_value=[broken]):
+    with _only_pending([broken]):
         assert '.broken' in _reg_mod._list_custom_exts()
         with pytest.warns(UserWarning, match='Failed to load pyvista.readers entry point'):
             assert _reg_mod._get_ext_handler('.broken') is None
@@ -226,7 +233,6 @@ def test_broken_plugin_warns_once_and_stays_pending():
 def test_failed_plugin_still_falls_back_to_the_optional_companion():
     """A broken plugin claiming an extension an optional companion package
     also serves must not block the companion on later lookups."""
-    _reg_mod._entry_points_loaded = False
 
     def _companion(_path, **__):
         """Handler the optional companion package would supply."""
@@ -238,7 +244,7 @@ def test_failed_plugin_still_falls_back_to_the_optional_companion():
     broken.load.side_effect = RuntimeError('broken plugin')
 
     with (
-        patch('pyvista.core.utilities.reader_registry.entry_points', return_value=[broken]),
+        _only_pending([broken]),
         patch(
             'pyvista.core.utilities.reader_registry._resolve_optional_reader',
             side_effect=lambda ext: _reg_mod._custom_ext_readers.__setitem__(ext, _companion),
@@ -252,7 +258,6 @@ def test_failed_plugin_still_falls_back_to_the_optional_companion():
 def test_plugin_querying_the_registry_during_its_own_load():
     """A reader plugin that reaches back into the registry while it is
     still loading resolves without a spurious failure."""
-    _reg_mod._entry_points_loaded = False
 
     def _plugin_reader(_path, **__):
         """Stand-in reader supplied by the plugin."""
@@ -268,7 +273,7 @@ def test_plugin_querying_the_registry_during_its_own_load():
     ep.value = 'package:reentrant'
     ep.load = _loader
 
-    with patch('pyvista.core.utilities.reader_registry.entry_points', return_value=[ep]):
+    with _only_pending([ep]):
         with warnings.catch_warnings(record=True) as captured:
             warnings.simplefilter('always')
             assert _reg_mod._get_ext_handler('.reentrant') is _plugin_reader
@@ -282,7 +287,6 @@ def test_plugin_querying_the_registry_during_its_own_load():
 def test_registered_readers_retries_a_recovered_plugin():
     """``registered_readers()`` retries a failed plugin, so a reader whose
     dependency arrives later becomes available."""
-    _reg_mod._entry_points_loaded = False
 
     def _recovered_reader(_path, **__):  # numpydoc ignore=GL08
         return pv.Sphere()
@@ -292,7 +296,7 @@ def test_registered_readers_retries_a_recovered_plugin():
     recovered.value = 'package:recovers'
     recovered.load.side_effect = [RuntimeError('missing dep'), _recovered_reader]
 
-    with patch('pyvista.core.utilities.reader_registry.entry_points', return_value=[recovered]):
+    with _only_pending([recovered]):
         with pytest.warns(UserWarning, match='Failed to load'):
             assert _reg_mod._get_ext_handler('.recovers') is None
 

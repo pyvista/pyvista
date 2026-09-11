@@ -322,6 +322,15 @@ def test_entry_point_load_failure_warns():
         _reg_mod._resolve_theme('broken_theme')
 
 
+def _only_pending(eps):
+    """Make *eps* the only pending theme entry points, ignoring installed plugins."""
+    _reg_mod._entry_points_loaded = False
+    _reg_mod._pending_ep_themes.clear()
+    _reg_mod._failed_ep_themes.clear()
+    _reg_mod._resolving_ep_themes.clear()
+    return patch('pyvista.plotting.theme_registry.entry_points', return_value=eps)
+
+
 def test_broken_plugin_warns_once_and_stays_pending():
     """A failed load warns once, falls through on later lookups without
     re-importing, and leaves the entry pending for ``registered_themes``
@@ -331,8 +340,7 @@ def test_broken_plugin_warns_once_and_stays_pending():
     ep.value = 'pkg:broken'
     ep.load.side_effect = ImportError('missing dependency')
 
-    _reg_mod._entry_points_loaded = False
-    with patch('pyvista.plotting.theme_registry.entry_points', return_value=[ep]):
+    with _only_pending([ep]):
         assert 'broken_theme' in _reg_mod._available_theme_names()
         with pytest.warns(UserWarning, match='Failed to load'):
             assert _reg_mod._resolve_theme('broken_theme') is None
@@ -361,8 +369,7 @@ def test_registered_themes_retries_a_recovered_plugin():
     ep.value = 'pkg:recovered'
     ep.load.side_effect = [ImportError('missing dependency'), RecoveredTheme]
 
-    _reg_mod._entry_points_loaded = False
-    with patch('pyvista.plotting.theme_registry.entry_points', return_value=[ep]):
+    with _only_pending([ep]):
         with pytest.warns(UserWarning, match='Failed to load'):
             assert _reg_mod._resolve_theme('recovered_theme') is None
 
@@ -391,8 +398,7 @@ def test_plugin_querying_the_registry_during_its_own_load():
     ep.value = 'pkg:reentrant'
     ep.load = _loader
 
-    _reg_mod._entry_points_loaded = False
-    with patch('pyvista.plotting.theme_registry.entry_points', return_value=[ep]):
+    with _only_pending([ep]):
         with warnings.catch_warnings(record=True) as captured:
             warnings.simplefilter('always')
             resolved = _reg_mod._resolve_theme('reentrant_theme')
