@@ -902,7 +902,7 @@ def test_gaussian_splatting(sphere: PolyData):
     assert output.dimensions == dimensions
 
 
-def test_extract_geometry(datasets, multiblock_all):
+def test_extract_geometry(datasets, multiblock_all, multiblock_all_no_pointset):
     for dataset in datasets:
         if isinstance(dataset, pv.PointSet):
             # PointSet has no cells, so it has no geometry to extract
@@ -918,8 +918,13 @@ def test_extract_geometry(datasets, multiblock_all):
         assert isinstance(geom, pv.PolyData)
     # Now test composite data structures
     with pytest.warns(pv.PyVistaDeprecationWarning):
-        output = multiblock_all.extract_geometry()
+        output = multiblock_all_no_pointset.extract_geometry()
     assert isinstance(output, pv.PolyData)
+    with (
+        pytest.warns(pv.PyVistaDeprecationWarning),
+        pytest.raises(pv.PointSetCellOperationError, match='type PointSet'),
+    ):
+        multiblock_all.extract_geometry()
 
 
 def test_extract_geometry_extent(uniform):

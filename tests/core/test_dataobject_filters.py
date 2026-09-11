@@ -1153,10 +1153,9 @@ def test_slice_filter(datasets_no_pointset):
     assert result.n_points < 1
 
 
-def test_slice_filter_composite(multiblock_all):
-    # Now test composite data structures
-    output = multiblock_all.slice(normal=normals[0], progress_bar=True)
-    assert output.n_blocks == multiblock_all.n_blocks
+def test_slice_filter_composite(multiblock_all_no_pointset):
+    output = multiblock_all_no_pointset.slice(normal=normals[0], progress_bar=True)
+    assert output.n_blocks == multiblock_all_no_pointset.n_blocks
 
 
 def _output_type_meshes():
@@ -1241,6 +1240,8 @@ def test_clip_slice_output_type(name, mesh_type):
 def test_clip_slice_output_type_composite(name):
     """A composite stays a composite, with every block following the same rule."""
     meshes = _output_type_meshes()
+    if name.startswith('slice'):
+        meshes.pop('PointSet')
     flat, nested = list(meshes)[:3], list(meshes)[3:]
     composite = pv.MultiBlock(
         {
@@ -1263,30 +1264,17 @@ def test_clip_slice_output_type_composite(name):
             assert type(block) is expected
             if expected is _MULTI:
                 assert all(type(sub) is _POLY for sub in block)
-            if mesh_type == 'PointSet' and name.startswith('slice'):
-                blocks = block if isinstance(block, _MULTI) else [block]
-                assert all(sub.is_empty for sub in blocks)
 
 
 @pytest.mark.parametrize(
     'name',
     ['slice', 'slice_implicit', 'slice_along_line', 'slice_orthogonal', 'slice_along_axis'],
 )
-def test_slice_composite_pointset_block_keeps_arrays(name):
-    """The empty block a PointSet gives still carries its arrays."""
+def test_slice_composite_pointset_block_raises(name):
+    """A PointSet block raises the same error a bare PointSet does, naming the block."""
     points = pv.PointSet(np.random.default_rng(0).uniform(-1, 1, (30, 3)))
-    points.point_data['data'] = np.arange(points.n_points, dtype=float)
-    points.field_data['meta'] = [1.0]
-    points.set_active_scalars('data')
-
-    block = _output_type_call(pv.MultiBlock({'points': points}), name)['points']
-
-    for sliced in block if isinstance(block, _MULTI) else [block]:
-        assert type(sliced) is _POLY
-        assert sliced.is_empty
-        assert sliced.array_names == points.array_names
-        assert sliced.active_scalars_name == 'data'
-        assert np.allclose(sliced.field_data['meta'], [1.0])
+    with pytest.raises(pv.PointSetDimensionReductionError, match='type PointSet'):
+        _output_type_call(pv.MultiBlock({'points': points}), name)
 
 
 def test_slice_orthogonal_filter(datasets_no_pointset):
@@ -1300,10 +1288,9 @@ def test_slice_orthogonal_filter(datasets_no_pointset):
             assert isinstance(slc, pv.PolyData)
 
 
-def test_slice_orthogonal_filter_composite(multiblock_all):
-    # Now test composite data structures
-    output = multiblock_all.slice_orthogonal(progress_bar=True)
-    assert output.n_blocks == multiblock_all.n_blocks
+def test_slice_orthogonal_filter_composite(multiblock_all_no_pointset):
+    output = multiblock_all_no_pointset.slice_orthogonal(progress_bar=True)
+    assert output.n_blocks == multiblock_all_no_pointset.n_blocks
 
 
 def test_slice_along_axis(datasets_no_pointset):
@@ -1322,10 +1309,9 @@ def test_slice_along_axis(datasets_no_pointset):
         dataset.slice_along_axis(axis='u')
 
 
-def test_slice_along_axis_composite(multiblock_all):
-    # Now test composite data structures
-    output = multiblock_all.slice_along_axis(progress_bar=True)
-    assert output.n_blocks == multiblock_all.n_blocks
+def test_slice_along_axis_composite(multiblock_all_no_pointset):
+    output = multiblock_all_no_pointset.slice_along_axis(progress_bar=True)
+    assert output.n_blocks == multiblock_all_no_pointset.n_blocks
 
 
 def test_extract_all_edges(datasets_no_pointset):
@@ -1702,13 +1688,11 @@ def test_slice_along_line():
         model.slice_along_line(one_cell, progress_bar=True)
 
 
-def test_slice_along_line_composite(multiblock_all):
-    # Now test composite data structures
-    a = [multiblock_all.bounds.x_min, multiblock_all.bounds.y_min, multiblock_all.bounds.z_min]
-    b = [multiblock_all.bounds.x_max, multiblock_all.bounds.y_max, multiblock_all.bounds.z_max]
-    line = pv.Line(a, b, resolution=10)
-    output = multiblock_all.slice_along_line(line, progress_bar=True)
-    assert output.n_blocks == multiblock_all.n_blocks
+def test_slice_along_line_composite(multiblock_all_no_pointset):
+    bounds = multiblock_all_no_pointset.bounds
+    line = pv.Line(bounds[::2], bounds[1::2], resolution=10)
+    output = multiblock_all_no_pointset.slice_along_line(line, progress_bar=True)
+    assert output.n_blocks == multiblock_all_no_pointset.n_blocks
 
 
 @pytest.mark.parametrize('generate_triangles', [True, False])
@@ -1733,20 +1717,6 @@ def _output_type_call_with(mesh, name, **kwargs):
         'slice_along_line': dict(line=pv.Line((-2.0, -2.0, -2.0), (2.0, 2.0, 2.0), resolution=4)),
     }.get(name, {})
     return getattr(mesh, name)(**extra, **kwargs)
-
-
-def test_slice_composite_pointset_block_contour():
-    """A PointSet block gives the cutter an empty output with no arrays to contour."""
-    points = pv.PointSet(np.random.default_rng(0).uniform(-1, 1, (30, 3)))
-    points.point_data['data'] = np.arange(points.n_points, dtype=float)
-    image = pv.ImageData(dimensions=(5, 5, 5))
-    image.point_data['data'] = np.linspace(0.0, 1.0, image.n_points)
-    composite = pv.MultiBlock({'image': image, 'points': points})
-
-    sliced = composite.slice(generate_triangles=True, contour=True)
-
-    assert type(sliced['points']) is pv.PolyData
-    assert sliced['points'].is_empty
 
 
 def test_slice_generate_triangles_true_emits_only_triangles():
@@ -3366,6 +3336,34 @@ def test_validate_mesh_str_filtered():
     assert actual == expected
 
 
+@pytest.mark.parametrize('fields', ['cells', 'non_convex', 'unused_points'])
+def test_validate_mesh_composite_pointset_block(ant, fields):
+    # By default the fields a PointSet cannot have are skipped for that block alone
+    multi = pv.MultiBlock({'ant': ant, 'points': ant.cast_to_pointset()})
+    report = multi.validate_mesh()
+    assert report.is_valid
+    assert str(report.mesh['points'].validate_mesh()) == str(
+        ant.cast_to_pointset().validate_mesh()
+    )
+
+    # Asking for them explicitly raises, as it does for a bare PointSet
+    match = f'field {fields!r} is not supported for PointSet' if fields != 'cells' else 'PointSet'
+    with pytest.raises(ValueError, match=match):
+        ant.cast_to_pointset().validate_mesh(fields)
+    with pytest.raises(ValueError, match=match):
+        multi.validate_mesh(fields)
+
+
+def test_validate_mesh_composite_grid_block(uniform):
+    multi = pv.MultiBlock({'sphere': pv.Sphere(), 'image': uniform})
+    assert multi.validate_mesh().is_valid
+    match = "Cell field 'non_convex' is not supported for ImageData"
+    with pytest.raises(ValueError, match=match):
+        uniform.validate_mesh('non_convex')
+    with pytest.raises(ValueError, match=match):
+        multi.validate_mesh('non_convex')
+
+
 def test_validate_mesh_pointset(ant):
     pset = ant.cast_to_pointset()
     report = pset.validate_mesh(report_body='fields')
@@ -3979,9 +3977,11 @@ def test_validate_mesh_explicit_structured_grid():
     assert valid_grid == grid
 
 
-def test_extract_surface_multiblock_no_args(multiblock_all_with_nested_and_none):
+def test_extract_surface_multiblock_no_args(multiblock_all_no_pointset_with_nested_and_none):
     # Get output directly from vtkCompositeDataGeometryFilter
-    poly_from_vtk_filter = multiblock_all_with_nested_and_none._composite_geometry_filter()
+    poly_from_vtk_filter = (
+        multiblock_all_no_pointset_with_nested_and_none._composite_geometry_filter()
+    )
 
     # Test branch without any config options, similar to vtkCompositeDataGeometryFilter
     kwargs = dict(
@@ -3990,26 +3990,20 @@ def test_extract_surface_multiblock_no_args(multiblock_all_with_nested_and_none)
         pass_pointid=False,
         progress_bar=False,
     )
-    poly_no_config = multiblock_all_with_nested_and_none.extract_surface(**kwargs)
+    poly_no_config = multiblock_all_no_pointset_with_nested_and_none.extract_surface(**kwargs)
     assert poly_no_config == poly_from_vtk_filter
 
 
 @pytest.mark.parametrize('algorithm', ['geometry', 'dataset_surface', None, _SENTINEL])
 @pytest.mark.parametrize('bool_kwargs', [True, False])
-def test_extract_surface_datasets(multiblock_all, algorithm, bool_kwargs):
+def test_extract_surface_datasets(multiblock_all_no_pointset, algorithm, bool_kwargs):
     kwargs = dict(
         algorithm=algorithm,
         progress_bar=bool_kwargs,
         pass_cellid=bool_kwargs,
         pass_pointid=bool_kwargs,
     )
-    for dataobj in (*multiblock_all, multiblock_all):
-        if isinstance(dataobj, pv.PointSet):
-            # PointSet has no cells, so it has no surface to extract
-            with pytest.raises(pv.PointSetCellOperationError):
-                dataobj.extract_surface(**kwargs)
-            continue
-
+    for dataobj in (*multiblock_all_no_pointset, multiblock_all_no_pointset):
         if algorithm is _SENTINEL:
             with pytest.warns(pv.PyVistaFutureWarning):
                 surf = dataobj.extract_surface(**kwargs)
@@ -4020,6 +4014,13 @@ def test_extract_surface_datasets(multiblock_all, algorithm, bool_kwargs):
         assert isinstance(surf, pv.PolyData)
         assert ('vtkOriginalPointIds' in surf.point_data) == bool_kwargs
         assert ('vtkOriginalCellIds' in surf.cell_data) == bool_kwargs
+
+
+def test_extract_surface_pointset_raises(multiblock_all):
+    with pytest.raises(pv.PointSetCellOperationError):
+        pv.PointSet().extract_surface(algorithm=None)
+    with pytest.raises(pv.PointSetCellOperationError, match='type PointSet'):
+        multiblock_all.extract_surface(algorithm=None)
 
 
 @pytest.mark.parametrize('as_multiblock', [True, False])
