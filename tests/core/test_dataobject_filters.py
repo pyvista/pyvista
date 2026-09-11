@@ -285,6 +285,9 @@ def _cell_types(mesh):
     }
 
 
+_CELL_TYPE_MESHES = _cell_type_meshes()
+
+
 def _clip_that_removes_nothing(mesh, name):
     """Apply one clip whose region contains the whole mesh."""
     enclosing = pv.Cube(center=(0, 0, 0), x_length=99, y_length=99, z_length=99)
@@ -301,10 +304,10 @@ CLIP_FILTERS = ['clip', 'clip_box', 'clip_slab', 'clip_surface', 'clip_scalar']
 
 
 @pytest.mark.parametrize('name', CLIP_FILTERS)
-@pytest.mark.parametrize('mesh_type', list(_cell_type_meshes()))
+@pytest.mark.parametrize('mesh_type', list(_CELL_TYPE_MESHES))
 def test_clip_keeps_the_cell_types_it_does_not_cut(mesh_type, name):
     """A clip that removes nothing leaves every cell as the type it was."""
-    mesh = _cell_type_meshes()[mesh_type]
+    mesh = _CELL_TYPE_MESHES[mesh_type].copy()
 
     clipped = _clip_that_removes_nothing(mesh, name)
 
@@ -313,10 +316,10 @@ def test_clip_keeps_the_cell_types_it_does_not_cut(mesh_type, name):
 
 
 @pytest.mark.parametrize('name', CLIP_FILTERS)
-@pytest.mark.parametrize('mesh_type', list(_cell_type_meshes()))
+@pytest.mark.parametrize('mesh_type', list(_CELL_TYPE_MESHES))
 def test_clip_keeps_the_points_it_does_not_cut(mesh_type, name):
     """A clip that removes nothing neither adds nor merges points."""
-    mesh = _cell_type_meshes()[mesh_type]
+    mesh = _CELL_TYPE_MESHES[mesh_type].copy()
 
     clipped = _clip_that_removes_nothing(mesh, name)
 
@@ -325,10 +328,10 @@ def test_clip_keeps_the_points_it_does_not_cut(mesh_type, name):
 
 
 @pytest.mark.parametrize('name', CLIP_FILTERS)
-@pytest.mark.parametrize('mesh_type', list(_cell_type_meshes()))
+@pytest.mark.parametrize('mesh_type', list(_CELL_TYPE_MESHES))
 def test_clip_splits_the_mesh_in_two(mesh_type, name):
     """What a clip keeps and what it removes add up to the whole mesh."""
-    mesh = _cell_type_meshes()[mesh_type]
+    mesh = _CELL_TYPE_MESHES[mesh_type].copy()
     center = np.array(mesh.center)
     surface = pv.Sphere(
         radius=0.6,
@@ -1177,6 +1180,9 @@ def _output_type_meshes():
     }
 
 
+_OUTPUT_TYPE_MESHES = _output_type_meshes()
+
+
 def _output_type_call(mesh, name):
     """Call one clip or slice filter with arguments valid for every input class."""
     kwargs = {
@@ -1222,7 +1228,7 @@ OUTPUT_TYPES = {
 @pytest.mark.parametrize('mesh_type', list(_CLIP_LIKE))
 def test_clip_slice_output_type(name, mesh_type):
     """Each filter gives back the class its docstring names, for every input class."""
-    mesh = _output_type_meshes()[mesh_type]
+    mesh = _OUTPUT_TYPE_MESHES[mesh_type].copy()
 
     if mesh_type == 'PointSet' and name.startswith('slice'):
         with pytest.raises(pv.PointSetDimensionReductionError):
@@ -1240,7 +1246,7 @@ def test_clip_slice_output_type(name, mesh_type):
 @pytest.mark.parametrize('name', list(OUTPUT_TYPES))
 def test_clip_slice_output_type_composite(name):
     """A composite stays a composite, with every block following the same rule."""
-    meshes = _output_type_meshes()
+    meshes = {key: mesh.copy() for key, mesh in _OUTPUT_TYPE_MESHES.items()}
     flat, nested = list(meshes)[:3], list(meshes)[3:]
     composite = pv.MultiBlock(
         {
