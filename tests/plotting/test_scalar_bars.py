@@ -221,6 +221,7 @@ def test_labels_centered_with_translucent_actor(sphere):
             'title_font_size': 40,
         },
     )
+    # The translucent actor makes VTK lay out the labels from a stale justification
     pl.add_mesh(pv.Cube(center=(2, 0, 0)), opacity=0.5)
     pl.show()
 

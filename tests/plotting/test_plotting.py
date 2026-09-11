@@ -6113,7 +6113,9 @@ def test_scaled_screenshot_scalar_bar_layout(sphere, no_images_to_verify):  # no
     pl.camera.azimuth += 20
     pl.reset_camera()
     second = pl.screenshot(None, scale=2)
+    # The bar and its title are the only things in the bottom fifth of the window
     bottom = int(0.8 * first.shape[0])
+    assert len(np.unique(first[bottom:].reshape(-1, 3), axis=0)) > 1
     assert np.array_equal(first[bottom:], second[bottom:])
     pl.close()
 
