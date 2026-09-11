@@ -6066,7 +6066,7 @@ def download_lshape(*, load: bool = True) -> MultiBlock | str:
 
 
 def _lshape_files_func():
-    def read_func(filename):  # noqa: ANN001
+    def read_func(filename: str):
         reader = pv.get_reader(filename)
         reader.set_active_time_set(1)
         reader.set_active_time_value(1.0)
