@@ -7445,6 +7445,7 @@ def test_point_sprite_shape_render(shape, verify_image_cache_wrapper):
     pl.show()
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 @pytest.mark.parametrize(
     'shape',
     ['circle', 'triangle', 'hexagon', 'diamond', 'asterisk', 'star'],
@@ -7468,6 +7469,19 @@ def test_point_sprite_shape_does_not_apply_to_surface(shape):
     assert actor.point_sprite_shape == shape
     assert not actor._point_sprite_applied
     assert 'point_sprite' not in actor._shader_replacements
+    pl.close()
+
+
+def test_point_sprite_shape_surface_render():
+    """A surface renders unclipped while the theme asks for a point shape."""
+    theme = pv.plotting.themes._TestingTheme()
+    theme.point_shape = 'circle'
+    pl = pv.Plotter(theme=theme)
+    pl.add_mesh(
+        pv.Wavelet(),
+        style='surface',
+        show_scalar_bar=False,
+    )
     pl.show()
 
 
