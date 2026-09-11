@@ -155,6 +155,55 @@ def test_set_scalars_replaces_digitized_array():
     assert mapper.scalar_range == (-0.5, 1.5)
 
 
+def test_set_scalars_categories_true():
+    mesh = pv.RectilinearGrid([0.0, 1.0, 2.0, 3.0, 4.0], [0.0, 1.0], [0.0])
+    mesh['labels'] = [8.0, 0.0, 2.0, np.nan]
+    mapper = DataSetMapper(mesh)
+    sargs = {}
+    mapper.set_scalars(mesh['labels'], 'labels', categories=True, scalar_bar_args=sargs)
+    assert mesh.cell_data.keys() == ['labels']
+    assert mapper.scalar_range == (-1.0, 9.0)
+    assert sargs == {'ticks': [0.0, 2.0, 8.0], 'fmt': '%.10g'}
+    lut = mapper.lookup_table
+    assert lut.n_values == 5
+    assert lut.annotations == {}
+    colors = {lut.map_value(value)[:3] for value in (0, 2, 8)}
+    assert len(colors) == 3
+    assert lut.map_value(4) == lut.nan_color.float_rgba
+    assert lut.map_value(np.nan) == lut.nan_color.float_rgba
+
+    sargs = {}
+    mapper.set_scalars(
+        mesh['labels'], 'labels', categories=True, annotations={2: 'two'}, scalar_bar_args=sargs
+    )
+    assert lut.annotations == {2.0: 'two'}
+    assert sargs['ticks'] == [0.0, 8.0]
+
+
+def test_set_scalars_categories_uneven_spacing():
+    mesh = pv.RectilinearGrid([0.0, 1.0, 2.0, 3.0], [0.0, 1.0], [0.0])
+    mesh['labels'] = [0.1, 0.33, 0.7]
+    mapper = DataSetMapper(mesh)
+    mapper.set_scalars(mesh['labels'], 'labels', categories=True)
+    lut = mapper.lookup_table
+    assert lut.n_values == 4096
+    assert mapper.scalar_range == pytest.approx((-0.015, 0.815))
+    colors = [lut.map_value(value)[:3] for value in (0.1, 0.33, 0.7)]
+    assert len(set(colors)) == 3
+    assert lut.map_value(0.2)[:3] == colors[0]
+    assert lut.map_value(0.5)[:3] == colors[1]
+
+
+def test_set_scalars_categories_thins_labels():
+    mesh = pv.ImageData(dimensions=(31, 2, 2))
+    mesh['labels'] = np.arange(30)
+    mapper = DataSetMapper(mesh)
+    sargs = {}
+    mapper.set_scalars(mesh['labels'], 'labels', categories=True, scalar_bar_args=sargs)
+    assert mapper.lookup_table.n_values == 30
+    assert sargs['ticks'] == [float(v) for v in range(0, 30, 3)]
+
+
 def test_mapper_pipeline_output_active_scalars(sphere):
     """Verify the mapper's pipeline produces the correct active scalars."""
     sphere['data_a'] = sphere.points[:, 0]

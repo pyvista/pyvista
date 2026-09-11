@@ -4561,6 +4561,35 @@ def test_string_scalars_replot():
     pl.show()
 
 
+@skip_windows_mesa
+def test_plot_categories_non_contiguous(sphere):
+    sphere['labels'] = np.zeros(sphere.n_cells)
+    sphere['labels'][: sphere.n_cells // 2] = 2
+    sphere['labels'][: sphere.n_cells // 4] = 8
+    pl = pv.Plotter()
+    actor = pl.add_mesh(
+        sphere,
+        scalars='labels',
+        categories=True,
+        cmap='glasbey',
+        lighting=False,
+        scalar_bar_args={
+            'width': 0.8,
+            'height': 0.2,
+            'position_x': 0.1,
+            'position_y': 0.2,
+            'label_font_size': 40,
+        },
+    )
+    lut = actor.mapper.lookup_table
+    assert len({lut.map_value(value)[:3] for value in (0, 2, 8)}) == 3
+    assert 'labels-digitized' not in sphere.cell_data
+    scalar_bar = pl.scalar_bar
+    assert scalar_bar.GetUseCustomLabels()
+    assert list(pv.convert_array(scalar_bar.GetCustomLabels())) == [0.0, 2.0, 8.0]
+    pl.show()
+
+
 @pytest.mark.skip_windows
 def test_depth_of_field():
     pl = pv.Plotter()

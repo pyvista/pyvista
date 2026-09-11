@@ -38,6 +38,40 @@ if TYPE_CHECKING:
     from pyvista.themes import Theme
 
 
+_MAX_CATEGORY_LABELS = 10
+_MAX_CATEGORY_TABLE_SIZE = 65536
+_CATEGORY_BAND_TABLE_SIZE = 4096
+
+
+def _category_step(values):
+    """Return the spacing between category values, or ``None`` if they are not evenly spaced."""
+    if len(values) == 1:
+        return 1.0
+    gaps = np.diff(values)
+    step = gaps.min()
+    ratios = gaps / step
+    evenly_spaced = np.allclose(ratios, np.round(ratios), rtol=0, atol=1e-6)
+    if not evenly_spaced or (values[-1] - values[0]) / step + 1 > _MAX_CATEGORY_TABLE_SIZE:
+        return None
+    return step
+
+
+def _category_range(values):
+    """Return a scalar range that centers every category value on a table entry."""
+    step = _category_step(values)
+    if step is None:
+        step = np.diff(values).min()
+    return [values[0] - step / 2, values[-1] + step / 2]
+
+
+def _category_indices(values):
+    """Return the table index of each category value, or ``None`` for unevenly spaced values."""
+    step = _category_step(values)
+    if step is None:
+        return None
+    return np.round((values - values[0]) / step).astype(int)
+
+
 @abstract_class
 class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkAbstractMapper):
     """Base Mapper with methods common to other mappers.
@@ -965,9 +999,14 @@ class _BaseDataSetMapper(_BaseMapper):
             transfer function that is an array either ``n_colors`` in length or
             shorter.
 
-        categories : bool, default: False
-            If set to ``True``, then the number of unique values in the scalar
-            array will be used as the ``n_colors`` argument.
+        categories : bool | int, default: False
+            If ``True``, each unique value in the scalar array gets its own
+            color and is labelled on the scalar bar. An integer is used as
+            the ``n_colors`` argument instead.
+
+            .. versionchanged:: 0.50
+                ``True`` gives every unique value its own color even when
+                the values are not evenly spaced.
 
         clim : Sequence, optional
             Color bar range for scalars.  Defaults to minimum and
@@ -985,10 +1024,12 @@ class _BaseDataSetMapper(_BaseMapper):
         if custom_opac:
             scalars_name = '__custom_rgba'
 
+        digitized = False
         if not np.issubdtype(scalars.dtype, np.number) and not isinstance(
             cmap,
             pv.LookupTable,
         ):
+            digitized = True
             # we can rapidly handle bools
             if scalars.dtype == np.bool_:
                 cats = np.array([b'False', b'True'], dtype='|S5')
@@ -1025,6 +1066,20 @@ class _BaseDataSetMapper(_BaseMapper):
         if scalars.dtype == np.bool_:
             scalars = scalars.astype(np.float64)
 
+        category_values = None
+        if (
+            categories is True
+            and not digitized
+            and not rgb
+            and not isinstance(cmap, pv.LookupTable)
+        ):
+            category_values = np.unique(scalars[~np.isnan(scalars)])
+            if category_values.size:
+                n_colors = len(category_values)
+                clim = _category_range(category_values)
+            else:
+                category_values = None
+
         # Set scalars range
         use_default_scalar_range = clim is None
         if clim is None:
@@ -1050,11 +1105,8 @@ class _BaseDataSetMapper(_BaseMapper):
             # have to add the attribute to pass it onward to some classes
             if isinstance(cmap, str):
                 self._cmap = cmap
-            if categories:
-                if categories is True:
-                    n_colors = len(np.unique(scalars))
-                elif isinstance(categories, int):
-                    n_colors = categories
+            if categories and categories is not True:
+                n_colors = categories
 
             self.lookup_table.apply_cmap(cmap, n_colors)
 
@@ -1083,7 +1135,11 @@ class _BaseDataSetMapper(_BaseMapper):
             if below_color:
                 self.lookup_table.below_range_color = below_color
                 scalar_bar_args.setdefault('below_label', 'below')
-            if isinstance(annotations, dict):
+            if category_values is not None:
+                ticks = self._apply_categories(category_values, annotations)
+                scalar_bar_args.setdefault('ticks', ticks)
+                scalar_bar_args.setdefault('fmt', '%.10g')
+            elif isinstance(annotations, dict):
                 self.lookup_table.annotations = annotations
             self.lookup_table.log_scale = log_scale
 
@@ -1097,6 +1153,28 @@ class _BaseDataSetMapper(_BaseMapper):
 
         if isinstance(self, PointGaussianMapper):
             self.as_rgba()
+
+    def _apply_categories(self, values, annotations):
+        """Give each category value its own table color and return the values to label."""
+        lut = self.lookup_table
+        colors = lut.values[: len(values)].copy()
+        nan_color = np.array(Color(lut.nan_color).int_rgba)
+        low, high = lut.scalar_range
+        indices = _category_indices(values)
+        if indices is None:
+            n_table = _CATEGORY_BAND_TABLE_SIZE
+            centers = low + (np.arange(n_table) + 0.5) / n_table * (high - low)
+            owner = np.searchsorted((values[:-1] + values[1:]) / 2, centers)
+            table = colors[owner]
+        else:
+            table = np.tile(nan_color, (indices[-1] + 1, 1))
+            table[indices] = colors
+        lut.values = table
+
+        annotated = {float(v): str(text) for v, text in annotations.items()} if annotations else {}
+        lut.annotations = annotated
+        stride = -(-len(values) // _MAX_CATEGORY_LABELS)
+        return [float(v) for v in values[::stride] if float(v) not in annotated]
 
     @property
     def cmap(self) -> str | None:  # numpydoc ignore=RT01
