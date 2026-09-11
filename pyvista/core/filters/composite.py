@@ -364,7 +364,7 @@ class CompositeFilters(DataObjectFilters):
     # fmt: off
     # ruff: disable[E501]
     @overload
-    def outline_corners(self: MultiBlock, *, factor: float = ..., nested: Literal[False] = False, progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc]
+    def outline_corners(self: MultiBlock, *, factor: float = ..., nested: Literal[False] = ..., progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc]
     @overload
     def outline_corners(self: MultiBlock, *, factor: float = ..., nested: Literal[True] = ..., progress_bar: bool = ...) -> MultiBlock: ...  # type: ignore[misc]
     @overload
