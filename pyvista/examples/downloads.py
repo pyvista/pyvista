@@ -896,6 +896,14 @@ def download_procedural_cow(*, load: bool = True) -> PolyData | str:
 
     .. versionadded:: 0.49
 
+    .. dropdown:: generate_cow.py
+
+        The script in the `PyVista data repository
+        <https://github.com/pyvista/data/tree/master/Data/cow>`_ that sums signed
+        distance fields into this mesh. Run it with ``uv run --locked generate_cow.py``.
+
+        .. embed-py-file:: cow/generate_cow.py
+
     Parameters
     ----------
     load : bool, default: True
@@ -908,17 +916,17 @@ def download_procedural_cow(*, load: bool = True) -> PolyData | str:
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_procedural_cow()
-    >>> dataset.plot(rgb=True, smooth_shading=True)
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import examples
+        >>> dataset = examples.download_procedural_cow()
+        >>> dataset.plot(rgb=True, smooth_shading=True)
 
     .. seealso::
 
         :ref:`Procedural Cow Dataset <procedural_cow_dataset>`
             See this dataset in the Dataset Gallery for more info.
-
-        :ref:`procedural_cow_example`
-            Plot this dataset and read the script that generates it.
 
         :ref:`Cow Dataset <cow_dataset>`
 
