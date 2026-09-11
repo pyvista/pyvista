@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.utilities.misc import _check_range
@@ -167,10 +166,10 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
     _theme = None
     _color_set = None
 
-    @_deprecate_positional_args(allowed=['theme'])
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
         theme=None,
+        *,
         interpolation=None,
         color=None,
         style='surface',

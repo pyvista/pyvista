@@ -17,7 +17,6 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
@@ -475,8 +474,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
     BEHAVIORS: ClassVar[dict[str, int]] = {'auto': _vtk.vtkAxis.AUTO, 'fixed': _vtk.vtkAxis.FIXED}
 
-    @_deprecate_positional_args
-    def __init__(self, label='', range=None, grid: bool = True) -> None:  # noqa: A002, FBT001, FBT002
+    def __init__(self, *, label='', range=None, grid: bool = True) -> None:  # noqa: A002
         """Initialize a new Axis instance."""
         super().__init__()
         self._tick_locs = _vtk.vtkDoubleArray()
@@ -1704,11 +1702,11 @@ class _Chart(DocSubs):
     def legend_visible(self, val) -> None:
         self.SetShowLegend(val)  # type: ignore[attr-defined]
 
-    @_deprecate_positional_args
     @doc_subs
-    def show(  # noqa: PLR0917
+    def show(
         self,
-        interactive: bool = True,  # noqa: FBT001, FBT002
+        *,
+        interactive: bool = True,
         off_screen=None,
         full_screen=None,
         screenshot=None,
@@ -2325,12 +2323,12 @@ class LinePlot2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Plot, _vtk.vtkPlotLine):
         'plot_init': 'chart.line([0, 1, 2], [2, 1, 3])',
     }
 
-    @_deprecate_positional_args(allowed=['chart', 'x', 'y'])
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
         chart,
         x,
         y,
+        *,
         color='b',
         width=1.0,
         style='-',
@@ -2499,12 +2497,12 @@ class ScatterPlot2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Plot, _vtk.vtkPlotPoi
         'plot_init': 'chart.scatter([0, 1, 2, 3, 4], [2, 1, 3, 4, 2])',
     }
 
-    @_deprecate_positional_args(allowed=['chart', 'x', 'y'])
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
         chart,
         x,
         y,
+        *,
         color='b',
         size=10,
         style='o',
@@ -2731,8 +2729,7 @@ class AreaPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _Plot, _vtk.vtkPlotArea):
         'plot_init': 'chart.area([0, 1, 2], [0, 0, 1], [1, 3, 2])',
     }
 
-    @_deprecate_positional_args(allowed=['chart', 'x', 'y1', 'y2'], n_allowed=4)
-    def __init__(self, chart, x, y1, y2=None, color='b', label='') -> None:  # noqa: PLR0917
+    def __init__(self, chart, x, y1, y2=None, *, color='b', label='') -> None:  # noqa: PLR0917
         """Initialize a new 2D area plot instance."""
         super().__init__(chart)
         self._table = pv.Table(
@@ -2938,12 +2935,12 @@ class BarPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPlot
         'multiplot_init': 'chart.bar([1, 2, 3], [[2, 1, 3], [1, 0, 2], [0, 3, 1], [3, 2, 0]])',
     }
 
-    @_deprecate_positional_args(allowed=['chart', 'x', 'y'])
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
         chart,
         x,
         y,
+        *,
         color=None,
         orientation='V',
         label=None,
@@ -3155,10 +3152,7 @@ class StackPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPl
         'multiplot_init': 'chart.stack([0, 1, 2], [[2, 1, 3], [1, 0, 2], [0, 3, 1], [3, 2, 0]])',
     }
 
-    @_deprecate_positional_args(allowed=['chart', 'x', 'ys'])
-    def __init__(  # noqa: PLR0917
-        self, chart, x, ys, colors=None, labels=None
-    ) -> None:
+    def __init__(self, chart, x, ys, *, colors=None, labels=None) -> None:
         """Initialize a new 2D stack plot instance."""
         super().__init__(chart)
         if not isinstance(ys[0], (Sequence, np.ndarray)):
@@ -3354,14 +3348,14 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
         'chart_set_labels': 'plot.label = "My awesome plot"',
     }
 
-    @_deprecate_positional_args
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
+        *,
         size=(1, 1),
         loc=(0, 0),
         x_label='x',
         y_label='y',
-        grid: bool = True,  # noqa: FBT001, FBT002
+        grid: bool = True,
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize the chart."""
         super().__init__(size, loc)
@@ -3545,8 +3539,7 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
             line_plot = self.line(x, y, color=color, style=line_style)
         return scatter_plot, line_plot
 
-    @_deprecate_positional_args(allowed=['x', 'y'])
-    def scatter(self, x, y, color='b', size=10, style='o', label=''):  # noqa: PLR0917
+    def scatter(self, x, y, *, color='b', size=10, style='o', label=''):
         """Add a scatter plot to this chart.
 
         Parameters
@@ -3592,8 +3585,7 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
         """
         return self._add_plot('scatter', x, y, color=color, size=size, style=style, label=label)
 
-    @_deprecate_positional_args(allowed=['x', 'y'])
-    def line(self, x, y, color='b', width=1.0, style='-', label=''):  # noqa: PLR0917
+    def line(self, x, y, *, color='b', width=1.0, style='-', label=''):
         """Add a line plot to this chart.
 
         Parameters
@@ -3639,10 +3631,7 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
         """
         return self._add_plot('line', x, y, color=color, width=width, style=style, label=label)
 
-    @_deprecate_positional_args(allowed=['x', 'y1', 'y2'])
-    def area(  # noqa: PLR0917
-        self, x, y1, y2=None, color='b', label=''
-    ):
+    def area(self, x, y1, y2=None, *, color='b', label=''):
         """Add an area plot to this chart.
 
         Parameters
@@ -3684,10 +3673,7 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
         """
         return self._add_plot('area', x, y1, y2, color=color, label=label)
 
-    @_deprecate_positional_args(allowed=['x', 'y'])
-    def bar(  # noqa: PLR0917
-        self, x, y, color=None, orientation='V', label=None
-    ):
+    def bar(self, x, y, *, color=None, orientation='V', label=None):
         """Add a bar plot to this chart.
 
         Parameters
@@ -3733,10 +3719,7 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
         """
         return self._add_plot('bar', x, y, color=color, orientation=orientation, label=label)
 
-    @_deprecate_positional_args(allowed=['x', 'ys'])
-    def stack(  # noqa: PLR0917
-        self, x, ys, colors=None, labels=None
-    ):
+    def stack(self, x, ys, *, colors=None, labels=None):
         """Add a stack plot to this chart.
 
         Parameters
@@ -4152,10 +4135,7 @@ class BoxPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPlot
         'multiplot_init': 'chart.plot',
     }
 
-    @_deprecate_positional_args(allowed=['chart', 'data'])
-    def __init__(  # noqa: PLR0917
-        self, chart, data, colors=None, labels=None
-    ) -> None:
+    def __init__(self, chart, data, *, colors=None, labels=None) -> None:
         """Initialize a new box plot instance."""
         super().__init__(chart)
         self._table = pv.Table(
@@ -4300,10 +4280,10 @@ class ChartBox(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartBox):
         'chart_set_labels': 'chart.plot.label = "Data label"',
     }
 
-    @_deprecate_positional_args(allowed=['data'])
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
         data,
+        *,
         colors=None,
         labels=None,
         size=None,
@@ -4466,10 +4446,7 @@ class PiePlot(_MultiCompPlot, _vtkWrapper, _vtk.vtkPlotPie):
         'multiplot_init': 'chart.plot',
     }
 
-    @_deprecate_positional_args(allowed=['chart', 'data'])
-    def __init__(  # noqa: PLR0917
-        self, chart, data, colors=None, labels=None
-    ) -> None:
+    def __init__(self, chart, data, *, colors=None, labels=None) -> None:
         """Initialize a new pie plot instance."""
         super().__init__(chart)
         self._table = pv.Table(data)
@@ -4585,10 +4562,10 @@ class ChartPie(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartPie):
         'chart_set_labels': 'chart.plot.labels = ["A", "B", "C", "D", "E"]',
     }
 
-    @_deprecate_positional_args(allowed=['data'])
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
         data,
+        *,
         colors=None,
         labels=None,
         size=None,
@@ -4756,13 +4733,13 @@ class ChartMPL(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkImageItem):
         'chart_set_labels': 'plots[0].label = "My awesome plot"',
     }
 
-    @_deprecate_positional_args(allowed=['figure'])
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
         figure=None,
+        *,
         size=(1, 1),
         loc=(0, 0),
-        redraw_on_render: bool = True,  # noqa: FBT001, FBT002
+        redraw_on_render: bool = True,
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize chart."""
         super().__init__(size, loc)
@@ -5050,8 +5027,7 @@ class Charts(_NoNewAttrMixin):
             self._scene.AddItem(chart)  # type: ignore[union-attr]
             chart._interactive = False  # Charts are not interactive by default
 
-    @_deprecate_positional_args(allowed=['interactive'])
-    def set_interaction(self, interactive, toggle: bool = False):  # noqa: FBT001, FBT002
+    def set_interaction(self, interactive, *, toggle: bool = False):
         """Set or toggle interaction with charts for this renderer.
 
         Interaction with other charts in this renderer is disabled when ``toggle``

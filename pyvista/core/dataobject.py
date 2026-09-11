@@ -13,7 +13,6 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core._vtk_utilities import is_vtk_attribute
 from pyvista.core._vtk_utilities import vtkPyVistaOverride
@@ -172,11 +171,11 @@ class DataObject(
     def _post_file_load_processing(self: Self) -> None:
         """Execute after loading a dataset from file, to be optionally overridden by subclasses."""
 
-    @_deprecate_positional_args(allowed=['filename'])
-    def save(  # noqa: PLR0917
+    def save(
         self: Self,
         filename: Path | str,
-        binary: bool = True,  # noqa: FBT001, FBT002
+        *,
+        binary: bool = True,
         texture: NumpyArray[np.uint8] | str | None = None,
         compression: _CompressionOptions = 'zlib',
         **writer_kwargs: Any,
@@ -378,8 +377,7 @@ class DataObject(
         msg = 'Called only by the inherited class'
         raise NotImplementedError(msg)
 
-    @_deprecate_positional_args
-    def head(self: Self, display: bool = True, html: bool | None = None) -> str:  # noqa: FBT001, FBT002
+    def head(self: Self, *, display: bool = True, html: bool | None = None) -> str:
         """Return the header stats of this dataset.
 
         If in IPython, this will be formatted to HTML. Otherwise
@@ -466,8 +464,7 @@ class DataObject(
         """
         # called only by the inherited class
 
-    @_deprecate_positional_args
-    def copy(self: Self, deep: bool = True) -> Self:  # noqa: FBT001, FBT002
+    def copy(self: Self, *, deep: bool = True) -> Self:
         """Return a copy of the object.
 
         Parameters
@@ -542,8 +539,7 @@ class DataObject(
 
     __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
 
-    @_deprecate_positional_args(allowed=['array', 'name'])
-    def add_field_data(self: Self, array: ArrayLike[Any], name: str, deep: bool = True) -> None:  # noqa: FBT001, FBT002
+    def add_field_data(self: Self, array: ArrayLike[Any], name: str, *, deep: bool = True) -> None:
         """Add field data.
 
         .. deprecated:: 0.50

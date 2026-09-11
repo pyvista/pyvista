@@ -14,7 +14,6 @@ from typing import TYPE_CHECKING
 from typing import NamedTuple
 
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core.errors import VTKExecutionError
 from pyvista.core.errors import VTKExecutionWarning
@@ -92,12 +91,12 @@ class VtkErrorCatcher:
 
     """
 
-    @_deprecate_positional_args
     def __init__(
         self,
-        raise_errors: bool = False,  # noqa: FBT001, FBT002
-        send_to_logging: bool = True,  # noqa: FBT001, FBT002
-        emit_warnings: bool = False,  # noqa: FBT001, FBT002
+        *,
+        raise_errors: bool = False,
+        send_to_logging: bool = True,
+        emit_warnings: bool = False,
     ) -> None:
         """Initialize context manager."""
         self.raise_errors = raise_errors
@@ -217,12 +216,12 @@ class Observer(_NoNewAttrMixin):
 
     """
 
-    @_deprecate_positional_args(allowed=['event_type'])
     def __init__(
         self,
         event_type='ErrorEvent',
-        log: bool = True,  # noqa: FBT001, FBT002
-        store_history: bool = False,  # noqa: FBT001, FBT002
+        *,
+        log: bool = True,
+        store_history: bool = False,
     ) -> None:
         """Initialize observer."""
         self.__event_occurred: bool = False
@@ -329,8 +328,7 @@ class Observer(_NoNewAttrMixin):
         self.__event_occurred = False
         return occ
 
-    @_deprecate_positional_args
-    def get_message(self, etc: bool = False):  # noqa: FBT001, FBT002
+    def get_message(self, *, etc: bool = False):
         """Get the last set error message.
 
         Parameters

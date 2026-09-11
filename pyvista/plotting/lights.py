@@ -9,7 +9,6 @@ import numpy as np
 import pyvista_validation as _validation
 
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.core.utilities.misc import _NoNewAttrMixin
@@ -136,9 +135,9 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
     CAMERA_LIGHT = LightType.CAMERA_LIGHT
     SCENE_LIGHT = LightType.SCENE_LIGHT
 
-    @_deprecate_positional_args
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
+        *,
         position=None,
         focal_point=None,
         color=None,
@@ -146,7 +145,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         intensity=None,
         positional=None,
         cone_angle=None,
-        show_actor=False,  # noqa: FBT002
+        show_actor=False,
         exponent=None,
         shadow_attenuation=None,
         attenuation_values=None,
@@ -978,8 +977,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         phi = np.radians(azim)
         self.position = (np.sin(theta) * np.cos(phi), np.sin(theta) * np.sin(phi), np.cos(theta))
 
-    @_deprecate_positional_args
-    def copy(self, deep=True):  # noqa: FBT002
+    def copy(self, *, deep=True):
         """Return a shallow or a deep copy of the light.
 
         The only mutable attribute of :class:`pyvista.Light` is the

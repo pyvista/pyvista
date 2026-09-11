@@ -11,7 +11,6 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.arrays import convert_string_array
@@ -534,10 +533,10 @@ class CompositePolyDataMapper(_BaseMapper, _vtk.vtkCompositePolyDataMapper):
 
     """
 
-    @_deprecate_positional_args(allowed=['dataset'])
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
         dataset=None,
+        *,
         theme=None,
         color_missing_with_nan=None,
         interpolate_before_map=None,
@@ -695,10 +694,10 @@ class CompositePolyDataMapper(_BaseMapper, _vtk.vtkCompositePolyDataMapper):
         for attr in self.block_attr:
             attr.color = next(colors)['color']
 
-    @_deprecate_positional_args(allowed=['scalars_name'])
-    def set_scalars(  # noqa: PLR0917
+    def set_scalars(
         self,
         scalars_name,
+        *,
         preference,
         component,
         annotations,

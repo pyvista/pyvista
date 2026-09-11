@@ -8,7 +8,6 @@ from typing import overload
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import vtk_version_info
 
 from .dataobject import DataObject
@@ -200,8 +199,7 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
     def copy_meta_from(self, ido, deep) -> None:  # numpydoc ignore=PR01
         """Copy pyvista meta data onto this object from another object."""
 
-    @_deprecate_positional_args
-    def copy(self, deep: bool = True):  # noqa: FBT001, FBT002
+    def copy(self, *, deep: bool = True):
         """Return a copy of the PartitionedDataSet.
 
         Parameters

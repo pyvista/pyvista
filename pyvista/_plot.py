@@ -18,7 +18,6 @@ from typing import Literal
 import numpy as np
 
 import pyvista as pv
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -103,35 +102,35 @@ def _apply_render_options(
             renderer.enable_ssao()
 
 
-@_deprecate_positional_args(allowed=['var_item'])
-def plot(  # noqa: ANN202, PLR0917
+def plot(  # noqa: ANN202
     var_item: list[PlottableType] | PlottableType,
-    off_screen: bool | None = None,  # noqa: FBT001
-    full_screen: bool | None = None,  # noqa: FBT001
-    screenshot: str | bool | None = None,  # noqa: FBT001
-    interactive: bool = True,  # noqa: FBT001, FBT002
+    *,
+    off_screen: bool | None = None,
+    full_screen: bool | None = None,
+    screenshot: str | bool | None = None,
+    interactive: bool = True,
     cpos: CameraPositionOptions | None = None,
     window_size: list[int] | None = None,
-    show_bounds: bool = False,  # noqa: FBT001, FBT002
-    show_axes: bool | None = None,  # noqa: FBT001
-    notebook: bool | None = None,  # noqa: FBT001
+    show_bounds: bool = False,
+    show_axes: bool | None = None,
+    notebook: bool | None = None,
     background: ColorLike | None = None,
     text: str = '',
-    return_img: bool = False,  # noqa: FBT001, FBT002
-    eye_dome_lighting: bool = False,  # noqa: FBT001, FBT002
-    volume: bool = False,  # noqa: FBT001, FBT002
-    parallel_projection: bool = False,  # noqa: FBT001, FBT002
+    return_img: bool = False,
+    eye_dome_lighting: bool = False,
+    volume: bool = False,
+    parallel_projection: bool = False,
     jupyter_backend: JupyterBackendOptions | None = None,
-    return_viewer: bool = False,  # noqa: FBT001, FBT002
-    return_cpos: bool = False,  # noqa: FBT001, FBT002
+    return_viewer: bool = False,
+    return_cpos: bool = False,
     jupyter_kwargs: dict[str, Any] | None = None,
     theme: Theme | ThemeOptions | str | None = None,
-    anti_aliasing: Literal['ssaa', 'msaa', 'fxaa'] | bool | None = None,  # noqa: FBT001
+    anti_aliasing: Literal['ssaa', 'msaa', 'fxaa'] | bool | None = None,
     zoom: str | float | None = None,
-    border: bool | None = None,  # noqa: FBT001
+    border: bool | None = None,
     border_color: ColorLike | None = None,
     border_width: float | None = None,
-    ssao: bool = False,  # noqa: FBT001, FBT002
+    ssao: bool = False,
     before_close_callback: Callable[[Plotter], None] | None = None,
     **kwargs,
 ):
@@ -349,15 +348,15 @@ def plot(  # noqa: ANN202, PLR0917
 
     # Handle var_item input
     def _handle_list(var_item: list[PlottableType]) -> None:
-        if len(var_item) == 2 and all(
-            isinstance(item, np.ndarray) for item in var_item
-        ):  # might be arrows
-            pl.add_arrows(var_item[0], var_item[1])
-            return
+        if len(var_item) == 2:
+            first, second = var_item
+            if isinstance(first, np.ndarray) and isinstance(second, np.ndarray):  # arrows
+                pl.add_arrows(first, second)
+                return
 
         for item in var_item:
             if volume or (isinstance(item, np.ndarray) and item.ndim == 3):
-                pl.add_volume(item, **kwargs)
+                pl.add_volume(item, **kwargs)  # type: ignore[arg-type]
             else:
                 pl.add_mesh(item, **kwargs)
 
@@ -365,7 +364,7 @@ def plot(  # noqa: ANN202, PLR0917
         _handle_list(var_item=var_item)
 
     elif volume or (isinstance(var_item, np.ndarray) and var_item.ndim == 3):
-        pl.add_volume(var_item, **kwargs)
+        pl.add_volume(var_item, **kwargs)  # type: ignore[arg-type]
 
     elif isinstance(var_item, pv.MultiBlock):
         pl.add_composite(var_item, **kwargs)
@@ -404,7 +403,7 @@ def plot(  # noqa: ANN202, PLR0917
         auto_close=auto_close,
         interactive=interactive,
         full_screen=full_screen,
-        screenshot=screenshot,
+        screenshot=False if screenshot is None else screenshot,
         return_img=return_img,
         jupyter_backend=jupyter_backend,
         before_close_callback=before_close_callback,
