@@ -142,7 +142,7 @@ class ScalarBarArgs(TypedDict, total=False):
     title: str
     mapper: _vtk.vtkMapper
     n_labels: int
-    ticks: Sequence[float]
+    tick_labels: Sequence[float]
     italic: bool
     bold: bool
     title_font_size: float

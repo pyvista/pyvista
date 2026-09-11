@@ -163,7 +163,7 @@ def test_set_scalars_categories_true():
     mapper.set_scalars(mesh['labels'], 'labels', categories=True, scalar_bar_args=sargs)
     assert mesh.cell_data.keys() == ['labels']
     assert mapper.scalar_range == (-1.0, 9.0)
-    assert sargs == {'ticks': [0.0, 2.0, 8.0], 'fmt': '%.10g'}
+    assert sargs == {'tick_labels': [0.0, 2.0, 8.0], 'fmt': '%.10g'}
     lut = mapper.lookup_table
     assert lut.n_values == 5
     assert lut.annotations == {}
@@ -177,7 +177,7 @@ def test_set_scalars_categories_true():
         mesh['labels'], 'labels', categories=True, annotations={2: 'two'}, scalar_bar_args=sargs
     )
     assert lut.annotations == {2.0: 'two'}
-    assert sargs['ticks'] == [0.0, 8.0]
+    assert sargs['tick_labels'] == [0.0, 8.0]
 
 
 def test_set_scalars_categories_integer_dtype():
@@ -230,7 +230,7 @@ def test_set_scalars_categories_thins_labels():
     sargs = {}
     mapper.set_scalars(mesh['labels'], 'labels', categories=True, scalar_bar_args=sargs)
     assert mapper.lookup_table.n_values == 30
-    assert sargs['ticks'] == [float(v) for v in range(0, 30, 3)]
+    assert sargs['tick_labels'] == [float(v) for v in range(0, 30, 3)]
 
 
 def test_mapper_pipeline_output_active_scalars(sphere):
