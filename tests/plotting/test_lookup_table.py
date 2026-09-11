@@ -281,6 +281,13 @@ def test_call_scalar(lut):
     assert lut(0.5) == lut.map_value(0.5)
 
 
+def test_named_opacity_matching_n_values():
+    lut = pv.LookupTable()
+    lut.apply_cmap('viridis', len('linear'))
+    lut.apply_opacity('linear')
+    assert np.array_equal(lut.values[:, -1], np.linspace(0, 255, lut.n_values, dtype=np.uint8))
+
+
 def test_custom_opacity(lut):
     values_copy = lut.values.copy()
     lut.apply_opacity('sigmoid')

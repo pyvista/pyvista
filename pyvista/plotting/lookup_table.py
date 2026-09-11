@@ -895,7 +895,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
                 msg = f'Opacity must be between 0 and 1, got {opacity}'
                 raise ValueError(msg)
             self.values[:, -1] = opacity * 255
-        elif len(opacity) == self.n_values:
+        elif not isinstance(opacity, str) and len(opacity) == self.n_values:
             # no interpolation is necessary
             self.values[:, -1] = np.array(opacity)
         else:
