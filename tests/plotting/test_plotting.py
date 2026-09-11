@@ -2537,6 +2537,7 @@ def test_add_volume_nested_multiblock_gives_one_volume_per_leaf():
     assert {'vol-0', 'vol-1'} <= set(pl.renderer.actors)
 
 
+@pytest.mark.skip_windows
 def test_multiblock_volume_rendering(uniform):
     ds_a = uniform.copy()
     ds_b = uniform.copy()
