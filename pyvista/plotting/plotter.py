@@ -2461,11 +2461,14 @@ class BasePlotter(_BoundsSizeMixin):
         render_window = cast('_vtk.vtkRenderWindow', self.render_window)
 
         # A changed title property makes VTK rescale the title for the tile scale
-        title_props = []
+        title_offsets = {}
         if self.image_scale != 1:
-            title_props = [bar.GetTitleTextProperty() for bar in self.scalar_bars.values()]
-        for prop in title_props:
-            prop.SetLineOffset(prop.GetLineOffset() + 1e-3)
+            title_offsets = {
+                bar.GetTitleTextProperty(): bar.GetTitleTextProperty().GetLineOffset()
+                for bar in self.scalar_bars.values()
+            }
+        for prop, offset in title_offsets.items():
+            prop.SetLineOffset(offset + 1e-3)
         try:
             return image_from_window(
                 render_window,
@@ -2473,8 +2476,8 @@ class BasePlotter(_BoundsSizeMixin):
                 ignore_alpha=not self.image_transparent_background,
             )
         finally:
-            for prop in title_props:
-                prop.SetLineOffset(prop.GetLineOffset() - 1e-3)
+            for prop, offset in title_offsets.items():
+                prop.SetLineOffset(offset)
 
     @property
     def image_scale(self) -> int:  # numpydoc ignore=RT01
