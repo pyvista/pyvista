@@ -5278,6 +5278,39 @@ def test_add_volume_categories_survives_transfer_function(no_images_to_verify): 
     pl.close()
 
 
+def test_add_volume_categories_keeps_clim(no_images_to_verify):  # noqa: ARG001
+    grid = pv.ImageData(dimensions=(5, 2, 2))
+    grid.point_data['labels'] = np.tile([0.0, 3.0, 12.0, 24.0, 27.0], 4)
+    pl = pv.Plotter()
+    pl.add_volume(grid, scalars='labels', categories=True, clim=(0, 100))
+    lut = pl.mapper.lookup_table
+    assert pl.mapper.scalar_range == (0.0, 100.0)
+    assert len({lut.map_value(value)[:3] for value in (0, 3, 12, 24, 27)}) == 5
+    pl.close()
+
+
+def test_add_volume_categories_all_nan(no_images_to_verify):  # noqa: ARG001
+    grid = pv.ImageData(dimensions=(5, 2, 2))
+    grid.point_data['labels'] = np.full(20, np.nan)
+    pl = pv.Plotter()
+    sargs = {}
+    with pytest.warns(RuntimeWarning, match='All-NaN axis encountered'):
+        pl.add_volume(grid, scalars='labels', categories=True, scalar_bar_args=sargs)
+    assert 'tick_locations' not in sargs
+    pl.close()
+
+
+def test_add_volume_categories_lookup_table(no_images_to_verify):  # noqa: ARG001
+    grid = pv.ImageData(dimensions=(5, 2, 2))
+    grid.point_data['labels'] = np.tile([0.0, 3.0, 12.0, 24.0, 27.0], 4)
+    lut = pv.LookupTable('viridis', n_values=4)
+    pl = pv.Plotter()
+    pl.add_volume(grid, scalars='labels', categories=True, cmap=lut)
+    assert pl.mapper.lookup_table is lut
+    assert lut.n_values == 4
+    pl.close()
+
+
 def test_add_volume_categories_int(no_images_to_verify):  # noqa: ARG001
     grid = pv.ImageData(dimensions=(5, 2, 2))
     grid.point_data['labels'] = np.tile([0.0, 3.0, 12.0, 24.0, 27.0], 4)
