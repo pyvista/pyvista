@@ -72,6 +72,12 @@ def _format_for(ext: str, side: _Side) -> _OptionalFormat | None:
     return fmt
 
 
+def _declared_reader_class(ext: str) -> str | None:
+    """Return the reader class name a companion package declares for reading ``ext``."""
+    fmt = _format_for(ext, _READ)
+    return None if fmt is None else fmt.reader_class
+
+
 def _installed_extensions(side: _Side) -> set[str]:
     """Return every extension optional on ``side`` whose package looks importable."""
     installed = set()

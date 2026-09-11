@@ -2242,7 +2242,7 @@ class DataSetFilters(DataObjectFilters):
             msg = 'Both ``scale`` and ``orient`` must use point data or cell data.'
             raise ValueError(msg)
 
-        source_data = dataset
+        source_data: DataSet = dataset
         set_actives_on_source_data = False
 
         if (scale and dataset.active_scalars_info.association == FieldAssociation.CELL) or (
@@ -2671,7 +2671,9 @@ class DataSetFilters(DataObjectFilters):
             if field == FieldAssociation.CELL:
                 # The filter reads the active point scalars
                 converted = input_mesh.cell_data_to_point_data(progress_bar=progress_bar)
-                input_mesh.point_data[_CONNECTIVITY_SCALARS] = converted.point_data[name]
+                input_mesh.point_data[_CONNECTIVITY_SCALARS] = converted.point_data[
+                    cast('str', name)
+                ]
                 input_mesh.set_active_scalars(_CONNECTIVITY_SCALARS, preference='point')
 
             if extraction_mode in ('all', 'specified', 'closest'):
@@ -7661,7 +7663,7 @@ class DataSetFilters(DataObjectFilters):
         colors: str
         | ColorLike
         | Sequence[ColorLike]
-        | dict[float, ColorLike]
+        | dict[float | str, ColorLike]
         | ColormapOptions = 'glasbey_category10',
         *,
         coloring_mode: Literal['index', 'cycle'] | None = None,
@@ -7721,9 +7723,10 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        colors : str | ColorLike | Sequence[ColorLike] | dict[float, ColorLike],
+        colors : str | ColorLike | Sequence[ColorLike] | dict[float | str, ColorLike],
             Colors to use. Specify a dictionary to explicitly control the mapping
-            from label values to colors. Alternatively, specify colors only using a
+            from label values to colors. A string key is converted to the data type
+            of the label array. Alternatively, specify colors only using a
             colormap or a sequence of colors and use ``coloring_mode`` to implicitly
             control the mapping. A single color is also supported to color the entire
             mesh with one color.
@@ -8004,6 +8007,8 @@ class DataSetFilters(DataObjectFilters):
             )
             color_rgb_sequence = [getattr(c, color_type) for c in colors_]
             for label, color in zip(colors.keys(), color_rgb_sequence, strict=True):
+                if isinstance(label, str):
+                    label = array.dtype.type(label)  # noqa: PLW2901
                 mask = array == label
                 if np.any(mask):
                     colors_out[mask, :] = color

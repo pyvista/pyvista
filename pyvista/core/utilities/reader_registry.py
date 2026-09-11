@@ -22,7 +22,7 @@ import pooch
 
 from pyvista._warn_external import warn_external
 from pyvista.core.utilities._optional_formats import _READ
-from pyvista.core.utilities._optional_formats import _format_for
+from pyvista.core.utilities._optional_formats import _declared_reader_class
 from pyvista.core.utilities._optional_formats import _import_handler
 from pyvista.core.utilities._optional_formats import _installed_extensions
 from pyvista.core.utilities._optional_formats import _missing_message
@@ -495,11 +495,8 @@ def _missing_reader_message(ext: str, filename: str | None = None) -> str | None
 
 def _optional_reader_class_name(ext: str) -> str | None:
     """Return the reader class an optional format exposes, when it is importable."""
-    fmt = _format_for(ext, _READ)
-    if fmt is None:
-        return None
     handler, _ = _import_handler(ext, _READ)
-    return fmt.reader_class if handler is not None else None
+    return _declared_reader_class(ext) if handler is not None else None
 
 
 def _resolve_optional_reader(ext: str) -> bool:

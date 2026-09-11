@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections import UserDict
 from collections import deque
 from collections.abc import Sequence
+import copy as copylib
 from enum import Enum
 import itertools
 import json
@@ -28,6 +29,9 @@ from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
+    from pyvista import DataObject
     from pyvista import DataSet
     from pyvista import Table
     from pyvista import pyvista_ndarray
@@ -35,6 +39,9 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
     from pyvista.core.dataset import _ActiveArrayExistsInfoTuple
+
+
+USER_DICT_KEY = '_PYVISTA_USER_DICT'
 
 
 class FieldAssociation(Enum):
@@ -1032,6 +1039,9 @@ class _SerializedDictArray(DisableVtkSnakeCase, UserDict, _vtk.vtkStringArray): 
     dict_ : str | dict | UserDict, optional
         Initial data. A JSON string is parsed first.
 
+    owner : DataObject, optional
+        Data object whose field data receives this array on the first write.
+
     **kwargs : dict, optional
         Additional key-value pairs, as for :class:`dict`.
 
@@ -1043,12 +1053,29 @@ class _SerializedDictArray(DisableVtkSnakeCase, UserDict, _vtk.vtkStringArray): 
 
     """
 
+    def __init__(
+        self: _SerializedDictArray,
+        dict_: str | dict[str, _JSONValueType] | UserDict[str, _JSONValueType] | None = None,
+        /,
+        owner: DataObject | None = None,
+        **kwargs,
+    ) -> None:
+        data = json.loads(dict_) if isinstance(dict_, str) else dict(dict_ or {})
+        data.update(kwargs)
+        _check_json(data)
+        object.__setattr__(self, 'data', data)
+        reference = None
+        if owner is not None:
+            reference = _vtk.vtkWeakReference()
+            reference.Set(owner)
+        object.__setattr__(self, '_owner', reference)
+        self.SetName(USER_DICT_KEY)
+        self._serialize()
+
     @property
     def _string(self: _SerializedDictArray) -> str:
         """Get the :vtk:`vtkStringArray` string."""
-        # Joining all values handles both the historical char-per-value
-        # format (read from older saved files) and the current
-        # whole-string-as-one-value format below.
+        # Older files hold one character per value, so join them all
         n = self.GetNumberOfValues()
         if n == 1:
             return self.GetValue(0)
@@ -1057,19 +1084,53 @@ class _SerializedDictArray(DisableVtkSnakeCase, UserDict, _vtk.vtkStringArray): 
     @_string.setter
     def _string(self: _SerializedDictArray, str_: str) -> None:
         """Set the :vtk:`vtkStringArray` to a specified string."""
-        # Store the entire string as a single value rather than one
-        # character per value. This avoids O(len(str_)) Python<->C
-        # crossings and matches how every other VTK string field stores
-        # text. Reading still works for the legacy char-per-value format
-        # because the getter joins all values.
         self.SetNumberOfValues(1)
         self.SetValue(0, str_)
 
-    def _update_string(self: _SerializedDictArray) -> None:
-        """Format dict data as JSON and update the :vtk:`vtkStringArray`."""
+    def _serialize(self: _SerializedDictArray) -> None:
+        """Write the dict as JSON to the :vtk:`vtkStringArray`."""
         data_str = json.dumps(self.data)
         if data_str != self._string:
             self._string = data_str
+
+    def _install(self: _SerializedDictArray) -> None:
+        """Make this array the one under its name in the owner's field data."""
+        owner = self._owner.Get() if self._owner is not None else None
+        if owner is None:
+            return
+        field_data = owner.GetFieldData()
+        if field_data.GetAbstractArray(USER_DICT_KEY) is not self:
+            field_data.AddArray(self)
+            field_data.Modified()
+
+    def _update_string(self: _SerializedDictArray) -> None:
+        """Serialize after a mutation and install the array in the owner."""
+        self._serialize()
+        self._install()
+
+    def _sync(self: _SerializedDictArray) -> None:
+        """Adopt the contents of the owner's array under this name if it is another array."""
+        owner = self._owner.Get() if self._owner is not None else None
+        if owner is None:
+            return
+        array = owner.GetFieldData().GetAbstractArray(USER_DICT_KEY)
+        if array is self or (array is None and not self.data):
+            return
+        if array is None:
+            self._replace(None)
+        else:
+            # Older files hold one character per value, so join them all
+            self._replace(''.join(map(array.GetValue, range(array.GetNumberOfValues()))))
+            self._install()
+
+    def _replace(
+        self: _SerializedDictArray, dict_: str | dict[str, _JSONValueType] | None
+    ) -> None:
+        """Replace the contents without installing the array in the owner."""
+        data = json.loads(dict_) if isinstance(dict_, str) else dict(dict_ or {})
+        _check_json(data)
+        object.__setattr__(self, 'data', data)
+        self._serialize()
 
     def __str__(self: _SerializedDictArray) -> str:
         """Return JSON-formatted dict representation."""
@@ -1079,51 +1140,36 @@ class _SerializedDictArray(DisableVtkSnakeCase, UserDict, _vtk.vtkStringArray): 
         """Return JSON-formatted dict representation."""
         return str(self)
 
-    def __init__(
-        self: _SerializedDictArray,
-        dict_: str | dict[str, _JSONValueType] | UserDict[str, _JSONValueType] | None = None,
-        /,
-        **kwargs,
-    ) -> None:
-        # Init from JSON string
-        if isinstance(dict_, str):
-            dict_ = json.loads(dict_)
-
-        # Init UserDict
-        super().__init__(dict_, **kwargs)  # type: ignore[arg-type]
-        self._update_string()
-
     def __getstate__(self: _SerializedDictArray) -> None:
-        """Support pickling.
-
-        This method does nothing. It only exists to make the pickle library happy.
-        Classes that store an instance of this class must pickle this array directly.
-        For example, DataObjects can support this by storing this array as field data
-        """
+        """Pickle no state; the owner pickles this array as field data."""
 
     def __setstate__(self: _SerializedDictArray, state: Any) -> None:
-        """Support pickling.
+        """Restore no state; the owner restores this array from field data."""
 
-        This method does nothing. It only exists to make the pickle library happy.
-        Classes that store an instance of this class must pickle this array directly.
-        For example, DataObjects can support this by storing this array as field data
-        """
+    def __setattr__(self: _SerializedDictArray, key: Any, value: Any) -> None:
+        if key == 'data':
+            _check_json(value)
+            value = dict(value)
+        object.__setattr__(self, key, value)
+        if key == 'data':
+            self._update_string()
 
-    # Override any/all `UserDict` or `MutableMapping` methods which mutate
-    # the dictionary. This ensures the serialized string is also updated
-    # and synced with the dict
+    # Every mutating method syncs, validates, mutates, then serializes exactly once
 
     def __setitem__(self: _SerializedDictArray, key: Any, item: Any) -> None:
-        super().__setitem__(key, item)
+        self._sync()
+        _check_json({key: item})
+        self.data[key] = item
         self._update_string()
 
     def __delitem__(self: _SerializedDictArray, key: Any) -> None:
-        super().__delitem__(key)
+        self._sync()
+        del self.data[key]
         self._update_string()
 
-    def __setattr__(self: _SerializedDictArray, key: Any, value: Any) -> None:
-        object.__setattr__(self, key, value)
-        self._update_string() if key != '_string' else None
+    def __ior__(self, other: Any) -> Self:  # type: ignore[misc]
+        self.update(other)
+        return self
 
     def update(self: _SerializedDictArray, *args, **kwargs) -> None:
         """Update the dictionary and re-serialize.
@@ -1136,53 +1182,113 @@ class _SerializedDictArray(DisableVtkSnakeCase, UserDict, _vtk.vtkStringArray): 
         **kwargs : dict, optional
             Keyword arguments of :meth:`dict.update`.
 
+        """
+        self._sync()
+        new = dict(*args, **kwargs)
+        _check_json(new)
+        self.data.update(new)
+        self._update_string()
+
+    def setdefault(self: _SerializedDictArray, key: Any, default: Any = None) -> Any:
+        """Insert a default value if the key is missing and return the value.
+
+        Parameters
+        ----------
+        key : Any
+            Key to look up.
+
+        default : Any, optional
+            Value stored under ``key`` if it is missing.
+
+        Returns
+        -------
+        Any
+            Value stored under ``key``.
 
         """
-        super().update(*args, **kwargs)
-        self._update_string()
+        self._sync()
+        if key not in self.data:
+            self[key] = default
+        return self.data[key]
 
-    def popitem(self: _SerializedDictArray) -> Any:
-        """Pop the last item and re-serialize."""
-        item = super().popitem()
-        self._update_string()
-        return item
-
-    def pop(self: _SerializedDictArray, __key: Any) -> Any:  # type: ignore[override]  # noqa: PYI063
+    def pop(self: _SerializedDictArray, key: Any, *args: Any) -> Any:
         """Pop an item by key and re-serialize.
 
         Parameters
         ----------
-        __key : Any
+        key : Any
             Key to remove.
+
+        *args : Any, optional
+            Value returned if ``key`` is missing, as for :meth:`dict.pop`.
 
         Returns
         -------
         Any
             Removed value.
 
-
         """
-        item = super().pop(__key)
+        self._sync()
+        item = self.data.pop(key, *args)
+        self._update_string()
+        return item
+
+    def popitem(self: _SerializedDictArray) -> Any:
+        """Pop the first item and re-serialize."""
+        self._sync()
+        key = next(iter(self.data))
+        item = (key, self.data.pop(key))
         self._update_string()
         return item
 
     def clear(self: _SerializedDictArray) -> None:
         """Clear the dictionary and re-serialize."""
-        super().clear()
+        self._sync()
+        self.data.clear()
         self._update_string()
 
-    def setdefault(self: _SerializedDictArray, *args, **kwargs) -> None:
-        """Insert a default value and re-serialize.
+    def copy(self: _SerializedDictArray) -> _SerializedDictArray:
+        """Return a copy that belongs to no data object."""
+        return type(self)(self.data)
 
-        Parameters
-        ----------
-        *args : tuple, optional
-            Arguments of :meth:`dict.setdefault`.
+    __copy__ = copy
 
-        **kwargs : dict, optional
-            Keyword arguments of :meth:`dict.setdefault`.
+    def __deepcopy__(self: _SerializedDictArray, memo: dict[int, Any]) -> _SerializedDictArray:
+        return type(self)(copylib.deepcopy(self.data, memo))
 
 
-        """
-        super().setdefault(*args, **kwargs)
-        self._update_string()
+_NO_KEY = object()
+
+
+def _non_string_key(obj: Any) -> Any:
+    """Return the first key in ``obj`` that is not a string, or ``_NO_KEY``."""
+    if isinstance(obj, dict):
+        for key, value in obj.items():
+            if not isinstance(key, str):
+                return key
+            found = _non_string_key(value)
+            if found is not _NO_KEY:
+                return found
+    elif isinstance(obj, (list, tuple)):
+        for value in obj:
+            found = _non_string_key(value)
+            if found is not _NO_KEY:
+                return found
+    return _NO_KEY
+
+
+def _check_json(obj: Any) -> None:
+    """Raise if JSON cannot serialize ``obj`` and warn on keys JSON stores as strings."""
+    json.dumps(obj)
+    key = _non_string_key(obj)
+    if key is _NO_KEY:
+        return
+    # deprecated 0.50.0, convert to error in 0.53.0
+    if _is_deprecation_due((0, 53)):  # pragma: no cover
+        msg = 'Convert this deprecation warning into an error.'
+        raise RuntimeError(msg)
+    msg = (
+        f'The user_dict key {key!r} is not a string, which is deprecated. '
+        f'JSON stores keys as strings, so use {json.dumps(key)!r} instead.'
+    )
+    warn_external(msg, PyVistaDeprecationWarning)
