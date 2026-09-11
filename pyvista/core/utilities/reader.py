@@ -190,6 +190,7 @@ class BaseVTKReader(ABC):
 
     def __init__(self: BaseVTKReader) -> None:
         self._data_object: pv.DataObject | None = None
+        self._filename: str | None = None
         self._observers: list[int | Callable[[Any], Any]] = []
 
     def SetFileName(self, filename) -> None:
@@ -395,6 +396,7 @@ class BaseReader(_FileIOBase, Generic[_T_Output_co]):
 
     @path.setter
     def path(self, path: str | Path):
+        path = str(path)
         if Path(path).is_dir():
             self._set_directory(path)
         elif Path(path).is_file():
@@ -1821,7 +1823,7 @@ class CGNSReader(BaseReader['MultiBlock'], PointCellDataSelection):
         return bool(self._reader.GetDistributeBlocks())
 
     @distribute_blocks.setter
-    def distribute_blocks(self, value: str) -> None:
+    def distribute_blocks(self, value: bool) -> None:
         self._reader.SetDistributeBlocks(value)
 
     def base_array_status(self, name: str) -> bool:
@@ -2877,7 +2879,7 @@ class _GRDECLReader(BaseVTKReader):
     def Update(self) -> None:
         """Read the GRDECL file and store internally to ``_data_object``."""
         self._data_object = _read_grdecl(
-            self._filename,
+            cast('str', self._filename),
             elevation=self._elevation,
             other_keywords=self._other_keywords,
         )
@@ -2975,7 +2977,7 @@ class _GIFReader(BaseVTKReader):
             micro=int(pillow_version.split('.')[2]),
         )
 
-        img = Image.open(self._filename)
+        img = Image.open(cast('str', self._filename))
         self._data_object = pv.ImageData(dimensions=(img.size[0], img.size[1], 1))
 
         # load each frame to the grid (RGB since gifs do not support transparency
@@ -3740,12 +3742,12 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
 
     @property
     def number_cell_arrays(self):
-        """Return the number of point arrays.
+        """Return the number of cell arrays.
 
         Returns
         -------
         int
-            Number of point arrays.
+            Number of cell arrays.
 
         """
         return self.reader.GetNumberOfElementResultArrays()
@@ -3802,12 +3804,12 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
 
     @property
     def number_global_arrays(self):
-        """Return the number of point arrays.
+        """Return the number of global arrays.
 
         Returns
         -------
         int
-            Number of point arrays.
+            Number of global arrays.
 
         """
         return self.reader.GetNumberOfGlobalResultArrays()
@@ -3822,7 +3824,7 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
             List of all global array names.
 
         """
-        return [self.reader.GetGlobalResultArrayName(i) for i in range(self.number_cell_arrays)]
+        return [self.reader.GetGlobalResultArrayName(i) for i in range(self.number_global_arrays)]
 
     def enable_global_array(self, name):
         """Enable global array with name.
@@ -4258,7 +4260,7 @@ class ExodusIIBlockSet(_NoNewAttrMixin):
 
         """
         status_method = self._construct_result_method('Get', 'Status')
-        return status_method(name)
+        return bool(status_method(name))
 
 
 @dataclass(order=True)

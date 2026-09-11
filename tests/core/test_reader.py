@@ -19,6 +19,7 @@ from pyvista.core.utilities.fileio import _try_imageio_imread
 from pyvista.core.utilities.reader import _CLASS_READER_PATTERNS
 from pyvista.core.utilities.reader import _CLASS_READER_RETURN_TYPE
 from pyvista.core.utilities.reader import CLASS_READERS
+from pyvista.core.utilities.reader import _PVDReader
 from pyvista.examples.downloads import download_file
 
 if TYPE_CHECKING:
@@ -259,6 +260,24 @@ def test_reader_invalid_file():
     # cannot use the BaseReader
     with pytest.raises(FileNotFoundError, match='does not exist'):
         pv.DICOMReader('dummy/')
+
+
+def test_reader_path_setter_pathlib(tmpdir):
+    tmpfile = tmpdir.join('temp.vti')
+    pv.ImageData().save(tmpfile.strpath)
+
+    # file branch
+    reader = pv.get_reader(tmpfile.strpath)
+    reader.path = Path(tmpfile.strpath)
+    assert isinstance(reader.path, str)
+    assert reader.path == tmpfile.strpath
+
+    # directory branch
+    directory = examples.download_dicom_stack(load=False)
+    reader = pv.DICOMReader(directory)
+    reader.path = Path(directory)
+    assert isinstance(reader.path, str)
+    assert reader.path == directory
 
 
 def test_xmlimagedatareader(tmpdir):
@@ -776,6 +795,11 @@ def test_pvdreader_no_time_group():
         assert dataset.time == 0.0
         assert dataset.group is None
         assert dataset.part == i
+
+
+def test_pvdreader_no_filename():
+    with pytest.raises(ValueError, match='Filename must be set'):
+        _PVDReader().UpdateInformation()
 
 
 @pytest.mark.skip_windows
@@ -1809,6 +1833,22 @@ def test_exodus_reader_core():
         assert key in unstruct.cell_data.keys()
 
 
+def test_exodus_reader_global_arrays():
+    reader = pv.get_reader(examples.download_parallel_exodus(load=False))
+
+    expected_names = ['KE', 'XMOM', 'YMOM', 'ZMOM', 'NSTEPS', 'TMSTEP']
+    assert reader.number_global_arrays == len(expected_names)
+    assert reader.global_array_names == expected_names
+
+    reader.enable_all_global_arrays()
+    for name in expected_names:
+        assert reader.global_array_status(name)
+
+    reader.disable_all_global_arrays()
+    for name in expected_names:
+        assert not reader.global_array_status(name)
+
+
 def _test_block_names(block, names):
     assert block.number == len(names)
     assert block.names == names
@@ -1838,19 +1878,19 @@ def _test_block_arrays(block, array_names):
     block.enable_all_arrays()
 
     for array_name in array_names:
-        assert block.array_status(array_name)
+        assert block.array_status(array_name) is True
 
     block.disable_all_arrays()
     for array_name in array_names:
-        assert not block.array_status(array_name)
+        assert block.array_status(array_name) is False
 
     for array_name in array_names:
         block.enable_array(array_name)
-        assert block.array_status(array_name)
+        assert block.array_status(array_name) is True
 
     for array_name in array_names:
         block.disable_array(array_name)
-        assert not block.array_status(array_name)
+        assert block.array_status(array_name) is False
 
 
 def test_exodus_blocks():
