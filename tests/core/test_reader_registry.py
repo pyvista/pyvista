@@ -195,6 +195,59 @@ def test_entry_point_load_failure_warns_and_returns_none():
     assert 'broken plugin' in message
 
 
+def test_broken_plugin_warns_once_and_stays_pending():
+    """A failed load warns once, falls through on later lookups without
+    re-importing, and leaves the entry pending for ``registered_readers``
+    to retry. The extension stops being advertised while it is failing."""
+    _reg_mod._entry_points_loaded = False
+
+    broken = MagicMock()
+    broken.name = '.broken'
+    broken.value = 'package:broken'
+    broken.load.side_effect = RuntimeError('broken plugin')
+
+    with patch('pyvista.core.utilities.reader_registry.entry_points', return_value=[broken]):
+        assert '.broken' in _reg_mod._list_custom_exts()
+        with pytest.warns(UserWarning, match='Failed to load pyvista.readers entry point'):
+            assert _reg_mod._get_ext_handler('.broken') is None
+
+        with warnings.catch_warnings(record=True) as captured:
+            warnings.simplefilter('always')
+            for _ in range(3):
+                assert _reg_mod._get_ext_handler('.broken') is None
+        assert [w for w in captured if 'Failed to load' in str(w.message)] == []
+        assert '.broken' not in _reg_mod._list_custom_exts()
+
+    assert broken.load.call_count == 1
+    assert '.broken' in _reg_mod._pending_ext_readers
+    assert list(_reg_mod._failed_ext_readers) == ['.broken']
+
+
+def test_registered_readers_retries_a_recovered_plugin():
+    """``registered_readers()`` retries a failed plugin, so a reader whose
+    dependency arrives later becomes available."""
+    _reg_mod._entry_points_loaded = False
+
+    def _recovered_reader(path, **kwargs):  # numpydoc ignore=GL08
+        return pv.Sphere()
+
+    recovered = MagicMock()
+    recovered.name = '.recovers'
+    recovered.value = 'package:recovers'
+    recovered.load.side_effect = [RuntimeError('missing dep'), _recovered_reader]
+
+    with patch('pyvista.core.utilities.reader_registry.entry_points', return_value=[recovered]):
+        with pytest.warns(UserWarning, match='Failed to load'):
+            assert _reg_mod._get_ext_handler('.recovers') is None
+
+        assert '.recovers' in {r.extension for r in pv.registered_readers()}
+        assert _reg_mod._get_ext_handler('.recovers') is _recovered_reader
+
+    assert recovered.load.call_count == 2
+    assert '.recovers' not in _reg_mod._pending_ext_readers
+    assert _reg_mod._failed_ext_readers == {}
+
+
 def test_read_with_custom_extension(tmp_path):
     test_file = tmp_path / 'data.myext'
     test_file.touch()
