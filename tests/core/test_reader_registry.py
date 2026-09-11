@@ -228,7 +228,7 @@ def test_registered_readers_retries_a_recovered_plugin():
     dependency arrives later becomes available."""
     _reg_mod._entry_points_loaded = False
 
-    def _recovered_reader(path, **kwargs):  # numpydoc ignore=GL08
+    def _recovered_reader(_path, **__):  # numpydoc ignore=GL08
         return pv.Sphere()
 
     recovered = MagicMock()
