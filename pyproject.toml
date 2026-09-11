@@ -355,6 +355,7 @@ exclude = ['pyvista/ext/']
 extra_checks = true
 follow_untyped_imports = true
 ignore_missing_imports = true
+native_parser = true
 no_implicit_reexport = true
 packages = ['pyvista']
 platform = 'linux'
