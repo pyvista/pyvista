@@ -322,6 +322,57 @@ def test_entry_point_load_failure_warns():
         _reg_mod._resolve_theme('broken_theme')
 
 
+def test_broken_plugin_warns_once_and_stays_pending():
+    """A failed load warns once, falls through on later lookups without
+    re-importing, and leaves the entry pending for ``registered_themes``
+    to retry. The name stops being advertised while it is failing."""
+    ep = MagicMock()
+    ep.name = 'broken_theme'
+    ep.value = 'pkg:broken'
+    ep.load.side_effect = ImportError('missing dependency')
+
+    _reg_mod._entry_points_loaded = False
+    with patch('pyvista.plotting.theme_registry.entry_points', return_value=[ep]):
+        assert 'broken_theme' in _reg_mod._available_theme_names()
+        with pytest.warns(UserWarning, match='Failed to load'):
+            assert _reg_mod._resolve_theme('broken_theme') is None
+
+        with warnings.catch_warnings(record=True) as captured:
+            warnings.simplefilter('always')
+            for _ in range(3):
+                assert _reg_mod._resolve_theme('broken_theme') is None
+        assert [w for w in captured if 'Failed to load' in str(w.message)] == []
+        assert 'broken_theme' not in _reg_mod._available_theme_names()
+
+    assert ep.load.call_count == 1
+    assert 'broken_theme' in _reg_mod._pending_ep_themes
+    assert list(_reg_mod._failed_ep_themes) == ['broken_theme']
+
+
+def test_registered_themes_retries_a_recovered_plugin():
+    """``registered_themes()`` retries a failed plugin, so a theme whose
+    dependency arrives later becomes available."""
+
+    class RecoveredTheme(pv.plotting.themes.Theme):
+        """Theme supplied by a plugin that recovers on retry."""
+
+    ep = MagicMock()
+    ep.name = 'recovered_theme'
+    ep.value = 'pkg:recovered'
+    ep.load.side_effect = [ImportError('missing dependency'), RecoveredTheme]
+
+    _reg_mod._entry_points_loaded = False
+    with patch('pyvista.plotting.theme_registry.entry_points', return_value=[ep]):
+        with pytest.warns(UserWarning, match='Failed to load'):
+            assert _reg_mod._resolve_theme('recovered_theme') is None
+
+        assert 'recovered_theme' in {r.name for r in pv.registered_themes()}
+        assert isinstance(_reg_mod._resolve_theme('recovered_theme'), RecoveredTheme)
+
+    assert ep.load.call_count == 2
+    assert _reg_mod._failed_ep_themes == {}
+
+
 def test_entry_point_non_theme_warns():
     ep = MagicMock()
     ep.name = 'not_theme'
