@@ -367,12 +367,6 @@ def test_raise_unsupported(pointset):
         pointset.surface_indices()
 
     with pytest.raises(PointSetCellOperationError):
-        pointset.partition(2)
-
-    with pytest.raises(PointSetCellOperationError):
-        pointset.remove_nan_cells()
-
-    with pytest.raises(PointSetCellOperationError):
         pointset.compute_boundary_mesh_quality()
 
     with pytest.raises(PointSetCellOperationError):
@@ -392,6 +386,32 @@ def test_raise_unsupported(pointset):
 
     with pytest.raises(PointSetCellOperationError):
         pointset.cell_quality()
+
+
+def test_remove_nan_cells_pointset():
+    cloud = pv.PointSet([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [2.0, 0.0, 0.0]])
+    cloud.point_data['data'] = [0.0, np.nan, 2.0]
+
+    removed = cloud.remove_nan_cells()
+
+    assert isinstance(removed, pv.PointSet)
+    assert removed.n_points == 2
+    assert not np.isnan(removed.point_data['data']).any()
+
+
+@pytest.mark.parametrize('as_composite', [True, False])
+def test_partition_pointset(as_composite):
+    cloud = pv.PointSet(np.random.default_rng(0).random((20, 3)))
+
+    partitioned = cloud.partition(2, as_composite=as_composite)
+
+    if as_composite:
+        assert isinstance(partitioned, pv.MultiBlock)
+        assert all(isinstance(block, pv.PointSet) for block in partitioned)
+        assert sum(block.n_points for block in partitioned) == cloud.n_points
+    else:
+        assert isinstance(partitioned, pv.PointSet)
+        assert partitioned.n_points == cloud.n_points
 
 
 def test_rotate_x():
