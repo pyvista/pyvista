@@ -29,5 +29,4 @@ assert_types(unstructured().cell_validator(), pv.UnstructuredGrid)
 assert_types(explicit_structured().cell_validator(), pv.ExplicitStructuredGrid)
 assert_types(multiblock().cell_validator(), pv.MultiBlock)
 
-# A `PointSet` is rejected outright, so the call never returns
-assert_types(pointset().cell_validator(), Never)
+assert_types(pointset().cell_validator(), Never)  # pragma: no cover

@@ -29,5 +29,4 @@ assert_types(unstructured().point_data_to_cell_data(), pv.UnstructuredGrid)
 assert_types(explicit_structured().point_data_to_cell_data(), pv.ExplicitStructuredGrid)
 assert_types(multiblock().point_data_to_cell_data(), pv.MultiBlock)
 
-# A `PointSet` is rejected outright, so the call never returns
-assert_types(pointset().point_data_to_cell_data(), Never)
+assert_types(pointset().point_data_to_cell_data(), Never)  # pragma: no cover
