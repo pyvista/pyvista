@@ -5,10 +5,11 @@ from __future__ import annotations
 import contextlib
 import weakref
 
+import pyvista_validation as _validation
+
 import pyvista as pv
 from pyvista import MAX_N_COLOR_BARS
 from pyvista import _vtk
-import pyvista_validation as _validation
 from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
@@ -621,9 +622,7 @@ class ScalarBars(_NoNewAttrMixin):
         if n_labels < 1:
             scalar_bar.SetDrawTickLabels(False)
         elif tick_labels is not None:
-            labels = _validation.validate_arrayN(
-                tick_labels, dtype_out=float, name='tick_labels'
-            )
+            labels = _validation.validate_arrayN(tick_labels, dtype_out=float, name='tick_labels')
             scalar_bar.SetDrawTickLabels(True)
             scalar_bar.SetCustomLabels(convert_array(labels))
             scalar_bar.UseCustomLabelsOn()
