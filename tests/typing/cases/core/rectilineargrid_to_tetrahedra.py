@@ -1,4 +1,4 @@
-"""Typing cases for :meth:`pyvista.RectilinearGridFilters.to_tetrahedra`."""
+"""Typing cases for :meth:`pyvista.RectilinearGrid.to_tetrahedra`."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""Typing cases for :meth:`pyvista.StructuredGridFilters.extract_subset`."""
+"""Typing cases for :meth:`pyvista.StructuredGrid.extract_subset`."""
 
 from __future__ import annotations
 

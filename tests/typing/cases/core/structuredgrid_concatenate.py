@@ -1,4 +1,4 @@
-"""Typing cases for :meth:`pyvista.StructuredGridFilters.concatenate`."""
+"""Typing cases for :meth:`pyvista.StructuredGrid.concatenate`."""
 
 from __future__ import annotations
 
