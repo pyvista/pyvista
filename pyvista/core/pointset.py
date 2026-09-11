@@ -388,7 +388,7 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
         return pdata.plot(*args, **kwargs)
 
     @_wraps(DataSetFilters.threshold)
-    def threshold(self, *args, **kwargs) -> PointSet:  # numpydoc ignore=RT01,PR01
+    def threshold(self, *args, **kwargs) -> PointSet:  # type: ignore[override]  # numpydoc ignore=RT01,PR01
         """Cast to PolyData and threshold.
 
         Need this because cell-wise operations fail for PointSets.
@@ -396,7 +396,7 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
         return self.cast_to_polydata(deep=False).threshold(*args, **kwargs).cast_to_pointset()
 
     @_wraps(DataSetFilters.threshold_percent)
-    def threshold_percent(self, *args, **kwargs) -> PointSet:  # numpydoc ignore=RT01,PR01
+    def threshold_percent(self, *args, **kwargs) -> PointSet:  # type: ignore[override]  # numpydoc ignore=RT01,PR01
         """Cast to PolyData and threshold.
 
         Need this because cell-wise operations fail for PointSets.
@@ -406,7 +406,7 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
         )
 
     @_wraps(DataSetFilters.explode)
-    def explode(self, *args, **kwargs) -> PointSet:  # numpydoc ignore=RT01,PR01
+    def explode(self, *args, **kwargs) -> PointSet:  # type: ignore[override]  # numpydoc ignore=RT01,PR01
         """Cast to PolyData and explode.
 
         The explode filter relies on cells.
@@ -429,7 +429,7 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
         """Return 0.0 since a PointSet has no volume."""
         return 0.0
 
-    def contour(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
+    def contour(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise dimension reducing operations are not supported."""
         msg = 'Contour and other dimension reducing filters are not supported on PointSets'
         raise PointSetNotSupported(msg)
@@ -456,15 +456,15 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
-    def decimate_boundary(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
+    def decimate_boundary(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
-    def find_cells_along_line(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
+    def find_cells_along_line(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
-    def tessellate(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
+    def tessellate(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
@@ -488,23 +488,23 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
         """Raise dimension reducing operations are not supported."""
         raise PointSetDimensionReductionError
 
-    def shrink(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
+    def shrink(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
-    def separate_cells(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
+    def separate_cells(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
-    def remove_cells(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
+    def remove_cells(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
-    def point_is_inside_cell(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
+    def point_is_inside_cell(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
-    def extract_surface(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
+    def extract_surface(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise extract surface are not supported."""
         raise PointSetCellOperationError
 
@@ -574,7 +574,7 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
         """Raise extract all edges are not supported."""
         raise PointSetCellOperationError
 
-    def cell_quality(self, *args, **kwargs):  # noqa: ARG002  # numpydoc ignore=PR01
+    def cell_quality(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise extract all edges are not supported."""
         raise PointSetCellOperationError
 

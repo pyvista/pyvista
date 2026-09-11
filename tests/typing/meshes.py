@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+from typing import TypeVar
+
 import numpy as np
 
 import pyvista as pv
+
+_MeshType = TypeVar('_MeshType', bound=pv.DataSet)
 
 
 def poly() -> pv.PolyData:
@@ -50,3 +54,12 @@ def pointset() -> pv.PointSet:
 def multiblock() -> pv.MultiBlock:
     """Return a composite of two meshes."""
     return pv.MultiBlock([poly(), image()])
+
+
+def with_arrays(mesh: _MeshType) -> _MeshType:
+    """Give a mesh point scalars ``s``, vectors ``v`` and integer ``labels``, keeping its class."""
+    mesh.point_data['s'] = mesh.points[:, 0]
+    mesh.point_data['v'] = np.tile([1.0, 0.0, 0.0], (mesh.n_points, 1))
+    mesh.point_data['labels'] = (np.arange(mesh.n_points) % 3).astype(int)
+    mesh.set_active_scalars('s')
+    return mesh
