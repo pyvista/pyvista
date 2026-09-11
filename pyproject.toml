@@ -357,6 +357,7 @@ follow_untyped_imports = true
 ignore_missing_imports = true
 native_parser = true
 no_implicit_reexport = true
+num_workers = 2
 packages = ['pyvista']
 platform = 'linux'
 plugins = ['npt_promote', 'pyvista.typing.mypy_plugin']
