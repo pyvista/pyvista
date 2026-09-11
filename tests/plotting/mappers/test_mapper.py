@@ -165,7 +165,7 @@ def test_set_scalars_categories_true():
     assert mapper.scalar_range == (-1.0, 9.0)
     assert sargs == {'tick_locations': [0.0, 2.0, 8.0], 'fmt': '%.0f'}
     lut = mapper.lookup_table
-    assert lut.n_values == 5
+    assert len(np.unique(lut.values, axis=0)) == 4  # three categories and the NaN color
     assert lut.annotations == {}
     colors = {lut.map_value(value)[:3] for value in (0, 2, 8)}
     assert len(colors) == 3
@@ -216,7 +216,7 @@ def test_set_scalars_categories_single_value():
     sargs = {}
     mapper.set_scalars(mesh['labels'], 'labels', categories=True, scalar_bar_args=sargs)
     assert mapper.scalar_range == (2.5, 3.5)
-    assert mapper.lookup_table.n_values == 1
+    assert len(np.unique(mapper.lookup_table.values, axis=0)) == 1
     assert sargs['tick_locations'] == [3.0]
 
 
@@ -252,7 +252,7 @@ def test_set_scalars_categories_thins_labels():
     mapper = DataSetMapper(mesh)
     sargs = {}
     mapper.set_scalars(mesh['labels'], 'labels', categories=True, scalar_bar_args=sargs)
-    assert mapper.lookup_table.n_values == 30
+    assert len(np.unique(mapper.lookup_table.values, axis=0)) == 30
     assert sargs['tick_locations'] == [float(v) for v in range(0, 30, 3)]
 
 
