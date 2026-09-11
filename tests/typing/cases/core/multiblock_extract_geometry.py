@@ -11,4 +11,4 @@ SKIP_RUNTIME = {
     'multiblock().extract_geometry()': 'the filter is deprecated and warns when called',
 }
 
-assert_types(multiblock().extract_geometry(), pv.PolyData)
+assert_types(multiblock().extract_geometry(), pv.PolyData)  # pragma: no cover
