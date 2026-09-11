@@ -94,9 +94,12 @@ jobs:
           python-version: 3.14
           cache: "pip"
 
+      - name: Set up headless display
+        uses: pyvista/setup-headless-display-action@c103a2ff45650d38cb71684b5dc6cdfeb9442c79
+
       - uses: awalsh128/cache-apt-pkgs-action@553a35bb8ebd9fcabcb1c9451aa4c98e1b4ca8a9
         with:
-          packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime xvfb
+          packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
           version: 3.0
 
       - name: Restore pyvista/data cache
@@ -108,7 +111,7 @@ jobs:
         run: pip install tox-uv
 
       - name: Build Documentation
-        run: timeout 3600 xvfb-run -a tox run -e docs-build
+        run: timeout 3600 tox run -e docs-build
 
       # Build a development wheel and bundle a PEP 503 simple index into the
       # docs output. Once the docs deploy to dev.pyvista.org, users can

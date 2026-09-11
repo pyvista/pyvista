@@ -137,6 +137,7 @@ extensions = [
     'numpydoc',
     'pyvista.ext._autoenum',
     'pyvista.ext._autoinherit',
+    'pyvista.ext._embed_py_file',
     'pyvista.ext.plot_directive',
     'sphinx_autoopengraph',
     'sphinx_examples_as_code',

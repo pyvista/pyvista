@@ -823,6 +823,8 @@ def download_cow(*, load: bool = True) -> PolyData | str:
 
         :ref:`Cow Head Dataset <cow_head_dataset>`
 
+        :ref:`Procedural Cow Dataset <procedural_cow_dataset>`
+
     """
     return _download_dataset(_dataset_cow, load=load)
 
@@ -861,11 +863,67 @@ def download_cow_head(*, load: bool = True) -> PolyData | str:
 
         :ref:`Cow Dataset <cow_dataset>`
 
+        :ref:`Procedural Cow Dataset <procedural_cow_dataset>`
+
     """
     return _download_dataset(_dataset_cow_head, load=load)
 
 
 _dataset_cow_head = _SingleFileDownloadableDatasetLoader('cowHead.vtp')
+
+
+@overload
+def download_procedural_cow(*, load: Literal[True] = True) -> PolyData: ...
+@overload
+def download_procedural_cow(*, load: Literal[False]) -> str: ...
+def download_procedural_cow(*, load: bool = True) -> PolyData | str:
+    """Download a procedurally generated cow.
+
+    A watertight surface of 300,000 triangles with its coat in the active ``'RGB'``
+    point array. Loading requires the ``pyvista-zstd`` package (``pip install
+    pyvista[io]``).
+
+    .. versionadded:: 0.50
+
+    .. dropdown:: generate_cow.py
+
+        The script in the `PyVista data repository
+        <https://github.com/pyvista/data/tree/master/Data/cow>`_ that sums signed
+        distance fields into this mesh. Run it with ``uv run --locked generate_cow.py``.
+
+        .. embed-py-file:: cow/generate_cow.py
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset. When ``False``, return the path to the file.
+
+    Returns
+    -------
+    pyvista.PolyData | str
+        Dataset or path to the file depending on the ``load`` parameter.
+
+    Examples
+    --------
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import examples
+        >>> dataset = examples.download_procedural_cow()
+        >>> dataset.plot(rgb=True, smooth_shading=True)
+
+    .. seealso::
+
+        :ref:`Procedural Cow Dataset <procedural_cow_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+        :ref:`Cow Dataset <cow_dataset>`
+
+    """
+    return _download_dataset(_dataset_procedural_cow, load=load)
+
+
+_dataset_procedural_cow = _SingleFileDownloadableDatasetLoader('cow/cow.pv')
 
 
 @overload
@@ -8769,9 +8827,8 @@ class _WholeBodyCTUtilities:
         names_to_ids = {key: i + 1 for i, key in enumerate(label_names)}
         dataset.user_dict['names_to_colors'] = names_to_colors
         dataset.user_dict['names_to_ids'] = names_to_ids
-        dataset.user_dict['ids_to_colors'] = dict(
-            sorted({names_to_ids[name]: names_to_colors[name] for name in label_names}.items())
-        )
+        ids_to_colors = sorted((names_to_ids[name], names_to_colors[name]) for name in label_names)
+        dataset.user_dict['ids_to_colors'] = {str(id_): color for id_, color in ids_to_colors}
 
     @staticmethod
     def label_map_from_masks(masks: MultiBlock) -> ImageData:

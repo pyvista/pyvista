@@ -376,15 +376,31 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         data_fields, point_fields, cell_fields = _MeshValidator._validate_fields(
             validation_fields, exclude_fields
         )
-        # Remove or error on fields unsupported for specific mesh types
-        _unsupported: dict[
-            type[DataSet | MultiBlock], tuple[_LiteralMeshValidationFields, ...]
-        ] = {}
+        self._validation_report = _MeshValidator._generate_report(
+            mesh,
+            name=name,
+            data_fields=data_fields,
+            point_fields=point_fields,
+            cell_fields=cell_fields,
+            explicit=validation_fields is not None,
+            **cell_validator_kwargs,
+        )
+
+    @staticmethod
+    def _supported_fields(
+        mesh: DataSet,
+        point_fields: tuple[_PointFields, ...],
+        cell_fields: tuple[_CellFields, ...],
+        *,
+        explicit: bool,
+    ) -> tuple[tuple[_PointFields, ...], tuple[_CellFields, ...]]:
+        """Drop the fields this mesh type cannot check, or raise if they were asked for."""
+        unsupported: tuple[_LiteralMeshValidationFields, ...] = ()
         if isinstance(mesh, pv.PointSet):
-            _unsupported[pv.PointSet] = ('unused_points', *_MeshValidator._allowed_cell_fields)
-        if isinstance(mesh, pv.Grid):
+            unsupported = ('unused_points', *_MeshValidator._allowed_cell_fields)
+        elif isinstance(mesh, pv.Grid):
             # Avoid vtkCellValidator fields since these may crash: https://gitlab.kitware.com/vtk/vtk/-/work_items/20096
-            _unsupported[type(mesh)] = (
+            unsupported = (
                 'wrong_number_of_points',
                 'intersecting_edges',
                 'intersecting_faces',
@@ -395,28 +411,15 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                 'degenerate_faces',
                 'coincident_points',
             )
-
-        for mesh_type, unsupported_field in _unsupported.items():
-            for field in unsupported_field:
-                if field in cell_fields or field in point_fields:
-                    if validation_fields is not None:
-                        # User explicitly requested this field (directly or via a group)
-                        kind = 'Point' if field in point_fields else 'Cell'
-                        msg = f'{kind} field {field!r} is not supported for {mesh_type.__name__}.'
-                        raise ValueError(msg)
-                    else:
-                        # Default case: remove unsupported fields without error
-                        cell_fields = tuple(f for f in cell_fields if f != field)
-                        point_fields = tuple(f for f in point_fields if f != field)
-
-        self._validation_report = _MeshValidator._generate_report(
-            mesh,
-            name=name,
-            data_fields=data_fields,
-            point_fields=point_fields,
-            cell_fields=cell_fields,
-            **cell_validator_kwargs,
-        )
+        for field in unsupported:
+            if field in cell_fields or field in point_fields:
+                if explicit:
+                    kind = 'Point' if field in point_fields else 'Cell'
+                    msg = f'{kind} field {field!r} is not supported for {type(mesh).__name__}.'
+                    raise ValueError(msg)
+                cell_fields = tuple(f for f in cell_fields if f != field)
+                point_fields = tuple(f for f in point_fields if f != field)
+        return point_fields, cell_fields
 
     @staticmethod
     def _validate_fields(
@@ -545,6 +548,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         data_fields: tuple[_DataFields, ...],
         point_fields: tuple[_PointFields, ...],
         cell_fields: tuple[_CellFields, ...],
+        explicit: bool,
         **cell_validator_kwargs,
     ) -> _MeshValidationReport[_DataSetOrMultiBlockType]:
         with warnings.catch_warnings():
@@ -560,6 +564,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                     data_fields=data_fields,
                     point_fields=point_fields,
                     cell_fields=cell_fields,
+                    explicit=explicit,
                     **cell_validator_kwargs,
                 )
             else:
@@ -569,6 +574,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                     data_fields=data_fields,
                     point_fields=point_fields,
                     cell_fields=cell_fields,
+                    explicit=explicit,
                     **cell_validator_kwargs,
                 )
 
@@ -580,8 +586,12 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         data_fields: tuple[_DataFields, ...],
         point_fields: tuple[_PointFields, ...],
         cell_fields: tuple[_CellFields, ...],
+        explicit: bool,
         **cell_validator_kwargs,
     ) -> _MeshValidationReport[_DataSetType]:
+        point_fields, cell_fields = _MeshValidator._supported_fields(
+            mesh, point_fields, cell_fields, explicit=explicit
+        )
         validated_mesh = mesh.copy(deep=False)
         field_summaries: dict[str, _MeshValidator._FieldSummary] = {}
         # Validate data arrays
@@ -633,6 +643,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
         data_fields: tuple[_DataFields, ...],
         point_fields: tuple[_PointFields, ...],
         cell_fields: tuple[_CellFields, ...],
+        explicit: bool,
         **cell_validator_kwargs,
     ) -> _MeshValidationReport[_MultiBlockType]:
         validated_mesh = mesh.copy(deep=False)
@@ -650,6 +661,7 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
                     data_fields=data_fields,
                     point_fields=point_fields,
                     cell_fields=cell_fields,
+                    explicit=explicit,
                     **cell_validator_kwargs,
                 )
                 reports.append(report)
@@ -3819,9 +3831,13 @@ class DataObjectFilters:
 
         Notes
         -----
-        A :class:`~pyvista.PointSet` has no cells to slice, so slicing one directly
-        raises :class:`~pyvista.core.errors.PointSetDimensionReductionError`. As a block of a
-        :class:`~pyvista.MultiBlock` it gives an empty block instead.
+        A :class:`~pyvista.PointSet` has no cells to slice, so slicing one raises
+        :class:`~pyvista.core.errors.PointSetDimensionReductionError`, whether it is
+        sliced directly or as a block of a :class:`~pyvista.MultiBlock`.
+
+        .. versionchanged:: 0.50
+
+            A ``PointSet`` block raises instead of giving an empty block.
 
         See Also
         --------
@@ -3851,8 +3867,7 @@ class DataObjectFilters:
 
         """
         if isinstance(self, pv.MultiBlock):
-            return _slice_each_block(
-                self,
+            return self.generic_filter(
                 'slice_implicit',
                 implicit_function,
                 generate_triangles=generate_triangles,
@@ -3965,9 +3980,13 @@ class DataObjectFilters:
         point data interpolated between the two neighbouring grid planes. All other
         inputs use :vtk:`vtkCutter`.
 
-        A :class:`~pyvista.PointSet` has no cells to slice, so slicing one directly
-        raises :class:`~pyvista.core.errors.PointSetDimensionReductionError`. As a block of a
-        :class:`~pyvista.MultiBlock` it gives an empty block instead.
+        A :class:`~pyvista.PointSet` has no cells to slice, so slicing one raises
+        :class:`~pyvista.core.errors.PointSetDimensionReductionError`, whether it is
+        sliced directly or as a block of a :class:`~pyvista.MultiBlock`.
+
+        .. versionchanged:: 0.50
+
+            A ``PointSet`` block raises instead of giving an empty block.
 
         See Also
         --------
@@ -4075,9 +4094,13 @@ class DataObjectFilters:
 
         Notes
         -----
-        A :class:`~pyvista.PointSet` has no cells to slice, so slicing one directly
-        raises :class:`~pyvista.core.errors.PointSetDimensionReductionError`. As a block of a
-        :class:`~pyvista.MultiBlock` it gives an empty block instead.
+        A :class:`~pyvista.PointSet` has no cells to slice, so slicing one raises
+        :class:`~pyvista.core.errors.PointSetDimensionReductionError`, whether it is
+        sliced directly or as a block of a :class:`~pyvista.MultiBlock`.
+
+        .. versionchanged:: 0.50
+
+            A ``PointSet`` block raises instead of giving an empty block.
 
         See Also
         --------
@@ -4105,8 +4128,7 @@ class DataObjectFilters:
         if z is None:
             z = self.center[2]
         if isinstance(self, pv.MultiBlock):
-            return _slice_each_block(
-                self,
+            return self.generic_filter(
                 'slice_orthogonal',
                 x=x,
                 y=y,
@@ -4211,9 +4233,13 @@ class DataObjectFilters:
 
         Notes
         -----
-        A :class:`~pyvista.PointSet` has no cells to slice, so slicing one directly
-        raises :class:`~pyvista.core.errors.PointSetDimensionReductionError`. As a block of a
-        :class:`~pyvista.MultiBlock` it gives an empty block instead.
+        A :class:`~pyvista.PointSet` has no cells to slice, so slicing one raises
+        :class:`~pyvista.core.errors.PointSetDimensionReductionError`, whether it is
+        sliced directly or as a block of a :class:`~pyvista.MultiBlock`.
+
+        .. versionchanged:: 0.50
+
+            A ``PointSet`` block raises instead of giving an empty block.
 
         See Also
         --------
@@ -4272,8 +4298,7 @@ class DataObjectFilters:
         center = list(center)
         # Make each of the slices
         if isinstance(self, pv.MultiBlock):
-            return _slice_each_block(
-                self,
+            return self.generic_filter(
                 'slice_along_axis',
                 n=n,
                 axis=ax_label,
@@ -4347,9 +4372,13 @@ class DataObjectFilters:
 
         Notes
         -----
-        A :class:`~pyvista.PointSet` has no cells to slice, so slicing one directly
-        raises :class:`~pyvista.core.errors.PointSetDimensionReductionError`. As a block of a
-        :class:`~pyvista.MultiBlock` it gives an empty block instead.
+        A :class:`~pyvista.PointSet` has no cells to slice, so slicing one raises
+        :class:`~pyvista.core.errors.PointSetDimensionReductionError`, whether it is
+        sliced directly or as a block of a :class:`~pyvista.MultiBlock`.
+
+        .. versionchanged:: 0.50
+
+            A ``PointSet`` block raises instead of giving an empty block.
 
         See Also
         --------
@@ -4398,8 +4427,7 @@ class DataObjectFilters:
             msg = f'Input line must have a PolyLine cell, not ({type(polyline)})'
             raise TypeError(msg)
         if isinstance(self, pv.MultiBlock):
-            return _slice_each_block(
-                self,
+            return self.generic_filter(
                 'slice_along_line',
                 line,
                 generate_triangles=generate_triangles,
@@ -4654,19 +4682,10 @@ class DataObjectFilters:
                 get_args(_ExtractSurfaceOptions), must_contain=algorithm, name='algorithm'
             )
 
-        if nonlinear_subdivision is None:
-            nonlinear_subdivision = 1
-        elif algorithm == 'geometry':
-            msg = (
-                'geometry algorithm cannot process non-linear cells and therefore '
-                'cannot be used to control non-linear subdivision.'
-            )
-            raise ValueError(msg)
-
         if isinstance(self, pv.MultiBlock):
             # Extract surface from each block separately and combine into a single PolyData
             multi_polys = self.generic_filter(
-                '_extract_surface',
+                'extract_surface',
                 pass_pointid=pass_pointid,
                 pass_cellid=pass_cellid,
                 nonlinear_subdivision=nonlinear_subdivision,
@@ -4678,6 +4697,15 @@ class DataObjectFilters:
                 append.AddInputData(poly)
             _update_alg(append, progress_bar=progress_bar, message='Appending PolyData')
             return _get_output(append)
+
+        if nonlinear_subdivision is None:
+            nonlinear_subdivision = 1
+        elif algorithm == 'geometry':
+            msg = (
+                'geometry algorithm cannot process non-linear cells and therefore '
+                'cannot be used to control non-linear subdivision.'
+            )
+            raise ValueError(msg)
 
         return self._extract_surface(
             pass_pointid=pass_pointid,
@@ -5904,17 +5932,6 @@ def _get_cell_quality_measures() -> dict[str, str]:
             measure_name = re.sub(r'([a-z])([A-Z])', r'\1_\2', measure_name).lower()
             measures[measure_name] = attr
     return measures
-
-
-def _slice_each_block(composite: MultiBlock, method: str, /, *args, **kwargs) -> MultiBlock:
-    """Apply a slice filter to every block, slicing a ``PointSet`` as its vertices."""
-
-    def slice_block(block: DataSet):  # numpydoc ignore=PR01
-        """Slice one block through the filter its own type supports."""
-        source = block.cast_to_polydata(deep=False) if isinstance(block, pv.PointSet) else block
-        return getattr(source, method)(*args, **kwargs)
-
-    return composite.generic_filter(slice_block)
 
 
 def _slice_image_along_axis(

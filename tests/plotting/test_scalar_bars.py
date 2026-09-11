@@ -128,6 +128,104 @@ def test_update_title_image(sphere, verify_image_cache):
     pl.show()
 
 
+@pytest.mark.usefixtures('verify_image_cache')
+def test_background_color_fill(sphere):
+    sphere[KEY] = sphere.points[:, 2]
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    scalar_bar = pl.add_scalar_bar(
+        KEY,
+        background_color='gray',
+        fill=True,
+        outline=True,
+        width=0.8,
+        height=0.3,
+        position_x=0.1,
+        position_y=0.05,
+        label_font_size=40,
+        title_font_size=40,
+    )
+    assert scalar_bar.GetBackgroundProperty().GetColor() == pytest.approx(
+        pv.Color('gray').float_rgb
+    )
+    pl.show()
+
+
+@pytest.mark.usefixtures('verify_image_cache')
+def test_background_color_keeps_out_of_range_colors(sphere):
+    sphere[KEY] = sphere.points[:, 2]
+    pl = pv.Plotter()
+    actor = pl.add_mesh(
+        sphere,
+        clim=[-0.2, 0.2],
+        below_color='magenta',
+        above_color='red',
+        scalar_bar_args={
+            'background_color': 'cyan',
+            'fill': True,
+            'width': 0.8,
+            'height': 0.3,
+            'position_x': 0.1,
+            'position_y': 0.05,
+            'label_font_size': 40,
+            'title_font_size': 40,
+        },
+    )
+    lut = pl.scalar_bar.GetLookupTable()
+    assert lut is actor.mapper.lookup_table
+    assert lut.below_range_color == pv.Color('magenta')
+    assert lut.above_range_color == pv.Color('red')
+    pl.show()
+
+
+@pytest.mark.usefixtures('verify_image_cache')
+def test_background_color_composite_range(multiblock_poly):
+    pl = pv.Plotter()
+    pl.add_composite(
+        multiblock_poly,
+        scalars='data_a',
+        clim=[0.2, 10],
+        scalar_bar_args={
+            'background_color': 'white',
+            'color': 'black',
+            'fill': True,
+            'outline': True,
+            'width': 0.8,
+            'height': 0.3,
+            'position_x': 0.1,
+            'position_y': 0.05,
+            'label_font_size': 40,
+            'title_font_size': 40,
+        },
+    )
+    assert pl.scalar_bar.GetLookupTable().GetRange() == (0.2, 10.0)
+    pl.update_scalar_bar_range([1, 5])
+    assert pl.scalar_bar.GetLookupTable().GetRange() == (1.0, 5.0)
+    pl.show()
+
+
+@pytest.mark.usefixtures('verify_image_cache')
+def test_labels_centered_with_translucent_actor(sphere):
+    sphere[KEY] = sphere.points[:, 2]
+    pl = pv.Plotter()
+    pl.add_mesh(
+        sphere,
+        scalar_bar_args={
+            'vertical': False,
+            'n_labels': 3,
+            'width': 0.8,
+            'height': 0.3,
+            'position_x': 0.1,
+            'position_y': 0.05,
+            'label_font_size': 40,
+            'title_font_size': 40,
+        },
+    )
+    # The translucent actor makes VTK lay out the labels from a stale justification
+    pl.add_mesh(pv.Cube(center=(2, 0, 0)), opacity=0.5)
+    pl.show()
+
+
 def test_too_many_scalar_bars():
     pl = pv.Plotter()
     with pytest.raises(RuntimeError, match='Maximum number of color'):  # noqa: PT012
@@ -186,6 +284,15 @@ def test_add_scalar_bar_shared_range_resync(sphere):
     pl.update_scalar_bar_range([0, 10])
     actors.append(pl.add_mesh(mid.copy(), scalars='data'))
     assert [m.scalar_range for m in mappers] == [(-1.0, 5.0)] * 6
+    pl.close()
+
+
+def test_update_scalar_bar_range_without_a_bar(sphere):
+    sphere['data'] = sphere.points[:, 2]
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, scalars='data', show_scalar_bar=False)
+    pl.update_scalar_bar_range([-1, 1])
+    assert pl.mapper.scalar_range == (-1.0, 1.0)
     pl.close()
 
 

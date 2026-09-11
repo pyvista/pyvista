@@ -350,6 +350,7 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
             pdata.GetFieldData().DeepCopy(self.GetFieldData())
         else:
             pdata.GetFieldData().ShallowCopy(self.GetFieldData())
+        pdata._sync_user_dict()
         return pdata
 
     def cast_to_unstructured_grid(self) -> pv.UnstructuredGrid:

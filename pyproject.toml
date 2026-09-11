@@ -110,7 +110,6 @@ test = [
   'pyvista-stl>=0.5.3,<0.6.0',
   'pyvista-zstd>=0.3.1,<0.5.0',
   'refleak>=0.2.2,<0.3.0',
-  'retry-requests<2.1.0',
   'scipy<1.17.0',
   'sphinx-autocodelink==0.11.3',
   'sphinx-autoopengraph<0.3',
@@ -590,6 +589,7 @@ pyvista = "pv"
 '*/conf.py' = ['E402']
 # A command-line script bundled with an agent skill, not an importable package.
 '.claude/skills/*/scripts/*.py' = ['INP', 'T20']
+'.github/scripts/*.py' = ['INP', 'T20'] # CI script, not a package
 '__init__.py' = ['PLC0414']
 'benchmarks/*' = ['ANN', 'S101']
 'doc/*' = ['ANN', 'INP', 'PLC0415']

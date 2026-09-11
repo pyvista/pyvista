@@ -9,6 +9,8 @@ import pyvista as pv
 from pyvista import Color
 from pyvista import LookupTable
 from pyvista import _vtk
+from pyvista.core.utilities.arrays import convert_array
+from pyvista.core.utilities.arrays import convert_string_array
 
 
 @pytest.fixture
@@ -118,6 +120,16 @@ def test_annotations(lut):
     anno = {0: 'low', 0.5: 'medium', 1: 'high'}
     lut.annotations = anno
     assert lut.annotations == anno
+
+
+def test_annotations_from_arrays(lut):
+    values = np.array([0, 1, 5])
+    labels = np.array(['a', 'b', 'c'])
+    lut.SetAnnotations(convert_array(values), convert_string_array(labels))
+    assert lut.annotations == {0.0: 'a', 1.0: 'b', 5.0: 'c'}
+    # Fewer annotations than the array once held
+    lut.annotations = {2.5: 'x'}
+    assert lut.annotations == {2.5: 'x'}
 
 
 def test_value_range(lut, lut_w_cmap):
