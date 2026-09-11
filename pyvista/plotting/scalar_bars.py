@@ -5,8 +5,6 @@ from __future__ import annotations
 import contextlib
 import weakref
 
-import numpy as np
-
 import pyvista as pv
 from pyvista import MAX_N_COLOR_BARS
 from pyvista import _vtk
@@ -396,7 +394,8 @@ class ScalarBars(_NoNewAttrMixin):
             String annotation for values above the scalars range.
 
         background_color : ColorLike, optional
-            The color used for the background in RGB format.
+            The color used for the background in RGB format. Only drawn when
+            ``fill`` is ``True``.
 
         n_colors : int, optional
             The maximum number of color displayed in the scalar bar.
@@ -597,23 +596,11 @@ class ScalarBars(_NoNewAttrMixin):
         # self._scalar_bars.append(scalar_bar)
 
         if background_color is not None:
-            background_color = np.array(Color(background_color).int_rgba)
-            scalar_bar.GetBackgroundProperty().SetColor(background_color[0:3])
-
+            scalar_bar.GetBackgroundProperty().SetColor(Color(background_color).float_rgb)
             if fill:
                 scalar_bar.DrawBackgroundOn()
 
-            lut = pv.LookupTable()
-            lut.DeepCopy(mapper.lookup_table)
-            ctable = _vtk.vtk_to_numpy(lut.GetTable())
-            alphas = ctable[:, -1][:, np.newaxis] / 255.0
-            use_table = ctable.copy()
-            use_table[:, -1] = 255.0
-            ctable = (use_table * alphas) + background_color * (1 - alphas)
-            lut.SetTable(_vtk.numpy_to_vtk(ctable, array_type=_vtk.VTK_UNSIGNED_CHAR))
-        else:
-            lut = mapper.lookup_table
-
+        lut = mapper.lookup_table
         scalar_bar.SetLookupTable(lut)
         if n_colors is None:
             # ensure the number of colors in the scalarbar's lookup table is at
@@ -665,6 +652,15 @@ class ScalarBars(_NoNewAttrMixin):
 
         label_text = scalar_bar.GetLabelTextProperty()
         anno_text = scalar_bar.GetAnnotationTextProperty()
+        # Preset the justification the layout applies to the medial label after measuring it
+        if vertical:
+            label_text.SetJustificationToLeft()
+            anno_text.SetJustificationToRight()
+            anno_text.SetVerticalJustificationToCentered()
+        else:
+            label_text.SetJustificationToCentered()
+            anno_text.SetJustificationToCentered()
+            anno_text.SetVerticalJustificationToTop()
         label_text.SetColor(color.float_rgb)
         anno_text.SetColor(color.float_rgb)
         label_text.SetShadow(shadow)
