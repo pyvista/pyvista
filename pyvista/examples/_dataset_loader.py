@@ -44,6 +44,7 @@ from typing import cast
 from typing import final
 
 import pyvista as pv
+from pyvista.core.utilities._optional_formats import _declared_reader_class
 from pyvista.core.utilities.fileio import get_ext
 
 if TYPE_CHECKING:
@@ -112,6 +113,16 @@ class _FileProps:
     def unique_reader_types(self) -> tuple[type[pv.BaseReader[Any]], ...]:
         """Return unique reader types from all file readers."""
         return _get_unique_reader_types(self._readers)
+
+    @property
+    def unique_companion_reader_names(self) -> tuple[str, ...]:
+        """Return the names of companion-package reader classes serving these files."""
+        names = {
+            name
+            for ext in self.unique_extensions
+            if (name := _declared_reader_class(ext)) is not None
+        }
+        return tuple(sorted(names))
 
 
 class _Downloadable(Protocol):
