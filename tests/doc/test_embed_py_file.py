@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import io
+from io import StringIO
 from pathlib import Path
 
 import pytest
@@ -36,7 +36,7 @@ def build(tmp_path, monkeypatch):
         (src / 'conf.py').write_text("extensions = ['pyvista.ext._embed_py_file']\n")
         (src / 'index.rst').write_text(body, encoding='utf-8')
         out = tmp_path / 'out'
-        warnings = io.StringIO()
+        warnings = StringIO()
         with docutils_namespace():
             app = Sphinx(
                 srcdir=str(src),
@@ -61,7 +61,7 @@ def test_embeds_the_downloaded_file_as_python(build, tmp_path):
     script.write_text(SCRIPT, encoding='utf-8')
 
     html, warnings, _, _ = build(
-        'Page\n====\n\n.. embed-py-file:: sample/sample.py\n', lambda name: str(script)
+        'Page\n====\n\n.. embed-py-file:: sample/sample.py\n', lambda _name: str(script)
     )
 
     assert 'highlight-python' in html
@@ -74,7 +74,7 @@ def test_embedded_file_is_a_build_dependency(build, tmp_path):
     script.write_text(SCRIPT, encoding='utf-8')
 
     _, _, app, _ = build(
-        'Page\n====\n\n.. embed-py-file:: sample/sample.py\n', lambda name: str(script)
+        'Page\n====\n\n.. embed-py-file:: sample/sample.py\n', lambda _name: str(script)
     )
 
     deps = {Path(dep).resolve() for dep in app.env.dependencies['index']}
@@ -98,7 +98,7 @@ def test_embedded_file_is_kept_out_of_the_search_index(build, tmp_path):
     script.write_text('MOOOOSE = 1\n', encoding='utf-8')
 
     html, _, _, search = build(
-        'Page\n====\n\n.. embed-py-file:: sample/sample.py\n', lambda name: str(script)
+        'Page\n====\n\n.. embed-py-file:: sample/sample.py\n', lambda _name: str(script)
     )
 
     assert 'MOOOOSE' in html
