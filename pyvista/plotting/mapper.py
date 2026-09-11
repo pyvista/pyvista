@@ -44,6 +44,8 @@ _MAX_CATEGORY_LABELS = 10
 _MAX_CATEGORY_TABLE_SIZE = 65536
 # Table size used when the category values are not evenly spaced
 _CATEGORY_BAND_TABLE_SIZE = 4096
+# Table entries per category, so a volume's transfer function resolves each band
+_CATEGORY_ENTRIES_PER_VALUE = 8
 
 
 def _category_step(values):
@@ -1180,12 +1182,17 @@ class _BaseDataSetMapper(_BaseMapper):
         indices = _category_indices(values) if centered else None
         if indices is None:
             n_table = _CATEGORY_BAND_TABLE_SIZE
-            centers = low + (np.arange(n_table) + 0.5) / n_table * (high - low)
-            owner = np.searchsorted((values[:-1] + values[1:]) / 2, centers)
-            table = colors[owner]
         else:
-            table = np.tile(nan_color, (indices[-1] + 1, 1))
-            table[indices] = colors
+            slots = int(indices[-1]) + 1
+            n_table = slots * max(
+                1, min(_CATEGORY_BAND_TABLE_SIZE // slots, _CATEGORY_ENTRIES_PER_VALUE)
+            )
+        centers = low + (np.arange(n_table) + 0.5) / n_table * (high - low)
+        owner = np.searchsorted((values[:-1] + values[1:]) / 2, centers)
+        table = colors[owner]
+        if indices is not None:
+            # Only the band within half a step of a value keeps that value's color
+            table[np.abs(centers - values[owner]) > (high - low) / slots / 2] = nan_color
         lut.values = table
 
         annotated = {float(v): str(text) for v, text in annotations.items()} if annotations else {}
