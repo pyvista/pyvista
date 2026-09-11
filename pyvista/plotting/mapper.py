@@ -1078,7 +1078,7 @@ class _BaseDataSetMapper(_BaseMapper):
             and not rgb
             and not isinstance(cmap, pv.LookupTable)
         ):
-            category_values = np.unique(scalars[~np.isnan(scalars)])
+            category_values = np.unique(scalars[~np.isnan(scalars)]).astype(float)
             if category_values.size:
                 n_colors = len(category_values)
                 clim = _category_range(category_values)

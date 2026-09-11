@@ -180,6 +180,16 @@ def test_set_scalars_categories_true():
     assert sargs['ticks'] == [0.0, 8.0]
 
 
+def test_set_scalars_categories_integer_dtype():
+    mesh = pv.RectilinearGrid([0.0, 1.0, 2.0, 3.0], [0.0, 1.0], [0.0])
+    mesh['labels'] = np.array([-32768, 0, 1], dtype=np.int16)
+    mapper = DataSetMapper(mesh)
+    mapper.set_scalars(mesh['labels'], 'labels', categories=True)
+    assert mapper.scalar_range == (-32768.5, 1.5)
+    colors = {mapper.lookup_table.map_value(value)[:3] for value in (-32768, 0, 1)}
+    assert len(colors) == 3
+
+
 def test_set_scalars_categories_uneven_spacing():
     mesh = pv.RectilinearGrid([0.0, 1.0, 2.0, 3.0], [0.0, 1.0], [0.0])
     mesh['labels'] = [0.1, 0.33, 0.7]
