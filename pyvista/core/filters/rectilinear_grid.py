@@ -68,6 +68,12 @@ class RectilinearGridFilters:
         pyvista.UnstructuredGrid
             UnstructuredGrid containing the tetrahedral cells.
 
+        Notes
+        -----
+        Splitting a cell into 12 tetrahedra adds a point at the cell's center, so the
+        output has more points than the input. With ``pass_data=True`` the point data
+        at each added point is the mean of that cell's corner values.
+
         Examples
         --------
         Divide a rectangular grid into tetrahedrons. Each cell contains by
@@ -141,12 +147,23 @@ class RectilinearGridFilters:
             # algorithm stores original cell ids in active scalars
             # this does not preserve active scalars, but we need to
             # keep active scalars until they are renamed
+            voxel_ids = np.asarray(out.cell_data.active_scalars)
             for name in self.cell_data:  # type: ignore[attr-defined]
                 if name != out.cell_data.active_scalars_name:
                     out[name] = self.cell_data[name][out.cell_data.active_scalars]  # type: ignore[attr-defined]
 
+            # Interpolate onto the center point added to every cell split into 12
+            centers = split = None
+            if self.point_data and out.n_points > self.n_points:  # type: ignore[attr-defined]
+                split = np.flatnonzero(
+                    np.bincount(voxel_ids, minlength=self.n_cells) == 12  # type: ignore[attr-defined]
+                )
+                centers = self.point_data_to_cell_data()  # type: ignore[attr-defined]
             for name in self.point_data:  # type: ignore[attr-defined]
-                out[name] = self.point_data[name]  # type: ignore[attr-defined]
+                values = self.point_data[name]  # type: ignore[attr-defined]
+                if centers is not None:
+                    values = np.concatenate((values, centers.cell_data[name][split]))
+                out[name] = values
 
         if alg.GetRememberVoxelId():
             # original cell_ids are not named and are the active scalars

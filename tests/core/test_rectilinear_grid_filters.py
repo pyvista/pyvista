@@ -67,6 +67,35 @@ def test_to_tetrahedra_mixed_does_not_modify_input(tiny_rectilinear, mixed):
     assert tiny_rectilinear.cell_data.active_scalars_name == 'active'
 
 
+def test_to_tetrahedra_12_interpolates_point_data(tiny_rectilinear):
+    # A linear field, so the value at a cell center is exactly the mean of its corners
+    weights = np.array([1.0, 10.0, 100.0])
+    tiny_rectilinear.point_data['linear'] = tiny_rectilinear.points @ weights
+    n_points = tiny_rectilinear.n_points
+
+    tet_grid = tiny_rectilinear.to_tetrahedra(tetra_per_cell=12)
+
+    assert tet_grid.n_points == n_points + tiny_rectilinear.n_cells
+    assert np.allclose(
+        tet_grid.point_data['linear'][:n_points], tiny_rectilinear.point_data['linear']
+    )
+    centers = tiny_rectilinear.cell_centers().points @ weights
+    assert np.allclose(tet_grid.point_data['linear'][n_points:], centers)
+
+
+def test_to_tetrahedra_mixed_interpolates_point_data(tiny_rectilinear):
+    weights = np.array([1.0, 10.0, 100.0])
+    tiny_rectilinear.point_data['linear'] = tiny_rectilinear.points @ weights
+    n_points = tiny_rectilinear.n_points
+    split = np.arange(tiny_rectilinear.n_cells) % 3 == 0
+
+    tet_grid = tiny_rectilinear.to_tetrahedra(mixed=np.where(split, 12, 5))
+
+    assert tet_grid.n_points == n_points + split.sum()
+    centers = tiny_rectilinear.cell_centers().points[split] @ weights
+    assert np.allclose(tet_grid.point_data['linear'][n_points:], centers)
+
+
 def test_to_tetrahedra_edge_case():
     with pytest.raises(RuntimeError, match='is 1'):
         pv.ImageData(dimensions=(1, 2, 2)).to_tetrahedra(tetra_per_cell=12)
