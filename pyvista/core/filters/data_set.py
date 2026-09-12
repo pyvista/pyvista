@@ -8510,81 +8510,23 @@ class DataSetFilters(DataObjectFilters):
             msg = 'Input mesh must have faces for voxelization.'
             raise ValueError(msg)
 
+        # Triangulate for computing the cell length percentile and for the stencil
+        poly_ijk = surface.triangulate()
+        volume = _make_reference_volume(
+            poly_ijk,
+            reference_volume=reference_volume,
+            dimensions=dimensions,
+            spacing=spacing,
+            rounding_func=rounding_func,
+            cell_length_percentile=cell_length_percentile,
+            cell_length_sample_size=cell_length_sample_size,
+            progress_bar=progress_bar,
+        )
         if reference_volume is not None:
-            if (
-                dimensions is not None
-                or spacing is not None
-                or rounding_func is not None
-                or cell_length_percentile is not None
-                or cell_length_sample_size is not None
-            ):
-                msg = (
-                    'Cannot specify a reference volume with other geometry parameters. '
-                    '`reference_volume` must define the geometry exclusively.'
-                )
-                raise TypeError(msg)
-            _validation.check_instance(reference_volume, pv.ImageData, name='reference volume')
-            # The image stencil filters do not support orientation, so we apply the
-            # inverse direction matrix to "remove" orientation from the polydata
-            poly_ijk = surface.rotate(
-                reference_volume.direction_matrix.T, point=reference_volume.origin, inplace=False
+            # The stencil filters ignore orientation, so remove it from the polydata
+            poly_ijk = poly_ijk.rotate(
+                volume.direction_matrix.T, point=volume.origin, inplace=False
             )
-            poly_ijk = poly_ijk.triangulate()
-        else:
-            # Compute reference volume geometry
-            if spacing is not None and dimensions is not None:
-                msg = 'Spacing and dimensions cannot both be set. Set one or the other.'
-                raise TypeError(msg)
-
-            # Triangulate for computing the cell length percentile
-            poly_ijk = surface.triangulate()
-
-            if spacing is not None and (
-                cell_length_percentile is not None or cell_length_sample_size is not None
-            ):
-                msg = 'Spacing and cell length options cannot both be set. Set one or the other.'
-                raise TypeError(msg)
-
-            # Get size of poly data for computing dimensions
-            size = np.array(surface.bounds_size)
-
-            if dimensions is None:
-                if spacing is None:
-                    # Estimate spacing from cell length percentile
-                    cell_length_percentile = (
-                        0.1 if cell_length_percentile is None else cell_length_percentile
-                    )
-                    cell_length_sample_size = (
-                        100_000 if cell_length_sample_size is None else cell_length_sample_size
-                    )
-                    spacing = _length_distribution_percentile(
-                        poly_ijk,
-                        cell_length_percentile,
-                        cell_length_sample_size,
-                        progress_bar=progress_bar,
-                    )
-                # Get initial spacing (will be adjusted later)
-                initial_spacing = _validation.validate_array3(spacing, broadcast=True)
-                rounding_func = np.round if rounding_func is None else rounding_func
-                initial_dimensions = size / initial_spacing
-                # Make sure we don't round dimensions to zero, make it one instead
-                initial_dimensions[initial_dimensions < 1] = 1
-                dimensions = np.array(rounding_func(initial_dimensions), dtype=int)
-            elif rounding_func is not None:
-                msg = (
-                    'Rounding func cannot be set when dimensions is specified. '
-                    'Set one or the other.'
-                )
-                raise TypeError(msg)
-
-            reference_volume = pv.ImageData()
-            reference_volume.dimensions = dimensions
-            # Dimensions are now fixed, now adjust spacing to match poly data bounds
-            # Since we are dealing with voxels as points, we want the bounds of the
-            # points to be 1/2 spacing width smaller than the polydata bounds
-            final_spacing = size / np.array(reference_volume.dimensions)
-            reference_volume.spacing = final_spacing
-            reference_volume.origin = np.array(surface.bounds[::2]) + final_spacing / 2
 
         # Use uint8 dtype if possible
         scalars_dtype: type[np.uint8 | float | int]
@@ -8598,25 +8540,17 @@ class DataSetFilters(DataObjectFilters):
         else:
             scalars_dtype = np.float64
 
-        mask = _stencil_binary_mask(
+        volume['mask'] = _stencil_binary_mask(
             poly_ijk,
-            extent=reference_volume.extent,
-            spacing=reference_volume.spacing,
-            origin=reference_volume.origin,
+            extent=volume.extent,
+            spacing=volume.spacing,
+            origin=volume.origin,
             dtype=scalars_dtype,
             foreground_value=foreground_value,
             background_value=background_value,
             progress_bar=progress_bar,
         )
-        # The image stencil filters do not support orientation, so the direction
-        # matrix is only set on the output
-        binary_mask = pv.ImageData()
-        binary_mask.extent = reference_volume.extent
-        binary_mask.spacing = reference_volume.spacing
-        binary_mask.origin = reference_volume.origin
-        binary_mask['mask'] = mask
-        binary_mask.direction_matrix = reference_volume.direction_matrix
-        return binary_mask
+        return volume
 
     def _voxelize_binary_mask_cells(  # type: ignore[misc]
         self: DataSet,
@@ -8996,6 +8930,86 @@ class DataSetFilters(DataObjectFilters):
         ugrid = voxel_cells.threshold(0.5)
         del ugrid.cell_data['mask']
         return ugrid
+
+
+def _make_reference_volume(
+    mesh: DataSet,
+    *,
+    reference_volume: ImageData | None,
+    dimensions: VectorLike[int] | None,
+    spacing: float | VectorLike[float] | None,
+    rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None,
+    cell_length_percentile: float | None,
+    cell_length_sample_size: int | None,
+    progress_bar: bool,
+) -> ImageData:  # numpydoc ignore=RT01
+    """Create an empty image whose voxels fit the bounds of a mesh."""
+    if reference_volume is not None:
+        if (
+            dimensions is not None
+            or spacing is not None
+            or rounding_func is not None
+            or cell_length_percentile is not None
+            or cell_length_sample_size is not None
+        ):
+            msg = (
+                'Cannot specify a reference volume with other geometry parameters. '
+                '`reference_volume` must define the geometry exclusively.'
+            )
+            raise TypeError(msg)
+        _validation.check_instance(reference_volume, pv.ImageData, name='reference volume')
+        volume = pv.ImageData()
+        volume.extent = reference_volume.extent
+        volume.spacing = reference_volume.spacing
+        volume.origin = reference_volume.origin
+        volume.direction_matrix = reference_volume.direction_matrix
+        return volume
+
+    if spacing is not None and dimensions is not None:
+        msg = 'Spacing and dimensions cannot both be set. Set one or the other.'
+        raise TypeError(msg)
+
+    if spacing is not None and (
+        cell_length_percentile is not None or cell_length_sample_size is not None
+    ):
+        msg = 'Spacing and cell length options cannot both be set. Set one or the other.'
+        raise TypeError(msg)
+
+    size = np.array(mesh.bounds_size)
+
+    if dimensions is None:
+        if spacing is None:
+            # Estimate spacing from cell length percentile
+            cell_length_percentile = (
+                0.1 if cell_length_percentile is None else cell_length_percentile
+            )
+            cell_length_sample_size = (
+                100_000 if cell_length_sample_size is None else cell_length_sample_size
+            )
+            spacing = _length_distribution_percentile(
+                mesh,
+                cell_length_percentile,
+                cell_length_sample_size,
+                progress_bar=progress_bar,
+            )
+        # Get initial spacing (will be adjusted later)
+        initial_spacing = _validation.validate_array3(spacing, broadcast=True)
+        rounding_func = np.round if rounding_func is None else rounding_func
+        initial_dimensions = size / initial_spacing
+        # Make sure we don't round dimensions to zero, make it one instead
+        initial_dimensions[initial_dimensions < 1] = 1
+        dimensions = np.array(rounding_func(initial_dimensions), dtype=int)
+    elif rounding_func is not None:
+        msg = 'Rounding func cannot be set when dimensions is specified. Set one or the other.'
+        raise TypeError(msg)
+
+    volume = pv.ImageData()
+    volume.dimensions = dimensions
+    final_spacing = size / np.array(volume.dimensions)
+    volume.spacing = final_spacing
+    # Voxels are points, so inset them by 1/2 spacing to fit the cells to the bounds
+    volume.origin = np.array(mesh.bounds[::2]) + final_spacing / 2
+    return volume
 
 
 def _length_distribution_percentile(poly, percentile, cell_length_sample_size, *, progress_bar):
