@@ -3474,8 +3474,7 @@ class BasePlotter(_BoundsSizeMixin):
             lighting=lighting,
             line_width=line_width,
             opacity=opacity,
-            # the common parser reduced this to 'back', 'front' or 'none'
-            culling=cast('str | None', culling),
+            culling=culling,
             edge_opacity=edge_opacity,
         )
         actor.SetProperty(prop)

@@ -17,7 +17,10 @@ from .opts import PointSpriteShape
 from .opts import RepresentationType
 
 if TYPE_CHECKING:
+    from typing import Literal
+
     from ._typing import ColorLike
+    from ._typing import CullingOptions
     from .themes import Theme
 
 _HAS_NATIVE_POINT_SHAPES = hasattr(getattr(_vtk.vtkProperty, 'Point2DShapeType', None), 'Star')
@@ -114,15 +117,15 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         Thickness of lines.  Only valid for wireframe and surface
         representations.
 
-    culling : str, optional
+    culling : str | bool, optional
         Does not render faces that are culled. This can be helpful for
         dense surface meshes, especially when edges are visible, but can
         cause flat meshes to be partially displayed. Defaults to
         ``'none'``. One of the following:
 
-        * ``"back"`` - Enable backface culling
-        * ``"front"`` - Enable frontface culling
-        * ``'none'`` - Disable both backface and frontface culling
+        * ``True``, ``'b'``, ``'back'``, ``'backface'`` - Enable backface culling
+        * ``'f'``, ``'front'``, ``'frontface'`` - Enable frontface culling
+        * ``False``, ``'none'`` - Disable both backface and frontface culling
 
     edge_opacity : float, default: :attr:`pyvista.plotting.themes.Theme.edge_opacity`
         Edge opacity of the mesh. A single float value that will be applied globally
@@ -193,7 +196,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         render_lines_as_tubes: bool | None = None,
         lighting: bool | None = None,
         line_width: float | None = None,
-        culling: str | None = None,
+        culling: CullingOptions | Literal['none'] | bool | None = None,
         edge_opacity: float | None = None,
     ) -> None:
         """Initialize this property."""
@@ -1059,12 +1062,14 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
 
         Does not render faces that are culled. This can be helpful for dense
         surface meshes, especially when edges are visible, but can cause flat
-        meshes to be partially displayed. Defaults to ``'none'``. One of the
-        following:
+        meshes to be partially displayed. Defaults to ``'none'``.
 
-        * ``"back"`` - Enable backface culling
-        * ``"front"`` - Enable frontface culling
-        * ``'none'`` - Disable both backface and frontface culling
+        The setter accepts any of the following, and the getter returns
+        ``'back'``, ``'front'`` or ``'none'``:
+
+        * ``True``, ``'b'``, ``'back'``, ``'backface'`` - Enable backface culling
+        * ``'f'``, ``'front'``, ``'frontface'`` - Enable frontface culling
+        * ``False``, ``'none'`` - Disable both backface and frontface culling
 
         Examples
         --------
@@ -1099,27 +1104,30 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         return 'none'
 
     @culling.setter
-    def culling(self, value: str) -> None:
+    def culling(self, value: CullingOptions | Literal['none'] | bool) -> None:
         if isinstance(value, str):
-            value = value.lower()
+            value = value.lower()  # type: ignore[assignment]
 
-        if value == 'back':
+        if value in (True, 'b', 'back', 'backface'):
             try:
                 self.BackfaceCullingOn()
                 self.FrontfaceCullingOff()
             except AttributeError:  # pragma: no cover
                 pass
-        elif value == 'front':
+        elif value in ('f', 'front', 'frontface'):
             try:
                 self.FrontfaceCullingOn()
                 self.BackfaceCullingOff()
             except AttributeError:  # pragma: no cover
                 pass
-        elif value == 'none':
+        elif value in (False, 'none'):
             self.FrontfaceCullingOff()
             self.BackfaceCullingOff()
         else:
-            msg = f'Invalid culling "{value}". Should be either:\n"back", "front", or "None"'
+            msg = (
+                f'Invalid culling "{value}". Should be one of:\n'
+                'True, "b", "back", "backface", "f", "front", "frontface", False, or "none"'
+            )
             raise ValueError(msg)
 
     @property
