@@ -1212,8 +1212,8 @@ Run all code examples in the docstrings with:
 Type Checking
 ~~~~~~~~~~~~~
 PyVista uses `mypy <https://mypy.readthedocs.io/>`_ for static type checking. Configuration
-lives in the ``[tool.mypy]`` section of ``pyproject.toml``. ``-n 2`` checks with two
-worker processes, as the ``tox`` environment does.
+lives in the ``[tool.mypy]`` section of ``pyproject.toml``, so no additional command-line
+flags are required to run it.
 
 .. tab-set::
     :sync-group: category
@@ -1224,7 +1224,7 @@ worker processes, as the ``tox`` environment does.
         .. code-block:: bash
 
             pip install -e . --group typing
-            mypy -n 2
+            mypy
 
     .. tab-item:: tox
         :sync: tox
