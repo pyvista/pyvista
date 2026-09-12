@@ -89,7 +89,10 @@ OpacityOptions = Literal[
     'foreground',
 ]
 CullingOptions = Literal['front', 'back', 'frontface', 'backface', 'f', 'b']
-StyleOptions = Literal['surface', 'wireframe', 'points', 'points_gaussian']
+# `Property` also takes bools and disables culling by name
+PropertyCullingOptions = CullingOptions | Literal['none'] | bool
+RepresentationOptions = Literal['surface', 'wireframe', 'points']
+StyleOptions = RepresentationOptions | Literal['points_gaussian']
 LightingOptions = Literal['light kit', 'three lights', 'none']
 BorderOptions = Literal[True, False, 'interior', 'exterior']
 # Distinct, user-facing built-in theme names, for autocomplete only. Excludes
@@ -117,7 +120,7 @@ class BackfaceArgs(TypedDict, total=False):
     theme: Theme
     interpolation: Literal['Physically based rendering', 'pbr', 'Phong', 'Gouraud', 'Flat']
     color: ColorLike
-    style: Literal['surface', 'wireframe', 'points']
+    style: RepresentationOptions
     metallic: float
     roughness: float
     point_size: float
@@ -132,7 +135,7 @@ class BackfaceArgs(TypedDict, total=False):
     render_lines_as_tubes: bool
     lighting: bool
     line_width: float
-    culling: CullingOptions | Literal['none'] | bool
+    culling: PropertyCullingOptions
     edge_opacity: float
 
 

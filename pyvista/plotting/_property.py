@@ -17,10 +17,8 @@ from .opts import PointSpriteShape
 from .opts import RepresentationType
 
 if TYPE_CHECKING:
-    from typing import Literal
-
     from ._typing import ColorLike
-    from ._typing import CullingOptions
+    from ._typing import PropertyCullingOptions
     from .themes import Theme
 
 _HAS_NATIVE_POINT_SHAPES = hasattr(getattr(_vtk.vtkProperty, 'Point2DShapeType', None), 'Star')
@@ -196,7 +194,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         render_lines_as_tubes: bool | None = None,
         lighting: bool | None = None,
         line_width: float | None = None,
-        culling: CullingOptions | Literal['none'] | bool | None = None,
+        culling: PropertyCullingOptions | None = None,
         edge_opacity: float | None = None,
     ) -> None:
         """Initialize this property."""
@@ -1104,7 +1102,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         return 'none'
 
     @culling.setter
-    def culling(self, value: CullingOptions | Literal['none'] | bool) -> None:
+    def culling(self, value: PropertyCullingOptions) -> None:
         if isinstance(value, str):
             value = value.lower()  # type: ignore[assignment]
 
