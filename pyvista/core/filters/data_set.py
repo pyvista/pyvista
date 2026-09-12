@@ -1320,6 +1320,14 @@ class DataSetFilters(DataObjectFilters):
             progress_bar=progress_bar,
         )
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # PointSet
+    def remove_nan_cells(self: PointSet, *, scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., component_mode: Literal['component', 'all', 'any'] = ..., component: int = ..., progress_bar: bool = ...) -> PointSet: ...  # type: ignore[misc, overload-overlap]
+    @overload  # DataSet
+    def remove_nan_cells(self: DataSet, *, scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., component_mode: Literal['component', 'all', 'any'] = ..., component: int = ..., progress_bar: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def remove_nan_cells(  # type: ignore[misc]
         self: _DataSetType,
         *,
@@ -1328,7 +1336,7 @@ class DataSetFilters(DataObjectFilters):
         component_mode: Literal['component', 'all', 'any'] = 'all',
         component: int = 0,
         progress_bar: bool = False,
-    ) -> UnstructuredGrid:
+    ) -> PointSet | UnstructuredGrid:
         """Remove cells whose scalar values are NaN.
 
         A cell is considered NaN if any of its associated scalar values are
@@ -1374,8 +1382,9 @@ class DataSetFilters(DataObjectFilters):
 
         Returns
         -------
-        pyvista.UnstructuredGrid
-            Dataset with NaN cells removed.
+        pyvista.UnstructuredGrid | pyvista.PointSet
+            Dataset with NaN cells removed. A :class:`~pyvista.PointSet` input returns
+            a ``PointSet`` with its NaN points removed.
 
         See Also
         --------
@@ -1405,6 +1414,19 @@ class DataSetFilters(DataObjectFilters):
         False
 
         """
+        # Cell-wise operations fail for a point cloud, so use its vertex cells
+        if isinstance(self, pv.PointSet):
+            return (
+                self.cast_to_polydata(deep=False)
+                .remove_nan_cells(
+                    scalars=scalars,
+                    preference=preference,
+                    component_mode=component_mode,
+                    component=component,
+                    progress_bar=progress_bar,
+                )
+                .cast_to_pointset()
+            )
         scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
         arr = get_array(self, scalars_, preference=preference, err=False)
         if arr is None:
@@ -1588,7 +1610,7 @@ class DataSetFilters(DataObjectFilters):
         alg.SetSampleDimensions(list(dimensions_))
         message = 'Splatting Points with Gaussian Distribution'
         _update_alg(alg, progress_bar=progress_bar, message=message)
-        return _get_output(alg)
+        return _get_output(alg, keep_pointset=False)
 
     def extract_geometry(  # type: ignore[misc]
         self: _DataSetType,
@@ -3155,7 +3177,7 @@ class DataSetFilters(DataObjectFilters):
 
         """
         alg = _vtk.vtkDelaunay3D()
-        alg.SetInputData(self)
+        alg.SetInputData(self.cast_to_unstructured_grid() if isinstance(self, pv.Grid) else self)
         alg.SetAlpha(alpha)
         alg.SetTolerance(tol)
         alg.SetOffset(offset)
@@ -3908,7 +3930,7 @@ class DataSetFilters(DataObjectFilters):
 
         # run the algorithm
         _update_alg(alg, progress_bar=progress_bar, message='Generating Streamlines')
-        return _get_output(alg)
+        return _get_output(alg, keep_pointset=False)
 
     def streamlines_evenly_spaced_2D(  # type: ignore[misc]  # noqa: N802
         self: _DataSetType,
@@ -4096,7 +4118,7 @@ class DataSetFilters(DataObjectFilters):
             progress_bar=progress_bar,
             message='Generating Evenly Spaced Streamlines on a 2D Dataset',
         )
-        return _get_output(alg)
+        return _get_output(alg, keep_pointset=False)
 
     def decimate_boundary(  # type: ignore[misc]
         self: _DataSetType,
@@ -6241,8 +6263,10 @@ class DataSetFilters(DataObjectFilters):
 
         Returns
         -------
-        output : pyvista.PolyData | pyvista.UnstructuredGrid
-            Mesh with merged points. PolyData is returned only if the input is PolyData.
+        output : pyvista.PolyData | pyvista.PointSet | pyvista.UnstructuredGrid
+            Mesh with merged points. A :class:`~pyvista.PolyData` gives a ``PolyData`` and a
+            :class:`~pyvista.PointSet` a ``PointSet``; every other dataset gives an
+            ``UnstructuredGrid``.
 
         Examples
         --------
@@ -6260,7 +6284,11 @@ class DataSetFilters(DataObjectFilters):
         # Create a second mesh with points. This is required for the merge
         # to work correctly. Additional points are not required for PolyData inputs
         other_points = None if isinstance(self, pv.PolyData) else self.points
-        other_mesh = pv.PolyData(other_points)
+        other_mesh = (
+            pv.PointSet(other_points)
+            if isinstance(self, pv.PointSet)
+            else pv.PolyData(other_points)
+        )
         return self.merge(
             other_mesh,
             merge_points=True,
@@ -6340,8 +6368,9 @@ class DataSetFilters(DataObjectFilters):
 
         Returns
         -------
-        pyvista.UnstructuredGrid
-            Merged grid.
+        pyvista.UnstructuredGrid | pyvista.PointSet
+            Merged grid. A :class:`~pyvista.PointSet` merged with nothing but point
+            clouds stays a ``PointSet``.
 
         Notes
         -----
@@ -6404,7 +6433,14 @@ class DataSetFilters(DataObjectFilters):
             append_filter.AddInputData(self)
 
         _update_alg(append_filter, progress_bar=progress_bar, message='Merging')
-        merged = _get_output(append_filter)
+        merged = _get_output(append_filter, keep_pointset=False)
+        # Only a merge of point clouds is still a point cloud
+        if isinstance(self, pv.PointSet):
+            others = (
+                [] if grid is None else [grid] if isinstance(grid, _vtk.vtkDataSet) else list(grid)
+            )
+            if all(isinstance(other, pv.PointSet) for other in others):
+                merged = merged.cast_to_pointset()
 
         if not vtk_at_least_95:
             # Update field data
@@ -6493,7 +6529,9 @@ class DataSetFilters(DataObjectFilters):
 
         """
         alg = _vtk.vtkBoundaryMeshQuality()
-        alg.SetInputData(self)
+        alg.SetInputData(
+            self.cast_to_unstructured_grid() if isinstance(self, pv.PolyData) else self
+        )
         _update_alg(alg, progress_bar=progress_bar, message='Compute Boundary Mesh Quality')
         return _get_output(alg)
 
@@ -6780,7 +6818,7 @@ class DataSetFilters(DataObjectFilters):
         alg.SetInputData(self)
         alg.SetDivideAllCellDataByVolume(False)
         _update_alg(alg, progress_bar=progress_bar, message='Integrating Variables')
-        return _get_output(alg)
+        return _get_output(alg, keep_pointset=False)
 
     def partition(  # type: ignore[misc]
         self: _DataSetType,
@@ -6788,7 +6826,7 @@ class DataSetFilters(DataObjectFilters):
         *,
         generate_global_id: bool = False,
         as_composite: bool = True,
-    ):
+    ) -> MultiBlock | PointSet | UnstructuredGrid:
         """Break down input dataset into a requested number of partitions.
 
         Cells on boundaries are uniquely assigned to each partition without duplication.
@@ -6825,8 +6863,10 @@ class DataSetFilters(DataObjectFilters):
 
         Returns
         -------
-        output : pyvista.MultiBlock | pyvista.UnstructuredGrid
-            UnStructuredGrid if ``as_composite=False`` and MultiBlock when ``True``.
+        output : pyvista.MultiBlock | pyvista.UnstructuredGrid | pyvista.PointSet
+            UnstructuredGrid if ``as_composite=False`` and MultiBlock when ``True``. A
+            :class:`~pyvista.PointSet` is partitioned by its points and gives ``PointSet``
+            blocks.
 
         Examples
         --------
@@ -6846,6 +6886,18 @@ class DataSetFilters(DataObjectFilters):
         >>> out.plot(multi_colors=True, cpos='xy')
 
         """
+        # Cell-wise operations fail for a point cloud, so use its vertex cells
+        if isinstance(self, pv.PointSet):
+            output = self.cast_to_polydata(deep=False).partition(
+                n_partitions,
+                generate_global_id=generate_global_id,
+                as_composite=as_composite,
+            )
+            if isinstance(output, pv.MultiBlock):
+                for ids, _, block in output.recursive_iterator('all', skip_none=True):
+                    output.replace(ids, block.cast_to_pointset())
+                return output
+            return output.cast_to_pointset()
         if not _vtk.has_attr('vtkRedistributeDataSetFilter'):  # pragma: no cover
             msg = (
                 '`partition` requires vtkRedistributeDataSetFilter, but it '
@@ -7403,6 +7455,13 @@ class DataSetFilters(DataObjectFilters):
         Unlike :func:`pyvista.DataSetFilters.extract_cells` which always
         produces a :class:`pyvista.UnstructuredGrid` output, this filter
         produces the same output type as input type.
+
+        A :class:`~pyvista.PointSet` has no cells, so extracting from one raises
+        :class:`~pyvista.core.errors.PointSetCellOperationError`.
+
+        .. versionchanged:: 0.50
+
+            A ``PointSet`` raises instead of giving an empty dataset.
 
         Examples
         --------
@@ -8185,6 +8244,11 @@ class DataSetFilters(DataObjectFilters):
         .. versionadded:: 0.45.0
 
         .. note::
+            The input must be a surface with faces or strips. Generate a surface from a
+            point cloud with :meth:`~pyvista.PolyDataFilters.reconstruct_surface` before
+            voxelizing it.
+
+        .. note::
             For best results, ensure the input surface is a closed surface. The
             surface is considered closed if it has zero :attr:`~pyvista.PolyData.n_open_edges`.
 
@@ -8627,6 +8691,12 @@ class DataSetFilters(DataObjectFilters):
 
         .. note::
 
+            The input must be a surface with faces or strips. Generate a surface from a
+            point cloud with :meth:`~pyvista.PolyDataFilters.reconstruct_surface` before
+            voxelizing it.
+
+        .. note::
+
             This method is a wrapper around :meth:`voxelize_binary_mask`. See that
             method for additional information.
 
@@ -8793,6 +8863,12 @@ class DataSetFilters(DataObjectFilters):
         used by default to estimate the spacing.
 
         .. versionadded:: 0.46
+
+        .. note::
+
+            The input must be a surface with faces or strips. Generate a surface from a
+            point cloud with :meth:`~pyvista.PolyDataFilters.reconstruct_surface` before
+            voxelizing it.
 
         .. note::
 
