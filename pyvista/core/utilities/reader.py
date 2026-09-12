@@ -299,7 +299,7 @@ class BaseReader(_FileIOBase, Generic[_T_Output_co]):
             self._reader = self._class_reader()
         self._filename: str | None = None
         self._progress_bar = False
-        self._progress_msg: str | None = None
+        self._progress_msg = ''
         self.__directory: str | None = None
         self._set_defaults()
         self.path = str(path)
