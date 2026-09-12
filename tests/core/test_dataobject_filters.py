@@ -6,6 +6,7 @@ import re
 import sys
 from typing import Literal
 from typing import get_args
+from unittest.mock import Mock
 
 from hypothesis import HealthCheck
 from hypothesis import assume
@@ -1672,8 +1673,11 @@ def test_point_data_to_cell_data_strings_no_copies(monkeypatch, categorical):
         copies.append(copied)
         return copied
 
-    def forbid_copy(*_args, **_kwargs):
-        pytest.fail('Conversion must not copy the input or materialize string values.')
+    forbid_copy = Mock(
+        side_effect=AssertionError(
+            'Conversion must not copy the input or materialize string values.'
+        )
+    )
 
     with monkeypatch.context() as patch:
         patch.setattr(pv.DataObject, 'copy', check_copy)
@@ -1681,6 +1685,7 @@ def test_point_data_to_cell_data_strings_no_copies(monkeypatch, categorical):
         with pytest.warns(UserWarning, match="Dropping string array 'labels'"):
             result = mesh.point_data_to_cell_data(pass_point_data=True, categorical=categorical)
 
+    forbid_copy.assert_not_called()
     assert len(copies) == int(categorical)
     for copied in copies:
         assert np.shares_memory(copied.points, mesh.points)
