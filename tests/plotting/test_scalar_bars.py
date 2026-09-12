@@ -343,6 +343,40 @@ def test_title_pad_boxed(sphere, outline: bool, fill: bool):
     assert pl.scalar_bar.GetTitleTextProperty().GetLineOffset() == 0
 
 
+@pytest.mark.usefixtures('verify_image_cache')
+def test_stacked_horizontal_bars_render(sphere):
+    sphere[KEY] = sphere.points[:, 2]
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    for i in range(3):
+        pl.add_scalar_bar(
+            f'{KEY} {i}',
+            vertical=False,
+            title_font_size=14,
+            label_font_size=14,
+            n_labels=3,
+            mapper=pl.mapper,
+        )
+    pl.show()
+
+
+@pytest.mark.usefixtures('verify_image_cache')
+def test_stacked_vertical_bars_render(sphere):
+    sphere[KEY] = sphere.points[:, 2]
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    for i in range(3):
+        pl.add_scalar_bar(
+            f'Range {i}',
+            vertical=True,
+            title_font_size=14,
+            label_font_size=14,
+            n_labels=3,
+            mapper=pl.mapper,
+        )
+    pl.show()
+
+
 @pytest.mark.parametrize('window_size', [[400, 300], [600, 400], [1024, 768]])
 def test_stacked_horizontal_bars_clear_their_annotations(sphere, window_size):
     # The pitch is a fraction of the window, so a small one must still fit the text
