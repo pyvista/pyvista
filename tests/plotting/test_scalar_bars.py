@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import itertools
+import re
 
 import numpy as np
 import pytest
 
 import pyvista as pv
 from pyvista import _vtk
+from pyvista.core.errors import VTKVersionError
 from pyvista.plotting.scalar_bars import _title_height
 from pyvista.plotting.scalar_bars import _title_width
 
@@ -452,7 +454,20 @@ def test_stacked_vertical_bars_clear_an_uneven_neighbor(sphere):
 STACKED_TITLES = ['A bit long', 'Short', 'Super duper long']
 
 
-@pytest.mark.parametrize('stacking', [None, 'widen', 'stagger', 'rotate'])
+@pytest.mark.parametrize(
+    'stacking',
+    [
+        None,
+        'widen',
+        'stagger',
+        pytest.param(
+            'rotate',
+            marks=pytest.mark.needs_vtk_version(
+                9, 4, 0, reason='ForceVerticalTitle was added in VTK 9.4.0'
+            ),
+        ),
+    ],
+)
 @pytest.mark.usefixtures('verify_image_cache')
 def test_stacking_layouts_render(sphere, stacking):
     sphere[KEY] = sphere.points[:, 2]
@@ -474,6 +489,7 @@ def test_stacking_layouts_render(sphere, stacking):
     pl.show()
 
 
+@pytest.mark.needs_vtk_version(9, 4, 0, reason='ForceVerticalTitle was added in VTK 9.4.0')
 @pytest.mark.parametrize('title_pad', [0.0, 0.5, 1.0, 2.0])
 @pytest.mark.parametrize('font_size', [10, 14, 20, 28])
 def test_stacking_rotate_clears_the_bar_by_the_title_pad(sphere, font_size, title_pad):
@@ -546,6 +562,18 @@ def test_stacking_invalid(sphere):
     pl.add_mesh(sphere, show_scalar_bar=False)
     with pytest.raises(ValueError, match=r'stacking .* is not valid'):
         pl.add_scalar_bar(KEY, stacking='spread', mapper=pl.mapper)
+    pl.close()
+
+
+@pytest.mark.skipif(
+    pv.vtk_version_info >= (9, 4, 0), reason='ForceVerticalTitle was added in VTK 9.4.0'
+)
+def test_stacking_rotate_needs_vtk_94(sphere):
+    sphere[KEY] = sphere.points[:, 2]
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    with pytest.raises(VTKVersionError, match=re.escape('requires VTK 9.4.0')):
+        pl.add_scalar_bar(KEY, vertical=True, stacking='rotate', mapper=pl.mapper)
     pl.close()
 
 

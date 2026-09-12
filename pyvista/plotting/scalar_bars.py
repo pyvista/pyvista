@@ -11,6 +11,7 @@ import pyvista_validation as _validation
 import pyvista as pv
 from pyvista import MAX_N_COLOR_BARS
 from pyvista import _vtk
+from pyvista.core.errors import VTKVersionError
 from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
@@ -439,9 +440,10 @@ class ScalarBars(_NoNewAttrMixin):
             spaces each bar by the width of its own title and its neighbor's.
             ``'stagger'`` keeps the bars close and steps each one up so that
             the titles clear each other.  ``'rotate'`` turns each title alongside its bar.
-            ``'stagger'`` and ``'rotate'`` apply to vertical bars only.  Use
-            ``title_pad`` to set the space each one leaves.  Has no effect when
-            the font size is constrained.
+            ``'stagger'`` and ``'rotate'`` apply to vertical bars only, and
+            ``'rotate'`` requires VTK 9.4.0 or newer.  Use ``title_pad`` to set
+            the space each one leaves.  Has no effect when the font size is
+            constrained.
 
             .. versionadded:: 0.50
 
@@ -682,6 +684,9 @@ class ScalarBars(_NoNewAttrMixin):
             if not vertical and stacking != 'widen':
                 msg = f'Stacking {stacking!r} is not supported for horizontal scalar bars.'
                 raise ValueError(msg)
+            if stacking == 'rotate' and pv.vtk_version_info < (9, 4, 0):
+                msg = "Stacking 'rotate' requires VTK 9.4.0 or newer."
+                raise VTKVersionError(msg)
 
         if title_pad is None:
             title_pad = (
