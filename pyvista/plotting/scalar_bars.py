@@ -17,6 +17,13 @@ from .colors import Color
 from .tools import parse_font_family
 
 
+def _title_width(text_property, title, dpi):
+    """Return the width in pixels of a title rendered with this text property."""
+    bounds = [0, 0, 0, 0]
+    _vtk.vtkFreeTypeTools.GetInstance().GetBoundingBox(text_property, title, dpi, bounds)
+    return bounds[1] - bounds[0] + 1
+
+
 class ScalarBars(_NoNewAttrMixin):
     """Plotter Scalar Bars.
 
@@ -247,6 +254,7 @@ class ScalarBars(_NoNewAttrMixin):
         italic: bool = False,
         bold: bool = False,
         title_font_size=None,
+        title_pad=None,
         label_font_size=None,
         color=None,
         font_family=None,
@@ -324,6 +332,16 @@ class ScalarBars(_NoNewAttrMixin):
         title_font_size : float, optional
             Sets the size of the title font.  Defaults to ``None`` and is sized
             according to :attr:`pyvista.plotting.themes.Theme.font`.
+
+        title_pad : float, optional
+            Space between the title and the tick labels, as a multiple of the
+            title font size.  Defaults to ``None`` and is sized according to
+            :attr:`pyvista.plotting.themes.Theme.colorbar_horizontal` or
+            :attr:`pyvista.plotting.themes.Theme.colorbar_vertical`.  Has no
+            effect when the font size is constrained, or when ``fill`` or
+            ``outline`` draws a box the title would be padded out of.
+
+            .. versionadded:: 0.50
 
         label_font_size : float, optional
             Sets the size of the title font.  Defaults to ``None`` and is sized
@@ -541,6 +559,13 @@ class ScalarBars(_NoNewAttrMixin):
         if vertical is None and theme.colorbar_orientation.lower() == 'vertical':
             vertical = True
 
+        if title_pad is None:
+            title_pad = (
+                theme.colorbar_vertical.title_pad
+                if vertical
+                else theme.colorbar_horizontal.title_pad
+            )
+
         # Automatically choose size if not specified
         if width is None:
             width = theme.colorbar_vertical.width if vertical else theme.colorbar_horizontal.width
@@ -576,6 +601,7 @@ class ScalarBars(_NoNewAttrMixin):
             return None
 
         # Automatically choose location if not specified
+        stacked_slot = 0
         if position_x is None or position_y is None:
             if not self._plotter._scalar_bar_slots:
                 msg = f'Maximum number of color bars ({MAX_N_COLOR_BARS}) reached.'
@@ -589,6 +615,7 @@ class ScalarBars(_NoNewAttrMixin):
                 if vertical:
                     position_x = theme.colorbar_vertical.position_x
                     position_x -= slot * (width + 0.2 * width)
+                    stacked_slot = slot
                 else:
                     position_x = theme.colorbar_horizontal.position_x
 
@@ -598,6 +625,7 @@ class ScalarBars(_NoNewAttrMixin):
                 else:
                     position_y = theme.colorbar_horizontal.position_y
                     position_y += slot * height
+                    stacked_slot = slot
 
         # parse color
         color = Color(color, default_color=theme.font.color)
@@ -747,6 +775,40 @@ class ScalarBars(_NoNewAttrMixin):
 
         if unconstrained_font_size:
             scalar_bar.SetUnconstrainedFontSize(True)
+
+        draws_box = scalar_bar.GetDrawFrame() or scalar_bar.GetDrawBackground()
+        unconstrained = bool(scalar_bar.GetUnconstrainedFontSize())
+        pad = round(title_pad * title_text.GetFontSize()) if title_pad and not draws_box else 0
+        if pad and unconstrained:
+            title_text.SetLineOffset(-pad)
+
+        # The gap between stacked bars is a fraction of the window but the annotations
+        # are not, so the annotations set that gap once the window is small
+        if stacked_slot and unconstrained:
+            window_width, window_height = self._plotter.window_size
+            if vertical:
+                title_width = _title_width(
+                    title_text, display_title, self._plotter.render_window.GetDPI()
+                )
+                margin = 0.2 * width * window_width
+                spacing = margin + max(width * window_width, title_width)
+                _, y = scalar_bar.GetPosition()
+                position_x = (
+                    theme.colorbar_vertical.position_x - stacked_slot * spacing / window_width
+                )
+                scalar_bar.SetPosition(position_x, y)
+            else:
+                annotations = (
+                    scalar_bar.GetBarRatio() * height * window_height
+                    + title_text.GetFontSize()
+                    + label_text.GetFontSize()
+                )
+                spacing = pad + max(height * window_height, annotations)
+                x, _ = scalar_bar.GetPosition()
+                position_y = (
+                    theme.colorbar_horizontal.position_y + stacked_slot * spacing / window_height
+                )
+                scalar_bar.SetPosition(x, position_y)
 
         # finally, add to the actor and return the scalar bar
         self._plotter.add_actor(scalar_bar, reset_camera=False, pickable=False, render=render)
