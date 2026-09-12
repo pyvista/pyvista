@@ -12,6 +12,7 @@ import threading
 import traceback
 from typing import TYPE_CHECKING
 from typing import NamedTuple
+from typing import NoReturn
 
 from pyvista import _vtk
 from pyvista._warn_external import warn_external
@@ -22,10 +23,19 @@ from pyvista.core.utilities.misc import _NoNewAttrMixin
 log = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+    from types import FrameType
+
+    from tqdm import tqdm
     from typing_extensions import Self
 
+    from pyvista._vtk import vtkObject
+    from pyvista.core.utilities.reader import BaseVTKReader
 
-def set_error_output_file(filename):
+
+def set_error_output_file(
+    filename: str | Path,
+) -> tuple[_vtk.vtkFileOutputWindow, _vtk.vtkOutputWindow]:
     """Set a file to write out the VTK errors.
 
     Parameters
@@ -43,7 +53,7 @@ def set_error_output_file(filename):
     """
     filename = Path(filename).expanduser().resolve()
     fileOutputWindow = _vtk.vtkFileOutputWindow()
-    fileOutputWindow.SetFileName(filename)
+    fileOutputWindow.SetFileName(filename)  # type: ignore[arg-type]
     outputWindow = _vtk.vtkOutputWindow()
     outputWindow.SetInstance(fileOutputWindow)
     return fileOutputWindow, outputWindow
@@ -108,7 +118,7 @@ class VtkErrorCatcher:
         self._start_observing()
         return self
 
-    def _start_observing(self):
+    def _start_observing(self) -> None:
         output_window = _vtk.vtkStringOutputWindow()
         error_win = _vtk.vtkOutputWindow()
         self._error_output_orig = error_win.GetInstance()
@@ -122,16 +132,16 @@ class VtkErrorCatcher:
         obs.observe(output_window)
         self._warning_observer = obs
 
-    def __exit__(self, *args):
+    def __exit__(self, *args: object) -> None:
         """Stop observing VTK string output window."""
         self._stop_observing()
         self._emit_warnings_and_raise_errors()
 
-    def _stop_observing(self):
+    def _stop_observing(self) -> None:
         error_win = _vtk.vtkOutputWindow()
         error_win.SetInstance(self._error_output_orig)
 
-    def _emit_warnings_and_raise_errors(self):
+    def _emit_warnings_and_raise_errors(self) -> None:
         if self.emit_warnings and self.warning_events:
             self._emit_warning(self._runtime_warning_message)
         if self.raise_errors and self.error_events:
@@ -174,10 +184,10 @@ class VtkErrorCatcher:
         """List of VTK error events formatted as runtime errors."""
         return '\n'.join([str(e) for e in self.warning_events])
 
-    def _raise_error(self, message: str):
+    def _raise_error(self, message: str) -> NoReturn:
         raise VTKExecutionError(message)
 
-    def _emit_warning(self, message: str):
+    def _emit_warning(self, message: str) -> None:
         warn_external(message, VTKExecutionWarning)
 
 
@@ -191,7 +201,7 @@ class VtkEvent(NamedTuple):
     line: str
     name: str
 
-    def __str__(self):
+    def __str__(self) -> str:
         if all(self):
             return (
                 f'{self.kind}: In {self.path}, line {self.line}\n'
@@ -218,7 +228,7 @@ class Observer(_NoNewAttrMixin):
 
     def __init__(
         self,
-        event_type='ErrorEvent',
+        event_type: str = 'ErrorEvent',
         *,
         log: bool = True,
         store_history: bool = False,
@@ -237,7 +247,7 @@ class Observer(_NoNewAttrMixin):
         self._event_history_etc: list[str] = []
 
     @staticmethod
-    def parse_message(message) -> VtkEvent:
+    def parse_message(message: str) -> VtkEvent:
         """Parse the given message.
 
         Parameters
@@ -271,7 +281,7 @@ class Observer(_NoNewAttrMixin):
             )
         return VtkEvent(kind='', path='', line='', name='', address='', alert=message.strip())
 
-    def log_message(self, kind, alert) -> None:
+    def log_message(self, kind: str, alert: str) -> None:
         """Parse different event types and passes them to logging.
 
         Parameters
@@ -288,7 +298,7 @@ class Observer(_NoNewAttrMixin):
         else:
             logging.warning(alert)  # noqa: LOG015
 
-    def __call__(self, _obj, _event, message='') -> None:
+    def __call__(self, _obj: vtkObject, _event: str, message: str = '') -> None:
         """Declare standard call function for the observer.
 
         On an event occurrence, this function executes.
@@ -318,7 +328,7 @@ class Observer(_NoNewAttrMixin):
             except Exception as e:  # noqa: BLE001
                 log.debug('Failed to print VTK error message: %s', e)
 
-    def has_event_occurred(self):  # numpydoc ignore=RT01
+    def has_event_occurred(self) -> bool:  # numpydoc ignore=RT01
         """Ask self if an error has occurred since last queried.
 
         This resets the observer's status.
@@ -328,7 +338,7 @@ class Observer(_NoNewAttrMixin):
         self.__event_occurred = False
         return occ
 
-    def get_message(self, *, etc: bool = False):
+    def get_message(self, *, etc: bool = False) -> str | None:
         """Get the last set error message.
 
         Parameters
@@ -338,20 +348,20 @@ class Observer(_NoNewAttrMixin):
 
         Returns
         -------
-        str
-            The last set error message.
+        str or None
+            The last set error message. It is ``None`` until an event has been observed.
 
         """
         if etc:
             return self.__message_etc
         return self.__message
 
-    def observe(self, algorithm):
+    def observe(self, algorithm: vtkObject | BaseVTKReader) -> None:
         """Make this an observer of an algorithm.
 
         Parameters
         ----------
-        algorithm : :vtk:`vtkAlgorithm`
+        algorithm : :vtk:`vtkObject` | BaseVTKReader
             Algorithm to observe.
 
         """
@@ -360,11 +370,11 @@ class Observer(_NoNewAttrMixin):
             raise RuntimeError(msg)
         if hasattr(algorithm, 'GetExecutive') and algorithm.GetExecutive() is not None:
             algorithm.GetExecutive().AddObserver(self.event_type, self)
-        algorithm.AddObserver(self.event_type, self)
+        algorithm.AddObserver(self.event_type, self)  # type: ignore[arg-type]
         self.__observing = True
 
 
-def send_errors_to_logging():  # numpydoc ignore=RT01
+def send_errors_to_logging() -> None:  # numpydoc ignore=RT01
     """Send all VTK error/warning messages to Python's logging module."""
     error_output = _vtk.vtkStringOutputWindow()
     error_win = _vtk.vtkOutputWindow()
@@ -382,15 +392,17 @@ class ProgressMonitor(_NoNewAttrMixin):
 
     Parameters
     ----------
-    algorithm
+    algorithm : :vtk:`vtkAlgorithm` | BaseVTKReader
         VTK algorithm or filter.
 
-    message : str, default: ""
+    message : str | None, default: ""
         Message to display in the progress bar.
 
     """
 
-    def __init__(self, algorithm, message=''):
+    def __init__(
+        self, algorithm: _vtk.vtkAlgorithm | BaseVTKReader, message: str | None = ''
+    ) -> None:
         """Initialize observer."""
         if not importlib.util.find_spec('tqdm'):
             msg = 'Please install `tqdm` to monitor algorithms.'
@@ -401,11 +413,11 @@ class ProgressMonitor(_NoNewAttrMixin):
         self.algorithm = algorithm
         self.message = message
         self._interrupt_signal_received = False
-        self._old_progress = 0
-        self._old_handler = None
-        self._progress_bar = None
+        self._old_progress: float = 0
+        self._old_handler: Callable[[int, FrameType | None], object] | int | None = None
+        self._progress_bar: tqdm | None = None
 
-    def handler(self, sig, frame) -> None:
+    def handler(self, sig: int, frame: FrameType | None) -> None:
         """Pass signal to custom interrupt handler.
 
         Parameters
@@ -420,7 +432,11 @@ class ProgressMonitor(_NoNewAttrMixin):
         self._interrupt_signal_received = (sig, frame)  # type: ignore[assignment]
         logging.debug('SIGINT received. Delaying KeyboardInterrupt until VTK algorithm finishes.')  # noqa: LOG015
 
-    def __call__(self, obj, *args) -> None:  # noqa: ARG002
+    def __call__(
+        self,
+        obj: _vtk.vtkAlgorithm | BaseVTKReader,
+        *args: int | str,  # noqa: ARG002
+    ) -> None:
         """Call progress update callback.
 
         On an event occurrence, this function executes.
@@ -434,7 +450,7 @@ class ProgressMonitor(_NoNewAttrMixin):
             self._progress_bar.update(step)  # type: ignore[union-attr]
             self._old_progress = progress
 
-    def __enter__(self):
+    def __enter__(self) -> tqdm:
         """Enter event for ``with`` context."""
         from tqdm import tqdm  # noqa: PLC0415
 
@@ -450,7 +466,7 @@ class ProgressMonitor(_NoNewAttrMixin):
         self.algorithm.AddObserver(self.event_type, self)
         return self._progress_bar
 
-    def __exit__(self, *args) -> None:
+    def __exit__(self, *args: object) -> None:
         """Exit event for ``with`` context."""
         self._progress_bar.total = 1  # type: ignore[union-attr]
         self._progress_bar.refresh()  # type: ignore[union-attr]

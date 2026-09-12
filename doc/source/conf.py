@@ -176,6 +176,7 @@ autodoc_type_aliases = {
     'JupyterBackendOptions': 'pyvista.JupyterBackendOptions',
     'MeshValidationFields': 'pyvista.MeshValidationFields',
     'Chart': 'pyvista.Chart',
+    'FrameType': 'types.FrameType',
     'ColorLike': 'pyvista.ColorLike',
     # generated from the example names; render it as a name, not 222 literals
     'ExampleName': 'ExampleName',
