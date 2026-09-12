@@ -209,10 +209,26 @@ def test_property_line_width(prop):
     assert prop.line_width == value
 
 
-@pytest.mark.parametrize('value', ['back', 'front', 'none'])
-def test_property_culling(prop, value):
+@pytest.mark.parametrize(
+    ('value', 'expected'),
+    [
+        (True, 'back'),
+        ('b', 'back'),
+        ('back', 'back'),
+        ('backface', 'back'),
+        ('f', 'front'),
+        ('front', 'front'),
+        ('frontface', 'front'),
+        (False, 'none'),
+        ('none', 'none'),
+        ('BackFace', 'back'),
+    ],
+)
+def test_property_culling(prop, value, expected):
     prop.culling = value
-    assert prop.culling == value
+    assert prop.culling == expected
+
+    assert pv.Property(culling=value).culling == expected
 
     with pytest.raises(ValueError, match='Invalid culling'):
         prop.culling = 'foo'
