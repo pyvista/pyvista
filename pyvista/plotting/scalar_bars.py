@@ -65,6 +65,12 @@ class ScalarBars(_NoNewAttrMixin):
             lines.append(f'{title_quotes:20} {interactive!s:5}')
         return '\n'.join(lines)
 
+    def _stacked_neighbor(self, slot):
+        """Return the scalar bar actor occupying the slot below this one, if any."""
+        lookup = self._plotter._scalar_bar_slot_lookup
+        title = next((name for name, taken in lookup.items() if taken == slot - 1), None)
+        return None if title is None else self._scalar_bar_actors.get(title)
+
     def _remove_mapper_from_plotter(
         self,
         actor,
@@ -787,15 +793,30 @@ class ScalarBars(_NoNewAttrMixin):
         if stacked_slot and unconstrained:
             window_width, window_height = self._plotter.window_size
             if vertical:
-                title_width = _title_width(
-                    title_text, display_title, self._plotter.render_window.GetDPI()
-                )
+                dpi = self._plotter.render_window.GetDPI()
+                title_width = _title_width(title_text, display_title, dpi)
                 margin = 0.2 * width * window_width
-                spacing = margin + max(width * window_width, title_width)
+                bar_width = width * window_width
+                neighbor = self._stacked_neighbor(stacked_slot)
                 _, y = scalar_bar.GetPosition()
-                position_x = (
-                    theme.colorbar_vertical.position_x - stacked_slot * spacing / window_width
-                )
+                if neighbor is None:
+                    spacing = margin + max(bar_width, title_width)
+                    position_x = (
+                        theme.colorbar_vertical.position_x - stacked_slot * spacing / window_width
+                    )
+                else:
+                    # A title is centered on its bar, so each neighbor claims half the gap
+                    neighbor_width = _title_width(
+                        neighbor.GetTitleTextProperty(), neighbor.GetTitle(), dpi
+                    )
+                    neighbor_bar = neighbor.GetWidth() * window_width
+                    spacing = margin + max(
+                        (bar_width + neighbor_bar) / 2, (title_width + neighbor_width) / 2
+                    )
+                    center = (
+                        neighbor.GetPosition()[0] + neighbor.GetWidth() / 2
+                    ) * window_width - spacing
+                    position_x = (center - bar_width / 2) / window_width
                 scalar_bar.SetPosition(position_x, y)
             else:
                 annotations = (

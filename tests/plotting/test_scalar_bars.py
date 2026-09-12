@@ -419,6 +419,29 @@ def test_stacked_vertical_bars_clear_their_titles(sphere):
     assert min(pitches) == pytest.approx(widest + gap)
 
 
+def test_stacked_vertical_bars_clear_an_uneven_neighbor(sphere):
+    # A title claims half the gap on each side, so a long one clears its short neighbors
+    sphere[KEY] = sphere.points[:, 2]
+    window_size = [900, 400]
+    titles = ['Short', 'A very much longer title', 'A bit long']
+
+    pl = pv.Plotter(window_size=window_size)
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bars = [
+        pl.add_scalar_bar(title, vertical=True, title_font_size=18, mapper=pl.mapper)
+        for title in titles
+    ]
+
+    dpi = pl.render_window.GetDPI()
+    widths = [_title_width(b.GetTitleTextProperty(), b.GetTitle(), dpi) for b in bars]
+    centers = [(b.GetPosition()[0] + b.GetWidth() / 2) * window_size[0] for b in bars]
+    gap = 0.2 * pl.theme.colorbar_vertical.width * window_size[0]
+    for (left, right), (left_width, right_width) in zip(
+        itertools.pairwise(centers), itertools.pairwise(widths), strict=True
+    ):
+        assert left - right == pytest.approx(gap + (left_width + right_width) / 2)
+
+
 def test_title_pad_keeps_stacked_spacing(sphere):
     # Stacked horizontal bars move up by as much as their title does
     sphere[KEY] = sphere.points[:, 2]
