@@ -8997,10 +8997,9 @@ class DataSetFilters(DataObjectFilters):
         .. note::
             This filter interpolates the input's data arrays and needs volumetric cells
             to interpolate from. A surface encloses a volume but is not one, so only the
-            voxels its faces pass through are sampled and the rest of the output is
-            blank. Use :meth:`voxelize_binary_mask` to fill the inside of a surface
-            instead; it labels voxels as foreground or background and ignores data
-            arrays entirely.
+            voxels near its faces are sampled and the rest of the output is blank. Use
+            :meth:`voxelize_binary_mask` to fill the inside of a surface instead; it
+            labels voxels as foreground or background and ignores data arrays entirely.
 
         .. note::
             Voxels which do not fall inside the input are flagged with a
@@ -9099,7 +9098,8 @@ class DataSetFilters(DataObjectFilters):
 
         pyvista.DataSetFilters.interpolate
             Similar filter which interpolates from the input's points instead of its
-            cells using a distance-weighted kernel.
+            cells using a distance-weighted kernel. Its ``radius`` fills every voxel
+            containing an input point, which sampling a surface's cells does not.
 
         pyvista.ImageDataFilters.resample
             Change the dimensions or spacing of an image which is already
