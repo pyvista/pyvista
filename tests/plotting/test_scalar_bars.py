@@ -7,6 +7,7 @@ import pytest
 
 import pyvista as pv
 from pyvista import _vtk
+from pyvista.plotting.scalar_bars import _title_height
 from pyvista.plotting.scalar_bars import _title_width
 
 KEY = 'Data'
@@ -473,20 +474,37 @@ def test_stacking_layouts_render(sphere, stacking):
     pl.show()
 
 
-def test_stacking_rotate_moves_the_title_clear_of_the_bar(sphere):
-    # The rotated title is drawn on the bar until the offset pushes it aside
+@pytest.mark.parametrize('title_pad', [0.0, 0.5, 1.0, 2.0])
+@pytest.mark.parametrize('font_size', [10, 14, 20, 28])
+def test_stacking_rotate_clears_the_bar_by_the_title_pad(sphere, font_size, title_pad):
+    # A rotated title clears its bar, and title_pad sets what is left between them
     sphere[KEY] = sphere.points[:, 2]
-    width = 0.05
-    font_size = 14
+    window_size = [400, 400]
+    width = 0.08
 
-    pl = pv.Plotter(window_size=[400, 400])
+    pl = pv.Plotter(window_size=window_size)
     pl.add_mesh(sphere, show_scalar_bar=False)
     bar = pl.add_scalar_bar(
-        KEY, vertical=True, stacking='rotate', title_font_size=font_size, width=width
+        KEY,
+        vertical=True,
+        stacking='rotate',
+        title_font_size=font_size,
+        label_font_size=font_size,
+        title_pad=title_pad,
+        width=width,
     )
 
     assert bar.GetForceVerticalTitle()
-    assert -bar.GetTitleTextProperty().GetLineOffset() > (width * 400 + font_size) / 4
+    title_text = bar.GetTitleTextProperty()
+    # The offset inflates the reported text bounds, so measure without it
+    probe = _vtk.vtkTextProperty()
+    probe.ShallowCopy(title_text)
+    probe.SetLineOffset(0)
+    height = _title_height(probe, KEY, pl.render_window.GetDPI())
+    # The title moves two pixels for every unit of line offset
+    shift = -2 * title_text.GetLineOffset()
+    gap = shift - (width * window_size[0] + height) + 4
+    assert gap == pytest.approx(round(title_pad * font_size), abs=2)
     pl.close()
 
 

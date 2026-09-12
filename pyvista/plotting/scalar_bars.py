@@ -38,10 +38,18 @@ def _widest_label(scalar_bar, text_property, dpi):
     return widest
 
 
-def _rotated_title_offset(bar_width, font_size, pad):
-    """Return the line offset that clears a rotated title off its bar."""
-    # The offset moves the pen and grows the text bounds, so the title moves twice as far
-    return round(((bar_width + font_size) / 2 + pad + font_size) / 2)
+def _title_height(text_property, title, dpi):
+    """Return the height in pixels of a title rendered with this text property."""
+    bounds = [0, 0, 0, 0]
+    _vtk.vtkFreeTypeTools.GetInstance().GetBoundingBox(text_property, title, dpi, bounds)
+    return bounds[3] - bounds[2] + 1
+
+
+def _rotated_title_offset(bar_width, title_height, pad):
+    """Return the line offset that clears a rotated title off its bar by ``pad`` pixels."""
+    # The offset moves the pen and grows the text bounds, so the title moves two pixels
+    # per unit; the constant is measured across font sizes and bar widths
+    return round((bar_width + title_height) / 2 - 2 + pad / 2)
 
 
 class ScalarBars(_NoNewAttrMixin):
@@ -898,11 +906,13 @@ class ScalarBars(_NoNewAttrMixin):
         font_size = title_text.GetFontSize()
         window_width, window_height = self._plotter.window_size
         bar_width = width * window_width
+        dpi = self._plotter.render_window.GetDPI()
 
         if unconstrained:
             if stacking == 'rotate':
                 scalar_bar.SetForceVerticalTitle(True)
-                title_text.SetLineOffset(-_rotated_title_offset(bar_width, font_size, pad))
+                title_height = _title_height(title_text, display_title, dpi)
+                title_text.SetLineOffset(-_rotated_title_offset(bar_width, title_height, pad))
             elif pad:
                 title_text.SetLineOffset(-pad)
 
@@ -910,7 +920,6 @@ class ScalarBars(_NoNewAttrMixin):
         # are not, so the annotations set that gap once the window is small
         if stacking and stacked_slot and unconstrained:
             if vertical:
-                dpi = self._plotter.render_window.GetDPI()
                 margin = 0.2 * bar_width
                 neighbor = self._stacked_neighbor(stacked_slot)
                 if stacking == 'widen':
