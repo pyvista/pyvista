@@ -5538,6 +5538,10 @@ class DataObjectFilters:
         pyvista.DataSetFilters.interpolate
             Interpolate values from one mesh onto another.
 
+        pyvista.DataSetFilters.resample_to_image
+            Sample onto a new :class:`~pyvista.ImageData` which fits the input's bounds,
+            without building the image first.
+
         pyvista.ImageDataFilters.resample
             Resample image data to modify its dimensions and spacing.
 

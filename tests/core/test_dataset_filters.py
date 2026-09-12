@@ -5741,3 +5741,138 @@ def test_voxelize(ant):
     # Test invalid input
     with pytest.raises(TypeError, match='Object arrays are not supported'):
         ant.voxelize(spacing={0.5, 0.3})
+
+
+def test_resample_to_image(tetbeam):
+    tetbeam['point_scalars'] = tetbeam.points[:, 2]
+    tetbeam.cell_data['cell_scalars'] = np.arange(tetbeam.n_cells, dtype=float)
+    image = tetbeam.resample_to_image()
+
+    assert isinstance(image, pv.ImageData)
+    assert 'point_scalars' in image.point_data
+    assert 'cell_scalars' in image.point_data
+    assert np.allclose(image.points_to_cells().bounds, tetbeam.bounds)
+
+    # The interior of the beam is sampled and its arrays are interpolated
+    valid = image['vtkValidPointMask'].astype(bool)
+    assert valid.any()
+    assert np.allclose(image['point_scalars'][valid], image.points[valid][:, 2])
+
+    # The spacing follows the input's own cells
+    coarse = tetbeam.resample_to_image(cell_length_percentile=0.9)
+    assert np.all(np.array(coarse.spacing) > image.spacing)
+
+
+def test_resample_to_image_dimensions_and_spacing(tetbeam):
+    dims = (10, 11, 12)
+    assert tetbeam.resample_to_image(dimensions=dims).dimensions == dims
+
+    image = tetbeam.resample_to_image(spacing=tetbeam.length / 20)
+    assert np.allclose(image.spacing, tetbeam.length / 20, atol=1e-2)
+    assert np.allclose(image.points_to_cells().bounds, tetbeam.bounds)
+
+
+def test_resample_to_image_geometry_matches_voxelize(sphere):
+    # Both filters place their voxels identically, so their outputs can be combined
+    mask = sphere.voxelize_binary_mask(dimensions=(20, 21, 22))
+    image = sphere.resample_to_image(dimensions=(20, 21, 22))
+
+    assert image.dimensions == mask.dimensions
+    assert image.spacing == mask.spacing
+    assert image.origin == mask.origin
+
+
+def test_resample_to_image_reference_volume(tetbeam):
+    tetbeam['point_scalars'] = tetbeam.points[:, 2]
+    reference = pv.ImageData(dimensions=(5, 6, 7), spacing=(0.2, 0.3, 0.4), origin=(0.1, 0.2, 0.3))
+    reference.direction_matrix = pv.Transform().rotate_z(30).matrix[:3, :3]
+    reference['reference_scalars'] = np.arange(reference.n_points)
+
+    image = tetbeam.resample_to_image(reference_volume=reference)
+
+    assert image.dimensions == reference.dimensions
+    assert image.spacing == reference.spacing
+    assert image.origin == reference.origin
+    assert np.allclose(image.direction_matrix, reference.direction_matrix)
+    # The reference only defines the geometry, its arrays are not part of the output
+    assert 'reference_scalars' not in image.array_names
+    assert 'point_scalars' in image.point_data
+
+
+def test_resample_to_image_surface_tolerance(sphere):
+    sphere['point_scalars'] = sphere.points[:, 0]
+    dims = (20, 20, 20)
+
+    # A surface has no volume to sample, so a strict search finds nothing
+    strict = sphere.resample_to_image(dimensions=dims, tolerance=0.0)
+    assert not strict['vtkValidPointMask'].any()
+
+    # By default the voxels the surface passes through are sampled
+    image = sphere.resample_to_image(dimensions=dims)
+    valid = image['vtkValidPointMask'].astype(bool)
+    assert valid.any()
+    # Only voxels near the surface are sampled, not the interior
+    distance = image.compute_implicit_distance(sphere)['implicit_distance']
+    assert np.all(np.abs(distance[valid]) <= np.linalg.norm(image.spacing) / 2)
+
+    # Only a volumetric input samples the interior
+    volume = sphere.delaunay_3d()
+    volume_valid = volume.resample_to_image(dimensions=dims)['vtkValidPointMask'].astype(bool)
+    interior = distance < -np.linalg.norm(image.spacing)
+    assert interior.any()
+    assert volume_valid[interior].all()
+    assert not valid[interior].any()
+
+
+def test_resample_to_image_tolerance_default(sphere, mocker: MockerFixture):
+    from pyvista.core.filters import data_object
+
+    spy = mocker.spy(data_object.DataObjectFilters, 'sample')
+    dims = (20, 20, 20)
+
+    # A surface is sampled with half a voxel's diagonal
+    image = sphere.resample_to_image(dimensions=dims)
+    assert spy.spy_return_list[-1] is image
+    assert spy.call_args.kwargs['tolerance'] == pytest.approx(np.linalg.norm(image.spacing) / 2)
+
+    # A volumetric input uses the tolerance computed by VTK
+    sphere.delaunay_3d().resample_to_image(dimensions=dims)
+    assert spy.call_args.kwargs['tolerance'] is None
+
+    # An explicit tolerance is always used as given
+    sphere.resample_to_image(dimensions=dims, tolerance=0.5)
+    assert spy.call_args.kwargs['tolerance'] == 0.5
+
+
+@pytest.mark.parametrize('axis', [0, 1, 2])
+def test_resample_to_image_flat_input(axis):
+    direction = np.zeros(3)
+    direction[axis] = 1
+    plane = pv.Plane(direction=direction, i_size=2, j_size=3)
+    plane['point_scalars'] = plane.points[:, axis - 1]
+    image = plane.resample_to_image()
+
+    assert image.dimensions[axis] == 1
+    assert image.spacing[axis] > 0
+    # Every voxel of the flat image is sampled from the plane
+    assert image['vtkValidPointMask'].all()
+
+
+def test_resample_to_image_raises(sphere):
+    match = 'Spacing and dimensions cannot both be set. Set one or the other.'
+    with pytest.raises(TypeError, match=match):
+        sphere.resample_to_image(dimensions=(1, 2, 3), spacing=(4, 5, 6))
+
+    match = (
+        'Cannot specify a reference volume with other geometry parameters. '
+        '`reference_volume` must define the geometry exclusively.'
+    )
+    with pytest.raises(TypeError, match=re.escape(match)):
+        sphere.resample_to_image(reference_volume=pv.ImageData(), dimensions=(1, 2, 3))
+
+    match = (
+        'Spacing cannot be estimated from the input cells. '
+        'Set `dimensions` or `spacing` explicitly.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.PointSet(np.zeros((4, 3))).resample_to_image()

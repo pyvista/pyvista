@@ -435,6 +435,11 @@ def create_grid(
         A uniform grid with the specified dimensions that surrounds the input
         dataset.
 
+    See Also
+    --------
+    pyvista.DataSetFilters.resample_to_image
+        Create a grid like this one and sample the dataset onto it in a single call.
+
     """
     bounds = np.array(dataset.bounds)
     if dimensions is None:

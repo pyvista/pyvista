@@ -8335,6 +8335,11 @@ class DataSetFilters(DataObjectFilters):
         voxelize_rectilinear
             Similar function that returns a :class:`~pyvista.RectilinearGrid` with cell data.
 
+        resample_to_image
+            Similar function which generates a :class:`~pyvista.ImageData` of the same
+            geometry. It interpolates the input's data arrays instead of generating a
+            mask, and needs volumetric cells to interpolate from rather than a surface.
+
         pyvista.ImageDataFilters.contour_labels
             Filter that generates surface contours from labeled image data. Can be
             loosely considered as an inverse of this filter.
@@ -8707,6 +8712,11 @@ class DataSetFilters(DataObjectFilters):
         voxelize_binary_mask
             Similar function that returns a :class:`~pyvista.ImageData` with point data.
 
+        resample_to_image
+            Similar function which generates a :class:`~pyvista.ImageData` of the same
+            geometry. It interpolates the input's data arrays instead of generating a
+            mask, and needs volumetric cells to interpolate from rather than a surface.
+
         Examples
         --------
         Create a voxel volume of a nut. By default, the spacing is automatically
@@ -8875,6 +8885,11 @@ class DataSetFilters(DataObjectFilters):
         voxelize_binary_mask
             Similar function that returns a :class:`~pyvista.ImageData` with point data.
 
+        resample_to_image
+            Similar function which generates a :class:`~pyvista.ImageData` of the same
+            geometry. It interpolates the input's data arrays instead of generating a
+            mask, and needs volumetric cells to interpolate from rather than a surface.
+
         Examples
         --------
         Create a voxelized mesh with uniform spacing.
@@ -8931,6 +8946,228 @@ class DataSetFilters(DataObjectFilters):
         del ugrid.cell_data['mask']
         return ugrid
 
+    def resample_to_image(  # type: ignore[misc]
+        self: DataSet,
+        *,
+        reference_volume: ImageData | None = None,
+        dimensions: VectorLike[int] | None = None,
+        spacing: float | VectorLike[float] | None = None,
+        rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None = None,
+        cell_length_percentile: float | None = None,
+        cell_length_sample_size: int | None = None,
+        tolerance: float | None = None,
+        categorical: bool = False,
+        locator: Literal['cell', 'cell_tree', 'obb_tree', 'static_cell']
+        | _vtk.vtkAbstractCellLocator
+        | None = 'static_cell',
+        pass_cell_data: bool = True,
+        pass_point_data: bool = True,
+        pass_field_data: bool = True,
+        mark_blank: bool = True,
+        snap_to_closest_point: bool = False,
+        progress_bar: bool = False,
+    ) -> ImageData:
+        """Resample this mesh's arrays onto a uniform grid.
+
+        The mesh's arrays are interpolated at the center of every voxel of a new
+        :class:`~pyvista.ImageData`. This is a one-line alternative to building the
+        grid explicitly and calling :meth:`~pyvista.DataObjectFilters.sample` on it.
+
+        The output geometry can be controlled in several ways:
+
+        #. Specify the output geometry using a ``reference_volume``.
+
+        #. Specify the ``spacing`` explicitly.
+
+        #. Specify the ``dimensions`` explicitly.
+
+        #. Specify the ``cell_length_percentile``. The spacing is estimated from the
+           mesh's cells using the specified percentile.
+
+        Use ``reference_volume`` for full control of the output's geometry. For
+        all other options, the geometry is implicitly defined such that the generated
+        voxels fit the bounds of the input mesh.
+
+        If no inputs are provided, ``cell_length_percentile=0.1`` (tenth percentile) is
+        used by default to estimate the spacing. The input's own cells therefore set the
+        resolution, and gridded inputs are not resampled below their native spacing.
+
+        .. versionadded:: 0.50
+
+        .. note::
+            This filter interpolates the input's data arrays and needs volumetric cells
+            to interpolate from. A surface encloses a volume but is not one, so only the
+            voxels its faces pass through are sampled and the rest of the output is
+            blank. Use :meth:`voxelize_binary_mask` to fill the inside of a surface
+            instead; it labels voxels as foreground or background and ignores data
+            arrays entirely.
+
+        .. note::
+            Voxels which do not fall inside the input are flagged with a
+            ``'vtkValidPointMask'`` point data array and are blanked. Volume rendering
+            the output shows these regions as transparent.
+
+        Parameters
+        ----------
+        reference_volume : ImageData, optional
+            Volume to use as a reference. The output will have the same ``dimensions``,
+            ``origin``, ``spacing``, ``offset``, and ``direction_matrix`` as the reference.
+
+        dimensions : VectorLike[int], optional
+            Dimensions of the generated image. Set this value to control the
+            dimensions explicitly. If unset, the dimensions are defined implicitly
+            through other parameters. See summary and examples for details.
+
+        spacing : float | VectorLike[float], optional
+            Approximate spacing to use for the generated image. Set this value
+            to control the spacing explicitly. If unset, the spacing is defined
+            implicitly through other parameters. See summary and examples for details.
+
+        rounding_func : Callable[VectorLike[float], VectorLike[int]], optional
+            Control how the dimensions are rounded to integers based on the provided or
+            calculated ``spacing``. Should accept a length-3 vector containing the
+            dimension values along the three directions and return a length-3 vector.
+            :func:`numpy.round` is used by default.
+
+            Rounding the dimensions implies rounding the actual spacing.
+
+            Has no effect if ``reference_volume`` or ``dimensions`` are specified.
+
+        cell_length_percentile : float, optional
+            Cell length percentage ``p`` to use for computing the default ``spacing``.
+            Default is ``0.1`` (tenth percentile) and must be between ``0`` and ``1``.
+            The ``p``-th percentile is computed from the cumulative distribution function
+            (CDF) of lengths which are representative of the cell length scales present
+            in the input. The CDF is computed by:
+
+            #. Triangulating the input cells.
+            #. Sampling a subset of up to ``cell_length_sample_size`` cells.
+            #. Computing the distance between two random points in each cell.
+            #. Inserting the distance into an ordered set to create the CDF.
+
+            Has no effect if ``dimensions`` or ``reference_volume`` are specified.
+
+        cell_length_sample_size : int, optional
+            Number of samples to use for the cumulative distribution function (CDF)
+            when using the ``cell_length_percentile`` option. ``100 000`` samples are
+            used by default.
+
+        tolerance : float, optional
+            Tolerance used when locating the cell a voxel is sampled from. By default
+            the tolerance computed by :vtk:`vtkResampleWithDataSet` is used for inputs
+            with volumetric cells, and half a voxel's diagonal is used otherwise so that
+            voxels near a surface or a line are sampled.
+
+        categorical : bool, default: False
+            Control whether the source point data is to be treated as categorical. If
+            ``True``, the resampled point data will be determined by a nearest neighbor
+            interpolation scheme.
+
+        locator : :vtk:`vtkAbstractCellLocator` | str, default: 'static_cell'
+            Prototype cell locator to perform the ``FindCell()`` operation. Default uses
+            the :vtk:`vtkStaticCellLocator`. Options are ``'cell'``, ``'cell_tree'``,
+            ``'obb_tree'`` and ``'static_cell'``.
+
+        pass_cell_data : bool, default: True
+            Preserve source mesh's original cell data arrays.
+
+        pass_point_data : bool, default: True
+            Preserve source mesh's original point data arrays.
+
+        pass_field_data : bool, default: True
+            Preserve source mesh's original field data arrays.
+
+        mark_blank : bool, default: True
+            Whether to mark blank points and cells in ``'vtkGhostType'``.
+
+        snap_to_closest_point : bool, default: False
+            Whether to snap to cell with closest point if no cell is found. Useful
+            when sampling from a mesh with lower dimension than this one.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        ImageData
+            Uniform grid with the input's arrays sampled onto its points.
+
+        See Also
+        --------
+        pyvista.DataObjectFilters.sample
+            Filter this one wraps. Samples onto an existing mesh of any type.
+
+        pyvista.DataSetFilters.interpolate
+            Similar filter which interpolates from the input's points instead of its
+            cells using a distance-weighted kernel.
+
+        pyvista.ImageDataFilters.resample
+            Change the dimensions or spacing of an image which is already
+            :class:`~pyvista.ImageData`.
+
+        voxelize_binary_mask
+            Voxelize the inside of a closed surface as a mask. Operates on a surface's
+            geometry and generates a new array instead of interpolating existing ones.
+
+        pyvista.create_grid
+            Create the uniform grid which this filter samples onto, without sampling.
+
+        Examples
+        --------
+        Load a tetrahedral mesh of a blood vessel network.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.download_blood_vessels()
+        >>> mesh.plot(scalars='shearstress', cpos='zy')
+
+        Resample it onto a uniform grid. The spacing is estimated from the mesh's own
+        cells.
+
+        >>> volume = mesh.resample_to_image()
+        >>> volume.dimensions
+        (68, 47, 118)
+
+        >>> volume.spacing
+        (1.0, 1.0, 1.0)
+
+        Volume render the result. The voxels outside the vessels are blank, and are
+        therefore transparent.
+
+        >>> volume.plot(volume=True, scalars='shearstress', cpos='zy')
+
+        Set the ``dimensions`` or the ``spacing`` to control the resolution explicitly.
+
+        >>> coarse = mesh.resample_to_image(dimensions=(32, 32, 32))
+        >>> coarse.plot(volume=True, scalars='shearstress', cpos='zy')
+
+        """
+        volume = _make_reference_volume(
+            self,
+            reference_volume=reference_volume,
+            dimensions=dimensions,
+            spacing=spacing,
+            rounding_func=rounding_func,
+            cell_length_percentile=cell_length_percentile,
+            cell_length_sample_size=cell_length_sample_size,
+            progress_bar=progress_bar,
+        )
+        if tolerance is None and self.max_cell_dimensionality < 3:
+            # Sample the voxels the input passes through, not only those containing it
+            tolerance = float(np.linalg.norm(volume.spacing)) / 2
+        return volume.sample(
+            self,
+            tolerance=tolerance,
+            categorical=categorical,
+            locator=locator,
+            pass_cell_data=pass_cell_data,
+            pass_point_data=pass_point_data,
+            pass_field_data=pass_field_data,
+            mark_blank=mark_blank,
+            snap_to_closest_point=snap_to_closest_point,
+            progress_bar=progress_bar,
+        )
+
 
 def _make_reference_volume(
     mesh: DataSet,
@@ -8979,6 +9216,12 @@ def _make_reference_volume(
 
     if dimensions is None:
         if spacing is None:
+            no_spacing_msg = (
+                'Spacing cannot be estimated from the input cells. '
+                'Set `dimensions` or `spacing` explicitly.'
+            )
+            if mesh.n_cells == 0:
+                raise ValueError(no_spacing_msg)
             # Estimate spacing from cell length percentile
             cell_length_percentile = (
                 0.1 if cell_length_percentile is None else cell_length_percentile
@@ -8993,11 +9236,7 @@ def _make_reference_volume(
                 progress_bar=progress_bar,
             )
             if spacing == 0:
-                msg = (
-                    'Spacing cannot be estimated from the input cells. '
-                    'Set `dimensions` or `spacing` explicitly.'
-                )
-                raise ValueError(msg)
+                raise ValueError(no_spacing_msg)
         # Get initial spacing (will be adjusted later)
         initial_spacing = _validation.validate_array3(spacing, broadcast=True)
         rounding_func = np.round if rounding_func is None else rounding_func
