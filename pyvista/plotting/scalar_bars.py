@@ -961,21 +961,30 @@ class ScalarBars(_NoNewAttrMixin):
                 # Slots fill from the bottom up, so the one below this is taken
                 neighbor = self._stacked_neighbor(stacked_slot)
                 neighbor_bar = neighbor.GetWidth() * window_width
-                # Labels are drawn on the side of the bar that faces the neighbor,
-                # so this bar is the only one reaching into the gap
-                spacing = (bar_width + neighbor_bar) / 2 + _widest_label(
-                    scalar_bar, label_text, dpi
+                neighbor_title = _title_width(
+                    neighbor.GetTitleTextProperty(), neighbor.GetTitle(), dpi
                 )
+                # The ramp is only part of the bar's box and sits at the edge facing
+                # away from the neighbor, so the labels drawn past it set the gap
+                reach = (
+                    scalar_bar.GetBarRatio() * bar_width
+                    + _widest_label(scalar_bar, label_text, dpi)
+                    - bar_width / 2
+                )
+                neighbor_reach = neighbor_bar / 2
                 if stacking == 'rotate' and neighbor.GetForceVerticalTitle():
                     # The neighbor turned its title into the gap these labels use
-                    spacing += pad + _rotated_title_height(neighbor, dpi)
+                    neighbor_reach += pad + _rotated_title_height(neighbor, dpi)
+                elif stacking == 'stagger':
+                    # Stepping the neighbor up brings its title down beside these labels
+                    neighbor_reach = max(neighbor_reach, neighbor_title / 2)
+                spacing = reach + neighbor_reach
                 if stacking == 'widen':
                     # A title is centered on its bar, so each neighbor claims half
-                    titles = (
-                        _title_width(title_text, display_title, dpi)
-                        + _title_width(neighbor.GetTitleTextProperty(), neighbor.GetTitle(), dpi)
-                    ) / 2
-                    spacing = max(spacing, titles)
+                    spacing = max(
+                        spacing,
+                        (_title_width(title_text, display_title, dpi) + neighbor_title) / 2,
+                    )
                 spacing += 0.2 * bar_width
                 _, y = scalar_bar.GetPosition()
                 center = (

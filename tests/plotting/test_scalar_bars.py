@@ -503,12 +503,19 @@ def test_stacked_vertical_bars_clear_an_uneven_neighbor(sphere):
         assert left - right == pytest.approx(gap + (left_width + right_width) / 2)
 
 
-def _stacked_gaps(bars, window_width):
-    """Return the space between each stacked bar and the neighbor it was placed against."""
-    return [
-        (neighbor.GetPosition()[0] - (bar.GetPosition()[0] + bar.GetWidth())) * window_width
-        for bar, neighbor in zip(bars[1:], bars[:-1], strict=True)
-    ]
+def _label_reach(bar, dpi, window_width):
+    """Return the x of the far edge of a bar's tick labels, in pixels."""
+    ramp = bar.GetBarRatio() * bar.GetWidth() * window_width
+    return (
+        bar.GetPosition()[0] * window_width
+        + ramp
+        + _widest_label(bar, bar.GetLabelTextProperty(), dpi)
+    )
+
+
+def _stacked_pairs(bars):
+    """Pair each stacked bar with the neighbor it was placed against."""
+    return zip(bars[1:], bars[:-1], strict=True)
 
 
 def _wide_number_bars(plotter, sphere, stacking, **kwargs):
@@ -536,8 +543,40 @@ def test_stacked_vertical_bars_clear_their_labels(sphere):
     bars = _wide_number_bars(pl, sphere, None, label_font_size=22)
 
     dpi = pl.render_window.GetDPI()
-    for bar, gap in zip(bars[1:], _stacked_gaps(bars, window_size[0]), strict=True):
-        assert gap > _widest_label(bar, bar.GetLabelTextProperty(), dpi)
+    for bar, neighbor in _stacked_pairs(bars):
+        assert _label_reach(bar, dpi, window_size[0]) < neighbor.GetPosition()[0] * window_size[0]
+    pl.close()
+
+
+def test_stacking_stagger_clears_the_neighbors_title(sphere):
+    # Stepping a bar up brings its title down alongside the next bar's labels
+    sphere[KEY] = sphere.points[:, 2]
+    window_size = [700, 450]
+
+    pl = pv.Plotter(window_size=window_size)
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bars = []
+    for title, clim in [('A very much longer title', (0, 1)), ('B', (-1234.5, 1234.5))]:
+        lut = pv.LookupTable(cmap='viridis', scalar_range=clim)
+        mapper = pv.DataSetMapper(sphere)
+        mapper.lookup_table = lut
+        bars.append(
+            pl.add_scalar_bar(
+                title,
+                vertical=True,
+                stacking='stagger',
+                title_font_size=18,
+                label_font_size=18,
+                n_labels=3,
+                mapper=mapper,
+            )
+        )
+
+    dpi = pl.render_window.GetDPI()
+    for bar, neighbor in _stacked_pairs(bars):
+        title_width = _title_width(neighbor.GetTitleTextProperty(), neighbor.GetTitle(), dpi)
+        center = (neighbor.GetPosition()[0] + neighbor.GetWidth() / 2) * window_size[0]
+        assert _label_reach(bar, dpi, window_size[0]) < center - title_width / 2
     pl.close()
 
 
@@ -549,13 +588,16 @@ def test_stacking_rotate_clears_the_neighbors_title(sphere):
 
     pl = pv.Plotter(window_size=window_size)
     pl.add_mesh(sphere, show_scalar_bar=False)
-    bars = _wide_number_bars(pl, sphere, 'rotate', title_font_size=40, label_font_size=7)
+    font_size = 40
+    bars = _wide_number_bars(pl, sphere, 'rotate', title_font_size=font_size, label_font_size=7)
 
     dpi = pl.render_window.GetDPI()
-    gaps = _stacked_gaps(bars, window_size[0])
-    for (bar, neighbor), gap in zip(itertools.pairwise(bars), gaps, strict=True):
-        labels = _widest_label(bar, bar.GetLabelTextProperty(), dpi)
-        assert gap > labels + _rotated_title_height(neighbor, dpi)
+    pad = round(pl.theme.colorbar_vertical.title_pad * font_size)
+    for bar, neighbor in _stacked_pairs(bars):
+        title = (
+            neighbor.GetPosition()[0] * window_size[0] - pad - _rotated_title_height(neighbor, dpi)
+        )
+        assert _label_reach(bar, dpi, window_size[0]) < title
     pl.close()
 
 
