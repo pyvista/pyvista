@@ -395,12 +395,14 @@ class ProgressMonitor(_NoNewAttrMixin):
     algorithm : :vtk:`vtkAlgorithm` | BaseVTKReader
         VTK algorithm or filter.
 
-    message : str, default: ""
+    message : str | None, default: ""
         Message to display in the progress bar.
 
     """
 
-    def __init__(self, algorithm: _vtk.vtkAlgorithm | BaseVTKReader, message: str = '') -> None:
+    def __init__(
+        self, algorithm: _vtk.vtkAlgorithm | BaseVTKReader, message: str | None = ''
+    ) -> None:
         """Initialize observer."""
         if not importlib.util.find_spec('tqdm'):
             msg = 'Please install `tqdm` to monitor algorithms.'
