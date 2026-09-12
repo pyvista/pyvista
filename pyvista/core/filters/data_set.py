@@ -6571,9 +6571,9 @@ class DataSetFilters(DataObjectFilters):
                 merged.field_data[array] = priority.field_data[array]
 
         if inplace:
-            if type(self) is type(merged):
+            if isinstance(self, type(merged)):
                 self.deep_copy(merged)
-                return cast('PointSet | UnstructuredGrid', self)
+                return self
             else:
                 msg = f'Mesh type {type(self)} cannot be overridden by output.'
                 raise TypeError(msg)
