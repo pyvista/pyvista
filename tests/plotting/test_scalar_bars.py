@@ -647,6 +647,32 @@ def test_stacking_gap_invalid(sphere):
     pl.close()
 
 
+@pytest.mark.needs_vtk_version(9, 4, 0, reason='ForceVerticalTitle was added in VTK 9.4.0')
+def test_stacking_gap_overrides_a_rotated_title(sphere):
+    # An explicit gap replaces the space a turned title would otherwise claim
+    sphere[KEY] = sphere.points[:, 2]
+    window_size = [500, 500]
+
+    pl = pv.Plotter(window_size=window_size)
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bars = [
+        pl.add_scalar_bar(
+            f'{KEY}{i}',
+            vertical=True,
+            rotate_title=True,
+            stacking_gap=0.1,
+            title_font_size=20,
+            mapper=pl.mapper,
+        )
+        for i in range(2)
+    ]
+
+    assert bars[1].GetTitleTextProperty().GetLineOffset() < 0
+    step = (bars[0].GetPosition()[0] - bars[1].GetPosition()[0]) * window_size[0]
+    assert step == pytest.approx(0.1 * window_size[0])
+    pl.close()
+
+
 def test_rotate_title_rejects_horizontal_bars(sphere):
     sphere[KEY] = sphere.points[:, 2]
     pl = pv.Plotter()

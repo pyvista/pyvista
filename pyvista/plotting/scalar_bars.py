@@ -61,7 +61,11 @@ def _turned_title(scalar_bar):
 
 
 def _title_separation(scalar_bar):
-    """Return the space a scalar bar leaves between its title and its labels."""
+    """Return the space a scalar bar leaves between its title and its labels.
+
+    Only meaningful for a title drawn across the end of the bar, since a turned
+    one carries the offset that moves it alongside instead.
+    """
     return -scalar_bar.GetTitleTextProperty().GetLineOffset()
 
 
@@ -119,7 +123,7 @@ class ScalarBars(_NoNewAttrMixin):
         title = next(name for name, taken in lookup.items() if taken == slot - 1)
         return self._scalar_bar_actors[title]
 
-    def _stacked_beside(self, scalar_bar, neighbor, *, gap, label_text, dpi):
+    def _stacked_beside(self, scalar_bar, neighbor, *, gap, label_text, pad, dpi):
         """Return the position that clears a vertical scalar bar of the one beside it."""
         window_width = self._plotter.window_size[0]
         bar_width = scalar_bar.GetWidth() * window_width
@@ -136,7 +140,7 @@ class ScalarBars(_NoNewAttrMixin):
             reach = neighbor_bar / 2
             if _turned_title(neighbor):
                 # The neighbor turned its title into the gap these labels use
-                reach += _title_separation(scalar_bar) + _bar_title_height(neighbor, dpi)
+                reach += pad + _bar_title_height(neighbor, dpi)
             # A title is centered on its bar, so each bar claims half the space it needs
             titles = sum(
                 0
@@ -988,7 +992,7 @@ class ScalarBars(_NoNewAttrMixin):
                 gap = stacking_gap * window_width if stacking_gap is not None else None
                 scalar_bar.SetPosition(
                     self._stacked_beside(
-                        scalar_bar, neighbor, gap=gap, label_text=label_text, dpi=dpi
+                        scalar_bar, neighbor, gap=gap, label_text=label_text, pad=pad, dpi=dpi
                     ),
                     scalar_bar.GetPosition()[1],
                 )
