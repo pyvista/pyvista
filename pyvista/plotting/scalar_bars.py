@@ -85,7 +85,8 @@ def _fitted_box(scalar_bar, *, vertical, title, label_text, pad, dpi, window):
 
     The colour ramp keeps the size it was given; the box grows around it.  Returns the
     box width and height as a fraction of the window, the bar ratio that holds the ramp
-    to its original size, and the line offset that seats the title inside the box.
+    to its original size, the line offset that seats the title inside the box, and the
+    separation that leaves the title its padding.
     """
     window_width, window_height = window
     text_pad = scalar_bar.GetTextPad()
@@ -100,11 +101,13 @@ def _fitted_box(scalar_bar, *, vertical, title, label_text, pad, dpi, window):
         # The title is centered on the box and the labels are drawn past the ramp
         box_width = max(box_width, title_width + 2 * text_pad, ramp + label_width + 2 * text_pad)
         bar_ratio = ramp / box_width
-        # A vertical title is lifted clear of the box by three quarters of a label; the
-        # offset that seats it again grows the title box at the ramp's expense, so the
-        # box gains that much height and any further offset becomes the padding
-        offset = round(0.75 * label_height) + pad
-        box_height += offset + text_pad
+        # A vertical title is lifted clear of the box by three quarters of a label, and
+        # the offset that seats it again grows the title box at the ramp's expense.  The
+        # offset carries the title and the ramp down together, so the padding between
+        # them is the separation VTK leaves rather than anything the offset can buy
+        offset = round(0.75 * label_height)
+        separation = pad
+        box_height += offset + pad + text_pad
     else:
         ramp = scalar_bar.GetBarRatio() * box_height
         # A horizontal title is stacked above the ramp and the labels, measured from the
@@ -112,8 +115,15 @@ def _fitted_box(scalar_bar, *, vertical, title, label_text, pad, dpi, window):
         box_height = max(box_height, ramp + label_height + title_height + pad + 2 * text_pad)
         bar_ratio = ramp / box_height
         offset = -pad
+        separation = 0
 
-    return box_width / window_width, box_height / window_height, bar_ratio, offset
+    return (
+        box_width / window_width,
+        box_height / window_height,
+        bar_ratio,
+        offset,
+        separation,
+    )
 
 
 class ScalarBars(_NoNewAttrMixin):
@@ -1065,7 +1075,7 @@ class ScalarBars(_NoNewAttrMixin):
                 bar_width = width * window_width
                 title_text.SetLineOffset(-_rotated_title_offset(bar_width, title_height, pad))
             elif fits_box:
-                width, height, bar_ratio, offset = _fitted_box(
+                width, height, bar_ratio, offset, separation = _fitted_box(
                     scalar_bar,
                     vertical=vertical,
                     title=display_title,
@@ -1080,6 +1090,7 @@ class ScalarBars(_NoNewAttrMixin):
                 scalar_bar.SetWidth(width)
                 scalar_bar.SetHeight(height)
                 scalar_bar.SetBarRatio(bar_ratio)
+                scalar_bar.SetVerticalTitleSeparation(separation)
                 scalar_bar.SetPosition(position_x, scalar_bar.GetPosition()[1])
                 title_text.SetLineOffset(offset)
             elif pad:

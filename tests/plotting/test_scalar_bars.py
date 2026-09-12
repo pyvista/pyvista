@@ -751,6 +751,41 @@ def test_fit_box_keeps_a_given_size(sphere, sizing, box):
         assert getattr(bar, f'Get{name.capitalize()}')() == pytest.approx(given)
 
 
+@pytest.mark.parametrize('window_size', [[400, 300], [1400, 1000]], ids=['small', 'large'])
+@pytest.mark.parametrize('vertical', [True, False], ids=['vertical', 'horizontal'])
+def test_fit_box_holds_at_any_window_size(sphere, vertical: bool, window_size):
+    # The text is measured in pixels while the box is a fraction of the window, so the
+    # fit has to be taken from the window it is drawn in
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=window_size)
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = _fitted_bar(pl, sphere, vertical=vertical, box={'outline': True})
+
+    dpi = pl.render_window.GetDPI()
+    left, right, bottom, top = _box_edges(bar, pl.window_size)
+    if vertical:
+        assert right - left >= _title_width(bar.GetTitleTextProperty(), FIT_TITLE, dpi)
+        assert _label_reach(bar, dpi, window_size[0]) <= right
+    else:
+        label_height = _label_size(bar, bar.GetLabelTextProperty(), dpi)[1]
+        title_height = _title_height(bar.GetTitleTextProperty(), FIT_TITLE, dpi)
+        assert top - bottom >= bar.GetBarRatio() * (top - bottom) + label_height + title_height
+
+
+# A baseline is capped at 400 pixels and compared against the render as it is, so a
+# window wider than that cannot be image tested
+@pytest.mark.parametrize('window_size', [[320, 280], [400, 300]], ids=['narrow', 'wide'])
+@pytest.mark.usefixtures('verify_image_cache')
+def test_fit_box_window_size_render(sphere, window_size):
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=window_size)
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    _fitted_bar(pl, sphere, vertical=True, box={'outline': True})
+    pl.show()
+
+
 @pytest.mark.parametrize('box', BOXES, ids=BOX_IDS)
 @pytest.mark.parametrize('vertical', [True, False], ids=['vertical', 'horizontal'])
 @pytest.mark.usefixtures('verify_image_cache')
