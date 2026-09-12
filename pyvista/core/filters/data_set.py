@@ -712,6 +712,11 @@ class DataSetFilters(DataObjectFilters):
         inplace: bool = False,
         progress_bar: bool = False,
         both: bool = False,
+    ) -> (
+        PolyData
+        | PointSet
+        | UnstructuredGrid
+        | tuple[PolyData | PointSet | UnstructuredGrid, PolyData | PointSet | UnstructuredGrid]
     ):
         """Clip a dataset by a scalar.
 
@@ -828,7 +833,7 @@ class DataSetFilters(DataObjectFilters):
 
         _update_alg(alg, progress_bar=progress_bar, message='Clipping by a Scalar')
         result0 = cast(
-            'DataSet',
+            'PolyData | PointSet | UnstructuredGrid',
             _keep_array_structure(_cast_output_to_match_input_type(_get_output(alg), self), self),
         )
         if not is_single_value:
@@ -836,10 +841,10 @@ class DataSetFilters(DataObjectFilters):
             result0 = result0.clip_scalar(scalars=scalars, invert=False, value=lower)
         if inplace:
             self.copy_from(result0, deep=False)
-            result0 = self
+            result0 = cast('PolyData | PointSet | UnstructuredGrid', self)
         if both:
             result1 = cast(
-                'DataSet',
+                'PolyData | PointSet | UnstructuredGrid',
                 _keep_array_structure(
                     _cast_output_to_match_input_type(_get_output(alg, oport=1), self), self
                 ),
@@ -866,7 +871,7 @@ class DataSetFilters(DataObjectFilters):
         compute_distance: bool = False,
         progress_bar: bool = False,
         crinkle: bool = False,
-    ):
+    ) -> PolyData | PointSet | UnstructuredGrid:
         """Clip any mesh type using a :class:`pyvista.PolyData` surface mesh.
 
         .. versionchanged:: 0.49
@@ -988,7 +993,7 @@ class DataSetFilters(DataObjectFilters):
             if info.name is not None and not clipped.is_empty:
                 clipped.set_active_scalars(info.name, preference=info.association)
         return cast(
-            'DataSet',
+            'PolyData | PointSet | UnstructuredGrid',
             _keep_array_structure(_cast_output_to_match_input_type(clipped, self), self),
         )
 
@@ -2380,7 +2385,7 @@ class DataSetFilters(DataObjectFilters):
         inplace: bool = False,
         progress_bar: bool = False,
         **kwargs,
-    ):
+    ) -> PolyData | PointSet | UnstructuredGrid:
         """Find and label connected regions.
 
         This filter extracts cell regions based on a specified connectivity
@@ -2844,7 +2849,7 @@ class DataSetFilters(DataObjectFilters):
         *,
         inplace: bool = False,
         progress_bar: bool = False,
-    ):
+    ) -> PolyData | PointSet | UnstructuredGrid:
         """Extract largest connected set in mesh.
 
         Can be used to reduce residues obtained when generating an
