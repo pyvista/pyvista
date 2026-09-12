@@ -6895,8 +6895,8 @@ class DataSetFilters(DataObjectFilters):
                 as_composite=as_composite,
             )
             if isinstance(output, pv.MultiBlock):
-                for index, block in enumerate(output):
-                    output[index] = None if block is None else block.cast_to_pointset()
+                for ids, _, block in output.recursive_iterator('all', skip_none=True):
+                    output.replace(ids, block.cast_to_pointset())
                 return output
             return output.cast_to_pointset()
         if not _vtk.has_attr('vtkRedistributeDataSetFilter'):  # pragma: no cover
