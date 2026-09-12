@@ -359,6 +359,7 @@ def test_stacked_bars_render(sphere, vertical: bool, title: str):
         pl.add_scalar_bar(
             title.format(i=i),
             vertical=vertical,
+            stacking='widen',
             title_font_size=14,
             label_font_size=14,
             n_labels=3,
@@ -379,6 +380,7 @@ def test_stacked_horizontal_bars_clear_their_annotations(sphere, window_size):
         pl.add_scalar_bar(
             f'{KEY}{i}',
             vertical=False,
+            stacking='widen',
             title_font_size=font_size,
             label_font_size=font_size,
             mapper=pl.mapper,
@@ -405,7 +407,9 @@ def test_stacked_vertical_bars_clear_their_titles(sphere):
     pl = pv.Plotter(window_size=window_size)
     pl.add_mesh(sphere, show_scalar_bar=False)
     bars = [
-        pl.add_scalar_bar(f'{title}{i}', vertical=True, title_font_size=18, mapper=pl.mapper)
+        pl.add_scalar_bar(
+            f'{title}{i}', vertical=True, stacking='widen', title_font_size=18, mapper=pl.mapper
+        )
         for i in range(3)
     ]
 
@@ -428,7 +432,9 @@ def test_stacked_vertical_bars_clear_an_uneven_neighbor(sphere):
     pl = pv.Plotter(window_size=window_size)
     pl.add_mesh(sphere, show_scalar_bar=False)
     bars = [
-        pl.add_scalar_bar(title, vertical=True, title_font_size=18, mapper=pl.mapper)
+        pl.add_scalar_bar(
+            title, vertical=True, stacking='widen', title_font_size=18, mapper=pl.mapper
+        )
         for title in titles
     ]
 
@@ -440,6 +446,91 @@ def test_stacked_vertical_bars_clear_an_uneven_neighbor(sphere):
         itertools.pairwise(centers), itertools.pairwise(widths), strict=True
     ):
         assert left - right == pytest.approx(gap + (left_width + right_width) / 2)
+
+
+STACKED_TITLES = ['A bit long', 'Short', 'Super duper long']
+
+
+@pytest.mark.parametrize('stacking', [None, 'widen', 'stagger', 'rotate'])
+@pytest.mark.usefixtures('verify_image_cache')
+def test_stacking_layouts_render(sphere, stacking):
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter()
+    # Move the bars off the window edge so a wide title is not clipped by it
+    pl.theme.colorbar_vertical.position_x = 0.75
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    for title in STACKED_TITLES:
+        pl.add_scalar_bar(
+            title,
+            vertical=True,
+            stacking=stacking,
+            title_font_size=14,
+            label_font_size=14,
+            n_labels=3,
+            mapper=pl.mapper,
+        )
+    pl.show()
+
+
+def test_stacking_rotate_moves_the_title_clear_of_the_bar(sphere):
+    # The rotated title is drawn on the bar until the offset pushes it aside
+    sphere[KEY] = sphere.points[:, 2]
+    width = 0.05
+    font_size = 14
+
+    pl = pv.Plotter(window_size=[400, 400])
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = pl.add_scalar_bar(
+        KEY, vertical=True, stacking='rotate', title_font_size=font_size, width=width
+    )
+
+    assert bar.GetForceVerticalTitle()
+    assert -bar.GetTitleTextProperty().GetLineOffset() > (width * 400 + font_size) / 4
+    pl.close()
+
+
+def test_stacking_stagger_offsets_each_title(sphere):
+    # Staggered titles sit one line further from the bar for every slot
+    sphere[KEY] = sphere.points[:, 2]
+    font_size = 14
+
+    pl = pv.Plotter(window_size=[400, 400])
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bars = [
+        pl.add_scalar_bar(
+            f'{KEY}{i}',
+            vertical=True,
+            stacking='stagger',
+            title_font_size=font_size,
+            title_pad=0,
+            mapper=pl.mapper,
+        )
+        for i in range(3)
+    ]
+
+    offsets = [-bar.GetTitleTextProperty().GetLineOffset() for bar in bars]
+    assert offsets == [0, font_size, 2 * font_size]
+    pl.close()
+
+
+def test_stacking_invalid(sphere):
+    sphere[KEY] = sphere.points[:, 2]
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    with pytest.raises(ValueError, match=r'stacking .* is not valid'):
+        pl.add_scalar_bar(KEY, stacking='spread', mapper=pl.mapper)
+    pl.close()
+
+
+@pytest.mark.parametrize('stacking', ['stagger', 'rotate'])
+def test_stacking_rejects_horizontal_bars(sphere, stacking):
+    sphere[KEY] = sphere.points[:, 2]
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    with pytest.raises(ValueError, match='not supported for horizontal'):
+        pl.add_scalar_bar(KEY, vertical=False, stacking=stacking, mapper=pl.mapper)
+    pl.close()
 
 
 def test_title_pad_keeps_stacked_spacing(sphere):
@@ -454,6 +545,7 @@ def test_title_pad_keeps_stacked_spacing(sphere):
             pl.add_scalar_bar(
                 f'{KEY}{i}',
                 vertical=False,
+                stacking='widen',
                 title_font_size=font_size,
                 title_pad=title_pad,
                 mapper=pl.mapper,
