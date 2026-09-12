@@ -1642,9 +1642,10 @@ def test_point_data_to_cell_data_strings(pass_point_data, categorical, dtype, un
             pass_point_data=pass_point_data, categorical=categorical
         )
 
-    assert len(caught) == 2
-    assert "'labels'" in str(caught[0].message)
-    assert "'names'" in str(caught[1].message)
+    assert [str(w.message) for w in caught if issubclass(w.category, UserWarning)] == [
+        "Dropping string array 'labels' from point-to-cell conversion.",
+        "Dropping string array 'names' from point-to-cell conversion.",
+    ]
     assert result.cell_data.keys() == ['existing', 'values']
     assert result.cell_data['values'][0] == (0 if categorical else 1.25)
     assert result.cell_data['existing'][0] == 42
