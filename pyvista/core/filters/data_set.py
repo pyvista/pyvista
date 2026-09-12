@@ -62,6 +62,7 @@ if TYPE_CHECKING:
     from pyvista import PointSet
     from pyvista import PolyData
     from pyvista import RectilinearGrid
+    from pyvista import StructuredGrid
     from pyvista import UnstructuredGrid
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
@@ -192,6 +193,16 @@ class _ExtractValuesInputs(NamedTuple):
 class DataSetFilters(DataObjectFilters):
     """A set of common filters that can be applied to any :vtk:`vtkDataSet`."""
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # return_matrix=False
+    def align(self: _DataSetType, target: DataSet | _vtk.vtkDataSet, *, max_landmarks: int = ..., max_mean_distance: float = ..., max_iterations: int = ..., check_mean_distance: bool = ..., start_by_matching_centroids: bool = ..., return_matrix: Literal[False] = ...) -> _DataSetType: ...  # type: ignore[misc]
+    @overload  # return_matrix=True
+    def align(self: _DataSetType, target: DataSet | _vtk.vtkDataSet, *, max_landmarks: int = ..., max_mean_distance: float = ..., max_iterations: int = ..., check_mean_distance: bool = ..., start_by_matching_centroids: bool = ..., return_matrix: Literal[True] = ...) -> tuple[_DataSetType, NumpyArray[float]]: ...  # type: ignore[misc]
+    @overload  # return_matrix not known
+    def align(self: _DataSetType, target: DataSet | _vtk.vtkDataSet, *, max_landmarks: int = ..., max_mean_distance: float = ..., max_iterations: int = ..., check_mean_distance: bool = ..., start_by_matching_centroids: bool = ..., return_matrix: bool = ...) -> _DataSetType | tuple[_DataSetType, NumpyArray[float]]: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def align(  # type: ignore[misc]
         self: _DataSetType,
         target: DataSet | _vtk.vtkDataSet,
@@ -300,6 +311,16 @@ class DataSetFilters(DataObjectFilters):
             return self.transform(matrix, inplace=False), matrix
         return self.transform(matrix, inplace=False)
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # return_matrix=False
+    def align_xyz(self: _DataSetType, *, centered: bool = ..., axis_0_direction: VectorLike[float] | str | None = ..., axis_1_direction: VectorLike[float] | str | None = ..., axis_2_direction: VectorLike[float] | str | None = ..., cell_centers: bool = ..., merge_points: bool = ..., return_matrix: Literal[False] = ...) -> _DataSetType: ...  # type: ignore[misc]
+    @overload  # return_matrix=True
+    def align_xyz(self: _DataSetType, *, centered: bool = ..., axis_0_direction: VectorLike[float] | str | None = ..., axis_1_direction: VectorLike[float] | str | None = ..., axis_2_direction: VectorLike[float] | str | None = ..., cell_centers: bool = ..., merge_points: bool = ..., return_matrix: Literal[True] = ...) -> tuple[_DataSetType, NumpyArray[float]]: ...  # type: ignore[misc]
+    @overload  # return_matrix not known
+    def align_xyz(self: _DataSetType, *, centered: bool = ..., axis_0_direction: VectorLike[float] | str | None = ..., axis_1_direction: VectorLike[float] | str | None = ..., axis_2_direction: VectorLike[float] | str | None = ..., cell_centers: bool = ..., merge_points: bool = ..., return_matrix: bool = ...) -> _DataSetType | tuple[_DataSetType, NumpyArray[float]]: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def align_xyz(  # type: ignore[misc]
         self: _DataSetType,
         *,
@@ -2930,6 +2951,16 @@ class DataSetFilters(DataObjectFilters):
 
         return bodies
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # PolyData
+    def warp_by_scalar(self: PolyData, scalars: str | None = ..., *, factor: float = ..., normal: VectorLike[float] | None = ..., inplace: bool = ..., progress_bar: bool = ..., **kwargs) -> PolyData: ...  # type: ignore[misc]
+    @overload  # ImageData or RectilinearGrid
+    def warp_by_scalar(self: ImageData | RectilinearGrid, scalars: str | None = ..., *, factor: float = ..., normal: VectorLike[float] | None = ..., inplace: bool = ..., progress_bar: bool = ..., **kwargs) -> StructuredGrid: ...  # type: ignore[misc]
+    @overload  # every other dataset
+    def warp_by_scalar(self: _DataSetType, scalars: str | None = ..., *, factor: float = ..., normal: VectorLike[float] | None = ..., inplace: bool = ..., progress_bar: bool = ..., **kwargs) -> _DataSetType: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def warp_by_scalar(  # type: ignore[misc]
         self: _DataSetType,
         scalars: str | None = None,
@@ -2971,7 +3002,9 @@ class DataSetFilters(DataObjectFilters):
         Returns
         -------
         pyvista.DataSet
-            Warped Dataset.  Return type matches input.
+            Warped Dataset. Return type matches input, except that an
+            :class:`~pyvista.ImageData` or :class:`~pyvista.RectilinearGrid` gives a
+            :class:`~pyvista.StructuredGrid`.
 
         See Also
         --------
@@ -3038,6 +3071,16 @@ class DataSetFilters(DataObjectFilters):
             return self
         return output
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # PolyData
+    def warp_by_vector(self: PolyData, vectors: str | None = ..., *, factor: float = ..., inplace: bool = ..., progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc]
+    @overload  # ImageData or RectilinearGrid
+    def warp_by_vector(self: ImageData | RectilinearGrid, vectors: str | None = ..., *, factor: float = ..., inplace: bool = ..., progress_bar: bool = ...) -> StructuredGrid: ...  # type: ignore[misc]
+    @overload  # every other dataset
+    def warp_by_vector(self: _DataSetType, vectors: str | None = ..., *, factor: float = ..., inplace: bool = ..., progress_bar: bool = ...) -> _DataSetType: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def warp_by_vector(  # type: ignore[misc]
         self: _DataSetType,
         vectors: str | None = None,
@@ -3071,8 +3114,10 @@ class DataSetFilters(DataObjectFilters):
 
         Returns
         -------
-        pyvista.PolyData
-            The warped mesh resulting from the operation.
+        pyvista.DataSet
+            The warped mesh. Return type matches input, except that an
+            :class:`~pyvista.ImageData` or :class:`~pyvista.RectilinearGrid` gives a
+            :class:`~pyvista.StructuredGrid`.
 
         See Also
         --------
@@ -3600,6 +3645,16 @@ class DataSetFilters(DataObjectFilters):
         _update_alg(interpolator, progress_bar=progress_bar, message='Interpolating')
         return _get_output(interpolator)
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # return_source=False
+    def streamlines(self: _DataSetType, vectors: str | None = ..., *, source_center: VectorLike[float] | None = ..., source_radius: float | None = ..., n_points: int = ..., start_position: VectorLike[float] | None = ..., return_source: Literal[False] = ..., pointa: VectorLike[float] | None = ..., pointb: VectorLike[float] | None = ..., progress_bar: bool = ..., **kwargs) -> PolyData: ...  # type: ignore[misc]
+    @overload  # return_source=True
+    def streamlines(self: _DataSetType, vectors: str | None = ..., *, source_center: VectorLike[float] | None = ..., source_radius: float | None = ..., n_points: int = ..., start_position: VectorLike[float] | None = ..., return_source: Literal[True] = ..., pointa: VectorLike[float] | None = ..., pointb: VectorLike[float] | None = ..., progress_bar: bool = ..., **kwargs) -> tuple[PolyData, PolyData]: ...  # type: ignore[misc]
+    @overload  # return_source not known
+    def streamlines(self: _DataSetType, vectors: str | None = ..., *, source_center: VectorLike[float] | None = ..., source_radius: float | None = ..., n_points: int = ..., start_position: VectorLike[float] | None = ..., return_source: bool = ..., pointa: VectorLike[float] | None = ..., pointb: VectorLike[float] | None = ..., progress_bar: bool = ..., **kwargs) -> PolyData | tuple[PolyData, PolyData]: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def streamlines(  # type: ignore[misc]
         self: _DataSetType,
         vectors: str | None = None,
@@ -4946,6 +5001,14 @@ class DataSetFilters(DataObjectFilters):
             output.set_active_scalars(name, cast('PointLiteral | CellLiteral', association))
         return cast('UnstructuredGrid', output)
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # PointSet
+    def extract_points(self: PointSet, ind: int | VectorLike[int] | VectorLike[bool], *, adjacent_cells: bool = ..., include_cells: bool | None = ..., pass_cell_ids: bool = ..., pass_point_ids: bool = ..., progress_bar: bool = ..., invert: bool = ...) -> PointSet: ...  # type: ignore[misc, overload-overlap]
+    @overload  # DataSet
+    def extract_points(self: DataSet, ind: int | VectorLike[int] | VectorLike[bool], *, adjacent_cells: bool = ..., include_cells: bool | None = ..., pass_cell_ids: bool = ..., pass_point_ids: bool = ..., progress_bar: bool = ..., invert: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def extract_points(  # type: ignore[misc]
         self: _DataSetType,
         ind: int | VectorLike[int] | VectorLike[bool],
@@ -5067,6 +5130,14 @@ class DataSetFilters(DataObjectFilters):
             output, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids
         )
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # PolyData
+    def remove_cells(self: PolyData, ind: int | VectorLike[int] | VectorLike[bool], *, inplace: bool = ..., invert: bool = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc, overload-overlap]
+    @overload  # DataSet
+    def remove_cells(self: DataSet, ind: int | VectorLike[int] | VectorLike[bool], *, inplace: bool = ..., invert: bool = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., progress_bar: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def remove_cells(  # type: ignore[misc]
         self: _DataSetType,
         ind: int | VectorLike[int] | VectorLike[bool],
@@ -5164,6 +5235,16 @@ class DataSetFilters(DataObjectFilters):
         )
         return _apply_inplace(self, output, inplace=inplace)
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # PolyData
+    def remove_points(self: PolyData, ind: int | VectorLike[int] | VectorLike[bool], mode: Literal['any', 'all'] = ..., *, invert: bool = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., inplace: bool = ..., progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc, overload-overlap]
+    @overload  # PointSet
+    def remove_points(self: PointSet, ind: int | VectorLike[int] | VectorLike[bool], mode: Literal['any', 'all'] = ..., *, invert: bool = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., inplace: bool = ..., progress_bar: bool = ...) -> PointSet: ...  # type: ignore[misc, overload-overlap]
+    @overload  # DataSet
+    def remove_points(self: DataSet, ind: int | VectorLike[int] | VectorLike[bool], mode: Literal['any', 'all'] = ..., *, invert: bool = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., inplace: bool = ..., progress_bar: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def remove_points(  # type: ignore[misc]
         self: _DataSetType,
         ind: int | VectorLike[int] | VectorLike[bool],
@@ -5259,7 +5340,7 @@ class DataSetFilters(DataObjectFilters):
 
         """
         _validation.check_contains(['any', 'all'], must_contain=mode, name='mode')
-        output = self.extract_points(
+        output: DataSet = self.extract_points(
             ind,
             adjacent_cells=mode == 'all',
             invert=not invert,
@@ -5443,6 +5524,22 @@ class DataSetFilters(DataObjectFilters):
             **kwargs,
         )
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # PointSet, split=False
+    def extract_values(self: PointSet, values: float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLike[float] | MatrixLike[float] | dict[str, VectorLike[float]] | dict[tuple[float, float], str] | None = ..., scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., adjacent_cells: bool = ..., include_cells: bool | None = ..., split: Literal[False] = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., progress_bar: bool = ...) -> PointSet: ...  # type: ignore[misc, overload-overlap]
+    @overload  # PointSet, split=True
+    def extract_values(self: PointSet, values: float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLike[float] | MatrixLike[float] | dict[str, VectorLike[float]] | dict[tuple[float, float], str] | None = ..., scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., adjacent_cells: bool = ..., include_cells: bool | None = ..., split: Literal[True] = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., progress_bar: bool = ...) -> MultiBlock: ...  # type: ignore[misc, overload-overlap]
+    @overload  # PointSet, split not known
+    def extract_values(self: PointSet, values: float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLike[float] | MatrixLike[float] | dict[str, VectorLike[float]] | dict[tuple[float, float], str] | None = ..., scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., adjacent_cells: bool = ..., include_cells: bool | None = ..., split: bool = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., progress_bar: bool = ...) -> PointSet | MultiBlock: ...  # type: ignore[misc, overload-overlap]
+    @overload  # DataSet, split=False
+    def extract_values(self: DataSet, values: float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLike[float] | MatrixLike[float] | dict[str, VectorLike[float]] | dict[tuple[float, float], str] | None = ..., scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., adjacent_cells: bool = ..., include_cells: bool | None = ..., split: Literal[False] = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., progress_bar: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
+    @overload  # DataSet, split=True
+    def extract_values(self: DataSet, values: float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLike[float] | MatrixLike[float] | dict[str, VectorLike[float]] | dict[tuple[float, float], str] | None = ..., scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., adjacent_cells: bool = ..., include_cells: bool | None = ..., split: Literal[True] = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., progress_bar: bool = ...) -> MultiBlock: ...  # type: ignore[misc]
+    @overload  # DataSet, split not known
+    def extract_values(self: DataSet, values: float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLike[float] | MatrixLike[float] | dict[str, VectorLike[float]] | dict[tuple[float, float], str] | None = ..., scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., adjacent_cells: bool = ..., include_cells: bool | None = ..., split: bool = ..., pass_point_ids: bool = ..., pass_cell_ids: bool = ..., progress_bar: bool = ...) -> UnstructuredGrid | MultiBlock: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def extract_values(  # type: ignore[misc]
         self: _DataSetType,
         values: (
@@ -5615,8 +5712,10 @@ class DataSetFilters(DataObjectFilters):
 
         Returns
         -------
-        output : pyvista.UnstructuredGrid | pyvista.MultiBlock
+        output : pyvista.UnstructuredGrid | pyvista.PointSet | pyvista.MultiBlock
             An extracted mesh or a composite of extracted meshes, depending on ``split``.
+            A :class:`~pyvista.PointSet` gives a ``PointSet``; every other dataset gives an
+            ``UnstructuredGrid``.
 
         Examples
         --------
@@ -6239,6 +6338,16 @@ class DataSetFilters(DataObjectFilters):
             output.clear_data()
         return output
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # PolyData
+    def merge_points(self: PolyData, *, tolerance: float = ..., inplace: bool = ..., progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc, overload-overlap]
+    @overload  # PointSet
+    def merge_points(self: PointSet, *, tolerance: float = ..., inplace: bool = ..., progress_bar: bool = ...) -> PointSet: ...  # type: ignore[misc, overload-overlap]
+    @overload  # DataSet
+    def merge_points(self: DataSet, *, tolerance: float = ..., inplace: bool = ..., progress_bar: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def merge_points(  # type: ignore[misc]
         self: _DataSetType,
         *,
@@ -6300,6 +6409,18 @@ class DataSetFilters(DataObjectFilters):
             progress_bar=progress_bar,
         )
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # PointSet with a composite, whose blocks decide
+    def merge(self: PointSet, grid: MultiBlock, *, merge_points: bool = ..., tolerance: float = ..., inplace: bool = ..., main_has_priority: bool | None = ..., progress_bar: bool = ...) -> PointSet | UnstructuredGrid: ...  # type: ignore[misc]
+    @overload  # PointSet with point clouds
+    def merge(self: PointSet, grid: PointSet | Sequence[PointSet] | None = ..., *, merge_points: bool = ..., tolerance: float = ..., inplace: bool = ..., main_has_priority: bool | None = ..., progress_bar: bool = ...) -> PointSet: ...  # type: ignore[misc, overload-overlap]
+    @overload  # PointSet with anything else
+    def merge(self: PointSet, grid: DataSet | _vtk.vtkDataSet | Sequence[DataSet | _vtk.vtkDataSet] | None = ..., *, merge_points: bool = ..., tolerance: float = ..., inplace: bool = ..., main_has_priority: bool | None = ..., progress_bar: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
+    @overload  # DataSet
+    def merge(self: DataSet, grid: DataSet | _vtk.vtkDataSet | MultiBlock | Sequence[DataSet | _vtk.vtkDataSet] | None = ..., *, merge_points: bool = ..., tolerance: float = ..., inplace: bool = ..., main_has_priority: bool | None = ..., progress_bar: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def merge(  # type: ignore[misc]
         self: _DataSetType,
         grid: DataSet
@@ -6648,6 +6769,14 @@ class DataSetFilters(DataObjectFilters):
         _update_alg(alg, progress_bar=progress_bar, message='Computing Derivative')
         return _get_output(alg)
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # PolyData
+    def shrink(self: PolyData, shrink_factor: float = ..., *, progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc, overload-overlap]
+    @overload  # DataSet
+    def shrink(self: DataSet, shrink_factor: float = ..., *, progress_bar: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def shrink(  # type: ignore[misc]
         self: _DataSetType,
         shrink_factor: float = 1.0,
@@ -6670,8 +6799,9 @@ class DataSetFilters(DataObjectFilters):
 
         Returns
         -------
-        pyvista.DataSet
-            Dataset with shrunk faces.  Return type matches input.
+        pyvista.PolyData | pyvista.UnstructuredGrid
+            Dataset with shrunk faces. A :class:`~pyvista.PolyData` gives a ``PolyData``;
+            every other dataset gives an ``UnstructuredGrid``.
 
         Examples
         --------
@@ -6821,6 +6951,22 @@ class DataSetFilters(DataObjectFilters):
         _update_alg(alg, progress_bar=progress_bar, message='Integrating Variables')
         return _get_output(alg, keep_pointset=False)
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # PointSet, as_composite=True
+    def partition(self: PointSet, n_partitions: int, *, generate_global_id: bool = ..., as_composite: Literal[True] = ...) -> MultiBlock: ...  # type: ignore[misc, overload-overlap]
+    @overload  # PointSet, as_composite=False
+    def partition(self: PointSet, n_partitions: int, *, generate_global_id: bool = ..., as_composite: Literal[False] = ...) -> PointSet: ...  # type: ignore[misc, overload-overlap]
+    @overload  # PointSet, as_composite not known
+    def partition(self: PointSet, n_partitions: int, *, generate_global_id: bool = ..., as_composite: bool = ...) -> MultiBlock | PointSet: ...  # type: ignore[misc, overload-overlap]
+    @overload  # as_composite=True
+    def partition(self: _DataSetType, n_partitions: int, *, generate_global_id: bool = ..., as_composite: Literal[True] = ...) -> MultiBlock: ...  # type: ignore[misc]
+    @overload  # as_composite=False
+    def partition(self: _DataSetType, n_partitions: int, *, generate_global_id: bool = ..., as_composite: Literal[False] = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
+    @overload  # as_composite not known
+    def partition(self: _DataSetType, n_partitions: int, *, generate_global_id: bool = ..., as_composite: bool = ...) -> MultiBlock | UnstructuredGrid: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def partition(  # type: ignore[misc]
         self: _DataSetType,
         n_partitions: int,
@@ -6925,6 +7071,20 @@ class DataSetFilters(DataObjectFilters):
             return pv.merge(list(output), merge_points=False)
         return output
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # as_composite=True, return_meta=False
+    def oriented_bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, axis_0_direction: VectorLike[float] | str | None = ..., axis_1_direction: VectorLike[float] | str | None = ..., axis_2_direction: VectorLike[float] | str | None = ..., frame_width: float = ..., return_meta: Literal[False] = ..., as_composite: Literal[True] = ...) -> MultiBlock: ...  # type: ignore[misc]
+    @overload  # as_composite=True, return_meta=True
+    def oriented_bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, axis_0_direction: VectorLike[float] | str | None = ..., axis_1_direction: VectorLike[float] | str | None = ..., axis_2_direction: VectorLike[float] | str | None = ..., frame_width: float = ..., return_meta: Literal[True] = ..., as_composite: Literal[True] = ...) -> tuple[MultiBlock, NumpyArray[np.floating], NumpyArray[np.floating]]: ...  # type: ignore[misc]
+    @overload  # as_composite=False, return_meta=False
+    def oriented_bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, axis_0_direction: VectorLike[float] | str | None = ..., axis_1_direction: VectorLike[float] | str | None = ..., axis_2_direction: VectorLike[float] | str | None = ..., frame_width: float = ..., return_meta: Literal[False] = ..., as_composite: Literal[False] = ...) -> PolyData: ...  # type: ignore[misc]
+    @overload  # as_composite=False, return_meta=True
+    def oriented_bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, axis_0_direction: VectorLike[float] | str | None = ..., axis_1_direction: VectorLike[float] | str | None = ..., axis_2_direction: VectorLike[float] | str | None = ..., frame_width: float = ..., return_meta: Literal[True] = ..., as_composite: Literal[False] = ...) -> tuple[PolyData, NumpyArray[np.floating], NumpyArray[np.floating]]: ...  # type: ignore[misc]
+    @overload  # flags not known
+    def oriented_bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, axis_0_direction: VectorLike[float] | str | None = ..., axis_1_direction: VectorLike[float] | str | None = ..., axis_2_direction: VectorLike[float] | str | None = ..., frame_width: float = ..., return_meta: bool = ..., as_composite: bool = ...) -> MultiBlock | PolyData | tuple[MultiBlock, NumpyArray[np.floating], NumpyArray[np.floating]] | tuple[PolyData, NumpyArray[np.floating], NumpyArray[np.floating]]: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def oriented_bounding_box(  # type: ignore[misc]
         self: _DataSetType,
         box_style: Literal['frame', 'outline', 'face'] = 'face',
@@ -7104,6 +7264,20 @@ class DataSetFilters(DataObjectFilters):
             as_composite=as_composite,
         )
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # as_composite=True, return_meta=False
+    def bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, oriented: bool = ..., frame_width: float = ..., return_meta: Literal[False] = ..., as_composite: Literal[True] = ...) -> MultiBlock: ...  # type: ignore[misc]
+    @overload  # as_composite=True, return_meta=True
+    def bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, oriented: bool = ..., frame_width: float = ..., return_meta: Literal[True] = ..., as_composite: Literal[True] = ...) -> tuple[MultiBlock, NumpyArray[np.floating], NumpyArray[np.floating]]: ...  # type: ignore[misc]
+    @overload  # as_composite=False, return_meta=False
+    def bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, oriented: bool = ..., frame_width: float = ..., return_meta: Literal[False] = ..., as_composite: Literal[False] = ...) -> PolyData: ...  # type: ignore[misc]
+    @overload  # as_composite=False, return_meta=True
+    def bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, oriented: bool = ..., frame_width: float = ..., return_meta: Literal[True] = ..., as_composite: Literal[False] = ...) -> tuple[PolyData, NumpyArray[np.floating], NumpyArray[np.floating]]: ...  # type: ignore[misc]
+    @overload  # flags not known
+    def bounding_box(self: _DataSetType, box_style: Literal['frame', 'outline', 'face'] = ..., *, oriented: bool = ..., frame_width: float = ..., return_meta: bool = ..., as_composite: bool = ...) -> MultiBlock | PolyData | tuple[MultiBlock, NumpyArray[np.floating], NumpyArray[np.floating]] | tuple[PolyData, NumpyArray[np.floating], NumpyArray[np.floating]]: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def bounding_box(  # type: ignore[misc]
         self: _DataSetType,
         box_style: Literal['frame', 'outline', 'face'] = 'face',
@@ -7383,6 +7557,12 @@ class DataSetFilters(DataObjectFilters):
         split.points += np.repeat(vec, np.diff(split.cell_offsets), axis=0)
         return split
 
+    # fmt: off
+    @overload  # PolyData
+    def separate_cells(self: PolyData) -> PolyData: ...  # type: ignore[misc, overload-overlap]
+    @overload  # DataSet
+    def separate_cells(self: DataSet) -> UnstructuredGrid: ...  # type: ignore[misc]
+    # fmt: on
     def separate_cells(  # type: ignore[misc]
         self: _DataSetType,
     ):
@@ -7394,8 +7574,9 @@ class DataSetFilters(DataObjectFilters):
 
         Returns
         -------
-        pyvista.UnstructuredGrid
-            UnstructuredGrid with isolated cells.
+        pyvista.PolyData | pyvista.UnstructuredGrid
+            Mesh with isolated cells. A :class:`~pyvista.PolyData` gives a ``PolyData``;
+            every other dataset gives an ``UnstructuredGrid``.
 
         Examples
         --------
@@ -7718,6 +7899,16 @@ class DataSetFilters(DataObjectFilters):
             return self
         return result
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # return_dict=False
+    def color_labels(self: _DataSetType, colors: str | ColorLike | Sequence[ColorLike] | dict[float | str, ColorLike] | ColormapOptions = ..., *, coloring_mode: Literal['index', 'cycle'] | None = ..., color_type: Literal['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'] = ..., negative_indexing: bool = ..., scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., output_scalars: str | None = ..., return_dict: Literal[False] = ..., inplace: bool = ...) -> _DataSetType: ...  # type: ignore[misc]
+    @overload  # return_dict=True
+    def color_labels(self: _DataSetType, colors: str | ColorLike | Sequence[ColorLike] | dict[float | str, ColorLike] | ColormapOptions = ..., *, coloring_mode: Literal['index', 'cycle'] | None = ..., color_type: Literal['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'] = ..., negative_indexing: bool = ..., scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., output_scalars: str | None = ..., return_dict: Literal[True] = ..., inplace: bool = ...) -> tuple[_DataSetType, dict[float | np.integer | np.floating, ColorLike]]: ...  # type: ignore[misc]
+    @overload  # return_dict not known
+    def color_labels(self: _DataSetType, colors: str | ColorLike | Sequence[ColorLike] | dict[float | str, ColorLike] | ColormapOptions = ..., *, coloring_mode: Literal['index', 'cycle'] | None = ..., color_type: Literal['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'] = ..., negative_indexing: bool = ..., scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., output_scalars: str | None = ..., return_dict: bool = ..., inplace: bool = ...) -> _DataSetType | tuple[_DataSetType, dict[float | np.integer | np.floating, ColorLike]]: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def color_labels(  # type: ignore[misc]
         self: DataSet,
         colors: str
@@ -7858,6 +8049,9 @@ class DataSetFilters(DataObjectFilters):
         -------
         pyvista.DataSet
             Dataset with RGB(A) scalars. Output type matches input type.
+
+        dict[float | numpy.integer | numpy.floating, ColorLike]
+            The label to color mapping, if ``return_dict`` is ``True``.
 
         Examples
         --------
