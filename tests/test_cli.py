@@ -362,6 +362,28 @@ def test_convert_read_error(tmp_path: Path, capsys: pytest.CaptureFixture):
 
 
 @pytest.mark.usefixtures('patch_app_console')
+def test_convert_read_error_keeps_install_hint(
+    tmp_path: Path, capsys: pytest.CaptureFixture, mocker: MockerFixture
+):
+    """An ImportError names the package to install, so it must reach the console intact."""
+    file_in = tmp_path / 'dummy.pv'
+    file_in.write_text('')
+    message = 'Needs `pyvista-zstd`.\npip install pyvista[io]'
+    mocker.patch.object(pv, 'read', side_effect=ImportError(message))
+
+    with pytest.raises(SystemExit) as e:
+        main(f'convert {str(file_in)!r} .ply')
+
+    out, err = capture_out_err(capsys)
+    assert out == ''
+    assert 'Path is not readable by PyVista:' not in err, err
+    assert 'Needs `pyvista-zstd`.' in err, err
+    # Square brackets are rich markup, so an unescaped extra would vanish from the panel.
+    assert 'pip install pyvista[io]' in err, err
+    assert e.value.code == 1
+
+
+@pytest.mark.usefixtures('patch_app_console')
 def test_convert_multiple_inputs(tmp_example_dir, tmp_ant_file: Path):
     second = tmp_example_dir / 'ant2.ply'
     shutil.copy(tmp_ant_file, second)
