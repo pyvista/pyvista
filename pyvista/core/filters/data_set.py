@@ -1320,6 +1320,14 @@ class DataSetFilters(DataObjectFilters):
             progress_bar=progress_bar,
         )
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # PointSet
+    def remove_nan_cells(self: PointSet, *, scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., component_mode: Literal['component', 'all', 'any'] = ..., component: int = ..., progress_bar: bool = ...) -> PointSet: ...  # type: ignore[misc, overload-overlap]
+    @overload  # DataSet
+    def remove_nan_cells(self: DataSet, *, scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., component_mode: Literal['component', 'all', 'any'] = ..., component: int = ..., progress_bar: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def remove_nan_cells(  # type: ignore[misc]
         self: _DataSetType,
         *,
@@ -1328,7 +1336,7 @@ class DataSetFilters(DataObjectFilters):
         component_mode: Literal['component', 'all', 'any'] = 'all',
         component: int = 0,
         progress_bar: bool = False,
-    ) -> UnstructuredGrid:
+    ):
         """Remove cells whose scalar values are NaN.
 
         A cell is considered NaN if any of its associated scalar values are
@@ -1374,9 +1382,9 @@ class DataSetFilters(DataObjectFilters):
 
         Returns
         -------
-        pyvista.UnstructuredGrid
-            Dataset with NaN cells removed. A :class:`~pyvista.PointSet` gives a ``PointSet``
-            with its NaN points removed.
+        pyvista.UnstructuredGrid | pyvista.PointSet
+            Dataset with NaN cells removed. A :class:`~pyvista.PointSet` input returns
+            a ``PointSet`` with its NaN points removed.
 
         See Also
         --------
