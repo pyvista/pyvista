@@ -1336,7 +1336,7 @@ class DataSetFilters(DataObjectFilters):
         component_mode: Literal['component', 'all', 'any'] = 'all',
         component: int = 0,
         progress_bar: bool = False,
-    ):
+    ) -> PointSet | UnstructuredGrid:
         """Remove cells whose scalar values are NaN.
 
         A cell is considered NaN if any of its associated scalar values are
@@ -6826,7 +6826,7 @@ class DataSetFilters(DataObjectFilters):
         *,
         generate_global_id: bool = False,
         as_composite: bool = True,
-    ):
+    ) -> MultiBlock | PointSet | UnstructuredGrid:
         """Break down input dataset into a requested number of partitions.
 
         Cells on boundaries are uniquely assigned to each partition without duplication.
