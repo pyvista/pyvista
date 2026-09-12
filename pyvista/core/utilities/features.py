@@ -488,11 +488,11 @@ def transform_vectors_sph_to_cart(*, theta, phi, r, u, v, w):  # numpydoc ignore
     r : array_like[float]
         Distance (radius) from the point of origin of shape ``(P,)``.
     u : array_like[float]
-        X-component of the vector of shape ``(P, N, M)``.
+        X-component of the vector of shape ``(M, N, P)`` with length-one axes dropped.
     v : array_like[float]
-        Y-component of the vector of shape ``(P, N, M)``.
+        Y-component of the vector of shape ``(M, N, P)`` with length-one axes dropped.
     w : array_like[float]
-        Z-component of the vector of shape ``(P, N, M)``.
+        Z-component of the vector of shape ``(M, N, P)`` with length-one axes dropped.
 
     Returns
     -------
@@ -652,10 +652,10 @@ def merge(
         msg = 'Expected at least one dataset.'
         raise ValueError(msg)
 
-    first = datasets[0]
-    if not isinstance(first, pv.DataSet):
-        msg = f'Expected pyvista.DataSet, not {type(first).__name__}'
-        raise TypeError(msg)
+    for i, dataset in enumerate(datasets):
+        if not isinstance(dataset, pv.DataSet):
+            msg = f'Expected pyvista.DataSet, not {type(dataset).__name__} at index {i}'
+            raise TypeError(msg)
 
     return datasets[0].merge(
         datasets[1:],
