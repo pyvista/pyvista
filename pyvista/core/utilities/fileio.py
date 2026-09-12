@@ -38,6 +38,7 @@ if TYPE_CHECKING:
     import meshio
     import trimesh
 
+    from pyvista import ArrayLike
     from pyvista import BaseReader
     from pyvista import DataObject
     from pyvista import DataSet
@@ -1609,10 +1610,12 @@ def from_trimesh(
             and (uv := visual.uv) is not None
         ):
             polydata.active_texture_coordinates = uv
-        polydata.point_data.update(mesh.vertex_attributes, copy=False)
+        vertex_attributes = cast('dict[str, ArrayLike[Any]]', mesh.vertex_attributes)
+        polydata.point_data.update(vertex_attributes, copy=False)
 
     if pass_cell_data:
-        polydata.cell_data.update(mesh.face_attributes, copy=False)
+        face_attributes = cast('dict[str, ArrayLike[Any]]', mesh.face_attributes)
+        polydata.cell_data.update(face_attributes, copy=False)
 
     if pass_field_data:
         for key, val in mesh.metadata.items():

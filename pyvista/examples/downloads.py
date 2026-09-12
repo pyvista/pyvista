@@ -7316,7 +7316,7 @@ def download_cloud_dark_matter(*, load: bool = True) -> PointSet | str:
 _dataset_cloud_dark_matter = _SingleFileDownloadableDatasetLoader(
     'point-clouds/findus23/halo_low_res.npy',
     read_func=np.load,
-    load_func=pv.PointSet,
+    load_func=pv.PointSet,  # type: ignore[arg-type]
 )
 
 
@@ -7388,7 +7388,7 @@ def download_cloud_dark_matter_dense(*, load: bool = True) -> PointSet | str:
 _dataset_cloud_dark_matter_dense = _SingleFileDownloadableDatasetLoader(
     'point-clouds/findus23/halo_high_res.npy',
     read_func=np.load,
-    load_func=pv.PointSet,
+    load_func=pv.PointSet,  # type: ignore[arg-type]
 )
 
 

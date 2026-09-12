@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import functools
 import sys
+from typing import Any
 from typing import Literal
 from typing import NamedTuple
 
@@ -23,15 +24,15 @@ class VersionInfo(NamedTuple):
     minor: int
     micro: int
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str((self.major, self.minor, self.micro))
 
     @staticmethod
-    def _format(version: tuple[int, int, int]):
+    def _format(version: tuple[int, ...]) -> str:
         return '.'.join(map(str, version))
 
 
-def _get_vtk_version():
+def _get_vtk_version() -> VersionInfo:
     """Return the vtk version as a namedtuple.
 
     Returns
@@ -58,7 +59,7 @@ def _get_vtk_version():
 class VTKVersionInfo(VersionInfo):
     """Version info which rejects comparisons against unsupported VTK versions."""
 
-    def _check_min_supported(self, other: tuple[int, int, int]) -> None:
+    def _check_min_supported(self, other: tuple[int, ...]) -> None:
         if isinstance(other, tuple) and other < _MIN_SUPPORTED_VTK_VERSION:  # type: ignore[redundant-expr]
             msg = (
                 f'Comparing against unsupported VTK version {VersionInfo._format(other):}. '
@@ -66,19 +67,19 @@ class VTKVersionInfo(VersionInfo):
             )
             raise VTKVersionError(msg)
 
-    def __lt__(self, other):
+    def __lt__(self, other: tuple[int, ...]) -> bool:
         self._check_min_supported(other)
         return super().__lt__(other)
 
-    def __le__(self, other):
+    def __le__(self, other: tuple[int, ...]) -> bool:
         self._check_min_supported(other)
         return super().__le__(other)
 
-    def __gt__(self, other):
+    def __gt__(self, other: tuple[int, ...]) -> bool:
         self._check_min_supported(other)
         return super().__gt__(other)
 
-    def __ge__(self, other):
+    def __ge__(self, other: tuple[int, ...]) -> bool:
         self._check_min_supported(other)
         return super().__ge__(other)
 
@@ -126,7 +127,7 @@ def vtk_backend() -> str:
 class vtkPyVistaOverride:  # noqa: N801
     """Base class to automatically override VTK classes with PyVista classes."""
 
-    def __init_subclass__(cls, **kwargs):
+    def __init_subclass__(cls, **kwargs) -> None:
         if vtk_version_info >= (9, 4):
             # Check for VTK base classes and call the override method
             for base in cls.__bases__:
@@ -143,8 +144,6 @@ class vtkPyVistaOverride:  # noqa: N801
                     # See https://gitlab.kitware.com/vtk/vtk/-/issues/19550#note_1598883
                     base.override(None)
                     break
-
-        return cls
 
 
 _VTK_SNAKE_CASE_STATE: Literal['allow', 'warning', 'error'] = 'error'
@@ -181,7 +180,7 @@ class DisableVtkSnakeCase:
     """Base class to raise error if using VTK's ``snake_case`` API."""
 
     @staticmethod
-    def check_attribute(target, attr):
+    def check_attribute(target: object, attr: str) -> None:
         """Raise or warn if ``attr`` is a VTK-defined ``snake_case`` name on ``target``.
 
         Parameters
@@ -197,7 +196,7 @@ class DisableVtkSnakeCase:
         if safe_by_class is None:  # pragma: no cover  # Python is shutting down
             return  # type: ignore[unreachable]
         # `target.__class__` and `isinstance` would recurse into `__getattribute__`
-        cls: type = target if issubclass(type(target), type) else type(target)
+        cls: type = target if issubclass(type(target), type) else type(target)  # type: ignore[assignment]
         safe = safe_by_class.get(cls)
         if safe is None:
             safe = safe_by_class[cls] = set()
@@ -227,7 +226,7 @@ class DisableVtkSnakeCase:
                 warn_external(msg, RuntimeWarning)
         return
 
-    def __getattribute__(self, item):
+    def __getattribute__(self, item: str) -> Any:
         """Get an attribute after checking it is part of the PyVista API."""
         # Hot path: inline the cache lookup so verified-safe names skip the check call
         try:
@@ -272,7 +271,7 @@ class DisableVtkSnakeCase:
         return sorted(attr for attr in listing if keep(attr))
 
 
-def is_vtk_attribute(obj: object, attr: str):  # numpydoc ignore=RT01
+def is_vtk_attribute(obj: object, attr: str) -> bool:  # numpydoc ignore=RT01
     """Return True if the attribute is defined by a VTK class.
 
     Parameters
@@ -285,7 +284,7 @@ def is_vtk_attribute(obj: object, attr: str):  # numpydoc ignore=RT01
 
     """
 
-    def _find_defining_class(cls, attr):
+    def _find_defining_class(cls: type, attr: str) -> type | None:
         """Find the class that defines a given attribute."""
         for base in cls.__mro__:
             if attr in base.__dict__:
@@ -298,7 +297,7 @@ def is_vtk_attribute(obj: object, attr: str):  # numpydoc ignore=RT01
 
 # Wrap the check in an LRU cache
 @functools.cache
-def _is_vtk_attribute_cached(target_type, attr):
+def _is_vtk_attribute_cached(target_type: type, attr: str) -> bool:
     return is_vtk_attribute(target_type, attr)
 
 
@@ -308,7 +307,7 @@ class VTKObjectWrapperCheckSnakeCase(_vtk.VTKObjectWrapper):
     This class overrides ``__getattr__`` to disable the VTK snake case API.
     """
 
-    def __getattr__(self, name: str):
+    def __getattr__(self, name: str) -> Any:
         """Forward unknown attribute requests to the wrapped VTK object."""
         if self.VTKObject is not None:
             # Check if forwarding snake_case attributes
