@@ -9,10 +9,10 @@ import pytest
 import pyvista as pv
 from pyvista import _vtk
 from pyvista.core.errors import VTKVersionError
-from pyvista.plotting.scalar_bars import _rotated_title_height
+from pyvista.plotting.scalar_bars import _bar_title_height
+from pyvista.plotting.scalar_bars import _label_size
 from pyvista.plotting.scalar_bars import _title_height
 from pyvista.plotting.scalar_bars import _title_width
-from pyvista.plotting.scalar_bars import _widest_label
 
 KEY = 'Data'
 
@@ -415,7 +415,6 @@ def test_stacked_bars_render(sphere, vertical: bool, title: str):
         pl.add_scalar_bar(
             title.format(i=i),
             vertical=vertical,
-            stacking='widen' if vertical else None,
             title_font_size=14,
             label_font_size=14,
             n_labels=3,
@@ -462,9 +461,7 @@ def test_stacked_vertical_bars_clear_their_titles(sphere):
     pl = pv.Plotter(window_size=window_size)
     pl.add_mesh(sphere, show_scalar_bar=False)
     bars = [
-        pl.add_scalar_bar(
-            f'{title}{i}', vertical=True, stacking='widen', title_font_size=18, mapper=pl.mapper
-        )
+        pl.add_scalar_bar(f'{title}{i}', vertical=True, title_font_size=18, mapper=pl.mapper)
         for i in range(3)
     ]
 
@@ -487,9 +484,7 @@ def test_stacked_vertical_bars_clear_an_uneven_neighbor(sphere):
     pl = pv.Plotter(window_size=window_size)
     pl.add_mesh(sphere, show_scalar_bar=False)
     bars = [
-        pl.add_scalar_bar(
-            title, vertical=True, stacking='widen', title_font_size=18, mapper=pl.mapper
-        )
+        pl.add_scalar_bar(title, vertical=True, title_font_size=18, mapper=pl.mapper)
         for title in titles
     ]
 
@@ -509,7 +504,7 @@ def _label_reach(bar, dpi, window_width):
     return (
         bar.GetPosition()[0] * window_width
         + ramp
-        + _widest_label(bar, bar.GetLabelTextProperty(), dpi)
+        + _label_size(bar, bar.GetLabelTextProperty(), dpi)[0]
     )
 
 
@@ -518,7 +513,7 @@ def _stacked_pairs(bars):
     return zip(bars[1:], bars[:-1], strict=True)
 
 
-def _wide_number_bars(plotter, sphere, stacking, **kwargs):
+def _wide_number_bars(plotter, sphere, **kwargs):
     """Stack three bars, the middle one labelled with numbers far wider than its bar."""
     bars = []
     for i, clim in enumerate([(0, 1), (-1234.5, 1234.5), (0, 1)]):
@@ -526,9 +521,7 @@ def _wide_number_bars(plotter, sphere, stacking, **kwargs):
         mapper = pv.DataSetMapper(sphere)
         mapper.lookup_table = lut
         bars.append(
-            plotter.add_scalar_bar(
-                f'{KEY}{i}', vertical=True, stacking=stacking, n_labels=3, mapper=mapper, **kwargs
-            )
+            plotter.add_scalar_bar(f'{KEY}{i}', vertical=True, n_labels=3, mapper=mapper, **kwargs)
         )
     return bars
 
@@ -540,7 +533,7 @@ def test_stacked_vertical_bars_clear_their_labels(sphere):
 
     pl = pv.Plotter(window_size=window_size)
     pl.add_mesh(sphere, show_scalar_bar=False)
-    bars = _wide_number_bars(pl, sphere, None, label_font_size=22)
+    bars = _wide_number_bars(pl, sphere, label_font_size=22)
 
     dpi = pl.render_window.GetDPI()
     for bar, neighbor in _stacked_pairs(bars):
@@ -548,40 +541,8 @@ def test_stacked_vertical_bars_clear_their_labels(sphere):
     pl.close()
 
 
-def test_stacking_stagger_clears_the_neighbors_title(sphere):
-    # Stepping a bar up brings its title down alongside the next bar's labels
-    sphere[KEY] = sphere.points[:, 2]
-    window_size = [700, 450]
-
-    pl = pv.Plotter(window_size=window_size)
-    pl.add_mesh(sphere, show_scalar_bar=False)
-    bars = []
-    for title, clim in [('A very much longer title', (0, 1)), ('B', (-1234.5, 1234.5))]:
-        lut = pv.LookupTable(cmap='viridis', scalar_range=clim)
-        mapper = pv.DataSetMapper(sphere)
-        mapper.lookup_table = lut
-        bars.append(
-            pl.add_scalar_bar(
-                title,
-                vertical=True,
-                stacking='stagger',
-                title_font_size=18,
-                label_font_size=18,
-                n_labels=3,
-                mapper=mapper,
-            )
-        )
-
-    dpi = pl.render_window.GetDPI()
-    for bar, neighbor in _stacked_pairs(bars):
-        title_width = _title_width(neighbor.GetTitleTextProperty(), neighbor.GetTitle(), dpi)
-        center = (neighbor.GetPosition()[0] + neighbor.GetWidth() / 2) * window_size[0]
-        assert _label_reach(bar, dpi, window_size[0]) < center - title_width / 2
-    pl.close()
-
-
 @pytest.mark.needs_vtk_version(9, 4, 0, reason='ForceVerticalTitle was added in VTK 9.4.0')
-def test_stacking_rotate_clears_the_neighbors_title(sphere):
+def test_rotated_title_clears_the_neighbors_labels(sphere):
     # A rotated title hangs into the same gap that the next bar's labels use
     sphere[KEY] = sphere.points[:, 2]
     window_size = [700, 450]
@@ -589,14 +550,14 @@ def test_stacking_rotate_clears_the_neighbors_title(sphere):
     pl = pv.Plotter(window_size=window_size)
     pl.add_mesh(sphere, show_scalar_bar=False)
     font_size = 40
-    bars = _wide_number_bars(pl, sphere, 'rotate', title_font_size=font_size, label_font_size=7)
+    bars = _wide_number_bars(
+        pl, sphere, rotate_title=True, title_font_size=font_size, label_font_size=7
+    )
 
     dpi = pl.render_window.GetDPI()
     pad = round(pl.theme.colorbar_vertical.title_pad * font_size)
     for bar, neighbor in _stacked_pairs(bars):
-        title = (
-            neighbor.GetPosition()[0] * window_size[0] - pad - _rotated_title_height(neighbor, dpi)
-        )
+        title = neighbor.GetPosition()[0] * window_size[0] - pad - _bar_title_height(neighbor, dpi)
         assert _label_reach(bar, dpi, window_size[0]) < title
     pl.close()
 
@@ -605,21 +566,24 @@ STACKED_TITLES = ['A bit long', 'Short', 'Super duper long']
 
 
 @pytest.mark.parametrize(
-    'stacking',
+    'layout',
     [
-        None,
-        'widen',
-        'stagger',
+        {},
+        {'stacking_gap': 0.25},
         pytest.param(
-            'rotate',
+            {'rotate_title': True},
             marks=pytest.mark.needs_vtk_version(
                 9, 4, 0, reason='ForceVerticalTitle was added in VTK 9.4.0'
             ),
         ),
     ],
+    ids=['default', 'gap', 'rotated'],
 )
+@pytest.mark.parametrize('vertical', [True, False], ids=['vertical', 'horizontal'])
 @pytest.mark.usefixtures('verify_image_cache')
-def test_stacking_layouts_render(sphere, stacking):
+def test_stacking_layouts_render(sphere, vertical: bool, layout):
+    if layout.get('rotate_title') and not vertical:
+        pytest.skip('A rotated title is vertical only')
     sphere[KEY] = sphere.points[:, 2]
 
     pl = pv.Plotter()
@@ -629,12 +593,12 @@ def test_stacking_layouts_render(sphere, stacking):
     for title in STACKED_TITLES:
         pl.add_scalar_bar(
             title,
-            vertical=True,
-            stacking=stacking,
+            vertical=vertical,
             title_font_size=14,
             label_font_size=14,
             n_labels=3,
             mapper=pl.mapper,
+            **layout,
         )
     pl.show()
 
@@ -653,7 +617,7 @@ def test_stacking_rotate_clears_the_bar_by_the_title_pad(sphere, font_size, titl
     bar = pl.add_scalar_bar(
         KEY,
         vertical=True,
-        stacking='rotate',
+        rotate_title=True,
         title_font_size=font_size,
         label_font_size=font_size,
         title_pad=title_pad,
@@ -674,105 +638,57 @@ def test_stacking_rotate_clears_the_bar_by_the_title_pad(sphere, font_size, titl
     pl.close()
 
 
-def test_stacking_stagger_steps_each_bar_up(sphere):
-    # Staggered bars step up a line at a time and keep the size of an unstaggered one
-    sphere[KEY] = sphere.points[:, 2]
-    font_size = 14
-    window_size = [400, 400]
-
-    def bars(stacking):
-        pl = pv.Plotter(window_size=window_size)
-        pl.add_mesh(sphere, show_scalar_bar=False)
-        return [
-            pl.add_scalar_bar(
-                f'{KEY}{i}',
-                vertical=True,
-                stacking=stacking,
-                title_font_size=font_size,
-                label_font_size=font_size,
-                title_pad=0,
-                mapper=pl.mapper,
-            )
-            for i in range(3)
-        ]
-
-    staggered, plain = bars('stagger'), bars(None)
-
-    assert {bar.GetHeight() for bar in staggered} == {plain[0].GetHeight()}
-    steps = [
-        (a.GetPosition()[1] - b.GetPosition()[1]) * window_size[1]
-        for a, b in itertools.pairwise(staggered)
-    ]
-    assert steps == [pytest.approx(-font_size)] * 2
-
-
-def test_stacking_invalid(sphere):
+def test_stacking_gap_invalid(sphere):
     sphere[KEY] = sphere.points[:, 2]
     pl = pv.Plotter()
     pl.add_mesh(sphere, show_scalar_bar=False)
-    with pytest.raises(ValueError, match=r'stacking .* is not valid'):
-        pl.add_scalar_bar(KEY, stacking='spread', mapper=pl.mapper)
+    with pytest.raises(ValueError, match='stacking_gap'):
+        pl.add_scalar_bar(KEY, stacking_gap=-0.1, mapper=pl.mapper)
     pl.close()
 
 
-def test_stacking_rotate_needs_vtk_94(sphere, monkeypatch):
+def test_rotate_title_rejects_horizontal_bars(sphere):
+    sphere[KEY] = sphere.points[:, 2]
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    with pytest.raises(ValueError, match='not supported for horizontal'):
+        pl.add_scalar_bar(KEY, vertical=False, rotate_title=True, mapper=pl.mapper)
+    pl.close()
+
+
+def test_rotate_title_needs_vtk_94(sphere, monkeypatch):
     monkeypatch.setattr(pv, 'vtk_version_info', (9, 3, 0))
     sphere[KEY] = sphere.points[:, 2]
     pl = pv.Plotter()
     pl.add_mesh(sphere, show_scalar_bar=False)
     with pytest.raises(VTKVersionError, match=re.escape('requires VTK 9.4.0')):
-        pl.add_scalar_bar(KEY, vertical=True, stacking='rotate', mapper=pl.mapper)
+        pl.add_scalar_bar(KEY, vertical=True, rotate_title=True, mapper=pl.mapper)
     pl.close()
 
 
-def test_stacking_from_theme(sphere):
+@pytest.mark.parametrize('vertical', [True, False])
+def test_stacking_gap_from_theme(sphere, vertical: bool):
     sphere[KEY] = sphere.points[:, 2]
-    pv.global_theme.colorbar_vertical.stacking = 'widen'
+    window_size = [500, 500]
+    config = 'colorbar_vertical' if vertical else 'colorbar_horizontal'
+    getattr(pv.global_theme, config).stacking_gap = 0.25
 
-    pl = pv.Plotter(window_size=[400, 400])
+    pl = pv.Plotter(window_size=window_size)
     pl.add_mesh(sphere, show_scalar_bar=False)
     bars = [
-        pl.add_scalar_bar(f'{KEY}{i}', vertical=True, title_font_size=20, mapper=pl.mapper)
+        pl.add_scalar_bar(f'{KEY}{i}', vertical=vertical, title_font_size=20, mapper=pl.mapper)
         for i in range(2)
     ]
-    assert bars[1].GetPosition()[0] < bars[0].GetPosition()[0]
+
+    axis = 0 if vertical else 1
+    step = (bars[1].GetPosition()[axis] - bars[0].GetPosition()[axis]) * window_size[axis]
+    assert step == pytest.approx(-0.25 * 500 if vertical else 0.25 * 500)
     pl.close()
 
 
-def test_stacking_from_theme_leaves_horizontal_bars(sphere):
-    # The option is vertical only, so a horizontal bar neither stacks nor raises
-    sphere[KEY] = sphere.points[:, 2]
-    pv.global_theme.colorbar_vertical.stacking = 'rotate'
-
-    pl = pv.Plotter(window_size=[400, 400])
-    pl.add_mesh(sphere, show_scalar_bar=False)
-    bars = [
-        pl.add_scalar_bar(f'{KEY}{i}', vertical=False, title_font_size=20, mapper=pl.mapper)
-        for i in range(2)
-    ]
-    # Only a stacked vertical bar is moved sideways
-    assert bars[1].GetPosition()[0] == bars[0].GetPosition()[0]
-    pl.close()
-
-
-def test_colorbar_stacking_theme_invalid():
-    with pytest.raises(ValueError, match=r'stacking .* is not valid'):
-        pv.global_theme.colorbar_vertical.stacking = 'spread'
-
-
-def test_colorbar_stacking_theme_is_vertical_only():
-    with pytest.raises(AttributeError, match='no attribute'):
-        pv.global_theme.colorbar_horizontal.stacking = 'widen'
-
-
-@pytest.mark.parametrize('stacking', ['widen', 'stagger', 'rotate'])
-def test_stacking_rejects_horizontal_bars(sphere, stacking):
-    sphere[KEY] = sphere.points[:, 2]
-    pl = pv.Plotter()
-    pl.add_mesh(sphere, show_scalar_bar=False)
-    with pytest.raises(ValueError, match='not supported for horizontal'):
-        pl.add_scalar_bar(KEY, vertical=False, stacking=stacking, mapper=pl.mapper)
-    pl.close()
+def test_stacking_gap_theme_invalid():
+    with pytest.raises(ValueError, match='stacking_gap'):
+        pv.global_theme.colorbar_vertical.stacking_gap = -0.1
 
 
 def test_title_pad_keeps_stacked_spacing(sphere):

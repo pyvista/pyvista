@@ -40,7 +40,6 @@ from pathlib import PurePosixPath
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
-from typing import get_args
 
 import pyvista_validation as _validation
 
@@ -49,7 +48,6 @@ from pyvista._warn_external import warn_external
 from pyvista.core.config import _ConfigBase
 from pyvista.core.utilities.misc import _check_range
 
-from ._typing import StackingOptions
 from .colors import Color
 from .colors import get_cmap_safe
 from .colors import get_cycler
@@ -649,13 +647,21 @@ class _ColorbarConfig(_ConfigBase):
 
     """
 
-    __slots__ = ['_height', '_position_x', '_position_y', '_title_pad', '_width']
+    __slots__ = [
+        '_height',
+        '_position_x',
+        '_position_y',
+        '_stacking_gap',
+        '_title_pad',
+        '_width',
+    ]
 
     def __init__(self):
         self._width = None
         self._height = None
         self._position_x = None
         self._position_y = None
+        self._stacking_gap = None
         self._title_pad = None
 
     @property
@@ -741,6 +747,28 @@ class _ColorbarConfig(_ConfigBase):
     def title_pad(self, title_pad: float):
         self._title_pad = float(title_pad)
 
+    @property
+    def stacking_gap(self) -> float | None:  # numpydoc ignore=RT01
+        """Return or set the distance between stacked colorbars.
+
+        The distance is a fraction of the window.  ``None`` spaces them as
+        tightly as their titles and tick labels allow.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pv.global_theme.colorbar_vertical.stacking_gap = 0.2
+
+        """
+        return self._stacking_gap
+
+    @stacking_gap.setter
+    def stacking_gap(self, stacking_gap: float | None):
+        if stacking_gap is not None:
+            _validation.check_greater_than(stacking_gap, 0, strict=False, name='stacking_gap')
+            stacking_gap = float(stacking_gap)
+        self._stacking_gap = stacking_gap
+
     def __repr__(self):
         txt = ['']
         parm = {
@@ -749,6 +777,7 @@ class _ColorbarConfig(_ConfigBase):
             'X Position': 'position_x',
             'Y Position': 'position_y',
             'Title Pad': 'title_pad',
+            'Stacking Gap': 'stacking_gap',
         }
         for name, attr in parm.items():
             setting = getattr(self, attr)
@@ -764,45 +793,37 @@ class _VerticalColorbarConfig(_ColorbarConfig):
 
     Examples
     --------
-    Stack vertical colorbars with their titles turned alongside them.
-
     >>> import pyvista as pv
-    >>> pv.global_theme.colorbar_vertical.stacking = 'rotate'
+    >>> pv.global_theme.colorbar_vertical.rotate_title = True
 
     """
 
-    __slots__ = ['_stacking']
+    __slots__ = ['_rotate_title']
 
     def __init__(self):
         super().__init__()
-        self._stacking = None
+        self._rotate_title = False
 
     @property
-    def stacking(self) -> StackingOptions | None:  # numpydoc ignore=RT01
-        """Return or set how the titles of stacked colorbars are kept apart.
+    def rotate_title(self) -> bool:  # numpydoc ignore=RT01
+        """Return or set whether a colorbar turns its title alongside the bar.
 
-        Horizontal colorbars are always spaced to fit their annotations, so this
-        is a vertical setting only.  See :meth:`pyvista.Plotter.add_scalar_bar`
-        for what each option does.
+        A horizontal colorbar cannot, so this is a vertical setting only.
 
         Examples
         --------
         >>> import pyvista as pv
-        >>> pv.global_theme.colorbar_vertical.stacking = 'stagger'
+        >>> pv.global_theme.colorbar_vertical.rotate_title = True
 
         """
-        return self._stacking
+        return self._rotate_title
 
-    @stacking.setter
-    def stacking(self, stacking: StackingOptions | None):
-        if stacking is not None:
-            _validation.check_contains(
-                get_args(StackingOptions), must_contain=stacking, name='stacking'
-            )
-        self._stacking = stacking
+    @rotate_title.setter
+    def rotate_title(self, rotate_title: bool):
+        self._rotate_title = bool(rotate_title)
 
     def __repr__(self):
-        return '\n'.join([super().__repr__(), f'    {"Stacking":<21}: {self.stacking}'])
+        return '\n'.join([super().__repr__(), f'    {"Rotate Title":<21}: {self.rotate_title}'])
 
 
 class _AxesConfig(_ConfigBase):
