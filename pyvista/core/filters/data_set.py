@@ -6889,6 +6889,18 @@ class DataSetFilters(DataObjectFilters):
         >>> out.plot(multi_colors=True, cpos='xy')
 
         """
+        # Cell-wise operations fail for a point cloud, so use its vertex cells
+        if isinstance(self, pv.PointSet):
+            output = self.cast_to_polydata(deep=False).partition(
+                n_partitions,
+                generate_global_id=generate_global_id,
+                as_composite=as_composite,
+            )
+            if isinstance(output, pv.MultiBlock):
+                for index, block in enumerate(output):
+                    output[index] = None if block is None else block.cast_to_pointset()
+                return output
+            return output.cast_to_pointset()
         if not _vtk.has_attr('vtkRedistributeDataSetFilter'):  # pragma: no cover
             msg = (
                 '`partition` requires vtkRedistributeDataSetFilter, but it '
