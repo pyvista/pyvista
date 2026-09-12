@@ -95,10 +95,10 @@ class ScalarBars(_NoNewAttrMixin):
         return '\n'.join(lines)
 
     def _stacked_neighbor(self, slot):
-        """Return the scalar bar actor occupying the slot below this one, if any."""
+        """Return the scalar bar actor occupying the slot below this one."""
         lookup = self._plotter._scalar_bar_slot_lookup
-        title = next((name for name, taken in lookup.items() if taken == slot - 1), None)
-        return None if title is None else self._scalar_bar_actors.get(title)
+        title = next(name for name, taken in lookup.items() if taken == slot - 1)
+        return self._scalar_bar_actors[title]
 
     def _remove_mapper_from_plotter(
         self,
@@ -930,6 +930,7 @@ class ScalarBars(_NoNewAttrMixin):
         if stacking and stacked_slot and unconstrained:
             if vertical:
                 margin = 0.2 * bar_width
+                # Slots fill from the bottom up, so the one below this is taken
                 neighbor = self._stacked_neighbor(stacked_slot)
                 if stacking == 'widen':
                     claim = _title_width(title_text, display_title, dpi)
@@ -937,27 +938,21 @@ class ScalarBars(_NoNewAttrMixin):
                     # The title is out of the way, so only the labels share the gap
                     claim = bar_width + _widest_label(scalar_bar, label_text, dpi)
                 _, y = scalar_bar.GetPosition()
-                if neighbor is None:
-                    spacing = margin + max(bar_width, claim)
-                    position_x = (
-                        theme.colorbar_vertical.position_x - stacked_slot * spacing / window_width
+                # A title is centered on its bar, so each neighbor claims half the gap
+                neighbor_bar = neighbor.GetWidth() * window_width
+                if stacking == 'widen':
+                    neighbor_claim = _title_width(
+                        neighbor.GetTitleTextProperty(), neighbor.GetTitle(), dpi
                     )
                 else:
-                    # A title is centered on its bar, so each neighbor claims half the gap
-                    neighbor_bar = neighbor.GetWidth() * window_width
-                    if stacking == 'widen':
-                        neighbor_claim = _title_width(
-                            neighbor.GetTitleTextProperty(), neighbor.GetTitle(), dpi
-                        )
-                    else:
-                        neighbor_claim = claim
-                    spacing = margin + max(
-                        (bar_width + neighbor_bar) / 2, (claim + neighbor_claim) / 2
-                    )
-                    center = (
-                        neighbor.GetPosition()[0] + neighbor.GetWidth() / 2
-                    ) * window_width - spacing
-                    position_x = (center - bar_width / 2) / window_width
+                    neighbor_claim = claim
+                spacing = margin + max(
+                    (bar_width + neighbor_bar) / 2, (claim + neighbor_claim) / 2
+                )
+                center = (
+                    neighbor.GetPosition()[0] + neighbor.GetWidth() / 2
+                ) * window_width - spacing
+                position_x = (center - bar_width / 2) / window_width
                 if stacking == 'stagger':
                     # Raising the whole bar steps its title clear of its neighbor's
                     y += stacked_slot * (font_size + pad) / window_height

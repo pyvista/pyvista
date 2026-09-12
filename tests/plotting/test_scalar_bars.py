@@ -616,10 +616,8 @@ def test_stacking_invalid(sphere):
     pl.close()
 
 
-@pytest.mark.skipif(
-    pv.vtk_version_info >= (9, 4, 0), reason='ForceVerticalTitle was added in VTK 9.4.0'
-)
-def test_stacking_rotate_needs_vtk_94(sphere):
+def test_stacking_rotate_needs_vtk_94(sphere, monkeypatch):
+    monkeypatch.setattr(pv, 'vtk_version_info', (9, 3, 0))
     sphere[KEY] = sphere.points[:, 2]
     pl = pv.Plotter()
     pl.add_mesh(sphere, show_scalar_bar=False)
