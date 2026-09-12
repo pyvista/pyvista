@@ -6921,7 +6921,7 @@ class DataSetFilters(DataObjectFilters):
             # vtk 9.2.0, so instead we set it to True always and simply merge
             # the result. See:
             # https://gitlab.kitware.com/vtk/vtk/-/issues/18632
-            return pv.merge(list(output), merge_points=False)
+            return cast('UnstructuredGrid', pv.merge(list(output), merge_points=False))
         return output
 
     def oriented_bounding_box(  # type: ignore[misc]

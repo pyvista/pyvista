@@ -861,6 +861,12 @@ def test_load_and_merge_raises_when_no_loadable_files():
         _load_and_merge([_DownloadableFile('foo.vtk')])
 
 
+def test_load_and_merge_raises_for_invalid_loaded_type():
+    bad_loader = _DatasetLoader(lambda: np.array([1, 2, 3]))
+    with pytest.raises(TypeError, match='Only DataSet objects can be merged'):
+        _load_and_merge([bad_loader])
+
+
 def test_get_file_or_folder_size_missing_path_raises(tmp_path):
     missing = str(tmp_path / 'does-not-exist')
     with pytest.raises(ValueError, match='Expected a file or folder path'):
