@@ -343,32 +343,22 @@ def test_title_pad_boxed(sphere, outline: bool, fill: bool):
     assert pl.scalar_bar.GetTitleTextProperty().GetLineOffset() == 0
 
 
+@pytest.mark.parametrize(
+    'title', ['Range {i}', 'A wide range {i}'], ids=['short_title', 'wide_title']
+)
+@pytest.mark.parametrize('vertical', [True, False], ids=['vertical', 'horizontal'])
 @pytest.mark.usefixtures('verify_image_cache')
-def test_stacked_horizontal_bars_render(sphere):
+def test_stacked_bars_render(sphere, vertical: bool, title: str):
     sphere[KEY] = sphere.points[:, 2]
+
     pl = pv.Plotter()
+    # Move the vertical bars off the window edge so a wide title is not clipped by it
+    pl.theme.colorbar_vertical.position_x = 0.8
     pl.add_mesh(sphere, show_scalar_bar=False)
     for i in range(3):
         pl.add_scalar_bar(
-            f'{KEY} {i}',
-            vertical=False,
-            title_font_size=14,
-            label_font_size=14,
-            n_labels=3,
-            mapper=pl.mapper,
-        )
-    pl.show()
-
-
-@pytest.mark.usefixtures('verify_image_cache')
-def test_stacked_vertical_bars_render(sphere):
-    sphere[KEY] = sphere.points[:, 2]
-    pl = pv.Plotter()
-    pl.add_mesh(sphere, show_scalar_bar=False)
-    for i in range(3):
-        pl.add_scalar_bar(
-            f'Range {i}',
-            vertical=True,
+            title.format(i=i),
+            vertical=vertical,
             title_font_size=14,
             label_font_size=14,
             n_labels=3,
@@ -425,7 +415,8 @@ def test_stacked_vertical_bars_clear_their_titles(sphere):
         (a.GetPosition()[0] - b.GetPosition()[0]) * window_size[0]
         for a, b in itertools.pairwise(bars)
     ]
-    assert min(pitches) >= widest
+    gap = 0.2 * pl.theme.colorbar_vertical.width * window_size[0]
+    assert min(pitches) == pytest.approx(widest + gap)
 
 
 def test_title_pad_keeps_stacked_spacing(sphere):

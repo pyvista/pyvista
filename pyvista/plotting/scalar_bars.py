@@ -782,18 +782,19 @@ class ScalarBars(_NoNewAttrMixin):
         if pad and unconstrained:
             title_text.SetLineOffset(-pad)
 
-        # The pitch is a fraction of the window but the annotations are not, so the
-        # annotations set the spacing between stacked bars once the window is small
+        # The gap between stacked bars is a fraction of the window but the annotations
+        # are not, so the annotations set that gap once the window is small
         if stacked_slot and unconstrained:
             window_width, window_height = self._plotter.window_size
             if vertical:
-                pitch = max(
-                    1.2 * width * window_width,
-                    _title_width(title_text, display_title, self._plotter.render_window.GetDPI()),
+                title_width = _title_width(
+                    title_text, display_title, self._plotter.render_window.GetDPI()
                 )
+                margin = 0.2 * width * window_width
+                spacing = margin + max(width * window_width, title_width)
                 _, y = scalar_bar.GetPosition()
                 position_x = (
-                    theme.colorbar_vertical.position_x - stacked_slot * pitch / window_width
+                    theme.colorbar_vertical.position_x - stacked_slot * spacing / window_width
                 )
                 scalar_bar.SetPosition(position_x, y)
             else:
@@ -802,10 +803,10 @@ class ScalarBars(_NoNewAttrMixin):
                     + title_text.GetFontSize()
                     + label_text.GetFontSize()
                 )
-                pitch = pad + max(height * window_height, annotations)
+                spacing = pad + max(height * window_height, annotations)
                 x, _ = scalar_bar.GetPosition()
                 position_y = (
-                    theme.colorbar_horizontal.position_y + stacked_slot * pitch / window_height
+                    theme.colorbar_horizontal.position_y + stacked_slot * spacing / window_height
                 )
                 scalar_bar.SetPosition(x, position_y)
 
