@@ -5813,49 +5813,73 @@ def test_resample_to_image_reference_volume(tetbeam):
     assert 'point_scalars' in image.point_data
 
 
-def test_resample_to_image_surface_tolerance(sphere):
+def voxel_of_each_point(mesh, image):
+    """Return the flat index of the voxel containing each of the mesh's points."""
+    dims = np.array(image.dimensions)
+    ijk = np.round((mesh.points - np.array(image.origin)) / np.array(image.spacing)).astype(int)
+    ijk = np.clip(ijk, 0, dims - 1)
+    return ijk[:, 0] + dims[0] * (ijk[:, 1] + dims[1] * ijk[:, 2])
+
+
+def test_resample_to_image_method_interpolate(sphere):
     sphere['point_scalars'] = sphere.points[:, 0]
     dims = (20, 20, 20)
 
-    # A surface has no volume to sample, so a strict search finds nothing
-    strict = sphere.resample_to_image(dimensions=dims, tolerance=0.0)
-    assert not strict['vtkValidPointMask'].any()
-
-    # By default the voxels the surface passes through are sampled
+    # Interpolating from the points fills every voxel containing one
     image = sphere.resample_to_image(dimensions=dims)
     valid = image['vtkValidPointMask'].astype(bool)
-    assert valid.any()
-    # Only voxels near the surface are sampled, not the interior
+    assert valid[voxel_of_each_point(sphere, image)].all()
+
+    # A surface has no volume for a cell search to land in, so sampling does not
+    sampled = sphere.resample_to_image(dimensions=dims, method='sample')
+    sampled_valid = sampled['vtkValidPointMask'].astype(bool)
+    assert not sampled_valid[voxel_of_each_point(sphere, sampled)].all()
+    assert sampled_valid.sum() < valid.sum()
+
+    # Only voxels near the surface are filled, not the interior
     distance = image.compute_implicit_distance(sphere)['implicit_distance']
     assert np.all(np.abs(distance[valid]) <= np.linalg.norm(image.spacing) / 2)
 
-    # Only a volumetric input samples the interior
-    volume = sphere.delaunay_3d()
-    volume_valid = volume.resample_to_image(dimensions=dims)['vtkValidPointMask'].astype(bool)
-    interior = distance < -np.linalg.norm(image.spacing)
-    assert interior.any()
-    assert volume_valid[interior].all()
-    assert not valid[interior].any()
+    # A smaller radius fills fewer voxels
+    tight = sphere.resample_to_image(dimensions=dims, radius=np.linalg.norm(image.spacing) / 4)
+    assert tight['vtkValidPointMask'].sum() < valid.sum()
 
 
-def test_resample_to_image_tolerance_default(sphere, mocker: MockerFixture):
+def test_resample_to_image_method_default(sphere, mocker: MockerFixture):
     from pyvista.core.filters import data_object
+    from pyvista.core.filters import data_set
 
-    spy = mocker.spy(data_object.DataObjectFilters, 'sample')
+    sample = mocker.spy(data_object.DataObjectFilters, 'sample')
+    interpolate = mocker.spy(data_set.DataSetFilters, 'interpolate')
     dims = (20, 20, 20)
 
-    # A surface is sampled with half a voxel's diagonal
-    image = sphere.resample_to_image(dimensions=dims)
-    assert spy.spy_return_list[-1] is image
-    assert spy.call_args.kwargs['tolerance'] == pytest.approx(np.linalg.norm(image.spacing) / 2)
-
-    # A volumetric input uses the tolerance computed by VTK
+    # A volumetric input is sampled from its cells
     sphere.delaunay_3d().resample_to_image(dimensions=dims)
-    assert spy.call_args.kwargs['tolerance'] is None
+    assert sample.call_count == 1
+    assert interpolate.call_count == 0
 
-    # An explicit tolerance is always used as given
-    sphere.resample_to_image(dimensions=dims, tolerance=0.5)
-    assert spy.call_args.kwargs['tolerance'] == 0.5
+    # Anything else is interpolated from its points
+    for mesh in (sphere, pv.PointSet(sphere.points), pv.Line()):
+        mesh.resample_to_image(dimensions=dims)
+    assert sample.call_count == 1
+    assert interpolate.call_count == 3
+
+    # An explicit method overrides the default
+    sphere.resample_to_image(dimensions=dims, method='sample')
+    assert sample.call_count == 2
+
+
+def test_resample_to_image_interpolate_point_cloud(sphere):
+    # A point cloud has no cells at all, so only interpolation can reach it
+    cloud = pv.PointSet(sphere.points)
+    cloud['point_scalars'] = sphere.points[:, 0]
+    image = cloud.resample_to_image(dimensions=(20, 20, 20))
+
+    valid = image['vtkValidPointMask'].astype(bool)
+    assert valid[voxel_of_each_point(cloud, image)].all()
+    # Each filled voxel takes a value from points no further away than the radius
+    radius = np.linalg.norm(image.spacing) / 2
+    assert np.allclose(image['point_scalars'][valid], image.points[valid][:, 0], atol=radius)
 
 
 @pytest.mark.parametrize('axis', [0, 1, 2])
@@ -5868,7 +5892,7 @@ def test_resample_to_image_flat_input(axis):
 
     assert image.dimensions[axis] == 1
     assert image.spacing[axis] > 0
-    # Every voxel of the flat image is sampled from the plane
+    # Every voxel of the flat image takes a value from the plane
     assert image['vtkValidPointMask'].all()
 
 
@@ -5890,3 +5914,16 @@ def test_resample_to_image_raises(sphere):
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         pv.PointSet(np.zeros((4, 3))).resample_to_image()
+
+    with pytest.raises(ValueError, match="method 'nonsense' is not valid"):
+        sphere.resample_to_image(dimensions=(4, 5, 6), method='nonsense')
+
+    match = "Radius and sharpness require `method='interpolate'`."
+    for kwargs in [{'radius': 0.1}, {'sharpness': 4.0}]:
+        with pytest.raises(TypeError, match=re.escape(match)):
+            sphere.resample_to_image(dimensions=(4, 5, 6), method='sample', **kwargs)
+
+    match = "Tolerance and categorical require `method='sample'`."
+    for kwargs in [{'tolerance': 0.1}, {'categorical': True}]:
+        with pytest.raises(TypeError, match=re.escape(match)):
+            sphere.resample_to_image(dimensions=(4, 5, 6), method='interpolate', **kwargs)

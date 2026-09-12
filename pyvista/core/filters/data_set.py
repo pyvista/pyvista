@@ -3533,6 +3533,10 @@ class DataSetFilters(DataObjectFilters):
         pyvista.DataObjectFilters.sample
             Resample array data from one mesh onto another.
 
+        resample_to_image
+            Interpolate onto a new :class:`~pyvista.ImageData` which fits the input's
+            bounds, without building the image first.
+
         :meth:`pyvista.ImageDataFilters.resample`
             Resample image data to modify its dimensions and spacing.
 
@@ -8955,23 +8959,19 @@ class DataSetFilters(DataObjectFilters):
         rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None = None,
         cell_length_percentile: float | None = None,
         cell_length_sample_size: int | None = None,
+        method: Literal['sample', 'interpolate'] | None = None,
         tolerance: float | None = None,
         categorical: bool = False,
-        locator: Literal['cell', 'cell_tree', 'obb_tree', 'static_cell']
-        | _vtk.vtkAbstractCellLocator
-        | None = 'static_cell',
-        pass_cell_data: bool = True,
-        pass_point_data: bool = True,
-        pass_field_data: bool = True,
-        mark_blank: bool = True,
-        snap_to_closest_point: bool = False,
+        radius: float | None = None,
+        sharpness: float | None = None,
         progress_bar: bool = False,
     ) -> ImageData:
         """Resample this mesh's arrays onto a uniform grid.
 
-        The mesh's arrays are interpolated at the center of every voxel of a new
+        The mesh's arrays are resampled at the center of every voxel of a new
         :class:`~pyvista.ImageData`. This is a one-line alternative to building the
-        grid explicitly and calling :meth:`~pyvista.DataObjectFilters.sample` on it.
+        grid explicitly and calling :meth:`~pyvista.DataObjectFilters.sample` or
+        :meth:`interpolate` on it.
 
         The output geometry can be controlled in several ways:
 
@@ -8989,22 +8989,33 @@ class DataSetFilters(DataObjectFilters):
         voxels fit the bounds of the input mesh.
 
         If no inputs are provided, ``cell_length_percentile=0.1`` (tenth percentile) is
-        used by default to estimate the spacing. The input's own cells therefore set the
-        resolution, and gridded inputs are not resampled below their native spacing.
+        used by default to estimate the spacing, so the input's own cells set the
+        resolution.
+
+        The values are resampled with one of two methods, chosen by ``method``:
+
+        #. ``'sample'`` interpolates inside the input's cells. This is the default for
+           an input with volumetric cells, and is the only method which uses the input's
+           topology or carries its cell data.
+
+        #. ``'interpolate'`` interpolates from the input's points within ``radius``.
+           This is the default otherwise, since a surface, a line or a point cloud has
+           no volume for a cell search to land in. Every voxel containing an input point
+           is filled, and only the input's point data is carried.
 
         .. versionadded:: 0.50
 
         .. note::
-            This filter interpolates the input's data arrays and needs volumetric cells
-            to interpolate from. A surface encloses a volume but is not one, so only the
-            voxels near its faces are sampled and the rest of the output is blank. Use
-            :meth:`voxelize_binary_mask` to fill the inside of a surface instead; it
-            labels voxels as foreground or background and ignores data arrays entirely.
+            The input's data arrays are resampled by this filter. Use
+            :meth:`voxelize_binary_mask` to fill the inside of a closed surface instead;
+            it labels voxels as foreground or background and ignores data arrays
+            entirely. Both filters place their voxels identically, so their outputs can
+            be combined.
 
         .. note::
-            Voxels which do not fall inside the input are flagged with a
-            ``'vtkValidPointMask'`` point data array and are blanked. Volume rendering
-            the output shows these regions as transparent.
+            Voxels with no value are flagged with a ``'vtkValidPointMask'`` point data
+            array. Volume rendering the output shows these regions as transparent when
+            ``method='sample'``, which also blanks them.
 
         Parameters
         ----------
@@ -9039,10 +9050,13 @@ class DataSetFilters(DataObjectFilters):
             (CDF) of lengths which are representative of the cell length scales present
             in the input. The CDF is computed by:
 
-            #. Triangulating the input cells.
             #. Sampling a subset of up to ``cell_length_sample_size`` cells.
             #. Computing the distance between two random points in each cell.
             #. Inserting the distance into an ordered set to create the CDF.
+
+            The estimate is a single value which is used for all three axes, so an
+            anisotropic input is resampled below its native spacing along its coarsest
+            axis.
 
             Has no effect if ``dimensions`` or ``reference_volume`` are specified.
 
@@ -9051,37 +9065,32 @@ class DataSetFilters(DataObjectFilters):
             when using the ``cell_length_percentile`` option. ``100 000`` samples are
             used by default.
 
+        method : 'sample' | 'interpolate', optional
+            Method used to compute each voxel's value. ``'sample'`` interpolates inside
+            the input's cells, and ``'interpolate'`` interpolates from its points within
+            ``radius``. By default ``'sample'`` is used for an input with volumetric
+            cells and ``'interpolate'`` is used otherwise. See summary for details.
+
         tolerance : float, optional
-            Tolerance used when locating the cell a voxel is sampled from. By default
-            the tolerance computed by :vtk:`vtkResampleWithDataSet` is used for inputs
-            with volumetric cells, and half a voxel's diagonal is used otherwise so that
-            voxels near a surface or a line are sampled.
+            Tolerance used when locating the cell a voxel is sampled from. The tolerance
+            computed by :vtk:`vtkResampleWithDataSet` is used by default. Requires
+            ``method='sample'``.
 
         categorical : bool, default: False
             Control whether the source point data is to be treated as categorical. If
             ``True``, the resampled point data will be determined by a nearest neighbor
-            interpolation scheme.
+            interpolation scheme. Requires ``method='sample'``.
 
-        locator : :vtk:`vtkAbstractCellLocator` | str, default: 'static_cell'
-            Prototype cell locator to perform the ``FindCell()`` operation. Default uses
-            the :vtk:`vtkStaticCellLocator`. Options are ``'cell'``, ``'cell_tree'``,
-            ``'obb_tree'`` and ``'static_cell'``.
+        radius : float, optional
+            Distance from a voxel's center within which the input's points contribute to
+            it. Half a voxel's diagonal is used by default, which is the furthest any
+            point inside a voxel can be from its center. Requires
+            ``method='interpolate'``.
 
-        pass_cell_data : bool, default: True
-            Preserve source mesh's original cell data arrays.
-
-        pass_point_data : bool, default: True
-            Preserve source mesh's original point data arrays.
-
-        pass_field_data : bool, default: True
-            Preserve source mesh's original field data arrays.
-
-        mark_blank : bool, default: True
-            Whether to mark blank points and cells in ``'vtkGhostType'``.
-
-        snap_to_closest_point : bool, default: False
-            Whether to snap to cell with closest point if no cell is found. Useful
-            when sampling from a mesh with lower dimension than this one.
+        sharpness : float, optional
+            Sharpness of the Gaussian interpolation kernel, ``2.0`` by default. As this
+            value increases, the weights of points far from a voxel's center fall off
+            faster. Requires ``method='interpolate'``.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -9094,12 +9103,12 @@ class DataSetFilters(DataObjectFilters):
         See Also
         --------
         pyvista.DataObjectFilters.sample
-            Filter this one wraps. Samples onto an existing mesh of any type.
+            Filter used by ``method='sample'``. Samples onto an existing mesh of any
+            type, and exposes options this one does not.
 
-        pyvista.DataSetFilters.interpolate
-            Similar filter which interpolates from the input's points instead of its
-            cells using a distance-weighted kernel. Its ``radius`` fills every voxel
-            containing an input point, which sampling a surface's cells does not.
+        interpolate
+            Filter used by ``method='interpolate'``. Interpolates onto an existing mesh
+            of any type, and exposes options this one does not.
 
         pyvista.ImageDataFilters.resample
             Change the dimensions or spacing of an image which is already
@@ -9107,10 +9116,11 @@ class DataSetFilters(DataObjectFilters):
 
         voxelize_binary_mask
             Voxelize the inside of a closed surface as a mask. Operates on a surface's
-            geometry and generates a new array instead of interpolating existing ones.
+            geometry and generates a new array instead of resampling existing ones.
 
         pyvista.create_grid
-            Create the uniform grid which this filter samples onto, without sampling.
+            Create a uniform grid surrounding a dataset. Its points lie on the dataset's
+            bounds, whereas this filter's voxels fit them.
 
         Examples
         --------
@@ -9137,6 +9147,15 @@ class DataSetFilters(DataObjectFilters):
         >>> mesh.resample_to_image(spacing=2.0).dimensions
         (34, 24, 59)
 
+        A point cloud of the same mesh has no cells for a cell search to land in, so it
+        is interpolated from its points instead.
+
+        >>> cloud = pv.PointSet(mesh.points)
+        >>> cloud['node_value'] = mesh['node_value']
+        >>> cloud.resample_to_image(spacing=2.0).plot(
+        ...     volume=True, scalars='node_value', cpos='zy'
+        ... )
+
         """
         volume = _make_reference_volume(
             self,
@@ -9148,19 +9167,29 @@ class DataSetFilters(DataObjectFilters):
             cell_length_sample_size=cell_length_sample_size,
             progress_bar=progress_bar,
         )
-        if tolerance is None and self.max_cell_dimensionality < 3:
-            # Sample the voxels the input passes through, not only those containing it
-            tolerance = float(np.linalg.norm(volume.spacing)) / 2
-        return volume.sample(
+        if method is None:
+            method = 'sample' if self.max_cell_dimensionality == 3 else 'interpolate'
+        else:
+            _validation.check_contains(
+                ['sample', 'interpolate'], must_contain=method, name='method'
+            )
+
+        if method == 'sample':
+            if radius is not None or sharpness is not None:
+                msg = "Radius and sharpness require `method='interpolate'`."
+                raise TypeError(msg)
+            return volume.sample(
+                self, tolerance=tolerance, categorical=categorical, progress_bar=progress_bar
+            )
+
+        if tolerance is not None or categorical:
+            msg = "Tolerance and categorical require `method='sample'`."
+            raise TypeError(msg)
+        return volume.interpolate(
             self,
-            tolerance=tolerance,
-            categorical=categorical,
-            locator=locator,
-            pass_cell_data=pass_cell_data,
-            pass_point_data=pass_point_data,
-            pass_field_data=pass_field_data,
-            mark_blank=mark_blank,
-            snap_to_closest_point=snap_to_closest_point,
+            radius=float(np.linalg.norm(volume.spacing)) / 2 if radius is None else radius,
+            sharpness=2.0 if sharpness is None else sharpness,
+            strategy='mask_points',
             progress_bar=progress_bar,
         )
 

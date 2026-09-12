@@ -96,4 +96,13 @@ volume
 volume.plot(volume=True, scalars='shearstress', cpos='zy')
 
 # %%
+# The values above come from the mesh's cells. An input without volumetric cells
+# has no interior for a cell search to land in, so the filter interpolates from
+# its points instead and fills every voxel which contains one. Here the same
+# points are resampled as a point cloud, which has no cells at all.
+cloud = pv.PointSet(mesh.points)
+cloud['node_value'] = mesh['node_value']
+cloud.resample_to_image(spacing=2.0).plot(volume=True, scalars='node_value', cpos='zy')
+
+# %%
 # .. tags:: filter
