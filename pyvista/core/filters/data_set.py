@@ -805,8 +805,7 @@ class DataSetFilters(DataObjectFilters):
         >>> clipped.plot()
 
         """
-        if inplace:
-            _validate_clip_inplace(self)
+        inplace_target = _validate_clip_inplace(self) if inplace else None
         alg = _clipper(self)
 
         if is_single_value := isinstance(value, (float, int)):
@@ -832,22 +831,18 @@ class DataSetFilters(DataObjectFilters):
         alg.SetGenerateClippedOutput(both)
 
         _update_alg(alg, progress_bar=progress_bar, message='Clipping by a Scalar')
-        result0 = cast(
-            'PolyData | PointSet | UnstructuredGrid',
-            _keep_array_structure(_cast_output_to_match_input_type(_get_output(alg), self), self),
+        result0: PolyData | PointSet | UnstructuredGrid = _keep_array_structure(
+            _cast_output_to_match_input_type(_get_output(alg), self), self
         )
         if not is_single_value:
             # Keep what lies above the lower value as well
             result0 = result0.clip_scalar(scalars=scalars, invert=False, value=lower)
-        if inplace:
-            self.copy_from(result0, deep=False)
-            result0 = cast('PolyData | PointSet | UnstructuredGrid', self)
+        if inplace_target is not None:
+            inplace_target.copy_from(result0, deep=False)
+            result0 = inplace_target
         if both:
-            result1 = cast(
-                'PolyData | PointSet | UnstructuredGrid',
-                _keep_array_structure(
-                    _cast_output_to_match_input_type(_get_output(alg, oport=1), self), self
-                ),
+            result1: PolyData | PointSet | UnstructuredGrid = _keep_array_structure(
+                _cast_output_to_match_input_type(_get_output(alg, oport=1), self), self
             )
             return result0, result1
         return result0
@@ -992,10 +987,7 @@ class DataSetFilters(DataObjectFilters):
             info = self.active_scalars_info
             if info.name is not None and not clipped.is_empty:
                 clipped.set_active_scalars(info.name, preference=info.association)
-        return cast(
-            'PolyData | PointSet | UnstructuredGrid',
-            _keep_array_structure(_cast_output_to_match_input_type(clipped, self), self),
-        )
+        return _keep_array_structure(_cast_output_to_match_input_type(clipped, self), self)
 
     def threshold(  # type: ignore[misc]
         self: _DataSetType,
