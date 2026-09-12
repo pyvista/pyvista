@@ -531,6 +531,34 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
             raise RuntimeError(msg)
         raise PointSetCellOperationError
 
+    def extract_cells(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
+        """Raise, since a point cloud has no cells."""
+        raise PointSetCellOperationError
+
+    def surface_indices(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
+        """Raise, since a point cloud has no cells."""
+        raise PointSetCellOperationError
+
+    def compute_boundary_mesh_quality(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
+        """Raise, since a point cloud has no cells."""
+        raise PointSetCellOperationError
+
+    def extract_cells_by_type(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
+        """Raise, since a point cloud has no cells."""
+        raise PointSetCellOperationError
+
+    def voxelize(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
+        """Raise, since a point cloud has no cells."""
+        raise PointSetCellOperationError
+
+    def voxelize_binary_mask(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
+        """Raise, since a point cloud has no cells."""
+        raise PointSetCellOperationError
+
+    def voxelize_rectilinear(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
+        """Raise, since a point cloud has no cells."""
+        raise PointSetCellOperationError
+
     def cell_validator(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError

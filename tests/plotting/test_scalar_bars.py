@@ -255,6 +255,57 @@ def test_ticks(sphere):
     pl.show()
 
 
+@pytest.mark.usefixtures('verify_image_cache')
+def test_categories_label_positions():
+    # Every label sits over the middle of its own color block
+    values = [0.0, 1.0, 2.0, 5.0, 6.0, 9.0]
+    mesh = pv.ImageData(dimensions=(len(values), 2, 2))
+    mesh[KEY] = np.tile(values, 4)
+    pl = pv.Plotter()
+    actor = pl.add_mesh(
+        mesh,
+        categories=True,
+        cmap='glasbey',
+        scalar_bar_args={
+            'width': 0.9,
+            'height': 0.3,
+            'position_x': 0.05,
+            'position_y': 0.05,
+            'label_font_size': 40,
+            'title_font_size': 40,
+        },
+    )
+    actor.visibility = False
+    assert list(pv.convert_array(pl.scalar_bars[KEY].GetCustomLabels())) == values
+    pl.show()
+
+
+@pytest.mark.usefixtures('verify_image_cache')
+def test_categories_label_positions_clim():
+    # An explicit range halves the end blocks and draws their labels at the bar ends
+    values = [0.0, 1.0, 2.0, 5.0, 6.0, 9.0]
+    mesh = pv.ImageData(dimensions=(len(values), 2, 2))
+    mesh[KEY] = np.tile(values, 4)
+    pl = pv.Plotter()
+    actor = pl.add_mesh(
+        mesh,
+        categories=True,
+        cmap='glasbey',
+        clim=(values[0], values[-1]),
+        scalar_bar_args={
+            'width': 0.9,
+            'height': 0.3,
+            'position_x': 0.05,
+            'position_y': 0.05,
+            'label_font_size': 40,
+            'title_font_size': 40,
+        },
+    )
+    actor.visibility = False
+    assert pl.mapper.lookup_table.scalar_range == (values[0], values[-1])
+    pl.show()
+
+
 def test_too_many_scalar_bars():
     pl = pv.Plotter()
     with pytest.raises(RuntimeError, match='Maximum number of color'):  # noqa: PT012
