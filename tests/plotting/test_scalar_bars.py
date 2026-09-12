@@ -377,7 +377,7 @@ def test_title_pad_constrained_font_size(sphere):
 
 @pytest.mark.parametrize(('outline', 'fill'), [(True, False), (False, True)])
 def test_title_pad_boxed(sphere, outline: bool, fill: bool):
-    # A drawn box is sized without the padding, so the title would sit outside it
+    # A drawn box is sized without the title, so the padding clears it off the frame
     sphere[KEY] = sphere.points[:, 2]
 
     pl = pv.Plotter()
@@ -391,7 +391,7 @@ def test_title_pad_boxed(sphere, outline: bool, fill: bool):
         background_color='grey',
     )
 
-    assert pl.scalar_bar.GetTitleTextProperty().GetLineOffset() == 0
+    assert pl.scalar_bar.GetTitleTextProperty().GetLineOffset() == -10
 
 
 @pytest.mark.parametrize(

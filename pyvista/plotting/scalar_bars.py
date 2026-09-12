@@ -338,8 +338,7 @@ class ScalarBars(_NoNewAttrMixin):
             title font size.  Defaults to ``None`` and is sized according to
             :attr:`pyvista.plotting.themes.Theme.colorbar_horizontal` or
             :attr:`pyvista.plotting.themes.Theme.colorbar_vertical`.  Has no
-            effect when the font size is constrained, or when ``fill`` or
-            ``outline`` draws a box the title would be padded out of.
+            effect when the font size is constrained.
 
             .. versionadded:: 0.50
 
@@ -776,9 +775,8 @@ class ScalarBars(_NoNewAttrMixin):
         if unconstrained_font_size:
             scalar_bar.SetUnconstrainedFontSize(True)
 
-        draws_box = scalar_bar.GetDrawFrame() or scalar_bar.GetDrawBackground()
         unconstrained = bool(scalar_bar.GetUnconstrainedFontSize())
-        pad = round(title_pad * title_text.GetFontSize()) if title_pad and not draws_box else 0
+        pad = round(title_pad * title_text.GetFontSize()) if title_pad else 0
         if pad and unconstrained:
             title_text.SetLineOffset(-pad)
 
