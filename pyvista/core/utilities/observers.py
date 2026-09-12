@@ -288,7 +288,7 @@ class Observer(_NoNewAttrMixin):
         else:
             logging.warning(alert)  # noqa: LOG015
 
-    def __call__(self, _obj, _event, message) -> None:
+    def __call__(self, _obj, _event, message='') -> None:
         """Declare standard call function for the observer.
 
         On an event occurrence, this function executes.
@@ -426,7 +426,8 @@ class ProgressMonitor(_NoNewAttrMixin):
         On an event occurrence, this function executes.
         """
         if self._interrupt_signal_received:
-            obj.AbortExecuteOn()
+            if (abort := getattr(obj, 'AbortExecuteOn', None)) is not None:
+                abort()
         else:
             progress = obj.GetProgress()
             step = progress - self._old_progress
