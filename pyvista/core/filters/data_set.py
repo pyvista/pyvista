@@ -6859,10 +6859,7 @@ class DataSetFilters(DataObjectFilters):
 
         See Also
         --------
-        :meth:`~pyvista.DataSetFilters.split_bodies`
-            Split connected bodies into blocks of a :class:`~pyvista.MultiBlock`.
-        :meth:`~pyvista.DataSetFilters.extract_values`
-            Threshold-like filter for extracting specific values and ranges.
+        split_bodies, extract_values
 
         Returns
         -------
