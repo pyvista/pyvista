@@ -9114,16 +9114,12 @@ class DataSetFilters(DataObjectFilters):
 
         Examples
         --------
-        Load a tetrahedral mesh of a blood vessel network.
+        Resample a tetrahedral mesh of a blood vessel network onto a uniform grid. The
+        spacing is estimated from the mesh's own cells.
 
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> mesh = examples.download_blood_vessels()
-        >>> mesh.plot(scalars='shearstress', cpos='zy')
-
-        Resample it onto a uniform grid. The spacing is estimated from the mesh's own
-        cells.
-
         >>> volume = mesh.resample_to_image()
         >>> volume.dimensions
         (68, 47, 118)
@@ -9138,8 +9134,8 @@ class DataSetFilters(DataObjectFilters):
 
         Set the ``dimensions`` or the ``spacing`` to control the resolution explicitly.
 
-        >>> coarse = mesh.resample_to_image(dimensions=(32, 32, 32))
-        >>> coarse.plot(volume=True, scalars='shearstress', cpos='zy')
+        >>> mesh.resample_to_image(spacing=2.0).dimensions
+        (34, 24, 59)
 
         """
         volume = _make_reference_volume(
