@@ -645,13 +645,14 @@ class _ColorbarConfig(_ConfigBase):
 
     """
 
-    __slots__ = ['_height', '_position_x', '_position_y', '_width']
+    __slots__ = ['_height', '_position_x', '_position_y', '_title_pad', '_width']
 
     def __init__(self):
         self._width = None
         self._height = None
         self._position_x = None
         self._position_y = None
+        self._title_pad = None
 
     @property
     def width(self) -> float:  # numpydoc ignore=RT01
@@ -717,6 +718,25 @@ class _ColorbarConfig(_ConfigBase):
     def position_y(self, position_y: float):
         self._position_y = float(position_y)
 
+    @property
+    def title_pad(self) -> float:  # numpydoc ignore=RT01
+        """Return or set the colorbar title padding.
+
+        The padding is the space between the title and the tick labels, as a
+        multiple of the title font size.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pv.global_theme.colorbar_horizontal.title_pad = 0.8
+
+        """
+        return self._title_pad  # type: ignore[return-value]
+
+    @title_pad.setter
+    def title_pad(self, title_pad: float):
+        self._title_pad = float(title_pad)
+
     def __repr__(self):
         txt = ['']
         parm = {
@@ -724,6 +744,7 @@ class _ColorbarConfig(_ConfigBase):
             'Height': 'height',
             'X Position': 'position_x',
             'Y Position': 'position_y',
+            'Title Pad': 'title_pad',
         }
         for name, attr in parm.items():
             setting = getattr(self, attr)
@@ -1847,12 +1868,14 @@ class Theme(_ConfigBase):
         self._colorbar_horizontal.height = 0.08
         self._colorbar_horizontal.position_x = 0.35
         self._colorbar_horizontal.position_y = 0.05
+        self._colorbar_horizontal.title_pad = 0.5
 
         self._colorbar_vertical = _ColorbarConfig()
         self._colorbar_vertical.width = 0.08
         self._colorbar_vertical.height = 0.45
         self._colorbar_vertical.position_x = 0.9
         self._colorbar_vertical.position_y = 0.02
+        self._colorbar_vertical.title_pad = 0.5
 
         self._show_scalar_bar = True
         self._show_edges = False

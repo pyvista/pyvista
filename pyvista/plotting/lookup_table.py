@@ -1077,6 +1077,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
             'title': self._lookup_type + '\n',
             'outline': False,
             'title_font_size': 40,
+            'title_pad': 0,
         }
         label_level = 0
         if self.below_range_color:
@@ -1094,7 +1095,6 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         scalar_bar.SetMaximumNumberOfColors(self.n_values)
         scalar_bar.SetPosition(0.03, 0.1 + label_level * 0.1)
         scalar_bar.SetPosition2(0.95, 0.9 - label_level * 0.1)
-        # scalar_bar.SetTextPad(-10)
         if self._nan_color_set and self.nan_opacity > 0:
             scalar_bar.SetDrawNanAnnotation(self._nan_color_set)
 

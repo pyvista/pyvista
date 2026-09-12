@@ -278,6 +278,12 @@ def test_colorbar_position_y(default_theme):
     assert default_theme.colorbar_horizontal.position_y == position_y
 
 
+def test_colorbar_title_pad(default_theme):
+    title_pad = 0.3
+    default_theme.colorbar_horizontal.title_pad = title_pad
+    assert default_theme.colorbar_horizontal.title_pad == title_pad
+
+
 @pytest.mark.parametrize('theme', pv.plotting.themes._NATIVE_THEMES)
 def test_themes(theme):
     try:

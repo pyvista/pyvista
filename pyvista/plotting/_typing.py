@@ -146,6 +146,7 @@ class ScalarBarArgs(TypedDict, total=False):
     italic: bool
     bold: bool
     title_font_size: float
+    title_pad: float
     label_font_size: float
     color: ColorLike
     font_family: FontFamilyOptions
