@@ -902,6 +902,13 @@ def test_gaussian_splatting(sphere: PolyData):
     assert output.dimensions == dimensions
 
 
+def test_gaussian_splatting_pointset(pointset):
+    output = pointset.gaussian_splatting(dimensions=(8, 8, 8))
+    assert isinstance(output, pv.ImageData)
+    assert output.n_cells > 0
+    assert 'SplatterValues' in output.array_names
+
+
 def test_extract_geometry(datasets, multiblock_all):
     for dataset in datasets:
         if isinstance(dataset, pv.PointSet):
@@ -1974,6 +1981,20 @@ def test_delaunay_3d():
     data = examples.load_uniform().threshold_percent(30, progress_bar=True)
     result = data.delaunay_3d()
     assert np.any(result.points)
+
+
+@pytest.mark.parametrize(
+    'grid',
+    [
+        pv.ImageData(dimensions=(3, 3, 3)),
+        pv.RectilinearGrid(np.arange(3.0), np.arange(3.0), np.arange(3.0)),
+    ],
+    ids=['ImageData', 'RectilinearGrid'],
+)
+def test_delaunay_3d_grid(grid):
+    result = grid.delaunay_3d()
+    assert isinstance(result, pv.UnstructuredGrid)
+    assert result.n_cells > 0
 
 
 def test_smooth(uniform):
@@ -3738,6 +3759,13 @@ def test_compute_boundary_mesh_quality():
     assert 'AngleFaceNormalAndCellCenterToFaceCenterVector' in qual.array_names
 
 
+def test_compute_boundary_mesh_quality_surface(sphere):
+    # A surface has no 3D cells, so there are no boundary faces to measure
+    qual = sphere.compute_boundary_mesh_quality()
+    assert isinstance(qual, pv.PolyData)
+    assert qual.n_cells == 0
+
+
 def test_compute_derivatives(random_hills):
     mesh = random_hills
     vector = np.zeros((mesh.n_points, 3))
@@ -4240,7 +4268,7 @@ def test_concatenate_structured_bad_inputs(structured_grids_split_coincident):
 def test_concatenate_structured_bad_point_data(structured_grids_split_coincident):
     voi_1, voi_2, _structured = structured_grids_split_coincident
     voi_1['point_data'] = voi_1['point_data'] * 2.0
-    with pytest.raises(RuntimeError):
+    with pytest.raises(RuntimeError, match='`point_data` is not identical'):
         voi_1.concatenate(voi_2, axis=1)
 
 
@@ -4534,6 +4562,26 @@ def test_integrate_data_datasets(datasets):
         else:  # pragma: no cover -- parametrize covers every case
             msg = 'Unexpected integration'
             raise ValueError(msg)
+
+
+def test_integrate_data_pointset(pointset):
+    integrated = pointset.integrate_data()
+    assert isinstance(integrated, pv.UnstructuredGrid)
+    assert integrated.n_cells == 1
+
+
+@pytest.mark.parametrize(
+    'name', ['streamlines', 'streamlines_from_source', 'streamlines_evenly_spaced_2D']
+)
+def test_streamlines_pointset(pointset, name):
+    pointset['vectors'] = np.tile([1.0, 0.0, 0.0], (pointset.n_points, 1))
+    kwargs = {
+        'streamlines': dict(n_points=2),
+        'streamlines_from_source': dict(source=pv.PolyData(pointset.points[:1])),
+        'streamlines_evenly_spaced_2D': dict(start_position=pointset.center),
+    }[name]
+    output = getattr(pointset, name)(vectors='vectors', **kwargs)
+    assert isinstance(output, pv.PolyData)
 
 
 def test_integrate_data():
@@ -4903,6 +4951,28 @@ def test_merge_points_filter(inplace):
     assert output.n_points == 1
     assert isinstance(mesh, pv.UnstructuredGrid)
     assert (mesh is output) == inplace
+
+
+def test_merge_pointset(pointset, sphere):
+    merged = pointset.merge(sphere)
+    assert isinstance(merged, pv.UnstructuredGrid)
+    assert merged.n_cells == sphere.n_cells
+    assert merged.n_points == pointset.n_points + sphere.n_points
+
+    # Only a merge of point clouds is still a point cloud
+    clouds = pointset.merge([pointset.translate((10, 0, 0)), pointset.translate((20, 0, 0))])
+    assert isinstance(clouds, pv.PointSet)
+    assert clouds.n_points == 3 * pointset.n_points
+    assert isinstance(pointset.merge(), pv.PointSet)
+
+
+@pytest.mark.parametrize('inplace', [True, False])
+def test_merge_points_pointset(inplace):
+    cloud = pv.PointSet([[0.0, 0.0, 0.0], [0.5, 0.0, 0.0], [0.5, 0.0, 0.0]])
+    output = cloud.merge_points(inplace=inplace)
+    assert isinstance(output, pv.PointSet)
+    assert output.n_points == 2
+    assert (cloud is output) == inplace
 
 
 @pytest.fixture
