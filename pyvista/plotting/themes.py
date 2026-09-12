@@ -648,7 +648,6 @@ class _ColorbarConfig(_ConfigBase):
     """
 
     __slots__ = [
-        '_fit_box',
         '_height',
         '_position_x',
         '_position_y',
@@ -663,7 +662,6 @@ class _ColorbarConfig(_ConfigBase):
         self._position_x = None
         self._position_y = None
         self._stacking_gap = None
-        self._fit_box = False
         self._title_pad = None
 
     @property
@@ -771,25 +769,6 @@ class _ColorbarConfig(_ConfigBase):
             stacking_gap = float(stacking_gap)
         self._stacking_gap = stacking_gap
 
-    @property
-    def fit_box(self) -> bool:  # numpydoc ignore=RT01
-        """Return or set whether a drawn box is fitted around the colorbar's text.
-
-        Applies only when ``fill`` or ``outline`` draws a box, and only when the
-        font size is unconstrained.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> pv.global_theme.colorbar_vertical.fit_box = True
-
-        """
-        return self._fit_box
-
-    @fit_box.setter
-    def fit_box(self, fit_box: bool):
-        self._fit_box = bool(fit_box)
-
     def __repr__(self):
         txt = ['']
         parm = {
@@ -799,7 +778,6 @@ class _ColorbarConfig(_ConfigBase):
             'Y Position': 'position_y',
             'Title Pad': 'title_pad',
             'Stacking Gap': 'stacking_gap',
-            'Fit Box': 'fit_box',
         }
         for name, attr in parm.items():
             setting = getattr(self, attr)

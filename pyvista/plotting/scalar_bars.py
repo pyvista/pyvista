@@ -414,7 +414,6 @@ class ScalarBars(_NoNewAttrMixin):
         vertical=None,
         stacking_gap: float | None = None,
         rotate_title: bool | None = None,
-        fit_box: bool | None = None,
         interactive=None,
         fmt=None,
         use_opacity: bool = True,
@@ -516,7 +515,9 @@ class ScalarBars(_NoNewAttrMixin):
             Adds a black shadow to the text.
 
         width : float, optional
-            The percentage (0 to 1) width of the window for the colorbar.
+            The percentage (0 to 1) width of the window for the colorbar.  Giving
+            a width, or a height, keeps a box drawn by ``fill`` or ``outline``
+            exactly that size rather than growing it around the text.
             Default set by
             :attr:`pyvista.plotting.themes.Theme.colorbar_vertical` or
             :attr:`pyvista.plotting.themes.Theme.colorbar_horizontal`
@@ -567,17 +568,6 @@ class ScalarBars(_NoNewAttrMixin):
             :attr:`pyvista.plotting.themes._VerticalColorbarConfig.rotate_title`.
             Applies to vertical bars only.  Requires VTK 9.4.0 or newer, and has
             no effect when the font size is constrained.
-
-            .. versionadded:: 0.50
-
-        fit_box : bool, optional
-            Grow the box drawn by ``fill`` or ``outline`` until it encloses the
-            title and the tick labels, keeping the color ramp the size it was
-            given.  Defaults to ``None`` and is taken from
-            :attr:`pyvista.plotting.themes._ColorbarConfig.fit_box`.  The label
-            at either end of the ramp is centered on that end, so part of it
-            still falls outside the box.  Has no effect without a box, when the
-            font size is constrained, or when the title is rotated.
 
             .. versionadded:: 0.50
 
@@ -754,8 +744,9 @@ class ScalarBars(_NoNewAttrMixin):
         ...     )
         >>> pl.show()
 
-        Fit the box drawn around a bar to the text it draws.  Without it the box is
-        sized from the ramp alone, so the title and labels fall outside it.
+        A box drawn around a bar grows to hold the title and the tick labels, as long
+        as the bar was not given a size of its own.  The label at either end of the
+        ramp is centered on that end, so part of it falls outside the box.
 
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(sphere, show_scalar_bar=False)
@@ -763,7 +754,6 @@ class ScalarBars(_NoNewAttrMixin):
         ...     'Elevation (m)',
         ...     vertical=True,
         ...     outline=True,
-        ...     fit_box=True,
         ...     title_font_size=30,
         ...     label_font_size=30,
         ...     mapper=pl.mapper,
@@ -779,7 +769,6 @@ class ScalarBars(_NoNewAttrMixin):
         ...     'Elevation (m)',
         ...     vertical=False,
         ...     outline=True,
-        ...     fit_box=True,
         ...     title_font_size=30,
         ...     label_font_size=30,
         ...     mapper=pl.mapper,
@@ -832,9 +821,6 @@ class ScalarBars(_NoNewAttrMixin):
         if stacking_gap is not None:
             _validation.check_greater_than(stacking_gap, 0, strict=False, name='stacking_gap')
 
-        if fit_box is None:
-            fit_box = config.fit_box
-
         if rotate_title is None:
             rotate_title = vertical and theme.colorbar_vertical.rotate_title
         if rotate_title and not vertical:
@@ -852,6 +838,8 @@ class ScalarBars(_NoNewAttrMixin):
             )
 
         # Automatically choose size if not specified
+        # A box is only free to grow around the text when its size was left open
+        sized = width is not None or height is not None
         if width is None:
             width = theme.colorbar_vertical.width if vertical else theme.colorbar_horizontal.width
         if height is None:
@@ -1063,7 +1051,7 @@ class ScalarBars(_NoNewAttrMixin):
 
         draws_box = scalar_bar.GetDrawFrame() or scalar_bar.GetDrawBackground()
         unconstrained = bool(scalar_bar.GetUnconstrainedFontSize())
-        fits_box = bool(fit_box) and draws_box
+        fits_box = draws_box and not sized
         # A box is sized without the padding unless it is fitted around the title
         keeps_pad = fits_box or not draws_box
         pad = round(title_pad * title_text.GetFontSize()) if title_pad and keeps_pad else 0

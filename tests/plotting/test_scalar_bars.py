@@ -382,7 +382,7 @@ def test_title_pad_constrained_font_size(sphere):
 
 @pytest.mark.parametrize(('outline', 'fill'), [(True, False), (False, True)])
 def test_title_pad_boxed(sphere, outline: bool, fill: bool):
-    # A drawn box is sized without the padding, so the title would sit outside it
+    # A box grows to hold the padded title, so the padding survives the box
     sphere[KEY] = sphere.points[:, 2]
 
     pl = pv.Plotter()
@@ -396,7 +396,7 @@ def test_title_pad_boxed(sphere, outline: bool, fill: bool):
         background_color='grey',
     )
 
-    assert pl.scalar_bar.GetTitleTextProperty().GetLineOffset() == 0
+    assert pl.scalar_bar.GetTitleTextProperty().GetLineOffset() == -10
 
 
 @pytest.mark.parametrize(
@@ -630,7 +630,6 @@ def _fitted_bar(plotter, sphere, *, vertical, box, **kwargs):
     return plotter.add_scalar_bar(
         FIT_TITLE,
         vertical=vertical,
-        fit_box=True,
         title_font_size=24,
         label_font_size=24,
         n_labels=5,
@@ -672,18 +671,18 @@ def test_fit_box_keeps_the_ramp(sphere, vertical: bool, box):
     # The box grows around the ramp rather than taking its size from it
     sphere[KEY] = sphere.points[:, 2]
 
-    def ramp_size(fit):
+    def ramp_size(**sizing):
         pl = pv.Plotter()
         pl.add_mesh(sphere, show_scalar_bar=False)
         bar = pl.add_scalar_bar(
             FIT_TITLE,
             vertical=vertical,
-            fit_box=fit,
             title_font_size=24,
             label_font_size=24,
             n_labels=5,
             mapper=pv.DataSetMapper(sphere),
             **box,
+            **sizing,
         )
         window_width, window_height = pl.window_size
         across = bar.GetWidth() * window_width if vertical else bar.GetHeight() * window_height
@@ -691,7 +690,9 @@ def test_fit_box_keeps_the_ramp(sphere, vertical: bool, box):
         pl.close()
         return size
 
-    assert ramp_size(True) == pytest.approx(ramp_size(False), abs=1.0)
+    config = pv.global_theme.colorbar_vertical if vertical else pv.global_theme.colorbar_horizontal
+    pinned = {'width': config.width, 'height': config.height}
+    assert ramp_size() == pytest.approx(ramp_size(**pinned), abs=1.0)
 
 
 @pytest.mark.parametrize('box', BOXES, ids=BOX_IDS)
@@ -713,35 +714,41 @@ def test_fit_box_without_a_box(sphere, vertical: bool):
 
     pl = pv.Plotter()
     pl.add_mesh(sphere, show_scalar_bar=False)
-    plain = pl.add_scalar_bar(FIT_TITLE, vertical=vertical, mapper=pv.DataSetMapper(sphere))
-    size = (plain.GetWidth(), plain.GetHeight(), plain.GetBarRatio())
-    pl.close()
-
-    pl = pv.Plotter()
-    pl.add_mesh(sphere, show_scalar_bar=False)
-    fitted = pl.add_scalar_bar(
-        FIT_TITLE, vertical=vertical, fit_box=True, mapper=pv.DataSetMapper(sphere)
+    bar = pl.add_scalar_bar(
+        FIT_TITLE,
+        vertical=vertical,
+        title_font_size=24,
+        label_font_size=24,
+        mapper=pv.DataSetMapper(sphere),
     )
 
-    assert (fitted.GetWidth(), fitted.GetHeight(), fitted.GetBarRatio()) == size
+    config = pl.theme.colorbar_vertical if vertical else pl.theme.colorbar_horizontal
+    assert bar.GetWidth() == pytest.approx(config.width)
+    assert bar.GetHeight() == pytest.approx(config.height)
 
 
-def test_fit_box_from_theme(sphere):
+@pytest.mark.parametrize('box', BOXES, ids=BOX_IDS)
+@pytest.mark.parametrize(
+    'sizing', [{'width': 0.3}, {'height': 0.3}, {'width': 0.3, 'height': 0.3}]
+)
+def test_fit_box_keeps_a_given_size(sphere, sizing, box):
+    # A box asked for a size of its own is left at that size
     sphere[KEY] = sphere.points[:, 2]
-    pv.global_theme.colorbar_vertical.fit_box = True
 
     pl = pv.Plotter()
     pl.add_mesh(sphere, show_scalar_bar=False)
     bar = pl.add_scalar_bar(
         FIT_TITLE,
         vertical=True,
-        outline=True,
         title_font_size=24,
         label_font_size=24,
         mapper=pv.DataSetMapper(sphere),
+        **box,
+        **sizing,
     )
 
-    assert bar.GetTitleTextProperty().GetLineOffset() > 0
+    for name, given in sizing.items():
+        assert getattr(bar, f'Get{name.capitalize()}')() == pytest.approx(given)
 
 
 @pytest.mark.parametrize('box', BOXES, ids=BOX_IDS)
