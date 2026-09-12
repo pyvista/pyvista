@@ -436,8 +436,10 @@ class ScalarBars(_NoNewAttrMixin):
             :attr:`pyvista.plotting.themes.Theme.colorbar_orientation`.
 
         stacking : 'widen' | 'stagger' | 'rotate', optional
-            How to keep the titles of stacked scalar bars apart.  By default the
-            bars are stacked tightly and their titles may overlap.
+            How to keep the titles of stacked vertical scalar bars apart.
+            Defaults to ``None`` and is taken from
+            :attr:`pyvista.plotting.themes.Theme.colorbar_stacking`, which
+            stacks the bars tightly and lets their titles overlap.
 
             - ``'widen'`` spaces each bar by the width of its own title and its
               neighbor's.
@@ -446,9 +448,10 @@ class ScalarBars(_NoNewAttrMixin):
             - ``'rotate'`` turns each title alongside its bar.  Requires VTK
               9.4.0 or newer.
 
-            ``'stagger'`` and ``'rotate'`` apply to vertical bars only.  Use
-            ``title_pad`` to set the space each one leaves.  Has no effect when
-            the font size is constrained.
+            Horizontal bars are always spaced to fit their annotations, so
+            this applies to vertical bars only.  Use ``title_pad`` to set the
+            space each one leaves.  Has no effect when the font size is
+            constrained.
 
             .. versionadded:: 0.50
 
@@ -682,11 +685,14 @@ class ScalarBars(_NoNewAttrMixin):
         if vertical is None and theme.colorbar_orientation.lower() == 'vertical':
             vertical = True
 
+        if stacking is None and vertical:
+            stacking = theme.colorbar_stacking
+
         if stacking is not None:
             _validation.check_contains(
                 get_args(StackingOptions), must_contain=stacking, name='stacking'
             )
-            if not vertical and stacking != 'widen':
+            if not vertical:
                 msg = f'Stacking {stacking!r} is not supported for horizontal scalar bars.'
                 raise ValueError(msg)
             if stacking == 'rotate' and pv.vtk_version_info < (9, 4, 0):
@@ -928,8 +934,20 @@ class ScalarBars(_NoNewAttrMixin):
 
         # The gap between stacked bars is a fraction of the window but the annotations
         # are not, so the annotations set that gap once the window is small
-        if stacking and stacked_slot and unconstrained:
-            if vertical:
+        if stacked_slot and unconstrained:
+            if not vertical:
+                annotations = (
+                    scalar_bar.GetBarRatio() * height * window_height
+                    + font_size
+                    + label_text.GetFontSize()
+                )
+                spacing = pad + max(height * window_height, annotations)
+                x, _ = scalar_bar.GetPosition()
+                position_y = (
+                    theme.colorbar_horizontal.position_y + stacked_slot * spacing / window_height
+                )
+                scalar_bar.SetPosition(x, position_y)
+            elif stacking:
                 margin = 0.2 * bar_width
                 # Slots fill from the bottom up, so the one below this is taken
                 neighbor = self._stacked_neighbor(stacked_slot)
@@ -958,18 +976,6 @@ class ScalarBars(_NoNewAttrMixin):
                     # Raising the whole bar steps its title clear of its neighbor's
                     y += stacked_slot * (font_size + pad) / window_height
                 scalar_bar.SetPosition(position_x, y)
-            else:
-                annotations = (
-                    scalar_bar.GetBarRatio() * height * window_height
-                    + font_size
-                    + label_text.GetFontSize()
-                )
-                spacing = pad + max(height * window_height, annotations)
-                x, _ = scalar_bar.GetPosition()
-                position_y = (
-                    theme.colorbar_horizontal.position_y + stacked_slot * spacing / window_height
-                )
-                scalar_bar.SetPosition(x, position_y)
 
         # finally, add to the actor and return the scalar bar
         self._plotter.add_actor(scalar_bar, reset_camera=False, pickable=False, render=render)

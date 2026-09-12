@@ -40,12 +40,16 @@ from pathlib import PurePosixPath
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
+from typing import get_args
+
+import pyvista_validation as _validation
 
 import pyvista  # noqa: TC001
 from pyvista._warn_external import warn_external
 from pyvista.core.config import _ConfigBase
 from pyvista.core.utilities.misc import _check_range
 
+from ._typing import StackingOptions
 from .colors import Color
 from .colors import get_cmap_safe
 from .colors import get_cycler
@@ -1790,6 +1794,7 @@ class Theme(_ConfigBase):
         '_color_cycler',
         '_colorbar_horizontal',
         '_colorbar_orientation',
+        '_colorbar_stacking',
         '_colorbar_vertical',
         '_depth_peeling',
         '_edge_color',
@@ -1862,6 +1867,7 @@ class Theme(_ConfigBase):
         self._border_width = 1.0
         self._floor_color = Color('gray')
         self._colorbar_orientation = 'horizontal'
+        self._colorbar_stacking = None
 
         self._colorbar_horizontal = _ColorbarConfig()
         self._colorbar_horizontal.width = 0.6
@@ -2643,6 +2649,30 @@ class Theme(_ConfigBase):
         self._colorbar_orientation = colorbar_orientation
 
     @property
+    def colorbar_stacking(self) -> StackingOptions | None:  # numpydoc ignore=RT01
+        """Return or set how the titles of stacked vertical colorbars are kept apart.
+
+        Horizontal colorbars are always spaced to fit their annotations, so this
+        applies to vertical ones only.  See :meth:`pyvista.Plotter.add_scalar_bar`
+        for what each option does.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pv.global_theme.colorbar_stacking = 'rotate'
+
+        """
+        return self._colorbar_stacking
+
+    @colorbar_stacking.setter
+    def colorbar_stacking(self, colorbar_stacking: StackingOptions | None):
+        if colorbar_stacking is not None:
+            _validation.check_contains(
+                get_args(StackingOptions), must_contain=colorbar_stacking, name='colorbar_stacking'
+            )
+        self._colorbar_stacking = colorbar_stacking
+
+    @property
     def colorbar_horizontal(self) -> _ColorbarConfig:  # numpydoc ignore=RT01
         """Return or set the default parameters of a horizontal colorbar.
 
@@ -3194,6 +3224,7 @@ class Theme(_ConfigBase):
             'Outline color': 'outline_color',
             'Floor color': 'floor_color',
             'Colorbar orientation': 'colorbar_orientation',
+            'Colorbar stacking': 'colorbar_stacking',
             'Colorbar - horizontal': 'colorbar_horizontal',
             'Colorbar - vertical': 'colorbar_vertical',
             'Show scalar bar': 'show_scalar_bar',

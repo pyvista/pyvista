@@ -413,7 +413,7 @@ def test_stacked_bars_render(sphere, vertical: bool, title: str):
         pl.add_scalar_bar(
             title.format(i=i),
             vertical=vertical,
-            stacking='widen',
+            stacking='widen' if vertical else None,
             title_font_size=14,
             label_font_size=14,
             n_labels=3,
@@ -434,7 +434,6 @@ def test_stacked_horizontal_bars_clear_their_annotations(sphere, window_size):
         pl.add_scalar_bar(
             f'{KEY}{i}',
             vertical=False,
-            stacking='widen',
             title_font_size=font_size,
             label_font_size=font_size,
             mapper=pl.mapper,
@@ -626,7 +625,42 @@ def test_stacking_rotate_needs_vtk_94(sphere, monkeypatch):
     pl.close()
 
 
-@pytest.mark.parametrize('stacking', ['stagger', 'rotate'])
+def test_stacking_from_theme(sphere):
+    sphere[KEY] = sphere.points[:, 2]
+    pv.global_theme.colorbar_stacking = 'widen'
+
+    pl = pv.Plotter(window_size=[400, 400])
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bars = [
+        pl.add_scalar_bar(f'{KEY}{i}', vertical=True, title_font_size=20, mapper=pl.mapper)
+        for i in range(2)
+    ]
+    assert bars[1].GetPosition()[0] < bars[0].GetPosition()[0]
+    pl.close()
+
+
+def test_stacking_from_theme_leaves_horizontal_bars(sphere):
+    # The option is vertical only, so a horizontal bar neither stacks nor raises
+    sphere[KEY] = sphere.points[:, 2]
+    pv.global_theme.colorbar_stacking = 'rotate'
+
+    pl = pv.Plotter(window_size=[400, 400])
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bars = [
+        pl.add_scalar_bar(f'{KEY}{i}', vertical=False, title_font_size=20, mapper=pl.mapper)
+        for i in range(2)
+    ]
+    # Only a stacked vertical bar is moved sideways
+    assert bars[1].GetPosition()[0] == bars[0].GetPosition()[0]
+    pl.close()
+
+
+def test_colorbar_stacking_theme_invalid():
+    with pytest.raises(ValueError, match=r'colorbar_stacking .* is not valid'):
+        pv.global_theme.colorbar_stacking = 'spread'
+
+
+@pytest.mark.parametrize('stacking', ['widen', 'stagger', 'rotate'])
 def test_stacking_rejects_horizontal_bars(sphere, stacking):
     sphere[KEY] = sphere.points[:, 2]
     pl = pv.Plotter()
@@ -648,7 +682,6 @@ def test_title_pad_keeps_stacked_spacing(sphere):
             pl.add_scalar_bar(
                 f'{KEY}{i}',
                 vertical=False,
-                stacking='widen',
                 title_font_size=font_size,
                 title_pad=title_pad,
                 mapper=pl.mapper,
