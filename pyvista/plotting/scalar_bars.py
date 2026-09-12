@@ -47,6 +47,14 @@ def _title_height(text_property, title, dpi):
     return bounds[3] - bounds[2] + 1
 
 
+def _rotated_title_height(scalar_bar, dpi):
+    """Return the height of a scalar bar's title, ignoring any offset applied to it."""
+    probe = _vtk.vtkTextProperty()
+    probe.ShallowCopy(scalar_bar.GetTitleTextProperty())
+    probe.SetLineOffset(0)
+    return _title_height(probe, scalar_bar.GetTitle(), dpi)
+
+
 def _rotated_title_offset(bar_width, title_height, pad):
     """Return the line offset that clears a rotated title off its bar by ``pad`` pixels."""
     # The offset moves the pen and grows the text bounds, so the title moves two pixels
@@ -439,7 +447,8 @@ class ScalarBars(_NoNewAttrMixin):
             How to keep the titles of stacked vertical scalar bars apart.
             Defaults to ``None`` and is taken from
             :attr:`pyvista.plotting.themes._VerticalColorbarConfig.stacking`,
-            which stacks the bars tightly and lets their titles overlap.
+            which packs the bars as closely as their tick labels allow and lets
+            their titles overlap.
 
             - ``'widen'`` spaces each bar by the width of its own title and its
               neighbor's.
@@ -448,10 +457,11 @@ class ScalarBars(_NoNewAttrMixin):
             - ``'rotate'`` turns each title alongside its bar.  Requires VTK
               9.4.0 or newer.
 
-            Horizontal bars are always spaced to fit their annotations, so
-            this applies to vertical bars only.  Use ``title_pad`` to set the
-            space each one leaves.  Has no effect when the font size is
-            constrained.
+            Tick labels are kept off the neighboring bar whatever this is set
+            to, so it only decides what becomes of the titles.  A horizontal
+            bar is always spaced to fit its annotations, so this applies to
+            vertical bars only.  Use ``title_pad`` to set the space each option
+            leaves.  Has no effect when the font size is constrained.
 
             .. versionadded:: 0.50
 
@@ -947,27 +957,27 @@ class ScalarBars(_NoNewAttrMixin):
                     theme.colorbar_horizontal.position_y + stacked_slot * spacing / window_height
                 )
                 scalar_bar.SetPosition(x, position_y)
-            elif stacking:
-                margin = 0.2 * bar_width
+            else:
                 # Slots fill from the bottom up, so the one below this is taken
                 neighbor = self._stacked_neighbor(stacked_slot)
-                if stacking == 'widen':
-                    claim = _title_width(title_text, display_title, dpi)
-                else:
-                    # The title is out of the way, so only the labels share the gap
-                    claim = bar_width + _widest_label(scalar_bar, label_text, dpi)
-                _, y = scalar_bar.GetPosition()
-                # A title is centered on its bar, so each neighbor claims half the gap
                 neighbor_bar = neighbor.GetWidth() * window_width
-                if stacking == 'widen':
-                    neighbor_claim = _title_width(
-                        neighbor.GetTitleTextProperty(), neighbor.GetTitle(), dpi
-                    )
-                else:
-                    neighbor_claim = claim
-                spacing = margin + max(
-                    (bar_width + neighbor_bar) / 2, (claim + neighbor_claim) / 2
+                # Labels are drawn on the side of the bar that faces the neighbor,
+                # so this bar is the only one reaching into the gap
+                spacing = (bar_width + neighbor_bar) / 2 + _widest_label(
+                    scalar_bar, label_text, dpi
                 )
+                if stacking == 'rotate' and neighbor.GetForceVerticalTitle():
+                    # The neighbor turned its title into the gap these labels use
+                    spacing += pad + _rotated_title_height(neighbor, dpi)
+                if stacking == 'widen':
+                    # A title is centered on its bar, so each neighbor claims half
+                    titles = (
+                        _title_width(title_text, display_title, dpi)
+                        + _title_width(neighbor.GetTitleTextProperty(), neighbor.GetTitle(), dpi)
+                    ) / 2
+                    spacing = max(spacing, titles)
+                spacing += 0.2 * bar_width
+                _, y = scalar_bar.GetPosition()
                 center = (
                     neighbor.GetPosition()[0] + neighbor.GetWidth() / 2
                 ) * window_width - spacing

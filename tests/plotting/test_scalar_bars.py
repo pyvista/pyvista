@@ -9,8 +9,10 @@ import pytest
 import pyvista as pv
 from pyvista import _vtk
 from pyvista.core.errors import VTKVersionError
+from pyvista.plotting.scalar_bars import _rotated_title_height
 from pyvista.plotting.scalar_bars import _title_height
 from pyvista.plotting.scalar_bars import _title_width
+from pyvista.plotting.scalar_bars import _widest_label
 
 KEY = 'Data'
 
@@ -499,6 +501,62 @@ def test_stacked_vertical_bars_clear_an_uneven_neighbor(sphere):
         itertools.pairwise(centers), itertools.pairwise(widths), strict=True
     ):
         assert left - right == pytest.approx(gap + (left_width + right_width) / 2)
+
+
+def _stacked_gaps(bars, window_width):
+    """Return the space between each stacked bar and the neighbor it was placed against."""
+    return [
+        (neighbor.GetPosition()[0] - (bar.GetPosition()[0] + bar.GetWidth())) * window_width
+        for bar, neighbor in zip(bars[1:], bars[:-1], strict=True)
+    ]
+
+
+def _wide_number_bars(plotter, sphere, stacking, **kwargs):
+    """Stack three bars, the middle one labelled with numbers far wider than its bar."""
+    bars = []
+    for i, clim in enumerate([(0, 1), (-1234.5, 1234.5), (0, 1)]):
+        lut = pv.LookupTable(cmap='viridis', scalar_range=clim)
+        mapper = pv.DataSetMapper(sphere)
+        mapper.lookup_table = lut
+        bars.append(
+            plotter.add_scalar_bar(
+                f'{KEY}{i}', vertical=True, stacking=stacking, n_labels=3, mapper=mapper, **kwargs
+            )
+        )
+    return bars
+
+
+def test_stacked_vertical_bars_clear_their_labels(sphere):
+    # Labels face the neighboring bar, so the gap fits them whatever the stacking is
+    sphere[KEY] = sphere.points[:, 2]
+    window_size = [700, 450]
+
+    pl = pv.Plotter(window_size=window_size)
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bars = _wide_number_bars(pl, sphere, None, label_font_size=22)
+
+    dpi = pl.render_window.GetDPI()
+    for bar, gap in zip(bars[1:], _stacked_gaps(bars, window_size[0]), strict=True):
+        assert gap > _widest_label(bar, bar.GetLabelTextProperty(), dpi)
+    pl.close()
+
+
+@pytest.mark.needs_vtk_version(9, 4, 0, reason='ForceVerticalTitle was added in VTK 9.4.0')
+def test_stacking_rotate_clears_the_neighbors_title(sphere):
+    # A rotated title hangs into the same gap that the next bar's labels use
+    sphere[KEY] = sphere.points[:, 2]
+    window_size = [700, 450]
+
+    pl = pv.Plotter(window_size=window_size)
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bars = _wide_number_bars(pl, sphere, 'rotate', title_font_size=40, label_font_size=7)
+
+    dpi = pl.render_window.GetDPI()
+    gaps = _stacked_gaps(bars, window_size[0])
+    for (bar, neighbor), gap in zip(itertools.pairwise(bars), gaps, strict=True):
+        labels = _widest_label(bar, bar.GetLabelTextProperty(), dpi)
+        assert gap > labels + _rotated_title_height(neighbor, dpi)
+    pl.close()
 
 
 STACKED_TITLES = ['A bit long', 'Short', 'Super duper long']
