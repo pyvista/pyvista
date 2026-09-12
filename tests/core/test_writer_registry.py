@@ -110,19 +110,11 @@ def test_builtin_writer_exts_includes_common_formats():
     assert {'.vtp', '.vtu', '.vti', '.vtm'} <= exts
 
 
-def test_entry_point_discovery_extension():
+@pytest.mark.parametrize('ep_name', ['.discovered', 'discovered'], ids=['with_dot', 'without_dot'])
+def test_entry_point_discovery_extension(ep_name):
+    """An entry point is found by extension whether or not its name carries the dot."""
     mock_ep = MagicMock()
-    mock_ep.name = '.discovered'
-    mock_ep.value = 'package:ep'
-    mock_ep.load.return_value = _noop_writer
-
-    with patch('pyvista.core.utilities.writer_registry.entry_points', return_value=[mock_ep]):
-        assert _reg_mod._get_ext_handler('.discovered') is _noop_writer
-
-
-def test_entry_point_name_without_dot_is_normalized():
-    mock_ep = MagicMock()
-    mock_ep.name = 'discovered'
+    mock_ep.name = ep_name
     mock_ep.value = 'package:ep'
     mock_ep.load.return_value = _noop_writer
 
