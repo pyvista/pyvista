@@ -77,7 +77,9 @@ from .mapper import OpenGLGPUVolumeRayCastMapper
 from .mapper import PointGaussianMapper
 from .mapper import SmartVolumeMapper
 from .mapper import UnstructuredGridVolumeRayCastMapper
+from .mapper import _apply_categories
 from .mapper import _BaseMapper
+from .mapper import _category_range
 from .mapper import _mapper_get_data_set_input
 from .mapper import _mapper_has_data_set_input
 from .opts import StereoType
@@ -3882,8 +3884,8 @@ class BasePlotter(_BoundsSizeMixin):
             argument instead.
 
             .. versionchanged:: 0.50
-                ``True`` gives every unique value its own color even when
-                the values are not evenly spaced.
+                ``True`` gives every unique value its own color instead of
+                spreading the colormap evenly over the scalar range.
 
         silhouette : dict, bool, optional
             If set to ``True``, plot a silhouette highlight for the
@@ -4867,9 +4869,15 @@ class BasePlotter(_BoundsSizeMixin):
             0 to 1 that reaches the actor when not directed at the
             light source emitted from the viewer.  Default 0.0.
 
-        categories : bool, optional
-            If set to ``True``, then the number of unique values in the scalar
-            array will be used as the ``n_colors`` argument.
+        categories : bool | int, optional
+            If ``True``, each unique value in the scalar array gets its own
+            color and is labelled on the scalar bar, and values between them
+            take the NaN color. An integer is used as the ``n_colors``
+            argument instead.
+
+            .. versionchanged:: 0.50
+                ``True`` gives every unique value its own color instead of
+                spreading the colormap evenly over the scalar range.
 
         culling : str, optional
             Does not render faces that are culled. Options are ``'front'`` or
@@ -5228,6 +5236,16 @@ class BasePlotter(_BoundsSizeMixin):
             raise TypeError(msg)
         self.mapper = mappers_lookup[mapper](theme=self._theme)
 
+        category_values = None
+        if categories is True and scalars.ndim == 1 and not isinstance(cmap, pv.LookupTable):
+            category_values = np.unique(scalars[~np.isnan(scalars)]).astype(float)
+            if category_values.size:
+                n_colors = len(category_values)
+                if clim is None:
+                    clim = _category_range(category_values)
+            else:
+                category_values = None
+
         # Set scalars range
         min_, max_ = None, None
         if clim is None:
@@ -5259,11 +5277,8 @@ class BasePlotter(_BoundsSizeMixin):
                 cmap = self._theme.cmap
 
             cmap_obj = get_cmap_safe(cmap)
-            if categories:
-                if categories is True:
-                    n_colors = len(np.unique(scalars))
-                elif isinstance(categories, int):
-                    n_colors = categories
+            if categories and categories is not True and isinstance(categories, int):
+                n_colors = categories
 
             if flip_scalars:
                 cmap_obj = cmap_obj.reversed()
@@ -5273,7 +5288,12 @@ class BasePlotter(_BoundsSizeMixin):
             self.mapper.lookup_table.apply_opacity(opacity)
             self.mapper.lookup_table.scalar_range = clim
             self.mapper.lookup_table.log_scale = log_scale
-            if isinstance(annotations, dict):
+            if category_values is not None:
+                labels = _apply_categories(self.mapper.lookup_table, category_values, annotations)
+                scalar_bar_args.setdefault('tick_locations', labels)
+                integral = np.array_equal(category_values, np.round(category_values))
+                scalar_bar_args.setdefault('fmt', '%.0f' if integral else '%g')
+            elif isinstance(annotations, dict):
                 self.mapper.lookup_table.annotations = annotations
 
         self.mapper.dataset = volume
