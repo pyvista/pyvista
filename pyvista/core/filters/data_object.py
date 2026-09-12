@@ -5149,6 +5149,9 @@ class DataObjectFilters:
         values of all cells using a particular point. Optionally, the
         input cell data can be passed through to the output as well.
 
+        String arrays are excluded from the conversion with a warning. They are
+        passed through to the output when ``pass_cell_data=True``.
+
         Parameters
         ----------
         pass_cell_data : bool, default: False
@@ -5201,13 +5204,19 @@ class DataObjectFilters:
                 ),
             )
 
+        # VTK drops or interpolates string arrays depending on the dataset type
+        filtered = _exclude_string_arrays(self, 'cell')
+
         alg = _vtk.vtkCellDataToPointData()
-        alg.SetInputDataObject(self)
+        alg.SetInputDataObject(self if filtered is None else filtered)
         alg.SetPassCellData(pass_cell_data)
         _update_alg(
             alg, progress_bar=progress_bar, message='Transforming cell data into point data.'
         )
-        return _get_output(alg, active_scalars=self.active_scalars_name)
+        output = _get_output(alg, active_scalars=self.active_scalars_name)
+        if filtered is not None and pass_cell_data:
+            output.cell_data.VTKObject.ShallowCopy(self.cell_data.VTKObject)
+        return output
 
     def ctp(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
