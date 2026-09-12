@@ -117,7 +117,7 @@ class BackfaceArgs(TypedDict, total=False):
     theme: Theme
     interpolation: Literal['Physically based rendering', 'pbr', 'Phong', 'Gouraud', 'Flat']
     color: ColorLike
-    style: StyleOptions
+    style: Literal['surface', 'wireframe', 'points']
     metallic: float
     roughness: float
     point_size: float
@@ -132,7 +132,7 @@ class BackfaceArgs(TypedDict, total=False):
     render_lines_as_tubes: bool
     lighting: bool
     line_width: float
-    culling: CullingOptions | bool
+    culling: CullingOptions | Literal['none'] | bool
     edge_opacity: float
 
 
