@@ -436,14 +436,18 @@ class ScalarBars(_NoNewAttrMixin):
 
         stacking : 'widen' | 'stagger' | 'rotate', optional
             How to keep the titles of stacked scalar bars apart.  By default the
-            bars are stacked tightly and their titles may overlap.  ``'widen'``
-            spaces each bar by the width of its own title and its neighbor's.
-            ``'stagger'`` keeps the bars close and steps each one up so that
-            the titles clear each other.  ``'rotate'`` turns each title alongside its bar.
-            ``'stagger'`` and ``'rotate'`` apply to vertical bars only, and
-            ``'rotate'`` requires VTK 9.4.0 or newer.  Use ``title_pad`` to set
-            the space each one leaves.  Has no effect when the font size is
-            constrained.
+            bars are stacked tightly and their titles may overlap.
+
+            - ``'widen'`` spaces each bar by the width of its own title and its
+              neighbor's.
+            - ``'stagger'`` keeps the bars close and steps each one up so that
+              the titles clear each other.
+            - ``'rotate'`` turns each title alongside its bar.  Requires VTK
+              9.4.0 or newer.
+
+            ``'stagger'`` and ``'rotate'`` apply to vertical bars only.  Use
+            ``title_pad`` to set the space each one leaves.  Has no effect when
+            the font size is constrained.
 
             .. versionadded:: 0.50
 
