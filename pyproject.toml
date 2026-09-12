@@ -679,6 +679,7 @@ pyvista = "pv"
 'pyvista/plotting/_plotting.py' = ['ANN']
 'pyvista/plotting/_typing.py' = ['PLC0414']
 'pyvista/plotting/actor.py' = ['ANN']
+'pyvista/plotting/actor_properties.py' = ['ANN']
 'pyvista/plotting/affine_widget.py' = ['ANN']
 'pyvista/plotting/axes.py' = ['ANN']
 'pyvista/plotting/axes_actor.py' = ['ANN']
