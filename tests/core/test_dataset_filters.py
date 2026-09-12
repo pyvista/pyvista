@@ -5409,20 +5409,34 @@ def test_voxelize_binary_mask_no_reference(frog_tissues_contour):
 
 
 @pytest.mark.parametrize('axis', [0, 1, 2])
-def test_voxelize_binary_mask_flat_input(axis):
+@pytest.mark.parametrize(
+    'kwargs',
+    [{}, {'spacing': 0.25}, {'spacing': (0.1, 0.2, 0.3)}, {'dimensions': (5, 6, 7)}],
+    ids=['default', 'scalar_spacing', 'vector_spacing', 'dimensions'],
+)
+def test_voxelize_binary_mask_flat_input(axis, kwargs):
+    # Only the geometry is tested, since a flat surface encloses nothing to label
     direction = np.zeros(3)
     direction[axis] = 1
     plane = pv.Plane(direction=direction, i_size=2, j_size=3)
-    mask = plane.voxelize_binary_mask()
+    mask = plane.voxelize_binary_mask(**kwargs)
 
-    # The flat axis has a single voxel which is as thick as the thickest other axis
-    assert mask.dimensions[axis] == 1
-    assert mask.spacing[axis] == max(np.delete(mask.spacing, axis))
+    # The flat axis has voxels with a real thickness, not a zero spacing
+    assert mask.spacing[axis] > 0
+    if 'spacing' in kwargs:
+        expected = np.broadcast_to(kwargs['spacing'], (3,))[axis]
+        assert mask.spacing[axis] == expected
 
-    # The voxel is centered on the input so its cell contains every input point
-    voxel_bounds = np.array(mask.points_to_cells().bounds)
-    assert np.all(voxel_bounds[::2] <= plane.points.min(axis=0))
-    assert np.all(voxel_bounds[1::2] >= plane.points.max(axis=0))
+    cells = np.array(mask.points_to_cells(dimensionality='3D').bounds)
+
+    # The other axes still fit the input bounds
+    other = [i for i in range(3) if i != axis]
+    assert np.allclose(cells[2 * np.array(other)], np.array(plane.bounds)[2 * np.array(other)])
+
+    # The flat axis is centered on the input, so its cells contain every input point
+    assert cells[2 * axis] < plane.bounds[2 * axis]
+    assert cells[2 * axis + 1] > plane.bounds[2 * axis + 1]
+    assert cells[2 * axis] == pytest.approx(-cells[2 * axis + 1])
 
 
 def test_voxelize_binary_mask_degenerate_cells_raises():
