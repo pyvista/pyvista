@@ -117,6 +117,8 @@ from .volume_property import VolumeProperty
 from .widgets import WidgetComponent
 
 if TYPE_CHECKING:
+    from typing import TypeAlias
+
     import cycler
     import imageio
     from IPython.lib.display import IFrame
@@ -157,6 +159,19 @@ if TYPE_CHECKING:
     from pyvista.plotting.text import VerticalOptions
 
     from .opts import PointSpriteShape
+
+    _ShowReturnType: TypeAlias = (
+        CameraPosition
+        | NumpyArray[np.uint8]
+        | EmbeddableWidget
+        | Widget
+        | IFrame
+        | Image
+        | tuple[
+            CameraPosition | EmbeddableWidget | Widget | NumpyArray[np.uint8] | IFrame | Image, ...
+        ]
+        | None
+    )
 
     _DistortionState = tuple[tuple[float, ...], tuple[float, float]]
 
@@ -8620,19 +8635,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         before_close_callback: Callable[[Plotter], None] | None = None,
         store_image_depth: bool = False,
         **kwargs,
-    ) -> (
-        CameraPosition
-        | NumpyArray[np.uint8]
-        | EmbeddableWidget
-        | Widget
-        | IFrame
-        | Image
-        | tuple[
-            CameraPosition | EmbeddableWidget | Widget | NumpyArray[np.uint8] | IFrame | Image,
-            ...,
-        ]
-        | None
-    ):
+    ) -> _ShowReturnType:
         """Display the plotting window.
 
         .. versionchanged:: 0.47
