@@ -3064,7 +3064,10 @@ class DataSetFilters(DataObjectFilters):
                 raise TypeError(msg)
             self.copy_from(output, deep=False)
             return self
-        return output
+        if not isinstance(self, type(output)):
+            # An ImageData or RectilinearGrid warps into a StructuredGrid
+            return output
+        return _as_input_class(output, self)
 
     # fmt: off
     # ruff: disable[E501]
@@ -3158,8 +3161,10 @@ class DataSetFilters(DataObjectFilters):
         if inplace:
             self.copy_from(warped_mesh, deep=False)
             return self
-        else:
+        if not isinstance(self, type(warped_mesh)):
+            # An ImageData or RectilinearGrid warps into a StructuredGrid
             return warped_mesh
+        return _as_input_class(warped_mesh, self)
 
     def delaunay_3d(  # type: ignore[misc]
         self: _DataSetType,
