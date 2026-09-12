@@ -5131,9 +5131,8 @@ class DataSetFilters(DataObjectFilters):
             output.point_data.pop('vtkOriginalPointIds', None)
         if not pass_cell_ids:
             output.cell_data.pop('vtkOriginalCellIds', None)
-        return cast(
-            'PointSet | UnstructuredGrid',
-            _finish_extraction(output, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids),
+        return _finish_extraction(
+            output, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids
         )
 
     # fmt: off
@@ -5229,7 +5228,7 @@ class DataSetFilters(DataObjectFilters):
         <class 'pyvista.core.pointset.PolyData'>
 
         """
-        output: DataSet = self.extract_cells(
+        output = self.extract_cells(
             ind,
             invert=not invert,
             pass_point_ids=pass_point_ids,
@@ -5239,7 +5238,7 @@ class DataSetFilters(DataObjectFilters):
         output = _cast_extraction(
             output, self, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids
         )
-        return cast('PolyData | UnstructuredGrid', _apply_inplace(self, output, inplace=inplace))
+        return _apply_inplace(self, output, inplace=inplace)
 
     # fmt: off
     # ruff: disable[E501]
@@ -5346,7 +5345,7 @@ class DataSetFilters(DataObjectFilters):
 
         """
         _validation.check_contains(['any', 'all'], must_contain=mode, name='mode')
-        output: DataSet = self.extract_points(
+        output = self.extract_points(
             ind,
             adjacent_cells=mode == 'all',
             invert=not invert,
@@ -5362,10 +5361,7 @@ class DataSetFilters(DataObjectFilters):
         ):
             # Every cell survived, so the input was passed through with its unused points
             output = output.remove_unused_points()
-        return cast(
-            'PolyData | PointSet | UnstructuredGrid',
-            _apply_inplace(self, output, inplace=inplace),
-        )
+        return _apply_inplace(self, output, inplace=inplace)
 
     def split_values(  # type: ignore[misc]
         self: _DataSetType,
@@ -6565,7 +6561,7 @@ class DataSetFilters(DataObjectFilters):
             append_filter.AddInputData(self)
 
         _update_alg(append_filter, progress_bar=progress_bar, message='Merging')
-        merged = _get_output(append_filter, keep_pointset=False)
+        merged: PointSet | UnstructuredGrid = _get_output(append_filter, keep_pointset=False)
         # Only a merge of point clouds is still a point cloud
         if isinstance(self, pv.PointSet):
             others = (
@@ -7929,7 +7925,7 @@ class DataSetFilters(DataObjectFilters):
     # ruff: enable[E501]
     # fmt: on
     def color_labels(  # type: ignore[misc]
-        self: DataSet,
+        self: _DataSetType,
         colors: str
         | ColorLike
         | Sequence[ColorLike]
@@ -7944,7 +7940,7 @@ class DataSetFilters(DataObjectFilters):
         output_scalars: str | None = None,
         return_dict: bool = False,
         inplace: bool = False,
-    ) -> DataSet | tuple[DataSet, dict[float | np.integer | np.floating, ColorLike]]:
+    ) -> _DataSetType | tuple[_DataSetType, dict[float | np.integer | np.floating, ColorLike]]:
         """Add RGB(A) scalars to labeled data.
 
         This filter adds a color array to map label values to specific colors.
@@ -9338,7 +9334,7 @@ def _validate_extraction_ids(
     return np.invert(mask) if invert else mask
 
 
-def _apply_inplace(mesh: DataSet, output: DataSet, *, inplace: bool) -> DataSet:
+def _apply_inplace(mesh: DataSet, output: _DataSetType, *, inplace: bool) -> _DataSetType:
     """Return the output, or overwrite the input mesh with it in-place."""
     if not inplace:
         return output
@@ -9351,6 +9347,18 @@ def _apply_inplace(mesh: DataSet, output: DataSet, *, inplace: bool) -> DataSet:
     return mesh
 
 
+@overload
+def _cast_extraction(
+    output: DataSet, input_mesh: PolyData, *, pass_point_ids: bool, pass_cell_ids: bool
+) -> PolyData: ...
+@overload
+def _cast_extraction(
+    output: DataSet, input_mesh: PointSet, *, pass_point_ids: bool, pass_cell_ids: bool
+) -> PointSet: ...
+@overload
+def _cast_extraction(
+    output: _DataSetType, input_mesh: DataSet, *, pass_point_ids: bool, pass_cell_ids: bool
+) -> _DataSetType: ...
 def _cast_extraction(
     output: DataSet, input_mesh: DataSet, *, pass_point_ids: bool, pass_cell_ids: bool
 ) -> DataSet:
@@ -9359,7 +9367,9 @@ def _cast_extraction(
     return _finish_extraction(output, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids)
 
 
-def _finish_extraction(output: DataSet, *, pass_point_ids: bool, pass_cell_ids: bool) -> DataSet:
+def _finish_extraction(
+    output: _DataSetType, *, pass_point_ids: bool, pass_cell_ids: bool
+) -> _DataSetType:
     """Ensure an empty extraction still carries the requested original id arrays."""
     if output.is_empty:
         if pass_point_ids and 'vtkOriginalPointIds' not in output.point_data:

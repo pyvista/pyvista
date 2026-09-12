@@ -554,7 +554,7 @@ class PolyDataFilters(DataSetFilters):
             msg = 'In-place merge requires both input datasets to be PolyData.'
             raise TypeError(msg)
 
-        merged: DataSet = DataSetFilters.merge(
+        merged: PolyData | UnstructuredGrid = DataSetFilters.merge(
             self,
             dataset,
             merge_points=merge_points,
@@ -610,7 +610,7 @@ class PolyDataFilters(DataSetFilters):
             self.deep_copy(merged)
             return self
 
-        return cast('PolyData | UnstructuredGrid', merged)
+        return merged
 
     def intersection(
         self,
