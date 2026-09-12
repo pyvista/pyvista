@@ -2950,8 +2950,6 @@ class DataSetFilters(DataObjectFilters):
 
     # fmt: off
     # ruff: disable[E501]
-    @overload  # PolyData
-    def warp_by_scalar(self: PolyData, scalars: str | None = ..., *, factor: float = ..., normal: VectorLike[float] | None = ..., inplace: bool = ..., progress_bar: bool = ..., **kwargs) -> PolyData: ...  # type: ignore[misc]
     @overload  # ImageData or RectilinearGrid
     def warp_by_scalar(self: ImageData | RectilinearGrid, scalars: str | None = ..., *, factor: float = ..., normal: VectorLike[float] | None = ..., inplace: bool = ..., progress_bar: bool = ..., **kwargs) -> StructuredGrid: ...  # type: ignore[misc]
     @overload  # every other dataset
@@ -2967,7 +2965,7 @@ class DataSetFilters(DataObjectFilters):
         inplace: bool = False,
         progress_bar: bool = False,
         **kwargs,
-    ) -> PolyData | StructuredGrid | _DataSetType:
+    ) -> StructuredGrid | _DataSetType:
         """Warp the dataset's points by a point data scalars array's values.
 
         This modifies point coordinates by moving points along point
@@ -3070,8 +3068,6 @@ class DataSetFilters(DataObjectFilters):
 
     # fmt: off
     # ruff: disable[E501]
-    @overload  # PolyData
-    def warp_by_vector(self: PolyData, vectors: str | None = ..., *, factor: float = ..., inplace: bool = ..., progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc]
     @overload  # ImageData or RectilinearGrid
     def warp_by_vector(self: ImageData | RectilinearGrid, vectors: str | None = ..., *, factor: float = ..., inplace: bool = ..., progress_bar: bool = ...) -> StructuredGrid: ...  # type: ignore[misc]
     @overload  # every other dataset
@@ -3085,7 +3081,7 @@ class DataSetFilters(DataObjectFilters):
         factor: float = 1.0,
         inplace: bool = False,
         progress_bar: bool = False,
-    ) -> PolyData | StructuredGrid | _DataSetType:
+    ) -> StructuredGrid | _DataSetType:
         """Warp the dataset's points by a point data vectors array's values.
 
         This modifies point coordinates by moving points along point
