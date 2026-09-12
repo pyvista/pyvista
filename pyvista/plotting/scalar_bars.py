@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import contextlib
+from typing import Literal
 import weakref
 
 import pyvista_validation as _validation
@@ -10,6 +11,7 @@ import pyvista_validation as _validation
 import pyvista as pv
 from pyvista import MAX_N_COLOR_BARS
 from pyvista import _vtk
+from pyvista.core.errors import VTKVersionError
 from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
@@ -22,6 +24,33 @@ def _title_width(text_property, title, dpi):
     bounds = [0, 0, 0, 0]
     _vtk.vtkFreeTypeTools.GetInstance().GetBoundingBox(text_property, title, dpi, bounds)
     return bounds[1] - bounds[0] + 1
+
+
+def _widest_label(scalar_bar, text_property, dpi):
+    """Return the width in pixels of the widest tick label a scalar bar draws."""
+    fmt = scalar_bar.GetLabelFormat()
+    widest = 0
+    for value in scalar_bar.GetLookupTable().GetRange():
+        try:
+            text = fmt % value
+        except (TypeError, ValueError):
+            text = fmt.format(value)
+        widest = max(widest, _title_width(text_property, text, dpi))
+    return widest
+
+
+def _title_height(text_property, title, dpi):
+    """Return the height in pixels of a title rendered with this text property."""
+    bounds = [0, 0, 0, 0]
+    _vtk.vtkFreeTypeTools.GetInstance().GetBoundingBox(text_property, title, dpi, bounds)
+    return bounds[3] - bounds[2] + 1
+
+
+def _rotated_title_offset(bar_width, title_height, pad):
+    """Return the line offset that clears a rotated title off its bar by ``pad`` pixels."""
+    # The offset moves the pen and grows the text bounds, so the title moves two pixels
+    # per unit; the constant is measured across font sizes and bar widths
+    return round((bar_width + title_height) / 2 - 2 + pad / 2)
 
 
 class ScalarBars(_NoNewAttrMixin):
@@ -64,6 +93,12 @@ class ScalarBars(_NoNewAttrMixin):
             title_quotes = f'"{title}"'
             lines.append(f'{title_quotes:20} {interactive!s:5}')
         return '\n'.join(lines)
+
+    def _stacked_neighbor(self, slot):
+        """Return the scalar bar actor occupying the slot below this one, if any."""
+        lookup = self._plotter._scalar_bar_slot_lookup
+        title = next((name for name, taken in lookup.items() if taken == slot - 1), None)
+        return None if title is None else self._scalar_bar_actors.get(title)
 
     def _remove_mapper_from_plotter(
         self,
@@ -264,6 +299,7 @@ class ScalarBars(_NoNewAttrMixin):
         position_x=None,
         position_y=None,
         vertical=None,
+        stacking: Literal['widen', 'stagger', 'rotate'] | None = None,
         interactive=None,
         fmt=None,
         use_opacity: bool = True,
@@ -398,6 +434,23 @@ class ScalarBars(_NoNewAttrMixin):
             Use vertical or horizontal scalar bar.  Default set by
             :attr:`pyvista.plotting.themes.Theme.colorbar_orientation`.
 
+        stacking : 'widen' | 'stagger' | 'rotate', optional
+            How to keep the titles of stacked scalar bars apart.  By default the
+            bars are stacked tightly and their titles may overlap.
+
+            - ``'widen'`` spaces each bar by the width of its own title and its
+              neighbor's.
+            - ``'stagger'`` keeps the bars close and steps each one up so that
+              the titles clear each other.
+            - ``'rotate'`` turns each title alongside its bar.  Requires VTK
+              9.4.0 or newer.
+
+            ``'stagger'`` and ``'rotate'`` apply to vertical bars only.  Use
+            ``title_pad`` to set the space each one leaves.  Has no effect when
+            the font size is constrained.
+
+            .. versionadded:: 0.50
+
         interactive : bool, optional
             Use a widget to control the size and location of the scalar bar.
             Default set by :attr:`pyvista.plotting.themes.Theme.interactive`.
@@ -519,6 +572,75 @@ class ScalarBars(_NoNewAttrMixin):
         >>> _ = pl.add_scalar_bar('Height', cmap='viridis', clim=(-2, 2))
         >>> pl.show()
 
+        Stack three scalar bars with titles of different lengths.  By default
+        the titles overlap.
+
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
+        >>> sphere['Data'] = sphere.points[:, 2]
+        >>> titles = ['A bit long', 'Short', 'Super duper long']
+        >>> pl = pv.Plotter()
+        >>> pl.theme.colorbar_vertical.position_x = 0.75
+        >>> _ = pl.add_mesh(sphere, show_scalar_bar=False)
+        >>> for title in titles:
+        ...     _ = pl.add_scalar_bar(
+        ...         title,
+        ...         vertical=True,
+        ...         title_font_size=30,
+        ...         label_font_size=30,
+        ...         mapper=pl.mapper,
+        ...     )
+        >>> pl.show()
+
+        Use ``'widen'`` to space each bar by the width of its title.
+
+        >>> pl = pv.Plotter()
+        >>> pl.theme.colorbar_vertical.position_x = 0.75
+        >>> _ = pl.add_mesh(sphere, show_scalar_bar=False)
+        >>> for title in titles:
+        ...     _ = pl.add_scalar_bar(
+        ...         title,
+        ...         vertical=True,
+        ...         stacking='widen',
+        ...         title_font_size=30,
+        ...         label_font_size=30,
+        ...         mapper=pl.mapper,
+        ...     )
+        >>> pl.show()
+
+        Use ``'stagger'`` to keep the bars close and step each one up
+        instead.
+
+        >>> pl = pv.Plotter()
+        >>> pl.theme.colorbar_vertical.position_x = 0.75
+        >>> _ = pl.add_mesh(sphere, show_scalar_bar=False)
+        >>> for title in titles:
+        ...     _ = pl.add_scalar_bar(
+        ...         title,
+        ...         vertical=True,
+        ...         stacking='stagger',
+        ...         title_font_size=30,
+        ...         label_font_size=30,
+        ...         mapper=pl.mapper,
+        ...     )
+        >>> pl.show()
+
+        Use ``'rotate'`` to turn each title alongside its bar.
+
+        >>> pl = pv.Plotter()
+        >>> pl.theme.colorbar_vertical.position_x = 0.75
+        >>> _ = pl.add_mesh(sphere, show_scalar_bar=False)
+        >>> for title in titles:
+        ...     _ = pl.add_scalar_bar(
+        ...         title,
+        ...         vertical=True,
+        ...         stacking='rotate',
+        ...         title_font_size=30,
+        ...         label_font_size=30,
+        ...         mapper=pl.mapper,
+        ...     )
+        >>> pl.show()
+
         """
         if theme is None:
             theme = pv.global_theme
@@ -558,6 +680,17 @@ class ScalarBars(_NoNewAttrMixin):
             fmt = theme.font.fmt
         if vertical is None and theme.colorbar_orientation.lower() == 'vertical':
             vertical = True
+
+        if stacking is not None:
+            _validation.check_contains(
+                ['widen', 'stagger', 'rotate'], must_contain=stacking, name='stacking'
+            )
+            if not vertical and stacking != 'widen':
+                msg = f'Stacking {stacking!r} is not supported for horizontal scalar bars.'
+                raise ValueError(msg)
+            if stacking == 'rotate' and pv.vtk_version_info < (9, 4, 0):
+                msg = "Stacking 'rotate' requires VTK 9.4.0 or newer."
+                raise VTKVersionError(msg)
 
         if title_pad is None:
             title_pad = (
@@ -779,28 +912,60 @@ class ScalarBars(_NoNewAttrMixin):
         draws_box = scalar_bar.GetDrawFrame() or scalar_bar.GetDrawBackground()
         unconstrained = bool(scalar_bar.GetUnconstrainedFontSize())
         pad = round(title_pad * title_text.GetFontSize()) if title_pad and not draws_box else 0
-        if pad and unconstrained:
-            title_text.SetLineOffset(-pad)
+        font_size = title_text.GetFontSize()
+        window_width, window_height = self._plotter.window_size
+        bar_width = width * window_width
+        dpi = self._plotter.render_window.GetDPI()
+
+        if unconstrained:
+            if stacking == 'rotate':
+                scalar_bar.SetForceVerticalTitle(True)
+                title_height = _title_height(title_text, display_title, dpi)
+                title_text.SetLineOffset(-_rotated_title_offset(bar_width, title_height, pad))
+            elif pad:
+                title_text.SetLineOffset(-pad)
 
         # The gap between stacked bars is a fraction of the window but the annotations
         # are not, so the annotations set that gap once the window is small
-        if stacked_slot and unconstrained:
-            window_width, window_height = self._plotter.window_size
+        if stacking and stacked_slot and unconstrained:
             if vertical:
-                title_width = _title_width(
-                    title_text, display_title, self._plotter.render_window.GetDPI()
-                )
-                margin = 0.2 * width * window_width
-                spacing = margin + max(width * window_width, title_width)
+                margin = 0.2 * bar_width
+                neighbor = self._stacked_neighbor(stacked_slot)
+                if stacking == 'widen':
+                    claim = _title_width(title_text, display_title, dpi)
+                else:
+                    # The title is out of the way, so only the labels share the gap
+                    claim = bar_width + _widest_label(scalar_bar, label_text, dpi)
                 _, y = scalar_bar.GetPosition()
-                position_x = (
-                    theme.colorbar_vertical.position_x - stacked_slot * spacing / window_width
-                )
+                if neighbor is None:
+                    spacing = margin + max(bar_width, claim)
+                    position_x = (
+                        theme.colorbar_vertical.position_x - stacked_slot * spacing / window_width
+                    )
+                else:
+                    # A title is centered on its bar, so each neighbor claims half the gap
+                    neighbor_bar = neighbor.GetWidth() * window_width
+                    if stacking == 'widen':
+                        neighbor_claim = _title_width(
+                            neighbor.GetTitleTextProperty(), neighbor.GetTitle(), dpi
+                        )
+                    else:
+                        neighbor_claim = claim
+                    spacing = margin + max(
+                        (bar_width + neighbor_bar) / 2, (claim + neighbor_claim) / 2
+                    )
+                    center = (
+                        neighbor.GetPosition()[0] + neighbor.GetWidth() / 2
+                    ) * window_width - spacing
+                    position_x = (center - bar_width / 2) / window_width
+                if stacking == 'stagger':
+                    # Raising the whole bar steps its title clear of its neighbor's
+                    y += stacked_slot * (font_size + pad) / window_height
                 scalar_bar.SetPosition(position_x, y)
             else:
                 annotations = (
                     scalar_bar.GetBarRatio() * height * window_height
-                    + title_text.GetFontSize()
+                    + font_size
                     + label_text.GetFontSize()
                 )
                 spacing = pad + max(height * window_height, annotations)
