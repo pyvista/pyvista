@@ -490,28 +490,36 @@ def test_stacking_rotate_moves_the_title_clear_of_the_bar(sphere):
     pl.close()
 
 
-def test_stacking_stagger_offsets_each_title(sphere):
-    # Staggered titles sit one line further from the bar for every slot
+def test_stacking_stagger_steps_each_bar_up(sphere):
+    # Staggered bars step up a line at a time and keep the size of an unstaggered one
     sphere[KEY] = sphere.points[:, 2]
     font_size = 14
+    window_size = [400, 400]
 
-    pl = pv.Plotter(window_size=[400, 400])
-    pl.add_mesh(sphere, show_scalar_bar=False)
-    bars = [
-        pl.add_scalar_bar(
-            f'{KEY}{i}',
-            vertical=True,
-            stacking='stagger',
-            title_font_size=font_size,
-            title_pad=0,
-            mapper=pl.mapper,
-        )
-        for i in range(3)
+    def bars(stacking):
+        pl = pv.Plotter(window_size=window_size)
+        pl.add_mesh(sphere, show_scalar_bar=False)
+        return [
+            pl.add_scalar_bar(
+                f'{KEY}{i}',
+                vertical=True,
+                stacking=stacking,
+                title_font_size=font_size,
+                label_font_size=font_size,
+                title_pad=0,
+                mapper=pl.mapper,
+            )
+            for i in range(3)
+        ]
+
+    staggered, plain = bars('stagger'), bars(None)
+
+    assert {bar.GetHeight() for bar in staggered} == {plain[0].GetHeight()}
+    steps = [
+        (a.GetPosition()[1] - b.GetPosition()[1]) * window_size[1]
+        for a, b in itertools.pairwise(staggered)
     ]
-
-    offsets = [-bar.GetTitleTextProperty().GetLineOffset() for bar in bars]
-    assert offsets == [0, font_size, 2 * font_size]
-    pl.close()
+    assert steps == [pytest.approx(-font_size)] * 2
 
 
 def test_stacking_invalid(sphere):

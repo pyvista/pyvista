@@ -429,8 +429,8 @@ class ScalarBars(_NoNewAttrMixin):
             How to keep the titles of stacked scalar bars apart.  By default the
             bars are stacked tightly and their titles may overlap.  ``'widen'``
             spaces each bar by the width of its own title and its neighbor's.
-            ``'stagger'`` keeps the bars close and offsets each title away from
-            the bar.  ``'rotate'`` turns each title alongside its bar.
+            ``'stagger'`` keeps the bars close and steps each one up so that
+            the titles clear each other.  ``'rotate'`` turns each title alongside its bar.
             ``'stagger'`` and ``'rotate'`` apply to vertical bars only.  Use
             ``title_pad`` to set the space each one leaves.  Has no effect when
             the font size is constrained.
@@ -594,8 +594,8 @@ class ScalarBars(_NoNewAttrMixin):
         ...     )
         >>> pl.show()
 
-        Use ``'stagger'`` to keep the bars close and step each title away from
-        its bar instead.
+        Use ``'stagger'`` to keep the bars close and step each one up
+        instead.
 
         >>> pl = pv.Plotter()
         >>> pl.theme.colorbar_vertical.position_x = 0.75
@@ -903,8 +903,6 @@ class ScalarBars(_NoNewAttrMixin):
             if stacking == 'rotate':
                 scalar_bar.SetForceVerticalTitle(True)
                 title_text.SetLineOffset(-_rotated_title_offset(bar_width, font_size, pad))
-            elif stacking == 'stagger':
-                title_text.SetLineOffset(-(pad + stacked_slot * (font_size + pad)))
             elif pad:
                 title_text.SetLineOffset(-pad)
 
@@ -942,6 +940,9 @@ class ScalarBars(_NoNewAttrMixin):
                         neighbor.GetPosition()[0] + neighbor.GetWidth() / 2
                     ) * window_width - spacing
                     position_x = (center - bar_width / 2) / window_width
+                if stacking == 'stagger':
+                    # Raising the whole bar steps its title clear of its neighbor's
+                    y += stacked_slot * (font_size + pad) / window_height
                 scalar_bar.SetPosition(position_x, y)
             else:
                 annotations = (
