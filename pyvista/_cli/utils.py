@@ -27,6 +27,7 @@ import pyvista_validation as _validation
 from rich import box
 from rich.console import Group
 from rich.console import NewLine
+from rich.markup import escape
 from rich.panel import Panel
 from rich.text import Text
 
@@ -329,13 +330,18 @@ def read_mesh(
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', category=pv.InvalidMeshWarning)
             return pv.read(path)
-    except Exception:  # noqa: BLE001
+    except Exception as error:  # noqa: BLE001
         if on_error.startswith('suppress'):
             if on_error == 'suppress+warn':
                 CLI_APP.error_console.print(f'[yellow]Skipping unreadable file:[/yellow] {path}')
             return None
         else:
-            msg = f'Path is not readable by PyVista:\n{path}'
+            # An ImportError already names the missing package and how to install it.
+            msg = (
+                escape(str(error))
+                if isinstance(error, ImportError)
+                else f'Path is not readable by PyVista:\n{path}'
+            )
             if on_error == 'exit+hint':
                 msg += '\nUse --skip-unreadable to skip this file.'
             print_error_and_exit(message=msg)
