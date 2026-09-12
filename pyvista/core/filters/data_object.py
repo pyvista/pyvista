@@ -5263,6 +5263,10 @@ class DataObjectFilters:
         Point data are specified per node and cell data specified within cells.
         Optionally, the input point data can be passed through to the output.
 
+        .. versionchanged:: 0.50
+            String arrays are excluded from conversion with a warning. They remain
+            in the input and are passed through when ``pass_point_data=True``.
+
         Parameters
         ----------
         pass_point_data : bool, default: False
@@ -5289,6 +5293,11 @@ class DataObjectFilters:
         output : DataSet | MultiBlock
             Dataset with the point data transformed into cell data.
             Return type matches input.
+
+        Raises
+        ------
+        ValueError
+            If point arrays are unnamed and string arrays are present.
 
         See Also
         --------
@@ -5335,12 +5344,61 @@ class DataObjectFilters:
 
         alg = _vtk.vtkPointDataToCellData()
         alg.SetInputDataObject(self)
+        point_data = self.point_data.VTKObject
+        # Inspect native types without copying string values into NumPy.
+        strings = [
+            i
+            for i in range(point_data.GetNumberOfArrays())
+            if point_data.GetAbstractArray(i).GetDataType() == _vtk.VTK_STRING
+        ]
+        if strings:
+            if any(not point_data.GetArrayName(i) for i in range(point_data.GetNumberOfArrays())):
+                msg = 'Name all point arrays before converting data with string arrays.'
+                raise ValueError(msg)
+            for i in strings:
+                name = point_data.GetAbstractArray(i).GetName()
+                warn_external(f'Dropping string array {name!r} from point-to-cell conversion.')
+            if categorical:
+                # VTK's selective mode loses the scalars required for categorization.
+                mesh = self.copy(deep=False)
+                for i in reversed(strings):
+                    mesh.point_data.VTKObject.RemoveArray(i)
+                alg.SetInputDataObject(mesh)
+            else:
+                alg.ProcessAllArraysOff()
+                for i in range(point_data.GetNumberOfArrays()):
+                    if i not in strings:
+                        name = point_data.GetAbstractArray(i).GetName()
+                        alg.AddPointDataArray(name)
+                # Selection loses attribute roles, including their interpolation policy.
+                cell_data = alg.GetOutput().GetCellData()
+                for role in range(_vtk.vtkDataSetAttributes.NUM_ATTRIBUTES):
+                    attribute = point_data.GetAbstractAttribute(role)
+                    if attribute is not None and not cell_data.GetCopyAttribute(
+                        role, _vtk.vtkDataSetAttributes.INTERPOLATE
+                    ):
+                        alg.RemovePointDataArray(attribute.GetName())
         alg.SetPassPointData(pass_point_data)
         alg.SetCategoricalData(categorical)
         _update_alg(
             alg, progress_bar=progress_bar, message='Transforming point data into cell data'
         )
-        return _get_output(alg, active_scalars=self.active_scalars_name)
+        output = _get_output(alg, active_scalars=self.active_scalars_name)
+        if strings and categorical and pass_point_data:
+            output.point_data.VTKObject.PassData(point_data)
+        if not alg.GetProcessAllArrays():
+            # VTK's array selection retains values but loses the active roles.
+            for role in range(_vtk.vtkDataSetAttributes.NUM_ATTRIBUTES):
+                attribute = self.point_data.VTKObject.GetAttribute(role)
+                if (
+                    attribute is not None
+                    and attribute.GetName() in output.cell_data
+                    and output.cell_data.VTKObject.GetCopyAttribute(
+                        role, _vtk.vtkDataSetAttributes.INTERPOLATE
+                    )
+                ):
+                    output.cell_data.VTKObject.SetActiveAttribute(attribute.GetName(), role)
+        return output
 
     def ptc(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
