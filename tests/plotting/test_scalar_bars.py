@@ -627,7 +627,7 @@ def test_stacking_rotate_needs_vtk_94(sphere, monkeypatch):
 
 def test_stacking_from_theme(sphere):
     sphere[KEY] = sphere.points[:, 2]
-    pv.global_theme.colorbar_stacking = 'widen'
+    pv.global_theme.colorbar_vertical.stacking = 'widen'
 
     pl = pv.Plotter(window_size=[400, 400])
     pl.add_mesh(sphere, show_scalar_bar=False)
@@ -642,7 +642,7 @@ def test_stacking_from_theme(sphere):
 def test_stacking_from_theme_leaves_horizontal_bars(sphere):
     # The option is vertical only, so a horizontal bar neither stacks nor raises
     sphere[KEY] = sphere.points[:, 2]
-    pv.global_theme.colorbar_stacking = 'rotate'
+    pv.global_theme.colorbar_vertical.stacking = 'rotate'
 
     pl = pv.Plotter(window_size=[400, 400])
     pl.add_mesh(sphere, show_scalar_bar=False)
@@ -656,8 +656,13 @@ def test_stacking_from_theme_leaves_horizontal_bars(sphere):
 
 
 def test_colorbar_stacking_theme_invalid():
-    with pytest.raises(ValueError, match=r'colorbar_stacking .* is not valid'):
-        pv.global_theme.colorbar_stacking = 'spread'
+    with pytest.raises(ValueError, match=r'stacking .* is not valid'):
+        pv.global_theme.colorbar_vertical.stacking = 'spread'
+
+
+def test_colorbar_stacking_theme_is_vertical_only():
+    with pytest.raises(AttributeError, match='no attribute'):
+        pv.global_theme.colorbar_horizontal.stacking = 'widen'
 
 
 @pytest.mark.parametrize('stacking', ['widen', 'stagger', 'rotate'])

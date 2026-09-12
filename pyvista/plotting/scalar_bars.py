@@ -438,8 +438,8 @@ class ScalarBars(_NoNewAttrMixin):
         stacking : 'widen' | 'stagger' | 'rotate', optional
             How to keep the titles of stacked vertical scalar bars apart.
             Defaults to ``None`` and is taken from
-            :attr:`pyvista.plotting.themes.Theme.colorbar_stacking`, which
-            stacks the bars tightly and lets their titles overlap.
+            :attr:`pyvista.plotting.themes._VerticalColorbarConfig.stacking`,
+            which stacks the bars tightly and lets their titles overlap.
 
             - ``'widen'`` spaces each bar by the width of its own title and its
               neighbor's.
@@ -686,7 +686,7 @@ class ScalarBars(_NoNewAttrMixin):
             vertical = True
 
         if stacking is None and vertical:
-            stacking = theme.colorbar_stacking
+            stacking = theme.colorbar_vertical.stacking
 
         if stacking is not None:
             _validation.check_contains(
