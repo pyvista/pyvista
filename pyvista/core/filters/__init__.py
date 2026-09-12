@@ -43,8 +43,13 @@ from pyvista.core.utilities.observers import ProgressMonitor
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
+    from pyvista.core.utilities.arrays import CellLiteral
+    from pyvista.core.utilities.arrays import PointLiteral
 
-def _update_alg(alg: _vtk.vtkAlgorithm, *, progress_bar: bool = False, message='') -> None:
+
+def _update_alg(
+    alg: _vtk.vtkAlgorithm, *, progress_bar: bool = False, message: str | None = ''
+) -> None:
     """Update an algorithm with or without a progress bar."""
     # Get the status of the alg update using GetExecutive
     # https://discourse.vtk.org/t/changing-vtkalgorithm-update-return-type-from-void-to-bool/16164
@@ -226,13 +231,13 @@ def _apply_points_dtype(
 def _get_output(
     algorithm: _vtk.vtkAlgorithm,
     *,
-    iport=0,
-    iconnection=0,
-    oport=0,
-    active_scalars=None,
-    active_scalars_field='point',
-    keep_pointset=True,
-):
+    iport: int = 0,
+    iconnection: int = 0,
+    oport: int = 0,
+    active_scalars: str | None = None,
+    active_scalars_field: PointLiteral | CellLiteral = 'point',
+    keep_pointset: bool = True,
+) -> Any:
     """Get the algorithm's output and copy input's pyvista meta info."""
     ido = cast('pv.DataObject', wrap(algorithm.GetInputDataObject(iport, iconnection)))
     data = cast('pv.DataObject', wrap(algorithm.GetOutputDataObject(oport)))

@@ -64,11 +64,11 @@ class UnstructuredGridFilters(DataSetFilters):
     def clean(
         self,
         *,
-        tolerance=0,
+        tolerance: float = 0,
         remove_unused_points: bool = True,
         produce_merge_map: bool = True,
         average_point_data: bool = True,
-        merging_array_name=None,
+        merging_array_name: str | None = None,
         progress_bar: bool = False,
     ) -> UnstructuredGrid:
         """Merge duplicate points and remove unused points in an UnstructuredGrid.
@@ -159,7 +159,7 @@ class UnstructuredGridFilters(DataSetFilters):
         alg.SetInputDataObject(self.copy())  # type: ignore[attr-defined]
         alg.SetAbsoluteTolerance(True)
         alg.SetTolerance(tolerance)
-        alg.SetMergingArray(merging_array_name)
+        alg.SetMergingArray(merging_array_name)  # type: ignore[arg-type]
         alg.SetRemoveUnusedPoints(remove_unused_points)
         alg.SetProduceMergeMap(produce_merge_map)
         alg.SetAveragePointData(average_point_data)
