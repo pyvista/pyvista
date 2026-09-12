@@ -77,6 +77,7 @@ from .mapper import OpenGLGPUVolumeRayCastMapper
 from .mapper import PointGaussianMapper
 from .mapper import SmartVolumeMapper
 from .mapper import UnstructuredGridVolumeRayCastMapper
+from .mapper import _apply_categories
 from .mapper import _BaseMapper
 from .mapper import _category_range
 from .mapper import _mapper_get_data_set_input
@@ -5288,7 +5289,7 @@ class BasePlotter(_BoundsSizeMixin):
             self.mapper.lookup_table.scalar_range = clim
             self.mapper.lookup_table.log_scale = log_scale
             if category_values is not None:
-                labels = self.mapper._apply_categories(category_values, annotations)
+                labels = _apply_categories(self.mapper.lookup_table, category_values, annotations)
                 scalar_bar_args.setdefault('tick_locations', labels)
                 integral = np.array_equal(category_values, np.round(category_values))
                 scalar_bar_args.setdefault('fmt', '%.0f' if integral else '%g')
