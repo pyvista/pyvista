@@ -1320,6 +1320,14 @@ class DataSetFilters(DataObjectFilters):
             progress_bar=progress_bar,
         )
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # PointSet
+    def remove_nan_cells(self: PointSet, *, scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., component_mode: Literal['component', 'all', 'any'] = ..., component: int = ..., progress_bar: bool = ...) -> PointSet: ...  # type: ignore[misc, overload-overlap]
+    @overload  # DataSet
+    def remove_nan_cells(self: DataSet, *, scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., component_mode: Literal['component', 'all', 'any'] = ..., component: int = ..., progress_bar: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def remove_nan_cells(  # type: ignore[misc]
         self: _DataSetType,
         *,
@@ -1328,7 +1336,7 @@ class DataSetFilters(DataObjectFilters):
         component_mode: Literal['component', 'all', 'any'] = 'all',
         component: int = 0,
         progress_bar: bool = False,
-    ) -> UnstructuredGrid:
+    ):
         """Remove cells whose scalar values are NaN.
 
         A cell is considered NaN if any of its associated scalar values are
@@ -1374,9 +1382,9 @@ class DataSetFilters(DataObjectFilters):
 
         Returns
         -------
-        pyvista.UnstructuredGrid
-            Dataset with NaN cells removed. A :class:`~pyvista.PointSet` gives a ``PointSet``
-            with its NaN points removed.
+        pyvista.UnstructuredGrid | pyvista.PointSet
+            Dataset with NaN cells removed. A :class:`~pyvista.PointSet` input returns
+            a ``PointSet`` with its NaN points removed.
 
         See Also
         --------
@@ -1406,6 +1414,19 @@ class DataSetFilters(DataObjectFilters):
         False
 
         """
+        # Cell-wise operations fail for a point cloud, so use its vertex cells
+        if isinstance(self, pv.PointSet):
+            return (
+                self.cast_to_polydata(deep=False)
+                .remove_nan_cells(
+                    scalars=scalars,
+                    preference=preference,
+                    component_mode=component_mode,
+                    component=component,
+                    progress_bar=progress_bar,
+                )
+                .cast_to_pointset()
+            )
         scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
         arr = get_array(self, scalars_, preference=preference, err=False)
         if arr is None:
@@ -6839,15 +6860,12 @@ class DataSetFilters(DataObjectFilters):
 
         See Also
         --------
-        :meth:`~pyvista.DataSetFilters.split_bodies`
-            Split connected bodies into blocks of a :class:`~pyvista.MultiBlock`.
-        :meth:`~pyvista.DataSetFilters.extract_values`
-            Threshold-like filter for extracting specific values and ranges.
+        split_bodies, extract_values
 
         Returns
         -------
-        output : pyvista.MultiBlock | pyvista.UnstructuredGrid
-            UnStructuredGrid if ``as_composite=False`` and MultiBlock when ``True``. A
+        output : pyvista.MultiBlock | pyvista.UnstructuredGrid | pyvista.PointSet
+            UnstructuredGrid if ``as_composite=False`` and MultiBlock when ``True``. A
             :class:`~pyvista.PointSet` is partitioned by its points and gives ``PointSet``
             blocks.
 
@@ -6869,6 +6887,18 @@ class DataSetFilters(DataObjectFilters):
         >>> out.plot(multi_colors=True, cpos='xy')
 
         """
+        # Cell-wise operations fail for a point cloud, so use its vertex cells
+        if isinstance(self, pv.PointSet):
+            output = self.cast_to_polydata(deep=False).partition(
+                n_partitions,
+                generate_global_id=generate_global_id,
+                as_composite=as_composite,
+            )
+            if isinstance(output, pv.MultiBlock):
+                for index, block in enumerate(output):
+                    output[index] = None if block is None else block.cast_to_pointset()
+                return output
+            return output.cast_to_pointset()
         if not _vtk.has_attr('vtkRedistributeDataSetFilter'):  # pragma: no cover
             msg = (
                 '`partition` requires vtkRedistributeDataSetFilter, but it '
