@@ -3504,11 +3504,11 @@ class PolyDataFilters(DataSetFilters):
             # Default validated origin is the mesh's center which we need to translate
             origin_ -= normal_ * self.length / 2.0
         # Make plane
-        plane = generate_plane(normal_, origin_)
+        vtk_plane = generate_plane(normal_, origin_)
         # choose what mesh to use
         mesh = self.copy() if not inplace else self
         # Perform projection in place on the copied mesh
-        f = lambda p: plane.ProjectPoint(p, p)
+        f = lambda p: vtk_plane.ProjectPoint(p, p)
         np.apply_along_axis(f, 1, mesh.points)
         return mesh
 

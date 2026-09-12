@@ -426,14 +426,6 @@ def _common_arg_parser(
     vertex_style = kwargs.pop('vertex_style', 'points')
     vertex_opacity = kwargs.pop('vertex_opacity', 1.0)
 
-    # Support aliases for 'back', 'front', or 'none'. Consider deprecating
-    if culling is False:
-        culling = 'none'
-    elif culling in ['b', 'backface', True]:
-        culling = 'back'
-    elif culling in ['f', 'frontface']:
-        culling = 'front'
-
     if show_scalar_bar is None:
         # use theme unless plotting RGB
         _default = theme.show_scalar_bar or scalar_bar_args

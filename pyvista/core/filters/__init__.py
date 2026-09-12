@@ -47,9 +47,7 @@ if TYPE_CHECKING:
     from pyvista.core.utilities.arrays import PointLiteral
 
 
-def _update_alg(
-    alg: _vtk.vtkAlgorithm, *, progress_bar: bool = False, message: str | None = ''
-) -> None:
+def _update_alg(alg: _vtk.vtkAlgorithm, *, progress_bar: bool = False, message: str = '') -> None:
     """Update an algorithm with or without a progress bar."""
     # Get the status of the alg update using GetExecutive
     # https://discourse.vtk.org/t/changing-vtkalgorithm-update-return-type-from-void-to-bool/16164
