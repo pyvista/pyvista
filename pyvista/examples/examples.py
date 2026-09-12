@@ -768,9 +768,8 @@ def load_frog_tissues() -> ImageData:
         First, define plotting parameters
 
         >>> # Configure colors / color bar
-        >>> clim = data.get_data_range()  # Set color bar limits to match data
         >>> cmap = 'glasbey'  # Use a categorical colormap
-        >>> categories = True  # Ensure n_colors matches number of labels
+        >>> categories = True  # Give every tissue label its own color
         >>> opacity = 'foreground'  # Make foreground opaque, background transparent
         >>> opacity_unit_distance = 1
 
@@ -792,7 +791,6 @@ def load_frog_tissues() -> ImageData:
         >>> pl = pv.Plotter()
         >>> _ = pl.add_volume(
         ...     data,
-        ...     clim=clim,
         ...     ambient=ambient,
         ...     shade=shade,
         ...     diffuse=diffuse,
