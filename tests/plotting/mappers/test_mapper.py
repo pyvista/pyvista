@@ -155,6 +155,107 @@ def test_set_scalars_replaces_digitized_array():
     assert mapper.scalar_range == (-0.5, 1.5)
 
 
+def test_set_scalars_categories_true():
+    mesh = pv.RectilinearGrid([0.0, 1.0, 2.0, 3.0, 4.0], [0.0, 1.0], [0.0])
+    mesh['labels'] = [8.0, 0.0, 2.0, np.nan]
+    mapper = DataSetMapper(mesh)
+    sargs = {}
+    mapper.set_scalars(mesh['labels'], 'labels', categories=True, scalar_bar_args=sargs)
+    assert mesh.cell_data.keys() == ['labels']
+    assert mapper.scalar_range == (-1.0, 9.0)
+    assert sargs == {'tick_locations': [0.0, 2.0, 8.0], 'fmt': '%.0f'}
+    lut = mapper.lookup_table
+    assert len(np.unique(lut.values, axis=0)) == 4  # three categories and the NaN color
+    assert lut.annotations == {}
+    colors = {lut.map_value(value)[:3] for value in (0, 2, 8)}
+    assert len(colors) == 3
+    assert lut.map_value(4) == lut.nan_color.float_rgba
+    assert lut.map_value(np.nan) == lut.nan_color.float_rgba
+
+    sargs = {}
+    mapper.set_scalars(
+        mesh['labels'], 'labels', categories=True, annotations={2: 'two'}, scalar_bar_args=sargs
+    )
+    assert lut.annotations == {2.0: 'two'}
+    assert sargs['tick_locations'] == [0.0, 8.0]
+
+
+def test_set_scalars_categories_integer_dtype():
+    mesh = pv.RectilinearGrid([0.0, 1.0, 2.0, 3.0], [0.0, 1.0], [0.0])
+    mesh['labels'] = np.array([-32768, 0, 1], dtype=np.int16)
+    mapper = DataSetMapper(mesh)
+    mapper.set_scalars(mesh['labels'], 'labels', categories=True)
+    assert mapper.scalar_range == (-32768.5, 1.5)
+    colors = {mapper.lookup_table.map_value(value)[:3] for value in (-32768, 0, 1)}
+    assert len(colors) == 3
+
+
+def test_set_scalars_categories_short_cmap():
+    mesh = pv.RectilinearGrid([0.0, 1.0, 2.0, 3.0, 4.0], [0.0, 1.0], [0.0])
+    mesh['labels'] = [0.0, 1.0, 2.0, 3.0]
+    mapper = DataSetMapper(mesh)
+    match = 'The colormap has 3 colors but the scalars have 4 categories.'
+    with pytest.raises(ValueError, match=match):
+        mapper.set_scalars(mesh['labels'], 'labels', categories=True, cmap=['r', 'g', 'b'])
+
+
+def test_set_scalars_categories_keeps_clim():
+    mesh = pv.RectilinearGrid([0.0, 1.0, 2.0, 3.0], [0.0, 1.0], [0.0])
+    mesh['labels'] = [0.0, 5.0, 10.0]
+    mapper = DataSetMapper(mesh)
+    mapper.set_scalars(mesh['labels'], 'labels', categories=True, clim=(0, 100))
+    assert mapper.scalar_range == (0.0, 100.0)
+    colors = {mapper.lookup_table.map_value(value)[:3] for value in (0, 5, 10)}
+    assert len(colors) == 3
+
+
+def test_set_scalars_categories_single_value():
+    mesh = pv.RectilinearGrid([0.0, 1.0, 2.0], [0.0, 1.0], [0.0])
+    mesh['labels'] = [3.0, 3.0]
+    mapper = DataSetMapper(mesh)
+    sargs = {}
+    mapper.set_scalars(mesh['labels'], 'labels', categories=True, scalar_bar_args=sargs)
+    assert mapper.scalar_range == (2.5, 3.5)
+    assert len(np.unique(mapper.lookup_table.values, axis=0)) == 1
+    assert sargs['tick_locations'] == [3.0]
+
+
+def test_set_scalars_categories_all_nan():
+    mesh = pv.RectilinearGrid([0.0, 1.0, 2.0], [0.0, 1.0], [0.0])
+    mesh['labels'] = [np.nan, np.nan]
+    mapper = DataSetMapper(mesh)
+    sargs = {}
+    with pytest.warns(RuntimeWarning, match='All-NaN axis encountered'):
+        mapper.set_scalars(mesh['labels'], 'labels', categories=True, scalar_bar_args=sargs)
+    assert 'tick_locations' not in sargs
+
+
+def test_set_scalars_categories_uneven_spacing():
+    mesh = pv.RectilinearGrid([0.0, 1.0, 2.0, 3.0], [0.0, 1.0], [0.0])
+    mesh['labels'] = [0.1, 0.33, 0.7]
+    mapper = DataSetMapper(mesh)
+    sargs = {}
+    mapper.set_scalars(mesh['labels'], 'labels', categories=True, scalar_bar_args=sargs)
+    assert sargs['fmt'] == '%g'
+    lut = mapper.lookup_table
+    assert lut.n_values == 4096
+    assert mapper.scalar_range == pytest.approx((-0.015, 0.815))
+    colors = [lut.map_value(value)[:3] for value in (0.1, 0.33, 0.7)]
+    assert len(set(colors)) == 3
+    assert lut.map_value(0.2)[:3] == colors[0]
+    assert lut.map_value(0.5)[:3] == colors[1]
+
+
+def test_set_scalars_categories_thins_labels():
+    mesh = pv.ImageData(dimensions=(31, 2, 2))
+    mesh['labels'] = np.arange(30)
+    mapper = DataSetMapper(mesh)
+    sargs = {}
+    mapper.set_scalars(mesh['labels'], 'labels', categories=True, scalar_bar_args=sargs)
+    assert len(np.unique(mapper.lookup_table.values, axis=0)) == 30
+    assert sargs['tick_locations'] == [float(v) for v in range(0, 30, 3)]
+
+
 def test_mapper_pipeline_output_active_scalars(sphere):
     """Verify the mapper's pipeline produces the correct active scalars."""
     sphere['data_a'] = sphere.points[:, 0]

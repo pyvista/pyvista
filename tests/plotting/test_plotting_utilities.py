@@ -216,22 +216,20 @@ def test_reduce_component_scalars_invalid(component, error_type, match):
         reduce_component_scalars(scalars, 'vec', component)
 
 
-def test_reduce_component_scalars_norm_path():
-    """``component=None`` reduces via ``np.linalg.norm`` and synthesizes
-    the ``-normed`` derived name."""
-    vec = np.array([[3.0, 4.0, 0.0], [0.0, 0.0, 5.0]], dtype=np.float32)
-    reduced, name = reduce_component_scalars(vec, 'u', None)
-    assert name == 'u-normed'
-    np.testing.assert_allclose(reduced, [5.0, 5.0])
-
-
-def test_reduce_component_scalars_component_int():
-    """Picking an integer ``component`` extracts the column and
-    synthesizes the ``-<component>`` derived name."""
-    vec = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], dtype=np.float32)
-    reduced, name = reduce_component_scalars(vec, 'u', 1)
-    assert name == 'u-1'
-    np.testing.assert_allclose(reduced, [2.0, 5.0])
+@pytest.mark.parametrize(
+    ('vectors', 'component', 'expected_name', 'expected'),
+    [
+        ([[3.0, 4.0, 0.0], [0.0, 0.0, 5.0]], None, 'u-normed', [5.0, 5.0]),
+        ([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], 1, 'u-1', [2.0, 5.0]),
+    ],
+    ids=['norm', 'component'],
+)
+def test_reduce_component_scalars(vectors, component, expected_name, expected):
+    """``component=None`` norms the vectors; an integer picks that column."""
+    vec = np.array(vectors, dtype=np.float32)
+    reduced, name = reduce_component_scalars(vec, 'u', component)
+    assert name == expected_name
+    np.testing.assert_allclose(reduced, expected)
 
 
 def test_resolve_scalars_field_returns_cell():
