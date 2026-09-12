@@ -608,6 +608,154 @@ def test_stacking_layouts_render(sphere, vertical: bool, layout):
     pl.show()
 
 
+BOXES = [{'outline': True}, {'fill': True, 'background_color': 'grey'}]
+BOX_IDS = ['outline', 'fill']
+FIT_TITLE = 'Elevation (m)'
+
+
+def _box_edges(bar, window_size):
+    """Return the pixel edges of the box a scalar bar draws, as left, right, bottom, top."""
+    window_width, window_height = window_size
+    x, y = bar.GetPosition()
+    return (
+        x * window_width,
+        (x + bar.GetWidth()) * window_width,
+        y * window_height,
+        (y + bar.GetHeight()) * window_height,
+    )
+
+
+def _fitted_bar(plotter, sphere, *, vertical, box, **kwargs):
+    """Add one scalar bar that fits its box to its text."""
+    return plotter.add_scalar_bar(
+        FIT_TITLE,
+        vertical=vertical,
+        fit_box=True,
+        title_font_size=24,
+        label_font_size=24,
+        n_labels=5,
+        mapper=pv.DataSetMapper(sphere),
+        **box,
+        **kwargs,
+    )
+
+
+@pytest.mark.parametrize('box', BOXES, ids=BOX_IDS)
+@pytest.mark.parametrize('vertical', [True, False], ids=['vertical', 'horizontal'])
+def test_fit_box_encloses_the_title(sphere, vertical: bool, box):
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = _fitted_bar(pl, sphere, vertical=vertical, box=box)
+
+    dpi = pl.render_window.GetDPI()
+    left, right, bottom, top = _box_edges(bar, pl.window_size)
+    title_width = _title_width(bar.GetTitleTextProperty(), FIT_TITLE, dpi)
+
+    if vertical:
+        # The title is centered on the box, so the box has to be at least as wide
+        assert right - left >= title_width
+        assert _label_reach(bar, dpi, pl.window_size[0]) <= right
+        # The title is seated back inside the box rather than lifted clear of it
+        assert bar.GetTitleTextProperty().GetLineOffset() > 0
+    else:
+        label_height = _label_size(bar, bar.GetLabelTextProperty(), dpi)[1]
+        title_height = _title_height(bar.GetTitleTextProperty(), FIT_TITLE, dpi)
+        ramp = bar.GetBarRatio() * (top - bottom)
+        assert top - bottom >= ramp + label_height + title_height
+
+
+@pytest.mark.parametrize('box', BOXES, ids=BOX_IDS)
+@pytest.mark.parametrize('vertical', [True, False], ids=['vertical', 'horizontal'])
+def test_fit_box_keeps_the_ramp(sphere, vertical: bool, box):
+    # The box grows around the ramp rather than taking its size from it
+    sphere[KEY] = sphere.points[:, 2]
+
+    def ramp_size(fit):
+        pl = pv.Plotter()
+        pl.add_mesh(sphere, show_scalar_bar=False)
+        bar = pl.add_scalar_bar(
+            FIT_TITLE,
+            vertical=vertical,
+            fit_box=fit,
+            title_font_size=24,
+            label_font_size=24,
+            n_labels=5,
+            mapper=pv.DataSetMapper(sphere),
+            **box,
+        )
+        window_width, window_height = pl.window_size
+        across = bar.GetWidth() * window_width if vertical else bar.GetHeight() * window_height
+        size = bar.GetBarRatio() * across
+        pl.close()
+        return size
+
+    assert ramp_size(True) == pytest.approx(ramp_size(False), abs=1.0)
+
+
+@pytest.mark.parametrize('box', BOXES, ids=BOX_IDS)
+def test_fit_box_keeps_the_title_pad(sphere, box):
+    # A fitted box grows to hold the padding, so the title is padded after all
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = _fitted_bar(pl, sphere, vertical=False, box=box, title_pad=0.5)
+
+    assert bar.GetTitleTextProperty().GetLineOffset() == -12
+
+
+@pytest.mark.parametrize('vertical', [True, False], ids=['vertical', 'horizontal'])
+def test_fit_box_without_a_box(sphere, vertical: bool):
+    # There is nothing to fit when no box is drawn
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    plain = pl.add_scalar_bar(FIT_TITLE, vertical=vertical, mapper=pv.DataSetMapper(sphere))
+    size = (plain.GetWidth(), plain.GetHeight(), plain.GetBarRatio())
+    pl.close()
+
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    fitted = pl.add_scalar_bar(
+        FIT_TITLE, vertical=vertical, fit_box=True, mapper=pv.DataSetMapper(sphere)
+    )
+
+    assert (fitted.GetWidth(), fitted.GetHeight(), fitted.GetBarRatio()) == size
+
+
+def test_fit_box_from_theme(sphere):
+    sphere[KEY] = sphere.points[:, 2]
+    pv.global_theme.colorbar_vertical.fit_box = True
+
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = pl.add_scalar_bar(
+        FIT_TITLE,
+        vertical=True,
+        outline=True,
+        title_font_size=24,
+        label_font_size=24,
+        mapper=pv.DataSetMapper(sphere),
+    )
+
+    assert bar.GetTitleTextProperty().GetLineOffset() > 0
+
+
+@pytest.mark.parametrize('box', BOXES, ids=BOX_IDS)
+@pytest.mark.parametrize('vertical', [True, False], ids=['vertical', 'horizontal'])
+@pytest.mark.usefixtures('verify_image_cache')
+def test_fit_box_render(sphere, vertical: bool, box):
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    _fitted_bar(pl, sphere, vertical=vertical, box=box)
+    pl.show()
+
+
 @pytest.mark.needs_vtk_version(9, 4, 0, reason='ForceVerticalTitle was added in VTK 9.4.0')
 @pytest.mark.parametrize('title_pad', [0.0, 0.5, 1.0, 2.0])
 @pytest.mark.parametrize('font_size', [10, 14, 20, 28])

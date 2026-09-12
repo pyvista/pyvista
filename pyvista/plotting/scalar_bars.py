@@ -29,7 +29,11 @@ def _label_size(scalar_bar, text_property, dpi):
     """Return the size in pixels of the widest tick label a scalar bar draws."""
     fmt = scalar_bar.GetLabelFormat()
     widest, height = 0.0, 0.0
-    for value in scalar_bar.GetLookupTable().GetRange():
+    low, high = scalar_bar.GetLookupTable().GetRange()
+    # An interior tick can be wider than either end, so measure every one of them
+    ticks = max(int(scalar_bar.GetNumberOfLabels()), 2)
+    for step in range(ticks):
+        value = low + (high - low) * step / (ticks - 1)
         try:
             text = fmt % value
         except (TypeError, ValueError):
@@ -74,6 +78,42 @@ def _rotated_title_offset(bar_width, title_height, pad):
     # The offset moves the pen and grows the text bounds, so the title moves two pixels
     # per unit; the constant is measured across font sizes and bar widths
     return round((bar_width + title_height) / 2 - 2 + pad / 2)
+
+
+def _fitted_box(scalar_bar, *, vertical, title, label_text, pad, dpi, window):
+    """Return the box that encloses a scalar bar's text, and the settings that fill it.
+
+    The colour ramp keeps the size it was given; the box grows around it.  Returns the
+    box width and height as a fraction of the window, the bar ratio that holds the ramp
+    to its original size, and the line offset that seats the title inside the box.
+    """
+    window_width, window_height = window
+    text_pad = scalar_bar.GetTextPad()
+    label_width, label_height = _label_size(scalar_bar, label_text, dpi)
+    title_width = _title_width(scalar_bar.GetTitleTextProperty(), title, dpi)
+    title_height = _title_height(scalar_bar.GetTitleTextProperty(), title, dpi)
+    box_width = scalar_bar.GetWidth() * window_width
+    box_height = scalar_bar.GetHeight() * window_height
+
+    if vertical:
+        ramp = scalar_bar.GetBarRatio() * box_width
+        # The title is centered on the box and the labels are drawn past the ramp
+        box_width = max(box_width, title_width + 2 * text_pad, ramp + label_width + 2 * text_pad)
+        bar_ratio = ramp / box_width
+        # A vertical title is lifted clear of the box by three quarters of a label; the
+        # offset that seats it again grows the title box at the ramp's expense, so the
+        # box gains that much height and any further offset becomes the padding
+        offset = round(0.75 * label_height) + pad
+        box_height += offset + text_pad
+    else:
+        ramp = scalar_bar.GetBarRatio() * box_height
+        # A horizontal title is stacked above the ramp and the labels, measured from the
+        # bottom of the box, so the box only has to be tall enough to cover the stack
+        box_height = max(box_height, ramp + label_height + title_height + pad + 2 * text_pad)
+        bar_ratio = ramp / box_height
+        offset = -pad
+
+    return box_width / window_width, box_height / window_height, bar_ratio, offset
 
 
 class ScalarBars(_NoNewAttrMixin):
@@ -374,6 +414,7 @@ class ScalarBars(_NoNewAttrMixin):
         vertical=None,
         stacking_gap: float | None = None,
         rotate_title: bool | None = None,
+        fit_box: bool | None = None,
         interactive=None,
         fmt=None,
         use_opacity: bool = True,
@@ -526,6 +567,17 @@ class ScalarBars(_NoNewAttrMixin):
             :attr:`pyvista.plotting.themes._VerticalColorbarConfig.rotate_title`.
             Applies to vertical bars only.  Requires VTK 9.4.0 or newer, and has
             no effect when the font size is constrained.
+
+            .. versionadded:: 0.50
+
+        fit_box : bool, optional
+            Grow the box drawn by ``fill`` or ``outline`` until it encloses the
+            title and the tick labels, keeping the color ramp the size it was
+            given.  Defaults to ``None`` and is taken from
+            :attr:`pyvista.plotting.themes._ColorbarConfig.fit_box`.  The label
+            at either end of the ramp is centered on that end, so part of it
+            still falls outside the box.  Has no effect without a box, when the
+            font size is constrained, or when the title is rotated.
 
             .. versionadded:: 0.50
 
@@ -702,6 +754,38 @@ class ScalarBars(_NoNewAttrMixin):
         ...     )
         >>> pl.show()
 
+        Fit the box drawn around a bar to the text it draws.  Without it the box is
+        sized from the ramp alone, so the title and labels fall outside it.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(sphere, show_scalar_bar=False)
+        >>> _ = pl.add_scalar_bar(
+        ...     'Elevation (m)',
+        ...     vertical=True,
+        ...     outline=True,
+        ...     fit_box=True,
+        ...     title_font_size=30,
+        ...     label_font_size=30,
+        ...     mapper=pl.mapper,
+        ... )
+        >>> pl.show()
+
+        A horizontal bar keeps its title inside the box the same way, and the box
+        grows to hold the padding the title is given.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(sphere, show_scalar_bar=False)
+        >>> _ = pl.add_scalar_bar(
+        ...     'Elevation (m)',
+        ...     vertical=False,
+        ...     outline=True,
+        ...     fit_box=True,
+        ...     title_font_size=30,
+        ...     label_font_size=30,
+        ...     mapper=pl.mapper,
+        ... )
+        >>> pl.show()
+
         """
         if theme is None:
             theme = pv.global_theme
@@ -747,6 +831,9 @@ class ScalarBars(_NoNewAttrMixin):
             stacking_gap = config.stacking_gap
         if stacking_gap is not None:
             _validation.check_greater_than(stacking_gap, 0, strict=False, name='stacking_gap')
+
+        if fit_box is None:
+            fit_box = config.fit_box
 
         if rotate_title is None:
             rotate_title = vertical and theme.colorbar_vertical.rotate_title
@@ -976,16 +1063,37 @@ class ScalarBars(_NoNewAttrMixin):
 
         draws_box = scalar_bar.GetDrawFrame() or scalar_bar.GetDrawBackground()
         unconstrained = bool(scalar_bar.GetUnconstrainedFontSize())
-        pad = round(title_pad * title_text.GetFontSize()) if title_pad and not draws_box else 0
+        fits_box = bool(fit_box) and draws_box
+        # A box is sized without the padding unless it is fitted around the title
+        keeps_pad = fits_box or not draws_box
+        pad = round(title_pad * title_text.GetFontSize()) if title_pad and keeps_pad else 0
         window_width, window_height = self._plotter.window_size
-        bar_width = width * window_width
         dpi = self._plotter.render_window.GetDPI()
 
         if unconstrained:
             if rotate_title:
                 scalar_bar.SetForceVerticalTitle(True)
                 title_height = _title_height(title_text, display_title, dpi)
+                bar_width = width * window_width
                 title_text.SetLineOffset(-_rotated_title_offset(bar_width, title_height, pad))
+            elif fits_box:
+                width, height, bar_ratio, offset = _fitted_box(
+                    scalar_bar,
+                    vertical=vertical,
+                    title=display_title,
+                    label_text=label_text,
+                    pad=pad,
+                    dpi=dpi,
+                    window=(window_width, window_height),
+                )
+                # A vertical bar is anchored at its right edge, where its labels are,
+                # so the box grows away from the window edge rather than through it
+                position_x -= width - scalar_bar.GetWidth() if vertical else 0
+                scalar_bar.SetWidth(width)
+                scalar_bar.SetHeight(height)
+                scalar_bar.SetBarRatio(bar_ratio)
+                scalar_bar.SetPosition(position_x, scalar_bar.GetPosition()[1])
+                title_text.SetLineOffset(offset)
             elif pad:
                 title_text.SetLineOffset(-pad)
 
