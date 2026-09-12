@@ -137,18 +137,22 @@ class ScalarBars(_NoNewAttrMixin):
                 + _label_size(scalar_bar, label_text, dpi)[0]
                 - bar_width / 2
             )
-            reach = neighbor_bar / 2
-            if _turned_title(neighbor):
-                # The neighbor turned its title into the gap these labels use
-                reach += pad + _bar_title_height(neighbor, dpi)
-            # A title is centered on its bar, so each bar claims half the space it needs
-            titles = sum(
-                0
-                if _turned_title(bar)
-                else _title_width(bar.GetTitleTextProperty(), bar.GetTitle(), dpi) / 2
-                for bar in (scalar_bar, neighbor)
+            this_title = _title_width(
+                scalar_bar.GetTitleTextProperty(), scalar_bar.GetTitle(), dpi
             )
-            gap = max(labels + reach, titles) + 0.2 * bar_width
+            neighbor_title = _title_width(
+                neighbor.GetTitleTextProperty(), neighbor.GetTitle(), dpi
+            )
+            # A title is centered on its bar, so each bar claims half of it
+            reach = max(labels, 0 if _turned_title(scalar_bar) else this_title / 2)
+            if scalar_bar.GetDrawFrame() or scalar_bar.GetDrawBackground():
+                reach = max(reach, bar_width / 2)
+            if _turned_title(neighbor):
+                # The neighbor turned its title into the gap this text uses
+                neighbor_reach = neighbor_bar / 2 + pad + _bar_title_height(neighbor, dpi)
+            else:
+                neighbor_reach = max(neighbor_bar / 2, neighbor_title / 2)
+            gap = reach + neighbor_reach + 0.2 * bar_width
         return (center - gap - bar_width / 2) / window_width
 
     def _stacked_above(self, neighbor, *, gap, dpi):
@@ -158,13 +162,15 @@ class ScalarBars(_NoNewAttrMixin):
             bar_height = neighbor.GetHeight() * window_height
             # A horizontal bar draws its title and labels above its ramp, so it is the
             # neighbor below whose annotations reach up into the gap
-            gap = (
+            stack = (
                 neighbor.GetBarRatio() * bar_height
                 + _label_size(neighbor, neighbor.GetLabelTextProperty(), dpi)[1]
                 + _title_separation(neighbor)
                 + _bar_title_height(neighbor, dpi)
-                + 0.2 * bar_height
             )
+            if neighbor.GetDrawFrame() or neighbor.GetDrawBackground():
+                stack = max(stack, bar_height)
+            gap = stack + 0.2 * bar_height
         return neighbor.GetPosition()[1] + gap / window_height
 
     def _remove_mapper_from_plotter(

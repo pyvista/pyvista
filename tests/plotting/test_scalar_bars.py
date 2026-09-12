@@ -475,27 +475,32 @@ def test_stacked_vertical_bars_clear_their_titles(sphere):
     assert min(pitches) == pytest.approx(widest + gap)
 
 
-def test_stacked_vertical_bars_clear_an_uneven_neighbor(sphere):
-    # A title claims half the gap on each side, so a long one clears its short neighbors
+@pytest.mark.parametrize(
+    ('titles', 'kwargs'),
+    [
+        (['Short', 'A very much longer title', 'A bit long'], {}),
+        (['Short', 'Super duper long title'], {'width': 0.2}),
+    ],
+    ids=['uneven_titles', 'wide_bars'],
+)
+def test_stacked_vertical_bars_clear_an_uneven_neighbor(sphere, titles, kwargs):
+    # A title is centered on its bar, so it must stop short of the neighboring ramp
     sphere[KEY] = sphere.points[:, 2]
     window_size = [900, 400]
-    titles = ['Short', 'A very much longer title', 'A bit long']
 
     pl = pv.Plotter(window_size=window_size)
     pl.add_mesh(sphere, show_scalar_bar=False)
     bars = [
-        pl.add_scalar_bar(title, vertical=True, title_font_size=18, mapper=pl.mapper)
+        pl.add_scalar_bar(title, vertical=True, title_font_size=18, mapper=pl.mapper, **kwargs)
         for title in titles
     ]
 
     dpi = pl.render_window.GetDPI()
-    widths = [_title_width(b.GetTitleTextProperty(), b.GetTitle(), dpi) for b in bars]
-    centers = [(b.GetPosition()[0] + b.GetWidth() / 2) * window_size[0] for b in bars]
-    gap = 0.2 * pl.theme.colorbar_vertical.width * window_size[0]
-    for (left, right), (left_width, right_width) in zip(
-        itertools.pairwise(centers), itertools.pairwise(widths), strict=True
-    ):
-        assert left - right == pytest.approx(gap + (left_width + right_width) / 2)
+    for bar, neighbor in _stacked_pairs(bars):
+        title = _title_width(bar.GetTitleTextProperty(), bar.GetTitle(), dpi)
+        center = (bar.GetPosition()[0] + bar.GetWidth() / 2) * window_size[0]
+        assert center + title / 2 < neighbor.GetPosition()[0] * window_size[0]
+    pl.close()
 
 
 def _label_reach(bar, dpi, window_width):
