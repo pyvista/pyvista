@@ -5,9 +5,12 @@ from __future__ import annotations
 import contextlib
 import weakref
 
+import pyvista_validation as _validation
+
 import pyvista as pv
 from pyvista import MAX_N_COLOR_BARS
 from pyvista import _vtk
+from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from .colors import Color
@@ -240,6 +243,7 @@ class ScalarBars(_NoNewAttrMixin):
         cmap=None,
         clim=None,
         n_labels=5,
+        tick_locations=None,
         italic: bool = False,
         bold: bool = False,
         title_font_size=None,
@@ -303,6 +307,13 @@ class ScalarBars(_NoNewAttrMixin):
 
         n_labels : int, default: 5
             Number of labels to use for the scalar bar.
+
+        tick_locations : sequence[float], optional
+            Scalar values to label, instead of ``n_labels`` evenly spaced values.
+            The label text comes from ``fmt``. Values outside the scalar range
+            are not drawn.
+
+            .. versionadded:: 0.50
 
         italic : bool, default: False
             Italicises title and bar labels.
@@ -611,6 +622,13 @@ class ScalarBars(_NoNewAttrMixin):
 
         if n_labels < 1:
             scalar_bar.SetDrawTickLabels(False)
+        elif tick_locations is not None:
+            labels = _validation.validate_arrayN(
+                tick_locations, dtype_out=float, name='tick_locations'
+            )
+            scalar_bar.SetDrawTickLabels(True)
+            scalar_bar.SetCustomLabels(convert_array(labels))
+            scalar_bar.UseCustomLabelsOn()
         else:
             scalar_bar.SetDrawTickLabels(True)
             scalar_bar.SetNumberOfLabels(n_labels)

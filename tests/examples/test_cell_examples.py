@@ -95,38 +95,27 @@ def test_cell_name(cell_example):
 
 
 @parametrize('cell_example', cell_example_functions)
-def test_cell_vtk_class(cell_example):
-    cell = cell_example().GetCell(0)
-    celltype = CellType(cell.GetCellType())
-    assert celltype.vtk_class is type(cell)
-
-
-@parametrize('cell_example', cell_example_functions)
-def test_cell_dimension(cell_example):
-    cell = next(cell_example().cell)
+def test_celltype_matches_cell(cell_example):
+    """The enum member reports what a concrete cell of that type reports."""
+    mesh = cell_example()
+    cell = next(mesh.cell)
     celltype = CellType(cell.type)
+    assert celltype.vtk_class is type(mesh.GetCell(0))
     assert celltype.dimension == cell.dimension
-
-
-@parametrize('cell_example', cell_example_functions)
-def test_cell_is_linear(cell_example):
-    cell = next(cell_example().cell)
-    celltype = CellType(cell.type)
     assert celltype.is_linear == cell.is_linear
-
-
-@parametrize('cell_example', cell_example_functions)
-def test_cell_is_composite(cell_example):
-    cell = next(cell_example().cell)
-    celltype = CellType(cell.type)
     assert celltype.is_composite != cell.IsPrimaryCell()
 
 
-@parametrize('cell_example', cell_example_functions)
-def test_cell_n_points(cell_example):
-    cell = next(cell_example().cell)
-    celltype = CellType(cell.type)
-    if (name := cell_example.__name__).startswith(('Bezier', 'Lagrange')) or name in (
+_HIGHER_ORDER = tuple(
+    func.__name__
+    for func in cell_example_functions
+    if func.__name__.startswith(('Bezier', 'Lagrange'))
+)
+
+# Per attribute, the cell examples whose count needs a concrete instance.
+NEEDS_AN_INSTANCE = {
+    'n_points': (
+        *_HIGHER_ORDER,
         'PolyLine',
         'PolyVertex',
         'Polygon',
@@ -134,51 +123,35 @@ def test_cell_n_points(cell_example):
         'QuadraticPolygon',
         'TriangleStrip',
         'ConvexPointSet',
-    ):
-        match = (
-            f'Cannot determine number of points for {celltype.name!r} '
-            f'without a concrete cell instance.'
-        )
-        with pytest.raises(ValueError, match=match):
-            _ = celltype.n_points
-    else:
-        assert celltype.n_points == cell.n_points
-
-
-@parametrize('cell_example', cell_example_functions)
-def test_cell_n_edges(cell_example):
-    cell = next(cell_example().cell)
-    celltype = CellType(cell.type)
-    if cell_example.__name__ in (
+    ),
+    'n_edges': (
         'Polygon',
         'Polyhedron',
         'QuadraticPolygon',
         'TriangleStrip',
         'ConvexPointSet',
-    ):
-        match = (
-            f'Cannot determine number of edges for {celltype.name!r} '
-            f'without a concrete cell instance.'
-        )
-        with pytest.raises(ValueError, match=match):
-            _ = celltype.n_edges
-    else:
-        assert celltype.n_edges == cell.n_edges
+    ),
+    'n_faces': ('Polyhedron', 'ConvexPointSet'),
+}
 
 
 @parametrize('cell_example', cell_example_functions)
-def test_cell_n_faces(cell_example):
+@parametrize('attribute', list(NEEDS_AN_INSTANCE))
+def test_celltype_counts(cell_example, attribute):
+    """The enum member counts points, edges or faces, or says it cannot."""
     cell = next(cell_example().cell)
     celltype = CellType(cell.type)
-    if cell_example.__name__ in ('Polyhedron', 'ConvexPointSet'):
+
+    if cell_example.__name__ in NEEDS_AN_INSTANCE[attribute]:
+        noun = attribute.removeprefix('n_')
         match = (
-            f'Cannot determine number of faces for {celltype.name!r} '
+            f'Cannot determine number of {noun} for {celltype.name!r} '
             f'without a concrete cell instance.'
         )
         with pytest.raises(ValueError, match=match):
-            _ = celltype.n_faces
+            getattr(celltype, attribute)
     else:
-        assert celltype.n_faces == cell.n_faces
+        assert getattr(celltype, attribute) == getattr(cell, attribute)
 
 
 def test_abstract_celltype():
