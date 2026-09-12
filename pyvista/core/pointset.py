@@ -405,16 +405,6 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
             self.cast_to_polydata(deep=False).threshold_percent(*args, **kwargs).cast_to_pointset()
         )
 
-    @_wraps(DataSetFilters.remove_nan_cells)
-    def remove_nan_cells(self, *args, **kwargs) -> PointSet:  # type: ignore[override]  # numpydoc ignore=RT01,PR01
-        """Cast to PolyData and remove the NaN points.
-
-        Need this because cell-wise operations fail for PointSets.
-        """
-        return (
-            self.cast_to_polydata(deep=False).remove_nan_cells(*args, **kwargs).cast_to_pointset()
-        )
-
     @_wraps(DataSetFilters.partition)
     def partition(self, *args, **kwargs):  # numpydoc ignore=RT01,PR01
         """Cast to PolyData and partition.

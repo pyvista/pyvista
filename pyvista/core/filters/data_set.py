@@ -1414,6 +1414,19 @@ class DataSetFilters(DataObjectFilters):
         False
 
         """
+        # Cell-wise operations fail for a point cloud, so use its vertex cells
+        if isinstance(self, pv.PointSet):
+            return (
+                self.cast_to_polydata(deep=False)
+                .remove_nan_cells(
+                    scalars=scalars,
+                    preference=preference,
+                    component_mode=component_mode,
+                    component=component,
+                    progress_bar=progress_bar,
+                )
+                .cast_to_pointset()
+            )
         scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
         arr = get_array(self, scalars_, preference=preference, err=False)
         if arr is None:
