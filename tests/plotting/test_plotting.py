@@ -5310,10 +5310,9 @@ def test_add_volume_categories_all_nan(no_images_to_verify):  # noqa: ARG001
     grid = pv.ImageData(dimensions=(5, 2, 2))
     grid.point_data['labels'] = np.full(20, np.nan)
     pl = pv.Plotter()
-    sargs = {}
     with pytest.warns(RuntimeWarning, match='All-NaN axis encountered'):
-        pl.add_volume(grid, scalars='labels', categories=True, scalar_bar_args=sargs)
-    assert 'tick_locations' not in sargs
+        pl.add_volume(grid, scalars='labels', categories=True)
+    assert not pl.scalar_bars['labels'].GetUseCustomLabels()
     pl.close()
 
 
