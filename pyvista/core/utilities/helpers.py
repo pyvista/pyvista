@@ -432,33 +432,16 @@ def _validate_plane_origin_and_normal(  # noqa: PLR0917
     return origin_, normal_
 
 
+# fmt: off
+# ruff: disable[E501]
 @overload
-def axis_rotation(
-    points: NumpyArray[float],
-    angle: float,
-    *,
-    inplace: Literal[False] = False,
-    deg: bool = ...,
-    axis: str = ...,
-) -> NumpyArray[float]: ...
+def axis_rotation(points: NumpyArray[float], angle: float, *, inplace: Literal[False] = False, deg: bool = ..., axis: str = ...) -> NumpyArray[float]: ...
 @overload
-def axis_rotation(
-    points: NumpyArray[float],
-    angle: float,
-    *,
-    inplace: Literal[True],
-    deg: bool = ...,
-    axis: str = ...,
-) -> None: ...
+def axis_rotation(points: NumpyArray[float], angle: float, *, inplace: Literal[True], deg: bool = ..., axis: str = ...) -> None: ...
 @overload
-def axis_rotation(
-    points: NumpyArray[float],
-    angle: float,
-    *,
-    inplace: bool = ...,
-    deg: bool = ...,
-    axis: str = ...,
-) -> NumpyArray[float] | None: ...
+def axis_rotation(points: NumpyArray[float], angle: float, *, inplace: bool = ..., deg: bool = ..., axis: str = ...) -> NumpyArray[float] | None: ...
+# ruff: enable[E501]
+# fmt: on
 def axis_rotation(
     points: NumpyArray[float],
     angle: float,
