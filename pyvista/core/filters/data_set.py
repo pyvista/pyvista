@@ -1977,7 +1977,7 @@ class DataSetFilters(DataObjectFilters):
         _update_alg(alg, progress_bar=progress_bar, message='Texturing Map to Plane')
         output = _get_output(alg)
         if not inplace:
-            return output
+            return _as_input_class(output, self)
         texture_coordinates = output.GetPointData().GetTCoords()
         texture_coordinates.SetName(name)
         otc = self.GetPointData().GetTCoords()
@@ -2048,7 +2048,7 @@ class DataSetFilters(DataObjectFilters):
         _update_alg(alg, progress_bar=progress_bar, message='Mapping texture to sphere')
         output = _get_output(alg)
         if not inplace:
-            return output
+            return _as_input_class(output, self)
         texture_coordinates = output.GetPointData().GetTCoords()
         texture_coordinates.SetName(name)
         otc = self.GetPointData().GetTCoords()
@@ -3636,7 +3636,7 @@ class DataSetFilters(DataObjectFilters):
         interpolator.SetPassPointArrays(pass_point_data)
         interpolator.SetPassCellArrays(pass_cell_data)
         _update_alg(interpolator, progress_bar=progress_bar, message='Interpolating')
-        return _get_output(interpolator)
+        return _as_input_class(_get_output(interpolator), self)
 
     # fmt: off
     # ruff: disable[E501]
@@ -6760,7 +6760,7 @@ class DataSetFilters(DataObjectFilters):
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars_)
         alg.SetInputData(self)
         _update_alg(alg, progress_bar=progress_bar, message='Computing Derivative')
-        return _get_output(alg)
+        return _as_input_class(_get_output(alg), self)
 
     # fmt: off
     # ruff: disable[E501]
@@ -7679,7 +7679,7 @@ class DataSetFilters(DataObjectFilters):
         for cell_type in valid_cell_types:
             alg.AddCellType(int(cell_type))
         _update_alg(alg, progress_bar=progress_bar, message='Extracting cell types')
-        return _get_output(alg)
+        return _as_input_class(_get_output(alg), self)
 
     def sort_labels(  # type: ignore[misc]
         self: _DataSetType,
@@ -7900,7 +7900,7 @@ class DataSetFilters(DataObjectFilters):
         if inplace:
             self.copy_from(result, deep=False)
             return self
-        return result
+        return _as_input_class(result, self)
 
     # fmt: off
     # ruff: disable[E501]
@@ -9320,6 +9320,15 @@ def _validate_extraction_ids(
                 raise IndexError(msg)
             mask[ids] = True
     return np.invert(mask) if invert else mask
+
+
+def _as_input_class(output: DataSet, input_mesh: _DataSetType) -> _DataSetType:
+    """Return the output as an instance of the input mesh's class."""
+    if isinstance(output, type(input_mesh)):
+        return output
+    restored = type(input_mesh)()
+    restored.copy_from(output, deep=False)
+    return restored
 
 
 def _apply_inplace(mesh: DataSet, output: _DataSetType, *, inplace: bool) -> _DataSetType:
