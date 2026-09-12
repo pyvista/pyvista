@@ -298,6 +298,13 @@ def test_delaunay_3d(pointset):
     assert out.n_cells > 10
 
 
+def test_reconstruct_surface():
+    cloud = pv.PointSet(pv.Sphere().points)
+    surf = cloud.reconstruct_surface()
+    assert isinstance(surf, pv.PolyData)
+    assert surf.is_all_triangles
+
+
 def test_raise_unsupported(pointset):
     with pytest.raises(PointSetNotSupported):
         pointset.contour()

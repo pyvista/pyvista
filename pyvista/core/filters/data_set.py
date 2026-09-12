@@ -8439,6 +8439,11 @@ class DataSetFilters(DataObjectFilters):
         .. versionadded:: 0.45.0
 
         .. note::
+            The input must be a surface with faces or strips. Generate a surface from a
+            point cloud with :meth:`~pyvista.PolyDataFilters.reconstruct_surface` before
+            voxelizing it.
+
+        .. note::
             For best results, ensure the input surface is a closed surface. The
             surface is considered closed if it has zero :attr:`~pyvista.PolyData.n_open_edges`.
 
@@ -8881,6 +8886,12 @@ class DataSetFilters(DataObjectFilters):
 
         .. note::
 
+            The input must be a surface with faces or strips. Generate a surface from a
+            point cloud with :meth:`~pyvista.PolyDataFilters.reconstruct_surface` before
+            voxelizing it.
+
+        .. note::
+
             This method is a wrapper around :meth:`voxelize_binary_mask`. See that
             method for additional information.
 
@@ -9047,6 +9058,12 @@ class DataSetFilters(DataObjectFilters):
         used by default to estimate the spacing.
 
         .. versionadded:: 0.46
+
+        .. note::
+
+            The input must be a surface with faces or strips. Generate a surface from a
+            point cloud with :meth:`~pyvista.PolyDataFilters.reconstruct_surface` before
+            voxelizing it.
 
         .. note::
 

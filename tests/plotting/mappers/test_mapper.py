@@ -207,6 +207,7 @@ def test_set_scalars_categories_keeps_clim():
     assert mapper.scalar_range == (0.0, 100.0)
     colors = {mapper.lookup_table.map_value(value)[:3] for value in (0, 5, 10)}
     assert len(colors) == 3
+    assert mapper.lookup_table.map_value(20) == mapper.lookup_table.nan_color.float_rgba
 
 
 def test_set_scalars_categories_single_value():

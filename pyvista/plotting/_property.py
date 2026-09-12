@@ -388,7 +388,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         value = RepresentationType.from_any(value)
         self.SetRepresentation(value.value)
         if value == RepresentationType.WIREFRAME and not self._color_set:
-            self.color = self._theme.outline_color  # type: ignore[union-attr] # type: ignore[attr-defined]
+            self.color = self._theme.outline_color  # type: ignore[union-attr]
 
     @property
     def color(self) -> Color:  # numpydoc ignore=RT01

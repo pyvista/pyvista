@@ -419,6 +419,11 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
         """Cast to PolyData and run delaunay_3d."""
         return self.cast_to_polydata(deep=False).delaunay_3d(*args, **kwargs)
 
+    @_wraps(PolyDataFilters.reconstruct_surface)
+    def reconstruct_surface(self, *args, **kwargs) -> PolyData:  # numpydoc ignore=RT01,PR01
+        """Cast to PolyData and reconstruct the surface."""
+        return self.cast_to_polydata(deep=False).reconstruct_surface(*args, **kwargs)
+
     @property
     def area(self) -> float:  # numpydoc ignore=RT01
         """Return 0.0 since a PointSet has no area."""
