@@ -37,7 +37,7 @@ def _padded_bins(
     mesh : pyvista.DataSet
         Mesh to voxelize.
 
-    density : array_like[float]
+    density : NumpyArray[float] | Sequence[float]
         A list of densities along x,y,z directions.
 
     Returns
@@ -79,7 +79,7 @@ def voxelize(
     mesh : pyvista.DataSet
         Mesh to voxelize.
 
-    density : float | array_like[float]
+    density : float | VectorLike[float]
         The uniform size of the voxels when single float passed.
         A list of densities along x,y,z directions.
         Defaults to 1/100 of the mesh length.
@@ -289,7 +289,7 @@ def voxelize_volume(
     mesh : pyvista.DataSet
         Mesh to voxelize.
 
-    density : float | array_like[float]
+    density : float | VectorLike[float]
         The uniform size of the voxels when single float passed.
         Nonuniform voxel size if a list of values are passed along x,y,z directions.
         Defaults to 1/100 of the mesh length.
@@ -461,11 +461,11 @@ def grid_from_sph_coords(
 
     Parameters
     ----------
-    theta : array_like[float]
+    theta : VectorLike[float]
         Azimuthal angle in degrees ``[0, 360]``.
-    phi : array_like[float]
+    phi : VectorLike[float]
         Polar (zenith) angle in degrees ``[0, 180]``.
-    r : array_like[float]
+    r : VectorLike[float]
         Distance (radius) from the point of origin.
 
     Returns
@@ -507,17 +507,17 @@ def transform_vectors_sph_to_cart(  # numpydoc ignore=RT02
 
     Parameters
     ----------
-    theta : array_like[float]
+    theta : VectorLike[float]
         Azimuthal angle in degrees ``[0, 360]`` of shape ``(M,)``.
-    phi : array_like[float]
+    phi : VectorLike[float]
         Polar (zenith) angle in degrees ``[0, 180]`` of shape ``(N,)``.
-    r : array_like[float]
+    r : VectorLike[float]
         Distance (radius) from the point of origin of shape ``(P,)``.
-    u : array_like[float]
+    u : ArrayLike[float]
         X-component of the vector of shape ``(M, N, P)`` with length-one axes dropped.
-    v : array_like[float]
+    v : ArrayLike[float]
         Y-component of the vector of shape ``(M, N, P)`` with length-one axes dropped.
-    w : array_like[float]
+    w : ArrayLike[float]
         Z-component of the vector of shape ``(M, N, P)`` with length-one axes dropped.
 
     Returns
@@ -585,14 +585,14 @@ def spherical_to_cartesian(
 
     Parameters
     ----------
-    r : array_like[float]
+    r : ArrayLike[float]
         Radial distance.
 
-    phi : array_like[float]
+    phi : ArrayLike[float]
         Angle (radians) with respect to the polar axis. Also known
         as polar angle.
 
-    theta : array_like[float]
+    theta : ArrayLike[float]
         Angle (radians) of rotation from the initial meridian plane.
         Also known as azimuthal angle.
 
