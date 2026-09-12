@@ -213,7 +213,7 @@ class DataSetFilters(DataObjectFilters):
         check_mean_distance: bool = True,
         start_by_matching_centroids: bool = True,
         return_matrix: bool = False,
-    ):
+    ) -> _DataSetType | tuple[_DataSetType, NumpyArray[float]]:
         """Align a dataset to another.
 
         Uses the iterative closest point algorithm to align the points of the
@@ -331,7 +331,7 @@ class DataSetFilters(DataObjectFilters):
         cell_centers: bool = False,
         merge_points: bool = False,
         return_matrix: bool = False,
-    ):
+    ) -> _DataSetType | tuple[_DataSetType, NumpyArray[float]]:
         """Align a dataset to the x-y-z axes.
 
         This filter aligns a mesh's :func:`~pyvista.principal_axes` to the world x-y-z
@@ -2975,7 +2975,7 @@ class DataSetFilters(DataObjectFilters):
         inplace: bool = False,
         progress_bar: bool = False,
         **kwargs,
-    ):
+    ) -> PolyData | StructuredGrid | _DataSetType:
         """Warp the dataset's points by a point data scalars array's values.
 
         This modifies point coordinates by moving points along point
@@ -3093,7 +3093,7 @@ class DataSetFilters(DataObjectFilters):
         factor: float = 1.0,
         inplace: bool = False,
         progress_bar: bool = False,
-    ):
+    ) -> PolyData | StructuredGrid | _DataSetType:
         """Warp the dataset's points by a point data vectors array's values.
 
         This modifies point coordinates by moving points along point
@@ -3673,7 +3673,7 @@ class DataSetFilters(DataObjectFilters):
         pointb: VectorLike[float] | None = None,
         progress_bar: bool = False,
         **kwargs,
-    ):
+    ) -> PolyData | tuple[PolyData, PolyData]:
         """Integrate a vector field to generate streamlines.
 
         The default behavior uses a sphere as the source - set its
@@ -3766,7 +3766,7 @@ class DataSetFilters(DataObjectFilters):
             alg = point_source
 
         alg.Update()
-        input_source = cast('pv.DataSet', wrap(alg.GetOutput()))
+        input_source = wrap(alg.GetOutput())
 
         output = self.streamlines_from_source(
             input_source,
@@ -5024,7 +5024,7 @@ class DataSetFilters(DataObjectFilters):
         pass_point_ids: bool = True,
         progress_bar: bool = False,
         invert: bool = False,
-    ):
+    ) -> PointSet | UnstructuredGrid:
         r"""Return a subset of the grid (with cells) that contains any of the given point indices.
 
         The output is an :class:`~pyvista.UnstructuredGrid`. Use :meth:`remove_points`
@@ -5131,8 +5131,9 @@ class DataSetFilters(DataObjectFilters):
             output.point_data.pop('vtkOriginalPointIds', None)
         if not pass_cell_ids:
             output.cell_data.pop('vtkOriginalCellIds', None)
-        return _finish_extraction(
-            output, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids
+        return cast(
+            'PointSet | UnstructuredGrid',
+            _finish_extraction(output, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids),
         )
 
     # fmt: off
@@ -5152,7 +5153,7 @@ class DataSetFilters(DataObjectFilters):
         pass_point_ids: bool = True,
         pass_cell_ids: bool = True,
         progress_bar: bool = False,
-    ):
+    ) -> PolyData | UnstructuredGrid:
         r"""Remove cells from a mesh.
 
         Only points used by a remaining cell are kept. The output is
@@ -5238,7 +5239,7 @@ class DataSetFilters(DataObjectFilters):
         output = _cast_extraction(
             output, self, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids
         )
-        return _apply_inplace(self, output, inplace=inplace)
+        return cast('PolyData | UnstructuredGrid', _apply_inplace(self, output, inplace=inplace))
 
     # fmt: off
     # ruff: disable[E501]
@@ -5260,7 +5261,7 @@ class DataSetFilters(DataObjectFilters):
         pass_cell_ids: bool = True,
         inplace: bool = False,
         progress_bar: bool = False,
-    ):
+    ) -> PolyData | PointSet | UnstructuredGrid:
         r"""Remove points and their cells from a mesh.
 
         Cells are removed according to ``mode``, and only points used by a remaining
@@ -5361,7 +5362,10 @@ class DataSetFilters(DataObjectFilters):
         ):
             # Every cell survived, so the input was passed through with its unused points
             output = output.remove_unused_points()
-        return _apply_inplace(self, output, inplace=inplace)
+        return cast(
+            'PolyData | PointSet | UnstructuredGrid',
+            _apply_inplace(self, output, inplace=inplace),
+        )
 
     def split_values(  # type: ignore[misc]
         self: _DataSetType,
@@ -5569,7 +5573,7 @@ class DataSetFilters(DataObjectFilters):
         pass_point_ids: bool = True,
         pass_cell_ids: bool = True,
         progress_bar: bool = False,
-    ):
+    ) -> PointSet | MultiBlock | UnstructuredGrid:
         """Return a subset of the mesh based on the values of point or cell data.
 
         Points and cells may be extracted with a single value, multiple values, a range
@@ -6359,7 +6363,7 @@ class DataSetFilters(DataObjectFilters):
         tolerance: float = 0.0,
         inplace: bool = False,
         progress_bar: bool = False,
-    ):
+    ) -> PolyData | PointSet | UnstructuredGrid:
         """Merge duplicate points in this mesh.
 
         .. versionadded:: 0.45
@@ -6439,7 +6443,7 @@ class DataSetFilters(DataObjectFilters):
         inplace: bool = False,
         main_has_priority: bool | None = None,
         progress_bar: bool = False,
-    ):
+    ) -> PointSet | UnstructuredGrid:
         """Join one or many other grids to this grid.
 
         Can be used to merge points of adjacent cells when no grids
@@ -6581,7 +6585,7 @@ class DataSetFilters(DataObjectFilters):
         if inplace:
             if type(self) is type(merged):
                 self.deep_copy(merged)
-                return self
+                return cast('PointSet | UnstructuredGrid', self)
             else:
                 msg = f'Mesh type {type(self)} cannot be overridden by output.'
                 raise TypeError(msg)
@@ -6787,7 +6791,7 @@ class DataSetFilters(DataObjectFilters):
         shrink_factor: float = 1.0,
         *,
         progress_bar: bool = False,
-    ):
+    ) -> PolyData | UnstructuredGrid:
         """Shrink the individual faces of a mesh.
 
         This filter shrinks the individual faces of a mesh rather than
@@ -7100,6 +7104,11 @@ class DataSetFilters(DataObjectFilters):
         frame_width: float = 0.1,
         return_meta: bool = False,
         as_composite: bool = True,
+    ) -> (
+        MultiBlock
+        | tuple[MultiBlock, NumpyArray[np.floating], NumpyArray[np.floating]]
+        | PolyData
+        | tuple[PolyData, NumpyArray[np.floating], NumpyArray[np.floating]]
     ):
         """Return an oriented bounding box (OBB) for this dataset.
 
@@ -7291,6 +7300,11 @@ class DataSetFilters(DataObjectFilters):
         frame_width: float = 0.1,
         return_meta: bool = False,
         as_composite: bool = True,
+    ) -> (
+        MultiBlock
+        | tuple[MultiBlock, NumpyArray[np.floating], NumpyArray[np.floating]]
+        | PolyData
+        | tuple[PolyData, NumpyArray[np.floating], NumpyArray[np.floating]]
     ):
         """Return a bounding box for this dataset.
 
@@ -7570,7 +7584,7 @@ class DataSetFilters(DataObjectFilters):
     # fmt: on
     def separate_cells(  # type: ignore[misc]
         self: _DataSetType,
-    ):
+    ) -> PolyData | UnstructuredGrid:
         """Return a copy of the dataset with separated cells with no shared points.
 
         This method may be useful when datasets have scalars that need to be
@@ -7930,7 +7944,7 @@ class DataSetFilters(DataObjectFilters):
         output_scalars: str | None = None,
         return_dict: bool = False,
         inplace: bool = False,
-    ):
+    ) -> DataSet | tuple[DataSet, dict[float | np.integer | np.floating, ColorLike]]:
         """Add RGB(A) scalars to labeled data.
 
         This filter adds a color array to map label values to specific colors.

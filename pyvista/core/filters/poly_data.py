@@ -451,7 +451,7 @@ class PolyDataFilters(DataSetFilters):
         inplace: bool = False,
         main_has_priority: bool | None = None,
         progress_bar: bool = False,
-    ):
+    ) -> PolyData | UnstructuredGrid:
         """Merge this mesh with one or more datasets.
 
         .. note::
@@ -610,7 +610,7 @@ class PolyDataFilters(DataSetFilters):
             self.deep_copy(merged)
             return self
 
-        return merged
+        return cast('PolyData | UnstructuredGrid', merged)
 
     def intersection(
         self,
