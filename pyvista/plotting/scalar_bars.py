@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import contextlib
-from typing import Literal
+from typing import get_args
 import weakref
 
 import pyvista_validation as _validation
@@ -15,6 +15,7 @@ from pyvista.core.errors import VTKVersionError
 from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
+from ._typing import StackingOptions
 from .colors import Color
 from .tools import parse_font_family
 
@@ -299,7 +300,7 @@ class ScalarBars(_NoNewAttrMixin):
         position_x=None,
         position_y=None,
         vertical=None,
-        stacking: Literal['widen', 'stagger', 'rotate'] | None = None,
+        stacking: StackingOptions | None = None,
         interactive=None,
         fmt=None,
         use_opacity: bool = True,
@@ -683,7 +684,7 @@ class ScalarBars(_NoNewAttrMixin):
 
         if stacking is not None:
             _validation.check_contains(
-                ['widen', 'stagger', 'rotate'], must_contain=stacking, name='stacking'
+                get_args(StackingOptions), must_contain=stacking, name='stacking'
             )
             if not vertical and stacking != 'widen':
                 msg = f'Stacking {stacking!r} is not supported for horizontal scalar bars.'

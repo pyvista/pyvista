@@ -92,6 +92,7 @@ CullingOptions = Literal['front', 'back', 'frontface', 'backface', 'f', 'b']
 StyleOptions = Literal['surface', 'wireframe', 'points', 'points_gaussian']
 LightingOptions = Literal['light kit', 'three lights', 'none']
 BorderOptions = Literal[True, False, 'interior', 'exterior']
+StackingOptions = Literal['widen', 'stagger', 'rotate']
 # Distinct, user-facing built-in theme names, for autocomplete only. Excludes
 # 'default'/'vtk' (legacy aliases for 'document'/the base Theme) and
 # 'testing'/'document_build' (internal-only, for pytest/doc builds). All four
@@ -156,7 +157,7 @@ class ScalarBarArgs(TypedDict, total=False):
     position_x: float
     position_y: float
     vertical: bool
-    stacking: Literal['widen', 'stagger', 'rotate']
+    stacking: StackingOptions
     interactive: bool
     fmt: str
     use_opacity: bool
