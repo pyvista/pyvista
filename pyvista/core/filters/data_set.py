@@ -8992,6 +8992,12 @@ def _make_reference_volume(
                 cell_length_sample_size,
                 progress_bar=progress_bar,
             )
+            if spacing == 0:
+                msg = (
+                    'Spacing cannot be estimated from the input cells. '
+                    'Set `dimensions` or `spacing` explicitly.'
+                )
+                raise ValueError(msg)
         # Get initial spacing (will be adjusted later)
         initial_spacing = _validation.validate_array3(spacing, broadcast=True)
         rounding_func = np.round if rounding_func is None else rounding_func
@@ -9005,10 +9011,13 @@ def _make_reference_volume(
 
     volume = pv.ImageData()
     volume.dimensions = dimensions
-    final_spacing = size / np.array(volume.dimensions)
+    flat = size == 0
+    final_spacing = np.divide(size, np.array(volume.dimensions), out=np.ones(3), where=~flat)
+    # A flat axis gets a single voxel, as thick as the thickest of the other axes
+    final_spacing[flat] = final_spacing[~flat].max() if not flat.all() else 1.0
     volume.spacing = final_spacing
     # Voxels are points, so inset them by 1/2 spacing to fit the cells to the bounds
-    volume.origin = np.array(mesh.bounds[::2]) + final_spacing / 2
+    volume.origin = np.array(mesh.bounds[::2]) + np.where(flat, 0.0, final_spacing / 2)
     return volume
 
 

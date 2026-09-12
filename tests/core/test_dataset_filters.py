@@ -5408,6 +5408,33 @@ def test_voxelize_binary_mask_no_reference(frog_tissues_contour):
     assert np.allclose(mask.points_to_cells().bounds, frog_tissues_contour.bounds)
 
 
+@pytest.mark.parametrize('axis', [0, 1, 2])
+def test_voxelize_binary_mask_flat_input(axis):
+    direction = np.zeros(3)
+    direction[axis] = 1
+    plane = pv.Plane(direction=direction, i_size=2, j_size=3)
+    mask = plane.voxelize_binary_mask()
+
+    # The flat axis has a single voxel which is as thick as the thickest other axis
+    assert mask.dimensions[axis] == 1
+    assert mask.spacing[axis] == max(np.delete(mask.spacing, axis))
+
+    # The voxel is centered on the input so its cell contains every input point
+    voxel_bounds = np.array(mask.points_to_cells().bounds)
+    assert np.all(voxel_bounds[::2] <= plane.points.min(axis=0))
+    assert np.all(voxel_bounds[1::2] >= plane.points.max(axis=0))
+
+
+def test_voxelize_binary_mask_degenerate_cells_raises():
+    degenerate = pv.PolyData(np.zeros((3, 3)), faces=[3, 0, 1, 2])
+    match = (
+        'Spacing cannot be estimated from the input cells. '
+        'Set `dimensions` or `spacing` explicitly.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        degenerate.voxelize_binary_mask()
+
+
 def test_voxelize_binary_mask_dimensions(sphere):
     dims = (10, 11, 12)
     mask = sphere.voxelize_binary_mask(dimensions=dims)
