@@ -6853,8 +6853,8 @@ class DataSetFilters(DataObjectFilters):
 
         Returns
         -------
-        output : pyvista.MultiBlock | pyvista.UnstructuredGrid
-            UnStructuredGrid if ``as_composite=False`` and MultiBlock when ``True``. A
+        output : pyvista.MultiBlock | pyvista.UnstructuredGrid | pyvista.PointSet
+            UnstructuredGrid if ``as_composite=False`` and MultiBlock when ``True``. A
             :class:`~pyvista.PointSet` is partitioned by its points and gives ``PointSet``
             blocks.
 
