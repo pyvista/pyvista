@@ -1119,11 +1119,14 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         name : str, optional
             Name to assign to the actor.  Defaults to the memory address.
 
-        culling : str, default: False
-            Does not render faces that are culled. Options are
-            ``'front'`` or ``'back'``. This can be helpful for dense
-            surface meshes, especially when edges are visible, but can
-            cause flat meshes to be partially displayed.
+        culling : str | bool, default: False
+            Does not render faces that are culled. This can be helpful for
+            dense surface meshes, especially when edges are visible, but can
+            cause flat meshes to be partially displayed. One of the following:
+
+            * ``True``, ``'b'``, ``'back'``, ``'backface'`` - Enable backface culling
+            * ``'f'``, ``'front'``, ``'frontface'`` - Enable frontface culling
+            * ``False``, ``'none'`` - Leave culling as the actor already has it
 
         pickable : bool, default: True
             Whether to allow this actor to be pickable within the
@@ -1177,7 +1180,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         if isinstance(culling, str):
             culling = culling.lower()
 
-        if culling:
+        if culling and culling != 'none':
             if culling in [True, 'back', 'backface', 'b']:
                 with contextlib.suppress(AttributeError):
                     actor.GetProperty().BackfaceCullingOn()
@@ -2313,9 +2316,10 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Default is ``True``. when ``False``, a box with faces is
             shown with the specified culling.
 
-        culling : str, default: "front"
-            Does not render faces on the bounding box that are culled. Options
-            are ``'front'`` or ``'back'``.
+        culling : str | bool, default: "front"
+            Does not render faces on the bounding box that are culled. Takes
+            the same values as :meth:`add_actor`, such as ``'front'``,
+            ``'back'`` or ``'none'``.
 
         Returns
         -------
