@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import cast
 
 import numpy as np
 
@@ -243,4 +242,5 @@ class UnstructuredGridFilters(DataSetFilters):
         if inplace:
             self.copy_from(extracted)
             return self
-        return cast('_UnstructuredGridType', extracted)
+        out.copy_from(extracted, deep=False)
+        return out
