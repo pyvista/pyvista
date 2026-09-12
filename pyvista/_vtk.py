@@ -773,6 +773,7 @@ _PLOTTING_MODULES: dict[str, tuple[str, ...]] = {
         'vtkWorldPointPicker',
     ),
     'vtkRenderingFreeType': (
+        'vtkFreeTypeTools',
         'vtkMathTextFreeTypeTextRenderer',
         'vtkVectorText',
     ),

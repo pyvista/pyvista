@@ -7,6 +7,7 @@ import pytest
 
 import pyvista as pv
 from pyvista import _vtk
+from pyvista.plotting.scalar_bars import _title_width
 
 KEY = 'Data'
 
@@ -340,6 +341,57 @@ def test_title_pad_boxed(sphere, outline: bool, fill: bool):
     )
 
     assert pl.scalar_bar.GetTitleTextProperty().GetLineOffset() == 0
+
+
+@pytest.mark.parametrize('window_size', [[400, 300], [600, 400], [1024, 768]])
+def test_stacked_horizontal_bars_clear_their_annotations(sphere, window_size):
+    # The pitch is a fraction of the window, so a small one must still fit the text
+    sphere[KEY] = sphere.points[:, 2]
+    font_size = 18
+
+    pl = pv.Plotter(window_size=window_size)
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bars = [
+        pl.add_scalar_bar(
+            f'{KEY}{i}',
+            vertical=False,
+            title_font_size=font_size,
+            label_font_size=font_size,
+            mapper=pl.mapper,
+        )
+        for i in range(3)
+    ]
+
+    height = pl.theme.colorbar_horizontal.height
+    needed = bars[0].GetBarRatio() * height * window_size[1] + 2 * font_size
+    pitches = [
+        (b.GetPosition()[1] - a.GetPosition()[1]) * window_size[1]
+        for a, b in itertools.pairwise(bars)
+    ]
+    assert pitches[0] == pytest.approx(pitches[1])
+    assert min(pitches) >= needed
+
+
+def test_stacked_vertical_bars_clear_their_titles(sphere):
+    # Titles are centred on the bar and are wider than it, so they set the pitch
+    sphere[KEY] = sphere.points[:, 2]
+    window_size = [600, 400]
+    title = 'A wide scalar bar title'
+
+    pl = pv.Plotter(window_size=window_size)
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bars = [
+        pl.add_scalar_bar(f'{title}{i}', vertical=True, title_font_size=18, mapper=pl.mapper)
+        for i in range(3)
+    ]
+
+    dpi = pl.render_window.GetDPI()
+    widest = max(_title_width(b.GetTitleTextProperty(), b.GetTitle(), dpi) for b in bars)
+    pitches = [
+        (a.GetPosition()[0] - b.GetPosition()[0]) * window_size[0]
+        for a, b in itertools.pairwise(bars)
+    ]
+    assert min(pitches) >= widest
 
 
 def test_title_pad_keeps_stacked_spacing(sphere):
