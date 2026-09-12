@@ -3602,7 +3602,7 @@ class BasePlotter(_BoundsSizeMixin):
         nan_opacity: float = 1.0,
         culling: CullingOptions | bool | None = None,
         rgb: bool | None = None,
-        categories: bool = False,
+        categories: bool | int = False,
         silhouette: SilhouetteArgs | bool | None = None,
         use_transparency: bool = False,
         below_color: ColorLike | None = None,
@@ -3875,10 +3875,15 @@ class BasePlotter(_BoundsSizeMixin):
             becomes ``True``.  This can be overridden by setting this
             parameter to ``False``.
 
-        categories : bool, optional
-            If set to ``True``, then the number of unique values in
-            the scalar array will be used as the ``n_colors``
-            argument.
+        categories : bool | int, optional
+            If ``True``, each unique value in the scalar array gets its
+            own color and is labelled on the scalar bar, and values between
+            them take the NaN color. An integer is used as the ``n_colors``
+            argument instead.
+
+            .. versionchanged:: 0.50
+                ``True`` gives every unique value its own color even when
+                the values are not evenly spaced.
 
         silhouette : dict, bool, optional
             If set to ``True``, plot a silhouette highlight for the
