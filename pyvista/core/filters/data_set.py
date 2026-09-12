@@ -6953,6 +6953,12 @@ class DataSetFilters(DataObjectFilters):
 
     # fmt: off
     # ruff: disable[E501]
+    @overload  # PointSet, as_composite=True
+    def partition(self: PointSet, n_partitions: int, *, generate_global_id: bool = ..., as_composite: Literal[True] = ...) -> MultiBlock: ...  # type: ignore[misc, overload-overlap]
+    @overload  # PointSet, as_composite=False
+    def partition(self: PointSet, n_partitions: int, *, generate_global_id: bool = ..., as_composite: Literal[False] = ...) -> PointSet: ...  # type: ignore[misc, overload-overlap]
+    @overload  # PointSet, as_composite not known
+    def partition(self: PointSet, n_partitions: int, *, generate_global_id: bool = ..., as_composite: bool = ...) -> MultiBlock | PointSet: ...  # type: ignore[misc, overload-overlap]
     @overload  # as_composite=True
     def partition(self: _DataSetType, n_partitions: int, *, generate_global_id: bool = ..., as_composite: Literal[True] = ...) -> MultiBlock: ...  # type: ignore[misc]
     @overload  # as_composite=False
