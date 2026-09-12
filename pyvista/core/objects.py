@@ -100,7 +100,7 @@ class Table(DataObject, _vtk.vtkTable):
 
     def _from_dict(self, array_dict):
         for array in array_dict.values():
-            if not isinstance(array, np.ndarray) and array.ndim < 3:
+            if not (isinstance(array, np.ndarray) and array.ndim < 3):
                 msg = 'Dictionary must contain only NumPy arrays with maximum of 2D.'
                 raise ValueError(msg)
         for name, array in array_dict.items():
