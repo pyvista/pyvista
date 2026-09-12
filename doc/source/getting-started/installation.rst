@@ -230,6 +230,7 @@ For a one-off install:
 
         .. code-block:: text
 
+            echo vtk > no-vtk.txt
             uv pip install --excludes no-vtk.txt 'pyvista[cvista]'
 
 .. note::
