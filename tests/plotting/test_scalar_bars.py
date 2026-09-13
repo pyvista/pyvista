@@ -884,6 +884,56 @@ def test_fit_box_fits_a_size_set_on_the_actor(sphere, box):
     assert _label_reach(bar, dpi, pl.window_size[0]) <= right
 
 
+def test_fit_box_follows_a_renamed_bar(sphere):
+    # The box is fitted around the title, so renaming the bar has to carry the fit over
+    # to the new title and measure it again
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = _fitted_bar(pl, sphere, vertical=True, box={'outline': True})
+    pl.screenshot(return_img=True)
+    width = bar.GetWidth()
+
+    pl.scalar_bars.update_title(FIT_TITLE, 'A very much longer title')
+    pl.render()
+
+    assert FIT_TITLE not in pl.scalar_bars._scalar_bar_fits
+    assert pl.scalar_bars._scalar_bar_fits['A very much longer title']['title'] == (
+        'A very much longer title'
+    )
+    # The longer title needs a wider box than the one it replaced
+    assert bar.GetWidth() > width
+
+
+@pytest.mark.parametrize('gone', ['_scalar_bar_actors', '_scalar_bar_fits'])
+def test_fit_box_ignores_a_bar_that_is_gone(sphere, gone: str):
+    # The observer is dropped with the bar, so it only ever fires for a bar it can
+    # still measure, and a render that finds neither must pass the fit by
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    _fitted_bar(pl, sphere, vertical=True, box={'outline': True})
+    getattr(pl.scalar_bars, gone).pop(FIT_TITLE)
+
+    pl.screenshot(return_img=True)
+
+
+def test_fit_box_stops_fitting_without_a_render_window(sphere):
+    # A closed plotter has no window to drop the observer from
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    _fitted_bar(pl, sphere, vertical=True, box={'outline': True})
+    pl.close()
+
+    pl.scalar_bars.clear()
+
+    assert not pl.scalar_bars._scalar_bar_fits
+
+
 def test_fit_box_stops_fitting_a_removed_bar(sphere):
     # The observer holds the bar, so it has to go when the bar does
     sphere[KEY] = sphere.points[:, 2]

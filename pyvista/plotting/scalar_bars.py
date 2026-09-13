@@ -193,12 +193,8 @@ class ScalarBars(_NoNewAttrMixin):
         if window is not None:
             window.RemoveObserver(fit['observer'])
 
-    def _apply_fit(self, title):
+    def _apply_fit(self, fit, scalar_bar):
         """Size a scalar bar's box to its text, or give it back the size it asked for."""
-        fit = self._scalar_bar_fits.get(title)
-        scalar_bar = self._scalar_bar_actors.get(title)
-        if fit is None or scalar_bar is None:
-            return
         width, height, position, bar_ratio, separation = fit['request']
         # Measure against the size that was asked for rather than the last fit
         scalar_bar.SetWidth(width)
@@ -211,7 +207,7 @@ class ScalarBars(_NoNewAttrMixin):
         if not (scalar_bar.GetDrawFrame() or scalar_bar.GetDrawBackground()):
             # Nothing is drawn around the text, so there is nothing to fit it to
             title_text.SetLineOffset(-fit['pad'])
-            fit['applied'] = self._fitted_widget(title, scalar_bar)
+            fit['applied'] = self._fitted_widget(fit['key'], scalar_bar)
             return
 
         fitted_width, fitted_height, fitted_ratio, offset, fitted_separation = _fitted_box(
@@ -232,7 +228,7 @@ class ScalarBars(_NoNewAttrMixin):
             # box grows away from the window edge rather than through it
             scalar_bar.SetPosition(position[0] - (fitted_width - width), position[1])
         title_text.SetLineOffset(offset)
-        fit['applied'] = self._fitted_widget(title, scalar_bar)
+        fit['applied'] = self._fitted_widget(fit['key'], scalar_bar)
 
     def _fitted_widget(self, title, scalar_bar):
         """Give a scalar bar's widget the box it was fitted to, and return that box."""
@@ -248,22 +244,24 @@ class ScalarBars(_NoNewAttrMixin):
     def _keep_fitted(self, title, scalar_bar, *, vertical, display_title, pad):
         """Refit a scalar bar's box whenever the window it is drawn in changes."""
         window = self._plotter.render_window
-        self._scalar_bar_fits[title] = {
+        fit = {
             'request': _box_geometry(scalar_bar),
             'vertical': vertical,
+            'key': title,
             'title': display_title,
             'pad': pad,
             'state': None,
             'applied': None,
             'observer': None,
         }
+        self._scalar_bar_fits[title] = fit
 
         def refit(*_args):
-            fit = self._scalar_bar_fits.get(title)
-            if fit is None:
-                return
-            bar = self._scalar_bar_actors.get(title)
+            # The bar is looked up by the key the fit carries, so a renamed bar is
+            # still the one this observer measures
+            bar = self._scalar_bar_actors.get(fit['key'])
             if bar is None:
+                # The observer outlived the bar it was measuring
                 return
             geometry = _box_geometry(bar)
             if fit['applied'] is not None and geometry != fit['applied']:
@@ -286,11 +284,9 @@ class ScalarBars(_NoNewAttrMixin):
             if state == fit['state']:
                 return
             fit['state'] = state
-            self._apply_fit(title)
+            self._apply_fit(fit, bar)
 
-        self._scalar_bar_fits[title]['observer'] = window.AddObserver(
-            _vtk.vtkCommand.StartEvent, refit
-        )
+        fit['observer'] = window.AddObserver(_vtk.vtkCommand.StartEvent, refit)
         refit()
 
     def _stacked_neighbor(self, slot):
@@ -520,6 +516,7 @@ class ScalarBars(_NoNewAttrMixin):
                 self._scalar_bar_widgets[new_title] = self._scalar_bar_widgets.pop(old_title)
             if old_title in self._scalar_bar_fits:
                 fit = self._scalar_bar_fits.pop(old_title)
+                fit['key'] = new_title
                 fit['title'] = new_title
                 # The title is what the box is fitted around, so it has to be measured again
                 fit['state'] = None
