@@ -365,7 +365,7 @@ def is_pyvista_dataset(obj: Any) -> TypeIs[DataSet | MultiBlock | PartitionedDat
     return isinstance(obj, (pv.DataSet, pv.MultiBlock, pv.PartitionedDataSet))
 
 
-def generate_plane(normal: VectorLike[float], origin: VectorLike[float]):
+def generate_plane(normal: VectorLike[float], origin: VectorLike[float]) -> _vtk.vtkPlane:
     """Return a :vtk:`vtkPlane`.
 
     Parameters
@@ -432,14 +432,24 @@ def _validate_plane_origin_and_normal(  # noqa: PLR0917
     return origin_, normal_
 
 
+# fmt: off
+# ruff: disable[E501]
+@overload
+def axis_rotation(points: NumpyArray[float], angle: float, *, inplace: Literal[False] = False, deg: bool = ..., axis: str = ...) -> NumpyArray[float]: ...
+@overload
+def axis_rotation(points: NumpyArray[float], angle: float, *, inplace: Literal[True], deg: bool = ..., axis: str = ...) -> None: ...
+@overload
+def axis_rotation(points: NumpyArray[float], angle: float, *, inplace: bool = ..., deg: bool = ..., axis: str = ...) -> NumpyArray[float] | None: ...
+# ruff: enable[E501]
+# fmt: on
 def axis_rotation(
     points: NumpyArray[float],
     angle: float,
     *,
     inplace: bool = False,
     deg: bool = True,
-    axis='z',
-):
+    axis: str = 'z',
+) -> NumpyArray[float] | None:
     """Rotate points by angle about an axis.
 
     Parameters
@@ -492,14 +502,17 @@ def axis_rotation(
     return transformations.apply_transformation_to_points(rot_mat, points, inplace=inplace)
 
 
-def is_inside_bounds(point, bounds):
+def is_inside_bounds(
+    point: float | VectorLike[float],
+    bounds: VectorLike[float],
+) -> bool:
     """Check if a point is inside a set of bounds.
 
     This is implemented through recursion so that this is N-dimensional.
 
     Parameters
     ----------
-    point : sequence[float]
+    point : float | VectorLike[float]
         Three item Cartesian point (that is, ``[x, y, z]``).
 
     bounds : sequence[float]
@@ -513,23 +526,24 @@ def is_inside_bounds(point, bounds):
     """
     if isinstance(point, (int, float)):
         point = [point]
-    if isinstance(point, (np.ndarray, Sequence)) and not isinstance(
-        point,
-        deque,
-    ):
-        if len(bounds) < 2 * len(point) or len(bounds) % 2 != 0:
-            msg = 'Bounds mismatch point dimensionality'
-            raise ValueError(msg)
-        point = deque(point)
-        bounds = deque(bounds)
-        return is_inside_bounds(point, bounds)
-    if not isinstance(point, deque):
-        msg = f'Unknown input data type ({type(point)}).'
+    if not isinstance(point, (np.ndarray, Sequence)):
+        msg = f'Unknown input data type ({type(point)}).'  # type: ignore[unreachable]
         raise TypeError(msg)
+    if len(bounds) < 2 * len(point) or len(bounds) % 2 != 0:
+        msg = 'Bounds mismatch point dimensionality'
+        raise ValueError(msg)
+    return _is_inside_bounds(deque(point), deque(bounds))
+
+
+def _is_inside_bounds(
+    point: deque[float | NumpyArray[float]],
+    bounds: deque[float | NumpyArray[float]],
+) -> bool:
+    """Recursively check if a point is inside a set of bounds."""
     if len(point) < 1:
         return True
     p = point.popleft()
     lower, upper = bounds.popleft(), bounds.popleft()
     if lower <= p <= upper:
-        return is_inside_bounds(point, bounds)
+        return _is_inside_bounds(point, bounds)
     return False

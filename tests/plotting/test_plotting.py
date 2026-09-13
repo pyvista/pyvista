@@ -76,12 +76,25 @@ def using_mesa():
     return 'Mesa' in regex.findall(gpu_info)[0]
 
 
-# always set on Windows CI
-# These tests fail with mesa opengl on windows
-skip_mesa = pytest.mark.skipif(using_mesa(), reason='Does not display correctly within OSMesa')
-skip_windows_mesa = skip_mesa and pytest.mark.skip_windows(
-    'Does not display correctly within OSMesa on Windows'
+class _Lazy:
+    """Answer a predicate once, when a marker is first evaluated."""
+
+    def __init__(self, predicate) -> None:
+        self._predicate = predicate
+        self._answer: bool | None = None
+
+    def __bool__(self) -> bool:
+        """Return the predicate's answer, evaluating it at most once."""
+        if self._answer is None:
+            self._answer = self._predicate()
+        return self._answer
+
+
+# Mesa opengl is always used on Windows CI, so the Windows skip is the Mesa skip there.
+skip_mesa = pytest.mark.skipif(
+    _Lazy(using_mesa), reason='Does not display correctly within OSMesa'
 )
+skip_windows_mesa = pytest.mark.skip_windows('Does not display correctly within OSMesa on Windows')
 skip_lesser_9_4_X = pytest.mark.needs_vtk_version(  # noqa: N816
     9, 4, reason='Functions not implemented before 9.4.X or invalid results prior'
 )
@@ -1733,9 +1746,12 @@ def test_screenshot(tmpdir):
 
     # check error before first render
     pl = pv.Plotter(off_screen=False)
-    pl.add_mesh(pv.Sphere())
-    with pytest.raises(RuntimeError):
-        pl.screenshot()
+    try:
+        pl.add_mesh(pv.Sphere())
+        with pytest.raises(RuntimeError):
+            pl.screenshot()
+    finally:
+        pl.close()
 
 
 @pytest.mark.usefixtures('no_images_to_verify')
@@ -2521,6 +2537,7 @@ def test_add_volume_nested_multiblock_gives_one_volume_per_leaf():
     assert {'vol-0', 'vol-1'} <= set(pl.renderer.actors)
 
 
+@pytest.mark.skip_windows
 def test_multiblock_volume_rendering(uniform):
     ds_a = uniform.copy()
     ds_b = uniform.copy()
@@ -4548,6 +4565,34 @@ def test_plot_categories_true(sphere):
     pl.show()
 
 
+@skip_windows_mesa
+def test_plot_categories_non_contiguous(sphere):
+    sphere['labels'] = np.zeros(sphere.n_cells)
+    sphere['labels'][: sphere.n_cells // 2] = 2
+    sphere['labels'][: sphere.n_cells // 4] = 8
+    pl = pv.Plotter()
+    actor = pl.add_mesh(
+        sphere,
+        scalars='labels',
+        categories=True,
+        cmap='glasbey',
+        lighting=False,
+        scalar_bar_args={
+            'width': 0.8,
+            'height': 0.2,
+            'position_x': 0.1,
+            'position_y': 0.2,
+            'label_font_size': 40,
+        },
+    )
+    lut = actor.mapper.lookup_table
+    assert len({lut.map_value(value)[:3] for value in (0, 2, 8)}) == 3
+    scalar_bar = pl.scalar_bar
+    assert scalar_bar.GetUseCustomLabels()
+    assert list(pv.convert_array(scalar_bar.GetCustomLabels())) == [0.0, 2.0, 8.0]
+    pl.show()
+
+
 def test_string_scalars_replot():
     mesh = pv.RectilinearGrid([0.0, 1.0, 2.0], [0.0, 1.0], [0.0])
     pl = pv.Plotter()
@@ -5219,6 +5264,79 @@ def test_plotter_volume_opacity_n_colors():
 
 
 @skip_windows_mesa  # due to opacity
+def test_add_volume_categories_true(no_images_to_verify):  # noqa: ARG001
+    grid = pv.ImageData(dimensions=(5, 2, 2))
+    grid.point_data['labels'] = np.tile([0.0, 3.0, 12.0, 24.0, 27.0], 4)
+    pl = pv.Plotter()
+    pl.add_volume(grid, scalars='labels', categories=True)
+    lut = pl.mapper.lookup_table
+    assert pl.mapper.scalar_range == (-1.5, 28.5)
+    colors = {lut.map_value(value)[:3] for value in (0, 3, 12, 24, 27)}
+    assert len(colors) == 5
+    assert lut.map_value(6) == lut.nan_color.float_rgba
+    bar = pl.scalar_bar
+    assert bar.GetUseCustomLabels()
+    assert list(pv.convert_array(bar.GetCustomLabels())) == [0.0, 3.0, 12.0, 24.0, 27.0]
+    assert bar.GetLabelFormat() == '%.0f'
+    pl.close()
+
+
+def test_add_volume_categories_survives_transfer_function(no_images_to_verify):  # noqa: ARG001
+    grid = pv.ImageData(dimensions=(5, 2, 2))
+    grid.point_data['labels'] = np.tile([0.0, 3.0, 12.0, 24.0, 27.0], 4)
+    pl = pv.Plotter()
+    pl.add_volume(grid, scalars='labels', categories=True)
+    lut = pl.mapper.lookup_table
+    transfer_function = lut.to_color_tf()
+    for value in (0, 3, 12, 24, 27):
+        assert transfer_function.GetColor(float(value)) == pytest.approx(
+            lut.map_value(value)[:3], abs=1 / 255
+        )
+    pl.close()
+
+
+def test_add_volume_categories_keeps_clim(no_images_to_verify):  # noqa: ARG001
+    grid = pv.ImageData(dimensions=(5, 2, 2))
+    grid.point_data['labels'] = np.tile([0.0, 3.0, 12.0, 24.0, 27.0], 4)
+    pl = pv.Plotter()
+    pl.add_volume(grid, scalars='labels', categories=True, clim=(0, 100))
+    lut = pl.mapper.lookup_table
+    assert pl.mapper.scalar_range == (0.0, 100.0)
+    assert len({lut.map_value(value)[:3] for value in (0, 3, 12, 24, 27)}) == 5
+    pl.close()
+
+
+def test_add_volume_categories_all_nan(no_images_to_verify):  # noqa: ARG001
+    grid = pv.ImageData(dimensions=(5, 2, 2))
+    grid.point_data['labels'] = np.full(20, np.nan)
+    pl = pv.Plotter()
+    with pytest.warns(RuntimeWarning, match='All-NaN axis encountered'):
+        pl.add_volume(grid, scalars='labels', categories=True)
+    assert not pl.scalar_bars['labels'].GetUseCustomLabels()
+    pl.close()
+
+
+def test_add_volume_categories_lookup_table(no_images_to_verify):  # noqa: ARG001
+    grid = pv.ImageData(dimensions=(5, 2, 2))
+    grid.point_data['labels'] = np.tile([0.0, 3.0, 12.0, 24.0, 27.0], 4)
+    lut = pv.LookupTable('viridis', n_values=4)
+    pl = pv.Plotter()
+    pl.add_volume(grid, scalars='labels', categories=True, cmap=lut)
+    assert pl.mapper.lookup_table is lut
+    assert lut.n_values == 4
+    pl.close()
+
+
+def test_add_volume_categories_int(no_images_to_verify):  # noqa: ARG001
+    grid = pv.ImageData(dimensions=(5, 2, 2))
+    grid.point_data['labels'] = np.tile([0.0, 3.0, 12.0, 24.0, 27.0], 4)
+    pl = pv.Plotter()
+    pl.add_volume(grid, scalars='labels', categories=3)
+    assert pl.mapper.lookup_table.n_values == 3
+    assert pl.mapper.scalar_range == (0.0, 27.0)
+    pl.close()
+
+
 def test_plotter_volume_clim():
     # Validate that we can use clim with volume rendering
     grid = pv.ImageData(dimensions=(9, 9, 9))
@@ -7487,6 +7605,7 @@ def test_point_sprite_shape_render(shape, verify_image_cache_wrapper):
     pl.show()
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 @pytest.mark.parametrize(
     'shape',
     ['circle', 'triangle', 'hexagon', 'diamond', 'asterisk', 'star'],
@@ -7510,6 +7629,19 @@ def test_point_sprite_shape_does_not_apply_to_surface(shape):
     assert actor.point_sprite_shape == shape
     assert not actor._point_sprite_applied
     assert 'point_sprite' not in actor._shader_replacements
+    pl.close()
+
+
+def test_point_sprite_shape_surface_render():
+    """A surface renders unclipped while the theme asks for a point shape."""
+    theme = pv.plotting.themes._TestingTheme()
+    theme.point_shape = 'circle'
+    pl = pv.Plotter(theme=theme)
+    pl.add_mesh(
+        pv.Wavelet(),
+        style='surface',
+        show_scalar_bar=False,
+    )
     pl.show()
 
 

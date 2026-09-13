@@ -300,23 +300,17 @@ def test_uri_kwargs_fall_back_to_the_builtin_reader(tmp_path):
     mock.assert_not_called()
 
 
-def test_uri_forwarded_to_custom_reader():
-    """Remote URI with a custom extension is passed directly to the handler."""
+@pytest.mark.parametrize(
+    'uri',
+    ['https://example.com/data.myformat', 's3://bucket/data.myformat'],
+)
+def test_uri_forwarded_to_custom_reader(uri):
+    """A remote URI with a custom extension is passed directly to the handler."""
     mock = MagicMock(return_value=pv.PolyData())
     pv.register_reader('.myformat', mock)
 
-    result = pv.read('https://example.com/data.myformat', normals=False)
-    mock.assert_called_once_with('https://example.com/data.myformat', normals=False)
-    assert isinstance(result, pv.PolyData)
-
-
-def test_s3_uri_forwarded_to_custom_reader():
-    """s3:// URI with a custom extension is passed directly to the handler."""
-    mock = MagicMock(return_value=pv.PolyData())
-    pv.register_reader('.myformat', mock)
-
-    result = pv.read('s3://bucket/data.myformat')
-    mock.assert_called_once_with('s3://bucket/data.myformat')
+    result = pv.read(uri, normals=False)
+    mock.assert_called_once_with(uri, normals=False)
     assert isinstance(result, pv.PolyData)
 
 

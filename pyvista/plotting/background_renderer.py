@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 import numpy as np
 
 import pyvista as pv
@@ -70,7 +72,7 @@ class BackgroundRenderer(Renderer):
         if self._prior_window_size != self.parent.window_size:
             self._prior_window_size = self.parent.window_size
 
-        actor = self._actors['background']
+        actor = cast('_vtk.vtkImageActor', self._actors['background'])
         image_data = actor.GetInput()
         origin = image_data.GetOrigin()
         extent = image_data.GetExtent()

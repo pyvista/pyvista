@@ -1155,6 +1155,44 @@ def test_add_actor_raises():
         pl.renderer.add_actor(_vtk.vtkActor(), culling='foo')
 
 
+@pytest.mark.parametrize(
+    ('culling', 'expected'),
+    [
+        ('none', (False, False)),
+        (False, (False, False)),
+        ('back', (True, False)),
+        ('backface', (True, False)),
+        ('b', (True, False)),
+        (True, (True, False)),
+        ('front', (False, True)),
+        ('frontface', (False, True)),
+        ('f', (False, True)),
+        ('NoNe', (False, False)),
+    ],
+)
+def test_add_actor_culling(culling, expected):
+    pl = pv.Plotter()
+    _, prop = pl.renderer.add_actor(_vtk.vtkActor(), culling=culling)
+    assert (bool(prop.GetBackfaceCulling()), bool(prop.GetFrontfaceCulling())) == expected
+    pl.close()
+
+
+def test_add_actor_culling_accepts_property_getter(sphere):
+    # `Property.culling` reports 'none' when disabled, so it must round trip
+    pl = pv.Plotter()
+    actor = pl.add_mesh(sphere)
+    assert actor.prop.culling == 'none'
+    pl.renderer.add_actor(_vtk.vtkActor(), culling=actor.prop.culling)
+    pl.close()
+
+
+def test_add_bounding_box_culling_none(sphere):
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
+    pl.add_bounding_box(culling='none')
+    pl.close()
+
+
 @pytest.mark.parametrize('grid', [1.0, 1, object()])
 def test_show_bounds_grid_raises(grid):
     pl = pv.Plotter()

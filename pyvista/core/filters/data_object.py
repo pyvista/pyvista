@@ -6091,8 +6091,8 @@ def _clip_input(mesh: DataSet | MultiBlock) -> DataSet | MultiBlock:
 
 
 def _keep_array_structure(
-    output: DataSet | MultiBlock, source: DataSet | MultiBlock
-) -> DataSet | MultiBlock:
+    output: _DataSetOrMultiBlockType, source: DataSet | MultiBlock
+) -> _DataSetOrMultiBlockType:
     """Give an empty clip the array names of its input, which VTK drops."""
     if isinstance(output, pv.MultiBlock):
         for (ids, _, block), original in zip(
@@ -6167,14 +6167,17 @@ def _clip_by_box_planes(
     return _get_output(append)
 
 
-def _validate_clip_inplace(mesh: DataSet | MultiBlock) -> None:
-    """Raise when a clipped output cannot be copied back into its input mesh."""
+def _validate_clip_inplace(
+    mesh: DataSet | MultiBlock,
+) -> PolyData | PointSet | UnstructuredGrid:
+    """Return the mesh, or raise when a clipped output cannot be copied back into it."""
     if not isinstance(mesh, (pv.PolyData, pv.PointSet, pv.UnstructuredGrid)):
         msg = (
             f'Cannot use inplace=True for {type(mesh).__name__} input. Only PolyData, '
             f'PointSet and UnstructuredGrid inputs can be clipped in place.'
         )
         raise TypeError(msg)
+    return mesh
 
 
 def _remove_unused_points_post_clip(clip_output, input_bounds):
@@ -6268,6 +6271,8 @@ class _Crinkler:
             def extract_cells_from_block(  # noqa: PLR0917
                 block_, clipped_a, clipped_b, active_scalars_info_
             ):
+                if _Crinkler.CELL_IDS not in clipped_a.cell_data.keys():
+                    return clipped_a, clipped_b
                 mask_a = clipped_cell_mask(block_, clipped_a)
                 mask_b = clipped_cell_mask(block_, clipped_b) & ~mask_a
                 clipped_a = _Crinkler._extract_cells(block_, mask_a, active_scalars_info_)
