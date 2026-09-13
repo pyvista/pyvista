@@ -9184,24 +9184,20 @@ class DataSetFilters(DataObjectFilters):
         ...     theta_resolution=40,
         ...     phi_resolution=40,
         ... ).resize(bounds=bounds)
-        >>> meshes = [surface.cast_to_pointset(), surface, solid]
 
         Show each input beside the voxels of its resampled image.
 
-        >>> pl = pv.Plotter(shape=(3, 2))
-        >>> for row, sphere in enumerate(meshes):
+        >>> datasets = {}
+        >>> for sphere in [surface.cast_to_pointset(), surface, solid]:
         ...     sphere['height'] = sphere.points[:, 2]
         ...     image = sphere.resample_to_image(spacing=0.05)
         ...     voxels = image.points_to_cells(dimensionality='3D')
-        ...     pl.subplot(row, 0)
-        ...     _ = pl.add_mesh(sphere, scalars='height')
-        ...     pl.subplot(row, 1)
-        ...     _ = pl.add_mesh(
-        ...         voxels.threshold(scalars='vtkValidPointMask', value=0.5),
-        ...         scalars='height',
+        ...     name = type(sphere).__name__
+        ...     datasets[name] = sphere
+        ...     datasets[f'{name} voxels'] = voxels.threshold(
+        ...         scalars='vtkValidPointMask', value=0.5
         ...     )
-        >>> pl.link_views()
-        >>> pl.show()
+        >>> pv.plot_compare(datasets, shape=(3, 2), scalars='height')
 
         The point cloud and the surface fill the same shell, since they have the same
         points. The solid is filled throughout, and its voxels stop just inside the
