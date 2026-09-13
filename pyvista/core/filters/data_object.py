@@ -34,7 +34,9 @@ from pyvista._version import version_info
 from pyvista._warn_external import warn_external
 from pyvista.core._typing_core import _DataSetOrMultiBlockType
 from pyvista.core.celltype import CellType
+from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import DeprecationError
+from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output
@@ -5506,9 +5508,10 @@ class DataObjectFilters:
             will be determined by a nearest neighbor interpolation scheme. All
             other arrays are interpolated normally.
 
-            The target must have single-component active point scalars. A
-            composite target is sampled block by block, keeping the first block
-            to sample each point, so every block needs them.
+            The target must have single-component point scalars. They are made
+            active when the target has exactly one such array and none is active
+            already. A composite target is sampled block by block, keeping the
+            first block to sample each point, so every block needs them.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -5552,9 +5555,9 @@ class DataObjectFilters:
             If ``target`` cannot be wrapped as a dataset or a composite of datasets.
 
         ValueError
-            If ``categorical=True`` and the target has no single-component active
-            point scalars, or if ``locator`` is a :vtk:`vtkOBBTree` and VTK is 9.7
-            or newer.
+            If ``categorical=True`` and the target has no single-component point
+            scalars, if it has several and none is active, or if ``locator`` is a
+            :vtk:`vtkOBBTree` and VTK is 9.7 or newer.
 
         See Also
         --------
@@ -6066,28 +6069,39 @@ def _categorical_blocks(target: DataSet | MultiBlock | PartitionedDataSet) -> li
         datasets = list(target.recursive_iterator(skip_none=True, skip_empty=True))[::-1]
     else:
         datasets = [target]
-    for dataset in datasets:
-        _check_categorical_scalars(dataset)
-    return datasets
+    return [_activate_categorical_scalars(dataset) for dataset in datasets]
 
 
-def _check_categorical_scalars(target: DataSet) -> None:
-    """Raise if ``target`` cannot be sampled as categorical data."""
+def _activate_categorical_scalars(target: DataSet) -> DataSet:
+    """Return ``target`` with the point scalars a categorical sample interpolates made active."""
     scalars = target.point_data.active_scalars
-    if scalars is None:
+    if scalars is not None:
+        if scalars.ndim > 1:
+            msg = (
+                'Categorical sampling requires single-component active point scalars, but the '
+                f"target's active point scalars '{target.point_data.active_scalars_name}' have "
+                f'{scalars.shape[1]} components.'
+            )
+            raise ValueError(msg)
+        return target
+
+    candidates = [name for name in target.point_data if target.point_data[name].ndim == 1]
+    if not candidates:
         msg = (
-            'Categorical sampling requires the target to have active point scalars, but '
-            f'the target has none. Make one of {target.point_data.keys()} active with '
+            'Categorical sampling requires single-component point scalars on the target, '
+            f'which has none. Its point data arrays are {target.point_data.keys()}.'
+        )
+        raise MissingDataError(msg)
+    if len(candidates) > 1:
+        msg = (
+            'Categorical sampling requires active point scalars on the target, which has '
+            f'none. Make one of {candidates} active with '
             "`target.set_active_scalars(name, preference='point')`."
         )
-        raise ValueError(msg)
-    if scalars.ndim > 1:
-        msg = (
-            'Categorical sampling requires single-component active point scalars, but '
-            f"the target's active point scalars '{target.point_data.active_scalars_name}' "
-            f'have {scalars.shape[1]} components.'
-        )
-        raise ValueError(msg)
+        raise AmbiguousDataError(msg)
+    target = target.copy(deep=False)
+    target.set_active_scalars(candidates[0], preference='point')
+    return target
 
 
 def _sample_composite_categorical(

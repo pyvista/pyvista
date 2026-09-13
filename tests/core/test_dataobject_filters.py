@@ -1733,6 +1733,7 @@ def categorical_probe():
 def categorical_target():
     """Target whose active point scalars are spaced apart so interpolation is detectable."""
     target = pv.Sphere(theta_resolution=10, phi_resolution=10).delaunay_3d()
+    target.clear_point_data()
     target.point_data['labels'] = (np.arange(target.n_points) % 3) * 10.0
     target.set_active_scalars('labels')
     return target
@@ -1832,9 +1833,29 @@ def test_sample_categorical_no_point_scalars_raises(categorical_probe, as_compos
     target.cell_data['labels'] = np.ones(target.n_cells)
     target = pv.MultiBlock([target]) if as_composite else target
 
-    match = 'Categorical sampling requires the target to have active point scalars'
-    with pytest.raises(ValueError, match=match):
+    match = 'Categorical sampling requires single-component point scalars on the target'
+    with pytest.raises(pv.MissingDataError, match=match):
         categorical_probe.sample(target, categorical=True)
+
+
+def test_sample_categorical_activates_the_only_candidate(categorical_probe, categorical_target):
+    categorical_target.point_data.active_scalars_name = None
+
+    result = categorical_probe.sample(categorical_target, categorical=True)
+
+    sampled = result['labels'][result['vtkValidPointMask'] == 1]
+    assert sampled.size
+    assert np.isin(sampled, categorical_target['labels']).all()
+    assert categorical_target.point_data.active_scalars_name is None
+
+
+def test_sample_categorical_ambiguous_scalars_raises(categorical_probe, categorical_target):
+    categorical_target.point_data['other'] = np.ones(categorical_target.n_points)
+    categorical_target.point_data.active_scalars_name = None
+
+    match = re.escape("Make one of ['labels', 'other'] active")
+    with pytest.raises(pv.AmbiguousDataError, match=match):
+        categorical_probe.sample(categorical_target, categorical=True)
 
 
 def test_sample_non_dataset_target_raises(categorical_probe):
