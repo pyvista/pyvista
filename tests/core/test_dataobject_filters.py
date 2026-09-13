@@ -1740,6 +1740,16 @@ def test_sample_categorical(categorical_target, as_composite):
     assert np.isin(sampled, categorical_target['labels']).all()
 
 
+def test_sample_categorical_skips_empty_blocks(categorical_target):
+    mesh = pv.ImageData(dimensions=(5, 5, 5), spacing=(0.3, 0.3, 0.3), origin=(-0.6, -0.6, -0.6))
+    target = pv.MultiBlock([pv.PolyData(), categorical_target, None])
+
+    result = mesh.sample(target, categorical=True)
+
+    sampled = result['labels'][result['vtkValidPointMask'] == 1]
+    assert np.isin(sampled, categorical_target['labels']).all()
+
+
 @pytest.mark.parametrize('as_composite', [True, False])
 def test_sample_categorical_no_point_scalars_raises(as_composite):
     mesh = pv.ImageData(dimensions=(5, 5, 5), spacing=(0.3, 0.3, 0.3), origin=(-0.6, -0.6, -0.6))

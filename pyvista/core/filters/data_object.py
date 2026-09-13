@@ -6034,7 +6034,7 @@ def _deprecate_obb_tree_locator() -> None:
 def _check_categorical_scalars(target: DataSet | MultiBlock) -> None:
     """Raise if ``target`` cannot be sampled as categorical data."""
     datasets = (
-        target.recursive_iterator(skip_none=True)
+        target.recursive_iterator(skip_none=True, skip_empty=True)
         if isinstance(target, pv.MultiBlock)
         else iter([target])
     )
