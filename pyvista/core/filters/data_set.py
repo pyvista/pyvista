@@ -8341,8 +8341,9 @@ class DataSetFilters(DataObjectFilters):
 
         resample_to_image
             Similar function which generates a :class:`~pyvista.ImageData` of the same
-            geometry. It interpolates the input's data arrays instead of generating a
-            mask, and needs volumetric cells to interpolate from rather than a surface.
+            geometry. It resamples the input's data arrays instead of generating a mask,
+            and fills the voxels its cells or points reach rather than a closed
+            surface's interior.
 
         pyvista.ImageDataFilters.contour_labels
             Filter that generates surface contours from labeled image data. Can be
@@ -8726,8 +8727,9 @@ class DataSetFilters(DataObjectFilters):
 
         resample_to_image
             Similar function which generates a :class:`~pyvista.ImageData` of the same
-            geometry. It interpolates the input's data arrays instead of generating a
-            mask, and needs volumetric cells to interpolate from rather than a surface.
+            geometry. It resamples the input's data arrays instead of generating a mask,
+            and fills the voxels its cells or points reach rather than a closed
+            surface's interior.
 
         Examples
         --------
@@ -8899,8 +8901,9 @@ class DataSetFilters(DataObjectFilters):
 
         resample_to_image
             Similar function which generates a :class:`~pyvista.ImageData` of the same
-            geometry. It interpolates the input's data arrays instead of generating a
-            mask, and needs volumetric cells to interpolate from rather than a surface.
+            geometry. It resamples the input's data arrays instead of generating a mask,
+            and fills the voxels its cells or points reach rather than a closed
+            surface's interior.
 
         Examples
         --------
@@ -9007,9 +9010,12 @@ class DataSetFilters(DataObjectFilters):
            topology or carries its cell data.
 
         #. ``'interpolate'`` interpolates from the input's points within ``radius``.
-           This is the default otherwise, since a surface, a line or a point cloud has
-           no volume for a cell search to land in. Every voxel containing an input point
-           is filled, and only the input's point data is carried.
+           This is the default otherwise, since a cell search misses most of a curved
+           surface and all of a point cloud. Every voxel containing an input point is
+           filled, and only the input's point data is carried.
+
+        A flat input is the exception: its voxels are centered on it, so ``'sample'``
+        reaches every one of them and reproduces the values exactly.
 
         .. versionadded:: 0.50
 
@@ -9049,7 +9055,7 @@ class DataSetFilters(DataObjectFilters):
 
             Rounding the dimensions implies rounding the actual spacing.
 
-            Has no effect if ``reference_volume`` or ``dimensions`` are specified.
+            Cannot be set together with ``reference_volume`` or ``dimensions``.
 
         cell_length_percentile : float, optional
             Cell length percentage ``p`` to use for computing the default ``spacing``.
@@ -9183,24 +9189,31 @@ class DataSetFilters(DataObjectFilters):
             cell_length_sample_size=cell_length_sample_size,
             progress_bar=progress_bar,
         )
-        if method is None:
-            method = 'sample' if self.max_cell_dimensionality == 3 else 'interpolate'
+        chosen = method
+        if chosen is None:
+            chosen = 'sample' if self.max_cell_dimensionality == 3 else 'interpolate'
         else:
             _validation.check_contains(
-                ['sample', 'interpolate'], must_contain=method, name='method'
+                ['sample', 'interpolate'], must_contain=chosen, name='method'
             )
-
-        if method == 'sample':
-            if radius is not None or sharpness is not None:
-                msg = "Radius and sharpness require `method='interpolate'`."
+        unused = (
+            {'radius': radius, 'sharpness': sharpness}
+            if chosen == 'sample'
+            else {'tolerance': tolerance, 'categorical': categorical or None}
+        )
+        for name, value in unused.items():
+            if value is not None:
+                wanted = 'interpolate' if chosen == 'sample' else 'sample'
+                chosen_for = '' if method is not None else ', chosen for this input'
+                msg = (
+                    f'`{name}` requires `method={wanted!r}`, but `method={chosen!r}`{chosen_for}.'
+                )
                 raise TypeError(msg)
+
+        if chosen == 'sample':
             return volume.sample(
                 self, tolerance=tolerance, categorical=categorical, progress_bar=progress_bar
             )
-
-        if tolerance is not None or categorical:
-            msg = "Tolerance and categorical require `method='sample'`."
-            raise TypeError(msg)
         return volume.interpolate(
             self,
             radius=float(np.linalg.norm(volume.spacing)) / 2 if radius is None else radius,

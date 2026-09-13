@@ -75,10 +75,10 @@ pl.show(cpos=cpos)
 # %%
 # Resample Onto a New Image
 # +++++++++++++++++++++++++
-# Both examples above build the target grid before sampling onto it.
-# :func:`~pyvista.DataSetFilters.resample_to_image` does the two steps at once,
-# which is the usual way to volume render a mesh that is not already
-# :class:`~pyvista.ImageData`.
+# Both examples above build the mesh to sample onto before sampling onto it.
+# :func:`~pyvista.DataSetFilters.resample_to_image` does the two steps at once
+# when that mesh is a uniform grid, which is the usual way to volume render a
+# mesh that is not already :class:`~pyvista.ImageData`.
 #
 # Load a tetrahedral mesh of a blood vessel network.
 mesh = examples.download_blood_vessels()
@@ -99,7 +99,8 @@ volume.plot(volume=True, scalars='shearstress', cpos='zy')
 # The values above come from the mesh's cells. An input without volumetric cells
 # has no interior for a cell search to land in, so the filter interpolates from
 # its points instead and fills every voxel which contains one. Here the same
-# points are resampled as a point cloud, which has no cells at all.
+# points are resampled as a point cloud, which has no cells at all. Only point
+# data survives that, so ``node_value`` is plotted rather than the cell array.
 cloud = pv.PointSet(mesh.points)
 cloud['node_value'] = mesh['node_value']
 cloud.resample_to_image(spacing=2.0).plot(volume=True, scalars='node_value', cpos='zy')

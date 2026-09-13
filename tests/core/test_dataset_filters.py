@@ -5807,13 +5807,17 @@ def test_resample_to_image_geometry_matches_voxelize(sphere):
 
 def test_resample_to_image_reference_volume(tetbeam):
     tetbeam['point_scalars'] = tetbeam.points[:, 2]
-    reference = pv.ImageData(dimensions=(5, 6, 7), spacing=(0.2, 0.3, 0.4), origin=(0.1, 0.2, 0.3))
+    reference = pv.ImageData()
+    reference.extent = (2, 6, 3, 8, 4, 10)
+    reference.spacing = (0.2, 0.3, 0.4)
+    reference.origin = (0.1, 0.2, 0.3)
     reference.direction_matrix = pv.Transform().rotate_z(30).matrix[:3, :3]
     reference['reference_scalars'] = np.arange(reference.n_points)
 
     image = tetbeam.resample_to_image(reference_volume=reference)
 
-    assert image.dimensions == reference.dimensions
+    assert image.extent == reference.extent
+    assert image.offset == reference.offset
     assert image.spacing == reference.spacing
     assert image.origin == reference.origin
     assert np.allclose(image.direction_matrix, reference.direction_matrix)
@@ -5895,14 +5899,32 @@ def test_resample_to_image_interpolate_point_cloud(sphere):
 def test_resample_to_image_flat_input(axis):
     direction = np.zeros(3)
     direction[axis] = 1
-    plane = pv.Plane(direction=direction, i_size=2, j_size=3)
-    plane['point_scalars'] = plane.points[:, axis - 1]
-    image = plane.resample_to_image()
+    other = (axis + 1) % 3
+    plane = pv.Plane(direction=direction, i_size=2, j_size=3, i_resolution=9, j_resolution=9)
+    plane['point_scalars'] = plane.points[:, other]
+    image = plane.resample_to_image(dimensions=np.where(np.eye(3)[axis], 1, 10).astype(int))
 
     assert image.dimensions[axis] == 1
     assert image.spacing[axis] > 0
     # Every voxel of the flat image takes a value from the plane
     assert image['vtkValidPointMask'].all()
+
+    # The voxels are centered on the plane, so sampling its cells is exact
+    exact = plane.resample_to_image(dimensions=image.dimensions, method='sample')
+    assert np.allclose(exact['point_scalars'], exact.points[:, other])
+
+
+def test_resample_to_image_categorical(tetbeam):
+    tetbeam.point_data['labels'] = np.where(tetbeam.points[:, 2] > 2.5, 7.0, 3.0)
+    dims = (8, 8, 8)
+
+    blended = tetbeam.resample_to_image(dimensions=dims)
+    categorical = tetbeam.resample_to_image(dimensions=dims, categorical=True)
+
+    valid = categorical['vtkValidPointMask'].astype(bool)
+    # Interpolating labels invents values between them, nearest neighbor does not
+    assert np.array_equal(np.unique(categorical['labels'][valid]), [3.0, 7.0])
+    assert len(np.unique(blended['labels'][valid])) > 2
 
 
 def test_resample_to_image_raises(sphere):
@@ -5927,12 +5949,17 @@ def test_resample_to_image_raises(sphere):
     with pytest.raises(ValueError, match="method 'nonsense' is not valid"):
         sphere.resample_to_image(dimensions=(4, 5, 6), method='nonsense')
 
-    match = "Radius and sharpness require `method='interpolate'`."
-    for kwargs in [{'radius': 0.1}, {'sharpness': 4.0}]:
+    for name, value in [('radius', 0.1), ('sharpness', 4.0)]:
+        match = f"`{name}` requires `method='interpolate'`, but `method='sample'`."
         with pytest.raises(TypeError, match=re.escape(match)):
-            sphere.resample_to_image(dimensions=(4, 5, 6), method='sample', **kwargs)
+            sphere.resample_to_image(dimensions=(4, 5, 6), method='sample', **{name: value})
 
-    match = "Tolerance and categorical require `method='sample'`."
-    for kwargs in [{'tolerance': 0.1}, {'categorical': True}]:
+    for name, value in [('tolerance', 0.1), ('categorical', True)]:
+        match = f"`{name}` requires `method='sample'`, but `method='interpolate'`."
         with pytest.raises(TypeError, match=re.escape(match)):
-            sphere.resample_to_image(dimensions=(4, 5, 6), method='interpolate', **kwargs)
+            sphere.resample_to_image(dimensions=(4, 5, 6), method='interpolate', **{name: value})
+
+    # The message says when the method was picked for the input rather than requested
+    match = "`radius` requires `method='interpolate'`, but `method='sample'`, chosen for this"
+    with pytest.raises(TypeError, match=re.escape(match)):
+        sphere.delaunay_3d().resample_to_image(dimensions=(4, 5, 6), radius=0.1)
