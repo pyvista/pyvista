@@ -8519,6 +8519,14 @@ class DataSetFilters(DataObjectFilters):
             msg = 'Input mesh must have faces for voxelization.'
             raise ValueError(msg)
 
+        _validate_reference_volume_options(
+            reference_volume=reference_volume,
+            dimensions=dimensions,
+            spacing=spacing,
+            rounding_func=rounding_func,
+            cell_length_percentile=cell_length_percentile,
+            cell_length_sample_size=cell_length_sample_size,
+        )
         # Triangulate for computing the cell length percentile and for the stencil
         poly_ijk = surface.triangulate()
         volume = _make_reference_volume(
@@ -9157,6 +9165,14 @@ class DataSetFilters(DataObjectFilters):
         ... )
 
         """
+        _validate_reference_volume_options(
+            reference_volume=reference_volume,
+            dimensions=dimensions,
+            spacing=spacing,
+            rounding_func=rounding_func,
+            cell_length_percentile=cell_length_percentile,
+            cell_length_sample_size=cell_length_sample_size,
+        )
         volume = _make_reference_volume(
             self,
             reference_volume=reference_volume,
@@ -9194,8 +9210,7 @@ class DataSetFilters(DataObjectFilters):
         )
 
 
-def _make_reference_volume(
-    mesh: DataSet,
+def _validate_reference_volume_options(
     *,
     reference_volume: ImageData | None,
     dimensions: VectorLike[int] | None,
@@ -9203,9 +9218,8 @@ def _make_reference_volume(
     rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None,
     cell_length_percentile: float | None,
     cell_length_sample_size: int | None,
-    progress_bar: bool,
-) -> ImageData:  # numpydoc ignore=RT01
-    """Create an empty image whose voxels fit the bounds of a mesh."""
+) -> None:
+    """Raise if the geometry options of a voxelize or resample filter conflict."""
     if reference_volume is not None:
         if (
             dimensions is not None
@@ -9220,12 +9234,7 @@ def _make_reference_volume(
             )
             raise TypeError(msg)
         _validation.check_instance(reference_volume, pv.ImageData, name='reference volume')
-        volume = pv.ImageData()
-        volume.extent = reference_volume.extent
-        volume.spacing = reference_volume.spacing
-        volume.origin = reference_volume.origin
-        volume.direction_matrix = reference_volume.direction_matrix
-        return volume
+        return
 
     if spacing is not None and dimensions is not None:
         msg = 'Spacing and dimensions cannot both be set. Set one or the other.'
@@ -9236,6 +9245,31 @@ def _make_reference_volume(
     ):
         msg = 'Spacing and cell length options cannot both be set. Set one or the other.'
         raise TypeError(msg)
+
+    if dimensions is not None and rounding_func is not None:
+        msg = 'Rounding func cannot be set when dimensions is specified. Set one or the other.'
+        raise TypeError(msg)
+
+
+def _make_reference_volume(
+    mesh: DataSet,
+    *,
+    reference_volume: ImageData | None,
+    dimensions: VectorLike[int] | None,
+    spacing: float | VectorLike[float] | None,
+    rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None,
+    cell_length_percentile: float | None,
+    cell_length_sample_size: int | None,
+    progress_bar: bool,
+) -> ImageData:  # numpydoc ignore=RT01
+    """Create an empty image whose voxels fit the bounds of a mesh."""
+    if reference_volume is not None:
+        volume = pv.ImageData()
+        volume.extent = reference_volume.extent
+        volume.spacing = reference_volume.spacing
+        volume.origin = reference_volume.origin
+        volume.direction_matrix = reference_volume.direction_matrix
+        return volume
 
     size = np.array(mesh.bounds_size)
     initial_spacing = None
@@ -9270,9 +9304,6 @@ def _make_reference_volume(
         # Make sure we don't round dimensions to zero, make it one instead
         initial_dimensions[initial_dimensions < 1] = 1
         dimensions = np.array(rounding_func(initial_dimensions), dtype=int)
-    elif rounding_func is not None:
-        msg = 'Rounding func cannot be set when dimensions is specified. Set one or the other.'
-        raise TypeError(msg)
 
     volume = pv.ImageData()
     volume.dimensions = dimensions
