@@ -5485,7 +5485,7 @@ class DataObjectFilters:
 
         Parameters
         ----------
-        target : pyvista.DataSet | pyvista.MultiBlock
+        target : pyvista.DataSet | pyvista.MultiBlock | pyvista.PartitionedDataSet
             The vtk data object to sample from - point and cell arrays from
             this object are sampled onto the nodes of the ``dataset`` mesh. A
             composite target is sampled block by block, keeping the first block
@@ -5617,12 +5617,15 @@ class DataObjectFilters:
             raise TypeError(msg)
         if categorical:
             blocks = _categorical_blocks(target_)
-            if isinstance(target_, (pv.MultiBlock, pv.PartitionedDataSet)):
+            if not blocks:
+                categorical = False
+            elif isinstance(target_, (pv.MultiBlock, pv.PartitionedDataSet)):
                 return cast(
                     '_DataSetOrMultiBlockType',
-                    _sample_composite_categorical(self, target_, blocks, options=options),
+                    _sample_composite_categorical(self, blocks, options=options),
                 )
-            target_ = blocks[0]
+            else:
+                target_ = blocks[0]
 
         alg = _vtk.vtkResampleWithDataSet()  # Construct the ResampleWithDataSet object
         alg.SetInputData(
@@ -6065,21 +6068,22 @@ def _categorical_blocks(target: DataSet | MultiBlock | PartitionedDataSet) -> li
     if isinstance(target, pv.PartitionedDataSet):
         target = pv.MultiBlock(list(target))
     if isinstance(target, pv.MultiBlock):
+        items = target.recursive_iterator('items', skip_none=True, skip_empty=True)
         # vtkCompositeDataProbeFilter traverses in reverse so the finest block wins
-        datasets = list(target.recursive_iterator(skip_none=True, skip_empty=True))[::-1]
+        named = [(f"block '{name}'", block) for name, block in items][::-1]
     else:
-        datasets = [target]
-    return [_activate_categorical_scalars(dataset) for dataset in datasets]
+        named = [('target', target)]
+    return [_activate_categorical_scalars(block, label) for label, block in named]
 
 
-def _activate_categorical_scalars(target: DataSet) -> DataSet:
+def _activate_categorical_scalars(target: DataSet, label: str) -> DataSet:
     """Return ``target`` with the point scalars a categorical sample interpolates made active."""
     scalars = target.point_data.active_scalars
     if scalars is not None:
         if scalars.ndim > 1:
             msg = (
-                'Categorical sampling requires single-component active point scalars, but the '
-                f"target's active point scalars '{target.point_data.active_scalars_name}' have "
+                f'Categorical sampling requires single-component active point scalars, but the '
+                f"{label}'s active point scalars '{target.point_data.active_scalars_name}' have "
                 f'{scalars.shape[1]} components.'
             )
             raise ValueError(msg)
@@ -6094,13 +6098,13 @@ def _activate_categorical_scalars(target: DataSet) -> DataSet:
     ]
     if not candidates:
         msg = (
-            'Categorical sampling requires single-component point scalars on the target, '
+            f'Categorical sampling requires single-component point scalars on the {label}, '
             f'which has none. Its point data arrays are {target.point_data.keys()}.'
         )
         raise MissingDataError(msg)
     if len(candidates) > 1:
         msg = (
-            'Categorical sampling requires active point scalars on the target, which has '
+            f'Categorical sampling requires active point scalars on the {label}, which has '
             f'none. Make one of {candidates} active with '
             "`target.set_active_scalars(name, preference='point')`."
         )
@@ -6111,16 +6115,9 @@ def _activate_categorical_scalars(target: DataSet) -> DataSet:
 
 
 def _sample_composite_categorical(
-    mesh: DataSet,
-    target: MultiBlock | PartitionedDataSet,
-    blocks: list[DataSet],
-    *,
-    options: dict[str, Any],
+    mesh: DataSet, blocks: list[DataSet], *, options: dict[str, Any]
 ) -> DataSet:
     """Sample each block of a composite target and keep the first block to hit each point."""
-    if not blocks:
-        return mesh.sample(target, categorical=False, **options)
-
     result = mesh.sample(blocks[0], categorical=True, **options)
     for block in blocks[1:]:
         probed = mesh.sample(block, categorical=True, **options)
@@ -6152,7 +6149,7 @@ def _blank_invalid_points_and_cells(result: DataSet) -> None:
         indicator = result.copy(deep=False)
         indicator.clear_data()
         indicator.point_data['invalid'] = invalid.astype(float)
-        per_cell = indicator.point_data_to_cell_data()['invalid'] > 0
+        per_cell = indicator.point_data_to_cell_data().cell_data['invalid'] > 0
 
         hidden_cell = np.uint8(_vtk.vtkDataSetAttributes.HIDDENCELL)
         cell_ghosts = result.cell_data[_GHOST_ARRAY]

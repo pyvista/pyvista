@@ -1789,7 +1789,7 @@ def test_sample_composite_categorical_merge_matches_vtk(kwargs):
     assert sorted(merged.point_data.keys()) == sorted(expected.point_data.keys())
     assert sorted(merged.cell_data.keys()) == sorted(expected.cell_data.keys())
     assert merged['labels'].any()
-    # Interpolating a constant is exact only to rounding, the masks and ghosts are not
+    # Interpolating a constant is exact only to rounding, but the masks and ghosts are
     for name in expected.point_data:
         assert np.allclose(merged.point_data[name], expected.point_data[name]), name
     for name in expected.cell_data:
@@ -1855,6 +1855,13 @@ def test_sample_composite_categorical_drops_mismatched_arrays(
     assert 'mismatched' not in merged.point_data
 
 
+def test_sample_empty_composite_categorical(categorical_probe):
+    result = categorical_probe.sample(pv.MultiBlock(), categorical=True)
+
+    assert result.n_points == categorical_probe.n_points
+    assert not np.any(result['vtkValidPointMask'])
+
+
 @pytest.mark.parametrize(
     'mesh',
     [pv.PolyData(), pv.PointSet(np.array([[0.0, 0.0, 0.0], [9.0, 9.0, 9.0]]))],
@@ -1873,10 +1880,11 @@ def test_sample_composite_categorical_without_ghost_arrays(mesh, categorical_tar
 def test_sample_categorical_no_point_scalars_raises(categorical_probe, as_composite):
     target = pv.Sphere(theta_resolution=10, phi_resolution=10).delaunay_3d()
     target.cell_data['labels'] = np.ones(target.n_cells)
+    subject = "block 'Block-00'" if as_composite else 'target'
     target = pv.MultiBlock([target]) if as_composite else target
 
-    match = 'Categorical sampling requires single-component point scalars on the target'
-    with pytest.raises(pv.MissingDataError, match=match):
+    match = f'Categorical sampling requires single-component point scalars on the {subject}'
+    with pytest.raises(pv.MissingDataError, match=re.escape(match)):
         categorical_probe.sample(target, categorical=True)
 
 
