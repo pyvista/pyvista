@@ -6,11 +6,12 @@ import numpy as np
 from type_assert import assert_types
 
 import pyvista as pv
+from tests.typing.meshes import image
 
 
-def image() -> pv.ImageData:
-    """Return a labeled image."""
-    mesh = pv.ImageData(dimensions=(4, 4, 4))
+def labeled_image() -> pv.ImageData:
+    """Return an image carrying a label array."""
+    mesh = image()
     mesh.point_data['labels'] = np.arange(mesh.n_points) % 3
     return mesh
 
@@ -21,8 +22,8 @@ def a_flag() -> bool:
 
 
 # Splitting the selection is what decides between an image and a composite
-assert_types(image().select_values(1), pv.ImageData)
-assert_types(image().select_values(1, split=False), pv.ImageData)
-assert_types(image().select_values(1, split=True), pv.MultiBlock)
-assert_types(image().select_values(ranges=[0, 1], split=True), pv.MultiBlock)
-assert_types(image().select_values(1, split=a_flag()), pv.ImageData | pv.MultiBlock)
+assert_types(labeled_image().select_values(1), pv.ImageData)
+assert_types(labeled_image().select_values(1, split=False), pv.ImageData)
+assert_types(labeled_image().select_values(1, split=True), pv.MultiBlock)
+assert_types(labeled_image().select_values(ranges=[0, 1], split=True), pv.MultiBlock)
+assert_types(labeled_image().select_values(1, split=a_flag()), pv.ImageData | pv.MultiBlock)
