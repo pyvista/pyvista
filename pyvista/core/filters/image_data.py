@@ -838,7 +838,7 @@ class ImageDataFilters(DataSetFilters):
             return field, scalars
 
         def _voi_from_mask(
-            mask_: str | ImageData | NumpyArray[float] | bool,  # noqa: FBT001
+            *, mask_: str | ImageData | NumpyArray[float] | bool
         ) -> VectorLike[int]:
             """Return the volume of interest bounding the mask's foreground."""
             _raise_error_kwargs_not_none('mask', also_exclude=['background_value', 'padding'])
@@ -1017,7 +1017,7 @@ class ImageDataFilters(DataSetFilters):
         elif margin is not None:
             voi = _voi_from_margin(margin)
         elif mask is not None:
-            voi = _voi_from_mask(mask)
+            voi = _voi_from_mask(mask_=mask)
         elif normalized_bounds is not None:
             voi = _voi_from_normalized_bounds(normalized_bounds)
         elif extent is not None:
