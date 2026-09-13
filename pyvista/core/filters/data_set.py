@@ -3573,7 +3573,7 @@ class DataSetFilters(DataObjectFilters):
         """
         target_ = wrap(target)
         if not isinstance(target_, pv.DataSet):
-            msg = (
+            msg = (  # type: ignore[unreachable]
                 'Interpolation target must be a DataSet or a point array, got '
                 f'{type(target_).__name__}.'
             )
