@@ -3538,6 +3538,9 @@ class DataSetFilters(DataObjectFilters):
             If ``target`` cannot be wrapped as a single dataset, such as a
             :class:`~pyvista.MultiBlock`.
 
+        ValueError
+            If ``target`` has no points.
+
         See Also
         --------
         pyvista.DataObjectFilters.sample
@@ -3574,6 +3577,9 @@ class DataSetFilters(DataObjectFilters):
                 f'{type(target_).__name__}.'
             )
             raise TypeError(msg)
+        if target_.n_points == 0:
+            msg = 'Interpolation target has no points to interpolate from.'
+            raise ValueError(msg)
 
         gaussian_kernel = _vtk.vtkGaussianKernel()
         gaussian_kernel.SetSharpness(sharpness)

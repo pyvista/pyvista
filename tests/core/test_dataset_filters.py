@@ -3602,6 +3602,12 @@ def test_interpolate_composite_target_raises():
         pv.Sphere().interpolate(target)
 
 
+def test_interpolate_empty_target_raises():
+    match = 'Interpolation target has no points to interpolate from.'
+    with pytest.raises(ValueError, match=match):
+        pv.Sphere().interpolate(pv.PolyData())
+
+
 def test_interpolate_excludes_string_arrays():
     target = pv.Sphere(theta_resolution=10, phi_resolution=10)
     target.point_data['values'] = np.arange(target.n_points, dtype=float)
