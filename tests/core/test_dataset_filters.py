@@ -6143,7 +6143,7 @@ def test_resample_to_image_raises(sphere):
         with pytest.raises(TypeError, match=re.escape(match)):
             sphere.resample_to_image(dimensions=(4, 5, 6), method='sample', **{name: value})
 
-    for name, value in [('tolerance', 0.1), ('categorical', True)]:
+    for name, value in [('tolerance', 0.1), ('categorical', True), ('categorical', False)]:
         match = f"`{name}` requires `method='sample'`, but `method='interpolate'`."
         with pytest.raises(TypeError, match=re.escape(match)):
             sphere.resample_to_image(dimensions=(4, 5, 6), method='interpolate', **{name: value})

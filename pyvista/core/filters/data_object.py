@@ -5844,7 +5844,7 @@ class DataObjectFilters:
         cell_length_sample_size: int | None = None,
         method: Literal['sample', 'interpolate'] | None = None,
         tolerance: float | None = None,
-        categorical: bool = False,
+        categorical: bool | None = None,
         radius: float | None = None,
         sharpness: float | None = None,
         progress_bar: bool = False,
@@ -5993,10 +5993,10 @@ class DataObjectFilters:
             computed by :vtk:`vtkResampleWithDataSet` is used by default. Requires
             ``method='sample'``.
 
-        categorical : bool, default: False
+        categorical : bool, optional
             Control whether the source point data is to be treated as categorical. If
             ``True``, the resampled point data will be determined by a nearest neighbor
-            interpolation scheme. Requires ``method='sample'``.
+            interpolation scheme. ``False`` by default. Requires ``method='sample'``.
 
         radius : float, optional
             Distance from a voxel's center within which the input's points contribute to
@@ -6147,7 +6147,7 @@ class DataObjectFilters:
         unused = (
             {'radius': radius, 'sharpness': sharpness}
             if chosen == 'sample'
-            else {'tolerance': tolerance, 'categorical': categorical or None}
+            else {'tolerance': tolerance, 'categorical': categorical}
         )
         for name, value in unused.items():
             if value is not None:
@@ -6159,7 +6159,10 @@ class DataObjectFilters:
 
         if chosen == 'sample':
             return volume.sample(
-                source, tolerance=tolerance, categorical=categorical, progress_bar=progress_bar
+                source,
+                tolerance=tolerance,
+                categorical=False if categorical is None else categorical,
+                progress_bar=progress_bar,
             )
         if dropped := [n for n in source.cell_data if not n.startswith('vtk')]:
             msg = (
