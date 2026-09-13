@@ -1797,20 +1797,62 @@ def test_sample_composite_categorical_merge_matches_vtk(kwargs):
     assert np.array_equal(merged['vtkValidPointMask'], expected['vtkValidPointMask'])
 
 
-def test_sample_composite_categorical_drops_partial_arrays():
+@pytest.fixture
+def side_by_side_blocks():
+    """Two blocks a probe of [5, 15, 25] hits in turn, with a constant `common` array."""
     lower = pv.ImageData(dimensions=(11, 11, 1), spacing=(1.0, 1.0, 1.0))
     upper = pv.ImageData(dimensions=(11, 11, 1), origin=(10.0, 0.0, 0.0), spacing=(1.0, 1.0, 1.0))
     lower['common'] = np.zeros(lower.n_points)
     upper['common'] = np.ones(upper.n_points)
-    lower['partial'] = np.zeros(lower.n_points)
-    lower.set_active_scalars('common')
-    mesh = pv.PolyData([[5.0, 5.0, 0.0], [15.0, 5.0, 0.0], [25.0, 5.0, 0.0]])
+    for block in (lower, upper):
+        block.set_active_scalars('common')
+    return lower, upper
 
-    merged = mesh.sample(pv.MultiBlock([lower, upper]), categorical=True)
+
+@pytest.fixture
+def side_by_side_probe():
+    """Probe points inside the lower block, inside the upper block, and outside both."""
+    return pv.PolyData([[5.0, 5.0, 0.0], [15.0, 5.0, 0.0], [25.0, 5.0, 0.0]])
+
+
+@pytest.mark.parametrize('on_upper', [True, False])
+def test_sample_composite_categorical_drops_partial_arrays(
+    side_by_side_blocks, side_by_side_probe, on_upper
+):
+    lower, upper = side_by_side_blocks
+    block = upper if on_upper else lower
+    block['partial'] = np.zeros(block.n_points)
+
+    merged = side_by_side_probe.sample(pv.MultiBlock([lower, upper]), categorical=True)
 
     assert 'partial' not in merged.point_data
     assert np.array_equal(merged['common'], [0.0, 1.0, 0.0])
     assert np.array_equal(merged['vtkValidPointMask'], [1, 1, 0])
+
+
+@pytest.mark.parametrize(
+    ('lower_array', 'upper_array'),
+    [
+        (np.zeros((121, 3)), np.ones(121)),
+        (np.full(121, 2.75), np.full(121, 7, dtype=np.int32)),
+    ],
+    ids=['components', 'dtype'],
+)
+def test_sample_composite_categorical_drops_mismatched_arrays(
+    side_by_side_blocks, side_by_side_probe, lower_array, upper_array
+):
+    lower, upper = side_by_side_blocks
+    lower['mismatched'] = lower_array
+    upper['mismatched'] = upper_array
+    target = pv.MultiBlock([lower, upper])
+
+    merged = side_by_side_probe.sample(target, categorical=True)
+
+    # VTK keeps an array only where every block agrees on its components and type
+    assert sorted(merged.point_data.keys()) == sorted(
+        side_by_side_probe.sample(target).point_data.keys()
+    )
+    assert 'mismatched' not in merged.point_data
 
 
 @pytest.mark.parametrize(

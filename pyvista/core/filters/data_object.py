@@ -6120,10 +6120,13 @@ def _sample_composite_categorical(
         probed = mesh.sample(block, categorical=True, **options)
         fill = (result[_VALID_POINT_MASK] == 0) & (probed[_VALID_POINT_MASK] == 1)
         for name in list(result.point_data.keys()):
-            if name not in probed.point_data:
+            array = result.point_data[name]
+            other = probed.point_data.get(name)
+            # vtkCompositeDataProbeFilter keeps an array only where every block agrees on it
+            if other is None or other.shape != array.shape or other.dtype != array.dtype:
                 del result.point_data[name]
-            elif fill.any() and len(result.point_data[name]) == mesh.n_points:
-                result.point_data[name][fill] = probed.point_data[name][fill]
+            elif fill.any():
+                array[fill] = other[fill]
     if len(blocks) > 1 and options['mark_blank']:
         _blank_invalid_points_and_cells(result)
     return result
