@@ -60,6 +60,7 @@ if TYPE_CHECKING:
     from pyvista import DataSetAttributes
     from pyvista import ImageData
     from pyvista import MultiBlock
+    from pyvista import PartitionedDataSet
     from pyvista import PointSet
     from pyvista import PolyData
     from pyvista import RectilinearGrid
@@ -5451,7 +5452,7 @@ class DataObjectFilters:
 
     def sample(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
-        target: DataSet | _vtk.vtkDataSet,
+        target: DataSet | MultiBlock | PartitionedDataSet | _vtk.vtkDataSet,
         *,
         tolerance: float | None = None,
         pass_cell_data: bool = True,
@@ -5482,9 +5483,11 @@ class DataObjectFilters:
 
         Parameters
         ----------
-        target : pyvista.DataSet
+        target : pyvista.DataSet | pyvista.MultiBlock
             The vtk data object to sample from - point and cell arrays from
-            this object are sampled onto the nodes of the ``dataset`` mesh.
+            this object are sampled onto the nodes of the ``dataset`` mesh. A
+            composite target is sampled block by block, keeping the first block
+            to sample each point.
 
         tolerance : float, optional
             Tolerance used to compute whether a point in the source is
@@ -5500,10 +5503,12 @@ class DataObjectFilters:
         categorical : bool, default: False
             Control whether the target's active point scalars are to be treated
             as categorical. If the data is categorical, then the resultant data
-            will be determined by a nearest neighbor interpolation scheme. The
-            target must have single-component active point scalars. All other
-            arrays are interpolated normally. A :class:`~pyvista.MultiBlock`
-            target is sampled without categorical data and warns.
+            will be determined by a nearest neighbor interpolation scheme. All
+            other arrays are interpolated normally.
+
+            The target must have single-component active point scalars. A
+            composite target is sampled block by block, keeping the first block
+            to sample each point, so every block needs them.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -5543,6 +5548,9 @@ class DataObjectFilters:
 
         Raises
         ------
+        TypeError
+            If ``target`` cannot be wrapped as a dataset or a composite of datasets.
+
         ValueError
             If ``categorical=True`` and the target has no single-component active
             point scalars, or if ``locator`` is a :vtk:`vtkOBBTree` and VTK is 9.7
@@ -5579,34 +5587,46 @@ class DataObjectFilters:
         pyvista_ndarray([ 46.5 , 225.12])
 
         """
-        if categorical:
-            _check_categorical_scalars(wrap(target))
+        options: dict[str, Any] = dict(
+            tolerance=tolerance,
+            pass_cell_data=pass_cell_data,
+            pass_point_data=pass_point_data,
+            progress_bar=progress_bar,
+            locator=locator,
+            pass_field_data=pass_field_data,
+            mark_blank=mark_blank,
+            snap_to_closest_point=snap_to_closest_point,
+        )
 
         # Sample block by block so each block takes the path for its own type
         if isinstance(self, pv.MultiBlock):
             return cast(
                 '_DataSetOrMultiBlockType',
-                self.generic_filter(
-                    'sample',
-                    target=target,
-                    tolerance=tolerance,
-                    pass_cell_data=pass_cell_data,
-                    pass_point_data=pass_point_data,
-                    categorical=categorical,
-                    progress_bar=progress_bar,
-                    locator=locator,
-                    pass_field_data=pass_field_data,
-                    mark_blank=mark_blank,
-                    snap_to_closest_point=snap_to_closest_point,
-                ),
+                self.generic_filter('sample', target=target, categorical=categorical, **options),
             )
+
+        target_ = wrap(target)
+        if not isinstance(target_, (pv.DataSet, pv.MultiBlock, pv.PartitionedDataSet)):
+            msg = (
+                'Sampling target must be a dataset or a composite of datasets, got '
+                f'{type(target_).__name__}.'
+            )
+            raise TypeError(msg)
+        if categorical:
+            blocks = _categorical_blocks(target_)
+            if isinstance(target_, (pv.MultiBlock, pv.PartitionedDataSet)):
+                return cast(
+                    '_DataSetOrMultiBlockType',
+                    _sample_composite_categorical(self, target_, blocks, options=options),
+                )
+            target_ = blocks[0]
 
         alg = _vtk.vtkResampleWithDataSet()  # Construct the ResampleWithDataSet object
         alg.SetInputData(
             self
         )  # Set the Input data (actually the source i.e. where to sample from)
         # Set the Source data (actually the target, i.e. where to sample to)
-        alg.SetSourceData(wrap(target))
+        alg.SetSourceData(target_)
         alg.SetPassCellArrays(pass_cell_data)
         alg.SetPassPointArrays(pass_point_data)
         alg.SetPassFieldArrays(pass_field_data)
@@ -5955,6 +5975,10 @@ def _get_cell_quality_measures() -> dict[str, str]:
     return measures
 
 
+_VALID_POINT_MASK = 'vtkValidPointMask'
+_GHOST_ARRAY = 'vtkGhostType'
+
+
 def _slice_image_along_axis(
     image: ImageData, *, axis: int, coordinate: float, sign: float
 ) -> PolyData | None:
@@ -6033,15 +6057,22 @@ def _deprecate_obb_tree_locator() -> None:
     warn_external(msg, PyVistaDeprecationWarning)
 
 
-def _check_categorical_scalars(target: DataSet | _vtk.vtkCompositeDataSet) -> None:
-    """Raise or warn if ``target`` cannot be sampled as categorical data."""
-    if isinstance(target, _vtk.vtkCompositeDataSet):
-        warn_external(
-            'Composite targets are sampled without categorical data, so the result '
-            'interpolates between categories. Combine the target into a single dataset '
-            'to sample it as categorical data.'
-        )
-        return
+def _categorical_blocks(target: DataSet | MultiBlock | PartitionedDataSet) -> list[DataSet]:
+    """Return the datasets a categorical sample of ``target`` probes, finest first."""
+    if isinstance(target, pv.PartitionedDataSet):
+        target = pv.MultiBlock(list(target))
+    if isinstance(target, pv.MultiBlock):
+        # vtkCompositeDataProbeFilter traverses in reverse so the finest block wins
+        datasets = list(target.recursive_iterator(skip_none=True, skip_empty=True))[::-1]
+    else:
+        datasets = [target]
+    for dataset in datasets:
+        _check_categorical_scalars(dataset)
+    return datasets
+
+
+def _check_categorical_scalars(target: DataSet) -> None:
+    """Raise if ``target`` cannot be sampled as categorical data."""
     scalars = target.point_data.active_scalars
     if scalars is None:
         msg = (
@@ -6057,6 +6088,53 @@ def _check_categorical_scalars(target: DataSet | _vtk.vtkCompositeDataSet) -> No
             f'have {scalars.shape[1]} components.'
         )
         raise ValueError(msg)
+
+
+def _sample_composite_categorical(
+    mesh: DataSet,
+    target: MultiBlock | PartitionedDataSet,
+    blocks: list[DataSet],
+    *,
+    options: dict[str, Any],
+) -> DataSet:
+    """Sample each block of a composite target and keep the first block to hit each point."""
+    if not blocks:
+        return mesh.sample(target, categorical=False, **options)
+
+    result = mesh.sample(blocks[0], categorical=True, **options)
+    for block in blocks[1:]:
+        probed = mesh.sample(block, categorical=True, **options)
+        fill = (result[_VALID_POINT_MASK] == 0) & (probed[_VALID_POINT_MASK] == 1)
+        for name in list(result.point_data.keys()):
+            if name not in probed.point_data:
+                del result.point_data[name]
+            elif fill.any() and len(result.point_data[name]) == mesh.n_points:
+                result.point_data[name][fill] = probed.point_data[name][fill]
+    if len(blocks) > 1 and options['mark_blank']:
+        _blank_invalid_points_and_cells(result)
+    return result
+
+
+def _blank_invalid_points_and_cells(result: DataSet) -> None:
+    """Mark the points which were never sampled, and every cell using one, as hidden."""
+    invalid = result[_VALID_POINT_MASK] == 0
+    if _GHOST_ARRAY in result.point_data:
+        hidden_point = np.uint8(_vtk.vtkDataSetAttributes.HIDDENPOINT)
+        point_ghosts = result.point_data[_GHOST_ARRAY]
+        point_ghosts[invalid] |= hidden_point
+        point_ghosts[~invalid] &= np.invert(hidden_point)
+
+    if _GHOST_ARRAY in result.cell_data:
+        # Averaging a 0/1 indicator marks every cell with at least one invalid point
+        indicator = result.copy(deep=False)
+        indicator.clear_data()
+        indicator.point_data['invalid'] = invalid.astype(float)
+        per_cell = indicator.point_data_to_cell_data()['invalid'] > 0
+
+        hidden_cell = np.uint8(_vtk.vtkDataSetAttributes.HIDDENCELL)
+        cell_ghosts = result.cell_data[_GHOST_ARRAY]
+        cell_ghosts[per_cell] |= hidden_cell
+        cell_ghosts[~per_cell] &= np.invert(hidden_cell)
 
 
 def _copy_active_attributes(source: DataSet, target: DataSet) -> None:
