@@ -1263,3 +1263,44 @@ def test_init_renderers_shape_descriptor_positive_raises(shape):
     match = f'"shape" must contain only positive integers. Got {shape!r}.'
     with pytest.raises(ValueError, match=re.escape(match)):
         pv.Plotter(shape=shape)
+
+
+def test_renderer_width_height():
+    pl = pv.Plotter(window_size=(400, 300))
+    assert pl.renderer.width == pytest.approx(400)
+    assert pl.renderer.height == pytest.approx(300)
+
+
+def test_renderer_raises_once_closed():
+    pl = pv.Plotter()
+    renderer = pl.renderer
+    renderer.deep_clean()
+    with pytest.raises(RuntimeError, match='no longer has a camera'):
+        _ = renderer.camera
+    with pytest.raises(RuntimeError, match='no longer has a plotter'):
+        _ = renderer.width
+
+
+def test_remove_actor_none():
+    pl = pv.Plotter()
+    assert pl.renderer.remove_actor(None) is False
+
+
+def test_add_actor_culling_prop_without_property():
+    pl = pv.Plotter()
+    _, prop = pl.renderer.add_actor(_vtk.vtkLegendScaleActor(), culling='back')
+    assert prop is None
+
+
+def test_set_active_renderer_requires_column():
+    pl = pv.Plotter(shape=(2, 2))
+    with pytest.raises(TypeError, match='"index_column" is required'):
+        pl.renderers.set_active_renderer(0)
+
+
+def test_shadow_renderer_raises_once_released():
+    pl = pv.Plotter()
+    renderers = pl.renderers
+    renderers.__del__()  # releases the shadow renderer, as garbage collection would
+    with pytest.raises(RuntimeError, match='no longer have a shadow renderer'):
+        _ = renderers.shadow_renderer
