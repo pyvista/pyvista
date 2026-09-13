@@ -3535,7 +3535,7 @@ class DataSetFilters(DataObjectFilters):
         pyvista.DataObjectFilters.sample
             Resample array data from one mesh onto another.
 
-        resample_to_image
+        pyvista.DataObjectFilters.resample_to_image
             Interpolate onto a new :class:`~pyvista.ImageData` which fits the input's
             bounds, without building the image first.
 
@@ -8355,7 +8355,7 @@ class DataSetFilters(DataObjectFilters):
         voxelize_rectilinear
             Similar function that returns a :class:`~pyvista.RectilinearGrid` with cell data.
 
-        resample_to_image
+        pyvista.DataObjectFilters.resample_to_image
             Similar function which generates a :class:`~pyvista.ImageData` of the same
             geometry. It resamples the input's data arrays instead of generating a mask,
             and fills the voxels its cells or points reach rather than a closed
@@ -8759,7 +8759,7 @@ class DataSetFilters(DataObjectFilters):
         voxelize_binary_mask
             Similar function that returns a :class:`~pyvista.ImageData` with point data.
 
-        resample_to_image
+        pyvista.DataObjectFilters.resample_to_image
             Similar function which generates a :class:`~pyvista.ImageData` of the same
             geometry. It resamples the input's data arrays instead of generating a mask,
             and fills the voxels its cells or points reach rather than a closed
@@ -8948,7 +8948,7 @@ class DataSetFilters(DataObjectFilters):
         voxelize_binary_mask
             Similar function that returns a :class:`~pyvista.ImageData` with point data.
 
-        resample_to_image
+        pyvista.DataObjectFilters.resample_to_image
             Similar function which generates a :class:`~pyvista.ImageData` of the same
             geometry. It resamples the input's data arrays instead of generating a mask,
             and fills the voxels its cells or points reach rather than a closed

@@ -437,7 +437,7 @@ def create_grid(
 
     See Also
     --------
-    pyvista.DataSetFilters.resample_to_image
+    pyvista.DataObjectFilters.resample_to_image
         Build a grid and resample the dataset onto it in a single call. Its voxels fit
         the dataset's bounds, whereas this grid's points lie on them.
 

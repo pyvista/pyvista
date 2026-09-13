@@ -6,7 +6,7 @@ Detailed Resampling
 
 This example uses :func:`pyvista.DataObjectFilters.sample`.
 
-:func:`pyvista.DataSetFilters.resample_to_image` samples onto a new
+:func:`pyvista.DataObjectFilters.resample_to_image` samples onto a new
 :class:`~pyvista.ImageData` in a single call.
 
 :func:`pyvista.DataSetFilters.interpolate` is similar, and the two
@@ -76,7 +76,7 @@ pl.show(cpos=cpos)
 # Resample Onto a New Image
 # +++++++++++++++++++++++++
 # Both examples above build the mesh to sample onto before sampling onto it.
-# :func:`~pyvista.DataSetFilters.resample_to_image` does the two steps at once
+# :func:`~pyvista.DataObjectFilters.resample_to_image` does the two steps at once
 # when that mesh is a uniform grid, which is the usual way to volume render a
 # mesh that is not already :class:`~pyvista.ImageData`.
 #

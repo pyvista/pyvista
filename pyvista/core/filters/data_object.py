@@ -5540,7 +5540,7 @@ class DataObjectFilters:
         pyvista.DataSetFilters.interpolate
             Interpolate values from one mesh onto another.
 
-        pyvista.DataSetFilters.resample_to_image
+        pyvista.DataObjectFilters.resample_to_image
             Sample onto a new :class:`~pyvista.ImageData` which fits the input's bounds,
             without building the image first.
 
@@ -5899,10 +5899,10 @@ class DataObjectFilters:
 
         .. note::
             The input's data arrays are resampled by this filter. Use
-            :meth:`voxelize_binary_mask` to fill the inside of a closed surface instead;
-            it labels voxels as foreground or background and ignores data arrays
-            entirely. Both filters place their voxels identically, so their outputs can
-            be combined.
+            :meth:`~pyvista.DataSetFilters.voxelize_binary_mask` to fill the inside of a
+            closed surface instead; it labels voxels as foreground or background and
+            ignores data arrays entirely. Both filters place their voxels identically, so
+            their outputs can be combined.
 
         .. note::
             Voxels with no value are flagged with a ``'vtkValidPointMask'`` point data
@@ -5922,9 +5922,10 @@ class DataObjectFilters:
             volumetric mesh's surface. ``method='interpolate'`` keeps those the input
             passes through, so the result straddles the input and reaches up to half a
             voxel diagonal beyond it. Resampling a solid and resampling its surface
-            therefore fill different voxels. Use :meth:`voxelize_binary_mask` on the
-            surface to fill a closed surface's interior instead; it keeps the same
-            voxels that ``method='sample'`` keeps for the solid.
+            therefore fill different voxels. Use
+            :meth:`~pyvista.DataSetFilters.voxelize_binary_mask` on the surface to fill a
+            closed surface's interior instead; it keeps the same voxels that
+            ``method='sample'`` keeps for the solid.
 
         Parameters
         ----------
@@ -6023,7 +6024,7 @@ class DataObjectFilters:
             Filter used by ``method='sample'``. Samples onto an existing mesh of any
             type, and exposes options this one does not.
 
-        interpolate
+        pyvista.DataSetFilters.interpolate
             Filter used by ``method='interpolate'``. Interpolates onto an existing mesh
             of any type, and exposes options this one does not.
 
@@ -6031,7 +6032,7 @@ class DataObjectFilters:
             Change the dimensions or spacing of an image which is already
             :class:`~pyvista.ImageData`.
 
-        voxelize_binary_mask
+        pyvista.DataSetFilters.voxelize_binary_mask
             Voxelize the inside of a closed surface as a mask. Operates on a surface's
             geometry and generates a new array instead of resampling existing ones.
 
