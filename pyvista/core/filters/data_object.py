@@ -5579,7 +5579,6 @@ class DataObjectFilters:
         pyvista_ndarray([ 46.5 , 225.12])
 
         """
-
         if categorical:
             _check_categorical_scalars(wrap(target))
 
