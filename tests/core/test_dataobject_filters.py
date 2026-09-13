@@ -1685,6 +1685,47 @@ def test_sample():
     sample_test(snap_to_closest_point=True)
 
 
+@pytest.fixture
+def categorical_target():
+    """Target with a single-component categorical point array."""
+    target = pv.Sphere(theta_resolution=10, phi_resolution=10).delaunay_3d()
+    target.point_data['labels'] = np.arange(target.n_points) % 3
+    return target
+
+
+@pytest.mark.parametrize('as_composite', [True, False])
+def test_sample_categorical(categorical_target, as_composite):
+    mesh = pv.ImageData(dimensions=(5, 5, 5), spacing=(0.3, 0.3, 0.3), origin=(-0.6, -0.6, -0.6))
+    target = pv.MultiBlock([categorical_target]) if as_composite else categorical_target
+
+    result = mesh.sample(target, categorical=True)
+
+    sampled = result['labels'][result['vtkValidPointMask'] == 1]
+    assert np.isin(sampled, categorical_target['labels']).all()
+
+
+@pytest.mark.parametrize('as_composite', [True, False])
+def test_sample_categorical_no_point_scalars_raises(as_composite):
+    mesh = pv.ImageData(dimensions=(5, 5, 5), spacing=(0.3, 0.3, 0.3), origin=(-0.6, -0.6, -0.6))
+    target = pv.Sphere(theta_resolution=10, phi_resolution=10).delaunay_3d()
+    target.cell_data['labels'] = np.ones(target.n_cells)
+    target = pv.MultiBlock([target]) if as_composite else target
+
+    match = 'Categorical sampling requires the target to have active point scalars'
+    with pytest.raises(ValueError, match=match):
+        mesh.sample(target, categorical=True)
+
+
+def test_sample_categorical_multi_component_raises():
+    mesh = pv.ImageData(dimensions=(5, 5, 5), spacing=(0.3, 0.3, 0.3), origin=(-0.6, -0.6, -0.6))
+    target = pv.Sphere(theta_resolution=10, phi_resolution=10).delaunay_3d()
+    target.point_data['vectors'] = np.ones((target.n_points, 3))
+
+    match = "active point scalars 'vectors' have 3 components"
+    with pytest.raises(ValueError, match=match):
+        mesh.sample(target, categorical=True)
+
+
 def test_sample_composite():
     mesh0 = pv.ImageData(dimensions=(11, 11, 1), origin=(0.0, 0.0, 0.0), spacing=(1.0, 1.0, 1.0))
     mesh1 = pv.ImageData(dimensions=(11, 11, 1), origin=(10.0, 0.0, 0.0), spacing=(1.0, 1.0, 1.0))

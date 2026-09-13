@@ -5498,9 +5498,11 @@ class DataObjectFilters:
             Preserve source mesh's original point data arrays.
 
         categorical : bool, default: False
-            Control whether the source point data is to be treated as
-            categorical. If the data is categorical, then the resultant data
-            will be determined by a nearest neighbor interpolation scheme.
+            Control whether the target's active point scalars are to be treated
+            as categorical. If the data is categorical, then the resultant data
+            will be determined by a nearest neighbor interpolation scheme. The
+            target must have single-component active point scalars. All other
+            arrays are interpolated normally.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -5533,6 +5535,12 @@ class DataObjectFilters:
             Dataset containing resampled data.
             Return type matches input.
 
+        Raises
+        ------
+        ValueError
+            If ``categorical=True`` and the target has no single-component active
+            point scalars.
+
         See Also
         --------
         pyvista.DataSetFilters.interpolate
@@ -5564,6 +5572,10 @@ class DataObjectFilters:
         pyvista_ndarray([ 46.5 , 225.12])
 
         """
+
+        if categorical:
+            _check_categorical_scalars(wrap(target))
+
         # Sample block by block so each block takes the path for its own type
         if isinstance(self, pv.MultiBlock):
             return cast(
@@ -5990,6 +6002,31 @@ def _slice_image_along_axis(
     output.set_active_scalars(image.active_scalars_name)
     _copy_active_attributes(image, output)
     return output
+
+
+def _check_categorical_scalars(target: DataSet | MultiBlock) -> None:
+    """Raise if ``target`` cannot be sampled as categorical data."""
+    datasets = (
+        target.recursive_iterator(skip_none=True)
+        if isinstance(target, pv.MultiBlock)
+        else iter([target])
+    )
+    for dataset in datasets:
+        scalars = dataset.point_data.active_scalars
+        if scalars is None:
+            msg = (
+                'Categorical sampling requires the target to have active point scalars, '
+                f'but the target has none. Its point data arrays are '
+                f'{dataset.point_data.keys()}.'
+            )
+            raise ValueError(msg)
+        if scalars.ndim > 1:
+            msg = (
+                'Categorical sampling requires single-component active point scalars, but '
+                f"the target's active point scalars '{dataset.point_data.active_scalars_name}' "
+                f'have {scalars.shape[1]} components.'
+            )
+            raise ValueError(msg)
 
 
 def _copy_active_attributes(source: DataSet, target: DataSet) -> None:
