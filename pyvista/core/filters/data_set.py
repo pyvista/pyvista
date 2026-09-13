@@ -9259,8 +9259,6 @@ def _string_array_names(attributes: DataSetAttributes) -> list[str]:
     return [
         name
         for index in range(vtk_attributes.GetNumberOfArrays())
-        if isinstance(
-            array := vtk_attributes.GetAbstractArray(index), _vtk.vtkStringArray
-        )
+        if isinstance(array := vtk_attributes.GetAbstractArray(index), _vtk.vtkStringArray)
         and (name := array.GetName()) is not None
     ]

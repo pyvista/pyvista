@@ -1683,7 +1683,9 @@ def test_sample():
     sample_test(snap_to_closest_point=True)
 
 
-@pytest.mark.parametrize('locator', ['cell', 'cell_tree', 'static_cell', _vtk.vtkStaticCellLocator])
+@pytest.mark.parametrize(
+    'locator', ['cell', 'cell_tree', 'static_cell', _vtk.vtkStaticCellLocator]
+)
 def test_sample_locator(locator):
     # An unstructured target is required: image data is probed without a cell locator
     target = pv.Sphere(theta_resolution=10, phi_resolution=10).delaunay_3d()
