@@ -3573,9 +3573,14 @@ class DataSetFilters(DataObjectFilters):
         """
         target_ = wrap(target)
         if not isinstance(target_, pv.DataSet):
-            msg = (  # type: ignore[unreachable]
+            hint = (  # type: ignore[unreachable]
+                ' Merge its blocks with `MultiBlock.combine()`.'
+                if isinstance(target_, pv.MultiBlock)
+                else ''
+            )
+            msg = (
                 f'Interpolation target must be a single dataset, got '
-                f'{type(target_).__name__}. Merge its blocks with `MultiBlock.combine()`.'
+                f'{type(target_).__name__}.{hint}'
             )
             raise TypeError(msg)
         if target_.n_points == 0:
