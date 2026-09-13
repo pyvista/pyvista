@@ -773,6 +773,46 @@ def test_fit_box_holds_at_any_window_size(sphere, vertical: bool, window_size):
         assert top - bottom >= bar.GetBarRatio() * (top - bottom) + label_height + title_height
 
 
+@pytest.mark.parametrize('vertical', [True, False], ids=['vertical', 'horizontal'])
+def test_fit_box_refits_a_resized_window(sphere, vertical: bool):
+    # The box is a fraction of the window and the text is not, so a narrower window
+    # leaves the text outside a box that is not measured again
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=[900, 700])
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = _fitted_bar(pl, sphere, vertical=vertical, box={'outline': True})
+    pl.screenshot(return_img=True)
+
+    # A vertical box is squeezed by a narrower window, a horizontal one by a shorter
+    pl.window_size = [400, 700] if vertical else [900, 260]
+    pl.screenshot(return_img=True)
+
+    dpi = pl.render_window.GetDPI()
+    left, right, bottom, top = _box_edges(bar, pl.window_size)
+    if vertical:
+        assert right - left >= _title_width(bar.GetTitleTextProperty(), FIT_TITLE, dpi)
+        assert _label_reach(bar, dpi, pl.window_size[0]) <= right
+    else:
+        label_height = _label_size(bar, bar.GetLabelTextProperty(), dpi)[1]
+        title_height = _title_height(bar.GetTitleTextProperty(), FIT_TITLE, dpi)
+        assert top - bottom >= bar.GetBarRatio() * (top - bottom) + label_height + title_height
+
+
+def test_fit_box_stops_fitting_a_removed_bar(sphere):
+    # The observer holds the bar, so it has to go when the bar does
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    _fitted_bar(pl, sphere, vertical=True, box={'outline': True})
+    assert pl.scalar_bars._scalar_bar_fits
+
+    pl.remove_scalar_bar(FIT_TITLE)
+
+    assert not pl.scalar_bars._scalar_bar_fits
+
+
 # A baseline is capped at 400 pixels and compared against the render as it is, so a
 # window wider than that cannot be image tested
 @pytest.mark.parametrize('window_size', [[320, 280], [400, 300]], ids=['narrow', 'wide'])

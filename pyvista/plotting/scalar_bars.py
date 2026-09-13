@@ -144,6 +144,7 @@ class ScalarBars(_NoNewAttrMixin):
         self._resync_titles: set[str] = set()
         self._scalar_bar_actors = {}
         self._scalar_bar_widgets = {}
+        self._scalar_bar_fits: dict[str, dict] = {}
 
     def clear(self):
         """Remove all scalar bars and resets all scalar bar properties."""
@@ -152,6 +153,8 @@ class ScalarBars(_NoNewAttrMixin):
         self._resync_titles = set()
         self._scalar_bar_actors = {}
         self._scalar_bar_widgets = {}
+        for title in list(self._scalar_bar_fits):
+            self._stop_fitting(title)
 
     def __plotter_close__(self) -> None:
         """Release scalar-bar state when the owning plotter closes."""
@@ -166,6 +169,96 @@ class ScalarBars(_NoNewAttrMixin):
             title_quotes = f'"{title}"'
             lines.append(f'{title_quotes:20} {interactive!s:5}')
         return '\n'.join(lines)
+
+    def _stop_fitting(self, title):
+        """Drop the observer that keeps a scalar bar's box fitted to its text."""
+        fit = self._scalar_bar_fits.pop(title, None)
+        if fit is None:
+            return
+        window = self._plotter.render_window
+        if window is not None:
+            window.RemoveObserver(fit['observer'])
+
+    def _apply_fit(self, title):
+        """Size a scalar bar's box to its text, or give it back the size it asked for."""
+        fit = self._scalar_bar_fits.get(title)
+        scalar_bar = self._scalar_bar_actors.get(title)
+        if fit is None or scalar_bar is None:
+            return
+        width, height, position, bar_ratio, separation = fit['request']
+        # Measure against the size that was asked for rather than the last fit
+        scalar_bar.SetWidth(width)
+        scalar_bar.SetHeight(height)
+        scalar_bar.SetBarRatio(bar_ratio)
+        scalar_bar.SetVerticalTitleSeparation(separation)
+        scalar_bar.SetPosition(*position)
+        title_text = scalar_bar.GetTitleTextProperty()
+
+        if not (scalar_bar.GetDrawFrame() or scalar_bar.GetDrawBackground()):
+            # Nothing is drawn around the text, so there is nothing to fit it to
+            title_text.SetLineOffset(-fit['pad'])
+            return
+
+        fitted_width, fitted_height, fitted_ratio, offset, fitted_separation = _fitted_box(
+            scalar_bar,
+            vertical=fit['vertical'],
+            title=fit['title'],
+            label_text=scalar_bar.GetLabelTextProperty(),
+            pad=fit['pad'],
+            dpi=self._plotter.render_window.GetDPI(),
+            window=self._plotter.window_size,
+        )
+        scalar_bar.SetWidth(fitted_width)
+        scalar_bar.SetHeight(fitted_height)
+        scalar_bar.SetBarRatio(fitted_ratio)
+        scalar_bar.SetVerticalTitleSeparation(fitted_separation)
+        if fit['vertical']:
+            # A vertical bar is anchored at its right edge, where its labels are, so the
+            # box grows away from the window edge rather than through it
+            scalar_bar.SetPosition(position[0] - (fitted_width - width), position[1])
+        title_text.SetLineOffset(offset)
+
+    def _keep_fitted(self, title, scalar_bar, *, vertical, display_title, pad):
+        """Refit a scalar bar's box whenever the window it is drawn in changes."""
+        window = self._plotter.render_window
+        self._scalar_bar_fits[title] = {
+            'request': (
+                scalar_bar.GetWidth(),
+                scalar_bar.GetHeight(),
+                scalar_bar.GetPosition(),
+                scalar_bar.GetBarRatio(),
+                scalar_bar.GetVerticalTitleSeparation(),
+            ),
+            'vertical': vertical,
+            'title': display_title,
+            'pad': pad,
+            'state': None,
+            'observer': None,
+        }
+
+        def refit(*_args):
+            fit = self._scalar_bar_fits.get(title)
+            if fit is None:
+                return
+            bar = self._scalar_bar_actors.get(title)
+            if bar is None:
+                return
+            # The text is measured in pixels while the box is a fraction of the window,
+            # so the fit only holds while the window and the box it draws hold
+            state = (
+                tuple(self._plotter.window_size),
+                self._plotter.render_window.GetDPI(),
+                bool(bar.GetDrawFrame() or bar.GetDrawBackground()),
+            )
+            if state == fit['state']:
+                return
+            fit['state'] = state
+            self._apply_fit(title)
+
+        self._scalar_bar_fits[title]['observer'] = window.AddObserver(
+            _vtk.vtkCommand.StartEvent, refit
+        )
+        refit()
 
     def _stacked_neighbor(self, slot):
         """Return the scalar bar actor occupying the slot below this one."""
@@ -310,6 +403,8 @@ class ScalarBars(_NoNewAttrMixin):
         if widget is not None:
             widget.SetEnabled(0)
 
+        self._stop_fitting(title)
+
     def __len__(self):
         """Return the number of scalar bar actors."""
         return len(self._scalar_bar_actors)
@@ -390,6 +485,12 @@ class ScalarBars(_NoNewAttrMixin):
             self._scalar_bar_mappers[new_title] = self._scalar_bar_mappers.pop(old_title)
             if old_title in self._scalar_bar_widgets:
                 self._scalar_bar_widgets[new_title] = self._scalar_bar_widgets.pop(old_title)
+            if old_title in self._scalar_bar_fits:
+                fit = self._scalar_bar_fits.pop(old_title)
+                fit['title'] = new_title
+                # The title is what the box is fitted around, so it has to be measured again
+                fit['state'] = None
+                self._scalar_bar_fits[new_title] = fit
             slot = self._plotter._scalar_bar_slot_lookup.pop(old_title, None)
             if slot is not None:
                 self._plotter._scalar_bar_slot_lookup[new_title] = slot
@@ -1068,31 +1169,16 @@ class ScalarBars(_NoNewAttrMixin):
         window_width, window_height = self._plotter.window_size
         dpi = self._plotter.render_window.GetDPI()
 
+        fit_box = False
         if unconstrained:
             if rotate_title:
                 scalar_bar.SetForceVerticalTitle(True)
                 title_height = _title_height(title_text, display_title, dpi)
                 bar_width = width * window_width
                 title_text.SetLineOffset(-_rotated_title_offset(bar_width, title_height, pad))
-            elif fits_box:
-                width, height, bar_ratio, offset, separation = _fitted_box(
-                    scalar_bar,
-                    vertical=vertical,
-                    title=display_title,
-                    label_text=label_text,
-                    pad=pad,
-                    dpi=dpi,
-                    window=(window_width, window_height),
-                )
-                # A vertical bar is anchored at its right edge, where its labels are,
-                # so the box grows away from the window edge rather than through it
-                position_x -= width - scalar_bar.GetWidth() if vertical else 0
-                scalar_bar.SetWidth(width)
-                scalar_bar.SetHeight(height)
-                scalar_bar.SetBarRatio(bar_ratio)
-                scalar_bar.SetVerticalTitleSeparation(separation)
-                scalar_bar.SetPosition(position_x, scalar_bar.GetPosition()[1])
-                title_text.SetLineOffset(offset)
+            elif not sized:
+                # The box is free to grow, but the bar has not been placed yet
+                fit_box = True
             elif pad:
                 title_text.SetLineOffset(-pad)
 
@@ -1115,6 +1201,13 @@ class ScalarBars(_NoNewAttrMixin):
                     scalar_bar.GetPosition()[0],
                     self._stacked_above(neighbor, gap=gap, dpi=dpi),
                 )
+
+        if fit_box:
+            # Fit once the bar is where it belongs, and keep it fitted as the window
+            # it is measured against changes
+            self._keep_fitted(
+                title, scalar_bar, vertical=vertical, display_title=display_title, pad=pad
+            )
 
         # finally, add to the actor and return the scalar bar
         self._plotter.add_actor(scalar_bar, reset_camera=False, pickable=False, render=render)
