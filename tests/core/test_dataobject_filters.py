@@ -1683,16 +1683,18 @@ def test_sample():
     sample_test(snap_to_closest_point=True)
 
 
-@pytest.mark.parametrize('locator', ['cell', 'cell_tree', 'static_cell', None])
+@pytest.mark.parametrize('locator', ['cell', 'cell_tree', 'static_cell', _vtk.vtkStaticCellLocator])
 def test_sample_locator(locator):
     # An unstructured target is required: image data is probed without a cell locator
     target = pv.Sphere(theta_resolution=10, phi_resolution=10).delaunay_3d()
-    target.point_data['pdata'] = np.arange(target.n_points, dtype=float)
+    # A linear field interpolates to the same value from whichever cell is found
+    target.point_data['x'] = target.points[:, 0]
     mesh = pv.Sphere(theta_resolution=8, phi_resolution=8, radius=0.4)
 
-    result = mesh.sample(target, locator=locator)
+    result = mesh.sample(target, locator=locator() if callable(locator) else locator)
 
-    assert np.array_equal(result['pdata'], mesh.sample(target, locator=None)['pdata'])
+    assert result['vtkValidPointMask'].all()
+    assert np.allclose(result['x'], mesh.points[:, 0])
 
 
 @pytest.mark.needs_vtk_version(9, 7, 0)
