@@ -5938,6 +5938,7 @@ class DataObjectFilters:
             Approximate spacing to use for the generated image. Set this value
             to control the spacing explicitly. If unset, the spacing is defined
             implicitly through other parameters. See summary and examples for details.
+
         target_n_points : int, optional
             Approximate number of points to generate. The spacing is isotropic and
             chosen so the output holds about this many points, distributed between the
