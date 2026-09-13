@@ -444,6 +444,33 @@ def test_points_to_cells_and_cells_to_points_ghost_array_round_trip(uniform):
     assert np.array_equal(converted.cell_data[GHOST_ARRAY_NAME], expected)
 
 
+@pytest.mark.parametrize('filter_name', ['points_to_cells', 'cells_to_points'])
+def test_remesh_ghost_array_is_kept_with_explicit_scalars(uniform, filter_name):
+    points_to_cells = filter_name == 'points_to_cells'
+    if points_to_cells:
+        scalars, data, flag = 'Spatial Point Data', uniform.point_data, HIDDEN_POINT
+    else:
+        scalars, data, flag = 'Spatial Cell Data', uniform.cell_data, HIDDEN_CELL
+    ghosts = np.resize(np.array([flag, 0], dtype=np.uint8), len(data[scalars]))
+    data[GHOST_ARRAY_NAME] = ghosts
+
+    converted = getattr(uniform, filter_name)(scalars)
+
+    new_data = converted.cell_data if points_to_cells else converted.point_data
+    assert set(new_data.keys()) == {scalars, GHOST_ARRAY_NAME}
+    assert converted.active_scalars_name == scalars
+    expected_flag = HIDDEN_CELL if points_to_cells else HIDDEN_POINT
+    assert np.array_equal(new_data[GHOST_ARRAY_NAME] == expected_flag, ghosts == flag)
+
+
+def test_points_to_cells_non_ghost_dtype_obeys_explicit_scalars(uniform):
+    uniform.point_data[GHOST_ARRAY_NAME] = np.zeros(uniform.n_points, dtype=float)
+
+    converted = uniform.points_to_cells('Spatial Point Data')
+
+    assert converted.cell_data.keys() == ['Spatial Point Data']
+
+
 def test_points_to_cells_ghost_array_ignores_non_ghost_dtype(uniform):
     array = np.zeros(uniform.n_points, dtype=float)
     uniform.point_data[GHOST_ARRAY_NAME] = array

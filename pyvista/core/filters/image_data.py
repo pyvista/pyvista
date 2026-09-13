@@ -3041,7 +3041,7 @@ class ImageDataFilters(DataSetFilters):
             Name of point data scalars to pass through to the output as cell data. Use
             this parameter to restrict the output to only include the specified array.
             By default, all point data arrays at the input are passed through as cell
-            data at the output.
+            data at the output. The ``'vtkGhostType'`` array is always included.
 
         dimensionality : VectorLike[bool], Literal[0, 1, 2, 3, "0D", "1D", "2D", "3D", "preserve"]
             Control which dimensions will be modified by the filter.
@@ -3245,7 +3245,7 @@ class ImageDataFilters(DataSetFilters):
             Name of cell data scalars to pass through to the output as point data. Use
             this parameter to restrict the output to only include the specified array.
             By default, all cell data arrays at the input are passed through as point
-            data at the output.
+            data at the output. The ``'vtkGhostType'`` array is always included.
 
         dimensionality : VectorLike[bool], Literal[0, 1, 2, 3, "0D", "1D", "2D", "3D", "preserve"]
             Control which dimensions will be modified by the filter.
@@ -3475,13 +3475,22 @@ class ImageDataFilters(DataSetFilters):
 
         # Copy old data (point or cell) to new data (cell or point)
         ghost_array_name = _vtk.vtkDataSetAttributes.GhostArrayName()
+        ghost_array = old_data.get(ghost_array_name)
+        if ghost_array is not None and ghost_array.dtype != np.uint8:
+            # VTK only recognizes an unsigned char array as ghosts
+            ghost_array = None
+
         array_names = [scalars] if scalars else old_data.keys()
         for array_name in array_names:
+            if ghost_array is not None and array_name == ghost_array_name:
+                continue
             array = old_data[array_name]
-            if array_name == ghost_array_name and array.dtype == np.uint8:
-                new_data[array_name] = _remap_ghost_array(array, points_to_cells=points_to_cells)
-            else:
-                new_data[array_name] = array.copy() if copy else array
+            new_data[array_name] = array.copy() if copy else array
+
+        if ghost_array is not None:
+            new_data[ghost_array_name] = _remap_ghost_array(
+                ghost_array, points_to_cells=points_to_cells
+            )
 
         new_image.set_active_scalars(output_scalars)
         return new_image
