@@ -3539,7 +3539,8 @@ class DataSetFilters(DataObjectFilters):
             :class:`~pyvista.MultiBlock`.
 
         ValueError
-            If ``target`` has no points.
+            If ``target`` has no points, or if ``strategy``, ``sharpness``, ``radius``
+            or ``n_points`` is out of range.
 
         See Also
         --------
@@ -3580,6 +3581,12 @@ class DataSetFilters(DataObjectFilters):
         if target_.n_points == 0:
             msg = 'Interpolation target has no points to interpolate from.'
             raise ValueError(msg)
+
+        # VTK silently clamps these to the same bounds
+        _validation.check_greater_than(sharpness, 1, name='sharpness', strict=False)
+        _validation.check_nonnegative(radius, name='radius')
+        if n_points is not None:
+            _validation.check_greater_than(n_points, 1, name='n_points', strict=False)
 
         gaussian_kernel = _vtk.vtkGaussianKernel()
         gaussian_kernel.SetSharpness(sharpness)

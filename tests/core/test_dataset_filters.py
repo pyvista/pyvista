@@ -3602,6 +3602,19 @@ def test_interpolate_composite_target_raises():
         pv.Sphere().interpolate(target)
 
 
+@pytest.mark.parametrize(
+    ('kwargs', 'match'),
+    [
+        ({'sharpness': 0.5}, 'sharpness values must all be greater than or equal to 1.'),
+        ({'radius': -1.0}, 'radius values must all be greater than or equal to 0.'),
+        ({'n_points': 0}, 'n_points values must all be greater than or equal to 1.'),
+    ],
+)
+def test_interpolate_kernel_range_raises(kwargs, match):
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.Sphere().interpolate(pv.Sphere(), **kwargs)
+
+
 def test_interpolate_empty_target_raises():
     match = 'Interpolation target has no points to interpolate from.'
     with pytest.raises(ValueError, match=match):
