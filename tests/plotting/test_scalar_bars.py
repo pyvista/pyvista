@@ -819,6 +819,29 @@ def test_fit_box_refits_a_resized_window(sphere, vertical: bool):
 
 
 @pytest.mark.parametrize('vertical', [True, False], ids=['vertical', 'horizontal'])
+def test_fit_box_fits_an_interactive_bar(sphere, vertical: bool):
+    # An interactive bar is drawn from its widget's representation, so the box the fit
+    # measured is the one the representation has to hold
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = _fitted_bar(pl, sphere, vertical=vertical, box={'outline': True}, interactive=True)
+    pl.screenshot(return_img=True)
+
+    dpi = pl.render_window.GetDPI()
+    left, right, bottom, top = _box_edges(bar, pl.window_size)
+    label_height = _label_size(bar, bar.GetLabelTextProperty(), dpi)[1]
+    title_height = _title_height(bar.GetTitleTextProperty(), FIT_TITLE, dpi)
+    if vertical:
+        assert right - left >= _title_width(bar.GetTitleTextProperty(), FIT_TITLE, dpi)
+        assert _label_reach(bar, dpi, pl.window_size[0]) <= right
+    else:
+        ramp = bar.GetBarRatio() * (top - bottom)
+        assert top - bottom >= ramp + label_height + title_height
+
+
+@pytest.mark.parametrize('vertical', [True, False], ids=['vertical', 'horizontal'])
 def test_fit_box_keeps_a_size_set_on_the_actor(sphere, vertical: bool):
     # The bar is sized after it is added, as LookupTable.plot does, so that is the size
     # it asks for and the one the next fit has to measure against

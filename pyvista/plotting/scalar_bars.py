@@ -211,7 +211,7 @@ class ScalarBars(_NoNewAttrMixin):
         if not (scalar_bar.GetDrawFrame() or scalar_bar.GetDrawBackground()):
             # Nothing is drawn around the text, so there is nothing to fit it to
             title_text.SetLineOffset(-fit['pad'])
-            fit['applied'] = _box_geometry(scalar_bar)
+            fit['applied'] = self._fitted_widget(title, scalar_bar)
             return
 
         fitted_width, fitted_height, fitted_ratio, offset, fitted_separation = _fitted_box(
@@ -232,7 +232,18 @@ class ScalarBars(_NoNewAttrMixin):
             # box grows away from the window edge rather than through it
             scalar_bar.SetPosition(position[0] - (fitted_width - width), position[1])
         title_text.SetLineOffset(offset)
-        fit['applied'] = _box_geometry(scalar_bar)
+        fit['applied'] = self._fitted_widget(title, scalar_bar)
+
+    def _fitted_widget(self, title, scalar_bar):
+        """Give a scalar bar's widget the box it was fitted to, and return that box."""
+        widget = self._scalar_bar_widgets.get(title)
+        if widget is not None:
+            # An interactive bar is drawn from its representation, so the representation
+            # carries the fitted box and dragging the widget asks for a box of its own
+            rep = widget.GetRepresentation()
+            rep.GetPositionCoordinate().SetValue(*scalar_bar.GetPosition())
+            rep.GetPosition2Coordinate().SetValue(scalar_bar.GetWidth(), scalar_bar.GetHeight())
+        return _box_geometry(scalar_bar)
 
     def _keep_fitted(self, title, scalar_bar, *, vertical, display_title, pad):
         """Refit a scalar bar's box whenever the window it is drawn in changes."""
