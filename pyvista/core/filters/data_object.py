@@ -5867,6 +5867,9 @@ class DataObjectFilters:
 
         #. Specify the ``dimensions`` explicitly.
 
+        #. Specify the ``target_n_points``. The spacing is isotropic and estimated so
+           the output has approximately this many points.
+
         #. Specify the ``cell_length_percentile``. The spacing is estimated from the
            mesh's cells using the specified percentile.
 
@@ -5946,8 +5949,6 @@ class DataObjectFilters:
             single point and takes no part in the count. Rounding to whole voxels means
             the count is approached, not matched exactly. Cannot be set with
             ``dimensions``, ``spacing``, or the cell length options.
-
-            .. versionadded:: 0.49
 
         rounding_func : Callable[VectorLike[float], VectorLike[int]], optional
             Control how the dimensions are rounded to integers based on the provided or

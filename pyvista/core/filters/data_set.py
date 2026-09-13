@@ -8238,6 +8238,9 @@ class DataSetFilters(DataObjectFilters):
 
         #. Specify the ``dimensions`` explicitly.
 
+        #. Specify the ``target_n_points``. The spacing is isotropic and estimated so
+           the output has approximately this many points.
+
         #. Specify the ``cell_length_percentile``. The spacing is estimated from the
            surface's cells using the specified percentile.
 
@@ -8302,7 +8305,7 @@ class DataSetFilters(DataObjectFilters):
             the count is approached, not matched exactly. Cannot be set with
             ``dimensions``, ``spacing``, or the cell length options.
 
-            .. versionadded:: 0.49
+            .. versionadded:: 0.50
 
         rounding_func : Callable[VectorLike[float], VectorLike[int]], optional
             Control how the dimensions are rounded to integers based on the provided or
@@ -8643,6 +8646,9 @@ class DataSetFilters(DataObjectFilters):
 
         #. Specify the ``dimensions`` explicitly.
 
+        #. Specify the ``target_n_points``. The spacing is isotropic and estimated so
+           the output has approximately this many points.
+
         #. Specify the ``cell_length_percentile``. The spacing is estimated from the
            surface's cells using the specified percentile.
 
@@ -8705,7 +8711,7 @@ class DataSetFilters(DataObjectFilters):
             the count is approached, not matched exactly. Cannot be set with
             ``dimensions``, ``spacing``, or the cell length options.
 
-            .. versionadded:: 0.49
+            .. versionadded:: 0.50
 
         rounding_func : Callable[VectorLike[float], VectorLike[int]], optional
             Control how the dimensions are rounded to integers based on the provided or
@@ -8840,6 +8846,9 @@ class DataSetFilters(DataObjectFilters):
 
         #. Specify the ``dimensions`` explicitly.
 
+        #. Specify the ``target_n_points``. The spacing is isotropic and estimated so
+           the output has approximately this many points.
+
         #. Specify the ``cell_length_percentile``. The spacing is estimated from the
            surface's cells using the specified percentile.
 
@@ -8892,7 +8901,7 @@ class DataSetFilters(DataObjectFilters):
             the count is approached, not matched exactly. Cannot be set with
             ``dimensions``, ``spacing``, or the cell length options.
 
-            .. versionadded:: 0.49
+            .. versionadded:: 0.50
 
         rounding_func : Callable[VectorLike[float], VectorLike[int]], optional
             Control how the dimensions are rounded to integers based on the provided or
