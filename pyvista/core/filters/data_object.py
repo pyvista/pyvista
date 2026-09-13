@@ -61,7 +61,6 @@ if TYPE_CHECKING:
     from pyvista import DataSetAttributes
     from pyvista import ImageData
     from pyvista import MultiBlock
-    from pyvista import PartitionedDataSet
     from pyvista import PointSet
     from pyvista import PolyData
     from pyvista import RectilinearGrid
@@ -5453,7 +5452,7 @@ class DataObjectFilters:
 
     def sample(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
-        target: DataSet | MultiBlock | PartitionedDataSet | _vtk.vtkDataSet,
+        target: DataSet | _vtk.vtkDataSet | _vtk.vtkMultiBlockDataSet | _vtk.vtkPartitionedDataSet,
         *,
         tolerance: float | None = None,
         pass_cell_data: bool = True,

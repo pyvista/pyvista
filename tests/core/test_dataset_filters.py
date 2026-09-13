@@ -5860,6 +5860,8 @@ def test_resample_to_image_method_interpolate(sphere):
 
 
 def test_sample_composite_target():
+    from pyvista import _vtk
+
     def _solid(center):
         mesh = pv.SolidSphere(outer_radius=0.4, center=center)
         mesh['height'] = mesh.points[:, 2]
@@ -5883,6 +5885,21 @@ def test_sample_composite_target():
 
     partitioned = grid.sample(pv.PartitionedDataSet([a, b]))
     assert np.array_equal(partitioned['vtkValidPointMask'], flat['vtkValidPointMask'])
+
+    # Unwrapped composites are accepted too
+    raw = _vtk.vtkMultiBlockDataSet()
+    raw.SetNumberOfBlocks(2)
+    raw.SetBlock(0, a)
+    raw.SetBlock(1, b)
+    assert np.array_equal(grid.sample(raw)['vtkValidPointMask'], flat['vtkValidPointMask'])
+
+    raw_partitions = _vtk.vtkPartitionedDataSet()
+    raw_partitions.SetNumberOfPartitions(2)
+    raw_partitions.SetPartition(0, a)
+    raw_partitions.SetPartition(1, b)
+    assert np.array_equal(
+        grid.sample(raw_partitions)['vtkValidPointMask'], flat['vtkValidPointMask']
+    )
 
 
 def test_resample_to_image_multiblock():
