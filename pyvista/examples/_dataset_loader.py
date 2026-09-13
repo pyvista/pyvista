@@ -395,7 +395,7 @@ class _SingleFileDatasetLoader(_SingleFile, _DatasetLoader):
         self,
         path: str,
         read_func: Callable[[str], DatasetObject] | None = None,
-        load_func: Callable[[DatasetObject], DatasetObject] | None = None,
+        load_func: Callable[[Any], DatasetObject] | None = None,
     ) -> None:
         """Wrap a single file, reading it with ``read_func`` and loading it with ``load_func``."""
         _SingleFile.__init__(self, path)
@@ -422,7 +422,7 @@ class _SingleFileDatasetLoader(_SingleFile, _DatasetLoader):
         self,
         path: str,
         read_func: Callable[[str], DatasetObject],
-        load_func: Callable[[DatasetObject], DatasetObject] | None,
+        load_func: Callable[[Any], DatasetObject] | None,
     ) -> DatasetObject:
         """Read ``path`` and optionally load the result."""
         read = read_func(path)
@@ -608,7 +608,7 @@ class _SingleFileDownloadableDatasetLoader(_SingleFileDatasetLoader, _Downloadab
         self,
         path: str,
         read_func: Callable[[str], DatasetObject] | None = None,
-        load_func: Callable[[DatasetObject], DatasetObject] | None = None,
+        load_func: Callable[[Any], DatasetObject] | None = None,
         target_file: str | None = None,
         download_func: Callable[[str], str | list[str]] | None = None,
         base_url: str | None = None,

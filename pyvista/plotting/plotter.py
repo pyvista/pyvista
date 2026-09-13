@@ -4304,7 +4304,6 @@ class BasePlotter(_BoundsSizeMixin):
             # active, it doesn't modify the original input mesh.
             # We ignore `copy_mesh` if the input is an algorithm
             mesh = mesh.copy(deep=False)
-        mesh = cast('pv.DataSet', mesh)
 
         # Parse arguments
         (
