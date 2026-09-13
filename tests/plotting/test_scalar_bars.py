@@ -818,6 +818,49 @@ def test_fit_box_refits_a_resized_window(sphere, vertical: bool):
         assert top - bottom >= bar.GetBarRatio() * (top - bottom) + label_height + title_height
 
 
+@pytest.mark.parametrize('vertical', [True, False], ids=['vertical', 'horizontal'])
+def test_fit_box_keeps_a_size_set_on_the_actor(sphere, vertical: bool):
+    # The bar is sized after it is added, as LookupTable.plot does, so that is the size
+    # it asks for and the one the next fit has to measure against
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=[900, 700])
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = _fitted_bar(pl, sphere, vertical=vertical, box={})
+    bar.SetPosition(0.03, 0.1)
+    bar.SetPosition2(0.6, 0.7)
+    pl.screenshot(return_img=True)
+
+    pl.window_size = [500, 700]
+    pl.screenshot(return_img=True)
+
+    assert bar.GetPosition() == pytest.approx((0.03, 0.1))
+    assert (bar.GetWidth(), bar.GetHeight()) == pytest.approx((0.6, 0.7))
+
+
+@pytest.mark.parametrize('box', BOXES, ids=BOX_IDS)
+def test_fit_box_fits_a_size_set_on_the_actor(sphere, box):
+    # A box around a bar that was sized after it was added is fitted to the text inside
+    # that size, not inside the one the bar was added with
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=[900, 700])
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = _fitted_bar(pl, sphere, vertical=True, box=box)
+    pl.screenshot(return_img=True)
+    fitted_height = bar.GetHeight()
+
+    bar.SetPosition2(bar.GetWidth(), 0.3)
+    pl.window_size = [500, 700]
+    pl.screenshot(return_img=True)
+
+    assert bar.GetHeight() < fitted_height
+    dpi = pl.render_window.GetDPI()
+    left, right, _bottom, _top = _box_edges(bar, pl.window_size)
+    assert right - left >= _title_width(bar.GetTitleTextProperty(), FIT_TITLE, dpi)
+    assert _label_reach(bar, dpi, pl.window_size[0]) <= right
+
+
 def test_fit_box_stops_fitting_a_removed_bar(sphere):
     # The observer holds the bar, so it has to go when the bar does
     sphere[KEY] = sphere.points[:, 2]

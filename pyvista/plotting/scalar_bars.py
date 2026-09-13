@@ -81,6 +81,17 @@ def _rotated_title_offset(bar_width, title_height, pad):
     return round((bar_width + title_height) / 2 - 2 + pad / 2)
 
 
+def _box_geometry(scalar_bar):
+    """Return the size, place and proportions of the box a scalar bar draws."""
+    return (
+        scalar_bar.GetWidth(),
+        scalar_bar.GetHeight(),
+        scalar_bar.GetPosition(),
+        scalar_bar.GetBarRatio(),
+        scalar_bar.GetVerticalTitleSeparation(),
+    )
+
+
 def _fitted_box(scalar_bar, *, vertical, title, label_text, pad, dpi, window):
     """Return the box that encloses a scalar bar's text, and the settings that fill it.
 
@@ -200,6 +211,7 @@ class ScalarBars(_NoNewAttrMixin):
         if not (scalar_bar.GetDrawFrame() or scalar_bar.GetDrawBackground()):
             # Nothing is drawn around the text, so there is nothing to fit it to
             title_text.SetLineOffset(-fit['pad'])
+            fit['applied'] = _box_geometry(scalar_bar)
             return
 
         fitted_width, fitted_height, fitted_ratio, offset, fitted_separation = _fitted_box(
@@ -220,22 +232,18 @@ class ScalarBars(_NoNewAttrMixin):
             # box grows away from the window edge rather than through it
             scalar_bar.SetPosition(position[0] - (fitted_width - width), position[1])
         title_text.SetLineOffset(offset)
+        fit['applied'] = _box_geometry(scalar_bar)
 
     def _keep_fitted(self, title, scalar_bar, *, vertical, display_title, pad):
         """Refit a scalar bar's box whenever the window it is drawn in changes."""
         window = self._plotter.render_window
         self._scalar_bar_fits[title] = {
-            'request': (
-                scalar_bar.GetWidth(),
-                scalar_bar.GetHeight(),
-                scalar_bar.GetPosition(),
-                scalar_bar.GetBarRatio(),
-                scalar_bar.GetVerticalTitleSeparation(),
-            ),
+            'request': _box_geometry(scalar_bar),
             'vertical': vertical,
             'title': display_title,
             'pad': pad,
             'state': None,
+            'applied': None,
             'observer': None,
         }
 
@@ -246,6 +254,17 @@ class ScalarBars(_NoNewAttrMixin):
             bar = self._scalar_bar_actors.get(title)
             if bar is None:
                 return
+            geometry = _box_geometry(bar)
+            if fit['applied'] is not None and geometry != fit['applied']:
+                # The bar was sized or placed after it was fitted, so that is what it
+                # asks for now and the fit is measured against it from here on
+                fit['request'] = tuple(
+                    now if now != before else asked
+                    for now, before, asked in zip(
+                        geometry, fit['applied'], fit['request'], strict=True
+                    )
+                )
+                fit['state'] = None
             # The text is measured in pixels while the box is a fraction of the window,
             # so the fit only holds while the window and the box it draws hold
             state = (
