@@ -9384,7 +9384,7 @@ def _validate_reference_volume_options(
 
 
 def _spacing_for_n_points(size: NumpyArray[float], target_n_points: int) -> float:
-    """Return the isotropic spacing whose grid holds about the target number of points."""
+    """Return the isotropic spacing whose grid holds about ``target_n_points`` points."""
     target = _validation.validate_number(
         target_n_points, must_be_in_range=[1, np.inf], must_be_integer=True, name='target n points'
     )
