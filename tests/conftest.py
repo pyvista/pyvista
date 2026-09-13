@@ -599,12 +599,14 @@ _RENDERING_MODULES = frozenset(
         'typing/cases/plotting/image_from_window.py',
         'typing/cases/plotting/map_value.py',
         'typing/cases/plotting/plotter_set_chart_interaction.py',
+        'typing/cases/plotting/property_culling.py',
         'typing/cases/plotting/remove_actor.py',
         'typing/cases/plotting/renderer_set_chart_interaction.py',
         'typing/cases/plotting/resolve_scalars_field.py',
         'typing/cases/plotting/screenshot.py',
         'typing/cases/plotting/show_bounds.py',
         'typing/cases/plotting/show_grid.py',
+        'typing/cases/plotting/volume_prop.py',
         # These also evaluate plotting symbols at module scope, so on a
         # rendering-free backend they are skipped at collection time (see
         # ``_RENDERING_ONLY_MODULES`` / ``pytest_ignore_collect``).

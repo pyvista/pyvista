@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import functools
 from typing import TYPE_CHECKING
+from typing import Any
+from typing import Literal
+from typing import overload
 
 import numpy as np
 
@@ -22,8 +25,11 @@ from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from collections.abc import Iterator
 
     from pyvista import MultiBlock
+    from pyvista import PolyData
+    from pyvista import UnstructuredGrid
     from pyvista.core.composite import _TypeMultiBlockLeaf
 
 
@@ -169,7 +175,7 @@ class CompositeFilters(DataObjectFilters):
         # Set default undocumented kwargs. A function is used here to prevent IDEs from
         # suggesting these keywords to users.
 
-        def get_iterator_kwargs(kwargs_) -> tuple[bool, bool]:
+        def get_iterator_kwargs(kwargs_: dict[str, Any]) -> tuple[bool, bool]:
             # Skip None blocks by default
             skip_none_: bool = kwargs_.pop('_skip_none', True)
             # Do not skip empty blocks by default
@@ -178,7 +184,12 @@ class CompositeFilters(DataObjectFilters):
 
         skip_none, skip_empty = get_iterator_kwargs(kwargs)
 
-        def apply_filter(function_, ids_, name_, block_):  # noqa: PLR0917
+        def apply_filter(  # noqa: PLR0917
+            function_: str | Callable[..., _TypeMultiBlockLeaf],
+            ids_: tuple[int, ...],
+            name_: str,
+            block_: _TypeMultiBlockLeaf,
+        ) -> _TypeMultiBlockLeaf:
             try:
                 function_ = (
                     getattr(block_, function_)
@@ -192,6 +203,7 @@ class CompositeFilters(DataObjectFilters):
                     function_.func if isinstance(function_, functools.partial) else function_
                 )
                 obj_name = type(block).__name__
+                index: int | str
                 if len(ids_) == 1:
                     index = ids_[0]
                     nested = ' '
@@ -207,29 +219,34 @@ class CompositeFilters(DataObjectFilters):
                 raise
             return output_
 
-        def get_iterator(multi, skip_none_, skip_empty_):
-            return multi.recursive_iterator(
+        def get_iterator(
+            multi: MultiBlock, *, skip_none_: bool, skip_empty_: bool
+        ) -> Iterator[tuple[tuple[int, ...], str, _TypeMultiBlockLeaf]]:
+            # `nested_ids` makes every id a tuple, which the overloads cannot prove here
+            return multi.recursive_iterator(  # type: ignore[return-value]
                 'all', skip_none=skip_none_, skip_empty=skip_empty_, nested_ids=True
             )
 
         # Apply filter in-place
         inplace = kwargs.get('inplace')
         if inplace:
-            for ids, name, block in get_iterator(self, skip_none, skip_empty):
+            for ids, name, block in get_iterator(
+                self, skip_none_=skip_none, skip_empty_=skip_empty
+            ):
                 apply_filter(function, ids, name, block)
             return self
 
         # Create a copy and replace all the blocks
         output = pv.MultiBlock()
         output.shallow_copy(self, recursive=True)
-        for ids, name, block in get_iterator(output, skip_none, skip_empty):
+        for ids, name, block in get_iterator(output, skip_none_=skip_none, skip_empty_=skip_empty):
             filtered = apply_filter(function, ids, name, block)
             # Only replace if necessary
             if filtered is not block:
                 output.replace(ids, filtered)
         return output
 
-    def extract_geometry(self):
+    def extract_geometry(self) -> PolyData:
         """Extract the surface the geometry of all blocks.
 
         Place this filter at the end of a pipeline before a polydata
@@ -252,13 +269,13 @@ class CompositeFilters(DataObjectFilters):
             raise RuntimeError(msg)
         return self._composite_geometry_filter()
 
-    def _composite_geometry_filter(self):
+    def _composite_geometry_filter(self) -> PolyData:
         gf = _vtk.vtkCompositeDataGeometryFilter()
         gf.SetInputData(self)
         _update_alg(gf)
         return _apply_points_dtype(wrap(gf.GetOutputDataObject(0)), algorithm=gf)
 
-    def combine(self, *, merge_points: bool = False, tolerance=0.0):
+    def combine(self, *, merge_points: bool = False, tolerance: float = 0.0) -> UnstructuredGrid:
         """Combine all blocks into a single unstructured grid.
 
         Parameters
@@ -298,7 +315,10 @@ class CompositeFilters(DataObjectFilters):
 
         """
         alg = _vtk.vtkAppendFilter()
+        n_inputs = 0
         for block in self:  # type: ignore[attr-defined]
+            if block is None:
+                continue
             single_block = (
                 CompositeFilters.combine(
                     block,  # type: ignore[arg-type]
@@ -309,10 +329,15 @@ class CompositeFilters(DataObjectFilters):
                 else block
             )
             alg.AddInputData(single_block)
+            n_inputs += 1
+        if n_inputs == 0:
+            # Nothing to append, so give back an empty grid
+            return pv.UnstructuredGrid()
         alg.SetMergePoints(merge_points)
         alg.SetTolerance(tolerance)
         _update_alg(alg)
-        return _apply_points_dtype(wrap(alg.GetOutputDataObject(0)), algorithm=alg)
+        output: _vtk.vtkUnstructuredGrid = alg.GetOutputDataObject(0)
+        return _apply_points_dtype(wrap(output), algorithm=alg)
 
     def outline(  # type: ignore[misc]
         self: MultiBlock,
@@ -320,7 +345,7 @@ class CompositeFilters(DataObjectFilters):
         generate_faces: bool = False,
         nested: bool = False,
         progress_bar: bool = False,
-    ):
+    ) -> PolyData:
         """Produce an outline of the full extent for the all blocks in this composite dataset.
 
         Parameters
@@ -349,6 +374,16 @@ class CompositeFilters(DataObjectFilters):
         box = pv.Box(bounds=self.bounds)
         return box.outline(generate_faces=generate_faces, progress_bar=progress_bar)
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload
+    def outline_corners(self: MultiBlock, *, factor: float = ..., nested: Literal[False] = ..., progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc]
+    @overload
+    def outline_corners(self: MultiBlock, *, factor: float = ..., nested: Literal[True] = ..., progress_bar: bool = ...) -> MultiBlock: ...  # type: ignore[misc]
+    @overload
+    def outline_corners(self: MultiBlock, *, factor: float = ..., nested: bool = ..., progress_bar: bool = ...) -> PolyData | MultiBlock: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def outline_corners(  # type: ignore[misc]
         self: MultiBlock,
         *,
@@ -372,8 +407,10 @@ class CompositeFilters(DataObjectFilters):
 
         Returns
         -------
-        pyvista.PolyData
-            Mesh containing outlined corners.
+        pyvista.PolyData | pyvista.MultiBlock
+            Mesh containing outlined corners. One mesh for the whole composite,
+            or a :class:`~pyvista.MultiBlock` holding one outline per block when
+            ``nested=True``.
 
         """
         if nested:
@@ -391,10 +428,10 @@ class CompositeFilters(DataObjectFilters):
         consistent_normals: bool = True,
         auto_orient_normals: bool = False,
         non_manifold_traversal: bool = True,
-        feature_angle=30.0,
+        feature_angle: float = 30.0,
         track_vertices: bool = False,
         progress_bar: bool = False,
-    ):
+    ) -> MultiBlock:
         """Compute point and/or cell normals for a multi-block dataset."""
         if not self.is_all_polydata:  # type: ignore[attr-defined]
             msg = (

@@ -1195,3 +1195,14 @@ def test_macos_offscreen_keeps_visible_application_in_dock(case):  # pragma: no 
 
     assert render_window.GetConnectContextToNSView() is False
     appkit_mock.NSApplication.sharedApplication().setActivationPolicy_.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    ('value', 'expected'),
+    [('backface', 'back'), ('f', 'front'), (True, 'back'), (False, 'none')],
+)
+def test_backface_params_culling(sphere, value, expected):
+    pl = pv.Plotter()
+    actor = pl.add_mesh(sphere, backface_params={'culling': value})
+    assert actor.backface_prop.culling == expected
+    pl.close()

@@ -5432,7 +5432,7 @@ def download_gpr_path(*, load: bool = True) -> PolyData | str:
 _dataset_gpr_path = _SingleFileDownloadableDatasetLoader(
     'gpr-example/path.txt',
     read_func=functools.partial(np.loadtxt, skiprows=1),
-    load_func=pv.PolyData,  # type: ignore[arg-type]
+    load_func=pv.PolyData,
 )
 
 
@@ -6066,7 +6066,7 @@ def download_lshape(*, load: bool = True) -> MultiBlock | str:
 
 
 def _lshape_files_func():
-    def read_func(filename):  # noqa: ANN001
+    def read_func(filename: str):
         reader = pv.get_reader(filename)
         reader.set_active_time_set(1)
         reader.set_active_time_value(1.0)

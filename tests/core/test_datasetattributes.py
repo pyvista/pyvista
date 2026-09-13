@@ -461,20 +461,13 @@ def test_should_pop_array(insert_arange_narray):
     assert 'sample_array' not in dsa
 
 
-def test_pop_should_return_arange_narray(insert_arange_narray):
-    dsa, sample_array = insert_arange_narray
-    other_array = dsa.pop('sample_array')
-    assert np.array_equal(other_array, sample_array)
-
-
-def test_pop_should_return_bool_array(insert_bool_array):
-    dsa, sample_array = insert_bool_array
-    other_array = dsa.pop('sample_array')
-    assert np.array_equal(other_array, sample_array)
-
-
-def test_pop_should_return_string_array(insert_string_array):
-    dsa, sample_array = insert_string_array
+@pytest.mark.parametrize(
+    'inserted',
+    ['insert_arange_narray', 'insert_bool_array', 'insert_string_array'],
+)
+def test_pop_should_return_array(request, inserted):
+    """`pop` returns the array that was inserted, whatever its dtype."""
+    dsa, sample_array = request.getfixturevalue(inserted)
     other_array = dsa.pop('sample_array')
     assert np.array_equal(other_array, sample_array)
 

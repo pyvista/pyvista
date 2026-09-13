@@ -26,6 +26,7 @@ T = TypeVar('T')
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+    from collections.abc import Mapping
 
     import pandas
     import pyarrow
@@ -1202,7 +1203,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
 
     def update(
         self: Self,
-        array_dict: dict[str, NumpyArray[float]] | DataSetAttributes,
+        array_dict: Mapping[str, ArrayLike[Any]] | DataSetAttributes,
         *,
         copy: bool = True,
     ) -> None:
@@ -1214,7 +1215,7 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         Parameters
         ----------
         array_dict : dict, DataSetAttributes
-            A dictionary of ``(array name, :class:`numpy.ndarray`)`` or a
+            A mapping of ``(array name, array)`` pairs or a
             :class:`pyvista.DataSetAttributes`.
 
         copy : bool, default: True
@@ -1253,11 +1254,11 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         self: Self,
         *,
         name: str,
-        array: NumpyArray[float],
+        array: ArrayLike[Any],
         copy: bool,
     ) -> None:
         if copy:
-            self[name] = array.copy() if hasattr(array, 'copy') else copylib.copy(array)
+            self[name] = array.copy() if isinstance(array, np.ndarray) else copylib.copy(array)
         else:
             self[name] = array
 

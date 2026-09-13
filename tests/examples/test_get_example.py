@@ -10,6 +10,7 @@ import textwrap
 from typing import get_args
 import warnings
 
+import numpy as np
 import pytest
 from typing_extensions import get_overloads
 
@@ -439,6 +440,21 @@ def test_get_example_function_without_dataset_raises():
         examples.get_example(planets.load_earth)
 
 
+def _size_of(dataset):
+    """Return the count that has to be non-zero for this dataset to hold anything."""
+    if isinstance(dataset, pv.MultiBlock):
+        return dataset.n_blocks
+    if isinstance(dataset, pv.PartitionedDataSet):
+        return dataset.n_partitions
+    if isinstance(dataset, pv.Texture):
+        return min(dataset.dimensions)
+    if isinstance(dataset, pv.PointSet):
+        return dataset.n_points  # the only dataset type carrying no cells
+    if isinstance(dataset, pv.DataSet):
+        return min(dataset.n_points, dataset.n_cells)
+    return np.size(dataset)
+
+
 @pytest.mark.needs_download
 @pytest.mark.parametrize('name', _all_example_names())
 def test_get_example_all(name):
@@ -447,9 +463,9 @@ def test_get_example_all(name):
         pytest.skip('Error loading on Windows')
 
     with warnings.catch_warnings():
-        # a few examples warn on their own account, and the nefertiti licence fires
-        # from its loader, so it reaches every route taken here
-        warnings.simplefilter('ignore')
+        # a few examples warn on their own account, the nefertiti licence among them
+        warnings.simplefilter('ignore', UserWarning)
+        warnings.simplefilter('ignore', pv.PyVistaDeprecationWarning)
         try:
             example = examples.get_example(name)
             loaded = example.load()
@@ -467,6 +483,8 @@ def test_get_example_all(name):
     # The declared return annotation is not usable here either, since the type can
     # differ by VTK version while the annotation cannot.
     assert type(loaded) is type(from_function)
+    # a loader that silently returns an empty dataset reads as a pass everywhere else
+    assert _size_of(loaded) > 0, f'{name} loaded empty'
     # every tuple field is one entry per path, including the filtered one
     assert len(example.file_sizes) == len(example.paths)
     assert len(example.source_urls) == len(example.paths)
