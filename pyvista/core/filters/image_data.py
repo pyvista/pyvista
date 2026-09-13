@@ -2997,7 +2997,9 @@ class ImageDataFilters(DataSetFilters):
         the number of input points equals the number of output cells. The re-meshing is
         otherwise lossless in the sense that point data at the input is passed through
         unmodified and stored as cell data at the output. Any cell data at the input is
-        ignored and is not used by this filter.
+        ignored and is not used by this filter. The ``'vtkGhostType'`` array is the one
+        exception: its point ghost flags are translated into the equivalent cell ghost
+        flags, so hidden points at the input become hidden cells at the output.
 
         To change the image data's representation, the input points are used to
         represent the centers of the output cells. This has the effect of "growing" the
@@ -3039,7 +3041,7 @@ class ImageDataFilters(DataSetFilters):
             Name of point data scalars to pass through to the output as cell data. Use
             this parameter to restrict the output to only include the specified array.
             By default, all point data arrays at the input are passed through as cell
-            data at the output.
+            data at the output. The ``'vtkGhostType'`` array is always included.
 
         dimensionality : VectorLike[bool], Literal[0, 1, 2, 3, "0D", "1D", "2D", "3D", "preserve"]
             Control which dimensions will be modified by the filter.
@@ -3064,6 +3066,7 @@ class ImageDataFilters(DataSetFilters):
         copy : bool, default: True
             Copy the input point data before associating it with the output cell data.
             If ``False``, the input and output will both refer to the same data arrays.
+            The ``'vtkGhostType'`` array is always copied since its values change.
 
         Returns
         -------
@@ -3199,7 +3202,10 @@ class ImageDataFilters(DataSetFilters):
         the number of input cells equals the number of output points. The re-meshing is
         otherwise lossless in the sense that cell data at the input is passed through
         unmodified and stored as point data at the output. Any point data at the input is
-        ignored and is not used by this filter.
+        ignored and is not used by this filter. The ``'vtkGhostType'`` array is the one
+        exception: its cell ghost flags are translated into the equivalent point ghost
+        flags, so hidden cells at the input become hidden points at the output. Cell
+        flags with no point equivalent are cleared.
 
         To change the image data's representation, the input cell centers are used to
         represent the output points. This has the effect of "shrinking" the
@@ -3239,7 +3245,7 @@ class ImageDataFilters(DataSetFilters):
             Name of cell data scalars to pass through to the output as point data. Use
             this parameter to restrict the output to only include the specified array.
             By default, all cell data arrays at the input are passed through as point
-            data at the output.
+            data at the output. The ``'vtkGhostType'`` array is always included.
 
         dimensionality : VectorLike[bool], Literal[0, 1, 2, 3, "0D", "1D", "2D", "3D", "preserve"]
             Control which dimensions will be modified by the filter.
@@ -3268,6 +3274,7 @@ class ImageDataFilters(DataSetFilters):
         copy : bool, default: True
             Copy the input cell data before associating it with the output point data.
             If ``False``, the input and output will both refer to the same data arrays.
+            The ``'vtkGhostType'`` array is always copied since its values change.
 
         Returns
         -------
@@ -3467,9 +3474,23 @@ class ImageDataFilters(DataSetFilters):
         new_image.field_data.update(self.field_data)
 
         # Copy old data (point or cell) to new data (cell or point)
+        ghost_array_name = _vtk.vtkDataSetAttributes.GhostArrayName()
+        ghost_array = old_data.get(ghost_array_name)
+        if ghost_array is not None and ghost_array.dtype != np.uint8:
+            # VTK only recognizes an unsigned char array as ghosts
+            ghost_array = None
+
         array_names = [scalars] if scalars else old_data.keys()
         for array_name in array_names:
-            new_data[array_name] = old_data[array_name].copy() if copy else old_data[array_name]
+            if ghost_array is not None and array_name == ghost_array_name:
+                continue
+            array = old_data[array_name]
+            new_data[array_name] = array.copy() if copy else array
+
+        if ghost_array is not None:
+            new_data[ghost_array_name] = _remap_ghost_array(
+                ghost_array, points_to_cells=points_to_cells
+            )
 
         new_image.set_active_scalars(output_scalars)
         return new_image
@@ -5755,6 +5776,28 @@ class ImageDataFilters(DataSetFilters):
         if mode != 'preserve-extents':
             output.offset = self.offset
         return output
+
+
+def _remap_ghost_array(  # numpydoc ignore=RT01
+    array: NumpyArray[Any], *, points_to_cells: bool
+) -> NumpyArray[np.uint8]:
+    """Translate ghost flags to the new association, clearing flags with no equivalent."""
+    attributes = _vtk.vtkDataSetAttributes
+    flag_map = (
+        {
+            attributes.DUPLICATEPOINT: attributes.DUPLICATECELL,
+            attributes.HIDDENPOINT: attributes.HIDDENCELL,
+        }
+        if points_to_cells
+        else {
+            attributes.DUPLICATECELL: attributes.DUPLICATEPOINT,
+            attributes.HIDDENCELL: attributes.HIDDENPOINT,
+        }
+    )
+    remapped = np.zeros(array.shape, dtype=np.uint8)
+    for old_flag, new_flag in flag_map.items():
+        remapped[np.bitwise_and(array, old_flag) != 0] |= np.uint8(new_flag)
+    return remapped
 
 
 def _validate_value_for_dtype(value: Any, dtype: np.dtype[Any], *, name: str) -> None:

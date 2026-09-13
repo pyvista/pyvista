@@ -40,6 +40,7 @@ with :class:`~pyvista.core.config.Config`.
    themes._SliderConfig
    themes._SliderStyleConfig
    themes._TrameConfig
+   themes._VerticalColorbarConfig
 
 .. seealso::
 

@@ -19,6 +19,7 @@ from typing import overload
 import urllib.parse
 
 import numpy as np
+import numpy.typing as npt
 import pyvista_validation as _validation
 
 import pyvista as pv
@@ -32,6 +33,7 @@ from .observers import Observer
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+    from collections.abc import Mapping
     import re
 
     import imageio
@@ -1337,25 +1339,26 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
         ]
 
     # Single cell type (except POLYGON and POLYHEDRON)
+    cells: list[tuple[str, Any]]
     if vtk_celltypes.min() == vtk_celltypes.max() and vtk_celltypes[0] not in {
         pv.CellType.POLYGON,
         pv.CellType.POLYHEDRON,
     }:
         vtk_celltype = vtk_celltypes[0]
-        cells = connectivity.reshape((mesh.n_cells, connectivity.size // mesh.n_cells))
+        cell_ids = connectivity.reshape((mesh.n_cells, connectivity.size // mesh.n_cells))
 
         if vtk_celltype == pv.CellType.PIXEL:
-            cells = cells[:, [0, 1, 3, 2]]
+            cell_ids = cell_ids[:, [0, 1, 3, 2]]
             celltype = 'quad'
 
         elif vtk_celltype == pv.CellType.VOXEL:
-            cells = cells[:, [0, 1, 3, 2, 4, 5, 7, 6]]
+            cell_ids = cell_ids[:, [0, 1, 3, 2, 4, 5, 7, 6]]
             celltype = 'hexahedron'
 
         else:
             celltype = vtk_to_meshio_type[vtk_celltype]
 
-        cells = [(celltype, cells)]
+        cells = [(celltype, cell_ids)]
 
     # Mixed cell types
     else:
@@ -1365,7 +1368,7 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
         for i, (i1, i2, vtk_celltype) in enumerate(
             zip(offset[:-1], offset[1:], vtk_celltypes, strict=False)
         ):
-            cell = connectivity[i1:i2]
+            cell: Any = connectivity[i1:i2]
 
             if vtk_celltype == pv.CellType.POLYHEDRON:
                 celltype = f'polyhedron{len(cell)}'
@@ -1410,7 +1413,7 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
         for k, v in vtk_cell_data.items()
     }
 
-    return meshio.Mesh(mesh.points, cells, point_data=point_data, cell_data=cell_data)
+    return meshio.Mesh(mesh.points, cells, point_data=point_data, cell_data=cell_data)  # type: ignore[arg-type]
 
 
 def read_meshio(filename: str | Path, file_format: str | None = None) -> UnstructuredGrid:
@@ -1551,6 +1554,11 @@ def _validate_pass_data(pass_data: _PassDataOptions) -> tuple[bool, bool, bool]:
     return pass_point_data, pass_cell_data, pass_field_data
 
 
+def _as_arrays(attributes: Mapping[str, npt.ArrayLike]) -> dict[str, NumpyArray[Any]]:
+    """Return the attribute mapping with every value as an array."""
+    return {name: np.asarray(value) for name, value in attributes.items()}
+
+
 def from_trimesh(
     mesh: trimesh.Trimesh, *, pass_data: _PassDataOptions = True
 ) -> PolyData:  # numpydoc ignore=RT01
@@ -1609,10 +1617,10 @@ def from_trimesh(
             and (uv := visual.uv) is not None
         ):
             polydata.active_texture_coordinates = uv
-        polydata.point_data.update(mesh.vertex_attributes, copy=False)
+        polydata.point_data.update(_as_arrays(mesh.vertex_attributes), copy=False)
 
     if pass_cell_data:
-        polydata.cell_data.update(mesh.face_attributes, copy=False)
+        polydata.cell_data.update(_as_arrays(mesh.face_attributes), copy=False)
 
     if pass_field_data:
         for key, val in mesh.metadata.items():
