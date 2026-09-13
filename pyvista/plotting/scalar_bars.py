@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import contextlib
+from typing import Any
 import weakref
 
 import pyvista_validation as _validation
@@ -144,7 +145,7 @@ class ScalarBars(_NoNewAttrMixin):
         self._resync_titles: set[str] = set()
         self._scalar_bar_actors = {}
         self._scalar_bar_widgets = {}
-        self._scalar_bar_fits: dict[str, dict] = {}
+        self._scalar_bar_fits: dict[str, dict[str, Any]] = {}
 
     def clear(self):
         """Remove all scalar bars and resets all scalar bar properties."""
