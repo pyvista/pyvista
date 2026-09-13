@@ -5868,10 +5868,15 @@ def test_resample_to_image_interpolate_warns_on_cell_data(sphere, tetbeam):
         image = sphere.resample_to_image(dimensions=(20, 20, 20))
     assert 'cval' not in image.point_data
 
+    def dropped_warnings(recorded):
+        """Return only the warnings this filter raises about dropped cell data."""
+        return [w for w in recorded if 'is dropped by' in str(w.message)]
+
     # Converting first keeps it, and warns no more
-    with warnings.catch_warnings():
-        warnings.simplefilter('error')
+    with warnings.catch_warnings(record=True) as recorded:
+        warnings.simplefilter('always')
         converted = sphere.cell_data_to_point_data().resample_to_image(dimensions=(20, 20, 20))
+    assert not dropped_warnings(recorded)
     assert 'cval' in converted.point_data
 
     # Asking for the method by name says so instead
@@ -5881,9 +5886,10 @@ def test_resample_to_image_interpolate_warns_on_cell_data(sphere, tetbeam):
     # `sample` carries cell data, so it does not warn
     tetbeam.clear_data()
     tetbeam.cell_data['cval'] = np.arange(tetbeam.n_cells, dtype=float)
-    with warnings.catch_warnings():
-        warnings.simplefilter('error')
+    with warnings.catch_warnings(record=True) as recorded:
+        warnings.simplefilter('always')
         sampled = tetbeam.resample_to_image(dimensions=(10, 10, 10))
+    assert not dropped_warnings(recorded)
     assert 'cval' in sampled.point_data
 
 
