@@ -5814,3 +5814,30 @@ def test_voxelize(ant):
     # Test invalid input
     with pytest.raises(TypeError, match='Object arrays are not supported'):
         ant.voxelize(spacing={0.5, 0.3})
+
+
+def test_filters_keep_the_input_subclass():
+    class _Grid(pv.UnstructuredGrid):
+        pass
+
+    mesh = _Grid(pv.Cube(clean=False).cast_to_unstructured_grid())
+    mesh['vectors'] = np.zeros((mesh.n_points, 3))
+    mesh['labels'] = np.arange(mesh.n_points) % 3
+    mesh['scalars'] = np.zeros(mesh.n_points)
+    source = pv.Cube().cast_to_unstructured_grid()
+    source['data'] = np.arange(source.n_points, dtype=float)
+
+    assert type(mesh.warp_by_vector('vectors')) is _Grid
+    assert type(mesh.warp_by_scalar('scalars')) is _Grid
+    assert type(mesh.texture_map_to_plane()) is _Grid
+    assert type(mesh.texture_map_to_sphere()) is _Grid
+    assert type(mesh.compute_derivative('vectors')) is _Grid
+    assert type(mesh.extract_cells_by_type(pv.CellType.QUAD)) is _Grid
+    assert type(mesh.pack_labels(scalars='labels')) is _Grid
+    assert type(mesh.sort_labels(scalars='labels')) is _Grid
+    assert type(mesh.interpolate(source)) is _Grid
+
+    # A warp still changes the class where it is meant to
+    image = pv.ImageData(dimensions=(3, 3, 3))
+    image['scalars'] = np.zeros(image.n_points)
+    assert type(image.warp_by_scalar('scalars')) is pv.StructuredGrid

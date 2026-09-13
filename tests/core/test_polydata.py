@@ -493,8 +493,10 @@ def test_subtract(sphere, sphere_shifted):
 
 def test_isubtract(sphere, sphere_shifted):
     sub_mesh = sphere.copy()
+    alias = sub_mesh
     sub_mesh -= sphere_shifted
     assert sub_mesh.n_points == sphere.boolean_difference(sphere_shifted).n_points
+    assert sub_mesh is alias
 
 
 def test_append(
