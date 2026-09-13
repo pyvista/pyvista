@@ -5517,6 +5517,10 @@ class DataObjectFilters:
                 * ``'obb_tree'`` - :vtk:`vtkOBBTree`
                 * ``'static_cell'`` - :vtk:`vtkStaticCellLocator`
 
+            .. deprecated:: 0.50.0
+                ``'obb_tree'`` is deprecated. :vtk:`vtkOBBTree` does not implement
+                ``FindCell`` and never accelerated sampling.
+
         pass_field_data : bool, default: True
             Preserve source mesh's original field data arrays.
 
@@ -5624,6 +5628,9 @@ class DataObjectFilters:
                 except KeyError as err:
                     msg = f'locator must be a string from {locator_map.keys()}, got {locator}'
                     raise ValueError(msg) from err
+
+            if isinstance(locator, _vtk.vtkOBBTree):
+                _deprecate_obb_tree_locator()
 
             if pv.vtk_version_info >= (9, 7):
                 alg.SetCellLocator(locator)
@@ -6002,6 +6009,26 @@ def _slice_image_along_axis(
     output.set_active_scalars(image.active_scalars_name)
     _copy_active_attributes(image, output)
     return output
+
+
+def _deprecate_obb_tree_locator() -> None:
+    """Warn or raise for a :vtk:`vtkOBBTree` sampling locator."""
+    # deprecated 0.50.0, convert to error in 0.53.0, remove 0.54.0
+    if _is_deprecation_due((0, 53)):  # pragma: no cover
+        msg = 'Convert this deprecation warning into an error.'
+        raise RuntimeError(msg)
+    if version_info >= (0, 54):  # pragma: no cover
+        msg = "Remove 'obb_tree' from the sample locator map."
+        raise RuntimeError(msg)
+
+    msg = (
+        "The 'obb_tree' locator is deprecated. `vtkOBBTree` does not implement `FindCell`, "
+        "so it never accelerated sampling. Use 'static_cell', 'cell' or 'cell_tree' instead."
+    )
+    if pv.vtk_version_info >= (9, 7):
+        msg += ' It crashes the interpreter with VTK 9.7 and newer.'
+        raise ValueError(msg)
+    warn_external(msg, PyVistaDeprecationWarning)
 
 
 def _check_categorical_scalars(target: DataSet | MultiBlock) -> None:

@@ -1675,14 +1675,48 @@ def test_sample():
     sample_test(progress_bar=True)
     sample_test(categorical=True)
     sample_test(locator=_vtk.vtkStaticCellLocator())
-    for locator in ['cell', 'cell_tree', 'obb_tree', 'static_cell']:
-        sample_test(locator=locator)
     with pytest.raises(ValueError):  # noqa: PT011
         sample_test(locator='invalid')
     sample_test(pass_cell_data=False)
     sample_test(pass_point_data=False)
     sample_test(pass_field_data=False)
     sample_test(snap_to_closest_point=True)
+
+
+@pytest.mark.parametrize('locator', ['cell', 'cell_tree', 'static_cell', None])
+def test_sample_locator(locator):
+    # An unstructured target is required: image data is probed without a cell locator
+    target = pv.Sphere(theta_resolution=10, phi_resolution=10).delaunay_3d()
+    target.point_data['pdata'] = np.arange(target.n_points, dtype=float)
+    mesh = pv.Sphere(theta_resolution=8, phi_resolution=8, radius=0.4)
+
+    result = mesh.sample(target, locator=locator)
+
+    assert np.array_equal(result['pdata'], mesh.sample(target, locator=None)['pdata'])
+
+
+@pytest.mark.needs_vtk_version(9, 7, 0)
+@pytest.mark.parametrize('locator', ['obb_tree', _vtk.vtkOBBTree])
+def test_sample_obb_tree_locator_raises(locator):
+    locator = locator() if callable(locator) else locator
+    target = pv.Sphere(theta_resolution=10, phi_resolution=10).delaunay_3d()
+    target.point_data['pdata'] = np.arange(target.n_points, dtype=float)
+
+    match = "The 'obb_tree' locator is deprecated"
+    with pytest.raises(ValueError, match=match):
+        pv.Sphere().sample(target, locator=locator)
+
+
+@pytest.mark.needs_vtk_version(less_than=(9, 7, 0))
+@pytest.mark.parametrize('locator', ['obb_tree', _vtk.vtkOBBTree])
+def test_sample_obb_tree_locator_deprecated(locator):
+    locator = locator() if callable(locator) else locator
+    target = pv.Sphere(theta_resolution=10, phi_resolution=10).delaunay_3d()
+    target.point_data['pdata'] = np.arange(target.n_points, dtype=float)
+
+    match = "The 'obb_tree' locator is deprecated"
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        pv.Sphere().sample(target, locator=locator)
 
 
 @pytest.fixture
