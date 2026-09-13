@@ -390,7 +390,7 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
         return pdata.plot(*args, **kwargs)
 
     @_wraps(DataSetFilters.threshold)
-    def threshold(self, *args, **kwargs) -> PointSet:  # numpydoc ignore=RT01,PR01
+    def threshold(self, *args, **kwargs) -> PointSet:  # type: ignore[override]  # numpydoc ignore=RT01,PR01
         """Cast to PolyData and threshold.
 
         Need this because cell-wise operations fail for PointSets.
@@ -398,7 +398,7 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
         return self.cast_to_polydata(deep=False).threshold(*args, **kwargs).cast_to_pointset()
 
     @_wraps(DataSetFilters.threshold_percent)
-    def threshold_percent(self, *args, **kwargs) -> PointSet:  # numpydoc ignore=RT01,PR01
+    def threshold_percent(self, *args, **kwargs) -> PointSet:  # type: ignore[override]  # numpydoc ignore=RT01,PR01
         """Cast to PolyData and threshold.
 
         Need this because cell-wise operations fail for PointSets.
@@ -408,7 +408,7 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
         )
 
     @_wraps(DataSetFilters.explode)
-    def explode(self, *args, **kwargs) -> PointSet:  # numpydoc ignore=RT01,PR01
+    def explode(self, *args, **kwargs) -> PointSet:  # type: ignore[override]  # numpydoc ignore=RT01,PR01
         """Cast to PolyData and explode.
 
         The explode filter relies on cells.

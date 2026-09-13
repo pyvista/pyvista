@@ -568,7 +568,7 @@ class DataSetFilters(DataObjectFilters):
         surface: DataSet | _vtk.vtkDataSet,
         *,
         inplace: bool = False,
-    ):
+    ) -> _DataSetType:
         """Compute the implicit distance from the points to a surface.
 
         This filter will compute the implicit distance from all of the
@@ -691,6 +691,11 @@ class DataSetFilters(DataObjectFilters):
         inplace: bool = False,
         progress_bar: bool = False,
         both: bool = False,
+    ) -> (
+        PolyData
+        | PointSet
+        | UnstructuredGrid
+        | tuple[PolyData | PointSet | UnstructuredGrid, PolyData | PointSet | UnstructuredGrid]
     ):
         """Clip a dataset by a scalar.
 
@@ -779,8 +784,7 @@ class DataSetFilters(DataObjectFilters):
         >>> clipped.plot()
 
         """
-        if inplace:
-            _validate_clip_inplace(self)
+        inplace_target = _validate_clip_inplace(self) if inplace else None
         alg = _clipper(self)
 
         if is_single_value := isinstance(value, (float, int)):
@@ -806,22 +810,18 @@ class DataSetFilters(DataObjectFilters):
         alg.SetGenerateClippedOutput(both)
 
         _update_alg(alg, progress_bar=progress_bar, message='Clipping by a Scalar')
-        result0 = cast(
-            'DataSet',
-            _keep_array_structure(_cast_output_to_match_input_type(_get_output(alg), self), self),
+        result0: PolyData | PointSet | UnstructuredGrid = _keep_array_structure(
+            _cast_output_to_match_input_type(_get_output(alg), self), self
         )
         if not is_single_value:
             # Keep what lies above the lower value as well
             result0 = result0.clip_scalar(scalars=scalars, invert=False, value=lower)
-        if inplace:
-            self.copy_from(result0, deep=False)
-            result0 = self
+        if inplace_target is not None:
+            inplace_target.copy_from(result0, deep=False)
+            result0 = inplace_target
         if both:
-            result1 = cast(
-                'DataSet',
-                _keep_array_structure(
-                    _cast_output_to_match_input_type(_get_output(alg, oport=1), self), self
-                ),
+            result1: PolyData | PointSet | UnstructuredGrid = _keep_array_structure(
+                _cast_output_to_match_input_type(_get_output(alg, oport=1), self), self
             )
             return result0, result1
         return result0
@@ -845,7 +845,7 @@ class DataSetFilters(DataObjectFilters):
         compute_distance: bool = False,
         progress_bar: bool = False,
         crinkle: bool = False,
-    ):
+    ) -> PolyData | PointSet | UnstructuredGrid:
         """Clip any mesh type using a :class:`pyvista.PolyData` surface mesh.
 
         .. versionchanged:: 0.49
@@ -966,10 +966,7 @@ class DataSetFilters(DataObjectFilters):
             info = self.active_scalars_info
             if info.name is not None and not clipped.is_empty:
                 clipped.set_active_scalars(info.name, preference=info.association)
-        return cast(
-            'DataSet',
-            _keep_array_structure(_cast_output_to_match_input_type(clipped, self), self),
-        )
+        return _keep_array_structure(_cast_output_to_match_input_type(clipped, self), self)
 
     def threshold(  # type: ignore[misc]
         self: _DataSetType,
@@ -984,7 +981,7 @@ class DataSetFilters(DataObjectFilters):
         component: int = 0,
         method: Literal['upper', 'lower'] = 'upper',
         progress_bar: bool = False,
-    ):
+    ) -> UnstructuredGrid:
         """Apply a :vtk:`vtkThreshold` filter to the input dataset.
 
         This filter will apply a :vtk:`vtkThreshold` filter to the input
@@ -1191,7 +1188,7 @@ class DataSetFilters(DataObjectFilters):
         preference: Literal['point', 'cell'] = 'cell',
         method: Literal['upper', 'lower'] = 'upper',
         progress_bar: bool = False,
-    ):
+    ) -> UnstructuredGrid:
         """Threshold the dataset by a percentage of its range on the active scalars array.
 
         .. warning::
@@ -1458,7 +1455,7 @@ class DataSetFilters(DataObjectFilters):
         *,
         generate_faces: bool = False,
         progress_bar: bool = False,
-    ):
+    ) -> PolyData:
         """Produce an outline of the full extent for the input dataset.
 
         Parameters
@@ -1503,7 +1500,7 @@ class DataSetFilters(DataObjectFilters):
         *,
         factor: float = 0.2,
         progress_bar: bool = False,
-    ):
+    ) -> PolyData:
         """Produce an outline of the corners for the input dataset.
 
         Parameters
@@ -1543,7 +1540,7 @@ class DataSetFilters(DataObjectFilters):
         radius: float = 0.1,
         dimensions: VectorLike[int] = (50, 50, 50),
         progress_bar: bool = False,
-    ):
+    ) -> ImageData:
         """Splat points into a volume using a Gaussian distribution.
 
         This filter uses :vtk:`vtkGaussianSplatter` to splat points into a volume
@@ -1711,7 +1708,7 @@ class DataSetFilters(DataObjectFilters):
         preference: Literal['point', 'cell'] = 'point',
         method: Literal['contour', 'marching_cubes', 'flying_edges'] = 'contour',
         progress_bar: bool = False,
-    ):
+    ) -> PolyData:
         """Contour an input self by an array.
 
         ``isosurfaces`` can be an integer specifying the number of
@@ -1892,7 +1889,7 @@ class DataSetFilters(DataObjectFilters):
         name: str = 'Texture Coordinates',
         use_bounds: bool = False,
         progress_bar: bool = False,
-    ):
+    ) -> _DataSetType:
         """Texture map this dataset to a user defined plane.
 
         This is often used to define a plane to texture map an image
@@ -1959,7 +1956,7 @@ class DataSetFilters(DataObjectFilters):
         _update_alg(alg, progress_bar=progress_bar, message='Texturing Map to Plane')
         output = _get_output(alg)
         if not inplace:
-            return output
+            return _as_input_class(output, self)
         texture_coordinates = output.GetPointData().GetTCoords()
         texture_coordinates.SetName(name)
         otc = self.GetPointData().GetTCoords()
@@ -1979,7 +1976,7 @@ class DataSetFilters(DataObjectFilters):
         inplace: bool = False,
         name: str = 'Texture Coordinates',
         progress_bar: bool = False,
-    ):
+    ) -> _DataSetType:
         """Texture map this dataset to a user defined sphere.
 
         This is often used to define a sphere to texture map an image
@@ -2030,7 +2027,7 @@ class DataSetFilters(DataObjectFilters):
         _update_alg(alg, progress_bar=progress_bar, message='Mapping texture to sphere')
         output = _get_output(alg)
         if not inplace:
-            return output
+            return _as_input_class(output, self)
         texture_coordinates = output.GetPointData().GetTCoords()
         texture_coordinates.SetName(name)
         otc = self.GetPointData().GetTCoords()
@@ -2056,7 +2053,7 @@ class DataSetFilters(DataObjectFilters):
         rng: VectorLike[float] | None = None,
         color_mode: Literal['scale', 'scalar', 'vector'] = 'scale',
         progress_bar: bool = False,
-    ):
+    ) -> PolyData:
         """Copy a geometric representation (called a glyph) to the input dataset.
 
         The glyph may be oriented along the input vectors, and it may
@@ -2359,7 +2356,7 @@ class DataSetFilters(DataObjectFilters):
         inplace: bool = False,
         progress_bar: bool = False,
         **kwargs,
-    ):
+    ) -> PolyData | PointSet | UnstructuredGrid:
         """Find and label connected regions.
 
         This filter extracts cell regions based on a specified connectivity
@@ -2823,7 +2820,7 @@ class DataSetFilters(DataObjectFilters):
         *,
         inplace: bool = False,
         progress_bar: bool = False,
-    ):
+    ) -> PolyData | PointSet | UnstructuredGrid:
         """Extract largest connected set in mesh.
 
         Can be used to reduce residues obtained when generating an
@@ -3130,7 +3127,7 @@ class DataSetFilters(DataObjectFilters):
         tol: float = 0.001,
         offset: float = 2.5,
         progress_bar: bool = False,
-    ):
+    ) -> UnstructuredGrid:
         """Construct a 3D Delaunay triangulation of the mesh.
 
         This filter can be used to generate a 3D tetrahedral mesh from
@@ -3376,8 +3373,9 @@ class DataSetFilters(DataObjectFilters):
 
         Returns
         -------
-        PolyData
+        pyvista.DataSet
             Mesh with a new ``'selected_points'`` :attr:`~pyvista.DataSet.point_data` array.
+            Return type matches input.
 
         See Also
         --------
@@ -3462,7 +3460,7 @@ class DataSetFilters(DataObjectFilters):
         pass_cell_data: bool = True,
         pass_point_data: bool = True,
         progress_bar: bool = False,
-    ):
+    ) -> _DataSetType:
         """Interpolate values onto this mesh from a given dataset.
 
         The ``target`` dataset is typically a point cloud. Only point data from
@@ -3597,7 +3595,7 @@ class DataSetFilters(DataObjectFilters):
         interpolator.SetPassPointArrays(pass_point_data)
         interpolator.SetPassCellArrays(pass_cell_data)
         _update_alg(interpolator, progress_bar=progress_bar, message='Interpolating')
-        return _get_output(interpolator)
+        return _as_input_class(_get_output(interpolator), self)
 
     def streamlines(  # type: ignore[misc]
         self: _DataSetType,
@@ -3738,7 +3736,7 @@ class DataSetFilters(DataObjectFilters):
         interpolator_type: Literal['point', 'cell', 'p', 'c'] = 'point',
         progress_bar: bool = False,
         max_length: float | None = None,
-    ):
+    ) -> PolyData:
         """Generate streamlines of vectors from the points of a source mesh.
 
         The integration is performed using a specified integrator, by default
@@ -3950,7 +3948,7 @@ class DataSetFilters(DataObjectFilters):
         minimum_number_of_loop_points: int = 4,
         compute_vorticity: bool = True,
         progress_bar: bool = False,
-    ):
+    ) -> PolyData:
         """Generate evenly spaced streamlines on a 2D dataset.
 
         This filter only supports datasets that lie on the xy plane, that is, ``z=0``.
@@ -4125,7 +4123,7 @@ class DataSetFilters(DataObjectFilters):
         target_reduction: float = 0.5,
         *,
         progress_bar: bool = False,
-    ):
+    ) -> PolyData:
         """Return a decimated version of a triangulation of the boundary.
 
         Only the outer surface of the input dataset will be considered.
@@ -4166,7 +4164,7 @@ class DataSetFilters(DataObjectFilters):
         resolution: int | None = None,
         tolerance: float | None = None,
         progress_bar: bool = False,
-    ):
+    ) -> PolyData:
         """Sample a dataset onto a line.
 
         Parameters
@@ -4306,7 +4304,7 @@ class DataSetFilters(DataObjectFilters):
 
         # Get variable of interest
         scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
-        values = sampled.get_array(scalars_)
+        values: NumpyArray[float] = sampled.get_array(scalars_)
         distance = sampled['Distance']
         if component is not None:
             try:
@@ -4354,7 +4352,7 @@ class DataSetFilters(DataObjectFilters):
         *,
         tolerance: float | None = None,
         progress_bar: bool = False,
-    ):
+    ) -> PolyData:
         """Sample a dataset onto a multiple lines.
 
         Parameters
@@ -4416,7 +4414,7 @@ class DataSetFilters(DataObjectFilters):
         resolution: int | None = None,
         tolerance: float | None = None,
         progress_bar: bool = False,
-    ):
+    ) -> PolyData:
         """Sample a dataset over a circular arc.
 
         Parameters
@@ -4499,7 +4497,7 @@ class DataSetFilters(DataObjectFilters):
         angle: float | None = None,
         tolerance: float | None = None,
         progress_bar: bool = False,
-    ):
+    ) -> PolyData:
         """Sample a dataset over a circular arc defined by a normal and polar vector and plot it.
 
         The number of segments composing the polyline is controlled by
@@ -4852,7 +4850,7 @@ class DataSetFilters(DataObjectFilters):
         pass_cell_ids: bool = True,
         pass_point_ids: bool = True,
         progress_bar: bool = False,
-    ):
+    ) -> UnstructuredGrid:
         r"""Return a subset of the grid.
 
         The output is an :class:`~pyvista.UnstructuredGrid`. Use :meth:`remove_cells`
@@ -4943,7 +4941,7 @@ class DataSetFilters(DataObjectFilters):
         association, name = self.active_scalars_info
         if name is None or name in output.array_names:
             output.set_active_scalars(name, cast('PointLiteral | CellLiteral', association))
-        return output
+        return cast('UnstructuredGrid', output)
 
     def extract_points(  # type: ignore[misc]
         self: _DataSetType,
@@ -5151,7 +5149,7 @@ class DataSetFilters(DataObjectFilters):
         <class 'pyvista.core.pointset.PolyData'>
 
         """
-        output = self.extract_cells(
+        output: DataSet = self.extract_cells(
             ind,
             invert=not invert,
             pass_point_ids=pass_point_ids,
@@ -5294,7 +5292,7 @@ class DataSetFilters(DataObjectFilters):
         preference: Literal['point', 'cell'] = 'point',
         component_mode: Literal['any', 'all', 'multi'] | int = 'all',
         **kwargs,
-    ):
+    ) -> MultiBlock:
         """Split mesh into separate sub-meshes using point or cell data.
 
         By default, this filter generates a separate mesh for each unique value in the
@@ -5367,7 +5365,8 @@ class DataSetFilters(DataObjectFilters):
         Returns
         -------
         pyvista.MultiBlock
-            Composite of split meshes with :class:`pyvista.UnstructuredGrid` blocks.
+            Composite of split meshes. The blocks are :class:`~pyvista.UnstructuredGrid`,
+            or :class:`~pyvista.PointSet` for a ``PointSet`` input.
 
         Examples
         --------
@@ -6119,7 +6118,7 @@ class DataSetFilters(DataObjectFilters):
         self: _DataSetType,
         *,
         progress_bar: bool = False,
-    ):
+    ) -> NumpyArray[np.integer]:
         """Return the surface indices of a grid.
 
         .. versionchanged:: 0.47
@@ -6488,7 +6487,7 @@ class DataSetFilters(DataObjectFilters):
 
     def compute_boundary_mesh_quality(  # type: ignore[misc]
         self: _DataSetType, *, progress_bar: bool = False
-    ):
+    ) -> PolyData:
         """Compute metrics on the boundary faces of a mesh.
 
         The metrics that can be computed on the boundary faces of the mesh and are:
@@ -6504,9 +6503,8 @@ class DataSetFilters(DataObjectFilters):
 
         Returns
         -------
-        pyvista.DataSet
-            Dataset with the computed metrics on the boundary faces of a mesh.
-            ``cell_data`` as the ``"CellQuality"`` array.
+        pyvista.PolyData
+            Boundary faces of the 3D cells, with the computed metrics in ``cell_data``.
 
         Examples
         --------
@@ -6546,7 +6544,7 @@ class DataSetFilters(DataObjectFilters):
         faster: bool = False,
         preference: Literal['point', 'cell'] = 'point',
         progress_bar: bool = False,
-    ):
+    ) -> _DataSetType:
         """Compute derivative-based quantities of point/cell scalar field.
 
         Utilize :vtk:`vtkGradientFilter` to compute derivative-based quantities,
@@ -6645,7 +6643,7 @@ class DataSetFilters(DataObjectFilters):
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars_)
         alg.SetInputData(self)
         _update_alg(alg, progress_bar=progress_bar, message='Computing Derivative')
-        return _get_output(alg)
+        return _as_input_class(_get_output(alg), self)
 
     def shrink(  # type: ignore[misc]
         self: _DataSetType,
@@ -6709,7 +6707,7 @@ class DataSetFilters(DataObjectFilters):
         max_n_subdivide: int = 3,
         merge_points: bool = True,
         progress_bar: bool = False,
-    ):
+    ) -> UnstructuredGrid:
         """Tessellate a mesh.
 
         This filter approximates nonlinear FEM-like elements with linear
@@ -6733,8 +6731,8 @@ class DataSetFilters(DataObjectFilters):
 
         Returns
         -------
-        pyvista.DataSet
-            Dataset with tessellated mesh.  Return type matches input.
+        pyvista.UnstructuredGrid
+            Dataset with tessellated mesh.
 
         Examples
         --------
@@ -6778,7 +6776,7 @@ class DataSetFilters(DataObjectFilters):
         self: _DataSetType,
         *,
         progress_bar: bool = False,
-    ):
+    ) -> UnstructuredGrid:
         """Integrate point and cell data.
 
         Area or volume is also provided in point data.
@@ -7342,7 +7340,7 @@ class DataSetFilters(DataObjectFilters):
 
     def explode(  # type: ignore[misc]
         self: _DataSetType, factor: float = 0.1
-    ):
+    ) -> UnstructuredGrid:
         """Push each individual cell away from the center of the dataset.
 
         Parameters
@@ -7374,7 +7372,7 @@ class DataSetFilters(DataObjectFilters):
         >>> exploded.plot(show_edges=True)
 
         """
-        split = self.separate_cells()
+        split: DataSet = self.separate_cells()
         if not isinstance(split, pv.UnstructuredGrid):
             split = split.cast_to_unstructured_grid()
 
@@ -7418,7 +7416,7 @@ class DataSetFilters(DataObjectFilters):
         cell_types: int | VectorLike[int],
         *,
         progress_bar: bool = False,
-    ):
+    ) -> _DataSetType:
         """Extract cells of a specified type.
 
         Given an input dataset and a list of cell types, produce an output
@@ -7494,7 +7492,7 @@ class DataSetFilters(DataObjectFilters):
         for cell_type in valid_cell_types:
             alg.AddCellType(int(cell_type))
         _update_alg(alg, progress_bar=progress_bar, message='Extracting cell types')
-        return _get_output(alg)
+        return _as_input_class(_get_output(alg), self)
 
     def sort_labels(  # type: ignore[misc]
         self: _DataSetType,
@@ -7504,7 +7502,7 @@ class DataSetFilters(DataObjectFilters):
         output_scalars: str | None = None,
         progress_bar: bool = False,
         inplace: bool = False,
-    ):
+    ) -> _DataSetType:
         """Sort labeled data by number of points or cells.
 
         This filter renumbers scalar label data of any type with ``N`` labels
@@ -7596,7 +7594,7 @@ class DataSetFilters(DataObjectFilters):
         output_scalars: str | None = None,
         progress_bar: bool = False,
         inplace: bool = False,
-    ):
+    ) -> _DataSetType:
         """Renumber labeled data such that labels are contiguous.
 
         This filter renumbers scalar label data of any type with ``N`` labels
@@ -7715,7 +7713,7 @@ class DataSetFilters(DataObjectFilters):
         if inplace:
             self.copy_from(result, deep=False)
             return self
-        return result
+        return _as_input_class(result, self)
 
     def color_labels(  # type: ignore[misc]
         self: DataSet,
@@ -8205,7 +8203,7 @@ class DataSetFilters(DataObjectFilters):
         cell_length_percentile: float | None = None,
         cell_length_sample_size: int | None = None,
         progress_bar: bool = False,
-    ):
+    ) -> ImageData:
         """Voxelize mesh as a binary :class:`~pyvista.ImageData` mask.
 
         The binary mask is a point data array where points inside and outside of the
@@ -9122,6 +9120,15 @@ def _validate_extraction_ids(
                 raise IndexError(msg)
             mask[ids] = True
     return np.invert(mask) if invert else mask
+
+
+def _as_input_class(output: DataSet, input_mesh: _DataSetType) -> _DataSetType:
+    """Return the output as an instance of the input mesh's class."""
+    if isinstance(output, type(input_mesh)):
+        return output
+    restored = type(input_mesh)()
+    restored.copy_from(output, deep=False)
+    return restored
 
 
 def _apply_inplace(mesh: DataSet, output: DataSet, *, inplace: bool) -> DataSet:
