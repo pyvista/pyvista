@@ -5432,7 +5432,7 @@ def download_gpr_path(*, load: bool = True) -> PolyData | str:
 _dataset_gpr_path = _SingleFileDownloadableDatasetLoader(
     'gpr-example/path.txt',
     read_func=functools.partial(np.loadtxt, skiprows=1),
-    load_func=pv.PolyData,  # type: ignore[arg-type]
+    load_func=pv.PolyData,
 )
 
 

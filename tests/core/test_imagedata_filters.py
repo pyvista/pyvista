@@ -10,11 +10,19 @@ from pytest_cases import parametrize_with_cases
 from pyvista_validation._cast_array import _cast_to_tuple
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista import examples
 from pyvista.core.filters.image_data import _InterpolationOptions
 from tests.conftest import NUMPY_VERSION_INFO
 
 BOUNDARY_LABELS = 'boundary_labels'
+DUPLICATE_CELL = _vtk.vtkDataSetAttributes.DUPLICATECELL
+DUPLICATE_POINT = _vtk.vtkDataSetAttributes.DUPLICATEPOINT
+EXTERIOR_CELL = _vtk.vtkDataSetAttributes.EXTERIORCELL
+GHOST_ARRAY_NAME = _vtk.vtkDataSetAttributes.GhostArrayName()
+HIDDEN_CELL = _vtk.vtkDataSetAttributes.HIDDENCELL
+HIDDEN_POINT = _vtk.vtkDataSetAttributes.HIDDENPOINT
+HIGH_CONNECTIVITY_CELL = _vtk.vtkDataSetAttributes.HIGHCONNECTIVITYCELL
 MORPHOLOGICAL_MAX_VAL = 42.0
 MORPHOLOGICAL_MID_VAL = 5.0
 MORPHOLOGICAL_MIN_VAL = 0.0
@@ -363,6 +371,114 @@ def test_cells_to_points(uniform_many_scalars, active_scalars, copy):
     ):
         shares_memory = np.shares_memory(cell_voxel_image[array_in], point_voxel_image[array_out])
         assert not shares_memory if copy else shares_memory
+
+
+@pytest.mark.parametrize(
+    ('point_flags', 'expected_cell_flags'),
+    [
+        ([HIDDEN_POINT, 0], [HIDDEN_CELL, 0]),
+        ([DUPLICATE_POINT, 0], [DUPLICATE_CELL, 0]),
+        ([DUPLICATE_POINT | HIDDEN_POINT, 0], [DUPLICATE_CELL | HIDDEN_CELL, 0]),
+    ],
+)
+def test_points_to_cells_ghost_array(uniform, point_flags, expected_cell_flags):
+    ghosts = np.resize(np.array(point_flags, dtype=np.uint8), uniform.n_points)
+    uniform.point_data[GHOST_ARRAY_NAME] = ghosts
+
+    converted = uniform.points_to_cells(copy=False)
+
+    expected = np.resize(np.array(expected_cell_flags, dtype=np.uint8), converted.n_cells)
+    assert converted.cell_data[GHOST_ARRAY_NAME].dtype == np.uint8
+    assert np.array_equal(converted.cell_data[GHOST_ARRAY_NAME], expected)
+    assert not np.shares_memory(converted.cell_data[GHOST_ARRAY_NAME], ghosts)
+    assert GHOST_ARRAY_NAME not in converted.point_data
+
+
+@pytest.mark.parametrize(
+    ('cell_flags', 'expected_point_flags'),
+    [
+        ([HIDDEN_CELL, 0], [HIDDEN_POINT, 0]),
+        ([DUPLICATE_CELL, 0], [DUPLICATE_POINT, 0]),
+        ([DUPLICATE_CELL | HIDDEN_CELL, 0], [DUPLICATE_POINT | HIDDEN_POINT, 0]),
+        ([HIGH_CONNECTIVITY_CELL, 0], [0, 0]),
+        ([HIDDEN_CELL | EXTERIOR_CELL, EXTERIOR_CELL], [HIDDEN_POINT, 0]),
+    ],
+)
+def test_cells_to_points_ghost_array(uniform, cell_flags, expected_point_flags):
+    ghosts = np.resize(np.array(cell_flags, dtype=np.uint8), uniform.n_cells)
+    uniform.cell_data[GHOST_ARRAY_NAME] = ghosts
+
+    converted = uniform.cells_to_points()
+
+    expected = np.resize(np.array(expected_point_flags, dtype=np.uint8), converted.n_points)
+    assert converted.point_data[GHOST_ARRAY_NAME].dtype == np.uint8
+    assert np.array_equal(converted.point_data[GHOST_ARRAY_NAME], expected)
+    assert GHOST_ARRAY_NAME not in converted.cell_data
+
+
+def test_points_to_cells_ghost_array_hides_unsampled_cells(uniform):
+    solid = pv.SolidSphere(outer_radius=3.0, center=uniform.center)
+    solid['data'] = solid.points[:, 2]
+    sampled = uniform.sample(solid)
+    hidden_points = sampled.point_data[GHOST_ARRAY_NAME] == HIDDEN_POINT
+    assert 0 < hidden_points.sum() < sampled.n_points
+
+    converted = sampled.points_to_cells()
+
+    hidden_cells = converted.cell_data[GHOST_ARRAY_NAME] == HIDDEN_CELL
+    assert np.array_equal(hidden_cells, hidden_points)
+    assert np.array_equal(
+        converted.cell_data['vtkValidPointMask'], sampled.point_data['vtkValidPointMask']
+    )
+
+
+def test_points_to_cells_and_cells_to_points_ghost_array_round_trip(uniform):
+    pattern = [HIDDEN_CELL | EXTERIOR_CELL, EXTERIOR_CELL]
+    uniform.cell_data[GHOST_ARRAY_NAME] = np.resize(
+        np.array(pattern, dtype=np.uint8), uniform.n_cells
+    )
+
+    converted = uniform.cells_to_points().points_to_cells()
+
+    expected = np.resize(np.array([HIDDEN_CELL, 0], dtype=np.uint8), converted.n_cells)
+    assert np.array_equal(converted.cell_data[GHOST_ARRAY_NAME], expected)
+
+
+@pytest.mark.parametrize('filter_name', ['points_to_cells', 'cells_to_points'])
+def test_remesh_ghost_array_is_kept_with_explicit_scalars(uniform, filter_name):
+    points_to_cells = filter_name == 'points_to_cells'
+    if points_to_cells:
+        scalars, data, flag = 'Spatial Point Data', uniform.point_data, HIDDEN_POINT
+    else:
+        scalars, data, flag = 'Spatial Cell Data', uniform.cell_data, HIDDEN_CELL
+    ghosts = np.resize(np.array([flag, 0], dtype=np.uint8), len(data[scalars]))
+    data[GHOST_ARRAY_NAME] = ghosts
+
+    converted = getattr(uniform, filter_name)(scalars)
+
+    new_data = converted.cell_data if points_to_cells else converted.point_data
+    assert set(new_data.keys()) == {scalars, GHOST_ARRAY_NAME}
+    assert converted.active_scalars_name == scalars
+    expected_flag = HIDDEN_CELL if points_to_cells else HIDDEN_POINT
+    assert np.array_equal(new_data[GHOST_ARRAY_NAME] == expected_flag, ghosts == flag)
+
+
+def test_points_to_cells_non_ghost_dtype_obeys_explicit_scalars(uniform):
+    uniform.point_data[GHOST_ARRAY_NAME] = np.zeros(uniform.n_points, dtype=float)
+
+    converted = uniform.points_to_cells('Spatial Point Data')
+
+    assert converted.cell_data.keys() == ['Spatial Point Data']
+
+
+def test_points_to_cells_ghost_array_ignores_non_ghost_dtype(uniform):
+    array = np.zeros(uniform.n_points, dtype=float)
+    uniform.point_data[GHOST_ARRAY_NAME] = array
+    assert uniform.GetPointData().GetGhostArray() is None
+
+    converted = uniform.points_to_cells()
+
+    assert np.array_equal(converted.cell_data[GHOST_ARRAY_NAME], array)
 
 
 def test_points_to_cells_scalars(uniform):

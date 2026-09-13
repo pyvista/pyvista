@@ -159,6 +159,8 @@ class ScalarBarArgs(TypedDict, total=False):
     position_x: float
     position_y: float
     vertical: bool
+    stacking_gap: float
+    rotate_title: bool
     interactive: bool
     fmt: str
     use_opacity: bool

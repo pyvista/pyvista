@@ -12,6 +12,6 @@ from tests.typing.meshes import unstructured
 assert_types(poly().merge(poly()), pv.PolyData)
 assert_types(poly().merge([poly(), poly()]), pv.PolyData)
 assert_types(poly().merge(poly(), inplace=True), pv.PolyData)
-assert_types(poly().merge(unstructured()), pv.PolyData | pv.UnstructuredGrid)
+assert_types(poly().merge(unstructured()), pv.UnstructuredGrid)
 assert_types(poly() + poly(), pv.PolyData)
 assert_types(poly() + unstructured(), pv.PolyData | pv.UnstructuredGrid)

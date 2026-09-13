@@ -400,7 +400,8 @@ class PolyDataFilters(DataSetFilters):
         so the in-place merge attempt will raise.
 
         """
-        return self.merge(dataset, inplace=True)
+        self.merge(dataset, inplace=True)
+        return self
 
     def append_polydata(  # type: ignore[misc]
         self: PolyData,
@@ -474,12 +475,12 @@ class PolyDataFilters(DataSetFilters):
 
     # fmt: off
     # ruff: disable[E501]
-    @overload  # type: ignore[override]  # merging polydata
-    def merge(self: PolyData, dataset: PolyData | _vtk.vtkPolyData | Sequence[PolyData | _vtk.vtkPolyData], *, merge_points: bool = ..., tolerance: float = ..., inplace: bool = ..., main_has_priority: bool | None = ..., progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc]
-    @overload  # merging in place
-    def merge(self: PolyData, dataset: DataSet | _vtk.vtkDataSet | MultiBlock | Sequence[DataSet | _vtk.vtkDataSet], *, merge_points: bool = ..., tolerance: float = ..., inplace: Literal[True], main_has_priority: bool | None = ..., progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc]
-    @overload  # merging into a new mesh
-    def merge(self: PolyData, dataset: DataSet | _vtk.vtkDataSet | MultiBlock | Sequence[DataSet | _vtk.vtkDataSet], *, merge_points: bool = ..., tolerance: float = ..., inplace: bool = ..., main_has_priority: bool | None = ..., progress_bar: bool = ...) -> PolyData | UnstructuredGrid: ...  # type: ignore[misc]
+    @overload  # type: ignore[override]  # PolyData with a composite, whose blocks decide
+    def merge(self: PolyData, dataset: MultiBlock, *, merge_points: bool = ..., tolerance: float = ..., inplace: bool = ..., main_has_priority: bool | None = ..., progress_bar: bool = ...) -> PolyData | UnstructuredGrid: ...  # type: ignore[misc]
+    @overload  # PolyData with polydata
+    def merge(self: PolyData, dataset: PolyData | Sequence[PolyData], *, merge_points: bool = ..., tolerance: float = ..., inplace: bool = ..., main_has_priority: bool | None = ..., progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc, overload-overlap]
+    @overload  # PolyData with anything else
+    def merge(self: PolyData, dataset: DataSet | _vtk.vtkDataSet | Sequence[DataSet | _vtk.vtkDataSet], *, merge_points: bool = ..., tolerance: float = ..., inplace: bool = ..., main_has_priority: bool | None = ..., progress_bar: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
     # ruff: enable[E501]
     # fmt: on
     def merge(  # type: ignore[misc]
@@ -572,7 +573,7 @@ class PolyDataFilters(DataSetFilters):
         -------
         pyvista.DataSet
             :class:`pyvista.PolyData` if ``dataset`` is a
-            :class:`pyvista.PolyData`, otherwise a
+            :class:`pyvista.PolyData` or a sequence of them, otherwise a
             :class:`pyvista.UnstructuredGrid`.
 
         Examples
@@ -595,7 +596,7 @@ class PolyDataFilters(DataSetFilters):
             msg = 'In-place merge requires both input datasets to be PolyData.'
             raise TypeError(msg)
 
-        merged = DataSetFilters.merge(
+        merged: PolyData | UnstructuredGrid = DataSetFilters.merge(
             self,
             dataset,
             merge_points=merge_points,
