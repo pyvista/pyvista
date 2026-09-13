@@ -426,7 +426,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.parent: BasePlotter | None = parent  # weakref.proxy to the plotter
         self._theme = parent.theme
         self.bounding_box_actor: Actor | None = None
-        self.axes_actor: _vtk.vtkProp | None = None
+        self.axes_actor: _vtk.vtkAxesActor | _vtk.vtkPropAssembly | None = None
         self.axes_widget: _vtk.vtkOrientationMarkerWidget | None = None
         self.scale = [1.0, 1.0, 1.0]
         self.AutomaticLightCreationOff()
