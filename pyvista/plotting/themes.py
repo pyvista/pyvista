@@ -3527,6 +3527,8 @@ class DarkTheme(Theme):
         self.background = 'black'
         self.cmap = 'viridis'
         self.font.color = 'white'
+        self.font.title_size = 18
+        self.font.label_size = 18
         self.show_edges = False
         self.color = 'lightblue'
         self.outline_color = 'white'
@@ -3562,6 +3564,7 @@ class ParaViewTheme(Theme):
         self.background = 'paraview'
         self.cmap = 'coolwarm'
         self.font.family = 'arial'
+        self.font.title_size = 16
         self.font.label_size = 16
         self.font.color = 'white'
         self.show_edges = False
