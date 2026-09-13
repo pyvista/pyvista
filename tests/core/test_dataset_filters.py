@@ -5493,17 +5493,17 @@ def test_voxelize_binary_mask_spacing(ant):
 
 def test_voxelize_binary_mask_cell_length_sample_size(ant, mocker: MockerFixture):
     from pyvista import _vtk
-    from pyvista.core.filters import data_set
+    from pyvista.core.filters import data_object
 
     sample_sizes = []
-    update_alg = data_set._update_alg
+    update_alg = data_object._update_alg
 
     def _record_sample_size(alg, **kwargs):
         if isinstance(alg, _vtk.vtkLengthDistribution):
             sample_sizes.append(alg.GetSampleSize())
         return update_alg(alg, **kwargs)
 
-    mocker.patch.object(data_set, '_update_alg', _record_sample_size)
+    mocker.patch.object(data_object, '_update_alg', _record_sample_size)
 
     # Sample size is used when sampling cell lengths
     ant.voxelize_binary_mask(cell_length_sample_size=100)
@@ -5857,6 +5857,57 @@ def test_resample_to_image_method_interpolate(sphere):
     # A smaller radius fills fewer voxels
     tight = sphere.resample_to_image(dimensions=dims, radius=np.linalg.norm(image.spacing) / 4)
     assert tight['vtkValidPointMask'].sum() < valid.sum()
+
+
+def test_resample_to_image_multiblock():
+    blocks = pv.MultiBlock([pv.Sphere(), pv.Sphere(center=(1.5, 0, 0))])
+    for block in blocks:
+        block['height'] = block.points[:, 2]
+
+    image = blocks.resample_to_image(target_n_points=20_000)
+    assert isinstance(image, pv.ImageData)
+    assert 'height' in image.point_data
+    # Voxels are points, so the cells rather than the points span the input's bounds
+    assert np.allclose(np.array(image.bounds_size) + np.array(image.spacing), blocks.bounds_size)
+
+    # Surfaces have no volume, so the blocks are interpolated from their points
+    valid = image['vtkValidPointMask'].astype(bool)
+    assert valid.any()
+    assert image.point_data['vtkGhostType'].size == image.n_points
+
+    # Each block reaches the output
+    for block in blocks:
+        ijk = np.round((block.points - np.array(image.origin)) / np.array(image.spacing)).astype(
+            int
+        )
+        ijk = np.clip(ijk, 0, np.array(image.dimensions) - 1)
+        flat = ijk[:, 0] + image.dimensions[0] * (ijk[:, 1] + image.dimensions[1] * ijk[:, 2])
+        assert valid[flat].all()
+
+
+def test_resample_to_image_multiblock_volumetric():
+    blocks = pv.MultiBlock(
+        [pv.SolidSphere(outer_radius=0.5), pv.SolidSphere(outer_radius=0.5, center=(1.2, 0, 0))]
+    )
+    for block in blocks:
+        block['height'] = block.points[:, 2]
+
+    image = blocks.resample_to_image(target_n_points=20_000)
+    assert 'height' in image.point_data
+    # Volumetric blocks are sampled, which fills their interiors
+    assert image['vtkValidPointMask'].sum() > 0.3 * image.n_points
+
+
+def test_resample_to_image_multiblock_matches_combined():
+    blocks = pv.MultiBlock([pv.Sphere(), pv.Sphere(center=(0.6, 0, 0))])
+    for block in blocks:
+        block['height'] = block.points[:, 2]
+
+    from_blocks = blocks.resample_to_image(target_n_points=10_000)
+    from_combined = blocks.combine().resample_to_image(target_n_points=10_000)
+    assert from_blocks.dimensions == from_combined.dimensions
+    assert np.allclose(from_blocks.origin, from_combined.origin)
+    assert np.allclose(from_blocks['height'], from_combined['height'])
 
 
 @pytest.mark.parametrize('target', [1_000, 100_000, 1_000_000])

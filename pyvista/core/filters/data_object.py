@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from collections.abc import Sequence
 from collections.abc import Sized
 import copy as copylib
@@ -5830,6 +5831,349 @@ class DataObjectFilters:
             output.cell_data[measure] = cell_quality_array
         return output
 
+    def resample_to_image(  # type: ignore[misc]
+        self: DataSet | MultiBlock,
+        *,
+        reference_volume: ImageData | None = None,
+        dimensions: VectorLike[int] | None = None,
+        spacing: float | VectorLike[float] | None = None,
+        target_n_points: int | None = None,
+        rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None = None,
+        cell_length_percentile: float | None = None,
+        cell_length_sample_size: int | None = None,
+        method: Literal['sample', 'interpolate'] | None = None,
+        tolerance: float | None = None,
+        categorical: bool = False,
+        radius: float | None = None,
+        sharpness: float | None = None,
+        progress_bar: bool = False,
+    ) -> ImageData:
+        """Resample this mesh's arrays onto a uniform grid.
+
+        The mesh's arrays are resampled at the center of every voxel of a new
+        :class:`~pyvista.ImageData`. This is a one-line alternative to building the
+        grid explicitly and calling :meth:`~pyvista.DataObjectFilters.sample` or
+        :meth:`~pyvista.DataSetFilters.interpolate` on it.
+
+        A :class:`~pyvista.MultiBlock` is resampled as a whole, so one grid covers
+        every block and a voxel takes its value from whichever block reaches it.
+
+        The output geometry can be controlled in several ways:
+
+        #. Specify the output geometry using a ``reference_volume``.
+
+        #. Specify the ``spacing`` explicitly.
+
+        #. Specify the ``dimensions`` explicitly.
+
+        #. Specify the ``cell_length_percentile``. The spacing is estimated from the
+           mesh's cells using the specified percentile.
+
+        Use ``reference_volume`` for full control of the output's geometry. For
+        all other options, the geometry is implicitly defined such that the generated
+        voxels fit the bounds of the input mesh.
+
+        If no inputs are provided, ``cell_length_percentile=0.1`` (tenth percentile) is
+        used by default to estimate the spacing, so the input's own cells set the
+        resolution.
+
+        The values are resampled with one of two methods, chosen by ``method``:
+
+        #. ``'sample'`` interpolates inside the input's cells. This is the default for
+           an input with volumetric cells, and is the only method which uses the input's
+           topology or carries its cell data.
+
+        #. ``'interpolate'`` interpolates from the input's points within ``radius``.
+           This is the default otherwise, since a cell search misses most of a curved
+           surface and all of a point cloud. Every voxel containing an input point is
+           filled, and only the input's point data is carried.
+
+        A flat input is the exception: its voxels are centered on it, so ``'sample'``
+        reaches every one of them and reproduces the values exactly.
+
+        .. versionadded:: 0.50
+
+        .. note::
+            The input's data arrays are resampled by this filter. Use
+            :meth:`voxelize_binary_mask` to fill the inside of a closed surface instead;
+            it labels voxels as foreground or background and ignores data arrays
+            entirely. Both filters place their voxels identically, so their outputs can
+            be combined.
+
+        .. note::
+            Voxels with no value are flagged with a ``'vtkValidPointMask'`` point data
+            array and hidden with a ``'vtkGhostType'`` array, so volume rendering the
+            output shows those regions as transparent.
+
+        .. note::
+            ``method='sample'`` reads the input's point `and` cell data, and writes both
+            to the output's point data. ``method='interpolate'`` reads point data only,
+            so the input's cell data is dropped and a warning is raised. Call
+            :meth:`~pyvista.DataObjectFilters.cell_data_to_point_data` on the input to
+            keep it.
+
+        .. note::
+            The two methods keep different voxels. ``method='sample'`` keeps those whose
+            centre lies inside a cell of the input, so the result stops just inside a
+            volumetric mesh's surface. ``method='interpolate'`` keeps those the input
+            passes through, so the result straddles the input and reaches up to half a
+            voxel diagonal beyond it. Resampling a solid and resampling its surface
+            therefore fill different voxels. Use :meth:`voxelize_binary_mask` on the
+            surface to fill a closed surface's interior instead; it keeps the same
+            voxels that ``method='sample'`` keeps for the solid.
+
+        Parameters
+        ----------
+        reference_volume : ImageData, optional
+            Volume to use as a reference. The output will have the same ``dimensions``,
+            ``origin``, ``spacing``, ``offset``, and ``direction_matrix`` as the reference.
+
+        dimensions : VectorLike[int], optional
+            Dimensions of the generated image. Set this value to control the
+            dimensions explicitly. If unset, the dimensions are defined implicitly
+            through other parameters. See summary and examples for details.
+
+        spacing : float | VectorLike[float], optional
+            Approximate spacing to use for the generated image. Set this value
+            to control the spacing explicitly. If unset, the spacing is defined
+            implicitly through other parameters. See summary and examples for details.
+        target_n_points : int, optional
+            Approximate number of points to generate. The spacing is isotropic and
+            chosen so the output holds about this many points, distributed between the
+            axes in proportion to the input's bounds. An axis with no extent holds a
+            single point and takes no part in the count. Rounding to whole voxels means
+            the count is approached, not matched exactly. Cannot be set with
+            ``dimensions``, ``spacing``, or the cell length options.
+
+            .. versionadded:: 0.49
+
+        rounding_func : Callable[VectorLike[float], VectorLike[int]], optional
+            Control how the dimensions are rounded to integers based on the provided or
+            calculated ``spacing``. Should accept a length-3 vector containing the
+            dimension values along the three directions and return a length-3 vector.
+            :func:`numpy.round` is used by default.
+
+            Rounding the dimensions implies rounding the actual spacing.
+
+            Cannot be set together with ``reference_volume`` or ``dimensions``.
+
+        cell_length_percentile : float, optional
+            Cell length percentage ``p`` to use for computing the default ``spacing``.
+            Default is ``0.1`` (tenth percentile) and must be between ``0`` and ``1``.
+            The ``p``-th percentile is computed from the cumulative distribution function
+            (CDF) of lengths which are representative of the cell length scales present
+            in the input. The CDF is computed by:
+
+            #. Sampling a subset of up to ``cell_length_sample_size`` cells.
+            #. Computing the distance between two random points in each cell.
+            #. Inserting the distance into an ordered set to create the CDF.
+
+            The estimate is a single value which is used for all three axes, so an
+            anisotropic input is resampled below its native spacing along its coarsest
+            axis.
+
+            Has no effect if ``dimensions`` or ``reference_volume`` are specified.
+
+        cell_length_sample_size : int, optional
+            Number of samples to use for the cumulative distribution function (CDF)
+            when using the ``cell_length_percentile`` option. ``100 000`` samples are
+            used by default.
+
+        method : 'sample' | 'interpolate', optional
+            Method used to compute each voxel's value. ``'sample'`` interpolates inside
+            the input's cells, and ``'interpolate'`` interpolates from its points within
+            ``radius``. By default ``'sample'`` is used for an input with volumetric
+            cells and ``'interpolate'`` is used otherwise. See summary for details.
+
+        tolerance : float, optional
+            Tolerance used when locating the cell a voxel is sampled from. The tolerance
+            computed by :vtk:`vtkResampleWithDataSet` is used by default. Requires
+            ``method='sample'``.
+
+        categorical : bool, default: False
+            Control whether the source point data is to be treated as categorical. If
+            ``True``, the resampled point data will be determined by a nearest neighbor
+            interpolation scheme. Requires ``method='sample'``.
+
+        radius : float, optional
+            Distance from a voxel's center within which the input's points contribute to
+            it. Half a voxel's diagonal is used by default, which is the furthest any
+            point inside a voxel can be from its center. Requires
+            ``method='interpolate'``.
+
+        sharpness : float, optional
+            Sharpness of the Gaussian interpolation kernel, ``2.0`` by default. As this
+            value increases, the weights of points far from a voxel's center fall off
+            faster. Requires ``method='interpolate'``.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        ImageData
+            Uniform grid with the input's arrays sampled onto its points.
+
+        See Also
+        --------
+        pyvista.DataObjectFilters.sample
+            Filter used by ``method='sample'``. Samples onto an existing mesh of any
+            type, and exposes options this one does not.
+
+        interpolate
+            Filter used by ``method='interpolate'``. Interpolates onto an existing mesh
+            of any type, and exposes options this one does not.
+
+        pyvista.ImageDataFilters.resample
+            Change the dimensions or spacing of an image which is already
+            :class:`~pyvista.ImageData`.
+
+        voxelize_binary_mask
+            Voxelize the inside of a closed surface as a mask. Operates on a surface's
+            geometry and generates a new array instead of resampling existing ones.
+
+        pyvista.create_grid
+            Create a uniform grid surrounding a dataset. Its points lie on the dataset's
+            bounds, whereas this filter's voxels fit them.
+
+        Examples
+        --------
+        Resample a tetrahedral mesh of a blood vessel network onto a uniform grid. The
+        spacing is estimated from the mesh's own cells.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.download_blood_vessels()
+        >>> volume = mesh.resample_to_image()
+        >>> volume.dimensions
+        (68, 47, 118)
+
+        >>> volume.spacing
+        (1.0, 1.0, 1.0)
+
+        Volume render the result. The voxels outside the vessels are blank, and are
+        therefore transparent.
+
+        >>> volume.plot(volume=True, scalars='shearstress', cpos='zy')
+
+        Set the ``dimensions`` or the ``spacing`` to control the resolution explicitly.
+
+        >>> mesh.resample_to_image(spacing=2.0).dimensions
+        (34, 24, 59)
+
+        Compare the three kinds of input. Resize one sphere's point cloud, surface, and
+        solid to identical bounds so they share a grid.
+
+        >>> bounds = (-0.5, 0.5, -0.5, 0.5, -0.5, 0.5)
+        >>> surface = pv.Sphere(theta_resolution=40, phi_resolution=40).resize(
+        ...     bounds=bounds
+        ... )
+        >>> solid = pv.SolidSphere(
+        ...     outer_radius=0.5,
+        ...     radius_resolution=15,
+        ...     theta_resolution=40,
+        ...     phi_resolution=40,
+        ... ).resize(bounds=bounds)
+
+        Show each input beside the voxels of its resampled image.
+
+        >>> datasets = {}
+        >>> for sphere in [surface.cast_to_pointset(), surface, solid]:
+        ...     sphere['height'] = sphere.points[:, 2]
+        ...     image = sphere.resample_to_image(spacing=0.05)
+        ...     voxels = image.points_to_cells(dimensionality='3D')
+        ...     name = type(sphere).__name__
+        ...     datasets[name] = sphere
+        ...     datasets[f'{name} voxels'] = voxels.threshold(
+        ...         scalars='vtkValidPointMask', value=0.5
+        ...     )
+        >>> pv.plot_compare(datasets, shape=(3, 2), scalars='height')
+
+        The point cloud and the surface fill the same shell, since they have the same
+        points. The solid is filled throughout, and its voxels stop just inside the
+        surface which the other two straddle.
+
+        Resample every block of a :class:`~pyvista.MultiBlock` onto one grid.
+
+        >>> blocks = pv.MultiBlock([pv.Sphere(), pv.Sphere(center=(1.5, 0, 0))])
+        >>> for block in blocks:
+        ...     block['height'] = block.points[:, 2]
+        >>> blocks.resample_to_image(target_n_points=20_000).dimensions
+        (50, 20, 20)
+
+        A point cloud of the same mesh has no cells for a cell search to land in, so it
+        is interpolated from its points instead.
+
+        >>> cloud = pv.PointSet(mesh.points)
+        >>> cloud['node_value'] = mesh['node_value']
+        >>> cloud.resample_to_image(spacing=2.0).plot(
+        ...     volume=True, scalars='node_value', cpos='zy'
+        ... )
+
+        """
+        _validate_reference_volume_options(
+            reference_volume=reference_volume,
+            dimensions=dimensions,
+            spacing=spacing,
+            target_n_points=target_n_points,
+            rounding_func=rounding_func,
+            cell_length_percentile=cell_length_percentile,
+            cell_length_sample_size=cell_length_sample_size,
+        )
+        # The filters below read a single dataset, not a composite
+        source = self.combine() if isinstance(self, pv.MultiBlock) else self
+        volume = _make_reference_volume(
+            source,
+            reference_volume=reference_volume,
+            dimensions=dimensions,
+            spacing=spacing,
+            target_n_points=target_n_points,
+            rounding_func=rounding_func,
+            cell_length_percentile=cell_length_percentile,
+            cell_length_sample_size=cell_length_sample_size,
+            progress_bar=progress_bar,
+        )
+        chosen = method
+        if chosen is None:
+            chosen = 'sample' if source.max_cell_dimensionality == 3 else 'interpolate'
+        else:
+            _validation.check_contains(
+                ['sample', 'interpolate'], must_contain=chosen, name='method'
+            )
+        chosen_for = '' if method is not None else ', chosen for this input'
+        unused = (
+            {'radius': radius, 'sharpness': sharpness}
+            if chosen == 'sample'
+            else {'tolerance': tolerance, 'categorical': categorical or None}
+        )
+        for name, value in unused.items():
+            if value is not None:
+                wanted = 'interpolate' if chosen == 'sample' else 'sample'
+                msg = (
+                    f'`{name}` requires `method={wanted!r}`, but `method={chosen!r}`{chosen_for}.'
+                )
+                raise TypeError(msg)
+
+        if chosen == 'sample':
+            return volume.sample(
+                source, tolerance=tolerance, categorical=categorical, progress_bar=progress_bar
+            )
+        if dropped := [n for n in source.cell_data if not n.startswith('vtk')]:
+            msg = (
+                f'Cell data {dropped} is dropped by `method={chosen!r}`'
+                f'{chosen_for}, which reads point data only. '
+                'Call `cell_data_to_point_data` on the input to keep it.'
+            )
+            warn_external(msg)
+        interpolated = volume.interpolate(
+            source,
+            radius=float(np.linalg.norm(volume.spacing)) / 2 if radius is None else radius,
+            sharpness=2.0 if sharpness is None else sharpness,
+            strategy='mask_points',
+            progress_bar=progress_bar,
+        )
+        return _blank_invalid_points(interpolated)
+
 
 def _convex_hull_scipy(points: NumpyArray[float], dimensionality: Literal[1, 2, 3]) -> PolyData:
     """Compute a convex hull surface from points using scipy's Qhull-based ConvexHull.
@@ -6037,6 +6381,173 @@ def _clipper(mesh: DataSet | MultiBlock) -> _vtk.vtkClipPolyData | _vtk.vtkTable
     if isinstance(mesh, pv.PolyData) and mesh.n_strips:
         return _vtk.vtkClipPolyData()
     return _vtk.vtkTableBasedClipDataSet()
+
+
+def _validate_reference_volume_options(
+    *,
+    reference_volume: ImageData | None,
+    dimensions: VectorLike[int] | None,
+    spacing: float | VectorLike[float] | None,
+    rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None,
+    target_n_points: int | None,
+    cell_length_percentile: float | None,
+    cell_length_sample_size: int | None,
+) -> None:
+    """Raise if the geometry options of a voxelize or resample filter conflict."""
+    if reference_volume is not None:
+        if (
+            dimensions is not None
+            or spacing is not None
+            or target_n_points is not None
+            or rounding_func is not None
+            or cell_length_percentile is not None
+            or cell_length_sample_size is not None
+        ):
+            msg = (
+                'Cannot specify a reference volume with other geometry parameters. '
+                '`reference_volume` must define the geometry exclusively.'
+            )
+            raise TypeError(msg)
+        _validation.check_instance(reference_volume, pv.ImageData, name='reference volume')
+        return
+
+    if spacing is not None and dimensions is not None:
+        msg = 'Spacing and dimensions cannot both be set. Set one or the other.'
+        raise TypeError(msg)
+
+    if spacing is not None and (
+        cell_length_percentile is not None or cell_length_sample_size is not None
+    ):
+        msg = 'Spacing and cell length options cannot both be set. Set one or the other.'
+        raise TypeError(msg)
+
+    if target_n_points is not None and (
+        dimensions is not None
+        or spacing is not None
+        or cell_length_percentile is not None
+        or cell_length_sample_size is not None
+    ):
+        msg = (
+            'Target n points cannot be set with dimensions, spacing or cell length options. '
+            'Set one or the other.'
+        )
+        raise TypeError(msg)
+
+    if dimensions is not None and rounding_func is not None:
+        msg = 'Rounding func cannot be set when dimensions is specified. Set one or the other.'
+        raise TypeError(msg)
+
+
+def _spacing_for_n_points(size: NumpyArray[float], target_n_points: int) -> float:
+    """Return the isotropic spacing whose grid holds about ``target_n_points`` points."""
+    target = _validation.validate_number(
+        target_n_points, must_be_in_range=[1, np.inf], must_be_integer=True, name='target n points'
+    )
+    extents = np.asarray(size, dtype=float)
+    live = extents > 0
+    if not live.any():
+        msg = 'Spacing cannot be estimated for an input with no extent. Set `spacing` explicitly.'
+        raise ValueError(msg)
+    # Flat axes hold a single point, so the budget is spread over the others
+    return float((extents[live].prod() / target) ** (1.0 / live.sum()))
+
+
+def _make_reference_volume(
+    mesh: DataSet,
+    *,
+    reference_volume: ImageData | None,
+    dimensions: VectorLike[int] | None,
+    spacing: float | VectorLike[float] | None,
+    target_n_points: int | None,
+    rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None,
+    cell_length_percentile: float | None,
+    cell_length_sample_size: int | None,
+    progress_bar: bool,
+) -> ImageData:  # numpydoc ignore=RT01
+    """Create an empty image whose voxels fit the bounds of a mesh."""
+    if reference_volume is not None:
+        volume = pv.ImageData()
+        volume.extent = reference_volume.extent
+        volume.spacing = reference_volume.spacing
+        volume.origin = reference_volume.origin
+        volume.direction_matrix = reference_volume.direction_matrix
+        return volume
+
+    size = np.array(mesh.bounds_size)
+    initial_spacing = None
+
+    if dimensions is None:
+        if target_n_points is not None:
+            spacing = _spacing_for_n_points(size, target_n_points)
+        if spacing is None:
+            no_spacing_msg = (
+                'Spacing cannot be estimated from the input cells. '
+                'Set `dimensions` or `spacing` explicitly.'
+            )
+            if mesh.n_cells == 0:
+                raise ValueError(no_spacing_msg)
+            # Estimate spacing from cell length percentile
+            cell_length_percentile = (
+                0.1 if cell_length_percentile is None else cell_length_percentile
+            )
+            cell_length_sample_size = (
+                100_000 if cell_length_sample_size is None else cell_length_sample_size
+            )
+            spacing = _length_distribution_percentile(
+                mesh,
+                cell_length_percentile,
+                cell_length_sample_size,
+                progress_bar=progress_bar,
+            )
+            if spacing == 0:
+                raise ValueError(no_spacing_msg)
+        # Get initial spacing (will be adjusted later)
+        initial_spacing = _validation.validate_array3(spacing, broadcast=True)
+        rounding_func = np.round if rounding_func is None else rounding_func
+        initial_dimensions = size / initial_spacing
+        # Make sure we don't round dimensions to zero, make it one instead
+        initial_dimensions[initial_dimensions < 1] = 1
+        dimensions = np.array(rounding_func(initial_dimensions), dtype=int)
+
+    volume = pv.ImageData()
+    volume.dimensions = dimensions
+    dimensions_ = np.array(volume.dimensions)
+    flat = size == 0
+    final_spacing = np.divide(size, dimensions_, out=np.ones(3), where=~flat)
+    if flat.any():
+        # A flat axis takes the requested spacing, else the finest of the other axes
+        others = final_spacing[~flat]
+        final_spacing[flat] = (
+            initial_spacing[flat]
+            if initial_spacing is not None
+            else (others.min() if others.size else 1.0)
+        )
+    volume.spacing = final_spacing
+    # Voxels are points, so inset them by 1/2 spacing to fit the cells to the bounds
+    inset = np.where(flat, (1 - dimensions_) * final_spacing / 2, final_spacing / 2)
+    volume.origin = np.array(mesh.bounds[::2]) + inset
+    return volume
+
+
+def _blank_invalid_points(image: ImageData) -> ImageData:
+    """Hide the points which the valid-point mask marks as empty."""
+    invalid = image.point_data['vtkValidPointMask'] == 0
+    ghosts = np.where(invalid, _vtk.vtkDataSetAttributes.HIDDENPOINT, 0).astype(np.uint8)
+    image.point_data.set_array(ghosts, _vtk.vtkDataSetAttributes.GhostArrayName())  # type: ignore[arg-type]
+    return image
+
+
+def _length_distribution_percentile(poly, percentile, cell_length_sample_size, *, progress_bar):
+    percentile = _validation.validate_number(
+        percentile, must_be_in_range=[0.0, 1.0], name='percentile'
+    )
+    distribution = _vtk.vtkLengthDistribution()
+    distribution.SetInputData(poly)
+    distribution.SetSampleSize(cell_length_sample_size)
+    _update_alg(
+        distribution, progress_bar=progress_bar, message='Computing cell length distribution'
+    )
+    return distribution.GetLengthQuantile(percentile)
 
 
 def _clip_input(mesh: DataSet | MultiBlock) -> DataSet | MultiBlock:
