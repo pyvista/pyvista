@@ -62,7 +62,6 @@ if TYPE_CHECKING:
     from ._typing import CameraPositionOptions
     from ._typing import Chart
     from ._typing import ColorLike
-    from .charts import _Chart
     from .cube_axes_actor import CubeAxesActor
     from .lights import Light
     from .plotter import BasePlotter
@@ -1001,7 +1000,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self._border_requested_width = None
         self.Modified()
 
-    def add_chart(self, chart: _Chart, *charts: _Chart) -> None:
+    def add_chart(self, chart: Chart, *charts: Chart) -> None:
         """Add a chart to this renderer.
 
         Parameters
@@ -1061,7 +1060,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
     @_wraps(Charts.set_interaction)
     def set_chart_interaction(  # numpydoc ignore=PR01,RT01
         self,
-        interactive: bool | _Chart | int | Sequence[_Chart] | Sequence[int],  # noqa: FBT001
+        interactive: bool | Chart | int | Sequence[Chart] | Sequence[int],  # noqa: FBT001
         *,
         toggle: bool = False,
     ) -> list[Chart]:
@@ -1073,7 +1072,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """Wrap ``Charts.get_charts_by_pos``."""
         return self._charts.get_charts_by_pos(pos) if self._charts else []
 
-    def remove_chart(self, chart_or_index: _Chart | int) -> None:
+    def remove_chart(self, chart_or_index: Chart | int) -> None:
         """Remove a chart from this renderer.
 
         Parameters

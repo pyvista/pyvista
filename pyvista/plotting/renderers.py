@@ -32,7 +32,6 @@ if TYPE_CHECKING:
     from ._typing import BorderOptions
     from ._typing import Chart
     from ._typing import ColorLike
-    from .charts import _Chart
     from .plotter import BasePlotter
 
 _SeamSegment = tuple[tuple[float, float], tuple[float, float]]
@@ -618,7 +617,7 @@ class Renderers(_NoNewAttrMixin):
 
     def set_chart_interaction(
         self,
-        interactive: bool | _Chart | int | Sequence[_Chart] | Sequence[int],  # noqa: FBT001
+        interactive: bool | Chart | int | Sequence[Chart] | Sequence[int],  # noqa: FBT001
         *,
         toggle: bool = False,
     ) -> list[Chart]:
