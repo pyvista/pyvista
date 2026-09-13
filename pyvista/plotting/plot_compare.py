@@ -425,8 +425,12 @@ def _fit_labels_on_render(
             return
         dpi = render_window.GetDPI()
         renderers = list(plotter.renderers)[: len(labels)]
-        actors = [renderer.actors.get(name) for renderer in renderers]
-        if not all(actors):
+        actors = [
+            actor
+            for renderer in renderers
+            if isinstance(actor := renderer.actors.get(name), pv.Text)
+        ]
+        if len(actors) != len(renderers):
             # A label has been removed or drawn over since it was added, so there is
             # nothing left to fit rather than anything to complain about mid-render
             return

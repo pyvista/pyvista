@@ -645,16 +645,16 @@ def test_border_default_handles_non_tuple_shape(shape, expects_overlay):
 
 
 def test_bad_legend_origin_and_size(sphere):
-    """Ensure bad parameters to origin/size raise ValueErrors."""
+    """Ensure bad parameters to origin/size raise."""
     pl = pv.Plotter()
     pl.add_mesh(sphere)
     legend_labels = [['sphere', 'r']]
     with pytest.raises(ValueError, match='Invalid loc'):
         pl.add_legend(labels=legend_labels, loc='bar')
-    with pytest.raises(ValueError, match='size'):
+    with pytest.raises(ValueError, match='`size` must have a length equal to'):
         pl.add_legend(labels=legend_labels, size=[])
     # test non-sequences also raise
-    with pytest.raises(ValueError, match='size'):
+    with pytest.raises(TypeError, match='`size` must be an instance of'):
         pl.add_legend(labels=legend_labels, size=type)
 
 
@@ -1145,7 +1145,7 @@ def test_compute_bounds(airplane):
 @pytest.mark.parametrize('aa_type', [None, 1.0, 1, object()])
 def test_enable_antialising_raises(aa_type):
     pl = pv.Plotter()
-    with pytest.raises(TypeError, match=f'`aa_type` must be a string, not {type(aa_type)}'):
+    with pytest.raises(TypeError, match='`aa_type` must be an instance of'):
         pl.renderer.enable_anti_aliasing(aa_type=aa_type)
 
 
@@ -1220,15 +1220,15 @@ def test_show_bounds_padding_raises(padding):
 
 @pytest.mark.parametrize('groups', [1, object(), True])
 def test_init_renderers_groups_raises(groups):
-    match = f'"groups" should be a list or tuple, not {type(groups).__name__}.'
-    with pytest.raises(TypeError, match=match):
+    match = f'"groups" must be an instance of .*Got {type(groups)} instead.'
+    with pytest.raises(TypeError, match=re.escape(match).replace('\\.\\*', '.*')):
         pv.Plotter(groups=groups)
 
 
 @pytest.mark.parametrize('group', [1, object(), True])
 def test_init_renderers_groups_item_raises(group):
-    match = f'Each group entry should be a list or tuple, not {type(group).__name__}.'
-    with pytest.raises(TypeError, match=match):
+    match = f'Each group entry must be an instance of .*Got {type(group)} instead.'
+    with pytest.raises(TypeError, match=re.escape(match).replace('\\.\\*', '.*')):
         pv.Plotter(groups=[group])
 
 
