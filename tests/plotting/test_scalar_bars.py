@@ -774,6 +774,25 @@ def test_fit_box_holds_at_any_window_size(sphere, vertical: bool, window_size):
 
 
 @pytest.mark.parametrize('vertical', [True, False], ids=['vertical', 'horizontal'])
+def test_fit_box_hugs_the_text_not_the_size_given(sphere, vertical: bool):
+    # The size a bar is given is a fraction of the window while its text is not, so on a
+    # large window a box that kept that size would stand well off the text it holds
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter()
+    config = pl.theme.colorbar_vertical if vertical else pl.theme.colorbar_horizontal
+    generous = 0.5
+    if vertical:
+        config.width = generous
+    else:
+        config.height = generous
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = _fitted_bar(pl, sphere, vertical=vertical, box={'outline': True})
+
+    assert (bar.GetWidth() if vertical else bar.GetHeight()) < generous
+
+
+@pytest.mark.parametrize('vertical', [True, False], ids=['vertical', 'horizontal'])
 def test_fit_box_refits_a_resized_window(sphere, vertical: bool):
     # The box is a fraction of the window and the text is not, so a narrower window
     # leaves the text outside a box that is not measured again

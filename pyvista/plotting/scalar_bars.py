@@ -99,8 +99,10 @@ def _fitted_box(scalar_bar, *, vertical, title, label_text, pad, dpi, window):
 
     if vertical:
         ramp = scalar_bar.GetBarRatio() * box_width
-        # The title is centered on the box and the labels are drawn past the ramp
-        box_width = max(box_width, title_width + 2 * text_pad, ramp + label_width + 2 * text_pad)
+        # The title is centered on the box and the labels are drawn past the ramp.  The
+        # width the bar was given only sets how thick the ramp is, so the box is free to
+        # be no wider than the text needs however large the window grows
+        box_width = max(title_width + 2 * text_pad, ramp + label_width + 2 * text_pad)
         bar_ratio = ramp / box_width
         # A vertical title is lifted clear of the box by three quarters of a label, and
         # the offset that seats it again grows the title box at the ramp's expense.  The
@@ -113,7 +115,7 @@ def _fitted_box(scalar_bar, *, vertical, title, label_text, pad, dpi, window):
         ramp = scalar_bar.GetBarRatio() * box_height
         # A horizontal title is stacked above the ramp and the labels, measured from the
         # bottom of the box, so the box only has to be tall enough to cover the stack
-        box_height = max(box_height, ramp + label_height + title_height + pad + 2 * text_pad)
+        box_height = ramp + label_height + title_height + pad + 2 * text_pad
         bar_ratio = ramp / box_height
         offset = -pad
         separation = 0
