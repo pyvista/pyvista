@@ -8205,6 +8205,7 @@ class DataSetFilters(DataObjectFilters):
         reference_volume: ImageData | None = None,
         dimensions: VectorLike[int] | None = None,
         spacing: float | VectorLike[float] | None = None,
+        target_n_points: int | None = None,
         rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None = None,
         cell_length_percentile: float | None = None,
         cell_length_sample_size: int | None = None,
@@ -8290,6 +8291,15 @@ class DataSetFilters(DataObjectFilters):
             Approximate spacing to use for the generated mask image. Set this value
             to control the spacing explicitly. If unset, the spacing is defined
             implicitly through other parameters. See summary and examples for details.
+        target_n_points : int, optional
+            Approximate number of points to generate. The spacing is isotropic and
+            chosen so the output holds about this many points, distributed between the
+            axes in proportion to the input's bounds. An axis with no extent holds a
+            single point and takes no part in the count. Rounding to whole voxels means
+            the count is approached, not matched exactly. Cannot be set with
+            ``dimensions``, ``spacing``, or the cell length options.
+
+            .. versionadded:: 0.49
 
         rounding_func : Callable[VectorLike[float], VectorLike[int]], optional
             Control how the dimensions are rounded to integers based on the provided or
@@ -8524,6 +8534,7 @@ class DataSetFilters(DataObjectFilters):
             reference_volume=reference_volume,
             dimensions=dimensions,
             spacing=spacing,
+            target_n_points=target_n_points,
             rounding_func=rounding_func,
             cell_length_percentile=cell_length_percentile,
             cell_length_sample_size=cell_length_sample_size,
@@ -8535,6 +8546,7 @@ class DataSetFilters(DataObjectFilters):
             reference_volume=reference_volume,
             dimensions=dimensions,
             spacing=spacing,
+            target_n_points=target_n_points,
             rounding_func=rounding_func,
             cell_length_percentile=cell_length_percentile,
             cell_length_sample_size=cell_length_sample_size,
@@ -8578,6 +8590,7 @@ class DataSetFilters(DataObjectFilters):
         reference_volume: ImageData | None,
         dimensions: VectorLike[int] | None,
         spacing: float | VectorLike[float] | None,
+        target_n_points: int | None,
         rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None,
         cell_length_percentile: float | None,
         cell_length_sample_size: int | None,
@@ -8595,6 +8608,7 @@ class DataSetFilters(DataObjectFilters):
             reference_volume=reference_volume,
             dimensions=dimensions,
             spacing=spacing,
+            target_n_points=target_n_points,
             rounding_func=rounding_func,
             cell_length_percentile=cell_length_percentile,
             cell_length_sample_size=cell_length_sample_size,
@@ -8610,6 +8624,7 @@ class DataSetFilters(DataObjectFilters):
         reference_volume: ImageData | None = None,
         dimensions: VectorLike[int] | None = None,
         spacing: float | VectorLike[float] | None = None,
+        target_n_points: int | None = None,
         rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None = None,
         cell_length_percentile: float | None = None,
         cell_length_sample_size: int | None = None,
@@ -8678,6 +8693,15 @@ class DataSetFilters(DataObjectFilters):
             Approximate spacing to use for the generated grid. Set this value
             to control the spacing explicitly. If unset, the spacing is defined
             implicitly through other parameters. See summary and examples for details.
+        target_n_points : int, optional
+            Approximate number of points to generate. The spacing is isotropic and
+            chosen so the output holds about this many points, distributed between the
+            axes in proportion to the input's bounds. An axis with no extent holds a
+            single point and takes no part in the count. Rounding to whole voxels means
+            the count is approached, not matched exactly. Cannot be set with
+            ``dimensions``, ``spacing``, or the cell length options.
+
+            .. versionadded:: 0.49
 
         rounding_func : Callable[VectorLike[float], VectorLike[int]], optional
             Control how the dimensions are rounded to integers based on the provided or
@@ -8782,6 +8806,7 @@ class DataSetFilters(DataObjectFilters):
             reference_volume=reference_volume,
             dimensions=dimensions,
             spacing=spacing,
+            target_n_points=target_n_points,
             rounding_func=rounding_func,
             cell_length_percentile=cell_length_percentile,
             cell_length_sample_size=cell_length_sample_size,
@@ -8795,6 +8820,7 @@ class DataSetFilters(DataObjectFilters):
         reference_volume: ImageData | None = None,
         dimensions: VectorLike[int] | None = None,
         spacing: float | VectorLike[float] | None = None,
+        target_n_points: int | None = None,
         rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None = None,
         cell_length_percentile: float | None = None,
         cell_length_sample_size: int | None = None,
@@ -8853,6 +8879,15 @@ class DataSetFilters(DataObjectFilters):
             Approximate spacing to use for the generated mesh. Set this value
             to control the spacing explicitly. If unset, the spacing is defined
             implicitly through other parameters. See summary and examples for details.
+        target_n_points : int, optional
+            Approximate number of points to generate. The spacing is isotropic and
+            chosen so the output holds about this many points, distributed between the
+            axes in proportion to the input's bounds. An axis with no extent holds a
+            single point and takes no part in the count. Rounding to whole voxels means
+            the count is approached, not matched exactly. Cannot be set with
+            ``dimensions``, ``spacing``, or the cell length options.
+
+            .. versionadded:: 0.49
 
         rounding_func : Callable[VectorLike[float], VectorLike[int]], optional
             Control how the dimensions are rounded to integers based on the provided or
@@ -8952,6 +8987,7 @@ class DataSetFilters(DataObjectFilters):
             reference_volume=reference_volume,
             dimensions=dimensions,
             spacing=spacing,
+            target_n_points=target_n_points,
             rounding_func=rounding_func,
             cell_length_percentile=cell_length_percentile,
             cell_length_sample_size=cell_length_sample_size,
@@ -8967,6 +9003,7 @@ class DataSetFilters(DataObjectFilters):
         reference_volume: ImageData | None = None,
         dimensions: VectorLike[int] | None = None,
         spacing: float | VectorLike[float] | None = None,
+        target_n_points: int | None = None,
         rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None = None,
         cell_length_percentile: float | None = None,
         cell_length_sample_size: int | None = None,
@@ -9063,6 +9100,15 @@ class DataSetFilters(DataObjectFilters):
             Approximate spacing to use for the generated image. Set this value
             to control the spacing explicitly. If unset, the spacing is defined
             implicitly through other parameters. See summary and examples for details.
+        target_n_points : int, optional
+            Approximate number of points to generate. The spacing is isotropic and
+            chosen so the output holds about this many points, distributed between the
+            axes in proportion to the input's bounds. An axis with no extent holds a
+            single point and takes no part in the count. Rounding to whole voxels means
+            the count is approached, not matched exactly. Cannot be set with
+            ``dimensions``, ``spacing``, or the cell length options.
+
+            .. versionadded:: 0.49
 
         rounding_func : Callable[VectorLike[float], VectorLike[int]], optional
             Control how the dimensions are rounded to integers based on the provided or
@@ -9224,6 +9270,7 @@ class DataSetFilters(DataObjectFilters):
             reference_volume=reference_volume,
             dimensions=dimensions,
             spacing=spacing,
+            target_n_points=target_n_points,
             rounding_func=rounding_func,
             cell_length_percentile=cell_length_percentile,
             cell_length_sample_size=cell_length_sample_size,
@@ -9233,6 +9280,7 @@ class DataSetFilters(DataObjectFilters):
             reference_volume=reference_volume,
             dimensions=dimensions,
             spacing=spacing,
+            target_n_points=target_n_points,
             rounding_func=rounding_func,
             cell_length_percentile=cell_length_percentile,
             cell_length_sample_size=cell_length_sample_size,
@@ -9286,6 +9334,7 @@ def _validate_reference_volume_options(
     dimensions: VectorLike[int] | None,
     spacing: float | VectorLike[float] | None,
     rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None,
+    target_n_points: int | None,
     cell_length_percentile: float | None,
     cell_length_sample_size: int | None,
 ) -> None:
@@ -9294,6 +9343,7 @@ def _validate_reference_volume_options(
         if (
             dimensions is not None
             or spacing is not None
+            or target_n_points is not None
             or rounding_func is not None
             or cell_length_percentile is not None
             or cell_length_sample_size is not None
@@ -9316,9 +9366,35 @@ def _validate_reference_volume_options(
         msg = 'Spacing and cell length options cannot both be set. Set one or the other.'
         raise TypeError(msg)
 
+    if target_n_points is not None and (
+        dimensions is not None
+        or spacing is not None
+        or cell_length_percentile is not None
+        or cell_length_sample_size is not None
+    ):
+        msg = (
+            'Target n points cannot be set with dimensions, spacing or cell length options. '
+            'Set one or the other.'
+        )
+        raise TypeError(msg)
+
     if dimensions is not None and rounding_func is not None:
         msg = 'Rounding func cannot be set when dimensions is specified. Set one or the other.'
         raise TypeError(msg)
+
+
+def _spacing_for_n_points(size: NumpyArray[float], target_n_points: int) -> float:
+    """Return the isotropic spacing whose grid holds about the target number of points."""
+    target = _validation.validate_number(
+        target_n_points, must_be_in_range=[1, np.inf], must_be_integer=True, name='target n points'
+    )
+    extents = np.asarray(size, dtype=float)
+    live = extents > 0
+    if not live.any():
+        msg = 'Spacing cannot be estimated for an input with no extent. Set `spacing` explicitly.'
+        raise ValueError(msg)
+    # Flat axes hold a single point, so the budget is spread over the others
+    return float((extents[live].prod() / target) ** (1.0 / live.sum()))
 
 
 def _make_reference_volume(
@@ -9327,6 +9403,7 @@ def _make_reference_volume(
     reference_volume: ImageData | None,
     dimensions: VectorLike[int] | None,
     spacing: float | VectorLike[float] | None,
+    target_n_points: int | None,
     rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None,
     cell_length_percentile: float | None,
     cell_length_sample_size: int | None,
@@ -9345,6 +9422,8 @@ def _make_reference_volume(
     initial_spacing = None
 
     if dimensions is None:
+        if target_n_points is not None:
+            spacing = _spacing_for_n_points(size, target_n_points)
         if spacing is None:
             no_spacing_msg = (
                 'Spacing cannot be estimated from the input cells. '

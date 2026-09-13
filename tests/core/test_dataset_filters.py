@@ -5859,6 +5859,52 @@ def test_resample_to_image_method_interpolate(sphere):
     assert tight['vtkValidPointMask'].sum() < valid.sum()
 
 
+@pytest.mark.parametrize('target', [1_000, 100_000, 1_000_000])
+def test_target_n_points(sphere, target):
+    image = sphere.resample_to_image(target_n_points=target)
+    assert 0.8 <= image.n_points / target <= 1.2
+    assert image.n_points == np.prod(image.dimensions)
+
+    # Both filters place their voxels identically
+    mask = sphere.voxelize_binary_mask(target_n_points=target)
+    assert mask.dimensions == image.dimensions
+    assert np.allclose(mask.origin, image.origin)
+    assert np.allclose(mask.spacing, image.spacing)
+
+    # Dimensions follow the bounds, so the spacing is isotropic up to the rounding
+    spacing = np.array(image.spacing)
+    assert spacing.max() / spacing.min() <= 1 + 1 / min(image.dimensions)
+
+
+def test_target_n_points_flat_axis():
+    plane = pv.Plane(i_size=2, j_size=3, i_resolution=20, j_resolution=20)
+    image = plane.resample_to_image(target_n_points=10_000)
+    # The flat axis holds one point and takes no part in the count
+    assert image.dimensions[2] == 1
+    assert 0.8 <= image.n_points / 10_000 <= 1.2
+
+
+def test_target_n_points_raises(sphere):
+    match = 'Target n points cannot be set with dimensions, spacing or cell length options'
+    for kwargs in [
+        dict(dimensions=(10, 10, 10)),
+        dict(spacing=0.1),
+        dict(cell_length_percentile=0.5),
+        dict(cell_length_sample_size=100),
+    ]:
+        with pytest.raises(TypeError, match=match):
+            sphere.resample_to_image(target_n_points=1000, **kwargs)
+
+    with pytest.raises(TypeError, match='Cannot specify a reference volume'):
+        sphere.resample_to_image(target_n_points=1000, reference_volume=pv.ImageData())
+
+    with pytest.raises(ValueError, match='greater than or equal to'):
+        sphere.resample_to_image(target_n_points=0)
+
+    with pytest.raises(ValueError, match='integer-like'):
+        sphere.resample_to_image(target_n_points=2.5)
+
+
 def test_resample_to_image_interpolate_warns_on_cell_data(sphere, tetbeam):
     sphere.clear_data()
     sphere.cell_data['cval'] = np.arange(sphere.n_cells, dtype=float)
