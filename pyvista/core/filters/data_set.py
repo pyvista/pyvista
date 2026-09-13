@@ -9031,6 +9031,16 @@ class DataSetFilters(DataObjectFilters):
             array and hidden with a ``'vtkGhostType'`` array, so volume rendering the
             output shows those regions as transparent.
 
+        .. note::
+            The two methods keep different voxels. ``method='sample'`` keeps those whose
+            centre lies inside a cell of the input, so the result stops just inside a
+            volumetric mesh's surface. ``method='interpolate'`` keeps those the input
+            passes through, so the result straddles the input and reaches up to half a
+            voxel diagonal beyond it. Resampling a solid and resampling its surface
+            therefore fill different voxels. Use :meth:`voxelize_binary_mask` on the
+            surface to fill a closed surface's interior instead; it keeps the same
+            voxels that ``method='sample'`` keeps for the solid.
+
         Parameters
         ----------
         reference_volume : ImageData, optional
@@ -9160,6 +9170,42 @@ class DataSetFilters(DataObjectFilters):
 
         >>> mesh.resample_to_image(spacing=2.0).dimensions
         (34, 24, 59)
+
+        Compare the three kinds of input. Resize one sphere's point cloud, surface, and
+        solid to identical bounds so they share a grid.
+
+        >>> bounds = (-0.5, 0.5, -0.5, 0.5, -0.5, 0.5)
+        >>> surface = pv.Sphere(theta_resolution=40, phi_resolution=40).resize(
+        ...     bounds=bounds
+        ... )
+        >>> solid = pv.SolidSphere(
+        ...     outer_radius=0.5,
+        ...     radius_resolution=15,
+        ...     theta_resolution=40,
+        ...     phi_resolution=40,
+        ... ).resize(bounds=bounds)
+        >>> meshes = [surface.cast_to_pointset(), surface, solid]
+
+        Show each input beside the voxels of its resampled image.
+
+        >>> pl = pv.Plotter(shape=(3, 2))
+        >>> for row, sphere in enumerate(meshes):
+        ...     sphere['height'] = sphere.points[:, 2]
+        ...     image = sphere.resample_to_image(spacing=0.05)
+        ...     voxels = image.points_to_cells(dimensionality='3D')
+        ...     pl.subplot(row, 0)
+        ...     _ = pl.add_mesh(sphere, scalars='height')
+        ...     pl.subplot(row, 1)
+        ...     _ = pl.add_mesh(
+        ...         voxels.threshold(scalars='vtkValidPointMask', value=0.5),
+        ...         scalars='height',
+        ...     )
+        >>> pl.link_views()
+        >>> pl.show()
+
+        The point cloud and the surface fill the same shell, since they have the same
+        points. The solid is filled throughout, and its voxels stop just inside the
+        surface which the other two straddle.
 
         A point cloud of the same mesh has no cells for a cell search to land in, so it
         is interpolated from its points instead.
