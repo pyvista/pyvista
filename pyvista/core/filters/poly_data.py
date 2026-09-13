@@ -108,15 +108,16 @@ class PolyDataFilters(DataSetFilters):
         progress_bar: bool = False,
     ) -> PolyData:
         """Perform boolean operation."""
+        _validation.check_contains(
+            ['union', 'intersection', 'difference'], must_contain=btype, name='btype'
+        )
+        _validation.check_instance(other_mesh, pv.PolyData, name='Input mesh')
         if self.n_points == other_mesh.n_points and np.allclose(self.points, other_mesh.points):
             msg = (
                 'The input mesh contains identical points to the surface being operated on. '
                 'Unable to perform boolean operations on an identical surface.'
             )
             raise ValueError(msg)
-        if not isinstance(other_mesh, pv.PolyData):
-            msg = 'Input mesh must be PolyData.'  # type: ignore[unreachable]
-            raise TypeError(msg)
         if not self.is_all_triangles or not other_mesh.is_all_triangles:
             msg = 'Make sure both the input and output are triangulated.'
             raise NotAllTrianglesError(msg)
@@ -1493,9 +1494,7 @@ class PolyDataFilters(DataSetFilters):
         tube.SetRadiusFactor(radius_factor)
         # Check if scalars array given
         if scalars is not None:
-            if not isinstance(scalars, str):
-                msg = 'scalars array must be given as a string name'  # type: ignore[unreachable]
-                raise TypeError(msg)
+            _validation.check_instance(scalars, str, name='scalars')
             field = poly_data.get_array_association(scalars, preference=preference)
             # args: (idx, port, connection, field, name)
             tube.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
@@ -4005,14 +4004,9 @@ class PolyDataFilters(DataSetFilters):
         extrusion_direction = _validation.validate_array3(direction, name='direction')
 
         extrusions = {'boundary_edges': 0, 'all_edges': 1}
-        if isinstance(extrusion, str):
-            if extrusion not in extrusions:
-                msg = f'Invalid strategy of extrusion "{extrusion}".'
-                raise ValueError(msg)
-            extrusion_strategy = extrusions[extrusion]
-        else:
-            msg = 'Invalid type given to `extrusion`. Must be a string.'  # type: ignore[unreachable]
-            raise TypeError(msg)
+        _validation.check_instance(extrusion, str, name='extrusion')
+        _validation.check_contains(list(extrusions), must_contain=extrusion, name='extrusion')
+        extrusion_strategy = extrusions[extrusion]
 
         cappings = {
             'intersection': 0,
@@ -4020,14 +4014,9 @@ class PolyDataFilters(DataSetFilters):
             'maximum_distance': 2,
             'average_distance': 3,
         }
-        if isinstance(capping, str):
-            if capping not in cappings:
-                msg = f'Invalid strategy of capping "{capping}".'
-                raise ValueError(msg)
-            capping_strategy = cappings[capping]
-        else:
-            msg = 'Invalid type given to `capping`. Must be a string.'  # type: ignore[unreachable]
-            raise TypeError(msg)
+        _validation.check_instance(capping, str, name='capping')
+        _validation.check_contains(list(cappings), must_contain=capping, name='capping')
+        capping_strategy = cappings[capping]
 
         alg = _vtk.vtkTrimmedExtrusionFilter()
         alg.SetInputData(self)
@@ -4411,6 +4400,9 @@ class PolyDataFilters(DataSetFilters):
         >>> pl.show()
 
         """
+        _validation.check_contains(
+            ['value', 'index'], must_contain=scalar_mode, name='scalar_mode'
+        )
         if scalars is None:
             set_default_active_scalars(self)
             scalars = self.active_scalars_name
@@ -4442,11 +4434,8 @@ class PolyDataFilters(DataSetFilters):
         alg.SetClipping(clipping)
         if scalar_mode == 'value':
             alg.SetScalarModeToValue()
-        elif scalar_mode == 'index':
-            alg.SetScalarModeToIndex()
         else:
-            msg = f'Invalid scalar mode "{scalar_mode}". Should be either "value" or "index".'  # type: ignore[unreachable]
-            raise ValueError(msg)
+            alg.SetScalarModeToIndex()
         alg.SetGenerateContourEdges(generate_contour_edges)
         alg.SetClipTolerance(clip_tolerance)
         alg.SetComponent(component)
