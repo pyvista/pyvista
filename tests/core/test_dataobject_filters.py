@@ -1880,6 +1880,15 @@ def test_sample_categorical_no_point_scalars_raises(categorical_probe, as_compos
         categorical_probe.sample(target, categorical=True)
 
 
+def test_sample_categorical_string_scalars_raise(categorical_probe, categorical_target):
+    categorical_target.clear_point_data()
+    categorical_target.point_data['names'] = ['a'] * categorical_target.n_points
+
+    match = 'Categorical sampling requires single-component point scalars on the target'
+    with pytest.raises(pv.MissingDataError, match=match):
+        categorical_probe.sample(categorical_target, categorical=True)
+
+
 def test_sample_categorical_activates_the_only_candidate(categorical_probe, categorical_target):
     categorical_target.point_data.active_scalars_name = None
 

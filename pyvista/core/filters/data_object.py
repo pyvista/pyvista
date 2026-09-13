@@ -6085,7 +6085,13 @@ def _activate_categorical_scalars(target: DataSet) -> DataSet:
             raise ValueError(msg)
         return target
 
-    candidates = [name for name in target.point_data if target.point_data[name].ndim == 1]
+    attributes = target.point_data.VTKObject
+    candidates = [
+        name
+        for name in target.point_data
+        # GetArray is None for arrays which hold no numeric values, such as string arrays
+        if (array := attributes.GetArray(name)) is not None and array.GetNumberOfComponents() == 1
+    ]
     if not candidates:
         msg = (
             'Categorical sampling requires single-component point scalars on the target, '
