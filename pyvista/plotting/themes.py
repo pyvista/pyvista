@@ -1081,8 +1081,10 @@ class _Font(_ConfigBase):
         self._color = Color(color)
 
     @property
-    def fmt(self) -> str:  # numpydoc ignore=RT01
+    def fmt(self) -> str | None:  # numpydoc ignore=RT01
         """Return or set the string formatter used to format numerical data.
+
+        ``None``, the default, lets each actor choose its own format.
 
         Examples
         --------
@@ -1092,10 +1094,10 @@ class _Font(_ConfigBase):
         >>> pv.global_theme.font.fmt = '{:.6e}'
 
         """
-        return self._fmt  # type: ignore[return-value]
+        return self._fmt
 
     @fmt.setter
-    def fmt(self, fmt: str):
+    def fmt(self, fmt: str | None) -> None:
         self._fmt = fmt
 
 
@@ -2960,8 +2962,11 @@ class Theme(_ConfigBase):
         self._multi_samples = int(multi_samples)
 
     @property
-    def multi_rendering_splitting_position(self) -> float:  # numpydoc ignore=RT01
+    def multi_rendering_splitting_position(self) -> float | None:  # numpydoc ignore=RT01
         """Return or set the default splitting position for multi-rendering.
+
+        ``None``, the default, lets the renderers choose the position from the
+        number of subplots on each side.
 
         Examples
         --------
@@ -2972,13 +2977,13 @@ class Theme(_ConfigBase):
         >>> pv.global_theme.multi_rendering_splitting_position = 0.5
 
         """
-        return self._multi_rendering_splitting_position  # type: ignore[return-value]
+        return self._multi_rendering_splitting_position
 
     @multi_rendering_splitting_position.setter
     def multi_rendering_splitting_position(
         self,
-        multi_rendering_splitting_position: float,
-    ):
+        multi_rendering_splitting_position: float | None,
+    ) -> None:
         self._multi_rendering_splitting_position = multi_rendering_splitting_position
 
     @property
