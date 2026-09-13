@@ -9028,8 +9028,8 @@ class DataSetFilters(DataObjectFilters):
 
         .. note::
             Voxels with no value are flagged with a ``'vtkValidPointMask'`` point data
-            array. Volume rendering the output shows these regions as transparent when
-            ``method='sample'``, which also blanks them.
+            array and hidden with a ``'vtkGhostType'`` array, so volume rendering the
+            output shows those regions as transparent.
 
         Parameters
         ----------
@@ -9214,13 +9214,14 @@ class DataSetFilters(DataObjectFilters):
             return volume.sample(
                 self, tolerance=tolerance, categorical=categorical, progress_bar=progress_bar
             )
-        return volume.interpolate(
+        interpolated = volume.interpolate(
             self,
             radius=float(np.linalg.norm(volume.spacing)) / 2 if radius is None else radius,
             sharpness=2.0 if sharpness is None else sharpness,
             strategy='mask_points',
             progress_bar=progress_bar,
         )
+        return _blank_invalid_points(interpolated)
 
 
 def _validate_reference_volume_options(
@@ -9336,6 +9337,14 @@ def _make_reference_volume(
     inset = np.where(flat, (1 - dimensions_) * final_spacing / 2, final_spacing / 2)
     volume.origin = np.array(mesh.bounds[::2]) + inset
     return volume
+
+
+def _blank_invalid_points(image: ImageData) -> ImageData:
+    """Hide the points which the valid-point mask marks as empty."""
+    invalid = image.point_data['vtkValidPointMask'] == 0
+    ghosts = np.where(invalid, _vtk.vtkDataSetAttributes.HIDDENPOINT, 0).astype(np.uint8)
+    image.point_data.set_array(ghosts, _vtk.vtkDataSetAttributes.GhostArrayName())  # type: ignore[arg-type]
+    return image
 
 
 def _length_distribution_percentile(poly, percentile, cell_length_sample_size, *, progress_bar):

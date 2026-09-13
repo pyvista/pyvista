@@ -5858,6 +5858,20 @@ def test_resample_to_image_method_interpolate(sphere):
     assert tight['vtkValidPointMask'].sum() < valid.sum()
 
 
+def test_resample_to_image_blanks_invalid_points(sphere, tetbeam):
+    ghost_name = pv._vtk.vtkDataSetAttributes.GhostArrayName()
+    hidden = pv._vtk.vtkDataSetAttributes.HIDDENPOINT
+
+    # Both methods hide the voxels their mask flags as empty
+    for mesh, kwargs in [(sphere, dict(dimensions=(20, 20, 20))), (tetbeam, {})]:
+        for method in ['sample', 'interpolate']:
+            image = mesh.resample_to_image(method=method, **kwargs)
+            invalid = image['vtkValidPointMask'] == 0
+            ghosts = image.point_data[ghost_name]
+            assert ghosts.dtype == np.uint8
+            assert np.array_equal(ghosts, np.where(invalid, hidden, 0))
+
+
 def test_resample_to_image_method_default(sphere, mocker: MockerFixture):
     from pyvista.core.filters import data_object
     from pyvista.core.filters import data_set
