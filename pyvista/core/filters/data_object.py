@@ -6033,7 +6033,7 @@ def _deprecate_obb_tree_locator() -> None:
     warn_external(msg, PyVistaDeprecationWarning)
 
 
-def _check_categorical_scalars(target: DataSet | MultiBlock) -> None:
+def _check_categorical_scalars(target: DataSet | _vtk.vtkCompositeDataSet) -> None:
     """Raise or warn if ``target`` cannot be sampled as categorical data."""
     if isinstance(target, _vtk.vtkCompositeDataSet):
         warn_external(

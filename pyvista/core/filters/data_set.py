@@ -3479,8 +3479,8 @@ class DataSetFilters(DataObjectFilters):
         discretized FEM or CFD simulation, use
         :func:`pyvista.DataObjectFilters.sample` instead.
 
-        Non-numeric arrays cannot be interpolated and are excluded from the output
-        with a warning.
+        Non-numeric point arrays cannot be interpolated and are excluded from the
+        output with a warning.
 
         Parameters
         ----------
@@ -3601,10 +3601,10 @@ class DataSetFilters(DataObjectFilters):
             gaussian_kernel.SetKernelFootprintToNClosest()
 
         target_, excluded = _drop_non_numeric_point_arrays(target_)
-        if excluded:
+        if dropped := excluded + _non_numeric_point_array_names(self):
             warn_external(
-                'Non-numeric arrays cannot be interpolated and are excluded from the '
-                f'interpolation: {excluded}.'
+                'Non-numeric point arrays cannot be interpolated and are excluded from '
+                f'the output: {dropped}.'
             )
 
         interpolator = _vtk.vtkPointInterpolator()
@@ -9257,18 +9257,32 @@ def _swap_axes(vectors, values):
     return vectors
 
 
-def _drop_non_numeric_point_arrays(dataset: _DataSetType) -> tuple[_DataSetType, list[str]]:
-    """Return ``dataset`` without its non-numeric point arrays, and the names of those arrays."""
+def _non_numeric_point_array_indices(dataset: DataSet) -> list[int]:
+    """Return the indices of the point arrays which hold no numeric values."""
     attributes = dataset.point_data.VTKObject
     # GetArray is None for arrays which hold no numeric values, such as string arrays
-    indices = [
+    return [
         index
         for index in range(attributes.GetNumberOfArrays())
         if attributes.GetArray(index) is None
     ]
+
+
+def _non_numeric_point_array_names(dataset: DataSet) -> list[str]:
+    """Return the names of the point arrays which hold no numeric values."""
+    attributes = dataset.point_data.VTKObject
+    return [
+        attributes.GetAbstractArray(index).GetName() or '<unnamed>'
+        for index in _non_numeric_point_array_indices(dataset)
+    ]
+
+
+def _drop_non_numeric_point_arrays(dataset: _DataSetType) -> tuple[_DataSetType, list[str]]:
+    """Return ``dataset`` without its non-numeric point arrays, and the names of those arrays."""
+    indices = _non_numeric_point_array_indices(dataset)
     if not indices:
         return dataset, []
-    names = [attributes.GetAbstractArray(index).GetName() or '<unnamed>' for index in indices]
+    names = _non_numeric_point_array_names(dataset)
     filtered = dataset.copy(deep=False)
     for index in reversed(indices):
         filtered.point_data.VTKObject.RemoveArray(index)

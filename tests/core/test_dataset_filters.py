@@ -3648,12 +3648,25 @@ def test_interpolate_excludes_string_arrays():
     target.point_data['labels'] = np.array(['a'] * target.n_points)
     surf = pv.Sphere(theta_resolution=8, phi_resolution=8, radius=0.4)
 
-    match = re.escape("excluded from the interpolation: ['labels'].")
+    match = re.escape("excluded from the output: ['labels'].")
     with pytest.warns(UserWarning, match=match):
         interp = surf.interpolate(target, radius=1.0)
 
     assert 'values' in interp.point_data
     assert 'labels' not in interp.point_data
+
+
+def test_interpolate_excludes_input_string_arrays():
+    target = pv.Sphere(theta_resolution=10, phi_resolution=10)
+    target.point_data['values'] = np.arange(target.n_points, dtype=float)
+    surf = pv.Sphere(theta_resolution=8, phi_resolution=8, radius=0.4)
+    surf.point_data['tag'] = np.array(['z'] * surf.n_points)
+
+    match = re.escape("excluded from the output: ['tag'].")
+    with pytest.warns(UserWarning, match=match):
+        interp = surf.interpolate(target, radius=1.0)
+
+    assert 'tag' not in interp.point_data
 
 
 def test_interpolate_excludes_unnamed_arrays():
@@ -3664,7 +3677,7 @@ def test_interpolate_excludes_unnamed_arrays():
     target.point_data.VTKObject.AddArray(unnamed)
     surf = pv.Sphere(theta_resolution=8, phi_resolution=8, radius=0.4)
 
-    match = re.escape("excluded from the interpolation: ['<unnamed>'].")
+    match = re.escape("excluded from the output: ['<unnamed>'].")
     with pytest.warns(UserWarning, match=match):
         interp = surf.interpolate(target, radius=1.0)
 
