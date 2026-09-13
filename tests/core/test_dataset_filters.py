@@ -3585,7 +3585,28 @@ def test_interpolate():
     assert interp.n_arrays
 
 
+@pytest.mark.parametrize('cast', ['poly', 'unstructured', 'image', 'rectilinear', 'structured'])
+def test_interpolate_target_types(cast):
+    grid = pv.ImageData(dimensions=(5, 5, 5), spacing=(0.3, 0.3, 0.3), origin=(-0.6, -0.6, -0.6))
+    target = {
+        'poly': lambda: pv.PolyData(grid.points),
+        'unstructured': grid.cast_to_unstructured_grid,
+        'image': grid.copy,
+        'rectilinear': grid.cast_to_rectilinear_grid,
+        'structured': grid.cast_to_structured_grid,
+    }[cast]()
+    # A linear field interpolates to itself wherever the kernel finds neighbours
+    target.point_data['x'] = target.points[:, 0]
+    surf = pv.Sphere(theta_resolution=8, phi_resolution=8, radius=0.3)
+
+    interp = surf.interpolate(target, radius=0.5)
+
+    assert interp.n_points == surf.n_points
+    assert np.allclose(interp['x'], surf.points[:, 0], atol=0.05)
+
+
 def test_interpolate_point_array_target():
+    # A point array is wrapped, the same as it is by `sample`
     points = np.random.default_rng(0).random((10, 3))
     surf = pv.Sphere(theta_resolution=10, phi_resolution=10)
 
@@ -3597,7 +3618,7 @@ def test_interpolate_point_array_target():
 def test_interpolate_composite_target_raises():
     target = pv.MultiBlock([pv.Sphere()])
 
-    match = 'Interpolation target must be a DataSet or a point array, got MultiBlock.'
+    match = 'Interpolation target must be a single dataset, got MultiBlock.'
     with pytest.raises(TypeError, match=re.escape(match)):
         pv.Sphere().interpolate(target)
 

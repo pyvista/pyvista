@@ -3574,15 +3574,15 @@ class DataSetFilters(DataObjectFilters):
         target_ = wrap(target)
         if not isinstance(target_, pv.DataSet):
             msg = (  # type: ignore[unreachable]
-                'Interpolation target must be a DataSet or a point array, got '
-                f'{type(target_).__name__}.'
+                f'Interpolation target must be a single dataset, got '
+                f'{type(target_).__name__}. Merge its blocks with `MultiBlock.combine()`.'
             )
             raise TypeError(msg)
         if target_.n_points == 0:
             msg = 'Interpolation target has no points to interpolate from.'
             raise ValueError(msg)
 
-        # VTK silently clamps these to the same bounds
+        # VTK clamps these silently
         _validation.check_greater_than(sharpness, 1, name='sharpness', strict=False)
         _validation.check_nonnegative(radius, name='radius')
         if n_points is not None:
@@ -3601,7 +3601,7 @@ class DataSetFilters(DataObjectFilters):
         interpolator.SetSourceData(target_)
         interpolator.SetKernel(gaussian_kernel)
         interpolator.SetNullValue(null_value)
-        if excluded := _string_array_names(target_.point_data):
+        if excluded := _non_numeric_array_names(target_.point_data):
             warn_external(
                 'String arrays cannot be interpolated and are excluded from the '
                 f'interpolation: {excluded}.'
@@ -9253,12 +9253,11 @@ def _swap_axes(vectors, values):
     return vectors
 
 
-def _string_array_names(attributes: DataSetAttributes) -> list[str]:
-    """Return the names of the string arrays in ``attributes``."""
+def _non_numeric_array_names(attributes: DataSetAttributes) -> list[str]:
+    """Return the names of the arrays in ``attributes`` which hold no numeric values."""
     vtk_attributes = attributes.VTKObject
     return [
-        name
+        array.GetName()
         for index in range(vtk_attributes.GetNumberOfArrays())
-        if isinstance(array := vtk_attributes.GetAbstractArray(index), _vtk.vtkStringArray)
-        and (name := array.GetName()) is not None
+        if not isinstance(array := vtk_attributes.GetAbstractArray(index), _vtk.vtkDataArray)
     ]
