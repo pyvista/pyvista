@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import cast
@@ -35,6 +34,7 @@ from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
     from typing import Any
 
     from pyvista import DataSet
@@ -85,8 +85,6 @@ class PolyDataFilters(DataSetFilters):
 
         """
         poly_data = self
-        if not isinstance(poly_data, pv.PolyData):  # pragma: no cover
-            poly_data = pv.PolyData(poly_data)  # type: ignore[unreachable]
         poly_data.point_data['point_ind'] = np.arange(poly_data.n_points)
         featureEdges = _vtk.vtkFeatureEdges()
         featureEdges.SetInputData(poly_data)
@@ -128,11 +126,8 @@ class PolyDataFilters(DataSetFilters):
             bfilter.SetOperationToUnion()
         elif btype == 'intersection':
             bfilter.SetOperationToIntersection()
-        elif btype == 'difference':
+        else:
             bfilter.SetOperationToDifference()
-        else:  # pragma: no cover
-            msg = f'Invalid btype {btype}'  # type: ignore[unreachable]
-            raise ValueError(msg)
         bfilter.SetInputData(0, self)
         bfilter.SetInputData(1, other_mesh)
         bfilter.ReorientDifferenceCellsOn()  # this is already default
@@ -1487,8 +1482,6 @@ class PolyDataFilters(DataSetFilters):
 
         """
         poly_data = self
-        if not isinstance(poly_data, pv.PolyData):
-            poly_data = pv.PolyData(poly_data)  # type: ignore[unreachable]
         n_sides = max(n_sides, 3)
         tube = _vtk.vtkTubeFilter()
         tube.SetInputDataObject(poly_data)
@@ -3918,9 +3911,7 @@ class PolyDataFilters(DataSetFilters):
                 PyVistaFutureWarning,
             )
 
-        if not isinstance(rotation_axis, (np.ndarray, Sequence)) or len(rotation_axis) != 3:  # type: ignore[redundant-expr]
-            msg = 'Vector must be a length three vector'
-            raise ValueError(msg)
+        axis = _validation.validate_array3(rotation_axis, name='rotation_axis')
 
         if resolution <= 0:
             msg = '`resolution` should be positive'
@@ -3932,7 +3923,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetDeltaRadius(dradius)
         alg.SetCapping(capping)
         alg.SetAngle(angle)
-        alg.SetRotationAxis(rotation_axis)  # type: ignore[arg-type]
+        alg.SetRotationAxis(*axis)
 
         _update_alg(alg, progress_bar=progress_bar, message='Extruding')
         output = _get_output(alg)
@@ -4011,9 +4002,7 @@ class PolyDataFilters(DataSetFilters):
         >>> extruded_disc.plot(smooth_shading=True, split_sharp_edges=True)
 
         """
-        if not isinstance(direction, (np.ndarray, Sequence)) or len(direction) != 3:  # type: ignore[redundant-expr]
-            msg = 'Vector must be a length three vector'
-            raise TypeError(msg)
+        extrusion_direction = _validation.validate_array3(direction, name='direction')
 
         extrusions = {'boundary_edges': 0, 'all_edges': 1}
         if isinstance(extrusion, str):
@@ -4042,7 +4031,7 @@ class PolyDataFilters(DataSetFilters):
 
         alg = _vtk.vtkTrimmedExtrusionFilter()
         alg.SetInputData(self)
-        alg.SetExtrusionDirection(*direction)
+        alg.SetExtrusionDirection(*extrusion_direction)
         alg.SetTrimSurfaceData(trim_surface)
         alg.SetExtrusionStrategy(extrusion_strategy)
         alg.SetCappingStrategy(capping_strategy)
