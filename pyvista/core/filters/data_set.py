@@ -9280,12 +9280,12 @@ def _make_reference_volume(
     flat = size == 0
     final_spacing = np.divide(size, dimensions_, out=np.ones(3), where=~flat)
     if flat.any():
-        # A flat axis has no size to divide, so take the requested or estimated spacing
+        # A flat axis takes the requested spacing, else the finest of the other axes
         others = final_spacing[~flat]
         final_spacing[flat] = (
             initial_spacing[flat]
             if initial_spacing is not None
-            else (others.max() if others.size else 1.0)
+            else (others.min() if others.size else 1.0)
         )
     volume.spacing = final_spacing
     # Voxels are points, so inset them by 1/2 spacing to fit the cells to the bounds

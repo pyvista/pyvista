@@ -5411,8 +5411,14 @@ def test_voxelize_binary_mask_no_reference(frog_tissues_contour):
 @pytest.mark.parametrize('axis', [0, 1, 2])
 @pytest.mark.parametrize(
     'kwargs',
-    [{}, {'spacing': 0.25}, {'spacing': (0.1, 0.2, 0.3)}, {'dimensions': (5, 6, 7)}],
-    ids=['default', 'scalar_spacing', 'vector_spacing', 'dimensions'],
+    [
+        {},
+        {'spacing': 0.25},
+        {'spacing': (0.1, 0.2, 0.3)},
+        {'dimensions': (5, 6, 7)},
+        {'dimensions': (1, 50, 50)},
+    ],
+    ids=['default', 'scalar_spacing', 'vector_spacing', 'dimensions', 'lopsided_dimensions'],
 )
 def test_voxelize_binary_mask_flat_input(axis, kwargs):
     # Only the geometry is tested, since a flat surface encloses nothing to label
@@ -5426,6 +5432,9 @@ def test_voxelize_binary_mask_flat_input(axis, kwargs):
     if 'spacing' in kwargs:
         expected = np.broadcast_to(kwargs['spacing'], (3,))[axis]
         assert mask.spacing[axis] == expected
+    else:
+        # It takes the finest of the other axes, so one voxel elsewhere cannot inflate it
+        assert mask.spacing[axis] == pytest.approx(min(np.delete(mask.spacing, axis)))
 
     cells = np.array(mask.points_to_cells(dimensionality='3D').bounds)
 
