@@ -3602,6 +3602,20 @@ def test_interpolate_composite_target_raises():
         pv.Sphere().interpolate(target)
 
 
+def test_interpolate_excludes_string_arrays():
+    target = pv.Sphere(theta_resolution=10, phi_resolution=10)
+    target.point_data['values'] = np.arange(target.n_points, dtype=float)
+    target.point_data['labels'] = np.array(['a'] * target.n_points)
+    surf = pv.Sphere(theta_resolution=8, phi_resolution=8, radius=0.4)
+
+    match = re.escape("excluded from the interpolation: ['labels'].")
+    with pytest.warns(UserWarning, match=match):
+        interp = surf.interpolate(target, radius=1.0)
+
+    assert 'values' in interp.point_data
+    assert 'labels' not in interp.point_data
+
+
 def test_select_enclosed_points(uniform, hexbeam):
     surf = pv.Sphere(center=uniform.center, radius=uniform.length / 2.0)
     with pytest.warns(pv.PyVistaDeprecationWarning):

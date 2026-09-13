@@ -57,6 +57,7 @@ from pyvista.core.utilities.transform import Transform
 if TYPE_CHECKING:
     from pyvista import Color
     from pyvista import DataSet
+    from pyvista import DataSetAttributes
     from pyvista import ImageData
     from pyvista import MultiBlock
     from pyvista import PointSet
@@ -3479,6 +3480,9 @@ class DataSetFilters(DataObjectFilters):
         discretized FEM or CFD simulation, use
         :func:`pyvista.DataObjectFilters.sample` instead.
 
+        String arrays cannot be interpolated and are excluded from the output with
+        a warning.
+
         Parameters
         ----------
         target : pyvista.DataSet
@@ -3584,6 +3588,13 @@ class DataSetFilters(DataObjectFilters):
         interpolator.SetSourceData(target_)
         interpolator.SetKernel(gaussian_kernel)
         interpolator.SetNullValue(null_value)
+        if excluded := _string_array_names(target_.point_data):
+            warn_external(
+                'String arrays cannot be interpolated and are excluded from the '
+                f'interpolation: {excluded}.'
+            )
+            for name in excluded:
+                interpolator.AddExcludedArray(name)
         if strategy == 'null_value':
             interpolator.SetNullPointsStrategyToNullValue()
         elif strategy == 'mask_points':
@@ -9227,3 +9238,16 @@ def _swap_axes(vectors, values):
     elif np.isclose(values[1], values[2]):
         _swap(1, 2)
     return vectors
+
+
+def _string_array_names(attributes: DataSetAttributes) -> list[str]:
+    """Return the names of the string arrays in ``attributes``."""
+    vtk_attributes = attributes.VTKObject
+    return [
+        name
+        for index in range(vtk_attributes.GetNumberOfArrays())
+        if isinstance(
+            array := vtk_attributes.GetAbstractArray(index), _vtk.vtkStringArray
+        )
+        and (name := array.GetName()) is not None
+    ]
