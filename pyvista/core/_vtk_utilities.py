@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import functools
 import sys
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
 from typing import NamedTuple
@@ -12,6 +13,9 @@ from pyvista import _vtk
 from pyvista._warn_external import warn_external
 from pyvista.core.config import global_config
 from pyvista.core.errors import VTKVersionError
+
+if TYPE_CHECKING:
+    from typing_extensions import TypeIs
 
 # A wrapped VTK class' ``__module__`` is rooted at the active backend; accept both.
 _VTK_MODULE_PREFIXES = tuple({'vtkmodules.', f'{_vtk._VTK_ROOT}.'})
@@ -176,6 +180,15 @@ _SUPPORTS_POLYHEDRON_FACE_CELL_ARRAYS = vtk_version_info >= (9, 4)
 _SAFE_ATTRS_BY_CLASS: dict[type, set[str]] = {}
 
 
+def _is_class(target: object) -> TypeIs[type]:
+    """Return True if the object is itself a class.
+
+    ``target.__class__`` and ``isinstance`` would recurse into ``__getattribute__``.
+
+    """
+    return issubclass(type(target), type)
+
+
 class DisableVtkSnakeCase:
     """Base class to raise error if using VTK's ``snake_case`` API."""
 
@@ -195,8 +208,7 @@ class DisableVtkSnakeCase:
         safe_by_class = _SAFE_ATTRS_BY_CLASS
         if safe_by_class is None:  # pragma: no cover  # Python is shutting down
             return  # type: ignore[unreachable]
-        # `target.__class__` and `isinstance` would recurse into `__getattribute__`
-        cls: type = target if issubclass(type(target), type) else type(target)  # type: ignore[assignment]
+        cls = target if _is_class(target) else type(target)
         safe = safe_by_class.get(cls)
         if safe is None:
             safe = safe_by_class[cls] = set()

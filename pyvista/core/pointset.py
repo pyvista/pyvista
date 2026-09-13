@@ -6,7 +6,6 @@ from collections.abc import Iterable
 from collections.abc import Sequence
 import contextlib
 import functools
-import numbers
 from pathlib import Path
 import textwrap
 from typing import TYPE_CHECKING
@@ -14,6 +13,7 @@ from typing import ClassVar
 from typing import Literal
 from typing import NoReturn
 from typing import cast
+from typing import overload
 
 import numpy as np
 
@@ -1409,9 +1409,10 @@ class PolyData(_PointSetBase, PolyDataFilters, _vtk.vtkPolyData):
         """Compute boolean difference of two meshes."""
         return self.boolean_difference(cutting_mesh)
 
-    def __isub__(self, cutting_mesh: PolyData) -> PolyData:  # noqa: PYI034
+    def __isub__(self, cutting_mesh: PolyData) -> Self:
         """Compute boolean difference of two meshes and update this mesh."""
-        return self.boolean_difference(cutting_mesh)
+        self.copy_from(self.boolean_difference(cutting_mesh), deep=False)
+        return self
 
     def __and__(self, other_mesh: PolyData) -> PolyData:
         """Compute boolean intersection of two meshes."""
@@ -4112,26 +4113,33 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         attrs.append(('Dimensions', self.dimensions, '{:d}, {:d}, {:d}'))
         return attrs
 
-    def __getitem__(  # type: ignore[override]
-        self, key: str | tuple[int | slice, int | slice, int | slice]
+    @overload
+    def __getitem__(
+        self, key: str | tuple[str, Literal['cell', 'point', 'field']]
+    ) -> pyvista_ndarray: ...
+    @overload
+    def __getitem__(self, key: tuple[int | slice, int | slice, int | slice]) -> StructuredGrid: ...
+    def __getitem__(
+        self,
+        key: str | tuple[str, Literal['cell', 'point', 'field']] | tuple[int | slice, ...],
     ) -> pyvista_ndarray | StructuredGrid:
         """Slice subsets of the StructuredGrid, or extract an array field."""
         # legacy behavior which looks for a point or cell array
-        if not isinstance(key, tuple):
+        if not isinstance(key, tuple) or isinstance(key[0], str):
             return super().__getitem__(key)
 
         # convert slice to VOI specification - only "basic indexing" is supported
-        voi = []  # type: ignore[var-annotated]
+        voi: list[int] = []
         rate = []
         if len(key) != 3:
-            msg = 'Slices must have exactly 3 dimensions.'  # type: ignore[unreachable]
+            msg = 'Slices must have exactly 3 dimensions.'
             raise RuntimeError(msg)
         for i, k in enumerate(key):
             if isinstance(k, Iterable):
                 msg = 'Fancy indexing with iterable is not supported.'
                 raise TypeError(msg)
-            if isinstance(k, numbers.Integral):  # type: ignore[unreachable]
-                start = stop = k  # type: ignore[unreachable]
+            if isinstance(k, (int, np.integer)):
+                start = stop = int(k)
                 step = 1
             elif isinstance(k, slice):
                 start = k.start if k.start is not None else 0
@@ -4867,7 +4875,8 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         Returns
         -------
         output : int | numpy.ndarray | None
-            Cell IDs. ``None`` if ``coords`` is outside the grid extent.
+            Cell ID for a single set of coordinates, or an array of cell IDs
+            for several. ``None`` if ``coords`` is outside the grid extent.
 
         See Also
         --------
@@ -4878,7 +4887,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         >>> from pyvista import examples
         >>> grid = examples.load_explicit_structured()
         >>> grid.cell_id((3, 4, 0))
-        np.int64(19)
+        19
 
         >>> coords = [(3, 4, 0), (3, 2, 1), (1, 0, 2), (2, 3, 2)]
         >>> grid.cell_id(coords)
@@ -4901,7 +4910,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         except ValueError:
             return None
         else:
-            return ind
+            return int(ind) if ind.ndim == 0 else ind
 
     def cell_coords(
         self,
@@ -5008,14 +5017,14 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
                 ]
                 for f in faces:
                     coords = np.sum([cell_coords, f[0]], axis=0)
-                    neighbor = cast('int', self.cell_id(coords))
-                    if neighbor:
-                        points = self.get_cell(neighbor).points
+                    neighbor = self.cell_id(coords)
+                    if neighbor is not None:
+                        points = self.get_cell(int(neighbor)).points
                         if points.shape[0] == 8:
                             a1 = cell_points[f[1], :]
                             a2 = points[f[2], :]
                             if np.array_equal(a1, a2):
-                                indices.append(neighbor)
+                                indices.append(int(neighbor))
             return indices
 
         def topological(ind: int) -> list[int]:
@@ -5024,9 +5033,9 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             cell_neighbors = [(-1, 0, 0), (1, 0, 0), (0, -1, 0), (0, 1, 0), (0, 0, -1), (0, 0, 1)]
             for n in cell_neighbors:
                 coords = np.sum([cell_coords, n], axis=0)
-                neighbor = cast('int', self.cell_id(coords))
-                if neighbor:
-                    indices.append(neighbor)
+                neighbor = self.cell_id(coords)
+                if neighbor is not None:
+                    indices.append(int(neighbor))
             return indices
 
         def geometric(ind: int) -> list[int]:
@@ -5036,9 +5045,9 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             if cell_points.shape[0] == 8:
                 for k in [-1, 1]:
                     coords = np.sum([cell_coords, (0, 0, k)], axis=0)
-                    neighbor = cast('int', self.cell_id(coords))
-                    if neighbor:
-                        indices.append(neighbor)
+                    neighbor = self.cell_id(coords)
+                    if neighbor is not None:
+                        indices.append(int(neighbor))
                 faces = [
                     [(-1, 0, 0), (0, 4, 3, 7), (1, 5, 2, 6)],
                     [(+1, 0, 0), (2, 6, 1, 5), (3, 7, 0, 4)],
@@ -5055,9 +5064,9 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
                     coords = np.sum([cell_coords, f[0]], axis=0)
                     for k in range(nk):
                         coords[2] = k
-                        neighbor = cast('int', self.cell_id(coords))
-                        if neighbor:
-                            points = self.get_cell(neighbor).points
+                        neighbor = self.cell_id(coords)
+                        if neighbor is not None:
+                            points = self.get_cell(int(neighbor)).points
                             if points.shape[0] == 8:
                                 z = points[f[2], 2]
                                 z = np.abs(z)
@@ -5070,7 +5079,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
                                     or (zmin[0] > cell_zmax[0] and zmax[1] < cell_zmin[1])
                                     or (zmin[1] > cell_zmax[1] and zmax[0] < cell_zmin[0])
                                 ):
-                                    indices.append(neighbor)
+                                    indices.append(int(neighbor))
             return indices
 
         if isinstance(ind, int):

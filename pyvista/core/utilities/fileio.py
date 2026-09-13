@@ -19,6 +19,7 @@ from typing import overload
 import urllib.parse
 
 import numpy as np
+import numpy.typing as npt
 import pyvista_validation as _validation
 
 import pyvista as pv
@@ -32,13 +33,13 @@ from .observers import Observer
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+    from collections.abc import Mapping
     import re
 
     import imageio
     import meshio
     import trimesh
 
-    from pyvista import ArrayLike
     from pyvista import BaseReader
     from pyvista import DataObject
     from pyvista import DataSet
@@ -1552,6 +1553,11 @@ def _validate_pass_data(pass_data: _PassDataOptions) -> tuple[bool, bool, bool]:
     return pass_point_data, pass_cell_data, pass_field_data
 
 
+def _as_arrays(attributes: Mapping[str, npt.ArrayLike]) -> dict[str, NumpyArray[Any]]:
+    """Return the attribute mapping with every value as an array."""
+    return {name: np.asarray(value) for name, value in attributes.items()}
+
+
 def from_trimesh(
     mesh: trimesh.Trimesh, *, pass_data: _PassDataOptions = True
 ) -> PolyData:  # numpydoc ignore=RT01
@@ -1610,12 +1616,10 @@ def from_trimesh(
             and (uv := visual.uv) is not None
         ):
             polydata.active_texture_coordinates = uv
-        vertex_attributes = cast('dict[str, ArrayLike[Any]]', mesh.vertex_attributes)
-        polydata.point_data.update(vertex_attributes, copy=False)
+        polydata.point_data.update(_as_arrays(mesh.vertex_attributes), copy=False)
 
     if pass_cell_data:
-        face_attributes = cast('dict[str, ArrayLike[Any]]', mesh.face_attributes)
-        polydata.cell_data.update(face_attributes, copy=False)
+        polydata.cell_data.update(_as_arrays(mesh.face_attributes), copy=False)
 
     if pass_field_data:
         for key, val in mesh.metadata.items():
