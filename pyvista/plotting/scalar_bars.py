@@ -117,6 +117,16 @@ class ScalarBars(_NoNewAttrMixin):
             lines.append(f'{title_quotes:20} {interactive!s:5}')
         return '\n'.join(lines)
 
+    def _place_widget(self, title, scalar_bar):
+        """Give a scalar bar's widget the place and size the layout gave the bar."""
+        widget = self._scalar_bar_widgets.get(title)
+        if widget is not None:
+            # An interactive bar is drawn from its representation, which is built before
+            # the bar is laid out and would otherwise put it back where it started
+            rep = widget.GetRepresentation()
+            rep.GetPositionCoordinate().SetValue(*scalar_bar.GetPosition())
+            rep.GetPosition2Coordinate().SetValue(scalar_bar.GetWidth(), scalar_bar.GetHeight())
+
     def _stacked_neighbor(self, slot):
         """Return the scalar bar actor occupying the slot below this one."""
         lookup = self._plotter._scalar_bar_slot_lookup
@@ -132,11 +142,16 @@ class ScalarBars(_NoNewAttrMixin):
             neighbor_bar = neighbor.GetWidth() * window_width
             # The ramp is only part of the bar's box and sits at the edge facing away
             # from the neighbor, so the labels drawn past it reach into the gap
-            labels = (
-                scalar_bar.GetBarRatio() * bar_width
-                + _label_size(scalar_bar, label_text, dpi)[0]
-                - bar_width / 2
-            )
+            if scalar_bar.GetOrientation():
+                labels = (
+                    scalar_bar.GetBarRatio() * bar_width
+                    + _label_size(scalar_bar, label_text, dpi)[0]
+                    - bar_width / 2
+                )
+            else:
+                # A horizontal bar fills the width it is given, and the label on the end
+                # facing the neighbor is centered on the ramp so half of it reaches past
+                labels = bar_width / 2 + _label_size(scalar_bar, label_text, dpi)[0] / 2
             this_title = _title_width(
                 scalar_bar.GetTitleTextProperty(), scalar_bar.GetTitle(), dpi
             )
@@ -994,20 +1009,24 @@ class ScalarBars(_NoNewAttrMixin):
         if stacked_slot and unconstrained:
             # Slots fill from the bottom up, so the one below this is taken
             neighbor = self._stacked_neighbor(stacked_slot)
-            if vertical:
+            x, y = scalar_bar.GetPosition()
+            # A bar is cleared along the axis its neighbor stacks on: past a vertical
+            # neighbor, which fills the height it is given, and over a horizontal one,
+            # which fills the width.  Bars drawn the same way stack as they always did,
+            # and one turned across its neighbor takes the short way out instead
+            if neighbor.GetOrientation():
                 gap = stacking_gap * window_width if stacking_gap is not None else None
                 scalar_bar.SetPosition(
                     self._stacked_beside(
                         scalar_bar, neighbor, gap=gap, label_text=label_text, pad=pad, dpi=dpi
                     ),
-                    scalar_bar.GetPosition()[1],
+                    y,
                 )
             else:
                 gap = stacking_gap * window_height if stacking_gap is not None else None
-                scalar_bar.SetPosition(
-                    scalar_bar.GetPosition()[0],
-                    self._stacked_above(neighbor, gap=gap, dpi=dpi),
-                )
+                scalar_bar.SetPosition(x, self._stacked_above(neighbor, gap=gap, dpi=dpi))
+
+        self._place_widget(title, scalar_bar)
 
         # finally, add to the actor and return the scalar bar
         self._plotter.add_actor(scalar_bar, reset_camera=False, pickable=False, render=render)

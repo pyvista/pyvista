@@ -567,6 +567,70 @@ def test_rotated_title_clears_the_neighbors_labels(sphere):
     pl.close()
 
 
+def _bar_rect(bar, window_size):
+    """Return the box a scalar bar draws, as left, right, bottom, top in pixels."""
+    window_width, window_height = window_size
+    x, y = bar.GetPosition()
+    return (
+        x * window_width,
+        (x + bar.GetWidth()) * window_width,
+        y * window_height,
+        (y + bar.GetHeight()) * window_height,
+    )
+
+
+def _overlap(first, second):
+    """Return the area two scalar bar boxes share, in square pixels."""
+    left = max(first[0], second[0])
+    right = min(first[1], second[1])
+    bottom = max(first[2], second[2])
+    top = min(first[3], second[3])
+    return max(right - left, 0) * max(top - bottom, 0)
+
+
+@pytest.mark.parametrize('vertical', [True, False], ids=['vertical_first', 'horizontal_first'])
+def test_stacked_bars_clear_a_neighbor_turned_across_them(sphere, vertical: bool):
+    # A bar stacks along the axis its neighbor fills, so one turned across that neighbor
+    # is cleared in the other direction rather than pushed along the window
+    sphere[KEY] = sphere.points[:, 2]
+    window_size = [1024, 768]
+
+    pl = pv.Plotter(window_size=window_size)
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bars = [
+        pl.add_scalar_bar(
+            f'Bar {index}',
+            vertical=turned,
+            title_font_size=14,
+            label_font_size=14,
+            mapper=pl.mapper,
+        )
+        for index, turned in enumerate([vertical, not vertical, vertical])
+    ]
+
+    rects = [_bar_rect(bar, window_size) for bar in bars]
+    for first, second in itertools.combinations(rects, 2):
+        assert _overlap(first, second) == 0
+
+
+def test_stacked_interactive_bar_keeps_the_place_it_was_given(sphere):
+    # An interactive bar is drawn from its widget's representation, which is built before
+    # the bar is stacked and would otherwise put it back where it started
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    pl.add_scalar_bar('First', vertical=True, title_font_size=14, mapper=pl.mapper)
+    bar = pl.add_scalar_bar(
+        'Second', vertical=True, title_font_size=14, interactive=True, mapper=pl.mapper
+    )
+    stacked = bar.GetPosition()
+
+    pl.screenshot(return_img=True)
+
+    assert bar.GetPosition() == pytest.approx(stacked)
+
+
 STACKED_TITLES = ['A bit long', 'Short', 'Super duper long']
 
 
