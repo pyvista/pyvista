@@ -1211,10 +1211,7 @@ def test_show_bounds_grid_value_raises():
 @given(padding=st.floats().filter(lambda x: (x > 1.0) | (x < 0)))
 def test_show_bounds_padding_raises(padding):
     pl = pv.Plotter()
-    with pytest.raises(
-        ValueError,
-        match=re.escape(f'padding ({padding}) not understood. Must be float between 0 and 1'),
-    ):
+    with pytest.raises(ValueError, match='padding values must all be'):
         pl.renderer.show_bounds(padding=padding)
 
 
