@@ -3585,6 +3585,23 @@ def test_interpolate():
     assert interp.n_arrays
 
 
+def test_interpolate_point_array_target():
+    points = np.random.default_rng(0).random((10, 3))
+    surf = pv.Sphere(theta_resolution=10, phi_resolution=10)
+
+    interp = surf.interpolate(points, radius=1.0)
+
+    assert interp.n_points == surf.n_points
+
+
+def test_interpolate_composite_target_raises():
+    target = pv.MultiBlock([pv.Sphere()])
+
+    match = 'Interpolation target must be a DataSet or a point array, got MultiBlock.'
+    with pytest.raises(TypeError, match=re.escape(match)):
+        pv.Sphere().interpolate(target)
+
+
 def test_select_enclosed_points(uniform, hexbeam):
     surf = pv.Sphere(center=uniform.center, radius=uniform.length / 2.0)
     with pytest.warns(pv.PyVistaDeprecationWarning):

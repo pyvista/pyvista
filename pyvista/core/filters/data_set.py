@@ -3528,6 +3528,12 @@ class DataSetFilters(DataObjectFilters):
         pyvista.DataSet
             Interpolated dataset.  Return type matches input.
 
+        Raises
+        ------
+        TypeError
+            If ``target`` cannot be wrapped as a single dataset, such as a
+            :class:`~pyvista.MultiBlock`.
+
         See Also
         --------
         pyvista.DataObjectFilters.sample
@@ -3557,15 +3563,13 @@ class DataSetFilters(DataObjectFilters):
         >>> pl.show()
 
         """
-        # Must cast to UnstructuredGrid in some cases (e.g. vtkImageData/vtkRectilinearGrid)
-        # I believe the locator and the interpolator call `GetPoints` and not all mesh types
-        # have that method
         target_ = wrap(target)
-        target_ = (
-            target_.cast_to_unstructured_grid()
-            if isinstance(target_, (pv.ImageData, pv.RectilinearGrid))
-            else target_
-        )
+        if not isinstance(target_, pv.DataSet):
+            msg = (
+                'Interpolation target must be a DataSet or a point array, got '
+                f'{type(target_).__name__}.'
+            )
+            raise TypeError(msg)
 
         gaussian_kernel = _vtk.vtkGaussianKernel()
         gaussian_kernel.SetSharpness(sharpness)
@@ -3575,15 +3579,10 @@ class DataSetFilters(DataObjectFilters):
             gaussian_kernel.SetNumberOfPoints(n_points)
             gaussian_kernel.SetKernelFootprintToNClosest()
 
-        locator = _vtk.vtkStaticPointLocator()
-        locator.SetDataSet(target_)
-        locator.BuildLocator()
-
         interpolator = _vtk.vtkPointInterpolator()
         interpolator.SetInputData(self)
-        interpolator.SetSourceData(target)
+        interpolator.SetSourceData(target_)
         interpolator.SetKernel(gaussian_kernel)
-        interpolator.SetLocator(locator)
         interpolator.SetNullValue(null_value)
         if strategy == 'null_value':
             interpolator.SetNullPointsStrategyToNullValue()
