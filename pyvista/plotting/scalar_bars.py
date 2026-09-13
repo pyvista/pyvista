@@ -1172,7 +1172,7 @@ class ScalarBars(_NoNewAttrMixin):
         window_width, window_height = self._plotter.window_size
         dpi = self._plotter.render_window.GetDPI()
 
-        fit_box = False
+        keep_fitted = False
         if unconstrained:
             if rotate_title:
                 scalar_bar.SetForceVerticalTitle(True)
@@ -1181,7 +1181,7 @@ class ScalarBars(_NoNewAttrMixin):
                 title_text.SetLineOffset(-_rotated_title_offset(bar_width, title_height, pad))
             elif not sized:
                 # The box is free to grow, but the bar has not been placed yet
-                fit_box = True
+                keep_fitted = True
             elif pad:
                 title_text.SetLineOffset(-pad)
 
@@ -1205,7 +1205,7 @@ class ScalarBars(_NoNewAttrMixin):
                     self._stacked_above(neighbor, gap=gap, dpi=dpi),
                 )
 
-        if fit_box:
+        if keep_fitted:
             # Fit once the bar is where it belongs, and keep it fitted as the window
             # it is measured against changes
             self._keep_fitted(
