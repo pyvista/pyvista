@@ -3656,6 +3656,22 @@ def test_interpolate_excludes_string_arrays():
     assert 'labels' not in interp.point_data
 
 
+def test_interpolate_excludes_unnamed_arrays():
+    target = pv.Sphere(theta_resolution=10, phi_resolution=10)
+    target.point_data['values'] = np.arange(target.n_points, dtype=float)
+    unnamed = _vtk.vtkStringArray()
+    unnamed.SetNumberOfValues(target.n_points)
+    target.point_data.VTKObject.AddArray(unnamed)
+    surf = pv.Sphere(theta_resolution=8, phi_resolution=8, radius=0.4)
+
+    match = re.escape("excluded from the interpolation: ['<unnamed>'].")
+    with pytest.warns(UserWarning, match=match):
+        interp = surf.interpolate(target, radius=1.0)
+
+    assert 'values' in interp.point_data
+    assert target.point_data.VTKObject.GetNumberOfArrays() == 3
+
+
 def test_select_enclosed_points(uniform, hexbeam):
     surf = pv.Sphere(center=uniform.center, radius=uniform.length / 2.0)
     with pytest.warns(pv.PyVistaDeprecationWarning):

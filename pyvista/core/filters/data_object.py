@@ -6035,10 +6035,11 @@ def _deprecate_obb_tree_locator() -> None:
 
 def _check_categorical_scalars(target: DataSet | MultiBlock) -> None:
     """Raise or warn if ``target`` cannot be sampled as categorical data."""
-    if isinstance(target, pv.MultiBlock):
+    if isinstance(target, _vtk.vtkCompositeDataSet):
         warn_external(
-            'Composite targets are sampled without categorical data. Combine the target '
-            'with `MultiBlock.combine()` to sample it as categorical data.'
+            'Composite targets are sampled without categorical data, so the result '
+            'interpolates between categories. Combine the target into a single dataset '
+            'to sample it as categorical data.'
         )
         return
     scalars = target.point_data.active_scalars

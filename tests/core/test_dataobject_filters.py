@@ -1747,14 +1747,19 @@ def test_sample_categorical(categorical_probe, categorical_target, categorical):
     assert bool(np.isin(sampled, categorical_target['labels']).all()) is categorical
 
 
-def test_sample_categorical_composite_target_warns(categorical_probe, categorical_target):
-    target = pv.MultiBlock([categorical_target])
+@pytest.mark.parametrize('composite', [pv.MultiBlock, pv.PartitionedDataSet])
+def test_sample_categorical_composite_target_warns(
+    categorical_probe, categorical_target, composite
+):
+    target = composite([categorical_target])
 
-    match = 'Composite targets are sampled without categorical data.'
-    with pytest.warns(UserWarning, match=re.escape(match)):
+    match = 'Composite targets are sampled without categorical data'
+    with pytest.warns(UserWarning, match=match):
         result = categorical_probe.sample(target, categorical=True)
 
-    assert result['labels'][result['vtkValidPointMask'] == 1].size
+    sampled = result['labels'][result['vtkValidPointMask'] == 1]
+    assert sampled.size
+    assert not np.isin(sampled, categorical_target['labels']).all()
 
 
 def test_sample_categorical_no_point_scalars_raises(categorical_probe):

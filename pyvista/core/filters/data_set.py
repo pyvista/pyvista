@@ -57,7 +57,6 @@ from pyvista.core.utilities.transform import Transform
 if TYPE_CHECKING:
     from pyvista import Color
     from pyvista import DataSet
-    from pyvista import DataSetAttributes
     from pyvista import ImageData
     from pyvista import MultiBlock
     from pyvista import PointSet
@@ -3480,8 +3479,8 @@ class DataSetFilters(DataObjectFilters):
         discretized FEM or CFD simulation, use
         :func:`pyvista.DataObjectFilters.sample` instead.
 
-        String arrays cannot be interpolated and are excluded from the output with
-        a warning.
+        Non-numeric arrays cannot be interpolated and are excluded from the output
+        with a warning.
 
         Parameters
         ----------
@@ -3601,18 +3600,18 @@ class DataSetFilters(DataObjectFilters):
             gaussian_kernel.SetNumberOfPoints(n_points)
             gaussian_kernel.SetKernelFootprintToNClosest()
 
+        target_, excluded = _drop_non_numeric_point_arrays(target_)
+        if excluded:
+            warn_external(
+                'Non-numeric arrays cannot be interpolated and are excluded from the '
+                f'interpolation: {excluded}.'
+            )
+
         interpolator = _vtk.vtkPointInterpolator()
         interpolator.SetInputData(self)
         interpolator.SetSourceData(target_)
         interpolator.SetKernel(gaussian_kernel)
         interpolator.SetNullValue(null_value)
-        if excluded := _non_numeric_array_names(target_.point_data):
-            warn_external(
-                'String arrays cannot be interpolated and are excluded from the '
-                f'interpolation: {excluded}.'
-            )
-            for name in excluded:
-                interpolator.AddExcludedArray(name)
         if strategy == 'null_value':
             interpolator.SetNullPointsStrategyToNullValue()
         elif strategy == 'mask_points':
@@ -9258,11 +9257,19 @@ def _swap_axes(vectors, values):
     return vectors
 
 
-def _non_numeric_array_names(attributes: DataSetAttributes) -> list[str]:
-    """Return the names of the arrays in ``attributes`` which hold no numeric values."""
-    vtk_attributes = attributes.VTKObject
-    return [
-        array.GetName()
-        for index in range(vtk_attributes.GetNumberOfArrays())
-        if not isinstance(array := vtk_attributes.GetAbstractArray(index), _vtk.vtkDataArray)
+def _drop_non_numeric_point_arrays(dataset: _DataSetType) -> tuple[_DataSetType, list[str]]:
+    """Return ``dataset`` without its non-numeric point arrays, and the names of those arrays."""
+    attributes = dataset.point_data.VTKObject
+    # GetArray is None for arrays which hold no numeric values, such as string arrays
+    indices = [
+        index
+        for index in range(attributes.GetNumberOfArrays())
+        if attributes.GetArray(index) is None
     ]
+    if not indices:
+        return dataset, []
+    names = [attributes.GetAbstractArray(index).GetName() or '<unnamed>' for index in indices]
+    filtered = dataset.copy(deep=False)
+    for index in reversed(indices):
+        filtered.point_data.VTKObject.RemoveArray(index)
+    return filtered, names
