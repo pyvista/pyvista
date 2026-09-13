@@ -5502,7 +5502,8 @@ class DataObjectFilters:
             as categorical. If the data is categorical, then the resultant data
             will be determined by a nearest neighbor interpolation scheme. The
             target must have single-component active point scalars. All other
-            arrays are interpolated normally.
+            arrays are interpolated normally. A :class:`~pyvista.MultiBlock`
+            target is sampled without categorical data and warns.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -5519,7 +5520,8 @@ class DataObjectFilters:
 
             .. deprecated:: 0.50.0
                 ``'obb_tree'`` is deprecated. :vtk:`vtkOBBTree` does not implement
-                ``FindCell`` and never accelerated sampling.
+                ``FindCell`` and never accelerated sampling. It raises with VTK 9.7
+                and newer.
 
         pass_field_data : bool, default: True
             Preserve source mesh's original field data arrays.
@@ -5543,7 +5545,8 @@ class DataObjectFilters:
         ------
         ValueError
             If ``categorical=True`` and the target has no single-component active
-            point scalars.
+            point scalars, or if ``locator`` is a :vtk:`vtkOBBTree` and VTK is 9.7
+            or newer.
 
         See Also
         --------
@@ -5576,6 +5579,7 @@ class DataObjectFilters:
         pyvista_ndarray([ 46.5 , 225.12])
 
         """
+
         if categorical:
             _check_categorical_scalars(wrap(target))
 
@@ -6031,28 +6035,28 @@ def _deprecate_obb_tree_locator() -> None:
 
 
 def _check_categorical_scalars(target: DataSet | MultiBlock) -> None:
-    """Raise if ``target`` cannot be sampled as categorical data."""
-    datasets = (
-        target.recursive_iterator(skip_none=True, skip_empty=True)
-        if isinstance(target, pv.MultiBlock)
-        else iter([target])
-    )
-    for dataset in datasets:
-        scalars = dataset.point_data.active_scalars
-        if scalars is None:
-            msg = (
-                'Categorical sampling requires the target to have active point scalars, '
-                f'but the target has none. Its point data arrays are '
-                f'{dataset.point_data.keys()}.'
-            )
-            raise ValueError(msg)
-        if scalars.ndim > 1:
-            msg = (
-                'Categorical sampling requires single-component active point scalars, but '
-                f"the target's active point scalars '{dataset.point_data.active_scalars_name}' "
-                f'have {scalars.shape[1]} components.'
-            )
-            raise ValueError(msg)
+    """Raise or warn if ``target`` cannot be sampled as categorical data."""
+    if isinstance(target, pv.MultiBlock):
+        warn_external(
+            'Composite targets are sampled without categorical data. Combine the target '
+            'with `MultiBlock.combine()` to sample it as categorical data.'
+        )
+        return
+    scalars = target.point_data.active_scalars
+    if scalars is None:
+        msg = (
+            'Categorical sampling requires the target to have active point scalars, but '
+            f'the target has none. Make one of {target.point_data.keys()} active with '
+            "`target.set_active_scalars(name, preference='point')`."
+        )
+        raise ValueError(msg)
+    if scalars.ndim > 1:
+        msg = (
+            'Categorical sampling requires single-component active point scalars, but '
+            f"the target's active point scalars '{target.point_data.active_scalars_name}' "
+            f'have {scalars.shape[1]} components.'
+        )
+        raise ValueError(msg)
 
 
 def _copy_active_attributes(source: DataSet, target: DataSet) -> None:
