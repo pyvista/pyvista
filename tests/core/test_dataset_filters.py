@@ -5859,6 +5859,32 @@ def test_resample_to_image_method_interpolate(sphere):
     assert tight['vtkValidPointMask'].sum() < valid.sum()
 
 
+def test_sample_composite_target():
+    def _solid(center):
+        mesh = pv.SolidSphere(outer_radius=0.4, center=center)
+        mesh['height'] = mesh.points[:, 2]
+        mesh.cell_data['cval'] = np.arange(mesh.n_cells, dtype=float)
+        return mesh
+
+    a, b = _solid((0.0, 0.0, 0.0)), _solid((0.7, 0.0, 0.0))
+    grid = pv.ImageData(dimensions=(20, 20, 20), spacing=(0.09,) * 3, origin=(-0.8,) * 3)
+
+    flat = grid.sample(pv.MultiBlock([a, b]))
+    assert flat['vtkValidPointMask'].sum() > 0
+    assert 'height' in flat.point_data
+    assert 'cval' in flat.point_data
+
+    # Nesting and empty blocks are handled by the composite probe
+    nested = grid.sample(pv.MultiBlock([a, pv.MultiBlock([b])]))
+    assert np.array_equal(nested['vtkValidPointMask'], flat['vtkValidPointMask'])
+
+    with_none = grid.sample(pv.MultiBlock([a, None]))
+    assert 0 < with_none['vtkValidPointMask'].sum() < flat['vtkValidPointMask'].sum()
+
+    partitioned = grid.sample(pv.PartitionedDataSet([a, b]))
+    assert np.array_equal(partitioned['vtkValidPointMask'], flat['vtkValidPointMask'])
+
+
 def test_resample_to_image_multiblock():
     blocks = pv.MultiBlock([pv.Sphere(), pv.Sphere(center=(1.5, 0, 0))])
     for block in blocks:

@@ -61,6 +61,7 @@ if TYPE_CHECKING:
     from pyvista import DataSetAttributes
     from pyvista import ImageData
     from pyvista import MultiBlock
+    from pyvista import PartitionedDataSet
     from pyvista import PointSet
     from pyvista import PolyData
     from pyvista import RectilinearGrid
@@ -5452,7 +5453,7 @@ class DataObjectFilters:
 
     def sample(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
-        target: DataSet | _vtk.vtkDataSet,
+        target: DataSet | MultiBlock | PartitionedDataSet | _vtk.vtkDataSet,
         *,
         tolerance: float | None = None,
         pass_cell_data: bool = True,
@@ -5483,9 +5484,10 @@ class DataObjectFilters:
 
         Parameters
         ----------
-        target : pyvista.DataSet
+        target : pyvista.DataSet | pyvista.MultiBlock | pyvista.PartitionedDataSet
             The vtk data object to sample from - point and cell arrays from
             this object are sampled onto the nodes of the ``dataset`` mesh.
+            A composite is sampled block by block.
 
         tolerance : float, optional
             Tolerance used to compute whether a point in the source is
