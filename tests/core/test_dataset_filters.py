@@ -9,6 +9,7 @@ from typing import Any
 from typing import NamedTuple
 from unittest.mock import Mock
 from unittest.mock import patch
+import warnings
 
 from hypothesis import given
 from hypothesis import strategies as st
@@ -5856,6 +5857,34 @@ def test_resample_to_image_method_interpolate(sphere):
     # A smaller radius fills fewer voxels
     tight = sphere.resample_to_image(dimensions=dims, radius=np.linalg.norm(image.spacing) / 4)
     assert tight['vtkValidPointMask'].sum() < valid.sum()
+
+
+def test_resample_to_image_interpolate_warns_on_cell_data(sphere, tetbeam):
+    sphere.clear_data()
+    sphere.cell_data['cval'] = np.arange(sphere.n_cells, dtype=float)
+
+    match = r"Cell data \['cval'\] is dropped by `method='interpolate'`, chosen for this input"
+    with pytest.warns(UserWarning, match=match):
+        image = sphere.resample_to_image(dimensions=(20, 20, 20))
+    assert 'cval' not in image.point_data
+
+    # Converting first keeps it, and warns no more
+    with warnings.catch_warnings():
+        warnings.simplefilter('error')
+        converted = sphere.cell_data_to_point_data().resample_to_image(dimensions=(20, 20, 20))
+    assert 'cval' in converted.point_data
+
+    # Asking for the method by name says so instead
+    with pytest.warns(UserWarning, match=r"`method='interpolate'`, which reads point data"):
+        sphere.resample_to_image(dimensions=(20, 20, 20), method='interpolate')
+
+    # `sample` carries cell data, so it does not warn
+    tetbeam.clear_data()
+    tetbeam.cell_data['cval'] = np.arange(tetbeam.n_cells, dtype=float)
+    with warnings.catch_warnings():
+        warnings.simplefilter('error')
+        sampled = tetbeam.resample_to_image(dimensions=(10, 10, 10))
+    assert 'cval' in sampled.point_data
 
 
 def test_resample_to_image_blanks_invalid_points(sphere, tetbeam):

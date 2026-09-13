@@ -9032,6 +9032,13 @@ class DataSetFilters(DataObjectFilters):
             output shows those regions as transparent.
 
         .. note::
+            ``method='sample'`` reads the input's point `and` cell data, and writes both
+            to the output's point data. ``method='interpolate'`` reads point data only,
+            so the input's cell data is dropped and a warning is raised. Call
+            :meth:`~pyvista.DataObjectFilters.cell_data_to_point_data` on the input to
+            keep it.
+
+        .. note::
             The two methods keep different voxels. ``method='sample'`` keeps those whose
             centre lies inside a cell of the input, so the result stops just inside a
             volumetric mesh's surface. ``method='interpolate'`` keeps those the input
@@ -9238,6 +9245,7 @@ class DataSetFilters(DataObjectFilters):
             _validation.check_contains(
                 ['sample', 'interpolate'], must_contain=chosen, name='method'
             )
+        chosen_for = '' if method is not None else ', chosen for this input'
         unused = (
             {'radius': radius, 'sharpness': sharpness}
             if chosen == 'sample'
@@ -9246,7 +9254,6 @@ class DataSetFilters(DataObjectFilters):
         for name, value in unused.items():
             if value is not None:
                 wanted = 'interpolate' if chosen == 'sample' else 'sample'
-                chosen_for = '' if method is not None else ', chosen for this input'
                 msg = (
                     f'`{name}` requires `method={wanted!r}`, but `method={chosen!r}`{chosen_for}.'
                 )
@@ -9256,6 +9263,13 @@ class DataSetFilters(DataObjectFilters):
             return volume.sample(
                 self, tolerance=tolerance, categorical=categorical, progress_bar=progress_bar
             )
+        if dropped := [n for n in self.cell_data if not n.startswith('vtk')]:
+            msg = (
+                f'Cell data {dropped} is dropped by `method={chosen!r}`'
+                f'{chosen_for}, which reads point data only. '
+                'Call `cell_data_to_point_data` on the input to keep it.'
+            )
+            warn_external(msg)
         interpolated = volume.interpolate(
             self,
             radius=float(np.linalg.norm(volume.spacing)) / 2 if radius is None else radius,
