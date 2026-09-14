@@ -5266,6 +5266,9 @@ class DataObjectFilters:
         Point data are specified per node and cell data specified within cells.
         Optionally, the input point data can be passed through to the output.
 
+        String arrays are excluded from the conversion with a warning. They are
+        passed through to the output when ``pass_point_data=True``.
+
         Parameters
         ----------
         pass_point_data : bool, default: False
@@ -5336,14 +5339,20 @@ class DataObjectFilters:
                 ),
             )
 
+        # String arrays segfault vtkPointDataToCellData, so convert without them
+        filtered = _exclude_string_arrays(self, 'point')
+
         alg = _vtk.vtkPointDataToCellData()
-        alg.SetInputDataObject(self)
+        alg.SetInputDataObject(self if filtered is None else filtered)
         alg.SetPassPointData(pass_point_data)
         alg.SetCategoricalData(categorical)
         _update_alg(
             alg, progress_bar=progress_bar, message='Transforming point data into cell data'
         )
-        return _get_output(alg, active_scalars=self.active_scalars_name)
+        output = _get_output(alg, active_scalars=self.active_scalars_name)
+        if filtered is not None and pass_point_data:
+            output.point_data.VTKObject.ShallowCopy(self.point_data.VTKObject)
+        return output
 
     def ptc(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
@@ -6174,6 +6183,33 @@ def _copy_active_attributes(source: DataSet, target: DataSet) -> None:
         tensors = attributes_in.GetTensors()
         if tensors is not None and tensors.GetName() in attributes_out:
             attributes_out.SetActiveTensors(tensors.GetName())
+
+
+def _exclude_string_arrays(
+    dataset: _DataSetType, association: Literal['point', 'cell']
+) -> _DataSetType | None:
+    """Return a shallow copy without any string arrays, or ``None`` if there are none."""
+    field = _vtk.vtkDataObject.POINT if association == 'point' else _vtk.vtkDataObject.CELL
+    attributes = dataset.GetAttributes(field)
+    # GetArray is None for arrays which are not numeric, such as string arrays
+    indices = [
+        index
+        for index in range(attributes.GetNumberOfArrays())
+        if attributes.GetArray(index) is None
+    ]
+    if not indices:
+        return None
+    names = [attributes.GetAbstractArray(index).GetName() for index in indices]
+    other = 'cell' if association == 'point' else 'point'
+    warn_external(
+        f'String arrays cannot be converted and are excluded from the '
+        f'{association}-to-{other} data conversion: {names}.'
+    )
+    filtered = dataset.copy(deep=False)
+    filtered_attributes = filtered.GetAttributes(field)
+    for index in reversed(indices):
+        filtered_attributes.RemoveArray(index)
+    return filtered
 
 
 def _box_planes(bounds: NumpyArray[float]) -> list[tuple[VectorLike[float], VectorLike[float]]]:

@@ -1628,6 +1628,103 @@ def test_point_data_to_cell_data():
     _ = data.ptc()
 
 
+_STRING_CONVERSIONS = [
+    ('point_data_to_cell_data', {}),
+    ('point_data_to_cell_data', {'categorical': True}),
+]
+_STRING_CONVERSION_IDS = ['ptc', 'ptc-categorical']
+
+
+def _conversion_associations(filter_name):
+    """Return the source and target attribute names of a data conversion filter."""
+    source_name, _, target_name = filter_name.partition('_to_')
+    return source_name, target_name
+
+
+@pytest.mark.parametrize('unstructured', [False, True])
+@pytest.mark.parametrize('dtype', ['U', 'S'])
+@pytest.mark.parametrize('pass_data', [False, True])
+@pytest.mark.parametrize(
+    ('filter_name', 'kwargs'), _STRING_CONVERSIONS, ids=_STRING_CONVERSION_IDS
+)
+def test_data_conversion_excludes_strings(filter_name, kwargs, pass_data, dtype, unstructured):
+    mesh = pv.ImageData(dimensions=(3, 2, 2))
+    if unstructured:
+        mesh = mesh.cast_to_unstructured_grid()
+    source_name, target_name = _conversion_associations(filter_name)
+    sizes = {'point_data': mesh.n_points, 'cell_data': mesh.n_cells}
+    source = getattr(mesh, source_name)
+    source['labels'] = np.arange(sizes[source_name]).astype(dtype)
+    source['values'] = np.arange(sizes[source_name], dtype=float)
+    source['names'] = np.full(sizes[source_name], 'name', dtype=dtype)
+    getattr(mesh, target_name)['existing'] = np.full(sizes[target_name], 42.0)
+    mesh.field_data['description'] = ['metadata']
+    kwargs = {**kwargs, f'pass_{source_name}': pass_data}
+
+    # The conversion must match the same mesh without any string arrays
+    numeric = mesh.copy()
+    del getattr(numeric, source_name)['labels']
+    del getattr(numeric, source_name)['names']
+    expected = getattr(numeric, filter_name)(**kwargs)
+
+    original = mesh.copy()
+    match = 'excluded from the {}-to-{} data conversion'.format(
+        source_name.removesuffix('_data'), target_name.removesuffix('_data')
+    )
+    with pytest.warns(UserWarning, match=match + re.escape(": ['labels', 'names']")):
+        result = getattr(mesh, filter_name)(**kwargs)
+
+    assert getattr(result, target_name) == getattr(expected, target_name)
+    assert result.field_data == original.field_data
+    if pass_data:
+        assert getattr(result, source_name) == source
+        assert np.shares_memory(getattr(result, source_name)['values'], source['values'])
+    else:
+        assert getattr(result, source_name) == getattr(expected, source_name)
+    assert mesh == original
+
+
+@pytest.mark.parametrize(
+    ('filter_name', 'kwargs'), _STRING_CONVERSIONS, ids=_STRING_CONVERSION_IDS
+)
+def test_data_conversion_excludes_strings_only(filter_name, kwargs):
+    mesh = pv.ImageData(dimensions=(3, 2, 2))
+    source_name, target_name = _conversion_associations(filter_name)
+    sizes = {'point_data': mesh.n_points, 'cell_data': mesh.n_cells}
+    getattr(mesh, source_name)['labels'] = np.arange(sizes[source_name]).astype(str)
+    original = mesh.copy()
+    with pytest.warns(UserWarning, match=re.escape("conversion: ['labels']")):
+        result = getattr(mesh, filter_name)(**kwargs, **{f'pass_{source_name}': True})
+    assert getattr(result, source_name).keys() == ['labels']
+    assert not getattr(result, target_name)
+    assert mesh == original
+
+
+def test_point_data_to_cell_data_excludes_unnamed_strings():
+    mesh = pv.ImageData(dimensions=(3, 2, 2))
+    mesh.point_data['values'] = np.arange(mesh.n_points, dtype=float)
+    mesh.point_data['labels'] = np.arange(mesh.n_points).astype(str)
+    mesh.point_data.VTKObject.GetAbstractArray('labels').SetName(None)
+    with pytest.warns(UserWarning, match='String arrays cannot be converted'):
+        result = mesh.point_data_to_cell_data()
+    assert result.cell_data.keys() == ['values']
+
+
+def test_point_data_to_cell_data_excludes_strings_composite():
+    numeric = pv.ImageData(dimensions=(3, 2, 2))
+    numeric.point_data['values'] = np.arange(numeric.n_points, dtype=float)
+    strings = numeric.copy()
+    strings.point_data['values'] = np.arange(strings.n_points).astype(str)
+    mesh = pv.MultiBlock({'numeric': numeric, 'nested': pv.MultiBlock([strings, None])})
+    original = mesh.copy()
+    with pytest.warns(UserWarning, match=re.escape("conversion: ['values']")):
+        result = mesh.point_data_to_cell_data()
+    assert result['numeric'].cell_data['values'][0] == 5.0
+    assert not result['nested'][0].cell_data
+    assert result['nested'][1] is None
+    assert mesh == original
+
+
 def test_point_data_to_cell_data_composite(multiblock_all_no_pointset):
     # Now test composite data structures
     output = multiblock_all_no_pointset.point_data_to_cell_data(progress_bar=True)
