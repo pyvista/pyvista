@@ -5898,9 +5898,11 @@ class DataObjectFilters:
     ) -> ImageData:
         """Resample this mesh's arrays onto a uniform grid.
 
-        The mesh's arrays are resampled at the center of every voxel of a new
-        :class:`~pyvista.ImageData`. This is a one-line alternative to building the
-        grid explicitly and calling :meth:`~pyvista.DataObjectFilters.sample` or
+        The mesh's arrays are resampled at the points of a new
+        :class:`~pyvista.ImageData`. Each point is the center of a voxel, and the voxels
+        tile the input's bounds, so the image's points are inset half a spacing from
+        those bounds. This is a one-line alternative to building the grid explicitly and
+        calling :meth:`~pyvista.DataObjectFilters.sample` or
         :meth:`~pyvista.DataSetFilters.interpolate` on it.
 
         A :class:`~pyvista.MultiBlock` is resampled as a whole, so one grid covers
@@ -5955,6 +5957,12 @@ class DataObjectFilters:
             Voxels with no value are flagged with a ``'vtkValidPointMask'`` point data
             array and, unless ``mark_blank=False``, hidden with a ``'vtkGhostType'``
             array, so volume rendering the output shows those regions as transparent.
+
+        .. note::
+            The voxels are returned as points, not :attr:`~pyvista.CellType.VOXEL`
+            cells. Use :meth:`~pyvista.ImageDataFilters.points_to_cells` to convert them,
+            which also carries the blanking over. See
+            :ref:`image_representations_example` for the difference.
 
         .. note::
             ``method='sample'`` reads the input's point `and` cell data, and writes both
