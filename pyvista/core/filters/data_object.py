@@ -5894,7 +5894,7 @@ class DataObjectFilters:
         categorical: bool | None = None,
         radius: float | None = None,
         sharpness: float | None = None,
-        mark_blank: bool = True,
+        mark_blank: bool = False,
         progress_bar: bool = False,
     ) -> ImageData:
         """Resample this mesh's arrays onto a uniform grid.
@@ -5960,7 +5960,7 @@ class DataObjectFilters:
 
         .. note::
             Voxels with no value are flagged with a ``'vtkValidPointMask'`` point data
-            array and, unless ``mark_blank=False``, hidden with a ``'vtkGhostType'``
+            array. Set ``mark_blank=True`` to also hide them with a ``'vtkGhostType'``
             array, so volume rendering the output shows those regions as transparent.
 
         Parameters
@@ -6071,10 +6071,10 @@ class DataObjectFilters:
             value increases, the weights of points far from a voxel's center fall off
             faster.
 
-        mark_blank : bool, default: True
+        mark_blank : bool, default: False
             Hide the voxels which no value could be resampled for, by flagging them in a
-            ``'vtkGhostType'`` array. Set this to ``False`` to leave every voxel visible
-            and filter them with the ``'vtkValidPointMask'`` array instead.
+            ``'vtkGhostType'`` array. Every voxel is visible by default, and the blank
+            ones can be filtered with the ``'vtkValidPointMask'`` array instead.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -6127,18 +6127,18 @@ class DataObjectFilters:
         >>> volume.spacing
         (1.0, 1.0, 1.0)
 
-        Volume render the result. The voxels outside the vessels are blank, and are
-        therefore transparent.
+        Volume render the result. Every voxel is visible, so the volume fills the
+        input's whole bounding box.
 
         >>> volume.plot(volume=True, scalars='shearstress', cpos='zy')
 
-        Set ``mark_blank=False`` to leave every voxel visible instead. The blank voxels
-        keep their ``'vtkValidPointMask'`` flag either way, so
+        Set ``mark_blank=True`` to hide the voxels no value could be resampled for. The
+        blank voxels keep their ``'vtkValidPointMask'`` flag either way, so
         :meth:`~pyvista.DataSetFilters.threshold` removes the same ones that blanking
         hides.
 
-        >>> unmarked = mesh.resample_to_image(mark_blank=False)
-        >>> unmarked.plot(volume=True, scalars='shearstress', cpos='zy')
+        >>> blanked = mesh.resample_to_image(mark_blank=True)
+        >>> blanked.plot(volume=True, scalars='shearstress', cpos='zy')
 
         Set the ``dimensions`` or the ``spacing`` to control the resolution explicitly.
 
@@ -6166,7 +6166,7 @@ class DataObjectFilters:
         >>> datasets = {}
         >>> for sphere in [surface.cast_to_pointset(), surface, solid]:
         ...     sphere['height'] = sphere.points[:, 2]
-        ...     image = sphere.resample_to_image(spacing=0.05)
+        ...     image = sphere.resample_to_image(spacing=0.05, mark_blank=True)
         ...     name = type(sphere).__name__
         ...     datasets[name] = sphere
         ...     datasets[f'{name} voxels'] = image.points_to_cells(dimensionality='3D')
@@ -6189,7 +6189,7 @@ class DataObjectFilters:
 
         >>> cloud = pv.PointSet(mesh.points)
         >>> cloud['node_value'] = mesh['node_value']
-        >>> cloud.resample_to_image(spacing=2.0).plot(
+        >>> cloud.resample_to_image(spacing=2.0, mark_blank=True).plot(
         ...     volume=True, scalars='node_value', cpos='zy'
         ... )
 

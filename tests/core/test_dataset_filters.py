@@ -6007,7 +6007,7 @@ def test_resample_to_image_multiblock():
     for block in blocks:
         block['height'] = block.points[:, 2]
 
-    image = blocks.resample_to_image(target_n_points=20_000)
+    image = blocks.resample_to_image(target_n_points=20_000, mark_blank=True)
     assert isinstance(image, pv.ImageData)
     assert 'height' in image.point_data
     # Voxels are points, so the cells rather than the points span the input's bounds
@@ -6200,14 +6200,14 @@ def test_resample_to_image_blanks_invalid_points(sphere, tetbeam):
     # Both methods hide the voxels their mask flags as empty
     for mesh, kwargs in [(sphere, dict(dimensions=(20, 20, 20))), (tetbeam, {})]:
         for method in ['sample', 'interpolate']:
-            image = mesh.resample_to_image(method=method, **kwargs)
+            image = mesh.resample_to_image(method=method, mark_blank=True, **kwargs)
             invalid = image['vtkValidPointMask'] == 0
             ghosts = image.point_data[ghost_name]
             assert ghosts.dtype == np.uint8
             assert np.array_equal(ghosts, np.where(invalid, hidden, 0))
 
-            # `mark_blank=False` keeps the mask but leaves every voxel visible
-            unmarked = mesh.resample_to_image(method=method, mark_blank=False, **kwargs)
+            # Blanking is off by default, which keeps the mask but hides nothing
+            unmarked = mesh.resample_to_image(method=method, **kwargs)
             assert ghost_name not in unmarked.point_data
             assert ghost_name not in unmarked.cell_data
             assert np.array_equal(unmarked['vtkValidPointMask'], image['vtkValidPointMask'])
