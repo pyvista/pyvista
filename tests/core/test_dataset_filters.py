@@ -6146,6 +6146,12 @@ def test_resample_to_image_blanks_invalid_points(sphere, tetbeam):
             assert ghosts.dtype == np.uint8
             assert np.array_equal(ghosts, np.where(invalid, hidden, 0))
 
+            # `mark_blank=False` keeps the mask but leaves every voxel visible
+            unmarked = mesh.resample_to_image(method=method, mark_blank=False, **kwargs)
+            assert ghost_name not in unmarked.point_data
+            assert ghost_name not in unmarked.cell_data
+            assert np.array_equal(unmarked['vtkValidPointMask'], image['vtkValidPointMask'])
+
 
 def test_resample_to_image_method_default(sphere, mocker: MockerFixture):
     from pyvista.core.filters import data_object

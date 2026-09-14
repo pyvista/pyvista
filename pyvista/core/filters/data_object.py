@@ -5893,6 +5893,7 @@ class DataObjectFilters:
         categorical: bool | None = None,
         radius: float | None = None,
         sharpness: float | None = None,
+        mark_blank: bool = True,
         progress_bar: bool = False,
     ) -> ImageData:
         """Resample this mesh's arrays onto a uniform grid.
@@ -5952,8 +5953,8 @@ class DataObjectFilters:
 
         .. note::
             Voxels with no value are flagged with a ``'vtkValidPointMask'`` point data
-            array and hidden with a ``'vtkGhostType'`` array, so volume rendering the
-            output shows those regions as transparent.
+            array and, unless ``mark_blank=False``, hidden with a ``'vtkGhostType'``
+            array, so volume rendering the output shows those regions as transparent.
 
         .. note::
             ``method='sample'`` reads the input's point `and` cell data, and writes both
@@ -6056,6 +6057,11 @@ class DataObjectFilters:
             value increases, the weights of points far from a voxel's center fall off
             faster. Requires ``method='interpolate'``.
 
+        mark_blank : bool, default: True
+            Hide the voxels which no value could be resampled for, by flagging them in a
+            ``'vtkGhostType'`` array. Set this to ``False`` to leave every voxel visible
+            and filter them with the ``'vtkValidPointMask'`` array instead.
+
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
@@ -6106,6 +6112,14 @@ class DataObjectFilters:
 
         >>> volume.plot(volume=True, scalars='shearstress', cpos='zy')
 
+        Set ``mark_blank=False`` to leave every voxel visible instead. The blank voxels
+        keep their ``'vtkValidPointMask'`` flag either way, so
+        :meth:`~pyvista.DataSetFilters.threshold` removes the same ones that blanking
+        hides.
+
+        >>> unmarked = mesh.resample_to_image(mark_blank=False)
+        >>> unmarked.plot(volume=True, scalars='shearstress', cpos='zy')
+
         Set the ``dimensions`` or the ``spacing`` to control the resolution explicitly.
 
         >>> mesh.resample_to_image(spacing=2.0).dimensions
@@ -6126,17 +6140,16 @@ class DataObjectFilters:
         ... ).resize(bounds=bounds)
 
         Show each input beside the voxels of its resampled image.
+        :meth:`~pyvista.ImageDataFilters.points_to_cells` carries the blanking over, so
+        only the filled voxels are drawn.
 
         >>> datasets = {}
         >>> for sphere in [surface.cast_to_pointset(), surface, solid]:
         ...     sphere['height'] = sphere.points[:, 2]
         ...     image = sphere.resample_to_image(spacing=0.05)
-        ...     voxels = image.points_to_cells(dimensionality='3D')
         ...     name = type(sphere).__name__
         ...     datasets[name] = sphere
-        ...     datasets[f'{name} voxels'] = voxels.threshold(
-        ...         scalars='vtkValidPointMask', value=0.5
-        ...     )
+        ...     datasets[f'{name} voxels'] = image.points_to_cells(dimensionality='3D')
         >>> pv.plot_compare(datasets, shape=(3, 2), scalars='height')
 
         The point cloud and the surface fill the same shell, since they have the same
@@ -6209,6 +6222,7 @@ class DataObjectFilters:
                 source,
                 tolerance=tolerance,
                 categorical=False if categorical is None else categorical,
+                mark_blank=mark_blank,
                 progress_bar=progress_bar,
             )
         if dropped := [n for n in source.cell_data if not n.startswith('vtk')]:
@@ -6225,7 +6239,7 @@ class DataObjectFilters:
             strategy='mask_points',
             progress_bar=progress_bar,
         )
-        return _blank_invalid_points(interpolated)
+        return _blank_invalid_points(interpolated) if mark_blank else interpolated
 
 
 def _convex_hull_scipy(points: NumpyArray[float], dimensionality: Literal[1, 2, 3]) -> PolyData:
