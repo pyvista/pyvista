@@ -199,6 +199,16 @@ gl_Position.y = new_y * u_distortion_projection_scale.y * clip_w;
 """
 
 
+def _distortion_state(prop: _vtk.vtkProp) -> _DistortionState | None:
+    """Return the distortion state a prop carries, or ``None`` if it carries none."""
+    return getattr(prop, '_camera_distortion_state', None)
+
+
+def _set_distortion_state(prop: _vtk.vtkProp, state: _DistortionState | None) -> None:
+    """Stash the distortion state on a prop, which only :class:`Actor` declares."""
+    prop._camera_distortion_state = state  # type: ignore[attr-defined]
+
+
 def close_all() -> bool:
     """Close all open/active plotters and clean up memory.
 
@@ -476,7 +486,7 @@ class BasePlotter(_BoundsSizeMixin):
         border_width: float | None = None,
         title: str | None = None,
         splitting_position: float | None = None,
-        groups: Sequence[int] | None = None,
+        groups: Sequence[Sequence[int | slice]] | None = None,
         row_weights: Sequence[int] | None = None,
         col_weights: Sequence[int] | None = None,
         lighting: LightingOptions | None = 'light kit',
@@ -1057,13 +1067,13 @@ class BasePlotter(_BoundsSizeMixin):
         if rotate_scene:
             for renderer in self.renderers:
                 for actor in renderer.actors.values():
-                    if hasattr(actor, 'RotateX'):
+                    if isinstance(actor, _vtk.vtkProp3D):
                         actor.RotateX(-90)
                         actor.RotateZ(-90)
 
                     if save_normals:
                         try:
-                            mapper = actor.GetMapper()
+                            mapper = actor.GetMapper() if hasattr(actor, 'GetMapper') else None
                             if mapper is None:
                                 continue
                             dataset = mapper.dataset
@@ -1108,7 +1118,7 @@ class BasePlotter(_BoundsSizeMixin):
         if rotate_scene:
             for renderer in self.renderers:
                 for actor in renderer.actors.values():
-                    if hasattr(actor, 'RotateX'):
+                    if isinstance(actor, _vtk.vtkProp3D):
                         actor.RotateZ(90)
                         actor.RotateX(90)
 
@@ -1846,7 +1856,7 @@ class BasePlotter(_BoundsSizeMixin):
                 (
                     renderer,
                     renderer.AddObserver(
-                        'StartEvent',
+                        _vtk.vtkCommand.StartEvent,
                         functools.partial(try_callback, self._apply_camera_distortion),
                     ),
                 )
@@ -1878,7 +1888,7 @@ class BasePlotter(_BoundsSizeMixin):
         self._camera_distortion_sweeps = {}
         for renderer in self.renderers:
             for prop in renderer.actors.values():
-                if getattr(prop, '_camera_distortion_state', None) is None:
+                if _distortion_state(prop) is None:
                     continue
                 if isinstance(prop, Actor):
                     prop.clear_shader_replacements(_feature_name=_CAMERA_DISTORTION_FEATURE)
@@ -1889,7 +1899,7 @@ class BasePlotter(_BoundsSizeMixin):
                 uniforms = prop.GetShaderProperty().GetVertexCustomUniforms()
                 uniforms.RemoveUniform(_CAMERA_DISTORTION_COEFFICIENTS_UNIFORM)
                 uniforms.RemoveUniform(_CAMERA_DISTORTION_SCALE_UNIFORM)
-                prop._camera_distortion_state = None
+                _set_distortion_state(prop, None)
 
     def _warn_undistorted(self, subject: str) -> None:
         """Warn once for each kind of prop the distortion shader cannot reach."""
@@ -1931,13 +1941,13 @@ class BasePlotter(_BoundsSizeMixin):
                     continue
                 # Writing a uniform marks the shader for a rebuild, so leave the
                 # actors whose state is already current alone.
-                if getattr(prop, '_camera_distortion_state', None) != state:
+                if _distortion_state(prop) != state:
                     self._distort_actor(prop, state)
 
     def _distort_actor(self, prop: _vtk.vtkActor, state: _DistortionState) -> None:
         """Attach the distortion shader to one actor and set its uniforms."""
         coefficients, projection_scale = state
-        if getattr(prop, '_camera_distortion_state', None) is None:
+        if _distortion_state(prop) is None:
             if isinstance(prop, Actor):
                 prop.add_shader_replacement(
                     'vertex',
@@ -1956,7 +1966,7 @@ class BasePlotter(_BoundsSizeMixin):
         uniforms = prop.GetShaderProperty().GetVertexCustomUniforms()
         uniforms.SetUniform4f(_CAMERA_DISTORTION_COEFFICIENTS_UNIFORM, coefficients)
         uniforms.SetUniform2f(_CAMERA_DISTORTION_SCALE_UNIFORM, projection_scale)
-        prop._camera_distortion_state = state  # type: ignore[attr-defined]
+        _set_distortion_state(prop, state)
 
     @_wraps(Renderer.enable_eye_dome_lighting)
     def enable_eye_dome_lighting(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
@@ -2654,7 +2664,7 @@ class BasePlotter(_BoundsSizeMixin):
         self._get_iren_not_none().untrack_click_position(*args, **kwargs)
 
     @property
-    def pickable_actors(self) -> list[_vtk.vtkActor]:  # numpydoc ignore=RT01
+    def pickable_actors(self) -> list[_vtk.vtkProp]:  # numpydoc ignore=RT01
         """Return or set the pickable actors.
 
         When setting, this will be the list of actors to make
@@ -2663,7 +2673,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         Returns
         -------
-        list[:vtk:`vtkActor`]
+        list[:vtk:`vtkProp`]
             List of actors.
 
         Examples
@@ -6742,7 +6752,7 @@ class BasePlotter(_BoundsSizeMixin):
         if fmt is None:
             fmt = self._theme.font.fmt
         if fmt is None:
-            fmt = '%.6e' if pv.vtk_version_info < (9, 6, 0) else '{:.6e}'  # type: ignore[unreachable]
+            fmt = '%.6e' if pv.vtk_version_info < (9, 6, 0) else '{:.6e}'
         if isinstance(points, np.ndarray):
             scalars = labels
         elif is_pyvista_dataset(points):
@@ -7399,7 +7409,7 @@ class BasePlotter(_BoundsSizeMixin):
         datasets = []
         for renderer in self.renderers:
             for actor in renderer.actors.values():
-                mapper = actor.GetMapper()
+                mapper = actor.GetMapper() if hasattr(actor, 'GetMapper') else None
 
                 # ignore any mappers whose inputs are not datasets
                 if _mapper_has_data_set_input(mapper):
@@ -7470,7 +7480,7 @@ class BasePlotter(_BoundsSizeMixin):
         # background layer
         if not self._has_background_layer:
             self.render_window.SetNumberOfLayers(3)  # type: ignore[union-attr]
-        renderer = self.renderers.add_background_renderer(image_path, scale, as_global)
+        renderer = self.renderers.add_background_renderer(image_path, scale, as_global=as_global)
         self.render_window.AddRenderer(renderer)  # type: ignore[union-attr]
 
         # set up autoscaling of the image
@@ -7610,12 +7620,12 @@ class BasePlotter(_BoundsSizeMixin):
         >>> pl.show()
 
         """
-        return [
-            tuple(self.renderers.index_to_loc(index).tolist())
-            for index in range(len(self.renderers))
-            if self.renderers[index]._actors is not None
-            and name in self.renderers[index]._actors.keys()
-        ]
+        locations = []
+        for index, renderer in enumerate(self.renderers):
+            if name in renderer.actors:
+                loc = np.atleast_1d(self.renderers.index_to_loc(index))
+                locations.append((int(loc[0]), int(loc[1])))
+        return locations
 
     # =======================================================================
     # Picking—forwarding shims for plotter.picking component.
@@ -8449,7 +8459,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         off_screen: bool | None = None,
         notebook: bool | None = None,
         shape: Sequence[int] | str = (1, 1),
-        groups: Sequence[int] | None = None,
+        groups: Sequence[Sequence[int | slice]] | None = None,
         row_weights: Sequence[int] | None = None,
         col_weights: Sequence[int] | None = None,
         border: BorderOptions | None = None,

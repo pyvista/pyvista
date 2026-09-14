@@ -1704,7 +1704,7 @@ class _Chart(DocSubs):
 
     @doc_subs
     def show(
-        self,
+        self: Chart,
         *,
         interactive: bool = True,
         off_screen=None,

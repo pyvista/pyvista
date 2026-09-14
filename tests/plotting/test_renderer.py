@@ -699,16 +699,16 @@ def test_border_default_handles_non_tuple_shape(shape, expects_overlay):
 
 
 def test_bad_legend_origin_and_size(sphere):
-    """Ensure bad parameters to origin/size raise ValueErrors."""
+    """Ensure bad parameters to origin/size raise."""
     pl = pv.Plotter()
     pl.add_mesh(sphere)
     legend_labels = [['sphere', 'r']]
     with pytest.raises(ValueError, match='Invalid loc'):
         pl.add_legend(labels=legend_labels, loc='bar')
-    with pytest.raises(ValueError, match='size'):
+    with pytest.raises(ValueError, match='`size` must have a length equal to'):
         pl.add_legend(labels=legend_labels, size=[])
     # test non-sequences also raise
-    with pytest.raises(ValueError, match='size'):
+    with pytest.raises(TypeError, match='`size` must be an instance of'):
         pl.add_legend(labels=legend_labels, size=type)
 
 
@@ -1199,7 +1199,7 @@ def test_compute_bounds(airplane):
 @pytest.mark.parametrize('aa_type', [None, 1.0, 1, object()])
 def test_enable_antialising_raises(aa_type):
     pl = pv.Plotter()
-    with pytest.raises(TypeError, match=f'`aa_type` must be a string, not {type(aa_type)}'):
+    with pytest.raises(TypeError, match='`aa_type` must be an instance of'):
         pl.renderer.enable_anti_aliasing(aa_type=aa_type)
 
 
@@ -1317,3 +1317,30 @@ def test_init_renderers_shape_descriptor_positive_raises(shape):
     match = f'"shape" must contain only positive integers. Got {shape!r}.'
     with pytest.raises(ValueError, match=re.escape(match)):
         pv.Plotter(shape=shape)
+
+
+def test_renderer_width_height():
+    pl = pv.Plotter(window_size=(400, 300))
+    assert pl.renderer.width == pytest.approx(400)
+    assert pl.renderer.height == pytest.approx(300)
+
+
+def test_renderer_raises_once_closed():
+    pl = pv.Plotter()
+    renderer = pl.renderer
+    renderer.deep_clean()
+    with pytest.raises(RuntimeError, match='no longer has a camera'):
+        _ = renderer.camera
+    with pytest.raises(RuntimeError, match='no longer has a plotter'):
+        _ = renderer.width
+
+
+def test_remove_actor_none():
+    pl = pv.Plotter()
+    assert pl.renderer.remove_actor(None) is False
+
+
+def test_add_actor_culling_prop_without_property():
+    pl = pv.Plotter()
+    _, prop = pl.renderer.add_actor(_vtk.vtkLegendScaleActor(), culling='back')
+    assert prop is None
