@@ -6122,15 +6122,15 @@ class DataObjectFilters:
         >>> solid_sphere['height'] = solid_sphere.points[:, 2]
         >>> volume = solid_sphere.resample_to_image()
 
-        Volume render the result as voxel cells. Every voxel is visible, so the volume
-        fills the input's whole bounding box.
+        Volume render the result. Every voxel is visible, so the volume is a solid
+        block.
 
-        >>> volume.points_to_cells().plot(volume=True)
+        >>> volume.plot(volume=True)
 
         Set ``mark_blank=True`` to hide the voxels no value could be resampled for.
 
         >>> blanked = solid_sphere.resample_to_image(mark_blank=True)
-        >>> blanked.points_to_cells().plot(volume=True)
+        >>> blanked.plot(volume=True)
 
         Set the ``dimensions`` or the ``spacing`` to control the resolution explicitly.
 
