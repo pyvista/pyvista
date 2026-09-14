@@ -3334,7 +3334,7 @@ def test_plot_compare_raises(no_images_to_verify):  # noqa: ARG001
     with pytest.raises(ValueError, match=re.escape(match)):
         pv.plot_compare([mesh, mesh], shape='not a shape')
 
-    match = '"shape" must be an instance of any type'
+    match = '"shape" should be a list, tuple or string descriptor'
     with pytest.raises(TypeError, match=re.escape(match)):
         pv.plot_compare([mesh, mesh], shape=2)
 

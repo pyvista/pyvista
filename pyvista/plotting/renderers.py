@@ -20,19 +20,7 @@ from .colors import Color
 from .renderer import Renderer
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
-    from pathlib import Path
-    from typing import Any
-
-    import cycler
-
-    from pyvista.core._typing_core import NumpyArray
-    from pyvista.core._typing_core import VectorLike
-
-    from ._typing import BorderOptions
-    from ._typing import Chart
-    from ._typing import ColorLike
-    from .plotter import BasePlotter
+    from pyvista.plotting.plotter import BasePlotter
 
 _SeamSegment = tuple[tuple[float, float], tuple[float, float]]
 
@@ -135,7 +123,7 @@ def _collect_seam_segments(
 def _make_seam_line_actor(
     segments: list[_SeamSegment],
     *,
-    color: ColorLike,
+    color,
     width: float,
 ) -> _vtk.vtkActor2D:
     """Build a 2D actor drawing ``segments`` as lines, in normalized viewport coordinates."""
@@ -170,12 +158,11 @@ class Renderers(_NoNewAttrMixin):
 
     Parameters
     ----------
-    plotter : pyvista.Plotter
+    plotter : str
         The PyVista plotter.
 
-    shape : str | sequence[int], optional
-        The initial shape of the PyVista plotter, ``(rows, columns)``, or a
-        string descriptor such as ``'3|1'``.
+    shape : tuple[int], optional
+        The initial shape of the PyVista plotter, (rows, columns).
 
     splitting_position : float, optional
         The position to place the splitting line between plots.
@@ -186,7 +173,7 @@ class Renderers(_NoNewAttrMixin):
     col_weights : sequence, optional
         The weights of the columns when the plot window is resized.
 
-    groups : sequence[sequence[int | slice]], optional
+    groups : list, optional
         A list of sequences that defines the grouping of the sub-datasets.
 
     border : bool | 'interior' | 'exterior', optional
@@ -206,7 +193,7 @@ class Renderers(_NoNewAttrMixin):
             plotting area as a whole, and defaulted to ``True`` for
             more than one subplot.
 
-    border_color : ColorLike, optional
+    border_color : str, optional
         The color of the border and/or subplot seams. Defaults to
         :attr:`pyvista.global_theme.border_color
         <pyvista.plotting.themes.Theme.border_color>`.
@@ -222,15 +209,15 @@ class Renderers(_NoNewAttrMixin):
         self,
         plotter: BasePlotter,
         *,
-        shape: str | VectorLike[int] = (1, 1),
-        splitting_position: float | None = None,
-        row_weights: VectorLike[float] | None = None,
-        col_weights: VectorLike[float] | None = None,
-        groups: Sequence[Sequence[int | slice]] | None = None,
-        border: BorderOptions | None = None,
-        border_color: ColorLike | None = None,
-        border_width: float | None = None,
-    ) -> None:
+        shape=(1, 1),
+        splitting_position=None,
+        row_weights=None,
+        col_weights=None,
+        groups=None,
+        border=None,
+        border_color=None,
+        border_width=None,
+    ):
         """Initialize renderers."""
         self._active_index = 0  # index of the active renderer
         self._plotter = weakref.proxy(plotter)
@@ -310,7 +297,9 @@ class Renderers(_NoNewAttrMixin):
             self._render_idxs = np.arange(n + m)
 
         else:
-            _validation.check_instance(shape, (np.ndarray, Sequence), name='"shape"')
+            if not isinstance(shape, (np.ndarray, Sequence)):
+                msg = '"shape" should be a list, tuple or string descriptor'
+                raise TypeError(msg)
             if len(shape) != 2:
                 msg = '"shape" must have length 2.'
                 raise ValueError(msg)
@@ -357,24 +346,26 @@ class Renderers(_NoNewAttrMixin):
             # top left cell)
 
             if groups is not None:
-                _validation.check_instance(groups, Sequence, name='"groups"')
+                if not isinstance(groups, Sequence):
+                    msg = f'"groups" should be a list or tuple, not {type(groups).__name__}.'
+                    raise TypeError(msg)
                 for group in groups:
-                    _validation.check_instance(group, Sequence, name='Each group entry')
+                    if not isinstance(group, Sequence):
+                        msg = (
+                            'Each group entry should be a list or '
+                            f'tuple, not {type(group).__name__}.'
+                        )
+                        raise TypeError(msg)
                     if len(group) != 2:
                         msg = 'Each group entry must have length 2.'
                         raise ValueError(msg)
 
-                    entry_rows, entry_cols = group[0], group[1]
-                    rows = (
-                        np.arange(shape[0], dtype=int)[entry_rows]
-                        if isinstance(entry_rows, slice)
-                        else np.asarray(entry_rows)
-                    )
-                    cols = (
-                        np.arange(shape[1], dtype=int)[entry_cols]
-                        if isinstance(entry_cols, slice)
-                        else np.asarray(entry_cols)
-                    )
+                    rows = group[0]
+                    if isinstance(rows, slice):
+                        rows = np.arange(self.shape[0], dtype=int)[rows]
+                    cols = group[1]
+                    if isinstance(cols, slice):
+                        cols = np.arange(self.shape[1], dtype=int)[cols]  # type: ignore[misc]
                     # Get the normalized group, i.e. extract top left corner
                     # and bottom right corner from the given rows and cols
                     norm_group = [np.min(rows), np.min(cols), np.max(rows), np.max(cols)]
@@ -392,22 +383,18 @@ class Renderers(_NoNewAttrMixin):
                     )
             # Create subplot renderers
             for row, col in itertools.product(range(shape[0]), range(shape[1])):
-                group_index = self.loc_to_group((row, col))
+                group = self.loc_to_group((row, col))
                 nb_rows = None
                 nb_cols = None
-                if group_index is not None:
-                    if row == self.groups[group_index, 0] and col == self.groups[group_index, 1]:
+                if group is not None:
+                    if row == self.groups[group, 0] and col == self.groups[group, 1]:
                         # Only add renderer for first location of the group
-                        nb_rows = int(
-                            1 + self.groups[group_index, 2] - self.groups[group_index, 0]
-                        )
-                        nb_cols = int(
-                            1 + self.groups[group_index, 3] - self.groups[group_index, 1]
-                        )
+                        nb_rows = 1 + self.groups[group, 2] - self.groups[group, 0]
+                        nb_cols = 1 + self.groups[group, 3] - self.groups[group, 1]
                 else:
                     nb_rows = 1
                     nb_cols = 1
-                if nb_rows is not None and nb_cols is not None:
+                if nb_rows is not None:
                     renderer = Renderer(
                         self._plotter,
                         border=draw_exterior,
@@ -416,15 +403,15 @@ class Renderers(_NoNewAttrMixin):
                     )
                     x0 = col_off[col]
                     y0 = row_off[row + nb_rows]
-                    x1 = col_off[col + nb_cols]
+                    x1 = col_off[col + nb_cols]  # type: ignore[operator]
                     y1 = row_off[row]
                     renderer.viewport = (x0, y0, x1, y1)
                     self._render_idxs[row, col] = len(self)
                     self._renderers.append(renderer)
                 else:
                     self._render_idxs[row, col] = self._render_idxs[
-                        self.groups[group_index, 0],
-                        self.groups[group_index, 1],
+                        self.groups[group, 0],
+                        self.groups[group, 1],
                     ]
 
         # For multi-subplot layouts, replace each renderer's own
@@ -460,19 +447,19 @@ class Renderers(_NoNewAttrMixin):
         self._shadow_renderer.viewport = (0, 0, 1, 1)
         self._shadow_renderer.SetDraw(False)
 
-    def loc_to_group(self, loc: VectorLike[int]) -> int | None:
+    def loc_to_group(self, loc):
         """Return index of the render window given a location index.
 
         Parameters
         ----------
-        loc : sequence[int]
-            Location of the renderer on the plotting grid, for example
-            ``loc=(1, 1)``.
+        loc : int | sequence[int]
+            Index of the renderer to add the actor to.  For example, ``loc=2``
+            or ``loc=(1, 1)``.
 
         Returns
         -------
-        int | None
-            Index of the group, or ``None`` when the location is in no group.
+        int
+            Index of the render window.
 
         """
         group_idxs = np.arange(self.groups.shape[0])
@@ -485,7 +472,7 @@ class Renderers(_NoNewAttrMixin):
         group = group_idxs[index]
         return None if group.size == 0 else group[0]
 
-    def loc_to_index(self, loc: int | VectorLike[int]) -> int:
+    def loc_to_index(self, loc):
         """Return index of the render window given a location index.
 
         Parameters
@@ -500,34 +487,39 @@ class Renderers(_NoNewAttrMixin):
             Index of the render window.
 
         """
-        _validation.check_instance(loc, (int, np.integer, np.ndarray, Sequence), name='"loc"')
         if isinstance(loc, (int, np.integer)):
-            return int(loc)
-        _validation.check_length(loc, exact_length=2, name='"loc"')
-        shape = self.shape
-        index_row, index_column = loc[0], loc[1]
-        if index_row < 0 or index_row >= shape[0]:
-            msg = f'Row index is out of range ({shape[0]})'
-            raise IndexError(msg)
-        if len(shape) == 1 or index_column < 0 or index_column >= shape[1]:
-            msg = f'Column index is out of range ({shape[-1]})'
-            raise IndexError(msg)
-        return int(self._render_idxs[index_row, index_column])
+            return loc
+        elif isinstance(loc, (np.ndarray, Sequence)):
+            if len(loc) != 2:
+                msg = '"loc" must contain two items'
+                raise ValueError(msg)
+            index_row = loc[0]
+            index_column = loc[1]
+            if index_row < 0 or index_row >= self.shape[0]:
+                msg = f'Row index is out of range ({self.shape[0]})'
+                raise IndexError(msg)
+            if index_column < 0 or index_column >= self.shape[1]:  # type: ignore[misc]
+                msg = f'Column index is out of range ({self.shape[1]})'  # type: ignore[misc]
+                raise IndexError(msg)
+            return self._render_idxs[index_row, index_column]
+        else:
+            msg = '"loc" must be an integer or a sequence.'
+            raise TypeError(msg)
 
-    def __getitem__(self, index: int) -> Renderer:
+    def __getitem__(self, index):
         """Return a renderer based on an index."""
         return self._renderers[index]
 
-    def __len__(self) -> int:
+    def __len__(self):
         """Return number of renderers."""
         return len(self._renderers)
 
-    def __iter__(self) -> Iterator[Renderer]:
+    def __iter__(self):
         """Return a iterable of renderers."""
         yield from self._renderers
 
     @property
-    def active_index(self) -> int:  # numpydoc ignore=RT01
+    def active_index(self):  # numpydoc ignore=RT01
         """Return the active index.
 
         Returns
@@ -538,7 +530,7 @@ class Renderers(_NoNewAttrMixin):
         """
         return self._active_index
 
-    def index_to_loc(self, index: int) -> NumpyArray[int] | np.intp:
+    def index_to_loc(self, index):
         """Convert a 1D index location to the 2D location on the plotting grid.
 
         Parameters
@@ -552,7 +544,9 @@ class Renderers(_NoNewAttrMixin):
             2D location on the plotting grid.
 
         """
-        _validation.check_instance(index, (int, np.integer), name='"index"')
+        if not isinstance(index, (int, np.integer)):
+            msg = '"index" must be a scalar integer.'
+            raise TypeError(msg)
         if len(self.shape) == 1:
             return np.intp(index)
         args = np.argwhere(self._render_idxs == index)
@@ -562,7 +556,7 @@ class Renderers(_NoNewAttrMixin):
         return args[0]
 
     @property
-    def active_renderer(self) -> Renderer:  # numpydoc ignore=RT01
+    def active_renderer(self):  # numpydoc ignore=RT01
         """Return the active renderer.
 
         Returns
@@ -585,7 +579,7 @@ class Renderers(_NoNewAttrMixin):
         """
         return self._shape
 
-    def set_active_renderer(self, index_row: int, index_column: int | None = None) -> None:
+    def set_active_renderer(self, index_row, index_column=None):
         """Set the index of the active renderer.
 
         Parameters
@@ -597,28 +591,19 @@ class Renderers(_NoNewAttrMixin):
             Index of the subplot to activate along the columns.
 
         """
-        shape = self.shape
-        if len(shape) == 1:
+        if len(self.shape) == 1:
             self._active_index = index_row
             return
 
-        if index_column is None:
-            msg = '"index_column" is required for a two-dimensional grid.'
-            raise TypeError(msg)
-        if index_row < 0 or index_row >= shape[0]:
-            msg = f'Row index is out of range ({shape[0]})'
+        if index_row < 0 or index_row >= self.shape[0]:
+            msg = f'Row index is out of range ({self.shape[0]})'
             raise IndexError(msg)
-        if index_column < 0 or index_column >= shape[1]:
-            msg = f'Column index is out of range ({shape[1]})'
+        if index_column < 0 or index_column >= self.shape[1]:
+            msg = f'Column index is out of range ({self.shape[1]})'
             raise IndexError(msg)
         self._active_index = self.loc_to_index((index_row, index_column))
 
-    def set_chart_interaction(
-        self,
-        interactive: bool | Chart | int | Sequence[Chart] | Sequence[int],  # noqa: FBT001
-        *,
-        toggle: bool = False,
-    ) -> list[Chart]:
+    def set_chart_interaction(self, interactive, *, toggle: bool = False):
         """Set or toggle interaction with charts for the active renderer.
 
         Interaction with other charts in other renderers is disabled.
@@ -648,8 +633,8 @@ class Renderers(_NoNewAttrMixin):
 
         """
         interactive_scene, interactive_charts = None, []
-        if self.active_renderer.has_charts and (charts := self.active_renderer._charts):
-            interactive_scene = charts._scene
+        if self.active_renderer.has_charts:
+            interactive_scene = self.active_renderer._charts._scene
             interactive_charts = self.active_renderer.set_chart_interaction(
                 interactive, toggle=toggle
             )
@@ -661,12 +646,12 @@ class Renderers(_NoNewAttrMixin):
         self._plotter.iren._set_context_style(interactive_scene if interactive_charts else None)
         return interactive_charts
 
-    def on_plotter_render(self) -> None:
+    def on_plotter_render(self):
         """Notify all renderers of explicit plotter render call."""
         for renderer in self:
             renderer.on_plotter_render()
 
-    def deep_clean(self) -> None:
+    def deep_clean(self):
         """Clean all renderers."""
         # Do not remove the renderers on the clean
         for renderer in self:
@@ -676,13 +661,11 @@ class Renderers(_NoNewAttrMixin):
         if self._border_overlay_renderer is not None:
             self._border_overlay_renderer.deep_clean()
         if hasattr(self, '_background_renderers'):
-            for background in self._background_renderers:
-                if background is not None:
-                    background.deep_clean()
+            for renderer in self._background_renderers:
+                if renderer is not None:
+                    renderer.deep_clean()
 
-    def add_background_renderer(
-        self, image_path: str | Path, scale: float, *, as_global: bool
-    ) -> BackgroundRenderer:
+    def add_background_renderer(self, image_path, scale, as_global):
         """Add a background image to the renderers.
 
         Parameters
@@ -733,46 +716,45 @@ class Renderers(_NoNewAttrMixin):
         """
         return self._background_renderers[self.active_index] is not None
 
-    def clear_background_renderers(self) -> None:
+    def clear_background_renderers(self):
         """Clear all background renderers."""
         for renderer in self._background_renderers:
             if renderer is not None:
                 renderer.clear()
 
-    def clear_actors(self) -> None:
+    def clear_actors(self):
         """Clear actors from all renderers."""
         for renderer in self:
             renderer.clear_actors()
 
-    def clear(self) -> None:
+    def clear(self):
         """Clear all renders."""
         for renderer in self:
             renderer.clear()
-        self.shadow_renderer.clear()
+        self._shadow_renderer.clear()  # type: ignore[union-attr]
         self.clear_background_renderers()
 
-    def close(self) -> None:
+    def close(self):
         """Close all renderers."""
         for renderer in self:
             renderer.close()
 
-        if self._shadow_renderer is not None:
-            self._shadow_renderer.close()
+        self._shadow_renderer.close()  # type: ignore[union-attr]
 
         if self._border_overlay_renderer is not None:
             self._border_overlay_renderer.close()
 
-        for background in self._background_renderers:
-            if background is not None:
-                background.close()
+        for renderer in self._background_renderers:
+            if renderer is not None:
+                renderer.close()
 
-    def remove_all_lights(self) -> None:
+    def remove_all_lights(self):
         """Remove all lights from all renderers."""
         for renderer in self:
             renderer.remove_all_lights()
 
     @property
-    def shadow_renderer(self) -> Renderer:  # numpydoc ignore=RT01
+    def shadow_renderer(self):  # numpydoc ignore=RT01
         """Shadow renderer.
 
         Returns
@@ -781,9 +763,6 @@ class Renderers(_NoNewAttrMixin):
             Shadow renderer.
 
         """
-        if self._shadow_renderer is None:
-            msg = 'The renderers have been closed and no longer have a shadow renderer.'
-            raise RuntimeError(msg)
         return self._shadow_renderer
 
     @property
@@ -792,7 +771,7 @@ class Renderers(_NoNewAttrMixin):
         return self._border_overlay_renderer
 
     def _build_border_overlay_renderer(
-        self, *, border_color: ColorLike, border_width: float, interior: bool, exterior: bool
+        self, *, border_color, border_width, interior, exterior
     ) -> Renderer | None:
         """Create an overlay renderer that draws every requested line once.
 
@@ -848,14 +827,14 @@ class Renderers(_NoNewAttrMixin):
 
     def set_background(
         self,
-        color: ColorLike | None,
+        color,
         *,
-        top: ColorLike | None = None,
-        right: ColorLike | None = None,
-        side: ColorLike | None = None,
-        corner: ColorLike | None = None,
+        top=None,
+        right=None,
+        side=None,
+        corner=None,
         all_renderers: bool = True,
-    ) -> None:
+    ):
         """Set the background color.
 
         Parameters
@@ -917,7 +896,7 @@ class Renderers(_NoNewAttrMixin):
         if all_renderers:
             for renderer in self:
                 renderer.set_background(color, top=top, right=right, side=side, corner=corner)
-            self.shadow_renderer.set_background(color)
+            self._shadow_renderer.set_background(color)  # type: ignore[union-attr]
         else:
             self.active_renderer.set_background(
                 color,
@@ -927,12 +906,7 @@ class Renderers(_NoNewAttrMixin):
                 corner=corner,
             )
 
-    def set_color_cycler(
-        self,
-        color_cycler: str | cycler.Cycler[str, Any] | Sequence[ColorLike],
-        *,
-        all_renderers: bool = True,
-    ) -> None:
+    def set_color_cycler(self, color_cycler, *, all_renderers: bool = True):
         """Set or reset the color cycler.
 
         This color cycler is iterated over by each sequential :class:`~pyvista.Plotter.add_mesh`
@@ -984,7 +958,7 @@ class Renderers(_NoNewAttrMixin):
         else:
             self.active_renderer.set_color_cycler(color_cycler)
 
-    def remove_background_image(self) -> None:
+    def remove_background_image(self):
         """Remove the background image at the current renderer.
 
         Examples
@@ -1009,7 +983,7 @@ class Renderers(_NoNewAttrMixin):
         renderer.deep_clean()
         self._background_renderers[self.active_index] = None
 
-    def __del__(self) -> None:
+    def __del__(self):
         """Destructor."""
         self._shadow_renderer = None
         self._border_overlay_renderer = None
