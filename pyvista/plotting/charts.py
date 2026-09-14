@@ -9,7 +9,6 @@ import itertools
 import re
 from typing import TYPE_CHECKING
 from typing import ClassVar
-from typing import cast
 import weakref
 
 from matplotlib.backends.backend_agg import FigureCanvasAgg
@@ -1705,7 +1704,7 @@ class _Chart(DocSubs):
 
     @doc_subs
     def show(
-        self,
+        self: Chart,
         *,
         interactive: bool = True,
         off_screen=None,
@@ -1784,11 +1783,9 @@ class _Chart(DocSubs):
             off_screen = pv.OFF_SCREEN
         pl = pv.Plotter(window_size=window_size, notebook=notebook, off_screen=off_screen)
         pl.background_color = background
-        # Every concrete chart is one of the four types the `Chart` alias names
-        chart = cast('Chart', self)
-        pl.add_chart(chart)
+        pl.add_chart(self)
         if interactive and (not off_screen or pv.BUILDING_GALLERY):  # pragma: no cover
-            pl.set_chart_interaction(chart)
+            pl.set_chart_interaction(self)
         return pl.show(
             screenshot=screenshot,
             full_screen=full_screen,

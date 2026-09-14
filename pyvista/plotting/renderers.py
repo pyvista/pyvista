@@ -503,9 +503,7 @@ class Renderers(_NoNewAttrMixin):
         _validation.check_instance(loc, (int, np.integer, np.ndarray, Sequence), name='"loc"')
         if isinstance(loc, (int, np.integer)):
             return int(loc)
-        if len(loc) != 2:
-            msg = '"loc" must contain two items'
-            raise ValueError(msg)
+        _validation.check_length(loc, exact_length=2, name='"loc"')
         shape = self.shape
         index_row, index_column = loc[0], loc[1]
         if index_row < 0 or index_row >= shape[0]:

@@ -199,6 +199,16 @@ gl_Position.y = new_y * u_distortion_projection_scale.y * clip_w;
 """
 
 
+def _distortion_state(prop: _vtk.vtkProp) -> _DistortionState | None:
+    """Return the distortion state a prop carries, or ``None`` if it carries none."""
+    return getattr(prop, '_camera_distortion_state', None)
+
+
+def _set_distortion_state(prop: _vtk.vtkProp, state: _DistortionState | None) -> None:
+    """Stash the distortion state on a prop, which only :class:`Actor` declares."""
+    prop._camera_distortion_state = state  # type: ignore[attr-defined]
+
+
 def close_all() -> bool:
     """Close all open/active plotters and clean up memory.
 
@@ -1878,7 +1888,7 @@ class BasePlotter(_BoundsSizeMixin):
         self._camera_distortion_sweeps = {}
         for renderer in self.renderers:
             for prop in renderer.actors.values():
-                if getattr(prop, '_camera_distortion_state', None) is None:
+                if _distortion_state(prop) is None:
                     continue
                 if isinstance(prop, Actor):
                     prop.clear_shader_replacements(_feature_name=_CAMERA_DISTORTION_FEATURE)
@@ -1889,8 +1899,7 @@ class BasePlotter(_BoundsSizeMixin):
                 uniforms = prop.GetShaderProperty().GetVertexCustomUniforms()
                 uniforms.RemoveUniform(_CAMERA_DISTORTION_COEFFICIENTS_UNIFORM)
                 uniforms.RemoveUniform(_CAMERA_DISTORTION_SCALE_UNIFORM)
-                # The state is stashed on the prop itself, which is any kind of prop
-                prop._camera_distortion_state = None  # type: ignore[attr-defined]
+                _set_distortion_state(prop, None)
 
     def _warn_undistorted(self, subject: str) -> None:
         """Warn once for each kind of prop the distortion shader cannot reach."""
@@ -1932,13 +1941,13 @@ class BasePlotter(_BoundsSizeMixin):
                     continue
                 # Writing a uniform marks the shader for a rebuild, so leave the
                 # actors whose state is already current alone.
-                if getattr(prop, '_camera_distortion_state', None) != state:
+                if _distortion_state(prop) != state:
                     self._distort_actor(prop, state)
 
     def _distort_actor(self, prop: _vtk.vtkActor, state: _DistortionState) -> None:
         """Attach the distortion shader to one actor and set its uniforms."""
         coefficients, projection_scale = state
-        if getattr(prop, '_camera_distortion_state', None) is None:
+        if _distortion_state(prop) is None:
             if isinstance(prop, Actor):
                 prop.add_shader_replacement(
                     'vertex',
@@ -1957,7 +1966,7 @@ class BasePlotter(_BoundsSizeMixin):
         uniforms = prop.GetShaderProperty().GetVertexCustomUniforms()
         uniforms.SetUniform4f(_CAMERA_DISTORTION_COEFFICIENTS_UNIFORM, coefficients)
         uniforms.SetUniform2f(_CAMERA_DISTORTION_SCALE_UNIFORM, projection_scale)
-        prop._camera_distortion_state = state  # type: ignore[attr-defined]
+        _set_distortion_state(prop, state)
 
     @_wraps(Renderer.enable_eye_dome_lighting)
     def enable_eye_dome_lighting(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01

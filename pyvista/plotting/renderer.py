@@ -247,8 +247,23 @@ def scale_point(
         mtx.Invert()
     else:
         mtx = camera.GetModelTransformMatrix()
-    scaled = mtx.MultiplyDoublePoint((float(point[0]), float(point[1]), float(point[2]), 0.0))
+    x, y, z = _validation.validate_array3(point, dtype_out=float, name='point')
+    scaled = mtx.MultiplyDoublePoint((x, y, z, 0.0))
     return (scaled[0], scaled[1], scaled[2])
+
+
+def _validate_vector(vector: VectorLike[float], *, name: str) -> tuple[float, float, float]:
+    """Return a three-component vector as a tuple of floats."""
+    return _validation.validate_array3(vector, dtype_out=float, to_tuple=True, name=name)
+
+
+def _validate_viewup(vector: VectorLike[float]) -> tuple[float, float, float]:
+    """Return a view-up vector, which is normalized and so cannot be zero."""
+    viewup = _validate_vector(vector, name='viewup')
+    if np.allclose(viewup, 0.0):
+        msg = 'Camera up vector cannot be zero.'
+        raise ValueError(msg)
+    return viewup
 
 
 class CameraPosition(_NoNewAttrMixin):
@@ -274,11 +289,11 @@ class CameraPosition(_NoNewAttrMixin):
         viewup: VectorLike[float],
     ) -> None:
         """Initialize a new camera position descriptor."""
-        self._position = position
-        self._focal_point = focal_point
-        self._viewup = viewup
+        self._position = _validate_vector(position, name='position')
+        self._focal_point = _validate_vector(focal_point, name='focal_point')
+        self._viewup = _validate_viewup(viewup)
 
-    def to_list(self) -> list[VectorLike[float]]:
+    def to_list(self) -> list[tuple[float, float, float]]:
         """Convert to a list of the position, focal point, and ``viewup``.
 
         Returns
@@ -311,12 +326,12 @@ class CameraPosition(_NoNewAttrMixin):
     def _repr_html_(self) -> str:
         """Return an HTML representation for Jupyter notebooks."""
 
-        def _fmt_vec(vec: tuple[Any, ...]) -> str:
+        def _fmt_vec(vec: tuple[float, float, float]) -> str:
             return '(' + ', '.join(f'{v:.4f}' for v in vec) + ')'
 
-        pos = _fmt_vec(tuple(self._position))
-        foc = _fmt_vec(tuple(self._focal_point))
-        vup = _fmt_vec(tuple(self._viewup))
+        pos = _fmt_vec(self._position)
+        foc = _fmt_vec(self._focal_point)
+        vup = _fmt_vec(self._viewup)
 
         css = _load_css()
         copy_all = _copy_btn(repr(self.to_list()))
@@ -341,7 +356,7 @@ class CameraPosition(_NoNewAttrMixin):
             '</div></div>'
         )
 
-    def __getitem__(self, index: int) -> VectorLike[float]:
+    def __getitem__(self, index: int) -> tuple[float, float, float]:
         """Fetch a component by index location like a list."""
         return self.to_list()[index]
 
@@ -349,36 +364,43 @@ class CameraPosition(_NoNewAttrMixin):
         """Comparison operator to act on list version of CameraPosition object."""
         if isinstance(other, CameraPosition):
             return self.to_list() == other.to_list()
-        return self.to_list() == other
+        if not isinstance(other, (list, tuple, np.ndarray)):
+            return NotImplemented
+        try:
+            vectors = [_validate_vector(vector, name='camera position') for vector in other]
+        except (TypeError, ValueError):
+            # Anything that is not three vectors is not a camera position
+            return NotImplemented
+        return self.to_list() == vectors
 
     __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
 
     @property
-    def position(self) -> VectorLike[float]:  # numpydoc ignore=RT01
+    def position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Location of the camera in world coordinates."""
         return self._position
 
     @position.setter
     def position(self, value: VectorLike[float]) -> None:
-        self._position = value
+        self._position = _validate_vector(value, name='position')
 
     @property
-    def focal_point(self) -> VectorLike[float]:  # numpydoc ignore=RT01
+    def focal_point(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Location of the camera's focus in world coordinates."""
         return self._focal_point
 
     @focal_point.setter
     def focal_point(self, value: VectorLike[float]) -> None:
-        self._focal_point = value
+        self._focal_point = _validate_vector(value, name='focal_point')
 
     @property
-    def viewup(self) -> VectorLike[float]:  # numpydoc ignore=RT01
+    def viewup(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """The view-up vector of the camera."""
         return self._viewup
 
     @viewup.setter
     def viewup(self, value: VectorLike[float]) -> None:
-        self._viewup = value
+        self._viewup = _validate_viewup(value)
 
 
 class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
@@ -602,21 +624,23 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
                 else camera_location
             )
             try:
+                # A single vector points the camera, and three of them place it
                 position = _validation.validate_array(
                     np.asarray(location, dtype=float),
                     must_have_shape=[(3,), (3, 3)],
                     name='camera position',
                 )
+                cpos = None if position.ndim == 1 else CameraPosition(*position)
             except (TypeError, ValueError) as error:
                 raise InvalidCameraError(str(error)) from error
 
-            if position.ndim == 1:
+            if cpos is None:
                 self.view_vector(position)
             else:
                 # everything is set explicitly
-                self.camera.position = scale_point(self.camera, position[0], invert=False)
-                self.camera.focal_point = scale_point(self.camera, position[1], invert=False)
-                self.camera.up = position[2]
+                self.camera.position = scale_point(self.camera, cpos.position, invert=False)
+                self.camera.focal_point = scale_point(self.camera, cpos.focal_point, invert=False)
+                self.camera.up = cpos.viewup
 
         # reset clipping range
         self.reset_camera_clipping_range()
@@ -1933,7 +1957,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         minor_ticks: bool = False,
         padding: float = 0.0,
         use_3d_text: bool | None = None,
-        render: bool | None = None,
+        render: bool = False,
         **kwargs: str,
     ) -> CubeAxesActor:
         """Add bounds axes.
@@ -2083,7 +2107,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
                 the 3D labels may not render at all in some cases. This is a known VTK bug:
                 https://gitlab.kitware.com/vtk/vtk/-/issues/19729.
 
-        render : bool, optional
+        render : bool, default: False
             If the render window is being shown, trigger a render
             after showing bounds.
 
@@ -2233,7 +2257,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         if all_edges:
             self.add_bounding_box(color=color, corner_factor=corner_factor)
 
-        self.add_actor(cube_axes_actor, reset_camera=False, pickable=False, render=bool(render))
+        self.add_actor(cube_axes_actor, reset_camera=False, pickable=False, render=render)
         self.cube_axes_actor = cube_axes_actor
         self._cube_axes_follow_scene = follow_scene
 
@@ -4594,14 +4618,12 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         ruler.GetPositionCoordinate().SetCoordinateSystemToWorld()
         ruler.GetPosition2Coordinate().SetCoordinateSystemToWorld()
         ruler.GetPositionCoordinate().SetReferenceCoordinate(None)  # type: ignore[arg-type]
-        ruler.GetPositionCoordinate().SetValue(
-            float(pointa[0]), float(pointa[1]), float(pointa[2])
-        )
-        ruler.GetPosition2Coordinate().SetValue(
-            float(pointb[0]), float(pointb[1]), float(pointb[2])
-        )
+        point_a = _validation.validate_array3(pointa, dtype_out=float, name='pointa')
+        point_b = _validation.validate_array3(pointb, dtype_out=float, name='pointb')
+        ruler.GetPositionCoordinate().SetValue(*point_a)
+        ruler.GetPosition2Coordinate().SetValue(*point_b)
 
-        distance = np.linalg.norm(np.asarray(pointa) - np.asarray(pointb))
+        distance = np.linalg.norm(point_a - point_b)
         if flip_range:
             ruler.SetRange(distance * scale, 0)
         else:
