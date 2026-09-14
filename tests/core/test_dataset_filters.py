@@ -6078,6 +6078,66 @@ def test_target_n_points_flat_axis():
     assert 0.8 <= image.n_points / 10_000 <= 1.2
 
 
+def test_max_n_points_clamps_the_defaults():
+    mesh = pv.Sphere(theta_resolution=50, phi_resolution=50)
+
+    # An estimated geometry is coarsened to fit, without raising
+    assert mesh.resample_to_image().n_points > 1000
+    for cap in [1000, 500, 100, 8, 1]:
+        assert mesh.resample_to_image(max_n_points=cap).n_points <= cap
+
+    # Every filter sharing the geometry options honours it
+    assert mesh.voxelize_binary_mask(max_n_points=1000).n_points <= 1000
+    assert mesh.voxelize(max_n_points=1000).n_cells <= 1000
+    assert mesh.voxelize_rectilinear(max_n_points=1000).n_cells <= 1000
+
+
+@pytest.mark.parametrize('cap', range(1, 200, 7))
+def test_max_n_points_is_a_strict_bound(sphere, cap):
+    assert sphere.resample_to_image(max_n_points=cap).n_points <= cap
+
+
+def test_max_n_points_clamps_a_flat_axis():
+    plane = pv.Plane(i_size=2, j_size=3, i_resolution=50, j_resolution=50)
+    image = plane.resample_to_image(max_n_points=100)
+    assert image.dimensions[2] == 1
+    assert image.n_points <= 100
+
+
+def test_max_n_points_raises_for_a_requested_geometry():
+    mesh = pv.Sphere(theta_resolution=50, phi_resolution=50)
+    match = 'points, which exceeds `max_n_points=1000`'
+    for kwargs in [
+        dict(dimensions=(40, 40, 40)),
+        dict(spacing=0.02),
+        dict(cell_length_percentile=0.01),
+        dict(reference_volume=pv.ImageData(dimensions=(40, 40, 40), spacing=(0.03,) * 3)),
+    ]:
+        with pytest.raises(ValueError, match=re.escape(match)):
+            mesh.resample_to_image(max_n_points=1000, **kwargs)
+
+    # A requested geometry inside the limit is left alone
+    assert mesh.resample_to_image(dimensions=(5, 5, 5), max_n_points=1000).n_points == 125
+
+
+def test_max_n_points_bounds_the_target(sphere):
+    match = 'Target n points (2000) cannot exceed max n points (1000).'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        sphere.resample_to_image(target_n_points=2000, max_n_points=1000)
+
+    # The target is approached, the limit is not exceeded
+    for target in [500, 999, 1000]:
+        assert sphere.resample_to_image(target_n_points=target, max_n_points=1000).n_points <= 1000
+
+
+def test_max_n_points_raises(sphere):
+    with pytest.raises(ValueError, match='greater than or equal to'):
+        sphere.resample_to_image(max_n_points=0)
+
+    with pytest.raises(ValueError, match='integer-like'):
+        sphere.resample_to_image(max_n_points=2.5)
+
+
 def test_target_n_points_raises(sphere):
     match = 'Target n points cannot be set with dimensions, spacing or cell length options'
     for kwargs in [

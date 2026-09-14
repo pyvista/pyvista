@@ -5885,6 +5885,7 @@ class DataObjectFilters:
         dimensions: VectorLike[int] | None = None,
         spacing: float | VectorLike[float] | None = None,
         target_n_points: int | None = None,
+        max_n_points: int | None = None,
         rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None = None,
         cell_length_percentile: float | None = None,
         cell_length_sample_size: int | None = None,
@@ -5921,6 +5922,11 @@ class DataObjectFilters:
 
         #. Specify the ``cell_length_percentile``. The spacing is estimated from the
            mesh's cells using the specified percentile.
+
+        Set ``max_n_points`` to cap the result of any of these. It differs from
+        ``target_n_points``, which is a resolution to aim for: a geometry specified
+        explicitly raises if it exceeds the cap, while an estimated one is coarsened to
+        fit.
 
         Use ``reference_volume`` for full control of the output's geometry. For
         all other options, the geometry is implicitly defined such that the generated
@@ -6006,6 +6012,19 @@ class DataObjectFilters:
             single point and takes no part in the count. Rounding to whole voxels means
             the count is approached, not matched exactly. Cannot be set with
             ``dimensions``, ``spacing``, or the cell length options.
+
+        max_n_points : int, optional
+            Strict upper bound on the number of points generated. Unlike
+            ``target_n_points``, which is only approached, this limit is never exceeded.
+            How it is enforced depends on how the geometry is defined:
+
+            - Geometry set explicitly, with ``reference_volume``, ``dimensions``,
+              ``spacing`` or a cell length option, raises if it exceeds the limit.
+            - ``target_n_points`` must not exceed the limit, and the grid estimated from
+              it is coarsened if rounding would take it above.
+            - Geometry left to the defaults is coarsened to fit, without raising.
+
+            .. versionadded:: 0.50
 
         rounding_func : Callable[VectorLike[float], VectorLike[int]], optional
             Control how the dimensions are rounded to integers based on the provided or
@@ -6188,6 +6207,7 @@ class DataObjectFilters:
             dimensions=dimensions,
             spacing=spacing,
             target_n_points=target_n_points,
+            max_n_points=max_n_points,
             rounding_func=rounding_func,
             cell_length_percentile=cell_length_percentile,
             cell_length_sample_size=cell_length_sample_size,
@@ -6200,6 +6220,7 @@ class DataObjectFilters:
             dimensions=dimensions,
             spacing=spacing,
             target_n_points=target_n_points,
+            max_n_points=max_n_points,
             rounding_func=rounding_func,
             cell_length_percentile=cell_length_percentile,
             cell_length_sample_size=cell_length_sample_size,
@@ -6584,10 +6605,21 @@ def _validate_reference_volume_options(
     spacing: float | VectorLike[float] | None,
     rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None,
     target_n_points: int | None,
+    max_n_points: int | None,
     cell_length_percentile: float | None,
     cell_length_sample_size: int | None,
 ) -> None:
     """Raise if the geometry options of a voxelize or resample filter conflict."""
+    if max_n_points is not None:
+        max_n_points = _validation.validate_number(
+            max_n_points, must_be_in_range=[1, np.inf], must_be_integer=True, name='max n points'
+        )
+        if target_n_points is not None and target_n_points > max_n_points:
+            msg = (
+                f'Target n points ({target_n_points}) cannot exceed max n points ({max_n_points}).'
+            )
+            raise ValueError(msg)
+
     if reference_volume is not None:
         if (
             dimensions is not None
@@ -6632,10 +6664,12 @@ def _validate_reference_volume_options(
         raise TypeError(msg)
 
 
-def _spacing_for_n_points(size: NumpyArray[float], target_n_points: int) -> float:
+def _spacing_for_n_points(
+    size: NumpyArray[float], target_n_points: int, name: str = 'target n points'
+) -> float:
     """Return the isotropic spacing whose grid holds about ``target_n_points`` points."""
     target = _validation.validate_number(
-        target_n_points, must_be_in_range=[1, np.inf], must_be_integer=True, name='target n points'
+        target_n_points, must_be_in_range=[1, np.inf], must_be_integer=True, name=name
     )
     extents = np.asarray(size, dtype=float)
     live = extents > 0
@@ -6646,6 +6680,17 @@ def _spacing_for_n_points(size: NumpyArray[float], target_n_points: int) -> floa
     return float((extents[live].prod() / target) ** (1.0 / live.sum()))
 
 
+def _dimensions_within(size: NumpyArray[float], max_n_points: int) -> NumpyArray[int]:
+    """Return the finest grid dimensions holding no more than ``max_n_points`` points."""
+    spacing = _spacing_for_n_points(size, max_n_points, name='max n points')
+    live = size > 0
+    dimensions = np.ones(3, dtype=int)
+    dimensions[live] = np.maximum(np.floor(size[live] / spacing), 1).astype(int)
+    while dimensions.prod() > max_n_points and (dimensions > 1).any():
+        dimensions[dimensions.argmax()] -= 1
+    return dimensions
+
+
 def _make_reference_volume(
     mesh: DataSet,
     *,
@@ -6653,18 +6698,28 @@ def _make_reference_volume(
     dimensions: VectorLike[int] | None,
     spacing: float | VectorLike[float] | None,
     target_n_points: int | None,
+    max_n_points: int | None,
     rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None,
     cell_length_percentile: float | None,
     cell_length_sample_size: int | None,
     progress_bar: bool,
 ) -> ImageData:  # numpydoc ignore=RT01
     """Create an empty image whose voxels fit the bounds of a mesh."""
+    # The geometry is the caller's own only if they set one of these
+    requested = (
+        reference_volume is not None
+        or dimensions is not None
+        or spacing is not None
+        or cell_length_percentile is not None
+        or cell_length_sample_size is not None
+    )
     if reference_volume is not None:
         volume = pv.ImageData()
         volume.extent = reference_volume.extent
         volume.spacing = reference_volume.spacing
         volume.origin = reference_volume.origin
         volume.direction_matrix = reference_volume.direction_matrix
+        _check_n_points(volume.n_points, max_n_points, requested=True)
         return volume
 
     size = np.array(mesh.bounds_size)
@@ -6703,6 +6758,10 @@ def _make_reference_volume(
         initial_dimensions[initial_dimensions < 1] = 1
         dimensions = np.array(rounding_func(initial_dimensions), dtype=int)
 
+    if max_n_points is not None and np.prod(dimensions) > max_n_points:
+        _check_n_points(int(np.prod(dimensions)), max_n_points, requested=requested)
+        dimensions = _dimensions_within(size, max_n_points)
+
     volume = pv.ImageData()
     volume.dimensions = dimensions
     dimensions_ = np.array(volume.dimensions)
@@ -6721,6 +6780,16 @@ def _make_reference_volume(
     inset = np.where(flat, (1 - dimensions_) * final_spacing / 2, final_spacing / 2)
     volume.origin = np.array(mesh.bounds[::2]) + inset
     return volume
+
+
+def _check_n_points(n_points: int, max_n_points: int | None, *, requested: bool) -> None:
+    """Raise if a caller-specified geometry holds more points than allowed."""
+    if requested and max_n_points is not None and n_points > max_n_points:
+        msg = (
+            f'The specified geometry has {n_points} points, which exceeds '
+            f'`max_n_points={max_n_points}`. Raise the limit or specify a coarser geometry.'
+        )
+        raise ValueError(msg)
 
 
 def _blank_invalid_points(image: ImageData) -> ImageData:

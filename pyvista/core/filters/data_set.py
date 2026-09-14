@@ -8438,6 +8438,7 @@ class DataSetFilters(DataObjectFilters):
         dimensions: VectorLike[int] | None = None,
         spacing: float | VectorLike[float] | None = None,
         target_n_points: int | None = None,
+        max_n_points: int | None = None,
         rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None = None,
         cell_length_percentile: float | None = None,
         cell_length_sample_size: int | None = None,
@@ -8473,6 +8474,11 @@ class DataSetFilters(DataObjectFilters):
 
         #. Specify the ``cell_length_percentile``. The spacing is estimated from the
            surface's cells using the specified percentile.
+
+        Set ``max_n_points`` to cap the result of any of these. It differs from
+        ``target_n_points``, which is a resolution to aim for: a geometry specified
+        explicitly raises if it exceeds the cap, while an estimated one is coarsened to
+        fit.
 
         Use ``reference_volume`` for full control of the output mask's geometry. For
         all other options, the geometry is implicitly defined such that the generated
@@ -8534,6 +8540,19 @@ class DataSetFilters(DataObjectFilters):
             single point and takes no part in the count. Rounding to whole voxels means
             the count is approached, not matched exactly. Cannot be set with
             ``dimensions``, ``spacing``, or the cell length options.
+
+            .. versionadded:: 0.50
+
+        max_n_points : int, optional
+            Strict upper bound on the number of points generated. Unlike
+            ``target_n_points``, which is only approached, this limit is never exceeded.
+            How it is enforced depends on how the geometry is defined:
+
+            - Geometry set explicitly, with ``reference_volume``, ``dimensions``,
+              ``spacing`` or a cell length option, raises if it exceeds the limit.
+            - ``target_n_points`` must not exceed the limit, and the grid estimated from
+              it is coarsened if rounding would take it above.
+            - Geometry left to the defaults is coarsened to fit, without raising.
 
             .. versionadded:: 0.50
 
@@ -8771,6 +8790,7 @@ class DataSetFilters(DataObjectFilters):
             dimensions=dimensions,
             spacing=spacing,
             target_n_points=target_n_points,
+            max_n_points=max_n_points,
             rounding_func=rounding_func,
             cell_length_percentile=cell_length_percentile,
             cell_length_sample_size=cell_length_sample_size,
@@ -8783,6 +8803,7 @@ class DataSetFilters(DataObjectFilters):
             dimensions=dimensions,
             spacing=spacing,
             target_n_points=target_n_points,
+            max_n_points=max_n_points,
             rounding_func=rounding_func,
             cell_length_percentile=cell_length_percentile,
             cell_length_sample_size=cell_length_sample_size,
@@ -8827,6 +8848,7 @@ class DataSetFilters(DataObjectFilters):
         dimensions: VectorLike[int] | None,
         spacing: float | VectorLike[float] | None,
         target_n_points: int | None,
+        max_n_points: int | None,
         rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None,
         cell_length_percentile: float | None,
         cell_length_sample_size: int | None,
@@ -8845,6 +8867,7 @@ class DataSetFilters(DataObjectFilters):
             dimensions=dimensions,
             spacing=spacing,
             target_n_points=target_n_points,
+            max_n_points=max_n_points,
             rounding_func=rounding_func,
             cell_length_percentile=cell_length_percentile,
             cell_length_sample_size=cell_length_sample_size,
@@ -8861,6 +8884,7 @@ class DataSetFilters(DataObjectFilters):
         dimensions: VectorLike[int] | None = None,
         spacing: float | VectorLike[float] | None = None,
         target_n_points: int | None = None,
+        max_n_points: int | None = None,
         rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None = None,
         cell_length_percentile: float | None = None,
         cell_length_sample_size: int | None = None,
@@ -8881,6 +8905,11 @@ class DataSetFilters(DataObjectFilters):
 
         #. Specify the ``cell_length_percentile``. The spacing is estimated from the
            surface's cells using the specified percentile.
+
+        Set ``max_n_points`` to cap the result of any of these. It differs from
+        ``target_n_points``, which is a resolution to aim for: a geometry specified
+        explicitly raises if it exceeds the cap, while an estimated one is coarsened to
+        fit.
 
         Use ``reference_volume`` for full control of the output grid's geometry. For
         all other options, the geometry is implicitly defined such that the generated
@@ -8940,6 +8969,19 @@ class DataSetFilters(DataObjectFilters):
             single point and takes no part in the count. Rounding to whole voxels means
             the count is approached, not matched exactly. Cannot be set with
             ``dimensions``, ``spacing``, or the cell length options.
+
+            .. versionadded:: 0.50
+
+        max_n_points : int, optional
+            Strict upper bound on the number of points generated. Unlike
+            ``target_n_points``, which is only approached, this limit is never exceeded.
+            How it is enforced depends on how the geometry is defined:
+
+            - Geometry set explicitly, with ``reference_volume``, ``dimensions``,
+              ``spacing`` or a cell length option, raises if it exceeds the limit.
+            - ``target_n_points`` must not exceed the limit, and the grid estimated from
+              it is coarsened if rounding would take it above.
+            - Geometry left to the defaults is coarsened to fit, without raising.
 
             .. versionadded:: 0.50
 
@@ -9047,6 +9089,7 @@ class DataSetFilters(DataObjectFilters):
             dimensions=dimensions,
             spacing=spacing,
             target_n_points=target_n_points,
+            max_n_points=max_n_points,
             rounding_func=rounding_func,
             cell_length_percentile=cell_length_percentile,
             cell_length_sample_size=cell_length_sample_size,
@@ -9061,6 +9104,7 @@ class DataSetFilters(DataObjectFilters):
         dimensions: VectorLike[int] | None = None,
         spacing: float | VectorLike[float] | None = None,
         target_n_points: int | None = None,
+        max_n_points: int | None = None,
         rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None = None,
         cell_length_percentile: float | None = None,
         cell_length_sample_size: int | None = None,
@@ -9081,6 +9125,11 @@ class DataSetFilters(DataObjectFilters):
 
         #. Specify the ``cell_length_percentile``. The spacing is estimated from the
            surface's cells using the specified percentile.
+
+        Set ``max_n_points`` to cap the result of any of these. It differs from
+        ``target_n_points``, which is a resolution to aim for: a geometry specified
+        explicitly raises if it exceeds the cap, while an estimated one is coarsened to
+        fit.
 
         Use ``reference_volume`` for full control of the output geometry. For
         all other options, the geometry is implicitly defined such that the generated
@@ -9130,6 +9179,19 @@ class DataSetFilters(DataObjectFilters):
             single point and takes no part in the count. Rounding to whole voxels means
             the count is approached, not matched exactly. Cannot be set with
             ``dimensions``, ``spacing``, or the cell length options.
+
+            .. versionadded:: 0.50
+
+        max_n_points : int, optional
+            Strict upper bound on the number of points generated. Unlike
+            ``target_n_points``, which is only approached, this limit is never exceeded.
+            How it is enforced depends on how the geometry is defined:
+
+            - Geometry set explicitly, with ``reference_volume``, ``dimensions``,
+              ``spacing`` or a cell length option, raises if it exceeds the limit.
+            - ``target_n_points`` must not exceed the limit, and the grid estimated from
+              it is coarsened if rounding would take it above.
+            - Geometry left to the defaults is coarsened to fit, without raising.
 
             .. versionadded:: 0.50
 
@@ -9232,6 +9294,7 @@ class DataSetFilters(DataObjectFilters):
             dimensions=dimensions,
             spacing=spacing,
             target_n_points=target_n_points,
+            max_n_points=max_n_points,
             rounding_func=rounding_func,
             cell_length_percentile=cell_length_percentile,
             cell_length_sample_size=cell_length_sample_size,
