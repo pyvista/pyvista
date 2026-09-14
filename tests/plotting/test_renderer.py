@@ -11,6 +11,7 @@ import pytest
 import pyvista as pv
 from pyvista import _vtk
 from pyvista import examples
+from pyvista.plotting.errors import InvalidCameraError
 from pyvista.plotting.prop_collection import _PropCollection
 from pyvista.plotting.renderer import ACTOR_LOC_MAP
 
@@ -329,6 +330,59 @@ def test_camera_position():
     assert call.func.id == pv.CameraPosition.__name__
     cpos2 = pv.CameraPosition(**{kw.arg: ast.literal_eval(kw.value) for kw in call.keywords})
     assert cpos2 == cpos
+
+
+def test_camera_position_holds_tuples_of_floats():
+    cpos = pv.CameraPosition([1, 2, 3], np.array([4.0, 5.0, 6.0]), (0, 0, 1))
+    assert cpos.position == (1.0, 2.0, 3.0)
+    assert cpos.focal_point == (4.0, 5.0, 6.0)
+    assert cpos.viewup == (0.0, 0.0, 1.0)
+    assert cpos.to_list() == [(1.0, 2.0, 3.0), (4.0, 5.0, 6.0), (0.0, 0.0, 1.0)]
+    assert cpos[0] == (1.0, 2.0, 3.0)
+
+    cpos.position = np.array([7, 8, 9])
+    cpos.focal_point = [0, 0, 0]
+    cpos.viewup = (0, 1, 0)
+    assert cpos.position == (7.0, 8.0, 9.0)
+    assert cpos.focal_point == (0.0, 0.0, 0.0)
+    assert cpos.viewup == (0.0, 1.0, 0.0)
+
+
+@pytest.mark.parametrize('vector', [[1, 2], 'not a vector'])
+def test_camera_position_raises(vector):
+    match = 'position'
+    with pytest.raises((TypeError, ValueError), match=match):
+        pv.CameraPosition(vector, (0, 0, 0), (0, 0, 1))
+
+
+@pytest.mark.parametrize('viewup', [(0, 0, 0), [0.0, 0.0, 0.0]])
+def test_camera_position_viewup_cannot_be_zero(viewup):
+    match = 'Camera up vector cannot be zero.'
+    with pytest.raises(ValueError, match=match):
+        pv.CameraPosition((1, 0, 0), (0, 0, 0), viewup)
+
+    cpos = pv.CameraPosition((1, 0, 0), (0, 0, 0), (0, 0, 1))
+    with pytest.raises(ValueError, match=match):
+        cpos.viewup = viewup
+
+
+@pytest.mark.parametrize('other', [5, 'xy', None, [1, 2], [(1, 2), (3, 4), (5, 6)]])
+def test_camera_position_eq_other_types(other):
+    assert pv.CameraPosition((1, 0, 0), (0, 0, 0), (0, 0, 1)) != other
+
+
+def test_camera_position_eq_sequence():
+    cpos = pv.CameraPosition((1, 0, 0), (0, 0, 0), (0, 0, 1))
+    assert cpos == [[1, 0, 0], [0, 0, 0], [0, 0, 1]]
+    assert cpos == np.array([[1.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 1.0]])
+    assert cpos != [[9, 0, 0], [0, 0, 0], [0, 0, 1]]
+
+
+@pytest.mark.parametrize('location', [[[1, 2], [3, 4], [5, 6]], [1, 2, 3, 4]])
+def test_camera_position_setter_raises(location):
+    pl = pv.Plotter()
+    with pytest.raises(InvalidCameraError, match='camera position'):
+        pl.camera_position = location
 
 
 @pytest.mark.skip_plotting
