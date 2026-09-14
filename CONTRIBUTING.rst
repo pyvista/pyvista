@@ -482,8 +482,8 @@ If you are on Linux or macOS, ``make docstyle`` runs the same script.
 
 ``doc/run_vale.py`` extracts the ``.rst`` files described below, runs Vale over
 every path CI checks, and then confirms that the rule still rejects the
-headings in ``tests/doc/vale/headings_invalid.rst``. The path list lives in
-that script alone; the workflow reads it with ``--print-files``.
+headings in ``tests/doc/vale/headings_invalid.rst``. CI runs that same script,
+so a local run checks exactly what the workflow does.
 
 Vale cannot parse prose written inside a Python file directly (for example,
 the ``# %%`` cell headings in a gallery example, or a docstring's
@@ -809,7 +809,7 @@ own for precision.
 - Sources have no input to preserve, so they subclass ``_Source``, which requests the
   precision in ``Update`` and casts in ``_update_and_wrap_output``. Return
   ``self._update_and_wrap_output()`` from a source's ``output`` property rather than
-  wrapping ``GetOutput()``, which is uncast.
+  wrapping ``GetOutput()``, whose points are not cast.
 - Geometry that PyVista builds without a VTK algorithm passes through
   ``_apply_points_dtype``.
 - Neither helper needs to know whether the algorithm supports double precision. The

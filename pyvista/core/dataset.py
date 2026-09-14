@@ -1919,7 +1919,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Notes
         -----
-        This will produce a deep copy of the points and of the point, cell and
+        This will produce a deep copy of the points and of the point, cell, and
         field data of the original mesh.
 
         Examples
@@ -1958,7 +1958,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
 
         Notes
         -----
-        This will produce a deep copy of the points and of the point, cell and
+        This will produce a deep copy of the points and of the point, cell, and
         field data of the original mesh.
 
         Examples
