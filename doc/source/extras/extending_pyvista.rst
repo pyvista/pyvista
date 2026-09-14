@@ -371,4 +371,10 @@ itself is imported only when a user first accesses
 ``plotter.<plugin_name>``, so installing the plugin costs nothing for
 plotters that never use it.
 
+A broken component plugin behaves the same way a broken accessor
+plugin does: the first access emits a ``UserWarning`` naming the
+plugin, every access raises an ``AttributeError`` carrying the same
+message, the name drops out of ``dir(plotter)``, and
+:func:`~pyvista.registered_plotter_components` retries it.
+
 See :ref:`plotter-component-api` for the full registration API.

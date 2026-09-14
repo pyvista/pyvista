@@ -33,7 +33,11 @@ def _fake_importer(name, body):
         module = ModuleType(name)
         module.__file__ = f'<fake {name}>'
         sys.modules[name] = module
-        exec(compiled, module.__dict__)  # noqa: S102
+        try:
+            exec(compiled, module.__dict__)  # noqa: S102
+        except BaseException:
+            del sys.modules[name]
+            raise
         return module
 
     return _import
@@ -42,6 +46,8 @@ def _fake_importer(name, body):
 def _reset_entry_point_state(monkeypatch, eps):
     monkeypatch.setattr(_reg_mod, '_entry_points_loaded', False)
     _reg_mod._pending_components.clear()
+    _reg_mod._failed_components.clear()
+    _reg_mod._resolving_components.clear()
     monkeypatch.setattr(
         'pyvista.plotting.component_registry.entry_points',
         lambda **_: eps,
@@ -600,29 +606,180 @@ def test_pending_plugin_only_imported_once(monkeypatch):
         sys.modules.pop(plugin_name, None)
 
 
-def test_broken_plugin_warns_once_and_isolates(monkeypatch):
-    """A failing plugin import warns once and is dropped from the pending list."""
+def _broken_entry_point(monkeypatch, importer):
+    """Install a single ``broken`` entry point backed by ``importer``."""
     ep = MagicMock()
     ep.name = 'broken'
     ep.value = 'broken_pc_module'
+    _reset_entry_point_state(monkeypatch, [ep])
+    monkeypatch.setattr('pyvista.plotting.component_registry.import_module', importer)
+
+
+def _component_warnings(captured):
+    """Return only the entry-point failure warnings from ``captured``."""
+    return [w for w in captured if 'Failed to load' in str(w.message)]
+
+
+def test_broken_plugin_warns_once_raises_with_cause_and_stays_pending(monkeypatch):
+    """A failed import warns on the first access only; every access raises
+    ``AttributeError`` naming the entry point, without re-importing, and
+    the entry stays pending."""
+    importer = MagicMock(side_effect=ImportError('missing dep'))
+    _broken_entry_point(monkeypatch, importer)
+    match = 'entry point "broken" from broken_pc_module: missing dep'
+
+    pl = pv.Plotter()
+    with pytest.warns(UserWarning, match=match):
+        with pytest.raises(AttributeError, match=match) as excinfo:
+            _ = pl.broken
+    assert isinstance(excinfo.value.__cause__, ImportError)
+
+    with warnings.catch_warnings(record=True) as captured:
+        warnings.simplefilter('always')
+        for _ in range(3):
+            with pytest.raises(AttributeError, match=match):
+                _ = pl.broken
+        assert not hasattr(pl, 'broken')
+    assert _component_warnings(captured) == []
+
+    assert importer.call_count == 1
+    assert _reg_mod._pending_components == {'broken': 'broken_pc_module'}
+    assert list(_reg_mod._failed_components) == ['broken']
+
+
+def test_broken_plugin_hidden_from_dir_until_import_succeeds(monkeypatch):
+    """``dir`` advertises a pending component until its import fails, then
+    hides it; ``registered_plotter_components()`` retries, and a successful
+    import attaches the component and lists it again."""
+    body = (
+        'import pyvista as pv\n'
+        "@pv.register_plotter_component('broken')\n"
+        'class BrokenComponent:\n'
+        '    def __init__(self, plotter):\n'
+        '        self._plotter = plotter\n'
+    )
+    importer = MagicMock(side_effect=[ImportError('missing dep'), None])
+
+    def _import(module_path):
+        importer(module_path)
+        return _fake_importer(module_path, body)(module_path)
+
+    _broken_entry_point(monkeypatch, _import)
+
+    try:
+        pl = pv.Plotter()
+        assert 'broken' in dir(pl)
+        assert 'broken' in _reg_mod._pending_component_names()
+        with pytest.warns(UserWarning, match='Failed to load'):
+            with pytest.raises(AttributeError, match='Failed to load'):
+                _ = pl.broken
+        assert 'broken' not in dir(pl)
+        assert 'broken' not in _reg_mod._pending_component_names()
+
+        assert 'broken' in {r.name for r in pv.registered_plotter_components()}
+        assert type(pv.Plotter().broken).__name__ == 'BrokenComponent'
+        assert _reg_mod._pending_components == {}
+        assert _reg_mod._failed_components == {}
+        assert importer.call_count == 2
+    finally:
+        with contextlib.suppress(ValueError):
+            pv.unregister_plotter_component('broken')
+        sys.modules.pop('broken_pc_module', None)
+
+
+def test_registered_components_warns_and_retries_broken_plugin(monkeypatch):
+    """``registered_plotter_components()`` retries a failed plugin on every
+    call, warning each time it fails, and leaves the entry pending."""
+    importer = MagicMock(side_effect=ImportError('missing dep'))
+    _broken_entry_point(monkeypatch, importer)
+    match = 'entry point "broken" from broken_pc_module'
+
+    for call in (1, 2):
+        with pytest.warns(UserWarning, match=match):
+            records = pv.registered_plotter_components()
+        assert isinstance(records, tuple)
+        assert importer.call_count == call
+    assert _reg_mod._pending_components == {'broken': 'broken_pc_module'}
+    assert list(_reg_mod._failed_components) == ['broken']
+
+
+def test_save_restore_round_trip_preserves_failed(monkeypatch):
+    """Restoring a snapshot taken before a failed import forgets the failure."""
+    _broken_entry_point(monkeypatch, MagicMock(side_effect=ImportError('missing dep')))
+    state = _reg_mod._save_registry_state()
+    with pytest.warns(UserWarning, match='Failed to load'):
+        with pytest.raises(AttributeError):
+            _ = pv.Plotter().broken
+    assert 'broken' in _reg_mod._failed_components
+    _reg_mod._restore_registry_state(state)
+    assert _reg_mod._failed_components == {}
+    assert 'broken' in _reg_mod._pending_component_names()
+
+
+def test_plugin_querying_registry_during_its_own_import(monkeypatch):
+    """A plugin module that calls ``registered_plotter_components()`` while
+    it is still being imported re-enters resolution for its own
+    still-pending name, and must resolve without raising."""
+    plugin_name = 'reentrant_pc_module'
+    body = (
+        'import pyvista as pv\n'
+        'pv.registered_plotter_components()\n'
+        "@pv.register_plotter_component('ep_reentrant')\n"
+        'class EpReentrantComponent:\n'
+        '    def __init__(self, plotter):\n'
+        '        self._plotter = plotter\n'
+        '    def value(self):\n'
+        '        return 42\n'
+    )
+    ep = MagicMock()
+    ep.name = 'ep_reentrant'
+    ep.value = plugin_name
 
     _reset_entry_point_state(monkeypatch, [ep])
     monkeypatch.setattr(
         'pyvista.plotting.component_registry.import_module',
-        MagicMock(side_effect=ImportError('missing dep')),
+        _fake_importer(plugin_name, body),
     )
 
-    pl = pv.Plotter()
-    with pytest.warns(UserWarning, match='Failed to load'):
-        with pytest.raises(AttributeError):
-            _ = pl.broken
+    try:
+        assert pv.Plotter().ep_reentrant.value() == 42
+        assert _reg_mod._pending_components == {}
+        assert _reg_mod._resolving_components == set()
+    finally:
+        with contextlib.suppress(ValueError):
+            pv.unregister_plotter_component('ep_reentrant')
+        sys.modules.pop(plugin_name, None)
 
-    with warnings.catch_warnings(record=True) as captured:
-        warnings.simplefilter('always')
-        with pytest.raises(AttributeError):
-            _ = pl.broken
-    component_warnings = [w for w in captured if 'Failed to load' in str(w.message)]
-    assert component_warnings == []
+
+def test_failed_plugin_that_accessed_itself_stays_pending(monkeypatch):
+    """A plugin whose body reaches its own component and then fails to
+    import stays pending, so ``registered_plotter_components()`` retries it."""
+    plugin_name = 'self_then_fail_pc_module'
+    body = (
+        'import contextlib\n'
+        'import pyvista as pv\n'
+        'with contextlib.suppress(AttributeError):\n'
+        '    pv.Plotter().ep_self_fail\n'
+        "raise ImportError('missing dep')\n"
+    )
+    ep = MagicMock()
+    ep.name = 'ep_self_fail'
+    ep.value = plugin_name
+
+    _reset_entry_point_state(monkeypatch, [ep])
+    monkeypatch.setattr(
+        'pyvista.plotting.component_registry.import_module',
+        _fake_importer(plugin_name, body),
+    )
+
+    try:
+        with pytest.warns(UserWarning, match='entry point "ep_self_fail"'):
+            with pytest.raises(AttributeError, match='missing dep'):
+                _ = pv.Plotter().ep_self_fail
+        assert _reg_mod._pending_components == {'ep_self_fail': plugin_name}
+        assert _reg_mod._resolving_components == set()
+    finally:
+        sys.modules.pop(plugin_name, None)
 
 
 def test_decorator_wins_over_pending_entry_point(monkeypatch):

@@ -64,6 +64,7 @@ class _ThemeRegistryState(TypedDict):
     discovered: dict[str, type[Theme] | Theme]
     discovered_sources: dict[str, str]
     pending: dict[str, list[EntryPoint]]
+    failed: dict[str, str]
     loaded: bool
 
 
@@ -78,6 +79,8 @@ _discovered_entry_point_sources: dict[str, str] = {}
 # requested via :func:`_resolve_theme`, keeping ``set_plot_theme`` calls
 # for built-in themes free of third-party plugin import cost.
 _pending_ep_themes: dict[str, list[EntryPoint]] = {}
+_failed_ep_themes: dict[str, str] = {}
+_resolving_ep_themes: set[str] = set()
 _entry_points_loaded: bool = False
 
 
@@ -95,6 +98,7 @@ def _save_registry_state() -> _ThemeRegistryState:
         'discovered': _discovered_entry_point_themes.copy(),
         'discovered_sources': _discovered_entry_point_sources.copy(),
         'pending': {k: list(v) for k, v in _pending_ep_themes.items()},
+        'failed': _failed_ep_themes.copy(),
         'loaded': _entry_points_loaded,
     }
 
@@ -114,6 +118,8 @@ def _restore_registry_state(state: _ThemeRegistryState) -> None:
     _discovered_entry_point_sources.update(state['discovered_sources'])
     _pending_ep_themes.clear()
     _pending_ep_themes.update({k: list(v) for k, v in state['pending'].items()})
+    _failed_ep_themes.clear()
+    _failed_ep_themes.update(state['failed'])
     _entry_points_loaded = state['loaded']
 
 
@@ -225,7 +231,7 @@ def _available_theme_names() -> tuple[str, ...]:
     names = (
         set(_registered_theme_classes)
         | set(_discovered_entry_point_themes)
-        | set(_pending_ep_themes)
+        | (set(_pending_ep_themes) - set(_failed_ep_themes))
     )
     return tuple(sorted(names))
 
@@ -270,6 +276,7 @@ def registered_themes() -> tuple[ThemeRegistration, ...]:
     # Force every pending plugin to load so the result reflects every
     # theme visible to PyVista. A plugin that fails to import emits a
     # ``UserWarning`` and is skipped; the rest still appear.
+    _failed_ep_themes.clear()
     for pending_name in list(_pending_ep_themes):
         _resolve_pending_theme(pending_name)
     records: list[ThemeRegistration] = []
@@ -393,28 +400,36 @@ def _resolve_pending_theme(name: str) -> bool:
 
     Notes
     -----
-    A plugin that fails to import emits a ``UserWarning`` and is dropped
-    from the pending list, so subsequent lookups of the same name fall
-    straight through without re-triggering the import or re-emitting the
-    warning.
+    A plugin that fails to import emits a ``UserWarning`` once and stays
+    pending, marked failed: later lookups fall straight through to the
+    built-in themes without re-importing or re-warning, and
+    :func:`registered_themes` retries it.
 
     """
-    eps = _pending_ep_themes.pop(name, None)
+    eps = _pending_ep_themes.get(name)
     if not eps:
+        return False
+    if name in _failed_ep_themes or name in _resolving_ep_themes:
         return False
     winner = eps[0]
     source = winner.value
+    _resolving_ep_themes.add(name)
     try:
         # ep.load() runs third-party import machinery—it can raise
         # literally anything. Convert to a warning so one broken plugin
         # cannot take down every theme lookup.
         loaded = winner.load()
     except Exception as exc:  # noqa: BLE001
-        warn_external(
+        msg = (
             f'Failed to load {THEME_ENTRY_POINT_GROUP} entry point '
-            f'"{winner.name}" from {source}: {exc}',
+            f'"{winner.name}" from {source}: {exc}'
         )
+        _failed_ep_themes[name] = msg
+        warn_external(msg)
         return False
+    finally:
+        _resolving_ep_themes.discard(name)
+    _pending_ep_themes.pop(name, None)
 
     if isinstance(loaded, Mapping):
         for theme_name, theme_obj in loaded.items():
