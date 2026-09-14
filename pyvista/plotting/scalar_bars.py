@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import contextlib
+from typing import Any
 import weakref
 
 import pyvista_validation as _validation
@@ -29,7 +30,11 @@ def _label_size(scalar_bar, text_property, dpi):
     """Return the size in pixels of the widest tick label a scalar bar draws."""
     fmt = scalar_bar.GetLabelFormat()
     widest, height = 0.0, 0.0
-    for value in scalar_bar.GetLookupTable().GetRange():
+    low, high = scalar_bar.GetLookupTable().GetRange()
+    # An interior tick can be wider than either end, so measure every one of them
+    ticks = max(int(scalar_bar.GetNumberOfLabels()), 2)
+    for step in range(ticks):
+        value = low + (high - low) * step / (ticks - 1)
         try:
             text = fmt % value
         except (TypeError, ValueError):
@@ -76,6 +81,65 @@ def _rotated_title_offset(bar_width, title_height, pad):
     return round((bar_width + title_height) / 2 - 2 + pad / 2)
 
 
+def _box_geometry(scalar_bar):
+    """Return the size, place and proportions of the box a scalar bar draws."""
+    return (
+        scalar_bar.GetWidth(),
+        scalar_bar.GetHeight(),
+        scalar_bar.GetPosition(),
+        scalar_bar.GetBarRatio(),
+        scalar_bar.GetVerticalTitleSeparation(),
+    )
+
+
+def _fitted_box(scalar_bar, *, vertical, title, label_text, pad, dpi, window):
+    """Return the box that encloses a scalar bar's text, and the settings that fill it.
+
+    The colour ramp keeps the size it was given; the box grows around it.  Returns the
+    box width and height as a fraction of the window, the bar ratio that holds the ramp
+    to its original size, the line offset that seats the title inside the box, and the
+    separation that leaves the title its padding.
+    """
+    window_width, window_height = window
+    text_pad = scalar_bar.GetTextPad()
+    label_width, label_height = _label_size(scalar_bar, label_text, dpi)
+    title_width = _title_width(scalar_bar.GetTitleTextProperty(), title, dpi)
+    title_height = _title_height(scalar_bar.GetTitleTextProperty(), title, dpi)
+    box_width = scalar_bar.GetWidth() * window_width
+    box_height = scalar_bar.GetHeight() * window_height
+
+    if vertical:
+        ramp = scalar_bar.GetBarRatio() * box_width
+        # The title is centered on the box and the labels are drawn past the ramp.  The
+        # width the bar was given only sets how thick the ramp is, so the box is free to
+        # be no wider than the text needs however large the window grows
+        box_width = max(title_width + 2 * text_pad, ramp + label_width + 2 * text_pad)
+        bar_ratio = ramp / box_width
+        # A vertical title is lifted clear of the box by three quarters of a label, and
+        # the offset that seats it again grows the title box at the ramp's expense.  The
+        # offset carries the title and the ramp down together, so the padding between
+        # them is the separation VTK leaves rather than anything the offset can buy
+        offset = round(0.75 * label_height)
+        separation = pad
+        box_height += offset + pad + text_pad
+    else:
+        ramp = scalar_bar.GetBarRatio() * box_height
+        # A horizontal title is stacked above the ramp and the labels, measured from the
+        # bottom of the box, so the box only has to be tall enough to cover the stack
+        box_height = ramp + label_height + title_height + pad + 2 * text_pad
+        bar_ratio = ramp / box_height
+        offset = -pad
+        separation = 0
+
+    return (
+        box_width / window_width,
+        box_height / window_height,
+        bar_ratio,
+        offset,
+        separation,
+    )
+
+
 class ScalarBars(_NoNewAttrMixin):
     """Plotter Scalar Bars.
 
@@ -94,6 +158,7 @@ class ScalarBars(_NoNewAttrMixin):
         self._resync_titles: set[str] = set()
         self._scalar_bar_actors = {}
         self._scalar_bar_widgets = {}
+        self._scalar_bar_fits: dict[str, dict[str, Any]] = {}
 
     def clear(self):
         """Remove all scalar bars and resets all scalar bar properties."""
@@ -102,6 +167,8 @@ class ScalarBars(_NoNewAttrMixin):
         self._resync_titles = set()
         self._scalar_bar_actors = {}
         self._scalar_bar_widgets = {}
+        for title in list(self._scalar_bar_fits):
+            self._stop_fitting(title)
 
     def __plotter_close__(self) -> None:
         """Release scalar-bar state when the owning plotter closes."""
@@ -116,6 +183,104 @@ class ScalarBars(_NoNewAttrMixin):
             title_quotes = f'"{title}"'
             lines.append(f'{title_quotes:20} {interactive!s:5}')
         return '\n'.join(lines)
+
+    def _stop_fitting(self, title):
+        """Drop the observer that keeps a scalar bar's box fitted to its text."""
+        fit = self._scalar_bar_fits.pop(title, None)
+        if fit is None:
+            return
+        window = self._plotter.render_window
+        if window is not None:
+            window.RemoveObserver(fit['observer'])
+
+    def _apply_fit(self, fit, scalar_bar):
+        """Size a scalar bar's box to its text, or give it back the size it asked for."""
+        width, height, position, bar_ratio, separation = fit['request']
+        # Measure against the size that was asked for rather than the last fit
+        scalar_bar.SetWidth(width)
+        scalar_bar.SetHeight(height)
+        scalar_bar.SetBarRatio(bar_ratio)
+        scalar_bar.SetVerticalTitleSeparation(separation)
+        scalar_bar.SetPosition(*position)
+        title_text = scalar_bar.GetTitleTextProperty()
+
+        if not (scalar_bar.GetDrawFrame() or scalar_bar.GetDrawBackground()):
+            # Nothing is drawn around the text, so there is nothing to fit it to
+            title_text.SetLineOffset(-fit['pad'])
+            self._place_widget(fit['key'], scalar_bar)
+            fit['applied'] = _box_geometry(scalar_bar)
+            return
+
+        fitted_width, fitted_height, fitted_ratio, offset, fitted_separation = _fitted_box(
+            scalar_bar,
+            vertical=fit['vertical'],
+            title=fit['title'],
+            label_text=scalar_bar.GetLabelTextProperty(),
+            pad=fit['pad'],
+            dpi=self._plotter.render_window.GetDPI(),
+            window=self._plotter.window_size,
+        )
+        scalar_bar.SetWidth(fitted_width)
+        scalar_bar.SetHeight(fitted_height)
+        scalar_bar.SetBarRatio(fitted_ratio)
+        scalar_bar.SetVerticalTitleSeparation(fitted_separation)
+        if fit['vertical']:
+            # A vertical bar is anchored at its right edge, where its labels are, so the
+            # box grows away from the window edge rather than through it
+            scalar_bar.SetPosition(position[0] - (fitted_width - width), position[1])
+        title_text.SetLineOffset(offset)
+        # The representation is what an interactive bar is drawn from, so it carries the
+        # fitted box too, and dragging the widget then asks for a box of its own
+        self._place_widget(fit['key'], scalar_bar)
+        fit['applied'] = _box_geometry(scalar_bar)
+
+    def _keep_fitted(self, title, scalar_bar, *, vertical, display_title, pad):
+        """Refit a scalar bar's box whenever the window it is drawn in changes."""
+        window = self._plotter.render_window
+        fit = {
+            'request': _box_geometry(scalar_bar),
+            'vertical': vertical,
+            'key': title,
+            'title': display_title,
+            'pad': pad,
+            'state': None,
+            'applied': None,
+            'observer': None,
+        }
+        self._scalar_bar_fits[title] = fit
+
+        def refit(*_args):
+            # The bar is looked up by the key the fit carries, so a renamed bar is
+            # still the one this observer measures
+            bar = self._scalar_bar_actors.get(fit['key'])
+            if bar is None:
+                # The observer outlived the bar it was measuring
+                return
+            geometry = _box_geometry(bar)
+            if fit['applied'] is not None and geometry != fit['applied']:
+                # The bar was sized or placed after it was fitted, so that is what it
+                # asks for now and the fit is measured against it from here on
+                fit['request'] = tuple(
+                    now if now != before else asked
+                    for now, before, asked in zip(
+                        geometry, fit['applied'], fit['request'], strict=True
+                    )
+                )
+                fit['state'] = None
+            # The text is measured in pixels while the box is a fraction of the window,
+            # so the fit only holds while the window and the box it draws hold
+            state = (
+                tuple(self._plotter.window_size),
+                self._plotter.render_window.GetDPI(),
+                bool(bar.GetDrawFrame() or bar.GetDrawBackground()),
+            )
+            if state == fit['state']:
+                return
+            fit['state'] = state
+            self._apply_fit(fit, bar)
+
+        fit['observer'] = window.AddObserver(_vtk.vtkCommand.StartEvent, refit)
+        refit()
 
     def _place_widget(self, title, scalar_bar):
         """Give a scalar bar's widget the place and size the layout gave the bar."""
@@ -275,6 +440,8 @@ class ScalarBars(_NoNewAttrMixin):
         if widget is not None:
             widget.SetEnabled(0)
 
+        self._stop_fitting(title)
+
     def __len__(self):
         """Return the number of scalar bar actors."""
         return len(self._scalar_bar_actors)
@@ -355,6 +522,13 @@ class ScalarBars(_NoNewAttrMixin):
             self._scalar_bar_mappers[new_title] = self._scalar_bar_mappers.pop(old_title)
             if old_title in self._scalar_bar_widgets:
                 self._scalar_bar_widgets[new_title] = self._scalar_bar_widgets.pop(old_title)
+            if old_title in self._scalar_bar_fits:
+                fit = self._scalar_bar_fits.pop(old_title)
+                fit['key'] = new_title
+                fit['title'] = new_title
+                # The title is what the box is fitted around, so it has to be measured again
+                fit['state'] = None
+                self._scalar_bar_fits[new_title] = fit
             slot = self._plotter._scalar_bar_slot_lookup.pop(old_title, None)
             if slot is not None:
                 self._plotter._scalar_bar_slot_lookup[new_title] = slot
@@ -490,7 +664,9 @@ class ScalarBars(_NoNewAttrMixin):
             Adds a black shadow to the text.
 
         width : float, optional
-            The percentage (0 to 1) width of the window for the colorbar.
+            The percentage (0 to 1) width of the window for the colorbar.  Giving
+            a width, or a height, keeps a box drawn by ``fill`` or ``outline``
+            exactly that size rather than growing it around the text.
             Default set by
             :attr:`pyvista.plotting.themes.Theme.colorbar_vertical` or
             :attr:`pyvista.plotting.themes.Theme.colorbar_horizontal`
@@ -717,6 +893,37 @@ class ScalarBars(_NoNewAttrMixin):
         ...     )
         >>> pl.show()
 
+        A box drawn around a bar grows to hold the title and the tick labels, as long
+        as the bar was not given a size of its own.  The label at either end of the
+        ramp is centered on that end, so part of it falls outside the box.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(sphere, show_scalar_bar=False)
+        >>> _ = pl.add_scalar_bar(
+        ...     'Elevation (m)',
+        ...     vertical=True,
+        ...     outline=True,
+        ...     title_font_size=30,
+        ...     label_font_size=30,
+        ...     mapper=pl.mapper,
+        ... )
+        >>> pl.show()
+
+        A horizontal bar keeps its title inside the box the same way, and the box
+        grows to hold the padding the title is given.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(sphere, show_scalar_bar=False)
+        >>> _ = pl.add_scalar_bar(
+        ...     'Elevation (m)',
+        ...     vertical=False,
+        ...     outline=True,
+        ...     title_font_size=30,
+        ...     label_font_size=30,
+        ...     mapper=pl.mapper,
+        ... )
+        >>> pl.show()
+
         """
         if theme is None:
             theme = pv.global_theme
@@ -780,6 +987,8 @@ class ScalarBars(_NoNewAttrMixin):
             )
 
         # Automatically choose size if not specified
+        # A box is only free to grow around the text when its size was left open
+        sized = width is not None or height is not None
         if width is None:
             width = theme.colorbar_vertical.width if vertical else theme.colorbar_horizontal.width
         if height is None:
@@ -991,16 +1200,23 @@ class ScalarBars(_NoNewAttrMixin):
 
         draws_box = scalar_bar.GetDrawFrame() or scalar_bar.GetDrawBackground()
         unconstrained = bool(scalar_bar.GetUnconstrainedFontSize())
-        pad = round(title_pad * title_text.GetFontSize()) if title_pad and not draws_box else 0
+        fits_box = draws_box and not sized
+        # A box is sized without the padding unless it is fitted around the title
+        keeps_pad = fits_box or not draws_box
+        pad = round(title_pad * title_text.GetFontSize()) if title_pad and keeps_pad else 0
         window_width, window_height = self._plotter.window_size
-        bar_width = width * window_width
         dpi = self._plotter.render_window.GetDPI()
 
+        keep_fitted = False
         if unconstrained:
             if rotate_title:
                 scalar_bar.SetForceVerticalTitle(True)
                 title_height = _title_height(title_text, display_title, dpi)
+                bar_width = width * window_width
                 title_text.SetLineOffset(-_rotated_title_offset(bar_width, title_height, pad))
+            elif not sized:
+                # The box is free to grow, but the bar has not been placed yet
+                keep_fitted = True
             elif pad:
                 title_text.SetLineOffset(-pad)
 
@@ -1027,6 +1243,13 @@ class ScalarBars(_NoNewAttrMixin):
                 scalar_bar.SetPosition(x, self._stacked_above(neighbor, gap=gap, dpi=dpi))
 
         self._place_widget(title, scalar_bar)
+
+        if keep_fitted:
+            # Fit once the bar is where it belongs, and keep it fitted as the window
+            # it is measured against changes
+            self._keep_fitted(
+                title, scalar_bar, vertical=vertical, display_title=display_title, pad=pad
+            )
 
         # finally, add to the actor and return the scalar bar
         self._plotter.add_actor(scalar_bar, reset_camera=False, pickable=False, render=render)
