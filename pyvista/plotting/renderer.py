@@ -916,7 +916,10 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.Modified()
 
     def add_border(
-        self, color: ColorLike = 'white', width: float = 1.0, edges: Sequence[str] | None = None
+        self,
+        color: ColorLike = 'white',
+        width: float = 1.0,
+        edges: list[str] | tuple[str, ...] | None = None,
     ) -> _vtk.vtkActor2D:
         """Add borders around the frame.
 
@@ -928,7 +931,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         width : float, default: 1.0
             Width of the border.
 
-        edges : sequence[str], optional
+        edges : list[str] | tuple[str, ...], optional
             Which edges of the frame to draw. Any subset of
             ``('top', 'left', 'bottom', 'right')``. When ``None``
             (the default) all four edges are drawn.
@@ -949,6 +952,11 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         }
         if edges is None:
             edges = ('top', 'left', 'bottom', 'right')
+        else:
+            # A bare string would be read one character at a time
+            _validation.check_instance(edges, (list, tuple), name='edges')
+            for edge in edges:
+                _validation.check_contains(list(edge_lines), must_contain=edge, name='edges')
         lines = np.array([edge_lines[e] for e in edges]).ravel()
 
         poly = pv.PolyData()
