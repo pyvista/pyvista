@@ -47,6 +47,12 @@ name = 'Spatial Point Data'
 result.plot(scalars=name, clim=data_to_probe.get_data_range(name))
 
 # %%
+# :func:`~pyvista.DataObjectFilters.resample_to_image` samples onto a new
+# :class:`~pyvista.ImageData` instead. Pass a ``reference_volume`` to give the
+# output the geometry of an image which already exists.
+mesh.resample_to_image(reference_volume=data_to_probe)
+
+# %%
 # Complex Resample
 # ++++++++++++++++
 # Take a volume of data and create a grid of lower resolution to resample on
@@ -54,6 +60,15 @@ data_to_probe = examples.download_embryo()
 mesh = pv.create_grid(data_to_probe, dimensions=(75, 75, 75))
 
 result = mesh.sample(data_to_probe)
+
+# %%
+# :func:`~pyvista.DataObjectFilters.resample_to_image` does both steps in one call.
+data_to_probe.resample_to_image(dimensions=(75, 75, 75))
+
+# %%
+# To down-sample :class:`~pyvista.ImageData` directly, use
+# :meth:`~pyvista.ImageDataFilters.resample` instead.
+data_to_probe.resample(dimensions=(75, 75, 75))
 
 # %%
 threshold = lambda m: m.threshold(75.0, scalars='SLCImage')
@@ -71,41 +86,6 @@ pl.add_mesh(threshold(result), **dargs)
 pl.link_views()
 pl.view_isometric()
 pl.show(cpos=cpos)
-
-# %%
-# Resample Onto a New Image
-# +++++++++++++++++++++++++
-# Both examples above build the mesh to sample onto before sampling onto it.
-# :func:`~pyvista.DataObjectFilters.resample_to_image` does the two steps at once
-# when that mesh is a uniform grid, which is the usual way to volume render a
-# mesh that is not already :class:`~pyvista.ImageData`.
-#
-# Load a tetrahedral mesh of a blood vessel network.
-mesh = examples.download_blood_vessels()
-mesh.plot(scalars='shearstress', cpos='zy')
-
-# %%
-# Resample it. The spacing is estimated from the mesh's own cells, so the result
-# keeps the resolution of the input.
-volume = mesh.resample_to_image(mark_blank=True)
-volume
-
-# %%
-# ``mark_blank`` hides the voxels outside the vessels, so they are transparent
-# when the image is volume rendered.
-volume.plot(volume=True, scalars='shearstress', cpos='zy')
-
-# %%
-# The values above come from the mesh's cells. An input without volumetric cells
-# has no interior for a cell search to land in, so the filter interpolates from
-# its points instead and fills every voxel which contains one. Here the same
-# points are resampled as a point cloud, which has no cells at all. Only point
-# data survives that, so ``node_value`` is plotted rather than the cell array.
-cloud = pv.PointSet(mesh.points)
-cloud['node_value'] = mesh['node_value']
-cloud.resample_to_image(spacing=2.0, mark_blank=True).plot(
-    volume=True, scalars='node_value', cpos='zy'
-)
 
 # %%
 # .. tags:: filter
