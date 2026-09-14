@@ -6114,67 +6114,49 @@ class DataObjectFilters:
 
         Examples
         --------
-        Resample a tetrahedral mesh of a blood vessel network onto a uniform grid. The
-        spacing is estimated from the mesh's own cells.
+        Resample a solid sphere's point data onto a uniform grid. The spacing is
+        estimated from the mesh's own cells.
 
         >>> import pyvista as pv
-        >>> from pyvista import examples
-        >>> mesh = examples.download_blood_vessels()
-        >>> volume = mesh.resample_to_image()
-        >>> volume.dimensions
-        (68, 47, 118)
+        >>> solid_sphere = pv.SolidSphere()
+        >>> solid_sphere['height'] = solid_sphere.points[:, 2]
+        >>> volume = solid_sphere.resample_to_image()
 
-        >>> volume.spacing
-        (1.0, 1.0, 1.0)
+        Volume render the result as voxel cells. Every voxel is visible, so the volume
+        fills the input's whole bounding box.
 
-        Volume render the result. Every voxel is visible, so the volume fills the
-        input's whole bounding box.
+        >>> volume.points_to_cells().plot(volume=True)
 
-        >>> volume.plot(volume=True, scalars='shearstress', cpos='zy')
+        Set ``mark_blank=True`` to hide the voxels no value could be resampled for.
 
-        Set ``mark_blank=True`` to hide the voxels no value could be resampled for. The
-        blank voxels keep their ``'vtkValidPointMask'`` flag either way, so
-        :meth:`~pyvista.DataSetFilters.threshold` removes the same ones that blanking
-        hides.
-
-        >>> blanked = mesh.resample_to_image(mark_blank=True)
-        >>> blanked.plot(volume=True, scalars='shearstress', cpos='zy')
+        >>> blanked = solid_sphere.resample_to_image(mark_blank=True)
+        >>> blanked.points_to_cells().plot(volume=True)
 
         Set the ``dimensions`` or the ``spacing`` to control the resolution explicitly.
 
-        >>> mesh.resample_to_image(spacing=2.0).dimensions
-        (34, 24, 59)
+        >>> solid_sphere.resample_to_image(spacing=0.05).dimensions
+        (20, 20, 20)
 
-        Compare the three kinds of input. Resize one sphere's point cloud, surface, and
-        solid to identical bounds so they share a grid.
+        Compare the three kinds of input the sphere can be given as: a solid, the
+        surface enclosing it, and its points alone.
 
-        >>> bounds = (-0.5, 0.5, -0.5, 0.5, -0.5, 0.5)
-        >>> surface = pv.Sphere(theta_resolution=40, phi_resolution=40).resize(
-        ...     bounds=bounds
-        ... )
-        >>> solid = pv.SolidSphere(
-        ...     outer_radius=0.5,
-        ...     radius_resolution=15,
-        ...     theta_resolution=40,
-        ...     phi_resolution=40,
-        ... ).resize(bounds=bounds)
-
-        Show each input beside the voxels of its resampled image.
-        :meth:`~pyvista.ImageDataFilters.points_to_cells` carries the blanking over, so
-        only the filled voxels are drawn.
-
-        >>> datasets = {}
-        >>> for sphere in [surface.cast_to_pointset(), surface, solid]:
-        ...     sphere['height'] = sphere.points[:, 2]
-        ...     image = sphere.resample_to_image(spacing=0.05, mark_blank=True)
-        ...     name = type(sphere).__name__
-        ...     datasets[name] = sphere
-        ...     datasets[f'{name} voxels'] = image.points_to_cells(dimensionality='3D')
+        >>> def resample_as_voxels(mesh):
+        ...     image = mesh.resample_to_image(spacing=0.05, mark_blank=True)
+        ...     return image.points_to_cells()
+        >>> surface = solid_sphere.extract_surface(algorithm=None)
+        >>> pointset = solid_sphere.cast_to_pointset()
+        >>> datasets = {
+        ...     'solid': solid_sphere,
+        ...     'solid voxels': resample_as_voxels(solid_sphere),
+        ...     'surface': surface,
+        ...     'surface voxels': resample_as_voxels(surface),
+        ...     'pointset': pointset,
+        ...     'pointset voxels': resample_as_voxels(pointset),
+        ... }
         >>> pv.plot_compare(datasets, shape=(3, 2), scalars='height')
 
-        The point cloud and the surface fill the same shell, since they have the same
-        points. The solid is filled throughout, and its voxels stop just inside the
-        surface which the other two straddle.
+        The solid is filled throughout, whereas the surface and the point cloud fill
+        the same shell, since they have the same points.
 
         Resample every block of a :class:`~pyvista.MultiBlock` onto one grid.
 
@@ -6183,15 +6165,6 @@ class DataObjectFilters:
         ...     block['height'] = block.points[:, 2]
         >>> blocks.resample_to_image(target_n_points=20_000).dimensions
         (50, 20, 20)
-
-        A point cloud of the same mesh has no cells for a cell search to land in, so it
-        is interpolated from its points instead.
-
-        >>> cloud = pv.PointSet(mesh.points)
-        >>> cloud['node_value'] = mesh['node_value']
-        >>> cloud.resample_to_image(spacing=2.0, mark_blank=True).plot(
-        ...     volume=True, scalars='node_value', cpos='zy'
-        ... )
 
         """
         _validate_reference_volume_options(
