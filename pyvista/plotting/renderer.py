@@ -239,6 +239,20 @@ def scale_point(camera, point, *, invert=False):
     return (scaled[0], scaled[1], scaled[2])
 
 
+def _validate_vector(vector, *, name: str) -> tuple[float, float, float]:
+    """Return a three-component vector as a tuple of floats."""
+    return _validation.validate_array3(vector, dtype_out=float, to_tuple=True, name=name)
+
+
+def _validate_viewup(vector) -> tuple[float, float, float]:
+    """Return a view-up vector, which is normalized and so cannot be zero."""
+    viewup = _validate_vector(vector, name='viewup')
+    if np.allclose(viewup, 0.0):
+        msg = 'Camera up vector cannot be zero.'
+        raise ValueError(msg)
+    return viewup
+
+
 class CameraPosition(_NoNewAttrMixin):
     """Container to hold camera location attributes.
 
@@ -257,11 +271,11 @@ class CameraPosition(_NoNewAttrMixin):
 
     def __init__(self, position, focal_point, viewup) -> None:
         """Initialize a new camera position descriptor."""
-        self._position = position
-        self._focal_point = focal_point
-        self._viewup = viewup
+        self._position = _validate_vector(position, name='position')
+        self._focal_point = _validate_vector(focal_point, name='focal_point')
+        self._viewup = _validate_viewup(viewup)
 
-    def to_list(self):
+    def to_list(self) -> list[tuple[float, float, float]]:
         """Convert to a list of the position, focal point, and ``viewup``.
 
         Returns
@@ -294,7 +308,7 @@ class CameraPosition(_NoNewAttrMixin):
     def _repr_html_(self) -> str:
         """Return an HTML representation for Jupyter notebooks."""
 
-        def _fmt_vec(vec: tuple[float, ...]) -> str:
+        def _fmt_vec(vec: tuple[float, float, float]) -> str:
             return '(' + ', '.join(f'{v:.4f}' for v in vec) + ')'
 
         pos = _fmt_vec(self._position)
@@ -324,7 +338,7 @@ class CameraPosition(_NoNewAttrMixin):
             '</div></div>'
         )
 
-    def __getitem__(self, index):
+    def __getitem__(self, index) -> tuple[float, float, float]:
         """Fetch a component by index location like a list."""
         return self.to_list()[index]
 
@@ -332,36 +346,43 @@ class CameraPosition(_NoNewAttrMixin):
         """Comparison operator to act on list version of CameraPosition object."""
         if isinstance(other, CameraPosition):
             return self.to_list() == other.to_list()
-        return self.to_list() == other
+        if not isinstance(other, (list, tuple, np.ndarray)):
+            return NotImplemented
+        try:
+            vectors = [_validate_vector(vector, name='camera position') for vector in other]
+        except (TypeError, ValueError):
+            # Anything that is not three vectors is not a camera position
+            return NotImplemented
+        return self.to_list() == vectors
 
     __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
 
     @property
-    def position(self):  # numpydoc ignore=RT01
+    def position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Location of the camera in world coordinates."""
         return self._position
 
     @position.setter
     def position(self, value) -> None:
-        self._position = value
+        self._position = _validate_vector(value, name='position')
 
     @property
-    def focal_point(self):  # numpydoc ignore=RT01
+    def focal_point(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Location of the camera's focus in world coordinates."""
         return self._focal_point
 
     @focal_point.setter
     def focal_point(self, value) -> None:
-        self._focal_point = value
+        self._focal_point = _validate_vector(value, name='focal_point')
 
     @property
-    def viewup(self):  # numpydoc ignore=RT01
+    def viewup(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """The view-up vector of the camera."""
         return self._viewup
 
     @viewup.setter
     def viewup(self, value) -> None:
-        self._viewup = value
+        self._viewup = _validate_viewup(value)
 
 
 class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
@@ -567,21 +588,30 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
             getattr(self, self.CAMERA_STR_ATTR_MAP[camera_location])()
 
-        elif isinstance(camera_location[0], (int, float)):
-            if len(camera_location) != 3:
-                raise InvalidCameraError
-            self.view_vector(camera_location)
         else:
-            # check if a valid camera position
-            if not isinstance(camera_location, CameraPosition) and (
-                not len(camera_location) == 3 or any(len(item) != 3 for item in camera_location)
-            ):
-                raise InvalidCameraError
+            location = (
+                camera_location.to_list()
+                if isinstance(camera_location, CameraPosition)
+                else camera_location
+            )
+            try:
+                # A single vector points the camera, and three of them place it
+                position = _validation.validate_array(
+                    np.asarray(location, dtype=float),
+                    must_have_shape=[(3,), (3, 3)],
+                    name='camera position',
+                )
+                cpos = None if position.ndim == 1 else CameraPosition(*position)
+            except (TypeError, ValueError) as error:
+                raise InvalidCameraError(str(error)) from error
 
-            # everything is set explicitly
-            self.camera.position = scale_point(self.camera, camera_location[0], invert=False)
-            self.camera.focal_point = scale_point(self.camera, camera_location[1], invert=False)
-            self.camera.up = camera_location[2]
+            if cpos is None:
+                self.view_vector(position)
+            else:
+                # everything is set explicitly
+                self.camera.position = scale_point(self.camera, cpos.position, invert=False)
+                self.camera.focal_point = scale_point(self.camera, cpos.focal_point, invert=False)
+                self.camera.up = cpos.viewup
 
         # reset clipping range
         self.reset_camera_clipping_range()
