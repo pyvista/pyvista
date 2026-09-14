@@ -289,9 +289,9 @@ class CameraPosition(_NoNewAttrMixin):
         viewup: VectorLike[float],
     ) -> None:
         """Initialize a new camera position descriptor."""
-        self._position = _validate_vector(position, name='position')
-        self._focal_point = _validate_vector(focal_point, name='focal_point')
-        self._viewup = _validate_viewup(viewup)
+        self.position = position
+        self.focal_point = focal_point
+        self.viewup = viewup
 
     def to_list(self) -> list[tuple[float, float, float]]:
         """Convert to a list of the position, focal point, and ``viewup``.
