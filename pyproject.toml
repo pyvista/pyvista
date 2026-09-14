@@ -694,7 +694,6 @@ pyvista = "pv"
 'pyvista/plotting/render_passes.py' = ['ANN']
 'pyvista/plotting/render_window_interactor.py' = ['ANN']
 'pyvista/plotting/renderer.py' = ['PLC0415']
-'pyvista/plotting/renderers.py' = ['ANN']
 'pyvista/plotting/scalar_bars.py' = ['ANN']
 'pyvista/plotting/text.py' = ['ANN']
 'pyvista/plotting/texture.py' = ['ANN']

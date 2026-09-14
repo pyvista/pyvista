@@ -1274,15 +1274,15 @@ def test_show_bounds_padding_raises(padding):
 
 @pytest.mark.parametrize('groups', [1, object(), True])
 def test_init_renderers_groups_raises(groups):
-    match = f'"groups" should be a list or tuple, not {type(groups).__name__}.'
-    with pytest.raises(TypeError, match=match):
+    match = f'"groups" must be an instance of .*Got {type(groups)} instead.'
+    with pytest.raises(TypeError, match=re.escape(match).replace('\\.\\*', '.*')):
         pv.Plotter(groups=groups)
 
 
 @pytest.mark.parametrize('group', [1, object(), True])
 def test_init_renderers_groups_item_raises(group):
-    match = f'Each group entry should be a list or tuple, not {type(group).__name__}.'
-    with pytest.raises(TypeError, match=match):
+    match = f'Each group entry must be an instance of .*Got {type(group)} instead.'
+    with pytest.raises(TypeError, match=re.escape(match).replace('\\.\\*', '.*')):
         pv.Plotter(groups=[group])
 
 
@@ -1344,3 +1344,17 @@ def test_add_actor_culling_prop_without_property():
     pl = pv.Plotter()
     _, prop = pl.renderer.add_actor(_vtk.vtkLegendScaleActor(), culling='back')
     assert prop is None
+
+
+def test_set_active_renderer_requires_column():
+    pl = pv.Plotter(shape=(2, 2))
+    with pytest.raises(TypeError, match='"index_column" is required'):
+        pl.renderers.set_active_renderer(0)
+
+
+def test_shadow_renderer_raises_once_released():
+    pl = pv.Plotter()
+    renderers = pl.renderers
+    renderers.__del__()  # releases the shadow renderer, as garbage collection would
+    with pytest.raises(RuntimeError, match='no longer have a shadow renderer'):
+        _ = renderers.shadow_renderer
