@@ -5938,14 +5938,20 @@ class DataObjectFilters:
 
         The values are resampled with one of two methods, chosen by ``method``:
 
-        #. ``'sample'`` interpolates inside the input's cells. This is the default for
-           an input with volumetric cells, and is the only method which uses the input's
-           topology or carries its cell data.
+        #. ``'sample'`` interpolates inside the input's cells, and is the default for
+           an input with volumetric cells. It is the only method which uses the input's
+           topology, and the only one which reads its cell data. It keeps the voxels
+           whose centre lies inside a cell, so the result stops just inside a volumetric
+           mesh's surface.
 
-        #. ``'interpolate'`` interpolates from the input's points within ``radius``.
-           This is the default otherwise, since a cell search misses most of a curved
-           surface and all of a point cloud. Every voxel containing an input point is
-           filled, and only the input's point data is carried.
+        #. ``'interpolate'`` interpolates from the input's points within ``radius``, and
+           is the default otherwise, since a cell search misses most of a curved surface
+           and all of a point cloud. It reads point data only. It keeps every voxel the
+           input passes through, so the result straddles the input and reaches up to half
+           a voxel diagonal beyond it.
+
+        Both write to the output's point data, and resampling a solid therefore fills
+        different voxels than resampling its surface.
 
         A flat input is the exception: its voxels are centered on it, so ``'sample'``
         reaches every one of them and reproduces the values exactly.
@@ -5953,40 +5959,9 @@ class DataObjectFilters:
         .. versionadded:: 0.50
 
         .. note::
-            The input's data arrays are resampled by this filter. Use
-            :meth:`~pyvista.DataSetFilters.voxelize_binary_mask` to fill the inside of a
-            closed surface instead; it labels voxels as foreground or background and
-            ignores data arrays entirely. Both filters place their voxels identically, so
-            their outputs can be combined.
-
-        .. note::
             Voxels with no value are flagged with a ``'vtkValidPointMask'`` point data
             array and, unless ``mark_blank=False``, hidden with a ``'vtkGhostType'``
             array, so volume rendering the output shows those regions as transparent.
-
-        .. note::
-            The voxels are returned as points, not :attr:`~pyvista.CellType.VOXEL`
-            cells. Use :meth:`~pyvista.ImageDataFilters.points_to_cells` to convert them,
-            which also carries the blanking over. See
-            :ref:`image_representations_example` for the difference.
-
-        .. note::
-            ``method='sample'`` reads the input's point `and` cell data, and writes both
-            to the output's point data. ``method='interpolate'`` reads point data only,
-            so the input's cell data is dropped and a warning is raised. Call
-            :meth:`~pyvista.DataObjectFilters.cell_data_to_point_data` on the input to
-            keep it.
-
-        .. note::
-            The two methods keep different voxels. ``method='sample'`` keeps those whose
-            centre lies inside a cell of the input, so the result stops just inside a
-            volumetric mesh's surface. ``method='interpolate'`` keeps those the input
-            passes through, so the result straddles the input and reaches up to half a
-            voxel diagonal beyond it. Resampling a solid and resampling its surface
-            therefore fill different voxels. Use
-            :meth:`~pyvista.DataSetFilters.voxelize_binary_mask` on the surface to fill a
-            closed surface's interior instead; it keeps the same voxels that
-            ``method='sample'`` keeps for the solid.
 
         Parameters
         ----------
@@ -6064,6 +6039,11 @@ class DataObjectFilters:
             ``radius``. By default ``'sample'`` is used for an input with volumetric
             cells and ``'interpolate'`` is used otherwise. See summary for details.
 
+            ``'interpolate'`` reads point data only, so the input's cell data is dropped
+            and a warning is raised. Call
+            :meth:`~pyvista.DataObjectFilters.cell_data_to_point_data` on the input to
+            keep it.
+
         tolerance : float, optional
             Tolerance used when locating the cell a voxel is sampled from. The tolerance
             computed by :vtk:`vtkResampleWithDataSet` is used by default. Requires
@@ -6096,7 +6076,11 @@ class DataObjectFilters:
         Returns
         -------
         ImageData
-            Uniform grid with the input's arrays sampled onto its points.
+            Uniform grid with the input's arrays sampled onto its points. The voxels are
+            points, not :attr:`~pyvista.CellType.VOXEL` cells;
+            :meth:`~pyvista.ImageDataFilters.points_to_cells` converts them and carries
+            the blanking over. See :ref:`image_representations_example` for the
+            difference.
 
         See Also
         --------
@@ -6114,7 +6098,9 @@ class DataObjectFilters:
 
         pyvista.DataSetFilters.voxelize_binary_mask
             Voxelize the inside of a closed surface as a mask. Operates on a surface's
-            geometry and generates a new array instead of resampling existing ones.
+            geometry and generates a new array instead of resampling existing ones. It
+            places its voxels identically to this filter, and keeps the same voxels that
+            ``method='sample'`` keeps for the solid a surface encloses.
 
         pyvista.create_grid
             Create a uniform grid surrounding a dataset. Its points lie on the dataset's
