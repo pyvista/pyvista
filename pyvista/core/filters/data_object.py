@@ -35,7 +35,9 @@ from pyvista._version import version_info
 from pyvista._warn_external import warn_external
 from pyvista.core._typing_core import _DataSetOrMultiBlockType
 from pyvista.core.celltype import CellType
+from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import DeprecationError
+from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output
@@ -61,6 +63,7 @@ if TYPE_CHECKING:
     from pyvista import DataSetAttributes
     from pyvista import ImageData
     from pyvista import MultiBlock
+    from pyvista import PartitionedDataSet
     from pyvista import PointSet
     from pyvista import PolyData
     from pyvista import RectilinearGrid
@@ -5452,7 +5455,7 @@ class DataObjectFilters:
 
     def sample(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
-        target: DataSet | _vtk.vtkDataSet | _vtk.vtkMultiBlockDataSet | _vtk.vtkPartitionedDataSet,
+        target: DataSet | MultiBlock | PartitionedDataSet | _vtk.vtkDataSet,
         *,
         tolerance: float | None = None,
         pass_cell_data: bool = True,
@@ -5485,8 +5488,9 @@ class DataObjectFilters:
         ----------
         target : pyvista.DataSet | pyvista.MultiBlock | pyvista.PartitionedDataSet
             The vtk data object to sample from - point and cell arrays from
-            this object are sampled onto the nodes of the ``dataset`` mesh.
-            A composite is sampled block by block.
+            this object are sampled onto the nodes of the ``dataset`` mesh. A
+            composite target is sampled block by block, keeping the first block
+            to sample each point.
 
         tolerance : float, optional
             Tolerance used to compute whether a point in the source is
@@ -5500,9 +5504,15 @@ class DataObjectFilters:
             Preserve source mesh's original point data arrays.
 
         categorical : bool, default: False
-            Control whether the source point data is to be treated as
-            categorical. If the data is categorical, then the resultant data
-            will be determined by a nearest neighbor interpolation scheme.
+            Control whether the target's active point scalars are to be treated
+            as categorical. If the data is categorical, then the resultant data
+            will be determined by a nearest neighbor interpolation scheme. All
+            other arrays are interpolated normally.
+
+            The target must have single-component point scalars. They are made
+            active when the target has exactly one such array and none is active
+            already. A composite target is sampled block by block, keeping the
+            first block to sample each point, so every block needs them.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -5516,6 +5526,11 @@ class DataObjectFilters:
                 * ``'cell_tree'`` - :vtk:`vtkCellTreeLocator`
                 * ``'obb_tree'`` - :vtk:`vtkOBBTree`
                 * ``'static_cell'`` - :vtk:`vtkStaticCellLocator`
+
+            .. deprecated:: 0.50.0
+                ``'obb_tree'`` is deprecated. :vtk:`vtkOBBTree` does not implement
+                ``FindCell`` and never accelerated sampling. It raises with VTK 9.7
+                and newer.
 
         pass_field_data : bool, default: True
             Preserve source mesh's original field data arrays.
@@ -5534,6 +5549,16 @@ class DataObjectFilters:
         output : DataSet | MultiBlock
             Dataset containing resampled data.
             Return type matches input.
+
+        Raises
+        ------
+        TypeError
+            If ``target`` cannot be wrapped as a dataset or a composite of datasets.
+
+        ValueError
+            If ``categorical=True`` and the target has no single-component point
+            scalars, if it has several and none is active, or if ``locator`` is a
+            :vtk:`vtkOBBTree` and VTK is 9.7 or newer.
 
         See Also
         --------
@@ -5570,31 +5595,49 @@ class DataObjectFilters:
         pyvista_ndarray([ 46.5 , 225.12])
 
         """
+        options: dict[str, Any] = dict(
+            tolerance=tolerance,
+            pass_cell_data=pass_cell_data,
+            pass_point_data=pass_point_data,
+            progress_bar=progress_bar,
+            locator=locator,
+            pass_field_data=pass_field_data,
+            mark_blank=mark_blank,
+            snap_to_closest_point=snap_to_closest_point,
+        )
+
         # Sample block by block so each block takes the path for its own type
         if isinstance(self, pv.MultiBlock):
             return cast(
                 '_DataSetOrMultiBlockType',
-                self.generic_filter(
-                    'sample',
-                    target=target,
-                    tolerance=tolerance,
-                    pass_cell_data=pass_cell_data,
-                    pass_point_data=pass_point_data,
-                    categorical=categorical,
-                    progress_bar=progress_bar,
-                    locator=locator,
-                    pass_field_data=pass_field_data,
-                    mark_blank=mark_blank,
-                    snap_to_closest_point=snap_to_closest_point,
-                ),
+                self.generic_filter('sample', target=target, categorical=categorical, **options),
             )
+
+        target_ = wrap(target)
+        if not isinstance(target_, (pv.DataSet, pv.MultiBlock, pv.PartitionedDataSet)):
+            msg = (
+                'Sampling target must be a dataset or a composite of datasets, got '
+                f'{type(target_).__name__}.'
+            )
+            raise TypeError(msg)
+        if categorical:
+            blocks = _categorical_blocks(target_)
+            if not blocks:
+                categorical = False
+            elif isinstance(target_, (pv.MultiBlock, pv.PartitionedDataSet)):
+                return cast(
+                    '_DataSetOrMultiBlockType',
+                    _sample_composite_categorical(self, blocks, options=options),
+                )
+            else:
+                target_ = blocks[0]
 
         alg = _vtk.vtkResampleWithDataSet()  # Construct the ResampleWithDataSet object
         alg.SetInputData(
             self
         )  # Set the Input data (actually the source i.e. where to sample from)
         # Set the Source data (actually the target, i.e. where to sample to)
-        alg.SetSourceData(wrap(target))
+        alg.SetSourceData(target_)
         alg.SetPassCellArrays(pass_cell_data)
         alg.SetPassPointArrays(pass_point_data)
         alg.SetPassFieldArrays(pass_field_data)
@@ -5618,6 +5661,9 @@ class DataObjectFilters:
                 except KeyError as err:
                     msg = f'locator must be a string from {locator_map.keys()}, got {locator}'
                     raise ValueError(msg) from err
+
+            if isinstance(locator, _vtk.vtkOBBTree):
+                _deprecate_obb_tree_locator()
 
             if pv.vtk_version_info >= (9, 7):
                 alg.SetCellLocator(locator)
@@ -6289,6 +6335,10 @@ def _get_cell_quality_measures() -> dict[str, str]:
     return measures
 
 
+_VALID_POINT_MASK = 'vtkValidPointMask'
+_GHOST_ARRAY = 'vtkGhostType'
+
+
 def _slice_image_along_axis(
     image: ImageData, *, axis: int, coordinate: float, sign: float
 ) -> PolyData | None:
@@ -6345,6 +6395,120 @@ def _slice_image_along_axis(
     output.set_active_scalars(image.active_scalars_name)
     _copy_active_attributes(image, output)
     return output
+
+
+def _deprecate_obb_tree_locator() -> None:
+    """Warn or raise for a :vtk:`vtkOBBTree` sampling locator."""
+    # deprecated 0.50.0, convert to error in 0.53.0, remove 0.54.0
+    if _is_deprecation_due((0, 53)):  # pragma: no cover
+        msg = 'Convert this deprecation warning into an error.'
+        raise RuntimeError(msg)
+    if version_info >= (0, 54):  # pragma: no cover
+        msg = "Remove 'obb_tree' from the sample locator map."
+        raise RuntimeError(msg)
+
+    msg = (
+        "The 'obb_tree' locator is deprecated. `vtkOBBTree` does not implement `FindCell`, "
+        "so it never accelerated sampling. Use 'static_cell', 'cell' or 'cell_tree' instead."
+    )
+    if pv.vtk_version_info >= (9, 7):
+        msg += ' It crashes the interpreter with VTK 9.7 and newer.'
+        raise ValueError(msg)
+    warn_external(msg, PyVistaDeprecationWarning)
+
+
+def _categorical_blocks(target: DataSet | MultiBlock | PartitionedDataSet) -> list[DataSet]:
+    """Return the datasets a categorical sample of ``target`` probes, finest first."""
+    if isinstance(target, pv.PartitionedDataSet):
+        target = pv.MultiBlock(list(target))
+    if isinstance(target, pv.MultiBlock):
+        items = target.recursive_iterator('items', skip_none=True, skip_empty=True)
+        # vtkCompositeDataProbeFilter traverses in reverse so the finest block wins
+        named = [(f"block '{name}'", block) for name, block in items][::-1]
+    else:
+        named = [('target', target)]
+    return [_activate_categorical_scalars(block, label) for label, block in named]
+
+
+def _activate_categorical_scalars(target: DataSet, label: str) -> DataSet:
+    """Return ``target`` with the point scalars a categorical sample interpolates made active."""
+    scalars = target.point_data.active_scalars
+    if scalars is not None:
+        if scalars.ndim > 1:
+            msg = (
+                f'Categorical sampling requires single-component active point scalars, but the '
+                f"{label}'s active point scalars '{target.point_data.active_scalars_name}' have "
+                f'{scalars.shape[1]} components.'
+            )
+            raise ValueError(msg)
+        return target
+
+    attributes = target.point_data.VTKObject
+    candidates = [
+        name
+        for name in target.point_data
+        # GetArray is None for arrays which hold no numeric values, such as string arrays
+        if (array := attributes.GetArray(name)) is not None and array.GetNumberOfComponents() == 1
+    ]
+    if not candidates:
+        msg = (
+            f'Categorical sampling requires single-component point scalars on the {label}, '
+            f'which has none. Its point data arrays are {target.point_data.keys()}.'
+        )
+        raise MissingDataError(msg)
+    if len(candidates) > 1:
+        msg = (
+            f'Categorical sampling requires active point scalars on the {label}, which has '
+            f'none. Make one of {candidates} active with '
+            "`target.set_active_scalars(name, preference='point')`."
+        )
+        raise AmbiguousDataError(msg)
+    target = target.copy(deep=False)
+    target.set_active_scalars(candidates[0], preference='point')
+    return target
+
+
+def _sample_composite_categorical(
+    mesh: DataSet, blocks: list[DataSet], *, options: dict[str, Any]
+) -> DataSet:
+    """Sample each block of a composite target and keep the first block to hit each point."""
+    result = mesh.sample(blocks[0], categorical=True, **options)
+    for block in blocks[1:]:
+        probed = mesh.sample(block, categorical=True, **options)
+        fill = (result[_VALID_POINT_MASK] == 0) & (probed[_VALID_POINT_MASK] == 1)
+        for name in list(result.point_data.keys()):
+            array = result.point_data[name]
+            other = probed.point_data.get(name)
+            # vtkCompositeDataProbeFilter keeps an array only where every block agrees on it
+            if other is None or other.shape != array.shape or other.dtype != array.dtype:
+                del result.point_data[name]
+            elif fill.any():
+                array[fill] = other[fill]
+    if len(blocks) > 1 and options['mark_blank']:
+        _blank_invalid_points_and_cells(result)
+    return result
+
+
+def _blank_invalid_points_and_cells(result: DataSet) -> None:
+    """Mark the points which were never sampled, and every cell using one, as hidden."""
+    invalid = result[_VALID_POINT_MASK] == 0
+    if _GHOST_ARRAY in result.point_data:
+        hidden_point = np.uint8(_vtk.vtkDataSetAttributes.HIDDENPOINT)
+        point_ghosts = result.point_data[_GHOST_ARRAY]
+        point_ghosts[invalid] |= hidden_point
+        point_ghosts[~invalid] &= np.invert(hidden_point)
+
+    if _GHOST_ARRAY in result.cell_data:
+        # Averaging a 0/1 indicator marks every cell with at least one invalid point
+        indicator = result.copy(deep=False)
+        indicator.clear_data()
+        indicator.point_data['invalid'] = invalid.astype(float)
+        per_cell = indicator.point_data_to_cell_data().cell_data['invalid'] > 0
+
+        hidden_cell = np.uint8(_vtk.vtkDataSetAttributes.HIDDENCELL)
+        cell_ghosts = result.cell_data[_GHOST_ARRAY]
+        cell_ghosts[per_cell] |= hidden_cell
+        cell_ghosts[~per_cell] &= np.invert(hidden_cell)
 
 
 def _copy_active_attributes(source: DataSet, target: DataSet) -> None:
