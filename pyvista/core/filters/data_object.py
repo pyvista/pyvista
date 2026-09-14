@@ -4574,7 +4574,7 @@ class DataObjectFilters:
             Setting the value to greater than ``1`` may cause some point data to not be passed even
             if no nonlinear faces exist.
 
-        algorithm : 'auto' | 'geometry' | 'dataset_surface'
+        algorithm : None | 'geometry' | 'dataset_surface'
             VTK algorithm to use internally.
 
             - ``'geometry'``: use :vtk:`vtkGeometryFilter`.
