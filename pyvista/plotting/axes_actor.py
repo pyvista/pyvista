@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
-from collections.abc import Sequence
 from enum import Enum
 from typing import TYPE_CHECKING
 from typing import cast
+
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
@@ -195,10 +195,11 @@ class AxesActor(
 
     @total_length.setter
     def total_length(self, length: float | VectorLike[float]) -> None:
-        if isinstance(length, Iterable):
-            self.SetTotalLength(float(length[0]), float(length[1]), float(length[2]))
-        else:
-            self.SetTotalLength(length, length, length)
+        self.SetTotalLength(
+            *_validation.validate_array3(
+                length, broadcast=True, dtype_out=float, name='total_length'
+            )
+        )
 
     @property
     def shaft_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -222,10 +223,11 @@ class AxesActor(
 
     @shaft_length.setter
     def shaft_length(self, length: float | VectorLike[float]) -> None:
-        if isinstance(length, Iterable):
-            self.SetNormalizedShaftLength(float(length[0]), float(length[1]), float(length[2]))
-        else:
-            self.SetNormalizedShaftLength(length, length, length)
+        self.SetNormalizedShaftLength(
+            *_validation.validate_array3(
+                length, broadcast=True, dtype_out=float, name='shaft_length'
+            )
+        )
 
     @property
     def tip_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -249,10 +251,11 @@ class AxesActor(
 
     @tip_length.setter
     def tip_length(self, length: float | VectorLike[float]) -> None:
-        if isinstance(length, Iterable):
-            self.SetNormalizedTipLength(float(length[0]), float(length[1]), float(length[2]))
-        else:
-            self.SetNormalizedTipLength(length, length, length)
+        self.SetNormalizedTipLength(
+            *_validation.validate_array3(
+                length, broadcast=True, dtype_out=float, name='tip_length'
+            )
+        )
 
     @property
     def label_position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -276,10 +279,11 @@ class AxesActor(
 
     @label_position.setter
     def label_position(self, length: float | VectorLike[float]) -> None:
-        if isinstance(length, Iterable):
-            self.SetNormalizedLabelPosition(float(length[0]), float(length[1]), float(length[2]))
-        else:
-            self.SetNormalizedLabelPosition(length, length, length)
+        self.SetNormalizedLabelPosition(
+            *_validation.validate_array3(
+                length, broadcast=True, dtype_out=float, name='label_position'
+            )
+        )
 
     @property
     def cone_resolution(self) -> int:  # numpydoc ignore=RT01
@@ -478,14 +482,9 @@ class AxesActor(
         return self.x_label, self.y_label, self.z_label
 
     @labels.setter
-    def labels(self, labels: Sequence[str]) -> None:
-        if not isinstance(labels, (list, tuple)):
-            msg = f'Labels must be a list or tuple. Got {labels} instead.'
-            raise TypeError(msg)
-
-        if len(labels) != 3:
-            msg = f'Labels must be a list or tuple with three items. Got {labels} instead.'
-            raise ValueError(msg)
+    def labels(self, labels: list[str] | tuple[str, str, str]) -> None:
+        _validation.check_instance(labels, (list, tuple), name='Labels')
+        _validation.check_length(labels, exact_length=3, name='Labels')
         self.x_label = labels[0]
         self.y_label = labels[1]
         self.z_label = labels[2]

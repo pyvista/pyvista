@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
 from typing import NamedTuple
+from typing import TypeAlias
 from typing import TypedDict
 from typing import get_args
 
@@ -56,6 +57,9 @@ if TYPE_CHECKING:
         from typing_extensions import Unpack
 
 ScaleModeOptions = Literal['default', 'anti_distortion']
+
+# Labels are given one per axis, so a bare string is not a sequence of them
+_LabelSequence: TypeAlias = list[str] | tuple[str, ...]
 
 
 class _AxesPropTuple(NamedTuple):
@@ -116,10 +120,10 @@ class _XYZAssembly(  # numpydoc ignore=PR01
         *,
         xyz_actors: tuple[Any, Any, Any],
         xyz_label_actors: tuple[Any, Any, Any],
-        x_label: str | Sequence[str] | None,
-        y_label: str | Sequence[str] | None,
-        z_label: str | Sequence[str] | None,
-        labels: Sequence[str] | None,
+        x_label: str | _LabelSequence | None,
+        y_label: str | _LabelSequence | None,
+        z_label: str | _LabelSequence | None,
+        labels: _LabelSequence | None,
         label_color: ColorLike,
         show_labels: bool,
         label_position: float | VectorLike[float] | None,
@@ -240,7 +244,7 @@ class _XYZAssembly(  # numpydoc ignore=PR01
 
     @labels.setter
     @abstractmethod
-    def labels(self, labels: Sequence[str]) -> None: ...
+    def labels(self, labels: _LabelSequence) -> None: ...
 
     @property
     @abstractmethod
@@ -249,7 +253,7 @@ class _XYZAssembly(  # numpydoc ignore=PR01
 
     @x_label.setter
     @abstractmethod
-    def x_label(self, label: str | Sequence[str]) -> None: ...
+    def x_label(self, label: str | _LabelSequence) -> None: ...
 
     @property
     @abstractmethod
@@ -258,7 +262,7 @@ class _XYZAssembly(  # numpydoc ignore=PR01
 
     @y_label.setter
     @abstractmethod
-    def y_label(self, label: str | Sequence[str]) -> None: ...
+    def y_label(self, label: str | _LabelSequence) -> None: ...
 
     @property
     @abstractmethod
@@ -267,7 +271,7 @@ class _XYZAssembly(  # numpydoc ignore=PR01
 
     @z_label.setter
     @abstractmethod
-    def z_label(self, label: str | Sequence[str]) -> None: ...
+    def z_label(self, label: str | _LabelSequence) -> None: ...
 
     @property
     @abstractmethod
@@ -402,7 +406,7 @@ class AxesAssembly(_XYZAssembly):
     z_label : str, default: 'Z'
         Text label for the z-axis. Alternatively, set the label with :attr:`labels`.
 
-    labels : Sequence[str], optional,
+    labels : list[str] | tuple[str, ...], optional,
         Text labels for the axes. This is an alternative parameter to using
         :attr:`x_label`, :attr:`y_label`, and :attr:`z_label` separately.
 
@@ -579,7 +583,7 @@ class AxesAssembly(_XYZAssembly):
         x_label: str | None = None,
         y_label: str | None = None,
         z_label: str | None = None,
-        labels: Sequence[str] | None = None,
+        labels: _LabelSequence | None = None,
         label_color: ColorLike = 'black',
         show_labels: bool = True,
         label_position: float | VectorLike[float] | None = None,
@@ -842,7 +846,7 @@ class AxesAssembly(_XYZAssembly):
         return self.x_label, self.y_label, self.z_label
 
     @labels.setter
-    def labels(self, labels: Sequence[str]) -> None:
+    def labels(self, labels: _LabelSequence) -> None:
         valid_labels = _validate_label_sequence(labels, n_labels=3, name='labels')
         self.x_label = valid_labels[0]
         self.y_label = valid_labels[1]
@@ -864,7 +868,7 @@ class AxesAssembly(_XYZAssembly):
         return self._label_actors[0].input
 
     @x_label.setter
-    def x_label(self, label: str | Sequence[str]) -> None:
+    def x_label(self, label: str | _LabelSequence) -> None:
         self._label_actors[0].input = _validation.check_string(label, name='x_label')
 
     @property
@@ -883,7 +887,7 @@ class AxesAssembly(_XYZAssembly):
         return self._label_actors[1].input
 
     @y_label.setter
-    def y_label(self, label: str | Sequence[str]) -> None:
+    def y_label(self, label: str | _LabelSequence) -> None:
         self._label_actors[1].input = _validation.check_string(label, name='y_label')
 
     @property
@@ -902,7 +906,7 @@ class AxesAssembly(_XYZAssembly):
         return self._label_actors[2].input
 
     @z_label.setter
-    def z_label(self, label: str | Sequence[str]) -> None:
+    def z_label(self, label: str | _LabelSequence) -> None:
         self._label_actors[2].input = _validation.check_string(label, name='z_label')
 
     @property
@@ -1241,8 +1245,8 @@ class AxesAssembly(_XYZAssembly):
 
 
 def _validate_label_sequence(
-    labels: Sequence[str], n_labels: int | Sequence[int], name: str
-) -> Sequence[str]:
+    labels: _LabelSequence, n_labels: int | Sequence[int], name: str
+) -> _LabelSequence:
     _validation.check_instance(labels, (list, tuple), name=name)
     _validation.check_iterable_items(labels, str, name=name)
     _validation.check_length(labels, exact_length=n_labels, name=name)
@@ -1328,7 +1332,7 @@ class AxesAssemblySymmetric(AxesAssembly):
         single string. If a single string, plus ``'+'`` and minus ``'-'`` characters
         are added. Alternatively, set the labels with :attr:`labels`.
 
-    labels : Sequence[str], optional
+    labels : list[str] | tuple[str, ...], optional
         Text labels for the axes. Specify three strings, one for each axis, or
         six strings, one for each +/- axis. If three strings plus ``'+'`` and minus
         ``'-'`` characters are added. This is an alternative parameter to using
@@ -1441,10 +1445,10 @@ class AxesAssemblySymmetric(AxesAssembly):
         tip_radius: float | VectorLike[float] = 0.1,
         tip_length: float | VectorLike[float] = 0.2,
         scale_mode: ScaleModeOptions = 'default',
-        x_label: str | Sequence[str] | None = None,
-        y_label: str | Sequence[str] | None = None,
-        z_label: str | Sequence[str] | None = None,
-        labels: Sequence[str] | None = None,
+        x_label: str | _LabelSequence | None = None,
+        y_label: str | _LabelSequence | None = None,
+        z_label: str | _LabelSequence | None = None,
+        labels: _LabelSequence | None = None,
         label_color: ColorLike = 'black',
         show_labels: bool = True,
         label_position: float | VectorLike[float] | None = None,
@@ -1539,7 +1543,7 @@ class AxesAssemblySymmetric(AxesAssembly):
         return *self.x_label, *self.y_label, *self.z_label
 
     @labels.setter
-    def labels(self, labels: Sequence[str]) -> None:
+    def labels(self, labels: _LabelSequence) -> None:
         valid_labels = _validate_label_sequence(labels, n_labels=[3, 6], name='labels')
         if len(valid_labels) == 3:
             self.x_label = valid_labels[0]
@@ -1555,7 +1559,7 @@ class AxesAssemblySymmetric(AxesAssembly):
         label_minus = self._label_actors_symmetric[axis].input
         return label_plus, label_minus
 
-    def _set_axis_label(self, axis: _AxisEnum, label: str | Sequence[str]) -> None:
+    def _set_axis_label(self, axis: _AxisEnum, label: str | _LabelSequence) -> None:
         if isinstance(label, str):
             label_plus, label_minus = '+' + label, '-' + label
         else:
@@ -1592,7 +1596,7 @@ class AxesAssemblySymmetric(AxesAssembly):
         return self._get_axis_label(_AxisEnum.x)
 
     @x_label.setter
-    def x_label(self, label: str | Sequence[str]) -> None:
+    def x_label(self, label: str | _LabelSequence) -> None:
         self._set_axis_label(_AxisEnum.x, label)
 
     @property  # type: ignore[override]
@@ -1624,7 +1628,7 @@ class AxesAssemblySymmetric(AxesAssembly):
         return self._get_axis_label(_AxisEnum.y)
 
     @y_label.setter
-    def y_label(self, label: str | Sequence[str]) -> None:
+    def y_label(self, label: str | _LabelSequence) -> None:
         self._set_axis_label(_AxisEnum.y, label)
 
     @property  # type: ignore[override]
@@ -1656,7 +1660,7 @@ class AxesAssemblySymmetric(AxesAssembly):
         return self._get_axis_label(_AxisEnum.z)
 
     @z_label.setter
-    def z_label(self, label: str | Sequence[str]) -> None:
+    def z_label(self, label: str | _LabelSequence) -> None:
         self._set_axis_label(_AxisEnum.z, label)
 
     def _update_label_positions(self) -> None:
@@ -1705,7 +1709,7 @@ class PlanesAssembly(_XYZAssembly):
     z_label : str, default: 'XY'
         Text label for the xy-plane. Alternatively, set the label with :attr:`labels`.
 
-    labels : Sequence[str], optional,
+    labels : list[str] | tuple[str, ...], optional,
         Text labels for the planes. This is an alternative parameter to using
         :attr:`x_label`, :attr:`y_label`, and :attr:`z_label` separately.
 
@@ -1869,11 +1873,11 @@ class PlanesAssembly(_XYZAssembly):
         x_label: str | None = None,
         y_label: str | None = None,
         z_label: str | None = None,
-        labels: Sequence[str] | None = None,
+        labels: _LabelSequence | None = None,
         label_color: ColorLike = 'black',
         show_labels: bool = True,
         label_position: float | VectorLike[float] = 0.5,
-        label_edge: Literal['top', 'bottom', 'right', 'left'] | Sequence[str] = 'right',
+        label_edge: Literal['top', 'bottom', 'right', 'left'] | _LabelSequence = 'right',
         label_offset: float = 0.05,
         label_size: int = 50,
         label_mode: Literal['2D', '3D'] = '3D',
@@ -2001,7 +2005,7 @@ class PlanesAssembly(_XYZAssembly):
         return self.x_label, self.y_label, self.z_label
 
     @labels.setter
-    def labels(self, labels: Sequence[str]) -> None:
+    def labels(self, labels: _LabelSequence) -> None:
         valid_labels = _validate_label_sequence(labels, n_labels=3, name='labels')
         self.x_label = valid_labels[0]
         self.y_label = valid_labels[1]
@@ -2023,7 +2027,7 @@ class PlanesAssembly(_XYZAssembly):
         return self._axis_actors[0].GetTitle()
 
     @x_label.setter
-    def x_label(self, label: str | Sequence[str]) -> None:
+    def x_label(self, label: str | _LabelSequence) -> None:
         valid_label = _validation.check_string(label, name='x_label')
         self._axis_actors[0].SetTitle(valid_label)
         self.planes.set_block_name(0, valid_label)
@@ -2044,7 +2048,7 @@ class PlanesAssembly(_XYZAssembly):
         return self._axis_actors[1].GetTitle()
 
     @y_label.setter
-    def y_label(self, label: str | Sequence[str]) -> None:
+    def y_label(self, label: str | _LabelSequence) -> None:
         valid_label = _validation.check_string(label, name='y_label')
         self._axis_actors[1].SetTitle(valid_label)
         self.planes.set_block_name(1, valid_label)
@@ -2065,7 +2069,7 @@ class PlanesAssembly(_XYZAssembly):
         return self._axis_actors[2].GetTitle()
 
     @z_label.setter
-    def z_label(self, label: str | Sequence[str]) -> None:
+    def z_label(self, label: str | _LabelSequence) -> None:
         valid_label = _validation.check_string(label, name='z_label')
         self._axis_actors[2].SetTitle(valid_label)
         self.planes.set_block_name(2, valid_label)
@@ -2210,7 +2214,7 @@ class PlanesAssembly(_XYZAssembly):
         return self._label_edge
 
     @label_edge.setter
-    def label_edge(self, edge: Literal['top', 'bottom', 'right', 'left'] | Sequence[str]) -> None:
+    def label_edge(self, edge: Literal['top', 'bottom', 'right', 'left'] | _LabelSequence) -> None:
         valid_edge = (
             [edge] * 3
             if isinstance(edge, str)
