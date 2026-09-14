@@ -1892,6 +1892,19 @@ def test_screenshot_renders_current_scene(sphere):
 
 
 @pytest.mark.usefixtures('no_images_to_verify')
+def test_prep_for_close_stores_last_image(sphere):
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
+    pl.screenshot()
+    pl.last_image = None
+    pl.last_image_depth = None
+    pl._prep_for_close()
+    assert pl.last_image is not None
+    assert pl.last_image_depth is not None
+    pl.close()
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
 @pytest.mark.parametrize('ext', SUPPORTED_FORMATS)
 def test_save_screenshot(tmpdir, sphere, ext):
     filename = str(tmpdir.mkdir('tmpdir').join('tmp' + ext))
