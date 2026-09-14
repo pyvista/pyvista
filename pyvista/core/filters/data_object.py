@@ -5890,11 +5890,11 @@ class DataObjectFilters:
         cell_length_percentile: float | None = None,
         cell_length_sample_size: int | None = None,
         method: Literal['sample', 'interpolate'] | None = None,
+        mark_blank: bool = False,
         tolerance: float | None = None,
         categorical: bool | None = None,
         radius: float | None = None,
         sharpness: float | None = None,
-        mark_blank: bool = False,
         progress_bar: bool = False,
     ) -> ImageData:
         """Resample this mesh's arrays onto a uniform grid.
@@ -6044,6 +6044,11 @@ class DataObjectFilters:
             :meth:`~pyvista.DataObjectFilters.cell_data_to_point_data` on the input to
             keep it.
 
+        mark_blank : bool, default: False
+            Hide the voxels which no value could be resampled for, by flagging them in a
+            ``'vtkGhostType'`` array. Every voxel is visible by default, and the blank
+            ones can be filtered with the ``'vtkValidPointMask'`` array instead.
+
         tolerance : float, optional
             Requires ``method='sample'``, and is forwarded to
             :meth:`~pyvista.DataObjectFilters.sample`.
@@ -6070,11 +6075,6 @@ class DataObjectFilters:
             Sharpness of the Gaussian interpolation kernel, ``2.0`` by default. As this
             value increases, the weights of points far from a voxel's center fall off
             faster.
-
-        mark_blank : bool, default: False
-            Hide the voxels which no value could be resampled for, by flagging them in a
-            ``'vtkGhostType'`` array. Every voxel is visible by default, and the blank
-            ones can be filtered with the ``'vtkValidPointMask'`` array instead.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
