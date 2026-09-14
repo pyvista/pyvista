@@ -1773,14 +1773,262 @@ def test_sample():
     sample_test(progress_bar=True)
     sample_test(categorical=True)
     sample_test(locator=_vtk.vtkStaticCellLocator())
-    for locator in ['cell', 'cell_tree', 'obb_tree', 'static_cell']:
-        sample_test(locator=locator)
     with pytest.raises(ValueError):  # noqa: PT011
         sample_test(locator='invalid')
     sample_test(pass_cell_data=False)
     sample_test(pass_point_data=False)
     sample_test(pass_field_data=False)
     sample_test(snap_to_closest_point=True)
+
+
+@pytest.mark.parametrize(
+    'locator', ['cell', 'cell_tree', 'static_cell', _vtk.vtkStaticCellLocator]
+)
+def test_sample_locator(locator):
+    # An unstructured target is required: image data is probed without a cell locator
+    target = pv.Sphere(theta_resolution=10, phi_resolution=10).delaunay_3d()
+    # A linear field interpolates to the same value from whichever cell is found
+    target.point_data['x'] = target.points[:, 0]
+    mesh = pv.Sphere(theta_resolution=8, phi_resolution=8, radius=0.4)
+
+    result = mesh.sample(target, locator=locator() if callable(locator) else locator)
+
+    assert result['vtkValidPointMask'].all()
+    assert np.allclose(result['x'], mesh.points[:, 0])
+
+
+@pytest.mark.needs_vtk_version(9, 7, 0)
+@pytest.mark.parametrize('locator', ['obb_tree', _vtk.vtkOBBTree])
+def test_sample_obb_tree_locator_raises(locator):
+    locator = locator() if callable(locator) else locator
+    target = pv.Sphere(theta_resolution=10, phi_resolution=10).delaunay_3d()
+    target.point_data['pdata'] = np.arange(target.n_points, dtype=float)
+
+    match = "The 'obb_tree' locator is deprecated"
+    with pytest.raises(ValueError, match=match):
+        pv.Sphere().sample(target, locator=locator)
+
+
+@pytest.mark.needs_vtk_version(less_than=(9, 7, 0))
+@pytest.mark.parametrize('locator', ['obb_tree', _vtk.vtkOBBTree])
+def test_sample_obb_tree_locator_deprecated(locator):
+    locator = locator() if callable(locator) else locator
+    target = pv.Sphere(theta_resolution=10, phi_resolution=10).delaunay_3d()
+    target.point_data['pdata'] = np.arange(target.n_points, dtype=float)
+
+    match = "The 'obb_tree' locator is deprecated"
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        pv.Sphere().sample(target, locator=locator)
+
+
+@pytest.fixture
+def categorical_probe():
+    """Image data overlapping the categorical target."""
+    return pv.ImageData(dimensions=(5, 5, 5), spacing=(0.3, 0.3, 0.3), origin=(-0.6, -0.6, -0.6))
+
+
+@pytest.fixture
+def categorical_target():
+    """Target whose active point scalars are spaced apart so interpolation is detectable."""
+    target = pv.Sphere(theta_resolution=10, phi_resolution=10).delaunay_3d()
+    target.clear_point_data()
+    target.point_data['labels'] = (np.arange(target.n_points) % 3) * 10.0
+    target.set_active_scalars('labels')
+    return target
+
+
+@pytest.mark.parametrize('categorical', [True, False])
+def test_sample_categorical(categorical_probe, categorical_target, categorical):
+    result = categorical_probe.sample(categorical_target, categorical=categorical)
+
+    sampled = result['labels'][result['vtkValidPointMask'] == 1]
+    assert sampled.size
+    assert bool(np.isin(sampled, categorical_target['labels']).all()) is categorical
+
+
+@pytest.mark.parametrize('composite', [pv.MultiBlock, pv.PartitionedDataSet])
+@pytest.mark.parametrize('categorical', [True, False])
+def test_sample_categorical_composite_target(
+    categorical_probe, categorical_target, composite, categorical
+):
+    target = composite([categorical_target])
+
+    result = categorical_probe.sample(target, categorical=categorical)
+
+    sampled = result['labels'][result['vtkValidPointMask'] == 1]
+    assert sampled.size
+    assert bool(np.isin(sampled, categorical_target['labels']).all()) is categorical
+
+
+@pytest.mark.parametrize(
+    'kwargs',
+    [
+        {},
+        {'mark_blank': False},
+        {'pass_cell_data': False},
+        {'pass_point_data': False},
+        {'locator': 'cell'},
+        {'tolerance': 1e-3},
+    ],
+)
+def test_sample_composite_categorical_merge_matches_vtk(kwargs):
+    # A constant per block interpolates to the same values either way, so the whole
+    # output must match the composite probe VTK runs when `categorical` is off
+    lower = pv.ImageData(dimensions=(6, 6, 6), spacing=(0.2,) * 3, origin=(-0.6,) * 3)
+    upper = pv.ImageData(dimensions=(6, 6, 6), spacing=(0.2,) * 3, origin=(-0.1,) * 3)
+    for index, block in enumerate((lower, upper)):
+        block.point_data['labels'] = np.full(block.n_points, 100.0 * index)
+    target = pv.MultiBlock([lower, upper])
+    mesh = pv.PolyData(np.random.default_rng(0).random((200, 3)) * 1.4 - 0.7)
+
+    expected = mesh.sample(target, **kwargs)
+    merged = mesh.sample(target, categorical=True, **kwargs)
+
+    assert sorted(merged.point_data.keys()) == sorted(expected.point_data.keys())
+    assert sorted(merged.cell_data.keys()) == sorted(expected.cell_data.keys())
+    assert merged['labels'].any()
+    # Interpolating a constant is exact only to rounding, but the masks and ghosts are
+    for name in expected.point_data:
+        assert np.allclose(merged.point_data[name], expected.point_data[name]), name
+    for name in expected.cell_data:
+        assert np.array_equal(merged.cell_data[name], expected.cell_data[name]), name
+    assert np.array_equal(merged['vtkValidPointMask'], expected['vtkValidPointMask'])
+
+
+@pytest.fixture
+def side_by_side_blocks():
+    """Two blocks a probe of [5, 15, 25] hits in turn, with a constant `common` array."""
+    lower = pv.ImageData(dimensions=(11, 11, 1), spacing=(1.0, 1.0, 1.0))
+    upper = pv.ImageData(dimensions=(11, 11, 1), origin=(10.0, 0.0, 0.0), spacing=(1.0, 1.0, 1.0))
+    lower['common'] = np.zeros(lower.n_points)
+    upper['common'] = np.ones(upper.n_points)
+    for block in (lower, upper):
+        block.set_active_scalars('common')
+    return lower, upper
+
+
+@pytest.fixture
+def side_by_side_probe():
+    """Probe points inside the lower block, inside the upper block, and outside both."""
+    return pv.PolyData([[5.0, 5.0, 0.0], [15.0, 5.0, 0.0], [25.0, 5.0, 0.0]])
+
+
+@pytest.mark.parametrize('on_upper', [True, False])
+def test_sample_composite_categorical_drops_partial_arrays(
+    side_by_side_blocks, side_by_side_probe, on_upper
+):
+    lower, upper = side_by_side_blocks
+    block = upper if on_upper else lower
+    block['partial'] = np.zeros(block.n_points)
+
+    merged = side_by_side_probe.sample(pv.MultiBlock([lower, upper]), categorical=True)
+
+    assert 'partial' not in merged.point_data
+    assert np.array_equal(merged['common'], [0.0, 1.0, 0.0])
+    assert np.array_equal(merged['vtkValidPointMask'], [1, 1, 0])
+
+
+@pytest.mark.parametrize(
+    ('lower_array', 'upper_array'),
+    [
+        (np.zeros((121, 3)), np.ones(121)),
+        (np.full(121, 2.75), np.full(121, 7, dtype=np.int32)),
+    ],
+    ids=['components', 'dtype'],
+)
+def test_sample_composite_categorical_drops_mismatched_arrays(
+    side_by_side_blocks, side_by_side_probe, lower_array, upper_array
+):
+    lower, upper = side_by_side_blocks
+    lower['mismatched'] = lower_array
+    upper['mismatched'] = upper_array
+    target = pv.MultiBlock([lower, upper])
+
+    merged = side_by_side_probe.sample(target, categorical=True)
+
+    # VTK keeps an array only where every block agrees on its components and type
+    assert sorted(merged.point_data.keys()) == sorted(
+        side_by_side_probe.sample(target).point_data.keys()
+    )
+    assert 'mismatched' not in merged.point_data
+
+
+def test_sample_empty_composite_categorical(categorical_probe):
+    result = categorical_probe.sample(pv.MultiBlock(), categorical=True)
+
+    assert result.n_points == categorical_probe.n_points
+    assert not np.any(result['vtkValidPointMask'])
+
+
+@pytest.mark.parametrize(
+    'mesh',
+    [pv.PolyData(), pv.PointSet(np.array([[0.0, 0.0, 0.0], [9.0, 9.0, 9.0]]))],
+    ids=['empty', 'pointset'],
+)
+def test_sample_composite_categorical_without_ghost_arrays(mesh, categorical_target):
+    target = pv.MultiBlock([categorical_target, categorical_target.copy()])
+
+    result = mesh.sample(target, categorical=True)
+
+    assert result.n_points == mesh.n_points
+    assert 'labels' in result.point_data
+
+
+@pytest.mark.parametrize('as_composite', [True, False])
+def test_sample_categorical_no_point_scalars_raises(categorical_probe, as_composite):
+    target = pv.Sphere(theta_resolution=10, phi_resolution=10).delaunay_3d()
+    target.cell_data['labels'] = np.ones(target.n_cells)
+    subject = "block 'Block-00'" if as_composite else 'target'
+    target = pv.MultiBlock([target]) if as_composite else target
+
+    match = f'Categorical sampling requires single-component point scalars on the {subject}'
+    with pytest.raises(pv.MissingDataError, match=re.escape(match)):
+        categorical_probe.sample(target, categorical=True)
+
+
+def test_sample_categorical_string_scalars_raise(categorical_probe, categorical_target):
+    categorical_target.clear_point_data()
+    categorical_target.point_data['names'] = ['a'] * categorical_target.n_points
+
+    match = 'Categorical sampling requires single-component point scalars on the target'
+    with pytest.raises(pv.MissingDataError, match=match):
+        categorical_probe.sample(categorical_target, categorical=True)
+
+
+def test_sample_categorical_activates_the_only_candidate(categorical_probe, categorical_target):
+    categorical_target.point_data.active_scalars_name = None
+
+    result = categorical_probe.sample(categorical_target, categorical=True)
+
+    sampled = result['labels'][result['vtkValidPointMask'] == 1]
+    assert sampled.size
+    assert np.isin(sampled, categorical_target['labels']).all()
+    assert categorical_target.point_data.active_scalars_name is None
+
+
+def test_sample_categorical_ambiguous_scalars_raises(categorical_probe, categorical_target):
+    categorical_target.point_data['other'] = np.ones(categorical_target.n_points)
+    categorical_target.point_data.active_scalars_name = None
+
+    match = re.escape("Make one of ['labels', 'other'] active")
+    with pytest.raises(pv.AmbiguousDataError, match=match):
+        categorical_probe.sample(categorical_target, categorical=True)
+
+
+def test_sample_non_dataset_target_raises(categorical_probe):
+    match = 'Sampling target must be a dataset or a composite of datasets, got NoneType.'
+    with pytest.raises(TypeError, match=re.escape(match)):
+        categorical_probe.sample(None)
+
+
+def test_sample_categorical_multi_component_raises(categorical_probe):
+    target = pv.Sphere(theta_resolution=10, phi_resolution=10).delaunay_3d()
+    target.point_data['vectors'] = np.ones((target.n_points, 3))
+    target.point_data.active_scalars_name = 'vectors'
+
+    match = "active point scalars 'vectors' have 3 components"
+    with pytest.raises(ValueError, match=match):
+        categorical_probe.sample(target, categorical=True)
 
 
 def test_sample_composite():

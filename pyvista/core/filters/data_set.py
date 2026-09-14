@@ -3523,6 +3523,9 @@ class DataSetFilters(DataObjectFilters):
         discretized FEM or CFD simulation, use
         :func:`pyvista.DataObjectFilters.sample` instead.
 
+        Non-numeric point arrays cannot be interpolated and are excluded from the
+        output with a warning.
+
         Parameters
         ----------
         target : pyvista.DataSet
@@ -3572,6 +3575,16 @@ class DataSetFilters(DataObjectFilters):
         pyvista.DataSet
             Interpolated dataset.  Return type matches input.
 
+        Raises
+        ------
+        TypeError
+            If ``target`` cannot be wrapped as a single dataset, such as a
+            :class:`~pyvista.MultiBlock`.
+
+        ValueError
+            If ``target`` has no points, or if ``strategy``, ``sharpness``, ``radius``
+            or ``n_points`` is out of range.
+
         See Also
         --------
         pyvista.DataObjectFilters.sample
@@ -3601,15 +3614,27 @@ class DataSetFilters(DataObjectFilters):
         >>> pl.show()
 
         """
-        # Must cast to UnstructuredGrid in some cases (e.g. vtkImageData/vtkRectilinearGrid)
-        # I believe the locator and the interpolator call `GetPoints` and not all mesh types
-        # have that method
         target_ = wrap(target)
-        target_ = (
-            target_.cast_to_unstructured_grid()
-            if isinstance(target_, (pv.ImageData, pv.RectilinearGrid))
-            else target_
-        )
+        if not isinstance(target_, pv.DataSet):
+            hint = (  # type: ignore[unreachable]
+                ' Merge its blocks with `MultiBlock.combine()`.'
+                if isinstance(target_, pv.MultiBlock)
+                else ''
+            )
+            msg = (
+                f'Interpolation target must be a single dataset, got '
+                f'{type(target_).__name__}.{hint}'
+            )
+            raise TypeError(msg)
+        if target_.n_points == 0:
+            msg = 'Interpolation target has no points to interpolate from.'
+            raise ValueError(msg)
+
+        # VTK clamps these silently
+        _validation.check_greater_than(sharpness, 1, name='sharpness', strict=False)
+        _validation.check_nonnegative(radius, name='radius')
+        if n_points is not None:
+            _validation.check_greater_than(n_points, 1, name='n_points', strict=False)
 
         gaussian_kernel = _vtk.vtkGaussianKernel()
         gaussian_kernel.SetSharpness(sharpness)
@@ -3619,15 +3644,17 @@ class DataSetFilters(DataObjectFilters):
             gaussian_kernel.SetNumberOfPoints(n_points)
             gaussian_kernel.SetKernelFootprintToNClosest()
 
-        locator = _vtk.vtkStaticPointLocator()
-        locator.SetDataSet(target_)
-        locator.BuildLocator()
+        target_, excluded = _drop_non_numeric_point_arrays(target_)
+        if dropped := excluded + _non_numeric_point_array_names(self):
+            warn_external(
+                'Non-numeric point arrays cannot be interpolated and are excluded from '
+                f'the output: {dropped}.'
+            )
 
         interpolator = _vtk.vtkPointInterpolator()
         interpolator.SetInputData(self)
-        interpolator.SetSourceData(target)
+        interpolator.SetSourceData(target_)
         interpolator.SetKernel(gaussian_kernel)
-        interpolator.SetLocator(locator)
         interpolator.SetNullValue(null_value)
         if strategy == 'null_value':
             interpolator.SetNullPointsStrategyToNullValue()
@@ -9454,3 +9481,35 @@ def _swap_axes(vectors, values):
     elif np.isclose(values[1], values[2]):
         _swap(1, 2)
     return vectors
+
+
+def _non_numeric_point_array_indices(dataset: DataSet) -> list[int]:
+    """Return the indices of the point arrays which hold no numeric values."""
+    attributes = dataset.point_data.VTKObject
+    # GetArray is None for arrays which hold no numeric values, such as string arrays
+    return [
+        index
+        for index in range(attributes.GetNumberOfArrays())
+        if attributes.GetArray(index) is None
+    ]
+
+
+def _non_numeric_point_array_names(dataset: DataSet) -> list[str]:
+    """Return the names of the point arrays which hold no numeric values."""
+    attributes = dataset.point_data.VTKObject
+    return [
+        attributes.GetAbstractArray(index).GetName() or '<unnamed>'
+        for index in _non_numeric_point_array_indices(dataset)
+    ]
+
+
+def _drop_non_numeric_point_arrays(dataset: _DataSetType) -> tuple[_DataSetType, list[str]]:
+    """Return ``dataset`` without its non-numeric point arrays, and the names of those arrays."""
+    indices = _non_numeric_point_array_indices(dataset)
+    if not indices:
+        return dataset, []
+    names = _non_numeric_point_array_names(dataset)
+    filtered = dataset.copy(deep=False)
+    for index in reversed(indices):
+        filtered.point_data.VTKObject.RemoveArray(index)
+    return filtered, names
