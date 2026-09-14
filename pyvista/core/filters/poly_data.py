@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import cast
+from typing import get_args
 from typing import overload
 
 import numpy as np
@@ -21,7 +22,9 @@ from pyvista.core.errors import PyVistaFutureWarning
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
+from pyvista.core.utilities.arrays import CellLiteral
 from pyvista.core.utilities.arrays import FieldAssociation
+from pyvista.core.utilities.arrays import PointLiteral
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
 from pyvista.core.utilities.arrays import set_default_active_scalars
@@ -47,6 +50,15 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core._dataset_types import _PolyDataType
     from pyvista.plotting._typing import ColorLike
     from pyvista.plotting.plotter import _ShowReturnType
+
+_BooleanOperationOptions = Literal['union', 'intersection', 'difference']
+_CurvatureOptions = Literal['mean', 'gaussian', 'maximum', 'minimum']
+_BandedScalarModeOptions = Literal['value', 'index']
+# VTK numbers each strategy in the order the options are listed here
+_ExtrusionOptions = Literal['boundary_edges', 'all_edges']
+_CappingOptions = Literal[
+    'intersection', 'minimum_distance', 'maximum_distance', 'average_distance'
+]
 
 
 @abstract_class
@@ -101,7 +113,7 @@ class PolyDataFilters(DataSetFilters):
 
     def _boolean(  # type: ignore[misc]
         self: PolyData,
-        btype: Literal['union', 'intersection', 'difference'],
+        btype: _BooleanOperationOptions,
         other_mesh: PolyData,
         *,
         tolerance: float,
@@ -109,7 +121,7 @@ class PolyDataFilters(DataSetFilters):
     ) -> PolyData:
         """Perform boolean operation."""
         _validation.check_contains(
-            ['union', 'intersection', 'difference'], must_contain=btype, name='btype'
+            get_args(_BooleanOperationOptions), must_contain=btype, name='btype'
         )
         _validation.check_instance(other_mesh, pv.PolyData, name='Input mesh')
         if self.n_points == other_mesh.n_points and np.allclose(self.points, other_mesh.points):
@@ -376,10 +388,12 @@ class PolyDataFilters(DataSetFilters):
 
     # fmt: off
     # ruff: disable[E501]
-    @overload  # merging polydata
-    def __add__(self: PolyData, dataset: PolyData | _vtk.vtkPolyData | Sequence[PolyData | _vtk.vtkPolyData]) -> PolyData: ...  # type: ignore[misc]
-    @overload  # merging anything else
-    def __add__(self: PolyData, dataset: DataSet | _vtk.vtkDataSet | MultiBlock | Sequence[DataSet | _vtk.vtkDataSet]) -> PolyData | UnstructuredGrid: ...  # type: ignore[misc]
+    @overload  # a composite, whose blocks decide
+    def __add__(self: PolyData, dataset: MultiBlock) -> PolyData | UnstructuredGrid: ...  # type: ignore[misc]
+    @overload  # polydata
+    def __add__(self: PolyData, dataset: PolyData | Sequence[PolyData]) -> PolyData: ...  # type: ignore[misc, overload-overlap]
+    @overload  # anything else
+    def __add__(self: PolyData, dataset: DataSet | _vtk.vtkDataSet | Sequence[DataSet | _vtk.vtkDataSet]) -> UnstructuredGrid: ...  # type: ignore[misc]
     # ruff: enable[E501]
     # fmt: on
     def __add__(  # type: ignore[misc]
@@ -741,7 +755,7 @@ class PolyDataFilters(DataSetFilters):
 
     def curvature(  # type: ignore[misc]
         self: PolyData,
-        curv_type: Literal['mean', 'gaussian', 'maximum', 'minimum'] = 'mean',
+        curv_type: _CurvatureOptions = 'mean',
         *,
         progress_bar: bool = False,
     ) -> NumpyArray[float]:
@@ -783,7 +797,11 @@ class PolyDataFilters(DataSetFilters):
         array([0.20587616, 0.06747695, ..., 0.11781171, 0.15988467])
 
         """
+        _validation.check_instance(curv_type, str, name='curv_type')
         curvature_type = curv_type.lower()
+        _validation.check_contains(
+            get_args(_CurvatureOptions), must_contain=curvature_type, name='curv_type'
+        )
 
         # Create curve filter and compute curvature
         curvefilter = _vtk.vtkCurvatures()
@@ -796,11 +814,8 @@ class PolyDataFilters(DataSetFilters):
             curvefilter.SetCurvatureTypeToGaussian()
         elif curvature_type == 'maximum':
             curvefilter.SetCurvatureTypeToMaximum()
-        elif curvature_type == 'minimum':
-            curvefilter.SetCurvatureTypeToMinimum()
         else:
-            msg = '``curv_type`` must be either "Mean", "Gaussian", "Maximum", or "Minimum".'
-            raise ValueError(msg)
+            curvefilter.SetCurvatureTypeToMinimum()
         _update_alg(curvefilter, progress_bar=progress_bar, message='Computing Curvature')
 
         # Compute and return curvature
@@ -809,7 +824,7 @@ class PolyDataFilters(DataSetFilters):
 
     def plot_curvature(  # type: ignore[misc]
         self: PolyData,
-        curv_type: Literal['mean', 'gaussian', 'maximum', 'minimum'] = 'mean',
+        curv_type: _CurvatureOptions = 'mean',
         **kwargs,
     ) -> _ShowReturnType:
         """Plot the curvature.
@@ -917,8 +932,8 @@ class PolyDataFilters(DataSetFilters):
         n_iter: int = 20,
         relaxation_factor: float = 0.01,
         convergence: float = 0.0,
-        edge_angle: float = 15,
-        feature_angle: float = 45,
+        edge_angle: float = 15.0,
+        feature_angle: float = 45.0,
         boundary_smoothing: bool = True,
         feature_smoothing: bool = False,
         inplace: bool = False,
@@ -1423,7 +1438,7 @@ class PolyDataFilters(DataSetFilters):
         n_sides: int = 20,
         radius_factor: float = 10.0,
         absolute: bool = False,
-        preference: Literal['point', 'cell'] = 'point',
+        preference: PointLiteral | CellLiteral = 'point',
         inplace: bool = False,
         progress_bar: bool = False,
     ) -> PolyData:
@@ -3575,7 +3590,7 @@ class PolyDataFilters(DataSetFilters):
         factor: float = 2.0,
         normal: VectorLike[float] | None = None,
         tcoords: bool | str = False,
-        preference: Literal['point', 'cell'] = 'point',
+        preference: PointLiteral | CellLiteral = 'point',
         progress_bar: bool = False,
     ) -> PolyData:
         """Create a ribbon of the lines in this dataset.
@@ -3652,7 +3667,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetWidth(width)
         if normal is not None:
             alg.SetUseDefaultNormal(True)
-            alg.SetDefaultNormal(np.asarray(normal, dtype=float).tolist())
+            alg.SetDefaultNormal(*_validation.validate_array3(normal, name='normal'))
         alg.SetAngle(angle)
         if scalars is not None:
             alg.SetVaryWidth(True)
@@ -3785,7 +3800,7 @@ class PolyDataFilters(DataSetFilters):
         dradius: float = 0.0,
         angle: float = 360.0,
         capping: bool | None = None,
-        rotation_axis: VectorLike[float] = (0, 0, 1),
+        rotation_axis: VectorLike[float] = (0.0, 0.0, 1.0),
         progress_bar: bool = False,
     ) -> PolyData:
         """Sweep polygonal data creating "skirt" from free edges/lines, and lines from vertices.
@@ -3937,10 +3952,8 @@ class PolyDataFilters(DataSetFilters):
         direction: VectorLike[float],
         trim_surface: PolyData,
         *,
-        extrusion: Literal['boundary_edges', 'all_edges'] = 'boundary_edges',
-        capping: Literal[
-            'intersection', 'minimum_distance', 'maximum_distance', 'average_distance'
-        ] = 'intersection',
+        extrusion: _ExtrusionOptions = 'boundary_edges',
+        capping: _CappingOptions = 'intersection',
         inplace: bool = False,
         progress_bar: bool = False,
     ) -> PolyData:
@@ -4004,27 +4017,20 @@ class PolyDataFilters(DataSetFilters):
         """
         extrusion_direction = _validation.validate_array3(direction, name='direction')
 
-        extrusions = {'boundary_edges': 0, 'all_edges': 1}
         _validation.check_instance(extrusion, str, name='extrusion')
-        _validation.check_contains(list(extrusions), must_contain=extrusion, name='extrusion')
-        extrusion_strategy = extrusions[extrusion]
+        extrusions = get_args(_ExtrusionOptions)
+        _validation.check_contains(extrusions, must_contain=extrusion, name='extrusion')
 
-        cappings = {
-            'intersection': 0,
-            'minimum_distance': 1,
-            'maximum_distance': 2,
-            'average_distance': 3,
-        }
         _validation.check_instance(capping, str, name='capping')
-        _validation.check_contains(list(cappings), must_contain=capping, name='capping')
-        capping_strategy = cappings[capping]
+        cappings = get_args(_CappingOptions)
+        _validation.check_contains(cappings, must_contain=capping, name='capping')
 
         alg = _vtk.vtkTrimmedExtrusionFilter()
         alg.SetInputData(self)
         alg.SetExtrusionDirection(*extrusion_direction)
         alg.SetTrimSurfaceData(trim_surface)
-        alg.SetExtrusionStrategy(extrusion_strategy)
-        alg.SetCappingStrategy(capping_strategy)
+        alg.SetExtrusionStrategy(extrusions.index(extrusion))
+        alg.SetCappingStrategy(cappings.index(capping))
         _update_alg(alg, progress_bar=progress_bar, message='Extruding with trimming')
         output = wrap(alg.GetOutput())
         if inplace:
@@ -4296,7 +4302,7 @@ class PolyDataFilters(DataSetFilters):
         component: int = 0,
         clip_tolerance: float = 1e-6,
         generate_contour_edges: bool = True,
-        scalar_mode: Literal['value', 'index'] = 'value',
+        scalar_mode: _BandedScalarModeOptions = 'value',
         clipping: bool = True,
         progress_bar: bool = False,
     ) -> PolyData | tuple[PolyData, PolyData]:
@@ -4402,7 +4408,7 @@ class PolyDataFilters(DataSetFilters):
 
         """
         _validation.check_contains(
-            ['value', 'index'], must_contain=scalar_mode, name='scalar_mode'
+            get_args(_BandedScalarModeOptions), must_contain=scalar_mode, name='scalar_mode'
         )
         if scalars is None:
             set_default_active_scalars(self)
