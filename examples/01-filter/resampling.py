@@ -87,12 +87,12 @@ mesh.plot(scalars='shearstress', cpos='zy')
 # %%
 # Resample it. The spacing is estimated from the mesh's own cells, so the result
 # keeps the resolution of the input.
-volume = mesh.resample_to_image()
+volume = mesh.resample_to_image(mark_blank=True)
 volume
 
 # %%
-# The voxels outside the vessels are blanked, so they are transparent when the
-# image is volume rendered.
+# ``mark_blank`` hides the voxels outside the vessels, so they are transparent
+# when the image is volume rendered.
 volume.plot(volume=True, scalars='shearstress', cpos='zy')
 
 # %%
@@ -103,7 +103,9 @@ volume.plot(volume=True, scalars='shearstress', cpos='zy')
 # data survives that, so ``node_value`` is plotted rather than the cell array.
 cloud = pv.PointSet(mesh.points)
 cloud['node_value'] = mesh['node_value']
-cloud.resample_to_image(spacing=2.0).plot(volume=True, scalars='node_value', cpos='zy')
+cloud.resample_to_image(spacing=2.0, mark_blank=True).plot(
+    volume=True, scalars='node_value', cpos='zy'
+)
 
 # %%
 # .. tags:: filter
