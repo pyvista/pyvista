@@ -4850,6 +4850,31 @@ def test_resample_to_image_blanks_invalid_points(sphere, tetbeam):
             assert np.array_equal(unmarked['vtkValidPointMask'], image['vtkValidPointMask'])
 
 
+@pytest.mark.parametrize(('method', 'kwargs'), [('sample', {}), ('interpolate', {'radius': 0.05})])
+def test_resample_to_image_null_value(sphere, method, kwargs):
+    sphere.clear_data()
+    sphere['point_scalars'] = sphere.points[:, 0]
+    dims = (20, 20, 20)
+    shared = dict(dimensions=dims, method=method, **kwargs)
+
+    plain = sphere.resample_to_image(**shared)
+    invalid = plain['vtkValidPointMask'] == 0
+    assert invalid.any()
+    assert np.array_equal(plain['point_scalars'][invalid], np.zeros(invalid.sum()))
+
+    # Both methods fill the empty voxels, and leave the rest alone
+    filled = sphere.resample_to_image(null_value=-99.0, **shared)
+    assert np.array_equal(filled['point_scalars'][invalid], np.full(invalid.sum(), -99.0))
+    assert np.array_equal(filled['point_scalars'][~invalid], plain['point_scalars'][~invalid])
+
+    # The mask and the blanking flags are not values to fill
+    blanked = sphere.resample_to_image(null_value=-99.0, mark_blank=True, **shared)
+    hidden = pv._vtk.vtkDataSetAttributes.HIDDENPOINT
+    ghost_name = pv._vtk.vtkDataSetAttributes.GhostArrayName()
+    assert np.array_equal(blanked['vtkValidPointMask'], plain['vtkValidPointMask'])
+    assert np.array_equal(blanked.point_data[ghost_name], np.where(invalid, hidden, 0))
+
+
 def test_resample_to_image_method_default(sphere, mocker: MockerFixture):
     from pyvista.core.filters import data_object
     from pyvista.core.filters import data_set

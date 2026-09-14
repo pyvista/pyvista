@@ -5890,6 +5890,7 @@ class DataObjectFilters:
         cell_length_percentile: float | None = None,
         cell_length_sample_size: int | None = None,
         method: Literal['sample', 'interpolate'] | None = None,
+        null_value: float | None = None,
         mark_blank: bool = False,
         tolerance: float | None = None,
         categorical: bool | None = None,
@@ -6044,10 +6045,17 @@ class DataObjectFilters:
             :meth:`~pyvista.DataObjectFilters.cell_data_to_point_data` on the input to
             keep it.
 
+        null_value : float, optional
+            Value given to the voxels which no value could be resampled for. Every
+            array of the output takes it, and zero is used by default. Both methods
+            accept it, though only ``method='interpolate'`` has it natively; under
+            ``method='sample'`` this filter fills the voxels itself.
+
         mark_blank : bool, default: False
             Hide the voxels which no value could be resampled for, by flagging them in a
-            ``'vtkGhostType'`` array. Every voxel is visible by default, and the blank
-            ones can be filtered with the ``'vtkValidPointMask'`` array instead.
+            ``'vtkGhostType'`` array. These are the voxels holding ``null_value``. Every
+            voxel is visible by default, and the blank ones can be filtered with the
+            ``'vtkValidPointMask'`` array instead.
 
         tolerance : float, optional
             Requires ``method='sample'``, and is forwarded to
@@ -6213,13 +6221,16 @@ class DataObjectFilters:
                 raise TypeError(msg)
 
         if chosen == 'sample':
-            return volume.sample(
+            sampled = volume.sample(
                 source,
                 tolerance=tolerance,
                 categorical=False if categorical is None else categorical,
                 mark_blank=mark_blank,
                 progress_bar=progress_bar,
             )
+            if null_value is not None:
+                _fill_null_values(sampled, null_value)
+            return sampled
         if dropped := [n for n in source.cell_data if not n.startswith('vtk')]:
             msg = (
                 f'Cell data {dropped} is dropped by `method={chosen!r}`'
@@ -6232,6 +6243,7 @@ class DataObjectFilters:
             radius=float(np.linalg.norm(volume.spacing)) / 2 if radius is None else radius,
             sharpness=2.0 if sharpness is None else sharpness,
             strategy='mask_points',
+            null_value=0.0 if null_value is None else null_value,
             progress_bar=progress_bar,
         )
         return _blank_invalid_points(interpolated) if mark_blank else interpolated
@@ -6755,6 +6767,14 @@ def _check_n_points(n_points: int, max_n_points: int | None, *, requested: bool)
             f'`max_n_points={max_n_points}`. Raise the limit or specify a coarser geometry.'
         )
         raise ValueError(msg)
+
+
+def _fill_null_values(image: ImageData, null_value: float) -> None:
+    """Give every array one value at the points the valid-point mask marks as empty."""
+    invalid = image.point_data[_VALID_POINT_MASK] == 0
+    for name, array in image.point_data.items():
+        if name not in (_VALID_POINT_MASK, _GHOST_ARRAY):
+            array[invalid] = null_value
 
 
 def _blank_invalid_points(image: ImageData) -> ImageData:
