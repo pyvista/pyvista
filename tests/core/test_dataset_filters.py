@@ -3585,6 +3585,106 @@ def test_interpolate():
     assert interp.n_arrays
 
 
+@pytest.mark.parametrize('cast', ['poly', 'unstructured', 'image', 'rectilinear', 'structured'])
+def test_interpolate_target_types(cast):
+    grid = pv.ImageData(dimensions=(5, 5, 5), spacing=(0.3, 0.3, 0.3), origin=(-0.6, -0.6, -0.6))
+    target = {
+        'poly': lambda: pv.PolyData(grid.points),
+        'unstructured': grid.cast_to_unstructured_grid,
+        'image': grid.copy,
+        'rectilinear': grid.cast_to_rectilinear_grid,
+        'structured': grid.cast_to_structured_grid,
+    }[cast]()
+    # A linear field interpolates to itself wherever the kernel finds neighbours
+    target.point_data['x'] = target.points[:, 0]
+    surf = pv.Sphere(theta_resolution=8, phi_resolution=8, radius=0.3)
+
+    interp = surf.interpolate(target, radius=0.5)
+
+    assert interp.n_points == surf.n_points
+    assert np.allclose(interp['x'], surf.points[:, 0], atol=0.05)
+
+
+def test_interpolate_point_array_target():
+    # A point array is wrapped, the same as it is by `sample`
+    points = np.random.default_rng(0).random((10, 3))
+    surf = pv.Sphere(theta_resolution=10, phi_resolution=10)
+
+    interp = surf.interpolate(points, radius=1.0)
+
+    assert interp.n_points == surf.n_points
+
+
+def test_interpolate_composite_target_raises():
+    target = pv.MultiBlock([pv.Sphere()])
+
+    match = 'Interpolation target must be a single dataset, got MultiBlock.'
+    with pytest.raises(TypeError, match=re.escape(match)):
+        pv.Sphere().interpolate(target)
+
+
+@pytest.mark.parametrize(
+    ('kwargs', 'match'),
+    [
+        ({'sharpness': 0.5}, 'sharpness values must all be greater than or equal to 1.'),
+        ({'radius': -1.0}, 'radius values must all be greater than or equal to 0.'),
+        ({'n_points': 0}, 'n_points values must all be greater than or equal to 1.'),
+    ],
+)
+def test_interpolate_kernel_range_raises(kwargs, match):
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.Sphere().interpolate(pv.Sphere(), **kwargs)
+
+
+def test_interpolate_empty_target_raises():
+    match = 'Interpolation target has no points to interpolate from.'
+    with pytest.raises(ValueError, match=match):
+        pv.Sphere().interpolate(pv.PolyData())
+
+
+def test_interpolate_excludes_string_arrays():
+    target = pv.Sphere(theta_resolution=10, phi_resolution=10)
+    target.point_data['values'] = np.arange(target.n_points, dtype=float)
+    target.point_data['labels'] = np.array(['a'] * target.n_points)
+    surf = pv.Sphere(theta_resolution=8, phi_resolution=8, radius=0.4)
+
+    match = re.escape("excluded from the output: ['labels'].")
+    with pytest.warns(UserWarning, match=match):
+        interp = surf.interpolate(target, radius=1.0)
+
+    assert 'values' in interp.point_data
+    assert 'labels' not in interp.point_data
+
+
+def test_interpolate_excludes_input_string_arrays():
+    target = pv.Sphere(theta_resolution=10, phi_resolution=10)
+    target.point_data['values'] = np.arange(target.n_points, dtype=float)
+    surf = pv.Sphere(theta_resolution=8, phi_resolution=8, radius=0.4)
+    surf.point_data['tag'] = np.array(['z'] * surf.n_points)
+
+    match = re.escape("excluded from the output: ['tag'].")
+    with pytest.warns(UserWarning, match=match):
+        interp = surf.interpolate(target, radius=1.0)
+
+    assert 'tag' not in interp.point_data
+
+
+def test_interpolate_excludes_unnamed_arrays():
+    target = pv.Sphere(theta_resolution=10, phi_resolution=10)
+    target.point_data['values'] = np.arange(target.n_points, dtype=float)
+    unnamed = _vtk.vtkStringArray()
+    unnamed.SetNumberOfValues(target.n_points)
+    target.point_data.VTKObject.AddArray(unnamed)
+    surf = pv.Sphere(theta_resolution=8, phi_resolution=8, radius=0.4)
+
+    match = re.escape("excluded from the output: ['<unnamed>'].")
+    with pytest.warns(UserWarning, match=match):
+        interp = surf.interpolate(target, radius=1.0)
+
+    assert 'values' in interp.point_data
+    assert target.point_data.VTKObject.GetNumberOfArrays() == 3
+
+
 def test_select_enclosed_points(uniform, hexbeam):
     surf = pv.Sphere(center=uniform.center, radius=uniform.length / 2.0)
     with pytest.warns(pv.PyVistaDeprecationWarning):

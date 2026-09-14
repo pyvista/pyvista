@@ -382,7 +382,7 @@ def test_title_pad_constrained_font_size(sphere):
 
 @pytest.mark.parametrize(('outline', 'fill'), [(True, False), (False, True)])
 def test_title_pad_boxed(sphere, outline: bool, fill: bool):
-    # A drawn box is sized without the padding, so the title would sit outside it
+    # A box grows to hold the padded title, so the padding survives the box
     sphere[KEY] = sphere.points[:, 2]
 
     pl = pv.Plotter()
@@ -396,7 +396,7 @@ def test_title_pad_boxed(sphere, outline: bool, fill: bool):
         background_color='grey',
     )
 
-    assert pl.scalar_bar.GetTitleTextProperty().GetLineOffset() == 0
+    assert pl.scalar_bar.GetTitleTextProperty().GetLineOffset() == -10
 
 
 @pytest.mark.parametrize(
@@ -669,6 +669,371 @@ def test_stacking_layouts_render(sphere, vertical: bool, layout):
             mapper=pl.mapper,
             **layout,
         )
+    pl.show()
+
+
+BOXES = [{'outline': True}, {'fill': True, 'background_color': 'grey'}]
+BOX_IDS = ['outline', 'fill']
+FIT_TITLE = 'Elevation (m)'
+
+
+def _box_edges(bar, window_size):
+    """Return the pixel edges of the box a scalar bar draws, as left, right, bottom, top."""
+    window_width, window_height = window_size
+    x, y = bar.GetPosition()
+    return (
+        x * window_width,
+        (x + bar.GetWidth()) * window_width,
+        y * window_height,
+        (y + bar.GetHeight()) * window_height,
+    )
+
+
+def _fitted_bar(plotter, sphere, *, vertical, box, **kwargs):
+    """Add one scalar bar that fits its box to its text."""
+    return plotter.add_scalar_bar(
+        FIT_TITLE,
+        vertical=vertical,
+        title_font_size=24,
+        label_font_size=24,
+        n_labels=5,
+        mapper=pv.DataSetMapper(sphere),
+        **box,
+        **kwargs,
+    )
+
+
+@pytest.mark.parametrize('box', BOXES, ids=BOX_IDS)
+@pytest.mark.parametrize('vertical', [True, False], ids=['vertical', 'horizontal'])
+def test_fit_box_encloses_the_title(sphere, vertical: bool, box):
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = _fitted_bar(pl, sphere, vertical=vertical, box=box)
+
+    dpi = pl.render_window.GetDPI()
+    left, right, bottom, top = _box_edges(bar, pl.window_size)
+    title_width = _title_width(bar.GetTitleTextProperty(), FIT_TITLE, dpi)
+
+    if vertical:
+        # The title is centered on the box, so the box has to be at least as wide
+        assert right - left >= title_width
+        assert _label_reach(bar, dpi, pl.window_size[0]) <= right
+        # The title is seated back inside the box rather than lifted clear of it
+        assert bar.GetTitleTextProperty().GetLineOffset() > 0
+    else:
+        label_height = _label_size(bar, bar.GetLabelTextProperty(), dpi)[1]
+        title_height = _title_height(bar.GetTitleTextProperty(), FIT_TITLE, dpi)
+        ramp = bar.GetBarRatio() * (top - bottom)
+        assert top - bottom >= ramp + label_height + title_height
+
+
+@pytest.mark.parametrize('box', BOXES, ids=BOX_IDS)
+@pytest.mark.parametrize('vertical', [True, False], ids=['vertical', 'horizontal'])
+def test_fit_box_keeps_the_ramp(sphere, vertical: bool, box):
+    # The box grows around the ramp rather than taking its size from it
+    sphere[KEY] = sphere.points[:, 2]
+
+    def ramp_size(**sizing):
+        pl = pv.Plotter()
+        pl.add_mesh(sphere, show_scalar_bar=False)
+        bar = pl.add_scalar_bar(
+            FIT_TITLE,
+            vertical=vertical,
+            title_font_size=24,
+            label_font_size=24,
+            n_labels=5,
+            mapper=pv.DataSetMapper(sphere),
+            **box,
+            **sizing,
+        )
+        window_width, window_height = pl.window_size
+        across = bar.GetWidth() * window_width if vertical else bar.GetHeight() * window_height
+        size = bar.GetBarRatio() * across
+        pl.close()
+        return size
+
+    config = pv.global_theme.colorbar_vertical if vertical else pv.global_theme.colorbar_horizontal
+    pinned = {'width': config.width, 'height': config.height}
+    assert ramp_size() == pytest.approx(ramp_size(**pinned), abs=1.0)
+
+
+@pytest.mark.parametrize('box', BOXES, ids=BOX_IDS)
+def test_fit_box_keeps_the_title_pad(sphere, box):
+    # A fitted box grows to hold the padding, so the title is padded after all
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = _fitted_bar(pl, sphere, vertical=False, box=box, title_pad=0.5)
+
+    assert bar.GetTitleTextProperty().GetLineOffset() == -12
+
+
+@pytest.mark.parametrize('vertical', [True, False], ids=['vertical', 'horizontal'])
+def test_fit_box_without_a_box(sphere, vertical: bool):
+    # There is nothing to fit when no box is drawn
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = pl.add_scalar_bar(
+        FIT_TITLE,
+        vertical=vertical,
+        title_font_size=24,
+        label_font_size=24,
+        mapper=pv.DataSetMapper(sphere),
+    )
+
+    config = pl.theme.colorbar_vertical if vertical else pl.theme.colorbar_horizontal
+    assert bar.GetWidth() == pytest.approx(config.width)
+    assert bar.GetHeight() == pytest.approx(config.height)
+
+
+@pytest.mark.parametrize('box', BOXES, ids=BOX_IDS)
+@pytest.mark.parametrize(
+    'sizing', [{'width': 0.3}, {'height': 0.3}, {'width': 0.3, 'height': 0.3}]
+)
+def test_fit_box_keeps_a_given_size(sphere, sizing, box):
+    # A box asked for a size of its own is left at that size
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = pl.add_scalar_bar(
+        FIT_TITLE,
+        vertical=True,
+        title_font_size=24,
+        label_font_size=24,
+        mapper=pv.DataSetMapper(sphere),
+        **box,
+        **sizing,
+    )
+
+    for name, given in sizing.items():
+        assert getattr(bar, f'Get{name.capitalize()}')() == pytest.approx(given)
+
+
+@pytest.mark.parametrize('window_size', [[400, 300], [1400, 1000]], ids=['small', 'large'])
+@pytest.mark.parametrize('vertical', [True, False], ids=['vertical', 'horizontal'])
+def test_fit_box_holds_at_any_window_size(sphere, vertical: bool, window_size):
+    # The text is measured in pixels while the box is a fraction of the window, so the
+    # fit has to be taken from the window it is drawn in
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=window_size)
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = _fitted_bar(pl, sphere, vertical=vertical, box={'outline': True})
+
+    dpi = pl.render_window.GetDPI()
+    left, right, bottom, top = _box_edges(bar, pl.window_size)
+    if vertical:
+        assert right - left >= _title_width(bar.GetTitleTextProperty(), FIT_TITLE, dpi)
+        assert _label_reach(bar, dpi, window_size[0]) <= right
+    else:
+        label_height = _label_size(bar, bar.GetLabelTextProperty(), dpi)[1]
+        title_height = _title_height(bar.GetTitleTextProperty(), FIT_TITLE, dpi)
+        assert top - bottom >= bar.GetBarRatio() * (top - bottom) + label_height + title_height
+
+
+@pytest.mark.parametrize('vertical', [True, False], ids=['vertical', 'horizontal'])
+def test_fit_box_hugs_the_text_not_the_size_given(sphere, vertical: bool):
+    # The size a bar is given is a fraction of the window while its text is not, so on a
+    # large window a box that kept that size would stand well off the text it holds
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter()
+    config = pl.theme.colorbar_vertical if vertical else pl.theme.colorbar_horizontal
+    generous = 0.5
+    if vertical:
+        config.width = generous
+    else:
+        config.height = generous
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = _fitted_bar(pl, sphere, vertical=vertical, box={'outline': True})
+
+    assert (bar.GetWidth() if vertical else bar.GetHeight()) < generous
+
+
+@pytest.mark.parametrize('vertical', [True, False], ids=['vertical', 'horizontal'])
+def test_fit_box_refits_a_resized_window(sphere, vertical: bool):
+    # The box is a fraction of the window and the text is not, so a narrower window
+    # leaves the text outside a box that is not measured again
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=[900, 700])
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = _fitted_bar(pl, sphere, vertical=vertical, box={'outline': True})
+    pl.screenshot(return_img=True)
+
+    # A vertical box is squeezed by a narrower window, a horizontal one by a shorter
+    pl.window_size = [400, 700] if vertical else [900, 260]
+    pl.screenshot(return_img=True)
+
+    dpi = pl.render_window.GetDPI()
+    left, right, bottom, top = _box_edges(bar, pl.window_size)
+    if vertical:
+        assert right - left >= _title_width(bar.GetTitleTextProperty(), FIT_TITLE, dpi)
+        assert _label_reach(bar, dpi, pl.window_size[0]) <= right
+    else:
+        label_height = _label_size(bar, bar.GetLabelTextProperty(), dpi)[1]
+        title_height = _title_height(bar.GetTitleTextProperty(), FIT_TITLE, dpi)
+        assert top - bottom >= bar.GetBarRatio() * (top - bottom) + label_height + title_height
+
+
+@pytest.mark.parametrize('vertical', [True, False], ids=['vertical', 'horizontal'])
+def test_fit_box_fits_an_interactive_bar(sphere, vertical: bool):
+    # An interactive bar is drawn from its widget's representation, so the box the fit
+    # measured is the one the representation has to hold
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = _fitted_bar(pl, sphere, vertical=vertical, box={'outline': True}, interactive=True)
+    pl.screenshot(return_img=True)
+
+    dpi = pl.render_window.GetDPI()
+    left, right, bottom, top = _box_edges(bar, pl.window_size)
+    label_height = _label_size(bar, bar.GetLabelTextProperty(), dpi)[1]
+    title_height = _title_height(bar.GetTitleTextProperty(), FIT_TITLE, dpi)
+    if vertical:
+        assert right - left >= _title_width(bar.GetTitleTextProperty(), FIT_TITLE, dpi)
+        assert _label_reach(bar, dpi, pl.window_size[0]) <= right
+    else:
+        ramp = bar.GetBarRatio() * (top - bottom)
+        assert top - bottom >= ramp + label_height + title_height
+
+
+@pytest.mark.parametrize('vertical', [True, False], ids=['vertical', 'horizontal'])
+def test_fit_box_keeps_a_size_set_on_the_actor(sphere, vertical: bool):
+    # The bar is sized after it is added, as LookupTable.plot does, so that is the size
+    # it asks for and the one the next fit has to measure against
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=[900, 700])
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = _fitted_bar(pl, sphere, vertical=vertical, box={})
+    bar.SetPosition(0.03, 0.1)
+    bar.SetPosition2(0.6, 0.7)
+    pl.screenshot(return_img=True)
+
+    pl.window_size = [500, 700]
+    pl.screenshot(return_img=True)
+
+    assert bar.GetPosition() == pytest.approx((0.03, 0.1))
+    assert (bar.GetWidth(), bar.GetHeight()) == pytest.approx((0.6, 0.7))
+
+
+@pytest.mark.parametrize('box', BOXES, ids=BOX_IDS)
+def test_fit_box_fits_a_size_set_on_the_actor(sphere, box):
+    # A box around a bar that was sized after it was added is fitted to the text inside
+    # that size, not inside the one the bar was added with
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=[900, 700])
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = _fitted_bar(pl, sphere, vertical=True, box=box)
+    pl.screenshot(return_img=True)
+    fitted_height = bar.GetHeight()
+
+    bar.SetPosition2(bar.GetWidth(), 0.3)
+    pl.window_size = [500, 700]
+    pl.screenshot(return_img=True)
+
+    assert bar.GetHeight() < fitted_height
+    dpi = pl.render_window.GetDPI()
+    left, right, _bottom, _top = _box_edges(bar, pl.window_size)
+    assert right - left >= _title_width(bar.GetTitleTextProperty(), FIT_TITLE, dpi)
+    assert _label_reach(bar, dpi, pl.window_size[0]) <= right
+
+
+def test_fit_box_follows_a_renamed_bar(sphere):
+    # The box is fitted around the title, so renaming the bar has to carry the fit over
+    # to the new title and measure it again
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = _fitted_bar(pl, sphere, vertical=True, box={'outline': True})
+    pl.screenshot(return_img=True)
+    width = bar.GetWidth()
+
+    pl.scalar_bars.update_title(FIT_TITLE, 'A very much longer title')
+    pl.render()
+
+    assert FIT_TITLE not in pl.scalar_bars._scalar_bar_fits
+    assert pl.scalar_bars._scalar_bar_fits['A very much longer title']['title'] == (
+        'A very much longer title'
+    )
+    # The longer title needs a wider box than the one it replaced
+    assert bar.GetWidth() > width
+
+
+@pytest.mark.parametrize('gone', ['_scalar_bar_actors', '_scalar_bar_fits'])
+def test_fit_box_ignores_a_bar_that_is_gone(sphere, gone: str):
+    # The observer is dropped with the bar, so it only ever fires for a bar it can
+    # still measure, and a render that finds neither must pass the fit by
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    _fitted_bar(pl, sphere, vertical=True, box={'outline': True})
+    getattr(pl.scalar_bars, gone).pop(FIT_TITLE)
+
+    pl.screenshot(return_img=True)
+
+
+def test_fit_box_stops_fitting_without_a_render_window(sphere):
+    # A closed plotter has no window to drop the observer from
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    _fitted_bar(pl, sphere, vertical=True, box={'outline': True})
+    pl.close()
+
+    pl.scalar_bars.clear()
+
+    assert not pl.scalar_bars._scalar_bar_fits
+
+
+def test_fit_box_stops_fitting_a_removed_bar(sphere):
+    # The observer holds the bar, so it has to go when the bar does
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    _fitted_bar(pl, sphere, vertical=True, box={'outline': True})
+    assert pl.scalar_bars._scalar_bar_fits
+
+    pl.remove_scalar_bar(FIT_TITLE)
+
+    assert not pl.scalar_bars._scalar_bar_fits
+
+
+# A baseline is capped at 400 pixels and compared against the render as it is, so a
+# window wider than that cannot be image tested
+@pytest.mark.parametrize('window_size', [[320, 280], [400, 300]], ids=['narrow', 'wide'])
+@pytest.mark.usefixtures('verify_image_cache')
+def test_fit_box_window_size_render(sphere, window_size):
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=window_size)
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    _fitted_bar(pl, sphere, vertical=True, box={'outline': True})
+    pl.show()
+
+
+@pytest.mark.parametrize('box', BOXES, ids=BOX_IDS)
+@pytest.mark.parametrize('vertical', [True, False], ids=['vertical', 'horizontal'])
+@pytest.mark.usefixtures('verify_image_cache')
+def test_fit_box_render(sphere, vertical: bool, box):
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    _fitted_bar(pl, sphere, vertical=vertical, box=box)
     pl.show()
 
 
