@@ -6045,28 +6045,28 @@ class DataObjectFilters:
             keep it.
 
         tolerance : float, optional
-            Keyword forwarded to :meth:`~pyvista.DataObjectFilters.sample`, and
-            requires ``method='sample'``.
+            Requires ``method='sample'``, and is forwarded to
+            :meth:`~pyvista.DataObjectFilters.sample`.
             Tolerance used when locating the cell a voxel is sampled from. The tolerance
             computed by :vtk:`vtkResampleWithDataSet` is used by default.
 
         categorical : bool, optional
-            Keyword forwarded to :meth:`~pyvista.DataObjectFilters.sample`, and
-            requires ``method='sample'``.
+            Requires ``method='sample'``, and is forwarded to
+            :meth:`~pyvista.DataObjectFilters.sample`.
             Control whether the source point data is to be treated as categorical. If
             ``True``, the resampled point data will be determined by a nearest neighbor
             interpolation scheme. ``False`` by default.
 
         radius : float, optional
-            Keyword forwarded to :meth:`~pyvista.DataSetFilters.interpolate`, and
-            requires ``method='interpolate'``.
+            Requires ``method='interpolate'``, and is forwarded to
+            :meth:`~pyvista.DataSetFilters.interpolate`.
             Distance from a voxel's center within which the input's points contribute to
             it. Half a voxel's diagonal is used by default, which is the furthest any
             point inside a voxel can be from its center.
 
         sharpness : float, optional
-            Keyword forwarded to :meth:`~pyvista.DataSetFilters.interpolate`, and
-            requires ``method='interpolate'``.
+            Requires ``method='interpolate'``, and is forwarded to
+            :meth:`~pyvista.DataSetFilters.interpolate`.
             Sharpness of the Gaussian interpolation kernel, ``2.0`` by default. As this
             value increases, the weights of points far from a voxel's center fall off
             faster.
