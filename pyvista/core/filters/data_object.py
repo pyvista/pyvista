@@ -5987,6 +5987,7 @@ class DataObjectFilters:
         reference_volume : ImageData, optional
             Volume to use as a reference. The output will have the same ``dimensions``,
             ``origin``, ``spacing``, ``offset``, and ``direction_matrix`` as the reference.
+            Only this geometry is taken from it; its arrays are not read.
 
         dimensions : VectorLike[int], optional
             Dimensions of the generated image. Set this value to control the
