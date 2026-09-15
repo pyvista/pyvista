@@ -1631,8 +1631,9 @@ def test_point_data_to_cell_data():
 _STRING_CONVERSIONS = [
     ('point_data_to_cell_data', {}),
     ('point_data_to_cell_data', {'categorical': True}),
+    ('cell_data_to_point_data', {}),
 ]
-_STRING_CONVERSION_IDS = ['ptc', 'ptc-categorical']
+_STRING_CONVERSION_IDS = ['ptc', 'ptc-categorical', 'ctp']
 
 
 def _conversion_associations(filter_name):
