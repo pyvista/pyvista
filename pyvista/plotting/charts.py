@@ -4914,7 +4914,8 @@ class ChartMPL(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkImageItem):
            >>> chart.show()
 
         """
-        return self._fig._suptitle.get_text()
+        suptitle = self._fig._suptitle
+        return '' if suptitle is None else str(suptitle.get_text())
 
     @title.setter
     def title(self, val) -> None:
