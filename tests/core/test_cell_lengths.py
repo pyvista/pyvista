@@ -149,10 +149,11 @@ def test_cell_length_percentile(ant):
     assert _cell_length_percentile(ant, 1.0, ant.n_cells) == lengths.max()
     assert _cell_length_percentile(ant, 0.5, ant.n_cells) == np.quantile(lengths, 0.5)
 
-    # A sample spans the whole mesh and is a subset of the full distribution
+    # A sample is a subset of the full distribution, drawn with a fixed seed
     sampled = _cell_length_percentile(ant, 0.0, 10)
     assert lengths.min() <= sampled <= lengths.max()
     assert sampled in lengths
+    assert _cell_length_percentile(ant, 0.0, 10) == sampled
 
     # Cells without edges contribute nothing
     assert _cell_length_percentile(pv.PointSet(ant.points).cast_to_polydata(), 0.5, 10) == 0.0
