@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sys
+
 import pytest
 
 import pyvista as pv
@@ -62,13 +64,24 @@ def test_scalar_range_sets_lookup_table_range(multiblock_poly):
     pl.close()
 
 
+def test_scalar_range_log_scale_floor(multiblock_poly):
+    pl = pv.Plotter()
+    _actor, mapper = pl.add_composite(multiblock_poly, scalars='data_a', log_scale=True)
+    assert mapper.scalar_range[0] == sys.float_info.min
+    pl.close()
+
+
+def test_block_attr_without_dataset():
+    assert len(CompositePolyDataMapper().block_attr) == 0
+
+
 def test_scalar_visibility(composite_mapper):
     isinstance(composite_mapper.scalar_visibility, bool)
 
 
 def test_scalar_map_mode(composite_mapper):
     isinstance(composite_mapper.scalar_map_mode, str)
-    with pytest.raises(ValueError, match='Invalid `scalar_map_mode`'):
+    with pytest.raises(ValueError, match="scalar_map_mode 'foo' is not valid"):
         composite_mapper.scalar_map_mode = 'foo'
 
 

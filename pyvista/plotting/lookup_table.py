@@ -23,12 +23,20 @@ from .colors import get_cmap_safe
 from .tools import opacity_transfer_function
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
+    from pyvista.core._typing_core import MatrixLike
+    from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import VectorLike
+
     from ._typing import ColorLike
     from ._typing import ColormapOptions
+    from ._typing import OpacityOptions
     from ._typing import ScalarBarArgs
 
-RAMP_MAP = {0: 'linear', 1: 's-curve', 2: 'sqrt'}
-RAMP_MAP_INV = {k: v for v, k in RAMP_MAP.items()}
+_RampOptions = Literal['linear', 's-curve', 'sqrt']
+RAMP_MAP: dict[int, _RampOptions] = {0: 'linear', 1: 's-curve', 2: 'sqrt'}
+RAMP_MAP_INV: dict[_RampOptions, int] = {k: v for v, k in RAMP_MAP.items()}
 
 
 class lookup_table_ndarray(_NoNewAttrMixin, np.ndarray):  # noqa: N801
@@ -45,24 +53,25 @@ class lookup_table_ndarray(_NoNewAttrMixin, np.ndarray):  # noqa: N801
 
     def __new__(
         cls,
-        array,
-        table=None,
-    ):
+        array: _vtk.vtkAbstractArray,
+        table: LookupTable | None = None,
+    ) -> Self:
         """Allocate the array."""
         obj = convert_array(array).view(cls)
         table_ref = _vtk.vtkWeakReference()
-        table_ref.Set(table)
+        if table is not None:
+            table_ref.Set(table)
         # Optimization: write the instance dict directly, bypassing _NoNewAttrMixin.__setattr__
         obj.__dict__.update(VTKObject=array, table=table_ref)
         return obj
 
-    def __array_finalize__(self, obj):
+    def __array_finalize__(self, obj: NumpyArray[Any] | None) -> None:
         """Finalize array (associate with parent metadata)."""
         # Views and slices keep their parent's metadata; copies and ufunc results do not
         if isinstance(obj, lookup_table_ndarray) and np.may_share_memory(self, obj):
             self.__dict__.update(table=obj.table, VTKObject=obj.VTKObject)
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: Any, value: Any) -> None:
         """Implement [] set operator.
 
         When the array is changed it triggers "Modified()" which updates
@@ -80,7 +89,12 @@ class lookup_table_ndarray(_NoNewAttrMixin, np.ndarray):  # noqa: N801
             # Reassigning the values updates the table's internal VTK array
             cast('LookupTable', table).values = self
 
-    def __array_wrap__(self, out_arr, context=None, return_scalar: bool = False):  # noqa: FBT001, FBT002
+    def __array_wrap__(
+        self,
+        out_arr: NumpyArray[Any],
+        context: tuple[Any, ...] | None = None,
+        return_scalar: bool = False,  # noqa: FBT001, FBT002
+    ) -> Any:
         """Return a NumPy scalar if array is 0d.
 
         See https://github.com/numpy/numpy/issues/5819
@@ -213,22 +227,22 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
     def __init__(
         self,
-        cmap=None,
-        n_values=256,
+        cmap: ColormapOptions | None = None,
+        n_values: int = 256,
         *,
         flip: bool = False,
-        values=None,
-        value_range=None,
-        hue_range=None,
-        alpha_range=None,
-        scalar_range=None,
-        log_scale=None,
-        nan_color=None,
-        above_range_color=None,
-        below_range_color=None,
-        ramp=None,
-        annotations=None,
-    ):
+        values: MatrixLike[float] | None = None,
+        value_range: tuple[float, float] | None = None,
+        hue_range: tuple[float, float] | None = None,
+        alpha_range: tuple[float, float] | None = None,
+        scalar_range: tuple[float, float] | None = None,
+        log_scale: bool | None = None,
+        nan_color: ColorLike | None = None,
+        above_range_color: bool | ColorLike | None = None,
+        below_range_color: bool | ColorLike | None = None,
+        ramp: _RampOptions | None = None,
+        annotations: dict[float, str] | None = None,
+    ) -> None:
         """Initialize the lookup table."""
         if cmap is not None and values is not None:
             msg = 'Cannot set both `cmap` and `values`.'
@@ -298,7 +312,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         return self.GetValueRange()
 
     @value_range.setter
-    def value_range(self, value: tuple[float, float]):
+    def value_range(self, value: tuple[float, float]) -> None:
         self.SetValueRange(value)
         self.rebuild()
 
@@ -338,7 +352,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         return self.GetHueRange()
 
     @hue_range.setter
-    def hue_range(self, value: tuple[float, float]):
+    def hue_range(self, value: tuple[float, float]) -> None:
         self.SetHueRange(value)
         self.rebuild()
 
@@ -371,7 +385,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         return self._cmap
 
     @cmap.setter
-    def cmap(self, value: ColormapOptions):
+    def cmap(self, value: ColormapOptions) -> None:
         self.apply_cmap(value, self.n_values)
 
     @property
@@ -398,10 +412,10 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         return bool(self.GetScale())
 
     @log_scale.setter
-    def log_scale(self, value: bool):
+    def log_scale(self, value: bool) -> None:
         self.SetScale(value)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return the representation."""
         lines = [f'{type(self).__name__} ({hex(id(self))})']
         lines.append(f'  Table Range:                {self.scalar_range}')
@@ -442,7 +456,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         return self.GetTableRange()
 
     @scalar_range.setter
-    def scalar_range(self, value: tuple[float, float]):
+    def scalar_range(self, value: tuple[float, float]) -> None:
         self.SetTableRange(value)
 
     @property
@@ -474,7 +488,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         return self.GetAlphaRange()
 
     @alpha_range.setter
-    def alpha_range(self, value: tuple[float, float]):
+    def alpha_range(self, value: tuple[float, float]) -> None:
         self.SetAlphaRange(value)
         self.rebuild()
 
@@ -507,11 +521,11 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         return self.GetSaturationRange()
 
     @saturation_range.setter
-    def saturation_range(self, value: tuple[float, float]):
+    def saturation_range(self, value: tuple[float, float]) -> None:
         self.SetSaturationRange(value)
         self.rebuild()
 
-    def rebuild(self):
+    def rebuild(self) -> None:
         """Clear the color map and recompute the values table.
 
         This is called automatically when setting values like
@@ -528,7 +542,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         self.ForceBuild()
 
     @property
-    def nan_color(self) -> Color | None:  # numpydoc ignore=RT01
+    def nan_color(self) -> Color:  # numpydoc ignore=RT01
         """Return or set the not a number (NAN) color.
 
         Any values that are NaNs will be rendered with this color.
@@ -549,13 +563,13 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         return Color(self.GetNanColor())
 
     @nan_color.setter
-    def nan_color(self, value):
+    def nan_color(self, value: ColorLike) -> None:
         # NAN value is always set, but make it explicit for example plotting
         self._nan_color_set = True
         self.SetNanColor(*Color(value).float_rgba)
 
     @property
-    def nan_opacity(self):  # numpydoc ignore=RT01
+    def nan_opacity(self) -> int:  # numpydoc ignore=RT01
         """Return or set the not a number (NAN) opacity.
 
         Any values that are NaNs will be rendered with this opacity.
@@ -574,21 +588,17 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
             >>> lut.plot()
 
         """
-        color = self.nan_color
-        return color.opacity  # type: ignore[union-attr]
+        return self.nan_color.opacity
 
     @nan_opacity.setter
-    def nan_opacity(self, value):
+    def nan_opacity(self, value: float | str) -> None:
         # Hacky check to prevent auto activation
         if not self._nan_color_set and (value in (1.0, 255)):
             return
-        color = self.nan_color
-        if color is None:
-            color = Color(pv.global_theme.nan_color)
         self.nan_color = Color(self.nan_color, opacity=value)
 
     @property
-    def ramp(self) -> str:  # numpydoc ignore=RT01
+    def ramp(self) -> _RampOptions:  # numpydoc ignore=RT01
         """Set the shape of the table ramp.
 
         This attribute is only used when creating custom color maps and will
@@ -640,7 +650,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         return RAMP_MAP[self.GetRamp()]
 
     @ramp.setter
-    def ramp(self, value: str):
+    def ramp(self, value: _RampOptions) -> None:
         try:
             self.SetRamp(RAMP_MAP_INV[value])
         except KeyError:
@@ -680,7 +690,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         return None
 
     @above_range_color.setter
-    def above_range_color(self, value: bool | ColorLike | None):
+    def above_range_color(self, value: bool | ColorLike | None) -> None:
         if value is None or value is False:
             self.SetUseAboveRangeColor(False)
         elif value is True:
@@ -691,7 +701,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
             self.SetUseAboveRangeColor(True)
 
     @property
-    def above_range_opacity(self):  # numpydoc ignore=RT01
+    def above_range_opacity(self) -> int | None:  # numpydoc ignore=RT01
         """Return or set the above range opacity.
 
         Examples
@@ -709,10 +719,10 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
         """
         color = self.above_range_color
-        return color.opacity  # type: ignore[union-attr]
+        return None if color is None else color.opacity
 
     @above_range_opacity.setter
-    def above_range_opacity(self, value):
+    def above_range_opacity(self, value: float | str) -> None:
         color = self.above_range_color
         if color is None:
             color = Color(pv.global_theme.above_range_color)
@@ -750,7 +760,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         return None
 
     @below_range_color.setter
-    def below_range_color(self, value: bool | ColorLike | None):
+    def below_range_color(self, value: bool | ColorLike | None) -> None:
         if value is None or value is False:
             self.SetUseBelowRangeColor(False)
         elif value is True:
@@ -761,7 +771,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
             self.SetUseBelowRangeColor(True)
 
     @property
-    def below_range_opacity(self):  # numpydoc ignore=RT01
+    def below_range_opacity(self) -> int | None:  # numpydoc ignore=RT01
         """Return or set the below range opacity.
 
         Examples
@@ -779,10 +789,10 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
         """
         color = self.below_range_color
-        return color.opacity  # type: ignore[union-attr]
+        return None if color is None else color.opacity
 
     @below_range_opacity.setter
-    def below_range_opacity(self, value):
+    def below_range_opacity(self, value: float | str) -> None:
         color = self.below_range_color
         if color is None:
             color = Color(pv.global_theme.below_range_color)
@@ -794,7 +804,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         n_values: int = 256,
         *,
         flip: bool = False,
-    ):
+    ) -> None:
         """Assign a colormap to this lookup table.
 
         This can be used instead of :attr:`LookupTable.cmap` when you need to
@@ -843,7 +853,13 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
         self._cmap = cmap_obj
 
-    def apply_opacity(self, opacity, *, interpolate: bool = True, kind: str = 'quadratic'):
+    def apply_opacity(
+        self,
+        opacity: float | VectorLike[float] | OpacityOptions,
+        *,
+        interpolate: bool = True,
+        kind: str = 'quadratic',
+    ) -> None:
         """Assign custom opacity to this lookup table.
 
         Parameters
@@ -940,7 +956,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         return lookup_table_ndarray(self.GetTable(), table=self)
 
     @values.setter
-    def values(self, new_values):
+    def values(self, new_values: MatrixLike[float]) -> None:
         self._values_manual = True
         self._cmap = None
         new_values = np.asarray(new_values).astype(np.uint8, copy=False)
@@ -973,7 +989,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         return self.GetNumberOfColors()
 
     @n_values.setter
-    def n_values(self, value: int):
+    def n_values(self, value: int) -> None:
         if self._cmap is not None:
             self.apply_cmap(self._cmap, value)
             self.SetNumberOfTableValues(value)
@@ -1014,7 +1030,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         }
 
     @annotations.setter
-    def annotations(self, values: dict[float, str] | None):
+    def annotations(self, values: dict[float, str] | None) -> None:
         # Drop the arrays so a typed annotated-values array cannot truncate new keys
         self.SetAnnotations(None, None)  # type: ignore[arg-type]
         if values is not None:
@@ -1034,7 +1050,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         else:
             return 'PyVista Lookup Table'
 
-    def plot(self, **kwargs):
+    def plot(self, **kwargs) -> None:
         """Plot this lookup table.
 
         Parameters
@@ -1216,14 +1232,18 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         """
         color = [0.0, 0.0, 0.0]
         self.GetColor(value, color)
-        if opacity:
-            color.append(self.GetOpacity(value))
-        return cast(
-            'tuple[float, float, float] | tuple[float, float, float, float]',
-            tuple(color),
-        )
+        rgb = (color[0], color[1], color[2])
+        return (*rgb, self.GetOpacity(value)) if opacity else rgb
 
-    def __call__(self, value):
+    # fmt: off
+    @overload
+    def __call__(self, value: float) -> tuple[float, float, float, float]: ...
+    @overload
+    def __call__(self, value: VectorLike[float] | _vtk.vtkDataArray) -> NumpyArray[float]: ...
+    # fmt: on
+    def __call__(
+        self, value: float | VectorLike[float] | _vtk.vtkDataArray
+    ) -> tuple[float, float, float, float] | NumpyArray[float]:
         """Implement a Matplotlib colormap-like call."""
         if isinstance(value, (int, float)):
             return self.map_value(value)

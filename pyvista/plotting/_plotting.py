@@ -5,6 +5,7 @@ from __future__ import annotations
 import itertools
 import operator
 from typing import TYPE_CHECKING
+from typing import Any
 
 import numpy as np
 
@@ -76,10 +77,10 @@ def _resolve_scalars_field(
 
 
 def reduce_component_scalars(
-    scalars: NumpyArray[float],
+    scalars: NumpyArray[Any],
     scalars_name: str,
     component: int | None,
-) -> tuple[NumpyArray[float], str]:
+) -> tuple[NumpyArray[Any], str]:
     """Reduce a 2D scalar array to 1D by magnitude or component index.
 
     Produces the derived array and synthesized name (``{name}-normed`` for
