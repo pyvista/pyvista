@@ -327,6 +327,13 @@ def test_poked_subplot_context_single_row():
     pl.close()
 
 
+def test_picker_scene_is_not_a_picker():
+    pl = pv.Plotter()
+
+    with pytest.raises(KeyError, match=re.escape('Picker class `PickerType.SCENE` is unknown.')):
+        pl.iren.picker = 'scene'
+
+
 @pytest.mark.parametrize('event', ['LeftButtonReleaseEvent', 'RightButtonReleaseEvent'])
 def test_release_button_observers(event):
     class CallBack:

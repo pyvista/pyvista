@@ -1579,7 +1579,6 @@ class RenderWindowInteractor(_NoNewAttrMixin):
             PickerType.PROP: _vtk.vtkPropPicker,
             PickerType.RENDERED: _vtk.vtkRenderedAreaPicker,
             PickerType.RESLICE: _vtk.vtkResliceCursorPicker,
-            PickerType.SCENE: _vtk.vtkScenePicker,
             PickerType.VOLUME: _vtk.vtkVolumePicker,
             PickerType.WORLD: _vtk.vtkWorldPointPicker,
         }
