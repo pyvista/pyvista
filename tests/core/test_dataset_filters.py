@@ -5541,16 +5541,16 @@ def test_voxelize_binary_mask_spacing(ant):
 
 
 def test_voxelize_binary_mask_cell_length_sample_size(ant, mocker: MockerFixture):
-    from pyvista.core.filters import data_set
+    from pyvista.core.utilities import _cell_lengths
 
     sample_sizes = []
-    cell_edge_lengths = data_set._cell_edge_lengths
+    cell_edge_lengths = _cell_lengths._cell_edge_lengths
 
     def _record_sample_size(mesh, cell_ids=None):
         sample_sizes.append(mesh.n_cells if cell_ids is None else len(cell_ids))
         return cell_edge_lengths(mesh, cell_ids)
 
-    mocker.patch.object(data_set, '_cell_edge_lengths', _record_sample_size)
+    mocker.patch.object(_cell_lengths, '_cell_edge_lengths', _record_sample_size)
 
     # Sample size is used when sampling cell lengths
     ant.voxelize_binary_mask(cell_length_sample_size=100)
@@ -5582,37 +5582,6 @@ def test_voxelize_binary_mask_cell_length_sample_size(ant, mocker: MockerFixture
     match = 'cell_length_percentile values must all be less than or equal to 1.0'
     with pytest.raises(ValueError, match=match):
         ant.voxelize_binary_mask(cell_length_percentile=1.1)
-
-
-def test_cell_length_percentile(ant):
-    from pyvista.core.filters.data_set import _cell_length_percentile
-    from pyvista.core.utilities.cells import _cell_edge_lengths
-
-    lengths = _cell_edge_lengths(ant)
-    assert _cell_length_percentile(ant, 0.0, ant.n_cells) == lengths.min()
-    assert _cell_length_percentile(ant, 1.0, ant.n_cells) == lengths.max()
-    assert _cell_length_percentile(ant, 0.5, ant.n_cells) == np.quantile(lengths, 0.5)
-
-    # A sample spans the whole mesh and is a subset of the full distribution
-    sampled = _cell_length_percentile(ant, 0.0, 10)
-    assert lengths.min() <= sampled <= lengths.max()
-    assert sampled in lengths
-
-    # Cells without edges contribute nothing
-    assert _cell_length_percentile(pv.PointSet(ant.points).cast_to_polydata(), 0.5, 10) == 0.0
-
-    # Zero-length edges are ignored
-    collapsed = pv.PolyData(ant.points, faces=[3, 0, 0, 0, *ant.faces])
-    assert _cell_length_percentile(collapsed, 0.0, collapsed.n_cells) == lengths.min()
-
-
-def test_cell_length_percentile_image_measures_one_cell(mocker: MockerFixture):
-    from pyvista.core.filters import data_set
-
-    image = pv.ImageData(dimensions=(100, 100, 100), spacing=(1, 2, 3))
-    spy = mocker.spy(data_set, '_cell_edge_lengths')
-    assert data_set._cell_length_percentile(image, 0.5, image.n_cells) == 2.0
-    assert np.array_equal(spy.call_args[0][1], [0])
 
 
 def test_voxelize_binary_mask_cell_length_ignores_vertices(sphere):

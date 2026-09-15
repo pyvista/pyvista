@@ -40,13 +40,13 @@ from pyvista.core.filters.data_object import _clip_input
 from pyvista.core.filters.data_object import _clipper
 from pyvista.core.filters.data_object import _keep_array_structure
 from pyvista.core.filters.data_object import _validate_clip_inplace
+from pyvista.core.utilities._cell_lengths import _cell_length_percentile
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
 from pyvista.core.utilities.arrays import set_default_active_scalars
 from pyvista.core.utilities.arrays import set_default_active_vectors
-from pyvista.core.utilities.cells import _cell_edge_lengths
 from pyvista.core.utilities.cells import numpy_to_idarr
 from pyvista.core.utilities.helpers import _NORMALS
 from pyvista.core.utilities.helpers import _warn_if_invalid_data
@@ -9232,29 +9232,6 @@ class DataSetFilters(DataObjectFilters):
         ugrid = voxel_cells.threshold(0.5)
         del ugrid.cell_data['mask']
         return ugrid
-
-
-def _cell_length_percentile(mesh, percentile, sample_size):
-    """Return a percentile of the nonzero edge lengths of an evenly spaced sample of cells."""
-    percentile = _validation.validate_number(
-        percentile, must_be_in_range=[0.0, 1.0], name='cell_length_percentile'
-    )
-    sample_size = _validation.validate_number(
-        sample_size,
-        must_be_integer=True,
-        must_be_in_range=[1, np.inf],
-        dtype_out=int,
-        name='cell_length_sample_size',
-    )
-    cell_ids = None
-    if isinstance(mesh, pv.ImageData):
-        # Every cell of an image is identical, so one cell measures them all
-        cell_ids = np.zeros(1, dtype=int)
-    elif sample_size < mesh.n_cells:
-        cell_ids = np.linspace(0, mesh.n_cells - 1, sample_size).round().astype(int)
-    lengths = _cell_edge_lengths(mesh, cell_ids)
-    lengths = lengths[lengths > 0]
-    return float(np.quantile(lengths, percentile)) if lengths.size else 0.0
 
 
 _STENCIL_SLAB_SLICES = 8
