@@ -5918,12 +5918,6 @@ class DataObjectFilters:
         calling :meth:`~pyvista.DataObjectFilters.sample` or
         :meth:`~pyvista.DataSetFilters.interpolate` on it.
 
-        A :class:`~pyvista.MultiBlock` is resampled as a whole, so one grid covers
-        every block and a voxel takes its value from whichever block reaches it. The
-        ``method`` is chosen for the composite as a whole, so a surface among solids needs
-        ``method='interpolate'`` to be filled, and only the arrays every block has are
-        kept.
-
         The output geometry can be controlled in several ways:
 
         #. Specify the output geometry using a ``reference_volume``.
@@ -5977,6 +5971,13 @@ class DataObjectFilters:
             Voxels with no value are flagged with a ``'vtkValidPointMask'`` point data
             array. Set ``mark_blank=True`` to also hide them with a ``'vtkGhostType'``
             array, so volume rendering the output shows those regions as transparent.
+
+        .. note::
+            A :class:`~pyvista.MultiBlock` is resampled as a whole: one grid covers every
+            block, a voxel takes its value from whichever block reaches it, and only the
+            arrays every block has are kept. The ``method`` is chosen for the composite as
+            a whole, so a surface among solids needs ``method='interpolate'`` to be
+            filled.
 
         Parameters
         ----------
