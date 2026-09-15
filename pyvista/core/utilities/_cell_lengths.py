@@ -18,7 +18,7 @@ _EDGE_CHUNK_CELLS = 1_000_000
 
 
 def _cell_length_percentile(mesh: DataSet, percentile: float, sample_size: int) -> float:
-    """Return a percentile of the nonzero edge lengths of an evenly spaced sample of cells."""
+    """Return a percentile of the nonzero edge lengths of a seeded random sample of cells."""
     percentile = _validation.validate_number(
         percentile, must_be_in_range=[0.0, 1.0], name='cell_length_percentile'
     )
@@ -34,7 +34,9 @@ def _cell_length_percentile(mesh: DataSet, percentile: float, sample_size: int) 
         # Every cell of an image is identical, so one cell measures them all
         cell_ids = np.zeros(1, dtype=int)
     elif sample_size < mesh.n_cells:
-        cell_ids = np.linspace(0, mesh.n_cells - 1, sample_size).round().astype(int)
+        cell_ids = np.sort(
+            np.random.default_rng(0).choice(mesh.n_cells, sample_size, replace=False)
+        )
     lengths = _cell_edge_lengths(mesh, cell_ids)
     lengths = lengths[lengths > 0]
     return float(np.quantile(lengths, percentile)) if lengths.size else 0.0
