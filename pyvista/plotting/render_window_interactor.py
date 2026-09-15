@@ -1447,13 +1447,13 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         """Activate the subplot that was last interacted."""
         active_renderer_index = self._plotter.renderers._active_index
         loc = self.get_event_subplot_loc()
-        self._plotter.subplot(*loc)
+        self._plotter.subplot(*np.atleast_1d(loc))
         try:
             yield
         finally:
             # Reset to the active renderer.
             loc = self._plotter.renderers.index_to_loc(active_renderer_index)
-            self._plotter.subplot(*loc)
+            self._plotter.subplot(*np.atleast_1d(loc))
 
     def get_interactor_style(self):
         """Get the interactor style.

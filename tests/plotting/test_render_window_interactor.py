@@ -315,6 +315,18 @@ def test_poked_subplot_context():
     pl.show()
 
 
+def test_poked_subplot_context_single_row():
+    pl = pv.Plotter(shape='2|1', window_size=(800, 800))
+    pl.show(auto_close=False)
+
+    pl.iren._mouse_move(600, 400)
+    with pl.iren.poked_subplot():
+        active = pl.renderers._active_index
+
+    assert active != pl.renderers._active_index
+    pl.close()
+
+
 @pytest.mark.parametrize('event', ['LeftButtonReleaseEvent', 'RightButtonReleaseEvent'])
 def test_release_button_observers(event):
     class CallBack:
