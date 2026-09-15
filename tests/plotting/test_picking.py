@@ -9,6 +9,7 @@ import pytest
 import pyvista as pv
 from pyvista import _vtk
 from pyvista.plotting.errors import PyVistaPickingError
+from pyvista.plotting.picking import PointPickingElementHandler
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -619,6 +620,17 @@ def test_element_picking(mode):
     elif mode == 'point':
         assert isinstance(tracker.last_picked, pv.PolyData)
         assert tracker.last_picked.n_points == 1
+
+
+def test_element_picking_face_records_the_matched_face(mocker: MockerFixture):
+    mesh = pv.ImageData(dimensions=(2, 2, 2)).cast_to_unstructured_grid()
+    handler = PointPickingElementHandler(mode='face')
+    mocker.patch.object(PointPickingElementHandler, 'get_mesh', return_value=mesh)
+
+    for face_id, face in enumerate(mesh.get_cell(0).faces):
+        picked = handler.get_face(face.cast_to_unstructured_grid().center)
+
+        assert picked.field_data['vtkOriginalFaceIds'] == [face_id]
 
 
 def test_element_picking_point_preserves_data():

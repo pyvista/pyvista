@@ -185,16 +185,17 @@ class PointPickingElementHandler(_NoNewAttrMixin):
         """
         cell = self.get_cell(picked_point).get_cell(0)
         if cell.n_faces > 1:
-            for face in cell.faces:
-                contains = face.cast_to_unstructured_grid().find_containing_cell(picked_point)
-                if contains > -1:
+            face = None
+            for face_id, cell_face in enumerate(cell.faces):
+                grid = cell_face.cast_to_unstructured_grid()
+                if grid.find_containing_cell(picked_point) > -1:
+                    face = grid
+                    face.field_data['vtkOriginalFaceIds'] = np.array([face_id])
                     break
-            if contains < 0:
+            if face is None:
                 # this shouldn't happen
                 msg = 'Trouble aligning point with face.'
                 raise RuntimeError(msg)
-            face = face.cast_to_unstructured_grid()
-            face.field_data['vtkOriginalFaceIds'] = np.array([len(cell.faces) - 1])
         else:
             face = cell.cast_to_unstructured_grid()
             face.field_data['vtkOriginalFaceIds'] = np.array([0])
