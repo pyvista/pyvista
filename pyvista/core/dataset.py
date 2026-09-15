@@ -922,15 +922,14 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             if arr_var is None:
                 return (np.nan, np.nan)
 
+        arr: NumpyArray[Any]
         if isinstance(arr_var, str):
             name = arr_var
             arr = get_array(self, name, preference=preference, err=True)
         else:
-            arr = arr_var  # type: ignore[assignment]
+            arr = arr_var
 
         # If array has no tuples return a NaN range
-        if arr is None:
-            return (np.nan, np.nan)
         if arr.size == 0 or not (arr.dtype == bool or np.issubdtype(arr.dtype, np.number)):
             return (np.nan, np.nan)
         # Use the array range
