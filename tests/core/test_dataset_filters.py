@@ -5584,11 +5584,10 @@ def test_voxelize_max_n_points_clamps_the_defaults():
     assert cube.voxelize_binary_mask(max_n_points=1000).n_points == 1000
     assert cube.voxelize_binary_mask(max_n_points=27).n_points == 27
 
-    # The cell filters count voxel cells, which are the points of the mask
-    assert mesh.voxelize(max_n_points=1000).n_cells <= 1000
+    # The rectilinear grid counts its own points, one more than its cells along each axis
     rectilinear = mesh.voxelize_rectilinear(max_n_points=1000)
-    assert rectilinear.n_cells <= 1000
-    assert rectilinear.n_points > 1000
+    assert rectilinear.n_points <= 1000
+    assert rectilinear.n_cells > 500
 
 
 @pytest.mark.parametrize('cap', range(1, 200, 7))
@@ -5625,6 +5624,25 @@ def test_voxelize_max_n_points_raises_for_a_requested_geometry():
 
     # A requested geometry inside the limit is left alone
     assert mesh.voxelize_binary_mask(dimensions=(5, 5, 5), max_n_points=1000).n_points == 125
+
+
+def test_voxelize_rectilinear_n_points(sphere):
+    grid = sphere.voxelize_rectilinear(target_n_points=1000)
+    assert grid.dimensions == (10, 10, 10)
+    assert grid.n_points == 1000
+
+    # A flat input has two point layers along its flat axis
+    grid = pv.Plane().voxelize_rectilinear(max_n_points=100)
+    assert grid.dimensions[2] == 2
+    assert grid.n_points <= 100
+
+    match = '`max_n_points=4` is below the 8 points of a grid with one cell along each axis.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        sphere.voxelize_rectilinear(max_n_points=4)
+
+    # Only the foreground is returned, so a bound on it cannot be honoured
+    with pytest.raises(TypeError, match='unexpected keyword'):
+        sphere.voxelize(max_n_points=1000)
 
 
 def test_voxelize_max_n_points_bounds_the_target(sphere):

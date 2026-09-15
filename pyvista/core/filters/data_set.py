@@ -8771,12 +8771,7 @@ class DataSetFilters(DataObjectFilters):
         >>> pl.show(cpos='yz')
 
         """
-        surface = wrap(self).extract_surface(algorithm=None, pass_pointid=False, pass_cellid=False)
-        if not (surface.faces.size or surface.strips.size):
-            # we have a point cloud or an empty mesh
-            msg = 'Input mesh must have faces for voxelization.'
-            raise ValueError(msg)
-
+        surface = _voxelize_surface(self)
         _validate_reference_volume_options(
             reference_volume=reference_volume,
             dimensions=dimensions,
@@ -8851,9 +8846,7 @@ class DataSetFilters(DataObjectFilters):
             )
             dimensions = dimensions_ - 1
 
-        binary_mask = self.voxelize_binary_mask(
-            background_value=background_value,
-            foreground_value=foreground_value,
+        _validate_reference_volume_options(
             reference_volume=reference_volume,
             dimensions=dimensions,
             spacing=spacing,
@@ -8862,6 +8855,24 @@ class DataSetFilters(DataObjectFilters):
             rounding_func=rounding_func,
             cell_length_percentile=cell_length_percentile,
             cell_length_sample_size=cell_length_sample_size,
+        )
+        # The output has one more point than the mask along each axis
+        volume = _make_reference_volume(
+            _voxelize_surface(self),
+            reference_volume=reference_volume,
+            dimensions=dimensions,
+            spacing=spacing,
+            target_n_points=target_n_points,
+            max_n_points=max_n_points,
+            rounding_func=rounding_func,
+            cell_length_percentile=cell_length_percentile,
+            cell_length_sample_size=cell_length_sample_size,
+            point_offset=1,
+        )
+        binary_mask = self.voxelize_binary_mask(
+            background_value=background_value,
+            foreground_value=foreground_value,
+            reference_volume=volume,
             progress_bar=progress_bar,
         )
         return binary_mask.points_to_cells(dimensionality='3D', copy=False)
@@ -8954,7 +8965,7 @@ class DataSetFilters(DataObjectFilters):
             implicitly through other parameters. See summary and examples for details.
 
         target_n_points : int, optional
-            Approximate number of voxel cells to generate. The spacing is isotropic and
+            Approximate number of points to generate. The spacing is isotropic and
             chosen so the output holds about this many points, distributed between the
             axes in proportion to the input's bounds. An axis with no extent holds a
             single point and takes no part in the count. Rounding to whole voxels means
@@ -8964,13 +8975,14 @@ class DataSetFilters(DataObjectFilters):
 
             .. note::
 
-                Voxels are cells here, so the output holds more points than voxels.
-                The same holds for ``max_n_points``.
+                Like ``dimensions``, this counts the points of the output, which has one
+                more point than cells along each axis. The same holds for
+                ``max_n_points``.
 
             .. versionadded:: 0.50
 
         max_n_points : int, optional
-            Strict upper bound on the number of voxel cells generated. Unlike
+            Strict upper bound on the number of points generated. Unlike
             ``target_n_points``, which is only approached, this limit is never exceeded.
             How it is enforced depends on how the geometry is defined:
 
@@ -9095,8 +9107,6 @@ class DataSetFilters(DataObjectFilters):
         reference_volume: ImageData | None = None,
         dimensions: VectorLike[int] | None = None,
         spacing: float | VectorLike[float] | None = None,
-        target_n_points: int | None = None,
-        max_n_points: int | None = None,
         rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None = None,
         cell_length_percentile: float | None = None,
         cell_length_sample_size: int | None = None,
@@ -9112,20 +9122,17 @@ class DataSetFilters(DataObjectFilters):
 
         #. Specify the ``dimensions`` explicitly.
 
-        #. Specify the ``target_n_points``. The spacing is isotropic and estimated so
-           the output has approximately this many points.
-
         #. Specify the ``cell_length_percentile``. The spacing is estimated from the
            surface's cells using the specified percentile.
-
-        Set ``max_n_points`` to cap the result of any of these. It differs from
-        ``target_n_points``, which is a resolution to aim for: a geometry specified
-        explicitly raises if it exceeds the cap, while an estimated one is coarsened to
-        fit.
 
         Use ``reference_volume`` for full control of the output geometry. For
         all other options, the geometry is implicitly defined such that the generated
         mesh fits the bounds of the input mesh.
+
+        Only the foreground cells are returned, so this filter has no ``target_n_points``
+        or ``max_n_points``. To bound the size of the grid, call
+        :meth:`~pyvista.DataSetFilters.voxelize_rectilinear` with ``max_n_points`` and
+        :meth:`~pyvista.DataSetFilters.threshold` its output.
 
         If no inputs are provided, ``cell_length_percentile=0.1`` (tenth percentile) is
         used by default to estimate the spacing.
@@ -9163,35 +9170,6 @@ class DataSetFilters(DataObjectFilters):
             Approximate spacing to use for the generated mesh. Set this value
             to control the spacing explicitly. If unset, the spacing is defined
             implicitly through other parameters. See summary and examples for details.
-
-        target_n_points : int, optional
-            Approximate number of voxel cells to generate. The spacing is isotropic and
-            chosen so the output holds about this many points, distributed between the
-            axes in proportion to the input's bounds. An axis with no extent holds a
-            single point and takes no part in the count. Rounding to whole voxels means
-            the count is approached, not matched exactly. Cannot be set with
-            ``reference_volume``, ``dimensions``, ``spacing``, or the cell length
-            options.
-
-            .. note::
-
-                Voxels are cells here, so the output holds more points than voxels.
-                The same holds for ``max_n_points``.
-
-            .. versionadded:: 0.50
-
-        max_n_points : int, optional
-            Strict upper bound on the number of voxel cells generated. Unlike
-            ``target_n_points``, which is only approached, this limit is never exceeded.
-            How it is enforced depends on how the geometry is defined:
-
-            - Geometry set explicitly, with ``reference_volume``, ``dimensions``,
-              ``spacing`` or a cell length option, raises if it exceeds the limit.
-            - ``target_n_points`` must not exceed the limit, and the grid estimated from
-              it is coarsened if rounding would take it above.
-            - Geometry left to the defaults is coarsened to fit, without raising.
-
-            .. versionadded:: 0.50
 
         rounding_func : Callable[VectorLike[float], VectorLike[int]], optional
             Control how the dimensions are rounded to integers based on the provided or
@@ -9286,8 +9264,8 @@ class DataSetFilters(DataObjectFilters):
             reference_volume=reference_volume,
             dimensions=dimensions,
             spacing=spacing,
-            target_n_points=target_n_points,
-            max_n_points=max_n_points,
+            target_n_points=None,
+            max_n_points=None,
             rounding_func=rounding_func,
             cell_length_percentile=cell_length_percentile,
             cell_length_sample_size=cell_length_sample_size,
@@ -9299,6 +9277,15 @@ class DataSetFilters(DataObjectFilters):
 
 
 _STENCIL_SLAB_SLICES = 8
+
+
+def _voxelize_surface(mesh: DataSet) -> PolyData:
+    """Extract the surface to voxelize, which must have faces."""
+    surface = wrap(mesh).extract_surface(algorithm=None, pass_pointid=False, pass_cellid=False)
+    if not (surface.faces.size or surface.strips.size):
+        msg = 'Input mesh must have faces for voxelization.'
+        raise ValueError(msg)
+    return surface
 
 
 def _stencil_binary_mask(
