@@ -234,7 +234,7 @@ def load_tetbeam() -> UnstructuredGrid:
     return _dataset_tetbeam.load()  # type:ignore[return-value]
 
 
-def _tetbeam_load_func():
+def _tetbeam_load_func() -> pv.UnstructuredGrid:
     # make the geometry identical to the hexbeam
     xrng = np.linspace(0, 1, 3)
     yrng = np.linspace(0, 1, 3)
@@ -269,7 +269,7 @@ def load_structured() -> StructuredGrid:
     return _dataset_structured.load()  # type:ignore[return-value]
 
 
-def _structured_load_func():
+def _structured_load_func() -> pv.StructuredGrid:
     x = np.arange(-10, 10, 0.25)
     y = np.arange(-10, 10, 0.25)
     x, y = np.meshgrid(x, y)
@@ -403,7 +403,7 @@ def load_spline() -> PolyData:
     return _dataset_spline.load()  # type:ignore[return-value]
 
 
-def _spline_load_func():
+def _spline_load_func() -> pv.PolyData:
     theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
     z = np.linspace(-2, 2, 100)
     r = z**2 + 1
@@ -450,7 +450,7 @@ def load_random_hills() -> PolyData:
     return _dataset_random_hills.load()  # type:ignore[return-value]
 
 
-def _random_hills_load_func():
+def _random_hills_load_func() -> pv.PolyData:
     mesh = pv.ParametricRandomHills()
     return mesh.elevation()
 
@@ -545,7 +545,7 @@ def load_explicit_structured(
 
 def _explicit_structured_load_func(
     dimensions: VectorLike[int] = (5, 6, 7), spacing: VectorLike[float] = (20, 10, 1)
-):
+) -> pv.ExplicitStructuredGrid:
     ni, nj, nk = np.asarray(dimensions) - 1
     si, sj, sk = spacing
     xi = np.arange(0.0, (ni + 1) * si, si)  # type:ignore[arg-type]
@@ -650,7 +650,9 @@ def load_hydrogen_orbital(n: int = 1, l: int = 0, m: int = 0, zoom_fac: float = 
     return _dataset_hydrogen_orbital.load(n=n, l=l, m=m, zoom_fac=zoom_fac)  # type:ignore[return-value]
 
 
-def _hydrogen_orbital_load_func(n: int = 1, l: int = 0, m: int = 0, zoom_fac: float = 1.0):  # noqa: PLR0917
+def _hydrogen_orbital_load_func(  # noqa: PLR0917
+    n: int = 1, l: int = 0, m: int = 0, zoom_fac: float = 1.0
+) -> pv.ImageData:
     try:
         from sympy import lambdify  # noqa: PLC0415
         from sympy.abc import phi  # noqa: PLC0415
