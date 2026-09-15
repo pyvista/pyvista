@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import itertools
+import math
 import re
 
 import numpy as np
@@ -10,7 +11,12 @@ import pyvista as pv
 from pyvista import _vtk
 from pyvista.core.errors import VTKVersionError
 from pyvista.plotting.scalar_bars import _bar_title_height
+from pyvista.plotting.scalar_bars import _box_pixels
+from pyvista.plotting.scalar_bars import _fitting_font
 from pyvista.plotting.scalar_bars import _label_size
+from pyvista.plotting.scalar_bars import _label_texts
+from pyvista.plotting.scalar_bars import _lifted_ramp
+from pyvista.plotting.scalar_bars import _text_size
 from pyvista.plotting.scalar_bars import _title_height
 from pyvista.plotting.scalar_bars import _title_width
 
@@ -396,7 +402,7 @@ def test_title_pad_boxed(sphere, outline: bool, fill: bool):
         background_color='grey',
     )
 
-    assert pl.scalar_bar.GetTitleTextProperty().GetLineOffset() == -10
+    assert _title_gap(pl, pl.scalar_bar) >= 10
 
 
 @pytest.mark.parametrize(
@@ -689,6 +695,58 @@ def _box_edges(bar, window_size):
     )
 
 
+def _laid_out(pl, bar, title):
+    """Lay a horizontal boxed bar out the way VTK does, returning its fonts and title gap."""
+    viewport = pl.renderer
+    width, height = _box_pixels(bar, viewport)
+    text_pad = bar.GetTextPad()
+    thickness = math.ceil(height * bar.GetBarRatio())
+    ramp = int(thickness - min(thickness / 8, text_pad))
+    _, lift = _lifted_ramp(ramp, text_pad)
+    title_text = bar.GetTitleTextProperty()
+    title_font = _fitting_font(
+        lambda size: _text_size(viewport, title_text, title, font_size=size),
+        width - 2 * text_pad,
+        int((height - ramp - lift - text_pad) * bar.GetTitleRatio()),
+        start=title_text.GetFontSize(),
+    )
+    title_box = math.ceil(_text_size(viewport, title_text, title, font_size=title_font)[1])
+    labels = _label_texts(bar)
+    label_text = bar.GetLabelTextProperty()
+
+    def size_of(size):
+        sizes = [_text_size(viewport, label_text, text, font_size=size) for text in labels]
+        return max(w for w, _ in sizes), max(h for _, h in sizes)
+
+    label_font = _fitting_font(
+        size_of,
+        (int(width - 4) - text_pad * (len(labels) - 1)) // len(labels),
+        height - ramp - 4 * text_pad - title_box,
+        start=label_text.GetFontSize(),
+    )
+    gap = 2 * text_pad - int(bar.GetFrameProperty().GetLineWidth()) - lift
+    return title_font, label_font, gap
+
+
+def _title_gap(pl, bar):
+    """Return the pixels a horizontal boxed bar leaves between its labels and its title."""
+    return _laid_out(pl, bar, bar.GetTitle())[2]
+
+
+def _text_outside_the_box(pl, bar):
+    """Return whether any of a bar's blue text is drawn outside its box."""
+    image = pl.screenshot(return_img=True)
+    red, green, blue = (image[..., channel].astype(int) for channel in range(3))
+    text = (blue > red + 60) & (blue > green + 60)
+    left, bottom = bar.GetPositionCoordinate().GetComputedViewportValue(pl.renderer)
+    width, height = _box_pixels(bar, pl.renderer)
+    rows = image.shape[0]
+    inside = text.copy()
+    inside[rows - bottom - height - 2 : rows - bottom + 2, left - 2 : left + width + 2] = False
+    assert text.any()
+    return bool(inside.any())
+
+
 def _fitted_bar(plotter, sphere, *, vertical, box, **kwargs):
     """Add one scalar bar that fits its box to its text."""
     return plotter.add_scalar_bar(
@@ -768,7 +826,151 @@ def test_fit_box_keeps_the_title_pad(sphere, box):
     pl.add_mesh(sphere, show_scalar_bar=False)
     bar = _fitted_bar(pl, sphere, vertical=False, box=box, title_pad=0.5)
 
-    assert bar.GetTitleTextProperty().GetLineOffset() == -12
+    assert _title_gap(pl, bar) >= 12
+
+
+@pytest.mark.parametrize('box', BOXES, ids=BOX_IDS)
+def test_fit_box_holds_the_labels(sphere, box):
+    # VTK lays a horizontal box out itself, pulling the ramp in by half a label so the
+    # labels at either end are drawn inside the box rather than centered on its edges
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=[1024, 768])
+    pl.background_color = 'white'
+    pl.add_mesh(sphere, show_scalar_bar=False, cmap='autumn')
+    bar = _fitted_bar(pl, sphere, vertical=False, box=box, color='blue')
+
+    assert not bar.GetUnconstrainedFontSize()
+    assert not _text_outside_the_box(pl, bar)
+
+
+@pytest.mark.parametrize(('asked', 'drawn'), [(24, 24), (18, 19)], ids=['exact', 'shared_height'])
+def test_fit_box_keeps_the_font_size(sphere, asked: int, drawn: int):
+    # VTK grows each font to the largest that fits the box, so the box is sized to stop
+    # it at the size asked for, or one larger where the two measure the same height
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=[1024, 768])
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = pl.add_scalar_bar(
+        FIT_TITLE,
+        vertical=False,
+        outline=True,
+        title_font_size=asked,
+        label_font_size=asked,
+        mapper=pv.DataSetMapper(sphere),
+    )
+
+    assert _laid_out(pl, bar, FIT_TITLE)[:2] == (drawn, drawn)
+
+
+def test_fit_box_pads_a_given_height(sphere):
+    # A horizontal box keeps the height it is given and spends the spare on padding
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=[1024, 768])
+    pl.background_color = 'white'
+    pl.add_mesh(sphere, show_scalar_bar=False, cmap='autumn')
+    bar = _fitted_bar(pl, sphere, vertical=False, box={'outline': True}, height=0.3)
+    pl.screenshot(return_img=True)
+
+    assert bar.GetHeight() == pytest.approx(0.3)
+    title_font, label_font, gap = _laid_out(pl, bar, FIT_TITLE)
+    assert (title_font, label_font) == (24, 24)
+    assert gap > round(pl.theme.colorbar_horizontal.title_pad * 24)
+
+
+def test_fit_box_shrinks_the_text_to_a_short_box(sphere):
+    # A horizontal box given too little height for its text shrinks the text to fit
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=[1024, 768])
+    pl.background_color = 'white'
+    pl.add_mesh(sphere, show_scalar_bar=False, cmap='autumn')
+    bar = _fitted_bar(pl, sphere, vertical=False, box={'outline': True}, height=0.05, color='blue')
+
+    assert bar.GetHeight() == pytest.approx(0.05)
+    title_font, label_font, _ = _laid_out(pl, bar, FIT_TITLE)
+    assert title_font < 24
+    assert label_font < 24
+    assert not _text_outside_the_box(pl, bar)
+
+
+def test_fit_box_lets_the_text_go_without_a_box(sphere):
+    # Turning the box off after the fact hands the text its size back
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = _fitted_bar(pl, sphere, vertical=False, box={'outline': True})
+    assert not bar.GetUnconstrainedFontSize()
+
+    bar.SetDrawFrame(False)
+    pl.screenshot(return_img=True)
+
+    assert bar.GetUnconstrainedFontSize()
+    pad = round(pl.theme.colorbar_horizontal.title_pad * 24)
+    assert bar.GetTitleTextProperty().GetLineOffset() == -pad
+
+
+def test_fit_box_leaves_unconstrained_text_its_size(sphere):
+    # Text asked to keep its size is left to it, box or no box
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = _fitted_bar(
+        pl, sphere, vertical=False, box={'outline': True}, unconstrained_font_size=True
+    )
+    pl.screenshot(return_img=True)
+
+    assert bar.GetUnconstrainedFontSize()
+    pad = round(pl.theme.colorbar_horizontal.title_pad * 24)
+    assert bar.GetTitleTextProperty().GetLineOffset() == -pad
+
+
+@pytest.mark.parametrize(
+    ('kwargs', 'log_scale', 'expected'),
+    [
+        ({'n_labels': 5}, False, ['0.00', '0.25', '0.50', '0.75', '1.00']),
+        ({'n_labels': 1}, False, ['0.50']),
+        ({'tick_locations': [0.1, 0.9, 2.0]}, False, ['0.10', '0.90', '2.00']),
+        ({'n_labels': 3}, True, ['0.01', '0.10', '1.00']),
+    ],
+    ids=['spaced', 'single', 'custom', 'log'],
+)
+def test_label_texts(sphere, kwargs, log_scale: bool, expected):
+    # The labels are laid out from their text, so that is what is measured
+    sphere[KEY] = np.linspace(0.01 if log_scale else 0.0, 1.0, sphere.n_points)
+
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, show_scalar_bar=False, log_scale=log_scale)
+    bar = pl.add_scalar_bar(KEY, fmt='%.2f', **kwargs)
+
+    assert _label_texts(bar) == expected
+
+
+def test_stacked_boxed_bar_reaches_only_to_its_box(sphere):
+    # A horizontal box holds its labels, so a bar beside it need only clear the box
+    sphere[KEY] = sphere.points[:, 2]
+
+    def second_bar(**box):
+        pl = pv.Plotter()
+        pl.add_mesh(sphere, show_scalar_bar=False)
+        pl.add_scalar_bar('First', vertical=True, title_font_size=14, label_font_size=14)
+        bar = pl.add_scalar_bar(
+            'Second',
+            vertical=False,
+            title_font_size=14,
+            label_font_size=14,
+            mapper=pv.DataSetMapper(sphere),
+            **box,
+        )
+        x = bar.GetPosition()[0]
+        pl.close()
+        return x
+
+    assert second_bar(outline=True) > second_bar()
 
 
 @pytest.mark.parametrize('vertical', [True, False], ids=['vertical', 'horizontal'])
