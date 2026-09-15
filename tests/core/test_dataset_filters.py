@@ -4552,15 +4552,15 @@ def test_extrude_trim_catch():
     trim_surface = pv.Plane()
     with pytest.raises(ValueError):  # noqa: PT011
         _ = mesh.extrude_trim(direction, trim_surface, extrusion='Invalid strategy')
-    with pytest.raises(TypeError, match='Invalid type'):
+    with pytest.raises(TypeError, match='extrusion must be an instance of'):
         _ = mesh.extrude_trim(direction, trim_surface, extrusion=0)
     with pytest.raises(ValueError):  # noqa: PT011
         _ = mesh.extrude_trim(direction, trim_surface, capping='Invalid strategy')
-    with pytest.raises(TypeError, match='Invalid type'):
+    with pytest.raises(TypeError, match='capping must be an instance of'):
         _ = mesh.extrude_trim(direction, trim_surface, capping=0)
     with pytest.raises(TypeError):
         _ = mesh.extrude_trim('foobar', trim_surface)
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError, match='direction has shape'):
         _ = mesh.extrude_trim([1, 2], trim_surface)
 
 
