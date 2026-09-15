@@ -693,9 +693,9 @@ class Renderers(_NoNewAttrMixin):
         scale : float
             Scale the image larger or smaller relative to the size of
             the window.  The image height is scaled to the height of the
-            render window and its aspect ratio is preserved, so a scale
-            size of 2 makes the image twice as tall as the render
-            window.  Defaults to 1.
+            render window, or of the subplot when ``as_global=False``.
+            Its aspect ratio is preserved, so the image is cropped
+            horizontally where it is too wide to fit.  Defaults to 1.
 
         as_global : bool
             When multiple render windows are present, setting

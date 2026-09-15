@@ -7472,8 +7472,9 @@ class BasePlotter(_BoundsSizeMixin):
         scale : float, default: 1.0
             Scale the image larger or smaller relative to the size of
             the window.  The image height is scaled to the height of the
-            render window and its aspect ratio is preserved, so a scale
-            size of 2 makes the image twice as tall as the render window.
+            render window, or of the subplot when ``as_global=False``.
+            Its aspect ratio is preserved, so the image is cropped
+            horizontally where it is too wide to fit.
 
         auto_resize : bool, default: True
             Resize the background when the render window changes size.

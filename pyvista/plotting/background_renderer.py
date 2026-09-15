@@ -82,7 +82,7 @@ class BackgroundRenderer(Renderer):
         yd = (extent[3] - extent[2] + 1) * spacing[1]
         dist = self.camera.distance
 
-        # scale the image height to the window height
         self.camera._focus = np.array([xc, yc, 0.0])
         self.camera.position = np.array([xc, yc, dist])
+        # scale the image height to the viewport height
         self.camera.parallel_scale = 0.5 * yd / self._scale
