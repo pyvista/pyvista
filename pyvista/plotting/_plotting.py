@@ -343,8 +343,9 @@ def process_opacity(*, mesh, opacity, preference, n_colors, scalars, use_transpa
     n_colors : int
         Number of colors to use when displaying the opacity.
 
-    scalars : numpy.ndarray
-        Dataset scalars.
+    scalars : numpy.ndarray | None
+        Dataset scalars. Used to check that a per-element opacity
+        array has a matching length.
 
     use_transparency : bool
         Invert the opacity mappings and make the values correspond
@@ -373,7 +374,7 @@ def process_opacity(*, mesh, opacity, preference, n_colors, scalars, use_transpa
             # Or get opacity transfer function (e.g. "linear")
             opacity = opacity_transfer_function(opacity, n_colors)
         else:
-            if scalars.shape[0] != opacity.shape[0]:
+            if scalars is not None and scalars.shape[0] != opacity.shape[0]:
                 msg = 'Opacity array and scalars array must have the same number of elements.'
                 raise ValueError(msg)
     elif isinstance(opacity, (np.ndarray, list, tuple)):

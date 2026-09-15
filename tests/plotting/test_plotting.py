@@ -3537,6 +3537,19 @@ def test_opacity_mismatched_fail(uniform):
         pl.add_mesh(uniform, scalars='Spatial Cell Data', opacity='unc')
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_opacity_by_array_without_scalars(uniform):
+    opac = uniform['Spatial Point Data'] / uniform['Spatial Point Data'].max()
+    uniform['unc'] = opac
+    uniform.set_active_scalars(None)
+
+    pl = pv.Plotter()
+    actor = pl.add_mesh(uniform, opacity='unc')
+
+    rgba = next(arr for arr in actor.mapper.dataset.point_data.values() if arr.ndim == 2)
+    np.testing.assert_allclose(rgba[:, -1] / 255, opac, atol=2 / 255)
+
+
 @skip_windows_mesa
 def test_opacity_by_array_preference():
     tetra = pv.Tetrahedron()  # 4 points, 4 cells
