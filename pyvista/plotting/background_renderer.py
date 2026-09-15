@@ -82,18 +82,7 @@ class BackgroundRenderer(Renderer):
         yd = (extent[3] - extent[2] + 1) * spacing[1]
         dist = self.camera.distance
 
-        # make the longest dimensions match the plotting window
-        img_dim = np.array(image_data.dimensions[:2])
+        # scale the image height to the window height
         self.camera._focus = np.array([xc, yc, 0.0])
         self.camera.position = np.array([xc, yc, dist])
-
-        ratio = img_dim / np.array(self.parent.window_size)
-        scale_value = 1
-        if ratio.max() > 1:
-            # images are not scaled if larger than the window
-            scale_value = ratio.max()
-
-        if self._scale is not None:
-            scale_value /= self._scale
-
         self.camera.parallel_scale = 0.5 * yd / self._scale

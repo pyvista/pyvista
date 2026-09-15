@@ -1355,3 +1355,22 @@ def test_shadow_renderer_raises_once_released():
     renderers.__del__()  # releases the shadow renderer, as garbage collection would
     with pytest.raises(RuntimeError, match='no longer have a shadow renderer'):
         _ = renderers.shadow_renderer
+
+
+@pytest.mark.parametrize('window_size', [(400, 400), (800, 400), (400, 800)])
+@pytest.mark.parametrize('scale', [0.5, 1.0, 2.0])
+def test_background_image_height_matches_window(window_size, scale):
+    pl = pv.Plotter(window_size=window_size)
+    pl.add_background_image(examples.mapfile, scale=scale)
+    background_renderer = pl.renderers._background_renderers[pl.renderers.active_index]
+    background_renderer.resize()
+
+    image_data = background_renderer.actors['background'].GetInput()
+    extent = image_data.GetExtent()
+    image_height = (extent[3] - extent[2] + 1) * image_data.GetSpacing()[1]
+
+    # `parallel_scale` is half the world-space height of the viewport
+    viewport_height = 2 * background_renderer.camera.parallel_scale
+    assert image_height / viewport_height == pytest.approx(scale)
+
+    pl.close()
