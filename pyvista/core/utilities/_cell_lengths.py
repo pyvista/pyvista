@@ -199,7 +199,11 @@ def _cell_array_edge_lengths(
 def _local_edge_table(mesh: DataSet, cell_id: int) -> NumpyArray[int]:
     """Return the endpoints of each edge of a cell as indices into the cell's points."""
     cell = _vtk.vtkGenericCell()
-    mesh.GetCell(cell_id, cell)
+    if isinstance(mesh, pv.ExplicitStructuredGrid):
+        # Every cell is a hexahedron, and a hidden one would read as an empty cell
+        cell.SetCellTypeToHexahedron()
+    else:
+        mesh.GetCell(cell_id, cell)
     point_ids = cell.GetPointIds()
     n_points = point_ids.GetNumberOfIds()
     if cell.GetCellDimension() == 1:
