@@ -2268,10 +2268,12 @@ class Color(_NoNewAttrMixin):
         """Hash calculation."""
         return hash((self._red, self._green, self._blue, self._opacity))
 
+    # fmt: off
     @overload
     def __getitem__(self, item: str | int | np.integer[Any]) -> float: ...
     @overload
     def __getitem__(self, item: slice) -> tuple[float, ...]: ...
+    # fmt: on
     def __getitem__(self, item: object) -> float | tuple[float, ...]:
         """Support indexing the float RGBA representation for backward compatibility."""
         if not isinstance(item, (str, slice, int, np.integer)):
@@ -2518,10 +2520,12 @@ def color_scheme_to_cycler(scheme: str | int | _vtk.vtkColorSeries) -> Cycler[st
     return cycler('color', colors)
 
 
+# fmt: off
 @overload
 def get_cycler(color_cycler: str | Sequence[ColorLike] | Cycler[str, Any]) -> Cycler[str, Any]: ...
 @overload
 def get_cycler(color_cycler: None) -> None: ...
+# fmt: on
 def get_cycler(
     color_cycler: str | Sequence[ColorLike] | Cycler[str, Any] | None,
 ) -> Cycler[str, Any] | None:

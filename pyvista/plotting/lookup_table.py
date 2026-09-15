@@ -1233,10 +1233,12 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
         rgb = (color[0], color[1], color[2])
         return (*rgb, self.GetOpacity(value)) if opacity else rgb
 
+    # fmt: off
     @overload
     def __call__(self, value: float) -> tuple[float, float, float, float]: ...
     @overload
     def __call__(self, value: VectorLike[float] | _vtk.vtkDataArray) -> NumpyArray[float]: ...
+    # fmt: on
     def __call__(
         self, value: float | VectorLike[float] | _vtk.vtkDataArray
     ) -> tuple[float, float, float, float] | NumpyArray[float]:
