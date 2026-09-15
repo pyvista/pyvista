@@ -1185,8 +1185,8 @@ class ScalarBars(_NoNewAttrMixin):
         ... )
         >>> pl.show()
 
-        A horizontal bar is laid out inside its box, ramp and tick labels alike, and
-        the box grows to hold the padding the title is given.
+        A horizontal bar's ramp and tick labels are laid out inside its box, and the
+        box grows to hold the padding the title is given.
 
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(sphere, show_scalar_bar=False)
