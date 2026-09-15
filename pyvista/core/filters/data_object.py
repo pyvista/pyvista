@@ -6722,7 +6722,7 @@ def _spacing_for_n_points(
     return float(1 / inverse_spacing)
 
 
-def _count_points(dimensions: NumpyArray[int], point_offset: int) -> int:
+def _count_points(dimensions: VectorLike[int], point_offset: int) -> int:
     """Return the points of a grid, with a Python product which cannot overflow."""
     return math.prod(int(d) + point_offset for d in dimensions)
 
