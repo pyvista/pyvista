@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 import itertools
 import operator
 from typing import TYPE_CHECKING
@@ -327,11 +328,10 @@ def process_opacity(*, mesh, opacity, preference, n_colors, scalars, use_transpa
     mesh : pyvista.DataSet
         Dataset to process the opacity for.
 
-    opacity : str, sequence
-        String or array.  If string, can be a ``str`` name of a
-        predefined mapping such as ``'linear'``, ``'geom'``,
-        ``'sigmoid'``, ``'sigmoid3-10'``, or the key of a cell or
-        point data array.
+    opacity : float | str | sequence[float] | None
+        Constant opacity, name of a predefined mapping such as
+        ``'linear'``, ``'geom'``, ``'sigmoid'`` or ``'sigmoid_10'``,
+        name of a cell or point data array, or an array of values.
 
     preference : str
         When ``mesh.n_points == mesh.n_cells``, this parameter
@@ -356,8 +356,8 @@ def process_opacity(*, mesh, opacity, preference, n_colors, scalars, use_transpa
     custom_opac : bool
         If using custom opacity.
 
-    opacity : numpy.ndarray
-        Array containing the opacity.
+    opacity : float | numpy.ndarray | None
+        Constant opacity, or an array containing the opacity.
 
     """
     custom_opac = False
@@ -377,7 +377,7 @@ def process_opacity(*, mesh, opacity, preference, n_colors, scalars, use_transpa
             if scalars is not None and scalars.shape[0] != opacity.shape[0]:
                 msg = 'Opacity array and scalars array must have the same number of elements.'
                 raise ValueError(msg)
-    elif isinstance(opacity, (np.ndarray, list, tuple)):
+    elif isinstance(opacity, (np.ndarray, Sequence)):
         opacity = np.asanyarray(opacity)
         if opacity.shape[0] in [mesh.n_cells, mesh.n_points]:
             # User could pass an array of opacities for every point/cell

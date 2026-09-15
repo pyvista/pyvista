@@ -32,6 +32,7 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.plotting import BackgroundPlotter
 from pyvista.plotting import QtDeprecationError
 from pyvista.plotting import QtInteractor
+from pyvista.plotting._plotting import process_opacity
 from pyvista.plotting._property import _HAS_NATIVE_POINT_SHAPES
 from pyvista.plotting._typing import OpacityOptions
 from pyvista.plotting.axes_assembly import ScaleModeOptions
@@ -3556,6 +3557,17 @@ def test_use_transparency_without_opacity(sphere):
     actor = pl.add_mesh(sphere, use_transparency=True)
 
     assert actor.prop.opacity == 1.0
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_opacity_accepts_any_sequence(sphere):
+    kwargs = dict(
+        mesh=sphere, preference='point', n_colors=8, scalars=None, use_transparency=False
+    )
+    _, from_range = process_opacity(opacity=range(5), **kwargs)
+    _, from_list = process_opacity(opacity=[0, 1, 2, 3, 4], **kwargs)
+
+    np.testing.assert_array_equal(from_range, from_list)
 
 
 @skip_windows_mesa
