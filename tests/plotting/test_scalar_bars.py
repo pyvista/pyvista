@@ -964,6 +964,34 @@ def test_fit_box_shrinks_the_text_to_a_short_box(sphere):
     assert not _text_outside_the_box(pl, bar)
 
 
+@pytest.mark.parametrize(
+    'bare', [{'title': ''}, {'tick_locations': []}], ids=['no_title', 'no_labels']
+)
+@pytest.mark.parametrize('height', [None, 0.05], ids=['free', 'short'])
+def test_fit_box_lays_out_a_bare_bar(sphere, bare, height):
+    # A box with nothing to hold on one line still lays the rest out
+    sphere[KEY] = sphere.points[:, 2]
+    size = {} if height is None else {'height': height}
+
+    pl = pv.Plotter(window_size=[1024, 768])
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = pl.add_scalar_bar(
+        vertical=False,
+        outline=True,
+        title_font_size=24,
+        label_font_size=24,
+        mapper=pv.DataSetMapper(sphere),
+        **size,
+        **bare,
+    )
+    pl.screenshot(return_img=True)
+
+    assert not bar.GetUnconstrainedFontSize()
+    assert _box_pixels(bar, pl.renderer)[1] > 0
+    if height is not None:
+        assert bar.GetHeight() == pytest.approx(height)
+
+
 def test_fit_box_shrinks_a_wide_title(sphere):
     # A title wider than the box is shrunk to fit it, and the labels keep their size
     sphere[KEY] = sphere.points[:, 2]

@@ -164,22 +164,18 @@ def _set_box_height(scalar_bar, viewport, pixels):
     """Give a scalar bar the box height VTK measures as this many pixels."""
     viewport_height = viewport.GetSize()[1]
     height = pixels / viewport_height
-    for _ in range(4):
-        scalar_bar.SetHeight(height)
-        measured = _box_pixels(scalar_bar, viewport)[1]
-        if measured == pixels:
-            break
-        # The corners are rounded to pixels one at a time
-        height += (pixels - measured) / viewport_height
+    scalar_bar.SetHeight(height)
+    # The corners are rounded to pixels one at a time, so a pixel can go missing
+    measured = _box_pixels(scalar_bar, viewport)[1]
+    scalar_bar.SetHeight(height + (pixels - measured) / viewport_height)
 
 
 def _lifted_ramp(ramp, text_pad):
     """Return the bar thickness VTK thins to ``ramp`` and how far it lifts the ramp."""
-    for thickness in range(ramp, ramp + text_pad + 2):
-        nudge = min(thickness / 8, text_pad)
-        if int(thickness - nudge) == ramp:
-            return thickness, int(nudge)
-    return ramp, 0
+    thickness = ramp
+    while int(thickness - min(thickness / 8, text_pad)) != ramp:
+        thickness += 1
+    return thickness, int(min(thickness / 8, text_pad))
 
 
 def _ramp_room(scalar_bar, width, ramp):
@@ -189,9 +185,7 @@ def _ramp_room(scalar_bar, width, ramp):
     swatch_pad = 4.0 if not notes or per_note > 16 else per_note / 4
 
     def swatch(drawn):
-        size = min(ramp, int(width) // 4)
-        if size < 4 and width > 16:
-            size = 4
+        size = max(min(ramp, int(width) // 4), 4 * (width > 16))
         return size if drawn else 0
 
     nan = swatch(scalar_bar.GetDrawNanAnnotation())
@@ -277,10 +271,10 @@ def _constrained_box(scalar_bar, *, title, pad, viewport, keep_height=False):
 
     # The text is padded off the ramp and the frame by the text pad, and the title off
     # the labels by twice that less the room the ramp is lifted off the frame
-    for text_pad in range(1, pad + 3):
-        thickness, lift = _lifted_ramp(ramp, text_pad)
-        if 2 * text_pad - line_width - lift >= pad:
-            break
+    text_pad = 1
+    while 2 * text_pad - line_width - _lifted_ramp(ramp, text_pad)[1] < pad:
+        text_pad += 1
+    thickness, lift = _lifted_ramp(ramp, text_pad)
     title_height = title_size(text_pad)[1]
     title_box = math.ceil(title_height)
     label_height = label_size(text_pad, ramp)[1]
