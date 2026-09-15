@@ -40,7 +40,6 @@ class BackgroundRenderer(Renderer):
         self.SetBackground(self._plotter.renderer.GetBackground())
         self._scale = scale
         self._modified_observer = None
-        self._prior_window_size = None
         if view_port is not None:
             self.viewport = view_port
 
@@ -68,9 +67,6 @@ class BackgroundRenderer(Renderer):
 
         if self._actors is None:  # the renderer has been closed
             return
-
-        if self._prior_window_size != self.parent.window_size:
-            self._prior_window_size = self.parent.window_size
 
         actor = cast('_vtk.vtkImageActor', self._actors['background'])
         image_data = actor.GetInput()
