@@ -39,8 +39,9 @@ from pyvista.core.filters.data_object import _cast_output_to_match_input_type
 from pyvista.core.filters.data_object import _clip_input
 from pyvista.core.filters.data_object import _clipper
 from pyvista.core.filters.data_object import _keep_array_structure
+from pyvista.core.filters.data_object import _make_reference_volume
 from pyvista.core.filters.data_object import _validate_clip_inplace
-from pyvista.core.utilities._cell_lengths import _cell_length_percentile
+from pyvista.core.filters.data_object import _validate_reference_volume_options
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.arrays import get_array
@@ -8432,6 +8433,8 @@ class DataSetFilters(DataObjectFilters):
         reference_volume: ImageData | None = None,
         dimensions: VectorLike[int] | None = None,
         spacing: float | VectorLike[float] | None = None,
+        target_n_points: int | None = None,
+        max_n_points: int | None = None,
         rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None = None,
         cell_length_percentile: float | None = None,
         cell_length_sample_size: int | None = None,
@@ -8462,8 +8465,16 @@ class DataSetFilters(DataObjectFilters):
 
         #. Specify the ``dimensions`` explicitly.
 
+        #. Specify the ``target_n_points``. The spacing is isotropic and estimated so
+           the output has approximately this many points.
+
         #. Specify the ``cell_length_percentile``. The spacing is estimated from the
            surface's cells using the specified percentile.
+
+        Set ``max_n_points`` to cap the result of any of these. It differs from
+        ``target_n_points``, which is a resolution to aim for: a geometry specified
+        explicitly raises if it exceeds the cap, while an estimated one is coarsened to
+        fit.
 
         Use ``reference_volume`` for full control of the output mask's geometry. For
         all other options, the geometry is implicitly defined such that the generated
@@ -8517,6 +8528,30 @@ class DataSetFilters(DataObjectFilters):
             Approximate spacing to use for the generated mask image. Set this value
             to control the spacing explicitly. If unset, the spacing is defined
             implicitly through other parameters. See summary and examples for details.
+
+        target_n_points : int, optional
+            Approximate number of points to generate. The spacing is isotropic and
+            chosen so the output holds about this many points, distributed between the
+            axes in proportion to the input's bounds. An axis with no extent holds a
+            single point and takes no part in the count. Rounding to whole voxels means
+            the count is approached, not matched exactly. Cannot be set with
+            ``reference_volume``, ``dimensions``, ``spacing``, or the cell length
+            options.
+
+            .. versionadded:: 0.50
+
+        max_n_points : int, optional
+            Strict upper bound on the number of points generated. Unlike
+            ``target_n_points``, which is only approached, this limit is never exceeded.
+            How it is enforced depends on how the geometry is defined:
+
+            - Geometry set explicitly, with ``reference_volume``, ``dimensions``,
+              ``spacing`` or a cell length option, raises if it exceeds the limit.
+            - ``target_n_points`` must not exceed the limit, and the grid estimated from
+              it is coarsened if rounding would take it above.
+            - Geometry left to the defaults is coarsened to fit, without raising.
+
+            .. versionadded:: 0.50
 
         rounding_func : Callable[VectorLike[float], VectorLike[int]], optional
             Control how the dimensions are rounded to integers based on the provided or
@@ -8736,90 +8771,35 @@ class DataSetFilters(DataObjectFilters):
         >>> pl.show(cpos='yz')
 
         """
-        surface = wrap(self).extract_surface(algorithm=None, pass_pointid=False, pass_cellid=False)
-        if not (surface.faces.size or surface.strips.size):
-            # we have a point cloud or an empty mesh
-            msg = 'Input mesh must have faces for voxelization.'
-            raise ValueError(msg)
-
+        surface = _voxelize_surface(self)
+        _validate_reference_volume_options(
+            reference_volume=reference_volume,
+            dimensions=dimensions,
+            spacing=spacing,
+            target_n_points=target_n_points,
+            max_n_points=max_n_points,
+            rounding_func=rounding_func,
+            cell_length_percentile=cell_length_percentile,
+            cell_length_sample_size=cell_length_sample_size,
+        )
+        volume = _make_reference_volume(
+            surface,
+            reference_volume=reference_volume,
+            dimensions=dimensions,
+            spacing=spacing,
+            target_n_points=target_n_points,
+            max_n_points=max_n_points,
+            rounding_func=rounding_func,
+            cell_length_percentile=cell_length_percentile,
+            cell_length_sample_size=cell_length_sample_size,
+        )
+        # The stencil filter takes triangles
+        poly_ijk = surface.triangulate()
         if reference_volume is not None:
-            if (
-                dimensions is not None
-                or spacing is not None
-                or rounding_func is not None
-                or cell_length_percentile is not None
-                or cell_length_sample_size is not None
-            ):
-                msg = (
-                    'Cannot specify a reference volume with other geometry parameters. '
-                    '`reference_volume` must define the geometry exclusively.'
-                )
-                raise TypeError(msg)
-            _validation.check_instance(reference_volume, pv.ImageData, name='reference volume')
-            # The image stencil filters do not support orientation, so we apply the
-            # inverse direction matrix to "remove" orientation from the polydata
-            poly_ijk = surface.rotate(
-                reference_volume.direction_matrix.T, point=reference_volume.origin, inplace=False
+            # The stencil filters ignore orientation, so remove it from the polydata
+            poly_ijk = poly_ijk.rotate(
+                volume.direction_matrix.T, point=volume.origin, inplace=False
             )
-            poly_ijk = poly_ijk.triangulate()
-        else:
-            # Compute reference volume geometry
-            if spacing is not None and dimensions is not None:
-                msg = 'Spacing and dimensions cannot both be set. Set one or the other.'
-                raise TypeError(msg)
-
-            poly_ijk = surface.triangulate()
-
-            if spacing is not None and (
-                cell_length_percentile is not None or cell_length_sample_size is not None
-            ):
-                msg = 'Spacing and cell length options cannot both be set. Set one or the other.'
-                raise TypeError(msg)
-
-            # Get size of poly data for computing dimensions
-            size = np.array(surface.bounds_size)
-
-            if dimensions is None:
-                if spacing is None:
-                    # Estimate spacing from cell length percentile
-                    cell_length_percentile = (
-                        0.1 if cell_length_percentile is None else cell_length_percentile
-                    )
-                    cell_length_sample_size = (
-                        100_000 if cell_length_sample_size is None else cell_length_sample_size
-                    )
-                    spacing = _cell_length_percentile(
-                        surface, cell_length_percentile, cell_length_sample_size
-                    )
-                    if spacing == 0:
-                        msg = (
-                            'The sampled cells have no edges with nonzero length, so the '
-                            'spacing cannot be estimated. Set `spacing` or `dimensions` '
-                            'explicitly.'
-                        )
-                        raise ValueError(msg)
-                # Get initial spacing (will be adjusted later)
-                initial_spacing = _validation.validate_array3(spacing, broadcast=True)
-                rounding_func = np.round if rounding_func is None else rounding_func
-                initial_dimensions = size / initial_spacing
-                # Make sure we don't round dimensions to zero, make it one instead
-                initial_dimensions[initial_dimensions < 1] = 1
-                dimensions = np.array(rounding_func(initial_dimensions), dtype=int)
-            elif rounding_func is not None:
-                msg = (
-                    'Rounding func cannot be set when dimensions is specified. '
-                    'Set one or the other.'
-                )
-                raise TypeError(msg)
-
-            reference_volume = pv.ImageData()
-            reference_volume.dimensions = dimensions
-            # Dimensions are now fixed, now adjust spacing to match poly data bounds
-            # Since we are dealing with voxels as points, we want the bounds of the
-            # points to be 1/2 spacing width smaller than the polydata bounds
-            final_spacing = size / np.array(reference_volume.dimensions)
-            reference_volume.spacing = final_spacing
-            reference_volume.origin = np.array(surface.bounds[::2]) + final_spacing / 2
 
         # Use uint8 dtype if possible
         scalars_dtype: type[np.uint8 | float | int]
@@ -8833,25 +8813,17 @@ class DataSetFilters(DataObjectFilters):
         else:
             scalars_dtype = np.float64
 
-        mask = _stencil_binary_mask(
+        volume['mask'] = _stencil_binary_mask(
             poly_ijk,
-            extent=reference_volume.extent,
-            spacing=reference_volume.spacing,
-            origin=reference_volume.origin,
+            extent=volume.extent,
+            spacing=volume.spacing,
+            origin=volume.origin,
             dtype=scalars_dtype,
             foreground_value=foreground_value,
             background_value=background_value,
             progress_bar=progress_bar,
         )
-        # The image stencil filters do not support orientation, so the direction
-        # matrix is only set on the output
-        binary_mask = pv.ImageData()
-        binary_mask.extent = reference_volume.extent
-        binary_mask.spacing = reference_volume.spacing
-        binary_mask.origin = reference_volume.origin
-        binary_mask['mask'] = mask
-        binary_mask.direction_matrix = reference_volume.direction_matrix
-        return binary_mask
+        return volume
 
     def _voxelize_binary_mask_cells(  # type: ignore[misc]
         self: DataSet,
@@ -8861,6 +8833,8 @@ class DataSetFilters(DataObjectFilters):
         reference_volume: ImageData | None,
         dimensions: VectorLike[int] | None,
         spacing: float | VectorLike[float] | None,
+        target_n_points: int | None,
+        max_n_points: int | None,
         rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None,
         cell_length_percentile: float | None,
         cell_length_sample_size: int | None,
@@ -8872,15 +8846,33 @@ class DataSetFilters(DataObjectFilters):
             )
             dimensions = dimensions_ - 1
 
-        binary_mask = self.voxelize_binary_mask(
-            background_value=background_value,
-            foreground_value=foreground_value,
+        _validate_reference_volume_options(
             reference_volume=reference_volume,
             dimensions=dimensions,
             spacing=spacing,
+            target_n_points=target_n_points,
+            max_n_points=max_n_points,
             rounding_func=rounding_func,
             cell_length_percentile=cell_length_percentile,
             cell_length_sample_size=cell_length_sample_size,
+        )
+        # The output has one more point than the mask along each axis
+        volume = _make_reference_volume(
+            _voxelize_surface(self),
+            reference_volume=reference_volume,
+            dimensions=dimensions,
+            spacing=spacing,
+            target_n_points=target_n_points,
+            max_n_points=max_n_points,
+            rounding_func=rounding_func,
+            cell_length_percentile=cell_length_percentile,
+            cell_length_sample_size=cell_length_sample_size,
+            point_offset=1,
+        )
+        binary_mask = self.voxelize_binary_mask(
+            background_value=background_value,
+            foreground_value=foreground_value,
+            reference_volume=volume,
             progress_bar=progress_bar,
         )
         return binary_mask.points_to_cells(dimensionality='3D', copy=False)
@@ -8893,6 +8885,8 @@ class DataSetFilters(DataObjectFilters):
         reference_volume: ImageData | None = None,
         dimensions: VectorLike[int] | None = None,
         spacing: float | VectorLike[float] | None = None,
+        target_n_points: int | None = None,
+        max_n_points: int | None = None,
         rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None = None,
         cell_length_percentile: float | None = None,
         cell_length_sample_size: int | None = None,
@@ -8908,8 +8902,16 @@ class DataSetFilters(DataObjectFilters):
 
         #. Specify the ``dimensions`` explicitly.
 
+        #. Specify the ``target_n_points``. The spacing is isotropic and estimated so
+           the output has approximately this many points.
+
         #. Specify the ``cell_length_percentile``. The spacing is estimated from the
            surface's cells using the specified percentile.
+
+        Set ``max_n_points`` to cap the result of any of these. It differs from
+        ``target_n_points``, which is a resolution to aim for: a geometry specified
+        explicitly raises if it exceeds the cap, while an estimated one is coarsened to
+        fit.
 
         Use ``reference_volume`` for full control of the output grid's geometry. For
         all other options, the geometry is implicitly defined such that the generated
@@ -8961,6 +8963,36 @@ class DataSetFilters(DataObjectFilters):
             Approximate spacing to use for the generated grid. Set this value
             to control the spacing explicitly. If unset, the spacing is defined
             implicitly through other parameters. See summary and examples for details.
+
+        target_n_points : int, optional
+            Approximate number of points to generate. The spacing is isotropic and
+            chosen so the output holds about this many points, distributed between the
+            axes in proportion to the input's bounds. An axis with no extent holds a
+            single point and takes no part in the count. Rounding to whole voxels means
+            the count is approached, not matched exactly. Cannot be set with
+            ``reference_volume``, ``dimensions``, ``spacing``, or the cell length
+            options.
+
+            .. note::
+
+                Like ``dimensions``, this counts the points of the output, which has one
+                more point than cells along each axis. The same holds for
+                ``max_n_points``.
+
+            .. versionadded:: 0.50
+
+        max_n_points : int, optional
+            Strict upper bound on the number of points generated. Unlike
+            ``target_n_points``, which is only approached, this limit is never exceeded.
+            How it is enforced depends on how the geometry is defined:
+
+            - Geometry set explicitly, with ``reference_volume``, ``dimensions``,
+              ``spacing`` or a cell length option, raises if it exceeds the limit.
+            - ``target_n_points`` must not exceed the limit, and the grid estimated from
+              it is coarsened if rounding would take it above.
+            - Geometry left to the defaults is coarsened to fit, without raising.
+
+            .. versionadded:: 0.50
 
         rounding_func : Callable[VectorLike[float], VectorLike[int]], optional
             Control how the dimensions are rounded to integers based on the provided or
@@ -9060,6 +9092,8 @@ class DataSetFilters(DataObjectFilters):
             reference_volume=reference_volume,
             dimensions=dimensions,
             spacing=spacing,
+            target_n_points=target_n_points,
+            max_n_points=max_n_points,
             rounding_func=rounding_func,
             cell_length_percentile=cell_length_percentile,
             cell_length_sample_size=cell_length_sample_size,
@@ -9094,6 +9128,11 @@ class DataSetFilters(DataObjectFilters):
         Use ``reference_volume`` for full control of the output geometry. For
         all other options, the geometry is implicitly defined such that the generated
         mesh fits the bounds of the input mesh.
+
+        Only the foreground cells are returned, so this filter has no ``target_n_points``
+        or ``max_n_points``. To bound the size of the grid, call
+        :meth:`~pyvista.DataSetFilters.voxelize_rectilinear` with ``max_n_points`` and
+        :meth:`~pyvista.DataSetFilters.threshold` its output.
 
         If no inputs are provided, ``cell_length_percentile=0.1`` (tenth percentile) is
         used by default to estimate the spacing.
@@ -9225,6 +9264,8 @@ class DataSetFilters(DataObjectFilters):
             reference_volume=reference_volume,
             dimensions=dimensions,
             spacing=spacing,
+            target_n_points=None,
+            max_n_points=None,
             rounding_func=rounding_func,
             cell_length_percentile=cell_length_percentile,
             cell_length_sample_size=cell_length_sample_size,
@@ -9236,6 +9277,15 @@ class DataSetFilters(DataObjectFilters):
 
 
 _STENCIL_SLAB_SLICES = 8
+
+
+def _voxelize_surface(mesh: DataSet) -> PolyData:
+    """Extract the surface to voxelize, which must have faces."""
+    surface = wrap(mesh).extract_surface(algorithm=None, pass_pointid=False, pass_cellid=False)
+    if not (surface.faces.size or surface.strips.size):
+        msg = 'Input mesh must have faces for voxelization.'
+        raise ValueError(msg)
+    return surface
 
 
 def _stencil_binary_mask(
