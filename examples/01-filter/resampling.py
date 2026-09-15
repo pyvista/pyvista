@@ -97,6 +97,12 @@ pl.show(cpos=cpos)
 # Start from a volumetric scan of a knee. Bone is the bright end of its intensity range,
 # from 100 up.
 knee = examples.download_knee_full()
+
+# sphinx_gallery_start_ignore
+# the interactive scene of this volume exceeds the file size limit
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
+
 knee.plot(volume=True, cmap='bone', clim=[100, 174])
 
 # %%
