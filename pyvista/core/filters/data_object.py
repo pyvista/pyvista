@@ -6049,7 +6049,8 @@ class DataObjectFilters:
             Value given to the voxels which no value could be resampled for. Every
             array of the output takes it, and zero is used by default. Both methods
             accept it, though only ``method='interpolate'`` has it natively; under
-            ``method='sample'`` this filter fills the voxels itself.
+            ``method='sample'`` this filter fills the voxels itself, and the value must
+            fit the data type of the arrays it fills.
 
         mark_blank : bool, default: False
             Hide the voxels which no value could be resampled for, by flagging them in a
@@ -6774,7 +6775,21 @@ def _fill_null_values(image: ImageData, null_value: float) -> None:
     invalid = image.point_data[_VALID_POINT_MASK] == 0
     for name, array in image.point_data.items():
         if name not in (_VALID_POINT_MASK, _GHOST_ARRAY):
+            _check_null_value_fits(null_value, name, array.dtype)
             array[invalid] = null_value
+
+
+def _check_null_value_fits(null_value: float, name: str, dtype: np.dtype[Any]) -> None:
+    """Reject a null value which an integer array cannot hold."""
+    if not np.issubdtype(dtype, np.integer):
+        return
+    info = np.iinfo(dtype)
+    if np.isnan(null_value) or not info.min <= null_value <= info.max:
+        msg = (
+            f'`null_value={null_value}` cannot be stored in array {name!r}, whose '
+            f'`{dtype}` data type holds integers from {info.min} to {info.max}.'
+        )
+        raise ValueError(msg)
 
 
 def _blank_invalid_points(image: ImageData) -> ImageData:

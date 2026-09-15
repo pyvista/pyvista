@@ -4875,6 +4875,25 @@ def test_resample_to_image_null_value(sphere, method, kwargs):
     assert np.array_equal(blanked.point_data[ghost_name], np.where(invalid, hidden, 0))
 
 
+@pytest.mark.parametrize('null_value', [-1.0, 300.0, np.nan])
+def test_resample_to_image_null_value_dtype_raises(sphere, null_value):
+    sphere.clear_data()
+    sphere['counts'] = np.arange(sphere.n_points, dtype=np.uint8)
+    match = (
+        f"`null_value={null_value}` cannot be stored in array 'counts', whose "
+        '`uint8` data type holds integers from 0 to 255.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        sphere.resample_to_image(dimensions=(20, 20, 20), method='sample', null_value=null_value)
+
+
+def test_resample_to_image_null_value_float_dtype(sphere):
+    sphere.clear_data()
+    sphere['counts'] = np.arange(sphere.n_points, dtype=np.float32)
+    image = sphere.resample_to_image(dimensions=(20, 20, 20), method='sample', null_value=-1.0)
+    assert image['counts'][image['vtkValidPointMask'] == 0].min() == -1.0
+
+
 def test_resample_to_image_method_default(sphere, mocker: MockerFixture):
     from pyvista.core.filters import data_object
     from pyvista.core.filters import data_set
