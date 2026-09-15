@@ -25,7 +25,8 @@ if TYPE_CHECKING:
 
 def _download_dataset_texture(
     loader: _SingleFileDownloadableDatasetLoader, *, load: bool, texture: bool
-):
+) -> Texture | ImageData | str:
+    """Download a dataset and optionally return it as a texture."""
     dataset = _download_dataset(loader, load=load)
     if texture:
         from pyvista.plotting.texture import Texture  # noqa: PLC0415
@@ -80,7 +81,10 @@ def load_planet(
     )
 
 
-def _planet_load_func(radius=1.0, lat_resolution=50, lon_resolution=100):
+def _planet_load_func(
+    radius: float = 1.0, lat_resolution: int = 50, lon_resolution: int = 100
+) -> PolyData:
+    """Create the sphere used for every planet."""
     return pv.Sphere(
         radius=radius,
         theta_resolution=lon_resolution,
@@ -93,7 +97,8 @@ def _planet_load_func(radius=1.0, lat_resolution=50, lon_resolution=100):
 _dataset_planet = _DatasetLoader(_planet_load_func)
 
 
-def _planet_deprecated(name):
+def _planet_deprecated(name: str) -> None:
+    """Warn that ``load_<name>`` is deprecated."""
     # Deprecated on 0.49.0, estimated removal on v0.52.0
     if pv.version_info >= (0, 52):  # pragma: no cover
         msg = f'Remove deprecated function `load_{name}`.'
@@ -104,7 +109,9 @@ def _planet_deprecated(name):
     )
 
 
-def load_sun(*, radius=1.0, lat_resolution=50, lon_resolution=100):
+def load_sun(
+    *, radius: float = 1.0, lat_resolution: int = 50, lon_resolution: int = 100
+) -> PolyData:
     """Load the Sun as a textured sphere.
 
     .. deprecated:: 0.49.0
@@ -139,7 +146,9 @@ def load_sun(*, radius=1.0, lat_resolution=50, lon_resolution=100):
     return load_planet(radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution)
 
 
-def load_moon(*, radius=1.0, lat_resolution=50, lon_resolution=100):
+def load_moon(
+    *, radius: float = 1.0, lat_resolution: int = 50, lon_resolution: int = 100
+) -> PolyData:
     """Load the Moon as a textured sphere.
 
     .. deprecated:: 0.49.0
@@ -174,7 +183,9 @@ def load_moon(*, radius=1.0, lat_resolution=50, lon_resolution=100):
     return load_planet(radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution)
 
 
-def load_mercury(*, radius=1.0, lat_resolution=50, lon_resolution=100):
+def load_mercury(
+    *, radius: float = 1.0, lat_resolution: int = 50, lon_resolution: int = 100
+) -> PolyData:
     """Load the planet Mercury as a textured sphere.
 
     .. deprecated:: 0.49.0
@@ -209,7 +220,9 @@ def load_mercury(*, radius=1.0, lat_resolution=50, lon_resolution=100):
     return load_planet(radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution)
 
 
-def load_venus(*, radius=1.0, lat_resolution=50, lon_resolution=100):
+def load_venus(
+    *, radius: float = 1.0, lat_resolution: int = 50, lon_resolution: int = 100
+) -> PolyData:
     """Load the planet Venus as a textured sphere.
 
     .. deprecated:: 0.49.0
@@ -244,7 +257,9 @@ def load_venus(*, radius=1.0, lat_resolution=50, lon_resolution=100):
     return load_planet(radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution)
 
 
-def load_earth(*, radius=1.0, lat_resolution=50, lon_resolution=100):
+def load_earth(
+    *, radius: float = 1.0, lat_resolution: int = 50, lon_resolution: int = 100
+) -> PolyData:
     """Load the planet Earth as a textured sphere.
 
     .. deprecated:: 0.49.0
@@ -279,7 +294,9 @@ def load_earth(*, radius=1.0, lat_resolution=50, lon_resolution=100):
     return load_planet(radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution)
 
 
-def load_mars(*, radius=1.0, lat_resolution=50, lon_resolution=100):
+def load_mars(
+    *, radius: float = 1.0, lat_resolution: int = 50, lon_resolution: int = 100
+) -> PolyData:
     """Load the planet Mars as a textured sphere.
 
     .. deprecated:: 0.49.0
@@ -314,7 +331,9 @@ def load_mars(*, radius=1.0, lat_resolution=50, lon_resolution=100):
     return load_planet(radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution)
 
 
-def load_jupiter(*, radius=1.0, lat_resolution=50, lon_resolution=100):
+def load_jupiter(
+    *, radius: float = 1.0, lat_resolution: int = 50, lon_resolution: int = 100
+) -> PolyData:
     """Load the planet Jupiter as a textured sphere.
 
     .. deprecated:: 0.49.0
@@ -349,7 +368,9 @@ def load_jupiter(*, radius=1.0, lat_resolution=50, lon_resolution=100):
     return load_planet(radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution)
 
 
-def load_saturn(*, radius=1.0, lat_resolution=50, lon_resolution=100):
+def load_saturn(
+    *, radius: float = 1.0, lat_resolution: int = 50, lon_resolution: int = 100
+) -> PolyData:
     """Load the planet Saturn as a textured sphere.
 
     .. deprecated:: 0.49.0
@@ -440,7 +461,10 @@ def load_planet_rings(*, inner: float = 0.25, outer: float = 0.5, c_res: int = 5
     return _dataset_planet_rings.load(inner=inner, outer=outer, c_res=c_res)  # type: ignore[return-value]
 
 
-def _planet_rings_load_func(*, inner=0.25, outer=0.5, c_res=50):
+def _planet_rings_load_func(
+    *, inner: float = 0.25, outer: float = 0.5, c_res: int = 50
+) -> PolyData:
+    """Create the textured disc used for planetary rings."""
     disc = pv.Disc(inner=inner, outer=outer, c_res=c_res)
     texture_coordinates = np.zeros((disc.points.shape[0], 2))
     radius = np.sqrt(disc.points[:, 0] ** 2 + disc.points[:, 1] ** 2)
@@ -453,7 +477,7 @@ def _planet_rings_load_func(*, inner=0.25, outer=0.5, c_res=50):
 _dataset_planet_rings = _DatasetLoader(_planet_rings_load_func)
 
 
-def load_saturn_rings(*, inner=0.25, outer=0.5, c_res=6):
+def load_saturn_rings(*, inner: float = 0.25, outer: float = 0.5, c_res: int = 6) -> PolyData:
     """Load the planet Saturn's rings.
 
     .. deprecated:: 0.49.0
@@ -507,7 +531,9 @@ def load_saturn_rings(*, inner=0.25, outer=0.5, c_res=6):
     return load_planet_rings(inner=inner, outer=outer, c_res=c_res)
 
 
-def load_uranus(*, radius=1.0, lat_resolution=50, lon_resolution=100):
+def load_uranus(
+    *, radius: float = 1.0, lat_resolution: int = 50, lon_resolution: int = 100
+) -> PolyData:
     """Load the planet Uranus as a textured sphere.
 
     .. deprecated:: 0.49.0
@@ -542,7 +568,9 @@ def load_uranus(*, radius=1.0, lat_resolution=50, lon_resolution=100):
     return load_planet(radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution)
 
 
-def load_neptune(*, radius=1.0, lat_resolution=50, lon_resolution=100):
+def load_neptune(
+    *, radius: float = 1.0, lat_resolution: int = 50, lon_resolution: int = 100
+) -> PolyData:
     """Load the planet Neptune as a textured sphere.
 
     .. deprecated:: 0.49.0
@@ -577,7 +605,9 @@ def load_neptune(*, radius=1.0, lat_resolution=50, lon_resolution=100):
     return load_planet(radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution)
 
 
-def load_pluto(*, radius=1.0, lat_resolution=50, lon_resolution=100):
+def load_pluto(
+    *, radius: float = 1.0, lat_resolution: int = 50, lon_resolution: int = 100
+) -> PolyData:
     """Load the dwarf planet Pluto as a textured sphere.
 
     .. deprecated:: 0.49.0
@@ -644,7 +674,7 @@ def download_sun_surface(
 
     Returns
     -------
-    output : pyvista.DataSet | pyvista.Texture | str
+    output : pyvista.Texture | pyvista.ImageData | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -713,7 +743,7 @@ def download_moon_surface(
 
     Returns
     -------
-    output : pyvista.DataSet | pyvista.Texture | str
+    output : pyvista.Texture | pyvista.ImageData | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -782,7 +812,7 @@ def download_mercury_surface(
 
     Returns
     -------
-    output : pyvista.DataSet | pyvista.Texture | str
+    output : pyvista.Texture | pyvista.ImageData | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -922,7 +952,7 @@ def download_mars_surface(
 
     Returns
     -------
-    output : pyvista.DataSet | pyvista.Texture | str
+    output : pyvista.Texture | pyvista.ImageData | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -988,7 +1018,7 @@ def download_jupiter_surface(
 
     Returns
     -------
-    output : pyvista.DataSet | pyvista.Texture | str
+    output : pyvista.Texture | pyvista.ImageData | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -1054,7 +1084,7 @@ def download_saturn_surface(
 
     Returns
     -------
-    output : pyvista.DataSet | pyvista.Texture | str
+    output : pyvista.Texture | pyvista.ImageData | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -1123,7 +1153,7 @@ def download_saturn_rings(
 
     Returns
     -------
-    output : pyvista.ImageData | pyvista.Texture | str
+    output : pyvista.Texture | pyvista.ImageData | str
         Dataset, texture, or filename of the Saturn's rings.
 
     Examples
@@ -1254,7 +1284,7 @@ def download_neptune_surface(
 
     Returns
     -------
-    output : pyvista.DataSet | pyvista.Texture | str
+    output : pyvista.Texture | pyvista.ImageData | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -1317,7 +1347,7 @@ def download_pluto_surface(
 
     Returns
     -------
-    output : pyvista.DataSet | pyvista.Texture | str
+    output : pyvista.Texture | pyvista.ImageData | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -1383,7 +1413,7 @@ def download_stars_sky_background(
 
     Returns
     -------
-    output : pyvista.DataSet | pyvista.Texture | str
+    output : pyvista.Texture | pyvista.ImageData | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -1457,7 +1487,7 @@ def download_milkyway_sky_background(
 
     Returns
     -------
-    output : pyvista.DataSet | pyvista.Texture | str
+    output : pyvista.Texture | pyvista.ImageData | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
