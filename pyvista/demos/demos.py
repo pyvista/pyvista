@@ -291,7 +291,7 @@ def plot_wave(*, fps=30, frequency=1, wavetime=3, notebook=None):
         telap = time.time() - tstart
         phase = telap * 2 * np.pi * frequency
         Z = np.sin(R + phase)
-        mesh.points[:, -1] = Z.ravel()  # type: ignore[index]
+        mesh.points[:, -1] = Z.ravel()
         mesh['Height'] = Z.ravel()
 
         mesh.compute_normals(inplace=True)

@@ -23,7 +23,6 @@ if TYPE_CHECKING:
     from pyvista import DataSet
 
     from ._typing_core import ArrayLike
-    from ._typing_core import NumpyArray
 
 
 class pyvista_ndarray(_NoNewAttrMixin, np.ndarray):  # noqa: N801  # numpydoc ignore=PR02
@@ -119,7 +118,7 @@ class pyvista_ndarray(_NoNewAttrMixin, np.ndarray):  # noqa: N801  # numpydoc ig
                 VTKObject=getattr(obj, 'VTKObject', None),
             )
 
-    def __setitem__(self: pyvista_ndarray, key: int | NumpyArray[int], value: Any) -> None:  # type: ignore[override]
+    def __setitem__(self: pyvista_ndarray, key: Any, value: Any) -> None:
         """Implement [] set operator.
 
         When the array is changed it triggers "Modified()" which updates
