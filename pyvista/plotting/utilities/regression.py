@@ -47,12 +47,12 @@ def remove_alpha(img: _vtk.vtkImageData) -> ImageData:
     return pv.wrap(vtk_image)
 
 
-def wrap_image_array(arr):
+def wrap_image_array(arr: NumpyArray[np.uint8]) -> ImageData:
     """Wrap a NumPy array as a ``pyvista.ImageData``.
 
     Parameters
     ----------
-    arr : np.ndarray
+    arr : numpy.ndarray
         A NumPy array of shape (X, Y, (3 or 4)) and ``dtype`` ``np.uint8``. For
         example, an array of shape ``(768, 1024, 3)``.
 

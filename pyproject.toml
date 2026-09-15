@@ -682,7 +682,6 @@ pyvista = "pv"
 'pyvista/plotting/scalar_bars.py' = ['ANN']
 'pyvista/plotting/themes.py' = ['ANN', 'ICN001']
 'pyvista/plotting/tools.py' = ['S607'] # pgrep and xset come from PATH
-'pyvista/plotting/utilities/*.py' = ['ANN']
 'pyvista/plotting/utilities/algorithms.py' = ['N802', 'N803']
 'pyvista/plotting/widgets.py' = ['ANN', 'PLC0415']
 'pyvista/utilities/*' = ['ANN', 'F401'] # deprecated modules
