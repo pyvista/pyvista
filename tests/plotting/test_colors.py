@@ -110,8 +110,13 @@ def test_get_cmap_safe_missing_third_party_raises(monkeypatch):
 
 @pytest.mark.parametrize('scheme', [object(), 1.0, None])
 def test_color_scheme_to_cycler_raises(scheme):
-    with pytest.raises(TypeError, match=f'Color scheme not understood: {scheme}'):
+    with pytest.raises(TypeError, match='Color scheme must be an instance of'):
         color_scheme_to_cycler(scheme=scheme)
+
+
+def test_color_scheme_to_cycler_raises_unknown_name():
+    with pytest.raises(ValueError, match="Color scheme 'nope' is not valid"):
+        color_scheme_to_cycler(scheme='nope')
 
 
 def test_color():
@@ -180,6 +185,22 @@ def test_color():
         c['invalid_name']  # Invalid string index
     with pytest.raises(IndexError):
         c[4]  # Invalid integer index
+
+
+def test_color_from_dict_without_alpha():
+    assert pv.Color({'r': 0, 'g': 0, 'b': 255}) == pv.Color('blue')
+    assert pv.Color({'r': 0, 'g': 0, 'b': 255}, default_opacity=128).opacity == 128
+
+
+@pytest.mark.parametrize('dct', [{'r': 0, 'b': 255}, {'g': 0, 'b': 255}, {'r': 0}])
+def test_color_from_dict_missing_channel_raises(dct):
+    with pytest.raises(ValueError, match='Invalid color input'):
+        pv.Color(dct)
+
+
+@pytest.mark.parametrize('other', [5, None, object(), 'not_a_color'])
+def test_color_eq_not_a_color(other):
+    assert pv.Color('red') != other
 
 
 @pytest.mark.parametrize('opacity', [275, -50, 2.4, -1.2, '#zz'])

@@ -679,7 +679,6 @@ pyvista = "pv"
 'pyvista/plotting/background_renderer.py' = ['ANN']
 'pyvista/plotting/camera.py' = ['ANN', 'S314'] # .pvcc is trusted
 'pyvista/plotting/charts.py' = ['ANN']
-'pyvista/plotting/colors.py' = ['ANN']
 'pyvista/plotting/composite_mapper.py' = ['ANN']
 'pyvista/plotting/cube_axes_actor.py' = ['ANN']
 'pyvista/plotting/errors.py' = ['ANN']

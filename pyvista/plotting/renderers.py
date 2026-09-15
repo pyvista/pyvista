@@ -929,7 +929,7 @@ class Renderers(_NoNewAttrMixin):
 
     def set_color_cycler(
         self,
-        color_cycler: str | cycler.Cycler[str, Any] | Sequence[ColorLike],
+        color_cycler: str | cycler.Cycler[str, Any] | Sequence[ColorLike] | None,
         *,
         all_renderers: bool = True,
     ) -> None:
@@ -957,7 +957,7 @@ class Renderers(_NoNewAttrMixin):
 
         Parameters
         ----------
-        color_cycler : str | cycler.Cycler | sequence[ColorLike]
+        color_cycler : str | cycler.Cycler | sequence[ColorLike] | None
             The colors to cycle through.
 
         all_renderers : bool, default: True
