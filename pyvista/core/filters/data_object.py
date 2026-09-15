@@ -6690,7 +6690,11 @@ def _validate_reference_volume_options(
 
 
 def _spacing_for_n_points(
-    size: NumpyArray[float], target_n_points: int, name: str = 'target n points'
+    size: NumpyArray[float],
+    target_n_points: int,
+    name: str = 'target n points',
+    *,
+    point_offset: int = 0,
 ) -> float:
     """Return the isotropic spacing whose grid holds about ``target_n_points`` points."""
     target = _validation.validate_number(
@@ -6704,18 +6708,43 @@ def _spacing_for_n_points(
             '`dimensions` instead of `target_n_points`.'
         )
         raise ValueError(msg)
-    # Flat axes hold a single point, so the budget is spread over the others
-    return float((extents[live].prod() / target) ** (1.0 / live.sum()))
+    if point_offset == 0:
+        # Flat axes hold a single point, so the budget is spread over the others
+        return float((extents[live].prod() / target) ** (1.0 / live.sum()))
+    # Past the flat axes, the point count is a polynomial in the inverse spacing
+    budget = target / (1 + point_offset) ** int((~live).sum())
+    if budget <= 1:
+        return float(extents[live].max())
+    polynomial = np.prod(extents[live]) * np.poly(-1 / extents[live])
+    polynomial[-1] -= budget
+    roots = np.roots(polynomial)
+    inverse_spacing = roots[np.isreal(roots) & (roots.real > 0)].real.max()
+    return float(1 / inverse_spacing)
 
 
-def _dimensions_within(size: NumpyArray[float], max_n_points: int) -> NumpyArray[int]:
+def _count_points(dimensions: NumpyArray[int], point_offset: int) -> int:
+    """Return the points of a grid, with a Python product which cannot overflow."""
+    return math.prod(int(d) + point_offset for d in dimensions)
+
+
+def _dimensions_within(
+    size: NumpyArray[float], max_n_points: int, point_offset: int
+) -> NumpyArray[int]:
     """Return the finest grid dimensions holding no more than ``max_n_points`` points."""
-    spacing = _spacing_for_n_points(size, max_n_points, name='max n points')
+    spacing = _spacing_for_n_points(
+        size, max_n_points, name='max n points', point_offset=point_offset
+    )
     live = size > 0
     dimensions = np.ones(3, dtype=int)
     dimensions[live] = np.maximum(np.round(size[live] / spacing), 1).astype(int)
-    while dimensions.prod() > max_n_points and (dimensions > 1).any():
+    while _count_points(dimensions, point_offset) > max_n_points and (dimensions > 1).any():
         dimensions[dimensions.argmax()] -= 1
+    if (n_points := _count_points(dimensions, point_offset)) > max_n_points:
+        msg = (
+            f'`max_n_points={max_n_points}` is below the {n_points} points of a grid with '
+            'one cell along each axis.'
+        )
+        raise ValueError(msg)
     return dimensions
 
 
@@ -6730,6 +6759,7 @@ def _make_reference_volume(
     rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None,
     cell_length_percentile: float | None,
     cell_length_sample_size: int | None,
+    point_offset: int = 0,
 ) -> ImageData:
     """Create an empty image whose voxels fit the bounds of a mesh."""
     if max_n_points is not None:
@@ -6754,7 +6784,8 @@ def _make_reference_volume(
         volume.spacing = reference_volume.spacing
         volume.origin = reference_volume.origin
         volume.direction_matrix = reference_volume.direction_matrix
-        _check_n_points(volume.n_points, max_n_points, requested=True)
+        n_points = _count_points(np.array(volume.dimensions), point_offset)
+        _check_n_points(n_points, max_n_points, requested=True)
         return volume
 
     size = np.array(mesh.bounds_size)
@@ -6762,7 +6793,7 @@ def _make_reference_volume(
 
     if dimensions is None:
         if target_n_points is not None:
-            spacing = _spacing_for_n_points(size, target_n_points)
+            spacing = _spacing_for_n_points(size, target_n_points, point_offset=point_offset)
         if spacing is None:
             if mesh.n_cells == 0:
                 msg = (
@@ -6794,11 +6825,10 @@ def _make_reference_volume(
         initial_dimensions[initial_dimensions < 1] = 1
         dimensions = np.array(rounding_func(initial_dimensions), dtype=int)
 
-    # A Python product cannot overflow the way an int64 one can
-    n_points = math.prod(int(d) for d in dimensions)
+    n_points = _count_points(dimensions, point_offset)
     if max_n_points is not None and n_points > max_n_points:
         _check_n_points(n_points, max_n_points, requested=requested)
-        dimensions = _dimensions_within(size, max_n_points)
+        dimensions = _dimensions_within(size, max_n_points, point_offset)
 
     volume = pv.ImageData()
     volume.dimensions = dimensions
