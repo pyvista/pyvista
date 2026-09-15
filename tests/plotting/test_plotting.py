@@ -33,6 +33,7 @@ from pyvista.plotting import BackgroundPlotter
 from pyvista.plotting import QtDeprecationError
 from pyvista.plotting import QtInteractor
 from pyvista.plotting._property import _HAS_NATIVE_POINT_SHAPES
+from pyvista.plotting._typing import OpacityOptions
 from pyvista.plotting.axes_assembly import ScaleModeOptions
 from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.errors import InvalidCameraError
@@ -45,6 +46,8 @@ from pyvista.plotting.renderer import _MIN_LUT_SAMPLES
 from pyvista.plotting.renderer import _MIN_LUT_SIZE
 from pyvista.plotting.renderer import _MIN_PREFILTER_SAMPLES
 from pyvista.plotting.texture import numpy_to_texture
+from pyvista.plotting.tools import _opacity_transfer_functions
+from pyvista.plotting.tools import normalize
 from pyvista.plotting.utilities import algorithms
 from tests.conftest import _get_module_functions
 from tests.core.test_imagedata_filters import labeled_image  # noqa: F401
@@ -3563,6 +3566,31 @@ def test_opacity_transfer_functions():
     assert len(mapping) == n
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
+@pytest.mark.parametrize('name', ['sigmoid_1', 'sigmoid_2', 'sigmoid_15', 'sigmoid_20'])
+def test_opacity_transfer_function_reverses_every_sigmoid(name):
+    reversed_ = pv.opacity_transfer_function(f'{name}_r', 8)
+    assert np.array_equal(reversed_, pv.opacity_transfer_function(name, 8)[::-1])
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_opacity_transfer_function_foreground_has_no_reverse():
+    with pytest.raises(ValueError, match=r'Opacity transfer function \(foreground_r\) unknown'):
+        pv.opacity_transfer_function('foreground_r', 8)
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_opacity_options_match_the_named_mappings():
+    assert set(get_args(OpacityOptions)) == set(_opacity_transfer_functions(8))
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_normalize_maps_its_bounds_onto_zero_and_one():
+    values = np.array([0.0, 5.0, 10.0])
+    assert np.allclose(normalize(values), [0.0, 0.5, 1.0])
+    assert np.allclose(normalize(values, minimum=0.0, maximum=20.0), [0.0, 0.25, 0.5])
+
+
 @skip_windows_mesa
 @pytest.mark.parametrize(
     'opacity',
@@ -6852,6 +6880,14 @@ def test_camera_distortion_reaches_an_actor_without_view_coordinates():
         return image.astype(int)
 
     assert np.abs(render(distort=True) - render(distort=False)).max() > 0
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+@pytest.mark.parametrize('color_box', [True, False])
+def test_create_axes_orientation_box_label_color(color_box):
+    actor = pv.create_axes_orientation_box(color_box=color_box, label_color='red')
+    cube = actor.GetParts().GetItemAsObject(0) if color_box else actor
+    assert cube.GetTextEdgesProperty().GetColor() == (1.0, 0.0, 0.0)
 
 
 def test_create_axes_orientation_box(verify_image_cache):
