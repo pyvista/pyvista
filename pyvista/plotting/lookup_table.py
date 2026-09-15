@@ -31,6 +31,7 @@ if TYPE_CHECKING:
 
     from ._typing import ColorLike
     from ._typing import ColormapOptions
+    from ._typing import OpacityOptions
     from ._typing import ScalarBarArgs
 
 _RampOptions = Literal['linear', 's-curve', 'sqrt']
@@ -854,7 +855,7 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
     def apply_opacity(
         self,
-        opacity: float | VectorLike[float] | str,
+        opacity: float | VectorLike[float] | OpacityOptions,
         *,
         interpolate: bool = True,
         kind: str = 'quadratic',
