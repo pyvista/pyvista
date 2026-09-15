@@ -27,7 +27,7 @@ class EmbedPyFileDirective(Directive):
     optional_arguments = 0
     final_argument_whitespace = False
 
-    def run(self):
+    def run(self) -> list[nodes.Node]:
         """Download the file and return it as a Python code block."""
         name = self.arguments[0]
         try:

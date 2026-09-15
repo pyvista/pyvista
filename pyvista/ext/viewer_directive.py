@@ -13,6 +13,9 @@ from sphinx.util.osutil import relative_uri
 from trame_vtk.tools.vtksz2html import HTML_VIEWER_PATH
 
 if TYPE_CHECKING:
+    from typing import Any
+
+    from sphinx.application import Sphinx
     from sphinx.environment import BuildEnvironment
 
 logger = logging.getLogger(__name__)
@@ -40,16 +43,19 @@ class OfflineViewerDirective(Directive):
     final_argument_whitespace = True
     has_content = True
 
-    def run(self):  # pragma: no cover
+    def run(self) -> list[nodes.Node]:  # pragma: no cover
         source_dir = Path(self.state.document.settings.env.app.srcdir)
         output_dir = Path(self.state.document.settings.env.app.outdir)
         # _build directory
         build_dir = Path(self.state.document.settings.env.app.outdir).parent
 
         # this is the path passed to 'offlineviewer:: <path>` directive
-        source_file = str(Path(self.state.document.current_source).parent / self.arguments[0])
-        source_file = Path(source_file).absolute().resolve()
-        if not Path(source_file).is_file():
+        source_file = (
+            (Path(self.state.document.current_source).parent / self.arguments[0])
+            .absolute()
+            .resolve()
+        )
+        if not source_file.is_file():
             logger.warning(f'Source file {source_file} does not exist.')
             return []
 
@@ -102,7 +108,7 @@ class OfflineViewerDirective(Directive):
         return [raw_node]
 
 
-def setup(app):
+def setup(app: Sphinx) -> dict[str, Any]:
     app.add_directive('offlineviewer', OfflineViewerDirective)
 
     return {

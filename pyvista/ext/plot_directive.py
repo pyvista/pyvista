@@ -182,6 +182,7 @@ import shutil
 import textwrap
 import traceback
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import ClassVar
 
 from docutils.parsers.rst import Directive
@@ -209,7 +210,10 @@ _COMMENT_OR_STRING_RE = re.compile(r"""('(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*")|[ \
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from docutils import nodes
     from docutils.parsers.rst.states import RSTState
+    from docutils.parsers.rst.states import RSTStateMachine
+    from docutils.statemachine import StringList
     from sphinx.application import Sphinx
     from sphinx.config import Config
     from sphinx.environment import BuildEnvironment
@@ -223,7 +227,7 @@ _PLOT_SOURCE_CLASS = 'pyvista-plot-source'
 # -----------------------------------------------------------------------------
 
 
-def _option_boolean(arg) -> bool:
+def _option_boolean(arg: str | None) -> bool:
     if not arg or not arg.strip():
         # no argument given, assume used as a flag
         return True
@@ -236,13 +240,13 @@ def _option_boolean(arg) -> bool:
         raise ValueError(msg)
 
 
-def _option_context(arg):
+def _option_context(arg: str | None) -> None:
     if arg is not None:  # pragma: no cover
         msg = 'No arguments allowed for ``:context:``'
         raise ValueError(msg)
 
 
-def _option_format(arg):
+def _option_format(arg: str | None) -> str:
     return directives.choice(arg, ('python', 'doctest'))
 
 
@@ -253,7 +257,7 @@ class PlotDirective(Directive):
     required_arguments = 0
     optional_arguments = 2
     final_argument_whitespace = False
-    option_spec: ClassVar[dict[str, Callable]] = {
+    option_spec: ClassVar[dict[str, Callable[..., Any]]] = {
         'alt': directives.unchanged,
         'height': directives.length_or_unitless,
         'width': directives.length_or_percentage_or_unitless,
@@ -270,7 +274,7 @@ class PlotDirective(Directive):
         'optional': directives.flag,
     }
 
-    def run(self):
+    def run(self) -> list[nodes.system_message]:
         """Run the plot directive."""
         try:
             return run(
@@ -285,7 +289,7 @@ class PlotDirective(Directive):
             raise self.error(str(e))
 
 
-def setup(app: Sphinx):
+def setup(app: Sphinx) -> dict[str, Any]:
     """Set up the plot directive.
 
     Sphinx calls this when it loads the extension, which is where the two globals
@@ -378,16 +382,16 @@ def setup(app: Sphinx):
 # -----------------------------------------------------------------------------
 # Doctest handling
 # -----------------------------------------------------------------------------
-def _contains_pyvista_plot(text) -> bool:
+def _contains_pyvista_plot(text: str) -> bool:
     return '.. pyvista-plot::' in text
 
 
-def _strip_comments(code):
+def _strip_comments(code: str) -> str:
     """Remove comments from a line of python code, leaving string literals alone."""
     return _COMMENT_OR_STRING_RE.sub(lambda match: match.group(1) or '', code)
 
 
-def _split_code_at_show(text):
+def _split_code_at_show(text: str) -> tuple[bool, list[str]]:
     """Split code at plt.show() or plt.plot().
 
     Includes logic to deal with edge cases like:
@@ -426,7 +430,7 @@ def _split_code_at_show(text):
     return is_doctest, parts
 
 
-def _show_or_plot_in_string(string):
+def _show_or_plot_in_string(string: str) -> bool:
     # string contains `.show(`, `.plot(`, or `plot_xyz(` where `xyz` is one
     # or more lower-case letters or underscore, e.g. `plot_cell(`, `plot_datasets(`
     pattern = r'(?:\.plot\(|\.show\(|(?:[ \t\n.]plot_[a-z_]+?)\()'
@@ -499,19 +503,19 @@ plot_context = {}
 class ImageFile:
     """Simple representation of an image file path."""
 
-    def __init__(self, dirname, basename):
+    def __init__(self, dirname: str, basename: str) -> None:
         """Construct ImageFile."""
         self.basename = basename
         self.dirname = dirname
         self.extension = Path(basename).suffix[1:]
 
     @property
-    def filename(self):
+    def filename(self) -> str:
         """Return the filename of this image."""
         return str(Path(self.dirname) / self.basename)
 
     @property
-    def stem(self):
+    def stem(self) -> str:
         """Return the ``basename`` without the suffix."""
         return Path(self.basename).stem
 
@@ -523,7 +527,7 @@ class PlotError(RuntimeError):
     """More descriptive plot error."""
 
 
-def _executable_piece(code_piece, *, is_doctest):
+def _executable_piece(code_piece: str, *, is_doctest: bool) -> str | None:
     """Return ``code_piece``'s script without its ``# doctest: +SKIP`` statements.
 
     A skipped statement is not runnable; executing the rest keeps the namespace --
@@ -539,7 +543,13 @@ def _executable_piece(code_piece, *, is_doctest):
     )
 
 
-def _run_code(*, code, code_path, ns=None, function_name=None):
+def _run_code(
+    *,
+    code: str,
+    code_path: str,
+    ns: dict[str, Any] | None = None,
+    function_name: str | None = None,
+) -> dict[str, Any] | None:
     """Run a docstring example.
 
     Run the example if it does not contain a ``pyvista-plot::`` directive.
@@ -569,18 +579,18 @@ def _run_code(*, code, code_path, ns=None, function_name=None):
 
 def render_figures(
     *,
-    code,
-    code_path,
-    output_dir,
-    output_base,
-    context,
-    function_name,
-    config,
-    force_static,
+    code: str,
+    code_path: str,
+    output_dir: str,
+    output_base: str,
+    context: bool,
+    function_name: str | None,
+    config: Config,
+    force_static: bool,
     env: BuildEnvironment | None = None,
     include_source: bool = True,
     state: RSTState | None = None,
-):
+) -> list[tuple[str, list[ImageFile]]]:
     """Run a pyplot script and save the images in *``output_dir``*.
 
     Save the images under *``output_dir``* with file names derived from
@@ -699,7 +709,7 @@ def _contains_doctest(text: str) -> bool:
     return bool(m)
 
 
-def hash_plot_code(code: str, options: dict) -> str:
+def hash_plot_code(code: str, options: dict[str, Any]) -> str:
     """Generate a hash of the plot code."""
     # convert to plain script if doctest code
     script = doctest.script_from_examples(code) if _contains_doctest(code) else code
@@ -720,7 +730,14 @@ def hash_plot_code(code: str, options: dict) -> str:
     return hashlib.sha256(''.join(parts).encode('utf-8')).hexdigest()[:16]
 
 
-def run(arguments, content, options, state_machine, state, lineno):  # noqa: PLR0917
+def run(  # noqa: PLR0917
+    arguments: list[str],
+    content: StringList,
+    options: dict[str, Any],
+    state_machine: RSTStateMachine,
+    state: RSTState,
+    lineno: int,
+) -> list[nodes.system_message]:
     """Run the plot directive."""
     document = state_machine.document
     config = document.settings.env.config
