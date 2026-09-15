@@ -5548,14 +5548,105 @@ def test_voxelize_binary_mask_flat_input(axis, kwargs):
     assert cells[2 * axis] == pytest.approx(-cells[2 * axis + 1])
 
 
-def test_voxelize_binary_mask_degenerate_cells_raises():
-    degenerate = pv.PolyData(np.zeros((3, 3)), faces=[3, 0, 1, 2])
-    match = (
-        'Spacing cannot be estimated from the input cells. '
-        'Set `dimensions` or `spacing` explicitly.'
-    )
+@pytest.mark.parametrize('target', [1_000, 100_000, 1_000_000])
+def test_voxelize_binary_mask_target_n_points(sphere, target):
+    mask = sphere.voxelize_binary_mask(target_n_points=target)
+    assert 0.8 <= mask.n_points / target <= 1.2
+    assert mask.n_points == np.prod(mask.dimensions)
+
+    # Dimensions follow the bounds, so the spacing is isotropic up to the rounding
+    spacing = np.array(mask.spacing)
+    assert spacing.max() / spacing.min() <= 1 + 1 / min(mask.dimensions)
+
+
+def test_voxelize_binary_mask_target_n_points_flat_axis():
+    plane = pv.Plane(i_size=2, j_size=3, i_resolution=20, j_resolution=20)
+    mask = plane.voxelize_binary_mask(target_n_points=10_000)
+    # The flat axis holds one point and takes no part in the count
+    assert mask.dimensions[2] == 1
+    assert 0.8 <= mask.n_points / 10_000 <= 1.2
+
+
+def test_voxelize_max_n_points_clamps_the_defaults():
+    mesh = pv.Sphere(theta_resolution=50, phi_resolution=50)
+
+    # An estimated geometry is coarsened to fit, without raising
+    assert mesh.voxelize_binary_mask().n_points > 1000
+    for cap in [1000, 500, 100, 8, 1]:
+        assert mesh.voxelize_binary_mask(max_n_points=cap).n_points <= cap
+
+    # Every filter sharing the geometry options honours it
+    assert mesh.voxelize(max_n_points=1000).n_cells <= 1000
+    assert mesh.voxelize_rectilinear(max_n_points=1000).n_cells <= 1000
+
+
+@pytest.mark.parametrize('cap', range(1, 200, 7))
+def test_voxelize_max_n_points_is_a_strict_bound(sphere, cap):
+    assert sphere.voxelize_binary_mask(max_n_points=cap).n_points <= cap
+
+
+def test_voxelize_max_n_points_clamps_a_flat_axis():
+    plane = pv.Plane(i_size=2, j_size=3, i_resolution=50, j_resolution=50)
+    mask = plane.voxelize_binary_mask(max_n_points=100)
+    assert mask.dimensions[2] == 1
+    assert mask.n_points <= 100
+
+
+def test_voxelize_max_n_points_raises_for_a_requested_geometry():
+    mesh = pv.Sphere(theta_resolution=50, phi_resolution=50)
+    match = 'points, which exceeds `max_n_points=1000`'
+    for kwargs in [
+        dict(dimensions=(40, 40, 40)),
+        dict(spacing=0.02),
+        dict(cell_length_percentile=0.01),
+        dict(reference_volume=pv.ImageData(dimensions=(40, 40, 40), spacing=(0.03,) * 3)),
+    ]:
+        with pytest.raises(ValueError, match=re.escape(match)):
+            mesh.voxelize_binary_mask(max_n_points=1000, **kwargs)
+
+    # A requested geometry inside the limit is left alone
+    assert mesh.voxelize_binary_mask(dimensions=(5, 5, 5), max_n_points=1000).n_points == 125
+
+
+def test_voxelize_max_n_points_bounds_the_target(sphere):
+    match = 'Target n points (2000) cannot exceed max n points (1000).'
     with pytest.raises(ValueError, match=re.escape(match)):
-        degenerate.voxelize_binary_mask()
+        sphere.voxelize_binary_mask(target_n_points=2000, max_n_points=1000)
+
+    # The target is approached, the limit is not exceeded
+    for target in [500, 999, 1000]:
+        assert (
+            sphere.voxelize_binary_mask(target_n_points=target, max_n_points=1000).n_points <= 1000
+        )
+
+
+def test_voxelize_max_n_points_raises(sphere):
+    with pytest.raises(ValueError, match='greater than or equal to'):
+        sphere.voxelize_binary_mask(max_n_points=0)
+
+    with pytest.raises(ValueError, match='integer-like'):
+        sphere.voxelize_binary_mask(max_n_points=2.5)
+
+
+def test_voxelize_target_n_points_raises(sphere):
+    match = 'Target n points cannot be set with dimensions, spacing or cell length options'
+    for kwargs in [
+        dict(dimensions=(10, 10, 10)),
+        dict(spacing=0.1),
+        dict(cell_length_percentile=0.5),
+        dict(cell_length_sample_size=100),
+    ]:
+        with pytest.raises(TypeError, match=match):
+            sphere.voxelize_binary_mask(target_n_points=1000, **kwargs)
+
+    with pytest.raises(TypeError, match='Cannot specify a reference volume'):
+        sphere.voxelize_binary_mask(target_n_points=1000, reference_volume=pv.ImageData())
+
+    with pytest.raises(ValueError, match='greater than or equal to'):
+        sphere.voxelize_binary_mask(target_n_points=0)
+
+    with pytest.raises(ValueError, match='integer-like'):
+        sphere.voxelize_binary_mask(target_n_points=2.5)
 
 
 def test_voxelize_binary_mask_dimensions(sphere):
@@ -5591,18 +5682,16 @@ def test_voxelize_binary_mask_spacing(ant):
 
 
 def test_voxelize_binary_mask_cell_length_sample_size(ant, mocker: MockerFixture):
-    from pyvista import _vtk
-    from pyvista.core.filters import data_object
+    from pyvista.core.utilities import _cell_lengths
 
     sample_sizes = []
-    update_alg = data_object._update_alg
+    cell_edge_lengths = _cell_lengths._cell_edge_lengths
 
-    def _record_sample_size(alg, **kwargs):
-        if isinstance(alg, _vtk.vtkLengthDistribution):
-            sample_sizes.append(alg.GetSampleSize())
-        return update_alg(alg, **kwargs)
+    def _record_sample_size(mesh, cell_ids=None):
+        sample_sizes.append(mesh.n_cells if cell_ids is None else len(cell_ids))
+        return cell_edge_lengths(mesh, cell_ids)
 
-    mocker.patch.object(data_object, '_update_alg', _record_sample_size)
+    mocker.patch.object(_cell_lengths, '_cell_edge_lengths', _record_sample_size)
 
     # Sample size is used when sampling cell lengths
     ant.voxelize_binary_mask(cell_length_sample_size=100)
@@ -5611,14 +5700,15 @@ def test_voxelize_binary_mask_cell_length_sample_size(ant, mocker: MockerFixture
     # Default sample size covers all cells
     sample_sizes.clear()
     ant.voxelize_binary_mask()
-    assert sample_sizes[0] > ant.n_cells
+    assert sample_sizes == [ant.n_cells]
 
-    # Sampling all cells is not random, so the spacing is reproducible
-    mask_all_cells = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells)
-    mask_all_cells_again = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells)
-    assert mask_all_cells.spacing == mask_all_cells_again.spacing
+    # Sampling is deterministic, so the spacing is reproducible
+    mask_sampled = ant.voxelize_binary_mask(cell_length_sample_size=100)
+    mask_sampled_again = ant.voxelize_binary_mask(cell_length_sample_size=100)
+    assert mask_sampled.spacing == mask_sampled_again.spacing
 
     # Sample sizes larger than the number of cells are clamped
+    mask_all_cells = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells)
     mask_clamped = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells * 10)
     assert mask_clamped.spacing == mask_all_cells.spacing
 
@@ -5626,6 +5716,45 @@ def test_voxelize_binary_mask_cell_length_sample_size(ant, mocker: MockerFixture
     sample_sizes.clear()
     ant.voxelize_binary_mask(dimensions=(10, 10, 10))
     assert sample_sizes == []
+
+    match = 'cell_length_sample_size values must all be greater than or equal to 1'
+    with pytest.raises(ValueError, match=match):
+        ant.voxelize_binary_mask(cell_length_sample_size=0)
+    match = 'cell_length_percentile values must all be less than or equal to 1.0'
+    with pytest.raises(ValueError, match=match):
+        ant.voxelize_binary_mask(cell_length_percentile=1.1)
+
+
+def test_voxelize_binary_mask_cell_length_ignores_vertices(sphere):
+    verts = np.column_stack([np.ones(sphere.n_points, dtype=int), np.arange(sphere.n_points)])
+    with_verts = pv.PolyData(sphere.points, faces=sphere.faces, verts=verts.ravel())
+    assert with_verts.n_verts
+    assert with_verts.voxelize_binary_mask().spacing == sphere.voxelize_binary_mask().spacing
+
+
+def test_voxelize_binary_mask_image_input():
+    image = pv.ImageData(dimensions=(4, 5, 6), spacing=(2, 2, 2))
+    mask = image.voxelize_binary_mask()
+    assert np.allclose(mask.spacing, image.spacing)
+    assert mask.points_to_cells().dimensions == image.dimensions
+    assert np.allclose(mask.points_to_cells().bounds, image.bounds)
+
+
+def test_voxelize_binary_mask_degenerate_cells(sphere):
+    n_degenerate = 2 * sphere.n_cells
+    degenerate = np.column_stack(
+        [np.full(n_degenerate, 3), np.zeros((n_degenerate, 3), dtype=int)]
+    )
+    faces = np.concatenate([sphere.faces, degenerate.ravel()])
+    mesh = pv.PolyData(sphere.points, faces=faces)
+
+    # Zero-length edges are ignored
+    assert mesh.voxelize_binary_mask().spacing == sphere.voxelize_binary_mask().spacing
+
+    match = 'The estimated cell length is zero.'
+    mesh = pv.PolyData(sphere.points, faces=degenerate.ravel())
+    with pytest.raises(ValueError, match=match):
+        mesh.voxelize_binary_mask()
 
 
 @pytest.mark.parametrize(

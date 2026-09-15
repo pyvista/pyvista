@@ -8569,21 +8569,22 @@ class DataSetFilters(DataObjectFilters):
         cell_length_percentile : float, optional
             Cell length percentage ``p`` to use for computing the default ``spacing``.
             Default is ``0.1`` (tenth percentile) and must be between ``0`` and ``1``.
-            The ``p``-th percentile is computed from the cumulative distribution function
-            (CDF) of lengths which are representative of the cell length scales present
-            in the input. The CDF is computed by:
+            The ``p``-th percentile is computed from the lengths of the edges of the
+            input's surface cells. Up to ``cell_length_sample_size`` cells, evenly
+            spaced through the surface, are used, and degenerate edges with zero
+            length are ignored.
 
-            #. Triangulating the input cells.
-            #. Sampling a subset of up to ``cell_length_sample_size`` cells.
-            #. Computing the distance between two random points in each cell.
-            #. Inserting the distance into an ordered set to create the CDF.
+            .. versionchanged:: 0.50.0
+                The percentile is computed from every edge of the sampled cells instead
+                of the distance between two random points of each triangulated cell,
+                and the sampled cells are evenly spaced instead of random. The estimate
+                is now deterministic.
 
             Has no effect if ``dimensions`` or ``reference_volume`` are specified.
 
         cell_length_sample_size : int, optional
-            Number of samples to use for the cumulative distribution function (CDF)
-            when using the ``cell_length_percentile`` option. ``100 000`` samples are
-            used by default.
+            Maximum number of cells to use when computing the ``cell_length_percentile``.
+            ``100 000`` cells are used by default.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -8636,13 +8637,13 @@ class DataSetFilters(DataObjectFilters):
 
         >>> mask
         ImageData (...)
-          N Cells:      7056
-          N Points:     8228
+          N Cells:      6720
+          N Points:     7854
           X Bounds:     -1.245e-01, 1.731e-01
-          Y Bounds:     -1.135e-01, 1.807e-01
+          Y Bounds:     -1.131e-01, 1.804e-01
           Z Bounds:     -1.359e-01, 9.140e-02
-          Dimensions:   22, 22, 17
-          Spacing:      1.417e-02, 1.401e-02, 1.421e-02
+          Dimensions:   22, 21, 17
+          Spacing:      1.417e-02, 1.468e-02, 1.421e-02
           N Arrays:     1
 
         >>> np.unique(mask.point_data['mask'])
@@ -8795,10 +8796,8 @@ class DataSetFilters(DataObjectFilters):
             cell_length_percentile=cell_length_percentile,
             cell_length_sample_size=cell_length_sample_size,
         )
-        # Triangulate for computing the cell length percentile and for the stencil
-        poly_ijk = surface.triangulate()
         volume = _make_reference_volume(
-            poly_ijk,
+            surface,
             reference_volume=reference_volume,
             dimensions=dimensions,
             spacing=spacing,
@@ -8807,8 +8806,9 @@ class DataSetFilters(DataObjectFilters):
             rounding_func=rounding_func,
             cell_length_percentile=cell_length_percentile,
             cell_length_sample_size=cell_length_sample_size,
-            progress_bar=progress_bar,
         )
+        # The stencil filter takes triangles
+        poly_ijk = surface.triangulate()
         if reference_volume is not None:
             # The stencil filters ignore orientation, so remove it from the polydata
             poly_ijk = poly_ijk.rotate(
@@ -8998,21 +8998,22 @@ class DataSetFilters(DataObjectFilters):
         cell_length_percentile : float, optional
             Cell length percentage ``p`` to use for computing the default ``spacing``.
             Default is ``0.1`` (tenth percentile) and must be between ``0`` and ``1``.
-            The ``p``-th percentile is computed from the cumulative distribution function
-            (CDF) of lengths which are representative of the cell length scales present
-            in the input. The CDF is computed by:
+            The ``p``-th percentile is computed from the lengths of the edges of the
+            input's surface cells. Up to ``cell_length_sample_size`` cells, evenly
+            spaced through the surface, are used, and degenerate edges with zero
+            length are ignored.
 
-            #. Triangulating the input cells.
-            #. Sampling a subset of up to ``cell_length_sample_size`` cells.
-            #. Computing the distance between two random points in each cell.
-            #. Inserting the distance into an ordered set to create the CDF.
+            .. versionchanged:: 0.50.0
+                The percentile is computed from every edge of the sampled cells instead
+                of the distance between two random points of each triangulated cell,
+                and the sampled cells are evenly spaced instead of random. The estimate
+                is now deterministic.
 
             Has no effect if ``dimensions`` or ``reference_volume`` are specified.
 
         cell_length_sample_size : int, optional
-            Number of samples to use for the cumulative distribution function (CDF)
-            when using the ``cell_length_percentile`` option. ``100 000`` samples are
-            used by default.
+            Maximum number of cells to use when computing the ``cell_length_percentile``.
+            ``100 000`` cells are used by default.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -9208,21 +9209,22 @@ class DataSetFilters(DataObjectFilters):
         cell_length_percentile : float, optional
             Cell length percentage ``p`` to use for computing the default ``spacing``.
             Default is ``0.1`` (tenth percentile) and must be between ``0`` and ``1``.
-            The ``p``-th percentile is computed from the cumulative distribution function
-            (CDF) of lengths which are representative of the cell length scales present
-            in the input. The CDF is computed by:
+            The ``p``-th percentile is computed from the lengths of the edges of the
+            input's surface cells. Up to ``cell_length_sample_size`` cells, evenly
+            spaced through the surface, are used, and degenerate edges with zero
+            length are ignored.
 
-            #. Triangulating the input cells.
-            #. Sampling a subset of up to ``cell_length_sample_size`` cells.
-            #. Computing the distance between two random points in each cell.
-            #. Inserting the distance into an ordered set to create the CDF.
+            .. versionchanged:: 0.50.0
+                The percentile is computed from every edge of the sampled cells instead
+                of the distance between two random points of each triangulated cell,
+                and the sampled cells are evenly spaced instead of random. The estimate
+                is now deterministic.
 
             Has no effect if ``dimensions`` is specified.
 
         cell_length_sample_size : int, optional
-            Number of samples to use for the cumulative distribution function (CDF)
-            when using the ``cell_length_percentile`` option. ``100 000`` samples are
-            used by default.
+            Maximum number of cells to use when computing the ``cell_length_percentile``.
+            ``100 000`` cells are used by default.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.

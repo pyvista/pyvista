@@ -44,6 +44,7 @@ from pyvista.core.filters import _get_output
 from pyvista.core.filters import _match_points_dtype
 from pyvista.core.filters import _points_dtype
 from pyvista.core.filters import _update_alg
+from pyvista.core.utilities._cell_lengths import _cell_length_percentile
 from pyvista.core.utilities.helpers import _NormalsLiteral
 from pyvista.core.utilities.helpers import _validate_plane_origin_and_normal
 from pyvista.core.utilities.helpers import generate_plane
@@ -4575,7 +4576,7 @@ class DataObjectFilters:
             Setting the value to greater than ``1`` may cause some point data to not be passed even
             if no nonlinear faces exist.
 
-        algorithm : 'auto' | 'geometry' | 'dataset_surface'
+        algorithm : None | 'geometry' | 'dataset_surface'
             VTK algorithm to use internally.
 
             - ``'geometry'``: use :vtk:`vtkGeometryFilter`.
@@ -5267,6 +5268,9 @@ class DataObjectFilters:
         Point data are specified per node and cell data specified within cells.
         Optionally, the input point data can be passed through to the output.
 
+        String arrays are excluded from the conversion with a warning. They are
+        passed through to the output when ``pass_point_data=True``.
+
         Parameters
         ----------
         pass_point_data : bool, default: False
@@ -5337,14 +5341,20 @@ class DataObjectFilters:
                 ),
             )
 
+        # String arrays segfault vtkPointDataToCellData, so convert without them
+        filtered = _exclude_string_arrays(self, 'point')
+
         alg = _vtk.vtkPointDataToCellData()
-        alg.SetInputDataObject(self)
+        alg.SetInputDataObject(self if filtered is None else filtered)
         alg.SetPassPointData(pass_point_data)
         alg.SetCategoricalData(categorical)
         _update_alg(
             alg, progress_bar=progress_bar, message='Transforming point data into cell data'
         )
-        return _get_output(alg, active_scalars=self.active_scalars_name)
+        output = _get_output(alg, active_scalars=self.active_scalars_name)
+        if filtered is not None and pass_point_data:
+            output.point_data.VTKObject.ShallowCopy(self.point_data.VTKObject)
+        return output
 
     def ptc(  # type: ignore[misc]
         self: _DataSetOrMultiBlockType,
@@ -6015,13 +6025,9 @@ class DataObjectFilters:
         cell_length_percentile : float, optional
             Cell length percentage ``p`` to use for computing the default ``spacing``.
             Default is ``0.1`` (tenth percentile) and must be between ``0`` and ``1``.
-            The ``p``-th percentile is computed from the cumulative distribution function
-            (CDF) of lengths which are representative of the cell length scales present
-            in the input. The CDF is computed by:
-
-            #. Sampling a subset of up to ``cell_length_sample_size`` cells.
-            #. Computing the distance between two random points in each cell.
-            #. Inserting the distance into an ordered set to create the CDF.
+            The ``p``-th percentile is computed from the lengths of the edges of the
+            input's cells. Up to ``cell_length_sample_size`` cells, evenly spaced through
+            the input, are used, and degenerate edges with zero length are ignored.
 
             The estimate is a single value which is used for all three axes, so an
             anisotropic input is resampled below its native spacing along its coarsest
@@ -6030,9 +6036,8 @@ class DataObjectFilters:
             Has no effect if ``dimensions`` or ``reference_volume`` are specified.
 
         cell_length_sample_size : int, optional
-            Number of samples to use for the cumulative distribution function (CDF)
-            when using the ``cell_length_percentile`` option. ``100 000`` samples are
-            used by default.
+            Maximum number of cells to use when computing the ``cell_length_percentile``.
+            ``100 000`` cells are used by default.
 
         method : 'sample' | 'interpolate', optional
             Method used to compute each voxel's value. ``'sample'`` interpolates inside
@@ -6198,7 +6203,6 @@ class DataObjectFilters:
             rounding_func=rounding_func,
             cell_length_percentile=cell_length_percentile,
             cell_length_sample_size=cell_length_sample_size,
-            progress_bar=progress_bar,
         )
         chosen = method
         if chosen is None:
@@ -6552,6 +6556,33 @@ def _copy_active_attributes(source: DataSet, target: DataSet) -> None:
             attributes_out.SetActiveTensors(tensors.GetName())
 
 
+def _exclude_string_arrays(
+    dataset: _DataSetType, association: Literal['point', 'cell']
+) -> _DataSetType | None:
+    """Return a shallow copy without any string arrays, or ``None`` if there are none."""
+    field = _vtk.vtkDataObject.POINT if association == 'point' else _vtk.vtkDataObject.CELL
+    attributes = dataset.GetAttributes(field)
+    # GetArray is None for arrays which are not numeric, such as string arrays
+    indices = [
+        index
+        for index in range(attributes.GetNumberOfArrays())
+        if attributes.GetArray(index) is None
+    ]
+    if not indices:
+        return None
+    names = [attributes.GetAbstractArray(index).GetName() for index in indices]
+    other = 'cell' if association == 'point' else 'point'
+    warn_external(
+        f'String arrays cannot be converted and are excluded from the '
+        f'{association}-to-{other} data conversion: {names}.'
+    )
+    filtered = dataset.copy(deep=False)
+    filtered_attributes = filtered.GetAttributes(field)
+    for index in reversed(indices):
+        filtered_attributes.RemoveArray(index)
+    return filtered
+
+
 def _box_planes(bounds: NumpyArray[float]) -> list[tuple[VectorLike[float], VectorLike[float]]]:
     """Return the six ``(outward normal, origin)`` planes of a box clip specification."""
     if len(bounds) == 12:
@@ -6680,7 +6711,6 @@ def _make_reference_volume(
     rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None,
     cell_length_percentile: float | None,
     cell_length_sample_size: int | None,
-    progress_bar: bool,
 ) -> ImageData:  # numpydoc ignore=RT01
     """Create an empty image whose voxels fit the bounds of a mesh."""
     # The geometry is the caller's own only if they set one of these
@@ -6707,12 +6737,12 @@ def _make_reference_volume(
         if target_n_points is not None:
             spacing = _spacing_for_n_points(size, target_n_points)
         if spacing is None:
-            no_spacing_msg = (
-                'Spacing cannot be estimated from the input cells. '
-                'Set `dimensions` or `spacing` explicitly.'
-            )
             if mesh.n_cells == 0:
-                raise ValueError(no_spacing_msg)
+                msg = (
+                    'Spacing cannot be estimated from the input cells. '
+                    'Set `dimensions` or `spacing` explicitly.'
+                )
+                raise ValueError(msg)
             # Estimate spacing from cell length percentile
             cell_length_percentile = (
                 0.1 if cell_length_percentile is None else cell_length_percentile
@@ -6720,14 +6750,15 @@ def _make_reference_volume(
             cell_length_sample_size = (
                 100_000 if cell_length_sample_size is None else cell_length_sample_size
             )
-            spacing = _length_distribution_percentile(
-                mesh,
-                cell_length_percentile,
-                cell_length_sample_size,
-                progress_bar=progress_bar,
+            spacing = _cell_length_percentile(
+                mesh, cell_length_percentile, cell_length_sample_size
             )
             if spacing == 0:
-                raise ValueError(no_spacing_msg)
+                msg = (
+                    'The estimated cell length is zero. Increase '
+                    '`cell_length_percentile` or set the `spacing` explicitly.'
+                )
+                raise ValueError(msg)
         # Get initial spacing (will be adjusted later)
         initial_spacing = _validation.validate_array3(spacing, broadcast=True)
         rounding_func = np.round if rounding_func is None else rounding_func
@@ -6798,19 +6829,6 @@ def _blank_invalid_points(image: ImageData) -> ImageData:
     ghosts = np.where(invalid, _vtk.vtkDataSetAttributes.HIDDENPOINT, 0).astype(np.uint8)
     image.point_data.set_array(ghosts, _vtk.vtkDataSetAttributes.GhostArrayName())  # type: ignore[arg-type]
     return image
-
-
-def _length_distribution_percentile(poly, percentile, cell_length_sample_size, *, progress_bar):
-    percentile = _validation.validate_number(
-        percentile, must_be_in_range=[0.0, 1.0], name='percentile'
-    )
-    distribution = _vtk.vtkLengthDistribution()
-    distribution.SetInputData(poly)
-    distribution.SetSampleSize(cell_length_sample_size)
-    _update_alg(
-        distribution, progress_bar=progress_bar, message='Computing cell length distribution'
-    )
-    return distribution.GetLengthQuantile(percentile)
 
 
 def _clip_input(mesh: DataSet | MultiBlock) -> DataSet | MultiBlock:
