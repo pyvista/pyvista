@@ -3603,7 +3603,7 @@ class BasePlotter(_BoundsSizeMixin):
         edge_color: ColorLike | None = None,
         point_size: float | None = None,
         line_width: float | None = None,
-        opacity: float | OpacityOptions | Sequence[float] | None = None,
+        opacity: float | OpacityOptions | str | VectorLike[float] | None = None,
         flip_scalars: bool = False,
         lighting: bool | None = None,
         n_colors: int = 256,
@@ -4389,7 +4389,6 @@ class BasePlotter(_BoundsSizeMixin):
                 silhouette_actor = self.add_silhouette(algo or mesh)
             silhouette_actor.user_matrix = user_matrix
 
-        scalar_bar_args = cast('ScalarBarArgs', scalar_bar_args)
         # Try to plot something if no preference given
         if scalars is None and color is None and texture is None:
             # Make sure scalars components are not vectors/tuples
@@ -4596,7 +4595,7 @@ class BasePlotter(_BoundsSizeMixin):
         mapper.static = static
 
         # Set actor properties ================================================
-        prop_kwargs = dict(
+        prop_kwargs: dict[str, Any] = dict(
             theme=self._theme,
             interpolation=interpolation,
             metallic=metallic,
@@ -5083,7 +5082,7 @@ class BasePlotter(_BoundsSizeMixin):
         assert_empty_kwargs(**kwargs)
 
         if show_scalar_bar is None:
-            show_scalar_bar = self._theme.show_scalar_bar or scalar_bar_args  # type: ignore[assignment]
+            show_scalar_bar = bool(self._theme.show_scalar_bar or scalar_bar_args)
 
         # Avoid mutating input
         scalar_bar_args = {} if scalar_bar_args is None else scalar_bar_args.copy()

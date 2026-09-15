@@ -667,15 +667,11 @@ pyvista = "pv"
   'PLR0917',
 ]
 'pyvista/jupyter*' = ['ANN']
-'pyvista/plotting/_plotting.py' = ['ANN']
 'pyvista/plotting/_typing.py' = ['PLC0414']
 'pyvista/plotting/actor_properties.py' = ['ANN']
-'pyvista/plotting/axes.py' = ['ANN']
 'pyvista/plotting/camera.py' = ['S314'] # .pvcc is trusted
 'pyvista/plotting/charts.py' = ['ANN']
-'pyvista/plotting/opts.py' = ['ANN']
 'pyvista/plotting/picking.py' = ['ANN']
-'pyvista/plotting/plotting/__init__.py' = ['ANN']
 'pyvista/plotting/render_passes.py' = ['ANN']
 'pyvista/plotting/render_window_interactor.py' = ['ANN']
 'pyvista/plotting/renderer.py' = ['PLC0415']

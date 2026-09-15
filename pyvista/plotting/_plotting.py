@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 import itertools
 import operator
 from typing import TYPE_CHECKING
@@ -20,10 +21,25 @@ from .tools import opacity_transfer_function
 from .utilities.algorithms import SmoothShadingAlgorithm
 
 if TYPE_CHECKING:
+    from typing import Literal
+
     from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import VectorLike
+    from pyvista.core.dataobject import DataObject
     from pyvista.core.dataset import DataSet
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import PointLiteral
+
+    from ._typing import ColorLike
+    from ._typing import ColormapOptions
+    from ._typing import CullingOptions
+    from ._typing import OpacityOptions
+    from ._typing import ScalarBarArgs
+    from ._typing import StyleOptions
+    from .lookup_table import LookupTable
+    from .opts import PointSpriteShape
+    from .texture import Texture
+    from .themes import Theme
 
 
 def _resolve_scalars_field(
@@ -316,7 +332,15 @@ def _get_generated_scalars_name(mesh: DataSet, base_name: str) -> str:
     return next(f'{base_name}-{i}' for i in itertools.count(1) if _is_free(f'{base_name}-{i}'))
 
 
-def process_opacity(*, mesh, opacity, preference, n_colors, scalars, use_transparency):
+def process_opacity(
+    *,
+    mesh: DataSet,
+    opacity: float | OpacityOptions | str | VectorLike[float] | None,
+    preference: PointLiteral | CellLiteral,
+    n_colors: int,
+    scalars: NumpyArray[float] | None,
+    use_transparency: bool,
+) -> tuple[bool, float | NumpyArray[Any] | None]:
     """Process opacity.
 
     This function accepts an opacity string or array and always
@@ -327,11 +351,10 @@ def process_opacity(*, mesh, opacity, preference, n_colors, scalars, use_transpa
     mesh : pyvista.DataSet
         Dataset to process the opacity for.
 
-    opacity : str, sequence
-        String or array.  If string, can be a ``str`` name of a
-        predefined mapping such as ``'linear'``, ``'geom'``,
-        ``'sigmoid'``, ``'sigmoid3-10'``, or the key of a cell or
-        point data array.
+    opacity : float | str | sequence[float] | None
+        Constant opacity, name of a predefined mapping such as
+        ``'linear'``, ``'geom'``, ``'sigmoid'`` or ``'sigmoid_10'``,
+        name of a cell or point data array, or an array of values.
 
     preference : str
         When ``mesh.n_points == mesh.n_cells``, this parameter
@@ -343,8 +366,9 @@ def process_opacity(*, mesh, opacity, preference, n_colors, scalars, use_transpa
     n_colors : int
         Number of colors to use when displaying the opacity.
 
-    scalars : numpy.ndarray
-        Dataset scalars.
+    scalars : numpy.ndarray | None
+        Dataset scalars. Used to check that a per-element opacity
+        array has a matching length.
 
     use_transparency : bool
         Invert the opacity mappings and make the values correspond
@@ -355,68 +379,91 @@ def process_opacity(*, mesh, opacity, preference, n_colors, scalars, use_transpa
     custom_opac : bool
         If using custom opacity.
 
-    opacity : numpy.ndarray
-        Array containing the opacity.
+    opacity : float | numpy.ndarray | None
+        Constant opacity, or an array containing the opacity.
 
     """
     custom_opac = False
+    values: float | NumpyArray[Any] | None
     if isinstance(opacity, str):
-        try:
-            # Get array from mesh
-            opacity = get_array(mesh, opacity, preference=preference, err=True)
-            if np.any(opacity > 1):
+        # Get array from mesh
+        array = get_array(mesh, opacity, preference=preference)
+        if array is None:
+            # Or get opacity transfer function (e.g. "linear")
+            values = opacity_transfer_function(opacity, n_colors)
+        else:
+            values = array
+            if np.any(values > 1):
                 warn_external('Opacity scalars contain values over 1')  # pragma: no cover
-            if np.any(opacity < 0):
+            if np.any(values < 0):
                 warn_external('Opacity scalars contain values less than 0')  # pragma: no cover
             custom_opac = True
-        except KeyError:
-            # Or get opacity transfer function (e.g. "linear")
-            opacity = opacity_transfer_function(opacity, n_colors)
-        else:
-            if scalars.shape[0] != opacity.shape[0]:
+            if scalars is not None and scalars.shape[0] != values.shape[0]:
                 msg = 'Opacity array and scalars array must have the same number of elements.'
                 raise ValueError(msg)
-    elif isinstance(opacity, (np.ndarray, list, tuple)):
-        opacity = np.asanyarray(opacity)
-        if opacity.shape[0] in [mesh.n_cells, mesh.n_points]:
+    elif isinstance(opacity, (np.ndarray, Sequence)):
+        values = np.asanyarray(opacity)
+        if values.shape[0] in [mesh.n_cells, mesh.n_points]:
             # User could pass an array of opacities for every point/cell
             custom_opac = True
         else:
-            opacity = opacity_transfer_function(opacity, n_colors)
+            values = opacity_transfer_function(values, n_colors)
+    else:
+        values = opacity
 
-    if use_transparency:
-        if np.max(opacity) <= 1.0:
-            opacity = 1 - opacity
-        elif isinstance(opacity, np.ndarray):
-            opacity = 255 - opacity
+    if use_transparency and values is not None:
+        if np.max(values) <= 1.0:
+            values = 1 - values
+        elif isinstance(values, np.ndarray):
+            values = 255 - values
 
-    return custom_opac, opacity
+    return custom_opac, values
 
 
 def _common_arg_parser(
     *,
-    dataset,
-    theme,
-    n_colors,
-    scalar_bar_args,
-    split_sharp_edges,
-    show_scalar_bar,
-    render_points_as_spheres,
-    point_shape,
-    smooth_shading,
-    pbr,
-    clim,
-    cmap,
-    culling,
-    name,
-    nan_color,
-    nan_opacity,
-    texture,
-    rgb,
-    style,
-    remove_existing_actor=None,
-    **kwargs,
-):
+    dataset: DataObject,
+    theme: Theme,
+    n_colors: int,
+    scalar_bar_args: ScalarBarArgs | None,
+    split_sharp_edges: bool | None,
+    show_scalar_bar: bool | None,
+    render_points_as_spheres: bool | None,
+    point_shape: PointSpriteShape | str | None,
+    smooth_shading: bool | None,
+    pbr: bool | None,
+    clim: Sequence[float] | None,
+    cmap: ColormapOptions | LookupTable | None,
+    culling: CullingOptions | bool | None,
+    name: str | None,
+    nan_color: ColorLike | None,
+    nan_opacity: float,
+    texture: Texture | NumpyArray[float] | Literal[False] | None,
+    rgb: bool | None,
+    style: StyleOptions | None,
+    remove_existing_actor: bool | None = None,
+    **kwargs: Any,
+) -> tuple[
+    ScalarBarArgs,
+    bool,
+    bool,
+    float,
+    bool,
+    PointSpriteShape | str | None,
+    bool,
+    Sequence[float] | None,
+    ColormapOptions | LookupTable | None,
+    CullingOptions | bool | None,
+    str,
+    Color,
+    Texture | NumpyArray[float] | None,
+    bool | None,
+    InterpolationType,
+    bool,
+    ColorLike,
+    StyleOptions,
+    float,
+]:
     """Parse arguments in common between ``add_volume``, composite, and mesh."""
     # supported aliases
     clim = kwargs.pop('rng', clim)
@@ -429,10 +476,12 @@ def _common_arg_parser(
 
     if show_scalar_bar is None:
         # use theme unless plotting RGB
-        _default = theme.show_scalar_bar or scalar_bar_args
+        _default = bool(theme.show_scalar_bar or scalar_bar_args)
         show_scalar_bar = False if rgb else _default
     # Avoid mutating input
-    scalar_bar_args = {'n_colors': n_colors} if scalar_bar_args is None else scalar_bar_args.copy()
+    parsed_scalar_bar_args: ScalarBarArgs = (
+        {'n_colors': n_colors} if scalar_bar_args is None else scalar_bar_args.copy()
+    )
 
     # theme based parameters
     if split_sharp_edges is None:
@@ -487,7 +536,7 @@ def _common_arg_parser(
 
     assert_empty_kwargs(**kwargs)
     return (
-        scalar_bar_args,
+        parsed_scalar_bar_args,
         split_sharp_edges,
         show_scalar_bar,
         feature_angle,
