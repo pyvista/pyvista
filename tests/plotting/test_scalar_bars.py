@@ -753,8 +753,7 @@ def _modelled_ramp(pl, bar, title):
             for text in _label_texts(bar)
         )
     )
-    below = min(ramp, int(width) // 4) if bar.GetDrawBelowRangeSwatch() else 0
-    return widest // 2 + below, lift, _ramp_room(bar, width, ramp) - widest, ramp
+    return widest // 2, lift, _ramp_room(bar, width, ramp) - widest, ramp
 
 
 def _title_gap(pl, bar):
@@ -1099,20 +1098,29 @@ def test_fit_box_is_taken_over_by_a_bar_added_again(sphere):
 
 
 def test_fit_box_lets_the_text_go_without_a_box(sphere):
-    # Turning the box off after the fact hands the text its size back
+    # Turning the box off after the fact hands the text its size back, and turning it
+    # on lays the text out inside it
     sphere[KEY] = sphere.points[:, 2]
 
-    pl = pv.Plotter()
-    pl.add_mesh(sphere, show_scalar_bar=False)
-    bar = _fitted_bar(pl, sphere, vertical=False, box={'outline': True})
+    pl = pv.Plotter(window_size=[1024, 768])
+    pl.background_color = 'white'
+    pl.add_mesh(sphere, show_scalar_bar=False, cmap='autumn')
+    bar = _fitted_bar(pl, sphere, vertical=False, box={}, color='blue')
+    pl.screenshot(return_img=True)
+    assert bar.GetUnconstrainedFontSize()
+    assert bar.GetTitleTextProperty().GetLineOffset() == -12
+
+    bar.SetDrawFrame(True)
+    pl.render()
     assert not bar.GetUnconstrainedFontSize()
+    assert bar.GetTitleTextProperty().GetLineOffset() == 0
+    assert _laid_out(pl, bar, FIT_TITLE)[:2] == (24, 24)
+    assert not _text_outside_the_box(pl, bar)
 
     bar.SetDrawFrame(False)
-    pl.screenshot(return_img=True)
-
+    pl.render()
     assert bar.GetUnconstrainedFontSize()
-    pad = round(pl.theme.colorbar_horizontal.title_pad * 24)
-    assert bar.GetTitleTextProperty().GetLineOffset() == -pad
+    assert bar.GetTitleTextProperty().GetLineOffset() == -12
 
 
 def test_fit_box_leaves_unconstrained_text_its_size(sphere):
