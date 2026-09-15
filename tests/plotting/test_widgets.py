@@ -386,6 +386,18 @@ def test_widget_sphere():
     pl.close()
 
 
+def test_sphere_widget_returns_only_the_new_widgets():
+    pl = pv.Plotter()
+    nodes = np.array([[-1, -1, -1], [1, 1, 1]])
+    first = pl.add_sphere_widget(None, center=nodes)
+    second = pl.add_sphere_widget(None, center=nodes)
+
+    assert len(first) == 2
+    assert len(second) == 2
+    assert not set(map(id, first)) & set(map(id, second))
+    pl.close()
+
+
 def test_widget_checkbox_button(uniform):
     pl = pv.Plotter()
     func = lambda value: value  # Does nothing

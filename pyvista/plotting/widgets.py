@@ -2497,8 +2497,9 @@ class WidgetComponent(_NoNewAttrMixin):
 
         Returns
         -------
-        :vtk:`vtkSphereWidget`
-            The sphere widget.
+        :vtk:`vtkSphereWidget` | list[:vtk:`vtkSphereWidget`]
+            The sphere widget, or the list of widgets when more than one center
+            is given.
 
         """
         if color is None:
@@ -2530,6 +2531,7 @@ class WidgetComponent(_NoNewAttrMixin):
         if indices is None:
             indices = list(range(num))
 
+        new_widgets = []
         for i in range(num):
             loc = center[i] if center.ndim > 1 else center
             sphere_widget = _vtk.vtkSphereWidget()
@@ -2552,13 +2554,14 @@ class WidgetComponent(_NoNewAttrMixin):
                 _parse_interaction_event(interaction_event),
                 _the_callback,
             )
+            new_widgets.append(sphere_widget)
             self.sphere_widgets.append(sphere_widget)
 
         if test_callback is True:
             # Test call back in the last
             _the_callback(sphere_widget, None)
         if num > 1:
-            return self.sphere_widgets
+            return new_widgets
 
         return sphere_widget
 
