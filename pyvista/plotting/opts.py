@@ -3,8 +3,12 @@
 from __future__ import annotations
 
 from enum import Enum
+from typing import TYPE_CHECKING
 
 from pyvista.core.utilities.misc import AnnotatedIntEnum
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
 
 
 class ShaderType(str, Enum):
@@ -13,7 +17,7 @@ class ShaderType(str, Enum):
     .. versionadded:: 0.48
     """
 
-    def __new__(cls, value, doc=None):
+    def __new__(cls, value: str, doc: str | None = None) -> Self:
         """Override method to include member documentation."""
         obj = str.__new__(cls, value)
         obj._value_ = value
@@ -31,7 +35,7 @@ class PointSpriteShape(str, Enum):
     .. versionadded:: 0.48
     """
 
-    def __new__(cls, value, doc=None):
+    def __new__(cls, value: str, doc: str | None = None) -> Self:
         """Override method to include member documentation."""
         obj = str.__new__(cls, value)
         obj._value_ = value
@@ -59,7 +63,7 @@ class InterpolationType(AnnotatedIntEnum):
     PBR = (3, 'Physically based rendering', 'Physically based rendering interpolation type.')
 
     @classmethod
-    def from_str(cls, input_str):
+    def from_str(cls, input_str: str) -> Self:
         """Create from string.
 
         Create an instance of InterpolationType from a string.
