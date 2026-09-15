@@ -7189,7 +7189,7 @@ class BasePlotter(_BoundsSizeMixin):
         *,
         factor: float = 3.0,
         n_points: int = 20,
-        viewup: Sequence[float] | None = None,
+        viewup: VectorLike[float] | None = None,
         shift: float = 0.0,
     ) -> pv.PolyData:
         """Generate an orbital path around the data scene.
@@ -7271,7 +7271,7 @@ class BasePlotter(_BoundsSizeMixin):
         *,
         focus: Sequence[float] | None = None,
         step: float = 0.5,
-        viewup: Sequence[float] | None = None,
+        viewup: VectorLike[float] | None = None,
         write_frames: bool = False,
         threaded: bool = False,
         progress_bar: bool = False,
