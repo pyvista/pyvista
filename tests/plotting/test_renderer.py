@@ -11,6 +11,7 @@ import pytest
 import pyvista as pv
 from pyvista import _vtk
 from pyvista import examples
+from pyvista.plotting.errors import InvalidCameraError
 from pyvista.plotting.prop_collection import _PropCollection
 from pyvista.plotting.renderer import ACTOR_LOC_MAP
 
@@ -331,6 +332,59 @@ def test_camera_position():
     assert cpos2 == cpos
 
 
+def test_camera_position_holds_tuples_of_floats():
+    cpos = pv.CameraPosition([1, 2, 3], np.array([4.0, 5.0, 6.0]), (0, 0, 1))
+    assert cpos.position == (1.0, 2.0, 3.0)
+    assert cpos.focal_point == (4.0, 5.0, 6.0)
+    assert cpos.viewup == (0.0, 0.0, 1.0)
+    assert cpos.to_list() == [(1.0, 2.0, 3.0), (4.0, 5.0, 6.0), (0.0, 0.0, 1.0)]
+    assert cpos[0] == (1.0, 2.0, 3.0)
+
+    cpos.position = np.array([7, 8, 9])
+    cpos.focal_point = [0, 0, 0]
+    cpos.viewup = (0, 1, 0)
+    assert cpos.position == (7.0, 8.0, 9.0)
+    assert cpos.focal_point == (0.0, 0.0, 0.0)
+    assert cpos.viewup == (0.0, 1.0, 0.0)
+
+
+@pytest.mark.parametrize('vector', [[1, 2], 'not a vector'])
+def test_camera_position_raises(vector):
+    match = 'position'
+    with pytest.raises((TypeError, ValueError), match=match):
+        pv.CameraPosition(vector, (0, 0, 0), (0, 0, 1))
+
+
+@pytest.mark.parametrize('viewup', [(0, 0, 0), [0.0, 0.0, 0.0]])
+def test_camera_position_viewup_cannot_be_zero(viewup):
+    match = 'Camera up vector cannot be zero.'
+    with pytest.raises(ValueError, match=match):
+        pv.CameraPosition((1, 0, 0), (0, 0, 0), viewup)
+
+    cpos = pv.CameraPosition((1, 0, 0), (0, 0, 0), (0, 0, 1))
+    with pytest.raises(ValueError, match=match):
+        cpos.viewup = viewup
+
+
+@pytest.mark.parametrize('other', [5, 'xy', None, [1, 2], [(1, 2), (3, 4), (5, 6)]])
+def test_camera_position_eq_other_types(other):
+    assert pv.CameraPosition((1, 0, 0), (0, 0, 0), (0, 0, 1)) != other
+
+
+def test_camera_position_eq_sequence():
+    cpos = pv.CameraPosition((1, 0, 0), (0, 0, 0), (0, 0, 1))
+    assert cpos == [[1, 0, 0], [0, 0, 0], [0, 0, 1]]
+    assert cpos == np.array([[1.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 1.0]])
+    assert cpos != [[9, 0, 0], [0, 0, 0], [0, 0, 1]]
+
+
+@pytest.mark.parametrize('location', [[[1, 2], [3, 4], [5, 6]], [1, 2, 3, 4]])
+def test_camera_position_setter_raises(location):
+    pl = pv.Plotter()
+    with pytest.raises(InvalidCameraError, match='camera position'):
+        pl.camera_position = location
+
+
 @pytest.mark.skip_plotting
 def test_plotter_camera_position():
     pl = pv.Plotter()
@@ -645,16 +699,16 @@ def test_border_default_handles_non_tuple_shape(shape, expects_overlay):
 
 
 def test_bad_legend_origin_and_size(sphere):
-    """Ensure bad parameters to origin/size raise ValueErrors."""
+    """Ensure bad parameters to origin/size raise."""
     pl = pv.Plotter()
     pl.add_mesh(sphere)
     legend_labels = [['sphere', 'r']]
     with pytest.raises(ValueError, match='Invalid loc'):
         pl.add_legend(labels=legend_labels, loc='bar')
-    with pytest.raises(ValueError, match='size'):
+    with pytest.raises(ValueError, match='`size` must have a length equal to'):
         pl.add_legend(labels=legend_labels, size=[])
     # test non-sequences also raise
-    with pytest.raises(ValueError, match='size'):
+    with pytest.raises(TypeError, match='`size` must be an instance of'):
         pl.add_legend(labels=legend_labels, size=type)
 
 
@@ -1145,7 +1199,7 @@ def test_compute_bounds(airplane):
 @pytest.mark.parametrize('aa_type', [None, 1.0, 1, object()])
 def test_enable_antialising_raises(aa_type):
     pl = pv.Plotter()
-    with pytest.raises(TypeError, match=f'`aa_type` must be a string, not {type(aa_type)}'):
+    with pytest.raises(TypeError, match='`aa_type` must be an instance of'):
         pl.renderer.enable_anti_aliasing(aa_type=aa_type)
 
 
@@ -1211,24 +1265,21 @@ def test_show_bounds_grid_value_raises():
 @given(padding=st.floats().filter(lambda x: (x > 1.0) | (x < 0)))
 def test_show_bounds_padding_raises(padding):
     pl = pv.Plotter()
-    with pytest.raises(
-        ValueError,
-        match=re.escape(f'padding ({padding}) not understood. Must be float between 0 and 1'),
-    ):
+    with pytest.raises(ValueError, match='padding values must all be'):
         pl.renderer.show_bounds(padding=padding)
 
 
 @pytest.mark.parametrize('groups', [1, object(), True])
 def test_init_renderers_groups_raises(groups):
-    match = f'"groups" should be a list or tuple, not {type(groups).__name__}.'
-    with pytest.raises(TypeError, match=match):
+    match = f'"groups" must be an instance of .*Got {type(groups)} instead.'
+    with pytest.raises(TypeError, match=re.escape(match).replace('\\.\\*', '.*')):
         pv.Plotter(groups=groups)
 
 
 @pytest.mark.parametrize('group', [1, object(), True])
 def test_init_renderers_groups_item_raises(group):
-    match = f'Each group entry should be a list or tuple, not {type(group).__name__}.'
-    with pytest.raises(TypeError, match=match):
+    match = f'Each group entry must be an instance of .*Got {type(group)} instead.'
+    with pytest.raises(TypeError, match=re.escape(match).replace('\\.\\*', '.*')):
         pv.Plotter(groups=[group])
 
 
@@ -1263,3 +1314,44 @@ def test_init_renderers_shape_descriptor_positive_raises(shape):
     match = f'"shape" must contain only positive integers. Got {shape!r}.'
     with pytest.raises(ValueError, match=re.escape(match)):
         pv.Plotter(shape=shape)
+
+
+def test_renderer_width_height():
+    pl = pv.Plotter(window_size=(400, 300))
+    assert pl.renderer.width == pytest.approx(400)
+    assert pl.renderer.height == pytest.approx(300)
+
+
+def test_renderer_raises_once_closed():
+    pl = pv.Plotter()
+    renderer = pl.renderer
+    renderer.deep_clean()
+    with pytest.raises(RuntimeError, match='no longer has a camera'):
+        _ = renderer.camera
+    with pytest.raises(RuntimeError, match='no longer has a plotter'):
+        _ = renderer.width
+
+
+def test_remove_actor_none():
+    pl = pv.Plotter()
+    assert pl.renderer.remove_actor(None) is False
+
+
+def test_add_actor_culling_prop_without_property():
+    pl = pv.Plotter()
+    _, prop = pl.renderer.add_actor(_vtk.vtkLegendScaleActor(), culling='back')
+    assert prop is None
+
+
+def test_set_active_renderer_requires_column():
+    pl = pv.Plotter(shape=(2, 2))
+    with pytest.raises(TypeError, match='"index_column" is required'):
+        pl.renderers.set_active_renderer(0)
+
+
+def test_shadow_renderer_raises_once_released():
+    pl = pv.Plotter()
+    renderers = pl.renderers
+    renderers.__del__()  # releases the shadow renderer, as garbage collection would
+    with pytest.raises(RuntimeError, match='no longer have a shadow renderer'):
+        _ = renderers.shadow_renderer

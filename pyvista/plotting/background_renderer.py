@@ -37,7 +37,7 @@ class BackgroundRenderer(Renderer):
         super().__init__(parent, border=False)
         self.SetLayer(0)
         self.InteractiveOff()
-        self.SetBackground(self.parent.renderer.GetBackground())
+        self.SetBackground(self._plotter.renderer.GetBackground())
         self._scale = scale
         self._modified_observer = None
         self._prior_window_size = None
