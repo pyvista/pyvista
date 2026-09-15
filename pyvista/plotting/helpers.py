@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 
 _ViewOptions = Literal['xy', 'yx', 'xz', 'zx', 'yz', 'zy']
 
-# The direction each plane is viewed from, and which way is up when it is
+# The direction each plane is viewed from, paired with its up vector.
 _VIEW_VECTORS: dict[_ViewOptions, tuple[tuple[int, int, int], tuple[int, int, int]]] = {
     'xy': ((0, 0, 1), (0, 1, 0)),
     'yx': ((0, 0, -1), (1, 0, 0)),

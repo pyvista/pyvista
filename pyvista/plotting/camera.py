@@ -341,11 +341,11 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         ...         [0.0, 0.0, 0.0, 0.5],
         ...     ]
         ... )
-        >>>
-        array([[1., 0., 0., 0.],
-               [0., 1., 0., 0.],
-               [0., 0., 1., 0.],
-               [0., 0., 0., 0.5]])
+        >>> pl.camera.model_transform_matrix
+        array([[1. , 0. , 0. , 0. ],
+               [0. , 1. , 0. , 0. ],
+               [0. , 0. , 1. , 0. ],
+               [0. , 0. , 0. , 0.5]])
 
         """
         vtk_matrix = self.GetModelTransformMatrix()
