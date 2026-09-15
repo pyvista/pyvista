@@ -64,7 +64,7 @@ def _process_uses_egl() -> bool:
     return bool(os.environ.get('WAYLAND_DISPLAY'))
 
 
-def _offscreen_probe_render_window():
+def _offscreen_probe_render_window() -> _vtk.vtkRenderWindow:
     """Create an offscreen render window suitable for GL capability probes.
 
     Under a Wayland session the process may already be using EGL for OpenGL,
@@ -91,7 +91,7 @@ def _offscreen_probe_render_window():
 
 
 @functools.cache
-def check_depth_peeling(number_of_peels=100, occlusion_ratio=0.0):
+def check_depth_peeling(number_of_peels: int = 100, occlusion_ratio: float = 0.0) -> bool:
     """Check if depth peeling is available.
 
     Attempts to use depth peeling to see if it is available for the
