@@ -4516,7 +4516,7 @@ class BasePlotter(_BoundsSizeMixin):
             if isinstance(texture, np.ndarray):
                 texture = numpy_to_texture(texture)
             if not isinstance(texture, (_vtk.vtkTexture, _vtk.vtkOpenGLTexture)):
-                msg = f'Invalid texture type ({type(texture)})'
+                msg = f'Invalid texture type ({type(texture)})'  # type: ignore[unreachable]
                 raise TypeError(msg)
             if mesh.GetPointData().GetTCoords() is None:
                 msg = 'Input mesh does not have texture coordinates to support the texture.'
