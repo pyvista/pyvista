@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
 from enum import Enum
+from typing import TYPE_CHECKING
 from typing import cast
+
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
@@ -15,6 +17,9 @@ from pyvista.core.utilities.misc import _NameMixin
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from ._property import Property
+
+if TYPE_CHECKING:
+    from pyvista.core._typing_core import VectorLike
 
 
 class AxesActor(
@@ -88,7 +93,7 @@ class AxesActor(
         CONE = 0
         SPHERE = 1
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize actor."""
         super().__init__()
 
@@ -165,7 +170,7 @@ class AxesActor(
         return bool(self.GetVisibility())
 
     @visibility.setter
-    def visibility(self, value: bool):
+    def visibility(self, value: bool) -> None:
         self.SetVisibility(value)
 
     @property
@@ -189,11 +194,12 @@ class AxesActor(
         return self.GetTotalLength()
 
     @total_length.setter
-    def total_length(self, length):
-        if isinstance(length, Iterable):
-            self.SetTotalLength(length[0], length[1], length[2])  # type: ignore[index]
-        else:
-            self.SetTotalLength(length, length, length)
+    def total_length(self, length: float | VectorLike[float]) -> None:
+        self.SetTotalLength(
+            *_validation.validate_array3(
+                length, broadcast=True, dtype_out=float, name='total_length'
+            )
+        )
 
     @property
     def shaft_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -216,11 +222,12 @@ class AxesActor(
         return self.GetNormalizedShaftLength()
 
     @shaft_length.setter
-    def shaft_length(self, length):
-        if isinstance(length, Iterable):
-            self.SetNormalizedShaftLength(length[0], length[1], length[2])  # type: ignore[index]
-        else:
-            self.SetNormalizedShaftLength(length, length, length)
+    def shaft_length(self, length: float | VectorLike[float]) -> None:
+        self.SetNormalizedShaftLength(
+            *_validation.validate_array3(
+                length, broadcast=True, dtype_out=float, name='shaft_length'
+            )
+        )
 
     @property
     def tip_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -243,11 +250,12 @@ class AxesActor(
         return self.GetNormalizedTipLength()
 
     @tip_length.setter
-    def tip_length(self, length):
-        if isinstance(length, Iterable):
-            self.SetNormalizedTipLength(length[0], length[1], length[2])  # type: ignore[index]
-        else:
-            self.SetNormalizedTipLength(length, length, length)
+    def tip_length(self, length: float | VectorLike[float]) -> None:
+        self.SetNormalizedTipLength(
+            *_validation.validate_array3(
+                length, broadcast=True, dtype_out=float, name='tip_length'
+            )
+        )
 
     @property
     def label_position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -270,11 +278,12 @@ class AxesActor(
         return self.GetNormalizedLabelPosition()
 
     @label_position.setter
-    def label_position(self, length):
-        if isinstance(length, Iterable):
-            self.SetNormalizedLabelPosition(length[0], length[1], length[2])  # type: ignore[index]
-        else:
-            self.SetNormalizedLabelPosition(length, length, length)
+    def label_position(self, length: float | VectorLike[float]) -> None:
+        self.SetNormalizedLabelPosition(
+            *_validation.validate_array3(
+                length, broadcast=True, dtype_out=float, name='label_position'
+            )
+        )
 
     @property
     def cone_resolution(self) -> int:  # numpydoc ignore=RT01
@@ -294,7 +303,7 @@ class AxesActor(
         return self.GetConeResolution()
 
     @cone_resolution.setter
-    def cone_resolution(self, res: int):
+    def cone_resolution(self, res: int) -> None:
         self.SetConeResolution(res)
 
     @property
@@ -315,7 +324,7 @@ class AxesActor(
         return self.GetSphereResolution()
 
     @sphere_resolution.setter
-    def sphere_resolution(self, res: int):
+    def sphere_resolution(self, res: int) -> None:
         self.SetSphereResolution(res)
 
     @property
@@ -336,7 +345,7 @@ class AxesActor(
         return self.GetCylinderResolution()
 
     @cylinder_resolution.setter
-    def cylinder_resolution(self, res: int):
+    def cylinder_resolution(self, res: int) -> None:
         self.SetCylinderResolution(res)
 
     @property
@@ -357,7 +366,7 @@ class AxesActor(
         return self.GetConeRadius()
 
     @cone_radius.setter
-    def cone_radius(self, rad: float):
+    def cone_radius(self, rad: float) -> None:
         self.SetConeRadius(rad)
 
     @property
@@ -378,7 +387,7 @@ class AxesActor(
         return self.GetSphereRadius()
 
     @sphere_radius.setter
-    def sphere_radius(self, rad: float):
+    def sphere_radius(self, rad: float) -> None:
         self.SetSphereRadius(rad)
 
     @property
@@ -399,7 +408,7 @@ class AxesActor(
         return self.GetCylinderRadius()
 
     @cylinder_radius.setter
-    def cylinder_radius(self, rad: float):
+    def cylinder_radius(self, rad: float) -> None:
         self.SetCylinderRadius(rad)
 
     @property
@@ -420,7 +429,7 @@ class AxesActor(
         return AxesActor.ShaftType(self.GetShaftType())
 
     @shaft_type.setter
-    def shaft_type(self, shaft_type: ShaftType | int):
+    def shaft_type(self, shaft_type: ShaftType | int) -> None:
         shaft_type = AxesActor.ShaftType(shaft_type)
         if shaft_type == AxesActor.ShaftType.CYLINDER:
             self.SetShaftTypeToCylinder()
@@ -445,7 +454,7 @@ class AxesActor(
         return AxesActor.TipType(self.GetTipType())
 
     @tip_type.setter
-    def tip_type(self, tip_type: TipType | int):
+    def tip_type(self, tip_type: TipType | int) -> None:
         tip_type = AxesActor.TipType(tip_type)
         if tip_type == AxesActor.TipType.CONE:
             self.SetTipTypeToCone()
@@ -473,14 +482,9 @@ class AxesActor(
         return self.x_label, self.y_label, self.z_label
 
     @labels.setter
-    def labels(self, labels: list[str] | tuple[str]):
-        if not isinstance(labels, (list, tuple)):
-            msg = f'Labels must be a list or tuple. Got {labels} instead.'  # type: ignore[unreachable]
-            raise TypeError(msg)
-
-        if len(labels) != 3:
-            msg = f'Labels must be a list or tuple with three items. Got {labels} instead.'
-            raise ValueError(msg)
+    def labels(self, labels: list[str] | tuple[str, str, str]) -> None:
+        _validation.check_instance(labels, (list, tuple), name='Labels')
+        _validation.check_length(labels, exact_length=3, name='Labels')
         self.x_label = labels[0]
         self.y_label = labels[1]
         self.z_label = labels[2]
@@ -501,7 +505,7 @@ class AxesActor(
         return self.GetXAxisLabelText()
 
     @x_label.setter
-    def x_label(self, label: str):
+    def x_label(self, label: str) -> None:
         self.SetXAxisLabelText(label)
 
     @property
@@ -520,7 +524,7 @@ class AxesActor(
         return self.GetYAxisLabelText()
 
     @y_label.setter
-    def y_label(self, label: str):
+    def y_label(self, label: str) -> None:
         self.SetYAxisLabelText(label)
 
     @property
@@ -539,7 +543,7 @@ class AxesActor(
         return self.GetZAxisLabelText()
 
     @z_label.setter
-    def z_label(self, label: str):
+    def z_label(self, label: str) -> None:
         self.SetZAxisLabelText(label)
 
     @property
@@ -548,7 +552,7 @@ class AxesActor(
         return cast('Property', self.GetXAxisShaftProperty())
 
     @x_axis_shaft_properties.setter
-    def x_axis_shaft_properties(self, properties: Property):
+    def x_axis_shaft_properties(self, properties: Property) -> None:
         self._actors[0].SetProperty(properties)
 
     @property
@@ -557,7 +561,7 @@ class AxesActor(
         return cast('Property', self.GetYAxisShaftProperty())
 
     @y_axis_shaft_properties.setter
-    def y_axis_shaft_properties(self, properties: Property):
+    def y_axis_shaft_properties(self, properties: Property) -> None:
         self._actors[1].SetProperty(properties)
 
     @property
@@ -566,7 +570,7 @@ class AxesActor(
         return cast('Property', self.GetZAxisShaftProperty())
 
     @z_axis_shaft_properties.setter
-    def z_axis_shaft_properties(self, properties: Property):
+    def z_axis_shaft_properties(self, properties: Property) -> None:
         self._actors[2].SetProperty(properties)
 
     @property
@@ -575,7 +579,7 @@ class AxesActor(
         return cast('Property', self.GetXAxisTipProperty())
 
     @x_axis_tip_properties.setter
-    def x_axis_tip_properties(self, properties: Property):
+    def x_axis_tip_properties(self, properties: Property) -> None:
         self._actors[3].SetProperty(properties)
 
     @property
@@ -584,7 +588,7 @@ class AxesActor(
         return cast('Property', self.GetYAxisTipProperty())
 
     @y_axis_tip_properties.setter
-    def y_axis_tip_properties(self, properties: Property):
+    def y_axis_tip_properties(self, properties: Property) -> None:
         self._actors[4].SetProperty(properties)
 
     @property
@@ -593,5 +597,5 @@ class AxesActor(
         return cast('Property', self.GetZAxisTipProperty())
 
     @z_axis_tip_properties.setter
-    def z_axis_tip_properties(self, properties: Property):
+    def z_axis_tip_properties(self, properties: Property) -> None:
         self._actors[5].SetProperty(properties)
