@@ -228,6 +228,7 @@ nitpick_ignore_regex = [
     #
     # PyVista TypeVars and TypeAliases
     (r'py:.*', '.*ColorLike'),
+    (r'py:.*', '.*_ColorChannel'),
     (r'py:.*', '.*ImageCompareType'),
     (r'py:.*', '.*ColormapOptions'),
     (r'py:.*', '.*ArrayLike'),
