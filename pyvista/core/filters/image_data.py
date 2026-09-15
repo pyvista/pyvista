@@ -5153,7 +5153,8 @@ class ImageDataFilters(DataSetFilters):
             mesh_type=pv.ImageData,
         )
         if not isinstance(validated, _ExtractValuesInputs):
-            return validated  # empty input
+            # Empty input, returned as the `mesh_type` that was requested
+            return cast('ImageData | MultiBlock', validated)
 
         kwargs: dict[str, Any] = dict(
             values=validated.values,

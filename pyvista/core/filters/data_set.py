@@ -37,8 +37,8 @@ from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_object import DataObjectFilters
 from pyvista.core.filters.data_object import _cast_output_to_match_input_type
 from pyvista.core.filters.data_object import _clip_input
+from pyvista.core.filters.data_object import _clip_output
 from pyvista.core.filters.data_object import _clipper
-from pyvista.core.filters.data_object import _keep_array_structure
 from pyvista.core.filters.data_object import _validate_clip_inplace
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import convert_array
@@ -70,6 +70,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import _DataObjectType
     from pyvista.core._typing_core import _DataSetType
     from pyvista.core.filters.data_object import _ExtractSurfaceOptions
+    from pyvista.core.pyvista_ndarray import pyvista_ndarray
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import PointLiteral
     from pyvista.plotting._typing import ColorLike
@@ -109,7 +110,7 @@ def _signed_distance_near_surface(
     is_exact = np.zeros(dataset.n_points, dtype=bool)
     points = dataset.points
 
-    def exact_distance(point_ids):
+    def exact_distance(point_ids: NumpyArray[int]) -> NumpyArray[float]:
         values = _vtk.vtkDoubleArray()
         function.FunctionValue(pv.convert_array(points[point_ids]), values)
         return pv.convert_array(values)
@@ -831,9 +832,7 @@ class DataSetFilters(DataObjectFilters):
         alg.SetGenerateClippedOutput(both)
 
         _update_alg(alg, progress_bar=progress_bar, message='Clipping by a Scalar')
-        result0: PolyData | PointSet | UnstructuredGrid = _keep_array_structure(
-            _cast_output_to_match_input_type(_get_output(alg), self), self
-        )
+        result0 = _clip_output(_get_output(alg), self)
         if not is_single_value:
             # Keep what lies above the lower value as well
             result0 = result0.clip_scalar(scalars=scalars, invert=False, value=lower)
@@ -841,9 +840,7 @@ class DataSetFilters(DataObjectFilters):
             inplace_target.copy_from(result0, deep=False)
             result0 = inplace_target
         if both:
-            result1: PolyData | PointSet | UnstructuredGrid = _keep_array_structure(
-                _cast_output_to_match_input_type(_get_output(alg, oport=1), self), self
-            )
+            result1 = _clip_output(_get_output(alg, oport=1), self)
             return result0, result1
         return result0
 
@@ -986,8 +983,10 @@ class DataSetFilters(DataObjectFilters):
             clipped.point_data.pop(_CLIP_SURFACE_SCALARS, None)
             info = self.active_scalars_info
             if info.name is not None and not clipped.is_empty:
-                clipped.set_active_scalars(info.name, preference=info.association)
-        return _keep_array_structure(_cast_output_to_match_input_type(clipped, self), self)
+                clipped.set_active_scalars(
+                    info.name, preference=cast('PointLiteral | CellLiteral', info.association)
+                )
+        return _clip_output(clipped, self)
 
     def threshold(  # type: ignore[misc]
         self: _DataSetType,
@@ -1299,7 +1298,7 @@ class DataSetFilters(DataObjectFilters):
         tscalars = set_default_active_scalars(self).name if scalars is None else scalars
         dmin, dmax = self.get_data_range(arr_var=tscalars, preference=preference)
 
-        def _check_percent(percent):
+        def _check_percent(percent: float) -> float:
             """Make sure percent is between 0 and 1 or fix if between 0 and 100."""
             if percent >= 1:
                 percent = float(percent) / 100.0
@@ -1311,12 +1310,13 @@ class DataSetFilters(DataObjectFilters):
                 raise ValueError(msg)
             return percent
 
-        def _get_val(percent, dmin, dmax):
+        def _get_val(percent: float, dmin: float, dmax: float) -> float:
             """Get the value from a percentage of a range."""
             percent = _check_percent(percent)
             return dmin + float(percent) * (dmax - dmin)
 
         # Compute the values
+        value: float | list[float]
         if isinstance(percent, (np.ndarray, Sequence)):
             # Get two values
             value = [_get_val(percent[0], dmin, dmax), _get_val(percent[1], dmin, dmax)]
@@ -2376,7 +2376,7 @@ class DataSetFilters(DataObjectFilters):
         closest_point: VectorLike[float] | None = None,
         inplace: bool = False,
         progress_bar: bool = False,
-        **kwargs,
+        **kwargs: Any,
     ) -> PolyData | PointSet | UnstructuredGrid:
         """Find and label connected regions.
 
@@ -2604,7 +2604,7 @@ class DataSetFilters(DataObjectFilters):
             )
             extraction_mode = 'largest'
 
-        def _extract_and_cast(mesh, **extract_kwargs):
+        def _extract_and_cast(mesh: _DataSetType, **extract_kwargs: Any) -> _DataSetType:
             """Extract a subset of a mesh and cast the result back to the mesh's type."""
             extracted = DataSetFilters.extract_values(
                 mesh,
@@ -2720,7 +2720,7 @@ class DataSetFilters(DataObjectFilters):
                 # The filter's own scalar connectivity is unreliable for these modes
                 scalars_name = input_mesh.active_scalars_name
                 input_mesh = _extract_and_cast(input_mesh, ranges=scalar_range)
-                if scalars_name in input_mesh.point_data:
+                if scalars_name is not None and scalars_name in input_mesh.point_data:
                     input_mesh.set_active_scalars(scalars_name, preference='point')
 
         alg = _vtk.vtkConnectivityFilter()
@@ -2964,7 +2964,7 @@ class DataSetFilters(DataObjectFilters):
         normal: VectorLike[float] | None = None,
         inplace: bool = False,
         progress_bar: bool = False,
-        **kwargs,
+        **kwargs: Any,
     ) -> StructuredGrid | _DataSetType:
         """Warp the dataset's points by a point data scalars array's values.
 
@@ -3235,7 +3235,7 @@ class DataSetFilters(DataObjectFilters):
         inside_out: bool = False,
         check_surface: bool = True,
         progress_bar: bool = False,
-    ):
+    ) -> _DataSetType:
         """Mark points as to whether they are inside a closed surface.
 
         This evaluates all the input points to determine whether they are in an
@@ -3692,7 +3692,7 @@ class DataSetFilters(DataObjectFilters):
         pointa: VectorLike[float] | None = None,
         pointb: VectorLike[float] | None = None,
         progress_bar: bool = False,
-        **kwargs,
+        **kwargs: Any,
     ) -> PolyData | tuple[PolyData, PolyData]:
         """Integrate a vector field to generate streamlines.
 
@@ -5400,7 +5400,7 @@ class DataSetFilters(DataObjectFilters):
         scalars: str | None = None,
         preference: Literal['point', 'cell'] = 'point',
         component_mode: Literal['any', 'all', 'multi'] | int = 'all',
-        **kwargs,
+        **kwargs: Any,
     ) -> MultiBlock:
         """Split mesh into separate sub-meshes using point or cell data.
 
@@ -5869,13 +5869,14 @@ class DataSetFilters(DataObjectFilters):
             split=split,
         )
         if not isinstance(validated, _ExtractValuesInputs):
-            return validated  # empty input
+            # Empty input, returned as the `mesh_type` that was requested
+            return cast('UnstructuredGrid | MultiBlock', validated)
 
         # Set default for include cells
         if include_cells is None:
             include_cells = self.n_cells > 0
 
-        kwargs = dict(
+        kwargs: dict[str, Any] = dict(
             values=validated.values,
             ranges=validated.ranges,
             array=validated.array,
@@ -5897,27 +5898,31 @@ class DataSetFilters(DataObjectFilters):
                 **kwargs,
             )
 
-        return self._extract_values(**kwargs)
+        return cast('PointSet | UnstructuredGrid', self._extract_values(**kwargs))
 
     def _validate_extract_values(  # type: ignore[misc]
         self: _DataSetType,
         *,
-        values,
-        ranges,
-        scalars,
-        preference,
-        component_mode,
-        split,
-        mesh_type=None,
-    ):
-        def _validate_scalar_array(scalars_, preference_):
+        values: Any,
+        ranges: Any,
+        scalars: str | None,
+        preference: Literal['point', 'cell'],
+        component_mode: Literal['any', 'all', 'multi'] | int,
+        split: bool,
+        mesh_type: type[DataSet] | None = None,
+    ) -> _ExtractValuesInputs | DataSet | MultiBlock:
+        def _validate_scalar_array(
+            scalars_: str | None, preference_: Literal['point', 'cell']
+        ) -> tuple[pyvista_ndarray, str, FieldAssociation]:
             # Get the scalar array and field association to use for extraction
             scalars_ = set_default_active_scalars(self).name if scalars_ is None else scalars_
             array_ = get_array(self, scalars_, preference=preference_, err=True)
             association_ = get_array_association(self, scalars_, preference=preference_)
             return array_, scalars_, association_
 
-        def _validate_component_mode(array_, component_mode_):
+        def _validate_component_mode(
+            array_: NumpyArray[Any], component_mode_: Any
+        ) -> tuple[NumpyArray[Any], int, Callable[..., Any] | None]:
             # Validate component mode and return logic function
             num_components = 1 if array_.ndim == 1 else array_.shape[1]
             if isinstance(component_mode_, (int, np.integer)) or (
@@ -5952,7 +5957,7 @@ class DataSetFilters(DataObjectFilters):
                 raise ValueError(msg)
             return array_, num_components, component_logic_function
 
-        def _get_inputs_from_dict(input_):
+        def _get_inputs_from_dict(input_: Any) -> tuple[list[str] | None, Any]:
             # Get extraction values from dict if applicable.
             # If dict, also validate names/labels mapped to the values
             if not isinstance(input_, dict):
@@ -5968,8 +5973,13 @@ class DataSetFilters(DataObjectFilters):
                     raise TypeError(msg)
 
         def _validate_values_and_ranges(
-            array_, *, values_, ranges_, num_components_, component_mode_
-        ):
+            array_: NumpyArray[Any],
+            *,
+            values_: Any,
+            ranges_: Any,
+            num_components_: int,
+            component_mode_: Any,
+        ) -> tuple[Any, Any]:
             # Make sure we have input values to extract
             is_multi_mode = component_mode_ == 'multi'
             if values_ is None:
@@ -6055,8 +6065,10 @@ class DataSetFilters(DataObjectFilters):
                 return pv.MultiBlock([out.copy() for _ in range(n_values + n_ranges)])
             return out
 
-        array, array_name, association = _validate_scalar_array(scalars, preference)
-        array, num_components, component_logic = _validate_component_mode(array, component_mode)
+        scalar_array, array_name, association = _validate_scalar_array(scalars, preference)
+        array, num_components, component_logic = _validate_component_mode(
+            scalar_array, component_mode
+        )
         value_names, values = _get_inputs_from_dict(values)
         range_names, ranges = _get_inputs_from_dict(ranges)
         valid_values, valid_ranges = _validate_values_and_ranges(
@@ -6081,37 +6093,37 @@ class DataSetFilters(DataObjectFilters):
     def _split_values(  # type:ignore[misc]
         self: _DataSetType,
         *,
-        method,
-        values,
-        ranges,
-        value_names,
-        range_names,
-        **kwargs,
-    ):
+        method: Callable[..., DataSet],
+        values: Any,
+        ranges: Any,
+        value_names: list[str] | None,
+        range_names: list[str] | None,
+        **kwargs: Any,
+    ) -> MultiBlock:
         # Split values and ranges separately and combine into single multiblock
         multi = pv.MultiBlock()
         if values is not None:
-            value_names = value_names or [None] * len(values)
-            for name, val in zip(value_names, values, strict=True):
+            names: Sequence[str | None] = value_names or [None] * len(values)
+            for name, val in zip(names, values, strict=True):
                 multi.append(method(values=[val], ranges=None, **kwargs), name)
         if ranges is not None:
-            range_names = range_names or [None] * len(ranges)
-            for name, rng in zip(range_names, ranges, strict=True):
+            names = range_names or [None] * len(ranges)
+            for name, rng in zip(names, ranges, strict=True):
                 multi.append(method(values=None, ranges=[rng], **kwargs), name)
         return multi
 
     def _apply_component_logic_to_array(  # type: ignore[misc]
         self: _DataSetType,
         *,
-        values,
-        ranges,
-        array,
-        component_logic,
-        invert,
-    ):
+        values: Any,
+        ranges: Any,
+        array: NumpyArray[Any],
+        component_logic: Callable[..., Any] | None,
+        invert: bool,
+    ) -> NumpyArray[bool]:
         """Build the selection mask from validated values and ranges."""
 
-        def _update_id_mask(logic_) -> None:
+        def _update_id_mask(logic_: NumpyArray[bool]) -> None:
             """Apply component logic and update the id mask."""
             logic_ = component_logic(logic_) if component_logic else logic_
             # Optimization: accumulate in place, since assigning ``True`` through a boolean
@@ -6144,18 +6156,18 @@ class DataSetFilters(DataObjectFilters):
     def _extract_values(  # type: ignore[misc]
         self: _DataSetType,
         *,
-        values,
-        ranges,
-        array,
-        component_logic,
-        invert,
-        association,
-        adjacent_cells,
-        include_cells,
-        progress_bar,
-        pass_point_ids,
-        pass_cell_ids,
-    ):
+        values: Any,
+        ranges: Any,
+        array: NumpyArray[Any],
+        component_logic: Callable[..., Any] | None,
+        invert: bool,
+        association: FieldAssociation,
+        adjacent_cells: bool,
+        include_cells: bool,
+        progress_bar: bool,
+        pass_point_ids: bool,
+        pass_cell_ids: bool,
+    ) -> DataSet:
         id_mask = self._apply_component_logic_to_array(
             values=values,
             ranges=ranges,
@@ -6192,7 +6204,7 @@ class DataSetFilters(DataObjectFilters):
         nonlinear_subdivision: int = 1,
         progress_bar: bool = False,
         message: str = 'Extracting Surface',
-    ):
+    ) -> PolyData:
         surf_filter = _vtk.vtkDataSetSurfaceFilter()
         surf_filter.SetInputData(self)
         surf_filter.SetPassThroughPointIds(pass_pointid)
@@ -6608,14 +6620,16 @@ class DataSetFilters(DataObjectFilters):
         return merged
 
     def __add__(  # type: ignore[misc]
-        self: _DataSetType, dataset
-    ):
+        self: _DataSetType,
+        dataset: DataSet | _vtk.vtkDataSet | MultiBlock | Sequence[DataSet | _vtk.vtkDataSet],
+    ) -> DataSet:
         """Combine this mesh with another into a :class:`pyvista.UnstructuredGrid`."""
         return DataSetFilters.merge(self, dataset)
 
     def __iadd__(  # type: ignore[misc]
-        self: _DataSetType, dataset
-    ):
+        self: _DataSetType,
+        dataset: DataSet | _vtk.vtkDataSet | MultiBlock | Sequence[DataSet | _vtk.vtkDataSet],
+    ) -> DataSet:
         """Merge another mesh into this one if possible.
 
         "If possible" means that ``self`` is a :class:`pyvista.UnstructuredGrid`.
@@ -7122,9 +7136,8 @@ class DataSetFilters(DataObjectFilters):
         as_composite: bool = True,
     ) -> (
         MultiBlock
-        | tuple[MultiBlock, NumpyArray[np.floating], NumpyArray[np.floating]]
         | PolyData
-        | tuple[PolyData, NumpyArray[np.floating], NumpyArray[np.floating]]
+        | tuple[MultiBlock | PolyData, NumpyArray[np.floating], NumpyArray[np.floating]]
     ):
         """Return an oriented bounding box (OBB) for this dataset.
 
@@ -7318,9 +7331,8 @@ class DataSetFilters(DataObjectFilters):
         as_composite: bool = True,
     ) -> (
         MultiBlock
-        | tuple[MultiBlock, NumpyArray[np.floating], NumpyArray[np.floating]]
         | PolyData
-        | tuple[PolyData, NumpyArray[np.floating], NumpyArray[np.floating]]
+        | tuple[MultiBlock | PolyData, NumpyArray[np.floating], NumpyArray[np.floating]]
     ):
         """Return a bounding box for this dataset.
 
@@ -7480,8 +7492,12 @@ class DataSetFilters(DataObjectFilters):
         frame_width: float,
         return_meta: bool,
         as_composite: bool,
+    ) -> (
+        MultiBlock
+        | PolyData
+        | tuple[MultiBlock | PolyData, NumpyArray[np.floating], NumpyArray[np.floating]]
     ):
-        def _multiblock_to_polydata(multiblock):
+        def _multiblock_to_polydata(multiblock: MultiBlock) -> PolyData:
             return multiblock.combine(merge_points=False).extract_surface(
                 algorithm=None, pass_pointid=False, pass_cellid=False
             )
@@ -8250,7 +8266,7 @@ class DataSetFilters(DataObjectFilters):
                 )
                 raise ValueError(msg)
 
-        def _is_index_like(array_, n_colors_):
+        def _is_index_like(array_: NumpyArray[Any], n_colors_: int) -> NumpyArray[bool]:
             """Return which values can be used to index ``n_colors_`` colors."""
             min_value = -n_colors_ if negative_indexing else 0
             return (array_ == np.floor(array_)) & (array_ >= min_value) & (array_ < n_colors_)
@@ -8860,7 +8876,7 @@ class DataSetFilters(DataObjectFilters):
         cell_length_percentile: float | None,
         cell_length_sample_size: int | None,
         progress_bar: bool,
-    ):
+    ) -> ImageData:
         if dimensions is not None:
             dimensions_ = _validation.validate_array3(
                 dimensions, must_be_integer=True, dtype_out=int, name='dimensions'
@@ -9228,7 +9244,9 @@ class DataSetFilters(DataObjectFilters):
         return ugrid
 
 
-def _length_distribution_percentile(poly, percentile, cell_length_sample_size, *, progress_bar):
+def _length_distribution_percentile(
+    poly: PolyData, percentile: float, cell_length_sample_size: int, *, progress_bar: bool
+) -> float:
     percentile = _validation.validate_number(
         percentile, must_be_in_range=[0.0, 1.0], name='percentile'
     )
@@ -9392,7 +9410,7 @@ def _cast_extraction(
     output: DataSet, input_mesh: DataSet, *, pass_point_ids: bool, pass_cell_ids: bool
 ) -> DataSet:
     """Cast an extracted mesh to the input type and keep its original id arrays."""
-    output = cast('DataSet', _cast_output_to_match_input_type(output, input_mesh))
+    output = _cast_output_to_match_input_type(output, input_mesh)
     return _finish_extraction(output, pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids)
 
 
@@ -9408,7 +9426,13 @@ def _finish_extraction(
     return output
 
 
-def _set_threshold_limit(alg, *, value, method, invert):
+def _set_threshold_limit(
+    alg: _vtk.vtkThreshold,
+    *,
+    value: float | VectorLike[float],
+    method: str,
+    invert: bool,
+) -> None:
     """Set ``vtkThreshold`` limits and function.
 
     Addresses VTK API deprecations and previous PyVista inconsistencies with ParaView. Reference:
@@ -9440,8 +9464,8 @@ def _set_threshold_limit(alg, *, value, method, invert):
     # Set values and function
     if isinstance(value, (np.ndarray, Sequence)):
         alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_BETWEEN)
-        alg.SetLowerThreshold(value[0])
-        alg.SetUpperThreshold(value[1])
+        alg.SetLowerThreshold(float(value[0]))
+        alg.SetUpperThreshold(float(value[1]))
     # Single value
     elif method.lower() == 'lower':
         alg.SetLowerThreshold(value)
@@ -9454,7 +9478,7 @@ def _set_threshold_limit(alg, *, value, method, invert):
         raise ValueError(msg)
 
 
-def _swap_axes(vectors, values):
+def _swap_axes(vectors: NumpyArray[float], values: VectorLike[float]) -> NumpyArray[float]:
     """Swap axes vectors based on their respective values.
 
     The vector with the larger component along its projected axis is selected to precede
@@ -9467,7 +9491,7 @@ def _swap_axes(vectors, values):
     module-level function for testing purposes.
     """
 
-    def _swap(axis_a, axis_b) -> None:
+    def _swap(axis_a: int, axis_b: int) -> None:
         axis_order = np.argmax(np.abs(vectors), axis=1)
         if axis_order[axis_a] > axis_order[axis_b]:
             vectors[[axis_a, axis_b]] = vectors[[axis_b, axis_a]]
