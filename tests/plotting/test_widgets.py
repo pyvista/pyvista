@@ -398,6 +398,14 @@ def test_sphere_widget_returns_only_the_new_widgets():
     pl.close()
 
 
+def test_volume_clip_plane_adds_one_widget(uniform):
+    pl = pv.Plotter()
+    pl.add_volume_clip_plane(uniform)
+
+    assert len(pl.widgets.plane_widgets) == 1
+    pl.close()
+
+
 def test_widget_checkbox_button(uniform):
     pl = pv.Plotter()
     func = lambda value: value  # Does nothing

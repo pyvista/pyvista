@@ -1032,7 +1032,6 @@ class WidgetComponent(_NoNewAttrMixin):
         )
         widget.GetPlane(plane)
         volume.mapper.AddClippingPlane(plane)
-        self.plane_widgets.append(widget)
 
         return widget
 
