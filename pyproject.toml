@@ -658,7 +658,7 @@ pyvista = "pv"
 'pyvista/examples/gltf.py' = ['ANN']
 'pyvista/examples/planets.py' = ['ANN']
 'pyvista/examples/vrml.py' = ['ANN']
-'pyvista/ext/*' = ['ANN', 'D100', 'D101', 'D102', 'D103']
+'pyvista/ext/*' = ['D100', 'D101', 'D102', 'D103']
 'pyvista/ext/_autoenum.py' = [
   'ARG002', # overrides of fixed third-party (Sphinx) method signatures
   'ARG003',
@@ -666,7 +666,6 @@ pyvista = "pv"
   'FBT002',
   'PLR0917',
 ]
-'pyvista/jupyter*' = ['ANN']
 'pyvista/plotting/_plotting.py' = ['ANN']
 'pyvista/plotting/_typing.py' = ['PLC0414']
 'pyvista/plotting/actor_properties.py' = ['ANN']
