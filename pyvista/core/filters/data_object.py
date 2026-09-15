@@ -6392,8 +6392,8 @@ def _make_reference_volume(
             )
             if spacing == 0:
                 msg = (
-                    'The estimated cell length is zero. Increase '
-                    '`cell_length_percentile` or set the `spacing` explicitly.'
+                    'The sampled cells have no edges with nonzero length, so the '
+                    'spacing cannot be estimated. Set `spacing` or `dimensions` explicitly.'
                 )
                 raise ValueError(msg)
         # Get initial spacing (will be adjusted later)

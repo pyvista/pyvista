@@ -5782,7 +5782,7 @@ def test_voxelize_binary_mask_degenerate_cells(sphere):
     # Zero-length edges are ignored
     assert mesh.voxelize_binary_mask().spacing == sphere.voxelize_binary_mask().spacing
 
-    match = 'The estimated cell length is zero.'
+    match = 'The sampled cells have no edges with nonzero length'
     mesh = pv.PolyData(sphere.points, faces=degenerate.ravel())
     with pytest.raises(ValueError, match=match):
         mesh.voxelize_binary_mask()

@@ -112,6 +112,19 @@ def test_cell_edge_lengths(make_mesh):
     )
 
 
+def test_cell_edge_lengths_hidden_cells():
+    grid = examples.load_explicit_structured()
+    hidden = grid.hide_cells(range(10), inplace=False)
+    assert np.array_equal(_cell_edge_lengths(hidden), _cell_edge_lengths(grid))
+    for cell_ids in ([0, 50], [50, 0]):
+        ids = np.array(cell_ids)
+        assert np.array_equal(_cell_edge_lengths(hidden, ids), _cell_edge_lengths(grid, ids))
+
+    structured = examples.load_structured()
+    hidden = structured.hide_cells(range(10), inplace=False)
+    assert np.array_equal(_cell_edge_lengths(hidden), _cell_edge_lengths(structured))
+
+
 def test_cell_edge_lengths_cells_without_edges():
     grid = _every_cell_type()
     no_edges = {
