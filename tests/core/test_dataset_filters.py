@@ -5592,6 +5592,14 @@ def test_voxelize_max_n_points_clamps_a_flat_axis():
     assert mask.n_points <= 100
 
 
+def test_voxelize_max_n_points_coarsens_a_rounded_up_estimate():
+    # These bounds round up to 10 x 4 x 1, one point over the limit
+    box = pv.Box(bounds=(0, 6.4059, 0, 2.7709, 0, 0.5056))
+    mask = box.voxelize_binary_mask(max_n_points=39)
+    assert mask.dimensions == (9, 4, 1)
+    assert mask.n_points <= 39
+
+
 def test_voxelize_max_n_points_raises_for_a_requested_geometry():
     mesh = pv.Sphere(theta_resolution=50, phi_resolution=50)
     match = 'points, which exceeds `max_n_points=1000`'
@@ -5626,6 +5634,12 @@ def test_voxelize_max_n_points_raises(sphere):
 
     with pytest.raises(ValueError, match='integer-like'):
         sphere.voxelize_binary_mask(max_n_points=2.5)
+
+
+def test_voxelize_target_n_points_raises_for_an_input_with_no_extent():
+    match = 'Spacing cannot be estimated for an input with no extent. Set `spacing` explicitly.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.Box(bounds=(1, 1, 1, 1, 1, 1)).voxelize_binary_mask(target_n_points=100)
 
 
 def test_voxelize_target_n_points_raises(sphere):
