@@ -2335,7 +2335,7 @@ class BasePlotter(_BoundsSizeMixin):
         return self.renderers.active_renderer.background_color
 
     @background_color.setter
-    def background_color(self, color: Color) -> None:
+    def background_color(self, color: ColorLike | None) -> None:
         self.set_background(color)
 
     @property
@@ -8648,7 +8648,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         auto_close: bool | None = None,
         interactive_update: bool = False,
         full_screen: bool | None = None,
-        screenshot: str | Path | BytesIO | bool = False,
+        screenshot: str | Path | BytesIO | bool | None = False,
         return_img: bool = False,
         cpos: CameraPositionOptions | None = None,
         jupyter_backend: JupyterBackendOptions | str | None = None,
