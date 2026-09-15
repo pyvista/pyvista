@@ -47,6 +47,27 @@ def test_texture_is_empty():
     assert not pv.Texture(examples.mapfile).is_empty
 
 
+def test_texture_empty_has_no_image():
+    with pytest.raises(ValueError, match='The texture is empty and has no image'):
+        pv.Texture().to_array()
+
+
+def test_texture_image_without_scalars():
+    texture = pv.Texture(pv.ImageData(dimensions=(2, 2, 1)))
+    with pytest.raises(ValueError, match='The texture image has no scalars'):
+        texture.to_array()
+
+
+def test_texture_copy_empty():
+    assert pv.Texture().copy().is_empty
+
+
+def test_texture_copy_shallow():
+    texture = pv.Texture(examples.mapfile)
+    shallow = texture.copy(deep=False)
+    assert shallow.dimensions == texture.dimensions
+
+
 def test_texture_get_data_range():
     assert np.isnan(pv.Texture().get_data_range()).all()
 
