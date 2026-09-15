@@ -386,6 +386,40 @@ def test_widget_sphere():
     pl.close()
 
 
+def test_sphere_widget_returns_only_the_new_widgets():
+    pl = pv.Plotter()
+    nodes = np.array([[-1, -1, -1], [1, 1, 1]])
+    first = pl.add_sphere_widget(None, center=nodes)
+    second = pl.add_sphere_widget(None, center=nodes)
+
+    assert len(first) == 2
+    assert len(second) == 2
+    assert not set(map(id, first)) & set(map(id, second))
+    pl.close()
+
+
+def test_volume_clip_plane_adds_one_widget(uniform):
+    pl = pv.Plotter()
+    pl.add_volume_clip_plane(uniform)
+
+    assert len(pl.widgets.plane_widgets) == 1
+    pl.close()
+
+
+def test_sphere_widget_style_is_matched_exactly():
+    pl = pv.Plotter()
+    surface = pl.add_sphere_widget(None, style='surface')
+    wireframe = pl.add_sphere_widget(None, style='wireframe')
+
+    assert surface.GetSphereProperty().GetRepresentationAsString() == 'Surface'
+    assert wireframe.GetSphereProperty().GetRepresentationAsString() == 'Wireframe'
+
+    match = re.escape("style 'wire' is not valid.")
+    with pytest.raises(ValueError, match=match):
+        pl.add_sphere_widget(None, style='wire')
+    pl.close()
+
+
 def test_widget_checkbox_button(uniform):
     pl = pv.Plotter()
     func = lambda value: value  # Does nothing
