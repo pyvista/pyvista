@@ -23,6 +23,7 @@ from pyvista.plotting.colors import _CMCRAMERI_CMAPS
 from pyvista.plotting.colors import _CMOCEAN_CMAPS
 from pyvista.plotting.colors import _COLORCET_CMAPS
 from pyvista.plotting.colors import _MATPLOTLIB_CMAPS
+from pyvista.plotting.colors import COLOR_SCHEMES
 from pyvista.plotting.colors import _format_color_name
 from pyvista.plotting.colors import _formatted_hex_colors
 from pyvista.plotting.colors import _validate_color_sequence
@@ -117,6 +118,19 @@ def test_color_scheme_to_cycler_raises(scheme):
 def test_color_scheme_to_cycler_raises_unknown_name():
     with pytest.raises(ValueError, match="Color scheme 'nope' is not valid"):
         color_scheme_to_cycler(scheme='nope')
+
+
+def test_color_scheme_to_cycler_input_forms():
+    def scheme_colors(scheme):
+        """Return the RGB tuples the scheme cycles through."""
+        return [pv.Color(entry['color']).int_rgb for entry in color_scheme_to_cycler(scheme)]
+
+    scheme_id = COLOR_SCHEMES['spectrum']['id']
+    series = _vtk.vtkColorSeries()
+    series.SetColorScheme(scheme_id)
+
+    assert scheme_colors(scheme_id) == scheme_colors('spectrum')
+    assert scheme_colors(series) == scheme_colors('spectrum')
 
 
 def test_color():
