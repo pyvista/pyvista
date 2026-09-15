@@ -656,7 +656,6 @@ pyvista = "pv"
 'pyvista/examples/downloads.py' = ['ANN202']
 'pyvista/examples/examples.py' = ['ANN202']
 'pyvista/examples/gltf.py' = ['ANN']
-'pyvista/examples/planets.py' = ['ANN']
 'pyvista/examples/vrml.py' = ['ANN']
 'pyvista/ext/*' = ['ANN', 'D100', 'D101', 'D102', 'D103']
 'pyvista/ext/_autoenum.py' = [
