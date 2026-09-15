@@ -2732,7 +2732,7 @@ class BasePlotter(_BoundsSizeMixin):
         closing.
         """
         # Grab screenshot right before renderer closes
-        self.last_image = self.screenshot(True, return_img=True)
+        self.last_image = self.screenshot(True, return_img=True, render=False)
         self.last_image_depth = self.get_image_depth()
 
     def increment_point_size_and_line_width(self, increment: float) -> None:
@@ -7015,11 +7015,11 @@ class BasePlotter(_BoundsSizeMixin):
     # fmt: off
     # ruff: disable[E501, FBT001]
     @overload
-    def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., *, transparent_background: bool | None = ..., return_img: Literal[True] = True, window_size: Sequence[int] | None = ..., scale: int | None = ...) -> NumpyArray[np.uint8]: ...
+    def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., *, transparent_background: bool | None = ..., return_img: Literal[True] = True, window_size: Sequence[int] | None = ..., scale: int | None = ..., render: bool = ...) -> NumpyArray[np.uint8]: ...
     @overload
-    def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., *, transparent_background: bool | None = ..., return_img: Literal[False] = ..., window_size: Sequence[int] | None = ..., scale: int | None = ...) -> None: ...
+    def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., *, transparent_background: bool | None = ..., return_img: Literal[False] = ..., window_size: Sequence[int] | None = ..., scale: int | None = ..., render: bool = ...) -> None: ...
     @overload
-    def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., *, transparent_background: bool | None = ..., return_img: bool = ..., window_size: Sequence[int] | None = ..., scale: int | None = ...) -> NumpyArray[np.uint8] | None: ...
+    def screenshot(self, filename: str | Path | BytesIO | bool | None = ..., *, transparent_background: bool | None = ..., return_img: bool = ..., window_size: Sequence[int] | None = ..., scale: int | None = ..., render: bool = ...) -> NumpyArray[np.uint8] | None: ...
     # ruff: enable[E501, FBT001]
     # fmt: on
     def screenshot(
@@ -7030,6 +7030,7 @@ class BasePlotter(_BoundsSizeMixin):
         return_img: bool = True,
         window_size: Sequence[int] | None = None,
         scale: int | None = None,
+        render: bool = True,
     ) -> NumpyArray[np.uint8] | None:
         """Take screenshot at current camera position.
 
@@ -7054,6 +7055,13 @@ class BasePlotter(_BoundsSizeMixin):
             Set the factor to scale the window size to make a higher
             resolution image. If ``None`` this will use the ``image_scale``
             property on this plotter which defaults to one.
+
+        render : bool, default: True
+            Render the scene before reading the image so that it reflects
+            every change since the last render. The first screenshot of a
+            plotter always renders.
+
+            .. versionadded:: 0.50
 
         Returns
         -------
@@ -7115,6 +7123,8 @@ class BasePlotter(_BoundsSizeMixin):
             # before extracting an image
             if self._first_time:
                 self._on_first_render_request()
+                self.render()
+            elif render:
                 self.render()
 
             with self.image_scale_context(scale):
@@ -8875,7 +8885,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         # Keep track of image for sphinx-gallery
         if pv.BUILDING_GALLERY:
             # always save screenshots for sphinx_gallery
-            self.last_image = self.screenshot(screenshot, return_img=True)
+            self.last_image = self.screenshot(screenshot, return_img=True, render=False)
             with contextlib.suppress(ImportError):
                 self.last_vtksz = self._trame_component().export_vtksz(filename=None)
 
@@ -8948,9 +8958,9 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         if _is_current and self._rendered:
             if pv.ON_SCREENSHOT:
                 filename = uuid.uuid4().hex
-                self.last_image = self.screenshot(filename, return_img=True)
+                self.last_image = self.screenshot(filename, return_img=True, render=False)
             else:
-                self.last_image = self.screenshot(screenshot, return_img=True)
+                self.last_image = self.screenshot(screenshot, return_img=True, render=False)
             if store_image_depth:
                 self.last_image_depth = self.get_image_depth()
         # NOTE: after this point, nothing from the render window can be accessed

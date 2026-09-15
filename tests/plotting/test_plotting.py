@@ -1877,6 +1877,34 @@ def test_screenshot_rendering(tmpdir):
 
 
 @pytest.mark.usefixtures('no_images_to_verify')
+def test_screenshot_renders_current_scene(sphere):
+    pl = pv.Plotter()
+    actor = pl.add_mesh(sphere, color='white')
+    pl.background_color = 'black'
+    shown = pl.screenshot()
+    actor.visibility = False
+    stale = pl.screenshot(render=False)
+    hidden = pl.screenshot()
+    assert np.any(shown)
+    assert np.array_equal(stale, shown)
+    assert not np.any(hidden)
+    pl.close()
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_prep_for_close_stores_last_image(sphere):
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
+    pl.screenshot()
+    pl.last_image = None
+    pl.last_image_depth = None
+    pl._prep_for_close()
+    assert pl.last_image is not None
+    assert pl.last_image_depth is not None
+    pl.close()
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
 @pytest.mark.parametrize('ext', SUPPORTED_FORMATS)
 def test_save_screenshot(tmpdir, sphere, ext):
     filename = str(tmpdir.mkdir('tmpdir').join('tmp' + ext))
@@ -6105,10 +6133,13 @@ def test_plotter_render_callback():
     assert len(pl._on_render_callbacks) == 0
     pl.add_on_render_callback(callback, render_event=False)
     assert len(pl._on_render_callbacks) == 1
-    pl.show()
+    pl.show(auto_close=False)
     assert n_ren[0] == 1  # if two, render_event not respected
+    pl.render()
+    assert n_ren[0] == 2
     pl.clear_on_render_callbacks()
     assert len(pl._on_render_callbacks) == 0
+    pl.close()
 
 
 def test_plot_texture_alone(texture):
