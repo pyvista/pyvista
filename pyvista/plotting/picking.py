@@ -1060,7 +1060,7 @@ class PickingComponent(_NoNewAttrMixin):
                 # Select the renderer where the mesh is added.
                 active_renderer_index = plotter.renderers._active_index
                 loc = plotter.iren.get_event_subplot_loc()
-                plotter.subplot(*loc)
+                plotter.subplot(*np.atleast_1d(loc))
 
                 # Use try in case selection is empty or invalid
                 try:
@@ -1081,7 +1081,7 @@ class PickingComponent(_NoNewAttrMixin):
 
                 # Reset to the active renderer.
                 loc = plotter.renderers.index_to_loc(active_renderer_index)
-                plotter.subplot(*loc)
+                plotter.subplot(*np.atleast_1d(loc))
 
                 # render here prior to running the callback
                 plotter.render()
