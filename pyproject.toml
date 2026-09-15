@@ -702,7 +702,6 @@ pyvista = "pv"
 'pyvista/plotting/utilities/*.py' = ['ANN']
 'pyvista/plotting/utilities/algorithms.py' = ['N802', 'N803']
 'pyvista/plotting/widgets.py' = ['ANN', 'PLC0415']
-'pyvista/report.py' = ['ANN']
 'pyvista/utilities/*' = ['ANN', 'F401'] # deprecated modules
 'tests/*' = ['ANN', 'D', 'FBT', 'INP', 'PLC0415', 'PLR0917', 'S101', 'T20']
 'tests/core/test_accessor_registry.py' = ['S301'] # unpickles its own objects
