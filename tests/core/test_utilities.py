@@ -1295,6 +1295,15 @@ def test_linkcode_resolve():
     assert int(edit_match[2]) == start + 1
 
 
+def test_linkcode_resolve_edit_link_targets_main_for_a_release(monkeypatch):
+    # The released docs' blob links point at that release's branch, but edits
+    # are only ever made on main
+    monkeypatch.setattr(pv, '__version__', '0.46.0')
+    info = {'module': 'pyvista', 'fullname': 'pyvista.core.DataObject'}
+    assert '/blob/release/0.46/' in linkcode_resolve('py', info)
+    assert '/edit/main/' in linkcode_resolve('py', info, edit=True)
+
+
 def test_fix_edit_link_button_gallery_example():
     # Gallery examples should point to the source .py file in /examples
     link = fix_edit_link_button('examples/00-load/create_draped_surface', 'default-link')
