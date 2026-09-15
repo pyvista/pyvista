@@ -5508,6 +5508,147 @@ def test_voxelize_binary_mask_no_reference(frog_tissues_contour):
     assert np.allclose(mask.points_to_cells().bounds, frog_tissues_contour.bounds)
 
 
+@pytest.mark.parametrize('axis', [0, 1, 2])
+@pytest.mark.parametrize(
+    'kwargs',
+    [
+        {},
+        {'spacing': 0.25},
+        {'spacing': (0.1, 0.2, 0.3)},
+        {'dimensions': (5, 6, 7)},
+        {'dimensions': (1, 50, 50)},
+    ],
+    ids=['default', 'scalar_spacing', 'vector_spacing', 'dimensions', 'lopsided_dimensions'],
+)
+def test_voxelize_binary_mask_flat_input(axis, kwargs):
+    # Only the geometry is tested, since a flat surface encloses nothing to label
+    direction = np.zeros(3)
+    direction[axis] = 1
+    plane = pv.Plane(direction=direction, i_size=2, j_size=3)
+    mask = plane.voxelize_binary_mask(**kwargs)
+
+    # The flat axis has voxels with a real thickness, not a zero spacing
+    assert mask.spacing[axis] > 0
+    if 'spacing' in kwargs:
+        expected = np.broadcast_to(kwargs['spacing'], (3,))[axis]
+        assert mask.spacing[axis] == expected
+    else:
+        # It takes the finest of the other axes, so one voxel elsewhere cannot inflate it
+        assert mask.spacing[axis] == pytest.approx(min(np.delete(mask.spacing, axis)))
+
+    cells = np.array(mask.points_to_cells(dimensionality='3D').bounds)
+
+    # The other axes still fit the input bounds
+    other = [i for i in range(3) if i != axis]
+    assert np.allclose(cells[2 * np.array(other)], np.array(plane.bounds)[2 * np.array(other)])
+
+    # The flat axis is centered on the input, so its cells contain every input point
+    assert cells[2 * axis] < plane.bounds[2 * axis]
+    assert cells[2 * axis + 1] > plane.bounds[2 * axis + 1]
+    assert cells[2 * axis] == pytest.approx(-cells[2 * axis + 1])
+
+
+@pytest.mark.parametrize('target', [1_000, 100_000, 1_000_000])
+def test_voxelize_binary_mask_target_n_points(sphere, target):
+    mask = sphere.voxelize_binary_mask(target_n_points=target)
+    assert 0.8 <= mask.n_points / target <= 1.2
+    assert mask.n_points == np.prod(mask.dimensions)
+
+    # Dimensions follow the bounds, so the spacing is isotropic up to the rounding
+    spacing = np.array(mask.spacing)
+    assert spacing.max() / spacing.min() <= 1 + 1 / min(mask.dimensions)
+
+
+def test_voxelize_binary_mask_target_n_points_flat_axis():
+    plane = pv.Plane(i_size=2, j_size=3, i_resolution=20, j_resolution=20)
+    mask = plane.voxelize_binary_mask(target_n_points=10_000)
+    # The flat axis holds one point and takes no part in the count
+    assert mask.dimensions[2] == 1
+    assert 0.8 <= mask.n_points / 10_000 <= 1.2
+
+
+def test_voxelize_max_n_points_clamps_the_defaults():
+    mesh = pv.Sphere(theta_resolution=50, phi_resolution=50)
+
+    # An estimated geometry is coarsened to fit, without raising
+    assert mesh.voxelize_binary_mask().n_points > 1000
+    for cap in [1000, 500, 100, 8, 1]:
+        assert mesh.voxelize_binary_mask(max_n_points=cap).n_points <= cap
+
+    # Every filter sharing the geometry options honours it
+    assert mesh.voxelize(max_n_points=1000).n_cells <= 1000
+    assert mesh.voxelize_rectilinear(max_n_points=1000).n_cells <= 1000
+
+
+@pytest.mark.parametrize('cap', range(1, 200, 7))
+def test_voxelize_max_n_points_is_a_strict_bound(sphere, cap):
+    assert sphere.voxelize_binary_mask(max_n_points=cap).n_points <= cap
+
+
+def test_voxelize_max_n_points_clamps_a_flat_axis():
+    plane = pv.Plane(i_size=2, j_size=3, i_resolution=50, j_resolution=50)
+    mask = plane.voxelize_binary_mask(max_n_points=100)
+    assert mask.dimensions[2] == 1
+    assert mask.n_points <= 100
+
+
+def test_voxelize_max_n_points_raises_for_a_requested_geometry():
+    mesh = pv.Sphere(theta_resolution=50, phi_resolution=50)
+    match = 'points, which exceeds `max_n_points=1000`'
+    for kwargs in [
+        dict(dimensions=(40, 40, 40)),
+        dict(spacing=0.02),
+        dict(cell_length_percentile=0.01),
+        dict(reference_volume=pv.ImageData(dimensions=(40, 40, 40), spacing=(0.03,) * 3)),
+    ]:
+        with pytest.raises(ValueError, match=re.escape(match)):
+            mesh.voxelize_binary_mask(max_n_points=1000, **kwargs)
+
+    # A requested geometry inside the limit is left alone
+    assert mesh.voxelize_binary_mask(dimensions=(5, 5, 5), max_n_points=1000).n_points == 125
+
+
+def test_voxelize_max_n_points_bounds_the_target(sphere):
+    match = 'Target n points (2000) cannot exceed max n points (1000).'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        sphere.voxelize_binary_mask(target_n_points=2000, max_n_points=1000)
+
+    # The target is approached, the limit is not exceeded
+    for target in [500, 999, 1000]:
+        assert (
+            sphere.voxelize_binary_mask(target_n_points=target, max_n_points=1000).n_points <= 1000
+        )
+
+
+def test_voxelize_max_n_points_raises(sphere):
+    with pytest.raises(ValueError, match='greater than or equal to'):
+        sphere.voxelize_binary_mask(max_n_points=0)
+
+    with pytest.raises(ValueError, match='integer-like'):
+        sphere.voxelize_binary_mask(max_n_points=2.5)
+
+
+def test_voxelize_target_n_points_raises(sphere):
+    match = 'Target n points cannot be set with dimensions, spacing or cell length options'
+    for kwargs in [
+        dict(dimensions=(10, 10, 10)),
+        dict(spacing=0.1),
+        dict(cell_length_percentile=0.5),
+        dict(cell_length_sample_size=100),
+    ]:
+        with pytest.raises(TypeError, match=match):
+            sphere.voxelize_binary_mask(target_n_points=1000, **kwargs)
+
+    with pytest.raises(TypeError, match='Cannot specify a reference volume'):
+        sphere.voxelize_binary_mask(target_n_points=1000, reference_volume=pv.ImageData())
+
+    with pytest.raises(ValueError, match='greater than or equal to'):
+        sphere.voxelize_binary_mask(target_n_points=0)
+
+    with pytest.raises(ValueError, match='integer-like'):
+        sphere.voxelize_binary_mask(target_n_points=2.5)
+
+
 def test_voxelize_binary_mask_dimensions(sphere):
     dims = (10, 11, 12)
     mask = sphere.voxelize_binary_mask(dimensions=dims)

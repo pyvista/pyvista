@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from collections.abc import Sequence
 from collections.abc import Sized
 import copy as copylib
@@ -43,6 +44,7 @@ from pyvista.core.filters import _get_output
 from pyvista.core.filters import _match_points_dtype
 from pyvista.core.filters import _points_dtype
 from pyvista.core.filters import _update_alg
+from pyvista.core.utilities._cell_lengths import _cell_length_percentile
 from pyvista.core.utilities.helpers import _NormalsLiteral
 from pyvista.core.utilities.helpers import _validate_plane_origin_and_normal
 from pyvista.core.utilities.helpers import generate_plane
@@ -6234,6 +6236,194 @@ def _clipper(mesh: DataSet | MultiBlock) -> _vtk.vtkClipPolyData | _vtk.vtkTable
     if isinstance(mesh, pv.PolyData) and mesh.n_strips:
         return _vtk.vtkClipPolyData()
     return _vtk.vtkTableBasedClipDataSet()
+
+
+def _validate_reference_volume_options(
+    *,
+    reference_volume: ImageData | None,
+    dimensions: VectorLike[int] | None,
+    spacing: float | VectorLike[float] | None,
+    rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None,
+    target_n_points: int | None,
+    max_n_points: int | None,
+    cell_length_percentile: float | None,
+    cell_length_sample_size: int | None,
+) -> None:
+    """Raise if the geometry options of a voxelize or resample filter conflict."""
+    if max_n_points is not None:
+        max_n_points = _validation.validate_number(
+            max_n_points, must_be_in_range=[1, np.inf], must_be_integer=True, name='max n points'
+        )
+        if target_n_points is not None and target_n_points > max_n_points:
+            msg = (
+                f'Target n points ({target_n_points}) cannot exceed max n points ({max_n_points}).'
+            )
+            raise ValueError(msg)
+
+    if reference_volume is not None:
+        if (
+            dimensions is not None
+            or spacing is not None
+            or target_n_points is not None
+            or rounding_func is not None
+            or cell_length_percentile is not None
+            or cell_length_sample_size is not None
+        ):
+            msg = (
+                'Cannot specify a reference volume with other geometry parameters. '
+                '`reference_volume` must define the geometry exclusively.'
+            )
+            raise TypeError(msg)
+        _validation.check_instance(reference_volume, pv.ImageData, name='reference volume')
+        return
+
+    if spacing is not None and dimensions is not None:
+        msg = 'Spacing and dimensions cannot both be set. Set one or the other.'
+        raise TypeError(msg)
+
+    if spacing is not None and (
+        cell_length_percentile is not None or cell_length_sample_size is not None
+    ):
+        msg = 'Spacing and cell length options cannot both be set. Set one or the other.'
+        raise TypeError(msg)
+
+    if target_n_points is not None and (
+        dimensions is not None
+        or spacing is not None
+        or cell_length_percentile is not None
+        or cell_length_sample_size is not None
+    ):
+        msg = (
+            'Target n points cannot be set with dimensions, spacing or cell length options. '
+            'Set one or the other.'
+        )
+        raise TypeError(msg)
+
+    if dimensions is not None and rounding_func is not None:
+        msg = 'Rounding func cannot be set when dimensions is specified. Set one or the other.'
+        raise TypeError(msg)
+
+
+def _spacing_for_n_points(
+    size: NumpyArray[float], target_n_points: int, name: str = 'target n points'
+) -> float:
+    """Return the isotropic spacing whose grid holds about ``target_n_points`` points."""
+    target = _validation.validate_number(
+        target_n_points, must_be_in_range=[1, np.inf], must_be_integer=True, name=name
+    )
+    extents = np.asarray(size, dtype=float)
+    live = extents > 0
+    if not live.any():
+        msg = 'Spacing cannot be estimated for an input with no extent. Set `spacing` explicitly.'
+        raise ValueError(msg)
+    # Flat axes hold a single point, so the budget is spread over the others
+    return float((extents[live].prod() / target) ** (1.0 / live.sum()))
+
+
+def _dimensions_within(size: NumpyArray[float], max_n_points: int) -> NumpyArray[int]:
+    """Return the finest grid dimensions holding no more than ``max_n_points`` points."""
+    spacing = _spacing_for_n_points(size, max_n_points, name='max n points')
+    live = size > 0
+    dimensions = np.ones(3, dtype=int)
+    dimensions[live] = np.maximum(np.floor(size[live] / spacing), 1).astype(int)
+    while dimensions.prod() > max_n_points and (dimensions > 1).any():
+        dimensions[dimensions.argmax()] -= 1
+    return dimensions
+
+
+def _make_reference_volume(
+    mesh: DataSet,
+    *,
+    reference_volume: ImageData | None,
+    dimensions: VectorLike[int] | None,
+    spacing: float | VectorLike[float] | None,
+    target_n_points: int | None,
+    max_n_points: int | None,
+    rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None,
+    cell_length_percentile: float | None,
+    cell_length_sample_size: int | None,
+) -> ImageData:  # numpydoc ignore=RT01
+    """Create an empty image whose voxels fit the bounds of a mesh."""
+    # The geometry is the caller's own only if they set one of these
+    requested = (
+        reference_volume is not None
+        or dimensions is not None
+        or spacing is not None
+        or cell_length_percentile is not None
+        or cell_length_sample_size is not None
+    )
+    if reference_volume is not None:
+        volume = pv.ImageData()
+        volume.extent = reference_volume.extent
+        volume.spacing = reference_volume.spacing
+        volume.origin = reference_volume.origin
+        volume.direction_matrix = reference_volume.direction_matrix
+        _check_n_points(volume.n_points, max_n_points, requested=True)
+        return volume
+
+    size = np.array(mesh.bounds_size)
+    initial_spacing = None
+
+    if dimensions is None:
+        if target_n_points is not None:
+            spacing = _spacing_for_n_points(size, target_n_points)
+        if spacing is None:
+            # Estimate spacing from cell length percentile
+            cell_length_percentile = (
+                0.1 if cell_length_percentile is None else cell_length_percentile
+            )
+            cell_length_sample_size = (
+                100_000 if cell_length_sample_size is None else cell_length_sample_size
+            )
+            spacing = _cell_length_percentile(
+                mesh, cell_length_percentile, cell_length_sample_size
+            )
+            if spacing == 0:
+                msg = (
+                    'The estimated cell length is zero. Increase '
+                    '`cell_length_percentile` or set the `spacing` explicitly.'
+                )
+                raise ValueError(msg)
+        # Get initial spacing (will be adjusted later)
+        initial_spacing = _validation.validate_array3(spacing, broadcast=True)
+        rounding_func = np.round if rounding_func is None else rounding_func
+        initial_dimensions = size / initial_spacing
+        # Make sure we don't round dimensions to zero, make it one instead
+        initial_dimensions[initial_dimensions < 1] = 1
+        dimensions = np.array(rounding_func(initial_dimensions), dtype=int)
+
+    if max_n_points is not None and np.prod(dimensions) > max_n_points:
+        _check_n_points(int(np.prod(dimensions)), max_n_points, requested=requested)
+        dimensions = _dimensions_within(size, max_n_points)
+
+    volume = pv.ImageData()
+    volume.dimensions = dimensions
+    dimensions_ = np.array(volume.dimensions)
+    flat = size == 0
+    final_spacing = np.divide(size, dimensions_, out=np.ones(3), where=~flat)
+    if flat.any():
+        # A flat axis takes the requested spacing, else the finest of the other axes
+        others = final_spacing[~flat]
+        final_spacing[flat] = (
+            initial_spacing[flat]
+            if initial_spacing is not None
+            else (others.min() if others.size else 1.0)
+        )
+    volume.spacing = final_spacing
+    # Voxels are points, so inset them by 1/2 spacing to fit the cells to the bounds
+    inset = np.where(flat, (1 - dimensions_) * final_spacing / 2, final_spacing / 2)
+    volume.origin = np.array(mesh.bounds[::2]) + inset
+    return volume
+
+
+def _check_n_points(n_points: int, max_n_points: int | None, *, requested: bool) -> None:
+    """Raise if a caller-specified geometry holds more points than allowed."""
+    if requested and max_n_points is not None and n_points > max_n_points:
+        msg = (
+            f'The specified geometry has {n_points} points, which exceeds '
+            f'`max_n_points={max_n_points}`. Raise the limit or specify a coarser geometry.'
+        )
+        raise ValueError(msg)
 
 
 def _clip_input(mesh: DataSet | MultiBlock) -> DataSet | MultiBlock:
