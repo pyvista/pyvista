@@ -34,6 +34,7 @@ from pyvista.core.filters.data_object import _SENTINEL
 from pyvista.core.filters.data_object import _VTK_CELL_STATUS_INFO
 from pyvista.core.filters.data_object import _convex_hull_scipy
 from pyvista.core.filters.data_object import _get_cell_quality_measures
+from pyvista.core.utilities._cell_lengths import _cell_edge_lengths
 from pyvista.core.utilities.cell_quality import _CellQualityLiteral
 from pyvista.core.utilities.helpers import _NORMALS
 from pyvista.core.utilities.helpers import generate_plane
@@ -2083,6 +2084,49 @@ def test_sample_composite():
     assert 'partial_data' not in result[0].point_data
     assert 'vtkValidPointMask' in result[0].point_data
     assert 'vtkGhostType' in result[0].point_data
+
+
+def test_sample_composite_target():
+    from pyvista import _vtk
+
+    def _solid(center):
+        mesh = pv.SolidSphere(outer_radius=0.4, center=center)
+        mesh['height'] = mesh.points[:, 2]
+        mesh.cell_data['cval'] = np.arange(mesh.n_cells, dtype=float)
+        return mesh
+
+    a, b = _solid((0.0, 0.0, 0.0)), _solid((0.7, 0.0, 0.0))
+    grid = pv.ImageData(dimensions=(20, 20, 20), spacing=(0.09,) * 3, origin=(-0.8,) * 3)
+
+    flat = grid.sample(pv.MultiBlock([a, b]))
+    assert flat['vtkValidPointMask'].sum() > 0
+    assert 'height' in flat.point_data
+    assert 'cval' in flat.point_data
+
+    # Nesting and empty blocks are handled by the composite probe
+    nested = grid.sample(pv.MultiBlock([a, pv.MultiBlock([b])]))
+    assert np.array_equal(nested['vtkValidPointMask'], flat['vtkValidPointMask'])
+
+    with_none = grid.sample(pv.MultiBlock([a, None]))
+    assert 0 < with_none['vtkValidPointMask'].sum() < flat['vtkValidPointMask'].sum()
+
+    partitioned = grid.sample(pv.PartitionedDataSet([a, b]))
+    assert np.array_equal(partitioned['vtkValidPointMask'], flat['vtkValidPointMask'])
+
+    # Unwrapped composites are accepted too
+    raw = _vtk.vtkMultiBlockDataSet()
+    raw.SetNumberOfBlocks(2)
+    raw.SetBlock(0, a)
+    raw.SetBlock(1, b)
+    assert np.array_equal(grid.sample(raw)['vtkValidPointMask'], flat['vtkValidPointMask'])
+
+    raw_partitions = _vtk.vtkPartitionedDataSet()
+    raw_partitions.SetNumberOfPartitions(2)
+    raw_partitions.SetPartition(0, a)
+    raw_partitions.SetPartition(1, b)
+    assert np.array_equal(
+        grid.sample(raw_partitions)['vtkValidPointMask'], flat['vtkValidPointMask']
+    )
 
 
 @pytest.mark.parametrize('as_composite', [True, False])
@@ -4716,10 +4760,10 @@ def test_resample_to_image_method_interpolate(sphere):
     sphere['point_scalars'] = sphere.points[:, 0]
     dims = (20, 20, 20)
 
-    # Interpolating from the points fills every voxel containing one
+    # Interpolating from the points fills every voxel the surface crosses
     image = sphere.resample_to_image(dimensions=dims)
     valid = image['vtkValidPointMask'].astype(bool)
-    assert valid[voxel_of_each_point(sphere, image)].all()
+    assert valid[voxel_of_each_point(sphere.subdivide(3), image)].all()
 
     # A surface has no volume for a cell search to land in, so sampling does not
     sampled = sphere.resample_to_image(dimensions=dims, method='sample')
@@ -4727,13 +4771,24 @@ def test_resample_to_image_method_interpolate(sphere):
     assert not sampled_valid[voxel_of_each_point(sphere, sampled)].all()
     assert sampled_valid.sum() < valid.sum()
 
-    # Only voxels near the surface are filled, not the interior
+    # Only voxels within the default radius of the surface are filled, not the interior
+    lengths = _cell_edge_lengths(sphere)
+    radius = np.quantile(lengths[lengths > 0], 0.95)
     distance = image.compute_implicit_distance(sphere)['implicit_distance']
-    assert np.all(np.abs(distance[valid]) <= np.linalg.norm(image.spacing) / 2)
+    assert np.all(np.abs(distance[valid]) <= radius)
+    assert not valid[voxel_of_each_point(pv.PolyData([sphere.center]), image)].any()
 
     # A smaller radius fills fewer voxels
-    tight = sphere.resample_to_image(dimensions=dims, radius=np.linalg.norm(image.spacing) / 4)
+    half_diagonal = np.linalg.norm(image.spacing) / 2
+    tight = sphere.resample_to_image(dimensions=dims, radius=half_diagonal)
     assert tight['vtkValidPointMask'].sum() < valid.sum()
+
+    # A point cloud has no cells to reach across, so its radius is half a voxel diagonal
+    cloud = pv.PolyData(sphere.points)
+    cloud['point_scalars'] = sphere['point_scalars']
+    assert cloud.resample_to_image(dimensions=dims) == cloud.resample_to_image(
+        dimensions=dims, radius=half_diagonal
+    )
 
 
 def test_resample_to_image_multiblock():
@@ -4967,7 +5022,7 @@ def test_resample_to_image_null_value(sphere, method, kwargs):
     assert np.array_equal(blanked.point_data[ghost_name], np.where(invalid, hidden, 0))
 
 
-@pytest.mark.parametrize('null_value', [-1.0, 300.0, np.nan])
+@pytest.mark.parametrize('null_value', [-1.0, 300.0, np.nan, 1.5])
 def test_resample_to_image_null_value_dtype_raises(sphere, null_value):
     sphere.clear_data()
     sphere['counts'] = np.arange(sphere.n_points, dtype=np.uint8)

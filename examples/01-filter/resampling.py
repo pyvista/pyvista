@@ -66,7 +66,7 @@ result = mesh.sample(data_to_probe)
 data_to_probe.resample_to_image(dimensions=(75, 75, 75))
 
 # %%
-# To down-sample :class:`~pyvista.ImageData` directly, use
+# To resample :class:`~pyvista.ImageData` directly, use
 # :meth:`~pyvista.ImageDataFilters.resample` instead.
 data_to_probe.resample(dimensions=(75, 75, 75))
 

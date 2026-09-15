@@ -5919,7 +5919,10 @@ class DataObjectFilters:
         :meth:`~pyvista.DataSetFilters.interpolate` on it.
 
         A :class:`~pyvista.MultiBlock` is resampled as a whole, so one grid covers
-        every block and a voxel takes its value from whichever block reaches it.
+        every block and a voxel takes its value from whichever block reaches it. The
+        ``method`` is chosen for the composite as a whole, so a surface among solids needs
+        ``method='interpolate'`` to be filled, and only the arrays every block has are
+        kept.
 
         The output geometry can be controlled in several ways:
 
@@ -5958,9 +5961,9 @@ class DataObjectFilters:
 
         #. ``'interpolate'`` interpolates from the input's points within ``radius``, and
            is the default otherwise, since a cell search misses most of a curved surface
-           and all of a point cloud. It reads point data only. It keeps every voxel the
-           input passes through, so the result straddles the input and reaches up to half
-           a voxel diagonal beyond it.
+           and all of a point cloud. It reads point data only. By default ``radius``
+           reaches across the input's cells, so every voxel a cell crosses is filled and
+           the result straddles the input.
 
         Both write to the output's point data, and resampling a solid therefore fills
         different voxels than resampling its surface.
@@ -5998,7 +6001,8 @@ class DataObjectFilters:
             axes in proportion to the input's bounds. An axis with no extent holds a
             single point and takes no part in the count. Rounding to whole voxels means
             the count is approached, not matched exactly. Cannot be set with
-            ``dimensions``, ``spacing``, or the cell length options.
+            ``reference_volume``, ``dimensions``, ``spacing``, or the cell length
+            options.
 
         max_n_points : int, optional
             Strict upper bound on the number of points generated. Unlike
@@ -6010,8 +6014,6 @@ class DataObjectFilters:
             - ``target_n_points`` must not exceed the limit, and the grid estimated from
               it is coarsened if rounding would take it above.
             - Geometry left to the defaults is coarsened to fit, without raising.
-
-            .. versionadded:: 0.50
 
         rounding_func : Callable[VectorLike[float], VectorLike[int]], optional
             Control how the dimensions are rounded to integers based on the provided or
@@ -6051,6 +6053,8 @@ class DataObjectFilters:
             and a warning is raised. Call
             :meth:`~pyvista.DataObjectFilters.cell_data_to_point_data` on the input to
             keep it.
+            It writes every array as ``float32``, so an integer array comes back as
+            floats.
 
         null_value : float, optional
             Value given to the voxels which no value could be resampled for. Every
@@ -6082,8 +6086,9 @@ class DataObjectFilters:
             Requires ``method='interpolate'``, and is forwarded to
             :meth:`~pyvista.DataSetFilters.interpolate`.
             Distance from a voxel's center within which the input's points contribute to
-            it. Half a voxel's diagonal is used by default, which is the furthest any
-            point inside a voxel can be from its center.
+            it. By default it is the 95th percentile of the length of the input's cell
+            edges, so that a cell's points reach every voxel the cell crosses, and never
+            less than half a voxel's diagonal, which is what a point cloud gets.
 
         sharpness : float, optional
             Requires ``method='interpolate'``, and is forwarded to
@@ -6121,8 +6126,8 @@ class DataObjectFilters:
         pyvista.DataSetFilters.voxelize_binary_mask
             Voxelize the inside of a closed surface as a mask. Operates on a surface's
             geometry and generates a new array instead of resampling existing ones. It
-            places its voxels identically to this filter, and keeps the same voxels that
-            ``method='sample'`` keeps for the solid a surface encloses.
+            places its voxels identically to this filter, and keeps essentially the same
+            voxels that ``method='sample'`` keeps for the solid a surface encloses.
 
         pyvista.create_grid
             Create a uniform grid surrounding a dataset. Its points lie on the dataset's
@@ -6247,9 +6252,16 @@ class DataObjectFilters:
                 'Call `cell_data_to_point_data` on the input to keep it.'
             )
             warn_external(msg)
+        if radius is None:
+            # A cell's points must reach every voxel the cell crosses
+            sample_size = 100_000 if cell_length_sample_size is None else cell_length_sample_size
+            radius = max(
+                float(np.linalg.norm(volume.spacing)) / 2,
+                _cell_length_percentile(source, 0.95, sample_size),
+            )
         interpolated = volume.interpolate(
             source,
-            radius=float(np.linalg.norm(volume.spacing)) / 2 if radius is None else radius,
+            radius=radius,
             sharpness=2.0 if sharpness is None else sharpness,
             strategy='mask_points',
             null_value=0.0 if null_value is None else null_value,
@@ -6832,7 +6844,11 @@ def _check_null_value_fits(null_value: float, name: str, dtype: np.dtype[Any]) -
     if not np.issubdtype(dtype, np.integer):
         return
     info = np.iinfo(dtype)
-    if np.isnan(null_value) or not info.min <= null_value <= info.max:
+    if (
+        np.isnan(null_value)
+        or not info.min <= null_value <= info.max
+        or null_value != int(null_value)
+    ):
         msg = (
             f'`null_value={null_value}` cannot be stored in array {name!r}, whose '
             f'`{dtype}` data type holds integers from {info.min} to {info.max}.'
