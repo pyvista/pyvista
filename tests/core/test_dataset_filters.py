@@ -5541,18 +5541,16 @@ def test_voxelize_binary_mask_spacing(ant):
 
 
 def test_voxelize_binary_mask_cell_length_sample_size(ant, mocker: MockerFixture):
-    from pyvista import _vtk
     from pyvista.core.filters import data_set
 
     sample_sizes = []
-    update_alg = data_set._update_alg
+    cell_edge_lengths = data_set._cell_edge_lengths
 
-    def _record_sample_size(alg, **kwargs):
-        if isinstance(alg, _vtk.vtkLengthDistribution):
-            sample_sizes.append(alg.GetSampleSize())
-        return update_alg(alg, **kwargs)
+    def _record_sample_size(mesh, cell_ids=None):
+        sample_sizes.append(mesh.n_cells if cell_ids is None else len(cell_ids))
+        return cell_edge_lengths(mesh, cell_ids)
 
-    mocker.patch.object(data_set, '_update_alg', _record_sample_size)
+    mocker.patch.object(data_set, '_cell_edge_lengths', _record_sample_size)
 
     # Sample size is used when sampling cell lengths
     ant.voxelize_binary_mask(cell_length_sample_size=100)
@@ -5561,14 +5559,15 @@ def test_voxelize_binary_mask_cell_length_sample_size(ant, mocker: MockerFixture
     # Default sample size covers all cells
     sample_sizes.clear()
     ant.voxelize_binary_mask()
-    assert sample_sizes[0] > ant.n_cells
+    assert sample_sizes == [ant.n_cells]
 
-    # Sampling all cells is not random, so the spacing is reproducible
-    mask_all_cells = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells)
-    mask_all_cells_again = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells)
-    assert mask_all_cells.spacing == mask_all_cells_again.spacing
+    # Sampling is deterministic, so the spacing is reproducible
+    mask_sampled = ant.voxelize_binary_mask(cell_length_sample_size=100)
+    mask_sampled_again = ant.voxelize_binary_mask(cell_length_sample_size=100)
+    assert mask_sampled.spacing == mask_sampled_again.spacing
 
     # Sample sizes larger than the number of cells are clamped
+    mask_all_cells = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells)
     mask_clamped = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells * 10)
     assert mask_clamped.spacing == mask_all_cells.spacing
 
@@ -5576,6 +5575,76 @@ def test_voxelize_binary_mask_cell_length_sample_size(ant, mocker: MockerFixture
     sample_sizes.clear()
     ant.voxelize_binary_mask(dimensions=(10, 10, 10))
     assert sample_sizes == []
+
+    match = 'cell_length_sample_size values must all be greater than or equal to 1'
+    with pytest.raises(ValueError, match=match):
+        ant.voxelize_binary_mask(cell_length_sample_size=0)
+    match = 'cell_length_percentile values must all be less than or equal to 1.0'
+    with pytest.raises(ValueError, match=match):
+        ant.voxelize_binary_mask(cell_length_percentile=1.1)
+
+
+def test_cell_length_percentile(ant):
+    from pyvista.core.filters.data_set import _cell_length_percentile
+    from pyvista.core.utilities.cells import _cell_edge_lengths
+
+    lengths = _cell_edge_lengths(ant)
+    assert _cell_length_percentile(ant, 0.0, ant.n_cells) == lengths.min()
+    assert _cell_length_percentile(ant, 1.0, ant.n_cells) == lengths.max()
+    assert _cell_length_percentile(ant, 0.5, ant.n_cells) == np.quantile(lengths, 0.5)
+
+    # A sample spans the whole mesh and is a subset of the full distribution
+    sampled = _cell_length_percentile(ant, 0.0, 10)
+    assert lengths.min() <= sampled <= lengths.max()
+    assert sampled in lengths
+
+    # Cells without edges contribute nothing
+    assert _cell_length_percentile(pv.PointSet(ant.points).cast_to_polydata(), 0.5, 10) == 0.0
+
+    # Zero-length edges are ignored
+    collapsed = pv.PolyData(ant.points, faces=[3, 0, 0, 0, *ant.faces])
+    assert _cell_length_percentile(collapsed, 0.0, collapsed.n_cells) == lengths.min()
+
+
+def test_cell_length_percentile_image_measures_one_cell(mocker: MockerFixture):
+    from pyvista.core.filters import data_set
+
+    image = pv.ImageData(dimensions=(100, 100, 100), spacing=(1, 2, 3))
+    spy = mocker.spy(data_set, '_cell_edge_lengths')
+    assert data_set._cell_length_percentile(image, 0.5, image.n_cells) == 2.0
+    assert np.array_equal(spy.call_args[0][1], [0])
+
+
+def test_voxelize_binary_mask_cell_length_ignores_vertices(sphere):
+    verts = np.column_stack([np.ones(sphere.n_points, dtype=int), np.arange(sphere.n_points)])
+    with_verts = pv.PolyData(sphere.points, faces=sphere.faces, verts=verts.ravel())
+    assert with_verts.n_verts
+    assert with_verts.voxelize_binary_mask().spacing == sphere.voxelize_binary_mask().spacing
+
+
+def test_voxelize_binary_mask_image_input():
+    image = pv.ImageData(dimensions=(4, 5, 6), spacing=(2, 2, 2))
+    mask = image.voxelize_binary_mask()
+    assert np.allclose(mask.spacing, image.spacing)
+    assert mask.points_to_cells().dimensions == image.dimensions
+    assert np.allclose(mask.points_to_cells().bounds, image.bounds)
+
+
+def test_voxelize_binary_mask_degenerate_cells(sphere):
+    n_degenerate = 2 * sphere.n_cells
+    degenerate = np.column_stack(
+        [np.full(n_degenerate, 3), np.zeros((n_degenerate, 3), dtype=int)]
+    )
+    faces = np.concatenate([sphere.faces, degenerate.ravel()])
+    mesh = pv.PolyData(sphere.points, faces=faces)
+
+    # Zero-length edges are ignored
+    assert mesh.voxelize_binary_mask().spacing == sphere.voxelize_binary_mask().spacing
+
+    match = 'The estimated cell length is zero.'
+    mesh = pv.PolyData(sphere.points, faces=degenerate.ravel())
+    with pytest.raises(ValueError, match=match):
+        mesh.voxelize_binary_mask()
 
 
 @pytest.mark.parametrize(

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import gc
+import inspect
 import itertools
 import re
 import sys
@@ -14,6 +15,7 @@ import pyvista as pv
 from pyvista import Cell
 from pyvista import CellType
 from pyvista import _vtk
+from pyvista import examples
 from pyvista.core._vtk_utilities import _SETDATA_TAKES_OWNERSHIP
 from pyvista.core._vtk_utilities import _SUPPORTS_FIXED_SIZE_STORAGE
 from pyvista.core._vtk_utilities import _SUPPORTS_POLYHEDRON_FACE_CELL_ARRAYS
@@ -22,6 +24,7 @@ from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.celltype import _DEPRECATED_CELL_TYPES
 from pyvista.core.celltype import _RENAMED_CELL_TYPES
 from pyvista.core.errors import CellSizeError
+from pyvista.core.utilities.cells import _cell_edge_lengths
 from pyvista.core.utilities.cells import create_mixed_cells
 from pyvista.core.utilities.cells import numpy_to_idarr
 from pyvista.examples import cells as example_cells
@@ -1176,3 +1179,130 @@ def test_create_mixed_cells_variable_size():
     types, cells = create_mixed_cells({pv.CellType.POLYGON: cells_in}, nr_points=10)
     assert types.tolist() == [pv.CellType.POLYGON] * 2
     assert cells.tolist() == [3, 0, 1, 2, 4, 3, 4, 5, 6]
+
+
+def _edge_lengths_per_cell(mesh):
+    """Compute the edge lengths of every cell one cell at a time."""
+    per_cell = []
+    for i in range(mesh.n_cells):
+        cell = mesh.GetCell(i)
+        points = cell.GetPoints()
+        if cell.GetCellDimension() == 1:
+            n_segments = points.GetNumberOfPoints() - 1
+            if cell.GetCellType() != pv.CellType.POLY_LINE:
+                n_segments = 1
+            pairs = [(points.GetPoint(k), points.GetPoint(k + 1)) for k in range(n_segments)]
+        else:
+            pairs = []
+            for e in range(cell.GetNumberOfEdges()):
+                edge_points = cell.GetEdge(e).GetPoints()
+                pairs.append((edge_points.GetPoint(0), edge_points.GetPoint(1)))
+        per_cell.append(np.array([np.linalg.norm(np.subtract(b, a)) for a, b in pairs]))
+    return per_cell
+
+
+def _mixed_polydata():
+    """Create polydata with vertex, line, polygon, and strip cells."""
+    poly = pv.PolyData()
+    poly.points = np.random.default_rng(0).random((20, 3))
+    poly.verts = [1, 0, 2, 1, 2]
+    poly.lines = [2, 3, 4, 3, 5, 6, 7]
+    poly.faces = [3, 8, 9, 10, 4, 11, 12, 13, 14]
+    poly.strips = [5, 15, 16, 17, 18, 19]
+    return poly
+
+
+def _every_cell_type():
+    """Create an unstructured grid with one cell of every type."""
+    grid = pv.UnstructuredGrid()
+    for name, make_cell in inspect.getmembers(examples.cells, inspect.isfunction):
+        if name[0].isupper():
+            grid = grid + make_cell()
+    return grid
+
+
+@pytest.mark.parametrize(
+    'make_mesh',
+    [
+        pv.Sphere,
+        _mixed_polydata,
+        _every_cell_type,
+        examples.load_hexbeam,
+        examples.load_explicit_structured,
+        examples.load_structured,
+        lambda: pv.StructuredGrid(*np.meshgrid([0.0, 1.0, 3.0], [0.0, 2.0], [0.0])),
+        lambda: pv.StructuredGrid(*np.meshgrid([0.0, 1.0, 3.0], [0.0], [0.0])),
+        lambda: pv.RectilinearGrid([0, 1, 3], [0, 2, 3, 7], [5, 6]),
+        lambda: pv.RectilinearGrid([0, 1, 3], [0, 2], [5]),
+        lambda: pv.RectilinearGrid([0], [2], [5]),
+        lambda: pv.ImageData(dimensions=(3, 4, 5), spacing=(1, 2, 3)),
+        lambda: pv.ImageData(dimensions=(3, 4, 1), spacing=(1, 2, 3)),
+        lambda: pv.ImageData(dimensions=(5, 1, 1), spacing=(2, 1, 1)),
+        lambda: pv.ImageData(dimensions=(1, 1, 1)),
+        lambda: pv.PointSet([[0.0, 0.0, 0.0]]),
+        pv.UnstructuredGrid,
+    ],
+    ids=[
+        'sphere',
+        'mixed_polydata',
+        'every_cell_type',
+        'hexbeam',
+        'explicit_structured',
+        'structured',
+        'structured_2d',
+        'structured_1d',
+        'rectilinear',
+        'rectilinear_2d',
+        'rectilinear_0d',
+        'image_3d',
+        'image_2d',
+        'image_1d',
+        'image_0d',
+        'pointset',
+        'empty',
+    ],
+)
+def test_cell_edge_lengths(make_mesh):
+    mesh = make_mesh()
+    expected = _edge_lengths_per_cell(mesh)
+
+    lengths = _cell_edge_lengths(mesh)
+    assert lengths.dtype == np.float64
+    assert np.allclose(np.sort(lengths), np.sort(np.concatenate(expected or [[]])))
+
+    cell_ids = np.array([mesh.n_cells - 1, 0])[: mesh.n_cells]
+    subset = _cell_edge_lengths(mesh, cell_ids)
+    assert np.allclose(
+        np.sort(subset), np.sort(np.concatenate([expected[i] for i in cell_ids] or [[]]))
+    )
+
+
+def test_cell_edge_lengths_cells_without_edges():
+    grid = _every_cell_type()
+    no_edges = {
+        pv.CellType.EMPTY_CELL,
+        pv.CellType.VERTEX,
+        pv.CellType.POLY_VERTEX,
+        pv.CellType.CONVEX_POINT_SET,
+    }
+    with_edges = np.flatnonzero(~np.isin(grid.celltypes, list(no_edges)))
+    without_edges = np.flatnonzero(np.isin(grid.celltypes, list(no_edges)))
+    assert with_edges.size
+    assert without_edges.size
+    assert _cell_edge_lengths(grid, without_edges).size == 0
+    assert _cell_edge_lengths(grid, with_edges).size == _cell_edge_lengths(grid).size
+
+
+def test_cell_edge_lengths_empty_cells():
+    faces = [3, 0, 1, 2, 0, 3, 2, 3, 4, 0]
+    poly = pv.PolyData(np.random.default_rng(0).random((5, 3)), faces=faces)
+    assert poly.n_cells == 4
+    lengths = _cell_edge_lengths(poly)
+    assert lengths.size == 6
+    assert np.allclose(np.sort(lengths), np.sort(np.concatenate(_edge_lengths_per_cell(poly))))
+
+
+def test_cell_edge_lengths_image_direction_matrix():
+    image = pv.ImageData(dimensions=(3, 3, 3), spacing=(1, 2, 3))
+    image.direction_matrix = pv.Transform().rotate_z(45).matrix[:3, :3]
+    assert np.array_equal(np.sort(_cell_edge_lengths(image)), np.repeat([1.0, 2.0, 3.0], 4 * 8))
