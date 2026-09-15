@@ -6026,8 +6026,9 @@ class DataObjectFilters:
             Cell length percentage ``p`` to use for computing the default ``spacing``.
             Default is ``0.1`` (tenth percentile) and must be between ``0`` and ``1``.
             The ``p``-th percentile is computed from the lengths of the edges of the
-            input's cells. Up to ``cell_length_sample_size`` cells, evenly spaced through
-            the input, are used, and degenerate edges with zero length are ignored.
+            mesh's own cells, with every block of a composite included. Up to
+            ``cell_length_sample_size`` cells are used, drawn at random with a fixed
+            seed, and degenerate edges with zero length are ignored.
 
             The estimate is a single value which is used for all three axes, so an
             anisotropic input is resampled below its native spacing along its coarsest
@@ -6169,8 +6170,10 @@ class DataObjectFilters:
         ... }
         >>> pv.plot_compare(datasets, shape=(3, 2), scalars='height')
 
-        The solid is filled throughout, whereas the surface and the point cloud fill
-        the same shell, since they have the same points.
+        The solid is filled throughout, and the surface fills only the shell its cells
+        occupy. The point cloud keeps the solid's interior points, so it reaches the
+        interior too, but only within ``radius`` of each point, which leaves gaps where
+        the points are sparse.
 
         Resample every block of a :class:`~pyvista.MultiBlock` onto one grid.
 
