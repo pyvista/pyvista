@@ -1085,7 +1085,8 @@ class LookupTable(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLookupTable):
 
         pl = pv.Plotter(window_size=[800, 230], off_screen=kwargs.pop('off_screen', None))
         actor = pl.add_mesh(mesh, scalars=None, show_scalar_bar=False)
-        actor.mapper.lookup_table = self
+        if (mapper := actor.mapper) is not None:
+            mapper.lookup_table = self
         actor.visibility = False
 
         scalar_bar_kwargs: ScalarBarArgs = {
