@@ -1715,8 +1715,15 @@ class InteractorStyleCaptureMixin(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtk
         callback : callable
             Function to call during callback
 
+        Returns
+        -------
+        int
+            The identifier of the added observer.
+
         """
-        self._observers.append(self.AddObserver(event, callback))
+        observer = self.AddObserver(event, callback)
+        self._observers.append(observer)
+        return observer
 
     def remove_observers(self):  # numpydoc ignore=SS06
         """Remove all observers added through

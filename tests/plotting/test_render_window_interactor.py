@@ -347,6 +347,15 @@ def test_release_button_observers(event):
     assert cb._i == 2
 
 
+@pytest.mark.parametrize('event', ['LeftButtonReleaseEvent', 'RightButtonReleaseEvent'])
+def test_release_button_observers_return_an_id(event):
+    pl = pv.Plotter()
+
+    observer = pl.iren.add_observer(event, empty_callback)
+
+    assert isinstance(observer, int)
+
+
 def test_enable_custom_trackball_style():
     pl = pv.Plotter()
     pl.enable_custom_trackball_style()
