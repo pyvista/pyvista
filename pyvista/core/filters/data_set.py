@@ -8569,16 +8569,16 @@ class DataSetFilters(DataObjectFilters):
         cell_length_percentile : float, optional
             Cell length percentage ``p`` to use for computing the default ``spacing``.
             Default is ``0.1`` (tenth percentile) and must be between ``0`` and ``1``.
-            The ``p``-th percentile is computed from the lengths of the edges of the
-            input's surface cells. Up to ``cell_length_sample_size`` cells, evenly
-            spaced through the surface, are used, and degenerate edges with zero
-            length are ignored.
+            The input's surface is extracted first, and the ``p``-th percentile is
+            computed from the lengths of the edges of its cells. Up to
+            ``cell_length_sample_size`` of those cells are used, drawn at random with a
+            fixed seed, and degenerate edges with zero length are ignored.
 
             .. versionchanged:: 0.50.0
                 The percentile is computed from every edge of the sampled cells instead
                 of the distance between two random points of each triangulated cell,
-                and the sampled cells are evenly spaced instead of random. The estimate
-                is now deterministic.
+                and the sample is drawn with a fixed seed. The estimate is now
+                deterministic.
 
             Has no effect if ``dimensions`` or ``reference_volume`` are specified.
 
@@ -8998,16 +8998,16 @@ class DataSetFilters(DataObjectFilters):
         cell_length_percentile : float, optional
             Cell length percentage ``p`` to use for computing the default ``spacing``.
             Default is ``0.1`` (tenth percentile) and must be between ``0`` and ``1``.
-            The ``p``-th percentile is computed from the lengths of the edges of the
-            input's surface cells. Up to ``cell_length_sample_size`` cells, evenly
-            spaced through the surface, are used, and degenerate edges with zero
-            length are ignored.
+            The input's surface is extracted first, and the ``p``-th percentile is
+            computed from the lengths of the edges of its cells. Up to
+            ``cell_length_sample_size`` of those cells are used, drawn at random with a
+            fixed seed, and degenerate edges with zero length are ignored.
 
             .. versionchanged:: 0.50.0
                 The percentile is computed from every edge of the sampled cells instead
                 of the distance between two random points of each triangulated cell,
-                and the sampled cells are evenly spaced instead of random. The estimate
-                is now deterministic.
+                and the sample is drawn with a fixed seed. The estimate is now
+                deterministic.
 
             Has no effect if ``dimensions`` or ``reference_volume`` are specified.
 
@@ -9209,16 +9209,16 @@ class DataSetFilters(DataObjectFilters):
         cell_length_percentile : float, optional
             Cell length percentage ``p`` to use for computing the default ``spacing``.
             Default is ``0.1`` (tenth percentile) and must be between ``0`` and ``1``.
-            The ``p``-th percentile is computed from the lengths of the edges of the
-            input's surface cells. Up to ``cell_length_sample_size`` cells, evenly
-            spaced through the surface, are used, and degenerate edges with zero
-            length are ignored.
+            The input's surface is extracted first, and the ``p``-th percentile is
+            computed from the lengths of the edges of its cells. Up to
+            ``cell_length_sample_size`` of those cells are used, drawn at random with a
+            fixed seed, and degenerate edges with zero length are ignored.
 
             .. versionchanged:: 0.50.0
                 The percentile is computed from every edge of the sampled cells instead
                 of the distance between two random points of each triangulated cell,
-                and the sampled cells are evenly spaced instead of random. The estimate
-                is now deterministic.
+                and the sample is drawn with a fixed seed. The estimate is now
+                deterministic.
 
             Has no effect if ``dimensions`` is specified.
 
