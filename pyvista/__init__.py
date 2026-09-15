@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import sys
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import Literal
 
 from pyvista._plot import plot as plot
@@ -56,6 +57,8 @@ from pyvista.report import check_matplotlib_vtk_compatibility as check_matplotli
 from pyvista.report import get_gpu_info as get_gpu_info
 
 if TYPE_CHECKING:
+    from types import ModuleType
+
     import numpy as np
 
 # get the int type from vtk
@@ -118,7 +121,7 @@ _env_theme_applied: bool = False
 
 
 # Lazily import/access the plotting module
-def _get_deprecated_validation():
+def _get_deprecated_validation() -> ModuleType:
     """Forward ``pyvista._validation`` to the ``pyvista_validation`` package with a warning."""
     import pyvista_validation  # noqa: PLC0415
 
@@ -139,7 +142,7 @@ def _get_deprecated_validation():
     return pyvista_validation
 
 
-def __getattr__(name):
+def __getattr__(name: str) -> Any:
     """Fetch an attribute ``name`` from ``globals()`` or the ``pyvista.plotting`` module.
 
     This override is implemented to prevent importing all of the plotting module
@@ -154,7 +157,7 @@ def __getattr__(name):
     import importlib  # noqa: PLC0415
     import inspect  # noqa: PLC0415
 
-    def _cache_attr_and_return(obj):
+    def _cache_attr_and_return(obj: Any) -> Any:
         # Cache the attr on this module to avoid calls to __getattr__ on next access
         globals()[name] = obj
         return obj
