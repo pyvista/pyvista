@@ -1357,20 +1357,21 @@ def test_shadow_renderer_raises_once_released():
         _ = renderers.shadow_renderer
 
 
-@pytest.mark.parametrize('window_size', [(400, 400), (800, 400), (400, 800)])
+@pytest.mark.parametrize('image_path', [examples.mapfile, examples.logofile])
 @pytest.mark.parametrize('scale', [0.5, 1.0, 2.0])
-def test_background_image_height_matches_window(window_size, scale):
-    pl = pv.Plotter(window_size=window_size)
-    pl.add_background_image(examples.mapfile, scale=scale)
+def test_background_image_height_scales_with_window(image_path, scale):
+    pl = pv.Plotter(window_size=(400, 400))
+    pl.add_background_image(image_path, scale=scale)
     background_renderer = pl.renderers._background_renderers[pl.renderers.active_index]
-    background_renderer.resize()
 
-    image_data = background_renderer.actors['background'].GetInput()
-    extent = image_data.GetExtent()
-    image_height = (extent[3] - extent[2] + 1) * image_data.GetSpacing()[1]
+    for window_size in [(400, 400), (800, 200), (200, 800)]:
+        pl.window_size = list(window_size)
+        background_renderer.resize()
 
-    # `parallel_scale` is half the world-space height of the viewport
-    viewport_height = 2 * background_renderer.camera.parallel_scale
-    assert image_height / viewport_height == pytest.approx(scale)
+        image_data = background_renderer.actors['background'].GetInput()
+        image_height = image_data.dimensions[1] * image_data.spacing[1]
+        # `parallel_scale` is half the world-space height of the viewport
+        viewport_height = 2 * background_renderer.camera.parallel_scale
+        assert image_height / viewport_height == pytest.approx(scale)
 
     pl.close()
