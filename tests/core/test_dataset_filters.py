@@ -32,6 +32,7 @@ from pyvista.core.filters import _get_output
 from pyvista.core.filters.data_set import _CONNECTIVITY_SCALARS
 from pyvista.core.filters.data_set import _rebuild_point_region_ids
 from pyvista.core.filters.data_set import _swap_axes
+from pyvista.core.utilities._cell_lengths import _cell_length_percentile
 from pyvista.core.utilities.arrays import convert_array
 
 if TYPE_CHECKING:
@@ -5532,9 +5533,12 @@ def test_voxelize_binary_mask_flat_input(axis, kwargs):
     if 'spacing' in kwargs:
         expected = np.broadcast_to(kwargs['spacing'], (3,))[axis]
         assert mask.spacing[axis] == expected
-    else:
+    elif 'dimensions' in kwargs:
         # It takes the finest of the other axes, so one voxel elsewhere cannot inflate it
         assert mask.spacing[axis] == pytest.approx(min(np.delete(mask.spacing, axis)))
+    else:
+        # It takes the estimated spacing, like the other axes
+        assert mask.spacing[axis] == pytest.approx(_cell_length_percentile(plane, 0.1, 100_000))
 
     cells = np.array(mask.points_to_cells(dimensionality='3D').bounds)
 
@@ -5575,9 +5579,16 @@ def test_voxelize_max_n_points_clamps_the_defaults():
     for cap in [1000, 500, 100, 8, 1]:
         assert mesh.voxelize_binary_mask(max_n_points=cap).n_points <= cap
 
-    # Every filter sharing the geometry options honours it
+    # A limit the bounds divide evenly is met exactly, not undershot
+    cube = pv.Cube().triangulate().subdivide(4)
+    assert cube.voxelize_binary_mask(max_n_points=1000).n_points == 1000
+    assert cube.voxelize_binary_mask(max_n_points=27).n_points == 27
+
+    # The cell filters count voxel cells, which are the points of the mask
     assert mesh.voxelize(max_n_points=1000).n_cells <= 1000
-    assert mesh.voxelize_rectilinear(max_n_points=1000).n_cells <= 1000
+    rectilinear = mesh.voxelize_rectilinear(max_n_points=1000)
+    assert rectilinear.n_cells <= 1000
+    assert rectilinear.n_points > 1000
 
 
 @pytest.mark.parametrize('cap', range(1, 200, 7))
@@ -5593,10 +5604,10 @@ def test_voxelize_max_n_points_clamps_a_flat_axis():
 
 
 def test_voxelize_max_n_points_coarsens_a_rounded_up_estimate():
-    # These bounds round up to 10 x 4 x 1, one point over the limit
+    # The grid sized for the limit rounds to 10 x 5 x 1, which is above it
     box = pv.Box(bounds=(0, 6.4059, 0, 2.7709, 0, 0.5056))
     mask = box.voxelize_binary_mask(max_n_points=39)
-    assert mask.dimensions == (9, 4, 1)
+    assert mask.dimensions == (7, 5, 1)
     assert mask.n_points <= 39
 
 
@@ -5627,6 +5638,12 @@ def test_voxelize_max_n_points_bounds_the_target(sphere):
             sphere.voxelize_binary_mask(target_n_points=target, max_n_points=1000).n_points <= 1000
         )
 
+    # A target which rounds above the limit is coarsened back under it
+    box = pv.Box()
+    assert box.voxelize_binary_mask(target_n_points=1300).n_points == 1331
+    clamped = box.voxelize_binary_mask(target_n_points=1300, max_n_points=1300)
+    assert 1000 < clamped.n_points <= 1300
+
 
 def test_voxelize_max_n_points_raises(sphere):
     with pytest.raises(ValueError, match='greater than or equal to'):
@@ -5637,7 +5654,7 @@ def test_voxelize_max_n_points_raises(sphere):
 
 
 def test_voxelize_target_n_points_raises_for_an_input_with_no_extent():
-    match = 'Spacing cannot be estimated for an input with no extent. Set `spacing` explicitly.'
+    match = 'Spacing cannot be estimated for an input with no extent.'
     with pytest.raises(ValueError, match=re.escape(match)):
         pv.Box(bounds=(1, 1, 1, 1, 1, 1)).voxelize_binary_mask(target_n_points=100)
 
@@ -5765,7 +5782,7 @@ def test_voxelize_binary_mask_degenerate_cells(sphere):
     # Zero-length edges are ignored
     assert mesh.voxelize_binary_mask().spacing == sphere.voxelize_binary_mask().spacing
 
-    match = 'The estimated cell length is zero.'
+    match = 'The sampled cells have no edges with nonzero length'
     mesh = pv.PolyData(sphere.points, faces=degenerate.ravel())
     with pytest.raises(ValueError, match=match):
         mesh.voxelize_binary_mask()

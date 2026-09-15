@@ -12,6 +12,7 @@ from dataclasses import fields
 from enum import IntEnum
 import functools
 import itertools
+import math
 import re
 import reprlib
 from typing import TYPE_CHECKING
@@ -6621,7 +6622,7 @@ def _validate_reference_volume_options(
     cell_length_percentile: float | None,
     cell_length_sample_size: int | None,
 ) -> None:
-    """Raise if the geometry options of a voxelize or resample filter conflict."""
+    """Raise if the geometry options of a filter which builds a voxel grid conflict."""
     if max_n_points is not None:
         max_n_points = _validation.validate_number(
             max_n_points, must_be_in_range=[1, np.inf], must_be_integer=True, name='max n points'
@@ -6686,7 +6687,10 @@ def _spacing_for_n_points(
     extents = np.asarray(size, dtype=float)
     live = extents > 0
     if not live.any():
-        msg = 'Spacing cannot be estimated for an input with no extent. Set `spacing` explicitly.'
+        msg = (
+            'Spacing cannot be estimated for an input with no extent. Set `spacing` or '
+            '`dimensions` instead of `target_n_points`.'
+        )
         raise ValueError(msg)
     # Flat axes hold a single point, so the budget is spread over the others
     return float((extents[live].prod() / target) ** (1.0 / live.sum()))
@@ -6697,7 +6701,7 @@ def _dimensions_within(size: NumpyArray[float], max_n_points: int) -> NumpyArray
     spacing = _spacing_for_n_points(size, max_n_points, name='max n points')
     live = size > 0
     dimensions = np.ones(3, dtype=int)
-    dimensions[live] = np.maximum(np.floor(size[live] / spacing), 1).astype(int)
+    dimensions[live] = np.maximum(np.round(size[live] / spacing), 1).astype(int)
     while dimensions.prod() > max_n_points and (dimensions > 1).any():
         dimensions[dimensions.argmax()] -= 1
     return dimensions
@@ -6714,8 +6718,16 @@ def _make_reference_volume(
     rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None,
     cell_length_percentile: float | None,
     cell_length_sample_size: int | None,
-) -> ImageData:  # numpydoc ignore=RT01
+) -> ImageData:
     """Create an empty image whose voxels fit the bounds of a mesh."""
+    if max_n_points is not None:
+        max_n_points = _validation.validate_number(
+            max_n_points,
+            must_be_in_range=[1, np.inf],
+            must_be_integer=True,
+            dtype_out=int,
+            name='max n points',
+        )
     # The geometry is the caller's own only if they set one of these
     requested = (
         reference_volume is not None
@@ -6758,8 +6770,8 @@ def _make_reference_volume(
             )
             if spacing == 0:
                 msg = (
-                    'The estimated cell length is zero. Increase '
-                    '`cell_length_percentile` or set the `spacing` explicitly.'
+                    'The sampled cells have no edges with nonzero length, so the '
+                    'spacing cannot be estimated. Set `spacing` or `dimensions` explicitly.'
                 )
                 raise ValueError(msg)
         # Get initial spacing (will be adjusted later)
@@ -6770,8 +6782,10 @@ def _make_reference_volume(
         initial_dimensions[initial_dimensions < 1] = 1
         dimensions = np.array(rounding_func(initial_dimensions), dtype=int)
 
-    if max_n_points is not None and np.prod(dimensions) > max_n_points:
-        _check_n_points(int(np.prod(dimensions)), max_n_points, requested=requested)
+    # A Python product cannot overflow the way an int64 one can
+    n_points = math.prod(int(d) for d in dimensions)
+    if max_n_points is not None and n_points > max_n_points:
+        _check_n_points(n_points, max_n_points, requested=requested)
         dimensions = _dimensions_within(size, max_n_points)
 
     volume = pv.ImageData()

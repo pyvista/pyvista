@@ -8539,7 +8539,8 @@ class DataSetFilters(DataObjectFilters):
             axes in proportion to the input's bounds. An axis with no extent holds a
             single point and takes no part in the count. Rounding to whole voxels means
             the count is approached, not matched exactly. Cannot be set with
-            ``dimensions``, ``spacing``, or the cell length options.
+            ``reference_volume``, ``dimensions``, ``spacing``, or the cell length
+            options.
 
             .. versionadded:: 0.50
 
@@ -8963,17 +8964,23 @@ class DataSetFilters(DataObjectFilters):
             implicitly through other parameters. See summary and examples for details.
 
         target_n_points : int, optional
-            Approximate number of points to generate. The spacing is isotropic and
+            Approximate number of voxel cells to generate. The spacing is isotropic and
             chosen so the output holds about this many points, distributed between the
             axes in proportion to the input's bounds. An axis with no extent holds a
             single point and takes no part in the count. Rounding to whole voxels means
             the count is approached, not matched exactly. Cannot be set with
-            ``dimensions``, ``spacing``, or the cell length options.
+            ``reference_volume``, ``dimensions``, ``spacing``, or the cell length
+            options.
+
+            .. note::
+
+                Voxels are cells here, so the output holds more points than voxels.
+                The same holds for ``max_n_points``.
 
             .. versionadded:: 0.50
 
         max_n_points : int, optional
-            Strict upper bound on the number of points generated. Unlike
+            Strict upper bound on the number of voxel cells generated. Unlike
             ``target_n_points``, which is only approached, this limit is never exceeded.
             How it is enforced depends on how the geometry is defined:
 
@@ -9174,17 +9181,23 @@ class DataSetFilters(DataObjectFilters):
             implicitly through other parameters. See summary and examples for details.
 
         target_n_points : int, optional
-            Approximate number of points to generate. The spacing is isotropic and
+            Approximate number of voxel cells to generate. The spacing is isotropic and
             chosen so the output holds about this many points, distributed between the
             axes in proportion to the input's bounds. An axis with no extent holds a
             single point and takes no part in the count. Rounding to whole voxels means
             the count is approached, not matched exactly. Cannot be set with
-            ``dimensions``, ``spacing``, or the cell length options.
+            ``reference_volume``, ``dimensions``, ``spacing``, or the cell length
+            options.
+
+            .. note::
+
+                Voxels are cells here, so the output holds more points than voxels.
+                The same holds for ``max_n_points``.
 
             .. versionadded:: 0.50
 
         max_n_points : int, optional
-            Strict upper bound on the number of points generated. Unlike
+            Strict upper bound on the number of voxel cells generated. Unlike
             ``target_n_points``, which is only approached, this limit is never exceeded.
             How it is enforced depends on how the geometry is defined:
 
