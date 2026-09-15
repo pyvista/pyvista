@@ -378,19 +378,6 @@ def setup(app: Sphinx):
 # -----------------------------------------------------------------------------
 # Doctest handling
 # -----------------------------------------------------------------------------
-def _contains_doctest(text):
-    try:
-        # check if it's valid Python as-is
-        compile(text, '<string>', 'exec')
-    except SyntaxError:
-        pass
-    else:
-        return False
-    r = re.compile(r'^\s*>>>', re.MULTILINE)
-    m = r.search(text)
-    return bool(m)
-
-
 def _contains_pyvista_plot(text) -> bool:
     return '.. pyvista-plot::' in text
 
