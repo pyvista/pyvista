@@ -686,7 +686,6 @@ pyvista = "pv"
 'pyvista/plotting/helpers.py' = ['ANN']
 'pyvista/plotting/lights.py' = ['ANN']
 'pyvista/plotting/lookup_table.py' = ['ANN']
-'pyvista/plotting/mapper.py' = ['ANN']
 'pyvista/plotting/opts.py' = ['ANN']
 'pyvista/plotting/picking.py' = ['ANN']
 'pyvista/plotting/plotting/__init__.py' = ['ANN']
