@@ -297,8 +297,12 @@ class AffineWidget3D(_NoNewAttrMixin):
 
         if always_visible:
             for actor in self._arrows + self._circles:
-                actor.mapper.SetResolveCoincidentTopologyToPolygonOffset()
-                actor.mapper.SetRelativeCoincidentTopologyPolygonOffsetParameters(0, -20000)
+                mapper = actor.mapper
+                if mapper is None:  # pragma: no cover
+                    msg = 'The widget actor was added without a mapper.'
+                    raise RuntimeError(msg)
+                mapper.SetResolveCoincidentTopologyToPolygonOffset()
+                mapper.SetRelativeCoincidentTopologyPolygonOffsetParameters(0, -20000)
 
     def _get_world_coord_rot(
         self, interactor: _vtk.vtkRenderWindowInteractor
