@@ -5,8 +5,11 @@ from __future__ import annotations
 import itertools
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Literal
+from typing import get_args
 
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
@@ -33,6 +36,9 @@ if TYPE_CHECKING:
     from pyvista import ImageData
     from pyvista.core._typing_core import InteractionEventType
     from pyvista.core._typing_core import VectorLike
+
+
+_SphereStyleOptions = Literal['surface', 'wireframe']
 
 
 def _parse_interaction_event(interaction_event: InteractionEventType):
@@ -2472,8 +2478,8 @@ class WidgetComponent(_NoNewAttrMixin):
             * ``color=[1.0, 1.0, 1.0]``
             * ``color='#FFFFFF'``
 
-        style : str, optional
-            Representation style: ``'surface'`` or ``'wireframe'``.
+        style : 'surface' | 'wireframe', optional
+            Representation style of the sphere.
 
         selected_color : ColorLike, optional
             Color of the widget when selected during interaction.
@@ -2503,6 +2509,9 @@ class WidgetComponent(_NoNewAttrMixin):
         """
         if color is None:
             color = pv.global_theme.color.float_rgb
+        _validation.check_contains(
+            list(get_args(_SphereStyleOptions)), must_contain=style, name='style'
+        )
         selected_color = Color(selected_color)
 
         center = np.array(center)
@@ -2535,7 +2544,7 @@ class WidgetComponent(_NoNewAttrMixin):
             loc = center[i] if center.ndim > 1 else center
             sphere_widget = _vtk.vtkSphereWidget()
             sphere_widget.WIDGET_INDEX = indices[i]  # type: ignore[attr-defined] # Monkey patch the index
-            if style in 'wireframe':
+            if style == 'wireframe':
                 sphere_widget.SetRepresentationToWireframe()
             else:
                 sphere_widget.SetRepresentationToSurface()

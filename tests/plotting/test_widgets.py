@@ -406,6 +406,20 @@ def test_volume_clip_plane_adds_one_widget(uniform):
     pl.close()
 
 
+def test_sphere_widget_style_is_matched_exactly():
+    pl = pv.Plotter()
+    surface = pl.add_sphere_widget(None, style='surface')
+    wireframe = pl.add_sphere_widget(None, style='wireframe')
+
+    assert surface.GetSphereProperty().GetRepresentationAsString() == 'Surface'
+    assert wireframe.GetSphereProperty().GetRepresentationAsString() == 'Wireframe'
+
+    match = re.escape("style 'wire' is not valid.")
+    with pytest.raises(ValueError, match=match):
+        pl.add_sphere_widget(None, style='wire')
+    pl.close()
+
+
 def test_widget_checkbox_button(uniform):
     pl = pv.Plotter()
     func = lambda value: value  # Does nothing
