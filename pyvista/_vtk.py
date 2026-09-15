@@ -728,7 +728,6 @@ _PLOTTING_MODULES: dict[str, tuple[str, ...]] = {
         'VTK_RESOLVE_POLYGON_OFFSET',
         'VTK_RESOLVE_SHIFT_ZBUFFER',
         'vtkAbstractMapper',
-        'vtkAbstractPropPicker',
         'vtkActor',
         'vtkActor2D',
         'vtkAreaPicker',
