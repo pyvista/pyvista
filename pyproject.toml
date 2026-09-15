@@ -684,7 +684,6 @@ pyvista = "pv"
 'pyvista/plotting/cube_axes_actor.py' = ['ANN']
 'pyvista/plotting/errors.py' = ['ANN']
 'pyvista/plotting/helpers.py' = ['ANN']
-'pyvista/plotting/lights.py' = ['ANN']
 'pyvista/plotting/lookup_table.py' = ['ANN']
 'pyvista/plotting/mapper.py' = ['ANN']
 'pyvista/plotting/opts.py' = ['ANN']
