@@ -674,7 +674,6 @@ pyvista = "pv"
 'pyvista/plotting/camera.py' = ['S314'] # .pvcc is trusted
 'pyvista/plotting/charts.py' = ['ANN']
 'pyvista/plotting/opts.py' = ['ANN']
-'pyvista/plotting/picking.py' = ['ANN']
 'pyvista/plotting/plotting/__init__.py' = ['ANN']
 'pyvista/plotting/render_passes.py' = ['ANN']
 'pyvista/plotting/render_window_interactor.py' = ['ANN']
