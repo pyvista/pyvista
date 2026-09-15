@@ -385,7 +385,7 @@ def process_opacity(*, mesh, opacity, preference, n_colors, scalars, use_transpa
         else:
             opacity = opacity_transfer_function(opacity, n_colors)
 
-    if use_transparency:
+    if use_transparency and opacity is not None:
         if np.max(opacity) <= 1.0:
             opacity = 1 - opacity
         elif isinstance(opacity, np.ndarray):
