@@ -7471,9 +7471,9 @@ class BasePlotter(_BoundsSizeMixin):
 
         scale : float, default: 1.0
             Scale the image larger or smaller relative to the size of
-            the window.  For example, a scale size of 2 will make the
-            largest dimension of the image twice as large as the
-            largest dimension of the render window.
+            the window.  The image height is scaled to the height of the
+            render window and its aspect ratio is preserved, so a scale
+            size of 2 makes the image twice as tall as the render window.
 
         auto_resize : bool, default: True
             Resize the background when the render window changes size.
