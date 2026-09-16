@@ -41,6 +41,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
 
+import numpy as np
 import pyvista_validation as _validation
 
 import pyvista  # noqa: TC001
@@ -210,6 +211,8 @@ class _LightingConfig(_ConfigBase):
     def interpolation(self) -> InterpolationType:  # numpydoc ignore=RT01
         """Return or set the default interpolation type.
 
+        This is the default value of :attr:`pyvista.Property.interpolation`.
+
         See :class:`pyvista.plotting.opts.InterpolationType`.
 
         Options are:
@@ -243,8 +246,10 @@ class _LightingConfig(_ConfigBase):
     def metallic(self) -> float:  # numpydoc ignore=RT01
         """Return or set the metallic value.
 
+        This is the default value of :attr:`pyvista.Property.metallic`.
+
         This requires that the interpolation be set to ``'Physically based
-        rendering'``. Must be between 0 and 1.
+        rendering'``. Must be in the range ``[0.0, 1.0]``.
 
         Examples
         --------
@@ -268,9 +273,11 @@ class _LightingConfig(_ConfigBase):
     def roughness(self) -> float:  # numpydoc ignore=RT01
         """Return or set the roughness value.
 
-        This value has to be between 0 (glossy) and 1 (rough). A glossy
-        material has reflections and a high specular part. This parameter is
-        only used by PBR interpolation.
+        This is the default value of :attr:`pyvista.Property.roughness`.
+
+        A glossy material has reflections and a high specular part. A value of
+        ``0.0`` is glossy and a value of ``1.0`` is rough. This parameter is
+        only used by PBR interpolation. Must be in the range ``[0.0, 1.0]``.
 
         Examples
         --------
@@ -294,9 +301,11 @@ class _LightingConfig(_ConfigBase):
     def ambient(self) -> float:  # numpydoc ignore=RT01
         """Return or set the ambient value.
 
-        When lighting is enabled, this is the amount of light in the range of 0
-        to 1 that reaches the actor when not directed at the light source
-        emitted from the viewer.
+        This is the default value of :attr:`pyvista.Property.ambient`.
+
+        When lighting is enabled, this is the amount of light that reaches the
+        actor when not directed at the light source emitted from the viewer.
+        Must be in the range ``[0.0, 1.0]``.
 
         Examples
         --------
@@ -319,10 +328,12 @@ class _LightingConfig(_ConfigBase):
     def diffuse(self) -> float:  # numpydoc ignore=RT01
         """Return or set the diffuse value.
 
+        This is the default value of :attr:`pyvista.Property.diffuse`.
+
         This is the scattering of light by reflection or
         transmission. Diffuse reflection results when light strikes an
         irregular surface such as a frosted window or the surface of a
-        frosted or coated light bulb. Must be between 0 and 1.
+        frosted or coated light bulb. Must be in the range ``[0.0, 1.0]``.
 
         Examples
         --------
@@ -345,8 +356,10 @@ class _LightingConfig(_ConfigBase):
     def specular(self) -> float:  # numpydoc ignore=RT01
         """Return or set the specular value.
 
+        This is the default value of :attr:`pyvista.Property.specular`.
+
         Specular lighting simulates the bright spot of a light that appears
-        on shiny objects. Must be between 0 and 1.
+        on shiny objects. Must be in the range ``[0.0, 1.0]``.
 
         Examples
         --------
@@ -369,7 +382,9 @@ class _LightingConfig(_ConfigBase):
     def specular_power(self) -> float:  # numpydoc ignore=RT01
         """Return or set the specular power value.
 
-        Must be between 0.0 and 128.0.
+        This is the default value of :attr:`pyvista.Property.specular_power`.
+
+        Must be in the range ``[0.0, 128.0]``.
 
         Examples
         --------
@@ -568,6 +583,8 @@ class _SilhouetteConfig(_ConfigBase):
     def opacity(self) -> float:  # numpydoc ignore=RT01
         """Return or set the silhouette opacity.
 
+        Must be in the range ``[0.0, 1.0]``.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -601,7 +618,7 @@ class _SilhouetteConfig(_ConfigBase):
     def decimate(self) -> float:  # numpydoc ignore=RT01
         """Return or set the amount to decimate the silhouette.
 
-        Parameter must be between 0 and 1.
+        Must be in the range ``[0.0, 1.0]``.
 
         Examples
         --------
@@ -1244,6 +1261,8 @@ class _SliderStyleConfig(_ConfigBase):
     @property
     def cap_opacity(self) -> float:  # numpydoc ignore=RT01
         """Return or set the cap opacity.
+
+        Must be in the range ``[0.0, 1.0]``.
 
         Examples
         --------
@@ -2090,6 +2109,10 @@ class Theme(_ConfigBase):
     def opacity(self) -> float:  # numpydoc ignore=RT01
         """Return or set the opacity.
 
+        This is the default value of :attr:`pyvista.Property.opacity`.
+
+        Must be in the range ``[0.0, 1.0]``.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -2106,6 +2129,10 @@ class Theme(_ConfigBase):
     @property
     def edge_opacity(self) -> float:  # numpydoc ignore=RT01
         """Return or set the edges opacity.
+
+        This is the default value of :attr:`pyvista.Property.edge_opacity`.
+
+        Must be in the range ``[0.0, 1.0]``.
 
         .. note::
             ``edge_opacity`` uses ``SetEdgeOpacity`` as the underlying method which
@@ -2592,6 +2619,10 @@ class Theme(_ConfigBase):
     def line_width(self) -> float:  # numpydoc ignore=RT01
         """Return or set the default line width.
 
+        This is the default value of :attr:`pyvista.Property.line_width`.
+
+        Must be in the range ``[0.0, inf)``.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -2602,11 +2633,16 @@ class Theme(_ConfigBase):
 
     @line_width.setter
     def line_width(self, line_width: float):
+        _validation.check_range(line_width, [0.0, np.inf], name='line_width')
         self._line_width = float(line_width)
 
     @property
     def point_size(self) -> float:  # numpydoc ignore=RT01
         """Return or set the default point size.
+
+        This is the default value of :attr:`pyvista.Property.point_size`.
+
+        Must be in the range ``[0.0, inf)``.
 
         Examples
         --------
@@ -2618,6 +2654,7 @@ class Theme(_ConfigBase):
 
     @point_size.setter
     def point_size(self, point_size: float):
+        _validation.check_range(point_size, [0.0, np.inf], name='point_size')
         self._point_size = float(point_size)
 
     @property

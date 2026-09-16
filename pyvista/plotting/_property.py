@@ -477,6 +477,8 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
     def opacity(self) -> float:  # numpydoc ignore=RT01
         """Return or set the opacity of this property.
 
+        Default :attr:`pyvista.plotting.themes.Theme.opacity`.
+
         The opacity is applied to the surface uniformly.
 
         Property has range ``[0.0, 1.0]``. A value of ``1.0`` is totally opaque
@@ -514,6 +516,8 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
     @property
     def edge_opacity(self) -> float:  # numpydoc ignore=RT01
         """Return or set the edge opacity of this property.
+
+        Default :attr:`pyvista.plotting.themes.Theme.edge_opacity`.
 
         Edge opacity of the mesh. A single float value that will be applied globally
         edge opacity of the mesh and uniformly applied everywhere.
