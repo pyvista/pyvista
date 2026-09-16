@@ -83,6 +83,14 @@ def test_get_cmap_safe_prefers_matplotlib(name):
     np.testing.assert_allclose(resolved(xs), expected(xs))
 
 
+def test_get_cmap_safe_returns_independent_copies():
+    first = get_cmap_safe('viridis')
+    second = get_cmap_safe('viridis')
+    assert first is not second
+    xs = np.linspace(0, 1, 64)
+    np.testing.assert_allclose(first(xs), second(xs))
+
+
 def test_get_cmap_safe_third_party_unique_names():
     # Names only in the 3rd-party packages still resolve through them.
     if importlib.util.find_spec('colorcet'):
