@@ -25,6 +25,7 @@ from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.utilities.arrays import CellLiteral
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import PointLiteral
+from pyvista.core.utilities.arrays import _active_scalars_input
 from pyvista.core.utilities.arrays import _scalars_info
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
@@ -4427,6 +4428,8 @@ class PolyDataFilters(DataSetFilters):
         if field != FieldAssociation.POINT:
             msg = 'Only point data can be contoured.'
             raise ValueError(msg)
+        # VTK below 9.5 reads the active scalars rather than the array it is given
+        input_mesh, _ = _active_scalars_input(self, scalars)
 
         if rng is None:
             rng = self.get_data_range(scalars)
@@ -4440,7 +4443,7 @@ class PolyDataFilters(DataSetFilters):
             scalars,
         )  # args: (idx, port, connection, field, name)
         alg.GenerateValues(n_contours, float(rng[0]), float(rng[1]))
-        alg.SetInputDataObject(self)
+        alg.SetInputDataObject(input_mesh)
         alg.SetClipping(clipping)
         if scalar_mode == 'value':
             alg.SetScalarModeToValue()
@@ -4463,7 +4466,7 @@ class PolyDataFilters(DataSetFilters):
             array = mesh.GetCellData().GetAbstractArray(i)
             name = array.GetName()
             if name is None:
-                array.SetName(self.cell_data.active_scalars_name)
+                array.SetName(input_mesh.cell_data.active_scalars_name)
 
         if generate_contour_edges:
             return mesh, wrap(alg.GetContourEdgesOutput())
