@@ -1874,6 +1874,11 @@ class DataSetFilters(DataObjectFilters):
         if field != FieldAssociation.POINT:
             msg = 'Contour filter only works on point data.'
             raise TypeError(msg)
+        # VTK reads past the end of its buffers when a structured grid is contoured
+        # on a multi-component array
+        if input_mesh.point_data[scalars_name].ndim > 1:
+            msg = f'Scalars {scalars_name!r} must have a single component to contour.'
+            raise ValueError(msg)
         alg.SetInputArrayToProcess(
             0,
             0,

@@ -1004,6 +1004,11 @@ def test_contour_errors(uniform, airplane):
     with pytest.raises(ValueError, match=match):
         airplane.contour(rng={})
 
+    airplane['vectors'] = airplane.points
+    match = "Scalars 'vectors' must have a single component to contour."
+    with pytest.raises(ValueError, match=match):
+        airplane.contour(scalars='vectors')
+
 
 def test_texture_map_to_plane(airplane):
     dataset = airplane
