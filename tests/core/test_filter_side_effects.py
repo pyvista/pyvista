@@ -1,4 +1,22 @@
-"""Check that dataset and dataobject filters never modify their input."""
+"""Check that filters never modify their input, and never read its active arrays.
+
+A filter returns a new dataset, so calling one must leave its input exactly as it was.
+The usual way to break that is to activate an array on the input before handing it to
+VTK, which nothing notices until someone reads the input afterwards.
+
+Each test takes one filter and calls it many times: once for every mesh type in
+``MESH_KINDS``, every arrangement of data arrays in ``DATA_MODES``, and every keyword the
+filter accepts (see ``_call_variants``). Calls which do not apply to a mesh raise and are
+skipped, so a filter runs far fewer times than the loops suggest.
+
+A failure lists every call which broke the property, what changed, and the expression
+which rebuilds that input, so one failing call can be reproduced on its own::
+
+    _make_mesh('image', 'both').threshold(scalars='c_scalars')
+
+The tables below the mesh builders supply the arguments each filter needs. A filter whose
+arguments are missing never runs, and the ``never ran`` assertion reports that.
+"""
 
 from __future__ import annotations
 
@@ -124,81 +142,145 @@ def _make_mesh(kind, mode):
     return _mesh_arrays(mesh, mode)
 
 
-def _array_digest(array):
-    """Digest a VTK array's name, type, shape and contents."""
+def _array_summary(array):
+    """Summarize a VTK array as ``name:type[components]xtuples#hash``."""
+    contents = np.ascontiguousarray(pv.convert_array(array)).tobytes()
     return (
-        array.GetName(),
-        array.GetDataTypeAsString(),
-        array.GetNumberOfComponents(),
-        array.GetNumberOfTuples(),
-        hashlib.sha256(np.ascontiguousarray(pv.convert_array(array)).tobytes()).hexdigest(),
+        f'{array.GetName()}:{array.GetDataTypeAsString()}'
+        f'[{array.GetNumberOfComponents()}]x{array.GetNumberOfTuples()}'
+        f'#{hashlib.sha256(contents).hexdigest()[:8]}'
     )
 
 
-def _attributes_digest(attributes):
-    """Digest every array of a :vtk:`vtkDataSetAttributes` and its active-attribute slots."""
-    arrays = tuple(
-        _array_digest(attributes.GetAbstractArray(i))
-        for i in range(attributes.GetNumberOfArrays())
-    )
-    active = []
-    for i in range(_vtk.vtkDataSetAttributes.NUM_ATTRIBUTES):
-        attribute = attributes.GetAbstractAttribute(i)
-        active.append(None if attribute is None else attribute.GetName())
-    return arrays, tuple(active)
-
-
-def _cells_digest(cell_array):
-    """Digest a :vtk:`vtkCellArray`'s offsets and connectivity."""
-    if cell_array is None:
-        return None
+def _cells_summary(cell_array):
+    """Summarize a :vtk:`vtkCellArray`'s offsets and connectivity."""
     return (
-        _array_digest(cell_array.GetOffsetsArray()),
-        _array_digest(cell_array.GetConnectivityArray()),
+        _array_summary(cell_array.GetOffsetsArray()),
+        _array_summary(cell_array.GetConnectivityArray()),
     )
 
 
-def _fingerprint(mesh):
-    """Return a hashable digest of everything a filter could modify on ``mesh``."""
-    if isinstance(mesh, pv.MultiBlock):
-        return (
-            type(mesh).__name__,
-            tuple(mesh.keys()),
-            tuple(None if block is None else _fingerprint(block) for block in mesh),
+def _attribute_entries(attributes, label):
+    """Return the arrays and active-array slots of a :vtk:`vtkDataSetAttributes`."""
+    entries = {
+        f'{label} arrays': tuple(
+            _array_summary(attributes.GetAbstractArray(index))
+            for index in range(attributes.GetNumberOfArrays())
         )
-    parts: list[Any] = [
-        type(mesh).__name__,
-        mesh.n_points,
-        mesh.n_cells,
-        _attributes_digest(mesh.GetPointData()),
-        _attributes_digest(mesh.GetCellData()),
-        tuple(
-            _array_digest(mesh.GetFieldData().GetAbstractArray(i))
-            for i in range(mesh.GetFieldData().GetNumberOfArrays())
+    }
+    for index in range(_vtk.vtkDataSetAttributes.NUM_ATTRIBUTES):
+        attribute = attributes.GetAbstractAttribute(index)
+        slot = _vtk.vtkDataSetAttributes.GetAttributeTypeAsString(index).lower()
+        entries[f'{label} active {slot}'] = None if attribute is None else attribute.GetName()
+    return entries
+
+
+def _fingerprint(mesh, prefix=''):
+    """Return a flat dict, keyed in English, of everything a filter could modify."""
+    if isinstance(mesh, pv.MultiBlock):
+        entries = {f'{prefix}block names': tuple(mesh.keys())}
+        for index, block in enumerate(mesh):
+            label = f'{prefix}block {index} '
+            if block is None:
+                entries[f'{label}type'] = None
+            else:
+                entries.update(_fingerprint(block, label))
+        return entries
+
+    field_data = mesh.GetFieldData()
+    entries: dict[str, Any] = {
+        f'{prefix}type': type(mesh).__name__,
+        f'{prefix}n_points': mesh.n_points,
+        f'{prefix}n_cells': mesh.n_cells,
+        f'{prefix}bounds': tuple(mesh.bounds),
+        **_attribute_entries(mesh.GetPointData(), f'{prefix}point data'),
+        **_attribute_entries(mesh.GetCellData(), f'{prefix}cell data'),
+        f'{prefix}field data arrays': tuple(
+            _array_summary(field_data.GetAbstractArray(index))
+            for index in range(field_data.GetNumberOfArrays())
         ),
-        mesh.GetExtent() if isinstance(mesh, _vtk.vtkImageData) else None,
-        mesh.bounds,
-    ]
+    }
+    if isinstance(mesh, _vtk.vtkImageData):
+        entries[f'{prefix}extent'] = mesh.GetExtent()
     if isinstance(mesh, _vtk.vtkPointSet):
         points = mesh.GetPoints()
-        parts.append(None if points is None else _array_digest(points.GetData()))
+        entries[f'{prefix}points'] = None if points is None else _array_summary(points.GetData())
     if isinstance(mesh, _vtk.vtkPolyData):
-        parts += [
-            _cells_digest(getattr(mesh, f'Get{name}')())
-            for name in ('Verts', 'Lines', 'Polys', 'Strips')
-        ]
+        for name in ('Verts', 'Lines', 'Polys', 'Strips'):
+            entries[f'{prefix}{name.lower()}'] = _cells_summary(getattr(mesh, f'Get{name}')())
     if isinstance(mesh, _vtk.vtkUnstructuredGrid):
-        parts.append(_cells_digest(mesh.GetCells()))
+        entries[f'{prefix}cells'] = _cells_summary(mesh.GetCells())
     if isinstance(mesh, _vtk.vtkRectilinearGrid):
-        parts += [
-            _array_digest(getattr(mesh, f'Get{axis}Coordinates')()) for axis in ('X', 'Y', 'Z')
-        ]
+        for axis in ('X', 'Y', 'Z'):
+            coordinates = getattr(mesh, f'Get{axis}Coordinates')()
+            entries[f'{prefix}{axis.lower()} coordinates'] = _array_summary(coordinates)
     # Names of the arrays which are read back as bool or complex live on the dataset
-    for names in (mesh._association_bitarray_names, mesh._association_complex_names):
-        parts.append(
-            tuple(sorted((key, tuple(sorted(value))) for key, value in names.items() if value))
+    for label, names in (
+        ('bool', mesh._association_bitarray_names),
+        ('complex', mesh._association_complex_names),
+    ):
+        entries[f'{prefix}{label} array names'] = tuple(
+            sorted((key, tuple(sorted(value))) for key, value in names.items() if value)
         )
-    return tuple(parts)
+    return entries
+
+
+def _short(value, limit=150):
+    """Return a one-line ``repr`` of ``value``, shortened to ``limit`` characters."""
+    if isinstance(value, pv.DataObject) or type(value).__name__.startswith('vtk'):
+        return f'<{type(value).__name__}>'
+    text = repr(value).replace('\n', ' ')
+    return text if len(text) <= limit else f'{text[: limit - 3]}...'
+
+
+def _describe_change(key, before, after):
+    """Return a line naming what changed for one fingerprint entry."""
+    summaries = (*before, *after) if isinstance(before, tuple) else ()
+    if isinstance(after, tuple) and summaries and all(isinstance(s, str) for s in summaries):
+        gone = [item for item in before if item not in after]
+        arrived = [item for item in after if item not in before]
+        if gone or arrived:
+            entries = [f'-{_short(item, 60)}' for item in gone]
+            entries += [f'+{_short(item, 60)}' for item in arrived]
+            return f'{key}: {", ".join(entries)}'
+        return f'{key}: reordered'
+    return f'{key}: {_short(before)} -> {_short(after)}'
+
+
+def _changes(before, after):
+    """Return one line for each fingerprint entry which differs."""
+    lines = [
+        _describe_change(key, before[key], after[key])
+        if key in after
+        else f'{key}: {_short(before[key])} -> <entry gone>'
+        for key in before
+        if key not in after or before[key] != after[key]
+    ]
+    lines += [f'{key}: <no entry> -> {_short(after[key])}' for key in after if key not in before]
+    return lines
+
+
+def _call_expression(kind, mode, name, args, kwargs):
+    """Return the expression which rebuilds an input and makes one call on it."""
+    mesh = (
+        f'_MESH_OVERRIDES[{name!r}]({mode!r})'
+        if name in _MESH_OVERRIDES
+        else f'_make_mesh({kind!r}, {mode!r})'
+    )
+    shown = [_short(arg, 40) for arg in args]
+    shown += [f'{key}={_short(value, 40)}' for key, value in kwargs.items()]
+    return f'{mesh}.{name}({", ".join(shown)})'
+
+
+def _report(kind, mode, name, args, kwargs, changes):
+    """Return a readable block naming one call and what it changed."""
+    return '\n'.join(
+        [
+            f'  {kind} mesh, {DATA_MODES[mode]}',
+            f'    {_call_expression(kind, mode, name, args, kwargs)}',
+            *(f'      {change}' for change in changes),
+        ]
+    )
 
 
 def _frequency_image(mode):
@@ -530,30 +612,54 @@ MESH_KINDS = [
     'pointset',
     'multiblock',
 ]
-DATA_MODES = ['point', 'cell', 'both', 'single_point', 'single_cell', 'single_vector']
-# The keywords are swept over these modes only, to keep the sweep's runtime in hand
+#: What each arrangement of data arrays puts on a mesh, and how a failure describes it.
+DATA_MODES = {
+    'point': 'five point arrays, point scalars and vectors active',
+    'cell': 'five cell arrays, cell scalars and vectors active',
+    'both': 'five point and five cell arrays, all four active',
+    'single_point': 'one point array, nothing active',
+    'single_cell': 'one cell array, nothing active',
+    'single_vector': 'one three-component point array, nothing active',
+}
+
+#: The keywords are swept over these modes only, to keep the sweep's runtime in hand.
 KEYWORD_DATA_MODES = ['both', 'single_point', 'single_vector']
+
+#: Modes whose mesh carries one array and no active arrays, so a default has to be resolved.
+UNSET_DATA_MODES = ['single_point', 'single_cell', 'single_vector']
 
 
 def _output_digest(result):
     """Return a comparable digest of whatever a filter returned."""
     if isinstance(result, pv.MultiBlock):
-        return tuple(None if block is None else _output_digest(block) for block in result)
+        return {f'block {index}': _output_digest(block) for index, block in enumerate(result)}
     if isinstance(result, pv.DataSet):
         return _fingerprint(result)
     if isinstance(result, tuple):
-        return tuple(_output_digest(item) for item in result)
-    return repr(result)
+        return {f'return value {index}': _output_digest(item) for index, item in enumerate(result)}
+    return {'returned': repr(result)}
+
+
+def _flatten(digest, prefix=''):
+    """Return a nested output digest as one flat dict."""
+    flat = {}
+    for key, value in digest.items():
+        label = f'{prefix}{key} '
+        if isinstance(value, dict):
+            flat.update(_flatten(value, label))
+        else:
+            flat[f'{prefix}{key}'] = value
+    return flat
 
 
 def _output_or_error(mesh, name, args, kwargs):
-    """Return the digest of a filter's output, or the name of the error it raised."""
+    """Return the flat digest of a filter's output, or the error it raised."""
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
         try:
-            return _output_digest(getattr(mesh, name)(*args, **kwargs))
+            return _flatten(_output_digest(getattr(mesh, name)(*args, **kwargs)))
         except Exception as error:  # noqa: BLE001  - the filter does not apply to this mesh
-            return type(error).__name__
+            return {'raised': type(error).__name__}
 
 
 def _run(mesh, name, args, kwargs):
@@ -585,45 +691,56 @@ def _override_mesh(name, mode, default):
         return None
 
 
+def _call_arguments(name, keyword_variant=()):
+    """Return the positional and keyword arguments for one call of ``name``."""
+    args = _POSITIONAL_ARGS[name]() if name in _POSITIONAL_ARGS else ()
+    merged = {**_REQUIRED_KWARGS.get(name, {}), **dict(keyword_variant)}
+    kwargs = {
+        key: value.build() if isinstance(value, _Fresh) else value for key, value in merged.items()
+    }
+    return args, kwargs
+
+
+def _fail(key, problem, reports, ran):
+    """Fail with one readable block per call which broke the property."""
+    pytest.fail(
+        f'{key} {problem} in {len(reports)} of {ran} calls:\n\n' + '\n\n'.join(reports),
+        pytrace=False,
+    )
+
+
 @pytest.mark.parametrize('key', list(FILTERS))
 def test_filter_does_not_modify_input(key):
+    """A filter leaves its input's arrays, active arrays, points, cells and geometry alone."""
     func = FILTERS[key]
     name = func.__name__
+    reports = []
     ran = 0
     for mode in DATA_MODES:
         for kind in MESH_KINDS:
-            template = _make_mesh(kind, mode)
-            if not hasattr(template, name):
+            template = _override_mesh(name, mode, _make_mesh(kind, mode))
+            if template is None or not hasattr(template, name):
                 continue
-            template = _override_mesh(name, mode, template)
-            if template is None:
-                continue
-            for keyword, kwargs in _call_variants(func):
+            for keyword, keyword_variant in _call_variants(func):
                 if keyword is not None and mode not in KEYWORD_DATA_MODES:
                     continue
                 if _crashes_vtk(kind, name, keyword):
                     continue
                 mesh = template.copy()
-                args = _POSITIONAL_ARGS[name]() if name in _POSITIONAL_ARGS else ()
-                call_kwargs = {
-                    key: value.build() if isinstance(value, _Fresh) else value
-                    for key, value in {**_REQUIRED_KWARGS.get(name, {}), **kwargs}.items()
-                }
+                args, kwargs = _call_arguments(name, keyword_variant)
                 before = _fingerprint(mesh)
-                if not _run(mesh, name, args, call_kwargs):
+                if not _run(mesh, name, args, kwargs):
                     continue
                 ran += 1
-                assert _fingerprint(mesh) == before, (
-                    f'{type(mesh).__name__}.{name}() modified its input '
-                    f'({kind} mesh, {mode} data, {keyword}={call_kwargs.get(keyword)!r})'
-                )
-    assert ran, f'{name} never ran; the test meshes or arguments no longer apply'
+                changes = _changes(before, _fingerprint(mesh))
+                if changes:
+                    reports.append(_report(kind, mode, name, args, kwargs, changes))
+    assert ran, f'{key} never ran; the test meshes or arguments no longer apply'
+    if reports:
+        _fail(key, 'modified its input', reports, ran)
 
 
-# Modes whose meshes carry one array and no active attributes
-_UNSET_DATA_MODES = ['single_point', 'single_cell', 'single_vector']
-
-# These re-mesh the whole attribute table, carrying the input's active scalars to the output
+#: These re-mesh the whole attribute table, carrying the input's active scalars to the output.
 _ACTIVE_SCALARS_PASSTHROUGH = frozenset({'cells_to_points', 'points_to_cells'})
 
 _DEFAULT_SCALARS_FILTERS = [
@@ -645,10 +762,12 @@ def _activated(mesh):
 
 
 @pytest.mark.parametrize('key', _DEFAULT_SCALARS_FILTERS)
-def test_filter_output_matches_preactivated_input(key):
+def test_filter_output_does_not_depend_on_active_scalars(key):
+    """A filter returns the same output whether or not its default array was already active."""
     name = FILTERS[key].__name__
+    reports = []
     ran = 0
-    for mode in _UNSET_DATA_MODES:
+    for mode in UNSET_DATA_MODES:
         for kind in MESH_KINDS:
             template = _override_mesh(name, mode, _make_mesh(kind, mode))
             if template is None or isinstance(template, pv.MultiBlock):
@@ -658,16 +777,13 @@ def test_filter_output_matches_preactivated_input(key):
             activated = _activated(template)
             if activated is None:
                 continue
-            args = _POSITIONAL_ARGS[name]() if name in _POSITIONAL_ARGS else ()
-            kwargs = {
-                key: value.build() if isinstance(value, _Fresh) else value
-                for key, value in _REQUIRED_KWARGS.get(name, {}).items()
-            }
+            args, kwargs = _call_arguments(name)
             as_is = _output_or_error(template.copy(), name, args, kwargs)
             preactivated = _output_or_error(activated, name, args, kwargs)
             ran += 1
-            assert as_is == preactivated, (
-                f'{type(template).__name__}.{name}() returns a different output when its '
-                f'default scalars are already active ({kind} mesh, {mode} data)'
-            )
-    assert ran, f'{name} never ran; the test meshes or arguments no longer apply'
+            changes = _changes(as_is, preactivated)
+            if changes:
+                reports.append(_report(kind, mode, name, args, kwargs, changes))
+    assert ran, f'{key} never ran; the test meshes or arguments no longer apply'
+    if reports:
+        _fail(key, 'returns a different output once its default array is active', reports, ran)
