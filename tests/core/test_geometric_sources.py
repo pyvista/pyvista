@@ -155,6 +155,20 @@ def test_text3d_source():
     assert len(out.split_bodies()) == 4
 
 
+@pytest.mark.parametrize('name', ['depth', 'height', 'width'])
+def test_text3d_source_size_setters(name):
+    src = pv.Text3DSource(string='Text')
+
+    setattr(src, name, 2.0)
+    assert getattr(src, name) == 2.0
+
+    setattr(src, name, None)
+    assert getattr(src, name) is None
+
+    with pytest.raises(ValueError, match=f'{name} values must all be greater than or equal'):
+        setattr(src, name, -1.0)
+
+
 @pytest.mark.parametrize('string', [' ', 'TEXT'])
 @pytest.mark.parametrize('center', [(0, 0, 0), (1, -2, 3)])
 @pytest.mark.parametrize('height', [None, 0, 2.1])
