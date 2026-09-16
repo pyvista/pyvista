@@ -1093,23 +1093,28 @@ def _ruler_label_values(ruler):
     return [value for value in values if low <= value <= high]
 
 
-@pytest.mark.parametrize('number_labels', [2, 3, 6, 15])
-def test_add_ruler_number_labels(number_labels):
+@pytest.mark.needs_vtk_version(
+    less_than=(9, 4, 0), reason='SnapLabelsToGrid was added in VTK 9.4.0'
+)
+@pytest.mark.parametrize('number_labels', [2, 5])
+def test_add_ruler_number_labels_even_spacing(number_labels):
     pl = pv.Plotter()
     ruler = pl.add_ruler([0.0, 0.0, 0.0], [2.8, 0.0, 0.0], number_labels=number_labels)
-    assert ruler.GetNumberOfLabels() == number_labels
+    step = 2.8 / (number_labels - 1)
+    assert _ruler_label_values(ruler) == pytest.approx([step * i for i in range(number_labels)])
 
 
 @pytest.mark.needs_vtk_version(9, 4, 0, reason='SnapLabelsToGrid was added in VTK 9.4.0')
 @pytest.mark.parametrize(
     ('number_labels', 'expected'),
     [
+        (2, [0.0, 1.5]),
         (3, [0.0, 1.0, 2.0]),
         (6, [0.0, 0.5, 1.0, 1.5, 2.0, 2.5]),
         (15, [0.18 * i for i in range(16)]),
     ],
 )
-def test_add_ruler_number_labels_round_values(number_labels, expected):
+def test_add_ruler_number_labels(number_labels, expected):
     pl = pv.Plotter()
     ruler = pl.add_ruler([0.0, 0.0, 0.0], [2.8, 0.0, 0.0], number_labels=number_labels)
     assert _ruler_label_values(ruler) == pytest.approx(expected)
@@ -1135,6 +1140,22 @@ def test_add_ruler_number_labels_raises(number_labels, error, match):
     pl = pv.Plotter()
     with pytest.raises(error, match=match):
         pl.add_ruler([0.0, 0.0, 0.0], [2.8, 0.0, 0.0], number_labels=number_labels)
+
+
+@pytest.mark.needs_vtk_version(
+    less_than=(9, 6, 0), reason='VTK places at most 25 labels below 9.6'
+)
+def test_add_ruler_number_labels_maximum_raises():
+    pl = pv.Plotter()
+    with pytest.raises(ValueError, match='less than or equal to 25'):
+        pl.add_ruler([0.0, 0.0, 0.0], [2.8, 0.0, 0.0], number_labels=30)
+
+
+@pytest.mark.needs_vtk_version(9, 6, 0, reason='VTK places at most 25 labels below 9.6')
+def test_add_ruler_number_labels_above_vtk_maximum():
+    pl = pv.Plotter()
+    ruler = pl.add_ruler([0.0, 0.0, 0.0], [2.8, 0.0, 0.0], number_labels=30)
+    assert len(_ruler_label_values(ruler)) > 25
 
 
 def test_plotter_shape():

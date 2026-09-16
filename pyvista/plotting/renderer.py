@@ -4544,13 +4544,13 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         number_labels : int, optional
             Number of labels to place on the ruler, at least ``2``. The labels are
-            snapped to round values, so the number placed may differ by one or two
-            from the number asked for. If not supplied, the number is chosen to suit
-            the distance being measured.
+            snapped to round values, so this is a target rather than an exact count
+            and the far end of the ruler may carry no label. If not supplied, the
+            number is chosen to suit the distance being measured.
 
             .. note::
                 Snapping requires VTK 9.4 or newer. Below that the labels are spaced
-                evenly over the distance instead, and the number asked for is exact.
+                evenly over the distance instead. Below VTK 9.6 the maximum is ``25``.
 
         show_labels : bool, default: True
             Whether to show labels.
@@ -4653,10 +4653,12 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         ruler.SetFontFactor(font_size_factor)
         ruler.SetLabelFactor(label_size_factor)
         if number_labels is not None:
+            # VTK clamps the label count to 25 below 9.6, silently dropping the rest
+            maximum = np.inf if vtk_version_info >= (9, 6) else 25
             number_labels = _validation.validate_number(
                 number_labels,
                 must_be_integer=True,
-                must_be_in_range=[2, np.inf],
+                must_be_in_range=[2, maximum],
                 dtype_out=int,
                 name='number_labels',
             )
