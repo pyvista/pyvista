@@ -951,6 +951,40 @@ def _preference_of(association: FieldAssociation) -> Literal['point', 'cell']:
     return 'point' if association == FieldAssociation.POINT else 'cell'
 
 
+def _shallow_copy_for_new_arrays(mesh: _DataSetType) -> _DataSetType:
+    """Return a shallow copy which can take new arrays without touching the input's metadata."""
+    copied = mesh.copy(deep=False)
+    copied.copy_meta_from(mesh, deep=True)
+    return copied
+
+
+def _array_info(
+    mesh: DataSet,
+    name: str | None,
+    preference: Literal['point', 'cell'],
+    *,
+    kind: Literal['scalars', 'vectors'],
+) -> _ActiveArrayExistsInfoTuple:
+    """Return the field association and name of the named or default array."""
+    from pyvista.core.dataset import _ActiveArrayExistsInfoTuple  # noqa: PLC0415
+
+    if name is None:
+        default_info = (
+            _default_active_scalars_info if kind == 'scalars' else _default_active_vectors_info
+        )
+        return default_info(mesh)
+    return _ActiveArrayExistsInfoTuple(
+        mesh.get_array_association(name, preference=preference), name
+    )
+
+
+def _scalars_info(
+    mesh: DataSet, scalars: str | None, preference: Literal['point', 'cell'] = 'point'
+) -> _ActiveArrayExistsInfoTuple:
+    """Return the field association and name of the given or default scalars."""
+    return _array_info(mesh, scalars, preference, kind='scalars')
+
+
 def _active_array_input(
     mesh: _DataSetType,
     name: str | None,
@@ -958,23 +992,8 @@ def _active_array_input(
     *,
     kind: Literal['scalars', 'vectors'],
 ) -> tuple[_DataSetType, _ActiveArrayExistsInfoTuple]:
-    """Return a shallow copy with the named or default array active, and its field and name.
-
-    The copy is always made, so callers may activate further arrays on it without
-    reaching the input.
-    """
-    from pyvista.core.dataset import _ActiveArrayExistsInfoTuple  # noqa: PLC0415
-
-    default_info = (
-        _default_active_scalars_info if kind == 'scalars' else _default_active_vectors_info
-    )
-    info = (
-        default_info(mesh)
-        if name is None
-        else _ActiveArrayExistsInfoTuple(
-            mesh.get_array_association(name, preference=preference), name
-        )
-    )
+    """Return a shallow copy with the named or default array active, and its field and name."""
+    info = _array_info(mesh, name, preference, kind=kind)
     copied = mesh.copy(deep=False)
     getattr(copied, f'set_active_{kind}')(info.name, preference=_preference_of(info.association))
     return copied, info
@@ -992,6 +1011,34 @@ def _active_vectors_input(
 ) -> tuple[_DataSetType, _ActiveArrayExistsInfoTuple]:
     """Return a mesh with the given or default vectors active, and the field and name."""
     return _active_array_input(mesh, vectors, preference, kind='vectors')
+
+
+def _default_array_input(
+    mesh: _DataSetType,
+    name: str | None,
+    preference: Literal['point', 'cell'],
+    *,
+    kind: Literal['scalars', 'vectors'],
+) -> tuple[_DataSetType, str]:
+    """Return the mesh to filter and the name of the array to process."""
+    if name is not None:
+        return mesh, name
+    copied, info = _active_array_input(mesh, None, preference, kind=kind)
+    return copied, info.name
+
+
+def _default_scalars_input(
+    mesh: _DataSetType, scalars: str | None, preference: Literal['point', 'cell'] = 'point'
+) -> tuple[_DataSetType, str]:
+    """Return the mesh to filter and the scalars name, activating the default if needed."""
+    return _default_array_input(mesh, scalars, preference, kind='scalars')
+
+
+def _default_vectors_input(
+    mesh: _DataSetType, vectors: str | None, preference: Literal['point', 'cell'] = 'point'
+) -> tuple[_DataSetType, str]:
+    """Return the mesh to filter and the vectors name, activating the default if needed."""
+    return _default_array_input(mesh, vectors, preference, kind='vectors')
 
 
 def set_default_active_vectors(mesh: DataSet) -> _ActiveArrayExistsInfoTuple:
