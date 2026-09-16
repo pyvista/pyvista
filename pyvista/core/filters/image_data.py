@@ -4856,7 +4856,9 @@ class ImageDataFilters(DataSetFilters):
         ``reference_image``, so the two images are aligned in space. The
         :attr:`~pyvista.Grid.dimensions`, :attr:`~pyvista.ImageData.spacing`,
         :attr:`~pyvista.ImageData.origin`, :attr:`~pyvista.ImageData.offset`, and
-        :attr:`~pyvista.ImageData.direction_matrix` of the output all match the reference.
+        :attr:`~pyvista.ImageData.direction_matrix` of the output all match the reference,
+        and so therefore do its :attr:`~pyvista.ImageData.index_to_physical_matrix` and
+        :attr:`~pyvista.ImageData.physical_to_index_matrix`.
 
         Use this filter to map an image onto the grid of another image, for example, to
         give two acquisitions of the same subject a common grid. Give the reference a
@@ -4929,6 +4931,14 @@ class ImageDataFilters(DataSetFilters):
         --------
         resample
             Change an image's dimensions and spacing in its own frame.
+
+        :meth:`~pyvista.DataObjectFilters.transform`
+            Move an image without resampling it, by changing its
+            :attr:`~pyvista.ImageData.direction_matrix` and
+            :attr:`~pyvista.ImageData.origin` instead of its values.
+
+        :attr:`~pyvista.ImageData.index_to_physical_matrix`
+            Where an image's samples sit in space.
 
         :meth:`~pyvista.DataObjectFilters.sample`
             Resample array data from one mesh onto another.

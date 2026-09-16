@@ -94,6 +94,43 @@ print(resliced.origin, resliced.spacing)
 print(resampled.origin, resampled.spacing)
 
 # %%
+# Transform or Reslice
+# ++++++++++++++++++++
+#
+# Rotating an image with :meth:`~pyvista.DataObjectFilters.transform` and reslicing it
+# through the same rotation are different operations. ``transform`` moves the image and
+# leaves the values alone, recording the rotation in the image's
+# :attr:`~pyvista.ImageData.direction_matrix`. ``reslice`` interpolates the values onto
+# the reference's points, so the output keeps the reference's geometry.
+
+rotate = pv.Transform().rotate_z(30)
+
+moved = gourds.transform(rotate, inplace=False)
+resliced = gourds.reslice(gourds, 'linear', transform=rotate, background_value=0)
+
+# %%
+# The moved image carries the rotation in the matrix which maps its indices to physical
+# space. The resliced one is still on the axes it started on, and only its values changed.
+
+print(moved.index_to_physical_matrix.round(3))
+print(resliced.index_to_physical_matrix.round(3))
+
+# %%
+# Plot both with the outline of the original image in red. ``transform`` carries the
+# picture out of that frame, while ``reslice`` fills the frame and writes
+# ``background_value`` wherever the rotated image does not reach it.
+
+pl = pv.Plotter(shape=(1, 2))
+for index, (image, label) in enumerate([(moved, 'transform'), (resliced, 'reslice')]):
+    pl.subplot(0, index)
+    pl.add_mesh(image, rgba=True, lighting=False)
+    pl.add_mesh(gourds.outline(), color='red', line_width=3)
+    pl.add_text(label, font_size=10)
+    pl.view_xy()
+    pl.camera.tight()
+pl.show()
+
+# %%
 # Oblique Anatomy
 # +++++++++++++++
 #
