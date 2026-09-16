@@ -84,9 +84,13 @@ def test_get_cmap_safe_prefers_matplotlib(name):
 
 
 def test_get_cmap_safe_returns_independent_copies():
+    cached = _colors_module._get_matplotlib_cmap('viridis')
+    assert _colors_module._get_matplotlib_cmap('viridis') is cached
     first = get_cmap_safe('viridis')
     second = get_cmap_safe('viridis')
     assert first is not second
+    assert first is not cached
+    assert second is not cached
     xs = np.linspace(0, 1, 64)
     np.testing.assert_allclose(first(xs), second(xs))
 

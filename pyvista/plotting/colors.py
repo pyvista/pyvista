@@ -2317,7 +2317,7 @@ def _validate_color_sequence(
 
 @functools.cache
 def _get_matplotlib_cmap(name: str) -> colors.Colormap:
-    """Fetch a matplotlib colormap by name with its lookup table already built."""
+    """Fetch a matplotlib colormap by name, keeping one built instance per name."""
     try:
         cmap_obj = colormaps[name]
     except KeyError:
