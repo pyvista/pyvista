@@ -94,48 +94,70 @@ print(resliced.origin, resliced.spacing)
 print(resampled.origin, resampled.spacing)
 
 # %%
-# Oblique Slices
-# ++++++++++++++
+# Oblique Anatomy
+# +++++++++++++++
 #
-# Because the reference defines the sampling points, it may also be rotated. Build a
-# grid through the centre of a brain volume, tilted 30 degrees.
+# A structure which does not lie along the scan axes is hard to read in the slices the
+# scanner produced. Load a whole-body CT with its segmentations and take the left
+# scapula, a flat bone which sits at an angle to all three axes.
 
-brain = examples.download_brain()
-
-rotation = pv.Transform().rotate_vector((1, 0, 0), 30).matrix[:3, :3]
-dimensions = np.array([200, 200, 1])
-spacing = np.array([1.0, 1.0, 1.0])
-
-oblique = pv.ImageData(dimensions=dimensions, spacing=spacing)
-oblique.direction_matrix = rotation
-oblique.origin = np.array(brain.center) - rotation @ (spacing * (dimensions - 1) / 2)
+dataset = examples.download_whole_body_ct_male()
+ct = dataset['ct']
+scapula = dataset['segmentations']['scapula_left']
 
 # %%
-# Show the plane cutting through the volume.
+# Fit axes to the bone itself. The foreground of its mask gives the plane the blade
+# lies in: the first two principal axes span that plane and the third is its normal.
 
-pl = pv.Plotter()
-pl.add_volume(brain, cmap='bone', opacity='sigmoid_5', show_scalar_bar=False)
-pl.add_mesh(oblique.points_to_cells(), color='red', style='wireframe', opacity=0.5)
-pl.view_vector((1, -1, 0.4), viewup=(0, 0, 1))
-pl.show()
-
-# %%
-# Reslice the volume onto that grid to sample the oblique plane.
-
-sliced = brain.reslice(oblique, 'linear')
+foreground = scapula.points[scapula.active_scalars > 0]
+center = foreground.mean(axis=0)
+axes = pv.principal_axes(foreground)
+extent = np.abs((foreground - center) @ axes.T).max(axis=0)
 
 # %%
-# The result is an image in the plane of the reference. Reset its orientation to view
-# it face-on.
+# Build one grid big enough to hold the blade, and a transform which brings the bone to
+# the middle of it under a given rotation.
 
-flat = sliced.copy()
-flat.direction_matrix = np.eye(3)
-flat.origin = (0.0, 0.0, 0.0)
+dimensions = (2 * extent[:2] + 20).astype(int)
+reference = pv.ImageData(dimensions=(*dimensions, 1), spacing=(1.0, 1.0, 1.0))
 
-pl = pv.Plotter()
-pl.add_mesh(flat, cmap='bone', show_scalar_bar=False, lighting=False)
-pl.view_xy()
-pl.camera.tight()
+
+def centered(rotation):
+    """Return the matrix which centres the scapula in the reference under ``rotation``."""
+    matrix = np.eye(4)
+    matrix[:3, :3] = rotation
+    matrix[:3, 3] = np.array(reference.center) - rotation @ center
+    return matrix
+
+
+# %%
+# Reslice twice from that one grid. Without a rotation the samples follow the scan axes;
+# with the bone's own axes they follow the blade. Since the grid itself is never rotated,
+# both outputs are ordinary axis-aligned images.
+
+along_scan = ct.reslice(
+    reference, 'linear', transform=centered(np.eye(3)), background_value=-1000
+)
+along_bone = ct.reslice(
+    reference, 'linear', transform=centered(axes), background_value=-1000
+)
+
+# %%
+# The blade crosses the scan plane at an angle, so it appears there as a thin sliver.
+# Sampled along its own axes it is a single image, with the glenoid and the head of the
+# humerus beside it.
+
+pl = pv.Plotter(shape=(1, 2))
+for index, (image, label) in enumerate(
+    [(along_scan, 'scan axes'), (along_bone, 'bone axes')]
+):
+    pl.subplot(0, index)
+    pl.add_mesh(
+        image, cmap='bone', clim=[-200, 900], show_scalar_bar=False, lighting=False
+    )
+    pl.add_text(label, font_size=10)
+    pl.view_xy()
+    pl.camera.tight()
 pl.show()
 
 # %%
