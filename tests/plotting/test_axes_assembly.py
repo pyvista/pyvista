@@ -248,9 +248,16 @@ def test_axes_assembly_label_position(axes_assembly):
         ('tip_length', 0.4, (0.8, 0.1, 0.1)),
     ],
 )
-def test_axes_assembly_label_position_follows_geometry(axes_assembly, name, value, expected):
+@pytest.mark.parametrize('cls', [pv.AxesAssembly, pv.AxesAssemblySymmetric])
+def test_axes_assembly_label_position_follows_geometry(cls, name, value, expected):
+    axes_assembly = cls()
     setattr(axes_assembly, name, value)
     assert np.allclose(axes_assembly._label_actors[0].relative_position, expected)
+    if cls is pv.AxesAssemblySymmetric:
+        expected_minus = (-expected[0], expected[1], expected[2])
+        assert np.allclose(
+            axes_assembly._label_actors_symmetric[0].relative_position, expected_minus
+        )
 
 
 def test_axes_assembly_label_position_anti_distortion(axes_assembly):
