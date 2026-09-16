@@ -45,7 +45,7 @@ THEME_OWN_RANGES = {
     'slider_styles.modern.cap_opacity': (0.0, 1.0),
 }
 
-# Valid range of every theme attribute which restricts its value.
+# Valid range of every theme attribute with a two-sided range check.
 THEME_RANGES = {
     'edge_opacity': (0.0, 1.0),
     'lighting_params.ambient': (0.0, 1.0),
@@ -92,6 +92,12 @@ def test_theme_range_is_validated(default_theme, path, rng):
         assert getattr(owner, name) == upper
         with pytest.raises(ValueError, match=f'{name} values must all be less than or equal'):
             setattr(owner, name, upper + 1.0)
+
+    else:
+        setattr(owner, name, 1e6)
+        assert getattr(owner, name) == 1e6
+        with pytest.raises(ValueError, match=f'{name} values must all be less than inf'):
+            setattr(owner, name, np.inf)
 
 
 @pytest.mark.parametrize(

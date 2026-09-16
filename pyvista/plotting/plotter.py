@@ -3133,16 +3133,19 @@ class BasePlotter(_BoundsSizeMixin):
 
         point_size : float, default: 5.0
             Point size of any points in the dataset plotted. Also
-            applicable when style='points'. Default ``5.0``.
+            applicable when style='points', expressed in screen units.
+            Must be in the range ``[0.0, inf)``.
 
         line_width : float, optional
             Thickness of lines.  Only valid for wireframe and surface
-            representations.
+            representations, expressed in screen units. Must be in the
+            range ``[0.0, inf)``.
 
         opacity : float, default: 1.0
             Opacity of the mesh. A single float value that will be applied
-            globally opacity of the mesh and uniformly
-            applied everywhere - should be between 0 and 1.
+            globally opacity of the mesh and uniformly applied everywhere.
+            Must be in the range ``[0.0, 1.0]``. A value of ``1.0`` is totally
+            opaque and ``0.0`` is completely transparent.
 
         flip_scalars : bool, default: False
             Flip direction of ``cmap``. Most colormaps allow ``*_r``
@@ -3370,8 +3373,9 @@ class BasePlotter(_BoundsSizeMixin):
 
         edge_opacity : float, optional
             Edge opacity of the mesh. A single float value that will be applied globally
-            edge opacity of the mesh and uniformly applied everywhere - should be
-            between 0 and 1.
+            edge opacity of the mesh and uniformly applied everywhere. Must be in the
+            range ``[0.0, 1.0]``. A value of ``1.0`` is totally opaque and ``0.0`` is
+            completely transparent.
 
             .. note::
                 ``edge_opacity`` uses ``SetEdgeOpacity`` as the underlying method which
@@ -3740,16 +3744,20 @@ class BasePlotter(_BoundsSizeMixin):
 
         point_size : float, optional
             Point size of any nodes in the dataset plotted. Also
-            applicable when style='points'. Default ``5.0``.
+            applicable when style='points', expressed in screen units.
+            Default ``5.0``. Must be in the range ``[0.0, inf)``.
 
         line_width : float, optional
             Thickness of lines.  Only valid for wireframe and surface
-            representations.  Default ``None``.
+            representations, expressed in screen units. Default ``None``.
+            Must be in the range ``[0.0, inf)``.
 
         opacity : float | str | array_like
             Opacity of the mesh. If a single float value is given, it
-            will be the global opacity of the mesh and uniformly
-            applied everywhere - should be between 0 and 1. A string
+            will be the global opacity of the mesh and uniformly applied
+            everywhere, and must be in the range ``[0.0, 1.0]``, where
+            ``1.0`` is totally opaque and ``0.0`` is completely
+            transparent. A string
             can also be specified to map the scalars range to a
             predefined opacity transfer function (options include:
             ``'linear'``, ``'linear_r'``, ``'geom'``, ``'geom_r'``).
@@ -4055,8 +4063,9 @@ class BasePlotter(_BoundsSizeMixin):
 
         edge_opacity : float, optional
             Edge opacity of the mesh. A single float value that will be applied globally
-            edge opacity of the mesh and uniformly applied everywhere - should be
-            between 0 and 1.
+            edge opacity of the mesh and uniformly applied everywhere. Must be in the
+            range ``[0.0, 1.0]``. A value of ``1.0`` is totally opaque and ``0.0`` is
+            completely transparent.
 
             .. note::
                 ``edge_opacity`` uses ``SetEdgeOpacity`` as the underlying method which

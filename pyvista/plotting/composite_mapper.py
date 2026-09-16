@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 import weakref
 
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
@@ -16,7 +17,6 @@ from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.arrays import convert_string_array
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
-from . import _ranges
 from .colors import Color
 from .colors import get_cycler
 from .mapper import _BaseMapper
@@ -211,7 +211,7 @@ class BlockAttributes(_NoNewAttrMixin):
             self._attr.Modified()
             return
 
-        _ranges.check_opacity(new_opacity)
+        _validation.check_range(new_opacity, [0.0, 1.0], name='opacity')
         self._attr.SetBlockOpacity(self._block, new_opacity)
 
     @property
