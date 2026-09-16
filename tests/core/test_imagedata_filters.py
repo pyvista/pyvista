@@ -1106,8 +1106,7 @@ def test_resample_reference_image(uniform, spacing, direction_matrix, origin, di
         reference.offset = offset
     reference['data'] = range(reference.n_points)
 
-    with pytest.warns(pv.PyVistaDeprecationWarning, match='`reference_image` is deprecated'):
-        resampled = uniform.resample(reference_image=reference, progress_bar=True)
+    resampled = uniform.resample(reference_image=reference, progress_bar=True)
     assert isinstance(resampled, pv.ImageData)
     assert resampled is not uniform
     assert resampled is not reference
@@ -1299,10 +1298,7 @@ def test_resample_raises(uniform):
         uniform.resample(scalars='Spatial Cell Data', extend_border=True)
 
     match = '`extend_border` cannot be set when a `reference_image` is provided.'
-    with (
-        pytest.warns(pv.PyVistaDeprecationWarning),
-        pytest.raises(ValueError, match=re.escape(match)),
-    ):
+    with pytest.raises(ValueError, match=re.escape(match)):
         uniform.resample(reference_image=uniform, extend_border=True)
 
     match = 'sample_rate must have finite values.'
@@ -1328,8 +1324,7 @@ def test_resample_reference_image_cell_data():
     image.cell_data['data'] = np.arange(image.n_cells, dtype=float)
     reference = pv.ImageData(dimensions=(9, 9, 9), spacing=(0.5, 0.5, 0.5), origin=(1, 1, 1))
 
-    with pytest.warns(pv.PyVistaDeprecationWarning):
-        resampled = image.resample(reference_image=reference)
+    resampled = image.resample(reference_image=reference)
     assert np.array_equal(resampled.dimensions, reference.dimensions)
     assert np.allclose(resampled.spacing, reference.spacing)
     assert np.allclose(resampled.origin, reference.origin)
@@ -1350,10 +1345,7 @@ def test_resample_cell_data_dimensions_raises():
         '`reference_image` must have dimensions of at least 2 along each non-singleton axis '
         'when resampling cell data.'
     )
-    with (
-        pytest.warns(pv.PyVistaDeprecationWarning),
-        pytest.raises(ValueError, match=re.escape(match)),
-    ):
+    with pytest.raises(ValueError, match=re.escape(match)):
         image.resample(reference_image=pv.ImageData(dimensions=(1, 5, 5)))
 
 

@@ -4223,13 +4223,15 @@ class ImageDataFilters(DataSetFilters):
 
         The resampling can be controlled in several ways:
 
+        #. Specify the output geometry using a ``reference_image``.
+
         #. Specify the ``dimensions`` explicitly.
 
         #. Specify the ``sample_rate`` explicitly.
 
-        The geometry is implicitly defined such that the resampled image fits the bounds
-        of the input. Use :meth:`reslice` instead to sample the image at the points of
-        another image.
+        The image is always resampled in its own frame so that it fits the bounds of the
+        input, and a ``reference_image`` only sets the output's geometry afterwards. Use
+        :meth:`reslice` instead to sample the image at the points of another image.
 
         This filter may be used to resample either point or cell data. For point data,
         this filter assumes the data is from discrete samples in space which represent
@@ -4298,12 +4300,12 @@ class ImageDataFilters(DataSetFilters):
             :attr:`~pyvista.Grid.dimensions`, and the reference's
             :attr:`~pyvista.ImageData.spacing`, :attr:`~pyvista.ImageData.origin`,
             :attr:`~pyvista.ImageData.offset`, and :attr:`~pyvista.ImageData.direction_matrix`
-            are applied to the output. The two images are `not` aligned in space, that is,
-            the values are not sampled at the reference image's points.
+            are applied to the output.
 
-            .. deprecated:: 0.49
-                Use ``dimensions=reference_image.dimensions`` for the same result, or use
-                :meth:`reslice` to sample the image at the reference image's points.
+            .. note::
+                The image is resampled in its own frame and the reference's geometry is
+                applied to the result afterwards, so the values are `not` sampled at the
+                reference image's points. Use :meth:`reslice` to sample at those points.
 
         dimensions : VectorLike[int], optional
             Set the output :attr:`~pyvista.Grid.dimensions` of the resampled image.
@@ -4586,7 +4588,7 @@ class ImageDataFilters(DataSetFilters):
                     z_min = -0.5,
                     z_max =  0.5)
 
-        Resize an image to match another image's dimensions. Here we load two
+        Use a reference image to control the resampling instead. Here we load two
         images with different dimensions:
         :func:`~pyvista.examples.downloads.download_bird` and
         :func:`~pyvista.examples.downloads.download_gourds`.
@@ -4599,13 +4601,14 @@ class ImageDataFilters(DataSetFilters):
         >>> gourds.dimensions
         (640, 480, 1)
 
-        Use ``dimensions`` to resize the bird to match the gourds or vice-versa.
+        Use ``reference_image`` to resample the bird to match the gourds geometry or
+        vice-versa.
 
-        >>> bird_resampled = bird.resample(dimensions=gourds.dimensions)
+        >>> bird_resampled = bird.resample(reference_image=gourds)
         >>> bird_resampled.dimensions
         (640, 480, 1)
 
-        >>> gourds_resampled = gourds.resample(dimensions=bird.dimensions)
+        >>> gourds_resampled = gourds.resample(reference_image=bird)
         >>> gourds_resampled.dimensions
         (458, 342, 1)
 
@@ -4690,19 +4693,6 @@ class ImageDataFilters(DataSetFilters):
                 )
                 raise ValueError(msg)
             _validation.check_instance(reference_image, pv.ImageData, name='reference_image')
-            # Deprecated on 0.49.0, error on 0.52.0, estimated removal on 0.53.0
-            warn_external(
-                '`reference_image` is deprecated. Use `dimensions=reference_image.dimensions` '
-                'for the same result, or use `reslice` to sample the image at the reference '
-                "image's points.",
-                PyVistaDeprecationWarning,
-            )
-            if pv.version_info >= (0, 52):  # pragma: no cover
-                msg = 'Convert this deprecation warning into an error.'
-                raise RuntimeError(msg)
-            if pv.version_info >= (0, 53):  # pragma: no cover
-                msg = 'Remove `reference_image` from `resample`.'
-                raise RuntimeError(msg)
         elif sample_rate is not None and dimensions is not None:
             msg = (
                 'Cannot specify a sample rate along with the `dimensions` parameter.\n'
