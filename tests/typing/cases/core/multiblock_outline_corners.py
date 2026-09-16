@@ -7,6 +7,7 @@ from type_assert import assert_types
 import pyvista as pv
 from tests.typing.meshes import multiblock
 from tests.typing.meshes import multiblock_image
+from tests.typing.meshes import multiblock_optional_poly
 from tests.typing.meshes import multiblock_poly
 
 
@@ -27,3 +28,9 @@ assert_types(multiblock().outline_corners(nested=a_flag()), pv.PolyData | pv.Mul
 # A declared block type follows the filter through
 assert_types(multiblock_poly().outline_corners(nested=True), pv.MultiBlock[pv.PolyData])
 assert_types(multiblock_image().outline_corners(nested=True), pv.MultiBlock[pv.PolyData])
+
+# An empty block survives the filter
+assert_types(
+    multiblock_optional_poly().outline_corners(nested=True),
+    pv.MultiBlock[pv.PolyData | None],
+)

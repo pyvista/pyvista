@@ -3,10 +3,15 @@
 from __future__ import annotations
 
 from type_assert import assert_types
+from typing_extensions import Never
 
 import pyvista as pv
 from pyvista import _vtk
 from pyvista.core.utilities import generate_plane
+
+SKIP_RUNTIME = {
+    'multiblock_pointset().slice_implicit(a_plane())': 'a `PointSet` has no cells, so the call raises',
+}
 
 
 def poly() -> pv.PolyData:
@@ -39,6 +44,21 @@ def a_plane() -> _vtk.vtkPlane:
     return generate_plane((1.0, 0.0, 0.0), (0.0, 0.0, 0.0))
 
 
+def multiblock_optional_poly() -> pv.MultiBlock[pv.PolyData | None]:
+    """Return a composite whose blocks may be missing."""
+    return pv.MultiBlock([poly(), None])
+
+
+def pointset() -> pv.PointSet:
+    """Return a point cloud."""
+    return pv.PointSet(poly().points)
+
+
+def multiblock_pointset() -> pv.MultiBlock[pv.PointSet]:
+    """Return a composite declared to hold only `PointSet`."""
+    return pv.MultiBlock([pointset()])
+
+
 # Slicing reduces any dataset to a surface, and a composite stays a composite
 assert_types(image().slice_implicit(a_plane()), pv.PolyData)
 assert_types(multiblock().slice_implicit(a_plane()), pv.MultiBlock)
@@ -46,3 +66,9 @@ assert_types(multiblock().slice_implicit(a_plane()), pv.MultiBlock)
 # A declared block type follows the filter through
 assert_types(multiblock_poly().slice_implicit(a_plane()), pv.MultiBlock[pv.PolyData])
 assert_types(multiblock_image().slice_implicit(a_plane()), pv.MultiBlock[pv.PolyData])
+
+# An empty block survives the filter
+assert_types(multiblock_optional_poly().slice_implicit(a_plane()), pv.MultiBlock[pv.PolyData | None])
+
+# A composite of point clouds cannot be reduced to a surface
+assert_types(multiblock_pointset().slice_implicit(a_plane()), Never)  # pragma: no cover

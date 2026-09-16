@@ -66,9 +66,9 @@ def multiblock_pointset() -> pv.MultiBlock[pv.PointSet]:
     return pv.MultiBlock([pointset()])
 
 
-def multiblock_unstructured() -> pv.MultiBlock[pv.UnstructuredGrid]:
-    """Return a composite declared to hold only `UnstructuredGrid`."""
-    return pv.MultiBlock([unstructured()])
+def multiblock_optional_poly() -> pv.MultiBlock[pv.PolyData | None]:
+    """Return a composite whose blocks may be missing."""
+    return pv.MultiBlock([poly(), None])
 
 
 def multiblock_image() -> pv.MultiBlock[pv.ImageData]:

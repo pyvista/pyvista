@@ -379,17 +379,21 @@ class CompositeFilters(DataObjectFilters):
     # ruff: disable[E501]
     @overload
     def outline_corners(self: MultiBlock[Any], *, factor: float = ..., nested: Literal[False] = ..., progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc]
-    @overload
+    @overload  # MultiBlock
     def outline_corners(self: MultiBlock, *, factor: float = ..., nested: Literal[True] = ..., progress_bar: bool = ...) -> MultiBlock: ...  # type: ignore[misc]
-    @overload
+    @overload  # MultiBlock[DataSet | None]
+    def outline_corners(self: MultiBlock[_DataSetType | None], *, factor: float = ..., nested: Literal[True] = ..., progress_bar: bool = ...) -> MultiBlock[PolyData | None]: ...  # type: ignore[misc]
+    @overload  # MultiBlock[DataSet]
     def outline_corners(self: MultiBlock[_DataSetType], *, factor: float = ..., nested: Literal[True] = ..., progress_bar: bool = ...) -> MultiBlock[PolyData]: ...  # type: ignore[misc]
-    @overload
+    @overload  # MultiBlock
     def outline_corners(self: MultiBlock[Any], *, factor: float = ..., nested: Literal[True] = ..., progress_bar: bool = ...) -> MultiBlock: ...  # type: ignore[misc]
-    @overload
+    @overload  # MultiBlock
     def outline_corners(self: MultiBlock, *, factor: float = ..., nested: bool = ..., progress_bar: bool = ...) -> PolyData | MultiBlock: ...  # type: ignore[misc]
-    @overload
+    @overload  # MultiBlock[DataSet | None]
+    def outline_corners(self: MultiBlock[_DataSetType | None], *, factor: float = ..., nested: bool = ..., progress_bar: bool = ...) -> PolyData | MultiBlock[PolyData | None]: ...  # type: ignore[misc]
+    @overload  # MultiBlock[DataSet]
     def outline_corners(self: MultiBlock[_DataSetType], *, factor: float = ..., nested: bool = ..., progress_bar: bool = ...) -> PolyData | MultiBlock[PolyData]: ...  # type: ignore[misc]
-    @overload
+    @overload  # MultiBlock
     def outline_corners(self: MultiBlock[Any], *, factor: float = ..., nested: bool = ..., progress_bar: bool = ...) -> PolyData | MultiBlock: ...  # type: ignore[misc]
     # ruff: enable[E501]
     # fmt: on

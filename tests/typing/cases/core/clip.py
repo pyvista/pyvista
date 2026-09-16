@@ -72,6 +72,11 @@ def a_flag() -> bool:
     return True
 
 
+def multiblock_optional_poly() -> pv.MultiBlock[pv.PolyData | None]:
+    """Return a composite whose blocks may be missing."""
+    return pv.MultiBlock([poly(), None])
+
+
 # A plane clip keeps a surface a surface and a point cloud a point cloud
 assert_types(poly().clip(), pv.PolyData)
 assert_types(pointset().clip(), pv.PointSet)
@@ -106,3 +111,6 @@ assert_types(multiblock_image().clip(), pv.MultiBlock[pv.UnstructuredGrid])
 assert_types(multiblock_poly().clip(return_clipped=True), tuple[pv.MultiBlock[pv.PolyData], pv.MultiBlock[pv.PolyData]])
 assert_types(multiblock_pointset().clip(), pv.MultiBlock[pv.PointSet])
 assert_types(multiblock_unstructured().clip(), pv.MultiBlock[pv.UnstructuredGrid])
+
+# An empty block survives the filter
+assert_types(multiblock_optional_poly().clip(), pv.MultiBlock[pv.PolyData | None])

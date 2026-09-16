@@ -52,6 +52,11 @@ def multiblock() -> pv.MultiBlock:
     return pv.MultiBlock([poly(), image()])
 
 
+def multiblock_optional_poly() -> pv.MultiBlock[pv.PolyData | None]:
+    """Return a composite whose blocks may be missing."""
+    return pv.MultiBlock([poly(), None])
+
+
 # A slab clip follows the plane clip
 assert_types(poly().clip_slab(thickness=0.2, normal='z'), pv.PolyData)
 assert_types(pointset().clip_slab(thickness=0.2, normal='z'), pv.PointSet)
@@ -63,3 +68,6 @@ assert_types(multiblock_poly().clip_slab(thickness=0.2, normal='z'), pv.MultiBlo
 assert_types(multiblock_image().clip_slab(thickness=0.2, normal='z'), pv.MultiBlock[pv.UnstructuredGrid])
 assert_types(multiblock_pointset().clip_slab(thickness=0.2, normal='z'), pv.MultiBlock[pv.PointSet])
 assert_types(multiblock_unstructured().clip_slab(thickness=0.2, normal='z'), pv.MultiBlock[pv.UnstructuredGrid])
+
+# An empty block survives the filter
+assert_types(multiblock_optional_poly().clip_slab(thickness=0.2, normal='z'), pv.MultiBlock[pv.PolyData | None])

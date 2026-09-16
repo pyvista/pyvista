@@ -57,13 +57,14 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
     from pyvista import PolyData
+    from pyvista import UnstructuredGrid
     from pyvista import VectorLike
 
     from ._typing_core import NumpyArray
     from .filters.data_object import _NestedMeshValidationFields
     from .utilities.writer import BaseWriter
 
-_TypeMultiBlockLeaf = Union['MultiBlock', DataSet, None]
+_TypeMultiBlockLeaf = Union['MultiBlock[Any]', DataSet, None]
 _BlockType = TypeVar(
     '_BlockType',
     bound='MultiBlock[Any] | DataSet | None',
@@ -88,10 +89,18 @@ class MultiBlock(
     can iterate over this data structure by index.  It has some dictionary
     features as we can also access blocks by their string name.
 
+    Subscripting the class declares what the blocks are, so that
+    ``MultiBlock[PolyData]`` indexes and iterates as :class:`~pyvista.PolyData`
+    and rejects anything else.  An unsubscripted ``MultiBlock`` holds any
+    combination of datasets, nested composites and empty blocks.
+
     .. versionchanged:: 0.36.0
        ``MultiBlock`` adheres more closely to being list like, and inherits
        from :class:`collections.abc.MutableSequence`.  Multiple nonconforming
        behaviors were removed or modified.
+
+    .. versionadded:: 0.50
+       ``MultiBlock`` is generic over its block type.
 
     Parameters
     ----------
@@ -1174,7 +1183,7 @@ class MultiBlock(
         """
         # apply reduction of min and max over each block
         # (typing.cast necessary to make mypy happy with ufunc.reduce() later)
-        blocks: tuple[_TypeMultiBlockLeaf, ...] = tuple(self)
+        blocks: Sequence[_TypeMultiBlockLeaf] = self
         all_bounds = [cast('list[float]', block.bounds) for block in blocks if block]
         # edge case where block has no bounds
         if not all_bounds:  # pragma: no cover
@@ -1302,7 +1311,7 @@ class MultiBlock(
         1.7348
 
         """
-        blocks: tuple[_TypeMultiBlockLeaf, ...] = tuple(self)
+        blocks: Sequence[_TypeMultiBlockLeaf] = self
         return sum(block.volume for block in blocks if block)
 
     def get_data_range(  # type: ignore[override]
@@ -2333,7 +2342,7 @@ class MultiBlock(
 
         return field_asc, scalars
 
-    def as_polydata_blocks(self, *, copy: bool = False) -> MultiBlock:
+    def as_polydata_blocks(self, *, copy: bool = False) -> MultiBlock[PolyData]:
         """Convert all the datasets within this MultiBlock to :class:`~pyvista.PolyData`.
 
         Parameters
@@ -2376,9 +2385,9 @@ class MultiBlock(
             else:
                 return block.extract_surface(algorithm=None)
 
-        return self.generic_filter(block_filter, _skip_none=False)
+        return cast('MultiBlock[PolyData]', self.generic_filter(block_filter, _skip_none=False))
 
-    def as_unstructured_grid_blocks(self, *, copy: bool = False) -> MultiBlock:
+    def as_unstructured_grid_blocks(self, *, copy: bool = False) -> MultiBlock[UnstructuredGrid]:
         """Convert all the datasets within this MultiBlock to :class:`~pyvista.UnstructuredGrid`.
 
         .. versionadded:: 0.45
@@ -2416,7 +2425,9 @@ class MultiBlock(
             else:
                 return block.cast_to_unstructured_grid()
 
-        return self.generic_filter(block_filter, _skip_none=False)
+        return cast(
+            'MultiBlock[UnstructuredGrid]', self.generic_filter(block_filter, _skip_none=False)
+        )
 
     @property
     def is_all_polydata(self) -> bool:
@@ -2471,7 +2482,7 @@ class MultiBlock(
         {<class 'pyvista.core.pointset.StructuredGrid'>}
 
         """
-        blocks: tuple[_TypeMultiBlockLeaf, ...] = tuple(self)
+        blocks: Sequence[_TypeMultiBlockLeaf] = self
         return {type(block) for block in blocks}
 
     @property

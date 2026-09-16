@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from type_assert import assert_types
 
 import pyvista as pv
@@ -35,10 +37,10 @@ def an_index() -> int:
     return 0
 
 
-# A block is a dataset, a nested `MultiBlock`, or nothing at all
-assert_types(multi()[0], MultiBlock | DataSet | None)
-assert_types(multi()['mesh'], MultiBlock | DataSet | None)
-assert_types(multi()[an_index()], MultiBlock | DataSet | None)
+# A block is a dataset, a nested `MultiBlock` of any block type, or nothing at all
+assert_types(multi()[0], MultiBlock[Any] | DataSet | None)
+assert_types(multi()['mesh'], MultiBlock[Any] | DataSet | None)
+assert_types(multi()[an_index()], MultiBlock[Any] | DataSet | None)
 
 # Slicing keeps the container
 assert_types(multi()[0:1], MultiBlock)

@@ -95,7 +95,7 @@ def _dataset_array_lengths_match(obj: DataSet) -> bool:
     return ok
 
 
-def _composite_array_lengths_match(obj: MultiBlock | PartitionedDataSet) -> bool:
+def _composite_array_lengths_match(obj: MultiBlock[Any] | PartitionedDataSet) -> bool:
     """Recursively apply :func:`_dataset_array_lengths_match` to every leaf DataSet."""
     for i in range(len(obj)):
         block = obj[i]

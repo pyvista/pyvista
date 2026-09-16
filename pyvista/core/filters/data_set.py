@@ -6437,20 +6437,20 @@ class DataSetFilters(DataObjectFilters):
     # fmt: off
     # ruff: disable[E501]
     @overload  # PointSet with a composite, whose blocks decide
-    def merge(self: PointSet, grid: MultiBlock, *, merge_points: bool = ..., tolerance: float = ..., inplace: bool = ..., main_has_priority: bool | None = ..., progress_bar: bool = ...) -> PointSet | UnstructuredGrid: ...  # type: ignore[misc]
+    def merge(self: PointSet, grid: MultiBlock[Any], *, merge_points: bool = ..., tolerance: float = ..., inplace: bool = ..., main_has_priority: bool | None = ..., progress_bar: bool = ...) -> PointSet | UnstructuredGrid: ...  # type: ignore[misc]
     @overload  # PointSet with point clouds
     def merge(self: PointSet, grid: PointSet | Sequence[PointSet] | None = ..., *, merge_points: bool = ..., tolerance: float = ..., inplace: bool = ..., main_has_priority: bool | None = ..., progress_bar: bool = ...) -> PointSet: ...  # type: ignore[misc, overload-overlap]
     @overload  # PointSet with anything else
     def merge(self: PointSet, grid: DataSet | _vtk.vtkDataSet | Sequence[DataSet | _vtk.vtkDataSet] | None = ..., *, merge_points: bool = ..., tolerance: float = ..., inplace: bool = ..., main_has_priority: bool | None = ..., progress_bar: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
     @overload  # DataSet
-    def merge(self: DataSet, grid: DataSet | _vtk.vtkDataSet | MultiBlock | Sequence[DataSet | _vtk.vtkDataSet] | None = ..., *, merge_points: bool = ..., tolerance: float = ..., inplace: bool = ..., main_has_priority: bool | None = ..., progress_bar: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
+    def merge(self: DataSet, grid: DataSet | _vtk.vtkDataSet | MultiBlock[Any] | Sequence[DataSet | _vtk.vtkDataSet] | None = ..., *, merge_points: bool = ..., tolerance: float = ..., inplace: bool = ..., main_has_priority: bool | None = ..., progress_bar: bool = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
     # ruff: enable[E501]
     # fmt: on
     def merge(  # type: ignore[misc]
         self: _DataSetType,
         grid: DataSet
         | _vtk.vtkDataSet
-        | MultiBlock
+        | MultiBlock[Any]
         | Sequence[DataSet | _vtk.vtkDataSet]
         | None = None,
         *,
@@ -6979,17 +6979,17 @@ class DataSetFilters(DataObjectFilters):
     # fmt: off
     # ruff: disable[E501]
     @overload  # PointSet, as_composite=True
-    def partition(self: PointSet, n_partitions: int, *, generate_global_id: bool = ..., as_composite: Literal[True] = ...) -> MultiBlock[DataSet]: ...  # type: ignore[misc, overload-overlap]
+    def partition(self: PointSet, n_partitions: int, *, generate_global_id: bool = ..., as_composite: Literal[True] = ...) -> MultiBlock[PointSet]: ...  # type: ignore[misc, overload-overlap]
     @overload  # PointSet, as_composite=False
     def partition(self: PointSet, n_partitions: int, *, generate_global_id: bool = ..., as_composite: Literal[False] = ...) -> PointSet: ...  # type: ignore[misc, overload-overlap]
     @overload  # PointSet, as_composite not known
-    def partition(self: PointSet, n_partitions: int, *, generate_global_id: bool = ..., as_composite: bool = ...) -> MultiBlock[DataSet] | PointSet: ...  # type: ignore[misc, overload-overlap]
+    def partition(self: PointSet, n_partitions: int, *, generate_global_id: bool = ..., as_composite: bool = ...) -> MultiBlock[PointSet] | PointSet: ...  # type: ignore[misc, overload-overlap]
     @overload  # as_composite=True
-    def partition(self: _DataSetType, n_partitions: int, *, generate_global_id: bool = ..., as_composite: Literal[True] = ...) -> MultiBlock[DataSet]: ...  # type: ignore[misc]
+    def partition(self: _DataSetType, n_partitions: int, *, generate_global_id: bool = ..., as_composite: Literal[True] = ...) -> MultiBlock[UnstructuredGrid]: ...  # type: ignore[misc]
     @overload  # as_composite=False
     def partition(self: _DataSetType, n_partitions: int, *, generate_global_id: bool = ..., as_composite: Literal[False] = ...) -> UnstructuredGrid: ...  # type: ignore[misc]
     @overload  # as_composite not known
-    def partition(self: _DataSetType, n_partitions: int, *, generate_global_id: bool = ..., as_composite: bool = ...) -> MultiBlock[DataSet] | UnstructuredGrid: ...  # type: ignore[misc]
+    def partition(self: _DataSetType, n_partitions: int, *, generate_global_id: bool = ..., as_composite: bool = ...) -> MultiBlock[UnstructuredGrid] | UnstructuredGrid: ...  # type: ignore[misc]
     # ruff: enable[E501]
     # fmt: on
     def partition(  # type: ignore[misc]
@@ -6998,7 +6998,7 @@ class DataSetFilters(DataObjectFilters):
         *,
         generate_global_id: bool = False,
         as_composite: bool = True,
-    ) -> MultiBlock[DataSet] | PointSet | UnstructuredGrid:
+    ) -> MultiBlock[PointSet] | MultiBlock[UnstructuredGrid] | PointSet | UnstructuredGrid:
         """Break down input dataset into a requested number of partitions.
 
         Cells on boundaries are uniquely assigned to each partition without duplication.
@@ -7094,7 +7094,7 @@ class DataSetFilters(DataObjectFilters):
             # the result. See:
             # https://gitlab.kitware.com/vtk/vtk/-/issues/18632
             return cast('UnstructuredGrid', pv.merge(list(composite), merge_points=False))
-        return composite
+        return cast('MultiBlock[PointSet] | MultiBlock[UnstructuredGrid]', composite)
 
     # fmt: off
     # ruff: disable[E501]
