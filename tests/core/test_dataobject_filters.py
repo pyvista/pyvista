@@ -26,6 +26,7 @@ from pyvista import examples
 from pyvista.core.cell import _get_connectivity_array
 from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import PointSetCellOperationError
+from pyvista.core.errors import PointSetDimensionReductionError
 from pyvista.core.errors import PointSetNotSupported
 from pyvista.core.filters.data_object import _PYVISTA_CELL_STATUS_INFO
 from pyvista.core.filters.data_object import _SENTINEL
@@ -4638,3 +4639,93 @@ def test_convex_hull_scipy_not_installed(monkeypatch):
     monkeypatch.setitem(sys.modules, 'scipy.spatial', None)
     with pytest.raises(ImportError, match='scipy'):
         _convex_hull_scipy(pv.Sphere().points, dimensionality=3)
+
+
+def _surface():
+    return pv.Sphere(theta_resolution=8, phi_resolution=8)
+
+
+def _volume():
+    return pv.ImageData(
+        dimensions=(5, 5, 5), spacing=(0.25, 0.25, 0.25), origin=(-0.5, -0.5, -0.5)
+    )
+
+
+def _cloud():
+    return pv.PointSet(_surface().points)
+
+
+def _plane():
+    return generate_plane((1.0, 0.0, 0.0), (0.0, 0.0, 0.0))
+
+
+def _line():
+    return pv.Line((-2.0, -2.0, -2.0), (2.0, 2.0, 2.0), resolution=4)
+
+
+_COMPOSITE_FILTERS = {
+    'clip': lambda mesh: mesh.clip(),
+    'clip_box': lambda mesh: mesh.clip_box(),
+    'clip_slab': lambda mesh: mesh.clip_slab(thickness=0.5, normal='z'),
+    'slice': lambda mesh: mesh.slice(),
+    'slice_implicit': lambda mesh: mesh.slice_implicit(_plane()),
+    'slice_along_line': lambda mesh: mesh.slice_along_line(_line()),
+    'extract_all_edges': lambda mesh: mesh.extract_all_edges(),
+    'cell_centers': lambda mesh: mesh.cell_centers(),
+    'triangulate': lambda mesh: mesh.triangulate(),
+    'outline_corners': lambda mesh: mesh.outline_corners(nested=True),
+}
+
+# Block class for a surface block and for a volume block.
+_BLOCK_TYPE = {
+    'clip': (pv.PolyData, pv.UnstructuredGrid),
+    'clip_box': (pv.PolyData, pv.UnstructuredGrid),
+    'clip_slab': (pv.PolyData, pv.UnstructuredGrid),
+    'slice': (pv.PolyData, pv.PolyData),
+    'slice_implicit': (pv.PolyData, pv.PolyData),
+    'slice_along_line': (pv.PolyData, pv.PolyData),
+    'extract_all_edges': (pv.PolyData, pv.PolyData),
+    'cell_centers': (pv.PolyData, pv.PolyData),
+    'triangulate': (pv.PolyData, pv.UnstructuredGrid),
+    'outline_corners': (pv.PolyData, pv.PolyData),
+}
+
+_POINTSET_BLOCK_TYPE = {
+    'clip': pv.PointSet,
+    'clip_box': pv.PointSet,
+    'clip_slab': pv.PointSet,
+    'cell_centers': pv.PolyData,
+    'outline_corners': pv.PolyData,
+}
+
+_POINTSET_RAISES = {
+    'slice': PointSetDimensionReductionError,
+    'slice_implicit': PointSetDimensionReductionError,
+    'slice_along_line': PointSetDimensionReductionError,
+    'extract_all_edges': PointSetCellOperationError,
+    'triangulate': PointSetCellOperationError,
+}
+
+
+@pytest.mark.parametrize('name', sorted(_COMPOSITE_FILTERS))
+@pytest.mark.parametrize('index', [0, 1], ids=['surface', 'volume'])
+def test_composite_filter_block_type(name, index):
+    block = (_surface, _volume)[index]()
+    out = _COMPOSITE_FILTERS[name](pv.MultiBlock([block]))
+    assert type(out[0]) is _BLOCK_TYPE[name][index]
+
+
+@pytest.mark.parametrize('name', sorted(_COMPOSITE_FILTERS))
+def test_composite_filter_pointset_block_type(name):
+    composite = pv.MultiBlock([_cloud()])
+    if name in _POINTSET_RAISES:
+        with pytest.raises(_POINTSET_RAISES[name]):
+            _COMPOSITE_FILTERS[name](composite)
+    else:
+        assert type(_COMPOSITE_FILTERS[name](composite)[0]) is _POINTSET_BLOCK_TYPE[name]
+
+
+@pytest.mark.parametrize('name', sorted(_COMPOSITE_FILTERS))
+def test_composite_filter_keeps_empty_block(name):
+    out = _COMPOSITE_FILTERS[name](pv.MultiBlock([_surface(), None]))
+    assert out[1] is None
