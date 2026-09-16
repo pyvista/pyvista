@@ -4,15 +4,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import numpy as np
-import pyvista_validation as _validation
-
 import pyvista as pv
 from pyvista import _vtk
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
+from . import _ranges
 from .colors import Color
 from .opts import InterpolationType
 from .opts import PointSpriteShape
@@ -522,7 +520,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
 
     @opacity.setter
     def opacity(self, value: float) -> None:
-        _validation.check_range(value, [0.0, 1.0], name='opacity')
+        _ranges.check_opacity(value)
         self.SetOpacity(value)
 
     @property
@@ -568,7 +566,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
 
     @edge_opacity.setter
     def edge_opacity(self, value: float) -> None:
-        _validation.check_range(value, [0.0, 1.0], name='edge_opacity')
+        _ranges.check_edge_opacity(value)
         self.SetEdgeOpacity(value)
 
     @property
@@ -668,7 +666,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
 
     @ambient.setter
     def ambient(self, value: float) -> None:
-        _validation.check_range(value, [0.0, 1.0], name='ambient')
+        _ranges.check_ambient(value)
         self.SetAmbient(value)
 
     @property
@@ -710,7 +708,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
 
     @diffuse.setter
     def diffuse(self, value: float) -> None:
-        _validation.check_range(value, [0.0, 1.0], name='diffuse')
+        _ranges.check_diffuse(value)
         self.SetDiffuse(value)
 
     @property
@@ -751,7 +749,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
 
     @specular.setter
     def specular(self, value: float) -> None:
-        _validation.check_range(value, [0.0, 1.0], name='specular')
+        _ranges.check_specular(value)
         self.SetSpecular(value)
 
     @property
@@ -792,7 +790,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
 
     @specular_power.setter
     def specular_power(self, value: float) -> None:
-        _validation.check_range(value, [0.0, 128.0], name='specular_power')
+        _ranges.check_specular_power(value)
         self.SetSpecularPower(value)
 
     @property
@@ -833,7 +831,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
 
     @metallic.setter
     def metallic(self, value: float) -> None:
-        _validation.check_range(value, [0.0, 1.0], name='metallic')
+        _ranges.check_metallic(value)
         self.SetMetallic(value)
 
     @property
@@ -879,7 +877,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
 
     @roughness.setter
     def roughness(self, value: float) -> None:
-        _validation.check_range(value, [0.0, 1.0], name='roughness')
+        _ranges.check_roughness(value)
         self.SetRoughness(value)
 
     @property
@@ -1041,7 +1039,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
 
     @line_width.setter
     def line_width(self, value: float) -> None:
-        _validation.check_range(value, [0.0, np.inf], name='line_width')
+        _ranges.check_line_width(value)
         self.SetLineWidth(value)
 
     @property
@@ -1083,7 +1081,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
 
     @point_size.setter
     def point_size(self, new_size: float) -> None:
-        _validation.check_range(new_size, [0.0, np.inf], name='point_size')
+        _ranges.check_point_size(new_size)
         self.SetPointSize(new_size)
 
     @property
@@ -1311,7 +1309,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         if not hasattr(self, 'SetAnisotropy'):  # pragma: no cover
             msg = 'Anisotropy requires VTK v9.1.0 or newer.'
             raise VTKVersionError(msg)
-        _validation.check_range(value, [0.0, 1.0], name='anisotropy')
+        _ranges.check_anisotropy(value)
         self.SetAnisotropy(value)
 
     @property
@@ -1350,7 +1348,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
 
     @anisotropy_rotation.setter
     def anisotropy_rotation(self, value: float) -> None:
-        _validation.check_range(value, [0.0, 1.0], name='anisotropy_rotation')
+        _ranges.check_anisotropy_rotation(value)
         self.SetAnisotropyRotation(value)
 
     @property
@@ -1389,7 +1387,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
 
     @index_of_refraction.setter
     def index_of_refraction(self, value: float) -> None:
-        _validation.check_range(value, [1.0, np.inf], name='index_of_refraction')
+        _ranges.check_index_of_refraction(value)
         self.SetBaseIOR(value)
 
     def plot(self, **kwargs) -> None:
