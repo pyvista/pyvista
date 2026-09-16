@@ -6836,6 +6836,29 @@ def test_camera_distortion_reads_each_subplots_projection_and_keeps_it_current()
 
 
 @pytest.mark.usefixtures('no_images_to_verify')
+def test_camera_distortion_is_centered_on_the_principal_point():
+    """The coefficients act on the distance from the principal point of the camera."""
+    image_size = (640, 480)
+    intrinsics = np.array([[800.0, 0.0, 200.0], [0.0, 760.0, 150.0], [0.0, 0.0, 1.0]])
+    pl = pv.Plotter(window_size=image_size)
+    actor = pl.add_mesh(pv.Sphere())
+    pl.camera.set_intrinsic_matrix(intrinsics, image_size)
+    pl.enable_camera_distortion((0.3, 0.1, 0.0, 0.0))
+
+    uniforms = actor.GetShaderProperty().GetVertexCustomUniforms()
+    values = [0.0, 0.0]
+    assert uniforms.GetUniform2f('u_distortion_projection_center', values)
+    width, height = image_size
+    assert values == pytest.approx(
+        (2 * intrinsics[0, 2] / width - 1, 1 - 2 * intrinsics[1, 2] / height)
+    )
+
+    pl.disable_camera_distortion()
+    assert not uniforms.GetUniform2f('u_distortion_projection_center', values)
+    pl.close()
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_camera_distortion_of_a_parallel_projection_does_not_follow_the_scene_scale():
     """A parallel projection has no focal length to write the coefficients in."""
 
