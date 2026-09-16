@@ -23,6 +23,28 @@ from pyvista.plotting.themes import DarkTheme
 from pyvista.plotting.themes import Theme
 from pyvista.plotting.themes import _set_plot_theme_from_env
 
+# Theme attributes which supply the default of a Property attribute.
+THEME_PROPERTY_DEFAULTS = {
+    'edge_opacity': 'edge_opacity',
+    'lighting_params.ambient': 'ambient',
+    'lighting_params.diffuse': 'diffuse',
+    'lighting_params.interpolation': 'interpolation',
+    'lighting_params.metallic': 'metallic',
+    'lighting_params.roughness': 'roughness',
+    'lighting_params.specular': 'specular',
+    'lighting_params.specular_power': 'specular_power',
+    'line_width': 'line_width',
+    'opacity': 'opacity',
+    'point_size': 'point_size',
+}
+
+# Theme attributes with no Property counterpart, which document their own range.
+THEME_OWN_RANGES = {
+    'silhouette.decimate': (0.0, 1.0),
+    'silhouette.opacity': (0.0, 1.0),
+    'slider_styles.modern.cap_opacity': (0.0, 1.0),
+}
+
 # Valid range of every theme attribute which restricts its value.
 THEME_RANGES = {
     'edge_opacity': (0.0, 1.0),
@@ -72,14 +94,26 @@ def test_theme_range_is_validated(default_theme, path, rng):
             setattr(owner, name, upper + 1.0)
 
 
-@pytest.mark.parametrize(('path', 'rng'), THEME_RANGES.items(), ids=THEME_RANGES)
-def test_theme_range_is_documented(default_theme, path, rng):
+@pytest.mark.parametrize(
+    ('path', 'prop_name'), THEME_PROPERTY_DEFAULTS.items(), ids=THEME_PROPERTY_DEFAULTS
+)
+def test_theme_default_cross_references_property(default_theme, path, prop_name):
+    name = path.rsplit('.', maxsplit=1)[-1]
+    owner = _owner_of(default_theme, path)
+    theme_doc = getattr(type(owner), name).__doc__
+    property_doc = getattr(pv.Property, prop_name).__doc__
+
+    assert f':attr:`pyvista.Property.{prop_name}`' in theme_doc
+    assert f':attr:`pyvista.plotting.themes.{type(owner).__name__}.{name}`' in property_doc
+    assert 'Must be in the range' not in theme_doc
+
+
+@pytest.mark.parametrize(('path', 'rng'), THEME_OWN_RANGES.items(), ids=THEME_OWN_RANGES)
+def test_theme_own_range_is_documented(default_theme, path, rng):
     name = path.rsplit('.', maxsplit=1)[-1]
     owner = _owner_of(default_theme, path)
     lower, upper = rng
-    upper_bound = 'inf)' if np.isinf(upper) else f'{upper}]'
-    expected = f'Must be in the range ``[{lower}, {upper_bound}``.'
-    assert expected in getattr(type(owner), name).__doc__
+    assert f'Must be in the range ``[{lower}, {upper}]``.' in getattr(type(owner), name).__doc__
 
 
 @pytest.mark.parametrize('trame', [1, None, object(), True, pv.Sphere()])

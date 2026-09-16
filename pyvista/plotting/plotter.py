@@ -3234,17 +3234,23 @@ class BasePlotter(_BoundsSizeMixin):
             When lighting is enabled, this is the amount of light that
             reaches the actor when not directed at the light source
             emitted from the viewer. Must be in the range ``[0.0, 1.0]``.
+            A value of ``0.0`` adds no ambient light and ``1.0`` lights every
+            surface fully, regardless of where the light is.
 
         diffuse : float, default: 1.0
             The diffuse lighting coefficient. Must be in the range
-            ``[0.0, 1.0]``.
+            ``[0.0, 1.0]``. A value of ``0.0`` reflects no light from the
+            light source and ``1.0`` reflects the full amount.
 
         specular : float, default: 0.0
             The specular lighting coefficient. Must be in the range
-            ``[0.0, 1.0]``.
+            ``[0.0, 1.0]``. A value of ``0.0`` has no highlight and ``1.0``
+            has a full-intensity one.
 
         specular_power : float, default: 1.0
-            The specular power. Must be in the range ``[0.0, 128.0]``.
+            The specular power. Must be in the range ``[0.0, 128.0]``. A
+            value of ``0.0`` spreads the highlight over the whole surface and
+            ``128.0`` concentrates it into a small, sharp spot.
 
         nan_color : ColorLike, default: :attr:`pyvista.plotting.themes.Theme.nan_color`
             The color to use for all ``NaN`` values in the plotted
@@ -3311,15 +3317,16 @@ class BasePlotter(_BoundsSizeMixin):
             color.
 
         metallic : float, default: 0.0
-            Usually this value is either 0 or 1 for a real material
-            but any value in between is valid. This parameter is only
-            used by PBR interpolation. Must be in the range ``[0.0, 1.0]``.
+            This parameter is only used by PBR interpolation. Must be in
+            the range ``[0.0, 1.0]``. A value of ``0.0`` is a non-metal such
+            as plastic and ``1.0`` is a bare metal; values in between are
+            valid but uncommon for a real material.
 
         roughness : float, default: 0.5
             A glossy material has reflections and a high specular part.
-            A value of ``0.0`` is glossy and a value of ``1.0`` is rough.
             This parameter is only used by PBR interpolation. Must be in
-            the range ``[0.0, 1.0]``.
+            the range ``[0.0, 1.0]``. A value of ``0.0`` is glossy and
+            ``1.0`` is rough.
 
         render : bool, default: True
             Force a render when ``True``.
@@ -3869,18 +3876,24 @@ class BasePlotter(_BoundsSizeMixin):
             When lighting is enabled, this is the amount of light that
             reaches the actor when not directed at the light source
             emitted from the viewer. Default 0.0. Must be in the range
-            ``[0.0, 1.0]``.
+            ``[0.0, 1.0]``. A value of ``0.0`` adds no ambient light and
+            ``1.0`` lights every surface fully, regardless of where the light
+            is.
 
         diffuse : float, optional
             The diffuse lighting coefficient. Default 1.0. Must be in the
-            range ``[0.0, 1.0]``.
+            range ``[0.0, 1.0]``. A value of ``0.0`` reflects no light from
+            the light source and ``1.0`` reflects the full amount.
 
         specular : float, optional
             The specular lighting coefficient. Default 0.0. Must be in the
-            range ``[0.0, 1.0]``.
+            range ``[0.0, 1.0]``. A value of ``0.0`` has no highlight and
+            ``1.0`` has a full-intensity one.
 
         specular_power : float, optional
-            The specular power. Must be in the range ``[0.0, 128.0]``.
+            The specular power. Must be in the range ``[0.0, 128.0]``. A
+            value of ``0.0`` spreads the highlight over the whole surface and
+            ``128.0`` concentrates it into a small, sharp spot.
 
         nan_color : ColorLike, optional
             The color to use for all ``NaN`` values in the plotted
@@ -3968,15 +3981,16 @@ class BasePlotter(_BoundsSizeMixin):
             color.
 
         metallic : float, optional
-            Usually this value is either 0 or 1 for a real material
-            but any value in between is valid. This parameter is only
-            used by PBR interpolation. Must be in the range ``[0.0, 1.0]``.
+            This parameter is only used by PBR interpolation. Must be in
+            the range ``[0.0, 1.0]``. A value of ``0.0`` is a non-metal such
+            as plastic and ``1.0`` is a bare metal; values in between are
+            valid but uncommon for a real material.
 
         roughness : float, optional
             A glossy material has reflections and a high specular part.
-            A value of ``0.0`` is glossy and a value of ``1.0`` is rough.
             This parameter is only used by PBR interpolation. Must be in
-            the range ``[0.0, 1.0]``.
+            the range ``[0.0, 1.0]``. A value of ``0.0`` is glossy and
+            ``1.0`` is rough.
 
         render : bool, default: True
             Force a render when ``True``.
