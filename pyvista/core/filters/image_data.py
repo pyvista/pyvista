@@ -4365,6 +4365,9 @@ class ImageDataFilters(DataSetFilters):
         reslice
             Sample an image at the points of a reference image.
 
+        :ref:`resample_reslice_example`
+            Compare the two filters.
+
         crop
             Crop image to remove points at the image's boundaries.
 
@@ -4875,7 +4878,7 @@ class ImageDataFilters(DataSetFilters):
             ``background_value``. Only points inside the image are interpolated, so
             ``border_mode`` applies to the image's own boundary.
 
-        .. versionadded:: 0.49
+        .. versionadded:: 0.50
 
         Parameters
         ----------
@@ -4884,8 +4887,8 @@ class ImageDataFilters(DataSetFilters):
             the output.
 
         interpolation : 'nearest', 'linear', 'cubic', 'lanczos', 'hamming', 'blackman', 'bspline'
-            Interpolation mode to use. See :meth:`resample` for a description of each
-            mode.
+            Interpolation mode to use, ``'nearest'`` by default. See :meth:`resample` for
+            a description of each mode.
 
         transform : TransformLike | :vtk:`vtkAbstractTransform`, optional
             Transform applied to the image before it is sampled, in the same direction as
@@ -4945,6 +4948,9 @@ class ImageDataFilters(DataSetFilters):
 
         :meth:`~pyvista.DataSetFilters.interpolate`
             Interpolate values from one mesh onto another.
+
+        :ref:`resample_reslice_example`
+            Compare the two filters.
 
         Examples
         --------

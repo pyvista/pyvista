@@ -88,7 +88,8 @@ pl.show()
 # %%
 # Both outputs have the same number of samples. The resliced image reports the
 # reference's geometry, because that is where its samples were taken. The resampled
-# image keeps the bounds of the gourds and only changes its spacing.
+# image stays where the gourds are, give or take the half voxel ``resample`` adds at
+# the border, and only its spacing changes.
 
 print(resliced.origin, resliced.spacing)
 print(resampled.origin, resampled.spacing)
