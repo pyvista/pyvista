@@ -4510,7 +4510,6 @@ def test_ruler_renderer_scale():
     pl.show()
 
 
-@pytest.mark.needs_vtk_version(9, 4, 0, reason='SnapLabelsToGrid was added in VTK 9.4.0')
 def test_ruler_number_labels():
     pl = pv.Plotter()
     pl.add_mesh(pv.Sphere())
@@ -4519,7 +4518,8 @@ def test_ruler_number_labels():
     pl.show()
 
 
-def test_ruler_number_labels_not_snapped():
+@pytest.mark.needs_vtk_version(9, 4, 0, reason='SnapLabelsToGrid was added in VTK 9.4.0')
+def test_ruler_snap_labels():
     pl = pv.Plotter()
     pl.add_mesh(pv.Sphere())
     pl.add_ruler(
@@ -4527,7 +4527,7 @@ def test_ruler_number_labels_not_snapped():
         [0.6, -0.6, 0],
         font_size_factor=1.2,
         number_labels=6,
-        snap_labels=False,
+        snap_labels=True,
     )
     pl.view_xy()
     pl.show()

@@ -24,6 +24,7 @@ import pyvista as pv
 from pyvista import _vtk
 from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import MissingDataError
+from pyvista.core.errors import VTKVersionError
 from pyvista.plotting.errors import RenderWindowUnavailable
 import pyvista.plotting.tools as tools_mod
 from pyvista.plotting.tools import supports_open_gl
@@ -1129,35 +1130,21 @@ def test_add_ruler_flip_side_renderer_scale():
     assert ruler.GetPosition2Coordinate().GetValue() == (-2.0, -1.5, 0.0)
 
 
-@pytest.mark.needs_vtk_version(
-    less_than=(9, 4, 0), reason='SnapLabelsToGrid was added in VTK 9.4.0'
-)
-@pytest.mark.parametrize('number_labels', [2, 5])
-def test_add_ruler_number_labels_even_spacing(number_labels):
+@pytest.mark.parametrize('number_labels', [2, 5, 6, 15])
+def test_add_ruler_number_labels(number_labels):
     pl = pv.Plotter()
     ruler = pl.add_ruler([0.0, 0.0, 0.0], [2.8, 0.0, 0.0], number_labels=number_labels)
     step = 2.8 / (number_labels - 1)
-    assert _ruler_label_values(ruler) == pytest.approx([step * i for i in range(number_labels)])
-
-
-@pytest.mark.parametrize('number_labels', [2, 5, 6, 15])
-def test_add_ruler_snap_labels_off(number_labels):
-    pl = pv.Plotter()
-    ruler = pl.add_ruler(
-        [0.0, 0.0, 0.0], [2.8, 0.0, 0.0], number_labels=number_labels, snap_labels=False
-    )
-    step = 2.8 / (number_labels - 1)
     values = _ruler_label_values(ruler)
     assert values == pytest.approx([step * i for i in range(number_labels)])
-    # both ends carry a label, which snapping does not guarantee
     assert values[0] == pytest.approx(0.0)
     assert values[-1] == pytest.approx(2.8)
 
 
-def test_add_ruler_snap_labels_off_without_count():
+def test_add_ruler_labels_without_count():
     pl = pv.Plotter()
-    ruler = pl.add_ruler([0.0, 0.0, 0.0], [2.8, 0.0, 0.0], snap_labels=False)
-    assert _ruler_label_values(ruler) == pytest.approx([0.7 * i for i in range(5)])
+    ruler = pl.add_ruler([0.0, 0.0, 0.0], [2.8, 0.0, 0.0])
+    assert _ruler_label_values(ruler) == pytest.approx([0.5 * i for i in range(6)])
 
 
 @pytest.mark.needs_vtk_version(9, 4, 0, reason='SnapLabelsToGrid was added in VTK 9.4.0')
@@ -1170,17 +1157,37 @@ def test_add_ruler_snap_labels_off_without_count():
         (15, [0.18 * i for i in range(16)]),
     ],
 )
-def test_add_ruler_number_labels(number_labels, expected):
+def test_add_ruler_snap_labels(number_labels, expected):
     pl = pv.Plotter()
-    ruler = pl.add_ruler([0.0, 0.0, 0.0], [2.8, 0.0, 0.0], number_labels=number_labels)
+    ruler = pl.add_ruler(
+        [0.0, 0.0, 0.0], [2.8, 0.0, 0.0], number_labels=number_labels, snap_labels=True
+    )
     assert _ruler_label_values(ruler) == pytest.approx(expected)
 
 
 @pytest.mark.needs_vtk_version(9, 4, 0, reason='SnapLabelsToGrid was added in VTK 9.4.0')
-def test_add_ruler_number_labels_flip_range():
+def test_add_ruler_snap_labels_without_count():
     pl = pv.Plotter()
-    ruler = pl.add_ruler([0.0, 0.0, 0.0], [2.8, 0.0, 0.0], number_labels=6, flip_range=True)
+    ruler = pl.add_ruler([0.0, 0.0, 0.0], [2.8, 0.0, 0.0], snap_labels=True)
+    assert _ruler_label_values(ruler) == pytest.approx([0.6 * i for i in range(5)])
+
+
+@pytest.mark.needs_vtk_version(9, 4, 0, reason='SnapLabelsToGrid was added in VTK 9.4.0')
+def test_add_ruler_snap_labels_flip_range():
+    pl = pv.Plotter()
+    ruler = pl.add_ruler(
+        [0.0, 0.0, 0.0], [2.8, 0.0, 0.0], number_labels=6, snap_labels=True, flip_range=True
+    )
     assert _ruler_label_values(ruler) == pytest.approx([2.5, 2.0, 1.5, 1.0, 0.5, 0.0])
+
+
+@pytest.mark.needs_vtk_version(
+    less_than=(9, 4, 0), reason='SnapLabelsToGrid was added in VTK 9.4.0'
+)
+def test_add_ruler_snap_labels_raises():
+    pl = pv.Plotter()
+    with pytest.raises(VTKVersionError, match=re.escape('`snap_labels` requires VTK >= 9.4')):
+        pl.add_ruler([0.0, 0.0, 0.0], [2.8, 0.0, 0.0], snap_labels=True)
 
 
 @pytest.mark.parametrize(
@@ -1211,7 +1218,7 @@ def test_add_ruler_number_labels_maximum_raises():
 def test_add_ruler_number_labels_above_vtk_maximum():
     pl = pv.Plotter()
     ruler = pl.add_ruler([0.0, 0.0, 0.0], [2.8, 0.0, 0.0], number_labels=30)
-    assert len(_ruler_label_values(ruler)) > 25
+    assert len(_ruler_label_values(ruler)) == 30
 
 
 def test_plotter_shape():

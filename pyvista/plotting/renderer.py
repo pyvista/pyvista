@@ -4504,7 +4504,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         flip_range: bool = False,
         flip_side: bool = False,
         number_labels: int | None = None,
-        snap_labels: bool = True,
+        snap_labels: bool = False,
         show_labels: bool = True,
         font_size_factor: float = 0.6,
         label_size_factor: float = 1.0,
@@ -4552,23 +4552,19 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             .. versionadded:: 0.50
 
         number_labels : int, optional
-            Number of labels to place on the ruler, at least ``2``. While
-            ``snap_labels`` is enabled this is a target rather than an exact count.
-            If not supplied, the number is chosen to suit the distance being
-            measured.
+            Number of labels to place on the ruler, at least ``2``. If not
+            supplied, the number is adjusted for "nice" values.
 
             .. note::
                 Below VTK 9.6 the maximum is ``25``.
 
-        snap_labels : bool, default: True
-            If ``True``, the labels are placed on round values, and the far end of
-            the ruler may carry no label. If ``False``, they are spread evenly over
-            the distance instead, so both ends are labelled and ``number_labels`` is
-            exact.
+        snap_labels : bool, default: False
+            If ``True``, the labels are placed on round values and ``number_labels``
+            becomes a target rather than an exact count. The far end of the ruler
+            carries a label only when a round value lands on it.
 
             .. note::
-                Snapping requires VTK 9.4 or newer. Below that the labels are always
-                spread evenly.
+                Requires VTK 9.4 or newer.
 
             .. versionadded:: 0.50
 
@@ -4676,6 +4672,13 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         ruler.SetTitle(title)
         ruler.SetFontFactor(font_size_factor)
         ruler.SetLabelFactor(label_size_factor)
+        if snap_labels:
+            if vtk_version_info < (9, 4):  # pragma: no cover
+                from pyvista.core.errors import VTKVersionError
+
+                msg = '`snap_labels` requires VTK >= 9.4. Try installing VTK v9.4.0 or newer.'
+                raise VTKVersionError(msg)
+            ruler.SnapLabelsToGridOn()
         if number_labels is not None:
             # VTK clamps the label count to 25 below 9.6, silently dropping the rest
             maximum = np.inf if vtk_version_info >= (9, 6) else 25
@@ -4687,12 +4690,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
                 name='number_labels',
             )
             ruler.SetNumberOfLabels(number_labels)
-            if snap_labels and vtk_version_info >= (9, 4):
-                ruler.SnapLabelsToGridOn()
-            else:
+            if not snap_labels:
                 ruler.AdjustLabelsOff()
-        elif not snap_labels:
-            ruler.AdjustLabelsOff()
         ruler.SetLabelVisibility(show_labels)
         if label_format:
             ruler.SetLabelFormat(label_format)
