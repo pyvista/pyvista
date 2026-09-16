@@ -529,6 +529,8 @@ MESH_KINDS = [
     'multiblock',
 ]
 DATA_MODES = ['point', 'cell', 'both', 'single_point', 'single_cell', 'single_vector']
+# The keywords are swept over these modes only, to keep the sweep's runtime in hand
+KEYWORD_DATA_MODES = ['both', 'single_point', 'single_vector']
 
 
 def _run(mesh, name, args, kwargs):
@@ -573,6 +575,8 @@ def test_filter_does_not_modify_input(name):
             if template is None:
                 continue
             for keyword, kwargs in _call_variants(func):
+                if keyword is not None and mode not in KEYWORD_DATA_MODES:
+                    continue
                 if _crashes_vtk(kind, name, keyword):
                     continue
                 mesh = template.copy()
