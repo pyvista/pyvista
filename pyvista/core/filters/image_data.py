@@ -2928,12 +2928,8 @@ class ImageDataFilters(DataSetFilters):
 
         VTK_NAME = 'BoundaryLabels'
         PV_NAME = 'boundary_labels'
-        if VTK_NAME in output.cell_data.keys():
+        if output.n_cells > 0 and VTK_NAME in output.cell_data.keys():
             labels_array = output.cell_data[VTK_NAME]
-            if not all(labels_array.shape):
-                # Array is empty but has non-zero shape, fix it here
-                # Mesh may also have non-zero points but this is cleaned later
-                output.cell_data[VTK_NAME] = np.empty((0, 0))
             output.rename_array(VTK_NAME, PV_NAME)
             if boundary_style in ['external', 'internal']:
                 # Output contains all boundary cells, need to remove cells we don't want
@@ -2942,6 +2938,10 @@ class ImageDataFilters(DataSetFilters):
                 output.remove_cells(
                     remove, inplace=True, pass_point_ids=False, pass_cell_ids=False
                 )
+
+        if output.n_cells == 0:
+            # No boundaries remain, discard any stray points and arrays
+            return pv.PolyData()
 
         want_external = 'external' in boundary_style
         if simplify_output is None:

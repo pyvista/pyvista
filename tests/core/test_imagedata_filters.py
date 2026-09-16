@@ -314,6 +314,19 @@ def test_contour_labels_2d_cell_data_raises():
         image.contour_labels()
 
 
+@pytest.mark.parametrize(
+    'kwargs',
+    [
+        {'boundary_style': 'internal', 'select_inputs': 2, 'simplify_output': True},
+        {'select_outputs': 99},
+    ],
+)
+def test_contour_labels_no_boundary_cells(labeled_image, kwargs):
+    contours = labeled_image.contour_labels(**kwargs)
+    assert contours.is_empty
+    assert BOUNDARY_LABELS not in contours.cell_data
+
+
 def test_contour_labels_empty_input(frog_tissues):
     voi = frog_tissues.extract_subset((10, 100, 20, 200, 20, 80))
     background_value = 0
