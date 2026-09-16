@@ -4534,8 +4534,14 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             If ``True``, the distance range goes from ``pointb`` to ``pointa``.
 
         number_labels : int, optional
-            Number of labels to place on ruler.
-            If not supplied, the number will be adjusted for "nice" values.
+            Number of labels to place on the ruler, at least ``2``. The labels are
+            snapped to round values, so the number placed may differ by one or two
+            from the number asked for. If not supplied, the number is chosen to suit
+            the distance being measured.
+
+            .. note::
+                Snapping requires VTK 9.4 or newer. Below that the labels are spaced
+                evenly over the distance instead, and the number asked for is exact.
 
         show_labels : bool, default: True
             Whether to show labels.
@@ -4641,8 +4647,18 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         ruler.SetFontFactor(font_size_factor)
         ruler.SetLabelFactor(label_size_factor)
         if number_labels is not None:
-            ruler.AdjustLabelsOff()
+            number_labels = _validation.validate_number(
+                number_labels,
+                must_be_integer=True,
+                must_be_in_range=[2, np.inf],
+                dtype_out=int,
+                name='number_labels',
+            )
             ruler.SetNumberOfLabels(number_labels)
+            if vtk_version_info >= (9, 4):
+                ruler.SnapLabelsToGridOn()
+            else:
+                ruler.AdjustLabelsOff()
         ruler.SetLabelVisibility(show_labels)
         if label_format:
             ruler.SetLabelFormat(label_format)

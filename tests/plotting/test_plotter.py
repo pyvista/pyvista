@@ -1044,6 +1044,61 @@ def test_add_ruler_scale():
     assert max_ == 0.0
 
 
+def _ruler_label_values(ruler):
+    """Return the label values a ruler places inside its range."""
+    adjusted = [0.0, 0.0]
+    ruler.GetAdjustedRange(adjusted)
+    count = ruler.GetAdjustedNumberOfLabels()
+    step = (adjusted[1] - adjusted[0]) / (count - 1)
+    values = [adjusted[0] + i * step for i in range(count)]
+    low, high = sorted(ruler.GetRange())
+    return [value for value in values if low <= value <= high]
+
+
+@pytest.mark.parametrize('number_labels', [2, 3, 6, 15])
+def test_add_ruler_number_labels(number_labels):
+    pl = pv.Plotter()
+    ruler = pl.add_ruler([0.0, 0.0, 0.0], [2.8, 0.0, 0.0], number_labels=number_labels)
+    assert ruler.GetNumberOfLabels() == number_labels
+
+
+@pytest.mark.needs_vtk_version(9, 4, 0, reason='SnapLabelsToGrid was added in VTK 9.4.0')
+@pytest.mark.parametrize(
+    ('number_labels', 'expected'),
+    [
+        (3, [0.0, 1.0, 2.0]),
+        (6, [0.0, 0.5, 1.0, 1.5, 2.0, 2.5]),
+        (15, [0.18 * i for i in range(16)]),
+    ],
+)
+def test_add_ruler_number_labels_round_values(number_labels, expected):
+    pl = pv.Plotter()
+    ruler = pl.add_ruler([0.0, 0.0, 0.0], [2.8, 0.0, 0.0], number_labels=number_labels)
+    assert _ruler_label_values(ruler) == pytest.approx(expected)
+
+
+@pytest.mark.needs_vtk_version(9, 4, 0, reason='SnapLabelsToGrid was added in VTK 9.4.0')
+def test_add_ruler_number_labels_flip_range():
+    pl = pv.Plotter()
+    ruler = pl.add_ruler([0.0, 0.0, 0.0], [2.8, 0.0, 0.0], number_labels=6, flip_range=True)
+    assert _ruler_label_values(ruler) == pytest.approx([2.5, 2.0, 1.5, 1.0, 0.5, 0.0])
+
+
+@pytest.mark.parametrize(
+    ('number_labels', 'error', 'match'),
+    [
+        (1, ValueError, 'greater than or equal to 2'),
+        (0, ValueError, 'greater than or equal to 2'),
+        (2.5, ValueError, 'integer-like'),
+        ('two', TypeError, 'real numbers'),
+    ],
+)
+def test_add_ruler_number_labels_raises(number_labels, error, match):
+    pl = pv.Plotter()
+    with pytest.raises(error, match=match):
+        pl.add_ruler([0.0, 0.0, 0.0], [2.8, 0.0, 0.0], number_labels=number_labels)
+
+
 def test_plotter_shape():
     pl = pv.Plotter()
     assert isinstance(pl.shape, tuple)
