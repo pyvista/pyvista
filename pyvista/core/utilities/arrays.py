@@ -881,6 +881,68 @@ def vtkmatrix_from_array(array: NumpyArray[float]) -> _vtk.vtkMatrix3x3 | _vtk.v
     return matrix
 
 
+def _default_active_vectors_info(mesh: DataSet) -> _ActiveArrayExistsInfoTuple:
+    """Return the active vectors info of a mesh, or that of its only vector-like array."""
+    from pyvista.core.dataset import _ActiveArrayExistsInfoTuple  # noqa: PLC0415
+
+    if mesh.active_vectors_name is not None:
+        field, name = mesh.active_vectors_info
+        return _ActiveArrayExistsInfoTuple(field, cast('str', name))
+
+    possible_vectors_point = [
+        name for name, value in mesh.point_data.items() if value.ndim == 2 and value.shape[1] == 3
+    ]
+    possible_vectors_cell = [
+        name for name, value in mesh.cell_data.items() if value.ndim == 2 and value.shape[1] == 3
+    ]
+    possible_vectors = possible_vectors_point + possible_vectors_cell
+
+    if len(possible_vectors) == 1:
+        field = (
+            FieldAssociation.POINT if len(possible_vectors_point) == 1 else FieldAssociation.CELL
+        )
+        return _ActiveArrayExistsInfoTuple(field, possible_vectors[0])
+    if len(possible_vectors) < 1:
+        msg = 'No vector-like data available.'
+        raise MissingDataError(msg)
+    msg = (
+        'Multiple vector-like data available\n'
+        f'cell data: {possible_vectors_cell}.\n'
+        f'point data: {possible_vectors_point}.\n'
+        'Set one as active using DataSet.set_active_vectors(name, preference=type)'
+    )
+    raise AmbiguousDataError(msg)
+
+
+def _default_active_scalars_info(mesh: DataSet) -> _ActiveArrayExistsInfoTuple:
+    """Return the active scalars info of a mesh, or that of its only array."""
+    from pyvista.core.dataset import _ActiveArrayExistsInfoTuple  # noqa: PLC0415
+
+    if mesh.active_scalars_name is not None:
+        field, name = mesh.active_scalars_info
+        return _ActiveArrayExistsInfoTuple(field, cast('str', name))
+
+    possible_scalars_point = mesh.point_data.keys()
+    possible_scalars_cell = mesh.cell_data.keys()
+    possible_scalars = possible_scalars_point + possible_scalars_cell
+
+    if len(possible_scalars) == 1:
+        field = (
+            FieldAssociation.POINT if len(possible_scalars_point) == 1 else FieldAssociation.CELL
+        )
+        return _ActiveArrayExistsInfoTuple(field, possible_scalars[0])
+    if len(possible_scalars) < 1:
+        msg = 'No data available.'
+        raise MissingDataError(msg)
+    msg = (
+        'Multiple data available\n'
+        f'cell data: {possible_scalars_cell}.\n'
+        f'point data: {possible_scalars_point}.\n'
+        'Set one as active using DataSet.set_active_scalars(name, preference=type)'
+    )
+    raise AmbiguousDataError(msg)
+
+
 def set_default_active_vectors(mesh: DataSet) -> _ActiveArrayExistsInfoTuple:
     """Set a default vectors array on mesh, if not already set.
 
@@ -916,35 +978,11 @@ def set_default_active_vectors(mesh: DataSet) -> _ActiveArrayExistsInfoTuple:
     from pyvista.core.dataset import _ActiveArrayExistsInfoTuple  # noqa: PLC0415
 
     if mesh.active_vectors_name is None:
-        point_data = mesh.point_data
-        cell_data = mesh.cell_data
-
-        possible_vectors_point = [
-            name for name, value in point_data.items() if value.ndim == 2 and value.shape[1] == 3
-        ]
-        possible_vectors_cell = [
-            name for name, value in cell_data.items() if value.ndim == 2 and value.shape[1] == 3
-        ]
-
-        possible_vectors = possible_vectors_point + possible_vectors_cell
-        n_possible_vectors = len(possible_vectors)
-
-        if n_possible_vectors == 1:
-            preference: Literal['point', 'cell'] = (
-                'point' if len(possible_vectors_point) == 1 else 'cell'
-            )
-            mesh.set_active_vectors(possible_vectors[0], preference=preference)
-        elif n_possible_vectors < 1:
-            msg = 'No vector-like data available.'
-            raise MissingDataError(msg)
-        else:  # n_possible_vectors > 1:
-            msg = (
-                'Multiple vector-like data available\n'
-                f'cell data: {possible_vectors_cell}.\n'
-                f'point data: {possible_vectors_point}.\n'
-                'Set one as active using DataSet.set_active_vectors(name, preference=type)'
-            )
-            raise AmbiguousDataError(msg)
+        default = _default_active_vectors_info(mesh)
+        preference: Literal['point', 'cell'] = (
+            'point' if default.association == FieldAssociation.POINT else 'cell'
+        )
+        mesh.set_active_vectors(default.name, preference=preference)
     field, name = mesh.active_vectors_info
     return _ActiveArrayExistsInfoTuple(field, cast('str', name))
 
@@ -984,31 +1022,11 @@ def set_default_active_scalars(mesh: DataSet) -> _ActiveArrayExistsInfoTuple:
     from pyvista.core.dataset import _ActiveArrayExistsInfoTuple  # noqa: PLC0415
 
     if mesh.active_scalars_name is None:
-        point_data = mesh.point_data
-        cell_data = mesh.cell_data
-
-        possible_scalars_point = point_data.keys()
-        possible_scalars_cell = cell_data.keys()
-
-        possible_scalars = possible_scalars_point + possible_scalars_cell
-        n_possible_scalars = len(possible_scalars)
-
-        if n_possible_scalars == 1:
-            preference: Literal['point', 'cell'] = (
-                'point' if len(possible_scalars_point) == 1 else 'cell'
-            )
-            mesh.set_active_scalars(possible_scalars[0], preference=preference)
-        elif n_possible_scalars < 1:
-            msg = 'No data available.'
-            raise MissingDataError(msg)
-        else:  # n_possible_scalars > 1:
-            msg = (
-                'Multiple data available\n'
-                f'cell data: {possible_scalars_cell}.\n'
-                f'point data: {possible_scalars_point}.\n'
-                'Set one as active using DataSet.set_active_scalars(name, preference=type)'
-            )
-            raise AmbiguousDataError(msg)
+        default = _default_active_scalars_info(mesh)
+        preference: Literal['point', 'cell'] = (
+            'point' if default.association == FieldAssociation.POINT else 'cell'
+        )
+        mesh.set_active_scalars(default.name, preference=preference)
     field, name = mesh.active_scalars_info
     return _ActiveArrayExistsInfoTuple(field, cast('str', name))
 

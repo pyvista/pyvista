@@ -111,7 +111,7 @@ def test_threshold_raises(mocker: MockerFixture):
 def test_contour_raises(mocker: MockerFixture):
     from pyvista.core.filters import data_set
 
-    m = mocker.patch.object(data_set, 'set_default_active_scalars')
+    m = mocker.patch.object(data_set, '_default_active_scalars_info')
     m().name = 'foo'
 
     with pytest.raises(

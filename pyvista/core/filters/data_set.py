@@ -41,6 +41,8 @@ from pyvista.core.filters.data_object import _clipper
 from pyvista.core.filters.data_object import _keep_array_structure
 from pyvista.core.filters.data_object import _validate_clip_inplace
 from pyvista.core.utilities.arrays import FieldAssociation
+from pyvista.core.utilities.arrays import _default_active_scalars_info
+from pyvista.core.utilities.arrays import _default_active_vectors_info
 from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
@@ -1150,7 +1152,7 @@ class DataSetFilters(DataObjectFilters):
 
         """
         # set the scalars to threshold on
-        scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
+        scalars_ = _default_active_scalars_info(self).name if scalars is None else scalars
         arr = get_array(self, scalars_, preference=preference, err=False)
         if arr is None:
             msg = 'No arrays present to threshold.'
@@ -1296,7 +1298,7 @@ class DataSetFilters(DataObjectFilters):
         See :ref:`using_filters_example` for more examples using a similar filter.
 
         """
-        tscalars = set_default_active_scalars(self).name if scalars is None else scalars
+        tscalars = _default_active_scalars_info(self).name if scalars is None else scalars
         dmin, dmax = self.get_data_range(arr_var=tscalars, preference=preference)
 
         def _check_percent(percent):
@@ -1445,7 +1447,7 @@ class DataSetFilters(DataObjectFilters):
                 )
                 .cast_to_pointset()
             )
-        scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
+        scalars_ = _default_active_scalars_info(self).name if scalars is None else scalars
         arr = get_array(self, scalars_, preference=preference, err=False)
         if arr is None:
             msg = f'No array {scalars_!r} found to remove NaN cells from.'
@@ -1845,7 +1847,7 @@ class DataSetFilters(DataObjectFilters):
             scalars_name = 'Contour Data'
             self[scalars_name] = scalars
         elif scalars is None:
-            scalars_name = set_default_active_scalars(self).name
+            scalars_name = _default_active_scalars_info(self).name
         else:
             msg = (
                 f'Invalid type for `scalars` ({type(scalars)}). Should be either '
@@ -3035,7 +3037,7 @@ class DataSetFilters(DataObjectFilters):
         """
         factor = kwargs.pop('scale_factor', factor)
         assert_empty_kwargs(**kwargs)
-        scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
+        scalars_ = _default_active_scalars_info(self).name if scalars is None else scalars
         _ = get_array(self, scalars_, preference='point', err=True)
 
         field = get_array_association(self, scalars_, preference='point')
@@ -3138,7 +3140,7 @@ class DataSetFilters(DataObjectFilters):
         >>> pl.show()
 
         """
-        vectors_ = set_default_active_vectors(self).name if vectors is None else vectors
+        vectors_ = _default_active_vectors_info(self).name if vectors is None else vectors
         arr = get_array(self, vectors_, preference='point')
         field = get_array_association(self, vectors_, preference='point')
         if arr is None:
@@ -4386,7 +4388,7 @@ class DataSetFilters(DataObjectFilters):
         )
 
         # Get variable of interest
-        scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
+        scalars_ = _default_active_scalars_info(self).name if scalars is None else scalars
         values: NumpyArray[float] = sampled.get_array(scalars_)
         distance = sampled['Distance']
         if component is not None:
@@ -4759,7 +4761,7 @@ class DataSetFilters(DataObjectFilters):
         )
 
         # Get variable of interest
-        scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
+        scalars_ = _default_active_scalars_info(self).name if scalars is None else scalars
         values = sampled.get_array(scalars_)
         distance = sampled['Distance']
 
@@ -4897,7 +4899,7 @@ class DataSetFilters(DataObjectFilters):
         )
 
         # Get variable of interest
-        scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
+        scalars_ = _default_active_scalars_info(self).name if scalars is None else scalars
         values = sampled.get_array(scalars_)
         distance = sampled['Distance']
 
@@ -5912,7 +5914,7 @@ class DataSetFilters(DataObjectFilters):
     ):
         def _validate_scalar_array(scalars_, preference_):
             # Get the scalar array and field association to use for extraction
-            scalars_ = set_default_active_scalars(self).name if scalars_ is None else scalars_
+            scalars_ = _default_active_scalars_info(self).name if scalars_ is None else scalars_
             array_ = get_array(self, scalars_, preference=preference_, err=True)
             association_ = get_array_association(self, scalars_, preference=preference_)
             return array_, scalars_, association_
@@ -6765,7 +6767,7 @@ class DataSetFilters(DataObjectFilters):
         """
         alg = _vtk.vtkGradientFilter()
         # Check if scalars array given
-        scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
+        scalars_ = _default_active_scalars_info(self).name if scalars is None else scalars
         if not isinstance(scalars_, str):
             msg = 'scalars array must be given as a string name'  # type: ignore[unreachable]
             raise TypeError(msg)
@@ -7897,7 +7899,7 @@ class DataSetFilters(DataObjectFilters):
 
         """
         # Set a input scalars
-        scalars = set_default_active_scalars(self).name if scalars is None else scalars
+        scalars = _default_active_scalars_info(self).name if scalars is None else scalars
         field = get_array_association(self, scalars, preference=preference)
 
         # Determine output scalars
@@ -8275,7 +8277,7 @@ class DataSetFilters(DataObjectFilters):
             color_dtype = 'uint8'
 
         if scalars is None:
-            field, name = set_default_active_scalars(self)
+            field, name = _default_active_scalars_info(self)
         else:
             name = scalars
             field = get_array_association(self, name, preference=preference, err=True)
