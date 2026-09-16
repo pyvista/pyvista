@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
 _GridType = TypeVar('_GridType', bound='Grid')
 _PointGridType = TypeVar('_PointGridType', bound='PointGrid')
-_PointSetType = TypeVar('_PointSetType', bound='_PointSetBase')
+_PointSetBaseType = TypeVar('_PointSetBaseType', bound='_PointSetBase')
 _DataSetType = TypeVar('_DataSetType', bound='DataSet')
 _MultiBlockType = TypeVar('_MultiBlockType', bound='MultiBlock[Any]')
 _DataSetOrMultiBlockType = TypeVar('_DataSetOrMultiBlockType', bound='DataSet | MultiBlock[Any]')
@@ -27,5 +27,5 @@ _DataObjectType = TypeVar('_DataObjectType', bound='DataObject')
 
 # Undocumented
 _PolyDataType = TypeVar('_PolyDataType', bound='PolyData')
-_PointSetOnlyType = TypeVar('_PointSetOnlyType', bound='PointSet')
+_PointSetType = TypeVar('_PointSetType', bound='PointSet')
 _UnstructuredGridType = TypeVar('_UnstructuredGridType', bound='UnstructuredGrid')
