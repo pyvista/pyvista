@@ -4483,7 +4483,7 @@ def test_ruler():
 def test_ruler_flip_side():
     pl = pv.Plotter()
     pl.add_mesh(pv.Box(bounds=(-1.25, 1.25, -0.3, 0.3, -0.3, 0.3)))
-    style = dict(font_size_factor=1.2, tick_length=18, number_minor_ticks=4)
+    style = dict(font_size_factor=1.2, tick_length=18)
     pl.add_ruler([-1.25, -0.6, 0], [1.25, -0.6, 0], title='+X', **style)
     pl.add_ruler([1.25, -1.1, 0], [-1.25, -1.1, 0], title='-X', flip_side=True, **style)
     pl.enable_parallel_projection()
@@ -4501,7 +4501,6 @@ def test_ruler_renderer_scale():
         title='X Distance',
         font_size_factor=1.0,
         tick_length=20,
-        number_minor_ticks=4,
     )
     pl.set_scale(xscale=3, yscale=2)
     pl.enable_parallel_projection()

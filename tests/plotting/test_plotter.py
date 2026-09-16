@@ -1045,14 +1045,15 @@ def test_add_ruler_scale():
     assert max_ == 0.0
 
 
-@pytest.mark.parametrize('color', ['red', 'gray', 'teal', 'white'])
-def test_add_ruler_color(color):
+@pytest.mark.parametrize(('label_color', 'tick_color'), [('red', 'gray'), ('teal', 'white')])
+def test_add_ruler_color(label_color, tick_color):
     pl = pv.Plotter()
-    ruler = pl.add_ruler([0.0, 0.0, 0.0], [1.0, 0.0, 0.0], label_color=color, tick_color=color)
-    expected = pv.Color(color).float_rgb
-    assert ruler.GetProperty().GetColor() == expected
-    assert ruler.GetLabelTextProperty().GetColor() == expected
-    assert ruler.GetTitleTextProperty().GetColor() == expected
+    ruler = pl.add_ruler(
+        [0.0, 0.0, 0.0], [1.0, 0.0, 0.0], label_color=label_color, tick_color=tick_color
+    )
+    assert ruler.GetProperty().GetColor() == pv.Color(tick_color).float_rgb
+    assert ruler.GetLabelTextProperty().GetColor() == pv.Color(label_color).float_rgb
+    assert ruler.GetTitleTextProperty().GetColor() == pv.Color(label_color).float_rgb
 
 
 @pytest.mark.parametrize('color', ['red', 'gray', 'teal', 'white'])
@@ -1072,13 +1073,13 @@ def test_add_legend_scale_color(color):
 def test_add_ruler_renderer_scale(scale_first):
     pl = pv.Plotter()
     if scale_first:
-        pl.set_scale(xscale=2, yscale=3)
-    ruler = pl.add_ruler([-1.0, -0.5, 0.0], [1.0, -0.5, 0.0])
+        pl.set_scale(xscale=2, yscale=3, zscale=4)
+    ruler = pl.add_ruler([-1.0, -0.5, 0.25], [1.0, -0.5, 0.25])
     if not scale_first:
-        pl.set_scale(xscale=2, yscale=3)
+        pl.set_scale(xscale=2, yscale=3, zscale=4)
 
-    assert ruler.GetPositionCoordinate().GetValue() == (-2.0, -1.5, 0.0)
-    assert ruler.GetPosition2Coordinate().GetValue() == (2.0, -1.5, 0.0)
+    assert ruler.GetPositionCoordinate().GetValue() == (-2.0, -1.5, 1.0)
+    assert ruler.GetPosition2Coordinate().GetValue() == (2.0, -1.5, 1.0)
     # the ruler reports the distance it was given, not the scaled one
     assert ruler.GetRange() == (0.0, 2.0)
 

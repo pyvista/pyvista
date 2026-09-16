@@ -3132,10 +3132,10 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         # Reset all actors to match this scale
         for actor in self.actors.values():
-            if hasattr(actor, 'SetScale'):
-                actor.SetScale(self.scale)
-            elif isinstance(actor, _vtk.vtkAxisActor2D) and hasattr(actor, '_unscaled_points'):
+            if isinstance(actor, _vtk.vtkAxisActor2D) and hasattr(actor, '_unscaled_points'):
                 self._place_ruler(actor)
+            elif hasattr(actor, 'SetScale'):
+                actor.SetScale(self.scale)
 
         self._plotter.render()
         if reset_camera:
