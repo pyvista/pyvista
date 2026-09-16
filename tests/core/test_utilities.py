@@ -429,13 +429,15 @@ def test_read_force_ext_wrong_extension(tmpdir):
     assert data.n_points == 0
 
     # try to read a .ply file as .vtm
-    # vtkXMLMultiBlockDataReader throws a VTK error about the validity of the XML file
-    # the returned dataset is empty
+    # the file is not XML at all, and VTK only reports the parse failure from 9.7 on
     fname = ex.planefile
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
-        data = fileio.read(fname, force_ext='.vtm')
-    assert len(data) == 0
+        if pv.vtk_version_info >= (9, 7):
+            with pytest.raises(pv.VTKExecutionError, match='Error parsing XML'):
+                fileio.read(fname, force_ext='.vtm')
+        else:
+            assert len(fileio.read(fname, force_ext='.vtm')) == 0
 
     fname = ex.planefile
     with pytest.raises(IOError):  # noqa: PT011
