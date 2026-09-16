@@ -4548,6 +4548,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             If ``True``, the labels and ticks are drawn on the other side of the
             ruler. The distances they report are unchanged.
 
+            .. versionadded:: 0.50
+
         number_labels : int, optional
             Number of labels to place on the ruler, at least ``2``. The labels are
             snapped to round values, so this is a target rather than an exact count
@@ -4621,9 +4623,9 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         ...     title='X Distance',
         ... )
 
-        Measure y direction of cone and place ruler slightly to left.
-        The title and labels are placed to the right of the ruler when
-        traveling from ``pointa`` to ``pointb``.
+        Measure y direction of cone and place ruler slightly to left. The labels
+        are placed to the right of the ruler when traveling from ``pointa`` to
+        ``pointb``.
 
         >>> _ = pl.add_ruler(
         ...     pointa=[cone.bounds.x_min - 0.1, cone.bounds.y_max, 0.0],

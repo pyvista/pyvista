@@ -1082,6 +1082,17 @@ def test_add_ruler_renderer_scale(scale_first):
     assert ruler.GetRange() == (0.0, 2.0)
 
 
+def _ruler_label_values(ruler):
+    """Return the label values a ruler places inside its range."""
+    adjusted = [0.0, 0.0]
+    ruler.GetAdjustedRange(adjusted)
+    count = ruler.GetAdjustedNumberOfLabels()
+    step = (adjusted[1] - adjusted[0]) / (count - 1)
+    values = [adjusted[0] + i * step for i in range(count)]
+    low, high = sorted(ruler.GetRange())
+    return [value for value in values if low <= value <= high]
+
+
 def test_add_ruler_flip_side():
     pl = pv.Plotter()
     plain = pl.add_ruler([0.0, 0.0, 0.0], [1.4, 0.0, 0.0])
@@ -1090,6 +1101,7 @@ def test_add_ruler_flip_side():
     assert flipped.GetPositionCoordinate().GetValue() == plain.GetPosition2Coordinate().GetValue()
     assert flipped.GetPosition2Coordinate().GetValue() == plain.GetPositionCoordinate().GetValue()
     assert flipped.GetRange() == plain.GetRange()[::-1]
+    assert _ruler_label_values(flipped) == pytest.approx(_ruler_label_values(plain)[::-1])
 
 
 @pytest.mark.parametrize('flip_range', [False, True])
@@ -1115,17 +1127,6 @@ def test_add_ruler_flip_side_renderer_scale():
 
     assert ruler.GetPositionCoordinate().GetValue() == (2.0, -1.5, 0.0)
     assert ruler.GetPosition2Coordinate().GetValue() == (-2.0, -1.5, 0.0)
-
-
-def _ruler_label_values(ruler):
-    """Return the label values a ruler places inside its range."""
-    adjusted = [0.0, 0.0]
-    ruler.GetAdjustedRange(adjusted)
-    count = ruler.GetAdjustedNumberOfLabels()
-    step = (adjusted[1] - adjusted[0]) / (count - 1)
-    values = [adjusted[0] + i * step for i in range(count)]
-    low, high = sorted(ruler.GetRange())
-    return [value for value in values if low <= value <= high]
 
 
 @pytest.mark.needs_vtk_version(
