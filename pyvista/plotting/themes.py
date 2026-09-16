@@ -46,7 +46,6 @@ import pyvista_validation as _validation
 import pyvista  # noqa: TC001
 from pyvista._warn_external import warn_external
 from pyvista.core.config import _ConfigBase
-from pyvista.core.utilities.misc import _check_range
 
 from .colors import Color
 from .colors import get_cmap_safe
@@ -262,7 +261,7 @@ class _LightingConfig(_ConfigBase):
 
     @metallic.setter
     def metallic(self, metallic: float):
-        _check_range(metallic, (0, 1), 'metallic')
+        _validation.check_range(metallic, [0.0, 1.0], name='metallic')
         self._metallic = metallic
 
     @property
@@ -288,7 +287,7 @@ class _LightingConfig(_ConfigBase):
 
     @roughness.setter
     def roughness(self, roughness: float):
-        _check_range(roughness, (0, 1), 'roughness')
+        _validation.check_range(roughness, [0.0, 1.0], name='roughness')
         self._roughness = roughness
 
     @property
@@ -313,7 +312,7 @@ class _LightingConfig(_ConfigBase):
 
     @ambient.setter
     def ambient(self, ambient: float):
-        _check_range(ambient, (0, 1), 'ambient')
+        _validation.check_range(ambient, [0.0, 1.0], name='ambient')
         self._ambient = ambient
 
     @property
@@ -339,7 +338,7 @@ class _LightingConfig(_ConfigBase):
 
     @diffuse.setter
     def diffuse(self, diffuse: float):
-        _check_range(diffuse, (0, 1), 'diffuse')
+        _validation.check_range(diffuse, [0.0, 1.0], name='diffuse')
         self._diffuse = diffuse
 
     @property
@@ -363,7 +362,7 @@ class _LightingConfig(_ConfigBase):
 
     @specular.setter
     def specular(self, specular: float):
-        _check_range(specular, (0, 1), 'specular')
+        _validation.check_range(specular, [0.0, 1.0], name='specular')
         self._specular = specular
 
     @property
@@ -386,7 +385,7 @@ class _LightingConfig(_ConfigBase):
 
     @specular_power.setter
     def specular_power(self, specular_power: float):
-        _check_range(specular_power, (0, 128), 'specular_power')
+        _validation.check_range(specular_power, [0.0, 128.0], name='specular_power')
         self._specular_power = specular_power
 
     @property
@@ -579,7 +578,7 @@ class _SilhouetteConfig(_ConfigBase):
 
     @opacity.setter
     def opacity(self, opacity: float):
-        _check_range(opacity, (0, 1), 'opacity')
+        _validation.check_range(opacity, [0.0, 1.0], name='opacity')
         self._opacity = float(opacity)
 
     @property
@@ -617,7 +616,7 @@ class _SilhouetteConfig(_ConfigBase):
         if decimate is None:
             self._decimate = None
         else:
-            _check_range(decimate, (0, 1), 'decimate')
+            _validation.check_range(decimate, [0.0, 1.0], name='decimate')
             self._decimate = float(decimate)
 
     def __repr__(self):
@@ -1256,7 +1255,7 @@ class _SliderStyleConfig(_ConfigBase):
 
     @cap_opacity.setter
     def cap_opacity(self, cap_opacity: float):
-        _check_range(cap_opacity, (0, 1), 'cap_opacity')
+        _validation.check_range(cap_opacity, [0.0, 1.0], name='cap_opacity')
         self._cap_opacity = float(cap_opacity)
 
     @property
@@ -2101,7 +2100,7 @@ class Theme(_ConfigBase):
 
     @opacity.setter
     def opacity(self, opacity: float):
-        _check_range(opacity, (0, 1), 'opacity')
+        _validation.check_range(opacity, [0.0, 1.0], name='opacity')
         self._opacity = float(opacity)
 
     @property
@@ -2123,7 +2122,7 @@ class Theme(_ConfigBase):
 
     @edge_opacity.setter
     def edge_opacity(self, edge_opacity: float):
-        _check_range(edge_opacity, (0, 1), 'edge_opacity')
+        _validation.check_range(edge_opacity, [0.0, 1.0], name='edge_opacity')
         self._edge_opacity = float(edge_opacity)
 
     @property
