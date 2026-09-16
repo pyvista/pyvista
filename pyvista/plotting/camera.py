@@ -30,16 +30,15 @@ _VISION_FROM_VTK = np.diag([1.0, -1.0, -1.0, 1.0])
 
 def _validate_image_size(image_size: VectorLike[int]) -> tuple[int, int]:
     """Validate a width and height in pixels."""
-    width, height = _validation.validate_array(
+    size = _validation.validate_array(
         image_size,
         must_have_shape=(2,),
         must_be_integer=True,
         must_be_in_range=[1, np.inf],
         dtype_out=int,
-        to_tuple=True,
         name='image size',
     )
-    return width, height
+    return int(size[0]), int(size[1])
 
 
 class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
