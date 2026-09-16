@@ -7,11 +7,11 @@ Also includes some pure-python helpers.
 from __future__ import annotations
 
 from enum import IntEnum
-import itertools
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
 from typing import Literal
+from typing import NamedTuple
 from typing import cast
 from typing import get_args
 
@@ -3093,6 +3093,87 @@ class _PartEnum(IntEnum):
     tip = 1
 
 
+class _AxesPartTemplate(NamedTuple):
+    """Normalized part geometry with the sign of each point and cell along the part's axis."""
+
+    mesh: PolyData
+    point_sign: NumpyArray[float]
+    cell_sign: NumpyArray[float]
+
+
+def _make_template(mesh: PolyData) -> _AxesPartTemplate:
+    """Return a template of the mesh as-is."""
+    return _AxesPartTemplate(mesh, np.ones(mesh.n_points), np.ones(mesh.n_cells))
+
+
+def _make_mirrored_template(mesh: PolyData) -> _AxesPartTemplate:
+    """Return a template with a second copy of the mesh to be mirrored across the origin."""
+    return _AxesPartTemplate(
+        mesh.append_polydata(mesh),
+        np.repeat([1.0, -1.0], mesh.n_points),
+        np.repeat([1.0, -1.0], mesh.n_cells),
+    )
+
+
+def _make_mirrored_point_template(mesh: PolyData, axis: _AxisEnum) -> _AxesPartTemplate:
+    """Return a template with one degenerate cell at the far end of the mesh to be mirrored."""
+    point = np.zeros((1, 3), dtype=mesh.points.dtype)
+    point[0, axis] = 0.5
+    extra = pv.PolyData(point, faces=[3, 0, 0, 0])
+    # Pad every array so that the append keeps them
+    for src, dst in ((mesh.point_data, extra.point_data), (mesh.cell_data, extra.cell_data)):
+        for name, array in src.items():
+            dst[name] = np.zeros((1, *array.shape[1:]), dtype=array.dtype)
+        dst.active_normals_name = src.active_normals_name
+        dst.active_vectors_name = src.active_vectors_name
+    return _AxesPartTemplate(
+        mesh.append_polydata(extra),
+        np.append(np.ones(mesh.n_points), -1.0),
+        np.append(np.ones(mesh.n_cells), -1.0),
+    )
+
+
+def _build_axes_part(
+    part: PolyData,
+    template: _AxesPartTemplate,
+    *,
+    axis: _AxisEnum,
+    scale: NumpyArray[float],
+    offset: float,
+) -> None:
+    """Write the scaled template to the part with its start at the offset along the axis."""
+    mesh = template.mesh
+    part.copy_from(mesh, deep=False)
+
+    # The normalized template spans [-0.5, 0.5] along the axis
+    translation = np.zeros(3)
+    translation[axis] = 0.5 * scale[axis] + offset
+    points = mesh.points * scale + translation
+    points[:, axis] *= template.point_sign
+    # Give the part its own points object so that the template's stays untouched
+    part.points = pv.vtk_points(points.astype(mesh.points.dtype, copy=False), deep=False)
+
+    for src, dst, sign in (
+        (mesh.point_data, part.point_data, template.point_sign),
+        (mesh.cell_data, part.cell_data, template.cell_sign),
+    ):
+        normals_name = src.active_normals_name
+        if normals_name is not None:
+            normals = src[normals_name]
+            scaled = normals / scale
+            norms = np.linalg.norm(scaled, axis=1, keepdims=True)
+            norms[norms == 0.0] = 1.0
+            scaled /= norms
+            scaled[:, axis] *= sign
+            dst[normals_name] = scaled.astype(normals.dtype, copy=False)
+        vectors_name = src.active_vectors_name
+        if vectors_name is not None:
+            vectors = src[vectors_name]
+            scaled = vectors * scale
+            scaled[:, axis] *= sign
+            dst[vectors_name] = scaled.astype(vectors.dtype, copy=False)
+
+
 class AxesGeometrySource(_NoNewAttrMixin):
     """Create axes geometry source.
 
@@ -3171,7 +3252,7 @@ class AxesGeometrySource(_NoNewAttrMixin):
         'cube',
         'octahedron',
     ]
-    GEOMETRY_TYPES: ClassVar[tuple[str]] = get_args(GeometryTypes)
+    GEOMETRY_TYPES: ClassVar[tuple[str, ...]] = get_args(GeometryTypes)
 
     def __init__(
         self: AxesGeometrySource,
@@ -3195,9 +3276,16 @@ class AxesGeometrySource(_NoNewAttrMixin):
         self._shaft_datasets = (polys[0], polys[1], polys[2])
         self._tip_datasets = (polys[3], polys[4], polys[5])
 
-        # Also store datasets for internal use
-        self._shaft_datasets_normalized = [pv.PolyData() for _ in range(3)]
-        self._tip_datasets_normalized = [pv.PolyData() for _ in range(3)]
+        # Normalized parts and the templates built from them and the symmetry flags
+        self._normalized: dict[_PartEnum, tuple[PolyData, PolyData, PolyData]] = {}
+        self._templates: dict[_PartEnum, tuple[_AxesPartTemplate, ...]] = {}
+
+        # Used by AxesAssembly for scale_mode='anti_distortion'
+        self._anti_distortion_factor: NumpyArray[float] = np.ones(shape=(3,), dtype=float)
+
+        # Set flags before the part types since the templates depend on them
+        self._symmetric = symmetric
+        self._symmetric_bounds = symmetric_bounds
 
         # Set geometry-dependent params
         self.shaft_type = shaft_type
@@ -3206,13 +3294,6 @@ class AxesGeometrySource(_NoNewAttrMixin):
         self.tip_type = tip_type
         self.tip_radius = tip_radius
         self.tip_length = tip_length
-
-        # Set flags
-        self._symmetric = symmetric
-        self._symmetric_bounds = symmetric_bounds
-
-        # Used by AxesAssembly for scale_mode='anti_distortion'
-        self._anti_distortion_factor: NumpyArray[float] = np.ones(shape=(3,), dtype=float)
 
     def __repr__(self: AxesGeometrySource) -> str:
         """Representation of the axes."""
@@ -3245,6 +3326,7 @@ class AxesGeometrySource(_NoNewAttrMixin):
     @symmetric.setter
     def symmetric(self: AxesGeometrySource, val: bool) -> None:
         self._symmetric = val
+        self._update_templates()
 
     @property
     def symmetric_bounds(self: AxesGeometrySource) -> bool:  # numpydoc ignore=RT01
@@ -3317,6 +3399,7 @@ class AxesGeometrySource(_NoNewAttrMixin):
     @symmetric_bounds.setter
     def symmetric_bounds(self: AxesGeometrySource, val: bool) -> None:
         self._symmetric_bounds = val
+        self._update_templates()
 
     @property
     def shaft_length(
@@ -3340,15 +3423,16 @@ class AxesGeometrySource(_NoNewAttrMixin):
         (1.0, 0.9, 0.5)
 
         """
-        return tuple(self._shaft_length.tolist())
+        return self._shaft_length
 
     @shaft_length.setter
     def shaft_length(self: AxesGeometrySource, length: float | VectorLike[float]) -> None:
-        self._shaft_length: NumpyArray[float] = _validation.validate_array3(
+        self._shaft_length = _validation.validate_array3(
             length,
             broadcast=True,
             dtype_out=float,
             must_be_in_range=[0.0, np.inf],
+            to_tuple=True,
             name='Shaft length',
         )
 
@@ -3374,15 +3458,16 @@ class AxesGeometrySource(_NoNewAttrMixin):
         (0.1, 0.4, 0.2)
 
         """
-        return tuple(self._tip_length.tolist())
+        return self._tip_length
 
     @tip_length.setter
     def tip_length(self: AxesGeometrySource, length: float | VectorLike[float]) -> None:
-        self._tip_length: NumpyArray[float] = _validation.validate_array3(
+        self._tip_length = _validation.validate_array3(
             length,
             broadcast=True,
             dtype_out=float,
             must_be_in_range=[0.0, np.inf],
+            to_tuple=True,
             name='Tip length',
         )
 
@@ -3410,9 +3495,10 @@ class AxesGeometrySource(_NoNewAttrMixin):
         self._tip_radius = _validation.validate_array3(
             radius,
             broadcast=True,
-            must_be_in_range=(0, float('inf')),
+            dtype_out=float,
+            must_be_in_range=[0.0, np.inf],
             to_tuple=True,
-            name='tip radius',
+            name='Tip radius',
         )
 
     @property
@@ -3441,9 +3527,10 @@ class AxesGeometrySource(_NoNewAttrMixin):
         self._shaft_radius = _validation.validate_array3(
             radius,
             broadcast=True,
-            must_be_in_range=(0, float('inf')),
+            dtype_out=float,
+            must_be_in_range=[0.0, np.inf],
             to_tuple=True,
-            name='shaft radius',
+            name='Shaft radius',
         )
 
     @property
@@ -3483,7 +3570,7 @@ class AxesGeometrySource(_NoNewAttrMixin):
 
     @shaft_type.setter
     def shaft_type(self: AxesGeometrySource, shaft_type: GeometryTypes | DataSet) -> None:
-        self._shaft_type = self._set_normalized_datasets(part=_PartEnum.shaft, geometry=shaft_type)
+        self._shaft_type = self._set_part_type(_PartEnum.shaft, shaft_type)
 
     @property
     def tip_type(self: AxesGeometrySource) -> str:  # numpydoc ignore=RT01
@@ -3524,82 +3611,67 @@ class AxesGeometrySource(_NoNewAttrMixin):
 
     @tip_type.setter
     def tip_type(self: AxesGeometrySource, tip_type: GeometryTypes | DataSet) -> None:
-        self._tip_type = self._set_normalized_datasets(part=_PartEnum.tip, geometry=tip_type)
+        self._tip_type = self._set_part_type(_PartEnum.tip, tip_type)
 
-    def _set_normalized_datasets(
-        self: AxesGeometrySource, part: _PartEnum, geometry: str | DataSet
+    def _set_part_type(
+        self: AxesGeometrySource, part: _PartEnum, geometry: GeometryTypes | DataSet
     ) -> str:
-        geometry_name, new_datasets = AxesGeometrySource._make_axes_parts(geometry)
-        datasets = (
-            self._shaft_datasets_normalized
-            if part == _PartEnum.shaft
-            else self._tip_datasets_normalized
-        )
-        datasets[_AxisEnum.x].copy_from(new_datasets[_AxisEnum.x])
-        datasets[_AxisEnum.y].copy_from(new_datasets[_AxisEnum.y])
-        datasets[_AxisEnum.z].copy_from(new_datasets[_AxisEnum.z])
-        return geometry_name
+        """Store the normalized parts and templates of a part type and return its name."""
+        name, self._normalized[part] = AxesGeometrySource._make_axes_parts(geometry)
+        self._templates[part] = self._make_templates(part)
+        return name
 
-    def _reset_shaft_and_tip_geometry(self: AxesGeometrySource) -> None:
-        # Store local copies of properties for iterating
-        shaft_radius, shaft_length = list(self.shaft_radius), list(self.shaft_length)
-        tip_radius, tip_length = list(self.tip_radius), list(self.tip_length)
+    def _update_templates(self: AxesGeometrySource) -> None:
+        """Rebuild the shaft and tip templates for the current symmetry flags."""
+        for part in _PartEnum:
+            self._templates[part] = self._make_templates(part)
 
-        nested_datasets = [self._shaft_datasets, self._tip_datasets]
-        nested_datasets_normalized = [
-            self._shaft_datasets_normalized,
-            self._tip_datasets_normalized,
-        ]
-        for part_type, axis in itertools.product(_PartEnum, _AxisEnum):
-            # Reset part by copying from the normalized version
-            part_normalized = nested_datasets_normalized[part_type][axis]
-            part = nested_datasets[part_type][axis]
-            part.copy_from(part_normalized)
-
-            # Offset so axis bounds are [0, 1]
-            part.points[:, axis] += 0.5
-
-            # Scale by length along axis, scale by radius off-axis
-            diameter = (shaft_radius if part_type == _PartEnum.shaft else tip_radius)[axis] * 2
-            factor = self._anti_distortion_factor
-            scale = np.array((diameter, diameter, diameter)) * factor
-
-            if part_type == _PartEnum.shaft:
-                shaft_length[axis] += tip_length[axis] * (1 - factor[axis])
-                scale[axis] = shaft_length[axis]
-            else:
-                scale[axis] = tip_length[axis] * factor[axis]
-
-            part.scale(scale, inplace=True)
-
-            if part_type == _PartEnum.tip:
-                # Move tip to end of shaft
-                part.points[:, axis] += shaft_length[axis]
-
-            if self.symmetric:
-                # Flip and append to part
-                origin = [0, 0, 0]
-                normal = [0, 0, 0]
-                normal[axis] = 1
-                flipped = part.flip_normal(normal=normal, point=origin)
-                part.append_polydata(flipped, inplace=True)
-            elif self.symmetric_bounds and part_type == _PartEnum.tip:
-                # For this feature we add a single degenerate cell
-                # at the tip and flip its position
-                point = [0, 0, 0]
-                total_length = shaft_length[axis] + tip_length[axis]
-                point[axis] = total_length  # type: ignore[call-overload]
-                flipped_point = np.array([point]) * -1  # Flip point
-                point_id = part.n_points
-                new_face = [3, point_id, point_id, point_id]
-
-                # Update mesh
-                part.points = np.append(part.points, flipped_point, axis=0)
-                part.faces = np.append(part.faces, new_face)
+    def _make_templates(
+        self: AxesGeometrySource, part: _PartEnum
+    ) -> tuple[_AxesPartTemplate, ...]:
+        """Return the shaft or tip templates for the current symmetry flags."""
+        normalized = self._normalized[part]
+        if self._symmetric:
+            return tuple(_make_mirrored_template(mesh) for mesh in normalized)
+        if self._symmetric_bounds and part == _PartEnum.tip:
+            return tuple(
+                _make_mirrored_point_template(mesh, axis)
+                for mesh, axis in zip(normalized, _AxisEnum, strict=True)
+            )
+        return tuple(_make_template(mesh) for mesh in normalized)
 
     def update(self: AxesGeometrySource) -> None:
         """Update the output of the source."""
-        self._reset_shaft_and_tip_geometry()
+        factor = self._anti_distortion_factor
+        shaft_radius = np.array(self._shaft_radius)
+        tip_radius = np.array(self._tip_radius)
+        tip_length = np.array(self._tip_length) * factor
+        # Lengthen the shafts by what the tips lose so the total length is unchanged
+        shaft_length = np.array(self._shaft_length) + np.array(self._tip_length) - tip_length
+
+        shaft_templates = self._templates[_PartEnum.shaft]
+        tip_templates = self._templates[_PartEnum.tip]
+        for axis in _AxisEnum:
+            # Scale by length along the axis and by diameter off-axis
+            shaft_scale = 2 * shaft_radius[axis] * factor
+            shaft_scale[axis] = shaft_length[axis]
+            _build_axes_part(
+                self._shaft_datasets[axis],
+                shaft_templates[axis],
+                axis=axis,
+                scale=shaft_scale,
+                offset=0.0,
+            )
+
+            tip_scale = 2 * tip_radius[axis] * factor
+            tip_scale[axis] = tip_length[axis]
+            _build_axes_part(
+                self._tip_datasets[axis],
+                tip_templates[axis],
+                axis=axis,
+                scale=tip_scale,
+                offset=shaft_length[axis],
+            )
 
     @property
     def output(self: AxesGeometrySource) -> MultiBlock:
@@ -3658,52 +3730,37 @@ class AxesGeometrySource(_NoNewAttrMixin):
         return out
 
     @staticmethod
-    def _make_any_part(geometry: str | DataSet) -> tuple[str, PolyData]:
-        part: DataSet
-        part_poly: PolyData
-        if isinstance(geometry, str):
-            name = geometry
-            part = AxesGeometrySource._make_default_part(
-                geometry,
-            )
-        elif isinstance(geometry, pv.DataSet):
-            name = 'custom'
-            part = geometry.copy()
-        else:
-            msg = f'Geometry must be a string or pyvista.DataSet. Got {type(geometry)}.'  # type: ignore[unreachable]
-            raise TypeError(msg)
-        part_poly = (
+    def _normalize_part(part: DataSet) -> PolyData:
+        """Return the part's surface with an origin-centered bounding box of edge length one."""
+        surface = (
             part
             if isinstance(part, pv.PolyData)
             else part.extract_surface(algorithm=None, pass_pointid=False, pass_cellid=False)
         )
-        part_poly = AxesGeometrySource._normalize_part(part_poly)
-        return name, part_poly
-
-    @staticmethod
-    def _normalize_part(part: PolyData) -> PolyData:
-        """Scale and translate part to have origin-centered bounding box with edge length one."""
-        # Center points at origin
-        # mypy ignore since pyvista_ndarray is not compatible with np.ndarray, see GH#5434
-        part.points -= part.center
-
-        # Scale so bounding box edges have length one
-        size = np.array(part.bounds_size)
+        size = np.array(surface.bounds_size)
         if np.any(size < 1e-8):
-            msg = f'Custom axes part must be 3D. Got bounds:\n{part.bounds}.'
+            msg = f'Custom axes part must be 3D. Got bounds:\n{surface.bounds}.'
             raise ValueError(msg)
-        part.scale(np.reciprocal(size), inplace=True)
-        return part
+        transform = pv.Transform().translate(-np.array(surface.center)).scale(np.reciprocal(size))
+        return surface.transform(transform, inplace=False)
 
     @staticmethod
     def _make_axes_parts(
         geometry: str | DataSet,
     ) -> tuple[str, tuple[PolyData, PolyData, PolyData]]:
-        """Return three axis-aligned normalized parts centered at the origin."""
-        name, part_z = AxesGeometrySource._make_any_part(geometry)
-        part_x = part_z.copy().rotate_y(90)
-        part_y = part_z.copy().rotate_x(-90)
-        return name, (part_x, part_y, part_z)
+        """Return the type name and three axis-aligned normalized parts centered at the origin."""
+        part: DataSet
+        if isinstance(geometry, str):
+            name = geometry
+            part = AxesGeometrySource._make_default_part(geometry)
+        elif isinstance(geometry, pv.DataSet):
+            name = 'custom'
+            part = geometry
+        else:
+            msg = f'Geometry must be a string or pyvista.DataSet. Got {type(geometry)}.'  # type: ignore[unreachable]
+            raise TypeError(msg)
+        part_z = AxesGeometrySource._normalize_part(part)
+        return name, (part_z.rotate_y(90), part_z.rotate_x(-90), part_z)
 
 
 class OrthogonalPlanesSource(_NoNewAttrMixin):
