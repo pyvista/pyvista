@@ -292,6 +292,28 @@ def test_contour_labels_raises(labeled_image):
         pv.ImageData().contour_labels()
 
 
+@pytest.mark.parametrize('dimensions', [(20, 20, 1), (320, 220, 1), (1, 20, 20), (20, 1, 20)])
+@pytest.mark.parametrize('boundary_style', ['external', 'internal', 'all', 'strict_external'])
+def test_contour_labels_2d_raises(dimensions, boundary_style):
+    image = pv.ImageData(dimensions=dimensions)
+    mask = np.zeros(image.n_points, dtype=np.uint8)
+    mask[: image.n_points // 3] = 1
+    image.point_data['mask'] = mask
+
+    match = 'Input must be 3-dimensional. Got 2-dimensional input instead.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        image.contour_labels(boundary_style)
+
+
+def test_contour_labels_2d_cell_data_raises():
+    image = pv.ImageData(dimensions=(21, 21, 2))
+    image.cell_data['mask'] = np.ones(image.n_cells, dtype=np.uint8)
+
+    match = 'Input must be 3-dimensional. Got 2-dimensional input instead.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        image.contour_labels()
+
+
 def test_contour_labels_empty_input(frog_tissues):
     voi = frog_tissues.extract_subset((10, 100, 20, 200, 20, 80))
     background_value = 0

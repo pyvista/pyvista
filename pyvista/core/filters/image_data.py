@@ -2589,6 +2589,11 @@ class ImageDataFilters(DataSetFilters):
         pyvista.PolyData
             Surface mesh of labeled regions.
 
+        Raises
+        ------
+        ValueError
+            If the contoured scalars are not 3-dimensional.
+
         See Also
         --------
         :meth:`~pyvista.DataSetFilters.voxelize_binary_mask`
@@ -2868,6 +2873,9 @@ class ImageDataFilters(DataSetFilters):
         input_ids = _validate_selection(select_inputs)
 
         alg_input = _get_alg_input(self, scalars)
+        if (dim := alg_input.dimensionality) != 3:
+            msg = f'Input must be 3-dimensional. Got {dim}-dimensional input instead.'
+            raise ValueError(msg)
         active_scalars = cast('pv.pyvista_ndarray', alg_input.active_scalars)
         if np.allclose(active_scalars, background_value):
             # Empty input, no contour will be generated
