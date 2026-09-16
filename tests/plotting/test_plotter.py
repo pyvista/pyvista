@@ -1082,6 +1082,41 @@ def test_add_ruler_renderer_scale(scale_first):
     assert ruler.GetRange() == (0.0, 2.0)
 
 
+def test_add_ruler_flip_side():
+    pl = pv.Plotter()
+    plain = pl.add_ruler([0.0, 0.0, 0.0], [1.4, 0.0, 0.0])
+    flipped = pl.add_ruler([0.0, 0.0, 0.0], [1.4, 0.0, 0.0], flip_side=True)
+
+    assert flipped.GetPositionCoordinate().GetValue() == plain.GetPosition2Coordinate().GetValue()
+    assert flipped.GetPosition2Coordinate().GetValue() == plain.GetPositionCoordinate().GetValue()
+    assert flipped.GetRange() == plain.GetRange()[::-1]
+
+
+@pytest.mark.parametrize('flip_range', [False, True])
+def test_add_ruler_flip_side_matches_swapped_points(flip_range):
+    point_a, point_b = [0.0, 0.0, 0.0], [-1.4, 0.0, 0.0]
+    pl = pv.Plotter()
+    flipped = pl.add_ruler(point_a, point_b, flip_range=flip_range, flip_side=True)
+    swapped = pl.add_ruler(point_b, point_a, flip_range=not flip_range)
+
+    assert flipped.GetPositionCoordinate().GetValue() == (
+        swapped.GetPositionCoordinate().GetValue()
+    )
+    assert flipped.GetPosition2Coordinate().GetValue() == (
+        swapped.GetPosition2Coordinate().GetValue()
+    )
+    assert flipped.GetRange() == swapped.GetRange()
+
+
+def test_add_ruler_flip_side_renderer_scale():
+    pl = pv.Plotter()
+    ruler = pl.add_ruler([-1.0, -0.5, 0.0], [1.0, -0.5, 0.0], flip_side=True)
+    pl.set_scale(xscale=2, yscale=3)
+
+    assert ruler.GetPositionCoordinate().GetValue() == (2.0, -1.5, 0.0)
+    assert ruler.GetPosition2Coordinate().GetValue() == (-2.0, -1.5, 0.0)
+
+
 def _ruler_label_values(ruler):
     """Return the label values a ruler places inside its range."""
     adjusted = [0.0, 0.0]

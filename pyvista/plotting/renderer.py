@@ -4502,6 +4502,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         pointb: VectorLike[float],
         *,
         flip_range: bool = False,
+        flip_side: bool = False,
         number_labels: int | None = None,
         show_labels: bool = True,
         font_size_factor: float = 0.6,
@@ -4524,9 +4525,10 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         parallel projection, that is, :func:`Plotter.enable_parallel_projection`,
         and place the ruler orthogonal to the viewing direction.
 
-        The title and labels are placed to the right of ruler moving from
-        ``pointa`` to ``pointb``. Use ``flip_range`` to flip the ``0`` location,
-        if needed.
+        The labels are placed to the right of the ruler moving from ``pointa`` to
+        ``pointb``, so two rulers pointing opposite ways carry their labels on
+        opposite sides. Use ``flip_side`` to move them across, and ``flip_range``
+        to flip the ``0`` location.
 
         Since the ruler is placed in an overlay on the viewing scene, the camera
         does not automatically reset to include the ruler in the view.
@@ -4541,6 +4543,10 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         flip_range : bool, default: False
             If ``True``, the distance range goes from ``pointb`` to ``pointa``.
+
+        flip_side : bool, default: False
+            If ``True``, the labels and ticks are drawn on the other side of the
+            ruler. The distances they report are unchanged.
 
         number_labels : int, optional
             Number of labels to place on the ruler, at least ``2``. The labels are
@@ -4640,6 +4646,10 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         ruler.GetPositionCoordinate().SetReferenceCoordinate(None)  # type: ignore[arg-type]
         point_a = _validation.validate_array3(pointa, dtype_out=float, name='pointa')
         point_b = _validation.validate_array3(pointb, dtype_out=float, name='pointb')
+        if flip_side:
+            # VTK draws to the right of the axis direction
+            point_a, point_b = point_b, point_a
+            flip_range = not flip_range
         ruler._unscaled_points = (point_a, point_b)  # type: ignore[attr-defined]
         self._place_ruler(ruler)
 
