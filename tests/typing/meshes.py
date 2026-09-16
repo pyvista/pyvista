@@ -61,11 +61,6 @@ def multiblock_poly() -> pv.MultiBlock[pv.PolyData]:
     return pv.MultiBlock([poly()])
 
 
-def multiblock_pointset() -> pv.MultiBlock[pv.PointSet]:
-    """Return a composite declared to hold only `PointSet`."""
-    return pv.MultiBlock([pointset()])
-
-
 def multiblock_optional_poly() -> pv.MultiBlock[pv.PolyData | None]:
     """Return a composite whose blocks may be missing."""
     return pv.MultiBlock([poly(), None])

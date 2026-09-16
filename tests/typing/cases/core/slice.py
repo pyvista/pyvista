@@ -42,12 +42,12 @@ def multiblock_optional_poly() -> pv.MultiBlock[pv.PolyData | None]:
     return pv.MultiBlock([poly(), None])
 
 
-def pointset() -> pv.PointSet:
+def pointset() -> pv.PointSet:  # pragma: no cover
     """Return a point cloud."""
     return pv.PointSet(poly().points)
 
 
-def multiblock_pointset() -> pv.MultiBlock[pv.PointSet]:
+def multiblock_pointset() -> pv.MultiBlock[pv.PointSet]:  # pragma: no cover
     """Return a composite declared to hold only `PointSet`."""
     return pv.MultiBlock([pointset()])
 
