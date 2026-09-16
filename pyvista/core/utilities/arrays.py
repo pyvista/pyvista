@@ -12,6 +12,7 @@ import json
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
+from typing import TypeVar
 from typing import cast
 from typing import overload
 
@@ -40,6 +41,8 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLike
     from pyvista.core.dataset import _ActiveArrayExistsInfoTuple
 
+
+_DataSetType = TypeVar('_DataSetType', bound='DataSet')
 
 USER_DICT_KEY = '_PYVISTA_USER_DICT'
 
@@ -941,6 +944,29 @@ def _default_active_scalars_info(mesh: DataSet) -> _ActiveArrayExistsInfoTuple:
         'Set one as active using DataSet.set_active_scalars(name, preference=type)'
     )
     raise AmbiguousDataError(msg)
+
+
+def _active_scalars_input(
+    mesh: _DataSetType, scalars: str | None, preference: Literal['point', 'cell'] = 'point'
+) -> tuple[_DataSetType, _ActiveArrayExistsInfoTuple]:
+    """Return a mesh with the given or default scalars active, and the field and name."""
+    from pyvista.core.dataset import _ActiveArrayExistsInfoTuple  # noqa: PLC0415
+
+    info = (
+        _default_active_scalars_info(mesh)
+        if scalars is None
+        else _ActiveArrayExistsInfoTuple(
+            mesh.get_array_association(scalars, preference=preference), scalars
+        )
+    )
+    if (info.association, info.name) == mesh.active_scalars_info:
+        return mesh, info
+    # The scalars are activated on a shallow copy, so the input is left untouched
+    copied = mesh.copy(deep=False)
+    copied.set_active_scalars(
+        info.name, preference='point' if info.association == FieldAssociation.POINT else 'cell'
+    )
+    return copied, info
 
 
 def set_default_active_vectors(mesh: DataSet) -> _ActiveArrayExistsInfoTuple:
