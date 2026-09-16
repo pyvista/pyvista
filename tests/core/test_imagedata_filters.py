@@ -340,6 +340,16 @@ def test_contour_labels_no_boundary_cells(labeled_image, kwargs):
     assert BOUNDARY_LABELS not in contours.cell_data
 
 
+@pytest.mark.parametrize('boundary_style', ['external', 'internal', 'all', 'strict_external'])
+def test_contour_labels_no_background(boundary_style):
+    image = pv.ImageData(dimensions=(10, 10, 10))
+    image.point_data['labels'] = np.full(image.n_points, 5, dtype=np.uint8)
+
+    contours = image.contour_labels(boundary_style, pad_background=False)
+    assert contours.is_empty
+    assert BOUNDARY_LABELS not in contours.cell_data
+
+
 def test_contour_labels_empty_input(frog_tissues):
     voi = frog_tissues.extract_subset((10, 100, 20, 200, 20, 80))
     background_value = 0

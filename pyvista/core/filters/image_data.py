@@ -2593,7 +2593,8 @@ class ImageDataFilters(DataSetFilters):
         Returns
         -------
         pyvista.PolyData
-            Surface mesh of labeled regions.
+            Surface mesh of labeled regions. The mesh is empty and has no
+            ``'boundary_labels'`` array if no boundary polygons are generated.
 
         Raises
         ------
@@ -2946,7 +2947,6 @@ class ImageDataFilters(DataSetFilters):
                 )
 
         if output.n_cells == 0:
-            # No boundaries remain, discard any stray points and arrays
             return pv.PolyData()
 
         want_external = 'external' in boundary_style
