@@ -4504,6 +4504,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         flip_range: bool = False,
         flip_side: bool = False,
         number_labels: int | None = None,
+        snap_labels: bool = True,
         show_labels: bool = True,
         font_size_factor: float = 0.6,
         label_size_factor: float = 1.0,
@@ -4551,14 +4552,25 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             .. versionadded:: 0.50
 
         number_labels : int, optional
-            Number of labels to place on the ruler, at least ``2``. The labels are
-            snapped to round values, so this is a target rather than an exact count
-            and the far end of the ruler may carry no label. If not supplied, the
-            number is chosen to suit the distance being measured.
+            Number of labels to place on the ruler, at least ``2``. While
+            ``snap_labels`` is enabled this is a target rather than an exact count.
+            If not supplied, the number is chosen to suit the distance being
+            measured.
 
             .. note::
-                Snapping requires VTK 9.4 or newer. Below that the labels are spaced
-                evenly over the distance instead. Below VTK 9.6 the maximum is ``25``.
+                Below VTK 9.6 the maximum is ``25``.
+
+        snap_labels : bool, default: True
+            If ``True``, the labels are placed on round values, and the far end of
+            the ruler may carry no label. If ``False``, they are spread evenly over
+            the distance instead, so both ends are labelled and ``number_labels`` is
+            exact.
+
+            .. note::
+                Snapping requires VTK 9.4 or newer. Below that the labels are always
+                spread evenly.
+
+            .. versionadded:: 0.50
 
         show_labels : bool, default: True
             Whether to show labels.
@@ -4675,10 +4687,12 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
                 name='number_labels',
             )
             ruler.SetNumberOfLabels(number_labels)
-            if vtk_version_info >= (9, 4):
+            if snap_labels and vtk_version_info >= (9, 4):
                 ruler.SnapLabelsToGridOn()
             else:
                 ruler.AdjustLabelsOff()
+        elif not snap_labels:
+            ruler.AdjustLabelsOff()
         ruler.SetLabelVisibility(show_labels)
         if label_format:
             ruler.SetLabelFormat(label_format)

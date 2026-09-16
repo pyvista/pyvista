@@ -1140,6 +1140,26 @@ def test_add_ruler_number_labels_even_spacing(number_labels):
     assert _ruler_label_values(ruler) == pytest.approx([step * i for i in range(number_labels)])
 
 
+@pytest.mark.parametrize('number_labels', [2, 5, 6, 15])
+def test_add_ruler_snap_labels_off(number_labels):
+    pl = pv.Plotter()
+    ruler = pl.add_ruler(
+        [0.0, 0.0, 0.0], [2.8, 0.0, 0.0], number_labels=number_labels, snap_labels=False
+    )
+    step = 2.8 / (number_labels - 1)
+    values = _ruler_label_values(ruler)
+    assert values == pytest.approx([step * i for i in range(number_labels)])
+    # both ends carry a label, which snapping does not guarantee
+    assert values[0] == pytest.approx(0.0)
+    assert values[-1] == pytest.approx(2.8)
+
+
+def test_add_ruler_snap_labels_off_without_count():
+    pl = pv.Plotter()
+    ruler = pl.add_ruler([0.0, 0.0, 0.0], [2.8, 0.0, 0.0], snap_labels=False)
+    assert _ruler_label_values(ruler) == pytest.approx([0.7 * i for i in range(5)])
+
+
 @pytest.mark.needs_vtk_version(9, 4, 0, reason='SnapLabelsToGrid was added in VTK 9.4.0')
 @pytest.mark.parametrize(
     ('number_labels', 'expected'),
