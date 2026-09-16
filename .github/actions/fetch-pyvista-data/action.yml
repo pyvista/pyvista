@@ -1,0 +1,23 @@
+name: Fetch pyvista/data
+description: >-
+  Download the pyvista/data tree at its current master commit into
+  `pyvista-data` and point `PYVISTA_DATA` at it.
+runs:
+  using: composite
+  steps:
+    - name: Download pyvista/data
+      shell: bash
+      run: | # zizmor: ignore[github-env]
+        commit="$(git ls-remote https://github.com/pyvista/data refs/heads/master | cut -f1)"
+        [ -n "$commit" ] || { echo "::error::could not resolve pyvista/data master"; exit 1; }
+        echo "pyvista/data commit $commit"
+        for attempt in 1 2 3; do
+          rm -rf pyvista-data
+          mkdir pyvista-data
+          if curl -sSfL "https://codeload.github.com/pyvista/data/tar.gz/$commit" | tar -xzf - --strip-components=1 -C pyvista-data; then
+            break
+          fi
+          [ "$attempt" -lt 3 ] || { echo "::error::could not download pyvista/data"; exit 1; }
+          echo "::warning::pyvista/data download attempt $attempt failed, retrying"
+        done
+        echo "PYVISTA_DATA=$GITHUB_WORKSPACE/pyvista-data" >> "$GITHUB_ENV"
