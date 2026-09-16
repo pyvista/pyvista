@@ -136,8 +136,8 @@ Calibrated Cameras
 ------------------
 A camera calibrated for computer vision is described by a 3x3 intrinsic matrix
 in pixels and a 4x4 extrinsic matrix that maps world coordinates to the camera.
-Set and read both with :py:attr:`pyvista.Camera.intrinsic_matrix` and
-:py:attr:`pyvista.Camera.extrinsic_matrix`.
+Set and read both with :attr:`~pyvista.Camera.intrinsic_matrix` and
+:attr:`~pyvista.Camera.extrinsic_matrix`.
 
 .. code-block:: python
 
@@ -155,9 +155,12 @@ Set and read both with :py:attr:`pyvista.Camera.intrinsic_matrix` and
 
 The intrinsic matrix is expressed in the pixel size of the viewport the camera
 renders into, so it is read back against the current window size and a camera
-that belongs to no plotter has none. The camera is a pinhole model with no lens
-distortion; apply distortion coefficients to the scene with
-:py:meth:`pyvista.Plotter.enable_camera_distortion`.
+that belongs to no plotter has none. Resetting the camera restores its default
+field of view, which discards the focal lengths.
+
+The camera is a pinhole model with no lens distortion; apply distortion
+coefficients to the scene with
+:meth:`~pyvista.Plotter.enable_camera_distortion`.
 
 
 API Reference

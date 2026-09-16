@@ -674,7 +674,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             scale_point(source, source.focal_point, invert=True),
             source.up,
         )
-        source._renderer = weakref.proxy(self)
+        if source._renderer is None:
+            source._renderer = weakref.proxy(self)
         self.Modified()
         self.camera_set = True
 

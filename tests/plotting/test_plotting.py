@@ -6647,6 +6647,12 @@ def _add_checkerboard_grid_scene(pl):
     return [actor]
 
 
+def _add_checkerboard_grid_scene_off_center(pl):
+    actors = _add_checkerboard_grid_scene(pl)
+    pl.camera.window_center = (0.45, -0.3)
+    return actors
+
+
 # The distortion is a per-vertex transform of clip coordinates, so it does not
 # depend on the scene. One flat calibration target carries both cases that a
 # render can tell apart: the radial terms, and the tangential ones.
@@ -6662,6 +6668,11 @@ def _add_checkerboard_grid_scene(pl):
             _add_checkerboard_grid_scene,
             (0.08, -0.06, 0.05, -0.07),
             id='checkerboard_centered-mixed_tangential',
+        ),
+        pytest.param(
+            _add_checkerboard_grid_scene_off_center,
+            (3.8, 2.1, 0.004, -0.003),
+            id='checkerboard_off_center-strong_barrel',
         ),
     ],
 )

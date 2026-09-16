@@ -635,7 +635,8 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         The two values move the optical axis away from the center of the
         viewport, as fractions of its half-width and half-height. A calibrated
         principal point ``(cx, cy)`` of an image ``width`` by ``height`` pixels
-        is ``(-2 * (cx - width / 2) / width, 2 * (cy - height / 2) / height)``.
+        corresponds to a window center of
+        ``(-2 * (cx - width / 2) / width, 2 * (cy - height / 2) / height)``.
 
         .. versionadded:: 0.50
 
@@ -711,11 +712,14 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         """Return the pixel width and height of the viewport the camera renders into."""
         if self._renderer is None:
             msg = 'An intrinsic matrix requires a plotter to derive the image size from.'
-            raise AttributeError(msg)
+            raise RuntimeError(msg)
         width, height = self._renderer.GetSize()
         if not width or not height:
-            msg = 'An intrinsic matrix requires a plotter whose image has a size.'
-            raise AttributeError(msg)
+            msg = (
+                'An intrinsic matrix requires a plotter with a non-empty viewport, got '
+                f'{width}x{height}. A closed plotter has none.'
+            )
+            raise RuntimeError(msg)
         return width, height
 
     @property
@@ -732,7 +736,10 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         Setting the matrix gives the camera a perspective projection.
 
         The camera has to belong to a plotter, which is what gives it an image
-        to be calibrated for.
+        to be calibrated for. Resetting the camera, as
+        :meth:`~pyvista.Plotter.reset_camera` and the view directions do,
+        restores its default field of view and discards ``fx`` and ``fy``. The
+        principal point is kept.
 
         .. versionadded:: 0.50
 
@@ -769,9 +776,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
             raise ValueError(msg)
         width, height = self._viewport_size()
         projection = array_from_vtkmatrix(
-            self.GetProjectionTransformMatrix(
-                self._renderer.GetTiledAspectRatio(), *self.clipping_range
-            )
+            self.GetProjectionTransformMatrix(self._renderer.GetTiledAspectRatio(), -1.0, 1.0)
         )
         return np.array(
             [
@@ -789,6 +794,12 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         width, height = self._viewport_size()
         if valid[0, 1] != 0.0:
             msg = 'Intrinsic matrices with axis skew are not supported.'
+            raise ValueError(msg)
+        if valid[1, 0] != 0.0 or not np.array_equal(valid[2], [0.0, 0.0, 1.0]):
+            msg = (
+                'An intrinsic matrix must be upper triangular with a last row of '
+                f'(0, 0, 1), got {valid.tolist()}.'
+            )
             raise ValueError(msg)
         focal_x, focal_y = valid[0, 0], valid[1, 1]
         if focal_x <= 0.0 or focal_y <= 0.0:

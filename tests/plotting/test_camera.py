@@ -7,6 +7,7 @@ import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista import transformations
 
 # pyvista attr -- value -- vtk name triples:
 configuration = [
@@ -356,25 +357,14 @@ IMAGE_SIZE = (640, 480)
 INTRINSICS = np.array([[800.0, 0.0, 310.0], [0.0, 760.0, 250.0], [0.0, 0.0, 1.0]])
 
 
-def rodrigues(rotation_vector):
-    """Return the rotation matrix of an axis-angle vector."""
-    angle = np.linalg.norm(rotation_vector)
-    axis = rotation_vector / angle
-    skew = np.array(
-        [
-            [0.0, -axis[2], axis[1]],
-            [axis[2], 0.0, -axis[0]],
-            [-axis[1], axis[0], 0.0],
-        ]
-    )
-    return np.eye(3) + np.sin(angle) * skew + (1.0 - np.cos(angle)) * skew @ skew
-
-
 @pytest.fixture
 def extrinsics():
     """Return an extrinsic matrix with no axis left unrotated."""
+    rotation_vector = np.array([0.15, -0.35, 0.05])
     matrix = np.eye(4)
-    matrix[:3, :3] = rodrigues(np.array([0.15, -0.35, 0.05]))
+    matrix[:3, :3] = transformations.axis_angle_rotation(
+        rotation_vector, np.linalg.norm(rotation_vector), deg=False
+    )[:3, :3]
     matrix[:3, 3] = (0.2, -0.1, 6.0)
     return matrix
 
@@ -433,7 +423,36 @@ def test_intrinsic_matrix_round_trip(calibrated):
     """An intrinsic matrix is recovered exactly after being set."""
     calibrated.camera.intrinsic_matrix = INTRINSICS
     assert calibrated.camera.intrinsic_matrix == pytest.approx(INTRINSICS)
-    assert calibrated.camera.is_set
+
+
+def test_intrinsic_matrix_marks_the_camera_set(calibrated):
+    """Setting intrinsics keeps the first render from resetting the view angle."""
+    camera = calibrated.renderer.camera
+    assert not camera.is_set
+    camera.intrinsic_matrix = INTRINSICS
+    assert camera.is_set
+
+
+def test_intrinsic_matrix_is_discarded_by_a_camera_reset(calibrated):
+    """A camera reset restores the default field of view but keeps the principal point."""
+    calibrated.add_mesh(pv.Sphere())
+    calibrated.camera.intrinsic_matrix = INTRINSICS
+    calibrated.reset_camera()
+    reset = calibrated.camera.intrinsic_matrix
+    assert reset[0, 0] != pytest.approx(INTRINSICS[0, 0])
+    assert reset[1, 1] != pytest.approx(INTRINSICS[1, 1])
+    assert reset[:2, 2] == pytest.approx(INTRINSICS[:2, 2])
+
+
+def test_linked_views_keep_the_camera_on_its_own_viewport():
+    """Linking views leaves a shared camera calibrated for the renderer it came from."""
+    pl = pv.Plotter(shape='1|2')
+    pl.subplot(0)
+    pl.camera.intrinsic_matrix = INTRINSICS
+    before = pl.camera.intrinsic_matrix
+    pl.link_views()
+    assert pl.camera.intrinsic_matrix == pytest.approx(before)
+    pl.close()
 
 
 def test_intrinsic_matrix_follows_the_window(calibrated):
@@ -467,10 +486,20 @@ def test_intrinsic_matrix_reaches_an_assigned_camera(calibrated):
 
 def test_intrinsic_matrix_raises_without_a_plotter(camera):
     """A camera of its own has no image to be calibrated for."""
-    with pytest.raises(AttributeError, match='requires a plotter'):
+    with pytest.raises(RuntimeError, match='requires a plotter'):
         camera.intrinsic_matrix  # noqa: B018
-    with pytest.raises(AttributeError, match='requires a plotter'):
+    with pytest.raises(RuntimeError, match='requires a plotter'):
         camera.intrinsic_matrix = INTRINSICS
+    with pytest.raises(RuntimeError, match='requires a plotter'):
+        getattr(camera, 'intrinsic_matrix', None)
+
+
+def test_intrinsic_matrix_raises_for_a_closed_plotter(calibrated):
+    """A closed plotter leaves the camera with no viewport to be calibrated for."""
+    camera = calibrated.camera
+    calibrated.close()
+    with pytest.raises(RuntimeError, match='non-empty viewport, got 0x0'):
+        camera.intrinsic_matrix  # noqa: B018
 
 
 def test_intrinsic_matrix_disables_parallel_projection(calibrated):
@@ -495,11 +524,12 @@ def test_intrinsic_matrix_raises_for_skew(calibrated):
         calibrated.camera.intrinsic_matrix = skewed
 
 
+@pytest.mark.parametrize('entry', [(0, 0), (1, 1)], ids=['fx', 'fy'])
 @pytest.mark.parametrize('focal_length', [0.0, -800.0])
-def test_intrinsic_matrix_raises_for_focal_length(calibrated, focal_length):
+def test_intrinsic_matrix_raises_for_focal_length(calibrated, entry, focal_length):
     """A focal length that is not positive is rejected."""
     invalid = INTRINSICS.copy()
-    invalid[0, 0] = focal_length
+    invalid[entry] = focal_length
     with pytest.raises(ValueError, match='focal lengths must be positive'):
         calibrated.camera.intrinsic_matrix = invalid
 
@@ -508,6 +538,17 @@ def test_intrinsic_matrix_raises_for_shape(calibrated):
     """A matrix that is not 3x3 is rejected."""
     with pytest.raises(ValueError, match='intrinsic matrix'):
         calibrated.camera.intrinsic_matrix = np.eye(4)
+
+
+@pytest.mark.parametrize(
+    'invalid',
+    [INTRINSICS.T, np.vstack([INTRINSICS[:2], [7.0, 9.0, 4.0]]), np.tril(INTRINSICS.T)],
+    ids=['transposed', 'last_row', 'lower_triangular'],
+)
+def test_intrinsic_matrix_raises_for_a_matrix_that_is_not_upper_triangular(calibrated, invalid):
+    """A matrix that is not a pinhole intrinsic matrix is rejected."""
+    with pytest.raises(ValueError, match='must be upper triangular'):
+        calibrated.camera.intrinsic_matrix = invalid
 
 
 def test_extrinsic_matrix(camera):
@@ -540,10 +581,17 @@ def test_extrinsic_matrix_keeps_distance(camera, extrinsics):
     assert camera.distance == pytest.approx(7.0)
 
 
-def test_extrinsic_matrix_raises_for_non_rotation(camera, extrinsics):
-    """An extrinsic matrix whose upper block is not a rotation is rejected."""
+def test_extrinsic_matrix_raises_for_a_scaled_rotation(camera, extrinsics):
+    """An extrinsic matrix whose upper block is not orthogonal is rejected."""
     extrinsics[:3, :3] *= 2.0
-    with pytest.raises(ValueError, match='extrinsic matrix rotation'):
+    with pytest.raises(ValueError, match='must be orthogonal'):
+        camera.extrinsic_matrix = extrinsics
+
+
+def test_extrinsic_matrix_raises_for_a_reflection(camera, extrinsics):
+    """An extrinsic matrix whose upper block is left-handed is rejected."""
+    extrinsics[:3, :3] = np.diag([1.0, 1.0, -1.0]) @ extrinsics[:3, :3]
+    with pytest.raises(ValueError, match='incorrect handedness'):
         camera.extrinsic_matrix = extrinsics
 
 
@@ -567,10 +615,9 @@ def test_calibrated_camera_matches_opencv_projection(calibrated, extrinsics):
     assert pixels == pytest.approx(opencv_project(WORLD_POINTS, INTRINSICS, extrinsics))
 
 
-def test_calibrated_camera_renders_where_opencv_projects(calibrated, extrinsics):
-    """A render window of the calibrated size maps world points to the same pixels."""
+def test_calibrated_camera_displays_where_opencv_projects(calibrated, extrinsics):
+    """The renderer maps world points to the pixels OpenCV projects them to."""
     pl = calibrated
-    pl.add_mesh(pv.Sphere(radius=0.5))
     pl.camera.intrinsic_matrix = INTRINSICS
     pl.camera.extrinsic_matrix = extrinsics
     pl.camera.clipping_range = (0.1, 100.0)
@@ -589,7 +636,7 @@ def test_calibrated_camera_renders_where_opencv_projects(calibrated, extrinsics)
     )
 
 
-def test_copy_carries_the_calibration(calibrated):
+def test_copy_carries_the_calibrated_projection(calibrated):
     """A copied camera keeps the window center and explicit aspect ratio."""
     camera = calibrated.camera
     camera.intrinsic_matrix = INTRINSICS
