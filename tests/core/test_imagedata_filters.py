@@ -292,24 +292,37 @@ def test_contour_labels_raises(labeled_image):
         pv.ImageData().contour_labels()
 
 
-@pytest.mark.parametrize('dimensions', [(20, 20, 1), (320, 220, 1), (1, 20, 20), (20, 1, 20)])
+@pytest.mark.parametrize(
+    ('dimensions', 'dimensionality'),
+    [
+        ((20, 20, 1), 2),
+        ((320, 220, 1), 2),
+        ((1, 20, 20), 2),
+        ((20, 1, 20), 2),
+        ((20, 1, 1), 1),
+        ((1, 1, 1), 0),
+    ],
+)
 @pytest.mark.parametrize('boundary_style', ['external', 'internal', 'all', 'strict_external'])
-def test_contour_labels_2d_raises(dimensions, boundary_style):
+def test_contour_labels_not_3d_raises(dimensions, dimensionality, boundary_style):
     image = pv.ImageData(dimensions=dimensions)
     mask = np.zeros(image.n_points, dtype=np.uint8)
     mask[: image.n_points // 3] = 1
     image.point_data['mask'] = mask
 
-    match = 'Input must be 3-dimensional. Got 2-dimensional input instead.'
+    match = (
+        f'Input scalars must be 3-dimensional. Got {dimensionality}-dimensional scalars instead.'
+    )
     with pytest.raises(ValueError, match=re.escape(match)):
         image.contour_labels(boundary_style)
 
 
-def test_contour_labels_2d_cell_data_raises():
+def test_contour_labels_not_3d_cell_data_raises():
+    # Cell scalars are re-meshed to points, so a single cell layer is 2-dimensional
     image = pv.ImageData(dimensions=(21, 21, 2))
     image.cell_data['mask'] = np.ones(image.n_cells, dtype=np.uint8)
 
-    match = 'Input must be 3-dimensional. Got 2-dimensional input instead.'
+    match = 'Input scalars must be 3-dimensional. Got 2-dimensional scalars instead.'
     with pytest.raises(ValueError, match=re.escape(match)):
         image.contour_labels()
 

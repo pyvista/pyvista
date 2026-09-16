@@ -2420,6 +2420,12 @@ class ImageDataFilters(DataSetFilters):
 
         .. versionadded:: 0.45
 
+        .. versionchanged:: 0.50
+
+            Input which is not 3-dimensional now raises a ``ValueError``. Previously,
+            2-dimensional input either generated an open surface or failed, depending
+            on the VTK version.
+
         Parameters
         ----------
         boundary_style : 'external' | 'internal' | 'all' | 'strict_external', default: 'external'
@@ -2592,7 +2598,7 @@ class ImageDataFilters(DataSetFilters):
         Raises
         ------
         ValueError
-            If the contoured scalars are not 3-dimensional.
+            If the input scalars are not 3-dimensional.
 
         See Also
         --------
@@ -2874,7 +2880,7 @@ class ImageDataFilters(DataSetFilters):
 
         alg_input = _get_alg_input(self, scalars)
         if (dim := alg_input.dimensionality) != 3:
-            msg = f'Input must be 3-dimensional. Got {dim}-dimensional input instead.'
+            msg = f'Input scalars must be 3-dimensional. Got {dim}-dimensional scalars instead.'
             raise ValueError(msg)
         active_scalars = cast('pv.pyvista_ndarray', alg_input.active_scalars)
         if np.allclose(active_scalars, background_value):
