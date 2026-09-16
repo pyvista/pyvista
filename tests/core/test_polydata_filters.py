@@ -51,6 +51,19 @@ def test_contour_banded_points(sphere):
     assert out['data'].max() >= rng[1]
 
 
+def test_contour_banded_scalars(sphere):
+    sphere.clear_data()
+    sphere['active'] = sphere.points[:, 2]
+    sphere['named'] = sphere.points[:, 0] * 10.0
+    sphere.set_active_scalars('active')
+
+    banded, _ = sphere.contour_banded(3, scalars='named')
+
+    # The bands span the named array, not the active one
+    assert banded.cell_data['Scalars'].min() == pytest.approx(sphere['named'].min())
+    assert sphere.active_scalars_name == 'active'
+
+
 @pytest.mark.parametrize(
     'other_mesh',
     [

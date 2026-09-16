@@ -111,8 +111,8 @@ def test_threshold_raises(mocker: MockerFixture):
 def test_contour_raises(mocker: MockerFixture):
     from pyvista.core.filters import data_set
 
-    m = mocker.patch.object(data_set, 'set_default_active_scalars')
-    m().name = 'foo'
+    m = mocker.patch.object(data_set, '_default_scalars_input')
+    m.return_value = (pv.PolyData(), 'foo')
 
     with pytest.raises(
         ValueError, match=r'Input dataset for the contour filter must have scalar.'
@@ -972,6 +972,10 @@ def test_contour(uniform, method):
     )
 
     assert 'Contour Data' in iso_new_scalars.point_data
+    assert 'Contour Data' not in uniform.point_data
+
+    uniform.contour(isosurfaces=[0.5], scalars=np.arange(uniform.n_points) % 2 == 0, method=method)
+    assert 'Contour Data' not in uniform._association_bitarray_names['POINT']
 
 
 def test_contour_errors(uniform, airplane):
@@ -999,6 +1003,11 @@ def test_contour_errors(uniform, airplane):
     match = 'No data available.'
     with pytest.raises(ValueError, match=match):
         airplane.contour(rng={})
+
+    airplane['vectors'] = airplane.points
+    match = "Scalars 'vectors' must have a single component to contour."
+    with pytest.raises(ValueError, match=match):
+        airplane.contour(scalars='vectors')
 
 
 def test_texture_map_to_plane(airplane):
@@ -1292,6 +1301,15 @@ def test_glyph_orient_and_scale():
     assert glyph3.bounds.z_max == geom.bounds.x_max
     assert glyph4.bounds.x_min == geom.bounds.x_min
     assert glyph4.bounds.x_max == geom.bounds.x_max
+
+
+def test_glyph_scale_by_vector_without_orient():
+    grid = pv.ImageData(dimensions=(1, 1, 1))
+    geom = pv.Line()
+    grid['z_axis'] = np.array([[0.0, 0.0, 10.0]])
+    glyph = grid.glyph(geom=geom, orient=False, scale='z_axis')
+    assert glyph.bounds.x_min == geom.bounds.x_min * 10.0
+    assert glyph.bounds.x_max == geom.bounds.x_max * 10.0
 
 
 @pytest.mark.parametrize('color_mode', ['scale', 'scalar', 'vector'])
@@ -3719,6 +3737,7 @@ def test_select_interior_points(uniform, hexbeam):
     assert result['selected_points'].any()
     assert result.n_arrays == uniform.n_arrays + 1
     assert result.active_scalars_name == 'selected_points'
+    assert 'selected_points' not in uniform._association_bitarray_names['POINT']
 
     # Now check non-closed surface
     mesh = pv.Sphere(end_theta=270)
@@ -4619,6 +4638,16 @@ def test_collision(sphere):
     moved_sphere.translate((1000, 0, 0), inplace=True)
     _, n_collision = sphere.collision(moved_sphere)
     assert not n_collision
+
+
+def test_collision_generate_scalars_keeps_input_arrays(sphere):
+    # Two arrays are needed: with only one, the collision scalars are the sole output array
+    sphere.cell_data['other'] = np.arange(sphere.n_cells)
+    sphere.cell_data['other2'] = np.arange(sphere.n_cells)
+    moved_sphere = sphere.translate((0.5, 0, 0), inplace=False)
+    output, _ = sphere.collision(moved_sphere, generate_scalars=True)
+    assert 'collision_rgba' in output.cell_data
+    assert sphere.cell_data.keys() == ['other', 'other2']
 
 
 def test_collision_solid_non_triangle(hexbeam):
