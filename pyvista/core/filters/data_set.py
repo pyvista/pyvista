@@ -41,6 +41,8 @@ from pyvista.core.filters.data_object import _clipper
 from pyvista.core.filters.data_object import _keep_array_structure
 from pyvista.core.filters.data_object import _validate_clip_inplace
 from pyvista.core.utilities.arrays import FieldAssociation
+from pyvista.core.utilities.arrays import _active_scalars_input
+from pyvista.core.utilities.arrays import _active_vectors_input
 from pyvista.core.utilities.arrays import _default_active_scalars_info
 from pyvista.core.utilities.arrays import _default_active_vectors_info
 from pyvista.core.utilities.arrays import convert_array
@@ -821,12 +823,7 @@ class DataSetFilters(DataObjectFilters):
             if both:
                 msg = 'Cannot have both=True for a range clip'
                 raise ValueError(msg)
-        # Activate the scalars on a shallow copy so the input's active scalars are untouched
-        source = cast('DataSet', _clip_input(self)).copy(deep=False)
-        if scalars is None:
-            set_default_active_scalars(source)
-        else:
-            source.set_active_scalars(scalars)
+        source, _ = _active_scalars_input(cast('DataSet', _clip_input(self)), scalars, 'cell')
         alg.SetInputDataObject(source)
 
         alg.SetInsideOut(invert)  # invert the clip if needed
@@ -2727,17 +2724,11 @@ class DataSetFilters(DataObjectFilters):
         # The copy's scalars and cells may be modified
         input_mesh = self.copy(deep=False)
         if scalar_range is not None:
-            if scalars is None:
-                set_default_active_scalars(input_mesh)
-            else:
-                input_mesh.set_active_scalars(scalars)
-            field, name = input_mesh.active_scalars_info
+            input_mesh, (field, name) = _active_scalars_input(input_mesh, scalars, 'cell')
             if field == FieldAssociation.CELL:
                 # The filter reads the active point scalars
                 converted = input_mesh.cell_data_to_point_data(progress_bar=progress_bar)
-                input_mesh.point_data[_CONNECTIVITY_SCALARS] = converted.point_data[
-                    cast('str', name)
-                ]
+                input_mesh.point_data[_CONNECTIVITY_SCALARS] = converted.point_data[name]
                 input_mesh.set_active_scalars(_CONNECTIVITY_SCALARS, preference='point')
 
             if extraction_mode in ('all', 'specified', 'closest'):
@@ -3969,13 +3960,7 @@ class DataSetFilters(DataObjectFilters):
             'cl': _vtk.vtkStreamTracer.CELL_LENGTH_UNIT,
             'l': _vtk.vtkStreamTracer.LENGTH_UNIT,
         }[step_unit]
-        # The active arrays are set on a shallow copy, so the input's are untouched
-        input_mesh = self.copy(deep=False)
-        if isinstance(vectors, str):
-            input_mesh.set_active_scalars(vectors)
-            input_mesh.set_active_vectors(vectors)
-        elif vectors is None:
-            set_default_active_vectors(input_mesh)
+        input_mesh = _streamlines_input(self, vectors)
 
         if max_time is not None:
             msg = (
@@ -4170,13 +4155,7 @@ class DataSetFilters(DataObjectFilters):
             'cl': _vtk.vtkStreamTracer.CELL_LENGTH_UNIT,
             'l': _vtk.vtkStreamTracer.LENGTH_UNIT,
         }[step_unit]
-        # The active arrays are set on a shallow copy, so the input's are untouched
-        input_mesh = self.copy(deep=False)
-        if isinstance(vectors, str):
-            input_mesh.set_active_scalars(vectors)
-            input_mesh.set_active_vectors(vectors)
-        elif vectors is None:
-            set_default_active_vectors(input_mesh)
+        input_mesh = _streamlines_input(self, vectors)
 
         loop_angle = loop_angle * np.pi / 180
 
@@ -9256,6 +9235,14 @@ class DataSetFilters(DataObjectFilters):
         ugrid = voxel_cells.threshold(0.5)
         del ugrid.cell_data['mask']
         return ugrid
+
+
+def _streamlines_input(mesh: _DataSetType, vectors: str | None) -> _DataSetType:
+    """Return a shallow copy with the vectors active, and active scalars too when named."""
+    input_mesh, _ = _active_vectors_input(mesh, vectors)
+    if vectors is not None:
+        input_mesh.set_active_scalars(vectors)
+    return input_mesh
 
 
 def _length_distribution_percentile(poly, percentile, cell_length_sample_size, *, progress_bar):

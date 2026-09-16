@@ -1885,8 +1885,7 @@ class ImageDataFilters(DataSetFilters):
         if is_cell_data:
             alg_input = self.cells_to_points(scalars, copy=False)
         else:
-            alg_input = self.copy(deep=False)
-            alg_input.set_active_scalars(scalars, preference='point')
+            alg_input, _ = _active_scalars_input(self, scalars)
         field = FieldAssociation.POINT
 
         # int64 overflowed before VTK 9.7, see https://gitlab.kitware.com/vtk/vtk/-/work_items/20019
@@ -2050,16 +2049,14 @@ class ImageDataFilters(DataSetFilters):
         # check for active scalars, otherwise risk of segfault
         input_image = cast('ImageData', self)
         if self.point_data.active_scalars_name is None:  # type: ignore[attr-defined]
-            # The scalars are made active on a shallow copy, so the input is untouched
-            input_image = self.copy(deep=False)  # type: ignore[attr-defined]
             try:
-                set_default_active_scalars(input_image)
+                input_image, info = _active_scalars_input(input_image, None)
             except MissingDataError:
                 msg = 'FFT filter requires point scalars.'
                 raise MissingDataError(msg) from None
 
-            # possible only cell scalars were made active
-            if input_image.point_data.active_scalars_name is None:
+            # possible only cell scalars were available
+            if info.association == FieldAssociation.CELL:
                 msg = 'FFT filter requires point scalars.'
                 raise MissingDataError(msg)
 
@@ -2321,9 +2318,7 @@ class ImageDataFilters(DataSetFilters):
         if self.point_data.active_scalars_name is None:  # type: ignore[attr-defined]
             possible_scalars = self.point_data.keys()  # type: ignore[attr-defined]
             if len(possible_scalars) == 1:
-                # The scalars are made active on a shallow copy, so the input is untouched
-                input_image = self.copy(deep=False)  # type: ignore[attr-defined]
-                input_image.set_active_scalars(possible_scalars[0], preference='point')
+                input_image, _ = _active_scalars_input(input_image, possible_scalars[0])
             elif len(possible_scalars) > 1:
                 msg = (
                     'There are multiple point scalars available. Set one to be '
@@ -3495,8 +3490,8 @@ class ImageDataFilters(DataSetFilters):
         new_image.set_active_scalars(output_scalars)
         return new_image
 
-    def pad_image(
-        self,
+    def pad_image(  # type: ignore[misc]
+        self: ImageData,
         pad_value: float | VectorLike[float] | Literal['wrap', 'mirror'] = 0.0,
         *,
         pad_size: int | VectorLike[int] = 1,
@@ -3668,9 +3663,9 @@ class ImageDataFilters(DataSetFilters):
 
         # Validate scalars
         if scalars is None:
-            field, scalars = _default_active_scalars_info(self)  # type: ignore[arg-type]
+            field, scalars = _default_active_scalars_info(self)
         else:
-            field = self.get_array_association(scalars, preference='point')  # type: ignore[attr-defined]
+            field = self.get_array_association(scalars, preference='point')
         if field != FieldAssociation.POINT:
             msg = (
                 f"Scalars '{scalars}' must be associated with point data. "
@@ -3687,7 +3682,7 @@ class ImageDataFilters(DataSetFilters):
             operation_size=all_pad_sizes[::2] + all_pad_sizes[1::2],
         )
         all_pad_sizes = all_pad_sizes * np.repeat(dims_mask, 2)
-        padded_extents = _pad_extent(self.GetExtent(), all_pad_sizes)  # type: ignore[attr-defined]
+        padded_extents = _pad_extent(self.GetExtent(), all_pad_sizes)
 
         # Validate pad value
         pad_multi_component = None  # Flag for multi-component constants
@@ -3704,7 +3699,7 @@ class ImageDataFilters(DataSetFilters):
                 raise ValueError(error_msg)
         else:
             val = np.atleast_1d(pad_value)
-            num_input_components = _get_num_components(self.point_data[scalars])  # type: ignore[attr-defined]
+            num_input_components = _get_num_components(self.point_data[scalars])
             if not (
                 val.ndim == 1
                 and (np.issubdtype(val.dtype, np.floating) or np.issubdtype(val.dtype, np.integer))
@@ -3719,7 +3714,7 @@ class ImageDataFilters(DataSetFilters):
             val = np.broadcast_to(val, (num_input_components,))
             if num_input_components > 1:
                 pad_multi_component = True
-                data = self.point_data  # type: ignore[attr-defined]
+                data = self.point_data
                 array_names = data.keys() if pad_all_scalars else [scalars]
                 for array_name in array_names:
                     array = data[array_name]
@@ -3741,9 +3736,8 @@ class ImageDataFilters(DataSetFilters):
                 pad_multi_component = False
             alg = _vtk.vtkImageConstantPad()  # type: ignore[assignment]
 
-        # The filter only operates on the active scalars, which are set on a shallow
-        # copy so the input's own active scalars are untouched
-        input_image = self.copy(deep=False)  # type: ignore[attr-defined]
+        # The filter only operates on the active scalars, which the copy owns
+        input_image, _ = _active_scalars_input(self, scalars)
         alg.SetInputDataObject(input_image)
         alg.SetOutputWholeExtent(*padded_extents)
 
@@ -4767,9 +4761,7 @@ class ImageDataFilters(DataSetFilters):
             if extend_border and reference_image_provided:
                 msg = '`extend_border` cannot be set when a `reference_image` is provided.'
                 raise ValueError(msg)
-            # Shallow copy so the requested scalars can be made active without modifying self
-            input_image = self.copy(deep=False)
-            input_image.point_data.active_scalars_name = name
+            input_image, _ = _active_scalars_input(self, name)
         if extend_border is None:
             extend_border = not (processing_cell_scalars or reference_image_provided)
 

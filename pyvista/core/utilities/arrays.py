@@ -946,27 +946,52 @@ def _default_active_scalars_info(mesh: DataSet) -> _ActiveArrayExistsInfoTuple:
     raise AmbiguousDataError(msg)
 
 
+def _preference_of(association: FieldAssociation) -> Literal['point', 'cell']:
+    """Return the ``preference`` keyword matching a field association."""
+    return 'point' if association == FieldAssociation.POINT else 'cell'
+
+
+def _active_array_input(
+    mesh: _DataSetType,
+    name: str | None,
+    preference: Literal['point', 'cell'],
+    *,
+    kind: Literal['scalars', 'vectors'],
+) -> tuple[_DataSetType, _ActiveArrayExistsInfoTuple]:
+    """Return a shallow copy with the named or default array active, and its field and name.
+
+    The copy is always made, so callers may activate further arrays on it without
+    reaching the input.
+    """
+    from pyvista.core.dataset import _ActiveArrayExistsInfoTuple  # noqa: PLC0415
+
+    default_info = (
+        _default_active_scalars_info if kind == 'scalars' else _default_active_vectors_info
+    )
+    info = (
+        default_info(mesh)
+        if name is None
+        else _ActiveArrayExistsInfoTuple(
+            mesh.get_array_association(name, preference=preference), name
+        )
+    )
+    copied = mesh.copy(deep=False)
+    getattr(copied, f'set_active_{kind}')(info.name, preference=_preference_of(info.association))
+    return copied, info
+
+
 def _active_scalars_input(
     mesh: _DataSetType, scalars: str | None, preference: Literal['point', 'cell'] = 'point'
 ) -> tuple[_DataSetType, _ActiveArrayExistsInfoTuple]:
     """Return a mesh with the given or default scalars active, and the field and name."""
-    from pyvista.core.dataset import _ActiveArrayExistsInfoTuple  # noqa: PLC0415
+    return _active_array_input(mesh, scalars, preference, kind='scalars')
 
-    info = (
-        _default_active_scalars_info(mesh)
-        if scalars is None
-        else _ActiveArrayExistsInfoTuple(
-            mesh.get_array_association(scalars, preference=preference), scalars
-        )
-    )
-    if (info.association, info.name) == mesh.active_scalars_info:
-        return mesh, info
-    # The scalars are activated on a shallow copy, so the input is left untouched
-    copied = mesh.copy(deep=False)
-    copied.set_active_scalars(
-        info.name, preference='point' if info.association == FieldAssociation.POINT else 'cell'
-    )
-    return copied, info
+
+def _active_vectors_input(
+    mesh: _DataSetType, vectors: str | None, preference: Literal['point', 'cell'] = 'point'
+) -> tuple[_DataSetType, _ActiveArrayExistsInfoTuple]:
+    """Return a mesh with the given or default vectors active, and the field and name."""
+    return _active_array_input(mesh, vectors, preference, kind='vectors')
 
 
 def set_default_active_vectors(mesh: DataSet) -> _ActiveArrayExistsInfoTuple:
@@ -1005,10 +1030,7 @@ def set_default_active_vectors(mesh: DataSet) -> _ActiveArrayExistsInfoTuple:
 
     if mesh.active_vectors_name is None:
         default = _default_active_vectors_info(mesh)
-        preference: Literal['point', 'cell'] = (
-            'point' if default.association == FieldAssociation.POINT else 'cell'
-        )
-        mesh.set_active_vectors(default.name, preference=preference)
+        mesh.set_active_vectors(default.name, preference=_preference_of(default.association))
     field, name = mesh.active_vectors_info
     return _ActiveArrayExistsInfoTuple(field, cast('str', name))
 
@@ -1049,10 +1071,7 @@ def set_default_active_scalars(mesh: DataSet) -> _ActiveArrayExistsInfoTuple:
 
     if mesh.active_scalars_name is None:
         default = _default_active_scalars_info(mesh)
-        preference: Literal['point', 'cell'] = (
-            'point' if default.association == FieldAssociation.POINT else 'cell'
-        )
-        mesh.set_active_scalars(default.name, preference=preference)
+        mesh.set_active_scalars(default.name, preference=_preference_of(default.association))
     field, name = mesh.active_scalars_info
     return _ActiveArrayExistsInfoTuple(field, cast('str', name))
 
