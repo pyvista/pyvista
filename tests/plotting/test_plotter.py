@@ -1044,6 +1044,29 @@ def test_add_ruler_scale():
     assert max_ == 0.0
 
 
+@pytest.mark.parametrize('color', ['red', 'gray', 'teal', 'white'])
+def test_add_ruler_color(color):
+    pl = pv.Plotter()
+    ruler = pl.add_ruler([0.0, 0.0, 0.0], [1.0, 0.0, 0.0], label_color=color, tick_color=color)
+    expected = pv.Color(color).float_rgb
+    assert ruler.GetProperty().GetColor() == expected
+    assert ruler.GetLabelTextProperty().GetColor() == expected
+    assert ruler.GetTitleTextProperty().GetColor() == expected
+
+
+@pytest.mark.parametrize('color', ['red', 'gray', 'teal', 'white'])
+def test_add_legend_scale_color(color):
+    pl = pv.Plotter()
+    legend_scale, _ = pl.add_legend_scale(color=color)
+    expected = pv.Color(color).float_rgb
+    for text in ['Label', 'Title']:
+        assert getattr(legend_scale, f'GetLegend{text}Property')().GetColor() == expected
+    for ax in ['Bottom', 'Left', 'Right', 'Top']:
+        axis = getattr(legend_scale, f'Get{ax}Axis')()
+        assert axis.GetProperty().GetColor() == expected
+        assert axis.GetLabelTextProperty().GetColor() == expected
+
+
 @pytest.mark.parametrize('scale_first', [True, False])
 def test_add_ruler_renderer_scale(scale_first):
     pl = pv.Plotter()

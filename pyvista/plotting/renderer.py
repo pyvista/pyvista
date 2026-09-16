@@ -4586,9 +4586,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Either a string, rgb list, or hex color string for
             label and title colors.
 
-            .. warning::
-                This is either white or black.
-
         tick_color : ColorLike, optional
             Either a string, rgb list, or hex color string for
             tick line colors.
@@ -4671,11 +4668,9 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         ruler.SetLabelVisibility(show_labels)
         if label_format:
             ruler.SetLabelFormat(label_format)
-        ruler.GetProperty().SetColor(*tick_color.int_rgb)
-        if label_color != Color('white'):
-            # This property turns black if set
-            ruler.GetLabelTextProperty().SetColor(*label_color.int_rgb)
-            ruler.GetTitleTextProperty().SetColor(*label_color.int_rgb)
+        ruler.GetProperty().SetColor(*tick_color.float_rgb)
+        ruler.GetLabelTextProperty().SetColor(*label_color.float_rgb)
+        ruler.GetTitleTextProperty().SetColor(*label_color.float_rgb)
         ruler.SetNumberOfMinorTicks(number_minor_ticks)
         ruler.SetTickVisibility(show_ticks)
         ruler.SetTickLength(tick_length)
@@ -4763,9 +4758,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Either a string, rgb list, or hex color string for tick text
             and tick line colors.
 
-            .. warning::
-                The axis labels tend to be either white or black.
-
         font_size_factor : float, default: 0.6
             Factor to scale font size overall.
 
@@ -4837,19 +4829,15 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         for text in ['Label', 'Title']:
             prop = getattr(legend_scale, f'GetLegend{text}Property')()
-            if color != Color('white'):
-                # This property turns black if set
-                prop.SetColor(*color.int_rgb)
+            prop.SetColor(*color.float_rgb)
             prop.SetFontSize(
                 int(font_size_factor * 20),
             )  # hack to avoid multiple font size arguments
 
         for ax in ['Bottom', 'Left', 'Right', 'Top']:
             axis = getattr(legend_scale, f'Get{ax}Axis')()
-            axis.GetProperty().SetColor(*color.int_rgb)
-            if color != Color('white'):
-                # This label property turns black if set
-                axis.GetLabelTextProperty().SetColor(*color.int_rgb)
+            axis.GetProperty().SetColor(*color.float_rgb)
+            axis.GetLabelTextProperty().SetColor(*color.float_rgb)
             axis.SetFontFactor(font_size_factor)
             axis.SetLabelFactor(label_size_factor)
             if label_format:
