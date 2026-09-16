@@ -42,6 +42,12 @@ def test_property_range_is_validated(prop, name, rng):
         with pytest.raises(ValueError, match=f'{name} values must all be less than or equal'):
             setattr(prop, name, upper + 1.0)
 
+    else:
+        setattr(prop, name, 1e6)
+        assert getattr(prop, name) == 1e6
+        with pytest.raises(ValueError, match=f'{name} values must all be less than inf'):
+            setattr(prop, name, np.inf)
+
 
 @pytest.mark.parametrize(('name', 'rng'), PROPERTY_RANGES.items(), ids=PROPERTY_RANGES)
 def test_property_range_is_documented(name, rng):
