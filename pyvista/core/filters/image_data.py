@@ -4845,7 +4845,7 @@ class ImageDataFilters(DataSetFilters):
         interpolation: _InterpolationOptions = 'nearest',
         *,
         transform: TransformLike | _vtk.vtkAbstractTransform | None = None,
-        border_mode: Literal['clamp', 'wrap', 'mirror'] = 'clamp',
+        border_mode: _BorderModeOptions = 'clamp',
         background_value: float = 0.0,
         anti_aliasing: bool = False,
         scalars: str | None = None,
@@ -5025,7 +5025,7 @@ class ImageDataFilters(DataSetFilters):
             get_args(_InterpolationOptions), must_contain=interpolation, name='interpolation'
         )
         _validation.check_contains(
-            ['clamp', 'wrap', 'mirror'], must_contain=border_mode, name='border_mode'
+            get_args(_BorderModeOptions), must_contain=border_mode, name='border_mode'
         )
         background_value = _validation.validate_number(
             background_value, must_be_finite=True, name='background_value'
@@ -6097,7 +6097,7 @@ def _bspline_coefficients(
     *,
     scalars: str,
     degree: int,
-    border_mode: Literal['clamp', 'wrap', 'mirror'],
+    border_mode: _BorderModeOptions,
     progress_bar: bool,
 ) -> ImageData:
     """Pre-compute the spline coefficients expected by the B-spline interpolator."""
@@ -6121,8 +6121,11 @@ def _resolve_reslice_transform(
     vtk_transform = (
         transform if isinstance(transform, _vtk.vtkAbstractTransform) else pv.Transform(transform)
     )
-    matrix = vtk_transform.GetMatrix() if hasattr(vtk_transform, 'GetMatrix') else None
-    scale = np.ones(3) if matrix is None else pv.Transform(matrix).decompose()[3]
+    scale = (
+        pv.Transform(vtk_transform.GetMatrix()).decompose()[3]
+        if isinstance(vtk_transform, _vtk.vtkHomogeneousTransform)
+        else np.ones(3)
+    )
     # The filter maps output points back onto the image, so invert to move the image
     return vtk_transform.GetInverse(), scale
 
@@ -6133,7 +6136,7 @@ def _reslice_image(
     reference: ImageData,
     interpolator: _vtk.vtkAbstractImageInterpolator,
     interpolation: _InterpolationOptions,
-    border_mode: Literal['clamp', 'wrap', 'mirror'],
+    border_mode: _BorderModeOptions,
     background_value: float,
     transform: _vtk.vtkAbstractTransform | None,
     progress_bar: bool,

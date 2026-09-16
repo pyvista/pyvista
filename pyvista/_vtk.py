@@ -325,6 +325,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
     ),
     'vtkCommonTransforms': (
         'vtkAbstractTransform',
+        'vtkHomogeneousTransform',
         'vtkThinPlateSplineTransform',
         'vtkTransform',
     ),
