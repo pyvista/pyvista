@@ -1585,10 +1585,16 @@ def test_reslice_interpolation(interpolation):
     interior = np.all((image.points >= 2) & (image.points <= 7), axis=1)
     assert np.allclose(resliced['values'][interior], image['values'][interior], atol=1e-3)
 
-    # Sampling between the input points gives different values
+    # Sampling between the input points gives values the mode's own kernel decides
     reference = pv.ImageData(dimensions=(9, 9, 9), origin=(0.5, 0.5, 0.5))
-    between = image.reslice(reference, interpolation)
-    assert between['values'].shape == (729,)
+    between = image.reslice(reference, interpolation)['values']
+    nearest = image.reslice(reference, 'nearest')['values']
+    assert between.shape == (729,)
+    if interpolation in ('nearest', 'bspline0'):
+        # A degree zero spline is nearest neighbor
+        assert np.array_equal(between, nearest)
+    else:
+        assert not np.allclose(between, nearest)
 
 
 @pytest.mark.parametrize('dtype', ['uint8', 'int32', 'int64', 'float32'])
@@ -1625,6 +1631,13 @@ def test_reslice_cell_data():
     # Cell values are sampled at the cell centers, so an identical grid is unchanged
     assert np.allclose(resliced.cell_data['values'], image.cell_data['values'])
 
+    # A reference which is a single cell thick keeps that axis
+    thin = pv.ImageData(dimensions=(6, 6, 2))
+    resliced = image.reslice(thin, 'linear')
+    assert np.array_equal(resliced.dimensions, thin.dimensions)
+    assert np.allclose(resliced.bounds, thin.bounds)
+    assert len(resliced.cell_data['values']) == thin.n_cells
+
 
 @pytest.mark.parametrize('interpolation', ['linear', 'lanczos'])
 def test_reslice_anti_aliasing(interpolation):
@@ -1645,16 +1658,33 @@ def test_reslice_anti_aliasing(interpolation):
     assert np.allclose(plain, smoothed)
 
 
-@pytest.mark.parametrize('border_mode', ['clamp', 'wrap', 'mirror'])
-def test_reslice_border_mode(border_mode):
+@pytest.mark.parametrize('scale', [0.0, 1e-9])
+def test_reslice_anti_aliasing_flattening_transform(scale):
+    # A transform which flattens an axis must not ask for an unbounded blur kernel
+    image = pv.ImageData(dimensions=(20, 20, 1))
+    image['values'] = np.arange(image.n_points, dtype=float)
+    reference = pv.ImageData(dimensions=(10, 10, 1), spacing=(2.0, 2.0, 1.0))
+
+    transform = pv.Transform().scale(scale, 1.0, 1.0)
+    resliced = image.reslice(reference, 'linear', transform=transform, anti_aliasing=True)
+    assert np.all(np.isfinite(resliced['values']))
+
+
+@pytest.mark.parametrize(
+    ('border_mode', 'expected_array'),
+    [  # Exact values aren't important, we're just checking the values differ between modes
+        ('clamp', [0.0, 0.4375, 1.0, 1.5625, 2.0]),
+        ('wrap', [0.0, 0.3125, 1.0, 1.6875, 2.0]),
+        ('mirror', [0.0, 0.375, 1.0, 1.625, 2.0]),
+    ],
+)
+def test_reslice_border_mode(border_mode, expected_array):
     image = pv.ImageData(dimensions=(3, 1, 1))
     image['data'] = np.array([0.0, 1.0, 2.0])
     reference = pv.ImageData(dimensions=(5, 1, 1), spacing=(0.5, 1.0, 1.0))
 
     resliced = image.reslice(reference, 'cubic', border_mode=border_mode)
-    assert len(resliced['data']) == 5
-    if border_mode == 'clamp':
-        assert np.allclose(resliced['data'][[0, -1]], [0.0, 2.0])
+    assert np.allclose(resliced['data'], expected_array)
 
 
 def test_reslice_scalars_not_active():
@@ -1667,6 +1697,20 @@ def test_reslice_scalars_not_active():
     assert resliced.array_names == ['other']
     assert np.array_equal(resliced['other'], image['other'])
     assert image.active_scalars_name == 'active'
+
+
+@pytest.mark.parametrize('preference', ['point', 'cell'])
+def test_reslice_preference(preference):
+    image = pv.ImageData(dimensions=(5, 5, 5))
+    image.point_data['data'] = np.arange(image.n_points, dtype=float)
+    image.cell_data['data'] = np.arange(image.n_cells, dtype=float)
+
+    resliced = image.reslice(image, scalars='data', preference=preference)
+    assert resliced.array_names == ['data']
+    assert np.array_equal(
+        getattr(resliced, f'{preference}_data')['data'],
+        getattr(image, f'{preference}_data')['data'],
+    )
 
 
 def test_reslice_inplace():
