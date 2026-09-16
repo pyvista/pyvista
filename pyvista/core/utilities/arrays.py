@@ -946,7 +946,7 @@ def _default_active_scalars_info(mesh: DataSet) -> _ActiveArrayExistsInfoTuple:
     raise AmbiguousDataError(msg)
 
 
-def _preference_of(association: FieldAssociation) -> Literal['point', 'cell']:
+def _preference_of(association: FieldAssociation) -> PointLiteral | CellLiteral:
     """Return the ``preference`` keyword matching a field association."""
     return 'point' if association == FieldAssociation.POINT else 'cell'
 
@@ -961,7 +961,7 @@ def _shallow_copy_for_new_arrays(mesh: _DataSetType) -> _DataSetType:
 def _array_info(
     mesh: DataSet,
     name: str | None,
-    preference: Literal['point', 'cell'],
+    preference: PointLiteral | CellLiteral,
     *,
     kind: Literal['scalars', 'vectors'],
 ) -> _ActiveArrayExistsInfoTuple:
@@ -979,7 +979,7 @@ def _array_info(
 
 
 def _scalars_info(
-    mesh: DataSet, scalars: str | None, preference: Literal['point', 'cell'] = 'point'
+    mesh: DataSet, scalars: str | None, preference: PointLiteral | CellLiteral = 'point'
 ) -> _ActiveArrayExistsInfoTuple:
     """Return the field association and name of the given or default scalars."""
     return _array_info(mesh, scalars, preference, kind='scalars')
@@ -988,7 +988,7 @@ def _scalars_info(
 def _active_array_input(
     mesh: _DataSetType,
     name: str | None,
-    preference: Literal['point', 'cell'],
+    preference: PointLiteral | CellLiteral,
     *,
     kind: Literal['scalars', 'vectors'],
 ) -> tuple[_DataSetType, _ActiveArrayExistsInfoTuple]:
@@ -1000,14 +1000,14 @@ def _active_array_input(
 
 
 def _active_scalars_input(
-    mesh: _DataSetType, scalars: str | None, preference: Literal['point', 'cell'] = 'point'
+    mesh: _DataSetType, scalars: str | None, preference: PointLiteral | CellLiteral = 'point'
 ) -> tuple[_DataSetType, _ActiveArrayExistsInfoTuple]:
     """Return a mesh with the given or default scalars active, and the field and name."""
     return _active_array_input(mesh, scalars, preference, kind='scalars')
 
 
 def _active_vectors_input(
-    mesh: _DataSetType, vectors: str | None, preference: Literal['point', 'cell'] = 'point'
+    mesh: _DataSetType, vectors: str | None, preference: PointLiteral | CellLiteral = 'point'
 ) -> tuple[_DataSetType, _ActiveArrayExistsInfoTuple]:
     """Return a mesh with the given or default vectors active, and the field and name."""
     return _active_array_input(mesh, vectors, preference, kind='vectors')
@@ -1016,7 +1016,7 @@ def _active_vectors_input(
 def _default_array_input(
     mesh: _DataSetType,
     name: str | None,
-    preference: Literal['point', 'cell'],
+    preference: PointLiteral | CellLiteral,
     *,
     kind: Literal['scalars', 'vectors'],
 ) -> tuple[_DataSetType, str]:
@@ -1028,14 +1028,14 @@ def _default_array_input(
 
 
 def _default_scalars_input(
-    mesh: _DataSetType, scalars: str | None, preference: Literal['point', 'cell'] = 'point'
+    mesh: _DataSetType, scalars: str | None, preference: PointLiteral | CellLiteral = 'point'
 ) -> tuple[_DataSetType, str]:
     """Return the mesh to filter and the scalars name, activating the default if needed."""
     return _default_array_input(mesh, scalars, preference, kind='scalars')
 
 
 def _default_vectors_input(
-    mesh: _DataSetType, vectors: str | None, preference: Literal['point', 'cell'] = 'point'
+    mesh: _DataSetType, vectors: str | None, preference: PointLiteral | CellLiteral = 'point'
 ) -> tuple[_DataSetType, str]:
     """Return the mesh to filter and the vectors name, activating the default if needed."""
     return _default_array_input(mesh, vectors, preference, kind='vectors')
