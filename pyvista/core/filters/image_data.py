@@ -28,7 +28,8 @@ from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.filters.data_set import _ExtractValuesInputs
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import _active_scalars_input
-from pyvista.core.utilities.arrays import _default_active_scalars_info
+from pyvista.core.utilities.arrays import _default_scalars_input
+from pyvista.core.utilities.arrays import _scalars_info
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import set_default_active_scalars
 from pyvista.core.utilities.helpers import _warn_if_invalid_data
@@ -85,8 +86,8 @@ _ConcatenateComponentPolicyOptions = Literal['strict', 'promote_rgba']
 class ImageDataFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for uniform grid datasets."""
 
-    def gaussian_smooth(
-        self,
+    def gaussian_smooth(  # type: ignore[misc]
+        self: ImageData,
         *,
         radius_factor=1.5,
         std_dev=2.0,
@@ -143,15 +144,7 @@ class ImageDataFilters(DataSetFilters):
 
         """
         alg = _vtk.vtkImageGaussianSmooth()
-        default_scalars = scalars is None
-        input_image, (field, scalars) = _active_scalars_input(self, scalars)  # type: ignore[type-var]
-        if field.value == 1:
-            msg = (
-                'If `scalars` not given, active scalars must be point array.'
-                if default_scalars
-                else 'Can only process point data, given `scalars` are cell data.'
-            )
-            raise ValueError(msg)
+        input_image, field, scalars = self._validate_point_scalars(scalars)
         alg.SetInputDataObject(input_image)
         alg.SetInputArrayToProcess(
             0,
@@ -171,8 +164,8 @@ class ImageDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar=progress_bar, message='Performing Gaussian Smoothing')
         return _get_output(alg)
 
-    def median_smooth(
-        self,
+    def median_smooth(  # type: ignore[misc]
+        self: ImageData,
         *,
         kernel_size=(3, 3, 3),
         scalars=None,
@@ -239,7 +232,7 @@ class ImageDataFilters(DataSetFilters):
 
         """
         alg = _vtk.vtkImageMedian3D()
-        input_image, (field, scalars) = _active_scalars_input(self, scalars, preference)  # type: ignore[type-var]
+        input_image, field, scalars = self._validate_point_scalars(scalars, preference)
         alg.SetInputDataObject(input_image)
         alg.SetInputArrayToProcess(
             0,
@@ -810,17 +803,17 @@ class ImageDataFilters(DataSetFilters):
                     raise TypeError(msg)
 
         def _validate_scalars(mesh: ImageData, scalars: str | None = None):
-            if scalars is None:
-                field, scalars = _default_active_scalars_info(mesh)
-            else:
-                field = mesh.get_array_association(scalars, preference='point')
+            mesh, scalars = _default_scalars_input(mesh, scalars)
+            field = mesh.get_array_association(scalars, preference='point')
             if field != FieldAssociation.POINT:
                 msg = (
                     f"Scalars '{scalars}' must be associated with point data. "
                     f'Got {field.name.lower()} data instead.'
                 )
                 raise ValueError(msg)
-            return field, scalars
+            return mesh, field, scalars
+
+        crop_source: ImageData = self
 
         def _voi_from_mask(mask_: str | ImageData | NumpyArray[float] | bool):  # noqa: FBT001
             _raise_error_kwargs_not_none('mask', also_exclude=['background_value', 'padding'])
@@ -842,7 +835,11 @@ class ImageDataFilters(DataSetFilters):
                 scalars = 'scalars'
                 mesh[scalars] = mask_
 
-            field, scalars_ = _validate_scalars(mesh, scalars)
+            mesh, field, scalars_ = _validate_scalars(mesh, scalars)
+            if isinstance(mask_, (str, bool)):
+                # The mask's scalars stay active on the cropped output
+                nonlocal crop_source
+                crop_source = mesh
             array = cast('pv.pyvista_ndarray', get_array(mesh, name=scalars_, preference=field))
             num_components = 1 if array.ndim == 1 else array.shape[1]
 
@@ -1014,7 +1011,7 @@ class ImageDataFilters(DataSetFilters):
         # Crop to the part of the requested region which the image actually covers
         voi = ImageDataFilters._clip_extent(voi, clip_to=self.extent)
 
-        cropped = self.extract_subset(
+        cropped = crop_source.extract_subset(
             voi, rebase_coordinates=rebase_coordinates, progress_bar=progress_bar
         )
         if not keep_dimensions:
@@ -1048,8 +1045,8 @@ class ImageDataFilters(DataSetFilters):
         result.cell_data.update(self.cell_data)
         return result
 
-    def image_dilate_erode(
-        self,
+    def image_dilate_erode(  # type: ignore[misc]
+        self: ImageData,
         dilate_value=1.0,
         erode_value=0.0,
         *,
@@ -1127,15 +1124,7 @@ class ImageDataFilters(DataSetFilters):
         )
 
         alg = _vtk.vtkImageDilateErode3D()
-        default_scalars = scalars is None
-        input_image, (field, scalars) = _active_scalars_input(self, scalars)  # type: ignore[type-var]
-        if field.value == 1:
-            msg = (
-                'If `scalars` not given, active scalars must be point array.'
-                if default_scalars
-                else 'Can only process point data, given `scalars` are cell data.'
-            )
-            raise ValueError(msg)
+        input_image, field, scalars = self._validate_point_scalars(scalars)
         alg.SetInputDataObject(input_image)
         alg.SetInputArrayToProcess(
             0,
@@ -1239,10 +1228,13 @@ class ImageDataFilters(DataSetFilters):
         return _get_output(alg)
 
     def _validate_point_scalars(  # type: ignore[misc]
-        self: ImageData, scalars: str | None = None
+        self: ImageData,
+        scalars: str | None = None,
+        preference: Literal['point', 'cell'] = 'point',
     ) -> tuple[ImageData, Literal[FieldAssociation.POINT], str]:
+        """Return a copy with the point scalars to process active, their field and name."""
         default_scalars = scalars is None
-        image, (field, scalars) = _active_scalars_input(self, scalars)
+        image, (field, scalars) = _active_scalars_input(self, scalars, preference)
         if field == FieldAssociation.CELL:
             msg = (
                 'If `scalars` not given, active scalars must be point array.'
@@ -1869,10 +1861,7 @@ class ImageDataFilters(DataSetFilters):
         >>> ithresh.plot()
 
         """
-        if scalars is None:
-            field, scalars = _default_active_scalars_info(self)
-        else:
-            field = self.get_array_association(scalars, preference=preference)
+        field, scalars = _scalars_info(self, scalars, preference)
 
         threshold_val = np.atleast_1d(threshold)
         if (size := threshold_val.size) not in (1, 2):
@@ -3662,10 +3651,7 @@ class ImageDataFilters(DataSetFilters):
             return 1 if array_.ndim == 1 else array_.shape[1]
 
         # Validate scalars
-        if scalars is None:
-            field, scalars = _default_active_scalars_info(self)
-        else:
-            field = self.get_array_association(scalars, preference='point')
+        field, scalars = _scalars_info(self, scalars)
         if field != FieldAssociation.POINT:
             msg = (
                 f"Scalars '{scalars}' must be associated with point data. "
@@ -4743,11 +4729,7 @@ class ImageDataFilters(DataSetFilters):
             )
             raise ValueError(msg)
 
-        if scalars is None:
-            field, name = _default_active_scalars_info(self)
-        else:
-            name = scalars
-            field = self.get_array_association(scalars, preference=preference)
+        field, name = _scalars_info(self, scalars, preference)
 
         # The filter operates on point scalars, so convert cell scalars to points
         processing_cell_scalars = field == FieldAssociation.CELL
