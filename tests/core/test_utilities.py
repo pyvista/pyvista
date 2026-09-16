@@ -3191,6 +3191,18 @@ def _compute_unit_cell_quality(
     return qual.active_scalars[0]
 
 
+def xfail_wedge_negative_volume(info):
+    """Xfail the wedge volume measure, which VTK reports as negative before 9.6."""
+    if (
+        pv.vtk_version_info < (9, 6)
+        and info.cell_type == pv.CellType.WEDGE
+        and info.quality_measure == 'volume'
+    ):
+        pytest.xfail(
+            'vtkWedge returns negative volume, see https://gitlab.kitware.com/vtk/vtk/-/issues/19643'
+        )
+
+
 def xfail_distortion_returns_one(info):
     if (
         info.cell_type in [pv.CellType.TRIANGLE, pv.CellType.TETRA]
@@ -3210,6 +3222,8 @@ def test_cell_quality_info_unit_cell_value(info):
         pytest.fail(
             f'Measure {info.quality_measure!r} is not valid for cell type {info.cell_type.name!r}'
         )
+
+    xfail_wedge_negative_volume(info)
 
     assert np.isclose(qual_value, info.unit_cell_value)
 
