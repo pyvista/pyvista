@@ -180,11 +180,7 @@ def _fingerprint(mesh, prefix=''):
     if isinstance(mesh, pv.MultiBlock):
         entries = {f'{prefix}block names': tuple(mesh.keys())}
         for index, block in enumerate(mesh):
-            label = f'{prefix}block {index} '
-            if block is None:
-                entries[f'{label}type'] = None
-            else:
-                entries.update(_fingerprint(block, label))
+            entries.update(_fingerprint(block, f'{prefix}block {index} '))
         return entries
 
     field_data = mesh.GetFieldData()
@@ -543,12 +539,7 @@ _KWARG_VALUES: dict[str, list[Any]] = {
 def _literal_options(annotation):
     """Return the options of a ``Literal`` annotation, or ``None``."""
     match = _LITERAL_PATTERN.search(str(annotation))
-    if match is None:
-        return None
-    try:
-        return ast.literal_eval(f'[{match.group(1)}]')
-    except (SyntaxError, ValueError):
-        return None
+    return None if match is None else ast.literal_eval(f'[{match.group(1)}]')
 
 
 def _kwarg_variants(parameter):
@@ -733,10 +724,10 @@ def test_filter_does_not_modify_input(key):
                     continue
                 ran += 1
                 changes = _changes(before, _fingerprint(mesh))
-                if changes:
+                if changes:  # pragma: no cover -- failure path
                     reports.append(_report(kind, mode, name, args, kwargs, changes))
     assert ran, f'{key} never ran; the test meshes or arguments no longer apply'
-    if reports:
+    if reports:  # pragma: no cover -- failure path
         _fail(key, 'modified its input', reports, ran)
 
 
@@ -752,12 +743,9 @@ _DEFAULT_SCALARS_FILTERS = [
 
 
 def _activated(mesh):
-    """Return a copy with the default scalars active, or ``None`` if there is no default."""
+    """Return a copy of ``mesh`` with its default scalars made active."""
     activated = mesh.copy()
-    try:
-        set_default_active_scalars(activated)
-    except Exception:  # noqa: BLE001  - no unambiguous default to activate
-        return None
+    set_default_active_scalars(activated)
     return activated
 
 
@@ -775,15 +763,39 @@ def test_filter_output_does_not_depend_on_active_scalars(key):
             if not hasattr(template, name):
                 continue
             activated = _activated(template)
-            if activated is None:
-                continue
             args, kwargs = _call_arguments(name)
             as_is = _output_or_error(template.copy(), name, args, kwargs)
             preactivated = _output_or_error(activated, name, args, kwargs)
             ran += 1
             changes = _changes(as_is, preactivated)
-            if changes:
+            if changes:  # pragma: no cover -- failure path
                 reports.append(_report(kind, mode, name, args, kwargs, changes))
     assert ran, f'{key} never ran; the test meshes or arguments no longer apply'
-    if reports:
+    if reports:  # pragma: no cover -- failure path
         _fail(key, 'returns a different output once its default array is active', reports, ran)
+
+
+def test_failure_names_the_call_and_every_entry_which_changed():
+    """A failure report names the call which broke the property and what it did to the mesh."""
+    mesh = _make_mesh('poly', 'single_point')
+    before = _fingerprint(mesh)
+    mesh.point_data['extra'] = np.arange(mesh.n_points, dtype=float)
+    mesh.set_active_scalars('extra')
+    changes = _changes(before, _fingerprint(mesh))
+    report = _report('poly', 'single_point', 'sample', (pv.Sphere(),), {'tolerance': 0.5}, changes)
+
+    with pytest.raises(pytest.fail.Exception) as excinfo:
+        _fail('DataSetFilters.sample', 'modified its input', [report], 4)
+
+    message = str(excinfo.value)
+    assert message.startswith('DataSetFilters.sample modified its input in 1 of 4 calls:')
+    assert f'  poly mesh, {DATA_MODES["single_point"]}' in message
+    assert "    _make_mesh('poly', 'single_point').sample(<PolyData>, tolerance=0.5)" in message
+    assert "      point data arrays: +'extra:" in message
+    assert "      point data active scalars: None -> 'extra'" in message
+
+
+def test_failure_names_reordered_arrays_as_reordered():
+    """Arrays which only changed order are reported as reordered, not as added and removed."""
+    change = _describe_change('cell data arrays', ('a', 'b'), ('b', 'a'))
+    assert change == 'cell data arrays: reordered'
