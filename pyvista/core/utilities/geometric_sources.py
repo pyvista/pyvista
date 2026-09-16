@@ -3737,12 +3737,10 @@ class AxesGeometrySource(_NoNewAttrMixin):
             if isinstance(part, pv.PolyData)
             else part.extract_surface(algorithm=None, pass_pointid=False, pass_cellid=False)
         )
-        size = np.array(surface.bounds_size)
-        if np.any(size < 1e-8):
+        if np.any(np.array(surface.bounds_size) < 1e-8):
             msg = f'Custom axes part must be 3D. Got bounds:\n{surface.bounds}.'
             raise ValueError(msg)
-        transform = pv.Transform().translate(-np.array(surface.center)).scale(np.reciprocal(size))
-        return surface.transform(transform, inplace=False)
+        return surface.resize(bounds_size=1.0, center=(0.0, 0.0, 0.0))
 
     @staticmethod
     def _make_axes_parts(
