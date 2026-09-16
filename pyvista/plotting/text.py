@@ -12,6 +12,7 @@ import pyvista as pv
 from pyvista import _vtk
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
+from pyvista.core.utilities.misc import _check_range
 from pyvista.core.utilities.misc import _NameMixin
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
@@ -607,7 +608,7 @@ class TextProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkTextProperty):
 
     @opacity.setter
     def opacity(self, opacity: float):
-        _validation.check_range(opacity, [0.0, 1.0], name='opacity')
+        _check_range(opacity, (0, 1), 'opacity')
         self.SetOpacity(opacity)
 
     @property
@@ -643,7 +644,7 @@ class TextProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkTextProperty):
 
     @background_opacity.setter
     def background_opacity(self, opacity: float):
-        _validation.check_range(opacity, [0.0, 1.0], name='background_opacity')
+        _check_range(opacity, (0, 1), 'background_opacity')
         self.SetBackgroundOpacity(opacity)
 
     @property

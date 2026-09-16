@@ -463,6 +463,16 @@ class conditional_decorator:  # noqa: N801
         return self.decorator(func)
 
 
+def _check_range(value: float, rng: Sequence[float], parm_name: str) -> None:
+    """Check if a parameter is within a range."""
+    if value < rng[0] or value > rng[1]:
+        msg = (
+            f'The value {float(value)} for `{parm_name}` is outside the '
+            f'acceptable range {tuple(rng)}.'
+        )
+        raise ValueError(msg)
+
+
 class _AutoFreezeMeta(type):
     """Metaclass to automatically freeze a class when called."""
 

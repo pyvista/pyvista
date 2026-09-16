@@ -8,13 +8,13 @@ from typing import TYPE_CHECKING
 import weakref
 
 import numpy as np
-import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.arrays import convert_string_array
+from pyvista.core.utilities.misc import _check_range
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from .colors import Color
@@ -211,7 +211,7 @@ class BlockAttributes(_NoNewAttrMixin):
             self._attr.Modified()
             return
 
-        _validation.check_range(new_opacity, [0.0, 1.0], name='opacity')
+        _check_range(new_opacity, (0, 1), 'opacity')
         self._attr.SetBlockOpacity(self._block, new_opacity)
 
     @property
