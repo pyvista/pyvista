@@ -111,8 +111,8 @@ def test_threshold_raises(mocker: MockerFixture):
 def test_contour_raises(mocker: MockerFixture):
     from pyvista.core.filters import data_set
 
-    m = mocker.patch.object(data_set, '_default_active_scalars_info')
-    m().name = 'foo'
+    m = mocker.patch.object(data_set, '_default_scalars_input')
+    m.return_value = (pv.PolyData(), 'foo')
 
     with pytest.raises(
         ValueError, match=r'Input dataset for the contour filter must have scalar.'
@@ -4641,11 +4641,13 @@ def test_collision(sphere):
 
 
 def test_collision_generate_scalars_keeps_input_arrays(sphere):
+    # Two arrays are needed: with only one, the collision scalars are the sole output array
     sphere.cell_data['other'] = np.arange(sphere.n_cells)
+    sphere.cell_data['other2'] = np.arange(sphere.n_cells)
     moved_sphere = sphere.translate((0.5, 0, 0), inplace=False)
     output, _ = sphere.collision(moved_sphere, generate_scalars=True)
     assert 'collision_rgba' in output.cell_data
-    assert sphere.cell_data.keys() == ['other']
+    assert sphere.cell_data.keys() == ['other', 'other2']
 
 
 def test_collision_solid_non_triangle(hexbeam):

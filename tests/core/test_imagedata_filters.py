@@ -282,6 +282,18 @@ def test_contour_labels_strict_external(channels):
     channels.contour_labels('strict_external', select_outputs=[2])
 
 
+def test_contour_labels_scalars(labeled_image):
+    other = np.zeros(labeled_image.n_points)
+    other[[13, 14]] = 7
+    labeled_image.point_data['other'] = other
+    labeled_image.set_active_scalars('labels')
+
+    contours = labeled_image.contour_labels(scalars='other')
+
+    assert np.unique(contours.cell_data['boundary_labels']).tolist() == [7]
+    assert labeled_image.active_scalars_name == 'labels'
+
+
 def test_contour_labels_raises(labeled_image):
     # Nonexistent scalar key
     with pytest.raises(KeyError):

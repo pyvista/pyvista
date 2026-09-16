@@ -22,6 +22,7 @@ from pyvista.core.filters.poly_data import PolyDataFilters
 from pyvista.core.filters.rectilinear_grid import RectilinearGridFilters
 from pyvista.core.filters.structured_grid import StructuredGridFilters
 from pyvista.core.filters.unstructured_grid import UnstructuredGridFilters
+from pyvista.core.utilities.arrays import set_default_active_scalars
 
 # Filters that open a plot rather than return a mesh.
 _PLOTTING_FILTERS = frozenset(
@@ -31,6 +32,7 @@ _PLOTTING_FILTERS = frozenset(
         'plot_over_circular_arc',
         'plot_over_circular_arc_normal',
         'plot_over_line',
+        'plot_boundaries',
     }
 )
 
@@ -156,13 +158,13 @@ def _cells_digest(cell_array):
     )
 
 
-def fingerprint(mesh):
+def _fingerprint(mesh):
     """Return a hashable digest of everything a filter could modify on ``mesh``."""
     if isinstance(mesh, pv.MultiBlock):
         return (
             type(mesh).__name__,
             tuple(mesh.keys()),
-            tuple(None if block is None else fingerprint(block) for block in mesh),
+            tuple(None if block is None else _fingerprint(block) for block in mesh),
         )
     parts: list[Any] = [
         type(mesh).__name__,
@@ -508,12 +510,12 @@ _FILTER_CLASSES = (
 
 
 def _filters():
-    """Return every public filter of every filter class."""
+    """Return every public filter of every filter class, keyed by class and name."""
     found = {}
     for cls in _FILTER_CLASSES:
         for name in sorted(vars(cls)):
             if not name.startswith('_') and name not in (_PLOTTING_FILTERS | _DEPRECATED_FILTERS):
-                found[name] = getattr(cls, name)
+                found[f'{cls.__name__}.{name}'] = getattr(cls, name)
     return found
 
 
@@ -531,6 +533,27 @@ MESH_KINDS = [
 DATA_MODES = ['point', 'cell', 'both', 'single_point', 'single_cell', 'single_vector']
 # The keywords are swept over these modes only, to keep the sweep's runtime in hand
 KEYWORD_DATA_MODES = ['both', 'single_point', 'single_vector']
+
+
+def _output_digest(result):
+    """Return a comparable digest of whatever a filter returned."""
+    if isinstance(result, pv.MultiBlock):
+        return tuple(None if block is None else _output_digest(block) for block in result)
+    if isinstance(result, pv.DataSet):
+        return _fingerprint(result)
+    if isinstance(result, tuple):
+        return tuple(_output_digest(item) for item in result)
+    return repr(result)
+
+
+def _output_or_error(mesh, name, args, kwargs):
+    """Return the digest of a filter's output, or the name of the error it raised."""
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        try:
+            return _output_digest(getattr(mesh, name)(*args, **kwargs))
+        except Exception as error:  # noqa: BLE001  - the filter does not apply to this mesh
+            return type(error).__name__
 
 
 def _run(mesh, name, args, kwargs):
@@ -562,9 +585,10 @@ def _override_mesh(name, mode, default):
         return None
 
 
-@pytest.mark.parametrize('name', list(FILTERS))
-def test_filter_does_not_modify_input(name):
-    func = FILTERS[name]
+@pytest.mark.parametrize('key', list(FILTERS))
+def test_filter_does_not_modify_input(key):
+    func = FILTERS[key]
+    name = func.__name__
     ran = 0
     for mode in DATA_MODES:
         for kind in MESH_KINDS:
@@ -585,12 +609,65 @@ def test_filter_does_not_modify_input(name):
                     key: value.build() if isinstance(value, _Fresh) else value
                     for key, value in {**_REQUIRED_KWARGS.get(name, {}), **kwargs}.items()
                 }
-                before = fingerprint(mesh)
+                before = _fingerprint(mesh)
                 if not _run(mesh, name, args, call_kwargs):
                     continue
                 ran += 1
-                assert fingerprint(mesh) == before, (
+                assert _fingerprint(mesh) == before, (
                     f'{type(mesh).__name__}.{name}() modified its input '
                     f'({kind} mesh, {mode} data, {keyword}={call_kwargs.get(keyword)!r})'
                 )
+    assert ran, f'{name} never ran; the test meshes or arguments no longer apply'
+
+
+# Modes whose meshes carry one array and no active attributes
+_UNSET_DATA_MODES = ['single_point', 'single_cell', 'single_vector']
+
+# These re-mesh the whole attribute table, carrying the input's active scalars to the output
+_ACTIVE_SCALARS_PASSTHROUGH = frozenset({'cells_to_points', 'points_to_cells'})
+
+_DEFAULT_SCALARS_FILTERS = [
+    key
+    for key, func in FILTERS.items()
+    if 'scalars' in inspect.signature(func).parameters
+    and func.__name__ not in _ACTIVE_SCALARS_PASSTHROUGH
+]
+
+
+def _activated(mesh):
+    """Return a copy with the default scalars active, or ``None`` if there is no default."""
+    activated = mesh.copy()
+    try:
+        set_default_active_scalars(activated)
+    except Exception:  # noqa: BLE001  - no unambiguous default to activate
+        return None
+    return activated
+
+
+@pytest.mark.parametrize('key', _DEFAULT_SCALARS_FILTERS)
+def test_filter_output_matches_preactivated_input(key):
+    name = FILTERS[key].__name__
+    ran = 0
+    for mode in _UNSET_DATA_MODES:
+        for kind in MESH_KINDS:
+            template = _override_mesh(name, mode, _make_mesh(kind, mode))
+            if template is None or isinstance(template, pv.MultiBlock):
+                continue
+            if not hasattr(template, name):
+                continue
+            activated = _activated(template)
+            if activated is None:
+                continue
+            args = _POSITIONAL_ARGS[name]() if name in _POSITIONAL_ARGS else ()
+            kwargs = {
+                key: value.build() if isinstance(value, _Fresh) else value
+                for key, value in _REQUIRED_KWARGS.get(name, {}).items()
+            }
+            as_is = _output_or_error(template.copy(), name, args, kwargs)
+            preactivated = _output_or_error(activated, name, args, kwargs)
+            ran += 1
+            assert as_is == preactivated, (
+                f'{type(template).__name__}.{name}() returns a different output when its '
+                f'default scalars are already active ({kind} mesh, {mode} data)'
+            )
     assert ran, f'{name} never ran; the test meshes or arguments no longer apply'
