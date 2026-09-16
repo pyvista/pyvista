@@ -14,21 +14,42 @@ import pytest
 
 import pyvista as pv
 from pyvista import _vtk
+from pyvista.core.filters.composite import CompositeFilters
 from pyvista.core.filters.data_object import DataObjectFilters
 from pyvista.core.filters.data_set import DataSetFilters
+from pyvista.core.filters.image_data import ImageDataFilters
+from pyvista.core.filters.poly_data import PolyDataFilters
+from pyvista.core.filters.rectilinear_grid import RectilinearGridFilters
+from pyvista.core.filters.structured_grid import StructuredGridFilters
+from pyvista.core.filters.unstructured_grid import UnstructuredGridFilters
 
 # Filters that open a plot rather than return a mesh.
 _PLOTTING_FILTERS = frozenset(
-    {'plot_over_circular_arc', 'plot_over_circular_arc_normal', 'plot_over_line'}
+    {
+        'plot_curvature',
+        'plot_normals',
+        'plot_over_circular_arc',
+        'plot_over_circular_arc_normal',
+        'plot_over_line',
+    }
 )
+
+# Filters which raise unconditionally, so a call cannot reach the input.
+_DEPRECATED_FILTERS = frozenset({'flip_normals'})
 
 # Keywords which modify the input by design, or which cannot affect it.
 _SKIP_KWARGS = frozenset(
     {'figsize', 'figure', 'fname', 'inplace', 'progress_bar', 'show', 'title', 'ylabel'}
 )
 
-# Combinations which crash VTK, unrelated to side effects.
-_CRASHES = frozenset({('pointset', 'streamlines_from_source', 'interpolator_type')})
+
+def _crashes_vtk(kind, name, keyword):
+    """Return whether a call segfaults VTK, for reasons unrelated to side effects."""
+    # vtkCellLocatorInterpolatedVelocityField dereferences the cells a PointSet lacks
+    return (
+        kind == 'pointset' and name == 'streamlines_from_source' and keyword == 'interpolator_type'
+    )
+
 
 _LITERAL_PATTERN = re.compile(r'Literal\[([^]]*)]')
 
@@ -87,6 +108,13 @@ def _make_mesh(kind, mode):
     elif kind == 'structured':
         x, y, z = np.meshgrid(np.arange(4.0), np.arange(3.0), np.arange(5.0), indexing='ij')
         mesh = pv.StructuredGrid(x, y, z)
+    elif kind == 'multiblock':
+        return pv.MultiBlock(
+            {
+                'poly': _make_mesh('poly', mode),
+                'unstructured': _make_mesh('unstructured', mode),
+            }
+        )
     else:
         mesh = pv.PointSet(pv.Sphere(theta_resolution=8, phi_resolution=8).points)
         # PointSet has no cells, so cell arrays cannot exist
@@ -130,6 +158,12 @@ def _cells_digest(cell_array):
 
 def fingerprint(mesh):
     """Return a hashable digest of everything a filter could modify on ``mesh``."""
+    if isinstance(mesh, pv.MultiBlock):
+        return (
+            type(mesh).__name__,
+            tuple(mesh.keys()),
+            tuple(None if block is None else fingerprint(block) for block in mesh),
+        )
     parts: list[Any] = [
         type(mesh).__name__,
         mesh.n_points,
@@ -163,6 +197,44 @@ def fingerprint(mesh):
             tuple(sorted((key, tuple(sorted(value))) for key, value in names.items() if value))
         )
     return tuple(parts)
+
+
+def _frequency_image(mode):
+    """Return an image carrying complex point scalars, as the frequency filters need."""
+    return _make_mesh('image', mode).fft()
+
+
+def _line_mesh(mode):
+    """Return a PolyData made of lines, which the contour filters need."""
+    return _mesh_arrays(
+        pv.MultipleLines(np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0]])), mode
+    )
+
+
+def _seam_grid(shift=(0.0, 0.0, 0.0)):
+    """Return a structured grid whose arrays are constant, so a seam always matches."""
+    x, y, z = np.meshgrid(np.arange(4.0), np.arange(3.0), np.arange(5.0), indexing='ij')
+    grid = pv.StructuredGrid(x + shift[0], y + shift[1], z + shift[2])
+    grid.point_data['constant'] = np.ones(grid.n_points)
+    grid.cell_data['constant'] = np.ones(grid.n_cells)
+    return grid
+
+
+def _triangulated(mode):
+    """Return an all-triangle PolyData."""
+    return _mesh_arrays(pv.Sphere(theta_resolution=8, phi_resolution=8).triangulate(), mode)
+
+
+#: Filters which only apply to an input the shared mesh kinds do not cover.
+_MESH_OVERRIDES = {
+    'concatenate': lambda mode: _seam_grid(),  # noqa: ARG005
+    'high_pass': _frequency_image,
+    'low_pass': _frequency_image,
+    'rfft': _frequency_image,
+    'triangulate_contours': _line_mesh,
+    'decimate': _triangulated,
+    'decimate_polyline': _line_mesh,
+}
 
 
 def _closed_surface():
@@ -200,6 +272,33 @@ class _Fresh:
 #: Positional arguments for the filters which require them.
 _POSITIONAL_ARGS = {
     'align': lambda: (_closed_surface().translate((0.01, 0.01, 0.01)),),
+    'boolean_difference': lambda: (_closed_surface().translate((0.1, 0.0, 0.0)),),
+    'boolean_intersection': lambda: (_closed_surface().translate((0.1, 0.0, 0.0)),),
+    'boolean_union': lambda: (_closed_surface().translate((0.1, 0.0, 0.0)),),
+    'collision': lambda: (_closed_surface().translate((0.1, 0.0, 0.0)),),
+    'concatenate': lambda: (_seam_grid((3.0, 0.0, 0.0)), 0),
+    'contour_banded': lambda: (3,),
+    'decimate': lambda: (0.5,),
+    'decimate_polyline': lambda: (0.5,),
+    'decimate_pro': lambda: (0.5,),
+    'edge_mask': lambda: (30.0,),
+    'extract_subset': lambda: ((0, 2, 0, 2, 0, 2),),
+    'extrude': lambda: ((0.0, 0.0, 1.0),),
+    'extrude_trim': lambda: ((0.0, 0.0, 1.0), pv.Plane(center=(0, 0, 1), i_size=10, j_size=10)),
+    'fill_holes': lambda: (1.0,),
+    'generic_filter': lambda: ('triangulate',),
+    'geodesic': lambda: (0, 5),
+    'geodesic_distance': lambda: (0, 5),
+    'high_pass': lambda: (1.0, 1.0, 1.0),
+    'image_threshold': lambda: (1.0,),
+    'intersection': lambda: (_closed_surface().translate((0.1, 0.0, 0.0)),),
+    'low_pass': lambda: (1.0, 1.0, 1.0),
+    'multi_ray_trace': lambda: (
+        np.array([[0.0, 0.0, -5.0]]),
+        np.array([[0.0, 0.0, 1.0]]),
+    ),
+    'ray_trace': lambda: ((0.0, 0.0, -5.0), (0.0, 0.0, 5.0)),
+    'subdivide': lambda: (1,),
     'clip_slab': lambda: (0.4,),
     'clip_surface': lambda: (_closed_surface(),),
     'compute_implicit_distance': lambda: (_closed_surface(),),
@@ -237,6 +336,7 @@ _POSITIONAL_ARGS = {
 _REQUIRED_KWARGS = {
     'sample_over_circular_arc': dict(pointa=(-1, 0, 0), pointb=(1, 0, 0), center=(0, 0, 0)),
     'sample_over_circular_arc_normal': dict(center=(0, 0, 0)),
+    'slice_index': dict(i=0),
     'validate_mesh': dict(action='warn'),
 }
 
@@ -395,19 +495,39 @@ def _call_variants(func):
             yield parameter.name, {**base, parameter.name: value}
 
 
+_FILTER_CLASSES = (
+    CompositeFilters,
+    DataObjectFilters,
+    DataSetFilters,
+    ImageDataFilters,
+    PolyDataFilters,
+    RectilinearGridFilters,
+    StructuredGridFilters,
+    UnstructuredGridFilters,
+)
+
+
 def _filters():
-    """Return every public dataobject and dataset filter."""
+    """Return every public filter of every filter class."""
     found = {}
-    for cls in (DataObjectFilters, DataSetFilters):
+    for cls in _FILTER_CLASSES:
         for name in sorted(vars(cls)):
-            if not name.startswith('_') and name not in _PLOTTING_FILTERS:
+            if not name.startswith('_') and name not in (_PLOTTING_FILTERS | _DEPRECATED_FILTERS):
                 found[name] = getattr(cls, name)
     return found
 
 
 FILTERS = _filters()
 
-MESH_KINDS = ['poly', 'unstructured', 'image', 'rectilinear', 'structured', 'pointset']
+MESH_KINDS = [
+    'poly',
+    'unstructured',
+    'image',
+    'rectilinear',
+    'structured',
+    'pointset',
+    'multiblock',
+]
 DATA_MODES = ['point', 'cell', 'both', 'single_point', 'single_cell', 'single_vector']
 
 
@@ -430,6 +550,16 @@ def _quiet_vtk():
     pv.vtk_verbosity('info')
 
 
+def _override_mesh(name, mode, default):
+    """Return the special input a filter needs for this mode, or ``None`` if it has none."""
+    if name not in _MESH_OVERRIDES:
+        return default
+    try:
+        return _MESH_OVERRIDES[name](mode)
+    except Exception:  # noqa: BLE001  - this mode cannot build that input
+        return None
+
+
 @pytest.mark.parametrize('name', list(FILTERS))
 def test_filter_does_not_modify_input(name):
     func = FILTERS[name]
@@ -439,8 +569,11 @@ def test_filter_does_not_modify_input(name):
             template = _make_mesh(kind, mode)
             if not hasattr(template, name):
                 continue
+            template = _override_mesh(name, mode, template)
+            if template is None:
+                continue
             for keyword, kwargs in _call_variants(func):
-                if (kind, name, keyword) in _CRASHES:
+                if _crashes_vtk(kind, name, keyword):
                     continue
                 mesh = template.copy()
                 args = _POSITIONAL_ARGS[name]() if name in _POSITIONAL_ARGS else ()
