@@ -24,8 +24,8 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
 
-# Computer vision cameras look along +z with +y down; VTK looks along -z with +y up.
-_VISION_FROM_VTK = np.diag([1.0, -1.0, -1.0, 1.0])
+# OpenCV cameras look along +z with +y down; VTK looks along -z with +y up.
+_OPENCV_FROM_VTK = np.diag([1.0, -1.0, -1.0, 1.0])
 
 
 class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
@@ -723,9 +723,11 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         """Return or set the pinhole intrinsic matrix of the camera.
 
         The matrix is ``[[fx, 0, cx], [0, fy, cy], [0, 0, 1]]`` in pixels, as
-        reported by a camera calibration. It describes the image the camera
-        renders, so it is expressed in the pixel size of the viewport and
-        changes with it. Axis skew cannot be represented and must be zero.
+        reported by a camera calibration such as ``cv2.calibrateCamera``, with
+        ``cy`` measured from the top of the image. It describes the image the
+        camera renders, so it is expressed in the pixel size of the viewport
+        and changes with it. Axis skew cannot be represented and must be
+        zero.
 
         Setting the matrix gives the camera a perspective projection.
 
@@ -806,10 +808,10 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
     def extrinsic_matrix(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
         """Return or set the pose of the camera as a 4x4 extrinsic matrix.
 
-        The matrix maps world coordinates to the camera coordinates used in
-        computer vision, with ``x`` to the right, ``y`` down and ``z`` along the
-        viewing direction. It describes the camera alone and does not include
-        :attr:`model_transform_matrix`.
+        The matrix maps world coordinates to camera coordinates in the OpenCV
+        convention, with ``x`` to the right, ``y`` down and ``z`` along the
+        viewing direction. Invert it for the camera-to-world pose. It describes
+        the camera alone and does not include :attr:`model_transform_matrix`.
 
         Setting the matrix keeps the camera's :attr:`distance` to its focal
         point.
@@ -835,7 +837,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
 
         """
         view = array_from_vtkmatrix(self.GetViewTransformMatrix())
-        return _VISION_FROM_VTK @ view
+        return _OPENCV_FROM_VTK @ view
 
     @extrinsic_matrix.setter
     def extrinsic_matrix(self, matrix: MatrixLike[float]) -> None:
