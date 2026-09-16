@@ -1841,11 +1841,14 @@ class DataSetFilters(DataObjectFilters):
             msg = f"Method '{method}' is not supported"  # type: ignore[unreachable]
             raise ValueError(msg)
 
+        input_mesh: DataSet = self
         if isinstance(scalars, str):
             scalars_name = scalars
         elif isinstance(scalars, (Sequence, np.ndarray)) and not isinstance(scalars, str):
             scalars_name = 'Contour Data'
-            self[scalars_name] = scalars
+            # The array goes on a shallow copy, so it reaches the output but not the input
+            input_mesh = self.copy(deep=False)
+            input_mesh[scalars_name] = scalars
         elif scalars is None:
             scalars_name = _default_active_scalars_info(self).name
         else:
@@ -1856,16 +1859,16 @@ class DataSetFilters(DataObjectFilters):
             raise TypeError(msg)
 
         # Make sure the input has scalars to contour on
-        if self.n_arrays < 1:
+        if input_mesh.n_arrays < 1:
             msg = 'Input dataset for the contour filter must have scalar.'
             raise ValueError(msg)
 
-        alg.SetInputDataObject(self)
+        alg.SetInputDataObject(input_mesh)
         alg.SetComputeNormals(compute_normals)
         alg.SetComputeGradients(compute_gradients)
         alg.SetComputeScalars(compute_scalars)
         # NOTE: only point data is allowed? well cells works but seems buggy?
-        field = get_array_association(self, scalars_name, preference=preference)
+        field = get_array_association(input_mesh, scalars_name, preference=preference)
         if field != FieldAssociation.POINT:
             msg = 'Contour filter only works on point data.'
             raise TypeError(msg)
@@ -1880,7 +1883,7 @@ class DataSetFilters(DataObjectFilters):
         if isinstance(isosurfaces, int):
             # generate values
             if rng is None:
-                rng_: list[float] = list(self.get_data_range(scalars_name))
+                rng_: list[float] = list(input_mesh.get_data_range(scalars_name))
             else:
                 rng_ = list(_validation.validate_data_range(rng, name='rng'))
             alg.GenerateValues(isosurfaces, rng_)

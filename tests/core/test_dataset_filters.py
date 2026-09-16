@@ -972,6 +972,7 @@ def test_contour(uniform, method):
     )
 
     assert 'Contour Data' in iso_new_scalars.point_data
+    assert 'Contour Data' not in uniform.point_data
 
 
 def test_contour_errors(uniform, airplane):
