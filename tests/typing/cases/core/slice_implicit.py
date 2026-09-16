@@ -19,6 +19,16 @@ def image() -> pv.ImageData:
     return pv.ImageData(dimensions=(5, 5, 5), spacing=(0.25, 0.25, 0.25), origin=(-0.5, -0.5, -0.5))
 
 
+def multiblock_poly() -> pv.MultiBlock[pv.PolyData]:
+    """Return a composite declared to hold only `PolyData`."""
+    return pv.MultiBlock([poly()])
+
+
+def multiblock_image() -> pv.MultiBlock[pv.ImageData]:
+    """Return a composite declared to hold only `ImageData`."""
+    return pv.MultiBlock([image()])
+
+
 def multiblock() -> pv.MultiBlock:
     """Return a composite of two meshes."""
     return pv.MultiBlock([poly(), image()])
@@ -32,3 +42,7 @@ def a_plane() -> _vtk.vtkPlane:
 # Slicing reduces any dataset to a surface, and a composite stays a composite
 assert_types(image().slice_implicit(a_plane()), pv.PolyData)
 assert_types(multiblock().slice_implicit(a_plane()), pv.MultiBlock)
+
+# A declared block type follows the filter through
+assert_types(multiblock_poly().slice_implicit(a_plane()), pv.MultiBlock[pv.PolyData])
+assert_types(multiblock_image().slice_implicit(a_plane()), pv.MultiBlock[pv.PolyData])

@@ -20,6 +20,11 @@ def a_multiblock() -> pv.MultiBlock:
 
 
 # Arrays
+def a_polydata_multiblock() -> pv.MultiBlock[pv.PolyData]:
+    """Return a `MultiBlock` declared to hold only `PolyData`."""
+    return pv.MultiBlock([pv.Sphere()])
+
+
 assert_types(a_transform().apply(np.zeros((4, 3))), NumpyArray[float])
 assert_types(a_transform().apply([(0.0, 0.0, 0.0)]), NumpyArray[float])
 assert_types(a_transform().apply((0.0, 0.0, 0.0)), NumpyArray[float])
@@ -40,3 +45,6 @@ assert_types(a_transform().apply(pv.Actor()), pv.Prop3D)
 assert_types(a_transform().apply(pv.Actor(), 'replace'), pv.Prop3D)
 assert_types(a_transform().apply(pv.Actor(), 'pre-multiply'), pv.Prop3D)
 assert_types(a_transform().apply(pv.Actor(), 'post-multiply'), pv.Prop3D)
+
+# A declared block type survives the transform
+assert_types(pv.Transform().apply(a_polydata_multiblock()), pv.MultiBlock[pv.PolyData])

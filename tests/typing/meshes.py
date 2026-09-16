@@ -56,6 +56,26 @@ def multiblock() -> pv.MultiBlock:
     return pv.MultiBlock([poly(), image()])
 
 
+def multiblock_poly() -> pv.MultiBlock[pv.PolyData]:
+    """Return a composite declared to hold only `PolyData`."""
+    return pv.MultiBlock([poly()])
+
+
+def multiblock_pointset() -> pv.MultiBlock[pv.PointSet]:
+    """Return a composite declared to hold only `PointSet`."""
+    return pv.MultiBlock([pointset()])
+
+
+def multiblock_unstructured() -> pv.MultiBlock[pv.UnstructuredGrid]:
+    """Return a composite declared to hold only `UnstructuredGrid`."""
+    return pv.MultiBlock([unstructured()])
+
+
+def multiblock_image() -> pv.MultiBlock[pv.ImageData]:
+    """Return a composite declared to hold only `ImageData`."""
+    return pv.MultiBlock([image()])
+
+
 def with_arrays(mesh: _MeshType) -> _MeshType:
     """Give a mesh point scalars ``s``, vectors ``v`` and integer ``labels``, keeping its class."""
     mesh.point_data['s'] = mesh.points[:, 0]

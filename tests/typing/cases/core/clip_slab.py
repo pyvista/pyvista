@@ -22,6 +22,31 @@ def image() -> pv.ImageData:
     return pv.ImageData(dimensions=(5, 5, 5), spacing=(0.25, 0.25, 0.25), origin=(-0.5, -0.5, -0.5))
 
 
+def unstructured() -> pv.UnstructuredGrid:
+    """Return a small unstructured grid."""
+    return image().cast_to_unstructured_grid()
+
+
+def multiblock_pointset() -> pv.MultiBlock[pv.PointSet]:
+    """Return a composite declared to hold only `PointSet`."""
+    return pv.MultiBlock([pointset()])
+
+
+def multiblock_unstructured() -> pv.MultiBlock[pv.UnstructuredGrid]:
+    """Return a composite declared to hold only `UnstructuredGrid`."""
+    return pv.MultiBlock([unstructured()])
+
+
+def multiblock_poly() -> pv.MultiBlock[pv.PolyData]:
+    """Return a composite declared to hold only `PolyData`."""
+    return pv.MultiBlock([poly()])
+
+
+def multiblock_image() -> pv.MultiBlock[pv.ImageData]:
+    """Return a composite declared to hold only `ImageData`."""
+    return pv.MultiBlock([image()])
+
+
 def multiblock() -> pv.MultiBlock:
     """Return a composite of two meshes."""
     return pv.MultiBlock([poly(), image()])
@@ -32,3 +57,9 @@ assert_types(poly().clip_slab(thickness=0.2, normal='z'), pv.PolyData)
 assert_types(pointset().clip_slab(thickness=0.2, normal='z'), pv.PointSet)
 assert_types(image().clip_slab(thickness=0.2, normal='z'), pv.UnstructuredGrid)
 assert_types(multiblock().clip_slab(thickness=0.2, normal='z'), pv.MultiBlock)
+
+# A declared block type follows the filter through
+assert_types(multiblock_poly().clip_slab(thickness=0.2, normal='z'), pv.MultiBlock[pv.PolyData])
+assert_types(multiblock_image().clip_slab(thickness=0.2, normal='z'), pv.MultiBlock[pv.UnstructuredGrid])
+assert_types(multiblock_pointset().clip_slab(thickness=0.2, normal='z'), pv.MultiBlock[pv.PointSet])
+assert_types(multiblock_unstructured().clip_slab(thickness=0.2, normal='z'), pv.MultiBlock[pv.UnstructuredGrid])

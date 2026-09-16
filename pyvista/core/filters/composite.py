@@ -30,6 +30,7 @@ if TYPE_CHECKING:
     from pyvista import MultiBlock
     from pyvista import PolyData
     from pyvista import UnstructuredGrid
+    from pyvista.core._typing_core import _DataSetType
     from pyvista.core.composite import _TypeMultiBlockLeaf
 
 
@@ -379,7 +380,15 @@ class CompositeFilters(DataObjectFilters):
     @overload
     def outline_corners(self: MultiBlock[Any], *, factor: float = ..., nested: Literal[False] = ..., progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc]
     @overload
+    def outline_corners(self: MultiBlock, *, factor: float = ..., nested: Literal[True] = ..., progress_bar: bool = ...) -> MultiBlock: ...  # type: ignore[misc]
+    @overload
+    def outline_corners(self: MultiBlock[_DataSetType], *, factor: float = ..., nested: Literal[True] = ..., progress_bar: bool = ...) -> MultiBlock[PolyData]: ...  # type: ignore[misc]
+    @overload
     def outline_corners(self: MultiBlock[Any], *, factor: float = ..., nested: Literal[True] = ..., progress_bar: bool = ...) -> MultiBlock: ...  # type: ignore[misc]
+    @overload
+    def outline_corners(self: MultiBlock, *, factor: float = ..., nested: bool = ..., progress_bar: bool = ...) -> PolyData | MultiBlock: ...  # type: ignore[misc]
+    @overload
+    def outline_corners(self: MultiBlock[_DataSetType], *, factor: float = ..., nested: bool = ..., progress_bar: bool = ...) -> PolyData | MultiBlock[PolyData]: ...  # type: ignore[misc]
     @overload
     def outline_corners(self: MultiBlock[Any], *, factor: float = ..., nested: bool = ..., progress_bar: bool = ...) -> PolyData | MultiBlock: ...  # type: ignore[misc]
     # ruff: enable[E501]

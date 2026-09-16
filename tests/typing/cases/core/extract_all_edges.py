@@ -9,6 +9,8 @@ import pyvista as pv
 from tests.typing.meshes import explicit_structured
 from tests.typing.meshes import image
 from tests.typing.meshes import multiblock
+from tests.typing.meshes import multiblock_image
+from tests.typing.meshes import multiblock_poly
 from tests.typing.meshes import pointset
 from tests.typing.meshes import poly
 from tests.typing.meshes import rectilinear
@@ -28,5 +30,9 @@ assert_types(structured().extract_all_edges(), pv.PolyData)
 assert_types(unstructured().extract_all_edges(), pv.PolyData)
 assert_types(explicit_structured().extract_all_edges(), pv.PolyData)
 assert_types(multiblock().extract_all_edges(), pv.MultiBlock)
+
+# A declared block type follows the filter through
+assert_types(multiblock_poly().extract_all_edges(), pv.MultiBlock[pv.PolyData])
+assert_types(multiblock_image().extract_all_edges(), pv.MultiBlock[pv.PolyData])
 
 assert_types(pointset().extract_all_edges(), Never)  # pragma: no cover

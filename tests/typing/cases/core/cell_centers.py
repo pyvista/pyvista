@@ -8,6 +8,8 @@ import pyvista as pv
 from tests.typing.meshes import explicit_structured
 from tests.typing.meshes import image
 from tests.typing.meshes import multiblock
+from tests.typing.meshes import multiblock_image
+from tests.typing.meshes import multiblock_poly
 from tests.typing.meshes import pointset
 from tests.typing.meshes import poly
 from tests.typing.meshes import rectilinear
@@ -23,3 +25,7 @@ assert_types(unstructured().cell_centers(), pv.PolyData)
 assert_types(explicit_structured().cell_centers(), pv.PolyData)
 assert_types(pointset().cell_centers(), pv.PolyData)
 assert_types(multiblock().cell_centers(), pv.MultiBlock)
+
+# A declared block type follows the filter through
+assert_types(multiblock_poly().cell_centers(), pv.MultiBlock[pv.PolyData])
+assert_types(multiblock_image().cell_centers(), pv.MultiBlock[pv.PolyData])

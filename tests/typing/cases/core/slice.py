@@ -17,6 +17,16 @@ def image() -> pv.ImageData:
     return pv.ImageData(dimensions=(5, 5, 5), spacing=(0.25, 0.25, 0.25), origin=(-0.5, -0.5, -0.5))
 
 
+def multiblock_poly() -> pv.MultiBlock[pv.PolyData]:
+    """Return a composite declared to hold only `PolyData`."""
+    return pv.MultiBlock([poly()])
+
+
+def multiblock_image() -> pv.MultiBlock[pv.ImageData]:
+    """Return a composite declared to hold only `ImageData`."""
+    return pv.MultiBlock([image()])
+
+
 def multiblock() -> pv.MultiBlock:
     """Return a composite of two meshes."""
     return pv.MultiBlock([poly(), image()])
@@ -26,3 +36,7 @@ def multiblock() -> pv.MultiBlock:
 assert_types(poly().slice(), pv.PolyData)
 assert_types(image().slice(), pv.PolyData)
 assert_types(multiblock().slice(), pv.MultiBlock)
+
+# A declared block type follows the filter through
+assert_types(multiblock_poly().slice(), pv.MultiBlock[pv.PolyData])
+assert_types(multiblock_image().slice(), pv.MultiBlock[pv.PolyData])
