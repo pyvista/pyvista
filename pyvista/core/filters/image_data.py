@@ -5056,10 +5056,17 @@ class ImageDataFilters(DataSetFilters):
             input_image.point_data[name] = input_image.point_data[name].astype(float)
 
         interpolator = _image_interpolator(interpolation, border_mode)
-        sampling_ratio = (
-            np.array(sample_grid.spacing) / transform_scale / np.array(input_image.spacing)
-        )
-        if anti_aliasing and np.any(sampling_ratio > 1):
+        if anti_aliasing:
+            with np.errstate(divide='ignore', invalid='ignore'):
+                sampling_ratio = (
+                    np.array(sample_grid.spacing) / transform_scale / np.array(input_image.spacing)
+                )
+            # Averaging more samples than an axis has adds nothing, and a transform which
+            # flattens an axis would otherwise ask for a kernel of unbounded width
+            sampling_ratio = np.minimum(sampling_ratio, input_image.dimensions)
+        else:
+            sampling_ratio = np.ones(3)
+        if np.any(sampling_ratio > 1):
             if isinstance(interpolator, _vtk.vtkImageSincInterpolator):
                 interpolator.AntialiasingOn()
             else:
