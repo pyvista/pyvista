@@ -931,7 +931,8 @@ class DataObject(
         _clear_vtk_objects_from_dict(state)
         _clear_accessor_cache(state)
 
-        if pv._PICKLE_FORMAT.lower() == 'xml':
+        pickle_format = pv._PICKLE_FORMAT
+        if pickle_format == 'xml':
             # the generic VTK XML writer `vtkXMLDataSetWriter` currently has a bug where it does
             # not pass all settings down to the sub-writers. Until this is fixed, use the
             # dataset-specific writers
@@ -960,7 +961,7 @@ class DataObject(
             writer.Write()
             to_serialize = writer.GetOutputString()
 
-        elif pv._PICKLE_FORMAT.lower() == 'legacy':
+        else:
             writer = _vtk.vtkDataSetWriter()
             writer.SetInputDataObject(self)
             writer.SetWriteToOutputString(True)
@@ -972,7 +973,7 @@ class DataObject(
 
         # this needs to be here because in multiprocessing situations, the pickle format
         # is not shared between processes
-        state['PICKLE_FORMAT'] = pv._PICKLE_FORMAT
+        state['PICKLE_FORMAT'] = pickle_format
         return state
 
     def __setstate__(self: Self, state: Any) -> None:
