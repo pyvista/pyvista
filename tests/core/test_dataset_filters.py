@@ -1294,6 +1294,15 @@ def test_glyph_orient_and_scale():
     assert glyph4.bounds.x_max == geom.bounds.x_max
 
 
+def test_glyph_scale_by_vector_without_orient():
+    grid = pv.ImageData(dimensions=(1, 1, 1))
+    geom = pv.Line()
+    grid['z_axis'] = np.array([[0.0, 0.0, 10.0]])
+    glyph = grid.glyph(geom=geom, orient=False, scale='z_axis')
+    assert glyph.bounds.x_min == geom.bounds.x_min * 10.0
+    assert glyph.bounds.x_max == geom.bounds.x_max * 10.0
+
+
 @pytest.mark.parametrize('color_mode', ['scale', 'scalar', 'vector'])
 def test_glyph_color_mode(sphere, color_mode):
     # define vector data

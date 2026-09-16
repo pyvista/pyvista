@@ -2174,7 +2174,8 @@ class DataSetFilters(DataObjectFilters):
         >>> pl.show()
 
         """
-        dataset = self
+        # The active arrays are set on a shallow copy, so the input's are untouched
+        dataset = self.copy(deep=False)
 
         # Make glyphing geometry if necessary
         if geom is None:
@@ -2229,7 +2230,7 @@ class DataSetFilters(DataObjectFilters):
             do_scale = True
         elif scale:
             try:
-                set_default_active_scalars(self)
+                set_default_active_scalars(dataset)
             except MissingDataError:
                 warn_external(
                     'No data to use for scale. scale will be set to False.'
@@ -2245,9 +2246,20 @@ class DataSetFilters(DataObjectFilters):
         else:
             do_scale = False
 
+        scale_by_vector = False
         if do_scale:
             if dataset.active_scalars is not None:
                 if dataset.active_scalars.ndim > 1:
+                    scale_by_vector = True
+                    if not orient:
+                        # This mode scales by the active vectors, not the active scalars
+                        scalars_field = dataset.active_scalars_info.association
+                        dataset.set_active_vectors(
+                            dataset.active_scalars_name,
+                            preference='point'
+                            if scalars_field == FieldAssociation.POINT
+                            else 'cell',
+                        )
                     alg.SetScaleModeToScaleByVector()
                 else:
                     alg.SetScaleModeToScaleByScalar()
@@ -2314,7 +2326,7 @@ class DataSetFilters(DataObjectFilters):
         if set_actives_on_source_data:
             if scale:
                 source_data.set_active_scalars(dataset.active_scalars_name, preference='point')
-            if orient:
+            if orient or scale_by_vector:
                 source_data.set_active_vectors(dataset.active_vectors_name, preference='point')
 
         if color_mode == 'scale':
