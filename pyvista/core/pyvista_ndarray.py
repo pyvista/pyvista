@@ -17,8 +17,10 @@ from .utilities.misc import _NoNewAttrMixin
 
 if TYPE_CHECKING:
     from typing import Any
+    from typing import SupportsIndex
 
     import numpy.typing as npt
+    from typing_extensions import Self
 
     from pyvista import DataSet
 
@@ -137,6 +139,40 @@ class pyvista_ndarray(_NoNewAttrMixin, np.ndarray):  # noqa: N801  # numpydoc ig
             owner = dataset.Get()
             if owner is not None:
                 owner.Modified()
+
+    def squeeze(self, axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None) -> Self:
+        """Remove axes of length one while retaining an array view.
+
+        .. versionchanged:: 0.50
+            Single-element inputs return zero-dimensional array views.
+
+        Parameters
+        ----------
+        axis : int or tuple of int, optional
+            Axes to remove. By default, remove all axes of length one.
+            Selecting an axis of length greater than one raises a ``ValueError``.
+
+        Returns
+        -------
+        pyvista.pyvista_ndarray
+            View of the array with the selected axes removed. If all axes are
+            removed, the result is a zero-dimensional array, not a scalar.
+            If the shape is unchanged, return this array.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> array = pv.pyvista_ndarray([[1]])
+        >>> squeezed = array.squeeze()
+        >>> squeezed.shape
+        ()
+        >>> squeezed[...] = 2
+        >>> array
+        pyvista_ndarray([[2]])
+
+        """
+        shape = np.asarray(self).squeeze(axis=axis).shape
+        return self if shape == self.shape else cast('Self', self.reshape(shape))
 
     def __array_wrap__(self: pyvista_ndarray, out_arr, context=None, return_scalar: bool = False):  # noqa: ANN001, ANN204, FBT001, FBT002
         """Return a NumPy scalar if array is 0d.
