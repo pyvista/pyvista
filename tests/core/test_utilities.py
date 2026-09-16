@@ -991,6 +991,16 @@ def test_update_alg_raises():
         _update_alg(reader)
 
 
+def test_update_alg_raises_request_data_error(tmp_path):
+    # OBJ indices are one-based, so the line element below is out of range
+    obj_file = tmp_path / 'bad.obj'
+    obj_file.write_text('v 0 0 0\nv 1 0 0\nl 0 1\n')
+    reader = _vtk.vtkOBJReader()
+    reader.SetFileName(str(obj_file))
+    with pytest.raises(pv.VTKExecutionError, match='Unexpected point index value: 0'):
+        _update_alg(reader)
+
+
 def test_axis_angle_rotation():
     # rotate points around body diagonal
     points = np.eye(3)
