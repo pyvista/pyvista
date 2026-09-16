@@ -1848,6 +1848,8 @@ class DataSetFilters(DataObjectFilters):
             scalars_name = 'Contour Data'
             # The array goes on a shallow copy, so it reaches the output but not the input
             input_mesh = self.copy(deep=False)
+            # A shallow copy shares the input's bool array name registry, so give it its own
+            input_mesh.copy_meta_from(self, deep=True)
             input_mesh[scalars_name] = scalars
         elif scalars is None:
             scalars_name = _default_active_scalars_info(self).name

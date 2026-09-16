@@ -974,6 +974,9 @@ def test_contour(uniform, method):
     assert 'Contour Data' in iso_new_scalars.point_data
     assert 'Contour Data' not in uniform.point_data
 
+    uniform.contour(isosurfaces=[0.5], scalars=np.arange(uniform.n_points) % 2 == 0, method=method)
+    assert 'Contour Data' not in uniform._association_bitarray_names['POINT']
+
 
 def test_contour_errors(uniform, airplane):
     with pytest.raises(TypeError):
