@@ -97,64 +97,82 @@ print(resampled.origin, resampled.spacing)
 # Oblique Anatomy
 # +++++++++++++++
 #
-# A structure which does not lie along the scan axes is hard to read in the slices the
+# A structure which runs across the scan axes is awkward to read in the slices the
 # scanner produced. Load a whole-body CT with its segmentations and take the left
-# scapula, a flat bone which sits at an angle to all three axes.
+# scapula, which lies at an angle within the axial plane.
 
 dataset = examples.download_whole_body_ct_male()
 ct = dataset['ct']
 scapula = dataset['segmentations']['scapula_left']
 
 # %%
-# Fit axes to the bone itself. The foreground of its mask gives the plane the blade
-# lies in: the first two principal axes span that plane and the third is its normal.
+# Project the foreground of the bone's mask onto the axial plane and fit a line to it
+# there. Seeding ``init_direction`` pins the sign, so the fitted direction cannot come
+# back reversed.
 
 foreground = scapula.points[scapula.active_scalars > 0]
 center = foreground.mean(axis=0)
-axes = pv.principal_axes(foreground)
-extent = np.abs((foreground - center) @ axes.T).max(axis=0)
+
+in_plane = foreground.copy()
+in_plane[:, 2] = center[2]
+line, _, direction = pv.fit_line_to_points(in_plane, init_direction='x', return_meta=True)
 
 # %%
-# Build one grid big enough to hold the blade, and a transform which brings the bone to
-# the middle of it under a given rotation.
+# Draw the line over the axial slice it was fitted in. It crosses the slice at an angle,
+# and so does the bone underneath it.
 
-dimensions = (2 * extent[:2] + 20).astype(int)
-reference = pv.ImageData(dimensions=(*dimensions, 1), spacing=(1.0, 1.0, 1.0))
+axial = ct.slice_index(k=round((center[2] - ct.origin[2]) / ct.spacing[2]))
+
+pl = pv.Plotter()
+pl.add_mesh(axial, cmap='bone', clim=[-200, 900], show_scalar_bar=False, lighting=False)
+pl.add_mesh(line.translate((0, 0, 1)), color='magenta', line_width=6)
+pl.view_xy()
+pl.camera.tight()
+pl.show()
+
+# %%
+# Because the fit is confined to that plane, a single rotation about the scan axis is
+# enough to bring the line onto the image's x axis.
+
+angle = np.degrees(np.arctan2(direction[1], direction[0]))
+rotation = pv.Transform().rotate_z(-angle).matrix[:3, :3]
+
+reference = pv.ImageData(dimensions=(320, 220, 1), spacing=(1.0, 1.0, 1.0))
 
 
-def centered(rotation):
-    """Return the matrix which centers the scapula in the reference under ``rotation``."""
+def centered(rot):
+    """Return the matrix which centers the scapula in the reference under ``rot``."""
     matrix = np.eye(4)
-    matrix[:3, :3] = rotation
-    matrix[:3, 3] = np.array(reference.center) - rotation @ center
+    matrix[:3, :3] = rot
+    matrix[:3, 3] = np.array(reference.center) - rot @ center
     return matrix
 
 
 # %%
-# Reslice twice from that one grid. Without a rotation the samples follow the scan axes;
-# with the bone's own axes they follow the blade. Since the grid itself is never rotated,
-# both outputs are ordinary axis-aligned images.
+# Reslice twice from that one grid, once without a rotation and once with it, and put
+# the line through the same transforms so it can be compared against.
 
 along_scan = ct.reslice(
     reference, 'linear', transform=centered(np.eye(3)), background_value=-1000
 )
 along_bone = ct.reslice(
-    reference, 'linear', transform=centered(axes), background_value=-1000
+    reference, 'linear', transform=centered(rotation), background_value=-1000
 )
 
+line_scan = line.transform(centered(np.eye(3)), inplace=False)
+line_bone = line.transform(centered(rotation), inplace=False)
+
 # %%
-# The blade crosses the scan plane at an angle, so it appears there as a thin sliver.
-# Sampled along its own axes it is a single image, with the glenoid and the head of the
-# humerus beside it.
+# The rotated grid samples along the bone, and the line it was fitted to comes out level.
 
 pl = pv.Plotter(shape=(1, 2))
-for index, (image, label) in enumerate(
-    [(along_scan, 'scan axes'), (along_bone, 'bone axes')]
-):
+panels = [(along_scan, line_scan, 'scan axes'), (along_bone, line_bone, 'bone axis')]
+for index, (image, overlay, label) in enumerate(panels):
     pl.subplot(0, index)
     pl.add_mesh(
         image, cmap='bone', clim=[-200, 900], show_scalar_bar=False, lighting=False
     )
+    pl.add_mesh(overlay.translate((0, 0, 1)), color='magenta', line_width=6)
     pl.add_text(label, font_size=10)
     pl.view_xy()
     pl.camera.tight()
