@@ -22,6 +22,7 @@ def _checker(name: str, rng: VectorLike[float]) -> Callable[[float], None]:
 check_ambient = _checker('ambient', [0.0, 1.0])
 check_anisotropy = _checker('anisotropy', [0.0, 1.0])
 check_anisotropy_rotation = _checker('anisotropy_rotation', [0.0, 1.0])
+check_background_opacity = _checker('background_opacity', [0.0, 1.0])
 check_cap_opacity = _checker('cap_opacity', [0.0, 1.0])
 check_decimate = _checker('decimate', [0.0, 1.0])
 check_diffuse = _checker('diffuse', [0.0, 1.0])

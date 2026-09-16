@@ -15,6 +15,7 @@ from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.misc import _NameMixin
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
+from . import _ranges
 from .colors import Color
 from .prop3d import _Prop3DMixin
 from .themes import Theme
@@ -607,7 +608,7 @@ class TextProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkTextProperty):
 
     @opacity.setter
     def opacity(self, opacity: float):
-        _validation.check_range(opacity, [0.0, 1.0], name='opacity')
+        _ranges.check_opacity(opacity)
         self.SetOpacity(opacity)
 
     @property
@@ -643,7 +644,7 @@ class TextProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkTextProperty):
 
     @background_opacity.setter
     def background_opacity(self, opacity: float):
-        _validation.check_range(opacity, [0.0, 1.0], name='background_opacity')
+        _ranges.check_background_opacity(opacity)
         self.SetBackgroundOpacity(opacity)
 
     @property
