@@ -1044,6 +1044,21 @@ def test_add_ruler_scale():
     assert max_ == 0.0
 
 
+@pytest.mark.parametrize('scale_first', [True, False])
+def test_add_ruler_renderer_scale(scale_first):
+    pl = pv.Plotter()
+    if scale_first:
+        pl.set_scale(xscale=2, yscale=3)
+    ruler = pl.add_ruler([-1.0, -0.5, 0.0], [1.0, -0.5, 0.0])
+    if not scale_first:
+        pl.set_scale(xscale=2, yscale=3)
+
+    assert ruler.GetPositionCoordinate().GetValue() == (-2.0, -1.5, 0.0)
+    assert ruler.GetPosition2Coordinate().GetValue() == (2.0, -1.5, 0.0)
+    # the ruler reports the distance it was given, not the scaled one
+    assert ruler.GetRange() == (0.0, 2.0)
+
+
 def _ruler_label_values(ruler):
     """Return the label values a ruler places inside its range."""
     adjusted = [0.0, 0.0]

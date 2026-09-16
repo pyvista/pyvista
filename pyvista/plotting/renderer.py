@@ -808,6 +808,13 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         scale = np.repeat(np.array(self.scale, dtype=float), 2)
         return BoundsTuple(*(np.array(self.bounds) / scale).tolist())
 
+    def _place_ruler(self, ruler: _vtk.vtkAxisActor2D) -> None:
+        """Put a ruler's end points where the renderer scale moves the scene."""
+        scale = np.array(self.scale, dtype=float)
+        point_a, point_b = ruler._unscaled_points  # type: ignore[attr-defined]
+        ruler.GetPositionCoordinate().SetValue(*(point_a * scale))
+        ruler.GetPosition2Coordinate().SetValue(*(point_b * scale))
+
     @property
     def background_color(self) -> Color:  # numpydoc ignore=RT01
         """Return the background color of this renderer."""
@@ -3127,6 +3134,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         for actor in self.actors.values():
             if hasattr(actor, 'SetScale'):
                 actor.SetScale(self.scale)
+            elif isinstance(actor, _vtk.vtkAxisActor2D) and hasattr(actor, '_unscaled_points'):
+                self._place_ruler(actor)
 
         self._plotter.render()
         if reset_camera:
@@ -4634,8 +4643,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         ruler.GetPositionCoordinate().SetReferenceCoordinate(None)  # type: ignore[arg-type]
         point_a = _validation.validate_array3(pointa, dtype_out=float, name='pointa')
         point_b = _validation.validate_array3(pointb, dtype_out=float, name='pointb')
-        ruler.GetPositionCoordinate().SetValue(*point_a)
-        ruler.GetPosition2Coordinate().SetValue(*point_b)
+        ruler._unscaled_points = (point_a, point_b)  # type: ignore[attr-defined]
+        self._place_ruler(ruler)
 
         distance = np.linalg.norm(point_a - point_b)
         if flip_range:

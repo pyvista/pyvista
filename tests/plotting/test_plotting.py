@@ -4480,6 +4480,24 @@ def test_ruler():
     pl.show()
 
 
+def test_ruler_renderer_scale():
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Box(bounds=(-1.4, 1.4, -0.3, 0.3, -0.3, 0.3)))
+    pl.add_ruler(
+        [-1.4, -0.6, 0],
+        [1.4, -0.6, 0],
+        title='X Distance',
+        font_size_factor=1.0,
+        tick_length=20,
+        number_minor_ticks=4,
+    )
+    pl.set_scale(xscale=3, yscale=2)
+    pl.enable_parallel_projection()
+    pl.view_xy()
+    pl.camera.zoom(0.55)
+    pl.show()
+
+
 @pytest.mark.needs_vtk_version(9, 4, 0, reason='SnapLabelsToGrid was added in VTK 9.4.0')
 def test_ruler_number_labels():
     pl = pv.Plotter()
