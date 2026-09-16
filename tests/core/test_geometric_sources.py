@@ -476,7 +476,7 @@ def test_axes_geometry_source_symmetric_bounds_init():
     assert axes_geometry_source.output.bounds == (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
 
 
-@pytest.mark.parametrize('tip_type', ['sphere', 'cone'])
+@pytest.mark.parametrize('tip_type', ['sphere', 'cube'])
 def test_axes_geometry_source_symmetric_bounds_arrays(tip_type):
     axes_geometry_source = pv.AxesGeometrySource(tip_type=tip_type, symmetric_bounds=True)
     for tip in list(axes_geometry_source.output)[3:]:
