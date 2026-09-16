@@ -3957,11 +3957,13 @@ class DataSetFilters(DataObjectFilters):
             'cl': _vtk.vtkStreamTracer.CELL_LENGTH_UNIT,
             'l': _vtk.vtkStreamTracer.LENGTH_UNIT,
         }[step_unit]
+        # The active arrays are set on a shallow copy, so the input's are untouched
+        input_mesh = self.copy(deep=False)
         if isinstance(vectors, str):
-            self.set_active_scalars(vectors)
-            self.set_active_vectors(vectors)
+            input_mesh.set_active_scalars(vectors)
+            input_mesh.set_active_vectors(vectors)
         elif vectors is None:
-            set_default_active_vectors(self)
+            set_default_active_vectors(input_mesh)
 
         if max_time is not None:
             msg = (
@@ -3982,7 +3984,7 @@ class DataSetFilters(DataObjectFilters):
         # Build the algorithm
         alg = _vtk.vtkStreamTracer()
         # Inputs
-        alg.SetInputDataObject(self)
+        alg.SetInputDataObject(input_mesh)
         alg.SetSourceData(source)
 
         # general parameters
@@ -4156,18 +4158,20 @@ class DataSetFilters(DataObjectFilters):
             'cl': _vtk.vtkStreamTracer.CELL_LENGTH_UNIT,
             'l': _vtk.vtkStreamTracer.LENGTH_UNIT,
         }[step_unit]
+        # The active arrays are set on a shallow copy, so the input's are untouched
+        input_mesh = self.copy(deep=False)
         if isinstance(vectors, str):
-            self.set_active_scalars(vectors)
-            self.set_active_vectors(vectors)
+            input_mesh.set_active_scalars(vectors)
+            input_mesh.set_active_vectors(vectors)
         elif vectors is None:
-            set_default_active_vectors(self)
+            set_default_active_vectors(input_mesh)
 
         loop_angle = loop_angle * np.pi / 180
 
         # Build the algorithm
         alg = _vtk.vtkEvenlySpacedStreamlines2D()
         # Inputs
-        alg.SetInputDataObject(self)
+        alg.SetInputDataObject(input_mesh)
 
         # Seed for starting position
         if start_position is not None:
