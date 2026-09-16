@@ -3032,7 +3032,7 @@ class BasePlotter(_BoundsSizeMixin):
 
     def add_composite(
         self,
-        dataset: MultiBlock,
+        dataset: MultiBlock[Any],
         *,
         color: ColorLike | None = None,
         style: StyleOptions | None = None,
@@ -4744,7 +4744,7 @@ class BasePlotter(_BoundsSizeMixin):
     # fmt: on
     def add_volume(
         self,
-        volume: DataSet | MultiBlock | NumpyArray[float],
+        volume: DataSet | MultiBlock[Any] | NumpyArray[float],
         *,
         scalars: str | NumpyArray[float] | None = None,
         clim: float | tuple[float, float] | None = None,
@@ -9155,7 +9155,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
                         input_alg.Update()
                     meshes.append(pv.wrap(dataset))
 
-        meshes: list[pv.DataSet | pv.MultiBlock] = []
+        meshes: list[pv.DataSet | pv.MultiBlock[Any]] = []
         for actor in self.actors.values():
             for leaf in _iter_leaf_props(actor):
                 _append_actor_dataset(leaf)

@@ -398,14 +398,14 @@ class PolyDataFilters(DataSetFilters):
     # fmt: on
     def __add__(  # type: ignore[misc]
         self: PolyData,
-        dataset: DataSet | _vtk.vtkDataSet | MultiBlock | Sequence[DataSet | _vtk.vtkDataSet],
+        dataset: DataSet | _vtk.vtkDataSet | MultiBlock[Any] | Sequence[DataSet | _vtk.vtkDataSet],
     ) -> PolyData | UnstructuredGrid:
         """Merge these two meshes."""
         return self.merge(dataset)
 
     def __iadd__(  # type: ignore[misc]
         self: PolyData,
-        dataset: DataSet | _vtk.vtkDataSet | MultiBlock | Sequence[DataSet | _vtk.vtkDataSet],
+        dataset: DataSet | _vtk.vtkDataSet | MultiBlock[Any] | Sequence[DataSet | _vtk.vtkDataSet],
     ) -> PolyData:
         """Merge another mesh into this one if possible.
 
@@ -499,7 +499,7 @@ class PolyDataFilters(DataSetFilters):
     # fmt: on
     def merge(  # type: ignore[misc]
         self: PolyData,
-        dataset: DataSet | _vtk.vtkDataSet | MultiBlock | Sequence[DataSet | _vtk.vtkDataSet],
+        dataset: DataSet | _vtk.vtkDataSet | MultiBlock[Any] | Sequence[DataSet | _vtk.vtkDataSet],
         *,
         merge_points: bool = True,
         tolerance: float = 0.0,

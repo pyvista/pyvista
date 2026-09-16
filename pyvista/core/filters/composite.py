@@ -38,7 +38,7 @@ class CompositeFilters(DataObjectFilters):
     """An internal class to manage filters/algorithms for composite datasets."""
 
     def generic_filter(  # type:ignore[misc]
-        self: MultiBlock,
+        self: MultiBlock[Any],
         function: str | Callable[..., _TypeMultiBlockLeaf],
         /,
         *args,
@@ -220,7 +220,7 @@ class CompositeFilters(DataObjectFilters):
             return output_
 
         def get_iterator(
-            multi: MultiBlock, *, skip_none_: bool, skip_empty_: bool
+            multi: MultiBlock[Any], *, skip_none_: bool, skip_empty_: bool
         ) -> Iterator[tuple[tuple[int, ...], str, _TypeMultiBlockLeaf]]:
             # `nested_ids` makes every id a tuple, which the overloads cannot prove here
             return multi.recursive_iterator(  # type: ignore[return-value]
@@ -340,7 +340,7 @@ class CompositeFilters(DataObjectFilters):
         return _apply_points_dtype(wrap(output), algorithm=alg)
 
     def outline(  # type: ignore[misc]
-        self: MultiBlock,
+        self: MultiBlock[Any],
         *,
         generate_faces: bool = False,
         nested: bool = False,
@@ -377,15 +377,15 @@ class CompositeFilters(DataObjectFilters):
     # fmt: off
     # ruff: disable[E501]
     @overload
-    def outline_corners(self: MultiBlock, *, factor: float = ..., nested: Literal[False] = ..., progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc]
+    def outline_corners(self: MultiBlock[Any], *, factor: float = ..., nested: Literal[False] = ..., progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc]
     @overload
-    def outline_corners(self: MultiBlock, *, factor: float = ..., nested: Literal[True] = ..., progress_bar: bool = ...) -> MultiBlock: ...  # type: ignore[misc]
+    def outline_corners(self: MultiBlock[Any], *, factor: float = ..., nested: Literal[True] = ..., progress_bar: bool = ...) -> MultiBlock: ...  # type: ignore[misc]
     @overload
-    def outline_corners(self: MultiBlock, *, factor: float = ..., nested: bool = ..., progress_bar: bool = ...) -> PolyData | MultiBlock: ...  # type: ignore[misc]
+    def outline_corners(self: MultiBlock[Any], *, factor: float = ..., nested: bool = ..., progress_bar: bool = ...) -> PolyData | MultiBlock: ...  # type: ignore[misc]
     # ruff: enable[E501]
     # fmt: on
     def outline_corners(  # type: ignore[misc]
-        self: MultiBlock,
+        self: MultiBlock[Any],
         *,
         factor=0.2,
         nested: bool = False,
