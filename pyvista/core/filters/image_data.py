@@ -5061,8 +5061,7 @@ class ImageDataFilters(DataSetFilters):
                 sampling_ratio = (
                     np.array(sample_grid.spacing) / transform_scale / np.array(input_image.spacing)
                 )
-            # Averaging more samples than an axis has adds nothing, and a transform which
-            # flattens an axis would otherwise ask for a kernel of unbounded width
+            # Never blur wider than the axis, which also bounds a flattening transform
             sampling_ratio = np.minimum(sampling_ratio, input_image.dimensions)
         else:
             sampling_ratio = np.ones(3)
