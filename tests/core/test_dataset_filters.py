@@ -4671,7 +4671,17 @@ def test_integrate_data_pointset(pointset):
 
 
 @pytest.mark.parametrize(
-    'name', ['streamlines', 'streamlines_from_source', 'streamlines_evenly_spaced_2D']
+    'name',
+    [
+        'streamlines',
+        'streamlines_from_source',
+        pytest.param(
+            'streamlines_evenly_spaced_2D',
+            marks=pytest.mark.xfail(
+                reason='vtkEvenlySpacedStreamlines2D needs a cell at the start position'
+            ),
+        ),
+    ],
 )
 def test_streamlines_pointset(pointset, name):
     pointset['vectors'] = np.tile([1.0, 0.0, 0.0], (pointset.n_points, 1))
