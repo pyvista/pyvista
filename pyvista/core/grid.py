@@ -826,9 +826,9 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
     def _compute_voi_from_index(
         self,
         indices: tuple[
-            int | slice | tuple[int, int],
-            int | slice | tuple[int, int],
-            int | slice | tuple[int, int],
+            int | slice | tuple[int, int] | list[int],
+            int | slice | tuple[int, int] | list[int],
+            int | slice | tuple[int, int] | list[int],
         ],
         *,
         index_mode: Literal['extent', 'dimensions'] = 'dimensions',
