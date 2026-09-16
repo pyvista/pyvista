@@ -5105,14 +5105,6 @@ class ImageDataFilters(DataSetFilters):
             output_image = output_image.points_to_cells(
                 scalars=name, copy=False, dimensionality=reference_image.dimensionality
             )
-            output_image.point_data.clear()
-        else:
-            output_image.cell_data.clear()
-        # Match the reference geometry exactly
-        output_image.direction_matrix = reference_image.direction_matrix
-        output_image.spacing = reference_image.spacing
-        output_image.origin = reference_image.origin
-        output_image.offset = reference_image.offset
 
         if inplace:
             self.copy_from(output_image)
