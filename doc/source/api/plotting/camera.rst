@@ -132,6 +132,36 @@ degrees to see the ``X+`` and ``Z+`` faces.
    pl.show()
 
 
+Calibrated Cameras
+------------------
+A camera calibrated for computer vision is described by a 3x3 intrinsic matrix
+in pixels and a 4x4 extrinsic matrix that maps world coordinates to the camera.
+Set them with :py:meth:`pyvista.Camera.from_intrinsics` or
+:py:meth:`pyvista.Camera.set_intrinsic_matrix` and
+:py:attr:`pyvista.Camera.extrinsic_matrix`, and read them back with
+:py:meth:`pyvista.Camera.get_intrinsic_matrix`.
+
+.. code-block:: python
+
+    import numpy as np
+    import pyvista as pv
+
+    image_size = (640, 480)
+    intrinsics = np.array(
+        [[800.0, 0.0, 310.0], [0.0, 760.0, 250.0], [0.0, 0.0, 1.0]]
+    )
+    extrinsics = np.eye(4)
+    extrinsics[:3, 3] = (0.2, -0.1, 6.0)
+
+    pl = pv.Plotter(window_size=image_size)
+    pl.camera = pv.Camera.from_intrinsics(intrinsics, image_size)
+    pl.camera.extrinsic_matrix = extrinsics
+
+The render window has to be the size the matrix was calibrated for. The camera
+is a pinhole model with no lens distortion; apply distortion coefficients to the
+scene with :py:meth:`pyvista.Plotter.enable_camera_distortion`.
+
+
 API Reference
 ~~~~~~~~~~~~~
 .. autosummary::

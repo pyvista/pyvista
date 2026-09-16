@@ -350,3 +350,213 @@ def test_repr_and_str(camera, render):
     text = render(camera)
     missing = [field for field in CAMERA_REPR_FIELDS if field not in text]
     assert not missing, f'Missing from {render.__name__}: {missing}'
+
+
+IMAGE_SIZE = (640, 480)
+INTRINSICS = np.array([[800.0, 0.0, 310.0], [0.0, 760.0, 250.0], [0.0, 0.0, 1.0]])
+
+
+def rodrigues(rotation_vector):
+    """Return the rotation matrix of an axis-angle vector."""
+    angle = np.linalg.norm(rotation_vector)
+    axis = rotation_vector / angle
+    skew = np.array(
+        [
+            [0.0, -axis[2], axis[1]],
+            [axis[2], 0.0, -axis[0]],
+            [-axis[1], axis[0], 0.0],
+        ]
+    )
+    return np.eye(3) + np.sin(angle) * skew + (1.0 - np.cos(angle)) * skew @ skew
+
+
+@pytest.fixture
+def extrinsics():
+    """Return an extrinsic matrix with no axis left unrotated."""
+    matrix = np.eye(4)
+    matrix[:3, :3] = rodrigues(np.array([0.15, -0.35, 0.05]))
+    matrix[:3, 3] = (0.2, -0.1, 6.0)
+    return matrix
+
+
+def opencv_project(points, intrinsic_matrix, extrinsic_matrix):
+    """Project world points to pixels with the OpenCV pinhole model."""
+    camera_points = points @ extrinsic_matrix[:3, :3].T + extrinsic_matrix[:3, 3]
+    pixels = camera_points @ intrinsic_matrix.T
+    return pixels[:, :2] / pixels[:, 2:3]
+
+
+WORLD_POINTS = np.array([[0.0, 0.0, 0.0], [0.4, 0.3, -0.2], [-0.5, 0.25, 0.35], [1.0, -0.8, 0.6]])
+
+
+def test_window_center(camera):
+    """The window center round-trips through the property."""
+    assert camera.window_center == (0.0, 0.0)
+    camera.window_center = (0.25, -0.1)
+    assert camera.window_center == (0.25, -0.1)
+    assert camera.GetWindowCenter() == (0.25, -0.1)
+
+
+def test_window_center_raises(camera):
+    """A window center of the wrong length is rejected."""
+    with pytest.raises(ValueError, match='window center'):
+        camera.window_center = (0.25, -0.1, 0.0)
+
+
+def test_explicit_aspect_ratio(camera):
+    """The explicit aspect ratio is ``None`` until set, and again once cleared."""
+    assert camera.explicit_aspect_ratio is None
+    camera.explicit_aspect_ratio = 1.25
+    assert camera.explicit_aspect_ratio == 1.25
+    assert camera.GetUseExplicitAspectRatio()
+    camera.explicit_aspect_ratio = None
+    assert camera.explicit_aspect_ratio is None
+    assert not camera.GetUseExplicitAspectRatio()
+
+
+@pytest.mark.parametrize('ratio', [0.0, -1.0])
+def test_explicit_aspect_ratio_raises(camera, ratio):
+    """A non-positive explicit aspect ratio is rejected."""
+    with pytest.raises(ValueError, match='explicit aspect ratio'):
+        camera.explicit_aspect_ratio = ratio
+
+
+def test_intrinsic_matrix_round_trip(camera):
+    """An intrinsic matrix is recovered exactly after being set."""
+    camera.set_intrinsic_matrix(INTRINSICS, IMAGE_SIZE)
+    assert camera.get_intrinsic_matrix(IMAGE_SIZE) == pytest.approx(INTRINSICS)
+    assert camera.is_set
+
+
+def test_from_intrinsics():
+    """The constructor matches setting the matrix on a default camera."""
+    camera = pv.Camera.from_intrinsics(INTRINSICS, IMAGE_SIZE)
+    other = pv.Camera()
+    other.set_intrinsic_matrix(INTRINSICS, IMAGE_SIZE)
+    assert camera == other
+
+
+def test_set_intrinsic_matrix_disables_parallel_projection(camera):
+    """Setting intrinsics gives the camera a perspective projection."""
+    camera.enable_parallel_projection()
+    camera.set_intrinsic_matrix(INTRINSICS, IMAGE_SIZE)
+    assert not camera.parallel_projection
+
+
+def test_get_intrinsic_matrix_raises_for_parallel_projection(camera):
+    """A parallel projection has no intrinsic matrix."""
+    camera.enable_parallel_projection()
+    with pytest.raises(ValueError, match='perspective projection'):
+        camera.get_intrinsic_matrix(IMAGE_SIZE)
+
+
+def test_set_intrinsic_matrix_raises_for_skew(camera):
+    """Axis skew cannot be represented and is rejected."""
+    skewed = INTRINSICS.copy()
+    skewed[0, 1] = 1e-3
+    with pytest.raises(ValueError, match='axis skew'):
+        camera.set_intrinsic_matrix(skewed, IMAGE_SIZE)
+
+
+@pytest.mark.parametrize('focal_length', [0.0, -800.0])
+def test_set_intrinsic_matrix_raises_for_focal_length(camera, focal_length):
+    """A focal length that is not positive is rejected."""
+    invalid = INTRINSICS.copy()
+    invalid[0, 0] = focal_length
+    with pytest.raises(ValueError, match='focal lengths must be positive'):
+        camera.set_intrinsic_matrix(invalid, IMAGE_SIZE)
+
+
+@pytest.mark.parametrize('image_size', [(640, 0), (640.5, 480), (640, 480, 3)])
+def test_intrinsic_matrix_raises_for_image_size(camera, image_size):
+    """An image size that is not two positive integers is rejected."""
+    with pytest.raises(ValueError, match='image size'):
+        camera.set_intrinsic_matrix(INTRINSICS, image_size)
+
+
+def test_extrinsic_matrix(camera):
+    """A camera looking down ``-z`` has its own axes flipped in ``y`` and ``z``."""
+    camera.position = (0.0, 0.0, 4.0)
+    camera.focal_point = (0.0, 0.0, 0.0)
+    camera.up = (0.0, 1.0, 0.0)
+    expected = np.array(
+        [
+            [1.0, 0.0, 0.0, 0.0],
+            [0.0, -1.0, 0.0, 0.0],
+            [0.0, 0.0, -1.0, 4.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ]
+    )
+    assert camera.extrinsic_matrix == pytest.approx(expected)
+
+
+def test_extrinsic_matrix_round_trip(camera, extrinsics):
+    """An extrinsic matrix is recovered exactly after being set."""
+    camera.extrinsic_matrix = extrinsics
+    assert camera.extrinsic_matrix == pytest.approx(extrinsics)
+
+
+def test_extrinsic_matrix_keeps_distance(camera, extrinsics):
+    """Setting an extrinsic matrix leaves the distance to the focal point alone."""
+    camera.position = (0.0, 0.0, 7.0)
+    camera.focal_point = (0.0, 0.0, 0.0)
+    camera.extrinsic_matrix = extrinsics
+    assert camera.distance == pytest.approx(7.0)
+
+
+def test_extrinsic_matrix_raises_for_non_rotation(camera, extrinsics):
+    """An extrinsic matrix whose upper block is not a rotation is rejected."""
+    extrinsics[:3, :3] *= 2.0
+    with pytest.raises(ValueError, match='extrinsic matrix rotation'):
+        camera.extrinsic_matrix = extrinsics
+
+
+def test_calibrated_camera_matches_opencv_projection(extrinsics):
+    """The camera's own matrices project points where OpenCV projects them."""
+    camera = pv.Camera.from_intrinsics(INTRINSICS, IMAGE_SIZE)
+    camera.extrinsic_matrix = extrinsics
+    camera.clipping_range = (0.1, 100.0)
+
+    width, height = IMAGE_SIZE
+    composite = pv.array_from_vtkmatrix(
+        camera.GetCompositeProjectionTransformMatrix(width / height, *camera.clipping_range)
+    )
+    homogeneous = np.column_stack([WORLD_POINTS, np.ones(len(WORLD_POINTS))])
+    clip = homogeneous @ composite.T
+    normalized = clip[:, :2] / clip[:, 3:4]
+    pixels = np.column_stack(
+        [(normalized[:, 0] + 1.0) * width / 2, (1.0 - normalized[:, 1]) * height / 2]
+    )
+    assert pixels == pytest.approx(opencv_project(WORLD_POINTS, INTRINSICS, extrinsics))
+
+
+def test_calibrated_camera_renders_where_opencv_projects(extrinsics):
+    """A render window of the calibrated size maps world points to the same pixels."""
+    pl = pv.Plotter(window_size=IMAGE_SIZE)
+    pl.add_mesh(pv.Sphere(radius=0.5))
+    pl.camera = pv.Camera.from_intrinsics(INTRINSICS, IMAGE_SIZE)
+    pl.camera.extrinsic_matrix = extrinsics
+    pl.camera.clipping_range = (0.1, 100.0)
+    pl.render()
+    assert tuple(pl.window_size) == IMAGE_SIZE
+
+    displayed = []
+    for point in WORLD_POINTS:
+        pl.renderer.SetWorldPoint(*point, 1.0)
+        pl.renderer.WorldToDisplay()
+        display_x, display_y, _ = pl.renderer.GetDisplayPoint()
+        displayed.append((display_x, IMAGE_SIZE[1] - display_y))
+    pl.close()
+
+    assert np.array(displayed) == pytest.approx(
+        opencv_project(WORLD_POINTS, INTRINSICS, extrinsics)
+    )
+
+
+def test_copy_carries_the_calibration():
+    """A copied camera keeps the window center and explicit aspect ratio."""
+    camera = pv.Camera.from_intrinsics(INTRINSICS, IMAGE_SIZE)
+    copied = camera.copy()
+    assert copied.window_center == camera.window_center
+    assert copied.explicit_aspect_ratio == camera.explicit_aspect_ratio
+    assert copied == camera
