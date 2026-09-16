@@ -6842,7 +6842,7 @@ def test_camera_distortion_is_centered_on_the_principal_point():
     intrinsics = np.array([[800.0, 0.0, 200.0], [0.0, 760.0, 150.0], [0.0, 0.0, 1.0]])
     pl = pv.Plotter(window_size=image_size)
     actor = pl.add_mesh(pv.Sphere())
-    pl.camera.set_intrinsic_matrix(intrinsics, image_size)
+    pl.camera.intrinsic_matrix = intrinsics
     pl.enable_camera_distortion((0.3, 0.1, 0.0, 0.0))
 
     uniforms = actor.GetShaderProperty().GetVertexCustomUniforms()

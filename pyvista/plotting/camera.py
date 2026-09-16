@@ -28,19 +28,6 @@ if TYPE_CHECKING:
 _VISION_FROM_VTK = np.diag([1.0, -1.0, -1.0, 1.0])
 
 
-def _validate_image_size(image_size: VectorLike[int]) -> tuple[int, int]:
-    """Validate a width and height in pixels."""
-    size = _validation.validate_array(
-        image_size,
-        must_have_shape=(2,),
-        must_be_integer=True,
-        must_be_in_range=[1, np.inf],
-        dtype_out=int,
-        name='image size',
-    )
-    return int(size[0]), int(size[1])
-
-
 class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
     """PyVista wrapper for the VTK Camera class.
 
@@ -142,53 +129,6 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
     @is_set.setter
     def is_set(self, value: bool):
         self._is_set = bool(value)
-
-    @classmethod
-    def from_intrinsics(
-        cls, intrinsic_matrix: MatrixLike[float], image_size: VectorLike[int]
-    ) -> Camera:
-        """Create a camera from a pinhole intrinsic matrix.
-
-        .. versionadded:: 0.50
-
-        Parameters
-        ----------
-        intrinsic_matrix : MatrixLike[float]
-            Matrix ``[[fx, 0, cx], [0, fy, cy], [0, 0, 1]]`` in pixels, as
-            reported by a camera calibration.
-
-        image_size : VectorLike[int]
-            Width and height in pixels of the image the matrix was calibrated
-            for.
-
-        Returns
-        -------
-        pyvista.Camera
-            Camera with the projection the matrix describes.
-
-        See Also
-        --------
-        set_intrinsic_matrix
-        get_intrinsic_matrix
-        extrinsic_matrix
-
-        Examples
-        --------
-        >>> import numpy as np
-        >>> import pyvista as pv
-        >>> intrinsics = np.array(
-        ...     [[800.0, 0.0, 310.0], [0.0, 760.0, 250.0], [0.0, 0.0, 1.0]]
-        ... )
-        >>> camera = pv.Camera.from_intrinsics(intrinsics, (640, 480))
-        >>> camera.get_intrinsic_matrix((640, 480))
-        array([[800.,   0., 310.],
-               [  0., 760., 250.],
-               [  0.,   0.,   1.]])
-
-        """
-        camera = cls()
-        camera.set_intrinsic_matrix(intrinsic_matrix, image_size)
-        return camera
 
     @classmethod
     def from_paraview_pvcc(cls, filename: str | Path) -> Camera:
@@ -701,7 +641,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
 
         See Also
         --------
-        set_intrinsic_matrix
+        intrinsic_matrix
 
         Examples
         --------
@@ -735,7 +675,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
 
         See Also
         --------
-        set_intrinsic_matrix
+        intrinsic_matrix
 
         Examples
         --------
@@ -767,44 +707,69 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         self.SetExplicitAspectRatio(ratio)
         self.SetUseExplicitAspectRatio(True)
 
-    def get_intrinsic_matrix(self, image_size: VectorLike[int]) -> NumpyArray[float]:
-        """Return the pinhole intrinsic matrix of the camera.
+    def _viewport_size(self) -> tuple[int, int]:
+        """Return the pixel width and height of the viewport the camera renders into."""
+        if self._renderer is None:
+            msg = 'An intrinsic matrix requires a plotter to derive the image size from.'
+            raise AttributeError(msg)
+        width, height = self._renderer.GetSize()
+        if not width or not height:
+            msg = 'An intrinsic matrix requires a plotter whose image has a size.'
+            raise AttributeError(msg)
+        return width, height
+
+    @property
+    def intrinsic_matrix(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
+        """Return or set the pinhole intrinsic matrix of the camera.
+
+        The matrix is ``[[fx, 0, cx], [0, fy, cy], [0, 0, 1]]`` in pixels, as
+        reported by a camera calibration. It describes the image the camera
+        renders, so it is expressed in the pixel size of the viewport and
+        changes with it. Axis skew cannot be represented and must be zero.
+
+        Setting the matrix gives the camera a perspective projection.
+
+        The camera has to belong to a plotter, which is what gives it an image
+        to be calibrated for.
 
         .. versionadded:: 0.50
 
-        Parameters
-        ----------
-        image_size : VectorLike[int]
-            Width and height in pixels of the image the camera renders into.
-
-        Returns
-        -------
-        numpy.ndarray
-            Matrix ``[[fx, 0, cx], [0, fy, cy], [0, 0, 1]]`` in pixels.
-
         See Also
         --------
-        set_intrinsic_matrix
-        from_intrinsics
         extrinsic_matrix
+        window_center
+        explicit_aspect_ratio
 
         Examples
         --------
+        A camera renders a square-pixel image centered on the optical axis
+        until it is given a calibration.
+
+        >>> import numpy as np
         >>> import pyvista as pv
-        >>> camera = pv.Camera()
-        >>> camera.get_intrinsic_matrix((640, 480)).round(3)
+        >>> pl = pv.Plotter(window_size=(640, 480))
+        >>> pl.camera.intrinsic_matrix.round(3)
         array([[895.692,   0.   , 320.   ],
                [  0.   , 895.692, 240.   ],
                [  0.   ,   0.   ,   1.   ]])
+
+        >>> pl.camera.intrinsic_matrix = np.array(
+        ...     [[800.0, 0.0, 310.0], [0.0, 760.0, 250.0], [0.0, 0.0, 1.0]]
+        ... )
+        >>> pl.camera.intrinsic_matrix
+        array([[800.,   0., 310.],
+               [  0., 760., 250.],
+               [  0.,   0.,   1.]])
 
         """
         if self.parallel_projection:
             msg = 'An intrinsic matrix is only defined for a perspective projection.'
             raise ValueError(msg)
-        width, height = _validate_image_size(image_size)
-        near, far = self.clipping_range
+        width, height = self._viewport_size()
         projection = array_from_vtkmatrix(
-            self.GetProjectionTransformMatrix(width / height, near, far)
+            self.GetProjectionTransformMatrix(
+                self._renderer.GetTiledAspectRatio(), *self.clipping_range
+            )
         )
         return np.array(
             [
@@ -814,57 +779,20 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
             ]
         )
 
-    def set_intrinsic_matrix(
-        self, intrinsic_matrix: MatrixLike[float], image_size: VectorLike[int]
-    ) -> None:
-        """Set the projection of the camera from a pinhole intrinsic matrix.
-
-        The camera is given a perspective projection, and reproduces the
-        calibrated image when the render window has the same size.
-
-        .. versionadded:: 0.50
-
-        Parameters
-        ----------
-        intrinsic_matrix : MatrixLike[float]
-            Matrix ``[[fx, 0, cx], [0, fy, cy], [0, 0, 1]]`` in pixels, as
-            reported by a camera calibration. Axis skew must be zero.
-
-        image_size : VectorLike[int]
-            Width and height in pixels of the image the matrix was calibrated
-            for.
-
-        See Also
-        --------
-        get_intrinsic_matrix
-        from_intrinsics
-        extrinsic_matrix
-
-        Examples
-        --------
-        >>> import numpy as np
-        >>> import pyvista as pv
-        >>> intrinsics = np.array(
-        ...     [[800.0, 0.0, 310.0], [0.0, 760.0, 250.0], [0.0, 0.0, 1.0]]
-        ... )
-        >>> camera = pv.Camera()
-        >>> camera.set_intrinsic_matrix(intrinsics, (640, 480))
-        >>> camera.window_center
-        (0.03125, 0.041666666666666664)
-
-        """
-        matrix = _validation.validate_array(
-            intrinsic_matrix, must_have_shape=(3, 3), dtype_out=float, name='intrinsic matrix'
+    @intrinsic_matrix.setter
+    def intrinsic_matrix(self, matrix: MatrixLike[float]) -> None:
+        valid = _validation.validate_array(
+            matrix, must_have_shape=(3, 3), dtype_out=float, name='intrinsic matrix'
         )
-        width, height = _validate_image_size(image_size)
-        if matrix[0, 1] != 0.0:
+        width, height = self._viewport_size()
+        if valid[0, 1] != 0.0:
             msg = 'Intrinsic matrices with axis skew are not supported.'
             raise ValueError(msg)
-        focal_x, focal_y = matrix[0, 0], matrix[1, 1]
+        focal_x, focal_y = valid[0, 0], valid[1, 1]
         if focal_x <= 0.0 or focal_y <= 0.0:
             msg = f'Intrinsic matrix focal lengths must be positive, got ({focal_x}, {focal_y}).'
             raise ValueError(msg)
-        center_x, center_y = matrix[0, 2], matrix[1, 2]
+        center_x, center_y = valid[0, 2], valid[1, 2]
         self.parallel_projection = False
         self.view_angle = np.degrees(2 * np.arctan(height / (2 * focal_y)))
         self.window_center = (
@@ -890,8 +818,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
 
         See Also
         --------
-        get_intrinsic_matrix
-        set_intrinsic_matrix
+        intrinsic_matrix
 
         Examples
         --------

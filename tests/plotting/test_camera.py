@@ -421,57 +421,93 @@ def test_explicit_aspect_ratio_raises(camera, ratio):
         camera.explicit_aspect_ratio = ratio
 
 
-def test_intrinsic_matrix_round_trip(camera):
+@pytest.fixture
+def calibrated():
+    """Return a plotter whose window is the size the intrinsics are calibrated for."""
+    pl = pv.Plotter(window_size=IMAGE_SIZE)
+    yield pl
+    pl.close()
+
+
+def test_intrinsic_matrix_round_trip(calibrated):
     """An intrinsic matrix is recovered exactly after being set."""
-    camera.set_intrinsic_matrix(INTRINSICS, IMAGE_SIZE)
-    assert camera.get_intrinsic_matrix(IMAGE_SIZE) == pytest.approx(INTRINSICS)
-    assert camera.is_set
+    calibrated.camera.intrinsic_matrix = INTRINSICS
+    assert calibrated.camera.intrinsic_matrix == pytest.approx(INTRINSICS)
+    assert calibrated.camera.is_set
 
 
-def test_from_intrinsics():
-    """The constructor matches setting the matrix on a default camera."""
-    camera = pv.Camera.from_intrinsics(INTRINSICS, IMAGE_SIZE)
-    other = pv.Camera()
-    other.set_intrinsic_matrix(INTRINSICS, IMAGE_SIZE)
-    assert camera == other
+def test_intrinsic_matrix_follows_the_window(calibrated):
+    """The reported focal length scales with the window the camera renders into."""
+    calibrated.camera.intrinsic_matrix = INTRINSICS
+    width, height = IMAGE_SIZE
+    calibrated.window_size = (2 * width, 3 * height)
+    calibrated.render()
+    assert calibrated.camera.intrinsic_matrix == pytest.approx(
+        np.diag([2.0, 3.0, 1.0]) @ INTRINSICS
+    )
 
 
-def test_set_intrinsic_matrix_disables_parallel_projection(camera):
+def test_intrinsic_matrix_uses_the_subplot_viewport():
+    """A subplot is calibrated for its own viewport, not the whole window."""
+    pl = pv.Plotter(shape=(1, 2), window_size=IMAGE_SIZE)
+    pl.subplot(0, 1)
+    intrinsics = np.array([[400.0, 0.0, 160.0], [0.0, 400.0, 240.0], [0.0, 0.0, 1.0]])
+    pl.camera.intrinsic_matrix = intrinsics
+    assert tuple(pl.renderer.GetSize()) == (IMAGE_SIZE[0] // 2, IMAGE_SIZE[1])
+    assert pl.camera.intrinsic_matrix == pytest.approx(intrinsics)
+    pl.close()
+
+
+def test_intrinsic_matrix_reaches_an_assigned_camera(calibrated):
+    """A camera handed to a plotter is calibrated for that plotter."""
+    calibrated.camera = pv.Camera()
+    calibrated.camera.intrinsic_matrix = INTRINSICS
+    assert calibrated.camera.intrinsic_matrix == pytest.approx(INTRINSICS)
+
+
+def test_intrinsic_matrix_raises_without_a_plotter(camera):
+    """A camera of its own has no image to be calibrated for."""
+    with pytest.raises(AttributeError, match='requires a plotter'):
+        camera.intrinsic_matrix  # noqa: B018
+    with pytest.raises(AttributeError, match='requires a plotter'):
+        camera.intrinsic_matrix = INTRINSICS
+
+
+def test_intrinsic_matrix_disables_parallel_projection(calibrated):
     """Setting intrinsics gives the camera a perspective projection."""
-    camera.enable_parallel_projection()
-    camera.set_intrinsic_matrix(INTRINSICS, IMAGE_SIZE)
-    assert not camera.parallel_projection
+    calibrated.camera.enable_parallel_projection()
+    calibrated.camera.intrinsic_matrix = INTRINSICS
+    assert not calibrated.camera.parallel_projection
 
 
-def test_get_intrinsic_matrix_raises_for_parallel_projection(camera):
+def test_intrinsic_matrix_raises_for_parallel_projection(calibrated):
     """A parallel projection has no intrinsic matrix."""
-    camera.enable_parallel_projection()
+    calibrated.camera.enable_parallel_projection()
     with pytest.raises(ValueError, match='perspective projection'):
-        camera.get_intrinsic_matrix(IMAGE_SIZE)
+        calibrated.camera.intrinsic_matrix  # noqa: B018
 
 
-def test_set_intrinsic_matrix_raises_for_skew(camera):
+def test_intrinsic_matrix_raises_for_skew(calibrated):
     """Axis skew cannot be represented and is rejected."""
     skewed = INTRINSICS.copy()
     skewed[0, 1] = 1e-3
     with pytest.raises(ValueError, match='axis skew'):
-        camera.set_intrinsic_matrix(skewed, IMAGE_SIZE)
+        calibrated.camera.intrinsic_matrix = skewed
 
 
 @pytest.mark.parametrize('focal_length', [0.0, -800.0])
-def test_set_intrinsic_matrix_raises_for_focal_length(camera, focal_length):
+def test_intrinsic_matrix_raises_for_focal_length(calibrated, focal_length):
     """A focal length that is not positive is rejected."""
     invalid = INTRINSICS.copy()
     invalid[0, 0] = focal_length
     with pytest.raises(ValueError, match='focal lengths must be positive'):
-        camera.set_intrinsic_matrix(invalid, IMAGE_SIZE)
+        calibrated.camera.intrinsic_matrix = invalid
 
 
-@pytest.mark.parametrize('image_size', [(640, 0), (640.5, 480), (640, 480, 3)])
-def test_intrinsic_matrix_raises_for_image_size(camera, image_size):
-    """An image size that is not two positive integers is rejected."""
-    with pytest.raises(ValueError, match='image size'):
-        camera.set_intrinsic_matrix(INTRINSICS, image_size)
+def test_intrinsic_matrix_raises_for_shape(calibrated):
+    """A matrix that is not 3x3 is rejected."""
+    with pytest.raises(ValueError, match='intrinsic matrix'):
+        calibrated.camera.intrinsic_matrix = np.eye(4)
 
 
 def test_extrinsic_matrix(camera):
@@ -511,9 +547,10 @@ def test_extrinsic_matrix_raises_for_non_rotation(camera, extrinsics):
         camera.extrinsic_matrix = extrinsics
 
 
-def test_calibrated_camera_matches_opencv_projection(extrinsics):
+def test_calibrated_camera_matches_opencv_projection(calibrated, extrinsics):
     """The camera's own matrices project points where OpenCV projects them."""
-    camera = pv.Camera.from_intrinsics(INTRINSICS, IMAGE_SIZE)
+    camera = calibrated.camera
+    camera.intrinsic_matrix = INTRINSICS
     camera.extrinsic_matrix = extrinsics
     camera.clipping_range = (0.1, 100.0)
 
@@ -530,11 +567,11 @@ def test_calibrated_camera_matches_opencv_projection(extrinsics):
     assert pixels == pytest.approx(opencv_project(WORLD_POINTS, INTRINSICS, extrinsics))
 
 
-def test_calibrated_camera_renders_where_opencv_projects(extrinsics):
+def test_calibrated_camera_renders_where_opencv_projects(calibrated, extrinsics):
     """A render window of the calibrated size maps world points to the same pixels."""
-    pl = pv.Plotter(window_size=IMAGE_SIZE)
+    pl = calibrated
     pl.add_mesh(pv.Sphere(radius=0.5))
-    pl.camera = pv.Camera.from_intrinsics(INTRINSICS, IMAGE_SIZE)
+    pl.camera.intrinsic_matrix = INTRINSICS
     pl.camera.extrinsic_matrix = extrinsics
     pl.camera.clipping_range = (0.1, 100.0)
     pl.render()
@@ -546,16 +583,16 @@ def test_calibrated_camera_renders_where_opencv_projects(extrinsics):
         pl.renderer.WorldToDisplay()
         display_x, display_y, _ = pl.renderer.GetDisplayPoint()
         displayed.append((display_x, IMAGE_SIZE[1] - display_y))
-    pl.close()
 
     assert np.array(displayed) == pytest.approx(
         opencv_project(WORLD_POINTS, INTRINSICS, extrinsics)
     )
 
 
-def test_copy_carries_the_calibration():
+def test_copy_carries_the_calibration(calibrated):
     """A copied camera keeps the window center and explicit aspect ratio."""
-    camera = pv.Camera.from_intrinsics(INTRINSICS, IMAGE_SIZE)
+    camera = calibrated.camera
+    camera.intrinsic_matrix = INTRINSICS
     copied = camera.copy()
     assert copied.window_center == camera.window_center
     assert copied.explicit_aspect_ratio == camera.explicit_aspect_ratio

@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
 from typing import cast
+import weakref
 
 import numpy as np
 import pyvista_validation as _validation
@@ -673,6 +674,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             scale_point(source, source.focal_point, invert=True),
             source.up,
         )
+        source._renderer = weakref.proxy(self)
         self.Modified()
         self.camera_set = True
 
