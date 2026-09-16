@@ -303,6 +303,12 @@ def test_contour_labels_raises(labeled_image):
     with pytest.raises(pv.MissingDataError, match='No data available'):
         pv.ImageData().contour_labels()
 
+    # Multi-component labels
+    labeled_image.point_data['vectors'] = np.zeros((labeled_image.n_points, 3))
+    match = "Scalars 'vectors' must have a single component to contour labels."
+    with pytest.raises(ValueError, match=match):
+        labeled_image.contour_labels(scalars='vectors')
+
 
 def test_contour_labels_empty_input(frog_tissues):
     voi = frog_tissues.extract_subset((10, 100, 20, 200, 20, 80))

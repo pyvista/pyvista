@@ -26,7 +26,9 @@ from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.filters.data_set import _ExtractValuesInputs
+from pyvista.core.utilities.arrays import CellLiteral
 from pyvista.core.utilities.arrays import FieldAssociation
+from pyvista.core.utilities.arrays import PointLiteral
 from pyvista.core.utilities.arrays import _active_scalars_input
 from pyvista.core.utilities.arrays import _default_scalars_input
 from pyvista.core.utilities.arrays import _scalars_info
@@ -1230,7 +1232,7 @@ class ImageDataFilters(DataSetFilters):
     def _validate_point_scalars(  # type: ignore[misc]
         self: ImageData,
         scalars: str | None = None,
-        preference: Literal['point', 'cell'] = 'point',
+        preference: PointLiteral | CellLiteral = 'point',
     ) -> tuple[ImageData, Literal[FieldAssociation.POINT], str]:
         """Return a copy with the point scalars to process active, their field and name."""
         default_scalars = scalars is None
@@ -2768,6 +2770,11 @@ class ImageDataFilters(DataSetFilters):
 
         def _get_alg_input(image: ImageData, scalars_: str | None) -> ImageData:
             image, (field, scalars_) = _active_scalars_input(image, scalars_)
+            # VTK reads uninitialized memory when the labels have several components
+            data = image.point_data if field == FieldAssociation.POINT else image.cell_data
+            if data[scalars_].ndim > 1:
+                msg = f'Scalars {scalars_!r} must have a single component to contour labels.'
+                raise ValueError(msg)
 
             image = (
                 image
