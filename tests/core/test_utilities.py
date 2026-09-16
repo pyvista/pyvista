@@ -429,13 +429,15 @@ def test_read_force_ext_wrong_extension(tmpdir):
     assert data.n_points == 0
 
     # try to read a .ply file as .vtm
-    # vtkXMLMultiBlockDataReader throws a VTK error about the validity of the XML file
-    # the returned dataset is empty
+    # the file is not XML at all, and VTK only reports the parse failure from 9.7 on
     fname = ex.planefile
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
-        data = fileio.read(fname, force_ext='.vtm')
-    assert len(data) == 0
+        if pv.vtk_version_info >= (9, 7):
+            with pytest.raises(pv.VTKExecutionError, match='Error parsing XML'):
+                fileio.read(fname, force_ext='.vtm')
+        else:
+            assert len(fileio.read(fname, force_ext='.vtm')) == 0
 
     fname = ex.planefile
     with pytest.raises(IOError):  # noqa: PT011
@@ -988,6 +990,16 @@ def test_update_alg_raises():
     reader = _vtk.vtkXMLPolyDataReader()
     reader.SetFileName('this_file_does_not_exist.vtp')
     with pytest.raises(pv.VTKExecutionError):
+        _update_alg(reader)
+
+
+def test_update_alg_raises_request_data_error(tmp_path):
+    # OBJ indices are one-based, so the line element below is out of range
+    obj_file = tmp_path / 'bad.obj'
+    obj_file.write_text('v 0 0 0\nv 1 0 0\nl 0 1\n')
+    reader = _vtk.vtkOBJReader()
+    reader.SetFileName(str(obj_file))
+    with pytest.raises(pv.VTKExecutionError, match='Unexpected point index value: 0'):
         _update_alg(reader)
 
 
