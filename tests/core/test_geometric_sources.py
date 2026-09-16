@@ -679,17 +679,14 @@ def test_axes_geometry_source_custom_part(axes_geometry_source):
     axes_geometry_source.tip_type = pv.ParametricKlein()
     assert axes_geometry_source.tip_type == 'custom'
 
-    match = (
-        'Custom axes part must be 3D. Got bounds:\n'
-        'BoundsTuple(x_min = -0.5,\n'
-        '            x_max =  0.5,\n'
-        '            y_min = -0.5,\n'
-        '            y_max =  0.5,\n'
-        '            z_min =  0.0,\n'
-        '            z_max =  0.0).'
-    )
+    match = 'Custom axes part must be 3D. Got dimensionality 2.'
     with pytest.raises(ValueError, match=re.escape(match)):
         axes_geometry_source.shaft_type = pv.Plane()
+    with pytest.raises(ValueError, match=re.escape(match)):
+        axes_geometry_source.shaft_type = pv.Plane().rotate_x(30).rotate_y(20)
+    match = 'Custom axes part must be 3D. Got dimensionality 1.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        axes_geometry_source.tip_type = pv.Line()
 
     match = (
         "Geometry 'foo' is not valid. Geometry must be one of: "

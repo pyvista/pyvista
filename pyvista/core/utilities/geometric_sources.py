@@ -3737,9 +3737,6 @@ class AxesGeometrySource(_NoNewAttrMixin):
             if isinstance(part, pv.PolyData)
             else part.extract_surface(algorithm=None, pass_pointid=False, pass_cellid=False)
         )
-        if np.any(np.array(surface.bounds_size) < 1e-8):
-            msg = f'Custom axes part must be 3D. Got bounds:\n{surface.bounds}.'
-            raise ValueError(msg)
         return surface.resize(bounds_size=1.0, center=(0.0, 0.0, 0.0))
 
     @staticmethod
@@ -3752,6 +3749,10 @@ class AxesGeometrySource(_NoNewAttrMixin):
             name = geometry
             part = AxesGeometrySource._make_default_part(geometry)
         elif isinstance(geometry, pv.DataSet):
+            dimensionality = geometry.dimensionality
+            if dimensionality < 3:
+                msg = f'Custom axes part must be 3D. Got dimensionality {dimensionality}.'
+                raise ValueError(msg)
             name = 'custom'
             part = geometry
         else:
