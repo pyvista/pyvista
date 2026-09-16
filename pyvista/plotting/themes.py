@@ -47,7 +47,7 @@ import pyvista  # noqa: TC001
 from pyvista._warn_external import warn_external
 from pyvista.core.config import _ConfigBase
 
-from . import _ranges
+from . import _property
 from .colors import Color
 from .colors import get_cmap_safe
 from .colors import get_cycler
@@ -264,7 +264,7 @@ class _LightingConfig(_ConfigBase):
 
     @metallic.setter
     def metallic(self, metallic: float):
-        _ranges.check_metallic(metallic)
+        _property.check_metallic(metallic)
         self._metallic = metallic
 
     @property
@@ -289,7 +289,7 @@ class _LightingConfig(_ConfigBase):
 
     @roughness.setter
     def roughness(self, roughness: float):
-        _ranges.check_roughness(roughness)
+        _property.check_roughness(roughness)
         self._roughness = roughness
 
     @property
@@ -313,7 +313,7 @@ class _LightingConfig(_ConfigBase):
 
     @ambient.setter
     def ambient(self, ambient: float):
-        _ranges.check_ambient(ambient)
+        _property.check_ambient(ambient)
         self._ambient = ambient
 
     @property
@@ -337,7 +337,7 @@ class _LightingConfig(_ConfigBase):
 
     @diffuse.setter
     def diffuse(self, diffuse: float):
-        _ranges.check_diffuse(diffuse)
+        _property.check_diffuse(diffuse)
         self._diffuse = diffuse
 
     @property
@@ -361,7 +361,7 @@ class _LightingConfig(_ConfigBase):
 
     @specular.setter
     def specular(self, specular: float):
-        _ranges.check_specular(specular)
+        _property.check_specular(specular)
         self._specular = specular
 
     @property
@@ -385,7 +385,7 @@ class _LightingConfig(_ConfigBase):
 
     @specular_power.setter
     def specular_power(self, specular_power: float):
-        _ranges.check_specular_power(specular_power)
+        _property.check_specular_power(specular_power)
         self._specular_power = specular_power
 
     @property
@@ -581,7 +581,7 @@ class _SilhouetteConfig(_ConfigBase):
 
     @opacity.setter
     def opacity(self, opacity: float):
-        _ranges.check_opacity(opacity)
+        _property.check_opacity(opacity)
         self._opacity = float(opacity)
 
     @property
@@ -620,7 +620,7 @@ class _SilhouetteConfig(_ConfigBase):
         if decimate is None:
             self._decimate = None
         else:
-            _ranges.check_decimate(decimate)
+            _validation.check_range(decimate, [0.0, 1.0], name='decimate')
             self._decimate = float(decimate)
 
     def __repr__(self):
@@ -1262,7 +1262,7 @@ class _SliderStyleConfig(_ConfigBase):
 
     @cap_opacity.setter
     def cap_opacity(self, cap_opacity: float):
-        _ranges.check_cap_opacity(cap_opacity)
+        _validation.check_range(cap_opacity, [0.0, 1.0], name='cap_opacity')
         self._cap_opacity = float(cap_opacity)
 
     @property
@@ -2110,7 +2110,7 @@ class Theme(_ConfigBase):
 
     @opacity.setter
     def opacity(self, opacity: float):
-        _ranges.check_opacity(opacity)
+        _property.check_opacity(opacity)
         self._opacity = float(opacity)
 
     @property
@@ -2135,7 +2135,7 @@ class Theme(_ConfigBase):
 
     @edge_opacity.setter
     def edge_opacity(self, edge_opacity: float):
-        _ranges.check_edge_opacity(edge_opacity)
+        _property.check_edge_opacity(edge_opacity)
         self._edge_opacity = float(edge_opacity)
 
     @property
@@ -2618,7 +2618,7 @@ class Theme(_ConfigBase):
 
     @line_width.setter
     def line_width(self, line_width: float):
-        _ranges.check_line_width(line_width)
+        _property.check_line_width(line_width)
         self._line_width = float(line_width)
 
     @property
@@ -2638,7 +2638,7 @@ class Theme(_ConfigBase):
 
     @point_size.setter
     def point_size(self, point_size: float):
-        _ranges.check_point_size(point_size)
+        _property.check_point_size(point_size)
         self._point_size = float(point_size)
 
     @property
