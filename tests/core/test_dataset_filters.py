@@ -4640,6 +4640,14 @@ def test_collision(sphere):
     assert not n_collision
 
 
+def test_collision_generate_scalars_keeps_input_arrays(sphere):
+    sphere.cell_data['other'] = np.arange(sphere.n_cells)
+    moved_sphere = sphere.translate((0.5, 0, 0), inplace=False)
+    output, _ = sphere.collision(moved_sphere, generate_scalars=True)
+    assert 'collision_rgba' in output.cell_data
+    assert sphere.cell_data.keys() == ['other']
+
+
 def test_collision_solid_non_triangle(hexbeam):
     # test non-triangular mesh with a unstructured grid
     cube = pv.Cube()
