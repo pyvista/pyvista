@@ -10,6 +10,7 @@ from pytest_cases import parametrize_with_cases
 from pyvista_validation._cast_array import _cast_to_tuple
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista import examples
 from pyvista.core.filters.image_data import _InterpolationOptions
 from tests.conftest import NUMPY_VERSION_INFO
@@ -1688,6 +1689,77 @@ def test_reslice_inplace():
     assert np.array_equal(image.dimensions, (3, 3, 3))
 
 
+def test_reslice_transform_moves_the_image():
+    # The transform moves the image, matching DataObjectFilters.transform
+    image = pv.ImageData(dimensions=(10, 1, 1))
+    image['x'] = image.points[:, 0].astype(float)
+    reference = pv.ImageData(dimensions=(10, 1, 1))
+
+    shift = pv.Transform().translate((3, 0, 0))
+    resliced = image.reslice(reference, 'linear', transform=shift, background_value=-1.0)
+    assert resliced['x'].tolist() == [-1.0, -1.0, -1.0, *range(7)]
+
+    transformed = image.transform(shift, inplace=False)
+    assert np.allclose(transformed.points[:, 0], image.points[:, 0] + 3)
+
+
+@pytest.mark.parametrize(
+    'transform',
+    [
+        pv.Transform().rotate_vector((0, 0, 1), 30),
+        pv.Transform().rotate_vector((0, 0, 1), 30).matrix,
+        pv.Transform().rotate_vector((0, 0, 1), 30).matrix[:3, :3],
+    ],
+)
+def test_reslice_transform_like(transform):
+    # Any TransformLike gives the same result
+    image = pv.ImageData(dimensions=(10, 10, 1))
+    image['x'] = image.points[:, 0].astype(float)
+    reference = pv.ImageData(dimensions=(10, 10, 1))
+
+    resliced = image.reslice(reference, 'linear', transform=transform)
+    expected = image.reslice(
+        reference, 'linear', transform=pv.Transform().rotate_vector((0, 0, 1), 30)
+    )
+    assert np.allclose(resliced['x'], expected['x'])
+
+
+def test_reslice_transform_nonlinear():
+    # A non-linear transform is applied to the image like any other
+    image = pv.ImageData(dimensions=(10, 1, 1))
+    image['x'] = image.points[:, 0].astype(float)
+    reference = pv.ImageData(dimensions=(10, 1, 1))
+
+    landmarks = [(0.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0)]
+    spline = _vtk.vtkThinPlateSplineTransform()
+    spline.SetSourceLandmarks(pv.vtk_points([*landmarks, (9.0, 0.0, 0.0)]))
+    spline.SetTargetLandmarks(pv.vtk_points([*landmarks, (7.0, 0.0, 0.0)]))
+    spline.SetBasisToR()
+
+    resliced = image.reslice(reference, 'linear', transform=spline, background_value=-1.0)
+    # The image is stretched, so its last value lands beyond the reference
+    assert resliced['x'][-1] == -1.0
+    assert np.allclose(resliced['x'][:8], np.linspace(0, 9, 8), atol=1e-6)
+
+
+def test_reslice_transform_scale_drives_anti_aliasing():
+    # The transform's scale is part of how coarsely the image ends up sampled
+    image = pv.ImageData(dimensions=(40, 1, 1), spacing=(0.25, 1.0, 1.0))
+    image['x'] = np.sin(image.points[:, 0] * 8)
+    reference = pv.ImageData(dimensions=(10, 1, 1))
+
+    shrink = pv.Transform().scale((0.25, 1.0, 1.0))
+    blurred = image.reslice(reference, 'linear', transform=shrink, anti_aliasing=True)
+    sharp = image.reslice(reference, 'linear', transform=shrink, anti_aliasing=False)
+    assert not np.allclose(blurred['x'], sharp['x'])
+
+    # Magnifying instead makes the sampling fine, so there is nothing to anti-alias
+    grow = pv.Transform().scale((4.0, 1.0, 1.0))
+    blurred = image.reslice(reference, 'linear', transform=grow, anti_aliasing=True)
+    sharp = image.reslice(reference, 'linear', transform=grow, anti_aliasing=False)
+    assert np.allclose(blurred['x'], sharp['x'])
+
+
 def test_reslice_raises():
     image = pv.ImageData(dimensions=(5, 5, 5))
     image['values'] = np.arange(image.n_points, dtype=float)
@@ -1700,6 +1772,8 @@ def test_reslice_raises():
         image.reslice(image, border_mode='invalid')
     with pytest.raises(ValueError, match='background_value'):
         image.reslice(image, background_value=np.inf)
+    with pytest.raises(TypeError, match='Input transform must be one of'):
+        image.reslice(image, transform='invalid')
 
 
 def test_select_values(uniform):

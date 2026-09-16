@@ -323,7 +323,11 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkMatrix3x3',
         'vtkMatrix4x4',
     ),
-    'vtkCommonTransforms': ('vtkTransform',),
+    'vtkCommonTransforms': (
+        'vtkAbstractTransform',
+        'vtkThinPlateSplineTransform',
+        'vtkTransform',
+    ),
     'vtkDomainsChemistry': ('vtkProteinRibbonFilter',),
     'vtkFiltersCore': (
         'VTK_BEST_FITTING_PLANE',
