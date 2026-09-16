@@ -3191,13 +3191,6 @@ def _compute_unit_cell_quality(
     return qual.active_scalars[0]
 
 
-def xfail_wedge_negative_volume(info):
-    if info.cell_type == pv.CellType.WEDGE and info.quality_measure == 'volume':
-        pytest.xfail(
-            'vtkWedge returns negative volume, see https://gitlab.kitware.com/vtk/vtk/-/issues/19643'
-        )
-
-
 def xfail_distortion_returns_one(info):
     if (
         info.cell_type in [pv.CellType.TRIANGLE, pv.CellType.TETRA]
@@ -3217,8 +3210,6 @@ def test_cell_quality_info_unit_cell_value(info):
         pytest.fail(
             f'Measure {info.quality_measure!r} is not valid for cell type {info.cell_type.name!r}'
         )
-
-    xfail_wedge_negative_volume(info)
 
     assert np.isclose(qual_value, info.unit_cell_value)
 
@@ -3244,9 +3235,6 @@ def test_cell_quality_info_ranges(info):
     assert normal_range[1] >= acceptable_range[1]
     assert full_range[0] <= normal_range[0]
     assert full_range[1] >= normal_range[1]
-
-    # last, so a measure xfailing here is still checked for range nesting above
-    xfail_wedge_negative_volume(info)
 
     assert info.unit_cell_value >= info.acceptable_range[0]
     assert info.unit_cell_value <= info.acceptable_range[1]
