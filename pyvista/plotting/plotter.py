@@ -173,7 +173,7 @@ if TYPE_CHECKING:
         | None
     )
 
-    _DistortionState = tuple[tuple[float, ...], tuple[float, float]]
+    _DistortionState = tuple[tuple[float, ...], tuple[float, float], tuple[float, float]]
 
 
 SUPPORTED_FORMATS = ['.png', '.jpeg', '.jpg', '.bmp', '.tif', '.tiff']
@@ -182,6 +182,7 @@ _N_DISTORTION_COEFFICIENTS = 4
 _CAMERA_DISTORTION_FEATURE = 'camera_distortion'
 _CAMERA_DISTORTION_COEFFICIENTS_UNIFORM = 'u_distortion_coefficients'
 _CAMERA_DISTORTION_SCALE_UNIFORM = 'u_distortion_projection_scale'
+_CAMERA_DISTORTION_CENTER_UNIFORM = 'u_distortion_projection_center'
 _CAMERA_DISTORTION_VERTEX = """
 // The default vtk assignment of gl_Position is inserted below this line:
 //VTK::PositionVC::Impl
@@ -190,14 +191,18 @@ _CAMERA_DISTORTION_VERTEX = """
 // position this shader may rely on: whether view coordinates are also in
 // scope depends on the mapper, and on whether the actor is lit.
 //
-// u_distortion_projection_scale holds the (0, 0) and (1, 1) entries of the
-// camera's projection matrix. Dividing the normalized device coordinates by
-// them recovers the normalized camera coordinates -- x and y in units of
-// the focal length -- that a calibration reports its coefficients in.
+// u_distortion_projection_center holds the normalized device coordinates of
+// the optical axis, and u_distortion_projection_scale the (0, 0) and (1, 1)
+// entries of the camera's projection matrix. Measuring from the first and
+// dividing by the second recovers the normalized camera coordinates -- x and
+// y in units of the focal length, from the principal point -- that a
+// calibration reports its coefficients in.
 
 float clip_w = gl_Position.w;
-float x = gl_Position.x / (clip_w * u_distortion_projection_scale.x);
-float y = gl_Position.y / (clip_w * u_distortion_projection_scale.y);
+float x = (gl_Position.x / clip_w - u_distortion_projection_center.x)
+          / u_distortion_projection_scale.x;
+float y = (gl_Position.y / clip_w - u_distortion_projection_center.y)
+          / u_distortion_projection_scale.y;
 float rSquared = x * x + y * y;
 float k1 = u_distortion_coefficients[0];
 float k2 = u_distortion_coefficients[1];
@@ -209,8 +214,10 @@ float new_y = y * radial + 2.0 * p2 * x * y + p1 * (rSquared + 2.0 * y * y);
 
 // Back to clip coordinates. z and w are left alone, so the distortion moves
 // geometry across the view plane without changing its depth.
-gl_Position.x = new_x * u_distortion_projection_scale.x * clip_w;
-gl_Position.y = new_y * u_distortion_projection_scale.y * clip_w;
+gl_Position.x = (new_x * u_distortion_projection_scale.x
+                 + u_distortion_projection_center.x) * clip_w;
+gl_Position.y = (new_y * u_distortion_projection_scale.y
+                 + u_distortion_projection_center.y) * clip_w;
 """
 
 
@@ -368,20 +375,25 @@ def _validate_distortion_coefficients(
     return k1, k2, p1, p2
 
 
-def _projection_scale(renderer: Renderer) -> tuple[float, float]:
-    """Return the x and y scale factors of a renderer's projection matrix.
+def _projection_terms(renderer: Renderer) -> tuple[tuple[float, float], tuple[float, float]]:
+    """Return the scale and the optical axis of a renderer's projection matrix.
 
-    Dividing normalized device coordinates by these recovers coordinates in
-    units of the focal length. A parallel projection has no focal length --
-    its scale factors carry the units of the scene -- so they are normalized
-    to put the top of the viewport at one, which keeps a set of coefficients
-    doing the same thing whatever the scene is measured in.
+    Measuring normalized device coordinates from the axis and dividing them by
+    the scale recovers coordinates in units of the focal length, from the
+    principal point. A parallel projection has no focal length -- its scale
+    factors carry the units of the scene -- so they are normalized to put the
+    top of the viewport at one, which keeps a set of coefficients doing the
+    same thing whatever the scene is measured in.
 
     Returns
     -------
     tuple[float, float]
-        The ``(0, 0)`` and ``(1, 1)`` entries of the projection matrix VTK
-        builds for this renderer's camera and viewport.
+        The x and y scale factors.
+
+    tuple[float, float]
+        The normalized device coordinates of the optical axis, which
+        :attr:`~pyvista.Camera.window_center` moves away from the center of
+        the viewport.
 
     """
     matrix = renderer.camera.GetProjectionTransformMatrix(
@@ -389,8 +401,8 @@ def _projection_scale(renderer: Renderer) -> tuple[float, float]:
     )
     x_scale, y_scale = matrix.GetElement(0, 0), matrix.GetElement(1, 1)
     if renderer.camera.parallel_projection:
-        return x_scale / y_scale, 1.0
-    return x_scale, y_scale
+        return (x_scale / y_scale, 1.0), (matrix.GetElement(0, 3), matrix.GetElement(1, 3))
+    return (x_scale, y_scale), (-matrix.GetElement(0, 2), -matrix.GetElement(1, 2))
 
 
 @abstract_class
@@ -1818,9 +1830,10 @@ class BasePlotter(_BoundsSizeMixin):
             barrel; ``p1`` and ``p2`` are the tangential terms. Higher-order
             radial terms such as OpenCV's ``k3`` are not supported.
 
-            They are applied in normalized camera coordinates, the units a
-            calibration such as ``cv2.calibrateCamera`` reports them in, so
-            the same numbers give the same distortion at any field of view.
+            They are applied in normalized camera coordinates measured from
+            the principal point, the units a calibration such as
+            ``cv2.calibrateCamera`` reports them in, so the same numbers give
+            the same distortion at any field of view.
             A parallel projection has no focal length to normalize by; there
             the top of the viewport stands in for one.
 
@@ -1914,6 +1927,7 @@ class BasePlotter(_BoundsSizeMixin):
                 uniforms = prop.GetShaderProperty().GetVertexCustomUniforms()
                 uniforms.RemoveUniform(_CAMERA_DISTORTION_COEFFICIENTS_UNIFORM)
                 uniforms.RemoveUniform(_CAMERA_DISTORTION_SCALE_UNIFORM)
+                uniforms.RemoveUniform(_CAMERA_DISTORTION_CENTER_UNIFORM)
                 _set_distortion_state(prop, None)
 
     def _warn_undistorted(self, subject: str) -> None:
@@ -1933,7 +1947,7 @@ class BasePlotter(_BoundsSizeMixin):
             return
         for renderer in self.renderers if caller is None else [caller]:
             props = renderer.GetViewProps()
-            state = (coefficients, _projection_scale(renderer))
+            state = (coefficients, *_projection_terms(renderer))
             # An actor can only enter the scene undistorted by being added to the
             # collection, so a renderer holding the props the last sweep left in
             # this state has nothing for another walk to find.
@@ -1961,7 +1975,7 @@ class BasePlotter(_BoundsSizeMixin):
 
     def _distort_actor(self, prop: _vtk.vtkActor, state: _DistortionState) -> None:
         """Attach the distortion shader to one actor and set its uniforms."""
-        coefficients, projection_scale = state
+        coefficients, projection_scale, projection_center = state
         if _distortion_state(prop) is None:
             if isinstance(prop, Actor):
                 prop.add_shader_replacement(
@@ -1981,6 +1995,7 @@ class BasePlotter(_BoundsSizeMixin):
         uniforms = prop.GetShaderProperty().GetVertexCustomUniforms()
         uniforms.SetUniform4f(_CAMERA_DISTORTION_COEFFICIENTS_UNIFORM, coefficients)
         uniforms.SetUniform2f(_CAMERA_DISTORTION_SCALE_UNIFORM, projection_scale)
+        uniforms.SetUniform2f(_CAMERA_DISTORTION_CENTER_UNIFORM, projection_center)
         _set_distortion_state(prop, state)
 
     @_wraps(Renderer.enable_eye_dome_lighting)
