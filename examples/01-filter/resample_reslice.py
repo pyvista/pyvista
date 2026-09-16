@@ -123,7 +123,7 @@ reference = pv.ImageData(dimensions=(*dimensions, 1), spacing=(1.0, 1.0, 1.0))
 
 
 def centered(rotation):
-    """Return the matrix which centres the scapula in the reference under ``rotation``."""
+    """Return the matrix which centers the scapula in the reference under ``rotation``."""
     matrix = np.eye(4)
     matrix[:3, :3] = rotation
     matrix[:3, 3] = np.array(reference.center) - rotation @ center

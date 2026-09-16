@@ -275,6 +275,7 @@ gif
 gimli
 github
 glTF
+glenoid
 globals
 gltf
 glyphing
@@ -292,6 +293,7 @@ hoc
 hotfixes
 http
 https
+humerus
 icosphere
 imageio
 img
@@ -414,6 +416,7 @@ rioxarray
 rst
 rtree
 scalar
+scapula
 scipy
 scooby
 setuptools
