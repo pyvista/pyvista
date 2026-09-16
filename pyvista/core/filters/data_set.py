@@ -3490,6 +3490,8 @@ class DataSetFilters(DataObjectFilters):
             raise RuntimeError(msg)
 
         out = self.copy(deep=False)
+        # A shallow copy shares the input's bool array name registry, so give it its own
+        out.copy_meta_from(self, deep=True)
         if surface.n_cells == 0:
             bools = np.full(self.n_points, inside_out, dtype=bool)
         elif method == 'signed_distance':

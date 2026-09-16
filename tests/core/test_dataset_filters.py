@@ -3729,6 +3729,7 @@ def test_select_interior_points(uniform, hexbeam):
     assert result['selected_points'].any()
     assert result.n_arrays == uniform.n_arrays + 1
     assert result.active_scalars_name == 'selected_points'
+    assert 'selected_points' not in uniform._association_bitarray_names['POINT']
 
     # Now check non-closed surface
     mesh = pv.Sphere(end_theta=270)
