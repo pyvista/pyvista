@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import Literal
 from typing import cast
 from typing import overload
@@ -1604,7 +1605,7 @@ class Transform(
     # fmt: on
     def apply(
         self: Transform,
-        obj: VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock | Prop3D,
+        obj: VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock[Any] | Prop3D,
         /,
         mode: Literal[
             'points',

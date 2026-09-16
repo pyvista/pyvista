@@ -35,6 +35,26 @@ def unstructured() -> pv.UnstructuredGrid:
     return image().cast_to_unstructured_grid()
 
 
+def multiblock_pointset() -> pv.MultiBlock[pv.PointSet]:
+    """Return a composite declared to hold only `PointSet`."""
+    return pv.MultiBlock([pointset()])
+
+
+def multiblock_unstructured() -> pv.MultiBlock[pv.UnstructuredGrid]:
+    """Return a composite declared to hold only `UnstructuredGrid`."""
+    return pv.MultiBlock([unstructured()])
+
+
+def multiblock_poly() -> pv.MultiBlock[pv.PolyData]:
+    """Return a composite declared to hold only `PolyData`."""
+    return pv.MultiBlock([poly()])
+
+
+def multiblock_image() -> pv.MultiBlock[pv.ImageData]:
+    """Return a composite declared to hold only `ImageData`."""
+    return pv.MultiBlock([image()])
+
+
 def multiblock() -> pv.MultiBlock:
     """Return a composite of two meshes."""
     return pv.MultiBlock([poly(), image()])
@@ -50,6 +70,11 @@ def explicit_structured() -> pv.ExplicitStructuredGrid:
 def a_flag() -> bool:
     """Return a flag typed only as ``bool``, so the widened overloads apply."""
     return True
+
+
+def multiblock_optional_poly() -> pv.MultiBlock[pv.PolyData | None]:
+    """Return a composite whose blocks may be missing."""
+    return pv.MultiBlock([poly(), None])
 
 
 # A plane clip keeps a surface a surface and a point cloud a point cloud
@@ -79,3 +104,13 @@ assert_types(multiblock().clip(return_clipped=a_flag()), pv.MultiBlock | tuple[p
 assert_types(poly().clip(inplace=True), pv.PolyData)
 assert_types(pointset().clip(inplace=True), pv.PointSet)
 assert_types(unstructured().clip(inplace=True), pv.UnstructuredGrid)
+
+# A declared block type follows the filter through
+assert_types(multiblock_poly().clip(), pv.MultiBlock[pv.PolyData])
+assert_types(multiblock_image().clip(), pv.MultiBlock[pv.UnstructuredGrid])
+assert_types(multiblock_poly().clip(return_clipped=True), tuple[pv.MultiBlock[pv.PolyData], pv.MultiBlock[pv.PolyData]])
+assert_types(multiblock_pointset().clip(), pv.MultiBlock[pv.PointSet])
+assert_types(multiblock_unstructured().clip(), pv.MultiBlock[pv.UnstructuredGrid])
+
+# An empty block survives the filter
+assert_types(multiblock_optional_poly().clip(), pv.MultiBlock[pv.PolyData | None])

@@ -5,6 +5,7 @@ from __future__ import annotations
 import itertools
 import sys
 from typing import TYPE_CHECKING
+from typing import Any
 import weakref
 
 import numpy as np
@@ -576,7 +577,7 @@ class CompositePolyDataMapper(_BaseMapper, _vtk.vtkCompositePolyDataMapper):
         return self._dataset
 
     @dataset.setter
-    def dataset(self, obj: MultiBlock):
+    def dataset(self, obj: MultiBlock[Any]):
         self.SetInputDataObject(obj)
         self._dataset = obj
         self._attr._dataset = obj
