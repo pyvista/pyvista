@@ -1207,6 +1207,12 @@ def _select_members(
     raise ValueError(msg)
 
 
+def _validate_label_mode(mode: Literal['2D', '3D']) -> Literal['2D', '3D']:
+    """Return the label mode, raising if it is not a valid option."""
+    _validation.check_contains(['2D', '3D'], must_contain=mode, name='label_mode')
+    return mode
+
+
 def _validate_scale_mode(mode: ScaleModeOptions) -> ScaleModeOptions:
     """Return the scale mode, raising if it is not a valid option."""
     _validation.check_contains(get_args(ScaleModeOptions), must_contain=mode, name='scale mode')
@@ -1692,7 +1698,7 @@ class PlanesAssembly(_XYZAssembly):
         ``'right'``, or ``'left'``. Use a single value to set the edge for all labels
         or set each edge independently.
 
-    label_offset : float | VectorLike[float], optional
+    label_offset : float, default: 0.05
         Vertical offset of the text labels. The offset is proportional to
         the :attr:`~pyvista.Prop3D.length` of the assembly. Positive values move the labels away
         from the center; negative values move them towards it.
@@ -1702,7 +1708,7 @@ class PlanesAssembly(_XYZAssembly):
         font size. If :attr:`label_mode` is ``'3D'``, the labels are scaled
         proportional to the :attr:`~pyvista.Prop3D.length` of the assembly.
 
-    label_mode : '2D' | '3D', default: '2D'
+    label_mode : '2D' | '3D', default: '3D'
         Mode to use for text labels. In 2D mode, the label actors are always visible
         and have a constant size regardless of window size. In 3D mode, the label actors
         may be occluded by other geometry and will scale with changes to the window
@@ -1710,13 +1716,13 @@ class PlanesAssembly(_XYZAssembly):
         terms of how they follow the camera.
 
     x_color : ColorLike, optional
-        Color of the xy-plane.
-
-    y_color : ColorLike, optional
         Color of the yz-plane.
 
-    z_color : ColorLike, optional
+    y_color : ColorLike, optional
         Color of the zx-plane.
+
+    z_color : ColorLike, optional
+        Color of the xy-plane.
 
     opacity : float, default: 0.3
         Opacity of the planes.
@@ -1866,7 +1872,9 @@ class PlanesAssembly(_XYZAssembly):
         # Init label actors
         self._axis_actors = (_AxisActor(), _AxisActor(), _AxisActor())
 
-        # Tempt init values for call to super class, will validate inputs later
+        # The label size depends on the label mode
+        self._label_mode = _validate_label_mode(label_mode)
+        # Temporary values for the call to the super class, validated and set below
         self._label_offset = 0.05
         self._label_edge = ('right', 'right', 'right')
         self._label_position = 0.5, 0.5, 0.5
@@ -2059,9 +2067,7 @@ class PlanesAssembly(_XYZAssembly):
 
         # In VTK 9.6+, the 3D label size depends on the 2D label size, so in the 3D case
         # we need to reset the 2D font size to match the VTK default value of 12
-        font_size_2d = (
-            valid_size if hasattr(self, 'label_mode') and self.label_mode == '2D' else 12
-        )
+        font_size_2d = valid_size if self._label_mode == '2D' else 12
         for axis in self._axis_actors:
             axis.GetTitleActor().SetScale(scale_3d)  # 3D labels
             axis.GetTitleTextProperty().SetFontSize(font_size_2d)  # 2D labels
@@ -2216,11 +2222,9 @@ class PlanesAssembly(_XYZAssembly):
 
     @label_mode.setter
     def label_mode(self, mode: Literal['2D', '3D']) -> None:
-        _validation.check_contains(['2D', '3D'], must_contain=mode, name='label_mode')
-        self._label_mode = mode
-        use_2D = mode == '2D'
+        self._label_mode = _validate_label_mode(mode)
         for axis in self._axis_actors:
-            axis.SetUse2DMode(use_2D)
+            axis.SetUse2DMode(mode == '2D')
 
         # The 3D label size depends on the 2D label size so we need to reset this property
         self.label_size = self.label_size
@@ -2299,6 +2303,7 @@ class PlanesAssembly(_XYZAssembly):
         axis_actors = self._axis_actors
         plane_sources = self._plane_sources
         transformation_matrix = self._transformation_matrix
+        offset_mag = self.planes.length * self.label_offset
 
         def transform_point(  # numpydoc ignore=PR01
             point: VectorLike[float],
@@ -2351,7 +2356,6 @@ class PlanesAssembly(_XYZAssembly):
             axis_dir = axis_vector / np.linalg.norm(axis_vector)
             offset_dir = np.cross(axis_dir, this_plane_source.GetNormal())
             offset_dir = -1 * offset_dir / np.linalg.norm(offset_dir)
-            offset_mag = self.planes.length * self.label_offset
             offset = offset_mag * offset_dir
             axis_point1 += offset
             axis_point2 += offset
@@ -2385,18 +2389,14 @@ class _AxisActor(DisableVtkSnakeCase, _vtk.vtkAxisActor):
         self.AxisVisibilityOff()  # Turn this on for debugging
 
         # Set empty tick labels
-        labels = _vtk.vtkStringArray()
-        labels.SetNumberOfTuples(0)
-        # labels.SetValue(0, "")
-        self.SetLabels(labels)
+        self.SetLabels(_vtk.vtkStringArray())
 
         # Ignore the axis bounds when rendering. Otherwise, the bounds must be
         # set with SetBounds() every time the axis is updated
         self.SetUseBounds(False)
 
         # Format title positioning
-        offset = (0, 0)
-        self.SetTitleOffset(*offset)
+        self.SetTitleOffset(0, 0)
         self.SetLabelOffset(0)
 
         # For 2D mode only
@@ -2405,7 +2405,6 @@ class _AxisActor(DisableVtkSnakeCase, _vtk.vtkAxisActor):
         text_prop = TextProperty()
         text_prop.justification_vertical = 'center'
         self.SetTitleTextProperty(text_prop)
-        self.GetTitleActor()
 
         # For 3D mode only
         self.GetProperty().SetLighting(False)
