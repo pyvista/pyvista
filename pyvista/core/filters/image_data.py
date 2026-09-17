@@ -27,7 +27,6 @@ from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.filters.data_set import _ExtractValuesInputs
 from pyvista.core.utilities.arrays import FieldAssociation
-from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import set_default_active_scalars
 from pyvista.core.utilities.helpers import _warn_if_invalid_data
@@ -2784,9 +2783,7 @@ class ImageDataFilters(DataSetFilters):
             """Return a contour with no cells and an empty boundary labels array."""
             empty = pv.PolyData()
             components = 1 if simplify_output else 2
-            array = np.empty((0, components), dtype=dtype_)
-            # cell_data rejects an empty array with more than one component
-            empty.GetCellData().AddArray(convert_array(array, PV_NAME))
+            empty.cell_data[PV_NAME] = np.empty((0, components), dtype=dtype_)
             return empty
 
         def _validate_selection(selection: int | VectorLike[int] | None) -> NumpyArray[int]:
