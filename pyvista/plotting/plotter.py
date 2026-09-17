@@ -4391,7 +4391,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         scalar_bar_args = cast('ScalarBarArgs', scalar_bar_args)
         # Try to plot something if no preference given
-        if scalars is None and color is None and texture is None:
+        if scalars is None and (rgb or (color is None and texture is None)):
             # Make sure scalars components are not vectors/tuples
             scalars = mesh.active_scalars_name
             # Don't allow plotting of string arrays by default
@@ -4502,8 +4502,14 @@ class BasePlotter(_BoundsSizeMixin):
                 original_scalar_name = scalars_name
 
         if rgb:
+            if scalars is None:
+                msg = (
+                    'The rgb keyword requires RGB(A) scalars, but none were given and the '
+                    'mesh has no active scalars.'
+                )
+                raise ValueError(msg)
             show_scalar_bar = False
-            scalars = cast('NumpyArray[float]', scalars)
+            scalars = np.asanyarray(scalars)
             if scalars.ndim != 2 or scalars.shape[1] < 3 or scalars.shape[1] > 4:
                 msg = 'RGB array must be n_points/n_cells by 3/4 in shape.'
                 raise ValueError(msg)
