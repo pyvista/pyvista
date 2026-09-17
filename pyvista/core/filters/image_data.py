@@ -2587,13 +2587,13 @@ class ImageDataFilters(DataSetFilters):
         Returns
         -------
         pyvista.PolyData
-            Surface mesh of labeled regions. The mesh is empty and has no
-            ``'boundary_labels'`` array if no boundary polygons are generated.
+            Surface mesh of labeled regions. If no boundary polygons are generated the
+            mesh is empty and its ``'boundary_labels'`` array has a single component.
 
         Raises
         ------
         ValueError
-            If the input scalars are not 3-dimensional.
+            If the input is not 3-dimensional.
 
         See Also
         --------
@@ -2777,6 +2777,14 @@ class ImageDataFilters(DataSetFilters):
         >>> labels_plotter(surf, zoom=1.5).show()
 
         """
+        VTK_NAME = 'BoundaryLabels'
+        PV_NAME = 'boundary_labels'
+
+        def _empty_output(dtype_: np.dtype[Any]) -> pv.PolyData:
+            """Return a contour with no cells and an empty boundary labels array."""
+            empty = pv.PolyData()
+            empty.cell_data[PV_NAME] = np.empty((0,), dtype=dtype_)
+            return empty
 
         def _validate_selection(selection: int | VectorLike[int] | None) -> NumpyArray[int]:
             if selection is None:
@@ -2875,12 +2883,12 @@ class ImageDataFilters(DataSetFilters):
 
         alg_input = _get_alg_input(self, scalars)
         if (dim := alg_input.dimensionality) != 3:
-            msg = f'Input scalars must be 3-dimensional. Got {dim}-dimensional scalars instead.'
+            msg = f'Input must be 3-dimensional. Got {dim}-dimensional input instead.'
             raise ValueError(msg)
         active_scalars = cast('pv.pyvista_ndarray', alg_input.active_scalars)
         if np.allclose(active_scalars, background_value):
             # Empty input, no contour will be generated
-            return pv.PolyData()
+            return _empty_output(active_scalars.dtype)
 
         # Pad with background values to close surfaces at image boundaries
         alg_input = alg_input.pad_image(background_value) if pad_background else alg_input
@@ -2927,8 +2935,6 @@ class ImageDataFilters(DataSetFilters):
                 algorithm='geometry', pass_cellid=False, pass_pointid=False
             )
 
-        VTK_NAME = 'BoundaryLabels'
-        PV_NAME = 'boundary_labels'
         if output.n_cells > 0 and VTK_NAME in output.cell_data.keys():
             labels_array = output.cell_data[VTK_NAME]
             output.rename_array(VTK_NAME, PV_NAME)
@@ -2941,7 +2947,7 @@ class ImageDataFilters(DataSetFilters):
                 )
 
         if output.n_cells == 0:
-            return pv.PolyData()
+            return _empty_output(active_scalars.dtype)
 
         want_external = 'external' in boundary_style
         if simplify_output is None:

@@ -310,9 +310,7 @@ def test_contour_labels_not_3d_raises(dimensions, dimensionality, boundary_style
     mask[: image.n_points // 3] = 1
     image.point_data['mask'] = mask
 
-    match = (
-        f'Input scalars must be 3-dimensional. Got {dimensionality}-dimensional scalars instead.'
-    )
+    match = f'Input must be 3-dimensional. Got {dimensionality}-dimensional input instead.'
     with pytest.raises(ValueError, match=re.escape(match)):
         image.contour_labels(boundary_style)
 
@@ -322,7 +320,7 @@ def test_contour_labels_not_3d_cell_data_raises():
     image = pv.ImageData(dimensions=(21, 21, 2))
     image.cell_data['mask'] = np.ones(image.n_cells, dtype=np.uint8)
 
-    match = 'Input scalars must be 3-dimensional. Got 2-dimensional scalars instead.'
+    match = 'Input must be 3-dimensional. Got 2-dimensional input instead.'
     with pytest.raises(ValueError, match=re.escape(match)):
         image.contour_labels()
 
@@ -337,7 +335,7 @@ def test_contour_labels_not_3d_cell_data_raises():
 def test_contour_labels_no_boundary_cells(labeled_image, kwargs):
     contours = labeled_image.contour_labels(**kwargs)
     assert contours.is_empty
-    assert BOUNDARY_LABELS not in contours.cell_data
+    assert contours.cell_data[BOUNDARY_LABELS].shape == (0,)
 
 
 @pytest.mark.parametrize('boundary_style', ['external', 'internal', 'all', 'strict_external'])
@@ -347,7 +345,8 @@ def test_contour_labels_no_background(boundary_style):
 
     contours = image.contour_labels(boundary_style, pad_background=False)
     assert contours.is_empty
-    assert BOUNDARY_LABELS not in contours.cell_data
+    assert contours.cell_data[BOUNDARY_LABELS].shape == (0,)
+    assert contours.cell_data[BOUNDARY_LABELS].dtype == np.uint8
 
 
 def test_contour_labels_empty_input(frog_tissues):
@@ -356,6 +355,7 @@ def test_contour_labels_empty_input(frog_tissues):
     assert np.allclose(voi.active_scalars, background_value)
     surface = voi.contour_labels(background_value=background_value)
     assert surface.is_empty
+    assert surface.cell_data[BOUNDARY_LABELS].shape == (0,)
 
 
 @pytest.fixture
