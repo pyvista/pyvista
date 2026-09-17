@@ -2420,12 +2420,6 @@ class ImageDataFilters(DataSetFilters):
 
         .. versionadded:: 0.45
 
-        .. versionchanged:: 0.50
-
-            Input which is not 3-dimensional now raises a ``ValueError``. Previously,
-            2-dimensional input either generated an open surface or failed, depending
-            on the VTK version.
-
         Parameters
         ----------
         boundary_style : 'external' | 'internal' | 'all' | 'strict_external', default: 'external'
