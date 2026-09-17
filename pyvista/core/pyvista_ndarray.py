@@ -148,7 +148,7 @@ class pyvista_ndarray(_NoNewAttrMixin, np.ndarray):  # noqa: N801  # numpydoc ig
 
         Parameters
         ----------
-        axis : int or tuple of int, optional
+        axis : int or tuple[int, ...], optional
             Axes to remove. By default, remove all axes of length one.
             Selecting an axis of length greater than one raises a ``ValueError``.
 
