@@ -77,35 +77,56 @@ resliced = mandelbrot.reslice(reference, 'linear')
 resampled = mandelbrot.resample(reference_image=reference, interpolation='linear')
 
 # %%
+# The region can also be cropped out of the image by hand and the crop resampled to the
+# reference's spacing. :meth:`~pyvista.ImageDataFilters.crop` works in index space, so
+# the reference's bounds have to be converted into the image's indices first.
+
+lo = np.floor((np.array(reference.bounds[::2]) - mandelbrot.origin) / mandelbrot.spacing)
+hi = np.ceil((np.array(reference.bounds[1::2]) - mandelbrot.origin) / mandelbrot.spacing)
+cropped = mandelbrot.crop(extent=np.column_stack([lo, hi]).astype(int).ravel())
+sample_rate = np.array(cropped.spacing) / reference.spacing
+cropped_resampled = cropped.resample(
+    (*sample_rate[:2], 1.0), 'linear', extend_border=False
+)
+
+# %%
 # Plot each output over the image it came from. Use
 # :meth:`~pyvista.ImageDataFilters.points_to_cells` to draw the samples as
-# :attr:`~pyvista.CellType.PIXEL` cells with their edges showing, and outline each
-# output in red. The resliced samples continue the picture around them, because that is
-# where they were taken. The resampled ones are the whole set shrunk into the frame.
+# :attr:`~pyvista.CellType.PIXEL` cells with their edges showing, and outline the
+# reference region in red. The resliced samples continue the picture around them,
+# because that is where they were taken. The resampled ones are the whole set shrunk
+# into the frame. The cropped ones carry the right picture but not the right grid.
 
 clim = mandelbrot.get_data_range()
 
-pl = pv.Plotter(shape=(1, 2))
-for index, (output, label) in enumerate([(resliced, 'reslice'), (resampled, 'resample')]):
+outputs = [
+    ('reslice', resliced),
+    ('resample', resampled),
+    ('crop+resample', cropped_resampled),
+]
+pl = pv.Plotter(shape=(1, 3))
+for index, (label, output) in enumerate(outputs):
     pl.subplot(0, index)
-    cells = output.points_to_cells()
-    for voxels in [mandelbrot.points_to_cells(), cells]:
+    for voxels in [mandelbrot.points_to_cells(), output.points_to_cells()]:
         pl.add_mesh(
             voxels, clim=clim, show_edges=True, lighting=False, show_scalar_bar=False
         )
-    pl.add_mesh(cells.outline(), color='red', line_width=4)
+    pl.add_mesh(reference.points_to_cells().outline(), color='red', line_width=4)
     pl.add_text(label, font_size=10)
     pl.view_xy()
     pl.camera.tight()
 pl.show()
 
 # %%
-# Both outputs carry the reference's geometry, since that is what ``reference_image``
-# asks for. Only the values differ: ``reslice`` read the image at the reference's
-# points, while ``resample`` stretched the whole image onto them.
+# ``reslice`` and ``resample`` both carry the reference's geometry, since that is what
+# ``reference_image`` asks for. Only their values differ: ``reslice`` read the image at
+# the reference's points, while ``resample`` stretched the whole image onto them. The
+# crop can only land on whole input voxels, so it covers more than the reference asked
+# for and its spacing cannot match either.
 
 print(resliced.origin, resliced.spacing)
 print(resampled.origin, resampled.spacing)
+print(cropped_resampled.origin, cropped_resampled.spacing)
 
 # %%
 # Transform or Reslice
