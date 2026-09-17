@@ -59,37 +59,50 @@ pl.show()
 # Position Matters
 # ++++++++++++++++
 #
-# The difference is clearest when the reference covers only part of the image. Build a
-# reference which covers the leftmost gourd at half the spacing.
+# The difference is clearest on an image coarse enough to see every sample. Generate a
+# small Mandelbrot set, and a reference which covers part of it at a finer spacing.
 
+mandelbrot = pv.ImageMandelbrotSource(
+    whole_extent=(0, 23, 0, 17, 0, 0), maxiter=25
+).output
 reference = pv.ImageData(
-    dimensions=(300, 300, 1), spacing=(0.5, 0.5, 1.0), origin=(60.0, 130.0, 0.0)
+    dimensions=(17, 17, 1), spacing=(0.05, 0.05, 1.0), origin=(-1.0, -0.4, 0.0)
 )
 
 # %%
 # ``reslice`` returns that region of the image, sampled at the reference's points.
-# ``resample`` returns the whole image squeezed into the reference's dimensions.
+# ``resample`` returns the whole image squeezed into the reference's geometry.
 
-resliced = gourds.reslice(reference, 'linear')
-resampled = gourds.resample(dimensions=reference.dimensions, interpolation='linear')
+resliced = mandelbrot.reslice(reference, 'linear')
+resampled = mandelbrot.resample(reference_image=reference, interpolation='linear')
+
+# %%
+# Plot each output over the image it came from. Use
+# :meth:`~pyvista.ImageDataFilters.points_to_cells` to draw the samples as
+# :attr:`~pyvista.CellType.PIXEL` cells with their edges showing, and outline each
+# output in red. The resliced samples continue the picture around them, because that is
+# where they were taken. The resampled ones are the whole set shrunk into the frame.
+
+clim = mandelbrot.get_data_range()
 
 pl = pv.Plotter(shape=(1, 2))
-pl.add_mesh(resliced, rgba=True, lighting=False)
-pl.add_text('reslice', font_size=10)
-pl.view_xy()
-pl.camera.tight()
-pl.subplot(0, 1)
-pl.add_mesh(resampled, rgba=True, lighting=False)
-pl.add_text('resample', font_size=10)
-pl.view_xy()
-pl.camera.tight()
+for index, (output, label) in enumerate([(resliced, 'reslice'), (resampled, 'resample')]):
+    pl.subplot(0, index)
+    cells = output.points_to_cells()
+    for voxels in [mandelbrot.points_to_cells(), cells]:
+        pl.add_mesh(
+            voxels, clim=clim, show_edges=True, lighting=False, show_scalar_bar=False
+        )
+    pl.add_mesh(cells.outline(), color='red', line_width=4)
+    pl.add_text(label, font_size=10)
+    pl.view_xy()
+    pl.camera.tight()
 pl.show()
 
 # %%
-# Both outputs have the same number of samples. The resliced image reports the
-# reference's geometry, because that is where its samples were taken. The resampled
-# image stays where the gourds are, give or take the half voxel ``resample`` adds at
-# the border, and only its spacing changes.
+# Both outputs carry the reference's geometry, since that is what ``reference_image``
+# asks for. Only the values differ: ``reslice`` read the image at the reference's
+# points, while ``resample`` stretched the whole image onto them.
 
 print(resliced.origin, resliced.spacing)
 print(resampled.origin, resampled.spacing)
@@ -134,6 +147,59 @@ for index, (image, label) in enumerate([(moved, 'transform'), (resliced, 'reslic
     pl.add_text(label, font_size=10)
     pl.view_xy()
     pl.camera.tight()
+pl.show()
+
+# %%
+# Beyond a Matrix
+# +++++++++++++++
+#
+# ``transform`` is limited to what an image's geometry can hold: an origin, a spacing
+# and an orthogonal :attr:`~pyvista.ImageData.direction_matrix`. ``reslice`` resamples
+# the values instead, so it also accepts transformations no image geometry could
+# express. :class:`~pyvista.ThinPlateSplineTransform` bends space so that one set of
+# points lands on another.
+#
+# Build an image with a curved structure running across it.
+
+WIDTH, HEIGHT, MIDDLE = 121, 81, 40.0
+
+
+def centerline(position):
+    """Return the height of the curved structure at each ``position``."""
+    return MIDDLE + 14.0 * np.sin(2 * np.pi * np.asarray(position) / (WIDTH - 1))
+
+
+curved = pv.ImageData(dimensions=(WIDTH, HEIGHT, 1))
+horizontal, vertical = curved.points[:, 0], curved.points[:, 1]
+curved['scan'] = np.exp(-((vertical - centerline(horizontal)) ** 2) / (2 * 5.0**2))
+
+# %%
+# Map points along the centerline onto a straight line, pinning the top and bottom
+# edges so the warp stays put where there is nothing to straighten.
+
+samples = np.linspace(0, WIDTH - 1, 13)
+source = [(sample, centerline(sample), 0.0) for sample in samples]
+target = [(sample, MIDDLE, 0.0) for sample in samples]
+for sample in np.linspace(0, WIDTH - 1, 7):
+    for edge in (0.0, HEIGHT - 1.0):
+        source.append((sample, edge, 0.0))
+        target.append((sample, edge, 0.0))
+
+warp = pv.ThinPlateSplineTransform(source, target)
+straightened = curved.reslice(curved, 'linear', transform=warp)
+
+# %%
+# The structure now runs along a single row. ``transform`` could not have done this:
+# it would have to keep the image's samples on a regular grid.
+
+pl = pv.Plotter(shape=(1, 2))
+panels = [(curved, 'curved'), (straightened, 'straightened')]
+for index, (image, label) in enumerate(panels):
+    pl.subplot(0, index)
+    pl.add_mesh(image, cmap='bone', clim=[0, 1], show_scalar_bar=False, lighting=False)
+    pl.add_text(label, font_size=10)
+    pl.view_xy()
+    pl.camera.tight(padding=0.1)
 pl.show()
 
 # %%

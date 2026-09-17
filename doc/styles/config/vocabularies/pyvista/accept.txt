@@ -201,6 +201,7 @@ boolean
 boxplot
 boxplots
 bugfix
+centerline
 circumsphere
 cmcrameri
 cmocean
@@ -403,6 +404,7 @@ renderers
 repo
 resample
 resampled
+resamples
 reslice
 resliced
 reslicing
