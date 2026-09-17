@@ -1,4 +1,4 @@
-"""Module containing the Transform class."""
+"""Module containing the transform classes."""
 
 from __future__ import annotations
 
@@ -2858,3 +2858,90 @@ class Transform(
                 msg = f"Unexpected rotation type '{representation}'"  # type: ignore[unreachable]
                 raise RuntimeError(msg)
         return out
+
+
+class ThinPlateSplineTransform(
+    _NoNewAttrMixin,
+    DisableVtkSnakeCase,
+    vtkPyVistaOverride,
+    _vtk.vtkThinPlateSplineTransform,
+):
+    """Describes a smooth non-linear transformation which matches two sets of points.
+
+    Each source point is mapped onto the target point with the same index, and the
+    space around them is bent smoothly to suit. Unlike :class:`Transform`, the result
+    is not a matrix and does not keep straight lines straight, so it can describe a
+    deformation such as the result of a non-rigid registration.
+
+    Pass an instance to :meth:`~pyvista.ImageDataFilters.reslice` to sample an image
+    through the deformation.
+
+    .. versionadded:: 0.50
+
+    Parameters
+    ----------
+    source_points : MatrixLike[float]
+        Points to map from, as an ``(N, 3)`` array.
+
+    target_points : MatrixLike[float]
+        Points to map onto, as an ``(N, 3)`` array of the same length as
+        ``source_points``.
+
+    sigma : float, default: 1.0
+        Stiffness of the spline.
+
+    See Also
+    --------
+    Transform
+        Describe a linear transformation with a 4x4 matrix.
+
+    :meth:`~pyvista.ImageDataFilters.reslice`
+        Sample an image at the points of a reference image.
+
+    :ref:`resample_reslice_example`
+        Straighten a curved structure with this transform.
+
+    Examples
+    --------
+    Create an image whose values are the ``y`` coordinate of each point.
+
+    >>> import numpy as np
+    >>> import pyvista as pv
+    >>> image = pv.ImageData(dimensions=(11, 11, 1))
+    >>> image['values'] = image.points[:, 1]
+
+    Pin the corners and pull the middle of the image upward.
+
+    >>> corners = [(0, 0, 0), (10, 0, 0), (0, 10, 0), (10, 10, 0)]
+    >>> warp = pv.ThinPlateSplineTransform(
+    ...     [*corners, (5, 5, 0)], [*corners, (5, 7, 0)]
+    ... )
+
+    Sample the image through the deformation. The values no longer match the ``y``
+    coordinate of the points they are stored at, because the image was bent.
+
+    >>> resliced = image.reslice(image, 'linear', transform=warp)
+    >>> bool(np.allclose(resliced['values'], image.points[:, 1]))
+    False
+
+    """
+
+    def __init__(
+        self: ThinPlateSplineTransform,
+        source_points: MatrixLike[float],
+        target_points: MatrixLike[float],
+        *,
+        sigma: float = 1.0,
+    ) -> None:
+        super().__init__()
+        source = _validation.validate_arrayNx3(source_points, name='source_points')
+        target = _validation.validate_arrayNx3(target_points, name='target_points')
+        if len(source) != len(target):
+            msg = (
+                f'Number of source points ({len(source)}) must equal the number of '
+                f'target points ({len(target)}).'
+            )
+            raise ValueError(msg)
+        self.SetSourceLandmarks(pv.vtk_points(source))
+        self.SetTargetLandmarks(pv.vtk_points(target))
+        self.SetSigma(sigma)
