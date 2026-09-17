@@ -2899,9 +2899,6 @@ class ThinPlateSplineTransform(
     :meth:`~pyvista.ImageDataFilters.reslice`
         Sample an image at the points of a reference image.
 
-    :ref:`resample_reslice_example`
-        Straighten a curved structure with this transform.
-
     Examples
     --------
     Create an image whose values are the ``y`` coordinate of each point.
