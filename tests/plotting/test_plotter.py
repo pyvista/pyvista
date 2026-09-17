@@ -286,6 +286,36 @@ def test_plotter_add_mesh_scalars_rgb_raises():
         pl.add_mesh(sp, scalars=np.zeros((sp.n_points, 5)), rgb=True)
 
 
+@pytest.mark.parametrize('kwargs', [{}, {'color': 'red'}])
+def test_plotter_add_mesh_rgb_without_scalars_raises(kwargs):
+    pl = pv.Plotter()
+    with pytest.raises(
+        ValueError,
+        match=re.escape('The rgb keyword requires RGB(A) scalars'),
+    ):
+        pl.add_mesh(pv.Sphere().outline(), rgb=True, **kwargs)
+
+
+@pytest.mark.parametrize('wrap', [list, tuple])
+def test_plotter_add_mesh_rgb_accepts_a_sequence(wrap):
+    # A sequence of colors is stamped on the mesh like the equivalent array
+    colors = [(1.0, 0.0, 0.0)] * pv.Sphere().n_points
+
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere(), scalars=wrap(colors), rgb=True)
+    assert np.array_equal(pl.mesh.point_data[pv.DEFAULT_SCALARS_NAME], np.array(colors))
+
+
+def test_plotter_add_mesh_rgb_uses_the_mesh_colors_over_color():
+    # The mesh's own colors win over the fallback color when rgb is enabled
+    sp = pv.Sphere()
+    sp['colors'] = np.tile(np.array([0, 255, 0], dtype=np.uint8), (sp.n_points, 1))
+
+    pl = pv.Plotter()
+    pl.add_mesh(sp, rgb=True, color='red')
+    assert np.array_equal(pl.mesh.active_scalars, sp['colors'])
+
+
 def test_plotter_add_mesh_texture_raises(mocker: MockerFixture):
     from pyvista.plotting import plotter
 
