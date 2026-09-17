@@ -778,9 +778,9 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
                 f'but a length of ({array_len}) was expected.'
             )
             raise ValueError(msg)
-        if any(data.shape) and data.size == 0:
+        if data.ndim > 1 and 0 in data.shape[1:]:
             msg = (
-                f'Invalid array shape. Empty arrays are not allowed. '
+                f'Invalid array shape. Arrays with zero components are not allowed. '
                 f"Array '{name}' cannot have shape {data.shape}."
             )
             raise ValueError(msg)
