@@ -129,6 +129,41 @@ print(resampled.origin, resampled.spacing)
 print(cropped_resampled.origin, cropped_resampled.spacing)
 
 # %%
+# The crop can be made to reproduce ``reslice`` exactly, but only once every condition
+# it would otherwise take care of is met:
+#
+# #. The region has to begin and end on whole input voxels, so the reference cannot be
+#    placed freely.
+# #. Those voxel corners have to be converted into physical coordinates by hand to
+#    build the reference.
+# #. The output dimensions have to be worked out from the region and the spacing.
+# #. ``extend_border`` has to be disabled, so the output keeps the crop's point bounds
+#    rather than its cell bounds.
+
+extent = (7, 14, 5, 12, 0, 0)
+dimensions = (17, 17, 1)
+step = np.array(mandelbrot.spacing[:2])
+lo = np.array(mandelbrot.origin[:2]) + step * extent[:4:2]
+hi = np.array(mandelbrot.origin[:2]) + step * extent[1:4:2]
+aligned = pv.ImageData(
+    dimensions=dimensions,
+    spacing=(*(hi - lo) / (np.array(dimensions[:2]) - 1), 1.0),
+    origin=(*lo, 0.0),
+)
+
+by_reslice = mandelbrot.reslice(aligned, 'linear')
+by_crop = mandelbrot.crop(extent=extent).resample(
+    dimensions=dimensions, interpolation='linear', extend_border=False
+)
+
+# %%
+# The two agree exactly. ``reslice`` does nothing the other filters cannot; it does it
+# from the reference alone, which is the whole of its value.
+
+print(np.allclose(by_reslice.bounds, by_crop.bounds))
+print(np.allclose(by_reslice.active_scalars, by_crop.active_scalars))
+
+# %%
 # Transform or Reslice
 # ++++++++++++++++++++
 #
