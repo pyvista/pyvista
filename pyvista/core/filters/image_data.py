@@ -4861,10 +4861,11 @@ class ImageDataFilters(DataSetFilters):
         :attr:`~pyvista.ImageData.physical_to_index_matrix`.
 
         Use this filter to map an image onto the grid of another image, for example, to
-        give two acquisitions of the same subject a common grid. Give the reference a
-        rotated :attr:`~pyvista.ImageData.direction_matrix` to sample an oblique plane or
-        volume, and pass a ``transform`` to apply a registration result at the same time.
-        Use :meth:`resample` instead to change an image's sampling density in its own frame.
+        give two acquisitions of the same subject a common grid. :meth:`resample` is the
+        filter for changing sampling density in the image's own frame. Give the reference
+        a rotated :attr:`~pyvista.ImageData.direction_matrix` to sample an oblique plane
+        or volume, and pass a ``transform`` to move the image as it is sampled, so a
+        registration result is applied in the same pass.
 
         This filter may be used to reslice either point or cell data. Cell data is
         sampled at the cell centers of the reference image.
@@ -4884,8 +4885,16 @@ class ImageDataFilters(DataSetFilters):
             the output.
 
         interpolation : 'nearest', 'linear', 'cubic', 'lanczos', 'hamming', 'blackman', 'bspline'
-            Interpolation mode to use, ``'nearest'`` by default. See :meth:`resample` for
-            a description of each mode.
+            Interpolation mode to use, ``'nearest'`` by default.
+
+            - ``'nearest'`` takes the value of the closest sample without modifying it.
+            - ``'linear'`` and ``'cubic'`` blend the surrounding samples.
+            - ``'lanczos'``, ``'hamming'``, and ``'blackman'`` use a windowed sinc filter
+              and preserve sharp detail.
+            - ``'bspline'`` interpolates smoothly with an n-degree basis spline. Append
+              the degree to set it, for example ``'bspline5'``.
+
+            See :meth:`resample` for guidance on choosing between them.
 
         transform : TransformLike | :vtk:`vtkAbstractTransform`, optional
             Transform applied to the image before it is sampled, in the same direction as
@@ -4948,6 +4957,43 @@ class ImageDataFilters(DataSetFilters):
 
         Examples
         --------
+        .. pyvista-plot::
+            :force_static:
+
+            An image acquired off-axis carries its rotation in the
+            :attr:`~pyvista.ImageData.direction_matrix`, so its samples do not line up
+            with the axes.
+
+            >>> import pyvista as pv
+            >>> scan = pv.ImageEllipsoidSource(
+            ...     whole_extent=(0, 40, 0, 24, 0, 0),
+            ...     center=(20, 12, 0),
+            ...     radius=(16, 6, 0),
+            ... ).output
+            >>> scan.direction_matrix = pv.Transform().rotate_z(30).matrix[:3, :3]
+
+            Reslice it onto an upright grid, passing a ``transform`` which undoes the
+            rotation, to read the same picture onto axis-aligned samples.
+
+            >>> reference = pv.ImageData(dimensions=(41, 25, 1))
+            >>> straightened = scan.reslice(
+            ...     reference, 'linear', transform=pv.Transform().rotate_z(-30)
+            ... )
+
+            >>> pl = pv.Plotter(shape=(1, 2))
+            >>> _ = pl.add_mesh(scan, cmap='bone', lighting=False, show_scalar_bar=False)
+            >>> _ = pl.add_text('off-axis', font_size=10)
+            >>> pl.view_xy()
+            >>> pl.camera.tight()
+            >>> _ = pl.subplot(0, 1)
+            >>> _ = pl.add_mesh(
+            ...     straightened, cmap='bone', lighting=False, show_scalar_bar=False
+            ... )
+            >>> _ = pl.add_text('resliced', font_size=10)
+            >>> pl.view_xy()
+            >>> pl.camera.tight()
+            >>> pl.show()
+
         Create a small image whose values are the ``x`` coordinate of each point.
 
         >>> import numpy as np
@@ -4985,13 +5031,17 @@ class ImageDataFilters(DataSetFilters):
         >>> bool(np.allclose(resliced['values'], resliced.points[:, 0]))
         True
 
-        Compare this to :meth:`resample`, which keeps the image where it is and only
-        changes how densely it is sampled. Its values no longer sit at the ``x``
-        coordinate they name, because the new points fall between the original ones.
+        Give the reference a rotated :attr:`~pyvista.ImageData.direction_matrix` to sample
+        an oblique plane. The output carries that orientation, and its values still sit at
+        the ``x`` coordinate they name.
 
-        >>> resampled = image.resample(dimensions=(11, 11, 1))
-        >>> bool(np.allclose(resampled['values'], resampled.points[:, 0]))
-        False
+        >>> oblique = pv.ImageData(dimensions=(3, 3, 1), origin=(1.0, 1.0, 0.0))
+        >>> oblique.direction_matrix = pv.Transform().rotate_z(30).matrix[:3, :3]
+        >>> resliced = image.reslice(oblique, 'linear')
+        >>> bool(np.allclose(resliced.direction_matrix, oblique.direction_matrix))
+        True
+        >>> bool(np.allclose(resliced['values'], resliced.points[:, 0]))
+        True
 
         Reference points outside the image are filled with ``background_value``. This
         reference samples at ``x = 2, 4, 6, 8``, and the image ends at ``x = 5``.
