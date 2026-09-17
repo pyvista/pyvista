@@ -292,6 +292,15 @@ def test_contour_labels_raises(labeled_image):
         pv.ImageData().contour_labels()
 
 
+def test_contour_labels_no_background():
+    image = pv.ImageData(dimensions=(10, 10, 10))
+    image.point_data['labels'] = np.full(image.n_points, 5, dtype=np.uint8)
+
+    contours = image.contour_labels('all', pad_background=False)
+    assert contours.is_empty
+    assert contours[BOUNDARY_LABELS].shape == (0,)
+
+
 def test_contour_labels_empty_input(frog_tissues):
     voi = frog_tissues.extract_subset((10, 100, 20, 200, 20, 80))
     background_value = 0

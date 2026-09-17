@@ -2925,7 +2925,7 @@ class ImageDataFilters(DataSetFilters):
             if not all(labels_array.shape):
                 # Array is empty but has non-zero shape, fix it here
                 # Mesh may also have non-zero points but this is cleaned later
-                output.cell_data[VTK_NAME] = np.empty((0, 0))
+                output.cell_data[VTK_NAME] = np.empty((0,))
             output.rename_array(VTK_NAME, PV_NAME)
             if boundary_style in ['external', 'internal']:
                 # Output contains all boundary cells, need to remove cells we don't want
