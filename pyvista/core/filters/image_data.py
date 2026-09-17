@@ -4365,9 +4365,6 @@ class ImageDataFilters(DataSetFilters):
         reslice
             Sample an image at the points of a reference image.
 
-        :ref:`resample_reslice_example`
-            Compare the two filters.
-
         crop
             Crop image to remove points at the image's boundaries.
 
@@ -4948,9 +4945,6 @@ class ImageDataFilters(DataSetFilters):
 
         :meth:`~pyvista.DataSetFilters.interpolate`
             Interpolate values from one mesh onto another.
-
-        :ref:`resample_reslice_example`
-            Compare the two filters.
 
         Examples
         --------

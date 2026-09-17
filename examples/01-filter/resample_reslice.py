@@ -121,6 +121,11 @@ print(resliced.index_to_physical_matrix.round(3))
 # picture out of that frame, while ``reslice`` fills the frame and writes
 # ``background_value`` wherever the rotated image does not reach it.
 
+# sphinx_gallery_start_ignore
+# two full-resolution photographs push the interactive scene past the size limit
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
+
 pl = pv.Plotter(shape=(1, 2))
 for index, (image, label) in enumerate([(moved, 'transform'), (resliced, 'reslice')]):
     pl.subplot(0, index)
