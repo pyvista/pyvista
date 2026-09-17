@@ -65,6 +65,7 @@ streamlines, src = mesh.streamlines(
     return_source=True,
     source_radius=10,
     source_center=(92.46, 74.37, 135.5),
+    n_points=40,
 )
 
 
@@ -73,7 +74,9 @@ boundary = mesh.decimate_boundary().extract_all_edges()
 
 sargs = dict(vertical=True, title_font_size=16)
 pl = pv.Plotter()
-pl.add_mesh(streamlines.tube(radius=0.2), lighting=False, scalar_bar_args=sargs)
+pl.add_mesh(
+    streamlines.tube(radius=0.2, n_sides=8), lighting=False, scalar_bar_args=sargs
+)
 pl.add_mesh(src)
 pl.add_mesh(boundary, color='grey', opacity=0.25)
 pl.camera_position = pv.CameraPosition(
@@ -91,7 +94,7 @@ pl.show()
 
 source_mesh = mesh.slice('z', origin=(0, 0, 182))  # inlet surface
 # thin out ~40% points to get a nice density of streamlines
-seed_mesh = source_mesh.decimate_boundary(0.4)
+seed_mesh = source_mesh.decimate_boundary(0.8)
 streamlines = mesh.streamlines_from_source(seed_mesh, integration_direction='forward')
 # print *only* added arrays from streamlines filter
 print('Added arrays from streamlines filter:')
@@ -109,7 +112,7 @@ print(
 sargs = dict(vertical=True, title_font_size=16)
 pl = pv.Plotter()
 pl.add_mesh(
-    streamlines.tube(radius=0.2),
+    streamlines.tube(radius=0.2, n_sides=8),
     scalars='IntegrationTime',
     clim=[0, 1000],
     lighting=False,
@@ -141,7 +144,13 @@ streamlines = mesh.streamlines(n_points=40, source_center=(0.08, 3, 0.71), max_l
 pl = pv.Plotter()
 pl.add_mesh(mesh.outline(), color='k')
 pl.add_mesh(kitchen, color=True)
-pl.add_mesh(streamlines.tube(radius=0.01), scalars='velocity', lighting=False)
+pl.add_mesh(
+    streamlines,
+    scalars='velocity',
+    lighting=False,
+    render_lines_as_tubes=True,
+    line_width=3,
+)
 pl.camera_position = kpos
 pl.show()
 

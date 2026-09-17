@@ -8,7 +8,6 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import examples
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 from .logo import text_3d
 
@@ -32,9 +31,12 @@ def glyphs(grid_sz=3):
 
     Examples
     --------
-    >>> from pyvista import demos
-    >>> mesh = demos.glyphs()
-    >>> mesh.plot()
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import demos
+        >>> mesh = demos.glyphs()
+        >>> mesh.plot()
 
     """
     # Seed rng for reproducible plots
@@ -87,8 +89,11 @@ def plot_glyphs(grid_sz=3, **kwargs):
 
     Examples
     --------
-    >>> from pyvista import demos
-    >>> demos.plot_glyphs()
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import demos
+        >>> demos.plot_glyphs()
 
     """
     # construct the glyphs on top of the mesh; don't scale by scalars now
@@ -213,12 +218,11 @@ def orientation_plotter():
     pl.add_mesh(ocube['y_n'], color='green')
     pl.add_mesh(ocube['z_p'], color='red')
     pl.add_mesh(ocube['z_n'], color='red')
-    pl.show_axes()  # type: ignore[call-arg]
+    pl.show_axes()
     return pl
 
 
-@_deprecate_positional_args
-def plot_wave(fps=30, frequency=1, wavetime=3, notebook=None):  # noqa: PLR0917
+def plot_wave(*, fps=30, frequency=1, wavetime=3, notebook=None):
     """Plot a 3D moving wave in a render window.
 
     Parameters
@@ -316,7 +320,7 @@ def plot_ants_plane(notebook=None):
 
     This example plots the following:
 
-    .. code-block:: python
+    .. pyvista-plot::
 
        >>> import pyvista as pv
        >>> from pyvista import examples

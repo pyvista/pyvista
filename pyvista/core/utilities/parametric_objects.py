@@ -9,13 +9,14 @@ from typing import Literal
 from typing import get_args
 
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core import _validation
+from pyvista.core.filters import _apply_points_dtype
+from pyvista.core.filters import _update_alg
 
-from .geometric_sources import translate
+from .geometric_sources import _translate_and_orient
 from .helpers import wrap
 
 if TYPE_CHECKING:
@@ -185,9 +186,9 @@ def Spline(
     return spline.compute_arc_length()
 
 
-@_deprecate_positional_args(allowed=['points'])
-def KochanekSpline(  # noqa: PLR0917
+def KochanekSpline(
     points: VectorLike[float] | MatrixLike[float],
+    *,
     tension: VectorLike[float] | None = None,
     bias: VectorLike[float] | None = None,
     continuity: VectorLike[float] | None = None,
@@ -327,7 +328,7 @@ def ParametricBohemianDome(
     direction = kwargs.pop('direction', [1.0, 0.0, 0.0])
     kwargs.setdefault('clean', True)
     surf = surface_from_para(parametric_function, **kwargs)
-    translate(surf, center, direction)
+    _translate_and_orient(surf, center, direction)
     return surf
 
 
@@ -359,7 +360,7 @@ def ParametricBour(**kwargs) -> PolyData:
     direction = kwargs.pop('direction', [1.0, 0.0, 0.0])
     surf = surface_from_para(parametric_function, **kwargs)
 
-    translate(surf, center, direction)
+    _translate_and_orient(surf, center, direction)
 
     return surf
 
@@ -404,7 +405,7 @@ def ParametricBoy(zscale: float | None = None, **kwargs) -> PolyData:
     direction = kwargs.pop('direction', [1.0, 0.0, 0.0])
     kwargs.setdefault('clean', True)
     surf = surface_from_para(parametric_function, **kwargs)
-    translate(surf, center, direction)
+    _translate_and_orient(surf, center, direction)
     return surf
 
 
@@ -440,7 +441,7 @@ def ParametricCatalanMinimal(**kwargs) -> PolyData:
     direction = kwargs.pop('direction', [1.0, 0.0, 0.0])
     surf = surface_from_para(parametric_function, **kwargs)
 
-    translate(surf, center, direction)
+    _translate_and_orient(surf, center, direction)
 
     return surf
 
@@ -509,7 +510,7 @@ def ParametricConicSpiral(  # noqa: PLR0917
     direction = kwargs.pop('direction', [1.0, 0.0, 0.0])
     surf = surface_from_para(parametric_function, **kwargs)
 
-    translate(surf, center, direction)
+    _translate_and_orient(surf, center, direction)
 
     return surf
 
@@ -546,7 +547,7 @@ def ParametricCrossCap(**kwargs) -> PolyData:
     direction = kwargs.pop('direction', [1.0, 0.0, 0.0])
     surf = surface_from_para(parametric_function, **kwargs)
 
-    translate(surf, center, direction)
+    _translate_and_orient(surf, center, direction)
 
     return surf
 
@@ -595,7 +596,7 @@ def ParametricDini(a: float | None = None, b: float | None = None, **kwargs) -> 
     direction = kwargs.pop('direction', [1.0, 0.0, 0.0])
     surf = surface_from_para(parametric_function, **kwargs)
 
-    translate(surf, center, direction)
+    _translate_and_orient(surf, center, direction)
 
     return surf
 
@@ -670,7 +671,7 @@ def ParametricEllipsoid(
     direction = kwargs.pop('direction', [1.0, 0.0, 0.0])
     kwargs.setdefault('clean', True)
     surf = surface_from_para(parametric_function, **kwargs)
-    translate(surf, center, direction)
+    _translate_and_orient(surf, center, direction)
     return surf
 
 
@@ -706,7 +707,7 @@ def ParametricEnneper(**kwargs) -> PolyData:
     direction = kwargs.pop('direction', [1.0, 0.0, 0.0])
     surf = surface_from_para(parametric_function, **kwargs)
 
-    translate(surf, center, direction)
+    _translate_and_orient(surf, center, direction)
 
     return surf
 
@@ -748,7 +749,7 @@ def ParametricFigure8Klein(radius: float | None = None, **kwargs) -> PolyData:
     direction = kwargs.pop('direction', [1.0, 0.0, 0.0])
     kwargs.setdefault('clean', True)
     surf = surface_from_para(parametric_function, **kwargs)
-    translate(surf, center, direction)
+    _translate_and_orient(surf, center, direction)
     return surf
 
 
@@ -780,7 +781,7 @@ def ParametricHenneberg(**kwargs) -> PolyData:
     direction = kwargs.pop('direction', [1.0, 0.0, 0.0])
     surf = surface_from_para(parametric_function, **kwargs)
 
-    translate(surf, center, direction)
+    _translate_and_orient(surf, center, direction)
 
     return surf
 
@@ -818,7 +819,7 @@ def ParametricKlein(**kwargs) -> PolyData:
     direction = kwargs.pop('direction', [1.0, 0.0, 0.0])
     kwargs.setdefault('clean', True)
     surf = surface_from_para(parametric_function, **kwargs)
-    translate(surf, center, direction)
+    _translate_and_orient(surf, center, direction)
     return surf
 
 
@@ -862,7 +863,7 @@ def ParametricKuen(deltav0: float | None = None, **kwargs) -> PolyData:
     direction = kwargs.pop('direction', [1.0, 0.0, 0.0])
     kwargs.setdefault('clean', True)
     surf = surface_from_para(parametric_function, **kwargs)
-    translate(surf, center, direction)
+    _translate_and_orient(surf, center, direction)
     return surf
 
 
@@ -898,7 +899,7 @@ def ParametricMobius(radius: float | None = None, **kwargs) -> PolyData:
     center = kwargs.pop('center', [0.0, 0.0, 0.0])
     direction = kwargs.pop('direction', [1.0, 0.0, 0.0])
     surf = surface_from_para(parametric_function, **kwargs)
-    translate(surf, center, direction)
+    _translate_and_orient(surf, center, direction)
     return surf
 
 
@@ -940,7 +941,7 @@ def ParametricPluckerConoid(n: int | None = None, **kwargs) -> PolyData:
     direction = kwargs.pop('direction', [1.0, 0.0, 0.0])
     surf = surface_from_para(parametric_function, **kwargs)
 
-    translate(surf, center, direction)
+    _translate_and_orient(surf, center, direction)
 
     return surf
 
@@ -978,12 +979,12 @@ def ParametricPseudosphere(**kwargs) -> PolyData:
     direction = kwargs.pop('direction', [1.0, 0.0, 0.0])
     kwargs.setdefault('clean', True)
     surf = surface_from_para(parametric_function, **kwargs)
-    translate(surf, center, direction)
+    _translate_and_orient(surf, center, direction)
     return surf
 
 
-@_deprecate_positional_args
-def ParametricRandomHills(  # noqa: PLR0917
+def ParametricRandomHills(
+    *,
     number_of_hills: int | None = None,
     hill_x_variance: float | None = None,
     hill_y_variance: float | None = None,
@@ -1077,7 +1078,7 @@ def ParametricRandomHills(  # noqa: PLR0917
     direction = kwargs.pop('direction', [1.0, 0.0, 0.0])
     surf = surface_from_para(parametric_function, **kwargs)
 
-    translate(surf, center, direction)
+    _translate_and_orient(surf, center, direction)
 
     return surf
 
@@ -1115,16 +1116,16 @@ def ParametricRoman(radius: float | None = None, **kwargs) -> PolyData:
     direction = kwargs.pop('direction', [1.0, 0.0, 0.0])
     surf = surface_from_para(parametric_function, **kwargs)
 
-    translate(surf, center, direction)
+    _translate_and_orient(surf, center, direction)
 
     return surf
 
 
-@_deprecate_positional_args(allowed=['xradius', 'yradius', 'zradius'])
-def ParametricSuperEllipsoid(  # noqa: PLR0917
+def ParametricSuperEllipsoid(
     xradius: float | None = None,
     yradius: float | None = None,
     zradius: float | None = None,
+    *,
     n1: float | None = None,
     n2: float | None = None,
     **kwargs,
@@ -1203,13 +1204,13 @@ def ParametricSuperEllipsoid(  # noqa: PLR0917
     direction = kwargs.pop('direction', [1.0, 0.0, 0.0])
     surf = surface_from_para(parametric_function, **kwargs)
 
-    translate(surf, center, direction)
+    _translate_and_orient(surf, center, direction)
 
     return surf
 
 
-@_deprecate_positional_args
-def ParametricSuperToroid(  # noqa: PLR0917
+def ParametricSuperToroid(
+    *,
     ringradius: float | None = None,
     crosssectionradius: float | None = None,
     xradius: float | None = None,
@@ -1304,7 +1305,7 @@ def ParametricSuperToroid(  # noqa: PLR0917
     direction = kwargs.pop('direction', [1.0, 0.0, 0.0])
     kwargs.setdefault('clean', True)
     surf = surface_from_para(parametric_function, **kwargs)
-    translate(surf, center, direction)
+    _translate_and_orient(surf, center, direction)
     return surf
 
 
@@ -1350,22 +1351,22 @@ def ParametricTorus(
     direction = kwargs.pop('direction', [1.0, 0.0, 0.0])
     kwargs.setdefault('clean', True)
     surf = surface_from_para(parametric_function, **kwargs)
-    translate(surf, center, direction)
+    _translate_and_orient(surf, center, direction)
     return surf
 
 
-@_deprecate_positional_args(allowed=['parametric_function'])
-def parametric_keywords(  # noqa: PLR0917
+def parametric_keywords(
     parametric_function: _vtk.vtkParametricFunction,
+    *,
     min_u: float = 0.0,
     max_u: float = 2 * math.pi,
     min_v: float = 0.0,
     max_v: float = 2 * math.pi,
-    join_u: bool = False,  # noqa: FBT001, FBT002
-    join_v: bool = False,  # noqa: FBT001, FBT002
-    twist_u: bool = False,  # noqa: FBT001, FBT002
-    twist_v: bool = False,  # noqa: FBT001, FBT002
-    clockwise: bool = True,  # noqa: FBT001, FBT002
+    join_u: bool = False,
+    join_v: bool = False,
+    twist_u: bool = False,
+    twist_v: bool = False,
+    clockwise: bool = True,
 ) -> None:
     """Apply keyword arguments to a parametric function.
 
@@ -1418,14 +1419,14 @@ def parametric_keywords(  # noqa: PLR0917
     parametric_function.SetClockwiseOrdering(clockwise)
 
 
-@_deprecate_positional_args(allowed=['parametric_function'])
-def surface_from_para(  # noqa: PLR0917
+def surface_from_para(
     parametric_function: _vtk.vtkParametricFunction,
+    *,
     u_res: int = 100,
     v_res: int = 100,
     w_res: int = 100,
-    clean: bool = False,  # noqa: FBT001, FBT002
-    texture_coordinates: bool = False,  # noqa: FBT001, FBT002
+    clean: bool = False,
+    texture_coordinates: bool = False,
 ) -> PolyData:
     """Construct a mesh from a parametric function.
 
@@ -1466,8 +1467,8 @@ def surface_from_para(  # noqa: PLR0917
     para_source.SetVResolution(v_res)
     para_source.SetWResolution(w_res)
     para_source.SetGenerateTextureCoordinates(texture_coordinates)
-    para_source.Update()
-    surf = wrap(para_source.GetOutput())
+    _update_alg(para_source)
+    surf = _apply_points_dtype(wrap(para_source.GetOutput()), algorithm=para_source)
     if clean:
         surf = surf.clean(
             tolerance=1e-7,  # determined experimentally

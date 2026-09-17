@@ -7,12 +7,12 @@ import os
 import platform
 import subprocess
 import sys
+from typing import NoReturn
 
 import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.errors import DeprecationError
 
 from .colors import Color
@@ -193,8 +193,8 @@ def _update_axes_label_color(axes_actor, color=None):
         axes_actor.GetTextEdgesProperty().SetColor(color.float_rgb)
 
 
-@_deprecate_positional_args
-def create_axes_marker(  # noqa: PLR0917
+def create_axes_marker(
+    *,
     label_color=None,
     x_color=None,
     y_color=None,
@@ -202,7 +202,7 @@ def create_axes_marker(  # noqa: PLR0917
     xlabel='X',
     ylabel='Y',
     zlabel='Z',
-    labels_off: bool = False,  # noqa: FBT001, FBT002
+    labels_off: bool = False,
     line_width=2,
     cone_radius=0.4,
     shaft_length=0.8,
@@ -335,8 +335,8 @@ def create_axes_marker(  # noqa: PLR0917
     return axes_actor
 
 
-@_deprecate_positional_args
-def create_axes_orientation_box(  # noqa: PLR0917
+def create_axes_orientation_box(
+    *,
     line_width=1,
     text_scale=0.366667,
     edge_color='black',
@@ -349,11 +349,11 @@ def create_axes_orientation_box(  # noqa: PLR0917
     x_face_color='red',
     y_face_color='green',
     z_face_color='blue',
-    color_box: bool = False,  # noqa: FBT001, FBT002
+    color_box: bool = False,
     label_color=None,
-    labels_off: bool = False,  # noqa: FBT001, FBT002
+    labels_off: bool = False,
     opacity=0.5,
-    show_text_edges: bool = False,  # noqa: FBT001, FBT002
+    show_text_edges: bool = False,
 ):
     """Create a Box axes orientation widget with labels.
 
@@ -420,26 +420,29 @@ def create_axes_orientation_box(  # noqa: PLR0917
 
     Examples
     --------
-    Create and plot an orientation box
+    .. pyvista-plot::
+        :force_static:
 
-    >>> import pyvista as pv
-    >>> actor = pv.create_axes_orientation_box(
-    ...     line_width=1,
-    ...     text_scale=0.53,
-    ...     edge_color='black',
-    ...     x_color='k',
-    ...     y_color=None,
-    ...     z_color=None,
-    ...     xlabel='X',
-    ...     ylabel='Y',
-    ...     zlabel='Z',
-    ...     color_box=False,
-    ...     labels_off=False,
-    ...     opacity=1.0,
-    ... )
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_actor(actor)
-    >>> pl.show()
+        Create and plot an orientation box
+
+        >>> import pyvista as pv
+        >>> actor = pv.create_axes_orientation_box(
+        ...     line_width=1,
+        ...     text_scale=0.53,
+        ...     edge_color='black',
+        ...     x_color='k',
+        ...     y_color=None,
+        ...     z_color=None,
+        ...     xlabel='X',
+        ...     ylabel='Y',
+        ...     zlabel='Z',
+        ...     color_box=False,
+        ...     labels_off=False,
+        ...     opacity=1.0,
+        ... )
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_actor(actor)
+        >>> pl.show()
 
     """
     x_color = Color(x_color, default_color=pv.global_theme.axes.x_color)
@@ -609,11 +612,11 @@ def normalize(x, minimum=None, maximum=None):
     return (x - minimum) / (maximum - minimum)
 
 
-@_deprecate_positional_args(allowed=['mapping', 'n_colors'])
-def opacity_transfer_function(  # noqa: PLR0917
+def opacity_transfer_function(
     mapping,
     n_colors,
-    interpolate: bool = True,  # noqa: FBT001, FBT002
+    *,
+    interpolate: bool = True,
     kind='linear',
 ):
     """Get the opacity transfer function for a mapping.
@@ -790,32 +793,21 @@ def parse_font_family(font_family: str) -> int:
     return FONTS[font_family].value
 
 
-def check_math_text_support() -> bool:  # pragma: no cover
-    """Raise a DeprecationError as this has been moved.
-
-    Returns
-    -------
-    bool
-        Returns False for compatibility.
-
-    """
+def check_math_text_support() -> NoReturn:
+    """Raise a DeprecationError as this has been moved."""
     # Deprecated on v0.47.0, estimated removal on v0.50.0
-    msg = '`check_math_text_support` is now imported from `pyvista.report`'
-    DeprecationError(msg)
+    msg = (
+        '`pyvista.plotting.check_math_text_support` is deprecated. '
+        'Use `pyvista.check_math_text_support` instead.'
+    )
+    raise DeprecationError(msg)
 
-    return False
 
-
-def check_matplotlib_vtk_compatibility() -> bool:  # pragma: no cover
-    """Raise a DeprecationError as this has been moved.
-
-    Returns
-    -------
-    bool
-        Returns False for compatibility.
-
-    """
+def check_matplotlib_vtk_compatibility() -> NoReturn:
+    """Raise a DeprecationError as this has been moved."""
     # Deprecated on v0.47.0, estimated removal on v0.50.0
-    msg = '`check_matplotlib_vtk_compatibility` is now imported from `pyvista.report`'
-    DeprecationError(msg)
-    return False  # returning bool for compatibility
+    msg = (
+        '`pyvista.plotting.check_matplotlib_vtk_compatibility` is deprecated. '
+        'Use `pyvista.check_matplotlib_vtk_compatibility` instead.'
+    )
+    raise DeprecationError(msg)

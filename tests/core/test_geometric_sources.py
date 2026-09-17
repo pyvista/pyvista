@@ -11,7 +11,7 @@ import pytest
 import pyvista as pv
 from pyvista import _vtk
 from pyvista import examples
-from pyvista.core.utilities.geometric_objects import translate
+from pyvista.core.utilities.geometric_sources import _translate_and_orient
 
 
 @pytest.fixture
@@ -97,7 +97,7 @@ def test_translate_direction_collinear(is_negative, delta, bunny):
     if is_negative:
         direction *= -1
     mesh_out = mesh_in.copy()
-    translate(mesh_out, direction=direction)
+    _translate_and_orient(mesh_out, direction=direction)
     points_in = mesh_in.points
     points_out = mesh_out.points
 
@@ -573,7 +573,7 @@ def test_axes_geometry_source_bounds(axes_geometry_source, part):
         )
         assert np.allclose(actual_bounds, expected_bounds)
 
-    else:
+    else:  # pragma: no cover -- parametrize covers every case
         raise NotImplementedError
 
 
@@ -748,6 +748,13 @@ def test_orthogonal_planes_source_bounds():
     assert output['xy'].bounds == (xmin, xmax, ymin, ymax, zmid, zmid)
     assert output['yz'].bounds == (xmid, xmid, ymin, ymax, zmin, zmax)
     assert output['zx'].bounds == (xmin, xmax, ymid, ymid, zmin, zmax)
+
+
+@pytest.mark.parametrize('resolution', [2.7, (1, 2, 2.5)])
+def test_orthogonal_planes_source_resolution_rejects_fractions(resolution):
+    # The resolution is cast to an integer dtype, which would otherwise truncate it silently
+    with pytest.raises(ValueError, match='resolution must have integer-like values'):
+        pv.OrthogonalPlanesSource(resolution=resolution)
 
 
 def test_orthogonal_planes_source_names():

@@ -165,6 +165,25 @@ def test_property_interpolation(prop):
         prop.interpolation = 'foo'
 
 
+@pytest.mark.parametrize(
+    ('interpolation', 'lit_by_environment'),
+    [('pbr', True), ('phong', False)],
+)
+def test_property_plot_environment_texture(prop, interpolation, lit_by_environment):
+    """Only physically based rendering is lit by the skybox environment texture."""
+    prop.interpolation = interpolation
+    captured = {}
+
+    def capture(pl):
+        captured['image_based_lighting'] = bool(pl.renderer.GetUseImageBasedLighting())
+        captured['environment_texture'] = pl.renderer.GetEnvironmentTexture() is not None
+
+    prop.plot(before_close_callback=capture)
+
+    assert captured['image_based_lighting'] is lit_by_environment
+    assert captured['environment_texture'] is lit_by_environment
+
+
 def test_property_render_points_as_spheres(prop):
     value = True
     prop.render_points_as_spheres = value
@@ -190,10 +209,26 @@ def test_property_line_width(prop):
     assert prop.line_width == value
 
 
-@pytest.mark.parametrize('value', ['back', 'front', 'none'])
-def test_property_culling(prop, value):
+@pytest.mark.parametrize(
+    ('value', 'expected'),
+    [
+        (True, 'back'),
+        ('b', 'back'),
+        ('back', 'back'),
+        ('backface', 'back'),
+        ('f', 'front'),
+        ('front', 'front'),
+        ('frontface', 'front'),
+        (False, 'none'),
+        ('none', 'none'),
+        ('BackFace', 'back'),
+    ],
+)
+def test_property_culling(prop, value, expected):
     prop.culling = value
-    assert prop.culling == value
+    assert prop.culling == expected
+
+    assert pv.Property(culling=value).culling == expected
 
     with pytest.raises(ValueError, match='Invalid culling'):
         prop.culling = 'foo'
@@ -219,3 +254,19 @@ def test_property_anisotropy(prop):
     assert isinstance(prop.anisotropy, float)
     prop.anisotropy = value
     assert prop.anisotropy == value
+
+
+def test_property_anisotropy_rotation(prop):
+    assert prop.anisotropy_rotation == 0.0
+    prop.anisotropy_rotation = 0.25
+    assert prop.anisotropy_rotation == 0.25
+    with pytest.raises(ValueError, match='outside the acceptable range'):
+        prop.anisotropy_rotation = 2.0
+
+
+def test_property_index_of_refraction(prop):
+    assert prop.index_of_refraction == 1.5
+    prop.index_of_refraction = 2.0
+    assert prop.index_of_refraction == 2.0
+    with pytest.raises(ValueError, match='outside the acceptable range'):
+        prop.index_of_refraction = 0.5

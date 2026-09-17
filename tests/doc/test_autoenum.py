@@ -43,12 +43,12 @@ def test_metaclass_properties_finds_only_metaclass_properties():
     class Meta(type):
         @property
         def computed(cls):
-            return 'value'
+            """Defined on the metaclass."""
 
     class Plain(metaclass=Meta):
         @property
         def instance_only(self):
-            return 'nope'
+            """Defined on the instance, not the metaclass."""
 
     props = autoenum._metaclass_properties(Plain)
     assert set(props) == {'computed'}
@@ -81,14 +81,15 @@ def test_metaclass_properties_first_definition_wins_in_mro():
     class BaseMeta(type):
         @property
         def shared(cls):
-            return 'base'
+            """Defined on the base metaclass."""
 
     class SubMeta(BaseMeta):
         @property
         def shared(self):
-            return 'sub'
+            """Redefined on the subclass metaclass."""
 
-    class Widget(metaclass=SubMeta): ...
+    class Widget(metaclass=SubMeta):
+        pass
 
     props = autoenum._metaclass_properties(Widget)
     assert props['shared'] is SubMeta.__dict__['shared']
@@ -98,11 +99,11 @@ def test_instance_properties_finds_only_public_properties():
     class Widget:
         @property
         def visible(self):
-            return True
+            """Public, so it is collected."""
 
         @property
         def _hidden(self):
-            return False
+            """Underscored, so it is skipped."""
 
         constant = 1
 
@@ -133,9 +134,9 @@ def test_metaclass_property_descriptions_uses_first_docstring_line(monkeypatch):
 
             More detail that shouldn't appear in the description.
             """
-            return 'value'
 
-    class Widget(metaclass=Meta): ...
+    class Widget(metaclass=Meta):
+        pass
 
     monkeypatch.setattr(autoenum, '_resolve', lambda *_args: Widget)
     descriptions = dict(autoenum.metaclass_property_descriptions('unused', 'unused'))
@@ -231,7 +232,7 @@ def test_patch_autosummary_objtype_routes_enums(monkeypatch):
 
 
 def _build_tinypages_autoenum(
-    tmp_path: Path, extra_pages: dict[str, str] | None = None
+    tmp_path: Path, extra_pages: dict[str, str]
 ) -> tuple[subprocess.CompletedProcess, Path]:
     """Build a throwaway copy of tinypages_autoenum; return (process, html build dir).
 
@@ -243,12 +244,11 @@ def _build_tinypages_autoenum(
         TINYPAGES_AUTOENUM_DIR, source_dir, ignore=shutil.ignore_patterns('__pycache__')
     )
 
-    if extra_pages:
-        for filename, content in extra_pages.items():
-            (source_dir / filename).write_text(content, encoding='utf-8')
-        stems = '\n   '.join(Path(filename).stem for filename in extra_pages)
-        with (source_dir / 'index.rst').open('a', encoding='utf-8') as f:
-            f.write(f'\n.. toctree::\n\n   {stems}\n')
+    for filename, content in extra_pages.items():
+        (source_dir / filename).write_text(content, encoding='utf-8')
+    stems = '\n   '.join(Path(filename).stem for filename in extra_pages)
+    with (source_dir / 'index.rst').open('a', encoding='utf-8') as f:
+        f.write(f'\n.. toctree::\n\n   {stems}\n')
 
     build_dir = tmp_path / 'build'
     proc = subprocess.run(

@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 
 
 def empty_callback():
-    return
+    """Registered as an observer, never invoked by these tests."""
 
 
 @pytest.mark.parametrize('callback', ['foo', 1, object()])
@@ -84,7 +84,7 @@ def test_observers():
 
     # Callback must not have any  empty arguments.
     def callback(a, b, *, c, d=1.0):
-        pass
+        """Rejected for its signature, so the body never runs."""
 
     with pytest.raises(TypeError):
         pl.add_key_event('w', callback)

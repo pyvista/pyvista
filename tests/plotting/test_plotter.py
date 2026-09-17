@@ -22,6 +22,7 @@ import pytest
 
 import pyvista as pv
 from pyvista import _vtk
+from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import MissingDataError
 from pyvista.plotting.errors import RenderWindowUnavailable
 import pyvista.plotting.tools as tools_mod
@@ -37,8 +38,29 @@ if TYPE_CHECKING:
 @pytest.mark.skip_egl('OSMesa/EGL builds will not fail.')
 def test_plotter_image_before_show():
     pl = pv.Plotter()
-    with pytest.raises(AttributeError, match='not yet been set up'):
+    with pytest.raises(RuntimeError, match='not yet been set up'):
         _ = pl.image
+
+
+@pytest.mark.skip_egl('OSMesa/EGL builds will not fail.')
+def test_plotter_image_before_show_subclass_getattr():
+    """A subclass ``__getattr__`` must not mask what the property raises."""
+
+    class _SubPlotter(pv.Plotter):
+        """Plotter that reports every unresolved attribute as missing."""
+
+        def __getattr__(self, name):
+            """Raise for an attribute found neither on the instance nor the class."""
+            msg = f'{type(self).__name__} has no attribute {name!r}'
+            raise AttributeError(msg)
+
+    pl = _SubPlotter()
+    with pytest.raises(AttributeError, match='has no attribute'):
+        _ = pl.not_an_attribute
+    with pytest.raises(RuntimeError, match='not yet been set up'):
+        _ = pl.image
+    with pytest.raises(RuntimeError, match='not yet been set up'):
+        _ = pl.image_depth
 
 
 def test_has_render_window_fail():
@@ -48,6 +70,24 @@ def test_has_render_window_fail():
         pl._check_has_ren_win()
     with pytest.raises(RenderWindowUnavailable, match='not available'):
         pl._make_render_window_current()
+
+
+def test_image_with_overridden_check_has_ren_win(sphere):
+    """A subclass may override the check, so its return value must not be used."""
+
+    class _SubPlotter(pv.Plotter):
+        """Plotter whose render window check returns ``None``."""
+
+        def _check_has_ren_win(self) -> None:
+            """Check the render window with the base class implementation."""
+            pv.Plotter._check_has_ren_win(self)
+
+    pl = _SubPlotter()
+    pl.add_mesh(sphere)
+    pl.show(auto_close=False)
+    assert pl.image.ndim == 3
+    assert pl.image_depth.ndim == 2
+    pl.close()
 
 
 def test_render_lines_as_tubes_show_edges_warning(sphere):
@@ -173,6 +213,12 @@ def test_plotter_theme_raises():
         pl.theme = pv.themes.DarkTheme()
 
 
+@pytest.mark.parametrize('name', ['check_math_text_support', 'check_matplotlib_vtk_compatibility'])
+def test_moved_check_shims_raise(name):
+    with pytest.raises(DeprecationError, match=f'`pyvista.plotting.{name}`'):
+        getattr(tools_mod, name)()
+
+
 @pytest.mark.parametrize('theme', pv.plotting.themes._NATIVE_THEMES)
 def test_plotter_theme_by_name(theme):
     pl = pv.Plotter(theme=theme.name)
@@ -285,7 +331,7 @@ def test_plotter_add_volume_resolution_raises(mocker: MockerFixture):
 def test_plotter_add_volume_mapper_raises():
     pl = pv.Plotter()
     im = pv.ImageData(dimensions=(10, 10, 10))
-    im.point_data['foo'] = 1
+    im.point_data['foo'] = np.ones(im.n_points)
     match = re.escape(
         'Mapper (foo) unknown. Available volume mappers include: '
         'fixed_point, gpu, open_gl, smart, ugrid'
@@ -850,8 +896,8 @@ def test_plotter_meshes_from_assembly():
 
     # Ensure all actors with meshes are included in result
     for part in assembly.parts:
-        if isinstance(part, pv.DataObject):
-            assert part in result
+        if isinstance(part, pv.Actor):
+            assert part.mapper.dataset in result
         else:
             assert part not in result
 
@@ -873,8 +919,8 @@ def test_plotter_meshes_from_nested_assembly():
 
     # Ensure all actors with meshes are included in result
     for part in [*assembly.parts, *subassembly.parts]:
-        if isinstance(part, pv.DataObject):
-            assert part in result
+        if isinstance(part, pv.Actor):
+            assert part.mapper.dataset in result
         else:
             assert part not in result
 
@@ -1041,7 +1087,7 @@ def test_off_screen_background_thread_rendering():
             assert img is not None
             assert img.shape[0] > 0
             pl.close()
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:  # noqa: BLE001  # pragma: no cover
             errors.append(e)
 
     t = threading.Thread(target=render_on_thread)
@@ -1117,7 +1163,7 @@ _MACOS_FIX_CASES = [
 
 @pytest.mark.skipif(sys.platform != 'darwin', reason='macOS-specific test')
 @pytest.mark.parametrize('case', _MACOS_FIX_CASES, ids=lambda c: c.id)
-def test_macos_offscreen_render_window_configured(case):
+def test_macos_offscreen_render_window_configured(case):  # pragma: no cover -- macOS only
     """Test no macOS phantom window is generated for off-screen plotting."""
     appkit_mock = MagicMock()
     appkit_mock.NSApp.return_value = None  # no application running
@@ -1134,7 +1180,7 @@ def test_macos_offscreen_render_window_configured(case):
 
 @pytest.mark.skipif(sys.platform != 'darwin', reason='macOS-specific test')
 @pytest.mark.parametrize('case', _MACOS_FIX_CASES, ids=lambda c: c.id)
-def test_macos_offscreen_keeps_visible_application_in_dock(case):
+def test_macos_offscreen_keeps_visible_application_in_dock(case):  # pragma: no cover -- macOS only
     """Test a host GUI application keeps its Dock icon and menu bar.
 
     The activation policy is process-global, so demoting it for an off-screen
@@ -1149,3 +1195,14 @@ def test_macos_offscreen_keeps_visible_application_in_dock(case):
 
     assert render_window.GetConnectContextToNSView() is False
     appkit_mock.NSApplication.sharedApplication().setActivationPolicy_.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    ('value', 'expected'),
+    [('backface', 'back'), ('f', 'front'), (True, 'back'), (False, 'none')],
+)
+def test_backface_params_culling(sphere, value, expected):
+    pl = pv.Plotter()
+    actor = pl.add_mesh(sphere, backface_params={'culling': value})
+    assert actor.backface_prop.culling == expected
+    pl.close()

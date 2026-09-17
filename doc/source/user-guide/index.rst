@@ -32,7 +32,7 @@ This basic example demonstrates three key features of PyVista:
    pv.global_theme.anti_aliasing = 'fxaa'
 
 
-Here, we download the `Stanford dragon mesh
+Here, we download the `Stanford bunny mesh
 <http://graphics.stanford.edu/data/3Dscanrep/>`_, color it according
 to height, and plot it using a web-viewer. This same example will run
 identically locally.
@@ -41,7 +41,7 @@ identically locally.
     :context:
 
     >>> from pyvista import examples
-    >>> mesh = examples.download_dragon()
+    >>> mesh = examples.download_bunny()
     >>> mesh['scalars'] = mesh.points[:, 1]
     >>> mesh.plot(cpos='xy', cmap='plasma')
 
@@ -62,6 +62,7 @@ User Guide Contents
 
    what-is-a-mesh
    simple
+   plotting
    data_model
    vtk_to_pyvista
    themes

@@ -26,6 +26,7 @@ print(f'Time to clip with a PolyData {t_elapsed:.2f} seconds.')
 
 # %%
 # Plot the clipped polydata
+PYVISTA_GALLERY_FORCE_STATIC = True
 clipped.plot(show_scalar_bar=False)
 
 # %%
@@ -50,6 +51,7 @@ print(f'Time to clip with a PointSet {t_elapsed:.2f} seconds.')
 #    PyVista must still create an intermediate PolyData to be able to plot, so
 #    there is no performance improvement when using a :class:`pyvista.PointSet`
 
+PYVISTA_GALLERY_FORCE_STATIC = True
 clipped_pset.plot(show_scalar_bar=False)
 # %%
 # .. tags:: load

@@ -41,6 +41,8 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
 
+import pyvista_validation as _validation
+
 import pyvista  # noqa: TC001
 from pyvista._warn_external import warn_external
 from pyvista.core.config import _ConfigBase
@@ -645,13 +647,22 @@ class _ColorbarConfig(_ConfigBase):
 
     """
 
-    __slots__ = ['_height', '_position_x', '_position_y', '_width']
+    __slots__ = [
+        '_height',
+        '_position_x',
+        '_position_y',
+        '_stacking_gap',
+        '_title_pad',
+        '_width',
+    ]
 
     def __init__(self):
         self._width = None
         self._height = None
         self._position_x = None
         self._position_y = None
+        self._stacking_gap = None
+        self._title_pad = None
 
     @property
     def width(self) -> float:  # numpydoc ignore=RT01
@@ -717,6 +728,47 @@ class _ColorbarConfig(_ConfigBase):
     def position_y(self, position_y: float):
         self._position_y = float(position_y)
 
+    @property
+    def title_pad(self) -> float:  # numpydoc ignore=RT01
+        """Return or set the colorbar title padding.
+
+        The padding is the space between the title and the tick labels, as a
+        multiple of the title font size.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pv.global_theme.colorbar_horizontal.title_pad = 0.8
+
+        """
+        return self._title_pad  # type: ignore[return-value]
+
+    @title_pad.setter
+    def title_pad(self, title_pad: float):
+        self._title_pad = float(title_pad)
+
+    @property
+    def stacking_gap(self) -> float | None:  # numpydoc ignore=RT01
+        """Return or set the distance between stacked colorbars.
+
+        The distance is a fraction of the window.  ``None`` spaces them as
+        tightly as their titles and tick labels allow.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pv.global_theme.colorbar_vertical.stacking_gap = 0.2
+
+        """
+        return self._stacking_gap
+
+    @stacking_gap.setter
+    def stacking_gap(self, stacking_gap: float | None):
+        if stacking_gap is not None:
+            _validation.check_greater_than(stacking_gap, 0, strict=False, name='stacking_gap')
+            stacking_gap = float(stacking_gap)
+        self._stacking_gap = stacking_gap
+
     def __repr__(self):
         txt = ['']
         parm = {
@@ -724,12 +776,54 @@ class _ColorbarConfig(_ConfigBase):
             'Height': 'height',
             'X Position': 'position_x',
             'Y Position': 'position_y',
+            'Title Pad': 'title_pad',
+            'Stacking Gap': 'stacking_gap',
         }
         for name, attr in parm.items():
             setting = getattr(self, attr)
             txt.append(f'    {name:<21}: {setting}')
 
         return '\n'.join(txt)
+
+
+class _VerticalColorbarConfig(_ColorbarConfig):
+    """PyVista vertical colorbar configuration.
+
+    Adds the settings that only a vertical colorbar has.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> pv.global_theme.colorbar_vertical.rotate_title = True
+
+    """
+
+    __slots__ = ['_rotate_title']
+
+    def __init__(self):
+        super().__init__()
+        self._rotate_title = False
+
+    @property
+    def rotate_title(self) -> bool:  # numpydoc ignore=RT01
+        """Return or set whether a colorbar turns its title alongside the bar.
+
+        A horizontal colorbar cannot, so this is a vertical setting only.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pv.global_theme.colorbar_vertical.rotate_title = True
+
+        """
+        return self._rotate_title
+
+    @rotate_title.setter
+    def rotate_title(self, rotate_title: bool):
+        self._rotate_title = bool(rotate_title)
+
+    def __repr__(self):
+        return '\n'.join([super().__repr__(), f'    {"Rotate Title":<21}: {self.rotate_title}'])
 
 
 class _AxesConfig(_ConfigBase):
@@ -1060,8 +1154,10 @@ class _Font(_ConfigBase):
         self._color = Color(color)
 
     @property
-    def fmt(self) -> str:  # numpydoc ignore=RT01
+    def fmt(self) -> str | None:  # numpydoc ignore=RT01
         """Return or set the string formatter used to format numerical data.
+
+        ``None``, the default, lets each actor choose its own format.
 
         Examples
         --------
@@ -1071,10 +1167,10 @@ class _Font(_ConfigBase):
         >>> pv.global_theme.font.fmt = '{:.6e}'
 
         """
-        return self._fmt  # type: ignore[return-value]
+        return self._fmt
 
     @fmt.setter
-    def fmt(self, fmt: str):
+    def fmt(self, fmt: str | None) -> None:
         self._fmt = fmt
 
 
@@ -1847,12 +1943,14 @@ class Theme(_ConfigBase):
         self._colorbar_horizontal.height = 0.08
         self._colorbar_horizontal.position_x = 0.35
         self._colorbar_horizontal.position_y = 0.05
+        self._colorbar_horizontal.title_pad = 0.5
 
-        self._colorbar_vertical = _ColorbarConfig()
+        self._colorbar_vertical = _VerticalColorbarConfig()
         self._colorbar_vertical.width = 0.08
         self._colorbar_vertical.height = 0.45
         self._colorbar_vertical.position_x = 0.9
         self._colorbar_vertical.position_y = 0.02
+        self._colorbar_vertical.title_pad = 0.5
 
         self._show_scalar_bar = True
         self._show_edges = False
@@ -1980,7 +2078,7 @@ class Theme(_ConfigBase):
         ...     focal_point=(0.0, 0.0, 0.0),
         ...     viewup=(0.0, 0.37, 0.93),
         ... )
-        >>> pl.show()  # doctest: +SKIP
+        >>> pl.show()
 
         """
         return self._interpolate_before_map
@@ -2446,7 +2544,7 @@ class Theme(_ConfigBase):
         >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))  # green
         >>> _ = pl.add_mesh(pv.Sphere(center=(1, 1, 0)))  # blue
         >>> _ = pl.add_mesh(pv.Cylinder(center=(0, 1, 0)))  # red again
-        >>> pl.show()  # doctest: +SKIP
+        >>> pl.show()
 
         """
         return self._color_cycler
@@ -2664,9 +2762,9 @@ class Theme(_ConfigBase):
         return self._colorbar_vertical
 
     @colorbar_vertical.setter
-    def colorbar_vertical(self, config: _ColorbarConfig):
-        if not isinstance(config, _ColorbarConfig):
-            msg = 'Configuration type must be `_ColorbarConfig`.'  # type: ignore[unreachable]
+    def colorbar_vertical(self, config: _VerticalColorbarConfig):
+        if not isinstance(config, _VerticalColorbarConfig):
+            msg = 'Configuration type must be `_VerticalColorbarConfig`.'  # type: ignore[unreachable]
             raise TypeError(msg)
         self._colorbar_vertical = config
 
@@ -2937,8 +3035,11 @@ class Theme(_ConfigBase):
         self._multi_samples = int(multi_samples)
 
     @property
-    def multi_rendering_splitting_position(self) -> float:  # numpydoc ignore=RT01
+    def multi_rendering_splitting_position(self) -> float | None:  # numpydoc ignore=RT01
         """Return or set the default splitting position for multi-rendering.
+
+        ``None``, the default, lets the renderers choose the position from the
+        number of subplots on each side.
 
         Examples
         --------
@@ -2949,13 +3050,13 @@ class Theme(_ConfigBase):
         >>> pv.global_theme.multi_rendering_splitting_position = 0.5
 
         """
-        return self._multi_rendering_splitting_position  # type: ignore[return-value]
+        return self._multi_rendering_splitting_position
 
     @multi_rendering_splitting_position.setter
     def multi_rendering_splitting_position(
         self,
-        multi_rendering_splitting_position: float,
-    ):
+        multi_rendering_splitting_position: float | None,
+    ) -> None:
         self._multi_rendering_splitting_position = multi_rendering_splitting_position
 
     @property
@@ -3128,7 +3229,7 @@ class Theme(_ConfigBase):
 
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(pv.PolyData())
-        >>> pl.show()  # doctest: +SKIP
+        >>> pl.show()
 
         """
         return self._allow_empty_mesh
@@ -3245,7 +3346,6 @@ class Theme(_ConfigBase):
 
     @interactor_style.setter
     def interactor_style(self, interactor_style: str) -> None:
-        """Set the default interactor style."""
         self._interactor_style = _validate_interactor_style(interactor_style)
 
     def load_theme(self, theme: str | Theme) -> None:
@@ -3291,6 +3391,18 @@ class Theme(_ConfigBase):
 
         for attr_name in Theme.__slots__:
             setattr(self, attr_name, getattr(theme, attr_name))
+
+    @classmethod
+    def _from_theme(cls, theme: str | Theme) -> Theme:
+        """Return a new theme holding a copy of the settings of ``theme``.
+
+        Equivalent to ``Theme()`` followed by :meth:`load_theme`.
+        """
+        # Optimization: skip ``__init__`` since ``load_theme`` overwrites every slot it
+        # fills; every plotter, mapper and property takes a theme snapshot this way.
+        new = cls.__new__(cls)
+        new.load_theme(theme)
+        return new
 
     def save(self, filename: str) -> None:
         """Serialize this theme to a ``json`` file.
@@ -3399,8 +3511,8 @@ class Theme(_ConfigBase):
 
         .. versionchanged:: 0.49
 
-            For cube map textures, the diffuse irradiance map used for
-            image-based lighting is down-sampled at the same rate. See
+            The image-based lighting textures are down-sampled at the same rate.
+            See
             :meth:`~pyvista.Plotter.set_environment_texture` for details.
 
         Examples
@@ -3493,6 +3605,8 @@ class DarkTheme(Theme):
         self.background = 'black'
         self.cmap = 'viridis'
         self.font.color = 'white'
+        self.font.title_size = 18
+        self.font.label_size = 18
         self.show_edges = False
         self.color = 'lightblue'
         self.outline_color = 'white'
@@ -3528,6 +3642,7 @@ class ParaViewTheme(Theme):
         self.background = 'paraview'
         self.cmap = 'coolwarm'
         self.font.family = 'arial'
+        self.font.title_size = 16
         self.font.label_size = 16
         self.font.color = 'white'
         self.show_edges = False

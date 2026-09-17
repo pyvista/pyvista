@@ -1,0 +1,22 @@
+name: Restore pyvista/data cache
+description: >-
+  Restore the pyvista/data working tree saved by cache-pyvista-data.yml into
+  `pyvista-data` and point `PYVISTA_DATA` at it. Fails the job when the key is
+  not found.
+inputs:
+  key:
+    description: Cache key output by cache-pyvista-data.yml.
+    required: true
+runs:
+  using: composite
+  steps:
+    - uses: actions/cache/restore@v6
+      with:
+        path: pyvista-data
+        key: ${{ inputs.key }}
+        enableCrossOsArchive: true
+        fail-on-cache-miss: true
+
+    - name: Point PYVISTA_DATA at the restored folder
+      shell: bash
+      run: echo "PYVISTA_DATA=$GITHUB_WORKSPACE/pyvista-data" >> "$GITHUB_ENV" # zizmor: ignore[github-env]

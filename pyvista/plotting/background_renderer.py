@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 from .renderer import Renderer
 
@@ -27,10 +28,7 @@ class BackgroundRenderer(Renderer):
 
     """
 
-    @_deprecate_positional_args(allowed=['parent', 'image_path'])
-    def __init__(  # noqa: PLR0917
-        self, parent, image_path, scale=1, view_port=None
-    ):
+    def __init__(self, parent, image_path, *, scale=1, view_port=None):
         """Initialize BackgroundRenderer with an image."""
         # read the image first as we don't need to create a render if
         # the image path is invalid
@@ -39,7 +37,7 @@ class BackgroundRenderer(Renderer):
         super().__init__(parent, border=False)
         self.SetLayer(0)
         self.InteractiveOff()
-        self.SetBackground(self.parent.renderer.GetBackground())
+        self.SetBackground(self._plotter.renderer.GetBackground())
         self._scale = scale
         self._modified_observer = None
         self._prior_window_size = None
@@ -74,7 +72,7 @@ class BackgroundRenderer(Renderer):
         if self._prior_window_size != self.parent.window_size:
             self._prior_window_size = self.parent.window_size
 
-        actor = self._actors['background']
+        actor = cast('_vtk.vtkImageActor', self._actors['background'])
         image_data = actor.GetInput()
         origin = image_data.GetOrigin()
         extent = image_data.GetExtent()
