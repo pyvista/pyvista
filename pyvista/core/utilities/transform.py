@@ -2880,10 +2880,11 @@ class ThinPlateSplineTransform(
 
     Parameters
     ----------
-    source_points : MatrixLike[float]
-        Points to map from, as an ``(N, 3)`` array.
+    source_points : MatrixLike[float], optional
+        Points to map from, as an ``(N, 3)`` array. Must be given together with
+        ``target_points``.
 
-    target_points : MatrixLike[float]
+    target_points : MatrixLike[float], optional
         Points to map onto, as an ``(N, 3)`` array of the same length as
         ``source_points``.
 
@@ -2928,20 +2929,24 @@ class ThinPlateSplineTransform(
 
     def __init__(
         self: ThinPlateSplineTransform,
-        source_points: MatrixLike[float],
-        target_points: MatrixLike[float],
+        source_points: MatrixLike[float] | None = None,
+        target_points: MatrixLike[float] | None = None,
         *,
         sigma: float = 1.0,
     ) -> None:
         super().__init__()
-        source = _validation.validate_arrayNx3(source_points, name='source_points')
-        target = _validation.validate_arrayNx3(target_points, name='target_points')
-        if len(source) != len(target):
-            msg = (
-                f'Number of source points ({len(source)}) must equal the number of '
-                f'target points ({len(target)}).'
-            )
+        if (source_points is None) != (target_points is None):
+            msg = 'Both source_points and target_points must be given, or neither.'
             raise ValueError(msg)
-        self.SetSourceLandmarks(pv.vtk_points(source))
-        self.SetTargetLandmarks(pv.vtk_points(target))
+        if source_points is not None and target_points is not None:
+            source = _validation.validate_arrayNx3(source_points, name='source_points')
+            target = _validation.validate_arrayNx3(target_points, name='target_points')
+            if len(source) != len(target):
+                msg = (
+                    f'Number of source points ({len(source)}) must equal the number of '
+                    f'target points ({len(target)}).'
+                )
+                raise ValueError(msg)
+            self.SetSourceLandmarks(pv.vtk_points(source))
+            self.SetTargetLandmarks(pv.vtk_points(target))
         self.SetSigma(sigma)

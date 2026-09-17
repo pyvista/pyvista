@@ -3533,7 +3533,16 @@ def test_thin_plate_spline_transform():
     assert warp.GetTargetLandmarks().GetNumberOfPoints() == 5
 
 
+def test_thin_plate_spline_transform_without_landmarks():
+    warp = pv.ThinPlateSplineTransform()
+    assert warp.GetSourceLandmarks() is None
+
+
 def test_thin_plate_spline_transform_raises():
     match = 'Number of source points (1) must equal the number of target points (2).'
     with pytest.raises(ValueError, match=re.escape(match)):
         pv.ThinPlateSplineTransform([(0, 0, 0)], [(0, 0, 0), (1, 1, 1)])
+
+    match = 'Both source_points and target_points must be given, or neither.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.ThinPlateSplineTransform([(0, 0, 0)])
