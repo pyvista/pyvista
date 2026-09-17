@@ -27,6 +27,7 @@ from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.filters.data_set import _ExtractValuesInputs
 from pyvista.core.utilities.arrays import FieldAssociation
+from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import set_default_active_scalars
 from pyvista.core.utilities.helpers import _warn_if_invalid_data
@@ -2587,8 +2588,7 @@ class ImageDataFilters(DataSetFilters):
         Returns
         -------
         pyvista.PolyData
-            Surface mesh of labeled regions. If no boundary polygons are generated the
-            mesh is empty and its ``'boundary_labels'`` array has a single component.
+            Surface mesh of labeled regions.
 
         Raises
         ------
@@ -2783,7 +2783,10 @@ class ImageDataFilters(DataSetFilters):
         def _empty_output(dtype_: np.dtype[Any]) -> pv.PolyData:
             """Return a contour with no cells and an empty boundary labels array."""
             empty = pv.PolyData()
-            empty.cell_data[PV_NAME] = np.empty((0,), dtype=dtype_)
+            components = 1 if simplify_output else 2
+            array = np.empty((0, components), dtype=dtype_)
+            # cell_data rejects an empty array with more than one component
+            empty.GetCellData().AddArray(convert_array(array, PV_NAME))
             return empty
 
         def _validate_selection(selection: int | VectorLike[int] | None) -> NumpyArray[int]:
@@ -2879,6 +2882,10 @@ class ImageDataFilters(DataSetFilters):
             must_contain=output_mesh_type,
             name='output_mesh_type',
         )
+        want_external = 'external' in boundary_style
+        if simplify_output is None:
+            simplify_output = want_external
+
         input_ids = _validate_selection(select_inputs)
 
         alg_input = _get_alg_input(self, scalars)
@@ -2949,9 +2956,6 @@ class ImageDataFilters(DataSetFilters):
         if output.n_cells == 0:
             return _empty_output(active_scalars.dtype)
 
-        want_external = 'external' in boundary_style
-        if simplify_output is None:
-            simplify_output = want_external
         if simplify_output:
             # Simplify scalars to a single component
             if not want_external:

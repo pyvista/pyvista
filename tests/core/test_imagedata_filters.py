@@ -326,27 +326,35 @@ def test_contour_labels_not_3d_cell_data_raises():
 
 
 @pytest.mark.parametrize(
-    'kwargs',
+    ('kwargs', 'expected_shape'),
     [
-        {'boundary_style': 'internal', 'select_inputs': 2, 'simplify_output': True},
-        {'select_outputs': 99},
+        ({'boundary_style': 'internal', 'select_inputs': 2, 'simplify_output': True}, (0,)),
+        ({'boundary_style': 'internal', 'select_inputs': 2, 'simplify_output': False}, (0, 2)),
+        ({'select_outputs': 99}, (0,)),
+        ({'select_outputs': 99, 'simplify_output': False}, (0, 2)),
     ],
 )
-def test_contour_labels_no_boundary_cells(labeled_image, kwargs):
+def test_contour_labels_no_boundary_cells(labeled_image, kwargs, expected_shape):
     contours = labeled_image.contour_labels(**kwargs)
     assert contours.is_empty
-    assert contours.cell_data[BOUNDARY_LABELS].shape == (0,)
+    assert contours[BOUNDARY_LABELS].shape == expected_shape
 
 
+@pytest.mark.parametrize('simplify_output', [True, False, None])
 @pytest.mark.parametrize('boundary_style', ['external', 'internal', 'all', 'strict_external'])
-def test_contour_labels_no_background(boundary_style):
+def test_contour_labels_no_background(boundary_style, simplify_output):
     image = pv.ImageData(dimensions=(10, 10, 10))
     image.point_data['labels'] = np.full(image.n_points, 5, dtype=np.uint8)
 
-    contours = image.contour_labels(boundary_style, pad_background=False)
+    contours = image.contour_labels(
+        boundary_style, simplify_output=simplify_output, pad_background=False
+    )
+    expected_ndim = (
+        1 if simplify_output or (simplify_output is None and 'external' in boundary_style) else 2
+    )
     assert contours.is_empty
-    assert contours.cell_data[BOUNDARY_LABELS].shape == (0,)
-    assert contours.cell_data[BOUNDARY_LABELS].dtype == np.uint8
+    assert contours[BOUNDARY_LABELS].ndim == expected_ndim
+    assert contours[BOUNDARY_LABELS].dtype == np.uint8
 
 
 def test_contour_labels_empty_input(frog_tissues):
@@ -355,7 +363,7 @@ def test_contour_labels_empty_input(frog_tissues):
     assert np.allclose(voi.active_scalars, background_value)
     surface = voi.contour_labels(background_value=background_value)
     assert surface.is_empty
-    assert surface.cell_data[BOUNDARY_LABELS].shape == (0,)
+    assert surface[BOUNDARY_LABELS].shape == (0,)
 
 
 @pytest.fixture
