@@ -323,7 +323,12 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkMatrix3x3',
         'vtkMatrix4x4',
     ),
-    'vtkCommonTransforms': ('vtkTransform',),
+    'vtkCommonTransforms': (
+        'vtkAbstractTransform',
+        'vtkHomogeneousTransform',
+        'vtkThinPlateSplineTransform',
+        'vtkTransform',
+    ),
     'vtkDomainsChemistry': ('vtkProteinRibbonFilter',),
     'vtkFiltersCore': (
         'VTK_BEST_FITTING_PLANE',
@@ -604,6 +609,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkImageInterpolator',
         'vtkImageMirrorPad',
         'vtkImageResize',
+        'vtkImageReslice',
         'vtkImageSincInterpolator',
         'vtkImageThreshold',
         'vtkImageWrapPad',
