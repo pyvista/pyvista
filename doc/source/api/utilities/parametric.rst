@@ -18,10 +18,10 @@ see additional examples, see :ref:`create_parametric_geometric_objects_example`.
    ParametricBohemianDome
    ParametricBour
    ParametricBoy
-   ParametricDini
    ParametricCatalanMinimal
    ParametricConicSpiral
    ParametricCrossCap
+   ParametricDini
    ParametricEllipsoid
    ParametricEnneper
    ParametricFigure8Klein

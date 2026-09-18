@@ -161,8 +161,7 @@ def test_del_on_a_slotted_target_raises():
 
     @pv.register_dataset_accessor('slotted_del', SlottedTarget)
     class SlottedAccessor:
-        def __init__(self, obj):
-            self._obj = obj
+        pass
 
     with pytest.raises(AttributeError, match='slotted_del'):
         del SlottedTarget().slotted_del
@@ -235,9 +234,6 @@ def test_class_access_returns_accessor_class():
     class ExposedAccessor:
         """Docstring visible on help(pv.PolyData.exposed)."""
 
-        def __init__(self, mesh):
-            self._mesh = mesh
-
     assert pv.PolyData.exposed is ExposedAccessor
     assert 'Docstring visible' in (pv.PolyData.exposed.__doc__ or '')
 
@@ -245,8 +241,7 @@ def test_class_access_returns_accessor_class():
 def test_accessor_name_appears_in_dir():
     @pv.register_dataset_accessor('discoverable', pv.PolyData)
     class DiscoverableAccessor:
-        def __init__(self, mesh):
-            self._mesh = mesh
+        pass
 
     assert 'discoverable' in dir(pv.PolyData)
     assert 'discoverable' in dir(pv.Sphere())
@@ -353,6 +348,8 @@ def test_accessor_vs_accessor_collision_warns_and_replaces():
         def who(self):
             return 'first'
 
+    assert pv.Sphere().clashing.who() == 'first'
+
     with pytest.warns(UserWarning, match='replaces an existing registered accessor'):
 
         @pv.register_dataset_accessor('clashing', pv.PolyData)
@@ -424,8 +421,7 @@ def test_builtin_shadow_raises_without_override():
 
         @pv.register_dataset_accessor('clip', pv.PolyData)
         class ClipAccessor:
-            def __init__(self, mesh):
-                self._mesh = mesh
+            pass
 
     assert callable(pv.PolyData.clip)
 
@@ -459,8 +455,7 @@ def test_inherited_builtin_shadow_raises():
 
         @pv.register_dataset_accessor('bounds', pv.PolyData)
         class BoundsAccessor:
-            def __init__(self, mesh):
-                self._mesh = mesh
+            pass
 
 
 def test_empty_name_raises():
@@ -513,9 +508,14 @@ def test_unregister_removes_descriptor():
         def __init__(self, mesh):
             self._mesh = mesh
 
+    sphere = pv.Sphere()
+    assert sphere.removable._mesh is sphere
     assert 'removable' in pv.PolyData.__dict__
+
     pv.unregister_dataset_accessor('removable', pv.PolyData)
     assert 'removable' not in pv.PolyData.__dict__
+    with pytest.raises(AttributeError):
+        _ = pv.Sphere().removable
 
 
 def test_unregister_restores_overridden_builtin():
@@ -536,8 +536,10 @@ def test_unregister_restores_overridden_builtin():
             return 'accessor'
 
     assert Target.__dict__['existing_method'] is not original_method
+    assert Target().existing_method() == 'accessor'
     pv.unregister_dataset_accessor('existing_method', Target)
     assert Target.__dict__['existing_method'] is original_method
+    assert Target().existing_method() == 'original'
 
 
 def test_unregister_missing_raises():
@@ -563,8 +565,7 @@ def test_unregister_inherited_accessor_raises():
 def test_unregister_updates_records():
     @pv.register_dataset_accessor('tracked', pv.PolyData)
     class TrackedAccessor:
-        def __init__(self, mesh):
-            self._mesh = mesh
+        pass
 
     names_before = [r.name for r in pv.registered_accessors()]
     assert 'tracked' in names_before
@@ -577,8 +578,7 @@ def test_unregister_updates_records():
 def test_registered_accessors_reports_records():
     @pv.register_dataset_accessor('introspect_me', pv.PolyData)
     class IntrospectMeAccessor:
-        def __init__(self, mesh):
-            self._mesh = mesh
+        pass
 
     records = pv.registered_accessors()
     matches = [r for r in records if r.name == 'introspect_me']
@@ -596,16 +596,14 @@ def test_registered_accessors_returns_tuple():
 def test_re_register_replaces_single_record():
     @pv.register_dataset_accessor('single_record', pv.PolyData)
     class FirstAccessor:
-        def __init__(self, mesh):
-            self._mesh = mesh
+        pass
 
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
 
         @pv.register_dataset_accessor('single_record', pv.PolyData)
         class SecondAccessor:
-            def __init__(self, mesh):
-                self._mesh = mesh
+            pass
 
     records = [r for r in pv.registered_accessors() if r.name == 'single_record']
     assert len(records) == 1
@@ -632,8 +630,7 @@ def test_save_restore_round_trip_populated():
 
     @pv.register_dataset_accessor('post_snapshot', pv.PolyData)
     class PostSnapshotAccessor:
-        def __init__(self, mesh):
-            self._mesh = mesh
+        pass
 
     pv.unregister_dataset_accessor('snapshot_me', pv.PolyData)
 
@@ -653,8 +650,7 @@ def test_save_restore_round_trip_preserves_override():
 
     @pv.register_dataset_accessor('clip', pv.PolyData, override=True)
     class ClipOverride:
-        def __init__(self, mesh):
-            self._mesh = mesh
+        pass
 
     _reg_mod._restore_registry_state(state)
     assert pv.PolyData.clip is original_clip
@@ -666,8 +662,7 @@ def test_fixture_isolation_setup():
 
     @pv.register_dataset_accessor('leaked_accessor', pv.PolyData)
     class LeakedAccessor:
-        def __init__(self, mesh):
-            self._mesh = mesh
+        pass
 
 
 def test_fixture_isolation_teardown():
@@ -756,6 +751,7 @@ def _reset_entry_point_state(monkeypatch, eps: list):
     ``entry_points`` return value."""
     monkeypatch.setattr(_reg_mod, '_entry_points_loaded', False)
     _reg_mod._pending_accessors.clear()
+    _reg_mod._failed_accessors.clear()
     monkeypatch.setattr(
         'pyvista.core.utilities.accessor_registry.entry_points',
         lambda **_: eps,
@@ -935,41 +931,144 @@ def test_entry_point_metadata_scanned_once(monkeypatch):
     assert scan_count == 1
 
 
-def test_broken_plugin_warns_once_and_isolates(monkeypatch):
-    """A plugin that fails to import emits one ``UserWarning`` per
-    access attempt, does not crash pyvista, and does not affect
-    lookups of unrelated names."""
+def _broken_entry_point(monkeypatch, importer):
     ep = MagicMock()
     ep.name = 'broken'
     ep.value = 'broken_plugin_module'
-
     _reset_entry_point_state(monkeypatch, [ep])
-    monkeypatch.setattr(
-        'pyvista.core.utilities.accessor_registry.import_module',
-        MagicMock(side_effect=ImportError('missing dep')),
-    )
+    monkeypatch.setattr('pyvista.core.utilities.accessor_registry.import_module', importer)
 
-    # First access: warn and raise AttributeError because there is no
-    # accessor named 'broken' after the failed import.
+
+def _accessor_warnings(captured):
+    return [w for w in captured if 'accessor' in str(w.message)]
+
+
+@pytest.mark.parametrize('target', [pv.Sphere, pv.MultiBlock, lambda: pv.PolyData])
+def test_broken_plugin_warns_once_raises_with_cause_and_stays_pending(monkeypatch, target):
+    """A failed import warns on the first access only; every access raises
+    ``AttributeError`` naming the entry point, without re-importing, and
+    the entry stays pending."""
+    importer = MagicMock(side_effect=ImportError('missing dep'))
+    _broken_entry_point(monkeypatch, importer)
+    match = 'entry point "broken" from broken_plugin_module: missing dep'
+
+    with pytest.warns(UserWarning, match=match):
+        with pytest.raises(AttributeError, match=match) as excinfo:
+            _ = target().broken
+    assert isinstance(excinfo.value.__cause__, ImportError)
+
+    with warnings.catch_warnings(record=True) as captured:
+        warnings.simplefilter('always')
+        for _ in range(3):
+            with pytest.raises(AttributeError, match=match):
+                _ = target().broken
+        assert not hasattr(target(), 'broken')
+    assert _accessor_warnings(captured) == []
+
+    assert importer.call_count == 1
+    assert _reg_mod._pending_accessors == {'broken': 'broken_plugin_module'}
+    assert list(_reg_mod._failed_accessors) == ['broken']
+    assert pv.Sphere().n_points > 0
+
+
+def test_plugin_that_registers_then_raises_is_not_re_executed(monkeypatch):
+    """Accessing a failed accessor never re-runs the plugin module, so an
+    accessor it attached before raising is neither re-registered nor
+    reported as a collision."""
+    body = (
+        'import pyvista as pv\n'
+        "@pv.register_dataset_accessor('sidecar', pv.PolyData)\n"
+        'class SidecarAccessor:\n'
+        '    def __init__(self, mesh):\n'
+        '        self._mesh = mesh\n'
+        "raise ImportError('missing dep')\n"
+    )
+    _broken_entry_point(monkeypatch, _fake_importer('broken_plugin_module', body))
+
+    try:
+        with pytest.warns(UserWarning, match='Failed to load'):
+            with pytest.raises(AttributeError):
+                _ = pv.Sphere().broken
+        with warnings.catch_warnings(record=True) as captured:
+            warnings.simplefilter('always')
+            for _ in range(3):
+                with pytest.raises(AttributeError, match='Failed to load'):
+                    _ = pv.Sphere().broken
+        assert _accessor_warnings(captured) == []
+        assert type(pv.Sphere().sidecar).__name__ == 'SidecarAccessor'
+    finally:
+        with contextlib.suppress(ValueError):
+            pv.unregister_dataset_accessor('sidecar', pv.PolyData)
+        sys.modules.pop('broken_plugin_module', None)
+
+
+def test_broken_plugin_hidden_from_dir_until_import_succeeds(monkeypatch):
+    """``dir`` advertises a pending accessor until its import fails, then
+    hides it; ``registered_accessors()`` retries, and a successful import
+    attaches the accessor and lists it again."""
+    body = (
+        'import pyvista as pv\n'
+        "@pv.register_dataset_accessor('broken', pv.PolyData)\n"
+        'class BrokenAccessor:\n'
+        '    def __init__(self, mesh):\n'
+        '        self._mesh = mesh\n'
+    )
+    importer = MagicMock(side_effect=[ImportError('missing dep'), None])
+
+    def _import(module_path):
+        importer(module_path)
+        return _fake_importer(module_path, body)(module_path)
+
+    _broken_entry_point(monkeypatch, _import)
+
+    try:
+        assert 'broken' in dir(pv.Sphere())
+        assert 'broken' in _reg_mod._pending_accessor_names()
+        with pytest.warns(UserWarning, match='Failed to load'):
+            with pytest.raises(AttributeError, match='Failed to load'):
+                _ = pv.Sphere().broken
+        assert 'broken' not in dir(pv.Sphere())
+        assert 'broken' not in _reg_mod._pending_accessor_names()
+
+        assert 'broken' in {r.name for r in pv.registered_accessors()}
+        assert type(pv.Sphere().broken).__name__ == 'BrokenAccessor'
+        assert _reg_mod._pending_accessors == {}
+        assert _reg_mod._failed_accessors == {}
+        assert 'broken' in dir(pv.Sphere())
+        assert importer.call_count == 2
+    finally:
+        with contextlib.suppress(ValueError):
+            pv.unregister_dataset_accessor('broken', pv.PolyData)
+        sys.modules.pop('broken_plugin_module', None)
+
+
+def test_registered_accessors_warns_and_retries_broken_plugin(monkeypatch):
+    """``registered_accessors()`` retries a failed plugin on every call,
+    warning each time it fails, and leaves the entry pending."""
+    importer = MagicMock(side_effect=ImportError('missing dep'))
+    _broken_entry_point(monkeypatch, importer)
+    match = 'entry point "broken" from broken_plugin_module'
+
+    for call in (1, 2):
+        with pytest.warns(UserWarning, match=match):
+            records = pv.registered_accessors()
+        assert isinstance(records, tuple)
+        assert importer.call_count == call
+    assert _reg_mod._pending_accessors == {'broken': 'broken_plugin_module'}
+    assert list(_reg_mod._failed_accessors) == ['broken']
+
+
+def test_save_restore_round_trip_preserves_failed(monkeypatch):
+    """Restoring a snapshot taken before a failed import forgets the failure."""
+    _broken_entry_point(monkeypatch, MagicMock(side_effect=ImportError('missing dep')))
+    state = _reg_mod._save_registry_state()
     with pytest.warns(UserWarning, match='Failed to load'):
         with pytest.raises(AttributeError):
             _ = pv.Sphere().broken
-
-    # Pending entry was consumed, so a second access is a clean
-    # AttributeError with no retry and no second "Failed to load"
-    # warning. Capture all warnings and assert specifically that no
-    # accessor-load warning fires; unrelated warnings (e.g. nightly
-    # NumPy / VTK deprecations) are ignored.
-    with warnings.catch_warnings(record=True) as captured:
-        warnings.simplefilter('always')
-        with pytest.raises(AttributeError):
-            _ = pv.Sphere().broken
-
-    accessor_warnings = [w for w in captured if 'Failed to load' in str(w.message)]
-    assert accessor_warnings == []
-
-    # Unrelated attributes still work.
-    assert pv.Sphere().n_points > 0
+    assert 'broken' in _reg_mod._failed_accessors
+    _reg_mod._restore_registry_state(state)
+    assert _reg_mod._failed_accessors == {}
+    assert 'broken' in _reg_mod._pending_accessor_names()
 
 
 def test_import_pyvista_does_not_import_plugin_modules(monkeypatch):
@@ -1092,7 +1191,7 @@ def test_pending_accessor_appears_in_dir_without_loading(monkeypatch):
     _reset_entry_point_state(monkeypatch, [ep])
     import_calls: list[str] = []
 
-    def _tracking_import(module_path: str):
+    def _tracking_import(module_path: str):  # pragma: no cover — asserted never called
         import_calls.append(module_path)
         return fake_import(module_path)
 
@@ -1115,8 +1214,7 @@ def test_explicit_accessor_appears_in_dir():
 
     @pv.register_dataset_accessor('explicit_dir_demo', pv.PolyData)
     class ExplicitDirDemo:
-        def __init__(self, mesh):
-            self._mesh = mesh
+        pass
 
     try:
         assert 'explicit_dir_demo' in dir(pv.Sphere())
@@ -1160,7 +1258,7 @@ def test_dir_after_pending_accessor_resolved(monkeypatch):
     finally:
         sys.modules.pop(plugin_name, None)
         # Clean up the descriptor that fake_import attached
-        if 'resolved_demo' in pv.PolyData.__dict__:
+        if 'resolved_demo' in pv.PolyData.__dict__:  # pragma: no branch — set by the body
             delattr(pv.PolyData, 'resolved_demo')
 
 

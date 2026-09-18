@@ -141,6 +141,8 @@ def _generate_faces_badge(n_faces: int) -> str:
 
 
 class _CellTypeTuple(NamedTuple):
+    """Value and documentation fields of a :class:`~pyvista.CellType` member."""
+
     value: int
     doc: str = ''
     example: str | None = None

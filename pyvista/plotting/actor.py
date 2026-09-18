@@ -3,15 +3,16 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Any
 import weakref
 
 import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 
+from ._property import _HAS_NATIVE_POINT_SHAPES
 from ._property import Property
 from .opts import PointSpriteShape
 from .opts import ShaderType
@@ -160,7 +161,12 @@ class Actor(Prop3D, _vtk.vtkActor):
 
     """
 
-    def __init__(self, mapper=None, prop=None, name=None) -> None:
+    def __init__(
+        self,
+        mapper: _vtk.vtkMapper | _BaseMapper | None = None,
+        prop: Property | None = None,
+        name: str | None = None,
+    ) -> None:
         """Initialize actor."""
         super().__init__()
         if mapper is not None:
@@ -177,7 +183,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         self._camera_distortion_state: tuple[tuple[float, ...], tuple[float, float]] | None = None
 
     @property
-    def mapper(self) -> _BaseMapper:  # numpydoc ignore=RT01
+    def mapper(self) -> _BaseMapper | None:  # numpydoc ignore=RT01
         """Return or set the mapper of the actor.
 
         Examples
@@ -210,11 +216,12 @@ class Actor(Prop3D, _vtk.vtkActor):
         return self.GetMapper()  # type: ignore[return-value]
 
     @mapper.setter
-    def mapper(self, obj) -> None:
-        self.SetMapper(obj)
+    def mapper(self, obj: _vtk.vtkMapper | _BaseMapper | None) -> None:
+        # VTK's stubs do not allow clearing the mapper with ``None``, but VTK does
+        self.SetMapper(obj)  # type: ignore[arg-type]
 
     @property
-    def prop(self):  # numpydoc ignore=RT01
+    def prop(self) -> Property:  # numpydoc ignore=RT01
         """Return or set the property of this actor.
 
         Examples
@@ -229,14 +236,14 @@ class Actor(Prop3D, _vtk.vtkActor):
         >>> pl.show()
 
         """
-        return self.GetProperty()
+        return self.GetProperty()  # type: ignore[return-value]
 
     @prop.setter
     def prop(self, obj: Property) -> None:
         self.SetProperty(obj)
 
     @property
-    def texture(self):  # numpydoc ignore=RT01
+    def texture(self) -> _vtk.vtkTexture | None:  # numpydoc ignore=RT01
         """Return or set the actor texture.
 
         Notes
@@ -264,14 +271,16 @@ class Actor(Prop3D, _vtk.vtkActor):
           Dimensions:   256, 256
 
         """
-        return self.GetTexture()
+        # VTK returns ``None`` when the actor has no texture
+        texture: _vtk.vtkTexture | None = self.GetTexture()
+        return texture
 
     @texture.setter
-    def texture(self, obj) -> None:
+    def texture(self, obj: _vtk.vtkTexture) -> None:
         self.SetTexture(obj)
 
     @property
-    def memory_address(self):  # numpydoc ignore=RT01
+    def memory_address(self) -> str:  # numpydoc ignore=RT01
         """Return the memory address of this actor."""
         return self.GetAddressAsString('')
 
@@ -295,7 +304,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         return bool(self.GetPickable())
 
     @pickable.setter
-    def pickable(self, value) -> None:
+    def pickable(self, value: bool) -> None:
         self.SetPickable(value)
 
     @property
@@ -418,7 +427,7 @@ class Actor(Prop3D, _vtk.vtkActor):
     def use_bounds(self, value: bool) -> None:
         self.SetUseBounds(value)
 
-    def plot(self, **kwargs) -> None:
+    def plot(self, **kwargs: Any) -> None:
         """Plot just the actor.
 
         This may be useful when interrogating or debugging individual actors.
@@ -446,8 +455,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         pl.add_actor(self)
         pl.show(**kwargs)
 
-    @_deprecate_positional_args
-    def copy(self: Self, deep: bool = True) -> Self:  # noqa: FBT001, FBT002
+    def copy(self: Self, *, deep: bool = True) -> Self:
         """Create a copy of this actor.
 
         Parameters
@@ -490,7 +498,7 @@ class Actor(Prop3D, _vtk.vtkActor):
             new_actor.ShallowCopy(self)
         return new_actor
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Representation of the actor."""
         mat_info = 'Identity' if np.array_equal(self.user_matrix, np.eye(4)) else 'Set'
         bnd = self.bounds
@@ -844,6 +852,28 @@ class Actor(Prop3D, _vtk.vtkActor):
         """
         self.clear_shader_replacements(_feature_name='mip')
 
+    @property
+    def point_sprite_shape(self) -> str:  # numpydoc ignore=RT01
+        """Return the requested point shape, including ``'square'``.
+
+        The shape is retained when another representation or sphere rendering
+        makes it inactive.
+
+        .. versionadded:: 0.49
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> actor = pv.Actor()
+        >>> actor.set_point_sprite_shape('circle')
+        >>> actor.point_sprite_shape
+        'circle'
+
+        """
+        if _HAS_NATIVE_POINT_SHAPES:
+            return self.prop.point_shape
+        return self._point_sprite_shape or 'square'
+
     def set_point_sprite_shape(self, shape: PointSpriteShape | str) -> None:
         """Set a custom point sprite shape via fragment shader.
 
@@ -853,15 +883,12 @@ class Actor(Prop3D, _vtk.vtkActor):
         defined by a GLSL fragment shader. This uses the ``discard``
         instruction to clip fragments outside the desired shape boundary.
 
-        The chosen shape is **persisted on the actor** and is only
-        injected into the fragment shader while the actor's
-        :attr:`~pyvista.Property.style` is ``'points'``. When the style
-        is ``'surface'`` or ``'wireframe'`` the shader replacement is
-        transparently removed, because the underlying GLSL relies on
-        ``gl_PointCoord`` which is undefined for non-point primitives
-        and would otherwise corrupt the rendering. Switching
-        ``prop.style`` back to ``'points'`` later will re-install the
-        shader automatically.
+        With native point-shape support, the shape is stored on
+        :attr:`pyvista.Property.point_shape` and applies to point primitives
+        in every representation, including vertex cells in surfaces.
+        Sphere rendering takes precedence while enabled. Older backends use
+        a shader replacement active only in ``'points'`` representation.
+        The requested shape can be read from :attr:`point_sprite_shape`.
 
         Parameters
         ----------
@@ -914,6 +941,9 @@ class Actor(Prop3D, _vtk.vtkActor):
             msg = f'Invalid point sprite shape {shape!r}. Must be one of: {valid}'
             raise ValueError(msg)
 
+        if _HAS_NATIVE_POINT_SHAPES:
+            self.prop.point_shape = shape
+            return
         self._point_sprite_shape = shape.value if isinstance(shape, PointSpriteShape) else shape
         self._install_point_sprite_observer()
         self._sync_point_sprite_shader()
@@ -938,6 +968,9 @@ class Actor(Prop3D, _vtk.vtkActor):
         >>> actor.clear_point_sprite_shape()
 
         """
+        if _HAS_NATIVE_POINT_SHAPES:
+            self.prop.point_shape = 'square'
+            return
         self._point_sprite_shape = None
         if self._point_sprite_observer is not None:
             self.prop.RemoveObserver(self._point_sprite_observer)
@@ -971,7 +1004,7 @@ class Actor(Prop3D, _vtk.vtkActor):
                 owner._sync_point_sprite_shader()
 
         self._point_sprite_observer = self.prop.AddObserver(
-            'ModifiedEvent',
+            _vtk.vtkCommand.ModifiedEvent,
             _on_property_modified,
         )
 

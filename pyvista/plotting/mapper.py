@@ -11,7 +11,6 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.arrays import FieldAssociation
@@ -39,18 +38,94 @@ if TYPE_CHECKING:
     from pyvista.themes import Theme
 
 
+# Most values labelled under a categorical scalar bar
+_MAX_CATEGORY_LABELS = 10
+# Largest table built when every category value gets its own entry
+_MAX_CATEGORY_TABLE_SIZE = 65536
+# Table size used when the category values are not evenly spaced
+_CATEGORY_BAND_TABLE_SIZE = 4096
+# Table entries per category, so a volume's transfer function resolves each band
+_CATEGORY_ENTRIES_PER_VALUE = 8
+
+
+def _category_step(values):
+    """Return the spacing between category values, or ``None`` if they are not evenly spaced."""
+    if len(values) == 1:
+        return 1.0
+    gaps = np.diff(values)
+    step = gaps.min()
+    ratios = gaps / step
+    evenly_spaced = np.allclose(ratios, np.round(ratios), rtol=0, atol=1e-6)
+    if not evenly_spaced or (values[-1] - values[0]) / step + 1 > _MAX_CATEGORY_TABLE_SIZE:
+        return None
+    return step
+
+
+def _category_range(values):
+    """Return a scalar range that centers every category value on a table entry."""
+    step = _category_step(values)
+    if step is None:
+        step = np.diff(values).min()
+    return [values[0] - step / 2, values[-1] + step / 2]
+
+
+def _apply_categories(lut, values, annotations):
+    """Give each category value its own table color and return the values to label."""
+    if len(lut.values) < len(values):
+        msg = (
+            f'The colormap has {len(lut.values)} colors but the scalars have '
+            f'{len(values)} categories. Use a colormap with at least '
+            f'{len(values)} colors.'
+        )
+        raise ValueError(msg)
+    colors = lut.values[: len(values)].copy()
+    nan_color = np.array(Color(lut.nan_color).int_rgba)
+    low, high = lut.scalar_range
+    step = _category_step(values)
+    slots = None if step is None else round((high - low) / step)
+    if slots is None or not 0 < slots <= _MAX_CATEGORY_TABLE_SIZE:
+        step = None
+        n_table = _CATEGORY_BAND_TABLE_SIZE
+    else:
+        n_table = slots * max(
+            1, min(_CATEGORY_BAND_TABLE_SIZE // slots, _CATEGORY_ENTRIES_PER_VALUE)
+        )
+    centers = low + (np.arange(n_table) + 0.5) / n_table * (high - low)
+    owner = np.searchsorted((values[:-1] + values[1:]) / 2, centers)
+    table = colors[owner]
+    if step is not None:
+        # Only the band within half a step of a value keeps that value's color
+        table[np.abs(centers - values[owner]) > step / 2] = nan_color
+    lut.values = table
+
+    annotated = {float(v): str(text) for v, text in annotations.items()} if annotations else {}
+    lut.annotations = annotated
+    stride = -(-len(values) // _MAX_CATEGORY_LABELS)
+    return [float(v) for v in values[::stride] if float(v) not in annotated]
+
+
 @abstract_class
 class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkAbstractMapper):
-    """Base Mapper with methods common to other mappers."""
+    """Base Mapper with methods common to other mappers.
+
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
+
+    Parameters
+    ----------
+    theme : pyvista.plotting.themes.Theme, optional
+        Plot-specific theme.
+
+    **kwargs : dict, optional
+        Supports ``interpolate_before_map``.
+
+    """
 
     def __init__(self, theme=None, **kwargs) -> None:
-        self._theme = pv.themes.Theme()
-        if theme is None:
-            # copy global theme to ensure local property theme is fixed
-            # after creation.
-            self._theme.load_theme(pv.global_theme)
-        else:
-            self._theme.load_theme(theme)
+        # snapshot the theme so later edits to the source theme do not reach this mapper
+        self._theme = pv.themes.Theme._from_theme(pv.global_theme if theme is None else theme)
         self.lookup_table = LookupTable()
 
         self.interpolate_before_map = kwargs.get(
@@ -145,6 +220,7 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
     @scalar_range.setter
     def scalar_range(self, clim) -> None:
         self.SetScalarRange(*clim)
+        self.lookup_table.SetRange(*clim)
 
     @property
     def lookup_table(self) -> LookupTable:  # numpydoc ignore=RT01
@@ -281,7 +357,6 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
 
     @array_name.setter
     def array_name(self, name: str) -> None:
-        """Return or set the array name or number and component to color by."""
         self.SetArrayName(name)
 
     @property
@@ -399,6 +474,11 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
 
 class _BaseDataSetMapper(_BaseMapper):
     """Base wrapper for :vtk:`vtkDataSetMapper`.
+
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
 
     Parameters
     ----------
@@ -775,6 +855,7 @@ class _BaseDataSetMapper(_BaseMapper):
         scalars_name,
         preference,
         direct_scalars_color_mode,
+        overwrite: bool = False,
     ) -> None:
         """Configure scalar mode.
 
@@ -795,6 +876,9 @@ class _BaseDataSetMapper(_BaseMapper):
             When ``True``, scalars are treated as RGB colors. When
             ``False``, scalars are mapped to the color table.
 
+        overwrite : bool, default: False
+            Replace an existing array named ``scalars_name`` with ``scalars``.
+
         """
         dataset = self.dataset
         if dataset is not None:
@@ -811,7 +895,8 @@ class _BaseDataSetMapper(_BaseMapper):
             # active (see https://github.com/pyvista/pyvista/issues/542).
             if use_points:
                 if (
-                    scalars_name not in dataset.point_data
+                    overwrite
+                    or scalars_name not in dataset.point_data
                     or scalars_name == pv.DEFAULT_SCALARS_NAME
                 ):
                     dataset.point_data.set_array(scalars, scalars_name, deep_copy=False)
@@ -819,7 +904,8 @@ class _BaseDataSetMapper(_BaseMapper):
                 self.scalar_map_mode = 'point'
             elif use_cells:
                 if (
-                    scalars_name not in dataset.cell_data
+                    overwrite
+                    or scalars_name not in dataset.cell_data
                     or scalars_name == pv.DEFAULT_SCALARS_NAME
                 ):
                     dataset.cell_data.set_array(scalars, scalars_name, deep_copy=False)
@@ -830,26 +916,26 @@ class _BaseDataSetMapper(_BaseMapper):
 
             self.color_mode = 'direct' if direct_scalars_color_mode else 'map'
 
-    @_deprecate_positional_args(allowed=['scalars', 'scalars_name'])
-    def set_scalars(  # noqa: PLR0917
+    def set_scalars(
         self,
         scalars,
         scalars_name,
+        *,
         n_colors=256,
         scalar_bar_args=None,
         rgb=None,
         component=None,
         preference='point',
-        custom_opac: bool = False,  # noqa: FBT001, FBT002
+        custom_opac: bool = False,
         annotations=None,
-        log_scale: bool = False,  # noqa: FBT001, FBT002
+        log_scale: bool = False,
         nan_color=None,
         above_color=None,
         below_color=None,
         cmap=None,
-        flip_scalars: bool = False,  # noqa: FBT001, FBT002
+        flip_scalars: bool = False,
         opacity=None,
-        categories: bool | int = False,  # noqa: FBT001, FBT002
+        categories: bool | int = False,
         clim=None,
     ):
         """Set the scalars on this mapper.
@@ -945,9 +1031,15 @@ class _BaseDataSetMapper(_BaseMapper):
             transfer function that is an array either ``n_colors`` in length or
             shorter.
 
-        categories : bool, default: False
-            If set to ``True``, then the number of unique values in the scalar
-            array will be used as the ``n_colors`` argument.
+        categories : bool | int, default: False
+            If ``True``, each unique value in the scalar array gets its own
+            color and is labelled on the scalar bar, and values between them
+            take the NaN color. An integer is used as the ``n_colors``
+            argument instead.
+
+            .. versionchanged:: 0.50
+                ``True`` gives every unique value its own color instead of
+                spreading the colormap evenly over the scalar range.
 
         clim : Sequence, optional
             Color bar range for scalars.  Defaults to minimum and
@@ -960,14 +1052,17 @@ class _BaseDataSetMapper(_BaseMapper):
         if not isinstance(scalars, np.ndarray):
             scalars = np.asarray(scalars)
 
-        # Set the array title for when it is added back to the mesh
+        # An array derived here is renamed, and replaces any stale copy of that name
+        original_scalars_name = scalars_name
         if custom_opac:
             scalars_name = '__custom_rgba'
 
+        digitized = False
         if not np.issubdtype(scalars.dtype, np.number) and not isinstance(
             cmap,
             pv.LookupTable,
         ):
+            digitized = True
             # we can rapidly handle bools
             if scalars.dtype == np.bool_:
                 cats = np.array([b'False', b'True'], dtype='|S5')
@@ -1004,6 +1099,21 @@ class _BaseDataSetMapper(_BaseMapper):
         if scalars.dtype == np.bool_:
             scalars = scalars.astype(np.float64)
 
+        category_values = None
+        if (
+            categories is True
+            and not digitized
+            and not rgb
+            and not isinstance(cmap, pv.LookupTable)
+        ):
+            category_values = np.unique(scalars[~np.isnan(scalars)]).astype(float)
+            if category_values.size:
+                n_colors = len(category_values)
+                if clim is None:
+                    clim = _category_range(category_values)
+            else:
+                category_values = None
+
         # Set scalars range
         use_default_scalar_range = clim is None
         if clim is None:
@@ -1029,11 +1139,8 @@ class _BaseDataSetMapper(_BaseMapper):
             # have to add the attribute to pass it onward to some classes
             if isinstance(cmap, str):
                 self._cmap = cmap
-            if categories:
-                if categories is True:
-                    n_colors = len(np.unique(scalars))
-                elif isinstance(categories, int):
-                    n_colors = categories
+            if categories and categories is not True and isinstance(categories, int):
+                n_colors = categories
 
             self.lookup_table.apply_cmap(cmap, n_colors)
 
@@ -1062,7 +1169,12 @@ class _BaseDataSetMapper(_BaseMapper):
             if below_color:
                 self.lookup_table.below_range_color = below_color
                 scalar_bar_args.setdefault('below_label', 'below')
-            if isinstance(annotations, dict):
+            if category_values is not None:
+                labels = _apply_categories(self.lookup_table, category_values, annotations)
+                scalar_bar_args.setdefault('tick_locations', labels)
+                integral = np.array_equal(category_values, np.round(category_values))
+                scalar_bar_args.setdefault('fmt', '%.0f' if integral else '%g')
+            elif isinstance(annotations, dict):
                 self.lookup_table.annotations = annotations
             self.lookup_table.log_scale = log_scale
 
@@ -1071,6 +1183,7 @@ class _BaseDataSetMapper(_BaseMapper):
             scalars_name=scalars_name,
             preference=preference,
             direct_scalars_color_mode=rgb or custom_opac,
+            overwrite=scalars_name != original_scalars_name,
         )
 
         if isinstance(self, PointGaussianMapper):
@@ -1144,10 +1257,7 @@ class _BaseDataSetMapper(_BaseMapper):
             msg = 'Resolve must be either "off", "polygon_offset" or "shift_zbuffer"'
             raise ValueError(msg)
 
-    @_deprecate_positional_args(allowed=['opacity'])
-    def set_custom_opacity(  # noqa: PLR0917
-        self, opacity, color, n_colors, preference='point'
-    ):
+    def set_custom_opacity(self, opacity, *, color, n_colors, preference='point'):
         """Set custom opacity.
 
         Parameters
@@ -1402,7 +1512,19 @@ class PointGaussianMapper(_BaseDataSetMapper, _vtk.vtkPointGaussianMapper):
 
 @abstract_class
 class _BaseVolumeMapper(_BaseMapper):
-    """Volume mapper class to override methods and attributes for to volume mappers."""
+    """Volume mapper class to override methods and attributes for to volume mappers.
+
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
+
+    Parameters
+    ----------
+    theme : pyvista.plotting.themes.Theme, optional
+        Plot-specific theme.
+
+    """
 
     def __init__(self, theme=None) -> None:
         """Initialize this class."""
@@ -1416,7 +1538,7 @@ class _BaseVolumeMapper(_BaseMapper):
         return None
 
     @interpolate_before_map.setter
-    def interpolate_before_map(self, *args) -> None:
+    def interpolate_before_map(self, value) -> None:
         pass
 
     @property
@@ -1514,7 +1636,14 @@ class _BaseVolumeMapper(_BaseMapper):
 
 
 class FixedPointVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkFixedPointVolumeRayCastMapper):
-    """Wrap :vtk:`vtkFixedPointVolumeRayCastMapper`."""
+    """Wrap :vtk:`vtkFixedPointVolumeRayCastMapper`.
+
+    Parameters
+    ----------
+    theme : pyvista.plotting.themes.Theme, optional
+        Plot-specific theme.
+
+    """
 
     def __init__(self, theme=None) -> None:
         """Initialize this class."""
@@ -1523,7 +1652,14 @@ class FixedPointVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkFixedPointVolumeR
 
 
 class GPUVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkGPUVolumeRayCastMapper):
-    """Wrap :vtk:`vtkGPUVolumeRayCastMapper`."""
+    """Wrap :vtk:`vtkGPUVolumeRayCastMapper`.
+
+    Parameters
+    ----------
+    theme : pyvista.plotting.themes.Theme, optional
+        Plot-specific theme.
+
+    """
 
     def __init__(self, theme=None) -> None:
         """Initialize this class."""
@@ -1532,7 +1668,14 @@ class GPUVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkGPUVolumeRayCastMapper):
 
 
 class OpenGLGPUVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkOpenGLGPUVolumeRayCastMapper):
-    """Wrap :vtk:`vtkOpenGLGPUVolumeRayCastMapper`."""
+    """Wrap :vtk:`vtkOpenGLGPUVolumeRayCastMapper`.
+
+    Parameters
+    ----------
+    theme : pyvista.plotting.themes.Theme, optional
+        Plot-specific theme.
+
+    """
 
     def __init__(self, theme=None) -> None:
         """Initialize this class."""
@@ -1541,7 +1684,14 @@ class OpenGLGPUVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkOpenGLGPUVolumeRay
 
 
 class SmartVolumeMapper(_BaseVolumeMapper, _vtk.vtkSmartVolumeMapper):
-    """Wrap :vtk:`vtkSmartVolumeMapper`."""
+    """Wrap :vtk:`vtkSmartVolumeMapper`.
+
+    Parameters
+    ----------
+    theme : pyvista.plotting.themes.Theme, optional
+        Plot-specific theme.
+
+    """
 
     def __init__(self, theme=None) -> None:
         """Initialize this class."""
@@ -1553,7 +1703,14 @@ class SmartVolumeMapper(_BaseVolumeMapper, _vtk.vtkSmartVolumeMapper):
 class UnstructuredGridVolumeRayCastMapper(
     _BaseVolumeMapper, _vtk.vtkUnstructuredGridVolumeRayCastMapper
 ):
-    """Wrap :vtk:`vtkUnstructuredGridVolumeMapper`."""
+    """Wrap :vtk:`vtkUnstructuredGridVolumeMapper`.
+
+    Parameters
+    ----------
+    theme : pyvista.plotting.themes.Theme, optional
+        Plot-specific theme.
+
+    """
 
     def __init__(self, theme=None) -> None:
         """Initialize this class."""

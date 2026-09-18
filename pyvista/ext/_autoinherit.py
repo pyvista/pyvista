@@ -32,6 +32,8 @@ from sphinx.ext.autosummary import extract_summary
 from sphinx.util import logging
 from sphinx.util.docstrings import prepare_docstring
 
+from pyvista.core._vtk_utilities import _VTK_MODULE_PREFIXES
+
 if TYPE_CHECKING:
     from collections.abc import Iterable
     from collections.abc import Sequence
@@ -270,6 +272,36 @@ def filter_member_rows(  # numpydoc ignore=RT01
 ) -> list[tuple[str, str, str]]:
     """Return ``[(label, target, summary)]`` for the filters ``module.objname`` inherits."""
     return [row[1:] for row in _rows(module, objname, names) if _is_filter(row[0])]
+
+
+def _is_vtk(cls: type) -> bool:
+    """Return whether ``cls`` is defined in a compiled VTK module."""
+    # ``vtkmodules`` also holds pure-Python helpers -- ``VTKObjectWrapper`` in
+    # ``numpy_interface`` -- that VTK does not document, so the ``:vtk:`` role, which
+    # checks every target against vtk.org, cannot resolve them.
+    root, _, module = cls.__module__.partition('.')
+    return f'{root}.' in _VTK_MODULE_PREFIXES and module.startswith('vtk')
+
+
+def _vtk_entry_points(cls: type) -> list[type]:
+    """Return the VTK classes in ``cls``'s MRO that no other VTK class there derives from."""
+    vtk = [base for base in cls.__mro__[1:] if _is_vtk(base)]
+    return [base for base in vtk if not any(o is not base and issubclass(o, base) for o in vtk)]
+
+
+def inherited_classes(module: str, objname: str) -> list[str]:  # numpydoc ignore=RT01
+    """Return the documented classes ``module.objname`` inherits from, most derived first."""
+    cls = _class_from(module, objname)
+    documented = _documented_classes()
+    return [documented[base] for base in cls.__mro__[1:] if base in documented]
+
+
+def vtk_bases(module: str, objname: str) -> list[str]:  # numpydoc ignore=RT01
+    """Return the names of the VTK classes ``module.objname`` wraps.
+
+    VTK documents its own hierarchy, so the bases above each entry point are left out.
+    """
+    return [base.__name__ for base in _vtk_entry_points(_class_from(module, objname))]
 
 
 def setup(app: Sphinx) -> dict[str, Any]:  # numpydoc ignore=RT01

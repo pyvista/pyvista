@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.utilities.misc import _check_range
@@ -12,7 +13,15 @@ from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from .colors import Color
 from .opts import InterpolationType
+from .opts import PointSpriteShape
 from .opts import RepresentationType
+
+if TYPE_CHECKING:
+    from ._typing import ColorLike
+    from ._typing import PropertyCullingOptions
+    from .themes import Theme
+
+_HAS_NATIVE_POINT_SHAPES = hasattr(getattr(_vtk.vtkProperty, 'Point2DShapeType', None), 'Star')
 
 
 class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
@@ -112,9 +121,9 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         cause flat meshes to be partially displayed. Defaults to
         ``'none'``. One of the following:
 
-        * ``"back"`` - Enable backface culling
-        * ``"front"`` - Enable frontface culling
-        * ``'none'`` - Disable both backface and frontface culling
+        * ``True``, ``'b'``, ``'back'``, ``'backface'`` - Enable backface culling
+        * ``'f'``, ``'front'``, ``'frontface'`` - Enable frontface culling
+        * ``False``, ``'none'`` - Disable both backface and frontface culling
 
     edge_opacity : float, default: :attr:`pyvista.plotting.themes.Theme.edge_opacity`
         Edge opacity of the mesh. A single float value that will be applied globally
@@ -164,38 +173,33 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
     _theme = None
     _color_set = None
 
-    @_deprecate_positional_args(allowed=['theme'])
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
-        theme=None,
-        interpolation=None,
-        color=None,
-        style='surface',
-        metallic=None,
-        roughness=None,
-        point_size=None,
-        opacity=None,
-        ambient=None,
-        diffuse=None,
-        specular=None,
-        specular_power=None,
-        show_edges=None,
-        edge_color=None,
-        render_points_as_spheres=None,
-        render_lines_as_tubes=None,
-        lighting=None,
-        line_width=None,
-        culling=None,
-        edge_opacity=None,
-    ):
+        theme: Theme | None = None,
+        *,
+        interpolation: str | int | InterpolationType | None = None,
+        color: ColorLike | None = None,
+        style: str | int | RepresentationType | None = 'surface',
+        metallic: float | None = None,
+        roughness: float | None = None,
+        point_size: float | None = None,
+        opacity: float | None = None,
+        ambient: float | None = None,
+        diffuse: float | None = None,
+        specular: float | None = None,
+        specular_power: float | None = None,
+        show_edges: bool | None = None,
+        edge_color: ColorLike | None = None,
+        render_points_as_spheres: bool | None = None,
+        render_lines_as_tubes: bool | None = None,
+        lighting: bool | None = None,
+        line_width: float | None = None,
+        culling: PropertyCullingOptions | None = None,
+        edge_opacity: float | None = None,
+    ) -> None:
         """Initialize this property."""
-        self._theme = pv.themes.Theme()
-        if theme is None:
-            # copy global theme to ensure local property theme is fixed
-            # after creation.
-            self._theme.load_theme(pv.global_theme)
-        else:
-            self._theme.load_theme(theme)
+        # snapshot the theme so later edits to the source theme do not reach this property
+        self._theme = pv.themes.Theme._from_theme(pv.global_theme if theme is None else theme)
 
         if interpolation is None:
             interpolation = self._theme.lighting_params.interpolation
@@ -217,6 +221,8 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         if point_size is None:
             point_size = self._theme.point_size
         self.point_size = point_size
+        if _HAS_NATIVE_POINT_SHAPES:
+            self.point_shape = self._theme.point_shape or 'square'
         if opacity is None:
             opacity = self._theme.opacity
         self.opacity = opacity
@@ -254,6 +260,52 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         if edge_opacity is None:
             edge_opacity = self._theme.edge_opacity
         self.edge_opacity = edge_opacity
+
+    @property
+    def point_shape(self) -> str:  # numpydoc ignore=RT01
+        """Return or set the shape of flat point primitives.
+
+        Shapes are ``'square'``, ``'circle'``, ``'triangle'``, ``'hexagon'``,
+        ``'diamond'``, ``'asterisk'``, and ``'star'``. The shape applies to
+        vertex cells in surface and wireframe representations as well as
+        points representation. Sphere rendering takes precedence while enabled.
+
+        .. versionadded:: 0.49
+
+        .. note::
+            Setting this property requires a graphics backend with native
+            point-shape support. :meth:`pyvista.Actor.set_point_sprite_shape`
+            also supports older backends in points representation.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> prop = pv.Property()
+        >>> prop.point_shape
+        'square'
+
+        """
+        if not _HAS_NATIVE_POINT_SHAPES:
+            return 'square'
+        shape = self.GetPoint2DShape()
+        for name in ('square', *(item.value for item in PointSpriteShape)):
+            native_name = 'Round' if name == 'circle' else name.capitalize()
+            if shape == getattr(self.Point2DShapeType, native_name, None):
+                return name
+        msg = f'Unknown native point shape {shape!r}.'
+        raise ValueError(msg)
+
+    @point_shape.setter
+    def point_shape(self, shape: PointSpriteShape | str) -> None:
+        if shape not in ('square', *PointSpriteShape):
+            msg = f'Invalid point sprite shape {shape!r}.'
+            raise ValueError(msg)
+        if not _HAS_NATIVE_POINT_SHAPES:
+            msg = 'This graphics backend does not support native point shapes.'
+            raise VTKVersionError(msg)
+        name = shape.value if isinstance(shape, PointSpriteShape) else shape
+        native_name = 'Round' if name == 'circle' else name.capitalize()
+        self.SetPoint2DShape(getattr(self.Point2DShapeType, native_name))
 
     @property
     def style(self) -> str:  # numpydoc ignore=RT01
@@ -300,7 +352,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         return self.GetRepresentationAsString()
 
     @style.setter
-    def style(self, new_style: str | int | RepresentationType):
+    def style(self, new_style: str | int | RepresentationType) -> None:
         self.representation = new_style
 
     @property
@@ -339,11 +391,11 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         return RepresentationType.from_any(self.GetRepresentation())
 
     @representation.setter
-    def representation(self, value: str | int | RepresentationType):
+    def representation(self, value: str | int | RepresentationType) -> None:
         value = RepresentationType.from_any(value)
         self.SetRepresentation(value.value)
         if value == RepresentationType.WIREFRAME and not self._color_set:
-            self.color = self._theme.outline_color  # type: ignore[union-attr] # type: ignore[attr-defined]
+            self.color = self._theme.outline_color  # type: ignore[union-attr]
 
     @property
     def color(self) -> Color:  # numpydoc ignore=RT01
@@ -379,7 +431,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         return Color(self.GetColor())
 
     @color.setter
-    def color(self, value):
+    def color(self, value: ColorLike | None) -> None:
         self._color_set = value is not None
         rgb_color = Color(value, default_color=self._theme.color)  # type: ignore[union-attr]
         self.SetColor(rgb_color.float_rgb)  # type: ignore[call-overload]
@@ -413,7 +465,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         return Color(self.GetEdgeColor())
 
     @edge_color.setter
-    def edge_color(self, value):
+    def edge_color(self, value: ColorLike | None) -> None:
         rgb_color = Color(value, default_color=self._theme.edge_color)  # type: ignore[union-attr]
         self.SetEdgeColor(rgb_color.float_rgb)
 
@@ -451,7 +503,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         return self.GetOpacity()
 
     @opacity.setter
-    def opacity(self, value: float):
+    def opacity(self, value: float) -> None:
         _check_range(value, (0, 1), 'opacity')
         self.SetOpacity(value)
 
@@ -492,7 +544,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         return self.GetEdgeOpacity()
 
     @edge_opacity.setter
-    def edge_opacity(self, value: float):
+    def edge_opacity(self, value: float) -> None:
         _check_range(value, (0, 1), 'edge_opacity')
         self.SetEdgeOpacity(value)
 
@@ -522,7 +574,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         return bool(self.GetEdgeVisibility())
 
     @show_edges.setter
-    def show_edges(self, value: bool):
+    def show_edges(self, value: bool) -> None:
         self.SetEdgeVisibility(value)
 
     @property
@@ -548,7 +600,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         return self.GetLighting()
 
     @lighting.setter
-    def lighting(self, value: bool | None):
+    def lighting(self, value: bool | None) -> None:
         if value is None:
             value = self._theme.lighting  # type: ignore[union-attr]
         self.SetLighting(value)
@@ -590,7 +642,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         return self.GetAmbient()
 
     @ambient.setter
-    def ambient(self, value: float):
+    def ambient(self, value: float) -> None:
         _check_range(value, (0, 1), 'ambient')
         self.SetAmbient(value)
 
@@ -631,7 +683,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         return self.GetDiffuse()
 
     @diffuse.setter
-    def diffuse(self, value: float):
+    def diffuse(self, value: float) -> None:
         _check_range(value, (0, 1), 'diffuse')
         self.SetDiffuse(value)
 
@@ -671,7 +723,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         return self.GetSpecular()
 
     @specular.setter
-    def specular(self, value: float):
+    def specular(self, value: float) -> None:
         _check_range(value, (0, 1), 'specular')
         self.SetSpecular(value)
 
@@ -710,7 +762,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         return self.GetSpecularPower()
 
     @specular_power.setter
-    def specular_power(self, value: float):
+    def specular_power(self, value: float) -> None:
         _check_range(value, (0, 128), 'specular_power')
         self.SetSpecularPower(value)
 
@@ -750,7 +802,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         return self.GetMetallic()
 
     @metallic.setter
-    def metallic(self, value: float):
+    def metallic(self, value: float) -> None:
         _check_range(value, (0, 1), 'metallic')
         self.SetMetallic(value)
 
@@ -796,7 +848,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         return self.GetRoughness()
 
     @roughness.setter
-    def roughness(self, value: bool):
+    def roughness(self, value: float) -> None:
         _check_range(value, (0, 1), 'roughness')
         self.SetRoughness(value)
 
@@ -845,7 +897,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         return InterpolationType.from_any(self.GetInterpolation())
 
     @interpolation.setter
-    def interpolation(self, value: str | int | InterpolationType):
+    def interpolation(self, value: str | int | InterpolationType) -> None:
         value = InterpolationType.from_any(value).value
         if value == InterpolationType.PBR:
             self.SetInterpolationToPBR()
@@ -881,7 +933,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         return self.GetRenderPointsAsSpheres()
 
     @render_points_as_spheres.setter
-    def render_points_as_spheres(self, value: bool):
+    def render_points_as_spheres(self, value: bool) -> None:
         self.SetRenderPointsAsSpheres(value)
 
     @property
@@ -920,7 +972,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         return self.GetRenderLinesAsTubes()
 
     @render_lines_as_tubes.setter
-    def render_lines_as_tubes(self, value: bool):
+    def render_lines_as_tubes(self, value: bool) -> None:
         self.SetRenderLinesAsTubes(value)
 
     @property
@@ -957,12 +1009,12 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         return self.GetLineWidth()
 
     @line_width.setter
-    def line_width(self, value: float):
+    def line_width(self, value: float) -> None:
         _check_range(value, [0, float('inf')], parm_name='line_width')
         self.SetLineWidth(value)
 
     @property
-    def point_size(self):  # numpydoc ignore=RT01
+    def point_size(self) -> float:  # numpydoc ignore=RT01
         """Return or set the point size.
 
         Defaults to :attr:`pyvista.plotting.themes.Theme.point_size`.
@@ -998,7 +1050,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         return self.GetPointSize()
 
     @point_size.setter
-    def point_size(self, new_size):
+    def point_size(self, new_size: float) -> None:
         _check_range(new_size, [0, float('inf')], parm_name='point_size')
         self.SetPointSize(new_size)
 
@@ -1008,12 +1060,14 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
 
         Does not render faces that are culled. This can be helpful for dense
         surface meshes, especially when edges are visible, but can cause flat
-        meshes to be partially displayed. Defaults to ``'none'``. One of the
-        following:
+        meshes to be partially displayed. Defaults to ``'none'``.
 
-        * ``"back"`` - Enable backface culling
-        * ``"front"`` - Enable frontface culling
-        * ``'none'`` - Disable both backface and frontface culling
+        The setter accepts any of the following, and the getter returns
+        ``'back'``, ``'front'`` or ``'none'``:
+
+        * ``True``, ``'b'``, ``'back'``, ``'backface'`` - Enable backface culling
+        * ``'f'``, ``'front'``, ``'frontface'`` - Enable frontface culling
+        * ``False``, ``'none'`` - Disable both backface and frontface culling
 
         Examples
         --------
@@ -1048,27 +1102,30 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         return 'none'
 
     @culling.setter
-    def culling(self, value):
+    def culling(self, value: PropertyCullingOptions) -> None:
         if isinstance(value, str):
-            value = value.lower()
+            value = value.lower()  # type: ignore[assignment]
 
-        if value == 'back':
+        if value in (True, 'b', 'back', 'backface'):
             try:
                 self.BackfaceCullingOn()
                 self.FrontfaceCullingOff()
             except AttributeError:  # pragma: no cover
                 pass
-        elif value == 'front':
+        elif value in ('f', 'front', 'frontface'):
             try:
                 self.FrontfaceCullingOn()
                 self.BackfaceCullingOff()
             except AttributeError:  # pragma: no cover
                 pass
-        elif value == 'none':
+        elif value in (False, 'none'):
             self.FrontfaceCullingOff()
             self.BackfaceCullingOff()
         else:
-            msg = f'Invalid culling "{value}". Should be either:\n"back", "front", or "None"'
+            msg = (
+                f'Invalid culling "{value}". Should be one of:\n'
+                'True, "b", "back", "backface", "f", "front", "frontface", False, or "none"'
+            )
             raise ValueError(msg)
 
     @property
@@ -1101,7 +1158,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         return Color(self.GetAmbientColor())
 
     @ambient_color.setter
-    def ambient_color(self, value):
+    def ambient_color(self, value: ColorLike) -> None:
         self.SetAmbientColor(Color(value).float_rgb)
 
     @property
@@ -1140,7 +1197,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         return Color(self.GetSpecularColor())
 
     @specular_color.setter
-    def specular_color(self, value):
+    def specular_color(self, value: ColorLike) -> None:
         self.SetSpecularColor(Color(value).float_rgb)
 
     @property
@@ -1177,7 +1234,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         return Color(self.GetDiffuseColor())
 
     @diffuse_color.setter
-    def diffuse_color(self, value):
+    def diffuse_color(self, value: ColorLike) -> None:
         self.SetDiffuseColor(Color(value).float_rgb)
 
     @property
@@ -1216,12 +1273,88 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         return self.GetAnisotropy()
 
     @anisotropy.setter
-    def anisotropy(self, value: float):
+    def anisotropy(self, value: float) -> None:
         if not hasattr(self, 'SetAnisotropy'):  # pragma: no cover
             msg = 'Anisotropy requires VTK v9.1.0 or newer.'
             raise VTKVersionError(msg)
         _check_range(value, (0, 1), 'anisotropy')
         self.SetAnisotropy(value)
+
+    @property
+    def anisotropy_rotation(self) -> float:  # numpydoc ignore=RT01
+        """Return or set the anisotropy rotation coefficient.
+
+        This value controls the rotation of the direction of the anisotropy.
+        This requires that the :attr:`interpolation` be set to
+        ``'Physically based rendering'``.
+
+        For further details see `PBR Journey Part 2 : Anisotropy model with VTK
+        <https://www.kitware.com/pbr-journey-part-2-anisotropy-model-with-vtk/>`_
+
+        Property has range ``[0.0, 1.0]``.
+
+        .. versionadded:: 0.49
+
+        Examples
+        --------
+        Get the default anisotropy rotation.
+
+        >>> import pyvista as pv
+        >>> prop = pv.Property()
+        >>> prop.anisotropy_rotation
+        0.0
+
+        Set the anisotropy rotation.
+
+        >>> prop.anisotropy_rotation = 0.25
+        >>> prop.anisotropy_rotation
+        0.25
+
+        """
+        return self.GetAnisotropyRotation()
+
+    @anisotropy_rotation.setter
+    def anisotropy_rotation(self, value: float) -> None:
+        _check_range(value, (0, 1), 'anisotropy_rotation')
+        self.SetAnisotropyRotation(value)
+
+    @property
+    def index_of_refraction(self) -> float:  # numpydoc ignore=RT01
+        """Return or set the index of refraction of the base layer.
+
+        This value controls the amount of light reflected at normal incidence.
+        This requires that the :attr:`interpolation` be set to
+        ``'Physically based rendering'``.
+
+        For further details see `PBR Journey Part 3 : Clear Coat Model with VTK
+        <https://www.kitware.com/pbr-journey-part-3-clear-coat-model-with-vtk/>`_
+
+        Property has range ``[1.0, inf)``.
+
+        .. versionadded:: 0.49
+
+        Examples
+        --------
+        Get the default index of refraction.
+
+        >>> import pyvista as pv
+        >>> prop = pv.Property()
+        >>> prop.index_of_refraction
+        1.5
+
+        Set the index of refraction.
+
+        >>> prop.index_of_refraction = 2.0
+        >>> prop.index_of_refraction
+        2.0
+
+        """
+        return self.GetBaseIOR()
+
+    @index_of_refraction.setter
+    def index_of_refraction(self, value: float) -> None:
+        _check_range(value, (1, float('inf')), 'index_of_refraction')
+        self.SetBaseIOR(value)
 
     def plot(self, **kwargs) -> None:
         """Plot this property on the Stanford Bunny.
@@ -1255,7 +1388,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         actor = pl.add_mesh(examples.download_bunny_coarse())
         actor.SetProperty(self)
 
-        if str(self.interpolation) == 'Physically based rendering':
+        if self.interpolation == InterpolationType.PBR:
             cubemap = examples.download_sky_box_cube_map()
             pl.set_environment_texture(cubemap)
 
@@ -1281,7 +1414,7 @@ class Property(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkProperty):
         new_prop.DeepCopy(self)
         return new_prop
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Representation of this property."""
         props = [
             f'{type(self).__name__} ({hex(id(self))})',

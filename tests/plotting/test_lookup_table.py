@@ -9,6 +9,8 @@ import pyvista as pv
 from pyvista import Color
 from pyvista import LookupTable
 from pyvista import _vtk
+from pyvista.core.utilities.arrays import convert_array
+from pyvista.core.utilities.arrays import convert_string_array
 
 
 @pytest.fixture
@@ -27,6 +29,12 @@ def test_cmap_values_raises():
         match=re.escape('Cannot set both `cmap` and `values`.'),
     ):
         LookupTable(cmap='foo', values='bar')
+
+
+def test_call_numpy_scalar(lut: LookupTable):
+    rgba = lut(np.float32(0.5))
+    assert rgba.shape == (1, 4)
+    assert np.array_equal(rgba, lut([0.5]))
 
 
 def test_call_raises(lut: LookupTable):
@@ -112,6 +120,16 @@ def test_annotations(lut):
     anno = {0: 'low', 0.5: 'medium', 1: 'high'}
     lut.annotations = anno
     assert lut.annotations == anno
+
+
+def test_annotations_from_arrays(lut):
+    values = np.array([0, 1, 5])
+    labels = np.array(['a', 'b', 'c'])
+    lut.SetAnnotations(convert_array(values), convert_string_array(labels))
+    assert lut.annotations == {0.0: 'a', 1.0: 'b', 5.0: 'c'}
+    # Fewer annotations than the array once held
+    lut.annotations = {2.5: 'x'}
+    assert lut.annotations == {2.5: 'x'}
 
 
 def test_value_range(lut, lut_w_cmap):
@@ -275,6 +293,13 @@ def test_call_scalar(lut):
     assert lut(0.5) == lut.map_value(0.5)
 
 
+def test_named_opacity_matching_n_values():
+    lut = pv.LookupTable()
+    lut.apply_cmap('viridis', len('linear'))
+    lut.apply_opacity('linear')
+    assert np.array_equal(lut.values[:, -1], np.linspace(0, 255, lut.n_values, dtype=np.uint8))
+
+
 def test_custom_opacity(lut):
     values_copy = lut.values.copy()
     lut.apply_opacity('sigmoid')
@@ -303,3 +328,14 @@ def test_to_opacity_tf(lut, clamping):
     tf = lut.to_opacity_tf(clamping=clamping)
     assert isinstance(tf, _vtk.vtkPiecewiseFunction)
     assert tf.GetClamping() == int(clamping)
+
+
+def test_values_views_keep_table(lut):
+    values = lut.values
+    assert values.table.Get() is lut
+    assert values.VTKObject is lut.GetTable()
+    assert values[:2].table is values.table
+    assert values[:2].VTKObject is values.VTKObject
+    assert values.copy().table is None
+    assert values.copy().VTKObject is None
+    assert values.GetNumberOfTuples() == lut.n_values

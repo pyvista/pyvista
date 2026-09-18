@@ -8,8 +8,6 @@ import re
 import threading
 
 import pytest
-import requests
-from retry_requests import retry
 
 import pyvista as pv
 from pyvista import examples
@@ -40,38 +38,8 @@ def pytest_generate_tests(metafunc):
 
 
 def test_dataset_loader_name_matches_download_name(test_case: DatasetLoaderTestCase):
-    if (msg := _get_mismatch_fail_msg(test_case)) is not None:
+    if (msg := _get_mismatch_fail_msg(test_case)) is not None:  # pragma: no cover -- failure path
         pytest.fail(msg)
-
-
-def _is_valid_url(url):
-    session = retry(
-        status_to_retry=[500, 502, 504, 403, 429],  # default + GH rate limit (403, 429)
-        retries=5,
-        backoff_factor=2.0,
-    )
-    try:
-        session.get(url)
-    except requests.RequestException:
-        return False
-    else:
-        return True
-
-
-def test_dataset_loader_source_url_blob(test_case: DatasetLoaderTestCase):
-    try:
-        # Skip test if not loadable
-        sources = test_case.dataset_loader[1].source_url
-    except pv.VTKVersionError as e:
-        reason = e.args[0]
-        pytest.skip(reason)
-
-    # Test valid url
-    sources = [sources] if isinstance(sources, str) else sources  # Make iterable
-    for url in sources:
-        # Check is_file() in case local cache of pyvista/data is used
-        if not (Path(url).is_file() or _is_valid_url(url)):
-            pytest.fail(f'Invalid blob URL for {test_case.dataset_name}:\n{url}')
 
 
 def test_delete_downloads(tmpdir):

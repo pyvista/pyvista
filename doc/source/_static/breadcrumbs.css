@@ -1,0 +1,40 @@
+/* Keep the breadcrumb trail on one line inside the book theme's fixed-height article header. */
+.bd-header-article .header-article-items__start {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.bd-header-article .header-article-item:has(ul.bd-breadcrumbs) {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.bd-header-article nav[aria-label="Breadcrumb"] {
+  min-width: 0;
+  overflow: hidden;
+}
+
+ul.bd-breadcrumbs {
+  flex-wrap: nowrap;
+  min-width: 0;
+  margin: 0;
+}
+
+ul.bd-breadcrumbs li.breadcrumb-item {
+  min-width: 0;
+}
+
+ul.bd-breadcrumbs li.breadcrumb-home {
+  flex: 0 0 auto;
+}
+
+/* Narrow screens: only the home icon and the parent page fit beside the header buttons. */
+@media (max-width: 991.98px) {
+  ul.bd-breadcrumbs
+    li.breadcrumb-item:not(.breadcrumb-home):not(:nth-last-child(2)) {
+    display: none;
+  }
+}

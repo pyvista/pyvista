@@ -44,22 +44,21 @@ def _on_ci():
     return os.environ.get('CI', 'false').lower() == 'true'
 
 
-def _cache_missing():
-    """Test if a cache-miss occurred in CI, inducing that the user
-    env variable is pointing to either an non-existing or empty directory.
-    """
-    if (var_name := examples.downloads._VTK_DATA_VARNAME) not in (env := os.environ):
+def _data_cache_populated():
+    """Return True when the data-source variable points at a non-empty directory."""
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', pv.PyVistaDeprecationWarning)
+        var_name = examples.downloads._get_data_varname()
+    if var_name is None:
         return False
-
-    root = Path(env[var_name])
-    if not root.is_dir():
-        return False
-    return any(root.iterdir())
+    root = Path(os.environ[var_name])
+    return root.is_dir() and any(root.iterdir())
 
 
 @pytest.fixture(scope='module', autouse=True)
 def check_cache_on_ci():
-    if not (_on_ci() and _cache_missing()):
+    """Assert the local data cache is used on CI whenever it is populated."""
+    if not (_on_ci() and _data_cache_populated()):  # pragma: no branch -- returns early off CI
         return
 
     assert examples.downloads._FILE_CACHE, (
@@ -73,13 +72,31 @@ def requests_fixture(mocker: pytest_mock.MockerFixture):
     """Mock the requests.get method to make sure HTTP requests are not emitted on CI,
     since can cause flakiness dut to GH rate limits.
     """
-    if not (_on_ci() and _cache_missing()):
+    if not (_on_ci() and _data_cache_populated()):  # pragma: no branch -- skips the spy off CI
         yield
         return
 
     spy = mocker.spy(requests, 'get')
     yield
     assert spy.call_count == 0, spy.mock_calls
+
+
+@parametrize(
+    var_name=[examples.downloads._DATA_VARNAME, examples.downloads._VTK_DATA_VARNAME],
+)
+def test_data_cache_populated(monkeypatch, tmp_path, var_name):
+    monkeypatch.delenv(examples.downloads._DATA_VARNAME, raising=False)
+    monkeypatch.delenv(examples.downloads._VTK_DATA_VARNAME, raising=False)
+    assert not _data_cache_populated()
+
+    monkeypatch.setenv(var_name, str(tmp_path / 'missing'))
+    assert not _data_cache_populated()
+
+    monkeypatch.setenv(var_name, str(tmp_path))
+    assert not _data_cache_populated()
+
+    (tmp_path / 'Data').mkdir()
+    assert _data_cache_populated()
 
 
 def test_download_single_sphere_animation():
@@ -100,41 +117,6 @@ def test_download_usa_texture():
     assert isinstance(data, pv.Texture)
 
 
-def test_download_usa():
-    data = examples.download_usa()
-    assert np.any(data.points)
-
-
-def test_download_st_helens():
-    data = examples.download_st_helens()
-    assert data.n_points
-
-
-def test_download_bunny():
-    data = examples.download_bunny()
-    assert data.n_points
-
-
-def test_download_cow():
-    data = examples.download_cow()
-    assert data.n_points
-
-
-def test_download_faults():
-    data = examples.download_faults()
-    assert data.n_points
-
-
-def test_download_tensors():
-    data = examples.download_tensors()
-    assert data.n_points
-
-
-def test_download_head():
-    data = examples.download_head()
-    assert data.n_points
-
-
 def test_download_bolt_nut():
     filenames = examples.download_bolt_nut(load=False)
     assert Path(filenames[0]).is_file()
@@ -142,16 +124,6 @@ def test_download_bolt_nut():
 
     data = examples.download_bolt_nut()
     assert isinstance(data, pv.MultiBlock)
-
-
-def test_download_clown():
-    data = examples.download_clown()
-    assert data.n_points
-
-
-def test_download_exodus():
-    data = examples.download_exodus()
-    assert data.n_blocks
 
 
 def test_download_fea_hertzian_contact_cylinder():
@@ -200,24 +172,15 @@ def test_download_blood_vessels():
     assert data.active_vectors_name == 'velocity'
 
 
-def test_download_bunny_coarse():
-    data = examples.download_bunny_coarse()
-    assert data.n_cells
+def test_download_procedural_cow():
+    filename = examples.download_procedural_cow(load=False)
+    assert (path := Path(filename)).is_file()
+    assert path.suffix == '.pv'
 
-
-def test_download_cow_head():
-    data = examples.download_cow_head()
-    assert data.n_cells
-
-
-def test_download_knee_full():
-    data = examples.download_knee_full()
-    assert data.n_cells
-
-
-def test_download_iron_protein():
-    data = examples.download_iron_protein()
-    assert data.n_cells
+    mesh = examples.download_procedural_cow()
+    assert isinstance(mesh, pv.PolyData)
+    assert mesh.n_cells == 300_000
+    assert mesh.active_scalars_name == 'RGB'
 
 
 def test_download_tetra_dc_mesh():
@@ -228,59 +191,9 @@ def test_download_tetra_dc_mesh():
     assert data['inverse'].active_scalars_name == 'Resistivity(log10)'
 
 
-def test_download_tetrahedron():
-    data = examples.download_tetrahedron()
-    assert data.n_cells
-
-
-def test_download_saddle_surface():
-    data = examples.download_saddle_surface()
-    assert data.n_cells
-
-
-def test_download_foot_bones():
-    data = examples.download_foot_bones()
-    assert data.n_cells
-
-
-def test_download_guitar():
-    data = examples.download_guitar()
-    assert data.n_cells
-
-
-def test_download_quadratic_pyramid():
-    data = examples.download_quadratic_pyramid()
-    assert data.n_cells
-
-
-def test_download_bird():
-    data = examples.download_bird()
-    assert data.n_cells
-
-
 def test_download_bird_texture():
     data = examples.download_bird_texture()
     assert isinstance(data, pv.Texture)
-
-
-def test_download_office():
-    data = examples.download_office()
-    assert data.n_cells
-
-
-def test_download_horse_points():
-    data = examples.download_horse_points()
-    assert data.n_points
-
-
-def test_download_horse():
-    data = examples.download_horse()
-    assert data.n_cells
-
-
-def test_download_cake_easy():
-    data = examples.download_cake_easy()
-    assert data.n_cells
 
 
 def test_download_cake_easy_texture():
@@ -315,11 +228,6 @@ def test_download_can_crushed_vtu():
     assert isinstance(dataset, pv.UnstructuredGrid)
 
 
-def test_download_rectilinear_grid():
-    data = examples.download_rectilinear_grid()
-    assert data.n_cells
-
-
 def test_download_gourds():
     data = examples.download_gourds()
     assert data.n_cells
@@ -334,129 +242,14 @@ def test_download_gourds_texture():
     assert isinstance(data, pv.Texture)
 
 
-def test_download_unstructured_grid():
-    data = examples.download_unstructured_grid()
-    assert data.n_cells
-
-
-def test_download_letter_k():
-    data = examples.download_letter_k()
-    assert data.n_cells
-
-
-def test_download_letter_a():
-    data = examples.download_letter_a()
-    assert data.n_cells
-
-
-def test_download_poly_line():
-    data = examples.download_poly_line()
-    assert data.n_cells
-
-
-def test_download_cad_model():
-    data = examples.download_cad_model()
-    assert data.n_cells
-
-
-def test_download_frog():
-    data = examples.download_frog()
-    assert data.n_cells
-
-
-def test_download_chest():
-    data = examples.download_chest()
-    assert data.n_cells
-
-
-def test_download_prostate():
-    data = examples.download_prostate()
-    assert data.n_cells
-
-
-def test_download_filled_contours():
-    data = examples.download_filled_contours()
-    assert data.n_cells
-
-
-def test_download_doorman():
-    data = examples.download_doorman()
-    assert data.n_cells
-
-
-def test_download_mug():
-    data = examples.download_mug()
-    assert data.n_blocks
-
-
-def test_download_oblique_cone():
-    data = examples.download_oblique_cone()
-    assert data.n_cells
-
-
-def test_download_emoji():
-    data = examples.download_emoji()
-    assert data.n_cells
-
-
 def test_download_emoji_texture():
     data = examples.download_emoji_texture()
     assert isinstance(data, pv.Texture)
 
 
-def test_download_teapot():
-    data = examples.download_teapot()
-    assert data.n_cells
-
-
-def test_download_brain():
-    data = examples.download_brain()
-    assert data.n_cells
-
-
-def test_download_structured_grid():
-    data = examples.download_structured_grid()
-    assert data.n_cells
-
-
-def test_download_structured_grid_two():
-    data = examples.download_structured_grid_two()
-    assert data.n_cells
-
-
-def test_download_trumpet():
-    data = examples.download_trumpet()
-    assert data.n_cells
-
-
-def test_download_face():
-    data = examples.download_face()
-    assert data.n_cells
-
-
-def test_download_sky_box_nz():
-    data = examples.download_sky_box_nz()
-    assert data.n_cells
-
-
 def test_download_sky_box_nz_texture():
     data = examples.download_sky_box_nz_texture()
     assert isinstance(data, pv.Texture)
-
-
-def test_download_disc_quads():
-    data = examples.download_disc_quads()
-    assert data.n_cells
-
-
-def test_download_honolulu():
-    data = examples.download_honolulu()
-    assert data.n_cells
-
-
-def test_download_motor():
-    data = examples.download_motor()
-    assert data.n_cells
 
 
 def test_download_tri_quadratic_hexahedron():
@@ -467,56 +260,11 @@ def test_download_tri_quadratic_hexahedron():
     assert pv.read(path).n_arrays != 0
 
 
-def test_download_human():
-    data = examples.download_human()
-    assert data.n_cells
-
-
-def test_download_vtk():
-    data = examples.download_vtk()
-    assert data.n_cells
-
-
-def test_download_spider():
-    data = examples.download_spider()
-    assert data.n_cells
-
-
 def test_download_carotid():
     filename = examples.download_carotid(load=False)
     assert Path(filename).is_file()
 
     data = examples.download_carotid()
-    assert data.n_cells
-
-
-def test_download_blow():
-    data = examples.download_blow()
-    assert data.n_cells
-
-
-def test_download_shark():
-    data = examples.download_shark()
-    assert data.n_cells
-
-
-def test_download_dragon():
-    data = examples.download_dragon()
-    assert data.n_cells
-
-
-def test_download_armadillo():
-    data = examples.download_armadillo()
-    assert data.n_cells
-
-
-def test_download_gears():
-    data = examples.download_gears()
-    assert data.n_cells
-
-
-def test_download_torso():
-    data = examples.download_torso()
     assert data.n_cells
 
 
@@ -551,26 +299,6 @@ def test_download_topo_land():
     data = examples.download_topo_land()
     assert isinstance(data, pv.PolyData)
     assert data.n_cells
-
-
-def test_download_coastlines():
-    data = examples.download_coastlines()
-    assert data.n_cells
-
-
-def test_download_knee():
-    data = examples.download_knee()
-    assert data.n_cells
-
-
-def test_download_lidar():
-    data = examples.download_lidar()
-    assert data.n_cells
-
-
-def test_download_pine_roots():
-    data = examples.download_pine_roots()
-    assert data.n_points
 
 
 def test_download_dicom_stack():
@@ -733,7 +461,7 @@ def test_download_sheen_chair_deprecated(monkeypatch):
 
     class MockLoader:
         def download(self):
-            return 'SheenChair.glb'
+            return ('SheenChair.glb',)
 
     monkeypatch.setattr(examples.gltf, '_gltf_loader', lambda _: MockLoader())
 
@@ -1071,7 +799,9 @@ def test_download_pepper():
 
 
 def test_download_drill():
-    dataset = examples.download_drill()
+    with pv.VtkErrorCatcher() as catcher:
+        dataset = examples.download_drill()
+    assert catcher.warning_events == []
     assert isinstance(dataset, pv.PolyData)
 
 

@@ -100,7 +100,10 @@ OpacityOptions = Literal[
     'foreground',
 ]
 CullingOptions = Literal['front', 'back', 'frontface', 'backface', 'f', 'b']
-StyleOptions = Literal['surface', 'wireframe', 'points', 'points_gaussian']
+# `Property` also takes bools and disables culling by name
+PropertyCullingOptions = CullingOptions | Literal['none'] | bool
+RepresentationOptions = Literal['surface', 'wireframe', 'points']
+StyleOptions = RepresentationOptions | Literal['points_gaussian']
 LightingOptions = Literal['light kit', 'three lights', 'none']
 BorderOptions = Literal[True, False, 'interior', 'exterior']
 # Distinct, user-facing built-in theme names, for autocomplete only. Excludes
@@ -117,15 +120,18 @@ CameraPositionOptions = (
     Literal['xy', 'xz', 'yz', 'yx', 'zx', 'zy', 'iso']
     | VectorLike[float]
     | MatrixLike[float]
+    | Sequence[VectorLike[float]]
     | CameraPosition
 )
 
 
 class BackfaceArgs(TypedDict, total=False):
+    """Keyword arguments accepted by backface property settings."""
+
     theme: Theme
     interpolation: Literal['Physically based rendering', 'pbr', 'Phong', 'Gouraud', 'Flat']
     color: ColorLike
-    style: StyleOptions
+    style: RepresentationOptions
     metallic: float
     roughness: float
     point_size: float
@@ -140,17 +146,21 @@ class BackfaceArgs(TypedDict, total=False):
     render_lines_as_tubes: bool
     lighting: bool
     line_width: float
-    culling: CullingOptions | bool
+    culling: PropertyCullingOptions
     edge_opacity: float
 
 
 class ScalarBarArgs(TypedDict, total=False):
+    """Keyword arguments accepted by :meth:`~pyvista.Plotter.add_scalar_bar`."""
+
     title: str
     mapper: _vtk.vtkMapper
     n_labels: int
+    tick_locations: Sequence[float]
     italic: bool
     bold: bool
     title_font_size: float
+    title_pad: float
     label_font_size: float
     color: ColorLike
     font_family: FontFamilyOptions
@@ -160,6 +170,8 @@ class ScalarBarArgs(TypedDict, total=False):
     position_x: float
     position_y: float
     vertical: bool
+    stacking_gap: float
+    rotate_title: bool
     interactive: bool
     fmt: str
     use_opacity: bool
@@ -176,6 +188,8 @@ class ScalarBarArgs(TypedDict, total=False):
 
 
 class SilhouetteArgs(TypedDict, total=False):
+    """Keyword arguments accepted by silhouette settings."""
+
     color: ColorLike
     line_width: float
     opacity: float

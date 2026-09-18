@@ -16,13 +16,13 @@ from typing import cast
 from typing import get_args
 
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import CellType
 from pyvista import UnstructuredGrid
 from pyvista import _vtk
 from pyvista._warn_external import warn_external
-from pyvista.core import _validation
 
 if TYPE_CHECKING:
     from pyvista import DataSet
@@ -3011,7 +3011,9 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
                 )
                 raise ValueError(msg)
         dimension = block_dimensions
-    dims = _validation.validate_array3(dimension, name='block_dimensions')
+    dims = _validation.validate_array3(
+        dimension, must_be_integer=True, dtype_out=int, name='block_dimensions'
+    )
     cell_centers = pv.ImageData(dimensions=dims + 1).cell_centers().points
 
     if generator == 'examples':

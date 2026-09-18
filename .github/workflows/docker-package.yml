@@ -11,20 +11,24 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Runs started by the schedule or by hand never cancel an in-progress run, so a merge to
+  # `main` always finishes; they queue behind it, and are dropped if another merge arrives.
+  cancel-in-progress: ${{ github.event_name != 'schedule' && github.event_name != 'workflow_dispatch' }}
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
-permissions:
-  packages: write
+permissions: {}
 
 jobs:
   build-and-publish:
     name: Build ${{ matrix.target }} image
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write # push the image to ghcr.io
     # For pull requests, run on branches named `docker*` or when the
     # `docker` label is applied. Never runs on forked PRs (needs secrets).
     if: github.event_name == 'push' ||
@@ -85,8 +89,10 @@ jobs:
       # EGL runtime libraries instead of shipping an image that can import
       # pyvista but cannot actually render.
       - name: Smoke test (render + GPUInfo)
+        env:
+          TARGET: ${{ matrix.target }}
         run: |
-          docker run --rm pyvista-ci:${{ matrix.target }} python -c "
+          docker run --rm "pyvista-ci:$TARGET" python -c "
           import numpy as np
           import pyvista as pv
           print(pv.Report())
