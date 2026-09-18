@@ -176,6 +176,8 @@ autodoc_type_aliases = {
     'TransformLike': 'pyvista.TransformLike',
     'RotationLike': 'pyvista.RotationLike',
     'InteractionEventType': 'pyvista.InteractionEventType',
+    'PlottableType': 'pyvista.PlottableType',
+    'WrappableType': 'pyvista.WrappableType',
 }
 
 # Enable ANSI coloring for programoutput, using erbsland.sphinx.ansi
@@ -321,7 +323,6 @@ nitpick_ignore_regex = [
     (r'py:.*', 'VerticalOptions'),
     (r'py:.*', '.*JupyterBackendOptions'),
     (r'py:.*', '_InterpolationOptions'),
-    (r'py:.*', 'PlottableType'),
     (r'py:.*', '_Dimensionality'),
     #
     # Built-in python types. TODO: Fix links (intersphinx?)

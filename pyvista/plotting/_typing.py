@@ -14,6 +14,7 @@ import matplotlib as mpl
 
 from pyvista import _vtk
 from pyvista.core._typing_core import BoundsTuple as BoundsTuple
+from pyvista.core._typing_core import ArrayLike
 from pyvista.core._typing_core import MatrixLike
 from pyvista.core._typing_core import Number as Number
 from pyvista.core._typing_core import NumpyArray
@@ -38,9 +39,19 @@ if TYPE_CHECKING:
     from .colors import _MATPLOTLIB_CMAPS_LITERAL
     from .colors import Color as Color
 
-PlottableType: TypeAlias = Union[
-    VectorLike[float], 'DataSet', 'MultiBlock', 'PartitionedDataSet', str, Path
+WrappableType: TypeAlias = Union[
+    _vtk.vtkDataObject,
+    'DataSet',
+    'MultiBlock',
+    'PartitionedDataSet',
+    _vtk.vtkAbstractArray,
+    NumpyArray[float],
+    'trimesh.Trimesh',
+    'meshio.Mesh',
+    None,
 ]
+
+PlottableType: TypeAlias = Union[ArrayLike[float], WrappableType, str, Path]
 
 
 NamedColormaps = Union[
