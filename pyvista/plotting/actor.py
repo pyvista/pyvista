@@ -110,9 +110,9 @@ noperspective out float dashArc;
 """
 
 _DASH_VERTEX_IMPL = """{
-  vec4 dashPosDC = MCDCMatrix * vertexMC;
   vec3 dashRow = vec3(MCDCMatrix[0].y, MCDCMatrix[1].y, MCDCMatrix[2].y);
-  float dashValue = dashArcMC * 0.5 * length(dashRow) / (dashPosDC.w * dashInterval);
+  float dashDepth = (MCDCMatrix * vec4(0.0, 0.0, 0.0, 1.0)).w;
+  float dashValue = dashArcMC * 0.5 * length(dashRow) / (dashDepth * dashInterval);
   dashArcVS = dashValue;
   dashArc = dashValue;
 }

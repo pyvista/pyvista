@@ -49,27 +49,26 @@ pl.show()
 
 styles = ['-', '--', ':', '-.', '-..']
 
-pl = pv.Plotter(shape=(1, 5))
-for index, style in enumerate(styles):
-    pl.subplot(0, index)
-    pl.add_mesh(helix.dash_lines(style), color='black', line_width=4)
-    pl.add_text(f"'{style}'", font_size=10)
-pl.link_views()
-pl.view_isometric()
-pl.show()
+pv.plot_compare(
+    {f"'{style}'": helix.dash_lines(style) for style in styles},
+    color='black',
+    line_width=4,
+    cpos='iso',
+)
 
 # %%
 # ``scale`` sets the length of one pattern interval in world units, so shorter
 # values give finer dashes.
 
-pl = pv.Plotter(shape=(1, 3))
-for index, scale in enumerate([0.02, 0.05, 0.12]):
-    pl.subplot(0, index)
-    pl.add_mesh(helix.dash_lines('--', scale=scale), color='black', line_width=4)
-    pl.add_text(f'scale={scale}', font_size=10)
-pl.link_views()
-pl.view_isometric()
-pl.show()
+pv.plot_compare(
+    {
+        f'scale={scale}': helix.dash_lines('--', scale=scale)
+        for scale in [0.02, 0.05, 0.12]
+    },
+    color='black',
+    line_width=4,
+    cpos='iso',
+)
 
 # %%
 # Dash the Rendering With a Shader
@@ -83,7 +82,9 @@ pl.view_isometric()
 pl.show()
 
 # %%
-# The same styles apply.
+# The same styles apply. These subplots are built by hand rather than with
+# :func:`~pyvista.plot_compare`, because the style is a property of the actor and
+# not of the dataset.
 
 pl = pv.Plotter(shape=(1, 5))
 for index, style in enumerate(styles):
