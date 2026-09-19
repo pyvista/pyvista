@@ -897,6 +897,7 @@ def test_dashed_lines_rejects_multiblock():
     pl = pv.Plotter()
     with pytest.raises(TypeError, match='not supported for `MultiBlock`'):
         pl.add_mesh(pv.MultiBlock([pv.Line(resolution=10)]), line_style='--')
+    pl.close()
 
 
 def test_dashed_lines_hidden_style():
