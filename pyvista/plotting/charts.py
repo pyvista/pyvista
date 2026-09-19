@@ -191,7 +191,7 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
     LINE_STYLES : dict
         Dictionary containing all allowed line styles as its keys.
 
-        .. include:: ../pen_line_styles.rst
+        .. include:: /api/plotting/line_styles.rst
 
     """
 
