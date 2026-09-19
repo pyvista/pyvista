@@ -13,8 +13,8 @@ from typing import Union
 import matplotlib as mpl
 
 from pyvista import _vtk
-from pyvista.core._typing_core import BoundsTuple as BoundsTuple
 from pyvista.core._typing_core import ArrayLike
+from pyvista.core._typing_core import BoundsTuple as BoundsTuple
 from pyvista.core._typing_core import MatrixLike
 from pyvista.core._typing_core import Number as Number
 from pyvista.core._typing_core import NumpyArray
@@ -51,7 +51,7 @@ WrappableType: TypeAlias = Union[
     None,
 ]
 
-PlottableType: TypeAlias = Union[ArrayLike[float], WrappableType, str, Path]
+PlottableType: TypeAlias = ArrayLike[float] | WrappableType | str | Path
 
 
 NamedColormaps = Union[
