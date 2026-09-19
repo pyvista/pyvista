@@ -1651,6 +1651,7 @@ def test_dash_lines_copies_cell_data():
     line.cell_data['tag'] = np.array([7])
     dashed = line.dash_lines('--', scale=0.01, join=False)
     assert np.all(dashed.cell_data['tag'] == 7)
+    assert 'tag' not in line.dash_lines('--', scale=0.01).cell_data
 
 
 def test_dash_lines_ignores_non_line_cells():
@@ -1709,3 +1710,14 @@ def test_dash_lines_hidden_style():
     hidden = line.dash_lines('')
     assert hidden.n_points == 0
     assert hidden.n_cells == 0
+
+
+def test_dash_lines_keeps_active_scalars_and_field_data():
+    line = pv.Line((0, 0, 0), (1, 0, 0), resolution=10)
+    line.point_data['vals'] = np.arange(line.n_points, dtype=float)
+    line.set_active_scalars('vals')
+    line.field_data['meta'] = ['x']
+
+    dashed = line.dash_lines()
+    assert dashed.active_scalars_name == 'vals'
+    assert list(dashed.field_data['meta']) == ['x']

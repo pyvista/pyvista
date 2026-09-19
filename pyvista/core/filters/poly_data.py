@@ -1553,8 +1553,8 @@ class PolyDataFilters(DataSetFilters):
         repeating on-off pattern. Other cell types are ignored, as with
         :func:`tube`.
 
-        Point data is interpolated onto the dash end points and cell data is copied
-        from the parent line cell.
+        Point data is interpolated onto the dash end points. Cell data is copied from
+        the parent line cell, unless ``join`` merges those cells together.
 
         .. versionadded:: 0.50
 
@@ -1577,7 +1577,8 @@ class PolyDataFilters(DataSetFilters):
 
         join : bool, default: True
             Join connected line cells into polylines with :func:`strip` first so the
-            pattern runs continuously across them.
+            pattern runs continuously across them. Joined cells have no cell data of
+            their own, so the input's cell data is dropped.
 
         inplace : bool, default: False
             Update this dataset in place. When ``False``, return a new dataset.
@@ -1620,12 +1621,16 @@ class PolyDataFilters(DataSetFilters):
         if runs == [(0, period)]:
             output = self.copy()
         else:
-            source = (
-                self.strip(join=True, pass_cell_data=True, progress_bar=progress_bar)
-                if join
-                else self
-            )
+            source = self.strip(join=True, progress_bar=progress_bar) if join else self
             output = _dashed_polydata(source, runs, period=period, scale=scale)
+            for array_name, array in self.field_data.items():
+                output.field_data[array_name] = array
+            association, active = self.active_scalars_info
+            if active is not None:
+                if association == FieldAssociation.CELL and active in output.cell_data:
+                    output.set_active_scalars(active, preference='cell')
+                elif association == FieldAssociation.POINT and active in output.point_data:
+                    output.set_active_scalars(active, preference='point')
 
         if not inplace:
             return output
