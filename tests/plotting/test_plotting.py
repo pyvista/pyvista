@@ -12,7 +12,6 @@ from io import BytesIO
 import os
 from pathlib import Path
 import re
-import sys
 import time
 from types import UnionType
 from typing import TYPE_CHECKING
@@ -3342,6 +3341,8 @@ def test_plot_compare_per_subplot_kwargs(verify_image_cache):
         # ... or is nested one level deeper than its own value
         ({'color': [[1, 0, 0], [0, 0, 1]]}, 2, {}, [{'color': [1, 0, 0]}, {'color': [0, 0, 1]}]),
         ({'clim': [[0, 1], [0, 2]]}, 2, {}, [{'clim': [0, 1]}, {'clim': [0, 2]}]),
+        # ... or is a value of a length of its own, which is one value of nothing
+        ({'clim': [[0, 1], [0]]}, 2, {}, [{'clim': [0, 1]}, {'clim': [0]}]),
     ],
 )
 @pytest.mark.usefixtures('no_images_to_verify')
@@ -3355,24 +3356,29 @@ def test_plot_compare_splits_per_subplot_kwargs(kwargs, n_datasets, shared, vary
 def test_plot_compare_knows_which_keywords_take_a_sequence():
     import cycler
 
+    from pyvista.plotting import _typing
     from pyvista.plotting._plotting import _common_arg_parser
     from pyvista.plotting.plot_compare import _KEYWORDS_TAKING_A_SEQUENCE
 
+    class Unbound:
+        """Stands for a name which is bound only while type checking."""
+
+        def __class_getitem__(cls, item):
+            """Return the stand-in itself, so that subscripting it resolves."""
+            return cls
+
+    class Namespace(dict):
+        """A namespace in which an unbound name stands for a type of its own."""
+
+        def __missing__(self, key):
+            """Return the stand-in for the name."""
+            return Unbound
+
     def resolved(method):
-        """Return the annotations of the method, standing in ``Any`` for private names."""
-        namespace: dict[str, Any] = {}
-        for name, module in list(sys.modules.items()):
-            if name.startswith('pyvista'):
-                namespace.update(vars(module))
-        # A pyvista function of the same name shadows the module the annotations mean
-        namespace['cycler'] = cycler
-        for _ in range(len(namespace) + 1):
-            try:
-                return get_type_hints(method, globalns=namespace)
-            except NameError as error:
-                namespace[error.name] = Any
-        msg = f'Could not resolve the annotations of {method.__name__}.'
-        raise AssertionError(msg)
+        """Return the annotations of the method, resolved against that namespace."""
+        # A pyvista function of the same name shadows the module `cycler` stands for
+        namespace = Namespace(vars(_typing) | vars(pv) | {'cycler': cycler})
+        return get_type_hints(method, globalns=namespace)
 
     def members(annotation):
         """Return each member of a union, or the annotation itself."""
