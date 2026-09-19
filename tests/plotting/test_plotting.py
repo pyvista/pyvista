@@ -3353,7 +3353,7 @@ def test_plot_compare_splits_per_subplot_kwargs(kwargs, n_datasets, shared, vary
 
 
 @pytest.mark.usefixtures('no_images_to_verify')
-def test_plot_compare_knows_which_keywords_take_a_sequence():
+def test_plot_compare_knows_which_keywords_take_a_sequence(monkeypatch: pytest.MonkeyPatch):
     import cycler
 
     from pyvista.plotting import _typing
@@ -3367,18 +3367,32 @@ def test_plot_compare_knows_which_keywords_take_a_sequence():
             """Return the stand-in itself, so that subscripting it resolves."""
             return cls
 
-    class Namespace(dict):
-        """A namespace in which an unbound name stands for a type of its own."""
-
-        def __missing__(self, key):
-            """Return the stand-in for the name."""
-            return Unbound
+    # The aliases refer to these names, which are bound only while type checking, and
+    # Python 3.14 resolves a name nested in an alias against the module the alias was
+    # written in rather than against the namespace given below. None is a sequence.
+    for name in (
+        'Actor',
+        'CellLiteral',
+        'Color',
+        'CompositePolyDataMapper',
+        'LookupTable',
+        'PointLiteral',
+        'PointSpriteShape',
+        'Property',
+        'Texture',
+        'Volume',
+        '_ALL_COLORS_LITERAL',
+        '_CMCRAMERI_CMAPS_LITERAL',
+        '_CMOCEAN_CMAPS_LITERAL',
+        '_COLORCET_CMAPS_LITERAL',
+        '_MATPLOTLIB_CMAPS_LITERAL',
+    ):
+        monkeypatch.setattr(_typing, name, Unbound, raising=False)
 
     def resolved(method):
-        """Return the annotations of the method, resolved against that namespace."""
+        """Return the annotations of the method, resolved against those names."""
         # A pyvista function of the same name shadows the module `cycler` stands for
-        namespace = Namespace(vars(_typing) | vars(pv) | {'cycler': cycler})
-        return get_type_hints(method, globalns=namespace)
+        return get_type_hints(method, globalns=vars(_typing) | vars(pv) | {'cycler': cycler})
 
     def members(annotation):
         """Return each member of a union, or the annotation itself."""
