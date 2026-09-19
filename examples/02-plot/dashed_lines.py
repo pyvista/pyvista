@@ -80,6 +80,16 @@ pl.view_isometric()
 pl.show()
 
 # %%
+# The style belongs to the actor, so :attr:`~pyvista.Actor.line_style` changes it
+# after the mesh is added.
+
+pl = pv.Plotter()
+actor = pl.add_mesh(helix, color='black', line_width=4, line_style='--')
+actor.line_style = ':'
+pl.view_isometric()
+pl.show()
+
+# %%
 # The same styles apply.
 
 pl = pv.Plotter(shape=(1, 5))
