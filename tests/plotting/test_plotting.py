@@ -6647,6 +6647,12 @@ def _add_checkerboard_grid_scene(pl):
     return [actor]
 
 
+def _add_checkerboard_grid_scene_off_center(pl):
+    actors = _add_checkerboard_grid_scene(pl)
+    pl.camera.window_center = (0.45, -0.3)
+    return actors
+
+
 # The distortion is a per-vertex transform of clip coordinates, so it does not
 # depend on the scene. One flat calibration target carries both cases that a
 # render can tell apart: the radial terms, and the tangential ones.
@@ -6662,6 +6668,11 @@ def _add_checkerboard_grid_scene(pl):
             _add_checkerboard_grid_scene,
             (0.08, -0.06, 0.05, -0.07),
             id='checkerboard_centered-mixed_tangential',
+        ),
+        pytest.param(
+            _add_checkerboard_grid_scene_off_center,
+            (3.8, 2.1, 0.004, -0.003),
+            id='checkerboard_off_center-strong_barrel',
         ),
     ],
 )
@@ -6832,6 +6843,29 @@ def test_camera_distortion_reads_each_subplots_projection_and_keeps_it_current()
     pl.camera.view_angle = 2 * pl.camera.view_angle
     pl.screenshot()
     assert projection_scale(actors[0]) < narrow
+    pl.close()
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_camera_distortion_is_centered_on_the_principal_point():
+    """The coefficients act on the distance from the principal point of the camera."""
+    image_size = (640, 480)
+    intrinsics = np.array([[800.0, 0.0, 200.0], [0.0, 760.0, 150.0], [0.0, 0.0, 1.0]])
+    pl = pv.Plotter(window_size=image_size)
+    actor = pl.add_mesh(pv.Sphere())
+    pl.camera.intrinsic_matrix = intrinsics
+    pl.enable_camera_distortion((0.3, 0.1, 0.0, 0.0))
+
+    uniforms = actor.GetShaderProperty().GetVertexCustomUniforms()
+    values = [0.0, 0.0]
+    assert uniforms.GetUniform2f('u_distortion_projection_center', values)
+    width, height = image_size
+    assert values == pytest.approx(
+        (2 * intrinsics[0, 2] / width - 1, 1 - 2 * intrinsics[1, 2] / height)
+    )
+
+    pl.disable_camera_distortion()
+    assert not uniforms.GetUniform2f('u_distortion_projection_center', values)
     pl.close()
 
 
