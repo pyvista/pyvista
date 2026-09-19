@@ -1200,7 +1200,6 @@ def missing_compare_arguments():
         'before_close_callback',  # a callable, which the command line cannot pass
         'label_kwargs',  # an arbitrary `add_text` kwargs dict, with no CLI equivalent
         'reference_kwargs',  # an arbitrary `add_mesh` kwargs dict, with no CLI equivalent
-        'subplot_kwargs',  # an arbitrary `add_mesh` kwargs dict, with no CLI equivalent
         'reference_mesh',  # given as `--outline` instead, which builds one from the paths
         'datasets',  # intentionally renamed to 'paths' in the CLI
     }

@@ -3349,7 +3349,7 @@ def test_plot_compare_per_subplot_kwargs(verify_image_cache):
 def test_plot_compare_splits_per_subplot_kwargs(kwargs, n_datasets, shared, varying):
     from pyvista.plotting.plot_compare import _split_kwargs
 
-    assert _split_kwargs(dict(kwargs), None, n_datasets=n_datasets) == (shared, varying)
+    assert _split_kwargs(dict(kwargs), n_datasets=n_datasets) == (shared, varying)
 
 
 @pytest.mark.usefixtures('no_images_to_verify')
@@ -3495,73 +3495,40 @@ def test_plot_compare_volume_keeps_the_opacity_transfer_function():
     # A volume's opacity is usually the transfer function mapped over its scalars,
     # so it keeps a sequence which a mesh would be drawn one value per subplot with
     kwargs = {'opacity': [0.0, 0.5, 1.0]}
-    assert _split_kwargs(dict(kwargs), None, n_datasets=3, volume=True) == (kwargs, [{}] * 3)
-    assert _split_kwargs(dict(kwargs), None, n_datasets=3) == (
+    assert _split_kwargs(dict(kwargs), n_datasets=3, volume=True) == (kwargs, [{}] * 3)
+    assert _split_kwargs(dict(kwargs), n_datasets=3) == (
         {},
         [{'opacity': 0.0}, {'opacity': 0.5}, {'opacity': 1.0}],
     )
 
 
-def test_plot_compare_subplot_kwargs(verify_image_cache):
-    verify_image_cache.skip = True
-
-    # `subplot_kwargs` draws one value per subplot, as giving the keyword one value
-    # per dataset does
-    mesh = pv.Sphere()
-    assert _drawn_actors([mesh, mesh], _drawn_opacity, subplot_kwargs={'opacity': [0.3, 0.9]}) == [
-        pytest.approx(0.3),
-        pytest.approx(0.9),
-    ]
-
-
 @pytest.mark.usefixtures('no_images_to_verify')
-def test_plot_compare_subplot_kwargs_draws_one_value_per_subplot():
+def test_plot_compare_shares_or_varies_a_sequence_valued_keyword():
     from pyvista.plotting.plot_compare import _split_kwargs
 
-    # A sequence of color names is one colormap, so a colormap for each subplot can
-    # only be given in `subplot_kwargs`
-    assert _split_kwargs({'cmap': ['gray', 'pink']}, None, n_datasets=2) == (
-        {'cmap': ['gray', 'pink']},
+    # A volume's opacity is one transfer function for every subplot, and nesting the
+    # values gives each subplot its own
+    shared = [0.0, 1.0]
+    assert _split_kwargs({'opacity': shared}, n_datasets=2, volume=True) == (
+        {'opacity': shared},
         [{}, {}],
     )
-    assert _split_kwargs({}, {'cmap': ['gray', 'pink']}, n_datasets=2) == (
+    assert _split_kwargs({'opacity': [shared, [1.0, 0.0]]}, n_datasets=2, volume=True) == (
         {},
-        [{'cmap': 'gray'}, {'cmap': 'pink'}],
+        [{'opacity': shared}, {'opacity': [1.0, 0.0]}],
     )
 
-
-@pytest.mark.usefixtures('no_images_to_verify')
-def test_plot_compare_subplot_kwargs_raises():
-    datasets = [pv.Sphere(), pv.Sphere()]
-
-    match = (
-        'Subplot kwargs must be a mapping of a keyword to one value per dataset, got list instead.'
+    # Repeating a value is how a keyword which is itself a sequence is shared
+    assert _split_kwargs({'opacity': [shared, shared]}, n_datasets=2) == (
+        {},
+        [{'opacity': shared}, {'opacity': shared}],
     )
-    with pytest.raises(TypeError, match=re.escape(match)):
-        pv.plot_compare(datasets, subplot_kwargs=[{'color': 'red'}, {'color': 'blue'}])
 
-    match = (
-        "Values for 'color' in `subplot_kwargs` must be a sequence with one value per "
-        'dataset, got str instead.'
+    # A colormap for each subplot needs no nesting, since a colormap name is not a color
+    assert _split_kwargs({'cmap': ['viridis', 'plasma']}, n_datasets=2) == (
+        {},
+        [{'cmap': 'viridis'}, {'cmap': 'plasma'}],
     )
-    with pytest.raises(TypeError, match=re.escape(match)):
-        pv.plot_compare(datasets, subplot_kwargs={'color': 'red'})
-
-    match = "Number of 'color' values (3) must match the number of datasets (2)."
-    with pytest.raises(ValueError, match=re.escape(match)):
-        pv.plot_compare(datasets, subplot_kwargs={'color': ['red', 'blue', 'green']})
-
-    match = (
-        "'color' was given both as a keyword argument and in `subplot_kwargs`. "
-        'Use one or the other.'
-    )
-    with pytest.raises(TypeError, match=re.escape(match)):
-        pv.plot_compare(datasets, color='red', subplot_kwargs={'color': ['red', 'blue']})
-
-    with pytest.raises(TypeError, match=re.escape(match)):
-        pv.plot_compare(
-            datasets, color=['red', 'blue'], subplot_kwargs={'color': ['green', 'yellow']}
-        )
 
 
 def test_plot_compare_volume(verify_image_cache):
