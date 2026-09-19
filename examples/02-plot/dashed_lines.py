@@ -16,8 +16,6 @@ Both accept the same style strings as :ref:`Pen.LINE_STYLES <pen_line_styles>`.
 
 """
 
-from __future__ import annotations
-
 import numpy as np
 import pyvista as pv
 
