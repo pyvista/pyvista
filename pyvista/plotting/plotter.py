@@ -4283,6 +4283,9 @@ class BasePlotter(_BoundsSizeMixin):
                 raise TypeError(msg)
             _validation.check_instance(opacity, (float, int, type(None)), name='opacity')
             _validation.check_instance(scalars, (str, type(None)), name='scalars')
+            if line_style is not None:
+                msg = '`line_style` is not supported for `MultiBlock` input.'
+                raise TypeError(msg)
             actor, _ = self.add_composite(
                 mesh,
                 color=color,
