@@ -809,9 +809,6 @@ class Actor(Prop3D, _vtk.vtkActor):
             return
 
         bits = _resolve_dash_pattern(value, None)
-        if bits == 0xFFFF:
-            self._disable_dashed_lines()
-            return
 
         mapper = self.mapper
         if mapper is None or not hasattr(mapper, 'MapDataArrayToVertexAttribute'):
