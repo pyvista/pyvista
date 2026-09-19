@@ -815,7 +815,7 @@ def test_dash_interval():
     actor = pl.add_mesh(pv.Line(resolution=20), line_style='--')
     actor.dash_interval = 0.02
     assert actor.dash_interval == 0.02
-    with pytest.raises(ValueError, match='greater than zero'):
+    with pytest.raises(ValueError, match='greater than 0'):
         actor.dash_interval = 0
     pl.close()
 
@@ -829,6 +829,6 @@ def test_dashed_lines_requires_polydata_mapper():
 def test_dashed_lines_invalid_style():
     pl = pv.Plotter()
     actor = pl.add_mesh(pv.Line(resolution=20))
-    with pytest.raises(ValueError, match='Invalid style'):
+    with pytest.raises(ValueError, match='is not valid'):
         actor.dashed_lines = 'wrong'
     pl.close()

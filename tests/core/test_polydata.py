@@ -1662,11 +1662,18 @@ def test_dash_lines_default_scale_follows_length():
     assert small.dash_lines().n_cells == large.dash_lines().n_cells
 
 
+def test_dash_lines_inplace():
+    line = pv.Line((0, 0, 0), (1, 0, 0), resolution=100)
+    returned = line.dash_lines('--', scale=0.01, inplace=True)
+    assert returned is line
+    assert line.n_cells > 1
+
+
 def test_dash_lines_raises():
     line = pv.Line((0, 0, 0), (1, 0, 0), resolution=10)
-    with pytest.raises(ValueError, match='Invalid style'):
+    with pytest.raises(ValueError, match='is not valid'):
         line.dash_lines('wrong')
-    with pytest.raises(ValueError, match='16-bit integer'):
+    with pytest.raises(ValueError, match='less than or equal to 65535'):
         line.dash_lines(pattern=0x1FFFF)
-    with pytest.raises(ValueError, match='greater than zero'):
+    with pytest.raises(ValueError, match='greater than 0'):
         line.dash_lines(scale=0.0)

@@ -7,12 +7,14 @@ from typing import Any
 import weakref
 
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._warn_external import warn_external
 from pyvista.core.filters.poly_data import _resolve_dash_pattern
 from pyvista.core.utilities.arrays import FieldAssociation
+from pyvista.plotting.utilities.algorithms import set_algorithm_input
 
 from ._property import _HAS_NATIVE_POINT_SHAPES
 from ._property import Property
@@ -787,19 +789,13 @@ class Actor(Prop3D, _vtk.vtkActor):
 
         Examples
         --------
-        Dash the lines of a spline.
+        Dash the lines of a circle.
 
-        >>> import numpy as np
         >>> import pyvista as pv
-        >>> theta = np.linspace(0, 4 * np.pi, 400)
-        >>> points = np.column_stack(
-        ...     [np.cos(theta), np.sin(theta), np.linspace(-1.5, 1.5, 400)]
-        ... )
-        >>> helix = pv.Spline(points, 400)
+        >>> circle = pv.Circle(resolution=200).extract_all_edges()
         >>> pl = pv.Plotter()
-        >>> actor = pl.add_mesh(helix, color='black', line_width=4, line_style='--')
-        >>> actor.dashed_lines = ':'
-        >>> pl.show()
+        >>> _ = pl.add_mesh(circle, color='black', line_width=4, line_style='--')
+        >>> pl.show(cpos='xy')
 
         """
         return self._dashed_lines
@@ -897,10 +893,8 @@ class Actor(Prop3D, _vtk.vtkActor):
 
     @dash_interval.setter
     def dash_interval(self, value: float) -> None:
+        _validation.check_greater_than(value, 0, name='dash_interval')
         value = float(value)
-        if value <= 0:
-            msg = f'`dash_interval` must be greater than zero, got {value}.'
-            raise ValueError(msg)
         self._dash_interval = value
         if self._dashed_lines is not None:
             self.GetShaderProperty().GetVertexCustomUniforms().SetUniformf('dashInterval', value)
@@ -914,10 +908,10 @@ class Actor(Prop3D, _vtk.vtkActor):
         if line_only:
             stripper = _vtk.vtkStripper()
             stripper.SetJoinContiguousSegments(True)
-            stripper.SetInputData(dataset)
-            arc_length.SetInputConnection(stripper.GetOutputPort())
+            set_algorithm_input(stripper, dataset)
+            set_algorithm_input(arc_length, stripper)
         else:
-            arc_length.SetInputData(dataset)
+            set_algorithm_input(arc_length, dataset)
         return arc_length
 
     def _disable_dashed_lines(self) -> None:

@@ -1543,6 +1543,7 @@ class PolyDataFilters(DataSetFilters):
         pattern: int | None = None,
         scale: float | None = None,
         join: bool = True,
+        inplace: bool = False,
         progress_bar: bool = False,
     ) -> PolyData:
         """Split line cells into dashes.
@@ -1576,6 +1577,9 @@ class PolyDataFilters(DataSetFilters):
             Join connected line cells into polylines with :func:`strip` first so the
             pattern runs continuously across them.
 
+        inplace : bool, default: False
+            Update this dataset in place. When ``False``, return a new dataset.
+
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
@@ -1590,76 +1594,36 @@ class PolyDataFilters(DataSetFilters):
             Join connected line cells into polylines.
         pyvista.PolyDataFilters.tube
             Generate a tube around each input line.
+        pyvista.Actor.dashed_lines
+            Dash an actor's lines in the shader instead of splitting the cells.
 
         Examples
         --------
-        Dash a helix.
+        Dash a circle.
 
-        >>> import numpy as np
         >>> import pyvista as pv
-        >>> theta = np.linspace(0, 4 * np.pi, 400)
-        >>> points = np.column_stack(
-        ...     [np.cos(theta), np.sin(theta), np.linspace(-1.5, 1.5, 400)]
-        ... )
-        >>> helix = pv.Spline(points, 400)
-        >>> helix.dash_lines().plot(color='black', line_width=4)
-
-        Compare the named patterns.
-
-        >>> pl = pv.Plotter(shape=(1, 5))
-        >>> for i, style in enumerate(['-', '--', ':', '-.', '-..']):
-        ...     pl.subplot(0, i)
-        ...     _ = pl.add_mesh(helix.dash_lines(style), color='black', line_width=4)
-        ...     _ = pl.add_text(style, font_size=12)
-        >>> pl.link_views()
-        >>> pl.view_isometric()
-        >>> pl.show()
-
-        Use an explicit 16-bit pattern for a long dash followed by a short one.
-
-        >>> helix.dash_lines(pattern=0x1CFF).plot(color='black', line_width=4)
-
-        Dash the edges of a mesh by extracting them first.
-
-        >>> sphere = pv.Sphere(theta_resolution=12, phi_resolution=12)
-        >>> edges = sphere.extract_all_edges().dash_lines(scale=0.01)
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(sphere, color='lightgray')
-        >>> _ = pl.add_mesh(edges, color='black', line_width=3)
-        >>> pl.show()
+        >>> circle = pv.Circle(resolution=200).extract_all_edges()
+        >>> circle.dash_lines().plot(color='black', line_width=4, cpos='xy')
 
         """
         bits = _resolve_dash_pattern(style, pattern)
+        if scale is not None:
+            _validation.check_greater_than(scale, 0, name='scale')
+
         if bits == 0xFFFF:
-            return self.copy()
-
-        source = (
-            self.strip(join=True, pass_cell_data=True, progress_bar=progress_bar) if join else self
-        )
-        if source.n_lines == 0:
-            return pv.PolyData()
-
-        scale = source.length / 200.0 if scale is None else float(scale)
-        if scale <= 0:
-            msg = f'`scale` must be greater than zero, got {scale}.'
-            raise ValueError(msg)
-
-        index_a, index_b, weight, lines, cells = _build_dashes(source, _pattern_runs(bits), scale)
-        if lines.size == 0:
-            return pv.PolyData()
-
-        output = pv.PolyData()
-        output.points = _interpolate_rows(
-            source.points, index_a=index_a, index_b=index_b, weight=weight
-        )
-        output.lines = lines
-        for name, array in source.point_data.items():
-            output.point_data[name] = _interpolate_rows(
-                np.asarray(array), index_a=index_a, index_b=index_b, weight=weight
+            output = self.copy()
+        else:
+            source = (
+                self.strip(join=True, pass_cell_data=True, progress_bar=progress_bar)
+                if join
+                else self
             )
-        for name, array in source.cell_data.items():
-            output.cell_data[name] = np.asarray(array)[cells]
-        return output
+            output = _dashed_polydata(source, bits, scale)
+
+        if not inplace:
+            return output
+        self.copy_from(output, deep=False)
+        return self
 
     def subdivide(  # type: ignore[misc]
         self: PolyData,
@@ -4928,17 +4892,10 @@ class PolyDataFilters(DataSetFilters):
 def _resolve_dash_pattern(style: str, pattern: int | None) -> int:
     """Return the 16-bit stipple pattern for a named style or an explicit pattern."""
     if pattern is not None:
-        value = int(pattern)
-        if not 0 <= value <= 0xFFFF:
-            msg = f'`pattern` must be a 16-bit integer, got {pattern}.'
-            raise ValueError(msg)
-        return value
-    try:
-        return LINE_STYLE_PATTERNS[style]
-    except KeyError:
-        valid = ', '.join(repr(key) for key in LINE_STYLE_PATTERNS)
-        msg = f'Invalid style {style!r}. Must be one of: {valid}.'
-        raise ValueError(msg) from None
+        _validation.check_range(pattern, [0, 0xFFFF], name='pattern')
+        return int(pattern)
+    _validation.check_contains(list(LINE_STYLE_PATTERNS), must_contain=style, name='style')
+    return LINE_STYLE_PATTERNS[style]
 
 
 def _pattern_runs(pattern: int) -> list[tuple[int, int]]:
@@ -5019,6 +4976,28 @@ def _build_dashes(
         np.asarray(lines, dtype=np.int64),
         np.asarray(cells, dtype=np.int64),
     )
+
+
+def _dashed_polydata(source: PolyData, bits: int, scale: float | None) -> PolyData:
+    """Return a dataset holding only the drawn parts of a source's line cells."""
+    output = pv.PolyData()
+    if source.n_lines == 0:
+        return output
+    interval = source.length / 200.0 if scale is None else float(scale)
+    index_a, index_b, weight, lines, cells = _build_dashes(source, _pattern_runs(bits), interval)
+    if lines.size == 0:
+        return output
+    output.points = _interpolate_rows(
+        source.points, index_a=index_a, index_b=index_b, weight=weight
+    )
+    output.lines = lines
+    for name, array in source.point_data.items():
+        output.point_data[name] = _interpolate_rows(
+            np.asarray(array), index_a=index_a, index_b=index_b, weight=weight
+        )
+    for name, array in source.cell_data.items():
+        output.cell_data[name] = np.asarray(array)[cells]
+    return output
 
 
 def _interpolate_rows(
