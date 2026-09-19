@@ -3744,7 +3744,7 @@ class BasePlotter(_BoundsSizeMixin):
             Dash pattern drawn along the mesh's line cells, one of ``''``
             (hidden), ``'-'`` (solid), ``'--'``, ``':'``, ``'-.'`` or ``'-..'``.
             The dashes are produced by the shader and keep a constant size on
-            screen. See :attr:`pyvista.Actor.dashed_lines`.
+            screen. See :attr:`pyvista.Actor.line_style`.
 
             Any style but ``'-'`` draws the mesh with a mapper that renders
             :class:`pyvista.PolyData` directly rather than the usual
@@ -4703,7 +4703,7 @@ class BasePlotter(_BoundsSizeMixin):
             )
 
         if line_style is not None:
-            actor.dashed_lines = line_style
+            actor.line_style = line_style
 
         self.add_actor(
             actor,

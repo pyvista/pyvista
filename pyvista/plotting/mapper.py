@@ -1360,7 +1360,7 @@ class _PolyDataMapper(_BaseDataSetMapper, _vtk.vtkPolyDataMapper):
     :class:`pyvista.DataSetMapper` delegates to an internal
     :vtk:`vtkPolyDataMapper`, so its vertex attribute mapping is out of reach.
     This mapper is the polygonal data mapper itself, and is used for the line
-    styles of :attr:`pyvista.Actor.dashed_lines`.
+    styles of :attr:`pyvista.Actor.line_style`.
 
     Parameters
     ----------

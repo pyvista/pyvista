@@ -1597,7 +1597,7 @@ class PolyDataFilters(DataSetFilters):
             Join connected line cells into polylines.
         pyvista.PolyDataFilters.tube
             Generate a tube around each input line.
-        pyvista.Actor.dashed_lines
+        pyvista.Actor.line_style
             Dash an actor's lines in the shader instead of splitting the cells.
 
         Examples

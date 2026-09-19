@@ -218,7 +218,7 @@ class Actor(Prop3D, _vtk.vtkActor):
             self.prop = prop
         self._name = name
         self._shader_replacements: dict[str, list[tuple[ShaderType, str, bool]]] = {}
-        self._dashed_lines: str | None = None
+        self._line_style: str | None = None
         self._dash_source: DataSet | _vtk.vtkAlgorithm | None = None
         self._dash_interval: float = 0.004
         self._point_sprite_shape: str | None = None
@@ -762,8 +762,8 @@ class Actor(Prop3D, _vtk.vtkActor):
             del registry[_feature_name]
 
     @property
-    def dashed_lines(self) -> str | None:  # numpydoc ignore=RT01
-        """Return or set the dash pattern drawn along this actor's lines.
+    def line_style(self) -> str | None:  # numpydoc ignore=RT01
+        """Return or set the dash style drawn along this actor's lines.
 
         Unlike :func:`pyvista.PolyDataFilters.dash_lines`, which splits the line
         cells into shorter cells, the dashes are produced by the fragment shader
@@ -799,16 +799,16 @@ class Actor(Prop3D, _vtk.vtkActor):
         >>> circle = pv.Circle(resolution=200).extract_all_edges()
         >>> pl = pv.Plotter()
         >>> actor = pl.add_mesh(circle, color='black', line_width=4, line_style='--')
-        >>> actor.dashed_lines = ':'
+        >>> actor.line_style = ':'
         >>> pl.show(cpos='xy')
 
         """
-        return self._dashed_lines
+        return self._line_style
 
-    @dashed_lines.setter
-    def dashed_lines(self, value: str | None) -> None:
+    @line_style.setter
+    def line_style(self, value: str | None) -> None:
         if value is None or value == '-':
-            self._disable_dashed_lines()
+            self._disable_line_style()
             return
 
         bits = _resolve_line_style(value)
@@ -832,12 +832,12 @@ class Actor(Prop3D, _vtk.vtkActor):
                 FieldAssociation.POINT.value,
                 -1,
             )
-        self._dashed_lines = value
+        self._line_style = value
 
         try:
             self._apply_dash_shader(bits)
         except Exception:
-            self._disable_dashed_lines()
+            self._disable_line_style()
             raise
 
     def _apply_dash_shader(self, bits: int) -> None:
@@ -846,37 +846,37 @@ class Actor(Prop3D, _vtk.vtkActor):
             'vertex',
             '//VTK::PositionVC::Dec',
             _DASH_VERTEX_DEC,
-            _feature_name='dashed_lines',
+            _feature_name='line_style',
         )
         self.add_shader_replacement(
             'vertex',
             '//VTK::CustomEnd::Impl',
             _DASH_VERTEX_IMPL,
-            _feature_name='dashed_lines',
+            _feature_name='line_style',
         )
         self.add_shader_replacement(
             'geometry',
             '//VTK::PositionVC::Dec',
             _DASH_GEOMETRY_DEC,
-            _feature_name='dashed_lines',
+            _feature_name='line_style',
         )
         self.add_shader_replacement(
             'geometry',
             '//VTK::Color::Impl',
             _DASH_GEOMETRY_IMPL,
-            _feature_name='dashed_lines',
+            _feature_name='line_style',
         )
         self.add_shader_replacement(
             'fragment',
             '//VTK::PositionVC::Dec',
             _DASH_FRAGMENT_DEC,
-            _feature_name='dashed_lines',
+            _feature_name='line_style',
         )
         self.add_shader_replacement(
             'fragment',
             '//VTK::Color::Impl',
             _DASH_FRAGMENT_IMPL,
-            _feature_name='dashed_lines',
+            _feature_name='line_style',
         )
         shader_property = self.GetShaderProperty()
         shader_property.GetVertexCustomUniforms().SetUniformf('dashInterval', self._dash_interval)
@@ -907,7 +907,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         _validation.check_greater_than(value, 0, name='dash_interval')
         value = float(value)
         self._dash_interval = value
-        if self._dashed_lines is not None:
+        if self._line_style is not None:
             self.GetShaderProperty().GetVertexCustomUniforms().SetUniformf('dashInterval', value)
 
     def _build_dash_pipeline(
@@ -937,18 +937,18 @@ class Actor(Prop3D, _vtk.vtkActor):
         set_algorithm_input(arc_length, stripper)
         return arc_length, source
 
-    def _disable_dashed_lines(self) -> None:
+    def _disable_line_style(self) -> None:
         """Remove the dash shader and restore the mapper's original input."""
-        if self._dashed_lines is None:
+        if self._line_style is None:
             return
-        self.clear_shader_replacements(_feature_name='dashed_lines')
+        self.clear_shader_replacements(_feature_name='line_style')
         mapper = self.mapper
         if mapper is not None and self._dash_source is not None:
             if hasattr(mapper, 'RemoveVertexAttributeMapping'):
                 mapper.RemoveVertexAttributeMapping('dashArcMC')
             mapper.dataset = self._dash_source
         self._dash_source = None
-        self._dashed_lines = None
+        self._line_style = None
 
     def enable_maximum_intensity_projection(
         self,

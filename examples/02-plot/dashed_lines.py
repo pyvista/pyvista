@@ -9,7 +9,7 @@ Dash a line by splitting its cells with a filter, or by dashing it in the shader
 PyVista offers two ways to dash a line, and they differ in where the dashes come
 from. :func:`~pyvista.PolyDataFilters.dash_lines` is a filter: it cuts the line
 cells into shorter cells, so the dashes are real geometry. The
-:attr:`~pyvista.Actor.dashed_lines` property instead discards fragments while
+:attr:`~pyvista.Actor.line_style` property instead discards fragments while
 rendering, so the geometry is untouched.
 
 Both accept the same style strings as :ref:`Pen.LINE_STYLES <pen_line_styles>`.

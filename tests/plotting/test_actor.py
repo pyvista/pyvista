@@ -765,16 +765,16 @@ def test_mip_and_point_sprite_coexist(point_cloud_actor):
     assert 'mip' in actor._shader_replacements
 
 
-def test_dashed_lines_via_add_mesh():
+def test_line_style_via_add_mesh():
     pl = pv.Plotter()
     actor = pl.add_mesh(pv.Line(resolution=20), line_style='--')
     assert isinstance(actor.mapper, _PolyDataMapper)
-    assert actor.dashed_lines == '--'
+    assert actor.line_style == '--'
     pl.close()
 
 
 @pytest.mark.parametrize('style', ['--', ':', '-.', '-..'])
-def test_dashed_lines_draws_fewer_pixels(style):
+def test_line_style_draws_fewer_pixels(style):
     def drawn(line_style):
         pl = pv.Plotter(off_screen=True, window_size=(600, 400))
         pl.disable_anti_aliasing()
@@ -794,20 +794,20 @@ def test_dashed_lines_draws_fewer_pixels(style):
     assert drawn(style) < drawn('-')
 
 
-def test_dashed_lines_disable_restores_input():
+def test_line_style_disable_restores_input():
     mesh = pv.Line(resolution=20)
     pl = pv.Plotter()
     actor = pl.add_mesh(mesh, line_style='--')
-    actor.dashed_lines = None
-    assert actor.dashed_lines is None
+    actor.line_style = None
+    assert actor.line_style is None
     assert actor.mapper.dataset is mesh
     pl.close()
 
 
-def test_dashed_lines_solid_style_is_not_dashed():
+def test_line_style_solid_is_not_dashed():
     pl = pv.Plotter()
     actor = pl.add_mesh(pv.Line(resolution=20), line_style='-')
-    assert actor.dashed_lines is None
+    assert actor.line_style is None
     pl.close()
 
 
@@ -821,21 +821,21 @@ def test_dash_interval():
     pl.close()
 
 
-def test_dashed_lines_requires_polydata_mapper():
+def test_line_style_requires_polydata_mapper():
     actor = pv.Actor(mapper=pv.DataSetMapper(dataset=pv.Line(resolution=20)))
     with pytest.raises(TypeError, match='line_style'):
-        actor.dashed_lines = '--'
+        actor.line_style = '--'
 
 
-def test_dashed_lines_invalid_style():
+def test_line_style_invalid():
     pl = pv.Plotter()
     actor = pl.add_mesh(pv.Line(resolution=20))
     with pytest.raises(ValueError, match='is not valid'):
-        actor.dashed_lines = 'wrong'
+        actor.line_style = 'wrong'
     pl.close()
 
 
-def test_dashed_lines_foreshorten_with_distance():
+def test_line_style_foreshorten_with_distance():
     pl = pv.Plotter(off_screen=True, window_size=(1200, 400))
     pl.disable_anti_aliasing()
     actor = pl.add_mesh(
@@ -864,13 +864,13 @@ def test_dashed_lines_foreshorten_with_distance():
     assert dashes[:third].mean() > 2 * dashes[-third:].mean()
 
 
-def test_dashed_lines_requires_dataset():
+def test_line_style_requires_dataset():
     actor = pv.Actor(mapper=_PolyDataMapper())
     with pytest.raises(ValueError, match='must have a dataset'):
-        actor.dashed_lines = '--'
+        actor.line_style = '--'
 
 
-def test_dashed_lines_restores_the_actor_when_the_shader_fails(monkeypatch):
+def test_line_style_restores_the_actor_when_the_shader_fails(monkeypatch):
     def boom(*_args):
         msg = 'no shader'
         raise RuntimeError(msg)
@@ -879,12 +879,12 @@ def test_dashed_lines_restores_the_actor_when_the_shader_fails(monkeypatch):
     actor = pv.Actor(mapper=_PolyDataMapper())
     actor.mapper.dataset = pv.Line(resolution=10)
     with pytest.raises(RuntimeError, match='no shader'):
-        actor.dashed_lines = '--'
-    assert actor.dashed_lines is None
+        actor.line_style = '--'
+    assert actor.line_style is None
 
 
 @pytest.mark.parametrize('style', ['--', ''])
-def test_dashed_lines_rejects_faces(style):
+def test_line_style_rejects_faces(style):
     mesh = pv.Plane(i_resolution=2, j_resolution=2)
     mesh.lines = np.array([2, 0, 8])
     pl = pv.Plotter()
@@ -893,14 +893,14 @@ def test_dashed_lines_rejects_faces(style):
     pl.close()
 
 
-def test_dashed_lines_rejects_multiblock():
+def test_line_style_rejects_multiblock():
     pl = pv.Plotter()
     with pytest.raises(TypeError, match='not supported for `MultiBlock`'):
         pl.add_mesh(pv.MultiBlock([pv.Line(resolution=10)]), line_style='--')
     pl.close()
 
 
-def test_dashed_lines_hidden_style():
+def test_line_style_hidden():
     pl = pv.Plotter(off_screen=True, window_size=(300, 200))
     pl.disable_anti_aliasing()
     pl.background_color = 'white'
@@ -915,7 +915,7 @@ def test_dashed_lines_hidden_style():
     image = pl.screenshot(return_img=True)
     pl.close()
 
-    assert actor.dashed_lines == ''
+    assert actor.line_style == ''
     assert not (image[..., 0] < 128).any()
 
 
@@ -934,14 +934,14 @@ def test_dashed_lines_hidden_style():
     ],
     ids=['polydata', 'unstructured', 'image', 'rectilinear'],
 )
-def test_dashed_lines_dataset_types(dataset):
+def test_line_style_dataset_types(dataset):
     def drawn(line_style, *, disable=False):
         pl = pv.Plotter(off_screen=True, window_size=(600, 200))
         pl.disable_anti_aliasing()
         pl.background_color = 'white'
         actor = pl.add_mesh(dataset, color='black', line_width=3, line_style=line_style)
         if disable:
-            actor.dashed_lines = None
+            actor.line_style = None
         pl.view_xy()
         pl.render()
         image = pl.screenshot(return_img=True)
