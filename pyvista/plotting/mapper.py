@@ -1354,13 +1354,12 @@ class DataSetMapper(_BaseDataSetMapper, _vtk.vtkDataSetMapper):
         super().__init__(dataset=dataset, theme=theme)
 
 
-class PolyDataMapper(_BaseDataSetMapper, _vtk.vtkPolyDataMapper):
+class _PolyDataMapper(_BaseDataSetMapper, _vtk.vtkPolyDataMapper):
     """Wrap :vtk:`vtkPolyDataMapper`.
 
-    This mapper renders :class:`pyvista.PolyData` directly. It is the mapper
-    :func:`pyvista.Plotter.add_mesh` creates for polygonal data.
-
-    .. versionadded:: 0.50
+    This mapper renders :class:`pyvista.PolyData` directly, which
+    :class:`pyvista.DataSetMapper` cannot do. It is used for the line styles of
+    :attr:`pyvista.Actor.dashed_lines`.
 
     Parameters
     ----------
@@ -1369,15 +1368,6 @@ class PolyDataMapper(_BaseDataSetMapper, _vtk.vtkPolyDataMapper):
 
     theme : pyvista.plotting.themes.Theme, optional
         Plot-specific theme.
-
-    Examples
-    --------
-    Create a mapper outside :class:`pyvista.Plotter` and assign it to an actor.
-
-    >>> import pyvista as pv
-    >>> mapper = pv.PolyDataMapper(dataset=pv.Sphere())
-    >>> actor = pv.Actor(mapper=mapper)
-    >>> actor.plot()
 
     """
 

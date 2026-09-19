@@ -10,6 +10,7 @@ from pyvista import _vtk
 from pyvista import examples
 from pyvista.plotting._property import _HAS_NATIVE_POINT_SHAPES
 from pyvista.plotting.actor import _POINT_SPRITE_SHADERS
+from pyvista.plotting.mapper import _PolyDataMapper
 from pyvista.plotting.prop3d import Prop3D
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
 from pyvista.plotting.prop3d import _Prop3DMixin
@@ -767,7 +768,7 @@ def test_mip_and_point_sprite_coexist(point_cloud_actor):
 def test_dashed_lines_via_add_mesh():
     pl = pv.Plotter()
     actor = pl.add_mesh(pv.Line(resolution=20), line_style='--')
-    assert isinstance(actor.mapper, pv.PolyDataMapper)
+    assert isinstance(actor.mapper, _PolyDataMapper)
     assert actor.dashed_lines == '--'
     pl.close()
 
@@ -822,7 +823,7 @@ def test_dash_interval():
 
 def test_dashed_lines_requires_polydata_mapper():
     actor = pv.Actor(mapper=pv.DataSetMapper(dataset=pv.Line(resolution=20)))
-    with pytest.raises(TypeError, match='PolyDataMapper'):
+    with pytest.raises(TypeError, match='line_style'):
         actor.dashed_lines = '--'
 
 
@@ -864,7 +865,7 @@ def test_dashed_lines_foreshorten_with_distance():
 
 
 def test_dashed_lines_requires_dataset():
-    actor = pv.Actor(mapper=pv.PolyDataMapper())
+    actor = pv.Actor(mapper=_PolyDataMapper())
     with pytest.raises(ValueError, match='must have a dataset'):
         actor.dashed_lines = '--'
 

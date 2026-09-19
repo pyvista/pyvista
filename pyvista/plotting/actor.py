@@ -785,8 +785,9 @@ class Actor(Prop3D, _vtk.vtkActor):
         the rest of the line. Parts of a line whose cells are shorter on screen
         than ``line_width`` are drawn solid.
 
-        Requires polygonal data, which :func:`~pyvista.Plotter.add_mesh` renders
-        with a :class:`pyvista.PolyDataMapper`.
+        Requires polygonal data drawn by :func:`~pyvista.Plotter.add_mesh` with
+        its ``line_style`` set, which selects a mapper that renders
+        :class:`pyvista.PolyData` directly.
 
         Examples
         --------
@@ -795,8 +796,8 @@ class Actor(Prop3D, _vtk.vtkActor):
         >>> import pyvista as pv
         >>> circle = pv.Circle(resolution=200).extract_all_edges()
         >>> pl = pv.Plotter()
-        >>> actor = pl.add_mesh(circle, color='black', line_width=4)
-        >>> actor.dashed_lines = '--'
+        >>> actor = pl.add_mesh(circle, color='black', line_width=4, line_style='--')
+        >>> actor.dashed_lines = ':'
         >>> pl.show(cpos='xy')
 
         """
@@ -812,7 +813,7 @@ class Actor(Prop3D, _vtk.vtkActor):
 
         mapper = self.mapper
         if mapper is None or not hasattr(mapper, 'MapDataArrayToVertexAttribute'):
-            msg = 'Dashed lines require pyvista.PolyData rendered by a pyvista.PolyDataMapper.'
+            msg = 'Dashed lines require a mesh added with add_mesh(..., line_style=...).'
             raise TypeError(msg)
 
         dataset = mapper.dataset

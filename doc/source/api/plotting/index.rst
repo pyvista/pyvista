@@ -71,7 +71,6 @@ Actors and Mappers
    DataSetMapper
    Follower
    plotting.mapper.PointGaussianMapper
-   PolyDataMapper
    Prop3D
    Property
 

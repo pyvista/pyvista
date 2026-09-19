@@ -75,7 +75,6 @@ from .mapper import FixedPointVolumeRayCastMapper
 from .mapper import GPUVolumeRayCastMapper
 from .mapper import OpenGLGPUVolumeRayCastMapper
 from .mapper import PointGaussianMapper
-from .mapper import PolyDataMapper
 from .mapper import SmartVolumeMapper
 from .mapper import UnstructuredGridVolumeRayCastMapper
 from .mapper import _apply_categories
@@ -83,6 +82,7 @@ from .mapper import _BaseMapper
 from .mapper import _category_range
 from .mapper import _mapper_get_data_set_input
 from .mapper import _mapper_has_data_set_input
+from .mapper import _PolyDataMapper
 from .opts import StereoType
 from .picking import PickingComponent
 from .prop_collection import _PropCollection
@@ -3741,10 +3741,17 @@ class BasePlotter(_BoundsSizeMixin):
             representations.  Default ``None``.
 
         line_style : str, optional
-            Dash pattern drawn along the mesh's line cells, one of ``'-'``
-            (solid), ``'--'``, ``':'``, ``'-.'`` or ``'-..'``. The dashes are
-            produced by the shader and keep a constant size on screen. Requires
-            :class:`pyvista.PolyData`. See :attr:`pyvista.Actor.dashed_lines`.
+            Dash pattern drawn along the mesh's line cells, one of ``''``
+            (hidden), ``'-'`` (solid), ``'--'``, ``':'``, ``'-.'`` or ``'-..'``.
+            The dashes are produced by the shader and keep a constant size on
+            screen. Requires :class:`pyvista.PolyData`. See
+            :attr:`pyvista.Actor.dashed_lines`.
+
+            Setting this draws the mesh with a mapper that renders
+            :class:`pyvista.PolyData` directly rather than the usual
+            :class:`pyvista.DataSetMapper`. Picking such a mesh with the
+            ``'hardware'`` picker crashes on macOS when the scene is rendered in
+            software.
 
             .. versionadded:: 0.50
 
@@ -4336,8 +4343,8 @@ class BasePlotter(_BoundsSizeMixin):
 
         if style == 'points_gaussian':
             mapper: _BaseMapper = PointGaussianMapper(theme=self.theme, emissive=emissive)
-        elif isinstance(mesh, pv.PolyData):
-            mapper = PolyDataMapper(theme=self.theme)
+        elif line_style is not None and isinstance(mesh, pv.PolyData):
+            mapper = _PolyDataMapper(theme=self.theme)
         else:
             mapper = DataSetMapper(theme=self.theme)
         self.mapper = mapper

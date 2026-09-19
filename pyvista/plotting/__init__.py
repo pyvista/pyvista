@@ -57,7 +57,6 @@ from .mapper import FixedPointVolumeRayCastMapper as FixedPointVolumeRayCastMapp
 from .mapper import GPUVolumeRayCastMapper as GPUVolumeRayCastMapper
 from .mapper import OpenGLGPUVolumeRayCastMapper as OpenGLGPUVolumeRayCastMapper
 from .mapper import PointGaussianMapper as PointGaussianMapper
-from .mapper import PolyDataMapper as PolyDataMapper
 from .mapper import SmartVolumeMapper as SmartVolumeMapper
 from .mapper import UnstructuredGridVolumeRayCastMapper as UnstructuredGridVolumeRayCastMapper
 from .opts import PointSpriteShape as PointSpriteShape
