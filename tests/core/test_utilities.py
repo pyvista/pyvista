@@ -3192,7 +3192,12 @@ def _compute_unit_cell_quality(
 
 
 def xfail_wedge_negative_volume(info):
-    if info.cell_type == pv.CellType.WEDGE and info.quality_measure == 'volume':
+    """Xfail the wedge volume measure, which VTK reports as negative before 9.6."""
+    if (
+        pv.vtk_version_info < (9, 6)
+        and info.cell_type == pv.CellType.WEDGE
+        and info.quality_measure == 'volume'
+    ):
         pytest.xfail(
             'vtkWedge returns negative volume, see https://gitlab.kitware.com/vtk/vtk/-/issues/19643'
         )
@@ -3244,9 +3249,6 @@ def test_cell_quality_info_ranges(info):
     assert normal_range[1] >= acceptable_range[1]
     assert full_range[0] <= normal_range[0]
     assert full_range[1] >= normal_range[1]
-
-    # last, so a measure xfailing here is still checked for range nesting above
-    xfail_wedge_negative_volume(info)
 
     assert info.unit_cell_value >= info.acceptable_range[0]
     assert info.unit_cell_value <= info.acceptable_range[1]
