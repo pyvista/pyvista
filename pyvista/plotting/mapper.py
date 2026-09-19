@@ -1354,6 +1354,42 @@ class DataSetMapper(_BaseDataSetMapper, _vtk.vtkDataSetMapper):
         super().__init__(dataset=dataset, theme=theme)
 
 
+class PolyDataMapper(_BaseDataSetMapper, _vtk.vtkPolyDataMapper):
+    """Wrap :vtk:`vtkPolyDataMapper`.
+
+    This mapper renders :class:`pyvista.PolyData` directly. It is the mapper
+    :func:`pyvista.Plotter.add_mesh` creates for polygonal data.
+
+    .. versionadded:: 0.50
+
+    Parameters
+    ----------
+    dataset : pyvista.PolyData, optional
+        Dataset to assign to this mapper.
+
+    theme : pyvista.plotting.themes.Theme, optional
+        Plot-specific theme.
+
+    Examples
+    --------
+    Create a mapper outside :class:`pyvista.Plotter` and assign it to an actor.
+
+    >>> import pyvista as pv
+    >>> mapper = pv.PolyDataMapper(dataset=pv.Sphere())
+    >>> actor = pv.Actor(mapper=mapper)
+    >>> actor.plot()
+
+    """
+
+    def __init__(
+        self,
+        dataset: DataSet | None = None,
+        theme: Theme | None = None,
+    ) -> None:
+        """Initialize this class."""
+        super().__init__(dataset=dataset, theme=theme)
+
+
 class PointGaussianMapper(_BaseDataSetMapper, _vtk.vtkPointGaussianMapper):
     """Wrap :vtk:`vtkPointGaussianMapper`.
 

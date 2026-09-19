@@ -75,6 +75,7 @@ from .mapper import FixedPointVolumeRayCastMapper
 from .mapper import GPUVolumeRayCastMapper
 from .mapper import OpenGLGPUVolumeRayCastMapper
 from .mapper import PointGaussianMapper
+from .mapper import PolyDataMapper
 from .mapper import SmartVolumeMapper
 from .mapper import UnstructuredGridVolumeRayCastMapper
 from .mapper import _apply_categories
@@ -4229,11 +4230,6 @@ class BasePlotter(_BoundsSizeMixin):
 
         if user_matrix is None:
             user_matrix = np.eye(4)
-        if style == 'points_gaussian':
-            mapper: _BaseMapper = PointGaussianMapper(theme=self.theme, emissive=emissive)
-        else:
-            mapper = DataSetMapper(theme=self.theme)
-        self.mapper = mapper
 
         if render_lines_as_tubes and show_edges:
             warn_external(
@@ -4328,6 +4324,14 @@ class BasePlotter(_BoundsSizeMixin):
             # active, it doesn't modify the original input mesh.
             # We ignore `copy_mesh` if the input is an algorithm
             mesh = mesh.copy(deep=False)
+
+        if style == 'points_gaussian':
+            mapper: _BaseMapper = PointGaussianMapper(theme=self.theme, emissive=emissive)
+        elif isinstance(mesh, pv.PolyData):
+            mapper = PolyDataMapper(theme=self.theme)
+        else:
+            mapper = DataSetMapper(theme=self.theme)
+        self.mapper = mapper
 
         # Parse arguments
         (
