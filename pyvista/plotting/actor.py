@@ -795,13 +795,13 @@ class Actor(Prop3D, _vtk.vtkActor):
 
         Examples
         --------
-        Dash the lines of a circle.
+        Dash the lines of a circle, changing the style the mesh was added with.
 
         >>> import pyvista as pv
         >>> circle = pv.Circle(resolution=200).extract_all_edges()
         >>> pl = pv.Plotter()
-        >>> actor = pl.add_mesh(circle, color='black', line_width=4, line_style='--')
-        >>> actor.line_style = ':'
+        >>> actor = pl.add_mesh(circle, color='black', line_width=4, line_style=':')
+        >>> actor.line_style = '--'
         >>> pl.show(cpos='xy')
 
         """
