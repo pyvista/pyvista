@@ -3744,14 +3744,13 @@ class BasePlotter(_BoundsSizeMixin):
             Dash pattern drawn along the mesh's line cells, one of ``''``
             (hidden), ``'-'`` (solid), ``'--'``, ``':'``, ``'-.'`` or ``'-..'``.
             The dashes are produced by the shader and keep a constant size on
-            screen. Requires :class:`pyvista.PolyData`. See
-            :attr:`pyvista.Actor.dashed_lines`.
+            screen. See :attr:`pyvista.Actor.dashed_lines`.
 
-            Setting this draws the mesh with a mapper that renders
+            Any style but ``'-'`` draws the mesh with a mapper that renders
             :class:`pyvista.PolyData` directly rather than the usual
-            :class:`pyvista.DataSetMapper`. Picking such a mesh with the
-            ``'hardware'`` picker crashes on macOS when the scene is rendered in
-            software.
+            :class:`pyvista.DataSetMapper`, extracting the surface of other
+            dataset types first. Picking such a mesh with the ``'hardware'``
+            picker crashes on macOS when the scene is rendered in software.
 
             .. versionadded:: 0.50
 
@@ -4343,7 +4342,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         if style == 'points_gaussian':
             mapper: _BaseMapper = PointGaussianMapper(theme=self.theme, emissive=emissive)
-        elif line_style is not None and isinstance(mesh, pv.PolyData):
+        elif line_style is not None and line_style != '-':
             mapper = _PolyDataMapper(theme=self.theme)
         else:
             mapper = DataSetMapper(theme=self.theme)

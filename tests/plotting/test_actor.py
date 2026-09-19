@@ -897,3 +897,34 @@ def test_dashed_lines_hidden_style():
 
     assert actor.dashed_lines == ''
     assert not (image[..., 0] < 128).any()
+
+
+@pytest.mark.parametrize(
+    'dataset',
+    [
+        pv.Line((-1, 0, 0), (1, 0, 0), resolution=40),
+        pv.Line((-1, 0, 0), (1, 0, 0), resolution=40).cast_to_unstructured_grid(),
+        pv.ImageData(dimensions=(41, 1, 1), spacing=(0.05, 1, 1), origin=(-1, 0, 0)),
+        pv.RectilinearGrid(np.linspace(-1, 1, 41)),
+    ],
+    ids=['polydata', 'unstructured', 'image', 'rectilinear'],
+)
+def test_dashed_lines_dataset_types(dataset):
+    def drawn(line_style, *, disable=False):
+        pl = pv.Plotter(off_screen=True, window_size=(600, 200))
+        pl.disable_anti_aliasing()
+        pl.background_color = 'white'
+        actor = pl.add_mesh(dataset, color='black', line_width=3, line_style=line_style)
+        if disable:
+            actor.dashed_lines = None
+        pl.view_xy()
+        pl.render()
+        image = pl.screenshot(return_img=True)
+        pl.close()
+        return int((image[..., 0] < 128).sum())
+
+    solid = drawn('-')
+    assert solid > 0
+    assert 0 < drawn('--') < solid
+    assert drawn('') == 0
+    assert drawn('--', disable=True) == solid

@@ -219,7 +219,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         self._name = name
         self._shader_replacements: dict[str, list[tuple[ShaderType, str, bool]]] = {}
         self._dashed_lines: str | None = None
-        self._dash_source: DataSet | None = None
+        self._dash_source: DataSet | _vtk.vtkAlgorithm | None = None
         self._dash_interval: float = 0.004
         self._point_sprite_shape: str | None = None
         self._point_sprite_applied: str | None = None
@@ -785,9 +785,10 @@ class Actor(Prop3D, _vtk.vtkActor):
         the rest of the line. Parts of a line whose cells are shorter on screen
         than ``line_width`` are drawn solid.
 
-        Requires polygonal data drawn by :func:`~pyvista.Plotter.add_mesh` with
-        its ``line_style`` set, which selects a mapper that renders
-        :class:`pyvista.PolyData` directly.
+        Requires a mesh drawn by :func:`~pyvista.Plotter.add_mesh` with its
+        ``line_style`` set, which selects a mapper that renders
+        :class:`pyvista.PolyData` directly. Other dataset types have their
+        surface extracted first.
 
         Examples
         --------
@@ -822,8 +823,8 @@ class Actor(Prop3D, _vtk.vtkActor):
             raise ValueError(msg)
 
         if self._dash_source is None:
-            self._dash_source = dataset
-            mapper.dataset = self._build_dash_pipeline(self._dash_source)
+            pipeline, self._dash_source = self._build_dash_pipeline(dataset)
+            mapper.dataset = pipeline
             mapper.MapDataArrayToVertexAttribute(
                 'dashArcMC',
                 'arc_length',
@@ -899,20 +900,28 @@ class Actor(Prop3D, _vtk.vtkActor):
         if self._dashed_lines is not None:
             self.GetShaderProperty().GetVertexCustomUniforms().SetUniformf('dashInterval', value)
 
-    def _build_dash_pipeline(self, dataset: DataSet) -> _vtk.vtkAlgorithm:
-        """Return an algorithm appending per-point arc length to the actor's lines."""
+    def _build_dash_pipeline(
+        self, dataset: DataSet
+    ) -> tuple[_vtk.vtkAlgorithm, DataSet | _vtk.vtkAlgorithm]:
+        """Return an arc length algorithm for the actor's lines and the input it wraps."""
+        source: DataSet | _vtk.vtkAlgorithm = dataset
+        surface = dataset
+        if not isinstance(dataset, pv.PolyData):
+            geometry = _vtk.vtkGeometryFilter()
+            set_algorithm_input(geometry, dataset)
+            geometry.Update()
+            source = geometry
+            surface = pv.wrap(geometry.GetOutput())
+
         arc_length = _vtk.vtkAppendArcLength()
-        line_only = (
-            isinstance(dataset, pv.PolyData) and dataset.n_faces == 0 and dataset.n_strips == 0
-        )
-        if line_only:
+        if surface.n_faces == 0 and surface.n_strips == 0:
             stripper = _vtk.vtkStripper()
             stripper.SetJoinContiguousSegments(True)
-            set_algorithm_input(stripper, dataset)
+            set_algorithm_input(stripper, source)
             set_algorithm_input(arc_length, stripper)
         else:
-            set_algorithm_input(arc_length, dataset)
-        return arc_length
+            set_algorithm_input(arc_length, source)
+        return arc_length, source
 
     def _disable_dashed_lines(self) -> None:
         """Remove the dash shader and restore the mapper's original input."""
