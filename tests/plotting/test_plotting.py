@@ -4480,10 +4480,54 @@ def test_ruler():
     pl.show()
 
 
+def test_ruler_flip_side():
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Box(bounds=(-1.25, 1.25, -0.3, 0.3, -0.3, 0.3)))
+    style = dict(font_size_factor=1.2, tick_length=18)
+    pl.add_ruler([-1.25, -0.6, 0], [1.25, -0.6, 0], title='+X', **style)
+    pl.add_ruler([1.25, -1.1, 0], [-1.25, -1.1, 0], title='-X', flip_side=True, **style)
+    pl.enable_parallel_projection()
+    pl.view_xy()
+    pl.camera.zoom(0.9)
+    pl.show()
+
+
+def test_ruler_renderer_scale():
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Box(bounds=(-1.25, 1.25, -0.3, 0.3, -0.3, 0.3)))
+    pl.add_ruler(
+        [-1.25, -0.6, 0],
+        [1.25, -0.6, 0],
+        title='X Distance',
+        font_size_factor=1.0,
+        tick_length=20,
+    )
+    pl.set_scale(xscale=3, yscale=2)
+    pl.enable_parallel_projection()
+    pl.view_xy()
+    pl.camera.zoom(0.55)
+    pl.show()
+
+
 def test_ruler_number_labels():
     pl = pv.Plotter()
     pl.add_mesh(pv.Sphere())
-    pl.add_ruler([-0.6, -0.6, 0], [0.6, -0.6, 0], font_size_factor=1.2, number_labels=2)
+    pl.add_ruler([-0.6, -0.6, 0], [0.6, -0.6, 0], font_size_factor=1.2, number_labels=6)
+    pl.view_xy()
+    pl.show()
+
+
+@pytest.mark.needs_vtk_version(9, 4, 0, reason='SnapLabelsToGrid was added in VTK 9.4.0')
+def test_ruler_snap_labels():
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    pl.add_ruler(
+        [-0.6, -0.6, 0],
+        [0.6, -0.6, 0],
+        font_size_factor=1.2,
+        number_labels=6,
+        snap_labels=True,
+    )
     pl.view_xy()
     pl.show()
 
