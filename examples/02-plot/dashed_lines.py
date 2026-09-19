@@ -82,9 +82,7 @@ pl.view_isometric()
 pl.show()
 
 # %%
-# The same styles apply. These subplots are built by hand rather than with
-# :func:`~pyvista.plot_compare`, because the style is a property of the actor and
-# not of the dataset.
+# The same styles apply.
 
 pl = pv.Plotter(shape=(1, 5))
 for index, style in enumerate(styles):
