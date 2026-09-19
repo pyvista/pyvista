@@ -784,8 +784,8 @@ class Actor(Prop3D, _vtk.vtkActor):
         Under a perspective camera the dashes shorten with distance along with
         the rest of the line.
 
-        The mapper must be a :class:`pyvista.PolyDataMapper`. Use
-        ``add_mesh(..., line_style=...)`` to have one created automatically.
+        Requires polygonal data, which :func:`~pyvista.Plotter.add_mesh` renders
+        with a :class:`pyvista.PolyDataMapper`.
 
         Examples
         --------
@@ -794,7 +794,8 @@ class Actor(Prop3D, _vtk.vtkActor):
         >>> import pyvista as pv
         >>> circle = pv.Circle(resolution=200).extract_all_edges()
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(circle, color='black', line_width=4, line_style='--')
+        >>> actor = pl.add_mesh(circle, color='black', line_width=4)
+        >>> actor.dashed_lines = '--'
         >>> pl.show(cpos='xy')
 
         """
