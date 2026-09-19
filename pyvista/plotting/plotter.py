@@ -82,6 +82,7 @@ from .mapper import _BaseMapper
 from .mapper import _category_range
 from .mapper import _mapper_get_data_set_input
 from .mapper import _mapper_has_data_set_input
+from .mapper import _PolyDataMapper
 from .opts import StereoType
 from .picking import PickingComponent
 from .prop_collection import _PropCollection
@@ -3603,6 +3604,7 @@ class BasePlotter(_BoundsSizeMixin):
         edge_color: ColorLike | None = None,
         point_size: float | None = None,
         line_width: float | None = None,
+        line_style: str | None = None,
         opacity: float | OpacityOptions | Sequence[float] | None = None,
         flip_scalars: bool = False,
         lighting: bool | None = None,
@@ -3737,6 +3739,20 @@ class BasePlotter(_BoundsSizeMixin):
         line_width : float, optional
             Thickness of lines.  Only valid for wireframe and surface
             representations.  Default ``None``.
+
+        line_style : str, optional
+            Dash pattern drawn along the mesh's line cells, one of ``''``
+            (hidden), ``'-'`` (solid), ``'--'``, ``':'``, ``'-.'`` or ``'-..'``.
+            The dashes are produced by the shader and keep a constant size on
+            screen. See :attr:`pyvista.Actor.dashed_lines`.
+
+            Any style but ``'-'`` draws the mesh with a mapper that renders
+            :class:`pyvista.PolyData` directly rather than the usual
+            :class:`pyvista.DataSetMapper`, extracting the surface of other
+            dataset types first. Picking such a mesh with the ``'hardware'``
+            picker crashes on macOS when the scene is rendered in software.
+
+            .. versionadded:: 0.50
 
         opacity : float | str | array_like
             Opacity of the mesh. If a single float value is given, it
@@ -4229,11 +4245,6 @@ class BasePlotter(_BoundsSizeMixin):
 
         if user_matrix is None:
             user_matrix = np.eye(4)
-        if style == 'points_gaussian':
-            mapper: _BaseMapper = PointGaussianMapper(theme=self.theme, emissive=emissive)
-        else:
-            mapper = DataSetMapper(theme=self.theme)
-        self.mapper = mapper
 
         if render_lines_as_tubes and show_edges:
             warn_external(
@@ -4272,6 +4283,9 @@ class BasePlotter(_BoundsSizeMixin):
                 raise TypeError(msg)
             _validation.check_instance(opacity, (float, int, type(None)), name='opacity')
             _validation.check_instance(scalars, (str, type(None)), name='scalars')
+            if line_style is not None:
+                msg = '`line_style` is not supported for `MultiBlock` input.'
+                raise TypeError(msg)
             actor, _ = self.add_composite(
                 mesh,
                 color=color,
@@ -4328,6 +4342,14 @@ class BasePlotter(_BoundsSizeMixin):
             # active, it doesn't modify the original input mesh.
             # We ignore `copy_mesh` if the input is an algorithm
             mesh = mesh.copy(deep=False)
+
+        if style == 'points_gaussian':
+            mapper: _BaseMapper = PointGaussianMapper(theme=self.theme, emissive=emissive)
+        elif line_style is not None and line_style != '-':
+            mapper = _PolyDataMapper(theme=self.theme)
+        else:
+            mapper = DataSetMapper(theme=self.theme)
+        self.mapper = mapper
 
         # Parse arguments
         (
@@ -4679,6 +4701,9 @@ class BasePlotter(_BoundsSizeMixin):
                 static=static,
                 show_vertices=False,
             )
+
+        if line_style is not None:
+            actor.dashed_lines = line_style
 
         self.add_actor(
             actor,
