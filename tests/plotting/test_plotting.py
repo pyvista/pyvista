@@ -3298,11 +3298,21 @@ def test_plot_compare_per_subplot_kwargs(verify_image_cache):
     ('kwargs', 'n_datasets', 'shared', 'varying'),
     [
         # A keyword which never takes a sequence of its own varies per subplot
-        ({'line_style': ['--', ':']}, 2, {}, [{'line_style': '--'}, {'line_style': ':'}]),
+        (
+            {'style': ['surface', 'wireframe']},
+            2,
+            {},
+            [{'style': 'surface'}, {'style': 'wireframe'}],
+        ),
         ({'line_width': [2, 4]}, 2, {}, [{'line_width': 2}, {'line_width': 4}]),
         ({'show_edges': [True, False]}, 2, {}, [{'show_edges': True}, {'show_edges': False}]),
         # A sequence of any other length is one value, left to `add_mesh` to reject
-        ({'line_style': ['--', ':']}, 3, {'line_style': ['--', ':']}, [{}, {}, {}]),
+        (
+            {'style': ['surface', 'wireframe']},
+            3,
+            {'style': ['surface', 'wireframe']},
+            [{}, {}, {}],
+        ),
         # A keyword whose own value can be a sequence keeps that value, however many
         # datasets it is drawn beside
         ({'color': [1, 0, 0]}, 3, {'color': [1, 0, 0]}, [{}, {}, {}]),
