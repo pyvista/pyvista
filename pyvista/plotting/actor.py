@@ -886,7 +886,8 @@ class Actor(Prop3D, _vtk.vtkActor):
     def dash_interval(self) -> float:  # numpydoc ignore=RT01
         """Return or set the on-screen length of one dash pattern interval.
 
-        The length is a fraction of the render window height. A full pattern
+        The length is a fraction of the renderer's viewport height, so a subplot
+        dashes at the same rate as a full window of that height. A full pattern
         repeats every sixteen intervals.
 
         .. versionadded:: 0.50
