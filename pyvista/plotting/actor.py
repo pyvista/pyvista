@@ -832,7 +832,16 @@ class Actor(Prop3D, _vtk.vtkActor):
                 FieldAssociation.POINT.value,
                 -1,
             )
+        self._dashed_lines = value
 
+        try:
+            self._apply_dash_shader(bits)
+        except Exception:
+            self._disable_dashed_lines()
+            raise
+
+    def _apply_dash_shader(self, bits: int) -> None:
+        """Replace the shader stages that discard the undrawn parts of a line."""
         self.add_shader_replacement(
             'vertex',
             '//VTK::PositionVC::Dec',
@@ -872,7 +881,6 @@ class Actor(Prop3D, _vtk.vtkActor):
         shader_property = self.GetShaderProperty()
         shader_property.GetVertexCustomUniforms().SetUniformf('dashInterval', self._dash_interval)
         shader_property.GetFragmentCustomUniforms().SetUniformi('dashPattern', bits)
-        self._dashed_lines = value
 
     @property
     def dash_interval(self) -> float:  # numpydoc ignore=RT01

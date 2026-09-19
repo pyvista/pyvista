@@ -870,6 +870,19 @@ def test_dashed_lines_requires_dataset():
         actor.dashed_lines = '--'
 
 
+def test_dashed_lines_restores_the_actor_when_the_shader_fails(monkeypatch):
+    def boom(self, bits):
+        msg = 'no shader'
+        raise RuntimeError(msg)
+
+    monkeypatch.setattr(pv.Actor, '_apply_dash_shader', boom)
+    actor = pv.Actor(mapper=_PolyDataMapper())
+    actor.mapper.dataset = pv.Line(resolution=10)
+    with pytest.raises(RuntimeError, match='no shader'):
+        actor.dashed_lines = '--'
+    assert actor.dashed_lines is None
+
+
 @pytest.mark.parametrize('style', ['--', ''])
 def test_dashed_lines_rejects_faces(style):
     mesh = pv.Plane(i_resolution=2, j_resolution=2)
