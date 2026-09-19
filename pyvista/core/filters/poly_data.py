@@ -1615,6 +1615,10 @@ class PolyDataFilters(DataSetFilters):
         >>> pl.view_isometric()
         >>> pl.show()
 
+        Use an explicit 16-bit pattern for a long dash followed by a short one.
+
+        >>> helix.dash_lines(pattern=0x1CFF).plot(color='black', line_width=4)
+
         Dash the edges of a mesh by extracting them first.
 
         >>> sphere = pv.Sphere(theta_resolution=12, phi_resolution=12)

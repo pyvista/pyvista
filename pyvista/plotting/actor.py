@@ -11,6 +11,8 @@ import numpy as np
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._warn_external import warn_external
+from pyvista.core.filters.poly_data import _resolve_dash_pattern
+from pyvista.core.utilities.arrays import FieldAssociation
 
 from ._property import _HAS_NATIVE_POINT_SHAPES
 from ._property import Property
@@ -22,6 +24,8 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from typing_extensions import Self
+
+    from pyvista import DataSet
 
     from .mapper import _BaseMapper
 
@@ -95,6 +99,41 @@ _POINT_SPRITE_SHADERS: dict[str, str] = {
         '  discard;\n'
     ),
 }
+
+
+_DASH_VERTEX_DEC = """//VTK::PositionVC::Dec
+in float dashArcMC;
+out float dashArcVS;
+noperspective out float dashArc;
+"""
+
+_DASH_VERTEX_IMPL = """{
+  vec4 dashPosDC = MCDCMatrix * vertexMC;
+  vec3 dashRow = vec3(MCDCMatrix[0].y, MCDCMatrix[1].y, MCDCMatrix[2].y);
+  float dashValue = dashArcMC * 0.5 * length(dashRow) / (dashPosDC.w * dashInterval);
+  dashArcVS = dashValue;
+  dashArc = dashValue;
+}
+//VTK::CustomEnd::Impl
+"""
+
+_DASH_GEOMETRY_DEC = """//VTK::PositionVC::Dec
+in float dashArcVS[];
+noperspective out float dashArc;
+"""
+
+_DASH_GEOMETRY_IMPL = """dashArc = dashArcVS[i];
+//VTK::Color::Impl
+"""
+
+_DASH_FRAGMENT_DEC = """//VTK::PositionVC::Dec
+noperspective in float dashArc;
+"""
+
+_DASH_FRAGMENT_IMPL = """//VTK::Color::Impl
+if (((1 << int(mod(abs(dashArc), 16.0))) & dashPattern) == 0)
+  discard;
+"""
 
 
 class Actor(Prop3D, _vtk.vtkActor):
@@ -177,6 +216,9 @@ class Actor(Prop3D, _vtk.vtkActor):
             self.prop = prop
         self._name = name
         self._shader_replacements: dict[str, list[tuple[ShaderType, str, bool]]] = {}
+        self._dashed_lines: str | None = None
+        self._dash_source: DataSet | None = None
+        self._dash_interval: float = 0.004
         self._point_sprite_shape: str | None = None
         self._point_sprite_applied: str | None = None
         self._point_sprite_observer: int | None = None
@@ -716,6 +758,180 @@ class Actor(Prop3D, _vtk.vtkActor):
                     replace_first,
                 )
             del registry[_feature_name]
+
+    @property
+    def dashed_lines(self) -> str | None:  # numpydoc ignore=RT01
+        """Return or set the dash pattern drawn along this actor's lines.
+
+        Unlike :func:`pyvista.PolyDataFilters.dash_lines`, which splits the line
+        cells into shorter cells, the dashes are produced by the fragment shader
+        and keep a constant size on screen as the camera zooms. The geometry is
+        unchanged and the dashes are not present in exported scenes.
+
+        Set to a style string to dash the lines, or to ``None`` to draw them
+        solid. Accepts the same styles as
+        :func:`pyvista.PolyDataFilters.dash_lines`.
+
+        .. versionadded:: 0.50
+
+        Notes
+        -----
+        Only line cells are dashed. Edges drawn with ``show_edges=True`` are
+        rendered from the polygons themselves and are unaffected.
+
+        Under a perspective camera the dashes shorten with distance along with
+        the rest of the line.
+
+        The mapper must be a :class:`pyvista.PolyDataMapper`. Use
+        ``add_mesh(..., line_style=...)`` to have one created automatically.
+
+        Examples
+        --------
+        Dash the lines of a spline.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> theta = np.linspace(0, 4 * np.pi, 400)
+        >>> points = np.column_stack(
+        ...     [np.cos(theta), np.sin(theta), np.linspace(-1.5, 1.5, 400)]
+        ... )
+        >>> helix = pv.Spline(points, 400)
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(helix, color='black', line_width=4, line_style='--')
+        >>> actor.dashed_lines = ':'
+        >>> pl.show()
+
+        """
+        return self._dashed_lines
+
+    @dashed_lines.setter
+    def dashed_lines(self, value: str | None) -> None:
+        if value is None or value == '-':
+            self._disable_dashed_lines()
+            return
+
+        bits = _resolve_dash_pattern(value, None)
+        if bits == 0xFFFF:
+            self._disable_dashed_lines()
+            return
+
+        mapper = self.mapper
+        if mapper is None or not hasattr(mapper, 'MapDataArrayToVertexAttribute'):
+            msg = 'Dashed lines require pyvista.PolyData rendered by a pyvista.PolyDataMapper.'
+            raise TypeError(msg)
+
+        dataset = mapper.dataset
+        if dataset is None:
+            msg = 'Actor must have a dataset to enable dashed lines.'
+            raise ValueError(msg)
+
+        if self._dash_source is None:
+            self._dash_source = dataset
+            mapper.dataset = self._build_dash_pipeline(self._dash_source)
+            mapper.MapDataArrayToVertexAttribute(
+                'dashArcMC',
+                'arc_length',
+                FieldAssociation.POINT.value,
+                -1,
+            )
+
+        self.add_shader_replacement(
+            'vertex',
+            '//VTK::PositionVC::Dec',
+            _DASH_VERTEX_DEC,
+            _feature_name='dashed_lines',
+        )
+        self.add_shader_replacement(
+            'vertex',
+            '//VTK::CustomEnd::Impl',
+            _DASH_VERTEX_IMPL,
+            _feature_name='dashed_lines',
+        )
+        self.add_shader_replacement(
+            'geometry',
+            '//VTK::PositionVC::Dec',
+            _DASH_GEOMETRY_DEC,
+            _feature_name='dashed_lines',
+        )
+        self.add_shader_replacement(
+            'geometry',
+            '//VTK::Color::Impl',
+            _DASH_GEOMETRY_IMPL,
+            _feature_name='dashed_lines',
+        )
+        self.add_shader_replacement(
+            'fragment',
+            '//VTK::PositionVC::Dec',
+            _DASH_FRAGMENT_DEC,
+            _feature_name='dashed_lines',
+        )
+        self.add_shader_replacement(
+            'fragment',
+            '//VTK::Color::Impl',
+            _DASH_FRAGMENT_IMPL,
+            _feature_name='dashed_lines',
+        )
+        shader_property = self.GetShaderProperty()
+        shader_property.GetVertexCustomUniforms().SetUniformf('dashInterval', self._dash_interval)
+        shader_property.GetFragmentCustomUniforms().SetUniformi('dashPattern', bits)
+        self._dashed_lines = value
+
+    @property
+    def dash_interval(self) -> float:  # numpydoc ignore=RT01
+        """Return or set the on-screen length of one dash pattern interval.
+
+        The length is a fraction of the render window height. A full pattern
+        repeats every sixteen intervals.
+
+        .. versionadded:: 0.50
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(pv.Line(), line_style='--')
+        >>> actor.dash_interval = 0.01
+
+        """
+        return self._dash_interval
+
+    @dash_interval.setter
+    def dash_interval(self, value: float) -> None:
+        value = float(value)
+        if value <= 0:
+            msg = f'`dash_interval` must be greater than zero, got {value}.'
+            raise ValueError(msg)
+        self._dash_interval = value
+        if self._dashed_lines is not None:
+            self.GetShaderProperty().GetVertexCustomUniforms().SetUniformf('dashInterval', value)
+
+    def _build_dash_pipeline(self, dataset: DataSet) -> _vtk.vtkAlgorithm:
+        """Return an algorithm appending per-point arc length to the actor's lines."""
+        arc_length = _vtk.vtkAppendArcLength()
+        line_only = (
+            isinstance(dataset, pv.PolyData) and dataset.n_faces == 0 and dataset.n_strips == 0
+        )
+        if line_only:
+            stripper = _vtk.vtkStripper()
+            stripper.SetJoinContiguousSegments(True)
+            stripper.SetInputData(dataset)
+            arc_length.SetInputConnection(stripper.GetOutputPort())
+        else:
+            arc_length.SetInputData(dataset)
+        return arc_length
+
+    def _disable_dashed_lines(self) -> None:
+        """Remove the dash shader and restore the mapper's original input."""
+        if self._dashed_lines is None:
+            return
+        self.clear_shader_replacements(_feature_name='dashed_lines')
+        mapper = self.mapper
+        if mapper is not None and self._dash_source is not None:
+            if hasattr(mapper, 'RemoveVertexAttributeMapping'):
+                mapper.RemoveVertexAttributeMapping('dashArcMC')
+            mapper.dataset = self._dash_source
+        self._dash_source = None
+        self._dashed_lines = None
 
     def enable_maximum_intensity_projection(
         self,

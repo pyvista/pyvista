@@ -3604,6 +3604,7 @@ class BasePlotter(_BoundsSizeMixin):
         edge_color: ColorLike | None = None,
         point_size: float | None = None,
         line_width: float | None = None,
+        line_style: str | None = None,
         opacity: float | OpacityOptions | Sequence[float] | None = None,
         flip_scalars: bool = False,
         lighting: bool | None = None,
@@ -3738,6 +3739,14 @@ class BasePlotter(_BoundsSizeMixin):
         line_width : float, optional
             Thickness of lines.  Only valid for wireframe and surface
             representations.  Default ``None``.
+
+        line_style : str, optional
+            Dash pattern drawn along the mesh's line cells, one of ``'-'``
+            (solid), ``'--'``, ``':'``, ``'-.'`` or ``'-..'``. The dashes are
+            produced by the shader and keep a constant size on screen. Requires
+            :class:`pyvista.PolyData`. See :attr:`pyvista.Actor.dashed_lines`.
+
+            .. versionadded:: 0.50
 
         opacity : float | str | array_like
             Opacity of the mesh. If a single float value is given, it
@@ -4683,6 +4692,9 @@ class BasePlotter(_BoundsSizeMixin):
                 static=static,
                 show_vertices=False,
             )
+
+        if line_style is not None:
+            actor.dashed_lines = line_style
 
         self.add_actor(
             actor,

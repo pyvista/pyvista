@@ -762,3 +762,73 @@ def test_mip_and_point_sprite_coexist(point_cloud_actor):
     actor.clear_point_sprite_shape()
     assert 'point_sprite' not in actor._shader_replacements
     assert 'mip' in actor._shader_replacements
+
+
+def test_dashed_lines_via_add_mesh():
+    pl = pv.Plotter()
+    actor = pl.add_mesh(pv.Line(resolution=20), line_style='--')
+    assert isinstance(actor.mapper, pv.PolyDataMapper)
+    assert actor.dashed_lines == '--'
+    pl.close()
+
+
+@pytest.mark.parametrize('style', ['--', ':', '-.', '-..'])
+def test_dashed_lines_draws_fewer_pixels(style):
+    def drawn(line_style):
+        pl = pv.Plotter(off_screen=True, window_size=(600, 400))
+        pl.disable_anti_aliasing()
+        pl.add_mesh(
+            pv.Line((-1, 0, 0), (1, 0, 0), resolution=50),
+            color='black',
+            line_width=3,
+            line_style=line_style,
+        )
+        pl.background_color = 'white'
+        pl.view_xy()
+        pl.render()
+        image = pl.screenshot(return_img=True)
+        pl.close()
+        return int((image[..., 0] < 128).sum())
+
+    assert drawn(style) < drawn('-')
+
+
+def test_dashed_lines_disable_restores_input():
+    mesh = pv.Line(resolution=20)
+    pl = pv.Plotter()
+    actor = pl.add_mesh(mesh, line_style='--')
+    actor.dashed_lines = None
+    assert actor.dashed_lines is None
+    assert actor.mapper.dataset is mesh
+    pl.close()
+
+
+def test_dashed_lines_solid_style_is_not_dashed():
+    pl = pv.Plotter()
+    actor = pl.add_mesh(pv.Line(resolution=20), line_style='-')
+    assert actor.dashed_lines is None
+    pl.close()
+
+
+def test_dash_interval():
+    pl = pv.Plotter()
+    actor = pl.add_mesh(pv.Line(resolution=20), line_style='--')
+    actor.dash_interval = 0.02
+    assert actor.dash_interval == 0.02
+    with pytest.raises(ValueError, match='greater than zero'):
+        actor.dash_interval = 0
+    pl.close()
+
+
+def test_dashed_lines_requires_polydata_mapper():
+    actor = pv.Actor(mapper=pv.DataSetMapper(dataset=pv.Line(resolution=20)))
+    with pytest.raises(TypeError, match='PolyDataMapper'):
+        actor.dashed_lines = '--'
+
+
+def test_dashed_lines_invalid_style():
+    pl = pv.Plotter()
+    actor = pl.add_mesh(pv.Line(resolution=20))
+    with pytest.raises(ValueError, match='Invalid style'):
+        actor.dashed_lines = 'wrong'
+    pl.close()
