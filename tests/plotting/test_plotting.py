@@ -3363,10 +3363,6 @@ def test_plot_compare_knows_which_keywords_take_a_sequence(monkeypatch: pytest.M
     class Unbound:
         """Stands for a name which is bound only while type checking."""
 
-        def __class_getitem__(cls, item):
-            """Return the stand-in itself, so that subscripting it resolves."""
-            return cls
-
     # The aliases refer to these names, which are bound only while type checking, and
     # Python 3.14 resolves a name nested in an alias against the module the alias was
     # written in rather than against the namespace given below. None is a sequence.
