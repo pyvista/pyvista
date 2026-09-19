@@ -12,7 +12,7 @@ import pyvista_validation as _validation
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._warn_external import warn_external
-from pyvista.core.filters.poly_data import _resolve_dash_pattern
+from pyvista.core.filters.poly_data import _resolve_line_style
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.plotting.utilities.algorithms import set_algorithm_input
 
@@ -808,7 +808,7 @@ class Actor(Prop3D, _vtk.vtkActor):
             self._disable_dashed_lines()
             return
 
-        bits = _resolve_dash_pattern(value, None)
+        bits = _resolve_line_style(value)
 
         mapper = self.mapper
         if mapper is None or not hasattr(mapper, 'MapDataArrayToVertexAttribute'):

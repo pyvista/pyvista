@@ -1622,8 +1622,11 @@ def test_dash_lines_total_length_matches_duty_cycle():
 
 def test_dash_lines_pattern_overrides_style():
     line = pv.Line((0, 0, 0), (1, 0, 0), resolution=50)
-    assert line.dash_lines(pattern=0xFFFF).n_cells == line.n_cells
-    assert line.dash_lines('--', pattern=0x0101, scale=0.01).n_cells > 10
+    assert line.dash_lines('-', pattern=[1, 7], scale=0.01).n_cells > 10
+    assert (
+        line.dash_lines(pattern=[8, 8], scale=0.01).n_cells
+        == line.dash_lines('--', scale=0.01).n_cells
+    )
 
 
 def test_dash_lines_join_makes_the_pattern_continuous():
@@ -1673,8 +1676,10 @@ def test_dash_lines_raises():
     line = pv.Line((0, 0, 0), (1, 0, 0), resolution=10)
     with pytest.raises(ValueError, match='is not valid'):
         line.dash_lines('wrong')
-    with pytest.raises(ValueError, match='less than or equal to 65535'):
-        line.dash_lines(pattern=0x1FFFF)
+    with pytest.raises(ValueError, match='even number of lengths'):
+        line.dash_lines(pattern=[4, 2, 4])
+    with pytest.raises(ValueError, match='greater than 0'):
+        line.dash_lines(pattern=[4, 0])
     with pytest.raises(ValueError, match='greater than 0'):
         line.dash_lines(scale=0.0)
 

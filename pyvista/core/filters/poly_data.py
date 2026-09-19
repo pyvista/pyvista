@@ -1541,7 +1541,7 @@ class PolyDataFilters(DataSetFilters):
         self: PolyData,
         style: str = '--',
         *,
-        pattern: int | None = None,
+        pattern: VectorLike[float] | None = None,
         scale: float | None = None,
         join: bool = True,
         inplace: bool = False,
@@ -1566,10 +1566,10 @@ class PolyDataFilters(DataSetFilters):
             (dash-dot-dot). A solid pattern returns a copy of the input and a hidden
             pattern returns an empty dataset.
 
-        pattern : int, optional
-            16-bit stipple pattern used instead of ``style``. Bit ``i`` sets whether
-            the ``i``-th interval of the pattern is drawn, least significant bit
-            first.
+        pattern : VectorLike[float], optional
+            Lengths of alternating drawn and undrawn intervals used instead of
+            ``style``, starting with a drawn one and repeating. ``[4, 6, 2, 4]``
+            draws four intervals, skips six, draws two and skips four.
 
         scale : float, optional
             Length of one pattern interval in world units. Defaults to
@@ -1607,12 +1607,17 @@ class PolyDataFilters(DataSetFilters):
         >>> circle = pv.Circle(resolution=200).extract_all_edges()
         >>> circle.dash_lines().plot(color='black', line_width=4, cpos='xy')
 
+        Use a long dash and a short one instead of a named style.
+
+        >>> dashed = circle.dash_lines(pattern=[6, 2, 2, 2])
+        >>> dashed.plot(color='black', line_width=4, cpos='xy')
+
         """
-        bits = _resolve_dash_pattern(style, pattern)
+        runs, period = _resolve_dash_pattern(style, pattern)
         if scale is not None:
             _validation.check_greater_than(scale, 0, name='scale')
 
-        if bits == 0xFFFF:
+        if runs == [(0, period)]:
             output = self.copy()
         else:
             source = (
@@ -1620,7 +1625,7 @@ class PolyDataFilters(DataSetFilters):
                 if join
                 else self
             )
-            output = _dashed_polydata(source, bits, scale)
+            output = _dashed_polydata(source, runs, period=period, scale=scale)
 
         if not inplace:
             return output
@@ -4891,11 +4896,25 @@ class PolyDataFilters(DataSetFilters):
         return out
 
 
-def _resolve_dash_pattern(style: str, pattern: int | None) -> int:
-    """Return the 16-bit stipple pattern for a named style or an explicit pattern."""
+def _resolve_dash_pattern(
+    style: str, pattern: VectorLike[float] | None
+) -> tuple[list[tuple[float, float]], float]:
+    """Return the drawn intervals and the repeat length of a named style or a pattern."""
     if pattern is not None:
-        _validation.check_range(pattern, [0, 0xFFFF], name='pattern')
-        return int(pattern)
+        lengths = _validation.validate_arrayN(pattern, must_be_finite=True, name='pattern')
+        _validation.check_greater_than(lengths, 0, name='pattern')
+        if lengths.size % 2:
+            msg = f'Pattern must hold an even number of lengths, got {lengths.size}.'
+            raise ValueError(msg)
+        edges = np.concatenate([[0.0], np.cumsum(lengths)])
+        runs = [(float(edges[i]), float(edges[i + 1])) for i in range(0, lengths.size, 2)]
+        return runs, float(edges[-1])
+    bits = _resolve_line_style(style)
+    return [(float(start), float(stop)) for start, stop in _pattern_runs(bits)], 16.0
+
+
+def _resolve_line_style(style: str) -> int:
+    """Return the 16-bit stipple pattern of a named line style."""
     _validation.check_contains(list(LINE_STYLE_PATTERNS), must_contain=style, name='style')
     return LINE_STYLE_PATTERNS[style]
 
@@ -4925,11 +4944,11 @@ def _locate(
 
 
 def _build_dashes(
-    source: PolyData, runs: list[tuple[int, int]], scale: float
+    source: PolyData, runs: list[tuple[float, float]], *, period: float, scale: float
 ) -> tuple[NumpyArray[int], NumpyArray[int], NumpyArray[float], NumpyArray[int], NumpyArray[int]]:
     """Return blend indices, weights, line connectivity and parent cell ids for the dashes."""
     points = source.points
-    period = 16.0 * scale
+    cycle = period * scale
     index_a: list[int] = []
     index_b: list[int] = []
     weight: list[float] = []
@@ -4952,7 +4971,7 @@ def _build_dashes(
         total = float(cumulative[-1])
         if total == 0.0:
             continue
-        for base in np.arange(0.0, total, period):
+        for base in np.arange(0.0, total, cycle):
             for first, last in runs:
                 start = base + first * scale
                 stop = min(base + last * scale, total)
@@ -4980,13 +4999,17 @@ def _build_dashes(
     )
 
 
-def _dashed_polydata(source: PolyData, bits: int, scale: float | None) -> PolyData:
+def _dashed_polydata(
+    source: PolyData, runs: list[tuple[float, float]], *, period: float, scale: float | None
+) -> PolyData:
     """Return a dataset holding only the drawn parts of a source's line cells."""
     output = pv.PolyData()
     if source.n_lines == 0:
         return output
     interval = source.length / 200.0 if scale is None else float(scale)
-    index_a, index_b, weight, lines, cells = _build_dashes(source, _pattern_runs(bits), interval)
+    index_a, index_b, weight, lines, cells = _build_dashes(
+        source, runs, period=period, scale=interval
+    )
     if lines.size == 0:
         return output
     output.points = _interpolate_rows(
