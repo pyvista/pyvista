@@ -62,6 +62,7 @@ _CappingOptions = Literal[
 
 
 LINE_STYLE_PATTERNS: dict[str, int] = {
+    '': 0x0000,
     '-': 0xFFFF,
     '--': 0x00FF,
     ':': 0x0101,
@@ -1560,9 +1561,10 @@ class PolyDataFilters(DataSetFilters):
         Parameters
         ----------
         style : str, default: '--'
-            Named dash pattern. One of ``'-'`` (solid), ``'--'`` (dashed), ``':'``
-            (dotted), ``'-.'`` (dash-dot) or ``'-..'`` (dash-dot-dot). A solid
-            pattern returns a copy of the input.
+            Named dash pattern. One of ``''`` (hidden), ``'-'`` (solid), ``'--'``
+            (dashed), ``':'`` (dotted), ``'-.'`` (dash-dot) or ``'-..'``
+            (dash-dot-dot). A solid pattern returns a copy of the input and a hidden
+            pattern returns an empty dataset.
 
         pattern : int, optional
             16-bit stipple pattern used instead of ``style``. Bit ``i`` sets whether

@@ -1697,3 +1697,10 @@ def test_dash_lines_snaps_integer_point_data():
     dashed = line.dash_lines()
     assert dashed.point_data['ids'].dtype == line.point_data['ids'].dtype
     assert np.isin(dashed.point_data['ids'], line.point_data['ids']).all()
+
+
+def test_dash_lines_hidden_style():
+    line = pv.Line((0, 0, 0), (1, 0, 0), resolution=10)
+    hidden = line.dash_lines('')
+    assert hidden.n_points == 0
+    assert hidden.n_cells == 0

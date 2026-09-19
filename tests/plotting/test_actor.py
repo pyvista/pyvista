@@ -877,3 +877,22 @@ def test_dashed_lines_mesh_with_faces():
     pl.render()
     assert actor.dashed_lines == '--'
     pl.close()
+
+
+def test_dashed_lines_hidden_style():
+    pl = pv.Plotter(off_screen=True, window_size=(300, 200))
+    pl.disable_anti_aliasing()
+    pl.background_color = 'white'
+    actor = pl.add_mesh(
+        pv.Line((-1, 0, 0), (1, 0, 0), resolution=20),
+        color='black',
+        line_width=4,
+        line_style='',
+    )
+    pl.view_xy()
+    pl.render()
+    image = pl.screenshot(return_img=True)
+    pl.close()
+
+    assert actor.dashed_lines == ''
+    assert not (image[..., 0] < 128).any()

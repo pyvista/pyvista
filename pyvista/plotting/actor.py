@@ -770,8 +770,8 @@ class Actor(Prop3D, _vtk.vtkActor):
         and keep a constant size on screen as the camera zooms. The geometry is
         unchanged and the dashes are not present in exported scenes.
 
-        Set to a style string to dash the lines, or to ``None`` to draw them
-        solid. Accepts the same styles as
+        Set to a style string to dash the lines, to ``''`` to hide them, or to
+        ``None`` to draw them solid. Accepts the same styles as
         :func:`pyvista.PolyDataFilters.dash_lines`.
 
         .. versionadded:: 0.50
