@@ -782,7 +782,8 @@ class Actor(Prop3D, _vtk.vtkActor):
         rendered from the polygons themselves and are unaffected.
 
         Under a perspective camera the dashes shorten with distance along with
-        the rest of the line.
+        the rest of the line. Parts of a line whose cells are shorter on screen
+        than ``line_width`` are drawn solid.
 
         Requires polygonal data, which :func:`~pyvista.Plotter.add_mesh` renders
         with a :class:`pyvista.PolyDataMapper`.
