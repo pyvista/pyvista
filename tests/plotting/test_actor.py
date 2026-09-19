@@ -871,7 +871,7 @@ def test_dashed_lines_requires_dataset():
 
 
 def test_dashed_lines_restores_the_actor_when_the_shader_fails(monkeypatch):
-    def boom(self, bits):
+    def boom(*_args):
         msg = 'no shader'
         raise RuntimeError(msg)
 
