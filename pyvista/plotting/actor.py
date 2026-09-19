@@ -778,8 +778,9 @@ class Actor(Prop3D, _vtk.vtkActor):
 
         Notes
         -----
-        Only line cells are dashed. Edges drawn with ``show_edges=True`` are
-        rendered from the polygons themselves and are unaffected.
+        Only line cells can be dashed, so a mesh holding polygons or strips is
+        rejected. Edges drawn with ``show_edges=True`` come from the polygons
+        themselves, so extract them into their own mesh to dash them.
 
         Under a perspective camera the dashes shorten with distance along with
         the rest of the line. Parts of a line whose cells are shorter on screen
@@ -913,14 +914,18 @@ class Actor(Prop3D, _vtk.vtkActor):
             source = geometry
             surface = pv.wrap(geometry.GetOutput())
 
+        if surface.n_faces or surface.n_strips:
+            msg = (
+                'Dashed lines require a mesh of line cells. Extract the lines into their '
+                'own mesh first, for example with extract_all_edges.'
+            )
+            raise ValueError(msg)
+
+        stripper = _vtk.vtkStripper()
+        stripper.SetJoinContiguousSegments(True)
+        set_algorithm_input(stripper, source)
         arc_length = _vtk.vtkAppendArcLength()
-        if surface.n_faces == 0 and surface.n_strips == 0:
-            stripper = _vtk.vtkStripper()
-            stripper.SetJoinContiguousSegments(True)
-            set_algorithm_input(stripper, source)
-            set_algorithm_input(arc_length, stripper)
-        else:
-            set_algorithm_input(arc_length, source)
+        set_algorithm_input(arc_length, stripper)
         return arc_length, source
 
     def _disable_dashed_lines(self) -> None:

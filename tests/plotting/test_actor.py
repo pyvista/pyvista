@@ -870,13 +870,13 @@ def test_dashed_lines_requires_dataset():
         actor.dashed_lines = '--'
 
 
-def test_dashed_lines_mesh_with_faces():
+@pytest.mark.parametrize('style', ['--', ''])
+def test_dashed_lines_rejects_faces(style):
     mesh = pv.Plane(i_resolution=2, j_resolution=2)
     mesh.lines = np.array([2, 0, 8])
     pl = pv.Plotter()
-    actor = pl.add_mesh(mesh, line_style='--')
-    pl.render()
-    assert actor.dashed_lines == '--'
+    with pytest.raises(ValueError, match='require a mesh of line cells'):
+        pl.add_mesh(mesh, line_style=style)
     pl.close()
 
 
