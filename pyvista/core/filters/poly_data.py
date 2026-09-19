@@ -1600,6 +1600,10 @@ class PolyDataFilters(DataSetFilters):
         pyvista.Actor.line_style
             Dash an actor's lines in the shader instead of splitting the cells.
 
+        Notes
+        -----
+        .. include:: /api/plotting/line_styles.rst
+
         Examples
         --------
         Dash a circle.

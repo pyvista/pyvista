@@ -12,7 +12,9 @@ cells into shorter cells, so the dashes are real geometry. The
 :attr:`~pyvista.Actor.line_style` property instead discards fragments while
 rendering, so the geometry is untouched.
 
-Both accept the same style strings as :ref:`Pen.LINE_STYLES <pen_line_styles>`.
+Both accept the same style strings.
+
+.. include:: /api/plotting/line_styles.rst
 
 """
 

@@ -778,6 +778,8 @@ class Actor(Prop3D, _vtk.vtkActor):
 
         Notes
         -----
+        .. include:: /api/plotting/line_styles.rst
+
         Only line cells can be dashed, so a mesh holding polygons or strips is
         rejected. Edges drawn with ``show_edges=True`` come from the polygons
         themselves, so extract them into their own mesh to dash them.
