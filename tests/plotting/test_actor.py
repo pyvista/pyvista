@@ -832,3 +832,32 @@ def test_dashed_lines_invalid_style():
     with pytest.raises(ValueError, match='is not valid'):
         actor.dashed_lines = 'wrong'
     pl.close()
+
+
+def test_dashed_lines_foreshorten_with_distance():
+    pl = pv.Plotter(off_screen=True, window_size=(1200, 400))
+    pl.disable_anti_aliasing()
+    actor = pl.add_mesh(
+        pv.Line((-1, 0, 2), (1, 0, -2), resolution=20),
+        color='black',
+        line_width=2,
+        line_style='--',
+    )
+    actor.dash_interval = 0.01
+    pl.background_color = 'white'
+    pl.camera.position = (0, 0, 4)
+    pl.camera.focal_point = (0, 0, 0)
+    pl.camera.up = (0, 1, 0)
+    pl.render()
+    image = pl.screenshot(return_img=True)
+    pl.close()
+
+    drawn = image[..., 0] < 128
+    row = drawn[drawn.sum(axis=1).argmax()]
+    (lit,) = np.nonzero(row)
+    dashes = np.array([len(run) for run in np.split(lit, np.nonzero(np.diff(lit) > 1)[0] + 1)])
+
+    dashes = dashes[1:-1]
+    third = len(dashes) // 3
+    assert third >= 2
+    assert dashes[:third].mean() > 2 * dashes[-third:].mean()
