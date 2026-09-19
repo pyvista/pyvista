@@ -61,6 +61,15 @@ _CappingOptions = Literal[
 ]
 
 
+LINE_STYLE_PATTERNS: dict[str, int] = {
+    '-': 0xFFFF,
+    '--': 0x00FF,
+    ':': 0x0101,
+    '-.': 0x0C0F,
+    '-..': 0x1C47,
+}
+
+
 @abstract_class
 class PolyDataFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for polydata datasets."""
@@ -1526,6 +1535,127 @@ class PolyDataFilters(DataSetFilters):
             poly_data.copy_from(mesh, deep=False)
             return poly_data
         return mesh
+
+    def dash_lines(  # type: ignore[misc]
+        self: PolyData,
+        style: str = '--',
+        *,
+        pattern: int | None = None,
+        scale: float | None = None,
+        join: bool = True,
+        progress_bar: bool = False,
+    ) -> PolyData:
+        """Split line cells into dashes.
+
+        Line and polyline cells are resampled into shorter line cells following a
+        repeating on-off pattern. Other cell types are ignored, as with
+        :func:`tube`.
+
+        Point data is interpolated onto the dash end points and cell data is copied
+        from the parent line cell.
+
+        .. versionadded:: 0.50
+
+        Parameters
+        ----------
+        style : str, default: '--'
+            Named dash pattern. One of ``'-'`` (solid), ``'--'`` (dashed), ``':'``
+            (dotted), ``'-.'`` (dash-dot) or ``'-..'`` (dash-dot-dot). A solid
+            pattern returns a copy of the input.
+
+        pattern : int, optional
+            16-bit stipple pattern used instead of ``style``. Bit ``i`` sets whether
+            the ``i``-th interval of the pattern is drawn, least significant bit
+            first.
+
+        scale : float, optional
+            Length of one pattern interval in world units. Defaults to
+            :attr:`~pyvista.DataSet.length` divided by ``200``.
+
+        join : bool, default: True
+            Join connected line cells into polylines with :func:`strip` first so the
+            pattern runs continuously across them.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Dataset with the dashes as line cells.
+
+        See Also
+        --------
+        pyvista.PolyDataFilters.strip
+            Join connected line cells into polylines.
+        pyvista.PolyDataFilters.tube
+            Generate a tube around each input line.
+
+        Examples
+        --------
+        Dash a helix.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> theta = np.linspace(0, 4 * np.pi, 400)
+        >>> points = np.column_stack(
+        ...     [np.cos(theta), np.sin(theta), np.linspace(-1.5, 1.5, 400)]
+        ... )
+        >>> helix = pv.Spline(points, 400)
+        >>> helix.dash_lines().plot(color='black', line_width=4)
+
+        Compare the named patterns.
+
+        >>> pl = pv.Plotter(shape=(1, 5))
+        >>> for i, style in enumerate(['-', '--', ':', '-.', '-..']):
+        ...     pl.subplot(0, i)
+        ...     _ = pl.add_mesh(helix.dash_lines(style), color='black', line_width=4)
+        ...     _ = pl.add_text(style, font_size=12)
+        >>> pl.link_views()
+        >>> pl.view_isometric()
+        >>> pl.show()
+
+        Dash the edges of a mesh by extracting them first.
+
+        >>> sphere = pv.Sphere(theta_resolution=12, phi_resolution=12)
+        >>> edges = sphere.extract_all_edges().dash_lines(scale=0.01)
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(sphere, color='lightgray')
+        >>> _ = pl.add_mesh(edges, color='black', line_width=3)
+        >>> pl.show()
+
+        """
+        bits = _resolve_dash_pattern(style, pattern)
+        if bits == 0xFFFF:
+            return self.copy()
+
+        source = (
+            self.strip(join=True, pass_cell_data=True, progress_bar=progress_bar) if join else self
+        )
+        if source.n_lines == 0:
+            return pv.PolyData()
+
+        scale = source.length / 200.0 if scale is None else float(scale)
+        if scale <= 0:
+            msg = f'`scale` must be greater than zero, got {scale}.'
+            raise ValueError(msg)
+
+        index_a, index_b, weight, lines, cells = _build_dashes(source, _pattern_runs(bits), scale)
+        if lines.size == 0:
+            return pv.PolyData()
+
+        output = pv.PolyData()
+        output.points = _interpolate_rows(
+            source.points, index_a=index_a, index_b=index_b, weight=weight
+        )
+        output.lines = lines
+        for name, array in source.point_data.items():
+            output.point_data[name] = _interpolate_rows(
+                np.asarray(array), index_a=index_a, index_b=index_b, weight=weight
+            )
+        for name, array in source.cell_data.items():
+            output.cell_data[name] = np.asarray(array)[cells]
+        return output
 
     def subdivide(  # type: ignore[misc]
         self: PolyData,
@@ -4789,3 +4919,114 @@ class PolyDataFilters(DataSetFilters):
         out = self if inplace else type(self)()
         out.copy_from(removed, deep=not inplace)
         return out
+
+
+def _resolve_dash_pattern(style: str, pattern: int | None) -> int:
+    """Return the 16-bit stipple pattern for a named style or an explicit pattern."""
+    if pattern is not None:
+        value = int(pattern)
+        if not 0 <= value <= 0xFFFF:
+            msg = f'`pattern` must be a 16-bit integer, got {pattern}.'
+            raise ValueError(msg)
+        return value
+    try:
+        return LINE_STYLE_PATTERNS[style]
+    except KeyError:
+        valid = ', '.join(repr(key) for key in LINE_STYLE_PATTERNS)
+        msg = f'Invalid style {style!r}. Must be one of: {valid}.'
+        raise ValueError(msg) from None
+
+
+def _pattern_runs(pattern: int) -> list[tuple[int, int]]:
+    """Return the start and stop bit indices of each run of set bits in a pattern."""
+    runs = []
+    start = None
+    for index in range(17):
+        drawn = index < 16 and bool(pattern >> index & 1)
+        if drawn and start is None:
+            start = index
+        elif not drawn and start is not None:
+            runs.append((start, index))
+            start = None
+    return runs
+
+
+def _locate(
+    ids: NumpyArray[int], cumulative: NumpyArray[float], value: float
+) -> tuple[int, int, float]:
+    """Return the point ids bracketing a distance along a polyline and the blend weight."""
+    upper = min(max(int(np.searchsorted(cumulative, value, side='left')), 1), len(ids) - 1)
+    span = cumulative[upper] - cumulative[upper - 1]
+    weight = 0.0 if span == 0 else (value - cumulative[upper - 1]) / span
+    return int(ids[upper - 1]), int(ids[upper]), float(weight)
+
+
+def _build_dashes(
+    source: PolyData, runs: list[tuple[int, int]], scale: float
+) -> tuple[NumpyArray[int], NumpyArray[int], NumpyArray[float], NumpyArray[int], NumpyArray[int]]:
+    """Return blend indices, weights, line connectivity and parent cell ids for the dashes."""
+    points = source.points
+    period = 16.0 * scale
+    index_a: list[int] = []
+    index_b: list[int] = []
+    weight: list[float] = []
+    lines: list[int] = []
+    cells: list[int] = []
+
+    flat = source.lines
+    position = 0
+    cell = source.n_verts
+    while position < flat.size:
+        size = int(flat[position])
+        ids = flat[position + 1 : position + 1 + size]
+        position += 1 + size
+        parent = cell
+        cell += 1
+        if size < 2:
+            continue
+        distance = np.linalg.norm(np.diff(points[ids], axis=0), axis=1)
+        cumulative = np.concatenate([[0.0], np.cumsum(distance)])
+        total = float(cumulative[-1])
+        if total == 0.0:
+            continue
+        for base in np.arange(0.0, total, period):
+            for first, last in runs:
+                start = base + first * scale
+                stop = min(base + last * scale, total)
+                if stop <= start:
+                    continue
+                inner = np.flatnonzero((cumulative > start) & (cumulative < stop))
+                blend = [
+                    _locate(ids, cumulative, start),
+                    *((int(ids[k]), int(ids[k]), 0.0) for k in inner),
+                    _locate(ids, cumulative, stop),
+                ]
+                lines.append(len(blend))
+                for left, right, fraction in blend:
+                    lines.append(len(index_a))
+                    index_a.append(left)
+                    index_b.append(right)
+                    weight.append(fraction)
+                cells.append(parent)
+    return (
+        np.asarray(index_a, dtype=np.int64),
+        np.asarray(index_b, dtype=np.int64),
+        np.asarray(weight, dtype=float),
+        np.asarray(lines, dtype=np.int64),
+        np.asarray(cells, dtype=np.int64),
+    )
+
+
+def _interpolate_rows(
+    array: NumpyArray[Any],
+    *,
+    index_a: NumpyArray[int],
+    index_b: NumpyArray[int],
+    weight: NumpyArray[float],
+) -> NumpyArray[Any]:
+    """Blend array rows between two index sets, snapping to the nearest for non-float data."""
+    if not np.issubdtype(array.dtype, np.floating):
+        return array[np.where(weight < 0.5, index_a, index_b)]
+    shape = (-1,) + (1,) * (array.ndim - 1)
+    fraction = weight.reshape(shape)
+    return array[index_a] * (1.0 - fraction) + array[index_b] * fraction

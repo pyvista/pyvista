@@ -1594,3 +1594,79 @@ def test_offset_array():
     mesh = pv.PolyData.from_regular_faces(np.zeros((4, 3)), [[0, 1, 2], [1, 2, 3]])
     with pytest.warns(pv.PyVistaDeprecationWarning, match='`PolyData.face_offsets`'):
         assert np.array_equal(mesh._offset_array, [0, 3, 6])
+
+
+def test_dash_lines_solid_returns_copy():
+    line = pv.Line((0, 0, 0), (1, 0, 0), resolution=10)
+    dashed = line.dash_lines('-')
+    assert dashed is not line
+    assert dashed.n_points == line.n_points
+    assert dashed.n_cells == line.n_cells
+
+
+@pytest.mark.parametrize('style', ['--', ':', '-.', '-..'])
+def test_dash_lines_splits_into_multiple_cells(style):
+    line = pv.Line((0, 0, 0), (1, 0, 0), resolution=100)
+    dashed = line.dash_lines(style, scale=0.01)
+    drawn = dashed.compute_cell_sizes(length=True, area=False, volume=False)
+    assert dashed.n_cells > 1
+    assert drawn.cell_data['Length'].sum() < 1.0
+
+
+def test_dash_lines_total_length_matches_duty_cycle():
+    line = pv.Line((0, 0, 0), (1, 0, 0))
+    dashed = line.dash_lines('--', scale=1 / 32)
+    drawn = dashed.compute_cell_sizes(length=True, area=False, volume=False)
+    assert np.isclose(drawn.cell_data['Length'].sum(), 0.5, atol=0.02)
+
+
+def test_dash_lines_pattern_overrides_style():
+    line = pv.Line((0, 0, 0), (1, 0, 0), resolution=50)
+    assert line.dash_lines(pattern=0xFFFF).n_cells == line.n_cells
+    assert line.dash_lines('--', pattern=0x0101, scale=0.01).n_cells > 10
+
+
+def test_dash_lines_join_makes_the_pattern_continuous():
+    points = np.zeros((51, 3))
+    points[:, 0] = np.linspace(0, 1, 51)
+    segments = np.column_stack([np.full(50, 2), np.arange(50), np.arange(1, 51)])
+    edges = pv.PolyData(points, lines=segments.ravel())
+    assert edges.n_cells == 50
+    assert edges.dash_lines('--', scale=0.05, join=False).n_cells == 50
+    assert edges.dash_lines('--', scale=0.05, join=True).n_cells < 50
+
+
+def test_dash_lines_interpolates_point_data():
+    line = pv.Line((0, 0, 0), (1, 0, 0), resolution=100)
+    line['x'] = line.points[:, 0].copy()
+    dashed = line.dash_lines('--', scale=0.01)
+    assert np.allclose(dashed['x'], dashed.points[:, 0], atol=1e-6)
+
+
+def test_dash_lines_copies_cell_data():
+    line = pv.Line((0, 0, 0), (1, 0, 0), resolution=10)
+    line.cell_data['tag'] = np.array([7])
+    dashed = line.dash_lines('--', scale=0.01, join=False)
+    assert np.all(dashed.cell_data['tag'] == 7)
+
+
+def test_dash_lines_ignores_non_line_cells():
+    sphere = pv.Sphere()
+    assert sphere.dash_lines().n_cells == 0
+    assert pv.PolyData().dash_lines().n_cells == 0
+
+
+def test_dash_lines_default_scale_follows_length():
+    small = pv.Line((0, 0, 0), (1, 0, 0), resolution=100)
+    large = pv.Line((0, 0, 0), (10, 0, 0), resolution=100)
+    assert small.dash_lines().n_cells == large.dash_lines().n_cells
+
+
+def test_dash_lines_raises():
+    line = pv.Line((0, 0, 0), (1, 0, 0), resolution=10)
+    with pytest.raises(ValueError, match='Invalid style'):
+        line.dash_lines('wrong')
+    with pytest.raises(ValueError, match='16-bit integer'):
+        line.dash_lines(pattern=0x1FFFF)
+    with pytest.raises(ValueError, match='greater than zero'):
+        line.dash_lines(scale=0.0)
