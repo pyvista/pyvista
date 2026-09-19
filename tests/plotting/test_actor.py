@@ -923,7 +923,12 @@ def test_dashed_lines_hidden_style():
     [
         pv.Line((-1, 0, 0), (1, 0, 0), resolution=40),
         pv.Line((-1, 0, 0), (1, 0, 0), resolution=40).cast_to_unstructured_grid(),
-        pv.ImageData(dimensions=(41, 1, 1), spacing=(0.05, 1, 1), origin=(-1, 0, 0)),
+        pytest.param(
+            pv.ImageData(dimensions=(41, 1, 1), spacing=(0.05, 1, 1), origin=(-1, 0, 0)),
+            marks=pytest.mark.needs_vtk_version(
+                (9, 6, 0), reason='vtkDataSetMapper renders 1D ImageData as nothing'
+            ),
+        ),
         pv.RectilinearGrid(np.linspace(-1, 1, 41)),
     ],
     ids=['polydata', 'unstructured', 'image', 'rectilinear'],
