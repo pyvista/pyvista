@@ -255,25 +255,34 @@ def _from_kwargs(
 
 
 # Keywords whose own value is one color
-_COLOR_KEYWORDS = frozenset({'above_color', 'below_color', 'color', 'edge_color', 'nan_color'})
+_COLOR_KEYWORDS = frozenset(
+    {'above_color', 'below_color', 'color', 'edge_color', 'nan_color', 'vertex_color'}
+)
 
-# Keywords whose own value is a colormap, which may be given as a sequence of colors
-_COLORMAP_KEYWORDS = frozenset({'cmap'})
+# Keywords whose own value is a sequence of colors, such as a colormap made of them
+_COLOR_SEQUENCE_KEYWORDS = frozenset({'cmap', 'colormap', 'multi_colors'})
+
+# Keywords whose own value can be a sequence but which are drawn one value per
+# subplot, since a single value is what they are usually given
+_PER_SUBPLOT_KEYWORDS = frozenset({'opacity'})
 
 # How many dimensions the value of each remaining keyword has, where a value with more
 # of them is one value per subplot
 _ONE_VALUE_NDIM = {
     'clim': 1,
-    'opacity': 1,
     'resolution': 1,
+    'rng': 1,
     'scalars': 2,
     'texture': 3,
     'user_matrix': 2,
 }
 
-# Every keyword of `add_mesh` and `add_volume` whose own value can be a sequence. Any
-# other keyword never takes one, so a sequence given for it is one value per subplot.
-_KEYWORDS_TAKING_A_SEQUENCE = _COLOR_KEYWORDS | _COLORMAP_KEYWORDS | frozenset(_ONE_VALUE_NDIM)
+# Every keyword whose own value can be a sequence, including the aliases which no
+# signature shows. Any other keyword never takes one, so a sequence given for it is
+# one value per subplot.
+_KEYWORDS_TAKING_A_SEQUENCE = (
+    _COLOR_KEYWORDS | _COLOR_SEQUENCE_KEYWORDS | _PER_SUBPLOT_KEYWORDS | frozenset(_ONE_VALUE_NDIM)
+)
 
 
 def _is_one_color(value: Any) -> bool:
@@ -285,8 +294,8 @@ def _is_one_color(value: Any) -> bool:
     return True
 
 
-def _is_one_colormap(value: Any) -> bool:
-    """Return whether the value is a single colormap given as a sequence of colors."""
+def _is_one_color_sequence(value: Any) -> bool:
+    """Return whether the value is one sequence of colors rather than one per subplot."""
     try:
         _validate_color_sequence(value)
     except (TypeError, ValueError):
@@ -294,16 +303,15 @@ def _is_one_colormap(value: Any) -> bool:
     return True
 
 
-def _is_one_value(key: str, value: Any) -> bool:
-    """Return whether the sequence is a single value of the keyword.
-
-    A keyword whose own value can be a sequence keeps that value, so that what it
-    means does not depend on how many datasets happen to be drawn beside it.
-    """
+def _is_one_value(key: str, value: Any, *, volume: bool) -> bool:
+    """Return whether the sequence is a single value of the keyword."""
+    if key in _PER_SUBPLOT_KEYWORDS:
+        # A volume's opacity is the transfer function mapped over its scalars
+        return volume
     if key in _COLOR_KEYWORDS:
         return _is_one_color(value)
-    if key in _COLORMAP_KEYWORDS:
-        return _is_one_colormap(value)
+    if key in _COLOR_SEQUENCE_KEYWORDS:
+        return _is_one_color_sequence(value)
     ndim = _ONE_VALUE_NDIM.get(key)
     if ndim is None:
         return False
@@ -317,20 +325,21 @@ def _is_one_value(key: str, value: Any) -> bool:
 
 def _is_a_sequence(value: Any) -> bool:
     """Return whether the value is a sequence of values rather than one value."""
-    return not isinstance(value, (str, bytes, Mapping)) and isinstance(
-        value, (Sequence, np.ndarray)
-    )
+    if isinstance(value, (str, bytes, Mapping)):
+        return False
+    # A zero-dimensional array is one value, and has no length to compare
+    return getattr(value, 'ndim', 1) > 0 and isinstance(value, (Sequence, np.ndarray))
 
 
-def _is_per_subplot(key: str, value: Any, n_datasets: int) -> bool:
+def _is_per_subplot(key: str, value: Any, n_datasets: int, *, volume: bool) -> bool:
     """Return whether the keyword was given one value for each subplot."""
     if not _is_a_sequence(value):
         return False
-    return len(value) == n_datasets and not _is_one_value(key, value)
+    return len(value) == n_datasets and not _is_one_value(key, value, volume=volume)
 
 
 def _split_kwargs(
-    kwargs: dict[str, Any], subplot_kwargs: Any, *, n_datasets: int
+    kwargs: dict[str, Any], subplot_kwargs: Any, *, n_datasets: int, volume: bool = False
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     """Return the keywords every subplot shares, and the ones each subplot has its own."""
     if subplot_kwargs is None:
@@ -344,7 +353,7 @@ def _split_kwargs(
 
     varying: dict[str, list[Any]] = {}
     for key in list(kwargs):
-        if _is_per_subplot(key, kwargs[key], n_datasets):
+        if _is_per_subplot(key, kwargs[key], n_datasets, volume=volume):
             varying[key] = list(kwargs.pop(key))
 
     for key, values in subplot_kwargs.items():
@@ -871,9 +880,10 @@ def plot_compare(  # noqa: ANN201
         Keyword arguments drawn with one value per subplot, given as a mapping of
         a keyword to a sequence of values. Only needed for the few keywords whose
         own value can be a sequence, which keep that value when they are given in
-        ``kwargs``::
+        ``kwargs``. ``'gray'`` and ``'pink'`` each name both a color and a colormap,
+        for instance, so a colormap for each subplot has to be given here::
 
-            pv.plot_compare([mesh, mesh], subplot_kwargs={'opacity': [0.3, 0.9]})
+            pv.plot_compare([mesh, mesh], subplot_kwargs={'cmap': ['gray', 'pink']})
 
         A keyword must not be given both here and in ``kwargs``.
 
@@ -897,7 +907,9 @@ def plot_compare(  # noqa: ANN201
 
         .. versionchanged:: 0.50
             A keyword given a sequence with one value per dataset is drawn with one
-            value per subplot.
+            value per subplot. ``opacity`` given a sequence of that length is one
+            opacity for each subplot rather than one opacity transfer function for
+            all of them, unless ``volume`` is ``True``.
 
     Returns
     -------
@@ -997,7 +1009,9 @@ def plot_compare(  # noqa: ANN201
 
     labels = _validate_labels(labels, names=names, n_datasets=n_datasets)
     _validate_reference_mesh(reference_mesh)
-    kwargs, per_subplot_kwargs = _split_kwargs(kwargs, subplot_kwargs, n_datasets=n_datasets)
+    kwargs, per_subplot_kwargs = _split_kwargs(
+        kwargs, subplot_kwargs, n_datasets=n_datasets, volume=volume
+    )
 
     if normalize:
         datasets = [_normalized(dataset) for dataset in datasets]
