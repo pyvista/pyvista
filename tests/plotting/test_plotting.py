@@ -6,15 +6,21 @@ See the image regression notes in CONTRIBUTING.rst
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 import inspect
 from io import BytesIO
 import os
 from pathlib import Path
 import re
+import sys
 import time
+from types import UnionType
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Union
 from typing import get_args
+from typing import get_origin
+from typing import get_type_hints
 import warnings
 
 import imageio
@@ -3253,6 +3259,184 @@ def test_plot_compare_takes_what_plot_takes(compare_datasets, verify_image_cache
         'window': (640, 480),
         'edges': True,
     }
+
+
+def _drawn_actors(datasets, describe=None, **kwargs):
+    """Return something describing the mesh actor drawn in each subplot.
+
+    Describes the color and line width of each by default. Holds nothing of the
+    plotter, which has to be free to be collected.
+    """
+    describe = describe or (lambda actor: (actor.prop.color.name, actor.prop.line_width))
+    drawn: list[Any] = []
+
+    def capture(plotter):
+        drawn.extend(
+            describe(actor)
+            for renderer in plotter.renderers
+            for actor in renderer.actors.values()
+            if isinstance(actor, pv.Actor)
+        )
+
+    pv.plot_compare(datasets, before_close_callback=capture, **kwargs)
+    return drawn
+
+
+def test_plot_compare_per_subplot_kwargs(verify_image_cache):
+    verify_image_cache.skip = True
+
+    # A keyword given one value per dataset draws each dataset with its own value,
+    # where a single value is drawn in every subplot
+    mesh = pv.Sphere()
+    assert _drawn_actors([mesh, mesh], color=['red', 'blue'], line_width=4) == [
+        ('red', 4.0),
+        ('blue', 4.0),
+    ]
+
+
+@pytest.mark.parametrize(
+    ('kwargs', 'n_datasets', 'shared', 'varying'),
+    [
+        # A keyword which never takes a sequence of its own varies per subplot
+        ({'line_style': ['--', ':']}, 2, {}, [{'line_style': '--'}, {'line_style': ':'}]),
+        ({'line_width': [2, 4]}, 2, {}, [{'line_width': 2}, {'line_width': 4}]),
+        ({'show_edges': [True, False]}, 2, {}, [{'show_edges': True}, {'show_edges': False}]),
+        # A sequence of any other length is one value, left to `add_mesh` to reject
+        ({'line_style': ['--', ':']}, 3, {'line_style': ['--', ':']}, [{}, {}, {}]),
+        # A keyword whose own value can be a sequence keeps that value, however many
+        # datasets it is drawn beside
+        ({'color': [1, 0, 0]}, 3, {'color': [1, 0, 0]}, [{}, {}, {}]),
+        ({'clim': [0, 1]}, 2, {'clim': [0, 1]}, [{}, {}]),
+        ({'cmap': ['red', 'blue']}, 2, {'cmap': ['red', 'blue']}, [{}, {}]),
+        ({'opacity': [0.3, 0.9]}, 2, {'opacity': [0.3, 0.9]}, [{}, {}]),
+        # ... unless what it is given is not one value of its own
+        ({'color': ['red', 'blue']}, 2, {}, [{'color': 'red'}, {'color': 'blue'}]),
+        ({'color': [1, 0]}, 2, {}, [{'color': 1}, {'color': 0}]),
+        ({'cmap': ['viridis', 'plasma']}, 2, {}, [{'cmap': 'viridis'}, {'cmap': 'plasma'}]),
+        ({'scalars': ['a', 'b']}, 2, {}, [{'scalars': 'a'}, {'scalars': 'b'}]),
+        # ... or is nested one level deeper than its own value
+        ({'color': [[1, 0, 0], [0, 0, 1]]}, 2, {}, [{'color': [1, 0, 0]}, {'color': [0, 0, 1]}]),
+        ({'clim': [[0, 1], [0, 2]]}, 2, {}, [{'clim': [0, 1]}, {'clim': [0, 2]}]),
+    ],
+)
+def test_plot_compare_splits_per_subplot_kwargs(
+    kwargs,
+    n_datasets,
+    shared,
+    varying,
+    no_images_to_verify,  # noqa: ARG001
+):
+    from pyvista.plotting.plot_compare import _split_kwargs
+
+    assert _split_kwargs(dict(kwargs), None, n_datasets=n_datasets) == (shared, varying)
+
+
+def test_plot_compare_knows_which_keywords_take_a_sequence(no_images_to_verify):  # noqa: ARG001
+    from pyvista.plotting.plot_compare import _KEYWORDS_TAKING_A_SEQUENCE
+
+    def resolved(method):
+        """Return the annotations of the method, standing in ``Any`` for private names."""
+        namespace: dict[str, Any] = {}
+        for name, module in list(sys.modules.items()):
+            if name.startswith('pyvista'):
+                namespace.update(vars(module))
+        while True:
+            try:
+                return get_type_hints(method, globalns=namespace)
+            except NameError as error:
+                namespace[error.name] = Any
+
+    def members(annotation):
+        """Return each member of a union, or the annotation itself."""
+        if get_origin(annotation) in (Union, UnionType):
+            return get_args(annotation)
+        return (annotation,)
+
+    def unwrapped(member):
+        """Return the type a member is built from, such as ``ndarray`` for ``NDArray[float]``."""
+        while True:
+            if (value := getattr(member, '__value__', None)) is not None:
+                member = value  # An alias defined with `type`, as numpy's `NDArray` is
+            elif (origin := get_origin(member)) is not None:
+                member = origin
+            else:
+                return member
+
+    def takes_a_sequence(annotation):
+        """Return whether the annotation allows a sequence which is not a string."""
+        for member in members(annotation):
+            origin = unwrapped(member)
+            if origin is Any or not isinstance(origin, type) or issubclass(origin, str):
+                continue
+            if issubclass(origin, (Sequence, np.ndarray)):
+                return True
+        return False
+
+    def keywords(method):
+        """Return the annotations of the keywords the method takes."""
+        # The first two parameters are `self` and the data object, which `plot_compare`
+        # gives the method itself
+        given = {'return', *list(inspect.signature(method).parameters)[:2]}
+        return {
+            name: annotation for name, annotation in resolved(method).items() if name not in given
+        }
+
+    # A keyword which takes a sequence of its own keeps that value rather than being
+    # read as one value per subplot, so `plot_compare` has to know about every one
+    found = {
+        name
+        for method in (pv.Plotter.add_mesh, pv.Plotter.add_volume)
+        for name, annotation in keywords(method).items()
+        if takes_a_sequence(annotation)
+    }
+    assert found == set(_KEYWORDS_TAKING_A_SEQUENCE)
+
+
+def test_plot_compare_subplot_kwargs(verify_image_cache):
+    verify_image_cache.skip = True
+
+    def drawn_opacity(actor):
+        """Return the opacity the actor is drawn with."""
+        return actor.prop.opacity
+
+    mesh = pv.Sphere()
+    # A sequence of numbers is one opacity transfer function, which is mapped over the
+    # scalars rather than applied to the actor
+    assert _drawn_actors([mesh, mesh], drawn_opacity, opacity=[0.3, 0.9]) == [1.0, 1.0]
+
+    # `subplot_kwargs` draws the same values one per subplot instead
+    assert _drawn_actors([mesh, mesh], drawn_opacity, subplot_kwargs={'opacity': [0.3, 0.9]}) == [
+        pytest.approx(0.3),
+        pytest.approx(0.9),
+    ]
+
+
+def test_plot_compare_subplot_kwargs_raises(no_images_to_verify):  # noqa: ARG001
+    datasets = [pv.Sphere(), pv.Sphere()]
+
+    match = (
+        'Subplot kwargs must be a mapping of a keyword to one value per dataset, got list instead.'
+    )
+    with pytest.raises(TypeError, match=re.escape(match)):
+        pv.plot_compare(datasets, subplot_kwargs=[{'color': 'red'}, {'color': 'blue'}])
+
+    match = (
+        "Values for 'color' in `subplot_kwargs` must be a sequence with one value per "
+        'dataset, got str instead.'
+    )
+    with pytest.raises(TypeError, match=re.escape(match)):
+        pv.plot_compare(datasets, subplot_kwargs={'color': 'red'})
+
+    match = "Number of 'color' values (3) must match the number of datasets (2)."
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.plot_compare(datasets, subplot_kwargs={'color': ['red', 'blue', 'green']})
+
+    match = (
+        "'color' was given both as a keyword argument and in `subplot_kwargs`. "
+        'Use one or the other.'
+    )
+    with pytest.raises(TypeError, match=re.escape(match)):
+        pv.plot_compare(datasets, color='red', subplot_kwargs={'color': ['red', 'blue']})
 
 
 def test_plot_compare_volume(verify_image_cache):
