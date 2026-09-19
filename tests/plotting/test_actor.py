@@ -861,3 +861,19 @@ def test_dashed_lines_foreshorten_with_distance():
     third = len(dashes) // 3
     assert third >= 2
     assert dashes[:third].mean() > 2 * dashes[-third:].mean()
+
+
+def test_dashed_lines_requires_dataset():
+    actor = pv.Actor(mapper=pv.PolyDataMapper())
+    with pytest.raises(ValueError, match='must have a dataset'):
+        actor.dashed_lines = '--'
+
+
+def test_dashed_lines_mesh_with_faces():
+    mesh = pv.Plane(i_resolution=2, j_resolution=2)
+    mesh.lines = np.array([2, 0, 8])
+    pl = pv.Plotter()
+    actor = pl.add_mesh(mesh, line_style='--')
+    pl.render()
+    assert actor.dashed_lines == '--'
+    pl.close()

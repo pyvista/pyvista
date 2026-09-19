@@ -1677,3 +1677,23 @@ def test_dash_lines_raises():
         line.dash_lines(pattern=0x1FFFF)
     with pytest.raises(ValueError, match='greater than 0'):
         line.dash_lines(scale=0.0)
+
+
+def test_dash_lines_degenerate_cells():
+    mesh = pv.PolyData()
+    mesh.points = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 0.0, 0.0]])
+    mesh.lines = np.array([1, 0, 2, 1, 2])
+    assert mesh.n_lines == 2
+
+    dashed = mesh.dash_lines(join=False)
+    assert dashed.n_points == 0
+    assert dashed.n_cells == 0
+
+
+def test_dash_lines_snaps_integer_point_data():
+    line = pv.Line((0, 0, 0), (1, 0, 0), resolution=10)
+    line.point_data['ids'] = np.arange(line.n_points)
+
+    dashed = line.dash_lines()
+    assert dashed.point_data['ids'].dtype == line.point_data['ids'].dtype
+    assert np.isin(dashed.point_data['ids'], line.point_data['ids']).all()
