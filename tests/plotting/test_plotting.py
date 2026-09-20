@@ -3303,13 +3303,6 @@ def test_plot_compare_per_subplot_kwargs(verify_image_cache):
         ),
         ({'line_width': [2, 4]}, 2, {}, [{'line_width': 2}, {'line_width': 4}]),
         ({'show_edges': [True, False]}, 2, {}, [{'show_edges': True}, {'show_edges': False}]),
-        # A sequence of any other length is one value, left to `add_mesh` to reject
-        (
-            {'style': ['surface', 'wireframe']},
-            3,
-            {'style': ['surface', 'wireframe']},
-            [{}, {}, {}],
-        ),
         # A keyword whose own value can be a sequence keeps that value, however many
         # datasets it is drawn beside
         ({'color': [1, 0, 0]}, 3, {'color': [1, 0, 0]}, [{}, {}, {}]),
@@ -3331,6 +3324,8 @@ def test_plot_compare_per_subplot_kwargs(verify_image_cache):
         # ... except `opacity`, which is usually given one value rather than a
         # transfer function
         ({'opacity': [0.3, 0.9]}, 2, {}, [{'opacity': 0.3}, {'opacity': 0.9}]),
+        # ... and which keeps a sequence of any other length instead of rejecting it
+        ({'opacity': [0.3, 0.6, 0.9]}, 2, {'opacity': [0.3, 0.6, 0.9]}, [{}, {}]),
         # ... unless what it is given is not one value of its own
         ({'color': ['red', 'blue']}, 2, {}, [{'color': 'red'}, {'color': 'blue'}]),
         ({'color': [1, 0]}, 2, {}, [{'color': 1}, {'color': 0}]),
@@ -3348,6 +3343,21 @@ def test_plot_compare_splits_per_subplot_kwargs(kwargs, n_datasets, shared, vary
     from pyvista.plotting.plot_compare import _split_kwargs
 
     assert _split_kwargs(dict(kwargs), n_datasets=n_datasets) == (shared, varying)
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_plot_compare_raises_when_a_keyword_has_too_few_values():
+    """A keyword which takes no sequence of its own must be given one value each."""
+    datasets = [pv.Sphere()] * 3
+
+    for keyword, values in (
+        ('line_width', [2, 4]),
+        ('style', ['surface', 'wireframe']),
+        ('show_edges', [True, False]),
+    ):
+        match = f'Number of {keyword!r} values (2) must match the number of datasets (3).'
+        with pytest.raises(ValueError, match=re.escape(match)):
+            pv.plot_compare(datasets, **{keyword: values})
 
 
 @pytest.mark.usefixtures('no_images_to_verify')

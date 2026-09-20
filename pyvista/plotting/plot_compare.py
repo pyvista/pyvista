@@ -338,12 +338,21 @@ def _split_kwargs(
     kwargs: dict[str, Any], *, n_datasets: int, volume: bool = False
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     """Return the keywords every subplot shares, and the ones each subplot has its own."""
+    shared = dict(kwargs)
     varying: dict[str, list[Any]] = {}
-    for key in list(kwargs):
-        if _is_per_subplot(key, kwargs[key], n_datasets, volume=volume):
-            varying[key] = list(kwargs.pop(key))
+    for key, value in kwargs.items():
+        if _is_per_subplot(key, value, n_datasets, volume=volume):
+            varying[key] = list(shared.pop(key))
+        elif key not in _KEYWORDS_TAKING_A_SEQUENCE and _is_a_sequence(value):
+            # The keyword takes no sequence of its own, so this one was meant to
+            # give each dataset a value and does not have enough of them
+            msg = (
+                f'Number of {key!r} values ({len(value)}) must match the number of '
+                f'datasets ({n_datasets}).'
+            )
+            raise ValueError(msg)
 
-    return kwargs, [
+    return shared, [
         {key: values[index] for key, values in varying.items()} for index in range(n_datasets)
     ]
 
