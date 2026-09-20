@@ -111,9 +111,108 @@ def test_min(pyvista_ndarray_1d):
     assert isinstance(pyvista_ndarray_1d.min(), type(arr.min()))
 
 
-def test_squeeze(pyvista_ndarray_1d):
-    reshaped_pvarr = pyvista_ndarray_1d.reshape((3, 1))
-    assert np.array_equal(reshaped_pvarr.squeeze(), np.array(reshaped_pvarr.squeeze()))
+@pytest.mark.parametrize('squeeze', [pyvista_ndarray.squeeze, np.squeeze])
+@pytest.mark.parametrize(
+    ('shape', 'axis'),
+    [
+        ((1,), None),
+        ((1, 1), None),
+        ((1, 1), (0, 1)),
+        ((1, 3, 1), -1),
+        ((1, 3, 1), (0, -1)),
+        ((3,), None),
+        ((1,), ()),
+        ((), None),
+        ((), 0),
+        ((), -1),
+        ((0, 1), None),
+    ],
+)
+def test_squeeze(squeeze, shape, axis):
+    """Squeeze follows NumPy shape rules and returns an array view."""
+    array = pyvista_ndarray(np.arange(np.prod(shape, dtype=int)).reshape(shape))
+    expected = np.asarray(array).squeeze(axis)
+    result = squeeze(array, axis)
+    assert isinstance(result, pyvista_ndarray)
+    assert result.shape == expected.shape
+    assert result.dtype == expected.dtype
+    assert np.array_equal(result, expected)
+    if result.shape == array.shape:
+        assert result is array
+    if array.size:
+        assert np.shares_memory(result, array)
+        result[...] = 42
+        assert np.all(np.asarray(array) == 42)
+
+
+@pytest.mark.parametrize('squeeze', [pyvista_ndarray.squeeze, np.squeeze])
+@pytest.mark.parametrize('axis', [1, 3, -4, (0, 0), (0, -3), (0, 1), 1.5, [0]])
+def test_squeeze_invalid_axis(squeeze, axis):
+    """Invalid axes raise the same exception as NumPy."""
+    array = pyvista_ndarray(np.ones((1, 3, 1)))
+    with pytest.raises((ValueError, IndexError, TypeError)) as error:
+        np.asarray(array).squeeze(axis=axis)
+    with pytest.raises(type(error.value)):
+        squeeze(array, axis=axis)
+
+
+@pytest.mark.parametrize('squeeze', [pyvista_ndarray.squeeze, np.squeeze])
+@pytest.mark.parametrize('step', [2, -1])
+def test_squeeze_strided(squeeze, step):
+    """Squeezing non-contiguous and reversed views retains their storage."""
+    array = pyvista_ndarray(np.arange(24).reshape(4, 1, 6)).transpose(2, 1, 0)[::step]
+    result = squeeze(array)
+    assert isinstance(result, pyvista_ndarray)
+    assert np.array_equal(result, np.asarray(array).squeeze())
+    assert np.shares_memory(result, array)
+    result[0, 0] = 42
+    assert array[0, 0, 0] == 42
+
+
+@pytest.mark.parametrize('squeeze', [pyvista_ndarray.squeeze, np.squeeze])
+@pytest.mark.parametrize(
+    ('dtype', 'value'),
+    [
+        (np.int64, 2),
+        (np.float64, 2.5),
+        (np.bool_, False),
+        (np.complex64, 2 + 3j),
+        (np.complex128, 2 + 3j),
+    ],
+)
+def test_squeeze_associated(squeeze, dtype, value):
+    """Singleton views retain metadata and notify their dataset on writes."""
+    mesh = pv.PolyData(np.zeros((1, 3)))
+    mesh.point_data['values'] = np.ones(1, dtype=dtype)
+    array = mesh.point_data['values']
+    assert isinstance(array, pyvista_ndarray)
+    result = squeeze(array.reshape((1, 1)))
+    assert isinstance(result, pyvista_ndarray)
+    assert result.shape == ()
+    assert result.dtype == dtype
+    assert result.item() == 1
+    assert np.shares_memory(result, array)
+    assert result.dataset is array.dataset
+    assert result.dataset.Get() is mesh
+    assert result.VTKObject is array.VTKObject
+    assert result.association == array.association == FieldAssociation.POINT
+    dataset_modified, array_modified = _CallCounter(), _CallCounter()
+    mesh.AddObserver(_vtk.vtkCommand.ModifiedEvent, dataset_modified)
+    array.AddObserver(_vtk.vtkCommand.ModifiedEvent, array_modified)
+    result[...] = value
+    assert mesh.point_data['values'].item() == value
+    assert dataset_modified.call_count == array_modified.call_count == 1
+
+
+@pytest.mark.parametrize('reduction', ['sum', 'min', 'max'])
+@pytest.mark.parametrize('size', [1, 3])
+def test_reductions_return_scalars(reduction, size):
+    """Reductions retain NumPy scalar return types."""
+    array = pyvista_ndarray(np.arange(size))
+    expected = getattr(np.asarray(array), reduction)()
+    result = getattr(array, reduction)()
+    assert type(result) is type(expected)
+    assert result == expected
 
 
 def test_tobytes(pyvista_ndarray_1d):

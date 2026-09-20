@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import re
-
 import numpy as np
 import pytest
 
@@ -154,12 +152,10 @@ def test_axes_actor_labels_group(axes_actor):
     assert axes_actor.y_label == new_labels[1]
     assert axes_actor.z_label == new_labels[2]
 
-    match = 'Labels must be a list or tuple. Got abc instead.'
-    with pytest.raises(TypeError, match=match):
+    with pytest.raises(TypeError, match='Labels must be an instance of'):
         axes_actor.labels = 'abc'
 
-    match = "Labels must be a list or tuple with three items. Got ['1', '2'] instead."
-    with pytest.raises(ValueError, match=re.escape(match)):
+    with pytest.raises(ValueError, match='Labels must have a length equal to'):
         axes_actor.labels = ['1', '2']
 
 

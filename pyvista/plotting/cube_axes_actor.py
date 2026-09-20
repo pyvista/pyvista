@@ -29,9 +29,8 @@ if TYPE_CHECKING:
 
 def _pad_bounds(bounds: VectorLike[float], *, padding: float) -> np.ndarray:
     """Cushion bounds by a percentage of their size along each axial direction."""
-    if not (isinstance(padding, (int, float)) and 0.0 <= padding < 1.0):  # type: ignore[redundant-expr]
-        msg = f'padding ({padding}) not understood. Must be float between 0 and 1'
-        raise ValueError(msg)
+    _validation.check_number(padding, name='padding')
+    _validation.check_range(padding, rng=(0.0, 1.0), strict_upper=True, name='padding')
     padded = np.asanyarray(bounds, dtype=float).copy()
     if not np.any(np.abs(padded) == np.inf):
         cushion = np.abs(padded[1::2] - padded[::2]) * padding
@@ -86,7 +85,7 @@ def _axis_label_values(vmin: float, vmax: float, n: int) -> np.ndarray:
     return np.linspace(vmin, vmax, maximum)
 
 
-def make_axis_labels(*, vmin, vmax, n, fmt):
+def make_axis_labels(*, vmin: float, vmax: float, n: int, fmt: str | None) -> _vtk.vtkStringArray:
     """Create axis labels as a :vtk:`vtkStringArray`.
 
     Parameters
@@ -99,7 +98,7 @@ def make_axis_labels(*, vmin, vmax, n, fmt):
         The number of labels to create. Fewer are created, and placed on
         :vtk:`vtkCubeAxesActor`'s own ticks, if it cannot space that many evenly
         between ``vmin`` and ``vmax``.
-    fmt : str
+    fmt : str, optional
         A format string for the labels. If the string starts with '%', the label will be formatted
         using the old-style string formatting method.
         Otherwise, the label will be formatted using the new-style string formatting method.
@@ -302,25 +301,25 @@ class CubeAxesActor(
 
     def __init__(
         self,
-        camera,
+        camera: pv.Camera,
         *,
         minor_ticks: bool = False,
-        tick_location=None,
-        x_title='X Axis',
-        y_title='Y Axis',
-        z_title='Z Axis',
+        tick_location: str | None = None,
+        x_title: str = 'X Axis',
+        y_title: str = 'Y Axis',
+        z_title: str = 'Z Axis',
         x_axis_visibility: bool = True,
         y_axis_visibility: bool = True,
         z_axis_visibility: bool = True,
-        x_label_format=None,
-        y_label_format=None,
-        z_label_format=None,
+        x_label_format: str | None = None,
+        y_label_format: str | None = None,
+        z_label_format: str | None = None,
         x_label_visibility: bool = True,
         y_label_visibility: bool = True,
         z_label_visibility: bool = True,
-        n_xlabels=5,
-        n_ylabels=5,
-        n_zlabels=5,
+        n_xlabels: int = 5,
+        n_ylabels: int = 5,
+        n_zlabels: int = 5,
         color: ColorLike | None = None,
         grid: bool | str | None = None,
         location: str | None = 'closest',
@@ -332,7 +331,7 @@ class CubeAxesActor(
         bounds: VectorLike[float] | None = None,
         axes_ranges: VectorLike[float] | None = None,
         padding: float = 0.0,
-    ):
+    ) -> None:
         """Initialize CubeAxesActor."""
         super().__init__()
         self.camera = camera
@@ -362,22 +361,11 @@ class CubeAxesActor(
         self._z_label_visibility = z_label_visibility
 
         default_fmt = '%.1f' if pv.vtk_version_info < (9, 6, 0) else '{0:.1f}'
-        if x_label_format is None:
-            x_label_format = pv.global_theme.font.fmt
-            if x_label_format is None:
-                x_label_format = default_fmt
-        if y_label_format is None:
-            y_label_format = pv.global_theme.font.fmt
-            if y_label_format is None:
-                y_label_format = default_fmt
-        if z_label_format is None:
-            z_label_format = pv.global_theme.font.fmt
-            if z_label_format is None:
-                z_label_format = default_fmt
+        theme_fmt = pv.global_theme.font.fmt or default_fmt
 
-        self.x_label_format = x_label_format
-        self.y_label_format = y_label_format
-        self.z_label_format = z_label_format
+        self.x_label_format = theme_fmt if x_label_format is None else x_label_format
+        self.y_label_format = theme_fmt if y_label_format is None else y_label_format
+        self.z_label_format = theme_fmt if z_label_format is None else z_label_format
 
         self.n_xlabels = n_xlabels
         self.n_ylabels = n_ylabels
@@ -534,23 +522,18 @@ class CubeAxesActor(
         return 'both'
 
     @tick_location.setter
-    def tick_location(self, value: str):
-        if not isinstance(value, str):
-            msg = f'`tick_location` must be a string, not {type(value)}'  # type: ignore[unreachable]
-            raise TypeError(msg)
-        value = value.lower()
-        if value in ('inside'):
+    def tick_location(self, value: str) -> None:
+        _validation.check_instance(value, str, name='`tick_location`')
+        location = value.lower()
+        _validation.check_contains(
+            ['inside', 'outside', 'both'], must_contain=location, name='tick_location'
+        )
+        if location == 'inside':
             self.SetTickLocationToInside()
-        elif value in ('outside'):
+        elif location == 'outside':
             self.SetTickLocationToOutside()
-        elif value in ('both'):
-            self.SetTickLocationToBoth()
         else:
-            msg = (
-                f'Value of tick_location ("{value}") should be either "inside", "outside", '
-                'or "both".'
-            )
-            raise ValueError(msg)
+            self.SetTickLocationToBoth()
 
     @property
     def bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
@@ -558,7 +541,7 @@ class CubeAxesActor(
         return BoundsTuple(*self.GetBounds())
 
     @bounds.setter
-    def bounds(self, bounds: VectorLike[float]):
+    def bounds(self, bounds: VectorLike[float]) -> None:
         self.SetBounds(bounds)  # type: ignore[arg-type]
         self._update_labels()
         bnds = self.bounds
@@ -584,7 +567,7 @@ class CubeAxesActor(
         return self.GetXAxisRange()
 
     @x_axis_range.setter
-    def x_axis_range(self, value: tuple[float, float]):
+    def x_axis_range(self, value: tuple[float, float]) -> None:
         self.SetXAxisRange(value)
         self._update_x_labels()
 
@@ -594,7 +577,7 @@ class CubeAxesActor(
         return self.GetYAxisRange()
 
     @y_axis_range.setter
-    def y_axis_range(self, value: tuple[float, float]):
+    def y_axis_range(self, value: tuple[float, float]) -> None:
         self.SetYAxisRange(value)
         self._update_y_labels()
 
@@ -604,7 +587,7 @@ class CubeAxesActor(
         return self.GetZAxisRange()
 
     @z_axis_range.setter
-    def z_axis_range(self, value: tuple[float, float]):
+    def z_axis_range(self, value: tuple[float, float]) -> None:
         self.SetZAxisRange(value)
         self._update_z_labels()
 
@@ -614,7 +597,7 @@ class CubeAxesActor(
         return self.GetLabelOffset()
 
     @label_offset.setter
-    def label_offset(self, offset: float):
+    def label_offset(self, offset: float) -> None:
         self.SetLabelOffset(offset)
 
     @property
@@ -628,7 +611,7 @@ class CubeAxesActor(
         return self.GetTitleOffset()
 
     @title_offset.setter
-    def title_offset(self, offset: Sequence[float]):
+    def title_offset(self, offset: Sequence[float]) -> None:
         self.SetTitleOffset(list(offset))
 
     @property
@@ -637,7 +620,7 @@ class CubeAxesActor(
         return self.GetCamera()
 
     @camera.setter
-    def camera(self, camera: pv.Camera):
+    def camera(self, camera: pv.Camera) -> None:
         self.SetCamera(camera)
 
     @property
@@ -646,7 +629,7 @@ class CubeAxesActor(
         return bool(self.GetXAxisMinorTickVisibility())
 
     @x_axis_minor_tick_visibility.setter
-    def x_axis_minor_tick_visibility(self, value: bool):
+    def x_axis_minor_tick_visibility(self, value: bool) -> None:
         self.SetXAxisMinorTickVisibility(value)
 
     @property
@@ -655,7 +638,7 @@ class CubeAxesActor(
         return bool(self.GetYAxisMinorTickVisibility())
 
     @y_axis_minor_tick_visibility.setter
-    def y_axis_minor_tick_visibility(self, value: bool):
+    def y_axis_minor_tick_visibility(self, value: bool) -> None:
         self.SetYAxisMinorTickVisibility(value)
 
     @property
@@ -664,7 +647,7 @@ class CubeAxesActor(
         return bool(self.GetZAxisMinorTickVisibility())
 
     @z_axis_minor_tick_visibility.setter
-    def z_axis_minor_tick_visibility(self, value: bool):
+    def z_axis_minor_tick_visibility(self, value: bool) -> None:
         self.SetZAxisMinorTickVisibility(value)
 
     @property
@@ -673,7 +656,7 @@ class CubeAxesActor(
         return self._x_label_visibility
 
     @x_label_visibility.setter
-    def x_label_visibility(self, value: bool):
+    def x_label_visibility(self, value: bool) -> None:
         self._x_label_visibility = bool(value)
         self._update_x_labels()
 
@@ -683,7 +666,7 @@ class CubeAxesActor(
         return self._y_label_visibility
 
     @y_label_visibility.setter
-    def y_label_visibility(self, value: bool):
+    def y_label_visibility(self, value: bool) -> None:
         self._y_label_visibility = bool(value)
         self._update_y_labels()
 
@@ -693,7 +676,7 @@ class CubeAxesActor(
         return self._z_label_visibility
 
     @z_label_visibility.setter
-    def z_label_visibility(self, value: bool):
+    def z_label_visibility(self, value: bool) -> None:
         self._z_label_visibility = bool(value)
         self._update_z_labels()
 
@@ -703,7 +686,7 @@ class CubeAxesActor(
         return bool(self.GetXAxisVisibility())
 
     @x_axis_visibility.setter
-    def x_axis_visibility(self, value: bool):
+    def x_axis_visibility(self, value: bool) -> None:
         self.SetXAxisVisibility(value)
 
     @property
@@ -712,7 +695,7 @@ class CubeAxesActor(
         return bool(self.GetYAxisVisibility())
 
     @y_axis_visibility.setter
-    def y_axis_visibility(self, value: bool):
+    def y_axis_visibility(self, value: bool) -> None:
         self.SetYAxisVisibility(value)
 
     @property
@@ -721,7 +704,7 @@ class CubeAxesActor(
         return bool(self.GetZAxisVisibility())
 
     @z_axis_visibility.setter
-    def z_axis_visibility(self, value: bool):
+    def z_axis_visibility(self, value: bool) -> None:
         self.SetZAxisVisibility(value)
 
     @property
@@ -730,7 +713,7 @@ class CubeAxesActor(
         return self.GetXLabelFormat()
 
     @x_label_format.setter
-    def x_label_format(self, value: str):
+    def x_label_format(self, value: str) -> None:
         self.SetXLabelFormat(value)
         self._update_x_labels()
 
@@ -740,7 +723,7 @@ class CubeAxesActor(
         return self.GetYLabelFormat()
 
     @y_label_format.setter
-    def y_label_format(self, value: str):
+    def y_label_format(self, value: str) -> None:
         self.SetYLabelFormat(value)
         self._update_y_labels()
 
@@ -750,7 +733,7 @@ class CubeAxesActor(
         return self.GetZLabelFormat()
 
     @z_label_format.setter
-    def z_label_format(self, value: str):
+    def z_label_format(self, value: str) -> None:
         self.SetZLabelFormat(value)
         self._update_z_labels()
 
@@ -760,7 +743,7 @@ class CubeAxesActor(
         return self._x_title
 
     @x_title.setter
-    def x_title(self, value: str):
+    def x_title(self, value: str) -> None:
         _validation.check_string(value, name='x_title')
         self._x_title = value
         self._update_x_labels()
@@ -771,7 +754,7 @@ class CubeAxesActor(
         return self._y_title
 
     @y_title.setter
-    def y_title(self, value: str):
+    def y_title(self, value: str) -> None:
         _validation.check_string(value, name='y_title')
         self._y_title = value
         self._update_y_labels()
@@ -782,7 +765,7 @@ class CubeAxesActor(
         return self._z_title
 
     @z_title.setter
-    def z_title(self, value: str):
+    def z_title(self, value: str) -> None:
         _validation.check_string(value, name='z_title')
         self._z_title = value
         self._update_z_labels()
@@ -796,46 +779,46 @@ class CubeAxesActor(
         return bool(self.GetUse2DMode())
 
     @use_2d_mode.setter
-    def use_2d_mode(self, value: bool):
+    def use_2d_mode(self, value: bool) -> None:
         self.SetUse2DMode(value)
 
     @property
-    def n_xlabels(self):  # numpydoc ignore=RT01
+    def n_xlabels(self) -> int:  # numpydoc ignore=RT01
         """Number of labels on the x-axis."""
         return self._n_xlabels
 
     @n_xlabels.setter
-    def n_xlabels(self, value: int):
+    def n_xlabels(self, value: int) -> None:
         self._n_xlabels = value
         self._update_x_labels()
 
     @property
-    def n_ylabels(self):  # numpydoc ignore=RT01
+    def n_ylabels(self) -> int:  # numpydoc ignore=RT01
         """Number of labels on the y-axis."""
         return self._n_ylabels
 
     @n_ylabels.setter
-    def n_ylabels(self, value: int):
+    def n_ylabels(self, value: int) -> None:
         self._n_ylabels = value
         self._update_y_labels()
 
     @property
-    def n_zlabels(self):  # numpydoc ignore=RT01
+    def n_zlabels(self) -> int:  # numpydoc ignore=RT01
         """Number of labels on the z-axis."""
         return self._n_zlabels
 
     @n_zlabels.setter
-    def n_zlabels(self, value: int):
+    def n_zlabels(self, value: int) -> None:
         self._n_zlabels = value
         self._update_z_labels()
 
-    def _update_labels(self):
+    def _update_labels(self) -> None:
         """Update all labels."""
         self._update_x_labels()
         self._update_y_labels()
         self._update_z_labels()
 
-    def _update_x_labels(self):
+    def _update_x_labels(self) -> None:
         """Regenerate x-axis labels."""
         if self.x_axis_visibility:
             self.SetXTitle(self._x_title)
@@ -853,7 +836,7 @@ class CubeAxesActor(
             self.SetXTitle(' ')
             self.SetAxisLabels(0, self._empty_str)
 
-    def _update_y_labels(self):
+    def _update_y_labels(self) -> None:
         """Regenerate y-axis labels."""
         if self.y_axis_visibility:
             self.SetYTitle(self._y_title)
@@ -871,7 +854,7 @@ class CubeAxesActor(
             self.SetYTitle(' ')
             self.SetAxisLabels(1, self._empty_str)
 
-    def _update_z_labels(self):
+    def _update_z_labels(self) -> None:
         """Regenerate z-axis labels."""
         if self.z_axis_visibility:
             self.SetZTitle(self._z_title)
@@ -914,7 +897,7 @@ class CubeAxesActor(
             self.y_axis_range = ranges[2], ranges[3]
             self.z_axis_range = ranges[4], ranges[5]
 
-    def update_bounds(self, bounds):
+    def update_bounds(self, bounds: VectorLike[float]) -> None:
         """Update the bounds of this actor.
 
         The ``padding`` and ``axes_ranges`` given to the constructor are applied

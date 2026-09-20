@@ -1265,10 +1265,7 @@ def test_show_bounds_grid_value_raises():
 @given(padding=st.floats().filter(lambda x: (x > 1.0) | (x < 0)))
 def test_show_bounds_padding_raises(padding):
     pl = pv.Plotter()
-    with pytest.raises(
-        ValueError,
-        match=re.escape(f'padding ({padding}) not understood. Must be float between 0 and 1'),
-    ):
+    with pytest.raises(ValueError, match='padding values must all be'):
         pl.renderer.show_bounds(padding=padding)
 
 
@@ -1358,3 +1355,23 @@ def test_shadow_renderer_raises_once_released():
     renderers.__del__()  # releases the shadow renderer, as garbage collection would
     with pytest.raises(RuntimeError, match='no longer have a shadow renderer'):
         _ = renderers.shadow_renderer
+
+
+@pytest.mark.parametrize('image_path', [examples.mapfile, examples.logofile])
+@pytest.mark.parametrize('scale', [0.5, 1.0, 2.0])
+def test_background_image_height_scales_with_window(image_path, scale):
+    pl = pv.Plotter(window_size=(400, 400))
+    pl.add_background_image(image_path, scale=scale)
+    background_renderer = pl.renderers._background_renderers[pl.renderers.active_index]
+
+    for window_size in [(400, 400), (800, 200), (200, 800)]:
+        pl.window_size = list(window_size)
+        background_renderer.resize()
+
+        image_data = background_renderer.actors['background'].GetInput()
+        image_height = image_data.dimensions[1] * image_data.spacing[1]
+        # `parallel_scale` is half the world-space height of the viewport
+        viewport_height = 2 * background_renderer.camera.parallel_scale
+        assert image_height / viewport_height == pytest.approx(scale)
+
+    pl.close()
