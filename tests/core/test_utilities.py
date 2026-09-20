@@ -429,13 +429,15 @@ def test_read_force_ext_wrong_extension(tmpdir):
     assert data.n_points == 0
 
     # try to read a .ply file as .vtm
-    # vtkXMLMultiBlockDataReader throws a VTK error about the validity of the XML file
-    # the returned dataset is empty
+    # the file is not XML at all, and VTK only reports the parse failure from 9.7 on
     fname = ex.planefile
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
-        data = fileio.read(fname, force_ext='.vtm')
-    assert len(data) == 0
+        if pv.vtk_version_info >= (9, 7):
+            with pytest.raises(pv.VTKExecutionError, match='Error parsing XML'):
+                fileio.read(fname, force_ext='.vtm')
+        else:
+            assert len(fileio.read(fname, force_ext='.vtm')) == 0
 
     fname = ex.planefile
     with pytest.raises(IOError):  # noqa: PT011
@@ -991,6 +993,16 @@ def test_update_alg_raises():
         _update_alg(reader)
 
 
+def test_update_alg_raises_request_data_error(tmp_path):
+    # OBJ indices are one-based, so the line element below is out of range
+    obj_file = tmp_path / 'bad.obj'
+    obj_file.write_text('v 0 0 0\nv 1 0 0\nl 0 1\n')
+    reader = _vtk.vtkOBJReader()
+    reader.SetFileName(str(obj_file))
+    with pytest.raises(pv.VTKExecutionError, match='Unexpected point index value: 0'):
+        _update_alg(reader)
+
+
 def test_axis_angle_rotation():
     # rotate points around body diagonal
     points = np.eye(3)
@@ -1293,6 +1305,15 @@ def test_linkcode_resolve():
     assert edit_match is not None
     assert int(edit_match[1]) == start
     assert int(edit_match[2]) == start + 1
+
+
+def test_linkcode_resolve_edit_link_targets_main_for_a_release(monkeypatch):
+    # The released docs' blob links point at that release's branch, but edits
+    # are only ever made on main
+    monkeypatch.setattr(pv, '__version__', '0.46.0')
+    info = {'module': 'pyvista', 'fullname': 'pyvista.core.DataObject'}
+    assert '/blob/release/0.46/' in linkcode_resolve('py', info)
+    assert '/edit/main/' in linkcode_resolve('py', info, edit=True)
 
 
 def test_fix_edit_link_button_gallery_example():
@@ -3192,7 +3213,12 @@ def _compute_unit_cell_quality(
 
 
 def xfail_wedge_negative_volume(info):
-    if info.cell_type == pv.CellType.WEDGE and info.quality_measure == 'volume':
+    """Xfail the wedge volume measure, which VTK reports as negative before 9.6."""
+    if (
+        pv.vtk_version_info < (9, 6)
+        and info.cell_type == pv.CellType.WEDGE
+        and info.quality_measure == 'volume'
+    ):
         pytest.xfail(
             'vtkWedge returns negative volume, see https://gitlab.kitware.com/vtk/vtk/-/issues/19643'
         )
@@ -3244,9 +3270,6 @@ def test_cell_quality_info_ranges(info):
     assert normal_range[1] >= acceptable_range[1]
     assert full_range[0] <= normal_range[0]
     assert full_range[1] >= normal_range[1]
-
-    # last, so a measure xfailing here is still checked for range nesting above
-    xfail_wedge_negative_volume(info)
 
     assert info.unit_cell_value >= info.acceptable_range[0]
     assert info.unit_cell_value <= info.acceptable_range[1]

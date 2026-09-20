@@ -467,6 +467,10 @@ class PointSet(_PointSetBase, _vtk.vtkPointSet):
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
+    def streamlines_evenly_spaced_2D(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002, N802  # numpydoc ignore=PR01
+        """Raise cell operations are not supported."""
+        raise PointSetCellOperationError
+
     def find_cells_along_line(self, *args, **kwargs) -> NoReturn:  # noqa: ARG002  # numpydoc ignore=PR01
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
