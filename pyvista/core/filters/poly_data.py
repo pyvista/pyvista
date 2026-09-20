@@ -4432,7 +4432,7 @@ class PolyDataFilters(DataSetFilters):
         input_mesh, _ = _active_scalars_input(self, scalars)
 
         if rng is None:
-            rng = self.get_data_range(scalars)
+            rng = self.get_data_range(scalars, preference='point')
 
         alg = _vtk.vtkBandedPolyDataContourFilter()
         alg.SetInputArrayToProcess(

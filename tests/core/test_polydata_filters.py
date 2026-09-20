@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import numpy as np
 import pytest
 
 import pyvista as pv
@@ -55,12 +56,13 @@ def test_contour_banded_scalars(sphere):
     sphere.clear_data()
     sphere['active'] = sphere.points[:, 2]
     sphere['named'] = sphere.points[:, 0] * 10.0
+    sphere.cell_data['named'] = np.full(sphere.n_cells, 100.0)
     sphere.set_active_scalars('active')
 
     banded, _ = sphere.contour_banded(3, scalars='named')
 
-    # The bands span the named array, not the active one
-    assert banded.cell_data['Scalars'].min() == pytest.approx(sphere['named'].min())
+    # The bands span the named point array, not the active one or its cell namesake
+    assert banded.cell_data['Scalars'].min() == pytest.approx(sphere.point_data['named'].min())
     assert sphere.active_scalars_name == 'active'
 
 
