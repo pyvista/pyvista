@@ -1645,7 +1645,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
             try:
                 picker = pickers[picker]()
             except KeyError:
-                msg = f'Picker class `{picker}` is unknown.'
+                msg = f'Picker class `{picker!s}` is unknown.'
                 raise KeyError(msg)
             # Set default tolerance for internal configurations
             if hasattr(picker, 'SetTolerance'):
