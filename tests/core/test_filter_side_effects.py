@@ -4,10 +4,11 @@ A filter returns a new dataset, so calling one must leave its input exactly as i
 The usual way to break that is to activate an array on the input before handing it to
 VTK, which nothing notices until someone reads the input afterwards.
 
-Each test takes one filter and calls it many times: once for every mesh type in
-``MESH_KINDS``, every arrangement of data arrays in ``DATA_MODES``, and every keyword the
-filter accepts (see ``_call_variants``). Calls which do not apply to a mesh raise and are
-skipped, so a filter runs far fewer times than the loops suggest.
+Each parametrized test takes one filter and calls it on every mesh type in ``MESH_KINDS``
+under several arrangements of data arrays (see ``DATA_MODES``), and the first also tries
+every keyword the filter accepts (see ``_call_variants``) for the arrangements in
+``KEYWORD_DATA_MODES``. Calls which do not apply to a mesh raise and do not count as runs,
+so a filter runs far fewer times than the loops suggest.
 
 A failure lists every call which broke the property, what changed, and the expression
 which rebuilds that input, so one failing call can be reproduced on its own::
@@ -710,7 +711,7 @@ def _fail(key, problem, reports, ran):
 
 @pytest.mark.parametrize('key', list(FILTERS))
 def test_filter_does_not_modify_input(key):
-    """A filter leaves its input's arrays, active arrays, points, cells and geometry alone."""
+    """A filter leaves its input's arrays, active arrays, points and cells alone, even on error."""
     func = FILTERS[key]
     name = func.__name__
     reports = []
@@ -728,9 +729,8 @@ def test_filter_does_not_modify_input(key):
                 mesh = template.copy()
                 args, kwargs = _call_arguments(name, keyword_variant)
                 before = _fingerprint(mesh)
-                if not _run(mesh, name, args, kwargs):
-                    continue
-                ran += 1
+                if _run(mesh, name, args, kwargs):
+                    ran += 1
                 changes = _changes(before, _fingerprint(mesh))
                 if changes:  # pragma: no cover -- failure path
                     reports.append(_report(kind, mode, name, args, kwargs, changes))
