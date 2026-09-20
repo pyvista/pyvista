@@ -86,7 +86,7 @@ Observer, <class 'pyvista.utilities.errors.Observer'>
 Octahedron, <function Octahedron at 0x1641c0f70>
 OpenFOAMReader, <class 'pyvista.utilities.reader.OpenFOAMReader'>
 PARAVIEW_BACKGROUND, (0.3215686274509804, 0.3411764705882353, 0.43137254901960786)
-PICKLE_FORMAT, xml
+# PICKLE_FORMAT, xml  # deprecated, accessing it emits a warning
 PLOT_DIRECTIVE_THEME, None
 PLYReader, <class 'pyvista.utilities.reader.PLYReader'>
 PNGReader, <class 'pyvista.utilities.reader.PNGReader'>
