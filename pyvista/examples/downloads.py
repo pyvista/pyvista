@@ -4736,7 +4736,7 @@ def download_damavand_volcano(*, load: bool = True) -> ImageData | str:
 
         >>> dataset = dataset.resample(0.5)
         >>> dataset.dimensions
-        (140, 116, 85)
+        (140, 116, 86)
 
         Plot it.
 

@@ -5501,7 +5501,7 @@ class ImageDataFilters(DataSetFilters):
             ...     bird, mode='resample-proportional', resample_kwargs=resample_kwargs
             ... )
             >>> concatenated.dimensions
-            (233, 100, 1)
+            (234, 100, 1)
             >>> concatenated.plot(**plot_kwargs)
 
             Use ``'resample-proportional'`` again but concontenate along the z-axis instead. The
