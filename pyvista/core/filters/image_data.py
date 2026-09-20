@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 from typing import Literal
 from typing import cast
 from typing import get_args
+from typing import overload
 import warnings
 
 import numpy as np
@@ -39,6 +40,7 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
     from pyvista import ImageData
+    from pyvista import MultiBlock
     from pyvista import PolyData
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import MatrixLike
@@ -83,14 +85,14 @@ _ConcatenateComponentPolicyOptions = Literal['strict', 'promote_rgba']
 class ImageDataFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for uniform grid datasets."""
 
-    def gaussian_smooth(
-        self,
+    def gaussian_smooth(  # type: ignore[misc]
+        self: ImageData,
         *,
-        radius_factor=1.5,
-        std_dev=2.0,
-        scalars=None,
+        radius_factor: float | VectorLike[float] = 1.5,
+        std_dev: float | VectorLike[float] = 2.0,
+        scalars: str | None = None,
         progress_bar: bool = False,
-    ):
+    ) -> ImageData:
         """Smooth the data with a Gaussian kernel.
 
         Parameters
@@ -143,13 +145,12 @@ class ImageDataFilters(DataSetFilters):
         alg = _vtk.vtkImageGaussianSmooth()
         alg.SetInputDataObject(self)
         if scalars is None:
-            set_default_active_scalars(self)  # type: ignore[arg-type]
-            field, scalars = self.active_scalars_info  # type: ignore[attr-defined]
+            field, scalars = set_default_active_scalars(self)
             if field.value == 1:
                 msg = 'If `scalars` not given, active scalars must be point array.'
                 raise ValueError(msg)
         else:
-            field = self.get_array_association(scalars, preference='point')  # type: ignore[attr-defined]
+            field = self.get_array_association(scalars, preference='point')
             if field.value == 1:
                 msg = 'Can only process point data, given `scalars` are cell data.'
                 raise ValueError(msg)
@@ -161,24 +162,24 @@ class ImageDataFilters(DataSetFilters):
             scalars,
         )  # args: (idx, port, connection, field, name)
         if isinstance(radius_factor, Iterable):
-            alg.SetRadiusFactors(radius_factor)  # type: ignore[call-overload]
+            alg.SetRadiusFactors(np.asarray(radius_factor, dtype=float).tolist())
         else:
             alg.SetRadiusFactors(radius_factor, radius_factor, radius_factor)
         if isinstance(std_dev, Iterable):
-            alg.SetStandardDeviations(std_dev)  # type: ignore[call-overload]
+            alg.SetStandardDeviations(np.asarray(std_dev, dtype=float).tolist())
         else:
             alg.SetStandardDeviations(std_dev, std_dev, std_dev)
         _update_alg(alg, progress_bar=progress_bar, message='Performing Gaussian Smoothing')
         return _get_output(alg)
 
-    def median_smooth(
-        self,
+    def median_smooth(  # type: ignore[misc]
+        self: ImageData,
         *,
-        kernel_size=(3, 3, 3),
-        scalars=None,
-        preference='point',
+        kernel_size: VectorLike[int] = (3, 3, 3),
+        scalars: str | None = None,
+        preference: Literal['point', 'cell'] = 'point',
         progress_bar: bool = False,
-    ):
+    ) -> ImageData:
         """Smooth data using a median filter.
 
         The Median filter that replaces each pixel with the median value from a
@@ -241,10 +242,9 @@ class ImageDataFilters(DataSetFilters):
         alg = _vtk.vtkImageMedian3D()
         alg.SetInputDataObject(self)
         if scalars is None:
-            set_default_active_scalars(self)  # type: ignore[arg-type]
-            field, scalars = self.active_scalars_info  # type: ignore[attr-defined]
+            field, scalars = set_default_active_scalars(self)
         else:
-            field = self.get_array_association(scalars, preference=preference)  # type: ignore[attr-defined]
+            field = self.get_array_association(scalars, preference=preference)
         alg.SetInputArrayToProcess(
             0,
             0,
@@ -252,7 +252,8 @@ class ImageDataFilters(DataSetFilters):
             field.value,
             scalars,
         )  # args: (idx, port, connection, field, name)
-        alg.SetKernelSize(kernel_size[0], kernel_size[1], kernel_size[2])
+        kernel = np.asarray(kernel_size, dtype=int)
+        alg.SetKernelSize(kernel[0], kernel[1], kernel[2])
         _update_alg(alg, progress_bar=progress_bar, message='Performing Median Smoothing')
         return _get_output(alg)
 
@@ -396,7 +397,10 @@ class ImageDataFilters(DataSetFilters):
 
         """
 
-        def _set_default_start_and_stop(rng, default_start, default_stop):
+        def _set_default_start_and_stop(
+            rng: int | VectorLike[int] | slice | None, default_start: int, default_stop: int
+        ) -> int | slice | tuple[int, int] | list[int]:
+            """Fill in the open ends of a single-axis index range."""
             if isinstance(rng, slice):
                 return rng
             out = (default_start, default_stop) if rng is None else np.asanyarray(rng).tolist()
@@ -412,9 +416,11 @@ class ImageDataFilters(DataSetFilters):
             raise TypeError(msg)
 
         lower = (0, 0, 0) if index_mode == 'dimensions' else self.offset
-        indices = tuple(
-            _set_default_start_and_stop(slc, low, dim)
-            for slc, low, dim in zip((i, j, k), lower, self.dimensions, strict=True)
+        dims = self.dimensions
+        indices = (
+            _set_default_start_and_stop(i, lower[0], dims[0]),
+            _set_default_start_and_stop(j, lower[1], dims[1]),
+            _set_default_start_and_stop(k, lower[2], dims[2]),
         )
         voi = self._compute_voi_from_index(
             indices, index_mode=index_mode, strict_index=strict_index
@@ -425,13 +431,13 @@ class ImageDataFilters(DataSetFilters):
 
     def extract_subset(  # type: ignore[misc]
         self: ImageData,
-        voi,
-        rate=(1, 1, 1),
+        voi: VectorLike[int],
+        rate: VectorLike[int] = (1, 1, 1),
         *,
         boundary: bool = False,
         rebase_coordinates: bool = True,
         progress_bar: bool = False,
-    ):
+    ) -> ImageData:
         r"""Select piece (for example, volume of interest).
 
         To use this filter set the VOI ``ivar`` which are i-j-k min/max indices
@@ -492,21 +498,22 @@ class ImageDataFilters(DataSetFilters):
         crop
 
         """
-        voi = _validation.validate_arrayN(
+        voi_array = _validation.validate_arrayN(
             voi, must_have_length=6, must_be_integer=True, dtype_out=int, name='voi'
         )
         extent = self.extent
-        if np.any(np.not_equal(ImageDataFilters._clip_extent(voi, clip_to=extent), voi)):
+        clipped = ImageDataFilters._clip_extent(voi_array, clip_to=extent)
+        if np.any(np.not_equal(clipped, voi_array)):
             msg = (
-                f'The requested volume of interest {tuple(voi.tolist())} '
+                f'The requested volume of interest {tuple(voi_array.tolist())} '
                 f"is outside the input's extent {extent}."
             )
             raise ValueError(msg)
 
         alg = _vtk.vtkExtractVOI()
-        alg.SetVOI(voi)
+        alg.SetVOI(voi_array.tolist())
         alg.SetInputDataObject(self)
-        alg.SetSampleRate(rate)
+        alg.SetSampleRate(*rate)
         alg.SetIncludeBoundary(boundary)
         _update_alg(alg, progress_bar=progress_bar, message='Extracting Subset')
         result = _get_output(alg)
@@ -548,7 +555,7 @@ class ImageDataFilters(DataSetFilters):
         normalized_bounds: VectorLike[float] | None = None,
         mask: str | ImageData | NumpyArray[float] | Literal[True] | None = None,
         padding: int | VectorLike[int] | None = None,
-        background_value: float | None = None,
+        background_value: float | VectorLike[float] | None = None,
         keep_dimensions: bool = False,
         fill_value: float | VectorLike[float] | None = None,
         rebase_coordinates: bool = False,
@@ -583,7 +590,7 @@ class ImageDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        factor : float, optional
+        factor : float | VectorLike[float], optional
             Cropping factor in range ``[0.0, 1.0]`` which specifies the proportion of the image to
             keep along each axis. Use a single float for uniform cropping or a vector of three
             floats for cropping each xyz-axis independently. The crop is centered in the image.
@@ -799,7 +806,8 @@ class ImageDataFilters(DataSetFilters):
         SUPPORTING_KWARGS = dict(padding=padding, background_value=background_value)
         MUTUALLY_EXCLUSIVE_KWARGS = CORE_METHOD_KWARGS | SUPPORTING_KWARGS
 
-        def _raise_error_kwargs_not_none(arg_name, also_exclude: Sequence[str] = ()):
+        def _raise_error_kwargs_not_none(arg_name: str, also_exclude: Sequence[str] = ()) -> None:
+            """Raise an error when a crop keyword conflicts with another one."""
             args_to_check = MUTUALLY_EXCLUSIVE_KWARGS.copy()
             for arg in [arg_name, *also_exclude]:
                 args_to_check.pop(arg)
@@ -813,7 +821,10 @@ class ImageDataFilters(DataSetFilters):
                     )
                     raise TypeError(msg)
 
-        def _validate_scalars(mesh: ImageData, scalars: str | None = None):
+        def _validate_scalars(
+            mesh: ImageData, scalars: str | None = None
+        ) -> tuple[FieldAssociation, str]:
+            """Return the point-data association and name of the scalars to crop with."""
             if scalars is None:
                 field, scalars = set_default_active_scalars(mesh)
             else:
@@ -826,7 +837,10 @@ class ImageDataFilters(DataSetFilters):
                 raise ValueError(msg)
             return field, scalars
 
-        def _voi_from_mask(mask_: str | ImageData | NumpyArray[float] | bool):  # noqa: FBT001
+        def _voi_from_mask(
+            *, mask_: str | ImageData | NumpyArray[float] | bool
+        ) -> VectorLike[int]:
+            """Return the volume of interest bounding the mask's foreground."""
             _raise_error_kwargs_not_none('mask', also_exclude=['background_value', 'padding'])
             # Validate scalars
             if isinstance(mask_, (str, bool)):
@@ -853,14 +867,14 @@ class ImageDataFilters(DataSetFilters):
             # Create a binary foreground/background mask array
             default_background = 0.0
             background = default_background if background_value is None else background_value
-            if num_components > 1:
-                background_array = _validation.validate_arrayN(
-                    background, name='background_value', must_have_length=(1, num_components)
-                )
-                mask_array = np.any(array != background_array, axis=1)
-            else:
-                background = _validation.validate_number(background, name='background_value')
-                mask_array = array != background
+            background_array = _validation.validate_arrayN(
+                background, name='background_value', must_have_length=(1, num_components)
+            )
+            mask_array = (
+                np.any(array != background_array, axis=1)
+                if num_components > 1
+                else array != background_array
+            )
 
             # Get foreground voi
             shaped_array = mask_array.reshape(mesh.dimensions[::-1])
@@ -874,7 +888,7 @@ class ImageDataFilters(DataSetFilters):
 
             zmin, ymin, xmin = coords.min(axis=0)
             zmax, ymax, xmax = coords.max(axis=0)
-            voi = xmin, xmax, ymin, ymax, zmin, zmax
+            voi: NumpyArray[int] = np.array([xmin, xmax, ymin, ymax, zmin, zmax])
 
             if padding is not None:
                 pad = _validate_padding(padding)
@@ -889,7 +903,8 @@ class ImageDataFilters(DataSetFilters):
             # Clip voi so it doesn't extend beyond the image's extent
             return ImageDataFilters._clip_extent(voi_array, clip_to=self.extent)
 
-        def _voi_from_normalized_bounds(normalized_bounds_):
+        def _voi_from_normalized_bounds(normalized_bounds_: VectorLike[float]) -> VectorLike[int]:
+            """Return the volume of interest for bounds relative to the image size."""
             _raise_error_kwargs_not_none('normalized_bounds')
             bounds = _validation.validate_arrayN(
                 normalized_bounds_,
@@ -918,7 +933,8 @@ class ImageDataFilters(DataSetFilters):
 
             return xmin, xmax, ymin, ymax, zmin, zmax
 
-        def _voi_from_extent(extent_):
+        def _voi_from_extent(extent_: VectorLike[int]) -> VectorLike[int]:
+            """Return the volume of interest for an explicit extent."""
             _raise_error_kwargs_not_none('extent')
             return _validation.validate_arrayN(
                 extent_,
@@ -928,7 +944,8 @@ class ImageDataFilters(DataSetFilters):
                 name='extent',
             )
 
-        def _voi_from_factor(factor_):
+        def _voi_from_factor(factor_: float | VectorLike[float]) -> VectorLike[int]:
+            """Return the volume of interest for a fraction of the image size."""
             _raise_error_kwargs_not_none('factor')
             valid_factor = _validation.validate_array3(
                 factor_,
@@ -949,7 +966,8 @@ class ImageDataFilters(DataSetFilters):
 
             return pv.ImageData(dimensions=new_dimensions, offset=new_offset).extent
 
-        def _voi_from_dimensions(dimensions_):
+        def _voi_from_dimensions(dimensions_: VectorLike[int]) -> VectorLike[int]:
+            """Return the volume of interest centered on the image with the given dimensions."""
             valid_dims = _validation.validate_array3(
                 dimensions_,
                 broadcast=True,
@@ -971,7 +989,8 @@ class ImageDataFilters(DataSetFilters):
 
             return pv.ImageData(dimensions=new_dimensions, offset=new_offset).extent
 
-        def _voi_from_margin(margin_):
+        def _voi_from_margin(margin_: int | VectorLike[int]) -> VectorLike[int]:
+            """Return the volume of interest left after removing a border."""
             _raise_error_kwargs_not_none('margin')
             padding = _validate_padding(margin_)
             # Do not pad singleton dims
@@ -980,7 +999,10 @@ class ImageDataFilters(DataSetFilters):
             padding[mask] = np.array(self.extent)[mask]
             return _pad_extent(self.extent, -padding)
 
-        def _voi_from_dimensions_or_offset(dimensions_, offset_):
+        def _voi_from_dimensions_or_offset(
+            dimensions_: VectorLike[int] | None, offset_: VectorLike[int] | None
+        ) -> VectorLike[int]:
+            """Return the volume of interest for explicit dimensions and offset."""
             _raise_error_kwargs_not_none('dimensions', also_exclude=['offset'])
             if dimensions_ is None:
                 msg = 'Dimensions must also be specified when cropping with offset.'
@@ -995,7 +1017,7 @@ class ImageDataFilters(DataSetFilters):
         elif margin is not None:
             voi = _voi_from_margin(margin)
         elif mask is not None:
-            voi = _voi_from_mask(mask)
+            voi = _voi_from_mask(mask_=mask)
         elif normalized_bounds is not None:
             voi = _voi_from_normalized_bounds(normalized_bounds)
         elif extent is not None:
@@ -1010,16 +1032,16 @@ class ImageDataFilters(DataSetFilters):
             raise TypeError(msg)
 
         # Ensure dimensions are all at least one
-        voi = np.array(voi)
-        voi[1] = max(voi[0:2])
-        voi[3] = max(voi[2:4])
-        voi[5] = max(voi[4:6])
+        voi_array = np.array(voi)
+        voi_array[1] = max(voi_array[0:2])
+        voi_array[3] = max(voi_array[2:4])
+        voi_array[5] = max(voi_array[4:6])
 
         # Crop to the part of the requested region which the image actually covers
-        voi = ImageDataFilters._clip_extent(voi, clip_to=self.extent)
+        clipped_voi = ImageDataFilters._clip_extent(voi_array, clip_to=self.extent)
 
         cropped = self.extract_subset(
-            voi, rebase_coordinates=rebase_coordinates, progress_bar=progress_bar
+            clipped_voi, rebase_coordinates=rebase_coordinates, progress_bar=progress_bar
         )
         if not keep_dimensions:
             return cropped
@@ -1052,15 +1074,15 @@ class ImageDataFilters(DataSetFilters):
         result.cell_data.update(self.cell_data)
         return result
 
-    def image_dilate_erode(
-        self,
-        dilate_value=1.0,
-        erode_value=0.0,
+    def image_dilate_erode(  # type: ignore[misc]
+        self: ImageData,
+        dilate_value: float = 1.0,
+        erode_value: float = 0.0,
         *,
-        kernel_size=(3, 3, 3),
-        scalars=None,
+        kernel_size: VectorLike[int] = (3, 3, 3),
+        scalars: str | None = None,
         progress_bar: bool = False,
-    ):
+    ) -> ImageData:
         """Dilates one value and erodes another.
 
         .. deprecated:: 0.47.0
@@ -1133,13 +1155,12 @@ class ImageDataFilters(DataSetFilters):
         alg = _vtk.vtkImageDilateErode3D()
         alg.SetInputDataObject(self)
         if scalars is None:
-            set_default_active_scalars(self)  # type: ignore[arg-type]
-            field, scalars = self.active_scalars_info  # type: ignore[attr-defined]
+            field, scalars = set_default_active_scalars(self)
             if field.value == 1:
                 msg = 'If `scalars` not given, active scalars must be point array.'
                 raise ValueError(msg)
         else:
-            field = self.get_array_association(scalars, preference='point')  # type: ignore[attr-defined]
+            field = self.get_array_association(scalars, preference='point')
             if field.value == 1:
                 msg = 'Can only process point data, given `scalars` are cell data.'
                 raise ValueError(msg)
@@ -1239,7 +1260,10 @@ class ImageDataFilters(DataSetFilters):
         alg.SetKernelSize(*kernal_sz)
         return alg
 
-    def _get_alg_output_from_input(self, alg, *, progress_bar: bool, operation: str):
+    def _get_alg_output_from_input(  # type: ignore[misc]
+        self: ImageData, alg: _vtk.vtkImageAlgorithm, *, progress_bar: bool, operation: str
+    ) -> ImageData:
+        """Run an image algorithm on this image and return its output."""
         alg.SetInputDataObject(self)
         _update_alg(alg, progress_bar=progress_bar, message=f'Performing {operation}')
         return _get_output(alg)
@@ -1266,7 +1290,7 @@ class ImageDataFilters(DataSetFilters):
         *,
         binary: bool | VectorLike[float] | None = None,
         progress_bar: bool = False,
-    ):
+    ) -> ImageData:
         """Morphologically dilate grayscale or binary data.
 
         This filter may be used to dilate grayscale images with continuous data, binary images
@@ -1420,7 +1444,7 @@ class ImageDataFilters(DataSetFilters):
         *,
         binary: bool | VectorLike[float] | None = None,
         progress_bar: bool = False,
-    ):
+    ) -> ImageData:
         """Morphologically erode grayscale or binary data.
 
         This filter may be used to erode grayscale images with continuous data, binary images
@@ -1578,7 +1602,7 @@ class ImageDataFilters(DataSetFilters):
         *,
         binary: bool | VectorLike[float] | None = None,
         progress_bar: bool = False,
-    ):
+    ) -> ImageData:
         """Perform morphological opening on continuous or binary data.
 
         Opening is an :meth:`erosion <erode>` followed by a :meth:`dilation <dilate>`.
@@ -1688,7 +1712,7 @@ class ImageDataFilters(DataSetFilters):
         *,
         binary: bool | VectorLike[float] | None = None,
         progress_bar: bool = False,
-    ):
+    ) -> ImageData:
         """Perform morphological closing on continuous or binary data.
 
         Closing is a :meth:`dilation <dilate>` followed by an :meth:`erosion <erode>`.
@@ -1799,14 +1823,14 @@ class ImageDataFilters(DataSetFilters):
 
     def image_threshold(  # type: ignore[misc]
         self: ImageData,
-        threshold,
+        threshold: float | VectorLike[float],
         *,
-        in_value=1.0,
-        out_value=0.0,
-        scalars=None,
-        preference='point',
+        in_value: float | None = 1.0,
+        out_value: float | None = 0.0,
+        scalars: str | None = None,
+        preference: Literal['point', 'cell'] = 'point',
         progress_bar: bool = False,
-    ):
+    ) -> ImageData:
         """Apply a threshold to scalar values in a uniform grid.
 
         If a single value is given for threshold, scalar values above or equal
@@ -1827,10 +1851,10 @@ class ImageDataFilters(DataSetFilters):
             a sequence, then length must be 2. Thresholds for deciding which
             cells/points are ``'in'`` or ``'out'`` based on scalar data.
 
-        in_value : float, default: 1.0
+        in_value : float | None, default: 1.0
             Scalars that match the threshold criteria for ``'in'`` will be replaced with this.
 
-        out_value : float, default: 0.0
+        out_value : float | None, default: 0.0
             Scalars that match the threshold criteria for ``'out'`` will be replaced with this.
 
         scalars : str, optional
@@ -1873,8 +1897,7 @@ class ImageDataFilters(DataSetFilters):
 
         """
         if scalars is None:
-            set_default_active_scalars(self)
-            field, scalars = self.active_scalars_info
+            field, scalars = set_default_active_scalars(self)
         else:
             field = self.get_array_association(scalars, preference=preference)
 
@@ -1903,13 +1926,13 @@ class ImageDataFilters(DataSetFilters):
 
         def _image_threshold(
             *,
-            threshold_val,
-            in_value,
-            out_value,
-            scalars,
-            field,
+            threshold_val: NumpyArray[float],
+            in_value: float | None,
+            out_value: float | None,
+            scalars: str,
+            field: FieldAssociation,
             progress_bar: bool,
-        ):
+        ) -> ImageData:
             """Threshold using vtkImageThreshold."""
             alg = _vtk.vtkImageThreshold()
             alg.SetInputDataObject(alg_input)
@@ -1936,13 +1959,13 @@ class ImageDataFilters(DataSetFilters):
 
         def _binary_image_threshold(
             *,
-            threshold_val,
-            in_value,
-            out_value,
-            scalars,
-            field,
+            threshold_val: NumpyArray[float],
+            in_value: float | None,
+            out_value: float | None,
+            scalars: str,
+            field: FieldAssociation,
             progress_bar: bool,
-        ):
+        ) -> ImageData:
             """Threshold using vtkImageBinaryThreshold."""
             alg = _vtk.vtkImageBinaryThreshold()
             alg.SetInputDataObject(alg_input)
@@ -1994,7 +2017,9 @@ class ImageDataFilters(DataSetFilters):
             return cell_output
         return output
 
-    def fft(self, *, output_scalars_name=None, progress_bar: bool = False):
+    def fft(  # type: ignore[misc]
+        self: ImageData, *, output_scalars_name: str | None = None, progress_bar: bool = False
+    ) -> ImageData:
         """Apply a fast Fourier transform (FFT) to the active scalars.
 
         The input can be real or complex data, but the output is always
@@ -2052,15 +2077,17 @@ class ImageDataFilters(DataSetFilters):
 
         """
         # check for active scalars, otherwise risk of segfault
-        if self.point_data.active_scalars_name is None:  # type: ignore[attr-defined]
+        scalars_name = self.point_data.active_scalars_name
+        if scalars_name is None:
             try:
-                set_default_active_scalars(self)  # type: ignore[arg-type]
+                set_default_active_scalars(self)
             except MissingDataError:
                 msg = 'FFT filter requires point scalars.'
                 raise MissingDataError(msg) from None
 
             # possible only cell scalars were made active
-            if self.point_data.active_scalars_name is None:  # type: ignore[attr-defined]
+            scalars_name = self.point_data.active_scalars_name
+            if scalars_name is None:
                 msg = 'FFT filter requires point scalars.'
                 raise MissingDataError(msg)
 
@@ -2068,14 +2095,12 @@ class ImageDataFilters(DataSetFilters):
         alg.SetInputDataObject(self)
         _update_alg(alg, progress_bar=progress_bar, message='Performing Fast Fourier Transform')
         output = _get_output(alg)
-        self._change_fft_output_scalars(
-            output,
-            self.point_data.active_scalars_name,  # type: ignore[attr-defined]
-            output_scalars_name,
-        )
+        self._change_fft_output_scalars(output, scalars_name, output_scalars_name)
         return output
 
-    def rfft(self, *, output_scalars_name=None, progress_bar: bool = False):
+    def rfft(  # type: ignore[misc]
+        self: ImageData, *, output_scalars_name: str | None = None, progress_bar: bool = False
+    ) -> ImageData:
         """Apply a reverse fast Fourier transform (RFFT) to the active scalars.
 
         The input can be real or complex data, but the output is always
@@ -2133,30 +2158,26 @@ class ImageDataFilters(DataSetFilters):
             PNGImage                complex128 (298620,)            SCALARS
 
         """
-        self._check_fft_scalars()
+        scalars_name = self._check_fft_scalars()
         alg = _vtk.vtkImageRFFT()
         alg.SetInputDataObject(self)
         _update_alg(
             alg, progress_bar=progress_bar, message='Performing Reverse Fast Fourier Transform.'
         )
         output = _get_output(alg)
-        self._change_fft_output_scalars(
-            output,
-            self.point_data.active_scalars_name,  # type: ignore[attr-defined]
-            output_scalars_name,
-        )
+        self._change_fft_output_scalars(output, scalars_name, output_scalars_name)
         return output
 
-    def low_pass(
-        self,
-        x_cutoff,
-        y_cutoff,
-        z_cutoff,
+    def low_pass(  # type: ignore[misc]
+        self: ImageData,
+        x_cutoff: float,
+        y_cutoff: float,
+        z_cutoff: float,
         *,
-        order=1,
-        output_scalars_name=None,
+        order: int = 1,
+        output_scalars_name: str | None = None,
         progress_bar: bool = False,
-    ):
+    ) -> ImageData:
         """Perform a Butterworth low pass filter in the frequency domain.
 
         This filter requires that the :class:`ImageData` have a complex point
@@ -2210,30 +2231,26 @@ class ImageDataFilters(DataSetFilters):
         high_pass : High-pass filtering of FFT output.
 
         """
-        self._check_fft_scalars()
+        scalars_name = self._check_fft_scalars()
         alg = _vtk.vtkImageButterworthLowPass()
         alg.SetInputDataObject(self)
         alg.SetCutOff(x_cutoff, y_cutoff, z_cutoff)
         alg.SetOrder(order)
         _update_alg(alg, progress_bar=progress_bar, message='Performing Low Pass Filter')
         output = _get_output(alg)
-        self._change_fft_output_scalars(
-            output,
-            self.point_data.active_scalars_name,  # type: ignore[attr-defined]
-            output_scalars_name,
-        )
+        self._change_fft_output_scalars(output, scalars_name, output_scalars_name)
         return output
 
-    def high_pass(
-        self,
-        x_cutoff,
-        y_cutoff,
-        z_cutoff,
+    def high_pass(  # type: ignore[misc]
+        self: ImageData,
+        x_cutoff: float,
+        y_cutoff: float,
+        z_cutoff: float,
         *,
-        order=1,
-        output_scalars_name=None,
+        order: int = 1,
+        output_scalars_name: str | None = None,
         progress_bar: bool = False,
-    ):
+    ) -> ImageData:
         """Perform a Butterworth high pass filter in the frequency domain.
 
         This filter requires that the :class:`ImageData` have a complex point
@@ -2287,41 +2304,42 @@ class ImageDataFilters(DataSetFilters):
         low_pass : Low-pass filtering of FFT output.
 
         """
-        self._check_fft_scalars()
+        scalars_name = self._check_fft_scalars()
         alg = _vtk.vtkImageButterworthHighPass()
         alg.SetInputDataObject(self)
         alg.SetCutOff(x_cutoff, y_cutoff, z_cutoff)
         alg.SetOrder(order)
         _update_alg(alg, progress_bar=progress_bar, message='Performing High Pass Filter')
         output = _get_output(alg)
-        self._change_fft_output_scalars(
-            output,
-            self.point_data.active_scalars_name,  # type: ignore[attr-defined]
-            output_scalars_name,
-        )
+        self._change_fft_output_scalars(output, scalars_name, output_scalars_name)
         return output
 
-    def _change_fft_output_scalars(self, dataset, orig_name, out_name) -> None:
+    def _change_fft_output_scalars(  # type: ignore[misc]
+        self: ImageData, dataset: ImageData, orig_name: str, out_name: str | None
+    ) -> None:
         """Modify the name and ``dtype`` of the output scalars for an FFT filter."""
         name = orig_name if out_name is None else out_name
         pdata = dataset.point_data
-        if pdata.active_scalars_name != name:
-            pdata[name] = pdata.pop(pdata.active_scalars_name)
+        active_name = pdata.active_scalars_name
+        if active_name is not None and active_name != name:
+            pdata[name] = pdata.pop(active_name)
 
         # always view the datatype of the point_data as complex128
         dataset._association_complex_names['POINT'].add(name)
 
-    def _check_fft_scalars(self):
-        """Check for complex active scalars.
+    def _check_fft_scalars(self: ImageData) -> str:  # type: ignore[misc]
+        """Check for complex active scalars and return their name.
 
         This is necessary for rfft, ``low_pass``, and ``high_pass`` filters.
 
         """
         # check for complex active point scalars, otherwise the risk of segfault
-        if self.point_data.active_scalars_name is None:  # type: ignore[attr-defined]
-            possible_scalars = self.point_data.keys()  # type: ignore[attr-defined]
+        scalars_name = self.point_data.active_scalars_name
+        if scalars_name is None:
+            possible_scalars = self.point_data.keys()
             if len(possible_scalars) == 1:
-                self.set_active_scalars(possible_scalars[0], preference='point')  # type: ignore[attr-defined]
+                scalars_name = possible_scalars[0]
+                self.set_active_scalars(scalars_name, preference='point')
             elif len(possible_scalars) > 1:
                 msg = (
                     'There are multiple point scalars available. Set one to be '
@@ -2332,15 +2350,16 @@ class ImageDataFilters(DataSetFilters):
                 msg = 'FFT filters require point scalars.'
                 raise MissingDataError(msg)
 
-        if not np.issubdtype(self.point_data.active_scalars.dtype, np.complexfloating):  # type: ignore[attr-defined]
+        if not np.issubdtype(self.point_data[scalars_name].dtype, np.complexfloating):
             msg = (
                 'Active scalars must be complex data for this filter, represented '
                 'as an array with a datatype of `numpy.complex64` or '
                 '`numpy.complex128`.'
             )
             raise ValueError(msg)
+        return scalars_name
 
-    def _flip_uniform(self, axis) -> pv.ImageData:
+    def _flip_uniform(self: ImageData, axis: int) -> pv.ImageData:  # type: ignore[misc]
         """Flip the uniform grid along a specified axis and return a uniform grid.
 
         This varies from :func:`DataSet.flip_x` because it returns a ImageData.
@@ -2808,7 +2827,8 @@ class ImageDataFilters(DataSetFilters):
                 return image.select_values(input_ids)
             return image
 
-        def _set_output_mesh_type(alg_: _vtk.vtkSurfaceNets3D):
+        def _set_output_mesh_type(alg_: _vtk.vtkSurfaceNets3D) -> None:
+            """Set the type of the cells generated by the surface nets filter."""
             if output_mesh_type is None:
                 alg_.SetOutputMeshTypeToDefault()
             elif output_mesh_type == 'quads':
@@ -2820,7 +2840,8 @@ class ImageDataFilters(DataSetFilters):
             alg_: _vtk.vtkSurfaceNets3D,
             *,
             array_: pyvista_ndarray,
-        ):
+        ) -> None:
+            """Register every foreground label with the surface nets filter."""
             # Always output all labels for surface nets; user-selected outputs are filtered later
             ids = np.unique(array_)
             ids = ids[ids != background_value]
@@ -2834,8 +2855,11 @@ class ImageDataFilters(DataSetFilters):
             relaxation_: float,
             scale_: float,
             distance_: float | None,
-        ):
-            def _is_small_number(num) -> bool | np.bool_:
+        ) -> None:
+            """Enable or disable smoothing and set its constraints."""
+
+            def _is_small_number(num: float | None) -> bool | np.bool_:
+                """Return whether a number is small enough to make smoothing degenerate."""
                 return isinstance(num, (float, int, np.floating, np.integer)) and num < 1e-8
 
             if smoothing and not _is_small_number(scale_) and not _is_small_number(distance_):
@@ -3003,7 +3027,7 @@ class ImageDataFilters(DataSetFilters):
         dimensionality: VectorLike[bool]
         | Literal[0, 1, 2, 3, '0D', '1D', '2D', '3D', 'preserve'] = 'preserve',
         copy: bool = True,
-    ):
+    ) -> ImageData:
         """Re-mesh image data from a point-based to a cell-based representation.
 
         This filter changes how image data is represented. Data represented as points
@@ -3208,7 +3232,7 @@ class ImageDataFilters(DataSetFilters):
         dimensionality: VectorLike[bool]
         | Literal[0, 1, 2, 3, '0D', '1D', '2D', '3D', 'preserve'] = 'preserve',
         copy: bool = True,
-    ):
+    ) -> ImageData:
         """Re-mesh image data from a cell-based to a point-based representation.
 
         This filter changes how image data is represented. Data represented as cells
@@ -3370,7 +3394,7 @@ class ImageDataFilters(DataSetFilters):
         scalars: str | None,
         dimensionality: VectorLike[bool] | Literal[0, 1, 2, 3, '0D', '1D', '2D', '3D', 'preserve'],
         copy: bool,
-    ):
+    ) -> ImageData:
         """Re-mesh points to cells or vice-versa.
 
         The active cell or point scalars at the input will be set as active point or
@@ -3414,7 +3438,8 @@ class ImageDataFilters(DataSetFilters):
 
         """
 
-        def _get_output_scalars(preference):
+        def _get_output_scalars(preference: Literal['point', 'cell']) -> str | None:
+            """Return the active scalars name when it has the given association."""
             active_scalars = self.active_scalars_name
             if active_scalars:
                 field = self.get_array_association(
@@ -3510,8 +3535,8 @@ class ImageDataFilters(DataSetFilters):
         new_image.set_active_scalars(output_scalars)
         return new_image
 
-    def pad_image(
-        self,
+    def pad_image(  # type: ignore[misc]
+        self: ImageData,
         pad_value: float | VectorLike[float] | Literal['wrap', 'mirror'] = 0.0,
         *,
         pad_size: int | VectorLike[int] = 1,
@@ -3678,15 +3703,15 @@ class ImageDataFilters(DataSetFilters):
 
         """
 
-        def _get_num_components(array_):
+        def _get_num_components(array_: NumpyArray[float]) -> int:
+            """Return the number of components of an array."""
             return 1 if array_.ndim == 1 else array_.shape[1]
 
         # Validate scalars
         if scalars is None:
-            set_default_active_scalars(self)  # type: ignore[arg-type]
-            field, scalars = self.active_scalars_info  # type: ignore[attr-defined]
+            field, scalars = set_default_active_scalars(self)
         else:
-            field = self.get_array_association(scalars, preference='point')  # type: ignore[attr-defined]
+            field = self.get_array_association(scalars, preference='point')
         if field != FieldAssociation.POINT:
             msg = (
                 f"Scalars '{scalars}' must be associated with point data. "
@@ -3700,10 +3725,10 @@ class ImageDataFilters(DataSetFilters):
         dims_mask, _ = self._validate_dimensional_operation(
             operation_mask=dimensionality,
             operator=operator.add,
-            operation_size=all_pad_sizes[::2] + all_pad_sizes[1::2],
+            operation_size=(all_pad_sizes[::2] + all_pad_sizes[1::2]).tolist(),
         )
         all_pad_sizes = all_pad_sizes * np.repeat(dims_mask, 2)
-        padded_extents = _pad_extent(self.GetExtent(), all_pad_sizes)  # type: ignore[attr-defined]
+        padded_extents = _pad_extent(self.GetExtent(), all_pad_sizes)
 
         # Validate pad value
         pad_multi_component = None  # Flag for multi-component constants
@@ -3720,7 +3745,7 @@ class ImageDataFilters(DataSetFilters):
                 raise ValueError(error_msg)
         else:
             val = np.atleast_1d(pad_value)
-            num_input_components = _get_num_components(self.active_scalars)  # type: ignore[attr-defined]
+            num_input_components = _get_num_components(self.point_data[scalars])
             if not (
                 val.ndim == 1
                 and (np.issubdtype(val.dtype, np.floating) or np.issubdtype(val.dtype, np.integer))
@@ -3735,7 +3760,7 @@ class ImageDataFilters(DataSetFilters):
             val = np.broadcast_to(val, (num_input_components,))
             if num_input_components > 1:
                 pad_multi_component = True
-                data = self.point_data  # type: ignore[attr-defined]
+                data = self.point_data
                 array_names = data.keys() if pad_all_scalars else [scalars]
                 for array_name in array_names:
                     array = data[array_name]
@@ -3760,13 +3785,14 @@ class ImageDataFilters(DataSetFilters):
         alg.SetInputDataObject(self)
         alg.SetOutputWholeExtent(*padded_extents)
 
-        def _get_padded_output(scalars_):
+        def _get_padded_output(scalars_: str) -> ImageData:
             """Update the active scalars and get the output.
 
             Includes special handling for padding with multi-component values.
             """
 
-            def _update_and_get_output():
+            def _update_and_get_output() -> ImageData:
+                """Run the pad filter and return its output."""
                 _update_alg(alg, progress_bar=progress_bar, message='Padding image')
                 # This filter is known to return empty arrays which emits a warning when
                 # the output is wrapped. These invalid arrays are removed later.
@@ -3778,7 +3804,7 @@ class ImageDataFilters(DataSetFilters):
                     return _get_output(alg)
 
             # Set scalars since the filter only operates on the active scalars
-            self.set_active_scalars(scalars_, preference='point')  # type: ignore[attr-defined]
+            self.set_active_scalars(scalars_, preference='point')
             if pad_multi_component is None:
                 return _update_and_get_output()
             else:
@@ -3791,7 +3817,7 @@ class ImageDataFilters(DataSetFilters):
                 else:  # Mulit-component padding
                     # The constant pad filter only pads with a single value.
                     # We need to apply the filter multiple times for each component.
-                    output_scalars = output.active_scalars
+                    output_scalars = np.asarray(output.point_data[scalars_])
                     num_output_components = _get_num_components(output_scalars)
                     for component in range(1, num_output_components):
                         alg.SetConstant(val[component])  # type: ignore[attr-defined]
@@ -3806,7 +3832,7 @@ class ImageDataFilters(DataSetFilters):
 
         # This filter pads only the active scalars, other arrays are returned empty.
         # We need to pad those other arrays or remove them from the output.
-        for point_array in self.point_data:  # type: ignore[attr-defined]
+        for point_array in self.point_data:
             if point_array != scalars:
                 if pad_all_scalars:
                     output[point_array] = _get_padded_output(point_array)[point_array]
@@ -3816,14 +3842,14 @@ class ImageDataFilters(DataSetFilters):
             data.remove(cell_array)
 
         # Restore active scalars
-        self.set_active_scalars(scalars, preference='point')  # type: ignore[attr-defined]
+        self.set_active_scalars(scalars, preference='point')
 
         # Make sure buggy scalars have been fixed
         _warn_if_invalid_data(output)
         return output
 
-    def label_connectivity(
-        self,
+    def label_connectivity(  # type: ignore[misc]
+        self: ImageData,
         *,
         scalars: str | None = None,
         scalar_range: (Literal['auto', 'foreground', 'vtk_default'] | VectorLike[float]) = 'auto',
@@ -4005,15 +4031,14 @@ class ImageDataFilters(DataSetFilters):
 
         """
         # Get a copy of input to not overwrite data
-        input_mesh = self.copy()  # type: ignore[attr-defined]
+        input_mesh = self.copy()
 
         if scalars is None:
-            set_default_active_scalars(input_mesh)
+            field, scalars = set_default_active_scalars(input_mesh)
         else:
-            input_mesh.set_active_scalars(scalars)
+            field, _ = input_mesh.set_active_scalars(scalars)
 
         # Make sure we have point data (required by the filter)
-        field, scalars = input_mesh.active_scalars_info
         if field == FieldAssociation.CELL:
             # Convert to point data
             input_mesh = input_mesh.cells_to_points(
@@ -4107,22 +4132,22 @@ class ImageDataFilters(DataSetFilters):
             output = output.points_to_cells(dimensionality=(True, True, True), copy=False)
             # Add label `RegionId` to original dataset as cell data if required
             if inplace:
-                self.cell_data['RegionId'] = output.cell_data['RegionId']  # type: ignore[attr-defined]
-                self.set_active_scalars(name='RegionId', preference='cell')  # type: ignore[attr-defined]
+                self.cell_data['RegionId'] = output.cell_data['RegionId']
+                self.set_active_scalars(name='RegionId', preference='cell')
 
         elif inplace:
             # Add label `RegionId` to original dataset as point data if required
-            self.point_data['RegionId'] = output.point_data['RegionId']  # type: ignore[attr-defined]
-            self.set_active_scalars(name='RegionId', preference='point')  # type: ignore[attr-defined]
+            self.point_data['RegionId'] = output.point_data['RegionId']
+            self.set_active_scalars(name='RegionId', preference='point')
             if scalars_casted_to_float:
                 input_mesh.point_data[scalars] = input_mesh.point_data[scalars].astype(int)
 
         if inplace:
-            return self, labels, sizes  # type: ignore[return-value]
+            return self, labels, sizes
         return output, labels, sizes
 
-    def _validate_dimensional_operation(
-        self,
+    def _validate_dimensional_operation(  # type: ignore[misc]
+        self: ImageData,
         operation_mask: VectorLike[bool] | Literal[0, 1, 2, 3, '0D', '1D', '2D', '3D', 'preserve'],
         operator: Callable,  # type: ignore[type-arg]
         operation_size: int | VectorLike[int],
@@ -4190,7 +4215,7 @@ class ImageDataFilters(DataSetFilters):
         (array([ True, False,  True]), array([6, 1, 6]))
 
         """
-        dimensions = np.asarray(self.dimensions)  # type: ignore[attr-defined]
+        dimensions = np.asarray(self.dimensions)
         # Build an array of the operation size
         operation_size = _validation.validate_array3(
             operation_size, reshape=True, broadcast=True, must_be_integer=True, dtype_out=int
@@ -4260,7 +4285,7 @@ class ImageDataFilters(DataSetFilters):
                 }[target_dimensionality]
                 msg = (
                     f'The operation requires to {operator.__name__} at least {operation_size} '
-                    f'dimension(s) to {self.dimensions}. A {operation_mask} ImageData with dims '  # type: ignore[attr-defined]
+                    f'dimension(s) to {self.dimensions}. A {operation_mask} ImageData with dims '
                     f'{desired_dimensions} cannot be obtained.'
                 )
                 raise ValueError(msg)
@@ -4292,7 +4317,7 @@ class ImageDataFilters(DataSetFilters):
         preference: Literal['point', 'cell'] = 'point',
         inplace: bool = False,
         progress_bar: bool = False,
-    ):
+    ) -> ImageData:
         """Resample the image to modify its dimensions and spacing.
 
         The resampling can be controlled in several ways:
@@ -4436,6 +4461,9 @@ class ImageDataFilters(DataSetFilters):
 
         :meth:`~pyvista.DataObjectFilters.sample`
             Resample array data from one mesh onto another.
+
+        :meth:`~pyvista.DataObjectFilters.resample_to_image`
+            Resample a mesh of any type onto a new image.
 
         :meth:`~pyvista.DataSetFilters.interpolate`
             Interpolate values from one mesh onto another.
@@ -4906,6 +4934,16 @@ class ImageDataFilters(DataSetFilters):
             return self
         return output_image
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # split=False
+    def select_values(self: ImageData, values: float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLike[float] | MatrixLike[float] | dict[str, VectorLike[float]] | dict[tuple[float, float], str] | None = ..., fill_value: float | VectorLike[float] | None = ..., replacement_value: float | VectorLike[float] | None = ..., scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., split: Literal[False] = ...) -> ImageData: ...  # type: ignore[misc]
+    @overload  # split=True
+    def select_values(self: ImageData, values: float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLike[float] | MatrixLike[float] | dict[str, VectorLike[float]] | dict[tuple[float, float], str] | None = ..., fill_value: float | VectorLike[float] | None = ..., replacement_value: float | VectorLike[float] | None = ..., scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., split: Literal[True] = ...) -> MultiBlock: ...  # type: ignore[misc]
+    @overload  # split not known
+    def select_values(self: ImageData, values: float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str] | None = ..., *, ranges: VectorLike[float] | MatrixLike[float] | dict[str, VectorLike[float]] | dict[tuple[float, float], str] | None = ..., fill_value: float | VectorLike[float] | None = ..., replacement_value: float | VectorLike[float] | None = ..., scalars: str | None = ..., preference: Literal['point', 'cell'] = ..., component_mode: Literal['any', 'all', 'multi'] | int = ..., invert: bool = ..., split: bool = ...) -> ImageData | MultiBlock: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def select_values(  # type: ignore[misc]
         self: ImageData,
         values: (
@@ -4920,14 +4958,14 @@ class ImageDataFilters(DataSetFilters):
             | dict[tuple[float, float], str]
         )
         | None = None,
-        fill_value: float | VectorLike[float] = 0,
+        fill_value: float | VectorLike[float] | None = 0,
         replacement_value: float | VectorLike[float] | None = None,
         scalars: str | None = None,
         preference: Literal['point', 'cell'] = 'point',
         component_mode: Literal['any', 'all', 'multi'] | int = 'all',
         invert: bool = False,
         split: bool = False,
-    ):
+    ) -> ImageData | MultiBlock:
         """Select values of interest and fill the rest with a constant.
 
         Point or cell data may be selected with a single value, multiple values, a range
@@ -5135,7 +5173,7 @@ class ImageDataFilters(DataSetFilters):
         if not isinstance(validated, _ExtractValuesInputs):
             return validated  # empty input
 
-        kwargs = dict(
+        kwargs: dict[str, Any] = dict(
             values=validated.values,
             ranges=validated.ranges,
             array=validated.array,
@@ -5160,19 +5198,22 @@ class ImageDataFilters(DataSetFilters):
     def _select_values(  # type: ignore[misc]
         self: ImageData,
         *,
-        values,
-        ranges,
-        array,
-        component_logic,
-        invert,
-        association,
-        array_name,
-        fill_value,
-        replacement_value,
-    ):
+        values: NumpyArray[float] | None,
+        ranges: NumpyArray[float] | None,
+        array: NumpyArray[float],
+        component_logic: Callable[[NumpyArray[np.bool_]], NumpyArray[np.bool_]] | None,
+        invert: bool,
+        association: FieldAssociation,
+        array_name: str,
+        fill_value: float | VectorLike[float] | None,
+        replacement_value: float | VectorLike[float] | None,
+    ) -> ImageData:
         input_array = cast(
             'pv.pyvista_ndarray',
             get_array(self, name=array_name, preference=association),
+        )
+        preference: Literal['point', 'cell'] = (
+            'point' if association == FieldAssociation.POINT else 'cell'
         )
         _validate_value_for_dtype(fill_value, input_array.dtype, name='fill_value')
         _validate_value_for_dtype(replacement_value, input_array.dtype, name='replacement_value')
@@ -5181,15 +5222,15 @@ class ImageDataFilters(DataSetFilters):
         # fill and replacement values is a threshold, which the VTK image filter does in one
         # threaded pass (VTK 9.7) rather than the several array passes made below
         threshold = None
-        if values is None and len(ranges) == 1:
+        if values is None and ranges is not None and len(ranges) == 1:
             threshold = ranges[0]
-        elif ranges is None and len(values) == 1:
+        elif ranges is None and values is not None and len(values) == 1:
             threshold = (values[0], values[0])
         if (
             threshold is not None
             and input_array.ndim == 1
-            and np.ndim(fill_value) == 0
-            and np.ndim(replacement_value) == 0
+            and not isinstance(fill_value, (Sequence, np.ndarray))
+            and not isinstance(replacement_value, (Sequence, np.ndarray))
         ):
             in_value, out_value = (
                 (fill_value, replacement_value) if invert else (replacement_value, fill_value)
@@ -5199,7 +5240,7 @@ class ImageDataFilters(DataSetFilters):
                 in_value=in_value,
                 out_value=out_value,
                 scalars=array_name,
-                preference=association,
+                preference=preference,
             )
 
         id_mask = self._apply_component_logic_to_array(
@@ -5228,7 +5269,7 @@ class ImageDataFilters(DataSetFilters):
 
         output = self.copy(deep=False)
         output[array_name] = array_out
-        output.set_active_scalars(array_name, preference=association)
+        output.set_active_scalars(array_name, preference=preference)
         return output
 
     def concatenate(  # type: ignore[misc]
@@ -5241,7 +5282,7 @@ class ImageDataFilters(DataSetFilters):
         component_policy: _ConcatenateComponentPolicyOptions | None = None,
         background_value: float | VectorLike[float] = 0.0,
         resample_kwargs: dict[str, Any] | None = None,
-    ):
+    ) -> ImageData:
         """Combine multiple images into one.
 
         This filter uses :vtk:`vtkImageAppend` to combine multiple images. By default, images are
@@ -5823,7 +5864,8 @@ def _validate_value_for_dtype(value: Any, dtype: np.dtype[Any], *, name: str) ->
         raise ValueError(msg)
 
 
-def _validate_padding(pad_size):
+def _validate_padding(pad_size: int | VectorLike[int]) -> NumpyArray[int]:
+    """Return the pad size broadcast to a length-6 extent padding."""
     # Process pad size to create a length-6 tuple (-X,+X,-Y,+Y,-Z,+Z)
     padding = np.atleast_1d(pad_size)
     if padding.ndim != 1:
@@ -5859,18 +5901,10 @@ def _validate_padding(pad_size):
     return all_pad_sizes
 
 
-def _pad_extent(extent, padding):
-    pad_xn, pad_xp, pad_yn, pad_yp, pad_zn, pad_zp = padding
-    ext_xn, ext_xp, ext_yn, ext_yp, ext_zn, ext_zp = extent
-
-    return (
-        ext_xn - pad_xn,  # minX
-        ext_xp + pad_xp,  # maxX
-        ext_yn - pad_yn,  # minY
-        ext_yp + pad_yp,  # maxY
-        ext_zn - pad_zn,  # minZ
-        ext_zp + pad_zp,  # maxZ
-    )
+def _pad_extent(extent: VectorLike[int], padding: VectorLike[int]) -> NumpyArray[int]:
+    """Return the extent grown by the given padding."""
+    signs = np.array([-1, 1, -1, 1, -1, 1])
+    return np.asarray(extent) + signs * np.asarray(padding)
 
 
 def _set_border_mode(

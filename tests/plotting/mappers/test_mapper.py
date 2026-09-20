@@ -83,7 +83,7 @@ def test_color_mode(dataset_mapper):
     dataset_mapper.color_mode = 'map'
     assert dataset_mapper.color_mode == 'map'
 
-    with pytest.raises(ValueError, match='Color mode must be either'):
+    with pytest.raises(ValueError, match="Color mode 'invalid' is not valid"):
         dataset_mapper.color_mode = 'invalid'
 
 
@@ -121,9 +121,15 @@ def test_resolve(dataset_mapper, resolve):
 
 
 def test_invalid_resolve(dataset_mapper):
-    match = 'Resolve must be either "off", "polygon_offset" or "shift_zbuffer"'
+    match = "Resolve 'invalid' is not valid"
     with pytest.raises(ValueError, match=match):
         dataset_mapper.resolve = 'invalid'
+
+
+def test_set_scalars_custom_opac_requires_opacity(sphere):
+    mapper = DataSetMapper(dataset=sphere)
+    with pytest.raises(ValueError, match='Custom opacity requires an opacity array'):
+        mapper.set_scalars(sphere.points[:, 0], 'x', custom_opac=True)
 
 
 def test_mapper_dataset_property_returns_original(sphere):
