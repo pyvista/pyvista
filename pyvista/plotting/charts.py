@@ -2108,7 +2108,7 @@ class _MultiCompPlot(_Plot):
 
     @color_scheme.setter
     def color_scheme(self, val) -> None:
-        self._color_series.SetColorScheme(COLOR_SCHEMES.get(val, COLOR_SCHEMES['custom'])['id'])  # type: ignore[index]
+        self._color_series.SetColorScheme(COLOR_SCHEMES.get(val, COLOR_SCHEMES['custom'])['id'])
         self._color_series.BuildLookupTable(self._lookup_table, _vtk.vtkColorSeries.CATEGORICAL)
         self.brush.color = self.colors[0]
 

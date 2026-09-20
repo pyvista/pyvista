@@ -86,6 +86,15 @@ def _category_range(values: NumpyArray[float]) -> tuple[float, float]:
     return float(values[0] - step / 2), float(values[-1] + step / 2)
 
 
+def _clim_has_no_bounds(clim: float | VectorLike[float] | None) -> bool:
+    """Return whether a scalar range was given as a pair of ``None`` bounds."""
+    if isinstance(clim, np.ndarray):
+        clim = clim.tolist()
+    return (
+        isinstance(clim, (list, tuple)) and len(clim) == 2 and all(bound is None for bound in clim)
+    )
+
+
 def _apply_categories(
     lut: LookupTable, values: NumpyArray[float], annotations: dict[float, str] | None
 ) -> list[float]:
@@ -759,9 +768,13 @@ class _BaseDataSetMapper(_BaseMapper):
             return
 
         if self.dataset is not None:
+            scalars = self._mapped_scalars
+            if scalars is None:
+                # Nothing is mapped, so there is no RGBA array to build
+                return
             self.dataset.point_data.pop('__rgba__', None)
             self._configure_scalars_mode(
-                scalars=self.lookup_table(self._mapped_scalars),
+                scalars=self.lookup_table(scalars),
                 scalars_name='__rgba__',
                 preference=self.scalar_map_mode,
                 direct_scalars_color_mode=True,
@@ -1063,6 +1076,9 @@ class _BaseDataSetMapper(_BaseMapper):
             ``c`` is the range ``(-c, c)``.
 
         """
+        if _clim_has_no_bounds(clim):
+            clim = None
+
         if scalar_bar_args is None:
             scalar_bar_args = {'n_colors': n_colors}
 
