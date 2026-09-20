@@ -310,6 +310,7 @@ nitpick_ignore_regex = [
     #
     # PyVista Widget enums
     (r'py:.*', '.*PickerType'),
+    (r'py:.*', '.*_PlaneWidget'),
     (r'py:.*', '.*ElementType'),
     #
     # PyVista shader/plotting enums
