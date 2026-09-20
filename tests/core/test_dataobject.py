@@ -15,6 +15,7 @@ import pytest
 
 import pyvista as pv
 from pyvista import examples
+from pyvista._version import _is_deprecation_due
 from pyvista.core import _vtk_utilities
 from pyvista.core.dataobject import USER_DICT_KEY
 from pyvista.core.errors import PyVistaDeprecationWarning
@@ -613,7 +614,7 @@ def test_user_dict_serializes_once_per_call(monkeypatch):
 
 
 def test_default_pickle_format():
-    assert pv.PICKLE_FORMAT == 'vtk'
+    assert pv._PICKLE_FORMAT == 'vtk'
 
 
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
@@ -624,7 +625,7 @@ def test_pickle_serialize_deserialize(datasets_no_pointset, pickle_format, capfd
     pickle protocol via ``__getstate__``/``__setstate__`` is tested
     here. File-format refusal is covered in ``test_reader.py``.
     """
-    pv.set_pickle_format(pickle_format)
+    pv._PICKLE_FORMAT = pickle_format
     for dataset in datasets_no_pointset:
         # These datasets carry no field data of their own.
         dataset.field_data['pickled_field'] = [1, 2, 3]
@@ -656,7 +657,7 @@ def test_pickle_serialize_deserialize(datasets_no_pointset, pickle_format, capfd
 
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
 def test_pickle_drops_cached_vtk_objects(pickle_format):
-    pv.set_pickle_format(pickle_format)
+    pv._PICKLE_FORMAT = pickle_format
     mesh = pv.Sphere()
     # A bool array is tracked in the instance dict, which must survive the round trip
     mesh.point_data['flags'] = np.ones(mesh.n_points, dtype=bool)
@@ -679,7 +680,7 @@ def n_points(dataset):
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
 def test_pickle_multiprocessing(datasets_no_pointset, pickle_format):
     # exercise pickling via multiprocessing
-    pv.set_pickle_format(pickle_format)
+    pv._PICKLE_FORMAT = pickle_format
     with multiprocessing.Pool(2) as p:
         res = p.map(n_points, datasets_no_pointset)
     for r, dataset in zip(res, datasets_no_pointset, strict=True):
@@ -688,13 +689,13 @@ def test_pickle_multiprocessing(datasets_no_pointset, pickle_format):
 
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
 def test_pickle_multiblock(multiblock_all_no_pointset_with_nested_and_none, pickle_format):
-    pv.set_pickle_format(pickle_format)
+    pv._PICKLE_FORMAT = pickle_format
     multiblock = multiblock_all_no_pointset_with_nested_and_none
 
     if pickle_format in ['legacy', 'xml']:
         match = (
             "MultiBlock is not supported with 'xml' or 'legacy' pickle formats.\n"
-            "Use `pyvista.PICKLE_FORMAT='vtk'`."
+            "Use the default 'vtk' pickle format."
         )
         with pytest.raises(TypeError, match=match):
             pickle.dumps(multiblock)
@@ -707,7 +708,7 @@ def test_pickle_multiblock(multiblock_all_no_pointset_with_nested_and_none, pick
 
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
 def test_pickle_user_dict(sphere, pickle_format):
-    pv.set_pickle_format(pickle_format)
+    pv._PICKLE_FORMAT = pickle_format
     user_dict = {'custom_attribute': 42}
     sphere.user_dict = user_dict
 
@@ -719,16 +720,39 @@ def test_pickle_user_dict(sphere, pickle_format):
 
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
 def test_set_pickle_format(pickle_format):
-    pv.set_pickle_format(pickle_format)
-    assert pickle_format == pv.PICKLE_FORMAT
+    match = '`pyvista.set_pickle_format` is deprecated.'
+    with pytest.warns(PyVistaDeprecationWarning, match=re.escape(match)):
+        pv.set_pickle_format(pickle_format)
+    assert pickle_format == pv._PICKLE_FORMAT
+    if _is_deprecation_due((0, 53)):  # pragma: no cover
+        msg = 'Convert this deprecation warning into an error.'
+        raise RuntimeError(msg)
+    if _is_deprecation_due((0, 54)):  # pragma: no cover
+        msg = 'Remove this deprecated function.'
+        raise RuntimeError(msg)
+
+
+def test_pickle_format_deprecated():
+    match = re.escape('`pyvista.PICKLE_FORMAT` is deprecated.')
+    with pytest.warns(PyVistaDeprecationWarning, match=match):
+        pv.PICKLE_FORMAT = 'xml'
+    assert pv._PICKLE_FORMAT == 'xml'
+    with pytest.warns(PyVistaDeprecationWarning, match=match):
+        assert pv.PICKLE_FORMAT == 'xml'
+    if _is_deprecation_due((0, 53)):  # pragma: no cover
+        msg = 'Convert this deprecation warning into an error.'
+        raise RuntimeError(msg)
+    if _is_deprecation_due((0, 54)):  # pragma: no cover
+        msg = 'Remove the PICKLE_FORMAT deprecation.'
+        raise RuntimeError(msg)
 
 
 def test_pickle_invalid_format(sphere):
     match = 'Unsupported pickle format `invalid_format`.'
-    with pytest.raises(ValueError, match=match):
+    with pytest.warns(PyVistaDeprecationWarning), pytest.raises(ValueError, match=match):
         pv.set_pickle_format('invalid_format')
 
-    pv.PICKLE_FORMAT = 'invalid_format'
+    pv._PICKLE_FORMAT = 'invalid_format'
     with pytest.raises(ValueError, match=match):
         pickle.dumps(sphere)
 

@@ -118,13 +118,13 @@ def test_cell_data_bad_value(hexbeam):
         hexbeam.cell_data['new_array'] = np.arange(hexbeam.n_cells - 1)
 
 
-@pytest.mark.parametrize('empty_shape', [(0,), (-1, 0), (0, -1), (0, 0)])
+@pytest.mark.parametrize('empty_shape', [(0,), (0, 2), (-1, 0), (0, -1), (0, 0)])
 @pytest.mark.parametrize('attribute', ['point_data', 'cell_data', 'field_data'])
 @pytest.mark.parametrize('mesh_is_empty', [True, False])
 def test_point_cell_field_data_empty_array(uniform, attribute, empty_shape, mesh_is_empty):
     # Test that setting empty arrays is only allowed when the mesh is
     # empty OR when setting field data.
-    # Empty arrays with non-zero shape values are never allowed.
+    # Arrays with zero components are never allowed.
 
     mesh = pv.PolyData() if mesh_is_empty else uniform
 
@@ -152,13 +152,14 @@ def test_point_cell_field_data_empty_array(uniform, attribute, empty_shape, mesh
 
     # Test setting the array
     data = getattr(mesh, attribute)
-    if empty_shape in [(0,), (0, 0)] and (attribute == 'field_data' or mesh_is_empty):
+    has_components = 0 not in empty_shape[1:]
+    has_expected_length = attribute == 'field_data' or mesh_is_empty
+    if has_components and has_expected_length:
         # Special case, no error raised
         data['new_array'] = empty_array
         assert 'new_array' in data
         assert data['new_array'].size == 0
-        # Note: the output shape is always (0,) and may not match the input shape (bug?)
-        assert data['new_array'].shape == (0,)
+        assert data['new_array'].shape == empty_shape
     else:
         # Expect error for all other cases
         with pytest.raises(ValueError, match=r'Invalid array shape.'):
