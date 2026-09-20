@@ -3351,13 +3351,91 @@ def test_plot_compare_splits_per_subplot_kwargs(kwargs, n_datasets, shared, vary
 
 
 @pytest.mark.usefixtures('no_images_to_verify')
-def test_plot_compare_classifies_keywords_the_drawing_methods_take():
-    """Every classified keyword is one the drawing methods still accept."""
+def test_plot_compare_classifies_every_keyword_the_drawing_methods_take():
+    """Each keyword a drawing method takes is one the split has classified."""
     from pyvista.plotting.plot_compare import _KEYWORDS_TAKING_A_SEQUENCE
+
+    # Every keyword `plot_compare` passes on. A new one fails here: add it to
+    # `_KEYWORDS_TAKING_A_SEQUENCE` if its own value can be a sequence, then name it
+    # here, so that no keyword is drawn one value per subplot without being considered.
+    expected = {
+        'above_color',
+        'ambient',
+        'annotations',
+        'backface_params',
+        'below_color',
+        'blending',
+        'categories',
+        'clim',
+        'cmap',
+        'color',
+        'color_missing_with_nan',
+        'component',
+        'copy_mesh',
+        'culling',
+        'diffuse',
+        'edge_color',
+        'edge_opacity',
+        'emissive',
+        'flip_scalars',
+        'force_opaque',
+        'interpolate_before_map',
+        'label',
+        'lighting',
+        'line_width',
+        'log_scale',
+        'mapper',
+        'metallic',
+        'multi_colors',
+        'n_colors',
+        'name',
+        'nan_color',
+        'nan_opacity',
+        'opacity',
+        'opacity_unit_distance',
+        'pbr',
+        'pickable',
+        'point_shape',
+        'point_size',
+        'preference',
+        'remove_existing_actor',
+        'render',
+        'render_lines_as_tubes',
+        'render_points_as_spheres',
+        'reset_camera',
+        'resolution',
+        'rgb',
+        'roughness',
+        'scalar_bar_args',
+        'scalars',
+        'shade',
+        'show_edges',
+        'show_scalar_bar',
+        'show_vertices',
+        'silhouette',
+        'smooth_shading',
+        'specular',
+        'specular_power',
+        'split_sharp_edges',
+        'static',
+        'style',
+        'texture',
+        'use_transparency',
+        'user_matrix',
+    }
 
     taken = set()
     for method in (pv.Plotter.add_mesh, pv.Plotter.add_volume, pv.Plotter.add_composite):
-        taken |= set(inspect.signature(method).parameters)
+        parameters = inspect.signature(method).parameters
+        taken |= {
+            name
+            for name, parameter in parameters.items()
+            if parameter.kind is not parameter.VAR_KEYWORD
+        }
+    # `self` and the data object are given by `plot_compare` itself
+    taken -= {'self', 'mesh', 'volume', 'dataset'}
+
+    assert taken == expected
 
     # `_common_arg_parser` pops these from `**kwargs`, so no signature shows them
     aliases = {'colormap', 'rng', 'vertex_color'}
