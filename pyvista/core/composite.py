@@ -70,7 +70,7 @@ _NestedPolyData = Union['PolyData', 'MultiBlock[_NestedPolyData]']
 _NestedUnstructuredGrid = Union['UnstructuredGrid', 'MultiBlock[_NestedUnstructuredGrid]']
 _BlockType = TypeVar(
     '_BlockType',
-    bound='MultiBlock[Any] | DataSet | None',
+    bound=_TypeMultiBlockLeaf,
     default=_TypeMultiBlockLeaf,
 )
 
@@ -92,9 +92,10 @@ class MultiBlock(
     can iterate over this data structure by index.  It has some dictionary
     features as we can also access blocks by their string name.
 
-    Subscripting the class declares what the blocks are, so that
-    ``MultiBlock[PolyData]`` indexes and iterates as :class:`~pyvista.PolyData`
-    and rejects anything else.  An unsubscripted ``MultiBlock`` holds any
+    Subscripting the class declares the block type for static type checking,
+    so that ``MultiBlock[PolyData]`` indexes and iterates as
+    :class:`~pyvista.PolyData` and its mutators accept nothing else.  Nothing
+    is checked at runtime.  An unsubscripted ``MultiBlock`` holds any
     combination of datasets, nested composites and empty blocks.
 
     .. versionchanged:: 0.36.0
@@ -1561,7 +1562,7 @@ class MultiBlock(
     def get_block(
         self,
         index: int | Sequence[int] | str,
-    ):
+    ) -> _TypeMultiBlockLeaf:
         """Get a block by its index or name.
 
         If the name is non-unique then returns the first occurrence. This
@@ -1771,7 +1772,7 @@ class MultiBlock(
         """Navigate to the parent MultiBlock and return (parent, ``final_index``)."""
         _validation.check_length(indices, min_length=1, name='index')
         # Navigate through the indices except the last one
-        target: MultiBlock[Any] | DataSet | None = self
+        target: _TypeMultiBlockLeaf = self
         for ind in indices[:-1]:
             if target is None or isinstance(target, pv.DataSet):
                 msg = f'Invalid indices {indices}.'
@@ -2357,6 +2358,10 @@ class MultiBlock(
     def as_polydata_blocks(
         self: MultiBlock[_DataSetType], *, copy: bool = ...
     ) -> MultiBlock[PolyData]: ...  # pragma: no cover
+    @overload
+    def as_polydata_blocks(
+        self: MultiBlock[Any], *, copy: bool = ...
+    ) -> MultiBlock[_NestedPolyData]: ...  # pragma: no cover
     def as_polydata_blocks(self, *, copy: bool = False) -> MultiBlock[Any]:
         """Convert all the datasets within this MultiBlock to :class:`~pyvista.PolyData`.
 
@@ -2414,6 +2419,10 @@ class MultiBlock(
     def as_unstructured_grid_blocks(
         self: MultiBlock[_DataSetType], *, copy: bool = ...
     ) -> MultiBlock[UnstructuredGrid]: ...  # pragma: no cover
+    @overload
+    def as_unstructured_grid_blocks(
+        self: MultiBlock[Any], *, copy: bool = ...
+    ) -> MultiBlock[_NestedUnstructuredGrid]: ...  # pragma: no cover
     def as_unstructured_grid_blocks(self, *, copy: bool = False) -> MultiBlock[Any]:
         """Convert all the datasets within this MultiBlock to :class:`~pyvista.UnstructuredGrid`.
 
