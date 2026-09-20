@@ -18,8 +18,11 @@ from pyvista.core.utilities import writer_registry as _reg_mod
 
 @pytest.fixture(autouse=True)
 def _clean_custom_writers():
-    """Restore the writer registry around every test."""
+    """Reset the writer registry to its pre-discovery state around every test."""
     state = _reg_mod._save_registry_state()
+    _reg_mod._restore_registry_state(
+        {'ext': {}, 'sources': {}, 'pending': {}, 'entry_points_loaded': False}
+    )
     yield
     _reg_mod._restore_registry_state(state)
 
@@ -401,8 +404,6 @@ def test_registered_writers_returns_record_with_source():
 
 
 def test_registered_writers_includes_entry_point_source():
-    _reg_mod._entry_points_loaded = False
-
     mock_ep = MagicMock()
     mock_ep.name = '.discovered_src'
     mock_ep.value = 'package.module:writer_func'
@@ -441,9 +442,6 @@ def test_register_custom_collision_override_silent():
 
 def test_metadata_scan_does_not_load_plugin():
     """``_ensure_entry_points`` records metadata without importing plugins."""
-    _reg_mod._entry_points_loaded = False
-    _reg_mod._pending_ext_writers.clear()
-
     mock_ep = MagicMock()
     mock_ep.name = '.lazy'
     mock_ep.value = 'lazy_pkg:writer'
@@ -458,9 +456,6 @@ def test_metadata_scan_does_not_load_plugin():
 
 def test_save_builtin_extension_does_not_load_plugin(tmp_path):
     """Saving to a built-in extension never imports any plugin module."""
-    _reg_mod._entry_points_loaded = False
-    _reg_mod._pending_ext_writers.clear()
-
     plugin_ep = MagicMock()
     plugin_ep.name = '.someplugin'
     plugin_ep.value = 'someplugin:writer'
@@ -474,9 +469,6 @@ def test_save_builtin_extension_does_not_load_plugin(tmp_path):
 
 def test_matching_extension_loads_only_its_plugin():
     """Looking up an extension a plugin claims loads *only* that plugin."""
-    _reg_mod._entry_points_loaded = False
-    _reg_mod._pending_ext_writers.clear()
-
     wanted = MagicMock()
     wanted.name = '.wanted'
     wanted.value = 'wanted_pkg:writer'
@@ -500,9 +492,6 @@ def test_matching_extension_loads_only_its_plugin():
 
 def test_list_custom_exts_includes_pending_without_loading():
     """``_list_custom_exts`` reports pending extensions without loading."""
-    _reg_mod._entry_points_loaded = False
-    _reg_mod._pending_ext_writers.clear()
-
     mock_ep = MagicMock()
     mock_ep.name = '.discoverable'
     mock_ep.value = 'discoverable_pkg:writer'
@@ -516,9 +505,6 @@ def test_list_custom_exts_includes_pending_without_loading():
 
 def test_registered_writers_forces_full_discovery():
     """``registered_writers`` resolves every pending plugin so callers see all."""
-    _reg_mod._entry_points_loaded = False
-    _reg_mod._pending_ext_writers.clear()
-
     mock_ep = MagicMock()
     mock_ep.name = '.eager'
     mock_ep.value = 'eager_pkg:writer'
