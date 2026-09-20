@@ -1552,8 +1552,7 @@ class PolyDataFilters(DataSetFilters):
         """Split line cells into dashes.
 
         Line and polyline cells are resampled into shorter line cells following a
-        repeating on-off pattern. Other cell types are ignored, as with
-        :func:`tube`.
+        repeating on-off pattern. Other cell types are ignored.
 
         Point data is interpolated onto the dash end points. Cell data is copied from
         the parent line cell, unless ``join`` merges those cells together.

@@ -176,6 +176,15 @@ def lines_from_points(
     pyvista.PolyData
         PolyData with lines and cells.
 
+    See Also
+    --------
+    pyvista.PolyDataFilters.dash_lines
+        Split the line cells into dashes.
+    pyvista.PolyDataFilters.tube
+        Generate a tube around each line.
+    pyvista.Actor.line_style
+        Dash the lines while rendering them.
+
     Examples
     --------
     >>> import numpy as np
