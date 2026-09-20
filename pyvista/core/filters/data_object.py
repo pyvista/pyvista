@@ -6699,9 +6699,7 @@ def _validate_reference_volume_options(
         raise TypeError(msg)
 
 
-def _validate_spacing(
-    spacing: float | VectorLike[float], name: str = 'spacing'
-) -> NumpyArray[float]:
+def _validate_spacing(spacing: float | VectorLike[float]) -> NumpyArray[float]:
     """Return a positive, finite spacing broadcast to three axes."""
     return _validation.validate_array3(
         spacing,
@@ -6710,7 +6708,7 @@ def _validate_spacing(
         must_be_in_range=[0, np.inf],
         strict_lower_bound=True,
         dtype_out=float,
-        name=name,
+        name='spacing',
     )
 
 
@@ -6721,7 +6719,10 @@ def _round_dimensions(
     """Round fractional dimensions to integers, with ``numpy.round`` by default."""
     rounding_func = np.round if rounding_func is None else rounding_func
     return _validation.validate_array3(
-        rounding_func(dimensions), must_be_integer=True, dtype_out=int, name='dimensions'
+        rounding_func(dimensions),
+        must_be_integer=True,
+        dtype_out=int,
+        name='rounding_func output',
     )
 
 

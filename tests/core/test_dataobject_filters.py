@@ -5139,7 +5139,7 @@ def test_resample_to_image_raises(sphere):
     match = 'spacing must have finite values.'
     with pytest.raises(ValueError, match=re.escape(match)):
         sphere.resample_to_image(spacing=np.inf)
-    match = 'dimensions must have integer-like values.'
+    match = 'rounding_func output must have integer-like values.'
     with pytest.raises(ValueError, match=re.escape(match)):
         sphere.resample_to_image(spacing=0.1, rounding_func=lambda d: np.asarray(d) + 0.5)
 

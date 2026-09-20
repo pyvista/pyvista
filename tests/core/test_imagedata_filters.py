@@ -1490,6 +1490,9 @@ def test_resample_raises(uniform):
     match = 'Cannot specify `sample_rate` and `spacing` together.'
     with pytest.raises(ValueError, match=re.escape(match)):
         uniform.resample(sample_rate=2, spacing=1.0)
+    match = 'Cannot specify `sample_rate`, `dimensions` and `spacing` together.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        uniform.resample(sample_rate=2, dimensions=(2, 2, 2), spacing=1.0)
     match = 'Cannot specify `dimensions` and `spacing` together.'
     with pytest.raises(ValueError, match=re.escape(match)):
         uniform.resample(dimensions=(2, 2, 2), spacing=1.0)
@@ -1661,8 +1664,11 @@ def test_resample_values_at_point_locations():
 def test_resample_fractional_dimensions():
     image = pv.ImageData(dimensions=(233, 171, 1))
     image['data'] = np.zeros(image.n_points)
+    # numpy.round sends 116.5 to 116 and 85.5 to 86 (half to even)
     assert np.array_equal(image.resample(0.5).dimensions, (116, 86, 1))
     assert np.array_equal(image.resample(0.29).dimensions, (68, 50, 1))
+    assert image.resample(0.5, rounding_func=np.floor).dimensions == (116, 85, 1)
+    assert image.resample(0.5, rounding_func=np.ceil).dimensions == (117, 86, 1)
 
     # A rate whose product is an integer but computes just below it is not rounded down
     image = pv.ImageData(dimensions=(100, 100, 1))
@@ -1695,11 +1701,11 @@ def test_resample_anti_aliasing_blur_width():
 def test_resample_spacing(extend_border):
     image = pv.ImageData(dimensions=(3, 2, 1), spacing=(1.0, 2.0, 5.0))
     image['data'] = np.zeros(image.n_points)
-    resampled = image.resample(spacing=(0.5, 0.5, 1.0), extend_border=extend_border)
+    resampled = image.resample(spacing=(0.5, 1.0, 1.0), extend_border=extend_border)
     # A border adds half a voxel at each end, so the spacing divides the cell bounds
-    expected_dimensions = (6, 8, 1) if extend_border else (5, 5, 1)
+    expected_dimensions = (6, 4, 1) if extend_border else (5, 3, 1)
     assert resampled.dimensions == expected_dimensions
-    assert resampled.spacing == (0.5, 0.5, 5.0)
+    assert resampled.spacing == (0.5, 1.0, 5.0)
     expected_bounds = image.points_to_cells().bounds if extend_border else image.bounds
     reference = resampled.points_to_cells() if extend_border else resampled
     assert np.allclose(reference.bounds, expected_bounds)
@@ -1729,6 +1735,15 @@ def test_resample_spacing_rounding():
     assert np.allclose(received[0], (3 / 0.7, 2 / 0.7, 1))
     assert received[0].dtype.kind == 'f'
 
+    # Singleton axes are never resampled, whatever the callable returns
+    resampled = image.resample(spacing=0.5, rounding_func=lambda _: np.full(3, 5))
+    assert resampled.dimensions == (5, 5, 1)
+    assert resampled.spacing[2] == 1.0
+
+    match = 'rounding_func output must have integer-like values.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        image.resample(spacing=0.5, rounding_func=lambda d: np.asarray(d) + 0.5)
+
 
 def test_resample_spacing_cell_data():
     image = pv.ImageData(dimensions=(4, 3, 3), spacing=(1.0, 1.0, 1.0))
@@ -1745,14 +1760,6 @@ def test_resample_spacing_cell_data():
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         image.resample(spacing=10)
-
-
-def test_resample_sample_rate_rounding_func():
-    image = pv.ImageData(dimensions=(233, 171, 1))
-    image['data'] = np.zeros(image.n_points)
-    assert image.resample(0.5).dimensions == (116, 86, 1)
-    assert image.resample(0.5, rounding_func=np.floor).dimensions == (116, 85, 1)
-    assert image.resample(0.5, rounding_func=np.ceil).dimensions == (117, 86, 1)
 
 
 def test_resample_cell_data_sample_rate_raises():

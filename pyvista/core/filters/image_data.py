@@ -4368,8 +4368,8 @@ class ImageDataFilters(DataSetFilters):
             The output dimensions are rounded to integers with ``rounding_func``.
 
             .. versionchanged:: 0.50
-                Fractional dimensions are rounded to the nearest integer. Previously they
-                were rounded down.
+                Fractional dimensions are rounded with :func:`numpy.round`. In version
+                0.49 they were rounded down.
 
         interpolation : 'nearest', 'linear', 'cubic', 'lanczos', 'hamming', 'blackman', 'bspline'
             Interpolation mode to use.
@@ -4426,8 +4426,9 @@ class ImageDataFilters(DataSetFilters):
             Approximate :attr:`~pyvista.ImageData.spacing` of the resampled image. Can
             be a single value or vector of three values for each axis. Values must be
             greater than ``0``. The output dimensions are rounded to integers with
-            ``rounding_func``, so the actual spacing may differ. Singleton axes keep
-            their spacing. See examples.
+            ``rounding_func``, so the actual spacing may differ. The spacing divides the
+            bounds of the image represented as cells, or the bounds of its points when
+            ``extend_border`` is ``False``. Singleton axes keep their spacing. See examples.
 
             .. versionadded:: 0.50
 
@@ -4842,7 +4843,7 @@ class ImageDataFilters(DataSetFilters):
             _validation.check_instance(reference_image, pv.ImageData, name='reference_image')
         elif len(specified) > 1:
             msg = (
-                f'Cannot specify {" and ".join(specified)} together.\n'
+                f'Cannot specify {", ".join(specified[:-1])} and {specified[-1]} together.\n'
                 'Only one of `sample_rate`, `dimensions`, or `spacing` may define the '
                 'sampling geometry.'
             )
@@ -4916,6 +4917,7 @@ class ImageDataFilters(DataSetFilters):
         # Singleton input dimensions are never resampled
         new_dimensions = np.where(old_dimensions == 1, 1, new_dimensions)
         new_dimensions = _round_dimensions(new_dimensions, rounding_func)
+        new_dimensions[old_dimensions == 1] = 1
         if processing_cell_scalars and np.any(new_dimensions < 1):
             axes = 'at least 2 along each non-singleton axis when resampling cell data.'
             if sample_rate is not None:
