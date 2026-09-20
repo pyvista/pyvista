@@ -112,3 +112,8 @@ def test_ipython_completer(tmp_path):
     )
     env = {**os.environ, 'IPYTHONDIR': str(tmp_path)}
     subprocess.run([sys.executable, '-c', code], check=True, env=env)
+
+
+def test_allow_ipython_completion_without_guarded_eval(monkeypatch):
+    monkeypatch.setitem(sys.modules, 'IPython.core.guarded_eval', None)
+    _allow_ipython_completion(pv.PolyData)

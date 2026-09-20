@@ -237,7 +237,7 @@ def reset_global_state():
     pv.allow_new_attributes(False)
     assert pv.allow_new_attributes() is False
 
-    pv.PICKLE_FORMAT = 'vtk'
+    pv._PICKLE_FORMAT = 'vtk'
     pv.global_config.points_dtype = None
 
 

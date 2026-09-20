@@ -624,7 +624,6 @@ pyvista = "pv"
   'S101',
   'SIM115',
   'T20',
-  'TID251',
 ]
 'examples/02-plot/composite_picking.py' = ['ARG001']
 'examples/02-plot/distance_measurement.py' = ['ARG001']
