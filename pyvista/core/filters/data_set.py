@@ -3592,6 +3592,10 @@ class DataSetFilters(DataObjectFilters):
         pyvista.DataObjectFilters.sample
             Resample array data from one mesh onto another.
 
+        pyvista.DataObjectFilters.resample_to_image
+            Interpolate onto a new :class:`~pyvista.ImageData` which fits the input's
+            bounds, without building the image first.
+
         :meth:`pyvista.ImageDataFilters.resample`
             Resample image data to modify its dimensions and spacing.
 
@@ -8610,6 +8614,12 @@ class DataSetFilters(DataObjectFilters):
         voxelize_rectilinear
             Similar function that returns a :class:`~pyvista.RectilinearGrid` with cell data.
 
+        pyvista.DataObjectFilters.resample_to_image
+            Similar function which generates a :class:`~pyvista.ImageData` of the same
+            geometry. It resamples the input's data arrays instead of generating a mask,
+            and fills the voxels its cells or points reach rather than a closed
+            surface's interior.
+
         pyvista.ImageDataFilters.contour_labels
             Filter that generates surface contours from labeled image data. Can be
             loosely considered as an inverse of this filter.
@@ -9049,6 +9059,12 @@ class DataSetFilters(DataObjectFilters):
         voxelize_binary_mask
             Similar function that returns a :class:`~pyvista.ImageData` with point data.
 
+        pyvista.DataObjectFilters.resample_to_image
+            Similar function which generates a :class:`~pyvista.ImageData` of the same
+            geometry. It resamples the input's data arrays instead of generating a mask,
+            and fills the voxels its cells or points reach rather than a closed
+            surface's interior.
+
         Examples
         --------
         Create a voxel volume of a nut. By default, the spacing is automatically
@@ -9224,6 +9240,12 @@ class DataSetFilters(DataObjectFilters):
 
         voxelize_binary_mask
             Similar function that returns a :class:`~pyvista.ImageData` with point data.
+
+        pyvista.DataObjectFilters.resample_to_image
+            Similar function which generates a :class:`~pyvista.ImageData` of the same
+            geometry. It resamples the input's data arrays instead of generating a mask,
+            and fills the voxels its cells or points reach rather than a closed
+            surface's interior.
 
         Examples
         --------

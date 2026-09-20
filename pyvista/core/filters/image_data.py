@@ -4437,6 +4437,9 @@ class ImageDataFilters(DataSetFilters):
         :meth:`~pyvista.DataObjectFilters.sample`
             Resample array data from one mesh onto another.
 
+        :meth:`~pyvista.DataObjectFilters.resample_to_image`
+            Resample a mesh of any type onto a new image.
+
         :meth:`~pyvista.DataSetFilters.interpolate`
             Interpolate values from one mesh onto another.
 
