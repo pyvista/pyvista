@@ -1337,8 +1337,7 @@ class BasePlotter(_BoundsSizeMixin):
         link_views
 
         pyvista.plot_compare
-            Fill a grid of subplots in a single call, with one value of a
-            keyword for each of them.
+            Plot a grid comparison of any number of data objects.
 
         Examples
         --------

@@ -272,9 +272,6 @@ _ONE_VALUE_NDIM = {
     'user_matrix': 2,
 }
 
-# A mesh takes one opacity, while a volume takes a transfer function over its scalars
-_OPACITY_NDIM = {False: 0, True: 1}
-
 # Every keyword whose own value can be a sequence, aliases included
 _KEYWORDS_TAKING_A_SEQUENCE = (
     _COLOR_KEYWORDS
@@ -303,12 +300,13 @@ def _is_one_color_sequence(value: Any) -> bool:
 
 
 def _is_one_value(key: str, value: Any, *, volume: bool) -> bool:
-    """Return whether the sequence is a single value of the keyword."""
+    """Return whether the value is a single value of the keyword."""
     if key in _COLOR_KEYWORDS:
         return _is_one_color(value)
     if key in _COLOR_SEQUENCE_KEYWORDS:
         return _is_one_color_sequence(value)
-    ndim = _OPACITY_NDIM[volume] if key == 'opacity' else _ONE_VALUE_NDIM.get(key)
+    # A mesh takes one opacity, while a volume takes a transfer function
+    ndim = (1 if volume else 0) if key == 'opacity' else _ONE_VALUE_NDIM.get(key)
     if ndim is None:
         return False
     try:
@@ -856,18 +854,19 @@ def plot_compare(  # noqa: ANN201
         ``datasets``, or to :meth:`~pyvista.Plotter.add_volume` when ``volume``
         is ``True``. These are the keywords :func:`pyvista.plot` takes.
 
-        Give a keyword a single value to draw every subplot with that value, or an
-        iterable of values to draw each subplot with its own. The length of the
-        iterable must match the number of subplots.
+        Give a keyword a single value to draw every subplot with that value, or a
+        sequence of values to draw each subplot with its own. The length of the
+        sequence must match the number of ``datasets``.
 
-        A keyword whose own value is an iterable keeps it, so ``clim=[0, 1]`` is one
+        A keyword whose own value is a sequence keeps it, so ``clim=[0, 1]`` is one
         range for every subplot. Nest the values to vary one of those, as in
-        ``clim=[[0, 1], [0, 2]]``.
+        ``clim=[[0, 1], [0, 2]]``. ``opacity`` is the exception: a sequence of any
+        other length is one opacity transfer function rather than an error.
 
         .. versionchanged:: 0.50
-            A keyword given one value for each subplot draws each subplot with its
-            own value. ``opacity`` is one opacity for each subplot rather than one
-            transfer function for all of them, unless ``volume`` is ``True``.
+            A keyword given one value for each of the ``datasets`` draws each subplot
+            with its own value. ``opacity`` is one opacity for each subplot rather
+            than one transfer function for all of them, unless ``volume`` is ``True``.
 
     Returns
     -------
