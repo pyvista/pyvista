@@ -67,6 +67,20 @@ def test_read_matches_the_builtin_reader(ext, builtin, request):
 
 
 @pytest.mark.parametrize(('ext', 'builtin'), EXT_BUILTINS)
+def test_read_stores_cells_with_32_bit_ids(ext, builtin, request):
+    path = request.getfixturevalue(f'{ext.lstrip(".")}_file')
+
+    fast = pv.read(path)
+    reference = builtin(path).read()
+
+    # The narrower storage is the one documented difference from the VTK readers
+    assert not fast.GetPolys().IsStorage64Bit()
+    assert reference.GetPolys().IsStorage64Bit()
+    assert fast.regular_faces.dtype != reference.regular_faces.dtype
+    assert fast.faces.dtype == reference.faces.dtype
+
+
+@pytest.mark.parametrize(('ext', 'builtin'), EXT_BUILTINS)
 def test_get_reader_still_returns_the_builtin_class(ext, builtin, request):
     path = request.getfixturevalue(f'{ext.lstrip(".")}_file')
 
