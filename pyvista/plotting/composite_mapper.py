@@ -20,6 +20,7 @@ from pyvista.core.utilities.misc import _NoNewAttrMixin
 from .colors import Color
 from .colors import get_cycler
 from .mapper import _BaseMapper
+from .mapper import _clim_has_no_bounds
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -815,6 +816,9 @@ class CompositePolyDataMapper(_BaseMapper, _vtk.vtkCompositePolyDataMapper):
             Dictionary of scalar bar arguments.
 
         """
+        if _clim_has_no_bounds(clim):
+            clim = None
+
         dataset = self._dataset
         if dataset is None:  # pragma: no cover
             msg = 'Cannot set scalars without a dataset.'
