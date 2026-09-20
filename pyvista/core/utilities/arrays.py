@@ -12,7 +12,6 @@ import json
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
-from typing import TypeVar
 from typing import cast
 from typing import overload
 
@@ -39,10 +38,9 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core import _DataSetType
     from pyvista.core.dataset import _ActiveArrayExistsInfoTuple
 
-
-_DataSetType = TypeVar('_DataSetType', bound='DataSet')
 
 USER_DICT_KEY = '_PYVISTA_USER_DICT'
 

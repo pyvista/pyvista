@@ -64,12 +64,9 @@ _SKIP_KWARGS = frozenset(
 )
 
 
-def _crashes_vtk(kind, name, keyword):
-    """Return whether a call segfaults VTK, for reasons unrelated to side effects."""
-    # vtkCellLocatorInterpolatedVelocityField dereferences the cells a PointSet lacks
-    return (
-        kind == 'pointset' and name == 'streamlines_from_source' and keyword == 'interpolator_type'
-    )
+#: Calls which segfault VTK for reasons unrelated to side effects, as ``(kind, name, keyword)``.
+# vtkCellLocatorInterpolatedVelocityField dereferences the cells a PointSet lacks
+_CRASHES_VTK = frozenset({('pointset', 'streamlines_from_source', 'interpolator_type')})
 
 
 _LITERAL_PATTERN = re.compile(r'Literal\[([^]]*)]')
@@ -724,7 +721,7 @@ def test_filter_does_not_modify_input(key):
             for keyword, keyword_variant in _call_variants(func):
                 if keyword is not None and mode not in KEYWORD_DATA_MODES:
                     continue
-                if _crashes_vtk(kind, name, keyword):
+                if (kind, name, keyword) in _CRASHES_VTK:
                     continue
                 mesh = template.copy()
                 args, kwargs = _call_arguments(name, keyword_variant)

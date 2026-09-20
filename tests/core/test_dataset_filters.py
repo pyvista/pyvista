@@ -4671,7 +4671,8 @@ def test_collision_generate_scalars_keeps_input_arrays(sphere):
     sphere.cell_data['other2'] = np.arange(sphere.n_cells)
     moved_sphere = sphere.translate((0.5, 0, 0), inplace=False)
     output, _ = sphere.collision(moved_sphere, generate_scalars=True)
-    assert 'collision_rgba' in output.cell_data
+    assert output.cell_data['collision_rgba'].shape == (sphere.n_cells, 4)
+    assert 'other2' in output.cell_data
     assert sphere.cell_data.keys() == ['other', 'other2']
 
 

@@ -9333,7 +9333,7 @@ class DataSetFilters(DataObjectFilters):
 def _streamlines_input(
     mesh: _DataSetType, vectors: str | None
 ) -> tuple[_DataSetType, _ActiveArrayExistsInfoTuple]:
-    """Return a shallow copy with the vectors active, and their field and name."""
+    """Return a shallow copy with the vectors active, as scalars too if named, and their info."""
     input_mesh, info = _active_vectors_input(mesh, vectors)
     if vectors is not None:
         input_mesh.set_active_scalars(vectors)

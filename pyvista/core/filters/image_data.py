@@ -856,7 +856,7 @@ class ImageDataFilters(DataSetFilters):
                 mesh[scalars] = mask_
 
             mesh, field, scalars_ = _validate_scalars(mesh, scalars)
-            if isinstance(mask_, (str, bool)):
+            if mask_ is True:
                 # The mask's scalars stay active on the cropped output
                 nonlocal crop_source
                 crop_source = mesh
@@ -5627,9 +5627,7 @@ class ImageDataFilters(DataSetFilters):
             if i > 0:
                 _validation.check_instance(img, pv.ImageData)
 
-            # Create shallow copies so we can safely modify if needed
-            img_copy = img.copy(deep=False)
-            img_copy, _, scalars = img_copy._validate_point_scalars()
+            img_copy, _, scalars = img._validate_point_scalars()
             all_scalars.append(scalars)
             array = img.point_data[scalars]
             all_dtypes.append(array.dtype)
