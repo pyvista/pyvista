@@ -1661,10 +1661,10 @@ def test_resample_values_at_point_locations():
 def test_resample_fractional_dimensions():
     image = pv.ImageData(dimensions=(233, 171, 1))
     image['data'] = np.zeros(image.n_points)
-    assert np.array_equal(image.resample(0.5).dimensions, (116, 85, 1))
-    assert np.array_equal(image.resample(0.29).dimensions, (67, 49, 1))
+    assert np.array_equal(image.resample(0.5).dimensions, (116, 86, 1))
+    assert np.array_equal(image.resample(0.29).dimensions, (68, 50, 1))
 
-    # A rate whose product is an integer but computes just below it is rounded up
+    # A rate whose product is an integer but computes just below it is not rounded down
     image = pv.ImageData(dimensions=(100, 100, 1))
     image['data'] = np.zeros(image.n_points)
     assert 100 * 0.29 < 29.0
@@ -1750,9 +1750,8 @@ def test_resample_spacing_cell_data():
 def test_resample_sample_rate_rounding_func():
     image = pv.ImageData(dimensions=(233, 171, 1))
     image['data'] = np.zeros(image.n_points)
-    # Sample rates are rounded down by default
-    assert image.resample(0.5).dimensions == (116, 85, 1)
-    assert image.resample(0.5, rounding_func=np.round).dimensions == (116, 86, 1)
+    assert image.resample(0.5).dimensions == (116, 86, 1)
+    assert image.resample(0.5, rounding_func=np.floor).dimensions == (116, 85, 1)
     assert image.resample(0.5, rounding_func=np.ceil).dimensions == (117, 86, 1)
 
 

@@ -4363,6 +4363,11 @@ class ImageDataFilters(DataSetFilters):
             Sampling rates to use. Can be a single value or vector of three values
             for each axis. Values greater than ``1.0`` will up-sample the axis and
             values less than ``1.0`` will down-sample it. Values must be greater than ``0``.
+            The output dimensions are rounded to integers with ``rounding_func``.
+
+            .. versionchanged:: 0.50
+                Fractional dimensions are rounded to the nearest integer. Previously they
+                were rounded down.
 
         interpolation : 'nearest', 'linear', 'cubic', 'lanczos', 'hamming', 'blackman', 'bspline'
             Interpolation mode to use.
@@ -4428,8 +4433,7 @@ class ImageDataFilters(DataSetFilters):
             Control how the dimensions computed from ``spacing`` or ``sample_rate`` are
             rounded to integers. Should accept a length-3 vector containing the
             dimension values along the three directions and return a length-3 vector.
-            By default, :func:`numpy.round` is used with ``spacing`` and
-            :func:`numpy.floor` is used with ``sample_rate``.
+            :func:`numpy.round` is used by default.
 
             Rounding the dimensions implies rounding the actual spacing.
 
@@ -4916,13 +4920,8 @@ class ImageDataFilters(DataSetFilters):
             new_dimensions = new_dimensions - 1
         # Singleton input dimensions are never resampled
         new_dimensions = np.where(old_dimensions == 1, 1, new_dimensions)
-        if rounding_func is not None:
-            new_dimensions = np.asarray(rounding_func(new_dimensions))
-        elif spacing is not None:
-            new_dimensions = np.round(new_dimensions)
-        else:
-            # Truncate fractional dimensions, with a tolerance for floating point error
-            new_dimensions = np.floor(new_dimensions + 1e-6)
+        rounding_func = np.round if rounding_func is None else rounding_func
+        new_dimensions = np.asarray(rounding_func(new_dimensions))
         new_dimensions = _validation.validate_array3(
             new_dimensions, must_be_integer=True, dtype_out=int, name='dimensions'
         )
