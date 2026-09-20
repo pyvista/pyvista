@@ -3148,16 +3148,19 @@ class BasePlotter(_BoundsSizeMixin):
 
         point_size : float, default: 5.0
             Point size of any points in the dataset plotted. Also
-            applicable when style='points'. Default ``5.0``.
+            applicable when style='points', expressed in screen units.
+            Must be in the range ``[0.0, inf)``.
 
         line_width : float, optional
             Thickness of lines.  Only valid for wireframe and surface
-            representations.
+            representations, expressed in screen units. Must be in the
+            range ``[0.0, inf)``.
 
         opacity : float, default: 1.0
             Opacity of the mesh. A single float value that will be applied
-            globally opacity of the mesh and uniformly
-            applied everywhere - should be between 0 and 1.
+            globally opacity of the mesh and uniformly applied everywhere.
+            Must be in the range ``[0.0, 1.0]``. A value of ``1.0`` is totally
+            opaque and ``0.0`` is completely transparent.
 
         flip_scalars : bool, default: False
             Flip direction of ``cmap``. Most colormaps allow ``*_r``
@@ -3246,19 +3249,26 @@ class BasePlotter(_BoundsSizeMixin):
             :ref:`shading_example`.
 
         ambient : float, default: 0.0
-            When lighting is enabled, this is the amount of light in
-            the range of 0 to 1 (default 0.0) that reaches the actor
-            when not directed at the light source emitted from the
-            viewer.
+            When lighting is enabled, this is the amount of light that
+            reaches the actor when not directed at the light source
+            emitted from the viewer. Must be in the range ``[0.0, 1.0]``.
+            A value of ``0.0`` adds no ambient light and ``1.0`` lights every
+            surface fully, regardless of where the light is.
 
         diffuse : float, default: 1.0
-            The diffuse lighting coefficient.
+            The diffuse lighting coefficient. Must be in the range
+            ``[0.0, 1.0]``. A value of ``0.0`` reflects no light from the
+            light source and ``1.0`` reflects the full amount.
 
         specular : float, default: 0.0
-            The specular lighting coefficient.
+            The specular lighting coefficient. Must be in the range
+            ``[0.0, 1.0]``. A value of ``0.0`` has no highlight and ``1.0``
+            has a full-intensity one.
 
         specular_power : float, default: 1.0
-            The specular power. Between 0.0 and 128.0.
+            The specular power. Must be in the range ``[0.0, 128.0]``. A
+            value of ``0.0`` spreads the highlight over the whole surface and
+            ``128.0`` concentrates it into a small, sharp spot.
 
         nan_color : ColorLike, default: :attr:`pyvista.plotting.themes.Theme.nan_color`
             The color to use for all ``NaN`` values in the plotted
@@ -3325,15 +3335,16 @@ class BasePlotter(_BoundsSizeMixin):
             color.
 
         metallic : float, default: 0.0
-            Usually this value is either 0 or 1 for a real material
-            but any value in between is valid. This parameter is only
-            used by PBR interpolation.
+            This parameter is only used by PBR interpolation. Must be in
+            the range ``[0.0, 1.0]``. A value of ``0.0`` is a non-metal such
+            as plastic and ``1.0`` is a bare metal; values in between are
+            valid but uncommon for a real material.
 
         roughness : float, default: 0.5
-            This value has to be between 0 (glossy) and 1 (rough). A
-            glossy material has reflections and a high specular
-            part. This parameter is only used by PBR
-            interpolation.
+            A glossy material has reflections and a high specular part.
+            This parameter is only used by PBR interpolation. Must be in
+            the range ``[0.0, 1.0]``. A value of ``0.0`` is glossy and
+            ``1.0`` is rough.
 
         render : bool, default: True
             Force a render when ``True``.
@@ -3377,8 +3388,9 @@ class BasePlotter(_BoundsSizeMixin):
 
         edge_opacity : float, optional
             Edge opacity of the mesh. A single float value that will be applied globally
-            edge opacity of the mesh and uniformly applied everywhere - should be
-            between 0 and 1.
+            edge opacity of the mesh and uniformly applied everywhere. Must be in the
+            range ``[0.0, 1.0]``. A value of ``1.0`` is totally opaque and ``0.0`` is
+            completely transparent.
 
             .. note::
                 ``edge_opacity`` uses ``SetEdgeOpacity`` as the underlying method which
@@ -3747,16 +3759,20 @@ class BasePlotter(_BoundsSizeMixin):
 
         point_size : float, optional
             Point size of any nodes in the dataset plotted. Also
-            applicable when style='points'. Default ``5.0``.
+            applicable when style='points', expressed in screen units.
+            Default ``5.0``. Must be in the range ``[0.0, inf)``.
 
         line_width : float, optional
             Thickness of lines.  Only valid for wireframe and surface
-            representations.  Default ``None``.
+            representations, expressed in screen units. Default ``None``.
+            Must be in the range ``[0.0, inf)``.
 
         opacity : float | str | array_like
             Opacity of the mesh. If a single float value is given, it
-            will be the global opacity of the mesh and uniformly
-            applied everywhere - should be between 0 and 1. A string
+            will be the global opacity of the mesh and uniformly applied
+            everywhere, and must be in the range ``[0.0, 1.0]``, where
+            ``1.0`` is totally opaque and ``0.0`` is completely
+            transparent. A string
             can also be specified to map the scalars range to a
             predefined opacity transfer function (options include:
             ``'linear'``, ``'linear_r'``, ``'geom'``, ``'geom_r'``).
@@ -3880,19 +3896,27 @@ class BasePlotter(_BoundsSizeMixin):
             :ref:`shading_example`.
 
         ambient : float, optional
-            When lighting is enabled, this is the amount of light in
-            the range of 0 to 1 (default 0.0) that reaches the actor
-            when not directed at the light source emitted from the
-            viewer.
+            When lighting is enabled, this is the amount of light that
+            reaches the actor when not directed at the light source
+            emitted from the viewer. Default 0.0. Must be in the range
+            ``[0.0, 1.0]``. A value of ``0.0`` adds no ambient light and
+            ``1.0`` lights every surface fully, regardless of where the light
+            is.
 
         diffuse : float, optional
-            The diffuse lighting coefficient. Default 1.0.
+            The diffuse lighting coefficient. Default 1.0. Must be in the
+            range ``[0.0, 1.0]``. A value of ``0.0`` reflects no light from
+            the light source and ``1.0`` reflects the full amount.
 
         specular : float, optional
-            The specular lighting coefficient. Default 0.0.
+            The specular lighting coefficient. Default 0.0. Must be in the
+            range ``[0.0, 1.0]``. A value of ``0.0`` has no highlight and
+            ``1.0`` has a full-intensity one.
 
         specular_power : float, optional
-            The specular power. Between 0.0 and 128.0.
+            The specular power. Must be in the range ``[0.0, 128.0]``. A
+            value of ``0.0`` spreads the highlight over the whole surface and
+            ``128.0`` concentrates it into a small, sharp spot.
 
         nan_color : ColorLike, optional
             The color to use for all ``NaN`` values in the plotted
@@ -3980,15 +4004,16 @@ class BasePlotter(_BoundsSizeMixin):
             color.
 
         metallic : float, optional
-            Usually this value is either 0 or 1 for a real material
-            but any value in between is valid. This parameter is only
-            used by PBR interpolation.
+            This parameter is only used by PBR interpolation. Must be in
+            the range ``[0.0, 1.0]``. A value of ``0.0`` is a non-metal such
+            as plastic and ``1.0`` is a bare metal; values in between are
+            valid but uncommon for a real material.
 
         roughness : float, optional
-            This value has to be between 0 (glossy) and 1 (rough). A
-            glossy material has reflections and a high specular
-            part. This parameter is only used by PBR
-            interpolation.
+            A glossy material has reflections and a high specular part.
+            This parameter is only used by PBR interpolation. Must be in
+            the range ``[0.0, 1.0]``. A value of ``0.0`` is glossy and
+            ``1.0`` is rough.
 
         render : bool, default: True
             Force a render when ``True``.
@@ -4053,8 +4078,9 @@ class BasePlotter(_BoundsSizeMixin):
 
         edge_opacity : float, optional
             Edge opacity of the mesh. A single float value that will be applied globally
-            edge opacity of the mesh and uniformly applied everywhere - should be
-            between 0 and 1.
+            edge opacity of the mesh and uniformly applied everywhere. Must be in the
+            range ``[0.0, 1.0]``. A value of ``1.0`` is totally opaque and ``0.0`` is
+            completely transparent.
 
             .. note::
                 ``edge_opacity`` uses ``SetEdgeOpacity`` as the underlying method which
