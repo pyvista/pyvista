@@ -77,6 +77,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLike
     from pyvista.core._typing_core import _DataObjectType
     from pyvista.core._typing_core import _DataSetType
+    from pyvista.core.dataset import _ActiveArrayExistsInfoTuple
     from pyvista.core.filters.data_object import _ExtractSurfaceOptions
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import PointLiteral
@@ -3976,7 +3977,7 @@ class DataSetFilters(DataObjectFilters):
             'cl': _vtk.vtkStreamTracer.CELL_LENGTH_UNIT,
             'l': _vtk.vtkStreamTracer.LENGTH_UNIT,
         }[step_unit]
-        input_mesh = _streamlines_input(self, vectors)
+        input_mesh, _ = _streamlines_input(self, vectors)
 
         if max_time is not None:
             msg = (
@@ -4179,7 +4180,14 @@ class DataSetFilters(DataObjectFilters):
             'cl': _vtk.vtkStreamTracer.CELL_LENGTH_UNIT,
             'l': _vtk.vtkStreamTracer.LENGTH_UNIT,
         }[step_unit]
-        input_mesh = _streamlines_input(self, vectors)
+        input_mesh, info = _streamlines_input(self, vectors)
+        # vtkEvenlySpacedStreamlines2D segfaults when the vectors are cell data
+        if info.association != FieldAssociation.POINT:
+            msg = (
+                f'This filter requires point vectors, but {info.name!r} is '
+                f'{info.association.name.lower()} data.'
+            )
+            raise TypeError(msg)
 
         loop_angle = loop_angle * np.pi / 180
 
@@ -9322,12 +9330,14 @@ class DataSetFilters(DataObjectFilters):
         return ugrid
 
 
-def _streamlines_input(mesh: _DataSetType, vectors: str | None) -> _DataSetType:
-    """Return a shallow copy with the vectors active, and active scalars too when named."""
-    input_mesh, _ = _active_vectors_input(mesh, vectors)
+def _streamlines_input(
+    mesh: _DataSetType, vectors: str | None
+) -> tuple[_DataSetType, _ActiveArrayExistsInfoTuple]:
+    """Return a shallow copy with the vectors active, and their field and name."""
+    input_mesh, info = _active_vectors_input(mesh, vectors)
     if vectors is not None:
         input_mesh.set_active_scalars(vectors)
-    return input_mesh
+    return input_mesh, info
 
 
 _STENCIL_SLAB_SLICES = 8

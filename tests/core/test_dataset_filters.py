@@ -2277,6 +2277,11 @@ def test_streamlines_evenly_spaced_2d_errors():
     with pytest.raises(ValueError, match='requires a 2D dataset in the XY plane'):
         mesh.rotate_x(45).streamlines_evenly_spaced_2D()
 
+    cell_vectors = mesh.point_data_to_cell_data()
+    match = "This filter requires point vectors, but 'velocity' is cell data."
+    with pytest.raises(TypeError, match=re.escape(match)):
+        cell_vectors.streamlines_evenly_spaced_2D(vectors='velocity')
+
 
 @pytest.mark.xfail
 def test_streamlines_nonxy_plane():
