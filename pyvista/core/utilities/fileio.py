@@ -24,6 +24,7 @@ import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
+from pyvista._version import _is_deprecation_due
 from pyvista._warn_external import warn_external
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import _classproperty
@@ -183,8 +184,23 @@ def _warn_multiblock_nested_field_data(mesh: pv.DataObject) -> None:
             warn_external(msg)
 
 
+def _validate_pickle_format(format: str) -> Literal['vtk', 'xml', 'legacy']:  # noqa: A002
+    """Normalize a pickle format name and raise for unsupported values."""
+    supported = {'vtk', 'xml', 'legacy'}
+    format_ = cast('Literal["vtk", "xml", "legacy"]', format.lower())
+    if format_ not in supported:
+        msg = (
+            f'Unsupported pickle format `{format_}`. Valid options are `{"`, `".join(supported)}`.'
+        )
+        raise ValueError(msg)
+    return format_
+
+
 def set_pickle_format(format: Literal['vtk', 'xml', 'legacy']) -> None:  # noqa: A002
     """Set the format used to serialize :class:`pyvista.DataObject` when pickled.
+
+    .. deprecated:: 0.50
+        The ``'vtk'`` format is the only supported pickle format and is always used.
 
     .. note::
 
@@ -206,31 +222,25 @@ def set_pickle_format(format: Literal['vtk', 'xml', 'legacy']) -> None:  # noqa:
         - ``'xml'``: objects are serialized as an XML-formatted string.
         - ``'legacy'`` objects are serialized to bytes in VTK's binary format.
 
-        .. note::
-
-            The ``'vtk'`` format requires VTK 9.3 or greater.
-
-        .. warning::
-
-            ``'xml'`` and ``'legacy'`` are not recommended. These formats are not
-            officially supported by VTK and have limitations. For example, these
-            formats cannot be used to pickle :class:`pyvista.MultiBlock`.
-
     Raises
     ------
     ValueError
         If the provided format is not supported.
 
     """
-    supported = {'vtk', 'xml', 'legacy'}
-    format_ = cast('Literal["vtk", "xml", "legacy"]', format.lower())
-    if format_ not in supported:
-        msg = (
-            f'Unsupported pickle format `{format_}`. Valid options are `{"`, `".join(supported)}`.'
-        )
-        raise ValueError(msg)
+    msg = (
+        '`pyvista.set_pickle_format` is deprecated. The `vtk` format is the only supported '
+        'pickle format and is always used.'
+    )
+    warn_external(msg, PyVistaDeprecationWarning)
+    if _is_deprecation_due((0, 53)):  # pragma: no cover
+        msg = 'Convert this deprecation warning into an error.'
+        raise RuntimeError(msg)
+    if _is_deprecation_due((0, 54)):  # pragma: no cover
+        msg = 'Remove this deprecated function.'
+        raise RuntimeError(msg)
 
-    pv.PICKLE_FORMAT = format_
+    pv._PICKLE_FORMAT = _validate_pickle_format(format)
 
 
 def _get_ext_force(filename: str | Path, force_ext: str | None = None) -> str:

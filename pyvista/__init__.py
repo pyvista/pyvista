@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import sys
+from types import ModuleType
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
@@ -57,8 +58,6 @@ from pyvista.report import check_matplotlib_vtk_compatibility as check_matplotli
 from pyvista.report import get_gpu_info as get_gpu_info
 
 if TYPE_CHECKING:
-    from types import ModuleType
-
     import numpy as np
 
 # get the int type from vtk
@@ -92,7 +91,7 @@ PLOT_DIRECTIVE_THEME = None
 FLOAT_FORMAT = '{:.3e}'
 
 # Serialization format to be used when pickling `DataObject`
-PICKLE_FORMAT: Literal['vtk', 'xml', 'legacy'] = 'vtk'
+_PICKLE_FORMAT: Literal['vtk', 'xml', 'legacy'] = 'vtk'
 
 # Name used for unnamed scalars
 DEFAULT_SCALARS_NAME = 'Data'
@@ -142,6 +141,25 @@ def _get_deprecated_validation() -> ModuleType:
     return pyvista_validation
 
 
+def _warn_deprecated_pickle_format() -> None:
+    """Warn that the pickle format selector is deprecated."""
+    from pyvista._version import _is_deprecation_due  # noqa: PLC0415
+    from pyvista._warn_external import warn_external  # noqa: PLC0415
+    from pyvista.core.errors import PyVistaDeprecationWarning  # noqa: PLC0415
+
+    msg = (
+        '`pyvista.PICKLE_FORMAT` is deprecated. The `vtk` format is the only supported '
+        'pickle format and is always used.'
+    )
+    warn_external(msg, PyVistaDeprecationWarning)
+    if _is_deprecation_due((0, 53)):  # pragma: no cover
+        msg = 'Convert this deprecation warning into an error.'
+        raise RuntimeError(msg)
+    if _is_deprecation_due((0, 54)):  # pragma: no cover
+        msg = 'Remove the PICKLE_FORMAT deprecation.'
+        raise RuntimeError(msg)
+
+
 def __getattr__(name: str) -> Any:
     """Fetch an attribute ``name`` from ``globals()`` or the ``pyvista.plotting`` module.
 
@@ -170,6 +188,10 @@ def __getattr__(name: str) -> Any:
     if name == '_validation':
         # Not cached either, so the deprecation warning is re-issued on each access
         return _get_deprecated_validation()
+    if name == 'PICKLE_FORMAT':
+        # Not cached either, so the deprecation warning is re-issued on each access
+        _warn_deprecated_pickle_format()
+        return _PICKLE_FORMAT
 
     allow = {
         'demos',
@@ -205,3 +227,18 @@ def __getattr__(name: str) -> Any:
         sys.modules['pyvista.plotting']._set_plot_theme_from_env()
 
     return _cache_attr_and_return(feature)
+
+
+class _PyVistaModule(ModuleType):
+    """Module type which intercepts assignment of deprecated module attributes."""
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        """Set a module attribute, redirecting deprecated names to their replacement."""
+        if name == 'PICKLE_FORMAT':
+            _warn_deprecated_pickle_format()
+            name = '_PICKLE_FORMAT'
+        super().__setattr__(name, value)
+
+
+# Module-level `__getattr__` covers reads only, so a subclass is needed to deprecate writes
+sys.modules[__name__].__class__ = _PyVistaModule
