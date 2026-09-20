@@ -61,10 +61,13 @@ if TYPE_CHECKING:
     from pyvista import VectorLike
 
     from ._typing_core import NumpyArray
+    from ._typing_core._dataset_types import _DataSetType
     from .filters.data_object import _NestedMeshValidationFields
     from .utilities.writer import BaseWriter
 
 _TypeMultiBlockLeaf = Union['MultiBlock[Any]', DataSet, None]
+_NestedPolyData = Union['PolyData', 'MultiBlock[_NestedPolyData]']
+_NestedUnstructuredGrid = Union['UnstructuredGrid', 'MultiBlock[_NestedUnstructuredGrid]']
 _BlockType = TypeVar(
     '_BlockType',
     bound='MultiBlock[Any] | DataSet | None',
@@ -2342,7 +2345,19 @@ class MultiBlock(
 
         return field_asc, scalars
 
-    def as_polydata_blocks(self, *, copy: bool = False) -> MultiBlock[PolyData]:
+    @overload  # a nested block stays nested
+    def as_polydata_blocks(
+        self: MultiBlock, *, copy: bool = ...
+    ) -> MultiBlock[_NestedPolyData]: ...  # pragma: no cover
+    @overload
+    def as_polydata_blocks(
+        self: MultiBlock[_DataSetType | None], *, copy: bool = ...
+    ) -> MultiBlock[PolyData]: ...  # pragma: no cover
+    @overload
+    def as_polydata_blocks(
+        self: MultiBlock[_DataSetType], *, copy: bool = ...
+    ) -> MultiBlock[PolyData]: ...  # pragma: no cover
+    def as_polydata_blocks(self, *, copy: bool = False) -> MultiBlock[Any]:
         """Convert all the datasets within this MultiBlock to :class:`~pyvista.PolyData`.
 
         Parameters
@@ -2385,9 +2400,21 @@ class MultiBlock(
             else:
                 return block.extract_surface(algorithm=None)
 
-        return cast('MultiBlock[PolyData]', self.generic_filter(block_filter, _skip_none=False))
+        return self.generic_filter(block_filter, _skip_none=False)
 
-    def as_unstructured_grid_blocks(self, *, copy: bool = False) -> MultiBlock[UnstructuredGrid]:
+    @overload  # a nested block stays nested
+    def as_unstructured_grid_blocks(
+        self: MultiBlock, *, copy: bool = ...
+    ) -> MultiBlock[_NestedUnstructuredGrid]: ...  # pragma: no cover
+    @overload
+    def as_unstructured_grid_blocks(
+        self: MultiBlock[_DataSetType | None], *, copy: bool = ...
+    ) -> MultiBlock[UnstructuredGrid]: ...  # pragma: no cover
+    @overload
+    def as_unstructured_grid_blocks(
+        self: MultiBlock[_DataSetType], *, copy: bool = ...
+    ) -> MultiBlock[UnstructuredGrid]: ...  # pragma: no cover
+    def as_unstructured_grid_blocks(self, *, copy: bool = False) -> MultiBlock[Any]:
         """Convert all the datasets within this MultiBlock to :class:`~pyvista.UnstructuredGrid`.
 
         .. versionadded:: 0.45
@@ -2425,9 +2452,7 @@ class MultiBlock(
             else:
                 return block.cast_to_unstructured_grid()
 
-        return cast(
-            'MultiBlock[UnstructuredGrid]', self.generic_filter(block_filter, _skip_none=False)
-        )
+        return self.generic_filter(block_filter, _skip_none=False)
 
     @property
     def is_all_polydata(self) -> bool:
