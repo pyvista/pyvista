@@ -4106,6 +4106,17 @@ def test_median_smooth_constant_data():
     )
 
 
+def test_median_smooth_cell_data_raises():
+    volume = pv.ImageData(dimensions=(5, 5, 5))
+    volume.cell_data['cell_data'] = np.zeros(volume.n_cells)
+    with pytest.raises(ValueError, match='Can only process point data'):
+        volume.median_smooth(scalars='cell_data')
+
+    volume.set_active_scalars('cell_data')
+    with pytest.raises(ValueError, match='active scalars must be point array'):
+        volume.median_smooth()
+
+
 def test_median_smooth_outlier():
     point_data = np.ones((10, 10, 10))
     point_data_outlier = point_data.copy()

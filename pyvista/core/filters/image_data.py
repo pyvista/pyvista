@@ -209,11 +209,13 @@ class ImageDataFilters(DataSetFilters):
         pyvista.ImageData
             Uniform grid with smoothed scalars.
 
-        Warnings
-        --------
-        Applying this filter to cell data will send the output to a new point
-        array with the same name, overwriting any existing point data array
-        with the same name.
+        Notes
+        -----
+        This filter only supports point data. For inputs with cell data, consider
+        re-meshing the cell data as point data with
+        :meth:`~pyvista.ImageDataFilters.cells_to_points`
+        or resampling the cell data to point data with
+        :func:`~pyvista.DataObjectFilters.cell_data_to_point_data`.
 
         Examples
         --------
