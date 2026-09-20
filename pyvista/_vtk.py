@@ -464,10 +464,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkSuperquadricSource',
         'vtkTessellatedBoxSource',
     ),
-    'vtkFiltersStatistics': (
-        'vtkComputeQuartiles',
-        'vtkLengthDistribution',
-    ),
+    'vtkFiltersStatistics': ('vtkComputeQuartiles',),
     'vtkFiltersTexture': (
         'vtkTextureMapToPlane',
         'vtkTextureMapToSphere',
