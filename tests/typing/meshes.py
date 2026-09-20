@@ -71,6 +71,11 @@ def multiblock_image() -> pv.MultiBlock[pv.ImageData]:
     return pv.MultiBlock([image()])
 
 
+def multiblock_optional_image() -> pv.MultiBlock[pv.ImageData | None]:
+    """Return a composite of grids whose blocks may be missing."""
+    return pv.MultiBlock([image(), None])
+
+
 def with_arrays(mesh: _MeshType) -> _MeshType:
     """Give a mesh point scalars ``s``, vectors ``v`` and integer ``labels``, keeping its class."""
     mesh.point_data['s'] = mesh.points[:, 0]

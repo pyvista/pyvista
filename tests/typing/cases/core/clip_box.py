@@ -57,6 +57,16 @@ def multiblock_optional_poly() -> pv.MultiBlock[pv.PolyData | None]:
     return pv.MultiBlock([poly(), None])
 
 
+def multiblock_optional_image() -> pv.MultiBlock[pv.ImageData | None]:
+    """Return a composite of grids whose blocks may be missing."""
+    return pv.MultiBlock([image(), None])
+
+
+def multiblock_optional_pointset() -> pv.MultiBlock[pv.PointSet | None]:
+    """Return a composite of point clouds whose blocks may be missing."""
+    return pv.MultiBlock([pointset(), None])
+
+
 # A box clip splits the cells it cuts, and clips a point cloud through its vertices
 assert_types(poly().clip_box(), pv.PolyData)
 assert_types(pointset().clip_box(), pv.PointSet)
@@ -71,3 +81,5 @@ assert_types(multiblock_unstructured().clip_box(), pv.MultiBlock[pv.Unstructured
 
 # An empty block survives the filter
 assert_types(multiblock_optional_poly().clip_box(), pv.MultiBlock[pv.PolyData | None])
+assert_types(multiblock_optional_image().clip_box(), pv.MultiBlock[pv.UnstructuredGrid | None])
+assert_types(multiblock_optional_pointset().clip_box(), pv.MultiBlock[pv.PointSet | None])

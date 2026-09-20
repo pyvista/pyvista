@@ -12,7 +12,6 @@ if TYPE_CHECKING:
     from pyvista import Grid
     from pyvista import MultiBlock
     from pyvista import PointGrid
-    from pyvista import PointSet
     from pyvista import PolyData
     from pyvista import UnstructuredGrid
     from pyvista.core.pointset import _PointSetBase
@@ -27,5 +26,4 @@ _DataObjectType = TypeVar('_DataObjectType', bound='DataObject')
 
 # Undocumented
 _PolyDataType = TypeVar('_PolyDataType', bound='PolyData')
-_PointSetType = TypeVar('_PointSetType', bound='PointSet')
 _UnstructuredGridType = TypeVar('_UnstructuredGridType', bound='UnstructuredGrid')

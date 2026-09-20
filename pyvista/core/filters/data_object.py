@@ -78,8 +78,6 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import _DataSetType
     from pyvista.core._typing_core import _MultiBlockType
-    from pyvista.core._typing_core._dataset_types import _PointSetType
-    from pyvista.core._typing_core._dataset_types import _PolyDataType
     from pyvista.core.utilities.cell_quality import _CellQualityLiteral
 
     _MeshType_co = TypeVar('_MeshType_co', DataSet, MultiBlock, covariant=True)
@@ -3301,13 +3299,13 @@ class DataObjectFilters:
     @overload  # MultiBlock
     def clip(self: MultiBlock, normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: Literal[False] = ..., return_clipped: Literal[False] = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> MultiBlock: ...  # type: ignore[misc]
     @overload  # MultiBlock[PolyData | None]
-    def clip(self: MultiBlock[_PolyDataType | None], normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: Literal[False] = ..., return_clipped: Literal[False] = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> MultiBlock[PolyData | None]: ...  # type: ignore[misc]
+    def clip(self: MultiBlock[PolyData | None], normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: Literal[False] = ..., return_clipped: Literal[False] = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> MultiBlock[PolyData | None]: ...  # type: ignore[misc]
     @overload  # MultiBlock[PolyData]
-    def clip(self: MultiBlock[_PolyDataType], normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: Literal[False] = ..., return_clipped: Literal[False] = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> MultiBlock[PolyData]: ...  # type: ignore[misc]
+    def clip(self: MultiBlock[PolyData], normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: Literal[False] = ..., return_clipped: Literal[False] = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> MultiBlock[PolyData]: ...  # type: ignore[misc]
     @overload  # MultiBlock[PointSet | None]
-    def clip(self: MultiBlock[_PointSetType | None], normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: Literal[False] = ..., return_clipped: Literal[False] = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> MultiBlock[PointSet | None]: ...  # type: ignore[misc]
+    def clip(self: MultiBlock[PointSet | None], normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: Literal[False] = ..., return_clipped: Literal[False] = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> MultiBlock[PointSet | None]: ...  # type: ignore[misc]
     @overload  # MultiBlock[PointSet]
-    def clip(self: MultiBlock[_PointSetType], normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: Literal[False] = ..., return_clipped: Literal[False] = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> MultiBlock[PointSet]: ...  # type: ignore[misc]
+    def clip(self: MultiBlock[PointSet], normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: Literal[False] = ..., return_clipped: Literal[False] = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> MultiBlock[PointSet]: ...  # type: ignore[misc]
     @overload  # MultiBlock[DataSet | None]
     def clip(self: MultiBlock[_DataSetType | None], normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: Literal[False] = ..., return_clipped: Literal[False] = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> MultiBlock[UnstructuredGrid | None]: ...  # type: ignore[misc]
     @overload  # MultiBlock[DataSet]
@@ -3317,13 +3315,13 @@ class DataObjectFilters:
     @overload  # MultiBlock
     def clip(self: MultiBlock, normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: Literal[False] = ..., return_clipped: Literal[True] = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> tuple[MultiBlock, MultiBlock]: ...  # type: ignore[misc]
     @overload  # MultiBlock[PolyData | None]
-    def clip(self: MultiBlock[_PolyDataType | None], normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: Literal[False] = ..., return_clipped: Literal[True] = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> tuple[MultiBlock[PolyData | None], MultiBlock[PolyData | None]]: ...  # type: ignore[misc]
+    def clip(self: MultiBlock[PolyData | None], normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: Literal[False] = ..., return_clipped: Literal[True] = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> tuple[MultiBlock[PolyData | None], MultiBlock[PolyData | None]]: ...  # type: ignore[misc]
     @overload  # MultiBlock[PolyData]
-    def clip(self: MultiBlock[_PolyDataType], normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: Literal[False] = ..., return_clipped: Literal[True] = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> tuple[MultiBlock[PolyData], MultiBlock[PolyData]]: ...  # type: ignore[misc]
+    def clip(self: MultiBlock[PolyData], normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: Literal[False] = ..., return_clipped: Literal[True] = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> tuple[MultiBlock[PolyData], MultiBlock[PolyData]]: ...  # type: ignore[misc]
     @overload  # MultiBlock[PointSet | None]
-    def clip(self: MultiBlock[_PointSetType | None], normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: Literal[False] = ..., return_clipped: Literal[True] = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> tuple[MultiBlock[PointSet | None], MultiBlock[PointSet | None]]: ...  # type: ignore[misc]
+    def clip(self: MultiBlock[PointSet | None], normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: Literal[False] = ..., return_clipped: Literal[True] = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> tuple[MultiBlock[PointSet | None], MultiBlock[PointSet | None]]: ...  # type: ignore[misc]
     @overload  # MultiBlock[PointSet]
-    def clip(self: MultiBlock[_PointSetType], normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: Literal[False] = ..., return_clipped: Literal[True] = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> tuple[MultiBlock[PointSet], MultiBlock[PointSet]]: ...  # type: ignore[misc]
+    def clip(self: MultiBlock[PointSet], normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: Literal[False] = ..., return_clipped: Literal[True] = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> tuple[MultiBlock[PointSet], MultiBlock[PointSet]]: ...  # type: ignore[misc]
     @overload  # MultiBlock[DataSet | None]
     def clip(self: MultiBlock[_DataSetType | None], normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: Literal[False] = ..., return_clipped: Literal[True] = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> tuple[MultiBlock[UnstructuredGrid | None], MultiBlock[UnstructuredGrid | None]]: ...  # type: ignore[misc]
     @overload  # MultiBlock[DataSet]
@@ -3333,13 +3331,13 @@ class DataObjectFilters:
     @overload  # MultiBlock
     def clip(self: MultiBlock, normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: Literal[False] = ..., return_clipped: bool = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> MultiBlock | tuple[MultiBlock, MultiBlock]: ...  # type: ignore[misc]
     @overload  # MultiBlock[PolyData | None]
-    def clip(self: MultiBlock[_PolyDataType | None], normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: Literal[False] = ..., return_clipped: bool = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> MultiBlock[PolyData | None] | tuple[MultiBlock[PolyData | None], MultiBlock[PolyData | None]]: ...  # type: ignore[misc]
+    def clip(self: MultiBlock[PolyData | None], normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: Literal[False] = ..., return_clipped: bool = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> MultiBlock[PolyData | None] | tuple[MultiBlock[PolyData | None], MultiBlock[PolyData | None]]: ...  # type: ignore[misc]
     @overload  # MultiBlock[PolyData]
-    def clip(self: MultiBlock[_PolyDataType], normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: Literal[False] = ..., return_clipped: bool = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> MultiBlock[PolyData] | tuple[MultiBlock[PolyData], MultiBlock[PolyData]]: ...  # type: ignore[misc]
+    def clip(self: MultiBlock[PolyData], normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: Literal[False] = ..., return_clipped: bool = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> MultiBlock[PolyData] | tuple[MultiBlock[PolyData], MultiBlock[PolyData]]: ...  # type: ignore[misc]
     @overload  # MultiBlock[PointSet | None]
-    def clip(self: MultiBlock[_PointSetType | None], normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: Literal[False] = ..., return_clipped: bool = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> MultiBlock[PointSet | None] | tuple[MultiBlock[PointSet | None], MultiBlock[PointSet | None]]: ...  # type: ignore[misc]
+    def clip(self: MultiBlock[PointSet | None], normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: Literal[False] = ..., return_clipped: bool = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> MultiBlock[PointSet | None] | tuple[MultiBlock[PointSet | None], MultiBlock[PointSet | None]]: ...  # type: ignore[misc]
     @overload  # MultiBlock[PointSet]
-    def clip(self: MultiBlock[_PointSetType], normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: Literal[False] = ..., return_clipped: bool = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> MultiBlock[PointSet] | tuple[MultiBlock[PointSet], MultiBlock[PointSet]]: ...  # type: ignore[misc]
+    def clip(self: MultiBlock[PointSet], normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: Literal[False] = ..., return_clipped: bool = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> MultiBlock[PointSet] | tuple[MultiBlock[PointSet], MultiBlock[PointSet]]: ...  # type: ignore[misc]
     @overload  # MultiBlock[DataSet | None]
     def clip(self: MultiBlock[_DataSetType | None], normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., value: float = ..., inplace: Literal[False] = ..., return_clipped: bool = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> MultiBlock[UnstructuredGrid | None] | tuple[MultiBlock[UnstructuredGrid | None], MultiBlock[UnstructuredGrid | None]]: ...  # type: ignore[misc]
     @overload  # MultiBlock[DataSet]
@@ -3507,13 +3505,13 @@ class DataObjectFilters:
     @overload  # MultiBlock
     def clip_box(self: MultiBlock, bounds: float | VectorLike[float] | PolyData | None = ..., *, invert: bool = ..., factor: float = ..., progress_bar: bool = ..., merge_points: bool = ..., crinkle: bool = ...) -> MultiBlock: ...  # type: ignore[misc]
     @overload  # MultiBlock[PolyData | None]
-    def clip_box(self: MultiBlock[_PolyDataType | None], bounds: float | VectorLike[float] | PolyData | None = ..., *, invert: bool = ..., factor: float = ..., progress_bar: bool = ..., merge_points: bool = ..., crinkle: bool = ...) -> MultiBlock[PolyData | None]: ...  # type: ignore[misc]
+    def clip_box(self: MultiBlock[PolyData | None], bounds: float | VectorLike[float] | PolyData | None = ..., *, invert: bool = ..., factor: float = ..., progress_bar: bool = ..., merge_points: bool = ..., crinkle: bool = ...) -> MultiBlock[PolyData | None]: ...  # type: ignore[misc]
     @overload  # MultiBlock[PolyData]
-    def clip_box(self: MultiBlock[_PolyDataType], bounds: float | VectorLike[float] | PolyData | None = ..., *, invert: bool = ..., factor: float = ..., progress_bar: bool = ..., merge_points: bool = ..., crinkle: bool = ...) -> MultiBlock[PolyData]: ...  # type: ignore[misc]
+    def clip_box(self: MultiBlock[PolyData], bounds: float | VectorLike[float] | PolyData | None = ..., *, invert: bool = ..., factor: float = ..., progress_bar: bool = ..., merge_points: bool = ..., crinkle: bool = ...) -> MultiBlock[PolyData]: ...  # type: ignore[misc]
     @overload  # MultiBlock[PointSet | None]
-    def clip_box(self: MultiBlock[_PointSetType | None], bounds: float | VectorLike[float] | PolyData | None = ..., *, invert: bool = ..., factor: float = ..., progress_bar: bool = ..., merge_points: bool = ..., crinkle: bool = ...) -> MultiBlock[PointSet | None]: ...  # type: ignore[misc]
+    def clip_box(self: MultiBlock[PointSet | None], bounds: float | VectorLike[float] | PolyData | None = ..., *, invert: bool = ..., factor: float = ..., progress_bar: bool = ..., merge_points: bool = ..., crinkle: bool = ...) -> MultiBlock[PointSet | None]: ...  # type: ignore[misc]
     @overload  # MultiBlock[PointSet]
-    def clip_box(self: MultiBlock[_PointSetType], bounds: float | VectorLike[float] | PolyData | None = ..., *, invert: bool = ..., factor: float = ..., progress_bar: bool = ..., merge_points: bool = ..., crinkle: bool = ...) -> MultiBlock[PointSet]: ...  # type: ignore[misc]
+    def clip_box(self: MultiBlock[PointSet], bounds: float | VectorLike[float] | PolyData | None = ..., *, invert: bool = ..., factor: float = ..., progress_bar: bool = ..., merge_points: bool = ..., crinkle: bool = ...) -> MultiBlock[PointSet]: ...  # type: ignore[misc]
     @overload  # MultiBlock[DataSet | None]
     def clip_box(self: MultiBlock[_DataSetType | None], bounds: float | VectorLike[float] | PolyData | None = ..., *, invert: bool = ..., factor: float = ..., progress_bar: bool = ..., merge_points: bool = ..., crinkle: bool = ...) -> MultiBlock[UnstructuredGrid | None]: ...  # type: ignore[misc]
     @overload  # MultiBlock[DataSet]
@@ -3703,13 +3701,13 @@ class DataObjectFilters:
     @overload  # MultiBlock
     def clip_slab(self: MultiBlock, thickness: float, normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> MultiBlock: ...  # type: ignore[misc]
     @overload  # MultiBlock[PolyData | None]
-    def clip_slab(self: MultiBlock[_PolyDataType | None], thickness: float, normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> MultiBlock[PolyData | None]: ...  # type: ignore[misc]
+    def clip_slab(self: MultiBlock[PolyData | None], thickness: float, normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> MultiBlock[PolyData | None]: ...  # type: ignore[misc]
     @overload  # MultiBlock[PolyData]
-    def clip_slab(self: MultiBlock[_PolyDataType], thickness: float, normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> MultiBlock[PolyData]: ...  # type: ignore[misc]
+    def clip_slab(self: MultiBlock[PolyData], thickness: float, normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> MultiBlock[PolyData]: ...  # type: ignore[misc]
     @overload  # MultiBlock[PointSet | None]
-    def clip_slab(self: MultiBlock[_PointSetType | None], thickness: float, normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> MultiBlock[PointSet | None]: ...  # type: ignore[misc]
+    def clip_slab(self: MultiBlock[PointSet | None], thickness: float, normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> MultiBlock[PointSet | None]: ...  # type: ignore[misc]
     @overload  # MultiBlock[PointSet]
-    def clip_slab(self: MultiBlock[_PointSetType], thickness: float, normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> MultiBlock[PointSet]: ...  # type: ignore[misc]
+    def clip_slab(self: MultiBlock[PointSet], thickness: float, normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> MultiBlock[PointSet]: ...  # type: ignore[misc]
     @overload  # MultiBlock[DataSet | None]
     def clip_slab(self: MultiBlock[_DataSetType | None], thickness: float, normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., invert: bool = ..., progress_bar: bool = ..., crinkle: bool = ..., plane: PolyData | None = ...) -> MultiBlock[UnstructuredGrid | None]: ...  # type: ignore[misc]
     @overload  # MultiBlock[DataSet]
@@ -3857,8 +3855,10 @@ class DataObjectFilters:
     # ruff: disable[E501]
     @overload  # MultiBlock
     def slice_implicit(self: MultiBlock, implicit_function: _vtk.vtkImplicitFunction, *, generate_triangles: bool = ..., contour: bool = ..., progress_bar: bool = ...) -> MultiBlock: ...  # type: ignore[misc]
+    @overload  # MultiBlock[PointSet | None], which raises
+    def slice_implicit(self: MultiBlock[PointSet | None], implicit_function: _vtk.vtkImplicitFunction, *, generate_triangles: bool = ..., contour: bool = ..., progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
     @overload  # MultiBlock[PointSet], which raises
-    def slice_implicit(self: MultiBlock[_PointSetType], implicit_function: _vtk.vtkImplicitFunction, *, generate_triangles: bool = ..., contour: bool = ..., progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
+    def slice_implicit(self: MultiBlock[PointSet], implicit_function: _vtk.vtkImplicitFunction, *, generate_triangles: bool = ..., contour: bool = ..., progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
     @overload  # MultiBlock[DataSet | None]
     def slice_implicit(self: MultiBlock[_DataSetType | None], implicit_function: _vtk.vtkImplicitFunction, *, generate_triangles: bool = ..., contour: bool = ..., progress_bar: bool = ...) -> MultiBlock[PolyData | None]: ...  # type: ignore[misc]
     @overload  # MultiBlock[DataSet]
@@ -3977,8 +3977,10 @@ class DataObjectFilters:
     # ruff: disable[E501]
     @overload  # MultiBlock
     def slice(self: MultiBlock, normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., generate_triangles: bool = ..., contour: bool = ..., progress_bar: bool = ..., plane: PolyData | None = ...) -> MultiBlock: ...  # type: ignore[misc]
+    @overload  # MultiBlock[PointSet | None], which raises
+    def slice(self: MultiBlock[PointSet | None], normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., generate_triangles: bool = ..., contour: bool = ..., progress_bar: bool = ..., plane: PolyData | None = ...) -> NoReturn: ...  # type: ignore[misc]
     @overload  # MultiBlock[PointSet], which raises
-    def slice(self: MultiBlock[_PointSetType], normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., generate_triangles: bool = ..., contour: bool = ..., progress_bar: bool = ..., plane: PolyData | None = ...) -> NoReturn: ...  # type: ignore[misc]
+    def slice(self: MultiBlock[PointSet], normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., generate_triangles: bool = ..., contour: bool = ..., progress_bar: bool = ..., plane: PolyData | None = ...) -> NoReturn: ...  # type: ignore[misc]
     @overload  # MultiBlock[DataSet | None]
     def slice(self: MultiBlock[_DataSetType | None], normal: VectorLike[float] | _NormalsLiteral | None = ..., *, origin: VectorLike[float] | None = ..., generate_triangles: bool = ..., contour: bool = ..., progress_bar: bool = ..., plane: PolyData | None = ...) -> MultiBlock[PolyData | None]: ...  # type: ignore[misc]
     @overload  # MultiBlock[DataSet]
@@ -4420,8 +4422,10 @@ class DataObjectFilters:
     # ruff: disable[E501]
     @overload  # MultiBlock
     def slice_along_line(self: MultiBlock, line: PolyData, *, generate_triangles: bool = ..., contour: bool = ..., progress_bar: bool = ...) -> MultiBlock: ...  # type: ignore[misc]
+    @overload  # MultiBlock[PointSet | None], which raises
+    def slice_along_line(self: MultiBlock[PointSet | None], line: PolyData, *, generate_triangles: bool = ..., contour: bool = ..., progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
     @overload  # MultiBlock[PointSet], which raises
-    def slice_along_line(self: MultiBlock[_PointSetType], line: PolyData, *, generate_triangles: bool = ..., contour: bool = ..., progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
+    def slice_along_line(self: MultiBlock[PointSet], line: PolyData, *, generate_triangles: bool = ..., contour: bool = ..., progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
     @overload  # MultiBlock[DataSet | None]
     def slice_along_line(self: MultiBlock[_DataSetType | None], line: PolyData, *, generate_triangles: bool = ..., contour: bool = ..., progress_bar: bool = ...) -> MultiBlock[PolyData | None]: ...  # type: ignore[misc]
     @overload  # MultiBlock[DataSet]
@@ -4558,8 +4562,10 @@ class DataObjectFilters:
     # ruff: disable[E501]
     @overload  # MultiBlock
     def extract_all_edges(self: MultiBlock, *, use_all_points: bool | None = ..., clear_data: bool = ..., progress_bar: bool = ...) -> MultiBlock: ...  # type: ignore[misc]
+    @overload  # MultiBlock[PointSet | None], which raises
+    def extract_all_edges(self: MultiBlock[PointSet | None], *, use_all_points: bool | None = ..., clear_data: bool = ..., progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
     @overload  # MultiBlock[PointSet], which raises
-    def extract_all_edges(self: MultiBlock[_PointSetType], *, use_all_points: bool | None = ..., clear_data: bool = ..., progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
+    def extract_all_edges(self: MultiBlock[PointSet], *, use_all_points: bool | None = ..., clear_data: bool = ..., progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
     @overload  # MultiBlock[DataSet | None]
     def extract_all_edges(self: MultiBlock[_DataSetType | None], *, use_all_points: bool | None = ..., clear_data: bool = ..., progress_bar: bool = ...) -> MultiBlock[PolyData | None]: ...  # type: ignore[misc]
     @overload  # MultiBlock[DataSet]
@@ -5523,12 +5529,14 @@ class DataObjectFilters:
     # ruff: disable[E501]
     @overload  # MultiBlock
     def triangulate(self: MultiBlock, *, inplace: bool = ..., progress_bar: bool = ...) -> MultiBlock: ...  # type: ignore[misc]
+    @overload  # MultiBlock[PointSet | None], which raises
+    def triangulate(self: MultiBlock[PointSet | None], *, inplace: bool = ..., progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
     @overload  # MultiBlock[PointSet], which raises
-    def triangulate(self: MultiBlock[_PointSetType], *, inplace: bool = ..., progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
+    def triangulate(self: MultiBlock[PointSet], *, inplace: bool = ..., progress_bar: bool = ...) -> NoReturn: ...  # type: ignore[misc]
     @overload  # MultiBlock[PolyData | None]
-    def triangulate(self: MultiBlock[_PolyDataType | None], *, inplace: bool = ..., progress_bar: bool = ...) -> MultiBlock[PolyData | None]: ...  # type: ignore[misc]
+    def triangulate(self: MultiBlock[PolyData | None], *, inplace: bool = ..., progress_bar: bool = ...) -> MultiBlock[PolyData | None]: ...  # type: ignore[misc]
     @overload  # MultiBlock[PolyData]
-    def triangulate(self: MultiBlock[_PolyDataType], *, inplace: bool = ..., progress_bar: bool = ...) -> MultiBlock[PolyData]: ...  # type: ignore[misc]
+    def triangulate(self: MultiBlock[PolyData], *, inplace: bool = ..., progress_bar: bool = ...) -> MultiBlock[PolyData]: ...  # type: ignore[misc]
     @overload  # MultiBlock[DataSet | None]
     def triangulate(self: MultiBlock[_DataSetType | None], *, inplace: bool = ..., progress_bar: bool = ...) -> MultiBlock[UnstructuredGrid | None]: ...  # type: ignore[misc]
     @overload  # MultiBlock[DataSet]

@@ -77,6 +77,21 @@ def multiblock_optional_poly() -> pv.MultiBlock[pv.PolyData | None]:
     return pv.MultiBlock([poly(), None])
 
 
+def multiblock_optional_image() -> pv.MultiBlock[pv.ImageData | None]:
+    """Return a composite of grids whose blocks may be missing."""
+    return pv.MultiBlock([image(), None])
+
+
+def multiblock_optional_pointset() -> pv.MultiBlock[pv.PointSet | None]:
+    """Return a composite of point clouds whose blocks may be missing."""
+    return pv.MultiBlock([pointset(), None])
+
+
+def multiblock_dataset() -> pv.MultiBlock[pv.DataSet]:
+    """Return a composite declared only as holding datasets."""
+    return pv.MultiBlock([image()])
+
+
 # A plane clip keeps a surface a surface and a point cloud a point cloud
 assert_types(poly().clip(), pv.PolyData)
 assert_types(pointset().clip(), pv.PointSet)
@@ -114,3 +129,8 @@ assert_types(multiblock_unstructured().clip(), pv.MultiBlock[pv.UnstructuredGrid
 
 # An empty block survives the filter
 assert_types(multiblock_optional_poly().clip(), pv.MultiBlock[pv.PolyData | None])
+assert_types(multiblock_optional_image().clip(), pv.MultiBlock[pv.UnstructuredGrid | None])
+assert_types(multiblock_optional_pointset().clip(), pv.MultiBlock[pv.PointSet | None])
+
+# A block type declared only as `DataSet` takes the widest single-mesh return
+assert_types(multiblock_dataset().clip(), pv.MultiBlock[pv.UnstructuredGrid])

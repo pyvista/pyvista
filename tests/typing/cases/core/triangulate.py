@@ -10,6 +10,7 @@ from tests.typing.meshes import explicit_structured
 from tests.typing.meshes import image
 from tests.typing.meshes import multiblock
 from tests.typing.meshes import multiblock_image
+from tests.typing.meshes import multiblock_optional_image
 from tests.typing.meshes import multiblock_optional_poly
 from tests.typing.meshes import multiblock_poly
 from tests.typing.meshes import pointset
@@ -38,6 +39,7 @@ assert_types(multiblock_image().triangulate(), pv.MultiBlock[pv.UnstructuredGrid
 
 # An empty block survives the filter
 assert_types(multiblock_optional_poly().triangulate(), pv.MultiBlock[pv.PolyData | None])
+assert_types(multiblock_optional_image().triangulate(), pv.MultiBlock[pv.UnstructuredGrid | None])
 
 
 assert_types(pointset().triangulate(), Never)  # pragma: no cover
