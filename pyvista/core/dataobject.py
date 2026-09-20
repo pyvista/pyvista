@@ -52,6 +52,9 @@ if TYPE_CHECKING:
 
     from ._typing_core import ArrayLike
     from ._typing_core import NumpyArray
+    from .utilities.arrays import CellLiteral
+    from .utilities.arrays import FieldLiteral
+    from .utilities.arrays import PointLiteral
     from .utilities.writer import BaseWriter
 
 # vector array names
@@ -369,7 +372,7 @@ class DataObject(
 
     @abstractmethod
     def get_data_range(  # numpydoc ignore=PR01
-        self: Self, name: str | None, preference: FieldAssociation | str
+        self: Self, name: str | None, preference: PointLiteral | CellLiteral | FieldLiteral
     ) -> tuple[float, float]:  # pragma: no cover
         """Get the non-NaN min and max of a named array."""
         msg = f'{type(self)} mesh type does not have a `get_data_range` method.'

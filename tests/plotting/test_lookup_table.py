@@ -195,6 +195,30 @@ def test_above_range_color(lut):
     assert lut.above_range_color == pv.global_theme.above_range_color
 
 
+def test_range_opacity_is_none_without_color(lut):
+    assert lut.above_range_color is None
+    assert lut.above_range_opacity is None
+    assert lut.below_range_color is None
+    assert lut.below_range_opacity is None
+
+
+def test_range_opacity(lut):
+    lut.above_range_color = 'grey'
+    lut.above_range_opacity = 0.5
+    assert lut.above_range_opacity == 128
+
+    lut.below_range_color = 'grey'
+    lut.below_range_opacity = 0.5
+    assert lut.below_range_opacity == 128
+
+
+def test_nan_opacity(lut):
+    assert lut.nan_opacity == 255
+    lut.nan_color = 'grey'
+    lut.nan_opacity = 0.5
+    assert lut.nan_opacity == 128
+
+
 def test_ramp(lut):
     lut.ramp = 'linear'
     assert lut.ramp == 'linear'
