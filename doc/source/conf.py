@@ -189,6 +189,7 @@ autodoc_type_aliases = {
     'TransformLike': 'pyvista.TransformLike',
     'RotationLike': 'pyvista.RotationLike',
     'InteractionEventType': 'pyvista.InteractionEventType',
+    'LineStyle': 'pyvista.LineStyle',
 }
 
 # Enable ANSI coloring for programoutput, using erbsland.sphinx.ansi
@@ -235,6 +236,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*VectorLike'),
     (r'py:.*', '.*TransformLike'),
     (r'py:.*', '.*InteractionEventType'),
+    (r'py:.*', '.*LineStyle'),
     (r'py:.*', '.*InteractorStyleHandler'),
     (r'py:.*', '.*WriterHandler'),
     (r'py:.*', '.*ReaderHandler'),
