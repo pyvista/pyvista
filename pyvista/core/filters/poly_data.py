@@ -1552,7 +1552,7 @@ class PolyDataFilters(DataSetFilters):
         """Split line cells into dashes.
 
         Line and polyline cells are resampled into shorter line cells following a
-        repeating on-off pattern. Other cell types are ignored.
+        repeating on-off pattern. Other cell types are passed through unchanged.
 
         Point data is interpolated onto the dash end points. Cell data is copied from
         the parent line cell, unless ``join`` merges those cells together.
@@ -1564,8 +1564,8 @@ class PolyDataFilters(DataSetFilters):
         style : str, default: '--'
             Named dash pattern. One of ``''`` (hidden), ``'-'`` (solid), ``'--'``
             (dashed), ``':'`` (dotted), ``'-.'`` (dash-dot) or ``'-..'``
-            (dash-dot-dot). A solid pattern returns a copy of the input and a hidden
-            pattern returns an empty dataset.
+            (dash-dot-dot). A solid pattern keeps the lines whole and a hidden pattern
+            removes them.
 
         pattern : VectorLike[float], optional
             Lengths of alternating drawn and undrawn intervals used instead of
@@ -1627,7 +1627,8 @@ class PolyDataFilters(DataSetFilters):
             output = self.copy()
         else:
             source = self.strip(join=True, progress_bar=progress_bar) if join else self
-            output = _dashed_polydata(source, runs, period=period, scale=scale)
+            dashes = _dashed_polydata(source, runs, period=period, scale=scale)
+            output = _replace_line_cells(self, dashes)
             for array_name, array in self.field_data.items():
                 output.field_data[array_name] = array
             association, active = self.active_scalars_info
@@ -5032,6 +5033,47 @@ def _dashed_polydata(
         )
     for name, array in source.cell_data.items():
         output.cell_data[name] = np.asarray(array)[cells]
+    return output
+
+
+def _replace_line_cells(source: PolyData, dashes: PolyData) -> PolyData:
+    """Return the source with its line cells replaced by the dashes."""
+    if source.n_verts == 0 and source.n_faces == 0 and source.n_strips == 0:
+        return dashes
+
+    output = pv.PolyData()
+    output.points = (
+        np.vstack([source.points, dashes.points]) if dashes.n_points else source.points.copy()
+    )
+
+    lines = np.asarray(dashes.lines).copy()
+    position = 0
+    while position < lines.size:
+        size = int(lines[position])
+        lines[position + 1 : position + 1 + size] += source.n_points
+        position += 1 + size
+    output.verts = source.verts
+    output.lines = lines
+    output.faces = source.faces
+    output.strips = source.strips
+
+    for name, array in source.point_data.items():
+        values = np.asarray(array)
+        if dashes.n_points == 0:
+            output.point_data[name] = values
+        elif name in dashes.point_data:
+            output.point_data[name] = np.concatenate([values, np.asarray(dashes.point_data[name])])
+
+    head = np.arange(source.n_verts)
+    tail = np.arange(source.n_verts + source.n_lines, source.n_cells)
+    for name, array in source.cell_data.items():
+        values = np.asarray(array)
+        if dashes.n_cells == 0:
+            output.cell_data[name] = np.concatenate([values[head], values[tail]])
+        elif name in dashes.cell_data:
+            output.cell_data[name] = np.concatenate(
+                [values[head], np.asarray(dashes.cell_data[name]), values[tail]]
+            )
     return output
 
 

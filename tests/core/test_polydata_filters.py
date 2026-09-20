@@ -237,10 +237,25 @@ def test_dash_lines_copies_cell_data():
     assert 'tag' not in line.dash_lines('--', scale=0.01).cell_data
 
 
-def test_dash_lines_ignores_non_line_cells():
+def test_dash_lines_keeps_non_line_cells():
     sphere = pv.Sphere()
-    assert sphere.dash_lines().n_cells == 0
+    assert sphere.dash_lines().n_cells == sphere.n_cells
     assert pv.PolyData().dash_lines().n_cells == 0
+
+
+@pytest.mark.parametrize('style', ['--', ''])
+def test_dash_lines_keeps_the_other_cells_of_a_mixed_mesh(style):
+    mesh = pv.Plane(i_resolution=2, j_resolution=2)
+    mesh.lines = np.array([2, 0, 8])
+    mesh.verts = np.array([1, 3])
+    mesh.cell_data['tag'] = np.arange(mesh.n_cells)
+
+    dashed = mesh.dash_lines(style, scale=0.2, join=False)
+    assert dashed.n_verts == mesh.n_verts
+    assert dashed.n_faces == mesh.n_faces
+    assert dashed.n_lines == (0 if style == '' else 1)
+    assert dashed.cell_data['tag'][0] == mesh.cell_data['tag'][0]
+    assert dashed.cell_data['tag'][-1] == mesh.cell_data['tag'][-1]
 
 
 def test_dash_lines_default_scale_follows_length():
