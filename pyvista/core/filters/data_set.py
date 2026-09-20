@@ -3067,7 +3067,7 @@ class DataSetFilters(DataObjectFilters):
 
         field = get_array_association(input_mesh, scalars_, preference='point')
         if field != FieldAssociation.POINT:
-            msg = 'Dataset can only by warped by a point data array.'
+            msg = 'Dataset can only be warped by a point data array.'
             raise TypeError(msg)
         # Run the algorithm
         alg = _vtk.vtkWarpScalar()
@@ -3172,7 +3172,7 @@ class DataSetFilters(DataObjectFilters):
             msg = 'No vectors present to warp by vector.'
             raise ValueError(msg)
         if field != FieldAssociation.POINT:
-            msg = 'Dataset can only by warped by a point data array.'
+            msg = 'Dataset can only be warped by a point data array.'
             raise TypeError(msg)
 
         # check that this is indeed a vector field

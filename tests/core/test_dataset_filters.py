@@ -1995,6 +1995,11 @@ def test_invalid_warp_vector(sphere):
     with pytest.raises(ValueError):  # noqa: PT011
         sphere.warp_by_vector()
 
+    # cell vectors
+    sphere.cell_data['cell_vectors'] = np.ones((sphere.n_cells, 3))
+    with pytest.raises(TypeError, match='can only be warped by a point data array'):
+        sphere.warp_by_vector('cell_vectors')
+
 
 def test_delaunay_3d():
     data = examples.load_uniform().threshold_percent(30, progress_bar=True)
