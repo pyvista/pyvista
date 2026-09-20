@@ -1916,9 +1916,9 @@ class PlanesAssembly(_XYZAssembly):
         # Set default text properties
         # TODO: implement set_text_prop() and use that instead
         for label in self._label_actor_iterator:
-            prop = label.prop
-            prop.justification_vertical = 'center'
-            prop.justification_horizontal = 'center'
+            label_prop = label.prop
+            label_prop.justification_vertical = 'center'
+            label_prop.justification_horizontal = 'center'
 
     def __repr__(self) -> str:
         """Representation of the planes assembly."""

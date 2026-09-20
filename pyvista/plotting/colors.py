@@ -15,7 +15,9 @@ import inspect
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
+from typing import TypedDict
 from typing import get_args
+from typing import overload
 
 from cycler import Cycler
 from cycler import cycler
@@ -40,10 +42,18 @@ except ImportError:  # pragma: no cover
     from matplotlib import colors
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+    from collections.abc import Mapping
     from collections.abc import Sequence
+    from typing import TypeAlias
+
+    from pyvista.core._typing_core import NumpyArray
 
     from ._typing import ColorLike
     from ._typing import ColormapOptions
+
+    # Any form a single channel may take, as accepted by ``convert_color_channel``
+    _ColorChannel: TypeAlias = float | str | np.floating[Any] | np.integer[Any]
 
 IPYGANY_MAP = {
     'reds': 'Reds',
@@ -54,12 +64,12 @@ _ALLOWED_COLOR_NAME_DELIMITERS = '_' + '-' + ' '
 _REMOVE_DELIMITER_LOOKUP = str.maketrans('', '', _ALLOWED_COLOR_NAME_DELIMITERS)
 
 
-def _format_color_name(name: str):
+def _format_color_name(name: str) -> str:
     """Format name as lower-case and remove delimiters."""
     return name.lower().translate(_REMOVE_DELIMITER_LOOKUP)
 
 
-def _format_color_dict(colors: dict[str, str]):
+def _format_color_dict(colors: dict[str, str]) -> dict[str, str]:
     """Format name and hex value."""
     return {_format_color_name(n): h.lower() for n, h in colors.items()}
 
@@ -305,7 +315,7 @@ hex_colors = _CSS_COLORS | _PARAVIEW_COLORS | _TABLEAU_COLORS | _VTK_COLORS
 _formatted_hex_colors = _format_color_dict(hex_colors)
 
 
-def _get_deprecated_hexcolors():
+def _get_deprecated_hexcolors() -> dict[str, str]:
     msg = (
         "'hexcolors' is deprecated; use 'hex_colors' instead. "
         'The color names in `hex_colors` are delimited with `_`.'
@@ -320,7 +330,7 @@ def _get_deprecated_hexcolors():
     return _formatted_hex_colors
 
 
-def __getattr__(name: str):
+def __getattr__(name: str) -> dict[str, str]:
     if name == 'hexcolors':
         return _get_deprecated_hexcolors()
     if pv.version_info >= (0, 52):  # pragma: no cover
@@ -587,7 +597,15 @@ _ALL_COLORS_LITERAL = Literal[
 
 matplotlib_default_colors = list(_TABLEAU_COLORS.values())
 
-COLOR_SCHEMES = {
+
+class _ColorScheme(TypedDict):
+    """A :vtk:`vtkColorSeries` scheme and a description of the colors it holds."""
+
+    id: int
+    descr: str | None
+
+
+COLOR_SCHEMES: dict[str, _ColorScheme] = {
     'spectrum': {
         'id': _vtk.vtkColorSeries.SPECTRUM,
         'descr': 'black, red, blue, green, purple, orange, brown',
@@ -831,8 +849,7 @@ COLOR_SCHEMES = {
 }
 
 SCHEME_NAMES = {
-    scheme_info['id']: scheme_name  # type: ignore[index]
-    for scheme_name, scheme_info in COLOR_SCHEMES.items()
+    scheme_info['id']: scheme_name for scheme_name, scheme_info in COLOR_SCHEMES.items()
 }
 
 # Define colormaps that require colorcet
@@ -1754,7 +1771,7 @@ class Color(_NoNewAttrMixin):
         *,
         default_color: ColorLike | None = None,
         default_opacity: float | str = 255,
-    ):
+    ) -> None:
         """Initialize new instance."""
         # Optimization: the color channels are assigned by every branch below, so only
         # the opacity (read by the three-channel paths) needs a value up front
@@ -1782,8 +1799,8 @@ class Color(_NoNewAttrMixin):
                 # From RGB(A) sequence
                 self._from_rgba(color)
             elif isinstance(color, _vtk.vtkColor3ub):
-                # From vtkColor3ub instance (can be unpacked as rgb tuple)
-                self._from_rgba(color)
+                # From vtkColor3ub instance, which holds three channels
+                self._from_rgba((color.GetRed(), color.GetGreen(), color.GetBlue()))
             else:  # pragma: no cover
                 msg = f'Unexpected color type: {type(color)}'
                 raise TypeError(msg)
@@ -1835,9 +1852,7 @@ class Color(_NoNewAttrMixin):
         return h.removeprefix('0x')
 
     @staticmethod
-    def convert_color_channel(
-        val: float | np.floating[Any] | np.integer[Any] | str,
-    ) -> int:
+    def convert_color_channel(val: _ColorChannel) -> int:
         """Convert the given color channel value to the integer representation.
 
         Parameters
@@ -1883,7 +1898,7 @@ class Color(_NoNewAttrMixin):
             msg = f'Unsupported color channel value provided: {val}'
             raise ValueError(msg)
 
-    def _from_rgba(self, rgba):
+    def _from_rgba(self, rgba: Sequence[_ColorChannel] | NumpyArray[Any]) -> None:
         """Construct color from an RGB(A) sequence."""
         arg = rgba
         if len(rgba) == 3:
@@ -1900,15 +1915,19 @@ class Color(_NoNewAttrMixin):
             msg = f'Invalid RGB(A) sequence: {arg}'
             raise ValueError(msg) from None
 
-    def _from_dict(self, dct):
+    def _from_dict(self, dct: Mapping[str, _ColorChannel]) -> None:
         """Construct color from an RGB(A) dictionary."""
-        # Get any of the keys associated with each color channel (or None).
-        rgba = [
-            next((dct[key] for key in cnames if key in dct), None) for cnames in self.CHANNEL_NAMES
-        ]
+        # Take any of the keys naming each channel, stopping at the first one the
+        # dictionary does not have, so that a missing alpha keeps the current opacity
+        rgba: list[_ColorChannel] = []
+        for cnames in self.CHANNEL_NAMES:
+            channel = next((dct[key] for key in cnames if key in dct), None)
+            if channel is None:
+                break
+            rgba.append(channel)
         self._from_rgba(rgba)
 
-    def _from_hex(self, h):
+    def _from_hex(self, h: str) -> None:
         """Construct color from a hex string."""
         try:
             channels = _hex_to_channels(h)
@@ -1922,7 +1941,7 @@ class Color(_NoNewAttrMixin):
         else:
             self._red, self._green, self._blue, self._opacity = channels
 
-    def _from_str(self, n: str):
+    def _from_str(self, n: str) -> None:
         """Construct color from a name or hex string."""
         arg = n
         n = _format_color_name(n)
@@ -2171,7 +2190,7 @@ class Color(_NoNewAttrMixin):
         """
         return _vtk.vtkColor3ub(self._red, self._green, self._blue)
 
-    def linear_to_srgb(self):
+    def linear_to_srgb(self) -> Color:
         """Convert from linear color values to sRGB color values.
 
         Returns
@@ -2186,7 +2205,7 @@ class Color(_NoNewAttrMixin):
         rgba[~mask] = 1.055 * rgba[~mask] ** (1 / 2.4) - 0.055
         return Color(rgba)
 
-    def srgb_to_linear(self):
+    def srgb_to_linear(self) -> Color:
         """Convert from sRGB color values to linear color values.
 
         Returns
@@ -2202,7 +2221,7 @@ class Color(_NoNewAttrMixin):
         return Color(rgba)
 
     @classmethod
-    def from_dict(cls, dict_):  # numpydoc ignore=RT01
+    def from_dict(cls, dict_: dict[str, int | float | str]) -> Color:  # numpydoc ignore=RT01
         """Construct from dictionary for JSON deserialization.
 
         Parameters
@@ -2213,12 +2232,12 @@ class Color(_NoNewAttrMixin):
         """
         return Color(dict_)
 
-    def to_dict(self):  # numpydoc ignore=RT01
+    def to_dict(self) -> dict[str, int]:  # numpydoc ignore=RT01
         """Convert to dictionary for JSON serialization."""
         return {'r': self._red, 'g': self._green, 'b': self._blue, 'a': self._opacity}
 
     @property
-    def opacity(self):  # numpydoc ignore=RT01
+    def opacity(self) -> int:  # numpydoc ignore=RT01
         """Return the opacity of this color in the range of ``(0-255)``.
 
         Examples
@@ -2233,18 +2252,29 @@ class Color(_NoNewAttrMixin):
         """
         return self._opacity
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         """Equality comparison."""
-        try:
-            return self.int_rgba == Color(other).int_rgba
-        except ValueError:  # pragma: no cover
+        if other is None:
+            # ``Color(None)`` is the default color, which is not what ``None`` means here
             return NotImplemented
+        try:
+            # Any color-like value is comparable, and anything else is not
+            other_color = Color(other)  # type: ignore[arg-type]
+        except (TypeError, ValueError):
+            return NotImplemented
+        return self.int_rgba == other_color.int_rgba
 
-    def __hash__(self):  # pragma: no cover
+    def __hash__(self) -> int:  # pragma: no cover
         """Hash calculation."""
         return hash((self._red, self._green, self._blue, self._opacity))
 
-    def __getitem__(self, item):
+    # fmt: off
+    @overload
+    def __getitem__(self, item: str | int | np.integer[Any]) -> float: ...
+    @overload
+    def __getitem__(self, item: slice) -> tuple[float, ...]: ...
+    # fmt: on
+    def __getitem__(self, item: object) -> float | tuple[float, ...]:
         """Support indexing the float RGBA representation for backward compatibility."""
         if not isinstance(item, (str, slice, int, np.integer)):
             msg = 'Invalid index specified, only strings and integers are supported.'
@@ -2252,14 +2282,12 @@ class Color(_NoNewAttrMixin):
         if isinstance(item, str):
             for i, cnames in enumerate(self.CHANNEL_NAMES):
                 if item in cnames:
-                    item = i
-                    break
-            else:
-                msg = f'Invalid string index {item!r}.'
-                raise ValueError(msg)
+                    return self.float_rgba[i]
+            msg = f'Invalid string index {item!r}.'
+            raise ValueError(msg)
         return self.float_rgba[item]
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[float]:
         """Support iteration over the float RGBA representation for backward compatibility."""
         return iter(self.float_rgba)
 
@@ -2354,14 +2382,16 @@ def get_cmap_safe(cmap: ColormapOptions) -> colors.Colormap:
     """
     _validation.check_instance(cmap, (str, list, colors.Colormap), name='cmap')
 
-    def get_3rd_party_cmap(cmap_):
+    def get_3rd_party_cmap(cmap_: str) -> colors.Colormap | None:  # numpydoc ignore=PR01
+        """Return the named colormap from a third-party package, if it has one."""
         cmap_sources = {
             'colorcet.cm': _COLORCET_CMAPS,
             'cmocean.cm.cmap_d': _CMOCEAN_CMAPS,
             'cmcrameri.cm.cmaps': _CMCRAMERI_CMAPS,
         }
 
-        def get_nested_attr(obj, attr_path):
+        def get_nested_attr(obj: object, attr_path: Sequence[str]) -> Any:  # numpydoc ignore=PR01
+            """Return the attribute reached by following a chain of names."""
             for attr in attr_path:
                 obj = getattr(obj, attr)
             return obj
@@ -2395,21 +2425,19 @@ def get_cmap_safe(cmap: ColormapOptions) -> colors.Colormap:
         return cmap
     if isinstance(cmap, str):
         # check if this colormap has been mapped between ipygany
-        if cmap in IPYGANY_MAP:
-            cmap = IPYGANY_MAP[cmap]  # type: ignore[assignment]
+        name = IPYGANY_MAP.get(cmap, cmap)
 
-        cmap_3rd_party = get_3rd_party_cmap(cmap)
-        if cmap_3rd_party:
+        cmap_3rd_party = get_3rd_party_cmap(name)
+        if cmap_3rd_party is not None:
             return cmap_3rd_party
-        elif not isinstance(cmap, colors.Colormap):
-            if inspect.ismodule(colormaps):  # pragma: no cover
-                # Backwards compatibility with matplotlib<3.5.0
-                if not hasattr(colormaps, cmap):
-                    msg = f'Invalid colormap "{cmap}"'
-                    raise ValueError(msg)
-                cmap_obj = getattr(colormaps, cmap)
-            else:
-                cmap_obj = _get_matplotlib_cmap(cmap).copy()
+        if inspect.ismodule(colormaps):  # pragma: no cover
+            # Backwards compatibility with matplotlib<3.5.0
+            if not hasattr(colormaps, name):
+                msg = f'Invalid colormap "{name}"'
+                raise ValueError(msg)
+            cmap_obj = getattr(colormaps, name)
+        else:
+            cmap_obj = _get_matplotlib_cmap(name).copy()
 
     else:  # input is a list
         for item in cmap:
@@ -2422,7 +2450,7 @@ def get_cmap_safe(cmap: ColormapOptions) -> colors.Colormap:
     return cmap_obj
 
 
-def get_default_cycler():
+def get_default_cycler() -> Cycler[str, Any]:
     """Return the default color cycler (matches matplotlib's default).
 
     Returns
@@ -2434,7 +2462,7 @@ def get_default_cycler():
     return cycler('color', matplotlib_default_colors)
 
 
-def get_hexcolors_cycler():
+def get_hexcolors_cycler() -> Cycler[str, Any]:
     """Return a color cycler for all of the available hex colors.
 
     See ``pyvista.plotting.colors.hex_colors``.
@@ -2449,7 +2477,7 @@ def get_hexcolors_cycler():
     return cycler('color', hex_colors.keys())
 
 
-def get_matplotlib_theme_cycler():
+def get_matplotlib_theme_cycler() -> Cycler[str, Any]:
     """Return the color cycler of the current matplotlib theme.
 
     Returns
@@ -2461,7 +2489,7 @@ def get_matplotlib_theme_cycler():
     return plt.rcParams['axes.prop_cycle']
 
 
-def color_scheme_to_cycler(scheme):
+def color_scheme_to_cycler(scheme: str | int | _vtk.vtkColorSeries) -> Cycler[str, Any]:
     """Convert a color scheme to a Cycler.
 
     Parameters
@@ -2479,26 +2507,36 @@ def color_scheme_to_cycler(scheme):
 
     Raises
     ------
+    TypeError
+        If ``scheme`` is not a string, an integer or a color series.
     ValueError
         If the provided ``scheme`` is not a valid color scheme.
 
     """
-    if not isinstance(scheme, _vtk.vtkColorSeries):
+    _validation.check_instance(scheme, (str, int, _vtk.vtkColorSeries), name='Color scheme')
+    if isinstance(scheme, _vtk.vtkColorSeries):
+        series = scheme
+    else:
         series = _vtk.vtkColorSeries()
         if isinstance(scheme, str):
-            series.SetColorScheme(COLOR_SCHEMES.get(scheme.lower())['id'])  # type: ignore[index]
-        elif isinstance(scheme, int):
-            series.SetColorScheme(scheme)
+            name = scheme.lower()
+            _validation.check_contains(list(COLOR_SCHEMES), must_contain=name, name='Color scheme')
+            series.SetColorScheme(COLOR_SCHEMES[name]['id'])
         else:
-            msg = f'Color scheme not understood: {scheme}'
-            raise TypeError(msg)
-    else:
-        series = scheme
+            series.SetColorScheme(scheme)
     colors = (series.GetColor(i) for i in range(series.GetNumberOfColors()))
     return cycler('color', colors)
 
 
-def get_cycler(color_cycler):
+# fmt: off
+@overload
+def get_cycler(color_cycler: str | Sequence[ColorLike] | Cycler[str, Any]) -> Cycler[str, Any]: ...
+@overload
+def get_cycler(color_cycler: None) -> None: ...
+# fmt: on
+def get_cycler(
+    color_cycler: str | Sequence[ColorLike] | Cycler[str, Any] | None,
+) -> Cycler[str, Any] | None:
     """Return a color cycler based on the input value.
 
     Parameters
