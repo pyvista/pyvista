@@ -4,8 +4,10 @@ from collections.abc import Sized
 import itertools
 import re
 import sys
+from typing import TYPE_CHECKING
 from typing import Literal
 from typing import get_args
+import warnings
 
 from hypothesis import HealthCheck
 from hypothesis import assume
@@ -32,6 +34,7 @@ from pyvista.core.filters.data_object import _SENTINEL
 from pyvista.core.filters.data_object import _VTK_CELL_STATUS_INFO
 from pyvista.core.filters.data_object import _convex_hull_scipy
 from pyvista.core.filters.data_object import _get_cell_quality_measures
+from pyvista.core.utilities._cell_lengths import _cell_edge_lengths
 from pyvista.core.utilities.cell_quality import _CellQualityLiteral
 from pyvista.core.utilities.helpers import _NORMALS
 from pyvista.core.utilities.helpers import generate_plane
@@ -39,6 +42,9 @@ from tests.core.test_dataset_filters import HYPOTHESIS_MAX_EXAMPLES
 from tests.core.test_dataset_filters import n_numbers
 from tests.core.test_dataset_filters import normals
 from tests.vtk_backend_divergence import CELL_STATUS_ENUM
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 # CellStatus sorted by lower-case names, excluding VALID state
 CELL_STATUS_ARRAY_NAMES = [
@@ -2079,6 +2085,49 @@ def test_sample_composite():
     assert 'partial_data' not in result[0].point_data
     assert 'vtkValidPointMask' in result[0].point_data
     assert 'vtkGhostType' in result[0].point_data
+
+
+def test_sample_composite_target():
+    from pyvista import _vtk
+
+    def _solid(center):
+        mesh = pv.SolidSphere(outer_radius=0.4, center=center)
+        mesh['height'] = mesh.points[:, 2]
+        mesh.cell_data['cval'] = np.arange(mesh.n_cells, dtype=float)
+        return mesh
+
+    a, b = _solid((0.0, 0.0, 0.0)), _solid((0.7, 0.0, 0.0))
+    grid = pv.ImageData(dimensions=(20, 20, 20), spacing=(0.09,) * 3, origin=(-0.8,) * 3)
+
+    flat = grid.sample(pv.MultiBlock([a, b]))
+    assert flat['vtkValidPointMask'].sum() > 0
+    assert 'height' in flat.point_data
+    assert 'cval' in flat.point_data
+
+    # Nesting and empty blocks are handled by the composite probe
+    nested = grid.sample(pv.MultiBlock([a, pv.MultiBlock([b])]))
+    assert np.array_equal(nested['vtkValidPointMask'], flat['vtkValidPointMask'])
+
+    with_none = grid.sample(pv.MultiBlock([a, None]))
+    assert 0 < with_none['vtkValidPointMask'].sum() < flat['vtkValidPointMask'].sum()
+
+    partitioned = grid.sample(pv.PartitionedDataSet([a, b]))
+    assert np.array_equal(partitioned['vtkValidPointMask'], flat['vtkValidPointMask'])
+
+    # Unwrapped composites are accepted too
+    raw = _vtk.vtkMultiBlockDataSet()
+    raw.SetNumberOfBlocks(2)
+    raw.SetBlock(0, a)
+    raw.SetBlock(1, b)
+    assert np.array_equal(grid.sample(raw)['vtkValidPointMask'], flat['vtkValidPointMask'])
+
+    raw_partitions = _vtk.vtkPartitionedDataSet()
+    raw_partitions.SetNumberOfPartitions(2)
+    raw_partitions.SetPartition(0, a)
+    raw_partitions.SetPartition(1, b)
+    assert np.array_equal(
+        grid.sample(raw_partitions)['vtkValidPointMask'], flat['vtkValidPointMask']
+    )
 
 
 @pytest.mark.parametrize('as_composite', [True, False])
@@ -4638,3 +4687,463 @@ def test_convex_hull_scipy_not_installed(monkeypatch):
     monkeypatch.setitem(sys.modules, 'scipy.spatial', None)
     with pytest.raises(ImportError, match='scipy'):
         _convex_hull_scipy(pv.Sphere().points, dimensionality=3)
+
+
+def test_resample_to_image(tetbeam):
+    tetbeam['point_scalars'] = tetbeam.points[:, 2]
+    tetbeam.cell_data['cell_scalars'] = np.arange(tetbeam.n_cells, dtype=float)
+    image = tetbeam.resample_to_image()
+
+    assert isinstance(image, pv.ImageData)
+    assert 'point_scalars' in image.point_data
+    assert 'cell_scalars' in image.point_data
+    assert np.allclose(image.points_to_cells().bounds, tetbeam.bounds)
+
+    # The interior of the beam is sampled and its arrays are interpolated
+    valid = image['vtkValidPointMask'].astype(bool)
+    assert valid.any()
+    assert np.allclose(image['point_scalars'][valid], image.points[valid][:, 2])
+
+    # The spacing follows the input's own cells
+    coarse = tetbeam.resample_to_image(cell_length_percentile=0.9)
+    assert np.all(np.array(coarse.spacing) > image.spacing)
+
+
+def test_resample_to_image_dimensions_and_spacing(tetbeam):
+    dims = (10, 11, 12)
+    assert tetbeam.resample_to_image(dimensions=dims).dimensions == dims
+
+    image = tetbeam.resample_to_image(spacing=tetbeam.length / 20)
+    assert np.allclose(image.spacing, tetbeam.length / 20, atol=1e-2)
+    assert np.allclose(image.points_to_cells().bounds, tetbeam.bounds)
+
+
+def test_resample_to_image_geometry_matches_voxelize(sphere):
+    # Both filters place their voxels identically, so their outputs can be combined
+    mask = sphere.voxelize_binary_mask(dimensions=(20, 21, 22))
+    image = sphere.resample_to_image(dimensions=(20, 21, 22))
+
+    assert image.dimensions == mask.dimensions
+    assert image.spacing == mask.spacing
+    assert image.origin == mask.origin
+
+
+def test_resample_to_image_reference_volume(tetbeam):
+    tetbeam['point_scalars'] = tetbeam.points[:, 2]
+    reference = pv.ImageData()
+    reference.extent = (2, 6, 3, 8, 4, 10)
+    reference.spacing = (0.2, 0.3, 0.4)
+    reference.origin = (0.1, 0.2, 0.3)
+    reference.direction_matrix = pv.Transform().rotate_z(30).matrix[:3, :3]
+    reference['reference_scalars'] = np.arange(reference.n_points)
+
+    image = tetbeam.resample_to_image(reference_volume=reference)
+
+    assert image.extent == reference.extent
+    assert image.offset == reference.offset
+    assert image.spacing == reference.spacing
+    assert image.origin == reference.origin
+    assert np.allclose(image.direction_matrix, reference.direction_matrix)
+    # The reference only defines the geometry, its arrays are not part of the output
+    assert 'reference_scalars' not in image.array_names
+    assert 'point_scalars' in image.point_data
+
+
+def voxel_of_each_point(mesh, image):
+    """Return the flat index of the voxel containing each of the mesh's points."""
+    dims = np.array(image.dimensions)
+    ijk = np.round((mesh.points - np.array(image.origin)) / np.array(image.spacing)).astype(int)
+    ijk = np.clip(ijk, 0, dims - 1)
+    return ijk[:, 0] + dims[0] * (ijk[:, 1] + dims[1] * ijk[:, 2])
+
+
+def test_resample_to_image_method_interpolate(sphere):
+    sphere['point_scalars'] = sphere.points[:, 0]
+    dims = (20, 20, 20)
+
+    # Interpolating from the points fills every voxel the surface crosses
+    image = sphere.resample_to_image(dimensions=dims)
+    valid = image['vtkValidPointMask'].astype(bool)
+    assert valid[voxel_of_each_point(sphere.subdivide(3), image)].all()
+
+    # A surface has no volume for a cell search to land in, so sampling does not
+    sampled = sphere.resample_to_image(dimensions=dims, method='sample')
+    sampled_valid = sampled['vtkValidPointMask'].astype(bool)
+    assert not sampled_valid[voxel_of_each_point(sphere, sampled)].all()
+    assert sampled_valid.sum() < valid.sum()
+
+    # Only voxels within the default radius of the surface are filled, not the interior
+    lengths = _cell_edge_lengths(sphere)
+    radius = np.quantile(lengths[lengths > 0], 0.95)
+    distance = image.compute_implicit_distance(sphere)['implicit_distance']
+    assert np.all(np.abs(distance[valid]) <= radius)
+    assert not valid[voxel_of_each_point(pv.PolyData([sphere.center]), image)].any()
+
+    # A smaller radius fills fewer voxels
+    half_diagonal = np.linalg.norm(image.spacing) / 2
+    tight = sphere.resample_to_image(dimensions=dims, radius=half_diagonal)
+    assert tight['vtkValidPointMask'].sum() < valid.sum()
+
+    # A point cloud has no cells to reach across, so its radius is half a voxel diagonal
+    cloud = pv.PolyData(sphere.points)
+    cloud['point_scalars'] = sphere['point_scalars']
+    assert cloud.resample_to_image(dimensions=dims) == cloud.resample_to_image(
+        dimensions=dims, radius=half_diagonal
+    )
+
+
+def test_resample_to_image_multiblock():
+    blocks = pv.MultiBlock([pv.Sphere(), pv.Sphere(center=(1.5, 0, 0))])
+    for block in blocks:
+        block['height'] = block.points[:, 2]
+
+    image = blocks.resample_to_image(target_n_points=20_000, mark_blank=True)
+    assert isinstance(image, pv.ImageData)
+    assert 'height' in image.point_data
+    # Voxels are points, so the cells rather than the points span the input's bounds
+    assert np.allclose(np.array(image.bounds_size) + np.array(image.spacing), blocks.bounds_size)
+
+    # Surfaces have no volume, so the blocks are interpolated from their points
+    valid = image['vtkValidPointMask'].astype(bool)
+    assert valid.any()
+    assert image.point_data['vtkGhostType'].size == image.n_points
+
+    # Each block reaches the output
+    for block in blocks:
+        ijk = np.round((block.points - np.array(image.origin)) / np.array(image.spacing)).astype(
+            int
+        )
+        ijk = np.clip(ijk, 0, np.array(image.dimensions) - 1)
+        flat = ijk[:, 0] + image.dimensions[0] * (ijk[:, 1] + image.dimensions[1] * ijk[:, 2])
+        assert valid[flat].all()
+
+
+def test_resample_to_image_multiblock_volumetric():
+    blocks = pv.MultiBlock(
+        [pv.SolidSphere(outer_radius=0.5), pv.SolidSphere(outer_radius=0.5, center=(1.2, 0, 0))]
+    )
+    for block in blocks:
+        block['height'] = block.points[:, 2]
+
+    image = blocks.resample_to_image(target_n_points=20_000)
+    assert 'height' in image.point_data
+    # Volumetric blocks are sampled, which fills their interiors
+    assert image['vtkValidPointMask'].sum() > 0.3 * image.n_points
+
+
+def test_resample_to_image_multiblock_matches_combined():
+    blocks = pv.MultiBlock([pv.Sphere(), pv.Sphere(center=(0.6, 0, 0))])
+    for block in blocks:
+        block['height'] = block.points[:, 2]
+
+    from_blocks = blocks.resample_to_image(target_n_points=10_000)
+    from_combined = blocks.combine().resample_to_image(target_n_points=10_000)
+    assert from_blocks.dimensions == from_combined.dimensions
+    assert np.allclose(from_blocks.origin, from_combined.origin)
+    assert np.allclose(from_blocks['height'], from_combined['height'])
+
+
+@pytest.mark.parametrize('target', [1_000, 100_000, 1_000_000])
+def test_target_n_points(sphere, target):
+    image = sphere.resample_to_image(target_n_points=target)
+    assert 0.8 <= image.n_points / target <= 1.2
+    assert image.n_points == np.prod(image.dimensions)
+
+    # Both filters place their voxels identically
+    mask = sphere.voxelize_binary_mask(target_n_points=target)
+    assert mask.dimensions == image.dimensions
+    assert np.allclose(mask.origin, image.origin)
+    assert np.allclose(mask.spacing, image.spacing)
+
+    # Dimensions follow the bounds, so the spacing is isotropic up to the rounding
+    spacing = np.array(image.spacing)
+    assert spacing.max() / spacing.min() <= 1 + 1 / min(image.dimensions)
+
+
+def test_target_n_points_flat_axis():
+    plane = pv.Plane(i_size=2, j_size=3, i_resolution=20, j_resolution=20)
+    image = plane.resample_to_image(target_n_points=10_000)
+    # The flat axis holds one point and takes no part in the count
+    assert image.dimensions[2] == 1
+    assert 0.8 <= image.n_points / 10_000 <= 1.2
+
+
+def test_max_n_points_clamps_the_defaults():
+    mesh = pv.Sphere(theta_resolution=50, phi_resolution=50)
+
+    # An estimated geometry is coarsened to fit, without raising
+    assert mesh.resample_to_image().n_points > 1000
+    for cap in [1000, 500, 100, 8, 1]:
+        assert mesh.resample_to_image(max_n_points=cap).n_points <= cap
+
+
+@pytest.mark.parametrize('cap', range(1, 200, 7))
+def test_max_n_points_is_a_strict_bound(sphere, cap):
+    assert sphere.resample_to_image(max_n_points=cap).n_points <= cap
+
+
+def test_max_n_points_clamps_a_flat_axis():
+    plane = pv.Plane(i_size=2, j_size=3, i_resolution=50, j_resolution=50)
+    image = plane.resample_to_image(max_n_points=100)
+    assert image.dimensions[2] == 1
+    assert image.n_points <= 100
+
+
+def test_max_n_points_raises_for_a_requested_geometry():
+    mesh = pv.Sphere(theta_resolution=50, phi_resolution=50)
+    match = 'points, which exceeds `max_n_points=1000`'
+    for kwargs in [
+        dict(dimensions=(40, 40, 40)),
+        dict(spacing=0.02),
+        dict(cell_length_percentile=0.01),
+        dict(reference_volume=pv.ImageData(dimensions=(40, 40, 40), spacing=(0.03,) * 3)),
+    ]:
+        with pytest.raises(ValueError, match=re.escape(match)):
+            mesh.resample_to_image(max_n_points=1000, **kwargs)
+
+    # A requested geometry inside the limit is left alone
+    assert mesh.resample_to_image(dimensions=(5, 5, 5), max_n_points=1000).n_points == 125
+
+
+def test_max_n_points_bounds_the_target(sphere):
+    match = 'Target n points (2000) cannot exceed max n points (1000).'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        sphere.resample_to_image(target_n_points=2000, max_n_points=1000)
+
+    # The target is approached, the limit is not exceeded
+    for target in [500, 999, 1000]:
+        assert sphere.resample_to_image(target_n_points=target, max_n_points=1000).n_points <= 1000
+
+
+def test_max_n_points_raises(sphere):
+    with pytest.raises(ValueError, match='greater than or equal to'):
+        sphere.resample_to_image(max_n_points=0)
+
+    with pytest.raises(ValueError, match='integer-like'):
+        sphere.resample_to_image(max_n_points=2.5)
+
+
+def test_target_n_points_raises(sphere):
+    match = 'Target n points cannot be set with dimensions, spacing or cell length options'
+    for kwargs in [
+        dict(dimensions=(10, 10, 10)),
+        dict(spacing=0.1),
+        dict(cell_length_percentile=0.5),
+        dict(cell_length_sample_size=100),
+    ]:
+        with pytest.raises(TypeError, match=match):
+            sphere.resample_to_image(target_n_points=1000, **kwargs)
+
+    with pytest.raises(TypeError, match='Cannot specify a reference volume'):
+        sphere.resample_to_image(target_n_points=1000, reference_volume=pv.ImageData())
+
+    with pytest.raises(ValueError, match='greater than or equal to'):
+        sphere.resample_to_image(target_n_points=0)
+
+    with pytest.raises(ValueError, match='integer-like'):
+        sphere.resample_to_image(target_n_points=2.5)
+
+
+def test_resample_to_image_interpolate_warns_on_cell_data(sphere, tetbeam):
+    sphere.clear_data()
+    sphere.cell_data['cval'] = np.arange(sphere.n_cells, dtype=float)
+
+    match = r"Cell data \['cval'\] is dropped by `method='interpolate'`, chosen for this input"
+    with pytest.warns(UserWarning, match=match):
+        image = sphere.resample_to_image(dimensions=(20, 20, 20))
+    assert 'cval' not in image.point_data
+
+    def dropped_warnings(recorded):
+        """Return only the warnings this filter raises about dropped cell data."""
+        return [w for w in recorded if 'is dropped by' in str(w.message)]
+
+    # Converting first keeps it, and warns no more
+    with warnings.catch_warnings(record=True) as recorded:
+        warnings.simplefilter('always')
+        converted = sphere.cell_data_to_point_data().resample_to_image(dimensions=(20, 20, 20))
+    assert not dropped_warnings(recorded)
+    assert 'cval' in converted.point_data
+
+    # Asking for the method by name says so instead
+    with pytest.warns(UserWarning, match=r"`method='interpolate'`, which reads point data"):
+        sphere.resample_to_image(dimensions=(20, 20, 20), method='interpolate')
+
+    # `sample` carries cell data, so it does not warn
+    tetbeam.clear_data()
+    tetbeam.cell_data['cval'] = np.arange(tetbeam.n_cells, dtype=float)
+    with warnings.catch_warnings(record=True) as recorded:
+        warnings.simplefilter('always')
+        sampled = tetbeam.resample_to_image(dimensions=(10, 10, 10))
+    assert not dropped_warnings(recorded)
+    assert 'cval' in sampled.point_data
+
+
+def test_resample_to_image_blanks_invalid_points(sphere, tetbeam):
+    ghost_name = pv._vtk.vtkDataSetAttributes.GhostArrayName()
+    hidden = pv._vtk.vtkDataSetAttributes.HIDDENPOINT
+
+    # Both methods hide the voxels their mask flags as empty
+    for mesh, kwargs in [(sphere, dict(dimensions=(20, 20, 20))), (tetbeam, {})]:
+        for method in ['sample', 'interpolate']:
+            image = mesh.resample_to_image(method=method, mark_blank=True, **kwargs)
+            invalid = image['vtkValidPointMask'] == 0
+            ghosts = image.point_data[ghost_name]
+            assert ghosts.dtype == np.uint8
+            assert np.array_equal(ghosts, np.where(invalid, hidden, 0))
+
+            # Blanking is off by default, which keeps the mask but hides nothing
+            unmarked = mesh.resample_to_image(method=method, **kwargs)
+            assert ghost_name not in unmarked.point_data
+            assert ghost_name not in unmarked.cell_data
+            assert np.array_equal(unmarked['vtkValidPointMask'], image['vtkValidPointMask'])
+
+
+@pytest.mark.parametrize(('method', 'kwargs'), [('sample', {}), ('interpolate', {'radius': 0.05})])
+def test_resample_to_image_null_value(sphere, method, kwargs):
+    sphere.clear_data()
+    sphere['point_scalars'] = sphere.points[:, 0]
+    dims = (20, 20, 20)
+    shared = dict(dimensions=dims, method=method, **kwargs)
+
+    plain = sphere.resample_to_image(**shared)
+    invalid = plain['vtkValidPointMask'] == 0
+    assert invalid.any()
+    assert np.array_equal(plain['point_scalars'][invalid], np.zeros(invalid.sum()))
+
+    # Both methods fill the empty voxels, and leave the rest alone
+    filled = sphere.resample_to_image(null_value=-99.0, **shared)
+    assert np.array_equal(filled['point_scalars'][invalid], np.full(invalid.sum(), -99.0))
+    assert np.array_equal(filled['point_scalars'][~invalid], plain['point_scalars'][~invalid])
+
+    # The mask and the blanking flags are not values to fill
+    blanked = sphere.resample_to_image(null_value=-99.0, mark_blank=True, **shared)
+    hidden = pv._vtk.vtkDataSetAttributes.HIDDENPOINT
+    ghost_name = pv._vtk.vtkDataSetAttributes.GhostArrayName()
+    assert np.array_equal(blanked['vtkValidPointMask'], plain['vtkValidPointMask'])
+    assert np.array_equal(blanked.point_data[ghost_name], np.where(invalid, hidden, 0))
+
+
+@pytest.mark.parametrize('null_value', [-1.0, 300.0, np.nan, 1.5])
+def test_resample_to_image_null_value_dtype_raises(sphere, null_value):
+    sphere.clear_data()
+    sphere['counts'] = np.arange(sphere.n_points, dtype=np.uint8)
+    match = (
+        f"`null_value={null_value}` cannot be stored in array 'counts', whose "
+        '`uint8` data type holds integers from 0 to 255.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        sphere.resample_to_image(dimensions=(20, 20, 20), method='sample', null_value=null_value)
+
+
+def test_resample_to_image_null_value_float_dtype(sphere):
+    sphere.clear_data()
+    sphere['counts'] = np.arange(sphere.n_points, dtype=np.float32)
+    image = sphere.resample_to_image(dimensions=(20, 20, 20), method='sample', null_value=-1.0)
+    assert image['counts'][image['vtkValidPointMask'] == 0].min() == -1.0
+
+
+def test_resample_to_image_method_default(sphere, mocker: MockerFixture):
+    from pyvista.core.filters import data_object
+    from pyvista.core.filters import data_set
+
+    sample = mocker.spy(data_object.DataObjectFilters, 'sample')
+    interpolate = mocker.spy(data_set.DataSetFilters, 'interpolate')
+    dims = (20, 20, 20)
+
+    # A volumetric input is sampled from its cells
+    sphere.delaunay_3d().resample_to_image(dimensions=dims)
+    assert sample.call_count == 1
+    assert interpolate.call_count == 0
+
+    # Anything else is interpolated from its points
+    for mesh in (sphere, pv.PointSet(sphere.points), pv.Line()):
+        mesh.resample_to_image(dimensions=dims)
+    assert sample.call_count == 1
+    assert interpolate.call_count == 3
+
+    # An explicit method overrides the default
+    sphere.resample_to_image(dimensions=dims, method='sample')
+    assert sample.call_count == 2
+
+
+def test_resample_to_image_interpolate_point_cloud(sphere):
+    # A point cloud has no cells at all, so only interpolation can reach it
+    cloud = pv.PointSet(sphere.points)
+    cloud['point_scalars'] = sphere.points[:, 0]
+    image = cloud.resample_to_image(dimensions=(20, 20, 20))
+
+    valid = image['vtkValidPointMask'].astype(bool)
+    assert valid[voxel_of_each_point(cloud, image)].all()
+    # Each filled voxel takes a value from points no further away than the radius
+    radius = np.linalg.norm(image.spacing) / 2
+    assert np.allclose(image['point_scalars'][valid], image.points[valid][:, 0], atol=radius)
+
+
+@pytest.mark.parametrize('axis', [0, 1, 2])
+def test_resample_to_image_flat_input(axis):
+    direction = np.zeros(3)
+    direction[axis] = 1
+    other = (axis + 1) % 3
+    plane = pv.Plane(direction=direction, i_size=2, j_size=3, i_resolution=9, j_resolution=9)
+    plane['point_scalars'] = plane.points[:, other]
+    image = plane.resample_to_image(dimensions=np.where(np.eye(3)[axis], 1, 10).astype(int))
+
+    assert image.dimensions[axis] == 1
+    assert image.spacing[axis] > 0
+    # Every voxel of the flat image takes a value from the plane
+    assert image['vtkValidPointMask'].all()
+
+    # The voxels are centered on the plane, so sampling its cells is exact
+    exact = plane.resample_to_image(dimensions=image.dimensions, method='sample')
+    assert np.allclose(exact['point_scalars'], exact.points[:, other])
+
+
+def test_resample_to_image_categorical(tetbeam):
+    tetbeam.point_data['labels'] = np.where(tetbeam.points[:, 2] > 2.5, 7.0, 3.0)
+    dims = (8, 8, 8)
+
+    blended = tetbeam.resample_to_image(dimensions=dims)
+    categorical = tetbeam.resample_to_image(dimensions=dims, categorical=True)
+
+    valid = categorical['vtkValidPointMask'].astype(bool)
+    # Interpolating labels invents values between them, nearest neighbor does not
+    assert np.array_equal(np.unique(categorical['labels'][valid]), [3.0, 7.0])
+    assert len(np.unique(blended['labels'][valid])) > 2
+
+
+def test_resample_to_image_raises(sphere):
+    match = 'Spacing and dimensions cannot both be set. Set one or the other.'
+    with pytest.raises(TypeError, match=match):
+        sphere.resample_to_image(dimensions=(1, 2, 3), spacing=(4, 5, 6))
+
+    match = (
+        'Cannot specify a reference volume with other geometry parameters. '
+        '`reference_volume` must define the geometry exclusively.'
+    )
+    with pytest.raises(TypeError, match=re.escape(match)):
+        sphere.resample_to_image(reference_volume=pv.ImageData(), dimensions=(1, 2, 3))
+
+    match = (
+        'Spacing cannot be estimated from the input cells. '
+        'Set `dimensions` or `spacing` explicitly.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.PointSet(np.zeros((4, 3))).resample_to_image()
+
+    with pytest.raises(ValueError, match="method 'nonsense' is not valid"):
+        sphere.resample_to_image(dimensions=(4, 5, 6), method='nonsense')
+
+    for name, value in [('radius', 0.1), ('sharpness', 4.0)]:
+        match = f"`{name}` requires `method='interpolate'`, but `method='sample'`."
+        with pytest.raises(TypeError, match=re.escape(match)):
+            sphere.resample_to_image(dimensions=(4, 5, 6), method='sample', **{name: value})
+
+    for name, value in [('tolerance', 0.1), ('categorical', True), ('categorical', False)]:
+        match = f"`{name}` requires `method='sample'`, but `method='interpolate'`."
+        with pytest.raises(TypeError, match=re.escape(match)):
+            sphere.resample_to_image(dimensions=(4, 5, 6), method='interpolate', **{name: value})
+
+    # The message says when the method was picked for the input rather than requested
+    match = "`radius` requires `method='interpolate'`, but `method='sample'`, chosen for this"
+    with pytest.raises(TypeError, match=re.escape(match)):
+        sphere.delaunay_3d().resample_to_image(dimensions=(4, 5, 6), radius=0.1)
