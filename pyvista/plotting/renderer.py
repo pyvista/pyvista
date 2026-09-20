@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
 from typing import cast
+import weakref
 
 import numpy as np
 import pyvista_validation as _validation
@@ -674,6 +675,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             scale_point(source, source.focal_point, invert=True),
             source.up,
         )
+        if source._renderer is None:
+            source._renderer = weakref.proxy(self)
         self.Modified()
         self.camera_set = True
 
@@ -808,6 +811,13 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """Return the scene bounds as an actor sees them before the renderer scale."""
         scale = np.repeat(np.array(self.scale, dtype=float), 2)
         return BoundsTuple(*(np.array(self.bounds) / scale).tolist())
+
+    def _place_ruler(self, ruler: _vtk.vtkAxisActor2D) -> None:
+        """Put a ruler's end points where the renderer scale moves the scene."""
+        scale = np.array(self.scale, dtype=float)
+        point_a, point_b = ruler._unscaled_points  # type: ignore[attr-defined]
+        ruler.GetPositionCoordinate().SetValue(*(point_a * scale))
+        ruler.GetPosition2Coordinate().SetValue(*(point_b * scale))
 
     @property
     def background_color(self) -> Color:  # numpydoc ignore=RT01
@@ -3126,7 +3136,9 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         # Reset all actors to match this scale
         for actor in self.actors.values():
-            if hasattr(actor, 'SetScale'):
+            if isinstance(actor, _vtk.vtkAxisActor2D) and hasattr(actor, '_unscaled_points'):
+                self._place_ruler(actor)
+            elif hasattr(actor, 'SetScale'):
                 actor.SetScale(self.scale)
 
         self._plotter.render()
@@ -4494,7 +4506,9 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         pointb: VectorLike[float],
         *,
         flip_range: bool = False,
+        flip_side: bool = False,
         number_labels: int | None = None,
+        snap_labels: bool = False,
         show_labels: bool = True,
         font_size_factor: float = 0.6,
         label_size_factor: float = 1.0,
@@ -4516,9 +4530,10 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         parallel projection, that is, :func:`Plotter.enable_parallel_projection`,
         and place the ruler orthogonal to the viewing direction.
 
-        The title and labels are placed to the right of ruler moving from
-        ``pointa`` to ``pointb``. Use ``flip_range`` to flip the ``0`` location,
-        if needed.
+        The labels are placed to the right of the ruler moving from ``pointa`` to
+        ``pointb``, so two rulers pointing opposite ways carry their labels on
+        opposite sides. Use ``flip_side`` to move them across, and ``flip_range``
+        to flip the ``0`` location.
 
         Since the ruler is placed in an overlay on the viewing scene, the camera
         does not automatically reset to include the ruler in the view.
@@ -4534,9 +4549,28 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         flip_range : bool, default: False
             If ``True``, the distance range goes from ``pointb`` to ``pointa``.
 
+        flip_side : bool, default: False
+            If ``True``, the labels and ticks are drawn on the other side of the
+            ruler. The distances they report are unchanged.
+
+            .. versionadded:: 0.50
+
         number_labels : int, optional
-            Number of labels to place on ruler.
-            If not supplied, the number will be adjusted for "nice" values.
+            Number of labels to place on the ruler, at least ``2``. If not
+            supplied, the number is adjusted for "nice" values.
+
+            .. note::
+                Below VTK 9.6 the maximum is ``25``.
+
+        snap_labels : bool, default: False
+            If ``True``, the labels are placed on round values and ``number_labels``
+            becomes a target rather than an exact count. The far end of the ruler
+            carries a label only when a round value lands on it.
+
+            .. note::
+                Requires VTK 9.4 or newer.
+
+            .. versionadded:: 0.50
 
         show_labels : bool, default: True
             Whether to show labels.
@@ -4572,9 +4606,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Either a string, rgb list, or hex color string for
             label and title colors.
 
-            .. warning::
-                This is either white or black.
-
         tick_color : ColorLike, optional
             Either a string, rgb list, or hex color string for
             tick line colors.
@@ -4604,9 +4635,9 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         ...     title='X Distance',
         ... )
 
-        Measure y direction of cone and place ruler slightly to left.
-        The title and labels are placed to the right of the ruler when
-        traveling from ``pointa`` to ``pointb``.
+        Measure y direction of cone and place ruler slightly to left. The labels
+        are placed to the right of the ruler when traveling from ``pointa`` to
+        ``pointb``.
 
         >>> _ = pl.add_ruler(
         ...     pointa=[cone.bounds.x_min - 0.1, cone.bounds.y_max, 0.0],
@@ -4629,8 +4660,12 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         ruler.GetPositionCoordinate().SetReferenceCoordinate(None)  # type: ignore[arg-type]
         point_a = _validation.validate_array3(pointa, dtype_out=float, name='pointa')
         point_b = _validation.validate_array3(pointb, dtype_out=float, name='pointb')
-        ruler.GetPositionCoordinate().SetValue(*point_a)
-        ruler.GetPosition2Coordinate().SetValue(*point_b)
+        if flip_side:
+            # VTK draws to the right of the axis direction
+            point_a, point_b = point_b, point_a
+            flip_range = not flip_range
+        ruler._unscaled_points = (point_a, point_b)  # type: ignore[attr-defined]
+        self._place_ruler(ruler)
 
         distance = np.linalg.norm(point_a - point_b)
         if flip_range:
@@ -4641,17 +4676,32 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         ruler.SetTitle(title)
         ruler.SetFontFactor(font_size_factor)
         ruler.SetLabelFactor(label_size_factor)
+        if snap_labels:
+            if vtk_version_info < (9, 4):  # pragma: no cover
+                from pyvista.core.errors import VTKVersionError
+
+                msg = '`snap_labels` requires VTK >= 9.4. Try installing VTK v9.4.0 or newer.'
+                raise VTKVersionError(msg)
+            ruler.SnapLabelsToGridOn()
         if number_labels is not None:
-            ruler.AdjustLabelsOff()
+            # VTK clamps the label count to 25 below 9.6, silently dropping the rest
+            maximum = np.inf if vtk_version_info >= (9, 6) else 25
+            number_labels = _validation.validate_number(
+                number_labels,
+                must_be_integer=True,
+                must_be_in_range=[2, maximum],
+                dtype_out=int,
+                name='number_labels',
+            )
             ruler.SetNumberOfLabels(number_labels)
+            if not snap_labels:
+                ruler.AdjustLabelsOff()
         ruler.SetLabelVisibility(show_labels)
         if label_format:
             ruler.SetLabelFormat(label_format)
-        ruler.GetProperty().SetColor(*tick_color.int_rgb)
-        if label_color != Color('white'):
-            # This property turns black if set
-            ruler.GetLabelTextProperty().SetColor(*label_color.int_rgb)
-            ruler.GetTitleTextProperty().SetColor(*label_color.int_rgb)
+        ruler.GetProperty().SetColor(*tick_color.float_rgb)
+        ruler.GetLabelTextProperty().SetColor(*label_color.float_rgb)
+        ruler.GetTitleTextProperty().SetColor(*label_color.float_rgb)
         ruler.SetNumberOfMinorTicks(number_minor_ticks)
         ruler.SetTickVisibility(show_ticks)
         ruler.SetTickLength(tick_length)
@@ -4739,9 +4789,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Either a string, rgb list, or hex color string for tick text
             and tick line colors.
 
-            .. warning::
-                The axis labels tend to be either white or black.
-
         font_size_factor : float, default: 0.6
             Factor to scale font size overall.
 
@@ -4813,19 +4860,15 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         for text in ['Label', 'Title']:
             prop = getattr(legend_scale, f'GetLegend{text}Property')()
-            if color != Color('white'):
-                # This property turns black if set
-                prop.SetColor(*color.int_rgb)
+            prop.SetColor(*color.float_rgb)
             prop.SetFontSize(
                 int(font_size_factor * 20),
             )  # hack to avoid multiple font size arguments
 
         for ax in ['Bottom', 'Left', 'Right', 'Top']:
             axis = getattr(legend_scale, f'Get{ax}Axis')()
-            axis.GetProperty().SetColor(*color.int_rgb)
-            if color != Color('white'):
-                # This label property turns black if set
-                axis.GetLabelTextProperty().SetColor(*color.int_rgb)
+            axis.GetProperty().SetColor(*color.float_rgb)
+            axis.GetLabelTextProperty().SetColor(*color.float_rgb)
             axis.SetFontFactor(font_size_factor)
             axis.SetLabelFactor(label_size_factor)
             if label_format:

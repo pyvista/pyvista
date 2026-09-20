@@ -59,17 +59,17 @@ ENV PYVISTA_OFF_SCREEN=true \
 # runtime, and falls back to Mesa llvmpipe software rendering on CPU-only
 # hosts via the libgl1/GLX path.
 RUN apt-get update \
- && apt-get install -y --no-install-recommends \
-      libopengl0 \
-      libgl1 \
-      libegl1 \
-      libxrender1 \
- && rm -rf /var/lib/apt/lists/*
+    && apt-get install -y --no-install-recommends \
+        libopengl0 \
+        libgl1 \
+        libegl1 \
+        libxrender1 \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /build/dist/pyvista-*.whl /tmp/
 
 RUN pip install /tmp/pyvista-*.whl \
- && rm /tmp/pyvista-*.whl
+    && rm /tmp/pyvista-*.whl
 
 WORKDIR /work
 
@@ -106,17 +106,17 @@ USER root
 # hosts via the libgl1/GLX path. The upstream jupyter image does not ship
 # these.
 RUN apt-get update \
- && apt-get install -y --no-install-recommends \
-      libopengl0 \
-      libgl1 \
-      libegl1 \
-      libxrender1 \
- && rm -rf /var/lib/apt/lists/*
+    && apt-get install -y --no-install-recommends \
+        libopengl0 \
+        libgl1 \
+        libegl1 \
+        libxrender1 \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /build/dist/pyvista-*.whl /tmp/
 
 RUN pip install "$(ls /tmp/pyvista-*.whl)[jupyter,colormaps,io]" \
- && rm /tmp/pyvista-*.whl
+    && rm /tmp/pyvista-*.whl
 
 USER ${NB_UID}
 WORKDIR ${HOME}
