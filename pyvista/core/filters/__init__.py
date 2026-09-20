@@ -73,6 +73,8 @@ def _update_alg(alg: _vtk.vtkAlgorithm, *, progress_bar: bool = False, message: 
         # raise it as a proper Python error.
         # We avoid using VtkErrorCatcher for the initial update because adding and tracking
         # with VTK observers can be slow.
+        # VTK marks even a failed execution as up-to-date, so force the re-run to execute.
+        alg.Modified()
         with pv.VtkErrorCatcher(raise_errors=True, emit_warnings=True):
             alg.Update()
 

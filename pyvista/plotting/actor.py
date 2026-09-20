@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Any
 import weakref
 
 import numpy as np
@@ -160,7 +161,12 @@ class Actor(Prop3D, _vtk.vtkActor):
 
     """
 
-    def __init__(self, mapper=None, prop=None, name=None) -> None:
+    def __init__(
+        self,
+        mapper: _vtk.vtkMapper | _BaseMapper | None = None,
+        prop: Property | None = None,
+        name: str | None = None,
+    ) -> None:
         """Initialize actor."""
         super().__init__()
         if mapper is not None:
@@ -177,7 +183,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         self._camera_distortion_state: tuple[tuple[float, ...], tuple[float, float]] | None = None
 
     @property
-    def mapper(self) -> _BaseMapper:  # numpydoc ignore=RT01
+    def mapper(self) -> _BaseMapper | None:  # numpydoc ignore=RT01
         """Return or set the mapper of the actor.
 
         Examples
@@ -210,11 +216,12 @@ class Actor(Prop3D, _vtk.vtkActor):
         return self.GetMapper()  # type: ignore[return-value]
 
     @mapper.setter
-    def mapper(self, obj) -> None:
-        self.SetMapper(obj)
+    def mapper(self, obj: _vtk.vtkMapper | _BaseMapper | None) -> None:
+        # VTK's stubs do not allow clearing the mapper with ``None``, but VTK does
+        self.SetMapper(obj)  # type: ignore[arg-type]
 
     @property
-    def prop(self):  # numpydoc ignore=RT01
+    def prop(self) -> Property:  # numpydoc ignore=RT01
         """Return or set the property of this actor.
 
         Examples
@@ -229,14 +236,14 @@ class Actor(Prop3D, _vtk.vtkActor):
         >>> pl.show()
 
         """
-        return self.GetProperty()
+        return self.GetProperty()  # type: ignore[return-value]
 
     @prop.setter
     def prop(self, obj: Property) -> None:
         self.SetProperty(obj)
 
     @property
-    def texture(self):  # numpydoc ignore=RT01
+    def texture(self) -> _vtk.vtkTexture | None:  # numpydoc ignore=RT01
         """Return or set the actor texture.
 
         Notes
@@ -264,14 +271,16 @@ class Actor(Prop3D, _vtk.vtkActor):
           Dimensions:   256, 256
 
         """
-        return self.GetTexture()
+        # VTK returns ``None`` when the actor has no texture
+        texture: _vtk.vtkTexture | None = self.GetTexture()
+        return texture
 
     @texture.setter
-    def texture(self, obj) -> None:
+    def texture(self, obj: _vtk.vtkTexture) -> None:
         self.SetTexture(obj)
 
     @property
-    def memory_address(self):  # numpydoc ignore=RT01
+    def memory_address(self) -> str:  # numpydoc ignore=RT01
         """Return the memory address of this actor."""
         return self.GetAddressAsString('')
 
@@ -295,7 +304,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         return bool(self.GetPickable())
 
     @pickable.setter
-    def pickable(self, value) -> None:
+    def pickable(self, value: bool) -> None:
         self.SetPickable(value)
 
     @property
@@ -418,7 +427,7 @@ class Actor(Prop3D, _vtk.vtkActor):
     def use_bounds(self, value: bool) -> None:
         self.SetUseBounds(value)
 
-    def plot(self, **kwargs) -> None:
+    def plot(self, **kwargs: Any) -> None:
         """Plot just the actor.
 
         This may be useful when interrogating or debugging individual actors.
@@ -489,7 +498,7 @@ class Actor(Prop3D, _vtk.vtkActor):
             new_actor.ShallowCopy(self)
         return new_actor
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Representation of the actor."""
         mat_info = 'Identity' if np.array_equal(self.user_matrix, np.eye(4)) else 'Set'
         bnd = self.bounds
@@ -995,7 +1004,7 @@ class Actor(Prop3D, _vtk.vtkActor):
                 owner._sync_point_sprite_shader()
 
         self._point_sprite_observer = self.prop.AddObserver(
-            'ModifiedEvent',
+            _vtk.vtkCommand.ModifiedEvent,
             _on_property_modified,
         )
 

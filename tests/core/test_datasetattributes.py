@@ -730,6 +730,21 @@ def test_complex(plane, dtype_str):
     assert np.issubdtype(plane.point_data[name].dtype, real_type)
 
 
+@pytest.mark.parametrize('dtype', [np.complex64, np.complex128])
+def test_complex_singleton(dtype):
+    """Reading a singleton complex array returns an associated writable view."""
+    mesh = pv.PolyData(np.zeros((1, 3)))
+    mesh.point_data['values'] = np.array([1 + 2j], dtype=dtype)
+    array = mesh.point_data['values']
+    assert isinstance(array, pv.pyvista_ndarray)
+    assert array.shape == ()
+    assert array.dtype == dtype
+    assert array.item() == 1 + 2j
+    assert array.dataset.Get() is mesh
+    array[...] = 3 + 4j
+    assert mesh.point_data['values'].item() == 3 + 4j
+
+
 @pytest.mark.parametrize('copy', [True, False])
 def test_update(uniform, copy):
     new_mesh = pv.ImageData(dimensions=uniform.dimensions)

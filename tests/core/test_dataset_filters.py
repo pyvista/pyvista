@@ -2255,6 +2255,9 @@ def test_streamlines_evenly_spaced_2d_errors():
     with pytest.raises(ValueError):  # noqa: PT011
         mesh.streamlines_evenly_spaced_2D(step_unit='not valid')
 
+    with pytest.raises(ValueError, match='requires a 2D dataset in the XY plane'):
+        mesh.rotate_x(45).streamlines_evenly_spaced_2D()
+
 
 @pytest.mark.xfail
 def test_streamlines_nonxy_plane():
@@ -4552,15 +4555,15 @@ def test_extrude_trim_catch():
     trim_surface = pv.Plane()
     with pytest.raises(ValueError):  # noqa: PT011
         _ = mesh.extrude_trim(direction, trim_surface, extrusion='Invalid strategy')
-    with pytest.raises(TypeError, match='Invalid type'):
+    with pytest.raises(TypeError, match='extrusion must be an instance of'):
         _ = mesh.extrude_trim(direction, trim_surface, extrusion=0)
     with pytest.raises(ValueError):  # noqa: PT011
         _ = mesh.extrude_trim(direction, trim_surface, capping='Invalid strategy')
-    with pytest.raises(TypeError, match='Invalid type'):
+    with pytest.raises(TypeError, match='capping must be an instance of'):
         _ = mesh.extrude_trim(direction, trim_surface, capping=0)
     with pytest.raises(TypeError):
         _ = mesh.extrude_trim('foobar', trim_surface)
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError, match='direction has shape'):
         _ = mesh.extrude_trim([1, 2], trim_surface)
 
 
@@ -4670,15 +4673,12 @@ def test_integrate_data_pointset(pointset):
     assert integrated.n_cells == 1
 
 
-@pytest.mark.parametrize(
-    'name', ['streamlines', 'streamlines_from_source', 'streamlines_evenly_spaced_2D']
-)
+@pytest.mark.parametrize('name', ['streamlines', 'streamlines_from_source'])
 def test_streamlines_pointset(pointset, name):
     pointset['vectors'] = np.tile([1.0, 0.0, 0.0], (pointset.n_points, 1))
     kwargs = {
         'streamlines': dict(n_points=2),
         'streamlines_from_source': dict(source=pv.PolyData(pointset.points[:1])),
-        'streamlines_evenly_spaced_2D': dict(start_position=pointset.center),
     }[name]
     output = getattr(pointset, name)(vectors='vectors', **kwargs)
     assert isinstance(output, pv.PolyData)

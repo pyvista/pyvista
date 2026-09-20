@@ -132,5 +132,5 @@ def show_static_image(
     if plotter.last_image is None:
         # Must render here, otherwise plotter will segfault.
         plotter.render()
-        plotter.last_image = plotter.screenshot(screenshot, return_img=True)
+        plotter.last_image = plotter.screenshot(screenshot, return_img=True, render=False)
     return PIL.Image.fromarray(plotter.last_image)

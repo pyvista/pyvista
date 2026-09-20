@@ -2315,6 +2315,18 @@ def _validate_color_sequence(
     raise ValueError(msg)
 
 
+@functools.cache
+def _get_matplotlib_cmap(name: str) -> colors.Colormap:
+    """Fetch a matplotlib colormap by name, keeping one built instance per name."""
+    try:
+        cmap_obj = colormaps[name]
+    except KeyError:
+        msg = f"Invalid colormap '{name}'"
+        raise ValueError(msg) from None
+    cmap_obj(0.0)  # build the table once so copies inherit it instead of rebuilding
+    return cmap_obj
+
+
 def get_cmap_safe(cmap: ColormapOptions) -> colors.Colormap:
     """Fetch a colormap by name from matplotlib, colorcet, cmocean, or cmcrameri.
 
@@ -2397,11 +2409,7 @@ def get_cmap_safe(cmap: ColormapOptions) -> colors.Colormap:
                     raise ValueError(msg)
                 cmap_obj = getattr(colormaps, cmap)
             else:
-                try:
-                    cmap_obj = colormaps[cmap]
-                except KeyError:
-                    msg = f"Invalid colormap '{cmap}'"
-                    raise ValueError(msg) from None
+                cmap_obj = _get_matplotlib_cmap(cmap).copy()
 
     else:  # input is a list
         for item in cmap:

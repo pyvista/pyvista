@@ -1488,7 +1488,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
     def get_array_association(
         self: Self,
         name: str,
-        preference: Literal['cell', 'point', 'field'] = 'cell',
+        preference: PointLiteral | CellLiteral | FieldLiteral = 'cell',
     ) -> FieldAssociation:
         """Get the association of an array.
 
