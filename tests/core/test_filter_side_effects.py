@@ -300,6 +300,11 @@ def _seam_grid(shift=(0.0, 0.0, 0.0)):
     return grid
 
 
+def _planar_mesh(mode):
+    """Return a mesh in the XY plane, which the evenly spaced streamlines filter needs."""
+    return _mesh_arrays(pv.Plane(i_resolution=4, j_resolution=4), mode)
+
+
 def _triangulated(mode):
     """Return an all-triangle PolyData."""
     return _mesh_arrays(pv.Sphere(theta_resolution=8, phi_resolution=8).triangulate(), mode)
@@ -314,6 +319,7 @@ _MESH_OVERRIDES = {
     'triangulate_contours': _line_mesh,
     'decimate': _triangulated,
     'decimate_polyline': _line_mesh,
+    'streamlines_evenly_spaced_2D': _planar_mesh,
 }
 
 
