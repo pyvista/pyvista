@@ -4138,6 +4138,14 @@ class DataSetFilters(DataObjectFilters):
         if step_unit not in ['l', 'cl']:
             msg = "Step unit must be either 'l' or 'cl'"
             raise ValueError(msg)
+        bounds = self.bounds
+        # vtkEvenlySpacedStreamlines2D compares the z bounds with this same tolerance.
+        if abs(bounds.z_max - bounds.z_min) >= np.finfo(float).eps:
+            msg = (
+                'This filter requires a 2D dataset in the XY plane, but the input spans '
+                f'z from {bounds.z_min} to {bounds.z_max}.'
+            )
+            raise ValueError(msg)
         step_unit_ = {
             'cl': _vtk.vtkStreamTracer.CELL_LENGTH_UNIT,
             'l': _vtk.vtkStreamTracer.LENGTH_UNIT,

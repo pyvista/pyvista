@@ -2589,6 +2589,11 @@ class ImageDataFilters(DataSetFilters):
         pyvista.PolyData
             Surface mesh of labeled regions.
 
+        Raises
+        ------
+        ValueError
+            If the input is not 3-dimensional.
+
         See Also
         --------
         :meth:`~pyvista.DataSetFilters.voxelize_binary_mask`
@@ -2771,6 +2776,15 @@ class ImageDataFilters(DataSetFilters):
         >>> labels_plotter(surf, zoom=1.5).show()
 
         """
+        VTK_NAME = 'BoundaryLabels'
+        PV_NAME = 'boundary_labels'
+
+        def _empty_output(dtype_: np.dtype[Any]) -> pv.PolyData:
+            """Return a contour with no cells and an empty boundary labels array."""
+            empty = pv.PolyData()
+            components = 1 if simplify_output else 2
+            empty.cell_data[PV_NAME] = np.empty((0, components), dtype=dtype_)
+            return empty
 
         def _validate_selection(selection: int | VectorLike[int] | None) -> NumpyArray[int]:
             if selection is None:
@@ -2865,13 +2879,20 @@ class ImageDataFilters(DataSetFilters):
             must_contain=output_mesh_type,
             name='output_mesh_type',
         )
+        want_external = 'external' in boundary_style
+        if simplify_output is None:
+            simplify_output = want_external
+
         input_ids = _validate_selection(select_inputs)
 
         alg_input = _get_alg_input(self, scalars)
+        if (dim := alg_input.dimensionality) != 3:
+            msg = f'Input must be 3-dimensional. Got {dim}-dimensional input instead.'
+            raise ValueError(msg)
         active_scalars = cast('pv.pyvista_ndarray', alg_input.active_scalars)
         if np.allclose(active_scalars, background_value):
             # Empty input, no contour will be generated
-            return pv.PolyData()
+            return _empty_output(active_scalars.dtype)
 
         # Pad with background values to close surfaces at image boundaries
         alg_input = alg_input.pad_image(background_value) if pad_background else alg_input
@@ -2918,14 +2939,8 @@ class ImageDataFilters(DataSetFilters):
                 algorithm='geometry', pass_cellid=False, pass_pointid=False
             )
 
-        VTK_NAME = 'BoundaryLabels'
-        PV_NAME = 'boundary_labels'
-        if VTK_NAME in output.cell_data.keys():
+        if output.n_cells > 0 and VTK_NAME in output.cell_data.keys():
             labels_array = output.cell_data[VTK_NAME]
-            if not all(labels_array.shape):
-                # Array is empty but has non-zero shape, fix it here
-                # Mesh may also have non-zero points but this is cleaned later
-                output.cell_data[VTK_NAME] = np.empty((0, 0))
             output.rename_array(VTK_NAME, PV_NAME)
             if boundary_style in ['external', 'internal']:
                 # Output contains all boundary cells, need to remove cells we don't want
@@ -2935,9 +2950,9 @@ class ImageDataFilters(DataSetFilters):
                     remove, inplace=True, pass_point_ids=False, pass_cell_ids=False
                 )
 
-        want_external = 'external' in boundary_style
-        if simplify_output is None:
-            simplify_output = want_external
+        if output.n_cells == 0:
+            return _empty_output(active_scalars.dtype)
+
         if simplify_output:
             # Simplify scalars to a single component
             if not want_external:
