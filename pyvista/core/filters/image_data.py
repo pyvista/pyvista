@@ -25,6 +25,8 @@ from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
+from pyvista.core.filters.data_object import _round_dimensions
+from pyvista.core.filters.data_object import _validate_spacing
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.filters.data_set import _ExtractValuesInputs
 from pyvista.core.utilities.arrays import FieldAssociation
@@ -4901,14 +4903,7 @@ class ImageDataFilters(DataSetFilters):
             )
             new_dimensions = old_dimensions * sample_rate_
         elif spacing is not None:
-            spacing_ = _validation.validate_array3(
-                spacing,
-                broadcast=True,
-                must_be_finite=True,
-                must_be_in_range=[0, np.inf],
-                strict_lower_bound=True,
-                name='spacing',
-            )
+            spacing_ = _validate_spacing(spacing)
             # A border spans one interval per point, otherwise one less than the points
             border = extend_border or processing_cell_scalars
             n_intervals = (old_dimensions - (0 if border else 1)) * input_image.spacing
@@ -4920,11 +4915,7 @@ class ImageDataFilters(DataSetFilters):
             new_dimensions = new_dimensions - 1
         # Singleton input dimensions are never resampled
         new_dimensions = np.where(old_dimensions == 1, 1, new_dimensions)
-        rounding_func = np.round if rounding_func is None else rounding_func
-        new_dimensions = np.asarray(rounding_func(new_dimensions))
-        new_dimensions = _validation.validate_array3(
-            new_dimensions, must_be_integer=True, dtype_out=int, name='dimensions'
-        )
+        new_dimensions = _round_dimensions(new_dimensions, rounding_func)
         if processing_cell_scalars and np.any(new_dimensions < 1):
             axes = 'at least 2 along each non-singleton axis when resampling cell data.'
             if sample_rate is not None:
