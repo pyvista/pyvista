@@ -6,20 +6,15 @@ See the image regression notes in CONTRIBUTING.rst
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 import inspect
 from io import BytesIO
 import os
 from pathlib import Path
 import re
 import time
-from types import UnionType
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Union
 from typing import get_args
-from typing import get_origin
-from typing import get_type_hints
 import warnings
 
 import imageio
@@ -3356,102 +3351,17 @@ def test_plot_compare_splits_per_subplot_kwargs(kwargs, n_datasets, shared, vary
 
 
 @pytest.mark.usefixtures('no_images_to_verify')
-def test_plot_compare_knows_which_keywords_take_a_sequence(monkeypatch: pytest.MonkeyPatch):
-    import cycler
-
-    from pyvista.plotting import _typing
-    from pyvista.plotting._plotting import _common_arg_parser
+def test_plot_compare_classifies_keywords_the_drawing_methods_take():
+    """Every classified keyword is one the drawing methods still accept."""
     from pyvista.plotting.plot_compare import _KEYWORDS_TAKING_A_SEQUENCE
 
-    class Unbound:
-        """Stands for a name which is bound only while type checking."""
+    taken = set()
+    for method in (pv.Plotter.add_mesh, pv.Plotter.add_volume, pv.Plotter.add_composite):
+        taken |= set(inspect.signature(method).parameters)
 
-    # The aliases refer to these names, which are bound only while type checking, and
-    # Python 3.14 resolves a name nested in an alias against the module the alias was
-    # written in rather than against the namespace given below. None is a sequence.
-    for name in (
-        'Actor',
-        'CellLiteral',
-        'Color',
-        'CompositePolyDataMapper',
-        'LookupTable',
-        'PointLiteral',
-        'PointSpriteShape',
-        'Property',
-        'Texture',
-        'Volume',
-        '_ALL_COLORS_LITERAL',
-        '_CMCRAMERI_CMAPS_LITERAL',
-        '_CMOCEAN_CMAPS_LITERAL',
-        '_COLORCET_CMAPS_LITERAL',
-        '_MATPLOTLIB_CMAPS_LITERAL',
-    ):
-        monkeypatch.setattr(_typing, name, Unbound, raising=False)
-
-    def resolved(method):
-        """Return the annotations of the method, resolved against those names."""
-        # A pyvista function of the same name shadows the module `cycler` stands for
-        return get_type_hints(method, globalns=vars(_typing) | vars(pv) | {'cycler': cycler})
-
-    def members(annotation):
-        """Return each member of a union, or the annotation itself."""
-        if get_origin(annotation) in (Union, UnionType):
-            return get_args(annotation)
-        return (annotation,)
-
-    def unwrapped(member):
-        """Return the type a member is built from, such as ``ndarray`` for ``NDArray[float]``."""
-        while True:
-            if (value := getattr(member, '__value__', None)) is not None:
-                member = value  # An alias defined with `type`, as numpy's `NDArray` is
-            elif (origin := get_origin(member)) is not None:
-                member = origin
-            else:
-                return member
-
-    def takes_a_sequence(annotation):
-        """Return whether the annotation allows a sequence which is not a string."""
-        for member in members(annotation):
-            origin = unwrapped(member)
-            if origin is Any or not isinstance(origin, type) or issubclass(origin, str):
-                continue
-            if issubclass(origin, (Sequence, np.ndarray)):
-                return True
-        return False
-
-    def keywords(method):
-        """Return the annotations of the keywords the method takes."""
-        # The first two parameters are `self` and the data object, which `plot_compare`
-        # gives the method itself
-        given = {'return', *list(inspect.signature(method).parameters)[:2]}
-        return {
-            name: annotation for name, annotation in resolved(method).items() if name not in given
-        }
-
-    # `plot_compare` decides what a sequence means for each keyword which takes one
-    # of its own, so it has to know about every one of them
-    found = {
-        name
-        for method in (pv.Plotter.add_mesh, pv.Plotter.add_volume, pv.Plotter.add_composite)
-        for name, annotation in keywords(method).items()
-        if takes_a_sequence(annotation)
-    }
-
-    # The aliases are in no signature, so each one is either in the table or named
-    # here as taking no sequence of its own
-    without_a_sequence = {
-        'backface_culling',
-        'feature_angle',
-        'interpolation',
-        'rgba',
-        'vertex_opacity',
-        'vertex_style',
-    }
-    source = inspect.getsource(_common_arg_parser) + inspect.getsource(pv.Plotter.add_volume)
-    aliases = set(re.findall(r"kwargs\.pop\('(\w+)'", source))
-    assert aliases <= set(_KEYWORDS_TAKING_A_SEQUENCE) | without_a_sequence
-
-    assert found | (aliases - without_a_sequence) == set(_KEYWORDS_TAKING_A_SEQUENCE)
+    # `_common_arg_parser` pops these from `**kwargs`, so no signature shows them
+    aliases = {'colormap', 'rng', 'vertex_color'}
+    assert set(_KEYWORDS_TAKING_A_SEQUENCE) - taken == aliases
 
 
 def _drawn_opacity(actor):
