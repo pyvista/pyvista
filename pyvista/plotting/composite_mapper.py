@@ -572,7 +572,7 @@ class CompositePolyDataMapper(_BaseMapper, _vtk.vtkCompositePolyDataMapper):
         self._orig_scalars_name: str | None = None
 
     @property
-    def dataset(self) -> MultiBlock | None:  # numpydoc ignore=RT01
+    def dataset(self) -> MultiBlock[Any] | None:  # numpydoc ignore=RT01
         """Return the composite dataset assigned to this mapper.
 
         Examples

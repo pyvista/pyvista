@@ -9173,7 +9173,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
     @property
     def meshes(
         self,
-    ) -> list[pv.DataSet | pv.MultiBlock]:  # numpydoc ignore=RT01
+    ) -> list[pv.DataSet | pv.MultiBlock[Any]]:  # numpydoc ignore=RT01
         """Return plotter meshes.
 
         Returns
