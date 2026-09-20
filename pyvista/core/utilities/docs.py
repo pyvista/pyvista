@@ -26,10 +26,11 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
         With keys ``'module'`` and ``'fullname'``.
 
     edit : bool, default=False
-        Link to the GitHub edit page instead of the blob view. The blob view
-        gets the full line range highlighted; the edit page gets a short,
-        two-line range starting at the same line -- a single-line anchor
-        doesn't reliably scroll the edit view there on first load.
+        Link to the GitHub edit page on ``main`` instead of the blob view for
+        the documented version. The blob view gets the full line range
+        highlighted; the edit page gets a short, two-line range starting at
+        the same line -- a single-line anchor doesn't reliably scroll the edit
+        view there on first load.
 
     Returns
     -------
@@ -108,7 +109,8 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
     else:
         linespec = f'#L{lineno}-L{lineno + len(source) - 1}'
 
-    if 'dev' in pv.__version__:
+    if edit or 'dev' in pv.__version__:
+        # Edits always target ``main``; a release branch only takes backports.
         kind = 'main'
     else:  # pragma: no cover
         kind = f'release/{".".join(pv.__version__.split(".")[:2])}'
