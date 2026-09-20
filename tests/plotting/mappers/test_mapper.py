@@ -205,6 +205,14 @@ def test_set_scalars_categories_short_cmap():
         mapper.set_scalars(mesh['labels'], 'labels', categories=True, cmap=['r', 'g', 'b'])
 
 
+@pytest.mark.parametrize('clim', [[None, None], (None, None)])
+def test_add_mesh_clim_without_bounds(sphere, clim):
+    sphere['data'] = sphere.points[:, 0]
+    pl = pv.Plotter()
+    actor = pl.add_mesh(sphere, scalars='data', clim=clim)
+    assert actor.mapper.scalar_range == pytest.approx(sphere.get_data_range('data'))
+
+
 def test_set_scalars_categories_keeps_clim():
     mesh = pv.RectilinearGrid([0.0, 1.0, 2.0, 3.0], [0.0, 1.0], [0.0])
     mesh['labels'] = [0.0, 5.0, 10.0]

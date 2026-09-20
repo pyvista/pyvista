@@ -86,6 +86,15 @@ def _category_range(values: NumpyArray[float]) -> tuple[float, float]:
     return float(values[0] - step / 2), float(values[-1] + step / 2)
 
 
+def _clim_has_no_bounds(clim: Any) -> bool:
+    """Return whether a scalar range was given without either of its bounds."""
+    return (
+        clim is not None
+        and not isinstance(clim, (int, float))
+        and all(bound is None for bound in clim)
+    )
+
+
 def _apply_categories(
     lut: LookupTable, values: NumpyArray[float], annotations: dict[float, str] | None
 ) -> list[float]:
@@ -1063,6 +1072,9 @@ class _BaseDataSetMapper(_BaseMapper):
             ``c`` is the range ``(-c, c)``.
 
         """
+        if _clim_has_no_bounds(clim):
+            clim = None
+
         if scalar_bar_args is None:
             scalar_bar_args = {'n_colors': n_colors}
 
