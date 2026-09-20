@@ -768,9 +768,13 @@ class _BaseDataSetMapper(_BaseMapper):
             return
 
         if self.dataset is not None:
+            scalars = self._mapped_scalars
+            if scalars is None:
+                # Nothing is mapped, so there is no RGBA array to build
+                return
             self.dataset.point_data.pop('__rgba__', None)
             self._configure_scalars_mode(
-                scalars=self.lookup_table(self._mapped_scalars),
+                scalars=self.lookup_table(scalars),
                 scalars_name='__rgba__',
                 preference=self.scalar_map_mode,
                 direct_scalars_color_mode=True,

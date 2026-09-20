@@ -546,6 +546,17 @@ def test_as_rgba_uses_mapped_scalars(sphere):
     assert mapper.color_mode == 'direct'
 
 
+def test_as_rgba_without_mapped_scalars(sphere):
+    """A mapper with nothing mapped has no RGBA array to build."""
+    mapper = DataSetMapper(dataset=sphere)
+    mapper.color_mode = 'map'
+
+    mapper.as_rgba()
+
+    assert '__rgba__' not in sphere.point_data
+    assert mapper.color_mode == 'map'
+
+
 def test_shared_mesh_raw_numpy_scalars_smooth_shading_subplots_mapper_output():
     """Shared meshes keep distinct raw NumPy scalar arrays per subplot."""
     n_row, n_col = 2, 2
