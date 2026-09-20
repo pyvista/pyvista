@@ -31,7 +31,6 @@ from pyvista.core.filters import _apply_points_dtype
 from pyvista.core.filters import _requested_points_precision
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
 from pyvista.core.utilities.helpers import wrap
-from pyvista.core.utilities.misc import _check_range
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import _reciprocal
 
@@ -885,9 +884,8 @@ class Text3DSource(_NoNewAttrMixin):
 
     @width.setter
     def width(self: Text3DSource, width: float | None) -> None:
-        _check_range(
-            width, rng=(0, float('inf')), parm_name='width'
-        ) if width is not None else None
+        if width is not None:
+            _validation.check_range(width, [0.0, np.inf], name='width')
         self._width = width
 
     @property
@@ -897,11 +895,8 @@ class Text3DSource(_NoNewAttrMixin):
 
     @height.setter
     def height(self: Text3DSource, height: float | None) -> None:
-        (
-            _check_range(height, rng=(0, float('inf')), parm_name='height')
-            if height is not None
-            else None
-        )
+        if height is not None:
+            _validation.check_range(height, [0.0, np.inf], name='height')
         self._height = height
 
     @property
@@ -911,9 +906,8 @@ class Text3DSource(_NoNewAttrMixin):
 
     @depth.setter
     def depth(self: Text3DSource, depth: float | None) -> None:
-        _check_range(
-            depth, rng=(0, float('inf')), parm_name='depth'
-        ) if depth is not None else None
+        if depth is not None:
+            _validation.check_range(depth, [0.0, np.inf], name='depth')
         self._depth = depth
 
     def update(self: Text3DSource) -> None:
