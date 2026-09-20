@@ -1336,6 +1336,10 @@ class BasePlotter(_BoundsSizeMixin):
         --------
         link_views
 
+        pyvista.plot_compare
+            Fill a grid of subplots in a single call, with one value of a
+            keyword for each of them.
+
         Examples
         --------
         Create a 2 wide plot and set the background of right-hand plot
