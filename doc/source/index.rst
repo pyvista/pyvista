@@ -150,7 +150,7 @@ Download the surface elevation map of Mount St. Helens and plot it.
     from pyvista import examples
     mesh = examples.download_st_helens()
     warped = mesh.warp_by_scalar('Elevation')
-    surf = warped.extract_surface().triangulate()
+    surf = warped.extract_surface(algorithm=None).triangulate()
     surf = surf.decimate_pro(0.75)  # reduce the density of the mesh by 75%
     surf.plot(cmap='gist_earth')
 
@@ -227,7 +227,7 @@ Subtract a sphere from a cube mesh.
     def make_cube():
         x = np.linspace(-0.5, 0.5, 25)
         grid = pv.StructuredGrid(*np.meshgrid(x, x, x))
-        surf = grid.extract_surface().triangulate().flip_faces()
+        surf = grid.extract_surface(algorithm=None).triangulate().flip_faces()
         return surf
 
     # Create example PolyData meshes for boolean operations

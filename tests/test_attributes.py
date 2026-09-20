@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import Counter
+import contextlib
 from dataclasses import is_dataclass
 from enum import Enum
 import importlib.util
@@ -181,8 +182,12 @@ def pytest_generate_tests(metafunc):
 def try_init_pyvista_object(class_):
     # Init object but skip if abstract
     kwargs = get_default_class_init_kwargs(class_)
+    ctx = contextlib.nullcontext()
+    if class_ is pv.ActorProperties:
+        ctx = pytest.warns(pv.PyVistaDeprecationWarning)
     try:
-        instance = class_(**kwargs)
+        with ctx:
+            instance = class_(**kwargs)
     except (VTKVersionError, ImportError):
         pytest.skip('VTK Version not supported.')
     except TypeError as e:
@@ -199,7 +204,9 @@ def get_default_class_init_kwargs(pyvista_class):
         kwargs['camera'] = pv.Camera()
     elif pyvista_class is pv.Renderer:
         kwargs['parent'] = pv.Plotter()
-    elif pyvista_class in [pv.ChartBox, pv.ChartPie]:
+    elif pyvista_class is pv.ChartBox:
+        kwargs['data'] = [list(range(10))]
+    elif pyvista_class is pv.ChartPie:
         kwargs['data'] = list(range(10))
     elif pyvista_class is pv.CompositeAttributes:
         kwargs['mapper'] = pv.CompositePolyDataMapper()
@@ -231,7 +238,10 @@ def get_default_class_init_kwargs(pyvista_class):
         kwargs['chart'] = pv.charts.Chart2D()
         kwargs['x'] = (0, 0, 0)
         kwargs['ys'] = (1, 0, 0)
-    elif pyvista_class in [pv.charts.BoxPlot, pv.charts.PiePlot]:
+    elif pyvista_class is pv.charts.BoxPlot:
+        kwargs['chart'] = pv.charts.Chart2D()
+        kwargs['data'] = [[0, 0, 0]]
+    elif pyvista_class is pv.charts.PiePlot:
         kwargs['chart'] = pv.charts.Chart2D()
         kwargs['data'] = [0, 0, 0]
     elif pyvista_class is pv.charts._ChartBackground:

@@ -10,10 +10,8 @@ import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
-from pyvista.core.utilities.misc import _check_range
 from pyvista.core.utilities.misc import _NameMixin
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
@@ -82,10 +80,7 @@ class CornerAnnotation(_NoNewAttrMixin, DisableVtkSnakeCase, _NameMixin, _vtk.vt
 
     """
 
-    @_deprecate_positional_args(allowed=['position', 'text'])
-    def __init__(  # noqa: PLR0917
-        self, position, text, prop=None, linear_font_scale_factor=None, name=None
-    ):
+    def __init__(self, position, text, *, prop=None, linear_font_scale_factor=None, name=None):
         """Initialize a new text annotation descriptor."""
         super().__init__()
         self.set_text(position, text)
@@ -213,10 +208,7 @@ class Text(_NoNewAttrMixin, DisableVtkSnakeCase, _NameMixin, _vtk.vtkTextActor):
 
     """
 
-    @_deprecate_positional_args(allowed=['text'])
-    def __init__(  # noqa: PLR0917
-        self, text=None, position=None, prop=None, name=None
-    ):
+    def __init__(self, text=None, *, position=None, prop=None, name=None):
         """Initialize a new text descriptor."""
         super().__init__()
         if text is not None:
@@ -430,7 +422,7 @@ class Label(_Prop3DMixin, Text):
 
     @_label_position.setter
     def _label_position(self, position: VectorLike[float]):
-        valid_position = _validation.validate_array3(position)
+        valid_position = _validation.validate_array3(position, dtype_out=float, to_tuple=True)
         self.GetPositionCoordinate().SetValue(valid_position)
 
     @property
@@ -537,36 +529,30 @@ class TextProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkTextProperty):
 
     """
 
-    _theme = Theme()
     _color_set = None
     _background_color_set = None
     _font_family = None
 
-    @_deprecate_positional_args(allowed=['theme'])
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
         theme=None,
+        *,
         color=None,
         font_family=None,
         orientation=None,
         font_size=None,
         font_file=None,
-        shadow: bool = False,  # noqa: FBT001, FBT002
+        shadow: bool = False,
         justification_horizontal=None,
         justification_vertical=None,
-        italic: bool = False,  # noqa: FBT001, FBT002
-        bold: bool = False,  # noqa: FBT001, FBT002
+        italic: bool = False,
+        bold: bool = False,
         background_color=None,
         background_opacity=None,
     ):
         """Initialize text's property."""
         super().__init__()
-        if theme is None:
-            # copy global theme to ensure local property theme is fixed
-            # after creation.
-            self._theme.load_theme(pv.global_theme)
-        else:
-            self._theme.load_theme(theme)
+        self._theme = Theme._from_theme(pv.global_theme if theme is None else theme)
         self.color = color
         self.font_family = font_family
         if orientation is not None:
@@ -621,7 +607,7 @@ class TextProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkTextProperty):
 
     @opacity.setter
     def opacity(self, opacity: float):
-        _check_range(opacity, (0, 1), 'opacity')
+        _validation.check_range(opacity, [0.0, 1.0], name='opacity')
         self.SetOpacity(opacity)
 
     @property
@@ -657,7 +643,7 @@ class TextProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkTextProperty):
 
     @background_opacity.setter
     def background_opacity(self, opacity: float):
-        _check_range(opacity, (0, 1), 'background_opacity')
+        _validation.check_range(opacity, [0.0, 1.0], name='background_opacity')
         self.SetBackgroundOpacity(opacity)
 
     @property

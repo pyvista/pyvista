@@ -15,17 +15,17 @@ def tiny_rectilinear():
 
 
 @pytest.mark.parametrize('tetra_per_cell', [5, 6, 12])
-def test_to_tetrahedral(tiny_rectilinear, tetra_per_cell):
+def test_to_tetrahedra(tiny_rectilinear, tetra_per_cell):
     tet_grid = tiny_rectilinear.to_tetrahedra(tetra_per_cell=tetra_per_cell)
     assert tet_grid.n_cells == tiny_rectilinear.n_cells * tetra_per_cell
 
 
-def test_to_tetrahedral_raise(tiny_rectilinear):
+def test_to_tetrahedra_raise(tiny_rectilinear):
     with pytest.raises(ValueError, match='either 5, 6, or 12'):
         tiny_rectilinear.to_tetrahedra(tetra_per_cell=9)
 
 
-def test_to_tetrahedral_mixed(tiny_rectilinear):
+def test_to_tetrahedra_mixed(tiny_rectilinear):
     data = np.empty(tiny_rectilinear.n_cells, dtype=int)
     half = tiny_rectilinear.n_cells // 2
     data[:half] = 5
@@ -44,12 +44,64 @@ def test_to_tetrahedral_mixed(tiny_rectilinear):
         tet_grid = tiny_rectilinear.to_tetrahedra(mixed=123)
 
 
-def test_to_tetrahedral_edge_case():
+def test_to_tetrahedra_mixed_without_cell_scalars_raises(tiny_rectilinear):
+    match = 'reads the active cell scalars'
+    with pytest.raises(ValueError, match=match):
+        tiny_rectilinear.to_tetrahedra(mixed=True)
+
+
+def test_to_tetrahedra_mixed_sequence_overrides_active_scalars(tiny_rectilinear):
+    tiny_rectilinear.cell_data['other'] = np.full(tiny_rectilinear.n_cells, 5)
+    tet_grid = tiny_rectilinear.to_tetrahedra(mixed=[12] * tiny_rectilinear.n_cells)
+    assert tet_grid.n_cells == tiny_rectilinear.n_cells * 12
+
+
+@pytest.mark.parametrize('mixed', ['other', [12] * 60])
+def test_to_tetrahedra_mixed_does_not_modify_input(tiny_rectilinear, mixed):
+    tiny_rectilinear.cell_data['active'] = np.full(tiny_rectilinear.n_cells, 5)
+    tiny_rectilinear.cell_data.set_array(np.full(tiny_rectilinear.n_cells, 12), 'other')
+
+    tiny_rectilinear.to_tetrahedra(mixed=mixed)
+
+    assert tiny_rectilinear.cell_data.keys() == ['active', 'other']
+    assert tiny_rectilinear.cell_data.active_scalars_name == 'active'
+
+
+def test_to_tetrahedra_12_interpolates_point_data(tiny_rectilinear):
+    # A linear field, so the value at a cell center is exactly the mean of its corners
+    weights = np.array([1.0, 10.0, 100.0])
+    tiny_rectilinear.point_data['linear'] = tiny_rectilinear.points @ weights
+    n_points = tiny_rectilinear.n_points
+
+    tet_grid = tiny_rectilinear.to_tetrahedra(tetra_per_cell=12)
+
+    assert tet_grid.n_points == n_points + tiny_rectilinear.n_cells
+    assert np.allclose(
+        tet_grid.point_data['linear'][:n_points], tiny_rectilinear.point_data['linear']
+    )
+    centers = tiny_rectilinear.cell_centers().points @ weights
+    assert np.allclose(tet_grid.point_data['linear'][n_points:], centers)
+
+
+def test_to_tetrahedra_mixed_interpolates_point_data(tiny_rectilinear):
+    weights = np.array([1.0, 10.0, 100.0])
+    tiny_rectilinear.point_data['linear'] = tiny_rectilinear.points @ weights
+    n_points = tiny_rectilinear.n_points
+    split = np.arange(tiny_rectilinear.n_cells) % 3 == 0
+
+    tet_grid = tiny_rectilinear.to_tetrahedra(mixed=np.where(split, 12, 5))
+
+    assert tet_grid.n_points == n_points + split.sum()
+    centers = tiny_rectilinear.cell_centers().points[split] @ weights
+    assert np.allclose(tet_grid.point_data['linear'][n_points:], centers)
+
+
+def test_to_tetrahedra_edge_case():
     with pytest.raises(RuntimeError, match='is 1'):
         pv.ImageData(dimensions=(1, 2, 2)).to_tetrahedra(tetra_per_cell=12)
 
 
-def test_to_tetrahedral_pass_cell_ids(tiny_rectilinear):
+def test_to_tetrahedra_pass_cell_ids(tiny_rectilinear):
     tet_grid = tiny_rectilinear.to_tetrahedra(pass_cell_ids=False, pass_data=False)
     assert not tet_grid.cell_data
     tet_grid = tiny_rectilinear.to_tetrahedra(pass_cell_ids=True, pass_data=False)
@@ -57,7 +109,7 @@ def test_to_tetrahedral_pass_cell_ids(tiny_rectilinear):
     assert np.issubdtype(tet_grid.cell_data['vtkOriginalCellIds'].dtype, np.integer)
 
 
-def test_to_tetrahedral_pass_cell_data(tiny_rectilinear):
+def test_to_tetrahedra_pass_cell_data(tiny_rectilinear):
     # test that data isn't passed
     tiny_rectilinear['cell_data'] = np.ones(tiny_rectilinear.n_cells)
     tiny_rectilinear['point_data'] = np.arange(tiny_rectilinear.n_points)
@@ -81,3 +133,16 @@ def test_to_tetrahedral_pass_cell_data(tiny_rectilinear):
     assert tiny_rectilinear.active_scalars_name == 'point_data'
     tet_grid = tiny_rectilinear.to_tetrahedra(pass_cell_ids=False, pass_data=True)
     assert tet_grid.active_scalars_name == 'point_data'
+
+
+def test_to_tetrahedra_points_dtype(rectilinear, monkeypatch):
+    # RectilinearGrid generates its points rather than storing them, so 'preserve'
+    # constrains nothing here and vtkRectilinearGridToTetrahedra picks single
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'preserve')
+    assert rectilinear.points.dtype == np.double
+    assert rectilinear.to_tetrahedra().points.dtype == np.single
+
+    # An explicit dtype does reach it, and says the widened points are not double
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'float64')
+    with pytest.warns(pv.PrecisionWarning, match='vtkRectilinearGridToTetrahedra'):
+        assert rectilinear.to_tetrahedra().points.dtype == np.double

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import colorsys
 import contextlib
+import functools
 import importlib
 import inspect
 from typing import TYPE_CHECKING
@@ -25,7 +26,6 @@ import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import _NoNewAttrMixin
@@ -1654,6 +1654,19 @@ _MATPLOTLIB_CMAPS_LITERAL = Literal[
 _MATPLOTLIB_CMAPS = get_args(_MATPLOTLIB_CMAPS_LITERAL)
 
 
+@functools.lru_cache(maxsize=1024)
+def _hex_to_channels(h: str) -> tuple[int, ...]:
+    """Parse a hex string with an optional prefix into three or four channel integers."""
+    # Optimization: color names and hex strings are immutable inputs that are parsed
+    # over and over (every theme copy and ``add_mesh`` call), so the result is cached
+    h = Color.strip_hex_prefix(h)
+    channels = tuple(Color.convert_color_channel(h[i : i + 2]) for i in range(0, len(h), 2))
+    if len(channels) not in (3, 4):
+        msg = 'Invalid length for RGBA sequence.'
+        raise ValueError(msg)
+    return channels
+
+
 class Color(_NoNewAttrMixin):
     r"""Helper class to convert between different color representations used in PyVista.
 
@@ -1734,16 +1747,17 @@ class Color(_NoNewAttrMixin):
         {'alpha', 'a', 'opacity'},  # 3
     )
 
-    @_deprecate_positional_args(allowed=['color', 'opacity'])
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
         color: ColorLike | None = None,
         opacity: float | str | None = None,
+        *,
         default_color: ColorLike | None = None,
         default_opacity: float | str = 255,
     ):
         """Initialize new instance."""
-        self._red, self._green, self._blue, self._opacity = 0, 0, 0, 0
+        # Optimization: the color channels are assigned by every branch below, so only
+        # the opacity (read by the three-channel paths) needs a value up front
         self._opacity = self.convert_color_channel(default_opacity)
         self._name = None
 
@@ -1896,15 +1910,17 @@ class Color(_NoNewAttrMixin):
 
     def _from_hex(self, h):
         """Construct color from a hex string."""
-        arg = h
-        h = self.strip_hex_prefix(h)
         try:
-            self._from_rgba(
-                [self.convert_color_channel(h[i : i + 2]) for i in range(0, len(h), 2)]
-            )
+            channels = _hex_to_channels(h)
         except ValueError:
-            msg = f'Invalid hex string: {arg}'
+            msg = f'Invalid hex string: {h}'
             raise ValueError(msg) from None
+        # Optimization: the channels are validated integers already, so assign them
+        # directly instead of re-validating each one through ``_from_rgba``
+        if len(channels) == 3:
+            self._red, self._green, self._blue = channels
+        else:
+            self._red, self._green, self._blue, self._opacity = channels
 
     def _from_str(self, n: str):
         """Construct color from a name or hex string."""
@@ -2064,9 +2080,7 @@ class Color(_NoNewAttrMixin):
         '#ff000040'
 
         """
-        return '#' + ''.join(
-            f'{c:0>2x}' for c in (self._red, self._green, self._blue, self._opacity)
-        )
+        return f'#{self._red:02x}{self._green:02x}{self._blue:02x}{self._opacity:02x}'
 
     @property
     def hex_rgb(self) -> str:  # numpydoc ignore=RT01
@@ -2301,6 +2315,18 @@ def _validate_color_sequence(
     raise ValueError(msg)
 
 
+@functools.cache
+def _get_matplotlib_cmap(name: str) -> colors.Colormap:
+    """Fetch a matplotlib colormap by name, keeping one built instance per name."""
+    try:
+        cmap_obj = colormaps[name]
+    except KeyError:
+        msg = f"Invalid colormap '{name}'"
+        raise ValueError(msg) from None
+    cmap_obj(0.0)  # build the table once so copies inherit it instead of rebuilding
+    return cmap_obj
+
+
 def get_cmap_safe(cmap: ColormapOptions) -> colors.Colormap:
     """Fetch a colormap by name from matplotlib, colorcet, cmocean, or cmcrameri.
 
@@ -2383,11 +2409,7 @@ def get_cmap_safe(cmap: ColormapOptions) -> colors.Colormap:
                     raise ValueError(msg)
                 cmap_obj = getattr(colormaps, cmap)
             else:
-                try:
-                    cmap_obj = colormaps[cmap]
-                except KeyError:
-                    msg = f"Invalid colormap '{cmap}'"
-                    raise ValueError(msg) from None
+                cmap_obj = _get_matplotlib_cmap(cmap).copy()
 
     else:  # input is a list
         for item in cmap:

@@ -17,8 +17,6 @@ for the interpolation and anti-aliasing options both filters share.
 
 """
 
-from __future__ import annotations
-
 import numpy as np
 
 # sphinx_gallery_thumbnail_number = 2

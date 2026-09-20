@@ -10,7 +10,6 @@ from types import ModuleType  # noqa: TC003
 
 import scooby
 
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._vtk import _VTK_ROOT
 
 # ``{pkg}`` is filled with the selected VTK backend (vtkmodules or cvista) in `_run`.
@@ -35,13 +34,15 @@ print({pkg}.vtkRenderingFreeType.vtkMathTextFreeTypeTextRenderer().MathTextIsSup
 """
 
 
-def _run(cmd: str):
+def _run(cmd: str) -> subprocess.CompletedProcess[bytes]:
+    """Run ``cmd`` with the interpreter that is running PyVista."""
     return subprocess.run(
         [sys.executable, '-c', cmd.format(pkg=_VTK_ROOT)], check=False, capture_output=True
     )
 
 
-def _get_cached_render_window_info(attr_name: str = ''):
+def _get_cached_render_window_info(attr_name: str = '') -> str:
+    """Return the render window report, or one attribute parsed out of it."""
     if not (info := getattr(_get_cached_render_window_info, 'info', '')):
         # an OpenGL context MUST be opened before trying to do this.
         proc = _run(_cmd_render_window_info)
@@ -59,7 +60,7 @@ def _get_cached_render_window_info(attr_name: str = ''):
     return info
 
 
-def get_gpu_info():  # numpydoc ignore=RT01
+def get_gpu_info() -> str:  # numpydoc ignore=RT01
     """Get all information about the GPU."""
     return _get_cached_render_window_info()
 
@@ -123,31 +124,31 @@ def check_math_text_support() -> bool:
 class GPUInfo:
     """A class to hold GPU details."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Instantiate a container for the GPU information."""
         self._gpu_info = get_gpu_info()
 
     @property
-    def renderer(self):  # numpydoc ignore=RT01
+    def renderer(self) -> str:  # numpydoc ignore=RT01
         """GPU renderer name."""
         return _get_cached_render_window_info('OpenGL renderer string')
 
     @property
-    def version(self):  # numpydoc ignore=RT01
+    def version(self) -> str:  # numpydoc ignore=RT01
         """GPU renderer version."""
         return _get_cached_render_window_info('OpenGL version string')
 
     @property
-    def vendor(self):  # numpydoc ignore=RT01
+    def vendor(self) -> str:  # numpydoc ignore=RT01
         """GPU renderer vendor."""
         return _get_cached_render_window_info('OpenGL vendor string')
 
-    def get_info(self):
+    def get_info(self) -> list[tuple[str, str]]:
         """All GPU information as tuple pairs.
 
         Returns
         -------
-        tuple
+        list[tuple[str, str]]
             Tuples of ``(key, info)``.
 
         """
@@ -157,7 +158,7 @@ class GPUInfo:
             ('GPU Version', self.version),
         ]
 
-    def _repr_html_(self):
+    def _repr_html_(self) -> str:
         """HTML table representation."""
         fmt = '<table>'
         row = '<tr><th>{}</th><td>{}</td></tr>\n'
@@ -166,11 +167,11 @@ class GPUInfo:
         fmt += '</table>'
         return fmt
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Representation method."""
         return f'<{type(self).__name__} object at {hex(id(self))}>'
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return a human-readable string representation."""
         content = '\n'
         for k, v in self.get_info():
@@ -179,7 +180,6 @@ class GPUInfo:
         return content
 
 
-@_deprecate_positional_args
 class Report(scooby.Report):
     """Generate a PyVista software environment report.
 
@@ -269,19 +269,20 @@ class Report(scooby.Report):
 
     """
 
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
         additional: list[str | ModuleType] | None = None,
+        *,
         ncol: int = 3,
         text_width: int = 80,
-        sort: bool = False,  # noqa: FBT001, FBT002
-        gpu: bool = True,  # noqa: FBT001, FBT002
-        downloads: bool = False,  # noqa: FBT001, FBT002
-        env_vars: bool = False,  # noqa: FBT001, FBT002
-    ):
+        sort: bool = False,
+        gpu: bool = True,
+        downloads: bool = False,
+        env_vars: bool = False,
+    ) -> None:
         """Generate a :class:`scooby.Report` instance."""
         # Mandatory packages
-        core = [
+        core: list[str | ModuleType] = [
             'pyvista',
             'vtk',
             'numpy',
@@ -295,7 +296,7 @@ class Report(scooby.Report):
         ]
 
         # Optional packages.
-        optional = [
+        optional: list[str | ModuleType] = [
             # cvista extra (alternative VTK backend)
             'cvista',
             # Misc.
@@ -311,6 +312,9 @@ class Report(scooby.Report):
             'imageio',
             'meshio',
             'pyvista-frd-reader',
+            'pyvista-miniply',
+            'pyvista-stl',
+            'pyvista-zstd',
             # colormaps extras
             'cmcrameri',
             'cmocean',
@@ -346,14 +350,14 @@ class Report(scooby.Report):
             render_window = 'None'
         extra_meta.append(('Render Window', render_window))
 
-        extra_meta.append(('MathText Support', check_math_text_support()))
+        extra_meta.append(('MathText Support', str(check_math_text_support())))
         if downloads:
             user_data_path, vtk_data_source, file_cache = _get_downloads_info()
             extra_meta.extend(
                 [
                     ('User Data Path', user_data_path),
                     ('Data Source', vtk_data_source),
-                    ('File Cache', file_cache),
+                    ('File Cache', str(file_cache)),
                 ]
             )
 
@@ -363,8 +367,8 @@ class Report(scooby.Report):
         scooby.Report.__init__(
             self,
             additional=additional,
-            core=core,  # type: ignore[arg-type]
-            optional=optional,  # type: ignore[arg-type]
+            core=core,
+            optional=optional,
             ncol=ncol,
             text_width=text_width,
             sort=sort,
@@ -380,6 +384,7 @@ def _get_set_env_vars() -> list[tuple[str, str]]:
 
 
 def _get_downloads_info() -> tuple[str, str, bool]:
+    """Return the user data path, the data source and whether files are cached."""
     from pyvista.examples.downloads import _FILE_CACHE  # noqa: PLC0415
     from pyvista.examples.downloads import SOURCE  # noqa: PLC0415
     from pyvista.examples.downloads import USER_DATA_PATH  # noqa: PLC0415

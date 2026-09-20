@@ -3,20 +3,19 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-import functools
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
 from typing import Literal
 from typing import cast
+from typing import overload
 
 import numpy as np
 import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.writer import BaseWriter
 from pyvista.core.utilities.writer import BMPWriter
 from pyvista.core.utilities.writer import DataSetWriter
@@ -33,10 +32,12 @@ from .dataset import DataSet
 from .filters import ImageDataFilters
 from .filters import RectilinearGridFilters
 from .filters import _get_output
+from .filters import _points_dtype
 from .utilities.arrays import array_from_vtkmatrix
 from .utilities.arrays import convert_array
 from .utilities.arrays import raise_has_duplicates
 from .utilities.arrays import vtkmatrix_from_array
+from .utilities.misc import _wraps
 from .utilities.misc import abstract_class
 
 if TYPE_CHECKING:
@@ -92,6 +93,15 @@ class Grid(DataSet):
     def dimensions(self: Self, dims: VectorLike[int]) -> None:
         self.SetDimensions(*dims)
         self.Modified()
+
+    def _convert_points_precision(self, points: pyvista_ndarray) -> pyvista_ndarray:
+        """Apply :attr:`pyvista.core.config.Config.points_dtype` to points generated on demand."""
+        # `'preserve'` leaves these alone: they are generated rather than stored, so
+        # there is no dtype of the caller's to preserve.
+        dtype = _points_dtype()
+        if dtype is None or points.dtype == dtype:
+            return points
+        return cast('pyvista_ndarray', points.astype(dtype))
 
     def to_hexahedra(self: Self) -> UnstructuredGrid:
         """Convert voxels to hexahedra.
@@ -443,10 +453,11 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
 
         """
         if pv.vtk_version_info >= (9, 4, 0):
-            return convert_array(self.GetPoints().GetData())
-
-        xx, yy, zz = self.meshgrid
-        return np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
+            points = convert_array(self.GetPoints().GetData())
+        else:
+            xx, yy, zz = self.meshgrid
+            points = np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
+        return self._convert_points_precision(points)
 
     @points.setter
     def points(
@@ -729,17 +740,16 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         '.vti': XMLImageDataWriter,
     }
 
-    @_deprecate_positional_args(allowed=['uinput'])
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self: Self,
         uinput: ImageData | str | Path | None = None,
+        *,
         dimensions: VectorLike[int] | None = None,
         spacing: VectorLike[float] = (1.0, 1.0, 1.0),
         origin: VectorLike[float] = (0.0, 0.0, 0.0),
-        deep: bool = False,  # noqa: FBT001, FBT002
+        deep: bool = False,
         direction_matrix: RotationLike | None = None,
         offset: int | VectorLike[int] | None = None,
-        *,
         validate: bool | _NestedMeshValidationFields = False,
     ) -> None:
         """Initialize the uniform grid."""
@@ -787,8 +797,23 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         """Return the default str representation."""
         return DataSet.__str__(self)
 
-    def __getitem__(  # type: ignore[override]
-        self, key: tuple[str, Literal['cell', 'point', 'field']] | str | tuple[int, int, int]
+    # fmt: off
+    # ruff: disable[E501]
+    @overload
+    def __getitem__(self, key: tuple[str, Literal['cell', 'point', 'field']] | str) -> pyvista_ndarray: ...
+    @overload
+    def __getitem__(self, key: tuple[int | slice | tuple[int, int], int | slice | tuple[int, int], int | slice | tuple[int, int]]) -> ImageData: ...
+    # ruff: enable[E501]
+    # fmt: on
+    def __getitem__(
+        self,
+        key: tuple[str, Literal['cell', 'point', 'field']]
+        | str
+        | tuple[
+            int | slice | tuple[int, int],
+            int | slice | tuple[int, int],
+            int | slice | tuple[int, int],
+        ],
     ) -> ImageData | pyvista_ndarray:
         """Search for a data array or slice with IJK indexing."""
         # Return point, cell, or field data
@@ -801,9 +826,9 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
     def _compute_voi_from_index(
         self,
         indices: tuple[
-            int | slice | tuple[int, int],
-            int | slice | tuple[int, int],
-            int | slice | tuple[int, int],
+            int | slice | tuple[int, int] | list[int],
+            int | slice | tuple[int, int] | list[int],
+            int | slice | tuple[int, int] | list[int],
         ],
         *,
         index_mode: Literal['extent', 'dimensions'] = 'dimensions',
@@ -829,7 +854,11 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
             if isinstance(slicer, (list, tuple)):
                 rng = _validation.validate_array(
-                    slicer, must_have_dtype=int, must_have_length=2, to_list=True
+                    slicer,
+                    must_have_dtype=int,
+                    must_have_ndim=1,
+                    must_have_length=2,
+                    to_list=True,
                 )
                 slicer = slice(*rng)  # noqa: PLW2901
 
@@ -906,31 +935,35 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
         """
         if pv.vtk_version_info >= (9, 4, 0):
-            return convert_array(self.GetPoints().GetData())
+            points = convert_array(self.GetPoints().GetData())
 
         # Handle empty case
-        if not all(self.dimensions):
-            return np.zeros((0, 3))
+        elif not all(self.dimensions):
+            points = np.zeros((0, 3))
 
-        # Get grid dimensions
-        nx, ny, nz = self.dimensions
-        nx -= 1
-        ny -= 1
-        nz -= 1
-        # get the points and convert to spacings
-        dx, dy, dz = self.spacing
-        # Now make the cell arrays
-        ox, oy, oz = np.array(self.origin) + self.extent[::2] * np.array([dx, dy, dz])
-        x = np.insert(np.cumsum(np.full(nx, dx)), 0, 0.0) + ox
-        y = np.insert(np.cumsum(np.full(ny, dy)), 0, 0.0) + oy
-        z = np.insert(np.cumsum(np.full(nz, dz)), 0, 0.0) + oz
-        xx, yy, zz = np.meshgrid(x, y, z, indexing='ij')
-        points = np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
+        else:
+            # Get grid dimensions
+            nx, ny, nz = self.dimensions
+            nx -= 1
+            ny -= 1
+            nz -= 1
+            # get the points and convert to spacings
+            dx, dy, dz = self.spacing
+            # Now make the cell arrays
+            ox, oy, oz = np.array(self.origin) + self.extent[::2] * np.array([dx, dy, dz])
+            x = np.insert(np.cumsum(np.full(nx, dx)), 0, 0.0) + ox
+            y = np.insert(np.cumsum(np.full(ny, dy)), 0, 0.0) + oy
+            z = np.insert(np.cumsum(np.full(nz, dz)), 0, 0.0) + oz
+            xx, yy, zz = np.meshgrid(x, y, z, indexing='ij')
+            points = np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
 
-        direction = self.direction_matrix
-        if not np.array_equal(direction, np.eye(3)):
-            return pv.Transform().rotate(direction, point=self.origin).apply(points, copy=False)
-        return points
+            direction = self.direction_matrix
+            if not np.array_equal(direction, np.eye(3)):
+                points = (
+                    pv.Transform().rotate(direction, point=self.origin).apply(points, copy=False)
+                )
+
+        return self._convert_points_precision(points)
 
     @points.setter
     def points(
@@ -1261,7 +1294,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
             offset_[2] + dims[2] - 1,
         )
 
-    @functools.wraps(RectilinearGridFilters.to_tetrahedra)
+    @_wraps(RectilinearGridFilters.to_tetrahedra)
     def to_tetrahedra(
         self: Self, *args, **kwargs
     ) -> UnstructuredGrid:  # numpydoc ignore=PR01,RT01

@@ -83,6 +83,18 @@ def test_get_cmap_safe_prefers_matplotlib(name):
     np.testing.assert_allclose(resolved(xs), expected(xs))
 
 
+def test_get_cmap_safe_returns_independent_copies():
+    cached = _colors_module._get_matplotlib_cmap('viridis')
+    assert _colors_module._get_matplotlib_cmap('viridis') is cached
+    first = get_cmap_safe('viridis')
+    second = get_cmap_safe('viridis')
+    assert first is not second
+    assert first is not cached
+    assert second is not cached
+    xs = np.linspace(0, 1, 64)
+    np.testing.assert_allclose(first(xs), second(xs))
+
+
 def test_get_cmap_safe_third_party_unique_names():
     # Names only in the 3rd-party packages still resolve through them.
     if importlib.util.find_spec('colorcet'):
@@ -204,6 +216,8 @@ def test_color_invalid_opacity(opacity):
         (-0.5, 0, 0),
         (0, 0),
         '#hh0000',
+        '#ff',
+        '#ff00ff00ff',
         'invalid_name',
         {'invalid_name': 100},
     ],

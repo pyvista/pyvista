@@ -11,6 +11,8 @@ import os
 from pathlib import Path
 import platform
 import re
+from types import FunctionType
+from types import ModuleType
 
 import numpy as np
 from numpy.random import default_rng
@@ -235,7 +237,8 @@ def reset_global_state():
     pv.allow_new_attributes(False)
     assert pv.allow_new_attributes() is False
 
-    pv.PICKLE_FORMAT = 'vtk'
+    pv._PICKLE_FORMAT = 'vtk'
+    pv.global_config.points_dtype = None
 
 
 @pytest.fixture
@@ -432,9 +435,10 @@ def pytest_runtest_makereport(item, call):  # noqa: ARG001
 def check_gc(request):
     """Snapshot live VTK objects so leaks from this test can be detected.
 
-    Every test in the repository is covered. ``tests/plotting`` overrides this fixture
-    with one that also watches plotters (a fixture of the same name in a nearer conftest
-    wins), and takes the snapshot this hook's counterpart there checks.
+    Every test collected as a function is covered; plugin-collected items take no
+    fixtures. ``tests/plotting`` overrides this fixture with one that also watches
+    plotters (a fixture of the same name in a nearer conftest wins), and takes the
+    snapshot this hook's counterpart there checks.
     """
     node = request.node
     if (
@@ -512,6 +516,12 @@ def pytest_sessionstart():
 def pytest_addoption(parser):
     parser.addoption('--test_downloads', action='store_true', default=False)
     parser.addoption(
+        '--regenerate_overloads',
+        action='store_true',
+        default=False,
+        help='rewrite the generated `get_example` overloads from the examples themselves',
+    )
+    parser.addoption(
         '--no_check_gc',
         action='store_true',
         default=False,
@@ -566,6 +576,37 @@ _RENDERING_MODULES = frozenset(
         'test_cli.py',
         'examples/test_gltf.py',
         'typing/test_return_type.py',
+        'typing/cases/plotting/add_actor.py',
+        'typing/cases/plotting/add_axes.py',
+        'typing/cases/plotting/add_axes_at_origin.py',
+        'typing/cases/plotting/add_bounding_box.py',
+        'typing/cases/plotting/add_box_axes.py',
+        'typing/cases/plotting/add_floor.py',
+        'typing/cases/plotting/add_legend.py',
+        'typing/cases/plotting/add_legend_scale.py',
+        'typing/cases/plotting/add_north_arrow_widget.py',
+        'typing/cases/plotting/add_orientation_widget.py',
+        'typing/cases/plotting/add_ruler.py',
+        'typing/cases/plotting/add_scalar_bar.py',
+        'typing/cases/plotting/add_text.py',
+        'typing/cases/plotting/add_title.py',
+        'typing/cases/plotting/add_volume.py',
+        'typing/cases/plotting/compute_bounds.py',
+        'typing/cases/plotting/enable_depth_peeling.py',
+        'typing/cases/plotting/get_default_cam_pos.py',
+        'typing/cases/plotting/get_image_depth.py',
+        'typing/cases/plotting/image.py',
+        'typing/cases/plotting/image_from_window.py',
+        'typing/cases/plotting/map_value.py',
+        'typing/cases/plotting/plotter_set_chart_interaction.py',
+        'typing/cases/plotting/property_culling.py',
+        'typing/cases/plotting/remove_actor.py',
+        'typing/cases/plotting/renderer_set_chart_interaction.py',
+        'typing/cases/plotting/resolve_scalars_field.py',
+        'typing/cases/plotting/screenshot.py',
+        'typing/cases/plotting/show_bounds.py',
+        'typing/cases/plotting/show_grid.py',
+        'typing/cases/plotting/volume_prop.py',
         # These also evaluate plotting symbols at module scope, so on a
         # rendering-free backend they are skipped at collection time (see
         # ``_RENDERING_ONLY_MODULES`` / ``pytest_ignore_collect``).
@@ -939,6 +980,15 @@ def pytest_report_header(config):  # noqa: ARG001
     return '\n'.join(lines)
 
 
+def _get_module_functions(module: ModuleType) -> dict[str, FunctionType]:
+    """Get all functions defined locally inside a module."""
+
+    def is_local(obj):
+        return type(obj) is FunctionType and obj.__module__ == module.__name__
+
+    return dict(inspect.getmembers(module, predicate=is_local))
+
+
 # Interactive scenes above ``max_vtksz_file_size`` in pyproject.toml fail the docs image
 # tests; these are the known exceptions with their own limit in MB, keyed by the vtksz
 # file stem without the plot-directive content hash.
@@ -947,7 +997,7 @@ _VTKSZ_SIZE_EXCEPTIONS_MB = {
     'sphx_glr_connectivity_001': 7,
     'sphx_glr_connectivity_002': 7,
     'sphx_glr_connectivity_003': 7,
-    'sphx_glr_ghost_cells_001': 7,
+    'sphx_glr_remove_cells_001': 7,
     'sphx_glr_openfoam_cooling_002': 7,
     'sphx_glr_openfoam_cooling_003': 8,
     'sphx_glr_pump_bracket_002': 7,

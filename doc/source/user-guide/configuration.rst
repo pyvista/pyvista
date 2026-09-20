@@ -87,6 +87,13 @@ data array:
 
 .. autoclass:: pyvista.InvalidMeshWarning
 
+The warning emitted when
+:attr:`~pyvista.core.config.Config.points_dtype` asks an algorithm for
+double-precision points it cannot generate, so the output is cast up and
+the dtype ends up wider than the values behind it:
+
+.. autoclass:: pyvista.PrecisionWarning
+
 .. _config_flags:
 
 Module-Level Flags
@@ -127,8 +134,11 @@ change the behavior of the whole process:
 
 ``pv.PICKLE_FORMAT`` (default: ``'vtk'``)
     In-memory serialization format used when pickling a
-    :class:`~pyvista.DataObject`. Set it with
-    :func:`pyvista.set_pickle_format`.
+    :class:`~pyvista.DataObject`.
+
+    .. deprecated:: 0.50
+        The ``'vtk'`` format is the only supported pickle format and is
+        always used.
 
 ``pv.DEFAULT_SCALARS_NAME`` (default: ``'Data'``)
     Name given to data arrays added without a name.

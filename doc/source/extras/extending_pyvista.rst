@@ -153,12 +153,13 @@ safe (the second import is a no-op against ``sys.modules``).
 
 The lazy resolution means installing an accessor plugin does not
 affect ``import pyvista`` performance or stability. A broken plugin
-only surfaces when a user actually accesses its namespace: they get
-a ``UserWarning`` pointing at the specific plugin and an
-``AttributeError`` on the call, and no other code is affected.
+only surfaces when a user actually accesses its namespace: the first
+access emits a ``UserWarning`` pointing at the specific plugin, every
+access raises an ``AttributeError`` carrying the same message, the
+name drops out of ``dir(mesh)``, and no other code is affected.
 ``pv.registered_accessors()`` is the one call that explicitly forces
-discovery of every pending plugin so the returned list reflects the
-full picture.
+discovery of every pending plugin, retrying any that failed, so the
+returned list reflects the full picture.
 
 For production plugins on PyPI, prefer the entry-point path: users
 get zero-config discovery without any startup cost on ``import

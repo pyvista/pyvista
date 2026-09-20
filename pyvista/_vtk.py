@@ -404,7 +404,6 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkOBBTree',
         'vtkRectilinearGridToPointSet',
         'vtkRectilinearGridToTetrahedra',
-        'vtkRemovePolyData',
         'vtkShrinkFilter',
         'vtkTableBasedClipDataSet',
         'vtkTableToPolyData',
@@ -470,10 +469,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkSuperquadricSource',
         'vtkTessellatedBoxSource',
     ),
-    'vtkFiltersStatistics': (
-        'vtkComputeQuartiles',
-        'vtkLengthDistribution',
-    ),
+    'vtkFiltersStatistics': ('vtkComputeQuartiles',),
     'vtkFiltersTexture': (
         'vtkTextureMapToPlane',
         'vtkTextureMapToSphere',
@@ -780,6 +776,7 @@ _PLOTTING_MODULES: dict[str, tuple[str, ...]] = {
         'vtkWorldPointPicker',
     ),
     'vtkRenderingFreeType': (
+        'vtkFreeTypeTools',
         'vtkMathTextFreeTypeTextRenderer',
         'vtkVectorText',
     ),
@@ -1012,3 +1009,10 @@ _SPECIAL_LOADERS: dict[str, Callable[[], type[Any]]] = {
     'vtkRenderPassCollection': _import_vtkRenderPassCollection,
     'vtkSequencePass': _import_vtkSequencePass,
 }
+
+
+# Handing Python a C++ object from a module that has not been imported binds that class
+# name to a base class for the rest of the process, so a documentation build -- whose
+# examples run in worker processes of their own -- resolves every class up front.
+if os.environ.get('PYVISTA_BUILDING_GALLERY', 'false').lower() == 'true':
+    import_all()

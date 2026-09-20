@@ -116,7 +116,7 @@ def test_documented_classes_needs_the_extension_to_be_loaded(monkeypatch):
 
 
 def test_provider_finds_the_class_that_defines_the_member():
-    assert autoinherit._provider(pv.PolyData, 'remove_cells') is _PointSetBase
+    assert autoinherit._provider(pv.PolyData, 'center_of_mass') is _PointSetBase
     assert autoinherit._provider(pv.ImageData, 'dimensions') is Grid
     assert autoinherit._provider(pv.PolyData, 'faces') is pv.PolyData
 

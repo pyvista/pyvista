@@ -142,7 +142,7 @@ of PyVista's reader machinery the format gets:
      - no
      - yes
    * - Keyword arguments to :func:`pyvista.read`
-     - dropped
+     - forwarded as ``handler(path, **kwargs)``
      - set as reader attributes
    * - ``progress_bar=True``, ``validate=``
      - ignored
@@ -211,6 +211,14 @@ This is the entry-point equivalent of ``override=True`` on
 :func:`pyvista.register_reader`.  Both groups accept both forms, a
 callable or a :class:`pyvista.BaseReader` subclass.
 
+A callable override is the one case where :func:`pyvista.read` does not
+forward its keyword arguments.  For an extension PyVista ships a reader
+for, those arguments name attributes of *that* reader, so
+``progress_bar``, ``validate`` and any keyword argument route the read
+past the override to the built-in rather than being reinterpreted by the
+callable.  Register a :class:`pyvista.BaseReader` subclass to expose
+options on an extension PyVista already reads.
+
 Declaring an override for an extension PyVista does *not* currently
 read is allowed and silent.  It costs nothing and keeps the package
 working if a later PyVista release adds a reader for that extension.
@@ -236,10 +244,12 @@ built-in format reads differently than expected.
 
 When :func:`pyvista.read` is given a remote URI (``https://``,
 ``s3://``, etc.) and a custom reader is registered for the file
-extension, the URI is passed directly to the reader.  If the reader
-raises :class:`~pyvista.LocalFileRequiredError`, PyVista downloads
-the file to a temporary local path and retries.  For built-in
-formats with no custom reader, the download happens automatically.
+extension, the URI is passed directly to the reader along with any
+keyword arguments.  If the reader raises
+:class:`~pyvista.LocalFileRequiredError`, PyVista downloads the file to
+a temporary local path and retries.  For built-in formats with no custom
+reader, and for a callable override handed reader arguments, the
+download happens automatically.
 This uses ``fsspec`` when available (install with
 ``pip install pyvista[io]``), falling back to ``pooch`` for HTTP(S)
 URIs.
@@ -315,6 +325,10 @@ without any manual registration::
    mesh.save('sphere.pv')
    pv.read('sphere.pv')
 
+Without it, both :func:`pyvista.read` and
+:meth:`pyvista.DataObject.save` raise :class:`ImportError` naming the
+package and the install command; see :ref:`optional_formats` below.
+
 Supported dataset types include :class:`~pyvista.ImageData`,
 :class:`~pyvista.PolyData`, :class:`~pyvista.StructuredGrid`,
 :class:`~pyvista.RectilinearGrid`, :class:`~pyvista.UnstructuredGrid`,
@@ -325,36 +339,51 @@ over ``.vtu`` / ``.vtp`` / ``.vtm`` when file size or I/O latency
 matters.
 
 
-Optional Readers
+.. _optional_formats:
+
+Optional Formats
 ~~~~~~~~~~~~~~~~
 
-A few formats are read by companion packages rather than by PyVista
-itself, so that a heavyweight or narrowly used parser is not carried by
+A few formats are served by companion packages rather than by PyVista
+itself, so that a heavyweight or narrowly used codec is not carried by
 every install.  PyVista still knows the extension: :func:`pyvista.read`
-dispatches to the companion package when it is installed, and raises
-:class:`ImportError` naming the package and the install command when it
-is not.
+and :meth:`pyvista.DataObject.save` dispatch to the companion package
+when it is installed, and raise :class:`ImportError` naming the package
+and the install command when it is not.
 
 .. list-table::
    :header-rows: 1
-   :widths: 10 35 25
+   :widths: 10 30 15 25
 
    * - Extension
      - Format
+     - Direction
      - Package
    * - ``.frd``
      - CalculiX FRD result files
+     - read
      - `pyvista-frd-reader <https://github.com/pyvista/pyvista-frd-reader>`_
+   * - ``.pv``
+     - PyVista's native ``zstd``-compressed format
+     - read, write
+     - `pyvista-zstd <https://github.com/pyvista/pyvista-zstd>`_
 
 All of them are included in the ``io`` extra::
 
    pip install pyvista[io]
 
-Once installed, reading is transparent::
+Reading and saving are then transparent::
 
    import pyvista as pv
 
    mesh = pv.read('mesh.frd')
+   mesh.save('mesh.pv')
+
+Without the package, the extension is still recognized: the
+:class:`ImportError` names the format, the missing package, and both
+the ``pip install pyvista[io]`` command and the command for that one
+package on its own.  When the package is present but fails to import,
+the error reports the import failure instead, with no install command.
 
 These packages provide the reader object themselves, so
 :func:`pyvista.get_reader` does not resolve their extensions.  Use the
@@ -367,10 +396,70 @@ selection is needed::
    reader.set_active_time_value(reader.time_values[-1])
    mesh = reader.read()
 
+The error :func:`pyvista.get_reader` raises names that class, so it
+says where to go: ``pyvista_frd.FRDReader`` for ``.frd`` and
+``pyvista_zstd.Reader`` for ``.pv``.
+
+Keyword arguments beyond those :meth:`~pyvista.DataObject.save`
+documents are forwarded to the package's writer, so format-specific
+options are reachable without a separate import::
+
+   mesh.save('mesh.pv', level=19, n_threads=4)
+
 .. versionchanged:: 0.49.0
    ``.frd`` moved from a built-in reader to ``pyvista-frd-reader``.
    ``pyvista.FRDReader`` was removed; use ``pyvista_frd.FRDReader``.
 
+
+Faster Readers for Built-in Formats
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Two further companion packages read a format PyVista already supports,
+faster than the VTK reader does.  They declare the
+``pyvista.readers.override`` entry point described above, so installing
+one is all it takes for :func:`pyvista.read` to use it.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 10 35 25
+
+   * - Extension
+     - Format
+     - Package
+   * - ``.ply``
+     - Polygon File Format
+     - `pyvista-miniply <https://github.com/pyvista/pyvista-miniply>`_
+   * - ``.stl``
+     - Stereolithography
+     - `pyvista-stl <https://github.com/pyvista/pyvista-stl>`_
+
+Both ship in the ``io-override`` extra, which is intentionally separate
+from ``io`` because installing it changes the readers used for existing
+formats::
+
+   pip install pyvista[io-override]
+
+The packages aim to match the stock VTK readers, including point normals,
+texture coordinates, and colors, but their behavior and output are not
+guaranteed to be identical.  Neither is required: without them
+:func:`pyvista.read` falls back to :class:`pyvista.PLYReader` and
+:class:`pyvista.STLReader`, which also remain what
+:func:`pyvista.get_reader` hands back.
+
+Because an override changes a format the user did not choose,
+:func:`pyvista.registered_readers` reports it::
+
+   import pyvista as pv
+
+   [(r.extension, r.source) for r in pv.registered_readers() if r.override]
+   # [('.ply', 'pyvista_miniply:read_as_mesh'), ('.stl', 'pyvista_stl:read_as_mesh')]
+
+To read a file with the VTK reader while a package is installed, use
+the reader class directly::
+
+   mesh = pv.STLReader('mesh.stl').read()
+
+.. versionadded:: 0.49.0
 
 Writer Classes
 ~~~~~~~~~~~~~~

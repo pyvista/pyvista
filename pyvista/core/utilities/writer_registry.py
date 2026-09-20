@@ -13,6 +13,8 @@ from typing import overload
 
 import pyvista as pv
 from pyvista._warn_external import warn_external
+from pyvista.core.utilities._optional_formats import _WRITE
+from pyvista.core.utilities._optional_formats import _missing_message
 from pyvista.core.utilities._registry_helpers import handler_source
 
 if TYPE_CHECKING:
@@ -122,22 +124,14 @@ def _get_builtin_writer_exts() -> frozenset[str]:
     return _builtin_writer_exts
 
 
+# fmt: off
+# ruff: disable[E501]
 @overload
-def register_writer(
-    key: str,
-    handler: None = None,
-    *,
-    override: bool = False,
-) -> Callable[[WriterHandler], WriterHandler]: ...
-
-
+def register_writer(key: str, handler: None = None, *, override: bool = False) -> Callable[[WriterHandler], WriterHandler]: ...
 @overload
-def register_writer(
-    key: str,
-    handler: WriterHandler,
-    *,
-    override: bool = False,
-) -> None: ...
+def register_writer(key: str, handler: WriterHandler, *, override: bool = False) -> None: ...
+# ruff: enable[E501]
+# fmt: on
 
 
 def register_writer(
@@ -269,6 +263,11 @@ def _register(
         )
     _custom_ext_writers[key] = handler
     _custom_ext_writer_sources[key] = source if source is not None else handler_source(handler)
+
+
+def _missing_writer_message(ext: str, filename: str | None = None) -> str | None:
+    """Return install instructions when ``ext`` needs a companion package PyVista cannot import."""
+    return _missing_message(ext, _WRITE, filename)
 
 
 def _get_ext_handler(ext: str) -> WriterHandler | None:

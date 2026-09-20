@@ -12,7 +12,6 @@ import numpy as np
 import pyvista_validation as _validation
 
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
@@ -396,7 +395,7 @@ class Prop3D(_NoNewAttrMixin, _NameMixin, _BoundsSizeMixin, DisableVtkSnakeCase,
         multiply_mode: Literal['pre', 'post'] = 'post',
         *,
         inplace: bool = False,
-    ):
+    ) -> Self:
         """Apply a transformation to this object's :attr:`~pyvista.Prop3D.user_matrix`.
 
         .. note::
@@ -457,10 +456,10 @@ class Prop3D(_NoNewAttrMixin, _NameMixin, _BoundsSizeMixin, DisableVtkSnakeCase,
         return output
 
     @abstractmethod
-    @_deprecate_positional_args
     def copy(
         self: Self,
-        deep: bool = True,  # noqa: FBT001, FBT002
+        *,
+        deep: bool = True,
     ) -> Self:  # numpydoc ignore=RT01
         """Return a copy of this prop.
 
@@ -569,7 +568,10 @@ def _orientation_as_rotation_matrix(orientation: VectorLike[float]) -> NumpyArra
         3x3 rotation matrix.
 
     """
-    valid_orientation = _validation.validate_array3(orientation, name='orientation')
+    # SetOrientation takes a mutable sequence
+    valid_orientation = _validation.validate_array3(
+        orientation, dtype_out=float, to_list=True, name='orientation'
+    )
     prop = _vtk.vtkActor()
     prop.SetOrientation(valid_orientation)
     matrix = _vtk.vtkMatrix4x4()
@@ -656,7 +658,7 @@ class _Prop3DMixin(_BoundsSizeMixin, ABC):
         self._post_set_update()
 
     @property
-    def _transformation_matrix(self):
+    def _transformation_matrix(self) -> NumpyArray[float]:
         """Transformation matrix applied to the actor.
 
         The transformation is computed from the attributes :attr:`position`
@@ -667,7 +669,7 @@ class _Prop3DMixin(_BoundsSizeMixin, ABC):
         return array_from_vtkmatrix(self._prop3d.GetMatrix())
 
     @abstractmethod
-    def _post_set_update(self):
+    def _post_set_update(self) -> None:
         """Update object after setting Prop3D attributes."""
 
     @abstractmethod

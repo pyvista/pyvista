@@ -562,7 +562,8 @@ class Texture(DataObject, _vtk.vtkTexture):
         if floor_plane is not None:
             valid_floor_plane = _validation.validate_array(
                 floor_plane,
-                must_have_shape=4,
+                must_have_ndim=1,
+                must_have_length=4,
                 dtype_out=float,
                 to_tuple=True,
                 name='floor_plane',

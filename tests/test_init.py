@@ -83,13 +83,13 @@ PLOTTING_VTKMODULES = CORE_VTKMODULES | {
 
 
 def exec_success(code: str):
-    return os.system(f'{sys.executable} -c "{code}"') == 0
+    return subprocess.run([sys.executable, '-c', code], check=False).returncode == 0
 
 
 def _module_is_loaded(module_to_check: str, module_to_import: str = 'pyvista') -> bool:
     """This function checks if the specified module is loaded after calling `import pyvista`
 
-    We use ``os.system`` because we need to test the import of pyvista
+    We use a subprocess because we need to test the import of pyvista
     outside of the pytest unit test framework as pytest loads vtk.
     """
     exe_str = (
@@ -309,6 +309,20 @@ def test_vtk_import_all_suppressed_ignores_failures(monkeypatch):
     _vtk.import_all(suppress_import_errors=True)
 
     assert calls == ['A', 'SpecialA']
+
+
+@pytest.mark.parametrize(('building_gallery', 'imported'), [('true', True), ('false', False)])
+def test_building_gallery_imports_vtk_eagerly(building_gallery, imported):
+    """A gallery build resolves every mapped VTK class when PyVista is imported."""
+    code = "from pyvista import _vtk; print('vtkOutlineFilter' in vars(_vtk))"
+    result = subprocess.run(
+        [sys.executable, '-c', code],
+        env={**os.environ, 'PYVISTA_BUILDING_GALLERY': building_gallery},
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    assert result.stdout.strip() == str(imported)
 
 
 def test_validation_forward_deprecated():

@@ -397,6 +397,9 @@ def test_point_picking_window(pickable_window):
         # do not use point picker as it snaps to points
     )
 
+    # must show to render the framebuffer the hardware picker reads back
+    pl.show(auto_close=False)
+
     # simulate the pick
     renderer = pl.renderer
     picker = pl.iren.picker

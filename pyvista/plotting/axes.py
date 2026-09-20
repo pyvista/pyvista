@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
@@ -37,13 +36,13 @@ class Axes(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkAxes):
 
     """
 
-    @_deprecate_positional_args
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
-        show_actor: bool = False,  # noqa: FBT001, FBT002
+        *,
+        show_actor: bool = False,
         actor_scale=1,
         line_width=1.0,
-        symmetric: bool = False,  # noqa: FBT001, FBT002
+        symmetric: bool = False,
     ):  # numpydoc ignore=PR01,RT01
         """Initialize a new axes descriptor."""
         super().__init__()

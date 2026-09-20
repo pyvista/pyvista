@@ -19,6 +19,7 @@ import pytest
 
 import pyvista as pv
 from pyvista import _vtk
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import convert_array
 
@@ -117,18 +118,9 @@ def test_repr_field_attributes_with_string(hexbeam_field_attributes):
     assert 'DataSetAttributes' in repr_str
     assert 'Contains arrays : None' in repr_str
 
-    # Add string data
-    str_len_18 = 'stringlength18char'
-    assert len(str_len_18) == 18
-    str_len_19 = 'stringlength19chars'
-    assert len(str_len_19) == 19
-
-    hexbeam_field_attributes['string_data_18'] = str_len_18
-    hexbeam_field_attributes['string_data_19'] = str_len_19
-
+    hexbeam_field_attributes['string_data'] = ['hello', 'world']
     repr_str = str(hexbeam_field_attributes)
-    assert 'string_data_18          str        "stringlength18char"' in repr_str
-    assert 'string_data_19          str        "stringlength19c..."' in repr_str
+    assert 'string_data             <U5        (2,)' in repr_str
 
 
 def test_empty_active_vectors(hexbeam):
@@ -194,11 +186,6 @@ def test_active_name_setter_ignores_string_array(plane, attr):
     assert before != 'strings'
 
 
-def test_patch_type_without_vtk_array(sphere):
-    array = pv.pyvista_ndarray([1.0, 2.0])
-    assert sphere.point_data._patch_type(array) is array
-
-
 def test_active_normals_name():
     # Load dataset known to have active normals by default
     sphere = pv.Sphere()
@@ -223,7 +210,7 @@ def test_active_normals_name():
 
 
 def test_set_scalars(sphere):
-    scalars = np.array(sphere.n_points)
+    scalars = np.arange(sphere.n_points)
     key = 'scalars'
     sphere.point_data.set_scalars(scalars, key)
     assert sphere.point_data.active_scalars_name == key
@@ -417,13 +404,15 @@ def test_set_array_catch(hexbeam):
 @settings(max_examples=20, suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(scalar=integers(min_value=-sys.maxsize - 1, max_value=sys.maxsize))
 def test_set_array_should_accept_scalar_value(scalar, hexbeam_point_attributes):
-    hexbeam_point_attributes.set_array(scalar, name='int_array')
+    with pytest.warns(PyVistaDeprecationWarning, match='from a scalar is deprecated'):
+        hexbeam_point_attributes.set_array(scalar, name='int_array')
 
 
 @settings(max_examples=20, suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(scalar=integers(min_value=-sys.maxsize - 1, max_value=sys.maxsize))
 def test_set_array_scalar_value_should_give_array(scalar, hexbeam_point_attributes):
-    hexbeam_point_attributes.set_array(scalar, name='int_array')
+    with pytest.warns(PyVistaDeprecationWarning, match='from a scalar is deprecated'):
+        hexbeam_point_attributes.set_array(scalar, name='int_array')
     expected = np.full(hexbeam_point_attributes.dataset.n_points, scalar)
     assert np.array_equal(expected, hexbeam_point_attributes['int_array'])
 
@@ -472,20 +461,13 @@ def test_should_pop_array(insert_arange_narray):
     assert 'sample_array' not in dsa
 
 
-def test_pop_should_return_arange_narray(insert_arange_narray):
-    dsa, sample_array = insert_arange_narray
-    other_array = dsa.pop('sample_array')
-    assert np.array_equal(other_array, sample_array)
-
-
-def test_pop_should_return_bool_array(insert_bool_array):
-    dsa, sample_array = insert_bool_array
-    other_array = dsa.pop('sample_array')
-    assert np.array_equal(other_array, sample_array)
-
-
-def test_pop_should_return_string_array(insert_string_array):
-    dsa, sample_array = insert_string_array
+@pytest.mark.parametrize(
+    'inserted',
+    ['insert_arange_narray', 'insert_bool_array', 'insert_string_array'],
+)
+def test_pop_should_return_array(request, inserted):
+    """`pop` returns the array that was inserted, whatever its dtype."""
+    dsa, sample_array = request.getfixturevalue(inserted)
     other_array = dsa.pop('sample_array')
     assert np.array_equal(other_array, sample_array)
 
@@ -746,6 +728,21 @@ def test_complex(plane, dtype_str):
     assert plane.point_data[name].dtype == dtype
     plane.point_data[name] = plane.point_data[name].real
     assert np.issubdtype(plane.point_data[name].dtype, real_type)
+
+
+@pytest.mark.parametrize('dtype', [np.complex64, np.complex128])
+def test_complex_singleton(dtype):
+    """Reading a singleton complex array returns an associated writable view."""
+    mesh = pv.PolyData(np.zeros((1, 3)))
+    mesh.point_data['values'] = np.array([1 + 2j], dtype=dtype)
+    array = mesh.point_data['values']
+    assert isinstance(array, pv.pyvista_ndarray)
+    assert array.shape == ()
+    assert array.dtype == dtype
+    assert array.item() == 1 + 2j
+    assert array.dataset.Get() is mesh
+    array[...] = 3 + 4j
+    assert mesh.point_data['values'].item() == 3 + 4j
 
 
 @pytest.mark.parametrize('copy', [True, False])

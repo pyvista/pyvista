@@ -52,6 +52,7 @@ import make_tables
 import pyvista as pv
 from pyvista import _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.errors import PyVistaFutureWarning
 from pyvista.core.utilities.docs import linkcode_resolve  # noqa: F401
 from pyvista.core.utilities.docs import pv_html_page_context
 from pyvista.ext._autoenum import instance_property_names
@@ -104,10 +105,14 @@ warnings.filterwarnings(
     ),
 )
 
-# Prevent deprecated features from being used in examples
+# Prevent deprecated features and changing defaults from being used in examples
 warnings.filterwarnings(
     'error',
     category=PyVistaDeprecationWarning,
+)
+warnings.filterwarnings(
+    'error',
+    category=PyVistaFutureWarning,
 )
 warnings.filterwarnings(
     'always',
@@ -132,6 +137,7 @@ extensions = [
     'numpydoc',
     'pyvista.ext._autoenum',
     'pyvista.ext._autoinherit',
+    'pyvista.ext._embed_py_file',
     'pyvista.ext.plot_directive',
     'sphinx_autoopengraph',
     'sphinx_examples_as_code',
@@ -170,7 +176,10 @@ autodoc_type_aliases = {
     'JupyterBackendOptions': 'pyvista.JupyterBackendOptions',
     'MeshValidationFields': 'pyvista.MeshValidationFields',
     'Chart': 'pyvista.Chart',
+    'FrameType': 'types.FrameType',
     'ColorLike': 'pyvista.ColorLike',
+    # generated from the example names; render it as a name, not 222 literals
+    'ExampleName': 'ExampleName',
     'ArrayLike': 'pyvista.ArrayLike',
     'VectorLike': 'pyvista.VectorLike',
     'MatrixLike': 'pyvista.MatrixLike',
@@ -230,6 +239,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*WriterHandler'),
     (r'py:.*', '.*ReaderHandler'),
     (r'py:.*', '.*ReaderProvider'),
+    (r'py:.*', r'pv\.BaseReader'),
     (r'py:.*', '.*_T_Provider'),
     (r'py:.*', '.*BoundsLike'),
     (r'py:.*', '.*RotationLike'),
@@ -254,6 +264,10 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*NormalsLiteral'),
     (r'py:.*', '.*_CellQualityLiteral'),
     (r'py:.*', '.*_CompressionOptions'),
+    (r'py:.*', '.*_ShowReturnType'),
+    (r'py:.*', '.*_ConnectivityMode'),
+    (r'py:.*', '.*_RegionAssignmentMode'),
+    (r'py:.*', '.*_AxesPropTuple'),
     (r'py:.*', '.*_SENTINEL'),
     (r'py:.*', '.*T'),
     (r'py:.*', '.*Options'),
@@ -267,6 +281,11 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*PolyData'),
     (r'py:.*', '.*UnstructuredGrid'),
     (r'py:.*', '.*_TypeMultiBlockLeaf'),
+    (r'py:.*', '.*DatasetObject'),
+    (r'py:.*', '.*_DatasetT_co'),
+    (r'py:.*', '.*_ReadersT_co'),
+    (r'py:.*', '.*ExampleName'),
+    (r'py:.*', '.*_DatasetLoader'),
     (r'py:.*', '.*Grid'),
     (r'py:.*', '.*PointGrid'),
     (r'py:.*', '.*_PointSetBase'),
@@ -563,14 +582,24 @@ def _filter_sphinx_gallery_warnings():
     warnings.simplefilter('error', append=True)
 
 
+# Examples whose VTK warnings are noise: VTK 9.7 intermittently logs Jacobi
+# eigenvalue warnings while importing this VRML scene.
+_VTK_OUTPUT_TOLERATED = frozenset({'load_vrml.py'})
+
+
 class ResetPyVista:
     """Reset pyvista module to default settings."""
 
-    def __call__(self, gallery_conf, fname):  # noqa: ARG002
+    def __init__(self):
+        self._error_catcher = None
+
+    def __call__(self, gallery_conf, fname, when):  # noqa: ARG002
         """Reset pyvista module to default settings.
 
         If default documentation settings are modified in any example, reset here.
         """
+        if when == 'after':
+            self._raise_for_vtk_output(fname)
         _filter_sphinx_gallery_warnings()
         import matplotlib as mpl  # must import before pyvista
 
@@ -585,6 +614,35 @@ class ResetPyVista:
 
         pv._wrappers['vtkPolyData'] = pv.PolyData
         pv.set_plot_theme('document_build')
+
+        if when == 'before':
+            self._start_catching_vtk_output()
+
+    def _start_catching_vtk_output(self):
+        """Begin recording the errors and warnings VTK logs while an example runs."""
+        import pyvista as pv
+
+        # An example that aborted may have left the previous recording open.
+        self._stop_catching_vtk_output()
+        catcher = pv.VtkErrorCatcher(send_to_logging=False)
+        catcher.__enter__()
+        self._error_catcher = catcher
+
+    def _stop_catching_vtk_output(self):
+        """Stop recording and return the events logged since recording began."""
+        catcher, self._error_catcher = self._error_catcher, None
+        if catcher is None:
+            return []
+        catcher.__exit__(None, None, None)
+        return catcher.events
+
+    def _raise_for_vtk_output(self, fname):
+        """Fail the build when an example logged a VTK error or warning."""
+        events = self._stop_catching_vtk_output()
+        if events and Path(fname).name not in _VTK_OUTPUT_TOLERATED:
+            logged = '\n'.join(str(event) for event in events)
+            msg = f'{fname} logged {len(events)} VTK error(s) or warning(s):\n{logged}'
+            raise RuntimeError(msg)
 
     def __repr__(self):
         return 'ResetPyVista'
@@ -655,7 +713,7 @@ autocodelink_autodoc_backrefs = True
 # Rename backreferences group headings.
 autocodelink_category_labels = {
     'Sphinx Gallery': 'Gallery Examples',
-    'Docstring Examples': 'Docstring Examples',
+    'Docstring Examples': 'API Examples',
     'Documentation': 'Guides',
 }
 
@@ -896,11 +954,16 @@ def get_version_match(semver):
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
+# An expanded sidebar embeds the site's whole toctree (~2,100 links) in every page:
+# the write phase grew from ~40s to ~7min and pages two- to five-fold (see #9023).
+# Release builds take that cost for navigability; every other build collapses it.
+RELEASE_BUILD = os.environ.get('_PYVISTA_RELEASE', '').lower() == 'true'
+
 html_theme_options = {
     'analytics': {'google_analytics_id': 'UA-140243896-1'},
     'show_prev_next': False,
     'github_url': 'https://github.com/pyvista/pyvista',
-    'collapse_navbar': True,
+    'collapse_navbar': not RELEASE_BUILD,
     'use_edit_page_button': True,
     'navigation_with_keys': False,
     'show_navbar_depth': 1,
