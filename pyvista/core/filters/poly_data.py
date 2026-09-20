@@ -1742,7 +1742,7 @@ class PolyDataFilters(DataSetFilters):
         # Subdivide
         sfilter.SetCheckForTriangles(False)  # we already check for this
         sfilter.SetNumberOfSubdivisions(nsub)
-        sfilter.SetInputData(self)
+        sfilter.SetInputData(_with_64_bit_faces(self))
         _update_alg(sfilter, progress_bar=progress_bar, message='Subdividing Mesh')
 
         submesh = _get_output(sfilter)
@@ -5090,3 +5090,15 @@ def _interpolate_rows(
     shape = (-1,) + (1,) * (array.ndim - 1)
     fraction = weight.reshape(shape)
     return array[index_a] * (1.0 - fraction) + array[index_b] * fraction
+
+
+def _with_64_bit_faces(mesh: PolyData) -> PolyData:
+    """Return the mesh with 64-bit faces, which the subdivision filters of vtk<9.4 require."""
+    if pv.vtk_version_info >= (9, 4, 0) or mesh.GetPolys().IsStorage64Bit():
+        return mesh
+    faces = _vtk.vtkCellArray()
+    faces.DeepCopy(mesh.GetPolys())
+    faces.ConvertTo64BitStorage()
+    converted = mesh.copy(deep=False)
+    converted.SetPolys(faces)
+    return converted
