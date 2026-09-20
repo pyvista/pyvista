@@ -644,7 +644,7 @@ def read_texture(filename: str | Path, *, progress_bar: bool = False) -> Texture
         # initialize the reader using the extension to find it
 
         image = read(filename, progress_bar=progress_bar)
-        if image.n_points < 2:
+        if not isinstance(image, pv.ImageData) or image.n_points < 2:
             msg = 'Problem reading the image with VTK.'
             raise ValueError(msg)
         return pv.Texture(image)

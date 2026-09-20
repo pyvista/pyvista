@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Literal
+from typing import get_args
 
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista._warn_external import warn_external
@@ -12,10 +15,34 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.helpers import is_pyvista_dataset
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+    from typing import Any
+
+    from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import VectorLike
+    from pyvista.core.dataset import DataSet
+
+    from ._typing import ColorLike
+
+_ViewOptions = Literal['xy', 'yx', 'xz', 'zx', 'yz', 'zy']
+
+# The direction each plane is viewed from, paired with its up vector.
+_VIEW_VECTORS: dict[_ViewOptions, tuple[tuple[int, int, int], tuple[int, int, int]]] = {
+    'xy': ((0, 0, 1), (0, 1, 0)),
+    'yx': ((0, 0, -1), (1, 0, 0)),
+    'xz': ((0, -1, 0), (0, 0, 1)),
+    'zx': ((0, 1, 0), (1, 0, 0)),
+    'yz': ((1, 0, 0), (0, 0, 1)),
+    'zy': ((-1, 0, 0), (0, 1, 0)),
+}
 
 
-def plot_arrows(cent, direction, **kwargs):
+def plot_arrows(
+    cent: VectorLike[float] | MatrixLike[float],
+    direction: VectorLike[float] | MatrixLike[float],
+    **kwargs: Any,
+) -> Any:
     """Plot arrows as vectors.
 
     Parameters
@@ -61,26 +88,26 @@ def plot_arrows(cent, direction, **kwargs):
     >>> pv.plot_arrows(cent, direction)
 
     """
-    return pv.plot([cent, direction], **kwargs)
+    return pv.plot([np.asarray(cent), np.asarray(direction)], **kwargs)
 
 
 def plot_compare_four(  # noqa: PLR0917  # pragma: no cover
-    data_a,
-    data_b,
-    data_c,
-    data_d,
+    data_a: DataSet,
+    data_b: DataSet,
+    data_c: DataSet,
+    data_d: DataSet,
     *,
-    display_kwargs=None,
-    plotter_kwargs=None,
-    show_kwargs=None,
-    screenshot=None,
-    camera_position=None,
-    outline=None,
-    outline_color='k',
-    labels=('A', 'B', 'C', 'D'),
+    display_kwargs: dict[str, Any] | None = None,
+    plotter_kwargs: dict[str, Any] | None = None,
+    show_kwargs: dict[str, Any] | None = None,
+    screenshot: str | bool = False,
+    camera_position: Any = None,
+    outline: DataSet | None = None,
+    outline_color: ColorLike = 'k',
+    labels: Sequence[str] = ('A', 'B', 'C', 'D'),
     link: bool = True,
-    notebook=None,
-):
+    notebook: bool | None = None,
+) -> Any:
     """Plot a 2 by 2 comparison of data objects.
 
     .. deprecated:: 0.49
@@ -112,7 +139,7 @@ def plot_compare_four(  # noqa: PLR0917  # pragma: no cover
     show_kwargs : dict, default: None
         Additional keyword arguments to pass to the ``show`` method.
 
-    screenshot : str | bool, default: None
+    screenshot : str | bool, default: False
         File name or path to save screenshot of the plot, or ``True`` to return
         a screenshot array.
 
@@ -136,8 +163,8 @@ def plot_compare_four(  # noqa: PLR0917  # pragma: no cover
 
     Returns
     -------
-    pyvista.Plotter
-        The plotter object.
+    tuple
+        See the returns of :func:`pyvista.Plotter.show`.
 
     See Also
     --------
@@ -157,7 +184,7 @@ def plot_compare_four(  # noqa: PLR0917  # pragma: no cover
         raise RuntimeError(msg)
 
     datasets = [[data_a, data_b], [data_c, data_d]]
-    labels = [labels[0:2], labels[2:4]]
+    corner_labels = [labels[0:2], labels[2:4]]
 
     if plotter_kwargs is None:
         plotter_kwargs = {}
@@ -174,7 +201,7 @@ def plot_compare_four(  # noqa: PLR0917  # pragma: no cover
         for j in range(2):
             pl.subplot(i, j)
             pl.add_mesh(datasets[i][j], **display_kwargs)
-            pl.add_text(labels[i][j])
+            pl.add_text(corner_labels[i][j])
             if is_pyvista_dataset(outline):
                 pl.add_mesh(outline, color=outline_color)
             if camera_position is not None:
@@ -190,7 +217,9 @@ def plot_compare_four(  # noqa: PLR0917  # pragma: no cover
     return pl.show(screenshot=screenshot, **show_kwargs)
 
 
-def view_vectors(view: str, *, negative: bool = False) -> tuple[NumpyArray[int], NumpyArray[int]]:
+def view_vectors(
+    view: _ViewOptions, *, negative: bool = False
+) -> tuple[NumpyArray[int], NumpyArray[int]]:
     """Given a plane to view, return vectors for setting up camera.
 
     Parameters
@@ -210,31 +239,9 @@ def view_vectors(view: str, *, negative: bool = False) -> tuple[NumpyArray[int],
         ``[x, y, z]`` vector that points to the ``viewup`` direction.
 
     """
-    if view == 'xy':
-        vec = np.array([0, 0, 1])
-        viewup = np.array([0, 1, 0])
-    elif view == 'yx':
-        vec = np.array([0, 0, -1])
-        viewup = np.array([1, 0, 0])
-    elif view == 'xz':
-        vec = np.array([0, -1, 0])
-        viewup = np.array([0, 0, 1])
-    elif view == 'zx':
-        vec = np.array([0, 1, 0])
-        viewup = np.array([1, 0, 0])
-    elif view == 'yz':
-        vec = np.array([1, 0, 0])
-        viewup = np.array([0, 0, 1])
-    elif view == 'zy':
-        vec = np.array([-1, 0, 0])
-        viewup = np.array([0, 1, 0])
-    else:
-        msg = (
-            f'Unexpected value for direction {view}\n'
-            "    Expected: 'xy', 'yx', 'xz', 'zx', 'yz', 'zy'"
-        )
-        raise ValueError(msg)
-
+    _validation.check_contains(list(get_args(_ViewOptions)), must_contain=view, name='view')
+    direction, up = _VIEW_VECTORS[view]
+    vec = np.array(direction)
     if negative:
         vec *= -1
-    return vec, viewup
+    return vec, np.array(up)
