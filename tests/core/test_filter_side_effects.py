@@ -420,8 +420,10 @@ _POSITIONAL_ARGS = {
 
 #: Keyword arguments required alongside the positional ones.
 _REQUIRED_KWARGS = {
+    'extract_values': dict(values=0.0),
     'sample_over_circular_arc': dict(pointa=(-1, 0, 0), pointb=(1, 0, 0), center=(0, 0, 0)),
     'sample_over_circular_arc_normal': dict(center=(0, 0, 0)),
+    'select_values': dict(values=0.0),
     'slice_index': dict(i=0),
     'validate_mesh': dict(action='warn'),
 }
@@ -772,6 +774,8 @@ def test_filter_output_does_not_depend_on_active_scalars(key):
             args, kwargs = _call_arguments(name)
             as_is = _output_or_error(template.copy(), name, args, kwargs)
             preactivated = _output_or_error(activated, name, args, kwargs)
+            if 'raised' in as_is and as_is == preactivated:
+                continue  # the filter does not apply to this mesh
             ran += 1
             changes = _changes(as_is, preactivated)
             if changes:  # pragma: no cover -- failure path
