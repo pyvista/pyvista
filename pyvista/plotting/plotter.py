@@ -6064,20 +6064,23 @@ class BasePlotter(_BoundsSizeMixin):
         # keeps to, so that the same font size means the same thing to both of them
         prop.font_size = int(font_size * 2)
 
-        named = isinstance(position, str)
-        if named:
+        if isinstance(position, str):
+            named = True
             if position not in _TEXT_POSITIONS:
                 positions = ', '.join(repr(name) for name in _TEXT_POSITIONS)
                 msg = f'Position {position!r} is not a coordinate or one of {positions}.'
                 raise ValueError(msg)
             x, y, horizontal, vertical = _TEXT_POSITIONS[position]
-            position = (x, y)
+            coordinate: Sequence[float] = (x, y)
             # Anchor the text to the part of the viewport it is placed in, so that it
             # stays there whatever size it is drawn at
             prop.justification_horizontal = horizontal
             prop.justification_vertical = vertical
+        else:
+            named = False
+            coordinate = position
 
-        actor = Text(text=text, position=position)
+        actor = Text(text=text, position=coordinate)
         if named or viewport:
             actor.GetActualPositionCoordinate().SetCoordinateSystemToNormalizedViewport()
             actor.GetActualPosition2Coordinate().SetCoordinateSystemToNormalizedViewport()
