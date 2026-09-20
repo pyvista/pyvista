@@ -322,6 +322,9 @@ def test_raise_unsupported(pointset):
         pointset.decimate_boundary()
 
     with pytest.raises(PointSetCellOperationError):
+        pointset.streamlines_evenly_spaced_2D()
+
+    with pytest.raises(PointSetCellOperationError):
         pointset.find_cells_along_line()
 
     with pytest.raises(PointSetCellOperationError):
