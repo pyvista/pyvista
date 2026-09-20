@@ -4541,10 +4541,54 @@ def test_ruler():
     pl.show()
 
 
+def test_ruler_flip_side():
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Box(bounds=(-1.25, 1.25, -0.3, 0.3, -0.3, 0.3)))
+    style = dict(font_size_factor=1.2, tick_length=18)
+    pl.add_ruler([-1.25, -0.6, 0], [1.25, -0.6, 0], title='+X', **style)
+    pl.add_ruler([1.25, -1.1, 0], [-1.25, -1.1, 0], title='-X', flip_side=True, **style)
+    pl.enable_parallel_projection()
+    pl.view_xy()
+    pl.camera.zoom(0.9)
+    pl.show()
+
+
+def test_ruler_renderer_scale():
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Box(bounds=(-1.25, 1.25, -0.3, 0.3, -0.3, 0.3)))
+    pl.add_ruler(
+        [-1.25, -0.6, 0],
+        [1.25, -0.6, 0],
+        title='X Distance',
+        font_size_factor=1.0,
+        tick_length=20,
+    )
+    pl.set_scale(xscale=3, yscale=2)
+    pl.enable_parallel_projection()
+    pl.view_xy()
+    pl.camera.zoom(0.55)
+    pl.show()
+
+
 def test_ruler_number_labels():
     pl = pv.Plotter()
     pl.add_mesh(pv.Sphere())
-    pl.add_ruler([-0.6, -0.6, 0], [0.6, -0.6, 0], font_size_factor=1.2, number_labels=2)
+    pl.add_ruler([-0.6, -0.6, 0], [0.6, -0.6, 0], font_size_factor=1.2, number_labels=6)
+    pl.view_xy()
+    pl.show()
+
+
+@pytest.mark.needs_vtk_version(9, 4, 0, reason='SnapLabelsToGrid was added in VTK 9.4.0')
+def test_ruler_snap_labels():
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    pl.add_ruler(
+        [-0.6, -0.6, 0],
+        [0.6, -0.6, 0],
+        font_size_factor=1.2,
+        number_labels=6,
+        snap_labels=True,
+    )
     pl.view_xy()
     pl.show()
 
@@ -6708,6 +6752,12 @@ def _add_checkerboard_grid_scene(pl):
     return [actor]
 
 
+def _add_checkerboard_grid_scene_off_center(pl):
+    actors = _add_checkerboard_grid_scene(pl)
+    pl.camera.window_center = (0.45, -0.3)
+    return actors
+
+
 # The distortion is a per-vertex transform of clip coordinates, so it does not
 # depend on the scene. One flat calibration target carries both cases that a
 # render can tell apart: the radial terms, and the tangential ones.
@@ -6723,6 +6773,11 @@ def _add_checkerboard_grid_scene(pl):
             _add_checkerboard_grid_scene,
             (0.08, -0.06, 0.05, -0.07),
             id='checkerboard_centered-mixed_tangential',
+        ),
+        pytest.param(
+            _add_checkerboard_grid_scene_off_center,
+            (3.8, 2.1, 0.004, -0.003),
+            id='checkerboard_off_center-strong_barrel',
         ),
     ],
 )
@@ -6893,6 +6948,29 @@ def test_camera_distortion_reads_each_subplots_projection_and_keeps_it_current()
     pl.camera.view_angle = 2 * pl.camera.view_angle
     pl.screenshot()
     assert projection_scale(actors[0]) < narrow
+    pl.close()
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_camera_distortion_is_centered_on_the_principal_point():
+    """The coefficients act on the distance from the principal point of the camera."""
+    image_size = (640, 480)
+    intrinsics = np.array([[800.0, 0.0, 200.0], [0.0, 760.0, 150.0], [0.0, 0.0, 1.0]])
+    pl = pv.Plotter(window_size=image_size)
+    actor = pl.add_mesh(pv.Sphere())
+    pl.camera.intrinsic_matrix = intrinsics
+    pl.enable_camera_distortion((0.3, 0.1, 0.0, 0.0))
+
+    uniforms = actor.GetShaderProperty().GetVertexCustomUniforms()
+    values = [0.0, 0.0]
+    assert uniforms.GetUniform2f('u_distortion_projection_center', values)
+    width, height = image_size
+    assert values == pytest.approx(
+        (2 * intrinsics[0, 2] / width - 1, 1 - 2 * intrinsics[1, 2] / height)
+    )
+
+    pl.disable_camera_distortion()
+    assert not uniforms.GetUniform2f('u_distortion_projection_center', values)
     pl.close()
 
 
