@@ -2593,7 +2593,7 @@ class MultiBlock(
         scalars_name: str,
         preference: PointLiteral | CellLiteral,
         component: int | None,
-        rgb: NumpyArray[float],
+        rgb: bool | None,
     ) -> tuple[FieldAssociation, str, np.dtype[np.number[Any]]]:
         """Active a scalars for an instance of :class:`pyvista.Plotter`."""
         # set the active scalars

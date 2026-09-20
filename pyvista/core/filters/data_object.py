@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from collections.abc import Sequence
 from collections.abc import Sized
 import copy as copylib
@@ -11,6 +12,7 @@ from dataclasses import fields
 from enum import IntEnum
 import functools
 import itertools
+import math
 import re
 import reprlib
 from typing import TYPE_CHECKING
@@ -44,6 +46,7 @@ from pyvista.core.filters import _get_output
 from pyvista.core.filters import _match_points_dtype
 from pyvista.core.filters import _points_dtype
 from pyvista.core.filters import _update_alg
+from pyvista.core.utilities._cell_lengths import _cell_length_percentile
 from pyvista.core.utilities.helpers import _NormalsLiteral
 from pyvista.core.utilities.helpers import _validate_plane_origin_and_normal
 from pyvista.core.utilities.helpers import generate_plane
@@ -5705,6 +5708,10 @@ class DataObjectFilters:
         pyvista.DataSetFilters.interpolate
             Interpolate values from one mesh onto another.
 
+        pyvista.DataObjectFilters.resample_to_image
+            Sample onto a new :class:`~pyvista.ImageData` which fits the input's bounds,
+            without building the image first.
+
         pyvista.ImageDataFilters.resample
             Resample image data to modify its dimensions and spacing.
 
@@ -6013,6 +6020,387 @@ class DataObjectFilters:
                 continue
             output.cell_data[measure] = cell_quality_array
         return output
+
+    def resample_to_image(  # type: ignore[misc]
+        self: DataSet | MultiBlock,
+        *,
+        reference_volume: ImageData | None = None,
+        dimensions: VectorLike[int] | None = None,
+        spacing: float | VectorLike[float] | None = None,
+        target_n_points: int | None = None,
+        max_n_points: int | None = None,
+        rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None = None,
+        cell_length_percentile: float | None = None,
+        cell_length_sample_size: int | None = None,
+        method: Literal['sample', 'interpolate'] | None = None,
+        null_value: float | None = None,
+        mark_blank: bool = False,
+        tolerance: float | None = None,
+        categorical: bool | None = None,
+        radius: float | None = None,
+        sharpness: float | None = None,
+        progress_bar: bool = False,
+    ) -> ImageData:
+        """Resample this mesh's arrays onto a uniform grid.
+
+        The mesh's arrays are resampled at the points of a new
+        :class:`~pyvista.ImageData`. Each point is the center of a voxel, and the voxels
+        tile the input's bounds, so the image's points are inset half a spacing from
+        those bounds. This is a one-line alternative to building the grid explicitly and
+        calling :meth:`~pyvista.DataObjectFilters.sample` or
+        :meth:`~pyvista.DataSetFilters.interpolate` on it.
+
+        The output geometry can be controlled in several ways:
+
+        #. Specify the output geometry using a ``reference_volume``.
+
+        #. Specify the ``spacing`` explicitly.
+
+        #. Specify the ``dimensions`` explicitly.
+
+        #. Specify the ``target_n_points``. The spacing is isotropic and estimated so
+           the output has approximately this many points.
+
+        #. Specify the ``cell_length_percentile``. The spacing is estimated from the
+           mesh's cells using the specified percentile.
+
+        Set ``max_n_points`` to cap the result of any of these. It differs from
+        ``target_n_points``, which is a resolution to aim for: a geometry specified
+        explicitly raises if it exceeds the cap, while an estimated one is coarsened to
+        fit.
+
+        Use ``reference_volume`` for full control of the output's geometry. For
+        all other options, the geometry is implicitly defined such that the generated
+        voxels fit the bounds of the input mesh.
+
+        If no inputs are provided, ``cell_length_percentile=0.1`` (tenth percentile) is
+        used by default to estimate the spacing, so the input's own cells set the
+        resolution.
+
+        The values are resampled with one of two methods, chosen by ``method``:
+
+        #. ``'sample'`` interpolates inside the input's cells, and is the default for
+           an input with volumetric cells. It is the only method which uses the input's
+           topology, and the only one which reads its cell data. It keeps the voxels
+           whose centre lies inside a cell, so the result stops just inside a volumetric
+           mesh's surface.
+
+        #. ``'interpolate'`` interpolates from the input's points within ``radius``, and
+           is the default otherwise, since a cell search misses most of a curved surface
+           and all of a point cloud. It reads point data only. By default ``radius``
+           reaches across the input's cells, so every voxel a cell crosses is filled and
+           the result straddles the input.
+
+        Both write to the output's point data, and resampling a solid therefore fills
+        different voxels than resampling its surface.
+
+        A flat input is the exception: its voxels are centered on it, so ``'sample'``
+        reaches every one of them and reproduces the values exactly.
+
+        .. versionadded:: 0.50
+
+        .. note::
+            Voxels with no value are flagged with a ``'vtkValidPointMask'`` point data
+            array. Set ``mark_blank=True`` to also hide them with a ``'vtkGhostType'``
+            array, so volume rendering the output shows those regions as transparent.
+
+        .. note::
+            A :class:`~pyvista.MultiBlock` is resampled as a whole: one grid covers every
+            block, a voxel takes its value from whichever block reaches it, and only the
+            arrays every block has are kept. The ``method`` is chosen for the composite as
+            a whole, so a surface among solids needs ``method='interpolate'`` to be
+            filled.
+
+        Parameters
+        ----------
+        reference_volume : ImageData, optional
+            Volume to use as a reference. The output will have the same ``dimensions``,
+            ``origin``, ``spacing``, ``offset``, and ``direction_matrix`` as the reference.
+            Only this geometry is taken from it; its arrays are not read.
+
+        dimensions : VectorLike[int], optional
+            Dimensions of the generated image. Set this value to control the
+            dimensions explicitly. If unset, the dimensions are defined implicitly
+            through other parameters. See summary and examples for details.
+
+        spacing : float | VectorLike[float], optional
+            Approximate spacing to use for the generated image. Set this value
+            to control the spacing explicitly. If unset, the spacing is defined
+            implicitly through other parameters. See summary and examples for details.
+
+        target_n_points : int, optional
+            Approximate number of points to generate. The spacing is isotropic and
+            chosen so the output holds about this many points, distributed between the
+            axes in proportion to the input's bounds. An axis with no extent holds a
+            single point and takes no part in the count. Rounding to whole voxels means
+            the count is approached, not matched exactly. Cannot be set with
+            ``reference_volume``, ``dimensions``, ``spacing``, or the cell length
+            options.
+
+        max_n_points : int, optional
+            Strict upper bound on the number of points generated. Unlike
+            ``target_n_points``, which is only approached, this limit is never exceeded.
+            How it is enforced depends on how the geometry is defined:
+
+            - Geometry set explicitly, with ``reference_volume``, ``dimensions``,
+              ``spacing`` or a cell length option, raises if it exceeds the limit.
+            - ``target_n_points`` must not exceed the limit, and the grid estimated from
+              it is coarsened if rounding would take it above.
+            - Geometry left to the defaults is coarsened to fit, without raising.
+
+        rounding_func : Callable[VectorLike[float], VectorLike[int]], optional
+            Control how the dimensions are rounded to integers based on the provided or
+            calculated ``spacing``. Should accept a length-3 vector containing the
+            dimension values along the three directions and return a length-3 vector.
+            :func:`numpy.round` is used by default.
+
+            Rounding the dimensions implies rounding the actual spacing.
+
+            Cannot be set together with ``reference_volume`` or ``dimensions``.
+
+        cell_length_percentile : float, optional
+            Cell length percentage ``p`` to use for computing the default ``spacing``.
+            Default is ``0.1`` (tenth percentile) and must be between ``0`` and ``1``.
+            The ``p``-th percentile is computed from the lengths of the edges of the
+            mesh's own cells, with every block of a composite included. Up to
+            ``cell_length_sample_size`` cells are used, drawn at random with a fixed
+            seed, and degenerate edges with zero length are ignored.
+
+            The estimate is a single value which is used for all three axes, so an
+            anisotropic input is resampled below its native spacing along its coarsest
+            axis.
+
+            Has no effect if ``dimensions`` or ``reference_volume`` are specified.
+
+        cell_length_sample_size : int, optional
+            Maximum number of cells to use when computing the ``cell_length_percentile``.
+            ``100 000`` cells are used by default.
+
+        method : 'sample' | 'interpolate', optional
+            Method used to compute each voxel's value. ``'sample'`` interpolates inside
+            the input's cells, and ``'interpolate'`` interpolates from its points within
+            ``radius``. By default ``'sample'`` is used for an input with volumetric
+            cells and ``'interpolate'`` is used otherwise. See summary for details.
+
+            ``'interpolate'`` reads point data only, so the input's cell data is dropped
+            and a warning is raised. Call
+            :meth:`~pyvista.DataObjectFilters.cell_data_to_point_data` on the input to
+            keep it.
+            It writes every array as ``float32``, so an integer array comes back as
+            floats.
+
+        null_value : float, optional
+            Value given to the voxels which no value could be resampled for. Every
+            array of the output takes it, and zero is used by default. Both methods
+            accept it, though only ``method='interpolate'`` has it natively; under
+            ``method='sample'`` this filter fills the voxels itself, and the value must
+            fit the data type of the arrays it fills.
+
+        mark_blank : bool, default: False
+            Hide the voxels which no value could be resampled for, by flagging them in a
+            ``'vtkGhostType'`` array. These are the voxels holding ``null_value``. Every
+            voxel is visible by default, and the blank ones can be filtered with the
+            ``'vtkValidPointMask'`` array instead.
+
+        tolerance : float, optional
+            Requires ``method='sample'``, and is forwarded to
+            :meth:`~pyvista.DataObjectFilters.sample`.
+            Tolerance used when locating the cell a voxel is sampled from. The tolerance
+            computed by :vtk:`vtkResampleWithDataSet` is used by default.
+
+        categorical : bool, optional
+            Requires ``method='sample'``, and is forwarded to
+            :meth:`~pyvista.DataObjectFilters.sample`.
+            Control whether the source point data is to be treated as categorical. If
+            ``True``, the resampled point data will be determined by a nearest neighbor
+            interpolation scheme. ``False`` by default.
+
+        radius : float, optional
+            Requires ``method='interpolate'``, and is forwarded to
+            :meth:`~pyvista.DataSetFilters.interpolate`.
+            Distance from a voxel's center within which the input's points contribute to
+            it. By default it is the 95th percentile of the length of the input's cell
+            edges, so that a cell's points reach every voxel the cell crosses, and never
+            less than half a voxel's diagonal, which is what a point cloud gets.
+
+        sharpness : float, optional
+            Requires ``method='interpolate'``, and is forwarded to
+            :meth:`~pyvista.DataSetFilters.interpolate`.
+            Sharpness of the Gaussian interpolation kernel, ``2.0`` by default. As this
+            value increases, the weights of points far from a voxel's center fall off
+            faster.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        ImageData
+            Uniform grid with the input's arrays sampled onto its points. The voxels are
+            points, not :attr:`~pyvista.CellType.VOXEL` cells;
+            :meth:`~pyvista.ImageDataFilters.points_to_cells` converts them and carries
+            the blanking over. See :ref:`image_representations_example` for the
+            difference.
+
+        See Also
+        --------
+        pyvista.DataObjectFilters.sample
+            Filter used by ``method='sample'``. Samples onto an existing mesh of any
+            type, and exposes options this one does not.
+
+        pyvista.DataSetFilters.interpolate
+            Filter used by ``method='interpolate'``. Interpolates onto an existing mesh
+            of any type, and exposes options this one does not.
+
+        pyvista.ImageDataFilters.resample
+            Change the dimensions or spacing of an image which is already
+            :class:`~pyvista.ImageData`.
+
+        pyvista.DataSetFilters.voxelize_binary_mask
+            Voxelize the inside of a closed surface as a mask. Operates on a surface's
+            geometry and generates a new array instead of resampling existing ones. It
+            places its voxels identically to this filter, and keeps essentially the same
+            voxels that ``method='sample'`` keeps for the solid a surface encloses.
+
+        pyvista.create_grid
+            Create a uniform grid surrounding a dataset. Its points lie on the dataset's
+            bounds, whereas this filter's voxels fit them.
+
+        Examples
+        --------
+        Resample a solid sphere's point data onto a uniform grid. The spacing is
+        estimated from the mesh's own cells.
+
+        >>> import pyvista as pv
+        >>> solid_sphere = pv.SolidSphere()
+        >>> solid_sphere['height'] = solid_sphere.points[:, 2]
+        >>> volume = solid_sphere.resample_to_image()
+
+        Volume render the result. Every voxel is visible, so the volume is a solid
+        block.
+
+        >>> volume.plot(volume=True)
+
+        Set ``mark_blank=True`` to hide the voxels no value could be resampled for.
+
+        >>> blanked = solid_sphere.resample_to_image(mark_blank=True)
+        >>> blanked.plot(volume=True)
+
+        Set the ``dimensions`` or the ``spacing`` to control the resolution explicitly.
+
+        >>> solid_sphere.resample_to_image(spacing=0.05).dimensions
+        (20, 20, 20)
+
+        Compare the three kinds of input the sphere can be given as: a solid, the
+        surface enclosing it, and its points alone.
+
+        >>> def resample_as_voxels(mesh):
+        ...     image = mesh.resample_to_image(spacing=0.05, mark_blank=True)
+        ...     return image.points_to_cells()
+        >>> surface = solid_sphere.extract_surface(algorithm=None)
+        >>> pointset = solid_sphere.cast_to_pointset()
+        >>> datasets = {
+        ...     'solid': solid_sphere,
+        ...     'solid voxels': resample_as_voxels(solid_sphere),
+        ...     'surface': surface,
+        ...     'surface voxels': resample_as_voxels(surface),
+        ...     'pointset': pointset,
+        ...     'pointset voxels': resample_as_voxels(pointset),
+        ... }
+        >>> pv.plot_compare(datasets, shape=(3, 2), scalars='height')
+
+        The solid is filled throughout, and the surface fills only the shell its cells
+        occupy. The point cloud keeps the solid's interior points, so it reaches the
+        interior too, but only within ``radius`` of each point, which leaves gaps where
+        the points are sparse.
+
+        Resample every block of a :class:`~pyvista.MultiBlock` onto one grid.
+
+        >>> blocks = pv.MultiBlock([pv.Sphere(), pv.Sphere(center=(1.5, 0, 0))])
+        >>> for block in blocks:
+        ...     block['height'] = block.points[:, 2]
+        >>> blocks.resample_to_image(target_n_points=20_000).dimensions
+        (50, 20, 20)
+
+        """
+        _validate_reference_volume_options(
+            reference_volume=reference_volume,
+            dimensions=dimensions,
+            spacing=spacing,
+            target_n_points=target_n_points,
+            max_n_points=max_n_points,
+            rounding_func=rounding_func,
+            cell_length_percentile=cell_length_percentile,
+            cell_length_sample_size=cell_length_sample_size,
+        )
+        # The filters below read a single dataset, not a composite
+        source = self.combine() if isinstance(self, pv.MultiBlock) else self
+        volume = _make_reference_volume(
+            source,
+            reference_volume=reference_volume,
+            dimensions=dimensions,
+            spacing=spacing,
+            target_n_points=target_n_points,
+            max_n_points=max_n_points,
+            rounding_func=rounding_func,
+            cell_length_percentile=cell_length_percentile,
+            cell_length_sample_size=cell_length_sample_size,
+        )
+        chosen = method
+        if chosen is None:
+            chosen = 'sample' if source.max_cell_dimensionality == 3 else 'interpolate'
+        else:
+            _validation.check_contains(
+                ['sample', 'interpolate'], must_contain=chosen, name='method'
+            )
+        chosen_for = '' if method is not None else ', chosen for this input'
+        unused = (
+            {'radius': radius, 'sharpness': sharpness}
+            if chosen == 'sample'
+            else {'tolerance': tolerance, 'categorical': categorical}
+        )
+        for name, value in unused.items():
+            if value is not None:
+                wanted = 'interpolate' if chosen == 'sample' else 'sample'
+                msg = (
+                    f'`{name}` requires `method={wanted!r}`, but `method={chosen!r}`{chosen_for}.'
+                )
+                raise TypeError(msg)
+
+        if chosen == 'sample':
+            sampled = volume.sample(
+                source,
+                tolerance=tolerance,
+                categorical=False if categorical is None else categorical,
+                mark_blank=mark_blank,
+                progress_bar=progress_bar,
+            )
+            if null_value is not None:
+                _fill_null_values(sampled, null_value)
+            return sampled
+        if dropped := [n for n in source.cell_data if not n.startswith('vtk')]:
+            msg = (
+                f'Cell data {dropped} is dropped by `method={chosen!r}`'
+                f'{chosen_for}, which reads point data only. '
+                'Call `cell_data_to_point_data` on the input to keep it.'
+            )
+            warn_external(msg)
+        if radius is None:
+            # A cell's points must reach every voxel the cell crosses
+            sample_size = 100_000 if cell_length_sample_size is None else cell_length_sample_size
+            radius = max(
+                float(np.linalg.norm(volume.spacing)) / 2,
+                _cell_length_percentile(source, 0.95, sample_size),
+            )
+        interpolated = volume.interpolate(
+            source,
+            radius=radius,
+            sharpness=2.0 if sharpness is None else sharpness,
+            strategy='mask_points',
+            null_value=0.0 if null_value is None else null_value,
+            progress_bar=progress_bar,
+        )
+        return _blank_invalid_points(interpolated) if mark_blank else interpolated
 
 
 def _convex_hull_scipy(points: NumpyArray[float], dimensionality: Literal[1, 2, 3]) -> PolyData:
@@ -6368,6 +6756,277 @@ def _clipper(
     if isinstance(mesh, pv.PolyData) and mesh.n_strips:
         return _vtk.vtkClipPolyData()
     return _vtk.vtkTableBasedClipDataSet()
+
+
+def _validate_reference_volume_options(
+    *,
+    reference_volume: ImageData | None,
+    dimensions: VectorLike[int] | None,
+    spacing: float | VectorLike[float] | None,
+    rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None,
+    target_n_points: int | None,
+    max_n_points: int | None,
+    cell_length_percentile: float | None,
+    cell_length_sample_size: int | None,
+) -> None:
+    """Raise if the geometry options of a filter which builds a voxel grid conflict."""
+    if max_n_points is not None:
+        max_n_points = _validation.validate_number(
+            max_n_points, must_be_in_range=[1, np.inf], must_be_integer=True, name='max n points'
+        )
+        if target_n_points is not None and target_n_points > max_n_points:
+            msg = (
+                f'Target n points ({target_n_points}) cannot exceed max n points ({max_n_points}).'
+            )
+            raise ValueError(msg)
+
+    if reference_volume is not None:
+        if (
+            dimensions is not None
+            or spacing is not None
+            or target_n_points is not None
+            or rounding_func is not None
+            or cell_length_percentile is not None
+            or cell_length_sample_size is not None
+        ):
+            msg = (
+                'Cannot specify a reference volume with other geometry parameters. '
+                '`reference_volume` must define the geometry exclusively.'
+            )
+            raise TypeError(msg)
+        _validation.check_instance(reference_volume, pv.ImageData, name='reference volume')
+        return
+
+    if spacing is not None and dimensions is not None:
+        msg = 'Spacing and dimensions cannot both be set. Set one or the other.'
+        raise TypeError(msg)
+
+    if spacing is not None and (
+        cell_length_percentile is not None or cell_length_sample_size is not None
+    ):
+        msg = 'Spacing and cell length options cannot both be set. Set one or the other.'
+        raise TypeError(msg)
+
+    if target_n_points is not None and (
+        dimensions is not None
+        or spacing is not None
+        or cell_length_percentile is not None
+        or cell_length_sample_size is not None
+    ):
+        msg = (
+            'Target n points cannot be set with dimensions, spacing or cell length options. '
+            'Set one or the other.'
+        )
+        raise TypeError(msg)
+
+    if dimensions is not None and rounding_func is not None:
+        msg = 'Rounding func cannot be set when dimensions is specified. Set one or the other.'
+        raise TypeError(msg)
+
+
+def _spacing_for_n_points(
+    size: NumpyArray[float],
+    target_n_points: int,
+    name: str = 'target n points',
+    *,
+    point_offset: int = 0,
+) -> float:
+    """Return the isotropic spacing whose grid holds about ``target_n_points`` points."""
+    target = _validation.validate_number(
+        target_n_points, must_be_in_range=[1, np.inf], must_be_integer=True, name=name
+    )
+    extents = np.asarray(size, dtype=float)
+    live = extents > 0
+    if not live.any():
+        msg = (
+            'Spacing cannot be estimated for an input with no extent. Set `spacing` or '
+            '`dimensions` instead of `target_n_points`.'
+        )
+        raise ValueError(msg)
+    if point_offset == 0:
+        # Flat axes hold a single point, so the budget is spread over the others
+        return float((extents[live].prod() / target) ** (1.0 / live.sum()))
+    # Past the flat axes, the point count is a polynomial in the inverse spacing
+    budget = target / (1 + point_offset) ** int((~live).sum())
+    if budget <= 1:
+        return float(extents[live].max())
+    polynomial = np.prod(extents[live]) * np.poly(-1 / extents[live])
+    polynomial[-1] -= budget
+    roots = np.roots(polynomial)
+    inverse_spacing = roots[np.isreal(roots) & (roots.real > 0)].real.max()
+    return float(1 / inverse_spacing)
+
+
+def _count_points(dimensions: VectorLike[int], point_offset: int) -> int:
+    """Return the points of a grid, with a Python product which cannot overflow."""
+    return math.prod(int(d) + point_offset for d in dimensions)
+
+
+def _dimensions_within(
+    size: NumpyArray[float], max_n_points: int, point_offset: int
+) -> NumpyArray[int]:
+    """Return the finest grid dimensions holding no more than ``max_n_points`` points."""
+    spacing = _spacing_for_n_points(
+        size, max_n_points, name='max n points', point_offset=point_offset
+    )
+    live = size > 0
+    dimensions = np.ones(3, dtype=int)
+    dimensions[live] = np.maximum(np.round(size[live] / spacing), 1).astype(int)
+    while _count_points(dimensions, point_offset) > max_n_points and (dimensions > 1).any():
+        dimensions[dimensions.argmax()] -= 1
+    if (n_points := _count_points(dimensions, point_offset)) > max_n_points:
+        msg = (
+            f'`max_n_points={max_n_points}` is below the {n_points} points of a grid with '
+            'one cell along each axis.'
+        )
+        raise ValueError(msg)
+    return dimensions
+
+
+def _make_reference_volume(
+    mesh: DataSet,
+    *,
+    reference_volume: ImageData | None,
+    dimensions: VectorLike[int] | None,
+    spacing: float | VectorLike[float] | None,
+    target_n_points: int | None,
+    max_n_points: int | None,
+    rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None,
+    cell_length_percentile: float | None,
+    cell_length_sample_size: int | None,
+    point_offset: int = 0,
+) -> ImageData:
+    """Create an empty image whose voxels fit the bounds of a mesh."""
+    if max_n_points is not None:
+        max_n_points = _validation.validate_number(
+            max_n_points,
+            must_be_in_range=[1, np.inf],
+            must_be_integer=True,
+            dtype_out=int,
+            name='max n points',
+        )
+    # The geometry is the caller's own only if they set one of these
+    requested = (
+        reference_volume is not None
+        or dimensions is not None
+        or spacing is not None
+        or cell_length_percentile is not None
+        or cell_length_sample_size is not None
+    )
+    if reference_volume is not None:
+        volume = pv.ImageData()
+        volume.extent = reference_volume.extent
+        volume.spacing = reference_volume.spacing
+        volume.origin = reference_volume.origin
+        volume.direction_matrix = reference_volume.direction_matrix
+        n_points = _count_points(np.array(volume.dimensions), point_offset)
+        _check_n_points(n_points, max_n_points, requested=True)
+        return volume
+
+    size = np.array(mesh.bounds_size)
+    initial_spacing = None
+
+    if dimensions is None:
+        if target_n_points is not None:
+            spacing = _spacing_for_n_points(size, target_n_points, point_offset=point_offset)
+        if spacing is None:
+            if mesh.n_cells == 0:
+                msg = (
+                    'Spacing cannot be estimated from the input cells. '
+                    'Set `dimensions` or `spacing` explicitly.'
+                )
+                raise ValueError(msg)
+            # Estimate spacing from cell length percentile
+            cell_length_percentile = (
+                0.1 if cell_length_percentile is None else cell_length_percentile
+            )
+            cell_length_sample_size = (
+                100_000 if cell_length_sample_size is None else cell_length_sample_size
+            )
+            spacing = _cell_length_percentile(
+                mesh, cell_length_percentile, cell_length_sample_size
+            )
+            if spacing == 0:
+                msg = (
+                    'The sampled cells have no edges with nonzero length, so the '
+                    'spacing cannot be estimated. Set `spacing` or `dimensions` explicitly.'
+                )
+                raise ValueError(msg)
+        # Get initial spacing (will be adjusted later)
+        initial_spacing = _validation.validate_array3(spacing, broadcast=True)
+        rounding_func = np.round if rounding_func is None else rounding_func
+        initial_dimensions = size / initial_spacing
+        # Make sure we don't round dimensions to zero, make it one instead
+        initial_dimensions[initial_dimensions < 1] = 1
+        dimensions = np.array(rounding_func(initial_dimensions), dtype=int)
+
+    n_points = _count_points(dimensions, point_offset)
+    if max_n_points is not None and n_points > max_n_points:
+        _check_n_points(n_points, max_n_points, requested=requested)
+        dimensions = _dimensions_within(size, max_n_points, point_offset)
+
+    volume = pv.ImageData()
+    volume.dimensions = dimensions
+    dimensions_ = np.array(volume.dimensions)
+    flat = size == 0
+    final_spacing = np.divide(size, dimensions_, out=np.ones(3), where=~flat)
+    if flat.any():
+        # A flat axis takes the requested spacing, else the finest of the other axes
+        others = final_spacing[~flat]
+        final_spacing[flat] = (
+            initial_spacing[flat]
+            if initial_spacing is not None
+            else (others.min() if others.size else 1.0)
+        )
+    volume.spacing = final_spacing
+    # Voxels are points, so inset them by 1/2 spacing to fit the cells to the bounds
+    inset = np.where(flat, (1 - dimensions_) * final_spacing / 2, final_spacing / 2)
+    volume.origin = np.array(mesh.bounds[::2]) + inset
+    return volume
+
+
+def _check_n_points(n_points: int, max_n_points: int | None, *, requested: bool) -> None:
+    """Raise if a caller-specified geometry holds more points than allowed."""
+    if requested and max_n_points is not None and n_points > max_n_points:
+        msg = (
+            f'The specified geometry has {n_points} points, which exceeds '
+            f'`max_n_points={max_n_points}`. Raise the limit or specify a coarser geometry.'
+        )
+        raise ValueError(msg)
+
+
+def _fill_null_values(image: ImageData, null_value: float) -> None:
+    """Give every array one value at the points the valid-point mask marks as empty."""
+    invalid = image.point_data[_VALID_POINT_MASK] == 0
+    for name, array in image.point_data.items():
+        if name not in (_VALID_POINT_MASK, _GHOST_ARRAY):
+            _check_null_value_fits(null_value, name, array.dtype)
+            array[invalid] = null_value
+
+
+def _check_null_value_fits(null_value: float, name: str, dtype: np.dtype[Any]) -> None:
+    """Reject a null value which an integer array cannot hold."""
+    if not np.issubdtype(dtype, np.integer):
+        return
+    info = np.iinfo(dtype)
+    if (
+        np.isnan(null_value)
+        or not info.min <= null_value <= info.max
+        or null_value != int(null_value)
+    ):
+        msg = (
+            f'`null_value={null_value}` cannot be stored in array {name!r}, whose '
+            f'`{dtype}` data type holds integers from {info.min} to {info.max}.'
+        )
+        raise ValueError(msg)
+
+
+def _blank_invalid_points(image: ImageData) -> ImageData:
+    """Hide the points which the valid-point mask marks as empty."""
+    invalid = image.point_data['vtkValidPointMask'] == 0
+    ghosts = np.where(invalid, _vtk.vtkDataSetAttributes.HIDDENPOINT, 0).astype(np.uint8)
+    image.point_data.set_array(ghosts, _vtk.vtkDataSetAttributes.GhostArrayName())  # type: ignore[arg-type]
+    return image
 
 
 def _clip_input(mesh: DataSet | MultiBlock[Any]) -> DataSet | MultiBlock[Any]:

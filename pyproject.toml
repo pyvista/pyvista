@@ -624,7 +624,6 @@ pyvista = "pv"
   'S101',
   'SIM115',
   'T20',
-  'TID251',
 ]
 'examples/02-plot/composite_picking.py' = ['ARG001']
 'examples/02-plot/distance_measurement.py' = ['ARG001']
@@ -641,7 +640,7 @@ pyvista = "pv"
 'pyvista/core/dataobject.py' = ['PLC0415']
 'pyvista/core/filters/data_object.py' = ['ANN', 'PYI019']
 'pyvista/core/filters/data_set.py' = ['ANN', 'PYI019']
-'pyvista/core/filters/image_data.py' = ['ANN', 'PYI019']
+'pyvista/core/filters/image_data.py' = ['PYI019']
 'pyvista/core/filters/poly_data.py' = ['PYI019']
 'pyvista/core/utilities/fileio.py' = ['S105'] # pass_data is not a password
 'pyvista/core/utilities/geometric_objects.py' = ['N802']
@@ -671,7 +670,6 @@ pyvista = "pv"
 'pyvista/plotting/_plotting.py' = ['ANN']
 'pyvista/plotting/_typing.py' = ['PLC0414']
 'pyvista/plotting/actor_properties.py' = ['ANN']
-'pyvista/plotting/affine_widget.py' = ['ANN']
 'pyvista/plotting/axes.py' = ['ANN']
 'pyvista/plotting/background_renderer.py' = ['ANN']
 'pyvista/plotting/camera.py' = ['ANN', 'S314'] # .pvcc is trusted
@@ -693,11 +691,10 @@ pyvista = "pv"
 'pyvista/plotting/text.py' = ['ANN']
 'pyvista/plotting/texture.py' = ['ANN']
 'pyvista/plotting/themes.py' = ['ANN', 'ICN001']
-'pyvista/plotting/tools.py' = ['ANN', 'S607'] # pgrep and xset come from PATH
+'pyvista/plotting/tools.py' = ['S607'] # pgrep and xset come from PATH
 'pyvista/plotting/utilities/*.py' = ['ANN']
 'pyvista/plotting/utilities/algorithms.py' = ['N802', 'N803']
 'pyvista/plotting/widgets.py' = ['ANN', 'PLC0415']
-'pyvista/report.py' = ['ANN']
 'pyvista/utilities/*' = ['ANN', 'F401'] # deprecated modules
 'tests/*' = ['ANN', 'D', 'FBT', 'INP', 'PLC0415', 'PLR0917', 'S101', 'T20']
 'tests/core/test_accessor_registry.py' = ['S301'] # unpickles its own objects

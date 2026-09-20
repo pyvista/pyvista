@@ -437,6 +437,12 @@ def create_grid(
         A uniform grid with the specified dimensions that surrounds the input
         dataset.
 
+    See Also
+    --------
+    pyvista.DataObjectFilters.resample_to_image
+        Build a grid and resample the dataset onto it in a single call. Its voxels fit
+        the dataset's bounds, whereas this grid's points lie on them.
+
     """
     bounds = np.array(dataset.bounds)
     if dimensions is None:
