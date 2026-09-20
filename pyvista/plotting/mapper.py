@@ -86,12 +86,12 @@ def _category_range(values: NumpyArray[float]) -> tuple[float, float]:
     return float(values[0] - step / 2), float(values[-1] + step / 2)
 
 
-def _clim_has_no_bounds(clim: Any) -> bool:
-    """Return whether a scalar range was given without either of its bounds."""
+def _clim_has_no_bounds(clim: float | VectorLike[float] | None) -> bool:
+    """Return whether a scalar range was given as a pair of ``None`` bounds."""
+    if isinstance(clim, np.ndarray):
+        clim = clim.tolist()
     return (
-        clim is not None
-        and not isinstance(clim, (int, float))
-        and all(bound is None for bound in clim)
+        isinstance(clim, (list, tuple)) and len(clim) == 2 and all(bound is None for bound in clim)
     )
 
 

@@ -213,6 +213,21 @@ def test_add_mesh_clim_without_bounds(sphere, clim):
     assert actor.mapper.scalar_range == pytest.approx(sphere.get_data_range('data'))
 
 
+@pytest.mark.parametrize('clim', [[None, 1.0], [1.0, None], [None], [None, None, None]])
+def test_add_mesh_clim_partial_bounds_raises(sphere, clim):
+    sphere['data'] = sphere.points[:, 0]
+    with pytest.raises((TypeError, IndexError)):
+        pv.Plotter().add_mesh(sphere, scalars='data', clim=clim)
+
+
+@pytest.mark.parametrize('clim', [np.float64(0.25), np.array([0.1, 0.2])])
+def test_add_mesh_clim_numpy(sphere, clim):
+    sphere['data'] = sphere.points[:, 0]
+    actor = pv.Plotter().add_mesh(sphere, scalars='data', clim=clim)
+    expected = (-clim, clim) if np.ndim(clim) == 0 else tuple(clim)
+    assert actor.mapper.scalar_range == pytest.approx(expected)
+
+
 def test_set_scalars_categories_keeps_clim():
     mesh = pv.RectilinearGrid([0.0, 1.0, 2.0, 3.0], [0.0, 1.0], [0.0])
     mesh['labels'] = [0.0, 5.0, 10.0]
