@@ -4,10 +4,14 @@ from __future__ import annotations
 
 import sys
 from typing import TYPE_CHECKING
+from typing import Any
+from typing import Literal
 from typing import cast
+from typing import get_args
 import weakref
 
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
@@ -32,10 +36,18 @@ from .utilities.algorithms import ActiveScalarsAlgorithm
 from .utilities.algorithms import set_algorithm_input
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from pyvista import DataSet
+    from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import VectorLike
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import PointLiteral
     from pyvista.themes import Theme
+
+    from ._typing import ColorLike
+    from ._typing import ColormapOptions
+    from ._typing import ScalarBarArgs
 
 
 # Most values labelled under a categorical scalar bar
@@ -47,8 +59,13 @@ _CATEGORY_BAND_TABLE_SIZE = 4096
 # Table entries per category, so a volume's transfer function resolves each band
 _CATEGORY_ENTRIES_PER_VALUE = 8
 
+_ColorModeOptions = Literal['direct', 'map']
+_ScalarMapModeOptions = Literal['default', 'point', 'cell', 'point_field', 'cell_field', 'field']
+_ResolveOptions = Literal['off', 'polygon_offset', 'shift_zbuffer']
+_BlendModeOptions = Literal['composite', 'maximum', 'minimum', 'average', 'additive']
 
-def _category_step(values):
+
+def _category_step(values: NumpyArray[float]) -> float | None:
     """Return the spacing between category values, or ``None`` if they are not evenly spaced."""
     if len(values) == 1:
         return 1.0
@@ -61,15 +78,17 @@ def _category_step(values):
     return step
 
 
-def _category_range(values):
+def _category_range(values: NumpyArray[float]) -> tuple[float, float]:
     """Return a scalar range that centers every category value on a table entry."""
     step = _category_step(values)
     if step is None:
         step = np.diff(values).min()
-    return [values[0] - step / 2, values[-1] + step / 2]
+    return float(values[0] - step / 2), float(values[-1] + step / 2)
 
 
-def _apply_categories(lut, values, annotations):
+def _apply_categories(
+    lut: LookupTable, values: NumpyArray[float], annotations: dict[float, str] | None
+) -> list[float]:
     """Give each category value its own table color and return the values to label."""
     if len(lut.values) < len(values):
         msg = (
@@ -123,7 +142,7 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
 
     """
 
-    def __init__(self, theme=None, **kwargs) -> None:
+    def __init__(self, theme: Theme | None = None, **kwargs) -> None:
         # snapshot the theme so later edits to the source theme do not reach this mapper
         self._theme = pv.themes.Theme._from_theme(pv.global_theme if theme is None else theme)
         self.lookup_table = LookupTable()
@@ -218,7 +237,7 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
         return self.GetScalarRange()
 
     @scalar_range.setter
-    def scalar_range(self, clim) -> None:
+    def scalar_range(self, clim: VectorLike[float]) -> None:
         self.SetScalarRange(*clim)
         self.lookup_table.SetRange(*clim)
 
@@ -257,11 +276,11 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
         return self.GetLookupTable()
 
     @lookup_table.setter
-    def lookup_table(self, table) -> None:
+    def lookup_table(self, table: LookupTable) -> None:
         self.SetLookupTable(table)
 
     @property
-    def color_mode(self) -> str:  # numpydoc ignore=RT01
+    def color_mode(self) -> _ColorModeOptions:  # numpydoc ignore=RT01
         """Return or set the color mode.
 
         Either ``'direct'``, or ``'map'``.
@@ -278,14 +297,14 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
         return 'direct'
 
     @color_mode.setter
-    def color_mode(self, value: str):
+    def color_mode(self, value: _ColorModeOptions) -> None:
+        _validation.check_contains(
+            list(get_args(_ColorModeOptions)), must_contain=value, name='Color mode'
+        )
         if value == 'direct':
             self.SetColorModeToDirectScalars()
-        elif value == 'map':
-            self.SetColorModeToMapScalars()
         else:
-            msg = 'Color mode must be either "default", "direct" or "map"'
-            raise ValueError(msg)
+            self.SetColorModeToMapScalars()
 
     @property
     def interpolate_before_map(self) -> bool | None:  # numpydoc ignore=RT01
@@ -360,7 +379,7 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
         self.SetArrayName(name)
 
     @property
-    def scalar_map_mode(self) -> str:  # numpydoc ignore=RT01
+    def scalar_map_mode(self) -> _ScalarMapModeOptions:  # numpydoc ignore=RT01
         """Return or set the scalar map mode.
 
         Examples
@@ -382,7 +401,7 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
 
         """
         # map vtk strings to more sensible strings
-        vtk_to_pv = {
+        vtk_to_pv: dict[str, _ScalarMapModeOptions] = {
             'Default': 'default',
             'UsePointData': 'point',
             'UseCellData': 'cell',
@@ -393,10 +412,15 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
         return vtk_to_pv[self.GetScalarModeAsString()]
 
     @scalar_map_mode.setter
-    def scalar_map_mode(self, scalar_mode: str | FieldAssociation):
+    def scalar_map_mode(self, scalar_mode: str | FieldAssociation) -> None:
         if isinstance(scalar_mode, FieldAssociation):
             scalar_mode = scalar_mode.name
         scalar_mode = scalar_mode.lower()
+        _validation.check_contains(
+            list(get_args(_ScalarMapModeOptions)),
+            must_contain=scalar_mode,
+            name='scalar_map_mode',
+        )
         if scalar_mode == 'default':
             self.SetScalarModeToDefault()
         elif scalar_mode == 'point':
@@ -407,14 +431,8 @@ class _BaseMapper(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.v
             self.SetScalarModeToUsePointFieldData()
         elif scalar_mode == 'cell_field':
             self.SetScalarModeToUseCellFieldData()
-        elif scalar_mode == 'field':
-            self.SetScalarModeToUseFieldData()
         else:
-            msg = (
-                f'Invalid `scalar_map_mode` "{scalar_mode}". Should be either '
-                '"default", "point", "cell", "point_field", "cell_field" or "field".'
-            )
-            raise ValueError(msg)
+            self.SetScalarModeToUseFieldData()
 
     @property
     def scalar_visibility(self) -> bool:  # numpydoc ignore=RT01
@@ -585,16 +603,16 @@ class _BaseDataSetMapper(_BaseMapper):
         return self.GetScalarRange()
 
     @scalar_range.setter
-    def scalar_range(self, clim) -> None:
+    def scalar_range(self, clim: VectorLike[float]) -> None:
         self._set_scalar_range(clim, use_default=False)
 
     # Avoid ref cycles by using weakref
     @property
-    def _input_dataset(self):
+    def _input_dataset(self) -> DataSet | None:
         return None if self._input_dataset_ref is None else self._input_dataset_ref()
 
     @_input_dataset.setter
-    def _input_dataset(self, dataset: DataSet | None):
+    def _input_dataset(self, dataset: DataSet | None) -> None:
         self._input_dataset_ref = None if dataset is None else weakref.ref(dataset)
 
     @property
@@ -722,10 +740,11 @@ class _BaseDataSetMapper(_BaseMapper):
 
         self._set_scalar_range(clim, use_default=True)
 
-    def _set_scalar_range(self, clim, *, use_default: bool) -> None:
+    def _set_scalar_range(self, clim: VectorLike[float], *, use_default: bool) -> None:
         """Set the scalar range and track whether it is user-defined."""
-        self.SetScalarRange(*clim)
-        self.lookup_table.scalar_range = clim
+        scalar_range = (float(clim[0]), float(clim[1]))
+        self.SetScalarRange(*scalar_range)
+        self.lookup_table.scalar_range = scalar_range
         self._use_default_scalar_range = use_default
 
     def as_rgba(self) -> None:
@@ -855,10 +874,10 @@ class _BaseDataSetMapper(_BaseMapper):
     def _configure_scalars_mode(
         self,
         *,
-        scalars,
-        scalars_name,
-        preference,
-        direct_scalars_color_mode,
+        scalars: NumpyArray[Any],
+        scalars_name: str,
+        preference: PointLiteral | CellLiteral | str,
+        direct_scalars_color_mode: bool,
         overwrite: bool = False,
     ) -> None:
         """Configure scalar mode.
@@ -922,26 +941,26 @@ class _BaseDataSetMapper(_BaseMapper):
 
     def set_scalars(
         self,
-        scalars,
-        scalars_name,
+        scalars: NumpyArray[Any] | Sequence[Any],
+        scalars_name: str,
         *,
-        n_colors=256,
-        scalar_bar_args=None,
-        rgb=None,
-        component=None,
-        preference='point',
+        n_colors: int = 256,
+        scalar_bar_args: ScalarBarArgs | None = None,
+        rgb: bool | None = None,
+        component: int | None = None,
+        preference: PointLiteral | CellLiteral = 'point',
         custom_opac: bool = False,
-        annotations=None,
+        annotations: dict[float, str] | None = None,
         log_scale: bool = False,
-        nan_color=None,
-        above_color=None,
-        below_color=None,
-        cmap=None,
+        nan_color: ColorLike | None = None,
+        above_color: ColorLike | None = None,
+        below_color: ColorLike | None = None,
+        cmap: ColormapOptions | LookupTable | None = None,
         flip_scalars: bool = False,
-        opacity=None,
+        opacity: NumpyArray[float] | None = None,
         categories: bool | int = False,
-        clim=None,
-    ):
+        clim: float | VectorLike[float] | None = None,
+    ) -> None:
         """Set the scalars on this mapper.
 
         Parameters
@@ -1027,13 +1046,10 @@ class _BaseDataSetMapper(_BaseMapper):
             Flip direction of ``cmap``. Most colormaps allow ``*_r`` suffix to do
             this as well.
 
-        opacity : str or numpy.ndarray, optional
-            Opacity mapping for the scalars array.
-            A string can also be specified to map the scalars range to a
-            predefined opacity transfer function (options include: ``'linear'``,
-            ``'linear_r'``, ``'geom'``, ``'geom_r'``). Or you can pass a custom made
-            transfer function that is an array either ``n_colors`` in length or
-            shorter.
+        opacity : numpy.ndarray, optional
+            Opacity mapping for the scalars array. With ``custom_opac`` this is
+            one value per point or cell. Otherwise it is applied to the lookup
+            table and is either ``n_colors`` in length or shorter.
 
         categories : bool | int, default: False
             If ``True``, each unique value in the scalar array gets its own
@@ -1045,9 +1061,10 @@ class _BaseDataSetMapper(_BaseMapper):
                 ``True`` gives every unique value its own color instead of
                 spreading the colormap evenly over the scalar range.
 
-        clim : Sequence, optional
+        clim : sequence[float] | float, optional
             Color bar range for scalars.  Defaults to minimum and
-            maximum of scalars array.  Example: ``(-1, 2)``.
+            maximum of scalars array.  Example: ``(-1, 2)``. A single value
+            ``c`` is the range ``(-c, c)``.
 
         """
         if scalar_bar_args is None:
@@ -1121,15 +1138,17 @@ class _BaseDataSetMapper(_BaseMapper):
         # Set scalars range
         use_default_scalar_range = clim is None
         if clim is None:
-            clim = [np.nanmin(scalars), np.nanmax(scalars)]
+            scalar_range = (float(np.nanmin(scalars)), float(np.nanmax(scalars)))
         elif isinstance(clim, (int, float)):
-            clim = [-clim, clim]
+            scalar_range = (-float(clim), float(clim))
+        else:
+            scalar_range = (float(clim[0]), float(clim[1]))
 
-        if log_scale and clim[0] <= 0:
-            clim = [sys.float_info.min, clim[1]]
+        if log_scale and scalar_range[0] <= 0:
+            scalar_range = (sys.float_info.min, scalar_range[1])
 
-        if np.any(clim) and not rgb:
-            self._set_scalar_range((clim[0], clim[1]), use_default=use_default_scalar_range)
+        if np.any(scalar_range) and not rgb:
+            self._set_scalar_range(scalar_range, use_default=use_default_scalar_range)
 
         if isinstance(cmap, pv.LookupTable):
             self.lookup_table = cmap
@@ -1156,13 +1175,16 @@ class _BaseDataSetMapper(_BaseMapper):
                 self.lookup_table.values[:] = self.lookup_table.values[::-1]
 
             if custom_opac:
+                if opacity is None:
+                    msg = 'Custom opacity requires an opacity array.'
+                    raise ValueError(msg)
                 # need to round the colors here since we're
                 # directly displaying the colors
-                hue = normalize(scalars, minimum=clim[0], maximum=clim[1])
-                scalars = np.round(hue * n_colors) / n_colors
-                scalars = get_cmap_safe(cmap)(scalars) * 255
-                scalars[:, -1] *= opacity
-                scalars = scalars.astype(np.uint8)
+                hue = normalize(scalars, minimum=scalar_range[0], maximum=scalar_range[1])
+                rounded = np.round(hue * n_colors) / n_colors
+                rgba: NumpyArray[float] = get_cmap_safe(cmap)(rounded) * 255
+                rgba[:, -1] *= opacity
+                scalars = rgba.astype(np.uint8)
 
             # configure the lookup table
             if nan_color:
@@ -1202,7 +1224,7 @@ class _BaseDataSetMapper(_BaseMapper):
         return self._cmap
 
     @property
-    def resolve(self) -> str:
+    def resolve(self) -> _ResolveOptions:
         """Set or return the global flag to avoid z-buffer resolution.
 
         A global flag that controls whether the coincident topology
@@ -1242,7 +1264,7 @@ class _BaseDataSetMapper(_BaseMapper):
         >>> pl.show()
 
         """
-        vtk_to_pv = {
+        vtk_to_pv: dict[int, _ResolveOptions] = {
             _vtk.VTK_RESOLVE_OFF: 'off',
             _vtk.VTK_RESOLVE_POLYGON_OFFSET: 'polygon_offset',
             _vtk.VTK_RESOLVE_SHIFT_ZBUFFER: 'shift_zbuffer',
@@ -1250,18 +1272,25 @@ class _BaseDataSetMapper(_BaseMapper):
         return vtk_to_pv[self.GetResolveCoincidentTopology()]
 
     @resolve.setter
-    def resolve(self, resolve):
+    def resolve(self, resolve: _ResolveOptions) -> None:
+        _validation.check_contains(
+            list(get_args(_ResolveOptions)), must_contain=resolve, name='Resolve'
+        )
         if resolve == 'off':
             self.SetResolveCoincidentTopologyToOff()
         elif resolve == 'polygon_offset':
             self.SetResolveCoincidentTopologyToPolygonOffset()
-        elif resolve == 'shift_zbuffer':
-            self.SetResolveCoincidentTopologyToShiftZBuffer()
         else:
-            msg = 'Resolve must be either "off", "polygon_offset" or "shift_zbuffer"'
-            raise ValueError(msg)
+            self.SetResolveCoincidentTopologyToShiftZBuffer()
 
-    def set_custom_opacity(self, opacity, *, color, n_colors, preference='point'):
+    def set_custom_opacity(
+        self,
+        opacity: NumpyArray[float],
+        *,
+        color: ColorLike,
+        n_colors: int,
+        preference: PointLiteral | CellLiteral = 'point',
+    ) -> None:
         """Set custom opacity.
 
         Parameters
@@ -1281,18 +1310,21 @@ class _BaseDataSetMapper(_BaseMapper):
             matches the number of points.
 
         """
+        dataset = self.dataset
+        if dataset is None:  # pragma: no cover
+            msg = 'Cannot set a custom opacity without a dataset.'
+            raise ValueError(msg)
+
         # Create a custom RGBA array to supply our opacity to
-        if opacity.size == self.dataset.n_points:  # type: ignore[union-attr]
-            rgba = np.empty((self.dataset.n_points, 4), np.uint8)  # type: ignore[union-attr]
-        elif opacity.size == self.dataset.n_cells:  # type: ignore[union-attr]
-            rgba = np.empty((self.dataset.n_cells, 4), np.uint8)  # type: ignore[union-attr]
+        if opacity.size == dataset.n_points:
+            rgba = np.empty((dataset.n_points, 4), np.uint8)
+        elif opacity.size == dataset.n_cells:
+            rgba = np.empty((dataset.n_cells, 4), np.uint8)
         else:  # pragma: no cover
             msg = (
-                (
-                    f'Opacity array size ({opacity.size}) does not equal '
-                    f'the number of points ({self.dataset.n_points}) or the '  # type: ignore[union-attr]
-                    f'number of cells ({self.dataset.n_cells}).'  # type: ignore[union-attr]
-                ),
+                f'Opacity array size ({opacity.size}) does not equal '
+                f'the number of points ({dataset.n_points}) or the '
+                f'number of cells ({dataset.n_cells}).'
             )
             raise ValueError(msg)
 
@@ -1307,7 +1339,7 @@ class _BaseDataSetMapper(_BaseMapper):
             scalars=rgba, scalars_name='', preference=preference, direct_scalars_color_mode=True
         )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Representation of the mapper."""
         mapper_attr = [
             f'{type(self).__name__} ({hex(id(self))})',
@@ -1373,7 +1405,12 @@ class PointGaussianMapper(_BaseDataSetMapper, _vtk.vtkPointGaussianMapper):
 
     """
 
-    def __init__(self, theme=None, emissive=None, scale_factor=1.0) -> None:
+    def __init__(
+        self,
+        theme: Theme | None = None,
+        emissive: bool | None = None,  # noqa: FBT001
+        scale_factor: float = 1.0,
+    ) -> None:
         super().__init__(theme=theme)
         if emissive is None:
             emissive = self._theme.lighting_params.emissive
@@ -1448,7 +1485,7 @@ class PointGaussianMapper(_BaseDataSetMapper, _vtk.vtkPointGaussianMapper):
         return self.GetScaleArray()
 
     @scale_array.setter
-    def scale_array(self, name: str):
+    def scale_array(self, name: str) -> None:
         if not self.dataset:  # pragma: no cover
             msg = 'Missing dataset.'
             raise RuntimeError(msg)
@@ -1496,7 +1533,7 @@ class PointGaussianMapper(_BaseDataSetMapper, _vtk.vtkPointGaussianMapper):
         self.SetSplatShaderCode(None)  # type: ignore[arg-type]
         self.scale_factor /= 1.5
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Representation of the Gaussian mapper."""
         mapper_attr = [
             f'{type(self).__name__} ({hex(id(self))})',
@@ -1530,7 +1567,7 @@ class _BaseVolumeMapper(_BaseMapper):
 
     """
 
-    def __init__(self, theme=None) -> None:
+    def __init__(self, theme: Theme | None = None) -> None:
         """Initialize this class."""
         super().__init__(theme=theme)
         self._lut = LookupTable()
@@ -1542,11 +1579,11 @@ class _BaseVolumeMapper(_BaseMapper):
         return None
 
     @interpolate_before_map.setter
-    def interpolate_before_map(self, value) -> None:
+    def interpolate_before_map(self, value: bool | None) -> None:
         pass
 
     @property
-    def dataset(self):  # numpydoc ignore=RT01
+    def dataset(self) -> DataSet | None:  # numpydoc ignore=RT01
         """Return or set the dataset assigned to this mapper."""
         return wrap(_mapper_get_data_set_input(self))
 
@@ -1558,12 +1595,12 @@ class _BaseVolumeMapper(_BaseMapper):
         set_algorithm_input(self, obj)
 
     @property
-    def lookup_table(self):  # numpydoc ignore=RT01
+    def lookup_table(self) -> LookupTable:  # numpydoc ignore=RT01
         """Return or set the lookup table used to map scalars to colors."""
         return self._lut
 
     @lookup_table.setter
-    def lookup_table(self, lut) -> None:
+    def lookup_table(self, lut: LookupTable) -> None:
         self._lut = lut
 
     @property
@@ -1572,13 +1609,13 @@ class _BaseVolumeMapper(_BaseMapper):
         return self._scalar_range
 
     @scalar_range.setter
-    def scalar_range(self, clim) -> None:
+    def scalar_range(self, clim: VectorLike[float]) -> None:
         if self.lookup_table is not None:
             self.lookup_table.SetRange(*clim)
         self._scalar_range = tuple(clim)
 
     @property
-    def blend_mode(self) -> str:  # numpydoc ignore=RT01
+    def blend_mode(self) -> _BlendModeOptions:  # numpydoc ignore=RT01
         """Return or set the blend mode.
 
         One of the following:
@@ -1595,20 +1632,22 @@ class _BaseVolumeMapper(_BaseMapper):
 
         """
         value = self.GetBlendMode()
-        mode = {
+        modes: dict[int, _BlendModeOptions] = {
             0: 'composite',
             1: 'maximum',
             2: 'minimum',
             3: 'average',
             4: 'additive',
-        }.get(value)
+        }
+        mode = modes.get(value)
         if mode is None:  # pragma: no cover
             msg = f'Unsupported blend mode return value {value}'
             raise NotImplementedError(msg)
         return mode
 
     @blend_mode.setter
-    def blend_mode(self, value: str | int):
+    def blend_mode(self, value: str | int) -> None:
+        _validation.check_instance(value, (str, int), name='blend_mode')
         if isinstance(value, int):
             self.SetBlendMode(value)
         elif isinstance(value, str):
@@ -1630,9 +1669,6 @@ class _BaseVolumeMapper(_BaseMapper):
                     '"composite", "minimum" or "maximum".'
                 )
                 raise ValueError(msg)
-        else:
-            msg = f'`blend_mode` should be either an int or str, not `{type(value)}`'  # type: ignore[unreachable]
-            raise TypeError(msg)
 
     def __del__(self) -> None:
         if hasattr(self, '_lut'):
@@ -1649,7 +1685,7 @@ class FixedPointVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkFixedPointVolumeR
 
     """
 
-    def __init__(self, theme=None) -> None:
+    def __init__(self, theme: Theme | None = None) -> None:
         """Initialize this class."""
         super().__init__(theme=theme)
         self.AutoAdjustSampleDistancesOff()
@@ -1665,7 +1701,7 @@ class GPUVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkGPUVolumeRayCastMapper):
 
     """
 
-    def __init__(self, theme=None) -> None:
+    def __init__(self, theme: Theme | None = None) -> None:
         """Initialize this class."""
         super().__init__(theme=theme)
         self.AutoAdjustSampleDistancesOff()
@@ -1681,7 +1717,7 @@ class OpenGLGPUVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkOpenGLGPUVolumeRay
 
     """
 
-    def __init__(self, theme=None) -> None:
+    def __init__(self, theme: Theme | None = None) -> None:
         """Initialize this class."""
         super().__init__(theme=theme)
         self.AutoAdjustSampleDistancesOff()
@@ -1697,7 +1733,7 @@ class SmartVolumeMapper(_BaseVolumeMapper, _vtk.vtkSmartVolumeMapper):
 
     """
 
-    def __init__(self, theme=None) -> None:
+    def __init__(self, theme: Theme | None = None) -> None:
         """Initialize this class."""
         super().__init__(theme=theme)
         self.AutoAdjustSampleDistancesOff()
@@ -1716,13 +1752,13 @@ class UnstructuredGridVolumeRayCastMapper(
 
     """
 
-    def __init__(self, theme=None) -> None:
+    def __init__(self, theme: Theme | None = None) -> None:
         """Initialize this class."""
         super().__init__(theme=theme)
         self.AutoAdjustSampleDistancesOff()
 
 
-def _mapper_has_data_set_input(mapper):
+def _mapper_has_data_set_input(mapper: Any) -> bool:
     """Check if mapper has a data set input using the appropriate method.
 
     Some mappers use ``GetDataSetInput``, others use ``GetInputAsDataSet``. This has
@@ -1731,7 +1767,7 @@ def _mapper_has_data_set_input(mapper):
     return hasattr(mapper, 'GetDataSetInput') or hasattr(mapper, 'GetInputAsDataSet')
 
 
-def _mapper_get_data_set_input(mapper) -> _vtk.vtkDataSet:
+def _mapper_get_data_set_input(mapper: Any) -> _vtk.vtkDataSet:
     """Get data set input from mapper using the appropriate method.
 
     Some mappers use ``GetDataSetInput``, others use ``GetInputAsDataSet``. This has
