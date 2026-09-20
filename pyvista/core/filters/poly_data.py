@@ -33,6 +33,7 @@ from pyvista.core.utilities.helpers import _NormalsLiteral
 from pyvista.core.utilities.helpers import _validate_plane_origin_and_normal
 from pyvista.core.utilities.helpers import generate_plane
 from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import _check_line_style
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 
@@ -44,6 +45,7 @@ if TYPE_CHECKING:
     from pyvista import MultiBlock
     from pyvista import PolyData
     from pyvista import UnstructuredGrid
+    from pyvista.core._typing_core import LineStyle
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
@@ -61,7 +63,7 @@ _CappingOptions = Literal[
 ]
 
 
-LINE_STYLE_PATTERNS: dict[str, int] = {
+LINE_STYLE_PATTERNS: dict[LineStyle, int] = {
     '': 0x0000,
     '-': 0xFFFF,
     '--': 0x00FF,
@@ -1539,7 +1541,7 @@ class PolyDataFilters(DataSetFilters):
 
     def dash_lines(  # type: ignore[misc]
         self: PolyData,
-        style: str = '--',
+        style: LineStyle = '--',
         *,
         pattern: VectorLike[float] | None = None,
         scale: float | None = None,
@@ -4906,7 +4908,7 @@ class PolyDataFilters(DataSetFilters):
 
 
 def _resolve_dash_pattern(
-    style: str, pattern: VectorLike[float] | None
+    style: LineStyle, pattern: VectorLike[float] | None
 ) -> tuple[list[tuple[float, float]], float]:
     """Return the drawn intervals and the repeat length of a named style or a pattern."""
     if pattern is not None:
@@ -4922,9 +4924,9 @@ def _resolve_dash_pattern(
     return [(float(start), float(stop)) for start, stop in _pattern_runs(bits)], 16.0
 
 
-def _resolve_line_style(style: str) -> int:
+def _resolve_line_style(style: LineStyle) -> int:
     """Return the 16-bit stipple pattern of a named line style."""
-    _validation.check_contains(list(LINE_STYLE_PATTERNS), must_contain=style, name='style')
+    _check_line_style(style)
     return LINE_STYLE_PATTERNS[style]
 
 

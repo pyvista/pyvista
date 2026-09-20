@@ -16,13 +16,16 @@ from typing import Concatenate
 from typing import Literal
 from typing import ParamSpec
 from typing import TypeVar
+from typing import get_args
 import warnings
 
 import numpy as np
+import pyvista_validation as _validation
 from typing_extensions import Self
 
 from pyvista import _vtk
 from pyvista._warn_external import warn_external
+from pyvista.core._typing_core._aliases import LineStyle
 from pyvista.core.utilities.accessor_registry import _resolve_pending_accessor
 
 if TYPE_CHECKING:
@@ -111,6 +114,11 @@ def check_valid_vector(point: VectorLike[float], name: str = '') -> None:
             name = 'Vector'
         msg = f'{name} must be a length three iterable of floats.'
         raise ValueError(msg)
+
+
+def _check_line_style(style: str, *, name: str = 'style') -> None:
+    """Raise when a style is not one of the named line styles."""
+    _validation.check_contains(list(get_args(LineStyle)), must_contain=style, name=name)
 
 
 def abstract_class(cls_):  # noqa: ANN001, ANN201 # numpydoc ignore=RT01

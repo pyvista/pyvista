@@ -28,6 +28,7 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from pyvista import DataSet
+    from pyvista.core._typing_core import LineStyle
 
     from .mapper import _BaseMapper
 
@@ -218,7 +219,7 @@ class Actor(Prop3D, _vtk.vtkActor):
             self.prop = prop
         self._name = name
         self._shader_replacements: dict[str, list[tuple[ShaderType, str, bool]]] = {}
-        self._line_style: str | None = None
+        self._line_style: LineStyle | None = None
         self._dash_source: DataSet | _vtk.vtkAlgorithm | None = None
         self._dash_interval: float = 0.004
         self._point_sprite_shape: str | None = None
@@ -762,7 +763,7 @@ class Actor(Prop3D, _vtk.vtkActor):
             del registry[_feature_name]
 
     @property
-    def line_style(self) -> str | None:  # numpydoc ignore=RT01
+    def line_style(self) -> LineStyle | None:  # numpydoc ignore=RT01
         """Return or set the dash style drawn along this actor's lines.
 
         Unlike :func:`pyvista.PolyDataFilters.dash_lines`, which splits the line
@@ -808,7 +809,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         return self._line_style
 
     @line_style.setter
-    def line_style(self, value: str | None) -> None:
+    def line_style(self, value: LineStyle | None) -> None:
         if value is None or value == '-':
             self._disable_line_style()
             return

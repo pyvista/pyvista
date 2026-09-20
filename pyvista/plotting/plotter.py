@@ -133,6 +133,7 @@ if TYPE_CHECKING:
     from pyvista import PolyData
     from pyvista import Texture
     from pyvista.core._typing_core import BoundsTuple
+    from pyvista.core._typing_core import LineStyle
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import TransformLike
@@ -3631,7 +3632,7 @@ class BasePlotter(_BoundsSizeMixin):
         edge_color: ColorLike | None = None,
         point_size: float | None = None,
         line_width: float | None = None,
-        line_style: str | None = None,
+        line_style: LineStyle | None = None,
         opacity: float | OpacityOptions | Sequence[float] | None = None,
         flip_scalars: bool = False,
         lighting: bool | None = None,
