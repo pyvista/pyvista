@@ -48,6 +48,14 @@ def test_lookup_table(composite_mapper):
     assert composite_mapper.lookup_table is table
 
 
+@pytest.mark.parametrize('clim', [[None, None], (None, None)])
+def test_add_composite_clim_without_bounds(multiblock_poly, clim):
+    pl = pv.Plotter()
+    _actor, mapper = pl.add_composite(multiblock_poly, scalars='data_a', clim=clim)
+    expected = multiblock_poly.get_data_range('data_a', allow_missing=True)
+    assert mapper.scalar_range == pytest.approx(expected)
+
+
 def test_scalar_range_sets_lookup_table_range(multiblock_poly):
     pl = pv.Plotter()
     _actor, mapper = pl.add_composite(multiblock_poly, scalars='data_a', clim=[0.2, 10])
