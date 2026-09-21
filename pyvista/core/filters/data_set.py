@@ -7160,8 +7160,9 @@ class DataSetFilters(DataObjectFilters):
         as_composite: bool = True,
     ) -> (
         MultiBlock
+        | tuple[MultiBlock, NumpyArray[np.floating], NumpyArray[np.floating]]
         | PolyData
-        | tuple[MultiBlock | PolyData, NumpyArray[np.floating], NumpyArray[np.floating]]
+        | tuple[PolyData, NumpyArray[np.floating], NumpyArray[np.floating]]
     ):
         """Return an oriented bounding box (OBB) for this dataset.
 
@@ -7355,8 +7356,9 @@ class DataSetFilters(DataObjectFilters):
         as_composite: bool = True,
     ) -> (
         MultiBlock
+        | tuple[MultiBlock, NumpyArray[np.floating], NumpyArray[np.floating]]
         | PolyData
-        | tuple[MultiBlock | PolyData, NumpyArray[np.floating], NumpyArray[np.floating]]
+        | tuple[PolyData, NumpyArray[np.floating], NumpyArray[np.floating]]
     ):
         """Return a bounding box for this dataset.
 
@@ -7518,8 +7520,9 @@ class DataSetFilters(DataObjectFilters):
         as_composite: bool,
     ) -> (
         MultiBlock
+        | tuple[MultiBlock, NumpyArray[np.floating], NumpyArray[np.floating]]
         | PolyData
-        | tuple[MultiBlock | PolyData, NumpyArray[np.floating], NumpyArray[np.floating]]
+        | tuple[PolyData, NumpyArray[np.floating], NumpyArray[np.floating]]
     ):
         def _multiblock_to_polydata(multiblock: MultiBlock) -> PolyData:
             return multiblock.combine(merge_points=False).extract_surface(
@@ -7587,7 +7590,7 @@ class DataSetFilters(DataObjectFilters):
                 point_id = box_poly.find_closest_point(point)
                 point = box_poly.points[point_id]
 
-            return alg_output, point, axes
+            return alg_output, point, axes  # type: ignore[return-value]
         return alg_output
 
     def explode(  # type: ignore[misc]
