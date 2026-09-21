@@ -11,16 +11,9 @@ from tests.typing.meshes import pointset
 from tests.typing.meshes import poly
 from tests.typing.meshes import unstructured
 
-# Adding to anything but a point cloud gives an unstructured grid
-assert_types(image() + poly(), pv.UnstructuredGrid)
-assert_types(unstructured() + poly(), pv.UnstructuredGrid)
-assert_types(image() + [poly(), poly()], pv.UnstructuredGrid)  # noqa: RUF005
-assert_types(image() + multiblock(), pv.UnstructuredGrid)
-
-# A point cloud stays a point cloud only when everything added is one
-assert_types(pointset() + pointset(), pv.PointSet)
-assert_types(pointset() + [pointset(), pointset()], pv.PointSet)  # noqa: RUF005
-assert_types(pointset() + poly(), pv.UnstructuredGrid)
-
-# The blocks of a composite decide, and they are not known until it is merged
-assert_types(pointset() + multiblock(), pv.PointSet | pv.UnstructuredGrid)
+# A merge gives one of the three classes it can build, never a bare dataset
+assert_types(image() + poly(), pv.PolyData | pv.PointSet | pv.UnstructuredGrid)
+assert_types(unstructured() + poly(), pv.PolyData | pv.PointSet | pv.UnstructuredGrid)
+assert_types(unstructured() + [poly(), poly()], pv.PolyData | pv.PointSet | pv.UnstructuredGrid)  # noqa: RUF005
+assert_types(pointset() + pointset(), pv.PolyData | pv.PointSet | pv.UnstructuredGrid)
+assert_types(image() + multiblock(), pv.PolyData | pv.PointSet | pv.UnstructuredGrid)
