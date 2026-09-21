@@ -167,9 +167,8 @@ pl.camera.zoom(3)
 pl.show()
 
 # %%
-# The shader also shortens the dashes with distance under a perspective camera,
-# which the filter cannot do. Only the filter survives being written to a file or
-# exported to the browser, since only it produces real dashed geometry.
+# Only the filter survives being written to a file or exported to the browser,
+# since only it produces real dashed geometry.
 
 # %%
 # Dashing the Edges of a Surface
