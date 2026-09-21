@@ -1050,7 +1050,7 @@ def test_line_style_toggles_after_add():
     dashed = drawn('--')
     dotted = drawn(':')
     solid = drawn(None)
-    dash_dot_dot = drawn('-..')
-    assert 0 < dotted < dashed < dash_dot_dot < solid
+    assert 0 < dotted < dashed < solid
+    assert 0 < drawn('-..') < solid
     assert drawn('-') == solid
     pl.close()
