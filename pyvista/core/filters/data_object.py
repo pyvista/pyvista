@@ -3351,7 +3351,16 @@ class DataObjectFilters:
         progress_bar: bool = False,
         crinkle: bool = False,
         plane: PolyData | None = None,
-    ) -> DataSet | MultiBlock | tuple[DataSet | MultiBlock, DataSet | MultiBlock]:
+    ) -> (
+        PolyData
+        | PointSet
+        | UnstructuredGrid
+        | MultiBlock
+        | tuple[
+            PolyData | PointSet | UnstructuredGrid | MultiBlock,
+            PolyData | PointSet | UnstructuredGrid | MultiBlock,
+        ]
+    ):
         """Clip a dataset by a plane by specifying the origin and normal.
 
         The origin and normal may be set explicitly or implicitly using a
@@ -3462,22 +3471,13 @@ class DataObjectFilters:
         # Post-process clip to fix output type and remove unused points
         input_bounds = self.bounds
         if isinstance(result, tuple):
-            kept = _remove_unused_points_post_clip(
-                _keep_array_structure(_cast_output_to_match_input_type(result[0], self), self),
-                input_bounds,
-            )
-            removed = _remove_unused_points_post_clip(
-                _keep_array_structure(_cast_output_to_match_input_type(result[1], self), self),
-                input_bounds,
-            )
+            kept = _remove_unused_points_post_clip(_clip_output(result[0], self), input_bounds)
+            removed = _remove_unused_points_post_clip(_clip_output(result[1], self), input_bounds)
             if inplace_target is not None:
                 inplace_target.copy_from(kept, deep=False)
                 return inplace_target, removed
             return kept, removed
-        clipped = _remove_unused_points_post_clip(
-            _keep_array_structure(_cast_output_to_match_input_type(result, self), self),
-            input_bounds,
-        )
+        clipped = _remove_unused_points_post_clip(_clip_output(result, self), input_bounds)
         if inplace_target is not None:
             inplace_target.copy_from(clipped, deep=False)
             return inplace_target
@@ -3504,7 +3504,7 @@ class DataObjectFilters:
         progress_bar: bool = False,
         merge_points: bool = True,
         crinkle: bool = False,
-    ) -> DataSet | MultiBlock:
+    ) -> PolyData | PointSet | UnstructuredGrid | MultiBlock:
         """Clip a dataset by a bounding box defined by the bounds.
 
         If no bounds are given, a corner of the dataset bounds will be removed.
@@ -3663,7 +3663,7 @@ class DataObjectFilters:
         clipped = _remove_unused_points_post_clip(clipped, self.bounds)
         if merge_points:
             clipped = _weld_points(clipped)
-        return _keep_array_structure(_cast_output_to_match_input_type(clipped, self), self)
+        return _clip_output(clipped, self)
 
     # fmt: off
     # ruff: disable[E501]
@@ -3687,7 +3687,7 @@ class DataObjectFilters:
         progress_bar: bool = False,
         crinkle: bool = False,
         plane: PolyData | None = None,
-    ) -> DataSet | MultiBlock:
+    ) -> PolyData | PointSet | UnstructuredGrid | MultiBlock:
         """Clip a dataset by a slab of finite thickness around a plane.
 
         The slab is the volumetric region bounded by two parallel planes offset
@@ -3807,8 +3807,8 @@ class DataObjectFilters:
         )
 
         input_bounds = self.bounds
-        result = _keep_array_structure(_cast_output_to_match_input_type(result, self), self)
-        return _remove_unused_points_post_clip(result, input_bounds)
+        clipped = _clip_output(result, self)
+        return _remove_unused_points_post_clip(clipped, input_bounds)
 
     # fmt: off
     # ruff: disable[E501]
@@ -5452,7 +5452,7 @@ class DataObjectFilters:
         *,
         inplace: bool = False,
         progress_bar: bool = False,
-    ) -> DataSet | MultiBlock:
+    ) -> PolyData | UnstructuredGrid | MultiBlock:
         """Return an all triangle mesh.
 
         More complex polygons will be broken down into triangles.
@@ -5501,7 +5501,7 @@ class DataObjectFilters:
         mesh = _get_output(alg)
         if inplace:
             self.copy_from(mesh, deep=False)
-            return self
+            return cast('UnstructuredGrid', self)
         return mesh
 
     def sample(  # type: ignore[misc]
@@ -7035,13 +7035,24 @@ def _validate_clip_inplace(
     return mesh
 
 
+# fmt: off
+# ruff: disable[E501]
+@overload
+def _clip_output(output: DataSet | MultiBlock, source: DataSet) -> PolyData | PointSet | UnstructuredGrid: ...
+@overload
+def _clip_output(output: DataSet | MultiBlock, source: MultiBlock) -> MultiBlock: ...
+@overload
+def _clip_output(output: DataSet | MultiBlock, source: DataSet | MultiBlock) -> PolyData | PointSet | UnstructuredGrid | MultiBlock: ...
+# ruff: enable[E501]
+# fmt: on
 def _clip_output(
-    output: DataSet | MultiBlock, source: DataSet
-) -> PolyData | PointSet | UnstructuredGrid:
+    output: DataSet | MultiBlock, source: DataSet | MultiBlock
+) -> PolyData | PointSet | UnstructuredGrid | MultiBlock:
     """Give a clipped dataset the array structure and dataset type of its input."""
-    # A clip keeps a PolyData or PointSet input's type and gives an UnstructuredGrid otherwise
+    # A clip keeps a PolyData or PointSet input's type, a composite stays a composite and
+    # anything else gives an UnstructuredGrid
     return cast(
-        'PolyData | PointSet | UnstructuredGrid',
+        'PolyData | PointSet | UnstructuredGrid | MultiBlock',
         _keep_array_structure(_cast_output_to_match_input_type(output, source), source),
     )
 
