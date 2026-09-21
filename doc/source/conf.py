@@ -189,7 +189,6 @@ autodoc_type_aliases = {
     'TransformLike': 'pyvista.TransformLike',
     'RotationLike': 'pyvista.RotationLike',
     'InteractionEventType': 'pyvista.InteractionEventType',
-    'LineStyle': 'pyvista.LineStyle',
 }
 
 # Enable ANSI coloring for programoutput, using erbsland.sphinx.ansi
