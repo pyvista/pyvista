@@ -23,6 +23,9 @@ from pyvista.core._typing_core import VectorLike
 from .renderer import CameraPosition
 
 if TYPE_CHECKING:
+    import meshio
+    import trimesh
+
     from pyvista.core.composite import MultiBlock
     from pyvista.core.dataset import DataSet
     from pyvista.core.partitioned import PartitionedDataSet
