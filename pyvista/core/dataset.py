@@ -723,7 +723,9 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         self._active_vectors_info = ActiveArrayInfoTuple(field, name)
 
     def set_active_tensors(
-        self: Self, name: str | None, preference: PointLiteral | CellLiteral = 'point'
+        self: Self,
+        name: str | None,
+        preference: PointLiteral | CellLiteral | FieldAssociation = 'point',
     ) -> None:
         """Find the tensors by name and appropriately sets it as active.
 
@@ -734,11 +736,12 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
         name : str, optional
             Name of the tensors array to assign as active.
 
-        preference : str, default: "point"
+        preference : str | pyvista.core.utilities.arrays.FieldAssociation, default: "point"
             If there are two arrays of the same name associated with
             points, cells, or field data, it will prioritize an array
-            matching this type.  Can be either ``'cell'``,
-            ``'field'``, or ``'point'``.
+            matching this type.  Can be either ``'cell'``, ``'field'`` or
+            ``'point'``, or the matching
+            :class:`~pyvista.core.utilities.arrays.FieldAssociation` member.
 
         """
         if name is None:
