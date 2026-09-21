@@ -100,6 +100,20 @@ def test_add_mesh_isovalue_raises():
         pl.add_mesh_isovalue(mesh=sp, scalars='foo')
 
 
+def test_add_mesh_isovalue_without_active_scalars_raises():
+    mesh = pv.Sphere()
+    mesh.point_data['foo'] = np.ones(mesh.n_points)
+    mesh.set_active_scalars(None)
+    assert mesh.n_arrays > 0
+    assert mesh.active_scalars_info.name is None
+
+    pl = pv.Plotter()
+    match = re.escape('No active scalars to contour. Set `scalars` explicitly.')
+    with pytest.raises(ValueError, match=match):
+        pl.add_mesh_isovalue(mesh=mesh)
+    pl.close()
+
+
 def test_add_mesh_isovalue_pointset_raises():
     pl = pv.Plotter()
     with pytest.raises(
