@@ -3231,7 +3231,7 @@ class StackPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPl
 
         if len(stacks) > 1:
             self.SetColorSeries(self._color_series)
-            self.colors = colors
+            self.colors = cast('Sequence[ColorLike] | None', colors)
             self.labels = labels
         else:
             # A single-component plot takes one color and one label
