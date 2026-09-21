@@ -459,6 +459,27 @@ def test_sphere_widget_single_color_is_shared_by_every_widget():
     pl.close()
 
 
+@pytest.mark.parametrize('color', [[255, 0, 0], [1.0, 0.0, 0.0], 'red'])
+def test_sphere_widget_single_color_is_not_split_across_widgets(color):
+    nodes = np.array([[-1.0, -1.0, -1.0], [0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
+    red = pv.Color('red').float_rgb
+    pl = pv.Plotter()
+
+    sphere_widgets = pl.add_sphere_widget(None, center=nodes, color=color)
+
+    assert [widget.GetSphereProperty().GetColor() for widget in sphere_widgets] == [red] * 3
+    pl.close()
+
+
+def test_sphere_widget_color_sequence_length_must_match():
+    nodes = np.array([[-1.0, -1.0, -1.0], [1.0, 1.0, 1.0]])
+    pl = pv.Plotter()
+
+    with pytest.raises(ValueError, match='Invalid color'):
+        pl.add_sphere_widget(None, center=nodes, color=['red', 'green', 'blue'])
+    pl.close()
+
+
 def test_widget_checkbox_button(uniform):
     pl = pv.Plotter()
     func = lambda value: value  # Does nothing
