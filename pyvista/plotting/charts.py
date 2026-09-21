@@ -3158,7 +3158,7 @@ class StackPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPl
         coordinates. Each sequence defines the sizes of one stack
         (area), which are stacked on top of each other.
 
-    colors : sequence[ColorLike], optional
+    colors : ColorLike | sequence[ColorLike], optional
         Color of the stacks (areas) drawn in this plot. Any color
         parsable by :class:`pyvista.Color` is allowed.
 
@@ -3216,7 +3216,7 @@ class StackPlot(_NoNewAttrMixin, DisableVtkSnakeCase, _MultiCompPlot, _vtk.vtkPl
         x: VectorLike[float],
         ys: VectorLike[float] | MatrixLike[float],
         *,
-        colors: str | Sequence[ColorLike] | None = None,
+        colors: ColorLike | Sequence[ColorLike] | None = None,
         labels: str | Sequence[str] | None = None,
     ) -> None:
         """Initialize a new 2D stack plot instance."""
@@ -3844,7 +3844,7 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
         x: VectorLike[float],
         ys: VectorLike[float] | MatrixLike[float],
         *,
-        colors: str | Sequence[ColorLike] | None = None,
+        colors: ColorLike | Sequence[ColorLike] | None = None,
         labels: str | Sequence[str] | None = None,
     ) -> StackPlot:
         """Add a stack plot to this chart.
@@ -3859,7 +3859,7 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
             coordinates. Each sequence defines the sizes of one stack
             (area), which are stacked on top of each other.
 
-        colors : sequence[ColorLike], optional
+        colors : ColorLike | sequence[ColorLike], optional
             Color of the stacks (areas) drawn in this plot. Any color
             parsable by :class:`pyvista.Color` is allowed.
 
