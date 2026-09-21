@@ -512,7 +512,7 @@ class WidgetComponent(_NoNewAttrMixin):
         normal_rotation: bool = True,
         interaction_event: InteractionEventType = 'end',
         outline_opacity: bool | float | None = None,
-    ) -> _PlaneWidget:
+    ) -> _vtk.vtkImplicitPlaneWidget | _vtk.vtkPlaneWidget:
         """Add a plane widget to the scene.
 
         This is useless without a callback function. You can pass a
@@ -952,7 +952,7 @@ class WidgetComponent(_NoNewAttrMixin):
         origin: VectorLike[float] | None = None,
         outline_opacity: bool | float | None = None,
         **kwargs: Any,
-    ) -> _PlaneWidget:
+    ) -> _vtk.vtkImplicitPlaneWidget | _vtk.vtkPlaneWidget:
         """Clip a volume using a plane widget.
 
         Parameters
