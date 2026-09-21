@@ -2055,7 +2055,7 @@ class WidgetComponent(_NoNewAttrMixin):
         else:
             field = get_array_association(mesh, scalars, preference=preference)
         if scalars is None:
-            msg = 'Input dataset for the contour filter must have data arrays.'
+            msg = 'No active scalars to contour. Set `scalars` explicitly.'
             raise ValueError(msg)
         # NOTE: only point data is allowed? well cells works but seems buggy?
         if field != pv.FieldAssociation.POINT:
