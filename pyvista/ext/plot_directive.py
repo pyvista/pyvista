@@ -304,9 +304,6 @@ def setup(app: Sphinx) -> dict[str, Any]:
     pv.BUILDING_GALLERY = True
     pv.OFF_SCREEN = True
 
-    setup.app = app
-    setup.config = app.config
-    setup.confdir = app.confdir
     app.add_directive('pyvista-plot', PlotDirective)
     if record_namespace is not None:
         app.setup_extension('sphinx_autocodelink')
@@ -741,7 +738,9 @@ def run(  # noqa: PLR0917
 ) -> list[nodes.system_message]:
     """Run the plot directive."""
     document = state_machine.document
-    config = document.settings.env.config
+    env = document.settings.env
+    app = env.app
+    config = env.config
     nofigs = 'nofigs' in options
     optional = 'optional' in options
     force_static = 'force_static' in options
@@ -762,10 +761,10 @@ def run(  # noqa: PLR0917
 
     if len(arguments):
         if not config.pyvista_plot_basedir:
-            source_file_name = str(Path(setup.app.builder.srcdir) / directives.uri(arguments[0]))
+            source_file_name = str(Path(app.builder.srcdir) / directives.uri(arguments[0]))
         else:
             source_file_name = str(
-                Path(setup.confdir) / config.pyvista_plot_basedir / directives.uri(arguments[0]),
+                Path(app.confdir) / config.pyvista_plot_basedir / directives.uri(arguments[0]),
             )
 
         # If there is content, it will be passed as a caption.
@@ -818,11 +817,11 @@ def run(  # noqa: PLR0917
         is_doctest = options['format'] != 'python'
 
     # determine output directory name fragment
-    source_rel_name = os.path.relpath(source_file_name, setup.confdir)
+    source_rel_name = os.path.relpath(source_file_name, app.confdir)
     source_rel_dir = str(Path(source_rel_name).parent).lstrip(os.path.sep)
 
     # build_dir: where to place output files (temporarily)
-    build_dir = str(Path(setup.app.doctreedir).parent / 'pyvista_plot_directive' / source_rel_dir)
+    build_dir = str(Path(app.doctreedir).parent / 'pyvista_plot_directive' / source_rel_dir)
     # get rid of .. in paths, also changes pathsep
     # see note in Python docs for warning about symbolic links on Windows.
     # need to compare source and dest paths at end
@@ -830,11 +829,11 @@ def run(  # noqa: PLR0917
     Path(build_dir).mkdir(parents=True, exist_ok=True)
 
     # output_dir: final location in the builder's directory
-    dest_dir = str((Path(setup.app.builder.outdir) / source_rel_dir).resolve())
+    dest_dir = str((Path(app.builder.outdir) / source_rel_dir).resolve())
     Path(dest_dir).mkdir(parents=True, exist_ok=True)
 
     # how to link to files from the RST file
-    dest_dir_link = Path(os.path.relpath(setup.confdir, rst_dir), source_rel_dir).as_posix()
+    dest_dir_link = Path(os.path.relpath(app.confdir, rst_dir), source_rel_dir).as_posix()
     try:
         build_dir_link = os.path.relpath(build_dir, rst_dir)
     except ValueError:  # pragma: no cover
