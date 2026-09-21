@@ -49,6 +49,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLike
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import PointLiteral
+    from pyvista.core.utilities.helpers import _NormalsLiteral
 
     from ._typing import ColorLike
     from .actor import Actor
@@ -498,7 +499,7 @@ class WidgetComponent(_NoNewAttrMixin):
         self,
         callback: Callable[..., object] | None,
         *,
-        normal: str | VectorLike[float] = 'x',
+        normal: VectorLike[float] | _NormalsLiteral = 'x',
         origin: VectorLike[float] | None = None,
         bounds: VectorLike[float] | None = None,
         factor: float = 1.25,
@@ -753,7 +754,7 @@ class WidgetComponent(_NoNewAttrMixin):
         /,
         mesh: DataSet | _vtk.vtkAlgorithm,
         *,
-        normal: str | VectorLike[float] = 'x',
+        normal: VectorLike[float] | _NormalsLiteral = 'x',
         invert: bool = False,
         widget_color: ColorLike | None = None,
         value: float = 0.0,
@@ -940,7 +941,7 @@ class WidgetComponent(_NoNewAttrMixin):
         /,
         volume: Volume | ImageData | RectilinearGrid,
         *,
-        normal: str | VectorLike[float] = 'x',
+        normal: VectorLike[float] | _NormalsLiteral = 'x',
         invert: bool = False,  # noqa: ARG002
         widget_color: ColorLike | None = None,
         value: float = 0.0,  # noqa: ARG002
@@ -1081,7 +1082,7 @@ class WidgetComponent(_NoNewAttrMixin):
         /,
         mesh: DataSet | _vtk.vtkAlgorithm,
         *,
-        normal: str | VectorLike[float] = 'x',
+        normal: VectorLike[float] | _NormalsLiteral = 'x',
         generate_triangles: bool = False,
         widget_color: ColorLike | None = None,
         assign_to_axis: str | int | None = None,
