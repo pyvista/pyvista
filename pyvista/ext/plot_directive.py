@@ -545,9 +545,9 @@ def _run_code(
     *,
     code: str,
     code_path: str,
-    ns: dict[str, Any] | None = None,
+    ns: dict[str, Any],
     function_name: str | None = None,
-) -> dict[str, Any] | None:
+) -> dict[str, Any]:
     """Run a docstring example.
 
     Run the example if it does not contain a ``pyvista-plot::`` directive.
