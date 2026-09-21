@@ -356,7 +356,8 @@ def test_card_header_carries_the_module_and_usage_badges(monkeypatch, metadata, 
 
 def test_filter_manifest_lists_the_usage_slugs_the_cards_emit():
     html = make_tables.DatasetCardFetcher.generate_filter_toolbar()
-    manifest = json.loads(re.search(r'<script[^>]*>(.*?)</script>', html, re.DOTALL).group(1))
+    start = html.index('>', html.index('id="facet-manifest"')) + 1
+    manifest = json.loads(html[start : html.index('</script>', start)])
 
     assert manifest['order']['use'] == [
         'unrestricted',
