@@ -36,6 +36,7 @@ from .opts import PickerType
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from typing import TypeAlias
 
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
@@ -46,6 +47,9 @@ if TYPE_CHECKING:
     from .plotter import BasePlotter
     from .render_window_interactor import InteractorStyleCaptureMixin
     from .text import CornerAnnotation
+
+    # Pickers that resolve a dataset.
+    _DataSetPicker: TypeAlias = _vtk.vtkPicker | _vtk.vtkHardwarePicker
 
 PICKED_REPRESENTATION_NAMES = {
     'point': '_picked_point',
@@ -138,12 +142,12 @@ class PointPickingElementHandler(_NoNewAttrMixin):
         mode: ElementType | str | int = ElementType.CELL,
         callback: Callable[..., None] | None = None,
     ) -> None:
-        self._picker_: weakref.ref[_vtk.vtkPicker] | None = None
+        self._picker_: weakref.ref[_DataSetPicker] | None = None
         self.callback = callback
         self.mode = ElementType.from_any(mode)
 
     @property
-    def picker(self) -> _vtk.vtkPicker:  # numpydoc ignore=RT01
+    def picker(self) -> _DataSetPicker:  # numpydoc ignore=RT01
         """Get or set the picker instance."""
         picker = None if self._picker_ is None else self._picker_()
         if picker is None:  # pragma: no cover
@@ -152,7 +156,7 @@ class PointPickingElementHandler(_NoNewAttrMixin):
         return picker
 
     @picker.setter
-    def picker(self, picker: _vtk.vtkPicker) -> None:
+    def picker(self, picker: _DataSetPicker) -> None:
         self._picker_ = weakref.ref(picker)
 
     def get_mesh(self) -> pv.DataSet | None:
@@ -288,7 +292,7 @@ class PointPickingElementHandler(_NoNewAttrMixin):
             raise PyVistaPickingError(msg)
         return mesh
 
-    def __call__(self, picked_point: VectorLike[float], picker: _vtk.vtkPicker) -> None:
+    def __call__(self, picked_point: VectorLike[float], picker: _DataSetPicker) -> None:
         """Perform the pick."""
         self.picker = picker
         mesh = self.get_mesh()
@@ -957,7 +961,7 @@ class PickingComponent(_NoNewAttrMixin):
 
         self_ = weakref.ref(self)
 
-        def _end_pick_event(picked_point: VectorLike[float], picker: _vtk.vtkPicker) -> None:
+        def _end_pick_event(picked_point: VectorLike[float], picker: _DataSetPicker) -> None:
             component = self_()
             if component is None:
                 return
