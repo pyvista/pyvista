@@ -8541,7 +8541,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
         border: BorderOptions | None = None,
         border_color: ColorLike | None = None,
         border_width: float | None = None,
-        window_size: list[int] | None = None,
+        window_size: Sequence[int] | None = None,
         line_smoothing: bool = False,
         point_smoothing: bool = False,
         polygon_smoothing: bool = False,
