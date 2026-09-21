@@ -55,7 +55,7 @@ Highlights of the API include:
       >>> actor = pl.add_mesh(mesh, scalars=mesh.points)
       >>> actor.prop
 
-.. card:: Readers and Writers
+.. card:: Readers & Writers
    :link: reader_api
    :link-type: ref
    :class-title: pyvista-card-title
