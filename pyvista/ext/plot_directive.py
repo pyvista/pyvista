@@ -211,6 +211,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from docutils import nodes
+    from docutils.parsers.rst.states import NestedStateMachine
     from docutils.parsers.rst.states import RSTState
     from docutils.parsers.rst.states import RSTStateMachine
     from docutils.statemachine import StringList
@@ -734,7 +735,7 @@ def run(  # noqa: PLR0917
     arguments: list[str],
     content: StringList,
     options: dict[str, Any],
-    state_machine: RSTStateMachine,
+    state_machine: RSTStateMachine | NestedStateMachine,
     state: RSTState,
     lineno: int,
 ) -> list[nodes.system_message]:
