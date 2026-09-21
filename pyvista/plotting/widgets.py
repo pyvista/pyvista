@@ -26,6 +26,7 @@ from pyvista.core.utilities.misc import try_callback
 
 from .affine_widget import AffineWidget3D
 from .colors import Color
+from .colors import _validate_color_sequence
 from .opts import PickerType
 from .utilities.algorithms import add_ids_algorithm
 from .utilities.algorithms import algorithm_to_mesh_handler
@@ -2551,7 +2552,7 @@ class WidgetComponent(_NoNewAttrMixin):
             is given.
 
         """
-        sphere_color: Any = pv.global_theme.color.float_rgb if color is None else color
+        sphere_color = pv.global_theme.color.float_rgb if color is None else color
         _validation.check_contains(
             list(get_args(_SphereStyleOptions)), must_contain=style, name='style'
         )
@@ -2562,14 +2563,7 @@ class WidgetComponent(_NoNewAttrMixin):
         if centers.ndim > 1:
             num = len(centers)
 
-        colors: Any
-        if isinstance(sphere_color, (list, tuple, np.ndarray)):
-            if len(sphere_color) == num and not isinstance(sphere_color[0], float):
-                colors = sphere_color
-            else:
-                colors = [sphere_color] * num
-        else:
-            colors = [sphere_color] * num
+        colors = _validate_color_sequence(sphere_color, num)
 
         def _the_callback(widget: _vtk.vtkSphereWidget, _event: str | None) -> None:
             point = widget.GetCenter()
@@ -2593,7 +2587,7 @@ class WidgetComponent(_NoNewAttrMixin):
                 sphere_widget.SetRepresentationToWireframe()
             else:
                 sphere_widget.SetRepresentationToSurface()
-            sphere_widget.GetSphereProperty().SetColor(Color(colors[i]).float_rgb)
+            sphere_widget.GetSphereProperty().SetColor(colors[i].float_rgb)
             sphere_widget.GetSelectedSphereProperty().SetColor(selected.float_rgb)
             sphere_widget.SetInteractor(iren.interactor)
             sphere_widget.SetCurrentRenderer(self._plotter.renderer)
