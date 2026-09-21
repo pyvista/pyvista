@@ -58,6 +58,7 @@ if TYPE_CHECKING:
 
     _PlaneWidget: TypeAlias = _vtk.vtkImplicitPlaneWidget | _vtk.vtkPlaneWidget
 
+_CLOSED_PLOTTER_MSG = 'Cannot add a widget to a closed plotter.'
 _SliderStyleOptions = Literal['classic', 'modern']
 _SphereStyleOptions = Literal['surface', 'wireframe']
 
@@ -322,7 +323,7 @@ class WidgetComponent(_NoNewAttrMixin):
         box_widget.GetOutlineProperty().SetColor(
             Color(color, default_color=pv.global_theme.font.color).float_rgb,
         )
-        box_widget.SetInteractor(self._plotter._get_iren_not_none().interactor)
+        box_widget.SetInteractor(self._plotter._get_iren_not_none(_CLOSED_PLOTTER_MSG).interactor)
         box_widget.SetCurrentRenderer(self._plotter.renderer)
         box_widget.SetPlaceFactor(factor)
         box_widget.SetRotationEnabled(rotation_enabled)
@@ -706,7 +707,9 @@ class WidgetComponent(_NoNewAttrMixin):
             plane_widget = poly_widget
 
         plane_widget.GetPlaneProperty().SetOpacity(0.5)
-        plane_widget.SetInteractor(self._plotter._get_iren_not_none().interactor)
+        plane_widget.SetInteractor(
+            self._plotter._get_iren_not_none(_CLOSED_PLOTTER_MSG).interactor
+        )
         plane_widget.SetCurrentRenderer(self._plotter.renderer)
 
         if assign_to_axis:
@@ -1418,7 +1421,7 @@ class WidgetComponent(_NoNewAttrMixin):
 
         line_widget = _vtk.vtkLineWidget()
         line_widget.GetLineProperty().SetColor(line_color.float_rgb)
-        line_widget.SetInteractor(self._plotter._get_iren_not_none().interactor)
+        line_widget.SetInteractor(self._plotter._get_iren_not_none(_CLOSED_PLOTTER_MSG).interactor)
         line_widget.SetCurrentRenderer(self._plotter.renderer)
         line_widget.SetPlaceFactor(factor)
         line_widget.PlaceWidget(widget_bounds)
@@ -1671,8 +1674,7 @@ class WidgetComponent(_NoNewAttrMixin):
         >>> pl.show()
 
         """
-        msg = 'Cannot add a widget to a closed plotter.'
-        iren = self._plotter._get_iren_not_none(msg)
+        iren = self._plotter._get_iren_not_none(_CLOSED_PLOTTER_MSG)
 
         rng_ = _float_list(rng)
         slider_value = ((rng_[1] - rng_[0]) / 2) + rng_[0] if value is None else float(value)
@@ -2214,7 +2216,9 @@ class WidgetComponent(_NoNewAttrMixin):
         spline_widget = _vtk.vtkSplineWidget()
         spline_widget.GetLineProperty().SetColor(spline_color.float_rgb)
         spline_widget.SetNumberOfHandles(n_handles)
-        spline_widget.SetInteractor(self._plotter._get_iren_not_none().interactor)
+        spline_widget.SetInteractor(
+            self._plotter._get_iren_not_none(_CLOSED_PLOTTER_MSG).interactor
+        )
         spline_widget.SetCurrentRenderer(self._plotter.renderer)
         spline_widget.SetPlaceFactor(factor)
         spline_widget.PlaceWidget(widget_bounds)
@@ -2412,8 +2416,7 @@ class WidgetComponent(_NoNewAttrMixin):
             The newly created distance widget.
 
         """
-        msg = 'Cannot add a widget to a closed plotter.'
-        iren = self._plotter._get_iren_not_none(msg)
+        iren = self._plotter._get_iren_not_none(_CLOSED_PLOTTER_MSG)
 
         measure_color = Color(color, default_color=pv.global_theme.font.color.float_rgb)
 
@@ -2579,6 +2582,7 @@ class WidgetComponent(_NoNewAttrMixin):
         if indices is None:
             indices = list(range(num))
 
+        iren = self._plotter._get_iren_not_none(_CLOSED_PLOTTER_MSG)
         new_widgets = []
         for i in range(num):
             loc = centers[i] if centers.ndim > 1 else centers
@@ -2590,7 +2594,7 @@ class WidgetComponent(_NoNewAttrMixin):
                 sphere_widget.SetRepresentationToSurface()
             sphere_widget.GetSphereProperty().SetColor(Color(colors[i]).float_rgb)
             sphere_widget.GetSelectedSphereProperty().SetColor(selected.float_rgb)
-            sphere_widget.SetInteractor(self._plotter._get_iren_not_none().interactor)
+            sphere_widget.SetInteractor(iren.interactor)
             sphere_widget.SetCurrentRenderer(self._plotter.renderer)
             sphere_widget.SetRadius(radius)
             sphere_widget.SetCenter(*_float_list(loc))
@@ -2777,8 +2781,7 @@ class WidgetComponent(_NoNewAttrMixin):
         >>> pl.show()
 
         """
-        msg = 'Cannot add a widget to a closed plotter.'
-        self._plotter._get_iren_not_none(msg)
+        iren = self._plotter._get_iren_not_none(_CLOSED_PLOTTER_MSG)
 
         def create_button(
             color1: ColorLike,
@@ -2816,7 +2819,7 @@ class WidgetComponent(_NoNewAttrMixin):
         button_rep.PlaceWidget(bounds)
 
         button_widget = _vtk.vtkButtonWidget()
-        button_widget.SetInteractor(self._plotter._get_iren_not_none().interactor)
+        button_widget.SetInteractor(iren.interactor)
         button_widget.SetRepresentation(button_rep)
         button_widget.SetCurrentRenderer(self._plotter.renderer)
         button_widget.On()
@@ -2929,8 +2932,7 @@ class WidgetComponent(_NoNewAttrMixin):
             >>> pl.show()
 
         """
-        msg = 'Cannot add a widget to a closed plotter.'
-        self._plotter._get_iren_not_none(msg)
+        iren = self._plotter._get_iren_not_none(_CLOSED_PLOTTER_MSG)
 
         origin_x, origin_y = _float_list(position)
 
@@ -2993,7 +2995,7 @@ class WidgetComponent(_NoNewAttrMixin):
         button_rep.GetProperty().SetColor((1, 1, 1))
 
         button_widget = _vtk.vtkButtonWidget()
-        button_widget.SetInteractor(self._plotter._get_iren_not_none().interactor)
+        button_widget.SetInteractor(iren.interactor)
         button_widget.SetRepresentation(button_rep)
         button_widget.SetCurrentRenderer(self._plotter.renderer)
         button_widget.On()
@@ -3158,7 +3160,7 @@ class WidgetComponent(_NoNewAttrMixin):
         representation.SetPosition2(*size)
         representation.GetImageProperty().SetOpacity(opacity)
         widget = _vtk.vtkLogoWidget()
-        widget.SetInteractor(self._plotter._get_iren_not_none().interactor)
+        widget.SetInteractor(self._plotter._get_iren_not_none(_CLOSED_PLOTTER_MSG).interactor)
         widget.SetRepresentation(representation)
         widget.On()
         self.logo_widgets.append(widget)
@@ -3198,7 +3200,7 @@ class WidgetComponent(_NoNewAttrMixin):
         representation = _vtk.vtkCamera3DRepresentation()
         representation.SetCamera(self._plotter.renderer.GetActiveCamera())
         widget = _vtk.vtkCamera3DWidget()
-        widget.SetInteractor(self._plotter._get_iren_not_none().interactor)
+        widget.SetInteractor(self._plotter._get_iren_not_none(_CLOSED_PLOTTER_MSG).interactor)
         widget.SetRepresentation(representation)
         widget.On()
         self.camera3d_widgets.append(widget)
