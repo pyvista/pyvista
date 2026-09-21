@@ -6629,11 +6629,12 @@ def _clipper(mesh: DataSet | MultiBlock) -> _vtk.vtkClipPolyData | _vtk.vtkTable
 def _remove_unused_clip_points(
     output: _DataSetType, clipper: _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet
 ) -> _DataSetType:
-    """Remove the points a clipper asked for both halves leaves each half holding."""
+    """Remove the input points each half keeps when a clipper splits a mesh in two."""
     # vtkTableBasedClipDataSet builds its own point list and has nothing to remove
-    if isinstance(clipper, _vtk.vtkClipPolyData):
-        return cast('_DataSetType', cast('PolyData', output).remove_unused_points(inplace=True))
-    return output
+    if not isinstance(clipper, _vtk.vtkClipPolyData):
+        return output
+    trimmed = cast('PolyData', output).remove_unused_points(inplace=True)
+    return cast('_DataSetType', trimmed)
 
 
 def _validate_reference_volume_options(
