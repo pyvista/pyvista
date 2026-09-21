@@ -1368,7 +1368,7 @@ class _Chart(DocSubs):
     def _is_within(self, pos: VectorLike[float]) -> bool:
         """Check whether the specified position (in pixels) lies within this chart's geometry."""
         l, b, w, h = self._geometry
-        return l <= pos[0] <= l + w and b <= pos[1] <= b + h
+        return bool(l <= pos[0] <= l + w and b <= pos[1] <= b + h)
 
     @property
     @doc_subs
@@ -5016,8 +5016,8 @@ class ChartMPL(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkImageItem):
     @property
     def _geometry(self) -> tuple[float, ...]:
         r_w, r_h = (0, 0) if self._renderer is None else self._renderer.GetSize()
-        t_w = self._size[0] * r_w
-        t_h = self._size[1] * r_h
+        t_w = float(self._size[0] * r_w)
+        t_h = float(self._size[1] * r_h)
         return (*self.position, t_w, t_h)
 
     @_geometry.setter
