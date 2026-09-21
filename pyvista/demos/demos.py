@@ -6,6 +6,7 @@ import time
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
+from typing import get_args
 
 import numpy as np
 
@@ -486,13 +487,7 @@ def plot_datasets(dataset_type: _DatasetTypeOptions | None = None) -> None:
     >>> demos.plot_datasets()
 
     """
-    allowable_types = [
-        'PolyData',
-        'UnstructuredGrid',
-        'ImageData',
-        'RectilinearGrid',
-        'StructuredGrid',
-    ]
+    allowable_types = list(get_args(_DatasetTypeOptions))
     if dataset_type is not None and dataset_type not in allowable_types:
         msg = (
             f'Invalid dataset_type {dataset_type}.  '

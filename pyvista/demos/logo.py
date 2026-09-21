@@ -35,7 +35,6 @@ from pyvista.core.utilities.features import _voxelize_legacy
 if TYPE_CHECKING:
     from pyvista.plotting._typing import CameraPositionOptions
     from pyvista.plotting.plotter import _ShowReturnType
-    from pyvista.plotting.renderer import CameraPosition
 
 THIS_PATH = str(Path(os.path.realpath(__file__)).parent)
 
@@ -87,8 +86,8 @@ def text_3d(string: str, depth: float = 0.5) -> pv.PolyData:
 
     Returns
     -------
-    pyvista.DataSet
-        The 3D text in the form of a PyVista DataSet.
+    pyvista.PolyData
+        The 3D text in the form of a PyVista PolyData mesh.
 
     """
     vec_text = _vtk.vtkVectorText()
@@ -112,6 +111,8 @@ def text_3d(string: str, depth: float = 0.5) -> pv.PolyData:
 def logo_letters(*, merge: Literal[False] = False, depth: float = ...) -> dict[str, pv.PolyData]: ...
 @overload
 def logo_letters(*, merge: Literal[True], depth: float = ...) -> pv.PolyData: ...
+@overload
+def logo_letters(*, merge: bool = ..., depth: float = ...) -> pv.PolyData | dict[str, pv.PolyData]: ...
 # ruff: enable[E501]
 # fmt: on
 def logo_letters(
@@ -211,7 +212,7 @@ def plot_logo(
     just_return_plotter: bool = False,
     show_note: bool = False,
     **kwargs: Any,
-) -> pv.Plotter | CameraPosition | _ShowReturnType:
+) -> pv.Plotter | _ShowReturnType:
     """Plot the stylized PyVista logo.
 
     Parameters
