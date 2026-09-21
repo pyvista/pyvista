@@ -414,9 +414,10 @@ def test_sphere_widget_style_is_matched_exactly():
     assert surface.GetSphereProperty().GetRepresentationAsString() == 'Surface'
     assert wireframe.GetSphereProperty().GetRepresentationAsString() == 'Wireframe'
 
-    match = re.escape("style 'wire' is not valid.")
-    with pytest.raises(ValueError, match=match):
-        pl.add_sphere_widget(None, style='wire')
+    for style in ['wire', '']:
+        match = re.escape(f'style {style!r} is not valid.')
+        with pytest.raises(ValueError, match=match):
+            pl.add_sphere_widget(None, style=style)
     pl.close()
 
 
