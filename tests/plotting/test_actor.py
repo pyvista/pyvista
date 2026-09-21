@@ -953,3 +953,18 @@ def test_line_style_dataset_types(dataset):
     assert 0 < drawn('--') < solid
     assert drawn('') == 0
     assert drawn('--', disable=True) == solid
+
+
+def test_line_style_rejects_points_gaussian():
+    pl = pv.Plotter()
+    with pytest.raises(TypeError, match='points_gaussian'):
+        pl.add_mesh(pv.Line(resolution=10), style='points_gaussian', line_style='--')
+    pl.close()
+
+
+def test_line_style_invalid_via_add_mesh():
+    pl = pv.Plotter()
+    with pytest.raises(ValueError, match="line_style 'dashed' is not valid"):
+        pl.add_mesh(pv.Line(resolution=10), line_style='dashed')
+    assert not pl.actors
+    pl.close()

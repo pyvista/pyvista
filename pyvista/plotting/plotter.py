@@ -49,6 +49,7 @@ from pyvista.core.utilities.arrays import raise_not_matching
 from pyvista.core.utilities.helpers import is_pyvista_dataset
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _BoundsSizeMixin
+from pyvista.core.utilities.misc import _check_line_style
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import _wraps
 from pyvista.core.utilities.misc import abstract_class
@@ -4298,6 +4299,12 @@ class BasePlotter(_BoundsSizeMixin):
 
         if isinstance(mesh, (str, Path)):
             mesh = pv.read(mesh)
+
+        if line_style is not None:
+            _check_line_style(line_style, name='line_style')
+            if style == 'points_gaussian':
+                msg = "`line_style` is not supported with `style='points_gaussian'`."
+                raise TypeError(msg)
 
         mesh, algo = algorithm_to_mesh_handler(mesh)
 
