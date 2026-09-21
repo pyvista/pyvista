@@ -31,7 +31,11 @@ class EmbedPyFileDirective(Directive):
         """Download the file and return it as a Python code block."""
         name = self.arguments[0]
         try:
-            path = Path(download_file(name))
+            downloaded = download_file(name)
+            if not isinstance(downloaded, str):
+                msg = f'{name} downloads to more than one file'
+                raise TypeError(msg)
+            path = Path(downloaded)
             text = path.read_text(encoding='utf-8')
         except Exception as e:  # noqa: BLE001
             logger.warning(f'Failed to embed {name}: {e}')
