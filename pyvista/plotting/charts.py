@@ -5022,7 +5022,7 @@ class ChartMPL(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkImageItem):
 
     @_geometry.setter
     def _geometry(self, _: VectorLike[float]) -> None:
-        msg = f'Cannot set the geometry of {type(self).__class__}'
+        msg = f'Cannot set the geometry of {type(self).__name__}'
         raise AttributeError(msg)
 
     @property
