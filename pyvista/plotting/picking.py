@@ -359,7 +359,7 @@ class PickingComponent(_NoNewAttrMixin):
         # Mesh-aware picking state
         self._picked_actor: _vtk.vtkActor | None = None
         self._picked_mesh: pv.DataSet | None = None
-        self._picked_cell: pv.DataSet | pv.MultiBlock | None = None
+        self._picked_cell: pv.UnstructuredGrid | pv.MultiBlock | None = None
         self._picking_text: CornerAnnotation | None = None
         self._picked_block_index: int | None = None
         # Path / geodesic / horizon state
@@ -407,12 +407,12 @@ class PickingComponent(_NoNewAttrMixin):
         return self._picked_mesh
 
     @property
-    def picked_cells(self) -> pv.DataSet | pv.MultiBlock | None:
+    def picked_cells(self) -> pv.UnstructuredGrid | pv.MultiBlock | None:
         r"""Return the cell-picked object.
 
         Returns
         -------
-        output : None | pyvista.DataSet | pyvista.MultiBlock
+        output : None | pyvista.UnstructuredGrid | pyvista.MultiBlock
             Picked object if available.
 
         """
@@ -1221,7 +1221,7 @@ class PickingComponent(_NoNewAttrMixin):
         """
         self_ = weakref.ref(self)
 
-        def finalize(picked: pv.DataSet | pv.MultiBlock | None) -> None:
+        def finalize(picked: pv.UnstructuredGrid | pv.MultiBlock | None) -> None:
             component = self_()
             if component is None:
                 return
@@ -1277,7 +1277,7 @@ class PickingComponent(_NoNewAttrMixin):
             if picked.n_blocks == 0 or picked.combine().n_cells < 1:
                 component._picked_cell = None
             elif picked.n_blocks == 1:
-                component._picked_cell = picked[0]
+                component._picked_cell = cast('pv.UnstructuredGrid', picked[0])
             else:
                 component._picked_cell = picked
 
@@ -1351,7 +1351,7 @@ class PickingComponent(_NoNewAttrMixin):
         """
         self_ = weakref.ref(self)
 
-        def finalize(picked: pv.DataSet | pv.MultiBlock | None) -> None:
+        def finalize(picked: pv.UnstructuredGrid | pv.MultiBlock | None) -> None:
             component = self_()
             if component is None:
                 return
@@ -1429,7 +1429,7 @@ class PickingComponent(_NoNewAttrMixin):
             if len(picked) == 0 or picked.combine().n_cells < 1:
                 component._picked_cell = None
             elif len(picked) == 1:
-                component._picked_cell = picked[0]
+                component._picked_cell = cast('pv.UnstructuredGrid', picked[0])
             else:
                 component._picked_cell = picked
 
@@ -1639,7 +1639,7 @@ class PickingComponent(_NoNewAttrMixin):
                 _poked_context_callback(plotter, callback, picked)
 
             if mode == ElementType.CELL:
-                component._picked_cell = picked
+                component._picked_cell = cast('pv.UnstructuredGrid', picked)
 
             if show:
                 if mode == ElementType.CELL:
