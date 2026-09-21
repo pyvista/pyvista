@@ -76,6 +76,26 @@ def multiblock_optional_image() -> pv.MultiBlock[pv.ImageData | None]:
     return pv.MultiBlock([image(), None])
 
 
+def multiblock_pointset() -> pv.MultiBlock[pv.PointSet]:
+    """Return a composite declared to hold only `PointSet`."""
+    return pv.MultiBlock([pointset()])
+
+
+def multiblock_optional_pointset() -> pv.MultiBlock[pv.PointSet | None]:
+    """Return a composite of point clouds whose blocks may be missing."""
+    return pv.MultiBlock([pointset(), None])
+
+
+def multiblock_unstructured() -> pv.MultiBlock[pv.UnstructuredGrid]:
+    """Return a composite declared to hold only `UnstructuredGrid`."""
+    return pv.MultiBlock([unstructured()])
+
+
+def multiblock_dataset() -> pv.MultiBlock[pv.DataSet]:
+    """Return a composite declared only as holding datasets."""
+    return pv.MultiBlock([image()])
+
+
 def with_arrays(mesh: _MeshType) -> _MeshType:
     """Give a mesh point scalars ``s``, vectors ``v`` and integer ``labels``, keeping its class."""
     mesh.point_data['s'] = mesh.points[:, 0]

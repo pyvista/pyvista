@@ -2,94 +2,28 @@
 
 from __future__ import annotations
 
-import numpy as np
 from type_assert import assert_types
 
 import pyvista as pv
-
-
-def poly() -> pv.PolyData:
-    """Return a sphere."""
-    return pv.Sphere(theta_resolution=8, phi_resolution=8)
-
-
-def pointset() -> pv.PointSet:
-    """Return a point cloud."""
-    return pv.PointSet(poly().points)
-
-
-def image() -> pv.ImageData:
-    """Return a small uniform grid."""
-    return pv.ImageData(dimensions=(5, 5, 5), spacing=(0.25, 0.25, 0.25), origin=(-0.5, -0.5, -0.5))
-
-
-def structured() -> pv.StructuredGrid:
-    """Return a small structured grid."""
-    axis = np.linspace(-0.5, 0.5, 5)
-    x, y, z = np.meshgrid(axis, axis, axis, indexing='ij')
-    return pv.StructuredGrid(x, y, z)
-
-
-def unstructured() -> pv.UnstructuredGrid:
-    """Return a small unstructured grid."""
-    return image().cast_to_unstructured_grid()
-
-
-def multiblock_pointset() -> pv.MultiBlock[pv.PointSet]:
-    """Return a composite declared to hold only `PointSet`."""
-    return pv.MultiBlock([pointset()])
-
-
-def multiblock_unstructured() -> pv.MultiBlock[pv.UnstructuredGrid]:
-    """Return a composite declared to hold only `UnstructuredGrid`."""
-    return pv.MultiBlock([unstructured()])
-
-
-def multiblock_poly() -> pv.MultiBlock[pv.PolyData]:
-    """Return a composite declared to hold only `PolyData`."""
-    return pv.MultiBlock([poly()])
-
-
-def multiblock_image() -> pv.MultiBlock[pv.ImageData]:
-    """Return a composite declared to hold only `ImageData`."""
-    return pv.MultiBlock([image()])
-
-
-def multiblock() -> pv.MultiBlock:
-    """Return a composite of two meshes."""
-    return pv.MultiBlock([poly(), image()])
-
-
-def explicit_structured() -> pv.ExplicitStructuredGrid:
-    """Return a small explicit structured grid, which is not an UnstructuredGrid."""
-    grid = structured()
-    grid.dimensions = [5, 5, 5]
-    return grid.cast_to_explicit_structured_grid()
+from tests.typing.meshes import explicit_structured
+from tests.typing.meshes import image
+from tests.typing.meshes import multiblock
+from tests.typing.meshes import multiblock_dataset
+from tests.typing.meshes import multiblock_image
+from tests.typing.meshes import multiblock_optional_image
+from tests.typing.meshes import multiblock_optional_pointset
+from tests.typing.meshes import multiblock_optional_poly
+from tests.typing.meshes import multiblock_pointset
+from tests.typing.meshes import multiblock_poly
+from tests.typing.meshes import multiblock_unstructured
+from tests.typing.meshes import pointset
+from tests.typing.meshes import poly
+from tests.typing.meshes import unstructured
 
 
 def a_flag() -> bool:
     """Return a flag typed only as ``bool``, so the widened overloads apply."""
     return True
-
-
-def multiblock_optional_poly() -> pv.MultiBlock[pv.PolyData | None]:
-    """Return a composite whose blocks may be missing."""
-    return pv.MultiBlock([poly(), None])
-
-
-def multiblock_optional_image() -> pv.MultiBlock[pv.ImageData | None]:
-    """Return a composite of grids whose blocks may be missing."""
-    return pv.MultiBlock([image(), None])
-
-
-def multiblock_optional_pointset() -> pv.MultiBlock[pv.PointSet | None]:
-    """Return a composite of point clouds whose blocks may be missing."""
-    return pv.MultiBlock([pointset(), None])
-
-
-def multiblock_dataset() -> pv.MultiBlock[pv.DataSet]:
-    """Return a composite declared only as holding datasets."""
-    return pv.MultiBlock([image()])
 
 
 # A plane clip keeps a surface a surface and a point cloud a point cloud

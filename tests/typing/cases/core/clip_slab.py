@@ -5,67 +5,17 @@ from __future__ import annotations
 from type_assert import assert_types
 
 import pyvista as pv
-
-
-def poly() -> pv.PolyData:
-    """Return a sphere."""
-    return pv.Sphere(theta_resolution=8, phi_resolution=8)
-
-
-def pointset() -> pv.PointSet:
-    """Return a point cloud."""
-    return pv.PointSet(poly().points)
-
-
-def image() -> pv.ImageData:
-    """Return a small uniform grid."""
-    return pv.ImageData(dimensions=(5, 5, 5), spacing=(0.25, 0.25, 0.25), origin=(-0.5, -0.5, -0.5))
-
-
-def unstructured() -> pv.UnstructuredGrid:
-    """Return a small unstructured grid."""
-    return image().cast_to_unstructured_grid()
-
-
-def multiblock_pointset() -> pv.MultiBlock[pv.PointSet]:
-    """Return a composite declared to hold only `PointSet`."""
-    return pv.MultiBlock([pointset()])
-
-
-def multiblock_unstructured() -> pv.MultiBlock[pv.UnstructuredGrid]:
-    """Return a composite declared to hold only `UnstructuredGrid`."""
-    return pv.MultiBlock([unstructured()])
-
-
-def multiblock_poly() -> pv.MultiBlock[pv.PolyData]:
-    """Return a composite declared to hold only `PolyData`."""
-    return pv.MultiBlock([poly()])
-
-
-def multiblock_image() -> pv.MultiBlock[pv.ImageData]:
-    """Return a composite declared to hold only `ImageData`."""
-    return pv.MultiBlock([image()])
-
-
-def multiblock() -> pv.MultiBlock:
-    """Return a composite of two meshes."""
-    return pv.MultiBlock([poly(), image()])
-
-
-def multiblock_optional_poly() -> pv.MultiBlock[pv.PolyData | None]:
-    """Return a composite whose blocks may be missing."""
-    return pv.MultiBlock([poly(), None])
-
-
-def multiblock_optional_image() -> pv.MultiBlock[pv.ImageData | None]:
-    """Return a composite of grids whose blocks may be missing."""
-    return pv.MultiBlock([image(), None])
-
-
-def multiblock_optional_pointset() -> pv.MultiBlock[pv.PointSet | None]:
-    """Return a composite of point clouds whose blocks may be missing."""
-    return pv.MultiBlock([pointset(), None])
-
+from tests.typing.meshes import image
+from tests.typing.meshes import multiblock
+from tests.typing.meshes import multiblock_image
+from tests.typing.meshes import multiblock_optional_image
+from tests.typing.meshes import multiblock_optional_pointset
+from tests.typing.meshes import multiblock_optional_poly
+from tests.typing.meshes import multiblock_pointset
+from tests.typing.meshes import multiblock_poly
+from tests.typing.meshes import multiblock_unstructured
+from tests.typing.meshes import pointset
+from tests.typing.meshes import poly
 
 # A slab clip follows the plane clip
 assert_types(poly().clip_slab(thickness=0.2, normal='z'), pv.PolyData)

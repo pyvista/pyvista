@@ -6,50 +6,17 @@ from type_assert import assert_types
 from typing_extensions import Never
 
 import pyvista as pv
+from tests.typing.meshes import image
+from tests.typing.meshes import multiblock
+from tests.typing.meshes import multiblock_image
+from tests.typing.meshes import multiblock_optional_poly
+from tests.typing.meshes import multiblock_pointset
+from tests.typing.meshes import multiblock_poly
+from tests.typing.meshes import poly
 
 SKIP_RUNTIME = {
     'multiblock_pointset().slice()': 'a `PointSet` has no cells, so the call raises',
 }
-
-
-def poly() -> pv.PolyData:
-    """Return a sphere."""
-    return pv.Sphere(theta_resolution=8, phi_resolution=8)
-
-
-def image() -> pv.ImageData:
-    """Return a small uniform grid."""
-    return pv.ImageData(dimensions=(5, 5, 5), spacing=(0.25, 0.25, 0.25), origin=(-0.5, -0.5, -0.5))
-
-
-def multiblock_poly() -> pv.MultiBlock[pv.PolyData]:
-    """Return a composite declared to hold only `PolyData`."""
-    return pv.MultiBlock([poly()])
-
-
-def multiblock_image() -> pv.MultiBlock[pv.ImageData]:
-    """Return a composite declared to hold only `ImageData`."""
-    return pv.MultiBlock([image()])
-
-
-def multiblock() -> pv.MultiBlock:
-    """Return a composite of two meshes."""
-    return pv.MultiBlock([poly(), image()])
-
-
-def multiblock_optional_poly() -> pv.MultiBlock[pv.PolyData | None]:
-    """Return a composite whose blocks may be missing."""
-    return pv.MultiBlock([poly(), None])
-
-
-def pointset() -> pv.PointSet:  # pragma: no cover
-    """Return a point cloud."""
-    return pv.PointSet(poly().points)
-
-
-def multiblock_pointset() -> pv.MultiBlock[pv.PointSet]:  # pragma: no cover
-    """Return a composite declared to hold only `PointSet`."""
-    return pv.MultiBlock([pointset()])
 
 
 # Slicing reduces any dataset to a surface, and a composite stays a composite
