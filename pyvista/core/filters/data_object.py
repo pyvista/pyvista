@@ -5452,7 +5452,7 @@ class DataObjectFilters:
         *,
         inplace: bool = False,
         progress_bar: bool = False,
-    ) -> PolyData | UnstructuredGrid | MultiBlock:
+    ) -> UnstructuredGrid | MultiBlock:
         """Return an all triangle mesh.
 
         More complex polygons will be broken down into triangles.
@@ -5460,20 +5460,20 @@ class DataObjectFilters:
         Parameters
         ----------
         inplace : bool, default: False
-            Updates mesh in-place.
+            Updates mesh in-place. Only an :class:`~pyvista.UnstructuredGrid` input can
+            be updated in place.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
         -------
-        pyvista.PolyData | pyvista.UnstructuredGrid | pyvista.MultiBlock
-            Mesh containing only linear cells. A :class:`~pyvista.PolyData` gives a
-            ``PolyData`` of triangles through
-            :meth:`~pyvista.PolyDataFilters.triangulate`; every other dataset gives an
+        pyvista.UnstructuredGrid | pyvista.MultiBlock
+            Mesh containing only linear cells. A dataset gives an
             :class:`~pyvista.UnstructuredGrid`, and a :class:`~pyvista.MultiBlock`
-            gives a ``MultiBlock`` whose blocks each follow that rule, nested blocks
-            included.
+            gives a ``MultiBlock`` whose blocks each take the path for their own
+            type, nested blocks included, so a :class:`~pyvista.PolyData` block gives
+            a ``PolyData`` through :meth:`~pyvista.PolyDataFilters.triangulate`.
 
         Examples
         --------
@@ -5494,14 +5494,16 @@ class DataObjectFilters:
         if isinstance(self, pv.MultiBlock):
             return self.generic_filter('triangulate', inplace=inplace, progress_bar=progress_bar)
 
+        inplace_target = _validate_triangulate_inplace(self) if inplace else None
+
         alg = _vtk.vtkDataSetTriangleFilter()
         alg.SetInputData(self)
         _update_alg(alg, progress_bar=progress_bar, message='Converting to triangle mesh')
 
         mesh = _get_output(alg)
-        if inplace:
-            self.copy_from(mesh, deep=False)
-            return cast('UnstructuredGrid', self)
+        if inplace_target is not None:
+            inplace_target.copy_from(mesh, deep=False)
+            return inplace_target
         return mesh
 
     def sample(  # type: ignore[misc]
@@ -7020,6 +7022,17 @@ def _clip_by_box_planes(
         append.AddInputData(piece)
     _update_alg(append, progress_bar=progress_bar, message='Clipping a Dataset by a Bounding Box')
     return _get_output(append)
+
+
+def _validate_triangulate_inplace(mesh: DataSet) -> UnstructuredGrid:
+    """Return the mesh, or raise when a triangulated output cannot be copied back into it."""
+    if not isinstance(mesh, pv.UnstructuredGrid):
+        msg = (
+            f'Cannot use inplace=True for {type(mesh).__name__} input. Only '
+            f'UnstructuredGrid inputs can be triangulated in place.'
+        )
+        raise TypeError(msg)
+    return mesh
 
 
 def _validate_clip_inplace(

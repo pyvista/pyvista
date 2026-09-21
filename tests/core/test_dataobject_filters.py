@@ -1773,6 +1773,12 @@ def test_triangulate():
     assert np.any(tri.cells)
 
 
+def test_triangulate_inplace_requires_an_unstructured_grid():
+    match = 'Cannot use inplace=True for ImageData input.'
+    with pytest.raises(TypeError, match=re.escape(match)):
+        examples.load_uniform().triangulate(inplace=True)
+
+
 def test_triangulate_composite(multiblock_all_no_pointset):
     output = multiblock_all_no_pointset.triangulate(progress_bar=True)
     assert output.n_blocks == multiblock_all_no_pointset.n_blocks
