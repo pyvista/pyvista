@@ -221,8 +221,9 @@ class Example(Generic[_DatasetT_co, _ReadersT_co]):
         the objects :meth:`load` reads through, so configuring one does not change what
         :meth:`load` returns. They are resolved on first access and reused.
 
-        Empty for examples read with a custom function or generated in memory, and
-        shorter than :attr:`paths` when only some files are read directly.
+        Empty for examples generated in memory, read with a custom function, or read
+        by a companion package, and shorter than :attr:`paths` when only some files
+        are read directly.
 
         Returns
         -------
@@ -382,15 +383,15 @@ ExampleName = Literal[
     'notch_displacement', 'notch_stress', 'nut', 'oblique_cone', 'office',
     'openfoam_tubes', 'owl', 'parallel_exodus', 'parched_canal_4k', 'particles',
     'particles_lethe', 'pepper', 'pine_roots', 'planet', 'planet_rings', 'plastic_vase',
-    'pluto_surface', 'poly_line', 'prism', 'prostar', 'prostate', 'pump_bracket', 'puppy',
-    'puppy_texture', 'quadratic_pyramid', 'random_hills', 'rectilinear',
-    'rectilinear_grid', 'reservoir', 'rgba_texture', 'room_cff', 'room_surface_mesh',
-    'saddle_surface', 'saturn_rings', 'saturn_surface', 'sea_vase', 'sextant', 'shark',
-    'single_sphere_animation', 'sky_box_cube_map', 'sky_box_nz', 'sky_box_nz_texture',
-    'sparse_points', 'sphere', 'sphere_vectors', 'spider', 'spline', 'st_helens',
-    'stars_cloud_hyg', 'stars_sky_background', 'structured', 'structured_grid',
-    'structured_grid_two', 'sun_surface', 't3_grid_0', 'teapot', 'teapot_vrml',
-    'tecplot_ascii', 'tensors', 'tetbeam', 'tetra_dc_mesh', 'tetrahedron',
+    'pluto_surface', 'poly_line', 'prism', 'procedural_cow', 'prostar', 'prostate',
+    'pump_bracket', 'puppy', 'puppy_texture', 'quadratic_pyramid', 'random_hills',
+    'rectilinear', 'rectilinear_grid', 'reservoir', 'rgba_texture', 'room_cff',
+    'room_surface_mesh', 'saddle_surface', 'saturn_rings', 'saturn_surface', 'sea_vase',
+    'sextant', 'shark', 'single_sphere_animation', 'sky_box_cube_map', 'sky_box_nz',
+    'sky_box_nz_texture', 'sparse_points', 'sphere', 'sphere_vectors', 'spider', 'spline',
+    'st_helens', 'stars_cloud_hyg', 'stars_sky_background', 'structured',
+    'structured_grid', 'structured_grid_two', 'sun_surface', 't3_grid_0', 'teapot',
+    'teapot_vrml', 'tecplot_ascii', 'tensors', 'tetbeam', 'tetra_dc_mesh', 'tetrahedron',
     'thermal_probes', 'topo_global', 'topo_land', 'torso', 'tri_quadratic_hexahedron',
     'trumpet', 'turbine_blade', 'uniform', 'unstructured_grid', 'uranus_surface', 'urn',
     'usa', 'usa_texture', 'venus_surface', 'victorian_goblet_face_illusion', 'vtk',
@@ -708,6 +709,8 @@ def get_example(name: Literal['poly_line'], *, download: bool = ...) -> Example[
 @overload
 def get_example(name: Literal['prism'], *, download: bool = ...) -> Example[pv.UnstructuredGrid, tuple[pv.GambitReader]]: ...
 @overload
+def get_example(name: Literal['procedural_cow'], *, download: bool = ...) -> Example[pv.PolyData, tuple[()]]: ...
+@overload
 def get_example(name: Literal['prostar'], *, download: bool = ...) -> Example[pv.UnstructuredGrid, tuple[pv.ProStarReader]]: ...
 @overload
 def get_example(name: Literal['prostate'], *, download: bool = ...) -> Example[pv.ImageData, tuple[pv.DICOMReader]]: ...
@@ -842,13 +845,11 @@ def get_example(name: Literal['woman'], *, download: bool = ...) -> Example[pv.P
 @overload
 def get_example(name: Literal['yinyang'], *, download: bool = ...) -> Example[pv.ImageData, tuple[pv.PNGReader]]: ...
 # --- end generated overloads ---
-# fmt: on
 @overload
-def get_example(
-    name: Callable[..., _DatasetT], *, download: bool = ...
-) -> Example[_DatasetT, tuple[pv.BaseReader[Any], ...]]: ...
+def get_example(name: Callable[..., _DatasetT], *, download: bool = ...) -> Example[_DatasetT, tuple[pv.BaseReader[Any], ...]]: ...
 @overload
 def get_example(name: str, *, download: bool = ...) -> Example: ...
+# fmt: on
 def get_example(
     name: ExampleName | str | Callable[..., Any], *, download: bool = True
 ) -> Example[Any, Any]:

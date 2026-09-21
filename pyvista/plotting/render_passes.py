@@ -6,7 +6,6 @@ import itertools
 import weakref
 
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 # The order of both the pre and post-passes matters.
@@ -234,8 +233,7 @@ class RenderPasses(_NoNewAttrMixin):
         self._shadow_map_pass = None
         self._update_passes()
 
-    @_deprecate_positional_args
-    def enable_depth_of_field_pass(self, automatic_focal_distance: bool = True):  # noqa: FBT001, FBT002
+    def enable_depth_of_field_pass(self, *, automatic_focal_distance: bool = True):
         """Enable the depth of field pass.
 
         Parameters
@@ -270,10 +268,7 @@ class RenderPasses(_NoNewAttrMixin):
         self._remove_pass(self._dof_pass)
         self._dof_pass = None
 
-    @_deprecate_positional_args
-    def enable_ssao_pass(  # noqa: PLR0917
-        self, radius, bias, kernel_size, blur
-    ):
+    def enable_ssao_pass(self, *, radius, bias, kernel_size, blur):
         """Enable the screen space ambient occlusion pass.
 
         Parameters

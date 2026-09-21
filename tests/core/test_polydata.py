@@ -493,8 +493,10 @@ def test_subtract(sphere, sphere_shifted):
 
 def test_isubtract(sphere, sphere_shifted):
     sub_mesh = sphere.copy()
+    alias = sub_mesh
     sub_mesh -= sphere_shifted
     assert sub_mesh.n_points == sphere.boolean_difference(sphere_shifted).n_points
+    assert sub_mesh is alias
 
 
 def test_append(
@@ -874,6 +876,19 @@ def test_subdivision(sphere, subfilter):
     mesh.subdivide(1, subfilter, inplace=True)
     assert mesh.n_points > sphere.n_points
     assert mesh.n_faces > sphere.n_faces
+
+
+@pytest.mark.parametrize('subfilter', ['butterfly', 'loop', 'linear'])
+def test_subdivision_32bit_faces(sphere, subfilter):
+    sphere.GetPolys().ConvertTo32BitStorage()
+    faces = sphere.regular_faces.copy()
+
+    mesh = sphere.subdivide(1, subfilter)
+
+    assert mesh.n_faces == 4 * sphere.n_faces
+    # The input keeps its own faces and their storage
+    assert np.array_equal(sphere.regular_faces, faces)
+    assert not sphere.GetPolys().IsStorage64Bit()
 
 
 def test_invalid_subdivision(sphere):

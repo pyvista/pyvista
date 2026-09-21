@@ -18,6 +18,7 @@ import pyvista_zstd
 import pyvista as pv
 from pyvista.core.utilities import reader_registry as _reg_mod
 from pyvista.core.utilities import writer_registry as _writer_mod
+from pyvista.examples._dataset_loader import _SingleFileDatasetLoader
 
 FRD_CONTENT = """2C
  -1    1 0.0 0.0 0.0
@@ -174,6 +175,29 @@ def test_read_with_a_broken_install(frd_file):
     assert 'libpvfrd.so' in message
     # An install command cannot fix a package already present.
     assert 'pip install' not in message
+
+
+def test_dataset_loader_reports_no_reader(frd_file):
+    loader = _SingleFileDatasetLoader(frd_file)
+
+    assert loader._readers == (None,)
+    assert loader.unique_reader_types == ()
+
+
+@pytest.mark.usefixtures('frd_not_installed')
+def test_dataset_loader_reports_no_reader_without_the_package(frd_file):
+    loader = _SingleFileDatasetLoader(frd_file)
+
+    assert loader._readers == (None,)
+    assert loader.unique_reader_types == ()
+
+
+@pytest.mark.usefixtures('frd_install_broken')
+def test_dataset_loader_reports_no_reader_with_a_broken_install(frd_file):
+    loader = _SingleFileDatasetLoader(frd_file)
+
+    assert loader._readers == (None,)
+    assert loader.unique_reader_types == ()
 
 
 @pytest.mark.usefixtures('frd_not_installed')

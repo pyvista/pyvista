@@ -399,7 +399,6 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkOBBTree',
         'vtkRectilinearGridToPointSet',
         'vtkRectilinearGridToTetrahedra',
-        'vtkRemovePolyData',
         'vtkShrinkFilter',
         'vtkTableBasedClipDataSet',
         'vtkTableToPolyData',
@@ -465,10 +464,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkSuperquadricSource',
         'vtkTessellatedBoxSource',
     ),
-    'vtkFiltersStatistics': (
-        'vtkComputeQuartiles',
-        'vtkLengthDistribution',
-    ),
+    'vtkFiltersStatistics': ('vtkComputeQuartiles',),
     'vtkFiltersTexture': (
         'vtkTextureMapToPlane',
         'vtkTextureMapToSphere',
@@ -774,6 +770,7 @@ _PLOTTING_MODULES: dict[str, tuple[str, ...]] = {
         'vtkWorldPointPicker',
     ),
     'vtkRenderingFreeType': (
+        'vtkFreeTypeTools',
         'vtkMathTextFreeTypeTextRenderer',
         'vtkVectorText',
     ),

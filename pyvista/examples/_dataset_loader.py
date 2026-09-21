@@ -44,6 +44,7 @@ from typing import cast
 from typing import final
 
 import pyvista as pv
+from pyvista.core.utilities._optional_formats import _declared_reader_class
 from pyvista.core.utilities.fileio import get_ext
 
 if TYPE_CHECKING:
@@ -112,6 +113,16 @@ class _FileProps:
     def unique_reader_types(self) -> tuple[type[pv.BaseReader[Any]], ...]:
         """Return unique reader types from all file readers."""
         return _get_unique_reader_types(self._readers)
+
+    @property
+    def unique_companion_reader_names(self) -> tuple[str, ...]:
+        """Return the names of companion-package reader classes serving these files."""
+        names = {
+            name
+            for ext in self.unique_extensions
+            if (name := _declared_reader_class(ext)) is not None
+        }
+        return tuple(sorted(names))
 
 
 class _Downloadable(Protocol):
@@ -384,7 +395,7 @@ class _SingleFileDatasetLoader(_SingleFile, _DatasetLoader):
         self,
         path: str,
         read_func: Callable[[str], DatasetObject] | None = None,
-        load_func: Callable[[DatasetObject], DatasetObject] | None = None,
+        load_func: Callable[[Any], DatasetObject] | None = None,
     ) -> None:
         """Wrap a single file, reading it with ``read_func`` and loading it with ``load_func``."""
         _SingleFile.__init__(self, path)
@@ -393,12 +404,13 @@ class _SingleFileDatasetLoader(_SingleFile, _DatasetLoader):
 
     @property
     def _readers(self) -> tuple[pv.BaseReader[Any] | None, ...]:
+        """Return the reader resolved for the file, or ``None`` when it has none."""
         # TODO: return the actual reader used, and not just a lookup
         #       (this will require an update to the 'read_func' API)
         try:
             return (pv.get_reader(self._path),)
-        except (FileNotFoundError, ValueError):
-            # Missing, or cannot be read directly (requires custom reader)
+        except (FileNotFoundError, ImportError, ValueError):
+            # Missing, read by a custom reader, or served by a package PyVista cannot import
             return (None,)
 
     @property
@@ -410,7 +422,7 @@ class _SingleFileDatasetLoader(_SingleFile, _DatasetLoader):
         self,
         path: str,
         read_func: Callable[[str], DatasetObject],
-        load_func: Callable[[DatasetObject], DatasetObject] | None,
+        load_func: Callable[[Any], DatasetObject] | None,
     ) -> DatasetObject:
         """Read ``path`` and optionally load the result."""
         read = read_func(path)
@@ -596,7 +608,7 @@ class _SingleFileDownloadableDatasetLoader(_SingleFileDatasetLoader, _Downloadab
         self,
         path: str,
         read_func: Callable[[str], DatasetObject] | None = None,
-        load_func: Callable[[DatasetObject], DatasetObject] | None = None,
+        load_func: Callable[[Any], DatasetObject] | None = None,
         target_file: str | None = None,
         download_func: Callable[[str], str | list[str]] | None = None,
         base_url: str | None = None,
@@ -873,7 +885,13 @@ def _load_and_merge(files: Sequence[_SingleFile]) -> DatasetObject:
     if len(loaded) == 0:
         msg = 'No loadable files were found to merge.'
         raise ValueError(msg)
-    return pv.merge(loaded)
+    datasets: list[pv.DataSet] = []
+    for dataset in loaded:
+        if not isinstance(dataset, pv.DataSet):
+            msg = f'Only DataSet objects can be merged. Got {type(dataset)}.'
+            raise TypeError(msg)
+        datasets.append(dataset)
+    return pv.merge(datasets)
 
 
 def _get_file_or_folder_size(filepath: str) -> int:

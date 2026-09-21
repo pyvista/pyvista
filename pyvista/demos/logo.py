@@ -24,7 +24,6 @@ import numpy as np
 import pyvista as pv
 from pyvista import _vtk
 from pyvista import examples
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.utilities.features import _voxelize_legacy
@@ -96,8 +95,7 @@ def text_3d(string, depth=0.5):
     return _get_output(tri_filter)
 
 
-@_deprecate_positional_args
-def logo_letters(merge=False, depth=0.3):  # noqa: FBT002
+def logo_letters(*, merge=False, depth=0.3):
     """Generate a mesh for each letter in "PyVista".
 
     Parameters
@@ -182,14 +180,14 @@ def logo_basic():
     return logo_letters(merge=True).compute_normals(split_vertices=True)
 
 
-@_deprecate_positional_args
-def plot_logo(  # noqa: PLR0917
+def plot_logo(
+    *,
     window_size=None,
     off_screen=None,
     screenshot=None,
     cpos=None,
-    just_return_plotter=False,  # noqa: FBT002
-    show_note=False,  # noqa: FBT002
+    just_return_plotter=False,
+    show_note=False,
     **kwargs,
 ):
     """Plot the stylized PyVista logo.
@@ -321,7 +319,7 @@ def plot_logo(  # noqa: PLR0917
 
     if screenshot:  # pragma: no cover
         pl.show(cpos=cpos, auto_close=False)
-        pl.screenshot(screenshot, True)
+        pl.screenshot(screenshot, transparent_background=True)
         cpos_final = pl.camera_position
         pl.close()
         return cpos_final

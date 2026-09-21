@@ -204,7 +204,9 @@ def get_default_class_init_kwargs(pyvista_class):
         kwargs['camera'] = pv.Camera()
     elif pyvista_class is pv.Renderer:
         kwargs['parent'] = pv.Plotter()
-    elif pyvista_class in [pv.ChartBox, pv.ChartPie]:
+    elif pyvista_class is pv.ChartBox:
+        kwargs['data'] = [list(range(10))]
+    elif pyvista_class is pv.ChartPie:
         kwargs['data'] = list(range(10))
     elif pyvista_class is pv.CompositeAttributes:
         kwargs['mapper'] = pv.CompositePolyDataMapper()
@@ -236,7 +238,10 @@ def get_default_class_init_kwargs(pyvista_class):
         kwargs['chart'] = pv.charts.Chart2D()
         kwargs['x'] = (0, 0, 0)
         kwargs['ys'] = (1, 0, 0)
-    elif pyvista_class in [pv.charts.BoxPlot, pv.charts.PiePlot]:
+    elif pyvista_class is pv.charts.BoxPlot:
+        kwargs['chart'] = pv.charts.Chart2D()
+        kwargs['data'] = [[0, 0, 0]]
+    elif pyvista_class is pv.charts.PiePlot:
         kwargs['chart'] = pv.charts.Chart2D()
         kwargs['data'] = [0, 0, 0]
     elif pyvista_class is pv.charts._ChartBackground:

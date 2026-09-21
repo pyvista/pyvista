@@ -2,22 +2,31 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.filters import _get_output
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.utilities.misc import abstract_class
+
+if TYPE_CHECKING:
+    from pyvista.core._typing_core import VectorLike
 
 
 @abstract_class
 class StructuredGridFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for structured grid datasets."""
 
-    @_deprecate_positional_args(allowed=['voi', 'rate'])
-    def extract_subset(self, voi, rate=(1, 1, 1), boundary: bool = False):  # noqa: FBT001, FBT002
+    def extract_subset(
+        self,
+        voi: VectorLike[int],
+        rate: VectorLike[int] = (1, 1, 1),
+        *,
+        boundary: bool = False,
+    ) -> pv.StructuredGrid:
         r"""Select piece (for example, volume of interest).
 
         To use this filter set the VOI ``ivar`` which are i-j-k min/max
@@ -72,14 +81,16 @@ class StructuredGridFilters(DataSetFilters):
 
         """
         alg = _vtk.vtkExtractGrid()
-        alg.SetVOI(voi)
+        alg.SetVOI(voi)  # type: ignore[arg-type]
         alg.SetInputDataObject(self)
-        alg.SetSampleRate(rate)
+        alg.SetSampleRate(rate)  # type: ignore[arg-type]
         alg.SetIncludeBoundary(boundary)
         alg.Update()
         return _get_output(alg)
 
-    def concatenate(self, other, axis, tolerance=0.0):
+    def concatenate(
+        self, other: pv.StructuredGrid, axis: int, tolerance: float = 0.0
+    ) -> pv.StructuredGrid:
         """Concatenate a structured grid to this grid.
 
         Joins structured grids into a single structured grid.  Grids
@@ -149,7 +160,7 @@ class StructuredGridFilters(DataSetFilters):
         ):
             msg = (
                 f'Grids cannot be joined along axis {axis}, as points '
-                'are not coincident within tolerance of {tolerance}.'
+                f'are not coincident within tolerance of {tolerance}.'
             )
             raise RuntimeError(msg)
 
@@ -175,7 +186,7 @@ class StructuredGridFilters(DataSetFilters):
             ):
                 msg = (
                     f'Grids cannot be joined along axis {axis}, as field '
-                    '`{name}` is not identical along the seam.'
+                    f'`{name}` is not identical along the seam.'
                 )
                 raise RuntimeError(msg)
             new_point_data[name] = np.concatenate((arr_1[slice_spec], arr_2), axis=axis).ravel(

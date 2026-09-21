@@ -16,7 +16,6 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
@@ -94,12 +93,12 @@ class RenderWindowInteractor(_NoNewAttrMixin):
 
     """
 
-    @_deprecate_positional_args(allowed=['plotter'])
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
         plotter,
+        *,
         desired_update_rate=30,
-        light_follow_camera=True,  # noqa: FBT002
+        light_follow_camera=True,
         interactor=None,
     ):
         """Initialize."""
@@ -215,8 +214,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
             event = _vtk.vtkCommand.GetEventIdFromString(event)
         return _vtk.vtkCommand.GetStringFromEventId(event)
 
-    @_deprecate_positional_args(allowed=['event', 'call'])
-    def add_observer(self, event, call, interactor_style_fallback=True):  # noqa: FBT002
+    def add_observer(self, event, call, *, interactor_style_fallback=True):
         """Add an observer for the given event.
 
         Parameters
@@ -317,8 +315,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         for observer in observers:
             self.remove_observer(observer)
 
-    @_deprecate_positional_args(allowed=['key'])
-    def clear_events_for_key(self, key, raise_on_missing=False):  # noqa: FBT002
+    def clear_events_for_key(self, key, *, raise_on_missing=False):
         """Remove the callbacks associated to the key.
 
         Parameters
@@ -386,13 +383,13 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         for callback in self._click_event_callbacks[event][double, True]:
             callback(self._plotter.click_position)
 
-    @_deprecate_positional_args(allowed=['callback', 'side'])
-    def track_click_position(  # noqa: PLR0917,
+    def track_click_position(
         self,
         callback=None,
         side='right',
-        double=False,  # noqa: FBT002
-        viewport=False,  # noqa: FBT002
+        *,
+        double=False,
+        viewport=False,
     ):
         """Keep track of the click position.
 
@@ -631,9 +628,9 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         """
         self.style = InteractorStyleTrackballCamera(self)
 
-    @_deprecate_positional_args
-    def enable_custom_trackball_style(  # noqa: PLR0917
+    def enable_custom_trackball_style(
         self,
+        *,
         left='rotate',
         shift_left='pan',
         control_left='spin',
@@ -1009,11 +1006,11 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         """
         self.style = InteractorStyleZoom(self)
 
-    @_deprecate_positional_args
     def enable_terrain_style(
         self,
-        mouse_wheel_zooms: bool | float = True,  # noqa: FBT001, FBT002
-        shift_pans: bool = True,  # noqa: FBT001, FBT002
+        *,
+        mouse_wheel_zooms: bool | float = True,
+        shift_pans: bool = True,
     ):
         """Set the interactive style to Terrain.
 
@@ -1480,8 +1477,7 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         """
         return self.interactor.GetDesiredUpdateRate()
 
-    @_deprecate_positional_args(allowed=['duration'])
-    def create_timer(self, duration, repeating=True):  # noqa: FBT002
+    def create_timer(self, duration, *, repeating=True):
         """Create a timer.
 
         Parameters

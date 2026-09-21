@@ -34,6 +34,7 @@ from scipy.spatial.transform import Rotation
 from scooby.report import get_distribution_dependencies
 
 import pyvista as pv
+from pyvista import _version
 from pyvista import _vtk
 from pyvista import examples as ex
 from pyvista._deprecate_positional_args import _MAX_POSITIONAL_ARGS
@@ -41,6 +42,7 @@ from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import _SUPPORTS_FIXED_SIZE_STORAGE
 from pyvista.core._vtk_utilities import is_vtk_attribute
 from pyvista.core.celltype import _CELL_TYPE_INFO
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters import _update_alg
 from pyvista.core.utilities import cells
 from pyvista.core.utilities import features
@@ -427,13 +429,15 @@ def test_read_force_ext_wrong_extension(tmpdir):
     assert data.n_points == 0
 
     # try to read a .ply file as .vtm
-    # vtkXMLMultiBlockDataReader throws a VTK error about the validity of the XML file
-    # the returned dataset is empty
+    # the file is not XML at all, and VTK only reports the parse failure from 9.7 on
     fname = ex.planefile
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
-        data = fileio.read(fname, force_ext='.vtm')
-    assert len(data) == 0
+        if pv.vtk_version_info >= (9, 7):
+            with pytest.raises(pv.VTKExecutionError, match='Error parsing XML'):
+                fileio.read(fname, force_ext='.vtm')
+        else:
+            assert len(fileio.read(fname, force_ext='.vtm')) == 0
 
     fname = ex.planefile
     with pytest.raises(IOError):  # noqa: PT011
@@ -561,11 +565,6 @@ def test_report():
     assert 'GPU Details : None' in report.__repr__()
     assert 'Render Window : None' in report.__repr__()
     assert 'User Data Path' not in report.__repr__()
-
-
-def test_report_warnings():
-    with pytest.warns(pv.PyVistaDeprecationWarning):
-        pv.Report('vtk', 4, 90, True)
 
 
 REPORT = str(pv.Report(gpu=False))
@@ -745,11 +744,7 @@ def test_vtkmatrix_from_array_like():
     assert np.array_equal(pv.array_from_vtkmatrix(matrix), strided)
 
 
-def test_convert_array_scalar_and_strided():
-    vtk_scalar = convert_array(np.array(1.5))
-    assert vtk_scalar.GetNumberOfTuples() == 1
-    assert vtk_scalar.GetValue(0) == 1.5
-
+def test_convert_array_strided():
     strided = np.arange(10.0)[::2]
     assert np.array_equal(convert_array(convert_array(strided)), strided)
 
@@ -768,6 +763,21 @@ def test_progress_monitor():
     mesh = pv.Sphere()
     ugrid = mesh.warp_by_vector(progress_bar=True)
     assert isinstance(ugrid, pv.PolyData)
+
+
+def test_progress_monitor_interrupt_without_abort_execute():
+    from pyvista.core.utilities.reader import _PVDReader
+
+    algorithm = _vtk.vtkSphereSource()
+    monitor = ProgressMonitor(algorithm)
+    monitor._interrupt_signal_received = True
+    monitor(algorithm)
+    assert algorithm.GetAbortExecute()
+
+    reader = _PVDReader()
+    monitor = ProgressMonitor(reader)
+    monitor._interrupt_signal_received = True
+    monitor(reader)
 
 
 def test_observer():
@@ -812,6 +822,20 @@ def test_observer_default_event():
     assert ret.alert == msg
 
     assert str(ret) == msg
+
+
+def test_observer_called_without_message():
+    from pyvista.core.utilities.reader import _PVDReader
+
+    obs = Observer(event_type='ProgressEvent', log=False, store_history=True)
+    reader = _PVDReader()
+    reader.AddObserver(obs.event_type, obs)
+
+    reader.UpdateObservers(obs.event_type)
+
+    assert obs.has_event_occurred()
+    assert obs.get_message() == ''
+    assert obs.event_history[-1].alert == ''
 
 
 @pytest.mark.parametrize('point', [1, object(), None])
@@ -971,6 +995,16 @@ def test_update_alg_raises():
         _update_alg(reader)
 
 
+def test_update_alg_raises_request_data_error(tmp_path):
+    # OBJ indices are one-based, so the line element below is out of range
+    obj_file = tmp_path / 'bad.obj'
+    obj_file.write_text('v 0 0 0\nv 1 0 0\nl 0 1\n')
+    reader = _vtk.vtkOBJReader()
+    reader.SetFileName(str(obj_file))
+    with pytest.raises(pv.VTKExecutionError, match='Unexpected point index value: 0'):
+        _update_alg(reader)
+
+
 def test_axis_angle_rotation():
     # rotate points around body diagonal
     points = np.eye(3)
@@ -1074,6 +1108,9 @@ def test_merge(sphere, cube, datasets):
     with pytest.raises(TypeError, match=r'Expected pyvista.DataSet'):
         pv.merge([None, sphere])
 
+    with pytest.raises(TypeError, match=r'Expected pyvista.DataSet, not NoneType at index 1'):
+        pv.merge([sphere, None])
+
     # check polydata
     merged_poly = pv.merge([sphere, cube])
     assert isinstance(merged_poly, pv.PolyData)
@@ -1121,12 +1158,25 @@ def test_convert_array():
     arr4 = pv.core.utilities.arrays.convert_array(my_list)
     assert arr4.GetNumberOfValues() == len(my_list)
 
-    # test string scalar is converted to string array with length on
-    my_str = 'abc'
-    arr5 = pv.core.utilities.arrays.convert_array(my_str)
-    assert arr5.GetNumberOfValues() == 1
-    arr6 = pv.core.utilities.arrays.convert_array(np.array(my_str))
-    assert arr6.GetNumberOfValues() == 1
+
+CONVERT_SCALAR_MATCH = (
+    'Converting a scalar to a VTK array is deprecated. '
+    'Pass an array with at least one dimension instead.'
+)
+
+
+@pytest.mark.parametrize('value', [1.5, np.array(2), 'abc', np.array('abc')])
+def test_convert_array_scalar_deprecated(value):
+    with pytest.warns(PyVistaDeprecationWarning, match=CONVERT_SCALAR_MATCH):
+        vtk_arr = pv.core.utilities.arrays.convert_array(np.asarray(value))
+    assert vtk_arr.GetNumberOfTuples() == 1
+    assert pv.core.utilities.arrays.convert_array(vtk_arr).tolist() == [np.asarray(value).item()]
+
+
+def test_convert_array_str_deprecated():
+    with pytest.warns(PyVistaDeprecationWarning, match=CONVERT_SCALAR_MATCH):
+        vtk_arr = pv.core.utilities.arrays.convert_array('abc')
+    assert vtk_arr.GetNumberOfValues() == 1
 
 
 def test_has_duplicates():
@@ -1257,6 +1307,15 @@ def test_linkcode_resolve():
     assert edit_match is not None
     assert int(edit_match[1]) == start
     assert int(edit_match[2]) == start + 1
+
+
+def test_linkcode_resolve_edit_link_targets_main_for_a_release(monkeypatch):
+    # The released docs' blob links point at that release's branch, but edits
+    # are only ever made on main
+    monkeypatch.setattr(pv, '__version__', '0.46.0')
+    info = {'module': 'pyvista', 'fullname': 'pyvista.core.DataObject'}
+    assert '/blob/release/0.46/' in linkcode_resolve('py', info)
+    assert '/edit/main/' in linkcode_resolve('py', info, edit=True)
 
 
 def test_fix_edit_link_button_gallery_example():
@@ -1757,14 +1816,15 @@ def test_convert_string_array_roundtrip():
     assert np.array_equal(out, arr)
 
 
-def test_convert_string_array_scalar_string():
-    """A bare Python str round-trips back to a 0-d numpy array of the original."""
-    vtk_arr = convert_string_array('hello')
+@pytest.mark.parametrize('value', ['hello', np.array('hello')])
+def test_convert_string_array_scalar_deprecated(value):
+    with pytest.warns(PyVistaDeprecationWarning, match=CONVERT_SCALAR_MATCH):
+        vtk_arr = convert_string_array(value)
     assert vtk_arr.GetNumberOfValues() == 1
     assert vtk_arr.GetValue(0) == 'hello'
     out = convert_string_array(vtk_arr)
-    assert out.ndim == 0
-    assert str(out) == 'hello'
+    assert out.shape == (1,)
+    assert out.tolist() == ['hello']
 
 
 @pytest.mark.parametrize(
@@ -2586,10 +2646,39 @@ def test_transform_mul_raises():
 def test_transform_copy(multiply_mode):
     t1 = Transform().scale(SCALE)
     t1.multiply_mode = multiply_mode
+    t1.point = (1, 2, 3)
+    t1.check_finite = False
     t2 = t1.copy()
     assert np.array_equal(t1.matrix, t2.matrix)
     assert t1 is not t2
     assert t2.multiply_mode == t1.multiply_mode
+    assert t2.point == t1.point
+    assert t2.check_finite == t1.check_finite
+
+    # The copy composes about the same point and validates the same way
+    assert np.array_equal(t1.scale(SCALE).matrix, t2.scale(SCALE).matrix)
+    t2.compose(np.diag([1.0, np.nan, 1.0, 1.0]))
+
+
+@pytest.mark.parametrize(
+    ('operation', 'expected'),
+    [
+        (lambda t: t * 2, lambda t: t.copy().scale(2)),
+        (lambda t: 2 * t, lambda t: t.copy().scale(2, multiply_mode='pre')),
+        (lambda t: t + (1, 2, 3), lambda t: t.copy().translate((1, 2, 3))),  # noqa: RUF005
+        (lambda t: (1, 2, 3) + t, lambda t: t.copy().translate((1, 2, 3), multiply_mode='pre')),  # noqa: RUF005
+    ],
+    ids=['mul', 'rmul', 'add', 'radd'],
+)
+def test_transform_operators_compose_about_the_origin(operation, expected):
+    with_point = Transform(point=(1, 2, 3))
+    without_point = Transform()
+
+    actual = operation(with_point)
+
+    assert np.array_equal(actual.matrix, operation(without_point).matrix)
+    assert np.array_equal(actual.matrix, expected(without_point).matrix)
+    assert actual.n_transformations == 1
 
 
 def test_transform_repr(transform):
@@ -3125,19 +3214,13 @@ def _compute_unit_cell_quality(
     return qual.active_scalars[0]
 
 
-@parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
-def test_cell_quality_info_valid_measures(info):
-    # Ensure the computed measure is not null
-    null_value = -1
-    qual_value = _compute_unit_cell_quality(info, null_value)
-    if np.isclose(qual_value, null_value):  # pragma: no cover -- failure path
-        pytest.fail(
-            f'Measure {info.quality_measure!r} is not valid for cell type {info.cell_type.name!r}'
-        )
-
-
 def xfail_wedge_negative_volume(info):
-    if info.cell_type == pv.CellType.WEDGE and info.quality_measure == 'volume':
+    """Xfail the wedge volume measure, which VTK reports as negative before 9.6."""
+    if (
+        pv.vtk_version_info < (9, 6)
+        and info.cell_type == pv.CellType.WEDGE
+        and info.quality_measure == 'volume'
+    ):
         pytest.xfail(
             'vtkWedge returns negative volume, see https://gitlab.kitware.com/vtk/vtk/-/issues/19643'
         )
@@ -3155,25 +3238,17 @@ def xfail_distortion_returns_one(info):
 
 @parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
 def test_cell_quality_info_unit_cell_value(info):
-    """Test that the actual computed measure for a unit cell matches the reported value."""
+    """Test that the measure is valid for the cell type and matches the reported value."""
+    null_value = -1
+    qual_value = _compute_unit_cell_quality(info, null_value)
+    if np.isclose(qual_value, null_value):  # pragma: no cover -- failure path
+        pytest.fail(
+            f'Measure {info.quality_measure!r} is not valid for cell type {info.cell_type.name!r}'
+        )
+
     xfail_wedge_negative_volume(info)
 
-    unit_cell_value = info.unit_cell_value
-    qual_value = _compute_unit_cell_quality(info)
-    assert np.isclose(qual_value, unit_cell_value)
-
-
-@parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
-def test_cell_quality_info_acceptable_range(info):
-    """Test that the unit cell value is within the acceptable range."""
-    # Some cells / measures have bugs and return invalid values and are expected to fail
-    xfail_wedge_negative_volume(info)
-
-    acceptable_range = info.acceptable_range
-    unit_cell_value = info.unit_cell_value
-
-    assert unit_cell_value >= acceptable_range[0]
-    assert unit_cell_value <= acceptable_range[1]
+    assert np.isclose(qual_value, info.unit_cell_value)
 
 
 def _replace_range_infinity(rng):
@@ -3187,23 +3262,19 @@ def _replace_range_infinity(rng):
 
 
 @parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
-def test_cell_quality_info_normal_range(info):
-    """Test that the normal range is broader than the acceptable range."""
+def test_cell_quality_info_ranges(info):
+    """Test that each range contains the next, and the unit cell value is acceptable."""
     acceptable_range = _replace_range_infinity(info.acceptable_range)
-    normal_range = _replace_range_infinity(info.normal_range)
-
-    assert normal_range[0] <= acceptable_range[0]
-    assert normal_range[1] >= acceptable_range[1]
-
-
-@parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
-def test_cell_quality_info_full_range(info):
-    """Test that the full range is broader than the normal range."""
     normal_range = _replace_range_infinity(info.normal_range)
     full_range = _replace_range_infinity(info.full_range)
 
+    assert normal_range[0] <= acceptable_range[0]
+    assert normal_range[1] >= acceptable_range[1]
     assert full_range[0] <= normal_range[0]
     assert full_range[1] >= normal_range[1]
+
+    assert info.unit_cell_value >= info.acceptable_range[0]
+    assert info.unit_cell_value <= info.acceptable_range[1]
 
 
 @parametrize('info', _CELL_QUALITY_INFO, ids=CELL_QUALITY_IDS)
@@ -3260,6 +3331,28 @@ def test_is_vtk_attribute_input_type(obj):
 
 
 warnings.simplefilter('always')
+
+
+@pytest.mark.parametrize('version', [(0, 49, 0), (0, 50, 'dev0'), (0, 50, 'dev1')])
+def test_deprecate_positional_args_before_deadline(monkeypatch, version):
+    monkeypatch.setattr(_version, 'version_info', version)
+
+    @_deprecate_positional_args(version=(0, 50))
+    def foo(bar):
+        return bar
+
+    with pytest.warns(pv.PyVistaDeprecationWarning, match='From version 0\\.50,'):
+        assert foo(True) is True
+
+
+@pytest.mark.parametrize('version', [(0, 50, '0rc1'), (0, 50, 0), (0, 51, 'dev0')])
+def test_deprecate_positional_args_at_deadline(monkeypatch, version):
+    monkeypatch.setattr(_version, 'version_info', version)
+
+    with pytest.raises(RuntimeError, match='Positional arguments are no longer allowed'):
+
+        @_deprecate_positional_args(version=(0, 50))
+        def foo(bar): ...
 
 
 def test_deprecate_positional_args_error_messages():

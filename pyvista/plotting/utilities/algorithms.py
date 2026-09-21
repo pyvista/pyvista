@@ -9,7 +9,6 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.errors import PyVistaPipelineError
 from pyvista.core.utilities.helpers import wrap
@@ -462,10 +461,10 @@ class SmoothShadingAlgorithm(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.VTKPytho
 
     ORIGINAL_POINT_IDS_NAME = 'vtkOriginalPointIds'
 
-    @_deprecate_positional_args
     def __init__(
         self,
-        split_sharp_edges: bool = False,  # noqa: FBT001, FBT002
+        *,
+        split_sharp_edges: bool = False,
         feature_angle: float = 30.0,
     ):
         """Initialize algorithm."""
@@ -661,8 +660,7 @@ class AddIDsAlgorithm(PreserveTypeAlgorithmBase):
 
     """
 
-    @_deprecate_positional_args
-    def __init__(self, point_ids: bool = True, cell_ids: bool = True):  # noqa: FBT001, FBT002
+    def __init__(self, *, point_ids: bool = True, cell_ids: bool = True):
         """Initialize algorithm."""
         super().__init__()
         if not point_ids and not cell_ids:  # pragma: no cover
@@ -756,8 +754,7 @@ class CrinkleAlgorithm(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.VTKPythonAlgor
         return 1
 
 
-@_deprecate_positional_args(allowed=['inp'])
-def outline_algorithm(inp, generate_faces: bool = False):  # noqa: FBT001, FBT002
+def outline_algorithm(inp, *, generate_faces: bool = False):
     """Add :vtk:`vtkOutlineFilter` to pipeline.
 
     Parameters
@@ -779,9 +776,9 @@ def outline_algorithm(inp, generate_faces: bool = False):  # noqa: FBT001, FBT00
     return alg
 
 
-@_deprecate_positional_args(allowed=['generator'])
 def source_algorithm(
     generator: Callable[[], DataSet],
+    *,
     output_type: str | type = pv.UnstructuredGrid,
 ) -> SourceAlgorithm:
     """Create a source algorithm that generates data from a callable.
@@ -807,10 +804,10 @@ def source_algorithm(
     return SourceAlgorithm(generator=generator, output_type=output_type)
 
 
-@_deprecate_positional_args(allowed=['inp', 'callback'])
 def callback_algorithm(
     inp,
     callback: Callable[[DataSet], DataSet],
+    *,
     output_type: str | type | None = None,
 ) -> CallbackFilterAlgorithm:
     """Add a filter that delegates to a user-supplied callable.
@@ -839,11 +836,11 @@ def callback_algorithm(
     return alg
 
 
-@_deprecate_positional_args(allowed=['inp'])
-def extract_surface_algorithm(  # noqa: PLR0917
+def extract_surface_algorithm(
     inp,
-    pass_pointid: bool = False,  # noqa: FBT001, FBT002
-    pass_cellid: bool = False,  # noqa: FBT001, FBT002
+    *,
+    pass_pointid: bool = False,
+    pass_cellid: bool = False,
     nonlinear_subdivision=1,
 ):
     """Add :vtk:`vtkDataSetSurfaceFilter` to pipeline.
@@ -874,10 +871,10 @@ def extract_surface_algorithm(  # noqa: PLR0917
     return surf_filter
 
 
-@_deprecate_positional_args(allowed=['inp', 'name'])
 def active_scalars_algorithm(
     inp,
     name: str,
+    *,
     preference: PointLiteral | CellLiteral = 'point',
 ) -> ActiveScalarsAlgorithm:
     """Add a filter that sets the active scalars.
@@ -908,10 +905,10 @@ def active_scalars_algorithm(
     return alg
 
 
-@_deprecate_positional_args(allowed=['inp'])
 def smooth_shading_algorithm(
     inp,
-    split_sharp_edges: bool = False,  # noqa: FBT001, FBT002
+    *,
+    split_sharp_edges: bool = False,
     feature_angle: float = 30.0,
 ) -> SmoothShadingAlgorithm:
     """Add a filter that computes point normals for smooth shading.
@@ -961,8 +958,7 @@ def pointset_to_polydata_algorithm(inp) -> PointSetToPolyDataAlgorithm:
     return alg
 
 
-@_deprecate_positional_args(allowed=['inp'])
-def add_ids_algorithm(inp, point_ids: bool = True, cell_ids: bool = True):  # noqa: FBT001, FBT002
+def add_ids_algorithm(inp, *, point_ids: bool = True, cell_ids: bool = True):
     """Add a filter that adds point and/or cell IDs.
 
     Parameters
@@ -1007,8 +1003,7 @@ def crinkle_algorithm(clip, source):
     return alg
 
 
-@_deprecate_positional_args(allowed=['inp'])
-def cell_data_to_point_data_algorithm(inp, pass_cell_data: bool = False):  # noqa: FBT001, FBT002
+def cell_data_to_point_data_algorithm(inp, *, pass_cell_data: bool = False):
     """Add a filter that converts cell data to point data.
 
     Parameters
@@ -1030,8 +1025,7 @@ def cell_data_to_point_data_algorithm(inp, pass_cell_data: bool = False):  # noq
     return alg
 
 
-@_deprecate_positional_args(allowed=['inp'])
-def point_data_to_cell_data_algorithm(inp, pass_point_data: bool = False):  # noqa: FBT001, FBT002
+def point_data_to_cell_data_algorithm(inp, *, pass_point_data: bool = False):
     """Add a filter that converts point data to cell data.
 
     Parameters

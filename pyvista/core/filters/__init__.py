@@ -28,6 +28,7 @@ from __future__ import annotations
 import contextlib
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import TypeVar
 from typing import cast
 
 import numpy as np
@@ -42,8 +43,11 @@ from pyvista.core.utilities.observers import ProgressMonitor
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
+    from pyvista.core.utilities.arrays import CellLiteral
+    from pyvista.core.utilities.arrays import PointLiteral
 
-def _update_alg(alg: _vtk.vtkAlgorithm, *, progress_bar: bool = False, message='') -> None:
+
+def _update_alg(alg: _vtk.vtkAlgorithm, *, progress_bar: bool = False, message: str = '') -> None:
     """Update an algorithm with or without a progress bar."""
     # Get the status of the alg update using GetExecutive
     # https://discourse.vtk.org/t/changing-vtkalgorithm-update-return-type-from-void-to-bool/16164
@@ -69,6 +73,8 @@ def _update_alg(alg: _vtk.vtkAlgorithm, *, progress_bar: bool = False, message='
         # raise it as a proper Python error.
         # We avoid using VtkErrorCatcher for the initial update because adding and tracking
         # with VTK observers can be slow.
+        # VTK marks even a failed execution as up-to-date, so force the re-run to execute.
+        alg.Modified()
         with pv.VtkErrorCatcher(raise_errors=True, emit_warnings=True):
             alg.Update()
 
@@ -211,7 +217,12 @@ def _match_points_dtype(
     _enforce_points_dtype(mesh_out, _points_dtype(mesh_in), algorithm=algorithm)
 
 
-def _apply_points_dtype(mesh: Any, *, algorithm: _vtk.vtkAlgorithm | str | None = None) -> Any:
+_MeshT = TypeVar('_MeshT')
+
+
+def _apply_points_dtype(
+    mesh: _MeshT, *, algorithm: _vtk.vtkAlgorithm | str | None = None
+) -> _MeshT:
     """Apply the configured dtype to a mesh wrapped without ``_get_output``."""
     _enforce_points_dtype(mesh, _points_dtype(), algorithm=algorithm)
     return mesh
@@ -220,13 +231,13 @@ def _apply_points_dtype(mesh: Any, *, algorithm: _vtk.vtkAlgorithm | str | None 
 def _get_output(
     algorithm: _vtk.vtkAlgorithm,
     *,
-    iport=0,
-    iconnection=0,
-    oport=0,
-    active_scalars=None,
-    active_scalars_field='point',
-    keep_pointset=True,
-):
+    iport: int = 0,
+    iconnection: int = 0,
+    oport: int = 0,
+    active_scalars: str | None = None,
+    active_scalars_field: PointLiteral | CellLiteral = 'point',
+    keep_pointset: bool = True,
+) -> Any:
     """Get the algorithm's output and copy input's pyvista meta info."""
     ido = cast('pv.DataObject', wrap(algorithm.GetInputDataObject(iport, iconnection)))
     data = cast('pv.DataObject', wrap(algorithm.GetOutputDataObject(oport)))
@@ -236,7 +247,7 @@ def _get_output(
         # Optimization: ask VTK directly instead of building DataSetAttributes wrappers
         if not data.GetFieldData().GetNumberOfArrays() and ido.GetFieldData().GetNumberOfArrays():
             data.field_data.update(ido.field_data)
-        if active_scalars is not None:
+        if active_scalars is not None and active_scalars in data.array_names:
             data.set_active_scalars(active_scalars, preference=active_scalars_field)
     # return a PointSet if input is a pointset, unless the algorithm generates
     # cells (e.g. glyph), in which case flattening to a PointSet would drop them

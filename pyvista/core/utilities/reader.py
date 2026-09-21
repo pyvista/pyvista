@@ -16,6 +16,7 @@ from typing import ClassVar
 from typing import ForwardRef
 from typing import Generic
 from typing import Literal
+from typing import NoReturn
 from typing import TypeVar
 from typing import cast
 from typing import get_args
@@ -27,7 +28,6 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import VersionInfo
 
 from .fileio import _FileIOBase
@@ -88,7 +88,7 @@ _legacy_dataset_types = Literal[  # no PointSet
 ]
 
 
-def get_reader(filename, force_ext=None):
+def get_reader(filename: str | Path, force_ext: str | None = None) -> Any:
     """Get a reader for fine-grained control of reading data files.
 
     Supported file types and Readers:
@@ -191,9 +191,10 @@ class BaseVTKReader(ABC):
 
     def __init__(self: BaseVTKReader) -> None:
         self._data_object: pv.DataObject | None = None
+        self._filename: str | Path | None = None
         self._observers: list[int | Callable[[Any], Any]] = []
 
-    def SetFileName(self, filename) -> None:
+    def SetFileName(self, filename: str | Path) -> None:
         """Set file name.
 
         Parameters
@@ -205,10 +206,12 @@ class BaseVTKReader(ABC):
         self._filename = filename
 
     @abstractmethod
-    def UpdateInformation(self):
+    def UpdateInformation(self) -> None:
         """Update Information from file."""
 
-    def AddObserver(self, event_type, callback) -> None:
+    def AddObserver(
+        self, event_type: int | str, callback: Callable[[Any, int | str], Any]
+    ) -> None:
         """Add Observer that can be triggered during Update.
 
         Parameters
@@ -230,7 +233,7 @@ class BaseVTKReader(ABC):
         """Return the load progress, ``0.0`` before the data loads and ``1.0`` after."""
         return 0.0 if self._data_object is None else 1.0
 
-    def UpdateObservers(self, event_type) -> None:
+    def UpdateObservers(self, event_type: int | str) -> None:
         """Call matching observer.
 
         Parameters
@@ -244,7 +247,7 @@ class BaseVTKReader(ABC):
                 observer(self, event_type)
 
     @abstractmethod
-    def Update(self):
+    def Update(self) -> None:
         """Update Reader from file and store data internally.
 
         Set self._data_object.
@@ -287,7 +290,7 @@ class BaseReader(_FileIOBase, Generic[_T_Output_co]):
     # tests that need the exact list consult this attribute.
     _output_types: ClassVar[tuple[_mesh_types, ...] | None] = None
 
-    def __init__(self, path) -> None:
+    def __init__(self, path: str | Path) -> None:
         """Initialize Reader by setting path."""
         if cls := self._vtk_class:
             self._reader = cls()
@@ -296,8 +299,8 @@ class BaseReader(_FileIOBase, Generic[_T_Output_co]):
             self._reader = self._class_reader()
         self._filename: str | None = None
         self._progress_bar = False
-        self._progress_msg = None
-        self.__directory = None
+        self._progress_msg = ''
+        self.__directory: str | None = None
         self._set_defaults()
         self.path = str(path)
         self._set_defaults_post()
@@ -321,7 +324,7 @@ class BaseReader(_FileIOBase, Generic[_T_Output_co]):
     ) -> list[tuple[re.Pattern[str], type[_FileIOBase]]]:
         return [(pattern, reader) for _, pattern, reader in _CLASS_READER_PATTERNS]
 
-    def show_progress(self, msg=None) -> None:
+    def show_progress(self, msg: str | None = None) -> None:
         """Show a progress bar when loading the file.
 
         Parameters
@@ -358,7 +361,7 @@ class BaseReader(_FileIOBase, Generic[_T_Output_co]):
         self._progress_bar = False
 
     @property
-    def reader(self):
+    def reader(self) -> Any:
         """Return the vtk Reader object.
 
         Returns
@@ -395,23 +398,24 @@ class BaseReader(_FileIOBase, Generic[_T_Output_co]):
         return self.__directory  # type: ignore[return-value]
 
     @path.setter
-    def path(self, path: str | Path):
+    def path(self, path: str | Path) -> None:
+        path = str(path)
         if Path(path).is_dir():
-            self._set_directory(path)
+            self._set_directory(str(path))
         elif Path(path).is_file():
-            self._set_filename(path)
+            self._set_filename(str(path))
         else:
             msg = f"Path '{path}' is invalid or does not exist."
             raise FileNotFoundError(msg)
 
-    def _set_directory(self, directory) -> None:
+    def _set_directory(self, directory: str) -> None:
         """Set directory and update reader."""
         self._filename = None
         self.__directory = directory
         self.reader.SetDirectoryName(directory)
         self._update_information()
 
-    def _set_filename(self, filename) -> None:
+    def _set_filename(self, filename: str) -> None:
         """Set filename and update reader."""
         # Private method since changing file type requires a
         # different subclass.
@@ -497,7 +501,7 @@ class PointCellDataSelection(_NoNewAttrMixin):
     """
 
     @property
-    def number_point_arrays(self):
+    def number_point_arrays(self) -> int:
         """Return the number of point arrays.
 
         Returns
@@ -509,7 +513,7 @@ class PointCellDataSelection(_NoNewAttrMixin):
         return self.reader.GetNumberOfPointArrays()  # type: ignore[attr-defined]
 
     @property
-    def point_array_names(self):
+    def point_array_names(self) -> list[str]:
         """Return the list of all point array names.
 
         Returns
@@ -520,7 +524,7 @@ class PointCellDataSelection(_NoNewAttrMixin):
         """
         return [self.reader.GetPointArrayName(i) for i in range(self.number_point_arrays)]  # type: ignore[attr-defined]
 
-    def enable_point_array(self, name) -> None:
+    def enable_point_array(self, name: str) -> None:
         """Enable point array with name.
 
         Parameters
@@ -531,7 +535,7 @@ class PointCellDataSelection(_NoNewAttrMixin):
         """
         self.reader.SetPointArrayStatus(name, 1)  # type: ignore[attr-defined]
 
-    def disable_point_array(self, name) -> None:
+    def disable_point_array(self, name: str) -> None:
         """Disable point array with name.
 
         Parameters
@@ -542,7 +546,7 @@ class PointCellDataSelection(_NoNewAttrMixin):
         """
         self.reader.SetPointArrayStatus(name, 0)  # type: ignore[attr-defined]
 
-    def point_array_status(self, name):
+    def point_array_status(self, name: str) -> bool:
         """Get status of point array with name.
 
         Parameters
@@ -569,7 +573,7 @@ class PointCellDataSelection(_NoNewAttrMixin):
             self.disable_point_array(name)
 
     @property
-    def all_point_arrays_status(self):
+    def all_point_arrays_status(self) -> dict[str, bool]:
         """Return the status of all point arrays.
 
         Returns
@@ -581,7 +585,7 @@ class PointCellDataSelection(_NoNewAttrMixin):
         return {name: self.point_array_status(name) for name in self.point_array_names}
 
     @property
-    def number_cell_arrays(self):
+    def number_cell_arrays(self) -> int:
         """Return the number of cell arrays.
 
         Returns
@@ -593,7 +597,7 @@ class PointCellDataSelection(_NoNewAttrMixin):
         return self.reader.GetNumberOfCellArrays()  # type: ignore[attr-defined]
 
     @property
-    def cell_array_names(self):
+    def cell_array_names(self) -> list[str]:
         """Return the list of all cell array names.
 
         Returns
@@ -604,7 +608,7 @@ class PointCellDataSelection(_NoNewAttrMixin):
         """
         return [self.reader.GetCellArrayName(i) for i in range(self.number_cell_arrays)]  # type: ignore[attr-defined]
 
-    def enable_cell_array(self, name) -> None:
+    def enable_cell_array(self, name: str) -> None:
         """Enable cell array with name.
 
         Parameters
@@ -615,7 +619,7 @@ class PointCellDataSelection(_NoNewAttrMixin):
         """
         self.reader.SetCellArrayStatus(name, 1)  # type: ignore[attr-defined]
 
-    def disable_cell_array(self, name) -> None:
+    def disable_cell_array(self, name: str) -> None:
         """Disable cell array with name.
 
         Parameters
@@ -626,7 +630,7 @@ class PointCellDataSelection(_NoNewAttrMixin):
         """
         self.reader.SetCellArrayStatus(name, 0)  # type: ignore[attr-defined]
 
-    def cell_array_status(self, name):
+    def cell_array_status(self, name: str) -> bool:
         """Get status of cell array with name.
 
         Parameters
@@ -653,7 +657,7 @@ class PointCellDataSelection(_NoNewAttrMixin):
             self.disable_cell_array(name)
 
     @property
-    def all_cell_arrays_status(self):
+    def all_cell_arrays_status(self) -> dict[str, bool]:
         """Return the status of all cell arrays.
 
         Returns
@@ -674,7 +678,7 @@ class TimeReader(ABC):
         """Return number of time points or iterations available to read."""
 
     @abstractmethod
-    def time_point_value(self, time_point) -> float:
+    def time_point_value(self, time_point: int) -> float:
         """Value of time point or iteration by index.
 
         Parameters
@@ -700,7 +704,7 @@ class TimeReader(ABC):
         """Active time or iteration value."""
 
     @abstractmethod
-    def set_active_time_value(self, time_value) -> None:
+    def set_active_time_value(self, time_value: float) -> None:
         """Set active time or iteration value.
 
         Parameters
@@ -711,7 +715,7 @@ class TimeReader(ABC):
         """
 
     @abstractmethod
-    def set_active_time_point(self, time_point) -> None:
+    def set_active_time_point(self, time_point: int) -> None:
         """Set active time or iteration by index.
 
         Parameters
@@ -905,7 +909,7 @@ class EnSightReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReader
 
     _vtk_class_name = 'vtkGenericEnSightReader'
 
-    def _set_filename(self, filename) -> None:
+    def _set_filename(self, filename: str) -> None:
         """Set filename and update reader."""
         # Private method since changing file type requires a
         # different subclass.
@@ -922,7 +926,7 @@ class EnSightReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReader
             return 0
         return item.GetSize() if pv.vtk_version_info < (9, 7) else item.GetCapacity()
 
-    def time_point_value(self, time_point) -> float:
+    def time_point_value(self, time_point: int) -> float:
         """Value of time point or iteration by index.
 
         Parameters
@@ -943,7 +947,7 @@ class EnSightReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReader
         """Active time or iteration value."""
         return self.reader.GetTimeValue()
 
-    def set_active_time_value(self, time_value) -> None:
+    def set_active_time_value(self, time_value: float) -> None:
         """Set active time or iteration value.
 
         Parameters
@@ -957,7 +961,7 @@ class EnSightReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReader
             raise ValueError(msg)
         self.reader.SetTimeValue(time_value)
 
-    def set_active_time_point(self, time_point) -> None:
+    def set_active_time_point(self, time_point: int) -> None:
         """Set active time or iteration by index.
 
         Parameters
@@ -973,7 +977,7 @@ class EnSightReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReader
         """Return the index of the active time set of the reader."""
         return self._active_time_set
 
-    def set_active_time_set(self, time_set):
+    def set_active_time_set(self, time_set: int) -> None:
         """Set the active time set by index.
 
         Parameters
@@ -1015,7 +1019,7 @@ class OpenFOAMReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         """Return number of time points or iterations available to read."""
         return self.reader.GetTimeValues().GetNumberOfValues()
 
-    def time_point_value(self, time_point) -> float:
+    def time_point_value(self, time_point: int) -> float:
         """Value of time point or iteration by index.
 
         Parameters
@@ -1041,7 +1045,7 @@ class OpenFOAMReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
             raise AttributeError(msg) from err
         return value
 
-    def set_active_time_value(self, time_value) -> None:
+    def set_active_time_value(self, time_value: float) -> None:
         """Set active time or iteration value.
 
         Parameters
@@ -1055,7 +1059,7 @@ class OpenFOAMReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
             raise ValueError(msg)
         self.reader.UpdateTimeStep(time_value)
 
-    def set_active_time_point(self, time_point) -> None:
+    def set_active_time_point(self, time_point: int) -> None:
         """Set active time or iteration by index.
 
         Parameters
@@ -1067,7 +1071,7 @@ class OpenFOAMReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         self.reader.UpdateTimeStep(self.time_point_value(time_point))
 
     @property
-    def decompose_polyhedra(self):
+    def decompose_polyhedra(self) -> bool:
         """Whether polyhedra are to be decomposed when read.
 
         .. warning::
@@ -1083,11 +1087,11 @@ class OpenFOAMReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         return bool(self.reader.GetDecomposePolyhedra())
 
     @decompose_polyhedra.setter
-    def decompose_polyhedra(self, value) -> None:
+    def decompose_polyhedra(self, value: bool) -> None:
         self.reader.SetDecomposePolyhedra(value)
 
     @property
-    def skip_zero_time(self):
+    def skip_zero_time(self) -> bool:
         """Indicate whether or not to ignore the '/0' time directory.
 
         Returns
@@ -1109,13 +1113,13 @@ class OpenFOAMReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         return bool(self.reader.GetSkipZeroTime())
 
     @skip_zero_time.setter
-    def skip_zero_time(self, value) -> None:
+    def skip_zero_time(self, value: bool) -> None:
         self.reader.SetSkipZeroTime(value)
         self._update_information()
         self.reader.SetRefresh()
 
     @property
-    def cell_to_point_creation(self):
+    def cell_to_point_creation(self) -> bool:
         """Whether cell data is translated to point data when read.
 
         Returns
@@ -1142,7 +1146,7 @@ class OpenFOAMReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         return bool(self.reader.GetCreateCellToPoint())
 
     @cell_to_point_creation.setter
-    def cell_to_point_creation(self, value) -> None:
+    def cell_to_point_creation(self, value: bool) -> None:
         self.reader.SetCreateCellToPoint(value)
 
     @property
@@ -1187,7 +1191,7 @@ class OpenFOAMReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         """
         return [self.reader.GetPatchArrayName(i) for i in range(self.number_patch_arrays)]
 
-    def enable_patch_array(self, name) -> None:
+    def enable_patch_array(self, name: str) -> None:
         """Enable reading of patch array.
 
         Parameters
@@ -1208,7 +1212,7 @@ class OpenFOAMReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         """
         self.reader.SetPatchArrayStatus(name, 1)
 
-    def disable_patch_array(self, name) -> None:
+    def disable_patch_array(self, name: str) -> None:
         """Disable reading of patch array.
 
         Parameters
@@ -1229,7 +1233,7 @@ class OpenFOAMReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         """
         self.reader.SetPatchArrayStatus(name, 0)
 
-    def patch_array_status(self, name):
+    def patch_array_status(self, name: str) -> bool:
         """Return status of reading patch array.
 
         Parameters
@@ -1288,7 +1292,7 @@ class OpenFOAMReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         self.reader.DisableAllPatchArrays()
 
     @property
-    def all_patch_arrays_status(self):
+    def all_patch_arrays_status(self) -> dict[str, bool]:
         """Status of reading all patch arrays.
 
         Returns
@@ -1323,7 +1327,7 @@ class POpenFOAMReader(OpenFOAMReader):
     _vtk_class_name = 'vtkPOpenFOAMReader'
 
     @property
-    def case_type(self):
+    def case_type(self) -> Literal['reconstructed', 'decomposed']:
         """Indicate whether decomposed mesh or reconstructed mesh should be read.
 
         Returns
@@ -1351,7 +1355,7 @@ class POpenFOAMReader(OpenFOAMReader):
         return 'reconstructed' if self.reader.GetCaseType() else 'decomposed'
 
     @case_type.setter
-    def case_type(self, value):
+    def case_type(self, value: str) -> None:
         if value == 'reconstructed':
             self.reader.SetCaseType(1)
         elif value == 'decomposed':
@@ -1632,7 +1636,7 @@ class MultiBlockPlot3DReader(BaseReader['MultiBlock']):
     def _set_defaults(self) -> None:
         self.auto_detect_format = True
 
-    def add_q_files(self, files) -> None:
+    def add_q_files(self, files: str | Path | Sequence[str | Path]) -> None:
         """Add q files.
 
         Parameters
@@ -1642,8 +1646,8 @@ class MultiBlockPlot3DReader(BaseReader['MultiBlock']):
 
         """
         # files may be a list or a single filename
-        if files and isinstance(files, (str, Path)):
-            files = [files]
+        if isinstance(files, (str, Path)):
+            files = [files] if files else []
         files = [_process_filename(f) for f in files]
 
         # AddFileName supports reading multiple q files
@@ -1656,7 +1660,7 @@ class MultiBlockPlot3DReader(BaseReader['MultiBlock']):
         return bool(self.reader.GetAutoDetectFormat())
 
     @auto_detect_format.setter
-    def auto_detect_format(self, value) -> None:
+    def auto_detect_format(self, value: bool) -> None:
         self.reader.SetAutoDetectFormat(value)
 
     def add_function(self, value: int | Plot3DFunctionEnum) -> None:
@@ -1727,7 +1731,7 @@ class MultiBlockPlot3DReader(BaseReader['MultiBlock']):
         return bool(self.reader.GetPreserveIntermediateFunctions())
 
     @preserve_intermediate_functions.setter
-    def preserve_intermediate_functions(self, val) -> None:
+    def preserve_intermediate_functions(self, val: bool) -> None:
         self.reader.SetPreserveIntermediateFunctions(val)
 
     @property
@@ -1736,7 +1740,7 @@ class MultiBlockPlot3DReader(BaseReader['MultiBlock']):
         return self.reader.GetGamma()
 
     @gamma.setter
-    def gamma(self, val) -> None:
+    def gamma(self, val: float) -> None:
         self.reader.SetGamma(val)
 
     @property
@@ -1745,7 +1749,7 @@ class MultiBlockPlot3DReader(BaseReader['MultiBlock']):
         return self.reader.GetR()
 
     @r_gas_constant.setter
-    def r_gas_constant(self, val) -> None:
+    def r_gas_constant(self, val: float) -> None:
         self.reader.SetR(val)
 
 
@@ -1822,7 +1826,7 @@ class CGNSReader(BaseReader['MultiBlock'], PointCellDataSelection):
         return bool(self._reader.GetDistributeBlocks())
 
     @distribute_blocks.setter
-    def distribute_blocks(self, value: str) -> None:
+    def distribute_blocks(self, value: bool) -> None:
         self._reader.SetDistributeBlocks(value)
 
     def base_array_status(self, name: str) -> bool:
@@ -1887,7 +1891,7 @@ class CGNSReader(BaseReader['MultiBlock'], PointCellDataSelection):
         """
         self._reader.DisableAllBases()
 
-    def family_array_status(self, name) -> bool:
+    def family_array_status(self, name: str) -> bool:
         """Get status of family array with name.
 
         Parameters
@@ -2086,7 +2090,7 @@ class _PVDReader(BaseVTKReader):
         self._active_datasets: list[PVDDataSet] | None = None
         self._time_values: list[float] | None = None
 
-    def SetFileName(self, filename) -> None:
+    def SetFileName(self, filename: str | Path) -> None:
         """Set filename and update reader.
 
         Parameters
@@ -2098,7 +2102,7 @@ class _PVDReader(BaseVTKReader):
         self._filename = str(filename)
         self._directory = str(Path(filename).parent)
 
-    def UpdateInformation(self):
+    def UpdateInformation(self) -> None:
         """Parse PVD file."""
         if self._filename is None:
             msg = 'Filename must be set'
@@ -2131,7 +2135,7 @@ class _PVDReader(BaseVTKReader):
         """Read data and store it."""
         self._data_object = pv.MultiBlock([reader.read() for reader in self._active_readers])
 
-    def _SetActiveTime(self, time_value) -> None:
+    def _SetActiveTime(self, time_value: float) -> None:
         """Set active time.
 
         Parameters
@@ -2196,7 +2200,7 @@ class PVDReader(BaseReader['MultiBlock'], TimeReader):
         """Return number of time points or iterations available to read."""
         return len(self.reader._time_values)
 
-    def time_point_value(self, time_point) -> float:
+    def time_point_value(self, time_point: int) -> float:
         """Value of time point or iteration by index.
 
         Parameters
@@ -2218,7 +2222,7 @@ class PVDReader(BaseReader['MultiBlock'], TimeReader):
         # all active datasets have the same time
         return self.reader._active_datasets[0].time
 
-    def set_active_time_value(self, time_value) -> None:
+    def set_active_time_value(self, time_value: float) -> None:
         """Set active time or iteration value.
 
         Parameters
@@ -2229,7 +2233,7 @@ class PVDReader(BaseReader['MultiBlock'], TimeReader):
         """
         self.reader._SetActiveTime(time_value)
 
-    def set_active_time_point(self, time_point) -> None:
+    def set_active_time_point(self, time_point: int) -> None:
         """Set active time or iteration by index.
 
         Parameters
@@ -2267,19 +2271,19 @@ class Nek5000Reader(BaseReader['UnstructuredGrid'], PointCellDataSelection, Time
     def _set_defaults_post(self) -> None:
         self.set_active_time_point(0)
 
-    def enable_merge_points(self):
+    def enable_merge_points(self) -> None:
         """Enable merging coincident GLL points from different spectral elements on read."""
         self.reader.CleanGridOn()
 
-    def disable_merge_points(self):
+    def disable_merge_points(self) -> None:
         """Disable merging coincident GLL points from different spectral elements on read."""
         self.reader.CleanGridOff()
 
-    def enable_spectral_element_ids(self):
+    def enable_spectral_element_ids(self) -> None:
         """Enable spectral element IDs to be shown as cell data."""
         self.reader.SpectralElementIdsOn()
 
-    def disable_spectral_element_ids(self):
+    def disable_spectral_element_ids(self) -> None:
         """Disable spectral element IDs to be shown as cell data."""
         self.reader.SpectralElementIdsOff()
 
@@ -2296,7 +2300,7 @@ class Nek5000Reader(BaseReader['UnstructuredGrid'], PointCellDataSelection, Time
         vtkinfo = self.reader.GetOutputInformation(0)
         return [vtkinfo.Get(key, i) for i in range(self.number_time_points)]
 
-    def time_point_value(self, time_point) -> float:
+    def time_point_value(self, time_point: int) -> float:
         """Value of time point or iteration by index.
 
         Parameters
@@ -2325,7 +2329,7 @@ class Nek5000Reader(BaseReader['UnstructuredGrid'], PointCellDataSelection, Time
         """Active time point."""
         return self.time_values.index(self.active_time_value)
 
-    def set_active_time_value(self, time_value):
+    def set_active_time_value(self, time_value: float) -> None:
         """Set active time or iteration value.
 
         Parameters
@@ -2339,7 +2343,7 @@ class Nek5000Reader(BaseReader['UnstructuredGrid'], PointCellDataSelection, Time
         vtkinfo = self.reader.GetOutputInformation(0)
         vtkinfo.Set(key, time_value)
 
-    def set_active_time_point(self, time_point):
+    def set_active_time_point(self, time_point: int) -> None:
         """Set active time or iteration by index.
 
         Parameters
@@ -2357,7 +2361,7 @@ class Nek5000Reader(BaseReader['UnstructuredGrid'], PointCellDataSelection, Time
     _cell_attr_err_msg = 'Nek5000 data does not contain cell arrays, this method cannot be used'
 
     @property
-    def number_cell_arrays(self):
+    def number_cell_arrays(self) -> NoReturn:
         """Raise Nek5000 data does not contain cell arrays.
 
         Raises
@@ -2369,7 +2373,7 @@ class Nek5000Reader(BaseReader['UnstructuredGrid'], PointCellDataSelection, Time
         raise AttributeError(self._cell_attr_err_msg)
 
     @property
-    def cell_array_names(self):
+    def cell_array_names(self) -> NoReturn:
         """Raise Nek5000 data does not contain cell arrays.
 
         Raises
@@ -2380,23 +2384,7 @@ class Nek5000Reader(BaseReader['UnstructuredGrid'], PointCellDataSelection, Time
         """
         raise AttributeError(self._cell_attr_err_msg)
 
-    def enable_cell_array(self, name) -> None:  # noqa: ARG002
-        """Raise Nek5000 data does not contain cell arrays.
-
-        Parameters
-        ----------
-        name : str
-            Cell array name.
-
-        Raises
-        ------
-        AttributeError
-            Nek5000 data does not contain cell arrays.
-
-        """
-        raise AttributeError(self._cell_attr_err_msg)
-
-    def disable_cell_array(self, name) -> None:  # noqa: ARG002
+    def enable_cell_array(self, name: str) -> None:  # noqa: ARG002
         """Raise Nek5000 data does not contain cell arrays.
 
         Parameters
@@ -2412,7 +2400,23 @@ class Nek5000Reader(BaseReader['UnstructuredGrid'], PointCellDataSelection, Time
         """
         raise AttributeError(self._cell_attr_err_msg)
 
-    def cell_array_status(self, name):  # noqa: ARG002
+    def disable_cell_array(self, name: str) -> None:  # noqa: ARG002
+        """Raise Nek5000 data does not contain cell arrays.
+
+        Parameters
+        ----------
+        name : str
+            Cell array name.
+
+        Raises
+        ------
+        AttributeError
+            Nek5000 data does not contain cell arrays.
+
+        """
+        raise AttributeError(self._cell_attr_err_msg)
+
+    def cell_array_status(self, name: str) -> NoReturn:  # noqa: ARG002
         """Raise Nek5000 data does not contain cell arrays.
 
         Parameters
@@ -2878,7 +2882,7 @@ class _GRDECLReader(BaseVTKReader):
     def Update(self) -> None:
         """Read the GRDECL file and store internally to ``_data_object``."""
         self._data_object = _read_grdecl(
-            self._filename,
+            cast('str | Path', self._filename),
             elevation=self._elevation,
             other_keywords=self._other_keywords,
         )
@@ -2976,7 +2980,7 @@ class _GIFReader(BaseVTKReader):
             micro=int(pillow_version.split('.')[2]),
         )
 
-        img = Image.open(self._filename)
+        img = Image.open(cast('str | Path', self._filename))
         self._data_object = pv.ImageData(dimensions=(img.size[0], img.size[1], 1))
 
         # load each frame to the grid (RGB since gifs do not support transparency
@@ -2989,7 +2993,7 @@ class _GIFReader(BaseVTKReader):
         for i, frame in enumerate(ImageSequence.Iterator(img)):
             self._current_frame = i
             data = np.array(pillow_get_data(frame.convert('RGB')), dtype=np.uint8)
-            self._data_object.point_data.set_array(data, f'frame{i}')
+            self._data_object.point_data.set_array(data, f'frame{i}')  # type: ignore[arg-type]
             self.UpdateObservers(6)
 
         if 'frame0' in self._data_object.point_data:
@@ -3026,7 +3030,7 @@ class GIFReader(BaseReader['ImageData']):  # numpydoc ignore=PR02
     _class_reader = _GIFReader
 
 
-def _read_from_plotter(filename, kind: Literal['vrml', '3ds']):
+def _read_from_plotter(filename: str | Path, kind: Literal['vrml', '3ds']) -> pv.MultiBlock:
     pl = pv.Plotter(off_screen=True)
     importer = getattr(pl, f'import_{kind}')
     importer(filename)
@@ -3040,9 +3044,9 @@ class _VRMLReader(BaseVTKReader):
 
     def Update(self) -> None:
         """Read the VRML and store internally to ``_data_object``."""
-        self._data_object = _read_from_plotter(self._filename, 'vrml')
+        self._data_object = _read_from_plotter(cast('str | Path', self._filename), 'vrml')
 
-    def UpdateInformation(self):
+    def UpdateInformation(self) -> None:
         """Update Information from file."""
 
 
@@ -3087,9 +3091,9 @@ class _ThreeDSReader(BaseVTKReader):
 
     def Update(self) -> None:
         """Read the 3DS and store internally to ``_data_object``."""
-        self._data_object = _read_from_plotter(self._filename, '3ds')
+        self._data_object = _read_from_plotter(cast('str | Path', self._filename), '3ds')
 
-    def UpdateInformation(self):
+    def UpdateInformation(self) -> None:
         """Update Information from file."""
 
 
@@ -3159,7 +3163,7 @@ class XdmfReader(
     _output_types = ('MultiBlock', 'UnstructuredGrid', 'StructuredGrid', 'RectilinearGrid')
 
     @property
-    def number_grids(self):
+    def number_grids(self) -> int:
         """Return the number of grids that can be read by the reader.
 
         Returns
@@ -3170,7 +3174,7 @@ class XdmfReader(
         """
         return self.reader.GetNumberOfGrids()
 
-    def set_active_time_value(self, time_value) -> None:
+    def set_active_time_value(self, time_value: float) -> None:
         """Set active time or iteration value.
 
         Parameters
@@ -3190,7 +3194,7 @@ class XdmfReader(
         """Return number of time points or iterations available to read."""
         return len(self.time_values)
 
-    def time_point_value(self, time_point) -> float:
+    def time_point_value(self, time_point: int) -> float:
         """Value of time point or iteration by index.
 
         Parameters
@@ -3217,7 +3221,7 @@ class XdmfReader(
         """Active time or iteration value."""
         return self._active_time_value
 
-    def set_active_time_point(self, time_point) -> None:
+    def set_active_time_point(self, time_point: int) -> None:
         """Set active time or iteration by index.
 
         Parameters
@@ -3316,11 +3320,10 @@ class GaussianCubeReader(BaseReader['DataSet']):
     _vtk_class_name = 'vtkGaussianCubeReader'
     _output_types = ('ImageData', 'PolyData')
 
-    @_deprecate_positional_args
     def read(
         self,
-        grid: bool = True,  # noqa: FBT001, FBT002
         *,
+        grid: bool = True,
         validate: bool | None = None,
     ) -> pv.DataSet:
         """Read the file and return the output.
@@ -3491,7 +3494,7 @@ class ParticleReader(BaseReader['PolyData']):
         return self.reader.GetDataByteOrderAsString()
 
     @endian.setter
-    def endian(self, endian: str):
+    def endian(self, endian: str) -> None:
         if endian == 'BigEndian':
             self.reader.SetDataByteOrderToBigEndian()
         elif endian == 'LittleEndian':
@@ -3545,7 +3548,7 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
 
     _vtk_class_name = 'vtkExodusIIReader'
 
-    def _set_defaults_post(self):
+    def _set_defaults_post(self) -> None:
         self._element_blocks = ExodusIIBlockSet(self, self._reader.ELEM_BLOCK)
         self._face_blocks = ExodusIIBlockSet(self, self._reader.FACE_BLOCK)
         self._edge_blocks = ExodusIIBlockSet(self, self._reader.EDGE_BLOCK)
@@ -3574,7 +3577,7 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         return wrap(global_extractor.GetOutputDataObject(0))  # type: ignore[return-value]
 
     @property
-    def element_blocks(self):
+    def element_blocks(self) -> ExodusIIBlockSet:
         """Returns an ExodusIIBlockSet object for the element blocks.
 
         Returns
@@ -3586,7 +3589,7 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         return self._element_blocks
 
     @property
-    def face_blocks(self):
+    def face_blocks(self) -> ExodusIIBlockSet:
         """Returns an ExodusIIBlockSet object for the face blocks.
 
         Returns
@@ -3598,7 +3601,7 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         return self._face_blocks
 
     @property
-    def edge_blocks(self):
+    def edge_blocks(self) -> ExodusIIBlockSet:
         """Returns an ExodusIIBlockSet object for the edge blocks.
 
         Returns
@@ -3610,7 +3613,7 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         return self._edge_blocks
 
     @property
-    def side_sets(self):
+    def side_sets(self) -> ExodusIIBlockSet:
         """Returns an ExodusIIBlockSet object for the side sets.
 
         Returns
@@ -3622,7 +3625,7 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         return self._side_sets
 
     @property
-    def node_sets(self):
+    def node_sets(self) -> ExodusIIBlockSet:
         """Returns an ExodusIIBlockSet object for the node sets.
 
         Returns
@@ -3634,7 +3637,7 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         return self._node_sets
 
     @property
-    def element_sets(self):
+    def element_sets(self) -> ExodusIIBlockSet:
         """Returns an ExodusIIBlockSet object for the element sets.
 
         Returns
@@ -3646,7 +3649,7 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         return self._elem_sets
 
     @property
-    def face_sets(self):
+    def face_sets(self) -> ExodusIIBlockSet:
         """Returns an ExodusIIBlockSet object for the face sets.
 
         Returns
@@ -3662,7 +3665,7 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         """Return number of time points or iterations available to read."""
         return self.reader.GetNumberOfTimeSteps()
 
-    def enable_displacements(self, displacement_magnitude=1.0):
+    def enable_displacements(self, displacement_magnitude: float = 1.0) -> None:
         """Nodal positions are 'displaced' by the standard exodus displacement vector.
 
         Parameters
@@ -3674,12 +3677,12 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         self.reader.SetApplyDisplacements(True)
         self.reader.SetDisplacementMagnitude(displacement_magnitude)
 
-    def disable_displacements(self):
+    def disable_displacements(self) -> None:
         """Nodal positions are not 'displaced'."""
         self.reader.SetApplyDisplacements(False)
 
     @property
-    def number_point_arrays(self):
+    def number_point_arrays(self) -> int:
         """Return the number of point arrays.
 
         Returns
@@ -3691,7 +3694,7 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         return self.reader.GetNumberOfPointResultArrays()
 
     @property
-    def point_array_names(self):
+    def point_array_names(self) -> list[str]:
         """Return the list of all point array names.
 
         Returns
@@ -3702,7 +3705,7 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         """
         return [self.reader.GetPointResultArrayName(i) for i in range(self.number_point_arrays)]
 
-    def enable_point_array(self, name):
+    def enable_point_array(self, name: str) -> None:
         """Enable point array with name.
 
         Parameters
@@ -3713,7 +3716,7 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         """
         self.reader.SetPointResultArrayStatus(name, 1)
 
-    def disable_point_array(self, name):
+    def disable_point_array(self, name: str) -> None:
         """Disable point array with name.
 
         Parameters
@@ -3724,7 +3727,7 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         """
         self.reader.SetPointResultArrayStatus(name, 0)
 
-    def point_array_status(self, name):
+    def point_array_status(self, name: str) -> bool:
         """Get status of point array with name.
 
         Parameters
@@ -3741,19 +3744,19 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         return bool(self.reader.GetPointResultArrayStatus(name))
 
     @property
-    def number_cell_arrays(self):
-        """Return the number of point arrays.
+    def number_cell_arrays(self) -> int:
+        """Return the number of cell arrays.
 
         Returns
         -------
         int
-            Number of point arrays.
+            Number of cell arrays.
 
         """
         return self.reader.GetNumberOfElementResultArrays()
 
     @property
-    def cell_array_names(self):
+    def cell_array_names(self) -> list[str]:
         """Return the list of all cell array names.
 
         Returns
@@ -3764,7 +3767,7 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         """
         return [self.reader.GetElementResultArrayName(i) for i in range(self.number_cell_arrays)]
 
-    def enable_cell_array(self, name):
+    def enable_cell_array(self, name: str) -> None:
         """Enable cell array with name.
 
         Parameters
@@ -3775,7 +3778,7 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         """
         self.reader.SetElementResultArrayStatus(name, 1)
 
-    def disable_cell_array(self, name):
+    def disable_cell_array(self, name: str) -> None:
         """Disable cell array with name.
 
         Parameters
@@ -3786,7 +3789,7 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         """
         self.reader.SetElementResultArrayStatus(name, 0)
 
-    def cell_array_status(self, name):
+    def cell_array_status(self, name: str) -> bool:
         """Get status of cell array with name.
 
         Parameters
@@ -3803,19 +3806,19 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         return bool(self.reader.GetElementResultArrayStatus(name))
 
     @property
-    def number_global_arrays(self):
-        """Return the number of point arrays.
+    def number_global_arrays(self) -> int:
+        """Return the number of global arrays.
 
         Returns
         -------
         int
-            Number of point arrays.
+            Number of global arrays.
 
         """
         return self.reader.GetNumberOfGlobalResultArrays()
 
     @property
-    def global_array_names(self):
+    def global_array_names(self) -> list[str]:
         """Return the list of all global array names.
 
         Returns
@@ -3824,9 +3827,9 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
             List of all global array names.
 
         """
-        return [self.reader.GetGlobalResultArrayName(i) for i in range(self.number_cell_arrays)]
+        return [self.reader.GetGlobalResultArrayName(i) for i in range(self.number_global_arrays)]
 
-    def enable_global_array(self, name):
+    def enable_global_array(self, name: str) -> None:
         """Enable global array with name.
 
         Parameters
@@ -3837,7 +3840,7 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         """
         self.reader.SetGlobalResultArrayStatus(name, 1)
 
-    def disable_global_array(self, name):
+    def disable_global_array(self, name: str) -> None:
         """Disable global array with name.
 
         Parameters
@@ -3848,7 +3851,7 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         """
         self.reader.SetGlobalResultArrayStatus(name, 0)
 
-    def global_array_status(self, name):
+    def global_array_status(self, name: str) -> bool:
         """Get status of global array with name.
 
         Parameters
@@ -3882,7 +3885,7 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         vtkinfo = self.reader.GetOutputInformation(0)
         return [vtkinfo.Get(key, i) for i in range(self.number_time_points)]
 
-    def time_point_value(self, time_point) -> float:
+    def time_point_value(self, time_point: int) -> float:
         """Value of time point or iteration by index.
 
         Parameters
@@ -3903,7 +3906,7 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
         """Active time or iteration value."""
         return self.time_values[self.reader.GetTimeStep()]
 
-    def set_active_time_value(self, time_value):
+    def set_active_time_value(self, time_value: float) -> None:
         """Set active time or iteration value.
 
         Parameters
@@ -3920,7 +3923,7 @@ class ExodusIIReader(BaseReader['MultiBlock'], PointCellDataSelection, TimeReade
 
         self.set_active_time_point(index)
 
-    def set_active_time_point(self, time_point):
+    def set_active_time_point(self, time_point: int) -> None:
         """Set active time or iteration by index.
 
         Parameters
@@ -4075,7 +4078,7 @@ class PExodusIIReader(ExodusIIReader):
 
     _vtk_class_name = 'vtkPExodusIIReader'
 
-    def _set_defaults(self):
+    def _set_defaults(self) -> None:
         # Create dummy multi-process controller
         dummy = _vtk.vtkDummyController()
         self.reader.SetController(dummy)
@@ -4094,7 +4097,7 @@ class ExodusIIBlockSet(_NoNewAttrMixin):
 
     """
 
-    def __init__(self, exodus_reader: ExodusIIReader, object_type):
+    def __init__(self, exodus_reader: ExodusIIReader, object_type: int) -> None:
         if not exodus_reader.reader.GetObjectTypeName(object_type):
             msg = 'object_type is invalid'
             raise ValueError(msg)
@@ -4103,7 +4106,7 @@ class ExodusIIBlockSet(_NoNewAttrMixin):
         self._object_type = object_type
 
     @property
-    def number(self):
+    def number(self) -> int:
         """Return the number of blocks or sets in object.
 
         Returns
@@ -4115,7 +4118,7 @@ class ExodusIIBlockSet(_NoNewAttrMixin):
         return self._reader.GetNumberOfObjects(self._object_type)
 
     @property
-    def names(self):
+    def names(self) -> list[str]:
         """Returns the list of the names of the sets or blocks in object.
 
         Returns
@@ -4126,7 +4129,7 @@ class ExodusIIBlockSet(_NoNewAttrMixin):
         """
         return [self._reader.GetObjectName(self._object_type, i) for i in range(self.number)]
 
-    def enable(self, name):
+    def enable(self, name: str) -> None:
         """Enable the block/set with name.
 
         Parameters
@@ -4137,12 +4140,12 @@ class ExodusIIBlockSet(_NoNewAttrMixin):
         """
         self._reader.SetObjectStatus(self._object_type, name, 1)
 
-    def enable_all(self):
+    def enable_all(self) -> None:
         """Enable all names in block/set."""
         for name in self.names:
             self.enable(name)
 
-    def disable(self, name):
+    def disable(self, name: str) -> None:
         """Disable the block/set with name.
 
         Parameters
@@ -4153,12 +4156,12 @@ class ExodusIIBlockSet(_NoNewAttrMixin):
         """
         self._reader.SetObjectStatus(self._object_type, name, 0)
 
-    def disable_all(self):
+    def disable_all(self) -> None:
         """Disable all names in block/set."""
         for name in self.names:
             self.disable(name)
 
-    def status(self, name):
+    def status(self, name: str) -> bool:
         """Get the status of the block/set with name.
 
         Parameters
@@ -4174,7 +4177,7 @@ class ExodusIIBlockSet(_NoNewAttrMixin):
         """
         return bool(self._reader.GetObjectStatus(self._object_type, name))
 
-    def _construct_result_method(self, prefix, suffix):
+    def _construct_result_method(self, prefix: str, suffix: str) -> Callable[..., Any]:
         """Construct result array methods from the object type enum."""
         # Get object name
         objectname = self._reader.GetObjectTypeName(self._object_type).title().replace(' ', '')
@@ -4186,7 +4189,7 @@ class ExodusIIBlockSet(_NoNewAttrMixin):
         return getattr(self._reader, method_name)
 
     @property
-    def number_arrays(self):
+    def number_arrays(self) -> int:
         """Return the number of block/set arrays in object.
 
         Returns
@@ -4199,7 +4202,7 @@ class ExodusIIBlockSet(_NoNewAttrMixin):
         return method()
 
     @property
-    def array_names(self):
+    def array_names(self) -> list[str]:
         """Returns the list of the names of the block/set arrays in object.
 
         Returns
@@ -4211,7 +4214,7 @@ class ExodusIIBlockSet(_NoNewAttrMixin):
         name_method = self._construct_result_method('Get', 'Name')
         return [name_method(i) for i in range(self.number_arrays)]
 
-    def enable_array(self, name):
+    def enable_array(self, name: str) -> None:
         """Enable the block/set array with name.
 
         Parameters
@@ -4223,12 +4226,12 @@ class ExodusIIBlockSet(_NoNewAttrMixin):
         enable_method = self._construct_result_method('Set', 'Status')
         enable_method(name, 1)
 
-    def enable_all_arrays(self):
+    def enable_all_arrays(self) -> None:
         """Enable all arrays in block/set."""
         for name in self.array_names:
             self.enable_array(name)
 
-    def disable_array(self, name):
+    def disable_array(self, name: str) -> None:
         """Disable the block/set array with name.
 
         Parameters
@@ -4240,12 +4243,12 @@ class ExodusIIBlockSet(_NoNewAttrMixin):
         disable_method = self._construct_result_method('Set', 'Status')
         disable_method(name, 0)
 
-    def disable_all_arrays(self):
+    def disable_all_arrays(self) -> None:
         """Disable all arrays in block/set."""
         for name in self.array_names:
             self.disable_array(name)
 
-    def array_status(self, name):
+    def array_status(self, name: str) -> bool:
         """Get the status of the block/set array with name.
 
         Parameters
@@ -4260,7 +4263,7 @@ class ExodusIIBlockSet(_NoNewAttrMixin):
 
         """
         status_method = self._construct_result_method('Get', 'Status')
-        return status_method(name)
+        return bool(status_method(name))
 
 
 @dataclass(order=True)
@@ -4287,7 +4290,7 @@ class _SeriesReader(BaseVTKReader, Generic[_SeriesEachReader]):
         self._reader_type: type[_SeriesEachReader] | None = None
         self._active_reader: _SeriesEachReader | None = None
 
-    def SetFileName(self, filename) -> None:
+    def SetFileName(self, filename: str | Path) -> None:
         """Set filename and update reader.
 
         Parameters
@@ -4323,7 +4326,7 @@ class _SeriesReader(BaseVTKReader, Generic[_SeriesEachReader]):
 
         return cast('type[_SeriesEachReader]', CLASS_READERS[child_ext])
 
-    def UpdateInformation(self):
+    def UpdateInformation(self) -> None:
         """Parse series file."""
         if self._filename is None:
             msg = 'Filename must be set'
@@ -4353,7 +4356,7 @@ class _SeriesReader(BaseVTKReader, Generic[_SeriesEachReader]):
         self._active_reader = cast('_SeriesEachReader', self._active_reader)
         self._data_object = self._active_reader.read()
 
-    def _SetActiveTime(self, time_value) -> None:
+    def _SetActiveTime(self, time_value: float) -> None:
         """Set active time.
 
         Parameters
@@ -4421,7 +4424,7 @@ class SeriesReader(BaseReader['DataObject'], TimeReader, Generic[_SeriesEachRead
         """Return number of time points or iterations available to read."""
         return len(self.reader._time_values)
 
-    def time_point_value(self, time_point) -> float:
+    def time_point_value(self, time_point: int) -> float:
         """Value of time point or iteration by index.
 
         Parameters
@@ -4442,7 +4445,7 @@ class SeriesReader(BaseReader['DataObject'], TimeReader, Generic[_SeriesEachRead
         """Active time or iteration value."""
         return self.reader._active_dataset.time
 
-    def set_active_time_value(self, time_value) -> None:
+    def set_active_time_value(self, time_value: float) -> None:
         """Set active time or iteration value.
 
         Parameters
@@ -4453,7 +4456,7 @@ class SeriesReader(BaseReader['DataObject'], TimeReader, Generic[_SeriesEachRead
         """
         self.reader._SetActiveTime(time_value)
 
-    def set_active_time_point(self, time_point) -> None:
+    def set_active_time_point(self, time_point: int) -> None:
         """Set active time or iteration by index.
 
         Parameters

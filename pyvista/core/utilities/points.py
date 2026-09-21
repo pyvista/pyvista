@@ -12,7 +12,6 @@ import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 
 if TYPE_CHECKING:
@@ -22,12 +21,12 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLike
 
 
-@_deprecate_positional_args(allowed=['points'])
-def vtk_points(  # noqa: PLR0917
+def vtk_points(
     points: VectorLike[float] | MatrixLike[float],
-    deep: bool = True,  # noqa: FBT001, FBT002
-    force_float: bool = False,  # noqa: FBT001, FBT002
-    allow_empty: bool = True,  # noqa: FBT001, FBT002
+    *,
+    deep: bool = True,
+    force_float: bool = False,
+    allow_empty: bool = True,
 ) -> _vtk.vtkPoints:
     """Convert a NumPy array or array-like to a :vtk:`vtkPoints` object.
 
@@ -155,10 +154,10 @@ def line_segments_from_points(points: VectorLike[float] | MatrixLike[float]) -> 
     return poly
 
 
-@_deprecate_positional_args(allowed=['points'])
 def lines_from_points(
     points: VectorLike[float] | MatrixLike[float],
-    close: bool = False,  # noqa: FBT001, FBT002
+    *,
+    close: bool = False,
 ) -> PolyData:
     """Make a connected line set given an array of points.
 
@@ -199,13 +198,23 @@ def lines_from_points(
     return poly
 
 
-@_deprecate_positional_args(allowed=['points'])
-def fit_plane_to_points(  # noqa: PLR0917
+# fmt: off
+# ruff: disable[E501]
+@overload
+def fit_plane_to_points(points: MatrixLike[float], *, return_meta: Literal[False] = False, resolution: int = ..., init_normal: VectorLike[float] | str | None = ...) -> PolyData: ...
+@overload
+def fit_plane_to_points(points: MatrixLike[float], *, return_meta: Literal[True], resolution: int = ..., init_normal: VectorLike[float] | str | None = ...) -> tuple[PolyData, NumpyArray[np.floating], NumpyArray[np.floating]]: ...
+@overload
+def fit_plane_to_points(points: MatrixLike[float], *, return_meta: bool = ..., resolution: int = ..., init_normal: VectorLike[float] | str | None = ...) -> PolyData | tuple[PolyData, NumpyArray[np.floating], NumpyArray[np.floating]]: ...
+# ruff: enable[E501]
+# fmt: on
+def fit_plane_to_points(
     points: MatrixLike[float],
-    return_meta: bool = False,  # noqa: FBT001, FBT002
+    *,
+    return_meta: bool = False,
     resolution: int = 10,
-    init_normal: VectorLike[float] | None = None,
-) -> PolyData | tuple[PolyData, NumpyArray[np.float64], NumpyArray[np.float64]]:
+    init_normal: VectorLike[float] | str | None = None,
+) -> PolyData | tuple[PolyData, NumpyArray[np.floating], NumpyArray[np.floating]]:
     """Fit a plane to points using its :func:`principal_axes`.
 
     The plane is automatically sized and oriented to fit the extents of
@@ -386,11 +395,21 @@ def fit_plane_to_points(  # noqa: PLR0917
     return plane
 
 
+# fmt: off
+# ruff: disable[E501]
+@overload
+def fit_line_to_points(points: MatrixLike[float], *, resolution: int = ..., init_direction: VectorLike[float] | str | None = ..., return_meta: Literal[False] = False) -> PolyData: ...
+@overload
+def fit_line_to_points(points: MatrixLike[float], *, resolution: int = ..., init_direction: VectorLike[float] | str | None = ..., return_meta: Literal[True]) -> tuple[PolyData, float, NumpyArray[float]]: ...
+@overload
+def fit_line_to_points(points: MatrixLike[float], *, resolution: int = ..., init_direction: VectorLike[float] | str | None = ..., return_meta: bool = ...) -> PolyData | tuple[PolyData, float, NumpyArray[float]]: ...
+# ruff: enable[E501]
+# fmt: on
 def fit_line_to_points(
     points: MatrixLike[float],
     *,
     resolution: int = 1,
-    init_direction: VectorLike[float] | None = None,
+    init_direction: VectorLike[float] | str | None = None,
     return_meta: bool = False,
 ) -> PolyData | tuple[PolyData, float, NumpyArray[float]]:
     """Fit a line to points using its :func:`principal_axes`.
@@ -408,7 +427,7 @@ def fit_line_to_points(
     resolution : int, default: 1
         Number of pieces to divide the line into.
 
-    init_direction : VectorLike[float], optional
+    init_direction : VectorLike[float] | str, optional
         Flip the direction of the line's points such that it best aligns with this
         vector. Can be a vector or string specifying the axis by name (for example, ``'x'``
         or ``'-x'``, etc.).
@@ -685,24 +704,18 @@ def vector_poly_data(
     return pv.PolyData(pdata)
 
 
+# fmt: off
+# ruff: disable[E501]
 @overload
 def principal_axes(points: MatrixLike[float]) -> NumpyArray[float]: ...
 @overload
-def principal_axes(
-    points: MatrixLike[float],
-    *,
-    return_std: Literal[True] = True,
-) -> tuple[NumpyArray[float], NumpyArray[float]]: ...
+def principal_axes(points: MatrixLike[float], *, return_std: Literal[True] = True) -> tuple[NumpyArray[float], NumpyArray[float]]: ...
 @overload
-def principal_axes(
-    points: MatrixLike[float],
-    *,
-    return_std: Literal[False] = False,
-) -> NumpyArray[float]: ...
+def principal_axes(points: MatrixLike[float], *, return_std: Literal[False] = False) -> NumpyArray[float]: ...
 @overload
-def principal_axes(
-    points: MatrixLike[float], *, return_std: bool = ...
-) -> NumpyArray[float] | tuple[NumpyArray[float], NumpyArray[float]]: ...
+def principal_axes(points: MatrixLike[float], *, return_std: bool = ...) -> NumpyArray[float] | tuple[NumpyArray[float], NumpyArray[float]]: ...
+# ruff: enable[E501]
+# fmt: on
 def principal_axes(
     points: MatrixLike[float], *, return_std: bool = False
 ) -> NumpyArray[float] | tuple[NumpyArray[float], NumpyArray[float]]:

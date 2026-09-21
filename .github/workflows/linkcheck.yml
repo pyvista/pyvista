@@ -38,6 +38,16 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+
+      - name: "Collect example dataset URLs"
+        # lychee reads files, so it never sees the URLs the example loaders build at runtime.
+        run: |
+          pip install -q .
+          python .github/scripts/dataset_urls.py "$RUNNER_TEMP/dataset-urls"
+
       - name: "Compute weekly cache key"
         id: cachekey
         # Rotate the cache weekly so a stale entry cannot pin the job to a
@@ -57,8 +67,24 @@ jobs:
           args: "."
           fail: false
 
+      - name: "Check example dataset URLs"
+        id: datasets
+        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8
+        with:
+          # Only 200 passes here: an accepted 429 would pass a missing dataset, so it is retried instead.
+          args: "--accept 200 ${{ runner.temp }}/dataset-urls"
+          output: lychee/datasets.md
+          fail: false
+
+      - name: "Upload example dataset URLs"
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: dataset-urls
+          path: ${{ runner.temp }}/dataset-urls
+
       - name: "Report Failure"
-        if: steps.lychee.outputs.exit_code != 0
+        if: steps.lychee.outputs.exit_code != 0 || steps.datasets.outputs.exit_code != 0
         env:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
@@ -75,7 +101,7 @@ jobs:
             /^## Redirects per input/ {skip=1; next}
             skip && /^##? [^#]/ {skip=0}
             !skip
-          ' ./lychee/out.md)
+          ' ./lychee/out.md ./lychee/datasets.md)
 
           body=$(cat <<EOF
           See [the linkcheck run](${RUN_URL}) for the full output.
@@ -94,7 +120,10 @@ jobs:
           fi
 
       - name: "Exit Action"
-        if: steps.lychee.outputs.exit_code != 0
+        if: steps.lychee.outputs.exit_code != 0 || steps.datasets.outputs.exit_code != 0
         env:
           LYCHEE_EXIT_CODE: ${{ steps.lychee.outputs.exit_code }}
-        run: exit "$LYCHEE_EXIT_CODE"
+          DATASETS_EXIT_CODE: ${{ steps.datasets.outputs.exit_code }}
+        run: |
+          [ "$LYCHEE_EXIT_CODE" != 0 ] && exit "$LYCHEE_EXIT_CODE"
+          exit "$DATASETS_EXIT_CODE"

@@ -309,9 +309,12 @@ jobs:
       # ALL STEPS ABOVE SHOULD BE EXACTLY THE SAME FOR EACH OS
       # ALL STEPS BELOW SHOULD MIMIC THE UNIT TESTING WORKFLOW EXACTLY
 
+      - name: Set up headless display
+        uses: pyvista/setup-headless-display-action@c103a2ff45650d38cb71684b5dc6cdfeb9442c79
+
       - uses: awalsh128/cache-apt-pkgs-action@553a35bb8ebd9fcabcb1c9451aa4c98e1b4ca8a9
         with:
-          packages: xvfb libgl1 libglx-mesa0 libosmesa6
+          packages: libosmesa6
           version: 3.0
 
       - name: Restore pyvista/data cache
@@ -332,7 +335,7 @@ jobs:
         if: ${{ !cancelled() }}
         env:
           TOX_ENV: py${{ matrix.python-version }}-plotting-vtk_local
-        run: xvfb-run tox run -e "$TOX_ENV" 2>&1 | tee plotting-test.log
+        run: tox run -e "$TOX_ENV" 2>&1 | tee plotting-test.log
 
       - name: Upload failure summary
         if: failure()
@@ -486,7 +489,7 @@ jobs:
           key: ${{ needs.cache-github-hosted.outputs.key }}
 
       - name: Set up headless display
-        uses: pyvista/setup-headless-display-action@b0bf9f57d62d2b3fee9f1c0e0c7e390f05e97a4e
+        uses: pyvista/setup-headless-display-action@c103a2ff45650d38cb71684b5dc6cdfeb9442c79
 
       - name: Install tox-uv
         run: pip install tox-uv
@@ -665,17 +668,20 @@ jobs:
                 jobs_list+="  ⚠️ Same failure signature as the [previous report](${prev_url})."$'\n'
               fi
 
-              # Counted here rather than trusting pytest's own "N failed" line, which isn't in
-              # $summary any more (and wasn't reliable for repeat-detection either -- see the
-              # FAILED/ERROR-only filtering above).
-              n_failures="$(printf '%s\n' "$summary" | grep -c .)"
-              failure_word="failures"
-              [ "$n_failures" -eq 1 ] && failure_word="failure"
+              # Without a pytest short-summary section the summary is the tail of the tox log.
+              n_failures="$(printf '%s\n' "$summary" | grep -cE '^(FAILED|ERROR) ' || true)"
+              if [ "$n_failures" -eq 0 ]; then
+                summary_label="failed before pytest reported (end of log)"
+              elif [ "$n_failures" -eq 1 ]; then
+                summary_label="1 failure"
+              else
+                summary_label="${n_failures} failures"
+              fi
 
               # Indented 2 spaces to stay nested inside this list item on GitHub.
               jobs_list+="  <!-- failure-hash:${name}:${hash} -->"$'\n'
               jobs_list+="  <details>"$'\n'
-              jobs_list+="  <summary>❌ ${n_failures} ${failure_word}</summary>"$'\n\n'
+              jobs_list+="  <summary>❌ ${summary_label}</summary>"$'\n\n'
               jobs_list+='  ```text'$'\n'
               jobs_list+="$(printf '%s\n' "$summary" | sed 's/^/  /')"$'\n'
               jobs_list+='  ```'$'\n\n'

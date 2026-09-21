@@ -861,6 +861,12 @@ def test_load_and_merge_raises_when_no_loadable_files():
         _load_and_merge([_DownloadableFile('foo.vtk')])
 
 
+def test_load_and_merge_raises_for_invalid_loaded_type():
+    bad_loader = _DatasetLoader(lambda: np.array([1, 2, 3]))
+    with pytest.raises(TypeError, match='Only DataSet objects can be merged'):
+        _load_and_merge([bad_loader])
+
+
 def test_get_file_or_folder_size_missing_path_raises(tmp_path):
     missing = str(tmp_path / 'does-not-exist')
     with pytest.raises(ValueError, match='Expected a file or folder path'):
@@ -897,6 +903,36 @@ def test_load_as_multiblock_non_loadable_file_before_loadable_file():
     multi = _load_as_multiblock((not_loadable, loadable))
     assert multi.keys() == ['HeadMRVolume']
     assert isinstance(multi['HeadMRVolume'], pv.ImageData)
+
+
+@pytest.mark.parametrize(
+    ('filename', 'companion_names', 'reader_types'),
+    [
+        ('mesh.frd', ('pyvista_frd.FRDReader',), ()),
+        ('mesh.pv', ('pyvista_zstd.Reader',), ()),
+        ('mesh.zvtk', ('pyvista_zstd.Reader',), ()),
+        ('mesh.vtp', (), (pv.XMLPolyDataReader,)),
+        ('mesh.npy', (), ()),
+    ],
+)
+def test_unique_companion_reader_names(tmp_path, filename, companion_names, reader_types):
+    (path := tmp_path / filename).touch()
+    loader = _SingleFileDatasetLoader(str(path))
+    assert loader.unique_companion_reader_names == companion_names
+    assert loader.unique_reader_types == reader_types
+
+
+def test_unique_companion_reader_names_deduplicates(tmp_path):
+    paths = [tmp_path / 'mesh.pv', tmp_path / 'mesh.zvtk']
+    for path in paths:
+        path.touch()
+
+    def _files_func():
+        return tuple(_SingleFileDatasetLoader(str(path)) for path in paths)
+
+    loader = _MultiFileDatasetLoader(_files_func)
+    assert loader.unique_extensions == ('.pv', '.zvtk')
+    assert loader.unique_companion_reader_names == ('pyvista_zstd.Reader',)
 
 
 def test_overloads_register_with_typing_extensions():

@@ -26,7 +26,6 @@ if TYPE_CHECKING:
     from trame_pyvista.jupyter import EmbeddableWidget
     from trame_pyvista.jupyter import Widget
 
-    from pyvista import pyvista_ndarray
     from pyvista.jupyter import JupyterBackendOptions
     from pyvista.plotting.plotter import Plotter
 
@@ -133,6 +132,5 @@ def show_static_image(
     if plotter.last_image is None:
         # Must render here, otherwise plotter will segfault.
         plotter.render()
-        plotter.last_image = plotter.screenshot(screenshot, return_img=True)
-    last_image = cast('pyvista_ndarray', plotter.last_image)
-    return PIL.Image.fromarray(last_image)
+        plotter.last_image = plotter.screenshot(screenshot, return_img=True, render=False)
+    return PIL.Image.fromarray(plotter.last_image)

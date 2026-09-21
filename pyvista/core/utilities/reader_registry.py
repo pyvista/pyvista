@@ -22,7 +22,7 @@ import pooch
 
 from pyvista._warn_external import warn_external
 from pyvista.core.utilities._optional_formats import _READ
-from pyvista.core.utilities._optional_formats import _format_for
+from pyvista.core.utilities._optional_formats import _declared_reader_class
 from pyvista.core.utilities._optional_formats import _import_handler
 from pyvista.core.utilities._optional_formats import _installed_extensions
 from pyvista.core.utilities._optional_formats import _missing_message
@@ -283,22 +283,14 @@ def _download_uri(uri: str, ext: str) -> str:
 _T_Provider = TypeVar('_T_Provider', bound=ReaderProvider)
 
 
+# fmt: off
+# ruff: disable[E501]
 @overload
-def register_reader(
-    key: str,
-    handler: None = None,
-    *,
-    override: bool = False,
-) -> Callable[[_T_Provider], _T_Provider]: ...
-
-
+def register_reader(key: str, handler: None = None, *, override: bool = False) -> Callable[[_T_Provider], _T_Provider]: ...
 @overload
-def register_reader(
-    key: str,
-    handler: ReaderProvider,
-    *,
-    override: bool = False,
-) -> None: ...
+def register_reader(key: str, handler: ReaderProvider, *, override: bool = False) -> None: ...
+# ruff: enable[E501]
+# fmt: on
 
 
 def register_reader(
@@ -323,9 +315,12 @@ def register_reader(
 
     * A bare **callable** ``handler(path, **kwargs)``. This is the
       lighter form for a format that has no reader-level state to
-      expose. :func:`pyvista.read` calls it directly;
-      :func:`pyvista.get_reader` raises :class:`ValueError` for the
-      extension because there is no reader object to hand back.
+      expose. :func:`pyvista.read` calls it directly, forwarding its
+      ``**kwargs``; :func:`pyvista.get_reader` raises
+      :class:`ValueError` for the extension because there is no reader
+      object to hand back. A callable registered with ``override=True``
+      is the exception: reader arguments for an extension PyVista
+      already reads route to the built-in reader instead.
 
     .. versionadded:: 0.48.0
 
@@ -494,11 +489,8 @@ def _missing_reader_message(ext: str, filename: str | None = None) -> str | None
 
 def _optional_reader_class_name(ext: str) -> str | None:
     """Return the reader class an optional format exposes, when it is importable."""
-    fmt = _format_for(ext, _READ)
-    if fmt is None:
-        return None
     handler, _ = _import_handler(ext, _READ)
-    return fmt.reader_class if handler is not None else None
+    return _declared_reader_class(ext) if handler is not None else None
 
 
 def _resolve_optional_reader(ext: str) -> bool:

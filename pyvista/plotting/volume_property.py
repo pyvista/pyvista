@@ -7,7 +7,6 @@ import weakref
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
@@ -87,22 +86,22 @@ class VolumeProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkVolumePropert
 
     """
 
-    @_deprecate_positional_args
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
-        lookup_table=None,
-        interpolation_type=None,
-        ambient=None,
-        diffuse=None,
-        specular=None,
-        specular_power=None,
-        shade=None,
-        opacity_unit_distance=None,
-    ):
+        *,
+        lookup_table: LookupTable | None = None,
+        interpolation_type: str | None = None,
+        ambient: float | None = None,
+        diffuse: float | None = None,
+        specular: float | None = None,
+        specular_power: float | None = None,
+        shade: bool | None = None,
+        opacity_unit_distance: float | None = None,
+    ) -> None:
         """Initialize the :vtk:`vtkVolumeProperty` class."""
         super().__init__()
-        self._lookup_table_ = None
-        self._lookup_table_observer_id = None
+        self._lookup_table_: weakref.ref[LookupTable] | None = None
+        self._lookup_table_observer_id: int | None = None
         if lookup_table is not None:
             self.apply_lookup_table(lookup_table)
         if interpolation_type is not None:
@@ -128,7 +127,7 @@ class VolumeProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkVolumePropert
         return None
 
     @_lookup_table.setter
-    def _lookup_table(self, lookup_table: LookupTable):
+    def _lookup_table(self, lookup_table: LookupTable) -> None:
         """Set the lookup table if applied via ``apply_lookup_table``."""
         if self._lookup_table is not None and self._lookup_table_observer_id is not None:
             # Clean up the old lookup table observer
@@ -140,7 +139,7 @@ class VolumeProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkVolumePropert
             lambda *_: self.reapply_lookup_table(),
         )
 
-    def reapply_lookup_table(self):
+    def reapply_lookup_table(self) -> None:
         """Reapply the lookup table previously applied.
 
         The VolumeProperty is unable to keep a dynamic link to the colors
@@ -156,7 +155,7 @@ class VolumeProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkVolumePropert
         if self._lookup_table is not None:
             self.apply_lookup_table(self._lookup_table)
 
-    def apply_lookup_table(self, lookup_table: LookupTable):
+    def apply_lookup_table(self, lookup_table: LookupTable) -> None:
         """Apply a lookup table to the volume property.
 
         Applies both the color and opacity of the lookup table as transfer
@@ -188,14 +187,14 @@ class VolumeProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkVolumePropert
 
         """
         if not isinstance(lookup_table, pv.LookupTable):
-            msg = '`lookup_table` must be a `pyvista.LookupTable`'
+            msg = '`lookup_table` must be a `pyvista.LookupTable`'  # type: ignore[unreachable]
             raise TypeError(msg)
         if self._lookup_table != lookup_table:
             self._lookup_table = lookup_table
         self.SetColor(lookup_table.to_color_tf())
         self.SetScalarOpacity(lookup_table.to_opacity_tf())
 
-    def __del__(self):
+    def __del__(self) -> None:
         """Clean up the lookup table observer when the object is deleted."""
         if self._lookup_table_observer_id is not None and self._lookup_table is not None:
             self._lookup_table.RemoveObserver(self._lookup_table_observer_id)
@@ -252,7 +251,7 @@ class VolumeProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkVolumePropert
         return self.GetInterpolationTypeAsString().split()[0].lower()
 
     @interpolation_type.setter
-    def interpolation_type(self, value: str):
+    def interpolation_type(self, value: str) -> None:
         if value == 'linear':
             self.SetInterpolationTypeToLinear()
         elif value == 'nearest':
@@ -275,7 +274,7 @@ class VolumeProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkVolumePropert
         return self.GetScalarOpacityUnitDistance()
 
     @opacity_unit_distance.setter
-    def opacity_unit_distance(self, value: float):
+    def opacity_unit_distance(self, value: float) -> None:
         self.SetScalarOpacityUnitDistance(value)
 
     @property
@@ -295,7 +294,7 @@ class VolumeProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkVolumePropert
         return bool(self.GetShade())
 
     @shade.setter
-    def shade(self, value: bool):
+    def shade(self, value: bool) -> None:
         self.SetShade(value)
 
     @property
@@ -321,7 +320,7 @@ class VolumeProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkVolumePropert
         return bool(self.GetIndependentComponents())
 
     @independent_components.setter
-    def independent_components(self, value: bool):
+    def independent_components(self, value: bool) -> None:
         self.SetIndependentComponents(value)
 
     @property
@@ -339,7 +338,7 @@ class VolumeProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkVolumePropert
         return self.GetAmbient()
 
     @ambient.setter
-    def ambient(self, value: float):
+    def ambient(self, value: float) -> None:
         self.SetAmbient(value)
 
     @property
@@ -357,7 +356,7 @@ class VolumeProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkVolumePropert
         return self.GetDiffuse()
 
     @diffuse.setter
-    def diffuse(self, value: float):
+    def diffuse(self, value: float) -> None:
         self.SetDiffuse(value)
 
     @property
@@ -376,7 +375,7 @@ class VolumeProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkVolumePropert
         return self.GetSpecular()
 
     @specular.setter
-    def specular(self, value: float):
+    def specular(self, value: float) -> None:
         self.SetSpecular(value)
 
     @property
@@ -389,7 +388,7 @@ class VolumeProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkVolumePropert
         return self.GetSpecularPower()
 
     @specular_power.setter
-    def specular_power(self, value: float):
+    def specular_power(self, value: float) -> None:
         self.SetSpecularPower(value)
 
     def copy(self) -> VolumeProperty:
@@ -405,7 +404,7 @@ class VolumeProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkVolumePropert
         new_prop.DeepCopy(self)
         return new_prop
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Representation of this property."""
         props = [
             f'{type(self).__name__} ({hex(id(self))})',

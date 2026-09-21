@@ -32,6 +32,8 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.plotting import BackgroundPlotter
 from pyvista.plotting import QtDeprecationError
 from pyvista.plotting import QtInteractor
+from pyvista.plotting._property import _HAS_NATIVE_POINT_SHAPES
+from pyvista.plotting._typing import OpacityOptions
 from pyvista.plotting.axes_assembly import ScaleModeOptions
 from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.errors import InvalidCameraError
@@ -44,6 +46,8 @@ from pyvista.plotting.renderer import _MIN_LUT_SAMPLES
 from pyvista.plotting.renderer import _MIN_LUT_SIZE
 from pyvista.plotting.renderer import _MIN_PREFILTER_SAMPLES
 from pyvista.plotting.texture import numpy_to_texture
+from pyvista.plotting.tools import _opacity_transfer_functions
+from pyvista.plotting.tools import normalize
 from pyvista.plotting.utilities import algorithms
 from tests.conftest import _get_module_functions
 from tests.core.test_imagedata_filters import labeled_image  # noqa: F401
@@ -75,12 +79,25 @@ def using_mesa():
     return 'Mesa' in regex.findall(gpu_info)[0]
 
 
-# always set on Windows CI
-# These tests fail with mesa opengl on windows
-skip_mesa = pytest.mark.skipif(using_mesa(), reason='Does not display correctly within OSMesa')
-skip_windows_mesa = skip_mesa and pytest.mark.skip_windows(
-    'Does not display correctly within OSMesa on Windows'
+class _Lazy:
+    """Answer a predicate once, when a marker is first evaluated."""
+
+    def __init__(self, predicate) -> None:
+        self._predicate = predicate
+        self._answer: bool | None = None
+
+    def __bool__(self) -> bool:
+        """Return the predicate's answer, evaluating it at most once."""
+        if self._answer is None:
+            self._answer = self._predicate()
+        return self._answer
+
+
+# Mesa opengl is always used on Windows CI, so the Windows skip is the Mesa skip there.
+skip_mesa = pytest.mark.skipif(
+    _Lazy(using_mesa), reason='Does not display correctly within OSMesa'
 )
+skip_windows_mesa = pytest.mark.skip_windows('Does not display correctly within OSMesa on Windows')
 skip_lesser_9_4_X = pytest.mark.needs_vtk_version(  # noqa: N816
     9, 4, reason='Functions not implemented before 9.4.X or invalid results prior'
 )
@@ -885,9 +902,9 @@ def test_plot_show_grid(sphere):
         pl.show_grid(location='foo')
     with pytest.raises(TypeError, match='location must be a string'):
         pl.show_grid(location=10)
-    with pytest.raises(ValueError, match='Value of tick'):
+    with pytest.raises(ValueError, match='tick_location'):
         pl.show_grid(ticks='foo')
-    with pytest.raises(TypeError, match='must be a string'):
+    with pytest.raises(TypeError, match='must be an instance of'):
         pl.show_grid(ticks=10)
 
     pl.show_grid()  # Add mesh after to make sure bounds update
@@ -1732,9 +1749,12 @@ def test_screenshot(tmpdir):
 
     # check error before first render
     pl = pv.Plotter(off_screen=False)
-    pl.add_mesh(pv.Sphere())
-    with pytest.raises(RuntimeError):
-        pl.screenshot()
+    try:
+        pl.add_mesh(pv.Sphere())
+        with pytest.raises(RuntimeError):
+            pl.screenshot()
+    finally:
+        pl.close()
 
 
 @pytest.mark.usefixtures('no_images_to_verify')
@@ -1767,6 +1787,21 @@ def test_screenshot_scaled():
     with pytest.raises(ValueError):  # noqa: PT011
         pl.image_scale = 0.5
 
+    pl.close()
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_screenshot_scaled_restores_window(sphere):
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, scalars=np.arange(sphere.n_points))
+    before = pl.screenshot()
+    assert pl.screenshot(scale=3).shape[:2] == tuple(3 * n for n in before.shape[:2])
+    # Tolerate sub-LSB pixel noise from non-deterministic renderers.
+    assert pv.compare_images(pl.screenshot(), before) < 1.0
+    pl.image_scale = 2
+    assert pl.get_image_depth().shape == tuple(2 * n for n in before.shape[:2])
+    pl.image_scale = 1
+    assert pv.compare_images(pl.image, before) < 1.0
     pl.close()
 
 
@@ -1842,6 +1877,34 @@ def test_screenshot_rendering(tmpdir):
     assert pl._first_time
     pl.save_graphic(filename)
     assert not pl._first_time
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_screenshot_renders_current_scene(sphere):
+    pl = pv.Plotter()
+    actor = pl.add_mesh(sphere, color='white')
+    pl.background_color = 'black'
+    shown = pl.screenshot()
+    actor.visibility = False
+    stale = pl.screenshot(render=False)
+    hidden = pl.screenshot()
+    assert np.any(shown)
+    assert np.array_equal(stale, shown)
+    assert not np.any(hidden)
+    pl.close()
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_prep_for_close_stores_last_image(sphere):
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
+    pl.screenshot()
+    pl.last_image = None
+    pl.last_image_depth = None
+    pl._prep_for_close()
+    assert pl.last_image is not None
+    assert pl.last_image_depth is not None
+    pl.close()
 
 
 @pytest.mark.usefixtures('no_images_to_verify')
@@ -2491,6 +2554,18 @@ def test_volume_rendering_mappers_image_data(mapper):
     pl = pv.Plotter()
     pl.add_volume(image, mapper=mapper)
     pl.show()
+
+
+@pytest.mark.skip_windows
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_add_volume_nested_multiblock_gives_one_volume_per_leaf():
+    grid = pv.ImageData(dimensions=(4, 4, 4))
+    grid.point_data['values'] = np.linspace(0.0, 1.0, grid.n_points)
+    nested = pv.MultiBlock([grid.copy(), pv.MultiBlock([None, grid.copy()])])
+    pl = pv.Plotter()
+    volumes = pl.add_volume(nested, name='vol')
+    assert [type(volume) for volume in volumes] == [pv.Volume, pv.Volume]
+    assert {'vol-0', 'vol-1'} <= set(pl.renderer.actors)
 
 
 @pytest.mark.skip_windows
@@ -3290,7 +3365,7 @@ def test_plot_compare_raises(no_images_to_verify):  # noqa: ARG001
     with pytest.raises(ValueError, match=re.escape(match)):
         pv.plot_compare([mesh, mesh], shape='not a shape')
 
-    match = '"shape" should be a list, tuple or string descriptor'
+    match = '"shape" must be an instance of any type'
     with pytest.raises(TypeError, match=re.escape(match)):
         pv.plot_compare([mesh, mesh], shape=2)
 
@@ -3517,6 +3592,31 @@ def test_opacity_transfer_functions():
     foo = [3, 5, 6, 10]
     mapping = pv.opacity_transfer_function(foo, n)
     assert len(mapping) == n
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+@pytest.mark.parametrize('name', ['sigmoid_1', 'sigmoid_2', 'sigmoid_15', 'sigmoid_20'])
+def test_opacity_transfer_function_reverses_every_sigmoid(name):
+    reversed_ = pv.opacity_transfer_function(f'{name}_r', 8)
+    assert np.array_equal(reversed_, pv.opacity_transfer_function(name, 8)[::-1])
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_opacity_transfer_function_foreground_has_no_reverse():
+    with pytest.raises(ValueError, match=r'Opacity transfer function \(foreground_r\) unknown'):
+        pv.opacity_transfer_function('foreground_r', 8)
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_opacity_options_match_the_named_mappings():
+    assert set(get_args(OpacityOptions)) == set(_opacity_transfer_functions(8))
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_normalize_maps_its_bounds_onto_zero_and_one():
+    values = np.array([0.0, 5.0, 10.0])
+    assert np.allclose(normalize(values), [0.0, 0.5, 1.0])
+    assert np.allclose(normalize(values, minimum=0.0, maximum=20.0), [0.0, 0.25, 0.5])
 
 
 @skip_windows_mesa
@@ -4408,10 +4508,54 @@ def test_ruler():
     pl.show()
 
 
+def test_ruler_flip_side():
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Box(bounds=(-1.25, 1.25, -0.3, 0.3, -0.3, 0.3)))
+    style = dict(font_size_factor=1.2, tick_length=18)
+    pl.add_ruler([-1.25, -0.6, 0], [1.25, -0.6, 0], title='+X', **style)
+    pl.add_ruler([1.25, -1.1, 0], [-1.25, -1.1, 0], title='-X', flip_side=True, **style)
+    pl.enable_parallel_projection()
+    pl.view_xy()
+    pl.camera.zoom(0.9)
+    pl.show()
+
+
+def test_ruler_renderer_scale():
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Box(bounds=(-1.25, 1.25, -0.3, 0.3, -0.3, 0.3)))
+    pl.add_ruler(
+        [-1.25, -0.6, 0],
+        [1.25, -0.6, 0],
+        title='X Distance',
+        font_size_factor=1.0,
+        tick_length=20,
+    )
+    pl.set_scale(xscale=3, yscale=2)
+    pl.enable_parallel_projection()
+    pl.view_xy()
+    pl.camera.zoom(0.55)
+    pl.show()
+
+
 def test_ruler_number_labels():
     pl = pv.Plotter()
     pl.add_mesh(pv.Sphere())
-    pl.add_ruler([-0.6, -0.6, 0], [0.6, -0.6, 0], font_size_factor=1.2, number_labels=2)
+    pl.add_ruler([-0.6, -0.6, 0], [0.6, -0.6, 0], font_size_factor=1.2, number_labels=6)
+    pl.view_xy()
+    pl.show()
+
+
+@pytest.mark.needs_vtk_version(9, 4, 0, reason='SnapLabelsToGrid was added in VTK 9.4.0')
+def test_ruler_snap_labels():
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    pl.add_ruler(
+        [-0.6, -0.6, 0],
+        [0.6, -0.6, 0],
+        font_size_factor=1.2,
+        number_labels=6,
+        snap_labels=True,
+    )
     pl.view_xy()
     pl.show()
 
@@ -4518,6 +4662,47 @@ def test_plot_categories_true(sphere):
     sphere['data'] = np.linspace(0, 5, sphere.n_points, dtype=int)
     pl = pv.Plotter()
     pl.add_mesh(sphere, scalars='data', categories=True, lighting=False)
+    pl.show()
+
+
+@skip_windows_mesa
+def test_plot_categories_non_contiguous(sphere):
+    sphere['labels'] = np.zeros(sphere.n_cells)
+    sphere['labels'][: sphere.n_cells // 2] = 2
+    sphere['labels'][: sphere.n_cells // 4] = 8
+    pl = pv.Plotter()
+    actor = pl.add_mesh(
+        sphere,
+        scalars='labels',
+        categories=True,
+        cmap='glasbey',
+        lighting=False,
+        scalar_bar_args={
+            'width': 0.8,
+            'height': 0.2,
+            'position_x': 0.1,
+            'position_y': 0.2,
+            'label_font_size': 40,
+        },
+    )
+    lut = actor.mapper.lookup_table
+    assert len({lut.map_value(value)[:3] for value in (0, 2, 8)}) == 3
+    scalar_bar = pl.scalar_bar
+    assert scalar_bar.GetUseCustomLabels()
+    assert list(pv.convert_array(scalar_bar.GetCustomLabels())) == [0.0, 2.0, 8.0]
+    pl.show()
+
+
+def test_string_scalars_replot():
+    mesh = pv.RectilinearGrid([0.0, 1.0, 2.0], [0.0, 1.0], [0.0])
+    pl = pv.Plotter()
+    actor = pl.add_mesh(mesh, scalars=['CellA', 'CellA'])
+    pl.remove_actor(actor)
+    pl.add_mesh(
+        mesh,
+        scalars=['CellA', 'CellB'],
+        scalar_bar_args={'width': 0.8, 'height': 0.3, 'label_font_size': 40},
+    )
     pl.show()
 
 
@@ -5179,6 +5364,79 @@ def test_plotter_volume_opacity_n_colors():
 
 
 @skip_windows_mesa  # due to opacity
+def test_add_volume_categories_true(no_images_to_verify):  # noqa: ARG001
+    grid = pv.ImageData(dimensions=(5, 2, 2))
+    grid.point_data['labels'] = np.tile([0.0, 3.0, 12.0, 24.0, 27.0], 4)
+    pl = pv.Plotter()
+    pl.add_volume(grid, scalars='labels', categories=True)
+    lut = pl.mapper.lookup_table
+    assert pl.mapper.scalar_range == (-1.5, 28.5)
+    colors = {lut.map_value(value)[:3] for value in (0, 3, 12, 24, 27)}
+    assert len(colors) == 5
+    assert lut.map_value(6) == lut.nan_color.float_rgba
+    bar = pl.scalar_bar
+    assert bar.GetUseCustomLabels()
+    assert list(pv.convert_array(bar.GetCustomLabels())) == [0.0, 3.0, 12.0, 24.0, 27.0]
+    assert bar.GetLabelFormat() == '%.0f'
+    pl.close()
+
+
+def test_add_volume_categories_survives_transfer_function(no_images_to_verify):  # noqa: ARG001
+    grid = pv.ImageData(dimensions=(5, 2, 2))
+    grid.point_data['labels'] = np.tile([0.0, 3.0, 12.0, 24.0, 27.0], 4)
+    pl = pv.Plotter()
+    pl.add_volume(grid, scalars='labels', categories=True)
+    lut = pl.mapper.lookup_table
+    transfer_function = lut.to_color_tf()
+    for value in (0, 3, 12, 24, 27):
+        assert transfer_function.GetColor(float(value)) == pytest.approx(
+            lut.map_value(value)[:3], abs=1 / 255
+        )
+    pl.close()
+
+
+def test_add_volume_categories_keeps_clim(no_images_to_verify):  # noqa: ARG001
+    grid = pv.ImageData(dimensions=(5, 2, 2))
+    grid.point_data['labels'] = np.tile([0.0, 3.0, 12.0, 24.0, 27.0], 4)
+    pl = pv.Plotter()
+    pl.add_volume(grid, scalars='labels', categories=True, clim=(0, 100))
+    lut = pl.mapper.lookup_table
+    assert pl.mapper.scalar_range == (0.0, 100.0)
+    assert len({lut.map_value(value)[:3] for value in (0, 3, 12, 24, 27)}) == 5
+    pl.close()
+
+
+def test_add_volume_categories_all_nan(no_images_to_verify):  # noqa: ARG001
+    grid = pv.ImageData(dimensions=(5, 2, 2))
+    grid.point_data['labels'] = np.full(20, np.nan)
+    pl = pv.Plotter()
+    with pytest.warns(RuntimeWarning, match='All-NaN axis encountered'):
+        pl.add_volume(grid, scalars='labels', categories=True)
+    assert not pl.scalar_bars['labels'].GetUseCustomLabels()
+    pl.close()
+
+
+def test_add_volume_categories_lookup_table(no_images_to_verify):  # noqa: ARG001
+    grid = pv.ImageData(dimensions=(5, 2, 2))
+    grid.point_data['labels'] = np.tile([0.0, 3.0, 12.0, 24.0, 27.0], 4)
+    lut = pv.LookupTable('viridis', n_values=4)
+    pl = pv.Plotter()
+    pl.add_volume(grid, scalars='labels', categories=True, cmap=lut)
+    assert pl.mapper.lookup_table is lut
+    assert lut.n_values == 4
+    pl.close()
+
+
+def test_add_volume_categories_int(no_images_to_verify):  # noqa: ARG001
+    grid = pv.ImageData(dimensions=(5, 2, 2))
+    grid.point_data['labels'] = np.tile([0.0, 3.0, 12.0, 24.0, 27.0], 4)
+    pl = pv.Plotter()
+    pl.add_volume(grid, scalars='labels', categories=3)
+    assert pl.mapper.lookup_table.n_values == 3
+    assert pl.mapper.scalar_range == (0.0, 27.0)
+    pl.close()
+
+
 def test_plotter_volume_clim():
     # Validate that we can use clim with volume rendering
     grid = pv.ImageData(dimensions=(9, 9, 9))
@@ -5947,10 +6205,13 @@ def test_plotter_render_callback():
     assert len(pl._on_render_callbacks) == 0
     pl.add_on_render_callback(callback, render_event=False)
     assert len(pl._on_render_callbacks) == 1
-    pl.show()
+    pl.show(auto_close=False)
     assert n_ren[0] == 1  # if two, render_event not respected
+    pl.render()
+    assert n_ren[0] == 2
     pl.clear_on_render_callbacks()
     assert len(pl._on_render_callbacks) == 0
+    pl.close()
 
 
 def test_plot_texture_alone(texture):
@@ -6032,6 +6293,52 @@ def test_update_scalar_bar_range(sphere):
     with pytest.raises(ValueError, match='not valid/not found in this plotter'):
         pl.update_scalar_bar_range(minmax, name='invalid')
     pl.show()
+
+
+def test_update_scalar_bar_range_shared_mappers():
+    left = pv.Sphere(center=(0, 0, 0))
+    right = pv.Sphere(center=(1.5, 0, 0))
+    left['Scalar'] = left.points[:, 2]
+    right['Scalar'] = right.points[:, 2]
+    pl = pv.Plotter()
+    sargs = {
+        'width': 0.8,
+        'height': 0.3,
+        'position_x': 0.1,
+        'position_y': 0.05,
+        'label_font_size': 40,
+        'title_font_size': 40,
+    }
+    left_actor = pl.add_mesh(left, scalar_bar_args=sargs)
+    right_actor = pl.add_mesh(right)
+    right_actor.visibility = False
+    pl.update_scalar_bar_range([-100, 0])
+    assert left_actor.mapper.scalar_range == (-100.0, 0.0)
+    assert right_actor.mapper.scalar_range == (-100.0, 0.0)
+    assert pl.scalar_bar.GetLookupTable().GetRange() == (-100.0, 0.0)
+    pl.show()
+
+
+def test_scaled_screenshot_scalar_bar_layout(sphere, no_images_to_verify):  # noqa: ARG001
+    sphere['z'] = sphere.points[:, 2]
+    pl = pv.Plotter()
+    pl.add_mesh(
+        sphere,
+        scalar_bar_args={
+            'title': 'Scalar bar title',
+            'title_font_size': 30,
+            'label_font_size': 30,
+        },
+    )
+    first = pl.screenshot(None, scale=2)
+    pl.camera.azimuth += 20
+    pl.reset_camera()
+    second = pl.screenshot(None, scale=2)
+    # The bar and its title are the only things in the bottom fifth of the window
+    bottom = int(0.8 * first.shape[0])
+    assert len(np.unique(first[bottom:].reshape(-1, 3), axis=0)) > 1
+    assert np.array_equal(first[bottom:], second[bottom:])
+    pl.close()
 
 
 def test_add_remove_scalar_bar(sphere):
@@ -6412,6 +6719,12 @@ def _add_checkerboard_grid_scene(pl):
     return [actor]
 
 
+def _add_checkerboard_grid_scene_off_center(pl):
+    actors = _add_checkerboard_grid_scene(pl)
+    pl.camera.window_center = (0.45, -0.3)
+    return actors
+
+
 # The distortion is a per-vertex transform of clip coordinates, so it does not
 # depend on the scene. One flat calibration target carries both cases that a
 # render can tell apart: the radial terms, and the tangential ones.
@@ -6427,6 +6740,11 @@ def _add_checkerboard_grid_scene(pl):
             _add_checkerboard_grid_scene,
             (0.08, -0.06, 0.05, -0.07),
             id='checkerboard_centered-mixed_tangential',
+        ),
+        pytest.param(
+            _add_checkerboard_grid_scene_off_center,
+            (3.8, 2.1, 0.004, -0.003),
+            id='checkerboard_off_center-strong_barrel',
         ),
     ],
 )
@@ -6601,6 +6919,29 @@ def test_camera_distortion_reads_each_subplots_projection_and_keeps_it_current()
 
 
 @pytest.mark.usefixtures('no_images_to_verify')
+def test_camera_distortion_is_centered_on_the_principal_point():
+    """The coefficients act on the distance from the principal point of the camera."""
+    image_size = (640, 480)
+    intrinsics = np.array([[800.0, 0.0, 200.0], [0.0, 760.0, 150.0], [0.0, 0.0, 1.0]])
+    pl = pv.Plotter(window_size=image_size)
+    actor = pl.add_mesh(pv.Sphere())
+    pl.camera.intrinsic_matrix = intrinsics
+    pl.enable_camera_distortion((0.3, 0.1, 0.0, 0.0))
+
+    uniforms = actor.GetShaderProperty().GetVertexCustomUniforms()
+    values = [0.0, 0.0]
+    assert uniforms.GetUniform2f('u_distortion_projection_center', values)
+    width, height = image_size
+    assert values == pytest.approx(
+        (2 * intrinsics[0, 2] / width - 1, 1 - 2 * intrinsics[1, 2] / height)
+    )
+
+    pl.disable_camera_distortion()
+    assert not uniforms.GetUniform2f('u_distortion_projection_center', values)
+    pl.close()
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_camera_distortion_of_a_parallel_projection_does_not_follow_the_scene_scale():
     """A parallel projection has no focal length to write the coefficients in."""
 
@@ -6648,6 +6989,14 @@ def test_camera_distortion_reaches_an_actor_without_view_coordinates():
         return image.astype(int)
 
     assert np.abs(render(distort=True) - render(distort=False)).max() > 0
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+@pytest.mark.parametrize('color_box', [True, False])
+def test_create_axes_orientation_box_label_color(color_box):
+    actor = pv.create_axes_orientation_box(color_box=color_box, label_color='red')
+    cube = actor.GetParts().GetItemAsObject(0) if color_box else actor
+    assert cube.GetTextEdgesProperty().GetColor() == (1.0, 0.0, 0.0)
 
 
 def test_create_axes_orientation_box(verify_image_cache):
@@ -7401,6 +7750,7 @@ def test_point_sprite_shape_render(shape, verify_image_cache_wrapper):
     pl.show()
 
 
+@pytest.mark.usefixtures('no_images_to_verify')
 @pytest.mark.parametrize(
     'shape',
     ['circle', 'triangle', 'hexagon', 'diamond', 'asterisk', 'star'],
@@ -7421,9 +7771,22 @@ def test_point_sprite_shape_does_not_apply_to_surface(shape):
     )
     # The shape is persisted on the actor, but the shader replacement
     # must NOT be installed while the representation is 'Surface'.
-    assert actor._point_sprite_shape == shape
+    assert actor.point_sprite_shape == shape
     assert not actor._point_sprite_applied
     assert 'point_sprite' not in actor._shader_replacements
+    pl.close()
+
+
+def test_point_sprite_shape_surface_render():
+    """A surface renders unclipped while the theme asks for a point shape."""
+    theme = pv.plotting.themes._TestingTheme()
+    theme.point_shape = 'circle'
+    pl = pv.Plotter(theme=theme)
+    pl.add_mesh(
+        pv.Wavelet(),
+        style='surface',
+        show_scalar_bar=False,
+    )
     pl.show()
 
 
@@ -7454,6 +7817,7 @@ def test_point_sprite_shape_change_style(shape, verify_image_cache_wrapper):
     pl.show()
 
 
+@pytest.mark.skipif(_HAS_NATIVE_POINT_SHAPES, reason='Legacy shader replacement lifecycle')
 def test_point_sprite_shape_transition_updates_shader(no_images_to_verify):  # noqa: ARG001
     # Regression: if the applied-state is tracked as a boolean, calling
     # set_point_sprite_shape with a new shape while the previous shape
@@ -7475,6 +7839,7 @@ def test_point_sprite_shape_transition_updates_shader(no_images_to_verify):  # n
     assert 'point_sprite' not in actor._shader_replacements
 
 
+@pytest.mark.skipif(_HAS_NATIVE_POINT_SHAPES, reason='Legacy shader replacement lifecycle')
 def test_point_sprite_shape_observer_tracks_representation(no_images_to_verify):  # noqa: ARG001
     # With a shape persisted on the actor, toggling the representation
     # between Points and Surface must install / remove the shader via
@@ -7496,6 +7861,7 @@ def test_point_sprite_shape_observer_tracks_representation(no_images_to_verify):
     assert 'point_sprite' in actor._shader_replacements
 
 
+@pytest.mark.skipif(_HAS_NATIVE_POINT_SHAPES, reason='Legacy shader replacement lifecycle')
 def test_clear_point_sprite_shape_detaches_observer(no_images_to_verify):  # noqa: ARG001
     actor = pv.Actor()
     actor.prop.style = 'points'
@@ -7518,8 +7884,7 @@ def test_set_point_sprite_shape_accepts_enum(no_images_to_verify):  # noqa: ARG0
     actor = pv.Actor()
     actor.prop.style = 'points'
     actor.set_point_sprite_shape(PointSpriteShape.TRIANGLE)
-    assert actor._point_sprite_shape == 'triangle'
-    assert actor._point_sprite_applied == 'triangle'
+    assert actor.point_sprite_shape == 'triangle'
 
 
 @pytest.fixture

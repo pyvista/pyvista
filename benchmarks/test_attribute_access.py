@@ -28,6 +28,16 @@ def test_active_scalars(sphere, benchmark):
     assert benchmark(operator.attrgetter('active_scalars'), sphere).size
 
 
+def test_active_scalars_info_unchosen(unchosen_sphere, benchmark):
+    """Read the active scalars info of a mesh whose active array was never chosen."""
+    assert benchmark(operator.attrgetter('active_scalars_info'), unchosen_sphere)
+
+
+def test_active_scalars_unchosen(unchosen_sphere, benchmark):
+    """Read the active scalars of a mesh whose active array was never chosen."""
+    assert benchmark(operator.attrgetter('active_scalars'), unchosen_sphere).size
+
+
 def test_active_vectors_info(sphere, benchmark):
     """Read the active vectors association and name."""
     assert benchmark(operator.attrgetter('active_vectors_info'), sphere) is not None

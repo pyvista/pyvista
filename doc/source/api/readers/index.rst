@@ -142,7 +142,7 @@ of PyVista's reader machinery the format gets:
      - no
      - yes
    * - Keyword arguments to :func:`pyvista.read`
-     - dropped
+     - forwarded as ``handler(path, **kwargs)``
      - set as reader attributes
    * - ``progress_bar=True``, ``validate=``
      - ignored
@@ -211,6 +211,14 @@ This is the entry-point equivalent of ``override=True`` on
 :func:`pyvista.register_reader`.  Both groups accept both forms, a
 callable or a :class:`pyvista.BaseReader` subclass.
 
+A callable override is the one case where :func:`pyvista.read` does not
+forward its keyword arguments.  For an extension PyVista ships a reader
+for, those arguments name attributes of *that* reader, so
+``progress_bar``, ``validate`` and any keyword argument route the read
+past the override to the built-in rather than being reinterpreted by the
+callable.  Register a :class:`pyvista.BaseReader` subclass to expose
+options on an extension PyVista already reads.
+
 Declaring an override for an extension PyVista does *not* currently
 read is allowed and silent.  It costs nothing and keeps the package
 working if a later PyVista release adds a reader for that extension.
@@ -236,10 +244,12 @@ built-in format reads differently than expected.
 
 When :func:`pyvista.read` is given a remote URI (``https://``,
 ``s3://``, etc.) and a custom reader is registered for the file
-extension, the URI is passed directly to the reader.  If the reader
-raises :class:`~pyvista.LocalFileRequiredError`, PyVista downloads
-the file to a temporary local path and retries.  For built-in
-formats with no custom reader, the download happens automatically.
+extension, the URI is passed directly to the reader along with any
+keyword arguments.  If the reader raises
+:class:`~pyvista.LocalFileRequiredError`, PyVista downloads the file to
+a temporary local path and retries.  For built-in formats with no custom
+reader, and for a callable override handed reader arguments, the
+download happens automatically.
 This uses ``fsspec`` when available (install with
 ``pip install pyvista[io]``), falling back to ``pooch`` for HTTP(S)
 URIs.
