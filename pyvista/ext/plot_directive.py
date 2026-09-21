@@ -498,7 +498,7 @@ Exception occurred rendering plot.
 
 # the context of the plot for all directives specified with the
 # :context: option
-plot_context = {}
+plot_context: dict[str, Any] = {}
 
 
 class ImageFile:
@@ -847,6 +847,7 @@ def run(  # noqa: PLR0917
 
     # make figures
     errors = []
+    results: list[tuple[str, list[ImageFile]]]
     if skip:
         results = [(code, [])]
     else:

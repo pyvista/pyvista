@@ -75,7 +75,9 @@ typing = [
   'mypy<2.4.0',
   'npt-promote==0.2',
   'numpy>=2.0.0',
+  'sphinx<9.2.0',
   'trimesh<5.1.0',
+  'types-docutils<0.22.0',
   { include-group = 'pinned' },
 ]
 
@@ -351,7 +353,6 @@ check_untyped_defs = true
 disallow_any_generics = true
 disallow_subclassing_any = true
 enable_error_code = ['ignore-without-code', 'redundant-expr', 'truthy-bool']
-exclude = ['pyvista/ext/']
 extra_checks = true
 follow_untyped_imports = true
 ignore_missing_imports = true

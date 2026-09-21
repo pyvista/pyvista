@@ -60,6 +60,8 @@ from pyvista.report import get_gpu_info as get_gpu_info
 if TYPE_CHECKING:
     import numpy as np
 
+    from pyvista.plotting.themes import Theme
+
 # get the int type from vtk
 ID_TYPE: type[np.int32 | np.longlong] = _get_vtk_id_type()
 
@@ -84,7 +86,7 @@ ON_SCREENSHOT = os.environ.get('PYVISTA_ON_SCREENSHOT', 'false').lower() == 'tru
 send_errors_to_logging()
 
 # theme to use by default for the plot directive
-PLOT_DIRECTIVE_THEME = None
+PLOT_DIRECTIVE_THEME: Theme | str | None = None
 
 # Set a parameter to control default print format for floats outside
 # of the plotter
