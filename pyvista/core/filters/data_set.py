@@ -6641,7 +6641,7 @@ class DataSetFilters(DataObjectFilters):
     def __iadd__(  # type: ignore[misc]
         self: _DataSetType,
         dataset: DataSet | _vtk.vtkDataSet | MultiBlock | Sequence[DataSet | _vtk.vtkDataSet],
-    ) -> DataSet:
+    ) -> _DataSetType:
         """Merge another mesh into this one if possible.
 
         "If possible" means that ``self`` is a :class:`pyvista.UnstructuredGrid`.
@@ -6650,7 +6650,7 @@ class DataSetFilters(DataObjectFilters):
 
         """
         try:
-            merged = DataSetFilters.merge(self, dataset, inplace=True)
+            DataSetFilters.merge(self, dataset, inplace=True)
         except TypeError:
             msg = (
                 'In-place merge only possible if the target mesh '
@@ -6658,7 +6658,7 @@ class DataSetFilters(DataObjectFilters):
                 'instead, which returns a new UnstructuredGrid.'
             )
             raise TypeError(msg) from None
-        return merged
+        return self
 
     def compute_boundary_mesh_quality(  # type: ignore[misc]
         self: _DataSetType, *, progress_bar: bool = False
