@@ -3560,6 +3560,25 @@ def test_use_transparency_without_opacity(sphere):
 
 
 @pytest.mark.usefixtures('no_images_to_verify')
+@pytest.mark.parametrize(
+    ('opacity', 'expected'),
+    [([0.0, 0.25, 1.0], [1.0, 0.75, 0.0]), ([0, 64, 255], [255, 191, 0])],
+)
+def test_use_transparency_inverts_an_opacity_array(opacity, expected):
+    mesh = pv.Triangle()
+    _, values = process_opacity(
+        mesh=mesh,
+        opacity=opacity,
+        preference='point',
+        n_colors=8,
+        scalars=None,
+        use_transparency=True,
+    )
+
+    np.testing.assert_allclose(values, expected)
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
 def test_opacity_accepts_any_sequence(sphere):
     kwargs = dict(
         mesh=sphere, preference='point', n_colors=8, scalars=None, use_transparency=False
