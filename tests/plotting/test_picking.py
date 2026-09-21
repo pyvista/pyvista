@@ -8,7 +8,9 @@ import pytest
 
 import pyvista as pv
 from pyvista import _vtk
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.plotting.errors import PyVistaPickingError
+from pyvista.plotting.picking import PICKED_REPRESENTATION_NAMES
 from pyvista.plotting.picking import PointPickingElementHandler
 
 if TYPE_CHECKING:
@@ -335,6 +337,45 @@ def test_cell_picking_interactive_subplot():
     assert pl.picked_cells.get_cell(0).type == pv.CellType.QUAD
 
 
+@pytest.mark.parametrize('show', [False, True])
+@pytest.mark.parametrize('through', [False, True])
+def test_cell_picking_empty_selection_clears_representation(through, show):
+    """A rubber band catching no cells clears the selection and skips the callback."""
+    picked = []
+
+    pl = pv.Plotter(shape=(1, 2), window_size=(400, 400))
+    for col in range(2):
+        pl.subplot(0, col)
+        pl.add_mesh(pv.Sphere(radius=0.2), pickable=True)
+        pl.view_xy()
+    pl.subplot(0, 0)  # pick in the other subplot to exercise the poked renderer
+    pl.enable_cell_picking(through=through, show=show, callback=picked.append)
+    pl.show(auto_close=False, interactive=False)
+    pl.iren._simulate_keypress('r')
+
+    name = PICKED_REPRESENTATION_NAMES['through' if through else 'visible']
+    width, height = pl.window_size
+
+    # select the right-hand sphere
+    pl.iren._mouse_left_button_press(5 * width // 8, height // 4)
+    pl.iren._mouse_left_button_release(7 * width // 8, 3 * height // 4)
+
+    assert pl.picked_cells is not None
+    assert len(picked) == 1
+    assert (name in pl.renderers[1].actors) is show
+    assert name not in pl.renderers[0].actors
+
+    # select empty space in the same subplot
+    pl.iren._mouse_left_button_press(width // 2 + 2, 2)
+    pl.iren._mouse_left_button_release(width // 2 + 8, 8)
+
+    assert pl.picked_cells is None
+    assert len(picked) == 1
+    assert all(name not in renderer.actors for renderer in pl.renderers)
+
+    pl.close()
+
+
 @pytest.mark.parametrize('left_clicking', [False, True])
 def test_point_picking(left_clicking):
     picked = []
@@ -364,6 +405,29 @@ def test_point_picking(left_clicking):
         pl.iren._mouse_right_button_click(width // 2, height // 2)
 
     assert picked
+
+
+def test_point_picking_use_mesh_passes_dataset_and_point_id():
+    """The deprecated ``use_mesh`` mode hands the callback a dataset and a point id."""
+    picked = []
+
+    sphere = pv.Sphere()
+    pl = pv.Plotter(window_size=(100, 100))
+    pl.add_mesh(sphere)
+    match = re.escape('`use_mesh` is deprecated. See `use_picker` instead.')
+    with pytest.warns(PyVistaDeprecationWarning, match=match):
+        pl.enable_point_picking(callback=lambda *args: picked.append(args), use_mesh=True)
+    pl.show(auto_close=False)
+
+    width, height = pl.window_size
+    pl.iren._mouse_right_button_click(width // 2, height // 2)
+
+    pl.close()
+
+    assert len(picked) == 1
+    dataset, point_id = picked[0]
+    assert dataset is sphere
+    assert np.allclose(dataset.points[point_id], pl.picked_point)
 
 
 @pytest.mark.skip_windows
@@ -635,6 +699,35 @@ def test_element_picking_face_records_the_matched_face(mocker: MockerFixture):
 
         assert picked is not None
         assert picked.field_data['vtkOriginalFaceIds'].tolist() == [face_id]
+
+
+def test_element_picking_face_raises_when_no_face_matches(mocker: MockerFixture):
+    """A point inside a cell but on none of its faces raises."""
+    mesh = pv.ImageData(dimensions=(2, 2, 2)).cast_to_unstructured_grid()
+    handler = PointPickingElementHandler(mode='face')
+    mocker.patch.object(PointPickingElementHandler, 'get_mesh', return_value=mesh)
+
+    match = re.escape('Trouble aligning point with face.')
+    with pytest.raises(RuntimeError, match=match):
+        handler.get_face(mesh.get_cell(0).center)
+
+
+def test_element_picking_skips_callback_when_no_element_matches(mocker: MockerFixture):
+    """A pick landing outside every cell leaves the callback uncalled."""
+    mesh = pv.ImageData(dimensions=(2, 2, 2)).cast_to_unstructured_grid()
+    picked = []
+    handler = PointPickingElementHandler(mode='cell', callback=picked.append)
+    mocker.patch.object(PointPickingElementHandler, 'get_mesh', return_value=mesh)
+    picker = _vtk.vtkPointPicker()
+
+    handler(mesh.get_cell(0).center, picker)
+
+    assert len(picked) == 1
+    assert picked[0].n_cells == 1
+
+    handler((10.0, 10.0, 10.0), picker)
+
+    assert len(picked) == 1
 
 
 def test_element_picking_point_preserves_data():
