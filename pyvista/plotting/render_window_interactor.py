@@ -1783,7 +1783,7 @@ class InteractorStyleCaptureMixin(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtk
         return observer
 
     def remove_observer(self, observer: int) -> None:
-        """Remove an observer added through :meth:`add_observer`.
+        """Remove an observer added through ``add_observer``.
 
         Parameters
         ----------
