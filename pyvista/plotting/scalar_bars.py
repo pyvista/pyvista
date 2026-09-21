@@ -607,6 +607,10 @@ class ScalarBars(_NoNewAttrMixin):
 
             lut = pv.LookupTable()
             lut.DeepCopy(mapper.lookup_table)
+            # Preserve the scalar range so the scalar bar respects the
+            # ``clim`` (and other range settings) instead of defaulting to
+            # ``[0, 1]``. ``DeepCopy`` does not carry the table range over.
+            lut.scalar_range = mapper.lookup_table.scalar_range
             ctable = _vtk.vtk_to_numpy(lut.GetTable())
             alphas = ctable[:, -1][:, np.newaxis] / 255.0
             use_table = ctable.copy()
