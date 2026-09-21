@@ -6631,8 +6631,7 @@ def _remove_unused_clip_points(
 ) -> _DataSetType:
     """Remove the input points each half keeps when a clipper splits a mesh in two.
 
-    https://github.com/pyvista/pyvista/issues/6511 and
-    https://github.com/pyvista/pyvista/issues/7738 are what this addresses.
+    See https://github.com/pyvista/pyvista/issues/6511 and #7738.
     """
     # vtkTableBasedClipDataSet builds its own point list and has nothing to remove
     if isinstance(clipper, _vtk.vtkClipPolyData):
