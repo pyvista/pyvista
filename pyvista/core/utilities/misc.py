@@ -116,9 +116,25 @@ def check_valid_vector(point: VectorLike[float], name: str = '') -> None:
         raise ValueError(msg)
 
 
+_LINE_STYLE_PATTERNS: dict[LineStyle, int] = {
+    '': 0x0000,
+    '-': 0xFFFF,
+    '--': 0x00FF,
+    ':': 0x0101,
+    '-.': 0x0C0F,
+    '-..': 0x1C47,
+}
+
+
 def _check_line_style(style: str, *, name: str = 'style') -> None:
     """Raise when a style is not one of the named line styles."""
     _validation.check_contains(list(get_args(LineStyle)), must_contain=style, name=name)
+
+
+def _resolve_line_style(style: LineStyle, *, name: str = 'style') -> int:
+    """Return the 16-bit stipple pattern of a named line style."""
+    _check_line_style(style, name=name)
+    return _LINE_STYLE_PATTERNS[style]
 
 
 def abstract_class(cls_):  # noqa: ANN001, ANN201 # numpydoc ignore=RT01

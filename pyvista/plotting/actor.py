@@ -12,8 +12,8 @@ import pyvista_validation as _validation
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._warn_external import warn_external
-from pyvista.core.filters.poly_data import _resolve_line_style
 from pyvista.core.utilities.arrays import FieldAssociation
+from pyvista.core.utilities.misc import _resolve_line_style
 from pyvista.plotting.utilities.algorithms import set_algorithm_input
 
 from ._property import _HAS_NATIVE_POINT_SHAPES

@@ -33,7 +33,7 @@ from pyvista.core.utilities.helpers import _NormalsLiteral
 from pyvista.core.utilities.helpers import _validate_plane_origin_and_normal
 from pyvista.core.utilities.helpers import generate_plane
 from pyvista.core.utilities.helpers import wrap
-from pyvista.core.utilities.misc import _check_line_style
+from pyvista.core.utilities.misc import _resolve_line_style
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 
@@ -61,16 +61,6 @@ _ExtrusionOptions = Literal['boundary_edges', 'all_edges']
 _CappingOptions = Literal[
     'intersection', 'minimum_distance', 'maximum_distance', 'average_distance'
 ]
-
-
-LINE_STYLE_PATTERNS: dict[LineStyle, int] = {
-    '': 0x0000,
-    '-': 0xFFFF,
-    '--': 0x00FF,
-    ':': 0x0101,
-    '-.': 0x0C0F,
-    '-..': 0x1C47,
-}
 
 
 @abstract_class
@@ -4922,12 +4912,6 @@ def _resolve_dash_pattern(
         return runs, float(edges[-1])
     bits = _resolve_line_style(style)
     return [(float(start), float(stop)) for start, stop in _pattern_runs(bits)], 16.0
-
-
-def _resolve_line_style(style: LineStyle) -> int:
-    """Return the 16-bit stipple pattern of a named line style."""
-    _check_line_style(style)
-    return LINE_STYLE_PATTERNS[style]
 
 
 def _pattern_runs(pattern: int) -> list[tuple[int, int]]:

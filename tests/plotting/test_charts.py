@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import itertools
+from typing import get_args
 import weakref
 
 import numpy as np
@@ -11,6 +12,7 @@ import pytest
 import pyvista as pv
 from pyvista import _vtk
 from pyvista import examples
+from pyvista.core.utilities.misc import _LINE_STYLE_PATTERNS
 from pyvista.plotting import charts
 from pyvista.plotting.colors import COLOR_SCHEMES
 
@@ -1230,3 +1232,9 @@ def test_get_background_texture(chart_2d):
     t_puppy = examples.download_puppy_texture()
     chart_2d.background_texture = t_puppy
     assert chart_2d.background_texture == t_puppy
+
+
+def test_line_style_tables_agree():
+    assert (
+        list(_LINE_STYLE_PATTERNS) == list(get_args(pv.LineStyle)) == list(charts.Pen.LINE_STYLES)
+    )
