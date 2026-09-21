@@ -323,3 +323,18 @@ def test_dash_lines_keeps_active_scalars_and_field_data():
     dashed = line.dash_lines()
     assert dashed.active_scalars_name == 'vals'
     assert list(dashed.field_data['meta']) == ['x']
+
+
+def test_dash_lines_keeps_inactive_scalars_inactive():
+    line = pv.Line((0, 0, 0), (1, 0, 0), resolution=10)
+    line.point_data['vals'] = np.arange(line.n_points, dtype=float)
+    line.set_active_scalars(None)
+    assert line.dash_lines().active_scalars_name is None
+
+
+def test_dash_lines_keeps_active_normals():
+    sphere = pv.Sphere()
+    sphere.lines = np.array([2, 0, 1])
+    dashed = sphere.dash_lines()
+    assert dashed.point_data.active_normals_name == 'Normals'
+    assert dashed.active_scalars_name is None

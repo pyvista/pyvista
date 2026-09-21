@@ -42,6 +42,7 @@ if TYPE_CHECKING:
     from typing import Any
 
     from pyvista import DataSet
+    from pyvista import DataSetAttributes
     from pyvista import MultiBlock
     from pyvista import PolyData
     from pyvista import UnstructuredGrid
@@ -1622,12 +1623,8 @@ class PolyDataFilters(DataSetFilters):
             output = _replace_line_cells(self, dashes)
             for array_name, array in self.field_data.items():
                 output.field_data[array_name] = array
-            association, active = self.active_scalars_info
-            if active is not None:
-                if association == FieldAssociation.CELL and active in output.cell_data:
-                    output.set_active_scalars(active, preference='cell')
-                elif association == FieldAssociation.POINT and active in output.point_data:
-                    output.set_active_scalars(active, preference='point')
+            _copy_active_names(self.point_data, output.point_data)
+            _copy_active_names(self.cell_data, output.cell_data)
 
         if not inplace:
             return output
@@ -5015,11 +5012,12 @@ def _dashed_polydata(
     )
     output.lines = lines
     for name, array in source.point_data.items():
-        output.point_data[name] = _interpolate_rows(
-            np.asarray(array), index_a=index_a, index_b=index_b, weight=weight
+        output.point_data.set_array(
+            _interpolate_rows(np.asarray(array), index_a=index_a, index_b=index_b, weight=weight),
+            name,
         )
     for name, array in source.cell_data.items():
-        output.cell_data[name] = np.asarray(array)[cells]
+        output.cell_data.set_array(np.asarray(array)[cells], name)
     return output
 
 
@@ -5047,21 +5045,32 @@ def _replace_line_cells(source: PolyData, dashes: PolyData) -> PolyData:
     for name, array in source.point_data.items():
         values = np.asarray(array)
         if dashes.n_points == 0:
-            output.point_data[name] = values
+            output.point_data.set_array(values, name)
         elif name in dashes.point_data:
-            output.point_data[name] = np.concatenate([values, np.asarray(dashes.point_data[name])])
+            output.point_data.set_array(
+                np.concatenate([values, np.asarray(dashes.point_data[name])]), name
+            )
 
     head = np.arange(source.n_verts)
     tail = np.arange(source.n_verts + source.n_lines, source.n_cells)
     for name, array in source.cell_data.items():
         values = np.asarray(array)
         if dashes.n_cells == 0:
-            output.cell_data[name] = np.concatenate([values[head], values[tail]])
+            output.cell_data.set_array(np.concatenate([values[head], values[tail]]), name)
         elif name in dashes.cell_data:
-            output.cell_data[name] = np.concatenate(
-                [values[head], np.asarray(dashes.cell_data[name]), values[tail]]
+            output.cell_data.set_array(
+                np.concatenate([values[head], np.asarray(dashes.cell_data[name]), values[tail]]),
+                name,
             )
     return output
+
+
+def _copy_active_names(source: DataSetAttributes, output: DataSetAttributes) -> None:
+    """Mirror the active array names of the source onto the arrays the output holds."""
+    for attribute in ('scalars', 'vectors', 'normals', 'texture_coordinates'):
+        name = getattr(source, f'active_{attribute}_name')
+        if name is not None and name in output:
+            setattr(output, f'active_{attribute}_name', name)
 
 
 def _interpolate_rows(
