@@ -3474,12 +3474,12 @@ class DataObjectFilters:
             kept = _remove_unused_points_post_clip(_clip_output(result[0], self), input_bounds)
             removed = _remove_unused_points_post_clip(_clip_output(result[1], self), input_bounds)
             if inplace_target is not None:
-                inplace_target.copy_from(kept, deep=False)
+                inplace_target.copy_from(cast('DataSet', kept), deep=False)
                 return inplace_target, removed
             return kept, removed
         clipped = _remove_unused_points_post_clip(_clip_output(result, self), input_bounds)
         if inplace_target is not None:
-            inplace_target.copy_from(clipped, deep=False)
+            inplace_target.copy_from(cast('DataSet', clipped), deep=False)
             return inplace_target
         return clipped
 
