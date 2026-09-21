@@ -320,6 +320,8 @@ class RenderWindowInteractor(_NoNewAttrMixin):
         if observer in self._observers:
             self.interactor.RemoveObserver(observer)
             del self._observers[observer]
+        elif isinstance(self.style, InteractorStyleCaptureMixin):
+            self.style.remove_observer(observer)
 
     def remove_observers(self, event: str | int | None = None) -> None:
         """Remove all observers.
@@ -1476,8 +1478,9 @@ class RenderWindowInteractor(_NoNewAttrMixin):
 
         Returns
         -------
-        tuple
-            A tuple containing the location of the subplot.
+        numpy.ndarray | numpy.intp
+            Location of the subplot on the plotting grid, or its 1D index
+            for a single-row layout.
 
         Raises
         ------
@@ -1778,6 +1781,19 @@ class InteractorStyleCaptureMixin(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtk
         observer = self.AddObserver(event, callback)  # type: ignore[arg-type]
         self._observers.append(observer)
         return observer
+
+    def remove_observer(self, observer: int) -> None:
+        """Remove an observer added through :meth:`add_observer`.
+
+        Parameters
+        ----------
+        observer : int
+            The identifier of the observer to remove.
+
+        """
+        if observer in self._observers:
+            self.RemoveObserver(observer)
+            self._observers.remove(observer)
 
     def remove_observers(self) -> None:  # numpydoc ignore=SS06
         """Remove all observers added through
