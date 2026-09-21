@@ -5162,7 +5162,7 @@ class Charts(_NoNewAttrMixin):
 
         Parameters
         ----------
-        *charts : Chart2D | Chart3D
+        *charts : Chart2D | ChartBox | ChartPie | ChartMPL
             One or more chart objects to be added to the collection.
 
         """
