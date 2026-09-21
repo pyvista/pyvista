@@ -39,8 +39,8 @@ from pyvista.core.filters.data_object import _cast_output_to_match_input_type
 from pyvista.core.filters.data_object import _clip_input
 from pyvista.core.filters.data_object import _clipper
 from pyvista.core.filters.data_object import _keep_array_structure
-from pyvista.core.filters.data_object import _remove_unused_clip_points
 from pyvista.core.filters.data_object import _make_reference_volume
+from pyvista.core.filters.data_object import _remove_unused_clip_points
 from pyvista.core.filters.data_object import _validate_clip_inplace
 from pyvista.core.filters.data_object import _validate_reference_volume_options
 from pyvista.core.utilities.arrays import FieldAssociation

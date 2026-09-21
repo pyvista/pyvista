@@ -700,7 +700,7 @@ def test_clip_strips_no_unused_points(clip_filter):
 def test_clip_leaves_points_alone_when_the_clipper_keeps_none(monkeypatch, hexbeam):
     """The table-based clipper builds its own point list, so nothing follows it."""
 
-    def _fail(*args, **kwargs):
+    def _fail(*_args, **_kwargs):
         msg = 'remove_unused_points should not be called'
         raise AssertionError(msg)
 
