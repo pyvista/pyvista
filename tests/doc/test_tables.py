@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 from io import StringIO
+from typing import get_args
 
 import cmcrameri
 import cmocean
@@ -17,6 +18,7 @@ import pyvista as pv
 from pyvista.examples._dataset_loader import _DatasetLoader
 from pyvista.examples._dataset_loader import _MultiFileDatasetLoader
 from pyvista.examples._dataset_loader import _SingleFileDatasetLoader
+from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
 
 CMAP_SET_MISMATCH_ERROR_MSG = (
     'Colormaps in documentation differ from colormaps available. '
@@ -188,25 +190,32 @@ def test_update_image_placeholders_existing(monkeypatch, tmp_path):
     assert node['uri'].endswith(expected.name)
 
 
-def test_usage_facet_order_lists_every_value_the_cards_emit():
+def test_usage_badges_cover_every_usage_value():
     """A `use` value missing from the manifest order is dropped from the filter panel.
 
     `collectFacetValues` in dataset_gallery_filter.js keeps only the values named in
     `order`, so a slug the cards emit but the manifest omits disappears silently.
     """
-    emitted = {
-        make_tables._facet_slugify(label)
-        for label in (
-            'Commercial use',
-            'Not for commercial use',
-            'ShareAlike',
-            'Attribution required',
-        )
-    }
-    listed = set(make_tables.DATASET_GALLERY_USE_ORDER)
+    from pyvista.examples._dataset_metadata import Usage
 
-    # `N/A (not recorded)` is added with an explicit `na` slug, not through the slugifier.
-    assert emitted <= listed
+    badges = make_tables.DATASET_GALLERY_USAGE_BADGES
+    assert set(get_args(Usage)) == set(badges)
+    # The facet slug is derived from the value, so the manifest order must agree.
+    assert [make_tables._facet_slugify(usage) for usage in badges] == [
+        'unrestricted',
+        'attribution',
+        'share-alike',
+        'non-commercial',
+        'undetermined',
+    ]
+    colours = [colour for _, colour in badges.values()]
+    assert len(set(colours)) == len(colours)
+    # Solid marks usage, outlined marks provenance, so the two never share a style.
+    assert not any(colour.endswith('-line') for colour in colours)
+    assert all(
+        colour.endswith('-line')
+        for colour in make_tables.DATASET_GALLERY_PROVENANCE_COLORS.values()
+    )
 
 
 @pytest.mark.parametrize(
@@ -288,20 +297,57 @@ def test_license_field_links_the_text_and_the_issuer(metadata):
     assert '`Creative Commons Attribution 3.0 Unported <https://creativecommons.org/' in field
 
 
-def test_usage_and_provenance_badges_do_not_share_a_colour(metadata):
-    usage = make_tables.DatasetPropsGenerator.generate_usage_field(metadata)
-    provenance = make_tables.DatasetPropsGenerator.generate_provenance_field(metadata)
-
+def test_usage_badge_links_the_legend(metadata):
+    gen = make_tables.DatasetPropsGenerator
     sa = replace(metadata.licenses[0], share_alike=True)
-    restricted = make_tables.DatasetPropsGenerator.generate_usage_field(
-        replace(metadata, licenses=(sa,))
-    )
 
-    assert ':bdg-success:`Commercial use`' in usage
-    assert ':bdg-info:`Attribution required`' in usage
-    assert ':bdg-warning:`ShareAlike`' in restricted
-    # Solid marks an obligation, outlined marks confidence; they must stay distinct.
-    assert provenance == ':bdg-success-line:`verified`'
+    assert gen.generate_usage_badge(metadata) == (
+        ':bdg-ref-info:`Credit required <dataset_gallery_usage>`'
+    )
+    assert gen.generate_usage_badge(replace(metadata, licenses=(sa,))) == (
+        ':bdg-ref-warning:`Share alike <dataset_gallery_usage>`'
+    )
+    assert gen.generate_provenance_field(metadata) == ':bdg-success-line:`verified`'
+
+
+def test_usage_badge_marks_an_uncatalogued_file_but_not_generated_data():
+    gen = make_tables.DatasetPropsGenerator
+
+    assert gen.generate_usage_badge(None, _SingleFileDownloadableDatasetLoader('mesh.vtp')) == (
+        ':bdg-ref-muted-line:`Not recorded <dataset_gallery_usage>`'
+    )
+    assert gen.generate_usage_badge(None, _DatasetLoader(pv.Sphere)) == ''
+    assert gen.generate_usage_badge(None) == ''
+
+
+def test_card_header_carries_the_module_and_usage_badges(monkeypatch, metadata, tmp_path):
+    path = tmp_path / 'mesh.vtp'
+    path.touch()
+    loader = _SingleFileDatasetLoader(str(path))
+    metadata = replace(metadata, licenses=(replace(metadata.licenses[0], share_alike=True),))
+    monkeypatch.setattr(
+        make_tables.DatasetPropsGenerator, '_dataset_metadata', staticmethod(lambda _: metadata)
+    )
+    card = make_tables.DatasetCard(
+        'thing', loader, module=pv.examples.downloads, function=pv.examples.download_bunny
+    )
+    monkeypatch.setattr(card, '_generate_cross_references', lambda *_: '')
+
+    rst = card.generate()
+
+    header = rst.split('^^^')[0]
+    assert ':bdg-ref-secondary:`Downloads' in header
+    assert ':bdg-ref-warning:`Share alike <dataset_gallery_usage>`' in header
+    # The facet slug is what docutils makes of the value, and the manifest lists it.
+    assert 'use-share-alike' in header
+    assert make_tables.DatasetCardFetcher.FACET_LABELS['use-share-alike'] == 'Share alike'
+    footer = rst.split('+++')[1]
+    assert '**Usage**' in footer
+    assert '**Commercial use**' in footer
+    assert '**Attribution required**' in footer
+    assert '**Share alike**' in footer
+    assert footer.count('Yes') == 3
+    assert footer.count('No') == 0
 
 
 def test_redistributor_shows_the_host_not_the_whole_url(metadata):

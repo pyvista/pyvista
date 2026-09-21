@@ -126,18 +126,23 @@ DATASET_GALLERY_MODULE_BADGE_COLORS: dict[ModuleType, str] = {
     pv.examples.planets: 'success',
 }
 
-# Provenance value -> sphinx-design badge color shown on the dataset card.
-# Outline badges throughout, so provenance never shares a colour with the solid
-# obligation badges next to it. Keep in step with the legend in dataset_gallery.rst.
-# Usage filter values, least to most restrictive rather than alphabetical. Every slug
-# the cards emit must appear here or the filter panel silently drops it.
-DATASET_GALLERY_USE_ORDER: tuple[str, ...] = (
-    'commercial-use',
-    'attribution-required',
-    'share-alike',
-    'not-for-commercial-use',
+# Usage value -> (badge text, sphinx-design colour), least to most restrictive. The
+# order is the filter's, and a value missing here is dropped from the filter panel.
+# Keep in step with the legend in dataset_gallery.rst, which every badge links.
+DATASET_GALLERY_USAGE_BADGES: dict[str, tuple[str, str]] = {
+    'unrestricted': ('No restrictions', 'success'),
+    'attribution': ('Credit required', 'info'),
+    'share_alike': ('Share alike', 'warning'),
+    'non_commercial': ('Not for commercial use', 'danger'),
+    'undetermined': ('Terms undetermined', 'muted'),
+}
+DATASET_GALLERY_USAGE_LEGEND = 'dataset_gallery_usage'
+DATASET_GALLERY_UNRECORDED_BADGE = (
+    f':bdg-ref-muted-line:`Not recorded <{DATASET_GALLERY_USAGE_LEGEND}>`'
 )
 
+# Provenance value -> outlined badge colour, so confidence in the origin never shares
+# a style with the solid usage badge.
 DATASET_GALLERY_PROVENANCE_COLORS: dict[str, str] = {
     'verified': 'success-line',
     'inferred': 'warning-line',
@@ -1918,6 +1923,11 @@ def _facet_slugify(text: str) -> str:
     return text.lower().replace(' ', '-').replace('_', '-').replace('.', '-')
 
 
+def _yes_or_no(flag: bool) -> str:  # noqa: FBT001
+    """Spell a licence flag out for the card's field grid."""
+    return 'Yes' if flag else 'No'
+
+
 def _facet_size_bin(total_size_bytes: int | None) -> tuple[str, str] | None:
     """Bucket a file size in bytes into a (label, slug) range bin, or None if there's no file."""
     if total_size_bytes is None:
@@ -2177,7 +2187,7 @@ class DatasetCard:
     GRID_ITEM_FIELDS_INDENT_LEVEL = 4
     REF_ANCHOR_INDENT_LEVEL = 2
 
-    # Template for the dataset name and its module badge
+    # Template for the dataset name and its module and usage badges
     header_template = _aligned_dedent(
         """
         |.. grid:: 1
@@ -2388,7 +2398,10 @@ class DatasetCard:
         DatasetCardFetcher.FACET_LABELS.update(facet_labels)
 
         # Assemble rst parts into main blocks used by the card
-        header_block = self._create_header_block(index_name, header_name, module_badge)
+        usage_badge = DatasetPropsGenerator.generate_usage_badge(dataset_metadata, self.loader)
+        header_block = self._create_header_block(
+            index_name, header_name, f'{module_badge} {usage_badge}'.rstrip()
+        )
         search_text_block = self._create_search_text_block(header_name, func_name, func_doc)
         info_block = self._create_info_block(func_ref, func_doc)
         img_block = self._create_image_block(img_path)
@@ -2625,8 +2638,8 @@ class DatasetCard:
         return '\n\n'.join(blocks)
 
     @classmethod
-    def _create_header_block(cls, index_name, header_name, module_badge):
-        """Generate header rst block with a reference target and module badge."""
+    def _create_header_block(cls, index_name, header_name, badges):
+        """Generate header rst block with a reference target and the badge line."""
         header_name_with_ref = DatasetCard._format_and_indent_from_template(
             index_name,
             header_name,
@@ -2635,7 +2648,7 @@ class DatasetCard:
         )
         return DatasetCard._format_and_indent_from_template(
             header_name_with_ref,
-            module_badge,
+            badges,
             template=cls.header_template,
             indent_level=cls.HEADER_FOOTER_INDENT_LEVEL,
         )
@@ -2720,12 +2733,9 @@ class DatasetCard:
                 )
             add(
                 'use',
-                'Commercial use' if metadata.commercial_use else 'Not for commercial use',
+                DATASET_GALLERY_USAGE_BADGES[metadata.usage][0],
+                slug=_facet_slugify(metadata.usage),
             )
-            if metadata.share_alike:
-                add('use', 'ShareAlike')
-            if metadata.attribution_required:
-                add('use', 'Attribution required')
 
         return ' '.join(classes), labels
 
@@ -2806,8 +2816,11 @@ class DatasetCard:
         fields: list[tuple[str, str | None]] = []
         if metadata is not None:
             fields += [
+                ('Usage', gen.generate_usage_badge(metadata)),
                 ('License', gen.generate_license_field(metadata)),
-                ('Usage', gen.generate_usage_field(metadata)),
+                ('Commercial use', _yes_or_no(metadata.commercial_use)),
+                ('Attribution required', _yes_or_no(metadata.attribution_required)),
+                ('Share alike', _yes_or_no(metadata.share_alike)),
                 ('Origin', gen.generate_origin_field(metadata)),
                 ('Collection', metadata.collection),
                 ('Redistributed from', gen.generate_redistributor_field(metadata)),
@@ -2982,18 +2995,14 @@ class DatasetPropsGenerator:
         return '\n'.join(lines)
 
     @staticmethod
-    def generate_usage_field(metadata) -> str:
-        """Format the obligations a licence attaches as badges."""
-        badges = [
-            ':bdg-success:`Commercial use`'
-            if metadata.commercial_use
-            else ':bdg-danger:`Not for commercial use`'
-        ]
-        if metadata.share_alike:
-            badges.append(':bdg-warning:`ShareAlike`')
-        if metadata.attribution_required:
-            badges.append(':bdg-info:`Attribution required`')
-        return ' '.join(badges)
+    def generate_usage_badge(metadata, loader: _DatasetLoader | None = None) -> str:
+        """Format `usage` as a badge linking the legend, marking a loader's file with no record."""
+        if metadata is None:
+            return (
+                DATASET_GALLERY_UNRECORDED_BADGE if isinstance(loader, _DOWNLOADABLE_TYPES) else ''
+            )
+        text, color = DATASET_GALLERY_USAGE_BADGES[metadata.usage]
+        return f':bdg-ref-{color}:`{text} <{DATASET_GALLERY_USAGE_LEGEND}>`'
 
     @staticmethod
     def generate_provenance_field(metadata) -> str:
@@ -3275,7 +3284,7 @@ class DatasetCardFetcher:
             'labels': cls.FACET_LABELS,
             'order': {
                 'size': [slug for _, _, slug in DATASET_GALLERY_SIZE_BINS],
-                'use': list(DATASET_GALLERY_USE_ORDER),
+                'use': [_facet_slugify(usage) for usage in DATASET_GALLERY_USAGE_BADGES],
             },
         }
         html = (
