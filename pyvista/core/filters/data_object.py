@@ -753,16 +753,16 @@ class _MeshValidator(Generic[_DataSetOrMultiBlockType]):
             summaries.append(summary)
         return summaries, validated_mesh
 
+    # fmt: off
+    # ruff: disable[E501]
     @staticmethod
-    @overload
-    def _invalid_cell_msg(
-        name: str, array: list[int], cell_type: CellType | None = ...
-    ) -> str: ...
+    @overload  # one array
+    def _invalid_cell_msg(name: str, array: list[int], cell_type: CellType | None = ...) -> str: ...
     @staticmethod
-    @overload
-    def _invalid_cell_msg(
-        name: str, array: tuple[list[int], ...], cell_type: list[CellType]
-    ) -> list[str]: ...
+    @overload  # one array per cell type
+    def _invalid_cell_msg(name: str, array: tuple[list[int], ...], cell_type: list[CellType]) -> list[str]: ...
+    # ruff: enable[E501]
+    # fmt: on
     @staticmethod
     def _invalid_cell_msg(
         name: str,
