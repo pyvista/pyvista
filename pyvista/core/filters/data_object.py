@@ -3265,10 +3265,10 @@ class DataObjectFilters:
             return in_.cast_to_pointset() if apply_vtk_94x_patch else in_
 
         if return_clipped:
-            a = _keep_array_structure(_get_output(alg, oport=0), source)
-            b = _keep_array_structure(_get_output(alg, oport=1), source)
-            a = _remove_unused_clip_points(a, alg)
-            b = _remove_unused_clip_points(b, alg)
+            a = _remove_unused_clip_points(_get_output(alg, oport=0), alg)
+            b = _remove_unused_clip_points(_get_output(alg, oport=1), alg)
+            a = _keep_array_structure(a, source)
+            b = _keep_array_structure(b, source)
             if crinkle:
                 a, b = _Crinkler._extract_crinkle_cells(source, a, b, active_scalars_info)
             return _maybe_cast_to_point_set(a), _maybe_cast_to_point_set(b)
@@ -6629,12 +6629,15 @@ def _clipper(mesh: DataSet | MultiBlock) -> _vtk.vtkClipPolyData | _vtk.vtkTable
 def _remove_unused_clip_points(
     output: _DataSetType, clipper: _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet
 ) -> _DataSetType:
-    """Remove the input points each half keeps when a clipper splits a mesh in two."""
+    """Remove the input points each half keeps when a clipper splits a mesh in two.
+
+    https://github.com/pyvista/pyvista/issues/6511 and
+    https://github.com/pyvista/pyvista/issues/7738 are what this addresses.
+    """
     # vtkTableBasedClipDataSet builds its own point list and has nothing to remove
-    if not isinstance(clipper, _vtk.vtkClipPolyData):
-        return output
-    trimmed = cast('PolyData', output).remove_unused_points(inplace=True)
-    return cast('_DataSetType', trimmed)
+    if isinstance(clipper, _vtk.vtkClipPolyData):
+        cast('PolyData', output).remove_unused_points(inplace=True)
+    return output
 
 
 def _validate_reference_volume_options(

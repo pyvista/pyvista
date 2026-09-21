@@ -834,16 +834,20 @@ class DataSetFilters(DataObjectFilters):
         alg.SetGenerateClippedOutput(both)
 
         _update_alg(alg, progress_bar=progress_bar, message='Clipping by a Scalar')
+        clipped0 = _get_output(alg)
+        clipped1 = _get_output(alg, oport=1) if both else None
+        if clipped1 is not None:
+            clipped0 = _remove_unused_clip_points(clipped0, alg)
+            clipped1 = _remove_unused_clip_points(clipped1, alg)
+
         result0: PolyData | PointSet | UnstructuredGrid = _keep_array_structure(
-            _cast_output_to_match_input_type(_get_output(alg), self), self
+            _cast_output_to_match_input_type(clipped0, self), self
         )
-        result1: PolyData | PointSet | UnstructuredGrid | None = None
-        if both:
-            result1 = _keep_array_structure(
-                _cast_output_to_match_input_type(_get_output(alg, oport=1), self), self
-            )
-            result0 = _remove_unused_clip_points(result0, alg)
-            result1 = _remove_unused_clip_points(result1, alg)
+        result1: PolyData | PointSet | UnstructuredGrid | None = (
+            None
+            if clipped1 is None
+            else _keep_array_structure(_cast_output_to_match_input_type(clipped1, self), self)
+        )
         if not is_single_value:
             # Keep what lies above the lower value as well
             result0 = result0.clip_scalar(scalars=scalars, invert=False, value=lower)

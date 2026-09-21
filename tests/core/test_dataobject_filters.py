@@ -254,6 +254,29 @@ def test_clip_empty_output_keeps_array_names():
     assert clipped.cell_data['ids'].dtype == np.uint16
 
 
+@pytest.mark.parametrize(
+    'clip_filter',
+    [
+        lambda mesh: mesh.clip(normal='z', origin=(0, 0, 99), return_clipped=True)[1],
+        lambda mesh: mesh.clip_scalar(scalars='height', value=99, both=True)[1],
+    ],
+    ids=['clip', 'clip_scalar'],
+)
+def test_clip_empty_half_keeps_array_names(clip_filter):
+    """Trimming the unused points off an empty half must not drop its arrays."""
+    mesh = pv.Plane().triangulate().strip()
+    mesh.point_data['height'] = mesh.points[:, 2].astype(np.float32)
+    mesh.cell_data['ids'] = np.arange(mesh.n_cells, dtype=np.uint16)
+    assert mesh.n_strips
+
+    clipped = clip_filter(mesh)
+
+    assert clipped.is_empty
+    assert sorted(clipped.array_names) == sorted(mesh.array_names)
+    assert clipped.point_data['height'].dtype == np.float32
+    assert clipped.cell_data['ids'].dtype == np.uint16
+
+
 def _cell_type_meshes():
     """One mesh per input class and per cell type a clip has to preserve."""
     axis = np.linspace(-1.0, 1.0, 4)
@@ -662,25 +685,24 @@ def test_clip_box_no_unused_points(as_composite):
     assert np.allclose(clipped.bounds, new_bounds)
 
 
-@pytest.mark.parametrize('invert', [True, False])
-def test_clip_box_polydata_no_unused_points(invert):
-    mesh = pv.Sphere(theta_resolution=16, phi_resolution=16)
-    clipped = mesh.clip_box([0.1, 1.0, 0.1, 1.0, 0.1, 1.0], invert=invert)
-    used = np.unique(clipped.cast_to_unstructured_grid().cell_connectivity)
-    assert clipped.n_points == len(used)
-
-
 def _n_unused_points(mesh):
     """Return the number of points which no cell of the mesh refers to."""
     used = np.unique(mesh.cast_to_unstructured_grid().cell_connectivity)
     return mesh.n_points - len(used)
 
 
+@pytest.mark.parametrize('invert', [True, False])
+def test_clip_box_polydata_no_unused_points(invert):
+    mesh = pv.Sphere(theta_resolution=16, phi_resolution=16)
+    clipped = mesh.clip_box([0.1, 1.0, 0.1, 1.0, 0.1, 1.0], invert=invert)
+    assert _n_unused_points(clipped) == 0
+
+
 @pytest.mark.parametrize(
     'clip_filter',
     [
         lambda mesh: mesh.clip(normal='x', origin=mesh.center, return_clipped=True),
-        lambda mesh: mesh.clip_box(pv.Box(mesh.bounds).scale(0.5).bounds, merge_points=False),
+        lambda mesh: mesh.clip_box([-0.25, 0.25, -0.25, 0.25, -1.0, 1.0], merge_points=False),
         lambda mesh: mesh.clip_scalar(scalars='x', value=0.0, both=True),
     ],
     ids=['clip', 'clip_box', 'clip_scalar'],
