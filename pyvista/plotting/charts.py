@@ -3608,13 +3608,13 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
            >>> chart.show()
 
         """
-        x_values: VectorLike[float]
+        x_values: VectorLike[float] | VectorLike[int]
         y_values: VectorLike[float]
         if y is None:
-            x_values, y_values = np.arange(len(x), dtype=float), x
+            x_values, y_values = np.arange(len(x)), x
         elif isinstance(y, str):
             fmt = y
-            x_values, y_values = np.arange(len(x), dtype=float), x
+            x_values, y_values = np.arange(len(x)), x
         else:
             x_values, y_values = x, y
         marker_style, line_style, color = self._parse_format(fmt)
