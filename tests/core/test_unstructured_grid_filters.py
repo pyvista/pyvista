@@ -129,6 +129,21 @@ def test_remove_unused_points(mesh_type, inplace):
     assert out.array_names == [key]
 
 
+@pytest.mark.parametrize('mesh_type', [pv.PolyData, pv.UnstructuredGrid])
+def test_remove_unused_points_leaves_input_alone(mesh_type):
+    mesh = pv.Cube(clean=False)
+    mesh.clear_point_data()
+    if mesh_type is pv.UnstructuredGrid:
+        mesh = mesh.cast_to_unstructured_grid()
+    mesh.points = np.append(mesh.points, [[9.0, 9.0, 9.0]], axis=0)
+    before = mesh.copy()
+
+    out = mesh.remove_unused_points()
+
+    assert out.n_points == mesh.n_points - 1
+    assert mesh.cast_to_unstructured_grid() == before.cast_to_unstructured_grid()
+
+
 @pytest.mark.parametrize('inplace', [True, False])
 def test_remove_unused_points_keeps_subclass(inplace):
     class _Grid(pv.UnstructuredGrid):

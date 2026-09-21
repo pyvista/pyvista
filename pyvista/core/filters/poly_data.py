@@ -4783,11 +4783,11 @@ class PolyDataFilters(DataSetFilters):
         """
         removed = (
             self.cast_to_unstructured_grid()
-            .remove_unused_points()
+            .remove_unused_points(inplace=True)
             .extract_surface(algorithm=None, pass_pointid=False, pass_cellid=False)
         )
         out = self if inplace else type(self)()
-        out.copy_from(removed, deep=not inplace)
+        out.copy_from(removed, deep=False)
         return out
 
 
