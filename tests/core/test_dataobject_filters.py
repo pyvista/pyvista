@@ -151,6 +151,29 @@ def test_clip_inplace(mesh):
 @pytest.mark.parametrize(
     'mesh',
     [
+        pv.Sphere(),
+        pv.PointSet(np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])),
+        pv.ImageData(dimensions=(5, 5, 5)).cast_to_unstructured_grid(),
+    ],
+    ids=['polydata', 'pointset', 'unstructured'],
+)
+def test_clip_inplace_return_clipped(mesh):
+    mesh = mesh.copy()
+    n_points_in = mesh.n_points
+    expected_kept, expected_removed = mesh.copy().clip(return_clipped=True)
+
+    kept, removed = mesh.clip(inplace=True, return_clipped=True)
+
+    assert kept is mesh
+    assert removed is not mesh
+    assert mesh.n_points < n_points_in
+    assert kept.n_points == expected_kept.n_points
+    assert removed.n_points == expected_removed.n_points
+
+
+@pytest.mark.parametrize(
+    'mesh',
+    [
         pv.ImageData(dimensions=(5, 5, 5)),
         pv.RectilinearGrid(*[np.linspace(-1, 1, 5)] * 3),
         pv.MultiBlock([pv.Sphere()]),
