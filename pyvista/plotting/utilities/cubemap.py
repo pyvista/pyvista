@@ -99,7 +99,7 @@ def cubemap_from_filenames(image_paths: Sequence[str | Path]) -> Texture:
     ...     '/home/user/_pz.jpg',
     ...     '/home/user/_nz.jpg',
     ... ]
-    >>> skybox = pv.cubemap(image_paths=image_paths)  # doctest:+SKIP
+    >>> skybox = pv.cubemap_from_filenames(image_paths)  # doctest:+SKIP
 
     """
     if len(image_paths) != 6:

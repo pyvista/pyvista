@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from typing import TypeAlias
 
     from pyvista import DataSet
+    from pyvista import PointSet
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import PointLiteral
 
@@ -822,7 +823,7 @@ def outline_algorithm(
 
     Parameters
     ----------
-    inp : pyvista.DataSet
+    inp : pyvista.DataSet | :vtk:`vtkAlgorithm` | :vtk:`vtkAlgorithmOutput`
         Input data to be filtered.
     generate_faces : bool, default: False
         Whether to generate faces for the outline.
@@ -877,7 +878,7 @@ def callback_algorithm(
 
     Parameters
     ----------
-    inp : pyvista.DataSet | :vtk:`vtkAlgorithm`
+    inp : pyvista.DataSet | :vtk:`vtkAlgorithm` | :vtk:`vtkAlgorithmOutput`
         Input data or algorithm.
 
     callback : callable
@@ -910,7 +911,7 @@ def extract_surface_algorithm(
 
     Parameters
     ----------
-    inp : pyvista.DataSet
+    inp : pyvista.DataSet | :vtk:`vtkAlgorithm` | :vtk:`vtkAlgorithmOutput`
         Input data to be filtered.
     pass_pointid : bool, default: False
         If ``True``, pass point IDs to the output.
@@ -944,7 +945,7 @@ def active_scalars_algorithm(
 
     Parameters
     ----------
-    inp : pyvista.DataSet | :vtk:`vtkAlgorithm`
+    inp : pyvista.DataSet | :vtk:`vtkAlgorithm` | :vtk:`vtkAlgorithmOutput`
         Input data or algorithm.
 
     name : str
@@ -978,7 +979,7 @@ def smooth_shading_algorithm(
 
     Parameters
     ----------
-    inp : pyvista.DataSet | :vtk:`vtkAlgorithm`
+    inp : pyvista.DataSet | :vtk:`vtkAlgorithm` | :vtk:`vtkAlgorithmOutput`
         Input data or algorithm.
 
     split_sharp_edges : bool, default: False
@@ -1002,12 +1003,14 @@ def smooth_shading_algorithm(
     return alg
 
 
-def pointset_to_polydata_algorithm(inp: _AlgorithmInput) -> PointSetToPolyDataAlgorithm:
+def pointset_to_polydata_algorithm(
+    inp: PointSet | _vtk.vtkAlgorithm | _vtk.vtkAlgorithmOutput,
+) -> PointSetToPolyDataAlgorithm:
     """Add a filter that casts PointSet to PolyData.
 
     Parameters
     ----------
-    inp : pyvista.PointSet | :vtk:`vtkAlgorithm`
+    inp : pyvista.PointSet | :vtk:`vtkAlgorithm` | :vtk:`vtkAlgorithmOutput`
         Input point set, or an algorithm producing one, to be cast to PolyData.
 
     Returns
@@ -1028,7 +1031,7 @@ def add_ids_algorithm(
 
     Parameters
     ----------
-    inp : pyvista.DataSet
+    inp : pyvista.DataSet | :vtk:`vtkAlgorithm` | :vtk:`vtkAlgorithmOutput`
         The input data to which the IDs will be added.
     point_ids : bool, default: True
         If ``True``, point IDs will be added to the input data.
@@ -1075,7 +1078,7 @@ def cell_data_to_point_data_algorithm(
 
     Parameters
     ----------
-    inp : pyvista.DataSet
+    inp : pyvista.DataSet | :vtk:`vtkAlgorithm` | :vtk:`vtkAlgorithmOutput`
         The input data whose cell data will be converted to point data.
     pass_cell_data : bool, default: False
         If ``True``, the original cell data will be passed to the output.
@@ -1099,7 +1102,7 @@ def point_data_to_cell_data_algorithm(
 
     Parameters
     ----------
-    inp : pyvista.DataSet
+    inp : pyvista.DataSet | :vtk:`vtkAlgorithm` | :vtk:`vtkAlgorithmOutput`
         The input data whose point data will be converted to cell data.
     pass_point_data : bool, default: False
         If ``True``, the original point data will be passed to the output.
@@ -1121,7 +1124,7 @@ def triangulate_algorithm(inp: _AlgorithmInput) -> _vtk.vtkTriangleFilter:
 
     Parameters
     ----------
-    inp : :vtk:`vtkDataObject`
+    inp : pyvista.DataSet | :vtk:`vtkAlgorithm` | :vtk:`vtkAlgorithmOutput`
         The input data to be triangulated.
 
     Returns
@@ -1144,7 +1147,7 @@ def decimation_algorithm(
 
     Parameters
     ----------
-    inp : :vtk:`vtkDataObject`
+    inp : pyvista.DataSet | :vtk:`vtkAlgorithm` | :vtk:`vtkAlgorithmOutput`
         The input data to be decimated.
     target_reduction : float
         The target reduction amount, as a fraction of the original data.
