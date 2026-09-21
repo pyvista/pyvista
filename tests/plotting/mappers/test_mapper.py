@@ -82,7 +82,7 @@ def test_color_mode(dataset_mapper):
     dataset_mapper.color_mode = 'map'
     assert dataset_mapper.color_mode == 'map'
 
-    with pytest.raises(ValueError, match='Color mode must be either'):
+    with pytest.raises(ValueError, match="Color mode 'invalid' is not valid"):
         dataset_mapper.color_mode = 'invalid'
 
 
@@ -120,9 +120,15 @@ def test_resolve(dataset_mapper, resolve):
 
 
 def test_invalid_resolve(dataset_mapper):
-    match = 'Resolve must be either "off", "polygon_offset" or "shift_zbuffer"'
+    match = "Resolve 'invalid' is not valid"
     with pytest.raises(ValueError, match=match):
         dataset_mapper.resolve = 'invalid'
+
+
+def test_set_scalars_custom_opac_requires_opacity(sphere):
+    mapper = DataSetMapper(dataset=sphere)
+    with pytest.raises(ValueError, match='Custom opacity requires an opacity array'):
+        mapper.set_scalars(sphere.points[:, 0], 'x', custom_opac=True)
 
 
 def test_mapper_dataset_property_returns_original(sphere):
@@ -197,6 +203,29 @@ def test_set_scalars_categories_short_cmap():
     match = 'The colormap has 3 colors but the scalars have 4 categories.'
     with pytest.raises(ValueError, match=match):
         mapper.set_scalars(mesh['labels'], 'labels', categories=True, cmap=['r', 'g', 'b'])
+
+
+@pytest.mark.parametrize('clim', [[None, None], (None, None)])
+def test_add_mesh_clim_without_bounds(sphere, clim):
+    sphere['data'] = sphere.points[:, 0]
+    pl = pv.Plotter()
+    actor = pl.add_mesh(sphere, scalars='data', clim=clim)
+    assert actor.mapper.scalar_range == pytest.approx(sphere.get_data_range('data'))
+
+
+@pytest.mark.parametrize('clim', [[None, 1.0], [1.0, None], [None], [None, None, None]])
+def test_add_mesh_clim_partial_bounds_raises(sphere, clim):
+    sphere['data'] = sphere.points[:, 0]
+    with pytest.raises((TypeError, IndexError)):
+        pv.Plotter().add_mesh(sphere, scalars='data', clim=clim)
+
+
+@pytest.mark.parametrize('clim', [np.float64(0.25), np.array([0.1, 0.2])])
+def test_add_mesh_clim_numpy(sphere, clim):
+    sphere['data'] = sphere.points[:, 0]
+    actor = pv.Plotter().add_mesh(sphere, scalars='data', clim=clim)
+    expected = (-clim, clim) if np.ndim(clim) == 0 else tuple(clim)
+    assert actor.mapper.scalar_range == pytest.approx(expected)
 
 
 def test_set_scalars_categories_keeps_clim():
@@ -515,6 +544,17 @@ def test_as_rgba_uses_mapped_scalars(sphere):
     # Calling as_rgba again should be a no-op (already direct)
     mapper.as_rgba()
     assert mapper.color_mode == 'direct'
+
+
+def test_as_rgba_without_mapped_scalars(sphere):
+    """A mapper with nothing mapped has no RGBA array to build."""
+    mapper = DataSetMapper(dataset=sphere)
+    mapper.color_mode = 'map'
+
+    mapper.as_rgba()
+
+    assert '__rgba__' not in sphere.point_data
+    assert mapper.color_mode == 'map'
 
 
 def test_shared_mesh_raw_numpy_scalars_smooth_shading_subplots_mapper_output():

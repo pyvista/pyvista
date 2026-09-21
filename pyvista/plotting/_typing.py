@@ -85,9 +85,7 @@ Chart = Union['Chart2D', 'ChartBox', 'ChartPie', 'ChartMPL']
 FontFamilyOptions = Literal['courier', 'times', 'arial']
 OpacityOptions = Literal[
     'linear',
-    'linear_r',
     'geom',
-    'geom_r',
     'sigmoid',
     'sigmoid_1',
     'sigmoid_2',
@@ -101,6 +99,21 @@ OpacityOptions = Literal[
     'sigmoid_10',
     'sigmoid_15',
     'sigmoid_20',
+    'linear_r',
+    'geom_r',
+    'sigmoid_r',
+    'sigmoid_1_r',
+    'sigmoid_2_r',
+    'sigmoid_3_r',
+    'sigmoid_4_r',
+    'sigmoid_5_r',
+    'sigmoid_6_r',
+    'sigmoid_7_r',
+    'sigmoid_8_r',
+    'sigmoid_9_r',
+    'sigmoid_10_r',
+    'sigmoid_15_r',
+    'sigmoid_20_r',
     'foreground',
 ]
 CullingOptions = Literal['front', 'back', 'frontface', 'backface', 'f', 'b']
