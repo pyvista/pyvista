@@ -43,7 +43,6 @@ if TYPE_CHECKING:
 
     from ._typing import ColorLike
     from ._typing import StyleOptions
-    from .actor import Actor
     from .plotter import BasePlotter
     from .render_window_interactor import InteractorStyleCaptureMixin
     from .text import CornerAnnotation
@@ -354,7 +353,7 @@ class PickingComponent(_NoNewAttrMixin):
         self._picker_in_use = False
         self._picked_point: NumpyArray[float] | None = None
         # Mesh-aware picking state
-        self._picked_actor: Actor | None = None
+        self._picked_actor: _vtk.vtkActor | None = None
         self._picked_mesh: pv.DataSet | None = None
         self._picked_cell: pv.DataSet | pv.MultiBlock | None = None
         self._picking_text: CornerAnnotation | None = None
@@ -394,7 +393,7 @@ class PickingComponent(_NoNewAttrMixin):
         return self._picked_point
 
     @property
-    def picked_actor(self) -> Actor | None:  # numpydoc ignore=RT01
+    def picked_actor(self) -> _vtk.vtkActor | None:  # numpydoc ignore=RT01
         """Return the picked actor."""
         return self._picked_actor
 
@@ -971,9 +970,7 @@ class PickingComponent(_NoNewAttrMixin):
                     with plotter._get_iren_not_none().poked_subplot():
                         component._clear_picking_representations()
                 return
-            # VTK hands back the actor and dataset that were added, which are
-            # the PyVista ones, but types them as the base classes.
-            component._picked_actor = cast('Actor | None', picker.GetActor())
+            component._picked_actor = picker.GetActor()
             component._picked_mesh = cast('pv.DataSet | None', picker.GetDataSet())
 
             if show_point:
