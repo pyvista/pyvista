@@ -334,7 +334,7 @@ nitpick_ignore_regex = [
     (r'py:.*', 'colors.ListedColormap'),
     (r'py:.*', '.*MeshValidationReport'),
     (r'py:.*', '.*CellQualityInfo'),
-    (r'py:.*', '.*Cycler'),
+    (r'py:.*', 'cycler.Cycler'),
     (r'py:.*', 'pyvista.PVDDataSet'),
     (r'py:.*', 'pyvista.SeriesDataSet'),
     (r'py:.*', 'ScalarBarArgs'),

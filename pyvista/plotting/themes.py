@@ -40,7 +40,6 @@ from pathlib import PurePosixPath
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
-from typing import Literal
 
 import pyvista_validation as _validation
 
@@ -68,15 +67,14 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
     from collections.abc import Sequence
 
-    from cycler import Cycler
+    import cycler
 
     from pyvista.core._typing_core import VectorLike
 
     from ._typing import ColorLike
     from ._typing import ColormapOptions
     from ._typing import ThemeOptions
-
-_TrameModeOptions = Literal['trame', 'server', 'client']
+    from ._typing import TrameModeOptions
 
 
 def _set_plot_theme_from_env() -> None:
@@ -610,7 +608,7 @@ class _SilhouetteConfig(_ConfigBase):
         self._feature_angle = feature_angle
 
     @property
-    def decimate(self) -> float:  # numpydoc ignore=RT01
+    def decimate(self) -> float | None:  # numpydoc ignore=RT01
         """Return or set the amount to decimate the silhouette.
 
         Must be in the range ``[0.0, 1.0]``. A value of ``0.0`` or ``None``
@@ -623,7 +621,7 @@ class _SilhouetteConfig(_ConfigBase):
         >>> pv.global_theme.silhouette.decimate = 0.9
 
         """
-        return self._decimate  # type: ignore[return-value]
+        return self._decimate
 
     @decimate.setter
     def decimate(self, decimate: float | None) -> None:
@@ -1109,7 +1107,7 @@ class _Font(_ConfigBase):
         self._size = int(size)
 
     @property
-    def title_size(self) -> int:  # numpydoc ignore=RT01
+    def title_size(self) -> int | None:  # numpydoc ignore=RT01
         """Return or set the title size.
 
         If ``None``, then VTK uses ``UnconstrainedFontSizeOn`` for titles.
@@ -1120,7 +1118,7 @@ class _Font(_ConfigBase):
         >>> pv.global_theme.font.title_size = 20
 
         """
-        return self._title_size  # type: ignore[return-value]
+        return self._title_size
 
     @title_size.setter
     def title_size(self, title_size: int | None) -> None:
@@ -1130,7 +1128,7 @@ class _Font(_ConfigBase):
             self._title_size = int(title_size)
 
     @property
-    def label_size(self) -> int:  # numpydoc ignore=RT01
+    def label_size(self) -> int | None:  # numpydoc ignore=RT01
         """Return or set the label size.
 
         If ``None``, then VTK uses ``UnconstrainedFontSizeOn`` for labels.
@@ -1141,7 +1139,7 @@ class _Font(_ConfigBase):
         >>> pv.global_theme.font.label_size = 20
 
         """
-        return self._label_size  # type: ignore[return-value]
+        return self._label_size
 
     @label_size.setter
     def label_size(self, label_size: int | None) -> None:
@@ -1527,7 +1525,7 @@ class _TrameConfig(_ConfigBase):
         elif jupyter_mode == 'native':  # pragma: no cover
             self._jupyter_extension_enabled = False
             self._server_proxy_enabled = False
-        self._default_mode: _TrameModeOptions = 'trame'
+        self._default_mode: TrameModeOptions = 'trame'
 
     @property
     def interactive_ratio(self) -> float:  # numpydoc ignore=RT01
@@ -1639,7 +1637,7 @@ class _TrameConfig(_ConfigBase):
         self._jupyter_extension_enabled = bool(enabled)
 
     @property
-    def default_mode(self) -> _TrameModeOptions:  # numpydoc ignore=RT01
+    def default_mode(self) -> TrameModeOptions:  # numpydoc ignore=RT01
         """Return or set the default mode of the Trame backend.
 
         * ``'trame'``: Uses a view that can switch between client and server
@@ -1652,7 +1650,7 @@ class _TrameConfig(_ConfigBase):
         return self._default_mode
 
     @default_mode.setter
-    def default_mode(self, mode: _TrameModeOptions) -> None:
+    def default_mode(self, mode: TrameModeOptions) -> None:
         self._default_mode = mode
 
 
@@ -1941,7 +1939,7 @@ class Theme(_ConfigBase):
         self._font = _Font()
         self._cmap: ColormapOptions = 'viridis'
         self._color = Color('white')
-        self._color_cycler: Cycler[str, Any] | None = None
+        self._color_cycler: cycler.Cycler[str, Any] | None = None
         self._nan_color = Color('darkgray')
         self._above_range_color = Color('grey')
         self._below_range_color = Color('grey')
@@ -2539,7 +2537,7 @@ class Theme(_ConfigBase):
         self._color = Color(color)
 
     @property
-    def color_cycler(self) -> Cycler[str, Any] | None:  # numpydoc ignore=RT01
+    def color_cycler(self) -> cycler.Cycler[str, Any] | None:  # numpydoc ignore=RT01
         """Return or set the default color cycler used to color meshes.
 
         This color cycler is iterated over by each renderer to sequentially
@@ -2575,7 +2573,7 @@ class Theme(_ConfigBase):
 
     @color_cycler.setter
     def color_cycler(
-        self, color_cycler: str | Sequence[ColorLike] | Cycler[str, Any] | None
+        self, color_cycler: str | Sequence[ColorLike] | cycler.Cycler[str, Any] | None
     ) -> None:
         self._color_cycler = get_cycler(color_cycler)
 
@@ -2783,7 +2781,7 @@ class Theme(_ConfigBase):
         self._colorbar_horizontal = config
 
     @property
-    def colorbar_vertical(self) -> _ColorbarConfig:  # numpydoc ignore=RT01
+    def colorbar_vertical(self) -> _VerticalColorbarConfig:  # numpydoc ignore=RT01
         """Return or set the default parameters of a vertical colorbar.
 
         Examples
@@ -3243,14 +3241,14 @@ class Theme(_ConfigBase):
     @property
     def before_close_callback(
         self,
-    ) -> Callable[[pyvista.Plotter], None]:  # numpydoc ignore=RT01
+    ) -> Callable[[pyvista.Plotter], None] | None:  # numpydoc ignore=RT01
         """Return the default callback function to run before the plotter closes."""
-        return self._before_close_callback  # type: ignore[return-value]
+        return self._before_close_callback
 
     @before_close_callback.setter
     def before_close_callback(
         self,
-        value: Callable[[pyvista.Plotter], None],
+        value: Callable[[pyvista.Plotter], None] | None,
     ) -> None:
         self._before_close_callback = value
 
