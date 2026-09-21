@@ -1282,7 +1282,7 @@ class _Chart(DocSubs):
     _DOC_SUBS: dict[str, str] | None = None
 
     def __init__(
-        self, size: Sequence[float] | None = (1, 1), loc: Sequence[float] | None = (0, 0)
+        self, size: VectorLike[float] | None = (1, 1), loc: VectorLike[float] | None = (0, 0)
     ) -> None:
         super().__init__()
         self._background = _ChartBackground(self)
@@ -1345,7 +1345,7 @@ class _Chart(DocSubs):
         return tuple(self.GetSize())  # type: ignore[attr-defined]
 
     @_geometry.setter
-    def _geometry(self, val: Sequence[float]) -> None:
+    def _geometry(self, val: VectorLike[float]) -> None:
         """Set the chart geometry."""
         self.SetSize(_vtk.vtkRectf(*val))  # type: ignore[attr-defined]
 
@@ -1365,14 +1365,14 @@ class _Chart(DocSubs):
     def _interactive(self, val: bool) -> None:
         self.SetInteractive(val)  # type: ignore[attr-defined]
 
-    def _is_within(self, pos: Sequence[float]) -> bool:
+    def _is_within(self, pos: VectorLike[float]) -> bool:
         """Check whether the specified position (in pixels) lies within this chart's geometry."""
         l, b, w, h = self._geometry
         return l <= pos[0] <= l + w and b <= pos[1] <= b + h
 
     @property
     @doc_subs
-    def size(self) -> Sequence[float]:  # numpydoc ignore=RT01
+    def size(self) -> VectorLike[float]:  # numpydoc ignore=RT01
         """Return or set the chart size in normalized coordinates.
 
         A size of ``(1, 1)`` occupies the whole renderer.
@@ -1395,7 +1395,7 @@ class _Chart(DocSubs):
         return self._size
 
     @size.setter
-    def size(self, val: Sequence[float]) -> None:
+    def size(self, val: VectorLike[float]) -> None:
         if not (len(val) == 2 and 0 <= val[0] <= 1 and 0 <= val[1] <= 1):
             msg = f'Invalid size {val}.'
             raise ValueError(msg)
@@ -1403,7 +1403,7 @@ class _Chart(DocSubs):
 
     @property
     @doc_subs
-    def loc(self) -> Sequence[float]:  # numpydoc ignore=RT01
+    def loc(self) -> VectorLike[float]:  # numpydoc ignore=RT01
         """Return or set the chart position in normalized coordinates.
 
         This denotes the location of the chart's bottom left corner.
@@ -1426,7 +1426,7 @@ class _Chart(DocSubs):
         return self._loc
 
     @loc.setter
-    def loc(self, val: Sequence[float]) -> None:
+    def loc(self, val: VectorLike[float]) -> None:
         if not (len(val) == 2 and 0 <= val[0] <= 1 and 0 <= val[1] <= 1):
             msg = f'Invalid loc {val}.'
             raise ValueError(msg)
@@ -3416,8 +3416,8 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
     def __init__(
         self,
         *,
-        size: Sequence[float] | None = (1, 1),
-        loc: Sequence[float] | None = (0, 0),
+        size: VectorLike[float] | None = (1, 1),
+        loc: VectorLike[float] | None = (0, 0),
         x_label: str = 'x',
         y_label: str = 'y',
         grid: bool = True,
@@ -4420,8 +4420,8 @@ class ChartBox(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartBox):
         *,
         colors: Sequence[ColorLike] | None = None,
         labels: Sequence[str] | None = None,
-        size: Sequence[float] | None = None,
-        loc: Sequence[float] | None = None,
+        size: VectorLike[float] | None = None,
+        loc: VectorLike[float] | None = None,
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize a new chart containing box plots."""
         self.SetAutoSize(False)  # We manually set the appropriate size
@@ -4443,7 +4443,7 @@ class ChartBox(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartBox):
         return _Chart._geometry.fget(self)  # type: ignore[attr-defined]
 
     @_geometry.setter
-    def _geometry(self, value: Sequence[float]) -> None:
+    def _geometry(self, value: VectorLike[float]) -> None:
         _Chart._geometry.fset(self, value)  # type: ignore[attr-defined]
 
     @property
@@ -4474,7 +4474,7 @@ class ChartBox(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartBox):
         return self._plot
 
     @property
-    def size(self) -> Sequence[float]:  # numpydoc ignore=RT01
+    def size(self) -> VectorLike[float]:  # numpydoc ignore=RT01
         """Return or set the chart size in normalized coordinates.
 
         A size of ``(1, 1)`` occupies the whole renderer.
@@ -4497,11 +4497,11 @@ class ChartBox(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartBox):
         return _Chart.size.fget(self)  # type: ignore[attr-defined]
 
     @size.setter
-    def size(self, val: Sequence[float]) -> None:
+    def size(self, val: VectorLike[float]) -> None:
         _Chart.size.fset(self, val)  # type: ignore[attr-defined]
 
     @property
-    def loc(self) -> Sequence[float]:  # numpydoc ignore=RT01
+    def loc(self) -> VectorLike[float]:  # numpydoc ignore=RT01
         """Return or set the chart position in normalized coordinates.
 
         This denotes the location of the chart's bottom left corner.
@@ -4524,7 +4524,7 @@ class ChartBox(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartBox):
         return _Chart.loc.fget(self)  # type: ignore[attr-defined]
 
     @loc.setter
-    def loc(self, val: Sequence[float]) -> None:
+    def loc(self, val: VectorLike[float]) -> None:
         _Chart.loc.fset(self, val)  # type: ignore[attr-defined]
 
 
@@ -4709,8 +4709,8 @@ class ChartPie(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartPie):
         *,
         colors: Sequence[ColorLike] | None = None,
         labels: Sequence[str] | None = None,
-        size: Sequence[float] | None = None,
-        loc: Sequence[float] | None = None,
+        size: VectorLike[float] | None = None,
+        loc: VectorLike[float] | None = None,
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize a new chart containing a pie plot."""
         self.SetAutoSize(False)  # We manually set the appropriate size
@@ -4731,7 +4731,7 @@ class ChartPie(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartPie):
         return _Chart._geometry.fget(self)  # type: ignore[attr-defined]
 
     @_geometry.setter
-    def _geometry(self, value: Sequence[float]) -> None:
+    def _geometry(self, value: VectorLike[float]) -> None:
         _Chart._geometry.fset(self, value)  # type: ignore[attr-defined]
 
     @property
@@ -4758,7 +4758,7 @@ class ChartPie(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartPie):
         return self._plot
 
     @property
-    def size(self) -> Sequence[float]:  # numpydoc ignore=RT01
+    def size(self) -> VectorLike[float]:  # numpydoc ignore=RT01
         """Return or set the chart size in normalized coordinates.
 
         A size of ``(1, 1)`` occupies the whole renderer.
@@ -4781,11 +4781,11 @@ class ChartPie(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartPie):
         return _Chart.size.fget(self)  # type: ignore[attr-defined]
 
     @size.setter
-    def size(self, val: Sequence[float]) -> None:
+    def size(self, val: VectorLike[float]) -> None:
         _Chart.size.fset(self, val)  # type: ignore[attr-defined]
 
     @property
-    def loc(self) -> Sequence[float]:  # numpydoc ignore=RT01
+    def loc(self) -> VectorLike[float]:  # numpydoc ignore=RT01
         """Return or set the chart position in normalized coordinates.
 
         This denotes the location of the chart's bottom left corner.
@@ -4808,7 +4808,7 @@ class ChartPie(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartPie):
         return _Chart.loc.fget(self)  # type: ignore[attr-defined]
 
     @loc.setter
-    def loc(self, val: Sequence[float]) -> None:
+    def loc(self, val: VectorLike[float]) -> None:
         _Chart.loc.fset(self, val)  # type: ignore[attr-defined]
 
 
@@ -4878,8 +4878,8 @@ class ChartMPL(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkImageItem):
         self,
         figure: Figure | None = None,
         *,
-        size: Sequence[float] | None = (1, 1),
-        loc: Sequence[float] | None = (0, 0),
+        size: VectorLike[float] | None = (1, 1),
+        loc: VectorLike[float] | None = (0, 0),
         redraw_on_render: bool = True,
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize chart."""
@@ -5021,7 +5021,7 @@ class ChartMPL(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkImageItem):
         return (*self.position, t_w, t_h)
 
     @_geometry.setter
-    def _geometry(self, _: Sequence[float]) -> None:
+    def _geometry(self, _: VectorLike[float]) -> None:
         msg = f'Cannot set the geometry of {type(self).__class__}'
         raise AttributeError(msg)
 
@@ -5031,7 +5031,7 @@ class ChartMPL(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkImageItem):
         return self.GetPosition()
 
     @position.setter
-    def position(self, val: Sequence[float]) -> None:
+    def position(self, val: VectorLike[float]) -> None:
         if len(val) != 2:
             msg = f'Invalid position {val}, must be length 2.'
             raise ValueError(msg)
@@ -5264,7 +5264,7 @@ class Charts(_NoNewAttrMixin):
             if chart._background is not None:
                 self._scene.RemoveItem(chart._background)
 
-    def get_charts_by_pos(self, pos: Sequence[float]) -> list[Chart]:
+    def get_charts_by_pos(self, pos: VectorLike[float]) -> list[Chart]:
         """Retrieve visible charts indicated by the given mouse position.
 
         Parameters
