@@ -39,7 +39,7 @@ if TYPE_CHECKING:
     from .colors import _MATPLOTLIB_CMAPS_LITERAL
     from .colors import Color as Color
 
-WrappableType: TypeAlias = Union[
+_WrappableType: TypeAlias = Union[
     _vtk.vtkDataObject,
     'DataSet',
     'MultiBlock',
@@ -48,10 +48,11 @@ WrappableType: TypeAlias = Union[
     NumpyArray[float],
     'trimesh.Trimesh',
     'meshio.Mesh',
-    None,
 ]
 
-PlottableType: TypeAlias = ArrayLike[float] | WrappableType | str | Path
+WrappableType: TypeAlias = _WrappableType | None
+
+PlottableType: TypeAlias = ArrayLike[float] | _WrappableType | str | Path
 
 
 NamedColormaps = Union[
