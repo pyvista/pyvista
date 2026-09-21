@@ -670,6 +670,49 @@ def test_clip_box_polydata_no_unused_points(invert):
     assert clipped.n_points == len(used)
 
 
+def _n_unused_points(mesh):
+    """Return the number of points which no cell of the mesh refers to."""
+    used = np.unique(mesh.cast_to_unstructured_grid().cell_connectivity)
+    return mesh.n_points - len(used)
+
+
+@pytest.mark.parametrize(
+    'clip_filter',
+    [
+        lambda mesh: mesh.clip(normal='x', origin=mesh.center, return_clipped=True),
+        lambda mesh: mesh.clip_box(pv.Box(mesh.bounds).scale(0.5).bounds, merge_points=False),
+    ],
+    ids=['clip', 'clip_box'],
+)
+def test_clip_strips_no_unused_points(clip_filter):
+    """A clipper asked for both halves gives each half the whole input point list."""
+    mesh = pv.Plane(i_resolution=8, j_resolution=8).triangulate().strip()
+    assert mesh.n_strips
+
+    outputs = clip_filter(mesh)
+    for output in outputs if isinstance(outputs, tuple) else [outputs]:
+        assert output.n_cells
+        assert _n_unused_points(output) == 0
+
+
+def test_clip_leaves_points_alone_when_the_clipper_keeps_none(monkeypatch, hexbeam):
+    """The table-based clipper builds its own point list, so nothing follows it."""
+
+    def _fail(*args, **kwargs):
+        msg = 'remove_unused_points should not be called'
+        raise AssertionError(msg)
+
+    monkeypatch.setattr(pv.UnstructuredGrid, 'remove_unused_points', _fail)
+    monkeypatch.setattr(pv.PolyData, 'remove_unused_points', _fail)
+
+    bounds = hexbeam.bounds
+    # Clip nothing away, so the output keeps the bounds of the input
+    kept, _ = hexbeam.clip(normal='x', origin=(bounds.x_max, 0.0, 0.0), return_clipped=True)
+    assert kept.n_cells == hexbeam.n_cells
+    assert hexbeam.clip_box(bounds, invert=False, merge_points=False).n_cells == hexbeam.n_cells
+    assert hexbeam.clip_slab(1e3, normal='x').n_cells == hexbeam.n_cells
+
+
 @pytest.mark.parametrize('invert', [True, False])
 def test_clip_box_polydata_keeps_cells_and_arrays(invert):
     """The clipped surface covers the same area and keeps its own cell types."""

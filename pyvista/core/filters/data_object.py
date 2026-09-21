@@ -3267,6 +3267,8 @@ class DataObjectFilters:
         if return_clipped:
             a = _keep_array_structure(_get_output(alg, oport=0), source)
             b = _keep_array_structure(_get_output(alg, oport=1), source)
+            a = _remove_unused_clip_points(a, alg)
+            b = _remove_unused_clip_points(b, alg)
             if crinkle:
                 a, b = _Crinkler._extract_crinkle_cells(source, a, b, active_scalars_info)
             return _maybe_cast_to_point_set(a), _maybe_cast_to_point_set(b)
@@ -3430,20 +3432,14 @@ class DataObjectFilters:
             crinkle=crinkle,
         )
 
-        # Post-process clip to fix output type and remove unused points
-        input_bounds = self.bounds
+        # Post-process clip to fix output type
         if isinstance(result, tuple):
             result = (
                 _keep_array_structure(_cast_output_to_match_input_type(result[0], self), self),
                 _keep_array_structure(_cast_output_to_match_input_type(result[1], self), self),
             )
-            result = (
-                _remove_unused_points_post_clip(result[0], input_bounds),
-                _remove_unused_points_post_clip(result[1], input_bounds),
-            )
         else:
             result = _keep_array_structure(_cast_output_to_match_input_type(result, self), self)
-            result = _remove_unused_points_post_clip(result, input_bounds)
         if inplace:
             if return_clipped:
                 self.copy_from(result[0], deep=False)
@@ -3630,7 +3626,6 @@ class DataObjectFilters:
 
         if crinkle:
             clipped = _Crinkler._extract_crinkle_cells(source, clipped, None, active_scalars_info)
-        clipped = _remove_unused_points_post_clip(clipped, self.bounds)
         if merge_points:
             clipped = _weld_points(clipped)
         return _keep_array_structure(_cast_output_to_match_input_type(clipped, self), self)
@@ -3776,9 +3771,7 @@ class DataObjectFilters:
             crinkle=crinkle,
         )
 
-        input_bounds = self.bounds
-        result = _keep_array_structure(_cast_output_to_match_input_type(result, self), self)
-        return _remove_unused_points_post_clip(result, input_bounds)
+        return _keep_array_structure(_cast_output_to_match_input_type(result, self), self)
 
     # fmt: off
     # ruff: disable[E501]
@@ -6633,6 +6626,16 @@ def _clipper(mesh: DataSet | MultiBlock) -> _vtk.vtkClipPolyData | _vtk.vtkTable
     return _vtk.vtkTableBasedClipDataSet()
 
 
+def _remove_unused_clip_points(
+    output: _DataSetType, clipper: _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet
+) -> _DataSetType:
+    """Remove the points a clipper asked for both halves leaves each half holding."""
+    # vtkTableBasedClipDataSet builds its own point list and has nothing to remove
+    if isinstance(clipper, _vtk.vtkClipPolyData):
+        return cast('_DataSetType', cast('PolyData', output).remove_unused_points(inplace=True))
+    return output
+
+
 def _validate_reference_volume_options(
     *,
     reference_volume: ImageData | None,
@@ -7002,25 +7005,6 @@ def _validate_clip_inplace(
         )
         raise TypeError(msg)
     return mesh
-
-
-def _remove_unused_points_post_clip(clip_output, input_bounds):
-    # VTK clip filters are buggy and sometimes retain unused points from the input, e.g.:
-    # https://github.com/pyvista/pyvista/issues/6511
-    # https://github.com/pyvista/pyvista/issues/7738
-
-    def maybe_remove_unused_points(mesh: DataSet):
-        # Unused points are correctly removed sometimes, so for performance we only
-        # remove points when the clipped bounds match input bounds
-        if np.allclose(clip_output.bounds, input_bounds) and hasattr(mesh, 'remove_unused_points'):
-            return mesh.remove_unused_points()
-        return mesh
-
-    return (
-        clip_output.generic_filter(maybe_remove_unused_points)
-        if isinstance(clip_output, pv.MultiBlock)
-        else maybe_remove_unused_points(clip_output)
-    )
 
 
 def _cast_output_to_match_input_type(
