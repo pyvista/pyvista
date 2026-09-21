@@ -26,15 +26,16 @@ if TYPE_CHECKING:
     from pyvista.core.utilities.arrays import CellLiteral
     from pyvista.core.utilities.arrays import PointLiteral
 
-    _AlgorithmInput: TypeAlias = _vtk.vtkDataObject | _vtk.vtkAlgorithm | _vtk.vtkAlgorithmOutput
+    _AlgorithmLike: TypeAlias = _vtk.vtkAlgorithm | _vtk.vtkAlgorithmOutput
+    _AlgorithmInput: TypeAlias = _vtk.vtkDataObject | _AlgorithmLike
 
 
 # fmt: off
 # ruff: disable[E501]
 @overload
-def algorithm_to_mesh_handler(mesh_or_algo: _vtk.vtkAlgorithm | _vtk.vtkAlgorithmOutput, port: int = ...) -> tuple[DataSet, _vtk.vtkAlgorithm | _vtk.vtkAlgorithmOutput]: ...
+def algorithm_to_mesh_handler(mesh_or_algo: _AlgorithmLike, port: int = ...) -> tuple[DataSet, _AlgorithmLike]: ...
 @overload
-def algorithm_to_mesh_handler(mesh_or_algo: Any, port: int = ...) -> tuple[DataSet, _vtk.vtkAlgorithm | _vtk.vtkAlgorithmOutput | None]: ...
+def algorithm_to_mesh_handler(mesh_or_algo: Any, port: int = ...) -> tuple[DataSet, _AlgorithmLike | None]: ...
 # ruff: enable[E501]
 # fmt: on
 def algorithm_to_mesh_handler(
