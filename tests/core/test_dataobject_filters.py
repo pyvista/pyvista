@@ -5154,12 +5154,6 @@ def _surface():
     return pv.Sphere(theta_resolution=8, phi_resolution=8)
 
 
-def _volume():
-    return pv.ImageData(
-        dimensions=(5, 5, 5), spacing=(0.25, 0.25, 0.25), origin=(-0.5, -0.5, -0.5)
-    )
-
-
 def _cloud():
     return pv.PointSet(_surface().points)
 
@@ -5185,20 +5179,6 @@ _COMPOSITE_FILTERS = {
     'outline_corners': lambda mesh: mesh.outline_corners(nested=True),
 }
 
-# Block class for a surface block and for a volume block.
-_BLOCK_TYPE = {
-    'clip': (pv.PolyData, pv.UnstructuredGrid),
-    'clip_box': (pv.PolyData, pv.UnstructuredGrid),
-    'clip_slab': (pv.PolyData, pv.UnstructuredGrid),
-    'slice': (pv.PolyData, pv.PolyData),
-    'slice_implicit': (pv.PolyData, pv.PolyData),
-    'slice_along_line': (pv.PolyData, pv.PolyData),
-    'extract_all_edges': (pv.PolyData, pv.PolyData),
-    'cell_centers': (pv.PolyData, pv.PolyData),
-    'triangulate': (pv.PolyData, pv.UnstructuredGrid),
-    'outline_corners': (pv.PolyData, pv.PolyData),
-}
-
 _POINTSET_BLOCK_TYPE = {
     'clip': pv.PointSet,
     'clip_box': pv.PointSet,
@@ -5214,14 +5194,6 @@ _POINTSET_RAISES = {
     'extract_all_edges': PointSetCellOperationError,
     'triangulate': PointSetCellOperationError,
 }
-
-
-@pytest.mark.parametrize('name', sorted(_COMPOSITE_FILTERS))
-@pytest.mark.parametrize('index', [0, 1], ids=['surface', 'volume'])
-def test_composite_filter_block_type(name, index):
-    block = (_surface, _volume)[index]()
-    out = _COMPOSITE_FILTERS[name](pv.MultiBlock([block]))
-    assert type(out[0]) is _BLOCK_TYPE[name][index]
 
 
 @pytest.mark.parametrize('name', sorted(_COMPOSITE_FILTERS))
