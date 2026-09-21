@@ -633,7 +633,8 @@ def test_element_picking_face_records_the_matched_face(mocker: MockerFixture):
     for face_id, face in enumerate(mesh.get_cell(0).faces):
         picked = handler.get_face(face.cast_to_unstructured_grid().center)
 
-        assert picked.field_data['vtkOriginalFaceIds'] == [face_id]
+        assert picked is not None
+        assert picked.field_data['vtkOriginalFaceIds'].tolist() == [face_id]
 
 
 def test_element_picking_point_preserves_data():
