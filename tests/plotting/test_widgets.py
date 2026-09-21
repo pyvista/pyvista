@@ -4,6 +4,7 @@ import re
 from typing import TYPE_CHECKING
 from typing import Literal
 from unittest.mock import ANY
+import warnings
 
 import numpy as np
 import pytest
@@ -463,6 +464,45 @@ def test_widget_checkbox_button(uniform):
     func = lambda value: value  # Does nothing
     pl.add_mesh(uniform)
     pl.add_checkbox_button_widget(callback=func)
+    pl.close()
+
+
+def test_widget_checkbox_button_click_passes_the_new_state(uniform):
+    states = []
+    pl = pv.Plotter()
+    pl.add_mesh(uniform)
+    size = 50
+    position = (10.0, 10.0)
+    button = pl.add_checkbox_button_widget(
+        callback=states.append, value=False, size=size, position=position
+    )
+    pl.show(auto_close=False)
+
+    center = (int(position[0] + size / 2), int(position[1] + size / 2))
+    pl.iren._mouse_left_button_click(*center)
+    assert button.GetRepresentation().GetState() == 1
+    pl.iren._mouse_left_button_click(*center)
+    assert button.GetRepresentation().GetState() == 0
+
+    assert states == [True, False]
+    pl.close()
+
+
+def test_widget_checkbox_button_click_without_callback(uniform):
+    pl = pv.Plotter()
+    pl.add_mesh(uniform)
+    size = 50
+    position = (10.0, 10.0)
+    button = pl.add_checkbox_button_widget(None, value=False, size=size, position=position)
+    pl.show(auto_close=False)
+
+    center = (int(position[0] + size / 2), int(position[1] + size / 2))
+    with warnings.catch_warnings(record=True) as log:
+        warnings.simplefilter('always')
+        pl.iren._mouse_left_button_click(*center)
+
+    assert not [w for w in log if 'Encountered issue in callback' in str(w.message)]
+    assert button.GetRepresentation().GetState() == 1
     pl.close()
 
 
