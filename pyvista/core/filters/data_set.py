@@ -6631,11 +6631,23 @@ class DataSetFilters(DataObjectFilters):
                 raise TypeError(msg)
         return merged
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # PointSet with a composite, whose blocks decide
+    def __add__(self: PointSet, dataset: MultiBlock) -> PointSet | UnstructuredGrid: ...  # type: ignore[misc]
+    @overload  # PointSet with point clouds
+    def __add__(self: PointSet, dataset: PointSet | Sequence[PointSet]) -> PointSet: ...  # type: ignore[misc, overload-overlap]
+    @overload  # PointSet with anything else
+    def __add__(self: PointSet, dataset: DataSet | _vtk.vtkDataSet | Sequence[DataSet | _vtk.vtkDataSet]) -> UnstructuredGrid: ...  # type: ignore[misc]
+    @overload  # DataSet
+    def __add__(self: DataSet, dataset: DataSet | _vtk.vtkDataSet | MultiBlock | Sequence[DataSet | _vtk.vtkDataSet]) -> UnstructuredGrid: ...  # type: ignore[misc]
+    # ruff: enable[E501]
+    # fmt: on
     def __add__(  # type: ignore[misc]
         self: _DataSetType,
         dataset: DataSet | _vtk.vtkDataSet | MultiBlock | Sequence[DataSet | _vtk.vtkDataSet],
-    ) -> PolyData | PointSet | UnstructuredGrid:
-        """Combine this mesh with another into a :class:`pyvista.UnstructuredGrid`."""
+    ) -> PointSet | UnstructuredGrid:
+        """Combine this mesh with another into a point set or unstructured grid."""
         return DataSetFilters.merge(self, dataset)
 
     def __iadd__(  # type: ignore[misc]
