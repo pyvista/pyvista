@@ -681,12 +681,14 @@ def _n_unused_points(mesh):
     [
         lambda mesh: mesh.clip(normal='x', origin=mesh.center, return_clipped=True),
         lambda mesh: mesh.clip_box(pv.Box(mesh.bounds).scale(0.5).bounds, merge_points=False),
+        lambda mesh: mesh.clip_scalar(scalars='x', value=0.0, both=True),
     ],
-    ids=['clip', 'clip_box'],
+    ids=['clip', 'clip_box', 'clip_scalar'],
 )
 def test_clip_strips_no_unused_points(clip_filter):
     """A clipper asked for both halves gives each half the whole input point list."""
     mesh = pv.Plane(i_resolution=8, j_resolution=8).triangulate().strip()
+    mesh.point_data['x'] = mesh.points[:, 0]
     assert mesh.n_strips
 
     outputs = clip_filter(mesh)

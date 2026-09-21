@@ -39,6 +39,7 @@ from pyvista.core.filters.data_object import _cast_output_to_match_input_type
 from pyvista.core.filters.data_object import _clip_input
 from pyvista.core.filters.data_object import _clipper
 from pyvista.core.filters.data_object import _keep_array_structure
+from pyvista.core.filters.data_object import _remove_unused_clip_points
 from pyvista.core.filters.data_object import _make_reference_volume
 from pyvista.core.filters.data_object import _validate_clip_inplace
 from pyvista.core.filters.data_object import _validate_reference_volume_options
@@ -836,16 +837,20 @@ class DataSetFilters(DataObjectFilters):
         result0: PolyData | PointSet | UnstructuredGrid = _keep_array_structure(
             _cast_output_to_match_input_type(_get_output(alg), self), self
         )
+        result1: PolyData | PointSet | UnstructuredGrid | None = None
+        if both:
+            result1 = _keep_array_structure(
+                _cast_output_to_match_input_type(_get_output(alg, oport=1), self), self
+            )
+            result0 = _remove_unused_clip_points(result0, alg)
+            result1 = _remove_unused_clip_points(result1, alg)
         if not is_single_value:
             # Keep what lies above the lower value as well
             result0 = result0.clip_scalar(scalars=scalars, invert=False, value=lower)
         if inplace_target is not None:
             inplace_target.copy_from(result0, deep=False)
             result0 = inplace_target
-        if both:
-            result1: PolyData | PointSet | UnstructuredGrid = _keep_array_structure(
-                _cast_output_to_match_input_type(_get_output(alg, oport=1), self), self
-            )
+        if result1 is not None:
             return result0, result1
         return result0
 
