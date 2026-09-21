@@ -29,6 +29,7 @@ from .utilities.arrays import _SerializedDictArray
 from .utilities.fileio import _PICKLE_FILE_EXT
 from .utilities.fileio import _CompressionOptions
 from .utilities.fileio import _raise_pickle_removed
+from .utilities.fileio import _validate_pickle_format
 from .utilities.fileio import get_ext
 from .utilities.fileio import read
 from .utilities.helpers import wrap
@@ -51,6 +52,9 @@ if TYPE_CHECKING:
 
     from ._typing_core import ArrayLike
     from ._typing_core import NumpyArray
+    from .utilities.arrays import CellLiteral
+    from .utilities.arrays import FieldLiteral
+    from .utilities.arrays import PointLiteral
     from .utilities.writer import BaseWriter
 
 # vector array names
@@ -368,7 +372,7 @@ class DataObject(
 
     @abstractmethod
     def get_data_range(  # numpydoc ignore=PR01
-        self: Self, name: str | None, preference: FieldAssociation | str
+        self: Self, name: str | None, preference: PointLiteral | CellLiteral | FieldLiteral
     ) -> tuple[float, float]:  # pragma: no cover
         """Get the non-NaN min and max of a named array."""
         msg = f'{type(self)} mesh type does not have a `get_data_range` method.'
@@ -883,13 +887,13 @@ class DataObject(
         self: Self,
     ) -> tuple[FunctionType, tuple[dict[str, Any]]] | dict[str, Any]:
         """Support pickle."""
-        pickle_format = pv.PICKLE_FORMAT
+        pickle_format = pv._PICKLE_FORMAT
         if pickle_format == 'vtk':
             return self._serialize_vtk_pickle_format()
         elif pickle_format in ['xml', 'legacy']:
             return self._serialize_pyvista_pickle_format()
-        # Invalid format, use the setter to raise an error
-        pv.set_pickle_format(pickle_format)
+        # Invalid format, use the validator to raise an error
+        _validate_pickle_format(pickle_format)
 
     def _serialize_vtk_pickle_format(
         self: Self,
@@ -915,21 +919,14 @@ class DataObject(
     def _serialize_pyvista_pickle_format(self: Self) -> dict[str, Any]:
         """Support pickle by serializing the VTK object data.
 
-        The format of the serialized VTK object data depends on ``pyvista.PICKLE_FORMAT``
-        (case-insensitive).
-        - If ``'xml'``, the data is serialized as an XML-formatted string.
-        - If ``'legacy'``, the data is serialized to bytes in VTK's binary format.
-
-        .. note::
-
-            These formats are custom PyVista legacy formats. The native ``'vtk'`` format is
-            preferred since it supports more objects (for example, MultiBlock).
+        .. deprecated:: 0.50
+            The ``'vtk'`` format is the only supported pickle format.
 
         """
         if isinstance(self, pv.MultiBlock):
             msg = (
                 "MultiBlock is not supported with 'xml' or 'legacy' pickle formats."
-                "\nUse `pyvista.PICKLE_FORMAT='vtk'`."
+                "\nUse the default 'vtk' pickle format."
             )
             raise TypeError(msg)
         state = self.__dict__.copy()
@@ -937,7 +934,8 @@ class DataObject(
         _clear_vtk_objects_from_dict(state)
         _clear_accessor_cache(state)
 
-        if pv.PICKLE_FORMAT.lower() == 'xml':
+        pickle_format = pv._PICKLE_FORMAT
+        if pickle_format == 'xml':
             # the generic VTK XML writer `vtkXMLDataSetWriter` currently has a bug where it does
             # not pass all settings down to the sub-writers. Until this is fixed, use the
             # dataset-specific writers
@@ -966,7 +964,7 @@ class DataObject(
             writer.Write()
             to_serialize = writer.GetOutputString()
 
-        elif pv.PICKLE_FORMAT.lower() == 'legacy':
+        else:
             writer = _vtk.vtkDataSetWriter()
             writer.SetInputDataObject(self)
             writer.SetWriteToOutputString(True)
@@ -976,9 +974,9 @@ class DataObject(
 
         state['vtk_serialized'] = to_serialize
 
-        # this needs to be here because in multiprocessing situations, `pyvista.PICKLE_FORMAT`
+        # this needs to be here because in multiprocessing situations, the pickle format
         # is not shared between processes
-        state['PICKLE_FORMAT'] = pv.PICKLE_FORMAT
+        state['PICKLE_FORMAT'] = pickle_format
         return state
 
     def __setstate__(self: Self, state: Any) -> None:
@@ -1021,10 +1019,8 @@ class DataObject(
     def _unserialize_pyvista_pickle_format(self: Self, state: dict[str, Any]) -> None:
         """Support unpickle of PyVista ``'xml'`` and ``'legacy'`` formats.
 
-        .. note::
-
-            These formats are custom PyVista legacy formats. The native ``'vtk'`` format is
-            preferred since it supports more objects (for example, MultiBlock).
+        .. deprecated:: 0.50
+            The ``'vtk'`` format is the only supported pickle format.
 
         """
         vtk_serialized = state.pop('vtk_serialized')

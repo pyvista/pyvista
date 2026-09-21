@@ -692,9 +692,10 @@ class Renderers(_NoNewAttrMixin):
 
         scale : float
             Scale the image larger or smaller relative to the size of
-            the window.  For example, a scale size of 2 will make the
-            largest dimension of the image twice as large as the
-            largest dimension of the render window.  Defaults to 1.
+            the window.  The image height is scaled to the height of the
+            render window, or of the subplot when ``as_global=False``.
+            Its aspect ratio is preserved, so the image is cropped
+            horizontally where it is too wide to fit.  Defaults to 1.
 
         as_global : bool
             When multiple render windows are present, setting
@@ -929,7 +930,7 @@ class Renderers(_NoNewAttrMixin):
 
     def set_color_cycler(
         self,
-        color_cycler: str | cycler.Cycler[str, Any] | Sequence[ColorLike],
+        color_cycler: str | cycler.Cycler[str, Any] | Sequence[ColorLike] | None,
         *,
         all_renderers: bool = True,
     ) -> None:
@@ -957,7 +958,7 @@ class Renderers(_NoNewAttrMixin):
 
         Parameters
         ----------
-        color_cycler : str | cycler.Cycler | sequence[ColorLike]
+        color_cycler : str | cycler.Cycler | sequence[ColorLike] | None
             The colors to cycle through.
 
         all_renderers : bool, default: True
