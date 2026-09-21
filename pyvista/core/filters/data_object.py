@@ -3265,10 +3265,8 @@ class DataObjectFilters:
             return in_.cast_to_pointset() if apply_vtk_94x_patch else in_
 
         if return_clipped:
-            a = _remove_unused_clip_points(_get_output(alg, oport=0), alg)
-            b = _remove_unused_clip_points(_get_output(alg, oport=1), alg)
-            a = _keep_array_structure(a, source)
-            b = _keep_array_structure(b, source)
+            a = _keep_array_structure(_get_output(alg, oport=0), source)
+            b = _keep_array_structure(_get_output(alg, oport=1), source)
             if crinkle:
                 a, b = _Crinkler._extract_crinkle_cells(source, a, b, active_scalars_info)
             return _maybe_cast_to_point_set(a), _maybe_cast_to_point_set(b)
@@ -3432,14 +3430,19 @@ class DataObjectFilters:
             crinkle=crinkle,
         )
 
-        # Post-process clip to fix output type
+        # Post-process clip to fix output type and remove unused points
         if isinstance(result, tuple):
             result = (
                 _keep_array_structure(_cast_output_to_match_input_type(result[0], self), self),
                 _keep_array_structure(_cast_output_to_match_input_type(result[1], self), self),
             )
+            result = (
+                _remove_unused_points_post_clip(result[0], self),
+                _remove_unused_points_post_clip(result[1], self),
+            )
         else:
             result = _keep_array_structure(_cast_output_to_match_input_type(result, self), self)
+            result = _remove_unused_points_post_clip(result, self)
         if inplace:
             if return_clipped:
                 self.copy_from(result[0], deep=False)
@@ -3626,6 +3629,7 @@ class DataObjectFilters:
 
         if crinkle:
             clipped = _Crinkler._extract_crinkle_cells(source, clipped, None, active_scalars_info)
+        clipped = _remove_unused_points_post_clip(clipped, self)
         if merge_points:
             clipped = _weld_points(clipped)
         return _keep_array_structure(_cast_output_to_match_input_type(clipped, self), self)
@@ -3771,7 +3775,8 @@ class DataObjectFilters:
             crinkle=crinkle,
         )
 
-        return _keep_array_structure(_cast_output_to_match_input_type(result, self), self)
+        result = _keep_array_structure(_cast_output_to_match_input_type(result, self), self)
+        return _remove_unused_points_post_clip(result, self)
 
     # fmt: off
     # ruff: disable[E501]
@@ -6617,26 +6622,18 @@ def _box_planes(bounds: NumpyArray[float]) -> list[tuple[VectorLike[float], Vect
     return planes
 
 
-def _clipper(mesh: DataSet | MultiBlock) -> _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet:
-    """Return the clipper that keeps the points a mesh holds apart."""
+def _clipper_keeps_input_points(mesh: DataSet | MultiBlock | None) -> bool:
+    """Return whether a dataset is clipped by the clipper which retains the input's points."""
     # vtkTableBasedClipDataSet does not support triangle strips and duplicates the points
     # of a mesh that mixes them with other cells
-    if isinstance(mesh, pv.PolyData) and mesh.n_strips:
+    return isinstance(mesh, pv.PolyData) and bool(mesh.n_strips)
+
+
+def _clipper(mesh: DataSet | MultiBlock) -> _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet:
+    """Return the clipper that keeps the points a mesh holds apart."""
+    if _clipper_keeps_input_points(mesh):
         return _vtk.vtkClipPolyData()
     return _vtk.vtkTableBasedClipDataSet()
-
-
-def _remove_unused_clip_points(
-    output: _DataSetType, clipper: _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet
-) -> _DataSetType:
-    """Remove the input points each half keeps when a clipper splits a mesh in two.
-
-    See https://github.com/pyvista/pyvista/issues/6511 and #7738.
-    """
-    # vtkTableBasedClipDataSet builds its own point list and has nothing to remove
-    if isinstance(clipper, _vtk.vtkClipPolyData):
-        cast('PolyData', output).remove_unused_points(inplace=True)
-    return output
 
 
 def _validate_reference_volume_options(
@@ -7008,6 +7005,30 @@ def _validate_clip_inplace(
         )
         raise TypeError(msg)
     return mesh
+
+
+def _remove_unused_points_post_clip(clip_output, source):
+    # vtkClipPolyData is buggy and retains unused points from the input, e.g.:
+    # https://github.com/pyvista/pyvista/issues/6511
+    # https://github.com/pyvista/pyvista/issues/7738
+    blocks = source.recursive_iterator() if isinstance(source, pv.MultiBlock) else [source]
+    if not any(_clipper_keeps_input_points(block) for block in blocks):
+        return clip_output
+
+    input_bounds = source.bounds
+
+    def maybe_remove_unused_points(mesh: DataSet):
+        # Unused points are correctly removed sometimes, so for performance we only
+        # remove points when the clipped bounds match input bounds
+        if np.allclose(clip_output.bounds, input_bounds) and hasattr(mesh, 'remove_unused_points'):
+            return mesh.remove_unused_points()
+        return mesh
+
+    return (
+        clip_output.generic_filter(maybe_remove_unused_points)
+        if isinstance(clip_output, pv.MultiBlock)
+        else maybe_remove_unused_points(clip_output)
+    )
 
 
 def _cast_output_to_match_input_type(
