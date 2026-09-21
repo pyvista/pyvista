@@ -207,7 +207,7 @@ class WidgetComponent(_NoNewAttrMixin):
 
     def add_box_widget(
         self,
-        callback: Callable[..., None] | None,
+        callback: Callable[..., object] | None,
         *,
         bounds: VectorLike[float] | None = None,
         factor: float = 1.25,
@@ -495,7 +495,7 @@ class WidgetComponent(_NoNewAttrMixin):
 
     def add_plane_widget(
         self,
-        callback: Callable[..., None] | None,
+        callback: Callable[..., object] | None,
         *,
         normal: str | VectorLike[float] = 'x',
         origin: VectorLike[float] | None = None,
@@ -1321,7 +1321,7 @@ class WidgetComponent(_NoNewAttrMixin):
 
     def add_line_widget(
         self,
-        callback: Callable[..., None] | None,
+        callback: Callable[..., object] | None,
         *,
         bounds: VectorLike[float] | None = None,
         factor: float = 1.25,
@@ -1442,7 +1442,7 @@ class WidgetComponent(_NoNewAttrMixin):
 
     def add_text_slider_widget(
         self,
-        callback: Callable[..., None] | None,
+        callback: Callable[..., object] | None,
         data: list[str],
         *,
         value: float | None = None,
@@ -1552,7 +1552,7 @@ class WidgetComponent(_NoNewAttrMixin):
 
     def add_slider_widget(
         self,
-        callback: Callable[..., None] | None,
+        callback: Callable[..., object] | None,
         rng: VectorLike[float],
         *,
         value: float | None = None,
@@ -2101,7 +2101,7 @@ class WidgetComponent(_NoNewAttrMixin):
 
     def add_spline_widget(
         self,
-        callback: Callable[..., None] | None,
+        callback: Callable[..., object] | None,
         *,
         bounds: VectorLike[float] | None = None,
         factor: float = 1.25,
@@ -2382,7 +2382,8 @@ class WidgetComponent(_NoNewAttrMixin):
 
     def add_measurement_widget(
         self,
-        callback: Callable[..., None] | None = None,
+        callback: Callable[[tuple[float, float, float], tuple[float, float, float], float], object]
+        | None = None,
         color: ColorLike | None = None,
     ) -> _vtk.vtkDistanceWidget:
         """Interactively measure distance with a distance widget.
@@ -2396,7 +2397,7 @@ class WidgetComponent(_NoNewAttrMixin):
 
         Parameters
         ----------
-        callback : Callable[[tuple[float, float, float], [tuple[float, float, float], int], float]
+        callback : Callable[[VectorLike[float], VectorLike[float], float], object], optional
             The method called every time the widget calculates a
             distance measurement. This callback receives the start
             point and end point as Cartesian coordinate tuples
@@ -2463,7 +2464,7 @@ class WidgetComponent(_NoNewAttrMixin):
 
     def add_sphere_widget(
         self,
-        callback: Callable[..., None] | None,
+        callback: Callable[..., object] | None,
         *,
         center: VectorLike[float] | MatrixLike[float] = (0, 0, 0),
         radius: float = 0.5,
@@ -2714,7 +2715,7 @@ class WidgetComponent(_NoNewAttrMixin):
 
     def add_checkbox_button_widget(
         self,
-        callback: Callable[..., None] | None,
+        callback: Callable[[bool], object] | None,
         *,
         value: bool = False,
         position: VectorLike[float] = (10.0, 10.0),
@@ -2831,7 +2832,7 @@ class WidgetComponent(_NoNewAttrMixin):
 
     def add_radio_button_widget(
         self,
-        callback: Callable[..., None] | None,
+        callback: Callable[[], object] | None,
         radio_button_group: str,
         *,
         value: bool = False,
