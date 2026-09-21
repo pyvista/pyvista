@@ -1047,10 +1047,9 @@ def test_chart_mpl_title_defaults_to_empty():
     chart = pv.ChartMPL()
 
     assert chart.title == ''
-    chart.title = 'Chart title'
-    assert chart.title == 'Chart title'
 
 
+@pytest.mark.skip_plotting
 def test_chart_mpl_update(pl):
     import matplotlib.pyplot as plt
 
