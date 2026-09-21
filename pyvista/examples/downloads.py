@@ -432,8 +432,9 @@ def _download_and_read(
 
     Returns
     -------
-    output : pyvista.DataSet | str
-        Dataset or path to the file depending on the ``load`` parameter.
+    output : pyvista.DataObject | pyvista.Texture | str | list[str]
+        Dataset, texture, or path to the file depending on the ``load`` and
+        ``texture`` parameters.
 
     """
     if get_ext(filename) == '.zip':  # pragma: no cover
@@ -1726,7 +1727,7 @@ def download_blood_vessels(*, load: bool = True) -> UnstructuredGrid | str:
     return _download_dataset(_dataset_blood_vessels, load=load)
 
 
-def _blood_vessels_load_func(obj: pv.DataSet) -> pv.DataSet:
+def _blood_vessels_load_func(obj: pv.UnstructuredGrid) -> pv.UnstructuredGrid:
     obj.set_active_vectors('velocity')
     return obj
 
@@ -3682,7 +3683,7 @@ def download_tri_quadratic_hexahedron(*, load: bool = True) -> UnstructuredGrid 
     return _download_dataset(_dataset_tri_quadratic_hexahedron, load=load)
 
 
-def _tri_quadratic_hexahedron_load_func(dataset: pv.DataSet) -> pv.DataSet:
+def _tri_quadratic_hexahedron_load_func(dataset: pv.UnstructuredGrid) -> pv.UnstructuredGrid:
     dataset.clear_data()
     return dataset
 
@@ -3845,7 +3846,7 @@ def download_carotid(*, load: bool = True) -> ImageData | str:
     return _download_dataset(_dataset_carotid, load=load)
 
 
-def _carotid_load_func(mesh: pv.DataSet) -> pv.DataSet:
+def _carotid_load_func(mesh: pv.ImageData) -> pv.ImageData:
     mesh.set_active_scalars('scalars')
     mesh.set_active_vectors('vectors')
     return mesh
@@ -4372,11 +4373,11 @@ def download_tetra_dc_mesh(*, load: bool = True) -> MultiBlock | tuple[str, ...]
 def _tetra_dc_mesh_files_func() -> tuple[
     _SingleFileDownloadableDatasetLoader, _SingleFileDownloadableDatasetLoader
 ]:
-    def _fwd_load_func(mesh: pv.DataSet) -> pv.DataSet:
+    def _fwd_load_func(mesh: pv.UnstructuredGrid) -> pv.UnstructuredGrid:
         mesh.set_active_scalars('Resistivity(log10)-fwd')
         return mesh
 
-    def _inv_load_func(mesh: pv.DataSet) -> pv.DataSet:
+    def _inv_load_func(mesh: pv.UnstructuredGrid) -> pv.UnstructuredGrid:
         mesh.set_active_scalars('Resistivity(log10)')
         return mesh
 
@@ -4766,7 +4767,7 @@ def download_damavand_volcano(*, load: bool = True) -> ImageData | str:
     return _download_dataset(_dataset_damavand_volcano, load=load)
 
 
-def _damavand_volcano_load_func(volume: pv.DataSet) -> pv.DataSet:
+def _damavand_volcano_load_func(volume: pv.ImageData) -> pv.ImageData:
     volume.rename_array('None', 'data')
     return volume
 
@@ -8903,7 +8904,9 @@ class _WholeBodyCTUtilities:
         return dataset
 
     @staticmethod
-    def files_func(name: str) -> Callable[[], tuple[Any, ...]]:
+    def files_func(
+        name: str,
+    ) -> Callable[[], tuple[_SingleFileDownloadableDatasetLoader, _DownloadableFile]]:
         """Return the file-loading function for the named dataset variant.
 
         Parameters
