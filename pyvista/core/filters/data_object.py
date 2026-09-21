@@ -7021,7 +7021,7 @@ def _remove_unused_points_post_clip(clip_output, source):
         # Unused points are correctly removed sometimes, so for performance we only
         # remove points when the clipped bounds match input bounds
         if np.allclose(clip_output.bounds, input_bounds) and hasattr(mesh, 'remove_unused_points'):
-            return mesh.remove_unused_points()
+            return _keep_array_structure(mesh.remove_unused_points(), mesh)
         return mesh
 
     return (

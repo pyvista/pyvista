@@ -680,9 +680,14 @@ def test_clip_box_polydata_no_unused_points(invert):
     [
         lambda: pv.Plane(i_resolution=8, j_resolution=8).triangulate().strip(),
         lambda: pv.Sphere(theta_resolution=16, phi_resolution=16),
+        lambda: (
+            pv.Plane(i_resolution=8, j_resolution=8)
+            .triangulate()
+            .merge(pv.lines_from_points(np.linspace([-1, 0, 0], [1, 0, 0], 5)))
+        ),
         lambda: pv.ImageData(dimensions=(5, 5, 5)).cast_to_unstructured_grid(),
     ],
-    ids=['strips', 'polydata', 'unstructured_grid'],
+    ids=['strips', 'polydata', 'polydata_with_lines', 'unstructured_grid'],
 )
 @pytest.mark.parametrize(
     'clip_filter',
@@ -690,18 +695,43 @@ def test_clip_box_polydata_no_unused_points(invert):
         lambda mesh: mesh.clip(normal='x', origin=mesh.center, return_clipped=True),
         lambda mesh: mesh.clip_box(pv.Box(mesh.bounds).scale(0.6).bounds, merge_points=False),
         lambda mesh: mesh.clip_slab(0.5, normal='x', origin=mesh.center),
+        lambda mesh: mesh.clip_scalar(scalars='x', value=mesh.center[0], both=True),
     ],
-    ids=['clip', 'clip_box', 'clip_slab'],
+    ids=['clip', 'clip_box', 'clip_slab', 'clip_scalar'],
 )
 def test_clip_output_has_no_unused_points(make_mesh, clip_filter):
     """Point removal is skipped after a clipper, so no clipper may leave points behind."""
     mesh = make_mesh()
+    mesh.point_data['x'] = mesh.points[:, 0]
 
     outputs = clip_filter(mesh)
 
     for output in outputs if isinstance(outputs, tuple) else [outputs]:
         assert output.n_cells
         assert _n_unused_points(output) == 0
+
+
+@pytest.mark.parametrize(
+    'clip_filter',
+    [
+        lambda mesh: mesh.clip(normal='z', origin=(0, 0, 99), return_clipped=True)[1],
+        lambda mesh: mesh.clip_scalar(scalars='height', value=99, both=True)[1],
+    ],
+    ids=['clip', 'clip_scalar'],
+)
+def test_clip_empty_half_keeps_array_names(clip_filter):
+    """Removing the unused points of an empty half must not drop its arrays."""
+    mesh = pv.Plane().triangulate().strip()
+    mesh.point_data['height'] = mesh.points[:, 2].astype(np.float32)
+    mesh.cell_data['ids'] = np.arange(mesh.n_cells, dtype=np.uint16)
+    assert mesh.n_strips
+
+    clipped = clip_filter(mesh)
+
+    assert clipped.is_empty
+    assert sorted(clipped.array_names) == sorted(mesh.array_names)
+    assert clipped.point_data['height'].dtype == np.float32
+    assert clipped.cell_data['ids'].dtype == np.uint16
 
 
 def test_clip_leaves_points_alone_when_the_clipper_keeps_none(monkeypatch, hexbeam):
