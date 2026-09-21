@@ -1611,6 +1611,7 @@ class PolyDataFilters(DataSetFilters):
         """
         runs, period = _resolve_dash_pattern(style, pattern)
         if scale is not None:
+            _validation.check_finite(scale, name='scale')
             _validation.check_greater_than(scale, 0, name='scale')
 
         if runs == [(0, period)]:
@@ -4902,7 +4903,9 @@ def _resolve_dash_pattern(
 ) -> tuple[list[tuple[float, float]], float]:
     """Return the drawn intervals and the repeat length of a named style or a pattern."""
     if pattern is not None:
-        lengths = _validation.validate_arrayN(pattern, must_be_finite=True, name='pattern')
+        lengths = _validation.validate_arrayN(
+            pattern, must_be_finite=True, must_have_min_length=2, name='pattern'
+        )
         _validation.check_greater_than(lengths, 0, name='pattern')
         if lengths.size % 2:
             msg = f'Pattern must hold an even number of lengths, got {lengths.size}.'

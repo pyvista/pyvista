@@ -281,6 +281,10 @@ def test_dash_lines_raises():
         line.dash_lines(pattern=[4, 0])
     with pytest.raises(ValueError, match='greater than 0'):
         line.dash_lines(scale=0.0)
+    with pytest.raises(ValueError, match='minimum length of 2'):
+        line.dash_lines(pattern=[])
+    with pytest.raises(ValueError, match='finite'):
+        line.dash_lines(scale=float('inf'))
 
 
 def test_dash_lines_degenerate_cells():
