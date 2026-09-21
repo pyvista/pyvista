@@ -26,6 +26,9 @@ _METADATA_FILENAME = 'DATASETS.toml'
 _METADATA_VARNAME = 'PYVISTA_DATASETS_TOML'
 
 Provenance = Literal['verified', 'inferred', 'unknown']
+Usage = Literal['unrestricted', 'attribution', 'share_alike', 'non_commercial', 'undetermined']
+
+_UNDETERMINED_LICENSE = 'LicenseRef-Unknown'
 
 
 def _load_toml(data: bytes) -> dict[str, Any]:
@@ -91,8 +94,8 @@ class ExampleMetadata:
 
     .. versionadded:: 0.49
 
-    Read through the properties of :class:`~pyvista.examples.Example`; this class is not
-    meant to be constructed directly. It mirrors one ``[[dataset]]`` block of
+    Read through :attr:`~pyvista.examples.Example.metadata`; this class is not meant
+    to be constructed directly. It mirrors one ``[[dataset]]`` block of
     ``DATASETS.toml`` in the `pyvista/data <https://github.com/pyvista/data>`_
     repository, which is the source of truth for every field here.
 
@@ -100,10 +103,11 @@ class ExampleMetadata:
     --------
     >>> from pyvista import examples
     >>> shark = examples.get_example('grey_nurse_shark')  # doctest:+SKIP
-    >>> shark.metadata.license_expression  # doctest:+SKIP
-    'CC-BY-SA-3.0'
+    >>> shark.metadata.provenance  # doctest:+SKIP
+    'verified'
 
-    A licence can attach obligations that outlive the download.
+    The one-word :attr:`~pyvista.examples.Example.usage` summarises the obligations
+    read from every licence the expression names; the flags behind it are here.
 
     >>> shark.metadata.share_alike  # doctest:+SKIP
     True
@@ -204,6 +208,30 @@ class ExampleMetadata:
 
         """
         return any(licence.share_alike for licence in self.licenses)
+
+    @property
+    def usage(self) -> Usage:
+        """Return the most restrictive term any licence named attaches.
+
+        Returns
+        -------
+        str
+            ``'unrestricted'``, ``'attribution'``, ``'share_alike'`` or
+            ``'non_commercial'``, or ``'undetermined'`` when the terms could not be
+            established or an identifier is missing from the licence table.
+
+        """
+        resolved = {licence.spdx_id for licence in self.licenses}
+        unresolved = any(term not in resolved for term in _license_terms(self.license_expression))
+        if not resolved or unresolved or _UNDETERMINED_LICENSE in resolved:
+            return 'undetermined'
+        if not self.commercial_use:
+            return 'non_commercial'
+        if self.share_alike:
+            return 'share_alike'
+        if self.attribution_required:
+            return 'attribution'
+        return 'unrestricted'
 
 
 @dataclass(frozen=True)

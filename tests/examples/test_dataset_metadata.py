@@ -273,24 +273,88 @@ def test_override_reports_a_missing_file(tmp_path, monkeypatch):
     _dataset_metadata._metadata_index.cache_clear()
 
 
-def test_example_exposes_the_record_directly(monkeypatch, index):
+def _record(expression: str, *licenses: License) -> ExampleMetadata:
+    """A record naming `expression`, resolved to whichever of `licenses` it names."""
+    return ExampleMetadata(
+        name='x',
+        title='X',
+        description='X.',
+        license_expression=expression,
+        licenses=tuple(lic for lic in licenses if lic.spdx_id in expression),
+        provenance='verified',
+        paths=('x.vtk',),
+    )
+
+
+def _license(spdx_id: str, *, commercial: bool, credit: bool, share: bool) -> License:
+    return License(
+        spdx_id=spdx_id,
+        title=spdx_id,
+        url='https://example.org/' + spdx_id,
+        commercial_use=commercial,
+        attribution_required=credit,
+        share_alike=share,
+    )
+
+
+CC0 = _license('CC0-1.0', commercial=True, credit=False, share=False)
+CC_BY = _license('CC-BY-4.0', commercial=True, credit=True, share=False)
+CC_BY_SA = _license('CC-BY-SA-4.0', commercial=True, credit=True, share=True)
+CC_BY_NC = _license('CC-BY-NC-4.0', commercial=False, credit=True, share=False)
+CC_BY_NC_SA = _license('CC-BY-NC-SA-4.0', commercial=False, credit=True, share=True)
+# Grants nothing, like the undetermined licence, but its terms are known.
+RESEARCH_ONLY = _license('LicenseRef-ResearchOnly', commercial=False, credit=False, share=False)
+UNKNOWN = _license('LicenseRef-Unknown', commercial=False, credit=False, share=False)
+
+
+@pytest.mark.parametrize(
+    ('record', 'expected'),
+    [
+        (_record('CC0-1.0', CC0), 'unrestricted'),
+        (_record('CC-BY-4.0', CC_BY), 'attribution'),
+        (_record('CC-BY-SA-4.0', CC_BY_SA), 'share_alike'),
+        (_record('CC-BY-NC-4.0', CC_BY_NC), 'non_commercial'),
+        (_record('LicenseRef-ResearchOnly', RESEARCH_ONLY), 'non_commercial'),
+        # The strictest term wins over every other term the expression names.
+        (_record('CC-BY-NC-SA-4.0', CC_BY_NC_SA), 'non_commercial'),
+        (_record('CC0-1.0 AND CC-BY-SA-4.0', CC0, CC_BY_SA), 'share_alike'),
+        (_record('CC0-1.0 AND CC-BY-4.0', CC0, CC_BY), 'attribution'),
+        # Undetermined terms are never softened by a permissive term beside them.
+        (_record('LicenseRef-Unknown', UNKNOWN), 'undetermined'),
+        (_record('CC-BY-4.0 AND LicenseRef-Unknown', CC_BY, UNKNOWN), 'undetermined'),
+        # An identifier the licence table does not define resolves to nothing.
+        (_record('CC-BY-4.0 AND LicenseRef-Missing', CC_BY), 'undetermined'),
+        (_record('LicenseRef-Missing'), 'undetermined'),
+    ],
+    ids=lambda value: value if isinstance(value, str) else value.license_expression,
+)
+def test_usage(record, expected):
+    assert record.usage == expected
+
+
+def test_usage_reads_the_published_flags(index):
+    assert index.match('shark/a.stl').usage == 'share_alike'
+    assert index.match('plain.vtk').usage == 'attribution'
+    assert index.match('both.vtk').usage == 'undetermined'
+
+
+def test_example_surfaces_the_headline_and_the_record(monkeypatch, index):
     from pyvista import examples
     from pyvista.examples import _get_example
 
-    monkeypatch.setattr(
-        _get_example, '_metadata_for_source_names', lambda _names: index.match('shark/a.stl')
-    )
+    record = index.match('shark/a.stl')
+    monkeypatch.setattr(_get_example, '_metadata_for_source_names', lambda _names: record)
     example = examples.get_example('sphere', download=False)
+    assert example.metadata is record
+    assert example.usage == 'share_alike'
     assert example.license == 'CC-BY-SA-3.0'
-    assert example.share_alike is True
-    assert example.commercial_use is True
-    assert example.provenance == 'inferred'
-    assert example.origin_url == 'https://www.thingiverse.com/thing:1'
-    assert example.authors == ('Someone',)
-    assert example.copyright == ('2013 someone',)
-    assert example.modified is True
-    assert example.references[0].doi == '10.1/2'
-    assert not hasattr(example, 'metadata')
+    assert example.attribution == 'Shark by Someone.'
+    assert example.title == 'Shark'
+    assert example.description == 'A shark.'
+    # Everything else is reached through the record, not repeated on the example.
+    for name in ('licenses', 'commercial_use', 'share_alike', 'provenance', 'origin_url'):
+        assert not hasattr(example, name)
+        assert hasattr(record, name)
 
 
 def test_example_without_a_record_is_empty(monkeypatch):
@@ -299,11 +363,11 @@ def test_example_without_a_record_is_empty(monkeypatch):
 
     monkeypatch.setattr(_get_example, '_metadata_for_source_names', lambda _names: None)
     example = examples.get_example('sphere', download=False)
+    assert example.metadata is None
+    assert example.usage is None
     assert example.license is None
-    assert example.commercial_use is None
-    assert example.licenses == ()
-    assert example.authors == ()
-    assert example.modified is False
+    assert example.attribution is None
+    assert example.title is None
 
 
 def test_bundled_table_covers_every_packaged_file():
