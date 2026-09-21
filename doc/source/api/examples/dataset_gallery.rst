@@ -11,16 +11,16 @@ The gallery includes datasets from the following modules:
 - :bdg-success:`Planets` - datasets from :mod:`pyvista.examples.planets`
 
 Use the search box and filters below to narrow the results by module, data
-type, cell type, reader, file size, licence or usage. Each filter accepts
+type, cell type, reader, file size, license, or usage. Each filter accepts
 multiple values and combines with the others.
 
 .. _dataset_gallery_usage:
 
-Can I use this dataset?
------------------------
+Usage Badges
+------------
 
 The second badge on every card answers that in a few words. It is the most
-restrictive term of the dataset's licence, and clicking it brings you back here.
+restrictive term of the dataset's license, and clicking it brings you back here.
 Read it as: what you must do, or must not do, when you use the data outside of
 learning PyVista.
 
@@ -41,10 +41,10 @@ learning PyVista.
      - ``'attribution'``
    * - :bdg-warning:`Share alike`
      - Use it and credit it, and anything you derive from it must be shared under
-       the same licence.
+       the same license.
      - ``'share_alike'``
    * - :bdg-danger:`Not for commercial use`
-     - Fine for learning, teaching, research and demos; not for a product for sale.
+     - Fine for learning, teaching, research, and demos; not for a product for sale.
        Credit the source where the ``Attribution`` row asks you to.
      - ``'non_commercial'``
    * - :bdg-muted:`Terms undetermined`
@@ -57,8 +57,8 @@ learning PyVista.
      - ``None``
 
 A dataset generated in code carries no badge, because there is no data file to
-license. A licence can attach more than one term, and the badge shows only the
-strictest: a share-alike licence also requires credit, and a non-commercial one
+license. A license can attach more than one term, and the badge shows only the
+strictest: a share-alike license also requires credit, and a non-commercial one
 may too. The dropdown below lists every term.
 
 Origin & License
@@ -80,13 +80,13 @@ so anything shown there can be read back at runtime.
      - The badge from the table above.
      - :attr:`Example.usage <pyvista.examples.Example.usage>`
    * - License
-     - One :bdg-link-primary:`badge` per licence, linking the exact text redistributed
-       with the data, followed by the licence name linking the issuing organisation's
+     - One :bdg-link-primary:`badge` per license, linking the exact text redistributed
+       with the data, followed by the license name linking the issuing organization's
        own page.
      - :attr:`Example.license <pyvista.examples.Example.license>`,
        :attr:`ExampleMetadata.licenses <pyvista.examples.ExampleMetadata.licenses>`
    * - Commercial use, Attribution required, Share alike
-     - ``Yes`` or ``No`` for each, combined over every licence named, so a second
+     - ``Yes`` or ``No`` for each, combined over every license named, so a second
        term the badge does not show is still visible.
      - :attr:`~pyvista.examples.ExampleMetadata.commercial_use`,
        :attr:`~pyvista.examples.ExampleMetadata.attribution_required`,
@@ -106,9 +106,13 @@ so anything shown there can be read back at runtime.
        stated at the source or proved by comparing bytes,
        :bdg-warning-line:`inferred` is a reasoned conclusion explained in the
        notes, and :bdg-danger-line:`unknown` could not be established at all. This
-       is a statement about the origin, not the licence, so a verified origin with
+       is a statement about the origin, not the license, so a verified origin with
        undetermined terms is not a contradiction.
      - :attr:`~pyvista.examples.ExampleMetadata.provenance`
+   * - Files
+     - Each file the example downloads, linking where it is fetched from.
+     - :attr:`Example.paths <pyvista.examples.Example.paths>`,
+       :attr:`Example.source_urls <pyvista.examples.Example.source_urls>`
    * - Modification, References, Provenance notes
      - What was changed after the data left its source, what to cite, and what was
        and was not established.
@@ -127,11 +131,11 @@ about licensing.
 
         >>> from pyvista import examples
         >>> bunny = examples.get_example('bunny')
-        >>> bunny.usage  # doctest:+SKIP
+        >>> bunny.usage
         'non_commercial'
-        >>> bunny.attribution  # doctest:+SKIP
+        >>> bunny.attribution
         'Stanford Computer Graphics Laboratory.'
-        >>> bunny.metadata.provenance  # doctest:+SKIP
+        >>> bunny.metadata.provenance
         'verified'
 
 .. include:: /api/examples/dataset-gallery/dataset_carousel.rst

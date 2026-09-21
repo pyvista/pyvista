@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import replace
 from io import StringIO
+import json
+import re
 from typing import get_args
 
 import cmcrameri
@@ -19,6 +21,7 @@ from pyvista.examples._dataset_loader import _DatasetLoader
 from pyvista.examples._dataset_loader import _MultiFileDatasetLoader
 from pyvista.examples._dataset_loader import _SingleFileDatasetLoader
 from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
+from pyvista.examples._get_example import _get_dataset_loader
 
 CMAP_SET_MISMATCH_ERROR_MSG = (
     'Colormaps in documentation differ from colormaps available. '
@@ -210,7 +213,7 @@ def test_usage_badges_cover_every_usage_value():
     ]
     colours = [colour for _, colour in badges.values()]
     assert len(set(colours)) == len(colours)
-    # Solid marks usage, outlined marks provenance, so the two never share a style.
+    # Solid marks usage and outlined marks provenance; the module badge is not checked.
     assert not any(colour.endswith('-line') for colour in colours)
     assert all(
         colour.endswith('-line')
@@ -346,8 +349,48 @@ def test_card_header_carries_the_module_and_usage_badges(monkeypatch, metadata, 
     assert '**Commercial use**' in footer
     assert '**Attribution required**' in footer
     assert '**Share alike**' in footer
-    assert footer.count('Yes') == 3
-    assert footer.count('No') == 0
+    assert re.findall(r'^\s*(Yes|No)$', footer, re.MULTILINE) == ['Yes', 'Yes', 'Yes']
+    plain = make_tables.DatasetCard._create_footer_block('', replace(metadata, licenses=()))
+    assert re.findall(r'^\s*(Yes|No)$', plain, re.MULTILINE) == ['No', 'Yes', 'No']
+
+
+def test_filter_manifest_lists_the_usage_slugs_the_cards_emit():
+    html = make_tables.DatasetCardFetcher.generate_filter_toolbar()
+    manifest = json.loads(re.search(r'<script[^>]*>(.*?)</script>', html, re.DOTALL).group(1))
+
+    assert manifest['order']['use'] == [
+        'unrestricted',
+        'attribution',
+        'share-alike',
+        'non-commercial',
+        'undetermined',
+    ]
+
+
+def test_unrecorded_facets_tell_a_missing_record_from_generated_data(monkeypatch):
+    monkeypatch.setattr(
+        make_tables.DatasetPropsGenerator, '_dataset_metadata', staticmethod(lambda _: None)
+    )
+    packaged, _, _ = _get_dataset_loader(pv.examples.load_ant)
+    classes, labels = make_tables.DatasetCard._generate_facet_classes(
+        packaged, pv.examples.examples
+    )
+    assert 'use-na' in classes.split()
+    assert labels['use-na'] == labels['license-na'] == 'N/A (not recorded)'
+
+    _, labels = make_tables.DatasetCard._generate_facet_classes(
+        _DatasetLoader(pv.Sphere), pv.examples.examples
+    )
+    assert labels['use-na'] == 'N/A (no file)'
+
+
+def test_license_field_falls_back_to_the_issuer_page(metadata):
+    lic = replace(metadata.licenses[0], text_url=None)
+    field = make_tables.DatasetPropsGenerator.generate_license_field(
+        replace(metadata, licenses=(lic,))
+    )
+
+    assert ':bdg-link-primary:`CC-BY-3.0 <https://creativecommons.org/licenses/by/3.0/>`' in field
 
 
 def test_redistributor_shows_the_host_not_the_whole_url(metadata):
@@ -373,7 +416,7 @@ def test_origin_field_falls_back_to_a_literal_for_a_non_url(metadata):
         replace(metadata, origin_url=None)
     )
 
-    assert linked == '`Humus texture library <https://humus.name/>`_'
+    assert linked == '`Humus texture library <https://humus.name/>`__'
     assert bare == '``Humus texture library``'
     assert missing is None
 

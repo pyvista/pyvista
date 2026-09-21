@@ -1909,7 +1909,7 @@ def _get_fullname(typ: type[Any]) -> str:
 
 
 def _strip_trailing(text: str) -> str:
-    """Strip trailing whitespace from every line, which sphinx-lint rejects."""
+    """Strip surrounding and per-line trailing whitespace from table prose."""
     return '\n'.join(line.rstrip() for line in text.strip().splitlines())
 
 
@@ -1924,7 +1924,7 @@ def _facet_slugify(text: str) -> str:
 
 
 def _yes_or_no(flag: bool) -> str:  # noqa: FBT001
-    """Spell a licence flag out for the card's field grid."""
+    """Spell a license flag out for the card's field grid."""
     return 'Yes' if flag else 'No'
 
 
@@ -2721,15 +2721,20 @@ class DatasetCard:
 
         metadata = DatasetPropsGenerator._dataset_metadata(loader)
         if metadata is None:
-            add('license', 'N/A (not recorded)', slug='na')
-            add('use', 'N/A (not recorded)', slug='na')
+            label = (
+                'N/A (not recorded)'
+                if isinstance(loader, _DOWNLOADABLE_TYPES)
+                else 'N/A (no file)'
+            )
+            add('license', label, slug='na')
+            add('use', label, slug='na')
         else:
-            for licence in metadata.licenses:
+            for lic in metadata.licenses:
                 # SPDX identifiers carry dots, which docutils rewrites in a class name.
                 add(
                     'license',
-                    licence.spdx_id,
-                    slug=_facet_slugify(licence.spdx_id).replace('.', '-'),
+                    lic.spdx_id,
+                    slug=_facet_slugify(lic.spdx_id),
                 )
             add(
                 'use',
@@ -2987,11 +2992,11 @@ class DatasetPropsGenerator:
 
     @staticmethod
     def generate_license_field(metadata) -> str:
-        """Format each licence as a badge linking its text, beside its canonical page."""
+        """Format each license as a badge linking its text, beside its canonical page."""
         lines = []
         for lic in metadata.licenses:
             badge = f':bdg-link-primary:`{lic.spdx_id} <{lic.text_url or lic.url}>`'
-            lines.append(f'{badge} `{lic.title} <{lic.url}>`_')
+            lines.append(f'{badge} `{lic.title} <{lic.url}>`__')
         return '\n'.join(lines)
 
     @staticmethod
@@ -3018,7 +3023,8 @@ class DatasetPropsGenerator:
         name = metadata.origin_title or metadata.origin_url
         if not metadata.origin_url.startswith(('http://', 'https://')):
             return f'``{name}``'
-        return f'`{name} <{metadata.origin_url}>`_'
+        # Anonymous, since the same title links a different URL on another card.
+        return f'`{name} <{metadata.origin_url}>`__'
 
     @staticmethod
     def generate_redistributor_field(metadata) -> str | None:
@@ -3029,7 +3035,7 @@ class DatasetPropsGenerator:
         if not url.startswith(('http://', 'https://')):
             return f'``{url}``'
         # The full URL is often long enough to break the nowrap field grid.
-        return f'`{urllib.parse.urlparse(url).netloc.removeprefix("www.")} <{url}>`_'
+        return f'`{urllib.parse.urlparse(url).netloc.removeprefix("www.")} <{url}>`__'
 
     @staticmethod
     def generate_references_field(metadata) -> str | None:
@@ -3039,9 +3045,9 @@ class DatasetPropsGenerator:
         lines = []
         for reference in metadata.references:
             if reference.doi:
-                lines.append(f'`{reference.citation} <https://doi.org/{reference.doi}>`_')
+                lines.append(f'`{reference.citation} <https://doi.org/{reference.doi}>`__')
             elif reference.url:
-                lines.append(f'`{reference.citation} <{reference.url}>`_')
+                lines.append(f'`{reference.citation} <{reference.url}>`__')
             else:
                 lines.append(reference.citation)
         return '\n'.join(lines)
