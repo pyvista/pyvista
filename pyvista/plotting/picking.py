@@ -874,7 +874,7 @@ class PickingComponent(_NoNewAttrMixin):
         ----------
         callback : callable, optional
             When input, calls this callable after a selection is made. The
-            ``mesh`` is input as the first parameter to this callable.
+            picked point is input as the first parameter to this callable.
 
         show_message : bool | str, default: True
             Show the message about how to use the mesh picking tool. If this
@@ -1577,7 +1577,8 @@ class PickingComponent(_NoNewAttrMixin):
         ----------
         callback : callable, optional
             When input, calls this callable after a selection is made. The
-            ``mesh`` is input as the first parameter to this callable.
+            picked element is input as the first parameter to this callable,
+            or the mesh when ``mode`` is ``"mesh"``.
 
         mode : str | ElementType, default: "cell"
             The picking mode. Either ``"mesh"``, ``"cell"``, ``"face"``,
