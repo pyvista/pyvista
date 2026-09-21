@@ -3303,6 +3303,18 @@ def test_plot_compare_per_subplot_kwargs(verify_image_cache):
         ),
         ({'line_width': [2, 4]}, 2, {}, [{'line_width': 2}, {'line_width': 4}]),
         ({'show_edges': [True, False]}, 2, {}, [{'show_edges': True}, {'show_edges': False}]),
+        (
+            {'scalar_bar_args': [{'title': 'a'}, {'title': 'b'}]},
+            2,
+            {},
+            [{'scalar_bar_args': {'title': 'a'}}, {'scalar_bar_args': {'title': 'b'}}],
+        ),
+        (
+            {'silhouette': [{'color': 'red'}, {'color': 'blue'}]},
+            2,
+            {},
+            [{'silhouette': {'color': 'red'}}, {'silhouette': {'color': 'blue'}}],
+        ),
         # A keyword whose own value can be a sequence keeps that value, however many
         # datasets it is drawn beside
         ({'color': [1, 0, 0]}, 3, {'color': [1, 0, 0]}, [{}, {}, {}]),
@@ -3331,6 +3343,8 @@ def test_plot_compare_per_subplot_kwargs(verify_image_cache):
         ({'color': [1, 0]}, 2, {}, [{'color': 1}, {'color': 0}]),
         ({'cmap': ['viridis', 'plasma']}, 2, {}, [{'cmap': 'viridis'}, {'cmap': 'plasma'}]),
         ({'scalars': ['a', 'b']}, 2, {}, [{'scalars': 'a'}, {'scalars': 'b'}]),
+        # ... where numbers of a matching length are one array of components instead
+        ({'scalars': [[0, 1], [2, 3]]}, 2, {'scalars': [[0, 1], [2, 3]]}, [{}, {}]),
         # ... or is nested one level deeper than its own value
         ({'color': [[1, 0, 0], [0, 0, 1]]}, 2, {}, [{'color': [1, 0, 0]}, {'color': [0, 0, 1]}]),
         ({'clim': [[0, 1], [0, 2]]}, 2, {}, [{'clim': [0, 1]}, {'clim': [0, 2]}]),
