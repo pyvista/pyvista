@@ -526,7 +526,7 @@ class _SilhouetteConfig(_ConfigBase):
 
     def __init__(self) -> None:
         self._color = Color('black')
-        self._line_width = 2
+        self._line_width: float = 2.0
         self._opacity = 1.0
         self._feature_angle: float | None = None
         self._decimate: float | None = None
@@ -571,7 +571,7 @@ class _SilhouetteConfig(_ConfigBase):
 
     @line_width.setter
     def line_width(self, line_width: float) -> None:
-        self._line_width = float(line_width)  # type: ignore[assignment]
+        self._line_width = float(line_width)
 
     @property
     def opacity(self) -> float:  # numpydoc ignore=RT01
@@ -1496,8 +1496,8 @@ class _TrameConfig(_ConfigBase):
     ]
 
     def __init__(self) -> None:
-        self._interactive_ratio: float = 1
-        self._still_ratio: float = 1
+        self._interactive_ratio: float = 1.0
+        self._still_ratio: float = 1.0
         self._jupyter_server_name = 'pyvista-jupyter'
         self._jupyter_server_port = 0
         self._server_proxy_enabled = 'PYVISTA_TRAME_SERVER_PROXY_PREFIX' in os.environ
@@ -2006,7 +2006,7 @@ class Theme(_ConfigBase):
         self._slider_styles = _SliderConfig()
         self._return_cpos = True
         self._hidden_line_removal = False
-        self._anti_aliasing = 'msaa'
+        self._anti_aliasing: str | None = 'msaa'
         self._enable_camera_orientation_widget = False
 
         self._lighting_params = _LightingConfig()
@@ -3049,7 +3049,7 @@ class Theme(_ConfigBase):
             msg = 'anti_aliasing must be either "ssaa", "msaa", "fxaa", or None'  # type: ignore[unreachable]
             raise TypeError(msg)
 
-        self._anti_aliasing = anti_aliasing  # type: ignore[assignment]
+        self._anti_aliasing = anti_aliasing
 
     @property
     def multi_samples(self) -> int:  # numpydoc ignore=RT01
