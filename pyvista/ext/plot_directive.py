@@ -248,6 +248,9 @@ def _option_context(arg: str | None) -> None:
 
 
 def _option_format(arg: str | None) -> str:
+    if arg is None:  # pragma: no cover
+        msg = "``:format:`` takes 'python' or 'doctest'"
+        raise ValueError(msg)
     return directives.choice(arg, ('python', 'doctest'))
 
 
