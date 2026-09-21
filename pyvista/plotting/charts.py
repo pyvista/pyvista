@@ -18,6 +18,7 @@ from typing import cast
 from typing import overload
 import weakref
 
+import matplotlib as mpl
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 import matplotlib.pyplot as plt
 import numpy as np
@@ -41,7 +42,6 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from matplotlib.backend_bases import DrawEvent
-    from matplotlib.figure import Figure
 
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
@@ -4876,7 +4876,7 @@ class ChartMPL(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkImageItem):
 
     def __init__(
         self,
-        figure: Figure | None = None,
+        figure: mpl.figure.Figure | None = None,
         *,
         size: VectorLike[float] | None = (1, 1),
         loc: VectorLike[float] | None = (0, 0),
@@ -4926,7 +4926,7 @@ class ChartMPL(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkImageItem):
         raise NotImplementedError(msg)
 
     @property
-    def figure(self) -> Figure:  # numpydoc ignore=RT01
+    def figure(self) -> mpl.figure.Figure:  # numpydoc ignore=RT01
         """Retrieve the matplotlib figure associated with this chart.
 
         Examples

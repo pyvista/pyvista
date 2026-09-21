@@ -337,7 +337,6 @@ nitpick_ignore_regex = [
     (r'py:.*', 'cycler.Cycler'),
     (r'py:.*', '.*_Plot2D'),
     (r'py:.*', '.*_TextureLike'),
-    (r'py:.*', 'Figure'),
     (r'py:.*', 'pyvista.PVDDataSet'),
     (r'py:.*', 'pyvista.SeriesDataSet'),
     (r'py:.*', 'ScalarBarArgs'),
