@@ -18,6 +18,7 @@ from pyvista.plotting.utilities.algorithms import set_algorithm_input
 
 from ._property import _HAS_NATIVE_POINT_SHAPES
 from ._property import Property
+from .mapper import _PolyDataMapper
 from .opts import PointSpriteShape
 from .opts import ShaderType
 from .prop3d import Prop3D
@@ -220,7 +221,8 @@ class Actor(Prop3D, _vtk.vtkActor):
         self._name = name
         self._shader_replacements: dict[str, list[tuple[ShaderType, str, bool]]] = {}
         self._line_style: LineStyle | None = None
-        self._dash_source: DataSet | _vtk.vtkAlgorithm | None = None
+        self._dash_source: _vtk.vtkAlgorithm | _vtk.vtkAlgorithmOutput | None = None
+        self._dash_input_dataset: DataSet | None = None
         self._dash_interval: float = 0.004
         self._point_sprite_shape: str | None = None
         self._point_sprite_applied: str | None = None
@@ -787,10 +789,11 @@ class Actor(Prop3D, _vtk.vtkActor):
 
         Under a perspective camera the dashes shorten with distance along with
         the rest of the line. Parts of a line whose cells are shorter on screen
-        than ``line_width`` are drawn solid.
+        than ``line_width`` are drawn solid. A mesh colored by cell scalars
+        restarts the pattern at each cell.
 
-        Requires a mesh drawn by :func:`~pyvista.Plotter.add_mesh` with its
-        ``line_style`` set, which selects a mapper that renders
+        Requires a mesh drawn by :func:`~pyvista.Plotter.add_mesh` with a
+        ``line_style`` other than ``'-'``, which selects a mapper that renders
         :class:`pyvista.PolyData` directly. Other dataset types have their
         surface extracted first.
 
@@ -814,11 +817,14 @@ class Actor(Prop3D, _vtk.vtkActor):
             self._disable_line_style()
             return
 
-        bits = _resolve_line_style(value)
+        bits = _resolve_line_style(value, name='line_style')
 
         mapper = self.mapper
-        if mapper is None or not hasattr(mapper, 'MapDataArrayToVertexAttribute'):
-            msg = 'Dashed lines require a mesh added with add_mesh(..., line_style=...).'
+        if not isinstance(mapper, _PolyDataMapper):
+            msg = (
+                'Dashed lines require a mesh added with add_mesh(..., line_style=...) '
+                "using a style other than '-'."
+            )
             raise TypeError(msg)
 
         dataset = mapper.dataset
@@ -827,7 +833,8 @@ class Actor(Prop3D, _vtk.vtkActor):
             raise ValueError(msg)
 
         if self._dash_source is None:
-            pipeline, self._dash_source = self._build_dash_pipeline(dataset)
+            self._dash_input_dataset = mapper._input_dataset
+            pipeline, self._dash_source = self._build_dash_pipeline(mapper, dataset)
             mapper.dataset = pipeline
             mapper.MapDataArrayToVertexAttribute(
                 'dashArcMC',
@@ -914,14 +921,18 @@ class Actor(Prop3D, _vtk.vtkActor):
             self.GetShaderProperty().GetVertexCustomUniforms().SetUniformf('dashInterval', value)
 
     def _build_dash_pipeline(
-        self, dataset: DataSet
-    ) -> tuple[_vtk.vtkAlgorithm, DataSet | _vtk.vtkAlgorithm]:
+        self, mapper: _PolyDataMapper, dataset: DataSet
+    ) -> tuple[_vtk.vtkAlgorithm, _vtk.vtkAlgorithm | _vtk.vtkAlgorithmOutput]:
         """Return an arc length algorithm for the actor's lines and the input it wraps."""
-        source: DataSet | _vtk.vtkAlgorithm = dataset
+        scalars_algo = mapper._active_scalars_algo
+        source: _vtk.vtkAlgorithm | _vtk.vtkAlgorithmOutput = (
+            mapper if scalars_algo is None else scalars_algo
+        ).GetInputConnection(0, 0)
+
         surface = dataset
         if not isinstance(dataset, pv.PolyData):
             geometry = _vtk.vtkGeometryFilter()
-            set_algorithm_input(geometry, dataset)
+            set_algorithm_input(geometry, source)
             geometry.Update()
             source = geometry
             surface = pv.wrap(geometry.GetOutput())
@@ -933,11 +944,16 @@ class Actor(Prop3D, _vtk.vtkActor):
             )
             raise ValueError(msg)
 
-        stripper = _vtk.vtkStripper()
-        stripper.SetJoinContiguousSegments(True)
-        set_algorithm_input(stripper, source)
+        upstream: _vtk.vtkAlgorithm
+        if mapper.scalar_map_mode == 'cell':
+            upstream = _vtk.vtkShrinkPolyData()
+            upstream.SetShrinkFactor(1.0)
+        else:
+            upstream = _vtk.vtkStripper()
+            upstream.SetJoinContiguousSegments(True)
+        set_algorithm_input(upstream, source)
         arc_length = _vtk.vtkAppendArcLength()
-        set_algorithm_input(arc_length, stripper)
+        set_algorithm_input(arc_length, upstream)
         return arc_length, source
 
     def _disable_line_style(self) -> None:
@@ -946,11 +962,12 @@ class Actor(Prop3D, _vtk.vtkActor):
             return
         self.clear_shader_replacements(_feature_name='line_style')
         mapper = self.mapper
-        if mapper is not None and self._dash_source is not None:
-            if hasattr(mapper, 'RemoveVertexAttributeMapping'):
-                mapper.RemoveVertexAttributeMapping('dashArcMC')
+        if isinstance(mapper, _PolyDataMapper) and self._dash_source is not None:
+            mapper.RemoveVertexAttributeMapping('dashArcMC')
             mapper.dataset = self._dash_source
+            mapper._input_dataset = self._dash_input_dataset
         self._dash_source = None
+        self._dash_input_dataset = None
         self._line_style = None
 
     def enable_maximum_intensity_projection(

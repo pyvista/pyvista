@@ -962,9 +962,95 @@ def test_line_style_rejects_points_gaussian():
     pl.close()
 
 
+def test_line_style_rejects_composite_actor():
+    pl = pv.Plotter()
+    actor, _ = pl.add_composite(pv.MultiBlock([pv.Line(resolution=10)]))
+    with pytest.raises(TypeError, match='line_style'):
+        actor.line_style = '--'
+    pl.close()
+
+
 def test_line_style_invalid_via_add_mesh():
     pl = pv.Plotter()
     with pytest.raises(ValueError, match="line_style 'dashed' is not valid"):
         pl.add_mesh(pv.Line(resolution=10), line_style='dashed')
     assert not pl.actors
+    pl.close()
+
+
+def test_line_style_follows_an_algorithm_input():
+    source = _vtk.vtkLineSource()
+    source.SetPoint1(-1, 0, 0)
+    source.SetPoint2(1, 0, 0)
+    source.SetResolution(50)
+
+    pl = pv.Plotter(off_screen=True, window_size=(600, 200))
+    pl.disable_anti_aliasing()
+    pl.background_color = 'white'
+    actor = pl.add_mesh(source, color='black', line_width=3, line_style='--')
+    pl.view_xy()
+
+    def drawn():
+        pl.render()
+        return int((pl.screenshot(return_img=True)[..., 0] < 128).sum())
+
+    before = drawn()
+    source.SetPoint2(0, 0, 0)
+    after = drawn()
+    actor.line_style = None
+    solid = drawn()
+    pl.close()
+    assert 0 < after < before
+    assert after < solid
+
+
+def test_line_style_keeps_cell_scalars():
+    points = np.zeros((5, 3))
+    points[:, 0] = np.linspace(-1, 1, 5)
+    segments = np.column_stack([np.full(4, 2), np.arange(4), np.arange(1, 5)])
+    edges = pv.PolyData(points, lines=segments.ravel())
+    edges.cell_data['c'] = np.arange(4)
+
+    def render(line_style):
+        pl = pv.Plotter(off_screen=True, window_size=(600, 200))
+        pl.disable_anti_aliasing()
+        pl.background_color = 'white'
+        pl.add_mesh(edges, scalars='c', line_width=3, line_style=line_style, show_scalar_bar=False)
+        pl.view_xy()
+        pl.render()
+        image = pl.screenshot(return_img=True)
+        pl.close()
+        drawn = image[(image != 255).any(axis=-1)]
+        return len(np.unique(drawn, axis=0)), len(drawn)
+
+    solid_colors, solid_pixels = render('-')
+    dashed_colors, dashed_pixels = render('--')
+    assert solid_colors > 1
+    assert dashed_colors == solid_colors
+    assert 0 < dashed_pixels < solid_pixels
+
+
+def test_line_style_toggles_after_add():
+    pl = pv.Plotter(off_screen=True, window_size=(600, 200))
+    pl.disable_anti_aliasing()
+    pl.background_color = 'white'
+    actor = pl.add_mesh(
+        pv.Line((-1, 0, 0), (1, 0, 0), resolution=50),
+        color='black',
+        line_width=3,
+        line_style='--',
+    )
+    pl.view_xy()
+
+    def drawn(line_style):
+        actor.line_style = line_style
+        pl.render()
+        return int((pl.screenshot(return_img=True)[..., 0] < 128).sum())
+
+    dashed = drawn('--')
+    dotted = drawn(':')
+    solid = drawn(None)
+    dash_dot_dot = drawn('-..')
+    assert 0 < dotted < dashed < dash_dot_dot < solid
+    assert drawn('-') == solid
     pl.close()
