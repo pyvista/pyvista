@@ -510,7 +510,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.camera.is_set = is_set
 
     def set_color_cycler(
-        self, color_cycler: str | cycler.Cycler[str, Any] | Sequence[ColorLike]
+        self,
+        color_cycler: str | cycler.Cycler[str, Any] | Sequence[ColorLike] | None,
     ) -> None:
         """Set or reset this renderer's color cycler.
 
@@ -537,7 +538,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         Parameters
         ----------
-        color_cycler : str | cycler.Cycler | sequence[ColorLike]
+        color_cycler : str | cycler.Cycler | sequence[ColorLike] | None
             The colors to cycle through.
 
         Examples
