@@ -59,6 +59,8 @@ from .theme_registry import _available_theme_names
 from .theme_registry import _register_alias
 from .theme_registry import _register_theme_class
 from .theme_registry import _resolve_theme_like
+from .tools import _validate_vector
+from .tools import _validate_viewup
 from .tools import parse_font_family
 
 if TYPE_CHECKING:
@@ -1675,13 +1677,13 @@ class _CameraConfig(_ConfigBase):
     ]
 
     def __init__(self) -> None:
-        self._position: VectorLike[float] = [1.0, 1.0, 1.0]
-        self._viewup: VectorLike[float] = [0.0, 0.0, 1.0]
+        self._position = _validate_vector((1.0, 1.0, 1.0), name='position')
+        self._viewup = _validate_viewup((0.0, 0.0, 1.0))
         self._parallel_projection = False
         self._parallel_scale = 1.0
 
     @property
-    def position(self) -> VectorLike[float]:  # numpydoc ignore=RT01
+    def position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the camera position.
 
         Examples
@@ -1696,10 +1698,10 @@ class _CameraConfig(_ConfigBase):
 
     @position.setter
     def position(self, position: VectorLike[float]) -> None:
-        self._position = position
+        self._position = _validate_vector(position, name='position')
 
     @property
-    def viewup(self) -> VectorLike[float]:  # numpydoc ignore=RT01
+    def viewup(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the camera's view-up vector.
 
         Examples
@@ -1714,7 +1716,7 @@ class _CameraConfig(_ConfigBase):
 
     @viewup.setter
     def viewup(self, viewup: VectorLike[float]) -> None:
-        self._viewup = viewup
+        self._viewup = _validate_viewup(viewup)
 
     @property
     def parallel_projection(self) -> bool:  # numpydoc ignore=RT01
@@ -1735,7 +1737,7 @@ class _CameraConfig(_ConfigBase):
         self._parallel_projection = value
 
     @property
-    def parallel_scale(self) -> bool:  # numpydoc ignore=RT01
+    def parallel_scale(self) -> float:  # numpydoc ignore=RT01
         """Return or set parallel scale.
 
         Examples
@@ -1746,10 +1748,10 @@ class _CameraConfig(_ConfigBase):
         >>> pv.global_theme.camera.parallel_scale = 2.0
 
         """
-        return self._parallel_scale  # type: ignore[return-value]
+        return self._parallel_scale
 
     @parallel_scale.setter
-    def parallel_scale(self, value: bool) -> None:
+    def parallel_scale(self, value: float) -> None:
         self._parallel_scale = value
 
 

@@ -44,6 +44,8 @@ from .helpers import view_vectors
 from .mapper import DataSetMapper
 from .prop_collection import _PropCollection
 from .render_passes import RenderPasses
+from .tools import _validate_vector
+from .tools import _validate_viewup
 from .tools import create_axes_marker
 from .tools import create_axes_orientation_box
 from .tools import create_north_arrow
@@ -251,20 +253,6 @@ def scale_point(
     x, y, z = _validation.validate_array3(point, dtype_out=float, name='point')
     scaled = mtx.MultiplyDoublePoint((x, y, z, 0.0))
     return (scaled[0], scaled[1], scaled[2])
-
-
-def _validate_vector(vector: VectorLike[float], *, name: str) -> tuple[float, float, float]:
-    """Return a three-component vector as a tuple of floats."""
-    return _validation.validate_array3(vector, dtype_out=float, to_tuple=True, name=name)
-
-
-def _validate_viewup(vector: VectorLike[float]) -> tuple[float, float, float]:
-    """Return a view-up vector, which is normalized and so cannot be zero."""
-    viewup = _validate_vector(vector, name='viewup')
-    if np.allclose(viewup, 0.0):
-        msg = 'Camera up vector cannot be zero.'
-        raise ValueError(msg)
-    return viewup
 
 
 class CameraPosition(_NoNewAttrMixin):
