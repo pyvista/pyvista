@@ -52,7 +52,9 @@ SPDX-License-Identifier = "CC-BY-SA-3.0"
 SPDX-FileCopyrightText = ["2013 someone"]
 provenance = "inferred"
 origin_url = "https://www.thingiverse.com/thing:1"
+origin_title = "Thing one"
 collection = "thingiverse"
+redistributed_from = "https://example.org/mirror/shark.stl"
 authors = ["Someone"]
 attribution = "Shark by Someone."
 modified = true
@@ -62,8 +64,8 @@ references = [{ citation = "A paper.", doi = "10.1/2" }]
 
 [[dataset]]
 name = "both"
-title = "Two licences"
-description = "Covered by two licences at once."
+title = "Two licenses"
+description = "Covered by two licenses at once."
 path = ["both.vtk"]
 SPDX-License-Identifier = "CC-BY-4.0 AND LicenseRef-Unknown"
 provenance = "verified"
@@ -72,7 +74,7 @@ origin_url = "https://example.org/both"
 [[dataset]]
 name = "plain"
 title = "Plain"
-description = "One file, one licence."
+description = "One file, one license."
 path = ["plain.vtk", "nested/*.vtk"]
 SPDX-License-Identifier = "CC-BY-4.0"
 provenance = "verified"
@@ -122,7 +124,7 @@ def test_matches(pattern, path, expected):
         ('MIT', ['MIT']),
         ('CC-BY-4.0 AND LicenseRef-Unknown', ['CC-BY-4.0', 'LicenseRef-Unknown']),
         ('MIT OR Apache-2.0', ['MIT', 'Apache-2.0']),
-        # The exception after `WITH` is not itself a licence.
+        # The exception after `WITH` is not itself a license.
         ('Apache-2.0 WITH LLVM-exception', ['Apache-2.0']),
         ('GPL-2.0-only WITH Classpath-exception-2.0 OR MIT', ['GPL-2.0-only', 'MIT']),
         ('(MIT AND Apache-2.0)', ['MIT', 'Apache-2.0']),
@@ -143,6 +145,8 @@ def test_build_index_reads_every_field(index):
         provenance='inferred',
         paths=('shark/**',),
         origin_url='https://www.thingiverse.com/thing:1',
+        origin_title='Thing one',
+        redistributed_from='https://example.org/mirror/shark.stl',
         collection='thingiverse',
         authors=('Someone',),
         copyright=('2013 someone',),
@@ -158,10 +162,10 @@ def test_build_index_reads_every_field(index):
 
 
 def test_undetermined_terms_are_not_a_permission():
-    """A licence with no `[license.*]` table grants nothing and requires credit."""
+    """A license with no `[license.*]` table grants nothing and requires credit."""
     document = DOCUMENT.replace(
         'SPDX-License-Identifier = "CC-BY-4.0"',
-        'SPDX-License-Identifier = "SomeLicenceNobodyDeclared-1.0"',
+        'SPDX-License-Identifier = "SomeLicenseNobodyDeclared-1.0"',
         1,
     )
     entry = _build_index(_load_toml(document.encode())).match('plain.vtk')
@@ -207,7 +211,7 @@ def test_obligations_combine_across_an_expression(index):
     shark = index.match('shark/shark.stl')
     assert shark.share_alike
 
-    # An undetermined licence makes the whole expression unusable commercially.
+    # An undetermined license makes the whole expression unusable commercially.
     both = index.match('both.vtk')
     assert not both.commercial_use
 
@@ -302,7 +306,7 @@ CC_BY = _license('CC-BY-4.0', commercial=True, credit=True, share=False)
 CC_BY_SA = _license('CC-BY-SA-4.0', commercial=True, credit=True, share=True)
 CC_BY_NC = _license('CC-BY-NC-4.0', commercial=False, credit=True, share=False)
 CC_BY_NC_SA = _license('CC-BY-NC-SA-4.0', commercial=False, credit=True, share=True)
-# Grants nothing, like the undetermined licence, but its terms are known.
+# Grants nothing, like the undetermined license, but its terms are known.
 RESEARCH_ONLY = _license('LicenseRef-ResearchOnly', commercial=False, credit=False, share=False)
 UNKNOWN = _license('LicenseRef-Unknown', commercial=False, credit=False, share=False)
 
@@ -319,10 +323,12 @@ UNKNOWN = _license('LicenseRef-Unknown', commercial=False, credit=False, share=F
         (_record('CC-BY-NC-SA-4.0', CC_BY_NC_SA), 'non_commercial'),
         (_record('CC0-1.0 AND CC-BY-SA-4.0', CC0, CC_BY_SA), 'share_alike'),
         (_record('CC0-1.0 AND CC-BY-4.0', CC0, CC_BY), 'attribution'),
+        # A choice of licenses is read as the strictest of them.
+        (_record('CC0-1.0 OR CC-BY-NC-4.0', CC0, CC_BY_NC), 'non_commercial'),
         # Undetermined terms are never softened by a permissive term beside them.
         (_record('LicenseRef-Unknown', UNKNOWN), 'undetermined'),
         (_record('CC-BY-4.0 AND LicenseRef-Unknown', CC_BY, UNKNOWN), 'undetermined'),
-        # An identifier the licence table does not define resolves to nothing.
+        # An identifier the license table does not define resolves to nothing.
         (_record('CC-BY-4.0 AND LicenseRef-Missing', CC_BY), 'undetermined'),
         (_record('LicenseRef-Missing'), 'undetermined'),
     ],

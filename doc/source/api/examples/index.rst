@@ -70,18 +70,18 @@ files, where they came from, and the readers for them.
    >>> mesh.plot()
 
 The same object says in one word what using the data obliges you to do, names
-the licence, and carries the credit line to use. The full record behind them,
+the license, and carries the credit line to use. The full record behind them,
 read from the `pyvista/data <https://github.com/pyvista/data>`_ repository and
 from the table shipped alongside the built-in examples, is one attribute away:
 
 .. code-block:: python
 
-   >>> shark = examples.get_example('grey_nurse_shark')  # doctest:+SKIP
-   >>> shark.usage, shark.license  # doctest:+SKIP
-   ('share-alike', 'CC-BY-SA-3.0')
-   >>> shark.attribution  # doctest:+SKIP
+   >>> shark = examples.get_example('grey_nurse_shark')
+   >>> shark.usage, shark.license
+   ('share_alike', 'CC-BY-SA-3.0')
+   >>> shark.attribution
    'Grey Nurse Shark, uploaded by rogerpeng1 ...'
-   >>> shark.metadata.provenance  # doctest:+SKIP
+   >>> shark.metadata.provenance
    'verified'
 
 See the API reference for details:

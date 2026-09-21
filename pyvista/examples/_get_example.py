@@ -91,7 +91,7 @@ class Example(Generic[_DatasetT_co, _ReadersT_co]):
     >>> bunny.attribution  # doctest:+SKIP
     'Stanford Computer Graphics Laboratory.'
 
-    The licence, and the full record behind these, are one attribute away.
+    The license, and the full record behind these, are one attribute away.
 
     >>> bunny.license  # doctest:+SKIP
     'LicenseRef-StanfordScanningRepository'
@@ -112,7 +112,7 @@ class Example(Generic[_DatasetT_co, _ReadersT_co]):
     file_sizes: tuple[int, ...]
     """Size in bytes of each entry in ``paths``, one per path, folders counted in full."""
 
-    download_urls: tuple[str, ...]
+    source_urls: tuple[str, ...]
     """URL each file is downloaded from, empty for an example generated in memory."""
 
     @functools.cached_property
@@ -125,10 +125,13 @@ class Example(Generic[_DatasetT_co, _ReadersT_co]):
     def metadata(self) -> ExampleMetadata | None:
         """Return the published record for this example's files.
 
-        The record mirrors one entry of the ``DATASETS.toml`` table in
+        .. versionadded:: 0.50
+
+        The published table is downloaded once per session on first access, whatever
+        ``download`` was passed to :func:`~pyvista.examples.get_example`. The record mirrors one entry of the ``DATASETS.toml`` table in
         `pyvista/data <https://github.com/pyvista/data>`_ and carries what this
         class leaves out: who made the data, where it came from, how sure the origin
-        is, every licence in full, what was changed, and what to cite.
+        is, every license in full, what was changed, and what to cite.
 
         Returns
         -------
@@ -144,17 +147,25 @@ class Example(Generic[_DatasetT_co, _ReadersT_co]):
 
     @property
     def title(self) -> str | None:  # numpydoc ignore=RT01
-        """Short human-readable name of the data, such as ``'Grey nurse shark'``."""
+        """Short human-readable name of the data, such as ``'Grey nurse shark'``.
+
+        .. versionadded:: 0.50
+        """
         return None if self.metadata is None else self.metadata.title
 
     @property
     def description(self) -> str | None:  # numpydoc ignore=RT01
-        """What the data is, in one or two sentences."""
+        """What the data is, in one or two sentences.
+
+        .. versionadded:: 0.50
+        """
         return None if self.metadata is None else self.metadata.description
 
     @property
     def usage(self) -> Usage | None:  # numpydoc ignore=RT01
-        """Most restrictive term the licence attaches, or ``None`` when unrecorded.
+        """Most restrictive term the license attaches, or ``None`` when unrecorded.
+
+        .. versionadded:: 0.50
 
         One of ``'unrestricted'``, ``'attribution'``, ``'share_alike'``,
         ``'non_commercial'`` and ``'undetermined'``, from least to most restrictive.
@@ -163,12 +174,21 @@ class Example(Generic[_DatasetT_co, _ReadersT_co]):
 
     @property
     def license(self) -> str | None:  # numpydoc ignore=RT01
-        """SPDX licence expression, such as ``'CC-BY-4.0'``, or ``None`` when unrecorded."""
+        """SPDX license expression, such as ``'CC-BY-4.0'``, or ``None`` when unrecorded.
+
+        .. versionadded:: 0.50
+
+        The same value as :attr:`ExampleMetadata.license_expression
+        <pyvista.examples.ExampleMetadata.license_expression>`.
+        """
         return None if self.metadata is None else self.metadata.license_expression
 
     @property
     def attribution(self) -> str | None:  # numpydoc ignore=RT01
-        """Credit line the licence requires, when it requires one."""
+        """Credit line the license requires, when it requires one.
+
+        .. versionadded:: 0.50
+        """
         return None if self.metadata is None else self.metadata.attribution
 
     @functools.cached_property
@@ -870,5 +890,5 @@ def get_example(
         function=function,
         paths=_resolve_paths(loader, dataset_name, download=download),
         file_sizes=loader._file_sizes if isinstance(loader, _FileProps) else (),
-        download_urls=loader.source_urls if isinstance(loader, _DOWNLOADABLE_TYPES) else (),
+        source_urls=loader.source_urls if isinstance(loader, _DOWNLOADABLE_TYPES) else (),
     )

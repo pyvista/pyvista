@@ -4,19 +4,12 @@
 
 schema_version = 1
 
-[license."Apache-2.0"]
-attribution_required = true
-commercial_use = true
-file = "https://github.com/pyvista/data/blob/master/LICENSES/Apache-2.0.txt"
-share_alike = false
-title = "Apache License 2.0"
-url = "https://www.apache.org/licenses/LICENSE-2.0"
-
 [license."CC-BY-4.0"]
 attribution_required = true
 commercial_use = true
-file = "https://github.com/pyvista/data/blob/master/LICENSES/CC-BY-4.0.txt"
+file = "LICENSES/CC-BY-4.0.txt"
 share_alike = false
+text_source = "https://spdx.org/licenses/CC-BY-4.0.json"
 title = "Creative Commons Attribution 4.0 International"
 url = "https://creativecommons.org/licenses/by/4.0/"
 
@@ -25,14 +18,16 @@ attribution_required = true
 commercial_use = true
 file = "https://github.com/pyvista/pyvista/blob/main/LICENSE"
 share_alike = false
+text_source = "https://spdx.org/licenses/MIT.json"
 title = "MIT License"
 url = "https://opensource.org/licenses/MIT"
 
 [license."LicenseRef-Unknown"]
 attribution_required = false
 commercial_use = false
-file = "https://github.com/pyvista/data/blob/master/LICENSES/LicenseRef-Unknown.txt"
+file = "LICENSES/LicenseRef-Unknown.txt"
 share_alike = false
+text_source = "Written for this repository; the file states what it is based on."
 title = "Undetermined license"
 url = "https://github.com/pyvista/data/blob/master/LICENSES/LicenseRef-Unknown.txt"
 
@@ -40,11 +35,6 @@ url = "https://github.com/pyvista/data/blob/master/LICENSES/LicenseRef-Unknown.t
 description = "Datasets authored by the PyVista project and distributed inside the package."
 title = "PyVista"
 url = "https://github.com/pyvista/pyvista"
-
-[collection."vtk-examples"]
-description = "The VTK Examples data collection, published by Bill Lorensen and now maintained by Kitware."
-title = "VTK Examples"
-url = "https://gitlab.kitware.com/vtk/vtk-examples"
 
 [collection."solar-system-scope"]
 description = "Planetary surface and sky textures published by Solar System Scope."
@@ -85,8 +75,8 @@ name = "channels"
 notes = """
 Added in February 2019 with the commit message "add channels example for
 volume analysis" and no recorded source. The single array is named `facies`,
-which places it in geostatistics — channel training images of this shape are
-widely circulated in that field — but the specific model was not identified.
+which places it in geostatistics, channel training images of this shape are
+widely circulated in that field, but the specific model was not identified.
 """
 path = ["channels.vti"]
 provenance = "unknown"
@@ -111,9 +101,8 @@ provenance = "verified"
 title = "Earth day map"
 
 [[dataset]]
-SPDX-License-Identifier = "Apache-2.0"
-attribution = "VTK Examples, licensed under the Apache License 2.0."
-collection = "vtk-examples"
+SPDX-License-Identifier = "LicenseRef-Unknown"
+authors = ["Lawrence Berkeley National Laboratory"]
 description = "Tissue segmentation labels for the frog volume, 500 by 470 by 136 voxels with 30 label values."
 modification = "Converted from the MetaImage pair `froggy/frogtissue.mhd` and `froggy/frogtissue.zraw` to VTK XML ImageData."
 modified = true
@@ -121,15 +110,17 @@ name = "frog_tissues"
 notes = """
 The dimensions, spacing, element type and array name all match
 `Data/froggy/frogtissue.mhd` in the pyvista/data repository, so this is a
-conversion of that volume rather than a separate scan, and it takes the same
-licence. Those files came from `src/Testing/Data/Frog` in
-`lorensen/VTKExamples`, which is published under the Apache License 2.0; no
-per-file provenance for the scan itself was ever published.
+conversion of that volume rather than a separate scan, and it carries the same
+terms. That volume is the Lawrence Berkeley National Laboratory frog, which
+reached pyvista/data through `lorensen/VTKExamples`; the permission on record
+covered the VTK textbook's CD-ROM, and no licence for wider redistribution has
+been found, so the terms are undetermined.
 """
-origin_title = "lorensen/VTKExamples"
-origin_url = "https://github.com/lorensen/VTKExamples"
+origin_title = "Lawrence Berkeley National Laboratory"
+origin_url = "https://www.lbl.gov/"
 path = ["frog_tissues.vti"]
 provenance = "inferred"
+redistributed_from = "https://github.com/lorensen/VTKExamples"
 title = "Frog tissue labels"
 
 [[dataset]]

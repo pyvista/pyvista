@@ -42,9 +42,9 @@ def _load_toml(data: bytes) -> dict[str, Any]:
 
 @dataclass(frozen=True)
 class License:
-    """A licence one or more example datasets are distributed under.
+    """A license one or more example datasets are distributed under.
 
-    .. versionadded:: 0.49
+    .. versionadded:: 0.50
 
     """
 
@@ -52,29 +52,29 @@ class License:
     """SPDX identifier, or a ``LicenseRef-`` identifier for terms SPDX does not list."""
 
     title: str
-    """Full name of the licence, such as ``'Creative Commons Attribution 4.0 International'``."""
+    """Full name of the license, such as ``'Creative Commons Attribution 4.0 International'``."""
 
     url: str
-    """Canonical URL of the licence text."""
+    """Canonical page of the license, at the organization that issues it."""
 
     commercial_use: bool
-    """Whether the licence permits use in a product for sale."""
+    """Whether the license permits use in a product for sale."""
 
     attribution_required: bool
-    """Whether the licence requires the work to be credited."""
+    """Whether the license requires the work to be credited."""
 
     share_alike: bool
-    """Whether derivative works must carry the same licence."""
+    """Whether derivative works must carry the same license."""
 
     text_url: str | None = None
-    """URL of the licence text as published beside the dataset table."""
+    """URL of the license text as published beside the dataset table."""
 
 
 @dataclass(frozen=True)
 class Reference:
     """A work an example dataset asks to be cited.
 
-    .. versionadded:: 0.49
+    .. versionadded:: 0.50
 
     """
 
@@ -92,7 +92,7 @@ class Reference:
 class ExampleMetadata:
     """Where an example dataset came from and how it may be used.
 
-    .. versionadded:: 0.49
+    .. versionadded:: 0.50
 
     Read through :attr:`~pyvista.examples.Example.metadata`; this class is not meant
     to be constructed directly. It mirrors one ``[[dataset]]`` block of
@@ -107,7 +107,7 @@ class ExampleMetadata:
     'verified'
 
     The one-word :attr:`~pyvista.examples.Example.usage` summarises the obligations
-    read from every licence the expression names; the flags behind it are here.
+    read from every license the expression names; the flags behind it are here.
 
     >>> shark.metadata.share_alike  # doctest:+SKIP
     True
@@ -124,13 +124,13 @@ class ExampleMetadata:
     """What the data is, in one or two sentences."""
 
     license_expression: str
-    """SPDX licence expression, such as ``'CC-BY-4.0'`` or ``'MIT AND CC0-1.0'``."""
+    """SPDX license expression, such as ``'CC-BY-4.0'`` or ``'MIT AND CC0-1.0'``."""
 
     licenses: tuple[License, ...]
-    """Every licence the expression names, resolved to its full terms."""
+    """Every license the expression names, resolved to its full terms."""
 
     provenance: Provenance
-    """Confidence in the origin, not the licence: ``'verified'``, ``'inferred'``, ``'unknown'``."""
+    """Confidence in the origin, not the license: ``'verified'``, ``'inferred'``, ``'unknown'``."""
 
     paths: tuple[str, ...]
     """Path patterns the entry claims, relative to the ``Data/`` directory."""
@@ -151,7 +151,7 @@ class ExampleMetadata:
     """Copyright notices, in ``SPDX-FileCopyrightText`` form."""
 
     attribution: str | None = None
-    """Credit line the licence requires, when it requires one."""
+    """Credit line the license requires, when it requires one."""
 
     redistributed_from: str | None = None
     """Intermediate redistributor the file reached this project through."""
@@ -170,7 +170,7 @@ class ExampleMetadata:
 
     @property
     def commercial_use(self) -> bool:
-        """Return whether every licence named permits use in a product for sale.
+        """Return whether every license named permits use in a product for sale.
 
         Undetermined terms count as not permitted.
 
@@ -180,12 +180,12 @@ class ExampleMetadata:
             ``True`` when the data is cleared for commercial use.
 
         """
-        # No resolved licence means undetermined terms, which are not a permission.
+        # No resolved license means undetermined terms, which are not a permission.
         return bool(self.licenses) and all(lic.commercial_use for lic in self.licenses)
 
     @property
     def attribution_required(self) -> bool:
-        """Return whether any licence named requires the work to be credited.
+        """Return whether any license named requires the work to be credited.
 
         Undetermined terms count as requiring it.
 
@@ -199,7 +199,7 @@ class ExampleMetadata:
 
     @property
     def share_alike(self) -> bool:
-        """Return whether any licence named requires derivatives to carry it too.
+        """Return whether any license named requires derivatives to carry it too.
 
         Returns
         -------
@@ -207,21 +207,22 @@ class ExampleMetadata:
             ``True`` when the ShareAlike obligation propagates.
 
         """
-        return any(licence.share_alike for licence in self.licenses)
+        return any(lic.share_alike for lic in self.licenses)
 
     @property
     def usage(self) -> Usage:
-        """Return the most restrictive term any licence named attaches.
+        """Return the most restrictive term any license named attaches.
 
         Returns
         -------
         str
             ``'unrestricted'``, ``'attribution'``, ``'share_alike'`` or
             ``'non_commercial'``, or ``'undetermined'`` when the terms could not be
-            established or an identifier is missing from the licence table.
+            established or an identifier is missing from the license table. An
+            ``OR`` is read as if it were ``AND``.
 
         """
-        resolved = {licence.spdx_id for licence in self.licenses}
+        resolved = {lic.spdx_id for lic in self.licenses}
         unresolved = any(term not in resolved for term in _license_terms(self.license_expression))
         if not resolved or unresolved or _UNDETERMINED_LICENSE in resolved:
             return 'undetermined'
@@ -236,7 +237,7 @@ class ExampleMetadata:
 
 @dataclass(frozen=True)
 class _MetadataIndex:
-    """Every dataset entry, with the licence table needed to resolve them."""
+    """Every dataset entry, with the license table needed to resolve them."""
 
     licenses: Mapping[str, License]
     collections: Mapping[str, Mapping[str, str]]
@@ -300,7 +301,7 @@ def _matches(pattern: str, path: str) -> bool:
 
 
 def _license_terms(expression: str) -> list[str]:
-    """Split an SPDX expression into the licence identifiers it names."""
+    """Split an SPDX expression into the license identifiers it names."""
     tokens = [token for token in re.split(r'[()\s]+', expression) if token]
     terms: list[str] = []
     skip = False
@@ -315,21 +316,30 @@ def _license_terms(expression: str) -> list[str]:
 
 
 def _license_text_url(file: str | None) -> str | None:
-    """Resolve a `[license.*]` `file` value against where the table is published."""
+    """Resolve a `[license.*]` `file` value against the published repository."""
     if not file:
         return None
+    from pyvista.examples.downloads import _DEFAULT_VTK_DATA_SOURCE  # noqa: PLC0415
+
     if file.startswith(('http://', 'https://')):
         return file
-    return _metadata_base_url() + file.lstrip('/')
+    return _DEFAULT_VTK_DATA_SOURCE.removesuffix('Data/') + file.lstrip('/')
 
 
 def _build_index(document: Mapping[str, Any]) -> _MetadataIndex:
     """Turn a parsed ``DATASETS.toml`` document into a lookup index."""
     version = document.get('schema_version')
     if version != SCHEMA_VERSION:
+        from pyvista.examples.downloads import USER_DATA_PATH  # noqa: PLC0415
+
+        hint = (
+            'Upgrade PyVista to read it.'
+            if isinstance(version, int) and version > SCHEMA_VERSION
+            else f'Delete the copy cached under {USER_DATA_PATH!r} to fetch the current table.'
+        )
         msg = (
             f'DATASETS.toml declares schema_version {version!r}, but this version of '
-            f'PyVista understands {SCHEMA_VERSION}. Upgrade PyVista to read it.'
+            f'PyVista understands {SCHEMA_VERSION}. {hint}'
         )
         raise ValueError(msg)
 
@@ -352,9 +362,11 @@ def _build_index(document: Mapping[str, Any]) -> _MetadataIndex:
             description=entry['description'],
             license_expression=entry['SPDX-License-Identifier'],
             licenses=tuple(
-                licenses[term]
-                for term in _license_terms(entry['SPDX-License-Identifier'])
-                if term in licenses
+                dict.fromkeys(
+                    licenses[term]
+                    for term in _license_terms(entry['SPDX-License-Identifier'])
+                    if term in licenses
+                )
             ),
             provenance=entry['provenance'],
             paths=tuple(entry['path']),

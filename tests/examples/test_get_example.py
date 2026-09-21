@@ -151,10 +151,10 @@ def test_get_example_fields():
     example = examples.get_example('uniform')
 
     assert example.function is examples.load_uniform
-    assert example.download_urls == (
+    assert example.source_urls == (
         'https://github.com/pyvista/pyvista/raw/main/pyvista/examples/uniform.vtk',
     )
-    assert len(example.file_sizes) == len(example.download_urls) == len(example.paths) == 1
+    assert len(example.file_sizes) == len(example.source_urls) == len(example.paths) == 1
     assert example.file_sizes[0] == Path(example.paths[0]).stat().st_size
 
 
@@ -162,7 +162,7 @@ def test_get_example_in_memory():
     """An example generated in memory has no files, and still loads."""
     example = examples.get_example('structured')
 
-    for empty in (example.paths, example.file_sizes, example.download_urls, example.readers):
+    for empty in (example.paths, example.file_sizes, example.source_urls, example.readers):
         assert empty == ()
     assert isinstance(example.load(), pv.StructuredGrid)
 
@@ -369,7 +369,7 @@ def test_example_has_no_private_loader_field():
         'function',
         'paths',
         'file_sizes',
-        'download_urls',
+        'source_urls',
     }
 
 
@@ -468,7 +468,7 @@ def test_get_example_all(name):
     assert _size_of(loaded) > 0, f'{name} loaded empty'
     # every tuple field is one entry per path, including the filtered one
     assert len(example.file_sizes) == len(example.paths)
-    assert len(example.download_urls) == len(example.paths)
+    assert len(example.source_urls) == len(example.paths)
     assert all(Path(path).is_absolute() for path in example.paths)
     assert all(Path(path).is_file() or Path(path).is_dir() for path in example.paths)
     # readers are a subset of the example's own files, never invented
