@@ -4261,11 +4261,10 @@ class BasePlotter(_BoundsSizeMixin):
                 # Combine meshes
                 not_hidden = not_hidden.merge(corners_grid)
                 association, name = mesh.active_scalars_info
-                preference = cast('PointLiteral | CellLiteral', association)
                 try:
-                    not_hidden.set_active_scalars(name, preference=preference)
+                    not_hidden.set_active_scalars(name, preference=association)
                 except KeyError:
-                    not_hidden.set_active_scalars(None, preference=preference)
+                    not_hidden.set_active_scalars(None, preference=association)
                 mesh = not_hidden
                 copy_mesh = False
 

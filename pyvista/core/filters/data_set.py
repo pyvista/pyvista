@@ -985,9 +985,7 @@ class DataSetFilters(DataObjectFilters):
             clipped.point_data.pop(_CLIP_SURFACE_SCALARS, None)
             info = self.active_scalars_info
             if info.name is not None and not clipped.is_empty:
-                clipped.set_active_scalars(
-                    info.name, preference=cast('PointLiteral | CellLiteral', info.association)
-                )
+                clipped.set_active_scalars(info.name, preference=info.association)
         return _clip_output(clipped, self)
 
     def threshold(  # type: ignore[misc]
