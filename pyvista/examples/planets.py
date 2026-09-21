@@ -28,7 +28,7 @@ def _download_dataset_texture(
 ) -> Texture | ImageData | str:
     """Download a dataset and optionally return it as a texture."""
     dataset = _download_dataset(loader, load=load)
-    if texture:
+    if texture and load:
         from pyvista.plotting.texture import Texture  # noqa: PLC0415
 
         return Texture(dataset)
@@ -675,7 +675,7 @@ def download_sun_surface(
     Returns
     -------
     output : pyvista.Texture | pyvista.ImageData | str
-        Texture, Dataset, or path to the file depending on the ``load`` and
+        Texture, image, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
     Examples
@@ -744,7 +744,7 @@ def download_moon_surface(
     Returns
     -------
     output : pyvista.Texture | pyvista.ImageData | str
-        Texture, Dataset, or path to the file depending on the ``load`` and
+        Texture, image, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
     Examples
@@ -813,7 +813,7 @@ def download_mercury_surface(
     Returns
     -------
     output : pyvista.Texture | pyvista.ImageData | str
-        Texture, Dataset, or path to the file depending on the ``load`` and
+        Texture, image, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
     Examples
@@ -883,7 +883,7 @@ def download_venus_surface(
     Returns
     -------
     output : pyvista.Texture | pyvista.ImageData | str
-        Texture, Dataset, or path to the file depending on the ``load`` and
+        Texture, image, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
     Examples
@@ -953,7 +953,7 @@ def download_mars_surface(
     Returns
     -------
     output : pyvista.Texture | pyvista.ImageData | str
-        Texture, Dataset, or path to the file depending on the ``load`` and
+        Texture, image, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
     Examples
@@ -1019,7 +1019,7 @@ def download_jupiter_surface(
     Returns
     -------
     output : pyvista.Texture | pyvista.ImageData | str
-        Texture, Dataset, or path to the file depending on the ``load`` and
+        Texture, image, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
     Examples
@@ -1085,7 +1085,7 @@ def download_saturn_surface(
     Returns
     -------
     output : pyvista.Texture | pyvista.ImageData | str
-        Texture, Dataset, or path to the file depending on the ``load`` and
+        Texture, image, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
     Examples
@@ -1154,7 +1154,7 @@ def download_saturn_rings(
     Returns
     -------
     output : pyvista.Texture | pyvista.ImageData | str
-        Dataset, texture, or filename of the Saturn's rings.
+        Texture, image, or path to the file for Saturn's rings.
 
     Examples
     --------
@@ -1222,7 +1222,7 @@ def download_uranus_surface(
     Returns
     -------
     output : pyvista.Texture | pyvista.ImageData | str
-        Texture, Dataset, or path to the file depending on the ``load`` and
+        Texture, image, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
     Examples
@@ -1285,7 +1285,7 @@ def download_neptune_surface(
     Returns
     -------
     output : pyvista.Texture | pyvista.ImageData | str
-        Texture, Dataset, or path to the file depending on the ``load`` and
+        Texture, image, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
     Examples
@@ -1348,7 +1348,7 @@ def download_pluto_surface(
     Returns
     -------
     output : pyvista.Texture | pyvista.ImageData | str
-        Texture, Dataset, or path to the file depending on the ``load`` and
+        Texture, image, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
     Examples
@@ -1414,7 +1414,7 @@ def download_stars_sky_background(
     Returns
     -------
     output : pyvista.Texture | pyvista.ImageData | str
-        Texture, Dataset, or path to the file depending on the ``load`` and
+        Texture, image, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
     Examples
@@ -1488,7 +1488,7 @@ def download_milkyway_sky_background(
     Returns
     -------
     output : pyvista.Texture | pyvista.ImageData | str
-        Texture, Dataset, or path to the file depending on the ``load`` and
+        Texture, image, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
     Examples

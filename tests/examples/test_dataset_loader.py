@@ -759,6 +759,9 @@ def test_download_dataset_texture():
     loaded = _download_dataset_texture(loader, texture=False, load=False)
     assert isinstance(loaded, str)
 
+    loaded = _download_dataset_texture(loader, texture=True, load=False)
+    assert isinstance(loaded, str)
+
 
 def test_source_url_invalid_base_url_raises():
     loader = _DownloadableFile('foo.vtk', base_url='not-a-url')
