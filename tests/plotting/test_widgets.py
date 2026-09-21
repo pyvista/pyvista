@@ -435,6 +435,29 @@ def test_sphere_widget_style_is_matched_exactly():
     pl.close()
 
 
+def test_sphere_widget_color_sequence_is_applied_per_widget():
+    nodes = np.array([[-1.0, -1.0, -1.0], [1.0, 1.0, 1.0]])
+    pl = pv.Plotter()
+    sphere_widgets = pl.add_sphere_widget(None, center=nodes, color=['red', 'blue'])
+
+    colors = [widget.GetSphereProperty().GetColor() for widget in sphere_widgets]
+    assert colors == [pv.Color('red').float_rgb, pv.Color('blue').float_rgb]
+    pl.close()
+
+
+def test_sphere_widget_single_color_is_shared_by_every_widget():
+    nodes = np.array([[-1.0, -1.0, -1.0], [1.0, 1.0, 1.0]])
+    yellow = pv.Color('yellow').float_rgb
+    pl = pv.Plotter()
+    sphere_widgets = pl.add_sphere_widget(None, center=nodes, color='yellow')
+    single = pl.add_sphere_widget(None, color='yellow')
+
+    colors = [widget.GetSphereProperty().GetColor() for widget in sphere_widgets]
+    assert colors == [yellow, yellow]
+    assert single.GetSphereProperty().GetColor() == yellow
+    pl.close()
+
+
 def test_widget_checkbox_button(uniform):
     pl = pv.Plotter()
     func = lambda value: value  # Does nothing
