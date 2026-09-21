@@ -1755,7 +1755,7 @@ class _Chart(DocSubs):
         off_screen: bool | None = None,
         full_screen: bool | None = None,
         screenshot: str | Path | BytesIO | bool | None = None,
-        window_size: list[int] | None = None,
+        window_size: Sequence[int] | None = None,
         notebook: bool | None = None,
         background: ColorLike = 'w',
         dev_kwargs: dict[str, Any] | None = None,
@@ -1783,7 +1783,7 @@ class _Chart(DocSubs):
             When ``True``, takes screenshot and returns ``numpy`` array of
             image.
 
-        window_size : list[int], optional
+        window_size : sequence[int], optional
             Window size in pixels. Defaults to active theme setting.
 
         notebook : bool, optional
