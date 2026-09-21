@@ -3443,8 +3443,7 @@ class DataObjectFilters:
         See :ref:`clip_with_surface_example` for more examples using this filter.
 
         """
-        if inplace:
-            _validate_clip_inplace(self)
+        inplace_target = _validate_clip_inplace(self) if inplace else None
         origin_, normal_ = _validate_plane_origin_and_normal(
             self, origin, normal, plane, default_normal='x'
         )
@@ -3471,17 +3470,17 @@ class DataObjectFilters:
                 _keep_array_structure(_cast_output_to_match_input_type(result[1], self), self),
                 input_bounds,
             )
-            if inplace:
-                _copy_clip_back(self, kept)
-                return self, removed
+            if inplace_target is not None:
+                inplace_target.copy_from(kept, deep=False)
+                return inplace_target, removed
             return kept, removed
         clipped = _remove_unused_points_post_clip(
             _keep_array_structure(_cast_output_to_match_input_type(result, self), self),
             input_bounds,
         )
-        if inplace:
-            _copy_clip_back(self, clipped)
-            return self
+        if inplace_target is not None:
+            inplace_target.copy_from(clipped, deep=False)
+            return inplace_target
         return clipped
 
     # fmt: off
@@ -7045,12 +7044,6 @@ def _clip_output(
         'PolyData | PointSet | UnstructuredGrid',
         _keep_array_structure(_cast_output_to_match_input_type(output, source), source),
     )
-
-
-def _copy_clip_back(mesh: DataSet | MultiBlock, clipped: DataSet | MultiBlock) -> None:
-    """Copy a clipped output back into the mesh it was clipped from."""
-    # `inplace` only reaches here for the types `_validate_clip_inplace` allows
-    cast('DataSet', mesh).copy_from(cast('DataSet', clipped), deep=False)
 
 
 def _remove_unused_points_post_clip(
