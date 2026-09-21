@@ -4787,7 +4787,7 @@ class PolyDataFilters(DataSetFilters):
             .extract_surface(algorithm=None, pass_pointid=False, pass_cellid=False)
         )
         out = self if inplace else type(self)()
-        out.copy_from(removed, deep=False)
+        out.copy_from(removed, deep=not inplace)
         return out
 
 
