@@ -1106,8 +1106,8 @@ class _Font(_ConfigBase):
 
         A scalar bar draws its title at this size; a box drawn around a
         horizontal bar that is too narrow for it, or given too small a height,
-        shrinks it to fit.  If ``None``, the size is fitted to the bar it is
-        drawn on.
+        shrinks it to fit.  Where this and :attr:`label_size` are both ``None``,
+        every size is fitted to the bar the text is drawn on.
 
         Examples
         --------
@@ -1130,8 +1130,8 @@ class _Font(_ConfigBase):
 
         The largest size a scalar bar draws its labels at.  They are drawn
         smaller where the bar leaves them too little room to stay clear of
-        each other.  If ``None``, the size is fitted to the bar they are drawn
-        on.
+        each other.  Where this and :attr:`title_size` are both ``None``, every
+        size is fitted to the bar the text is drawn on.
 
         Examples
         --------
