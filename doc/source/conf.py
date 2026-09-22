@@ -17,6 +17,7 @@ import warnings
 from docutils import nodes
 from docutils.parsers.rst.directives.images import Image
 from sphinx import addnodes
+from sphinx.util.docstrings import prepare_docstring
 from sphinx.util.inspect import TypeAliasForwardRef
 from sphinx_autocodelink.gallery import AutoCodeLinkScraper
 
@@ -1220,7 +1221,11 @@ def drop_type_alias_docstring(  # noqa: PLR0917
     lines: list[str],
 ) -> None:
     """Drop the docstring a type alias inherits from ``typing`` or its origin class."""
-    if what == 'data' and get_origin(obj) is not None:
+    if (
+        what == 'data'
+        and get_origin(obj) is not None
+        and lines == prepare_docstring(obj.__doc__ or '')
+    ):
         lines.clear()
 
 
@@ -1229,7 +1234,8 @@ def setup(app: Sphinx) -> None:  # noqa: D103
     app.connect('builder-inited', configure_backend)
     # The last toctree listing a page becomes its parent, and tag pages sort after galleries.
     app.connect('env-updated', forget_tag_page_toctrees)
-    app.connect('autodoc-process-docstring', drop_type_alias_docstring)
+    # priority < 500 so this sees the docstring before numpydoc rewrites it
+    app.connect('autodoc-process-docstring', drop_type_alias_docstring, priority=400)
     # Priority must stay above the 501 used by sphinx-book-theme's
     # ``add_source_buttons``, which is what builds the "suggest edit" button.
     app.connect('html-page-context', pv_html_page_context, priority=502)
