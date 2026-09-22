@@ -6,6 +6,7 @@ Typing
 Type aliases and type variable for annotating code that uses PyVista.
 
 .. versionadded:: 0.50
+   The ``pyvista.typing`` module.
 
 .. deprecated:: 0.50
    Accessing these aliases from ``pyvista``, for example ``pyvista.VectorLike``,

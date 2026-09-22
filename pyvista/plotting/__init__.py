@@ -9,9 +9,12 @@ from . import _rendering_imports as _rendering_imports
 
 # isort: on
 
+from typing import Any
+
 from pyvista import MAX_N_COLOR_BARS as MAX_N_COLOR_BARS
 from pyvista._plot import plot as plot
 
+# Bound so the submodule is also reachable as ``pyvista._typing``
 from . import _typing as _typing
 from ._property import Property as Property
 from .actor import Actor as Actor
@@ -136,7 +139,7 @@ class QtInteractor:  # numpydoc ignore=PR01
 global_theme: _GlobalTheme = _GlobalTheme()
 
 
-def __getattr__(name: str) -> object:
+def __getattr__(name: str) -> Any:
     """Forward the deprecated attributes of this module with a warning."""
     if name in ('CameraPositionOptions', 'Chart', 'ColorLike'):
         from pyvista.typing import _get_deprecated_alias  # noqa: PLC0415

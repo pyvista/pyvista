@@ -54,14 +54,16 @@ _LAZY_ALIASES = {
 }
 
 
-def __getattr__(name: str) -> object:
-    """Import a type alias whose module cannot be imported with this one."""
-    if name not in _LAZY_ALIASES:
-        msg = f'module {__name__!r} has no attribute {name!r}'
-        raise AttributeError(msg)
-    alias = getattr(importlib.import_module(_LAZY_ALIASES[name]), name)
-    globals()[name] = alias
-    return alias
+if not TYPE_CHECKING:
+
+    def __getattr__(name: str) -> object:
+        """Import a type alias whose module cannot be imported with this one."""
+        if name not in _LAZY_ALIASES:
+            msg = f'module {__name__!r} has no attribute {name!r}'
+            raise AttributeError(msg)
+        alias = getattr(importlib.import_module(_LAZY_ALIASES[name]), name)
+        globals()[name] = alias
+        return alias
 
 
 def __dir__() -> list[str]:
@@ -75,6 +77,7 @@ def _get_deprecated_alias(module: str, name: str) -> object:
     from pyvista._warn_external import warn_external  # noqa: PLC0415
     from pyvista.core.errors import PyVistaDeprecationWarning  # noqa: PLC0415
 
+    alias = getattr(sys.modules[__name__], name)
     msg = f'`{module}.{name}` has moved to `pyvista.typing`; use `pyvista.typing.{name}` instead.'
     warn_external(msg, PyVistaDeprecationWarning)
     if _is_deprecation_due((0, 53)):  # pragma: no cover
@@ -83,4 +86,4 @@ def _get_deprecated_alias(module: str, name: str) -> object:
     if _is_deprecation_due((0, 54)):  # pragma: no cover
         msg = f'Remove the type alias forwards from `{module}`.'
         raise RuntimeError(msg)
-    return getattr(sys.modules[__name__], name)
+    return alias

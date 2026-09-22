@@ -356,38 +356,46 @@ _CORE_TYPE_ALIASES = [
     'VectorLike',
 ]
 _PLOTTING_TYPE_ALIASES = ['CameraPositionOptions', 'Chart', 'ColorLike']
-_TYPE_ALIASES = [
-    *_CORE_TYPE_ALIASES,
-    *_PLOTTING_TYPE_ALIASES,
-    'JupyterBackendOptions',
-    'MeshValidationFields',
-]
+_TYPE_ALIAS_SOURCES = {
+    **dict.fromkeys(_CORE_TYPE_ALIASES, 'pyvista.core._typing_core'),
+    **dict.fromkeys(_PLOTTING_TYPE_ALIASES, 'pyvista.plotting._typing'),
+    'JupyterBackendOptions': 'pyvista.jupyter',
+    'MeshValidationFields': 'pyvista.core.filters.data_object',
+}
+
+
+def _source_alias(name):
+    """Return the type alias ``name`` from the private module that provides it."""
+    return getattr(importlib.import_module(_TYPE_ALIAS_SOURCES[name]), name)
 
 
 def test_typing_namespace():
+    """``pyvista.typing`` exports every type alias, unchanged from the module that provides it."""
     import pyvista as pv
 
-    assert sorted(pv.typing.__all__) == sorted(_TYPE_ALIASES)
+    assert sorted(pv.typing.__all__) == sorted(_TYPE_ALIAS_SOURCES)
     for name in pv.typing.__all__:
-        getattr(pv.typing, name)
+        assert getattr(pv.typing, name) is _source_alias(name)
 
 
 def test_typing_dir_lists_aliases_before_access():
+    """``dir(pyvista.typing)`` lists the aliases that are imported on first access."""
     assert exec_success('import pyvista.typing as t; assert {*t.__all__} <= {*dir(t)}')
 
 
 @pytest.mark.parametrize(
     ('module', 'name'),
     [
-        *(('pyvista', name) for name in _TYPE_ALIASES),
+        *(('pyvista', name) for name in _TYPE_ALIAS_SOURCES),
         *(('pyvista.core', name) for name in _CORE_TYPE_ALIASES),
         *(('pyvista.plotting', name) for name in _PLOTTING_TYPE_ALIASES),
     ],
 )
 def test_type_alias_forward_deprecated(module, name):
+    """A type alias read from its old module warns and is still the same alias."""
     import pyvista as pv
 
     msg = f'`{module}.{name}` has moved to `pyvista.typing`; use `pyvista.typing.{name}` instead.'
     with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(msg)):
         alias = getattr(importlib.import_module(module), name)
-    assert alias is getattr(pv.typing, name)
+    assert alias is _source_alias(name)
