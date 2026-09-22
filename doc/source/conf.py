@@ -324,6 +324,7 @@ nitpick_ignore_regex = [
     #
     # PyVista plotting-related classes
     (r'py:.*', '.*BasePlotter'),
+    (r'py:.*', '.*_AlgorithmInput'),
     (r'py:.*', '.*ScalarBars'),
     (r'py:.*', '.*Theme'),
     #

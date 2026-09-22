@@ -4534,8 +4534,7 @@ class BasePlotter(_BoundsSizeMixin):
             # can activate the mapper's live input, not just the cached
             # snapshot.
             if (
-                algo is not None
-                and original_scalar_name is None
+                original_scalar_name is None
                 and isinstance(scalars, np.ndarray)
                 and scalars.shape[0] in (mesh.n_points, mesh.n_cells)
             ):
