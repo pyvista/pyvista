@@ -3632,7 +3632,7 @@ class BasePlotter(_BoundsSizeMixin):
         edge_color: ColorLike | None = None,
         point_size: float | None = None,
         line_width: float | None = None,
-        opacity: float | OpacityOptions | Sequence[float] | None = None,
+        opacity: float | OpacityOptions | str | VectorLike[float] | None = None,
         flip_scalars: bool = False,
         lighting: bool | None = None,
         n_colors: int = 256,
@@ -3779,8 +3779,9 @@ class BasePlotter(_BoundsSizeMixin):
             predefined opacity transfer function (options include:
             ``'linear'``, ``'linear_r'``, ``'geom'``, ``'geom_r'``).
             A string could also be used to map a scalars array from
-            the mesh to the opacity (must have same number of elements
-            as the ``scalars`` argument). Or you can pass a custom
+            the mesh to the opacity (must have the same number of
+            elements as the ``scalars`` argument, when scalars are
+            given). Or you can pass a custom
             made transfer function that is an array either
             ``n_colors`` in length or shorter.
 
@@ -4432,7 +4433,6 @@ class BasePlotter(_BoundsSizeMixin):
                 silhouette_actor = self.add_silhouette(algo or mesh)
             silhouette_actor.user_matrix = user_matrix
 
-        scalar_bar_args = cast('ScalarBarArgs', scalar_bar_args)
         # Try to plot something if no preference given
         if scalars is None and (rgb or (color is None and texture is None)):
             # Make sure scalars components are not vectors/tuples
@@ -4579,7 +4579,7 @@ class BasePlotter(_BoundsSizeMixin):
             if isinstance(texture, np.ndarray):
                 texture = numpy_to_texture(texture)
             if not isinstance(texture, (_vtk.vtkTexture, _vtk.vtkOpenGLTexture)):
-                msg = f'Invalid texture type ({type(texture)})'
+                msg = f'Invalid texture type ({type(texture)})'  # type: ignore[unreachable]
                 raise TypeError(msg)
             if mesh.GetPointData().GetTCoords() is None:
                 msg = 'Input mesh does not have texture coordinates to support the texture.'
@@ -4644,7 +4644,7 @@ class BasePlotter(_BoundsSizeMixin):
         mapper.static = static
 
         # Set actor properties ================================================
-        prop_kwargs = dict(
+        prop_kwargs: dict[str, Any] = dict(
             theme=self._theme,
             interpolation=interpolation,
             metallic=metallic,
@@ -5131,7 +5131,7 @@ class BasePlotter(_BoundsSizeMixin):
         assert_empty_kwargs(**kwargs)
 
         if show_scalar_bar is None:
-            show_scalar_bar = self._theme.show_scalar_bar or scalar_bar_args  # type: ignore[assignment]
+            show_scalar_bar = bool(self._theme.show_scalar_bar or scalar_bar_args)
 
         # Avoid mutating input
         scalar_bar_args = {} if scalar_bar_args is None else scalar_bar_args.copy()

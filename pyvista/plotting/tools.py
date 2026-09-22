@@ -697,7 +697,7 @@ def _opacity_transfer_functions(n_colors: int) -> dict[str, NumpyArray[np.uint8]
 
 
 def opacity_transfer_function(
-    mapping: OpacityOptions | VectorLike[float],
+    mapping: OpacityOptions | str | VectorLike[float],
     n_colors: int,
     *,
     interpolate: bool = True,
