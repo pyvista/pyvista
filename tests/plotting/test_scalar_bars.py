@@ -1575,6 +1575,34 @@ def test_fit_box_keeps_a_size_set_on_the_actor(sphere, vertical: bool):
 
 
 @pytest.mark.parametrize('box', BOXES, ids=BOX_IDS)
+def test_fit_box_keeps_a_font_set_on_the_actor(sphere, box):
+    # A font size set after the bar is added is the one it asks for, so the next fit
+    # measures the text at that size rather than putting the first one back
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=[900, 700])
+    pl.background_color = 'white'
+    pl.add_mesh(sphere, show_scalar_bar=False, cmap='autumn')
+    bar = _fitted_bar(pl, sphere, vertical=True, box=box, color='blue')
+    pl.screenshot(return_img=True)
+    bar.GetTitleTextProperty().SetFontSize(36)
+    bar.GetLabelTextProperty().SetFontSize(12)
+    pl.screenshot(return_img=True)
+
+    assert bar.GetTitleTextProperty().GetFontSize() == 36
+    assert bar.GetLabelTextProperty().GetFontSize() == 12
+    assert not _text_outside_the_box(pl, bar)
+
+    # A refit of the box, here for a new window, measures against those sizes too
+    pl.window_size = [1000, 700]
+    pl.screenshot(return_img=True)
+
+    assert bar.GetTitleTextProperty().GetFontSize() == 36
+    assert bar.GetLabelTextProperty().GetFontSize() == 12
+    assert not _text_outside_the_box(pl, bar)
+
+
+@pytest.mark.parametrize('box', BOXES, ids=BOX_IDS)
 def test_fit_box_fits_a_size_set_on_the_actor(sphere, box):
     # A box around a bar that was sized after it was added is fitted to the text inside
     # that size, not inside the one the bar was added with

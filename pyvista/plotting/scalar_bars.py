@@ -138,7 +138,7 @@ def _rotated_title_offset(bar_width, title_height, pad):
 
 
 def _box_geometry(scalar_bar):
-    """Return the size, place and proportions of the box a scalar bar draws."""
+    """Return the size, place and proportions of a scalar bar's box, and its font sizes."""
     return (
         scalar_bar.GetWidth(),
         scalar_bar.GetHeight(),
@@ -147,6 +147,8 @@ def _box_geometry(scalar_bar):
         scalar_bar.GetVerticalTitleSeparation(),
         scalar_bar.GetTitleRatio(),
         scalar_bar.GetTextPad(),
+        scalar_bar.GetTitleTextProperty().GetFontSize(),
+        scalar_bar.GetLabelTextProperty().GetFontSize(),
     )
 
 
@@ -478,7 +480,17 @@ class ScalarBars(_NoNewAttrMixin):
 
     def _apply_fit(self, fit, scalar_bar):
         """Size a scalar bar's box to its text, or give it back the size it asked for."""
-        width, height, position, bar_ratio, separation, title_ratio, text_pad = fit['request']
+        (
+            width,
+            height,
+            position,
+            bar_ratio,
+            separation,
+            title_ratio,
+            text_pad,
+            title_font,
+            label_font,
+        ) = fit['request']
         # Measure against the size that was asked for rather than the last fit
         scalar_bar.SetWidth(width)
         scalar_bar.SetHeight(height)
@@ -489,8 +501,8 @@ class ScalarBars(_NoNewAttrMixin):
         scalar_bar.SetPosition(*position)
         title_text = scalar_bar.GetTitleTextProperty()
         label_text = scalar_bar.GetLabelTextProperty()
-        title_text.SetFontSize(fit['fonts'][0])
-        label_text.SetFontSize(fit['fonts'][1])
+        title_text.SetFontSize(title_font)
+        label_text.SetFontSize(label_font)
 
         if not (scalar_bar.GetDrawFrame() or scalar_bar.GetDrawBackground()):
             # Nothing is drawn around the text, so there is nothing to fit it to
@@ -603,10 +615,6 @@ class ScalarBars(_NoNewAttrMixin):
         window = self._plotter.render_window
         fit = {
             'request': _box_geometry(scalar_bar),
-            'fonts': (
-                scalar_bar.GetTitleTextProperty().GetFontSize(),
-                scalar_bar.GetLabelTextProperty().GetFontSize(),
-            ),
             'vertical': vertical,
             'key': title,
             'title': display_title,
@@ -631,8 +639,8 @@ class ScalarBars(_NoNewAttrMixin):
                 return
             geometry = _box_geometry(bar)
             if fit['applied'] is not None and geometry != fit['applied']:
-                # The bar was sized or placed after it was fitted, so that is what it
-                # asks for now and the fit is measured against it from here on
+                # The bar was sized, placed or given a font size after it was fitted, so
+                # that is what it asks for now and the fit is measured against it
                 fit['request'] = tuple(
                     now if now != before else asked
                     for now, before, asked in zip(
