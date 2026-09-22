@@ -737,7 +737,8 @@ class _ColorbarConfig(_ConfigBase):
         """Return or set the colorbar title padding.
 
         The padding is the space between the title and the tick labels, as a
-        multiple of the size the labels are drawn at.
+        multiple of the size the labels are drawn at; a title turned alongside
+        the bar is padded off the bar by a multiple of its own size.
 
         Examples
         --------

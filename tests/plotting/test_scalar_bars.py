@@ -581,13 +581,14 @@ def test_rotated_title_clears_the_neighbors_labels(sphere):
 
     pl = pv.Plotter(window_size=window_size)
     pl.add_mesh(sphere, show_scalar_bar=False)
-    label_font = 7
+    font_size = 40
     bars = _wide_number_bars(
-        pl, sphere, rotate_title=True, title_font_size=40, label_font_size=label_font
+        pl, sphere, rotate_title=True, title_font_size=font_size, label_font_size=7
     )
 
     dpi = pl.render_window.GetDPI()
-    pad = round(pl.theme.colorbar_vertical.title_pad * label_font)
+    # A turned title is padded off its bar by its own size
+    pad = round(pl.theme.colorbar_vertical.title_pad * font_size)
     for bar, neighbor in _stacked_pairs(bars):
         title = neighbor.GetPosition()[0] * window_size[0] - pad - _bar_title_height(neighbor, dpi)
         assert _label_reach(bar, dpi, window_size[0]) < title
