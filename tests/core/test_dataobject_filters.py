@@ -737,7 +737,7 @@ def test_clip_empty_half_keeps_array_names(clip_filter):
 def test_clip_leaves_points_alone_when_the_clipper_keeps_none(monkeypatch, hexbeam):
     """The table-based clipper builds its own point list, so nothing follows it."""
 
-    def _fail(*_args, **_kwargs):
+    def _fail(*_args, **_kwargs):  # pragma: no cover -- the test asserts it never runs
         msg = 'remove_unused_points should not be called'
         raise AssertionError(msg)
 
