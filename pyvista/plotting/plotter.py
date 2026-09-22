@@ -3007,7 +3007,9 @@ class BasePlotter(_BoundsSizeMixin):
     def isometric_view_interactive(self) -> None:
         """Set the current interactive render window to isometric view."""
         interactor = self._get_iren_not_none().get_interactor_style()
-        renderer = interactor.GetCurrentRenderer()
+        # VTK types the getter as non-optional, but it returns None before the
+        # first interaction, and otherwise the PyVista renderer it was given.
+        renderer = cast('Renderer | None', interactor.GetCurrentRenderer())
         if renderer is None:
             renderer = self.renderer
         renderer.view_isometric()
@@ -8643,7 +8645,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
         # Add ren win and interactor
         self.iren = RenderWindowInteractor(self, light_follow_camera=False, interactor=interactor)
-        self.iren.set_render_window(self.render_window)
+        self.iren.set_render_window(self.render_window)  # type: ignore[arg-type]
         self.reset_key_events()
         self._get_iren_not_none().enable_interactor_style()
         self.iren.add_observer('KeyPressEvent', self.key_press_event)
