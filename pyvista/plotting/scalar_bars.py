@@ -35,21 +35,31 @@ def _format_label(fmt, value):
         return fmt.format(value)
 
 
+def _custom_anchor(value, *, first, low, span, log_scale):
+    """Return how far along the ramp a custom tick sits, or ``-1`` where it is not drawn."""
+    if span <= 0:
+        return 0.5 if value == first else -1.0
+    if log_scale:
+        return (math.log10(value) - low) / span if value > 0 else -1.0
+    return (value - low) / span
+
+
 def _label_ticks(scalar_bar):
     """Return how far along the ramp each tick label sits and the text it is drawn with."""
     fmt = scalar_bar.GetLabelFormat()
     lookup_table = scalar_bar.GetLookupTable()
-    low, high = lookup_table.GetRange()
-    log_scale = bool(lookup_table.UsingLogScale()) and low > 0 and high > 0
-    if log_scale:
-        low, high = math.log10(low), math.log10(high)
+    first, last = lookup_table.GetRange()
+    log_scale = bool(lookup_table.UsingLogScale()) and first > 0 and last > 0
+    low, high = (math.log10(first), math.log10(last)) if log_scale else (first, last)
     span = high - low
     if scalar_bar.GetUseCustomLabels():
         custom = scalar_bar.GetCustomLabels()
         count = custom.GetNumberOfTuples() if custom is not None else 0
         values = [custom.GetValue(index) for index in range(count)]
-        places = [math.log10(value) if log_scale and value > 0 else value for value in values]
-        anchors = [(place - low) / span if span else 0.5 for place in places]
+        anchors = [
+            _custom_anchor(value, first=first, low=low, span=span, log_scale=log_scale)
+            for value in values
+        ]
     else:
         ticks = int(scalar_bar.GetNumberOfLabels())
         anchors = [step / (ticks - 1) if ticks > 1 else 0.5 for step in range(ticks)]

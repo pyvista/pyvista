@@ -1800,3 +1800,23 @@ def test_fit_fonts_leave_a_constrained_bar_to_vtk(sphere):
 
     assert not boxed.GetUnconstrainedFontSize()
     assert boxed.GetLabelTextProperty().GetFontSize() == WIDE_FONT
+
+
+def test_fit_fonts_skip_the_ticks_a_flat_range_hides(sphere):
+    # VTK draws only the custom tick equal to the range when the range has no width, so
+    # the ones it hides are not labels the fit has to find room for
+    sphere[WIDE_KEY] = np.full(sphere.n_points, 5.0)
+
+    pl = pv.Plotter(window_size=[1024, 768])
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = pl.add_scalar_bar(
+        WIDE_KEY,
+        tick_locations=[4.0, 5.0, 6.0],
+        label_font_size=WIDE_FONT,
+        title_font_size=WIDE_FONT,
+        mapper=pv.DataSetMapper(sphere),
+    )
+    pl.screenshot(return_img=True)
+
+    assert [anchor for anchor, _ in _label_ticks(bar)] == [-1.0, 0.5, -1.0]
+    assert bar.GetLabelTextProperty().GetFontSize() == WIDE_FONT
