@@ -11,7 +11,7 @@ to use them with related plotting methods.
 
 """
 
-# sphinx_gallery_thumbnail_number = 7
+# sphinx_gallery_thumbnail_number = 6  # AxesAssemblySymmetric
 
 import pyvista as pv
 from pyvista import examples
@@ -25,25 +25,21 @@ mesh = examples.download_bunny_coarse()
 
 pl = pv.Plotter()
 pl.add_mesh(mesh)
-axes = pv.CubeAxesActor(camera=pl.camera)
-axes.bounds = mesh.bounds
+axes = pv.CubeAxesActor(camera=pl.camera, bounds=mesh.bounds)
 pl.add_actor(axes)
-pl.background_color = pv.Color('paraview')
 pl.show()
 
 # %%
-# Adding the axes like this can be a bit cumbersome since the camera, bounds, and color
-# must be set manually. Instead, use :meth:`~pyvista.Plotter.show_bounds` to add a
-# :class:`~pyvista.CubeAxesActor` with pre-configured parameters.
-
-pl = pv.Plotter()
-pl.add_mesh(mesh)
-pl.show_bounds()
-pl.show()
-
-# %%
-# Alternatively, use :meth:`~pyvista.Plotter.show_grid`. This also adds a
-# :class:`~pyvista.CubeAxesActor` to the plot but with different default options.
+# The colors, fonts, grid lines, and axis placement are all constructor arguments. See
+# :ref:`bounds_example` for more ways to configure them.
+#
+# Creating the actor directly means passing the camera and bounds yourself, and the
+# renderer does not track it. :meth:`~pyvista.Plotter.show_bounds` builds the same actor
+# from the scene and registers it, so :meth:`~pyvista.Plotter.remove_bounds_axes` and
+# :meth:`~pyvista.Plotter.update_bounds_axes` apply to it.
+#
+# :meth:`~pyvista.Plotter.show_grid` adds grid lines on the back faces, labels on the
+# outer edges, and ticks on both sides.
 
 pl = pv.Plotter()
 pl.add_mesh(mesh)
@@ -70,11 +66,11 @@ pl.show()
 
 pl = pv.Plotter()
 pl.add_mesh(mesh)
-axes = pl.add_axes_at_origin()
+pl.add_axes_at_origin()
 pl.show()
 
 # %%
-# The axes are too large and should be scaled down. Transformations with `AxesActor`
+# The axes are too large and should be scaled down. Transformations with ``AxesActor``
 # are possible, but with some caveats:
 #
 # - The bounds of ``AxesActor`` are hard-coded as ``+/- 1``, which makes it challenging
@@ -134,7 +130,6 @@ pl.show()
 # #. Add :class:`~pyvista.AxesAssemblySymmetric` as a custom
 #    orientation widget using :meth:`~pyvista.Plotter.add_orientation_widget`.
 
-# Load a dataset
 mesh = examples.load_airplane()
 
 # Create a plotter with four linked views.
@@ -167,9 +162,9 @@ pl.show()
 
 # %%
 # Camera Orientation Widget
-# -------------------------
-# There is also a specialized camera widget which can added to a plot with
-# :class:`~pyvista.Plotter.add_camera_orientation_widget`.
+# =========================
+# There is also a specialized camera widget which can be added to a plot with
+# :meth:`~pyvista.Plotter.add_camera_orientation_widget`.
 
 pl = pv.Plotter()
 pl.add_mesh(mesh)

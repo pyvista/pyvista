@@ -4,12 +4,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import Literal
-from typing import overload
 
 import numpy as np
 
+# `typing.overload` registers with `get_overloads` only from 3.11
+from typing_extensions import overload
+
 import pyvista as pv
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.examples._dataset_loader import _DatasetLoader
@@ -29,7 +30,7 @@ def _download_dataset_texture(
     if texture:
         from pyvista.plotting.texture import Texture  # noqa: PLC0415
 
-        return Texture(dataset)  # type: ignore[abstract]
+        return Texture(dataset)
     return dataset
 
 
@@ -103,8 +104,7 @@ def _planet_deprecated(name):
     )
 
 
-@_deprecate_positional_args
-def load_sun(radius=1.0, lat_resolution=50, lon_resolution=100):
+def load_sun(*, radius=1.0, lat_resolution=50, lon_resolution=100):
     """Load the Sun as a textured sphere.
 
     .. deprecated:: 0.49.0
@@ -139,8 +139,7 @@ def load_sun(radius=1.0, lat_resolution=50, lon_resolution=100):
     return load_planet(radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution)
 
 
-@_deprecate_positional_args
-def load_moon(radius=1.0, lat_resolution=50, lon_resolution=100):
+def load_moon(*, radius=1.0, lat_resolution=50, lon_resolution=100):
     """Load the Moon as a textured sphere.
 
     .. deprecated:: 0.49.0
@@ -175,8 +174,7 @@ def load_moon(radius=1.0, lat_resolution=50, lon_resolution=100):
     return load_planet(radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution)
 
 
-@_deprecate_positional_args
-def load_mercury(radius=1.0, lat_resolution=50, lon_resolution=100):
+def load_mercury(*, radius=1.0, lat_resolution=50, lon_resolution=100):
     """Load the planet Mercury as a textured sphere.
 
     .. deprecated:: 0.49.0
@@ -211,8 +209,7 @@ def load_mercury(radius=1.0, lat_resolution=50, lon_resolution=100):
     return load_planet(radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution)
 
 
-@_deprecate_positional_args
-def load_venus(radius=1.0, lat_resolution=50, lon_resolution=100):
+def load_venus(*, radius=1.0, lat_resolution=50, lon_resolution=100):
     """Load the planet Venus as a textured sphere.
 
     .. deprecated:: 0.49.0
@@ -247,8 +244,7 @@ def load_venus(radius=1.0, lat_resolution=50, lon_resolution=100):
     return load_planet(radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution)
 
 
-@_deprecate_positional_args
-def load_earth(radius=1.0, lat_resolution=50, lon_resolution=100):
+def load_earth(*, radius=1.0, lat_resolution=50, lon_resolution=100):
     """Load the planet Earth as a textured sphere.
 
     .. deprecated:: 0.49.0
@@ -283,8 +279,7 @@ def load_earth(radius=1.0, lat_resolution=50, lon_resolution=100):
     return load_planet(radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution)
 
 
-@_deprecate_positional_args
-def load_mars(radius=1.0, lat_resolution=50, lon_resolution=100):
+def load_mars(*, radius=1.0, lat_resolution=50, lon_resolution=100):
     """Load the planet Mars as a textured sphere.
 
     .. deprecated:: 0.49.0
@@ -319,8 +314,7 @@ def load_mars(radius=1.0, lat_resolution=50, lon_resolution=100):
     return load_planet(radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution)
 
 
-@_deprecate_positional_args
-def load_jupiter(radius=1.0, lat_resolution=50, lon_resolution=100):
+def load_jupiter(*, radius=1.0, lat_resolution=50, lon_resolution=100):
     """Load the planet Jupiter as a textured sphere.
 
     .. deprecated:: 0.49.0
@@ -355,8 +349,7 @@ def load_jupiter(radius=1.0, lat_resolution=50, lon_resolution=100):
     return load_planet(radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution)
 
 
-@_deprecate_positional_args
-def load_saturn(radius=1.0, lat_resolution=50, lon_resolution=100):
+def load_saturn(*, radius=1.0, lat_resolution=50, lon_resolution=100):
     """Load the planet Saturn as a textured sphere.
 
     .. deprecated:: 0.49.0
@@ -460,8 +453,7 @@ def _planet_rings_load_func(*, inner=0.25, outer=0.5, c_res=50):
 _dataset_planet_rings = _DatasetLoader(_planet_rings_load_func)
 
 
-@_deprecate_positional_args
-def load_saturn_rings(inner=0.25, outer=0.5, c_res=6):
+def load_saturn_rings(*, inner=0.25, outer=0.5, c_res=6):
     """Load the planet Saturn's rings.
 
     .. deprecated:: 0.49.0
@@ -515,8 +507,7 @@ def load_saturn_rings(inner=0.25, outer=0.5, c_res=6):
     return load_planet_rings(inner=inner, outer=outer, c_res=c_res)
 
 
-@_deprecate_positional_args
-def load_uranus(radius=1.0, lat_resolution=50, lon_resolution=100):
+def load_uranus(*, radius=1.0, lat_resolution=50, lon_resolution=100):
     """Load the planet Uranus as a textured sphere.
 
     .. deprecated:: 0.49.0
@@ -551,8 +542,7 @@ def load_uranus(radius=1.0, lat_resolution=50, lon_resolution=100):
     return load_planet(radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution)
 
 
-@_deprecate_positional_args
-def load_neptune(radius=1.0, lat_resolution=50, lon_resolution=100):
+def load_neptune(*, radius=1.0, lat_resolution=50, lon_resolution=100):
     """Load the planet Neptune as a textured sphere.
 
     .. deprecated:: 0.49.0
@@ -587,8 +577,7 @@ def load_neptune(radius=1.0, lat_resolution=50, lon_resolution=100):
     return load_planet(radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution)
 
 
-@_deprecate_positional_args
-def load_pluto(radius=1.0, lat_resolution=50, lon_resolution=100):
+def load_pluto(*, radius=1.0, lat_resolution=50, lon_resolution=100):
     """Load the dwarf planet Pluto as a textured sphere.
 
     .. deprecated:: 0.49.0
@@ -623,20 +612,22 @@ def load_pluto(radius=1.0, lat_resolution=50, lon_resolution=100):
     return load_planet(radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution)
 
 
+# fmt: off
+# ruff: disable[E501]
 @overload
+def download_sun_surface(*, texture: Literal[False] = ..., load: Literal[True] = ...) -> ImageData: ...
+@overload
+def download_sun_surface(*, texture: Literal[False] = ..., load: Literal[False] = ...) -> str: ...
+@overload
+def download_sun_surface(*, texture: Literal[True], load: Literal[True] = ...) -> Texture: ...
+@overload
+def download_sun_surface(*, texture: Literal[True], load: Literal[False]) -> str: ...
+# ruff: enable[E501]
+# fmt: on
 def download_sun_surface(
-    texture: Literal[False] = ..., load: Literal[True] = ...
-) -> ImageData: ...
-@overload
-def download_sun_surface(texture: Literal[False] = ..., load: Literal[False] = ...) -> str: ...
-@overload
-def download_sun_surface(texture: Literal[True], load: Literal[True] = ...) -> Texture: ...
-@overload
-def download_sun_surface(texture: Literal[True], load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_sun_surface(
-    texture: bool = False,  # noqa: FBT001, FBT002
-    load: bool = True,  # noqa: FBT001, FBT002
+    *,
+    texture: bool = False,
+    load: bool = True,
 ) -> Texture | ImageData | str:
     """Download the surface of the Sun.
 
@@ -659,13 +650,16 @@ def download_sun_surface(
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> texture = examples.planets.download_sun_surface(texture=True)
-    >>> texture.plot(zoom='tight', show_axes=False)
+    .. pyvista-plot::
+        :force_static:
 
-    >>> mesh = examples.planets.load_planet()
-    >>> image_path = examples.planets.download_stars_sky_background(load=False)
-    >>> mesh.plot(texture=texture, background=image_path)
+        >>> from pyvista import examples
+        >>> texture = examples.planets.download_sun_surface(texture=True)
+        >>> texture.plot(zoom='tight', show_axes=False)
+
+        >>> mesh = examples.planets.load_planet()
+        >>> image_path = examples.planets.download_stars_sky_background(load=False)
+        >>> mesh.plot(texture=texture, background=image_path)
 
     .. seealso::
 
@@ -687,20 +681,22 @@ _dataset_sun_surface = _SingleFileDownloadableDatasetLoader(
 )
 
 
+# fmt: off
+# ruff: disable[E501]
 @overload
+def download_moon_surface(*, texture: Literal[False] = ..., load: Literal[True] = ...) -> ImageData: ...
+@overload
+def download_moon_surface(*, texture: Literal[False] = ..., load: Literal[False] = ...) -> str: ...
+@overload
+def download_moon_surface(*, texture: Literal[True], load: Literal[True] = ...) -> Texture: ...
+@overload
+def download_moon_surface(*, texture: Literal[True], load: Literal[False]) -> str: ...
+# ruff: enable[E501]
+# fmt: on
 def download_moon_surface(
-    texture: Literal[False] = ..., load: Literal[True] = ...
-) -> ImageData: ...
-@overload
-def download_moon_surface(texture: Literal[False] = ..., load: Literal[False] = ...) -> str: ...
-@overload
-def download_moon_surface(texture: Literal[True], load: Literal[True] = ...) -> Texture: ...
-@overload
-def download_moon_surface(texture: Literal[True], load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_moon_surface(
-    texture: bool = False,  # noqa: FBT001, FBT002
-    load: bool = True,  # noqa: FBT001, FBT002
+    *,
+    texture: bool = False,
+    load: bool = True,
 ) -> Texture | ImageData | str:
     """Download the surface of the Earth's Moon.
 
@@ -723,13 +719,16 @@ def download_moon_surface(
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> texture = examples.planets.download_moon_surface(texture=True)
-    >>> texture.plot(zoom='tight', show_axes=False)
+    .. pyvista-plot::
+        :force_static:
 
-    >>> mesh = examples.planets.load_planet()
-    >>> image_path = examples.planets.download_stars_sky_background(load=False)
-    >>> mesh.plot(texture=texture, background=image_path)
+        >>> from pyvista import examples
+        >>> texture = examples.planets.download_moon_surface(texture=True)
+        >>> texture.plot(zoom='tight', show_axes=False)
+
+        >>> mesh = examples.planets.load_planet()
+        >>> image_path = examples.planets.download_stars_sky_background(load=False)
+        >>> mesh.plot(texture=texture, background=image_path)
 
     .. seealso::
 
@@ -751,20 +750,22 @@ _dataset_moon_surface = _SingleFileDownloadableDatasetLoader(
 )
 
 
+# fmt: off
+# ruff: disable[E501]
 @overload
+def download_mercury_surface(*, texture: Literal[False] = ..., load: Literal[True] = ...) -> ImageData: ...
+@overload
+def download_mercury_surface(*, texture: Literal[False] = ..., load: Literal[False] = ...) -> str: ...
+@overload
+def download_mercury_surface(*, texture: Literal[True], load: Literal[True] = ...) -> Texture: ...
+@overload
+def download_mercury_surface(*, texture: Literal[True], load: Literal[False]) -> str: ...
+# ruff: enable[E501]
+# fmt: on
 def download_mercury_surface(
-    texture: Literal[False] = ..., load: Literal[True] = ...
-) -> ImageData: ...
-@overload
-def download_mercury_surface(texture: Literal[False] = ..., load: Literal[False] = ...) -> str: ...
-@overload
-def download_mercury_surface(texture: Literal[True], load: Literal[True] = ...) -> Texture: ...
-@overload
-def download_mercury_surface(texture: Literal[True], load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_mercury_surface(
-    texture: bool = False,  # noqa: FBT001, FBT002
-    load: bool = True,  # noqa: FBT001, FBT002
+    *,
+    texture: bool = False,
+    load: bool = True,
 ) -> Texture | ImageData | str:
     """Download the surface of planet Mercury.
 
@@ -787,13 +788,16 @@ def download_mercury_surface(
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> texture = examples.planets.download_mercury_surface(texture=True)
-    >>> texture.plot(zoom='tight', show_axes=False)
+    .. pyvista-plot::
+        :force_static:
 
-    >>> mesh = examples.planets.load_planet()
-    >>> image_path = examples.planets.download_stars_sky_background(load=False)
-    >>> mesh.plot(texture=texture, background=image_path)
+        >>> from pyvista import examples
+        >>> texture = examples.planets.download_mercury_surface(texture=True)
+        >>> texture.plot(zoom='tight', show_axes=False)
+
+        >>> mesh = examples.planets.load_planet()
+        >>> image_path = examples.planets.download_stars_sky_background(load=False)
+        >>> mesh.plot(texture=texture, background=image_path)
 
     .. seealso::
 
@@ -812,35 +816,23 @@ _dataset_mercury_surface = _SingleFileDownloadableDatasetLoader(
 )
 
 
+# fmt: off
+# ruff: disable[E501]
 @overload
-def download_venus_surface(
-    atmosphere: bool = ...,  # noqa: FBT001
-    texture: Literal[False] = ...,
-    load: Literal[True] = ...,
-) -> ImageData: ...
+def download_venus_surface(*, atmosphere: bool = ..., texture: Literal[False] = ..., load: Literal[True] = ...) -> ImageData: ...
 @overload
-def download_venus_surface(
-    atmosphere: bool = ...,  # noqa: FBT001
-    texture: Literal[False] = ...,
-    load: Literal[False] = ...,
-) -> str: ...
+def download_venus_surface(*, atmosphere: bool = ..., texture: Literal[False] = ..., load: Literal[False] = ...) -> str: ...
 @overload
-def download_venus_surface(
-    atmosphere: bool = ...,  # noqa: FBT001
-    texture: Literal[True] = ...,
-    load: Literal[True] = ...,
-) -> Texture: ...
+def download_venus_surface(*, atmosphere: bool = ..., texture: Literal[True] = ..., load: Literal[True] = ...) -> Texture: ...
 @overload
+def download_venus_surface(*, atmosphere: bool = ..., texture: Literal[True] = ..., load: Literal[False] = ...) -> str: ...
+# ruff: enable[E501]
+# fmt: on
 def download_venus_surface(
-    atmosphere: bool = ...,  # noqa: FBT001
-    texture: Literal[True] = ...,
-    load: Literal[False] = ...,
-) -> str: ...
-@_deprecate_positional_args
-def download_venus_surface(
-    atmosphere: bool = True,  # noqa: FBT001, FBT002
-    texture: bool = False,  # noqa: FBT001, FBT002
-    load: bool = True,  # noqa: FBT001, FBT002
+    *,
+    atmosphere: bool = True,
+    texture: bool = False,
+    load: bool = True,
 ) -> Texture | ImageData | str:  # pragma: no cover
     """Download the surface or atmosphere of Planet Venus.
 
@@ -898,20 +890,22 @@ __dataset_venus_surface_no_atmosphere = _SingleFileDownloadableDatasetLoader(
 )
 
 
+# fmt: off
+# ruff: disable[E501]
 @overload
+def download_mars_surface(*, texture: Literal[False] = ..., load: Literal[True] = ...) -> ImageData: ...
+@overload
+def download_mars_surface(*, texture: Literal[False] = ..., load: Literal[False] = ...) -> str: ...
+@overload
+def download_mars_surface(*, texture: Literal[True], load: Literal[True] = ...) -> Texture: ...
+@overload
+def download_mars_surface(*, texture: Literal[True], load: Literal[False]) -> str: ...
+# ruff: enable[E501]
+# fmt: on
 def download_mars_surface(
-    texture: Literal[False] = ..., load: Literal[True] = ...
-) -> ImageData: ...
-@overload
-def download_mars_surface(texture: Literal[False] = ..., load: Literal[False] = ...) -> str: ...
-@overload
-def download_mars_surface(texture: Literal[True], load: Literal[True] = ...) -> Texture: ...
-@overload
-def download_mars_surface(texture: Literal[True], load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_mars_surface(
-    texture: bool = False,  # noqa: FBT001, FBT002
-    load: bool = True,  # noqa: FBT001, FBT002
+    *,
+    texture: bool = False,
+    load: bool = True,
 ) -> Texture | ImageData | str:
     """Download the surface of the planet Mars.
 
@@ -934,13 +928,16 @@ def download_mars_surface(
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> texture = examples.planets.download_mars_surface(texture=True)
-    >>> texture.plot(zoom='tight', show_axes=False)
+    .. pyvista-plot::
+        :force_static:
 
-    >>> mesh = examples.planets.load_planet()
-    >>> image_path = examples.planets.download_stars_sky_background(load=False)
-    >>> mesh.plot(texture=texture, background=image_path)
+        >>> from pyvista import examples
+        >>> texture = examples.planets.download_mars_surface(texture=True)
+        >>> texture.plot(zoom='tight', show_axes=False)
+
+        >>> mesh = examples.planets.load_planet()
+        >>> image_path = examples.planets.download_stars_sky_background(load=False)
+        >>> mesh.plot(texture=texture, background=image_path)
 
     .. seealso::
 
@@ -959,20 +956,22 @@ _dataset_mars_surface = _SingleFileDownloadableDatasetLoader(
 )
 
 
+# fmt: off
+# ruff: disable[E501]
 @overload
+def download_jupiter_surface(*, texture: Literal[False] = ..., load: Literal[True] = ...) -> ImageData: ...
+@overload
+def download_jupiter_surface(*, texture: Literal[False] = ..., load: Literal[False] = ...) -> str: ...
+@overload
+def download_jupiter_surface(*, texture: Literal[True], load: Literal[True] = ...) -> Texture: ...
+@overload
+def download_jupiter_surface(*, texture: Literal[True], load: Literal[False]) -> str: ...
+# ruff: enable[E501]
+# fmt: on
 def download_jupiter_surface(
-    texture: Literal[False] = ..., load: Literal[True] = ...
-) -> ImageData: ...
-@overload
-def download_jupiter_surface(texture: Literal[False] = ..., load: Literal[False] = ...) -> str: ...
-@overload
-def download_jupiter_surface(texture: Literal[True], load: Literal[True] = ...) -> Texture: ...
-@overload
-def download_jupiter_surface(texture: Literal[True], load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_jupiter_surface(
-    texture: bool = False,  # noqa: FBT001, FBT002
-    load: bool = True,  # noqa: FBT001, FBT002
+    *,
+    texture: bool = False,
+    load: bool = True,
 ) -> Texture | ImageData | str:
     """Download the surface of the planet Jupiter.
 
@@ -995,13 +994,16 @@ def download_jupiter_surface(
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> texture = examples.planets.download_jupiter_surface(texture=True)
-    >>> texture.plot(zoom='tight', show_axes=False)
+    .. pyvista-plot::
+        :force_static:
 
-    >>> mesh = examples.planets.load_planet()
-    >>> image_path = examples.planets.download_stars_sky_background(load=False)
-    >>> mesh.plot(texture=texture, background=image_path)
+        >>> from pyvista import examples
+        >>> texture = examples.planets.download_jupiter_surface(texture=True)
+        >>> texture.plot(zoom='tight', show_axes=False)
+
+        >>> mesh = examples.planets.load_planet()
+        >>> image_path = examples.planets.download_stars_sky_background(load=False)
+        >>> mesh.plot(texture=texture, background=image_path)
 
     .. seealso::
 
@@ -1020,20 +1022,22 @@ _dataset_jupiter_surface = _SingleFileDownloadableDatasetLoader(
 )
 
 
+# fmt: off
+# ruff: disable[E501]
 @overload
+def download_saturn_surface(*, texture: Literal[False] = ..., load: Literal[True] = ...) -> ImageData: ...
+@overload
+def download_saturn_surface(*, texture: Literal[False] = ..., load: Literal[False] = ...) -> str: ...
+@overload
+def download_saturn_surface(*, texture: Literal[True], load: Literal[True] = ...) -> Texture: ...
+@overload
+def download_saturn_surface(*, texture: Literal[True], load: Literal[False]) -> str: ...
+# ruff: enable[E501]
+# fmt: on
 def download_saturn_surface(
-    texture: Literal[False] = ..., load: Literal[True] = ...
-) -> ImageData: ...
-@overload
-def download_saturn_surface(texture: Literal[False] = ..., load: Literal[False] = ...) -> str: ...
-@overload
-def download_saturn_surface(texture: Literal[True], load: Literal[True] = ...) -> Texture: ...
-@overload
-def download_saturn_surface(texture: Literal[True], load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_saturn_surface(
-    texture: bool = False,  # noqa: FBT001, FBT002
-    load: bool = True,  # noqa: FBT001, FBT002
+    *,
+    texture: bool = False,
+    load: bool = True,
 ) -> Texture | ImageData | str:
     """Download the surface of the planet Saturn.
 
@@ -1087,20 +1091,22 @@ _dataset_saturn_surface = _SingleFileDownloadableDatasetLoader(
 )
 
 
+# fmt: off
+# ruff: disable[E501]
 @overload
+def download_saturn_rings(*, texture: Literal[False] = ..., load: Literal[True] = ...) -> ImageData: ...
+@overload
+def download_saturn_rings(*, texture: Literal[False] = ..., load: Literal[False] = ...) -> str: ...
+@overload
+def download_saturn_rings(*, texture: Literal[True], load: Literal[True] = ...) -> Texture: ...
+@overload
+def download_saturn_rings(*, texture: Literal[True], load: Literal[False]) -> str: ...
+# ruff: enable[E501]
+# fmt: on
 def download_saturn_rings(
-    texture: Literal[False] = ..., load: Literal[True] = ...
-) -> ImageData: ...
-@overload
-def download_saturn_rings(texture: Literal[False] = ..., load: Literal[False] = ...) -> str: ...
-@overload
-def download_saturn_rings(texture: Literal[True], load: Literal[True] = ...) -> Texture: ...
-@overload
-def download_saturn_rings(texture: Literal[True], load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_saturn_rings(
-    texture: bool = False,  # noqa: FBT001, FBT002
-    load: bool = True,  # noqa: FBT001, FBT002
+    *,
+    texture: bool = False,
+    load: bool = True,
 ) -> Texture | ImageData | str:
     """Download the texture of Saturn's rings.
 
@@ -1153,20 +1159,22 @@ _dataset_saturn_rings = _SingleFileDownloadableDatasetLoader(
 )
 
 
+# fmt: off
+# ruff: disable[E501]
 @overload
+def download_uranus_surface(*, texture: Literal[False] = ..., load: Literal[True] = ...) -> ImageData: ...
+@overload
+def download_uranus_surface(*, texture: Literal[False] = ..., load: Literal[False] = ...) -> str: ...
+@overload
+def download_uranus_surface(*, texture: Literal[True], load: Literal[True] = ...) -> Texture: ...
+@overload
+def download_uranus_surface(*, texture: Literal[True], load: Literal[False]) -> str: ...
+# ruff: enable[E501]
+# fmt: on
 def download_uranus_surface(
-    texture: Literal[False] = ..., load: Literal[True] = ...
-) -> ImageData: ...
-@overload
-def download_uranus_surface(texture: Literal[False] = ..., load: Literal[False] = ...) -> str: ...
-@overload
-def download_uranus_surface(texture: Literal[True], load: Literal[True] = ...) -> Texture: ...
-@overload
-def download_uranus_surface(texture: Literal[True], load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_uranus_surface(
-    texture: bool = False,  # noqa: FBT001, FBT002
-    load: bool = True,  # noqa: FBT001, FBT002
+    *,
+    texture: bool = False,
+    load: bool = True,
 ) -> Texture | ImageData | str:
     """Download and the texture of the surface of planet Uranus.
 
@@ -1214,20 +1222,22 @@ _dataset_uranus_surface = _SingleFileDownloadableDatasetLoader(
 )
 
 
+# fmt: off
+# ruff: disable[E501]
 @overload
+def download_neptune_surface(*, texture: Literal[False] = ..., load: Literal[True] = ...) -> ImageData: ...
+@overload
+def download_neptune_surface(*, texture: Literal[False] = ..., load: Literal[False] = ...) -> str: ...
+@overload
+def download_neptune_surface(*, texture: Literal[True], load: Literal[True] = ...) -> Texture: ...
+@overload
+def download_neptune_surface(*, texture: Literal[True], load: Literal[False]) -> str: ...
+# ruff: enable[E501]
+# fmt: on
 def download_neptune_surface(
-    texture: Literal[False] = ..., load: Literal[True] = ...
-) -> ImageData: ...
-@overload
-def download_neptune_surface(texture: Literal[False] = ..., load: Literal[False] = ...) -> str: ...
-@overload
-def download_neptune_surface(texture: Literal[True], load: Literal[True] = ...) -> Texture: ...
-@overload
-def download_neptune_surface(texture: Literal[True], load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_neptune_surface(
-    texture: bool = False,  # noqa: FBT001, FBT002
-    load: bool = True,  # noqa: FBT001, FBT002
+    *,
+    texture: bool = False,
+    load: bool = True,
 ) -> Texture | ImageData | str:
     """Download the texture of the surface of planet Neptune.
 
@@ -1275,20 +1285,22 @@ _dataset_neptune_surface = _SingleFileDownloadableDatasetLoader(
 )
 
 
+# fmt: off
+# ruff: disable[E501]
 @overload
+def download_pluto_surface(*, texture: Literal[False] = ..., load: Literal[True] = ...) -> ImageData: ...
+@overload
+def download_pluto_surface(*, texture: Literal[False] = ..., load: Literal[False] = ...) -> str: ...
+@overload
+def download_pluto_surface(*, texture: Literal[True], load: Literal[True] = ...) -> Texture: ...
+@overload
+def download_pluto_surface(*, texture: Literal[True], load: Literal[False]) -> str: ...
+# ruff: enable[E501]
+# fmt: on
 def download_pluto_surface(
-    texture: Literal[False] = ..., load: Literal[True] = ...
-) -> ImageData: ...
-@overload
-def download_pluto_surface(texture: Literal[False] = ..., load: Literal[False] = ...) -> str: ...
-@overload
-def download_pluto_surface(texture: Literal[True], load: Literal[True] = ...) -> Texture: ...
-@overload
-def download_pluto_surface(texture: Literal[True], load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_pluto_surface(
-    texture: bool = False,  # noqa: FBT001, FBT002
-    load: bool = True,  # noqa: FBT001, FBT002
+    *,
+    texture: bool = False,
+    load: bool = True,
 ) -> Texture | ImageData | str:
     """Download the texture of the surface of the dwarf planet Pluto.
 
@@ -1311,13 +1323,16 @@ def download_pluto_surface(
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> texture = examples.planets.download_pluto_surface(texture=True)
-    >>> texture.plot(zoom='tight', show_axes=False)
+    .. pyvista-plot::
+        :force_static:
 
-    >>> mesh = examples.planets.load_planet()
-    >>> image_path = examples.planets.download_stars_sky_background(load=False)
-    >>> mesh.plot(texture=texture, background=image_path)
+        >>> from pyvista import examples
+        >>> texture = examples.planets.download_pluto_surface(texture=True)
+        >>> texture.plot(zoom='tight', show_axes=False)
+
+        >>> mesh = examples.planets.load_planet()
+        >>> image_path = examples.planets.download_stars_sky_background(load=False)
+        >>> mesh.plot(texture=texture, background=image_path)
 
     .. seealso::
 
@@ -1336,24 +1351,22 @@ _dataset_pluto_surface = _SingleFileDownloadableDatasetLoader(
 )
 
 
+# fmt: off
+# ruff: disable[E501]
 @overload
-def download_stars_sky_background(
-    texture: Literal[False] = ..., load: Literal[True] = ...
-) -> ImageData: ...
+def download_stars_sky_background(*, texture: Literal[False] = ..., load: Literal[True] = ...) -> ImageData: ...
 @overload
-def download_stars_sky_background(
-    texture: Literal[False] = ..., load: Literal[False] = ...
-) -> str: ...
+def download_stars_sky_background(*, texture: Literal[False] = ..., load: Literal[False] = ...) -> str: ...
 @overload
-def download_stars_sky_background(
-    texture: Literal[True], load: Literal[True] = ...
-) -> Texture: ...
+def download_stars_sky_background(*, texture: Literal[True], load: Literal[True] = ...) -> Texture: ...
 @overload
-def download_stars_sky_background(texture: Literal[True], load: Literal[False]) -> str: ...
-@_deprecate_positional_args
+def download_stars_sky_background(*, texture: Literal[True], load: Literal[False]) -> str: ...
+# ruff: enable[E501]
+# fmt: on
 def download_stars_sky_background(
-    texture: bool = False,  # noqa: FBT001, FBT002
-    load: bool = True,  # noqa: FBT001, FBT002
+    *,
+    texture: bool = False,
+    load: bool = True,
 ) -> Texture | ImageData | str:
     """Download the night sky stars texture.
 
@@ -1376,29 +1389,32 @@ def download_stars_sky_background(
 
     Examples
     --------
-    Load the night sky image as a background image.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> import pyvista as pv
-    >>> pl = pv.Plotter()
-    >>> image_path = examples.planets.download_stars_sky_background(load=False)
-    >>> pl.add_background_image(image_path)
-    >>> pl.show()
+        Load the night sky image as a background image.
+
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> image_path = examples.planets.download_stars_sky_background(load=False)
+        >>> pl.add_background_image(image_path)
+        >>> pl.show()
 
 
-    .. seealso::
+        .. seealso::
 
-        :ref:`Stars Sky Background Dataset <stars_sky_background_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+            :ref:`Stars Sky Background Dataset <stars_sky_background_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
-        :func:`~pyvista.examples.planets.load_planet`
-            Load a planet as a sphere with texture coordinates.
+            :func:`~pyvista.examples.planets.load_planet`
+                Load a planet as a sphere with texture coordinates.
 
-        :ref:`Milkyway Sky Background Dataset <milkyway_sky_background_dataset>`
-            Sky texture of the Milky Way galaxy.
+            :ref:`Milkyway Sky Background Dataset <milkyway_sky_background_dataset>`
+                Sky texture of the Milky Way galaxy.
 
-        :ref:`planets_example`
-            Example plot of the solar system.
+            :ref:`planets_example`
+                Example plot of the solar system.
 
     """
     return _download_dataset_texture(_dataset_stars_sky_background, load=load, texture=texture)
@@ -1409,24 +1425,22 @@ _dataset_stars_sky_background = _SingleFileDownloadableDatasetLoader(
 )
 
 
+# fmt: off
+# ruff: disable[E501]
 @overload
-def download_milkyway_sky_background(
-    texture: Literal[False] = ..., load: Literal[True] = ...
-) -> ImageData: ...
+def download_milkyway_sky_background(*, texture: Literal[False] = ..., load: Literal[True] = ...) -> ImageData: ...
 @overload
-def download_milkyway_sky_background(
-    texture: Literal[False] = ..., load: Literal[False] = ...
-) -> str: ...
+def download_milkyway_sky_background(*, texture: Literal[False] = ..., load: Literal[False] = ...) -> str: ...
 @overload
-def download_milkyway_sky_background(
-    texture: Literal[True], load: Literal[True] = ...
-) -> Texture: ...
+def download_milkyway_sky_background(*, texture: Literal[True], load: Literal[True] = ...) -> Texture: ...
 @overload
-def download_milkyway_sky_background(texture: Literal[True], load: Literal[False]) -> str: ...
-@_deprecate_positional_args
+def download_milkyway_sky_background(*, texture: Literal[True], load: Literal[False]) -> str: ...
+# ruff: enable[E501]
+# fmt: on
 def download_milkyway_sky_background(
-    texture: bool = False,  # noqa: FBT001, FBT002
-    load: bool = True,  # noqa: FBT001, FBT002
+    *,
+    texture: bool = False,
+    load: bool = True,
 ) -> Texture | ImageData | str:
     """Download the sky texture of the Milky Way galaxy.
 
@@ -1449,25 +1463,28 @@ def download_milkyway_sky_background(
 
     Examples
     --------
-    Load the Milky Way sky image as a background image.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> import pyvista as pv
-    >>> pl = pv.Plotter()
-    >>> image_path = examples.planets.download_milkyway_sky_background(load=False)
-    >>> pl.add_background_image(image_path)
-    >>> pl.show()
+        Load the Milky Way sky image as a background image.
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> image_path = examples.planets.download_milkyway_sky_background(load=False)
+        >>> pl.add_background_image(image_path)
+        >>> pl.show()
 
-        :ref:`Milkyway Sky Background Dataset <milkyway_sky_background_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
 
-        :ref:`Stars Sky Background Dataset <stars_sky_background_dataset>`
-            Night sky stars texture.
+            :ref:`Milkyway Sky Background Dataset <milkyway_sky_background_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
-        :ref:`planets_example`
-            Example plot of the solar system.
+            :ref:`Stars Sky Background Dataset <stars_sky_background_dataset>`
+                Night sky stars texture.
+
+            :ref:`planets_example`
+                Example plot of the solar system.
 
     """
     return _download_dataset_texture(_dataset_milkyway_sky_background, load=load, texture=texture)

@@ -399,7 +399,6 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkOBBTree',
         'vtkRectilinearGridToPointSet',
         'vtkRectilinearGridToTetrahedra',
-        'vtkRemovePolyData',
         'vtkShrinkFilter',
         'vtkTableBasedClipDataSet',
         'vtkTableToPolyData',
@@ -465,10 +464,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkSuperquadricSource',
         'vtkTessellatedBoxSource',
     ),
-    'vtkFiltersStatistics': (
-        'vtkComputeQuartiles',
-        'vtkLengthDistribution',
-    ),
+    'vtkFiltersStatistics': ('vtkComputeQuartiles',),
     'vtkFiltersTexture': (
         'vtkTextureMapToPlane',
         'vtkTextureMapToSphere',
@@ -640,7 +636,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkImageSinusoidSource',
     ),
     'vtkImagingStencil': (
-        'vtkImageStencil',
+        'vtkImageStencilToImage',
         'vtkPolyDataToImageStencil',
     ),
     'vtkParallelCore': ('vtkDummyController',),
@@ -774,6 +770,7 @@ _PLOTTING_MODULES: dict[str, tuple[str, ...]] = {
         'vtkWorldPointPicker',
     ),
     'vtkRenderingFreeType': (
+        'vtkFreeTypeTools',
         'vtkMathTextFreeTypeTextRenderer',
         'vtkVectorText',
     ),
@@ -811,6 +808,9 @@ _OPENGL_MODULES: dict[str, tuple[str, ...]] = {
         'vtkOpenGLRenderer',
         'vtkOpenGLSkybox',
         'vtkOpenGLTexture',
+        'vtkPBRIrradianceTexture',
+        'vtkPBRLUTTexture',
+        'vtkPBRPrefilterTexture',
         'vtkRenderStepsPass',
         'vtkSSAAPass',
         'vtkSSAOPass',
@@ -938,7 +938,14 @@ def has_attr(name: str) -> bool:
 
 
 def import_all(*, suppress_import_errors: bool = True):
-    """Eagerly import all vtk classes used by PyVista."""
+    """Eagerly import all vtk classes used by PyVista.
+
+    Parameters
+    ----------
+    suppress_import_errors : bool, default: True
+        Skip classes that fail to import.
+
+    """
     for name in (*list(_VTK_CLASS_TO_MODULE.keys()), *list(_SPECIAL_LOADERS.keys())):
         if suppress_import_errors:
             # Use has_attr to suppress import errors
@@ -996,3 +1003,10 @@ _SPECIAL_LOADERS: dict[str, Callable[[], type[Any]]] = {
     'vtkRenderPassCollection': _import_vtkRenderPassCollection,
     'vtkSequencePass': _import_vtkSequencePass,
 }
+
+
+# Handing Python a C++ object from a module that has not been imported binds that class
+# name to a base class for the rest of the process, so a documentation build -- whose
+# examples run in worker processes of their own -- resolves every class up front.
+if os.environ.get('PYVISTA_BUILDING_GALLERY', 'false').lower() == 'true':
+    import_all()

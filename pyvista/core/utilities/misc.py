@@ -11,7 +11,10 @@ import sys
 import threading
 import traceback
 from typing import TYPE_CHECKING
+from typing import Any
+from typing import Concatenate
 from typing import Literal
+from typing import ParamSpec
 from typing import TypeVar
 import warnings
 
@@ -23,7 +26,7 @@ from pyvista._warn_external import warn_external
 from pyvista.core.utilities.accessor_registry import _resolve_pending_accessor
 
 if TYPE_CHECKING:
-    from typing import Any
+    from collections.abc import Callable
 
     from pyvista._typing_core import ArrayLike
     from pyvista._typing_core import NumpyArray
@@ -133,6 +136,22 @@ def abstract_class(cls_):  # noqa: ANN001, ANN201 # numpydoc ignore=RT01
     return cls_
 
 
+_P = ParamSpec('_P')
+_R = TypeVar('_R')
+
+
+def _wraps(
+    target: Callable[Concatenate[Any, _P], Any],
+) -> Callable[[Callable[..., _R]], Callable[Concatenate[Any, _P], _R]]:
+    """Give a forwarding method ``target``'s docstring, name and signature."""
+
+    def decorate(method: Callable[..., _R]) -> Callable[Concatenate[Any, _P], _R]:
+        functools.update_wrapper(method, target)
+        return method
+
+    return decorate
+
+
 class AnnotatedIntEnum(int, Enum):
     """Annotated enum type."""
 
@@ -224,7 +243,17 @@ def has_module(module_name: str) -> bool:
 
 
 class _SMPToolsContext:
-    """Context manager that restores VTK SMP backend state on exit."""
+    """Context manager that restores VTK SMP backend state on exit.
+
+    Parameters
+    ----------
+    original_backend : str
+        SMP backend to restore on exit.
+
+    original_threads : int
+        Thread count to restore on exit.
+
+    """
 
     def __init__(self, original_backend: str, original_threads: int) -> None:
         self._original_backend = original_backend
@@ -434,16 +463,6 @@ class conditional_decorator:  # noqa: N801
         return self.decorator(func)
 
 
-def _check_range(value: float, rng: Sequence[float], parm_name: str) -> None:
-    """Check if a parameter is within a range."""
-    if value < rng[0] or value > rng[1]:
-        msg = (
-            f'The value {float(value)} for `{parm_name}` is outside the '
-            f'acceptable range {tuple(rng)}.'
-        )
-        raise ValueError(msg)
-
-
 class _AutoFreezeMeta(type):
     """Metaclass to automatically freeze a class when called."""
 
@@ -477,6 +496,28 @@ class _DataObjectMeta(_AutoFreezeABCMeta):
         raise AttributeError(msg)
 
 
+def _allow_ipython_completion(cls: type) -> None:
+    """Let IPython's default completion policy evaluate instances of ``cls``.
+
+    IPython's ``limited`` evaluation policy refuses attribute and item access on
+    any class that overrides ``__getattribute__`` or ``__getattr__``, which every
+    VTK subclass does, unless the exact type is allow-listed. Tab completion such
+    as ``mesh.point_data['`` depends on that evaluation.
+    """
+    if 'IPython' not in sys.modules:
+        return
+    # IPython 9.17+ loads the completer lazily, so the module has to be imported here
+    try:
+        guarded_eval = importlib.import_module('IPython.core.guarded_eval')
+    except ImportError:  # IPython < 8.8 has no evaluation policy
+        return
+    policy = getattr(guarded_eval, 'EVALUATION_POLICIES', {}).get('limited')
+    for name in ('allowed_getattr', 'allowed_getitem'):
+        allowed = getattr(policy, name, None)
+        if isinstance(allowed, set):
+            allowed.add(cls)
+
+
 class _NoNewAttrMixin(metaclass=_AutoFreezeABCMeta):
     """``Mixin`` to prevent adding new attributes.
 
@@ -484,6 +525,11 @@ class _NoNewAttrMixin(metaclass=_AutoFreezeABCMeta):
     object. It freezes the attributes when called and prevents setting new ones via
     "normal" methods like ``obj.foo = 42``.
     """
+
+    def __init_subclass__(cls, **kwargs) -> None:
+        """Register each subclass with IPython's completion policy."""
+        super().__init_subclass__(**kwargs)
+        _allow_ipython_completion(cls)
 
     def _no_new_attributes(self, this_class: type) -> None:
         """Prevent setting additional attributes."""
@@ -547,6 +593,17 @@ def set_new_attribute(obj: object, name: str, value: Any) -> None:
     to set it.
 
     Use :func:`set_new_attribute` to override this and set a new attribute anyway.
+
+    Parameters
+    ----------
+    obj : object
+        Object to set the attribute on.
+
+    name : str
+        Attribute name.
+
+    value : Any
+        Attribute value.
 
     See Also
     --------
@@ -642,6 +699,11 @@ class _NameMixin:
 
     .. versionadded:: 0.45
 
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
+
     """
 
     @property
@@ -665,6 +727,16 @@ class _NameMixin:
 
 
 class _BoundsSizeMixin:
+    """Add a ``bounds_size`` property to classes which define ``bounds``.
+
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
+
+
+    """
+
     @property
     def bounds_size(self) -> tuple[float, float, float]:
         """Return the size of each axis of the object's bounding box.

@@ -1,11 +1,10 @@
 name: Check Python Syntax
 
+# The merge queue compiles the tree that lands on `main`, so there is no push
+# trigger here.
 on:
   pull_request:
   merge_group:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 permissions:

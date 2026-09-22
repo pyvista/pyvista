@@ -52,7 +52,9 @@ Swap the entire theme with :func:`pyvista.set_plot_theme` or the
 names with :func:`pyvista.registered_themes`, and save or restore a
 customized theme with :meth:`~pyvista.plotting.themes.Theme.save` and
 :func:`pyvista.load_theme`. A theme can also be applied to a single
-plotter with ``pv.Plotter(theme=my_theme)``.
+plotter with ``pv.Plotter(theme=my_theme)``. Choose the notebook backend
+with :func:`pyvista.set_jupyter_backend`, and see :ref:`jupyter_backends_api`
+for the backend registry.
 
 .. seealso::
 
@@ -84,6 +86,13 @@ The warning emitted when
 data array:
 
 .. autoclass:: pyvista.InvalidMeshWarning
+
+The warning emitted when
+:attr:`~pyvista.core.config.Config.points_dtype` asks an algorithm for
+double-precision points it cannot generate, so the output is cast up and
+the dtype ends up wider than the values behind it:
+
+.. autoclass:: pyvista.PrecisionWarning
 
 .. _config_flags:
 
@@ -125,8 +134,11 @@ change the behavior of the whole process:
 
 ``pv.PICKLE_FORMAT`` (default: ``'vtk'``)
     In-memory serialization format used when pickling a
-    :class:`~pyvista.DataObject`. Set it with
-    :func:`pyvista.set_pickle_format`.
+    :class:`~pyvista.DataObject`.
+
+    .. deprecated:: 0.50
+        The ``'vtk'`` format is the only supported pickle format and is
+        always used.
 
 ``pv.DEFAULT_SCALARS_NAME`` (default: ``'Data'``)
     Name given to data arrays added without a name.
@@ -338,7 +350,7 @@ is discovered without an explicit import.
      - :func:`~pyvista.register_plotter_component`
      - :func:`~pyvista.registered_plotter_components`
      - ``pyvista.plotter_components``
-   * - :ref:`Jupyter backends <jupyter_plotting>`
+   * - :ref:`Jupyter backends <jupyter_backends_api>`
      - :func:`~pyvista.register_jupyter_backend`
      - :func:`~pyvista.registered_jupyter_backends`
      - ``pyvista.jupyter_backends``

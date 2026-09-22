@@ -105,9 +105,13 @@ The second half of that clause is the author's statement, not yours. Put it in t
 the sentence is complete, and say plainly that it is theirs to confirm, reword, or drop —
 you cannot attest that someone else reviewed the change.
 
-No banner, no badge, no separate heading, no generated-with footer. Put it in the
-description rather than only in a commit trailer, because the description is what a
-reviewer reads first.
+Then close the body with the generated-with footer. It is mandatory for any pull request
+an AI tool helped write:
+
+> 🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+No banner, no badge, no separate heading. Put the disclosure in the description rather
+than only in a commit trailer, because the description is what a reviewer reads first.
 
 ## Labels that start extra CI
 
@@ -120,6 +124,10 @@ time, so ask for one because the change touches what it covers, not by default:
 | `vtk-master-testing`  | a VTK build from master, then the suite     | the change depends on unreleased VTK, or the dev wheels are not recent enough           |
 | `integration-testing` | mne, trame, pyvistaqt, geovista, playwright | public API behavior, object lifetimes, plotting defaults -- what downstream sits on     |
 | `docker`              | the Docker image build                      | packaging, or a dependency the image installs                                           |
+
+A fifth label, `blacksmith`, starts nothing extra: it moves the documentation cache,
+build and test jobs onto the paid Blacksmith runners the merge queue uses, which finish
+sooner. Ask for it when the documentation build is what the pull request is waiting on.
 
 A label only takes effect on the next run, so it goes on before the final push, or the
 branch gets pushed again afterwards; `CONTRIBUTING.rst` says the same for the VTK labels.

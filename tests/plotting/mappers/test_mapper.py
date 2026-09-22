@@ -82,7 +82,7 @@ def test_color_mode(dataset_mapper):
     dataset_mapper.color_mode = 'map'
     assert dataset_mapper.color_mode == 'map'
 
-    with pytest.raises(ValueError, match='Color mode must be either'):
+    with pytest.raises(ValueError, match="Color mode 'invalid' is not valid"):
         dataset_mapper.color_mode = 'invalid'
 
 
@@ -120,9 +120,15 @@ def test_resolve(dataset_mapper, resolve):
 
 
 def test_invalid_resolve(dataset_mapper):
-    match = 'Resolve must be either "off", "polygon_offset" or "shift_zbuffer"'
+    match = "Resolve 'invalid' is not valid"
     with pytest.raises(ValueError, match=match):
         dataset_mapper.resolve = 'invalid'
+
+
+def test_set_scalars_custom_opac_requires_opacity(sphere):
+    mapper = DataSetMapper(dataset=sphere)
+    with pytest.raises(ValueError, match='Custom opacity requires an opacity array'):
+        mapper.set_scalars(sphere.points[:, 0], 'x', custom_opac=True)
 
 
 def test_mapper_dataset_property_returns_original(sphere):
@@ -142,6 +148,142 @@ def test_mapper_set_scalars_does_not_mutate_mesh(sphere):
 
     # The original mesh's active scalars must NOT be changed
     assert sphere.active_scalars_name == 'data_a'
+
+
+def test_set_scalars_replaces_digitized_array():
+    mesh = pv.RectilinearGrid([0.0, 1.0, 2.0], [0.0, 1.0], [0.0])
+    mapper = DataSetMapper(mesh)
+    mapper.set_scalars(np.array(['CellA', 'CellA']), 'Data')
+    assert list(mesh.cell_data['Data-digitized']) == [0, 0]
+    mapper.set_scalars(np.array(['CellA', 'CellB']), 'Data')
+    assert list(mesh.cell_data['Data-digitized']) == [0, 1]
+    assert mapper.lookup_table.annotations == {0.0: 'CellA', 1.0: 'CellB'}
+    assert mapper.scalar_range == (-0.5, 1.5)
+
+
+def test_set_scalars_categories_true():
+    mesh = pv.RectilinearGrid([0.0, 1.0, 2.0, 3.0, 4.0], [0.0, 1.0], [0.0])
+    mesh['labels'] = [8.0, 0.0, 2.0, np.nan]
+    mapper = DataSetMapper(mesh)
+    sargs = {}
+    mapper.set_scalars(mesh['labels'], 'labels', categories=True, scalar_bar_args=sargs)
+    assert mesh.cell_data.keys() == ['labels']
+    assert mapper.scalar_range == (-1.0, 9.0)
+    assert sargs == {'tick_locations': [0.0, 2.0, 8.0], 'fmt': '%.0f'}
+    lut = mapper.lookup_table
+    assert len(np.unique(lut.values, axis=0)) == 4  # three categories and the NaN color
+    assert lut.annotations == {}
+    colors = {lut.map_value(value)[:3] for value in (0, 2, 8)}
+    assert len(colors) == 3
+    assert lut.map_value(4) == lut.nan_color.float_rgba
+    assert lut.map_value(np.nan) == lut.nan_color.float_rgba
+
+    sargs = {}
+    mapper.set_scalars(
+        mesh['labels'], 'labels', categories=True, annotations={2: 'two'}, scalar_bar_args=sargs
+    )
+    assert lut.annotations == {2.0: 'two'}
+    assert sargs['tick_locations'] == [0.0, 8.0]
+
+
+def test_set_scalars_categories_integer_dtype():
+    mesh = pv.RectilinearGrid([0.0, 1.0, 2.0, 3.0], [0.0, 1.0], [0.0])
+    mesh['labels'] = np.array([-32768, 0, 1], dtype=np.int16)
+    mapper = DataSetMapper(mesh)
+    mapper.set_scalars(mesh['labels'], 'labels', categories=True)
+    assert mapper.scalar_range == (-32768.5, 1.5)
+    colors = {mapper.lookup_table.map_value(value)[:3] for value in (-32768, 0, 1)}
+    assert len(colors) == 3
+
+
+def test_set_scalars_categories_short_cmap():
+    mesh = pv.RectilinearGrid([0.0, 1.0, 2.0, 3.0, 4.0], [0.0, 1.0], [0.0])
+    mesh['labels'] = [0.0, 1.0, 2.0, 3.0]
+    mapper = DataSetMapper(mesh)
+    match = 'The colormap has 3 colors but the scalars have 4 categories.'
+    with pytest.raises(ValueError, match=match):
+        mapper.set_scalars(mesh['labels'], 'labels', categories=True, cmap=['r', 'g', 'b'])
+
+
+@pytest.mark.parametrize('clim', [[None, None], (None, None)])
+def test_add_mesh_clim_without_bounds(sphere, clim):
+    sphere['data'] = sphere.points[:, 0]
+    pl = pv.Plotter()
+    actor = pl.add_mesh(sphere, scalars='data', clim=clim)
+    assert actor.mapper.scalar_range == pytest.approx(sphere.get_data_range('data'))
+
+
+@pytest.mark.parametrize('clim', [[None, 1.0], [1.0, None], [None], [None, None, None]])
+def test_add_mesh_clim_partial_bounds_raises(sphere, clim):
+    sphere['data'] = sphere.points[:, 0]
+    with pytest.raises((TypeError, IndexError)):
+        pv.Plotter().add_mesh(sphere, scalars='data', clim=clim)
+
+
+@pytest.mark.parametrize('clim', [np.float64(0.25), np.array([0.1, 0.2])])
+def test_add_mesh_clim_numpy(sphere, clim):
+    sphere['data'] = sphere.points[:, 0]
+    actor = pv.Plotter().add_mesh(sphere, scalars='data', clim=clim)
+    expected = (-clim, clim) if np.ndim(clim) == 0 else tuple(clim)
+    assert actor.mapper.scalar_range == pytest.approx(expected)
+
+
+def test_set_scalars_categories_keeps_clim():
+    mesh = pv.RectilinearGrid([0.0, 1.0, 2.0, 3.0], [0.0, 1.0], [0.0])
+    mesh['labels'] = [0.0, 5.0, 10.0]
+    mapper = DataSetMapper(mesh)
+    mapper.set_scalars(mesh['labels'], 'labels', categories=True, clim=(0, 100))
+    assert mapper.scalar_range == (0.0, 100.0)
+    colors = {mapper.lookup_table.map_value(value)[:3] for value in (0, 5, 10)}
+    assert len(colors) == 3
+    assert mapper.lookup_table.map_value(20) == mapper.lookup_table.nan_color.float_rgba
+
+
+def test_set_scalars_categories_single_value():
+    mesh = pv.RectilinearGrid([0.0, 1.0, 2.0], [0.0, 1.0], [0.0])
+    mesh['labels'] = [3.0, 3.0]
+    mapper = DataSetMapper(mesh)
+    sargs = {}
+    mapper.set_scalars(mesh['labels'], 'labels', categories=True, scalar_bar_args=sargs)
+    assert mapper.scalar_range == (2.5, 3.5)
+    assert len(np.unique(mapper.lookup_table.values, axis=0)) == 1
+    assert sargs['tick_locations'] == [3.0]
+
+
+def test_set_scalars_categories_all_nan():
+    mesh = pv.RectilinearGrid([0.0, 1.0, 2.0], [0.0, 1.0], [0.0])
+    mesh['labels'] = [np.nan, np.nan]
+    mapper = DataSetMapper(mesh)
+    sargs = {}
+    with pytest.warns(RuntimeWarning, match='All-NaN axis encountered'):
+        mapper.set_scalars(mesh['labels'], 'labels', categories=True, scalar_bar_args=sargs)
+    assert 'tick_locations' not in sargs
+
+
+def test_set_scalars_categories_uneven_spacing():
+    mesh = pv.RectilinearGrid([0.0, 1.0, 2.0, 3.0], [0.0, 1.0], [0.0])
+    mesh['labels'] = [0.1, 0.33, 0.7]
+    mapper = DataSetMapper(mesh)
+    sargs = {}
+    mapper.set_scalars(mesh['labels'], 'labels', categories=True, scalar_bar_args=sargs)
+    assert sargs['fmt'] == '%g'
+    lut = mapper.lookup_table
+    assert lut.n_values == 4096
+    assert mapper.scalar_range == pytest.approx((-0.015, 0.815))
+    colors = [lut.map_value(value)[:3] for value in (0.1, 0.33, 0.7)]
+    assert len(set(colors)) == 3
+    assert lut.map_value(0.2)[:3] == colors[0]
+    assert lut.map_value(0.5)[:3] == colors[1]
+
+
+def test_set_scalars_categories_thins_labels():
+    mesh = pv.ImageData(dimensions=(31, 2, 2))
+    mesh['labels'] = np.arange(30)
+    mapper = DataSetMapper(mesh)
+    sargs = {}
+    mapper.set_scalars(mesh['labels'], 'labels', categories=True, scalar_bar_args=sargs)
+    assert len(np.unique(mapper.lookup_table.values, axis=0)) == 30
+    assert sargs['tick_locations'] == [float(v) for v in range(0, 30, 3)]
 
 
 def test_mapper_pipeline_output_active_scalars(sphere):
@@ -402,6 +544,17 @@ def test_as_rgba_uses_mapped_scalars(sphere):
     # Calling as_rgba again should be a no-op (already direct)
     mapper.as_rgba()
     assert mapper.color_mode == 'direct'
+
+
+def test_as_rgba_without_mapped_scalars(sphere):
+    """A mapper with nothing mapped has no RGBA array to build."""
+    mapper = DataSetMapper(dataset=sphere)
+    mapper.color_mode = 'map'
+
+    mapper.as_rgba()
+
+    assert '__rgba__' not in sphere.point_data
+    assert mapper.color_mode == 'map'
 
 
 def test_shared_mesh_raw_numpy_scalars_smooth_shading_subplots_mapper_output():

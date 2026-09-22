@@ -22,7 +22,7 @@ def pytest_generate_tests(metafunc):
 
 
 def test_dataset_loader_name_matches_function_name(test_case: DatasetLoaderTestCase):
-    if (msg := _get_mismatch_fail_msg(test_case)) is not None:
+    if (msg := _get_mismatch_fail_msg(test_case)) is not None:  # pragma: no cover -- failure path
         pytest.fail(msg)
 
 

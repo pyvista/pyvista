@@ -5,14 +5,15 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Literal
+from typing import cast
+from typing import get_args
+
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
-from pyvista.core.utilities.misc import _check_range
 from pyvista.core.utilities.misc import _NameMixin
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
@@ -22,9 +23,6 @@ from .themes import Theme
 from .tools import FONTS
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
-
-    from pyvista import Property
     from pyvista.core._typing_core import VectorLike
 
     from ._typing import ColorLike
@@ -45,6 +43,51 @@ TextPositionOptions = Literal[
     'right_edge',
 ]
 
+CornerOptions = Literal[
+    TextPositionOptions,
+    'll',
+    'lr',
+    'ul',
+    'ur',
+    'top',
+    'bottom',
+    'right',
+    'r',
+    'left',
+    'l',
+]
+
+_CORNERS: dict[CornerOptions, int] = {
+    'lower_left': _vtk.vtkCornerAnnotation.LowerLeft,
+    'lower_right': _vtk.vtkCornerAnnotation.LowerRight,
+    'upper_left': _vtk.vtkCornerAnnotation.UpperLeft,
+    'upper_right': _vtk.vtkCornerAnnotation.UpperRight,
+    'lower_edge': _vtk.vtkCornerAnnotation.LowerEdge,
+    'upper_edge': _vtk.vtkCornerAnnotation.UpperEdge,
+    'left_edge': _vtk.vtkCornerAnnotation.LeftEdge,
+    'right_edge': _vtk.vtkCornerAnnotation.RightEdge,
+    'll': _vtk.vtkCornerAnnotation.LowerLeft,
+    'lr': _vtk.vtkCornerAnnotation.LowerRight,
+    'ul': _vtk.vtkCornerAnnotation.UpperLeft,
+    'ur': _vtk.vtkCornerAnnotation.UpperRight,
+    'top': _vtk.vtkCornerAnnotation.UpperEdge,
+    'bottom': _vtk.vtkCornerAnnotation.LowerEdge,
+    'right': _vtk.vtkCornerAnnotation.RightEdge,
+    'r': _vtk.vtkCornerAnnotation.RightEdge,
+    'left': _vtk.vtkCornerAnnotation.LeftEdge,
+    'l': _vtk.vtkCornerAnnotation.LeftEdge,
+}
+
+
+def _resolve_corner(position: CornerOptions | int) -> int:
+    """Return the corner a position names, or the corner index itself."""
+    if isinstance(position, str):
+        _validation.check_contains(list(_CORNERS), must_contain=position, name='Position')
+        return _CORNERS[position]
+    if position is True:
+        return _CORNERS['upper_left']
+    return int(position)
+
 
 class CornerAnnotation(_NoNewAttrMixin, DisableVtkSnakeCase, _NameMixin, _vtk.vtkCornerAnnotation):
     """Text annotation in four corners.
@@ -54,8 +97,9 @@ class CornerAnnotation(_NoNewAttrMixin, DisableVtkSnakeCase, _NameMixin, _vtk.vt
 
     Parameters
     ----------
-    position : str | bool
-        Position of the text.
+    position : str | bool | int
+        Position of the text. Either the name of a corner, ``True`` for the upper
+        left one, or the index of a corner.
 
     text : str
         Text input.
@@ -81,26 +125,31 @@ class CornerAnnotation(_NoNewAttrMixin, DisableVtkSnakeCase, _NameMixin, _vtk.vt
 
     """
 
-    @_deprecate_positional_args(allowed=['position', 'text'])
-    def __init__(  # noqa: PLR0917
-        self, position, text, prop=None, linear_font_scale_factor=None, name=None
-    ):
+    def __init__(
+        self,
+        position: CornerOptions | int,
+        text: str,
+        *,
+        prop: TextProperty | None = None,
+        linear_font_scale_factor: float | None = None,
+        name: str | None = None,
+    ) -> None:
         """Initialize a new text annotation descriptor."""
         super().__init__()
         self.set_text(position, text)
-        if prop is None:
-            self.prop = TextProperty()
+        self.prop = TextProperty() if prop is None else prop
         if linear_font_scale_factor is not None:
             self.linear_font_scale_factor = linear_font_scale_factor
         self._name = name
 
-    def get_text(self, position):
+    def get_text(self, position: CornerOptions | int) -> str:
         """Get the text to be displayed for each corner.
 
         Parameters
         ----------
-        position : str | bool
-            Position of the text.
+        position : str | bool | int
+            Position of the text. Either the name of a corner, ``True`` for the
+            upper left one, or the index of a corner.
 
         Returns
         -------
@@ -108,45 +157,22 @@ class CornerAnnotation(_NoNewAttrMixin, DisableVtkSnakeCase, _NameMixin, _vtk.vt
             Text to be displayed for each corner.
 
         """
-        return self.GetText(position)
+        return self.GetText(_resolve_corner(position))
 
-    def set_text(self, position, text):
+    def set_text(self, position: CornerOptions | int, text: str) -> None:
         """Set the text to be displayed for each corner.
 
         Parameters
         ----------
-        position : str | bool
-            Position of the text.
+        position : str | bool | int
+            Position of the text. Either the name of a corner, ``True`` for the
+            upper left one, or the index of a corner.
 
         text : str
             Text to be displayed for each corner.
 
         """
-        corner_mappings = {
-            'lower_left': self.LowerLeft,
-            'lower_right': self.LowerRight,
-            'upper_left': self.UpperLeft,
-            'upper_right': self.UpperRight,
-            'lower_edge': self.LowerEdge,
-            'upper_edge': self.UpperEdge,
-            'left_edge': self.LeftEdge,
-            'right_edge': self.RightEdge,
-        }
-        corner_mappings['ll'] = corner_mappings['lower_left']
-        corner_mappings['lr'] = corner_mappings['lower_right']
-        corner_mappings['ul'] = corner_mappings['upper_left']
-        corner_mappings['ur'] = corner_mappings['upper_right']
-        corner_mappings['top'] = corner_mappings['upper_edge']
-        corner_mappings['bottom'] = corner_mappings['lower_edge']
-        corner_mappings['right'] = corner_mappings['right_edge']
-        corner_mappings['r'] = corner_mappings['right_edge']
-        corner_mappings['left'] = corner_mappings['left_edge']
-        corner_mappings['l'] = corner_mappings['left_edge']
-        if isinstance(position, str):
-            position = corner_mappings[position]
-        elif position is True:
-            position = corner_mappings['upper_left']
-        self.SetText(position, text)
+        self.SetText(_resolve_corner(position), text)
 
     @property
     def prop(self) -> TextProperty:
@@ -161,7 +187,7 @@ class CornerAnnotation(_NoNewAttrMixin, DisableVtkSnakeCase, _NameMixin, _vtk.vt
         return self.GetTextProperty()
 
     @prop.setter
-    def prop(self, prop: TextProperty):
+    def prop(self, prop: TextProperty) -> None:
         self.SetTextProperty(prop)
 
     @property
@@ -177,7 +203,7 @@ class CornerAnnotation(_NoNewAttrMixin, DisableVtkSnakeCase, _NameMixin, _vtk.vt
         return self.GetLinearFontScaleFactor()
 
     @linear_font_scale_factor.setter
-    def linear_font_scale_factor(self, factor: float):
+    def linear_font_scale_factor(self, factor: float) -> None:
         self.SetLinearFontScaleFactor(factor)
 
 
@@ -212,22 +238,25 @@ class Text(_NoNewAttrMixin, DisableVtkSnakeCase, _NameMixin, _vtk.vtkTextActor):
 
     """
 
-    @_deprecate_positional_args(allowed=['text'])
-    def __init__(  # noqa: PLR0917
-        self, text=None, position=None, prop=None, name=None
-    ):
+    def __init__(
+        self,
+        text: str | None = None,
+        *,
+        position: VectorLike[float] | None = None,
+        prop: TextProperty | None = None,
+        name: str | None = None,
+    ) -> None:
         """Initialize a new text descriptor."""
         super().__init__()
         if text is not None:
             self.input = text
         if position is not None:
             self.position = position
-        if prop is None:
-            self.prop = TextProperty()
+        self.prop = TextProperty() if prop is None else prop
         self._name = name
 
     @property
-    def input(self):
+    def input(self) -> str:
         r"""Text string to be displayed.
 
         Returns
@@ -241,11 +270,11 @@ class Text(_NoNewAttrMixin, DisableVtkSnakeCase, _NameMixin, _vtk.vtkTextActor):
         return self.GetInput()
 
     @input.setter  # noqa: A003
-    def input(self, text: str):
+    def input(self, text: str) -> None:
         self.SetInput(text)
 
     @property
-    def prop(self):
+    def prop(self) -> TextProperty:
         """Property of this actor.
 
         Returns
@@ -254,30 +283,30 @@ class Text(_NoNewAttrMixin, DisableVtkSnakeCase, _NameMixin, _vtk.vtkTextActor):
             Property of this actor.
 
         """
-        return self.GetTextProperty()
+        return cast('TextProperty', self.GetTextProperty())
 
     @prop.setter
-    def prop(self, prop: TextProperty):
+    def prop(self, prop: TextProperty) -> None:
         self.SetTextProperty(prop)
 
     @property
-    def position(self):
+    def position(self) -> tuple[float, float]:
         """Position coordinate.
 
         Returns
         -------
-        Sequence[float]
+        tuple[float, float]
             Position coordinate.
 
         """
         return self.GetPosition()
 
     @position.setter
-    def position(self, position: Sequence[float]):
-        self.SetPosition(position[0], position[1])
+    def position(self, position: VectorLike[float]) -> None:
+        self.SetPosition(float(position[0]), float(position[1]))
 
 
-class Label(_Prop3DMixin, Text):
+class Label(_Prop3DMixin, Text):  # type: ignore[misc]
     """2D label actor with a 3D position coordinate.
 
     Unlike :class:`~pyvista.Text`, which uses 2D viewport coordinates to position text
@@ -405,9 +434,9 @@ class Label(_Prop3DMixin, Text):
         relative_position: VectorLike[float] = (0.0, 0.0, 0.0),
         *,
         size: int = 50,
-        prop: Property | None = None,
+        prop: TextProperty | None = None,
         name: str = 'Label',
-    ):
+    ) -> None:
         Text.__init__(self, text=text, prop=prop)
         self.GetPositionCoordinate().SetCoordinateSystemToWorld()
         self.SetTextScaleModeToNone()  # Use font size to control size of text
@@ -428,8 +457,8 @@ class Label(_Prop3DMixin, Text):
         return self.GetPositionCoordinate().GetValue()
 
     @_label_position.setter
-    def _label_position(self, position: VectorLike[float]):
-        valid_position = _validation.validate_array3(position)
+    def _label_position(self, position: VectorLike[float]) -> None:
+        valid_position = _validation.validate_array3(position, dtype_out=float, to_tuple=True)
         self.GetPositionCoordinate().SetValue(valid_position)
 
     @property
@@ -444,7 +473,7 @@ class Label(_Prop3DMixin, Text):
         return self.prop.font_size
 
     @size.setter
-    def size(self, size: int):
+    def size(self, size: int) -> None:
         self.prop.font_size = size
 
     @property
@@ -453,12 +482,12 @@ class Label(_Prop3DMixin, Text):
         return tuple(self._relative_position.tolist())
 
     @relative_position.setter
-    def relative_position(self, position: VectorLike[float]):
+    def relative_position(self, position: VectorLike[float]) -> None:
         self._relative_position = _validation.validate_array3(position, dtype_out=float)
         self._post_set_update()
 
-    def _post_set_update(self):
-        # Update the label's underlying text position
+    def _post_set_update(self) -> None:
+        """Move the underlying text to the transformed relative position."""
         matrix4x4 = self._transformation_matrix
         vector4 = (*self.relative_position, 1)
         new_position = (matrix4x4 @ vector4)[:3]
@@ -510,13 +539,13 @@ class TextProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkTextProperty):
     italic : bool, default: False
         Italicises title and bar labels.
 
-    bold : bool, default: True
+    bold : bool, default: False
         Bolds title and bar labels.
 
-    background_color : pyvista.Color, optional
+    background_color : pyvista.ColorLike, optional
         Background color of text.
 
-    background_opacity : pyvista.Color, optional
+    background_opacity : float, optional
         Background opacity of text.
 
     Examples
@@ -536,36 +565,30 @@ class TextProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkTextProperty):
 
     """
 
-    _theme = Theme()
-    _color_set = None
-    _background_color_set = None
-    _font_family = None
+    _color_set: bool | None = None
+    _background_color_set: bool | None = None
+    _font_family: str | None = None
 
-    @_deprecate_positional_args(allowed=['theme'])
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
-        theme=None,
-        color=None,
-        font_family=None,
-        orientation=None,
-        font_size=None,
-        font_file=None,
-        shadow: bool = False,  # noqa: FBT001, FBT002
-        justification_horizontal=None,
-        justification_vertical=None,
-        italic: bool = False,  # noqa: FBT001, FBT002
-        bold: bool = False,  # noqa: FBT001, FBT002
-        background_color=None,
-        background_opacity=None,
-    ):
+        theme: Theme | None = None,
+        *,
+        color: ColorLike | None = None,
+        font_family: str | None = None,
+        orientation: float | None = None,
+        font_size: int | None = None,
+        font_file: str | Path | None = None,
+        shadow: bool = False,
+        justification_horizontal: HorizontalOptions | None = None,
+        justification_vertical: VerticalOptions | None = None,
+        italic: bool = False,
+        bold: bool = False,
+        background_color: ColorLike | None = None,
+        background_opacity: float | None = None,
+    ) -> None:
         """Initialize text's property."""
         super().__init__()
-        if theme is None:
-            # copy global theme to ensure local property theme is fixed
-            # after creation.
-            self._theme.load_theme(pv.global_theme)
-        else:
-            self._theme.load_theme(theme)
+        self._theme = Theme._from_theme(pv.global_theme if theme is None else theme)
         self.color = color
         self.font_family = font_family
         if orientation is not None:
@@ -600,7 +623,7 @@ class TextProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkTextProperty):
         return Color(self.GetColor())
 
     @color.setter
-    def color(self, color: ColorLike):
+    def color(self, color: ColorLike | None) -> None:
         self._color_set = color is not None
         rgb_color = Color(color, default_color=self._theme.font.color)
         self.SetColor(rgb_color.float_rgb)
@@ -619,8 +642,8 @@ class TextProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkTextProperty):
         return self.GetOpacity()
 
     @opacity.setter
-    def opacity(self, opacity: float):
-        _check_range(opacity, (0, 1), 'opacity')
+    def opacity(self, opacity: float) -> None:
+        _validation.check_range(opacity, [0.0, 1.0], name='opacity')
         self.SetOpacity(opacity)
 
     @property
@@ -636,7 +659,7 @@ class TextProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkTextProperty):
         return Color(self.GetBackgroundColor())
 
     @background_color.setter
-    def background_color(self, color: ColorLike):
+    def background_color(self, color: ColorLike | None) -> None:
         self._background_color_set = color is not None
         rgb_color = Color(color)
         self.SetBackgroundColor(rgb_color.float_rgb)
@@ -655,8 +678,8 @@ class TextProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkTextProperty):
         return self.GetBackgroundOpacity()
 
     @background_opacity.setter
-    def background_opacity(self, opacity: float):
-        _check_range(opacity, (0, 1), 'background_opacity')
+    def background_opacity(self, opacity: float) -> None:
+        _validation.check_range(opacity, [0.0, 1.0], name='background_opacity')
         self.SetBackgroundOpacity(opacity)
 
     @property
@@ -672,7 +695,7 @@ class TextProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkTextProperty):
         return bool(self.GetFrame())
 
     @show_frame.setter
-    def show_frame(self, frame: bool):
+    def show_frame(self, frame: bool) -> None:
         self.SetFrame(frame)
 
     @property
@@ -688,7 +711,7 @@ class TextProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkTextProperty):
         return Color(self.GetFrameColor())
 
     @frame_color.setter
-    def frame_color(self, color):
+    def frame_color(self, color: ColorLike) -> None:
         self.SetFrameColor(Color(color).float_rgb)
 
     @property
@@ -705,7 +728,7 @@ class TextProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkTextProperty):
         return self.GetFrameWidth()
 
     @frame_width.setter
-    def frame_width(self, width: int):
+    def frame_width(self, width: int) -> None:
         self.SetFrameWidth(width)
 
     @property
@@ -721,7 +744,7 @@ class TextProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkTextProperty):
         return self._font_family
 
     @font_family.setter
-    def font_family(self, font_family: str | None):
+    def font_family(self, font_family: str | None) -> None:
         if font_family is None:
             font_family = self._theme.font.family
         self._font_family = font_family
@@ -740,7 +763,7 @@ class TextProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkTextProperty):
         return self.GetFontSize()
 
     @font_size.setter
-    def font_size(self, font_size: int):
+    def font_size(self, font_size: int) -> None:
         self.SetFontSize(font_size)
 
     def enable_shadow(self) -> None:
@@ -760,15 +783,15 @@ class TextProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkTextProperty):
         return self.GetOrientation()
 
     @orientation.setter
-    def orientation(self, orientation: float):
+    def orientation(self, orientation: float) -> None:
         self.SetOrientation(orientation)
 
-    def set_font_file(self, font_file: str):
+    def set_font_file(self, font_file: str | Path) -> None:
         """Set the font file.
 
         Parameters
         ----------
-        font_file : str
+        font_file : str | Path
             Font file path.
 
         """
@@ -781,7 +804,7 @@ class TextProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkTextProperty):
         self.SetFontFile(str(path))
 
     @property
-    def justification_horizontal(self) -> str:
+    def justification_horizontal(self) -> HorizontalOptions:
         """Text's justification horizontal.
 
         Returns
@@ -791,28 +814,30 @@ class TextProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkTextProperty):
             Should be either "left", "center" or "right".
 
         """
-        justification = self.GetJustificationAsString().lower()
-        if justification == 'centered':
-            justification = 'center'
-        return justification
+        justifications: dict[str, HorizontalOptions] = {
+            'left': 'left',
+            'centered': 'center',
+            'right': 'right',
+        }
+        return justifications[self.GetJustificationAsString().lower()]
 
     @justification_horizontal.setter
-    def justification_horizontal(self, justification: str):
-        if justification.lower() == 'left':
+    def justification_horizontal(self, justification: HorizontalOptions) -> None:
+        value = justification.lower()
+        _validation.check_contains(
+            list(get_args(HorizontalOptions)),
+            must_contain=value,
+            name='justification_horizontal',
+        )
+        if value == 'left':
             self.SetJustificationToLeft()
-        elif justification.lower() == 'center':
+        elif value == 'center':
             self.SetJustificationToCentered()
-        elif justification.lower() == 'right':
-            self.SetJustificationToRight()
         else:
-            msg = (
-                f'Invalid {justification} for justification_horizontal. '
-                'Should be either "left", "center" or "right".'
-            )
-            raise ValueError(msg)
+            self.SetJustificationToRight()
 
     @property
-    def justification_vertical(self) -> str:
+    def justification_vertical(self) -> VerticalOptions:
         """Text's vertical justification.
 
         Returns
@@ -822,25 +847,27 @@ class TextProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkTextProperty):
             Should be either "bottom", "center" or "top".
 
         """
-        justification = self.GetVerticalJustificationAsString().lower()
-        if justification == 'centered':
-            justification = 'center'
-        return justification
+        justifications: dict[str, VerticalOptions] = {
+            'bottom': 'bottom',
+            'centered': 'center',
+            'top': 'top',
+        }
+        return justifications[self.GetVerticalJustificationAsString().lower()]
 
     @justification_vertical.setter
-    def justification_vertical(self, justification: str):
-        if justification.lower() == 'bottom':
+    def justification_vertical(self, justification: VerticalOptions) -> None:
+        value = justification.lower()
+        _validation.check_contains(
+            list(get_args(VerticalOptions)),
+            must_contain=value,
+            name='justification_vertical',
+        )
+        if value == 'bottom':
             self.SetVerticalJustificationToBottom()
-        elif justification.lower() == 'center':
+        elif value == 'center':
             self.SetVerticalJustificationToCentered()
-        elif justification.lower() == 'top':
-            self.SetVerticalJustificationToTop()
         else:
-            msg = (
-                f'Invalid {justification} for justification_vertical. '
-                'Should be either "bottom", "center" or "top".'
-            )
-            raise ValueError(msg)
+            self.SetVerticalJustificationToTop()
 
     @property
     def italic(self) -> bool:
@@ -855,7 +882,7 @@ class TextProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkTextProperty):
         return bool(self.GetItalic())
 
     @italic.setter
-    def italic(self, italic: bool):
+    def italic(self, italic: bool) -> None:
         self.SetItalic(italic)
 
     @property
@@ -871,7 +898,7 @@ class TextProperty(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkTextProperty):
         return bool(self.GetBold())
 
     @bold.setter
-    def bold(self, bold: bool):
+    def bold(self, bold: bool) -> None:
         self.SetBold(bold)
 
     def shallow_copy(self, to_copy: TextProperty) -> None:

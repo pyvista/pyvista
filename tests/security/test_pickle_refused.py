@@ -59,18 +59,11 @@ def test_dataobject_save_refuses_pickle(sphere, tmp_path, ext):
 )
 def test_remote_pickle_uri_refused_before_download(uri):
     """Remote ``.pkl`` URIs must refuse before any network call — covers P-1a."""
-    downloaded = False
-
-    def fake_retrieve(*_args, **_kwargs):
-        nonlocal downloaded
-        downloaded = True
-        return '/tmp/should-not-be-used'
-
-    with patch('pooch.retrieve', side_effect=fake_retrieve):
+    with patch('pooch.retrieve') as retrieve:
         with pytest.raises(ValueError, match=_REFUSAL_MATCH):
             pv.read(uri)
 
-    assert downloaded is False, 'remote pickle URI must refuse before download'
+    retrieve.assert_not_called()
 
 
 def test_force_ext_pickle_refused(tmp_path):

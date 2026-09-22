@@ -228,6 +228,16 @@ def test_from_dict_raises(mocker: MockerFixture):
         pv.Table(dict(a=m))
 
 
+@pytest.mark.parametrize(
+    'array', [[1.0, 2.0], np.zeros((2, 2, 2))], ids=['list', 'three-dimensional']
+)
+def test_from_dict_raises_for_invalid_arrays(array):
+    with pytest.raises(
+        ValueError, match=r'Dictionary must contain only NumPy arrays with maximum of 2D.'
+    ):
+        pv.Table(dict(a=array))
+
+
 def test_table_to_arrow():
     table = pv.Table({'a': np.arange(5, dtype=np.int64), 'b': np.linspace(0, 1, 5)})
     arrow_table = table.to_arrow()
@@ -273,3 +283,9 @@ def test_table_to_arrow_matches_to_pandas():
     arrays = np.random.default_rng(seed=0).random((10, 3))
     table = pv.Table(arrays)
     pd.testing.assert_frame_equal(table.to_arrow().to_pandas(), table.to_pandas())
+
+
+def test_table_unused_kwargs_deprecated():
+    """Unused keyword arguments warn instead of being silently swallowed."""
+    with pytest.warns(pv.core.errors.PyVistaDeprecationWarning, match='unused keyword'):
+        pv.Table(np.zeros((3, 2)), bogus=1)

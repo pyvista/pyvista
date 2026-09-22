@@ -66,6 +66,10 @@ def test_init():
     assert repr(light) is not None
 
 
+def test_eq_not_a_light():
+    assert pv.Light() != 5
+
+
 def test_eq():
     light = pv.Light()
     other = pv.Light()
@@ -313,6 +317,12 @@ def test_from_vtk():
             assert np.array_equal(trans_arr, value)
         else:
             assert getattr(light, pvname) == value
+
+    # the transformation matrix is copied, not shared with the source light
+    source_matrix = vtk_light.GetTransformMatrix()
+    assert light.transform_matrix is not source_matrix
+    source_matrix.SetElement(0, 3, 42.0)
+    assert light.transform_matrix.GetElement(0, 3) != 42.0
 
     # invalid case
     with pytest.raises(TypeError):

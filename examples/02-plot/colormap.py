@@ -155,8 +155,8 @@ pl.show()
 # style identical to the solver's native post-processing tool.
 # Below is an example of how to recreate the default ``cgx`` (CalculiX GraphiX)
 # colormap using Matplotlib's :class:`matplotlib.colors.LinearSegmentedColormap`.
-# It may be particular useful when visualizing ``.frd`` files with
-# :class:`~pyvista.FRDReader`.
+# It may be particularly useful when visualizing ``.frd`` files, which
+# :func:`pyvista.read` handles through the ``pyvista-frd-reader`` package.
 #
 # This specific colormap uses exact RGB nodes at specific scalar fractions
 # (0.0, 0.1, 0.3, 0.5, 0.8, 0.9, 1.0) to create its distinct color bands.

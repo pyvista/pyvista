@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 import subprocess
+import sys
 
 import pytest
 
@@ -18,7 +19,8 @@ MYPY_CONFIG_FILE_USE_PLUGIN = str(Path(TEST_DIR) / 'mypy_use_plugin.ini')
 @pytest.fixture
 def decorated_single():
     @promote_type(float)
-    class Foo: ...
+    class Foo:
+        pass
 
     return Foo
 
@@ -26,7 +28,8 @@ def decorated_single():
 @pytest.fixture
 def decorated_double():
     @promote_type(float, str)
-    class Foo: ...
+    class Foo:
+        pass
 
     return Foo
 
@@ -99,7 +102,11 @@ def _run_mypy_code(code, use_plugin, tmp_path):
     try:
         # Use '--follow-imports=skip' to only analyze the files passed to mypy
         # otherwise it will analyze the entire pyvista library
-        args = ['mypy', '--show-traceback', '--follow-imports=skip']
+        # A bare 'mypy' is on PATH only when the environment is activated.
+        args = [sys.executable, '-m', 'mypy', '--show-traceback', '--follow-imports=skip']
+
+        # Cache to os.devnull so that runs in parallel do not share mypy's sqlite database
+        args.extend(['--cache-dir', os.devnull])
 
         # Set config file
         config = MYPY_CONFIG_FILE_USE_PLUGIN if use_plugin else MYPY_CONFIG_FILE_NO_PLUGIN

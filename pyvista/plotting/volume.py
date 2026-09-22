@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 from .prop3d import Prop3D
 
@@ -25,7 +24,7 @@ class Volume(Prop3D, _vtk.vtkVolume):
 
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize volume."""
         super().__init__()
 
@@ -54,11 +53,11 @@ class Volume(Prop3D, _vtk.vtkVolume):
         return self.GetMapper()  # type: ignore[return-value]
 
     @mapper.setter
-    def mapper(self, obj):
-        self.SetMapper(obj)
+    def mapper(self, obj: _BaseMapper) -> None:
+        self.SetMapper(obj)  # type: ignore[arg-type]
 
     @property
-    def prop(self):  # numpydoc ignore=RT01
+    def prop(self) -> VolumeProperty:  # numpydoc ignore=RT01
         """Return or set the property of this actor.
 
         Examples
@@ -74,14 +73,13 @@ class Volume(Prop3D, _vtk.vtkVolume):
         0
 
         """
-        return self.GetProperty()
+        return self.GetProperty()  # type: ignore[return-value]
 
     @prop.setter
-    def prop(self, obj: VolumeProperty):
+    def prop(self, obj: VolumeProperty) -> None:
         self.SetProperty(obj)
 
-    @_deprecate_positional_args
-    def copy(self: Self, deep: bool = True) -> Self:  # noqa: FBT001, FBT002
+    def copy(self: Self, *, deep: bool = True) -> Self:
         """Create a copy of this volume.
 
         Parameters

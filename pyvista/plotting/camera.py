@@ -2,20 +2,33 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 import weakref
-import xml.dom.minidom as md
 from xml.etree import ElementTree as ET
 
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
+from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from .helpers import view_vectors
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from pyvista.core._typing_core import MatrixLike
+    from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import VectorLike
+
+    from .helpers import _ViewOptions
+    from .renderer import Renderer
+
+# OpenCV cameras look along +z with +y down; VTK looks along -z with +y up.
+_OPENCV_FROM_VTK = np.diag([1.0, -1.0, -1.0, 1.0])
 
 
 class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
@@ -42,26 +55,28 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
 
     """
 
-    def __init__(self, renderer=None):
+    def __init__(self, renderer: Renderer | None = None) -> None:
         """Initialize a new camera descriptor."""
         self._parallel_projection = False
         self._elevation = 0.0
         self._azimuth = 0.0
         self._is_set = False
-        self._focus = None  # Used by BackgroundRenderer
+        self._focus: NumpyArray[float] | None = None  # Used by BackgroundRenderer
 
         if renderer:
             if not isinstance(renderer, pv.Renderer):
-                msg = 'Camera only accepts a pyvista.Renderer or None as the ``renderer`` argument'
+                msg = 'Camera only accepts a pyvista.Renderer or None as the ``renderer`` argument'  # type: ignore[unreachable]
                 raise TypeError(msg)
             self._renderer = weakref.proxy(renderer)
         else:
-            self._renderer = None  # type: ignore[assignment]
+            self._renderer = None
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: object) -> bool:
         """Compare whether the relevant attributes of two cameras are equal."""
-        # attributes which are native python types and thus implement __eq__
+        if not isinstance(other, Camera):
+            return NotImplemented
 
+        # attributes which are native python types and thus implement __eq__
         native_attrs = [
             'position',
             'focal_point',
@@ -70,6 +85,8 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
             'thickness',
             'parallel_scale',
             'clipping_range',
+            'window_center',
+            'explicit_aspect_ratio',
             'view_angle',
             'roll',
         ]
@@ -77,17 +94,11 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
             if getattr(self, attr) != getattr(other, attr):
                 return False
 
-        this_trans = self.model_transform_matrix
-        that_trans = other.model_transform_matrix
-        trans_count = sum(1 for trans in [this_trans, that_trans] if trans is not None)
-        if trans_count == 1:
-            # either but not both are None
-            return False
-        return not (trans_count == 2 and not np.array_equal(this_trans, that_trans))
+        return bool(np.array_equal(self.model_transform_matrix, other.model_transform_matrix))
 
     __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Print a ``repr`` specifying the id of the camera and its camera type."""
         repr_str = f'{self.__class__.__name__} ({hex(id(self))})'
         repr_str += f'\n  Position:            {self.position}'
@@ -101,11 +112,11 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         repr_str += f'\n  Roll:                {self.roll}'
         return repr_str
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return the object string representation."""
         return self.__repr__()
 
-    def __del__(self):
+    def __del__(self) -> None:
         """Delete the camera."""
         self.RemoveAllObservers()
 
@@ -115,7 +126,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         return self._is_set
 
     @is_set.setter
-    def is_set(self, value: bool):
+    def is_set(self, value: bool) -> None:
         self._is_set = bool(value)
 
     @classmethod
@@ -180,7 +191,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         camera.is_set = True
         return camera
 
-    def to_paraview_pvcc(self, filename: str | Path):
+    def to_paraview_pvcc(self, filename: str | Path) -> None:
         """Write the camera parameters to a ParaView camera file (.pvcc extension).
 
         Parameters
@@ -246,13 +257,11 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
                 e.append(tmp)
                 e.append(ET.Element('Domain', dict(name='bool', id=f'0.{name}.bool')))
 
-        xmlstr = ET.tostring(root).decode()
-        newxml = md.parseString(xmlstr)
-        with Path(filename).open('w') as outfile:
-            outfile.write(newxml.toprettyxml(indent='\t', newl='\n'))
+        ET.indent(root, space='\t')
+        ET.ElementTree(root).write(filename, encoding='utf-8', xml_declaration=True)
 
     @property
-    def position(self):  # numpydoc ignore=RT01
+    def position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the position of the camera in world coordinates.
 
         Examples
@@ -269,15 +278,15 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         return self.GetPosition()
 
     @position.setter
-    def position(self, value):
-        self.SetPosition(value)
+    def position(self, value: VectorLike[float]) -> None:
+        self.SetPosition(_validation.validate_array3(value, dtype_out=float, to_tuple=True))
         self._elevation = 0.0
         self._azimuth = 0.0
-        if self._renderer:  # type: ignore[truthy-bool]
+        if self._renderer:
             self.reset_clipping_range()
         self.is_set = True
 
-    def reset_clipping_range(self):
+    def reset_clipping_range(self) -> None:
         """Reset the camera clipping range based on the bounds of the visible actors.
 
         Examples
@@ -291,12 +300,12 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
 
         """
         if self._renderer is None:
-            msg = 'Camera is must be associated with a renderer to reset its clipping range.'  # type: ignore[unreachable]
+            msg = 'Camera is must be associated with a renderer to reset its clipping range.'
             raise AttributeError(msg)
         self._renderer.reset_camera_clipping_range()
 
     @property
-    def focal_point(self):  # numpydoc ignore=RT01
+    def focal_point(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Location of the camera's focus in world coordinates.
 
         Examples
@@ -313,12 +322,12 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         return self.GetFocalPoint()
 
     @focal_point.setter
-    def focal_point(self, point):
-        self.SetFocalPoint(point)
+    def focal_point(self, point: VectorLike[float]) -> None:
+        self.SetFocalPoint(_validation.validate_array3(point, dtype_out=float, to_tuple=True))
         self.is_set = True
 
     @property
-    def model_transform_matrix(self):  # numpydoc ignore=RT01
+    def model_transform_matrix(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
         """Return or set the camera's model transformation matrix.
 
         Examples
@@ -339,11 +348,11 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         ...         [0.0, 0.0, 0.0, 0.5],
         ...     ]
         ... )
-        >>>
-        array([[1., 0., 0., 0.],
-               [0., 1., 0., 0.],
-               [0., 0., 1., 0.],
-               [0., 0., 0., 0.5]])
+        >>> pl.camera.model_transform_matrix
+        array([[1. , 0. , 0. , 0. ],
+               [0. , 1. , 0. , 0. ],
+               [0. , 0. , 1. , 0. ],
+               [0. , 0. , 0. , 0.5]])
 
         """
         vtk_matrix = self.GetModelTransformMatrix()
@@ -352,13 +361,13 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         return matrix
 
     @model_transform_matrix.setter
-    def model_transform_matrix(self, matrix):
+    def model_transform_matrix(self, matrix: NumpyArray[float]) -> None:
         vtk_matrix = _vtk.vtkMatrix4x4()
-        vtk_matrix.DeepCopy(matrix.ravel())
+        vtk_matrix.DeepCopy(matrix.ravel().tolist())
         self.SetModelTransformMatrix(vtk_matrix)
 
     @property
-    def distance(self):  # numpydoc ignore=RT01
+    def distance(self) -> float:  # numpydoc ignore=RT01
         """Return or set the distance of the focal point from the camera.
 
         Notes
@@ -379,12 +388,12 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         return self.GetDistance()
 
     @distance.setter
-    def distance(self, distance):
+    def distance(self, distance: float) -> None:
         self.SetDistance(distance)
         self.is_set = True
 
     @property
-    def thickness(self):  # numpydoc ignore=RT01
+    def thickness(self) -> float:  # numpydoc ignore=RT01
         """Return or set the distance between clipping planes.
 
         Examples
@@ -401,11 +410,11 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         return self.GetThickness()
 
     @thickness.setter
-    def thickness(self, length):
+    def thickness(self, length: float) -> None:
         self.SetThickness(length)
 
     @property
-    def parallel_scale(self):  # numpydoc ignore=RT01
+    def parallel_scale(self) -> float:  # numpydoc ignore=RT01
         """Return or set the scaling used for a parallel projection.
 
         Examples
@@ -422,10 +431,10 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         return self.GetParallelScale()
 
     @parallel_scale.setter
-    def parallel_scale(self, scale):
+    def parallel_scale(self, scale: float) -> None:
         self.SetParallelScale(scale)
 
-    def zoom(self, value):
+    def zoom(self, value: float | str) -> None:
         """Set the zoom of the camera.
 
         In perspective mode, decrease the view angle by the specified
@@ -478,7 +487,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         self.is_set = True
 
     @property
-    def up(self):  # numpydoc ignore=RT01
+    def up(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the "up" of the camera.
 
         The vector is normalized, so it must have a non-zero magnitude.
@@ -502,16 +511,16 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         return self.GetViewUp()
 
     @up.setter
-    def up(self, vector):
+    def up(self, vector: VectorLike[float]) -> None:
         # VTK normalizes the view up vector and silently substitutes (0, 1, 0) when it
         # has no magnitude, so a zero vector must be rejected before SetViewUp.
         if np.allclose(vector, 0.0):
             msg = 'Camera up vector cannot be zero.'
             raise ValueError(msg)
-        self.SetViewUp(vector)
+        self.SetViewUp(_validation.validate_array3(vector, dtype_out=float, to_tuple=True))
         self.is_set = True
 
-    def enable_parallel_projection(self):
+    def enable_parallel_projection(self) -> None:
         """Enable parallel projection.
 
         The camera will have a parallel projection. Parallel
@@ -530,7 +539,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         self._parallel_projection = True
         self.SetParallelProjection(True)
 
-    def disable_parallel_projection(self):
+    def disable_parallel_projection(self) -> None:
         """Disable the use of parallel projection.
 
         This is default behavior.
@@ -548,7 +557,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         self.SetParallelProjection(False)
 
     @property
-    def parallel_projection(self):  # numpydoc ignore=RT01
+    def parallel_projection(self) -> bool:  # numpydoc ignore=RT01
         """Return the state of the parallel projection.
 
         Examples
@@ -564,14 +573,14 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         return self._parallel_projection
 
     @parallel_projection.setter
-    def parallel_projection(self, state):
+    def parallel_projection(self, state: bool) -> None:
         if state:
             self.enable_parallel_projection()
         else:
             self.disable_parallel_projection()
 
     @property
-    def clipping_range(self):  # numpydoc ignore=RT01
+    def clipping_range(self) -> tuple[float, float]:  # numpydoc ignore=RT01
         """Return or set the location of the clipping planes.
 
         Clipping planes are the near and far clipping planes along
@@ -591,14 +600,15 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         return self.GetClippingRange()
 
     @clipping_range.setter
-    def clipping_range(self, points):
-        if points[0] > points[1]:
+    def clipping_range(self, points: VectorLike[float]) -> None:
+        near, far = float(points[0]), float(points[1])
+        if near > far:
             msg = 'Near point must be lower than the far point.'
             raise ValueError(msg)
-        self.SetClippingRange(points[0], points[1])
+        self.SetClippingRange(near, far)
 
     @property
-    def view_angle(self):  # numpydoc ignore=RT01
+    def view_angle(self) -> float:  # numpydoc ignore=RT01
         """Return or set the camera view angle.
 
         Examples
@@ -615,11 +625,245 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         return self.GetViewAngle()
 
     @view_angle.setter
-    def view_angle(self, value):
+    def view_angle(self, value: float) -> None:
         self.SetViewAngle(value)
 
     @property
-    def direction(self):  # numpydoc ignore=RT01
+    def window_center(self) -> tuple[float, float]:  # numpydoc ignore=RT01
+        """Return or set the horizontal and vertical shift of the projection center.
+
+        The two values move the optical axis away from the center of the
+        viewport, as fractions of its half-width and half-height. A calibrated
+        principal point ``(cx, cy)`` of an image ``width`` by ``height`` pixels
+        corresponds to a window center of
+        ``(-2 * (cx - width / 2) / width, 2 * (cy - height / 2) / height)``.
+
+        .. versionadded:: 0.50
+
+        See Also
+        --------
+        intrinsic_matrix
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> camera = pv.Camera()
+        >>> camera.window_center
+        (0.0, 0.0)
+        >>> camera.window_center = (0.25, -0.1)
+        >>> camera.window_center
+        (0.25, -0.1)
+
+        """
+        return self.GetWindowCenter()
+
+    @window_center.setter
+    def window_center(self, value: VectorLike[float]) -> None:
+        center = _validation.validate_array(
+            value, must_have_shape=(2,), dtype_out=float, name='window center'
+        )
+        self.SetWindowCenter(*center)
+
+    @property
+    def explicit_aspect_ratio(self) -> float | None:  # numpydoc ignore=RT01
+        """Return or set an aspect ratio to use in place of the viewport's own.
+
+        The ratio is the width of the view frustum divided by its height. It is
+        ``None`` when the camera takes the aspect ratio from the viewport it
+        renders into, which assumes square pixels.
+
+        .. versionadded:: 0.50
+
+        See Also
+        --------
+        intrinsic_matrix
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> camera = pv.Camera()
+        >>> camera.explicit_aspect_ratio is None
+        True
+        >>> camera.explicit_aspect_ratio = 1.25
+        >>> camera.explicit_aspect_ratio
+        1.25
+        >>> camera.explicit_aspect_ratio = None
+        >>> camera.explicit_aspect_ratio is None
+        True
+
+        """
+        return self.GetExplicitAspectRatio() if self.GetUseExplicitAspectRatio() else None
+
+    @explicit_aspect_ratio.setter
+    def explicit_aspect_ratio(self, value: float | None) -> None:
+        if value is None:
+            self.SetUseExplicitAspectRatio(False)
+            return
+        ratio = _validation.validate_number(
+            value,
+            must_be_in_range=[0.0, np.inf],
+            strict_lower_bound=True,
+            name='explicit aspect ratio',
+        )
+        self.SetExplicitAspectRatio(ratio)
+        self.SetUseExplicitAspectRatio(True)
+
+    def _viewport_size(self) -> tuple[int, int]:
+        """Return the pixel width and height of the viewport the camera renders into."""
+        if self._renderer is None:
+            msg = 'An intrinsic matrix requires a plotter to derive the image size from.'
+            raise RuntimeError(msg)
+        width, height = self._renderer.GetSize()
+        if not width or not height:
+            msg = (
+                'An intrinsic matrix requires a plotter with a non-empty viewport, got '
+                f'{width}x{height}. A closed plotter has none.'
+            )
+            raise RuntimeError(msg)
+        return width, height
+
+    @property
+    def intrinsic_matrix(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
+        """Return or set the pinhole intrinsic matrix of the camera.
+
+        The matrix is ``[[fx, 0, cx], [0, fy, cy], [0, 0, 1]]`` in pixels, as
+        reported by a camera calibration such as ``cv2.calibrateCamera``, with
+        ``cy`` measured from the top of the image. It describes the image the
+        camera renders, so it is expressed in the pixel size of the viewport
+        and changes with it. Axis skew cannot be represented and must be
+        zero.
+
+        Setting the matrix gives the camera a perspective projection.
+
+        The camera has to belong to a plotter, which is what gives it an image
+        to be calibrated for. Resetting the camera, as
+        :meth:`~pyvista.Plotter.reset_camera` and the view directions do,
+        restores its default field of view and discards ``fx`` and ``fy``. The
+        principal point is kept.
+
+        .. versionadded:: 0.50
+
+        See Also
+        --------
+        extrinsic_matrix
+        window_center
+        explicit_aspect_ratio
+
+        Examples
+        --------
+        A camera renders a square-pixel image centered on the optical axis
+        until it is given a calibration.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter(window_size=(640, 480))
+        >>> pl.camera.intrinsic_matrix.round(3)
+        array([[895.692,   0.   , 320.   ],
+               [  0.   , 895.692, 240.   ],
+               [  0.   ,   0.   ,   1.   ]])
+
+        >>> pl.camera.intrinsic_matrix = np.array(
+        ...     [[800.0, 0.0, 310.0], [0.0, 760.0, 250.0], [0.0, 0.0, 1.0]]
+        ... )
+        >>> pl.camera.intrinsic_matrix
+        array([[800.,   0., 310.],
+               [  0., 760., 250.],
+               [  0.,   0.,   1.]])
+
+        """
+        if self.parallel_projection:
+            msg = 'An intrinsic matrix is only defined for a perspective projection.'
+            raise ValueError(msg)
+        width, height = self._viewport_size()
+        projection = array_from_vtkmatrix(
+            self.GetProjectionTransformMatrix(self._renderer.GetTiledAspectRatio(), -1.0, 1.0)
+        )
+        return np.array(
+            [
+                [projection[0, 0] * width / 2, 0.0, (1.0 - projection[0, 2]) * width / 2],
+                [0.0, projection[1, 1] * height / 2, (1.0 + projection[1, 2]) * height / 2],
+                [0.0, 0.0, 1.0],
+            ]
+        )
+
+    @intrinsic_matrix.setter
+    def intrinsic_matrix(self, matrix: MatrixLike[float]) -> None:
+        valid = _validation.validate_array(
+            matrix, must_have_shape=(3, 3), dtype_out=float, name='intrinsic matrix'
+        )
+        width, height = self._viewport_size()
+        if valid[0, 1] != 0.0:
+            msg = 'Intrinsic matrices with axis skew are not supported.'
+            raise ValueError(msg)
+        if valid[1, 0] != 0.0 or not np.array_equal(valid[2], [0.0, 0.0, 1.0]):
+            msg = (
+                'An intrinsic matrix must be upper triangular with a last row of '
+                f'(0, 0, 1), got {valid.tolist()}.'
+            )
+            raise ValueError(msg)
+        focal_x, focal_y = valid[0, 0], valid[1, 1]
+        if focal_x <= 0.0 or focal_y <= 0.0:
+            msg = f'Intrinsic matrix focal lengths must be positive, got ({focal_x}, {focal_y}).'
+            raise ValueError(msg)
+        center_x, center_y = valid[0, 2], valid[1, 2]
+        self.parallel_projection = False
+        self.view_angle = np.degrees(2 * np.arctan(height / (2 * focal_y)))
+        self.window_center = (
+            -2 * (center_x - width / 2) / width,
+            2 * (center_y - height / 2) / height,
+        )
+        self.explicit_aspect_ratio = (width * focal_y) / (height * focal_x)
+        self.is_set = True
+
+    @property
+    def extrinsic_matrix(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
+        """Return or set the pose of the camera as a 4x4 extrinsic matrix.
+
+        The matrix maps world coordinates to camera coordinates in the OpenCV
+        convention, with ``x`` to the right, ``y`` down and ``z`` along the
+        viewing direction. Invert it for the camera-to-world pose. It describes
+        the camera alone and does not include :attr:`model_transform_matrix`.
+
+        Setting the matrix keeps the camera's :attr:`distance` to its focal
+        point.
+
+        .. versionadded:: 0.50
+
+        See Also
+        --------
+        intrinsic_matrix
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> camera = pv.Camera()
+        >>> camera.position = (0.0, 0.0, 4.0)
+        >>> camera.focal_point = (0.0, 0.0, 0.0)
+        >>> camera.up = (0.0, 1.0, 0.0)
+        >>> camera.extrinsic_matrix
+        array([[ 1.,  0.,  0.,  0.],
+               [ 0., -1.,  0.,  0.],
+               [ 0.,  0., -1.,  4.],
+               [ 0.,  0.,  0.,  1.]])
+
+        """
+        view = array_from_vtkmatrix(self.GetViewTransformMatrix())
+        return _OPENCV_FROM_VTK @ view
+
+    @extrinsic_matrix.setter
+    def extrinsic_matrix(self, matrix: MatrixLike[float]) -> None:
+        valid = _validation.validate_transform4x4(matrix, name='extrinsic matrix')
+        rotation = _validation.validate_rotation(
+            valid[:3, :3], must_have_handedness='right', name='extrinsic matrix rotation'
+        )
+        center = -rotation.T @ valid[:3, 3]
+        distance = self.distance
+        self.position = center
+        self.focal_point = center + distance * rotation[2]
+        self.up = -rotation[1]
+
+    @property
+    def direction(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Vector from the camera position to the focal point.
 
         Examples
@@ -632,7 +876,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         """
         return self.GetDirectionOfProjection()
 
-    def view_frustum(self, aspect=1.0):
+    def view_frustum(self, aspect: float = 1.0) -> pv.PolyData:
         """Get the view frustum.
 
         Parameters
@@ -669,7 +913,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         return pv.wrap(frustum_source.GetOutput())
 
     @property
-    def roll(self):  # numpydoc ignore=RT01
+    def roll(self) -> float:  # numpydoc ignore=RT01
         """Return or set the roll of the camera about the direction of projection.
 
         This will spin the camera about its axis.
@@ -688,12 +932,12 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         return self.GetRoll()
 
     @roll.setter
-    def roll(self, angle):
+    def roll(self, angle: float) -> None:
         self.SetRoll(angle)
         self.is_set = True
 
     @property
-    def elevation(self):  # numpydoc ignore=RT01
+    def elevation(self) -> float:  # numpydoc ignore=RT01
         """Return or set the vertical rotation of the scene.
 
         Rotate the camera about the cross product of the negative of
@@ -714,7 +958,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         return self._elevation
 
     @elevation.setter
-    def elevation(self, angle):
+    def elevation(self, angle: float) -> None:
         if self._elevation:
             self.Elevation(-self._elevation)
         self._elevation = angle
@@ -722,7 +966,7 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         self.is_set = True
 
     @property
-    def azimuth(self):  # numpydoc ignore=RT01
+    def azimuth(self) -> float:  # numpydoc ignore=RT01
         """Return or set the azimuth of the camera.
 
         Rotate the camera about the view up vector centered at the
@@ -744,14 +988,14 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
         return self._azimuth
 
     @azimuth.setter
-    def azimuth(self, angle):
+    def azimuth(self, angle: float) -> None:
         if self._azimuth:
             self.Azimuth(-self._azimuth)
         self._azimuth = angle
         self.Azimuth(angle)
         self.is_set = True
 
-    def copy(self):
+    def copy(self) -> Camera:
         """Return a deep copy of the camera.
 
         Returns
@@ -761,8 +1005,8 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
 
         Examples
         --------
-        Create a camera and check that it shares a transformation
-        matrix with its shallow copy.
+        Create a camera and check that its copy holds the same
+        transformation matrix until the original is changed.
 
         >>> import pyvista as pv
         >>> import numpy as np
@@ -799,6 +1043,8 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
             'parallel_scale',
             'up',
             'clipping_range',
+            'window_center',
+            'explicit_aspect_ratio',
             'view_angle',
             'roll',
             'parallel_projection',
@@ -812,14 +1058,14 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
 
         return new_camera
 
-    @_deprecate_positional_args
-    def tight(  # noqa: PLR0917
+    def tight(
         self,
-        padding=0.0,
-        adjust_render_window: bool = True,  # noqa: FBT001, FBT002
-        view='xy',
-        negative: bool = False,  # noqa: FBT001, FBT002
-    ):
+        *,
+        padding: float = 0.0,
+        adjust_render_window: bool = True,
+        view: _ViewOptions = 'xy',
+        negative: bool = False,
+    ) -> None:
         """Adjust the camera position so that the actors fill the entire renderer.
 
         The camera view direction is reoriented to be normal to the ``view``
@@ -853,25 +1099,32 @@ class Camera(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkCamera):
 
         Examples
         --------
-        Display the bird image with a tight view.
+        .. pyvista-plot::
+            :force_static:
 
-        >>> import pyvista as pv
-        >>> from pyvista import examples
-        >>> bird = examples.download_bird()
-        >>> pl = pv.Plotter(border=True, border_width=5)
-        >>> _ = pl.add_mesh(bird, rgb=True)
-        >>> pl.camera.tight()
-        >>> pl.show()
+            Display the bird image with a tight view.
 
-        Set the background to blue use a 5% padding around the image.
+            >>> import pyvista as pv
+            >>> from pyvista import examples
+            >>> bird = examples.download_bird()
+            >>> pl = pv.Plotter(border=True, border_width=5)
+            >>> _ = pl.add_mesh(bird, rgb=True)
+            >>> pl.camera.tight()
+            >>> pl.show()
 
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(bird, rgb=True)
-        >>> pl.background_color = 'b'
-        >>> pl.camera.tight(padding=0.05)
-        >>> pl.show()
+            Set the background to blue use a 5% padding around the image.
+
+            >>> pl = pv.Plotter()
+            >>> _ = pl.add_mesh(bird, rgb=True)
+            >>> pl.background_color = 'b'
+            >>> pl.camera.tight(padding=0.05)
+            >>> pl.show()
 
         """
+        if self._renderer is None:
+            msg = 'Camera must be associated with a renderer to fit it to the actors.'
+            raise AttributeError(msg)
+
         # Inspired by vedo resetCamera. Thanks @marcomusy.
         x0, x1, y0, y1, z0, z1 = self._renderer.bounds
 

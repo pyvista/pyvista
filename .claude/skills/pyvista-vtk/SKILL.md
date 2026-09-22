@@ -25,10 +25,10 @@ concluding a wrapper is missing; if it genuinely is, add the property or filter 
 let the consumer land after it.
 
 `import vtk` and `import vtkmodules` are both banned by ruff (`banned-api` in
-`pyproject.toml`), which points you at `pyvista._vtk` instead. `examples/*` is exempt from
-that rule (`TID251` in its per-file ignores) and is covered by the custom pre-commit hooks
-instead. Inside the package the
-sanctioned form is `from . import _vtk`, then `_vtk.vtkThreshold()`.
+`pyproject.toml`), which points you at `pyvista._vtk` instead. Examples are exempt
+because `examples/ruff.toml` defines its own `banned-api` table, which replaces the
+parent's rather than merging with it. Inside the package the sanctioned form is
+`from . import _vtk`, then `_vtk.vtkThreshold()`.
 
 The wrapper classes also gate the VTK surface at runtime: `_NoNewAttrMixin`
 (`pyvista/core/utilities/misc.py`) refuses unknown attributes, and `DisableVtkSnakeCase`
@@ -118,7 +118,7 @@ Points that reviewers raise when they are missing:
 - **`_update_alg` and `_get_output`** (`pyvista/core/filters/__init__.py`) are the only
   pipeline driver. They handle the progress bar, VTK errors, and wrapping the output into
   the right PyVista subclass with its metadata intact.
-- **Validate at the boundary.** `pyvista.core._validation` has the checks already:
+- **Validate at the boundary.** The `pyvista-validation` package, imported as `_validation`, has the checks already:
   `check_string`, `check_contains`, `check_range`, `check_subdtype`, `validate_array`,
   `validate_array3`, `validate_arrayNx3`, `validate_axes`, `validate_transform4x4`,
   `validate_number`, and more. Internal helpers can trust their inputs; public entry points
