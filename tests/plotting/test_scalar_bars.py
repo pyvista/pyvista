@@ -1307,7 +1307,6 @@ def test_fit_box_widens_a_vertical_bar_given_only_a_height(sphere, box):
     pl = pv.Plotter(window_size=[1024, 768])
     pl.background_color = 'white'
     pl.add_mesh(sphere, show_scalar_bar=False, cmap='autumn')
-    pl.theme.colorbar_vertical.width = 0.08
     bar = _fitted_bar(pl, sphere, vertical=True, box=box, fmt='%.1f', height=0.6, color='blue')
 
     dpi = pl.render_window.GetDPI()
@@ -1346,27 +1345,46 @@ def test_fit_box_encloses_a_turned_title(sphere, box):
 
 
 @pytest.mark.needs_vtk_version(9, 4, 0, reason='ForceVerticalTitle was added in VTK 9.4.0')
-def test_fit_box_shrinks_a_turned_title_to_a_given_width(sphere):
-    # A width of its own is the room the row has, so the turned title takes what the
-    # ramp and the labels leave it
+@pytest.mark.parametrize(
+    ('asked', 'gives_way'),
+    [((24, 24), 'both'), ((24, 12), 'title'), ((12, 24), 'labels')],
+    ids=['same', 'larger-title', 'larger-labels'],
+)
+def test_fit_box_shares_a_given_width_between_a_turned_title_and_the_labels(
+    sphere, asked, gives_way
+):
+    # A width of its own is the room the row past the ramp has, and the one that asked
+    # for the larger size gives way first, both together once they match
     sphere[KEY] = sphere.points[:, 2]
 
     pl = pv.Plotter(window_size=[1024, 768])
     pl.background_color = 'white'
     pl.add_mesh(sphere, show_scalar_bar=False, cmap='autumn')
-    bar = _fitted_bar(
-        pl,
-        sphere,
+    bar = pl.add_scalar_bar(
+        FIT_TITLE,
         vertical=True,
-        box={'outline': True},
+        outline=True,
         rotate_title=True,
         fmt='%.1f',
-        width=0.06,
+        title_font_size=asked[0],
+        label_font_size=asked[1],
+        n_labels=5,
+        mapper=pv.DataSetMapper(sphere),
+        width=0.08,
         color='blue',
     )
 
-    assert bar.GetWidth() == pytest.approx(0.06)
-    assert bar.GetTitleTextProperty().GetFontSize() < 24
+    title = bar.GetTitleTextProperty().GetFontSize()
+    labels = bar.GetLabelTextProperty().GetFontSize()
+    assert bar.GetWidth() == pytest.approx(0.08)
+    if gives_way == 'both':
+        assert title == labels < 24
+    elif gives_way == 'title':
+        assert labels == 12
+        assert 12 < title < 24
+    else:
+        assert title == 12
+        assert 12 < labels < 24
     assert not _text_beside_the_box(pl, bar)
 
 
@@ -1736,7 +1754,6 @@ def test_fit_box_height_only_vertical_render(sphere, box):
 
     pl = pv.Plotter()
     pl.add_mesh(sphere, show_scalar_bar=False)
-    pl.theme.colorbar_vertical.width = 0.08
     _fitted_bar(pl, sphere, vertical=True, box=box, fmt='%.1f', height=0.6)
     pl.show()
 

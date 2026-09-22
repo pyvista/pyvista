@@ -77,7 +77,7 @@ def _title_height(text_property, title, dpi):
     return bounds[3] - bounds[2] + 1
 
 
-def _fitted_font(text_property, texts, room, *, dpi, measure=None):
+def _shrunk_font(text_property, texts, room, *, dpi, measure=None):
     """Return the largest font size up to the one asked for that fits ``room`` pixels."""
     measure = _title_width if measure is None else measure
     if not texts:
@@ -89,6 +89,33 @@ def _fitted_font(text_property, texts, room, *, dpi, measure=None):
         font_size -= 1
         probe.SetFontSize(font_size)
     return font_size
+
+
+def _row_fonts(title_text, label_text, *, title, labels, room, dpi):
+    """Return the font sizes that fit a turned title and the tick labels side by side.
+
+    Each keeps the size it asked for while the row has ``room`` pixels for the title's
+    height and the widest label, and where it has not, the one that asked for the
+    larger size gives way first, and both together once they match.
+    """
+    title_probe = _vtk.vtkTextProperty()
+    title_probe.ShallowCopy(title_text)
+    label_probe = _vtk.vtkTextProperty()
+    label_probe.ShallowCopy(label_text)
+
+    def used():
+        widest = max((_title_width(label_probe, text, dpi) for text in labels), default=0)
+        return _title_height(title_probe, title, dpi) + widest
+
+    while used() > room:
+        title_font, label_font = title_probe.GetFontSize(), label_probe.GetFontSize()
+        if title_font <= 3 and label_font <= 3:
+            break
+        if title_font >= label_font and title_font > 3:
+            title_probe.SetFontSize(title_font - 1)
+        if label_font >= title_font and label_font > 3:
+            label_probe.SetFontSize(label_font - 1)
+    return title_probe.GetFontSize(), label_probe.GetFontSize()
 
 
 def _seating_offset(label_height):
@@ -554,25 +581,25 @@ class ScalarBars(_NoNewAttrMixin):
             scalar_bar.SetUnconstrainedFontSize(True)
             box_width = _box_pixels(scalar_bar, fit['renderer'])[0]
             title_room, label_room = _vertical_rooms(scalar_bar, box_width)
-            label_text.SetFontSize(
-                _fitted_font(label_text, _label_texts(scalar_bar), label_room, dpi=dpi)
-            )
             if turned:
-                # A turned title stands beside the labels rather than across the box
-                title_room = (
-                    label_room
-                    - _label_size(scalar_bar, label_text, dpi)[0]
-                    - scalar_bar.GetTextPad()
-                    - fit['pad']
+                # A turned title stands beside the labels rather than across the box, so
+                # the two share the row past the ramp
+                title_font, label_font = _row_fonts(
+                    title_text,
+                    label_text,
+                    title=fit['title'],
+                    labels=_label_texts(scalar_bar),
+                    room=label_room - scalar_bar.GetTextPad() - fit['pad'],
+                    dpi=dpi,
                 )
-                title_text.SetFontSize(
-                    _fitted_font(
-                        title_text, [fit['title']], title_room, dpi=dpi, measure=_title_height
-                    )
-                )
+                title_text.SetFontSize(title_font)
+                label_text.SetFontSize(label_font)
             else:
+                label_text.SetFontSize(
+                    _shrunk_font(label_text, _label_texts(scalar_bar), label_room, dpi=dpi)
+                )
                 title_text.SetFontSize(
-                    _fitted_font(title_text, [fit['title']], title_room, dpi=dpi)
+                    _shrunk_font(title_text, [fit['title']], title_room, dpi=dpi)
                 )
                 title_text.SetLineOffset(
                     _seating_offset(_label_size(scalar_bar, label_text, dpi)[1])
