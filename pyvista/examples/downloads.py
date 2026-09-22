@@ -8807,7 +8807,7 @@ class _WholeBodyCTUtilities:
             raise RuntimeError(msg)
 
     @staticmethod
-    def add_metadata(dataset: MultiBlock, colors_module_path: str) -> None:
+    def add_metadata(dataset: MultiBlock[Any], colors_module_path: str) -> None:
         # Add color and id mappings to dataset
         """Add color and id mappings to the dataset's user dict.
 
@@ -8831,7 +8831,7 @@ class _WholeBodyCTUtilities:
         dataset.user_dict['ids_to_colors'] = {str(id_): color for id_, color in ids_to_colors}
 
     @staticmethod
-    def label_map_from_masks(masks: MultiBlock) -> ImageData:
+    def label_map_from_masks(masks: MultiBlock[Any]) -> ImageData:
         # Create label map array from segmentation masks
         # Initialize array with background values (zeros)
         """Create a label map image from segmentation masks.

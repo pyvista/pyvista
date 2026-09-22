@@ -2,49 +2,23 @@
 
 from __future__ import annotations
 
-import numpy as np
 from type_assert import assert_types
 
 import pyvista as pv
-
-
-def poly() -> pv.PolyData:
-    """Return a sphere."""
-    return pv.Sphere(theta_resolution=8, phi_resolution=8)
-
-
-def pointset() -> pv.PointSet:
-    """Return a point cloud."""
-    return pv.PointSet(poly().points)
-
-
-def image() -> pv.ImageData:
-    """Return a small uniform grid."""
-    return pv.ImageData(dimensions=(5, 5, 5), spacing=(0.25, 0.25, 0.25), origin=(-0.5, -0.5, -0.5))
-
-
-def structured() -> pv.StructuredGrid:
-    """Return a small structured grid."""
-    axis = np.linspace(-0.5, 0.5, 5)
-    x, y, z = np.meshgrid(axis, axis, axis, indexing='ij')
-    return pv.StructuredGrid(x, y, z)
-
-
-def unstructured() -> pv.UnstructuredGrid:
-    """Return a small unstructured grid."""
-    return image().cast_to_unstructured_grid()
-
-
-def multiblock() -> pv.MultiBlock:
-    """Return a composite of two meshes."""
-    return pv.MultiBlock([poly(), image()])
-
-
-def explicit_structured() -> pv.ExplicitStructuredGrid:
-    """Return a small explicit structured grid, which is not an UnstructuredGrid."""
-    grid = structured()
-    grid.dimensions = [5, 5, 5]
-    return grid.cast_to_explicit_structured_grid()
+from tests.typing.meshes import explicit_structured
+from tests.typing.meshes import image
+from tests.typing.meshes import multiblock
+from tests.typing.meshes import multiblock_dataset
+from tests.typing.meshes import multiblock_image
+from tests.typing.meshes import multiblock_optional_image
+from tests.typing.meshes import multiblock_optional_pointset
+from tests.typing.meshes import multiblock_optional_poly
+from tests.typing.meshes import multiblock_pointset
+from tests.typing.meshes import multiblock_poly
+from tests.typing.meshes import multiblock_unstructured
+from tests.typing.meshes import pointset
+from tests.typing.meshes import poly
+from tests.typing.meshes import unstructured
 
 
 def a_flag() -> bool:
@@ -79,3 +53,18 @@ assert_types(multiblock().clip(return_clipped=a_flag()), pv.MultiBlock | tuple[p
 assert_types(poly().clip(inplace=True), pv.PolyData)
 assert_types(pointset().clip(inplace=True), pv.PointSet)
 assert_types(unstructured().clip(inplace=True), pv.UnstructuredGrid)
+
+# A declared block type follows the filter through
+assert_types(multiblock_poly().clip(), pv.MultiBlock[pv.PolyData])
+assert_types(multiblock_image().clip(), pv.MultiBlock[pv.UnstructuredGrid])
+assert_types(multiblock_poly().clip(return_clipped=True), tuple[pv.MultiBlock[pv.PolyData], pv.MultiBlock[pv.PolyData]])
+assert_types(multiblock_pointset().clip(), pv.MultiBlock[pv.PointSet])
+assert_types(multiblock_unstructured().clip(), pv.MultiBlock[pv.UnstructuredGrid])
+
+# An empty block survives the filter
+assert_types(multiblock_optional_poly().clip(), pv.MultiBlock[pv.PolyData | None])
+assert_types(multiblock_optional_image().clip(), pv.MultiBlock[pv.UnstructuredGrid | None])
+assert_types(multiblock_optional_pointset().clip(), pv.MultiBlock[pv.PointSet | None])
+
+# A block type declared only as `DataSet` takes the widest single-mesh return
+assert_types(multiblock_dataset().clip(), pv.MultiBlock[pv.UnstructuredGrid])

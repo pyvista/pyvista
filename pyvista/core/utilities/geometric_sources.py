@@ -3264,7 +3264,9 @@ class AxesGeometrySource(_NoNewAttrMixin):
         # Init datasets
         names = ['x_shaft', 'y_shaft', 'z_shaft', 'x_tip', 'y_tip', 'z_tip']
         polys = [pv.PolyData() for _ in range(len(names))]
-        self._output = pv.MultiBlock(dict(zip(names, polys, strict=True)))
+        self._output: pv.MultiBlock[pv.PolyData] = pv.MultiBlock(
+            dict(zip(names, polys, strict=True))
+        )
 
         # Store shaft/tip references in separate vars for convenience
         self._shaft_datasets = (polys[0], polys[1], polys[2])
@@ -3668,7 +3670,7 @@ class AxesGeometrySource(_NoNewAttrMixin):
             )
 
     @property
-    def output(self: AxesGeometrySource) -> MultiBlock:
+    def output(self: AxesGeometrySource) -> MultiBlock[PolyData]:
         """Get the output of the source.
 
         The output is a :class:`pyvista.MultiBlock` with six blocks: one for each part
@@ -3830,7 +3832,7 @@ class OrthogonalPlanesSource(_NoNewAttrMixin):
         names: Sequence[str] = ('yz', 'zx', 'xy'),
     ) -> None:
         # Init sources and the output dataset
-        self._output = pv.MultiBlock([pv.PolyData() for _ in range(3)])
+        self._output: pv.MultiBlock[pv.PolyData] = pv.MultiBlock([pv.PolyData() for _ in range(3)])
         self.sources = tuple(pv.PlaneSource() for _ in range(3))
 
         # Init properties
@@ -3988,7 +3990,7 @@ class OrthogonalPlanesSource(_NoNewAttrMixin):
             plane.copy_from(source.output)
 
     @property
-    def output(self: OrthogonalPlanesSource) -> MultiBlock:
+    def output(self: OrthogonalPlanesSource) -> MultiBlock[PolyData]:
         """Get the output of the source.
 
         The output is a :class:`pyvista.MultiBlock` with three blocks: one for each
