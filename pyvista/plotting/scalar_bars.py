@@ -655,9 +655,10 @@ class ScalarBars(_NoNewAttrMixin):
             fit['applied'] = _layout_settings(scalar_bar)
             return
 
-        if fit['sized']:
-            # A box given a size keeps it, and the labels are held apart at a size the
-            # ramp it leaves them has room for
+        if fit['sized'] or _turned_title(scalar_bar):
+            # A box given a size keeps it, and so does one whose title is turned
+            # alongside the bar rather than drawn across its end; either way the labels
+            # are held apart at a size the ramp the box leaves them has room for
             label_text.SetFontSize(fitted_label_font())
             self._place_widget(fit['key'], scalar_bar)
             fit['applied'] = _layout_settings(scalar_bar)
@@ -1719,7 +1720,7 @@ class ScalarBars(_NoNewAttrMixin):
                 bar_width = width * viewport_width
                 title_text.SetLineOffset(-_rotated_title_offset(bar_width, title_height, pad))
                 # The labels beside a turned title are held apart like any other bar's
-                keep_fitted = not draws_box
+                keep_fitted = True
             else:
                 # The box is free to grow and the bar has not been placed yet, or the
                 # text has to be fitted to a bar that is not free to grow around it

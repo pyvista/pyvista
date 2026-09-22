@@ -2023,15 +2023,22 @@ def test_fit_fonts_hold_the_labels_of_a_vertical_box_apart(sphere, box):
         assert getattr(bar, f'Get{name.capitalize()}')() == pytest.approx(given)
 
 
+@pytest.mark.parametrize('box', [{}, {'outline': True}], ids=['bare', 'boxed'])
 @pytest.mark.needs_vtk_version(9, 4, 0, reason='ForceVerticalTitle was added in VTK 9.4.0')
-def test_fit_fonts_hold_the_labels_beside_a_turned_title_apart(sphere):
+def test_fit_fonts_hold_the_labels_beside_a_turned_title_apart(sphere, box):
     # A turned title keeps its seat alongside the bar, and the labels are held apart
-    # along the whole ramp it leaves them
+    # along the whole ramp it leaves them, inside a box as well as without one
     pl = pv.Plotter(window_size=SMALL_WINDOW)
     pl.background_color = 'white'
     pl.add_mesh(sphere, show_scalar_bar=False)
     bar = _wide_bar(
-        pl, sphere, vertical=True, n_labels=CROWDED_LABELS, color='blue', rotate_title=True
+        pl,
+        sphere,
+        vertical=True,
+        n_labels=CROWDED_LABELS,
+        color='blue',
+        rotate_title=True,
+        **box,
     )
     pl.screenshot(return_img=True)
 
