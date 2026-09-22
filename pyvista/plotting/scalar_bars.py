@@ -19,6 +19,10 @@ from pyvista.core.utilities.misc import _NoNewAttrMixin
 from .colors import Color
 from .tools import parse_font_family
 
+# The sizes VTK's constrained layout shrinks a font down to, and grows it up to
+_SMALLEST_FONT = 3
+_LARGEST_FONT = 100
+
 
 def _title_width(text_property, title, dpi):
     """Return the width in pixels of a title rendered with this text property."""
@@ -38,6 +42,7 @@ def _format_label(fmt, value):
 def _custom_anchor(value, *, first, low, span, log_scale):
     """Return where along the ramp a custom tick sits, or ``-1`` where it has no place on it."""
     if span <= 0:
+        # A flat range draws the one tick at its value, in the middle of the ramp
         return 0.5 if value == first else -1.0
     if log_scale:
         return (math.log10(value) - low) / span if value > 0 else -1.0
@@ -189,10 +194,10 @@ def _fitting_font(size_of, target_width, target_height, *, start):
         width, height = size_of(font_size)
         return width <= target_width and height <= target_height
 
-    font_size = max(start, 3)
+    font_size = max(start, _SMALLEST_FONT)
     if not fits(font_size):
         return _shrunk_font(fits, start=font_size, floor=True)
-    while font_size < 100 and fits(font_size + 1):
+    while font_size < _LARGEST_FONT and fits(font_size + 1):
         font_size += 1
     return font_size
 
@@ -204,7 +209,7 @@ def _shrunk_font(fits, *, start, floor=False):
     handing back the size that was asked for.
     """
     font_size = int(start)
-    while font_size > 3 and not fits(font_size):
+    while font_size > _SMALLEST_FONT and not fits(font_size):
         font_size -= 1
     return font_size if floor or fits(font_size) else start
 
@@ -230,14 +235,15 @@ def _fitted_label_font(scalar_bar, *, vertical, title, viewport, start):
         else []
     )
     if len(ticks) < 2:
+        # A lone label has nothing to clear
         return start
 
     label_text = scalar_bar.GetLabelTextProperty()
     text_pad = scalar_bar.GetTextPad()
     box_width, box_height = _box_pixels(scalar_bar, viewport)
-    # VTK thins the ramp by a share of a text pad before it sizes the swatches beside it
+    # VTK thins the ramp before it sizes the swatches beside it
     thickness = math.ceil(scalar_bar.GetBarRatio() * (box_width if vertical else box_height))
-    ramp = int(thickness - min(thickness / 8, text_pad))
+    ramp = int(thickness - _nudge(thickness, text_pad))
     if vertical:
         # The bar gives up the end its title is drawn across, and the labels are stacked
         # along what is left of the ramp
@@ -295,19 +301,30 @@ def _set_box_height(scalar_bar, viewport, pixels):
     scalar_bar.SetHeight(height + (pixels - measured) / viewport_height)
 
 
+def _nudge(thickness, text_pad):
+    """Return how far VTK thins a bar of this thickness to keep its ramp off the frame.
+
+    The nudge is an eighth of the thickness, up to a text pad.
+    """
+    return min(thickness / 8, text_pad)
+
+
 def _lifted_ramp(ramp, text_pad):
     """Return the bar thickness VTK thins to ``ramp`` and how far it lifts the ramp."""
     thickness = ramp
-    while int(thickness - min(thickness / 8, text_pad)) != ramp:
+    while int(thickness - _nudge(thickness, text_pad)) != ramp:
         thickness += 1
-    return thickness, int(min(thickness / 8, text_pad))
+    return thickness, int(_nudge(thickness, text_pad))
 
 
 def _swatch_sizes(scalar_bar, length, thickness):
     """Return the pad VTK leaves around a bar's swatches and the size of each one."""
     notes = scalar_bar.GetLookupTable().GetNumberOfAnnotatedValues()
     per_note = int(length) // notes if notes else 0
+    # The pad is a quarter of the length each annotation gets, up to four pixels
     swatch_pad = 4.0 if not notes or per_note > 16 else per_note / 4
+    # A swatch is as deep as the ramp, up to a quarter of the length, and no less than
+    # four pixels on a bar over sixteen long
     size = max(min(thickness, int(length) // 4), 4 * (length > 16))
     drawn = (
         scalar_bar.GetDrawNanAnnotation(),
@@ -336,10 +353,11 @@ def _tick_run(scalar_bar, *, height, thickness, title_height, text_pad):
     The ramp is cleared of every swatch and of the title drawn across its end.
     """
     swatch_pad, nan, below, above = _swatch_sizes(scalar_bar, height, thickness)
+    # VTK pads the box at either end and between the title and the labels
     span = height - title_height - 3 * text_pad - scalar_bar.GetVerticalTitleSeparation()
     for size in (nan, below, above):
         if size:
-            # A swatch gives the text pad back once it is deep enough to spare it
+            # A swatch deeper than two text pads gives one of them back
             span -= (size - text_pad if size > 2 * text_pad else size) + swatch_pad
     return span
 
@@ -367,7 +385,7 @@ def _constrained_box(scalar_bar, *, title, pad, viewport, keep_height=False):
     thickness = math.ceil(
         scalar_bar.GetHeight() * viewport.GetSize()[1] * scalar_bar.GetBarRatio()
     )
-    ramp = int(thickness - min(thickness / 8, scalar_bar.GetTextPad()))
+    ramp = int(thickness - _nudge(thickness, scalar_bar.GetTextPad()))
     labels = _label_texts(scalar_bar)
 
     def title_sizes(font_size):
@@ -382,7 +400,7 @@ def _constrained_box(scalar_bar, *, title, pad, viewport, keep_height=False):
         if not title:
             return 0.0, 0.0
         font_size = title_text.GetFontSize()
-        while font_size > 3 and title_sizes(font_size)[0] > box_width - 2 * text_pad:
+        while font_size > _SMALLEST_FONT and title_sizes(font_size)[0] > box_width - 2 * text_pad:
             font_size -= 1
         return title_sizes(font_size)
 
@@ -397,7 +415,7 @@ def _constrained_box(scalar_bar, *, title, pad, viewport, keep_height=False):
             return 0.0, 0.0
         slot = label_slot(text_pad, ramp)
         font_size = label_text.GetFontSize()
-        while font_size > 3 and label_sizes(font_size)[0] > slot:
+        while font_size > _SMALLEST_FONT and label_sizes(font_size)[0] > slot:
             font_size -= 1
         return label_sizes(font_size)
 
