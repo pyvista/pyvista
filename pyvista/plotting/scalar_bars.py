@@ -50,7 +50,7 @@ def _custom_anchor(value, *, first, low, span, log_scale):
 
 
 def _label_ticks(scalar_bar):
-    """Return where along the ramp each tick label is anchored, drawn or not, and its text."""
+    """Return the anchor along the ramp and the text of every tick label laid out."""
     fmt = scalar_bar.GetLabelFormat()
     lookup_table = scalar_bar.GetLookupTable()
     first, last = lookup_table.GetRange()
