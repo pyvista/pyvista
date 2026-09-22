@@ -1103,7 +1103,9 @@ class _Font(_ConfigBase):
     def title_size(self) -> int:  # numpydoc ignore=RT01
         """Return or set the title size.
 
-        If ``None``, then VTK uses ``UnconstrainedFontSizeOn`` for titles.
+        A scalar bar draws its title at this size where it has the room for it
+        and smaller where it does not.  If ``None``, the size is fitted to the
+        bar the title is drawn on.
 
         Examples
         --------
@@ -1124,7 +1126,9 @@ class _Font(_ConfigBase):
     def label_size(self) -> int:  # numpydoc ignore=RT01
         """Return or set the label size.
 
-        If ``None``, then VTK uses ``UnconstrainedFontSizeOn`` for labels.
+        A scalar bar draws its label at this size where it has the room for it
+        and smaller where it does not.  If ``None``, the size is fitted to the
+        bar the label is drawn on.
 
         Examples
         --------
