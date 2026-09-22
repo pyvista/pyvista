@@ -2167,20 +2167,21 @@ def test_label_ticks_place_custom_values_on_a_log_ramp(sphere):
 
 @pytest.mark.parametrize('indexed', [True, False], ids=['indexed', 'no_labels'])
 def test_fit_fonts_leave_a_bar_with_no_tick_labels_alone(sphere, indexed: bool):
-    # A bar that draws no tick labels has none to find room for
-    clim = (0.0, 10.0)
-    sphere[KEY] = np.linspace(*clim, sphere.n_points)
+    # A bar that draws no tick labels has none to find room for, so it keeps the size it
+    # asked for where labels it drew would have been shrunk
+    sphere[WIDE_KEY] = np.linspace(*WIDE_RANGE, sphere.n_points)
     table = pv.LookupTable(cmap='viridis')
-    table.scalar_range = clim
+    table.scalar_range = WIDE_RANGE
     table.SetIndexedLookup(indexed)
 
     pl = pv.Plotter(window_size=SMALL_WINDOW)
     pl.add_mesh(sphere, show_scalar_bar=False)
     bar = pl.add_scalar_bar(
-        KEY,
+        WIDE_KEY,
         lookup_table=table,
-        # An indexed lookup draws none of the five labels it is given; none turns them off
-        n_labels=5 if indexed else 0,
+        vertical=False,
+        # An indexed lookup draws none of the labels it is given; none turns them off
+        n_labels=CROWDED_LABELS if indexed else 0,
         label_font_size=WIDE_FONT,
         title_font_size=WIDE_FONT,
     )
