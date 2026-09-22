@@ -212,13 +212,12 @@ def _fitted_fonts(scalar_bar, *, vertical, title, viewport, fonts):
     if title and not vertical:
         title_font = _shrunk_font(title_fits, start=title_font)
 
-    # An indexed lookup is drawn with annotations in place of ticks, and a tick whose
-    # value falls outside the range is laid out but not drawn
-    ticks = (
-        []
-        if scalar_bar.GetLookupTable().GetIndexedLookup()
-        else [tick for tick in _label_ticks(scalar_bar) if 0 <= tick[0] <= 1]
+    # A bar can turn its tick labels off, an indexed lookup draws annotations in their
+    # place, and a tick whose value falls outside the range is laid out but not drawn
+    draws_ticks = scalar_bar.GetDrawTickLabels() and not (
+        scalar_bar.GetLookupTable().GetIndexedLookup()
     )
+    ticks = [tick for tick in _label_ticks(scalar_bar) if 0 <= tick[0] <= 1] if draws_ticks else []
     if not ticks:
         return title_font, label_font
     ticks.sort()

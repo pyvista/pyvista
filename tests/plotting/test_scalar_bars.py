@@ -1867,3 +1867,27 @@ def test_fit_fonts_skip_the_ticks_a_flat_range_hides(sphere):
 
     assert [anchor for anchor, _ in _label_ticks(bar)] == [-1.0, 0.5, -1.0]
     assert bar.GetLabelTextProperty().GetFontSize() == WIDE_FONT
+
+
+@pytest.mark.parametrize('indexed', [True, False], ids=['indexed', 'no_labels'])
+def test_fit_fonts_leave_a_bar_with_no_tick_labels_alone(sphere, indexed: bool):
+    # A bar that draws no tick labels has none to find room for
+    sphere[KEY] = np.linspace(0, 10, sphere.n_points)
+    table = pv.LookupTable(cmap='viridis')
+    table.scalar_range = (0, 10)
+    table.SetIndexedLookup(indexed)
+
+    pl = pv.Plotter(window_size=[400, 300])
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = pl.add_scalar_bar(
+        KEY,
+        lookup_table=table,
+        n_labels=5 if indexed else 0,
+        label_font_size=WIDE_FONT,
+        title_font_size=WIDE_FONT,
+    )
+    pl.screenshot(return_img=True)
+
+    assert bar.GetLabelTextProperty().GetFontSize() == WIDE_FONT
+
+
