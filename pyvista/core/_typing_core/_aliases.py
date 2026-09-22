@@ -28,12 +28,11 @@ else:
 # NOTE:
 # Type aliases are automatically expanded in the documentation.
 # To document an alias as-is without expansion, the alias should be:
-#   (1) added to the "autodoc_type_aliases" dictionary in /doc/source/conf.py
-#   (2) added to /doc/core/typing.rst
-#   (3) added to the "numpydoc_validation" excludes in pyproject.toml
+#   (1) added to "_TYPE_ALIASES" in /doc/source/conf.py
+#   (2) added to /doc/source/api/core/typing.rst
 #
 # Long or complex type aliases (e.g. a union of 4 or more base types) should
-# always be added to the dictionary and documented
+# always be added to the list and documented
 Number = Union[int, float]
 VectorLike = _ArrayLike1D[NumberType]
 MatrixLike = _ArrayLike2D[NumberType]

@@ -46,6 +46,14 @@ Includes sequences and numpy arrays.
 
 .. autodata:: VectorLike
 
+pyvista.NumpyArray
+~~~~~~~~~~~~~~~~~~
+NumPy array with numerical values.
+
+.. currentmodule:: pyvista
+
+.. autodata:: NumpyArray
+
 
 VTK Related Types
 -----------------

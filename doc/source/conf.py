@@ -16,6 +16,7 @@ import warnings
 from docutils import nodes
 from docutils.parsers.rst.directives.images import Image
 from sphinx import addnodes
+from sphinx.util.inspect import TypeAliasForwardRef
 from sphinx_autocodelink.gallery import AutoCodeLinkScraper
 
 if TYPE_CHECKING:
@@ -169,27 +170,38 @@ duration_n_slowest = 50
 duration_write_json = None
 
 
+# Documented type aliases, linked by name rather than expanded
+_TYPE_ALIASES = [
+    'ArrayLike',
+    'CameraPositionOptions',
+    'CellArrayLike',
+    'CellsLike',
+    'Chart',
+    'ColorLike',
+    'InteractionEventType',
+    'JupyterBackendOptions',
+    'MatrixLike',
+    'MeshValidationFields',
+    'NumberType',
+    'NumpyArray',
+    'RotationLike',
+    'TransformLike',
+    'VectorLike',
+]
+
 # Configuration for sphinx.ext.autodoc
-# Do not expand following type aliases when generating the docs
 autodoc_type_aliases = {
-    'CameraPositionOptions': 'pyvista.CameraPositionOptions',
-    'JupyterBackendOptions': 'pyvista.JupyterBackendOptions',
-    'MeshValidationFields': 'pyvista.MeshValidationFields',
-    'Chart': 'pyvista.Chart',
+    **{name: f'~pyvista.{name}' for name in _TYPE_ALIASES},
     'FrameType': 'types.FrameType',
-    'ColorLike': 'pyvista.ColorLike',
     # generated from the example names; render it as a name, not 222 literals
     'ExampleName': 'ExampleName',
-    'ArrayLike': 'pyvista.ArrayLike',
-    'VectorLike': 'pyvista.VectorLike',
-    'MatrixLike': 'pyvista.MatrixLike',
-    'BoundsLike': 'pyvista.BoundsLike',
-    'CellsLike': 'pyvista.CellsLike',
-    'CellArrayLike': 'pyvista.CellArrayLike',
-    'TransformLike': 'pyvista.TransformLike',
-    'RotationLike': 'pyvista.RotationLike',
-    'InteractionEventType': 'pyvista.InteractionEventType',
 }
+
+# Render aliases nested in unions and generics by name, see sphinx-doc/sphinx#14003
+TypeAliasForwardRef.__repr__ = lambda self: self.name
+
+# Link the TypeVar in rendered aliases to its documented location
+pv.NumberType.__module__ = 'pyvista'
 
 # Enable ANSI coloring for programoutput, using erbsland.sphinx.ansi
 programoutput_use_ansi = True
@@ -208,6 +220,8 @@ maximum_signature_line_length = 88
 numpydoc_use_plots = True
 numpydoc_show_class_members = False
 numpydoc_xref_param_type = True
+# Link docstring types such as ``VectorLike[float]`` from any module
+numpydoc_xref_aliases = {name: f'pyvista.{name}' for name in _TYPE_ALIASES}
 
 sphinx_examples_as_code_conf = {
     # Replace sphinx-gallery's own per-example download footer/note with
@@ -222,34 +236,18 @@ vtk_xref_nitpicky = False
 nitpicky = True
 # Except ignore these entries
 nitpick_ignore_regex = [
-    # NOTE: We need to ignore any/all pyvista objects which are used as type hints
-    # in function signatures since these are not linked by sphinx (bug).
-    # See https://github.com/pyvista/pyvista/pull/6206#issuecomment-2149138086
-    #
-    # PyVista TypeVars and TypeAliases
-    (r'py:.*', '.*ColorLike'),
+    # Undocumented PyVista TypeVars and TypeAliases
     (r'py:.*', '.*_ColorChannel'),
     (r'py:.*', '.*ImageCompareType'),
     (r'py:.*', '.*ColormapOptions'),
-    (r'py:.*', '.*ArrayLike'),
-    (r'py:.*', '.*MatrixLike'),
-    (r'py:.*', '.*VectorLike'),
-    (r'py:.*', '.*TransformLike'),
-    (r'py:.*', '.*InteractionEventType'),
     (r'py:.*', '.*InteractorStyleHandler'),
     (r'py:.*', '.*WriterHandler'),
     (r'py:.*', '.*ReaderHandler'),
     (r'py:.*', '.*ReaderProvider'),
     (r'py:.*', r'pv\.BaseReader'),
     (r'py:.*', '.*_T_Provider'),
-    (r'py:.*', '.*BoundsLike'),
-    (r'py:.*', '.*RotationLike'),
-    (r'py:.*', '.*CellsLike'),
     (r'py:.*', '.*ShapeLike'),
-    (r'py:.*', '.*NumpyArray'),
-    (r'py:.*', '.*MeshValidationFields'),
     (r'py:.*', '.*_ArrayLikeOrScalar'),
-    (r'py:.*', '.*NumberType'),
     (r'py:.*', '.*_PolyDataType'),
     (r'py:.*', '.*_UnstructuredGridType'),
     (r'py:.*', '.*_GridType'),
@@ -271,10 +269,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*_AxesPropTuple'),
     (r'py:.*', '.*_SENTINEL'),
     (r'py:.*', '.*T'),
-    (r'py:.*', '.*Options'),
-    # Python 3.14 typing internals leaked through get_type_hints() on
-    # forward-refs inside Union aliases (e.g., 'Color' inside ColorLike).
-    (r'py:.*', 'TypeAliasForwardRef'),
+    (r'py:.*', r'(.*\.)?_\w+Options'),
     #
     # Dataset-related types
     (r'py:.*', '.*DataSet'),
@@ -342,12 +337,13 @@ nitpick_ignore_regex = [
     (r'py:.*', 'BackfaceArgs'),
     (r'py:.*', 'CullingOptions'),
     (r'py:.*', 'OpacityOptions'),
-    (r'py:.*', 'CameraPositionOptions'),
     (r'py:.*', 'StyleOptions'),
     (r'py:.*', 'FontFamilyOptions'),
     (r'py:.*', 'HorizontalOptions'),
     (r'py:.*', 'VerticalOptions'),
-    (r'py:.*', '.*JupyterBackendOptions'),
+    (r'py:.*', 'BorderOptions'),
+    (r'py:.*', 'TextPositionOptions'),
+    (r'py:.*', 'ThemeOptions'),
     (r'py:.*', '_InterpolationOptions'),
     (r'py:.*', 'PlottableType'),
     (r'py:.*', '_Dimensionality'),
