@@ -7238,7 +7238,7 @@ class BasePlotter(_BoundsSizeMixin):
         *,
         factor: float = 3.0,
         n_points: int = 20,
-        viewup: Sequence[float] | None = None,
+        viewup: VectorLike[float] | None = None,
         shift: float = 0.0,
     ) -> pv.PolyData:
         """Generate an orbital path around the data scene.
@@ -7251,7 +7251,7 @@ class BasePlotter(_BoundsSizeMixin):
         n_points : int, default: 20
             Number of points on the orbital path.
 
-        viewup : sequence[float], optional
+        viewup : VectorLike[float], optional
             The normal to the orbital plane.
 
         shift : float, default: 0.0
@@ -7318,9 +7318,9 @@ class BasePlotter(_BoundsSizeMixin):
         self,
         path: pv.PolyData | None = None,
         *,
-        focus: Sequence[float] | None = None,
+        focus: VectorLike[float] | None = None,
         step: float = 0.5,
-        viewup: Sequence[float] | None = None,
+        viewup: VectorLike[float] | None = None,
         write_frames: bool = False,
         threaded: bool = False,
         progress_bar: bool = False,
@@ -7333,14 +7333,14 @@ class BasePlotter(_BoundsSizeMixin):
             Path of orbital points. The order in the points is the order of
             travel.
 
-        focus : sequence[float], optional
+        focus : VectorLike[float], optional
             The point of focus the camera. For example ``(0.0, 0.0, 0.0)``.
 
         step : float, default: 0.5
             The timestep between flying to each camera position. Ignored when
             ``plotter.off_screen = True``.
 
-        viewup : sequence[float], optional
+        viewup : VectorLike[float], optional
             The normal to the orbital plane.
 
         write_frames : bool, default: False

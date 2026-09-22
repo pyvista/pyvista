@@ -108,6 +108,7 @@ PropertyCullingOptions = CullingOptions | Literal['none'] | bool
 RepresentationOptions = Literal['surface', 'wireframe', 'points']
 StyleOptions = RepresentationOptions | Literal['points_gaussian']
 LightingOptions = Literal['light kit', 'three lights', 'none']
+TrameModeOptions = Literal['trame', 'server', 'client']
 BorderOptions = Literal[True, False, 'interior', 'exterior']
 # Distinct, user-facing built-in theme names, for autocomplete only. Excludes
 # 'default'/'vtk' (legacy aliases for 'document'/the base Theme) and
