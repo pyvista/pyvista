@@ -784,14 +784,6 @@ def _blue_ink(pl):
 
 def _drawn_box(pl, bar):
     """Return the box drawn around a bar in pixels, as left, bottom, width and height."""
-    for fit in pl.scalar_bars._scalar_bar_fits.values():
-        shell = fit['shell']
-        drawn = shell is not None and any(actor.GetVisibility() for actor in shell)
-        if drawn and pl.scalar_bars._scalar_bar_actors.get(fit['key']) is bar:
-            frame = shell[1]
-            left, bottom = frame.GetPositionCoordinate().GetComputedViewportValue(pl.renderer)
-            bounds = frame.GetMapper().GetInput().GetBounds()
-            return left, bottom, round(bounds[1] + 0.5), round(bounds[3] + 0.5)
     left, bottom = bar.GetPositionCoordinate().GetComputedViewportValue(pl.renderer)
     return left, bottom, *_box_pixels(bar, pl.renderer)
 
@@ -1385,14 +1377,26 @@ def test_fit_box_encloses_a_turned_title(sphere, box):
 
     dpi = pl.render_window.GetDPI()
     title_text = bar.GetTitleTextProperty()
-    # The far-side offset would carry the title out of the box it is laid out inside
-    assert title_text.GetLineOffset() == 0
+    # The title is turned by its text property and moved beside the labels rather than
+    # to the far side of the bar, and the spaces that move it along the bar are carried
+    # past the title rather than in it
+    assert not bar.GetForceVerticalTitle()
+    assert title_text.GetOrientation() == 90
+    assert title_text.GetLineOffset() > 0
+    assert bar.GetTitle() == FIT_TITLE
     ramp = bar.GetBarRatio() * _box_pixels(bar, pl.renderer)[0]
     labels = _label_size(bar, bar.GetLabelTextProperty(), dpi)[0]
-    turned = _title_height(title_text, FIT_TITLE, dpi)
+    # The property measures the title turned and offset, so measure it flat and in place
+    probe = _vtk.vtkTextProperty()
+    probe.ShallowCopy(title_text)
+    probe.SetOrientation(0)
+    probe.SetLineOffset(0)
+    turned = _title_height(probe, FIT_TITLE, dpi)
     assert _box_pixels(bar, pl.renderer)[0] >= ramp + labels + turned
+    # The box grows around the ramp by the half label reaching past its top
     label_height = _label_size(bar, bar.GetLabelTextProperty(), dpi)[1]
-    assert _drawn_box(pl, bar)[3] >= _box_pixels(bar, pl.renderer)[1] + label_height
+    asked = pl.theme.colorbar_vertical.height * 768
+    assert _box_pixels(bar, pl.renderer)[1] >= asked + label_height / 2
     assert _registered(pl, bar)
     assert not _text_outside_the_box(pl, bar)
     # The box reaches no further past the top label than the pad and the line, and the
@@ -1467,8 +1471,11 @@ def test_fit_box_keeps_a_turned_bar_the_height_it_was_given(sphere):
     )
     pl.screenshot(return_img=True)
 
-    assert _drawn_box(pl, bar)[3] == pytest.approx(0.6 * 768, abs=1)
-    assert _box_pixels(bar, pl.renderer)[1] < 0.6 * 768
+    assert _box_pixels(bar, pl.renderer)[1] == pytest.approx(0.6 * 768, abs=1)
+    # The ramp is held back from the top for the label centered on its end
+    label_height = _label_size(bar, bar.GetLabelTextProperty(), pl.render_window.GetDPI())[1]
+    _, bar_bottom = bar.GetPositionCoordinate().GetComputedViewportValue(pl.renderer)
+    assert _ramp_ends(pl, bar)[1] <= bar_bottom + 0.6 * 768 - label_height / 2
     assert _registered(pl, bar)
     assert not _text_outside_the_box(pl, bar)
 
@@ -1476,8 +1483,8 @@ def test_fit_box_keeps_a_turned_bar_the_height_it_was_given(sphere):
 @pytest.mark.needs_vtk_version(9, 4, 0, reason='ForceVerticalTitle was added in VTK 9.4.0')
 def test_fit_box_lets_a_swatch_hold_a_turned_bar_label(sphere):
     # A swatch drawn above the ramp already holds the top label off the frame, so the
-    # box reaches past the ramp only at the bottom.  VTK draws the swatch's annotation
-    # on the far side of the ramp, outside any box, so the ink is not checked
+    # box has no half label to grow by.  VTK draws the swatch's annotation on the far
+    # side of the ramp, outside any box, so the ink is not checked
     sphere[KEY] = sphere.points[:, 2]
 
     pl = pv.Plotter(window_size=[1024, 768])
@@ -1495,10 +1502,8 @@ def test_fit_box_lets_a_swatch_hold_a_turned_bar_label(sphere):
     )
     pl.screenshot(return_img=True)
 
-    _, bottom, _, height = _drawn_box(pl, bar)
-    _, bar_bottom = bar.GetPositionCoordinate().GetComputedViewportValue(pl.renderer)
-    assert bottom < bar_bottom
-    assert bottom + height == bar_bottom + _box_pixels(bar, pl.renderer)[1]
+    asked = pl.theme.colorbar_vertical.height * 768
+    assert _box_pixels(bar, pl.renderer)[1] <= asked + 4
     assert _registered(pl, bar)
 
 
@@ -1524,10 +1529,8 @@ def test_fit_box_moves_a_turned_bar_box_with_it(sphere):
     pl.screenshot(return_img=True)
 
     left, bottom, width, _ = _drawn_box(pl, bar)
-    bar_left, _ = bar.GetPositionCoordinate().GetComputedViewportValue(pl.renderer)
     # A vertical box is anchored at its right edge and grows away from it
     assert bottom == pytest.approx(0.2 * 768, abs=1)
-    assert (left, width) == (bar_left, _box_pixels(bar, pl.renderer)[0])
     assert left + width == pytest.approx((0.1 + pl.theme.colorbar_vertical.width) * 1024, abs=1)
     assert not _text_outside_the_box(pl, bar)
 
@@ -1551,7 +1554,6 @@ def test_fit_box_takes_a_turned_bar_box_away_with_it(sphere, gone):
         color='blue',
     )
     assert _blue_ink(pl).any()
-    assert bar.GetFrameProperty().GetOpacity() == 0.0
 
     if gone == 'hidden':
         bar.SetVisibility(False)
@@ -1561,36 +1563,6 @@ def test_fit_box_takes_a_turned_bar_box_away_with_it(sphere, gone):
         pl.remove_actor(bar)
 
     assert not _blue_ink(pl).any()
-    if gone == 'removed':
-        # The bar gets its own frame back, for wherever it is drawn next
-        assert bar.GetFrameProperty().GetOpacity() == 1.0
-
-
-@pytest.mark.needs_vtk_version(9, 4, 0, reason='ForceVerticalTitle was added in VTK 9.4.0')
-def test_fit_box_keeps_an_opacity_set_on_a_turned_bar_box(sphere):
-    # The bar's own frame is drawn transparent behind the box, so an opacity set on it
-    # after the bar is added is the box's
-    sphere[KEY] = sphere.points[:, 2]
-
-    pl = pv.Plotter(window_size=[1024, 768])
-    pl.background_color = 'white'
-    pl.add_mesh(sphere, show_scalar_bar=False, cmap='autumn')
-    bar = _fitted_bar(
-        pl,
-        sphere,
-        vertical=True,
-        box={'outline': True},
-        rotate_title=True,
-        fmt='%.1f',
-        color='blue',
-    )
-    pl.screenshot(return_img=True)
-    bar.GetFrameProperty().SetOpacity(0.3)
-    pl.screenshot(return_img=True)
-
-    frame = pl.scalar_bars._scalar_bar_fits[FIT_TITLE]['shell'][1]
-    assert frame.GetProperty().GetOpacity() == pytest.approx(0.3)
-    assert bar.GetFrameProperty().GetOpacity() == 0.0
 
 
 @pytest.mark.needs_vtk_version(9, 4, 0, reason='ForceVerticalTitle was added in VTK 9.4.0')
@@ -1669,8 +1641,10 @@ def test_fit_box_frees_a_turned_title_with_its_box(sphere):
     assert offset == twin.GetTitleTextProperty().GetLineOffset()
     assert offset < 0
     assert bar.GetWidth() == twin.GetWidth()
-    shell = pl.scalar_bars._scalar_bar_fits[FIT_TITLE]['shell']
-    assert not any(actor.GetVisibility() for actor in shell)
+    # The bar turns the title itself again
+    assert bar.GetForceVerticalTitle()
+    assert bar.GetTitleTextProperty().GetOrientation() == 0
+    assert bar.GetComponentTitle() == ''
 
 
 def test_fit_box_shrinks_a_sized_vertical_title(sphere):
