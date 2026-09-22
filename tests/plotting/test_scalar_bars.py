@@ -1256,6 +1256,116 @@ def test_fit_box_keeps_a_given_size(sphere, sizing, box):
         assert getattr(bar, f'Get{name.capitalize()}')() == pytest.approx(given)
 
 
+@pytest.mark.parametrize('box', BOXES, ids=BOX_IDS)
+def test_fit_box_seats_a_sized_vertical_title(sphere, box):
+    # A vertical box kept at a size of its own holds its title inside itself rather than
+    # across the top edge the layout lifts the title through
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=[1024, 768])
+    pl.background_color = 'white'
+    pl.add_mesh(sphere, show_scalar_bar=False, cmap='autumn')
+    bar = _fitted_bar(
+        pl,
+        sphere,
+        vertical=True,
+        box=box,
+        fmt='%.1f',
+        width=0.25,
+        height=0.6,
+        position_x=0.6,
+        position_y=0.2,
+        color='blue',
+    )
+
+    assert bar.GetWidth() == pytest.approx(0.25)
+    assert bar.GetHeight() == pytest.approx(0.6)
+    assert bar.GetTitleTextProperty().GetFontSize() == 24
+    assert bar.GetTitleTextProperty().GetLineOffset() > 0
+    assert not _text_outside_the_box(pl, bar)
+
+
+def test_fit_box_shrinks_a_sized_vertical_title(sphere):
+    # A title wider than the box it was given is shrunk to it, and the labels keep the
+    # size they asked for
+    sphere[KEY] = sphere.points[:, 2]
+    title = 'Elevation above the reference ellipsoid, in metres'
+
+    pl = pv.Plotter(window_size=[1024, 768])
+    pl.background_color = 'white'
+    pl.add_mesh(sphere, show_scalar_bar=False, cmap='autumn')
+    bar = pl.add_scalar_bar(
+        title,
+        vertical=True,
+        outline=True,
+        fmt='%.1f',
+        width=0.25,
+        height=0.6,
+        position_x=0.6,
+        position_y=0.2,
+        title_font_size=24,
+        label_font_size=20,
+        n_labels=5,
+        color='blue',
+        mapper=pv.DataSetMapper(sphere),
+    )
+
+    assert bar.GetTitleTextProperty().GetFontSize() < 24
+    assert bar.GetLabelTextProperty().GetFontSize() == 20
+    assert not _text_outside_the_box(pl, bar)
+
+
+def test_fit_box_shrinks_sized_vertical_labels(sphere):
+    # Labels wider than the room left beside the ramp are shrunk to it, and the title
+    # keeps the size it asked for
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=[1024, 768])
+    pl.background_color = 'white'
+    pl.add_mesh(sphere, show_scalar_bar=False, cmap='autumn')
+    bar = pl.add_scalar_bar(
+        'Depth',
+        vertical=True,
+        outline=True,
+        fmt='%.6f',
+        width=0.12,
+        height=0.6,
+        position_x=0.6,
+        position_y=0.2,
+        title_font_size=24,
+        label_font_size=20,
+        n_labels=5,
+        color='blue',
+        mapper=pv.DataSetMapper(sphere),
+    )
+
+    assert bar.GetLabelTextProperty().GetFontSize() < 20
+    assert bar.GetTitleTextProperty().GetFontSize() == 24
+    assert not _text_outside_the_box(pl, bar)
+
+
+def test_fit_box_refits_a_sized_vertical_bar(sphere):
+    # The box is a fraction of the window and the text is not, so the text is fitted to
+    # the box again whenever the window changes, and gets its size back when there is room
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=[1400, 700])
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = _fitted_bar(
+        pl, sphere, vertical=True, box={'outline': True}, fmt='%.1f', width=0.15, height=0.6
+    )
+    pl.screenshot(return_img=True)
+    assert bar.GetTitleTextProperty().GetFontSize() == 24
+
+    pl.window_size = [500, 700]
+    pl.screenshot(return_img=True)
+    assert bar.GetTitleTextProperty().GetFontSize() < 24
+
+    pl.window_size = [1400, 700]
+    pl.screenshot(return_img=True)
+    assert bar.GetTitleTextProperty().GetFontSize() == 24
+
+
 @pytest.mark.parametrize('window_size', [[400, 300], [1400, 1000]], ids=['small', 'large'])
 @pytest.mark.parametrize('vertical', [True, False], ids=['vertical', 'horizontal'])
 def test_fit_box_holds_at_any_window_size(sphere, vertical: bool, window_size):
@@ -1463,6 +1573,17 @@ def test_fit_box_window_size_render(sphere, window_size):
     pl = pv.Plotter(window_size=window_size)
     pl.add_mesh(sphere, show_scalar_bar=False)
     _fitted_bar(pl, sphere, vertical=True, box={'outline': True})
+    pl.show()
+
+
+@pytest.mark.parametrize('box', BOXES, ids=BOX_IDS)
+@pytest.mark.usefixtures('verify_image_cache')
+def test_fit_box_sized_vertical_render(sphere, box):
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    _fitted_bar(pl, sphere, vertical=True, box=box, width=0.15, height=0.6, position_x=0.7)
     pl.show()
 
 
