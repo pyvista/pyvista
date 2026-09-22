@@ -2052,6 +2052,43 @@ def test_fit_fonts_hold_the_labels_beside_a_turned_title_apart(sphere, box):
     assert _label_runs(pl, bar) == CROWDED_LABELS
 
 
+def test_fit_fonts_size_vertical_labels_for_the_seat_their_title_takes(sphere):
+    # The title is padded off the labels by a share of their size, so shrinking them
+    # seats it closer and lengthens the run they are drawn along, and they are sized for
+    # that run rather than for the shorter one the size asked for would have left
+    title_pad = 0.5
+    sphere[WIDE_KEY] = np.linspace(*WIDE_RANGE, sphere.n_points)
+
+    pl = pv.Plotter(window_size=SMALL_WINDOW)
+    pl.background_color = 'white'
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = pl.add_scalar_bar(
+        WIDE_KEY,
+        vertical=True,
+        n_labels=CROWDED_LABELS,
+        title_font_size=12,
+        label_font_size=60,
+        title_pad=title_pad,
+        color='blue',
+        mapper=pv.DataSetMapper(sphere),
+    )
+    pl.screenshot(return_img=True)
+
+    def fitted(seat):
+        """Return the size that fits the run a title seated for ``seat`` leaves."""
+        bar.GetTitleTextProperty().SetLineOffset(-round(title_pad * seat))
+        return _fitted_label_font(
+            bar, vertical=True, title=bar.GetTitle(), viewport=pl.renderer, start=seat
+        )
+
+    font = bar.GetLabelTextProperty().GetFontSize()
+    assert bar.GetTitleTextProperty().GetLineOffset() == -round(title_pad * font)
+    assert _label_runs(pl, bar) == CROWDED_LABELS
+    # The size is the one the run it seats holds, and no size above it holds its own run
+    assert fitted(font) == font
+    assert fitted(font + 1) < font + 1
+
+
 def test_fit_fonts_follow_a_title_set_by_hand(sphere):
     # A vertical bar gives up the end its title is drawn across, so a taller title set
     # after the fit leaves the labels less room and they are fitted again

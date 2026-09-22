@@ -214,14 +214,15 @@ def _shrunk_font(fits, *, start, floor=False):
     return font_size if floor or fits(font_size) else start
 
 
-def _fitted_label_font(scalar_bar, *, vertical, title, viewport, start):
+def _fitted_label_font(scalar_bar, *, vertical, title, viewport, start, seat=None):
     """Return the largest label font size up to ``start`` that keeps the labels apart.
 
     VTK centers each tick label on its own tick and, with the font size unconstrained,
     draws the label at the size it asks for and leaves the ramp its full length, so the
     labels run into each other once the bar is shorter than the text needs.  A label is
     free to run past the edge of the viewport, and the size asked for is kept where the
-    labels clear each other at no size.
+    labels clear each other at no size.  ``seat`` places the title for a size under
+    consideration, where the room left for the labels depends on where it sits.
     """
     # A bar can turn its tick labels off, an indexed lookup draws annotations in their
     # place, and a tick whose value falls outside the range is laid out but not drawn
@@ -239,33 +240,39 @@ def _fitted_label_font(scalar_bar, *, vertical, title, viewport, start):
         return start
 
     label_text = scalar_bar.GetLabelTextProperty()
+    title_text = scalar_bar.GetTitleTextProperty()
     text_pad = scalar_bar.GetTextPad()
     box_width, box_height = _box_pixels(scalar_bar, viewport)
     # VTK thins the ramp before it sizes the swatches beside it
     thickness = math.ceil(scalar_bar.GetBarRatio() * (box_width if vertical else box_height))
     ramp = int(thickness - _nudge(thickness, text_pad))
-    if vertical:
+
+    def room_for(font_size):
+        # A title seated closer leaves the labels a longer run, so each size is measured
+        # against the room it would be drawn in
+        if seat is not None:
+            seat(font_size)
+        if not vertical:
+            # The ticks are spread along the ramp less a text pad
+            return _ramp_room(scalar_bar, box_width, ramp) - text_pad
         # The bar gives up the end its title is drawn across, and the labels are stacked
         # along what is left of the ramp
-        title_text = scalar_bar.GetTitleTextProperty()
         title_height = (
             _text_size(viewport, title_text, title, font_size=title_text.GetFontSize())[1]
             if title and not _turned_title(scalar_bar)
             else 0
         )
-        room = _tick_run(
+        return _tick_run(
             scalar_bar,
             height=box_height,
             thickness=ramp,
             title_height=title_height,
             text_pad=text_pad,
         )
-    else:
-        # The ticks are spread along the ramp less a text pad
-        room = _ramp_room(scalar_bar, box_width, ramp) - text_pad
 
     def labels_fit(font_size):
         # Each label has to clear the label before it
+        room = room_for(font_size)
         edge = None
         for anchor, text in ticks:
             # VTK draws the text into whole pixels and reports a size a pixel under the
@@ -606,29 +613,31 @@ class ScalarBars(_NoNewAttrMixin):
         label_text = scalar_bar.GetLabelTextProperty()
         draws_box = scalar_bar.GetDrawFrame() or scalar_bar.GetDrawBackground()
 
-        def fitted_label_font():
-            # The labels are measured once the title is seated, against the ramp it leaves
+        def fitted_label_font(seat=None):
+            # The labels are measured against the ramp the title they sit under leaves
             return _fitted_label_font(
                 scalar_bar,
                 vertical=fit['vertical'],
                 title=fit['title'],
                 viewport=fit['renderer'],
                 start=label_text.GetFontSize(),
+                seat=seat,
             )
+
+        def seat_title(font_size):
+            # The title is padded off the labels by a share of the size they are drawn at
+            title_text.SetLineOffset(-round(fit['title_pad'] * font_size))
 
         if not draws_box:
             # Nothing is drawn around the text, so there is nothing to fit it to, and the
-            # labels are held apart at a size the bar has room for.  The title is padded
-            # off them by their size, and seating it closer only lengthens the ramp they
-            # were fitted along
+            # labels are held apart at a size the bar has room for, with the title seated
+            # for each size the fit weighs
             scalar_bar.SetUnconstrainedFontSize(True)
             # A turned title keeps the seat that carries it alongside the bar
-            turned = _turned_title(scalar_bar)
-            if not turned:
-                title_text.SetLineOffset(-_title_pad(fit, scalar_bar))
-            label_text.SetFontSize(fitted_label_font())
-            if not turned:
-                title_text.SetLineOffset(-_title_pad(fit, scalar_bar))
+            seat = None if _turned_title(scalar_bar) else seat_title
+            label_text.SetFontSize(fitted_label_font(seat))
+            if seat is not None:
+                seat(label_text.GetFontSize())
             self._place_widget(fit['key'], scalar_bar)
             fit['applied'] = _layout_settings(scalar_bar)
             return
