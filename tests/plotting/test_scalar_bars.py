@@ -20,6 +20,7 @@ from pyvista.plotting.scalar_bars import _label_ticks
 from pyvista.plotting.scalar_bars import _lifted_ramp
 from pyvista.plotting.scalar_bars import _nudge
 from pyvista.plotting.scalar_bars import _ramp_room
+from pyvista.plotting.scalar_bars import _rotated_title_offset
 from pyvista.plotting.scalar_bars import _text_size
 from pyvista.plotting.scalar_bars import _title_height
 from pyvista.plotting.scalar_bars import _title_width
@@ -27,7 +28,7 @@ from pyvista.plotting.scalar_bars import _title_width
 KEY = 'Data'
 WIDE_KEY = 'Pressure (Pa)'
 WIDE_FONT = 22
-# Four-digit labels, too wide for a bar on a small window to hold apart at that size
+# Labels up to eight characters wide, too many for a bar on a small window to hold apart
 WIDE_RANGE = (0.0, 6932.0)
 # Enough labels to crowd a bar on a small window at the size they ask for
 CROWDED_LABELS = 9
@@ -1996,6 +1997,46 @@ def test_fit_fonts_fit_a_boxed_bar_to_the_box_it_grows(sphere):
     pl.window_size = SMALL_WINDOW
     pl.render()
     assert bar.GetLabelTextProperty().GetFontSize() == first == largest_that_fits()
+
+
+@pytest.mark.parametrize('box', [{}, {'width': 0.1, 'height': 0.4}], ids=['grown', 'sized'])
+def test_fit_fonts_hold_the_labels_of_a_vertical_box_apart(sphere, box):
+    # A vertical box keeps its text unconstrained, so its labels are held apart whether
+    # the box grows around them or keeps the size it was given
+    pl = pv.Plotter(window_size=SMALL_WINDOW)
+    pl.background_color = 'white'
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = _wide_bar(
+        pl, sphere, vertical=True, n_labels=CROWDED_LABELS, color='blue', outline=True, **box
+    )
+    pl.screenshot(return_img=True)
+
+    assert bar.GetLabelTextProperty().GetFontSize() < WIDE_FONT
+    assert _label_runs(pl, bar) == CROWDED_LABELS
+    for name, given in box.items():
+        assert getattr(bar, f'Get{name.capitalize()}')() == pytest.approx(given)
+
+
+@pytest.mark.needs_vtk_version(9, 4, 0, reason='ForceVerticalTitle was added in VTK 9.4.0')
+def test_fit_fonts_hold_the_labels_beside_a_turned_title_apart(sphere):
+    # A turned title keeps its seat alongside the bar, and the labels are held apart
+    # along the whole ramp it leaves them
+    pl = pv.Plotter(window_size=SMALL_WINDOW)
+    pl.background_color = 'white'
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = _wide_bar(
+        pl, sphere, vertical=True, n_labels=CROWDED_LABELS, color='blue', rotate_title=True
+    )
+    pl.screenshot(return_img=True)
+
+    dpi = pl.render_window.GetDPI()
+    pad = round(pl.theme.colorbar_vertical.title_pad * WIDE_FONT)
+    seat = _rotated_title_offset(
+        bar.GetWidth() * SMALL_WINDOW[0], _bar_title_height(bar, dpi), pad
+    )
+    assert bar.GetTitleTextProperty().GetLineOffset() == -seat
+    assert bar.GetLabelTextProperty().GetFontSize() < WIDE_FONT
+    assert _label_runs(pl, bar) == CROWDED_LABELS
 
 
 def test_fit_fonts_follow_a_title_set_by_hand(sphere):

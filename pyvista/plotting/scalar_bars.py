@@ -250,7 +250,7 @@ def _fitted_label_font(scalar_bar, *, vertical, title, viewport, start):
         title_text = scalar_bar.GetTitleTextProperty()
         title_height = (
             _text_size(viewport, title_text, title, font_size=title_text.GetFontSize())[1]
-            if title
+            if title and not _turned_title(scalar_bar)
             else 0
         )
         room = _tick_run(
@@ -622,9 +622,13 @@ class ScalarBars(_NoNewAttrMixin):
             # off them by their size, and seating it closer only lengthens the ramp they
             # were fitted along
             scalar_bar.SetUnconstrainedFontSize(True)
-            title_text.SetLineOffset(-_title_pad(fit, scalar_bar))
+            # A turned title keeps the seat that carries it alongside the bar
+            turned = _turned_title(scalar_bar)
+            if not turned:
+                title_text.SetLineOffset(-_title_pad(fit, scalar_bar))
             label_text.SetFontSize(fitted_label_font())
-            title_text.SetLineOffset(-_title_pad(fit, scalar_bar))
+            if not turned:
+                title_text.SetLineOffset(-_title_pad(fit, scalar_bar))
             self._place_widget(fit['key'], scalar_bar)
             fit['applied'] = _layout_settings(scalar_bar)
             return
@@ -651,17 +655,24 @@ class ScalarBars(_NoNewAttrMixin):
             fit['applied'] = _layout_settings(scalar_bar)
             return
 
+        if fit['sized'] and fit['vertical']:
+            # A vertical box given a size keeps it, and the labels are held apart at a
+            # size the ramp it leaves them has room for
+            label_text.SetFontSize(fitted_label_font())
+            self._place_widget(fit['key'], scalar_bar)
+            fit['applied'] = _layout_settings(scalar_bar)
+            return
+
         self._size_box(fit, scalar_bar)
-        if fit['unconstrained']:
-            # The box holds the text at its size, so the labels are held apart at a size
-            # the box has room for and the box is sized again around them.  The title is
-            # seated by a share of the label height, which moves the box and the title
-            # together, so the run the labels were fitted to is the run they keep
-            label_font = fitted_label_font()
-            if label_font != label_text.GetFontSize():
-                _request_layout(scalar_bar, fit['request'])
-                label_text.SetFontSize(label_font)
-                self._size_box(fit, scalar_bar)
+        # The box holds the text at its size, so the labels are held apart at a size the
+        # box has room for and the box is sized again around them.  The title is seated
+        # by a share of the label height, which moves the box and the title together,
+        # so the run the labels were fitted to is the run they keep
+        label_font = fitted_label_font()
+        if label_font != label_text.GetFontSize():
+            _request_layout(scalar_bar, fit['request'])
+            label_text.SetFontSize(label_font)
+            self._size_box(fit, scalar_bar)
         # The representation is what an interactive bar is drawn from, so it carries the
         # fitted box too, and dragging the widget then asks for a box of its own
         self._place_widget(fit['key'], scalar_bar)
@@ -1110,14 +1121,15 @@ class ScalarBars(_NoNewAttrMixin):
             :attr:`pyvista.plotting.themes.Theme.colorbar_horizontal` or
             :attr:`pyvista.plotting.themes.Theme.colorbar_vertical`.  Has no
             effect when the font size is constrained, or on a box given a size
-            of its own, which pads its title with whatever height it has spare.
+            of its own.
 
             .. versionadded:: 0.50
 
         label_font_size : float, optional
             The largest size the labels are drawn at.  They are drawn smaller
             where the bar leaves them too little room to stay clear of each
-            other.  Defaults to ``None`` and is sized according to
+            other.  A box drawn around a horizontal bar sizes its text as the
+            Notes describe.  Defaults to ``None`` and is sized according to
             :attr:`pyvista.plotting.themes.Theme.font`.
 
         color : ColorLike, optional
@@ -1706,12 +1718,12 @@ class ScalarBars(_NoNewAttrMixin):
                 title_height = _title_height(title_text, display_title, dpi)
                 bar_width = width * viewport_width
                 title_text.SetLineOffset(-_rotated_title_offset(bar_width, title_height, pad))
-            elif not sized or constrained or not vertical or not draws_box:
+                # The labels beside a turned title are held apart like any other bar's
+                keep_fitted = not draws_box
+            else:
                 # The box is free to grow and the bar has not been placed yet, or the
                 # text has to be fitted to a bar that is not free to grow around it
                 keep_fitted = True
-            elif pad:
-                title_text.SetLineOffset(-pad)
 
         # The gap between stacked bars is a fraction of the viewport but the annotations
         # are not, so the annotations set that gap once the viewport is small
