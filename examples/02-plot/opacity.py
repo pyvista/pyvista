@@ -109,19 +109,22 @@ knee = examples.download_knee()
 
 # %%
 # And here we inspect the DICOM image with a few different opacity mappings:
+opacities = [None, 'linear', 'sigmoid', 'geom_r']
+
 pv.plot_compare(
     [knee] * 4,
-    labels=None,
-    shape=(2, 2),
-    border=False,
+    labels=[
+        'No Opacity',
+        'Linear Opacity',
+        'Sigmoidal Opacity',
+        'Reversed Log Scale Opacity',
+    ],
     show_axes=False,
     cmap='bone',
-    opacity=[None, 'linear', 'sigmoid', 'geom_r'],
+    opacity=opacities,
     scalar_bar_args=[
-        {'title': 'No Opacity'},
-        {'title': 'Linear Opacity'},
-        {'title': 'Sigmoidal Opacity'},
-        {'title': 'Log Scale Opacity'},
+        {'title': str(opacity), 'vertical': True, 'position_x': 0.04, 'fmt': '%.0f'}
+        for opacity in opacities
     ],
     cpos='xy',
 )
