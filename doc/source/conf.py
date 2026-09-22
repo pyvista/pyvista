@@ -11,6 +11,7 @@ from pathlib import Path
 import shutil
 import sys
 from typing import TYPE_CHECKING
+from typing import get_origin
 import warnings
 
 from docutils import nodes
@@ -1210,11 +1211,25 @@ def forget_tag_page_toctrees(app: Sphinx, env: BuildEnvironment) -> None:
             del env.toctree_includes[docname]
 
 
+def drop_type_alias_docstring(  # noqa: PLR0917
+    app: Sphinx,  # noqa: ARG001
+    what: str,
+    name: str,  # noqa: ARG001
+    obj: object,
+    options: dict,  # noqa: ARG001
+    lines: list[str],
+) -> None:
+    """Drop the docstring a type alias inherits from ``typing`` or its origin class."""
+    if what == 'data' and get_origin(obj) is not None:
+        lines.clear()
+
+
 def setup(app: Sphinx) -> None:  # noqa: D103
     app.connect('config-inited', report_parallel_safety)
     app.connect('builder-inited', configure_backend)
     # The last toctree listing a page becomes its parent, and tag pages sort after galleries.
     app.connect('env-updated', forget_tag_page_toctrees)
+    app.connect('autodoc-process-docstring', drop_type_alias_docstring)
     # Priority must stay above the 501 used by sphinx-book-theme's
     # ``add_source_buttons``, which is what builds the "suggest edit" button.
     app.connect('html-page-context', pv_html_page_context, priority=502)
