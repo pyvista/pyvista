@@ -66,10 +66,12 @@ from pyvista.examples._dataset_loader import _MultiFileDownloadableDatasetLoader
 from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from collections.abc import Iterator
 
     from numpy import ndarray
 
+    from pyvista import DataObject
     from pyvista import ExplicitStructuredGrid
     from pyvista import ImageData
     from pyvista import MultiBlock
@@ -97,7 +99,7 @@ _DEFAULT_USER_DATA_PATH = str(pooch.os_cache(f'pyvista_{CACHE_VERSION}'))  # typ
 _DEFAULT_VTK_DATA_SOURCE = 'https://github.com/pyvista/data/raw/master/Data/'
 
 
-def _warn_invalid_dir_not_used(path: Path, env_var: str):
+def _warn_invalid_dir_not_used(path: Path, env_var: str) -> None:
     msg = f'The given {env_var} is not a valid directory and will not be used:\n{path.as_posix()}'
     warn_external(msg)
 
@@ -156,7 +158,7 @@ def _get_user_data_path() -> str:
     return output_path
 
 
-def _warn_if_path_not_accessible(path: str | Path, msg: str):
+def _warn_if_path_not_accessible(path: str | Path, msg: str) -> None:
     # Provide helpful message if pooch path is inaccessible
     try:
         if not Path(path).is_dir():
@@ -189,7 +191,7 @@ FETCHER = pooch.create(  # type: ignore[attr-defined]
 )
 
 
-def _gltf_loader(name: str):
+def _gltf_loader(name: str) -> _SingleFileDownloadableDatasetLoader:
     """Return a dataset loader for glTF files.
 
     The glTF files are hosted in a separate repository from `pyvista/data`, so
@@ -258,7 +260,7 @@ def file_from_files(target_path: str, fnames: list[str]) -> str:
     raise FileNotFoundError(msg)
 
 
-def _file_copier(input_file, output_file, *_, **__):  # noqa: ANN001
+def _file_copier(input_file: str | Path, output_file: str | Path, *_: Any, **__: Any) -> None:
     """Copy a file from a local directory to the output path."""
     if not Path(input_file).is_file():
         msg = f"'{input_file}' not found within {_DATA_VARNAME} '{SOURCE}'"
@@ -321,13 +323,13 @@ def _file_lock(path: Path) -> Iterator[None]:
         lock.release()
 
 
-def _locked_fetch(fetcher: Any, filename: str, **kwargs):
+def _locked_fetch(fetcher: Any, filename: str, **kwargs: Any) -> str | list[str]:
     """Fetch with a per-file lock so parallel processes cannot corrupt a shared download."""
     with _file_lock(fetcher.abspath / filename):
         return fetcher.fetch(filename, **kwargs)
 
 
-def _download_file(filename: str):
+def _download_file(filename: str) -> str | list[str]:
     """Download a file using pooch."""
     # Pre-create the parent dir: pooch's check-then-makedirs races under parallel downloads
     with contextlib.suppress(OSError):
@@ -340,7 +342,7 @@ def _download_file(filename: str):
     )
 
 
-def _download_archive(filename: str, target_file: str | None = None):
+def _download_archive(filename: str, target_file: str | None = None) -> str | list[str]:
     """Download an archive.
 
     Return the path to a single file when set.
@@ -366,7 +368,9 @@ def _download_archive(filename: str, target_file: str | None = None):
     return fnames
 
 
-def _download_archive_file_or_folder(filename: str, target_file: str | None = None):
+def _download_archive_file_or_folder(
+    filename: str, target_file: str | None = None
+) -> str | list[str]:
     """Download an archive.
 
     This function is similar to ``_download_archive``, but also allows
@@ -408,7 +412,7 @@ def delete_downloads() -> None:
 
 def _download_and_read(
     filename: str, *, texture: bool = False, file_format: str | None = None, load: bool = True
-):
+) -> DataObject | Texture | str | list[str]:
     """Download and read a file.
 
     Parameters
@@ -428,8 +432,9 @@ def _download_and_read(
 
     Returns
     -------
-    output : pyvista.DataSet | str
-        Dataset or path to the file depending on the ``load`` parameter.
+    output : pyvista.DataObject | pyvista.Texture | str | list[str]
+        Dataset, texture, or path to the file depending on the ``load`` and
+        ``texture`` parameters.
 
     """
     if get_ext(filename) == '.zip':  # pragma: no cover
@@ -781,7 +786,7 @@ def download_bunny_coarse(*, load: bool = True) -> PolyData | str:
     return _download_dataset(_dataset_bunny_coarse, load=load)
 
 
-def _bunny_coarse_load_func(mesh):  # noqa: ANN001
+def _bunny_coarse_load_func(mesh: pv.PolyData) -> pv.PolyData:
     mesh.verts = np.array([], dtype=np.int32)
     return mesh
 
@@ -1050,7 +1055,7 @@ def download_head(*, load: bool = True) -> ImageData | str:
     return _download_dataset(_dataset_head, load=load)
 
 
-def _head_files_func():
+def _head_files_func() -> tuple[_SingleFileDownloadableDatasetLoader, _DownloadableFile]:
     # Multiple files needed for read, but only one gets loaded
     head_raw = _DownloadableFile('HeadMRVolume.raw')
     head_mhd = _SingleFileDownloadableDatasetLoader('HeadMRVolume.mhd')
@@ -1153,7 +1158,9 @@ def download_bolt_nut(*, load: bool = True) -> MultiBlock | tuple[str, ...]:
     return _download_dataset(_dataset_bolt_nut, load=load)
 
 
-def _bolt_nut_files_func():
+def _bolt_nut_files_func() -> tuple[
+    _SingleFileDownloadableDatasetLoader, _SingleFileDownloadableDatasetLoader
+]:
     # Multiple mesh files are loaded for this example
     bolt = _SingleFileDownloadableDatasetLoader('bolt.slc')
     nut = _SingleFileDownloadableDatasetLoader('nut.slc')
@@ -1720,7 +1727,7 @@ def download_blood_vessels(*, load: bool = True) -> UnstructuredGrid | str:
     return _download_dataset(_dataset_blood_vessels, load=load)
 
 
-def _blood_vessels_load_func(obj):  # noqa: ANN001
+def _blood_vessels_load_func(obj: pv.UnstructuredGrid) -> pv.UnstructuredGrid:
     obj.set_active_vectors('velocity')
     return obj
 
@@ -1881,7 +1888,7 @@ def download_sparse_points(*, load: bool = True) -> PolyData | str:
     return _download_dataset(_dataset_sparse_points, load=load)
 
 
-def _sparse_points_reader(saved_file):  # noqa: ANN001
+def _sparse_points_reader(saved_file: str) -> pv.PolyData:
     points_reader = _vtk.vtkDelimitedTextReader()
     points_reader.SetFileName(saved_file)
     points_reader.DetectNumericColumnsOn()
@@ -2709,7 +2716,7 @@ def download_frog(*, load: bool = True) -> ImageData | str:
     return _download_dataset(_dataset_frog, load=load)
 
 
-def _frog_files_func():
+def _frog_files_func() -> tuple[_SingleFileDownloadableDatasetLoader, _DownloadableFile]:
     # Multiple files needed for read, but only one gets loaded
     frog_zraw = _DownloadableFile('froggy/frog.zraw')
     frog_mhd = _SingleFileDownloadableDatasetLoader('froggy/frog.mhd')
@@ -2927,7 +2934,7 @@ def download_doorman(*, load: bool = True) -> PolyData | str:
     return _download_dataset(_dataset_doorman, load=load)
 
 
-def _doorman_files_func():
+def _doorman_files_func() -> tuple[_SingleFileDownloadableDatasetLoader | _DownloadableFile, ...]:
     # Multiple files needed for read, but only one gets loaded
     doorman_obj = _SingleFileDownloadableDatasetLoader('doorman/doorman.obj')
     doorman_mtl = _DownloadableFile('doorman/doorman.mtl')
@@ -3031,7 +3038,9 @@ def download_parallel_exodus(*, load: bool = True) -> MultiBlock | str:
     return _download_dataset(_dataset_parallel_exodus, load=load)
 
 
-def _parallel_exodus_download():
+def _parallel_exodus_download() -> tuple[
+    _SingleFileDownloadableDatasetLoader | _DownloadableFile, ...
+]:
     can = _SingleFileDownloadableDatasetLoader('ParallelExodus/can.e.4.0')
     partitions = [_DownloadableFile(f'ParallelExodus/can.e.4.{i}') for i in range(1, 4)]
     return can, *partitions
@@ -3674,7 +3683,7 @@ def download_tri_quadratic_hexahedron(*, load: bool = True) -> UnstructuredGrid 
     return _download_dataset(_dataset_tri_quadratic_hexahedron, load=load)
 
 
-def _tri_quadratic_hexahedron_load_func(dataset):  # noqa: ANN001
+def _tri_quadratic_hexahedron_load_func(dataset: pv.UnstructuredGrid) -> pv.UnstructuredGrid:
     dataset.clear_data()
     return dataset
 
@@ -3837,7 +3846,7 @@ def download_carotid(*, load: bool = True) -> ImageData | str:
     return _download_dataset(_dataset_carotid, load=load)
 
 
-def _carotid_load_func(mesh):  # noqa: ANN001
+def _carotid_load_func(mesh: pv.ImageData) -> pv.ImageData:
     mesh.set_active_scalars('scalars')
     mesh.set_active_vectors('vectors')
     return mesh
@@ -4285,7 +4294,7 @@ def download_kitchen(*, split: bool = False, load: bool = True) -> StructuredGri
         return _download_dataset(_dataset_kitchen, load=load)
 
 
-def _kitchen_split_load_func(mesh):  # noqa: ANN001
+def _kitchen_split_load_func(mesh: pv.StructuredGrid) -> pv.MultiBlock:
     extents = {
         'door': (27, 27, 14, 18, 0, 11),
         'window1': (0, 0, 9, 18, 6, 12),
@@ -4361,12 +4370,14 @@ def download_tetra_dc_mesh(*, load: bool = True) -> MultiBlock | tuple[str, ...]
     return _download_dataset(_dataset_tetra_dc_mesh, load=load)
 
 
-def _tetra_dc_mesh_files_func():
-    def _fwd_load_func(mesh):  # noqa: ANN001
+def _tetra_dc_mesh_files_func() -> tuple[
+    _SingleFileDownloadableDatasetLoader, _SingleFileDownloadableDatasetLoader
+]:
+    def _fwd_load_func(mesh: pv.UnstructuredGrid) -> pv.UnstructuredGrid:
         mesh.set_active_scalars('Resistivity(log10)-fwd')
         return mesh
 
-    def _inv_load_func(mesh):  # noqa: ANN001
+    def _inv_load_func(mesh: pv.UnstructuredGrid) -> pv.UnstructuredGrid:
         mesh.set_active_scalars('Resistivity(log10)')
         return mesh
 
@@ -4756,7 +4767,7 @@ def download_damavand_volcano(*, load: bool = True) -> ImageData | str:
     return _download_dataset(_dataset_damavand_volcano, load=load)
 
 
-def _damavand_volcano_load_func(volume):  # noqa: ANN001
+def _damavand_volcano_load_func(volume: pv.ImageData) -> pv.ImageData:
     volume.rename_array('None', 'data')
     return volume
 
@@ -4839,7 +4850,7 @@ def download_embryo(*, load: bool = True) -> ImageData | str:
     return _download_dataset(_dataset_embryo, load=load)
 
 
-def _embryo_load_func(dataset):  # noqa: ANN001
+def _embryo_load_func(dataset: pv.ImageData) -> pv.ImageData:
     # This file's RLE stream is one byte short on every plane, and vtkSLCReader copies a full
     # plane out of an uninitialized buffer, so the last voxel of each plane is heap garbage.
     # It varies per read and lands in the z=75 slice used by the slice_orthogonal example,
@@ -5098,7 +5109,7 @@ def download_sky_box_cube_map(*, load: bool = True) -> Texture | tuple[str, ...]
     return _download_dataset(_dataset_sky_box_cube_map, load=load)
 
 
-def _sky_box_cube_map_files_func():
+def _sky_box_cube_map_files_func() -> tuple[_DownloadableFile, ...]:
     posx = _DownloadableFile(
         'skybox2-posx.jpg',
     )
@@ -5950,7 +5961,9 @@ def download_cylinder_crossflow(*, load: bool = True) -> MultiBlock | str:
     return _download_dataset(_dataset_cylinder_crossflow, load=load)
 
 
-def _cylinder_crossflow_files_func():
+def _cylinder_crossflow_files_func() -> tuple[
+    _SingleFileDownloadableDatasetLoader | _DownloadableFile, ...
+]:
     case = _SingleFileDownloadableDatasetLoader('EnSight/CylinderCrossflow/cylinder_Re35.case')
     geo = _DownloadableFile('EnSight/CylinderCrossflow/cylinder_Re35.geo')
     scl1 = _DownloadableFile('EnSight/CylinderCrossflow/cylinder_Re35.scl1')
@@ -6012,7 +6025,7 @@ def download_naca(*, load: bool = True) -> MultiBlock | str:
     return _download_dataset(_dataset_naca, load=load)
 
 
-def _naca_files_func():
+def _naca_files_func() -> tuple[_SingleFileDownloadableDatasetLoader | _DownloadableFile, ...]:
     case = _SingleFileDownloadableDatasetLoader('EnSight/naca.bin.case')
     dens1 = _DownloadableFile('EnSight/naca.gold.bin.DENS_1')
     dens3 = _DownloadableFile('EnSight/naca.gold.bin.DENS_3')
@@ -6065,8 +6078,8 @@ def download_lshape(*, load: bool = True) -> MultiBlock | str:
     return _download_dataset(_dataset_lshape, load=load)
 
 
-def _lshape_files_func():
-    def read_func(filename: str):
+def _lshape_files_func() -> tuple[_SingleFileDownloadableDatasetLoader | _DownloadableFile, ...]:
+    def read_func(filename: str) -> pv.DataSet | pv.MultiBlock:
         reader = pv.get_reader(filename)
         reader.set_active_time_set(1)
         reader.set_active_time_value(1.0)
@@ -6338,7 +6351,7 @@ def download_openfoam_tubes(*, load: bool = True) -> MultiBlock | str:
     return _download_dataset(_dataset_openfoam_tubes, load=load)
 
 
-def _openfoam_tubes_read_func(filename):  # noqa: ANN001
+def _openfoam_tubes_read_func(filename: str) -> pv.DataSet | pv.MultiBlock:
     reader = pv.OpenFOAMReader(filename)
     reader.set_active_time_value(1000)
     return reader.read()
@@ -6572,7 +6585,9 @@ def download_electronics_cooling(*, load: bool = True) -> MultiBlock | tuple[str
     return _download_dataset(_dataset_electronics_cooling, load=load)
 
 
-def _electronics_cooling_files_func():
+def _electronics_cooling_files_func() -> tuple[
+    _SingleFileDownloadableDatasetLoader, _SingleFileDownloadableDatasetLoader
+]:
     _structure = _SingleFileDownloadableDatasetLoader(
         'fvm/cooling_electronics/datasets.zip',
         target_file='structure.vtp',
@@ -6827,7 +6842,7 @@ def download_cgns_multi(*, load: bool = True) -> MultiBlock | str:
     return _download_dataset(_dataset_cgns_multi, load=load)
 
 
-def _cgns_multi_read_func(filename):  # noqa: ANN001
+def _cgns_multi_read_func(filename: str) -> pv.DataSet | pv.MultiBlock:
     reader = pv.get_reader(filename)
     # Disable reading the boundary patch. This generates messages like
     # "Skipping BC_t node: BC_t type 'BCFarfield' not supported yet."
@@ -8155,7 +8170,7 @@ def download_dikhololo_night(*, load: bool = True) -> Texture | str:
     return _download_dataset(_dataset_dikhololo_night, load=load)
 
 
-def _dikhololo_night_load_func(texture):  # noqa: ANN001
+def _dikhololo_night_load_func(texture: Texture) -> Texture:
     texture.SetColorModeToDirectScalars()
     texture.SetMipmap(True)
     texture.SetInterpolate(True)
@@ -8461,7 +8476,7 @@ def download_meshio_xdmf(*, load: bool = True) -> MultiBlock | str:
     return _download_dataset(_dataset_meshio_xdmf, load=load)
 
 
-def _meshio_xdmf_files_func():
+def _meshio_xdmf_files_func() -> tuple[_SingleFileDownloadableDatasetLoader, _DownloadableFile]:
     h5 = _DownloadableFile('meshio/out.h5')
     xdmf = _SingleFileDownloadableDatasetLoader('meshio/out.xdmf')
     return xdmf, h5
@@ -8577,7 +8592,7 @@ def download_reservoir(*, load: bool = True) -> ExplicitStructuredGrid | str:
     return _download_dataset(_dataset_reservoir, load=load)
 
 
-def _reservoir_load_func(grid):  # noqa: ANN001
+def _reservoir_load_func(grid: pv.ExplicitStructuredGrid) -> pv.ExplicitStructuredGrid:
     # See loading steps from this example:
     # https://examples.vtk.org/site/Python/ExplicitStructuredGrid/LoadESGrid/
     grid.ComputeFacesConnectivityFlagsArray()
@@ -8777,7 +8792,7 @@ class _WholeBodyCTUtilities:
     """Helpers for loading the whole body CT datasets."""
 
     @staticmethod
-    def import_colors_dict(module_path) -> dict[str, tuple[int, int, int]]:  # noqa: ANN001
+    def import_colors_dict(module_path: str) -> dict[str, tuple[int, int, int]]:
         # Import `colors` dict from downloaded `colors.py` module
         """Import the ``colors`` dict from the downloaded ``colors.py`` module.
 
@@ -8863,7 +8878,7 @@ class _WholeBodyCTUtilities:
         return label_map_image
 
     @staticmethod
-    def load_func(files):  # noqa: ANN001, ANN205
+    def load_func(files: Any) -> pv.MultiBlock:
         """Load the dataset and add its label map and metadata.
 
         Parameters
@@ -8889,7 +8904,9 @@ class _WholeBodyCTUtilities:
         return dataset
 
     @staticmethod
-    def files_func(name):  # noqa: ANN001, ANN205
+    def files_func(
+        name: str,
+    ) -> Callable[[], tuple[_SingleFileDownloadableDatasetLoader, _DownloadableFile]]:
         """Return the file-loading function for the named dataset variant.
 
         Parameters
@@ -8920,7 +8937,7 @@ class _WholeBodyCTUtilities:
         """
         target_file = f'{name}.vtm' if 'resampled' in name else name
 
-        def func():
+        def func() -> tuple[_SingleFileDownloadableDatasetLoader, _DownloadableFile]:
             # Multiple files needed for read, but only one gets loaded
             dataset = _SingleFileDownloadableDatasetLoader(
                 f'whole_body_ct/{name}.zip',
@@ -9172,7 +9189,9 @@ def download_room_cff(*, load: bool = True) -> MultiBlock | str:
     return _download_dataset(_dataset_room_cff, load=load)
 
 
-def _dataset_room_cff_files_func():
+def _dataset_room_cff_files_func() -> tuple[
+    _SingleFileDownloadableDatasetLoader, _DownloadableFile
+]:
     cas = _SingleFileDownloadableDatasetLoader('FLUENTCFF/room.cas.h5')
     dat = _DownloadableFile('FLUENTCFF/room.dat.h5')
     return cas, dat
@@ -9283,7 +9302,9 @@ def download_headsq(*, load: bool = True) -> ImageData | str:
     return _download_dataset(_dataset_headsq, load=load)
 
 
-def _dataset_headsq_files_func():
+def _dataset_headsq_files_func() -> tuple[
+    _SingleFileDownloadableDatasetLoader | _DownloadableFile, ...
+]:
     return tuple(
         [_SingleFileDownloadableDatasetLoader('headsq/quarter.nhdr')]
         + [_DownloadableFile('headsq/quarter.' + str(i)) for i in range(1, 94)],
@@ -9498,7 +9519,7 @@ def download_particles(*, load: bool = True) -> PolyData | str:
     return _download_dataset(_dataset_particles, load=load)
 
 
-def _particles_read_func(filename: str):
+def _particles_read_func(filename: str) -> pv.DataSet | pv.MultiBlock:
     reader = pv.get_reader(filename)
     reader.reader.SetDataByteOrderToBigEndian()
     reader.reader.Update()
@@ -9551,7 +9572,7 @@ def download_prostar(*, load: bool = True) -> UnstructuredGrid | str:
     return _download_dataset(_dataset_prostar, load=load)
 
 
-def _prostar_files_func():
+def _prostar_files_func() -> tuple[_SingleFileDownloadableDatasetLoader, _DownloadableFile]:
     # Multiple files needed for read, but only one gets loaded
     prostar_cel = _DownloadableFile('prostar.cel')
     prostar_vrt = _SingleFileDownloadableDatasetLoader('prostar.vrt')
@@ -9643,7 +9664,7 @@ def download_full_head(*, load: bool = True) -> ImageData | str:
     return _download_dataset(_dataset_full_head, load=load)
 
 
-def _full_head_files_func():
+def _full_head_files_func() -> tuple[_SingleFileDownloadableDatasetLoader, _DownloadableFile]:
     full_head_raw = _DownloadableFile('FullHead.raw.gz')
     full_head_mha = _SingleFileDownloadableDatasetLoader('FullHead.mhd')
     return full_head_mha, full_head_raw
@@ -9694,7 +9715,7 @@ def download_nek5000(*, load: bool = True) -> UnstructuredGrid | str:
     return _download_dataset(_dataset_nek5000, load=load)
 
 
-def _nek_5000_download():
+def _nek_5000_download() -> tuple[_SingleFileDownloadableDatasetLoader | _DownloadableFile, ...]:
     nek5000 = _SingleFileDownloadableDatasetLoader('nek5000/eddy_uv.nek5000')
     data_files = [_DownloadableFile(f'nek5000/eddy_uv0.f{str(i).zfill(5)}') for i in range(1, 12)]
     return (nek5000, *data_files)
