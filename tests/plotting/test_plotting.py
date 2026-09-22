@@ -3303,6 +3303,13 @@ def test_plot_compare_per_subplot_kwargs(verify_image_cache):
         ),
         ({'line_width': [2, 4]}, 2, {}, [{'line_width': 2}, {'line_width': 4}]),
         ({'show_edges': [True, False]}, 2, {}, [{'show_edges': True}, {'show_edges': False}]),
+        # A view of a mapping is a value for each subplot, in the mapping's own order
+        (
+            {'show_edges': {'on': True, 'off': False}.values()},
+            2,
+            {},
+            [{'show_edges': True}, {'show_edges': False}],
+        ),
         (
             {'scalar_bar_args': [{'title': 'a'}, {'title': 'b'}]},
             2,

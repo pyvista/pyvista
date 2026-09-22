@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from collections.abc import KeysView
 from collections.abc import Mapping
 from collections.abc import Sequence
+from collections.abc import ValuesView
 import math
 import string
 from typing import TYPE_CHECKING
@@ -322,7 +324,9 @@ def _is_a_sequence(value: Any) -> bool:
     if isinstance(value, (str, bytes, Mapping)):
         return False
     # A zero-dimensional array is one value, and has no length to compare
-    return getattr(value, 'ndim', 1) > 0 and isinstance(value, (Sequence, np.ndarray))
+    return getattr(value, 'ndim', 1) > 0 and isinstance(
+        value, (Sequence, np.ndarray, KeysView, ValuesView)
+    )
 
 
 def _is_per_subplot(key: str, value: Any, n_datasets: int, *, volume: bool) -> bool:
@@ -563,7 +567,7 @@ def _fit_labels_on_render(
 def plot_compare(  # noqa: ANN201
     datasets: Sequence[PlottableType] | Mapping[str, PlottableType],
     *,
-    labels: Sequence[str] | None = _AUTO_LABELS,
+    labels: Iterable[str] | None = _AUTO_LABELS,
     label_size: float | Literal['best_fit', 'uniform'] | None = None,
     label_position: TextPositionOptions | None = None,
     label_kwargs: dict[str, Any] | None = None,
@@ -621,7 +625,7 @@ def plot_compare(  # noqa: ANN201
         required. If a mapping or a :class:`~pyvista.MultiBlock` is given, its
         keys are used as the default ``labels``.
 
-    labels : Sequence[str] | None, optional
+    labels : Iterable[str] | None, optional
         The labels to display for each data object. Must have the same length as
         ``datasets``. By default, the keys of ``datasets`` are used when it is a
         mapping or a :class:`~pyvista.MultiBlock`, and the labels ``'A'``,
