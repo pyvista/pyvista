@@ -54,20 +54,20 @@ cylinder = pv.Cylinder(
     height=0.03,
 ).triangulate()
 
+silhouettes = {
+    'Silhouette with sharp edges': dict(
+        color='red', line_width=8.0, decimate=None, feature_angle=True
+    ),
+    'Silhouette without sharp edges': dict(color='red', line_width=8.0, decimate=None),
+    'No silhouette': False,
+}
+
 pv.plot_compare(
     [cylinder] * 3,
-    labels=[
-        'Silhouette with sharp edges',
-        'Silhouette without sharp edges',
-        'No silhouette',
-    ],
+    labels=silhouettes.keys(),
     color='lightblue',
     smooth_shading=True,
-    silhouette=[
-        dict(color='red', line_width=8.0, decimate=None, feature_angle=True),
-        dict(color='red', line_width=8.0, decimate=None),
-        False,
-    ],
+    silhouette=silhouettes.values(),
     cpos='iso',
     show_axes=False,
 )
