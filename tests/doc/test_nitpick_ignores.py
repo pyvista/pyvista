@@ -7,6 +7,7 @@ import re
 
 import pytest
 
+import pyvista as pv
 from tests.conftest import PYVISTA_ROOT_DIR
 
 CONF_PY = PYVISTA_ROOT_DIR / 'doc' / 'source' / 'conf.py'
@@ -23,8 +24,8 @@ def conf_value(name: str) -> object:
     raise KeyError(msg)
 
 
-@pytest.mark.parametrize('alias', conf_value('_TYPE_ALIASES'))
-@pytest.mark.parametrize('prefix', ['', 'pyvista.'])
+@pytest.mark.parametrize('alias', pv.typing.__all__)
+@pytest.mark.parametrize('prefix', ['', 'pyvista.typing.'])
 def test_type_alias_links_are_checked(alias, prefix):
     """Confirm no nitpick ignore hides an unresolved link to a documented type alias."""
     target = f'{prefix}{alias}'

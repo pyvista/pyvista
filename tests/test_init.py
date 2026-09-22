@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib
 import os
 import re
 import subprocess
@@ -339,3 +340,54 @@ def test_validation_forward_deprecated():
     with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(msg)):
         from pyvista import _validation
     assert _validation.validate_array3([1, 2, 3]).shape == (3,)
+
+
+_CORE_TYPE_ALIASES = [
+    'ArrayLike',
+    'CellArrayLike',
+    'CellsLike',
+    'InteractionEventType',
+    'MatrixLike',
+    'Number',
+    'NumberType',
+    'NumpyArray',
+    'RotationLike',
+    'TransformLike',
+    'VectorLike',
+]
+_PLOTTING_TYPE_ALIASES = ['CameraPositionOptions', 'Chart', 'ColorLike']
+_TYPE_ALIASES = [
+    *_CORE_TYPE_ALIASES,
+    *_PLOTTING_TYPE_ALIASES,
+    'JupyterBackendOptions',
+    'MeshValidationFields',
+]
+
+
+def test_typing_namespace():
+    import pyvista as pv
+
+    assert sorted(pv.typing.__all__) == sorted(_TYPE_ALIASES)
+    for name in pv.typing.__all__:
+        getattr(pv.typing, name)
+
+
+def test_typing_dir_lists_aliases_before_access():
+    assert exec_success('import pyvista.typing as t; assert {*t.__all__} <= {*dir(t)}')
+
+
+@pytest.mark.parametrize(
+    ('module', 'name'),
+    [
+        *(('pyvista', name) for name in _TYPE_ALIASES),
+        *(('pyvista.core', name) for name in _CORE_TYPE_ALIASES),
+        *(('pyvista.plotting', name) for name in _PLOTTING_TYPE_ALIASES),
+    ],
+)
+def test_type_alias_forward_deprecated(module, name):
+    import pyvista as pv
+
+    msg = f'`{module}.{name}` has moved to `pyvista.typing`; use `pyvista.typing.{name}` instead.'
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(msg)):
+        alias = getattr(importlib.import_module(module), name)
+    assert alias is getattr(pv.typing, name)

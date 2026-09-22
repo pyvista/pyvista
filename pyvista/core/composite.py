@@ -56,7 +56,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
     from pyvista import PolyData
-    from pyvista import VectorLike
+    from pyvista.core._typing_core import VectorLike
 
     from ._typing_core import NumpyArray
     from .filters.data_object import _NestedMeshValidationFields

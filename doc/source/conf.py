@@ -172,28 +172,10 @@ duration_n_slowest = 50
 duration_write_json = None
 
 
-# Documented type aliases, linked by name rather than expanded
-_TYPE_ALIASES = [
-    'ArrayLike',
-    'CameraPositionOptions',
-    'CellArrayLike',
-    'CellsLike',
-    'Chart',
-    'ColorLike',
-    'InteractionEventType',
-    'JupyterBackendOptions',
-    'MatrixLike',
-    'MeshValidationFields',
-    'NumberType',
-    'NumpyArray',
-    'RotationLike',
-    'TransformLike',
-    'VectorLike',
-]
-
 # Configuration for sphinx.ext.autodoc
 autodoc_type_aliases = {
-    **{name: f'~pyvista.{name}' for name in _TYPE_ALIASES},
+    # link documented type aliases by name rather than expanding them
+    **{name: f'~pyvista.typing.{name}' for name in pv.typing.__all__},
     'FrameType': 'types.FrameType',
     # generated from the example names; render it as a name, not 222 literals
     'ExampleName': 'ExampleName',
@@ -203,7 +185,7 @@ autodoc_type_aliases = {
 TypeAliasForwardRef.__repr__ = lambda self: self.name
 
 # Link the TypeVar in rendered aliases to its documented location
-pv.NumberType.__module__ = 'pyvista'
+pv.typing.NumberType.__module__ = 'pyvista.typing'
 
 # Enable ANSI coloring for programoutput, using erbsland.sphinx.ansi
 programoutput_use_ansi = True
@@ -223,7 +205,7 @@ numpydoc_use_plots = True
 numpydoc_show_class_members = False
 numpydoc_xref_param_type = True
 # Link docstring types such as ``VectorLike[float]`` from any module
-numpydoc_xref_aliases = {name: f'pyvista.{name}' for name in _TYPE_ALIASES}
+numpydoc_xref_aliases = {name: f'pyvista.typing.{name}' for name in pv.typing.__all__}
 
 sphinx_examples_as_code_conf = {
     # Replace sphinx-gallery's own per-example download footer/note with

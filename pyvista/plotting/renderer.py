@@ -4260,7 +4260,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
             For dict inputs, the keys are used as labels and the values are used
             as the colors. Labels must be strings, and colors can be any
-            :class:`~pyvista.ColorLike`.
+            :class:`~pyvista.typing.ColorLike`.
 
             For list inputs, the list must contain one entry for each item to
             be added to the legend. Each entry can contain one of the following:

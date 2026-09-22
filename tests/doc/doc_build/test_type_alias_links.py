@@ -41,23 +41,19 @@ def link_anchors(html: str, text: str) -> list[str]:
 def test_signature_links_type_alias(filename, alias):
     """Confirm a type alias in a signature links to its documentation."""
     signature, _ = split_api_page(filename)
-    assert f'pyvista.{alias}' in link_anchors(signature, alias)
+    assert f'pyvista.typing.{alias}' in link_anchors(signature, alias)
 
 
 @pytest.mark.parametrize(('filename', 'alias'), DOCSTRING_ALIASES)
 def test_docstring_links_type_alias(filename, alias):
     """Confirm a type alias in a docstring parameter type links to its documentation."""
     _, docstring = split_api_page(filename)
-    assert f'pyvista.{alias}' in link_anchors(docstring, alias)
+    assert f'pyvista.typing.{alias}' in link_anchors(docstring, alias)
 
 
-@pytest.mark.parametrize(
-    ('page', 'alias'),
-    [('api/core/typing.html', 'CellsLike'), ('api/utilities/colors.html', 'ColorLike')],
-)
-def test_type_alias_drops_inherited_docstring(page, alias):
+def test_type_alias_drops_inherited_docstring():
     """Confirm a type alias does not show the docstring of its ``typing`` origin."""
-    html = (Path(BUILD_HTML_DIR) / page).read_text()
-    assert f'pyvista.{alias}' in html
+    html = (Path(BUILD_HTML_DIR) / 'api' / 'core' / 'typing.html').read_text()
+    assert 'pyvista.typing.ColorLike' in html
     assert 'Represent a union type' not in html
     assert 'Type aliases are created through the type statement' not in html
