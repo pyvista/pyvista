@@ -14,6 +14,7 @@ import sys
 
 import pytest
 import sphinx
+from sphinx.ext.autodoc import ObjectMember
 
 from pyvista.ext import _autoenum as autoenum
 
@@ -37,6 +38,12 @@ def test_resolve_dotted_path():
     import os
 
     assert autoenum._resolve('os', 'path.sep') == os.path.sep
+
+
+@pytest.mark.parametrize('tuple_form', [True, False])
+def test_member_name_reads_both_shapes_sphinx_passes(tuple_form):
+    member = ('spin', object()) if tuple_form else ObjectMember('spin', object())
+    assert autoenum._member_name(member) == 'spin'
 
 
 def test_metaclass_properties_finds_only_metaclass_properties():
