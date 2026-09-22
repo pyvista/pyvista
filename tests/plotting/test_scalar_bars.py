@@ -1285,6 +1285,28 @@ def test_fit_box_seats_a_sized_vertical_title(sphere, box):
     assert not _text_outside_the_box(pl, bar)
 
 
+@pytest.mark.parametrize('box', BOXES, ids=BOX_IDS)
+def test_fit_box_widens_a_vertical_bar_given_only_a_height(sphere, box):
+    # A vertical title spans the width of its box, so only a width of its own holds the
+    # text to it; a height leaves the box free to widen around the title at full size
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=[1024, 768])
+    pl.background_color = 'white'
+    pl.add_mesh(sphere, show_scalar_bar=False, cmap='autumn')
+    pl.theme.colorbar_vertical.width = 0.08
+    bar = _fitted_bar(pl, sphere, vertical=True, box=box, fmt='%.1f', height=0.6, color='blue')
+
+    dpi = pl.render_window.GetDPI()
+    assert bar.GetHeight() == pytest.approx(0.6)
+    assert bar.GetWidth() > 0.08
+    assert _box_pixels(bar, pl.renderer)[0] >= _title_width(
+        bar.GetTitleTextProperty(), FIT_TITLE, dpi
+    )
+    assert bar.GetTitleTextProperty().GetFontSize() == 24
+    assert not _text_outside_the_box(pl, bar)
+
+
 def test_fit_box_shrinks_a_sized_vertical_title(sphere):
     # A title wider than the box it was given is shrunk to it, and the labels keep the
     # size they asked for
