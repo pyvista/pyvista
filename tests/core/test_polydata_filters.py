@@ -179,12 +179,15 @@ def test_ruled_surface():
     assert ruled.n_cells
 
 
-def test_dash_lines_solid_returns_copy():
+def test_dash_lines_solid_returns_the_lines_whole():
     line = pv.Line((0, 0, 0), (1, 0, 0), resolution=10)
-    dashed = line.dash_lines('-')
-    assert dashed is not line
-    assert dashed.n_points == line.n_points
-    assert dashed.n_cells == line.n_cells
+    line.point_data['ids'] = np.arange(line.n_points)
+
+    solid = line.dash_lines('-')
+    assert solid is not line
+    assert solid.n_cells == line.n_cells
+    assert np.array_equal(solid.points, line.points)
+    assert np.array_equal(solid.point_data['ids'], line.point_data['ids'])
 
 
 @pytest.mark.parametrize('style', ['--', ':', '-.', '-..'])
@@ -237,25 +240,30 @@ def test_dash_lines_copies_cell_data():
     assert 'tag' not in line.dash_lines('--', scale=0.01).cell_data
 
 
-def test_dash_lines_keeps_non_line_cells():
-    sphere = pv.Sphere()
-    assert sphere.dash_lines().n_cells == sphere.n_cells
+def test_dash_lines_removes_non_line_cells():
+    assert pv.Sphere().dash_lines().n_cells == 0
     assert pv.PolyData().dash_lines().n_cells == 0
 
 
-@pytest.mark.parametrize('style', ['--', ''])
-def test_dash_lines_keeps_the_other_cells_of_a_mixed_mesh(style):
+@pytest.mark.parametrize('style', ['--', '-', ''])
+def test_dash_lines_removes_the_other_cells_of_a_mixed_mesh(style):
     mesh = pv.Plane(i_resolution=2, j_resolution=2)
     mesh.lines = np.array([2, 0, 8])
     mesh.verts = np.array([1, 3])
     mesh.cell_data['tag'] = np.arange(mesh.n_cells)
+    assert mesh.n_verts
+    assert mesh.n_faces
 
     dashed = mesh.dash_lines(style, scale=0.2, join=False)
-    assert dashed.n_verts == mesh.n_verts
-    assert dashed.n_faces == mesh.n_faces
-    assert dashed.n_lines == (0 if style == '' else 1)
-    assert dashed.cell_data['tag'][0] == mesh.cell_data['tag'][0]
-    assert dashed.cell_data['tag'][-1] == mesh.cell_data['tag'][-1]
+    assert dashed.n_verts == 0
+    assert dashed.n_faces == 0
+    assert dashed.n_strips == 0
+    assert dashed.n_cells == dashed.n_lines
+    if style == '':
+        assert dashed.n_cells == 0
+    else:
+        # the tags all come from the single line cell, which follows the vert
+        assert np.all(dashed.cell_data['tag'] == mesh.cell_data['tag'][mesh.n_verts])
 
 
 def test_dash_lines_default_scale_follows_length():

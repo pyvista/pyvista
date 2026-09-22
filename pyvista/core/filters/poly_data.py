@@ -33,6 +33,7 @@ from pyvista.core.utilities.helpers import _NormalsLiteral
 from pyvista.core.utilities.helpers import _validate_plane_origin_and_normal
 from pyvista.core.utilities.helpers import generate_plane
 from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import _LINE_STYLE_PATTERNS
 from pyvista.core.utilities.misc import _resolve_line_style
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
@@ -1543,7 +1544,8 @@ class PolyDataFilters(DataSetFilters):
         """Split line cells into dashes.
 
         Line and polyline cells are resampled into shorter line cells following a
-        repeating on-off pattern. Other cell types are passed through unchanged.
+        repeating on-off pattern. Only those cells are returned, so vertices, polygons
+        and strips are removed.
 
         Point data is interpolated onto the dash end points. Cell data is copied from
         the parent line cell, unless ``join`` merges those cells together.
@@ -1555,8 +1557,8 @@ class PolyDataFilters(DataSetFilters):
         style : str, default: '--'
             Named dash pattern. One of ``''`` (hidden), ``'-'`` (solid), ``'--'``
             (dashed), ``':'`` (dotted), ``'-.'`` (dash-dot) or ``'-..'``
-            (dash-dot-dot). A solid pattern keeps the lines whole and a hidden pattern
-            removes them.
+            (dash-dot-dot). A solid pattern returns the lines whole instead of
+            dashing them, and a hidden pattern returns no lines at all.
 
         pattern : VectorLike[float], optional
             Lengths of alternating drawn and undrawn intervals used instead of
@@ -1581,7 +1583,7 @@ class PolyDataFilters(DataSetFilters):
         Returns
         -------
         pyvista.PolyData
-            Dataset with the dashes as line cells.
+            Dataset holding the dashes as its only cells.
 
         See Also
         --------
@@ -1615,16 +1617,12 @@ class PolyDataFilters(DataSetFilters):
             _validation.check_finite(scale, name='scale')
             _validation.check_greater_than(scale, 0, name='scale')
 
-        if runs == [(0, period)]:
-            output = self.copy()
-        else:
-            source = self.strip(join=True, progress_bar=progress_bar) if join else self
-            dashes = _dashed_polydata(source, runs, period=period, scale=scale)
-            output = _replace_line_cells(self, dashes)
-            for array_name, array in self.field_data.items():
-                output.field_data[array_name] = array
-            _copy_active_names(self.point_data, output.point_data)
-            _copy_active_names(self.cell_data, output.cell_data)
+        source = self.strip(join=True, progress_bar=progress_bar) if join else self
+        output = _dashed_polydata(source, runs, period=period, scale=scale)
+        for array_name, array in self.field_data.items():
+            output.field_data[array_name] = array
+        _copy_active_names(self.point_data, output.point_data)
+        _copy_active_names(self.cell_data, output.cell_data)
 
         if not inplace:
             return output
@@ -4897,8 +4895,11 @@ class PolyDataFilters(DataSetFilters):
 
 def _resolve_dash_pattern(
     style: LineStyle, pattern: VectorLike[float] | None
-) -> tuple[list[tuple[float, float]], float]:
-    """Return the drawn intervals and the repeat length of a named style or a pattern."""
+) -> tuple[list[tuple[float, float]] | None, float]:
+    """Return the drawn intervals and the repeat length of a named style or a pattern.
+
+    Intervals of ``None`` mean the lines are drawn whole.
+    """
     if pattern is not None:
         lengths = _validation.validate_arrayN(
             pattern, must_be_finite=True, must_have_min_length=2, name='pattern'
@@ -4911,6 +4912,8 @@ def _resolve_dash_pattern(
         runs = [(float(edges[i]), float(edges[i + 1])) for i in range(0, lengths.size, 2)]
         return runs, float(edges[-1])
     bits = _resolve_line_style(style)
+    if bits == _LINE_STYLE_PATTERNS['-']:
+        return None, 16.0
     return [(float(start), float(stop)) for start, stop in _pattern_runs(bits)], 16.0
 
 
@@ -4938,8 +4941,24 @@ def _locate(
     return int(ids[upper - 1]), int(ids[upper]), float(weight)
 
 
+def _drawn_intervals(
+    runs: list[tuple[float, float]] | None, *, total: float, cycle: float, scale: float
+) -> list[tuple[float, float]]:
+    """Return the drawn intervals along a polyline of the given length."""
+    if runs is None:
+        return [(0.0, total)]
+    intervals = []
+    for base in np.arange(0.0, total, cycle):
+        for first, last in runs:
+            start = float(base + first * scale)
+            stop = float(min(base + last * scale, total))
+            if stop > start:
+                intervals.append((start, stop))
+    return intervals
+
+
 def _build_dashes(
-    source: PolyData, runs: list[tuple[float, float]], *, period: float, scale: float
+    source: PolyData, runs: list[tuple[float, float]] | None, *, period: float, scale: float
 ) -> tuple[NumpyArray[int], NumpyArray[int], NumpyArray[float], NumpyArray[int], NumpyArray[int]]:
     """Return blend indices, weights, line connectivity and parent cell ids for the dashes."""
     points = source.points
@@ -4966,25 +4985,20 @@ def _build_dashes(
         total = float(cumulative[-1])
         if total == 0.0:
             continue
-        for base in np.arange(0.0, total, cycle):
-            for first, last in runs:
-                start = base + first * scale
-                stop = min(base + last * scale, total)
-                if stop <= start:
-                    continue
-                inner = np.flatnonzero((cumulative > start) & (cumulative < stop))
-                blend = [
-                    _locate(ids, cumulative, start),
-                    *((int(ids[k]), int(ids[k]), 0.0) for k in inner),
-                    _locate(ids, cumulative, stop),
-                ]
-                lines.append(len(blend))
-                for left, right, fraction in blend:
-                    lines.append(len(index_a))
-                    index_a.append(left)
-                    index_b.append(right)
-                    weight.append(fraction)
-                cells.append(parent)
+        for start, stop in _drawn_intervals(runs, total=total, cycle=cycle, scale=scale):
+            inner = np.flatnonzero((cumulative > start) & (cumulative < stop))
+            blend = [
+                _locate(ids, cumulative, start),
+                *((int(ids[k]), int(ids[k]), 0.0) for k in inner),
+                _locate(ids, cumulative, stop),
+            ]
+            lines.append(len(blend))
+            for left, right, fraction in blend:
+                lines.append(len(index_a))
+                index_a.append(left)
+                index_b.append(right)
+                weight.append(fraction)
+            cells.append(parent)
     return (
         np.asarray(index_a, dtype=np.int64),
         np.asarray(index_b, dtype=np.int64),
@@ -4995,7 +5009,7 @@ def _build_dashes(
 
 
 def _dashed_polydata(
-    source: PolyData, runs: list[tuple[float, float]], *, period: float, scale: float | None
+    source: PolyData, runs: list[tuple[float, float]] | None, *, period: float, scale: float | None
 ) -> PolyData:
     """Return a dataset holding only the drawn parts of a source's line cells."""
     output = pv.PolyData()
@@ -5018,50 +5032,6 @@ def _dashed_polydata(
         )
     for name, array in source.cell_data.items():
         output.cell_data.set_array(np.asarray(array)[cells], name)
-    return output
-
-
-def _replace_line_cells(source: PolyData, dashes: PolyData) -> PolyData:
-    """Return the source with its line cells replaced by the dashes."""
-    if source.n_verts == 0 and source.n_faces == 0 and source.n_strips == 0:
-        return dashes
-
-    output = pv.PolyData()
-    output.points = (
-        np.vstack([source.points, dashes.points]) if dashes.n_points else source.points.copy()
-    )
-
-    lines = np.asarray(dashes.lines).copy()
-    position = 0
-    while position < lines.size:
-        size = int(lines[position])
-        lines[position + 1 : position + 1 + size] += source.n_points
-        position += 1 + size
-    output.verts = source.verts
-    output.lines = lines
-    output.faces = source.faces
-    output.strips = source.strips
-
-    for name, array in source.point_data.items():
-        values = np.asarray(array)
-        if dashes.n_points == 0:
-            output.point_data.set_array(values, name)
-        elif name in dashes.point_data:
-            output.point_data.set_array(
-                np.concatenate([values, np.asarray(dashes.point_data[name])]), name
-            )
-
-    head = np.arange(source.n_verts)
-    tail = np.arange(source.n_verts + source.n_lines, source.n_cells)
-    for name, array in source.cell_data.items():
-        values = np.asarray(array)
-        if dashes.n_cells == 0:
-            output.cell_data.set_array(np.concatenate([values[head], values[tail]]), name)
-        elif name in dashes.cell_data:
-            output.cell_data.set_array(
-                np.concatenate([values[head], np.asarray(dashes.cell_data[name]), values[tail]]),
-                name,
-            )
     return output
 
 
