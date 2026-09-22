@@ -655,9 +655,9 @@ class ScalarBars(_NoNewAttrMixin):
             fit['applied'] = _layout_settings(scalar_bar)
             return
 
-        if fit['sized'] and fit['vertical']:
-            # A vertical box given a size keeps it, and the labels are held apart at a
-            # size the ramp it leaves them has room for
+        if fit['sized']:
+            # A box given a size keeps it, and the labels are held apart at a size the
+            # ramp it leaves them has room for
             label_text.SetFontSize(fitted_label_font())
             self._place_widget(fit['key'], scalar_bar)
             fit['applied'] = _layout_settings(scalar_bar)

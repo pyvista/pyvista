@@ -1268,21 +1268,27 @@ def test_fit_box_without_a_box(sphere, vertical: bool):
 
 @pytest.mark.parametrize('box', BOXES, ids=BOX_IDS)
 @pytest.mark.parametrize(
+    'text', [{}, {'unconstrained_font_size': True}], ids=['fitted_text', 'own_size']
+)
+@pytest.mark.parametrize('vertical', [True, False], ids=['vertical', 'horizontal'])
+@pytest.mark.parametrize(
     'sizing', [{'width': 0.3}, {'height': 0.3}, {'width': 0.3, 'height': 0.3}]
 )
-def test_fit_box_keeps_a_given_size(sphere, sizing, box):
-    # A box asked for a size of its own is left at that size
+def test_fit_box_keeps_a_given_size(sphere, sizing, vertical: bool, text, box):
+    # A box asked for a size of its own is left at that size, whichever way it runs and
+    # whether its text is sized to it or holds the size it asked for
     sphere[KEY] = sphere.points[:, 2]
 
     pl = pv.Plotter()
     pl.add_mesh(sphere, show_scalar_bar=False)
     bar = pl.add_scalar_bar(
         FIT_TITLE,
-        vertical=True,
+        vertical=vertical,
         title_font_size=24,
         label_font_size=24,
         mapper=pv.DataSetMapper(sphere),
         **box,
+        **text,
         **sizing,
     )
 
