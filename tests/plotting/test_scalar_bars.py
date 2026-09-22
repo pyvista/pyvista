@@ -1837,6 +1837,18 @@ def test_fit_fonts_measure_the_viewport_a_bar_is_drawn_in(sphere):
     assert not _text_outside_the_box(pl, bar)
 
 
+def test_fit_fonts_leave_a_tick_off_the_viewport_alone(sphere):
+    # A bar placed so that a tick sits at the end of the viewport cannot clear it at any
+    # size, and shrinking the labels to nothing would not help
+    pl = pv.Plotter(window_size=[600, 300])
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = _wide_bar(pl, sphere, vertical=True, n_labels=10, position_x=0.1, position_y=0.6)
+    pl.screenshot(return_img=True)
+
+    font = bar.GetLabelTextProperty().GetFontSize()
+    assert 3 < font < WIDE_FONT
+
+
 def test_fit_fonts_skip_the_ticks_a_flat_range_hides(sphere):
     # VTK draws only the custom tick equal to the range when the range has no width, so
     # the ones it hides are not labels the fit has to find room for

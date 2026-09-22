@@ -166,21 +166,23 @@ def _fitting_font(size_of, target_width, target_height, *, start):
         return width <= target_width and height <= target_height
 
     font_size = max(start, 3)
-    if fits(font_size):
-        while font_size < 100 and fits(font_size + 1):
-            font_size += 1
-    else:
-        while font_size > 3 and not fits(font_size):
-            font_size -= 1
+    if not fits(font_size):
+        return _shrunk_font(fits, start=font_size, floor=True)
+    while font_size < 100 and fits(font_size + 1):
+        font_size += 1
     return font_size
 
 
-def _shrunk_font(fits, *, start):
-    """Return the largest font size up to ``start`` that fits, never shrinking past 3."""
+def _shrunk_font(fits, *, start, floor=False):
+    """Return the largest font size up to ``start`` that fits.
+
+    Where nothing fits, ``floor`` settles for the smallest size there is rather than
+    handing back the size that was asked for.
+    """
     font_size = max(int(start), 3)
     while font_size > 3 and not fits(font_size):
         font_size -= 1
-    return font_size
+    return font_size if floor or fits(font_size) else start
 
 
 def _fitted_fonts(scalar_bar, *, vertical, title, viewport, fonts):
@@ -243,10 +245,10 @@ def _fitted_fonts(scalar_bar, *, vertical, title, viewport, fonts):
         start, limit = left + offset, viewport_width
         beside = None
 
-    def labels_fit(font_size):
-        # Each label has to clear the near end of the viewport, then the label before it,
-        # and the last one has to clear the far end
-        edge = text_pad
+    def labels_fit(font_size, *, inside):
+        # Each label has to clear the label before it, and the ones on the ends have to
+        # clear the ends of the viewport
+        edge = text_pad if inside else None
         for anchor, text in ticks:
             # VTK draws the text into whole pixels and reports a size a pixel under the
             # room it takes, so a label is measured as the pixels it covers
@@ -258,12 +260,19 @@ def _fitted_fonts(scalar_bar, *, vertical, title, viewport, fonts):
                 return False
             reach = (height if vertical else width) / 2
             center = start + room * anchor
-            if center - reach < edge or center + reach > limit - text_pad:
+            if edge is not None and center - reach < edge:
+                return False
+            if inside and center + reach > limit - text_pad:
                 return False
             edge = center + reach + text_pad
         return True
 
-    return title_font, _shrunk_font(labels_fit, start=label_font)
+    label_font = _shrunk_font(lambda size: labels_fit(size, inside=True), start=label_font)
+    if not labels_fit(label_font, inside=True):
+        # A tick anchored at the end of the viewport is not cleared at any size, but the
+        # labels can still be held off each other
+        label_font = _shrunk_font(lambda size: labels_fit(size, inside=False), start=label_font)
+    return title_font, label_font
 
 
 def _box_pixels(scalar_bar, viewport):
