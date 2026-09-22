@@ -893,7 +893,7 @@ class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
             return point_normals
         return self.cell_data.active_normals
 
-    def get_data_range(  # type: ignore[override]
+    def get_data_range(
         self: Self,
         arr_var: str | NumpyArray[float] | None = None,
         preference: PointLiteral | CellLiteral | FieldLiteral = 'cell',

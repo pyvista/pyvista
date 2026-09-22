@@ -27,7 +27,9 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from .dataset import DataSet
-    from .utilities.arrays import FieldAssociation
+    from .utilities.arrays import CellLiteral
+    from .utilities.arrays import FieldLiteral
+    from .utilities.arrays import PointLiteral
     from .utilities.writer import BaseWriter
 
 
@@ -290,7 +292,7 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
         self[index] = dataset
 
     def get_data_range(  # numpydoc ignore=RT01,PR01
-        self: Self, name: str | None, preference: FieldAssociation | str
+        self: Self, name: str | None, preference: PointLiteral | CellLiteral | FieldLiteral
     ) -> tuple[float, float]:  # pragma: no cover
         """Get the non-NaN min and max of a named array."""
         return DataObject.get_data_range(self, name=name, preference=preference)

@@ -5133,6 +5133,16 @@ def test_resample_to_image_raises(sphere):
     with pytest.raises(ValueError, match="method 'nonsense' is not valid"):
         sphere.resample_to_image(dimensions=(4, 5, 6), method='nonsense')
 
+    match = 'spacing values must all be greater than 0.0.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        sphere.resample_to_image(spacing=0)
+    match = 'spacing must have finite values.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        sphere.resample_to_image(spacing=np.inf)
+    match = 'rounding_func output must have integer-like values.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        sphere.resample_to_image(spacing=0.1, rounding_func=lambda d: np.asarray(d) + 0.5)
+
     for name, value in [('radius', 0.1), ('sharpness', 4.0)]:
         match = f"`{name}` requires `method='interpolate'`, but `method='sample'`."
         with pytest.raises(TypeError, match=re.escape(match)):

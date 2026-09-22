@@ -66,6 +66,10 @@ def test_init():
     assert repr(light) is not None
 
 
+def test_eq_not_a_light():
+    assert pv.Light() != 5
+
+
 def test_eq():
     light = pv.Light()
     other = pv.Light()

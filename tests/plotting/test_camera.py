@@ -322,6 +322,16 @@ def test_eq():
     assert camera == other
 
 
+def test_eq_not_a_camera():
+    assert pv.Camera() != 5
+
+
+def test_tight_without_renderer():
+    match = 'Camera must be associated with a renderer to fit it to the actors.'
+    with pytest.raises(AttributeError, match=re.escape(match)):
+        pv.Camera().tight()
+
+
 def test_copy():
     camera = pv.Camera()
     for name, value, _ in configuration:

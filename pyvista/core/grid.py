@@ -742,7 +742,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
     def __init__(
         self: Self,
-        uinput: ImageData | str | Path | None = None,
+        uinput: ImageData | _vtk.vtkImageData | str | Path | None = None,
         *,
         dimensions: VectorLike[int] | None = None,
         spacing: VectorLike[float] = (1.0, 1.0, 1.0),

@@ -135,7 +135,7 @@ def test_view_vectors():
         assert isinstance(viewup, np.ndarray)
         assert np.array_equal(viewup.shape, (3,))
 
-    with pytest.raises(ValueError, match='Unexpected value for direction'):
+    with pytest.raises(ValueError, match="view 'invalid' is not valid"):
         view_vectors('invalid')
 
 

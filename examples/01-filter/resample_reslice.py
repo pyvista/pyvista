@@ -134,7 +134,8 @@ print(cropped_resampled.origin, cropped_resampled.spacing)
 #    placed freely.
 # #. Those voxel corners have to be converted into physical coordinates by hand to
 #    build the reference.
-# #. The output dimensions have to be worked out from the region and the spacing.
+# #. The output has to be sized to the region by hand, through either ``dimensions``
+#    or ``spacing``.
 # #. ``extend_border`` has to be disabled, so the output keeps the crop's point bounds
 #    rather than its cell bounds.
 

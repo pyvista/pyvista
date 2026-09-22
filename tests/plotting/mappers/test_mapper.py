@@ -205,6 +205,29 @@ def test_set_scalars_categories_short_cmap():
         mapper.set_scalars(mesh['labels'], 'labels', categories=True, cmap=['r', 'g', 'b'])
 
 
+@pytest.mark.parametrize('clim', [[None, None], (None, None)])
+def test_add_mesh_clim_without_bounds(sphere, clim):
+    sphere['data'] = sphere.points[:, 0]
+    pl = pv.Plotter()
+    actor = pl.add_mesh(sphere, scalars='data', clim=clim)
+    assert actor.mapper.scalar_range == pytest.approx(sphere.get_data_range('data'))
+
+
+@pytest.mark.parametrize('clim', [[None, 1.0], [1.0, None], [None], [None, None, None]])
+def test_add_mesh_clim_partial_bounds_raises(sphere, clim):
+    sphere['data'] = sphere.points[:, 0]
+    with pytest.raises((TypeError, IndexError)):
+        pv.Plotter().add_mesh(sphere, scalars='data', clim=clim)
+
+
+@pytest.mark.parametrize('clim', [np.float64(0.25), np.array([0.1, 0.2])])
+def test_add_mesh_clim_numpy(sphere, clim):
+    sphere['data'] = sphere.points[:, 0]
+    actor = pv.Plotter().add_mesh(sphere, scalars='data', clim=clim)
+    expected = (-clim, clim) if np.ndim(clim) == 0 else tuple(clim)
+    assert actor.mapper.scalar_range == pytest.approx(expected)
+
+
 def test_set_scalars_categories_keeps_clim():
     mesh = pv.RectilinearGrid([0.0, 1.0, 2.0, 3.0], [0.0, 1.0], [0.0])
     mesh['labels'] = [0.0, 5.0, 10.0]
@@ -521,6 +544,17 @@ def test_as_rgba_uses_mapped_scalars(sphere):
     # Calling as_rgba again should be a no-op (already direct)
     mapper.as_rgba()
     assert mapper.color_mode == 'direct'
+
+
+def test_as_rgba_without_mapped_scalars(sphere):
+    """A mapper with nothing mapped has no RGBA array to build."""
+    mapper = DataSetMapper(dataset=sphere)
+    mapper.color_mode = 'map'
+
+    mapper.as_rgba()
+
+    assert '__rgba__' not in sphere.point_data
+    assert mapper.color_mode == 'map'
 
 
 def test_shared_mesh_raw_numpy_scalars_smooth_shading_subplots_mapper_output():

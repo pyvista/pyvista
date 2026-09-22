@@ -878,6 +878,19 @@ def test_subdivision(sphere, subfilter):
     assert mesh.n_faces > sphere.n_faces
 
 
+@pytest.mark.parametrize('subfilter', ['butterfly', 'loop', 'linear'])
+def test_subdivision_32bit_faces(sphere, subfilter):
+    sphere.GetPolys().ConvertTo32BitStorage()
+    faces = sphere.regular_faces.copy()
+
+    mesh = sphere.subdivide(1, subfilter)
+
+    assert mesh.n_faces == 4 * sphere.n_faces
+    # The input keeps its own faces and their storage
+    assert np.array_equal(sphere.regular_faces, faces)
+    assert not sphere.GetPolys().IsStorage64Bit()
+
+
 def test_invalid_subdivision(sphere):
     with pytest.raises(ValueError):  # noqa: PT011
         sphere.subdivide(1, 'not valid')

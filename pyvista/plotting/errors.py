@@ -26,7 +26,7 @@ class InvalidCameraError(ValueError):
 
     """
 
-    def __init__(self, message=CAMERA_ERROR_MESSAGE):
+    def __init__(self, message: str = CAMERA_ERROR_MESSAGE) -> None:
         """Call the base class constructor with the custom message."""
         super().__init__(message)
 
@@ -41,7 +41,7 @@ class RenderWindowUnavailable(RuntimeError):  # noqa: N818
 
     """
 
-    def __init__(self, message='Render window is not available.'):
+    def __init__(self, message: str = 'Render window is not available.') -> None:
         """Call the base class constructor with the custom message."""
         super().__init__(message)
 
@@ -56,7 +56,9 @@ class MismatchedInteractorError(RuntimeError):  # pragma: no cover
 
     """
 
-    def __init__(self, message='Interactor and render window backends are incompatible.'):
+    def __init__(
+        self, message: str = 'Interactor and render window backends are incompatible.'
+    ) -> None:
         """Call the base class constructor with the custom message."""
         super().__init__(message)
 
