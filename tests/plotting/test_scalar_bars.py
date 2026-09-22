@@ -1600,6 +1600,18 @@ def test_fit_box_window_size_render(sphere, window_size):
 
 @pytest.mark.parametrize('box', BOXES, ids=BOX_IDS)
 @pytest.mark.usefixtures('verify_image_cache')
+def test_fit_box_height_only_vertical_render(sphere, box):
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    pl.theme.colorbar_vertical.width = 0.08
+    _fitted_bar(pl, sphere, vertical=True, box=box, fmt='%.1f', height=0.6)
+    pl.show()
+
+
+@pytest.mark.parametrize('box', BOXES, ids=BOX_IDS)
+@pytest.mark.usefixtures('verify_image_cache')
 def test_fit_box_sized_vertical_render(sphere, box):
     sphere[KEY] = sphere.points[:, 2]
 
