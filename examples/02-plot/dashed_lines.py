@@ -45,7 +45,7 @@ pl.view_isometric()
 pl.show()
 
 # %%
-# Every named style is available. ``'-'`` is solid, so it leaves the input alone.
+# Every named style is available. ``'-'`` is solid, so it returns the lines whole.
 
 styles = ['-', '--', ':', '-.', '-..']
 
