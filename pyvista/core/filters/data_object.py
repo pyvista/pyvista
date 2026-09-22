@@ -6699,6 +6699,33 @@ def _validate_reference_volume_options(
         raise TypeError(msg)
 
 
+def _validate_spacing(spacing: float | VectorLike[float]) -> NumpyArray[float]:
+    """Return a positive, finite spacing broadcast to three axes."""
+    return _validation.validate_array3(
+        spacing,
+        broadcast=True,
+        must_be_finite=True,
+        must_be_in_range=[0, np.inf],
+        strict_lower_bound=True,
+        dtype_out=float,
+        name='spacing',
+    )
+
+
+def _round_dimensions(
+    dimensions: NumpyArray[float],
+    rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None,
+) -> NumpyArray[int]:
+    """Round fractional dimensions to integers, with ``numpy.round`` by default."""
+    rounding_func = np.round if rounding_func is None else rounding_func
+    return _validation.validate_array3(
+        rounding_func(dimensions),
+        must_be_integer=True,
+        dtype_out=int,
+        name='rounding_func output',
+    )
+
+
 def _spacing_for_n_points(
     size: NumpyArray[float],
     target_n_points: int,
@@ -6828,12 +6855,11 @@ def _make_reference_volume(
                 )
                 raise ValueError(msg)
         # Get initial spacing (will be adjusted later)
-        initial_spacing = _validation.validate_array3(spacing, broadcast=True)
-        rounding_func = np.round if rounding_func is None else rounding_func
+        initial_spacing = _validate_spacing(spacing)
         initial_dimensions = size / initial_spacing
         # Make sure we don't round dimensions to zero, make it one instead
         initial_dimensions[initial_dimensions < 1] = 1
-        dimensions = np.array(rounding_func(initial_dimensions), dtype=int)
+        dimensions = _round_dimensions(initial_dimensions, rounding_func)
 
     n_points = _count_points(dimensions, point_offset)
     if max_n_points is not None and n_points > max_n_points:
