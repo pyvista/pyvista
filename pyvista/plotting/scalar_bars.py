@@ -332,21 +332,21 @@ def _constrained_box(scalar_bar, *, title, pad, viewport, keep_height=False):
     return height, bar_ratio, title_ratio, text_pad
 
 
-def _fitted_box(scalar_bar, *, vertical, title, label_text, pad, dpi, window):
+def _fitted_box(scalar_bar, *, vertical, title, label_text, pad, dpi, viewport):
     """Return the box that encloses a scalar bar's text, and the settings that fill it.
 
     The colour ramp keeps the size it was given; the box grows around it.  Returns the
-    box width and height as a fraction of the window, the bar ratio that holds the ramp
-    to its original size, the line offset that seats the title inside the box, and the
-    separation that leaves the title its padding.
+    box width and height as a fraction of the viewport, the bar ratio that holds the
+    ramp to its original size, the line offset that seats the title inside the box, and
+    the separation that leaves the title its padding.
     """
-    window_width, window_height = window
+    viewport_width, viewport_height = viewport.GetSize()
     text_pad = scalar_bar.GetTextPad()
     label_width, label_height = _label_size(scalar_bar, label_text, dpi)
     title_width = _title_width(scalar_bar.GetTitleTextProperty(), title, dpi)
     title_height = _title_height(scalar_bar.GetTitleTextProperty(), title, dpi)
-    box_width = scalar_bar.GetWidth() * window_width
-    box_height = scalar_bar.GetHeight() * window_height
+    box_width = scalar_bar.GetWidth() * viewport_width
+    box_height = scalar_bar.GetHeight() * viewport_height
 
     if vertical:
         ramp = scalar_bar.GetBarRatio() * box_width
@@ -372,8 +372,8 @@ def _fitted_box(scalar_bar, *, vertical, title, label_text, pad, dpi, window):
         separation = 0
 
     return (
-        box_width / window_width,
-        box_height / window_height,
+        box_width / viewport_width,
+        box_height / viewport_height,
         bar_ratio,
         offset,
         separation,
@@ -483,7 +483,7 @@ class ScalarBars(_NoNewAttrMixin):
             label_text=scalar_bar.GetLabelTextProperty(),
             pad=fit['pad'],
             dpi=self._plotter.render_window.GetDPI(),
-            window=self._plotter.window_size,
+            viewport=fit['renderer'],
         )
         scalar_bar.SetWidth(fitted_width)
         scalar_bar.SetHeight(fitted_height)
@@ -574,11 +574,11 @@ class ScalarBars(_NoNewAttrMixin):
 
     def _stacked_beside(self, scalar_bar, neighbor, *, gap, label_text, pad, dpi, constrained):
         """Return the position that clears a vertical scalar bar of the one beside it."""
-        window_width = self._plotter.window_size[0]
-        bar_width = scalar_bar.GetWidth() * window_width
-        center = (neighbor.GetPosition()[0] + neighbor.GetWidth() / 2) * window_width
+        viewport_width = self._plotter.renderer.GetSize()[0]
+        bar_width = scalar_bar.GetWidth() * viewport_width
+        center = (neighbor.GetPosition()[0] + neighbor.GetWidth() / 2) * viewport_width
         if gap is None:
-            neighbor_bar = neighbor.GetWidth() * window_width
+            neighbor_bar = neighbor.GetWidth() * viewport_width
             # The ramp is only part of the bar's box and sits at the edge facing away
             # from the neighbor, so the labels drawn past it reach into the gap
             if scalar_bar.GetOrientation():
@@ -610,13 +610,13 @@ class ScalarBars(_NoNewAttrMixin):
             else:
                 neighbor_reach = max(neighbor_bar / 2, neighbor_title / 2)
             gap = reach + neighbor_reach + 0.2 * bar_width
-        return (center - gap - bar_width / 2) / window_width
+        return (center - gap - bar_width / 2) / viewport_width
 
     def _stacked_above(self, neighbor, *, gap, dpi):
         """Return the position that clears a horizontal scalar bar of the one below it."""
-        window_height = self._plotter.window_size[1]
+        viewport_height = self._plotter.renderer.GetSize()[1]
         if gap is None:
-            bar_height = neighbor.GetHeight() * window_height
+            bar_height = neighbor.GetHeight() * viewport_height
             # A horizontal bar draws its title and labels above its ramp, so it is the
             # neighbor below whose annotations reach up into the gap
             stack = (
@@ -628,7 +628,7 @@ class ScalarBars(_NoNewAttrMixin):
             if neighbor.GetDrawFrame() or neighbor.GetDrawBackground():
                 stack = max(stack, bar_height)
             gap = stack + 0.2 * bar_height
-        return neighbor.GetPosition()[1] + gap / window_height
+        return neighbor.GetPosition()[1] + gap / viewport_height
 
     def _remove_mapper_from_plotter(
         self,
@@ -980,7 +980,7 @@ class ScalarBars(_NoNewAttrMixin):
             :attr:`pyvista.plotting.themes.Theme.colorbar_orientation`.
 
         stacking_gap : float, optional
-            Distance between stacked scalar bars, as a fraction of the window.
+            Distance between stacked scalar bars, as a fraction of the viewport.
             Defaults to ``None``, which spaces them as tightly as their titles
             and tick labels allow, and is taken from
             :attr:`pyvista.plotting.themes.Theme.colorbar_horizontal` or
@@ -1494,7 +1494,7 @@ class ScalarBars(_NoNewAttrMixin):
         # A box is sized without the padding unless it is fitted around the title
         keeps_pad = fits_box or not draws_box
         pad = round(title_pad * title_text.GetFontSize()) if title_pad and keeps_pad else 0
-        window_width, window_height = self._plotter.window_size
+        viewport_width, viewport_height = self._plotter.renderer.GetSize()
         dpi = self._plotter.render_window.GetDPI()
 
         keep_fitted = False
@@ -1502,7 +1502,7 @@ class ScalarBars(_NoNewAttrMixin):
             if rotate_title:
                 scalar_bar.SetForceVerticalTitle(True)
                 title_height = _title_height(title_text, display_title, dpi)
-                bar_width = width * window_width
+                bar_width = width * viewport_width
                 title_text.SetLineOffset(-_rotated_title_offset(bar_width, title_height, pad))
             elif not sized or constrained:
                 # The box is free to grow, but the bar has not been placed yet
@@ -1510,8 +1510,8 @@ class ScalarBars(_NoNewAttrMixin):
             elif pad:
                 title_text.SetLineOffset(-pad)
 
-        # The gap between stacked bars is a fraction of the window but the annotations
-        # are not, so the annotations set that gap once the window is small
+        # The gap between stacked bars is a fraction of the viewport but the annotations
+        # are not, so the annotations set that gap once the viewport is small
         if stacked_slot and unconstrained:
             # Slots fill from the bottom up, so the one below this is taken
             neighbor = self._stacked_neighbor(stacked_slot)
@@ -1521,7 +1521,7 @@ class ScalarBars(_NoNewAttrMixin):
             # which fills the width.  Bars drawn the same way stack as they always did,
             # and one turned across its neighbor takes the short way out instead
             if neighbor.GetOrientation():
-                gap = stacking_gap * window_width if stacking_gap is not None else None
+                gap = stacking_gap * viewport_width if stacking_gap is not None else None
                 scalar_bar.SetPosition(
                     self._stacked_beside(
                         scalar_bar,
@@ -1535,7 +1535,7 @@ class ScalarBars(_NoNewAttrMixin):
                     y,
                 )
             else:
-                gap = stacking_gap * window_height if stacking_gap is not None else None
+                gap = stacking_gap * viewport_height if stacking_gap is not None else None
                 scalar_bar.SetPosition(x, self._stacked_above(neighbor, gap=gap, dpi=dpi))
 
         self._place_widget(title, scalar_bar)

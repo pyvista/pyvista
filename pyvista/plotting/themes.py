@@ -755,7 +755,7 @@ class _ColorbarConfig(_ConfigBase):
     def stacking_gap(self) -> float | None:  # numpydoc ignore=RT01
         """Return or set the distance between stacked colorbars.
 
-        The distance is a fraction of the window.  ``None`` spaces them as
+        The distance is a fraction of the viewport.  ``None`` spaces them as
         tightly as their titles and tick labels allow.
 
         Examples
