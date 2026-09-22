@@ -1838,15 +1838,17 @@ def test_fit_fonts_measure_the_viewport_a_bar_is_drawn_in(sphere):
 
 
 def test_fit_fonts_leave_a_tick_off_the_viewport_alone(sphere):
-    # A bar placed so that a tick sits at the end of the viewport cannot clear it at any
-    # size, and shrinking the labels to nothing would not help
+    # A bar drawn against the side of the viewport hangs its first label over the edge at
+    # any size, so the fit settles for holding the labels off each other
     pl = pv.Plotter(window_size=[600, 300])
     pl.add_mesh(sphere, show_scalar_bar=False)
-    bar = _wide_bar(pl, sphere, vertical=True, n_labels=10, position_x=0.1, position_y=0.6)
+    bar = _wide_bar(pl, sphere, n_labels=6, position_x=0.0)
     pl.screenshot(return_img=True)
 
-    font = bar.GetLabelTextProperty().GetFontSize()
-    assert 3 < font < WIDE_FONT
+    over, *gaps = _label_gaps(pl, bar)
+    assert 3 < bar.GetLabelTextProperty().GetFontSize() < WIDE_FONT
+    assert over < 0
+    assert min(gaps) >= 0
 
 
 def test_fit_fonts_skip_the_ticks_a_flat_range_hides(sphere):
@@ -1867,6 +1869,18 @@ def test_fit_fonts_skip_the_ticks_a_flat_range_hides(sphere):
 
     assert [anchor for anchor, _ in _label_ticks(bar)] == [-1.0, 0.5, -1.0]
     assert bar.GetLabelTextProperty().GetFontSize() == WIDE_FONT
+
+
+def test_label_ticks_place_custom_values_on_a_log_ramp(sphere):
+    # A log ramp places a custom tick by its logarithm, and has nowhere to put one that
+    # is not above zero
+    sphere[KEY] = np.linspace(0.01, 100.0, sphere.n_points)
+
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, log_scale=True, show_scalar_bar=False)
+    bar = pl.add_scalar_bar(KEY, tick_locations=[0.0, 0.1, 10.0], fmt='%.2f')
+
+    assert _label_ticks(bar) == [(-1.0, '0.00'), (0.25, '0.10'), (0.75, '10.00')]
 
 
 @pytest.mark.parametrize('indexed', [True, False], ids=['indexed', 'no_labels'])
@@ -1891,3 +1905,46 @@ def test_fit_fonts_leave_a_bar_with_no_tick_labels_alone(sphere, indexed: bool):
     assert bar.GetLabelTextProperty().GetFontSize() == WIDE_FONT
 
 
+def _label_runs(pl, bar):
+    """Return how many separated bands of text a vertical bar draws beside its ramp."""
+    image = pl.screenshot(return_img=True)
+    red, green, blue = (image[..., channel].astype(int) for channel in range(3))
+    text = (blue > 200) & (red < 150) & (green < 150)
+    # The swatch annotations are drawn on the other side of the bar, so the text past the
+    # ramp is the tick labels
+    left = bar.GetPositionCoordinate().GetComputedViewportValue(pl.renderer)[0]
+    ramp = bar.GetBarRatio() * _box_pixels(bar, pl.renderer)[0]
+    inked = text[:, int(left + ramp) :].any(axis=1)
+    return int(np.sum(inked[1:] & ~inked[:-1])) + int(inked[0])
+
+
+def test_fit_fonts_clear_the_swatches_a_vertical_bar_draws(sphere):
+    # Each swatch takes its own end of the ramp, leaving the labels a shorter run
+
+    def fit(**kwargs):
+        pl = pv.Plotter(window_size=[600, 300])
+        pl.background_color = 'white'
+        pl.add_mesh(sphere, show_scalar_bar=False)
+        bar = _wide_bar(
+            pl,
+            sphere,
+            vertical=True,
+            title='',
+            n_labels=6,
+            color='blue',
+            position_x=0.05,
+            position_y=0.1,
+            **kwargs,
+        )
+        return pl, bar
+
+    plain, without = fit()
+    bare = _label_runs(plain, without)
+
+    pl, bar = fit(nan_annotation=True, below_label='low', above_label='high')
+
+    assert bar.GetDrawNanAnnotation()
+    assert bar.GetDrawBelowRangeSwatch()
+    assert bar.GetDrawAboveRangeSwatch()
+    assert bar.GetLabelTextProperty().GetFontSize() < without.GetLabelTextProperty().GetFontSize()
+    assert _label_runs(pl, bar) == bare == 6
