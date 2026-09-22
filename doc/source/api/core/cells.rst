@@ -1,3 +1,5 @@
+.. _cells_api:
+
 Cells
 =====
 
@@ -57,3 +59,38 @@ Class Definition
 
    pyvista.Cell
    pyvista.CellArray
+
+
+Enumerations
+~~~~~~~~~~~~
+
+.. autosummary::
+   :toctree: _autosummary
+
+   pyvista.CellStatus
+   pyvista.CellType
+
+.. seealso::
+
+   :ref:`linear_cells_example`
+      Build one cell of each linear cell type.
+
+   :meth:`~pyvista.DataObjectFilters.cell_validator`
+      The filter that reports :class:`~pyvista.CellStatus` bits.
+
+
+Cell Quality
+~~~~~~~~~~~~
+
+.. autosummary::
+   :toctree: _autosummary
+
+   pyvista.cell_quality_info
+
+.. seealso::
+
+   :meth:`~pyvista.DataObjectFilters.cell_quality`
+      Compute cell quality measures for a dataset.
+
+   :ref:`mesh_quality_example`
+      Compute and plot mesh quality.

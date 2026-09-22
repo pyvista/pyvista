@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import re
 
 from hypothesis import given
@@ -10,6 +11,7 @@ import pytest
 import pyvista as pv
 from pyvista import _vtk
 from pyvista import examples
+from pyvista.plotting.errors import InvalidCameraError
 from pyvista.plotting.prop_collection import _PropCollection
 from pyvista.plotting.renderer import ACTOR_LOC_MAP
 
@@ -67,6 +69,218 @@ def test_show_grid_axes_ranges_with_all_edges():
     assert labels_ranges == axes_ranges
 
 
+def test_show_bounds_keeps_explicit_bounds():
+    """Regression test for https://github.com/pyvista/pyvista/issues/8231."""
+    bounds = (1.0, 7.0, 2.0, 5.0, -2.0, 2.0)
+    pl = pv.Plotter()
+    actor = pl.show_bounds(bounds=bounds)
+    pl.add_mesh(pv.Sphere(radius=5))
+    assert actor.bounds == bounds
+
+
+def test_show_bounds_keeps_mesh_bounds():
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere(radius=5))
+    actor = pl.show_bounds(mesh=pv.Cube())
+    pl.add_mesh(pv.Sphere(radius=9))
+    assert actor.bounds == pv.Cube().bounds
+
+
+def test_show_bounds_keeps_axes_ranges():
+    ranges = (0.0, 100.0)
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    actor = pl.show_bounds(axes_ranges=[*ranges, *ranges, *ranges])
+    pl.add_mesh(pv.Cube())
+    assert actor.x_axis_range == ranges
+    assert actor.y_axis_range == ranges
+    assert actor.z_axis_range == ranges
+
+
+def test_show_bounds_keeps_padding():
+    padded = pytest.approx((-0.6, 0.6, -0.6, 0.6, -0.6, 0.6))
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    actor = pl.show_bounds(padding=0.1)
+    pl.add_mesh(pv.Cube())
+    assert actor.bounds == padded
+    # padding must not compound as more actors are added
+    pl.add_mesh(pv.Cube())
+    assert actor.bounds == padded
+
+
+def test_show_bounds_follows_scene():
+    cube = pv.Cube()
+    pl = pv.Plotter()
+    actor = pl.show_bounds()
+    pl.add_mesh(cube)
+    assert actor.bounds == cube.bounds
+
+
+def test_show_bounds_scaled_keeps_zaxis():
+    """Regression test for https://github.com/pyvista/pyvista/issues/8687."""
+    pl = pv.Plotter()
+    pl.set_scale(zscale=2)
+    pl.add_mesh(pv.Sphere())
+    actor = pl.show_bounds(location='outer', grid='back')
+    assert not actor.use_2d_mode
+    assert actor.z_axis_visibility
+    assert len(actor.z_labels) == 5
+
+
+def test_show_bounds_scaled_after_show_keeps_zaxis():
+    """Scaling after the axes exist must not switch them to 2D either.
+
+    Regression test for https://github.com/pyvista/pyvista/issues/4768.
+    """
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    actor = pl.show_bounds(font_size=24)
+    pl.set_scale(1, 1, 2)
+    assert not actor.use_2d_mode
+    assert actor.z_axis_visibility
+    assert not actor.GetUseTextActor3D()
+
+
+def test_show_bounds_keeps_use_2d():
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    actor = pl.show_bounds(use_2d=True)
+    assert actor.use_2d_mode
+    pl.add_mesh(pv.Cube())
+    assert actor.use_2d_mode
+
+
+def test_show_bounds_scaled_drops_3d_text():
+    """3D text is not placed correctly on a scaled renderer, whichever order it is set in."""
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    actor = pl.show_bounds(use_3d_text=True)
+    assert actor.GetUseTextActor3D()
+    pl.set_scale(zscale=2)
+    assert not actor.GetUseTextActor3D()
+
+
+def test_show_bounds_scaled_keeps_text_changes():
+    """Dropping 3D text happens once, not on every actor added afterwards."""
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    actor = pl.show_bounds()
+    pl.set_scale(zscale=2)
+    actor.GetLabelTextProperty(0).SetFontSize(37)
+    pl.add_mesh(pv.Cube())
+    assert actor.GetLabelTextProperty(0).GetFontSize() == 37
+
+
+SCALE = (1.0, 15.0, 5.0)
+
+
+@pytest.mark.parametrize('scale_first', [True, False])
+def test_add_bounding_box_scaled(scale_first):
+    """The box sits on the scene whichever order the scale is set in.
+
+    Regression test for https://github.com/pyvista/pyvista/issues/4695.
+    """
+    pl = pv.Plotter()
+    mesh_actor = pl.add_mesh(pv.Sphere())
+    if scale_first:
+        pl.set_scale(*SCALE)
+    pl.add_bounding_box()
+    if not scale_first:
+        pl.set_scale(*SCALE)
+    assert np.allclose(pl.renderer.bounding_box_actor.GetBounds(), mesh_actor.GetBounds())
+
+
+def test_add_bounding_box_rescaled_keeps_actor():
+    """A scale change moves the box with the scene; only a bigger scene rebuilds it."""
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    box = pl.add_bounding_box()
+    pl.set_scale(*SCALE)
+    assert pl.renderer.bounding_box_actor is box
+    pl.add_mesh(pv.Cube(x_length=3.0))
+    new_box = pl.renderer.bounding_box_actor
+    assert new_box is not box
+    expected = pl.renderer.compute_bounds(ignore_actors=[new_box])
+    assert np.allclose(new_box.GetBounds(), expected)
+
+
+@pytest.mark.parametrize('scale_first', [True, False])
+def test_add_floor_scaled(scale_first):
+    """The floor scales with the scene, padding and offset included.
+
+    Regression test for https://github.com/pyvista/pyvista/issues/4695.
+    """
+
+    def floor_bounds(scale):
+        pl = pv.Plotter()
+        pl.add_mesh(pv.Sphere())
+        if scale_first:
+            pl.set_scale(*scale)
+        floor = pl.add_floor('-z', pad=0.5, offset=0.5)
+        if not scale_first:
+            pl.set_scale(*scale)
+        return np.array(floor.GetBounds())
+
+    unscaled = floor_bounds((1.0, 1.0, 1.0))
+    assert np.allclose(floor_bounds(SCALE), unscaled * np.repeat(SCALE, 2))
+
+
+def test_link_views_moves_bounds_axes_camera():
+    """Axes built before the views were linked follow the shared camera.
+
+    Regression test for https://github.com/pyvista/pyvista/issues/3082.
+    """
+    pl = pv.Plotter(shape=(1, 2))
+    for index in range(2):
+        pl.subplot(0, index)
+        pl.add_mesh(pv.Sphere())
+        pl.show_bounds()
+    pl.link_views()
+    assert pl.renderers[1].camera is pl.renderers[0].camera
+    assert all(r.cube_axes_actor.camera is r.camera for r in pl.renderers)
+    pl.unlink_views()
+    assert pl.renderers[1].camera is not pl.renderers[0].camera
+    assert all(r.cube_axes_actor.camera is r.camera for r in pl.renderers)
+
+
+def test_remove_bounds_axes_forgets_pinned_bounds():
+    """Pinned bounds do not outlive the actor they were pinned for."""
+    cube = pv.Cube()
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    pl.show_bounds(bounds=(0, 1, 0, 1, 0, 1))
+    pl.remove_bounds_axes()
+    pl.renderer.cube_axes_actor = pv.CubeAxesActor(pl.camera, bounds=(0, 1, 0, 1, 0, 1))
+    pl.add_mesh(cube)
+    assert pl.renderer.cube_axes_actor.bounds == cube.bounds
+
+
+def test_show_bounds_actor_assigned_directly_follows_scene():
+    """An actor put on the renderer by hand still tracks the scene."""
+    cube = pv.Cube()
+    pl = pv.Plotter()
+    pl.add_mesh(pv.Sphere())
+    pl.renderer.cube_axes_actor = pv.CubeAxesActor(pl.camera, bounds=(0, 1, 0, 1, 0, 1))
+    pl.add_mesh(cube)
+    assert pl.renderer.cube_axes_actor.bounds == cube.bounds
+
+
+def test_update_bounds_reapplies_padding_and_ranges():
+    """The actor keeps what it was built with when its bounds are updated."""
+    ranges = (0.0, 100.0)
+    actor = pv.CubeAxesActor(
+        pv.Plotter().camera,
+        bounds=(0, 1, 0, 1, 0, 1),
+        padding=0.1,
+        axes_ranges=[*ranges, *ranges, *ranges],
+    )
+    actor.update_bounds((-1, 1, -1, 1, -1, 1))
+    assert actor.bounds == pytest.approx((-1.2, 1.2, -1.2, 1.2, -1.2, 1.2))
+    assert actor.x_axis_range == ranges
+    assert actor.z_axis_range == ranges
+
+
 def test_show_bounds_with_scaling(sphere):
     pl = pv.Plotter()
     pl.add_mesh(sphere)
@@ -83,15 +297,19 @@ def test_show_bounds_invalid_axes_ranges():
 
     # send incorrect axes_ranges types
     axes_ranges = 1
-    with pytest.raises(TypeError, match='numeric sequence'):
+    with pytest.raises(ValueError, match=r'has shape \(\) which is not allowed'):
         pl.show_bounds(axes_ranges=axes_ranges)
 
     axes_ranges = [0, 1, 'a', 'b', 2, 3]
-    with pytest.raises(TypeError, match='All of the elements'):
+    with pytest.raises(TypeError, match='axes_ranges must have real numbers'):
         pl.show_bounds(axes_ranges=axes_ranges)
 
     axes_ranges = [0, 1, 2, 3, 4]
-    with pytest.raises(ValueError, match=r'[xmin, xmax, ymin, max, zmin, zmax]'):
+    with pytest.raises(ValueError, match=r'has shape \(5,\) which is not allowed'):
+        pl.show_bounds(axes_ranges=axes_ranges)
+
+    axes_ranges = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12]]
+    with pytest.raises(ValueError, match=r'has shape \(6, 2\) which is not allowed'):
         pl.show_bounds(axes_ranges=axes_ranges)
 
 
@@ -104,11 +322,67 @@ def test_camera_position():
     assert isinstance(cpos, pv.CameraPosition)
 
     # Test str format is a list
-    assert eval(str(cpos)) == cpos.to_list()
+    assert ast.literal_eval(str(cpos)) == cpos.to_list()
 
-    # Test repr format is init-able
-    cpos2 = eval('pv.' + repr(cpos))
+    # Test repr format is a CameraPosition call with literal arguments
+    call = ast.parse(repr(cpos), mode='eval').body
+    assert isinstance(call, ast.Call)
+    assert call.func.id == pv.CameraPosition.__name__
+    cpos2 = pv.CameraPosition(**{kw.arg: ast.literal_eval(kw.value) for kw in call.keywords})
     assert cpos2 == cpos
+
+
+def test_camera_position_holds_tuples_of_floats():
+    cpos = pv.CameraPosition([1, 2, 3], np.array([4.0, 5.0, 6.0]), (0, 0, 1))
+    assert cpos.position == (1.0, 2.0, 3.0)
+    assert cpos.focal_point == (4.0, 5.0, 6.0)
+    assert cpos.viewup == (0.0, 0.0, 1.0)
+    assert cpos.to_list() == [(1.0, 2.0, 3.0), (4.0, 5.0, 6.0), (0.0, 0.0, 1.0)]
+    assert cpos[0] == (1.0, 2.0, 3.0)
+
+    cpos.position = np.array([7, 8, 9])
+    cpos.focal_point = [0, 0, 0]
+    cpos.viewup = (0, 1, 0)
+    assert cpos.position == (7.0, 8.0, 9.0)
+    assert cpos.focal_point == (0.0, 0.0, 0.0)
+    assert cpos.viewup == (0.0, 1.0, 0.0)
+
+
+@pytest.mark.parametrize('vector', [[1, 2], 'not a vector'])
+def test_camera_position_raises(vector):
+    match = 'position'
+    with pytest.raises((TypeError, ValueError), match=match):
+        pv.CameraPosition(vector, (0, 0, 0), (0, 0, 1))
+
+
+@pytest.mark.parametrize('viewup', [(0, 0, 0), [0.0, 0.0, 0.0]])
+def test_camera_position_viewup_cannot_be_zero(viewup):
+    match = 'Camera up vector cannot be zero.'
+    with pytest.raises(ValueError, match=match):
+        pv.CameraPosition((1, 0, 0), (0, 0, 0), viewup)
+
+    cpos = pv.CameraPosition((1, 0, 0), (0, 0, 0), (0, 0, 1))
+    with pytest.raises(ValueError, match=match):
+        cpos.viewup = viewup
+
+
+@pytest.mark.parametrize('other', [5, 'xy', None, [1, 2], [(1, 2), (3, 4), (5, 6)]])
+def test_camera_position_eq_other_types(other):
+    assert pv.CameraPosition((1, 0, 0), (0, 0, 0), (0, 0, 1)) != other
+
+
+def test_camera_position_eq_sequence():
+    cpos = pv.CameraPosition((1, 0, 0), (0, 0, 0), (0, 0, 1))
+    assert cpos == [[1, 0, 0], [0, 0, 0], [0, 0, 1]]
+    assert cpos == np.array([[1.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 1.0]])
+    assert cpos != [[9, 0, 0], [0, 0, 0], [0, 0, 1]]
+
+
+@pytest.mark.parametrize('location', [[[1, 2], [3, 4], [5, 6]], [1, 2, 3, 4]])
+def test_camera_position_setter_raises(location):
+    pl = pv.Plotter()
+    with pytest.raises(InvalidCameraError, match='camera position'):
+        pl.camera_position = location
 
 
 @pytest.mark.skip_plotting
@@ -425,16 +699,16 @@ def test_border_default_handles_non_tuple_shape(shape, expects_overlay):
 
 
 def test_bad_legend_origin_and_size(sphere):
-    """Ensure bad parameters to origin/size raise ValueErrors."""
+    """Ensure bad parameters to origin/size raise."""
     pl = pv.Plotter()
     pl.add_mesh(sphere)
     legend_labels = [['sphere', 'r']]
     with pytest.raises(ValueError, match='Invalid loc'):
         pl.add_legend(labels=legend_labels, loc='bar')
-    with pytest.raises(ValueError, match='size'):
+    with pytest.raises(ValueError, match='`size` must have a length equal to'):
         pl.add_legend(labels=legend_labels, size=[])
     # test non-sequences also raise
-    with pytest.raises(ValueError, match='size'):
+    with pytest.raises(TypeError, match='`size` must be an instance of'):
         pl.add_legend(labels=legend_labels, size=type)
 
 
@@ -925,7 +1199,7 @@ def test_compute_bounds(airplane):
 @pytest.mark.parametrize('aa_type', [None, 1.0, 1, object()])
 def test_enable_antialising_raises(aa_type):
     pl = pv.Plotter()
-    with pytest.raises(TypeError, match=f'`aa_type` must be a string, not {type(aa_type)}'):
+    with pytest.raises(TypeError, match='`aa_type` must be an instance of'):
         pl.renderer.enable_anti_aliasing(aa_type=aa_type)
 
 
@@ -933,6 +1207,44 @@ def test_add_actor_raises():
     pl = pv.Plotter()
     with pytest.raises(ValueError, match=re.escape('Culling option (foo) not understood.')):
         pl.renderer.add_actor(_vtk.vtkActor(), culling='foo')
+
+
+@pytest.mark.parametrize(
+    ('culling', 'expected'),
+    [
+        ('none', (False, False)),
+        (False, (False, False)),
+        ('back', (True, False)),
+        ('backface', (True, False)),
+        ('b', (True, False)),
+        (True, (True, False)),
+        ('front', (False, True)),
+        ('frontface', (False, True)),
+        ('f', (False, True)),
+        ('NoNe', (False, False)),
+    ],
+)
+def test_add_actor_culling(culling, expected):
+    pl = pv.Plotter()
+    _, prop = pl.renderer.add_actor(_vtk.vtkActor(), culling=culling)
+    assert (bool(prop.GetBackfaceCulling()), bool(prop.GetFrontfaceCulling())) == expected
+    pl.close()
+
+
+def test_add_actor_culling_accepts_property_getter(sphere):
+    # `Property.culling` reports 'none' when disabled, so it must round trip
+    pl = pv.Plotter()
+    actor = pl.add_mesh(sphere)
+    assert actor.prop.culling == 'none'
+    pl.renderer.add_actor(_vtk.vtkActor(), culling=actor.prop.culling)
+    pl.close()
+
+
+def test_add_bounding_box_culling_none(sphere):
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
+    pl.add_bounding_box(culling='none')
+    pl.close()
 
 
 @pytest.mark.parametrize('grid', [1.0, 1, object()])
@@ -953,24 +1265,21 @@ def test_show_bounds_grid_value_raises():
 @given(padding=st.floats().filter(lambda x: (x > 1.0) | (x < 0)))
 def test_show_bounds_padding_raises(padding):
     pl = pv.Plotter()
-    with pytest.raises(
-        ValueError,
-        match=re.escape(f'padding ({padding}) not understood. Must be float between 0 and 1'),
-    ):
+    with pytest.raises(ValueError, match='padding values must all be'):
         pl.renderer.show_bounds(padding=padding)
 
 
 @pytest.mark.parametrize('groups', [1, object(), True])
 def test_init_renderers_groups_raises(groups):
-    match = f'"groups" should be a list or tuple, not {type(groups).__name__}.'
-    with pytest.raises(TypeError, match=match):
+    match = f'"groups" must be an instance of .*Got {type(groups)} instead.'
+    with pytest.raises(TypeError, match=re.escape(match).replace('\\.\\*', '.*')):
         pv.Plotter(groups=groups)
 
 
 @pytest.mark.parametrize('group', [1, object(), True])
 def test_init_renderers_groups_item_raises(group):
-    match = f'Each group entry should be a list or tuple, not {type(group).__name__}.'
-    with pytest.raises(TypeError, match=match):
+    match = f'Each group entry must be an instance of .*Got {type(group)} instead.'
+    with pytest.raises(TypeError, match=re.escape(match).replace('\\.\\*', '.*')):
         pv.Plotter(groups=[group])
 
 
@@ -1005,3 +1314,64 @@ def test_init_renderers_shape_descriptor_positive_raises(shape):
     match = f'"shape" must contain only positive integers. Got {shape!r}.'
     with pytest.raises(ValueError, match=re.escape(match)):
         pv.Plotter(shape=shape)
+
+
+def test_renderer_width_height():
+    pl = pv.Plotter(window_size=(400, 300))
+    assert pl.renderer.width == pytest.approx(400)
+    assert pl.renderer.height == pytest.approx(300)
+
+
+def test_renderer_raises_once_closed():
+    pl = pv.Plotter()
+    renderer = pl.renderer
+    renderer.deep_clean()
+    with pytest.raises(RuntimeError, match='no longer has a camera'):
+        _ = renderer.camera
+    with pytest.raises(RuntimeError, match='no longer has a plotter'):
+        _ = renderer.width
+
+
+def test_remove_actor_none():
+    pl = pv.Plotter()
+    assert pl.renderer.remove_actor(None) is False
+
+
+def test_add_actor_culling_prop_without_property():
+    pl = pv.Plotter()
+    _, prop = pl.renderer.add_actor(_vtk.vtkLegendScaleActor(), culling='back')
+    assert prop is None
+
+
+def test_set_active_renderer_requires_column():
+    pl = pv.Plotter(shape=(2, 2))
+    with pytest.raises(TypeError, match='"index_column" is required'):
+        pl.renderers.set_active_renderer(0)
+
+
+def test_shadow_renderer_raises_once_released():
+    pl = pv.Plotter()
+    renderers = pl.renderers
+    renderers.__del__()  # releases the shadow renderer, as garbage collection would
+    with pytest.raises(RuntimeError, match='no longer have a shadow renderer'):
+        _ = renderers.shadow_renderer
+
+
+@pytest.mark.parametrize('image_path', [examples.mapfile, examples.logofile])
+@pytest.mark.parametrize('scale', [0.5, 1.0, 2.0])
+def test_background_image_height_scales_with_window(image_path, scale):
+    pl = pv.Plotter(window_size=(400, 400))
+    pl.add_background_image(image_path, scale=scale)
+    background_renderer = pl.renderers._background_renderers[pl.renderers.active_index]
+
+    for window_size in [(400, 400), (800, 200), (200, 800)]:
+        pl.window_size = list(window_size)
+        background_renderer.resize()
+
+        image_data = background_renderer.actors['background'].GetInput()
+        image_height = image_data.dimensions[1] * image_data.spacing[1]
+        # `parallel_scale` is half the world-space height of the viewport
+        viewport_height = 2 * background_renderer.camera.parallel_scale
+        assert image_height / viewport_height == pytest.approx(scale)
+
+    pl.close()

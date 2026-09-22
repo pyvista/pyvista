@@ -6,7 +6,12 @@ import inspect
 import os
 import os.path as op
 import sys
+from typing import TYPE_CHECKING
 from typing import Any
+
+if TYPE_CHECKING:
+    from docutils.nodes import document
+    from sphinx.application import Sphinx
 
 
 def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> str | None:  # noqa: FBT001, FBT002
@@ -21,15 +26,16 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
         With keys ``'module'`` and ``'fullname'``.
 
     edit : bool, default=False
-        Link to the GitHub edit page instead of the blob view. The blob view
-        gets the full line range highlighted; the edit page gets a short,
-        two-line range starting at the same line -- a single-line anchor
-        doesn't reliably scroll the edit view there on first load.
+        Link to the GitHub edit page on ``main`` instead of the blob view for
+        the documented version. The blob view gets the full line range
+        highlighted; the edit page gets a short, two-line range starting at
+        the same line -- a single-line anchor doesn't reliably scroll the edit
+        view there on first load.
 
     Returns
     -------
-    str
-        The code URL. Empty string if there is no valid link.
+    str | None
+        The code URL. ``None`` if there is no valid link.
 
     Notes
     -----
@@ -83,10 +89,6 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
         fn = None
 
     if not fn:  # pragma: no cover
-        try:
-            fn = inspect.getsourcefile(sys.modules[obj.__module__])
-        except Exception:  # noqa: BLE001
-            return None
         return None
 
     fn = op.relpath(fn, start=op.dirname(pv.__file__))  # noqa: PTH120
@@ -107,7 +109,8 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
     else:
         linespec = f'#L{lineno}-L{lineno + len(source) - 1}'
 
-    if 'dev' in pv.__version__:
+    if edit or 'dev' in pv.__version__:
+        # Edits always target ``main``; a release branch only takes backports.
         kind = 'main'
     else:  # pragma: no cover
         kind = f'release/{".".join(pv.__version__.split(".")[:2])}'
@@ -161,7 +164,7 @@ def fix_edit_link_button(pagename: str, link: str) -> str:
     return link
 
 
-def _fix_edit_button(pagename: str, context) -> None:
+def _fix_edit_button(pagename: str, context: dict[str, Any]) -> None:
     """Point the "suggest edit" button at the file the page is generated from.
 
     ``sphinx-book-theme`` builds the pencil button in Python rather than in a
@@ -197,7 +200,7 @@ def _fix_edit_button(pagename: str, context) -> None:
                 repo_button['url'] = fix_edit_link_button(pagename, repo_button['url'])
 
 
-def _drop_download_button(context) -> None:
+def _drop_download_button(context: dict[str, Any]) -> None:
     """Remove the header "download this page" button.
 
     ``sphinx-book-theme`` adds it whenever a page has a source suffix, without
@@ -218,16 +221,33 @@ def _drop_download_button(context) -> None:
 
 
 def pv_html_page_context(  # noqa: PLR0917
-    app,  # noqa: ARG001
+    app: Sphinx,  # noqa: ARG001
     pagename: str,
     templatename: str,  # noqa: ARG001
-    context,
-    doctree,  # noqa: ARG001
+    context: dict[str, Any],
+    doctree: document | None,  # noqa: ARG001
 ) -> None:
     """Fix up the ``sphinx-book-theme`` header buttons for the page being rendered.
 
     Must be connected to ``html-page-context`` with a priority above the 501
     used by the theme's own handlers, which is where the buttons are built.
+
+    Parameters
+    ----------
+    app : sphinx.application.Sphinx
+        Sphinx application.
+
+    pagename : str
+        Name of the page being rendered.
+
+    templatename : str
+        Name of the template in use.
+
+    context : dict
+        Template context to modify.
+
+    doctree : docutils.nodes.document, optional
+        Document tree of the page, if any.
 
     """
     _fix_edit_button(pagename, context)

@@ -16,7 +16,7 @@ The wrapping function :func:`pyvista.wrap` is usable from the top level of
 PyVista. This allows users to quickly wrap any VTK dataset they have as a
 PyVista object:
 
-.. code-block:: python
+.. pyvista-plot::
 
     import vtk
     import pyvista as pv
@@ -49,13 +49,15 @@ assigned to the nodes or cells of the mesh respectively).
 
 First, check out some common meta-properties:
 
-.. code-block:: python
+.. pyvista-plot::
+    :context:
 
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> import numpy as np
 
-.. code-block:: python
+.. pyvista-plot::
+    :context:
 
     >>> mesh = examples.load_airplane()
 
@@ -65,6 +67,7 @@ First, check out some common meta-properties:
     2452
 
     Inspect how many points are in this mesh
+
     >>> mesh.n_points
     1335
 
@@ -74,6 +77,7 @@ First, check out some common meta-properties:
     0
 
     What are the mesh bounds?
+
     >>> mesh.bounds
     BoundsTuple(x_min =  139.06100463867188,
                 x_max = 1654.9300537109375,
@@ -92,7 +96,8 @@ Access the points by fetching the :attr:`points
 <pyvista.DataSet.points>` attribute on any PyVista mesh
 as a :class:`numpy.ndarray`:
 
-.. code-block:: python
+.. pyvista-plot::
+    :context:
 
     >>> the_pts = mesh.points
     >>> isinstance(the_pts, np.ndarray)
@@ -112,7 +117,8 @@ These dictionaries of the different point and cell arrays can be directly
 accessed and modified as NumPy arrays. In the example below, we load a dataset,
 access an array on that dataset, then add some more data:
 
-.. code-block:: python
+.. pyvista-plot::
+    :context:
 
     >>> mesh = examples.load_uniform()
 
@@ -200,7 +206,8 @@ after it's closed).
 You can then use this cached camera position for additional plotting
 without having to manually interact with the plotting window:
 
-.. code-block:: python
+.. pyvista-plot::
+    :context:
 
     # reuse the camera position from the previous plotter
     cpos = pl.camera_position
@@ -241,7 +248,8 @@ Any PyVista mesh object can be saved to a VTK file format using
 :func:`save() <pyvista.DataObject.save>`. For example, the mesh in the
 code block above could be saved like:
 
-.. code-block:: python
+.. pyvista-plot::
+    :context:
 
     mesh.save("mesh.vtk")
 
@@ -259,6 +267,7 @@ XDMF, and more.
 
 To save a PyVista mesh using ``meshio``, use :func:`pyvista.save_meshio`:
 
-.. code-block:: python
+.. pyvista-plot::
+    :context:
 
     pv.save_meshio("mesh.obj", mesh)

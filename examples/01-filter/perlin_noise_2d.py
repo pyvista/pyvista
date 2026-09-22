@@ -26,7 +26,7 @@ import pyvista as pv
 # terrain seem more like hills rather than mountains.
 freq = [0.689, 0.562, 0.683]
 noise = pv.perlin_noise(1, freq, (0, 0, 0))
-sampled = pv.sample_function(noise, bounds=(-10, 10, -10, 10, -10, 10), dim=(500, 500, 1))
+sampled = pv.sample_function(noise, bounds=(-10, 10, -10, 10, -10, 10), dim=(300, 300, 1))
 
 
 # %%
@@ -72,7 +72,7 @@ pl.show()
 
 
 # %%
-# Show the terrain with custom lighting and shadows
+# Show the terrain with custom lighting
 
 pl = pv.Plotter(lighting=None)
 pl.add_light(
@@ -92,7 +92,6 @@ pl.add_mesh(
     smooth_shading=True,
     clim=clim,
 )
-pl.enable_shadows = True
 pl.show()
 # %%
 # .. tags:: filter

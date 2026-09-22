@@ -64,3 +64,15 @@ Class Reference
 
    RectilinearGrid
    ImageData
+
+
+Shared Base Classes
+-------------------
+These classes are not used directly. They are documented because they define
+members that several of the classes above share, so that each of those members is
+documented once, here, and linked from every class that inherits it.
+
+.. autosummary::
+   :toctree: _autosummary
+
+   Grid

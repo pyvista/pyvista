@@ -16,13 +16,13 @@ import numpy as np
 import pyvista as pv
 from pyvista import examples
 
-mesh = examples.download_dragon()
+mesh = examples.download_bunny()
 mesh.rotate_x(90, inplace=True)
 mesh.rotate_z(120, inplace=True)
 
 
 # %%
-# Using two lights, plot the Stanford Dragon with shadows.
+# Using two lights, plot the Stanford Bunny with shadows.
 #
 # .. Note::
 #    VTK has known issues when rendering shadows on certain window

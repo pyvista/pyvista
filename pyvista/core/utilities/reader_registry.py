@@ -21,6 +21,12 @@ from typing import overload
 import pooch
 
 from pyvista._warn_external import warn_external
+from pyvista.core.utilities._optional_formats import _READ
+from pyvista.core.utilities._optional_formats import _declared_reader_class
+from pyvista.core.utilities._optional_formats import _import_handler
+from pyvista.core.utilities._optional_formats import _installed_extensions
+from pyvista.core.utilities._optional_formats import _missing_message
+from pyvista.core.utilities._optional_formats import _source
 from pyvista.core.utilities._registry_helpers import handler_source
 from pyvista.core.utilities.reader import CLASS_READERS
 from pyvista.core.utilities.reader import BaseReader
@@ -32,10 +38,10 @@ if TYPE_CHECKING:
 
 
 class ReaderHandler(Protocol):
-    """Callable that reads *path* and returns a :class:`pyvista.DataSet`."""
+    """Callable that reads ``path`` and returns a :class:`pyvista.DataSet`."""
 
     def __call__(self, path: str, /, **kwargs: Any) -> DataSet:
-        """Read *path* and return the resulting dataset."""
+        """Read ``path`` and return the resulting dataset."""
 
 
 # A bare callable, or a BaseReader subclass.
@@ -99,6 +105,8 @@ class ReaderRegistration(NamedTuple):
 
 
 class _RegistryState(TypedDict):
+    """Mutable state of the reader registry."""
+
     ext: dict[str, ReaderHandler]
     classes: dict[str, type[BaseReader[Any]]]
     sources: dict[str, str]
@@ -145,13 +153,17 @@ _override_ext_readers: set[str] = set()
 _pending_ext_readers: dict[str, list[EntryPoint]] = {}
 _entry_points_loaded: bool = False
 _temp_files: list[str] = []
+_temp_dirs: list[str] = []
 
 
 def _cleanup_temp_files() -> None:
-    """Remove temporary files created by :func:`_download_uri`."""
+    """Remove temporary files and directories created by :func:`_download_uri`."""
     for path in _temp_files:
         Path(path).unlink(missing_ok=True)
     _temp_files.clear()
+    for path in _temp_dirs:
+        shutil.rmtree(path, ignore_errors=True)
+    _temp_dirs.clear()
 
 
 atexit.register(_cleanup_temp_files)
@@ -186,7 +198,7 @@ def _restore_registry_state(state: _RegistryState) -> None:
 
 
 def has_scheme(value: str) -> bool:
-    """Return ``True`` if *value* starts with a URI scheme (for example, ``https://``).
+    """Return ``True`` if ``value`` starts with a URI scheme (for example, ``https://``).
 
     Parameters
     ----------
@@ -196,7 +208,7 @@ def has_scheme(value: str) -> bool:
     Returns
     -------
     bool
-        ``True`` if *value* contains a ``://`` scheme prefix before
+        ``True`` if ``value`` contains a ``://`` scheme prefix before
         the first ``/``.
 
     """
@@ -208,7 +220,7 @@ def has_scheme(value: str) -> bool:
 
 
 def _download_uri(uri: str, ext: str) -> str:
-    """Download a remote URI to a temporary file, preserving *ext*.
+    """Download a remote URI to a temporary file, preserving ``ext``.
 
     Uses ``fsspec`` when available (supports ``s3://``, ``gs://``,
     ``az://``, ``http://``, and any other registered filesystem).
@@ -245,7 +257,13 @@ def _download_uri(uri: str, ext: str) -> str:
                 f'Install it with: pip install fsspec'
             )
             raise ImportError(msg)
-        result = pooch.retrieve(uri, known_hash=None, fname=f'pyvista_download{suffix}')  # type: ignore[attr-defined]  # pooch doesn't export retrieve in __all__
+        # A fresh directory per call: pooch reuses an existing file of the same name
+        # without checking it came from the same URL.
+        download_dir = tempfile.mkdtemp(prefix='pyvista_download_')
+        _temp_dirs.append(download_dir)
+        result = pooch.retrieve(  # type: ignore[attr-defined]  # pooch doesn't export retrieve in __all__
+            uri, known_hash=None, fname=f'download{suffix}', path=download_dir
+        )
         _temp_files.append(result)
         return result
 
@@ -265,22 +283,14 @@ def _download_uri(uri: str, ext: str) -> str:
 _T_Provider = TypeVar('_T_Provider', bound=ReaderProvider)
 
 
+# fmt: off
+# ruff: disable[E501]
 @overload
-def register_reader(
-    key: str,
-    handler: None = None,
-    *,
-    override: bool = False,
-) -> Callable[[_T_Provider], _T_Provider]: ...
-
-
+def register_reader(key: str, handler: None = None, *, override: bool = False) -> Callable[[_T_Provider], _T_Provider]: ...
 @overload
-def register_reader(
-    key: str,
-    handler: ReaderProvider,
-    *,
-    override: bool = False,
-) -> None: ...
+def register_reader(key: str, handler: ReaderProvider, *, override: bool = False) -> None: ...
+# ruff: enable[E501]
+# fmt: on
 
 
 def register_reader(
@@ -305,9 +315,12 @@ def register_reader(
 
     * A bare **callable** ``handler(path, **kwargs)``. This is the
       lighter form for a format that has no reader-level state to
-      expose. :func:`pyvista.read` calls it directly;
-      :func:`pyvista.get_reader` raises :class:`ValueError` for the
-      extension because there is no reader object to hand back.
+      expose. :func:`pyvista.read` calls it directly, forwarding its
+      ``**kwargs``; :func:`pyvista.get_reader` raises
+      :class:`ValueError` for the extension because there is no reader
+      object to hand back. A callable registered with ``override=True``
+      is the exception: reader arguments for an extension PyVista
+      already reads route to the built-in reader instead.
 
     .. versionadded:: 0.48.0
 
@@ -342,7 +355,7 @@ def register_reader(
     Raises
     ------
     ValueError
-        If ``key`` collides with a built-in VTK reader and *override*
+        If ``key`` collides with a built-in VTK reader and ``override``
         is ``False``.
 
     Warns
@@ -469,6 +482,26 @@ def _get_ext_reader_class(ext: str) -> type[BaseReader[Any]] | None:
     return _custom_class_readers.get(ext)
 
 
+def _missing_reader_message(ext: str, filename: str | None = None) -> str | None:
+    """Return install instructions when ``ext`` needs a companion package PyVista cannot import."""
+    return _missing_message(ext, _READ, filename)
+
+
+def _optional_reader_class_name(ext: str) -> str | None:
+    """Return the reader class an optional format exposes, when it is importable."""
+    handler, _ = _import_handler(ext, _READ)
+    return _declared_reader_class(ext) if handler is not None else None
+
+
+def _resolve_optional_reader(ext: str) -> bool:
+    """Register the companion package serving ``ext``, when it is importable."""
+    handler, _ = _import_handler(ext, _READ)
+    if handler is None:
+        return False
+    _register(ext, cast('ReaderHandler', handler), source=_source(ext, _READ))
+    return True
+
+
 def _resolve_ext(ext: str) -> None:
     """Make sure any plugin claiming *ext* has been imported."""
     if ext in _custom_ext_readers or ext in _custom_class_readers:
@@ -476,6 +509,8 @@ def _resolve_ext(ext: str) -> None:
     _ensure_entry_points()
     if ext in _pending_ext_readers:
         _resolve_pending_reader(ext)
+        return
+    _resolve_optional_reader(ext)
 
 
 def _ensure_entry_points() -> None:
@@ -550,7 +585,7 @@ def _undeclared_override_message(ext: str, ep: EntryPoint) -> str:
 
 
 def _resolve_pending_reader(ext: str) -> bool:
-    """Import the plugin claiming *ext*, if any.
+    """Import the plugin claiming ``ext``, if any.
 
     Returns
     -------
@@ -611,8 +646,12 @@ def _list_custom_exts() -> list[str]:
     formats. The plugin modules themselves are **not** imported.
     """
     _ensure_entry_points()
+    installed_optional = _installed_extensions(_READ)
     return list(
-        _custom_ext_readers.keys() | _custom_class_readers.keys() | _pending_ext_readers.keys()
+        _custom_ext_readers.keys()
+        | _custom_class_readers.keys()
+        | _pending_ext_readers.keys()
+        | installed_optional
     )
 
 

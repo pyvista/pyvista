@@ -30,7 +30,7 @@ grid = pv.StructuredGrid(x, y, z)
 grid.point_data['size'] = z.ravel()
 
 # generate glyphs with varying size
-sphere = pv.Sphere()
+sphere = pv.Sphere(theta_resolution=16, phi_resolution=16)
 spheres = grid.glyph(scale='size', geom=sphere, orient=False)
 
 spheres.plot(show_scalar_bar=False)

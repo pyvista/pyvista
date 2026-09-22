@@ -222,7 +222,7 @@ point_cloud['phase'] = hydro_orbital['real_wf'][indices] < 0
 # Turn the point cloud into individual spheres. We do this so we can improve
 # the plot by enabling surface space ambient occlusion (SSAO)
 dplot = point_cloud.glyph(
-    geom=pv.Sphere(theta_resolution=8, phi_resolution=8),
+    geom=pv.Sphere(theta_resolution=6, phi_resolution=6),
     scale=False,
     orient=False,
 )

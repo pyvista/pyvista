@@ -20,7 +20,7 @@ Highlights of the API include:
 * Filtering/plotting tools built for interactivity (see :ref:`widgets`)
 * Direct access to common VTK filters (see :ref:`filters`)
 * Intuitive plotting routines with `matplotlib`_ similar syntax (see
-  :ref:`plotting`)
+  :ref:`plotting-api-index`)
 
 
 .. card:: Core API
@@ -55,13 +55,13 @@ Highlights of the API include:
       >>> actor = pl.add_mesh(mesh, scalars=mesh.points)
       >>> actor.prop
 
-.. card:: Readers
+.. card:: Readers and Writers
    :link: reader_api
    :link-type: ref
    :class-title: pyvista-card-title
 
-   Use PyVista's Reader classes to read data files using
-   :func:`pyvista.get_reader`.
+   Read data files with :func:`pyvista.read` or the Reader classes, and
+   write them with :meth:`pyvista.DataObject.save` or the Writer classes.
 
    .. jupyter-execute::
 

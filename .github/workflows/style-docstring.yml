@@ -11,29 +11,30 @@ permissions:
   id-token: none
 
 jobs:
+  # GitHub-hosted runners can re-use the cache across OS's, so this ubuntu
+  # entry serves the Windows job via enableCrossOsArchive on the restore.
   cache-pyvista-data:
     name: Cache pyvista/data
-    uses: ./.github/workflows/cache-pyvista-data.yml
+    uses: $/.github/workflows/cache-pyvista-data.yml
     with:
-      # Runner should match the actual runner used by the docstring job
-      runs-on: "blacksmith-4vcpu-ubuntu-2204"
+      runs-on: "ubuntu-22.04"
 
   docstringcheck:
     strategy:
       fail-fast: false
       matrix:
         include:
-          - os: blacksmith-4vcpu-ubuntu-2204
+          - os: ubuntu-22.04
             python-version: "3.14" # Should be the latest version supported
           - os: windows-latest
             python-version: "3.10" # Should be the oldest version supported
 
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
 
     needs: cache-pyvista-data
     env:
       TOX_COLORED: "yes"
-      PYVISTA_VTK_DATA: ${{ github.workspace }}/pyvista-data
     steps:
       - uses: actions/checkout@v7
         with:
@@ -45,33 +46,53 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
 
-      - name: Setup headless display on Windows
-        if: runner.os == 'Windows'
-        uses: pyvista/setup-headless-display-action@5bc8de3bc71fcda7a96439571287a554901541a0
+      - name: Set up headless display
+        uses: pyvista/setup-headless-display-action@c103a2ff45650d38cb71684b5dc6cdfeb9442c79
 
       - uses: awalsh128/cache-apt-pkgs-action@553a35bb8ebd9fcabcb1c9451aa4c98e1b4ca8a9
         if: runner.os == 'Linux'
         with:
-          packages: xvfb libgl1 libglx-mesa0 libosmesa6
+          packages: libosmesa6
           version: 3.0
 
       - name: Restore pyvista/data cache
-        uses: actions/cache/restore@v6
+        uses: $/.github/actions/restore-pyvista-data
         with:
-          path: pyvista-data
           key: ${{ needs.cache-pyvista-data.outputs.key }}
-          enableCrossOsArchive: true
 
       - name: Install tox-uv
         run: pip install tox-uv
 
-      - name: Test Package Docstrings (Linux)
-        if: runner.os == 'Linux'
-        run: xvfb-run -a tox run -f doctest
+      - name: Test Package Docstrings
+        run: tox run -e doctest-modules
 
-      - name: Test Package Docstrings (Windows)
-        if: runner.os == 'Windows'
-        run: tox run -f doctest
+  doctest-names:
+    name: Doctest Names
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    env:
+      TOX_COLORED: "yes"
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.14" # Should be the latest version supported
+          cache: pip
+
+      - uses: awalsh128/cache-apt-pkgs-action@553a35bb8ebd9fcabcb1c9451aa4c98e1b4ca8a9
+        with:
+          packages: libgl1 libglx-mesa0
+          version: 3.0
+
+      - name: Install tox-uv
+        run: pip install tox-uv
+
+      - name: Check Docstring Example Names
+        run: tox run -e doctest-names
 
   vale:
     name: Vale
@@ -120,10 +141,13 @@ jobs:
       # headings that must be flagged, and fails if any of them stops being.
       - name: Install Vale
         run: |
-          curl -sSfL https://github.com/errata-ai/vale/releases/download/v${VALE_VERSION}/vale_${VALE_VERSION}_Linux_64-bit.tar.gz \
-            | sudo tar -xz -C /usr/local/bin vale
+          curl -sSfL "https://github.com/errata-ai/vale/releases/download/v${VALE_VERSION}/vale_${VALE_VERSION}_Linux_64-bit.tar.gz" -o vale.tar.gz
+          echo "${VALE_SHA256}  vale.tar.gz" | sha256sum --check
+          sudo tar -xz -C /usr/local/bin -f vale.tar.gz vale
         env:
           VALE_VERSION: 3.18.0
+          # From vale_<version>_checksums.txt on the release page; update both together.
+          VALE_SHA256: a6f71a75a12fe689345b754f2412b90367fe33648abb7d200fa19eaadc2dbf6d
 
       - name: "Check Vale still catches known-bad headings"
         run: python3 tests/doc/vale/check_expected_failures.py

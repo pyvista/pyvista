@@ -1,49 +1,14 @@
-# `exceptions` is a snapshot of false positives found when this rule was
-# added, not a maintained list. Add a new type/module name here if CI flags
-# it as repeated; no need to revisit existing entries unless one starts
-# masking a real doubled word.
+# A case-sensitive copy of `Vale.Repetition`, for numpydoc descriptions that
+# restate the type they document (`list` then "List of ..."). See `doc/.vale.ini`.
+#
+# `tokens` holds a dotted identifier together, so `pyvista.plotting.plotting` is
+# one word; a trailing sentence period stays outside it, so a doubled word
+# ending a sentence is still caught. `tests/doc/vale/repetition.rst` and its
+# `_invalid` counterpart pin both halves.
 extends: repetition
 message: "'%s' is repeated!"
 level: error
 alpha: true
 ignorecase: false
 tokens:
-  - '[^\s.!?]+'
-exceptions:
-  # numpydoc type lines restated as the first word of their description
-  - Actor
-  - AddIDsAlgorithm
-  - Brush
-  - Camera
-  - Chart
-  - Color
-  - CrinkleAlgorithm
-  - DataFrame
-  - Hexahedra
-  - ImageData
-  - Iterable
-  - Iterator
-  - Light
-  - MultiBlock
-  - Number
-  - Path
-  - Pen
-  - Plotter
-  - PolyData
-  - RectilinearGrid
-  - StructuredGrid
-  - Table
-  - Text
-  - Texture
-  - Theme
-  - Trimesh
-  - UnstructuredGrid
-  - Any
-  # dotted module paths repeating their last segment, e.g. pyvista.examples.examples
-  - examples
-  - plotting
-  # code repeating a real identifier, e.g. reader.reader.read()
-  - reader
-  - dataset
-  # two separate, correctly-labeled comments
-  - triangle
+  - '[^\s!?]*[^\s!?.]'

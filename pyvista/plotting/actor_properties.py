@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from pyvista._warn_external import warn_external
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
 from .opts import InterpolationType
@@ -18,31 +20,25 @@ class ActorProperties(_NoNewAttrMixin):
 
     Contains the surface properties of the object.
 
+    .. deprecated:: 0.49
+        Use :class:`pyvista.Property` instead. Its
+        :attr:`~pyvista.Property.interpolation` replaces ``interpolation_model``,
+        and ``shading`` has no equivalent.
+
     Parameters
     ----------
     properties : :vtk:`vtkProperty`
         VTK properties of the current object.
 
-    Examples
-    --------
-    Access the properties of the z-axis shaft.
-
-    >>> import pyvista as pv
-
-    >>> axes = pv.Axes()
-    >>> z_axes_prop = axes.axes_actor.z_axis_shaft_properties
-    >>> z_axes_prop.color = (1.0, 1.0, 0.0)
-    >>> z_axes_prop.opacity = 0.5
-    >>> axes.axes_actor.shaft_type = axes.axes_actor.ShaftType.CYLINDER
-
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_actor(axes.axes_actor)
-    >>> _ = pl.add_mesh(pv.Sphere())
-    >>> pl.show()
-
     """
 
     def __init__(self, properties: _vtk.vtkProperty) -> None:
+        """Initialize the wrapper."""
+        # deprecated 0.49, convert to error in 0.52, remove 0.53
+        warn_external(
+            '`ActorProperties` is deprecated. Use `pyvista.Property` instead.',
+            PyVistaDeprecationWarning,
+        )
         super().__init__()
         self.properties = properties
 

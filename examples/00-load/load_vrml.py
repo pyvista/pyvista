@@ -11,6 +11,10 @@ https://en.wikipedia.org/wiki/VRML
 
 """
 
+# sphinx_gallery_start_ignore
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
 import pyvista as pv
 from pyvista import examples
 

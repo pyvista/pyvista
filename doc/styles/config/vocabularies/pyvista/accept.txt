@@ -470,6 +470,7 @@ unticked
 untrusted
 upscaling
 url
+uv
 validators
 vendoring
 venv

@@ -24,11 +24,11 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG = ROOT / 'doc' / '.vale.ini'
 
-# Vale cannot read a .py file, so gallery examples and docstrings are extracted
-# to .rst first; see `doc/extract_rst_from_py_for_vale.py`. The last entry is a
-# fixture of headings that must stay valid -- it lives under `tests` and so has
-# to be named explicitly. Its counterpart, `headings_invalid.rst`, is
-# deliberately absent: those headings must fail.
+# Gallery examples and docstrings are extracted to .rst first, so Vale sees them
+# with numpydoc structure resolved; see `doc/extract_rst_from_py_for_vale.py`.
+# The last two entries are fixtures that must stay valid, and so have to be
+# named explicitly. Their `_invalid` counterparts are deliberately absent: those
+# cases must fail, which `check_expected_failures.py` asserts.
 PATHS = [
     'doc',
     'pyvista',
@@ -37,6 +37,7 @@ PATHS = [
     '.vale/examples',
     '.vale/pyvista',
     'tests/doc/vale/headings.rst',
+    'tests/doc/vale/repetition.rst',
 ]
 
 EXTRACT = [

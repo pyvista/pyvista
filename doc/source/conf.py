@@ -21,6 +21,7 @@ from sphinx_autocodelink.gallery import AutoCodeLinkScraper
 if TYPE_CHECKING:
     from docutils.nodes import Element
     from sphinx.application import Sphinx
+    from sphinx.environment import BuildEnvironment
 
 # Otherwise VTK reader issues on some systems, causing sphinx to crash. See also #226.
 locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
@@ -41,20 +42,27 @@ warnings.filterwarnings(
 # import things like `scipy` or `matplotlib` that would be unnecessarily bulky to import by default
 # during normal operation. See https://github.com/pyvista/pyvista/pull/7023.
 # Note that `import make_tables` below imports pyvista.
-os.environ['PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'] = 'true'
+os.environ['_PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'] = 'true'
 
 sys.path.insert(0, str(Path().cwd()))
+import make_search_summaries
 import make_tables
 
 # -- pyvista configuration ---------------------------------------------------
 import pyvista as pv
 from pyvista import _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.errors import PyVistaFutureWarning
 from pyvista.core.utilities.docs import linkcode_resolve  # noqa: F401
 from pyvista.core.utilities.docs import pv_html_page_context
 from pyvista.ext._autoenum import instance_property_names
 from pyvista.ext._autoenum import metaclass_property_descriptions
 from pyvista.ext._autoenum import metaclass_property_names
+from pyvista.ext._autoinherit import filter_member_rows
+from pyvista.ext._autoinherit import inherited_classes
+from pyvista.ext._autoinherit import inherited_member_rows
+from pyvista.ext._autoinherit import own_members
+from pyvista.ext._autoinherit import vtk_bases
 from pyvista.plotting.utilities.sphinx_gallery import DynamicScraper
 
 # Need to import all vtk modules eagerly to avoid issues with parallel lazy imports
@@ -97,10 +105,14 @@ warnings.filterwarnings(
     ),
 )
 
-# Prevent deprecated features from being used in examples
+# Prevent deprecated features and changing defaults from being used in examples
 warnings.filterwarnings(
     'error',
     category=PyVistaDeprecationWarning,
+)
+warnings.filterwarnings(
+    'error',
+    category=PyVistaFutureWarning,
 )
 warnings.filterwarnings(
     'always',
@@ -124,6 +136,8 @@ extensions = [
     'notfound.extension',
     'numpydoc',
     'pyvista.ext._autoenum',
+    'pyvista.ext._autoinherit',
+    'pyvista.ext._embed_py_file',
     'pyvista.ext.plot_directive',
     'sphinx_autoopengraph',
     'sphinx_examples_as_code',
@@ -150,6 +164,11 @@ extensions = [
 ]
 
 
+# Configuration for sphinx.ext.duration: report in the build log, skip the JSON file
+duration_n_slowest = 50
+duration_write_json = None
+
+
 # Configuration for sphinx.ext.autodoc
 # Do not expand following type aliases when generating the docs
 autodoc_type_aliases = {
@@ -157,7 +176,10 @@ autodoc_type_aliases = {
     'JupyterBackendOptions': 'pyvista.JupyterBackendOptions',
     'MeshValidationFields': 'pyvista.MeshValidationFields',
     'Chart': 'pyvista.Chart',
+    'FrameType': 'types.FrameType',
     'ColorLike': 'pyvista.ColorLike',
+    # generated from the example names; render it as a name, not 222 literals
+    'ExampleName': 'ExampleName',
     'ArrayLike': 'pyvista.ArrayLike',
     'VectorLike': 'pyvista.VectorLike',
     'MatrixLike': 'pyvista.MatrixLike',
@@ -167,6 +189,8 @@ autodoc_type_aliases = {
     'TransformLike': 'pyvista.TransformLike',
     'RotationLike': 'pyvista.RotationLike',
     'InteractionEventType': 'pyvista.InteractionEventType',
+    'PlottableType': 'pyvista.PlottableType',
+    'WrappableType': 'pyvista.WrappableType',
 }
 
 # Enable ANSI coloring for programoutput, using erbsland.sphinx.ansi
@@ -193,6 +217,9 @@ sphinx_examples_as_code_conf = {
     'gallery_downloads': True,
 }
 
+# Disable checking if vtk links resolve correctly, web checks can be unstable
+vtk_xref_nitpicky = False
+
 # Warn if target links or references cannot be found
 nitpicky = True
 # Except ignore these entries
@@ -203,6 +230,7 @@ nitpick_ignore_regex = [
     #
     # PyVista TypeVars and TypeAliases
     (r'py:.*', '.*ColorLike'),
+    (r'py:.*', '.*_ColorChannel'),
     (r'py:.*', '.*ImageCompareType'),
     (r'py:.*', '.*ColormapOptions'),
     (r'py:.*', '.*ArrayLike'),
@@ -214,6 +242,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*WriterHandler'),
     (r'py:.*', '.*ReaderHandler'),
     (r'py:.*', '.*ReaderProvider'),
+    (r'py:.*', r'pv\.BaseReader'),
     (r'py:.*', '.*_T_Provider'),
     (r'py:.*', '.*BoundsLike'),
     (r'py:.*', '.*RotationLike'),
@@ -238,6 +267,11 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*NormalsLiteral'),
     (r'py:.*', '.*_CellQualityLiteral'),
     (r'py:.*', '.*_CompressionOptions'),
+    (r'py:.*', '.*_ShowReturnType'),
+    (r'py:.*', '.*_ConnectivityMode'),
+    (r'py:.*', '.*_RegionAssignmentMode'),
+    (r'py:.*', '.*_AxesPropTuple'),
+    (r'py:.*', '.*_SENTINEL'),
     (r'py:.*', '.*T'),
     (r'py:.*', '.*Options'),
     # Python 3.14 typing internals leaked through get_type_hints() on
@@ -250,9 +284,14 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*PolyData'),
     (r'py:.*', '.*UnstructuredGrid'),
     (r'py:.*', '.*_TypeMultiBlockLeaf'),
+    (r'py:.*', '.*DatasetObject'),
+    (r'py:.*', '.*_DatasetT_co'),
+    (r'py:.*', '.*_ReadersT_co'),
+    (r'py:.*', '.*ExampleName'),
+    (r'py:.*', '.*_DatasetLoader'),
     (r'py:.*', '.*Grid'),
     (r'py:.*', '.*PointGrid'),
-    (r'py:.*', '.*_PointSet'),
+    (r'py:.*', '.*_PointSetBase'),
     #
     # PyVista array-related types
     (r'py:.*', 'ActiveArrayInfo'),
@@ -279,6 +318,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*ShaderType'),
     (r'py:.*', '.*PointSpriteShape'),
     (r'py:.*', '.*StereoType'),
+    (r'py:.*', '.*LightType'),
     #
     # PyVista Texture enum
     (r'py:.*', '.*WrapType'),
@@ -311,7 +351,6 @@ nitpick_ignore_regex = [
     (r'py:.*', 'VerticalOptions'),
     (r'py:.*', '.*JupyterBackendOptions'),
     (r'py:.*', '_InterpolationOptions'),
-    (r'py:.*', 'PlottableType'),
     (r'py:.*', '_Dimensionality'),
     #
     # Built-in python types. TODO: Fix links (intersphinx?)
@@ -413,6 +452,10 @@ intersphinx_mapping = {
     ),
     'pytest': ('https://docs.pytest.org/en/stable/', ('../intersphinx/pytest-objects.inv',)),
     'pyvistaqt': ('https://qt.pyvista.org/', ('../intersphinx/pyvistaqt-objects.inv',)),
+    'pyvista_validation': (
+        'https://validation.pyvista.org/',
+        ('../intersphinx/pyvista-validation-objects.inv',),
+    ),
     'trimesh': ('https://trimesh.org', ('../intersphinx/trimesh-objects.inv',)),
 }
 intersphinx_timeout = 5
@@ -430,7 +473,15 @@ autosummary_context = {
     # Methods that should be skipped when generating the docs
     # __init__ should be documented in the class docstring
     # override is a VTK method
-    'skipmethods': ['__init__', 'override'],
+    # check_attribute is an undocumented hook used by DisableVtkSnakeCase
+    'skipmethods': ['__init__', 'override', 'check_attribute'],
+    # Used by _templates/autosummary/class.rst: see pyvista/ext/_autoinherit.py for how
+    # each member is routed to exactly one class page.
+    'own_members': own_members,
+    'inherited_classes': inherited_classes,
+    'inherited_member_rows': inherited_member_rows,
+    'filter_member_rows': filter_member_rows,
+    'vtk_bases': vtk_bases,
     # Used by _templates/autosummary/enum.rst: autosummary does not populate `attributes`
     # for the `enum` objtype the way it does for `class`, so enum.rst asks these directly.
     'instance_property_names': instance_property_names,
@@ -534,14 +585,24 @@ def _filter_sphinx_gallery_warnings():
     warnings.simplefilter('error', append=True)
 
 
+# Examples whose VTK warnings are noise: VTK 9.7 intermittently logs Jacobi
+# eigenvalue warnings while importing this VRML scene.
+_VTK_OUTPUT_TOLERATED = frozenset({'load_vrml.py'})
+
+
 class ResetPyVista:
     """Reset pyvista module to default settings."""
 
-    def __call__(self, gallery_conf, fname):  # noqa: ARG002
+    def __init__(self):
+        self._error_catcher = None
+
+    def __call__(self, gallery_conf, fname, when):  # noqa: ARG002
         """Reset pyvista module to default settings.
 
         If default documentation settings are modified in any example, reset here.
         """
+        if when == 'after':
+            self._raise_for_vtk_output(fname)
         _filter_sphinx_gallery_warnings()
         import matplotlib as mpl  # must import before pyvista
 
@@ -556,6 +617,35 @@ class ResetPyVista:
 
         pv._wrappers['vtkPolyData'] = pv.PolyData
         pv.set_plot_theme('document_build')
+
+        if when == 'before':
+            self._start_catching_vtk_output()
+
+    def _start_catching_vtk_output(self):
+        """Begin recording the errors and warnings VTK logs while an example runs."""
+        import pyvista as pv
+
+        # An example that aborted may have left the previous recording open.
+        self._stop_catching_vtk_output()
+        catcher = pv.VtkErrorCatcher(send_to_logging=False)
+        catcher.__enter__()
+        self._error_catcher = catcher
+
+    def _stop_catching_vtk_output(self):
+        """Stop recording and return the events logged since recording began."""
+        catcher, self._error_catcher = self._error_catcher, None
+        if catcher is None:
+            return []
+        catcher.__exit__(None, None, None)
+        return catcher.events
+
+    def _raise_for_vtk_output(self, fname):
+        """Fail the build when an example logged a VTK error or warning."""
+        events = self._stop_catching_vtk_output()
+        if events and Path(fname).name not in _VTK_OUTPUT_TOLERATED:
+            logged = '\n'.join(str(event) for event in events)
+            msg = f'{fname} logged {len(events)} VTK error(s) or warning(s):\n{logged}'
+            raise RuntimeError(msg)
 
     def __repr__(self):
         return 'ResetPyVista'
@@ -605,7 +695,8 @@ from jinja2.sandbox import SandboxedEnvironment
 from numpydoc.docscrape import NumpyDocString
 from numpydoc.docscrape_sphinx import SphinxDocString
 
-IMPORT_PYVISTA_RE = r'\b(import +pyvista|from +pyvista +import)\b'
+# Also matches submodule imports, e.g. ``from pyvista.examples.cells import ...``.
+IMPORT_PYVISTA_RE = r'\b(import +pyvista|from +pyvista(\.[\w.]+)? +import)\b'
 IMPORT_MATPLOTLIB_RE = r'\b(import +matplotlib|from +matplotlib +import)\b'
 
 pyvista_plot_setup = """
@@ -625,7 +716,7 @@ autocodelink_autodoc_backrefs = True
 # Rename backreferences group headings.
 autocodelink_category_labels = {
     'Sphinx Gallery': 'Gallery Examples',
-    'Docstring Examples': 'Docstring Examples',
+    'Docstring Examples': 'API Examples',
     'Documentation': 'Guides',
 }
 
@@ -640,6 +731,9 @@ autocodelink_show_usage_count = True
 
 # render gallery backreferences as thumbnail cards
 autocodelink_gallery_cards = True
+
+# execute and record ``.. jupyter-execute::`` cells so their identifiers link too
+autocodelink_jupyter_blocks = True
 
 
 def _str_examples(self):
@@ -863,17 +957,25 @@ def get_version_match(semver):
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
+# An expanded sidebar embeds the site's whole toctree (~2,100 links) in every page:
+# the write phase grew from ~40s to ~7min and pages two- to five-fold (see #9023).
+# Release builds take that cost for navigability; every other build collapses it.
+RELEASE_BUILD = os.environ.get('_PYVISTA_RELEASE', '').lower() == 'true'
+
 html_theme_options = {
     'analytics': {'google_analytics_id': 'UA-140243896-1'},
     'show_prev_next': False,
     'github_url': 'https://github.com/pyvista/pyvista',
-    'collapse_navigation': True,
+    'collapse_navbar': not RELEASE_BUILD,
     'use_edit_page_button': True,
     'navigation_with_keys': False,
     'show_navbar_depth': 1,
     # Capping at depth 4 keeps classes nested under their section pages while
     # avoiding an O(N^2) sidebar render across ~2,700 method-level entries.
     'max_navbar_depth': 4,
+    'article_header_start': ['toggle-primary-sidebar.html', 'breadcrumbs.html'],
+    # Else pydata injects a hidden navbar that steals the sidebar toggles, sphinx-book-theme#988.
+    'navbar_persistent': [],
     'icon_links': [
         {
             'name': 'Slack Community',
@@ -932,6 +1034,7 @@ html_css_files = [
     'announcement.css',  # override banner color
     'codimensional.css',  # pin partner card to bottom of right sidebar
     'jupyter_sphinx_theme.css',  # make jupyter-sphinx containers follow the dark mode toggle
+    'breadcrumbs.css',  # keep the trail on one line in the fixed-height article header
 ]
 
 # -- Options for HTMLHelp output ------------------------------------------
@@ -996,10 +1099,16 @@ texinfo_documents = [
 
 # -- Custom 404 page
 
+# Netlify serves this page for any missing path, at any depth, so its links are
+# site-root absolute, as ``notfound_urls_prefix = None`` makes the theme's own.
+# ``notfound.js`` fills the container with suggestions built from the requested URL.
 notfound_context = {
     'body': (
-        '<h1>Page not found.</h1>\n\n'
-        'Perhaps try the <a href="https://docs.pyvista.org/examples/index.html">examples page</a>.'
+        '<h1>Page not found</h1>\n'
+        '<div id="notfound"></div>\n'
+        '<p>Try the <a href="/search.html">search page</a>, '
+        'the <a href="/api/index.html">API reference</a>, '
+        'or the <a href="/examples/index.html">examples gallery</a>.</p>'
     ),
 }
 notfound_urls_prefix = None
@@ -1042,6 +1151,12 @@ html_sidebars = {
         'navbar-logo.html',
         'icon-links.html',
         'search-button-field.html',
+        'sbt-sidebar-nav.html',
+    ],
+    # The search page renders its own search box, so drop the sidebar's.
+    'search': [
+        'navbar-logo.html',
+        'icon-links.html',
         'sbt-sidebar-nav.html',
     ],
 }
@@ -1092,9 +1207,19 @@ def configure_backend(app: Sphinx) -> None:  # noqa: D103
     app.add_directive('image', PlaceHolderImage)
 
 
+def forget_tag_page_toctrees(app: Sphinx, env: BuildEnvironment) -> None:
+    """Drop tag pages' toctree entries so an example's parent stays its gallery."""
+    tags_dir = f'{app.config.tags_output_dir}/'
+    for docname in list(env.toctree_includes):
+        if docname.startswith(tags_dir) and docname != f'{tags_dir}tagsindex':
+            del env.toctree_includes[docname]
+
+
 def setup(app: Sphinx) -> None:  # noqa: D103
     app.connect('config-inited', report_parallel_safety)
     app.connect('builder-inited', configure_backend)
+    # The last toctree listing a page becomes its parent, and tag pages sort after galleries.
+    app.connect('env-updated', forget_tag_page_toctrees)
     # Priority must stay above the 501 used by sphinx-book-theme's
     # ``add_source_buttons``, which is what builds the "suggest edit" button.
     app.connect('html-page-context', pv_html_page_context, priority=502)
@@ -1107,8 +1232,12 @@ def setup(app: Sphinx) -> None:  # noqa: D103
     # right before writing, patch the gallery placeholders
     app.connect('doctree-resolved', make_tables.patch_gallery_placeholders)
 
+    # feeds the search result snippets rendered by search_summaries.js
+    app.connect('build-finished', make_search_summaries.dump_search_summaries)
+
     app.add_css_file('copybutton.css')
     app.add_css_file('no_search_highlight.css')
     app.add_css_file('dataset_gallery_filter.css')
     app.add_js_file('redirect_fragments.js')
+    app.add_js_file('notfound.js')
     app.add_js_file('dataset_gallery_filter.js')

@@ -148,7 +148,7 @@ pl.show()
 # using a second array to control the transparency of the mesh
 
 model = examples.download_model_with_variance()
-contours = model.contour(10, scalars='Temperature')
+contours = model.contour(5, scalars='Temperature')
 contours.array_names
 
 # %%

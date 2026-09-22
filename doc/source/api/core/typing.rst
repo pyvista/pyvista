@@ -47,6 +47,32 @@ Includes sequences and numpy arrays.
 .. autodata:: VectorLike
 
 
+Plotting Types
+--------------
+
+pyvista.WrappableType
+~~~~~~~~~~~~~~~~~~~~~
+Object accepted by :func:`pyvista.wrap`.
+
+Includes PyVista and VTK data objects, NumPy arrays, ``trimesh`` meshes,
+``meshio`` meshes, and ``None``.
+
+.. currentmodule:: pyvista
+
+.. autodata:: WrappableType
+
+pyvista.PlottableType
+~~~~~~~~~~~~~~~~~~~~~
+Object accepted by :func:`pyvista.plot` or :meth:`pyvista.Plotter.add_mesh`.
+
+Includes all :data:`pyvista.WrappableType` objects except ``None``, along with
+array-like objects, file paths, and filenames.
+
+.. currentmodule:: pyvista
+
+.. autodata:: PlottableType
+
+
 VTK Related Types
 -----------------
 

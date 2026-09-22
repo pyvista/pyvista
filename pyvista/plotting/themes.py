@@ -41,11 +41,13 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
 
+import pyvista_validation as _validation
+
 import pyvista  # noqa: TC001
 from pyvista._warn_external import warn_external
 from pyvista.core.config import _ConfigBase
-from pyvista.core.utilities.misc import _check_range
 
+from . import _property
 from .colors import Color
 from .colors import get_cmap_safe
 from .colors import get_cycler
@@ -209,6 +211,8 @@ class _LightingConfig(_ConfigBase):
     def interpolation(self) -> InterpolationType:  # numpydoc ignore=RT01
         """Return or set the default interpolation type.
 
+        This is the default value of :attr:`pyvista.Property.interpolation`.
+
         See :class:`pyvista.plotting.opts.InterpolationType`.
 
         Options are:
@@ -242,8 +246,8 @@ class _LightingConfig(_ConfigBase):
     def metallic(self) -> float:  # numpydoc ignore=RT01
         """Return or set the metallic value.
 
-        This requires that the interpolation be set to ``'Physically based
-        rendering'``. Must be between 0 and 1.
+        This is the default value of :attr:`pyvista.Property.metallic`, which
+        documents the valid range.
 
         Examples
         --------
@@ -260,16 +264,15 @@ class _LightingConfig(_ConfigBase):
 
     @metallic.setter
     def metallic(self, metallic: float):
-        _check_range(metallic, (0, 1), 'metallic')
+        _property._check_metallic(metallic)
         self._metallic = metallic
 
     @property
     def roughness(self) -> float:  # numpydoc ignore=RT01
         """Return or set the roughness value.
 
-        This value has to be between 0 (glossy) and 1 (rough). A glossy
-        material has reflections and a high specular part. This parameter is
-        only used by PBR interpolation.
+        This is the default value of :attr:`pyvista.Property.roughness`, which
+        documents the valid range.
 
         Examples
         --------
@@ -286,16 +289,15 @@ class _LightingConfig(_ConfigBase):
 
     @roughness.setter
     def roughness(self, roughness: float):
-        _check_range(roughness, (0, 1), 'roughness')
+        _property._check_roughness(roughness)
         self._roughness = roughness
 
     @property
     def ambient(self) -> float:  # numpydoc ignore=RT01
         """Return or set the ambient value.
 
-        When lighting is enabled, this is the amount of light in the range of 0
-        to 1 that reaches the actor when not directed at the light source
-        emitted from the viewer.
+        This is the default value of :attr:`pyvista.Property.ambient`, which
+        documents the valid range.
 
         Examples
         --------
@@ -311,17 +313,15 @@ class _LightingConfig(_ConfigBase):
 
     @ambient.setter
     def ambient(self, ambient: float):
-        _check_range(ambient, (0, 1), 'ambient')
+        _property._check_ambient(ambient)
         self._ambient = ambient
 
     @property
     def diffuse(self) -> float:  # numpydoc ignore=RT01
         """Return or set the diffuse value.
 
-        This is the scattering of light by reflection or
-        transmission. Diffuse reflection results when light strikes an
-        irregular surface such as a frosted window or the surface of a
-        frosted or coated light bulb. Must be between 0 and 1.
+        This is the default value of :attr:`pyvista.Property.diffuse`, which
+        documents the valid range.
 
         Examples
         --------
@@ -337,15 +337,15 @@ class _LightingConfig(_ConfigBase):
 
     @diffuse.setter
     def diffuse(self, diffuse: float):
-        _check_range(diffuse, (0, 1), 'diffuse')
+        _property._check_diffuse(diffuse)
         self._diffuse = diffuse
 
     @property
     def specular(self) -> float:  # numpydoc ignore=RT01
         """Return or set the specular value.
 
-        Specular lighting simulates the bright spot of a light that appears
-        on shiny objects. Must be between 0 and 1.
+        This is the default value of :attr:`pyvista.Property.specular`, which
+        documents the valid range.
 
         Examples
         --------
@@ -361,14 +361,15 @@ class _LightingConfig(_ConfigBase):
 
     @specular.setter
     def specular(self, specular: float):
-        _check_range(specular, (0, 1), 'specular')
+        _property._check_specular(specular)
         self._specular = specular
 
     @property
     def specular_power(self) -> float:  # numpydoc ignore=RT01
         """Return or set the specular power value.
 
-        Must be between 0.0 and 128.0.
+        This is the default value of :attr:`pyvista.Property.specular_power`,
+        which documents the valid range.
 
         Examples
         --------
@@ -384,7 +385,7 @@ class _LightingConfig(_ConfigBase):
 
     @specular_power.setter
     def specular_power(self, specular_power: float):
-        _check_range(specular_power, (0, 128), 'specular_power')
+        _property._check_specular_power(specular_power)
         self._specular_power = specular_power
 
     @property
@@ -567,6 +568,9 @@ class _SilhouetteConfig(_ConfigBase):
     def opacity(self) -> float:  # numpydoc ignore=RT01
         """Return or set the silhouette opacity.
 
+        Must be in the range ``[0.0, 1.0]``. A value of ``1.0`` is totally
+        opaque and ``0.0`` is completely transparent.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -577,7 +581,7 @@ class _SilhouetteConfig(_ConfigBase):
 
     @opacity.setter
     def opacity(self, opacity: float):
-        _check_range(opacity, (0, 1), 'opacity')
+        _validation.check_range(opacity, [0.0, 1.0], name='opacity')
         self._opacity = float(opacity)
 
     @property
@@ -600,7 +604,9 @@ class _SilhouetteConfig(_ConfigBase):
     def decimate(self) -> float:  # numpydoc ignore=RT01
         """Return or set the amount to decimate the silhouette.
 
-        Parameter must be between 0 and 1.
+        Must be in the range ``[0.0, 1.0]``. A value of ``0.0`` or ``None``
+        decimates nothing and ``1.0`` decimates as much as the algorithm
+        allows.
 
         Examples
         --------
@@ -615,7 +621,7 @@ class _SilhouetteConfig(_ConfigBase):
         if decimate is None:
             self._decimate = None
         else:
-            _check_range(decimate, (0, 1), 'decimate')
+            _validation.check_range(decimate, [0.0, 1.0], name='decimate')
             self._decimate = float(decimate)
 
     def __repr__(self):
@@ -645,13 +651,22 @@ class _ColorbarConfig(_ConfigBase):
 
     """
 
-    __slots__ = ['_height', '_position_x', '_position_y', '_width']
+    __slots__ = [
+        '_height',
+        '_position_x',
+        '_position_y',
+        '_stacking_gap',
+        '_title_pad',
+        '_width',
+    ]
 
     def __init__(self):
         self._width = None
         self._height = None
         self._position_x = None
         self._position_y = None
+        self._stacking_gap = None
+        self._title_pad = None
 
     @property
     def width(self) -> float:  # numpydoc ignore=RT01
@@ -717,6 +732,47 @@ class _ColorbarConfig(_ConfigBase):
     def position_y(self, position_y: float):
         self._position_y = float(position_y)
 
+    @property
+    def title_pad(self) -> float:  # numpydoc ignore=RT01
+        """Return or set the colorbar title padding.
+
+        The padding is the space between the title and the tick labels, as a
+        multiple of the title font size.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pv.global_theme.colorbar_horizontal.title_pad = 0.8
+
+        """
+        return self._title_pad  # type: ignore[return-value]
+
+    @title_pad.setter
+    def title_pad(self, title_pad: float):
+        self._title_pad = float(title_pad)
+
+    @property
+    def stacking_gap(self) -> float | None:  # numpydoc ignore=RT01
+        """Return or set the distance between stacked colorbars.
+
+        The distance is a fraction of the window.  ``None`` spaces them as
+        tightly as their titles and tick labels allow.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pv.global_theme.colorbar_vertical.stacking_gap = 0.2
+
+        """
+        return self._stacking_gap
+
+    @stacking_gap.setter
+    def stacking_gap(self, stacking_gap: float | None):
+        if stacking_gap is not None:
+            _validation.check_greater_than(stacking_gap, 0, strict=False, name='stacking_gap')
+            stacking_gap = float(stacking_gap)
+        self._stacking_gap = stacking_gap
+
     def __repr__(self):
         txt = ['']
         parm = {
@@ -724,12 +780,54 @@ class _ColorbarConfig(_ConfigBase):
             'Height': 'height',
             'X Position': 'position_x',
             'Y Position': 'position_y',
+            'Title Pad': 'title_pad',
+            'Stacking Gap': 'stacking_gap',
         }
         for name, attr in parm.items():
             setting = getattr(self, attr)
             txt.append(f'    {name:<21}: {setting}')
 
         return '\n'.join(txt)
+
+
+class _VerticalColorbarConfig(_ColorbarConfig):
+    """PyVista vertical colorbar configuration.
+
+    Adds the settings that only a vertical colorbar has.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> pv.global_theme.colorbar_vertical.rotate_title = True
+
+    """
+
+    __slots__ = ['_rotate_title']
+
+    def __init__(self):
+        super().__init__()
+        self._rotate_title = False
+
+    @property
+    def rotate_title(self) -> bool:  # numpydoc ignore=RT01
+        """Return or set whether a colorbar turns its title alongside the bar.
+
+        A horizontal colorbar cannot, so this is a vertical setting only.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pv.global_theme.colorbar_vertical.rotate_title = True
+
+        """
+        return self._rotate_title
+
+    @rotate_title.setter
+    def rotate_title(self, rotate_title: bool):
+        self._rotate_title = bool(rotate_title)
+
+    def __repr__(self):
+        return '\n'.join([super().__repr__(), f'    {"Rotate Title":<21}: {self.rotate_title}'])
 
 
 class _AxesConfig(_ConfigBase):
@@ -1060,8 +1158,10 @@ class _Font(_ConfigBase):
         self._color = Color(color)
 
     @property
-    def fmt(self) -> str:  # numpydoc ignore=RT01
+    def fmt(self) -> str | None:  # numpydoc ignore=RT01
         """Return or set the string formatter used to format numerical data.
+
+        ``None``, the default, lets each actor choose its own format.
 
         Examples
         --------
@@ -1071,10 +1171,10 @@ class _Font(_ConfigBase):
         >>> pv.global_theme.font.fmt = '{:.6e}'
 
         """
-        return self._fmt  # type: ignore[return-value]
+        return self._fmt
 
     @fmt.setter
-    def fmt(self, fmt: str):
+    def fmt(self, fmt: str | None) -> None:
         self._fmt = fmt
 
 
@@ -1150,6 +1250,9 @@ class _SliderStyleConfig(_ConfigBase):
     def cap_opacity(self) -> float:  # numpydoc ignore=RT01
         """Return or set the cap opacity.
 
+        Must be in the range ``[0.0, 1.0]``. A value of ``1.0`` is totally
+        opaque and ``0.0`` is completely transparent.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -1160,7 +1263,7 @@ class _SliderStyleConfig(_ConfigBase):
 
     @cap_opacity.setter
     def cap_opacity(self, cap_opacity: float):
-        _check_range(cap_opacity, (0, 1), 'cap_opacity')
+        _validation.check_range(cap_opacity, [0.0, 1.0], name='cap_opacity')
         self._cap_opacity = float(cap_opacity)
 
     @property
@@ -1658,6 +1761,14 @@ class _PlotCellConfig(_ConfigBase):
 class Theme(_ConfigBase):
     """Base VTK theme.
 
+    The active theme is exposed as ``pyvista.global_theme``. See
+    :ref:`configuration` for an overview of all global settings.
+
+    See Also
+    --------
+    pyvista.core.config.Config
+        Non-plotting counterpart, exposed as ``pyvista.global_config``.
+
     Notes
     -----
     This section is aimed at theme authors and plugin package
@@ -1839,12 +1950,14 @@ class Theme(_ConfigBase):
         self._colorbar_horizontal.height = 0.08
         self._colorbar_horizontal.position_x = 0.35
         self._colorbar_horizontal.position_y = 0.05
+        self._colorbar_horizontal.title_pad = 0.5
 
-        self._colorbar_vertical = _ColorbarConfig()
+        self._colorbar_vertical = _VerticalColorbarConfig()
         self._colorbar_vertical.width = 0.08
         self._colorbar_vertical.height = 0.45
         self._colorbar_vertical.position_x = 0.9
         self._colorbar_vertical.position_y = 0.02
+        self._colorbar_vertical.title_pad = 0.5
 
         self._show_scalar_bar = True
         self._show_edges = False
@@ -1972,7 +2085,7 @@ class Theme(_ConfigBase):
         ...     focal_point=(0.0, 0.0, 0.0),
         ...     viewup=(0.0, 0.37, 0.93),
         ... )
-        >>> pl.show()  # doctest: +SKIP
+        >>> pl.show()
 
         """
         return self._interpolate_before_map
@@ -1985,6 +2098,9 @@ class Theme(_ConfigBase):
     def opacity(self) -> float:  # numpydoc ignore=RT01
         """Return or set the opacity.
 
+        This is the default value of :attr:`pyvista.Property.opacity`, which
+        documents the valid range.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -1995,12 +2111,15 @@ class Theme(_ConfigBase):
 
     @opacity.setter
     def opacity(self, opacity: float):
-        _check_range(opacity, (0, 1), 'opacity')
+        _property._check_opacity(opacity)
         self._opacity = float(opacity)
 
     @property
     def edge_opacity(self) -> float:  # numpydoc ignore=RT01
         """Return or set the edges opacity.
+
+        This is the default value of :attr:`pyvista.Property.edge_opacity`,
+        which documents the valid range.
 
         .. note::
             ``edge_opacity`` uses ``SetEdgeOpacity`` as the underlying method which
@@ -2017,7 +2136,7 @@ class Theme(_ConfigBase):
 
     @edge_opacity.setter
     def edge_opacity(self, edge_opacity: float):
-        _check_range(edge_opacity, (0, 1), 'edge_opacity')
+        _property._check_edge_opacity(edge_opacity)
         self._edge_opacity = float(edge_opacity)
 
     @property
@@ -2438,7 +2557,7 @@ class Theme(_ConfigBase):
         >>> _ = pl.add_mesh(pv.Cube(center=(1, 0, 0)))  # green
         >>> _ = pl.add_mesh(pv.Sphere(center=(1, 1, 0)))  # blue
         >>> _ = pl.add_mesh(pv.Cylinder(center=(0, 1, 0)))  # red again
-        >>> pl.show()  # doctest: +SKIP
+        >>> pl.show()
 
         """
         return self._color_cycler
@@ -2487,6 +2606,12 @@ class Theme(_ConfigBase):
     def line_width(self) -> float:  # numpydoc ignore=RT01
         """Return or set the default line width.
 
+        This is the default value of :attr:`pyvista.Property.line_width`, which
+        documents the valid range.
+
+        .. versionchanged:: 0.50
+            A negative width raises instead of being accepted.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -2497,11 +2622,18 @@ class Theme(_ConfigBase):
 
     @line_width.setter
     def line_width(self, line_width: float):
+        _property._check_line_width(line_width)
         self._line_width = float(line_width)
 
     @property
     def point_size(self) -> float:  # numpydoc ignore=RT01
         """Return or set the default point size.
+
+        This is the default value of :attr:`pyvista.Property.point_size`, which
+        documents the valid range.
+
+        .. versionchanged:: 0.50
+            A negative size raises instead of being accepted.
 
         Examples
         --------
@@ -2513,6 +2645,7 @@ class Theme(_ConfigBase):
 
     @point_size.setter
     def point_size(self, point_size: float):
+        _property._check_point_size(point_size)
         self._point_size = float(point_size)
 
     @property
@@ -2656,9 +2789,9 @@ class Theme(_ConfigBase):
         return self._colorbar_vertical
 
     @colorbar_vertical.setter
-    def colorbar_vertical(self, config: _ColorbarConfig):
-        if not isinstance(config, _ColorbarConfig):
-            msg = 'Configuration type must be `_ColorbarConfig`.'  # type: ignore[unreachable]
+    def colorbar_vertical(self, config: _VerticalColorbarConfig):
+        if not isinstance(config, _VerticalColorbarConfig):
+            msg = 'Configuration type must be `_VerticalColorbarConfig`.'  # type: ignore[unreachable]
             raise TypeError(msg)
         self._colorbar_vertical = config
 
@@ -2929,8 +3062,11 @@ class Theme(_ConfigBase):
         self._multi_samples = int(multi_samples)
 
     @property
-    def multi_rendering_splitting_position(self) -> float:  # numpydoc ignore=RT01
+    def multi_rendering_splitting_position(self) -> float | None:  # numpydoc ignore=RT01
         """Return or set the default splitting position for multi-rendering.
+
+        ``None``, the default, lets the renderers choose the position from the
+        number of subplots on each side.
 
         Examples
         --------
@@ -2941,13 +3077,13 @@ class Theme(_ConfigBase):
         >>> pv.global_theme.multi_rendering_splitting_position = 0.5
 
         """
-        return self._multi_rendering_splitting_position  # type: ignore[return-value]
+        return self._multi_rendering_splitting_position
 
     @multi_rendering_splitting_position.setter
     def multi_rendering_splitting_position(
         self,
-        multi_rendering_splitting_position: float,
-    ):
+        multi_rendering_splitting_position: float | None,
+    ) -> None:
         self._multi_rendering_splitting_position = multi_rendering_splitting_position
 
     @property
@@ -3120,7 +3256,7 @@ class Theme(_ConfigBase):
 
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(pv.PolyData())
-        >>> pl.show()  # doctest: +SKIP
+        >>> pl.show()
 
         """
         return self._allow_empty_mesh
@@ -3237,7 +3373,6 @@ class Theme(_ConfigBase):
 
     @interactor_style.setter
     def interactor_style(self, interactor_style: str) -> None:
-        """Set the default interactor style."""
         self._interactor_style = _validate_interactor_style(interactor_style)
 
     def load_theme(self, theme: str | Theme) -> None:
@@ -3283,6 +3418,18 @@ class Theme(_ConfigBase):
 
         for attr_name in Theme.__slots__:
             setattr(self, attr_name, getattr(theme, attr_name))
+
+    @classmethod
+    def _from_theme(cls, theme: str | Theme) -> Theme:
+        """Return a new theme holding a copy of the settings of ``theme``.
+
+        Equivalent to ``Theme()`` followed by :meth:`load_theme`.
+        """
+        # Optimization: skip ``__init__`` since ``load_theme`` overwrites every slot it
+        # fills; every plotter, mapper and property takes a theme snapshot this way.
+        new = cls.__new__(cls)
+        new.load_theme(theme)
+        return new
 
     def save(self, filename: str) -> None:
         """Serialize this theme to a ``json`` file.
@@ -3389,6 +3536,12 @@ class Theme(_ConfigBase):
 
         .. versionadded:: 0.45
 
+        .. versionchanged:: 0.49
+
+            The image-based lighting textures are down-sampled at the same rate.
+            See
+            :meth:`~pyvista.Plotter.set_environment_texture` for details.
+
         Examples
         --------
         Enable resampling the environment texture globally.
@@ -3479,6 +3632,8 @@ class DarkTheme(Theme):
         self.background = 'black'
         self.cmap = 'viridis'
         self.font.color = 'white'
+        self.font.title_size = 18
+        self.font.label_size = 18
         self.show_edges = False
         self.color = 'lightblue'
         self.outline_color = 'white'
@@ -3514,6 +3669,7 @@ class ParaViewTheme(Theme):
         self.background = 'paraview'
         self.cmap = 'coolwarm'
         self.font.family = 'arial'
+        self.font.title_size = 16
         self.font.label_size = 16
         self.font.color = 'white'
         self.show_edges = False

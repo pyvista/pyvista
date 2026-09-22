@@ -20,6 +20,7 @@ and how you can help develop PyVista.
    vtk_role
    examples_as_code
    pytest_plugin
+   pyvista_validation
    pyvista_data
    extending_pyvista
 

@@ -6,7 +6,7 @@ Plot a Lorenz Attractor
 
 Integrate the Lorenz system and render the trajectory as a colored tube.
 
-Built from :func:`pyvista.lines_from_points`.
+Built from :func:`pyvista.MultipleLines`.
 
 """
 
@@ -35,7 +35,7 @@ for i in range(n_steps):
         z + (x * y - beta * z) * dt,
     )
 
-trajectory = pv.lines_from_points(points)
+trajectory = pv.MultipleLines(points)
 trajectory['z'] = points[:, 2]
 
 

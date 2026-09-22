@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sys
+
 import pytest
 
 import pyvista as pv
@@ -46,13 +48,48 @@ def test_lookup_table(composite_mapper):
     assert composite_mapper.lookup_table is table
 
 
+@pytest.mark.parametrize('clim', [[None, None], (None, None)])
+def test_add_composite_clim_without_bounds(multiblock_poly, clim):
+    pl = pv.Plotter()
+    _actor, mapper = pl.add_composite(multiblock_poly, scalars='data_a', clim=clim)
+    expected = multiblock_poly.get_data_range('data_a', allow_missing=True)
+    assert mapper.scalar_range == pytest.approx(expected)
+
+
+def test_scalar_range_sets_lookup_table_range(multiblock_poly):
+    pl = pv.Plotter()
+    _actor, mapper = pl.add_composite(multiblock_poly, scalars='data_a', clim=[0.2, 10])
+    assert mapper.scalar_range == (0.2, 10.0)
+    assert mapper.lookup_table.scalar_range == (0.2, 10.0)
+    assert pl.scalar_bar.GetLookupTable().GetRange() == (0.2, 10.0)
+    mapper.scalar_range = (-1, 1)
+    assert mapper.lookup_table.scalar_range == (-1.0, 1.0)
+    pl.update_scalar_bar_range([3, 4])
+    assert mapper.lookup_table.scalar_range == (3.0, 4.0)
+    mapper.lookup_table = _vtk.vtkLookupTable()
+    mapper.scalar_range = (5, 6)
+    assert mapper.lookup_table.GetRange() == (5.0, 6.0)
+    pl.close()
+
+
+def test_scalar_range_log_scale_floor(multiblock_poly):
+    pl = pv.Plotter()
+    _actor, mapper = pl.add_composite(multiblock_poly, scalars='data_a', log_scale=True)
+    assert mapper.scalar_range[0] == sys.float_info.min
+    pl.close()
+
+
+def test_block_attr_without_dataset():
+    assert len(CompositePolyDataMapper().block_attr) == 0
+
+
 def test_scalar_visibility(composite_mapper):
     isinstance(composite_mapper.scalar_visibility, bool)
 
 
 def test_scalar_map_mode(composite_mapper):
     isinstance(composite_mapper.scalar_map_mode, str)
-    with pytest.raises(ValueError, match='Invalid `scalar_map_mode`'):
+    with pytest.raises(ValueError, match="scalar_map_mode 'foo' is not valid"):
         composite_mapper.scalar_map_mode = 'foo'
 
 

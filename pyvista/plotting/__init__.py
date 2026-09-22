@@ -16,6 +16,8 @@ from ._property import Property as Property
 from ._typing import CameraPositionOptions as CameraPositionOptions
 from ._typing import Chart as Chart
 from ._typing import ColorLike as ColorLike
+from ._typing import PlottableType as PlottableType
+from ._typing import WrappableType as WrappableType
 from .actor import Actor as Actor
 from .actor_properties import ActorProperties as ActorProperties
 from .affine_widget import AffineWidget3D as AffineWidget3D

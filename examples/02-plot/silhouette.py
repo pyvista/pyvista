@@ -84,11 +84,10 @@ pl.show()
 
 # %%
 # Here is another example:
-dragon = examples.download_dragon()
 pl = pv.Plotter()
 pl.set_background('black', top='blue')
 pl.add_mesh(
-    dragon,
+    bunny,
     color='green',
     specular=1,
     smooth_shading=True,

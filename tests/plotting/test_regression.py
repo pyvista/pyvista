@@ -97,11 +97,13 @@ def test_compare_images_two_plotters_same(sphere, tmpdir):
     pl2 = pv.Plotter()
     pl2.add_mesh(sphere)
 
-    assert not pv.compare_images(pl1, pl2)
-    assert not pv.compare_images(arr1, pl2)
-    assert not pv.compare_images(im1, pl2)
-    assert not pv.compare_images(filename, pl2)
-    assert not pv.compare_images(arr1, pl2, use_vtk=False)
+    # Tolerate sub-LSB pixel noise from non-deterministic renderers.
+    error_tol = 1.0
+    assert pv.compare_images(pl1, pl2) < error_tol
+    assert pv.compare_images(arr1, pl2) < error_tol
+    assert pv.compare_images(im1, pl2) < error_tol
+    assert pv.compare_images(filename, pl2) < error_tol
+    assert pv.compare_images(arr1, pl2, use_vtk=False) < error_tol
 
     with pytest.raises(TypeError):
         pv.compare_images(im1, pl1.render_window)

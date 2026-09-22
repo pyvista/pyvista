@@ -2,38 +2,39 @@
 
 from __future__ import annotations
 
-import functools
 from typing import TYPE_CHECKING
 
 import numpy as np
 
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.filters.poly_data import PolyDataFilters
+from pyvista.core.utilities.misc import _wraps
 from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:
+    from pyvista import UnstructuredGrid
     from pyvista.core._typing_core._dataset_types import _UnstructuredGridType
+    from pyvista.core.pointset import PolyData
 
 
 @abstract_class
 class UnstructuredGridFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for unstructured grid datasets."""
 
-    @functools.wraps(PolyDataFilters.delaunay_2d)  # type: ignore[has-type]
-    def delaunay_2d(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
+    @_wraps(PolyDataFilters.delaunay_2d)
+    def delaunay_2d(self, *args, **kwargs) -> PolyData:  # numpydoc ignore=PR01,RT01
         """Wrap ``PolyDataFilters.delaunay_2d``."""
         return PolyDataFilters.delaunay_2d(self, *args, **kwargs)  # type: ignore[arg-type]
 
-    @functools.wraps(PolyDataFilters.reconstruct_surface)  # type: ignore[has-type]
-    def reconstruct_surface(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
+    @_wraps(PolyDataFilters.reconstruct_surface)
+    def reconstruct_surface(self, *args, **kwargs) -> PolyData:  # numpydoc ignore=PR01,RT01
         """Wrap ``PolyDataFilters.reconstruct_surface``."""
         return PolyDataFilters.reconstruct_surface(self, *args, **kwargs)  # type: ignore[arg-type]
 
-    def subdivide_tetra(self):
+    def subdivide_tetra(self) -> UnstructuredGrid:
         """Subdivide each tetrahedron into twelve tetrahedrons.
 
         Returns
@@ -60,16 +61,16 @@ class UnstructuredGridFilters(DataSetFilters):
         _update_alg(alg)
         return _get_output(alg)
 
-    @_deprecate_positional_args
-    def clean(  # noqa: PLR0917
+    def clean(
         self,
-        tolerance=0,
-        remove_unused_points: bool = True,  # noqa: FBT001, FBT002
-        produce_merge_map: bool = True,  # noqa: FBT001, FBT002
-        average_point_data: bool = True,  # noqa: FBT001, FBT002
-        merging_array_name=None,
-        progress_bar: bool = False,  # noqa: FBT001, FBT002
-    ):
+        *,
+        tolerance: float = 0,
+        remove_unused_points: bool = True,
+        produce_merge_map: bool = True,
+        average_point_data: bool = True,
+        merging_array_name: str | None = None,
+        progress_bar: bool = False,
+    ) -> UnstructuredGrid:
         """Merge duplicate points and remove unused points in an UnstructuredGrid.
 
         This filter, merging coincident points as defined by a merging
@@ -158,7 +159,7 @@ class UnstructuredGridFilters(DataSetFilters):
         alg.SetInputDataObject(self.copy())  # type: ignore[attr-defined]
         alg.SetAbsoluteTolerance(True)
         alg.SetTolerance(tolerance)
-        alg.SetMergingArray(merging_array_name)
+        alg.SetMergingArray(merging_array_name)  # type: ignore[arg-type]
         alg.SetRemoveUnusedPoints(remove_unused_points)
         alg.SetProduceMergeMap(produce_merge_map)
         alg.SetAveragePointData(average_point_data)
@@ -234,9 +235,12 @@ class UnstructuredGridFilters(DataSetFilters):
         cell_array.InsertNextCell(1)
 
         # Extract all the cells, except for the dummy cell
-        out = out.extract_cells(np.arange(self.n_cells), pass_point_ids=False, pass_cell_ids=False)
+        extracted = out.extract_cells(
+            np.arange(self.n_cells), pass_point_ids=False, pass_cell_ids=False
+        )
 
         if inplace:
-            self.copy_from(out)
+            self.copy_from(extracted)
             return self
+        out.copy_from(extracted, deep=False)
         return out

@@ -61,8 +61,13 @@ def test_contour_banded_points(sphere):
     ids=['ugrid', 'image', 'structured'],
 )
 def test_boolean_raises(other_mesh):
-    with pytest.raises(TypeError, match=r'Input mesh must be PolyData.'):
+    with pytest.raises(TypeError, match=r'Input mesh must be an instance of'):
         pv.Sphere()._boolean('union', other_mesh=other_mesh, tolerance=0.0, progress_bar=False)
+
+
+def test_boolean_btype_raises(sphere):
+    with pytest.raises(ValueError, match=r"btype 'foo' is not valid"):
+        sphere._boolean('foo', other_mesh=pv.Sphere(center=(5, 0, 0)), tolerance=0.0)
 
 
 def test_clean_raises(mocker: MockerFixture):

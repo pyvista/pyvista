@@ -84,6 +84,11 @@ class PlotterComponent(Protocol):
 
     .. versionadded:: 0.48.0
 
+    Parameters
+    ----------
+    plotter : pyvista.Plotter
+        Plotter the component is attached to.
+
     Examples
     --------
     Declare a component that satisfies the protocol.
@@ -170,6 +175,15 @@ class _CachedComponent:
     :class:`TypeError` on first access rather than silently leaking
     whatever the hook was meant to release (VTK observers, websockets,
     background threads, etc.).
+
+    Parameters
+    ----------
+    name : str
+        Attribute name the component is registered under.
+
+    component_cls : type
+        Component class to instantiate on first access.
+
     """
 
     _LIFECYCLE_HOOKS: ClassVar[tuple[str, ...]] = (

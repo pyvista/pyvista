@@ -162,5 +162,6 @@ round trips, or a raise path. Those belong in `tests/core/`.
 The documentation build has its own cache, its own flags (`--doc_mode`,
 `--doc_images_dir`), and its own tox environment, `docs-test-images`. Editing a docstring
 example that renders changes a documentation baseline, so a `Build Documentation` failure
-after a docstring edit is usually this and not a broken build. Fetch
-`doc-failed-test-images` from the run and treat it the same way as a plotting baseline.
+after a docstring edit is usually this and not a broken build. Repairing that cache is its
+own job -- most of those failures are renames rather than changed pictures -- and
+**pyvista-doc-images** covers it.

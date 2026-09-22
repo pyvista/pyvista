@@ -11,6 +11,8 @@ import os
 from pathlib import Path
 import platform
 import re
+from types import FunctionType
+from types import ModuleType
 
 import numpy as np
 from numpy.random import default_rng
@@ -65,7 +67,7 @@ if HAS_PLOTTING:
     )
     from pyvista.plotting.theme_registry import _save_registry_state as _save_theme_registry_state
     from pyvista.plotting.utilities.gl_checks import uses_egl
-else:  # core-only VTK backend: rendering modules are absent
+else:  # pragma: no cover -- core-only VTK backend, measured by no -cov environment
 
     def _save_component_registry_state():
         return None
@@ -153,7 +155,7 @@ def flaky_test(
 
     @functools.wraps(test_function)
     def wrapper(*args, **kwargs):
-        for i in range(times):
+        for i in range(times):  # pragma: no branch -- the last attempt returns or raises
             try:
                 test_function(*args, **kwargs)
             except exceptions as e:
@@ -235,7 +237,8 @@ def reset_global_state():
     pv.allow_new_attributes(False)
     assert pv.allow_new_attributes() is False
 
-    pv.PICKLE_FORMAT = 'vtk'
+    pv._PICKLE_FORMAT = 'vtk'
+    pv.global_config.points_dtype = None
 
 
 @pytest.fixture
@@ -432,9 +435,10 @@ def pytest_runtest_makereport(item, call):  # noqa: ARG001
 def check_gc(request):
     """Snapshot live VTK objects so leaks from this test can be detected.
 
-    Every test in the repository is covered. ``tests/plotting`` overrides this fixture
-    with one that also watches plotters (a fixture of the same name in a nearer conftest
-    wins), and takes the snapshot this hook's counterpart there checks.
+    Every test collected as a function is covered; plugin-collected items take no
+    fixtures. ``tests/plotting`` overrides this fixture with one that also watches
+    plotters (a fixture of the same name in a nearer conftest wins), and takes the
+    snapshot this hook's counterpart there checks.
     """
     node = request.node
     if (
@@ -512,6 +516,12 @@ def pytest_sessionstart():
 def pytest_addoption(parser):
     parser.addoption('--test_downloads', action='store_true', default=False)
     parser.addoption(
+        '--regenerate_overloads',
+        action='store_true',
+        default=False,
+        help='rewrite the generated `get_example` overloads from the examples themselves',
+    )
+    parser.addoption(
         '--no_check_gc',
         action='store_true',
         default=False,
@@ -566,6 +576,37 @@ _RENDERING_MODULES = frozenset(
         'test_cli.py',
         'examples/test_gltf.py',
         'typing/test_return_type.py',
+        'typing/cases/plotting/add_actor.py',
+        'typing/cases/plotting/add_axes.py',
+        'typing/cases/plotting/add_axes_at_origin.py',
+        'typing/cases/plotting/add_bounding_box.py',
+        'typing/cases/plotting/add_box_axes.py',
+        'typing/cases/plotting/add_floor.py',
+        'typing/cases/plotting/add_legend.py',
+        'typing/cases/plotting/add_legend_scale.py',
+        'typing/cases/plotting/add_north_arrow_widget.py',
+        'typing/cases/plotting/add_orientation_widget.py',
+        'typing/cases/plotting/add_ruler.py',
+        'typing/cases/plotting/add_scalar_bar.py',
+        'typing/cases/plotting/add_text.py',
+        'typing/cases/plotting/add_title.py',
+        'typing/cases/plotting/add_volume.py',
+        'typing/cases/plotting/compute_bounds.py',
+        'typing/cases/plotting/enable_depth_peeling.py',
+        'typing/cases/plotting/get_default_cam_pos.py',
+        'typing/cases/plotting/get_image_depth.py',
+        'typing/cases/plotting/image.py',
+        'typing/cases/plotting/image_from_window.py',
+        'typing/cases/plotting/map_value.py',
+        'typing/cases/plotting/plotter_set_chart_interaction.py',
+        'typing/cases/plotting/property_culling.py',
+        'typing/cases/plotting/remove_actor.py',
+        'typing/cases/plotting/renderer_set_chart_interaction.py',
+        'typing/cases/plotting/resolve_scalars_field.py',
+        'typing/cases/plotting/screenshot.py',
+        'typing/cases/plotting/show_bounds.py',
+        'typing/cases/plotting/show_grid.py',
+        'typing/cases/plotting/volume_prop.py',
         # These also evaluate plotting symbols at module scope, so on a
         # rendering-free backend they are skipped at collection time (see
         # ``_RENDERING_ONLY_MODULES`` / ``pytest_ignore_collect``).
@@ -613,15 +654,14 @@ def pytest_ignore_collect(collection_path, config):  # noqa: ARG001
     (``HAS_PLOTTING is False``); otherwise these modules collect and run
     normally (and carry the ``needs_rendering`` marker).
     """
-    if HAS_PLOTTING:
-        return None
-
-    tests_root = Path(__file__).parent
-    try:
-        rel = Path(str(collection_path)).relative_to(tests_root).as_posix()
-    except ValueError:
-        return None
-    return True if rel in _RENDERING_ONLY_MODULES else None
+    if not HAS_PLOTTING:  # pragma: no cover -- measured by no -cov environment
+        tests_root = Path(__file__).parent
+        try:
+            rel = Path(str(collection_path)).relative_to(tests_root).as_posix()
+        except ValueError:
+            return None
+        return True if rel in _RENDERING_ONLY_MODULES else None
+    return None
 
 
 def pytest_collection_modifyitems(config, items):  # noqa: ARG001
@@ -840,7 +880,7 @@ def pytest_runtest_setup(item: pytest.Item):
         )
 
         bounds = _check_args_kwargs_marker(item_mark=item_mark, sig=sig)
-        if os.name == 'nt':
+        if os.name == 'nt':  # pragma: no cover -- Windows only
             pytest.skip(bounds.arguments[r])
 
     if item_mark := item.get_closest_marker('skip_mac'):
@@ -880,7 +920,8 @@ def pytest_runtest_setup(item: pytest.Item):
             pytest.skip(bounds.arguments[r])
 
     test_downloads = item.config.getoption(flag := '--test_downloads')
-    if item.get_closest_marker('needs_download') and not test_downloads:
+    # Unreached: the core run enables downloads, and no plotting test is marked.
+    if item.get_closest_marker('needs_download') and not test_downloads:  # pragma: no cover
         pytest.skip(f'Downloads not enabled with {flag}')
 
     playwright = item.config.getoption(flag := '--playwright')
@@ -937,3 +978,35 @@ def pytest_report_header(config):  # noqa: ARG001
         comma_lst = ', '.join(not_found)
         lines.append(f'optional package{plrl} not found: {comma_lst}')
     return '\n'.join(lines)
+
+
+def _get_module_functions(module: ModuleType) -> dict[str, FunctionType]:
+    """Get all functions defined locally inside a module."""
+
+    def is_local(obj):
+        return type(obj) is FunctionType and obj.__module__ == module.__name__
+
+    return dict(inspect.getmembers(module, predicate=is_local))
+
+
+# Interactive scenes above ``max_vtksz_file_size`` in pyproject.toml fail the docs image
+# tests; these are the known exceptions with their own limit in MB, keyed by the vtksz
+# file stem without the plot-directive content hash.
+_VTKSZ_SIZE_EXCEPTIONS_MB = {
+    'pyvista-DataSetFilters-voxelize_binary_mask_04_00': 7,
+    'sphx_glr_connectivity_001': 7,
+    'sphx_glr_connectivity_002': 7,
+    'sphx_glr_connectivity_003': 7,
+    'sphx_glr_remove_cells_001': 7,
+    'sphx_glr_openfoam_cooling_002': 7,
+    'sphx_glr_openfoam_cooling_003': 8,
+    'sphx_glr_pump_bracket_002': 7,
+}
+
+
+def pytest_pyvista_max_vtksz_file_size_hook(test_case, request):  # noqa: ARG001
+    """Raise the vtksz size limit for the known exceptions."""
+    name = re.sub(r'-[0-9a-f]{16}(?=_\d\d_\d\d$)', '', test_case.test_name)
+    if (limit := _VTKSZ_SIZE_EXCEPTIONS_MB.get(name)) is not None:
+        test_case.max_vtksz_file_size = limit
+    return test_case

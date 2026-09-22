@@ -41,10 +41,10 @@ def tox_add_env_config(env_conf: EnvConfigSet, state: State) -> None:  # noqa: A
         return
 
     if env_conf.env_name == 'doctest-modules':
-        updated = {'VTK_DEFAULT_OPENGL_WINDOW': 'vtkEGLRenderWindow'}
         if os.environ['RUNNER_OS'] == 'Linux':
-            updated['PYTEST_XDIST_AUTO_NUM_WORKERS'] = _get_ci_xdist_auto_workers()
-        env_conf['set_env'].update(updated)
+            env_conf['set_env'].update(
+                {'PYTEST_XDIST_AUTO_NUM_WORKERS': _get_ci_xdist_auto_workers()},
+            )
         return
 
     # For plotting tests on Linux with vtk < 9.4, some segfaults have been spotted

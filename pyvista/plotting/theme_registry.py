@@ -177,7 +177,7 @@ def _resolve_theme(name: str) -> Theme | None:
 
     Explicit subclass registrations win over entry-point discoveries.
     Entry-point plugins are imported lazily—only the plugin claiming
-    *name* loads, sibling plugins stay pending.
+    ``name`` loads, sibling plugins stay pending.
     """
     normalized = _normalize_theme_name(name)
 
@@ -382,7 +382,7 @@ def _ensure_entry_points() -> None:
 
 
 def _resolve_pending_theme(name: str) -> bool:
-    """Import the plugin claiming *name*, if any.
+    """Import the plugin claiming ``name``, if any.
 
     Returns
     -------

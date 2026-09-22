@@ -19,12 +19,12 @@ from pyvista import examples
 # %%
 # Glyphing can be done via the :func:`pyvista.DataSetFilters.glyph` filter
 
-mesh = examples.download_carotid().threshold(145, scalars='scalars')
+mesh = examples.download_carotid().threshold(210, scalars='scalars')
 mask = mesh['scalars'] < 210
 mesh['scalars'][mask] = 0  # null out smaller vectors
 
 # Make a geometric object to use as the glyph
-geom = pv.Arrow()  # This could be any dataset
+geom = pv.Arrow(tip_resolution=8, shaft_resolution=8)  # This could be any dataset
 
 # Perform the glyph
 glyphs = mesh.glyph(orient='vectors', scale='scalars', factor=0.003, geom=geom)

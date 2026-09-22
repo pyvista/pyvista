@@ -26,7 +26,6 @@ if TYPE_CHECKING:
     from trame_pyvista.jupyter import EmbeddableWidget
     from trame_pyvista.jupyter import Widget
 
-    from pyvista import pyvista_ndarray
     from pyvista.jupyter import JupyterBackendOptions
     from pyvista.plotting.plotter import Plotter
 
@@ -38,6 +37,20 @@ def handle_plotter(
     **kwargs,
 ) -> EmbeddableWidget | IFrame | Widget | Image:
     """Show the ``pyvista`` plot in a jupyter environment.
+
+    Parameters
+    ----------
+    plotter : pyvista.Plotter
+        Plotter to display.
+
+    backend : str, optional
+        Jupyter backend to use.
+
+    screenshot : str | pathlib.Path | io.BytesIO | bool, optional
+        Save a screenshot to this path when set.
+
+    **kwargs : dict, optional
+        Passed to the backend handler.
 
     Returns
     -------
@@ -97,13 +110,27 @@ def handle_plotter(
 def show_static_image(
     plotter: Plotter,
     screenshot: str | Path | BytesIO | bool | None,  # noqa: FBT001
-) -> Image:  # numpydoc ignore=RT01
-    """Display a static image to be displayed within a jupyter notebook."""
+) -> Image:
+    """Display a static image to be displayed within a jupyter notebook.
+
+    Parameters
+    ----------
+    plotter : pyvista.Plotter
+        Plotter to take the screenshot from.
+
+    screenshot : str | pathlib.Path | io.BytesIO | bool, optional
+        Save the screenshot to this path when set.
+
+    Returns
+    -------
+    PIL.Image.Image
+        Static image of the plotter.
+
+    """
     import PIL.Image  # noqa: PLC0415
 
     if plotter.last_image is None:
         # Must render here, otherwise plotter will segfault.
         plotter.render()
-        plotter.last_image = plotter.screenshot(screenshot, return_img=True)
-    last_image = cast('pyvista_ndarray', plotter.last_image)
-    return PIL.Image.fromarray(last_image)
+        plotter.last_image = plotter.screenshot(screenshot, return_img=True, render=False)
+    return PIL.Image.fromarray(plotter.last_image)

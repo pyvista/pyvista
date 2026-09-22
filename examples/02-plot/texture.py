@@ -141,7 +141,6 @@ for phase in np.linspace(0, 2 * np.pi, nframe + 1)[:nframe]:
     # must update normals when smooth shading is enabled
     mesh.compute_normals(cell_normals=False, inplace=True)
     pl.write_frame()
-    pl.clear()
 
 # Closes and finalizes movie
 pl.close()

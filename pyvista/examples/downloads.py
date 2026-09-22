@@ -13,14 +13,17 @@ including file and dataset metadata.
 
 Examples
 --------
->>> from pyvista import examples
->>> mesh = examples.download_saddle_surface()
->>> mesh.plot()
+.. pyvista-plot::
+
+   >>> from pyvista import examples
+   >>> mesh = examples.download_saddle_surface()
+   >>> mesh.plot()
 
 """
 
 from __future__ import annotations
 
+import contextlib
 import functools
 import importlib.util
 import logging
@@ -30,16 +33,26 @@ from pathlib import PureWindowsPath
 import shutil
 import sys
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import Literal
 from typing import cast
-from typing import overload
 
 import numpy as np
 import pooch
 
+# `typing.overload` registers with `get_overloads` only from 3.11
+from typing_extensions import overload
+
+try:
+    import filelock
+
+    _HAS_FILELOCK = True
+except ImportError:  # pragma: no cover
+    # Only needed to serialize parallel downloads
+    _HAS_FILELOCK = False
+
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core.filters import _get_output
 from pyvista.core.utilities.fileio import get_ext
@@ -53,6 +66,8 @@ from pyvista.examples._dataset_loader import _MultiFileDownloadableDatasetLoader
 from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from numpy import ndarray
 
     from pyvista import ExplicitStructuredGrid
@@ -74,6 +89,8 @@ POOCH_LOGGER.setLevel(logging.CRITICAL)
 CACHE_VERSION = 3
 
 _USERDATA_PATH_VARNAME = 'PYVISTA_USERDATA_PATH'
+_DATA_VARNAME = 'PYVISTA_DATA'
+# deprecated 0.49.0, convert to error in 0.52.0, remove 0.53.0
 _VTK_DATA_VARNAME = 'PYVISTA_VTK_DATA'
 
 _DEFAULT_USER_DATA_PATH = str(pooch.os_cache(f'pyvista_{CACHE_VERSION}'))  # type: ignore[attr-defined]
@@ -85,15 +102,31 @@ def _warn_invalid_dir_not_used(path: Path, env_var: str):
     warn_external(msg)
 
 
+def _get_data_varname() -> str | None:
+    """Return the name of the set data-source variable, preferring the current name."""
+    if _DATA_VARNAME in os.environ:
+        return _DATA_VARNAME
+    if _VTK_DATA_VARNAME in os.environ:
+        from pyvista.core.errors import PyVistaDeprecationWarning  # noqa: PLC0415
+
+        msg = (
+            f"The '{_VTK_DATA_VARNAME}' environment variable is deprecated; "
+            f"use '{_DATA_VARNAME}' instead."
+        )
+        warn_external(msg, PyVistaDeprecationWarning)
+        return _VTK_DATA_VARNAME
+    return None
+
+
 def _get_vtk_data_source() -> tuple[str, bool]:
     # If available, a local pyvista/data instance will be used for examples
     # Set default output
     source = _DEFAULT_VTK_DATA_SOURCE
     file_cache = False
-    if _VTK_DATA_VARNAME in os.environ:
-        path = Path(os.environ[_VTK_DATA_VARNAME])
+    if (varname := _get_data_varname()) is not None:
+        path = Path(os.environ[varname])
         if not path.is_dir():
-            _warn_invalid_dir_not_used(path, _VTK_DATA_VARNAME)
+            _warn_invalid_dir_not_used(path, varname)
         else:
             if path.name != 'Data':
                 # append 'Data' if user does not provide it
@@ -179,7 +212,7 @@ def _gltf_loader(name: str):
     return _SingleFileDownloadableDatasetLoader(
         paths[name],
         base_url=base_url,
-        download_func=fetcher.fetch,
+        download_func=functools.partial(_locked_fetch, fetcher),
     )
 
 
@@ -228,7 +261,7 @@ def file_from_files(target_path: str, fnames: list[str]) -> str:
 def _file_copier(input_file, output_file, *_, **__):  # noqa: ANN001
     """Copy a file from a local directory to the output path."""
     if not Path(input_file).is_file():
-        msg = f"'{input_file}' not found within PYVISTA_VTK_DATA '{SOURCE}'"
+        msg = f"'{input_file}' not found within {_DATA_VARNAME} '{SOURCE}'"
         raise FileNotFoundError(msg)
     shutil.copy(input_file, output_file)
 
@@ -267,9 +300,40 @@ def download_file(filename: str) -> str | list[str]:
         return _download_file(filename)
 
 
+@contextlib.contextmanager
+def _file_lock(path: Path) -> Iterator[None]:
+    """Hold an advisory cross-process lock while ``path`` is downloaded."""
+    if not _HAS_FILELOCK:
+        yield
+        return
+    try:
+        lock_path = Path(f'{path}.lock')
+        lock_path.parent.mkdir(parents=True, exist_ok=True)
+        lock = filelock.FileLock(lock_path)
+        lock.acquire()
+    except OSError:
+        # Cannot create the lock; proceed unlocked and let pooch report any real errors
+        yield
+        return
+    try:
+        yield
+    finally:
+        lock.release()
+
+
+def _locked_fetch(fetcher: Any, filename: str, **kwargs):
+    """Fetch with a per-file lock so parallel processes cannot corrupt a shared download."""
+    with _file_lock(fetcher.abspath / filename):
+        return fetcher.fetch(filename, **kwargs)
+
+
 def _download_file(filename: str):
     """Download a file using pooch."""
-    return FETCHER.fetch(
+    # Pre-create the parent dir: pooch's check-then-makedirs races under parallel downloads
+    with contextlib.suppress(OSError):
+        (FETCHER.abspath / filename).parent.mkdir(parents=True, exist_ok=True)
+    return _locked_fetch(
+        FETCHER,
         filename,
         processor=pooch.Unzip() if filename.endswith('.zip') else None,  # type: ignore[attr-defined]
         downloader=_file_copier if _FILE_CACHE else None,
@@ -381,11 +445,10 @@ def _download_and_read(
 
 
 @overload
-def download_masonry_texture(load: Literal[True] = True) -> Texture: ...  # noqa: FBT002
+def download_masonry_texture(*, load: Literal[True] = True) -> Texture: ...
 @overload
-def download_masonry_texture(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_masonry_texture(load: bool = True) -> Texture | str:  # noqa: FBT001, FBT002
+def download_masonry_texture(*, load: Literal[False]) -> str: ...
+def download_masonry_texture(*, load: bool = True) -> Texture | str:
     """Download masonry texture.
 
     Parameters
@@ -425,11 +488,10 @@ _dataset_masonry_texture = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_usa_texture(load: Literal[True] = True) -> Texture: ...  # noqa: FBT002
+def download_usa_texture(*, load: Literal[True] = True) -> Texture: ...
 @overload
-def download_usa_texture(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_usa_texture(load: bool = True) -> Texture | str:  # noqa: FBT001, FBT002
+def download_usa_texture(*, load: Literal[False]) -> str: ...
+def download_usa_texture(*, load: bool = True) -> Texture | str:
     """Download USA texture.
 
     Parameters
@@ -445,17 +507,20 @@ def download_usa_texture(load: bool = True) -> Texture | str:  # noqa: FBT001, F
 
     Examples
     --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> dataset = examples.download_usa_texture()
-    >>> dataset.plot(cpos='xy')
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> dataset = examples.download_usa_texture()
+        >>> dataset.plot(cpos='xy')
 
-        :ref:`Usa Texture Dataset <usa_texture_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
 
-        :ref:`Usa Dataset <usa_dataset>`
+            :ref:`Usa Texture Dataset <usa_texture_dataset>`
+                See this dataset in the Dataset Gallery for more info.
+
+            :ref:`Usa Dataset <usa_dataset>`
 
     """
     return _download_dataset(_dataset_usa_texture, load=load)
@@ -468,11 +533,10 @@ _dataset_usa_texture = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_puppy_texture(load: Literal[True] = True) -> Texture: ...  # noqa: FBT002
+def download_puppy_texture(*, load: Literal[True] = True) -> Texture: ...
 @overload
-def download_puppy_texture(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_puppy_texture(load: bool = True) -> Texture | str:  # noqa: FBT001, FBT002
+def download_puppy_texture(*, load: Literal[False]) -> str: ...
+def download_puppy_texture(*, load: bool = True) -> Texture | str:
     """Download puppy texture.
 
     Parameters
@@ -488,9 +552,12 @@ def download_puppy_texture(load: bool = True) -> Texture | str:  # noqa: FBT001,
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_puppy_texture()
-    >>> dataset.plot(cpos='xy')
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import examples
+        >>> dataset = examples.download_puppy_texture()
+        >>> dataset.plot(cpos='xy')
 
     .. seealso::
 
@@ -507,11 +574,10 @@ _dataset_puppy_texture = _SingleFileDownloadableDatasetLoader('puppy.jpg', read_
 
 
 @overload
-def download_puppy(load: Literal[True] = True) -> ImageData: ...  # noqa: FBT002
+def download_puppy(*, load: Literal[True] = True) -> ImageData: ...
 @overload
-def download_puppy(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_puppy(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
+def download_puppy(*, load: Literal[False]) -> str: ...
+def download_puppy(*, load: bool = True) -> ImageData | str:
     """Download puppy dataset.
 
     Parameters
@@ -551,11 +617,10 @@ _dataset_puppy = _SingleFileDownloadableDatasetLoader('puppy.jpg')
 
 
 @overload
-def download_usa(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_usa(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_usa(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_usa(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_usa(*, load: Literal[False]) -> str: ...
+def download_usa(*, load: bool = True) -> PolyData | str:
     """Download USA dataset.
 
     Parameters
@@ -590,11 +655,10 @@ _dataset_usa = _SingleFileDownloadableDatasetLoader('usa.vtk')
 
 
 @overload
-def download_st_helens(load: Literal[True] = True) -> ImageData: ...  # noqa: FBT002
+def download_st_helens(*, load: Literal[True] = True) -> ImageData: ...
 @overload
-def download_st_helens(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_st_helens(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
+def download_st_helens(*, load: Literal[False]) -> str: ...
+def download_st_helens(*, load: bool = True) -> ImageData | str:
     """Download Saint Helens dataset.
 
     Parameters
@@ -627,11 +691,10 @@ _dataset_st_helens = _SingleFileDownloadableDatasetLoader('SainteHelens.dem')
 
 
 @overload
-def download_bunny(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_bunny(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_bunny(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_bunny(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_bunny(*, load: Literal[False]) -> str: ...
+def download_bunny(*, load: bool = True) -> PolyData | str:
     """Download bunny dataset.
 
     The Stanford Bunny from the `Stanford 3D Scanning Repository
@@ -675,11 +738,10 @@ _dataset_bunny = _SingleFileDownloadableDatasetLoader('bunny.ply')
 
 
 @overload
-def download_bunny_coarse(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002  # noqa: FBT002
+def download_bunny_coarse(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_bunny_coarse(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_bunny_coarse(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_bunny_coarse(*, load: Literal[False]) -> str: ...
+def download_bunny_coarse(*, load: bool = True) -> PolyData | str:
     """Download coarse bunny dataset.
 
     A decimated version of the Stanford Bunny from the `Stanford 3D
@@ -731,11 +793,10 @@ _dataset_bunny_coarse = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_cow(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_cow(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_cow(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_cow(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_cow(*, load: Literal[False]) -> str: ...
+def download_cow(*, load: bool = True) -> PolyData | str:
     """Download cow dataset.
 
     Parameters
@@ -762,6 +823,8 @@ def download_cow(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
 
         :ref:`Cow Head Dataset <cow_head_dataset>`
 
+        :ref:`Procedural Cow Dataset <procedural_cow_dataset>`
+
     """
     return _download_dataset(_dataset_cow, load=load)
 
@@ -770,11 +833,10 @@ _dataset_cow = _SingleFileDownloadableDatasetLoader('cow.vtp')
 
 
 @overload
-def download_cow_head(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_cow_head(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_cow_head(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_cow_head(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_cow_head(*, load: Literal[False]) -> str: ...
+def download_cow_head(*, load: bool = True) -> PolyData | str:
     """Download cow head dataset.
 
     Parameters
@@ -801,6 +863,8 @@ def download_cow_head(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT
 
         :ref:`Cow Dataset <cow_dataset>`
 
+        :ref:`Procedural Cow Dataset <procedural_cow_dataset>`
+
     """
     return _download_dataset(_dataset_cow_head, load=load)
 
@@ -809,11 +873,64 @@ _dataset_cow_head = _SingleFileDownloadableDatasetLoader('cowHead.vtp')
 
 
 @overload
-def download_faults(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_procedural_cow(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_faults(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_faults(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_procedural_cow(*, load: Literal[False]) -> str: ...
+def download_procedural_cow(*, load: bool = True) -> PolyData | str:
+    """Download a procedurally generated cow.
+
+    A watertight surface of 300,000 triangles with its coat in the active ``'RGB'``
+    point array. Loading requires the ``pyvista-zstd`` package (``pip install
+    pyvista[io]``).
+
+    .. versionadded:: 0.50
+
+    .. dropdown:: generate_cow.py
+
+        The script in the `PyVista data repository
+        <https://github.com/pyvista/data/tree/master/Data/cow>`_ that sums signed
+        distance fields into this mesh. Run it with ``uv run --locked generate_cow.py``.
+
+        .. embed-py-file:: cow/generate_cow.py
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset. When ``False``, return the path to the file.
+
+    Returns
+    -------
+    pyvista.PolyData | str
+        Dataset or path to the file depending on the ``load`` parameter.
+
+    Examples
+    --------
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import examples
+        >>> dataset = examples.download_procedural_cow()
+        >>> dataset.plot(rgb=True, smooth_shading=True)
+
+    .. seealso::
+
+        :ref:`Procedural Cow Dataset <procedural_cow_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+        :ref:`Cow Dataset <cow_dataset>`
+
+    """
+    return _download_dataset(_dataset_procedural_cow, load=load)
+
+
+_dataset_procedural_cow = _SingleFileDownloadableDatasetLoader('cow/cow.pv')
+
+
+@overload
+def download_faults(*, load: Literal[True] = True) -> PolyData: ...
+@overload
+def download_faults(*, load: Literal[False]) -> str: ...
+def download_faults(*, load: bool = True) -> PolyData | str:
     """Download faults dataset.
 
     Parameters
@@ -846,11 +963,10 @@ _dataset_faults = _SingleFileDownloadableDatasetLoader('faults.vtk')
 
 
 @overload
-def download_tensors(load: Literal[True] = True) -> UnstructuredGrid: ...  # noqa: FBT002
+def download_tensors(*, load: Literal[True] = True) -> UnstructuredGrid: ...
 @overload
-def download_tensors(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_tensors(load: bool = True) -> UnstructuredGrid | str:  # noqa: FBT001, FBT002
+def download_tensors(*, load: Literal[False]) -> str: ...
+def download_tensors(*, load: bool = True) -> UnstructuredGrid | str:
     """Download tensors dataset.
 
     Parameters
@@ -883,12 +999,17 @@ _dataset_tensors = _SingleFileDownloadableDatasetLoader('tensors.vtk')
 
 
 @overload
-def download_head(load: Literal[True] = True) -> ImageData: ...  # noqa: FBT002
+def download_head(*, load: Literal[True] = True) -> ImageData: ...
 @overload
-def download_head(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_head(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
+def download_head(*, load: Literal[False]) -> str: ...
+def download_head(*, load: bool = True) -> ImageData | str:
     """Download head dataset.
+
+    .. note::
+        ``load=False`` returns only the file which is read directly, not the
+        other files downloaded alongside it. This is a legacy quirk of the
+        ``load`` argument. For every file belonging to this example, use
+        :func:`examples.get_example('head').paths <pyvista.examples.get_example>`.
 
     Parameters
     ----------
@@ -903,24 +1024,27 @@ def download_head(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
 
     Examples
     --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> dataset = examples.download_head()
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_volume(dataset, cmap='cool', opacity='sigmoid_6')
-    >>> pl.camera_position = pv.CameraPosition(
-    ...     position=(-228.0, -418.0, -158.0),
-    ...     focal_point=(94.0, 122.0, 82.0),
-    ...     viewup=(-0.2, -0.3, 0.9),
-    ... )
-    >>> pl.show()
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> dataset = examples.download_head()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_volume(dataset, cmap='cool', opacity='sigmoid_6')
+        >>> pl.camera_position = pv.CameraPosition(
+        ...     position=(-228.0, -418.0, -158.0),
+        ...     focal_point=(94.0, 122.0, 82.0),
+        ...     viewup=(-0.2, -0.3, 0.9),
+        ... )
+        >>> pl.show()
 
-        :ref:`Head Dataset <head_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
 
-        :ref:`Head 2 Dataset <head_2_dataset>`
+            :ref:`Head Dataset <head_dataset>`
+                See this dataset in the Dataset Gallery for more info.
+
+            :ref:`Head 2 Dataset <head_2_dataset>`
 
     """
     return _download_dataset(_dataset_head, load=load)
@@ -937,11 +1061,10 @@ _dataset_head = _MultiFileDownloadableDatasetLoader(_head_files_func)
 
 
 @overload
-def download_head_2(load: Literal[True] = True) -> ImageData: ...  # noqa: FBT002
+def download_head_2(*, load: Literal[True] = True) -> ImageData: ...
 @overload
-def download_head_2(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_head_2(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
+def download_head_2(*, load: Literal[False]) -> str: ...
+def download_head_2(*, load: bool = True) -> ImageData | str:
     """Download head dataset.
 
     Parameters
@@ -957,12 +1080,15 @@ def download_head_2(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT0
 
     Examples
     --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> dataset = examples.download_head_2()
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_volume(dataset, cmap='cool', opacity='sigmoid_6')
-    >>> pl.show()
+    .. pyvista-plot::
+        :force_static:
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> dataset = examples.download_head_2()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_volume(dataset, cmap='cool', opacity='sigmoid_6')
+        >>> pl.show()
 
     .. seealso::
 
@@ -979,47 +1105,49 @@ _dataset_head_2 = _SingleFileDownloadableDatasetLoader('head.vti')
 
 
 @overload
-def download_bolt_nut(load: Literal[True] = True) -> MultiBlock: ...  # noqa: FBT002
+def download_bolt_nut(*, load: Literal[True] = True) -> MultiBlock: ...
 @overload
-def download_bolt_nut(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_bolt_nut(load: bool = True) -> MultiBlock | str:  # noqa: FBT001, FBT002
+def download_bolt_nut(*, load: Literal[False]) -> tuple[str, ...]: ...
+def download_bolt_nut(*, load: bool = True) -> MultiBlock | tuple[str, ...]:
     """Download bolt nut dataset.
 
     Parameters
     ----------
     load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
-        to ``False`` and only the filename will be returned.
+        to ``False`` and the path of every file is returned instead.
 
     Returns
     -------
-    output : pyvista.MultiBlock or tuple
-        DataSet or tuple of filenames depending on ``load``.
+    output : pyvista.MultiBlock or tuple[str, ...]
+        DataSet or the paths of the bolt and nut files depending on ``load``.
 
     Examples
     --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> dataset = examples.download_bolt_nut()
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_volume(
-    ...     dataset,
-    ...     cmap='coolwarm',
-    ...     opacity='sigmoid_5',
-    ...     show_scalar_bar=False,
-    ... )
-    >>> pl.camera_position = pv.CameraPosition(
-    ...     position=(194.6, -141.8, 182.0),
-    ...     focal_point=(34.5, 61.0, 32.5),
-    ...     viewup=(-0.229, 0.45, 0.86),
-    ... )
-    >>> pl.show()
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> dataset = examples.download_bolt_nut()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_volume(
+        ...     dataset,
+        ...     cmap='coolwarm',
+        ...     opacity='sigmoid_5',
+        ...     show_scalar_bar=False,
+        ... )
+        >>> pl.camera_position = pv.CameraPosition(
+        ...     position=(194.6, -141.8, 182.0),
+        ...     focal_point=(34.5, 61.0, 32.5),
+        ...     viewup=(-0.229, 0.45, 0.86),
+        ... )
+        >>> pl.show()
 
-        :ref:`Bolt Nut Dataset <bolt_nut_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
+
+            :ref:`Bolt Nut Dataset <bolt_nut_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_bolt_nut, load=load)
@@ -1039,11 +1167,10 @@ _dataset_bolt_nut = _MultiFileDownloadableDatasetLoader(
 
 
 @overload
-def download_clown(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_clown(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_clown(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_clown(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_clown(*, load: Literal[False]) -> str: ...
+def download_clown(*, load: bool = True) -> PolyData | str:
     """Download clown dataset.
 
     Parameters
@@ -1076,11 +1203,10 @@ _dataset_clown = _SingleFileDownloadableDatasetLoader('clown.facet')
 
 
 @overload
-def download_topo_global(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_topo_global(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_topo_global(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_topo_global(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_topo_global(*, load: Literal[False]) -> str: ...
+def download_topo_global(*, load: bool = True) -> PolyData | str:
     """Download topo dataset.
 
     Parameters
@@ -1116,11 +1242,10 @@ _dataset_topo_global = _SingleFileDownloadableDatasetLoader('EarthModels/ETOPO_1
 
 
 @overload
-def download_topo_land(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_topo_land(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_topo_land(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_topo_land(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_topo_land(*, load: Literal[False]) -> str: ...
+def download_topo_land(*, load: bool = True) -> PolyData | str:
     """Download topo land dataset.
 
     Parameters
@@ -1136,9 +1261,12 @@ def download_topo_land(load: bool = True) -> PolyData | str:  # noqa: FBT001, FB
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_topo_land()
-    >>> dataset.plot(clim=[-2000, 3000], cmap='gist_earth', show_scalar_bar=False)
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import examples
+        >>> dataset = examples.download_topo_land()
+        >>> dataset.plot(clim=[-2000, 3000], cmap='gist_earth', show_scalar_bar=False)
 
     .. seealso::
 
@@ -1155,11 +1283,10 @@ _dataset_topo_land = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_coastlines(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_coastlines(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_coastlines(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_coastlines(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_coastlines(*, load: Literal[False]) -> str: ...
+def download_coastlines(*, load: bool = True) -> PolyData | str:
     """Download coastlines dataset.
 
     Parameters
@@ -1192,11 +1319,10 @@ _dataset_coastlines = _SingleFileDownloadableDatasetLoader('EarthModels/Coastlin
 
 
 @overload
-def download_knee(load: Literal[True] = True) -> ImageData: ...  # noqa: FBT002
+def download_knee(*, load: Literal[True] = True) -> ImageData: ...
 @overload
-def download_knee(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_knee(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
+def download_knee(*, load: Literal[False]) -> str: ...
+def download_knee(*, load: bool = True) -> ImageData | str:
     """Download knee dataset.
 
     Parameters
@@ -1231,11 +1357,10 @@ _dataset_knee = _SingleFileDownloadableDatasetLoader('DICOM_KNEE.dcm')
 
 
 @overload
-def download_knee_full(load: Literal[True] = True) -> ImageData: ...  # noqa: FBT002
+def download_knee_full(*, load: Literal[True] = True) -> ImageData: ...
 @overload
-def download_knee_full(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_knee_full(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
+def download_knee_full(*, load: Literal[False]) -> str: ...
+def download_knee_full(*, load: bool = True) -> ImageData | str:
     """Download full knee dataset.
 
     Parameters
@@ -1251,15 +1376,18 @@ def download_knee_full(load: bool = True) -> ImageData | str:  # noqa: FBT001, F
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> import pyvista as pv
-    >>> dataset = examples.download_knee_full()
-    >>> cpos = pv.CameraPosition(
-    ...     position=(-381.7, -46.02, 216.5),
-    ...     focal_point=(74.83, 89.29, 100.0),
-    ...     viewup=(0.23, 0.072, 0.97),
-    ... )
-    >>> dataset.plot(volume=True, cmap='bone', cpos=cpos, show_scalar_bar=False)
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> dataset = examples.download_knee_full()
+        >>> cpos = pv.CameraPosition(
+        ...     position=(-381.7, -46.02, 216.5),
+        ...     focal_point=(74.83, 89.29, 100.0),
+        ...     viewup=(0.23, 0.072, 0.97),
+        ... )
+        >>> dataset.plot(volume=True, cmap='bone', cpos=cpos, show_scalar_bar=False)
 
     .. seealso::
 
@@ -1276,11 +1404,10 @@ _dataset_knee_full = _SingleFileDownloadableDatasetLoader('vw_knee.slc')
 
 
 @overload
-def download_lidar(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_lidar(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_lidar(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_lidar(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_lidar(*, load: Literal[False]) -> str: ...
+def download_lidar(*, load: bool = True) -> PolyData | str:
     """Download lidar dataset.
 
     Parameters
@@ -1316,11 +1443,10 @@ _dataset_lidar = _SingleFileDownloadableDatasetLoader('kafadar-lidar-interp.vtp'
 
 
 @overload
-def download_exodus(load: Literal[True] = True) -> MultiBlock: ...  # noqa: FBT002
+def download_exodus(*, load: Literal[True] = True) -> MultiBlock: ...
 @overload
-def download_exodus(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_exodus(load: bool = True) -> MultiBlock | str:  # noqa: FBT001, FBT002
+def download_exodus(*, load: Literal[False]) -> str: ...
+def download_exodus(*, load: bool = True) -> MultiBlock | str:
     """Sample ExodusII data file.
 
     Parameters
@@ -1353,11 +1479,10 @@ _dataset_exodus = _SingleFileDownloadableDatasetLoader('mesh_fs8.exo')
 
 
 @overload
-def download_nefertiti(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_nefertiti(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_nefertiti(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_nefertiti(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_nefertiti(*, load: Literal[False]) -> str: ...
+def download_nefertiti(*, load: bool = True) -> PolyData | str:
     """Download mesh of Queen Nefertiti.
 
     .. warning::
@@ -1394,9 +1519,13 @@ def download_nefertiti(load: bool = True) -> PolyData | str:  # noqa: FBT001, FB
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_nefertiti()  # doctest: +SKIP
-    >>> dataset.plot(cpos='xz')  # doctest: +SKIP
+    .. pyvista-plot::
+        :force_static:
+
+        from pyvista import examples
+
+        dataset = examples.download_nefertiti()
+        dataset.plot(cpos='xz')
 
     .. seealso::
 
@@ -1407,29 +1536,50 @@ def download_nefertiti(load: bool = True) -> PolyData | str:  # noqa: FBT001, FB
 
         * :ref:`compute_normals_example`
         * :ref:`extract_edges_example`
-        * :ref:`show_edges_example`
         * :ref:`edl_example`
         * :ref:`pbr_example`
         * :ref:`box_widget_example`
 
     """
-    warn_external(
-        'download_nefertiti returns a dataset licensed under CC BY-NC-SA 4.0 '
-        '("The Other Nefertiti" by Al-Badri and Nelles, 2016). It may not be '
-        'used for commercial purposes, and derivative works must be shared '
-        'under the same license. For a CC0 alternative suitable for commercial '
-        'use, see download_washington_bust or download_lincoln_life_mask.',
-        UserWarning,
-    )
     return _download_dataset(_dataset_nefertiti, load=load)
 
 
-_dataset_nefertiti = _SingleFileDownloadableDatasetLoader(
+class _NefertitiDatasetLoader(_SingleFileDownloadableDatasetLoader):
+    """Loader which reports the dataset's licence wherever the data is reached."""
+
+    @staticmethod
+    def _warn_licence() -> None:
+        """Warn that the dataset is not licensed for commercial use."""
+        warn_external(
+            'The nefertiti dataset is licensed under CC BY-NC-SA 4.0 '
+            '("The Other Nefertiti" by Al-Badri and Nelles, 2016). It may not be '
+            'used for commercial purposes, and derivative works must be shared '
+            'under the same license. For a CC0 alternative suitable for commercial '
+            'use, see download_washington_bust or download_lincoln_life_mask.',
+            UserWarning,
+        )
+
+    def download(self) -> tuple[str, ...]:
+        """Warn about the licence, then download as usual."""
+        self._warn_licence()
+        return super().download()
+
+    def load(self) -> Any:
+        """Warn about the licence, then load as usual."""
+        self._warn_licence()
+        return super().load()
+
+
+_dataset_nefertiti = _NefertitiDatasetLoader(
     'nefertiti.ply.zip',
     target_file='nefertiti.ply',
 )
 
 
+@overload
+def download_washington_bust(*, load: Literal[True] = True) -> PolyData: ...
+@overload
+def download_washington_bust(*, load: Literal[False]) -> str: ...
 def download_washington_bust(*, load: bool = True) -> PolyData | str:
     """Download a bust of George Washington.
 
@@ -1457,9 +1607,12 @@ def download_washington_bust(*, load: bool = True) -> PolyData | str:
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_washington_bust()  # doctest: +SKIP
-    >>> dataset.plot()  # doctest: +SKIP
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import examples
+        >>> dataset = examples.download_washington_bust()
+        >>> dataset.plot()
 
     .. seealso::
 
@@ -1478,6 +1631,10 @@ _dataset_washington_bust = _SingleFileDownloadableDatasetLoader(
 )
 
 
+@overload
+def download_lincoln_life_mask(*, load: Literal[True] = True) -> PolyData: ...
+@overload
+def download_lincoln_life_mask(*, load: Literal[False]) -> str: ...
 def download_lincoln_life_mask(*, load: bool = True) -> PolyData | str:
     """Download the life mask of Abraham Lincoln.
 
@@ -1506,9 +1663,12 @@ def download_lincoln_life_mask(*, load: bool = True) -> PolyData | str:
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_lincoln_life_mask()  # doctest: +SKIP
-    >>> dataset.plot()  # doctest: +SKIP
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import examples
+        >>> dataset = examples.download_lincoln_life_mask()
+        >>> dataset.plot()
 
     .. seealso::
 
@@ -1528,11 +1688,10 @@ _dataset_lincoln_life_mask = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_blood_vessels(load: Literal[True] = True) -> UnstructuredGrid: ...  # noqa: FBT002
+def download_blood_vessels(*, load: Literal[True] = True) -> UnstructuredGrid: ...
 @overload
-def download_blood_vessels(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_blood_vessels(load: bool = True) -> UnstructuredGrid | str:  # noqa: FBT001, FBT002
+def download_blood_vessels(*, load: Literal[False]) -> str: ...
+def download_blood_vessels(*, load: bool = True) -> UnstructuredGrid | str:
     """Download data representing the bifurcation of blood vessels.
 
     Parameters
@@ -1574,11 +1733,10 @@ _dataset_blood_vessels = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_iron_protein(load: Literal[True] = True) -> ImageData: ...  # noqa: FBT002
+def download_iron_protein(*, load: Literal[True] = True) -> ImageData: ...
 @overload
-def download_iron_protein(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_iron_protein(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
+def download_iron_protein(*, load: Literal[False]) -> str: ...
+def download_iron_protein(*, load: bool = True) -> ImageData | str:
     """Download iron protein dataset.
 
     Parameters
@@ -1594,14 +1752,17 @@ def download_iron_protein(load: bool = True) -> ImageData | str:  # noqa: FBT001
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_iron_protein()
-    >>> dataset.plot(volume=True, cmap='blues')
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> dataset = examples.download_iron_protein()
+        >>> dataset.plot(volume=True, cmap='blues')
 
-        :ref:`Iron Protein Dataset <iron_protein_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
+
+            :ref:`Iron Protein Dataset <iron_protein_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_iron_protein, load=load)
@@ -1611,11 +1772,10 @@ _dataset_iron_protein = _SingleFileDownloadableDatasetLoader('ironProt.vtk')
 
 
 @overload
-def download_tetrahedron(load: Literal[True] = True) -> UnstructuredGrid: ...  # noqa: FBT002
+def download_tetrahedron(*, load: Literal[True] = True) -> UnstructuredGrid: ...
 @overload
-def download_tetrahedron(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_tetrahedron(load: bool = True) -> UnstructuredGrid | str:  # noqa: FBT001, FBT002
+def download_tetrahedron(*, load: Literal[False]) -> str: ...
+def download_tetrahedron(*, load: bool = True) -> UnstructuredGrid | str:
     """Download tetrahedron dataset.
 
     Parameters
@@ -1651,11 +1811,10 @@ _dataset_tetrahedron = _SingleFileDownloadableDatasetLoader('Tetrahedron.vtu')
 
 
 @overload
-def download_saddle_surface(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_saddle_surface(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_saddle_surface(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_saddle_surface(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_saddle_surface(*, load: Literal[False]) -> str: ...
+def download_saddle_surface(*, load: bool = True) -> PolyData | str:
     """Download saddle surface dataset.
 
     Parameters
@@ -1688,11 +1847,10 @@ _dataset_saddle_surface = _SingleFileDownloadableDatasetLoader('InterpolatingOnS
 
 
 @overload
-def download_sparse_points(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_sparse_points(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_sparse_points(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_sparse_points(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_sparse_points(*, load: Literal[False]) -> str: ...
+def download_sparse_points(*, load: bool = True) -> PolyData | str:
     """Download sparse points data.
 
     Used with :func:`download_saddle_surface`.
@@ -1745,11 +1903,10 @@ _dataset_sparse_points = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_foot_bones(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_foot_bones(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_foot_bones(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_foot_bones(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_foot_bones(*, load: Literal[False]) -> str: ...
+def download_foot_bones(*, load: bool = True) -> PolyData | str:
     """Download foot bones dataset.
 
     Parameters
@@ -1782,11 +1939,10 @@ _dataset_foot_bones = _SingleFileDownloadableDatasetLoader('fsu/footbones.ply')
 
 
 @overload
-def download_guitar(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_guitar(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_guitar(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_guitar(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_guitar(*, load: Literal[False]) -> str: ...
+def download_guitar(*, load: bool = True) -> PolyData | str:
     """Download guitar dataset.
 
     Parameters
@@ -1821,11 +1977,10 @@ _dataset_guitar = _SingleFileDownloadableDatasetLoader('fsu/stratocaster.ply')
 
 
 @overload
-def download_quadratic_pyramid(load: Literal[True] = True) -> UnstructuredGrid: ...  # noqa: FBT002
+def download_quadratic_pyramid(*, load: Literal[True] = True) -> UnstructuredGrid: ...
 @overload
-def download_quadratic_pyramid(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_quadratic_pyramid(load: bool = True) -> UnstructuredGrid | str:  # noqa: FBT001, FBT002
+def download_quadratic_pyramid(*, load: Literal[False]) -> str: ...
+def download_quadratic_pyramid(*, load: bool = True) -> UnstructuredGrid | str:
     """Download quadratic pyramid dataset.
 
     Parameters
@@ -1861,11 +2016,10 @@ _dataset_quadratic_pyramid = _SingleFileDownloadableDatasetLoader('QuadraticPyra
 
 
 @overload
-def download_bird(load: Literal[True] = True) -> ImageData: ...  # noqa: FBT002
+def download_bird(*, load: Literal[True] = True) -> ImageData: ...
 @overload
-def download_bird(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_bird(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
+def download_bird(*, load: Literal[False]) -> str: ...
+def download_bird(*, load: bool = True) -> ImageData | str:
     """Download bird dataset.
 
     Parameters
@@ -1900,11 +2054,10 @@ _dataset_bird = _SingleFileDownloadableDatasetLoader('Pileated.jpg')
 
 
 @overload
-def download_bird_texture(load: Literal[True] = True) -> Texture: ...  # noqa: FBT002
+def download_bird_texture(*, load: Literal[True] = True) -> Texture: ...
 @overload
-def download_bird_texture(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_bird_texture(load: bool = True) -> Texture | str:  # noqa: FBT001, FBT002
+def download_bird_texture(*, load: Literal[False]) -> str: ...
+def download_bird_texture(*, load: bool = True) -> Texture | str:
     """Download bird texture.
 
     Parameters
@@ -1920,16 +2073,19 @@ def download_bird_texture(load: bool = True) -> Texture | str:  # noqa: FBT001, 
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_bird_texture()
-    >>> dataset.plot(cpos='xy')
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> dataset = examples.download_bird_texture()
+        >>> dataset.plot(cpos='xy')
 
-        :ref:`Bird Texture Dataset <bird_texture_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
 
-        :ref:`Bird Dataset <bird_dataset>`
+            :ref:`Bird Texture Dataset <bird_texture_dataset>`
+                See this dataset in the Dataset Gallery for more info.
+
+            :ref:`Bird Dataset <bird_dataset>`
 
     """
     return _download_dataset(_dataset_bird_texture, load=load)
@@ -1942,11 +2098,10 @@ _dataset_bird_texture = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_office(load: Literal[True] = True) -> StructuredGrid: ...  # noqa: FBT002
+def download_office(*, load: Literal[True] = True) -> StructuredGrid: ...
 @overload
-def download_office(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_office(load: bool = True) -> StructuredGrid | str:  # noqa: FBT001, FBT002
+def download_office(*, load: Literal[False]) -> str: ...
+def download_office(*, load: bool = True) -> StructuredGrid | str:
     """Download office dataset.
 
     Parameters
@@ -1979,11 +2134,10 @@ _dataset_office = _SingleFileDownloadableDatasetLoader('office.binary.vtk')
 
 
 @overload
-def download_horse_points(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_horse_points(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_horse_points(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_horse_points(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_horse_points(*, load: Literal[False]) -> str: ...
+def download_horse_points(*, load: bool = True) -> PolyData | str:
     """Download horse points dataset.
 
     Parameters
@@ -2018,11 +2172,10 @@ _dataset_horse_points = _SingleFileDownloadableDatasetLoader('horsePoints.vtp')
 
 
 @overload
-def download_horse(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_horse(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_horse(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_horse(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_horse(*, load: Literal[False]) -> str: ...
+def download_horse(*, load: bool = True) -> PolyData | str:
     """Download horse dataset.
 
     Parameters
@@ -2057,11 +2210,10 @@ _dataset_horse = _SingleFileDownloadableDatasetLoader('horse.vtp')
 
 
 @overload
-def download_cake_easy(load: Literal[True] = True) -> ImageData: ...  # noqa: FBT002
+def download_cake_easy(*, load: Literal[True] = True) -> ImageData: ...
 @overload
-def download_cake_easy(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_cake_easy(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
+def download_cake_easy(*, load: Literal[False]) -> str: ...
+def download_cake_easy(*, load: bool = True) -> ImageData | str:
     """Download cake dataset.
 
     Parameters
@@ -2096,11 +2248,10 @@ _dataset_cake_easy = _SingleFileDownloadableDatasetLoader('cake_easy.jpg')
 
 
 @overload
-def download_cake_easy_texture(load: Literal[True] = True) -> Texture: ...  # noqa: FBT002
+def download_cake_easy_texture(*, load: Literal[True] = True) -> Texture: ...
 @overload
-def download_cake_easy_texture(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_cake_easy_texture(load: bool = True) -> Texture | str:  # noqa: FBT001, FBT002
+def download_cake_easy_texture(*, load: Literal[False]) -> str: ...
+def download_cake_easy_texture(*, load: bool = True) -> Texture | str:
     """Download cake texture.
 
     Parameters
@@ -2138,11 +2289,10 @@ _dataset_cake_easy_texture = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_rectilinear_grid(load: Literal[True] = True) -> RectilinearGrid: ...  # noqa: FBT002
+def download_rectilinear_grid(*, load: Literal[True] = True) -> RectilinearGrid: ...
 @overload
-def download_rectilinear_grid(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_rectilinear_grid(load: bool = True) -> RectilinearGrid | str:  # noqa: FBT001, FBT002
+def download_rectilinear_grid(*, load: Literal[False]) -> str: ...
+def download_rectilinear_grid(*, load: bool = True) -> RectilinearGrid | str:
     """Download rectilinear grid dataset.
 
     Parameters
@@ -2177,11 +2327,10 @@ _dataset_rectilinear_grid = _SingleFileDownloadableDatasetLoader('RectilinearGri
 
 
 @overload
-def download_gourds(zoom: bool, load: Literal[True]) -> ImageData: ...  # noqa: FBT001
+def download_gourds(*, zoom: bool = False, load: Literal[True] = True) -> ImageData: ...
 @overload
-def download_gourds(zoom: bool, load: Literal[False]) -> str: ...  # noqa: FBT001
-@_deprecate_positional_args
-def download_gourds(zoom: bool = False, load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
+def download_gourds(*, zoom: bool = False, load: Literal[False] = ...) -> str: ...
+def download_gourds(*, zoom: bool = False, load: bool = True) -> ImageData | str:
     """Download gourds dataset.
 
     Parameters
@@ -2200,9 +2349,12 @@ def download_gourds(zoom: bool = False, load: bool = True) -> ImageData | str:  
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_gourds()
-    >>> dataset.plot(rgba=True, cpos='xy')
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import examples
+        >>> dataset = examples.download_gourds()
+        >>> dataset.plot(rgba=True, cpos='xy')
 
     .. seealso::
 
@@ -2226,11 +2378,10 @@ __gourds2 = _SingleFileDownloadableDatasetLoader('Gourds2.jpg')
 
 
 @overload
-def download_gourds_texture(zoom: bool, load: Literal[True]) -> Texture: ...  # noqa: FBT001
+def download_gourds_texture(*, zoom: bool = False, load: Literal[True] = True) -> Texture: ...
 @overload
-def download_gourds_texture(zoom: bool, load: Literal[False]) -> str: ...  # noqa: FBT001
-@_deprecate_positional_args
-def download_gourds_texture(zoom: bool = False, load: bool = True) -> Texture | str:  # noqa: FBT001, FBT002
+def download_gourds_texture(*, zoom: bool = False, load: Literal[False] = ...) -> str: ...
+def download_gourds_texture(*, zoom: bool = False, load: bool = True) -> Texture | str:
     """Download gourds texture.
 
     Parameters
@@ -2249,18 +2400,21 @@ def download_gourds_texture(zoom: bool = False, load: bool = True) -> Texture | 
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_gourds_texture()
-    >>> dataset.plot(cpos='xy')
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> dataset = examples.download_gourds_texture()
+        >>> dataset.plot(cpos='xy')
 
-        :ref:`Gourds Texture Dataset <gourds_texture_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
 
-        :ref:`Gourds Dataset <gourds_dataset>`
+            :ref:`Gourds Texture Dataset <gourds_texture_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
-        :ref:`Gourds Pnm Dataset <gourds_pnm_dataset>`
+            :ref:`Gourds Dataset <gourds_dataset>`
+
+            :ref:`Gourds Pnm Dataset <gourds_pnm_dataset>`
 
     """
     example = __gourds2_texture if zoom else _dataset_gourds_texture
@@ -2278,11 +2432,10 @@ __gourds2_texture = _SingleFileDownloadableDatasetLoader('Gourds2.jpg', read_fun
 
 
 @overload
-def download_gourds_pnm(load: Literal[True] = True) -> ImageData: ...  # noqa: FBT002
+def download_gourds_pnm(*, load: Literal[True] = True) -> ImageData: ...
 @overload
-def download_gourds_pnm(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_gourds_pnm(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
+def download_gourds_pnm(*, load: Literal[False]) -> str: ...
+def download_gourds_pnm(*, load: bool = True) -> ImageData | str:
     """Download gourds dataset from pnm file.
 
     Parameters
@@ -2298,9 +2451,12 @@ def download_gourds_pnm(load: bool = True) -> ImageData | str:  # noqa: FBT001, 
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_gourds_pnm()
-    >>> dataset.plot(rgba=True, cpos='xy')
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import examples
+        >>> dataset = examples.download_gourds_pnm()
+        >>> dataset.plot(rgba=True, cpos='xy')
 
     .. seealso::
 
@@ -2319,11 +2475,10 @@ _dataset_gourds_pnm = _SingleFileDownloadableDatasetLoader('Gourds.pnm')
 
 
 @overload
-def download_unstructured_grid(load: Literal[True] = True) -> UnstructuredGrid: ...  # noqa: FBT002
+def download_unstructured_grid(*, load: Literal[True] = True) -> UnstructuredGrid: ...
 @overload
-def download_unstructured_grid(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_unstructured_grid(load: bool = True) -> UnstructuredGrid | str:  # noqa: FBT001, FBT002
+def download_unstructured_grid(*, load: Literal[False]) -> str: ...
+def download_unstructured_grid(*, load: bool = True) -> UnstructuredGrid | str:
     """Download unstructured grid dataset.
 
     Parameters
@@ -2356,11 +2511,10 @@ _dataset_unstructured_grid = _SingleFileDownloadableDatasetLoader('uGridEx.vtk')
 
 
 @overload
-def download_letter_k(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_letter_k(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_letter_k(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_letter_k(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_letter_k(*, load: Literal[False]) -> str: ...
+def download_letter_k(*, load: bool = True) -> PolyData | str:
     """Download letter k dataset.
 
     Parameters
@@ -2395,11 +2549,10 @@ _dataset_letter_k = _SingleFileDownloadableDatasetLoader('k.vtk')
 
 
 @overload
-def download_letter_a(load: Literal[True] = True) -> UnstructuredGrid: ...  # noqa: FBT002
+def download_letter_a(*, load: Literal[True] = True) -> UnstructuredGrid: ...
 @overload
-def download_letter_a(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_letter_a(load: bool = True) -> UnstructuredGrid | str:  # noqa: FBT001, FBT002
+def download_letter_a(*, load: Literal[False]) -> str: ...
+def download_letter_a(*, load: bool = True) -> UnstructuredGrid | str:
     """Download letter a dataset.
 
     Parameters
@@ -2434,11 +2587,10 @@ _dataset_letter_a = _SingleFileDownloadableDatasetLoader('a_grid.vtk')
 
 
 @overload
-def download_poly_line(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_poly_line(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_poly_line(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_poly_line(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_poly_line(*, load: Literal[False]) -> str: ...
+def download_poly_line(*, load: bool = True) -> PolyData | str:
     """Download polyline dataset.
 
     Parameters
@@ -2471,11 +2623,10 @@ _dataset_poly_line = _SingleFileDownloadableDatasetLoader('polyline.vtk')
 
 
 @overload
-def download_cad_model(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_cad_model(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_cad_model(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_cad_model(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_cad_model(*, load: Literal[False]) -> str: ...
+def download_cad_model(*, load: bool = True) -> PolyData | str:
     """Download cad dataset.
 
     Parameters
@@ -2508,12 +2659,17 @@ _dataset_cad_model = _SingleFileDownloadableDatasetLoader('42400-IDGH.stl')
 
 
 @overload
-def download_frog(load: Literal[True] = True) -> ImageData: ...  # noqa: FBT002
+def download_frog(*, load: Literal[True] = True) -> ImageData: ...
 @overload
-def download_frog(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_frog(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
+def download_frog(*, load: Literal[False]) -> str: ...
+def download_frog(*, load: bool = True) -> ImageData | str:
     """Download frog dataset.
+
+    .. note::
+        ``load=False`` returns only the file which is read directly, not the
+        other files downloaded alongside it. This is a legacy quirk of the
+        ``load`` argument. For every file belonging to this example, use
+        :func:`examples.get_example('frog').paths <pyvista.examples.get_example>`.
 
     Parameters
     ----------
@@ -2528,15 +2684,18 @@ def download_frog(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> import pyvista as pv
-    >>> cpos = pv.CameraPosition(
-    ...     position=(842.9, -574.2, -440.8),
-    ...     focal_point=(249.5, 234.5, 101.2),
-    ...     viewup=(-0.32, 0.35, -0.88),
-    ... )
-    >>> dataset = examples.download_frog()
-    >>> dataset.plot(volume=True, cpos=cpos)
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> cpos = pv.CameraPosition(
+        ...     position=(842.9, -574.2, -440.8),
+        ...     focal_point=(249.5, 234.5, 101.2),
+        ...     viewup=(-0.32, 0.35, -0.88),
+        ... )
+        >>> dataset = examples.download_frog()
+        >>> dataset.plot(volume=True, cpos=cpos)
 
     .. seealso::
 
@@ -2561,11 +2720,10 @@ _dataset_frog = _MultiFileDownloadableDatasetLoader(_frog_files_func)
 
 
 @overload
-def download_chest(load: Literal[True] = True) -> ImageData: ...  # noqa: FBT002
+def download_chest(*, load: Literal[True] = True) -> ImageData: ...
 @overload
-def download_chest(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_chest(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
+def download_chest(*, load: Literal[False]) -> str: ...
+def download_chest(*, load: bool = True) -> ImageData | str:
     """Download chest dataset.
 
     Parameters
@@ -2581,9 +2739,12 @@ def download_chest(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT00
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_chest()
-    >>> dataset.plot(cpos='xy')
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import examples
+        >>> dataset = examples.download_chest()
+        >>> dataset.plot(cpos='xy')
 
     .. seealso::
 
@@ -2601,11 +2762,10 @@ _dataset_chest = _SingleFileDownloadableDatasetLoader('MetaIO/ChestCT-SHORT.mha'
 
 
 @overload
-def download_brain_atlas_with_sides(load: Literal[True] = True) -> ImageData: ...  # noqa: FBT002
+def download_brain_atlas_with_sides(*, load: Literal[True] = True) -> ImageData: ...
 @overload
-def download_brain_atlas_with_sides(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_brain_atlas_with_sides(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
+def download_brain_atlas_with_sides(*, load: Literal[False]) -> str: ...
+def download_brain_atlas_with_sides(*, load: bool = True) -> ImageData | str:
     """Download an image of an averaged brain with a right-left label.
 
     Parameters
@@ -2640,11 +2800,10 @@ _dataset_brain_atlas_with_sides = _SingleFileDownloadableDatasetLoader('avg152T1
 
 
 @overload
-def download_prostate(load: Literal[True] = True) -> ImageData: ...  # noqa: FBT002
+def download_prostate(*, load: Literal[True] = True) -> ImageData: ...
 @overload
-def download_prostate(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_prostate(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
+def download_prostate(*, load: Literal[False]) -> str: ...
+def download_prostate(*, load: bool = True) -> ImageData | str:
     """Download prostate dataset.
 
     Parameters
@@ -2677,11 +2836,10 @@ _dataset_prostate = _SingleFileDownloadableDatasetLoader('prostate.img')
 
 
 @overload
-def download_filled_contours(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_filled_contours(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_filled_contours(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_filled_contours(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_filled_contours(*, load: Literal[False]) -> str: ...
+def download_filled_contours(*, load: bool = True) -> PolyData | str:
     """Download filled contours dataset.
 
     Parameters
@@ -2714,15 +2872,20 @@ _dataset_filled_contours = _SingleFileDownloadableDatasetLoader('filledContours.
 
 
 @overload
-def download_doorman(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_doorman(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_doorman(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_doorman(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_doorman(*, load: Literal[False]) -> str: ...
+def download_doorman(*, load: bool = True) -> PolyData | str:
     """Download doorman dataset.
 
     .. versionchanged:: 0.44.0
         Add support for downloading the texture images.
+
+    .. note::
+        ``load=False`` returns only the file which is read directly, not the
+        other files downloaded alongside it. This is a legacy quirk of the
+        ``load`` argument. For every file belonging to this example, use
+        :func:`examples.get_example('doorman').paths <pyvista.examples.get_example>`.
 
     Parameters
     ----------
@@ -2794,11 +2957,10 @@ _dataset_doorman = _MultiFileDownloadableDatasetLoader(
 
 
 @overload
-def download_mug(load: Literal[True] = True) -> MultiBlock: ...  # noqa: FBT002
+def download_mug(*, load: Literal[True] = True) -> MultiBlock: ...
 @overload
-def download_mug(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_mug(load: bool = True) -> MultiBlock | str:  # noqa: FBT001, FBT002
+def download_mug(*, load: Literal[False]) -> str: ...
+def download_mug(*, load: bool = True) -> MultiBlock | str:
     """Download mug dataset.
 
     Parameters
@@ -2837,6 +2999,12 @@ def download_parallel_exodus(*, load: Literal[False]) -> str: ...
 def download_parallel_exodus(*, load: bool = True) -> MultiBlock | str:
     """Download parallel Exodus dataset.
 
+    .. note::
+        ``load=False`` returns only the file which is read directly, not the
+        other files downloaded alongside it. This is a legacy quirk of the
+        ``load`` argument. For every file belonging to this example, use
+        :func:`examples.get_example('parallel_exodus').paths <pyvista.examples.get_example>`.
+
     Parameters
     ----------
     load : bool, default: True
@@ -2873,11 +3041,10 @@ _dataset_parallel_exodus = _MultiFileDownloadableDatasetLoader(_parallel_exodus_
 
 
 @overload
-def download_oblique_cone(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_oblique_cone(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_oblique_cone(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_oblique_cone(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_oblique_cone(*, load: Literal[False]) -> str: ...
+def download_oblique_cone(*, load: bool = True) -> PolyData | str:
     """Download oblique cone dataset.
 
     Parameters
@@ -2910,11 +3077,10 @@ _dataset_oblique_cone = _SingleFileDownloadableDatasetLoader('ObliqueCone.vtp')
 
 
 @overload
-def download_emoji(load: Literal[True] = True) -> ImageData: ...  # noqa: FBT002
+def download_emoji(*, load: Literal[True] = True) -> ImageData: ...
 @overload
-def download_emoji(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_emoji(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
+def download_emoji(*, load: Literal[False]) -> str: ...
+def download_emoji(*, load: bool = True) -> ImageData | str:
     """Download emoji dataset.
 
     Parameters
@@ -2949,11 +3115,10 @@ _dataset_emoji = _SingleFileDownloadableDatasetLoader('emote.jpg')
 
 
 @overload
-def download_emoji_texture(load: Literal[True] = True) -> Texture: ...  # noqa: FBT002
+def download_emoji_texture(*, load: Literal[True] = True) -> Texture: ...
 @overload
-def download_emoji_texture(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_emoji_texture(load: bool = True) -> Texture | str:  # noqa: FBT001, FBT002
+def download_emoji_texture(*, load: Literal[False]) -> str: ...
+def download_emoji_texture(*, load: bool = True) -> Texture | str:
     """Download emoji texture.
 
     Parameters
@@ -2988,11 +3153,10 @@ _dataset_emoji_texture = _SingleFileDownloadableDatasetLoader('emote.jpg', read_
 
 
 @overload
-def download_teapot(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_teapot(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_teapot(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_teapot(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_teapot(*, load: Literal[False]) -> str: ...
+def download_teapot(*, load: bool = True) -> PolyData | str:
     """Download teapot dataset.
 
     The `Utah Teapot <https://en.wikipedia.org/wiki/Utah_teapot>`_,
@@ -3035,11 +3199,10 @@ _dataset_teapot = _SingleFileDownloadableDatasetLoader('teapot.g')
 
 
 @overload
-def download_brain(load: Literal[True] = True) -> ImageData: ...  # noqa: FBT002
+def download_brain(*, load: Literal[True] = True) -> ImageData: ...
 @overload
-def download_brain(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_brain(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
+def download_brain(*, load: Literal[False]) -> str: ...
+def download_brain(*, load: bool = True) -> ImageData | str:
     """Download brain dataset.
 
     Parameters
@@ -3055,9 +3218,12 @@ def download_brain(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT00
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_brain()
-    >>> dataset.plot(volume=True)
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import examples
+        >>> dataset = examples.download_brain()
+        >>> dataset.plot(volume=True)
 
     .. seealso::
 
@@ -3073,8 +3239,14 @@ def download_brain(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT00
 _dataset_brain = _SingleFileDownloadableDatasetLoader('brain.vtk')
 
 
+@overload
+def download_frd(*, load: Literal[True] = True) -> UnstructuredGrid: ...
+@overload
+def download_frd(*, load: Literal[False]) -> str: ...
 def download_frd(*, load: bool = True) -> UnstructuredGrid | str:
     """Download a sample CalculiX FRD file.
+
+    Loading requires the ``pyvista-frd-reader`` package (``pip install pyvista[io]``).
 
     .. versionadded:: 0.48
 
@@ -3110,11 +3282,10 @@ _dataset_frd = _SingleFileDownloadableDatasetLoader('mesh.frd')
 
 
 @overload
-def download_structured_grid(load: Literal[True] = True) -> StructuredGrid: ...  # noqa: FBT002
+def download_structured_grid(*, load: Literal[True] = True) -> StructuredGrid: ...
 @overload
-def download_structured_grid(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_structured_grid(load: bool = True) -> StructuredGrid | str:  # noqa: FBT001, FBT002
+def download_structured_grid(*, load: Literal[False]) -> str: ...
+def download_structured_grid(*, load: bool = True) -> StructuredGrid | str:
     """Download structured grid dataset.
 
     Parameters
@@ -3149,11 +3320,10 @@ _dataset_structured_grid = _SingleFileDownloadableDatasetLoader('StructuredGrid.
 
 
 @overload
-def download_structured_grid_two(load: Literal[True] = True) -> StructuredGrid: ...  # noqa: FBT002
+def download_structured_grid_two(*, load: Literal[True] = True) -> StructuredGrid: ...
 @overload
-def download_structured_grid_two(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_structured_grid_two(load: bool = True) -> StructuredGrid | str:  # noqa: FBT001, FBT002
+def download_structured_grid_two(*, load: Literal[False]) -> str: ...
+def download_structured_grid_two(*, load: bool = True) -> StructuredGrid | str:
     """Download structured grid two dataset.
 
     Parameters
@@ -3188,11 +3358,10 @@ _dataset_structured_grid_two = _SingleFileDownloadableDatasetLoader('SampleStruc
 
 
 @overload
-def download_trumpet(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_trumpet(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_trumpet(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_trumpet(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_trumpet(*, load: Literal[False]) -> str: ...
+def download_trumpet(*, load: bool = True) -> PolyData | str:
     """Download trumpet dataset.
 
     Parameters
@@ -3227,11 +3396,10 @@ _dataset_trumpet = _SingleFileDownloadableDatasetLoader('trumpet.obj')
 
 
 @overload
-def download_face(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_face(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_face(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_face(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_face(*, load: Literal[False]) -> str: ...
+def download_face(*, load: bool = True) -> PolyData | str:
     """Download face dataset.
 
     Parameters
@@ -3267,11 +3435,10 @@ _dataset_face = _SingleFileDownloadableDatasetLoader('fran_cut.vtk')
 
 
 @overload
-def download_sky_box_nz(load: Literal[True] = True) -> ImageData: ...  # noqa: FBT002
+def download_sky_box_nz(*, load: Literal[True] = True) -> ImageData: ...
 @overload
-def download_sky_box_nz(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_sky_box_nz(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
+def download_sky_box_nz(*, load: Literal[False]) -> str: ...
+def download_sky_box_nz(*, load: bool = True) -> ImageData | str:
     """Download skybox-nz dataset.
 
     Parameters
@@ -3287,9 +3454,12 @@ def download_sky_box_nz(load: bool = True) -> ImageData | str:  # noqa: FBT001, 
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_sky_box_nz()
-    >>> dataset.plot(rgba=True, cpos='xy')
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import examples
+        >>> dataset = examples.download_sky_box_nz()
+        >>> dataset.plot(rgba=True, cpos='xy')
 
     .. seealso::
 
@@ -3308,11 +3478,10 @@ _dataset_sky_box_nz = _SingleFileDownloadableDatasetLoader('skybox-nz.jpg')
 
 
 @overload
-def download_sky_box_nz_texture(load: Literal[True] = True) -> Texture: ...  # noqa: FBT002
+def download_sky_box_nz_texture(*, load: Literal[True] = True) -> Texture: ...
 @overload
-def download_sky_box_nz_texture(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_sky_box_nz_texture(load: bool = True) -> Texture | str:  # noqa: FBT001, FBT002
+def download_sky_box_nz_texture(*, load: Literal[False]) -> str: ...
+def download_sky_box_nz_texture(*, load: bool = True) -> Texture | str:
     """Download skybox-nz texture.
 
     Parameters
@@ -3328,18 +3497,21 @@ def download_sky_box_nz_texture(load: bool = True) -> Texture | str:  # noqa: FB
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_sky_box_nz_texture()
-    >>> dataset.plot(cpos='xy')
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> dataset = examples.download_sky_box_nz_texture()
+        >>> dataset.plot(cpos='xy')
 
-        :ref:`Sky Box Nz Texture Dataset <sky_box_nz_texture_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
 
-        :ref:`Sky Box Nz Dataset <sky_box_nz_dataset>`
+            :ref:`Sky Box Nz Texture Dataset <sky_box_nz_texture_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
-        :ref:`Sky Box Cube Map Dataset <sky_box_cube_map_dataset>`
+            :ref:`Sky Box Nz Dataset <sky_box_nz_dataset>`
+
+            :ref:`Sky Box Cube Map Dataset <sky_box_cube_map_dataset>`
 
     """
     return _download_dataset(_dataset_sky_box_nz_texture, load=load)
@@ -3352,11 +3524,10 @@ _dataset_sky_box_nz_texture = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_disc_quads(load: Literal[True] = True) -> UnstructuredGrid: ...  # noqa: FBT002
+def download_disc_quads(*, load: Literal[True] = True) -> UnstructuredGrid: ...
 @overload
-def download_disc_quads(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_disc_quads(load: bool = True) -> UnstructuredGrid | str:  # noqa: FBT001, FBT002
+def download_disc_quads(*, load: Literal[False]) -> str: ...
+def download_disc_quads(*, load: bool = True) -> UnstructuredGrid | str:
     """Download disc quads dataset.
 
     Parameters
@@ -3389,11 +3560,10 @@ _dataset_disc_quads = _SingleFileDownloadableDatasetLoader('Disc_BiQuadraticQuad
 
 
 @overload
-def download_honolulu(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_honolulu(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_honolulu(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_honolulu(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_honolulu(*, load: Literal[False]) -> str: ...
+def download_honolulu(*, load: bool = True) -> PolyData | str:
     """Download Honolulu dataset.
 
     Parameters
@@ -3431,11 +3601,10 @@ _dataset_honolulu = _SingleFileDownloadableDatasetLoader('honolulu.vtk')
 
 
 @overload
-def download_motor(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_motor(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_motor(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_motor(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_motor(*, load: Literal[False]) -> str: ...
+def download_motor(*, load: bool = True) -> PolyData | str:
     """Download motor dataset.
 
     Parameters
@@ -3468,11 +3637,10 @@ _dataset_motor = _SingleFileDownloadableDatasetLoader('motor.g')
 
 
 @overload
-def download_tri_quadratic_hexahedron(load: Literal[True] = True) -> UnstructuredGrid: ...  # noqa: FBT002
+def download_tri_quadratic_hexahedron(*, load: Literal[True] = True) -> UnstructuredGrid: ...
 @overload
-def download_tri_quadratic_hexahedron(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_tri_quadratic_hexahedron(load: bool = True) -> UnstructuredGrid | str:  # noqa: FBT001, FBT002
+def download_tri_quadratic_hexahedron(*, load: Literal[False]) -> str: ...
+def download_tri_quadratic_hexahedron(*, load: bool = True) -> UnstructuredGrid | str:
     """Download triquadratic hexahedron dataset.
 
     Parameters
@@ -3518,11 +3686,10 @@ _dataset_tri_quadratic_hexahedron = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_human(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_human(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_human(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_human(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_human(*, load: Literal[False]) -> str: ...
+def download_human(*, load: bool = True) -> PolyData | str:
     """Download human dataset.
 
     Parameters
@@ -3555,11 +3722,10 @@ _dataset_human = _SingleFileDownloadableDatasetLoader('Human.vtp')
 
 
 @overload
-def download_vtk(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_vtk(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_vtk(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_vtk(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_vtk(*, load: Literal[False]) -> str: ...
+def download_vtk(*, load: bool = True) -> PolyData | str:
     """Download vtk dataset.
 
     Parameters
@@ -3594,11 +3760,10 @@ _dataset_vtk = _SingleFileDownloadableDatasetLoader('vtk.vtp')
 
 
 @overload
-def download_spider(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_spider(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_spider(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_spider(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_spider(*, load: Literal[False]) -> str: ...
+def download_spider(*, load: bool = True) -> PolyData | str:
     """Download spider dataset.
 
     Parameters
@@ -3631,11 +3796,10 @@ _dataset_spider = _SingleFileDownloadableDatasetLoader('spider.ply')
 
 
 @overload
-def download_carotid(load: Literal[True] = True) -> ImageData: ...  # noqa: FBT002
+def download_carotid(*, load: Literal[True] = True) -> ImageData: ...
 @overload
-def download_carotid(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_carotid(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
+def download_carotid(*, load: Literal[False]) -> str: ...
+def download_carotid(*, load: bool = True) -> ImageData | str:
     """Download carotid dataset.
 
     Parameters
@@ -3651,20 +3815,23 @@ def download_carotid(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> import pyvista as pv
-    >>> cpos = pv.CameraPosition(
-    ...     position=(221.0, -24.38, -69.96),
-    ...     focal_point=(135.9, 106.6, 17.72),
-    ...     viewup=(-0.25, 0.42, -0.87),
-    ... )
-    >>> dataset = examples.download_carotid()
-    >>> dataset.plot(volume=True, cpos=cpos)
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> cpos = pv.CameraPosition(
+        ...     position=(221.0, -24.38, -69.96),
+        ...     focal_point=(135.9, 106.6, 17.72),
+        ...     viewup=(-0.25, 0.42, -0.87),
+        ... )
+        >>> dataset = examples.download_carotid()
+        >>> dataset.plot(volume=True, cpos=cpos)
 
-        :ref:`Carotid Dataset <carotid_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
+
+            :ref:`Carotid Dataset <carotid_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_carotid, load=load)
@@ -3682,11 +3849,10 @@ _dataset_carotid = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_blow(load: Literal[True] = True) -> UnstructuredGrid: ...  # noqa: FBT002
+def download_blow(*, load: Literal[True] = True) -> UnstructuredGrid: ...
 @overload
-def download_blow(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_blow(load: bool = True) -> UnstructuredGrid | str:  # noqa: FBT001, FBT002
+def download_blow(*, load: Literal[False]) -> str: ...
+def download_blow(*, load: bool = True) -> UnstructuredGrid | str:
     """Download blow dataset.
 
     Parameters
@@ -3731,11 +3897,10 @@ _dataset_blow = _SingleFileDownloadableDatasetLoader('blow.vtk')
 
 
 @overload
-def download_shark(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_shark(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_shark(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_shark(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_shark(*, load: Literal[False]) -> str: ...
+def download_shark(*, load: bool = True) -> PolyData | str:
     """Download shark dataset.
 
     Parameters
@@ -3780,11 +3945,10 @@ _dataset_shark = _SingleFileDownloadableDatasetLoader('shark.ply')
 
 
 @overload
-def download_great_white_shark(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_great_white_shark(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_great_white_shark(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_great_white_shark(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_great_white_shark(*, load: Literal[False]) -> str: ...
+def download_great_white_shark(*, load: bool = True) -> PolyData | str:
     """Download great white shark dataset.
 
     .. versionadded:: 0.45
@@ -3842,11 +4006,10 @@ _dataset_great_white_shark = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_grey_nurse_shark(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_grey_nurse_shark(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_grey_nurse_shark(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_grey_nurse_shark(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_grey_nurse_shark(*, load: Literal[False]) -> str: ...
+def download_grey_nurse_shark(*, load: bool = True) -> PolyData | str:
     """Download grey nurse shark dataset.
 
     .. versionadded:: 0.45
@@ -3909,11 +4072,10 @@ _dataset_grey_nurse_shark = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_dragon(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_dragon(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_dragon(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_dragon(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_dragon(*, load: Literal[False]) -> str: ...
+def download_dragon(*, load: bool = True) -> PolyData | str:
     """Download dragon dataset.
 
     Parameters
@@ -3929,9 +4091,12 @@ def download_dragon(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT00
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_dragon()
-    >>> dataset.plot(cpos='xy')
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import examples
+        >>> dataset = examples.download_dragon()
+        >>> dataset.plot(cpos='xy')
 
     .. seealso::
 
@@ -3946,11 +4111,10 @@ _dataset_dragon = _SingleFileDownloadableDatasetLoader('dragon.ply')
 
 
 @overload
-def download_armadillo(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_armadillo(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_armadillo(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_armadillo(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_armadillo(*, load: Literal[False]) -> str: ...
+def download_armadillo(*, load: bool = True) -> PolyData | str:
     """Download armadillo dataset.
 
     Parameters
@@ -3966,17 +4130,20 @@ def download_armadillo(load: bool = True) -> PolyData | str:  # noqa: FBT001, FB
 
     Examples
     --------
-    Plot the armadillo dataset. Use a custom camera position.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> import pyvista as pv
-    >>> cpos = pv.CameraPosition(
-    ...     position=(161.5, 82.1, -330.2),
-    ...     focal_point=(-4.3, 24.5, -1.6),
-    ...     viewup=(-0.1, 1, 0.12),
-    ... )
-    >>> dataset = examples.download_armadillo()
-    >>> dataset.plot(cpos=cpos)
+        Plot the armadillo dataset. Use a custom camera position.
+
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> cpos = pv.CameraPosition(
+        ...     position=(161.5, 82.1, -330.2),
+        ...     focal_point=(-4.3, 24.5, -1.6),
+        ...     viewup=(-0.1, 1, 0.12),
+        ... )
+        >>> dataset = examples.download_armadillo()
+        >>> dataset.plot(cpos=cpos)
 
     .. seealso::
 
@@ -3991,11 +4158,10 @@ _dataset_armadillo = _SingleFileDownloadableDatasetLoader('Armadillo.ply')
 
 
 @overload
-def download_gears(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_gears(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_gears(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_gears(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_gears(*, load: Literal[False]) -> str: ...
+def download_gears(*, load: bool = True) -> PolyData | str:
     """Download gears dataset.
 
     Parameters
@@ -4036,11 +4202,10 @@ _dataset_gears = _SingleFileDownloadableDatasetLoader('gears.stl')
 
 
 @overload
-def download_torso(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_torso(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_torso(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_torso(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_torso(*, load: Literal[False]) -> str: ...
+def download_torso(*, load: bool = True) -> PolyData | str:
     """Download torso dataset.
 
     Parameters
@@ -4073,11 +4238,10 @@ _dataset_torso = _SingleFileDownloadableDatasetLoader('Torso.vtp')
 
 
 @overload
-def download_kitchen(split: bool, load: Literal[True] = True) -> StructuredGrid: ...  # noqa: FBT001, FBT002
+def download_kitchen(*, split: bool = False, load: Literal[True] = True) -> StructuredGrid: ...
 @overload
-def download_kitchen(split: bool, load: Literal[False]) -> str: ...  # noqa: FBT001
-@_deprecate_positional_args
-def download_kitchen(split: bool = False, load: bool = True) -> StructuredGrid | str:  # noqa: FBT001, FBT002
+def download_kitchen(*, split: bool = False, load: Literal[False] = ...) -> str: ...
+def download_kitchen(*, split: bool = False, load: bool = True) -> StructuredGrid | str:
     """Download structured grid of kitchen with velocity field.
 
     Use the ``split`` argument to extract all of the furniture in the
@@ -4160,11 +4324,10 @@ __kitchen_split = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_tetra_dc_mesh(load: Literal[True] = True) -> MultiBlock: ...  # noqa: FBT002
+def download_tetra_dc_mesh(*, load: Literal[True] = True) -> MultiBlock: ...
 @overload
-def download_tetra_dc_mesh(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_tetra_dc_mesh(load: bool = True) -> MultiBlock | str:  # noqa: FBT001, FBT002
+def download_tetra_dc_mesh(*, load: Literal[False]) -> tuple[str, ...]: ...
+def download_tetra_dc_mesh(*, load: bool = True) -> MultiBlock | tuple[str, ...]:
     """Download two meshes defining an electrical inverse problem.
 
     This contains a high resolution forward modeled mesh and a coarse
@@ -4174,13 +4337,14 @@ def download_tetra_dc_mesh(load: bool = True) -> MultiBlock | str:  # noqa: FBT0
     ----------
     load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
-        to ``False`` and only the filename will be returned.
+        to ``False`` and the path of every file is returned instead.
 
     Returns
     -------
-    pyvista.MultiBlock
+    output : pyvista.MultiBlock or tuple[str, ...]
         DataSet containing the high resolution forward modeled mesh
-        and a coarse inverse modeled mesh.
+        and a coarse inverse modeled mesh, or the paths of their files
+        depending on ``load``.
 
     Examples
     --------
@@ -4226,11 +4390,10 @@ _dataset_tetra_dc_mesh = _MultiFileDownloadableDatasetLoader(
 
 
 @overload
-def download_model_with_variance(load: Literal[True] = True) -> UnstructuredGrid: ...  # noqa: FBT002
+def download_model_with_variance(*, load: Literal[True] = True) -> UnstructuredGrid: ...
 @overload
-def download_model_with_variance(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_model_with_variance(load: bool = True) -> UnstructuredGrid | str:  # noqa: FBT001, FBT002
+def download_model_with_variance(*, load: Literal[False]) -> str: ...
+def download_model_with_variance(*, load: bool = True) -> UnstructuredGrid | str:
     """Download model with variance dataset.
 
     Parameters
@@ -4263,11 +4426,10 @@ _dataset_model_with_variance = _SingleFileDownloadableDatasetLoader('model_with_
 
 
 @overload
-def download_thermal_probes(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_thermal_probes(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_thermal_probes(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_thermal_probes(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_thermal_probes(*, load: Literal[False]) -> str: ...
+def download_thermal_probes(*, load: bool = True) -> PolyData | str:
     """Download thermal probes dataset.
 
     Parameters
@@ -4300,11 +4462,10 @@ _dataset_thermal_probes = _SingleFileDownloadableDatasetLoader('probes.vtp')
 
 
 @overload
-def download_carburetor(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_carburetor(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_carburetor(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_carburetor(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_carburetor(*, load: Literal[False]) -> str: ...
+def download_carburetor(*, load: bool = True) -> PolyData | str:
     """Download scan of a carburetor.
 
     Parameters
@@ -4320,9 +4481,12 @@ def download_carburetor(load: bool = True) -> PolyData | str:  # noqa: FBT001, F
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_carburetor()
-    >>> dataset.plot()
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import examples
+        >>> dataset = examples.download_carburetor()
+        >>> dataset.plot()
 
     .. seealso::
 
@@ -4337,11 +4501,10 @@ _dataset_carburetor = _SingleFileDownloadableDatasetLoader('carburetor.ply')
 
 
 @overload
-def download_turbine_blade(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_turbine_blade(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_turbine_blade(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_turbine_blade(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_turbine_blade(*, load: Literal[False]) -> str: ...
+def download_turbine_blade(*, load: bool = True) -> PolyData | str:
     """Download scan of a turbine blade.
 
     Parameters
@@ -4374,11 +4537,10 @@ _dataset_turbine_blade = _SingleFileDownloadableDatasetLoader('turbineblade.ply'
 
 
 @overload
-def download_pine_roots(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_pine_roots(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_pine_roots(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_pine_roots(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_pine_roots(*, load: Literal[False]) -> str: ...
+def download_pine_roots(*, load: bool = True) -> PolyData | str:
     """Download pine roots dataset.
 
     Parameters
@@ -4394,9 +4556,12 @@ def download_pine_roots(load: bool = True) -> PolyData | str:  # noqa: FBT001, F
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_pine_roots()
-    >>> dataset.plot()
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import examples
+        >>> dataset = examples.download_pine_roots()
+        >>> dataset.plot()
 
     .. seealso::
 
@@ -4411,11 +4576,10 @@ _dataset_pine_roots = _SingleFileDownloadableDatasetLoader('pine_root.tri')
 
 
 @overload
-def download_crater_topo(load: Literal[True] = True) -> ImageData: ...  # noqa: FBT002
+def download_crater_topo(*, load: Literal[True] = True) -> ImageData: ...
 @overload
-def download_crater_topo(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_crater_topo(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
+def download_crater_topo(*, load: Literal[False]) -> str: ...
+def download_crater_topo(*, load: bool = True) -> ImageData | str:
     """Download crater dataset.
 
     Parameters
@@ -4451,11 +4615,10 @@ _dataset_crater_topo = _SingleFileDownloadableDatasetLoader('Ruapehu_mag_dem_15m
 
 
 @overload
-def download_crater_imagery(load: Literal[True] = True) -> Texture: ...  # noqa: FBT002
+def download_crater_imagery(*, load: Literal[True] = True) -> Texture: ...
 @overload
-def download_crater_imagery(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_crater_imagery(load: bool = True) -> Texture | str:  # noqa: FBT001, FBT002
+def download_crater_imagery(*, load: Literal[False]) -> str: ...
+def download_crater_imagery(*, load: bool = True) -> Texture | str:
     """Download crater texture.
 
     Parameters
@@ -4471,20 +4634,23 @@ def download_crater_imagery(load: bool = True) -> Texture | str:  # noqa: FBT001
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> import pyvista as pv
-    >>> cpos = pv.CameraPosition(
-    ...     position=(66.0, 73.0, -382.6),
-    ...     focal_point=(66.0, 73.0, 0.0),
-    ...     viewup=(0.0, -1.0, 0.0),
-    ... )
-    >>> texture = examples.download_crater_imagery()
-    >>> texture.plot(cpos=cpos)
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> cpos = pv.CameraPosition(
+        ...     position=(66.0, 73.0, -382.6),
+        ...     focal_point=(66.0, 73.0, 0.0),
+        ...     viewup=(0.0, -1.0, 0.0),
+        ... )
+        >>> texture = examples.download_crater_imagery()
+        >>> texture.plot(cpos=cpos)
 
-        :ref:`Crater Imagery Dataset <crater_imagery_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
+
+            :ref:`Crater Imagery Dataset <crater_imagery_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_crater_imagery, load=load)
@@ -4497,11 +4663,10 @@ _dataset_crater_imagery = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_dolfin(load: Literal[True] = True) -> UnstructuredGrid: ...  # noqa: FBT002
+def download_dolfin(*, load: Literal[True] = True) -> UnstructuredGrid: ...
 @overload
-def download_dolfin(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_dolfin(load: bool = True) -> UnstructuredGrid | str:  # noqa: FBT001, FBT002
+def download_dolfin(*, load: Literal[False]) -> str: ...
+def download_dolfin(*, load: bool = True) -> UnstructuredGrid | str:
     """Download dolfin mesh.
 
     Parameters
@@ -4539,11 +4704,10 @@ _dataset_dolfin = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_damavand_volcano(load: Literal[True] = True) -> ImageData: ...  # noqa: FBT002
+def download_damavand_volcano(*, load: Literal[True] = True) -> ImageData: ...
 @overload
-def download_damavand_volcano(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_damavand_volcano(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
+def download_damavand_volcano(*, load: Literal[False]) -> str: ...
+def download_damavand_volcano(*, load: bool = True) -> ImageData | str:
     """Download Damavand volcano model.
 
     Parameters
@@ -4559,26 +4723,29 @@ def download_damavand_volcano(load: bool = True) -> ImageData | str:  # noqa: FB
 
     Examples
     --------
-    Load the dataset.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> import pyvista as pv
-    >>> dataset = examples.download_damavand_volcano()
+        Load the dataset.
 
-    Use :meth:`~pyvista.ImageDataFilters.resample` to down-sample it before plotting.
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> dataset = examples.download_damavand_volcano()
 
-    >>> dataset = dataset.resample(0.5)
-    >>> dataset.dimensions
-    (140, 116, 85)
+        Use :meth:`~pyvista.ImageDataFilters.resample` to down-sample it before plotting.
 
-    Plot it.
+        >>> dataset = dataset.resample(0.5)
+        >>> dataset.dimensions
+        (140, 116, 85)
 
-    >>> cpos = pv.CameraPosition(
-    ...     position=(46630.0, 4328000.0, -382500.0),
-    ...     focal_point=(552500.0, 3980000.0, -24740.0),
-    ...     viewup=(0.41, -0.29, -0.86),
-    ... )
-    >>> dataset.plot(cpos=cpos, cmap='reds', show_scalar_bar=False, volume=True)
+        Plot it.
+
+        >>> cpos = pv.CameraPosition(
+        ...     position=(46630.0, 4328000.0, -382500.0),
+        ...     focal_point=(552500.0, 3980000.0, -24740.0),
+        ...     viewup=(0.41, -0.29, -0.86),
+        ... )
+        >>> dataset.plot(cpos=cpos, cmap='reds', show_scalar_bar=False, volume=True)
 
     .. seealso::
 
@@ -4601,11 +4768,10 @@ _dataset_damavand_volcano = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_delaunay_example(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_delaunay_example(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_delaunay_example(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_delaunay_example(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_delaunay_example(*, load: Literal[False]) -> str: ...
+def download_delaunay_example(*, load: bool = True) -> PolyData | str:
     """Download a pointset for the Delaunay example.
 
     Parameters
@@ -4638,11 +4804,10 @@ _dataset_delaunay_example = _SingleFileDownloadableDatasetLoader('250.vtk')
 
 
 @overload
-def download_embryo(load: Literal[True] = True) -> ImageData: ...  # noqa: FBT002
+def download_embryo(*, load: Literal[True] = True) -> ImageData: ...
 @overload
-def download_embryo(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_embryo(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
+def download_embryo(*, load: Literal[False]) -> str: ...
+def download_embryo(*, load: bool = True) -> ImageData | str:
     """Download a volume of an embryo.
 
     Parameters
@@ -4658,14 +4823,17 @@ def download_embryo(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT0
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_embryo()
-    >>> dataset.plot(volume=True)
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> dataset = examples.download_embryo()
+        >>> dataset.plot(volume=True)
 
-        :ref:`Embryo Dataset <embryo_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
+
+            :ref:`Embryo Dataset <embryo_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_embryo, load=load)
@@ -4685,11 +4853,10 @@ _dataset_embryo = _SingleFileDownloadableDatasetLoader('embryo.slc', load_func=_
 
 
 @overload
-def download_antarctica_velocity(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_antarctica_velocity(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_antarctica_velocity(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_antarctica_velocity(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_antarctica_velocity(*, load: Literal[False]) -> str: ...
+def download_antarctica_velocity(*, load: bool = True) -> PolyData | str:
     """Download the Antarctica velocity simulation results.
 
     Parameters
@@ -4705,9 +4872,12 @@ def download_antarctica_velocity(load: bool = True) -> PolyData | str:  # noqa: 
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_antarctica_velocity()
-    >>> dataset.plot(cpos='xy', clim=[1e-3, 1e4], cmap='Blues', log_scale=True)
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import examples
+        >>> dataset = examples.download_antarctica_velocity()
+        >>> dataset.plot(cpos='xy', clim=[1e-3, 1e4], cmap='Blues', log_scale=True)
 
     .. seealso::
 
@@ -4722,11 +4892,10 @@ _dataset_antarctica_velocity = _SingleFileDownloadableDatasetLoader('antarctica_
 
 
 @overload
-def download_room_surface_mesh(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_room_surface_mesh(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_room_surface_mesh(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_room_surface_mesh(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_room_surface_mesh(*, load: Literal[False]) -> str: ...
+def download_room_surface_mesh(*, load: bool = True) -> PolyData | str:
     """Download the room surface mesh.
 
     This mesh is for demonstrating the difference that depth peeling can
@@ -4764,11 +4933,10 @@ _dataset_room_surface_mesh = _SingleFileDownloadableDatasetLoader('room_surface_
 
 
 @overload
-def download_beach(load: Literal[True] = True) -> ImageData: ...  # noqa: FBT002
+def download_beach(*, load: Literal[True] = True) -> ImageData: ...
 @overload
-def download_beach(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_beach(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
+def download_beach(*, load: Literal[False]) -> str: ...
+def download_beach(*, load: bool = True) -> ImageData | str:
     """Download the beach NRRD image.
 
     Parameters
@@ -4801,11 +4969,10 @@ _dataset_beach = _SingleFileDownloadableDatasetLoader('beach.nrrd')
 
 
 @overload
-def download_rgba_texture(load: Literal[True] = True) -> Texture: ...  # noqa: FBT002
+def download_rgba_texture(*, load: Literal[True] = True) -> Texture: ...
 @overload
-def download_rgba_texture(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_rgba_texture(load: bool = True) -> Texture | str:  # noqa: FBT001, FBT002
+def download_rgba_texture(*, load: Literal[False]) -> str: ...
+def download_rgba_texture(*, load: bool = True) -> Texture | str:
     """Download a texture with an alpha channel.
 
     Parameters
@@ -4821,14 +4988,17 @@ def download_rgba_texture(load: bool = True) -> Texture | str:  # noqa: FBT001, 
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_rgba_texture()
-    >>> dataset.plot(cpos='xy')
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> dataset = examples.download_rgba_texture()
+        >>> dataset.plot(cpos='xy')
 
-        :ref:`Rgba Texture Dataset <rgba_texture_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
+
+            :ref:`Rgba Texture Dataset <rgba_texture_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_rgba_texture, load=load)
@@ -4841,11 +5011,10 @@ _dataset_rgba_texture = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_vtk_logo(load: Literal[True] = True) -> Texture: ...  # noqa: FBT002
+def download_vtk_logo(*, load: Literal[True] = True) -> Texture: ...
 @overload
-def download_vtk_logo(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_vtk_logo(load: bool = True) -> Texture | str:  # noqa: FBT001, FBT002
+def download_vtk_logo(*, load: Literal[False]) -> str: ...
+def download_vtk_logo(*, load: bool = True) -> Texture | str:
     """Download a texture of the VTK logo.
 
     Parameters
@@ -4861,16 +5030,19 @@ def download_vtk_logo(load: bool = True) -> Texture | str:  # noqa: FBT001, FBT0
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_vtk_logo()
-    >>> dataset.plot(cpos='xy')
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> dataset = examples.download_vtk_logo()
+        >>> dataset.plot(cpos='xy')
 
-        :ref:`Vtk Logo Dataset <vtk_logo_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
 
-        :ref:`Vtk Dataset <vtk_dataset>`
+            :ref:`Vtk Logo Dataset <vtk_logo_dataset>`
+                See this dataset in the Dataset Gallery for more info.
+
+            :ref:`Vtk Dataset <vtk_dataset>`
 
     """
     return _download_dataset(_dataset_vtk_logo, load=load)
@@ -4880,44 +5052,47 @@ _dataset_vtk_logo = _SingleFileDownloadableDatasetLoader('vtk.png', read_func=re
 
 
 @overload
-def download_sky_box_cube_map(load: Literal[True] = True) -> Texture: ...  # noqa: FBT002
+def download_sky_box_cube_map(*, load: Literal[True] = True) -> Texture: ...
 @overload
-def download_sky_box_cube_map(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_sky_box_cube_map(load: bool = True) -> Texture | str:  # noqa: FBT001, FBT002
+def download_sky_box_cube_map(*, load: Literal[False]) -> tuple[str, ...]: ...
+def download_sky_box_cube_map(*, load: bool = True) -> Texture | tuple[str, ...]:
     """Download a skybox cube map texture.
 
     Parameters
     ----------
     load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
-        to ``False`` and only the filename will be returned.
+        to ``False`` and the path of every face is returned instead.
 
     Returns
     -------
-    pyvista.Texture
-        Texture containing a skybox.
+    output : pyvista.Texture or tuple[str, ...]
+        Texture containing a skybox, or the path of every face when
+        ``load`` is ``False``.
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> import pyvista as pv
-    >>> pl = pv.Plotter()
-    >>> dataset = examples.download_sky_box_cube_map()
-    >>> _ = pl.add_actor(dataset.to_skybox())
-    >>> pl.set_environment_texture(dataset)
-    >>> pl.show()
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> dataset = examples.download_sky_box_cube_map()
+        >>> _ = pl.add_actor(dataset.to_skybox())
+        >>> pl.set_environment_texture(dataset)
+        >>> pl.show()
 
-        :ref:`Sky Box Cube Map Dataset <sky_box_cube_map_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
 
-        :ref:`Cubemap Space 4k Dataset <cubemap_space_4k_dataset>`
+            :ref:`Sky Box Cube Map Dataset <sky_box_cube_map_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
-        :ref:`Cubemap Space 16k Dataset <cubemap_space_16k_dataset>`
+            :ref:`Cubemap Space 4k Dataset <cubemap_space_4k_dataset>`
 
-        :ref:`Cubemap Park Dataset <cubemap_park_dataset>`
+            :ref:`Cubemap Space 16k Dataset <cubemap_space_16k_dataset>`
+
+            :ref:`Cubemap Park Dataset <cubemap_park_dataset>`
 
     """
     return _download_dataset(_dataset_sky_box_cube_map, load=load)
@@ -4942,11 +5117,10 @@ _dataset_sky_box_cube_map = _MultiFileDownloadableDatasetLoader(
 
 
 @overload
-def download_cubemap_park(load: Literal[True] = True) -> Texture: ...  # noqa: FBT002
+def download_cubemap_park(*, load: Literal[True] = True) -> Texture: ...
 @overload
-def download_cubemap_park(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_cubemap_park(load: bool = True) -> Texture | str:  # noqa: FBT001, FBT002
+def download_cubemap_park(*, load: Literal[False]) -> str: ...
+def download_cubemap_park(*, load: bool = True) -> Texture | str:
     """Download a cubemap of a park.
 
     Downloaded from http://www.humus.name/index.php?page=Textures
@@ -5004,11 +5178,10 @@ _dataset_cubemap_park = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_cubemap_space_4k(load: Literal[True] = True) -> Texture: ...  # noqa: FBT002
+def download_cubemap_space_4k(*, load: Literal[True] = True) -> Texture: ...
 @overload
-def download_cubemap_space_4k(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_cubemap_space_4k(load: bool = True) -> Texture | str:  # noqa: FBT001, FBT002
+def download_cubemap_space_4k(*, load: Literal[False]) -> str: ...
+def download_cubemap_space_4k(*, load: bool = True) -> Texture | str:
     """Download the 4k space cubemap.
 
     This cubemap was generated by downloading the 4k image from: `Deep Star
@@ -5067,11 +5240,10 @@ _dataset_cubemap_space_4k = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_cubemap_space_16k(load: Literal[True] = True) -> Texture: ...  # noqa: FBT002
+def download_cubemap_space_16k(*, load: Literal[True] = True) -> Texture: ...
 @overload
-def download_cubemap_space_16k(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_cubemap_space_16k(load: bool = True) -> Texture | str:  # noqa: FBT001, FBT002
+def download_cubemap_space_16k(*, load: Literal[False]) -> str: ...
+def download_cubemap_space_16k(*, load: bool = True) -> Texture | str:
     """Download the 16k space cubemap.
 
     This cubemap was generated by downloading the 16k image from: `Deep Star
@@ -5136,11 +5308,10 @@ _dataset_cubemap_space_16k = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_backward_facing_step(load: Literal[True] = True) -> MultiBlock: ...  # noqa: FBT002
+def download_backward_facing_step(*, load: Literal[True] = True) -> MultiBlock: ...
 @overload
-def download_backward_facing_step(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_backward_facing_step(load: bool = True) -> MultiBlock | str:  # noqa: FBT001, FBT002
+def download_backward_facing_step(*, load: Literal[False]) -> str: ...
+def download_backward_facing_step(*, load: bool = True) -> MultiBlock | str:
     """Download an ensight gold case of a fluid simulation.
 
     Parameters
@@ -5176,11 +5347,10 @@ _dataset_backward_facing_step = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_gpr_data_array(load: Literal[True] = True) -> ndarray: ...  # noqa: FBT002
+def download_gpr_data_array(*, load: Literal[True] = True) -> ndarray: ...
 @overload
-def download_gpr_data_array(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_gpr_data_array(load: bool = True) -> ndarray | str:  # noqa: FBT001, FBT002
+def download_gpr_data_array(*, load: Literal[False]) -> str: ...
+def download_gpr_data_array(*, load: bool = True) -> ndarray | str:
     """Download GPR example data array.
 
     Parameters
@@ -5225,11 +5395,10 @@ _dataset_gpr_data_array = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_gpr_path(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_gpr_path(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_gpr_path(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_gpr_path(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_gpr_path(*, load: Literal[False]) -> str: ...
+def download_gpr_path(*, load: bool = True) -> PolyData | str:
     """Download GPR example path.
 
     Parameters
@@ -5263,16 +5432,15 @@ def download_gpr_path(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT
 _dataset_gpr_path = _SingleFileDownloadableDatasetLoader(
     'gpr-example/path.txt',
     read_func=functools.partial(np.loadtxt, skiprows=1),
-    load_func=pv.PolyData,  # type: ignore[arg-type]
+    load_func=pv.PolyData,
 )
 
 
 @overload
-def download_woman(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_woman(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_woman(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_woman(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_woman(*, load: Literal[False]) -> str: ...
+def download_woman(*, load: bool = True) -> PolyData | str:
     """Download scan of a woman.
 
     Originally obtained from Laser Design.
@@ -5313,11 +5481,10 @@ _dataset_woman = _SingleFileDownloadableDatasetLoader('woman.stl')
 
 
 @overload
-def download_lobster(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_lobster(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_lobster(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_lobster(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_lobster(*, load: Literal[False]) -> str: ...
+def download_lobster(*, load: bool = True) -> PolyData | str:
     """Download scan of a lobster.
 
     Originally obtained from Laser Design.
@@ -5352,11 +5519,10 @@ _dataset_lobster = _SingleFileDownloadableDatasetLoader('lobster.ply')
 
 
 @overload
-def download_face2(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_face2(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_face2(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_face2(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_face2(*, load: Literal[False]) -> str: ...
+def download_face2(*, load: bool = True) -> PolyData | str:
     """Download scan of a man's face.
 
     Originally obtained from Laser Design.
@@ -5393,11 +5559,10 @@ _dataset_face2 = _SingleFileDownloadableDatasetLoader('man_face.stl')
 
 
 @overload
-def download_urn(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_urn(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_urn(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_urn(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_urn(*, load: Literal[False]) -> str: ...
+def download_urn(*, load: bool = True) -> PolyData | str:
     """Download scan of a burial urn.
 
     Originally obtained from Laser Design.
@@ -5438,11 +5603,10 @@ _dataset_urn = _SingleFileDownloadableDatasetLoader('urn.stl')
 
 
 @overload
-def download_pepper(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_pepper(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_pepper(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_pepper(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_pepper(*, load: Literal[False]) -> str: ...
+def download_pepper(*, load: bool = True) -> PolyData | str:
     """Download scan of a pepper (capsicum).
 
     Originally obtained from Laser Design.
@@ -5477,11 +5641,10 @@ _dataset_pepper = _SingleFileDownloadableDatasetLoader('pepper.ply')
 
 
 @overload
-def download_drill(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_drill(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_drill(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_drill(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_drill(*, load: Literal[False]) -> str: ...
+def download_drill(*, load: bool = True) -> PolyData | str:
     """Download scan of a power drill.
 
     Originally obtained from Laser Design.
@@ -5499,9 +5662,12 @@ def download_drill(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_drill()
-    >>> dataset.plot()
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import examples
+        >>> dataset = examples.download_drill()
+        >>> dataset.plot()
 
     .. seealso::
 
@@ -5509,16 +5675,28 @@ def download_drill(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
             See this dataset in the Dataset Gallery for more info.
 
     """
-    # Silence warning: unexpected data at end of line in OBJ file
-    with pv.vtk_verbosity('off'):
-        return _download_dataset(_dataset_drill, load=load)
+    return _download_dataset(_dataset_drill, load=load)
 
 
-_dataset_drill = _SingleFileDownloadableDatasetLoader('drill.obj')
+def _read_drill(path: str) -> PolyData:
+    """Read ``drill.obj`` without the warning about its space-separated ``mtllib`` line."""
+    reader = pv.OBJReader(path)
+    reader.reader.AddObserver(_vtk.vtkCommand.WarningEvent, lambda *_: None)
+    return reader.read()
 
 
-@_deprecate_positional_args
-def download_action_figure(load: bool = True, *, high_resolution: bool = False) -> PolyData | str:  # noqa: FBT001, FBT002
+_dataset_drill = _SingleFileDownloadableDatasetLoader('drill.obj', read_func=_read_drill)
+
+
+# fmt: off
+# ruff: disable[E501]
+@overload
+def download_action_figure(*, load: Literal[True] = True, high_resolution: bool = False) -> PolyData: ...
+@overload
+def download_action_figure(*, load: Literal[False], high_resolution: bool = False) -> str: ...
+# ruff: enable[E501]
+# fmt: on
+def download_action_figure(*, load: bool = True, high_resolution: bool = False) -> PolyData | str:
     """Download scan of an action figure.
 
     Originally obtained from Laser Design.
@@ -5590,11 +5768,10 @@ __dataset_action_figure_high_res = _SingleFileDownloadableDatasetLoader('tigerfi
 
 
 @overload
-def download_notch_stress(load: Literal[True] = True) -> UnstructuredGrid: ...  # noqa: FBT002
+def download_notch_stress(*, load: Literal[True] = True) -> UnstructuredGrid: ...
 @overload
-def download_notch_stress(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_notch_stress(load: bool = True) -> UnstructuredGrid | str:  # noqa: FBT001, FBT002
+def download_notch_stress(*, load: Literal[False]) -> str: ...
+def download_notch_stress(*, load: bool = True) -> UnstructuredGrid | str:
     """Download the FEA stress result from a notched beam.
 
     Parameters
@@ -5635,11 +5812,10 @@ _dataset_notch_stress = _SingleFileDownloadableDatasetLoader('notch_stress_fixed
 
 
 @overload
-def download_notch_displacement(load: Literal[True] = True) -> UnstructuredGrid: ...  # noqa: FBT002
+def download_notch_displacement(*, load: Literal[True] = True) -> UnstructuredGrid: ...
 @overload
-def download_notch_displacement(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_notch_displacement(load: bool = True) -> UnstructuredGrid | str:  # noqa: FBT001, FBT002
+def download_notch_displacement(*, load: Literal[False]) -> str: ...
+def download_notch_displacement(*, load: bool = True) -> UnstructuredGrid | str:
     """Download the FEA displacement result from a notched beam.
 
     Parameters
@@ -5680,11 +5856,10 @@ _dataset_notch_displacement = _SingleFileDownloadableDatasetLoader('notch_disp.v
 
 
 @overload
-def download_louis_louvre(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_louis_louvre(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_louis_louvre(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_louis_louvre(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_louis_louvre(*, load: Literal[False]) -> str: ...
+def download_louis_louvre(*, load: bool = True) -> PolyData | str:
     """Download the Louis XIV de France statue at the Louvre, Paris.
 
     Statue found in the Napoléon Courtyard of Louvre Palace. It is a
@@ -5706,20 +5881,23 @@ def download_louis_louvre(load: bool = True) -> PolyData | str:  # noqa: FBT001,
 
     Examples
     --------
-    Plot the Louis XIV statue with custom lighting and camera angle.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> import pyvista as pv
-    >>> dataset = examples.download_louis_louvre()
-    >>> pl = pv.Plotter(lighting=None)
-    >>> _ = pl.add_mesh(dataset, smooth_shading=True)
-    >>> pl.add_light(pv.Light(position=(10, -10, 10)))
-    >>> pl.camera_position = pv.CameraPosition(
-    ...     position=(-6.71, -14.55, 15.17),
-    ...     focal_point=(1.44, 2.54, 9.84),
-    ...     viewup=(0.16, 0.22, 0.96),
-    ... )
-    >>> pl.show()
+        Plot the Louis XIV statue with custom lighting and camera angle.
+
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> dataset = examples.download_louis_louvre()
+        >>> pl = pv.Plotter(lighting=None)
+        >>> _ = pl.add_mesh(dataset, smooth_shading=True)
+        >>> pl.add_light(pv.Light(position=(10, -10, 10)))
+        >>> pl.camera_position = pv.CameraPosition(
+        ...     position=(-6.71, -14.55, 15.17),
+        ...     focal_point=(1.44, 2.54, 9.84),
+        ...     viewup=(0.16, 0.22, 0.96),
+        ... )
+        >>> pl.show()
 
     .. seealso::
 
@@ -5734,12 +5912,17 @@ _dataset_louis_louvre = _SingleFileDownloadableDatasetLoader('louis.ply')
 
 
 @overload
-def download_cylinder_crossflow(load: Literal[True] = True) -> MultiBlock: ...  # noqa: FBT002
+def download_cylinder_crossflow(*, load: Literal[True] = True) -> MultiBlock: ...
 @overload
-def download_cylinder_crossflow(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_cylinder_crossflow(load: bool = True) -> MultiBlock | str:  # noqa: FBT001, FBT002
+def download_cylinder_crossflow(*, load: Literal[False]) -> str: ...
+def download_cylinder_crossflow(*, load: bool = True) -> MultiBlock | str:
     """Download CFD result for cylinder in cross flow at Re=35.
+
+    .. note::
+        ``load=False`` returns only the file which is read directly, not the
+        other files downloaded alongside it. This is a legacy quirk of the
+        ``load`` argument. For every file belonging to this example, use
+        :func:`examples.get_example('cylinder_crossflow').paths <pyvista.examples.get_example>`.
 
     Parameters
     ----------
@@ -5782,12 +5965,17 @@ _dataset_cylinder_crossflow = _MultiFileDownloadableDatasetLoader(
 
 
 @overload
-def download_naca(load: Literal[True] = True) -> MultiBlock: ...  # noqa: FBT002
+def download_naca(*, load: Literal[True] = True) -> MultiBlock: ...
 @overload
-def download_naca(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_naca(load: bool = True) -> MultiBlock | str:  # noqa: FBT001, FBT002
+def download_naca(*, load: Literal[False]) -> str: ...
+def download_naca(*, load: bool = True) -> MultiBlock | str:
     """Download NACA airfoil dataset in EnSight format.
+
+    .. note::
+        ``load=False`` returns only the file which is read directly, not the
+        other files downloaded alongside it. This is a legacy quirk of the
+        ``load`` argument. For every file belonging to this example, use
+        :func:`examples.get_example('naca').paths <pyvista.examples.get_example>`.
 
     Parameters
     ----------
@@ -5836,12 +6024,17 @@ _dataset_naca = _MultiFileDownloadableDatasetLoader(files_func=_naca_files_func)
 
 
 @overload
-def download_lshape(load: Literal[True] = True) -> MultiBlock: ...  # noqa: FBT002
+def download_lshape(*, load: Literal[True] = True) -> MultiBlock: ...
 @overload
-def download_lshape(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_lshape(load: bool = True) -> MultiBlock | str:  # noqa: FBT001, FBT002
+def download_lshape(*, load: Literal[False]) -> str: ...
+def download_lshape(*, load: bool = True) -> MultiBlock | str:
     """Download LShape dataset in EnSight format.
+
+    .. note::
+        ``load=False`` returns only the file which is read directly, not the
+        other files downloaded alongside it. This is a legacy quirk of the
+        ``load`` argument. For every file belonging to this example, use
+        :func:`examples.get_example('lshape').paths <pyvista.examples.get_example>`.
 
     Parameters
     ----------
@@ -5873,7 +6066,7 @@ def download_lshape(load: bool = True) -> MultiBlock | str:  # noqa: FBT001, FBT
 
 
 def _lshape_files_func():
-    def read_func(filename):  # noqa: ANN001
+    def read_func(filename: str):
         reader = pv.get_reader(filename)
         reader.set_active_time_set(1)
         reader.set_active_time_value(1.0)
@@ -5889,11 +6082,10 @@ _dataset_lshape = _MultiFileDownloadableDatasetLoader(files_func=_lshape_files_f
 
 
 @overload
-def download_wavy(load: Literal[True] = True) -> MultiBlock: ...  # noqa: FBT002
+def download_wavy(*, load: Literal[True] = True) -> MultiBlock: ...
 @overload
-def download_wavy(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_wavy(load: bool = True) -> MultiBlock | str:  # noqa: FBT001, FBT002
+def download_wavy(*, load: Literal[False]) -> str: ...
+def download_wavy(*, load: bool = True) -> MultiBlock | str:
     """Download PVD file of a 2D wave.
 
     Parameters
@@ -5926,11 +6118,10 @@ _dataset_wavy = _SingleFileDownloadableDatasetLoader('PVD/wavy.zip', target_file
 
 
 @overload
-def download_single_sphere_animation(load: Literal[True] = True) -> MultiBlock: ...  # noqa: FBT002
+def download_single_sphere_animation(*, load: Literal[True] = True) -> MultiBlock: ...
 @overload
-def download_single_sphere_animation(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_single_sphere_animation(load: bool = True) -> MultiBlock | str:  # noqa: FBT001, FBT002
+def download_single_sphere_animation(*, load: Literal[False]) -> str: ...
+def download_single_sphere_animation(*, load: bool = True) -> MultiBlock | str:
     """Download PVD file for single sphere.
 
     Parameters
@@ -5990,11 +6181,10 @@ _dataset_single_sphere_animation = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_dual_sphere_animation(load: Literal[True] = True) -> MultiBlock: ...  # noqa: FBT002
+def download_dual_sphere_animation(*, load: Literal[True] = True) -> MultiBlock: ...
 @overload
-def download_dual_sphere_animation(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_dual_sphere_animation(load: bool = True) -> MultiBlock | str:  # noqa: FBT001, FBT002
+def download_dual_sphere_animation(*, load: Literal[False]) -> str: ...
+def download_dual_sphere_animation(*, load: bool = True) -> MultiBlock | str:
     """Download PVD file for double sphere.
 
     Parameters
@@ -6054,11 +6244,10 @@ _dataset_dual_sphere_animation = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_cavity(load: Literal[True] = True) -> MultiBlock: ...  # noqa: FBT002
+def download_cavity(*, load: Literal[True] = True) -> MultiBlock: ...
 @overload
-def download_cavity(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_cavity(load: bool = True) -> MultiBlock | str:  # noqa: FBT001, FBT002
+def download_cavity(*, load: Literal[False]) -> str: ...
+def download_cavity(*, load: bool = True) -> MultiBlock | str:
     """Download cavity OpenFOAM example.
 
     Retrieved from
@@ -6096,11 +6285,10 @@ _dataset_cavity = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_openfoam_tubes(load: Literal[True] = True) -> MultiBlock: ...  # noqa: FBT002
+def download_openfoam_tubes(*, load: Literal[True] = True) -> MultiBlock: ...
 @overload
-def download_openfoam_tubes(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_openfoam_tubes(load: bool = True) -> MultiBlock | str:  # noqa: FBT001, FBT002
+def download_openfoam_tubes(*, load: Literal[False]) -> str: ...
+def download_openfoam_tubes(*, load: bool = True) -> MultiBlock | str:
     """Download tubes OpenFOAM example.
 
     Data generated from public SimScale examples at `SimScale Project Library -
@@ -6164,11 +6352,10 @@ _dataset_openfoam_tubes = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_lucy(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_lucy(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_lucy(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_lucy(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_lucy(*, load: Literal[False]) -> str: ...
+def download_lucy(*, load: bool = True) -> PolyData | str:
     """Download the lucy angel mesh.
 
     Original downloaded from the `The Stanford 3D Scanning Repository
@@ -6232,11 +6419,10 @@ _dataset_lucy = _SingleFileDownloadableDatasetLoader('lucy.ply')
 
 
 @overload
-def download_pump_bracket(load: Literal[True] = True) -> UnstructuredGrid: ...  # noqa: FBT002
+def download_pump_bracket(*, load: Literal[True] = True) -> UnstructuredGrid: ...
 @overload
-def download_pump_bracket(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_pump_bracket(load: bool = True) -> UnstructuredGrid | str:  # noqa: FBT001, FBT002
+def download_pump_bracket(*, load: Literal[False]) -> str: ...
+def download_pump_bracket(*, load: bool = True) -> UnstructuredGrid | str:
     """Download the pump bracket example dataset.
 
     Data generated from public SimScale examples at `SimScale Project Library -
@@ -6304,11 +6490,10 @@ _dataset_pump_bracket = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_electronics_cooling(load: Literal[True] = True) -> MultiBlock: ...  # noqa: FBT002
+def download_electronics_cooling(*, load: Literal[True] = True) -> MultiBlock: ...
 @overload
-def download_electronics_cooling(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_electronics_cooling(load: bool = True) -> MultiBlock | str:  # noqa: FBT001, FBT002
+def download_electronics_cooling(*, load: Literal[False]) -> tuple[str, ...]: ...
+def download_electronics_cooling(*, load: bool = True) -> MultiBlock | tuple[str, ...]:
     """Download the electronics cooling example datasets.
 
     Data generated from public SimScale examples at `SimScale Project Library -
@@ -6322,58 +6507,61 @@ def download_electronics_cooling(load: bool = True) -> MultiBlock | str:  # noqa
     ----------
     load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
-        to ``False`` and only the filename will be returned.
+        to ``False`` and the path of every file is returned instead.
 
     Returns
     -------
-    output : tuple[PolyData, UnstructuredGrid] | list[str]
-        DataSets or filenames depending on ``load``.
+    output : pyvista.MultiBlock or tuple[str, ...]
+        DataSet or the paths of the files depending on ``load``.
 
     Examples
     --------
-    Load the datasets and plot the air velocity through the electronics.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> structure, air = examples.download_electronics_cooling()
+        Load the datasets and plot the air velocity through the electronics.
 
-    Show the type and bounds of the datasets.
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> structure, air = examples.download_electronics_cooling()
 
-    >>> structure, air
-    (PolyData (...)
-      N Cells:    344270
-      N Points:   187992
-      N Strips:   0
-      X Bounds:   -3.000e-03, 1.530e-01
-      Y Bounds:   -3.000e-03, 2.030e-01
-      Z Bounds:   -9.000e-03, 4.200e-02
-      N Arrays:   4, UnstructuredGrid (...)
-      N Cells:    1749992
-      N Points:   610176
-      X Bounds:   -1.388e-18, 1.500e-01
-      Y Bounds:   -3.000e-03, 2.030e-01
-      Z Bounds:   -6.000e-03, 4.400e-02
-      N Arrays:   10)
+        Show the type and bounds of the datasets.
 
-    >>> z_slice = air.clip('z', value=-0.005)
-    >>> pl = pv.Plotter()
-    >>> pl.enable_ssao(radius=0.01)
-    >>> _ = pl.add_mesh(
-    ...     z_slice,
-    ...     scalars='U',
-    ...     lighting=False,
-    ...     scalar_bar_args={'title': 'Velocity'},
-    ... )
-    >>> _ = pl.add_mesh(
-    ...     structure,
-    ...     color='w',
-    ...     smooth_shading=True,
-    ...     split_sharp_edges=True,
-    ... )
-    >>> pl.camera_position = 'xy'
-    >>> pl.camera.roll = 90
-    >>> pl.enable_anti_aliasing('fxaa')
-    >>> pl.show()
+        >>> structure, air
+        (PolyData (...)
+          N Cells:    344270
+          N Points:   187992
+          N Strips:   0
+          X Bounds:   -3.000e-03, 1.530e-01
+          Y Bounds:   -3.000e-03, 2.030e-01
+          Z Bounds:   -9.000e-03, 4.200e-02
+          N Arrays:   4, UnstructuredGrid (...)
+          N Cells:    1749992
+          N Points:   610176
+          X Bounds:   -1.388e-18, 1.500e-01
+          Y Bounds:   -3.000e-03, 2.030e-01
+          Z Bounds:   -6.000e-03, 4.400e-02
+          N Arrays:   10)
+
+        >>> z_slice = air.clip('z', value=-0.005)
+        >>> pl = pv.Plotter()
+        >>> pl.enable_ssao(radius=0.01)
+        >>> _ = pl.add_mesh(
+        ...     z_slice,
+        ...     scalars='U',
+        ...     lighting=False,
+        ...     scalar_bar_args={'title': 'Velocity'},
+        ... )
+        >>> _ = pl.add_mesh(
+        ...     structure,
+        ...     color='w',
+        ...     smooth_shading=True,
+        ...     split_sharp_edges=True,
+        ... )
+        >>> pl.camera_position = 'xy'
+        >>> pl.camera.roll = 90
+        >>> pl.enable_anti_aliasing('fxaa')
+        >>> pl.show()
 
     .. seealso::
 
@@ -6403,11 +6591,10 @@ _dataset_electronics_cooling = _MultiFileDownloadableDatasetLoader(
 
 
 @overload
-def download_can_crushed_hdf(load: Literal[True] = True) -> UnstructuredGrid: ...  # noqa: FBT002
+def download_can_crushed_hdf(*, load: Literal[True] = True) -> UnstructuredGrid: ...
 @overload
-def download_can_crushed_hdf(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_can_crushed_hdf(load: bool = True) -> UnstructuredGrid | str:  # noqa: FBT001, FBT002
+def download_can_crushed_hdf(*, load: Literal[False]) -> str: ...
+def download_can_crushed_hdf(*, load: bool = True) -> UnstructuredGrid | str:
     """Download the crushed can dataset.
 
     File obtained from `Kitware <https://www.kitware.com/>`_. Used
@@ -6452,11 +6639,10 @@ _dataset_can_crushed_hdf = _SingleFileDownloadableDatasetLoader('hdf/can-vtu.hdf
 
 
 @overload
-def download_can_crushed_vtu(load: Literal[True] = True) -> UnstructuredGrid: ...  # noqa: FBT002
+def download_can_crushed_vtu(*, load: Literal[True] = True) -> UnstructuredGrid: ...
 @overload
-def download_can_crushed_vtu(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_can_crushed_vtu(load: bool = True) -> UnstructuredGrid | str:  # noqa: FBT001, FBT002
+def download_can_crushed_vtu(*, load: Literal[False]) -> str: ...
+def download_can_crushed_vtu(*, load: bool = True) -> UnstructuredGrid | str:
     """Download the crushed can dataset.
 
     File obtained from `Kitware <https://www.kitware.com/>`_. Used
@@ -6499,11 +6685,10 @@ _dataset_can_crushed_vtu = _SingleFileDownloadableDatasetLoader('can.vtu')
 
 
 @overload
-def download_cgns_structured(load: Literal[True] = True) -> MultiBlock: ...  # noqa: FBT002
+def download_cgns_structured(*, load: Literal[True] = True) -> MultiBlock: ...
 @overload
-def download_cgns_structured(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_cgns_structured(load: bool = True) -> MultiBlock | str:  # noqa: FBT001, FBT002
+def download_cgns_structured(*, load: Literal[False]) -> str: ...
+def download_cgns_structured(*, load: bool = True) -> MultiBlock | str:
     """Download the structured CGNS dataset mesh.
 
     Originally downloaded from `CFD General Notation System Example Files
@@ -6546,11 +6731,10 @@ _dataset_cgns_structured = _SingleFileDownloadableDatasetLoader('cgns/sqnz_s.adf
 
 
 @overload
-def download_tecplot_ascii(load: Literal[True] = True) -> MultiBlock: ...  # noqa: FBT002
+def download_tecplot_ascii(*, load: Literal[True] = True) -> MultiBlock: ...
 @overload
-def download_tecplot_ascii(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_tecplot_ascii(load: bool = True) -> MultiBlock | str:  # noqa: FBT001, FBT002
+def download_tecplot_ascii(*, load: Literal[False]) -> str: ...
+def download_tecplot_ascii(*, load: bool = True) -> MultiBlock | str:
     """Download the single block ASCII Tecplot dataset.
 
     Originally downloaded from Paul Bourke's
@@ -6591,11 +6775,10 @@ _dataset_tecplot_ascii = _SingleFileDownloadableDatasetLoader('tecplot_ascii.dat
 
 
 @overload
-def download_cgns_multi(load: Literal[True] = True) -> MultiBlock: ...  # noqa: FBT002
+def download_cgns_multi(*, load: Literal[True] = True) -> MultiBlock: ...
 @overload
-def download_cgns_multi(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_cgns_multi(load: bool = True) -> MultiBlock | str:  # noqa: FBT001, FBT002
+def download_cgns_multi(*, load: Literal[False]) -> str: ...
+def download_cgns_multi(*, load: bool = True) -> MultiBlock | str:
     """Download a multielement airfoil with a cell centered solution.
 
     Originally downloaded from `CFD General Notation System Example Files
@@ -6658,9 +6841,13 @@ _dataset_cgns_multi = _SingleFileDownloadableDatasetLoader(
 )
 
 
-@_deprecate_positional_args
+@overload
+def download_dicom_stack(*, load: Literal[True] = True) -> ImageData: ...
+@overload
+def download_dicom_stack(*, load: Literal[False]) -> str: ...
 def download_dicom_stack(
-    load: bool = True,  # noqa: FBT001, FBT002
+    *,
+    load: bool = True,
 ) -> ImageData | str:
     """Download TCIA DICOM stack volume.
 
@@ -6712,14 +6899,17 @@ def download_dicom_stack(
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_dicom_stack()
-    >>> dataset.plot(volume=True, zoom=3, show_scalar_bar=False)
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> dataset = examples.download_dicom_stack()
+        >>> dataset.plot(volume=True, zoom=3, show_scalar_bar=False)
 
-        :ref:`Dicom Stack Dataset <dicom_stack_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
+
+            :ref:`Dicom Stack Dataset <dicom_stack_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_dicom_stack, load=load)
@@ -6732,11 +6922,10 @@ _dataset_dicom_stack = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_parched_canal_4k(load: Literal[True] = True) -> Texture: ...  # noqa: FBT002
+def download_parched_canal_4k(*, load: Literal[True] = True) -> Texture: ...
 @overload
-def download_parched_canal_4k(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_parched_canal_4k(load: bool = True) -> Texture | str:  # noqa: FBT001, FBT002
+def download_parched_canal_4k(*, load: Literal[False]) -> str: ...
+def download_parched_canal_4k(*, load: bool = True) -> Texture | str:
     """Download parched canal 4k dataset.
 
     Parameters
@@ -6788,11 +6977,10 @@ _dataset_parched_canal_4k = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_cells_nd(load: Literal[True] = True) -> UnstructuredGrid: ...  # noqa: FBT002
+def download_cells_nd(*, load: Literal[True] = True) -> UnstructuredGrid: ...
 @overload
-def download_cells_nd(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_cells_nd(load: bool = True) -> UnstructuredGrid | str:  # noqa: FBT001, FBT002
+def download_cells_nd(*, load: Literal[False]) -> str: ...
+def download_cells_nd(*, load: bool = True) -> UnstructuredGrid | str:
     """Download example AVS UCD dataset.
 
     Parameters
@@ -6825,11 +7013,10 @@ _dataset_cells_nd = _SingleFileDownloadableDatasetLoader('cellsnd.ascii.inp')
 
 
 @overload
-def download_moonlanding_image(load: Literal[True] = True) -> ImageData: ...  # noqa: FBT002
+def download_moonlanding_image(*, load: Literal[True] = True) -> ImageData: ...
 @overload
-def download_moonlanding_image(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_moonlanding_image(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
+def download_moonlanding_image(*, load: Literal[False]) -> str: ...
+def download_moonlanding_image(*, load: bool = True) -> ImageData | str:
     """Download the Moon landing image.
 
     This is a noisy image originally obtained from `Scipy Lecture Notes
@@ -6875,11 +7062,10 @@ _dataset_moonlanding_image = _SingleFileDownloadableDatasetLoader('moonlanding.p
 
 
 @overload
-def download_angular_sector(load: Literal[True] = True) -> UnstructuredGrid: ...  # noqa: FBT002
+def download_angular_sector(*, load: Literal[True] = True) -> UnstructuredGrid: ...
 @overload
-def download_angular_sector(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_angular_sector(load: bool = True) -> UnstructuredGrid | str:  # noqa: FBT001, FBT002
+def download_angular_sector(*, load: Literal[False]) -> str: ...
+def download_angular_sector(*, load: bool = True) -> UnstructuredGrid | str:
     """Download the angular sector dataset.
 
     Parameters
@@ -6912,11 +7098,10 @@ _dataset_angular_sector = _SingleFileDownloadableDatasetLoader('AngularSector.vt
 
 
 @overload
-def download_mount_damavand(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_mount_damavand(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_mount_damavand(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_mount_damavand(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_mount_damavand(*, load: Literal[False]) -> str: ...
+def download_mount_damavand(*, load: bool = True) -> PolyData | str:
     """Download the Mount Damavand dataset.
 
     Visualize 3D models of Damavand Volcano, Alborz, Iran. This is a 2D map
@@ -6939,13 +7124,16 @@ def download_mount_damavand(load: bool = True) -> PolyData | str:  # noqa: FBT00
 
     Examples
     --------
-    Download the Damavand dataset and plot it after warping it by its altitude.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> dataset = examples.download_mount_damavand()
-    >>> dataset = dataset.cell_data_to_point_data()
-    >>> dataset = dataset.warp_by_scalar('z', factor=2)
-    >>> dataset.plot(cmap='gist_earth', show_scalar_bar=False)
+        Download the Damavand dataset and plot it after warping it by its altitude.
+
+        >>> from pyvista import examples
+        >>> dataset = examples.download_mount_damavand()
+        >>> dataset = dataset.cell_data_to_point_data()
+        >>> dataset = dataset.warp_by_scalar('z', factor=2)
+        >>> dataset.plot(cmap='gist_earth', show_scalar_bar=False)
 
     .. seealso::
 
@@ -6960,11 +7148,10 @@ _dataset_mount_damavand = _SingleFileDownloadableDatasetLoader('AOI.Damavand.326
 
 
 @overload
-def download_particles_lethe(load: Literal[True] = True) -> UnstructuredGrid: ...  # noqa: FBT002
+def download_particles_lethe(*, load: Literal[True] = True) -> UnstructuredGrid: ...
 @overload
-def download_particles_lethe(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_particles_lethe(load: bool = True) -> UnstructuredGrid | str:  # noqa: FBT001, FBT002
+def download_particles_lethe(*, load: Literal[False]) -> str: ...
+def download_particles_lethe(*, load: bool = True) -> UnstructuredGrid | str:
     """Download a particles dataset generated by `lethe <https://github.com/chaos-polymtl/lethe>`_.
 
     See `PyVista discussions #1984
@@ -7011,11 +7198,10 @@ _dataset_particles_lethe = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_gif_simple(load: Literal[True] = True) -> ImageData: ...  # noqa: FBT002
+def download_gif_simple(*, load: Literal[True] = True) -> ImageData: ...
 @overload
-def download_gif_simple(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_gif_simple(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
+def download_gif_simple(*, load: Literal[False]) -> str: ...
+def download_gif_simple(*, load: bool = True) -> ImageData | str:
     """Download a simple three frame GIF.
 
     Parameters
@@ -7066,11 +7252,10 @@ _dataset_gif_simple = _SingleFileDownloadableDatasetLoader('gifs/sample.gif')
 
 
 @overload
-def download_cloud_dark_matter(load: Literal[True] = True) -> PointSet: ...  # noqa: FBT002
+def download_cloud_dark_matter(*, load: Literal[True] = True) -> PointSet: ...
 @overload
-def download_cloud_dark_matter(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_cloud_dark_matter(load: bool = True) -> PointSet | str:  # noqa: FBT001, FBT002
+def download_cloud_dark_matter(*, load: Literal[False]) -> str: ...
+def download_cloud_dark_matter(*, load: bool = True) -> PointSet | str:
     """Download particles from a simulated dark matter halo.
 
     This dataset contains 32,314 particles.
@@ -7088,38 +7273,41 @@ def download_cloud_dark_matter(load: bool = True) -> PointSet | str:  # noqa: FB
 
     Examples
     --------
-    Download the dark matter cloud and display its representation.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> import numpy as np
-    >>> from pyvista import examples
-    >>> pc = examples.download_cloud_dark_matter()
-    >>> pc
-    PointSet (...)
-      N Cells:    0
-      N Points:   32314
-      X Bounds:   7.451e+01, 7.892e+01
-      Y Bounds:   1.616e+01, 2.275e+01
-      Z Bounds:   8.900e+01, 9.319e+01
-      N Arrays:   0
+        Download the dark matter cloud and display its representation.
 
-    Plot the point cloud. Color based on the distance from the center of the
-    cloud.
+        >>> import numpy as np
+        >>> from pyvista import examples
+        >>> pc = examples.download_cloud_dark_matter()
+        >>> pc
+        PointSet (...)
+          N Cells:    0
+          N Points:   32314
+          X Bounds:   7.451e+01, 7.892e+01
+          Y Bounds:   1.616e+01, 2.275e+01
+          Z Bounds:   8.900e+01, 9.319e+01
+          N Arrays:   0
 
-    >>> pc.plot(
-    ...     scalars=np.linalg.norm(pc.points - pc.center, axis=1),
-    ...     style='points_gaussian',
-    ...     opacity=0.5,
-    ...     point_size=1.5,
-    ...     show_scalar_bar=False,
-    ...     zoom=2,
-    ... )
+        Plot the point cloud. Color based on the distance from the center of the
+        cloud.
 
-    .. seealso::
+        >>> pc.plot(
+        ...     scalars=np.linalg.norm(pc.points - pc.center, axis=1),
+        ...     style='points_gaussian',
+        ...     opacity=0.5,
+        ...     point_size=1.5,
+        ...     show_scalar_bar=False,
+        ...     zoom=2,
+        ... )
 
-        :ref:`Cloud Dark Matter Dataset <cloud_dark_matter_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
 
-        :ref:`Cloud Dark Matter Dense Dataset <cloud_dark_matter_dense_dataset>`
+            :ref:`Cloud Dark Matter Dataset <cloud_dark_matter_dataset>`
+                See this dataset in the Dataset Gallery for more info.
+
+            :ref:`Cloud Dark Matter Dense Dataset <cloud_dark_matter_dense_dataset>`
 
     """
     return _download_dataset(_dataset_cloud_dark_matter, load=load)
@@ -7133,11 +7321,10 @@ _dataset_cloud_dark_matter = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_cloud_dark_matter_dense(load: Literal[True] = True) -> PointSet: ...  # noqa: FBT002
+def download_cloud_dark_matter_dense(*, load: Literal[True] = True) -> PointSet: ...
 @overload
-def download_cloud_dark_matter_dense(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_cloud_dark_matter_dense(load: bool = True) -> PointSet | str:  # noqa: FBT001, FBT002
+def download_cloud_dark_matter_dense(*, load: Literal[False]) -> str: ...
+def download_cloud_dark_matter_dense(*, load: bool = True) -> PointSet | str:
     """Download a particles from a simulated dark matter halo.
 
     This dataset contains 2,062,256 particles.
@@ -7155,41 +7342,44 @@ def download_cloud_dark_matter_dense(load: bool = True) -> PointSet | str:  # no
 
     Examples
     --------
-    Download the dark matter cloud and display its representation.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> import numpy as np
-    >>> from pyvista import examples
-    >>> pc = examples.download_cloud_dark_matter_dense()
-    >>> pc
-    PointSet (...)
-      N Cells:    0
-      N Points:   2062256
-      X Bounds:   7.462e+01, 7.863e+01
-      Y Bounds:   1.604e+01, 2.244e+01
-      Z Bounds:   8.893e+01, 9.337e+01
-      N Arrays:   0
+        Download the dark matter cloud and display its representation.
 
-    Plot the point cloud. Color based on the distance from the center of the
-    cloud.
+        >>> import numpy as np
+        >>> from pyvista import examples
+        >>> pc = examples.download_cloud_dark_matter_dense()
+        >>> pc
+        PointSet (...)
+          N Cells:    0
+          N Points:   2062256
+          X Bounds:   7.462e+01, 7.863e+01
+          Y Bounds:   1.604e+01, 2.244e+01
+          Z Bounds:   8.893e+01, 9.337e+01
+          N Arrays:   0
 
-    >>> pc.plot(
-    ...     scalars=np.linalg.norm(pc.points - pc.center, axis=1),
-    ...     style='points_gaussian',
-    ...     opacity=0.030,
-    ...     point_size=2.0,
-    ...     show_scalar_bar=False,
-    ...     zoom=2,
-    ... )
+        Plot the point cloud. Color based on the distance from the center of the
+        cloud.
 
-    .. seealso::
+        >>> pc.plot(
+        ...     scalars=np.linalg.norm(pc.points - pc.center, axis=1),
+        ...     style='points_gaussian',
+        ...     opacity=0.030,
+        ...     point_size=2.0,
+        ...     show_scalar_bar=False,
+        ...     zoom=2,
+        ... )
 
-        :ref:`Cloud Dark Matter Dense Dataset <cloud_dark_matter_dense_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
 
-        :ref:`Cloud Dark Matter Dataset <cloud_dark_matter_dataset>`
+            :ref:`Cloud Dark Matter Dense Dataset <cloud_dark_matter_dense_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
-        :ref:`point_clouds_example`
-            More details on how to plot point clouds.
+            :ref:`Cloud Dark Matter Dataset <cloud_dark_matter_dataset>`
+
+            :ref:`point_clouds_example`
+                More details on how to plot point clouds.
 
     """
     return _download_dataset(_dataset_cloud_dark_matter_dense, load=load)
@@ -7203,11 +7393,10 @@ _dataset_cloud_dark_matter_dense = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_stars_cloud_hyg(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_stars_cloud_hyg(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_stars_cloud_hyg(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_stars_cloud_hyg(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_stars_cloud_hyg(*, load: Literal[False]) -> str: ...
+def download_stars_cloud_hyg(*, load: bool = True) -> PolyData | str:
     """Download a point cloud of stars as computed by the HYG Database.
 
     See `HYG-Database <https://github.com/astronexus/HYG-Database>`_ for more
@@ -7236,38 +7425,41 @@ def download_stars_cloud_hyg(load: bool = True) -> PolyData | str:  # noqa: FBT0
 
     Examples
     --------
-    Download and plot a point cloud of stars within 3,000 light years. Stars
-    are colored according to their RGBA colors.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> import numpy as np
-    >>> from pyvista import examples
-    >>> stars = examples.download_stars_cloud_hyg()
-    >>> stars.plot(
-    ...     style='points_gaussian',
-    ...     background='k',
-    ...     point_size=0.5,
-    ...     scalars='_rgba',
-    ...     render_points_as_spheres=False,
-    ...     zoom=3.0,
-    ... )
+        Download and plot a point cloud of stars within 3,000 light years. Stars
+        are colored according to their RGBA colors.
 
-    >>> stars
-    PolyData (...)
-      N Cells:    107857
-      N Points:   107857
-      N Strips:   0
-      X Bounds:   -9.755e+02, 9.774e+02
-      Y Bounds:   -9.620e+02, 9.662e+02
-      Z Bounds:   -9.788e+02, 9.702e+02
-      N Arrays:   3
+        >>> import numpy as np
+        >>> from pyvista import examples
+        >>> stars = examples.download_stars_cloud_hyg()
+        >>> stars.plot(
+        ...     style='points_gaussian',
+        ...     background='k',
+        ...     point_size=0.5,
+        ...     scalars='_rgba',
+        ...     render_points_as_spheres=False,
+        ...     zoom=3.0,
+        ... )
 
-    .. seealso::
+        >>> stars
+        PolyData (...)
+          N Cells:    107857
+          N Points:   107857
+          N Strips:   0
+          X Bounds:   -9.755e+02, 9.774e+02
+          Y Bounds:   -9.620e+02, 9.662e+02
+          Z Bounds:   -9.788e+02, 9.702e+02
+          N Arrays:   3
 
-        :ref:`Stars Cloud Hyg Dataset <stars_cloud_hyg_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
 
-        :ref:`point_clouds_example`
-            More details on how to plot point clouds.
+            :ref:`Stars Cloud Hyg Dataset <stars_cloud_hyg_dataset>`
+                See this dataset in the Dataset Gallery for more info.
+
+            :ref:`point_clouds_example`
+                More details on how to plot point clouds.
 
     """
     return _download_dataset(_dataset_stars_cloud_hyg, load=load)
@@ -7279,11 +7471,10 @@ _dataset_stars_cloud_hyg = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_fea_bracket(load: Literal[True] = True) -> UnstructuredGrid: ...  # noqa: FBT002
+def download_fea_bracket(*, load: Literal[True] = True) -> UnstructuredGrid: ...
 @overload
-def download_fea_bracket(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_fea_bracket(load: bool = True) -> UnstructuredGrid | str:  # noqa: FBT001, FBT002
+def download_fea_bracket(*, load: Literal[False]) -> str: ...
+def download_fea_bracket(*, load: bool = True) -> UnstructuredGrid | str:
     """Download the finite element solution of a bracket.
 
     Contains von-mises equivalent cell stress assuming a vertical (y-axis) load.
@@ -7336,11 +7527,10 @@ _dataset_fea_bracket = _SingleFileDownloadableDatasetLoader('fea/kiefer/dataset.
 
 
 @overload
-def download_fea_hertzian_contact_cylinder(load: Literal[True] = True) -> UnstructuredGrid: ...  # noqa: FBT002
+def download_fea_hertzian_contact_cylinder(*, load: Literal[True] = True) -> UnstructuredGrid: ...
 @overload
-def download_fea_hertzian_contact_cylinder(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_fea_hertzian_contact_cylinder(load: bool = True) -> UnstructuredGrid | str:  # noqa: FBT001, FBT002
+def download_fea_hertzian_contact_cylinder(*, load: Literal[False]) -> str: ...
+def download_fea_hertzian_contact_cylinder(*, load: bool = True) -> UnstructuredGrid | str:
     """Download a hertzian contact finite element solution.
 
     Hertzian contact is referred to the frictionless contact between two
@@ -7409,12 +7599,15 @@ _dataset_fea_hertzian_contact_cylinder = _SingleFileDownloadableDatasetLoader(
 )
 
 
+# fmt: off
+# ruff: disable[E501]
 @overload
-def download_black_vase(load: Literal[True], *, high_resolution: bool) -> PolyData: ...
+def download_black_vase(*, load: Literal[True] = True, high_resolution: bool = False) -> PolyData: ...
 @overload
-def download_black_vase(load: Literal[False], *, high_resolution: bool) -> str: ...
-@_deprecate_positional_args
-def download_black_vase(load: bool = True, *, high_resolution: bool = False) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_black_vase(*, load: Literal[False], high_resolution: bool = False) -> str: ...
+# ruff: enable[E501]
+# fmt: on
+def download_black_vase(*, load: bool = True, high_resolution: bool = False) -> PolyData | str:
     """Download a black vase scan created by Ivan Nikolov.
 
     The dataset was downloaded from `GGG-BenchmarkSfM: Dataset for Benchmarking
@@ -7490,12 +7683,15 @@ __dataset_black_vase_high_res = _SingleFileDownloadableDatasetLoader(
 )
 
 
+# fmt: off
+# ruff: disable[E501]
 @overload
-def download_ivan_angel(load: Literal[True], *, high_resolution: bool) -> PolyData: ...
+def download_ivan_angel(*, load: Literal[True] = True, high_resolution: bool = False) -> PolyData: ...
 @overload
-def download_ivan_angel(load: Literal[False], *, high_resolution: bool) -> str: ...
-@_deprecate_positional_args
-def download_ivan_angel(load: bool = True, *, high_resolution: bool = False) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_ivan_angel(*, load: Literal[False], high_resolution: bool = False) -> str: ...
+# ruff: enable[E501]
+# fmt: on
+def download_ivan_angel(*, load: bool = True, high_resolution: bool = False) -> PolyData | str:
     """Download a scan of an angel statue created by Ivan Nikolov.
 
     The dataset was downloaded from `GGG-BenchmarkSfM: Dataset for Benchmarking
@@ -7577,12 +7773,15 @@ __dataset_ivan_angel_high_res = _SingleFileDownloadableDatasetLoader(
 )
 
 
+# fmt: off
+# ruff: disable[E501]
 @overload
-def download_bird_bath(load: Literal[True], *, high_resolution: bool) -> PolyData: ...
+def download_bird_bath(*, load: Literal[True] = True, high_resolution: bool = False) -> PolyData: ...
 @overload
-def download_bird_bath(load: Literal[False], *, high_resolution: bool) -> str: ...
-@_deprecate_positional_args
-def download_bird_bath(load: bool = True, *, high_resolution: bool = False) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_bird_bath(*, load: Literal[False], high_resolution: bool = False) -> str: ...
+# ruff: enable[E501]
+# fmt: on
+def download_bird_bath(*, load: bool = True, high_resolution: bool = False) -> PolyData | str:
     """Download a scan of a bird bath created by Ivan Nikolov.
 
     The dataset was downloaded from `GGG-BenchmarkSfM: Dataset for Benchmarking
@@ -7657,11 +7856,10 @@ __dataset_bird_bath_high_res = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_owl(load: Literal[True], *, high_resolution: bool) -> PolyData: ...
+def download_owl(*, load: Literal[True] = True, high_resolution: bool = False) -> PolyData: ...
 @overload
-def download_owl(load: Literal[False], *, high_resolution: bool) -> str: ...
-@_deprecate_positional_args
-def download_owl(load: bool = True, *, high_resolution: bool = False) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_owl(*, load: Literal[False], high_resolution: bool = False) -> str: ...
+def download_owl(*, load: bool = True, high_resolution: bool = False) -> PolyData | str:
     """Download a scan of an owl statue created by Ivan Nikolov.
 
     The dataset was downloaded from `GGG-BenchmarkSfM: Dataset for Benchmarking
@@ -7740,12 +7938,15 @@ __dataset_owl_high_res = _SingleFileDownloadableDatasetLoader(
 )
 
 
+# fmt: off
+# ruff: disable[E501]
 @overload
-def download_plastic_vase(load: Literal[True], *, high_resolution: bool) -> PolyData: ...
+def download_plastic_vase(*, load: Literal[True] = True, high_resolution: bool = False) -> PolyData: ...
 @overload
-def download_plastic_vase(load: Literal[False], *, high_resolution: bool) -> str: ...
-@_deprecate_positional_args
-def download_plastic_vase(load: bool = True, *, high_resolution: bool = False) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_plastic_vase(*, load: Literal[False], high_resolution: bool = False) -> str: ...
+# ruff: enable[E501]
+# fmt: on
+def download_plastic_vase(*, load: bool = True, high_resolution: bool = False) -> PolyData | str:
     """Download a scan of a plastic vase created by Ivan Nikolov.
 
     The dataset was downloaded from `GGG-BenchmarkSfM: Dataset for Benchmarking
@@ -7821,12 +8022,15 @@ __dataset_plastic_vase_high_res = _SingleFileDownloadableDatasetLoader(
 )
 
 
+# fmt: off
+# ruff: disable[E501]
 @overload
-def download_sea_vase(load: Literal[True], *, high_resolution: bool) -> PolyData: ...
+def download_sea_vase(*, load: Literal[True] = True, high_resolution: bool = False) -> PolyData: ...
 @overload
-def download_sea_vase(load: Literal[False], *, high_resolution: bool) -> str: ...
-@_deprecate_positional_args
-def download_sea_vase(load: bool = True, *, high_resolution: bool = False) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_sea_vase(*, load: Literal[False], high_resolution: bool = False) -> str: ...
+# ruff: enable[E501]
+# fmt: on
+def download_sea_vase(*, load: bool = True, high_resolution: bool = False) -> PolyData | str:
     """Download a scan of a sea vase created by Ivan Nikolov.
 
     The dataset was downloaded from `GGG-BenchmarkSfM: Dataset for Benchmarking
@@ -7901,11 +8105,10 @@ __dataset_sea_vase_high_res = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_dikhololo_night(load: Literal[True] = True) -> Texture: ...  # noqa: FBT002
+def download_dikhololo_night(*, load: Literal[True] = True) -> Texture: ...
 @overload
-def download_dikhololo_night(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_dikhololo_night(load: bool = True) -> Texture | str:  # noqa: FBT001, FBT002
+def download_dikhololo_night(*, load: Literal[False]) -> str: ...
+def download_dikhololo_night(*, load: bool = True) -> Texture | str:
     """Download and read the dikhololo night HDR texture example.
 
     Files hosted at https://polyhaven.com/
@@ -7966,11 +8169,10 @@ _dataset_dikhololo_night = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_cad_model_case(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_cad_model_case(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_cad_model_case(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_cad_model_case(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_cad_model_case(*, load: Literal[False]) -> str: ...
+def download_cad_model_case(*, load: bool = True) -> PolyData | str:
     """Download a CAD model of a Raspberry PI 4 case.
 
     The dataset was downloaded from `Thingiverse
@@ -8025,11 +8227,10 @@ _dataset_cad_model_case = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_aero_bracket(load: Literal[True] = True) -> UnstructuredGrid: ...  # noqa: FBT002
+def download_aero_bracket(*, load: Literal[True] = True) -> UnstructuredGrid: ...
 @overload
-def download_aero_bracket(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_aero_bracket(load: bool = True) -> UnstructuredGrid | str:  # noqa: FBT001, FBT002
+def download_aero_bracket(*, load: Literal[False]) -> str: ...
+def download_aero_bracket(*, load: bool = True) -> UnstructuredGrid | str:
     """Download the finite element solution of an aero bracket.
 
     Data generated from public SimScale examples at `SimScale Project Library -
@@ -8124,11 +8325,10 @@ _dataset_aero_bracket = _SingleFileDownloadableDatasetLoader('fea/aero_bracket/a
 
 
 @overload
-def download_coil_magnetic_field(load: Literal[True] = True) -> ImageData: ...  # noqa: FBT002
+def download_coil_magnetic_field(*, load: Literal[True] = True) -> ImageData: ...
 @overload
-def download_coil_magnetic_field(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_coil_magnetic_field(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
+def download_coil_magnetic_field(*, load: Literal[False]) -> str: ...
+def download_coil_magnetic_field(*, load: bool = True) -> ImageData | str:
     """Download the magnetic field of a coil.
 
     These examples were generated from the following `script
@@ -8147,63 +8347,66 @@ def download_coil_magnetic_field(load: bool = True) -> ImageData | str:  # noqa:
 
     Examples
     --------
-    Download the magnetic field dataset and generate streamlines from the field.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> grid = examples.download_coil_magnetic_field()
-    >>> seed = pv.Disc(inner=1, outer=5.2, r_res=3, c_res=12)
-    >>> strl = grid.streamlines_from_source(
-    ...     seed,
-    ...     vectors='B',
-    ...     max_length=180,
-    ...     initial_step_length=0.1,
-    ...     integration_direction='both',
-    ... )
-    >>> strl.plot(
-    ...     cmap='plasma',
-    ...     render_lines_as_tubes=True,
-    ...     line_width=2,
-    ...     lighting=False,
-    ...     zoom=2,
-    ... )
+        Download the magnetic field dataset and generate streamlines from the field.
 
-    Plot the magnet field strength in the Z direction.
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> grid = examples.download_coil_magnetic_field()
+        >>> seed = pv.Disc(inner=1, outer=5.2, r_res=3, c_res=12)
+        >>> strl = grid.streamlines_from_source(
+        ...     seed,
+        ...     vectors='B',
+        ...     max_length=180,
+        ...     initial_step_length=0.1,
+        ...     integration_direction='both',
+        ... )
+        >>> strl.plot(
+        ...     cmap='plasma',
+        ...     render_lines_as_tubes=True,
+        ...     line_width=2,
+        ...     lighting=False,
+        ...     zoom=2,
+        ... )
 
-    >>> import numpy as np
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> grid = examples.download_coil_magnetic_field()
-    >>> # create coils
-    >>> coils = []
-    >>> for z in np.linspace(-8, 8, 16):
-    ...     coils.append(
-    ...         pv.Polygon(center=(0, 0, z), radius=5, n_sides=100, fill=False)
-    ...     )
-    >>> coils = pv.MultiBlock(coils)
-    >>> # plot the magnet field strength in the Z direction
-    >>> scalars = np.abs(grid['B'][:, 2])
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(coils, render_lines_as_tubes=True, line_width=5, color='w')
-    >>> vol = pl.add_volume(
-    ...     grid,
-    ...     scalars=scalars,
-    ...     cmap='plasma',
-    ...     show_scalar_bar=False,
-    ...     log_scale=True,
-    ...     opacity='sigmoid_2',
-    ... )
-    >>> vol.prop.interpolation_type = 'linear'
-    >>> _ = pl.add_volume_clip_plane(
-    ...     vol,
-    ...     normal='-x',
-    ...     normal_rotation=False,
-    ...     interaction_event='always',
-    ...     widget_color=pv.Color(opacity=0.0),
-    ... )
-    >>> pl.enable_anti_aliasing()
-    >>> pl.camera.zoom(2)
-    >>> pl.show()
+        Plot the magnet field strength in the Z direction.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> grid = examples.download_coil_magnetic_field()
+        >>> # create coils
+        >>> coils = []
+        >>> for z in np.linspace(-8, 8, 16):
+        ...     coils.append(
+        ...         pv.Polygon(center=(0, 0, z), radius=5, n_sides=100, fill=False)
+        ...     )
+        >>> coils = pv.MultiBlock(coils)
+        >>> # plot the magnet field strength in the Z direction
+        >>> scalars = np.abs(grid['B'][:, 2])
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(coils, render_lines_as_tubes=True, line_width=5, color='w')
+        >>> vol = pl.add_volume(
+        ...     grid,
+        ...     scalars=scalars,
+        ...     cmap='plasma',
+        ...     show_scalar_bar=False,
+        ...     log_scale=True,
+        ...     opacity='sigmoid_2',
+        ... )
+        >>> vol.prop.interpolation_type = 'linear'
+        >>> _ = pl.add_volume_clip_plane(
+        ...     vol,
+        ...     normal='-x',
+        ...     normal_rotation=False,
+        ...     interaction_event='always',
+        ...     widget_color=pv.Color(opacity=0.0),
+        ... )
+        >>> pl.enable_anti_aliasing()
+        >>> pl.camera.zoom(2)
+        >>> pl.show()
 
     .. seealso::
 
@@ -8218,14 +8421,19 @@ _dataset_coil_magnetic_field = _SingleFileDownloadableDatasetLoader('magpylib/co
 
 
 @overload
-def download_meshio_xdmf(load: Literal[True] = True) -> MultiBlock: ...  # noqa: FBT002
+def download_meshio_xdmf(*, load: Literal[True] = True) -> MultiBlock: ...
 @overload
-def download_meshio_xdmf(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_meshio_xdmf(load: bool = True) -> MultiBlock | str:  # noqa: FBT001, FBT002
+def download_meshio_xdmf(*, load: Literal[False]) -> str: ...
+def download_meshio_xdmf(*, load: bool = True) -> MultiBlock | str:
     """Download xdmf file created by meshio.
 
     The dataset was created by ``test_time_series`` test function in meshio.
+
+    .. note::
+        ``load=False`` returns only the file which is read directly, not the
+        other files downloaded alongside it. This is a legacy quirk of the
+        ``load`` argument. For every file belonging to this example, use
+        :func:`examples.get_example('meshio_xdmf').paths <pyvista.examples.get_example>`.
 
     Parameters
     ----------
@@ -8263,11 +8471,10 @@ _dataset_meshio_xdmf = _MultiFileDownloadableDatasetLoader(files_func=_meshio_xd
 
 
 @overload
-def download_victorian_goblet_face_illusion(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_victorian_goblet_face_illusion(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_victorian_goblet_face_illusion(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_victorian_goblet_face_illusion(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_victorian_goblet_face_illusion(*, load: Literal[False]) -> str: ...
+def download_victorian_goblet_face_illusion(*, load: bool = True) -> PolyData | str:
     """Download Victorian Goblet face illusion.
 
     This is a replica of a Victorian goblet with an external profile
@@ -8310,11 +8517,10 @@ _dataset_victorian_goblet_face_illusion = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_reservoir(load: Literal[True] = True) -> ExplicitStructuredGrid: ...  # noqa: FBT002
+def download_reservoir(*, load: Literal[True] = True) -> ExplicitStructuredGrid: ...
 @overload
-def download_reservoir(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_reservoir(load: bool = True) -> ExplicitStructuredGrid | str:  # noqa: FBT001, FBT002
+def download_reservoir(*, load: Literal[False]) -> str: ...
+def download_reservoir(*, load: bool = True) -> ExplicitStructuredGrid | str:
     """Download the UNISIM-II-D reservoir model.
 
     UNISIM-II is a synthetic carbonate reservoir model created by
@@ -8394,14 +8600,17 @@ _dataset_reservoir = _SingleFileDownloadableDatasetLoader(
 )
 
 
+# fmt: off
+# ruff: disable[E501]
 @overload
-def download_whole_body_ct_male(load: Literal[True], *, high_resolution: bool) -> MultiBlock: ...
+def download_whole_body_ct_male(*, load: Literal[True] = True, high_resolution: bool = False) -> MultiBlock: ...
 @overload
-def download_whole_body_ct_male(load: Literal[False], *, high_resolution: bool) -> str: ...
-@_deprecate_positional_args
+def download_whole_body_ct_male(*, load: Literal[False], high_resolution: bool = False) -> str: ...
+# ruff: enable[E501]
+# fmt: on
 def download_whole_body_ct_male(
-    load: bool = True,  # noqa: FBT001, FBT002
     *,
+    load: bool = True,
     high_resolution: bool = False,
 ) -> MultiBlock | str:
     r"""Download a CT image of a male subject with 117 segmented anatomic structures.
@@ -8451,6 +8660,12 @@ def download_whole_body_ct_male(
         ``(320, 320, 547)`` was returned. Use ``high_resolution=True`` for the
         high-resolution version.
 
+    .. note::
+        ``load=False`` returns only the file which is read directly, not the
+        other files downloaded alongside it. This is a legacy quirk of the
+        ``load`` argument. For every file belonging to this example, use
+        :func:`examples.get_example('whole_body_ct_male').paths <pyvista.examples.get_example>`.
+
     Parameters
     ----------
     load : bool, default: True
@@ -8471,72 +8686,75 @@ def download_whole_body_ct_male(
 
     Examples
     --------
-    Load the dataset and get some of its properties.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> import pyvista as pv
-    >>> dataset = examples.download_whole_body_ct_male()
+        Load the dataset and get some of its properties.
 
-    Get the CT image.
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> dataset = examples.download_whole_body_ct_male()
 
-    >>> ct_image = dataset['ct']
-    >>> ct_image
-    ImageData (...)
-      N Cells:      6876432
-      N Points:     6988800
-      X Bounds:     7.500e-01, 4.778e+02
-      Y Bounds:     7.500e-01, 4.778e+02
-      Z Bounds:     7.527e-01, 8.182e+02
-      Dimensions:   160, 160, 273
-      Spacing:      3.000e+00, 3.000e+00, 3.005e+00
-      N Arrays:     1
+        Get the CT image.
 
-    Get the segmentation label names and show the first three.
+        >>> ct_image = dataset['ct']
+        >>> ct_image
+        ImageData (...)
+          N Cells:      6876432
+          N Points:     6988800
+          X Bounds:     7.500e-01, 4.778e+02
+          Y Bounds:     7.500e-01, 4.778e+02
+          Z Bounds:     7.527e-01, 8.182e+02
+          Dimensions:   160, 160, 273
+          Spacing:      3.000e+00, 3.000e+00, 3.005e+00
+          N Arrays:     1
 
-    >>> segmentations = dataset['segmentations']
-    >>> label_names = segmentations.keys()
-    >>> label_names[:3]
-    ['adrenal_gland_left', 'adrenal_gland_right', 'aorta']
+        Get the segmentation label names and show the first three.
 
-    Get the label map and show its data range.
+        >>> segmentations = dataset['segmentations']
+        >>> label_names = segmentations.keys()
+        >>> label_names[:3]
+        ['adrenal_gland_left', 'adrenal_gland_right', 'aorta']
 
-    >>> label_map = dataset['label_map']
-    >>> label_map.get_data_range()
-    (np.uint8(0), np.uint8(117))
+        Get the label map and show its data range.
 
-    Show the ``'names_to_colors'`` dictionary with RGB colors for each segment.
+        >>> label_map = dataset['label_map']
+        >>> label_map.get_data_range()
+        (np.uint8(0), np.uint8(117))
 
-    >>> dataset.user_dict['names_to_colors']  # doctest: +SKIP
+        Show the ``'names_to_colors'`` dictionary with RGB colors for each segment.
 
-    Show the ``'names_to_ids'`` dictionary with a mapping from segment names to segment ids.
+        >>> dataset.user_dict['names_to_colors']  # doctest: +SKIP
 
-    >>> dataset.user_dict['names_to_ids']  # doctest: +SKIP
+        Show the ``'names_to_ids'`` dictionary with a mapping from segment names to segment ids.
 
-    Create a surface mesh of the segmentation labels.
+        >>> dataset.user_dict['names_to_ids']  # doctest: +SKIP
 
-    >>> labels_mesh = label_map.contour_labels()
+        Create a surface mesh of the segmentation labels.
 
-    Color the surface using :func:`~pyvista.DataSetFilters.color_labels`. Use the
-    ``'ids_to_colors'`` dictionary that's included with the dataset to map the colors.
+        >>> labels_mesh = label_map.contour_labels()
 
-    >>> colored_mesh = labels_mesh.color_labels(
-    ...     colors=dataset.user_dict['ids_to_colors']
-    ... )
+        Color the surface using :func:`~pyvista.DataSetFilters.color_labels`. Use the
+        ``'ids_to_colors'`` dictionary that's included with the dataset to map the colors.
 
-    Plot the CT image and segmentation labels together.
+        >>> colored_mesh = labels_mesh.color_labels(
+        ...     colors=dataset.user_dict['ids_to_colors']
+        ... )
 
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_volume(
-    ...     ct_image,
-    ...     cmap='bone',
-    ...     opacity='sigmoid_8',
-    ...     show_scalar_bar=False,
-    ... )
-    >>> _ = pl.add_mesh(colored_mesh)
-    >>> pl.view_zx()
-    >>> pl.camera.up = (0, 0, 1)
-    >>> pl.camera.zoom(1.3)
-    >>> pl.show()
+        Plot the CT image and segmentation labels together.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_volume(
+        ...     ct_image,
+        ...     cmap='bone',
+        ...     opacity='sigmoid_8',
+        ...     show_scalar_bar=False,
+        ... )
+        >>> _ = pl.add_mesh(colored_mesh)
+        >>> pl.view_zx()
+        >>> pl.camera.up = (0, 0, 1)
+        >>> pl.camera.zoom(1.3)
+        >>> pl.show()
 
     .. seealso::
 
@@ -8556,9 +8774,25 @@ def download_whole_body_ct_male(
 
 
 class _WholeBodyCTUtilities:
+    """Helpers for loading the whole body CT datasets."""
+
     @staticmethod
     def import_colors_dict(module_path) -> dict[str, tuple[int, int, int]]:  # noqa: ANN001
         # Import `colors` dict from downloaded `colors.py` module
+        """Import the ``colors`` dict from the downloaded ``colors.py`` module.
+
+        Parameters
+        ----------
+        module_path : str
+            Path of the downloaded ``colors.py`` module.
+
+        Returns
+        -------
+        dict[str, tuple[int, int, int]]
+            Mapping from label names to RGB colors.
+
+
+        """
         module_name = 'colors'
         spec = importlib.util.spec_from_file_location(module_name, module_path)
         if spec is not None:
@@ -8575,21 +8809,47 @@ class _WholeBodyCTUtilities:
     @staticmethod
     def add_metadata(dataset: MultiBlock, colors_module_path: str) -> None:
         # Add color and id mappings to dataset
+        """Add color and id mappings to the dataset's user dict.
+
+        Parameters
+        ----------
+        dataset : pyvista.MultiBlock
+            Dataset to annotate.
+
+        colors_module_path : str
+            Path of the downloaded ``colors.py`` module.
+
+
+        """
         segmentations = cast('pv.MultiBlock', dataset['segmentations'])
         label_names = sorted(segmentations.keys())
         names_to_colors = _WholeBodyCTUtilities.import_colors_dict(colors_module_path)
         names_to_ids = {key: i + 1 for i, key in enumerate(label_names)}
         dataset.user_dict['names_to_colors'] = names_to_colors
         dataset.user_dict['names_to_ids'] = names_to_ids
-        dataset.user_dict['ids_to_colors'] = dict(
-            sorted({names_to_ids[name]: names_to_colors[name] for name in label_names}.items())
-        )
+        ids_to_colors = sorted((names_to_ids[name], names_to_colors[name]) for name in label_names)
+        dataset.user_dict['ids_to_colors'] = {str(id_): color for id_, color in ids_to_colors}
 
     @staticmethod
     def label_map_from_masks(masks: MultiBlock) -> ImageData:
         # Create label map array from segmentation masks
         # Initialize array with background values (zeros)
+        """Create a label map image from segmentation masks.
+
+        Parameters
+        ----------
+        masks : pyvista.MultiBlock
+            Segmentation masks, one block per label.
+
+        Returns
+        -------
+        pyvista.ImageData
+            Label map image.
+
+
+        """
         n_points = cast('pv.ImageData', masks[0]).n_points
+        # Initialize array with background values (zeros)
         label_map_array = np.zeros((n_points,), dtype=np.uint8)
         label_names = sorted(masks.keys())
         for i, name in enumerate(label_names):
@@ -8604,6 +8864,20 @@ class _WholeBodyCTUtilities:
 
     @staticmethod
     def load_func(files):  # noqa: ANN001, ANN205
+        """Load the dataset and add its label map and metadata.
+
+        Parameters
+        ----------
+        files : sequence
+            Loaders for the dataset file and the colors module.
+
+        Returns
+        -------
+        pyvista.MultiBlock
+            Loaded dataset with label map and metadata.
+
+
+        """
         dataset_file, colors_module = files
         dataset = dataset_file.load()
 
@@ -8611,12 +8885,39 @@ class _WholeBodyCTUtilities:
         dataset['label_map'] = _WholeBodyCTUtilities.label_map_from_masks(dataset['segmentations'])
 
         # Add metadata
-        _WholeBodyCTUtilities.add_metadata(dataset, colors_module.path)
+        _WholeBodyCTUtilities.add_metadata(dataset, colors_module.paths[0])
         return dataset
 
     @staticmethod
     def files_func(name):  # noqa: ANN001, ANN205
+        """Return the file-loading function for the named dataset variant.
+
+        Parameters
+        ----------
+        name : str
+            Name of the dataset variant.
+
+        Returns
+        -------
+        callable
+            Function returning the file loaders.
+
+        """
         # Resampled version is saved as a multiblock
+        """Return the file-loading function for the named dataset variant.
+
+        Parameters
+        ----------
+        name : str
+            Name of the dataset variant.
+
+        Returns
+        -------
+        callable
+            Function returning the file loaders.
+
+
+        """
         target_file = f'{name}.vtm' if 'resampled' in name else name
 
         def func():
@@ -8640,14 +8941,17 @@ __dataset_whole_body_ct_male_high_res = _MultiFileDownloadableDatasetLoader(
 )
 
 
+# fmt: off
+# ruff: disable[E501]
 @overload
-def download_whole_body_ct_female(load: Literal[True], *, high_resolution: bool) -> MultiBlock: ...
+def download_whole_body_ct_female(*, load: Literal[True] = True, high_resolution: bool = False) -> MultiBlock: ...
 @overload
-def download_whole_body_ct_female(load: Literal[False], *, high_resolution: bool) -> str: ...
-@_deprecate_positional_args
+def download_whole_body_ct_female(*, load: Literal[False], high_resolution: bool = False) -> str: ...
+# ruff: enable[E501]
+# fmt: on
 def download_whole_body_ct_female(
-    load: bool = True,  # noqa: FBT001, FBT002
     *,
+    load: bool = True,
     high_resolution: bool = False,
 ) -> MultiBlock | str:
     r"""Download a CT image of a female subject with 117 segmented anatomic structures.
@@ -8697,6 +9001,12 @@ def download_whole_body_ct_female(
         ``(320, 320, 547)`` was returned. Use ``high_resolution=True`` for the
         high-resolution version.
 
+    .. note::
+        ``load=False`` returns only the file which is read directly, not the
+        other files downloaded alongside it. This is a legacy quirk of the
+        ``load`` argument. For every file belonging to this example, use
+        :func:`examples.get_example('whole_body_ct_female').paths <pyvista.examples.get_example>`.
+
     Parameters
     ----------
     load : bool, default: True
@@ -8717,77 +9027,80 @@ def download_whole_body_ct_female(
 
     Examples
     --------
-    Load the dataset.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> import pyvista as pv
-    >>> dataset = examples.download_whole_body_ct_female()
+        Load the dataset.
 
-    Get the names of the dataset's blocks.
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> dataset = examples.download_whole_body_ct_female()
 
-    >>> dataset.keys()
-    ['ct', 'segmentations', 'label_map']
+        Get the names of the dataset's blocks.
 
-    Get the CT image.
+        >>> dataset.keys()
+        ['ct', 'segmentations', 'label_map']
 
-    >>> ct_image = dataset['ct']
-    >>> ct_image
-    ImageData (...)
-      N Cells:      6825870
-      N Points:     6937600
-      X Bounds:     7.500e-01, 4.778e+02
-      Y Bounds:     7.500e-01, 4.778e+02
-      Z Bounds:     7.528e-01, 8.122e+02
-      Dimensions:   160, 160, 271
-      Spacing:      3.000e+00, 3.000e+00, 3.006e+00
-      N Arrays:     1
+        Get the CT image.
 
-    Get the segmentation label names and show the first three.
+        >>> ct_image = dataset['ct']
+        >>> ct_image
+        ImageData (...)
+          N Cells:      6825870
+          N Points:     6937600
+          X Bounds:     7.500e-01, 4.778e+02
+          Y Bounds:     7.500e-01, 4.778e+02
+          Z Bounds:     7.528e-01, 8.122e+02
+          Dimensions:   160, 160, 271
+          Spacing:      3.000e+00, 3.000e+00, 3.006e+00
+          N Arrays:     1
 
-    >>> segmentations = dataset['segmentations']
-    >>> label_names = segmentations.keys()
-    >>> label_names[:3]
-    ['adrenal_gland_left', 'adrenal_gland_right', 'aorta']
+        Get the segmentation label names and show the first three.
 
-    Get the label map and show its data range.
+        >>> segmentations = dataset['segmentations']
+        >>> label_names = segmentations.keys()
+        >>> label_names[:3]
+        ['adrenal_gland_left', 'adrenal_gland_right', 'aorta']
 
-    >>> label_map = dataset['label_map']
-    >>> label_map.get_data_range()
-    (np.uint8(0), np.uint8(117))
+        Get the label map and show its data range.
 
-    Show the ``'names_to_colors'`` dictionary with RGB colors for each segment.
+        >>> label_map = dataset['label_map']
+        >>> label_map.get_data_range()
+        (np.uint8(0), np.uint8(117))
 
-    >>> dataset.user_dict['names_to_colors']  # doctest: +SKIP
+        Show the ``'names_to_colors'`` dictionary with RGB colors for each segment.
 
-    Show the ``'names_to_ids'`` dictionary with a mapping from segment names to segment ids.
+        >>> dataset.user_dict['names_to_colors']  # doctest: +SKIP
 
-    >>> dataset.user_dict['names_to_ids']  # doctest: +SKIP
+        Show the ``'names_to_ids'`` dictionary with a mapping from segment names to segment ids.
 
-    Create a surface mesh of the segmentation labels.
+        >>> dataset.user_dict['names_to_ids']  # doctest: +SKIP
 
-    >>> labels_mesh = label_map.contour_labels()
+        Create a surface mesh of the segmentation labels.
 
-    Color the surface using :func:`~pyvista.DataSetFilters.color_labels`. Use the
-    ``'ids_to_colors'`` dictionary included with the dataset to map the colors.
+        >>> labels_mesh = label_map.contour_labels()
 
-    >>> colored_mesh = labels_mesh.color_labels(
-    ...     colors=dataset.user_dict['ids_to_colors']
-    ... )
+        Color the surface using :func:`~pyvista.DataSetFilters.color_labels`. Use the
+        ``'ids_to_colors'`` dictionary included with the dataset to map the colors.
 
-    Plot the CT image and segmentation labels together.
+        >>> colored_mesh = labels_mesh.color_labels(
+        ...     colors=dataset.user_dict['ids_to_colors']
+        ... )
 
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_volume(
-    ...     ct_image,
-    ...     cmap='bone',
-    ...     opacity='sigmoid_7',
-    ...     show_scalar_bar=False,
-    ... )
-    >>> _ = pl.add_mesh(colored_mesh)
-    >>> pl.view_zx()
-    >>> pl.camera.up = (0, 0, 1)
-    >>> pl.camera.zoom(1.3)
-    >>> pl.show()
+        Plot the CT image and segmentation labels together.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_volume(
+        ...     ct_image,
+        ...     cmap='bone',
+        ...     opacity='sigmoid_7',
+        ...     show_scalar_bar=False,
+        ... )
+        >>> _ = pl.add_mesh(colored_mesh)
+        >>> pl.view_zx()
+        >>> pl.camera.up = (0, 0, 1)
+        >>> pl.camera.zoom(1.3)
+        >>> pl.show()
 
     .. seealso::
 
@@ -8819,12 +9132,17 @@ __dataset_whole_body_ct_female_high_res = _MultiFileDownloadableDatasetLoader(
 
 
 @overload
-def download_room_cff(load: Literal[True] = True) -> MultiBlock: ...  # noqa: FBT002
+def download_room_cff(*, load: Literal[True] = True) -> MultiBlock: ...
 @overload
-def download_room_cff(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_room_cff(load: bool = True) -> MultiBlock | str:  # noqa: FBT001, FBT002
+def download_room_cff(*, load: Literal[False]) -> str: ...
+def download_room_cff(*, load: bool = True) -> MultiBlock | str:
     """Download a room model in CFF format.
+
+    .. note::
+        ``load=False`` returns only the file which is read directly, not the
+        other files downloaded alongside it. This is a legacy quirk of the
+        ``load`` argument. For every file belonging to this example, use
+        :func:`examples.get_example('room_cff').paths <pyvista.examples.get_example>`.
 
     Parameters
     ----------
@@ -8864,11 +9182,10 @@ _dataset_room_cff = _MultiFileDownloadableDatasetLoader(_dataset_room_cff_files_
 
 
 @overload
-def download_m4_total_density(load: Literal[True] = True) -> ImageData: ...  # noqa: FBT002
+def download_m4_total_density(*, load: Literal[True] = True) -> ImageData: ...
 @overload
-def download_m4_total_density(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_m4_total_density(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
+def download_m4_total_density(*, load: Literal[False]) -> str: ...
+def download_m4_total_density(*, load: bool = True) -> ImageData | str:
     """Download a total density dataset of the chemistry.
 
     Parameters
@@ -8884,34 +9201,37 @@ def download_m4_total_density(load: bool = True) -> ImageData | str:  # noqa: FB
 
     Examples
     --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
+    .. pyvista-plot::
+        :force_static:
 
-    >>> filename = examples.download_m4_total_density(load=False)
-    >>> reader = pv.get_reader(filename)
-    >>> reader.hb_scale = 1.1
-    >>> reader.b_scale = 10.0
+        >>> import pyvista as pv
+        >>> from pyvista import examples
 
-    >>> grid = reader.read()
-    >>> poly = reader.read(grid=False)
+        >>> filename = examples.download_m4_total_density(load=False)
+        >>> reader = pv.get_reader(filename)
+        >>> reader.hb_scale = 1.1
+        >>> reader.b_scale = 10.0
 
-    Add the outline and volume to the plotter.
+        >>> grid = reader.read()
+        >>> poly = reader.read(grid=False)
 
-    >>> pl = pv.Plotter()
-    >>> outline = pl.add_mesh(grid.outline(), color='black')
-    >>> volume = pl.add_volume(grid)
+        Add the outline and volume to the plotter.
 
-    Add atoms and bonds to the plotter.
+        >>> pl = pv.Plotter()
+        >>> outline = pl.add_mesh(grid.outline(), color='black')
+        >>> volume = pl.add_volume(grid)
 
-    >>> atoms = pl.add_mesh(poly.glyph(geom=pv.Sphere()), color='red')
-    >>> bonds = pl.add_mesh(poly.tube(), color='white')
+        Add atoms and bonds to the plotter.
 
-    >>> pl.show(cpos='zx')
+        >>> atoms = pl.add_mesh(poly.glyph(geom=pv.Sphere()), color='red')
+        >>> bonds = pl.add_mesh(poly.tube(), color='white')
 
-    .. seealso::
+        >>> pl.show(cpos='zx')
 
-        :ref:`M4 Total Density Dataset <m4_total_density_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
+
+            :ref:`M4 Total Density Dataset <m4_total_density_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_m4_total_density, load=load)
@@ -8921,16 +9241,21 @@ _dataset_m4_total_density = _SingleFileDownloadableDatasetLoader('m4_TotalDensit
 
 
 @overload
-def download_headsq(load: Literal[True] = True) -> ImageData: ...  # noqa: FBT002
+def download_headsq(*, load: Literal[True] = True) -> ImageData: ...
 @overload
-def download_headsq(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_headsq(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
+def download_headsq(*, load: Literal[False]) -> str: ...
+def download_headsq(*, load: bool = True) -> ImageData | str:
     """Download the headsq dataset.
 
     The headsq dataset is a 3D MRI scan of a human head.
 
     .. versionadded:: 0.44.0
+
+    .. note::
+        ``load=False`` returns only the file which is read directly, not the
+        other files downloaded alongside it. This is a legacy quirk of the
+        ``load`` argument. For every file belonging to this example, use
+        :func:`examples.get_example('headsq').paths <pyvista.examples.get_example>`.
 
     Parameters
     ----------
@@ -8969,11 +9294,10 @@ _dataset_headsq = _MultiFileDownloadableDatasetLoader(_dataset_headsq_files_func
 
 
 @overload
-def download_prism(load: Literal[True] = True) -> UnstructuredGrid: ...  # noqa: FBT002
+def download_prism(*, load: Literal[True] = True) -> UnstructuredGrid: ...
 @overload
-def download_prism(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_prism(load: bool = True) -> UnstructuredGrid | str:  # noqa: FBT001, FBT002
+def download_prism(*, load: Literal[False]) -> str: ...
+def download_prism(*, load: bool = True) -> UnstructuredGrid | str:
     """Download a prism model.
 
     .. versionadded:: 0.44.0
@@ -9008,11 +9332,10 @@ _dataset_prism = _SingleFileDownloadableDatasetLoader('prism.neu')
 
 
 @overload
-def download_t3_grid_0(load: Literal[True] = True) -> ImageData: ...  # noqa: FBT002
+def download_t3_grid_0(*, load: Literal[True] = True) -> ImageData: ...
 @overload
-def download_t3_grid_0(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_t3_grid_0(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
+def download_t3_grid_0(*, load: Literal[False]) -> str: ...
+def download_t3_grid_0(*, load: bool = True) -> ImageData | str:
     """Download a T3 grid 0 image.
 
     .. versionadded:: 0.44.0
@@ -9047,11 +9370,10 @@ _dataset_t3_grid_0 = _SingleFileDownloadableDatasetLoader('t3_grid_0.mnc')
 
 
 @overload
-def download_caffeine(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_caffeine(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_caffeine(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_caffeine(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_caffeine(*, load: Literal[False]) -> str: ...
+def download_caffeine(*, load: bool = True) -> PolyData | str:
     """Download the caffeine molecule.
 
     .. versionadded:: 0.44.0
@@ -9094,9 +9416,13 @@ def download_caffeine(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT
 _dataset_caffeine = _SingleFileDownloadableDatasetLoader('caffeine.pdb')
 
 
-@_deprecate_positional_args
+@overload
+def download_e07733s002i009(*, load: Literal[True] = True) -> ImageData: ...
+@overload
+def download_e07733s002i009(*, load: Literal[False]) -> str: ...
 def download_e07733s002i009(
-    load: bool = True,  # noqa: FBT001,FBT002
+    *,
+    load: bool = True,
 ) -> ImageData | str:  # pragma: no cover
     """Download an ``e07733s002i009`` image.
 
@@ -9132,11 +9458,10 @@ _dataset_e07733s002i009 = _SingleFileDownloadableDatasetLoader('E07733S002I009.M
 
 
 @overload
-def download_particles(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_particles(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_particles(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_particles(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_particles(*, load: Literal[False]) -> str: ...
+def download_particles(*, load: bool = True) -> PolyData | str:
     """Download a particle dataset.
 
     .. versionadded:: 0.44.0
@@ -9186,14 +9511,19 @@ _dataset_particles = _SingleFileDownloadableDatasetLoader(
 
 
 @overload
-def download_prostar(load: Literal[True] = True) -> UnstructuredGrid: ...  # noqa: FBT002
+def download_prostar(*, load: Literal[True] = True) -> UnstructuredGrid: ...
 @overload
-def download_prostar(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_prostar(load: bool = True) -> UnstructuredGrid | str:  # noqa: FBT001, FBT002
+def download_prostar(*, load: Literal[False]) -> str: ...
+def download_prostar(*, load: bool = True) -> UnstructuredGrid | str:
     """Download a prostar dataset.
 
     .. versionadded:: 0.44.0
+
+    .. note::
+        ``load=False`` returns only the file which is read directly, not the
+        other files downloaded alongside it. This is a legacy quirk of the
+        ``load`` argument. For every file belonging to this example, use
+        :func:`examples.get_example('prostar').paths <pyvista.examples.get_example>`.
 
     Parameters
     ----------
@@ -9232,11 +9562,10 @@ _dataset_prostar = _MultiFileDownloadableDatasetLoader(_prostar_files_func)
 
 
 @overload
-def download_3gqp(load: Literal[True] = True) -> PolyData: ...  # noqa: FBT002
+def download_3gqp(*, load: Literal[True] = True) -> PolyData: ...
 @overload
-def download_3gqp(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_3gqp(load: bool = True) -> PolyData | str:  # noqa: FBT001, FBT002
+def download_3gqp(*, load: Literal[False]) -> str: ...
+def download_3gqp(*, load: bool = True) -> PolyData | str:
     """Download a 3GQP dataset.
 
     .. versionadded:: 0.44.0
@@ -9271,14 +9600,19 @@ _dataset_3gqp = _SingleFileDownloadableDatasetLoader('3GQP.pdb')
 
 
 @overload
-def download_full_head(load: Literal[True] = True) -> ImageData: ...  # noqa: FBT002
+def download_full_head(*, load: Literal[True] = True) -> ImageData: ...
 @overload
-def download_full_head(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_full_head(load: bool = True) -> ImageData | str:  # noqa: FBT001, FBT002
+def download_full_head(*, load: Literal[False]) -> str: ...
+def download_full_head(*, load: bool = True) -> ImageData | str:
     """Download the full head image.
 
     .. versionadded:: 0.45.0
+
+    .. note::
+        ``load=False`` returns only the file which is read directly, not the
+        other files downloaded alongside it. This is a legacy quirk of the
+        ``load`` argument. For every file belonging to this example, use
+        :func:`examples.get_example('full_head').paths <pyvista.examples.get_example>`.
 
     Parameters
     ----------
@@ -9293,9 +9627,12 @@ def download_full_head(load: bool = True) -> ImageData | str:  # noqa: FBT001, F
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.download_full_head()
-    >>> dataset.plot(volume=True)
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import examples
+        >>> dataset = examples.download_full_head()
+        >>> dataset.plot(volume=True)
 
     .. seealso::
 
@@ -9316,14 +9653,19 @@ _dataset_full_head = _MultiFileDownloadableDatasetLoader(_full_head_files_func)
 
 
 @overload
-def download_nek5000(load: Literal[True] = True) -> UnstructuredGrid: ...  # noqa: FBT002
+def download_nek5000(*, load: Literal[True] = True) -> UnstructuredGrid: ...
 @overload
-def download_nek5000(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_nek5000(load: bool = True) -> UnstructuredGrid | str:  # noqa: FBT001, FBT002
+def download_nek5000(*, load: Literal[False]) -> str: ...
+def download_nek5000(*, load: bool = True) -> UnstructuredGrid | str:
     """Download 2D nek5000 data example.
 
     .. versionadded:: 0.45.0
+
+    .. note::
+        ``load=False`` returns only the file which is read directly, not the
+        other files downloaded alongside it. This is a legacy quirk of the
+        ``load`` argument. For every file belonging to this example, use
+        :func:`examples.get_example('nek5000').paths <pyvista.examples.get_example>`.
 
     Parameters
     ----------
@@ -9349,9 +9691,7 @@ def download_nek5000(load: bool = True) -> UnstructuredGrid | str:  # noqa: FBT0
             See this dataset in the Dataset Gallery for more info.
 
     """
-    # Silence info messages about 2D mesh found
-    with pv.vtk_verbosity('off'):
-        return _download_dataset(_dataset_nek5000, load=load)
+    return _download_dataset(_dataset_nek5000, load=load)
 
 
 def _nek_5000_download():
@@ -9364,11 +9704,10 @@ _dataset_nek5000 = _MultiFileDownloadableDatasetLoader(_nek_5000_download)
 
 
 @overload
-def download_biplane(load: Literal[True] = True) -> MultiBlock: ...  # noqa: FBT002
+def download_biplane(*, load: Literal[True] = True) -> MultiBlock: ...
 @overload
-def download_biplane(load: Literal[False]) -> str: ...
-@_deprecate_positional_args
-def download_biplane(load: bool = True) -> MultiBlock | str:  # noqa: FBT001, FBT002
+def download_biplane(*, load: Literal[False]) -> str: ...
+def download_biplane(*, load: bool = True) -> MultiBlock | str:
     """Download biplane dataset.
 
     .. warning::
@@ -9427,25 +9766,28 @@ def download_yinyang(*, load: bool = True) -> ImageData | str:
 
     Examples
     --------
-    Load the image and plot it as grayscale pixel cells.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> dataset = examples.download_yinyang()
-    >>> pixel_cells = dataset.points_to_cells()
-    >>> pixel_cells.plot(
-    ...     cmap='gray',
-    ...     clim=[0, 255],
-    ...     cpos='xy',
-    ...     zoom='tight',
-    ...     lighting=False,
-    ...     show_scalar_bar=False,
-    ...     show_axes=False,
-    ... )
+        Load the image and plot it as grayscale pixel cells.
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> dataset = examples.download_yinyang()
+        >>> pixel_cells = dataset.points_to_cells()
+        >>> pixel_cells.plot(
+        ...     cmap='gray',
+        ...     clim=[0, 255],
+        ...     cpos='xy',
+        ...     zoom='tight',
+        ...     lighting=False,
+        ...     show_scalar_bar=False,
+        ...     show_axes=False,
+        ... )
 
-        :ref:`Yinyang Dataset <yinyang_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
+
+            :ref:`Yinyang Dataset <yinyang_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_yinyang, load=load)
@@ -9515,6 +9857,12 @@ def download_teapot_vrml(*, load: bool = True) -> MultiBlock | str:
     dataset; the model has been freely distributed in computer graphics
     software for 50 years and is conventionally treated as public domain.
 
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
     Returns
     -------
     output : pyvista.MultiBlock | str
@@ -9548,6 +9896,12 @@ def download_sextant(*, load: Literal[False]) -> str: ...
 def download_sextant(*, load: bool = True) -> MultiBlock | str:
     """Download the sextant example.
 
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
     Returns
     -------
     output : pyvista.MultiBlock | str
@@ -9555,17 +9909,20 @@ def download_sextant(*, load: bool = True) -> MultiBlock | str:
 
     Examples
     --------
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> vrml_file = examples.download_sextant(load=False)
-    >>> pl = pv.Plotter()
-    >>> pl.import_vrml(vrml_file)
-    >>> pl.show()
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> vrml_file = examples.download_sextant(load=False)
+        >>> pl = pv.Plotter()
+        >>> pl.import_vrml(vrml_file)
+        >>> pl.show()
 
-        :ref:`Sextant Dataset <sextant_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
+
+            :ref:`Sextant Dataset <sextant_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_sextant, load=load)
@@ -9582,6 +9939,12 @@ def download_grasshopper(*, load: bool = True) -> MultiBlock | str:
     """Download the grasshopper example.
 
     .. versionadded:: 0.45
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
 
     Returns
     -------
@@ -9623,6 +9986,12 @@ def download_flamingo(*, load: bool = True) -> MultiBlock | str:
 
     .. versionadded:: 0.44.0
 
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
     Returns
     -------
     output : pyvista.MultiBlock | str
@@ -9655,6 +10024,12 @@ def download_damaged_helmet(*, load: Literal[True] = True) -> MultiBlock: ...
 def download_damaged_helmet(*, load: Literal[False]) -> str: ...
 def download_damaged_helmet(*, load: bool = True) -> MultiBlock | str:  # pragma: no cover
     """Download the damaged helmet example.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
 
     Returns
     -------
@@ -9691,6 +10066,12 @@ def download_gearbox(*, load: Literal[False]) -> str: ...
 def download_gearbox(*, load: bool = True) -> MultiBlock | str:  # pragma: no cover
     """Download the gearbox example.
 
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
     Returns
     -------
     output : pyvista.MultiBlock | str
@@ -9724,6 +10105,12 @@ def download_avocado(*, load: Literal[False]) -> str: ...
 def download_avocado(*, load: bool = True) -> MultiBlock | str:  # pragma: no cover
     """Download the avocado example.
 
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
     Returns
     -------
     output : pyvista.MultiBlock | str
@@ -9756,6 +10143,12 @@ def download_milk_truck(*, load: Literal[True] = True) -> MultiBlock: ...
 def download_milk_truck(*, load: Literal[False]) -> str: ...
 def download_milk_truck(*, load: bool = True) -> MultiBlock | str:  # pragma: no cover
     """Download the milk truck example.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
 
     Returns
     -------

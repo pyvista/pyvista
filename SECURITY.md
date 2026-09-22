@@ -19,7 +19,7 @@ PyVista **refuses** `.pkl` / `.pickle` extensions in `pyvista.read()` and `DataO
 
 **Why.** Pickle is a Python serialization protocol, not a mesh file format. Unpickling untrusted data is arbitrary code execution (CWE-502). A `pyvista.read(path)` call with an attacker-influenced `path` (downloaded data, shared notebook, copy-pasted command) would be a one-shot RCE if pickle dispatch were enabled.
 
-**What still works.** Python's pickle protocol via `DataObject.__getstate__` / `__setstate__` is unchanged — `multiprocessing`, `dask`, and `joblib` continue to work. `pyvista.set_pickle_format()` tunes that in-memory protocol.
+**What still works.** Python's pickle protocol via `DataObject.__getstate__` / `__setstate__` is unchanged — `multiprocessing`, `dask`, and `joblib` continue to work. That protocol always uses VTK's own marshalling.
 
 **Migration.**
 

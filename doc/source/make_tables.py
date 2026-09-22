@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Sequence
@@ -34,15 +35,16 @@ import docutils
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+import pyvista_validation as _validation
 from scipy.stats import linregress
 from sphinx.util import logging
 from sphinx.util.console import bold
 from sphinx.util.console import color_terminal
 from sphinx.util.console import darkgreen
 from sphinx.util.console import nocolor
+from typing_extensions import get_overloads
 
 import pyvista as pv
-from pyvista import _validation
 from pyvista.core.celltype import _CELL_TYPE_INFO
 from pyvista.core.celltype import PLACEHOLDER
 from pyvista.core.filters.data_object import _get_cell_quality_measures
@@ -54,10 +56,11 @@ from pyvista.core.utilities.reader import _CLASS_READER_RETURN_TYPE
 from pyvista.core.utilities.reader import CLASS_READERS
 from pyvista.core.utilities.reader import _mesh_types
 from pyvista.examples import cells
+from pyvista.examples._dataset_loader import _DOWNLOADABLE_TYPES
 from pyvista.examples._dataset_loader import _DatasetLoader
-from pyvista.examples._dataset_loader import _Downloadable
-from pyvista.examples._dataset_loader import _MultiFilePropsProtocol
-from pyvista.examples._dataset_loader import _SingleFilePropsProtocol
+from pyvista.examples._dataset_loader import _FileProps
+from pyvista.examples._get_example import _example_loader
+from pyvista.examples._get_example import _public_function
 from pyvista.plotting.colors import _CSS_COLORS
 from pyvista.plotting.colors import _PARAVIEW_COLORS
 from pyvista.plotting.colors import _TABLEAU_COLORS
@@ -99,6 +102,11 @@ DATASET_GALLERY_IMAGE_EXT_DICT = {
     'single_sphere_animation': '.gif',
     'dual_sphere_animation': '.gif',
 }
+# Substring of the one VTK warning each of these datasets logs with no fix on our side.
+DATASET_EXPECTED_VTK_OUTPUT: dict[str, str] = {
+    'can_crushed_vtu': 'Could not locate key vtkExodusIIReader::GLOBAL_TEMPORAL_VARIABLE',
+}
+
 # If there is no image, a dummy "Not Available" image is used instead.
 DATASET_GALLERY_IMAGE_NOT_AVAILABLE_PATH = os.path.join(DATASET_GALLERY_DIR, 'not_available.png')
 
@@ -318,7 +326,7 @@ def _meshio_info_dict():
                 meshio_info[class_name][format_name] = info
 
         # Store writer info next
-        cls = eval('pv.' + class_name)
+        cls = getattr(pv, class_name)
         writer_extensions = _swap_extension_mapping(cls._WRITERS)
         for writer, extensions in writer_extensions:
             # Check if the format was already added from the reader
@@ -1878,11 +1886,11 @@ def _get_fullname(typ: type[Any]) -> str:
 def _facet_slugify(text: str) -> str:
     """Turn a facet label into a CSS-class-safe slug, e.g. ``POLY_LINE`` -> ``poly-line``.
 
-    Dashes underscores too, matching what docutils' class-option parser does
-    to `:class-card:` on its own, so the slug agrees with the rendered class.
+    Dashes underscores and dots too, matching what docutils' class-option parser
+    does to `:class-card:` on its own, so the slug agrees with the rendered class.
     """
     text = re.sub(r'(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])', '-', text)
-    return text.lower().replace(' ', '-').replace('_', '-')
+    return text.lower().replace(' ', '-').replace('_', '-').replace('.', '-')
 
 
 def _facet_size_bin(total_size_bytes: int | None) -> tuple[str, str] | None:
@@ -1894,6 +1902,13 @@ def _facet_size_bin(total_size_bytes: int | None) -> tuple[str, str] | None:
         if size_mb < edge:
             return label, slug
     return DATASET_GALLERY_SIZE_BINS[-1][1], DATASET_GALLERY_SIZE_BINS[-1][2]
+
+
+def _no_reader_bin(loader: _DatasetLoader | _FileProps) -> tuple[str, str]:
+    """Return the (label, slug) saying why a loader with no reader has none."""
+    if isinstance(loader, _FileProps):
+        return 'N/A (read in code)', 'na-read-in-code'
+    return 'N/A (generated in code)', 'na'
 
 
 def _ljust_lines(lines: list[str], min_width=None) -> list[str]:
@@ -2240,19 +2255,22 @@ class DatasetCard:
         self,
         dataset_name: str,
         loader: _DatasetLoader,
+        *,
+        module: ModuleType,
+        function: Callable[..., Any],
     ):
         self.dataset_name = dataset_name
         self.loader = loader
+        self.module = module
+        self.function = function
         self.card = None
         self.ref = None
 
     def generate(self):
         # Get rst dataset name-related info
-        index_name, header_name, func_ref, func_doc, func_name = self._generate_dataset_name(
-            self.dataset_name,
-        )
+        index_name, header_name, func_ref, func_doc, func_name = self._generate_dataset_name()
         # Get thumbnail image path
-        module_name = self.loader._module.__name__.replace('.', '-')
+        module_name = self.module.__name__.replace('.', '-')
         ext = DATASET_GALLERY_IMAGE_EXT_DICT.get(self.dataset_name, '.png')
         if ext is None:
             img_path = self._create_default_image()
@@ -2280,14 +2298,12 @@ class DatasetCard:
             dimensions,
             spacing,
             n_arrays,
-        ) = DatasetCard._generate_dataset_properties(self.loader)
+        ) = DatasetCard._generate_dataset_properties(self.loader, self.module)
 
         # Get cross-references from docs
-        cross_references = DatasetCard._generate_cross_references(
-            self.dataset_name, index_name, header_name
-        )
+        cross_references = self._generate_cross_references(index_name, header_name)
 
-        class_card, facet_labels = DatasetCard._generate_facet_classes(self.loader)
+        class_card, facet_labels = DatasetCard._generate_facet_classes(self.loader, self.module)
         DatasetCardFetcher.FACET_LABELS.update(facet_labels)
 
         # Assemble rst parts into main blocks used by the card
@@ -2329,9 +2345,9 @@ class DatasetCard:
         )
 
     @staticmethod
-    def _generate_dataset_properties(loader):
+    def _generate_dataset_properties(loader, module: ModuleType):
         # Get data from loader
-        if isinstance(loader, _Downloadable):
+        if isinstance(loader, _DOWNLOADABLE_TYPES):
             loader.download()
 
         # properties collected by the loader
@@ -2340,7 +2356,7 @@ class DatasetCard:
         file_ext = DatasetPropsGenerator.generate_file_ext(loader)
         reader_type = DatasetPropsGenerator.generate_reader_type(loader)
         importer_meth = DatasetPropsGenerator.generate_importer_method(loader)
-        module_badge = DatasetPropsGenerator.generate_module_badge(loader)
+        module_badge = DatasetPropsGenerator.generate_module_badge(module)
         dataset_type = DatasetPropsGenerator.generate_dataset_type(loader)
         celltype_field = DatasetPropsGenerator.generate_celltype_field(loader)
         datasource_links = DatasetPropsGenerator.generate_datasource_links(loader)
@@ -2371,31 +2387,17 @@ class DatasetCard:
             n_arrays,
         )
 
-    @staticmethod
-    def _get_dataset_function(dataset_name: str) -> tuple[FunctionType, str]:
-        # Get the corresponding function of the loader
-        for func_name in ['download_' + dataset_name, 'load_' + dataset_name]:
-            for module in DATASET_GALLERY_MODULES:
-                if func := getattr(module, func_name, None):
-                    return func, func_name
-
-        msg = f'No load or download function was found for {dataset_name}.'
-        raise RuntimeError(msg)
-
-    @staticmethod
-    def _generate_dataset_name(dataset_name: str):
+    def _generate_dataset_name(self):
         # Format dataset name for indexing and section heading
-        index_name = dataset_name + '_dataset'
+        index_name = self.dataset_name + '_dataset'
         header = ' '.join([word.capitalize() for word in index_name.split('_')])
 
         # Get the card's header info
-        func, func_name = DatasetCard._get_dataset_function(dataset_name)
-        func_ref = f':func:`~{_get_fullname(func)}`'
-        func_doc = _get_doc(func)
-        return index_name, header, func_ref, func_doc, func_name
+        func_ref = f':func:`~{_get_fullname(self.function)}`'
+        func_doc = _get_doc(self.function)
+        return index_name, header, func_ref, func_doc, self.function.__name__
 
-    @staticmethod
-    def _generate_cross_references(dataset_name: str, index_name: str, header_name):
+    def _generate_cross_references(self, index_name: str, header_name):
         def find_seealso_refs(func: FunctionType) -> list[str]:
             # Find and return the :ref: references from the .. seealso:: directive
             # in the docstring of a function.
@@ -2439,8 +2441,7 @@ class DatasetCard:
 
             return refs
 
-        func, _ = DatasetCard._get_dataset_function(dataset_name)
-        refs = find_seealso_refs(func)
+        refs = find_seealso_refs(self.function)
 
         # Filter the references
         self_ref = f':ref:`{header_name} <{index_name}>`'
@@ -2458,8 +2459,8 @@ class DatasetCard:
             keep_refs.append(ref)
 
         assert self_ref_count == 1, (
-            f"Dataset '{dataset_name}' is missing a cross-reference link to its corresponding "
-            f'entry in the Dataset Gallery.\n'
+            f"Dataset '{self.dataset_name}' is missing a cross-reference link to its "
+            f'corresponding entry in the Dataset Gallery.\n'
             f'A reference link should be included in a see also directive, e.g.:\n'
             f'\n'
             f'    .. seealso::\n'
@@ -2565,7 +2566,9 @@ class DatasetCard:
         )
 
     @staticmethod
-    def _generate_facet_classes(loader: _DatasetLoader) -> tuple[str, dict[str, str]]:
+    def _generate_facet_classes(
+        loader: _DatasetLoader, module: ModuleType
+    ) -> tuple[str, dict[str, str]]:
         """Compute `:class-card:` CSS classes (and their labels) for the filter toolbar.
 
         A dataset gets one class per value per facet (e.g. multiple cell
@@ -2581,12 +2584,9 @@ class DatasetCard:
             classes.append(f'{prefix}-{slug}')
             labels[f'{prefix}-{slug}'] = value_name
 
-        add('mod', DATASET_GALLERY_MODULES[loader._module])
+        add('mod', DATASET_GALLERY_MODULES[module])
 
-        dataset_types = loader.unique_dataset_type
-        if not isinstance(dataset_types, tuple):
-            dataset_types = (dataset_types,)
-        for dataset_type in dataset_types:
+        for dataset_type in loader.unique_dataset_types:
             name = 'None' if dataset_type is type(None) else dataset_type.__name__
             add('dtype', name)
 
@@ -2597,17 +2597,17 @@ class DatasetCard:
         else:
             add('ctype', 'N/A (no cells)', slug='na')
 
-        reader_types = DatasetPropsGenerator._try_getattr(loader, 'unique_reader_type')
-        if reader_types is None:
-            add('reader', 'N/A (generated in code)', slug='na')
-        else:
-            if not isinstance(reader_types, tuple):
-                reader_types = (reader_types,)
-            for reader_type in reader_types:
-                add('reader', reader_type.__name__)
+        reader_types, companion_names = DatasetPropsGenerator._reader_names(loader)
+        for reader_type in reader_types:
+            add('reader', reader_type.__name__)
+        for name in companion_names:
+            add('reader', name)
+        if not reader_types and not companion_names:
+            add('reader', *_no_reader_bin(loader))
 
         # Uses DATASET_GALLERY_SIZE_BINS' own slugs so bins sort numerically, not alphabetically.
-        total_size_bytes = DatasetPropsGenerator._try_getattr(loader, '_total_size_bytes')
+        file_sizes = DatasetPropsGenerator._try_getattr(loader, '_file_sizes')
+        total_size_bytes = None if file_sizes is None else sum(file_sizes)
         size_bin = _facet_size_bin(total_size_bytes)
         size_label, size_slug = size_bin or ('N/A (no file)', 'na')
         add('size', size_label, slug=size_slug)
@@ -2716,17 +2716,15 @@ class DatasetPropsGenerator:
         return '``' + str(num) + '``' if num else None
 
     @staticmethod
-    def generate_file_ext(loader: _SingleFilePropsProtocol | _MultiFilePropsProtocol):
+    def generate_file_ext(loader: _FileProps):
         # Format extension as single str with rst backticks
         # Multiple extensions are comma-separated
         def _format_ext(file_ext_: list[str]):
             return sep.join(['``' + ext + '``' for ext in file_ext_])
 
         sep = ',\n'
-        file_ext = DatasetPropsGenerator._try_getattr(loader, 'unique_extension')
+        file_ext = DatasetPropsGenerator._try_getattr(loader, 'unique_extensions')
         if file_ext:
-            file_ext = loader.unique_extension
-            file_ext = [file_ext] if isinstance(file_ext, str) else file_ext
             if len(file_ext) > 10:
                 # Limit number of extensions displayed
                 first = _format_ext(file_ext[:3])
@@ -2736,53 +2734,57 @@ class DatasetPropsGenerator:
         return None
 
     @staticmethod
+    def _reader_names(
+        loader: _DatasetLoader | _FileProps,
+    ) -> tuple[tuple[type[pv.BaseReader[Any]], ...], tuple[str, ...]]:
+        """Return the loader's built-in reader types and its companion-package reader names."""
+        get = DatasetPropsGenerator._try_getattr
+        return (
+            get(loader, 'unique_reader_types') or (),
+            get(loader, 'unique_companion_reader_names') or (),
+        )
+
+    @staticmethod
     def generate_reader_type(
-        loader: _SingleFilePropsProtocol | _MultiFilePropsProtocol,
+        loader: _FileProps,
     ):
         """Format reader type(s) with doc references to reader class(es)."""
-        reader_type = DatasetPropsGenerator._try_getattr(loader, 'unique_reader_type')
-        if reader_type is None:
-            return '``N/A (generated in code)``'
-        else:
-            reader_type = (
-                repr(loader.unique_reader_type)
-                .replace("<class '", ':class:`~')
-                .replace("'>", '`')
-                .replace('(', '')
-                .replace(')', '')
-            ).replace(', ', '\n')
-        return reader_type
+        reader_types, companion_names = DatasetPropsGenerator._reader_names(loader)
+        fields = [f':class:`~{_get_fullname(cls)}`' for cls in reader_types]
+        # A companion package's reader is outside the pyvista API, so there is no page for it.
+        fields += [f'``{name}``' for name in companion_names]
+        if fields:
+            return '\n'.join(fields)
+        label, _ = _no_reader_bin(loader)
+        return f'``{label}``'
 
     @staticmethod
     def generate_importer_method(
-        loader: _SingleFilePropsProtocol | _MultiFilePropsProtocol,
+        loader: _FileProps,
     ):
         """Format Plotter importer method with a doc reference."""
-        reader_type = DatasetPropsGenerator._try_getattr(loader, 'unique_reader_type')
-        if reader_type is None:
+        reader_types = DatasetPropsGenerator._try_getattr(loader, 'unique_reader_types')
+        if not reader_types or len(reader_types) != 1:
             return None
 
-        if importer := READER_IMPORTERS.get(reader_type):
+        if importer := READER_IMPORTERS.get(reader_types[0]):
             return f':meth:`~pyvista.Plotter.{importer}`'
         return None
 
     @staticmethod
     def generate_dataset_type(loader: _DatasetLoader):
         """Format dataset type(s) with doc references to dataset class(es)."""
-        dataset_types = loader.unique_dataset_type
-        if not isinstance(dataset_types, tuple):
-            dataset_types = (dataset_types,)
         return '\n'.join(
             '``None``' if cls is type(None) else f':class:`~{_get_fullname(cls)}`'
-            for cls in dataset_types
+            for cls in loader.unique_dataset_types
         )
 
     @staticmethod
-    def generate_module_badge(loader: _DatasetLoader):
+    def generate_module_badge(module: ModuleType):
         """Format the dataset's source module as a small badge linking to its module page."""
-        label = DATASET_GALLERY_MODULES[loader._module]
-        color = DATASET_GALLERY_MODULE_BADGE_COLORS[loader._module]
-        module_path = loader._module.__name__
+        label = DATASET_GALLERY_MODULES[module]
+        color = DATASET_GALLERY_MODULE_BADGE_COLORS[module]
+        module_path = module.__name__
         return f':bdg-ref-{color}:`{label} <{module_path}>`'
 
     @staticmethod
@@ -2816,16 +2818,12 @@ class DatasetPropsGenerator:
         def _rst_link(name, url):
             return f'`{name} <{url}>`_'
 
-        if not isinstance(loader, _Downloadable):
+        if not isinstance(loader, _DOWNLOADABLE_TYPES):
             return None
-        # Collect url names and links as sequences
-        name = loader.source_name
-        names = [name] if isinstance(name, str) else name
-        url = loader.web_url
-        urls = [url] if isinstance(url, str) else url
-
         # Use dict to create an ordered set to make sure links are unique
-        url_dict = {url: name for name, url in zip(names, urls, strict=True)}
+        url_dict = {
+            url: name for name, url in zip(loader.source_names, loader.web_urls, strict=True)
+        }
 
         rst_links = [_rst_link(name, url) for url, name in url_dict.items()]
         return '\n'.join(rst_links)
@@ -2941,32 +2939,47 @@ def _build_dataset_card(module_name: str, dataset_name: str) -> _DatasetCardResu
     worker process independently of every other dataset's card.
     """
     module = importlib.import_module(module_name)
-    dataset_loader: _DatasetLoader = getattr(module, f'_dataset_{dataset_name}')
-    # Store module and function as dynamic properties for access later
-    dataset_loader._module = module
-    try:
-        dataset_loader._function = getattr(module, f'download_{dataset_name}')
-    except AttributeError:
-        dataset_loader._function = getattr(module, f'load_{dataset_name}')
+    dataset_loader = _example_loader(module, dataset_name)
+    assert dataset_loader is not None
+    function = _public_function(module, dataset_name)
 
     module_display = module_name.removeprefix('pyvista.')
     summary = bold(f'generating rst for {module_display}...')
     print(f'{summary} {darkgreen(dataset_name)}', flush=True)
-    if isinstance(dataset_loader, _Downloadable):
-        dataset_loader.download()
-    dataset_loader.load_and_store_dataset()
-    assert dataset_loader.dataset is not None
+    with pv.VtkErrorCatcher(send_to_logging=False) as catcher:
+        if isinstance(dataset_loader, _DOWNLOADABLE_TYPES):
+            dataset_loader.download()
+        dataset_loader.load_and_store_dataset()
+        assert dataset_loader.dataset is not None
 
-    card = DatasetCard(dataset_name, dataset_loader)
-    # indent one level from the carousel header directive
-    DatasetCardFetcher.FACET_LABELS.clear()
-    rst = _pad_lines(card.generate(), pad_left='   ')
-    facet_labels = dict(DatasetCardFetcher.FACET_LABELS)
+        card = DatasetCard(dataset_name, dataset_loader, module=module, function=function)
+        # indent one level from the carousel header directive
+        DatasetCardFetcher.FACET_LABELS.clear()
+        rst = _pad_lines(card.generate(), pad_left='   ')
+        facet_labels = dict(DatasetCardFetcher.FACET_LABELS)
 
-    type_mismatch = _validate_function_annotation(card)
-    dataset_loader.clear_dataset()
+        type_mismatch = _validate_function_annotation(card)
+        dataset_loader.clear_dataset()
+    _raise_for_vtk_output(dataset_name, catcher.events)
 
     return _DatasetCardResult(dataset_name, rst, facet_labels, type_mismatch)
+
+
+def _raise_for_vtk_output(dataset_name: str, events: list[pv.VtkEvent]) -> None:
+    """Fail the build when a dataset's card logs VTK output that is not expected."""
+    expected = DATASET_EXPECTED_VTK_OUTPUT.get(dataset_name)
+    unexpected = [
+        event
+        for event in events
+        if expected is None or expected not in ' '.join(str(event).split())
+    ]
+    if not unexpected:
+        return
+    counts = Counter(' '.join(str(event).split()) for event in unexpected)
+    header = f'{dataset_name} logged {len(unexpected)} unexpected VTK error(s) or warning(s):'
+    body = '\n'.join(f'    {count}x {message}' for message, count in counts.items())
+    msg = f'{header}\n{body}'
+    raise RuntimeError(msg)
 
 
 class DatasetCardFetcher:
@@ -3115,28 +3128,65 @@ class DatasetCarousel(DocTable):
         return path
 
 
+def _annotation_str(annotation: Any) -> str:
+    """Return a return annotation as the source text it was written as."""
+    if isinstance(annotation, str):
+        return annotation
+    return getattr(annotation, '__name__', str(annotation))
+
+
+def _union_members(annotation: str) -> set[str]:
+    """Split a return annotation into its union members, so order does not matter."""
+    return {part.strip() for part in annotation.split('|')}
+
+
+def _expected_return_types(card: DatasetCard) -> tuple[str, str]:
+    """Return the dataset type an example loads and the type ``load=False`` gives back."""
+    dataset_type = type(card.loader.dataset).__name__
+    # `_download_dataset` collapses to a bare path only when there is one to return
+    loadable = getattr(card.loader, 'loadable_paths', ())
+    return dataset_type, 'str' if len(loadable) == 1 else 'tuple[str, ...]'
+
+
 def _validate_function_annotation(card: DatasetCard) -> str | None:
-    """Return a mismatch message if the download/load function's return annotation is wrong."""
-    if card.loader._module not in DATASET_GALLERY_MODULES:
+    """Return a message if a download/load function's return annotations are wrong.
+
+    Every ``@overload`` is checked as well as the implementation, because the overloads
+    are what a caller and a type checker actually see; an implementation annotated as a
+    union says nothing about which branch returns which half.
+    """
+    if card.module not in DATASET_GALLERY_MODULES:
         return None
 
-    runtime_name = type(card.loader.dataset).__name__
-    function = card.loader._function
-    params = inspect.signature(function).parameters
+    function = card.function
+    signature = inspect.signature(function)
+    dataset_type, path_type = _expected_return_types(card)
 
-    expected_annotation = runtime_name
-    if 'texture' in params:
-        expected_annotation = f'Texture | {expected_annotation}'
-    if 'load' in params:
-        expected_annotation += ' | str'
+    expected = {dataset_type}
+    if 'texture' in signature.parameters:
+        expected.add('Texture')
+    if 'load' in signature.parameters:
+        expected.add(path_type)
 
-    ann = inspect.signature(function).return_annotation
-    ann_name = ann if isinstance(ann, str) else ann.__name__
-    if expected_annotation != ann_name:
-        return (
-            f'{function.__name__!r} annotated type is {ann_name!r}, '
-            f'expected {expected_annotation!r}'
-        )
+    problems = []
+    actual = _annotation_str(signature.return_annotation)
+    if _union_members(actual) != expected:
+        problems.append(f'annotated {actual!r}, expected {" | ".join(sorted(expected))!r}')
+
+    for overload in get_overloads(function):
+        overload_signature = inspect.signature(overload)
+        load = overload_signature.parameters.get('load')
+        if load is None or 'Literal[False]' not in _annotation_str(load.annotation):
+            continue
+        returns = _annotation_str(overload_signature.return_annotation)
+        if _union_members(returns) != {path_type}:
+            problems.append(
+                f'`load=False` overload returns {returns!r}, expected {path_type!r}',
+            )
+
+    if problems:
+        joined = '\n\t'.join(problems)
+        return f'{function.__name__!r}:\n\t{joined}'
     return None
 
 

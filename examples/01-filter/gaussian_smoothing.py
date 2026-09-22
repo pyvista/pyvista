@@ -38,6 +38,7 @@ for std_dev in [2.0, 4.0, 8.0]:
         std_dev=std_dev
     )
 
+PYVISTA_GALLERY_FORCE_STATIC = True
 pv.plot_compare(
     datasets,
     rgb=True,

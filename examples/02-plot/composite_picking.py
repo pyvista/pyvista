@@ -27,8 +27,8 @@ def make_poly():
     poly = pv.ParametricSuperEllipsoid(
         n1=rng.random(),
         n2=rng.random() * 2,
-        u_res=50,
-        v_res=50,
+        u_res=25,
+        v_res=25,
     )
     poly.points += rng.random(3) * 20
     return poly

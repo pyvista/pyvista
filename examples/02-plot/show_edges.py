@@ -20,8 +20,8 @@ Uses the :attr:`~pyvista.Property.show_edges` property.
 # sphinx_gallery_thumbnail_number = 1
 from pyvista import examples
 
-bust = examples.download_washington_bust()
+cow = examples.download_cow()
 
-bust.plot(show_edges=True, color=True)
+cow.plot(show_edges=True, color=True, cpos='xy')
 # %%
 # .. tags:: plot

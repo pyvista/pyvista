@@ -19,12 +19,13 @@ from typing import overload
 import urllib.parse
 
 import numpy as np
+import numpy.typing as npt
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista._version import _is_deprecation_due
 from pyvista._warn_external import warn_external
-from pyvista.core import _validation
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import _classproperty
 from pyvista.core.utilities.misc import _NoNewAttrMixin
@@ -33,6 +34,7 @@ from .observers import Observer
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+    from collections.abc import Mapping
     import re
 
     import imageio
@@ -76,6 +78,16 @@ _ReadReturnT = TypeVar('_ReadReturnT', bound='DataObject')
 
 
 class _FileIOBase(ABC, _NoNewAttrMixin):
+    """Base class for readers and writers, which are matched to files by extension.
+
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
+
+
+    """
+
     _vtk_class_name: str = ''
 
     def __repr__(self) -> str:
@@ -89,8 +101,7 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
 
     @path.setter
     @abstractmethod
-    def path(self, path: str | Path) -> None:
-        """Set the path."""
+    def path(self, path: str | Path) -> None: ...
 
     @_classproperty
     def _vtk_class(cls) -> _vtk.vtkWriter | None:  # noqa: N805
@@ -100,7 +111,11 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
 
     @classmethod
     @abstractmethod
-    def _get_extension_mappings(cls) -> list[dict[str, type]]: ...
+    def _get_extension_mappings(cls) -> list[dict[str, type]]:
+        # Subclasses must override this, but `extensions` is a `_classproperty` and so is
+        # evaluated on this class too, e.g. when Sphinx imports it. Match
+        # `_get_extension_pattern_mappings` and return nothing rather than None.
+        return []
 
     @classmethod
     def _get_extension_pattern_mappings(
@@ -114,6 +129,11 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
 
         These extensions are used by :func:`~pyvista.read` and :class:`~pyvista.DataObject.save`
         to determine which reader and/or writer is used for reading and/or saving files.
+
+        Returns
+        -------
+        tuple[str, ...]
+            File extensions associated with this class.
 
         """
         extensions = set()
@@ -129,6 +149,11 @@ class _FileIOBase(ABC, _NoNewAttrMixin):
 
         These extensions are used by :func:`~pyvista.read` and :class:`~pyvista.DataObject.save`
         to determine which reader and/or writer is used for reading and/or saving files.
+
+        Returns
+        -------
+        tuple[re.Pattern[str], ...]
+            Regex patterns associated with this class.
 
         """
         patterns = {
@@ -159,8 +184,23 @@ def _warn_multiblock_nested_field_data(mesh: pv.DataObject) -> None:
             warn_external(msg)
 
 
+def _validate_pickle_format(format: str) -> Literal['vtk', 'xml', 'legacy']:  # noqa: A002
+    """Normalize a pickle format name and raise for unsupported values."""
+    supported = {'vtk', 'xml', 'legacy'}
+    format_ = cast('Literal["vtk", "xml", "legacy"]', format.lower())
+    if format_ not in supported:
+        msg = (
+            f'Unsupported pickle format `{format_}`. Valid options are `{"`, `".join(supported)}`.'
+        )
+        raise ValueError(msg)
+    return format_
+
+
 def set_pickle_format(format: Literal['vtk', 'xml', 'legacy']) -> None:  # noqa: A002
     """Set the format used to serialize :class:`pyvista.DataObject` when pickled.
+
+    .. deprecated:: 0.50
+        The ``'vtk'`` format is the only supported pickle format and is always used.
 
     .. note::
 
@@ -182,31 +222,25 @@ def set_pickle_format(format: Literal['vtk', 'xml', 'legacy']) -> None:  # noqa:
         - ``'xml'``: objects are serialized as an XML-formatted string.
         - ``'legacy'`` objects are serialized to bytes in VTK's binary format.
 
-        .. note::
-
-            The ``'vtk'`` format requires VTK 9.3 or greater.
-
-        .. warning::
-
-            ``'xml'`` and ``'legacy'`` are not recommended. These formats are not
-            officially supported by VTK and have limitations. For example, these
-            formats cannot be used to pickle :class:`pyvista.MultiBlock`.
-
     Raises
     ------
     ValueError
         If the provided format is not supported.
 
     """
-    supported = {'vtk', 'xml', 'legacy'}
-    format_ = cast('Literal["vtk", "xml", "legacy"]', format.lower())
-    if format_ not in supported:
-        msg = (
-            f'Unsupported pickle format `{format_}`. Valid options are `{"`, `".join(supported)}`.'
-        )
-        raise ValueError(msg)
+    msg = (
+        '`pyvista.set_pickle_format` is deprecated. The `vtk` format is the only supported '
+        'pickle format and is always used.'
+    )
+    warn_external(msg, PyVistaDeprecationWarning)
+    if _is_deprecation_due((0, 53)):  # pragma: no cover
+        msg = 'Convert this deprecation warning into an error.'
+        raise RuntimeError(msg)
+    if _is_deprecation_due((0, 54)):  # pragma: no cover
+        msg = 'Remove this deprecated function.'
+        raise RuntimeError(msg)
 
-    pv.PICKLE_FORMAT = format_
+    pv._PICKLE_FORMAT = _validate_pickle_format(format)
 
 
 def _get_ext_force(filename: str | Path, force_ext: str | None = None) -> str:
@@ -252,33 +286,20 @@ def get_ext(filename: str | Path) -> str:
     return ext
 
 
+# fmt: off
+# ruff: disable[E501]
 @overload
+def read(filename: PathStrSeq, *, force_ext: str | None = ..., file_format: str | None = ..., progress_bar: bool = ..., cls: type[_ReadReturnT], validate: bool | None = ...) -> _ReadReturnT: ...
+@overload
+def read(filename: PathStrSeq, *, force_ext: str | None = ..., file_format: str | None = ..., progress_bar: bool = ..., cls: None = ..., validate: bool | None = ...) -> DataSet | MultiBlock: ...
+# ruff: enable[E501]
+# fmt: on
 def read(
     filename: PathStrSeq,
-    force_ext: str | None = ...,
-    file_format: str | None = ...,
-    progress_bar: bool = ...,  # noqa: FBT001
     *,
-    cls: type[_ReadReturnT],
-    validate: bool | None = ...,
-) -> _ReadReturnT: ...
-@overload
-def read(
-    filename: PathStrSeq,
-    force_ext: str | None = ...,
-    file_format: str | None = ...,
-    progress_bar: bool = ...,  # noqa: FBT001
-    *,
-    cls: None = ...,
-    validate: bool | None = ...,
-) -> DataSet | MultiBlock: ...
-@_deprecate_positional_args(allowed=['filename'])
-def read(  # noqa: PLR0917
-    filename: PathStrSeq,
     force_ext: str | None = None,
     file_format: str | None = None,
-    progress_bar: bool = False,  # noqa: FBT001, FBT002
-    *,
+    progress_bar: bool = False,
     cls: type[DataObject] | None = None,
     validate: bool | None = None,
     **kwargs,
@@ -371,6 +392,13 @@ def read(  # noqa: PLR0917
                 setattr(reader, key, value)
             mesh = reader.read()
 
+        When the extension resolves to a callable registered with
+        :func:`pyvista.register_reader`, ``**kwargs`` is forwarded to that
+        callable as ``handler(path, **kwargs)`` instead. ``progress_bar`` and
+        ``validate`` are never forwarded, and a callable that overrides an
+        extension PyVista already reads is bypassed entirely so that these
+        arguments keep naming attributes of the built-in reader.
+
         .. versionadded:: 0.49
 
     Returns
@@ -426,6 +454,22 @@ def read(  # noqa: PLR0917
     return result
 
 
+def _needs_reader_object(
+    ext: str, *, progress_bar: bool, validate: bool | None, kwargs: dict[str, Any]
+) -> bool:
+    """Return ``True`` when the caller asked for something a handler cannot serve.
+
+    ``progress_bar`` and ``validate`` are reader-object features, and for a
+    built-in extension ``kwargs`` name attributes of the built-in reader. An
+    override of such an extension therefore steps aside rather than
+    reinterpreting any of the three.
+    """
+    from pyvista.core.utilities.reader import CLASS_READERS  # noqa: PLC0415
+
+    asked = progress_bar or validate is not None or bool(kwargs)
+    return asked and ext in CLASS_READERS
+
+
 def _read_dispatch(  # noqa: PLR0911
     filename: PathStrSeq,
     *,
@@ -451,6 +495,7 @@ def _read_dispatch(  # noqa: PLR0911
                     file_format=file_format,
                     progress_bar=progress_bar,
                     validate=validate,
+                    **kwargs,
                 ),
                 name,
             )
@@ -460,6 +505,7 @@ def _read_dispatch(  # noqa: PLR0911
     from pyvista.core.utilities.reader_registry import LocalFileRequiredError  # noqa: PLC0415
     from pyvista.core.utilities.reader_registry import _download_uri  # noqa: PLC0415
     from pyvista.core.utilities.reader_registry import _get_ext_handler  # noqa: PLC0415
+    from pyvista.core.utilities.reader_registry import _missing_reader_message  # noqa: PLC0415
     from pyvista.core.utilities.reader_registry import has_scheme  # noqa: PLC0415
 
     # Handle remote URIs before Path coercion
@@ -472,12 +518,14 @@ def _read_dispatch(  # noqa: PLR0911
         # natively (e.g. zarr stores on S3). If it fails, fall back to
         # downloading the file and retrying with a local path.
         ext_handler = _get_ext_handler(uri_ext)
-        if ext_handler is not None:
+        if ext_handler is not None and not _needs_reader_object(
+            uri_ext, progress_bar=progress_bar, validate=validate, kwargs=kwargs
+        ):
             try:
-                return ext_handler(filename)
+                return ext_handler(filename, **kwargs)
             except LocalFileRequiredError:
                 filename = _download_uri(filename, uri_ext)
-                return ext_handler(filename)
+                return ext_handler(filename, **kwargs)
         filename = _download_uri(filename, uri_ext)
 
     filename = Path(filename).expanduser().resolve()
@@ -495,8 +543,13 @@ def _read_dispatch(  # noqa: PLR0911
 
     # Check for registered custom extension readers
     ext_handler = _get_ext_handler(ext)
-    if ext_handler is not None:
-        return ext_handler(str(filename))
+    if ext_handler is not None and not _needs_reader_object(
+        ext, progress_bar=progress_bar, validate=validate, kwargs=kwargs
+    ):
+        return ext_handler(str(filename), **kwargs)
+
+    if (missing := _missing_reader_message(ext, str(filename))) is not None:
+        raise ImportError(missing)
 
     try:
         reader = pv.get_reader(filename, force_ext)
@@ -512,11 +565,6 @@ def _read_dispatch(  # noqa: PLR0911
         try:
             return read_meshio(filename)
         except ReadError:
-            if ext == '.pv':  # pragma: no cover
-                msg += (
-                    "\nThe '.pv' extension is supported by the `pyvista-zstd` package. "
-                    'It can be installed with `pyvista[io]`.'
-                )
             raise OSError(msg)
     else:
         _set_reader_attributes(reader, **kwargs)
@@ -558,8 +606,7 @@ def _set_reader_attributes(reader: BaseReader[Any], **kwargs) -> None:
         setattr(reader, name, value)
 
 
-@_deprecate_positional_args(allowed=['filename'])
-def read_texture(filename: str | Path, progress_bar: bool = False) -> Texture:  # noqa: FBT001, FBT002
+def read_texture(filename: str | Path, *, progress_bar: bool = False) -> Texture:
     """Load a texture from an image file.
 
     Will attempt to read any file type supported by ``vtk``, however
@@ -597,25 +644,25 @@ def read_texture(filename: str | Path, progress_bar: bool = False) -> Texture:  
         # initialize the reader using the extension to find it
 
         image = read(filename, progress_bar=progress_bar)
-        if image.n_points < 2:
+        if not isinstance(image, pv.ImageData) or image.n_points < 2:
             msg = 'Problem reading the image with VTK.'
             raise ValueError(msg)
-        return pv.Texture(image)  # type: ignore[abstract]
+        return pv.Texture(image)
     except (KeyError, ValueError):
         # Otherwise, use the imageio reader
         pass
 
-    return pv.Texture(_try_imageio_imread(filename))  # type: ignore[abstract] # pragma: no cover
+    return pv.Texture(_try_imageio_imread(filename))  # pragma: no cover
 
 
-@_deprecate_positional_args(allowed=['filename'])
-def read_exodus(  # noqa: PLR0917
+def read_exodus(
     filename: str | Path,
-    animate_mode_shapes: bool = True,  # noqa: FBT001, FBT002
-    apply_displacements: bool = True,  # noqa: FBT001, FBT002
+    *,
+    animate_mode_shapes: bool = True,
+    apply_displacements: bool = True,
     displacement_magnitude: float = 1.0,
-    read_point_data: bool = True,  # noqa: FBT001, FBT002
-    read_cell_data: bool = True,  # noqa: FBT001, FBT002
+    read_point_data: bool = True,
+    read_cell_data: bool = True,
     enabled_sidesets: Iterable[str | int] | None = None,
 ) -> DataSet | MultiBlock:
     """Read an ExodusII file (``'.e'`` or ``'.exo'``).
@@ -706,10 +753,10 @@ def read_exodus(  # noqa: PLR0917
     return cast('pv.DataSet', wrap(reader.GetOutput()))
 
 
-@_deprecate_positional_args(allowed=['filename'])
 def read_grdecl(
     filename: str | Path,
-    elevation: bool = True,  # noqa: FBT001, FBT002
+    *,
+    elevation: bool = True,
     other_keywords: Sequence[str] | None = None,
 ) -> ExplicitStructuredGrid:
     """Read a GRDECL file (``'.GRDECL'``).
@@ -774,20 +821,20 @@ def _read_grdecl(
         'ZONES',
     )
 
+    # fmt: off
+    # ruff: disable[E501]
     @overload
+    def read_keyword(f: TextIO, *, split: Literal[True] = True, converter: type = ...) -> list[str]: ...
+    @overload
+    def read_keyword(f: TextIO, *, split: Literal[False] = False, converter: type = ...) -> str: ...
+    @overload
+    def read_keyword(f: TextIO, *, split: bool = ..., converter: type = ...) -> list[str]: ...
+    # ruff: enable[E501]
+    # fmt: on
     def read_keyword(
         f: TextIO,
-        split: Literal[True] = True,  # noqa: FBT002
-        converter: type = ...,
-    ) -> list[str]: ...
-    @overload
-    def read_keyword(f: TextIO, split: Literal[False] = False, converter: type = ...) -> str: ...  # noqa: FBT002
-    @overload
-    def read_keyword(f: TextIO, split: bool = ..., converter: type = ...) -> list[str]: ...  # noqa: FBT001
-    @_deprecate_positional_args(allowed=['f'])
-    def read_keyword(
-        f: TextIO,
-        split: bool = True,  # noqa: FBT001, FBT002
+        *,
+        split: bool = True,
         converter: type | None = None,
     ) -> str | list[str]:
         """Read a keyword.
@@ -1062,7 +1109,7 @@ def _read_grdecl(
 
 # unused; the shims exist solely to keep the import path callable while always
 # raising. They must accept any historical call signature unchanged.
-def read_pickle(*args: Any, **kwargs: Any) -> NoReturn:  # noqa: ARG001
+def read_pickle(*args: Any, **kwargs: Any) -> NoReturn:  # noqa: ARG001  # numpydoc ignore=PR01
     """Raise :class:`ValueError`—pickle is not a supported mesh file format.
 
     This shim is kept only for backwards-compatible import paths. See
@@ -1074,7 +1121,7 @@ def read_pickle(*args: Any, **kwargs: Any) -> NoReturn:  # noqa: ARG001
     _raise_pickle_removed()
 
 
-def save_pickle(*args: Any, **kwargs: Any) -> NoReturn:  # noqa: ARG001
+def save_pickle(*args: Any, **kwargs: Any) -> NoReturn:  # noqa: ARG001  # numpydoc ignore=PR01
     """Raise :class:`ValueError`—pickle is not a supported mesh file format.
 
     See :func:`read_pickle`.
@@ -1302,25 +1349,26 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
         ]
 
     # Single cell type (except POLYGON and POLYHEDRON)
+    cells: list[tuple[str, Any]]
     if vtk_celltypes.min() == vtk_celltypes.max() and vtk_celltypes[0] not in {
         pv.CellType.POLYGON,
         pv.CellType.POLYHEDRON,
     }:
         vtk_celltype = vtk_celltypes[0]
-        cells = connectivity.reshape((mesh.n_cells, connectivity.size // mesh.n_cells))
+        cell_ids = connectivity.reshape((mesh.n_cells, connectivity.size // mesh.n_cells))
 
         if vtk_celltype == pv.CellType.PIXEL:
-            cells = cells[:, [0, 1, 3, 2]]
+            cell_ids = cell_ids[:, [0, 1, 3, 2]]
             celltype = 'quad'
 
         elif vtk_celltype == pv.CellType.VOXEL:
-            cells = cells[:, [0, 1, 3, 2, 4, 5, 7, 6]]
+            cell_ids = cell_ids[:, [0, 1, 3, 2, 4, 5, 7, 6]]
             celltype = 'hexahedron'
 
         else:
             celltype = vtk_to_meshio_type[vtk_celltype]
 
-        cells = [(celltype, cells)]
+        cells = [(celltype, cell_ids)]
 
     # Mixed cell types
     else:
@@ -1330,7 +1378,7 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
         for i, (i1, i2, vtk_celltype) in enumerate(
             zip(offset[:-1], offset[1:], vtk_celltypes, strict=False)
         ):
-            cell = connectivity[i1:i2]
+            cell: Any = connectivity[i1:i2]
 
             if vtk_celltype == pv.CellType.POLYHEDRON:
                 celltype = f'polyhedron{len(cell)}'
@@ -1375,7 +1423,7 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
         for k, v in vtk_cell_data.items()
     }
 
-    return meshio.Mesh(mesh.points, cells, point_data=point_data, cell_data=cell_data)
+    return meshio.Mesh(mesh.points, cells, point_data=point_data, cell_data=cell_data)  # type: ignore[arg-type]
 
 
 def read_meshio(filename: str | Path, file_format: str | None = None) -> UnstructuredGrid:
@@ -1516,6 +1564,11 @@ def _validate_pass_data(pass_data: _PassDataOptions) -> tuple[bool, bool, bool]:
     return pass_point_data, pass_cell_data, pass_field_data
 
 
+def _as_arrays(attributes: Mapping[str, npt.ArrayLike]) -> dict[str, NumpyArray[Any]]:
+    """Return the attribute mapping with every value as an array."""
+    return {name: np.asarray(value) for name, value in attributes.items()}
+
+
 def from_trimesh(
     mesh: trimesh.Trimesh, *, pass_data: _PassDataOptions = True
 ) -> PolyData:  # numpydoc ignore=RT01
@@ -1574,10 +1627,10 @@ def from_trimesh(
             and (uv := visual.uv) is not None
         ):
             polydata.active_texture_coordinates = uv
-        polydata.point_data.update(mesh.vertex_attributes, copy=False)
+        polydata.point_data.update(_as_arrays(mesh.vertex_attributes), copy=False)
 
     if pass_cell_data:
-        polydata.cell_data.update(mesh.face_attributes, copy=False)
+        polydata.cell_data.update(_as_arrays(mesh.face_attributes), copy=False)
 
     if pass_field_data:
         for key, val in mesh.metadata.items():
@@ -1646,7 +1699,7 @@ def to_trimesh(  # numpydoc ignore=RT01
         raise ImportError(msg)
 
     # Avoid circular import
-    from pyvista.core.dataobject import USER_DICT_KEY  # noqa: PLC0415
+    from pyvista.core.utilities.arrays import USER_DICT_KEY  # noqa: PLC0415
 
     _validation.check_instance(mesh, pv.DataSet, name='mesh')
 

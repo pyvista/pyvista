@@ -65,7 +65,7 @@ strl = grid.streamlines_from_source(
 
 pl = pv.Plotter()
 pl.add_mesh(
-    strl.tube(radius=0.1),
+    strl.tube(radius=0.1, n_sides=6),
     cmap='bwr',
     ambient=0.2,
 )

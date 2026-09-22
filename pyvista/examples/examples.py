@@ -2,9 +2,11 @@
 
 Examples
 --------
->>> from pyvista import examples
->>> mesh = examples.load_ant()
->>> mesh.plot()
+.. pyvista-plot::
+
+   >>> from pyvista import examples
+   >>> mesh = examples.load_ant()
+   >>> mesh.plot()
 
 """
 
@@ -316,14 +318,17 @@ def load_globe_texture() -> Texture:
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> dataset = examples.load_globe_texture()
-    >>> dataset.plot()
+    .. pyvista-plot::
+        :force_static:
 
-    .. seealso::
+        >>> from pyvista import examples
+        >>> dataset = examples.load_globe_texture()
+        >>> dataset.plot()
 
-        :ref:`Globe Texture Dataset <globe_texture_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
+
+            :ref:`Globe Texture Dataset <globe_texture_dataset>`
+                See this dataset in the Dataset Gallery for more info.
 
     """
     return _dataset_globe_texture.load()
@@ -366,7 +371,7 @@ def load_spline() -> PolyData:
 
     This example data was created with:
 
-    .. code-block:: python
+    .. pyvista-plot::
 
        >>> import numpy as np
        >>> import pyvista as pv
@@ -419,10 +424,11 @@ def load_random_hills() -> PolyData:
 
     This example dataset was created with:
 
-    .. code-block:: python
+    .. pyvista-plot::
 
-       >>> mesh = pv.ParametricRandomHills()  # doctest:+SKIP
-       >>> mesh = mesh.elevation()  # doctest:+SKIP
+       >>> import pyvista as pv
+       >>> mesh = pv.ParametricRandomHills()
+       >>> mesh = mesh.elevation()
 
     Returns
     -------
@@ -625,12 +631,15 @@ def load_hydrogen_orbital(n: int = 1, l: int = 0, m: int = 0, zoom_fac: float = 
 
     Examples
     --------
-    Plot the 3dxy orbital of a hydrogen atom. This corresponds to the quantum
-    numbers ``n=3``, ``l=2``, and ``m=-2``.
+    .. pyvista-plot::
+        :force_static:
 
-    >>> from pyvista import examples
-    >>> grid = examples.load_hydrogen_orbital(3, 2, -2)
-    >>> grid.plot(volume=True, opacity=[1, 0, 1], cmap='magma')
+        Plot the 3dxy orbital of a hydrogen atom. This corresponds to the quantum
+        numbers ``n=3``, ``l=2``, and ``m=-2``.
+
+        >>> from pyvista import examples
+        >>> grid = examples.load_hydrogen_orbital(3, 2, -2)
+        >>> grid.plot(volume=True, opacity=[1, 0, 1], cmap='magma')
 
     .. seealso::
 
@@ -708,12 +717,15 @@ def load_logo() -> ImageData:
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> image = examples.load_logo()
-    >>> image.dimensions
-    (1389, 592, 1)
+    .. pyvista-plot::
+        :force_static:
 
-    >>> image.plot(cpos='xy', zoom='tight', rgb=True, show_axes=False)
+        >>> from pyvista import examples
+        >>> image = examples.load_logo()
+        >>> image.dimensions
+        (1389, 592, 1)
+
+        >>> image.plot(cpos='xy', zoom='tight', rgb=True, show_axes=False)
 
     .. seealso::
 
@@ -741,64 +753,65 @@ def load_frog_tissues() -> ImageData:
 
     Examples
     --------
-    Load data
+    .. pyvista-plot::
+        :force_static:
 
-    >>> import numpy as np
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> data = examples.load_frog_tissues()
+        Load data
 
-    Plot tissue labels as a volume
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> data = examples.load_frog_tissues()
 
-    First, define plotting parameters
+        Plot tissue labels as a volume
 
-    >>> # Configure colors / color bar
-    >>> clim = data.get_data_range()  # Set color bar limits to match data
-    >>> cmap = 'glasbey'  # Use a categorical colormap
-    >>> categories = True  # Ensure n_colors matches number of labels
-    >>> opacity = 'foreground'  # Make foreground opaque, background transparent
-    >>> opacity_unit_distance = 1
+        First, define plotting parameters
 
-    Set plotting resolution to half the image's spacing
+        >>> # Configure colors / color bar
+        >>> cmap = 'glasbey'  # Use a categorical colormap
+        >>> categories = True  # Give every tissue label its own color
+        >>> opacity = 'foreground'  # Make foreground opaque, background transparent
+        >>> opacity_unit_distance = 1
 
-    >>> res = np.array(data.spacing) / 2
+        Set plotting resolution to half the image's spacing
 
-    Define rendering parameters
+        >>> res = np.array(data.spacing) / 2
 
-    >>> mapper = 'gpu'
-    >>> shade = True
-    >>> ambient = 0.3
-    >>> diffuse = 0.6
-    >>> specular = 0.5
-    >>> specular_power = 40
+        Define rendering parameters
 
-    Make and show plot
+        >>> mapper = 'gpu'
+        >>> shade = True
+        >>> ambient = 0.3
+        >>> diffuse = 0.6
+        >>> specular = 0.5
+        >>> specular_power = 40
 
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_volume(
-    ...     data,
-    ...     clim=clim,
-    ...     ambient=ambient,
-    ...     shade=shade,
-    ...     diffuse=diffuse,
-    ...     specular=specular,
-    ...     specular_power=specular_power,
-    ...     mapper=mapper,
-    ...     opacity=opacity,
-    ...     opacity_unit_distance=opacity_unit_distance,
-    ...     categories=categories,
-    ...     cmap=cmap,
-    ...     resolution=res,
-    ... )
-    >>> pl.camera_position = 'yx'  # Set camera to provide a dorsal view
-    >>> pl.show()
+        Make and show plot
 
-    .. seealso::
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_volume(
+        ...     data,
+        ...     ambient=ambient,
+        ...     shade=shade,
+        ...     diffuse=diffuse,
+        ...     specular=specular,
+        ...     specular_power=specular_power,
+        ...     mapper=mapper,
+        ...     opacity=opacity,
+        ...     opacity_unit_distance=opacity_unit_distance,
+        ...     categories=categories,
+        ...     cmap=cmap,
+        ...     resolution=res,
+        ... )
+        >>> pl.camera_position = 'yx'  # Set camera to provide a dorsal view
+        >>> pl.show()
 
-        :ref:`Frog Tissues Dataset <frog_tissues_dataset>`
-            See this dataset in the Dataset Gallery for more info.
+        .. seealso::
 
-        :ref:`Frog Dataset <frog_dataset>`
+            :ref:`Frog Tissues Dataset <frog_tissues_dataset>`
+                See this dataset in the Dataset Gallery for more info.
+
+            :ref:`Frog Dataset <frog_dataset>`
 
     """
     return _dataset_frog_tissues.load()

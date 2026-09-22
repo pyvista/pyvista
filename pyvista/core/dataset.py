@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from collections import defaultdict
 from collections.abc import Iterable
+from collections.abc import Mapping
 from collections.abc import Sequence
-import copy
 import functools
 from typing import TYPE_CHECKING
 from typing import Any
@@ -15,20 +16,23 @@ from typing import cast
 from typing import overload
 
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.typing.mypy_plugin import promote_type
 
-from . import _validation
 from ._typing_core import BoundsTuple
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
+from .datasetattributes import _active_scalars_name
+from .datasetattributes import _active_vectors_name
+from .datasetattributes import _array_names
 from .errors import PyVistaDeprecationWarning
 from .filters import DataSetFilters
 from .filters import _get_output
+from .filters import _update_alg
 from .formatting_html import _data_array_section
 from .formatting_html import _fmt_memory
 from .formatting_html import build_repr_html
@@ -39,12 +43,14 @@ from .utilities.arrays import FieldAssociation
 from .utilities.arrays import FieldLiteral
 from .utilities.arrays import PointLiteral
 from .utilities.arrays import _coerce_pointslike_arg
+from .utilities.arrays import _warn_scalar_array
 from .utilities.arrays import get_array
 from .utilities.arrays import get_array_association
 from .utilities.arrays import parse_field_choice
 from .utilities.arrays import raise_not_matching
 from .utilities.arrays import vtk_id_list_to_array
 from .utilities.helpers import is_pyvista_dataset
+from .utilities.misc import _BoundsSizeMixin
 from .utilities.misc import abstract_class
 from .utilities.points import vtk_points
 
@@ -72,8 +78,17 @@ if TYPE_CHECKING:
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
 
+# array names that are never reported as the active scalars
+_ACTIVE_SCALARS_EXCLUDE = frozenset({'__custom_rgba', 'Normals', 'vtkOriginalPointIds', 'TCoords'})
 
-class ActiveArrayInfoTuple(NamedTuple):
+
+def _copy_association_names(names: Mapping[str, Iterable[str]]) -> defaultdict[str, set[str]]:
+    """Return an independent copy of a per-association array name mapping."""
+    # Optimization: the values are sets of strings, so this is much cheaper than copy.deepcopy
+    return defaultdict(set, {key: set(value) for key, value in names.items()})
+
+
+class ActiveArrayInfoTuple(NamedTuple):  # numpydoc ignore=PR02
     """Active array info tuple.
 
     Parameters
@@ -114,7 +129,7 @@ class _ActiveArrayExistsInfoTuple(NamedTuple):
 
 @promote_type(_vtk.vtkDataSet)
 @abstract_class
-class DataSet(DataSetFilters, DataObject):
+class DataSet(_BoundsSizeMixin, DataSetFilters, DataObject):
     """Methods in common to spatially referenced objects.
 
     Parameters
@@ -168,9 +183,8 @@ class DataSet(DataSetFilters, DataObject):
 
         Notes
         -----
-        If both cell and point scalars are present and neither have
-        been set active within at the dataset level, point scalars
-        will be made active.
+        If the point and cell attributes both have active scalars and neither
+        has been chosen at the dataset level, the point scalars are reported.
 
         Examples
         --------
@@ -186,29 +200,30 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         field, name = self._active_scalars_info
-        exclude = {'__custom_rgba', 'Normals', 'vtkOriginalPointIds', 'TCoords'}
-        if name in exclude:
+        if name in _ACTIVE_SCALARS_EXCLUDE:
             name = self._last_active_scalars_name
 
         # verify this field is still valid
+        # Optimization: read the VTK attributes directly rather than through point_data/cell_data,
+        # which construct a DataSetAttributes wrapper on every access
         if name is not None:
             if field is FieldAssociation.CELL:
-                if self.cell_data.active_scalars_name != name:
+                if _active_scalars_name(self.GetCellData()) != name:
                     name = None
             elif field is FieldAssociation.POINT:
-                if self.point_data.active_scalars_name != name:
+                if _active_scalars_name(self.GetPointData()) != name:
                     name = None
 
         if name is None:
-            # check for the active scalars in point or cell arrays
-            self._active_scalars_info = ActiveArrayInfoTuple(field, None)
-            for attr in [self.point_data, self.cell_data]:
-                if attr.active_scalars_name is not None:
-                    self._active_scalars_info = ActiveArrayInfoTuple(
-                        attr.association,
-                        attr.active_scalars_name,
-                    )
-                    break
+            # Search on every read so an array activated later is seen
+            for association, attributes in (
+                (FieldAssociation.POINT, self.GetPointData()),
+                (FieldAssociation.CELL, self.GetCellData()),
+            ):
+                active_name = _active_scalars_name(attributes)
+                if active_name is not None:
+                    return ActiveArrayInfoTuple(association, active_name)
+            return ActiveArrayInfoTuple(field, None)
 
         return self._active_scalars_info
 
@@ -227,9 +242,8 @@ class DataSet(DataSetFilters, DataObject):
 
         Notes
         -----
-        If both cell and point vectors are present and neither have
-        been set active within at the dataset level, point vectors
-        will be made active.
+        If the point and cell attributes both have active vectors and neither
+        has been chosen at the dataset level, the point vectors are reported.
 
         Examples
         --------
@@ -248,22 +262,25 @@ class DataSet(DataSetFilters, DataObject):
         field, name = self._active_vectors_info
 
         # verify this field is still valid
+        # Optimization: read the VTK attributes directly, as in active_scalars_info
         if name is not None:
             if field is FieldAssociation.POINT:
-                if self.point_data.active_vectors_name != name:
+                if _active_vectors_name(self.GetPointData()) != name:
                     name = None
             if field is FieldAssociation.CELL:
-                if self.cell_data.active_vectors_name != name:
+                if _active_vectors_name(self.GetCellData()) != name:
                     name = None
 
         if name is None:
-            # check for the active vectors in point or cell arrays
-            self._active_vectors_info = ActiveArrayInfoTuple(field, None)
-            for attr in [self.point_data, self.cell_data]:
-                name = attr.active_vectors_name
+            # Search on every read so an array activated later is seen
+            for association, attributes in (
+                (FieldAssociation.POINT, self.GetPointData()),
+                (FieldAssociation.CELL, self.GetCellData()),
+            ):
+                name = _active_vectors_name(attributes)
                 if name is not None:
-                    self._active_vectors_info = ActiveArrayInfoTuple(attr.association, name)
-                    break
+                    return ActiveArrayInfoTuple(association, name)
+            return ActiveArrayInfoTuple(field, None)
 
         return self._active_vectors_info
 
@@ -490,15 +507,12 @@ class DataSet(DataSetFilters, DataObject):
                          [ 1., -1.,  3.]], dtype=float32)
 
         """
-        _points = self.GetPoints()
-        try:
-            _points = _points.GetData()
-        except AttributeError:
+        vtkpts = self.GetPoints()
+        if vtkpts is None:
             # create an empty array
             vtkpts = vtk_points(np.empty((0, 3)), deep=False)
             self.SetPoints(vtkpts)
-            _points = self.GetPoints().GetData()
-        return pyvista_ndarray(_points, dataset=self)
+        return pyvista_ndarray(vtkpts.GetData(), dataset=self)
 
     @points.setter
     def points(self: Self, points: MatrixLike[float] | _vtk.vtkPoints) -> None:
@@ -874,11 +888,12 @@ class DataSet(DataSetFilters, DataObject):
         842
 
         """
-        if self.point_data.active_normals is not None:
-            return self.point_data.active_normals
+        point_normals = self.point_data.active_normals
+        if point_normals is not None:
+            return point_normals
         return self.cell_data.active_normals
 
-    def get_data_range(  # type: ignore[override]
+    def get_data_range(
         self: Self,
         arr_var: str | NumpyArray[float] | None = None,
         preference: PointLiteral | CellLiteral | FieldLiteral = 'cell',
@@ -921,8 +936,7 @@ class DataSet(DataSetFilters, DataObject):
         # Use the array range
         return np.nanmin(arr), np.nanmax(arr)
 
-    @_deprecate_positional_args(allowed=['ido'])
-    def copy_meta_from(self: Self, ido: DataSet, deep: bool = True) -> None:  # noqa: FBT001, FBT002
+    def copy_meta_from(self: Self, ido: DataSet, *, deep: bool = True) -> None:
         """Copy pyvista meta data onto this object from another object.
 
         Parameters
@@ -934,19 +948,24 @@ class DataSet(DataSetFilters, DataObject):
             Deep or shallow copy.
 
         """
+        # Copy the private tuples, not the properties, which would resolve an unchosen array
         if deep:
-            self._association_complex_names = copy.deepcopy(ido._association_complex_names)
-            self._association_bitarray_names = copy.deepcopy(ido._association_bitarray_names)
-            self._active_scalars_info = ido.active_scalars_info.copy()
-            self._active_vectors_info = ido.active_vectors_info.copy()
-            self._active_tensors_info = ido.active_tensors_info.copy()
+            self._association_complex_names = _copy_association_names(
+                ido._association_complex_names
+            )
+            self._association_bitarray_names = _copy_association_names(
+                ido._association_bitarray_names
+            )
+            self._active_scalars_info = ido._active_scalars_info.copy()
+            self._active_vectors_info = ido._active_vectors_info.copy()
+            self._active_tensors_info = ido._active_tensors_info.copy()
         else:
             # pass by reference
             self._association_complex_names = ido._association_complex_names
             self._association_bitarray_names = ido._association_bitarray_names
-            self._active_scalars_info = ido.active_scalars_info
-            self._active_vectors_info = ido.active_vectors_info
-            self._active_tensors_info = ido.active_tensors_info
+            self._active_scalars_info = ido._active_scalars_info
+            self._active_vectors_info = ido._active_vectors_info
+            self._active_tensors_info = ido._active_tensors_info
 
     @property
     def point_data(self: Self) -> DataSetAttributes:
@@ -1469,7 +1488,7 @@ class DataSet(DataSetFilters, DataObject):
     def get_array_association(
         self: Self,
         name: str,
-        preference: Literal['cell', 'point', 'field'] = 'cell',
+        preference: PointLiteral | CellLiteral | FieldLiteral = 'cell',
     ) -> FieldAssociation:
         """Get the association of an array.
 
@@ -1561,10 +1580,7 @@ class DataSet(DataSetFilters, DataObject):
             scalars = np.asanyarray(scalars)
 
         if scalars.ndim == 0:
-            if np.issubdtype(scalars.dtype, np.str_):
-                # Always set scalar strings as field data
-                self.field_data[name] = scalars
-                return
+            _warn_scalar_array(name, None)
             # reshape single scalar values from 0D to 1D so that shape[0] can be indexed
             scalars = scalars.reshape((1,))
 
@@ -1577,7 +1593,6 @@ class DataSet(DataSetFilters, DataObject):
             # Field data must be set explicitly as it could be a point of
             # confusion for new users
             raise_not_matching(scalars, self)
-        return
 
     @property
     def n_arrays(self: Self) -> int:
@@ -1617,12 +1632,14 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         names: list[str] = []
-        names.extend(self.field_data.keys())
-        names.extend(self.point_data.keys())
-        names.extend(self.cell_data.keys())
-        if self.active_scalars_name is not None:
-            names.remove(self.active_scalars_name)
-            names.insert(0, self.active_scalars_name)
+        # Optimization: read the VTK attributes directly instead of wrapping them
+        names.extend(_array_names(self.GetFieldData()))
+        names.extend(_array_names(self.GetPointData()))
+        names.extend(_array_names(self.GetCellData()))
+        active_scalars_name = self.active_scalars_name
+        if active_scalars_name is not None:
+            names.remove(active_scalars_name)
+            names.insert(0, active_scalars_name)
         return names
 
     def _get_attrs(self: Self) -> list[tuple[str, Any, str]]:
@@ -1637,8 +1654,6 @@ class DataSet(DataSetFilters, DataObject):
         attrs.append(('X Bounds', (bds.x_min, bds.x_max), fmt))
         attrs.append(('Y Bounds', (bds.y_min, bds.y_max), fmt))
         attrs.append(('Z Bounds', (bds.z_min, bds.z_max), fmt))
-        # if self.n_cells <= pyvista.REPR_VOLUME_MAX_CELLS and self.n_cells > 0:
-        #     attrs.append(("Volume", (self.volume), pyvista.FLOAT_FORMAT))
         return attrs
 
     def _repr_html_(self: Self) -> str:
@@ -1716,18 +1731,14 @@ class DataSet(DataSetFilters, DataObject):
             fmt = pv.FLOAT_FORMAT
             result: list[tuple[str, int, str, str, str]] = []
             for name, arr in attrs.items():
-                # Field data can contain str values at runtime despite
-                # DataSetAttributes.items() being typed as -> pyvista_ndarray.
-                # Wrap str so .shape / .dtype are available.
-                coerced = pv.pyvista_ndarray(arr) if isinstance(arr, str) else arr  # type: ignore[redundant-expr,unreachable]
-                ncomp = coerced.shape[1] if coerced.ndim > 1 else 1
-                shape = str(tuple(coerced.shape)) if show_shape else ''
+                ncomp = arr.shape[1] if arr.ndim > 1 else 1
+                shape = str(tuple(arr.shape)) if show_shape else ''
                 range_str = ''
-                if show_range and coerced.size > 0 and np.issubdtype(coerced.dtype, np.number):
-                    lo = fmt.format(np.nanmin(coerced))
-                    hi = fmt.format(np.nanmax(coerced))
+                if show_range and arr.size > 0 and np.issubdtype(arr.dtype, np.number):
+                    lo = fmt.format(np.nanmin(arr))
+                    hi = fmt.format(np.nanmax(arr))
                     range_str = f'[{lo}, {hi}]'
-                result.append((name, ncomp, str(coerced.dtype), shape, range_str))
+                result.append((name, ncomp, str(arr.dtype), shape, range_str))
             return result
 
         vec_assoc = self.active_vectors_info.association
@@ -1789,8 +1800,7 @@ class DataSet(DataSetFilters, DataObject):
         """Return the object string representation."""
         return self.head(display=False, html=False)
 
-    @_deprecate_positional_args(allowed=['mesh'])
-    def copy_from(self: Self, mesh: _vtk.vtkDataSet, deep: bool = True) -> None:  # noqa: FBT001, FBT002
+    def copy_from(self: Self, mesh: _vtk.vtkDataSet, *, deep: bool = True) -> None:
         """Overwrite this dataset in-place with the new dataset's geometries and data.
 
         Parameters
@@ -1889,11 +1899,10 @@ class DataSet(DataSetFilters, DataObject):
             input_is_double = isinstance(self, pv.ImageData)
         if input_is_double:
             alg.SetOutputPointsPrecision(_vtk.vtkAlgorithm.DOUBLE_PRECISION)
-        alg.Update()
+        _update_alg(alg)
         return _get_output(alg)
 
-    @_deprecate_positional_args
-    def cast_to_pointset(self: Self, pass_cell_data: bool = False) -> PointSet:  # noqa: FBT001, FBT002
+    def cast_to_pointset(self: Self, *, pass_cell_data: bool = False) -> PointSet:
         """Extract the points of this dataset and return a :class:`pyvista.PointSet`.
 
         Parameters
@@ -1910,8 +1919,8 @@ class DataSet(DataSetFilters, DataObject):
 
         Notes
         -----
-        This will produce a deep copy of the points and point/cell data of
-        the original mesh.
+        This will produce a deep copy of the points and of the point, cell and
+        field data of the original mesh.
 
         Examples
         --------
@@ -1926,11 +1935,13 @@ class DataSet(DataSetFilters, DataObject):
         pset.points = self.points.copy()
         out = self.cell_data_to_point_data() if pass_cell_data else self
         pset.GetPointData().DeepCopy(out.GetPointData())
-        pset.active_scalars_name = out.active_scalars_name
+        pset.GetFieldData().DeepCopy(self.GetFieldData())
+        field, name = out.active_scalars_info
+        if field == FieldAssociation.POINT:
+            pset.active_scalars_name = name
         return pset
 
-    @_deprecate_positional_args
-    def cast_to_poly_points(self: Self, pass_cell_data: bool = False) -> pv.PolyData:  # noqa: FBT001, FBT002
+    def cast_to_poly_points(self: Self, *, pass_cell_data: bool = False) -> pv.PolyData:
         """Extract the points of this dataset and return a :class:`pyvista.PolyData`.
 
         Parameters
@@ -1947,8 +1958,8 @@ class DataSet(DataSetFilters, DataObject):
 
         Notes
         -----
-        This will produce a deep copy of the points and point/cell data of
-        the original mesh.
+        This will produce a deep copy of the points and of the point, cell and
+        field data of the original mesh.
 
         Examples
         --------
@@ -1986,15 +1997,20 @@ class DataSet(DataSetFilters, DataObject):
             cell_data = cell_data.cell_data_to_point_data()
             pset.GetCellData().DeepCopy(cell_data.GetPointData())
         pset.GetPointData().DeepCopy(self.GetPointData())
-        pset.active_scalars_name = self.active_scalars_name
+        pset.GetFieldData().DeepCopy(self.GetFieldData())
+        field, name = self.active_scalars_info
+        if field == FieldAssociation.POINT or pass_cell_data:
+            pset.active_scalars_name = name
         return pset
 
+    # fmt: off
+    # ruff: disable[E501]
     @overload
     def find_closest_point(self: Self, point: Iterable[float], n: Literal[1] = 1) -> int: ...
     @overload
-    def find_closest_point(
-        self: Self, point: Iterable[float], n: int = ...
-    ) -> VectorLike[int]: ...
+    def find_closest_point(self: Self, point: Iterable[float], n: int = ...) -> VectorLike[int]: ...
+    # ruff: enable[E501]
+    # fmt: on
     def find_closest_point(
         self: Self, point: Iterable[float], n: int = 1
     ) -> int | VectorLike[int]:
@@ -2066,12 +2082,22 @@ class DataSet(DataSetFilters, DataObject):
             return vtk_id_list_to_array(id_list)
         return locator.FindClosestPoint(point)  # type: ignore[arg-type]
 
-    @_deprecate_positional_args(allowed=['point'])
+    # fmt: off
+    # ruff: disable[E501]
+    @overload
+    def find_closest_cell(self: Self, point: VectorLike[float] | MatrixLike[float], *, return_closest_point: Literal[False] = False) -> int | NumpyArray[int]: ...
+    @overload
+    def find_closest_cell(self: Self, point: VectorLike[float] | MatrixLike[float], *, return_closest_point: Literal[True]) -> tuple[int | NumpyArray[int], NumpyArray[float]]: ...
+    @overload
+    def find_closest_cell(self: Self, point: VectorLike[float] | MatrixLike[float], *, return_closest_point: bool = ...) -> int | NumpyArray[int] | tuple[int | NumpyArray[int], NumpyArray[float]]: ...
+    # ruff: enable[E501]
+    # fmt: on
     def find_closest_cell(
         self: Self,
         point: VectorLike[float] | MatrixLike[float],
-        return_closest_point: bool = False,  # noqa: FBT001, FBT002
-    ) -> int | NumpyArray[int] | tuple[int | NumpyArray[int], NumpyArray[int]]:
+        *,
+        return_closest_point: bool = False,
+    ) -> int | NumpyArray[int] | tuple[int | NumpyArray[int], NumpyArray[float]]:
         """Find index of closest cell in this mesh to the given point.
 
         .. warning::
@@ -2650,15 +2676,15 @@ class DataSet(DataSetFilters, DataObject):
         [0, 2, 1]
 
         """
-        # must check upper bounds, otherwise segfaults (on Linux, 9.2)
-        if index + 1 > self.n_cells:
+        # must check bounds, otherwise segfaults (on Linux, 9.2) or returns an empty cell
+        if not 0 <= index < self.n_cells:
             msg = f'Invalid index {index} for a dataset with {self.n_cells} cells.'
             raise IndexError(msg)
 
         # Note: we have to use vtkGenericCell here since
         # GetCell(vtkIdType cellId, vtkGenericCell* cell) is thread-safe,
         # while GetCell(vtkIdType cellId) is not.
-        cell = pv.Cell()
+        cell = pv.Cell()  # type: ignore[abstract]
         self.GetCell(index, cell)
         cell.SetCellType(self.GetCellType(index))
         return cell

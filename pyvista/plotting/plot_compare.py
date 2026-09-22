@@ -46,6 +46,12 @@ class _Sentinel:
 
     Prints as the name it is given, so that a signature shows what it stands for
     rather than the address of an object.
+
+    Parameters
+    ----------
+    name : str
+        Name shown when the sentinel is printed.
+
     """
 
     def __init__(self, name: str) -> None:
@@ -318,8 +324,7 @@ def _validate_label_position(label_position: Any) -> TextPositionOptions | None:
 
 def _text_width(text: str, prop: Any, *, size: float, dpi: int, measurer: Any) -> float:
     """Return the width in pixels of the text drawn at the given font size."""
-    # A `pyvista.TextProperty` loads the theme into a property shared by all of them,
-    # which measuring has no business doing, so measure with a plain VTK one
+    # Measure with a plain VTK property, which needs no theme
     measured = _vtk.vtkTextProperty()
     # Copy what the text is drawn with, to measure its font rather than the default
     measured.ShallowCopy(prop)
@@ -420,8 +425,12 @@ def _fit_labels_on_render(
             return
         dpi = render_window.GetDPI()
         renderers = list(plotter.renderers)[: len(labels)]
-        actors = [renderer.actors.get(name) for renderer in renderers]
-        if not all(actors):
+        actors = [
+            actor
+            for renderer in renderers
+            if isinstance(actor := renderer.actors.get(name), pv.Text)
+        ]
+        if len(actors) != len(renderers):
             # A label has been removed or drawn over since it was added, so there is
             # nothing left to fit rather than anything to complain about mid-render
             return
@@ -999,7 +1008,7 @@ def plot_compare(  # noqa: ANN201
         )
 
     return pl.show(
-        screenshot=screenshot,
+        screenshot=False if screenshot is None else screenshot,
         full_screen=full_screen,
         interactive=interactive,
         return_img=return_img,

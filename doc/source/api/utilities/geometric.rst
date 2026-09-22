@@ -65,6 +65,7 @@ Geometric Objects
    SolidSphereGeneric
    Sphere
    Spline
+   StructuredSphere
    Superquadric
    Tetrahedron
    Text3D
@@ -94,8 +95,8 @@ Geometric sources are closer to the actual VTK pipeline. They serve as the
    AxesGeometrySource
    BoxSource
    ConeSource
-   CubeSource
    CubeFacesSource
+   CubeSource
    CylinderSource
    DiscSource
    LineSource

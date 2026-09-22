@@ -123,17 +123,13 @@ def test_class_access_returns_component_class():
     class ExposedComponent:
         """Visible on help."""
 
-        def __init__(self, plotter):
-            self._plotter = plotter
-
     assert pv.BasePlotter.exposed is ExposedComponent
 
 
 def test_component_name_appears_in_dir():
     @pv.register_plotter_component('discoverable')
     class DiscoverableComponent:
-        def __init__(self, plotter):
-            self._plotter = plotter
+        pass
 
     assert 'discoverable' in dir(pv.BasePlotter)
     assert 'discoverable' in dir(pv.Plotter())
@@ -172,11 +168,11 @@ def test_close_hook_skipped_for_untouched_components():
 
     @pv.register_plotter_component('lc_untouched')
     class UntouchedComponent:
-        def __init__(self, plotter):
+        def __init__(self, plotter):  # pragma: no cover -- asserted never constructed
             constructions.append('constructed')
             self._plotter = plotter
 
-        def __plotter_close__(self):
+        def __plotter_close__(self):  # pragma: no cover -- asserted never invoked
             constructions.append('closed')
 
     pl = pv.Plotter()
@@ -280,6 +276,8 @@ def test_component_vs_component_collision_warns_and_replaces():
         def who(self):
             return 'first'
 
+    assert pv.Plotter().clashing.who() == 'first'
+
     with pytest.warns(UserWarning, match='replaces an existing registered'):
 
         @pv.register_plotter_component('clashing')
@@ -296,16 +294,14 @@ def test_component_vs_component_collision_warns_and_replaces():
 def test_override_silences_replacement_warning():
     @pv.register_plotter_component('silent_override')
     class FirstComponent:
-        def __init__(self, plotter):
-            self._plotter = plotter
+        pass
 
     with warnings.catch_warnings():
         warnings.simplefilter('error')
 
         @pv.register_plotter_component('silent_override', override=True)
         class SecondComponent:
-            def __init__(self, plotter):
-                self._plotter = plotter
+            pass
 
 
 def test_builtin_shadow_raises_without_override():
@@ -314,8 +310,7 @@ def test_builtin_shadow_raises_without_override():
 
         @pv.register_plotter_component('close')
         class CloseShadow:
-            def __init__(self, plotter):
-                self._plotter = plotter
+            pass
 
 
 def test_builtin_shadow_succeeds_with_override():
@@ -324,8 +319,7 @@ def test_builtin_shadow_succeeds_with_override():
 
     @pv.register_plotter_component('close', override=True)
     class CloseOverride:
-        def __init__(self, plotter):
-            self._plotter = plotter
+        pass
 
     try:
         # Class-level access on a _CachedComponent returns the component class.
@@ -377,9 +371,14 @@ def test_unregister_removes_descriptor():
         def __init__(self, plotter):
             self._plotter = plotter
 
+    pl = pv.Plotter()
+    assert pl.removable._plotter is pl
     assert 'removable' in pv.BasePlotter.__dict__
+
     pv.unregister_plotter_component('removable')
     assert 'removable' not in pv.BasePlotter.__dict__
+    with pytest.raises(AttributeError):
+        _ = pv.Plotter().removable
 
 
 def test_unregister_missing_raises():
@@ -402,15 +401,16 @@ def test_unregister_restores_overridden_builtin():
             self._obj = obj
 
     assert Target.__dict__['existing_method'] is not original_method
+    assert isinstance(Target().existing_method, OverrideComponent)
     pv.unregister_plotter_component('existing_method', target_cls=Target)
     assert Target.__dict__['existing_method'] is original_method
+    assert Target().existing_method() == 'original'
 
 
 def test_registered_components_reports_records():
     @pv.register_plotter_component('introspect_me')
     class IntrospectMeComponent:
-        def __init__(self, plotter):
-            self._plotter = plotter
+        pass
 
     matches = [r for r in pv.registered_plotter_components() if r.name == 'introspect_me']
     assert len(matches) == 1
@@ -427,8 +427,7 @@ def test_registered_components_returns_tuple():
 def test_re_register_replaces_single_record():
     @pv.register_plotter_component('single_record')
     class FirstComponent:
-        def __init__(self, plotter):
-            self._plotter = plotter
+        pass
 
     with warnings.catch_warnings():
         # Suppress the intentional collision warning; the test verifies
@@ -437,8 +436,7 @@ def test_re_register_replaces_single_record():
 
         @pv.register_plotter_component('single_record')
         class SecondComponent:
-            def __init__(self, plotter):
-                self._plotter = plotter
+            pass
 
     records = [r for r in pv.registered_plotter_components() if r.name == 'single_record']
     assert len(records) == 1
@@ -455,15 +453,13 @@ def test_save_restore_round_trip_baseline():
 def test_save_restore_round_trip_populated():
     @pv.register_plotter_component('snapshot_me')
     class SnapshotComponent:
-        def __init__(self, plotter):
-            self._plotter = plotter
+        pass
 
     state = _reg_mod._save_registry_state()
 
     @pv.register_plotter_component('post_snapshot')
     class PostSnapshotComponent:
-        def __init__(self, plotter):
-            self._plotter = plotter
+        pass
 
     pv.unregister_plotter_component('snapshot_me')
     _reg_mod._restore_registry_state(state)
@@ -478,8 +474,7 @@ def test_fixture_isolation_setup():
 
     @pv.register_plotter_component('leaked_component')
     class LeakedComponent:
-        def __init__(self, plotter):
-            self._plotter = plotter
+        pass
 
 
 def test_fixture_isolation_teardown():
@@ -704,7 +699,7 @@ def test_pending_component_appears_in_dir_without_loading(monkeypatch):
     _reset_entry_point_state(monkeypatch, [ep])
     import_calls = []
 
-    def _tracking_import(module_path):
+    def _tracking_import(module_path):  # pragma: no cover -- asserted never called
         import_calls.append(module_path)
         return fake_import(module_path)
 
@@ -722,8 +717,7 @@ def test_pending_component_appears_in_dir_without_loading(monkeypatch):
 def test_explicit_component_appears_in_dir():
     @pv.register_plotter_component('explicit_dir_demo')
     class ExplicitDirDemo:
-        def __init__(self, plotter):
-            self._plotter = plotter
+        pass
 
     assert 'explicit_dir_demo' in dir(pv.Plotter())
 
@@ -756,7 +750,7 @@ def test_dir_after_pending_component_resolved(monkeypatch):
         assert 'resolved_demo' in dir(pl)
     finally:
         sys.modules.pop(plugin_name, None)
-        if 'resolved_demo' in pv.BasePlotter.__dict__:
+        if 'resolved_demo' in pv.BasePlotter.__dict__:  # pragma: no branch -- set by the body
             delattr(pv.BasePlotter, 'resolved_demo')
 
 
@@ -849,15 +843,13 @@ def test_inherited_component_replacement_warns():
 
     @pv.register_plotter_component('inherited_demo', target_cls=ParentTarget)
     class FirstComponent:
-        def __init__(self, obj):
-            self._obj = obj
+        pass
 
     with pytest.warns(UserWarning, match='inherited by'):
 
         @pv.register_plotter_component('inherited_demo', target_cls=ChildTarget)
         class SecondComponent:
-            def __init__(self, obj):
-                self._obj = obj
+            pass
 
 
 def test_inherited_shadow_raises_with_inherited_location():
@@ -874,8 +866,9 @@ def test_inherited_shadow_raises_with_inherited_location():
 
         @pv.register_plotter_component('existing_method', target_cls=ChildTarget)
         class ShadowComponent:
-            def __init__(self, obj):
-                self._obj = obj
+            pass
+
+    assert ChildTarget().existing_method() == 'parent'
 
 
 def test_component_descriptor_handles_slots_target():

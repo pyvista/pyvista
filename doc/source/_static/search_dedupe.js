@@ -1,21 +1,9 @@
-// Collapse duplicate search results.
-//
-// Sphinx searches several indices independently (objects, titles, full text) and
-// concatenates the hits, so an API page shows up twice. Searching `add_mesh`
-// lists both
-//
-//   pyvista.Plotter.add_mesh (Python method, in Plotter.add_mesh)
-//       -> pyvista.Plotter.add_mesh.html#pyvista.Plotter.add_mesh
-//   Plotter.add_mesh
-//       -> pyvista.Plotter.add_mesh.html
-//
-// The de-duplication in Sphinx's own `searchtools.js` keys on the anchor and the
-// description, so it never merges the two. Every autosummary stub page hits this
-// because the page documents a single object whose name is also the page title.
-//
-// Drop the whole-page hit whenever the same page is already listed through an
-// anchor, keeping the object hit: it links straight to the definition and says
-// what kind of object it is.
+// Collapse duplicate search results: Sphinx searches objects, titles, and
+// full text independently, so an autosummary stub page shows up both as an
+// object hit (`pyvista.Plotter.add_mesh (Python method, in Plotter.add_mesh)`)
+// and as a page hit (`Plotter.add_mesh`). Drop the page hit, then turn the
+// object hit into a page-style hit (no anchor, no descriptor) so it links to
+// the page top and gets a docstring summary (see `search_summaries.js`).
 (function () {
   if (typeof Search === "undefined" || !Search._performSearch) return;
 
@@ -26,8 +14,16 @@
 
   // Each result is [docname, title, anchor, descr, score, filename, kind].
   const DOCNAME = 0;
+  const TITLE = 1;
   const ANCHOR = 2;
+  const DESCR = 3;
   const KIND = 6;
+
+  // An object hit whose full name is its page's basename is the page.
+  const isOwnPage = (result) =>
+    result[KIND] === "object" &&
+    (result[DOCNAME] === result[TITLE] ||
+      result[DOCNAME].endsWith("/" + result[TITLE]));
 
   const performSearch = Search._performSearch;
 
@@ -41,7 +37,7 @@
     }
     if (!anchored.size) return results;
 
-    return results.filter(
+    const deduped = results.filter(
       (result) =>
         !(
           PAGE_KINDS.has(result[KIND]) &&
@@ -49,5 +45,13 @@
           anchored.has(result[DOCNAME])
         ),
     );
+
+    for (const result of deduped) {
+      if (isOwnPage(result)) {
+        result[ANCHOR] = "";
+        result[DESCR] = null;
+      }
+    }
+    return deduped;
   };
 })();

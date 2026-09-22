@@ -46,25 +46,27 @@ requires a few lines of code.
    ...     (-0.01684, 0.110154, -0.0015369),
    ...     (-0.15446, 0.939031, -0.3071841),
    ... ]
+   >>> from pyvista import examples
+   >>> examples.download_bunny().save('bunny.stl')
 
 +----------------------------------------------------+-------------------------------------+
 | Read and plot STL file using `vtk`_                | Read an STL file using PyVista      |
 +====================================================+=====================================+
-| .. code-block:: python                             | .. code-block:: python              |
-|                                                    |                                     |
-|    import vtk                                      |    import pyvista as pv             |
-|    reader = vtk.vtkSTLReader()                     |    mesh = pv.read('bunny.stl')      |
-|    reader.SetFileName("bunny.stl")                 |    mesh.plot()                      |
-|    mapper = vtk.vtkDataSetMapper()                 |                                     |
-|    output_port = reader.GetOutputPort()            | .. pyvista-plot::                   |
-|    mapper.SetInputConnection(output_port)          |    :include-source: False           |
-|    actor = vtk.vtkActor()                          |    :context:                        |
-|    actor.SetMapper(mapper)                         |                                     |
-|    ren = vtk.vtkRenderer()                         |    from pyvista import examples     |
-|    renWin = vtk.vtkRenderWindow()                  |    mesh = examples.download_bunny() |
-|    renWin.AddRenderer(ren)                         |    mesh.plot(cpos=bunny_cpos)       |
-|    iren = vtk.vtkRenderWindowInteractor()          |                                     |
-|    style = vtk.vtkInteractorStyleTrackballCamera() |                                     |
+| .. code-block:: python                             | .. pyvista-plot::                   |
+|                                                    |    :nofigs:                         |
+|    import vtk                                      |    :context:                        |
+|    reader = vtk.vtkSTLReader()                     |                                     |
+|    reader.SetFileName("bunny.stl")                 |    import pyvista as pv             |
+|    mapper = vtk.vtkDataSetMapper()                 |    mesh = pv.read('bunny.stl')      |
+|    output_port = reader.GetOutputPort()            |    mesh.plot()                      |
+|    mapper.SetInputConnection(output_port)          |                                     |
+|    actor = vtk.vtkActor()                          | .. pyvista-plot::                   |
+|    actor.SetMapper(mapper)                         |    :include-source: False           |
+|    ren = vtk.vtkRenderer()                         |    :context:                        |
+|    renWin = vtk.vtkRenderWindow()                  |                                     |
+|    renWin.AddRenderer(ren)                         |    from pyvista import examples     |
+|    iren = vtk.vtkRenderWindowInteractor()          |    mesh = examples.download_bunny() |
+|    style = vtk.vtkInteractorStyleTrackballCamera() |    mesh.plot(cpos=bunny_cpos)       |
 |    iren.SetRenderWindow(renWin)                    |                                     |
 |    iren.SetInteractorStyle(style)                  |                                     |
 |    ren.AddActor(actor)                             |                                     |

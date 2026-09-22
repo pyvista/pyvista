@@ -8,8 +8,10 @@ runs:
   steps:
     - name: Build failure summary
       shell: bash
+      env:
+        JOB_LABEL: ${{ github.job }} (${{ join(matrix.*, ', ') }})
       run: |
-        echo "${{ github.job }} (${{ join(matrix.*, ', ') }})" > job_label.txt
+        printf '%s\n' "$JOB_LABEL" > job_label.txt
         : > failure_summary.txt
         for log in core-test.log plotting-test.log; do
           [ -s "$log" ] || continue
