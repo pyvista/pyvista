@@ -1678,10 +1678,10 @@ def test_remove_actor_removes_mapper_from_every_scalar_bar(sphere):
     pl.close()
 
 
-def _wide_bar(plotter, sphere, *, vertical=False, title=WIDE_KEY, **kwargs):
+def _wide_bar(pl, sphere, *, vertical=False, title=WIDE_KEY, **kwargs):
     """Add one scalar bar whose tick labels are wider than the bar has room for."""
     sphere[WIDE_KEY] = np.linspace(0, 6932.0, sphere.n_points)
-    return plotter.add_scalar_bar(
+    return pl.add_scalar_bar(
         title,
         vertical=vertical,
         title_font_size=WIDE_FONT,
@@ -1709,12 +1709,13 @@ def _label_gaps(pl, bar):
 
 
 def _text_at_the_viewport_edge(pl):
-    """Return whether any blue text is drawn against the left or right edge of a render."""
+    """Return whether any blue text is drawn against an edge of a render."""
     image = pl.screenshot(return_img=True)
     red, green, blue = (image[..., channel].astype(int) for channel in range(3))
     text = (blue > 200) & (red < 150) & (green < 150)
     assert text.any()
-    return bool(text[:, 0].any() or text[:, -1].any())
+    edges = (text[0], text[-1], text[:, 0], text[:, -1])
+    return any(bool(edge.any()) for edge in edges)
 
 
 @pytest.mark.parametrize('window', [[1024, 768], [512, 384], [341, 256]])
@@ -1767,13 +1768,20 @@ def test_fit_fonts_follow_the_viewport(sphere, vertical: bool):
 
 
 def test_fit_fonts_take_a_size_set_by_hand(sphere):
-    # A size set after the bar was added is the size the fit measures against from there
+    # A size set after the bar was added is the size the fit measures against from there,
+    # so a refit lands on it rather than on the size the bar was given
     pl = pv.Plotter(window_size=[1024, 768])
     pl.add_mesh(sphere, show_scalar_bar=False)
     bar = _wide_bar(pl, sphere)
     pl.screenshot(return_img=True)
+    assert bar.GetLabelTextProperty().GetFontSize() == WIDE_FONT
 
     bar.GetLabelTextProperty().SetFontSize(6)
+    pl.window_size = [400, 300]
+    pl.render()
+    assert bar.GetLabelTextProperty().GetFontSize() == 6
+
+    pl.window_size = [1024, 768]
     pl.render()
     assert bar.GetLabelTextProperty().GetFontSize() == 6
 
@@ -1800,6 +1808,33 @@ def test_fit_fonts_leave_a_constrained_bar_to_vtk(sphere):
 
     assert not boxed.GetUnconstrainedFontSize()
     assert boxed.GetLabelTextProperty().GetFontSize() == WIDE_FONT
+
+
+@pytest.mark.parametrize('window', [[1024, 768], [512, 384], [400, 300]])
+def test_fit_fonts_hold_vertical_labels_apart(sphere, window):
+    # A vertical bar stacks its labels along the ramp and draws them out past its side,
+    # so they have both the ends of the viewport and its edge to stay clear of.  The
+    # title is left off because a vertical one overhangs the bar it is centered on
+    pl = pv.Plotter(window_size=window)
+    pl.background_color = 'white'
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = _wide_bar(pl, sphere, vertical=True, title='', n_labels=9, color='blue')
+    pl.screenshot(return_img=True)
+
+    assert bar.GetLabelTextProperty().GetFontSize() < WIDE_FONT
+    assert not _text_at_the_viewport_edge(pl)
+
+
+def test_fit_fonts_measure_the_viewport_a_bar_is_drawn_in(sphere):
+    # A bar's box is a fraction of its own viewport, so a subplot holds the text of a
+    # bar that the whole window would leave hanging out of it
+    pl = pv.Plotter(shape=(1, 2), window_size=[1024, 768], border=False)
+    pl.background_color = 'white'
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = _wide_bar(pl, sphere, vertical=True, n_labels=9, color='blue', outline=True)
+    pl.screenshot(return_img=True)
+
+    assert not _text_outside_the_box(pl, bar)
 
 
 def test_fit_fonts_skip_the_ticks_a_flat_range_hides(sphere):

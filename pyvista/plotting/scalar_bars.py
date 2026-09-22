@@ -198,16 +198,16 @@ def _fitted_fonts(scalar_bar, *, vertical, title, viewport, fonts):
     text_pad = scalar_bar.GetTextPad()
     box_width, box_height = _box_pixels(scalar_bar, viewport)
     left, bottom = scalar_bar.GetPositionCoordinate().GetComputedViewportValue(viewport)[:2]
-    thickness = scalar_bar.GetBarRatio() * (box_width if vertical else box_height)
+    thickness = math.ceil(scalar_bar.GetBarRatio() * (box_width if vertical else box_height))
 
     def title_fits(font_size):
         # A title is centered across the end of the bar, so it runs off both sides at once
-        width = _text_size(viewport, title_text, title, font_size=font_size)[0]
+        width = math.ceil(_text_size(viewport, title_text, title, font_size=font_size)[0]) + 1
         center = left + box_width / 2
         return center - width / 2 >= 0 and center + width / 2 <= viewport_width
 
+    # A title drawn across the end of a vertical bar overhangs it on either side
     if title and not vertical:
-        # A vertical title is drawn across a narrow bar and overhangs it either side
         title_font = _shrunk_font(title_fits, start=title_font)
 
     # An indexed lookup is drawn with annotations in place of ticks, and a tick whose
@@ -224,16 +224,20 @@ def _fitted_fonts(scalar_bar, *, vertical, title, viewport, fonts):
     if vertical:
         # The bar gives up the end its title is drawn across, and the labels are stacked
         # along what is left of the ramp and drawn out past its side
-        title_height = _text_size(viewport, title_text, title, font_size=title_font)[1]
-        span = (
-            box_height
-            - (title_height if title else 0)
-            - 3 * text_pad
-            - scalar_bar.GetVerticalTitleSeparation()
+        title_height = (
+            _text_size(viewport, title_text, title, font_size=title_font)[1] if title else 0
         )
-        offset, room = _ramp_room(scalar_bar, span, thickness)
+        offset, room = _tick_run(
+            scalar_bar,
+            height=box_height,
+            thickness=thickness,
+            title_height=title_height,
+            text_pad=text_pad,
+        )
         start, limit = bottom + offset, viewport_height
-        beside = viewport_width - (left + thickness + 2 * text_pad)
+        # A label drawn out past the side of the ramp has the viewport edge to clear
+        # there as well as the ends of the bar
+        beside = viewport_width - (left + thickness + 3 * text_pad)
     else:
         offset, room = _ramp_room(scalar_bar, box_width, thickness)
         start, limit = left + offset, viewport_width
@@ -244,14 +248,19 @@ def _fitted_fonts(scalar_bar, *, vertical, title, viewport, fonts):
         # and the last one has to clear the far end
         edge = text_pad
         for anchor, text in ticks:
-            width, height = _text_size(viewport, label_text, text, font_size=font_size)
+            # VTK draws the text into whole pixels and reports a size a pixel under the
+            # room it takes, so a label is measured as the pixels it covers
+            width, height = (
+                math.ceil(size) + 1
+                for size in _text_size(viewport, label_text, text, font_size=font_size)
+            )
             if beside is not None and width > beside:
                 return False
-            size = height if vertical else width
+            reach = (height if vertical else width) / 2
             center = start + room * anchor
-            if center - size / 2 < edge or center + size / 2 > limit - text_pad:
+            if center - reach < edge or center + reach > limit - text_pad:
                 return False
-            edge = center + size / 2 + text_pad
+            edge = center + reach + text_pad
         return True
 
     return title_font, _shrunk_font(labels_fit, start=label_font)
@@ -282,19 +291,23 @@ def _lifted_ramp(ramp, text_pad):
     return thickness, int(min(thickness / 8, text_pad))
 
 
+def _swatch_sizes(scalar_bar, length, thickness):
+    """Return the pad VTK leaves around a bar's swatches and the size of each one."""
+    notes = scalar_bar.GetLookupTable().GetNumberOfAnnotatedValues()
+    per_note = int(length) // notes if notes else 0
+    swatch_pad = 4.0 if not notes or per_note > 16 else per_note / 4
+    size = max(min(thickness, int(length) // 4), 4 * (length > 16))
+    drawn = (
+        scalar_bar.GetDrawNanAnnotation(),
+        scalar_bar.GetDrawBelowRangeSwatch(),
+        scalar_bar.GetDrawAboveRangeSwatch(),
+    )
+    return (swatch_pad, *(size if is_drawn else 0 for is_drawn in drawn))
+
+
 def _ramp_room(scalar_bar, width, ramp):
     """Return where VTK starts a horizontal ramp beside its swatches, and its length."""
-    notes = scalar_bar.GetLookupTable().GetNumberOfAnnotatedValues()
-    per_note = int(width) // notes if notes else 0
-    swatch_pad = 4.0 if not notes or per_note > 16 else per_note / 4
-
-    def swatch(drawn):
-        size = max(min(ramp, int(width) // 4), 4 * (width > 16))
-        return size if drawn else 0
-
-    nan = swatch(scalar_bar.GetDrawNanAnnotation())
-    below = swatch(scalar_bar.GetDrawBelowRangeSwatch())
-    above = swatch(scalar_bar.GetDrawAboveRangeSwatch())
+    swatch_pad, nan, below, above = _swatch_sizes(scalar_bar, width, ramp)
     room = int(width - (nan + swatch_pad))
     if below:
         room = int(room - (below + swatch_pad))
@@ -302,8 +315,23 @@ def _ramp_room(scalar_bar, width, ramp):
         room -= above
         if nan:
             room = int(room - swatch_pad)
-    # Only the below-range swatch is drawn on the end the ramp starts at
+    # Only the below-range swatch is drawn on the end a horizontal ramp starts at
     return below, room
+
+
+def _tick_run(scalar_bar, *, height, thickness, title_height, text_pad):
+    """Return where VTK starts a vertical bar's tick labels, and the span they fill.
+
+    The ramp is cleared of every swatch and of the title drawn across its end, and the
+    pad the swatches are spaced by is left below it whether any of them is drawn.
+    """
+    swatch_pad, nan, below, above = _swatch_sizes(scalar_bar, height, thickness)
+    span = height - title_height - 3 * text_pad - scalar_bar.GetVerticalTitleSeparation()
+    for size in (nan, below, above):
+        if size:
+            # A swatch gives the text pad back once it is deep enough to spare it
+            span -= (size - text_pad if size > 2 * text_pad else size) + swatch_pad
+    return nan + swatch_pad + below, span
 
 
 def _constrained_box(scalar_bar, *, title, pad, viewport, keep_height=False):
@@ -541,9 +569,17 @@ class ScalarBars(_NoNewAttrMixin):
 
     def _apply_fit(self, fit, scalar_bar):
         """Size a scalar bar's box to its text, or give it back the size it asked for."""
-        request = fit['request']
-        width, height, position, bar_ratio, separation, title_ratio, text_pad = request[:7]
-        title_font, label_font = request[7:]
+        (
+            width,
+            height,
+            position,
+            bar_ratio,
+            separation,
+            title_ratio,
+            text_pad,
+            title_font,
+            label_font,
+        ) = fit['request']
         # Measure against the size that was asked for rather than the last fit
         scalar_bar.SetWidth(width)
         scalar_bar.SetHeight(height)
@@ -649,14 +685,14 @@ class ScalarBars(_NoNewAttrMixin):
             if bar is None:
                 # The observer outlived the bar it was measuring
                 return
-            geometry = _layout_settings(bar)
-            if fit['applied'] is not None and geometry != fit['applied']:
+            settings = _layout_settings(bar)
+            if fit['applied'] is not None and settings != fit['applied']:
                 # The bar was sized or placed after it was fitted, so that is what it
                 # asks for now and the fit is measured against it from here on
                 fit['request'] = tuple(
                     now if now != before else asked
                     for now, before, asked in zip(
-                        geometry, fit['applied'], fit['request'], strict=True
+                        settings, fit['applied'], fit['request'], strict=True
                     )
                 )
                 fit['state'] = None
@@ -1065,7 +1101,7 @@ class ScalarBars(_NoNewAttrMixin):
             Adds a black shadow to the text.
 
         width : float, optional
-            The percentage (0 to 1) width of the window for the colorbar.  Giving
+            The percentage (0 to 1) width of the viewport for the colorbar.  Giving
             a width, or a height, keeps a box drawn by ``fill`` or ``outline``
             exactly that size rather than growing it around the text, though
             only a height holds a horizontal box whose text is not
@@ -1076,14 +1112,14 @@ class ScalarBars(_NoNewAttrMixin):
             depending on the value of ``vertical``.
 
         height : float, optional
-            The percentage (0 to 1) height of the window for the
+            The percentage (0 to 1) height of the viewport for the
             colorbar.  Default set by
             :attr:`pyvista.plotting.themes.Theme.colorbar_vertical` or
             :attr:`pyvista.plotting.themes.Theme.colorbar_horizontal`
             depending on the value of ``vertical``.
 
         position_x : float, optional
-            The percentage (0 to 1) along the window's horizontal
+            The percentage (0 to 1) along the viewport's horizontal
             direction to place the bottom left corner of the colorbar.
             Default set by
             :attr:`pyvista.plotting.themes.Theme.colorbar_vertical` or
@@ -1091,7 +1127,7 @@ class ScalarBars(_NoNewAttrMixin):
             depending on the value of ``vertical``.
 
         position_y : float, optional
-            The percentage (0 to 1) along the window's vertical
+            The percentage (0 to 1) along the viewport's vertical
             direction to place the bottom left corner of the colorbar.
             Default set by
             :attr:`pyvista.plotting.themes.Theme.colorbar_vertical` or
@@ -1630,7 +1666,7 @@ class ScalarBars(_NoNewAttrMixin):
                 title_height = _title_height(title_text, display_title, dpi)
                 bar_width = width * viewport_width
                 title_text.SetLineOffset(-_rotated_title_offset(bar_width, title_height, pad))
-            elif not sized or constrained or not vertical:
+            elif not sized or constrained or not vertical or not draws_box:
                 # The box is free to grow and the bar has not been placed yet, or the
                 # text has to be fitted to a bar that is not free to grow around it
                 keep_fitted = True
