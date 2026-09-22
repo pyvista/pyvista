@@ -775,7 +775,8 @@ class Actor(Prop3D, _vtk.vtkActor):
 
         Set to a style string to dash the lines, to ``''`` to hide them, or to
         ``None`` to draw them solid. Accepts the same styles as
-        :func:`pyvista.PolyDataFilters.dash_lines`.
+        :func:`pyvista.PolyDataFilters.dash_lines`. Use :attr:`dash_interval`
+        to set the size of the interval pattern.
 
         .. versionadded:: 0.50
 
@@ -799,13 +800,12 @@ class Actor(Prop3D, _vtk.vtkActor):
 
         Examples
         --------
-        Dash the lines of a circle, changing the style the mesh was added with.
+        Dash the lines of a circle.
 
         >>> import pyvista as pv
         >>> circle = pv.Circle(resolution=200).extract_all_edges()
         >>> pl = pv.Plotter()
-        >>> actor = pl.add_mesh(circle, color='black', line_width=4, line_style=':')
-        >>> actor.line_style = '--'
+        >>> actor = pl.add_mesh(circle, color='black', line_width=4, line_style='--')
         >>> pl.show(cpos='xy')
 
         """
@@ -899,6 +899,8 @@ class Actor(Prop3D, _vtk.vtkActor):
         The length is a fraction of the renderer's viewport height, so a subplot
         dashes at the same rate as a full window of that height. A full pattern
         repeats every sixteen intervals.
+
+        This property only affects lines with a dashed :attr:`line_style`.
 
         .. versionadded:: 0.50
 
