@@ -123,7 +123,7 @@ pv.plot_compare(
     cmap='bone',
     opacity=opacities,
     scalar_bar_args=[
-        {'title': str(opacity), 'vertical': True, 'position_x': 0.04, 'fmt': '%.0f'}
+        {'title': str(opacity), 'vertical': True, 'position_x': 0.1, 'fmt': '%.0f'}
         for opacity in opacities
     ],
     cpos='xy',
