@@ -1125,7 +1125,8 @@ class ScalarBars(_NoNewAttrMixin):
 
         title_pad : float, optional
             Space between the title and the tick labels, as a multiple of the
-            size the labels are drawn at; a title turned alongside the bar is
+            size the labels are drawn at, or of the size they ask for on a box
+            that sizes the text itself.  A title turned alongside the bar is
             padded off the bar by a multiple of its own size.  Defaults to
             ``None`` and is sized according to
             :attr:`pyvista.plotting.themes.Theme.colorbar_horizontal` or
