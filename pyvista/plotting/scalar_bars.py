@@ -7,6 +7,7 @@ import math
 from typing import Any
 import weakref
 
+import numpy as np
 import pyvista_validation as _validation
 
 import pyvista as pv
@@ -77,15 +78,14 @@ def _title_height(text_property, title, dpi):
     return bounds[3] - bounds[2] + 1
 
 
-def _shrunk_font(text_property, texts, room, *, dpi, measure=None):
+def _shrunk_font(text_property, texts, room, *, dpi):
     """Return the largest font size up to the one asked for that fits ``room`` pixels."""
-    measure = _title_width if measure is None else measure
     if not texts:
         return text_property.GetFontSize()
     probe = _vtk.vtkTextProperty()
     probe.ShallowCopy(text_property)
     font_size = probe.GetFontSize()
-    while font_size > 3 and max(measure(probe, text, dpi) for text in texts) > room:
+    while font_size > 3 and max(_title_width(probe, text, dpi) for text in texts) > room:
         font_size -= 1
         probe.SetFontSize(font_size)
     return font_size
@@ -130,8 +130,7 @@ def _vertical_rooms(scalar_bar, box_width):
     text_pad = scalar_bar.GetTextPad()
     # The ramp is thinned and nudged off the frame, and the labels are drawn from its
     # far side, so they have the rest of the box less the pad on either side of them
-    thickness = math.ceil(box_width * scalar_bar.GetBarRatio())
-    ramp = int(thickness - min(thickness / 8, text_pad))
+    ramp = _thinned_ramp(math.ceil(box_width * scalar_bar.GetBarRatio()), text_pad)
     return box_width - 2 * text_pad, box_width - ramp - 3 * text_pad
 
 
@@ -230,23 +229,37 @@ def _set_box_height(scalar_bar, viewport, pixels):
     scalar_bar.SetHeight(height + (pixels - measured) / viewport_height)
 
 
+def _thinned_ramp(thickness, text_pad):
+    """Return the ramp VTK thins a bar ``thickness`` pixels thick to."""
+    return int(thickness - min(thickness / 8, text_pad))
+
+
 def _lifted_ramp(ramp, text_pad):
     """Return the bar thickness VTK thins to ``ramp`` and how far it lifts the ramp."""
     thickness = ramp
-    while int(thickness - min(thickness / 8, text_pad)) != ramp:
+    while _thinned_ramp(thickness, text_pad) != ramp:
         thickness += 1
     return thickness, int(min(thickness / 8, text_pad))
 
 
+def _swatch_pad(scalar_bar, length):
+    """Return the pad VTK leaves around the swatches of a bar ``length`` pixels long."""
+    notes = scalar_bar.GetLookupTable().GetNumberOfAnnotatedValues()
+    per_note = int(length) // notes if notes else 0
+    return 4.0 if not notes or per_note > 16 else per_note / 4
+
+
+def _swatch_size(ramp, length):
+    """Return the size in pixels VTK gives a swatch on the end of a ramp ``ramp`` thick."""
+    return max(min(ramp, int(length) // 4), 4 * (length > 16))
+
+
 def _ramp_room(scalar_bar, width, ramp):
     """Return the length in pixels VTK leaves a horizontal ramp beside its swatches."""
-    notes = scalar_bar.GetLookupTable().GetNumberOfAnnotatedValues()
-    per_note = int(width) // notes if notes else 0
-    swatch_pad = 4.0 if not notes or per_note > 16 else per_note / 4
+    swatch_pad = _swatch_pad(scalar_bar, width)
 
     def swatch(drawn):
-        size = max(min(ramp, int(width) // 4), 4 * (width > 16))
-        return size if drawn else 0
+        return _swatch_size(ramp, width) if drawn else 0
 
     nan = swatch(scalar_bar.GetDrawNanAnnotation())
     below = swatch(scalar_bar.GetDrawBelowRangeSwatch())
@@ -259,6 +272,120 @@ def _ramp_room(scalar_bar, width, ramp):
         if nan:
             room = int(room - swatch_pad)
     return room
+
+
+def _frame_edge(scalar_bar):
+    """Return the pixels VTK keeps text clear of a box's edge by, the pad and the line."""
+    return scalar_bar.GetTextPad() + int(scalar_bar.GetFrameProperty().GetLineWidth())
+
+
+def _turned_label_reach(scalar_bar, *, label_height, box_width, box_height):
+    """Return how far past the top and the bottom of its box a turned bar's labels reach.
+
+    A turned title leaves the ramp the height of the box, and the tick labels are
+    centered on the ramp's ends, so half a label reaches past each: the top one past
+    the text pad over the ramp, the bottom one past the swatch pad under it, less what
+    a swatch drawn on that end holds the ramp off it by.  Each is to clear the frame by
+    the text pad and the line.
+    """
+    text_pad = scalar_bar.GetTextPad()
+    thickness = _thinned_ramp(math.ceil(box_width * scalar_bar.GetBarRatio()), text_pad)
+    swatch_pad = _swatch_pad(scalar_bar, box_height)
+
+    def swatch(drawn):
+        size = _swatch_size(thickness, box_height) if drawn else 0
+        # VTK's swatch box is a text pad shorter than the swatch
+        return size, size - text_pad if size > 2 * text_pad else size
+
+    nan, nan_box = swatch(scalar_bar.GetDrawNanAnnotation())
+    below, below_box = swatch(scalar_bar.GetDrawBelowRangeSwatch())
+    above, above_box = swatch(scalar_bar.GetDrawAboveRangeSwatch())
+    bottom = swatch_pad + nan + below
+    run = box_height - 3 * text_pad - scalar_bar.GetVerticalTitleSeparation()
+    for size, box in ((nan, nan_box), (below, below_box), (above, above_box)):
+        if size:
+            run -= box + swatch_pad
+    clearance = math.ceil(label_height / 2) + _frame_edge(scalar_bar)
+    return (
+        max(math.ceil(bottom + run + clearance - box_height), 0),
+        max(math.ceil(clearance - bottom), 0),
+    )
+
+
+def _turned_title_reach(scalar_bar, *, label_height, title_length, box_height):
+    """Return how far past the top and the bottom of its box a turned title reaches.
+
+    The title is centered on the box and lifted by three quarters of a label, so half
+    of one longer than the box reaches past each end, and is to clear the frame by the
+    text pad and the line.
+    """
+    lift = _seating_offset(label_height)
+    half = title_length / 2 + _frame_edge(scalar_bar) - box_height / 2
+    return max(math.ceil(half + lift), 0), max(math.ceil(half - lift), 0)
+
+
+def _turned_title_room(scalar_bar, *, label_height, box_height, above, below):
+    """Return the length a box that keeps its height leaves a turned title.
+
+    The labels take ``above`` and ``below`` pixels of the box past the ramp, and the
+    title is centered on the ramp and lifted by three quarters of a label, so the end
+    it is lifted toward is what holds it.
+    """
+    lift = _seating_offset(label_height)
+    edge = _frame_edge(scalar_bar)
+    return max(
+        min(
+            box_height + above - below - 2 * (lift + edge),
+            box_height - above + below + 2 * (lift - edge),
+        ),
+        0,
+    )
+
+
+def _box_shell():
+    """Return the actors that draw a box's background and its frame, in that order."""
+    shell = []
+    corners = np.zeros((4, 3))
+    quad = pv.PolyData(corners, faces=[4, 0, 1, 2, 3])
+    loop = pv.PolyData(corners, lines=[5, 0, 1, 2, 3, 0])
+    for polydata in (quad, loop):
+        mapper = _vtk.vtkPolyDataMapper2D()
+        mapper.SetInputData(polydata)
+        actor = _vtk.vtkActor2D()
+        actor.SetMapper(mapper)
+        actor.GetPositionCoordinate().SetCoordinateSystemToNormalizedViewport()
+        actor.PickableOff()
+        shell.append(actor)
+    return tuple(shell)
+
+
+def _shape_shell(shell, *, position, width, height):
+    """Lay a box's shell out at a normalized position, with a size in pixels, as VTK does."""
+    corners = [
+        (0, 0, 0),
+        (0, height - 0.5, 0),
+        (width - 0.5, height - 0.5, 0),
+        (width - 0.5, 0, 0),
+    ]
+    for actor in shell:
+        pv.wrap(actor.GetMapper().GetInput()).points = np.array(corners, dtype=float)
+        actor.SetPosition(*position)
+
+
+def _dress_shell(shell, scalar_bar, opacities, *, drawn):
+    """Give a box's shell the bar's frame and background, drawn only while the bar draws them."""
+    draws = (scalar_bar.GetDrawBackground(), scalar_bar.GetDrawFrame())
+    sources = (scalar_bar.GetBackgroundProperty(), scalar_bar.GetFrameProperty())
+    for index, (actor, source, draw) in enumerate(zip(shell, sources, draws, strict=True)):
+        if source.GetOpacity():
+            # Set on the bar after it was fitted, so that is what it asks for now
+            opacities[index] = source.GetOpacity()
+        # The bar draws its own frame and background transparent, so the shell's are
+        # the ones seen
+        actor.GetProperty().DeepCopy(source)
+        actor.GetProperty().SetOpacity(opacities[index])
+        source.SetOpacity(0.0)
+        actor.SetVisibility(bool(draw and drawn))
 
 
 def _constrained_box(scalar_bar, *, title, pad, viewport, keep_height=False):
@@ -284,7 +411,7 @@ def _constrained_box(scalar_bar, *, title, pad, viewport, keep_height=False):
     thickness = math.ceil(
         scalar_bar.GetHeight() * viewport.GetSize()[1] * scalar_bar.GetBarRatio()
     )
-    ramp = int(thickness - min(thickness / 8, scalar_bar.GetTextPad()))
+    ramp = _thinned_ramp(thickness, scalar_bar.GetTextPad())
     labels = _label_texts(scalar_bar)
 
     def title_sizes(font_size):
@@ -392,9 +519,7 @@ def _constrained_box(scalar_bar, *, title, pad, viewport, keep_height=False):
     return height, bar_ratio, title_ratio, text_pad
 
 
-def _fitted_box(
-    scalar_bar, *, vertical, title, label_text, pad, dpi, window, keep_height=False, turned=False
-):
+def _fitted_box(scalar_bar, *, vertical, title, label_text, pad, dpi, window, keep_height, turned):
     """Return the box that encloses a scalar bar's text, and the settings that fill it.
 
     The colour ramp keeps the size it was given; the box grows around it, except in a
@@ -477,10 +602,10 @@ class ScalarBars(_NoNewAttrMixin):
         self._scalar_bar_ranges = {}
         self._scalar_bar_mappers = {}
         self._resync_titles = set()
-        self._scalar_bar_actors = {}
-        self._scalar_bar_widgets = {}
         for title in list(self._scalar_bar_fits):
             self._stop_fitting(title)
+        self._scalar_bar_actors = {}
+        self._scalar_bar_widgets = {}
 
     def __plotter_close__(self) -> None:
         """Release scalar-bar state when the owning plotter closes."""
@@ -504,6 +629,68 @@ class ScalarBars(_NoNewAttrMixin):
         window = self._plotter.render_window
         if window is not None:
             window.RemoveObserver(fit['observer'])
+        if fit['shell'] is not None:
+            for actor in fit['shell']:
+                fit['renderer'].RemoveActor(actor)
+            bar = self._scalar_bar_actors.get(title)
+            if bar is not None:
+                bar.GetBackgroundProperty().SetOpacity(fit['opacities'][0])
+                bar.GetFrameProperty().SetOpacity(fit['opacities'][1])
+
+    def _hold_turned_title(self, fit, scalar_bar, *, dpi):
+        """Hold a turned title to the length a box that keeps its height leaves it."""
+        box_width, box_height = _box_pixels(scalar_bar, fit['renderer'])
+        label_height = _label_size(scalar_bar, scalar_bar.GetLabelTextProperty(), dpi)[1]
+        above, below = _turned_label_reach(
+            scalar_bar, label_height=label_height, box_width=box_width, box_height=box_height
+        )
+        room = _turned_title_room(
+            scalar_bar, label_height=label_height, box_height=box_height, above=above, below=below
+        )
+        title_text = scalar_bar.GetTitleTextProperty()
+        title_text.SetFontSize(_shrunk_font(title_text, [fit['title']], room, dpi=dpi))
+
+    def _enclose_turned(self, fit, scalar_bar, *, dpi):
+        """Draw a turned bar's box past the ends of its ramp, around the text on them.
+
+        VTK draws the box of a turned bar around the ramp alone, so the bar draws its
+        own frame and background transparent and a shell of the two is drawn under it
+        instead, reaching half a label past the ramp's ends and as far as a title
+        longer than the ramp does.  A box that keeps its height gives the ramp up to
+        the labels; otherwise the box grows around it.
+        """
+        renderer = fit['renderer']
+        box_width, box_height = _box_pixels(scalar_bar, renderer)
+        label_height = _label_size(scalar_bar, scalar_bar.GetLabelTextProperty(), dpi)[1]
+        above, below = _turned_label_reach(
+            scalar_bar, label_height=label_height, box_width=box_width, box_height=box_height
+        )
+        x, y = scalar_bar.GetPosition()
+        if fit['pinned_height']:
+            shell_height = box_height
+            _set_box_height(scalar_bar, renderer, max(box_height - above - below, 1))
+        else:
+            title_above, title_below = _turned_title_reach(
+                scalar_bar,
+                label_height=label_height,
+                title_length=_title_width(scalar_bar.GetTitleTextProperty(), fit['title'], dpi),
+                box_height=box_height,
+            )
+            above, below = max(above, title_above), max(below, title_below)
+            shell_height = box_height + above + below
+        scalar_bar.SetPosition(x, y + below / renderer.GetSize()[1])
+
+        shell = fit['shell']
+        if shell is None:
+            shell = fit['shell'] = _box_shell()
+            for actor in shell:
+                renderer.AddActor(actor)
+            if renderer.HasViewProp(scalar_bar):
+                # Props are drawn in the order they were added, and the bar goes on top
+                renderer.RemoveActor(scalar_bar)
+                renderer.AddActor(scalar_bar)
+        _shape_shell(shell, position=(x, y), width=box_width, height=shell_height)
+        _dress_shell(shell, scalar_bar, fit['opacities'], drawn=bool(scalar_bar.GetVisibility()))
 
     def _apply_fit(self, fit, scalar_bar):
         """Size a scalar bar's box to its text, or give it back the size it asked for."""
@@ -594,6 +781,9 @@ class ScalarBars(_NoNewAttrMixin):
                 )
                 title_text.SetFontSize(title_font)
                 label_text.SetFontSize(label_font)
+                if fit['pinned_height']:
+                    self._hold_turned_title(fit, scalar_bar, dpi=dpi)
+                self._enclose_turned(fit, scalar_bar, dpi=dpi)
             else:
                 label_text.SetFontSize(
                     _shrunk_font(label_text, _label_texts(scalar_bar), label_room, dpi=dpi)
@@ -608,6 +798,9 @@ class ScalarBars(_NoNewAttrMixin):
             fit['applied'] = _box_geometry(scalar_bar)
             return
 
+        if turned and fit['pinned_height']:
+            # The title is held to the box before the row is laid out around it
+            self._hold_turned_title(fit, scalar_bar, dpi=dpi)
         fitted_width, fitted_height, fitted_ratio, offset, fitted_separation = _fitted_box(
             scalar_bar,
             vertical=fit['vertical'],
@@ -628,6 +821,8 @@ class ScalarBars(_NoNewAttrMixin):
             # box grows away from the window edge rather than through it
             scalar_bar.SetPosition(position[0] - (fitted_width - width), position[1])
         title_text.SetLineOffset(offset)
+        if turned:
+            self._enclose_turned(fit, scalar_bar, dpi=dpi)
         # The representation is what an interactive bar is drawn from, so it carries the
         # fitted box too, and dragging the widget then asks for a box of its own
         self._place_widget(fit['key'], scalar_bar)
@@ -659,6 +854,11 @@ class ScalarBars(_NoNewAttrMixin):
             'pinned_width': pinned_width,
             'pinned_height': pinned_height,
             'renderer': self._plotter.renderer,
+            'shell': None,
+            'opacities': [
+                scalar_bar.GetBackgroundProperty().GetOpacity(),
+                scalar_bar.GetFrameProperty().GetOpacity(),
+            ],
             'state': None,
             'applied': None,
             'observer': None,
@@ -672,6 +872,10 @@ class ScalarBars(_NoNewAttrMixin):
             if bar is None:
                 # The observer outlived the bar it was measuring
                 return
+            if fit['shell'] is not None:
+                # The shell follows what the bar draws, and whether it is drawn at all
+                drawn = bool(bar.GetVisibility()) and fit['renderer'].HasViewProp(bar)
+                _dress_shell(fit['shell'], bar, fit['opacities'], drawn=drawn)
             geometry = _box_geometry(bar)
             if fit['applied'] is not None and geometry != fit['applied']:
                 # The bar was sized, placed or given a font size after it was fitted, so
@@ -804,13 +1008,13 @@ class ScalarBars(_NoNewAttrMixin):
                 if slot is not None:
                     self._scalar_bar_mappers.pop(name)
                     self._scalar_bar_ranges.pop(name)
+                    self._stop_fitting(name)
                     self._plotter.remove_actor(
                         self._scalar_bar_actors.pop(name),
                         reset_camera=reset_camera,
                         render=render,
                     )
                     self._plotter._scalar_bar_slots.add(slot)
-                    self._stop_fitting(name)
 
     def remove_scalar_bar(self, title=None, *, render: bool = True):
         """Remove a scalar bar.
@@ -850,6 +1054,7 @@ class ScalarBars(_NoNewAttrMixin):
             else:
                 title = next(iter(self._scalar_bar_actors.keys()))
 
+        self._stop_fitting(title)
         actor = self._scalar_bar_actors.pop(title)
         self._plotter.remove_actor(actor, render=render)
         self._scalar_bar_ranges.pop(title)
@@ -863,8 +1068,6 @@ class ScalarBars(_NoNewAttrMixin):
         widget = self._scalar_bar_widgets.pop(title, None)
         if widget is not None:
             widget.SetEnabled(0)
-
-        self._stop_fitting(title)
 
     def __len__(self):
         """Return the number of scalar bar actors."""
@@ -1145,7 +1348,11 @@ class ScalarBars(_NoNewAttrMixin):
             Applies to vertical bars only.  Requires VTK 9.4.0 or newer, and has
             no effect when the font size is constrained.  A box drawn by
             ``fill`` or ``outline`` holds the title past the tick labels rather
-            than on the far side of the bar.
+            than on the far side of the bar, and reaches past the ends of the
+            ramp for the labels centered on them and for a title longer than
+            the ramp, unless the box was given a height, which holds the title
+            to it.  That box is drawn behind the bar, whose own frame and
+            background read an opacity of 0.
 
             .. versionadded:: 0.50
 
@@ -1236,7 +1443,10 @@ class ScalarBars(_NoNewAttrMixin):
         the width of its box, so a box given a width of its own shrinks its
         title and its tick labels to fit that width, while a height alone
         leaves the box free to widen around them.  A turned title is laid out
-        in a row with the ramp and the labels so that the box holds it too.
+        in a row with the ramp and the labels so that the box holds it too, and
+        the box reaches past the ends of the ramp for the labels centered on
+        them and for a title longer than the ramp, growing around the ramp
+        unless it was given a height to keep.
 
         The ``mapper``, ``lookup_table``, and ``cmap`` parameters can be used
         to set a custom color map for the scalar bar; otherwise, the bar will
