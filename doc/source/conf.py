@@ -1216,7 +1216,7 @@ def forget_tag_page_toctrees(app: Sphinx, env: BuildEnvironment) -> None:
 
 
 def restrict_trimesh_inventory(app: Sphinx) -> None:
-    """Drop the stdlib and NumPy names ``trimesh.typed`` re-exports from trimesh's inventory."""
+    """Drop non-``trimesh`` names from trimesh's inventory so they link to their own docs."""
     inventories = InventoryAdapter(app.env)
     for objtype, objects in inventories.named_inventory['trimesh'].items():
         if objtype.startswith('py:'):

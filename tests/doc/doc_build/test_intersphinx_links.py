@@ -36,17 +36,20 @@ def test_link_target(page, target):
     path = next(Path(BUILD_HTML_DIR).rglob(page), None)
     assert path is not None, f'{page} not found under {BUILD_HTML_DIR}'
 
-    hrefs = _HREF_RE.findall(path.read_text())
+    hrefs = _HREF_RE.findall(path.read_text(encoding='utf-8'))
 
-    assert any(href.endswith(target) for href in hrefs)
+    assert any(href.endswith(target) for href in hrefs), f'{page} has no link to {target}'
 
 
 def test_no_links_to_trimesh_reexports():
     """Confirm names ``trimesh.typed`` re-exports, like ``Sequence``, never link to trimesh."""
-    pages = [
+    pages = sorted(Path(BUILD_HTML_DIR).rglob('*.html'))
+    assert pages, f'no built pages found under {BUILD_HTML_DIR}. Build the documentation first.'
+
+    linked = [
         str(path.relative_to(BUILD_HTML_DIR))
-        for path in Path(BUILD_HTML_DIR).rglob('*.html')
-        if 'trimesh.org/trimesh.typed.html' in path.read_text()
+        for path in pages
+        if b'trimesh.org/trimesh.typed.html' in path.read_bytes()
     ]
 
-    assert not pages
+    assert not linked
