@@ -1383,6 +1383,33 @@ def test_fit_box_leaves_a_turned_title_alone_without_a_box(sphere):
     assert bar.GetTitleTextProperty().GetLineOffset() < 0
 
 
+@pytest.mark.needs_vtk_version(9, 4, 0, reason='ForceVerticalTitle was added in VTK 9.4.0')
+def test_fit_box_frees_a_turned_title_with_its_box(sphere):
+    # A box taken off a bar after it is added leaves the turned title the far side of
+    # the bar, where a bar added without a box has it
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=[1024, 768])
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = _fitted_bar(
+        pl, sphere, vertical=True, box={'outline': True}, rotate_title=True, fmt='%.1f'
+    )
+    pl.screenshot(return_img=True)
+    bar.SetDrawFrame(False)
+    pl.screenshot(return_img=True)
+
+    bare = pv.Plotter(window_size=[1024, 768])
+    bare.add_mesh(sphere, show_scalar_bar=False)
+    twin = _fitted_bar(bare, sphere, vertical=True, box={}, rotate_title=True, fmt='%.1f')
+    bare.screenshot(return_img=True)
+    bare.close()
+
+    offset = bar.GetTitleTextProperty().GetLineOffset()
+    assert offset == twin.GetTitleTextProperty().GetLineOffset()
+    assert offset < 0
+    assert bar.GetWidth() == twin.GetWidth()
+
+
 def test_fit_box_shrinks_a_sized_vertical_title(sphere):
     # A title wider than the box it was given is shrunk to it, and the labels keep the
     # size they asked for

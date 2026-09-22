@@ -504,10 +504,20 @@ class ScalarBars(_NoNewAttrMixin):
         title_text.SetFontSize(title_font)
         label_text.SetFontSize(label_font)
 
+        dpi = self._plotter.render_window.GetDPI()
+        turned = _turned_title(scalar_bar)
         if not (scalar_bar.GetDrawFrame() or scalar_bar.GetDrawBackground()):
             # Nothing is drawn around the text, so there is nothing to fit it to
             scalar_bar.SetUnconstrainedFontSize(True)
-            title_text.SetLineOffset(-fit['pad'])
+            if turned:
+                # A turned title keeps the far side of the bar to itself
+                bar_width = width * self._plotter.window_size[0]
+                title_height = _bar_title_height(scalar_bar, dpi)
+                title_text.SetLineOffset(
+                    -_rotated_title_offset(bar_width, title_height, fit['pad'])
+                )
+            else:
+                title_text.SetLineOffset(-fit['pad'])
             self._place_widget(fit['key'], scalar_bar)
             fit['applied'] = _box_geometry(scalar_bar)
             return
@@ -534,8 +544,6 @@ class ScalarBars(_NoNewAttrMixin):
             fit['applied'] = _box_geometry(scalar_bar)
             return
 
-        dpi = self._plotter.render_window.GetDPI()
-        turned = _turned_title(scalar_bar)
         if turned:
             # The offset inflates the bounds the title is measured from, and the box the
             # title is laid out inside needs none of it
