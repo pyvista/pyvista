@@ -1089,8 +1089,10 @@ class ScalarBars(_NoNewAttrMixin):
             Bolds title and bar labels.
 
         title_font_size : float, optional
-            Sets the size of the title font.  Defaults to ``None`` and is sized
-            according to :attr:`pyvista.plotting.themes.Theme.font`.
+            Sets the size of the title font.  A box drawn around a horizontal
+            bar that is too narrow or too short for the title shrinks it to
+            fit.  Defaults to ``None`` and is sized according to
+            :attr:`pyvista.plotting.themes.Theme.font`.
 
         title_pad : float, optional
             Space between the title and the tick labels, as a multiple of the
@@ -1103,8 +1105,10 @@ class ScalarBars(_NoNewAttrMixin):
             .. versionadded:: 0.50
 
         label_font_size : float, optional
-            Sets the size of the label font.  Defaults to ``None`` and is sized
-            according to :attr:`pyvista.plotting.themes.Theme.font`.
+            The largest size the labels are drawn at.  They are drawn smaller
+            where the bar leaves them too little room to stay clear of each
+            other.  Defaults to ``None`` and is sized according to
+            :attr:`pyvista.plotting.themes.Theme.font`.
 
         color : ColorLike, optional
             Either a string, rgb list, or hex color string.  Default
@@ -1262,9 +1266,10 @@ class ScalarBars(_NoNewAttrMixin):
         -----
         Setting ``title_font_size`` or ``label_font_size`` sets the size the
         text asks for rather than leaving it to the bar.  The title is drawn at
-        its size, and the labels at theirs where they have the room to stay clear
-        of each other and smaller where they do not; a label is free to run
-        past the edge of the viewport.  A box drawn around a horizontal bar
+        its size.  The label size is the largest the labels are drawn at: they
+        are drawn smaller where the bar leaves them too little room to stay
+        clear of each other, and a label is free to run past the edge of the
+        viewport.  A box drawn around a horizontal bar
         sizes the text itself, so the box is laid out to keep the text at the
         size asked for, or one size larger where two sizes measure the same
         height; a box given too small a height, or too narrow for its text,

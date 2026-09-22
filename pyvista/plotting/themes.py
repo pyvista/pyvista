@@ -1127,9 +1127,10 @@ class _Font(_ConfigBase):
     def label_size(self) -> int:  # numpydoc ignore=RT01
         """Return or set the label size.
 
-        A scalar bar draws its labels at this size where they have the room to
-        stay clear of each other and smaller where they do not.  If ``None``, the
-        size is fitted to the bar they are drawn on.
+        The largest size a scalar bar draws its labels at.  They are drawn
+        smaller where the bar leaves them too little room to stay clear of
+        each other.  If ``None``, the size is fitted to the bar they are drawn
+        on.
 
         Examples
         --------
