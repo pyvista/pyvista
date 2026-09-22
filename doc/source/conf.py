@@ -264,7 +264,6 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*_VTKWriterType'),
     (r'py:.*', '.*NormalsLiteral'),
     (r'py:.*', '.*_CellQualityLiteral'),
-    (r'py:.*', '.*_CompressionOptions'),
     (r'py:.*', '.*_ShowReturnType'),
     (r'py:.*', '.*_ConnectivityMode'),
     (r'py:.*', '.*_RegionAssignmentMode'),
@@ -346,7 +345,6 @@ nitpick_ignore_regex = [
     (r'py:.*', 'BorderOptions'),
     (r'py:.*', 'TextPositionOptions'),
     (r'py:.*', 'ThemeOptions'),
-    (r'py:.*', '_InterpolationOptions'),
     (r'py:.*', 'PlottableType'),
     (r'py:.*', '_Dimensionality'),
     #

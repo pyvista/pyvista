@@ -14,7 +14,7 @@ CONF_PY = PYVISTA_ROOT_DIR / 'doc' / 'source' / 'conf.py'
 
 def conf_value(name: str) -> object:
     """Return the literal assigned to ``name`` in the documentation ``conf.py``."""
-    for node in ast.parse(CONF_PY.read_text()).body:
+    for node in ast.parse(CONF_PY.read_text(encoding='utf-8')).body:
         if isinstance(node, ast.Assign) and any(
             isinstance(target, ast.Name) and target.id == name for target in node.targets
         ):

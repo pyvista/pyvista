@@ -11,6 +11,7 @@ import pytest
 SIGNATURE_ALIASES = [
     ('pyvista.DataObjectFilters.translate.html', 'VectorLike'),  # subscripted
     ('pyvista.DataObjectFilters.validate_mesh.html', 'MeshValidationFields'),  # in a union
+    ('pyvista.Plotter.add_bounding_box.html', 'ColorLike'),  # on its own
     ('pyvista.Plotter.add_mesh.html', 'ColorLike'),
 ]
 DOCSTRING_ALIASES = [
