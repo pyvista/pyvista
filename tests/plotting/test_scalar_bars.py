@@ -12,6 +12,7 @@ from pyvista import _vtk
 from pyvista.core.errors import VTKVersionError
 from pyvista.plotting.scalar_bars import _bar_title_height
 from pyvista.plotting.scalar_bars import _box_pixels
+from pyvista.plotting.scalar_bars import _fitted_label_font
 from pyvista.plotting.scalar_bars import _fitting_font
 from pyvista.plotting.scalar_bars import _label_size
 from pyvista.plotting.scalar_bars import _label_texts
@@ -1691,15 +1692,32 @@ def _wide_bar(pl, sphere, *, vertical=False, title=WIDE_KEY, **kwargs):
     )
 
 
-def _label_gaps(pl, bar):
-    """Return the pixels a horizontal bar leaves between each pair of its tick labels."""
+def _drawn_ramp(pl, bar):
+    """Return the pixels a render inks a horizontal bar's ramp across, below its blue text."""
+    image = pl.screenshot(return_img=True)
+    bottom = bar.GetPositionCoordinate().GetComputedViewportValue(pl.renderer)[1]
+    height = _box_pixels(bar, pl.renderer)[1]
+    box = image[image.shape[0] - int(bottom + height) : image.shape[0] - int(bottom)]
+    text = (box[..., 2] > 200) & (box[..., 0] < 150) & (box[..., 1] < 150)
+    ramp = box[np.flatnonzero(text.any(axis=1)).max() + 2 :]
+    colored = (ramp.max(axis=2).astype(int) - ramp.min(axis=2)) > 40
+    columns = np.flatnonzero(colored.any(axis=0))
+    return columns.max() - columns.min() + 1
+
+
+def _label_gaps(pl, bar, *, font_size=None):
+    """Return the pixels a horizontal bar leaves between each pair of its tick labels.
+
+    The labels are laid out along the ramp as drawn, less a text pad, and measured as
+    the whole pixels they cover, at the size they are drawn at or the one given.
+    """
     viewport = pl.renderer
     label_text = bar.GetLabelTextProperty()
-    width, height = _box_pixels(bar, viewport)
-    room = _ramp_room(bar, width, bar.GetBarRatio() * height)
+    font_size = label_text.GetFontSize() if font_size is None else font_size
+    room = _drawn_ramp(pl, bar) - bar.GetTextPad()
     edges = []
-    for anchor, text in _label_ticks(bar):
-        size = _text_size(viewport, label_text, text, font_size=label_text.GetFontSize())[0]
+    for anchor, text in sorted(_label_ticks(bar)):
+        size = math.ceil(_text_size(viewport, label_text, text, font_size=font_size)[0]) + 1
         edges.append((room * anchor - size / 2, room * anchor + size / 2))
     return [after[0] - before[1] for before, after in itertools.pairwise(edges)]
 
@@ -1719,25 +1737,34 @@ def _label_runs(pl, bar):
     image = pl.screenshot(return_img=True)
     red, green, blue = (image[..., channel].astype(int) for channel in range(3))
     text = (blue > 200) & (red < 150) & (green < 150)
-    # The swatch annotations are drawn on the other side of the bar, so the text past the
-    # ramp is the tick labels
+    colored = (image.max(axis=2).astype(int) - image.min(axis=2) > 40) & ~text
     left = bar.GetPositionCoordinate().GetComputedViewportValue(pl.renderer)[0]
-    ramp = bar.GetBarRatio() * _box_pixels(bar, pl.renderer)[0]
-    inked = text[:, int(left + ramp) :].any(axis=1)
+    width = _box_pixels(bar, pl.renderer)[0]
+    ramp = int(left + bar.GetBarRatio() * width)
+    # The title is drawn above the ramp, the swatch annotations on its other side and an
+    # outline around the box, so the text beside the rows the ramp is inked on is the
+    # tick labels
+    rows = colored[:, int(left) + 1 : ramp].any(axis=1)
+    inked = text[rows, ramp : int(left + width) - 1].any(axis=1)
     return int(np.sum(inked[1:] & ~inked[:-1])) + int(inked[0])
 
 
 @pytest.mark.parametrize('window', [[1024, 768], [512, 384], [341, 256]])
 def test_fit_fonts_holds_the_labels_apart(sphere, window):
     # Unconstrained labels are drawn at the size they ask for, so the size has to be one
-    # that leaves each of them room on the bar
+    # that leaves each of them room on the bar, and the largest one that does
     pl = pv.Plotter(window_size=window)
+    pl.background_color = 'white'
     pl.add_mesh(sphere, show_scalar_bar=False)
-    bar = _wide_bar(pl, sphere)
+    bar = _wide_bar(pl, sphere, color='blue')
     pl.screenshot(return_img=True)
 
-    assert bar.GetLabelTextProperty().GetFontSize() <= WIDE_FONT
-    assert min(_label_gaps(pl, bar)) >= 0
+    font = bar.GetLabelTextProperty().GetFontSize()
+    pad = bar.GetTextPad()
+    assert font <= WIDE_FONT
+    assert min(_label_gaps(pl, bar)) >= pad
+    # One size larger and the labels would close up
+    assert font == WIDE_FONT or min(_label_gaps(pl, bar, font_size=font + 1)) < pad
 
 
 def test_fit_fonts_leaves_a_bar_with_room_alone(sphere):
@@ -1767,11 +1794,17 @@ def test_fit_fonts_follow_the_viewport(sphere, vertical: bool):
 
     pl.window_size = [400, 300]
     pl.render()
-    assert bar.GetLabelTextProperty().GetFontSize() < large
+    small = bar.GetLabelTextProperty().GetFontSize()
+    assert small < large
 
     pl.window_size = [1024, 768]
     pl.render()
     assert bar.GetLabelTextProperty().GetFontSize() == large
+
+    # A refit lands where the first fit did
+    pl.window_size = [400, 300]
+    pl.render()
+    assert bar.GetLabelTextProperty().GetFontSize() == small
 
 
 def test_fit_fonts_take_a_size_set_by_hand(sphere):
@@ -1797,13 +1830,13 @@ def test_fit_fonts_leave_the_title_alone(sphere):
     # Nothing is drawn around the title, so it keeps its size however far it runs past
     # the bar it is centered on
     pl = pv.Plotter(window_size=[400, 300])
-    pl.background_color = 'white'
     pl.add_mesh(sphere, show_scalar_bar=False)
-    bar = _wide_bar(pl, sphere, title='Pressure at the inlet of the manifold (Pa)', color='blue')
+    bar = _wide_bar(pl, sphere, title='Pressure at the inlet of the manifold (Pa)')
     pl.screenshot(return_img=True)
 
-    assert bar.GetTitleTextProperty().GetFontSize() == WIDE_FONT
-    assert _text_at_the_viewport_edge(pl)
+    title_text = bar.GetTitleTextProperty()
+    assert title_text.GetFontSize() == WIDE_FONT
+    assert _text_size(pl.renderer, title_text, bar.GetTitle(), font_size=WIDE_FONT)[0] > 400
 
 
 def test_fit_fonts_leave_a_constrained_bar_to_vtk(sphere):
@@ -1865,6 +1898,80 @@ def test_fit_fonts_leave_a_label_over_the_viewport_edge_alone(sphere):
     assert bar.GetLabelTextProperty().GetFontSize() == 40
     assert min(_label_gaps(pl, bar)) > 0
     assert _text_at_the_viewport_edge(pl)
+
+
+def test_fit_fonts_keep_the_size_where_no_size_clears_the_labels(sphere):
+    # Two ticks all but on the same spot overlap at any size, so shrinking would not help
+    pl = pv.Plotter(window_size=[600, 300])
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = _wide_bar(pl, sphere, tick_locations=[0.0, 1.0, 6932.0])
+    pl.screenshot(return_img=True)
+
+    assert bar.GetLabelTextProperty().GetFontSize() == WIDE_FONT
+
+
+def test_fit_fonts_skip_a_tick_drawn_on_another(sphere):
+    # A tick given twice is drawn once, so it is not a label the others have to clear
+    ticks = [0.0, 1733.0, 3466.0, 5199.0, 6932.0]
+
+    def fitted(tick_locations):
+        pl = pv.Plotter(window_size=[400, 300])
+        pl.add_mesh(sphere, show_scalar_bar=False)
+        bar = _wide_bar(pl, sphere, tick_locations=tick_locations)
+        pl.screenshot(return_img=True)
+        return bar.GetLabelTextProperty().GetFontSize()
+
+    assert fitted(ticks) < WIDE_FONT
+    assert fitted([*ticks, 6932.0]) == fitted(ticks)
+
+
+def test_fit_fonts_fit_a_boxed_bar_to_the_box_it_grows(sphere):
+    # A box grows around its text and seats the title in it, so the labels are fitted to
+    # the room the grown box leaves them, on the first fit and again on a refit
+    pl = pv.Plotter(window_size=[400, 300])
+    pl.background_color = 'white'
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = _wide_bar(
+        pl,
+        sphere,
+        vertical=True,
+        n_labels=9,
+        color='blue',
+        outline=True,
+        unconstrained_font_size=True,
+    )
+
+    def largest_that_fits():
+        return _fitted_label_font(
+            bar, vertical=True, title=bar.GetTitle(), viewport=pl.renderer, start=WIDE_FONT
+        )
+
+    pl.screenshot(return_img=True)
+    first = bar.GetLabelTextProperty().GetFontSize()
+    assert first < WIDE_FONT
+    assert first == largest_that_fits()
+    assert _label_runs(pl, bar) == 9
+
+    pl.window_size = [1024, 768]
+    pl.render()
+    pl.window_size = [400, 300]
+    pl.render()
+    assert bar.GetLabelTextProperty().GetFontSize() == first == largest_that_fits()
+
+
+def test_fit_fonts_follow_a_title_set_by_hand(sphere):
+    # A vertical bar gives up the end its title is drawn across, so a taller title set
+    # after the fit leaves the labels less room and they are fitted again
+    pl = pv.Plotter(window_size=[400, 300])
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = _wide_bar(pl, sphere, vertical=True, n_labels=9)
+    pl.screenshot(return_img=True)
+    before = bar.GetLabelTextProperty().GetFontSize()
+
+    bar.GetTitleTextProperty().SetFontSize(3 * WIDE_FONT)
+    pl.render()
+
+    assert bar.GetLabelTextProperty().GetFontSize() < before
 
 
 def test_fit_fonts_skip_the_ticks_a_flat_range_hides(sphere):

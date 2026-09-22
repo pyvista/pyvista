@@ -1103,8 +1103,10 @@ class _Font(_ConfigBase):
     def title_size(self) -> int:  # numpydoc ignore=RT01
         """Return or set the title size.
 
-        A scalar bar draws its title at this size.  If ``None``, the size is
-        fitted to the bar it is drawn on.
+        A scalar bar draws its title at this size; a box drawn around a
+        horizontal bar that is too narrow for it, or given too small a height,
+        shrinks it to fit.  If ``None``, the size is fitted to the bar it is
+        drawn on.
 
         Examples
         --------
