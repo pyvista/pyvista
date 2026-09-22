@@ -541,6 +541,11 @@ def _fitted_box(scalar_bar, *, vertical, title, label_text, pad, dpi, viewport):
     )
 
 
+def _title_pad(fit, scalar_bar):
+    """Return the padding a fitted bar's title gets, from the size its labels are drawn at."""
+    return round(fit['title_pad'] * scalar_bar.GetLabelTextProperty().GetFontSize())
+
+
 class ScalarBars(_NoNewAttrMixin):
     """Plotter Scalar Bars.
 
@@ -613,10 +618,13 @@ class ScalarBars(_NoNewAttrMixin):
 
         if not draws_box:
             # Nothing is drawn around the text, so there is nothing to fit it to, and the
-            # labels are held apart at a size the bar has room for
+            # labels are held apart at a size the bar has room for.  The title is padded
+            # off them by their size, and seating it closer only lengthens the ramp they
+            # were fitted along
             scalar_bar.SetUnconstrainedFontSize(True)
-            title_text.SetLineOffset(-fit['pad'])
+            title_text.SetLineOffset(-_title_pad(fit, scalar_bar))
             label_text.SetFontSize(fitted_label_font())
+            title_text.SetLineOffset(-_title_pad(fit, scalar_bar))
             self._place_widget(fit['key'], scalar_bar)
             fit['applied'] = _layout_settings(scalar_bar)
             return
@@ -630,7 +638,7 @@ class ScalarBars(_NoNewAttrMixin):
             fitted_height, fitted_ratio, fitted_title_ratio, fitted_pad = _constrained_box(
                 scalar_bar,
                 title=fit['title'],
-                pad=fit['pad'],
+                pad=_title_pad(fit, scalar_bar),
                 viewport=viewport,
                 keep_height=fit['sized'],
             )
@@ -667,7 +675,7 @@ class ScalarBars(_NoNewAttrMixin):
             vertical=fit['vertical'],
             title=fit['title'],
             label_text=scalar_bar.GetLabelTextProperty(),
-            pad=fit['pad'],
+            pad=_title_pad(fit, scalar_bar),
             dpi=self._plotter.render_window.GetDPI(),
             viewport=fit['renderer'],
         )
@@ -682,7 +690,7 @@ class ScalarBars(_NoNewAttrMixin):
         scalar_bar.GetTitleTextProperty().SetLineOffset(offset)
 
     def _keep_fitted(
-        self, title, scalar_bar, *, vertical, display_title, pad, sized, unconstrained
+        self, title, scalar_bar, *, vertical, display_title, title_pad, sized, unconstrained
     ):
         """Refit a scalar bar's box whenever the window it is drawn in changes."""
         window = self._plotter.render_window
@@ -691,7 +699,7 @@ class ScalarBars(_NoNewAttrMixin):
             'vertical': vertical,
             'key': title,
             'title': display_title,
-            'pad': pad,
+            'title_pad': title_pad,
             'sized': sized,
             'unconstrained': unconstrained,
             'renderer': self._plotter.renderer,
@@ -1096,7 +1104,8 @@ class ScalarBars(_NoNewAttrMixin):
 
         title_pad : float, optional
             Space between the title and the tick labels, as a multiple of the
-            title font size.  Defaults to ``None`` and is sized according to
+            size the labels are drawn at.  Defaults to ``None`` and is sized
+            according to
             :attr:`pyvista.plotting.themes.Theme.colorbar_horizontal` or
             :attr:`pyvista.plotting.themes.Theme.colorbar_vertical`.  Has no
             effect when the font size is constrained, or on a box given a size
@@ -1683,7 +1692,8 @@ class ScalarBars(_NoNewAttrMixin):
         fits_box = draws_box and not sized
         # A box is sized without the padding unless it is fitted around the title
         keeps_pad = fits_box or not draws_box
-        pad = round(title_pad * title_text.GetFontSize()) if title_pad and keeps_pad else 0
+        title_pad = title_pad if title_pad and keeps_pad else 0
+        pad = round(title_pad * label_text.GetFontSize())
         viewport_width, viewport_height = self._plotter.renderer.GetSize()
         dpi = self._plotter.render_window.GetDPI()
 
@@ -1739,7 +1749,7 @@ class ScalarBars(_NoNewAttrMixin):
                 scalar_bar,
                 vertical=vertical,
                 display_title=display_title,
-                pad=pad,
+                title_pad=title_pad,
                 sized=sized,
                 unconstrained=unconstrained_font_size,
             )

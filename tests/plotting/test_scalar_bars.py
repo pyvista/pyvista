@@ -367,7 +367,13 @@ def test_title_pad(sphere, vertical: bool, title_pad: float):
 
     pl = pv.Plotter()
     pl.add_mesh(sphere, show_scalar_bar=False)
-    pl.add_scalar_bar(KEY, vertical=vertical, title_font_size=font_size, title_pad=title_pad)
+    pl.add_scalar_bar(
+        KEY,
+        vertical=vertical,
+        title_font_size=font_size,
+        label_font_size=font_size,
+        title_pad=title_pad,
+    )
 
     offset = pl.scalar_bar.GetTitleTextProperty().GetLineOffset()
     assert offset == -round(title_pad * font_size)
@@ -382,7 +388,7 @@ def test_title_pad_from_theme(sphere, vertical: bool):
 
     pl = pv.Plotter()
     pl.add_mesh(sphere, show_scalar_bar=False)
-    pl.add_scalar_bar(KEY, vertical=vertical, title_font_size=font_size)
+    pl.add_scalar_bar(KEY, vertical=vertical, title_font_size=font_size, label_font_size=font_size)
 
     assert pl.scalar_bar.GetTitleTextProperty().GetLineOffset() == -15
 
@@ -410,6 +416,7 @@ def test_title_pad_boxed(sphere, outline: bool, fill: bool):
     pl.add_scalar_bar(
         KEY,
         title_font_size=20,
+        label_font_size=20,
         title_pad=0.5,
         outline=outline,
         fill=fill,
@@ -574,13 +581,13 @@ def test_rotated_title_clears_the_neighbors_labels(sphere):
 
     pl = pv.Plotter(window_size=window_size)
     pl.add_mesh(sphere, show_scalar_bar=False)
-    font_size = 40
+    label_font = 7
     bars = _wide_number_bars(
-        pl, sphere, rotate_title=True, title_font_size=font_size, label_font_size=7
+        pl, sphere, rotate_title=True, title_font_size=40, label_font_size=label_font
     )
 
     dpi = pl.render_window.GetDPI()
-    pad = round(pl.theme.colorbar_vertical.title_pad * font_size)
+    pad = round(pl.theme.colorbar_vertical.title_pad * label_font)
     for bar, neighbor in _stacked_pairs(bars):
         title = neighbor.GetPosition()[0] * window_size[0] - pad - _bar_title_height(neighbor, dpi)
         assert _label_reach(bar, dpi, window_size[0]) < title
@@ -1175,7 +1182,7 @@ def test_fit_box_lets_the_text_go_without_a_box(sphere):
 
 
 def test_fit_box_leaves_unconstrained_text_its_size(sphere):
-    # Text asked to keep its size is left to it, box or no box
+    # Text asked to keep its size is not sized to the box, box or no box
     sphere[KEY] = sphere.points[:, 2]
 
     pl = pv.Plotter()
@@ -1186,7 +1193,9 @@ def test_fit_box_leaves_unconstrained_text_its_size(sphere):
     pl.screenshot(return_img=True)
 
     assert bar.GetUnconstrainedFontSize()
-    pad = round(pl.theme.colorbar_horizontal.title_pad * 24)
+    assert bar.GetTitleTextProperty().GetFontSize() == 24
+    label_font = bar.GetLabelTextProperty().GetFontSize()
+    pad = round(pl.theme.colorbar_horizontal.title_pad * label_font)
     assert bar.GetTitleTextProperty().GetLineOffset() == -pad
 
 
@@ -1628,6 +1637,7 @@ def test_title_pad_keeps_stacked_spacing(sphere):
                 f'{KEY}{i}',
                 vertical=False,
                 title_font_size=font_size,
+                label_font_size=font_size,
                 title_pad=title_pad,
                 mapper=pl.mapper,
             )
@@ -2000,6 +2010,32 @@ def test_fit_fonts_follow_a_title_set_by_hand(sphere):
     pl.render()
 
     assert bar.GetLabelTextProperty().GetFontSize() < before
+
+
+@pytest.mark.parametrize(
+    'layout',
+    [
+        {'vertical': False},
+        {'vertical': True},
+        {'vertical': True, 'outline': True, 'unconstrained_font_size': True},
+    ],
+    ids=['horizontal', 'vertical', 'boxed'],
+)
+def test_fit_fonts_pad_the_title_by_the_labels_as_drawn(sphere, layout):
+    # The padding is a share of the label size, so it follows the labels as they shrink
+    title_pad = 0.5
+    pl = pv.Plotter(window_size=SMALL_WINDOW)
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = _wide_bar(pl, sphere, n_labels=CROWDED_LABELS, title_pad=title_pad, **layout)
+    pl.screenshot(return_img=True)
+
+    label_font = bar.GetLabelTextProperty().GetFontSize()
+    assert label_font < WIDE_FONT
+    pad = round(title_pad * label_font)
+    if layout.get('outline'):
+        assert bar.GetVerticalTitleSeparation() == pad
+    else:
+        assert bar.GetTitleTextProperty().GetLineOffset() == -pad
 
 
 def test_fit_fonts_skip_the_ticks_a_flat_range_hides(sphere):
