@@ -25,9 +25,7 @@ if TYPE_CHECKING:
     import meshio
     import trimesh
 
-    from pyvista.core.composite import MultiBlock
-    from pyvista.core.dataset import DataSet
-    from pyvista.core.partitioned import PartitionedDataSet
+    from pyvista.core.dataobject import DataObject
     from pyvista.plotting.themes import Theme
 
     from .charts import Chart2D as Chart2D
@@ -43,9 +41,7 @@ if TYPE_CHECKING:
 
 _WrappableType: TypeAlias = Union[
     _vtk.vtkDataObject,
-    'DataSet',
-    'MultiBlock',
-    'PartitionedDataSet',
+    'DataObject',
     _vtk.vtkAbstractArray,
     NumpyArray[float],
     'trimesh.Trimesh',
