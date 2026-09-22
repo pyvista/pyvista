@@ -21,7 +21,6 @@ import numpy as np
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import _NoNewAttrMixin
@@ -489,21 +488,22 @@ class PickingComponent(_NoNewAttrMixin):
     # Low-level picking entrypoints
     # =========================================================================
 
-    @_deprecate_positional_args(allowed=['callback'])
-    def enable_point_picking(  # noqa: PLR0917
+    def enable_point_picking(
         self,
+        /,
         callback=None,
+        *,
         tolerance=0.025,
-        left_clicking=False,  # noqa: FBT002
+        left_clicking=False,
         picker=PickerType.POINT,
-        show_message=True,  # noqa: FBT002
+        show_message=True,
         font_size=18,
         color='pink',
         point_size=10,
-        show_point=True,  # noqa: FBT002
-        use_picker=False,  # noqa: FBT002
-        pickable_window=False,  # noqa: FBT002
-        clear_on_no_selection=True,  # noqa: FBT002
+        show_point=True,
+        use_picker=False,
+        pickable_window=False,
+        clear_on_no_selection=True,
         **kwargs,
     ):
         """Enable picking at points under the cursor.
@@ -660,14 +660,15 @@ class PickingComponent(_NoNewAttrMixin):
                 name='_point_picking_message',
             )
 
-    @_deprecate_positional_args(allowed=['callback'])
-    def enable_rectangle_picking(  # noqa: PLR0917
+    def enable_rectangle_picking(
         self,
+        /,
         callback=None,
-        show_message=True,  # noqa: FBT002
+        *,
+        show_message=True,
         font_size=18,
-        start=False,  # noqa: FBT002
-        show_frustum=False,  # noqa: FBT002
+        start=False,
+        show_frustum=False,
         style='wireframe',
         color='pink',
         **kwargs,
@@ -786,21 +787,22 @@ class PickingComponent(_NoNewAttrMixin):
     # Mesh-aware picking
     # =========================================================================
 
-    @_deprecate_positional_args(allowed=['callback'])
-    def enable_surface_point_picking(  # noqa: PLR0917
+    def enable_surface_point_picking(
         self,
+        /,
         callback=None,
-        show_message=True,  # noqa: FBT002
+        *,
+        show_message=True,
         font_size=18,
         color='pink',
-        show_point=True,  # noqa: FBT002
+        show_point=True,
         point_size=10,
         tolerance=0.025,
-        pickable_window=False,  # noqa: FBT002
-        left_clicking=False,  # noqa: FBT002
+        pickable_window=False,
+        left_clicking=False,
         picker=PickerType.CELL,
-        use_picker=False,  # noqa: FBT002
-        clear_on_no_selection=True,  # noqa: FBT002
+        use_picker=False,
+        clear_on_no_selection=True,
         **kwargs,
     ):
         """Enable picking of a point on the surface of a mesh.
@@ -943,18 +945,19 @@ class PickingComponent(_NoNewAttrMixin):
             clear_on_no_selection=clear_on_no_selection,
         )
 
-    @_deprecate_positional_args(allowed=['callback'])
-    def enable_mesh_picking(  # noqa: PLR0917
+    def enable_mesh_picking(
         self,
+        /,
         callback=None,
-        show=True,  # noqa: FBT002
-        show_message=True,  # noqa: FBT002
+        *,
+        show=True,
+        show_message=True,
         style='wireframe',
         line_width=5,
         color='pink',
         font_size=18,
-        left_clicking=False,  # noqa: FBT002
-        use_actor=False,  # noqa: FBT002
+        left_clicking=False,
+        use_actor=False,
         picker=PickerType.CELL,
         **kwargs,
     ):
@@ -1097,18 +1100,19 @@ class PickingComponent(_NoNewAttrMixin):
             pickable_window=False,
         )
 
-    @_deprecate_positional_args(allowed=['callback'])
-    def enable_rectangle_through_picking(  # noqa: PLR0917
+    def enable_rectangle_through_picking(
         self,
+        /,
         callback=None,
-        show=True,  # noqa: FBT002
+        *,
+        show=True,
         style='wireframe',
         line_width=5,
         color='pink',
-        show_message=True,  # noqa: FBT002
+        show_message=True,
         font_size=18,
-        start=False,  # noqa: FBT002
-        show_frustum=False,  # noqa: FBT002
+        start=False,
+        show_frustum=False,
         **kwargs,
     ):
         """Enable rectangle based cell picking through the scene.
@@ -1226,18 +1230,19 @@ class PickingComponent(_NoNewAttrMixin):
             color=color,
         )
 
-    @_deprecate_positional_args(allowed=['callback'])
-    def enable_rectangle_visible_picking(  # noqa: PLR0917
+    def enable_rectangle_visible_picking(
         self,
+        /,
         callback=None,
-        show=True,  # noqa: FBT002
+        *,
+        show=True,
         style='wireframe',
         line_width=5,
         color='pink',
-        show_message=True,  # noqa: FBT002
+        show_message=True,
         font_size=18,
-        start=False,  # noqa: FBT002
-        show_frustum=False,  # noqa: FBT002
+        start=False,
+        show_frustum=False,
         **kwargs,
     ):
         """Enable rectangle based cell picking on visible surfaces.
@@ -1349,6 +1354,8 @@ class PickingComponent(_NoNewAttrMixin):
                     tri_smesh = smesh.extract_surface(
                         algorithm=None, pass_pointid=False, pass_cellid=False
                     ).triangulate()
+                    # The hardware selector can report ids past the triangulated mesh
+                    cids = cids[cids < tri_smesh.n_cells]
                     cids_to_get = tri_smesh.extract_cells(cids)['original_cell_ids']
                     picked.append(smesh.extract_cells(cids_to_get))
 
@@ -1375,19 +1382,20 @@ class PickingComponent(_NoNewAttrMixin):
             color=color,
         )
 
-    @_deprecate_positional_args(allowed=['callback'])
-    def enable_cell_picking(  # noqa: PLR0917
+    def enable_cell_picking(
         self,
+        /,
         callback=None,
-        through=True,  # noqa: FBT002
-        show=True,  # noqa: FBT002
-        show_message=True,  # noqa: FBT002
+        *,
+        through=True,
+        show=True,
+        show_message=True,
         style='wireframe',
         line_width=5,
         color='pink',
         font_size=18,
-        start=False,  # noqa: FBT002
-        show_frustum=False,  # noqa: FBT002
+        start=False,
+        show_frustum=False,
         **kwargs,
     ):
         """Enable picking of cells with a rectangle selection tool.
@@ -1485,17 +1493,18 @@ class PickingComponent(_NoNewAttrMixin):
             **kwargs,
         )
 
-    @_deprecate_positional_args(allowed=['callback'])
-    def enable_element_picking(  # noqa: PLR0917
+    def enable_element_picking(
         self,
+        /,
         callback=None,
+        *,
         mode='cell',
-        show=True,  # noqa: FBT002
-        show_message=True,  # noqa: FBT002
+        show=True,
+        show_message=True,
         font_size=18,
         tolerance=0.025,
-        pickable_window=False,  # noqa: FBT002
-        left_clicking=False,  # noqa: FBT002
+        pickable_window=False,
+        left_clicking=False,
         picker=PickerType.CELL,
         **kwargs,
     ):
@@ -1654,7 +1663,7 @@ class PickingComponent(_NoNewAttrMixin):
         sel_index = _vtk.vtkSelectionNode.COMPOSITE_INDEX()
         sel_prop = _vtk.vtkSelectionNode.PROP()
 
-        def get_picked_block(*args, **kwargs):  # numpydoc ignore=PR01  # noqa: ARG001
+        def get_picked_block(*args, **kwargs):  # noqa: ARG001  # numpydoc ignore=PR01
             component = self_()
             if component is None:
                 return
@@ -1694,9 +1703,15 @@ class PickingComponent(_NoNewAttrMixin):
     # Higher-level convenience pickers
     # =========================================================================
 
-    @_deprecate_positional_args
-    def fly_to_mouse_position(self, focus=False):  # noqa: FBT002
-        """Focus on last stored mouse position."""
+    def fly_to_mouse_position(self, *, focus=False):
+        """Focus on last stored mouse position.
+
+        Parameters
+        ----------
+        focus : bool, default: False
+            Set the camera focal point to the picked point instead of flying to it.
+
+        """
         plotter = self._plotter
         if plotter.mouse_position is None:
             plotter.store_mouse_position()
@@ -1733,16 +1748,17 @@ class PickingComponent(_NoNewAttrMixin):
 
         self._plotter.track_click_position(callback=_the_callback, side='right')
 
-    @_deprecate_positional_args(allowed=['callback'])
-    def enable_path_picking(  # noqa: PLR0917
+    def enable_path_picking(
         self,
+        /,
         callback=None,
-        show_message=True,  # noqa: FBT002
+        *,
+        show_message=True,
         font_size=18,
         color='pink',
         point_size=10,
         line_width=5,
-        show_path=True,  # noqa: FBT002
+        show_path=True,
         tolerance=0.025,
         **kwargs,
     ):
@@ -1851,18 +1867,19 @@ class PickingComponent(_NoNewAttrMixin):
             clear_on_no_selection=False,
         )
 
-    @_deprecate_positional_args(allowed=['callback'])
-    def enable_geodesic_picking(  # noqa: PLR0917
+    def enable_geodesic_picking(
         self,
+        /,
         callback=None,
-        show_message=True,  # noqa: FBT002
+        *,
+        show_message=True,
         font_size=18,
         color='pink',
         point_size=10,
         line_width=5,
         tolerance=0.025,
-        show_path=True,  # noqa: FBT002
-        keep_order=True,  # noqa: FBT002
+        show_path=True,
+        keep_order=True,
         **kwargs,
     ):
         """Enable picking at geodesic paths.
@@ -2003,20 +2020,21 @@ class PickingComponent(_NoNewAttrMixin):
             clear_on_no_selection=False,
         )
 
-    @_deprecate_positional_args(allowed=['callback'])
-    def enable_horizon_picking(  # noqa: PLR0917
+    def enable_horizon_picking(
         self,
+        /,
         callback=None,
+        *,
         normal=(0.0, 0.0, 1.0),
         width=None,
-        show_message=True,  # noqa: FBT002
+        show_message=True,
         font_size=18,
         color='pink',
         point_size=10,
         line_width=5,
-        show_path=True,  # noqa: FBT002
+        show_path=True,
         opacity=0.75,
-        show_horizon=True,  # noqa: FBT002
+        show_horizon=True,
         **kwargs,
     ):
         """Enable horizon picking.

@@ -224,6 +224,17 @@ OPENGRAPH_PLOT_IMAGES_SERIAL = {
     'some_autodocs.html': 'some_autodocs-2_00_00.png',
 }
 
+# ``sphinx_examples_as_code`` downloads: ``samples`` has four functions with Examples
+# docstrings, but ``make_sphere_second`` uses ``:include-source: False``
+EXPECTED_DOWNLOADS_PY = {
+    'samples_make_sphere.py',
+    'samples_example_with_empty_plotter.py',
+    'samples_example_with_closed_plotter.py',
+}
+EXPECTED_DOWNLOADS = EXPECTED_DOWNLOADS_PY | {
+    name.removesuffix('.py') + '.ipynb' for name in EXPECTED_DOWNLOADS_PY
+}
+
 
 @dataclass(frozen=True)
 class TinyPagesCase:
@@ -266,13 +277,6 @@ CASES = (
     TinyPagesCase(
         id='default',
         env={},
-        expected_files=ALL_EXPECTED_FILES_SERIAL,
-        expected_images_matplotlib=MATPLOTLIB_EXPECTED_IMAGES_SERIAL,
-        expected_opengraph_images=OPENGRAPH_PLOT_IMAGES_SERIAL,
-    ),
-    TinyPagesCase(
-        id='plot_skip_false',
-        env={'PYVISTA_PLOT_SKIP': 'false'},
         expected_files=ALL_EXPECTED_FILES_SERIAL,
         expected_images_matplotlib=MATPLOTLIB_EXPECTED_IMAGES_SERIAL,
         expected_opengraph_images=OPENGRAPH_PLOT_IMAGES_SERIAL,
@@ -411,6 +415,13 @@ def test_tinypages(tmp_path: Path, case: TinyPagesCase, monkeypatch: pytest.Monk
         page: meta_tags(html_dir / page).get('og:image') for page in case.expected_opengraph
     }
     assert actual_opengraph == case.expected_opengraph
+    assert meta_tags(html_dir / 'some_autodocs.html').get('og:description')
+
+    # The examples downloads do not depend on the plots being rendered
+    downloads_dir = html_dir / '_downloads'
+    assert downloads_dir.is_dir(), 'expected examples_download to produce a _downloads dir'
+    generated = {p.name for p in downloads_dir.rglob('samples_*')}
+    assert generated == EXPECTED_DOWNLOADS
 
 
 @flaky_test(exceptions=(AssertionError,))
@@ -435,59 +446,26 @@ def test_parallel_error(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None
     assert 'cannot be enabled for parallel builds' in err
 
 
-@flaky_test(exceptions=(AssertionError,))
-def test_tinypages_all_extensions_integration(tmp_path: Path):
-    """Check that every PyVista-authored Sphinx extension builds together."""
-    source_dir = copy_tinypages(tmp_path)
+AUTOCODELINK_DIR = Path(__file__).parent / 'tinypages_autocodelink'
+
+
+@pytest.fixture(scope='module')
+def autocodelink_build(tmp_path_factory: pytest.TempPathFactory) -> tuple[Path, Path, str, str]:
+    """Build ``tinypages_autocodelink`` once; return its html and doctree dirs and output."""
+    tmp_path = tmp_path_factory.mktemp('autocodelink')
     html_dir = tmp_path / 'html'
     doctree_dir = tmp_path / 'doctrees'
-
     returncode, out, err = _run_sphinx_build(
-        _sphinx_build_cmd(source_dir, html_dir, doctree_dir),
+        _sphinx_build_cmd(AUTOCODELINK_DIR, html_dir, doctree_dir),
     )
     assert returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
-
-    tags = meta_tags(html_dir / 'some_autodocs.html')
-    assert tags.get('og:image')
-    assert tags.get('og:description')
-
-    downloads_dir = html_dir / '_downloads'
-    assert downloads_dir.is_dir(), 'expected examples_download to produce a _downloads dir'
-
-    generated_py = {p.name for p in downloads_dir.rglob('*.py') if p.name.startswith('samples_')}
-    generated_ipynb = {
-        p.name for p in downloads_dir.rglob('*.ipynb') if p.name.startswith('samples_')
-    }
-
-    # samples includes four functions with Examples docstrings, so we should expect four
-    # downloads, but make_sphere_second uses ``:include-source: False``, so downloads are
-    # not generated
-    expected_py = {
-        'samples_make_sphere.py',
-        'samples_example_with_empty_plotter.py',
-        'samples_example_with_closed_plotter.py',
-    }
-    expected_ipynb = {name.removesuffix('.py') + '.ipynb' for name in expected_py}
-
-    assert generated_py == expected_py, (
-        f'expected Python downloads {expected_py}, got {generated_py}'
-    )
-    assert generated_ipynb == expected_ipynb, (
-        f'expected notebook downloads {expected_ipynb}, got {generated_ipynb}'
-    )
+    return html_dir, doctree_dir, out, err
 
 
 @flaky_test(exceptions=(AssertionError,))
-def test_autocodelink(tmp_path: Path):
+def test_autocodelink(autocodelink_build: tuple[Path, Path, str, str]):
     """Check that ``pyvista_plot_autocodelink`` hyperlinks identifiers resolved from execution."""
-    source_dir = Path(__file__).parent / 'tinypages_autocodelink'
-    html_dir = tmp_path / 'html'
-    doctree_dir = tmp_path / 'doctrees'
-
-    returncode, out, err = _run_sphinx_build(
-        _sphinx_build_cmd(source_dir, html_dir, doctree_dir),
-    )
-    assert returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
+    html_dir, _, out, err = autocodelink_build
 
     html = (html_dir / 'index.html').read_text(encoding='utf-8')
 
@@ -529,16 +507,14 @@ def test_autocodelink(tmp_path: Path):
 
 
 @flaky_test(exceptions=(AssertionError,))
-def test_autocodelink_idempotent_rebuild(tmp_path: Path):
+def test_autocodelink_idempotent_rebuild(autocodelink_build: tuple[Path, Path, str, str]):
     """Rebuilding into the same output dir must not nest a second anchor."""
-    source_dir = Path(__file__).parent / 'tinypages_autocodelink'
-    html_dir = tmp_path / 'html'
-    doctree_dir = tmp_path / 'doctrees'
-    cmd = _sphinx_build_cmd(source_dir, html_dir, doctree_dir)
+    html_dir, doctree_dir, _, _ = autocodelink_build
 
-    for _ in range(2):
-        returncode, out, err = _run_sphinx_build(cmd)
-        assert returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
+    returncode, out, err = _run_sphinx_build(
+        _sphinx_build_cmd(AUTOCODELINK_DIR, html_dir, doctree_dir),
+    )
+    assert returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
 
     html = (html_dir / 'index.html').read_text(encoding='utf-8')
     assert (
@@ -549,16 +525,9 @@ def test_autocodelink_idempotent_rebuild(tmp_path: Path):
 
 
 @flaky_test(exceptions=(AssertionError,))
-def test_autodoc_backrefs_hoisted_to_page_level(tmp_path: Path):
+def test_autodoc_backrefs_hoisted_to_page_level(autocodelink_build: tuple[Path, Path, str, str]):
     """``autocodelink_autodoc_backrefs`` sections must hoist exactly like numpydoc's own."""
-    source_dir = Path(__file__).parent / 'tinypages_autocodelink'
-    html_dir = tmp_path / 'html'
-    doctree_dir = tmp_path / 'doctrees'
-
-    returncode, out, err = _run_sphinx_build(
-        _sphinx_build_cmd(source_dir, html_dir, doctree_dir),
-    )
-    assert returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
+    html_dir = autocodelink_build[0]
 
     referenced = (html_dir / 'hoist_referenced.html').read_text(encoding='utf-8')
     # hoisted: </section> (closing Examples) directly precedes it, as a sibling -- not

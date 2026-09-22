@@ -49,7 +49,8 @@ much more concise syntax that is more "Pythonic". The equivalent code in
 PyVista is:
 
 
-.. code-block:: python
+.. pyvista-plot::
+   :context:
 
    >>> import pyvista as pv
    >>> import numpy as np
@@ -127,28 +128,9 @@ For example, in VTK you would have to do:
 
 However, with PyVista you only need:
 
-.. code-block:: python
-
-    grid.plot(cpos='xy', show_scalar_bar=False, cmap='coolwarm')
-
-..
-   This is here so we can generate a plot. We used to have to repeat
-   everything since jupyter-execute didn't allow for
-   plain text between command blocks. We have to try again with pyvista-plot.
-
 .. pyvista-plot::
-   :include-source: false
    :context:
 
-   import pyvista as pv
-   pv.set_plot_theme('document')
-   pv.set_jupyter_backend('static')
-   import numpy as np
-   xi = np.arange(300)
-   x, y = np.meshgrid(xi, xi)
-   values = 127.5 + (1.0 + np.sin(x/25.0)*np.cos(y/25.0))
-   grid = pv.ImageData(dimensions=(300, 300, 1))
-   grid.point_data["values"] = values.flatten(order="F")
    grid.plot(cpos='xy', show_scalar_bar=False, cmap='coolwarm')
 
 
@@ -337,3 +319,12 @@ the flexibility of PyVista and the raw power of VTK.
 .. note::
    You can use :func:`pyvista.Polygon` for a one line replacement of
    the above VTK code.
+
+Configuring the VTK Interface
+-----------------------------
+PyVista has several runtime controls for the underlying VTK library,
+such as :func:`pyvista.vtk_snake_case` for access to VTK's own
+``snake_case`` attributes on wrapped objects,
+:func:`pyvista.vtk_verbosity` for VTK's logging verbosity, and
+``pv.global_config.show_vtk_api`` for showing the VTK-inherited API
+in tab completion. See :ref:`configuration` for all of them.

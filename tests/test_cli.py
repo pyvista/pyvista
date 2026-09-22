@@ -207,6 +207,9 @@ class CasesReport:
     def case_no_bool(self):
         return '--no-downloads --no-sort', (), dict(downloads=False, sort=False)
 
+    def case_env_vars(self):
+        return '--env-vars', (), dict(env_vars=True)
+
     def case_additional(self):
         return '--additional "foo"', (['foo'],), {}
 
@@ -217,7 +220,7 @@ class CasesReport:
         return '"foo" "bar"', (['foo', 'bar'],), {}
 
     def case_additional_ncol(self):
-        return '"foo" --ncol 2', (['foo'], 2), {}
+        return '"foo" --ncol 2', (['foo'],), dict(ncol=2)
 
     def case_additional_textwidth(self):
         # `textwidth` is keyword whereas `additional` is positional since inspect.BoundArguments
@@ -355,6 +358,28 @@ def test_convert_read_error(tmp_path: Path, capsys: pytest.CaptureFixture):
     assert '╭─ PyVista Error ─' in err, err
     assert 'Path is not readable by PyVista:' in err, err
     assert name in err, err
+    assert e.value.code == 1
+
+
+@pytest.mark.usefixtures('patch_app_console')
+def test_convert_read_error_keeps_install_hint(
+    tmp_path: Path, capsys: pytest.CaptureFixture, mocker: MockerFixture
+):
+    """An ImportError names the package to install, so it must reach the console intact."""
+    file_in = tmp_path / 'dummy.pv'
+    file_in.write_text('')
+    message = 'Needs `pyvista-zstd`.\npip install pyvista[io]'
+    mocker.patch.object(pv, 'read', side_effect=ImportError(message))
+
+    with pytest.raises(SystemExit) as e:
+        main(f'convert {str(file_in)!r} .ply')
+
+    out, err = capture_out_err(capsys)
+    assert out == ''
+    assert 'Path is not readable by PyVista:' not in err, err
+    assert 'Needs `pyvista-zstd`.' in err, err
+    # Square brackets are rich markup, so an unescaped extra would vanish from the panel.
+    assert 'pip install pyvista[io]' in err, err
     assert e.value.code == 1
 
 
@@ -1015,7 +1040,7 @@ def test_validate_fields(tmp_ant_file, field, capsys: pytest.CaptureFixture):
     main(f'validate {tmp_ant_file!s} --help')
     out, err = capture_out_err(capsys)
     assert err == ''
-    if f'• {field}:' not in out:
+    if f'• {field}:' not in out:  # pragma: no cover -- failure path
         pytest.fail(f'Field {field} is missing from the validate CLI help documentation.')
 
     # Discard captured output to clean up test output
@@ -1701,35 +1726,34 @@ def test_validate_glob_expands_files(
 
 
 @pytest.mark.usefixtures('patch_app_console')
-def test_report_help(capsys: pytest.CaptureFixture):
-    main('report --help')
+@pytest.mark.parametrize(
+    ('command', 'usage', 'summary'),
+    [
+        (
+            'report',
+            'Usage: pyvista report [ARGS]',
+            'Generate a PyVista software environment report.',
+        ),
+        (
+            'plot',
+            'Usage: pyvista plot PATH... [OPTIONS]',
+            'Plot one or more mesh files in an interactive window.',
+        ),
+        (
+            'compare',
+            'Usage: pyvista compare PATH... [OPTIONS]',
+            'Compare two or more mesh files side-by-side.',
+        ),
+    ],
+    ids=['report', 'plot', 'compare'],
+)
+def test_command_help(command, usage, summary, capsys: pytest.CaptureFixture):
+    """Each command's help opens with its usage line and its one-line summary."""
+    main(f'{command} --help')
 
-    expected = textwrap.dedent(
-        """\
-            Usage: pyvista report [ARGS]
-
-            Generate a PyVista software environment report.
-       """
-    )
     out, err = capture_out_err(capsys)
     assert err == ''
-    assert expected == '\n'.join(out.split('\n')[:4])
-
-
-@pytest.mark.usefixtures('patch_app_console')
-def test_plot_help(capsys: pytest.CaptureFixture):
-    main('plot --help')
-
-    expected = textwrap.dedent(
-        """\
-        Usage: pyvista plot PATH... [OPTIONS]
-
-        Plot one or more mesh files in an interactive window.
-        """
-    )
-    out, err = capture_out_err(capsys)
-    assert err == ''
-    assert expected == '\n'.join(out.split('\n')[:4])
+    assert '\n'.join(out.split('\n')[:4]) == f'{usage}\n\n{summary}\n'
 
 
 def test_version(capsys: pytest.CaptureFixture):
@@ -1970,7 +1994,6 @@ def test_validate_unsupported_mesh_type(capsys: pytest.CaptureFixture):
 
 
 @parametrize(
-    as_script=[True, False],
     tokens_err_codes=[
         ('--foo', 1),
         ('report --foo', 1),
@@ -1981,20 +2004,32 @@ def test_validate_unsupported_mesh_type(capsys: pytest.CaptureFixture):
         ('--help', 0),
     ],
 )
-def test_cli_entry_point(as_script: bool, tokens_err_codes: tuple[str, int]):
-    args = [sys.executable, '-m', 'pyvista'] if not as_script else ['pyvista']
-
+def test_cli_exit_code(tokens_err_codes: tuple[str, int]):
+    """An unknown command or option exits non-zero; help and a bare call exit clean."""
     argv, exit_code_expected = tokens_err_codes
-    args += [*shlex.split(argv)]
+
+    if exit_code_expected:
+        with pytest.raises(SystemExit) as e:
+            main(shlex.split(argv))
+        assert e.value.code == exit_code_expected
+    else:
+        assert main(shlex.split(argv)) is None
+
+
+@parametrize(as_script=[True, False])
+def test_cli_entry_point(as_script: bool):
+    """Both `pyvista` and `python -m pyvista` reach the same application."""
+    args = ['pyvista'] if as_script else [sys.executable, '-m', 'pyvista']
 
     process = subprocess.run(
-        args,
+        [*args, '--help'],
         check=False,
         capture_output=True,
         encoding='utf-8',
     )
 
-    assert process.returncode == exit_code_expected
+    assert process.returncode == 0
+    assert 'Usage: pyvista COMMAND' in process.stdout
 
 
 @parametrize(func=['plot', 'report'])
@@ -2265,6 +2300,8 @@ def test_compare_too_small_warning_advises_the_command(
     assert 'link=False' not in flattened
 
 
+# Pinned so the panel below is not rendered at a width or style of the environment's choosing
+@pytest.mark.usefixtures('patch_app_console')
 def test_compare_too_small_warning_is_printed_before_the_plot_is_shown(
     tmp_example_dir: Path, capsys: pytest.CaptureFixture, mocker: MockerFixture
 ):
@@ -2283,15 +2320,14 @@ def test_compare_too_small_warning_is_printed_before_the_plot_is_shown(
 
     def fake_show(*args, **kwargs):  # noqa: ARG001
         _, err = capsys.readouterr()
-        # The message is wrapped and padded to the width of the panel it is printed
-        # in, so flatten it the same way it is elsewhere before matching a substring
-        flattened = ' '.join(err.replace('│', ' ').split())
-        printed_before_shown.append('too small to make out' in flattened)
+        # Flatten the wrapping and padding of the panel, as the tests above do
+        printed_before_shown.append(' '.join(err.replace('│', ' ').split()))
 
     mocker.patch.object(pv.Plotter, 'show', fake_show)
     main('compare tiny.vtp huge.vtp --link --off-screen')
 
-    assert printed_before_shown == [True]
+    assert len(printed_before_shown) == 1
+    assert 'too small to make out' in printed_before_shown[0]
 
 
 def test_compare_forwards_other_warnings(tmp_compare_files: list[Path], mocker: MockerFixture):
@@ -2340,18 +2376,3 @@ def test_compare_raises(tmp_compare_files: list[Path], capsys: pytest.CaptureFix
     assert 'The following exception has been raised when calling  ' in err
     assert 'pv.plot_compare' in err
     assert 'Number of labels (1) must match the number of datasets (2).' in err
-
-
-def test_compare_help(capsys: pytest.CaptureFixture):
-    main('compare --help')
-
-    expected = textwrap.dedent(
-        """\
-        Usage: pyvista compare PATH... [OPTIONS]
-
-        Compare two or more mesh files side-by-side.
-        """
-    )
-    out, err = capture_out_err(capsys)
-    assert err == ''
-    assert expected == '\n'.join(out.split('\n')[:4])

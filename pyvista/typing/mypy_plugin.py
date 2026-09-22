@@ -32,7 +32,7 @@ def promote_type(*types: type[Any]) -> Callable[[T], T]:  # noqa: ARG001
 
     Parameters
     ----------
-    types : type
+    *types : type
         Types to promote the class to. The types are only used statically by mypy.
 
     Returns
@@ -82,6 +82,6 @@ if importlib.util.find_spec('mypy'):  # pragma: no cover
                 return _promote_type_callback
             return None
 
-    def plugin(version: str) -> type[_PyVistaPlugin]:  # numpydoc ignore: RT01  # noqa: ARG001
+    def plugin(version: str) -> type[_PyVistaPlugin]:  # noqa: ARG001
         """Entry-point for mypy."""
         return _PyVistaPlugin

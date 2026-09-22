@@ -16,7 +16,14 @@ Denotes the first release candidate.
 # major, minor, patch
 from __future__ import annotations
 
-version_info = 0, 49, 'dev0'
+version_info = 0, 50, 'dev0'
 
 # Nice string for the version
 __version__ = '.'.join(map(str, version_info))
+
+
+def _is_deprecation_due(version: tuple[int, int]) -> bool:
+    """Check a release deadline, excluding its development versions."""
+    return version_info[:2] > version or (
+        version_info[:2] == version and not str(version_info[2]).startswith('dev')
+    )

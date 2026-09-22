@@ -8,7 +8,6 @@ from typing import overload
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista.core._vtk_utilities import vtk_version_info
 
 from .dataobject import DataObject
@@ -22,12 +21,15 @@ from .utilities.writer import XMLPartitionedDataSetWriter
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+    from typing import Any
     from typing import ClassVar
 
     from typing_extensions import Self
 
     from .dataset import DataSet
-    from .utilities.arrays import FieldAssociation
+    from .utilities.arrays import CellLiteral
+    from .utilities.arrays import FieldLiteral
+    from .utilities.arrays import PointLiteral
     from .utilities.writer import BaseWriter
 
 
@@ -35,6 +37,14 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
     """Wrapper for the :vtk:`vtkPartitionedDataSet` class.
 
     DataSet which composite dataset to encapsulates a dataset consisting of partitions.
+
+    Parameters
+    ----------
+    *args : :vtk:`vtkPartitionedDataSet` | sequence[DataSet], optional
+        Partitioned dataset to wrap or datasets to use as partitions.
+
+    **kwargs : dict, optional
+        Supports ``deep``; only ``deep=True`` is supported.
 
     Examples
     --------
@@ -57,7 +67,7 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
     if vtk_version_info >= (9, 4):
         _WRITERS['.vtkhdf'] = HDFWriter
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         """Initialize the PartitionedDataSet."""
         super().__init__()
         if len(args) == 1:
@@ -101,13 +111,14 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
                 index = self.n_partitions + index
             return wrap(self.GetPartition(index))
 
+    # fmt: off
+    # ruff: disable[E501]
     @overload
     def __setitem__(self, index: int, data: DataSet | None) -> None: ...  # pragma: no cover
-
     @overload
-    def __setitem__(
-        self, index: slice, data: Iterable[DataSet | None]
-    ) -> None: ...  # pragma: no cover
+    def __setitem__(self, index: slice, data: Iterable[DataSet | None]) -> None: ...  # pragma: no cover
+    # ruff: enable[E501]
+    # fmt: on
 
     def __setitem__(
         self,
@@ -138,11 +149,11 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
             self[i + 1] = self[i]
         self[index] = dataset
 
-    def pop(self, index: int = -1) -> None:  # numpydoc ignore=PR01  # noqa: ARG002
+    def pop(self, index: int = -1) -> None:  # noqa: ARG002  # numpydoc ignore=PR01
         """Pop off a partition at the specified index are not supported."""
         raise PartitionedDataSetsNotSupported
 
-    def _get_attrs(self):
+    def _get_attrs(self: Self) -> list[tuple[str, Any, str]]:
         """Return the representation methods (internal helper)."""
         attrs = []
         attrs.append(('N Partitions', self.n_partitions, '{}'))
@@ -188,11 +199,12 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
         """Return the number of partitions."""
         return self.n_partitions
 
-    def copy_meta_from(self, ido, deep) -> None:  # numpydoc ignore=PR01
+    def copy_meta_from(
+        self: Self, ido: PartitionedDataSet, *, deep: bool
+    ) -> None:  # numpydoc ignore=PR01
         """Copy pyvista meta data onto this object from another object."""
 
-    @_deprecate_positional_args
-    def copy(self, deep: bool = True):  # noqa: FBT001, FBT002
+    def copy(self: Self, *, deep: bool = True) -> Self:
         """Return a copy of the PartitionedDataSet.
 
         Parameters
@@ -225,7 +237,7 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
             newobject.deep_copy(self)
         else:
             raise PartitionedDataSetsNotSupported
-        newobject.copy_meta_from(self, deep)
+        newobject.copy_meta_from(self, deep=deep)
         newobject.wrap_nested()
         return newobject
 
@@ -242,7 +254,7 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
         return self.GetNumberOfPartitions()
 
     @n_partitions.setter
-    def n_partitions(self, n) -> None:
+    def n_partitions(self, n: int) -> None:
         self.SetNumberOfPartitions(n)
         self.Modified()
 
@@ -266,7 +278,7 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
         """
         return self.n_partitions == 0
 
-    def append(self, dataset) -> None:
+    def append(self, dataset: DataSet) -> None:
         """Add a data set to the next partition index.
 
         Parameters
@@ -279,8 +291,8 @@ class PartitionedDataSet(DataObject, MutableSequence, _vtk.vtkPartitionedDataSet
         self.n_partitions += 1
         self[index] = dataset
 
-    def get_data_range(  # numpydoc ignore=RT01
-        self: Self, name: str | None, preference: FieldAssociation | str
+    def get_data_range(  # numpydoc ignore=RT01,PR01
+        self: Self, name: str | None, preference: PointLiteral | CellLiteral | FieldLiteral
     ) -> tuple[float, float]:  # pragma: no cover
         """Get the non-NaN min and max of a named array."""
         return DataObject.get_data_range(self, name=name, preference=preference)

@@ -7,9 +7,17 @@ PyVista plotting parameters can be controlled on a plot by plot basis
 or through a global theme, making it possible to control mesh colors
 and styles through one global configuration.
 
+.. seealso::
+
+   :ref:`configuration`
+      ``pv.global_theme`` is one of two global configuration objects.
+      The other, ``pv.global_config``, holds the core non-plotting
+      settings.
+
 The default theme parameters in PyVista can be accessed and displayed with:
 
-.. code-block:: python
+.. pyvista-plot::
+   :context:
 
    >>> import pyvista as pv
    >>> pv.global_theme
@@ -17,11 +25,12 @@ The default theme parameters in PyVista can be accessed and displayed with:
 Default plotting parameters can be accessed individually by their
 attribute names:
 
-.. code-block:: python
+.. pyvista-plot::
+   :context:
 
-   >>> pyvista.global_theme.color = 'lightblue'
+   >>> pv.global_theme.color = 'lightblue'
 
-Here's an example plot of the Stanford Dragon using default plotting
+Here's an example plot of the Stanford Bunny using default plotting
 parameters:
 
 .. pyvista-plot::
@@ -29,8 +38,8 @@ parameters:
 
    >>> import pyvista as pv
    >>> from pyvista import examples
-   >>> dragon = examples.download_dragon()
-   >>> dragon.plot(cpos='xy')
+   >>> bunny = examples.download_bunny()
+   >>> bunny.plot(cpos='xy')
 
 These parameters can then be modified globally with:
 
@@ -46,14 +55,14 @@ Now, the mesh will be plotted with the new global parameters:
 .. pyvista-plot::
    :context:
 
-   >>> dragon.plot(cpos='xy')
+   >>> bunny.plot(cpos='xy')
 
 This is identical to plotting the mesh with the following parameters:
 
 .. pyvista-plot::
    :context:
 
-   >>> dragon.plot(
+   >>> bunny.plot(
    ...     cpos='xy', color='red', background='white', show_axes=False
    ... )
 
@@ -63,29 +72,32 @@ Creating a Custom Theme
 You can customize a theme based on one of the built-in themes and then
 apply it globally with:
 
-.. code-block:: python
+.. pyvista-plot::
+   :context:
 
-    # Create a theme based off the DocumentTheme
+   # Create a theme based off the DocumentTheme
 
-    my_theme = pv.plotting.themes.DocumentTheme()
-    my_theme.cmap = 'jet'
-    my_theme.show_edges = True
+   my_theme = pv.plotting.themes.DocumentTheme()
+   my_theme.cmap = 'jet'
+   my_theme.show_edges = True
 
-    # Apply it globally
+   # Apply it globally
 
-    pv.global_theme.load_theme(my_theme)
+   pv.global_theme.load_theme(my_theme)
 
 Alternatively, you can save the theme to disk to be used later with:
 
-.. code-block:: python
+.. pyvista-plot::
+   :context:
 
-    my_theme.save('my_theme.json')
+   my_theme.save('my_theme.json')
 
 And then subsequently loaded in a new session of pyvista with:
 
-.. code-block:: python
+.. pyvista-plot::
+   :context:
 
-    pv.global_theme.load_theme('my_theme.json')
+   pv.global_theme.load_theme('my_theme.json')
 
 
 Default Interactor Styles
@@ -95,11 +107,11 @@ Themes can also control the default interactor style used by new
 plotters. Built-in styles use the same names as the corresponding
 ``enable_*_style`` methods.
 
-.. code-block:: python
+.. pyvista-plot::
 
-    import pyvista as pv
+   import pyvista as pv
 
-    pv.global_theme.interactor_style = 'terrain_style'
+   pv.global_theme.interactor_style = 'terrain_style'
 
 Custom interactor styles can be registered by downstream packages and
 used the same way once they are installed or registered at runtime.

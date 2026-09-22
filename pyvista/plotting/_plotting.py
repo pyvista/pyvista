@@ -5,14 +5,15 @@ from __future__ import annotations
 import itertools
 import operator
 from typing import TYPE_CHECKING
+from typing import Any
 
 import numpy as np
 
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.misc import assert_empty_kwargs
 
+from ._property import _HAS_NATIVE_POINT_SHAPES
 from .colors import Color
 from .opts import InterpolationType
 from .tools import opacity_transfer_function
@@ -76,10 +77,10 @@ def _resolve_scalars_field(
 
 
 def reduce_component_scalars(
-    scalars: NumpyArray[float],
+    scalars: NumpyArray[Any],
     scalars_name: str,
     component: int | None,
-) -> tuple[NumpyArray[float], str]:
+) -> tuple[NumpyArray[Any], str]:
     """Reduce a 2D scalar array to 1D by magnitude or component index.
 
     Produces the derived array and synthesized name (``{name}-normed`` for
@@ -315,8 +316,7 @@ def _get_generated_scalars_name(mesh: DataSet, base_name: str) -> str:
     return next(f'{base_name}-{i}' for i in itertools.count(1) if _is_free(f'{base_name}-{i}'))
 
 
-@_deprecate_positional_args
-def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparency):  # noqa: PLR0917
+def process_opacity(*, mesh, opacity, preference, n_colors, scalars, use_transparency):
     """Process opacity.
 
     This function accepts an opacity string or array and always
@@ -427,14 +427,6 @@ def _common_arg_parser(
     vertex_style = kwargs.pop('vertex_style', 'points')
     vertex_opacity = kwargs.pop('vertex_opacity', 1.0)
 
-    # Support aliases for 'back', 'front', or 'none'. Consider deprecating
-    if culling is False:
-        culling = 'none'
-    elif culling in ['b', 'backface', True]:
-        culling = 'back'
-    elif culling in ['f', 'frontface']:
-        culling = 'front'
-
     if show_scalar_bar is None:
         # use theme unless plotting RGB
         _default = theme.show_scalar_bar or scalar_bar_args
@@ -455,7 +447,7 @@ def _common_arg_parser(
     if point_shape is None:
         point_shape = theme.point_shape
 
-    if point_shape is not None and render_points_as_spheres:
+    if point_shape is not None and render_points_as_spheres and not _HAS_NATIVE_POINT_SHAPES:
         warn_external(
             f'point_shape={point_shape!r} requires render_points_as_spheres=False. '
             'Disabling render_points_as_spheres.',

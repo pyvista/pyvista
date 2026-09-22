@@ -15,6 +15,29 @@ coverage:
         if_not_found: failure
         if_ci_failed: error
         if_no_uploads: error
+      # Scoped to the package so a gain under tests/ cannot absorb a loss here.
+      # `if_not_found: success` until main carries flag history to compare against.
+      package:
+        flags:
+          - package
+        target: auto
+        threshold: 0.5%
+        if_not_found: success
+        if_ci_failed: error
+        if_no_uploads: error
+      # A test line that never executes is a test that does not test what it appears
+      # to, so the goal here is 100% rather than "do not regress". The tree measures
+      # 98.87% today, so this ratchets at `threshold: 0%` and the target rises as the
+      # remainder is cleared; `patch` below already holds new code to 100%. Reach for
+      # `# pragma: no cover` when a branch exists to prove it is never taken.
+      tests:
+        flags:
+          - tests
+        target: auto
+        threshold: 0%
+        if_not_found: success
+        if_ci_failed: error
+        if_no_uploads: error
     patch:
       default:
         target: auto
@@ -22,3 +45,33 @@ coverage:
         if_not_found: failure
         if_ci_failed: error
         if_no_uploads: error
+      tests:
+        flags:
+          - tests
+        target: 100%
+        threshold: 0%
+        if_not_found: success
+        if_ci_failed: error
+        if_no_uploads: error
+
+# `pyvista` and `tests` are uploaded as separate reports (see the upload job in
+# .github/workflows/testing-and-deployment.yml), one XML per side per matrix cell.
+flag_management:
+  individual_flags:
+    - name: package
+      paths:
+        - pyvista/
+    - name: tests
+      paths:
+        - tests/
+    # Flagged apart from the two above so the statuses compare a fixed set of jobs.
+    # VTK-dev runs only on demand, so `carryforward` keeps the lines it alone covers from
+    # reading as uncovered; no status is attached, so a stale carry-forward cannot gate.
+    - name: package-vtk-dev
+      carryforward: true
+      paths:
+        - pyvista/
+    - name: tests-vtk-dev
+      carryforward: true
+      paths:
+        - tests/

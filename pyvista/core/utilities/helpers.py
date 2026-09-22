@@ -11,12 +11,11 @@ from typing import cast
 from typing import overload
 
 import numpy as np
+import pyvista_validation as _validation
 from typing_extensions import TypeIs
 
 import pyvista as pv
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core import _validation
 
 from . import transformations
 from .fileio import from_meshio
@@ -126,22 +125,16 @@ def _warn_if_invalid_data(obj: DataObject) -> None:
 # vtkDataSet overloads
 # Overload types should match the mappings in the `pyvista._wrappers` dict
 # Overloads should be ordered from narrow types (child class) to general types (parent class)
+# fmt: off
+# ruff: disable[E501]
 @overload
 def wrap(dataset: _vtk.vtkPolyData, *, validate: bool | None = ...) -> PolyData: ...  # type: ignore[overload-overlap]
 @overload
 def wrap(dataset: _vtk.vtkStructuredGrid, *, validate: bool | None = ...) -> StructuredGrid: ...  # type: ignore[overload-overlap]
 @overload
-def wrap(  # type: ignore[overload-overlap]
-    dataset: _vtk.vtkExplicitStructuredGrid,
-    *,
-    validate: bool | None = ...,
-) -> ExplicitStructuredGrid: ...
+def wrap(dataset: _vtk.vtkExplicitStructuredGrid, *, validate: bool | None = ...) -> ExplicitStructuredGrid: ...  # type: ignore[overload-overlap]
 @overload
-def wrap(  # type: ignore[overload-overlap]
-    dataset: _vtk.vtkUnstructuredGrid,
-    *,
-    validate: bool | None = ...,
-) -> UnstructuredGrid: ...
+def wrap(dataset: _vtk.vtkUnstructuredGrid, *, validate: bool | None = ...) -> UnstructuredGrid: ...  # type: ignore[overload-overlap]
 @overload
 def wrap(dataset: _vtk.vtkPointSet, *, validate: bool | None = ...) -> PointSet: ...
 @overload
@@ -155,34 +148,26 @@ def wrap(dataset: _vtk.vtkMultiBlockDataSet, *, validate: bool | None = ...) -> 
 @overload
 def wrap(dataset: _vtk.vtkTable, *, validate: bool | None = ...) -> Table: ...
 @overload
-def wrap(
-    dataset: _vtk.vtkPartitionedDataSet,
-    *,
-    validate: bool | None = ...,
-) -> PartitionedDataSet: ...
-
-
+def wrap(dataset: _vtk.vtkPartitionedDataSet, *, validate: bool | None = ...) -> PartitionedDataSet: ...
 # General catch-all cases
 @overload
 def wrap(dataset: _vtk.vtkDataSet, *, validate: bool | None = ...) -> DataSet: ...
 @overload
 def wrap(dataset: _vtk.vtkDataObject, *, validate: bool | None = ...) -> DataObject: ...
-
-
 # Misc overloads
 @overload
 def wrap(dataset: NumpyArray[float], *, validate: bool | None = ...) -> PolyData | ImageData: ...
 @overload
-def wrap(dataset: _vtk.vtkAbstractArray, *, validate: bool | None = ...) -> pyvista_ndarray: ...
+def wrap(dataset: _vtk.vtkDataArray, *, validate: bool | None = ...) -> pyvista_ndarray: ...
 @overload
 def wrap(dataset: None, *, validate: bool | None = ...) -> None: ...
-
-
 # Third-party meshes
 @overload
 def wrap(dataset: trimesh.Trimesh, *, validate: bool | None = ...) -> PolyData: ...
 @overload
 def wrap(dataset: meshio.Mesh, *, validate: bool | None = ...) -> UnstructuredGrid: ...
+# ruff: enable[E501]
+# fmt: on
 def wrap(  # noqa: PLR0911
     dataset: _WrappableVTKDataObjectType
     | DataObject
@@ -380,7 +365,7 @@ def is_pyvista_dataset(obj: Any) -> TypeIs[DataSet | MultiBlock | PartitionedDat
     return isinstance(obj, (pv.DataSet, pv.MultiBlock, pv.PartitionedDataSet))
 
 
-def generate_plane(normal: VectorLike[float], origin: VectorLike[float]):
+def generate_plane(normal: VectorLike[float], origin: VectorLike[float]) -> _vtk.vtkPlane:
     """Return a :vtk:`vtkPlane`.
 
     Parameters
@@ -441,17 +426,30 @@ def _validate_plane_origin_and_normal(  # noqa: PLR0917
         # find center of data if origin not specified
         origin = mesh.center if origin is None else origin
         origin_ = _validation.validate_array3(origin, dtype_out=float, name='origin')
+    if not np.any(normal_):
+        msg = '`normal` must be a non-zero vector.'
+        raise ValueError(msg)
     return origin_, normal_
 
 
-@_deprecate_positional_args(allowed=['points', 'angle'])
-def axis_rotation(  # noqa: PLR0917
+# fmt: off
+# ruff: disable[E501]
+@overload
+def axis_rotation(points: NumpyArray[float], angle: float, *, inplace: Literal[False] = False, deg: bool = ..., axis: str = ...) -> NumpyArray[float]: ...
+@overload
+def axis_rotation(points: NumpyArray[float], angle: float, *, inplace: Literal[True], deg: bool = ..., axis: str = ...) -> None: ...
+@overload
+def axis_rotation(points: NumpyArray[float], angle: float, *, inplace: bool = ..., deg: bool = ..., axis: str = ...) -> NumpyArray[float] | None: ...
+# ruff: enable[E501]
+# fmt: on
+def axis_rotation(
     points: NumpyArray[float],
     angle: float,
-    inplace: bool = False,  # noqa: FBT001, FBT002
-    deg: bool = True,  # noqa: FBT001, FBT002
-    axis='z',
-):
+    *,
+    inplace: bool = False,
+    deg: bool = True,
+    axis: str = 'z',
+) -> NumpyArray[float] | None:
     """Rotate points by angle about an axis.
 
     Parameters
@@ -504,14 +502,17 @@ def axis_rotation(  # noqa: PLR0917
     return transformations.apply_transformation_to_points(rot_mat, points, inplace=inplace)
 
 
-def is_inside_bounds(point, bounds):
+def is_inside_bounds(
+    point: float | VectorLike[float],
+    bounds: VectorLike[float],
+) -> bool:
     """Check if a point is inside a set of bounds.
 
     This is implemented through recursion so that this is N-dimensional.
 
     Parameters
     ----------
-    point : sequence[float]
+    point : float | VectorLike[float]
         Three item Cartesian point (that is, ``[x, y, z]``).
 
     bounds : sequence[float]
@@ -525,23 +526,24 @@ def is_inside_bounds(point, bounds):
     """
     if isinstance(point, (int, float)):
         point = [point]
-    if isinstance(point, (np.ndarray, Sequence)) and not isinstance(
-        point,
-        deque,
-    ):
-        if len(bounds) < 2 * len(point) or len(bounds) % 2 != 0:
-            msg = 'Bounds mismatch point dimensionality'
-            raise ValueError(msg)
-        point = deque(point)
-        bounds = deque(bounds)
-        return is_inside_bounds(point, bounds)
-    if not isinstance(point, deque):
-        msg = f'Unknown input data type ({type(point)}).'
+    if not isinstance(point, (np.ndarray, Sequence)):
+        msg = f'Unknown input data type ({type(point)}).'  # type: ignore[unreachable]
         raise TypeError(msg)
+    if len(bounds) < 2 * len(point) or len(bounds) % 2 != 0:
+        msg = 'Bounds mismatch point dimensionality'
+        raise ValueError(msg)
+    return _is_inside_bounds(deque(point), deque(bounds))
+
+
+def _is_inside_bounds(
+    point: deque[float | NumpyArray[float]],
+    bounds: deque[float | NumpyArray[float]],
+) -> bool:
+    """Recursively check if a point is inside a set of bounds."""
     if len(point) < 1:
         return True
     p = point.popleft()
     lower, upper = bounds.popleft(), bounds.popleft()
     if lower <= p <= upper:
-        return is_inside_bounds(point, bounds)
+        return _is_inside_bounds(point, bounds)
     return False

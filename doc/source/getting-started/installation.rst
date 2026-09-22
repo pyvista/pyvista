@@ -194,7 +194,56 @@ That installs the fork alongside stock ``vtk``; because it imports under its own
 ``cvista`` name, it does not clobber an existing install. When it is present
 PyVista selects it automatically.
 
-Set ``PYVISTA_VTK_BACKEND`` to choose explicitly. It must be set **before**
+The fork does not replace stock VTK -- ``vtk`` remains a hard requirement of
+PyVista, so both are installed. To install the fork *instead of* stock VTK,
+drop the requirement during resolution. This needs `uv <https://docs.astral.sh/uv/>`_;
+pip has no equivalent.
+
+For a project, declare it once and it is recorded in the lock file:
+
+.. code-block:: toml
+
+    [project]
+    dependencies = ['pyvista[cvista]']
+
+    [tool.uv]
+    exclude-dependencies = ['vtk']
+
+For a one-off install:
+
+.. tab-set::
+
+    .. tab-item:: bash / zsh
+
+        .. code-block:: bash
+
+            uv pip install --excludes <(echo vtk) 'pyvista[cvista]'
+
+    .. tab-item:: PowerShell
+
+        .. code-block:: powershell
+
+            'vtk' | Out-File -Encoding ascii no-vtk.txt
+            uv pip install --excludes no-vtk.txt 'pyvista[cvista]'
+
+    .. tab-item:: Any shell
+
+        .. code-block:: text
+
+            echo vtk > no-vtk.txt
+            uv pip install --excludes no-vtk.txt 'pyvista[cvista]'
+
+.. note::
+
+   The resulting environment is functionally correct but reports as
+   inconsistent, since PyVista's metadata still requires ``vtk``::
+
+       $ uv pip check
+       Found 4 incompatibilities
+       The package `pyvista` requires `vtk>=9.3.1`, but it's not installed
+       ...
+
+Set :envvar:`PYVISTA_VTK_BACKEND` to choose explicitly. It must be set **before**
 PyVista is imported, since the backend is resolved at import time::
 
     PYVISTA_VTK_BACKEND=vtkmodules   # force stock VTK, even if cvista is installed
@@ -339,9 +388,10 @@ and set up Python:
 
 With ``libegl1`` installed, VTK 9.5+ renders off-screen via EGL out of the
 box, so no ``Xvfb`` or ``DISPLAY`` configuration is required. Set
-``PYVISTA_OFF_SCREEN=true`` in your shell (or pass ``off_screen=True``
-when constructing a ``Plotter``) and ``pv.Plotter(off_screen=True)`` will
-just work.
+:envvar:`PYVISTA_OFF_SCREEN` to ``true`` in your shell (or pass
+``off_screen=True`` when constructing a ``Plotter``) and
+``pv.Plotter(off_screen=True)`` will just work. See :ref:`configuration`
+for all environment variables.
 
 Reconnect to the server with port-forwarding, and start Jupyter:
 

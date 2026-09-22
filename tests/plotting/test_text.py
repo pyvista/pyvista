@@ -22,9 +22,30 @@ def test_corner_annotation_text(corner_annotation):
     assert corner_annotation.get_text(1) == 'text1'
 
 
+def test_corner_annotation_text_upper_left(corner_annotation):
+    corner_annotation.set_text(True, 'text4')
+    assert corner_annotation.get_text('upper_left') == 'text4'
+
+
+def test_corner_annotation_text_by_name(corner_annotation):
+    corner_annotation.set_text('upper_left', 'text2')
+    assert corner_annotation.get_text('upper_left') == 'text2'
+    assert corner_annotation.get_text('ul') == 'text2'
+
+
+def test_corner_annotation_text_invalid_position(corner_annotation):
+    with pytest.raises(ValueError, match="Position 'nope' is not valid"):
+        corner_annotation.set_text('nope', 'text3')
+
+
 def test_corner_annotation_prop(corner_annotation):
     prop = corner_annotation.prop
     assert isinstance(prop, pv.TextProperty)
+
+
+def test_corner_annotation_given_prop():
+    prop = pv.TextProperty(color='red')
+    assert pv.CornerAnnotation(0, 'text', prop=prop).prop.color == pv.Color('red')
 
 
 def test_corner_annotation_name():
@@ -47,6 +68,11 @@ def test_text_prop(text):
     assert isinstance(prop, pv.TextProperty)
 
 
+def test_text_given_prop():
+    prop = pv.TextProperty(color='red')
+    assert pv.Text('abc', prop=prop).prop.color == pv.Color('red')
+
+
 def test_text_position(text):
     position = np.random.default_rng().random(2)
     text.position = position
@@ -59,7 +85,9 @@ def test_text_name():
 
 
 def test_label():
-    label = pv.Label('text', (1, 2, 3), size=42, prop=pv.Property())
+    label = pv.Label('text', (1, 2, 3), size=42, prop=pv.TextProperty(color='red'))
+
+    assert label.prop.color == pv.Color('red')
 
     assert label.input == 'text'
     label.input = 'new'
@@ -336,3 +364,18 @@ def test_add_text_actor_follows_the_theme_of_the_plotter():
     assert actor.prop.color == pv.Color('blue')
     assert actor.prop.font_family == 'times'
     pl.close()
+
+
+def test_text_property_theme_is_not_shared():
+    """Test that a property keeps its own theme when another property is created."""
+    theme = pv.themes.Theme()
+    theme.font.color = 'red'
+    custom = pv.TextProperty(theme=theme)
+
+    # A property made from the global theme does not take the custom theme's color
+    default = pv.TextProperty()
+    assert default.color == pv.Color(pv.global_theme.font.color)
+
+    # Nor does it leave the custom property resolving colors from the global theme
+    custom.color = None
+    assert custom.color == pv.Color('red')

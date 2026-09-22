@@ -94,7 +94,7 @@ def test_add_mesh_isovalue_raises():
 
     pl = pv.Plotter()
     sp = pv.Sphere()
-    sp.cell_data['foo'] = 1
+    sp.cell_data['foo'] = np.ones(sp.n_cells)
     match = re.escape('Contour filter only works on Point data. Array (foo) is in the Cell data.')
     with pytest.raises(TypeError, match=match):
         pl.add_mesh_isovalue(mesh=sp, scalars='foo')
@@ -400,6 +400,18 @@ def test_widget_closed(uniform):
     pl.close()
     with pytest.raises(RuntimeError, match='closed plotter'):
         pl.add_checkbox_button_widget(callback=lambda value: value)
+
+
+def test_close_with_widgets_does_not_render(uniform):
+    """Widget teardown during ``close`` must not trigger renders."""
+    pl = pv.Plotter()
+    pl.add_mesh(uniform)
+    pl.add_plane_widget(callback=lambda normal, origin: None)  # noqa: ARG005
+    pl.show(auto_close=False)
+    render_starts = []
+    pl.render_window.AddObserver('StartEvent', lambda *_: render_starts.append(1))
+    pl.close()
+    assert not render_starts
 
 
 def test_widget_radio_button(uniform):

@@ -60,7 +60,9 @@ pl.show()
 
 contours = dataset.contour()
 slices = dataset.slice_orthogonal()
-glyphs = dataset.glyph(factor=1e-3, geom=pv.Sphere(), orient=False)
+glyphs = dataset.glyph(
+    factor=1e-3, geom=pv.Sphere(theta_resolution=8, phi_resolution=8), orient=False
+)
 
 # Use :func:`~pyvista.plot_compare` to show each result in its own linked subplot with an
 # outline of the original dataset.

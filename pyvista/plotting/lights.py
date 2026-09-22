@@ -6,10 +6,9 @@ from enum import IntEnum
 from typing import TYPE_CHECKING
 
 import numpy as np
+import pyvista_validation as _validation
 
 from pyvista import _vtk
-from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core import _validation
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.core.utilities.misc import _NoNewAttrMixin
@@ -17,9 +16,15 @@ from pyvista.core.utilities.misc import _NoNewAttrMixin
 from .colors import Color
 
 if TYPE_CHECKING:
+    from typing import Literal
+
     from pyvista.core._typing_core import TransformLike
+    from pyvista.core._typing_core import VectorLike
 
     from ._typing import ColorLike
+    from .renderer import Renderer
+
+    _LightTypeOptions = Literal['headlight', 'camera light', 'scene light']
 
 
 class LightType(IntEnum):
@@ -29,7 +34,7 @@ class LightType(IntEnum):
     CAMERA_LIGHT = 2
     SCENE_LIGHT = 3
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Pretty name for a light type."""
         return self.name.replace('_', ' ').title()
 
@@ -136,25 +141,25 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
     CAMERA_LIGHT = LightType.CAMERA_LIGHT
     SCENE_LIGHT = LightType.SCENE_LIGHT
 
-    @_deprecate_positional_args
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
-        position=None,
-        focal_point=None,
-        color=None,
-        light_type='scene light',
-        intensity=None,
-        positional=None,
-        cone_angle=None,
-        show_actor=False,  # noqa: FBT002
-        exponent=None,
-        shadow_attenuation=None,
-        attenuation_values=None,
-    ):
+        *,
+        position: VectorLike[float] | None = None,
+        focal_point: VectorLike[float] | None = None,
+        color: ColorLike | None = None,
+        light_type: _LightTypeOptions | int = 'scene light',
+        intensity: float | None = None,
+        positional: bool | None = None,
+        cone_angle: float | None = None,
+        show_actor: bool = False,
+        exponent: float | None = None,
+        shadow_attenuation: float | None = None,
+        attenuation_values: VectorLike[float] | None = None,
+    ) -> None:
         """Initialize the light."""
         super().__init__()
-        self._renderers = []
-        self.actor = None
+        self._renderers: list[Renderer] = []
+        self.actor: _vtk.vtkLightActor | None = None
 
         if position is not None:
             self.position = position
@@ -185,7 +190,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
                 )
                 raise ValueError(msg) from None
         elif not isinstance(light_type, int):
-            msg = f'Parameter light_type must be int or str, not {type(light_type).__name__}.'
+            msg = f'Parameter light_type must be int or str, not {type(light_type).__name__}.'  # type: ignore[unreachable]
             raise TypeError(msg)
         # LightType is an int subclass
 
@@ -218,8 +223,11 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         """Print a ``repr`` specifying the id of the light and its light type."""
         return f'<{self.__class__.__name__} ({self.light_type}) at {hex(id(self))}>'
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: object) -> bool:
         """Compare whether the relevant attributes of two lights are equal."""
+        if not isinstance(other, Light):
+            return NotImplemented
+
         # attributes which are native python types and thus implement __eq__
         native_attrs = [
             'light_type',
@@ -243,26 +251,24 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         # check transformation matrix element by element (if it exists)
         this_trans = self.transform_matrix
         that_trans = other.transform_matrix
-        trans_count = sum(1 for trans in [this_trans, that_trans] if trans is not None)
-        if trans_count == 1:
+        if this_trans is None or that_trans is None:
             # either but not both are None
-            return False
-        if trans_count == 2:
-            for i in range(4):
-                for j in range(4):
-                    if this_trans.GetElement(i, j) != that_trans.GetElement(i, j):
-                        return False
-        return True
+            return this_trans is that_trans
+        return all(
+            this_trans.GetElement(i, j) == that_trans.GetElement(i, j)
+            for i in range(4)
+            for j in range(4)
+        )
 
     __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
 
-    def __del__(self):
+    def __del__(self) -> None:
         """Clean up when the light is being destroyed."""
         self.actor = None
         self._renderers.clear()
 
     @property
-    def shadow_attenuation(self):  # numpydoc ignore=RT01
+    def shadow_attenuation(self) -> float:  # numpydoc ignore=RT01
         """Return or set the value of shadow attenuation.
 
         By default a light will be completely blocked when in shadow.
@@ -285,11 +291,11 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         return self.GetShadowAttenuation()
 
     @shadow_attenuation.setter
-    def shadow_attenuation(self, value):
+    def shadow_attenuation(self, value: float) -> None:
         self.SetShadowAttenuation(value)
 
     @property
-    def ambient_color(self):  # numpydoc ignore=RT01
+    def ambient_color(self) -> Color:  # numpydoc ignore=RT01
         """Return or set the ambient color of the light.
 
         When setting, the color must be a 3-length sequence or a string.
@@ -314,11 +320,11 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         return Color(self.GetAmbientColor())
 
     @ambient_color.setter
-    def ambient_color(self, color: ColorLike):
+    def ambient_color(self, color: ColorLike) -> None:
         self.SetAmbientColor(Color(color).float_rgb)
 
     @property
-    def diffuse_color(self):  # numpydoc ignore=RT01
+    def diffuse_color(self) -> Color:  # numpydoc ignore=RT01
         """Return or set the diffuse color of the light.
 
         When setting, the color must be a 3-length sequence or a string.
@@ -343,11 +349,11 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         return Color(self.GetDiffuseColor())
 
     @diffuse_color.setter
-    def diffuse_color(self, color: ColorLike):
+    def diffuse_color(self, color: ColorLike) -> None:
         self.SetDiffuseColor(Color(color).float_rgb)
 
     @property
-    def specular_color(self):  # numpydoc ignore=RT01
+    def specular_color(self) -> Color:  # numpydoc ignore=RT01
         """Return or set the specular color of the light.
 
         When setting, the color must be a 3-length sequence or a string.
@@ -372,11 +378,11 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         return Color(self.GetSpecularColor())
 
     @specular_color.setter
-    def specular_color(self, color: ColorLike):
+    def specular_color(self, color: ColorLike) -> None:
         self.SetSpecularColor(Color(color).float_rgb)
 
     @property
-    def position(self):  # numpydoc ignore=RT01
+    def position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return the position of the light.
 
         Note: the position is defined in the coordinate space
@@ -403,11 +409,11 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         return self.GetPosition()
 
     @position.setter
-    def position(self, pos):
-        self.SetPosition(pos)
+    def position(self, pos: VectorLike[float]) -> None:
+        self.SetPosition(_validation.validate_array3(pos, dtype_out=float, to_tuple=True))
 
     @property
-    def world_position(self):  # numpydoc ignore=RT01
+    def world_position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return the world space position of the light.
 
         The world space position is the :py:attr:`position` property
@@ -437,7 +443,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         return self.GetTransformedPosition()
 
     @property
-    def focal_point(self):  # numpydoc ignore=RT01
+    def focal_point(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return the focal point of the light.
 
         Note: the focal point is defined in the coordinate space
@@ -457,11 +463,11 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         return self.GetFocalPoint()
 
     @focal_point.setter
-    def focal_point(self, pos):
-        self.SetFocalPoint(pos)
+    def focal_point(self, pos: VectorLike[float]) -> None:
+        self.SetFocalPoint(_validation.validate_array3(pos, dtype_out=float, to_tuple=True))
 
     @property
-    def world_focal_point(self):  # numpydoc ignore=RT01
+    def world_focal_point(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return the world space focal point of the light.
 
         The world space focal point is the :py:attr:`focal_point`
@@ -492,7 +498,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         return self.GetTransformedFocalPoint()
 
     @property
-    def intensity(self):  # numpydoc ignore=RT01
+    def intensity(self) -> float:  # numpydoc ignore=RT01
         """Return or set the brightness of the light (between 0 and 1).
 
         Examples
@@ -515,11 +521,11 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         return self.GetIntensity()
 
     @intensity.setter
-    def intensity(self, intensity):
+    def intensity(self, intensity: float) -> None:
         self.SetIntensity(intensity)
 
     @property
-    def on(self):  # numpydoc ignore=RT01
+    def on(self) -> bool:  # numpydoc ignore=RT01
         """Return or set whether the light is on.
 
         This corresponds to the Switch state of the :vtk:`vtkLight` class.
@@ -538,11 +544,11 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         return bool(self.GetSwitch())
 
     @on.setter
-    def on(self, state):
+    def on(self, state: bool) -> None:
         self.SetSwitch(state)
 
     @property
-    def positional(self):  # numpydoc ignore=RT01
+    def positional(self) -> bool:  # numpydoc ignore=RT01
         """Return or set whether the light is positional.
 
         The default is a directional light, that is, an infinitely distant
@@ -573,13 +579,13 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         return bool(self.GetPositional())
 
     @positional.setter
-    def positional(self, state):
+    def positional(self, state: bool) -> None:
         if not state:
             self.hide_actor()
         self.SetPositional(state)
         self._check_actor()
 
-    def _check_actor(self):
+    def _check_actor(self) -> None:
         """Check if the light actor should be added or removed from attached renderers.
 
         This should be called whenever positional state or cone angle
@@ -602,7 +608,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
                 renderer.remove_actor(self.actor, render=False)
 
     @property
-    def exponent(self):  # numpydoc ignore=RT01
+    def exponent(self) -> float:  # numpydoc ignore=RT01
         """Return or set the exponent of the cosine used for spotlights.
 
         With a spotlight (a positional light with cone angle less than
@@ -646,11 +652,11 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         return self.GetExponent()
 
     @exponent.setter
-    def exponent(self, exp):
+    def exponent(self, exp: float) -> None:
         self.SetExponent(exp)
 
     @property
-    def cone_angle(self):  # numpydoc ignore=RT01
+    def cone_angle(self) -> float:  # numpydoc ignore=RT01
         """Return or set the cone angle of a positional light.
 
         The angle is in degrees and is measured between the axis of
@@ -688,14 +694,14 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         return self.GetConeAngle()
 
     @cone_angle.setter
-    def cone_angle(self, angle):
+    def cone_angle(self, angle: float) -> None:
         if angle >= 90:
             self.hide_actor()
         self.SetConeAngle(angle)
         self._check_actor()
 
     @property
-    def attenuation_values(self):  # numpydoc ignore=RT01
+    def attenuation_values(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the quadratic attenuation constants.
 
         The values are 3-length sequences which specify the constant,
@@ -739,11 +745,13 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         return self.GetAttenuationValues()
 
     @attenuation_values.setter
-    def attenuation_values(self, values):
-        self.SetAttenuationValues(values)
+    def attenuation_values(self, values: VectorLike[float]) -> None:
+        self.SetAttenuationValues(
+            _validation.validate_array3(values, dtype_out=float, to_tuple=True)
+        )
 
     @property
-    def transform_matrix(self):  # numpydoc ignore=RT01
+    def transform_matrix(self) -> _vtk.vtkMatrix4x4 | None:  # numpydoc ignore=RT01
         """Return (if any) or set the transformation matrix of the light.
 
         The transformation matrix is ``None`` by default, and it is
@@ -786,7 +794,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         return self.GetTransformMatrix()
 
     @transform_matrix.setter
-    def transform_matrix(self, matrix: TransformLike):
+    def transform_matrix(self, matrix: TransformLike | None) -> None:
         if matrix is None or isinstance(matrix, _vtk.vtkMatrix4x4):
             self.SetTransformMatrix(matrix)
         else:
@@ -794,7 +802,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
             self.SetTransformMatrix(vtkmatrix_from_array(trans))
 
     @property
-    def light_type(self):  # numpydoc ignore=RT01
+    def light_type(self) -> LightType:  # numpydoc ignore=RT01
         """Return or set the light type.
 
         The default light type is a scene light which lives in world
@@ -847,15 +855,15 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         return LightType(self.GetLightType())
 
     @light_type.setter
-    def light_type(self, ltype):
+    def light_type(self, ltype: int) -> None:
         if not isinstance(ltype, int):
             # note that LightType is an int subclass
-            msg = f'Light type must be an integer subclass instance, got {ltype} instead.'
+            msg = f'Light type must be an integer subclass instance, got {ltype} instead.'  # type: ignore[unreachable]
             raise TypeError(msg)
         self.SetLightType(ltype)
 
     @property
-    def is_headlight(self):  # numpydoc ignore=RT01
+    def is_headlight(self) -> bool:  # numpydoc ignore=RT01
         """Return whether the light is a headlight.
 
         Examples
@@ -872,7 +880,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         return bool(self.LightTypeIsHeadlight())
 
     @property
-    def is_camera_light(self):  # numpydoc ignore=RT01
+    def is_camera_light(self) -> bool:  # numpydoc ignore=RT01
         """Return whether the light is a camera light.
 
         Examples
@@ -890,7 +898,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         return bool(self.LightTypeIsCameraLight())
 
     @property
-    def is_scene_light(self):  # numpydoc ignore=RT01
+    def is_scene_light(self) -> bool:  # numpydoc ignore=RT01
         """Return whether the light is a scene light.
 
         Examples
@@ -907,7 +915,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         """
         return bool(self.LightTypeIsSceneLight())
 
-    def switch_on(self):
+    def switch_on(self) -> None:
         """Switch on the light.
 
         Examples
@@ -922,7 +930,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         """
         self.SwitchOn()
 
-    def switch_off(self):
+    def switch_off(self) -> None:
         """Switch off the light.
 
         Examples
@@ -936,7 +944,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         """
         self.SwitchOff()
 
-    def set_direction_angle(self, elev, azim):
+    def set_direction_angle(self, elev: float, azim: float) -> None:
         """Set the position and focal point of a directional light.
 
         The light is switched to directional (non-positional). The
@@ -978,8 +986,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         phi = np.radians(azim)
         self.position = (np.sin(theta) * np.cos(phi), np.sin(theta) * np.sin(phi), np.cos(theta))
 
-    @_deprecate_positional_args
-    def copy(self, deep=True):  # noqa: FBT002
+    def copy(self, *, deep: bool = True) -> Light:
         """Return a shallow or a deep copy of the light.
 
         The only mutable attribute of :class:`pyvista.Light` is the
@@ -1050,7 +1057,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
 
         return new_light
 
-    def set_headlight(self):
+    def set_headlight(self) -> None:
         """Set the light to be a headlight.
 
         Headlights are fixed to the camera and always point to the
@@ -1068,7 +1075,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         """
         self.SetLightTypeToHeadlight()
 
-    def set_camera_light(self):
+    def set_camera_light(self) -> None:
         """Set the light to be a camera light.
 
         A camera light moves with the camera, but it can have an
@@ -1090,7 +1097,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         """
         self.SetLightTypeToCameraLight()
 
-    def set_scene_light(self):
+    def set_scene_light(self) -> None:
         """Set the light to be a scene light.
 
         Scene lights are stationary with respect to the scene.
@@ -1109,7 +1116,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         self.SetLightTypeToSceneLight()
 
     @classmethod
-    def from_vtk(cls, vtk_light):
+    def from_vtk(cls, vtk_light: _vtk.vtkLight) -> Light:
         """Create a light from a :vtk:`vtkLight`, resulting in a copy.
 
         Parameters
@@ -1124,7 +1131,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
 
         """
         if not isinstance(vtk_light, _vtk.vtkLight):
-            msg = f'Expected vtk.vtkLight object, got {type(vtk_light).__name__} instead.'
+            msg = f'Expected vtk.vtkLight object, got {type(vtk_light).__name__} instead.'  # type: ignore[unreachable]
             raise TypeError(msg)
 
         light = cls()
@@ -1135,18 +1142,22 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         light.diffuse_color = vtk_light.GetDiffuseColor()
         light.specular_color = vtk_light.GetSpecularColor()
         light.intensity = vtk_light.GetIntensity()
-        light.on = vtk_light.GetSwitch()
-        light.positional = vtk_light.GetPositional()
+        light.on = bool(vtk_light.GetSwitch())
+        light.positional = bool(vtk_light.GetPositional())
         light.exponent = vtk_light.GetExponent()
         light.cone_angle = vtk_light.GetConeAngle()
         light.attenuation_values = vtk_light.GetAttenuationValues()
         trans = vtk_light.GetTransformMatrix()
+        if trans is not None:
+            matrix = _vtk.vtkMatrix4x4()
+            matrix.DeepCopy(trans)
+            trans = matrix
         light.transform_matrix = trans
         light.shadow_attenuation = vtk_light.GetShadowAttenuation()
 
         return light
 
-    def show_actor(self):
+    def show_actor(self) -> None:
         """Show an actor for a spotlight that depicts the geometry of the beam.
 
         For a directional light or a positional light with
@@ -1179,7 +1190,7 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
             return
         self.actor.VisibilityOn()  # type: ignore[union-attr]
 
-    def hide_actor(self):
+    def hide_actor(self) -> None:
         """Hide the actor for a positional light that depicts the geometry of the beam.
 
         For a directional light the function doesn't do anything.
@@ -1196,11 +1207,11 @@ class Light(_NoNewAttrMixin, DisableVtkSnakeCase, _vtk.vtkLight):
         self.actor.VisibilityOff()  # type: ignore[union-attr]
 
     @property
-    def renderers(self):  # numpydoc ignore=RT01
+    def renderers(self) -> list[Renderer]:  # numpydoc ignore=RT01
         """Return the renderers associated with this light."""
         return self._renderers
 
-    def add_renderer(self, renderer):
+    def add_renderer(self, renderer: Renderer) -> None:
         """Attach a renderer to this light.
 
         Parameters
