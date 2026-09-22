@@ -55,7 +55,7 @@ pyvista.WrappableType
 Object accepted by :func:`pyvista.wrap`.
 
 Includes PyVista and VTK data objects, NumPy arrays, ``trimesh`` meshes, and
-``meshio`` meshes.
+``meshio`` meshes, along with ``None``.
 
 .. currentmodule:: pyvista
 
