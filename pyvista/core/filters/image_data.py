@@ -2993,7 +2993,7 @@ class ImageDataFilters(DataSetFilters):
                 unique_values = np.unique(internal_values, axis=0)
                 for i, value in enumerate(unique_values):
                     is_value = np.all(labels_array == value, axis=1)
-                    labels_array[is_value, 0] = -(i + 1)  # type: ignore[index]
+                    labels_array[is_value, 0] = -(i + 1)
 
             # Keep first component only
             output.cell_data[PV_NAME] = output.cell_data[PV_NAME][:, 0]

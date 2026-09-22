@@ -120,7 +120,7 @@ _env_theme_applied: bool = False
 
 
 # Lazily import/access the plotting module
-def _get_deprecated_validation():
+def _get_deprecated_validation() -> ModuleType:
     """Forward ``pyvista._validation`` to the ``pyvista_validation`` package with a warning."""
     import pyvista_validation  # noqa: PLC0415
 
@@ -141,7 +141,7 @@ def _get_deprecated_validation():
     return pyvista_validation
 
 
-def _warn_deprecated_pickle_format():
+def _warn_deprecated_pickle_format() -> None:
     """Warn that the pickle format selector is deprecated."""
     from pyvista._version import _is_deprecation_due  # noqa: PLC0415
     from pyvista._warn_external import warn_external  # noqa: PLC0415
@@ -160,7 +160,7 @@ def _warn_deprecated_pickle_format():
         raise RuntimeError(msg)
 
 
-def __getattr__(name):
+def __getattr__(name: str) -> Any:
     """Fetch an attribute ``name`` from ``globals()`` or the ``pyvista.plotting`` module.
 
     This override is implemented to prevent importing all of the plotting module
@@ -175,7 +175,7 @@ def __getattr__(name):
     import importlib  # noqa: PLC0415
     import inspect  # noqa: PLC0415
 
-    def _cache_attr_and_return(obj):
+    def _cache_attr_and_return(obj: Any) -> Any:
         # Cache the attr on this module to avoid calls to __getattr__ on next access
         globals()[name] = obj
         return obj
