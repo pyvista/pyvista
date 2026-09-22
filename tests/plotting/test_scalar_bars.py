@@ -724,7 +724,7 @@ def _laid_out(pl, bar, title):
 
     label_font = _fitting_font(
         size_of,
-        int((_ramp_room(bar, width, ramp)[1] - text_pad * (len(labels) - 1)) / len(labels)),
+        int((_ramp_room(bar, width, ramp) - text_pad * (len(labels) - 1)) / len(labels)),
         height - ramp - 4 * text_pad - title_box,
         start=label_text.GetFontSize(),
     )
@@ -756,7 +756,7 @@ def _modelled_ramp(pl, bar, title):
             for text in _label_texts(bar)
         )
     )
-    return widest // 2, lift, _ramp_room(bar, width, ramp)[1] - widest, ramp
+    return widest // 2, lift, _ramp_room(bar, width, ramp) - widest, ramp
 
 
 def _title_gap(pl, bar):
@@ -1051,7 +1051,7 @@ def test_fit_box_leaves_room_for_the_swatches(sphere):
     )
     assert bar.GetDrawBelowRangeSwatch()
     assert bar.GetDrawAboveRangeSwatch()
-    assert _ramp_room(bar, width, 10)[1] < width - 4
+    assert _ramp_room(bar, width, 10) < width - 4
     assert label_font < 24
     # Text drawn free at that size is inked the same height as the boxed text
     _, _, _, free = bands(label_font_size=label_font, unconstrained_font_size=True)
@@ -1695,17 +1695,13 @@ def _label_gaps(pl, bar):
     """Return the pixels a horizontal bar leaves between each pair of its tick labels."""
     viewport = pl.renderer
     label_text = bar.GetLabelTextProperty()
-    left = bar.GetPositionCoordinate().GetComputedViewportValue(viewport)[0]
     width, height = _box_pixels(bar, viewport)
-    offset, room = _ramp_room(bar, width, bar.GetBarRatio() * height)
+    room = _ramp_room(bar, width, bar.GetBarRatio() * height)
     edges = []
     for anchor, text in _label_ticks(bar):
         size = _text_size(viewport, label_text, text, font_size=label_text.GetFontSize())[0]
-        center = left + offset + room * anchor
-        edges.append((center - size / 2, center + size / 2))
-    gaps = [after[0] - before[1] for before, after in itertools.pairwise(edges)]
-    # The ends are measured against the viewport they have to stay inside
-    return [edges[0][0], *gaps, viewport.GetSize()[0] - edges[-1][1]]
+        edges.append((room * anchor - size / 2, room * anchor + size / 2))
+    return [after[0] - before[1] for before, after in itertools.pairwise(edges)]
 
 
 def _text_at_the_viewport_edge(pl):
@@ -1718,19 +1714,30 @@ def _text_at_the_viewport_edge(pl):
     return any(bool(edge.any()) for edge in edges)
 
 
+def _label_runs(pl, bar):
+    """Return how many separated bands of text a vertical bar draws beside its ramp."""
+    image = pl.screenshot(return_img=True)
+    red, green, blue = (image[..., channel].astype(int) for channel in range(3))
+    text = (blue > 200) & (red < 150) & (green < 150)
+    # The swatch annotations are drawn on the other side of the bar, so the text past the
+    # ramp is the tick labels
+    left = bar.GetPositionCoordinate().GetComputedViewportValue(pl.renderer)[0]
+    ramp = bar.GetBarRatio() * _box_pixels(bar, pl.renderer)[0]
+    inked = text[:, int(left + ramp) :].any(axis=1)
+    return int(np.sum(inked[1:] & ~inked[:-1])) + int(inked[0])
+
+
 @pytest.mark.parametrize('window', [[1024, 768], [512, 384], [341, 256]])
 def test_fit_fonts_holds_the_labels_apart(sphere, window):
     # Unconstrained labels are drawn at the size they ask for, so the size has to be one
     # that leaves each of them room on the bar
     pl = pv.Plotter(window_size=window)
-    pl.background_color = 'white'
     pl.add_mesh(sphere, show_scalar_bar=False)
-    bar = _wide_bar(pl, sphere, color='blue')
+    bar = _wide_bar(pl, sphere)
     pl.screenshot(return_img=True)
 
     assert bar.GetLabelTextProperty().GetFontSize() <= WIDE_FONT
     assert min(_label_gaps(pl, bar)) >= 0
-    assert not _text_at_the_viewport_edge(pl)
 
 
 def test_fit_fonts_leaves_a_bar_with_room_alone(sphere):
@@ -1786,17 +1793,17 @@ def test_fit_fonts_take_a_size_set_by_hand(sphere):
     assert bar.GetLabelTextProperty().GetFontSize() == 6
 
 
-def test_fit_fonts_pad_the_title_they_leave(sphere):
-    # The title is padded off the labels by a share of the size it is drawn at, which is
-    # the size the fit left it rather than the size it asked for
+def test_fit_fonts_leave_the_title_alone(sphere):
+    # Nothing is drawn around the title, so it keeps its size however far it runs past
+    # the bar it is centered on
     pl = pv.Plotter(window_size=[400, 300])
+    pl.background_color = 'white'
     pl.add_mesh(sphere, show_scalar_bar=False)
-    bar = _wide_bar(pl, sphere, title='Pressure at the inlet of the manifold (Pa)', title_pad=0.5)
+    bar = _wide_bar(pl, sphere, title='Pressure at the inlet of the manifold (Pa)', color='blue')
     pl.screenshot(return_img=True)
 
-    title_font = bar.GetTitleTextProperty().GetFontSize()
-    assert title_font < WIDE_FONT
-    assert bar.GetTitleTextProperty().GetLineOffset() == -round(0.5 * title_font)
+    assert bar.GetTitleTextProperty().GetFontSize() == WIDE_FONT
+    assert _text_at_the_viewport_edge(pl)
 
 
 def test_fit_fonts_leave_a_constrained_bar_to_vtk(sphere):
@@ -1812,17 +1819,16 @@ def test_fit_fonts_leave_a_constrained_bar_to_vtk(sphere):
 
 @pytest.mark.parametrize('window', [[1024, 768], [512, 384], [400, 300]])
 def test_fit_fonts_hold_vertical_labels_apart(sphere, window):
-    # A vertical bar stacks its labels along the ramp and draws them out past its side,
-    # so they have both the ends of the viewport and its edge to stay clear of.  The
-    # title is left off because a vertical one overhangs the bar it is centered on
+    # A vertical bar stacks its labels along the ramp, so each has the one below it to
+    # stay clear of
     pl = pv.Plotter(window_size=window)
     pl.background_color = 'white'
     pl.add_mesh(sphere, show_scalar_bar=False)
     bar = _wide_bar(pl, sphere, vertical=True, title='', n_labels=9, color='blue')
     pl.screenshot(return_img=True)
 
-    assert bar.GetLabelTextProperty().GetFontSize() < WIDE_FONT
-    assert not _text_at_the_viewport_edge(pl)
+    assert bar.GetLabelTextProperty().GetFontSize() <= WIDE_FONT
+    assert _label_runs(pl, bar) == 9
 
 
 def test_fit_fonts_measure_the_viewport_a_bar_is_drawn_in(sphere):
@@ -1837,18 +1843,28 @@ def test_fit_fonts_measure_the_viewport_a_bar_is_drawn_in(sphere):
     assert not _text_outside_the_box(pl, bar)
 
 
-def test_fit_fonts_leave_a_tick_off_the_viewport_alone(sphere):
-    # A bar drawn against the side of the viewport hangs its first label over the edge at
-    # any size, so the fit settles for holding the labels off each other
-    pl = pv.Plotter(window_size=[600, 300])
+def test_fit_fonts_leave_a_label_over_the_viewport_edge_alone(sphere):
+    # The labels on the ends of a bar drawn out to the sides of the viewport run past
+    # them, and are left at their size for it as long as they clear each other
+    sphere[KEY] = sphere.points[:, 2] * 255
+
+    pl = pv.Plotter(window_size=[400, 400])
+    pl.background_color = 'white'
     pl.add_mesh(sphere, show_scalar_bar=False)
-    bar = _wide_bar(pl, sphere, n_labels=6, position_x=0.0)
+    bar = pl.add_scalar_bar(
+        KEY,
+        n_labels=3,
+        width=0.8,
+        position_x=0.1,
+        label_font_size=40,
+        title_font_size=40,
+        color='blue',
+    )
     pl.screenshot(return_img=True)
 
-    over, *gaps = _label_gaps(pl, bar)
-    assert 3 < bar.GetLabelTextProperty().GetFontSize() < WIDE_FONT
-    assert over < 0
-    assert min(gaps) >= 0
+    assert bar.GetLabelTextProperty().GetFontSize() == 40
+    assert min(_label_gaps(pl, bar)) > 0
+    assert _text_at_the_viewport_edge(pl)
 
 
 def test_fit_fonts_skip_the_ticks_a_flat_range_hides(sphere):
@@ -1903,19 +1919,6 @@ def test_fit_fonts_leave_a_bar_with_no_tick_labels_alone(sphere, indexed: bool):
     pl.screenshot(return_img=True)
 
     assert bar.GetLabelTextProperty().GetFontSize() == WIDE_FONT
-
-
-def _label_runs(pl, bar):
-    """Return how many separated bands of text a vertical bar draws beside its ramp."""
-    image = pl.screenshot(return_img=True)
-    red, green, blue = (image[..., channel].astype(int) for channel in range(3))
-    text = (blue > 200) & (red < 150) & (green < 150)
-    # The swatch annotations are drawn on the other side of the bar, so the text past the
-    # ramp is the tick labels
-    left = bar.GetPositionCoordinate().GetComputedViewportValue(pl.renderer)[0]
-    ramp = bar.GetBarRatio() * _box_pixels(bar, pl.renderer)[0]
-    inked = text[:, int(left + ramp) :].any(axis=1)
-    return int(np.sum(inked[1:] & ~inked[:-1])) + int(inked[0])
 
 
 def test_fit_fonts_clear_the_swatches_a_vertical_bar_draws(sphere):

@@ -1103,9 +1103,8 @@ class _Font(_ConfigBase):
     def title_size(self) -> int:  # numpydoc ignore=RT01
         """Return or set the title size.
 
-        A horizontal scalar bar draws its title at this size where it has the room
-        for it and smaller where it does not.  If ``None``, the size is fitted to
-        the bar it is drawn on.
+        A scalar bar draws its title at this size.  If ``None``, the size is
+        fitted to the bar it is drawn on.
 
         Examples
         --------
@@ -1126,9 +1125,9 @@ class _Font(_ConfigBase):
     def label_size(self) -> int:  # numpydoc ignore=RT01
         """Return or set the label size.
 
-        A scalar bar draws its labels at this size where it has the room
-        for them and smaller where it does not.  If ``None``, the size is fitted
-        to the bar they are drawn on.
+        A scalar bar draws its labels at this size where they have the room to
+        stay clear of each other and smaller where they do not.  If ``None``, the
+        size is fitted to the bar they are drawn on.
 
         Examples
         --------
