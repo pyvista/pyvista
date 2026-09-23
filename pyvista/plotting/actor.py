@@ -784,19 +784,14 @@ class Actor(Prop3D, _vtk.vtkActor):
         -----
         .. include:: /api/plotting/line_styles.rst
 
-        Only line cells can be dashed, so a mesh holding polygons or strips is
-        rejected. Edges drawn with ``show_edges=True`` come from the polygons
-        themselves, so extract them into their own mesh to dash them.
-
-        Under a perspective camera the dashes shorten with distance along with
-        the rest of the line. Parts of a line whose cells are shorter on screen
-        than ``line_width`` are drawn solid. A mesh colored by cell scalars
-        restarts the pattern at each cell.
-
-        Requires a mesh drawn by :func:`~pyvista.Plotter.add_mesh` with a
-        ``line_style`` other than ``'-'``, which selects a mapper that renders
-        :class:`pyvista.PolyData` directly. Other dataset types have their
-        surface extracted first.
+        * Requires an actor from :func:`~pyvista.Plotter.add_mesh` with a
+          ``line_style`` other than ``'-'``.
+        * Requires a mesh of line cells. Polygons and strips are rejected.
+        * Edges drawn with ``show_edges=True`` are not dashed. Extract them with
+          :func:`~pyvista.DataObjectFilters.extract_all_edges` and add that as
+          its own mesh.
+        * Cells shorter on screen than ``line_width`` are drawn solid.
+        * Cell scalars restart the pattern at each cell.
 
         Examples
         --------
