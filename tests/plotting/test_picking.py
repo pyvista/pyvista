@@ -144,6 +144,23 @@ def test_multi_cell_picking(through):
         assert merged.n_cells < cube.n_cells + n_sphere_cells
 
 
+def test_multi_cell_picking_with_a_prop_that_has_no_mapper():
+    pl = pv.Plotter(window_size=(1024, 768))
+    pl.add_mesh(pv.Cube(), pickable=True)
+    pl.add_actor(pv.AxesAssembly())
+    pl.enable_cell_picking(through=True, start=True, show=True)
+    pl.show(auto_close=False)
+
+    pl.iren._mouse_left_button_press(169, 113)
+    pl.iren._mouse_move(875, 684)
+    pl.iren._mouse_left_button_release()
+
+    assert pl.picked_cells is not None
+    assert pl.picked_cells.n_cells > 0
+
+    pl.close()
+
+
 @pytest.mark.parametrize('left_clicking', [False, True])
 def test_mesh_picking(sphere, left_clicking):
     picked = []

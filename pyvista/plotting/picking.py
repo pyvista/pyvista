@@ -30,7 +30,7 @@ from pyvista.core.utilities.misc import try_callback
 from .composite_mapper import CompositePolyDataMapper
 from .errors import PyVistaPickingError
 from .mapper import _mapper_get_data_set_input
-from .mapper import _mapper_has_data_set_input
+from .mapper import _prop_get_data_set_input
 from .opts import ElementType
 from .opts import PickerType
 
@@ -1259,12 +1259,9 @@ class PickingComponent(_NoNewAttrMixin):
             picked = pv.MultiBlock()
             renderer = plotter._get_iren_not_none().get_poked_renderer()
             for actor in renderer.actors.values():
-                if (
-                    (mapper := actor.GetMapper())
-                    and _mapper_has_data_set_input(mapper)
-                    and actor.GetPickable()
-                ):
-                    input_mesh = pv.wrap(_mapper_get_data_set_input(actor.GetMapper()))
+                dataset = _prop_get_data_set_input(actor)
+                if dataset is not None and actor.GetPickable():
+                    input_mesh = pv.wrap(dataset)
                     input_mesh.cell_data['original_cell_ids'] = np.arange(input_mesh.n_cells)
                     extract = _vtk.vtkExtractGeometry()
                     extract.SetInputData(input_mesh)

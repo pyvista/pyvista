@@ -1779,6 +1779,12 @@ def _mapper_has_data_set_input(mapper: Any) -> bool:
     return hasattr(mapper, 'GetDataSetInput') or hasattr(mapper, 'GetInputAsDataSet')
 
 
+def _prop_get_data_set_input(prop: _vtk.vtkProp) -> _vtk.vtkDataSet | None:
+    """Return the data set a prop's mapper reads, or ``None`` when it has no such mapper."""
+    mapper = prop.GetMapper() if hasattr(prop, 'GetMapper') else None
+    return _mapper_get_data_set_input(mapper) if _mapper_has_data_set_input(mapper) else None
+
+
 def _mapper_get_data_set_input(mapper: Any) -> _vtk.vtkDataSet:
     """Get data set input from mapper using the appropriate method.
 
