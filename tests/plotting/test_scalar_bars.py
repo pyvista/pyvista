@@ -10,6 +10,7 @@ import pytest
 import pyvista as pv
 from pyvista import _vtk
 from pyvista.core.errors import VTKVersionError
+from pyvista.plotting.scalar_bars import _LEGIBLE_FONT_SIZE as LEGIBLE_FONT_SIZE
 from pyvista.plotting.scalar_bars import _bar_title_height
 from pyvista.plotting.scalar_bars import _box_pixels
 from pyvista.plotting.scalar_bars import _fitting_font
@@ -894,6 +895,7 @@ def test_fit_box_encloses_the_title(sphere, vertical: bool, box):
 
 @pytest.mark.parametrize('box', BOXES, ids=BOX_IDS)
 @pytest.mark.parametrize('vertical', [True, False], ids=['vertical', 'horizontal'])
+@pytest.mark.filterwarnings('ignore:The text of scalar bar')
 def test_fit_box_keeps_the_ramp(sphere, vertical: bool, box):
     # The box grows around the ramp rather than taking its size from it
     sphere[KEY] = sphere.points[:, 2]
@@ -1818,23 +1820,43 @@ def test_fit_box_keeps_a_turned_bar_the_box_it_was_given(sphere):
 
 @pytest.mark.needs_vtk_version(9, 4, 0, reason='ForceVerticalTitle was added in VTK 9.4.0')
 def test_fit_box_holds_a_turned_bar_too_small_for_any_font(sphere):
-    # The text is shrunk as far as it goes rather than the layout giving up
+    # The text stops at a size that can still be read, and says that it does not fit
     sphere[KEY] = sphere.points[:, 2]
 
     pl = pv.Plotter(window_size=[1024, 768])
     pl.add_mesh(sphere, show_scalar_bar=False)
-    bar = _fitted_bar(
-        pl,
-        sphere,
-        vertical=True,
-        box={'outline': True, 'width': 0.02, 'height': 0.12},
-        rotate_title=True,
-        fmt='%.1f',
-    )
+    with pytest.warns(UserWarning, match='does not fit its box'):
+        bar = _fitted_bar(
+            pl,
+            sphere,
+            vertical=True,
+            box={'outline': True, 'width': 0.02, 'height': 0.12},
+            rotate_title=True,
+            fmt='%.1f',
+        )
     pl.screenshot(return_img=True)
 
-    assert bar.GetTitleTextProperty().GetFontSize() == 3
-    assert bar.GetLabelTextProperty().GetFontSize() == 3
+    assert bar.GetTitleTextProperty().GetFontSize() == LEGIBLE_FONT_SIZE
+    assert bar.GetLabelTextProperty().GetFontSize() == LEGIBLE_FONT_SIZE
+
+
+def test_fit_box_warns_once_that_a_title_does_not_fit_its_box(sphere):
+    # A box too narrow for the title keeps it legible and overflowing, and says so once
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=[1024, 768])
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    warning = re.escape(f'scalar bar {FIT_TITLE!r} does not fit its box')
+    box = {'outline': True, 'width': 0.03, 'height': 0.4}
+    with pytest.warns(UserWarning, match=warning):
+        bar = _fitted_bar(pl, sphere, vertical=True, box=box)
+    pl.screenshot(return_img=True)
+
+    assert bar.GetTitleTextProperty().GetFontSize() == LEGIBLE_FONT_SIZE
+    # The refit a resized window runs says nothing more about a box already reported
+    pl.window_size = [900, 700]
+    pl.screenshot(return_img=True)
+    pl.close()
 
 
 def test_fit_box_sizes_a_box_with_no_tick_labels(sphere):

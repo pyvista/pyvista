@@ -13,6 +13,7 @@ import pyvista_validation as _validation
 import pyvista as pv
 from pyvista import MAX_N_COLOR_BARS
 from pyvista import _vtk
+from pyvista._warn_external import warn_external
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.misc import _NoNewAttrMixin
@@ -78,17 +79,45 @@ def _title_height(text_property, title, dpi):
     return bounds[3] - bounds[2] + 1
 
 
+#: The smallest font size a box shrinks text to before letting it overflow instead
+_LEGIBLE_FONT_SIZE = 8
+
+
+def _widest(text_property, texts, dpi):
+    """Return the width of the widest of several texts."""
+    return max(_title_width(text_property, text, dpi) for text in texts)
+
+
 def _shrunk_font(text_property, texts, room, *, dpi):
-    """Return the largest font size up to the one asked for that fits ``room`` pixels."""
+    """Return the largest legible font size that fits ``room`` pixels, and whether it does.
+
+    The size asked for is shrunk no further than ``_LEGIBLE_FONT_SIZE``, and a size
+    already smaller than that is kept, so that text too long for its box overflows
+    rather than becoming unreadable.
+    """
     if not texts:
-        return text_property.GetFontSize()
+        return text_property.GetFontSize(), True
     probe = _vtk.vtkTextProperty()
     probe.ShallowCopy(text_property)
     font_size = probe.GetFontSize()
-    while font_size > 3 and max(_title_width(probe, text, dpi) for text in texts) > room:
+    while font_size > _LEGIBLE_FONT_SIZE and _widest(probe, texts, dpi) > room:
         font_size -= 1
         probe.SetFontSize(font_size)
-    return font_size
+    return font_size, _widest(probe, texts, dpi) <= room
+
+
+def _warn_unfitted(fit, *, fits):
+    """Warn, once for a bar, that its box is too small for the text it is given."""
+    if fits or fit['warned']:
+        return
+    fit['warned'] = True
+    name = fit['key']
+    message = (
+        f'The text of scalar bar {name!r} does not fit its box at the smallest legible '
+        'font size, and is drawn past it. Give the box more room, or the text a '
+        'smaller font size of its own.'
+    )
+    warn_external(message)
 
 
 def _row_fonts(title_text, label_text, *, title, labels, room, dpi):
@@ -96,12 +125,15 @@ def _row_fonts(title_text, label_text, *, title, labels, room, dpi):
 
     Each keeps the size it asked for while the row has ``room`` pixels for the title's
     height and the widest label, and where it has not, the one that asked for the
-    larger size gives way first, and both together once they match.
+    larger size gives way first, and both together once they match.  Neither is shrunk
+    past ``_LEGIBLE_FONT_SIZE``, and the last value returned says whether the row fits.
     """
     title_probe = _vtk.vtkTextProperty()
     title_probe.ShallowCopy(title_text)
     label_probe = _vtk.vtkTextProperty()
     label_probe.ShallowCopy(label_text)
+
+    floor = _LEGIBLE_FONT_SIZE
 
     def used():
         widest = max((_title_width(label_probe, text, dpi) for text in labels), default=0)
@@ -109,13 +141,13 @@ def _row_fonts(title_text, label_text, *, title, labels, room, dpi):
 
     while used() > room:
         title_font, label_font = title_probe.GetFontSize(), label_probe.GetFontSize()
-        if title_font <= 3 and label_font <= 3:
+        if title_font <= floor and label_font <= floor:
             break
-        if title_font >= label_font and title_font > 3:
+        if title_font >= label_font and title_font > floor:
             title_probe.SetFontSize(title_font - 1)
-        if label_font >= title_font and label_font > 3:
+        if label_font >= title_font and label_font > floor:
             label_probe.SetFontSize(label_font - 1)
-    return title_probe.GetFontSize(), label_probe.GetFontSize()
+    return title_probe.GetFontSize(), label_probe.GetFontSize(), used() <= room
 
 
 def _seating_offset(label_height):
@@ -579,7 +611,9 @@ class ScalarBars(_NoNewAttrMixin):
         """Hold a turned title to the length the height of its box leaves it."""
         title_text = scalar_bar.GetTitleTextProperty()
         room = _box_pixels(scalar_bar, fit['renderer'])[1] - 2 * _frame_edge(scalar_bar) - 4
-        title_text.SetFontSize(_shrunk_font(title_text, [_boxed_title(fit)], room, dpi=dpi))
+        font_size, fits = _shrunk_font(title_text, [_boxed_title(fit)], room, dpi=dpi)
+        title_text.SetFontSize(font_size)
+        _warn_unfitted(fit, fits=fits)
 
     def _turn_title(self, fit, scalar_bar):
         """Lay a turned title out inside its box, holding the ramp back for the labels.
@@ -754,7 +788,7 @@ class ScalarBars(_NoNewAttrMixin):
             if turned:
                 # A turned title stands beside the labels rather than across the box, so
                 # the two share the row past the ramp
-                title_font, label_font = _row_fonts(
+                title_font, label_font, fits = _row_fonts(
                     title_text,
                     label_text,
                     title=fit['title'],
@@ -764,16 +798,20 @@ class ScalarBars(_NoNewAttrMixin):
                 )
                 title_text.SetFontSize(title_font)
                 label_text.SetFontSize(label_font)
+                _warn_unfitted(fit, fits=fits)
                 if fit['pinned_height']:
                     self._hold_turned_title(fit, scalar_bar, dpi=dpi)
                 self._turn_title(fit, scalar_bar)
             else:
-                label_text.SetFontSize(
-                    _shrunk_font(label_text, _label_texts(scalar_bar), label_room, dpi=dpi)
+                label_font, label_fits = _shrunk_font(
+                    label_text, _label_texts(scalar_bar), label_room, dpi=dpi
                 )
-                title_text.SetFontSize(
-                    _shrunk_font(title_text, [fit['title']], title_room, dpi=dpi)
+                label_text.SetFontSize(label_font)
+                title_font, title_fits = _shrunk_font(
+                    title_text, [fit['title']], title_room, dpi=dpi
                 )
+                title_text.SetFontSize(title_font)
+                _warn_unfitted(fit, fits=label_fits and title_fits)
                 title_text.SetLineOffset(
                     _seating_offset(_label_size(scalar_bar, label_text, dpi)[1])
                 )
@@ -841,6 +879,7 @@ class ScalarBars(_NoNewAttrMixin):
             'turned': turned,
             'component': scalar_bar.GetComponentTitle() or '',
             'state': None,
+            'warned': False,
             'applied': None,
             'observer': None,
         }
@@ -1428,7 +1467,9 @@ class ScalarBars(_NoNewAttrMixin):
         in a row with the ramp and the labels so that the box holds it too, and
         the ramp is held back from the top of the box for the label centered on
         its end, the box growing around the ramp unless it was given a height
-        to keep.
+        to keep.  Text is shrunk no further than a size it can still be read
+        at, and a box too small to hold it even then is drawn with the text
+        past its edge and warned about.
 
         The ``mapper``, ``lookup_table``, and ``cmap`` parameters can be used
         to set a custom color map for the scalar bar; otherwise, the bar will
