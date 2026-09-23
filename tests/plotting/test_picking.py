@@ -161,6 +161,24 @@ def test_multi_cell_picking_with_a_prop_that_has_no_mapper():
     pl.close()
 
 
+def test_mesh_picking_shows_the_picked_mesh_on_a_single_row_layout(sphere):
+    pl = pv.Plotter(shape='2|1')
+    pl.subplot(2)
+    pl.add_mesh(sphere)
+    pl.enable_mesh_picking()
+    pl.show(auto_close=False)
+    pl.subplot(0)
+
+    width, height = pl.window_size
+    pl.iren._mouse_right_button_click(width // 2, height // 2)
+
+    assert pl.picked_mesh is not None
+    assert PICKED_REPRESENTATION_NAMES['mesh'] in pl.renderers[2].actors
+    assert pl.renderers._active_index == 0
+
+    pl.close()
+
+
 @pytest.mark.parametrize('left_clicking', [False, True])
 def test_mesh_picking(sphere, left_clicking):
     picked = []
