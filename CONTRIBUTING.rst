@@ -1380,7 +1380,7 @@ signature. To show and link an alias by name instead, which suits long unions:
 #. Document it in ``doc/source/api/core/typing.rst``.
 
 Docstrings can then refer to the alias by its bare name, for example
-``points : VectorLike[float]``, and the documentation build reports a broken link
+``center : VectorLike[float]``, and the documentation build reports a broken link
 to it.
 
 A name that appears in a signature but has no documentation page, such as a private
