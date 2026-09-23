@@ -701,11 +701,13 @@ class PickingComponent(_NoNewAttrMixin):
                     else:
                         _poked_context_callback(plotter, callback, point)
 
+        iren = self._plotter._get_iren_not_none()
         if picker is not None:  # If None, use the already-set picker
-            self._plotter._get_iren_not_none().picker = picker
-        if hasattr(self._plotter._get_iren_not_none().picker, 'SetTolerance'):
-            self._plotter._get_iren_not_none().picker.SetTolerance(tolerance)
-        self._plotter._get_iren_not_none().add_pick_observer(_end_pick_event)
+            iren.picker = picker
+        active_picker = iren.picker
+        if hasattr(active_picker, 'SetTolerance'):
+            active_picker.SetTolerance(tolerance)
+        iren.add_pick_observer(_end_pick_event)
         self._init_click_picking_callback(left_clicking=left_clicking)
         self._picker_in_use = True
 
