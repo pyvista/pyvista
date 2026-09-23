@@ -1387,6 +1387,10 @@ A name that appears in a signature but has no documentation page, such as a priv
 ``TypeVar``, fails the documentation build. Add it to ``_UNDOCUMENTED_TYPES`` in
 ``doc/source/conf.py``, keeping the list sorted.
 
+If the name belongs to another package whose documentation Sphinx links to, such as
+``Path`` from ``pathlib``, map it to its full name in ``_REFERENCE_NAMES`` instead, so
+it links rather than being ignored.
+
 Style Checking
 ~~~~~~~~~~~~~~
 PyVista follows PEP8 standard as outlined in the `Coding Style section
