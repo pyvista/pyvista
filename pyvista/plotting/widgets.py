@@ -2443,10 +2443,10 @@ class WidgetComponent(_NoNewAttrMixin):
             representation.GetPoint1DisplayPosition(p1)
             representation.GetPoint2DisplayPosition(p2)
             if iren.picker.Pick(p1, self._plotter.renderer):
-                pos1 = iren.picker.GetPickPosition()
+                pos1 = list(iren.picker.GetPickPosition())
                 representation.GetPoint1Representation().SetWorldPosition(pos1)
             if iren.picker.Pick(p2, self._plotter.renderer):
-                pos2 = iren.picker.GetPickPosition()
+                pos2 = list(iren.picker.GetPickPosition())
                 representation.GetPoint2Representation().SetWorldPosition(pos2)
             representation.BuildRepresentation()
 
