@@ -301,6 +301,74 @@ _UNDOCUMENTED_TYPES = [
     '_WrappableVTKDataObjectType',
     'lookup_table_ndarray',
     'pyarrow',
+    'vtkAbstractArray',
+    'vtkAbstractCellLocator',
+    'vtkAbstractPicker',
+    'vtkActor',
+    'vtkActor2D',
+    'vtkAlgorithm',
+    'vtkAlgorithmOutput',
+    'vtkAnnotatedCubeActor',
+    'vtkAxesActor',
+    'vtkAxisActor2D',
+    'vtkBoxWidget',
+    'vtkButtonWidget',
+    'vtkCamera3DWidget',
+    'vtkCameraOrientationWidget',
+    'vtkCell',
+    'vtkCellDataToPointData',
+    'vtkColor3ub',
+    'vtkColorTransferFunction',
+    'vtkContextInteractorStyle',
+    'vtkDataObject',
+    'vtkDataSet',
+    'vtkDataSetSurfaceFilter',
+    'vtkDistanceWidget',
+    'vtkEnSightWriter',
+    'vtkFileOutputWindow',
+    'vtkImageData',
+    'vtkImplicitFunction',
+    'vtkImplicitPlaneWidget',
+    'vtkInteractorStyle',
+    'vtkLegendBoxActor',
+    'vtkLegendScaleActor',
+    'vtkLight',
+    'vtkLineWidget',
+    'vtkLogoWidget',
+    'vtkMapper',
+    'vtkMatrix3x3',
+    'vtkMatrix4x4',
+    'vtkMultiBlockDataSet',
+    'vtkOBBTree',
+    'vtkObject',
+    'vtkOrientationMarkerWidget',
+    'vtkOutlineFilter',
+    'vtkOutputWindow',
+    'vtkParametricFunction',
+    'vtkPerlinNoise',
+    'vtkPiecewiseFunction',
+    'vtkPlane',
+    'vtkPlaneWidget',
+    'vtkPointDataToCellData',
+    'vtkPoints',
+    'vtkProp',
+    'vtkPropAssembly',
+    'vtkProperty',
+    'vtkQuadricDecimation',
+    'vtkRenderWindow',
+    'vtkRenderWindowInteractor',
+    'vtkRenderer',
+    'vtkScalarBarActor',
+    'vtkSkybox',
+    'vtkSliderWidget',
+    'vtkSphereWidget',
+    'vtkSplineWidget',
+    'vtkTable',
+    'vtkTexture',
+    'vtkTriangleFilter',
+    'vtkVolumeProperty',
+    'vtkWeakReference',
+    'vtkWriter',
 ]
 
 # Configuration for sphinx.ext.autodoc
@@ -1204,14 +1272,10 @@ def resolve_python_reference(  # noqa: PLR0917
     node: addnodes.pending_xref,
     contnode: Element,
 ) -> Element | None:
-    """Resolve a Python reference to a VTK class, or to an object under its full name."""
+    """Resolve a Python reference to an object under its full name."""
     if node['refdomain'] != 'py':
         return None
     target = node['reftarget']
-    name = target.rpartition('.')[2]
-    if re.fullmatch(r'vtk[A-Z]\w*', name):
-        url = f'https://vtk.org/doc/nightly/html/class{name}.html'
-        return nodes.reference('', '', contnode, internal=False, refuri=url)
     full_name = _REFERENCE_NAMES.get(target)
     for prefix, module in _REFERENCE_PREFIXES.items():
         if target.startswith(prefix):
