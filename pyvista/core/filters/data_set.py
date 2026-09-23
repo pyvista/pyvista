@@ -402,7 +402,8 @@ class DataSetFilters(DataObjectFilters):
         Returns
         -------
         pyvista.DataSet
-            The dataset aligned to the x-y-z axes.
+            The dataset aligned to the x-y-z axes. A :class:`~pyvista.RectilinearGrid`
+            is returned as a :class:`~pyvista.StructuredGrid`.
 
         numpy.ndarray
             Transform matrix to transform the input dataset to the x-y-z axes if
@@ -576,7 +577,9 @@ class DataSetFilters(DataObjectFilters):
                     axes[1] *= -1
 
         rotation = Transform().rotate(axes)
-        aligned = self.transform(rotation, inplace=False)
+        # A rectilinear grid cannot represent the rotation, so cast it first
+        mesh = self.cast_to_structured_grid() if isinstance(self, pv.RectilinearGrid) else self
+        aligned = cast('_DataSetType', mesh.transform(rotation, inplace=False))
         translation = Transform().translate(-np.array(aligned.center))
         if not centered:
             translation.translate(self.center)
