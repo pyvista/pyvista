@@ -15,8 +15,8 @@ which rebuilds that input, so one failing call can be reproduced on its own::
 
     _make_mesh('image', 'both').threshold(scalars='c_scalars')
 
-The tables below the mesh builders supply the arguments each filter needs. A filter whose
-arguments are missing never runs, and the ``never ran`` assertion reports that.
+The filters, arguments and special meshes live in ``filter_side_effects_cases.py``, whose
+docstring says what to do when a new filter or keyword makes this module fail.
 """
 
 from __future__ import annotations
@@ -42,32 +42,7 @@ from pyvista.core.filters.rectilinear_grid import RectilinearGridFilters
 from pyvista.core.filters.structured_grid import StructuredGridFilters
 from pyvista.core.filters.unstructured_grid import UnstructuredGridFilters
 from pyvista.core.utilities.arrays import set_default_active_scalars
-
-# Filters that open a plot rather than return a mesh.
-_PLOTTING_FILTERS = frozenset(
-    {
-        'plot_curvature',
-        'plot_normals',
-        'plot_over_circular_arc',
-        'plot_over_circular_arc_normal',
-        'plot_over_line',
-        'plot_boundaries',
-    }
-)
-
-# Filters which raise unconditionally, so a call cannot reach the input.
-_DEPRECATED_FILTERS = frozenset({'flip_normals'})
-
-# Keywords which modify the input by design, or which cannot affect it.
-_SKIP_KWARGS = frozenset(
-    {'figsize', 'figure', 'fname', 'inplace', 'progress_bar', 'show', 'title', 'ylabel'}
-)
-
-
-#: Calls which segfault VTK for reasons unrelated to side effects, as ``(kind, name, keyword)``.
-# vtkCellLocatorInterpolatedVelocityField dereferences the cells a PointSet lacks
-_CRASHES_VTK = frozenset({('pointset', 'streamlines_from_source', 'interpolator_type')})
-
+from tests.core import filter_side_effects_cases as cases
 
 _LITERAL_PATTERN = re.compile(r'Literal\[([^]]*)]')
 
@@ -257,8 +232,8 @@ def _changes(before, after):
 def _call_expression(kind, mode, name, args, kwargs):
     """Return the expression which rebuilds an input and makes one call on it."""
     mesh = (
-        f'_MESH_OVERRIDES[{name!r}]({mode!r})'
-        if name in _MESH_OVERRIDES
+        f'_override_mesh({name!r}, {mode!r}, None)'
+        if name in cases.MESH_OVERRIDES
         else f'_make_mesh({kind!r}, {mode!r})'
     )
     shown = [_short(arg, 40) for arg in args]
@@ -277,271 +252,6 @@ def _report(kind, mode, name, args, kwargs, changes):
     )
 
 
-def _frequency_image(mode):
-    """Return an image carrying complex point scalars, as the frequency filters need."""
-    return _make_mesh('image', mode).fft()
-
-
-def _line_mesh(mode):
-    """Return a PolyData made of lines, which the contour filters need."""
-    return _mesh_arrays(
-        pv.MultipleLines(np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0]])), mode
-    )
-
-
-def _seam_grid(shift=(0.0, 0.0, 0.0)):
-    """Return a structured grid whose arrays are constant, so a seam always matches."""
-    x, y, z = np.meshgrid(np.arange(4.0), np.arange(3.0), np.arange(5.0), indexing='ij')
-    grid = pv.StructuredGrid(x + shift[0], y + shift[1], z + shift[2])
-    grid.point_data['constant'] = np.ones(grid.n_points)
-    grid.cell_data['constant'] = np.ones(grid.n_cells)
-    return grid
-
-
-def _planar_mesh(mode):
-    """Return a mesh in the XY plane, which the evenly spaced streamlines filter needs."""
-    return _mesh_arrays(pv.Plane(i_resolution=4, j_resolution=4), mode)
-
-
-def _triangulated(mode):
-    """Return an all-triangle PolyData."""
-    return _mesh_arrays(pv.Sphere(theta_resolution=8, phi_resolution=8).triangulate(), mode)
-
-
-#: Filters which only apply to an input the shared mesh kinds do not cover.
-_MESH_OVERRIDES = {
-    'concatenate': lambda mode: _seam_grid(),  # noqa: ARG005
-    'high_pass': _frequency_image,
-    'low_pass': _frequency_image,
-    'rfft': _frequency_image,
-    'triangulate_contours': _line_mesh,
-    'decimate': _triangulated,
-    'decimate_polyline': _line_mesh,
-    'streamlines_evenly_spaced_2D': _planar_mesh,
-}
-
-
-def _closed_surface():
-    """Return a closed surface enclosing part of every test mesh."""
-    return pv.Sphere(radius=0.4, theta_resolution=10, phi_resolution=10)
-
-
-def _sample_target():
-    """Return a volume carrying arrays for the sampling filters to pull from."""
-    target = pv.ImageData(dimensions=(4, 4, 4), spacing=(0.5, 0.5, 0.5), origin=(-0.75,) * 3)
-    target.point_data['t_point'] = np.arange(target.n_points, dtype=float)
-    target.cell_data['t_cell'] = np.arange(target.n_cells, dtype=float)
-    return target
-
-
-def _implicit_plane():
-    """Return an implicit function for :meth:`~pyvista.DataObjectFilters.slice_implicit`."""
-    plane = _vtk.vtkPlane()
-    plane.SetOrigin(0.0, 0.0, 0.0)
-    plane.SetNormal(0.0, 0.0, 1.0)
-    return plane
-
-
-class _Fresh:
-    """An argument value rebuilt for every call."""
-
-    def __init__(self, factory):
-        self._factory = factory
-
-    def build(self):
-        """Return a new value."""
-        return self._factory()
-
-
-#: Positional arguments for the filters which require them.
-_POSITIONAL_ARGS = {
-    'align': lambda: (_closed_surface().translate((0.01, 0.01, 0.01)),),
-    'boolean_difference': lambda: (_closed_surface().translate((0.1, 0.0, 0.0)),),
-    'boolean_intersection': lambda: (_closed_surface().translate((0.1, 0.0, 0.0)),),
-    'boolean_union': lambda: (_closed_surface().translate((0.1, 0.0, 0.0)),),
-    'collision': lambda: (_closed_surface().translate((0.1, 0.0, 0.0)),),
-    'concatenate': lambda: (_seam_grid((3.0, 0.0, 0.0)), 0),
-    'contour_banded': lambda: (3,),
-    'decimate': lambda: (0.5,),
-    'decimate_polyline': lambda: (0.5,),
-    'decimate_pro': lambda: (0.5,),
-    'edge_mask': lambda: (30.0,),
-    'extract_subset': lambda: ((0, 2, 0, 2, 0, 2),),
-    'extrude': lambda: ((0.0, 0.0, 1.0),),
-    'extrude_trim': lambda: ((0.0, 0.0, 1.0), pv.Plane(center=(0, 0, 1), i_size=10, j_size=10)),
-    'fill_holes': lambda: (1.0,),
-    'generic_filter': lambda: ('triangulate',),
-    'geodesic': lambda: (0, 5),
-    'geodesic_distance': lambda: (0, 5),
-    'high_pass': lambda: (1.0, 1.0, 1.0),
-    'image_threshold': lambda: (1.0,),
-    'intersection': lambda: (_closed_surface().translate((0.1, 0.0, 0.0)),),
-    'low_pass': lambda: (1.0, 1.0, 1.0),
-    'multi_ray_trace': lambda: (
-        np.array([[0.0, 0.0, -5.0]]),
-        np.array([[0.0, 0.0, 1.0]]),
-    ),
-    'ray_trace': lambda: ((0.0, 0.0, -5.0), (0.0, 0.0, 5.0)),
-    'subdivide': lambda: (1,),
-    'clip_slab': lambda: (0.4,),
-    'clip_surface': lambda: (_closed_surface(),),
-    'compute_implicit_distance': lambda: (_closed_surface(),),
-    'extract_cells': lambda: ([0, 1, 2],),
-    'extract_cells_by_type': lambda: (pv.CellType.TRIANGLE,),
-    'extract_points': lambda: ([0, 1, 2],),
-    'flip_normal': lambda: ((1.0, 0.0, 0.0),),
-    'interpolate': lambda: (_sample_target(),),
-    'partition': lambda: (2,),
-    'reflect': lambda: ((1.0, 0.0, 0.0),),
-    'remove_cells': lambda: ([0, 1],),
-    'remove_points': lambda: ([0, 1],),
-    'rotate': lambda: (np.eye(3),),
-    'rotate_vector': lambda: ((1.0, 1.0, 1.0), 30.0),
-    'rotate_x': lambda: (30.0,),
-    'rotate_y': lambda: (30.0,),
-    'rotate_z': lambda: (30.0,),
-    'sample': lambda: (_sample_target(),),
-    'sample_over_circular_arc': lambda: (),
-    'sample_over_line': lambda: ((-1.0, -1.0, -1.0), (1.0, 1.0, 1.0)),
-    'sample_over_multiple_lines': lambda: (
-        np.array([[-1.0, -1.0, -1.0], [0.0, 0.0, 0.0], [1.0, 1.0, 1.0]]),
-    ),
-    'scale': lambda: (2.0,),
-    'select_enclosed_points': lambda: (_closed_surface(),),
-    'select_interior_points': lambda: (_closed_surface(),),
-    'slice_along_line': lambda: (pv.Line((-1, -1, -1), (1, 1, 1), resolution=4),),
-    'slice_implicit': lambda: (_implicit_plane(),),
-    'streamlines_from_source': lambda: (pv.PointSet(np.array([[0.0, 0.0, 0.0]])),),
-    'transform': lambda: (np.eye(4),),
-    'translate': lambda: ((1.0, 2.0, 3.0),),
-}
-
-#: Keyword arguments required alongside the positional ones.
-_REQUIRED_KWARGS = {
-    'extract_values': dict(values=0.0),
-    'sample_over_circular_arc': dict(pointa=(-1, 0, 0), pointb=(1, 0, 0), center=(0, 0, 0)),
-    'sample_over_circular_arc_normal': dict(center=(0, 0, 0)),
-    'select_values': dict(values=0.0),
-    'slice_index': dict(i=0),
-    'validate_mesh': dict(action='warn'),
-}
-
-#: Values to try for keywords whose type is neither ``bool`` nor a ``Literal``.
-_KWARG_VALUES: dict[str, list[Any]] = {
-    'alpha': [0.5],
-    'angle': [90.0],
-    'axis_0_direction': ['-x'],
-    'axis_1_direction': [(0.0, 1.0, 0.0)],
-    'axis_2_direction': [(0.0, 0.0, -1.0)],
-    'background_value': [2],
-    'bounds': [(-0.2, 0.2, -0.2, 0.2, -0.2, 0.2)],
-    'bounds_size': [2.0],
-    'cell_ids': [0],
-    'cell_length_percentile': [0.5],
-    'cell_length_sample_size': [100],
-    'cell_types': [pv.CellType.TRIANGLE],
-    'center': [(0.0, 0.0, 0.0)],
-    'closed_loop_maximum_distance': [0.2],
-    'closest_point': [(0.0, 0.0, 0.0)],
-    'colors': ['glasbey'],
-    'component': [1],
-    'dimensions': [(6, 6, 6)],
-    'divergence': ['div'],
-    'exclude_fields': ['nonmanifold_edges'],
-    'extent': [(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)],
-    'factor': [0.2],
-    'feature_angle': [10.0],
-    'foreground_value': [9],
-    'frame_width': [0.2],
-    'geom': [_Fresh(pv.Cube)],
-    'gradient': ['grad'],
-    'grid': [_Fresh(lambda: pv.Sphere(radius=0.3, theta_resolution=6, phi_resolution=6))],
-    'high_point': [(0.0, 0.0, 1.0)],
-    'ind': [[0, 1]],
-    'indices': [(0,)],
-    'initial_step_length': [0.2],
-    'isosurfaces': [3, [0.5, 1.5]],
-    'locator_tolerance': [1e-3],
-    'loop_angle': [30.0],
-    'low_point': [(0.0, 0.0, -1.0)],
-    'max_error': [1e-5],
-    'max_iterations': [10],
-    'max_landmarks': [20],
-    'max_length': [1.0],
-    'max_mean_distance': [1e-3],
-    'max_n_subdivide': [2],
-    'max_step_length': [0.5],
-    'max_steps': [10],
-    'min_step_length': [0.05],
-    'minimum_number_of_loop_points': [2],
-    'n': [3],
-    'n_partitions': [2],
-    'n_points': [10],
-    'name': ['custom_name'],
-    'nonlinear_subdivision': [2],
-    'normal': [(1.0, 1.0, 0.0)],
-    'null_value': [-1.0],
-    'offset': [3.0],
-    'orient': ['p_vectors', 'c_vectors'],
-    'origin': [(0.0, 0.0, 0.0)],
-    'output_scalars': ['renamed'],
-    'percent': [0.3],
-    'planarity_tolerance': [1e-3],
-    'plane': [_Fresh(lambda: pv.Plane(i_size=5, j_size=5))],
-    'point': [(1.0, 0.0, 0.0)],
-    'point_ids': [0],
-    'point_u': [(1.0, 0.0, 0.0)],
-    'point_v': [(0.0, 1.0, 0.0)],
-    'pointa': [(-1.0, 0.0, 0.0)],
-    'pointb': [(1.0, 0.0, 0.0)],
-    'points': [np.array([[-1.0, -1.0, -1.0], [1.0, 1.0, 1.0]])],
-    'polar': [(1.0, 0.0, 0.0)],
-    'quality_measure': ['area', 'all_valid', ['area', 'aspect_ratio']],
-    'radius': [0.2],
-    'ranges': [(0.0, 3.0)],
-    'reference_volume': [_Fresh(lambda: pv.ImageData(dimensions=(5, 5, 5)))],
-    'region_ids': [0],
-    'resolution': [5],
-    'rng': [(0.0, 1.0)],
-    'rotation': [np.eye(3)],
-    'rotation_scale': [2.0],
-    'rounding_func': [np.ceil],
-    'scalar_range': [(0.0, 3.0), 'p_scalars'],
-    'scalars': ['p_scalars', 'p_other', 'p_vectors', 'c_scalars', 'c_other', 'solo'],
-    'scale': ['p_scalars', 'p_other', 'c_scalars'],
-    'separating_distance': [5.0],
-    'separating_distance_ratio': [0.3],
-    'sharpness': [3.0],
-    'shrink_factor': [0.5],
-    'size_tolerance': [1e-3],
-    'source': [_Fresh(lambda: pv.PointSet(np.array([[0.0, 0.0, 0.0]])))],
-    'source_center': [(0.0, 0.0, 0.0)],
-    'source_radius': [0.5],
-    'spacing': [0.3],
-    'start_position': [(0.0, 0.0, 0.0)],
-    'step_length': [0.2],
-    'surface': [_Fresh(_closed_surface)],
-    'target': [_Fresh(_sample_target)],
-    'target_reduction': [0.2],
-    'terminal_speed': [1e-9],
-    'thickness': [0.4],
-    'tol': [1e-2],
-    'tolerance': [1e-2],
-    'trans': [np.eye(4)],
-    'validation_fields': ['nonmanifold_edges'],
-    'value': [1.0, (0.5, 2.0)],
-    'values': [0.0, {'a': 0.0}],
-    'variable_input': [0],
-    'vector': [(1.0, 1.0, 1.0)],
-    'vectors': ['p_vectors', 'c_vectors'],
-    'vorticity': ['vort'],
-    'x': [0.0],
-    'xyz': [2.0],
-    'y': [0.0],
-    'z': [0.0],
-}
-
-
 def _literal_options(annotation):
     """Return the options of a ``Literal`` annotation, or ``None``."""
     match = _LITERAL_PATTERN.search(str(annotation))
@@ -550,10 +260,10 @@ def _literal_options(annotation):
 
 def _kwarg_variants(parameter):
     """Yield values to try for a single keyword parameter."""
-    if parameter.name in _SKIP_KWARGS:
+    if parameter.name in cases.SKIP_KWARGS:
         return
-    if parameter.name in _KWARG_VALUES:
-        yield from _KWARG_VALUES[parameter.name]
+    if parameter.name in cases.KWARG_VALUES:
+        yield from cases.KWARG_VALUES[parameter.name]
         return
     if isinstance(parameter.default, bool):
         yield not parameter.default
@@ -593,7 +303,9 @@ def _filters():
     found = {}
     for cls in _FILTER_CLASSES:
         for name in sorted(vars(cls)):
-            if not name.startswith('_') and name not in (_PLOTTING_FILTERS | _DEPRECATED_FILTERS):
+            if not name.startswith('_') and name not in (
+                cases.PLOTTING_FILTERS | cases.DEPRECATED_FILTERS
+            ):
                 found[f'{cls.__name__}.{name}'] = getattr(cls, name)
     return found
 
@@ -660,14 +372,14 @@ def _output_or_error(mesh, name, args, kwargs):
 
 
 def _run(mesh, name, args, kwargs):
-    """Call a filter, returning whether it ran on this mesh."""
+    """Call a filter, returning the error it raised, or ``None`` if it ran."""
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
         try:
             getattr(mesh, name)(*args, **kwargs)
-        except Exception:  # noqa: BLE001  - the filter does not apply to this mesh
-            return False
-    return True
+        except Exception as error:  # noqa: BLE001  - the filter does not apply to this mesh
+            return error
+    return None
 
 
 @pytest.fixture(autouse=True)
@@ -680,30 +392,78 @@ def _quiet_vtk():
 
 def _override_mesh(name, mode, default):
     """Return the special input a filter needs for this mode, or ``None`` if it has none."""
-    if name not in _MESH_OVERRIDES:
+    if name not in cases.MESH_OVERRIDES:
         return default
     try:
-        return _MESH_OVERRIDES[name](mode)
+        return cases.MESH_OVERRIDES[name](lambda mesh: _mesh_arrays(mesh, mode))
     except Exception:  # noqa: BLE001  - this mode cannot build that input
         return None
 
 
 def _call_arguments(name, keyword_variant=()):
     """Return the positional and keyword arguments for one call of ``name``."""
-    args = _POSITIONAL_ARGS[name]() if name in _POSITIONAL_ARGS else ()
-    merged = {**_REQUIRED_KWARGS.get(name, {}), **dict(keyword_variant)}
+    args = cases.POSITIONAL_ARGS[name]() if name in cases.POSITIONAL_ARGS else ()
+    merged = {**cases.REQUIRED_KWARGS.get(name, {}), **dict(keyword_variant)}
     kwargs = {
-        key: value.build() if isinstance(value, _Fresh) else value for key, value in merged.items()
+        key: value.build() if isinstance(value, cases.Fresh) else value
+        for key, value in merged.items()
     }
     return args, kwargs
 
 
-def _fail(key, problem, reports, ran):
-    """Fail with one readable block per call which broke the property."""
+#: Where the filters, arguments and meshes the sweep uses are listed.
+CASES_FILE = 'tests/core/filter_side_effects_cases.py'
+
+#: What to look at when a filter modifies its input.
+MODIFIED_HINT = (
+    'Hint: a filter must leave `self` unchanged. Resolve array names with the non-mutating '
+    'helpers in pyvista/core/utilities/arrays.py (`_active_scalars_input`, '
+    '`_default_scalars_input` and their vector twins) and give VTK the shallow copy they '
+    'return. Run any call above on its own to reproduce it.'
+)
+
+#: What to look at when a filter's output depends on the input's active scalars.
+ACTIVE_SCALARS_HINT = (
+    "Hint: the filter reads the input's active scalars instead of resolving its default "
+    'array itself; use `_default_scalars_input` from pyvista/core/utilities/arrays.py. If '
+    'the filter carries the active scalars to its output by design, add it to '
+    'ACTIVE_SCALARS_PASSTHROUGH in ' + CASES_FILE + '.'
+)
+
+
+class SweepSetupError(Exception):
+    """The sweep could not exercise a filter, which is a problem with the test, not the filter."""
+
+
+def _fail(key, problem, reports, ran, hint):
+    """Fail with one readable block per call which broke the property, then a hint."""
     pytest.fail(
-        f'{key} {problem} in {len(reports)} of {ran} calls:\n\n' + '\n\n'.join(reports),
+        f'{key} {problem} in {len(reports)} of {ran} calls:\n\n'
+        + '\n\n'.join(reports)
+        + f'\n\n{hint}',
         pytrace=False,
     )
+
+
+def _first_line(error):
+    """Return the first line of an error's message, shortened."""
+    return next(iter(str(error).splitlines()), '')[:120]
+
+
+def _fail_setup(key, errors):
+    """Raise because a filter never ran, naming the first errors it raised."""
+    seen = '\n'.join(
+        f'  {where}: {type(error).__name__}: {_first_line(error)}'
+        for where, error in list(errors.items())[:5]
+    )
+    msg = (
+        f'{key} raised on every test mesh, so the sweep checked nothing. This is a problem '
+        f'with the test setup, not a side effect. First errors, by mesh kind and data mode:\n'
+        f'{seen}\n\n'
+        f'Fix: in {CASES_FILE}, give the filter its required arguments in POSITIONAL_ARGS or '
+        f'REQUIRED_KWARGS, or a mesh it accepts in MESH_OVERRIDES.'
+    )
+    raise SweepSetupError(msg)
 
 
 @pytest.mark.parametrize('key', list(FILTERS))
@@ -712,6 +472,7 @@ def test_filter_does_not_modify_input(key):
     func = FILTERS[key]
     name = func.__name__
     reports = []
+    errors = {}
     ran = 0
     for mode in DATA_MODES:
         for kind in MESH_KINDS:
@@ -721,29 +482,71 @@ def test_filter_does_not_modify_input(key):
             for keyword, keyword_variant in _call_variants(func):
                 if keyword is not None and mode not in KEYWORD_DATA_MODES:
                     continue
-                if (kind, name, keyword) in _CRASHES_VTK:
+                if (kind, name, keyword) in cases.CRASHES_VTK:
                     continue
                 mesh = template.copy()
                 args, kwargs = _call_arguments(name, keyword_variant)
                 before = _fingerprint(mesh)
-                if _run(mesh, name, args, kwargs):
+                error = _run(mesh, name, args, kwargs)
+                if error is None:
                     ran += 1
+                else:
+                    errors.setdefault(f'{kind}/{mode}', error)
                 changes = _changes(before, _fingerprint(mesh))
                 if changes:  # pragma: no cover -- failure path
                     reports.append(_report(kind, mode, name, args, kwargs, changes))
-    assert ran, f'{key} never ran; the test meshes or arguments no longer apply'
+    if not ran:  # pragma: no cover -- failure path
+        _fail_setup(key, errors)
     if reports:  # pragma: no cover -- failure path
-        _fail(key, 'modified its input', reports, ran)
+        _fail(key, 'modified its input', reports, ran, MODIFIED_HINT)
 
 
-#: These re-mesh the whole attribute table, carrying the input's active scalars to the output.
-_ACTIVE_SCALARS_PASSTHROUGH = frozenset({'cells_to_points', 'points_to_cells'})
+def _unvaried_keywords():
+    """Return the filter keywords the sweep has no value for, with the filters using each."""
+    unvaried = {}
+    for key, func in FILTERS.items():
+        for parameter in list(inspect.signature(func).parameters.values())[1:]:
+            if (
+                parameter.default is not inspect.Parameter.empty
+                and parameter.name not in cases.SKIP_KWARGS
+                and next(_kwarg_variants(parameter), None) is None
+            ):
+                unvaried.setdefault(parameter.name, []).append(key)
+    return unvaried
+
+
+def _check_keyword_setup(unvaried, listed):
+    """Raise if a keyword lacks values without being listed, or is listed but has values."""
+    new = sorted(set(unvaried) - listed)
+    if new:
+        lines = '\n'.join(f'  {name}, used by {", ".join(unvaried[name])}' for name in new)
+        msg = (
+            f'The sweep has no values to try for these keywords, so it only ever calls them '
+            f'with their defaults:\n{lines}\n\n'
+            f'Fix: in {CASES_FILE}, add values to KWARG_VALUES, or add the name to '
+            f'SKIP_KWARGS if the keyword cannot affect the input.'
+        )
+        raise SweepSetupError(msg)
+    stale = sorted(listed - set(unvaried))
+    if stale:
+        msg = (
+            f'These keywords are listed in UNVARIED_KWARGS but are varied now, or no filter '
+            f'uses them any more: {stale}\n\nFix: remove them from UNVARIED_KWARGS in '
+            f'{CASES_FILE}.'
+        )
+        raise SweepSetupError(msg)
+
+
+def test_setup_every_keyword_has_values():
+    """Every filter keyword has values to try, or is listed as skipped or not yet varied."""
+    _check_keyword_setup(_unvaried_keywords(), cases.UNVARIED_KWARGS)
+
 
 _DEFAULT_SCALARS_FILTERS = [
     key
     for key, func in FILTERS.items()
     if 'scalars' in inspect.signature(func).parameters
-    and func.__name__ not in _ACTIVE_SCALARS_PASSTHROUGH
+    and func.__name__ not in cases.ACTIVE_SCALARS_PASSTHROUGH
 ]
 
 
@@ -759,6 +562,7 @@ def test_filter_output_does_not_depend_on_active_scalars(key):
     """A filter returns the same output whether or not its default array was already active."""
     name = FILTERS[key].__name__
     reports = []
+    errors = {}
     ran = 0
     for mode in UNSET_DATA_MODES:
         for kind in MESH_KINDS:
@@ -772,14 +576,22 @@ def test_filter_output_does_not_depend_on_active_scalars(key):
             as_is = _output_or_error(template.copy(), name, args, kwargs)
             preactivated = _output_or_error(activated, name, args, kwargs)
             if 'raised' in as_is and as_is == preactivated:
+                errors.setdefault(f'{kind}/{mode}', _run(template.copy(), name, args, kwargs))
                 continue  # the filter does not apply to this mesh
             ran += 1
             changes = _changes(as_is, preactivated)
             if changes:  # pragma: no cover -- failure path
                 reports.append(_report(kind, mode, name, args, kwargs, changes))
-    assert ran, f'{key} never ran; the test meshes or arguments no longer apply'
+    if not ran:  # pragma: no cover -- failure path
+        _fail_setup(key, errors)
     if reports:  # pragma: no cover -- failure path
-        _fail(key, 'returns a different output once its default array is active', reports, ran)
+        _fail(
+            key,
+            'returns a different output once its default array is active',
+            reports,
+            ran,
+            ACTIVE_SCALARS_HINT,
+        )
 
 
 def test_failure_names_the_call_and_every_entry_which_changed():
@@ -792,9 +604,10 @@ def test_failure_names_the_call_and_every_entry_which_changed():
     report = _report('poly', 'single_point', 'sample', (pv.Sphere(),), {'tolerance': 0.5}, changes)
 
     with pytest.raises(pytest.fail.Exception) as excinfo:
-        _fail('DataSetFilters.sample', 'modified its input', [report], 4)
+        _fail('DataSetFilters.sample', 'modified its input', [report], 4, MODIFIED_HINT)
 
     message = str(excinfo.value)
+    assert message.endswith(MODIFIED_HINT)
     assert message.startswith('DataSetFilters.sample modified its input in 1 of 4 calls:')
     assert f'  poly mesh, {DATA_MODES["single_point"]}' in message
     assert "    _make_mesh('poly', 'single_point').sample(<PolyData>, tolerance=0.5)" in message
@@ -806,3 +619,24 @@ def test_failure_names_reordered_arrays_as_reordered():
     """Arrays which only changed order are reported as reordered, not as added and removed."""
     change = _describe_change('cell data arrays', ('a', 'b'), ('b', 'a'))
     assert change == 'cell data arrays: reordered'
+
+
+def test_setup_failure_names_the_errors_and_the_tables_to_edit():
+    """A filter which never ran is reported as a setup problem, with its errors and the fix."""
+    errors = {'poly/both': TypeError("missing 1 required positional argument: 'target'")}
+    with pytest.raises(SweepSetupError, match='problem with the test setup') as excinfo:
+        _fail_setup('DataSetFilters.sample', errors)
+    message = str(excinfo.value)
+    assert "  poly/both: TypeError: missing 1 required positional argument: 'target'" in message
+    assert 'POSITIONAL_ARGS' in message
+
+
+def test_setup_failure_names_new_and_stale_keywords():
+    """A keyword without values, or one listed needlessly, is reported with the fix."""
+    unvaried = {'order': ['ImageDataFilters.low_pass']}
+    with pytest.raises(
+        SweepSetupError, match=re.escape('order, used by ImageDataFilters.low_pass')
+    ):
+        _check_keyword_setup(unvaried, frozenset())
+    with pytest.raises(SweepSetupError, match='remove them from UNVARIED_KWARGS'):
+        _check_keyword_setup({}, frozenset({'order'}))
