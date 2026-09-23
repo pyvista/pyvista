@@ -19,6 +19,7 @@ from docutils import nodes
 from docutils.parsers.rst.directives.images import Image
 from sphinx import addnodes
 from sphinx.ext.intersphinx import InventoryAdapter
+from sphinx.ext.intersphinx import missing_reference
 from sphinx.util.docstrings import prepare_docstring
 from sphinx.util.inspect import TypeAliasForwardRef
 from sphinx_autocodelink.gallery import AutoCodeLinkScraper
@@ -193,6 +194,115 @@ _DOCUMENTED_TYPES = [
     'VectorLike',
 ]
 
+# Names in signatures and docstrings without a documentation page
+_UNDOCUMENTED_TYPES = [
+    'ActiveArrayInfo',
+    'ActiveScalarsAlgorithm',
+    'AddIDsAlgorithm',
+    'BackfaceArgs',
+    'BasePlotter',
+    'BorderOptions',
+    'CallbackFilterAlgorithm',
+    'CellLiteral',
+    'CellQualityInfo',
+    'Colormap',
+    'ColormapOptions',
+    'CrinkleAlgorithm',
+    'CullingOptions',
+    'Cycler',
+    'ElementType',
+    'EmbeddableWidget',
+    'ExampleName',
+    'FieldAssociation',
+    'FieldLiteral',
+    'FontFamilyOptions',
+    'HorizontalOptions',
+    'IFrame',
+    'Image',
+    'ImageCompareType',
+    'InteractorStyleHandler',
+    'LightType',
+    'Mesh',
+    'MeshValidationReport',
+    'NumpyArray',
+    'OpacityOptions',
+    'PathStrSeq',
+    'PickerType',
+    'PlottableType',
+    'PointLiteral',
+    'PointSetToPolyDataAlgorithm',
+    'PointSpriteShape',
+    'ReaderProvider',
+    'RowLiteral',
+    'ScalarBarArgs',
+    'ShaderType',
+    'ShaftType',
+    'SilhouetteArgs',
+    'SmoothShadingAlgorithm',
+    'SourceAlgorithm',
+    'StereoType',
+    'StyleOptions',
+    'T',
+    'TextPositionOptions',
+    'ThemeOptions',
+    'TipType',
+    'TrameModeOptions',
+    'VerticalOptions',
+    'VtkEvent',
+    'Widget',
+    'WrapType',
+    'WriterHandler',
+    '_ActiveArrayExistsInfoTuple',
+    '_AlgorithmInput',
+    '_AxesPropTuple',
+    '_AxisOptions',
+    '_BandedScalarModeOptions',
+    '_BlockType',
+    '_BorderModeOptions',
+    '_BoundaryConstraintOptions',
+    '_CappingOptions',
+    '_CellQualityLiteral',
+    '_ColorChannel',
+    '_CompressionOptions',
+    '_ConcatenateComponentPolicyOptions',
+    '_ConcatenateDTypePolicyOptions',
+    '_ConcatenateModeOptions',
+    '_CurvatureOptions',
+    '_DataSetOrMultiBlockType',
+    '_DataSetType',
+    '_DatasetT_co',
+    '_Dimensionality',
+    '_ExtractSurfaceOptions',
+    '_ExtrusionOptions',
+    '_FillModeOptions',
+    '_FiveArrays',
+    '_GeneratorOptions',
+    '_InterpolationOptions',
+    '_MeshType_co',
+    '_MeshValidationReport',
+    '_NormalsLiteral',
+    '_ParametrizeByOptions',
+    '_PassDataOptions',
+    '_PolyDataType',
+    '_ReadersT_co',
+    '_SENTINEL',
+    '_SMPToolsContext',
+    '_SelectInteriorPointsOptions',
+    '_SerializedDictArray',
+    '_ShowReturnType',
+    '_SliderStyleOptions',
+    '_SphereStyleOptions',
+    '_T_Output_co',
+    '_T_Provider',
+    '_TypeMultiBlockLeaf',
+    '_UnstructuredGridType',
+    '_UnsupportedActionOptions',
+    '_ViewOptions',
+    '_WrappableVTKDataObjectType',
+    'lookup_table_ndarray',
+    'pyarrow',
+]
+
 # Configuration for sphinx.ext.autodoc
 autodoc_type_aliases = {
     **{name: f'~pyvista.{name}' for name in _DOCUMENTED_TYPES},
@@ -221,6 +331,7 @@ maximum_signature_line_length = 88
 numpydoc_use_plots = True
 numpydoc_show_class_members = False
 numpydoc_xref_param_type = True
+numpydoc_xref_ignore = {'optional'}
 # Link docstring types such as ``VectorLike[float]`` from any module
 numpydoc_xref_aliases = {name: f'pyvista.{name}' for name in _DOCUMENTED_TYPES}
 
@@ -236,154 +347,7 @@ vtk_xref_nitpicky = False
 # Warn if target links or references cannot be found
 nitpicky = True
 # Except ignore these entries
-_UNDOCUMENTED_TYPES = [
-    'ActiveArrayInfo',
-    'ActiveScalarsAlgorithm',
-    'AddIDsAlgorithm',
-    'BackfaceArgs',
-    'BorderOptions',
-    'BytesIO',
-    'CallbackFilterAlgorithm',
-    'CellLiteral',
-    'CellQualityInfo',
-    'ColormapOptions',
-    'CrinkleAlgorithm',
-    'CullingOptions',
-    'DataObject',
-    'DataSet',
-    'ElementType',
-    'EmbeddableWidget',
-    'ExampleName',
-    'FieldAssociation',
-    'FieldLiteral',
-    'FontFamilyOptions',
-    'HorizontalOptions',
-    'IFrame',
-    'Image',
-    'ImageCompareType',
-    'InteractorStyleHandler',
-    'MeshValidationReport',
-    'NDArray',
-    'NumpyArray',
-    'OpacityOptions',
-    'PartitionedDataSet',
-    'Path',
-    'PathStrSeq',
-    'PickerType',
-    'PlottableType',
-    'PointLiteral',
-    'PointSetToPolyDataAlgorithm',
-    'PointSpriteShape',
-    'ReaderProvider',
-    'Rotation',
-    'RowLiteral',
-    'ScalarBarArgs',
-    'ShaderType',
-    'ShaftType',
-    'SilhouetteArgs',
-    'SmoothShadingAlgorithm',
-    'SourceAlgorithm',
-    'StereoType',
-    'StringIO',
-    'StyleOptions',
-    'T',
-    'TextPositionOptions',
-    'Theme',
-    'ThemeOptions',
-    'TipType',
-    'TrameModeOptions',
-    'UnstructuredGrid',
-    'UserDict',
-    'VerticalOptions',
-    'VtkEvent',
-    'Widget',
-    'WriterHandler',
-    '_ActiveArrayExistsInfoTuple',
-    '_AlgorithmInput',
-    '_AxisOptions',
-    '_BandedScalarModeOptions',
-    '_BlockType',
-    '_BorderModeOptions',
-    '_BoundaryConstraintOptions',
-    '_CappingOptions',
-    '_CellQualityLiteral',
-    '_ColorChannel',
-    '_CompressionOptions',
-    '_ConcatenateComponentPolicyOptions',
-    '_ConcatenateDTypePolicyOptions',
-    '_ConcatenateModeOptions',
-    '_CurvatureOptions',
-    '_DataSetOrMultiBlockType',
-    '_DataSetType',
-    '_DatasetT_co',
-    '_Dimensionality',
-    '_ExtractSurfaceOptions',
-    '_ExtrusionOptions',
-    '_FillModeOptions',
-    '_FiveArrays',
-    '_GeneratorOptions',
-    '_InterpolationOptions',
-    '_MeshType_co',
-    '_NormalsLiteral',
-    '_ParametrizeByOptions',
-    '_PassDataOptions',
-    '_PolyDataType',
-    '_SENTINEL',
-    '_SelectInteriorPointsOptions',
-    '_SerializedDictArray',
-    '_ShowReturnType',
-    '_SliderStyleOptions',
-    '_SphereStyleOptions',
-    '_T_Provider',
-    '_TypeMultiBlockLeaf',
-    '_UnstructuredGridType',
-    '_UnsupportedActionOptions',
-    '_ViewOptions',
-    '_WrappableVTKDataObjectType',
-    'axes_enabled',
-    'colors.Colormap',
-    'cycler.Cycler',
-    'ipywidgets.Widget',
-    'meshio.Mesh',
-    'ndarray',
-    'np.bool_',
-    'np.dtype',
-    'np.eye',
-    'np.float32',
-    'np.floating',
-    'np.integer',
-    'np.intp',
-    'np.uint8',
-    'numpy._typing._array_like.ArrayLike',
-    'numpy._typing._array_like.NDArray',
-    'numpy.finfo',
-    'numpy.uint8',
-    'optional',
-    'pv.PolyData',
-    'pv.StructuredGrid',
-    'pv.UnstructuredGrid',
-    'pyarrow',
-    'pyvista.BasePlotter',
-    'pyvista.Theme',
-    'pyvista.core._typing_core._dataset_types._DataSetOrMultiBlockType',
-    'pyvista.core.composite._BlockType',
-    'pyvista.core.filters.data_object._MeshValidationReport',
-    'pyvista.core.utilities.cell_quality.CellQualityInfo',
-    'pyvista.core.utilities.features.perlin_noise',
-    'pyvista.core.utilities.misc._SMPToolsContext',
-    'pyvista.core.utilities.observers.VtkEvent',
-    'pyvista.core.utilities.reader._T_Output_co',
-    'pyvista.examples._get_example._DatasetT_co',
-    'pyvista.examples._get_example._ReadersT_co',
-    'pyvista.plotting.axes_assembly._AxesPropTuple',
-    'pyvista.plotting.lights.LightType',
-    'pyvista.plotting.lookup_table.lookup_table_ndarray',
-    'pyvista.plotting.plotter.BasePlotter',
-    'pyvista.plotting.texture.Texture.WrapType',
-    'vtk.DataSet',
-    'vtk.VTK_DOUBLE_MAX',
-]
-nitpick_ignore_regex = [(r'py:.*', re.escape(name)) for name in _UNDOCUMENTED_TYPES]
+nitpick_ignore_regex = [(r'py:.*', rf'(.*\.)?{re.escape(name)}') for name in _UNDOCUMENTED_TYPES]
 
 
 add_module_names = False
@@ -1214,18 +1178,54 @@ def restrict_trimesh_inventory(app: Sphinx) -> None:
             main_inventory.setdefault(objtype, {}).update(objects)
 
 
-def link_vtk_class(  # noqa: PLR0917
-    app: Sphinx,  # noqa: ARG001
-    env: BuildEnvironment,  # noqa: ARG001
+# Modules that references abbreviate or reach through a private path
+_REFERENCE_PREFIXES = {
+    'np.': 'numpy.',
+    'numpy._typing._array_like.': 'numpy.typing.',
+    'pv.': 'pyvista.',
+}
+
+# Objects that references name without their module
+_REFERENCE_NAMES = {
+    'BytesIO': 'io.BytesIO',
+    'NDArray': 'numpy.typing.NDArray',
+    'Path': 'pathlib.Path',
+    'Rotation': 'scipy.spatial.transform.Rotation',
+    'StringIO': 'io.StringIO',
+    'Theme': 'pyvista.plotting.themes.Theme',
+    'UserDict': 'collections.UserDict',
+    'ndarray': 'numpy.ndarray',
+}
+
+
+def resolve_python_reference(  # noqa: PLR0917
+    app: Sphinx,
+    env: BuildEnvironment,
     node: addnodes.pending_xref,
     contnode: Element,
-) -> nodes.reference | None:
-    """Link an unresolved Python reference to a VTK class to the VTK documentation."""
-    name = node['reftarget'].rpartition('.')[2]
-    if node['refdomain'] != 'py' or not re.fullmatch(r'vtk[A-Z]\w*', name):
+) -> Element | None:
+    """Resolve a Python reference to a VTK class, or to an object under its full name."""
+    if node['refdomain'] != 'py':
         return None
-    url = f'https://vtk.org/doc/nightly/html/class{name}.html'
-    return nodes.reference('', '', contnode, internal=False, refuri=url)
+    target = node['reftarget']
+    name = target.rpartition('.')[2]
+    if re.fullmatch(r'vtk[A-Z]\w*', name):
+        url = f'https://vtk.org/doc/nightly/html/class{name}.html'
+        return nodes.reference('', '', contnode, internal=False, refuri=url)
+    full_name = _REFERENCE_NAMES.get(target)
+    for prefix, module in _REFERENCE_PREFIXES.items():
+        if target.startswith(prefix):
+            full_name = module + target.removeprefix(prefix)
+    if full_name is None and '.' not in target:
+        full_name = f'pyvista.{target}'
+    if full_name is None:
+        return None
+    new_node = node.deepcopy()
+    new_node['reftarget'] = full_name
+    new_node['reftype'] = 'obj'
+    return env.domains['py'].resolve_xref(
+        env, node['refdoc'], app.builder, 'obj', full_name, new_node, contnode
+    ) or missing_reference(app, env, new_node, contnode)
 
 
 def setup(app: Sphinx) -> None:  # noqa: D103
@@ -1237,7 +1237,7 @@ def setup(app: Sphinx) -> None:  # noqa: D103
     app.connect('env-updated', forget_tag_page_toctrees)
     # priority < 500 so this sees the docstring before numpydoc rewrites it
     app.connect('autodoc-process-docstring', drop_type_alias_docstring, priority=400)
-    app.connect('missing-reference', link_vtk_class)
+    app.connect('missing-reference', resolve_python_reference)
     # Priority must stay above the 501 used by sphinx-book-theme's
     # ``add_source_buttons``, which is what builds the "suggest edit" button.
     app.connect('html-page-context', pv_html_page_context, priority=502)
