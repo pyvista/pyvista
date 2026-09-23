@@ -44,7 +44,8 @@ if TYPE_CHECKING:
     from rich.console import Console
     from rich.console import ConsoleOptions
 
-    from pyvista import DataObject
+    from pyvista import DataSet
+    from pyvista import MultiBlock
 
 
 def default(entry: HelpEntry):  # noqa: ANN202
@@ -301,7 +302,7 @@ def read_mesh(
     path: Path,
     *,
     on_error: _ReadMeshOptions = 'exit',
-) -> DataObject | None:
+) -> DataSet | MultiBlock | None:
     """Read a mesh with optional handling for read errors.
 
     Parameters
@@ -321,7 +322,7 @@ def read_mesh(
 
     Returns
     -------
-    DataObject | None
+    DataSet | MultiBlock | None
         Mesh object or None, depending on ``on_error`` value.
 
     """
@@ -452,7 +453,7 @@ before being passed to the corresponding plotter method. For example, you need t
 """
 
 
-def read_meshes(paths: list[str], *, skip_unreadable: bool) -> list[DataObject]:
+def read_meshes(paths: list[str], *, skip_unreadable: bool) -> list[DataSet | MultiBlock]:
     """Validate and read every path, dropping the unreadable ones when asked to.
 
     Parameters
@@ -465,7 +466,7 @@ def read_meshes(paths: list[str], *, skip_unreadable: bool) -> list[DataObject]:
 
     Returns
     -------
-    list[DataObject]
+    list[DataSet | MultiBlock]
         Mesh read from each path.
 
     """
