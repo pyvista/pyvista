@@ -8,6 +8,7 @@ import json
 import locale
 import os
 from pathlib import Path
+import re
 import shutil
 import sys
 from typing import TYPE_CHECKING
@@ -173,8 +174,8 @@ duration_n_slowest = 50
 duration_write_json = None
 
 
-# Documented type aliases, linked by name rather than expanded
-_TYPE_ALIASES = [
+# Documented in `pyvista.typing`
+_DOCUMENTED_TYPES = [
     'ArrayLike',
     'CameraPositionOptions',
     'CellArrayLike',
@@ -187,7 +188,6 @@ _TYPE_ALIASES = [
     'MatrixLike',
     'MeshValidationFields',
     'NumberType',
-    'NumpyArray',
     'RotationLike',
     'TransformLike',
     'VectorLike',
@@ -195,7 +195,7 @@ _TYPE_ALIASES = [
 
 # Configuration for sphinx.ext.autodoc
 autodoc_type_aliases = {
-    **{name: f'~pyvista.{name}' for name in _TYPE_ALIASES},
+    **{name: f'~pyvista.{name}' for name in _DOCUMENTED_TYPES},
     'FrameType': 'types.FrameType',
     # generated from the example names; render it as a name, not 222 literals
     'ExampleName': 'ExampleName',
@@ -203,9 +203,6 @@ autodoc_type_aliases = {
 
 # Render aliases nested in unions and generics by name, see sphinx-doc/sphinx#14003
 TypeAliasForwardRef.__repr__ = lambda self: self.name
-
-# Link the TypeVar in rendered aliases to its documented location
-pv.NumberType.__module__ = 'pyvista'
 
 # Enable ANSI coloring for programoutput, using erbsland.sphinx.ansi
 programoutput_use_ansi = True
@@ -225,7 +222,7 @@ numpydoc_use_plots = True
 numpydoc_show_class_members = False
 numpydoc_xref_param_type = True
 # Link docstring types such as ``VectorLike[float]`` from any module
-numpydoc_xref_aliases = {name: f'pyvista.{name}' for name in _TYPE_ALIASES}
+numpydoc_xref_aliases = {name: f'pyvista.{name}' for name in _DOCUMENTED_TYPES}
 
 sphinx_examples_as_code_conf = {
     # Replace sphinx-gallery's own per-example download footer/note with
@@ -239,183 +236,154 @@ vtk_xref_nitpicky = False
 # Warn if target links or references cannot be found
 nitpicky = True
 # Except ignore these entries
-nitpick_ignore_regex = [
-    # Undocumented PyVista TypeVars and TypeAliases
-    (r'py:.*', '.*_ColorChannel'),
-    (r'py:.*', '.*ImageCompareType'),
-    (r'py:.*', '.*ColormapOptions'),
-    (r'py:.*', '.*InteractorStyleHandler'),
-    (r'py:.*', '.*WriterHandler'),
-    (r'py:.*', '.*ReaderHandler'),
-    (r'py:.*', '.*ReaderProvider'),
-    (r'py:.*', r'pv\.BaseReader'),
-    (r'py:.*', '.*_T_Provider'),
-    (r'py:.*', '.*ShapeLike'),
-    (r'py:.*', '.*_ArrayLikeOrScalar'),
-    (r'py:.*', '.*_PolyDataType'),
-    (r'py:.*', '.*_UnstructuredGridType'),
-    (r'py:.*', '.*_GridType'),
-    (r'py:.*', '.*_PointGridType'),
-    (r'py:.*', '.*_PointSetBaseType'),
-    (r'py:.*', '.*_DataSetType'),
-    (r'py:.*', '.*_DataSetOrMultiBlockType'),
-    (r'py:.*', '.*_DataObjectType'),
-    (r'py:.*', '.*_MeshType_co'),
-    (r'py:.*', '.*_T_Output_co'),
-    (r'py:.*', '.*_WrappableVTKDataObjectType'),
-    (r'py:.*', '.*_VTKWriterType'),
-    (r'py:.*', '.*NormalsLiteral'),
-    (r'py:.*', '.*_CellQualityLiteral'),
-    (r'py:.*', '.*_ShowReturnType'),
-    (r'py:.*', '.*_ConnectivityMode'),
-    (r'py:.*', '.*_RegionAssignmentMode'),
-    (r'py:.*', '.*_AxesPropTuple'),
-    (r'py:.*', '.*_SENTINEL'),
-    (r'py:.*', '.*T'),
-    (r'py:.*', r'(.*\.)?_\w+Options'),
-    #
-    # Dataset-related types
-    (r'py:.*', '.*DataSet'),
-    (r'py:.*', '.*DataObject'),
-    (r'py:.*', '.*PolyData'),
-    (r'py:.*', '.*UnstructuredGrid'),
-    (r'py:.*', '.*_TypeMultiBlockLeaf'),
-    (r'py:.*', '.*_BlockType'),
-    (r'py:.*', '.*DatasetObject'),
-    (r'py:.*', '.*_DatasetT_co'),
-    (r'py:.*', '.*_ReadersT_co'),
-    (r'py:.*', '.*ExampleName'),
-    (r'py:.*', '.*_DatasetLoader'),
-    (r'py:.*', '.*Grid'),
-    (r'py:.*', '.*PointGrid'),
-    (r'py:.*', '.*_PointSetBase'),
-    #
-    # PyVista array-related types
-    (r'py:.*', 'ActiveArrayInfo'),
-    (r'py:.*', 'FieldAssociation'),
-    (r'py:.*', '.*CellLiteral'),
-    (r'py:.*', '.*PointLiteral'),
-    (r'py:.*', '.*FieldLiteral'),
-    (r'py:.*', '.*RowLiteral'),
-    (r'py:.*', '.*_SerializedDictArray'),
-    (r'py:.*', '.*_FiveArrays'),
-    #
-    # PyVista AxesAssembly-related types
-    (r'py:.*', '.*GeometryTypes'),
-    (r'py:.*', '.*ShaftType'),
-    (r'py:.*', '.*TipType'),
-    (r'py:.*', '.*_AxesGeometryKwargs'),
-    (r'py:.*', '.*_OrthogonalPlanesKwargs'),
-    #
-    # PyVista Widget enums
-    (r'py:.*', '.*PickerType'),
-    (r'py:.*', '.*ElementType'),
-    #
-    # PyVista shader/plotting enums
-    (r'py:.*', '.*ShaderType'),
-    (r'py:.*', '.*PointSpriteShape'),
-    (r'py:.*', '.*StereoType'),
-    (r'py:.*', '.*LightType'),
-    #
-    # PyVista Texture enum
-    (r'py:.*', '.*WrapType'),
-    #
-    # PyVista plotting-related classes
-    (r'py:.*', '.*BasePlotter'),
-    (r'py:.*', '.*_AlgorithmInput'),
-    (r'py:.*', '.*ScalarBars'),
-    (r'py:.*', '.*Theme'),
-    #
-    # Misc pyvista ignores
-    (r'py:.*', 'principal_axes'),  # Valid ref, but is not linked correctly in some wrapped cases
-    (r'py:.*', 'axes_enabled'),  # Valid ref, but is not linked correctly in some wrapped cases
-    (r'py:.*', '.*lookup_table_ndarray'),
-    (r'py:.*', '.*colors.Colormap'),
-    (r'py:.*', 'colors.ListedColormap'),
-    (r'py:.*', '.*MeshValidationReport'),
-    (r'py:.*', '.*CellQualityInfo'),
-    (r'py:.*', 'cycler.Cycler'),
-    (r'py:.*', 'pyvista.PVDDataSet'),
-    (r'py:.*', 'pyvista.SeriesDataSet'),
-    (r'py:.*', 'ScalarBarArgs'),
-    (r'py:.*', 'SilhouetteArgs'),
-    (r'py:.*', 'BackfaceArgs'),
-    (r'py:.*', 'CullingOptions'),
-    (r'py:.*', 'OpacityOptions'),
-    (r'py:.*', 'StyleOptions'),
-    (r'py:.*', 'FontFamilyOptions'),
-    (r'py:.*', 'HorizontalOptions'),
-    (r'py:.*', 'VerticalOptions'),
-    (r'py:.*', 'BorderOptions'),
-    (r'py:.*', 'TextPositionOptions'),
-    (r'py:.*', 'ThemeOptions'),
-    (r'py:.*', 'TrameModeOptions'),
-    (r'py:.*', 'PlottableType'),
-    (r'py:.*', '_Dimensionality'),
-    #
-    # Built-in python types. TODO: Fix links (intersphinx?)
-    (r'py:.*', '.*BytesIO'),
-    (r'py:.*', '.*StringIO'),
-    (r'py:.*', '.*Path'),
-    (r'py:.*', '.*UserDict'),
-    (r'py:.*', 'sys.float_info.max'),
-    (r'py:.*', '.*NoneType'),
-    (r'py:.*', 'collections.*'),
-    (r'py:.*', '.*PathStrSeq'),
-    (r'py:.*', 'ModuleType'),
-    (r'py:.*', 'typing.Union'),
-    #
-    # NumPy types. TODO: Fix links (intersphinx?)
-    (r'py:.*', '.*DTypeLike'),
-    (r'py:.*', 'np.*'),
-    (r'py:.*', 'npt.*'),
-    (r'py:.*', 'numpy.*'),
-    (r'py:.*', '.*NDArray'),
-    (r'py:.*', 'ndarray'),
-    #
-    # pyarrow does not register a py:module entry in its intersphinx
-    # inventory, so ``:mod:`pyarrow``` cannot be resolved even when the
-    # inventory is loaded. ``pyarrow.Table`` is registered as a py:class
-    # and resolves normally.
-    (r'py:mod', 'pyarrow'),
-    #
-    # Third party ignores. TODO: Can these be linked with intersphinx?
-    (r'py:.*', 'ipywidgets.Widget'),
-    (r'py:.*', 'EmbeddableWidget'),
-    (r'py:.*', 'Widget'),
-    (r'py:.*', 'IFrame'),
-    (r'py:.*', 'Image'),
-    (r'py:.*', 'meshio.*'),
-    (r'py:.*', '.*Mesh'),
-    (r'py:.*', '.*Trimesh'),
-    (r'py:.*', 'networkx.*'),
-    (r'py:.*', 'Rotation'),
-    (r'py:.*', '.*VtkEvent'),
-    (r'py:.*', 'vtk.*'),
-    (r'py:.*', '_vtk.*'),
-    (r'py:.*', 'VTK'),
-    #
-    # Misc general ignores
-    (r'py:.*', 'optional'),
-    #
-    # Private implementation types used in signatures
-    (r'py:.*', r'.*_SMPToolsContext'),
-    (r'py:.*', r'.*_ActiveArrayExistsInfoTuple'),
-    #
-    # Private algorithm classes returned by plotting utility functions
-    (r'py:.*', r'.*ActiveScalarsAlgorithm'),
-    (r'py:.*', r'.*AddIDsAlgorithm'),
-    (r'py:.*', r'.*CallbackFilterAlgorithm'),
-    (r'py:.*', r'.*CrinkleAlgorithm'),
-    (r'py:.*', r'.*PointSetToPolyDataAlgorithm'),
-    (r'py:.*', r'.*SmoothShadingAlgorithm'),
-    (r'py:.*', r'.*SourceAlgorithm'),
-    (r'py:.*', r'pyvista\.Common'),
-    #
-    # Long-form function paths used in some docstrings/examples
-    (r'py:.*', r'pyvista\.core\.utilities\.features\.perlin_noise'),
-    (r'py:.*', r'pyvista\.core\.utilities\.features\.sample_function'),
+_UNDOCUMENTED_TYPES = [
+    'ActiveArrayInfo',
+    'ActiveScalarsAlgorithm',
+    'AddIDsAlgorithm',
+    'BackfaceArgs',
+    'BorderOptions',
+    'BytesIO',
+    'CallbackFilterAlgorithm',
+    'CellLiteral',
+    'CellQualityInfo',
+    'ColormapOptions',
+    'CrinkleAlgorithm',
+    'CullingOptions',
+    'DataObject',
+    'DataSet',
+    'ElementType',
+    'EmbeddableWidget',
+    'ExampleName',
+    'FieldAssociation',
+    'FieldLiteral',
+    'FontFamilyOptions',
+    'HorizontalOptions',
+    'IFrame',
+    'Image',
+    'ImageCompareType',
+    'InteractorStyleHandler',
+    'MeshValidationReport',
+    'NDArray',
+    'NumpyArray',
+    'OpacityOptions',
+    'PartitionedDataSet',
+    'Path',
+    'PathStrSeq',
+    'PickerType',
+    'PlottableType',
+    'PointLiteral',
+    'PointSetToPolyDataAlgorithm',
+    'PointSpriteShape',
+    'ReaderProvider',
+    'Rotation',
+    'RowLiteral',
+    'ScalarBarArgs',
+    'ShaderType',
+    'ShaftType',
+    'SilhouetteArgs',
+    'SmoothShadingAlgorithm',
+    'SourceAlgorithm',
+    'StereoType',
+    'StringIO',
+    'StyleOptions',
+    'T',
+    'TextPositionOptions',
+    'Theme',
+    'ThemeOptions',
+    'TipType',
+    'TrameModeOptions',
+    'UnstructuredGrid',
+    'UserDict',
+    'VerticalOptions',
+    'VtkEvent',
+    'Widget',
+    'WriterHandler',
+    '_ActiveArrayExistsInfoTuple',
+    '_AlgorithmInput',
+    '_AxisOptions',
+    '_BandedScalarModeOptions',
+    '_BlockType',
+    '_BorderModeOptions',
+    '_BoundaryConstraintOptions',
+    '_CappingOptions',
+    '_CellQualityLiteral',
+    '_ColorChannel',
+    '_CompressionOptions',
+    '_ConcatenateComponentPolicyOptions',
+    '_ConcatenateDTypePolicyOptions',
+    '_ConcatenateModeOptions',
+    '_CurvatureOptions',
+    '_DataSetOrMultiBlockType',
+    '_DataSetType',
+    '_DatasetT_co',
+    '_Dimensionality',
+    '_ExtractSurfaceOptions',
+    '_ExtrusionOptions',
+    '_FillModeOptions',
+    '_FiveArrays',
+    '_GeneratorOptions',
+    '_InterpolationOptions',
+    '_MeshType_co',
+    '_NormalsLiteral',
+    '_ParametrizeByOptions',
+    '_PassDataOptions',
+    '_PolyDataType',
+    '_SENTINEL',
+    '_SelectInteriorPointsOptions',
+    '_SerializedDictArray',
+    '_ShowReturnType',
+    '_SliderStyleOptions',
+    '_SphereStyleOptions',
+    '_T_Provider',
+    '_TypeMultiBlockLeaf',
+    '_UnstructuredGridType',
+    '_UnsupportedActionOptions',
+    '_ViewOptions',
+    '_WrappableVTKDataObjectType',
+    'axes_enabled',
+    'colors.Colormap',
+    'cycler.Cycler',
+    'ipywidgets.Widget',
+    'meshio.Mesh',
+    'ndarray',
+    'np.bool_',
+    'np.dtype',
+    'np.eye',
+    'np.float32',
+    'np.floating',
+    'np.integer',
+    'np.intp',
+    'np.uint8',
+    'numpy._typing._array_like.ArrayLike',
+    'numpy._typing._array_like.NDArray',
+    'numpy.finfo',
+    'numpy.uint8',
+    'optional',
+    'pv.PolyData',
+    'pv.StructuredGrid',
+    'pv.UnstructuredGrid',
+    'pyarrow',
+    'pyvista.BasePlotter',
+    'pyvista.Theme',
+    'pyvista.core._typing_core._dataset_types._DataSetOrMultiBlockType',
+    'pyvista.core.composite._BlockType',
+    'pyvista.core.filters.data_object._MeshValidationReport',
+    'pyvista.core.utilities.cell_quality.CellQualityInfo',
+    'pyvista.core.utilities.features.perlin_noise',
+    'pyvista.core.utilities.misc._SMPToolsContext',
+    'pyvista.core.utilities.observers.VtkEvent',
+    'pyvista.core.utilities.reader._T_Output_co',
+    'pyvista.examples._get_example._DatasetT_co',
+    'pyvista.examples._get_example._ReadersT_co',
+    'pyvista.plotting.axes_assembly._AxesPropTuple',
+    'pyvista.plotting.lights.LightType',
+    'pyvista.plotting.lookup_table.lookup_table_ndarray',
+    'pyvista.plotting.plotter.BasePlotter',
+    'pyvista.plotting.texture.Texture.WrapType',
+    'vtk.DataSet',
+    'vtk.VTK_DOUBLE_MAX',
 ]
+nitpick_ignore_regex = [(r'py:.*', re.escape(name)) for name in _UNDOCUMENTED_TYPES]
 
 
 add_module_names = False
@@ -688,7 +656,6 @@ suppress_warnings = [
     'image.not_readable',
 ]
 
-import re
 
 # -- .. pyvista-plot:: directive ----------------------------------------------
 from jinja2.sandbox import SandboxedEnvironment
@@ -1247,6 +1214,20 @@ def restrict_trimesh_inventory(app: Sphinx) -> None:
             main_inventory.setdefault(objtype, {}).update(objects)
 
 
+def link_vtk_class(  # noqa: PLR0917
+    app: Sphinx,  # noqa: ARG001
+    env: BuildEnvironment,  # noqa: ARG001
+    node: addnodes.pending_xref,
+    contnode: Element,
+) -> nodes.reference | None:
+    """Link an unresolved Python reference to a VTK class to the VTK documentation."""
+    name = node['reftarget'].rpartition('.')[2]
+    if node['refdomain'] != 'py' or not re.fullmatch(r'vtk[A-Z]\w*', name):
+        return None
+    url = f'https://vtk.org/doc/nightly/html/class{name}.html'
+    return nodes.reference('', '', contnode, internal=False, refuri=url)
+
+
 def setup(app: Sphinx) -> None:  # noqa: D103
     app.connect('config-inited', report_parallel_safety)
     app.connect('builder-inited', configure_backend)
@@ -1256,6 +1237,7 @@ def setup(app: Sphinx) -> None:  # noqa: D103
     app.connect('env-updated', forget_tag_page_toctrees)
     # priority < 500 so this sees the docstring before numpydoc rewrites it
     app.connect('autodoc-process-docstring', drop_type_alias_docstring, priority=400)
+    app.connect('missing-reference', link_vtk_class)
     # Priority must stay above the 501 used by sphinx-book-theme's
     # ``add_source_buttons``, which is what builds the "suggest edit" button.
     app.connect('html-page-context', pv_html_page_context, priority=502)
