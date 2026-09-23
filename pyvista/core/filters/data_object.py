@@ -6326,11 +6326,12 @@ class DataObjectFilters:
         >>> voxelized.points_to_cells().plot(show_edges=True)
 
         Compare the three kinds of input the sphere can be given as: a solid, the
-        surface enclosing it, and its points alone.
+        surface enclosing it, and its points alone. The voxels are clipped in half, since
+        the three results are alike on the outside and differ inside.
 
         >>> def resample_as_voxels(mesh):
         ...     image = mesh.resample_to_image(spacing=0.05, mark_blank=True)
-        ...     return image.points_to_cells()
+        ...     return image.points_to_cells().clip()
         >>> surface = solid_sphere.extract_surface(algorithm=None)
         >>> pointset = solid_sphere.cast_to_pointset()
         >>> datasets = {
