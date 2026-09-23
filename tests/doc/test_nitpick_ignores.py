@@ -14,13 +14,12 @@ CONF_PY = PYVISTA_ROOT_DIR / 'doc' / 'source' / 'conf.py'
 
 def conf_value(name: str) -> object:
     """Return the literal assigned to ``name`` in the documentation ``conf.py``."""
-    for node in ast.parse(CONF_PY.read_text(encoding='utf-8')).body:
-        if isinstance(node, ast.Assign) and any(
-            isinstance(target, ast.Name) and target.id == name for target in node.targets
-        ):
-            return ast.literal_eval(node.value)
-    msg = f'{name} is not assigned a literal in {CONF_PY}'
-    raise KeyError(msg)
+    return next(
+        ast.literal_eval(node.value)
+        for node in ast.parse(CONF_PY.read_text(encoding='utf-8')).body
+        if isinstance(node, ast.Assign)
+        and any(isinstance(target, ast.Name) and target.id == name for target in node.targets)
+    )
 
 
 @pytest.mark.parametrize('alias', conf_value('_TYPE_ALIASES'))
