@@ -97,6 +97,11 @@ cropped_resampled = cropped.resample(
 
 clim = mandelbrot.get_data_range()
 
+# sphinx_gallery_start_ignore
+# the interactive scene renders a single panel zoomed in rather than all three
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
+
 outputs = [
     ('reslice', resliced),
     ('resample', resampled),
