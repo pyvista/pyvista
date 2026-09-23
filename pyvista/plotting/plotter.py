@@ -619,7 +619,7 @@ class BasePlotter(_BoundsSizeMixin):
         self._window_size_unset = False
         self.last_image_depth: NumpyArray[np.float32] | None = None
         self.last_image: NumpyArray[np.uint8] | None = None
-        self.last_vtksz: str | Path | None = None
+        self.last_vtksz: bytes | None = None
         self._has_background_layer = False
         if image_scale is None:
             image_scale = self._theme.image_scale
