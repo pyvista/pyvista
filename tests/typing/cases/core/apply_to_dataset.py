@@ -17,6 +17,14 @@ def a_multiblock() -> pv.MultiBlock:
     return pv.MultiBlock([pv.Sphere()])
 
 
+def a_polydata_multiblock() -> pv.MultiBlock[pv.PolyData]:
+    """Return a `MultiBlock` declared to hold only `PolyData`."""
+    return pv.MultiBlock([pv.Sphere()])
+
+
 assert_types(pv.Transform().apply_to_dataset(pv.Sphere()), pv.PolyData)
 assert_types(pv.Transform().apply_to_dataset(a_grid()), pv.ImageData)
 assert_types(pv.Transform().apply_to_dataset(a_multiblock()), pv.MultiBlock)
+
+# A declared block type survives the transform
+assert_types(pv.Transform().apply_to_dataset(a_polydata_multiblock()), pv.MultiBlock[pv.PolyData])
