@@ -12,6 +12,7 @@ from unittest.mock import MagicMock
 import pytest
 
 import pyvista as pv
+from pyvista.ext import _embed_py_file
 from pyvista.ext import plot_directive
 from pyvista.ext import viewer_directive
 from pyvista.ext.plot_directive import hash_plot_code
@@ -124,6 +125,19 @@ def test_offline_viewer_paths_warns_for_asset_outside_images(tmp_path, monkeypat
     assert viewer_uri is None
     assert asset_uri is None
     assert 'is not under outdir/_images; cannot compute asset URI' in caplog.text
+
+
+def test_embed_py_file_warns_for_a_multi_file_dataset(monkeypatch, caplog):
+    monkeypatch.setattr(_embed_py_file, 'download_file', lambda _name: ['one.py', 'two.py'])
+    state_machine = SimpleNamespace(reporter=None)
+    directive = _embed_py_file.EmbedPyFileDirective(
+        'pyvista-embed-py-file', ['many'], {}, [], 1, 0, '', None, state_machine
+    )
+
+    with caplog.at_level('WARNING', logger=_embed_py_file.__name__):
+        assert directive.run() == []
+
+    assert 'many downloads to more than one file' in caplog.text
 
 
 def test_record_namespace_is_none_when_sphinx_autocodelink_unimportable(monkeypatch):

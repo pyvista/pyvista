@@ -77,7 +77,6 @@ if TYPE_CHECKING:
     from pyvista import UnstructuredGrid
     from pyvista import VectorLike
     from pyvista import pyvista_ndarray
-    from pyvista.core._typing_core import BoundsTuple
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import _DataSetType
     from pyvista.core._typing_core import _MultiBlockType
@@ -3512,15 +3511,14 @@ class DataObjectFilters:
         )
 
         # Post-process clip to fix output type and remove unused points
-        input_bounds = self.bounds
         if isinstance(result, tuple):
-            kept = _remove_unused_points_post_clip(_clip_output(result[0], self), input_bounds)
-            removed = _remove_unused_points_post_clip(_clip_output(result[1], self), input_bounds)
+            kept = _remove_unused_points_post_clip(_clip_output(result[0], self), self)
+            removed = _remove_unused_points_post_clip(_clip_output(result[1], self), self)
             if inplace_target is not None:
                 inplace_target.copy_from(cast('DataSet', kept), deep=False)
                 return inplace_target, removed
             return kept, removed
-        clipped = _remove_unused_points_post_clip(_clip_output(result, self), input_bounds)
+        clipped = _remove_unused_points_post_clip(_clip_output(result, self), self)
         if inplace_target is not None:
             inplace_target.copy_from(cast('DataSet', clipped), deep=False)
             return inplace_target
@@ -3717,7 +3715,7 @@ class DataObjectFilters:
 
         if crinkle:
             clipped = _Crinkler._extract_crinkle_cells(source, clipped, None, active_scalars_info)
-        clipped = _remove_unused_points_post_clip(clipped, self.bounds)
+        clipped = _remove_unused_points_post_clip(clipped, self)
         if merge_points:
             clipped = _weld_points(clipped)
         return _clip_output(clipped, self)
@@ -3877,9 +3875,8 @@ class DataObjectFilters:
             crinkle=crinkle,
         )
 
-        input_bounds = self.bounds
         clipped = _clip_output(result, self)
-        return _remove_unused_points_post_clip(clipped, input_bounds)
+        return _remove_unused_points_post_clip(clipped, self)
 
     # fmt: off
     # ruff: disable[E501]
@@ -6797,13 +6794,18 @@ def _box_planes(bounds: NumpyArray[float]) -> list[tuple[VectorLike[float], Vect
     return planes
 
 
+def _clipper_keeps_input_points(mesh: DataSet | MultiBlock[Any] | None) -> bool:
+    """Return whether a dataset is clipped by the clipper which retains the input's points."""
+    # vtkTableBasedClipDataSet does not support triangle strips and duplicates the points
+    # of a mesh that mixes them with other cells
+    return isinstance(mesh, pv.PolyData) and bool(mesh.n_strips)
+
+
 def _clipper(
     mesh: DataSet | MultiBlock[Any],
 ) -> _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet:
     """Return the clipper that keeps the points a mesh holds apart."""
-    # vtkTableBasedClipDataSet does not support triangle strips and duplicates the points
-    # of a mesh that mixes them with other cells
-    if isinstance(mesh, pv.PolyData) and mesh.n_strips:
+    if _clipper_keeps_input_points(mesh):
         return _vtk.vtkClipPolyData()
     return _vtk.vtkTableBasedClipDataSet()
 
@@ -7239,17 +7241,23 @@ def _clip_output(
 
 
 def _remove_unused_points_post_clip(
-    clip_output: _DataSetOrMultiBlockType, input_bounds: BoundsTuple
+    clip_output: _DataSetOrMultiBlockType, source: DataSet | MultiBlock[Any]
 ) -> _DataSetOrMultiBlockType:
-    # VTK clip filters are buggy and sometimes retain unused points from the input, e.g.:
+    """Drop points a buggy clipper kept from the input, when the clipper is one that does."""
+    # vtkClipPolyData is buggy and retains unused points from the input, e.g.:
     # https://github.com/pyvista/pyvista/issues/6511
     # https://github.com/pyvista/pyvista/issues/7738
+    blocks = source.recursive_iterator() if isinstance(source, pv.MultiBlock) else [source]
+    if not any(_clipper_keeps_input_points(block) for block in blocks):
+        return clip_output
+
+    input_bounds = source.bounds
 
     def maybe_remove_unused_points(mesh: DataSet) -> DataSet:
         # Unused points are correctly removed sometimes, so for performance we only
         # remove points when the clipped bounds match input bounds
         if np.allclose(clip_output.bounds, input_bounds) and hasattr(mesh, 'remove_unused_points'):
-            return mesh.remove_unused_points()
+            return _keep_array_structure(mesh.remove_unused_points(), mesh)
         return mesh
 
     return cast(

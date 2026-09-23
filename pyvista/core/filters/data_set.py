@@ -40,6 +40,7 @@ from pyvista.core.filters.data_object import _clip_input
 from pyvista.core.filters.data_object import _clip_output
 from pyvista.core.filters.data_object import _clipper
 from pyvista.core.filters.data_object import _make_reference_volume
+from pyvista.core.filters.data_object import _remove_unused_points_post_clip
 from pyvista.core.filters.data_object import _validate_clip_inplace
 from pyvista.core.filters.data_object import _validate_reference_volume_options
 from pyvista.core.utilities.arrays import FieldAssociation
@@ -834,7 +835,7 @@ class DataSetFilters(DataObjectFilters):
         alg.SetGenerateClippedOutput(both)
 
         _update_alg(alg, progress_bar=progress_bar, message='Clipping by a Scalar')
-        result0 = _clip_output(_get_output(alg), self)
+        result0 = _remove_unused_points_post_clip(_clip_output(_get_output(alg), self), self)
         if not is_single_value:
             # Keep what lies above the lower value as well
             result0 = result0.clip_scalar(scalars=scalars, invert=False, value=lower)
@@ -842,7 +843,9 @@ class DataSetFilters(DataObjectFilters):
             inplace_target.copy_from(result0, deep=False)
             result0 = inplace_target
         if both:
-            result1 = _clip_output(_get_output(alg, oport=1), self)
+            result1 = _remove_unused_points_post_clip(
+                _clip_output(_get_output(alg, oport=1), self), self
+            )
             return result0, result1
         return result0
 
