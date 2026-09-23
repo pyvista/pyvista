@@ -47,11 +47,11 @@ pl.show()
 # %%
 # Every named style is available. ``'-'`` is solid, so it returns the lines
 # whole. ``pattern`` takes lengths of alternating drawn and undrawn intervals
-# instead of a style, so ``[6, 2, 2, 2]`` draws six, skips two, draws two and
+# instead of a style, so ``[10, 2, 1, 2]`` draws ten, skips two, draws one and
 # skips two, then repeats.
 
 styles = ['-', '--', ':', '-.', '-..']
-pattern = [6, 2, 2, 2]
+pattern = [10, 2, 1, 2]
 
 dashed = {f"'{style}'": helix.dash_lines(style) for style in styles}
 dashed[f'pattern={pattern}'] = helix.dash_lines(pattern=pattern)
