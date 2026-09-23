@@ -10,6 +10,10 @@ import pyvista as pv
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+    from collections.abc import Sequence
+    from typing import Any
+
+    from pyvista.plotting.plotter import BasePlotter
 
 BUILDING_GALLERY_ERROR_MSG = (
     'pyvista.BUILDING_GALLERY must be set to True in your conf.py to capture '
@@ -18,7 +22,7 @@ BUILDING_GALLERY_ERROR_MSG = (
 )
 
 
-def _get_sg_image_scraper():
+def _get_sg_image_scraper() -> Scraper:
     """Return the callable scraper to be used by Sphinx-Gallery.
 
     It allows PyVista users to just use strings as they already can for
@@ -33,10 +37,10 @@ def _get_sg_image_scraper():
 
 
 def html_rst(
-    figure_list,
-    sources_dir,
-    srcsetpaths=None,
-):  # pragma: no cover  # numpydoc ignore=PR01,RT01
+    figure_list: Sequence[str],
+    sources_dir: str,
+    srcsetpaths: Sequence[dict[int, str]] | None = None,
+) -> str:  # pragma: no cover  # numpydoc ignore=PR01,RT01
     """Generate reST for viewer with exported scene."""
     from sphinx_gallery.scrapers import _get_srcset_st  # noqa: PLC0415
     from sphinx_gallery.scrapers import figure_rst  # noqa: PLC0415
@@ -74,7 +78,7 @@ def html_rst(
     return images_rst
 
 
-def _process_events_before_scraping(plotter):
+def _process_events_before_scraping(plotter: BasePlotter) -> None:
     """Process events such as changing the camera or an object before scraping."""
     if plotter.iren is not None and plotter.iren.initialized:
         # check for pyvistaqt app which can be specifically bound to pyvista plotter
@@ -153,7 +157,12 @@ class Scraper:
         """Return a stable representation of the class instance."""
         return f'<{type(self).__name__} object>'
 
-    def __call__(self, block, block_vars, gallery_conf):  # noqa: ARG002
+    def __call__(
+        self,
+        block: tuple[str, str, int],  # noqa: ARG002
+        block_vars: dict[str, Any],
+        gallery_conf: dict[str, Any],
+    ) -> str:
         """Save the figures generated after running example code.
 
         Called by sphinx-gallery.
@@ -196,7 +205,12 @@ class DynamicScraper:  # pragma: no cover
         """Return a stable representation of the class instance."""
         return f'<{type(self).__name__} object>'
 
-    def __call__(self, block, block_vars, gallery_conf):  # pragma: no cover
+    def __call__(
+        self,
+        block: tuple[str, str, int],
+        block_vars: dict[str, Any],
+        gallery_conf: dict[str, Any],
+    ) -> str:  # pragma: no cover
         """Save the figures generated after running example code.
 
         Called by sphinx-gallery.
