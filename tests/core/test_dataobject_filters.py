@@ -4729,6 +4729,50 @@ def test_resample_to_image_geometry_matches_voxelize(sphere):
     assert image.origin == mask.origin
 
 
+@pytest.mark.parametrize('method', ['sample', 'interpolate'])
+def test_resample_to_image_masks_geometry(sphere, method):
+    dims = (20, 20, 20)
+    image = sphere.resample_to_image(dimensions=dims, method=method)
+
+    # An input with nothing to resample is voxelized, and the mask is the output's scalars
+    mask = image.active_scalars
+    assert image.active_scalars_name == 'mask'
+    assert mask.dtype == np.uint8
+    assert np.array_equal(mask, (image['vtkValidPointMask'] != 0).astype(np.uint8))
+    assert 0 < mask.sum() < mask.size
+
+    # Normals and texture coordinates are not scalars, so they are voxelized too
+    sphere.point_data.set_array(sphere.point_normals, 'Normals')
+    sphere.point_data.active_normals_name = 'Normals'
+    assert sphere.active_scalars_name is None
+    attributes_only = sphere.resample_to_image(dimensions=dims, method=method)
+    assert attributes_only.active_scalars_name == 'mask'
+    assert np.array_equal(attributes_only['mask'], mask)
+
+    # An input which resamples onto scalars keeps them instead
+    sphere['height'] = sphere.points[:, 2]
+    resampled = sphere.resample_to_image(dimensions=dims, method=method)
+    assert resampled.active_scalars_name == 'height'
+    assert 'mask' not in resampled.point_data
+
+
+def test_resample_to_image_masks_geometry_options(sphere):
+    dims = (20, 20, 20)
+
+    # `null_value` fills resampled arrays, and never a generated mask
+    filled = sphere.resample_to_image(dimensions=dims, null_value=-99.0)
+    assert np.array_equal(np.unique(filled['mask']), [0, 1])
+
+    # Blanking hides the mask's empty voxels, like those of any other array
+    blanked = sphere.resample_to_image(dimensions=dims, mark_blank=True)
+    ghosts = blanked.point_data[pv._vtk.vtkDataSetAttributes.GhostArrayName()]
+    assert np.array_equal(ghosts != 0, blanked['mask'] == 0)
+
+    # A composite whose blocks share no arrays is voxelized as a whole
+    blocks = pv.MultiBlock([sphere, pv.Sphere(center=(1.5, 0, 0))])
+    assert blocks.resample_to_image(dimensions=dims).active_scalars_name == 'mask'
+
+
 def test_resample_to_image_reference_volume(tetbeam):
     tetbeam['point_scalars'] = tetbeam.points[:, 2]
     reference = pv.ImageData()

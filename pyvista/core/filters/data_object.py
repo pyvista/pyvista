@@ -6114,6 +6114,11 @@ class DataObjectFilters:
         A flat input is the exception: its voxels are centered on it, so ``'sample'``
         reaches every one of them and reproduces the values exactly.
 
+        If the resampling leaves the output with no scalars, the input's geometry alone
+        is voxelized: a binary ``'mask'`` array marks the voxels the input reached. This
+        covers an input with no arrays at all, and one whose only arrays are normals or
+        texture coordinates.
+
         .. versionadded:: 0.50
 
         .. note::
@@ -6211,7 +6216,8 @@ class DataObjectFilters:
             array of the output takes it, and zero is used by default. Both methods
             accept it, though only ``method='interpolate'`` has it natively; under
             ``method='sample'`` this filter fills the voxels itself, and the value must
-            fit the data type of the arrays it fills.
+            fit the data type of the arrays it fills. A generated ``'mask'`` is the
+            exception and always marks its empty voxels with ``0``.
 
         mark_blank : bool, default: False
             Hide the voxels which no value could be resampled for, by flagging them in a
@@ -6253,8 +6259,9 @@ class DataObjectFilters:
         Returns
         -------
         ImageData
-            Uniform grid with the input's arrays sampled onto its points. The voxels are
-            points, not :attr:`~pyvista.CellType.VOXEL` cells;
+            Uniform grid with the input's arrays sampled onto its points, or with a
+            binary ``'mask'`` array when the resampling leaves it without scalars. The
+            voxels are points, not :attr:`~pyvista.CellType.VOXEL` cells;
             :meth:`~pyvista.ImageDataFilters.points_to_cells` converts them and carries
             the blanking over. See :ref:`image_representations_example` for the
             difference.
@@ -6274,10 +6281,11 @@ class DataObjectFilters:
             :class:`~pyvista.ImageData`.
 
         pyvista.DataSetFilters.voxelize_binary_mask
-            Voxelize the inside of a closed surface as a mask. Operates on a surface's
-            geometry and generates a new array instead of resampling existing ones. It
-            places its voxels identically to this filter, and keeps essentially the same
-            voxels that ``method='sample'`` keeps for the solid a surface encloses.
+            Voxelize the inside of a closed surface as a mask. It labels the surface's
+            interior, whereas the ``'mask'`` this filter generates marks the voxels its
+            resampling reached. It places its voxels identically to this filter, and
+            keeps essentially the same voxels that ``method='sample'`` keeps for the
+            solid a surface encloses.
 
         pyvista.create_grid
             Create a uniform grid surrounding a dataset. Its points lie on the dataset's
@@ -6307,6 +6315,15 @@ class DataObjectFilters:
 
         >>> solid_sphere.resample_to_image(spacing=0.05).dimensions
         (20, 20, 20)
+
+        Resample a mesh with no scalars of its own. Its geometry is voxelized instead,
+        and the generated mask is the output's scalars.
+
+        >>> voxelized = pv.Sphere().resample_to_image(spacing=0.05, mark_blank=True)
+        >>> voxelized.active_scalars_name
+        'mask'
+
+        >>> voxelized.points_to_cells().plot(show_edges=True)
 
         Compare the three kinds of input the sphere can be given as: a solid, the
         surface enclosing it, and its points alone.
@@ -6394,7 +6411,7 @@ class DataObjectFilters:
             )
             if null_value is not None:
                 _fill_null_values(sampled, null_value)
-            return sampled
+            return _mask_geometry(sampled)
         if dropped := [n for n in source.cell_data if not n.startswith('vtk')]:
             msg = (
                 f'Cell data {dropped} is dropped by `method={chosen!r}`'
@@ -6417,7 +6434,9 @@ class DataObjectFilters:
             null_value=0.0 if null_value is None else null_value,
             progress_bar=progress_bar,
         )
-        return _blank_invalid_points(interpolated) if mark_blank else interpolated
+        if mark_blank:
+            _blank_invalid_points(interpolated)
+        return _mask_geometry(interpolated)
 
 
 def _convex_hull_scipy(points: NumpyArray[float], dimensionality: Literal[1, 2, 3]) -> PolyData:
@@ -6529,6 +6548,7 @@ def _get_cell_quality_measures() -> dict[str, str]:
 
 _VALID_POINT_MASK = 'vtkValidPointMask'
 _GHOST_ARRAY = 'vtkGhostType'
+_GEOMETRY_MASK = 'mask'
 
 
 def _slice_image_along_axis(
@@ -7062,6 +7082,14 @@ def _check_null_value_fits(null_value: float, name: str, dtype: np.dtype[Any]) -
             f'`{dtype}` data type holds integers from {info.min} to {info.max}.'
         )
         raise ValueError(msg)
+
+
+def _mask_geometry(image: ImageData) -> ImageData:
+    """Give an output with no scalars of its own a binary mask of the voxels reached."""
+    if image.active_scalars_name is None and _GEOMETRY_MASK not in image.point_data:
+        valid = image.point_data[_VALID_POINT_MASK] != 0
+        image.point_data.set_scalars(valid.astype(np.uint8), _GEOMETRY_MASK)
+    return image
 
 
 def _blank_invalid_points(image: ImageData) -> ImageData:
