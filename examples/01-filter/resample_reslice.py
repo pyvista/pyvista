@@ -132,17 +132,9 @@ print(resampled.origin, resampled.spacing)
 print(cropped_resampled.origin, cropped_resampled.spacing)
 
 # %%
-# The crop can be made to reproduce ``reslice`` exactly, but only once every condition
-# it would otherwise take care of is met:
-#
-# #. The region has to begin and end on whole input voxels, so the reference cannot be
-#    placed freely.
-# #. Those voxel corners have to be converted into physical coordinates by hand to
-#    build the reference.
-# #. The output has to be sized to the region by hand, through either ``dimensions``
-#    or ``spacing``.
-# #. ``extend_border`` has to be disabled, so the output keeps the crop's point bounds
-#    rather than its cell bounds.
+# The crop can be made to reproduce ``reslice`` exactly, but only when the reference is
+# placed on whole input voxels and sized to them by hand, and ``extend_border`` is
+# disabled so the output keeps the crop's point bounds rather than its cell bounds.
 
 extent = (7, 14, 5, 12, 0, 0)
 dimensions = (17, 17, 1)
@@ -176,8 +168,11 @@ print(np.allclose(by_reslice.active_scalars, by_crop.active_scalars))
 # leaves the values alone, recording the rotation in the image's
 # :attr:`~pyvista.ImageData.direction_matrix`. ``reslice`` interpolates the values onto
 # the reference's points, so the output keeps the reference's geometry.
+#
+# Rotate the gourds about their own center, so the picture turns in place.
 
-rotate = pv.Transform().rotate_z(30)
+center = gourds.center
+rotate = pv.Transform().translate(-np.array(center)).rotate_z(30).translate(center)
 
 moved = gourds.transform(rotate, inplace=False)
 resliced = gourds.reslice(gourds, 'linear', transform=rotate, background_value=0)
@@ -190,9 +185,10 @@ print(moved.index_to_physical_matrix.round(3))
 print(resliced.index_to_physical_matrix.round(3))
 
 # %%
-# Plot both with the outline of the original image in red. ``transform`` carries the
-# picture out of that frame, while ``reslice`` fills the frame and writes
-# ``background_value`` wherever the rotated image does not reach it.
+# Plot both with the outline of the original image in red. ``transform`` leaves the
+# picture where the rotation put it, overhanging the frame at the corners, while
+# ``reslice`` returns the frame itself and writes ``background_value`` into the corners
+# the rotated image no longer reaches.
 
 # sphinx_gallery_start_ignore
 # two full-resolution photographs push the interactive scene past the size limit
@@ -210,56 +206,82 @@ for index, (image, label) in enumerate([(moved, 'transform'), (resliced, 'reslic
 pl.show()
 
 # %%
+# The two are not alternatives so much as two halves of the same operation. Moving the
+# image with ``transform`` and then reslicing the result onto the reference gives the
+# same values as passing the rotation to ``reslice`` directly, because ``reslice`` reads
+# its input wherever that input's geometry says it lies.
+
+through = moved.reslice(gourds, 'linear', background_value=0)
+print(np.array_equal(through.active_scalars, resliced.active_scalars))
+
+# %%
+# Use ``transform=`` when the output should land on the reference's grid. Use the
+# ``transform`` filter on its own to move an image without touching its values at all.
+
+# %%
 # Beyond a Matrix
 # +++++++++++++++
 #
 # ``transform`` is limited to what an image's geometry can hold: an origin, a spacing
 # and an orthogonal :attr:`~pyvista.ImageData.direction_matrix`. ``reslice`` resamples
 # the values instead, so it also accepts transformations no image geometry could
-# express. :class:`~pyvista.ThinPlateSplineTransform` bends space so that one set of
-# points lands on another.
+# express. A thin plate spline bends space so that one set of points lands on another,
+# which is the kind of deformation a non-rigid registration produces.
 #
-# Build an image with a curved structure running across it.
+# PyVista has no class for one, so use VTK's directly.
 
-WIDTH, HEIGHT, MIDDLE = 121, 81, 40.0
-
-
-def centerline(position):
-    """Return the height of the curved structure at each ``position``."""
-    return MIDDLE + 14.0 * np.sin(2 * np.pi * np.asarray(position) / (WIDTH - 1))
-
-
-curved = pv.ImageData(dimensions=(WIDTH, HEIGHT, 1))
-horizontal, vertical = curved.points[:, 0], curved.points[:, 1]
-curved['scan'] = np.exp(-((vertical - centerline(horizontal)) ** 2) / (2 * 5.0**2))
+from vtkmodules.vtkCommonTransforms import vtkThinPlateSplineTransform
 
 # %%
-# Map points along the centerline onto a straight line, pinning the top and bottom
-# edges so the warp stays put where there is nothing to straighten.
+# Pin the four corners of the photograph and pull its middle to one side.
 
-samples = np.linspace(0, WIDTH - 1, 13)
-source = [(sample, centerline(sample), 0.0) for sample in samples]
-target = [(sample, MIDDLE, 0.0) for sample in samples]
-for sample in np.linspace(0, WIDTH - 1, 7):
-    for edge in (0.0, HEIGHT - 1.0):
-        source.append((sample, edge, 0.0))
-        target.append((sample, edge, 0.0))
+width, height = np.array(gourds.dimensions[:2]) - 1
+corners = [(0, 0, 0), (width, 0, 0), (0, height, 0), (width, height, 0)]
 
-warp = pv.ThinPlateSplineTransform(source, target)
-straightened = curved.reslice(curved, 'linear', transform=warp)
+warp = vtkThinPlateSplineTransform()
+warp.SetSourceLandmarks(pv.vtk_points([*corners, (width / 2, height / 2, 0)]))
+warp.SetTargetLandmarks(pv.vtk_points([*corners, (width / 2 + 90, height / 2, 0)]))
+warp.SetBasisToR2LogR()
+
+warped = gourds.reslice(gourds, 'linear', transform=warp, background_value=0)
 
 # %%
-# The structure now runs along a single row. ``transform`` could not have done this:
-# it would have to keep the image's samples on a regular grid.
+# The deformation is easier to read on a regular grid than on the photograph, so build
+# one covering the same region and put it through the same reslice.
 
+grid = pv.ImageGridSource(
+    extent=(0, width // 4, 0, height // 4, 0, 0), spacing=(4, 4, 1)
+).output
+
+lines = grid.reslice(gourds, 'nearest')
+warped_lines = grid.reslice(gourds, 'nearest', transform=warp)
+
+# %%
+# Draw each grid over the image it belongs to, using its values as opacity so only the
+# lines show. The picture is stretched on one side of the middle and squeezed on the
+# other, while the pinned corners stay where they are. ``transform`` could not have done
+# this: it would have to keep the image's samples on a regular grid.
+
+# sphinx_gallery_start_ignore
+# two full-resolution photographs push the interactive scene past the size limit
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
+
+panels = [(gourds, lines, 'input'), (warped, warped_lines, 'thin plate spline')]
 pl = pv.Plotter(shape=(1, 2))
-panels = [(curved, 'curved'), (straightened, 'straightened')]
-for index, (image, label) in enumerate(panels):
+for index, (image, overlay, label) in enumerate(panels):
     pl.subplot(0, index)
-    pl.add_mesh(image, cmap='bone', clim=[0, 1], show_scalar_bar=False, lighting=False)
+    pl.add_mesh(image, rgba=True, lighting=False)
+    pl.add_mesh(
+        overlay.translate((0, 0, 1)),
+        color='magenta',
+        opacity='ImageScalars',
+        show_scalar_bar=False,
+        lighting=False,
+    )
     pl.add_text(label, font_size=10)
     pl.view_xy()
-    pl.camera.tight(padding=0.1)
+    pl.camera.tight()
 pl.show()
 
 # %%
