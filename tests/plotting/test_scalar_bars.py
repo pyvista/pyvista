@@ -1879,6 +1879,47 @@ def test_fit_box_holds_a_turned_bar_too_small_for_any_font(sphere):
     assert bar.GetLabelTextProperty().GetFontSize() == LEGIBLE_FONT_SIZE
 
 
+def test_fit_box_keeps_a_narrow_horizontal_title_legible(sphere):
+    # VTK shrinks the text of a horizontal box to whatever room the box leaves it, so a
+    # box too narrow for a legible title is laid out the way a vertical one is instead
+    sphere[KEY] = sphere.points[:, 2]
+    title = 'Elevation above mean sea level (m)'
+
+    pl = pv.Plotter(window_size=[1024, 768])
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    with pytest.warns(UserWarning, match='does not fit its box'):
+        bar = pl.add_scalar_bar(
+            title,
+            vertical=False,
+            outline=True,
+            width=0.12,
+            height=0.12,
+            n_labels=3,
+            title_font_size=24,
+            label_font_size=24,
+            mapper=pv.DataSetMapper(sphere),
+        )
+    pl.screenshot(return_img=True)
+
+    assert bar.GetUnconstrainedFontSize()
+    assert bar.GetTitleTextProperty().GetFontSize() == LEGIBLE_FONT_SIZE
+    pl.close()
+
+
+def test_fit_box_leaves_a_horizontal_box_with_room_to_vtk(sphere):
+    # A box wide enough for a legible title is laid out by VTK, which sizes the text
+    sphere[KEY] = sphere.points[:, 2]
+
+    pl = pv.Plotter(window_size=[1024, 768])
+    pl.add_mesh(sphere, show_scalar_bar=False)
+    bar = _fitted_bar(pl, sphere, vertical=False, box={'outline': True}, width=0.5, height=0.12)
+    pl.screenshot(return_img=True)
+
+    assert not bar.GetUnconstrainedFontSize()
+    assert bar.GetTitleTextProperty().GetFontSize() == 24
+    pl.close()
+
+
 def test_fit_box_warns_once_that_a_title_does_not_fit_its_box(sphere):
     # A box too narrow for the title keeps it legible and overflowing, and says so once
     sphere[KEY] = sphere.points[:, 2]

@@ -910,7 +910,20 @@ class ScalarBars(_NoNewAttrMixin):
             fit['applied'] = _layout_settings(scalar_bar)
             return
 
-        if not (fit['vertical'] or fit['unconstrained']):
+        constrained = not (fit['vertical'] or fit['unconstrained'])
+        if constrained:
+            # VTK sizes the text of a horizontal box to the box, however little that
+            # leaves it, so a box with no room for legible text is laid out the way a
+            # vertical one is instead, with the text drawn past its edge
+            room = _box_pixels(scalar_bar, fit['renderer'])[0] - 2 * scalar_bar.GetTextPad()
+            title_font, title_fits = _legible_font(title_text, [fit['title']], room, dpi=dpi)
+            constrained = title_fits
+            if not title_fits:
+                _warn_unfitted(fit, fits=False)
+                scalar_bar.SetUnconstrainedFontSize(True)
+                title_text.SetFontSize(title_font)
+
+        if constrained:
             # VTK lays a horizontal box out itself, sizing the text to the box, so the
             # box is sized to leave the text the size it asked for instead
             scalar_bar.SetUnconstrainedFontSize(False)
