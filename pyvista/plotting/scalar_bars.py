@@ -1594,16 +1594,9 @@ class ScalarBars(_NoNewAttrMixin):
             :attr:`pyvista.plotting.themes._VerticalColorbarConfig.rotate_title`.
             Applies to vertical bars only.  Requires VTK 9.4.0 or newer, and has
             no effect when the font size is constrained.  A box drawn by
-            ``fill`` or ``outline`` holds the title past the tick labels rather
-            than on the far side of the bar, centered on the box, and holds the
-            ramp back from the top of the box for the label centered on its
-            end, growing around the ramp unless it was given a height to keep;
-            a title longer than the box grows it too, as far as the window
-            leaves room, and is shrunk to the height the box ends up with.  The
-            bar then turns the title by its text property rather than by
-            ``ForceVerticalTitle``, and moves it along the bar by spaces
-            carried in its component title; a title of several lines keeps
-            ``ForceVerticalTitle`` instead.
+            ``fill`` or ``outline`` holds the title inside it, past the tick
+            labels, and grows around it unless it was given a size of its own.
+            A title of several lines is left beside the box instead.
 
             .. versionadded:: 0.50
 
@@ -1690,20 +1683,14 @@ class ScalarBars(_NoNewAttrMixin):
         its size.  The label size is the largest the labels are drawn at: they
         are drawn smaller where the bar leaves them too little room to stay
         clear of each other, and a label is free to run past the edge of the
-        viewport.  A box drawn around a horizontal bar
-        sizes the text itself, so the box is laid out to keep the text at the
-        size asked for, or one size larger where two sizes measure the same
-        height; a box given too small a height, or too narrow for its text,
-        shrinks the text to fit.  A vertical title spans the width of its box,
-        so a box given a width of its own shrinks its title and its tick labels
-        to fit that width, while a height alone leaves the box free to widen
-        around them.  A turned title is laid out in a row with the ramp and the
-        labels so that the box holds it too, and the ramp is held back from the
-        top of the box for the label centered on its end, the box growing
-        around the ramp unless it was given a height to keep.  Text is shrunk
-        no further than a size it can still be read at, and a box too small to
-        hold it even then is drawn with the text past its edge and warned
-        about.
+        viewport.  A box drawn around a horizontal bar sizes the text itself,
+        so the box is laid out to keep the text at the size asked for, or one
+        size larger where two sizes measure the same height; a box given too
+        small a height, or too narrow for its text, shrinks the text to fit.  A
+        box given a width of its own shrinks a vertical bar's text to that
+        width, while a height alone leaves the box free to widen around it.
+        Text is shrunk no further than a size it can still be read at: a box
+        with too little room for it draws the text past its edge and warns.
 
         The ``mapper``, ``lookup_table``, and ``cmap`` parameters can be used
         to set a custom color map for the scalar bar; otherwise, the bar will
