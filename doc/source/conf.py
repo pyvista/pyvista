@@ -238,7 +238,6 @@ _UNDOCUMENTED_TYPES = [
     'SourceAlgorithm',
     'StereoType',
     'StyleOptions',
-    'T',
     'TextPositionOptions',
     'ThemeOptions',
     'TipType',
@@ -248,53 +247,6 @@ _UNDOCUMENTED_TYPES = [
     'Widget',
     'WrapType',
     'WriterHandler',
-    '_ActiveArrayExistsInfoTuple',
-    '_AlgorithmInput',
-    '_AxesPropTuple',
-    '_AxisOptions',
-    '_BandedScalarModeOptions',
-    '_BlockType',
-    '_BorderModeOptions',
-    '_BoundaryConstraintOptions',
-    '_CappingOptions',
-    '_CellQualityLiteral',
-    '_ColorChannel',
-    '_CompressionOptions',
-    '_ConcatenateComponentPolicyOptions',
-    '_ConcatenateDTypePolicyOptions',
-    '_ConcatenateModeOptions',
-    '_CurvatureOptions',
-    '_DataSetOrMultiBlockType',
-    '_DataSetType',
-    '_DatasetT_co',
-    '_Dimensionality',
-    '_ExtractSurfaceOptions',
-    '_ExtrusionOptions',
-    '_FillModeOptions',
-    '_FiveArrays',
-    '_GeneratorOptions',
-    '_InterpolationOptions',
-    '_MeshType_co',
-    '_MeshValidationReport',
-    '_NormalsLiteral',
-    '_ParametrizeByOptions',
-    '_PassDataOptions',
-    '_PolyDataType',
-    '_ReadersT_co',
-    '_SENTINEL',
-    '_SMPToolsContext',
-    '_SelectInteriorPointsOptions',
-    '_SerializedDictArray',
-    '_ShowReturnType',
-    '_SliderStyleOptions',
-    '_SphereStyleOptions',
-    '_T_Output_co',
-    '_T_Provider',
-    '_TypeMultiBlockLeaf',
-    '_UnstructuredGridType',
-    '_UnsupportedActionOptions',
-    '_ViewOptions',
-    '_WrappableVTKDataObjectType',
     'lookup_table_ndarray',
     'pyarrow',
 ]
@@ -343,7 +295,10 @@ vtk_xref_nitpicky = False
 # Warn if target links or references cannot be found
 nitpicky = True
 # Except ignore these entries
-nitpick_ignore_regex = [(r'py:.*', rf'(.*\.)?{re.escape(name)}') for name in _UNDOCUMENTED_TYPES]
+nitpick_ignore_regex = [
+    (r'py:.*', r'(.*\.)?_\w+'),  # ignore all private names
+    *[(r'py:.*', rf'(.*\.)?{re.escape(name)}') for name in _UNDOCUMENTED_TYPES],
+]
 
 
 add_module_names = False

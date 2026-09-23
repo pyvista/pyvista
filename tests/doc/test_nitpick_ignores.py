@@ -31,3 +31,8 @@ def test_undocumented_types_are_sorted():
     """Keep the nitpick ignore names sorted and unique."""
     names = conf_value('_UNDOCUMENTED_TYPES')
     assert names == sorted(set(names))
+
+
+def test_undocumented_types_are_public():
+    """Leave private names to the ignore pattern that covers all of them."""
+    assert not [name for name in conf_value('_UNDOCUMENTED_TYPES') if name.startswith('_')]
