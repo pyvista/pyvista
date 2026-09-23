@@ -210,10 +210,8 @@ _UNDOCUMENTED_TYPES = [
     'CrinkleAlgorithm',
     'CullingOptions',
     'Cycler',
-    'ElementType',
     'EmbeddableWidget',
     'ExampleName',
-    'FieldAssociation',
     'FieldLiteral',
     'FontFamilyOptions',
     'HorizontalOptions',
@@ -231,11 +229,9 @@ _UNDOCUMENTED_TYPES = [
     'PlottableType',
     'PointLiteral',
     'PointSetToPolyDataAlgorithm',
-    'PointSpriteShape',
     'ReaderProvider',
     'RowLiteral',
     'ScalarBarArgs',
-    'ShaderType',
     'ShaftType',
     'SilhouetteArgs',
     'SmoothShadingAlgorithm',
@@ -1192,7 +1188,6 @@ _REFERENCE_NAMES = {
     'Path': 'pathlib.Path',
     'Rotation': 'scipy.spatial.transform.Rotation',
     'StringIO': 'io.StringIO',
-    'Theme': 'pyvista.plotting.themes.Theme',
     'UserDict': 'collections.UserDict',
     'ndarray': 'numpy.ndarray',
 }
@@ -1215,11 +1210,15 @@ def resolve_python_reference(  # noqa: PLR0917
     for prefix, module in _REFERENCE_PREFIXES.items():
         if target.startswith(prefix):
             full_name = module + target.removeprefix(prefix)
-    if full_name is None and '.' not in target:
-        full_name = f'pyvista.{target}'
-    if full_name is None:
-        return None
     new_node = node.deepcopy()
+    if full_name is None:
+        if '.' in target or missing_reference(app, env, node, contnode):
+            return None
+        # A bare class name, as from an import under TYPE_CHECKING, matches the one class it names
+        new_node['refspecific'] = True
+        return env.domains['py'].resolve_xref(
+            env, node['refdoc'], app.builder, 'class', target, new_node, contnode
+        )
     new_node['reftarget'] = full_name
     new_node['reftype'] = 'obj'
     return env.domains['py'].resolve_xref(
