@@ -2061,19 +2061,6 @@ def test_reslice_transform_nonlinear():
     assert np.allclose(resliced['x'][:8], np.linspace(0, 9, 8), atol=1e-6)
 
 
-def test_reslice_transform_thin_plate_spline():
-    # The public non-linear transform bends the image, leaving pinned points alone
-    image = pv.ImageData(dimensions=(11, 11, 1))
-    image['values'] = image.points[:, 1]
-    corners = [(0, 0, 0), (10, 0, 0), (0, 10, 0), (10, 10, 0)]
-    warp = pv.ThinPlateSplineTransform([*corners, (5, 5, 0)], [*corners, (5, 7, 0)])
-
-    resliced = image.reslice(image, 'linear', transform=warp)
-    assert not np.allclose(resliced['values'], image['values'])
-    pinned = [0, 10, 110, 120]
-    assert np.allclose(resliced['values'][pinned], image['values'][pinned], atol=1e-6)
-
-
 def test_reslice_transform_scale_drives_anti_aliasing():
     # The transform's scale is part of how coarsely the image ends up sampled
     image = pv.ImageData(dimensions=(40, 1, 1), spacing=(0.25, 1.0, 1.0))

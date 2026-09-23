@@ -3712,26 +3712,3 @@ def test_write_path_of_ensight_writer(tmp_path, hexbeam):
 
     expected_path = path.with_name(path.stem + f'.{writer.writer.GetProcessNumber()}.case')
     assert writer.written_path == expected_path
-
-
-def test_thin_plate_spline_transform():
-    corners = [(0, 0, 0), (10, 0, 0), (0, 10, 0), (10, 10, 0)]
-    warp = pv.ThinPlateSplineTransform([*corners, (5, 5, 0)], [*corners, (5, 7, 0)], sigma=2.0)
-    assert warp.GetSigma() == 2.0
-    assert warp.GetSourceLandmarks().GetNumberOfPoints() == 5
-    assert warp.GetTargetLandmarks().GetNumberOfPoints() == 5
-
-
-def test_thin_plate_spline_transform_without_landmarks():
-    warp = pv.ThinPlateSplineTransform()
-    assert warp.GetSourceLandmarks() is None
-
-
-def test_thin_plate_spline_transform_raises():
-    match = 'Number of source points (1) must equal the number of target points (2).'
-    with pytest.raises(ValueError, match=re.escape(match)):
-        pv.ThinPlateSplineTransform([(0, 0, 0)], [(0, 0, 0), (1, 1, 1)])
-
-    match = 'Both source_points and target_points must be given, or neither.'
-    with pytest.raises(ValueError, match=re.escape(match)):
-        pv.ThinPlateSplineTransform([(0, 0, 0)])

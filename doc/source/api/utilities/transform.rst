@@ -4,9 +4,7 @@ Transformations
 ---------------
 The :class:`~pyvista.Transform` class describes linear transformations and is
 accepted wherever a transformation is used, such as
-:meth:`~pyvista.DataObjectFilters.transform`.
-:class:`~pyvista.ThinPlateSplineTransform` describes a non-linear one, which
-:meth:`~pyvista.ImageDataFilters.reslice` accepts. The functions on this page
+:meth:`~pyvista.DataObjectFilters.transform`. The functions on this page
 transform points and vectors directly.
 
 .. currentmodule:: pyvista
@@ -14,7 +12,6 @@ transform points and vectors directly.
 .. autosummary::
    :toctree: _autosummary
 
-   ThinPlateSplineTransform
    Transform
    core.utilities.axis_rotation
 
