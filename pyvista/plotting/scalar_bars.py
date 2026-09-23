@@ -80,7 +80,7 @@ def _title_height(text_property, title, dpi):
 
 
 #: The smallest font size a box shrinks text to before letting it overflow instead
-_LEGIBLE_FONT_SIZE = 8
+_LEGIBLE_FONT_SIZE = 12
 
 
 def _widest(text_property, texts, dpi):
@@ -886,6 +886,9 @@ class ScalarBars(_NoNewAttrMixin):
         self._scalar_bar_fits[title] = fit
 
         def refit(*_args):
+            if fit['applied'] is not None:
+                # A later fit is the window's doing, and says nothing the first has not
+                fit['warned'] = True
             # The bar is looked up by the key the fit carries, so a renamed bar is
             # still the one this observer measures
             bar = self._scalar_bar_actors.get(fit['key'])

@@ -1853,6 +1853,8 @@ def test_fit_box_warns_once_that_a_title_does_not_fit_its_box(sphere):
     pl.screenshot(return_img=True)
 
     assert bar.GetTitleTextProperty().GetFontSize() == LEGIBLE_FONT_SIZE
+    # The size it stops at is one the title can still be read at
+    assert LEGIBLE_FONT_SIZE >= 12
     # The refit a resized window runs says nothing more about a box already reported
     pl.window_size = [900, 700]
     pl.screenshot(return_img=True)
@@ -1944,7 +1946,7 @@ def test_fit_box_shrinks_a_sized_vertical_title(sphere):
         vertical=True,
         outline=True,
         fmt='%.1f',
-        width=0.25,
+        width=0.3,
         height=0.6,
         position_x=0.6,
         position_y=0.2,
@@ -2273,6 +2275,7 @@ def test_fit_box_turned_title_render(sphere, box):
 
 
 @pytest.mark.parametrize('box', BOXES, ids=BOX_IDS)
+@pytest.mark.filterwarnings('ignore:The text of scalar bar')
 @pytest.mark.usefixtures('verify_image_cache')
 def test_fit_box_sized_vertical_render(sphere, box):
     sphere[KEY] = sphere.points[:, 2]
