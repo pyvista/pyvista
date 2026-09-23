@@ -20,7 +20,7 @@ from pyvista.core._typing_core._dataset_types import (
 from pyvista.core._typing_core._dataset_types import _DataSetType as _DataSetType
 from pyvista.core._typing_core._dataset_types import _GridType as _GridType
 from pyvista.core._typing_core._dataset_types import _PointGridType as _PointGridType
-from pyvista.core._typing_core._dataset_types import _PointSetType as _PointSetType
+from pyvista.core._typing_core._dataset_types import _PointSetBaseType as _PointSetBaseType
 from pyvista.core._vtk_utilities import _MIN_SUPPORTED_VTK_VERSION
 from pyvista.core._vtk_utilities import VersionInfo
 from pyvista.core._vtk_utilities import vtk_backend as vtk_backend

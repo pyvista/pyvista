@@ -1947,7 +1947,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self,
         /,
         *,
-        mesh: DataSet | MultiBlock | None = None,
+        mesh: DataSet | MultiBlock[Any] | None = None,
         bounds: VectorLike[float] | None = None,
         axes_ranges: VectorLike[float] | None = None,
         show_xaxis: bool = True,
