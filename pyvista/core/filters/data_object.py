@@ -4639,6 +4639,15 @@ class DataObjectFilters:
             :class:`~pyvista.PolyData`, and a :class:`~pyvista.MultiBlock` gives a
             ``MultiBlock`` of ``PolyData`` blocks, nested blocks included.
 
+        See Also
+        --------
+        pyvista.PolyDataFilters.dash_lines
+            Split the line cells into dashes.
+        pyvista.PolyDataFilters.tube
+            Generate a tube around each line.
+        pyvista.Actor.line_style
+            Dash the lines while rendering them.
+
         Examples
         --------
         Extract the edges of a sample unstructured grid and plot the edges.

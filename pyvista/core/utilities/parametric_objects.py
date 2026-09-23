@@ -85,6 +85,15 @@ def Spline(
     pyvista.PolyData
         Line mesh of spline.
 
+    See Also
+    --------
+    pyvista.PolyDataFilters.dash_lines
+        Split the line cells into dashes.
+    pyvista.PolyDataFilters.tube
+        Generate a tube around each line.
+    pyvista.Actor.line_style
+        Dash the lines while rendering them.
+
     Examples
     --------
     Construct a spline.
@@ -218,6 +227,15 @@ def KochanekSpline(
     -------
     pyvista.PolyData
         Kochanek spline.
+
+    See Also
+    --------
+    pyvista.PolyDataFilters.dash_lines
+        Split the line cells into dashes.
+    pyvista.PolyDataFilters.tube
+        Generate a tube around each line.
+    pyvista.Actor.line_style
+        Dash the lines while rendering them.
 
     Examples
     --------
