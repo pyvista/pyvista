@@ -18,6 +18,7 @@ Both accept the same style strings.
 
 """
 
+# sphinx_gallery_thumbnail_number = 2
 import numpy as np
 import pyvista as pv
 
