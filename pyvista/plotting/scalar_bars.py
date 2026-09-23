@@ -1799,7 +1799,8 @@ class ScalarBars(_NoNewAttrMixin):
         >>> pl.show()
 
         A box drawn around a bar grows to hold the title and the tick labels, as long
-        as the bar was not given a size of its own.
+        as the bar was not given a size of its own.  A vertical title is drawn across
+        the end of the bar, so the box is as wide as the title is long.
 
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(sphere, show_scalar_bar=False)
@@ -1824,6 +1825,56 @@ class ScalarBars(_NoNewAttrMixin):
         ...     outline=True,
         ...     title_font_size=30,
         ...     label_font_size=30,
+        ...     mapper=pl.mapper,
+        ... )
+        >>> pl.show()
+
+        ``rotate_title`` turns the title alongside the bar instead, where the box holds
+        it past the tick labels and keeps its width to the bar and the text.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(sphere, show_scalar_bar=False)
+        >>> _ = pl.add_scalar_bar(
+        ...     'Elevation (m)',
+        ...     vertical=True,
+        ...     rotate_title=True,
+        ...     outline=True,
+        ...     title_font_size=30,
+        ...     label_font_size=30,
+        ...     mapper=pl.mapper,
+        ... )
+        >>> pl.show()
+
+        A box given a width of its own keeps it, and the text is shrunk to that width
+        rather than the box grown to the text.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(sphere, show_scalar_bar=False)
+        >>> _ = pl.add_scalar_bar(
+        ...     'Elevation (m)',
+        ...     vertical=True,
+        ...     width=0.15,
+        ...     position_x=0.75,
+        ...     outline=True,
+        ...     title_font_size=30,
+        ...     label_font_size=30,
+        ...     mapper=pl.mapper,
+        ... )
+        >>> pl.show()
+
+        Tick labels are drawn smaller where the bar leaves them too little room to stay
+        clear of each other.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(sphere, show_scalar_bar=False)
+        >>> _ = pl.add_scalar_bar(
+        ...     'Elevation (m)',
+        ...     vertical=True,
+        ...     n_labels=14,
+        ...     height=0.25,
+        ...     position_x=0.8,
+        ...     title_font_size=24,
+        ...     label_font_size=24,
         ...     mapper=pl.mapper,
         ... )
         >>> pl.show()
