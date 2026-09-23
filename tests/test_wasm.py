@@ -19,7 +19,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 import sys
-from unittest import mock
+import unittest.mock as mock
 
 import pytest
 
