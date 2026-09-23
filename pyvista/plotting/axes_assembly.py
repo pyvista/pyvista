@@ -48,6 +48,7 @@ if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLike
     from pyvista.core.composite import MultiBlock
     from pyvista.core.dataset import DataSet
+    from pyvista.core.pointset import PolyData
     from pyvista.plotting._typing import ColorLike
     from pyvista.plotting.camera import Camera
 
@@ -2282,7 +2283,7 @@ class PlanesAssembly(_XYZAssembly):
             axis.SetCamera(camera)
 
     @property
-    def planes(self) -> MultiBlock:
+    def planes(self) -> MultiBlock[PolyData]:
         """Get the orthogonal plane datasets of the assembly.
 
         The planes are :class:`pyvista.PolyData` meshes stored as a

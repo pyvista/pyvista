@@ -405,6 +405,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkRectilinearGridToPointSet',
         'vtkRectilinearGridToTetrahedra',
         'vtkShrinkFilter',
+        'vtkShrinkPolyData',
         'vtkTableBasedClipDataSet',
         'vtkTableToPolyData',
         'vtkTessellatorFilter',
@@ -853,7 +854,7 @@ def _import_from(module_name: str, class_name: str) -> Any:
         raise ImportError(str(e)) from e
 
 
-def __getattr__(name: str):
+def __getattr__(name: str) -> Any:
     """Lazy attribute access.
 
     VTK modules are only imported when first accessed.
@@ -943,7 +944,7 @@ def has_attr(name: str) -> bool:
     return True
 
 
-def import_all(*, suppress_import_errors: bool = True):
+def import_all(*, suppress_import_errors: bool = True) -> None:
     """Eagerly import all vtk classes used by PyVista.
 
     Parameters
@@ -963,7 +964,7 @@ def import_all(*, suppress_import_errors: bool = True):
 # Specialized loading functions for irregular imports
 
 
-def _import_vtkPythonItem():  # noqa: N802
+def _import_vtkPythonItem() -> type[Any]:  # noqa: N802
     try:
         return _import_from('vtkPythonContext2D', 'vtkPythonItem')
     except ImportError:  # pragma: no cover
@@ -982,21 +983,21 @@ def _import_vtkPythonItem():  # noqa: N802
     return vtkPythonItem
 
 
-def _import_vtkCellTypeUtilities():  # noqa: N802
+def _import_vtkCellTypeUtilities() -> type[Any]:  # noqa: N802
     try:  # Introduced VTK 9.6.0
         return _import_from('vtkCommonDataModel', 'vtkCellTypeUtilities')
     except ImportError:
         return _import_from('vtkCommonDataModel', 'vtkCellTypes')
 
 
-def _import_vtkRenderPassCollection():  # noqa: N802
+def _import_vtkRenderPassCollection() -> type[Any]:  # noqa: N802
     try:  # Moved in VTK 10.0.0
         return _import_from('vtkRenderingCore', 'vtkRenderPassCollection')
     except ImportError:
         return _import_from('vtkRenderingOpenGL2', 'vtkRenderPassCollection')
 
 
-def _import_vtkSequencePass():  # noqa: N802
+def _import_vtkSequencePass() -> type[Any]:  # noqa: N802
     try:  # Moved in VTK 10.0.0
         return _import_from('vtkRenderingCore', 'vtkSequencePass')
     except ImportError:
