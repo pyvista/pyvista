@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from collections.abc import KeysView
 from collections.abc import Mapping
+from collections.abc import Sequence
+from collections.abc import ValuesView
 import math
 import string
 from typing import TYPE_CHECKING
@@ -21,11 +24,11 @@ from pyvista._plot import _apply_render_options
 from pyvista._plot import _set_background
 from pyvista._warn_external import warn_external
 from pyvista.core.utilities.helpers import is_pyvista_dataset
+from pyvista.plotting.colors import _validate_color_sequence
 from pyvista.plotting.text import _TEXT_POSITIONS
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-    from collections.abc import Sequence
 
     from pyvista import DataSet
     from pyvista import MultiBlock
@@ -253,6 +256,109 @@ def _from_kwargs(
     return kwargs.pop(key)
 
 
+# Keywords whose own value is one color
+_COLOR_KEYWORDS = frozenset(
+    {'above_color', 'below_color', 'color', 'edge_color', 'nan_color', 'vertex_color'}
+)
+
+# Keywords whose own value is a sequence of colors, such as a colormap made of them
+_COLOR_SEQUENCE_KEYWORDS = frozenset({'cmap', 'colormap', 'multi_colors'})
+
+# How many dimensions one value of each remaining keyword has
+_ONE_VALUE_NDIM = {
+    'clim': 1,
+    'resolution': 1,
+    'rng': 1,
+    'scalars': 2,
+    'texture': 3,
+    'user_matrix': 2,
+}
+
+# Every keyword whose own value can be a sequence, aliases included
+_KEYWORDS_TAKING_A_SEQUENCE = (
+    _COLOR_KEYWORDS
+    | _COLOR_SEQUENCE_KEYWORDS
+    | frozenset(_ONE_VALUE_NDIM)
+    | frozenset({'opacity'})
+)
+
+
+def _is_one_color(value: Any) -> bool:
+    """Return whether the value is a single color."""
+    try:
+        pv.Color(value)
+    except (TypeError, ValueError):
+        return False
+    return True
+
+
+def _is_one_color_sequence(value: Any) -> bool:
+    """Return whether the value is one sequence of colors rather than one per subplot."""
+    try:
+        _validate_color_sequence(value)
+    except (TypeError, ValueError):
+        return False
+    return True
+
+
+def _is_one_value(key: str, value: Any, *, volume: bool) -> bool:
+    """Return whether the value is a single value of the keyword."""
+    if key in _COLOR_KEYWORDS:
+        return _is_one_color(value)
+    if key in _COLOR_SEQUENCE_KEYWORDS:
+        return _is_one_color_sequence(value)
+    # A mesh takes one opacity, while a volume takes a transfer function
+    ndim = (1 if volume else 0) if key == 'opacity' else _ONE_VALUE_NDIM.get(key)
+    if ndim is None:
+        return False
+    try:
+        array = np.asarray(value)
+    except ValueError:
+        # Values of differing lengths are not a single value of anything
+        return False
+    return array.ndim <= ndim and np.issubdtype(array.dtype, np.number)
+
+
+def _is_a_sequence(value: Any) -> bool:
+    """Return whether the value is a sequence of values rather than one value."""
+    if isinstance(value, (str, bytes, Mapping)):
+        return False
+    # A zero-dimensional array is one value, and has no length to compare
+    return getattr(value, 'ndim', 1) > 0 and isinstance(
+        value, (Sequence, np.ndarray, KeysView, ValuesView)
+    )
+
+
+def _is_per_subplot(key: str, value: Any, n_datasets: int, *, volume: bool) -> bool:
+    """Return whether the keyword was given one value for each subplot."""
+    if not _is_a_sequence(value):
+        return False
+    return len(value) == n_datasets and not _is_one_value(key, value, volume=volume)
+
+
+def _split_kwargs(
+    kwargs: dict[str, Any], *, n_datasets: int, volume: bool = False
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """Return the keywords every subplot shares, and the ones each subplot has its own."""
+    shared = dict(kwargs)
+    varying: dict[str, list[Any]] = {}
+    for key, value in kwargs.items():
+        if _is_per_subplot(key, value, n_datasets, volume=volume):
+            varying[key] = list(shared.pop(key))
+        elif key not in _KEYWORDS_TAKING_A_SEQUENCE and _is_a_sequence(value):
+            # The keyword takes no sequence of its own, so this one was meant to
+            # give each dataset a value and does not have enough of them
+            msg = (
+                f'Number of {key!r} values ({len(value)}) must match the number of '
+                f'datasets ({n_datasets}).'
+            )
+            raise ValueError(msg)
+
+    return shared, [
+        {key: values[index] for key, values in varying.items()} for index in range(n_datasets)
+    ]
+
+
 def _subplot_args(shape: tuple[int, ...], index: int) -> tuple[int, ...]:
     """Return the ``subplot`` arguments for the index within the layout."""
     # Layouts defined by a string descriptor are 1D and take a single index
@@ -461,11 +567,11 @@ def _fit_labels_on_render(
 def plot_compare(  # noqa: ANN201
     datasets: Sequence[PlottableType] | Mapping[str, PlottableType],
     *,
-    labels: Sequence[str] | None = _AUTO_LABELS,
+    labels: Iterable[str] | None = _AUTO_LABELS,
     label_size: float | Literal['best_fit', 'uniform'] | None = None,
     label_position: TextPositionOptions | None = None,
     label_kwargs: dict[str, Any] | None = None,
-    reference_mesh: DataSet | MultiBlock | PartitionedDataSet | None = None,
+    reference_mesh: DataSet | MultiBlock[Any] | PartitionedDataSet | None = None,
     reference_kwargs: dict[str, Any] | None = None,
     volume: bool = False,
     shape: Sequence[int] | str | None = None,
@@ -519,7 +625,7 @@ def plot_compare(  # noqa: ANN201
         required. If a mapping or a :class:`~pyvista.MultiBlock` is given, its
         keys are used as the default ``labels``.
 
-    labels : Sequence[str] | None, optional
+    labels : Iterable[str] | None, optional
         The labels to display for each data object. Must have the same length as
         ``datasets``. By default, the keys of ``datasets`` are used when it is a
         mapping or a :class:`~pyvista.MultiBlock`, and the labels ``'A'``,
@@ -750,7 +856,21 @@ def plot_compare(  # noqa: ANN201
         Additional keyword arguments to pass to the
         :meth:`~pyvista.Plotter.add_mesh` method which draws each of the
         ``datasets``, or to :meth:`~pyvista.Plotter.add_volume` when ``volume``
-        is ``True``.
+        is ``True``. These are the keywords :func:`pyvista.plot` takes.
+
+        Give a keyword a single value to draw every subplot with that value, or a
+        sequence of values to draw each subplot with its own. The length of the
+        sequence must match the number of ``datasets``.
+
+        A keyword whose own value is a sequence keeps it, so ``clim=[0, 1]`` is one
+        range for every subplot. Nest the values to vary one of those, as in
+        ``clim=[[0, 1], [0, 2]]``. ``opacity`` is the exception: a sequence of any
+        other length is one opacity transfer function rather than an error.
+
+        .. versionchanged:: 0.50
+            A keyword given one value for each of the ``datasets`` draws each subplot
+            with its own value. ``opacity`` is one opacity for each subplot rather
+            than one transfer function for all of them, unless ``volume`` is ``True``.
 
     Returns
     -------
@@ -786,6 +906,15 @@ def plot_compare(  # noqa: ANN201
     ...     },
     ...     color='w',
     ...     cpos='xy',
+    ... )
+
+    Vary a keyword from one subplot to the next by giving it one value per
+    dataset. Here the same mesh is drawn twice, in two colors and two opacities.
+
+    >>> pv.plot_compare(
+    ...     [mesh, mesh],
+    ...     color=['red', 'blue'],
+    ...     opacity=[1.0, 0.5],
     ... )
 
     A :class:`~pyvista.MultiBlock` is compared block-by-block, and its block
@@ -840,6 +969,7 @@ def plot_compare(  # noqa: ANN201
 
     labels = _validate_labels(labels, names=names, n_datasets=n_datasets)
     _validate_reference_mesh(reference_mesh)
+    kwargs, per_subplot_kwargs = _split_kwargs(kwargs, n_datasets=n_datasets, volume=volume)
 
     if normalize:
         datasets = [_normalized(dataset) for dataset in datasets]
@@ -901,7 +1031,8 @@ def plot_compare(  # noqa: ANN201
 
     for index, dataset in enumerate(datasets):
         pl.subplot(*_subplot_args(pl.renderers.shape, index))
-        pl.add_volume(dataset, **kwargs) if volume else pl.add_mesh(dataset, **kwargs)
+        draw_kwargs = kwargs | per_subplot_kwargs[index]
+        pl.add_volume(dataset, **draw_kwargs) if volume else pl.add_mesh(dataset, **draw_kwargs)
         if labels is not None:
             pl._add_text_actor(labels[index], **label_kwargs)
         if cpos is not None:

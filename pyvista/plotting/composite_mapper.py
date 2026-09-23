@@ -5,6 +5,7 @@ from __future__ import annotations
 import itertools
 import sys
 from typing import TYPE_CHECKING
+from typing import Any
 import weakref
 
 import numpy as np
@@ -334,7 +335,7 @@ class CompositeAttributes(
 
     """
 
-    def __init__(self, mapper: CompositePolyDataMapper, dataset: MultiBlock | None) -> None:
+    def __init__(self, mapper: CompositePolyDataMapper, dataset: MultiBlock[Any] | None) -> None:
         """Initialize CompositeAttributes."""
         super().__init__()
         mapper.SetCompositeDataDisplayAttributes(self)
@@ -551,7 +552,7 @@ class CompositePolyDataMapper(_BaseMapper, _vtk.vtkCompositePolyDataMapper):
 
     def __init__(
         self,
-        dataset: MultiBlock | None = None,
+        dataset: MultiBlock[Any] | None = None,
         *,
         theme: Theme | None = None,
         color_missing_with_nan: bool | None = None,
@@ -572,7 +573,7 @@ class CompositePolyDataMapper(_BaseMapper, _vtk.vtkCompositePolyDataMapper):
         self._orig_scalars_name: str | None = None
 
     @property
-    def dataset(self) -> MultiBlock | None:  # numpydoc ignore=RT01
+    def dataset(self) -> MultiBlock[Any] | None:  # numpydoc ignore=RT01
         """Return the composite dataset assigned to this mapper.
 
         Examples
@@ -592,7 +593,7 @@ class CompositePolyDataMapper(_BaseMapper, _vtk.vtkCompositePolyDataMapper):
         return self._dataset
 
     @dataset.setter
-    def dataset(self, obj: MultiBlock | None) -> None:
+    def dataset(self, obj: MultiBlock[Any] | None) -> None:
         self.SetInputDataObject(obj)
         self._dataset = obj
         self._attr._dataset = obj
