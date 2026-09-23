@@ -206,16 +206,22 @@ def test_dash_lines_total_length_matches_duty_cycle():
     assert np.isclose(drawn.cell_data['Length'].sum(), 0.5, atol=0.02)
 
 
-def test_dash_lines_pattern_spells_out_a_style():
-    line = pv.Line((0, 0, 0), (1, 0, 0), resolution=50)
-    assert (
-        line.dash_lines(pattern=[8, 8], scale=0.01).n_cells
-        == line.dash_lines('--', scale=0.01).n_cells
-    )
-    assert (
-        line.dash_lines(pattern=[4, 6, 2, 4], scale=0.01).n_cells
-        == line.dash_lines('-.', scale=0.01).n_cells
-    )
+@pytest.mark.parametrize(
+    ('style', 'pattern'),
+    [
+        ('--', [8, 8]),
+        (':', [1, 7, 1, 7]),
+        ('-.', [4, 6, 2, 4]),
+        ('-..', [3, 3, 1, 3, 3, 3]),
+    ],
+)
+def test_dash_lines_pattern_spells_out_a_style(style, pattern):
+    # the equivalences the style docstring promises
+    line = pv.Line((0, 0, 0), (1, 0, 0), resolution=400)
+    named = line.dash_lines(style, scale=0.005)
+    spelled = line.dash_lines(pattern=pattern, scale=0.005)
+    assert named.n_cells == spelled.n_cells
+    assert np.array_equal(named.points, spelled.points)
 
 
 def test_dash_lines_style_and_pattern_are_exclusive():

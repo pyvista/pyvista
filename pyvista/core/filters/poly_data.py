@@ -1555,17 +1555,22 @@ class PolyDataFilters(DataSetFilters):
         Parameters
         ----------
         style : str, optional
-            Named dash pattern. One of ``''`` (hidden), ``'-'`` (solid), ``'--'``
-            (dashed), ``':'`` (dotted), ``'-.'`` (dash-dot) or ``'-..'``
-            (dash-dot-dot). A solid pattern returns the lines whole instead of
-            dashing them, and a hidden pattern returns no lines at all. Defaults
-            to ``'--'``. Cannot be set together with ``pattern``.
+            Named dash pattern, one of:
+
+            * ``''``: hidden, returning no lines at all.
+            * ``'-'``: solid, returning the lines whole.
+            * ``'--'``: dashed, equivalent to ``pattern=[8, 8]``.
+            * ``':'``: dotted, equivalent to ``pattern=[1, 7, 1, 7]``.
+            * ``'-.'``: dash-dot, equivalent to ``pattern=[4, 6, 2, 4]``.
+            * ``'-..'``: dash-dot-dot, equivalent to ``pattern=[3, 3, 1, 3, 3, 3]``.
+
+            Every named style repeats over sixteen intervals. Defaults to ``'--'``.
+            Cannot be set together with ``pattern``.
 
         pattern : VectorLike[float], optional
             Lengths of alternating drawn and undrawn intervals, starting with a
             drawn one and repeating. ``[4, 6, 2, 4]`` draws four intervals, skips
-            six, draws two and skips four, which is the ``'-.'`` style spelled
-            out. Cannot be set together with ``style``.
+            six, draws two and skips four. Cannot be set together with ``style``.
 
         scale : float, optional
             Length of one pattern interval in world units. Defaults to
