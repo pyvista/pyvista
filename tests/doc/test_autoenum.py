@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from enum import Enum
+from enum import EnumMeta
 from enum import Flag
 from enum import IntEnum
 from enum import IntFlag
@@ -11,9 +12,11 @@ import re
 import shutil
 import subprocess
 import sys
+from unittest.mock import patch
 
 import pytest
 import sphinx
+from sphinx.ext.autodoc import ClassDocumenter
 from sphinx.ext.autodoc import ObjectMember
 
 from pyvista.ext import _autoenum as autoenum
@@ -40,10 +43,36 @@ def test_resolve_dotted_path():
     assert autoenum._resolve('os', 'path.sep') == os.path.sep
 
 
-@pytest.mark.parametrize('tuple_form', [True, False])
-def test_member_name_reads_both_shapes_sphinx_passes(tuple_form):
-    member = ('spin', object()) if tuple_form else ObjectMember('spin', object())
-    assert autoenum._member_name(member) == 'spin'
+def test_filter_members_drops_enum_members_and_metaclass_properties():
+    class Meta(EnumMeta):
+        @property
+        def computed(cls):
+            """Defined on the metaclass."""
+
+    class Color(Enum, metaclass=Meta):
+        RED = 1
+
+        @property
+        def label(self):
+            """An ordinary property, which stays."""
+
+    documenter = autoenum.EnumDocumenter.__new__(autoenum.EnumDocumenter)
+    documenter.object = Color
+    members = [ObjectMember(name, object()) for name in ('RED', 'computed', 'label')]
+    with patch.object(ClassDocumenter, 'filter_members', lambda _s, m, _w: m):
+        kept = documenter.filter_members(members, want_all=True)
+
+    assert [member.__name__ for member in kept] == ['label']
+
+
+def test_filter_members_leaves_a_non_enum_alone():
+    documenter = autoenum.EnumDocumenter.__new__(autoenum.EnumDocumenter)
+    documenter.object = int
+    members = [ObjectMember('bit_length', object())]
+    with patch.object(ClassDocumenter, 'filter_members', lambda _s, m, _w: m):
+        kept = documenter.filter_members(members, want_all=True)
+
+    assert kept == members
 
 
 def test_metaclass_properties_finds_only_metaclass_properties():

@@ -28,11 +28,6 @@ logger = logging.getLogger(__name__)
 _SKIP_METACLASSES = (type, EnumMeta)
 
 
-def _member_name(member: ObjectMember | tuple[str, Any]) -> str:
-    """Return the name of an autodoc member, which Sphinx below 9 passes as a tuple."""
-    return member.__name__ if isinstance(member, ObjectMember) else member[0]
-
-
 def _is_enum(obj: Any) -> bool:
     """Return whether ``obj`` is an ``Enum`` subclass."""
     return isinstance(obj, type) and issubclass(obj, Enum)
@@ -186,7 +181,7 @@ class EnumDocumenter(ClassDocumenter):
             return super().filter_members(members, want_all)
 
         skip_names = set(self.object.__members__) | set(_metaclass_properties(self.object))
-        kept = [member for member in members if _member_name(member) not in skip_names]
+        kept = [member for member in members if member.__name__ not in skip_names]
         return super().filter_members(kept, want_all)
 
     def add_content(self, more_content: Any) -> None:
