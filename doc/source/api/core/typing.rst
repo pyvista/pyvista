@@ -110,6 +110,14 @@ and :vtk:`vtkCommand.EventIds`.
 
 .. autodata:: InteractionEventType
 
+pyvista.LineStyle
+~~~~~~~~~~~~~~~~~
+Named style of a line, shared by the charts and the line filters.
+
+.. currentmodule:: pyvista
+
+.. autodata:: LineStyle
+
 pyvista.CameraPositionOptions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Any object used to set a :class:`Camera`.
