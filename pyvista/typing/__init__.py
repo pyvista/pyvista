@@ -10,10 +10,10 @@ from pyvista.core._typing_core import ArrayLike as ArrayLike
 from pyvista.core._typing_core import CellArrayLike as CellArrayLike
 from pyvista.core._typing_core import CellsLike as CellsLike
 from pyvista.core._typing_core import InteractionEventType as InteractionEventType
+from pyvista.core._typing_core import LineStyle as LineStyle
 from pyvista.core._typing_core import MatrixLike as MatrixLike
 from pyvista.core._typing_core import Number as Number
 from pyvista.core._typing_core import NumberType as NumberType
-from pyvista.core._typing_core import NumpyArray as NumpyArray
 from pyvista.core._typing_core import RotationLike as RotationLike
 from pyvista.core._typing_core import TransformLike as TransformLike
 from pyvista.core._typing_core import VectorLike as VectorLike
@@ -34,11 +34,11 @@ __all__ = [
     'ColorLike',
     'InteractionEventType',
     'JupyterBackendOptions',
+    'LineStyle',
     'MatrixLike',
     'MeshValidationFields',
     'Number',
     'NumberType',
-    'NumpyArray',
     'RotationLike',
     'TransformLike',
     'VectorLike',

@@ -11,6 +11,7 @@ from collections.abc import Iterable
 from collections.abc import Sequence
 import itertools
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import Literal
 from typing import cast
 from typing import get_args
@@ -58,7 +59,7 @@ _NOT_SUPPORTED_PARAMETRIC = [
 
 
 def plot_cell(  # noqa: ANN201
-    grid: DataSet | MultiBlock,
+    grid: DataSet | MultiBlock[Any],
     cpos: CameraPositionOptions | None = None,
     *,
     line_width: int | None = None,

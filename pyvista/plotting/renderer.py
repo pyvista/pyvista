@@ -44,6 +44,8 @@ from .helpers import view_vectors
 from .mapper import DataSetMapper
 from .prop_collection import _PropCollection
 from .render_passes import RenderPasses
+from .tools import _validate_vector
+from .tools import _validate_viewup
 from .tools import create_axes_marker
 from .tools import create_axes_orientation_box
 from .tools import create_north_arrow
@@ -251,20 +253,6 @@ def scale_point(
     x, y, z = _validation.validate_array3(point, dtype_out=float, name='point')
     scaled = mtx.MultiplyDoublePoint((x, y, z, 0.0))
     return (scaled[0], scaled[1], scaled[2])
-
-
-def _validate_vector(vector: VectorLike[float], *, name: str) -> tuple[float, float, float]:
-    """Return a three-component vector as a tuple of floats."""
-    return _validation.validate_array3(vector, dtype_out=float, to_tuple=True, name=name)
-
-
-def _validate_viewup(vector: VectorLike[float]) -> tuple[float, float, float]:
-    """Return a view-up vector, which is normalized and so cannot be zero."""
-    viewup = _validate_vector(vector, name='viewup')
-    if np.allclose(viewup, 0.0):
-        msg = 'Camera up vector cannot be zero.'
-        raise ValueError(msg)
-    return viewup
 
 
 class CameraPosition(_NoNewAttrMixin):
@@ -1868,7 +1856,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         show_axes
             Show the axes orientation widget.
 
-        axes_enabled
+        :attr:`~pyvista.Renderer.axes_enabled`
             Check if the axes orientation widget is enabled.
 
         Examples
@@ -1893,7 +1881,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         hide_axes
             Hide the axes orientation widget.
 
-        axes_enabled
+        :attr:`~pyvista.Renderer.axes_enabled`
             Check if the axes orientation widget is enabled.
 
         add_axes_at_origin
@@ -1947,7 +1935,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self,
         /,
         *,
-        mesh: DataSet | MultiBlock | None = None,
+        mesh: DataSet | MultiBlock[Any] | None = None,
         bounds: VectorLike[float] | None = None,
         axes_ranges: VectorLike[float] | None = None,
         show_xaxis: bool = True,
@@ -3782,7 +3770,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """Disable surface space ambient occlusion (SSAO)."""
         self._render_passes.disable_ssao_pass()
 
-    def get_pick_position(self) -> tuple[float, float, float, float]:
+    def get_pick_position(self) -> tuple[int, int, int, int]:
         """Get the pick position/area as ``x0, y0, x1, y1``.
 
         Returns

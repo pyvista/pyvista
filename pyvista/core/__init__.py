@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ._typing_core import BoundsTuple as BoundsTuple
+from ._typing_core import NumpyArray as NumpyArray
 from .cell import Cell as Cell
 from .cell import CellArray as CellArray
 from .celltype import CellType as CellType
@@ -58,10 +59,10 @@ _TYPE_ALIASES = (
     'CellArrayLike',
     'CellsLike',
     'InteractionEventType',
+    'LineStyle',
     'MatrixLike',
     'Number',
     'NumberType',
-    'NumpyArray',
     'RotationLike',
     'TransformLike',
     'VectorLike',

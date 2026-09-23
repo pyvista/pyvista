@@ -63,14 +63,6 @@ Includes sequences and numpy arrays.
 
 .. autodata:: VectorLike
 
-pyvista.typing.NumpyArray
-~~~~~~~~~~~~~~~~~~~~~~~~~
-NumPy array with numerical values.
-
-.. currentmodule:: pyvista.typing
-
-.. autodata:: NumpyArray
-
 
 VTK Related Types
 -----------------
@@ -126,6 +118,14 @@ and :vtk:`vtkCommand.EventIds`.
 .. currentmodule:: pyvista.typing
 
 .. autodata:: InteractionEventType
+
+pyvista.typing.LineStyle
+~~~~~~~~~~~~~~~~~~~~~~~~
+Named style of a line, shared by the charts and the line filters.
+
+.. currentmodule:: pyvista.typing
+
+.. autodata:: LineStyle
 
 pyvista.typing.CameraPositionOptions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

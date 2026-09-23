@@ -8,6 +8,7 @@ import json
 import locale
 import os
 from pathlib import Path
+import re
 import shutil
 import sys
 from typing import TYPE_CHECKING
@@ -17,6 +18,8 @@ import warnings
 from docutils import nodes
 from docutils.parsers.rst.directives.images import Image
 from sphinx import addnodes
+from sphinx.ext.intersphinx import InventoryAdapter
+from sphinx.ext.intersphinx import missing_reference
 from sphinx.util.docstrings import prepare_docstring
 from sphinx.util.inspect import TypeAliasForwardRef
 from sphinx_autocodelink.gallery import AutoCodeLinkScraper
@@ -172,10 +175,86 @@ duration_n_slowest = 50
 duration_write_json = None
 
 
+# Documented in `pyvista.typing`
+_DOCUMENTED_TYPES = [
+    'ArrayLike',
+    'CameraPositionOptions',
+    'CellArrayLike',
+    'CellsLike',
+    'Chart',
+    'ColorLike',
+    'InteractionEventType',
+    'JupyterBackendOptions',
+    'LineStyle',
+    'MatrixLike',
+    'MeshValidationFields',
+    'Number',
+    'NumberType',
+    'RotationLike',
+    'TransformLike',
+    'VectorLike',
+]
+
+# Names in signatures and docstrings without a documentation page
+_UNDOCUMENTED_TYPES = [
+    'ActiveArrayInfo',
+    'ActiveScalarsAlgorithm',
+    'AddIDsAlgorithm',
+    'BackfaceArgs',
+    'BasePlotter',
+    'BorderOptions',
+    'CallbackFilterAlgorithm',
+    'CellLiteral',
+    'CellQualityInfo',
+    'Colormap',
+    'ColormapOptions',
+    'CrinkleAlgorithm',
+    'CullingOptions',
+    'Cycler',
+    'EmbeddableWidget',
+    'ExampleName',
+    'FieldLiteral',
+    'FontFamilyOptions',
+    'HorizontalOptions',
+    'IFrame',
+    'Image',
+    'ImageCompareType',
+    'InteractorStyleHandler',
+    'LightType',
+    'Mesh',
+    'MeshValidationReport',
+    'NumpyArray',
+    'OpacityOptions',
+    'PathStrSeq',
+    'PickerType',
+    'PlottableType',
+    'PointLiteral',
+    'PointSetToPolyDataAlgorithm',
+    'ReaderProvider',
+    'RowLiteral',
+    'ScalarBarArgs',
+    'ShaftType',
+    'SilhouetteArgs',
+    'SmoothShadingAlgorithm',
+    'SourceAlgorithm',
+    'StereoType',
+    'StyleOptions',
+    'TextPositionOptions',
+    'ThemeOptions',
+    'TipType',
+    'TrameModeOptions',
+    'VerticalOptions',
+    'VtkEvent',
+    'Widget',
+    'WrapType',
+    'WriterHandler',
+    'lookup_table_ndarray',
+    'pyarrow',
+]
+
 # Configuration for sphinx.ext.autodoc
 autodoc_type_aliases = {
-    # link documented type aliases by name rather than expanding them
-    **{name: f'~pyvista.typing.{name}' for name in pv.typing.__all__},
+    **{name: f'~pyvista.typing.{name}' for name in _DOCUMENTED_TYPES},
     'FrameType': 'types.FrameType',
     # generated from the example names; render it as a name, not 222 literals
     'ExampleName': 'ExampleName',
@@ -183,9 +262,6 @@ autodoc_type_aliases = {
 
 # Render aliases nested in unions and generics by name, see sphinx-doc/sphinx#14003
 TypeAliasForwardRef.__repr__ = lambda self: self.name
-
-# Link the TypeVar in rendered aliases to its documented location
-pv.typing.NumberType.__module__ = 'pyvista.typing'
 
 # Enable ANSI coloring for programoutput, using erbsland.sphinx.ansi
 programoutput_use_ansi = True
@@ -204,8 +280,9 @@ maximum_signature_line_length = 88
 numpydoc_use_plots = True
 numpydoc_show_class_members = False
 numpydoc_xref_param_type = True
+numpydoc_xref_ignore = {'optional'}
 # Link docstring types such as ``VectorLike[float]`` from any module
-numpydoc_xref_aliases = {name: f'pyvista.typing.{name}' for name in pv.typing.__all__}
+numpydoc_xref_aliases = {name: f'pyvista.typing.{name}' for name in _DOCUMENTED_TYPES}
 
 sphinx_examples_as_code_conf = {
     # Replace sphinx-gallery's own per-example download footer/note with
@@ -220,178 +297,8 @@ vtk_xref_nitpicky = False
 nitpicky = True
 # Except ignore these entries
 nitpick_ignore_regex = [
-    # Undocumented PyVista TypeVars and TypeAliases
-    (r'py:.*', '.*_ColorChannel'),
-    (r'py:.*', '.*ImageCompareType'),
-    (r'py:.*', '.*ColormapOptions'),
-    (r'py:.*', '.*InteractorStyleHandler'),
-    (r'py:.*', '.*WriterHandler'),
-    (r'py:.*', '.*ReaderHandler'),
-    (r'py:.*', '.*ReaderProvider'),
-    (r'py:.*', r'pv\.BaseReader'),
-    (r'py:.*', '.*_T_Provider'),
-    (r'py:.*', '.*ShapeLike'),
-    (r'py:.*', '.*_ArrayLikeOrScalar'),
-    (r'py:.*', '.*_PolyDataType'),
-    (r'py:.*', '.*_UnstructuredGridType'),
-    (r'py:.*', '.*_GridType'),
-    (r'py:.*', '.*_PointGridType'),
-    (r'py:.*', '.*_PointSetType'),
-    (r'py:.*', '.*_DataSetType'),
-    (r'py:.*', '.*_DataSetOrMultiBlockType'),
-    (r'py:.*', '.*_DataObjectType'),
-    (r'py:.*', '.*_MeshType_co'),
-    (r'py:.*', '.*_T_Output_co'),
-    (r'py:.*', '.*_WrappableVTKDataObjectType'),
-    (r'py:.*', '.*_VTKWriterType'),
-    (r'py:.*', '.*NormalsLiteral'),
-    (r'py:.*', '.*_CellQualityLiteral'),
-    (r'py:.*', '.*_ShowReturnType'),
-    (r'py:.*', '.*_ConnectivityMode'),
-    (r'py:.*', '.*_RegionAssignmentMode'),
-    (r'py:.*', '.*_AxesPropTuple'),
-    (r'py:.*', '.*_SENTINEL'),
-    (r'py:.*', '.*T'),
-    (r'py:.*', r'(.*\.)?_\w+Options'),
-    #
-    # Dataset-related types
-    (r'py:.*', '.*DataSet'),
-    (r'py:.*', '.*DataObject'),
-    (r'py:.*', '.*PolyData'),
-    (r'py:.*', '.*UnstructuredGrid'),
-    (r'py:.*', '.*_TypeMultiBlockLeaf'),
-    (r'py:.*', '.*DatasetObject'),
-    (r'py:.*', '.*_DatasetT_co'),
-    (r'py:.*', '.*_ReadersT_co'),
-    (r'py:.*', '.*ExampleName'),
-    (r'py:.*', '.*_DatasetLoader'),
-    (r'py:.*', '.*Grid'),
-    (r'py:.*', '.*PointGrid'),
-    (r'py:.*', '.*_PointSetBase'),
-    #
-    # PyVista array-related types
-    (r'py:.*', 'ActiveArrayInfo'),
-    (r'py:.*', 'FieldAssociation'),
-    (r'py:.*', '.*CellLiteral'),
-    (r'py:.*', '.*PointLiteral'),
-    (r'py:.*', '.*FieldLiteral'),
-    (r'py:.*', '.*RowLiteral'),
-    (r'py:.*', '.*_SerializedDictArray'),
-    (r'py:.*', '.*_FiveArrays'),
-    #
-    # PyVista AxesAssembly-related types
-    (r'py:.*', '.*GeometryTypes'),
-    (r'py:.*', '.*ShaftType'),
-    (r'py:.*', '.*TipType'),
-    (r'py:.*', '.*_AxesGeometryKwargs'),
-    (r'py:.*', '.*_OrthogonalPlanesKwargs'),
-    #
-    # PyVista Widget enums
-    (r'py:.*', '.*PickerType'),
-    (r'py:.*', '.*ElementType'),
-    #
-    # PyVista shader/plotting enums
-    (r'py:.*', '.*ShaderType'),
-    (r'py:.*', '.*PointSpriteShape'),
-    (r'py:.*', '.*StereoType'),
-    (r'py:.*', '.*LightType'),
-    #
-    # PyVista Texture enum
-    (r'py:.*', '.*WrapType'),
-    #
-    # PyVista plotting-related classes
-    (r'py:.*', '.*BasePlotter'),
-    (r'py:.*', '.*ScalarBars'),
-    (r'py:.*', '.*Theme'),
-    #
-    # Misc pyvista ignores
-    (r'py:.*', 'principal_axes'),  # Valid ref, but is not linked correctly in some wrapped cases
-    (r'py:.*', 'axes_enabled'),  # Valid ref, but is not linked correctly in some wrapped cases
-    (r'py:.*', '.*lookup_table_ndarray'),
-    (r'py:.*', '.*colors.Colormap'),
-    (r'py:.*', 'colors.ListedColormap'),
-    (r'py:.*', '.*MeshValidationReport'),
-    (r'py:.*', '.*CellQualityInfo'),
-    (r'py:.*', 'cycler.Cycler'),
-    (r'py:.*', 'pyvista.PVDDataSet'),
-    (r'py:.*', 'pyvista.SeriesDataSet'),
-    (r'py:.*', 'ScalarBarArgs'),
-    (r'py:.*', 'SilhouetteArgs'),
-    (r'py:.*', 'BackfaceArgs'),
-    (r'py:.*', 'CullingOptions'),
-    (r'py:.*', 'OpacityOptions'),
-    (r'py:.*', 'StyleOptions'),
-    (r'py:.*', 'FontFamilyOptions'),
-    (r'py:.*', 'HorizontalOptions'),
-    (r'py:.*', 'VerticalOptions'),
-    (r'py:.*', 'BorderOptions'),
-    (r'py:.*', 'TextPositionOptions'),
-    (r'py:.*', 'ThemeOptions'),
-    (r'py:.*', 'PlottableType'),
-    (r'py:.*', '_Dimensionality'),
-    #
-    # Built-in python types. TODO: Fix links (intersphinx?)
-    (r'py:.*', '.*BytesIO'),
-    (r'py:.*', '.*StringIO'),
-    (r'py:.*', '.*Path'),
-    (r'py:.*', '.*UserDict'),
-    (r'py:.*', 'sys.float_info.max'),
-    (r'py:.*', '.*NoneType'),
-    (r'py:.*', 'collections.*'),
-    (r'py:.*', '.*PathStrSeq'),
-    (r'py:.*', 'ModuleType'),
-    (r'py:.*', 'typing.Union'),
-    #
-    # NumPy types. TODO: Fix links (intersphinx?)
-    (r'py:.*', '.*DTypeLike'),
-    (r'py:.*', 'np.*'),
-    (r'py:.*', 'npt.*'),
-    (r'py:.*', 'numpy.*'),
-    (r'py:.*', '.*NDArray'),
-    (r'py:.*', 'ndarray'),
-    #
-    # pyarrow does not register a py:module entry in its intersphinx
-    # inventory, so ``:mod:`pyarrow``` cannot be resolved even when the
-    # inventory is loaded. ``pyarrow.Table`` is registered as a py:class
-    # and resolves normally.
-    (r'py:mod', 'pyarrow'),
-    #
-    # Third party ignores. TODO: Can these be linked with intersphinx?
-    (r'py:.*', 'ipywidgets.Widget'),
-    (r'py:.*', 'EmbeddableWidget'),
-    (r'py:.*', 'Widget'),
-    (r'py:.*', 'IFrame'),
-    (r'py:.*', 'Image'),
-    (r'py:.*', 'meshio.*'),
-    (r'py:.*', '.*Mesh'),
-    (r'py:.*', '.*Trimesh'),
-    (r'py:.*', 'networkx.*'),
-    (r'py:.*', 'Rotation'),
-    (r'py:.*', '.*VtkEvent'),
-    (r'py:.*', 'vtk.*'),
-    (r'py:.*', '_vtk.*'),
-    (r'py:.*', 'VTK'),
-    #
-    # Misc general ignores
-    (r'py:.*', 'optional'),
-    #
-    # Private implementation types used in signatures
-    (r'py:.*', r'.*_SMPToolsContext'),
-    (r'py:.*', r'.*_ActiveArrayExistsInfoTuple'),
-    #
-    # Private algorithm classes returned by plotting utility functions
-    (r'py:.*', r'.*ActiveScalarsAlgorithm'),
-    (r'py:.*', r'.*AddIDsAlgorithm'),
-    (r'py:.*', r'.*CallbackFilterAlgorithm'),
-    (r'py:.*', r'.*CrinkleAlgorithm'),
-    (r'py:.*', r'.*PointSetToPolyDataAlgorithm'),
-    (r'py:.*', r'.*SmoothShadingAlgorithm'),
-    (r'py:.*', r'.*SourceAlgorithm'),
-    (r'py:.*', r'pyvista\.Common'),
-    #
-    # Long-form function paths used in some docstrings/examples
-    (r'py:.*', r'pyvista\.core\.utilities\.features\.perlin_noise'),
-    (r'py:.*', r'pyvista\.core\.utilities\.features\.sample_function'),
+    (r'py:.*', r'(.*\.)?_\w+'),  # ignore all private names
+    *[(r'py:.*', rf'(.*\.)?{re.escape(name)}') for name in _UNDOCUMENTED_TYPES],
 ]
 
 
@@ -514,9 +421,9 @@ exclude_patterns = [
     # searchable through the page that includes it.
     'api/core/cell_quality/*.rst',
     'api/examples/dataset-gallery/*.rst',
-    'api/plotting/charts/pen_line_styles.rst',
     'api/plotting/charts/plot_color_schemes.rst',
     'api/plotting/charts/scatter_marker_styles.rst',
+    'api/plotting/line_styles.rst',
     'api/readers/readers_table.rst',
     'api/utilities/color_table/*.rst',
     'api/utilities/colormap_table/*.rst',
@@ -665,7 +572,6 @@ suppress_warnings = [
     'image.not_readable',
 ]
 
-import re
 
 # -- .. pyvista-plot:: directive ----------------------------------------------
 from jinja2.sandbox import SandboxedEnvironment
@@ -1209,13 +1115,83 @@ def drop_type_alias_docstring(  # noqa: PLR0917
         lines.clear()
 
 
+def restrict_trimesh_inventory(app: Sphinx) -> None:
+    """Drop non-``trimesh`` names from trimesh's inventory so they link to their own docs."""
+    inventories = InventoryAdapter(app.env)
+    for objtype, objects in inventories.named_inventory['trimesh'].items():
+        if objtype.startswith('py:'):
+            for name in [name for name in objects if name.split('.')[0] != 'trimesh']:
+                del objects[name]
+    # Merge again as intersphinx does, so the entries trimesh overrode are restored
+    main_inventory = inventories.main_inventory
+    main_inventory.clear()
+    for inv_name in sorted(inventories.named_inventory):
+        for objtype, objects in inventories.named_inventory[inv_name].items():
+            main_inventory.setdefault(objtype, {}).update(objects)
+
+
+# Modules that references abbreviate or reach through a private path
+_REFERENCE_PREFIXES = {
+    'np.': 'numpy.',
+    'numpy._typing._array_like.': 'numpy.typing.',
+    'pv.': 'pyvista.',
+}
+
+# Objects that references name without their module
+_REFERENCE_NAMES = {
+    'BytesIO': 'io.BytesIO',
+    'NDArray': 'numpy.typing.NDArray',
+    'Path': 'pathlib.Path',
+    'Rotation': 'scipy.spatial.transform.Rotation',
+    'StringIO': 'io.StringIO',
+    'UserDict': 'collections.UserDict',
+    'ndarray': 'numpy.ndarray',
+}
+
+
+# Types that are documented and linked elsewhere can still fail to resolve from signature
+# annotations, which Sphinx then reports as nitpick warnings, see sphinx-doc/sphinx#14003.
+# This resolves those missing links, such as `pv.PolyData` or a bare `Path`.
+def resolve_python_reference(  # noqa: PLR0917
+    app: Sphinx,
+    env: BuildEnvironment,
+    node: addnodes.pending_xref,
+    contnode: Element,
+) -> Element | None:
+    """Resolve a Python reference to an object under its full name."""
+    if node['refdomain'] != 'py':
+        return None
+    target = node['reftarget']
+    full_name = _REFERENCE_NAMES.get(target)
+    for prefix, module in _REFERENCE_PREFIXES.items():
+        if target.startswith(prefix):
+            full_name = module + target.removeprefix(prefix)
+    new_node = node.deepcopy()
+    if full_name is None:
+        if '.' in target or missing_reference(app, env, node, contnode):
+            return None
+        # A bare class name, as from an import under TYPE_CHECKING, matches the one class it names
+        new_node['refspecific'] = True
+        return env.domains['py'].resolve_xref(
+            env, node['refdoc'], app.builder, 'class', target, new_node, contnode
+        )
+    new_node['reftarget'] = full_name
+    new_node['reftype'] = 'obj'
+    return env.domains['py'].resolve_xref(
+        env, node['refdoc'], app.builder, 'obj', full_name, new_node, contnode
+    ) or missing_reference(app, env, new_node, contnode)
+
+
 def setup(app: Sphinx) -> None:  # noqa: D103
     app.connect('config-inited', report_parallel_safety)
     app.connect('builder-inited', configure_backend)
+    # priority > 500 so intersphinx has already loaded the inventories
+    app.connect('builder-inited', restrict_trimesh_inventory, priority=501)
     # The last toctree listing a page becomes its parent, and tag pages sort after galleries.
     app.connect('env-updated', forget_tag_page_toctrees)
     # priority < 500 so this sees the docstring before numpydoc rewrites it
     app.connect('autodoc-process-docstring', drop_type_alias_docstring, priority=400)
+    app.connect('missing-reference', resolve_python_reference)
     # Priority must stay above the 501 used by sphinx-book-theme's
     # ``add_source_buttons``, which is what builds the "suggest edit" button.
     app.connect('html-page-context', pv_html_page_context, priority=502)

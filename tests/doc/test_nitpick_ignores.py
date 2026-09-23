@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import ast
-import re
 
 import pytest
 
@@ -15,23 +14,31 @@ CONF_PY = PYVISTA_ROOT_DIR / 'doc' / 'source' / 'conf.py'
 
 def conf_value(name: str) -> object:
     """Return the literal assigned to ``name`` in the documentation ``conf.py``."""
-    for node in ast.parse(CONF_PY.read_text(encoding='utf-8')).body:
-        if isinstance(node, ast.Assign) and any(
-            isinstance(target, ast.Name) and target.id == name for target in node.targets
-        ):
-            return ast.literal_eval(node.value)
-    msg = f'{name} is not assigned a literal in {CONF_PY}'
-    raise KeyError(msg)
+    return next(
+        ast.literal_eval(node.value)
+        for node in ast.parse(CONF_PY.read_text(encoding='utf-8')).body
+        if isinstance(node, ast.Assign)
+        and any(isinstance(target, ast.Name) and target.id == name for target in node.targets)
+    )
 
 
-@pytest.mark.parametrize('alias', pv.typing.__all__)
-@pytest.mark.parametrize('prefix', ['', 'pyvista.typing.'])
-def test_type_alias_links_are_checked(alias, prefix):
-    """Confirm no nitpick ignore hides an unresolved link to a documented type alias."""
-    target = f'{prefix}{alias}'
-    patterns = [
-        pattern
-        for _, pattern in conf_value('nitpick_ignore_regex')
-        if re.fullmatch(pattern, target)
-    ]
-    assert not patterns, f'{patterns} hide broken links to {target}'
+@pytest.mark.parametrize('name', conf_value('_DOCUMENTED_TYPES'))
+def test_documented_types_are_not_ignored(name):
+    """Confirm no nitpick ignore hides an unresolved link to a documented type."""
+    assert name not in conf_value('_UNDOCUMENTED_TYPES')
+
+
+def test_undocumented_types_are_sorted():
+    """Keep the nitpick ignore names sorted and unique."""
+    names = conf_value('_UNDOCUMENTED_TYPES')
+    assert names == sorted(set(names))
+
+
+def test_documented_types_match_typing_module():
+    """Document every name that ``pyvista.typing`` exports."""
+    assert sorted(conf_value('_DOCUMENTED_TYPES')) == sorted(pv.typing.__all__)
+
+
+def test_undocumented_types_are_public():
+    """Leave private names to the ignore pattern that covers all of them."""
+    assert not [name for name in conf_value('_UNDOCUMENTED_TYPES') if name.startswith('_')]

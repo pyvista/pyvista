@@ -1402,12 +1402,36 @@ class DataSetMapper(_BaseDataSetMapper, _vtk.vtkDataSetMapper):
         super().__init__(dataset=dataset, theme=theme)
 
 
+class _PolyDataMapper(_BaseDataSetMapper, _vtk.vtkPolyDataMapper):
+    """Wrap :vtk:`vtkPolyDataMapper`.
+
+    Maps vertex attributes directly, as :attr:`pyvista.Actor.line_style` requires.
+
+    Parameters
+    ----------
+    dataset : pyvista.PolyData, optional
+        Dataset to assign to this mapper.
+
+    theme : pyvista.plotting.themes.Theme, optional
+        Plot-specific theme.
+
+    """
+
+    def __init__(
+        self,
+        dataset: DataSet | None = None,
+        theme: Theme | None = None,
+    ) -> None:
+        """Initialize this class."""
+        super().__init__(dataset=dataset, theme=theme)
+
+
 class PointGaussianMapper(_BaseDataSetMapper, _vtk.vtkPointGaussianMapper):
     """Wrap :vtk:`vtkPointGaussianMapper`.
 
     Parameters
     ----------
-    theme : pyvista.Theme, optional
+    theme : pyvista.plotting.themes.Theme, optional
         The theme to be used.
     emissive : bool, optional
         Whether or not the point should appear emissive. Default is set by the
@@ -1777,6 +1801,12 @@ def _mapper_has_data_set_input(mapper: Any) -> bool:
     been standardized to ``GetDataSetInput`` in VTK >= 9.5.
     """
     return hasattr(mapper, 'GetDataSetInput') or hasattr(mapper, 'GetInputAsDataSet')
+
+
+def _prop_get_data_set_input(prop: _vtk.vtkProp) -> _vtk.vtkDataSet | None:
+    """Return the data set a prop's mapper reads, or ``None`` when it has no such mapper."""
+    mapper = prop.GetMapper() if hasattr(prop, 'GetMapper') else None
+    return _mapper_get_data_set_input(mapper) if _mapper_has_data_set_input(mapper) else None
 
 
 def _mapper_get_data_set_input(mapper: Any) -> _vtk.vtkDataSet:
