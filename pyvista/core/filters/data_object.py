@@ -7260,10 +7260,22 @@ def _remove_unused_points_post_clip(
     )
 
 
+# fmt: off
+# ruff: disable[E501]
+@overload  # A PolyData input is matched by extracting the output's surface
+def _cast_output_to_match_input_type(output_mesh: DataSet | MultiBlock[Any], input_mesh: PolyData) -> PolyData: ...
+@overload  # A PointSet input is matched by keeping only the output's points
+def _cast_output_to_match_input_type(output_mesh: DataSet | MultiBlock[Any], input_mesh: PointSet) -> PointSet: ...
+@overload  # A composite input is matched block by block
+def _cast_output_to_match_input_type(output_mesh: DataSet | MultiBlock[Any], input_mesh: MultiBlock[Any]) -> MultiBlock[Any]: ...
+@overload  # Any other input leaves the output as it is
+def _cast_output_to_match_input_type(output_mesh: _DataSetOrMultiBlockType, input_mesh: DataSet | MultiBlock[Any]) -> _DataSetOrMultiBlockType | PolyData | PointSet: ...
+# ruff: enable[E501]
+# fmt: on
 def _cast_output_to_match_input_type(
-    output_mesh: DataSet | MultiBlock[Any], input_mesh: _DataSetOrMultiBlockType
-) -> _DataSetOrMultiBlockType:
-    # Ensure output type matches input type
+    output_mesh: DataSet | MultiBlock[Any], input_mesh: DataSet | MultiBlock[Any]
+) -> DataSet | MultiBlock[Any]:
+    """Cast an output mesh to match the type of the input mesh it was generated from."""
 
     def cast_output(mesh_out: DataSet, mesh_in: DataSet | MultiBlock) -> DataSet:
         if isinstance(mesh_in, pv.PolyData) and not isinstance(mesh_out, pv.PolyData):
@@ -7282,11 +7294,10 @@ def _cast_output_to_match_input_type(
             mesh_out.replace(ids, cast_output(block_out, block_in))
         return mesh_out
 
-    return cast(
-        '_DataSetOrMultiBlockType',
+    return (
         cast_output_blocks(output_mesh, cast('MultiBlock', input_mesh))
         if isinstance(output_mesh, pv.MultiBlock)
-        else cast_output(output_mesh, input_mesh),
+        else cast_output(output_mesh, input_mesh)
     )
 
 
