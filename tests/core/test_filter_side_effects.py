@@ -482,8 +482,6 @@ def test_filter_does_not_modify_input(key):
             for keyword, keyword_variant in _call_variants(func):
                 if keyword is not None and mode not in KEYWORD_DATA_MODES:
                     continue
-                if (kind, name, keyword) in cases.CRASHES_VTK:
-                    continue
                 mesh = template.copy()
                 args, kwargs = _call_arguments(name, keyword_variant)
                 before = _fingerprint(mesh)

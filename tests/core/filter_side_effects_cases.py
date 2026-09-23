@@ -42,11 +42,6 @@ SKIP_KWARGS = frozenset(
 )
 
 
-#: Calls which segfault VTK for reasons unrelated to side effects, as ``(kind, name, keyword)``.
-# vtkCellLocatorInterpolatedVelocityField dereferences the cells a PointSet lacks
-CRASHES_VTK = frozenset({('pointset', 'streamlines_from_source', 'interpolator_type')})
-
-
 #: Keywords the sweep does not vary yet. Move one to ``KWARG_VALUES`` to cover it.
 UNVARIED_KWARGS = frozenset(
     {

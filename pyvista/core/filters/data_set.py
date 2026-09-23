@@ -3970,6 +3970,10 @@ class DataSetFilters(DataObjectFilters):
         if interpolator_type not in ['c', 'cell', 'p', 'point']:
             msg = "Interpolator type must be either 'cell' or 'point'"
             raise ValueError(msg)
+        # vtkCellLocatorInterpolatedVelocityField segfaults on a mesh without cells
+        if interpolator_type in ['c', 'cell'] and self.n_cells == 0:
+            msg = "The 'cell' interpolator requires a mesh with cells; use 'point' instead."
+            raise ValueError(msg)
         if step_unit not in ['l', 'cl']:
             msg = "Step unit must be either 'l' or 'cl'"
             raise ValueError(msg)

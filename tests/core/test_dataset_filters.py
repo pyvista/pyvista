@@ -2206,6 +2206,14 @@ def test_streamlines_from_source(uniform_vec):
     assert all([stream.n_points, stream.n_cells])
 
 
+def test_streamlines_from_source_cell_interpolator_needs_cells(uniform_vec):
+    points = pv.PointSet(uniform_vec.points)
+    points['vectors'] = uniform_vec['vectors']
+    source = pv.PointSet(np.array([[0.0, 0.0, 0.0]]))
+    with pytest.raises(ValueError, match="The 'cell' interpolator requires a mesh with cells"):
+        points.streamlines_from_source(source, 'vectors', interpolator_type='cell')
+
+
 def test_streamlines_from_source_structured_grids():
     x, y, z = np.meshgrid(
         np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5), np.arange(-10, 10, 0.5)
