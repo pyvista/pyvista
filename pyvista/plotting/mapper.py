@@ -1402,6 +1402,30 @@ class DataSetMapper(_BaseDataSetMapper, _vtk.vtkDataSetMapper):
         super().__init__(dataset=dataset, theme=theme)
 
 
+class _PolyDataMapper(_BaseDataSetMapper, _vtk.vtkPolyDataMapper):
+    """Wrap :vtk:`vtkPolyDataMapper`.
+
+    Maps vertex attributes directly, as :attr:`pyvista.Actor.line_style` requires.
+
+    Parameters
+    ----------
+    dataset : pyvista.PolyData, optional
+        Dataset to assign to this mapper.
+
+    theme : pyvista.plotting.themes.Theme, optional
+        Plot-specific theme.
+
+    """
+
+    def __init__(
+        self,
+        dataset: DataSet | None = None,
+        theme: Theme | None = None,
+    ) -> None:
+        """Initialize this class."""
+        super().__init__(dataset=dataset, theme=theme)
+
+
 class PointGaussianMapper(_BaseDataSetMapper, _vtk.vtkPointGaussianMapper):
     """Wrap :vtk:`vtkPointGaussianMapper`.
 

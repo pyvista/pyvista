@@ -236,6 +236,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*VectorLike'),
     (r'py:.*', '.*TransformLike'),
     (r'py:.*', '.*InteractionEventType'),
+    (r'py:.*', '.*LineStyle'),
     (r'py:.*', '.*InteractorStyleHandler'),
     (r'py:.*', '.*WriterHandler'),
     (r'py:.*', '.*ReaderHandler'),
@@ -538,9 +539,9 @@ exclude_patterns = [
     # searchable through the page that includes it.
     'api/core/cell_quality/*.rst',
     'api/examples/dataset-gallery/*.rst',
-    'api/plotting/charts/pen_line_styles.rst',
     'api/plotting/charts/plot_color_schemes.rst',
     'api/plotting/charts/scatter_marker_styles.rst',
+    'api/plotting/line_styles.rst',
     'api/readers/readers_table.rst',
     'api/utilities/color_table/*.rst',
     'api/utilities/colormap_table/*.rst',
