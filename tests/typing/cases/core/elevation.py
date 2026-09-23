@@ -8,6 +8,7 @@ import pyvista as pv
 from tests.typing.meshes import explicit_structured
 from tests.typing.meshes import image
 from tests.typing.meshes import multiblock
+from tests.typing.meshes import multiblock_poly
 from tests.typing.meshes import pointset
 from tests.typing.meshes import poly
 from tests.typing.meshes import rectilinear
@@ -23,3 +24,6 @@ assert_types(unstructured().elevation(), pv.UnstructuredGrid)
 assert_types(explicit_structured().elevation(), pv.ExplicitStructuredGrid)
 assert_types(pointset().elevation(), pv.PointSet)
 assert_types(multiblock().elevation(), pv.MultiBlock)
+
+# A declared block type survives the filter
+assert_types(multiblock_poly().elevation(), pv.MultiBlock[pv.PolyData])

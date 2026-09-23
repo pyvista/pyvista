@@ -465,7 +465,7 @@ def plot_compare(  # noqa: ANN201
     label_size: float | Literal['best_fit', 'uniform'] | None = None,
     label_position: TextPositionOptions | None = None,
     label_kwargs: dict[str, Any] | None = None,
-    reference_mesh: DataSet | MultiBlock | PartitionedDataSet | None = None,
+    reference_mesh: DataSet | MultiBlock[Any] | PartitionedDataSet | None = None,
     reference_kwargs: dict[str, Any] | None = None,
     volume: bool = False,
     shape: Sequence[int] | str | None = None,

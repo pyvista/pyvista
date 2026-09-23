@@ -18,6 +18,10 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import Literal
+from typing import overload
 
 import numpy as np
 
@@ -28,12 +32,18 @@ from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.utilities.features import _voxelize_legacy
 
+if TYPE_CHECKING:
+    from pyvista.plotting._typing import CameraPositionOptions
+    from pyvista.plotting.plotter import _ShowReturnType
+
 THIS_PATH = str(Path(os.path.realpath(__file__)).parent)
 
 LOGO_TITLE = 'PyVista'
 
 
-def atomize(grid, shift_fac=0.1, scale=0.9):
+def atomize(
+    grid: pv.UnstructuredGrid, shift_fac: float = 0.1, scale: float = 0.9
+) -> pv.UnstructuredGrid:
     """Break apart and shrink and/or scale the individual cells of a mesh.
 
     Parameters
@@ -63,7 +73,7 @@ def atomize(grid, shift_fac=0.1, scale=0.9):
     return cells[0].merge(cells[1:])
 
 
-def text_3d(string, depth=0.5):
+def text_3d(string: str, depth: float = 0.5) -> pv.PolyData:
     """Create 3D text from a given string.
 
     Parameters
@@ -76,8 +86,8 @@ def text_3d(string, depth=0.5):
 
     Returns
     -------
-    pyvista.DataSet
-        The 3D text in the form of a PyVista DataSet.
+    pyvista.PolyData
+        The 3D text in the form of a PyVista PolyData mesh.
 
     """
     vec_text = _vtk.vtkVectorText()
@@ -95,7 +105,19 @@ def text_3d(string, depth=0.5):
     return _get_output(tri_filter)
 
 
-def logo_letters(*, merge=False, depth=0.3):
+# fmt: off
+# ruff: disable[E501]
+@overload
+def logo_letters(*, merge: Literal[False] = False, depth: float = ...) -> dict[str, pv.PolyData]: ...
+@overload
+def logo_letters(*, merge: Literal[True], depth: float = ...) -> pv.PolyData: ...
+@overload
+def logo_letters(*, merge: bool = ..., depth: float = ...) -> pv.PolyData | dict[str, pv.PolyData]: ...
+# ruff: enable[E501]
+# fmt: on
+def logo_letters(
+    *, merge: bool = False, depth: float = 0.3
+) -> pv.PolyData | dict[str, pv.PolyData]:
     """Generate a mesh for each letter in "PyVista".
 
     Parameters
@@ -115,7 +137,8 @@ def logo_letters(*, merge=False, depth=0.3):
         the keys are the letters and the values are the respective meshes.
 
     """
-    mesh_letters = pv.PolyData() if merge else {}
+    merged = pv.PolyData()
+    letters: dict[str, pv.PolyData] = {}
 
     # spacing between letters
     space_factor = 0.9
@@ -126,14 +149,14 @@ def logo_letters(*, merge=False, depth=0.3):
         mesh_letter.translate([width * space_factor, 0, 0.0], inplace=True)
         width += this_letter_width
         if merge:
-            mesh_letters += mesh_letter
+            merged += mesh_letter
         else:
-            mesh_letters[letter] = mesh_letter  # type: ignore[index]
+            letters[letter] = mesh_letter
 
-    return mesh_letters
+    return merged if merge else letters
 
 
-def logo_voxel(density=0.03):
+def logo_voxel(density: float = 0.03) -> pv.UnstructuredGrid:
     """Create a voxelized PyVista logo.
 
     Parameters
@@ -150,7 +173,7 @@ def logo_voxel(density=0.03):
     return _voxelize_legacy(text_3d(LOGO_TITLE, depth=0.3), density=density)
 
 
-def logo_basic():
+def logo_basic() -> pv.PolyData:
     """Create a basic pyvista logo.
 
     Returns
@@ -182,14 +205,14 @@ def logo_basic():
 
 def plot_logo(
     *,
-    window_size=None,
-    off_screen=None,
-    screenshot=None,
-    cpos=None,
-    just_return_plotter=False,
-    show_note=False,
-    **kwargs,
-):
+    window_size: list[int] | None = None,
+    off_screen: bool | None = None,
+    screenshot: str | Path | None = None,
+    cpos: CameraPositionOptions | None = None,
+    just_return_plotter: bool = False,
+    show_note: bool = False,
+    **kwargs: Any,
+) -> pv.Plotter | _ShowReturnType:
     """Plot the stylized PyVista logo.
 
     Parameters
@@ -327,7 +350,9 @@ def plot_logo(
         return pl.show(cpos=cpos, **kwargs)
 
 
-def logo_atomized(density=0.05, scale=0.6, depth=0.05):
+def logo_atomized(
+    density: float = 0.05, scale: float = 0.6, depth: float = 0.05
+) -> pv.UnstructuredGrid:
     """Generate a voxelized pyvista logo with intra-cell spacing.
 
     Parameters

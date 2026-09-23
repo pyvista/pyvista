@@ -393,7 +393,7 @@ class PolyDataFilters(DataSetFilters):
     # fmt: off
     # ruff: disable[E501]
     @overload  # a composite, whose blocks decide
-    def __add__(self: PolyData, dataset: MultiBlock) -> PolyData | UnstructuredGrid: ...  # type: ignore[misc]
+    def __add__(self: PolyData, dataset: MultiBlock[Any]) -> PolyData | UnstructuredGrid: ...  # type: ignore[misc]
     @overload  # polydata
     def __add__(self: PolyData, dataset: PolyData | Sequence[PolyData]) -> PolyData: ...  # type: ignore[misc, overload-overlap]
     @overload  # anything else
@@ -402,14 +402,14 @@ class PolyDataFilters(DataSetFilters):
     # fmt: on
     def __add__(  # type: ignore[misc]
         self: PolyData,
-        dataset: DataSet | _vtk.vtkDataSet | MultiBlock | Sequence[DataSet | _vtk.vtkDataSet],
+        dataset: DataSet | _vtk.vtkDataSet | MultiBlock[Any] | Sequence[DataSet | _vtk.vtkDataSet],
     ) -> PolyData | UnstructuredGrid:
         """Merge these two meshes."""
         return self.merge(dataset)
 
     def __iadd__(  # type: ignore[misc]
         self: PolyData,
-        dataset: DataSet | _vtk.vtkDataSet | MultiBlock | Sequence[DataSet | _vtk.vtkDataSet],
+        dataset: DataSet | _vtk.vtkDataSet | MultiBlock[Any] | Sequence[DataSet | _vtk.vtkDataSet],
     ) -> PolyData:
         """Merge another mesh into this one if possible.
 
@@ -494,7 +494,7 @@ class PolyDataFilters(DataSetFilters):
     # fmt: off
     # ruff: disable[E501]
     @overload  # type: ignore[override]  # PolyData with a composite, whose blocks decide
-    def merge(self: PolyData, dataset: MultiBlock, *, merge_points: bool = ..., tolerance: float = ..., inplace: bool = ..., main_has_priority: bool | None = ..., progress_bar: bool = ...) -> PolyData | UnstructuredGrid: ...  # type: ignore[misc]
+    def merge(self: PolyData, dataset: MultiBlock[Any], *, merge_points: bool = ..., tolerance: float = ..., inplace: bool = ..., main_has_priority: bool | None = ..., progress_bar: bool = ...) -> PolyData | UnstructuredGrid: ...  # type: ignore[misc]
     @overload  # PolyData with polydata
     def merge(self: PolyData, dataset: PolyData | Sequence[PolyData], *, merge_points: bool = ..., tolerance: float = ..., inplace: bool = ..., main_has_priority: bool | None = ..., progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc, overload-overlap]
     @overload  # PolyData with anything else
@@ -503,7 +503,7 @@ class PolyDataFilters(DataSetFilters):
     # fmt: on
     def merge(  # type: ignore[misc]
         self: PolyData,
-        dataset: DataSet | _vtk.vtkDataSet | MultiBlock | Sequence[DataSet | _vtk.vtkDataSet],
+        dataset: DataSet | _vtk.vtkDataSet | MultiBlock[Any] | Sequence[DataSet | _vtk.vtkDataSet],
         *,
         merge_points: bool = True,
         tolerance: float = 0.0,

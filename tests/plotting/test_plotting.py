@@ -32,6 +32,7 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.plotting import BackgroundPlotter
 from pyvista.plotting import QtDeprecationError
 from pyvista.plotting import QtInteractor
+from pyvista.plotting._plotting import process_opacity
 from pyvista.plotting._property import _HAS_NATIVE_POINT_SHAPES
 from pyvista.plotting._typing import OpacityOptions
 from pyvista.plotting.axes_assembly import ScaleModeOptions
@@ -3535,6 +3536,57 @@ def test_opacity_mismatched_fail(uniform):
     with pytest.raises(ValueError):  # noqa: PT011
         # cell scalars vs point opacity
         pl.add_mesh(uniform, scalars='Spatial Cell Data', opacity='unc')
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_opacity_by_array_without_scalars(uniform):
+    opac = uniform['Spatial Point Data'] / uniform['Spatial Point Data'].max()
+    uniform['unc'] = opac
+    uniform.set_active_scalars(None)
+
+    pl = pv.Plotter()
+    actor = pl.add_mesh(uniform, opacity='unc')
+
+    rgba = next(arr for arr in actor.mapper.dataset.point_data.values() if arr.ndim == 2)
+    np.testing.assert_allclose(rgba[:, -1] / 255, opac, atol=2 / 255)
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_use_transparency_without_opacity(sphere):
+    pl = pv.Plotter()
+    actor = pl.add_mesh(sphere, use_transparency=True)
+
+    assert actor.prop.opacity == 1.0
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+@pytest.mark.parametrize(
+    ('opacity', 'expected'),
+    [([0.0, 0.25, 1.0], [1.0, 0.75, 0.0]), ([0, 64, 255], [255, 191, 0])],
+)
+def test_use_transparency_inverts_an_opacity_array(opacity, expected):
+    mesh = pv.Triangle()
+    _, values = process_opacity(
+        mesh=mesh,
+        opacity=opacity,
+        preference='point',
+        n_colors=8,
+        scalars=None,
+        use_transparency=True,
+    )
+
+    np.testing.assert_allclose(values, expected)
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_opacity_accepts_any_sequence(sphere):
+    kwargs = dict(
+        mesh=sphere, preference='point', n_colors=8, scalars=None, use_transparency=False
+    )
+    _, from_range = process_opacity(opacity=range(5), **kwargs)
+    _, from_list = process_opacity(opacity=[0, 1, 2, 3, 4], **kwargs)
+
+    np.testing.assert_array_equal(from_range, from_list)
 
 
 @skip_windows_mesa

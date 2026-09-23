@@ -559,7 +559,7 @@ class BasePlotter(_BoundsSizeMixin):
         # `orbit_on_path()` call, if any; used by `close()` to stop it cleanly
         self._orbit_thread: threading.Thread | None = None
         self._orbit_stop_event: threading.Event | None = None
-        self.mesh: MultiBlock | DataSet | None = None
+        self.mesh: MultiBlock[Any] | DataSet | None = None
         if title is None:
             title = self._theme.title
         self.title = str(title)
@@ -3010,7 +3010,9 @@ class BasePlotter(_BoundsSizeMixin):
     def isometric_view_interactive(self) -> None:
         """Set the current interactive render window to isometric view."""
         interactor = self._get_iren_not_none().get_interactor_style()
-        renderer = interactor.GetCurrentRenderer()
+        # VTK types the getter as non-optional, but it returns None before the
+        # first interaction, and otherwise the PyVista renderer it was given.
+        renderer = cast('Renderer | None', interactor.GetCurrentRenderer())
         if renderer is None:
             renderer = self.renderer
         renderer.view_isometric()
@@ -3050,7 +3052,7 @@ class BasePlotter(_BoundsSizeMixin):
 
     def add_composite(
         self,
-        dataset: MultiBlock,
+        dataset: MultiBlock[Any],
         *,
         color: ColorLike | None = None,
         style: StyleOptions | None = None,
@@ -3634,7 +3636,7 @@ class BasePlotter(_BoundsSizeMixin):
         point_size: float | None = None,
         line_width: float | None = None,
         line_style: LineStyle | None = None,
-        opacity: float | OpacityOptions | Sequence[float] | None = None,
+        opacity: float | OpacityOptions | str | VectorLike[float] | None = None,
         flip_scalars: bool = False,
         lighting: bool | None = None,
         n_colors: int = 256,
@@ -3795,8 +3797,9 @@ class BasePlotter(_BoundsSizeMixin):
             predefined opacity transfer function (options include:
             ``'linear'``, ``'linear_r'``, ``'geom'``, ``'geom_r'``).
             A string could also be used to map a scalars array from
-            the mesh to the opacity (must have same number of elements
-            as the ``scalars`` argument). Or you can pass a custom
+            the mesh to the opacity (must have the same number of
+            elements as the ``scalars`` argument, when scalars are
+            given). Or you can pass a custom
             made transfer function that is an array either
             ``n_colors`` in length or shorter.
 
@@ -4460,7 +4463,6 @@ class BasePlotter(_BoundsSizeMixin):
                 silhouette_actor = self.add_silhouette(algo or mesh)
             silhouette_actor.user_matrix = user_matrix
 
-        scalar_bar_args = cast('ScalarBarArgs', scalar_bar_args)
         # Try to plot something if no preference given
         if scalars is None and (rgb or (color is None and texture is None)):
             # Make sure scalars components are not vectors/tuples
@@ -4562,8 +4564,7 @@ class BasePlotter(_BoundsSizeMixin):
             # can activate the mapper's live input, not just the cached
             # snapshot.
             if (
-                algo is not None
-                and original_scalar_name is None
+                original_scalar_name is None
                 and isinstance(scalars, np.ndarray)
                 and scalars.shape[0] in (mesh.n_points, mesh.n_cells)
             ):
@@ -4608,7 +4609,7 @@ class BasePlotter(_BoundsSizeMixin):
             if isinstance(texture, np.ndarray):
                 texture = numpy_to_texture(texture)
             if not isinstance(texture, (_vtk.vtkTexture, _vtk.vtkOpenGLTexture)):
-                msg = f'Invalid texture type ({type(texture)})'
+                msg = f'Invalid texture type ({type(texture)})'  # type: ignore[unreachable]
                 raise TypeError(msg)
             if mesh.GetPointData().GetTCoords() is None:
                 msg = 'Input mesh does not have texture coordinates to support the texture.'
@@ -4673,7 +4674,7 @@ class BasePlotter(_BoundsSizeMixin):
         mapper.static = static
 
         # Set actor properties ================================================
-        prop_kwargs = dict(
+        prop_kwargs: dict[str, Any] = dict(
             theme=self._theme,
             interpolation=interpolation,
             metallic=metallic,
@@ -4815,16 +4816,16 @@ class BasePlotter(_BoundsSizeMixin):
     # fmt: off
     # ruff: disable[E501]
     @overload
-    def add_volume(self, volume: MultiBlock, *, scalars: str | NumpyArray[float] | None = ..., clim: float | tuple[float, float] | None = ..., resolution: VectorLike[float] | None = ..., opacity: OpacityOptions | NumpyArray[float] = ..., n_colors: int = ..., cmap: ColormapOptions | LookupTable | None = ..., flip_scalars: bool = ..., reset_camera: bool | None = ..., name: str | None = ..., ambient: float | None = ..., categories: bool | int = ..., culling: CullingOptions | bool = ..., multi_colors: bool = ..., blending: Literal['additive', 'maximum', 'minimum', 'composite', 'average'] = ..., mapper: Literal['fixed_point', 'gpu', 'open_gl', 'smart', 'ugrid'] | None = ..., scalar_bar_args: ScalarBarArgs | None = ..., show_scalar_bar: bool | None = ..., annotations: dict[float, str] | None = ..., pickable: bool = ..., preference: PointLiteral | CellLiteral = ..., opacity_unit_distance: float | None = ..., shade: bool = ..., diffuse: float = ..., specular: float = ..., specular_power: float = ..., render: bool | None = ..., user_matrix: TransformLike | None = ..., log_scale: bool = ..., **kwargs) -> list[Volume]: ...
+    def add_volume(self, volume: MultiBlock[Any], *, scalars: str | NumpyArray[float] | None = ..., clim: float | tuple[float, float] | None = ..., resolution: VectorLike[float] | None = ..., opacity: OpacityOptions | NumpyArray[float] = ..., n_colors: int = ..., cmap: ColormapOptions | LookupTable | None = ..., flip_scalars: bool = ..., reset_camera: bool | None = ..., name: str | None = ..., ambient: float | None = ..., categories: bool | int = ..., culling: CullingOptions | bool = ..., multi_colors: bool = ..., blending: Literal['additive', 'maximum', 'minimum', 'composite', 'average'] = ..., mapper: Literal['fixed_point', 'gpu', 'open_gl', 'smart', 'ugrid'] | None = ..., scalar_bar_args: ScalarBarArgs | None = ..., show_scalar_bar: bool | None = ..., annotations: dict[float, str] | None = ..., pickable: bool = ..., preference: PointLiteral | CellLiteral = ..., opacity_unit_distance: float | None = ..., shade: bool = ..., diffuse: float = ..., specular: float = ..., specular_power: float = ..., render: bool | None = ..., user_matrix: TransformLike | None = ..., log_scale: bool = ..., **kwargs) -> list[Volume]: ...
     @overload
     def add_volume(self, volume: DataSet | NumpyArray[float], *, scalars: str | NumpyArray[float] | None = ..., clim: float | tuple[float, float] | None = ..., resolution: VectorLike[float] | None = ..., opacity: OpacityOptions | NumpyArray[float] = ..., n_colors: int = ..., cmap: ColormapOptions | LookupTable | None = ..., flip_scalars: bool = ..., reset_camera: bool | None = ..., name: str | None = ..., ambient: float | None = ..., categories: bool | int = ..., culling: CullingOptions | bool = ..., multi_colors: bool = ..., blending: Literal['additive', 'maximum', 'minimum', 'composite', 'average'] = ..., mapper: Literal['fixed_point', 'gpu', 'open_gl', 'smart', 'ugrid'] | None = ..., scalar_bar_args: ScalarBarArgs | None = ..., show_scalar_bar: bool | None = ..., annotations: dict[float, str] | None = ..., pickable: bool = ..., preference: PointLiteral | CellLiteral = ..., opacity_unit_distance: float | None = ..., shade: bool = ..., diffuse: float = ..., specular: float = ..., specular_power: float = ..., render: bool | None = ..., user_matrix: TransformLike | None = ..., log_scale: bool = ..., **kwargs) -> Volume: ...
     @overload
-    def add_volume(self, volume: DataSet | MultiBlock | NumpyArray[float], *, scalars: str | NumpyArray[float] | None = ..., clim: float | tuple[float, float] | None = ..., resolution: VectorLike[float] | None = ..., opacity: OpacityOptions | NumpyArray[float] = ..., n_colors: int = ..., cmap: ColormapOptions | LookupTable | None = ..., flip_scalars: bool = ..., reset_camera: bool | None = ..., name: str | None = ..., ambient: float | None = ..., categories: bool | int = ..., culling: CullingOptions | bool = ..., multi_colors: bool = ..., blending: Literal['additive', 'maximum', 'minimum', 'composite', 'average'] = ..., mapper: Literal['fixed_point', 'gpu', 'open_gl', 'smart', 'ugrid'] | None = ..., scalar_bar_args: ScalarBarArgs | None = ..., show_scalar_bar: bool | None = ..., annotations: dict[float, str] | None = ..., pickable: bool = ..., preference: PointLiteral | CellLiteral = ..., opacity_unit_distance: float | None = ..., shade: bool = ..., diffuse: float = ..., specular: float = ..., specular_power: float = ..., render: bool | None = ..., user_matrix: TransformLike | None = ..., log_scale: bool = ..., **kwargs) -> Volume | list[Volume]: ...
+    def add_volume(self, volume: DataSet | MultiBlock[Any] | NumpyArray[float], *, scalars: str | NumpyArray[float] | None = ..., clim: float | tuple[float, float] | None = ..., resolution: VectorLike[float] | None = ..., opacity: OpacityOptions | NumpyArray[float] = ..., n_colors: int = ..., cmap: ColormapOptions | LookupTable | None = ..., flip_scalars: bool = ..., reset_camera: bool | None = ..., name: str | None = ..., ambient: float | None = ..., categories: bool | int = ..., culling: CullingOptions | bool = ..., multi_colors: bool = ..., blending: Literal['additive', 'maximum', 'minimum', 'composite', 'average'] = ..., mapper: Literal['fixed_point', 'gpu', 'open_gl', 'smart', 'ugrid'] | None = ..., scalar_bar_args: ScalarBarArgs | None = ..., show_scalar_bar: bool | None = ..., annotations: dict[float, str] | None = ..., pickable: bool = ..., preference: PointLiteral | CellLiteral = ..., opacity_unit_distance: float | None = ..., shade: bool = ..., diffuse: float = ..., specular: float = ..., specular_power: float = ..., render: bool | None = ..., user_matrix: TransformLike | None = ..., log_scale: bool = ..., **kwargs) -> Volume | list[Volume]: ...
     # ruff: enable[E501]
     # fmt: on
     def add_volume(
         self,
-        volume: DataSet | MultiBlock | NumpyArray[float],
+        volume: DataSet | MultiBlock[Any] | NumpyArray[float],
         *,
         scalars: str | NumpyArray[float] | None = None,
         clim: float | tuple[float, float] | None = None,
@@ -5163,7 +5164,7 @@ class BasePlotter(_BoundsSizeMixin):
         assert_empty_kwargs(**kwargs)
 
         if show_scalar_bar is None:
-            show_scalar_bar = self._theme.show_scalar_bar or scalar_bar_args  # type: ignore[assignment]
+            show_scalar_bar = bool(self._theme.show_scalar_bar or scalar_bar_args)
 
         # Avoid mutating input
         scalar_bar_args = {} if scalar_bar_args is None else scalar_bar_args.copy()
@@ -5442,7 +5443,7 @@ class BasePlotter(_BoundsSizeMixin):
         self,
         mesh: NumpyArray[float]
         | DataSet
-        | MultiBlock
+        | MultiBlock[Any]
         | _vtk.vtkAlgorithm
         | _vtk.vtkAlgorithmOutput,
         *,
@@ -7269,7 +7270,7 @@ class BasePlotter(_BoundsSizeMixin):
         *,
         factor: float = 3.0,
         n_points: int = 20,
-        viewup: Sequence[float] | None = None,
+        viewup: VectorLike[float] | None = None,
         shift: float = 0.0,
     ) -> pv.PolyData:
         """Generate an orbital path around the data scene.
@@ -7282,7 +7283,7 @@ class BasePlotter(_BoundsSizeMixin):
         n_points : int, default: 20
             Number of points on the orbital path.
 
-        viewup : sequence[float], optional
+        viewup : VectorLike[float], optional
             The normal to the orbital plane.
 
         shift : float, default: 0.0
@@ -7349,9 +7350,9 @@ class BasePlotter(_BoundsSizeMixin):
         self,
         path: pv.PolyData | None = None,
         *,
-        focus: Sequence[float] | None = None,
+        focus: VectorLike[float] | None = None,
         step: float = 0.5,
-        viewup: Sequence[float] | None = None,
+        viewup: VectorLike[float] | None = None,
         write_frames: bool = False,
         threaded: bool = False,
         progress_bar: bool = False,
@@ -7364,14 +7365,14 @@ class BasePlotter(_BoundsSizeMixin):
             Path of orbital points. The order in the points is the order of
             travel.
 
-        focus : sequence[float], optional
+        focus : VectorLike[float], optional
             The point of focus the camera. For example ``(0.0, 0.0, 0.0)``.
 
         step : float, default: 0.5
             The timestep between flying to each camera position. Ignored when
             ``plotter.off_screen = True``.
 
-        viewup : sequence[float], optional
+        viewup : VectorLike[float], optional
             The normal to the orbital plane.
 
         write_frames : bool, default: False
@@ -8676,7 +8677,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
 
         # Add ren win and interactor
         self.iren = RenderWindowInteractor(self, light_follow_camera=False, interactor=interactor)
-        self.iren.set_render_window(self.render_window)
+        self.iren.set_render_window(self.render_window)  # type: ignore[arg-type]
         self.reset_key_events()
         self._get_iren_not_none().enable_interactor_style()
         self.iren.add_observer('KeyPressEvent', self.key_press_event)
@@ -9209,7 +9210,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
     @property
     def meshes(
         self,
-    ) -> list[pv.DataSet | pv.MultiBlock]:  # numpydoc ignore=RT01
+    ) -> list[pv.DataSet | pv.MultiBlock[Any]]:  # numpydoc ignore=RT01
         """Return plotter meshes.
 
         Returns
@@ -9239,7 +9240,7 @@ class Plotter(_NoNewAttrMixin, BasePlotter):
                         input_alg.Update()
                     meshes.append(pv.wrap(dataset))
 
-        meshes: list[pv.DataSet | pv.MultiBlock] = []
+        meshes: list[pv.DataSet | pv.MultiBlock[Any]] = []
         for actor in self.actors.values():
             for leaf in _iter_leaf_props(actor):
                 _append_actor_dataset(leaf)
