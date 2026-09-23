@@ -3770,7 +3770,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """Disable surface space ambient occlusion (SSAO)."""
         self._render_passes.disable_ssao_pass()
 
-    def get_pick_position(self) -> tuple[float, float, float, float]:
+    def get_pick_position(self) -> tuple[int, int, int, int]:
         """Get the pick position/area as ``x0, y0, x1, y1``.
 
         Returns

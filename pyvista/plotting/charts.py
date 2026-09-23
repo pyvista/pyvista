@@ -26,6 +26,7 @@ import numpy as np
 import pyvista as pv
 from pyvista import _vtk
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
+from pyvista.core.utilities.misc import _check_line_style
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import abstract_class
 
@@ -43,6 +44,7 @@ if TYPE_CHECKING:
 
     from matplotlib.backend_bases import DrawEvent
 
+    from pyvista.core._typing_core import LineStyle
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
@@ -55,7 +57,6 @@ if TYPE_CHECKING:
 _TextureLike: TypeAlias = Union[
     str, _vtk.vtkTexture, _vtk.vtkImageData, 'NumpyArray[Any]', 'Sequence[pv.ImageData]'
 ]
-_LineStyleOptions: TypeAlias = Literal['', '-', '--', ':', '-.', '-..']
 _MarkerStyleOptions: TypeAlias = Literal['', 'x', '+', 's', 'o', 'd']
 _AxisBehaviorOptions: TypeAlias = Literal['auto', 'fixed']
 _OrientationOptions: TypeAlias = Literal['H', 'V']
@@ -223,12 +224,12 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
     LINE_STYLES : dict
         Dictionary containing all allowed line styles as its keys.
 
-        .. include:: ../pen_line_styles.rst
+        .. include:: /api/plotting/line_styles.rst
 
     """
 
     LINE_STYLES: ClassVar[
-        dict[str, dict[str, int | str]]
+        dict[LineStyle, dict[str, int | str]]
     ] = {  # descr is used in the documentation, set to None to hide it from the docs.
         '': {'id': _vtk.vtkPen.NO_PEN, 'descr': 'Hidden'},
         '-': {'id': _vtk.vtkPen.SOLID_LINE, 'descr': 'Solid'},
@@ -242,7 +243,7 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
         self,
         color: ColorLike | None = 'k',
         width: float = 1,
-        style: _LineStyleOptions | None = '-',
+        style: LineStyle | None = '-',
     ) -> None:
         """Initialize a new Pen instance."""
         super().__init__()
@@ -300,7 +301,7 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
         self.SetWidth(float(val))
 
     @property
-    def style(self) -> _LineStyleOptions:  # numpydoc ignore=RT01
+    def style(self) -> LineStyle:  # numpydoc ignore=RT01
         """Return or set the pen's line style.
 
         See :ref:`Pen.LINE_STYLES <pen_line_styles>` for a list of allowed line styles.
@@ -320,16 +321,12 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
         return self._line_style
 
     @style.setter
-    def style(self, val: _LineStyleOptions | None) -> None:
+    def style(self, val: LineStyle | None) -> None:
         if val is None:
             val = ''
-        try:
-            self.SetLineType(self.LINE_STYLES[val]['id'])  # type: ignore[arg-type]
-            self._line_style = val
-        except KeyError:
-            formatted_styles = '", "'.join(self.LINE_STYLES.keys())
-            msg = f'Invalid line style. Allowed line styles: "{formatted_styles}"'
-            raise ValueError(msg)
+        _check_line_style(val)
+        self.SetLineType(self.LINE_STYLES[val]['id'])  # type: ignore[arg-type]
+        self._line_style = val
 
 
 class Brush(_vtkWrapper, _vtk.vtkBrush):
@@ -1487,7 +1484,7 @@ class _Chart(DocSubs):
 
     @property
     @doc_subs
-    def border_style(self) -> _LineStyleOptions:  # numpydoc ignore=RT01
+    def border_style(self) -> LineStyle:  # numpydoc ignore=RT01
         """Return or set the chart's border style.
 
         Examples
@@ -1508,7 +1505,7 @@ class _Chart(DocSubs):
         return self._background.BorderPen.style
 
     @border_style.setter
-    def border_style(self, val: _LineStyleOptions | None) -> None:
+    def border_style(self, val: LineStyle | None) -> None:
         self._background.BorderPen.style = val
         self._background.ActiveBorderPen.style = val
 
@@ -1981,7 +1978,7 @@ class _Plot(DocSubs):
 
     @property
     @doc_subs
-    def line_style(self) -> _LineStyleOptions:  # numpydoc ignore=RT01
+    def line_style(self) -> LineStyle:  # numpydoc ignore=RT01
         """Return or set the line style of all lines drawn in this plot.
 
         This is equivalent to accessing/modifying the style of this plot's pen.
@@ -2003,7 +2000,7 @@ class _Plot(DocSubs):
         return self.pen.style
 
     @line_style.setter
-    def line_style(self, val: _LineStyleOptions | None) -> None:
+    def line_style(self, val: LineStyle | None) -> None:
         self.pen.style = val
 
     @property
@@ -2376,7 +2373,7 @@ class LinePlot2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Plot, _vtk.vtkPlotLine):
         *,
         color: ColorLike | None = 'b',
         width: float = 1.0,
-        style: _LineStyleOptions | None = '-',
+        style: LineStyle | None = '-',
         label: str | None = '',
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize a new 2D line plot instance."""
@@ -3470,7 +3467,7 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
         return plot
 
     @classmethod
-    def _parse_format(cls, fmt: str) -> tuple[_MarkerStyleOptions, _LineStyleOptions, str]:
+    def _parse_format(cls, fmt: str) -> tuple[_MarkerStyleOptions, LineStyle, str]:
         """Parse a format string and separate it into a marker style, line style and color.
 
         Parameters
@@ -3506,7 +3503,7 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
 
         """
         marker_style: _MarkerStyleOptions = ''
-        line_style: _LineStyleOptions = ''
+        line_style: LineStyle = ''
         color = None
         # Note: All colors, marker styles and line styles are sorted in decreasing order of length
         # to be able to find the largest match first (e.g. find 'darkred' and '--' first instead
@@ -3545,7 +3542,7 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
         # Extract line style from format string
         for style in line_styles[:-1]:  # Last style is empty string
             if style in fmt:
-                line_style = cast('_LineStyleOptions', style)
+                line_style = style
                 fmt = fmt.replace(line_style, '', 1)  # Remove found line_style from format string
                 break
         return marker_style, line_style, color
@@ -3687,7 +3684,7 @@ class Chart2D(_NoNewAttrMixin, DisableVtkSnakeCase, _Chart, _vtk.vtkChartXY):
         *,
         color: ColorLike | None = 'b',
         width: float = 1.0,
-        style: _LineStyleOptions | None = '-',
+        style: LineStyle | None = '-',
         label: str | None = '',
     ) -> LinePlot2D:
         """Add a line plot to this chart.

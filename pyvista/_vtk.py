@@ -400,6 +400,7 @@ _CORE_MODULES: dict[str, tuple[str, ...]] = {
         'vtkRectilinearGridToPointSet',
         'vtkRectilinearGridToTetrahedra',
         'vtkShrinkFilter',
+        'vtkShrinkPolyData',
         'vtkTableBasedClipDataSet',
         'vtkTableToPolyData',
         'vtkTessellatorFilter',

@@ -7,13 +7,18 @@ from typing import Any
 import weakref
 
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import _vtk
 from pyvista._warn_external import warn_external
+from pyvista.core.utilities.arrays import FieldAssociation
+from pyvista.core.utilities.misc import _resolve_line_style
+from pyvista.plotting.utilities.algorithms import set_algorithm_input
 
 from ._property import _HAS_NATIVE_POINT_SHAPES
 from ._property import Property
+from .mapper import _PolyDataMapper
 from .opts import PointSpriteShape
 from .opts import ShaderType
 from .prop3d import Prop3D
@@ -22,6 +27,9 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from typing_extensions import Self
+
+    from pyvista import DataSet
+    from pyvista.core._typing_core import LineStyle
 
     from .mapper import _BaseMapper
 
@@ -95,6 +103,41 @@ _POINT_SPRITE_SHADERS: dict[str, str] = {
         '  discard;\n'
     ),
 }
+
+
+_DASH_VERTEX_DEC = """//VTK::PositionVC::Dec
+in float dashArcMC;
+out float dashArcVS;
+noperspective out float dashArc;
+"""
+
+_DASH_VERTEX_IMPL = """{
+  vec3 dashRow = vec3(MCDCMatrix[0].y, MCDCMatrix[1].y, MCDCMatrix[2].y);
+  float dashDepth = (MCDCMatrix * vec4(0.0, 0.0, 0.0, 1.0)).w;
+  float dashValue = dashArcMC * 0.5 * length(dashRow) / (dashDepth * dashInterval);
+  dashArcVS = dashValue;
+  dashArc = dashValue;
+}
+//VTK::CustomEnd::Impl
+"""
+
+_DASH_GEOMETRY_DEC = """//VTK::PositionVC::Dec
+in float dashArcVS[];
+noperspective out float dashArc;
+"""
+
+_DASH_GEOMETRY_IMPL = """dashArc = dashArcVS[i];
+//VTK::Color::Impl
+"""
+
+_DASH_FRAGMENT_DEC = """//VTK::PositionVC::Dec
+noperspective in float dashArc;
+"""
+
+_DASH_FRAGMENT_IMPL = """//VTK::Color::Impl
+if (((1 << int(mod(abs(dashArc), 16.0))) & dashPattern) == 0)
+  discard;
+"""
 
 
 class Actor(Prop3D, _vtk.vtkActor):
@@ -177,6 +220,10 @@ class Actor(Prop3D, _vtk.vtkActor):
             self.prop = prop
         self._name = name
         self._shader_replacements: dict[str, list[tuple[ShaderType, str, bool]]] = {}
+        self._line_style: LineStyle | None = None
+        self._dash_source: _vtk.vtkAlgorithm | _vtk.vtkAlgorithmOutput | None = None
+        self._dash_input_dataset: DataSet | None = None
+        self._dash_interval: float = 0.004
         self._point_sprite_shape: str | None = None
         self._point_sprite_applied: str | None = None
         self._point_sprite_observer: int | None = None
@@ -716,6 +763,209 @@ class Actor(Prop3D, _vtk.vtkActor):
                     replace_first,
                 )
             del registry[_feature_name]
+
+    @property
+    def line_style(self) -> LineStyle | None:  # numpydoc ignore=RT01
+        """Return or set the dash style drawn along this actor's lines.
+
+        Unlike :func:`pyvista.PolyDataFilters.dash_lines`, which splits the line
+        cells into shorter cells, the dashes are produced by the fragment shader
+        and keep a constant size on screen as the camera zooms. The geometry is
+        unchanged and the dashes are not present in exported scenes.
+
+        Set to a style string to dash the lines, to ``''`` to hide them, or to
+        ``None`` to draw them solid. Accepts the same styles as
+        :func:`pyvista.PolyDataFilters.dash_lines`. Use :attr:`dash_interval`
+        to set the size of the interval pattern.
+
+        .. versionadded:: 0.50
+
+        Notes
+        -----
+        .. include:: /api/plotting/line_styles.rst
+
+        * Requires an actor from :func:`~pyvista.Plotter.add_mesh` with a
+          ``line_style`` other than ``'-'``.
+        * Requires a mesh of line cells. Polygons and strips are rejected.
+        * Edges drawn with ``show_edges=True`` are not dashed. Extract them with
+          :func:`~pyvista.DataObjectFilters.extract_all_edges` and add that as
+          its own mesh.
+        * Cells shorter on screen than ``line_width`` are drawn solid.
+        * Cell scalars restart the pattern at each cell.
+
+        Examples
+        --------
+        Dash the lines of a circle.
+
+        >>> import pyvista as pv
+        >>> circle = pv.Circle(resolution=200).extract_all_edges()
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(circle, color='black', line_width=4, line_style='--')
+        >>> pl.show(cpos='xy')
+
+        """
+        return self._line_style
+
+    @line_style.setter
+    def line_style(self, value: LineStyle | None) -> None:
+        if value is None or value == '-':
+            self._disable_line_style()
+            return
+
+        bits = _resolve_line_style(value, name='line_style')
+
+        mapper = self.mapper
+        if not isinstance(mapper, _PolyDataMapper):
+            msg = (
+                'Dashed lines require a mesh added with add_mesh(..., line_style=...) '
+                "using a style other than '-'."
+            )
+            raise TypeError(msg)
+
+        dataset = mapper.dataset
+        if dataset is None:
+            msg = 'Actor must have a dataset to enable dashed lines.'
+            raise ValueError(msg)
+
+        if self._dash_source is None:
+            self._dash_input_dataset = mapper._input_dataset
+            pipeline, self._dash_source = self._build_dash_pipeline(mapper, dataset)
+            mapper.dataset = pipeline
+            mapper.MapDataArrayToVertexAttribute(
+                'dashArcMC',
+                'arc_length',
+                FieldAssociation.POINT.value,
+                -1,
+            )
+        self._line_style = value
+
+        try:
+            self._apply_dash_shader(bits)
+        except Exception:
+            self._disable_line_style()
+            raise
+
+    def _apply_dash_shader(self, bits: int) -> None:
+        """Replace the shader stages that discard the undrawn parts of a line."""
+        self.add_shader_replacement(
+            'vertex',
+            '//VTK::PositionVC::Dec',
+            _DASH_VERTEX_DEC,
+            _feature_name='line_style',
+        )
+        self.add_shader_replacement(
+            'vertex',
+            '//VTK::CustomEnd::Impl',
+            _DASH_VERTEX_IMPL,
+            _feature_name='line_style',
+        )
+        self.add_shader_replacement(
+            'geometry',
+            '//VTK::PositionVC::Dec',
+            _DASH_GEOMETRY_DEC,
+            _feature_name='line_style',
+        )
+        self.add_shader_replacement(
+            'geometry',
+            '//VTK::Color::Impl',
+            _DASH_GEOMETRY_IMPL,
+            _feature_name='line_style',
+        )
+        self.add_shader_replacement(
+            'fragment',
+            '//VTK::PositionVC::Dec',
+            _DASH_FRAGMENT_DEC,
+            _feature_name='line_style',
+        )
+        self.add_shader_replacement(
+            'fragment',
+            '//VTK::Color::Impl',
+            _DASH_FRAGMENT_IMPL,
+            _feature_name='line_style',
+        )
+        shader_property = self.GetShaderProperty()
+        shader_property.GetVertexCustomUniforms().SetUniformf('dashInterval', self._dash_interval)
+        shader_property.GetFragmentCustomUniforms().SetUniformi('dashPattern', bits)
+
+    @property
+    def dash_interval(self) -> float:  # numpydoc ignore=RT01
+        """Return or set the on-screen length of one dash pattern interval.
+
+        The length is a fraction of the renderer's viewport height, so a subplot
+        dashes at the same rate as a full window of that height. A full pattern
+        repeats every sixteen intervals.
+
+        This property only affects lines with a dashed :attr:`line_style`.
+
+        .. versionadded:: 0.50
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(pv.Line(), line_style='--')
+        >>> actor.dash_interval = 0.01
+
+        """
+        return self._dash_interval
+
+    @dash_interval.setter
+    def dash_interval(self, value: float) -> None:
+        _validation.check_greater_than(value, 0, name='dash_interval')
+        value = float(value)
+        self._dash_interval = value
+        if self._line_style is not None:
+            self.GetShaderProperty().GetVertexCustomUniforms().SetUniformf('dashInterval', value)
+
+    def _build_dash_pipeline(
+        self, mapper: _PolyDataMapper, dataset: DataSet
+    ) -> tuple[_vtk.vtkAlgorithm, _vtk.vtkAlgorithm | _vtk.vtkAlgorithmOutput]:
+        """Return an arc length algorithm for the actor's lines and the input it wraps."""
+        scalars_algo = mapper._active_scalars_algo
+        source: _vtk.vtkAlgorithm | _vtk.vtkAlgorithmOutput = (
+            mapper if scalars_algo is None else scalars_algo
+        ).GetInputConnection(0, 0)
+
+        surface = dataset
+        if not isinstance(dataset, pv.PolyData):
+            geometry = _vtk.vtkGeometryFilter()
+            set_algorithm_input(geometry, source)
+            geometry.Update()
+            source = geometry
+            surface = pv.wrap(geometry.GetOutput())
+
+        if surface.n_faces or surface.n_strips:
+            msg = (
+                'Dashed lines require a mesh of line cells. Extract the lines into their '
+                'own mesh first, for example with extract_all_edges.'
+            )
+            raise ValueError(msg)
+
+        upstream: _vtk.vtkAlgorithm
+        if mapper.scalar_map_mode == 'cell':
+            upstream = _vtk.vtkShrinkPolyData()
+            upstream.SetShrinkFactor(1.0)
+        else:
+            upstream = _vtk.vtkStripper()
+            upstream.SetJoinContiguousSegments(True)
+        set_algorithm_input(upstream, source)
+        arc_length = _vtk.vtkAppendArcLength()
+        set_algorithm_input(arc_length, upstream)
+        return arc_length, source
+
+    def _disable_line_style(self) -> None:
+        """Remove the dash shader and restore the mapper's original input."""
+        if self._line_style is None:
+            return
+        self.clear_shader_replacements(_feature_name='line_style')
+        mapper = self.mapper
+        if isinstance(mapper, _PolyDataMapper) and self._dash_source is not None:
+            mapper.RemoveVertexAttributeMapping('dashArcMC')
+            mapper.dataset = self._dash_source
+            mapper._input_dataset = self._dash_input_dataset
+        self._dash_source = None
+        self._dash_input_dataset = None
+        self._line_style = None
 
     def enable_maximum_intensity_projection(
         self,
