@@ -113,6 +113,7 @@ pv.plot_compare(
     color='black',
     line_width=4,
     cpos='iso',
+    shape=(1, 5),
 )
 
 # %%
