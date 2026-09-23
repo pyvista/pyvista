@@ -45,16 +45,18 @@ pl.view_isometric()
 pl.show()
 
 # %%
-# Every named style is available. ``'-'`` is solid, so it returns the lines whole.
+# Every named style is available. ``'-'`` is solid, so it returns the lines
+# whole. ``pattern`` takes lengths of alternating drawn and undrawn intervals
+# instead of a style, so ``[6, 2, 2, 2]`` draws six, skips two, draws two and
+# skips two, then repeats.
 
 styles = ['-', '--', ':', '-.', '-..']
+pattern = [6, 2, 2, 2]
 
-pv.plot_compare(
-    {f"'{style}'": helix.dash_lines(style) for style in styles},
-    color='black',
-    line_width=4,
-    cpos='iso',
-)
+dashed = {f"'{style}'": helix.dash_lines(style) for style in styles}
+dashed[f'pattern={pattern}'] = helix.dash_lines(pattern=pattern)
+
+pv.plot_compare(dashed, color='black', line_width=4, cpos='iso')
 
 # %%
 # ``scale`` sets the length of one pattern interval in world units, so shorter
@@ -101,7 +103,8 @@ pl.view_isometric()
 pl.show()
 
 # %%
-# The same styles apply.
+# The same named styles apply, but there is no ``pattern``: the shader draws
+# only the named ones.
 
 pv.plot_compare(
     [helix] * len(styles),
