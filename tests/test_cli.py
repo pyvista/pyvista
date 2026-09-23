@@ -2274,6 +2274,17 @@ def test_compare_called_outline(tmp_compare_files: list[Path], mock_plot_compare
     assert outline.bounds == meshes.bounds
 
 
+def test_compare_called_outline_partitioned(tmp_example_dir: Path, mock_plot_compare: MagicMock):
+    """Test that the outline encloses a partitioned dataset, which cannot be a block."""
+    pv.PartitionedDataSet([pv.Sphere(radius=5.0)]).save(tmp_example_dir / 'part.vtpd')
+    pv.Cube().save(tmp_example_dir / 'cube.vtp')
+
+    main('compare part.vtpd cube.vtp --outline')
+
+    outline = mock_plot_compare.call_args.kwargs['reference_mesh']
+    assert outline.bounds == pv.MultiBlock([pv.Sphere(radius=5.0), pv.Cube()]).bounds
+
+
 def test_compare_label_positions_are_the_ones_which_can_be_drawn():
     """Test that the positions offered are the ones a label can be drawn in."""
     from pyvista._cli.utils import LabelPosition
