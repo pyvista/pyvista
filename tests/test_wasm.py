@@ -19,7 +19,8 @@ from __future__ import annotations
 import os
 from pathlib import Path
 import sys
-from unittest import mock
+from unittest.mock import MagicMock
+from unittest.mock import patch as mock_patch
 
 import pytest
 
@@ -40,7 +41,7 @@ class TestIsPyodide:
         """Test that is_pyodide returns False in standard Python."""
         assert wasm.is_pyodide() is False
 
-    @mock.patch.object(sys, 'platform', 'emscripten')
+    @mock_patch.object(sys, 'platform', 'emscripten')
     def test_is_pyodide_returns_true_in_emscripten(self):
         """Test that is_pyodide returns True in emscripten platform."""
         assert wasm.is_pyodide() is True
@@ -106,17 +107,17 @@ class TestGenerateStandaloneHTML:
 class TestJupyterBackendAutoDetection:
     """Tests for WASM backend auto-detection in Pyodide environments."""
 
-    @mock.patch.object(sys, 'platform', 'emscripten')
+    @mock_patch.object(sys, 'platform', 'emscripten')
     def test_resolve_backend_prefers_wasm_in_pyodide(self):
         """Test that _resolve_backend prefers wasm in emscripten environment."""
         from pyvista.jupyter import _resolve_backend
 
         # Mock pyvista_wasm as available
-        with mock.patch.dict('sys.modules', {'pyvista_wasm': mock.MagicMock()}):
+        with mock_patch.dict('sys.modules', {'pyvista_wasm': MagicMock()}):
             backend = _resolve_backend()
             assert backend == 'wasm'
 
-    @mock.patch.object(sys, 'platform', 'emscripten')
+    @mock_patch.object(sys, 'platform', 'emscripten')
     def test_resolve_backend_fallback_without_pyvista_wasm(self):
         """Test fallback when pyvista-wasm is not available in emscripten."""
         from pyvista.jupyter import _resolve_backend
