@@ -4918,9 +4918,11 @@ def _resolve_dash_pattern(
         if lengths.size % 2:
             msg = f'Pattern must hold an even number of lengths, got {lengths.size}.'
             raise ValueError(msg)
+        # the lengths alternate drawn and undrawn, so every even edge opens a drawn run
         edges = np.concatenate([[0.0], np.cumsum(lengths)])
         runs = [(float(edges[i]), float(edges[i + 1])) for i in range(0, lengths.size, 2)]
         return runs, float(edges[-1])
+    # a named style is sixteen stipple bits, so it repeats every sixteen intervals
     bits = _resolve_line_style('--' if style is None else style)
     if bits == _LINE_STYLE_PATTERNS['-']:
         return None, 16.0
@@ -4931,6 +4933,7 @@ def _pattern_runs(pattern: int) -> list[tuple[int, int]]:
     """Return the start and stop bit indices of each run of set bits in a pattern."""
     runs = []
     start = None
+    # step one past the last bit so a run reaching bit 15 is still closed
     for index in range(17):
         drawn = index < 16 and bool(pattern >> index & 1)
         if drawn and start is None:
@@ -4945,8 +4948,10 @@ def _locate(
     ids: NumpyArray[int], cumulative: NumpyArray[float], value: float
 ) -> tuple[int, int, float]:
     """Return the point ids bracketing a distance along a polyline and the blend weight."""
+    # clamp so the pair stays inside the polyline at either end of it
     upper = min(max(int(np.searchsorted(cumulative, value, side='left')), 1), len(ids) - 1)
     span = cumulative[upper] - cumulative[upper - 1]
+    # repeated points leave a segment of no length, which has nothing to blend along
     weight = 0.0 if span == 0 else (value - cumulative[upper - 1]) / span
     return int(ids[upper - 1]), int(ids[upper]), float(weight)
 
@@ -4956,11 +4961,13 @@ def _drawn_intervals(
 ) -> list[tuple[float, float]]:
     """Return the drawn intervals along a polyline of the given length."""
     if runs is None:
+        # a solid style draws each cell whole rather than repeating along it
         return [(0.0, total)]
     intervals = []
     for base in np.arange(0.0, total, cycle):
         for first, last in runs:
             start = float(base + first * scale)
+            # the last cycle runs off the end of the line, so cut it there
             stop = float(min(base + last * scale, total))
             if stop > start:
                 intervals.append((start, stop))
@@ -4981,6 +4988,7 @@ def _build_dashes(
 
     flat = source.lines
     position = 0
+    # cell ids run verts first, then lines, so the first line follows the verts
     cell = source.n_verts
     while position < flat.size:
         size = int(flat[position])
@@ -4996,6 +5004,7 @@ def _build_dashes(
         if total == 0.0:
             continue
         for start, stop in _drawn_intervals(runs, total=total, cycle=cycle, scale=scale):
+            # keep the polyline's own points so the dash still follows its bends
             inner = np.flatnonzero((cumulative > start) & (cumulative < stop))
             blend = [
                 _locate(ids, cumulative, start),
@@ -5004,6 +5013,7 @@ def _build_dashes(
             ]
             lines.append(len(blend))
             for left, right, fraction in blend:
+                # the points are appended in order, so each id is the count so far
                 lines.append(len(index_a))
                 index_a.append(left)
                 index_b.append(right)
@@ -5025,6 +5035,7 @@ def _dashed_polydata(
     output = pv.PolyData()
     if source.n_lines == 0:
         return output
+    # a two hundredth of the bounding box diagonal gives a readable default
     interval = source.length / 200.0 if scale is None else float(scale)
     index_a, index_b, weight, lines, cells = _build_dashes(
         source, runs, period=period, scale=interval
@@ -5036,6 +5047,7 @@ def _dashed_polydata(
     )
     output.lines = lines
     for name, array in source.point_data.items():
+        # set_array rather than an item assignment, which would activate the first array
         output.point_data.set_array(
             _interpolate_rows(np.asarray(array), index_a=index_a, index_b=index_b, weight=weight),
             name,
@@ -5047,8 +5059,10 @@ def _dashed_polydata(
 
 def _copy_active_names(source: DataSetAttributes, output: DataSetAttributes) -> None:
     """Mirror the active array names of the source onto the arrays the output holds."""
+    # the builders add arrays without activating any, so the input decides what is active
     for attribute in ('scalars', 'vectors', 'normals', 'texture_coordinates'):
         name = getattr(source, f'active_{attribute}_name')
+        # the output only holds the arrays the dashes kept, so skip any it lost
         if name is not None and name in output:
             setattr(output, f'active_{attribute}_name', name)
 
@@ -5062,7 +5076,9 @@ def _interpolate_rows(
 ) -> NumpyArray[Any]:
     """Blend array rows between two index sets, snapping to the nearest for non-float data."""
     if not np.issubdtype(array.dtype, np.floating):
+        # ids and labels cannot be averaged, so take whichever end is nearer
         return array[np.where(weight < 0.5, index_a, index_b)]
+    # line the weights up against however many components each row holds
     shape = (-1,) + (1,) * (array.ndim - 1)
     fraction = weight.reshape(shape)
     return array[index_a] * (1.0 - fraction) + array[index_b] * fraction
@@ -5075,6 +5091,7 @@ def _with_64_bit_faces(mesh: PolyData) -> PolyData:
     faces = _vtk.vtkCellArray()
     faces.DeepCopy(mesh.GetPolys())
     faces.ConvertTo64BitStorage()
+    # a shallow copy, so the input keeps its own faces and their storage
     converted = mesh.copy(deep=False)
     converted.SetPolys(faces)
     return converted
