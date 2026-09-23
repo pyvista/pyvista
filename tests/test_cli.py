@@ -2107,6 +2107,7 @@ def test_compare_called(tmp_compare_files: list[Path], mock_plot_compare: MagicM
         ('--border=false', 'border', False),
         ('--border interior', 'border', 'interior'),
         ('--border=exterior', 'border', 'exterior'),
+        ("--color=\"['red','blue']\"", 'color', ['red', 'blue']),
     ],
     ids=[
         'link_default',
@@ -2129,6 +2130,7 @@ def test_compare_called(tmp_compare_files: list[Path], mock_plot_compare: MagicM
         'border_false',
         'border_interior',
         'border_exterior',
+        'color_per_subplot',
     ],
 )
 def test_compare_forwards_arguments(
@@ -2145,6 +2147,25 @@ def test_compare_forwards_arguments(
     main(shlex.split(f'compare {names} {tokens}'))
 
     assert mock_plot_compare.call_args.kwargs[argument] == expected
+
+
+def test_compare_draws_a_value_for_each_subplot(
+    tmp_compare_files: list[Path], monkeypatch: pytest.MonkeyPatch
+):
+    """A keyword given one value per file draws each subplot with its own value."""
+    drawn: list[Any] = []
+    add_mesh = pv.Plotter.add_mesh
+
+    def record(self, mesh, **kwargs):
+        """Draw the mesh, recording the color it is drawn with."""
+        drawn.append(kwargs.get('color'))
+        return add_mesh(self, mesh, **kwargs)
+
+    monkeypatch.setattr(pv.Plotter, 'add_mesh', record)
+    names = ' '.join(path.name for path in tmp_compare_files)
+    main(shlex.split(f"""compare {names} --color="['red','blue']" --off_screen=True"""))
+
+    assert drawn == ['red', 'blue']
 
 
 @pytest.mark.usefixtures('patch_app_console')

@@ -1339,6 +1339,9 @@ class BasePlotter(_BoundsSizeMixin):
         --------
         link_views
 
+        pyvista.plot_compare
+            Plot a grid comparison of any number of data objects.
+
         Examples
         --------
         Create a 2 wide plot and set the background of right-hand plot

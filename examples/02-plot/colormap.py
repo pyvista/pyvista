@@ -107,44 +107,22 @@ mesh.plot(scalars=scalars, cmap=['black', 'blue', 'yellow', 'grey', 'red'])
 # must have Colorcet installed in your Python environment:
 # ``pip install colorcet``
 
-pl = pv.Plotter(shape=(2, 2), border=False)
-pl.subplot(0, 0)
-pl.add_mesh(
-    mesh,
+pv.plot_compare(
+    [mesh] * 4,
+    labels=None,
+    shape=(2, 2),
+    border=False,
+    show_axes=False,
     scalars='Elevation',
-    cmap='fire',
-    lighting=True,
-    scalar_bar_args={'title': 'Colorcet Fire'},
+    cmap=['fire', 'fire', 'hot', 'hot'],
+    lighting=[True, False, True, False],
+    scalar_bar_args=[
+        {'title': 'Colorcet Fire'},
+        {'title': 'Colorcet Fire (No Lighting)'},
+        {'title': 'Matplotlib Hot'},
+        {'title': 'Matplotlib Hot (No Lighting)'},
+    ],
 )
-
-pl.subplot(0, 1)
-pl.add_mesh(
-    mesh,
-    scalars='Elevation',
-    cmap='fire',
-    lighting=False,
-    scalar_bar_args={'title': 'Colorcet Fire (No Lighting)'},
-)
-
-pl.subplot(1, 0)
-pl.add_mesh(
-    mesh,
-    scalars='Elevation',
-    cmap='hot',
-    lighting=True,
-    scalar_bar_args={'title': 'Matplotlib Hot'},
-)
-
-pl.subplot(1, 1)
-pl.add_mesh(
-    mesh,
-    scalars='Elevation',
-    cmap='hot',
-    lighting=False,
-    scalar_bar_args={'title': 'Matplotlib Hot (No Lighting)'},
-)
-
-pl.show()
 
 # %%
 # .. _calculix_colormap_example:
