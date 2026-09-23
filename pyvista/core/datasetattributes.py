@@ -22,7 +22,7 @@ from .utilities.arrays import convert_array
 from .utilities.arrays import copy_vtk_array
 from .utilities.misc import _NoNewAttrMixin
 
-T = TypeVar('T')
+_T = TypeVar('_T')
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -909,7 +909,9 @@ class DataSetAttributes(_NoNewAttrMixin, DisableVtkSnakeCase, VTKObjectWrapperCh
         self.VTKObject.RemoveArray(key)
         self.VTKObject.Modified()
 
-    def pop(self: Self, key: str, default: pyvista_ndarray | T = _SENTINEL) -> pyvista_ndarray | T:
+    def pop(
+        self: Self, key: str, default: pyvista_ndarray | _T = _SENTINEL
+    ) -> pyvista_ndarray | _T:
         """Remove an array and return it.
 
         Parameters
