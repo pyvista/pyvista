@@ -427,7 +427,7 @@ class PickingComponent(_NoNewAttrMixin):
     # Pick position helpers
     # =========================================================================
 
-    def get_pick_position(self) -> tuple[float, float, float, float]:
+    def get_pick_position(self) -> tuple[int, int, int, int]:
         """Get the pick position or area.
 
         Returns
