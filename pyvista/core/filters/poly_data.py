@@ -1533,7 +1533,7 @@ class PolyDataFilters(DataSetFilters):
 
     def dash_lines(  # type: ignore[misc]
         self: PolyData,
-        style: LineStyle = '--',
+        style: LineStyle | None = None,
         *,
         pattern: VectorLike[float] | None = None,
         scale: float | None = None,
@@ -1554,16 +1554,18 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        style : str, default: '--'
+        style : str, optional
             Named dash pattern. One of ``''`` (hidden), ``'-'`` (solid), ``'--'``
             (dashed), ``':'`` (dotted), ``'-.'`` (dash-dot) or ``'-..'``
             (dash-dot-dot). A solid pattern returns the lines whole instead of
-            dashing them, and a hidden pattern returns no lines at all.
+            dashing them, and a hidden pattern returns no lines at all. Defaults
+            to ``'--'``. Cannot be set together with ``pattern``.
 
         pattern : VectorLike[float], optional
-            Lengths of alternating drawn and undrawn intervals used instead of
-            ``style``, starting with a drawn one and repeating. ``[4, 6, 2, 4]``
-            draws four intervals, skips six, draws two and skips four.
+            Lengths of alternating drawn and undrawn intervals, starting with a
+            drawn one and repeating. ``[4, 6, 2, 4]`` draws four intervals, skips
+            six, draws two and skips four, which is the ``'-.'`` style spelled
+            out. Cannot be set together with ``style``.
 
         scale : float, optional
             Length of one pattern interval in world units. Defaults to
@@ -4894,13 +4896,16 @@ class PolyDataFilters(DataSetFilters):
 
 
 def _resolve_dash_pattern(
-    style: LineStyle, pattern: VectorLike[float] | None
+    style: LineStyle | None, pattern: VectorLike[float] | None
 ) -> tuple[list[tuple[float, float]] | None, float]:
     """Return the drawn intervals and the repeat length of a named style or a pattern.
 
     Intervals of ``None`` mean the lines are drawn whole.
     """
     if pattern is not None:
+        if style is not None:
+            msg = 'Cannot set both `style` and `pattern`. A named style is itself a pattern.'
+            raise ValueError(msg)
         lengths = _validation.validate_arrayN(
             pattern, must_be_finite=True, must_have_min_length=2, name='pattern'
         )
@@ -4911,7 +4916,7 @@ def _resolve_dash_pattern(
         edges = np.concatenate([[0.0], np.cumsum(lengths)])
         runs = [(float(edges[i]), float(edges[i + 1])) for i in range(0, lengths.size, 2)]
         return runs, float(edges[-1])
-    bits = _resolve_line_style(style)
+    bits = _resolve_line_style('--' if style is None else style)
     if bits == _LINE_STYLE_PATTERNS['-']:
         return None, 16.0
     return [(float(start), float(stop)) for start, stop in _pattern_runs(bits)], 16.0
