@@ -347,6 +347,7 @@ nitpick_ignore_regex = [
     (r'py:.*', 'BorderOptions'),
     (r'py:.*', 'TextPositionOptions'),
     (r'py:.*', 'ThemeOptions'),
+    (r'py:.*', 'TrameModeOptions'),
     (r'py:.*', 'PlottableType'),
     (r'py:.*', '_Dimensionality'),
     #
