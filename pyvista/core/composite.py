@@ -176,6 +176,21 @@ class MultiBlock(
     if vtk_version_info >= (9, 4):
         _WRITERS['.vtkhdf'] = HDFWriter
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload  # empty
+    def __init__(self, *, validate: bool | _NestedMeshValidationFields = ...) -> None: ...  # pragma: no cover
+    @overload  # copy, block type known
+    def __init__(self, dataset: MultiBlock[_BlockType], /, *, deep: bool = ..., validate: bool | _NestedMeshValidationFields = ...) -> None: ...  # pragma: no cover
+    @overload  # copy
+    def __init__(self, dataset: _vtk.vtkMultiBlockDataSet, /, *, deep: bool = ..., validate: bool | _NestedMeshValidationFields = ...) -> None: ...  # pragma: no cover
+    @overload  # read from file
+    def __init__(self, filename: str | Path, /, *, force_ext: str | None = ..., file_format: str | None = ..., progress_bar: bool = ..., validate: bool | _NestedMeshValidationFields = ...) -> None: ...  # pragma: no cover
+    @overload  # build from blocks, named or not
+    def __init__(self, dataset: Sequence[_BlockType] | dict[str, _BlockType], /, *, validate: bool | _NestedMeshValidationFields = ...) -> None: ...  # pragma: no cover
+    # ruff: enable[E501]
+    # fmt: on
+
     def __init__(
         self, *args, validate: bool | _NestedMeshValidationFields = False, **kwargs
     ) -> None:

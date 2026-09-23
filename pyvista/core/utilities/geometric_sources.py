@@ -4196,7 +4196,7 @@ class CubeFacesSource(CubeSource):
             points_dtype=_resolve_points_dtype_kwarg(point_dtype, points_dtype),
         )
         # Init output
-        self._output = pv.MultiBlock([pv.PolyData() for _ in range(6)])
+        self._output: pv.MultiBlock[pv.PolyData] = pv.MultiBlock([pv.PolyData() for _ in range(6)])
 
         # Set properties
         self.frame_width = frame_width
@@ -4478,8 +4478,8 @@ class CubeFacesSource(CubeSource):
                 points += vector  # noqa: PLW2901
 
             # Set poly as a single quad cell
-            face_poly.points = points  # type: ignore[union-attr]
-            face_poly.faces = [4, 0, 1, 2, 3]  # type: ignore[union-attr]
+            face_poly.points = points
+            face_poly.faces = [4, 0, 1, 2, 3]
 
             if frame_width is not None:
                 # Create frame proportional to the smallest face
@@ -4488,11 +4488,11 @@ class CubeFacesSource(CubeSource):
                     points, face_center, frame_scale
                 )
                 # Set poly as four quad cells of the frame
-                face_poly.points = frame_points  # type: ignore[union-attr]
-                face_poly.faces = frame_faces  # type: ignore[union-attr]
+                face_poly.points = frame_points
+                face_poly.faces = frame_faces
 
     @property
-    def output(self: CubeFacesSource) -> MultiBlock:  # type: ignore[override]
+    def output(self: CubeFacesSource) -> MultiBlock[PolyData]:  # type: ignore[override]
         """Get the output of the source.
 
         The output is a :class:`pyvista.MultiBlock` with six blocks: one for each

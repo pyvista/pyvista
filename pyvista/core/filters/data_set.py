@@ -7511,7 +7511,6 @@ class DataSetFilters(DataObjectFilters):
 
         # Modify box
         for face in box:
-            face = cast('pv.PolyData', face)
             if box_style == 'outline':
                 face.copy_from(pv.lines_from_points(face.points))
             if oriented:
