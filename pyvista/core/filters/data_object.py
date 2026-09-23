@@ -1705,7 +1705,7 @@ class DataObjectFilters:
             Value used for most floating point equality checks throughout the cell checking
             process, for example, for checking coincident points or intersecting edges.
             The default value is the epsilon (``eps``) of ``float32`` ``dtype`` using
-            :attr:`numpy.finfo`.
+            :class:`numpy.finfo`.
 
             .. note::
                 This tolerance is independent of other tolerances.
@@ -1731,7 +1731,7 @@ class DataObjectFilters:
             cells with a size less than this value are flagged as having
             :attr:`~pyvista.CellStatus.NEGATIVE_SIZE`.
             The default value is the epsilon (``eps``) of the mesh's points ``dtype`` using
-            :attr:`numpy.finfo`.
+            :class:`numpy.finfo`.
 
             Setting this tolerance explicitly may be useful for marking small cells as invalid.
 

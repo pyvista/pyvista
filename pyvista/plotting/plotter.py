@@ -721,7 +721,7 @@ class BasePlotter(_BoundsSizeMixin):
 
         Returns
         -------
-        pyvista.Theme
+        pyvista.plotting.themes.Theme
             Theme of this plotter.
 
         Examples

@@ -1856,7 +1856,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         show_axes
             Show the axes orientation widget.
 
-        axes_enabled
+        :attr:`~pyvista.Renderer.axes_enabled`
             Check if the axes orientation widget is enabled.
 
         Examples
@@ -1881,7 +1881,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         hide_axes
             Hide the axes orientation widget.
 
-        axes_enabled
+        :attr:`~pyvista.Renderer.axes_enabled`
             Check if the axes orientation widget is enabled.
 
         add_axes_at_origin

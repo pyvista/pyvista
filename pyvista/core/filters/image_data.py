@@ -127,7 +127,7 @@ class ImageDataFilters(DataSetFilters):
         Examples
         --------
         First, create sample data to smooth. Here, we use
-        :func:`pyvista.perlin_noise() <pyvista.core.utilities.features.perlin_noise>`
+        :func:`pyvista.perlin_noise`
         to create meaningful data.
 
         >>> import numpy as np
@@ -224,7 +224,7 @@ class ImageDataFilters(DataSetFilters):
         Examples
         --------
         First, create sample data to smooth. Here, we use
-        :func:`pyvista.perlin_noise() <pyvista.core.utilities.features.perlin_noise>`
+        :func:`pyvista.perlin_noise`
         to create meaningful data.
 
         >>> import numpy as np
@@ -3893,7 +3893,7 @@ class ImageDataFilters(DataSetFilters):
             - ``'auto'``: (default) includes the full data range, similarly to
               :meth:`~pyvista.DataSetFilters.connectivity`.
             - ``'foreground'``: includes the full data range except the smallest value.
-            - ``'vtk_default'``: default to [``0.5``, :const:`~vtk.VTK_DOUBLE_MAX`].
+            - ``'vtk_default'``: default to [``0.5``, ``VTK_DOUBLE_MAX``].
             - ``VectorLike[float]``: explicitly set the range.
 
             The bounds are always cast to floats since vtk expects doubles. The scalars
