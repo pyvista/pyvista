@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import Literal
 from typing import TypeAlias
 from typing import TypedDict
@@ -39,7 +40,7 @@ if TYPE_CHECKING:
     from .colors import Color as Color
 
 PlottableType: TypeAlias = Union[
-    VectorLike[float], 'DataSet', 'MultiBlock', 'PartitionedDataSet', str, Path
+    VectorLike[float], 'DataSet', 'MultiBlock[Any]', 'PartitionedDataSet', str, Path
 ]
 
 
@@ -107,6 +108,7 @@ PropertyCullingOptions = CullingOptions | Literal['none'] | bool
 RepresentationOptions = Literal['surface', 'wireframe', 'points']
 StyleOptions = RepresentationOptions | Literal['points_gaussian']
 LightingOptions = Literal['light kit', 'three lights', 'none']
+TrameModeOptions = Literal['trame', 'server', 'client']
 BorderOptions = Literal[True, False, 'interior', 'exterior']
 # Distinct, user-facing built-in theme names, for autocomplete only. Excludes
 # 'default'/'vtk' (legacy aliases for 'document'/the base Theme) and

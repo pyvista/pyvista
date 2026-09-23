@@ -33,6 +33,8 @@ from pyvista.core.utilities.helpers import _NormalsLiteral
 from pyvista.core.utilities.helpers import _validate_plane_origin_and_normal
 from pyvista.core.utilities.helpers import generate_plane
 from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import _LINE_STYLE_PATTERNS
+from pyvista.core.utilities.misc import _resolve_line_style
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 
@@ -41,9 +43,11 @@ if TYPE_CHECKING:
     from typing import Any
 
     from pyvista import DataSet
+    from pyvista import DataSetAttributes
     from pyvista import MultiBlock
     from pyvista import PolyData
     from pyvista import UnstructuredGrid
+    from pyvista.core._typing_core import LineStyle
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
@@ -389,7 +393,7 @@ class PolyDataFilters(DataSetFilters):
     # fmt: off
     # ruff: disable[E501]
     @overload  # a composite, whose blocks decide
-    def __add__(self: PolyData, dataset: MultiBlock) -> PolyData | UnstructuredGrid: ...  # type: ignore[misc]
+    def __add__(self: PolyData, dataset: MultiBlock[Any]) -> PolyData | UnstructuredGrid: ...  # type: ignore[misc]
     @overload  # polydata
     def __add__(self: PolyData, dataset: PolyData | Sequence[PolyData]) -> PolyData: ...  # type: ignore[misc, overload-overlap]
     @overload  # anything else
@@ -398,14 +402,14 @@ class PolyDataFilters(DataSetFilters):
     # fmt: on
     def __add__(  # type: ignore[misc]
         self: PolyData,
-        dataset: DataSet | _vtk.vtkDataSet | MultiBlock | Sequence[DataSet | _vtk.vtkDataSet],
+        dataset: DataSet | _vtk.vtkDataSet | MultiBlock[Any] | Sequence[DataSet | _vtk.vtkDataSet],
     ) -> PolyData | UnstructuredGrid:
         """Merge these two meshes."""
         return self.merge(dataset)
 
     def __iadd__(  # type: ignore[misc]
         self: PolyData,
-        dataset: DataSet | _vtk.vtkDataSet | MultiBlock | Sequence[DataSet | _vtk.vtkDataSet],
+        dataset: DataSet | _vtk.vtkDataSet | MultiBlock[Any] | Sequence[DataSet | _vtk.vtkDataSet],
     ) -> PolyData:
         """Merge another mesh into this one if possible.
 
@@ -490,7 +494,7 @@ class PolyDataFilters(DataSetFilters):
     # fmt: off
     # ruff: disable[E501]
     @overload  # type: ignore[override]  # PolyData with a composite, whose blocks decide
-    def merge(self: PolyData, dataset: MultiBlock, *, merge_points: bool = ..., tolerance: float = ..., inplace: bool = ..., main_has_priority: bool | None = ..., progress_bar: bool = ...) -> PolyData | UnstructuredGrid: ...  # type: ignore[misc]
+    def merge(self: PolyData, dataset: MultiBlock[Any], *, merge_points: bool = ..., tolerance: float = ..., inplace: bool = ..., main_has_priority: bool | None = ..., progress_bar: bool = ...) -> PolyData | UnstructuredGrid: ...  # type: ignore[misc]
     @overload  # PolyData with polydata
     def merge(self: PolyData, dataset: PolyData | Sequence[PolyData], *, merge_points: bool = ..., tolerance: float = ..., inplace: bool = ..., main_has_priority: bool | None = ..., progress_bar: bool = ...) -> PolyData: ...  # type: ignore[misc, overload-overlap]
     @overload  # PolyData with anything else
@@ -499,7 +503,7 @@ class PolyDataFilters(DataSetFilters):
     # fmt: on
     def merge(  # type: ignore[misc]
         self: PolyData,
-        dataset: DataSet | _vtk.vtkDataSet | MultiBlock | Sequence[DataSet | _vtk.vtkDataSet],
+        dataset: DataSet | _vtk.vtkDataSet | MultiBlock[Any] | Sequence[DataSet | _vtk.vtkDataSet],
         *,
         merge_points: bool = True,
         tolerance: float = 0.0,
@@ -1526,6 +1530,111 @@ class PolyDataFilters(DataSetFilters):
             poly_data.copy_from(mesh, deep=False)
             return poly_data
         return mesh
+
+    def dash_lines(  # type: ignore[misc]
+        self: PolyData,
+        style: LineStyle | None = None,
+        *,
+        pattern: VectorLike[float] | None = None,
+        scale: float | None = None,
+        join: bool = True,
+        inplace: bool = False,
+        progress_bar: bool = False,
+    ) -> PolyData:
+        """Split line cells into dashes.
+
+        Line and polyline cells are resampled into shorter line cells following a
+        repeating on-off pattern. Only those cells are returned, so vertices, polygons
+        and strips are removed.
+
+        Point data is interpolated onto the dash end points. Cell data is copied from
+        the parent line cell, unless ``join`` merges those cells together.
+
+        .. versionadded:: 0.50
+
+        Parameters
+        ----------
+        style : str, optional
+            Named dash pattern, one of:
+
+            * ``''``: hidden, returning no lines at all.
+            * ``'-'``: solid, returning the lines whole.
+            * ``'--'``: dashed, equivalent to ``pattern=[8, 8]``.
+            * ``':'``: dotted, equivalent to ``pattern=[1, 7, 1, 7]``.
+            * ``'-.'``: dash-dot, equivalent to ``pattern=[4, 6, 2, 4]``.
+            * ``'-..'``: dash-dot-dot, equivalent to ``pattern=[3, 3, 1, 3, 3, 3]``.
+
+            Every named style repeats over sixteen intervals. Defaults to ``'--'``.
+            Cannot be set together with ``pattern``.
+
+        pattern : VectorLike[float], optional
+            Lengths of alternating drawn and undrawn intervals, starting with a
+            drawn one and repeating. ``[4, 6, 2, 4]`` draws four intervals, skips
+            six, draws two and skips four. Cannot be set together with ``style``.
+
+        scale : float, optional
+            Length of one pattern interval in world units. Defaults to
+            :attr:`~pyvista.DataSet.length` divided by ``200``.
+
+        join : bool, default: True
+            Join connected line cells into polylines with :func:`strip` first so the
+            pattern runs continuously across them. Joined cells have no cell data of
+            their own, so the input's cell data is dropped.
+
+        inplace : bool, default: False
+            Update this dataset in place. When ``False``, return a new dataset.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Dataset holding the dashes as its only cells.
+
+        See Also
+        --------
+        pyvista.PolyDataFilters.strip
+            Join connected line cells into polylines.
+        pyvista.PolyDataFilters.tube
+            Generate a tube around each input line.
+        pyvista.Actor.line_style
+            Dash an actor's lines in the shader instead of splitting the cells.
+
+        Notes
+        -----
+        .. include:: /api/plotting/line_styles.rst
+
+        Examples
+        --------
+        Dash a circle.
+
+        >>> import pyvista as pv
+        >>> circle = pv.Circle(resolution=200).extract_all_edges()
+        >>> circle.dash_lines().plot(color='black', line_width=4, cpos='xy')
+
+        Use a long dash and a short one instead of a named style.
+
+        >>> dashed = circle.dash_lines(pattern=[6, 2, 2, 2])
+        >>> dashed.plot(color='black', line_width=4, cpos='xy')
+
+        """
+        runs, period = _resolve_dash_pattern(style, pattern)
+        if scale is not None:
+            _validation.check_finite(scale, name='scale')
+            _validation.check_greater_than(scale, 0, name='scale')
+
+        source = self.strip(join=True, progress_bar=progress_bar) if join else self
+        output = _dashed_polydata(source, runs, period=period, scale=scale)
+        for array_name, array in self.field_data.items():
+            output.field_data[array_name] = array
+        _copy_active_names(self.point_data, output.point_data)
+        _copy_active_names(self.cell_data, output.cell_data)
+
+        if not inplace:
+            return output
+        self.copy_from(output, deep=False)
+        return self
 
     def subdivide(  # type: ignore[misc]
         self: PolyData,
@@ -4791,6 +4900,190 @@ class PolyDataFilters(DataSetFilters):
         return out
 
 
+def _resolve_dash_pattern(
+    style: LineStyle | None, pattern: VectorLike[float] | None
+) -> tuple[list[tuple[float, float]] | None, float]:
+    """Return the drawn intervals and the repeat length of a named style or a pattern.
+
+    Intervals of ``None`` mean the lines are drawn whole.
+    """
+    if pattern is not None:
+        if style is not None:
+            msg = 'Cannot set both `style` and `pattern`. A named style is itself a pattern.'
+            raise ValueError(msg)
+        lengths = _validation.validate_arrayN(
+            pattern, must_be_finite=True, must_have_min_length=2, name='pattern'
+        )
+        _validation.check_greater_than(lengths, 0, name='pattern')
+        if lengths.size % 2:
+            msg = f'Pattern must hold an even number of lengths, got {lengths.size}.'
+            raise ValueError(msg)
+        # the lengths alternate drawn and undrawn, so every even edge opens a drawn run
+        edges = np.concatenate([[0.0], np.cumsum(lengths)])
+        runs = [(float(edges[i]), float(edges[i + 1])) for i in range(0, lengths.size, 2)]
+        return runs, float(edges[-1])
+    # a named style is sixteen stipple bits, so it repeats every sixteen intervals
+    bits = _resolve_line_style('--' if style is None else style)
+    if bits == _LINE_STYLE_PATTERNS['-']:
+        return None, 16.0
+    return [(float(start), float(stop)) for start, stop in _pattern_runs(bits)], 16.0
+
+
+def _pattern_runs(pattern: int) -> list[tuple[int, int]]:
+    """Return the start and stop bit indices of each run of set bits in a pattern."""
+    runs = []
+    start = None
+    # step one past the last bit so a run reaching bit 15 is still closed
+    for index in range(17):
+        drawn = index < 16 and bool(pattern >> index & 1)
+        if drawn and start is None:
+            start = index
+        elif not drawn and start is not None:
+            runs.append((start, index))
+            start = None
+    return runs
+
+
+def _locate(
+    ids: NumpyArray[int], cumulative: NumpyArray[float], value: float
+) -> tuple[int, int, float]:
+    """Return the point ids bracketing a distance along a polyline and the blend weight."""
+    # clamp so the pair stays inside the polyline at either end of it
+    upper = min(max(int(np.searchsorted(cumulative, value, side='left')), 1), len(ids) - 1)
+    span = cumulative[upper] - cumulative[upper - 1]
+    # repeated points leave a segment of no length, which has nothing to blend along
+    weight = 0.0 if span == 0 else (value - cumulative[upper - 1]) / span
+    return int(ids[upper - 1]), int(ids[upper]), float(weight)
+
+
+def _drawn_intervals(
+    runs: list[tuple[float, float]] | None, *, total: float, cycle: float, scale: float
+) -> list[tuple[float, float]]:
+    """Return the drawn intervals along a polyline of the given length."""
+    if runs is None:
+        # a solid style draws each cell whole rather than repeating along it
+        return [(0.0, total)]
+    intervals = []
+    for base in np.arange(0.0, total, cycle):
+        for first, last in runs:
+            start = float(base + first * scale)
+            # the last cycle runs off the end of the line, so cut it there
+            stop = float(min(base + last * scale, total))
+            if stop > start:
+                intervals.append((start, stop))
+    return intervals
+
+
+def _build_dashes(
+    source: PolyData, runs: list[tuple[float, float]] | None, *, period: float, scale: float
+) -> tuple[NumpyArray[int], NumpyArray[int], NumpyArray[float], NumpyArray[int], NumpyArray[int]]:
+    """Return blend indices, weights, line connectivity and parent cell ids for the dashes."""
+    points = source.points
+    cycle = period * scale
+    index_a: list[int] = []
+    index_b: list[int] = []
+    weight: list[float] = []
+    lines: list[int] = []
+    cells: list[int] = []
+
+    flat = source.lines
+    position = 0
+    # cell ids run verts first, then lines, so the first line follows the verts
+    cell = source.n_verts
+    while position < flat.size:
+        size = int(flat[position])
+        ids = flat[position + 1 : position + 1 + size]
+        position += 1 + size
+        parent = cell
+        cell += 1
+        if size < 2:
+            continue
+        distance = np.linalg.norm(np.diff(points[ids], axis=0), axis=1)
+        cumulative = np.concatenate([[0.0], np.cumsum(distance)])
+        total = float(cumulative[-1])
+        if total == 0.0:
+            continue
+        for start, stop in _drawn_intervals(runs, total=total, cycle=cycle, scale=scale):
+            # keep the polyline's own points so the dash still follows its bends
+            inner = np.flatnonzero((cumulative > start) & (cumulative < stop))
+            blend = [
+                _locate(ids, cumulative, start),
+                *((int(ids[k]), int(ids[k]), 0.0) for k in inner),
+                _locate(ids, cumulative, stop),
+            ]
+            lines.append(len(blend))
+            for left, right, fraction in blend:
+                # the points are appended in order, so each id is the count so far
+                lines.append(len(index_a))
+                index_a.append(left)
+                index_b.append(right)
+                weight.append(fraction)
+            cells.append(parent)
+    return (
+        np.asarray(index_a, dtype=np.int64),
+        np.asarray(index_b, dtype=np.int64),
+        np.asarray(weight, dtype=float),
+        np.asarray(lines, dtype=np.int64),
+        np.asarray(cells, dtype=np.int64),
+    )
+
+
+def _dashed_polydata(
+    source: PolyData, runs: list[tuple[float, float]] | None, *, period: float, scale: float | None
+) -> PolyData:
+    """Return a dataset holding only the drawn parts of a source's line cells."""
+    output = pv.PolyData()
+    if source.n_lines == 0:
+        return output
+    # a two hundredth of the bounding box diagonal gives a readable default
+    interval = source.length / 200.0 if scale is None else float(scale)
+    index_a, index_b, weight, lines, cells = _build_dashes(
+        source, runs, period=period, scale=interval
+    )
+    if lines.size == 0:
+        return output
+    output.points = _interpolate_rows(
+        source.points, index_a=index_a, index_b=index_b, weight=weight
+    )
+    output.lines = lines
+    for name, array in source.point_data.items():
+        # set_array rather than an item assignment, which would activate the first array
+        output.point_data.set_array(
+            _interpolate_rows(np.asarray(array), index_a=index_a, index_b=index_b, weight=weight),
+            name,
+        )
+    for name, array in source.cell_data.items():
+        output.cell_data.set_array(np.asarray(array)[cells], name)
+    return output
+
+
+def _copy_active_names(source: DataSetAttributes, output: DataSetAttributes) -> None:
+    """Mirror the active array names of the source onto the arrays the output holds."""
+    # the builders add arrays without activating any, so the input decides what is active
+    for attribute in ('scalars', 'vectors', 'normals', 'texture_coordinates'):
+        name = getattr(source, f'active_{attribute}_name')
+        # the output only holds the arrays the dashes kept, so skip any it lost
+        if name is not None and name in output:
+            setattr(output, f'active_{attribute}_name', name)
+
+
+def _interpolate_rows(
+    array: NumpyArray[Any],
+    *,
+    index_a: NumpyArray[int],
+    index_b: NumpyArray[int],
+    weight: NumpyArray[float],
+) -> NumpyArray[Any]:
+    """Blend array rows between two index sets, snapping to the nearest for non-float data."""
+    if not np.issubdtype(array.dtype, np.floating):
+        # ids and labels cannot be averaged, so take whichever end is nearer
+        return array[np.where(weight < 0.5, index_a, index_b)]
+    # line the weights up against however many components each row holds
+    shape = (-1,) + (1,) * (array.ndim - 1)
+    fraction = weight.reshape(shape)
+    return array[index_a] * (1.0 - fraction) + array[index_b] * fraction
+
+
 def _with_64_bit_faces(mesh: PolyData) -> PolyData:
     """Return the mesh with 64-bit faces, which the subdivision filters of vtk<9.4 require."""
     if pv.vtk_version_info >= (9, 4, 0) or mesh.GetPolys().IsStorage64Bit():
@@ -4798,6 +5091,7 @@ def _with_64_bit_faces(mesh: PolyData) -> PolyData:
     faces = _vtk.vtkCellArray()
     faces.DeepCopy(mesh.GetPolys())
     faces.ConvertTo64BitStorage()
+    # a shallow copy, so the input keeps its own faces and their storage
     converted = mesh.copy(deep=False)
     converted.SetPolys(faces)
     return converted
