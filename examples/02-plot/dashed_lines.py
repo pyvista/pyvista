@@ -103,14 +103,14 @@ pl.show()
 # %%
 # The same styles apply.
 
-pl = pv.Plotter(shape=(1, 5))
-for index, style in enumerate(styles):
-    pl.subplot(0, index)
-    pl.add_mesh(helix, color='black', line_width=4, line_style=style)
-    pl.add_text(f"'{style}'", font_size=10)
-pl.link_views()
-pl.view_isometric()
-pl.show()
+pv.plot_compare(
+    [helix] * len(styles),
+    labels=[f"'{style}'" for style in styles],
+    line_style=styles,
+    color='black',
+    line_width=4,
+    cpos='iso',
+)
 
 # %%
 # Here the dash length is set on the actor with
@@ -140,31 +140,16 @@ print('dash_lines output', helix.dash_lines('--').n_cells, 'cells')
 # in world units, so they grow with the geometry when you zoom in. Shader dashes
 # are measured on screen, so they keep their size.
 
-pl = pv.Plotter(shape=(2, 2))
+both = {'filter': helix.dash_lines('--'), 'shader': helix}
+options = dict(line_style=[None, '--'], color='black', line_width=4, cpos='iso')
 
-pl.subplot(0, 0)
-pl.add_mesh(helix.dash_lines('--'), color='black', line_width=4)
-pl.add_text('filter', font_size=10)
-pl.view_isometric()
+pv.plot_compare(both, **options)
 
-pl.subplot(0, 1)
-pl.add_mesh(helix, color='black', line_width=4, line_style='--')
-pl.add_text('shader', font_size=10)
-pl.view_isometric()
+# %%
+# Zoomed in, the filter dashes have grown with the geometry while the shader
+# dashes have kept their size.
 
-pl.subplot(1, 0)
-pl.add_mesh(helix.dash_lines('--'), color='black', line_width=4)
-pl.add_text('filter, zoomed in', font_size=10)
-pl.view_isometric()
-pl.camera.zoom(3)
-
-pl.subplot(1, 1)
-pl.add_mesh(helix, color='black', line_width=4, line_style='--')
-pl.add_text('shader, zoomed in', font_size=10)
-pl.view_isometric()
-pl.camera.zoom(3)
-
-pl.show()
+pv.plot_compare(both, **options, zoom=3)
 
 # %%
 # Only the filter survives being written to a file or exported to the browser,
