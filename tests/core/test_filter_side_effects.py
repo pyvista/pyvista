@@ -21,11 +21,17 @@ docstring says what to do when a new filter or keyword makes this module fail.
 
 from __future__ import annotations
 
-import ast
+import functools
 import hashlib
 import inspect
 import re
+import sys
+from types import UnionType
 from typing import Any
+from typing import Literal
+from typing import Union
+from typing import get_args
+from typing import get_origin
 import warnings
 
 import numpy as np
@@ -33,6 +39,7 @@ import pytest
 
 import pyvista as pv
 from pyvista import _vtk
+from pyvista.core import _typing_core
 from pyvista.core.filters.composite import CompositeFilters
 from pyvista.core.filters.data_object import DataObjectFilters
 from pyvista.core.filters.data_set import DataSetFilters
@@ -44,7 +51,8 @@ from pyvista.core.filters.unstructured_grid import UnstructuredGridFilters
 from pyvista.core.utilities.arrays import set_default_active_scalars
 from tests.core import filter_side_effects_cases as cases
 
-_LITERAL_PATTERN = re.compile(r'Literal\[([^]]*)]')
+#: Names the filter annotations refer to without importing them at runtime.
+_ANNOTATION_NAMES = {**vars(_typing_core), **vars(pv)}
 
 
 def _mesh_arrays(mesh, mode):
@@ -252,25 +260,37 @@ def _report(kind, mode, name, args, kwargs, changes):
     )
 
 
-def _literal_options(annotation):
-    """Return the options of a ``Literal`` annotation, or ``None``."""
-    match = _LITERAL_PATTERN.search(str(annotation))
-    return None if match is None else ast.literal_eval(f'[{match.group(1)}]')
+@functools.cache
+def _annotation(func, name):
+    """Return the evaluated annotation of one of a filter's parameters, or ``None``."""
+    annotation = inspect.signature(func).parameters[name].annotation
+    if not isinstance(annotation, str):
+        return annotation
+    namespace = {**_ANNOTATION_NAMES, **vars(sys.modules[func.__module__])}
+    try:
+        return eval(annotation, namespace)  # noqa: S307  - the filter's own annotation
+    except NameError:  # a name imported for type checking only
+        return None
 
 
-def _kwarg_variants(parameter):
+def _choices(annotation):
+    """Return every value a ``bool`` or ``Literal`` in ``annotation`` allows."""
+    if annotation is bool:
+        return [True, False]
+    if get_origin(annotation) is Literal:
+        return list(get_args(annotation))
+    if get_origin(annotation) in (Union, UnionType):
+        return [choice for arg in get_args(annotation) for choice in _choices(arg)]
+    return []
+
+
+def _kwarg_variants(func, parameter):
     """Yield values to try for a single keyword parameter."""
     if parameter.name in cases.SKIP_KWARGS:
         return
-    if parameter.name in cases.KWARG_VALUES:
-        yield from cases.KWARG_VALUES[parameter.name]
-        return
-    if isinstance(parameter.default, bool):
-        yield not parameter.default
-        return
-    options = _literal_options(parameter.annotation)
-    if options is not None:
-        yield from (option for option in options if option != parameter.default)
+    yield from cases.KWARG_VALUES.get(parameter.name, [])
+    choices = _choices(_annotation(func, parameter.name))
+    yield from (choice for choice in choices if choice is not parameter.default)
 
 
 def _call_variants(func):
@@ -282,7 +302,7 @@ def _call_variants(func):
     for parameter in parameters:
         if parameter.default is inspect.Parameter.empty:
             continue
-        for value in _kwarg_variants(parameter):
+        for value in _kwarg_variants(func, parameter):
             yield parameter.name, {**base, parameter.name: value}
 
 
@@ -501,21 +521,20 @@ def test_filter_does_not_modify_input(key):
 
 def _unvaried_keywords():
     """Return the filter keywords the sweep has no value for, with the filters using each."""
-    unvaried = {}
-    for key, func in FILTERS.items():
-        for parameter in list(inspect.signature(func).parameters.values())[1:]:
-            if (
-                parameter.default is not inspect.Parameter.empty
-                and parameter.name not in cases.SKIP_KWARGS
-                and next(_kwarg_variants(parameter), None) is None
-            ):
-                unvaried.setdefault(parameter.name, []).append(key)
-    return unvaried
+    pairs = [
+        (parameter.name, key)
+        for key, func in FILTERS.items()
+        for parameter in list(inspect.signature(func).parameters.values())[1:]
+        if parameter.default is not inspect.Parameter.empty
+        and parameter.name not in cases.SKIP_KWARGS
+        and next(_kwarg_variants(func, parameter), None) is None
+    ]
+    return {name: [key for other, key in pairs if other == name] for name, _ in pairs}
 
 
-def _check_keyword_setup(unvaried, listed):
-    """Raise if a keyword lacks values without being listed, or is listed but has values."""
-    new = sorted(set(unvaried) - listed)
+def _check_keyword_setup(unvaried, unused):
+    """Raise if a keyword has no values to try, or ``KWARG_VALUES`` names an unknown one."""
+    new = sorted(unvaried)
     if new:
         lines = '\n'.join(f'  {name}, used by {", ".join(unvaried[name])}' for name in new)
         msg = (
@@ -525,19 +544,23 @@ def _check_keyword_setup(unvaried, listed):
             f'SKIP_KWARGS if the keyword cannot affect the input.'
         )
         raise SweepSetupError(msg)
-    stale = sorted(listed - set(unvaried))
-    if stale:
+    if unused:
         msg = (
-            f'These keywords are listed in UNVARIED_KWARGS but are varied now, or no filter '
-            f'uses them any more: {stale}\n\nFix: remove them from UNVARIED_KWARGS in '
-            f'{CASES_FILE}.'
+            f'No filter has these keywords any more: {sorted(unused)}\n\n'
+            f'Fix: remove them from KWARG_VALUES in {CASES_FILE}.'
         )
         raise SweepSetupError(msg)
 
 
+def _unused_kwarg_values():
+    """Return the ``KWARG_VALUES`` names which no filter accepts."""
+    used = {name for func in FILTERS.values() for name in inspect.signature(func).parameters}
+    return set(cases.KWARG_VALUES) - used
+
+
 def test_setup_every_keyword_has_values():
-    """Every filter keyword has values to try, or is listed as skipped or not yet varied."""
-    _check_keyword_setup(_unvaried_keywords(), cases.UNVARIED_KWARGS)
+    """Every filter keyword has values to try, and every listed value belongs to a keyword."""
+    _check_keyword_setup(_unvaried_keywords(), _unused_kwarg_values())
 
 
 _DEFAULT_SCALARS_FILTERS = [
@@ -630,11 +653,11 @@ def test_setup_failure_names_the_errors_and_the_tables_to_edit():
 
 
 def test_setup_failure_names_new_and_stale_keywords():
-    """A keyword without values, or one listed needlessly, is reported with the fix."""
+    """A keyword without values, or values for an unknown keyword, is reported with the fix."""
     unvaried = {'order': ['ImageDataFilters.low_pass']}
     with pytest.raises(
         SweepSetupError, match=re.escape('order, used by ImageDataFilters.low_pass')
     ):
-        _check_keyword_setup(unvaried, frozenset())
-    with pytest.raises(SweepSetupError, match='remove them from UNVARIED_KWARGS'):
-        _check_keyword_setup({}, frozenset({'order'}))
+        _check_keyword_setup(unvaried, set())
+    with pytest.raises(SweepSetupError, match='remove them from KWARG_VALUES'):
+        _check_keyword_setup({}, {'order'})
