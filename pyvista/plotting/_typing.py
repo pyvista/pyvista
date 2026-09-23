@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import Literal
 from typing import TypeAlias
 from typing import TypedDict
@@ -39,7 +40,7 @@ if TYPE_CHECKING:
     from .colors import Color as Color
 
 PlottableType: TypeAlias = Union[
-    VectorLike[float], 'DataSet', 'MultiBlock', 'PartitionedDataSet', str, Path
+    VectorLike[float], 'DataSet', 'MultiBlock[Any]', 'PartitionedDataSet', str, Path
 ]
 
 
