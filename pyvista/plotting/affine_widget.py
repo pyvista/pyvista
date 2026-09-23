@@ -3,28 +3,39 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import TypeVar
 from typing import cast
 
 import numpy as np
 
 import pyvista as pv
-from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista import _vtk
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.misc import try_callback
 
-from . import _vtk
-
 if TYPE_CHECKING:
+    from collections.abc import Callable
+    from collections.abc import Sequence
+
     from pyvista import Actor
+    from pyvista import Plotter
+    from pyvista import Renderer
+    from pyvista.core._typing_core import MatrixLike
+    from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import VectorLike
+
+    from ._typing import ColorLike
+
+_CallableT = TypeVar('_CallableT')
 
 DARK_YELLOW = (0.9647058823529412, 0.7450980392156863, 0)
 GLOBAL_AXES = np.eye(3)
 
 
-def _validate_axes(axes):
+def _validate_axes(axes: MatrixLike[float]) -> NumpyArray[float]:
     """Validate and normalize input axes.
 
-    Axes are expected to follow the right-hand rule (e.g. third axis is the
+    Axes are expected to follow the right-hand rule (for example, third axis is the
     cross product of the first two.
 
     Parameters
@@ -34,24 +45,24 @@ def _validate_axes(axes):
 
     Returns
     -------
-    dict
+    numpy.ndarray
         The validated and normalized axes.
 
     """
-    axes = np.array(axes)
-    if axes.shape != (3, 3):
+    array = np.array(axes)
+    if array.shape != (3, 3):
         msg = '`axes` must be a (3, 3) array.'
         raise ValueError(msg)
 
-    axes = axes / np.linalg.norm(axes, axis=1, keepdims=True)
-    if not np.allclose(np.cross(axes[0], axes[1]), axes[2]):
+    array = array / np.linalg.norm(array, axis=1, keepdims=True)
+    if not np.allclose(np.cross(array[0], array[1]), array[2]):
         msg = '`axes` do not follow the right hand rule.'
         raise ValueError(msg)
 
-    return axes
+    return array
 
 
-def _check_callable(func, name='callback'):
+def _check_callable(func: _CallableT, name: str = 'callback') -> _CallableT:
     """Check if a variable is callable."""
     if func and not callable(func):
         msg = f'`{name}` must be a callable, not {type(func)}.'
@@ -59,7 +70,7 @@ def _check_callable(func, name='callback'):
     return func
 
 
-def _make_quarter_arc():
+def _make_quarter_arc() -> pv.PolyData:
     """Make a quarter circle centered at the origin."""
     circ = pv.Circle(resolution=100)
     circ.faces = np.empty(0, dtype=int)
@@ -67,7 +78,7 @@ def _make_quarter_arc():
     return circ
 
 
-def get_angle(v1, v2):
+def get_angle(v1: NumpyArray[float], v2: NumpyArray[float]) -> float:
     """Compute the angle between two vectors in degrees.
 
     Parameters
@@ -86,8 +97,13 @@ def get_angle(v1, v2):
     return np.rad2deg(np.arccos(np.clip(np.dot(v1, v2), -1.0, 1.0)))
 
 
-@_deprecate_positional_args
-def ray_plane_intersection(start_point, direction, plane_point, normal):  # noqa: PLR0917
+def ray_plane_intersection(
+    *,
+    start_point: NumpyArray[float],
+    direction: NumpyArray[float],
+    plane_point: NumpyArray[float],
+    normal: NumpyArray[float],
+) -> NumpyArray[float]:
     """Compute the intersection between a ray and a plane.
 
     Parameters
@@ -134,12 +150,12 @@ class AffineWidget3D(_NoNewAttrMixin):
     always_visible : bool, default: True
         Make the widget always visible. Setting this to ``False`` will cause
         the widget geometry to be hidden by other actors in the plotter.
-    axes_colors : tuple[ColorLike], optional
+    axes_colors : sequence[ColorLike], optional
         Uses the theme by default. Configure the individual axis colors by
         modifying either the theme with ``pyvista.global_theme.axes.x_color =
         <COLOR>`` or setting this with a ``tuple`` as in ``('r', 'g', 'b')``.
     axes : numpy.ndarray, optional
-        ``(3, 3)`` Numpy array defining the X, Y, and Z axes. By default this
+        ``(3, 3)`` NumPy array defining the X, Y, and Z axes. By default this
         matches the default coordinate system.
     release_callback : callable, optional
         Call this method when releasing the left mouse button. It is passed the
@@ -155,8 +171,6 @@ class AffineWidget3D(_NoNewAttrMixin):
     :attr:`pyvista.Prop3D.user_matrix` but will not be applied to the
     dataset. Use this matrix in conjunction with
     :func:`pyvista.DataObjectFilters.transform` to transform the dataset.
-
-    Requires VTK >= v9.2
 
     Examples
     --------
@@ -178,38 +192,36 @@ class AffineWidget3D(_NoNewAttrMixin):
 
     """
 
-    @_deprecate_positional_args(allowed=['plotter', 'actor'])
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
-        plotter,
-        actor,
-        origin=None,
-        start: bool = True,  # noqa: FBT001, FBT002
-        scale=0.15,
-        line_radius=0.02,
-        always_visible: bool = True,  # noqa: FBT001, FBT002
-        axes_colors=None,
-        axes=None,
-        release_callback=None,
-        interact_callback=None,
-    ):
+        plotter: Plotter,
+        actor: Actor,
+        *,
+        origin: VectorLike[float] | None = None,
+        start: bool = True,
+        scale: float = 0.15,
+        line_radius: float = 0.02,
+        always_visible: bool = True,
+        axes_colors: Sequence[ColorLike] | None = None,
+        axes: MatrixLike[float] | None = None,
+        release_callback: Callable[[NumpyArray[float]], None] | None = None,
+        interact_callback: Callable[[NumpyArray[float]], None] | None = None,
+    ) -> None:
         """Initialize the widget."""
         self._axes = np.eye(4)
         self._axes_inv = np.eye(4)
         self._pl = plotter
         self._main_actor = actor
         self._selected_actor: Actor | None = None
-        self._init_position = None
+        self._init_position: NumpyArray[float] | None = None
         self._mouse_move_observer: int | None = None
         self._left_press_observer: int | None = None
         self._left_release_observer: int | None = None
 
-        if self._main_actor.user_matrix is None:
-            self._main_actor.user_matrix = np.eye(4)
         self._cached_matrix = self._main_actor.user_matrix
 
-        self._arrows = []  # type: ignore[var-annotated]
-        self._circles = []  # type: ignore[var-annotated]
+        self._arrows: list[Actor] = []
+        self._circles: list[Actor] = []
         self._pressing_down = False
         origin = origin or actor.center
         self._origin = np.array(origin)
@@ -241,7 +253,7 @@ class AffineWidget3D(_NoNewAttrMixin):
         if start:
             self.enable()
 
-    def _init_actors(self, scale, always_visible):
+    def _init_actors(self, scale: float, always_visible: bool) -> None:  # noqa: FBT001
         """Initialize the widget's actors."""
         for ii, color in enumerate(self._axes_colors):
             arrow = pv.Arrow(
@@ -285,10 +297,16 @@ class AffineWidget3D(_NoNewAttrMixin):
 
         if always_visible:
             for actor in self._arrows + self._circles:
-                actor.mapper.SetResolveCoincidentTopologyToPolygonOffset()
-                actor.mapper.SetRelativeCoincidentTopologyPolygonOffsetParameters(0, -20000)
+                mapper = actor.mapper
+                if mapper is None:  # pragma: no cover
+                    msg = 'The widget actor was added without a mapper.'
+                    raise RuntimeError(msg)
+                mapper.SetResolveCoincidentTopologyToPolygonOffset()
+                mapper.SetRelativeCoincidentTopologyPolygonOffsetParameters(0, -20000)
 
-    def _get_world_coord_rot(self, interactor):
+    def _get_world_coord_rot(
+        self, interactor: _vtk.vtkRenderWindowInteractor
+    ) -> NumpyArray[float]:
         """Get the world coordinates given an interactor.
 
         Unlike ``_get_world_coord_trans``, these coordinates are physically
@@ -300,7 +318,7 @@ class AffineWidget3D(_NoNewAttrMixin):
         coordinate = _vtk.vtkCoordinate()
         coordinate.SetCoordinateSystemToDisplay()
         coordinate.SetValue(x, y, 0)
-        ren = interactor.GetRenderWindow().GetRenderers().GetFirstRenderer()
+        ren = cast('Renderer', interactor.GetRenderWindow().GetRenderers().GetFirstRenderer())
         point = np.array(coordinate.GetComputedWorldValue(ren))
         if self._selected_actor:
             index = self._circles.index(self._selected_actor)
@@ -313,7 +331,9 @@ class AffineWidget3D(_NoNewAttrMixin):
             )
         return point
 
-    def _get_world_coord_trans(self, interactor):
+    def _get_world_coord_trans(
+        self, interactor: _vtk.vtkRenderWindowInteractor
+    ) -> NumpyArray[float]:
         """Get the world coordinates given an interactor.
 
         This uses a modified scaled approach to get the world coordinates that
@@ -344,20 +364,24 @@ class AffineWidget3D(_NoNewAttrMixin):
         # Scale by twice actor length (experimentally determined for good UX)
         return world_coords[:3] * self._actor_length * 2
 
-    def _move_callback(self, interactor, _event):
+    def _move_callback(self, interactor: _vtk.vtkRenderWindowInteractor, _event: str) -> None:
         """Process actions for the move mouse event."""
         click_x, click_y = interactor.GetEventPosition()
         click_z = 0
-        picker = interactor.GetPicker()
-        renderer = interactor.GetInteractorStyle()._parent()._plotter.iren.get_poked_renderer()
+        picker = cast('_vtk.vtkAbstractPropPicker', interactor.GetPicker())
+        renderer = self._pl._get_iren_not_none().get_poked_renderer()
         picker.Pick(click_x, click_y, click_z, renderer)
-        actor = picker.GetActor()
+        actor = cast('Actor | None', picker.GetActor())
 
         if self._pressing_down:
+            init_position = self._init_position
+            if init_position is None:  # pragma: no cover
+                msg = 'The widget was moved without a press event.'
+                raise RuntimeError(msg)
             if self._selected_actor in self._arrows:
                 current_pos = self._get_world_coord_trans(interactor)
                 index = self._arrows.index(self._selected_actor)
-                diff = current_pos - self._init_position
+                diff = current_pos - init_position
                 trans_matrix = np.eye(4)
                 trans_matrix[:3, -1] = self.axes[index] * np.dot(diff, self.axes[index])
                 matrix = trans_matrix @ self._cached_matrix
@@ -365,7 +389,7 @@ class AffineWidget3D(_NoNewAttrMixin):
                 current_pos = self._get_world_coord_rot(interactor)
                 index = self._circles.index(self._selected_actor)
                 vec_current = current_pos - self._origin
-                vec_init = self._init_position - self._origin
+                vec_init = init_position - self._origin
                 normal = self.axes[index]
                 vec_current = vec_current - np.dot(vec_current, normal) * normal
                 vec_init = vec_init - np.dot(vec_init, normal) * normal
@@ -377,17 +401,20 @@ class AffineWidget3D(_NoNewAttrMixin):
                     angle = -angle
 
                 trans = _vtk.vtkTransform()
-                trans.Translate(self._origin)  # type: ignore[call-overload]
+                trans.Translate(*self._origin)
                 trans.RotateWXYZ(
                     angle,
                     self._axes[index][0],
                     self._axes[index][1],
                     self._axes[index][2],
                 )
-                trans.Translate(-self._origin)  # type: ignore[call-overload]
+                trans.Translate(*(-self._origin))
                 trans.Update()
                 rot_matrix = pv.array_from_vtkmatrix(trans.GetMatrix())
                 matrix = rot_matrix @ self._cached_matrix
+            else:  # pragma: no cover
+                msg = 'No widget actor is selected.'
+                raise RuntimeError(msg)
 
             if self._user_interact_callback:
                 try_callback(self._user_interact_callback, self._main_actor.user_matrix)
@@ -399,7 +426,7 @@ class AffineWidget3D(_NoNewAttrMixin):
             # deselect it
             if self._selected_actor in self._arrows:
                 index = self._arrows.index(self._selected_actor)
-            elif self._selected_actor in self._circles:
+            else:
                 index = self._circles.index(self._selected_actor)
             self._selected_actor.prop.color = self._axes_colors[index]
             self._selected_actor = None
@@ -418,7 +445,7 @@ class AffineWidget3D(_NoNewAttrMixin):
                 self._selected_actor = actor
         self._pl.render()
 
-    def _press_callback(self, interactor, _event):
+    def _press_callback(self, interactor: _vtk.vtkRenderWindowInteractor, _event: str) -> None:
         """Process actions for the mouse button press event."""
         if self._selected_actor:
             self._pl.enable_trackball_actor_style()
@@ -428,7 +455,7 @@ class AffineWidget3D(_NoNewAttrMixin):
             else:
                 self._init_position = self._get_world_coord_trans(interactor)
 
-    def _release_callback(self, _interactor, _event):
+    def _release_callback(self, _interactor: _vtk.vtkRenderWindowInteractor, _event: str) -> None:
         """Process actions for the mouse button release event."""
         self._pl.enable_trackball_style()
         self._pressing_down = False
@@ -436,13 +463,13 @@ class AffineWidget3D(_NoNewAttrMixin):
         if self._user_release_callback:
             try_callback(self._user_release_callback, self._main_actor.user_matrix)
 
-    def _reset(self):
+    def _reset(self) -> None:
         """Reset the actor and cached transform."""
         self._main_actor.user_matrix = np.eye(4)
         self._cached_matrix = np.eye(4)
 
     @property
-    def axes(self):
+    def axes(self) -> NumpyArray[float]:
         """Return or set the axes of the widget.
 
         The axes will be checked for orthogonality. Non-orthogonal axes will
@@ -457,12 +484,12 @@ class AffineWidget3D(_NoNewAttrMixin):
         return self._axes[:3, :3]
 
     @axes.setter
-    def axes(self, axes):
+    def axes(self, axes: MatrixLike[float]) -> None:
         mat = np.eye(4)
         mat[:3, :3] = _validate_axes(axes)
         mat[:3, -1] = self.origin
         self._axes = mat
-        self._axes_inv = np.linalg.inv(self._axes)  # type: ignore[assignment]
+        self._axes_inv = np.linalg.inv(self._axes)
         for actor in self._arrows + self._circles:
             matrix = actor.user_matrix
             # Be sure to use the inverse here
@@ -485,49 +512,49 @@ class AffineWidget3D(_NoNewAttrMixin):
         return cast('tuple[float, float, float]', tuple(self._origin))
 
     @origin.setter
-    def origin(self, value):
-        value = np.array(value)
-        diff = value - self._origin
+    def origin(self, value: VectorLike[float]) -> None:
+        origin = np.array(value)
+        diff = origin - self._origin
 
         for actor in self._circles + self._arrows:
-            if actor.user_matrix is None:
-                actor.user_matrix = np.eye(4)
             matrix = actor.user_matrix
             matrix[:3, -1] += diff
             actor.user_matrix = matrix
 
-        self._origin = value
+        self._origin = origin
 
-    def enable(self):
+    def enable(self) -> None:
         """Enable the widget."""
-        if not self._pl._picker_in_use:
+        if not self._pl.picking._picker_in_use:
             self._pl.enable_mesh_picking(show_message=False, show=False, picker='hardware')
-        self._mouse_move_observer = self._pl.iren.add_observer(
+        iren = self._pl._get_iren_not_none()
+        self._mouse_move_observer = iren.add_observer(
             'MouseMoveEvent',
             self._move_callback,
         )
-        self._left_press_observer = self._pl.iren.add_observer(
+        self._left_press_observer = iren.add_observer(
             'LeftButtonPressEvent',
             self._press_callback,
             interactor_style_fallback=False,
         )
-        self._left_release_observer = self._pl.iren.add_observer(
+        self._left_release_observer = iren.add_observer(
             'LeftButtonReleaseEvent',
             self._release_callback,
             interactor_style_fallback=False,
         )
 
-    def disable(self):
+    def disable(self) -> None:
         """Disable the widget."""
         self._pl.disable_picking()
+        iren = self._pl._get_iren_not_none()
         if self._mouse_move_observer:
-            self._pl.iren.remove_observer(self._mouse_move_observer)
+            iren.remove_observer(self._mouse_move_observer)
         if self._left_press_observer:
-            self._pl.iren.remove_observer(self._left_press_observer)
+            iren.remove_observer(self._left_press_observer)
         if self._left_release_observer:
-            self._pl.iren.remove_observer(self._left_release_observer)
+            iren.remove_observer(self._left_release_observer)
 
-    def remove(self):
+    def remove(self) -> None:
         """Disable and delete all actors of this widget."""
         self.disable()
         for actor in self._circles + self._arrows:

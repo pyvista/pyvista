@@ -4,8 +4,10 @@
 Save a Movie Using Glyphs
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Create an animated GIF by generating glyphs using :func:`glyph()
-<pyvista.DataSetFilters.glyph>` using :func:`pyvista.Sphere`.
+Create an animated GIF by generating glyphs from a scalar field.
+
+Uses :func:`glyph() <pyvista.DataSetFilters.glyph>` with
+:func:`pyvista.Sphere`.
 
 """
 
@@ -14,7 +16,7 @@ import numpy as np
 import pyvista as pv
 
 # %%
-# Create sphere glyphs
+# Create Sphere Glyphs
 # ~~~~~~~~~~~~~~~~~~~~
 
 x = np.arange(-10, 10, 1, dtype=float)
@@ -28,13 +30,13 @@ grid = pv.StructuredGrid(x, y, z)
 grid.point_data['size'] = z.ravel()
 
 # generate glyphs with varying size
-sphere = pv.Sphere()
+sphere = pv.Sphere(theta_resolution=16, phi_resolution=16)
 spheres = grid.glyph(scale='size', geom=sphere, orient=False)
 
 spheres.plot(show_scalar_bar=False)
 
 # %%
-# Create the movie
+# Create the Movie
 # ~~~~~~~~~~~~~~~~
 
 # Create a plotter object and set the scalars to the Z height
@@ -51,7 +53,7 @@ pl.add_mesh(
 pl.open_gif('glyph_wave.gif')
 
 # Update Z and write a frame for each updated mesh
-nframe = 30
+nframe = 20
 for phase in np.linspace(0, 2 * np.pi, nframe + 1)[:nframe]:
     z = (np.sin(r + phase) + 1) / 2
 

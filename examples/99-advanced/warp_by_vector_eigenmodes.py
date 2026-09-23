@@ -4,12 +4,13 @@
 Display Eigenmodes of Vibration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This example applies the :func:`warp_by_vector
-<pyvista.DataSetFilters.warp_by_vector>` filter to a cube whose eigenmodes have
-been computed using the Ritz method, as outlined in Visscher, William M.,
-Albert Migliori, Thomas M. Bell, et Robert A. Reinert. "On the normal modes of
-free vibration of inhomogeneous and anisotropic elastic objects". The Journal
-of the Acoustical Society of America 90, n.4 (October 1991): 2154-62.
+Apply :func:`~pyvista.DataSetFilters.warp_by_vector` to a cube eigenmode.
+
+The eigenmodes have been computed using the Ritz method, as outlined in
+Visscher, William M., Albert Migliori, Thomas M. Bell, et Robert A.
+Reinert. "On the normal modes of free vibration of inhomogeneous and
+anisotropic elastic objects". The Journal of the Acoustical Society of
+America 90, n.4 (October 1991): 2154-62.
 https://asa.scitation.org/doi/10.1121/1.401643.
 
 """
@@ -18,7 +19,7 @@ https://asa.scitation.org/doi/10.1121/1.401643.
 # First, let's solve the eigenvalue problem for a vibrating cube. We use
 # a crude approximation (by choosing a low max polynomial order) to get a fast
 # computation.
-from itertools import product
+import itertools
 
 import numpy as np
 import pyvista as pv
@@ -72,14 +73,14 @@ def make_cijkl_E_nu(E=200, nu=0.3):
     }
 
     cijkl = np.zeros((3, 3, 3, 3))
-    for i, j, k, l in product(range(3), repeat=4):
+    for i, j, k, l in itertools.product(range(3), repeat=4):
         u = coord_mapping[i + 1, j + 1]
         v = coord_mapping[k + 1, l + 1]
         cijkl[i, j, k, l] = cij[u - 1, v - 1]
     return cijkl, cij
 
 
-def get_first_N_above_thresh(*, N, freqs, thresh, decimals=3):
+def get_first_n_above_thresh(*, N, freqs, thresh, decimals=3):
     """Return first N unique frequencies with amplitude>thresh based on first decimals."""
     unique_freqs, unique_indices = np.unique(
         np.round(freqs, decimals=decimals), return_index=True
@@ -109,7 +110,7 @@ def assemble_mass_and_stiffness(*, N, F, geom_params, cijkl):
     assert len(triplets) == (N + 1) * (N + 2) * (N + 3) // 6
 
     quadruplets = []
-    for i, triplet in product(range(3), triplets):
+    for i, triplet in itertools.product(range(3), triplets):
         quadruplets.append((i, *triplet))
     assert len(quadruplets) == 3 * (N + 1) * (N + 2) * (N + 3) // 6
 
@@ -120,9 +121,9 @@ def assemble_mass_and_stiffness(*, N, F, geom_params, cijkl):
     for index1, quad1 in enumerate(quadruplets):
         I, p1, q1, r1 = quad1
         for index2, quad2 in enumerate(quadruplets[index1:]):
-            index2 = index2 + index1  # noqa: PLW2901
+            index2_ = index2 + index1
             J, p2, q2, r2 = quad2
-            G[index1, index2] = (
+            G[index1, index2_] = (
                 cijkl[I, 1 - 1, J, 1 - 1]
                 * p1
                 * p2
@@ -160,10 +161,10 @@ def assemble_mass_and_stiffness(*, N, F, geom_params, cijkl):
                 * r2
                 * F(p1 + p2, q1 + q2, r1 + r2 - 2, **geom_params)
             )
-            G[index2, index1] = G[index1, index2]  # since stiffness matrix is symmetric
+            G[index2_, index1] = G[index1, index2_]  # since stiffness matrix is symmetric
             if I == J:
-                E[index1, index2] = F(p1 + p2, q1 + q2, r1 + r2, **geom_params)
-                E[index2, index1] = E[index1, index2]  # since mass matrix is symmetric
+                E[index1, index2_] = F(p1 + p2, q1 + q2, r1 + r2, **geom_params)
+                E[index2_, index1] = E[index1, index2_]  # since mass matrix is symmetric
     return E, G, quadruplets
 
 
@@ -189,15 +190,15 @@ omegas = np.sqrt(np.abs(w) / rho) * 1e5  # convert back to Hz
 freqs = omegas / (2 * np.pi)
 # expected values from (Bernard 2014, pl.14),
 # error depends on polynomial order ``N``
-expected_freqs_kHz = np.array(  # noqa: N816
+expected_freqs_khz = np.array(
     [704.8, 949.0, 965.2, 1096.3, 1128.4, 1182.8, 1338.9, 1360.9]
 )
-computed_freqs_kHz, mode_indices = get_first_N_above_thresh(  # noqa: N816
+computed_freqs_khz, mode_indices = get_first_n_above_thresh(
     N=8, freqs=freqs / 1e3, thresh=1, decimals=1
 )
 print('found the following first unique eigenfrequencies:')
 for ind, (freq1, freq2) in enumerate(
-    zip(computed_freqs_kHz, expected_freqs_kHz, strict=True)
+    zip(computed_freqs_khz, expected_freqs_khz, strict=True)
 ):
     error = np.abs(freq2 - freq1) / freq1 * 100.0
     print(
@@ -265,12 +266,12 @@ pl.show()
 
 
 pl = pv.Plotter(shape=(2, 4))
-for i, j in product(range(2), range(4)):
+for i, j in itertools.product(range(2), range(4)):
     pl.subplot(i, j)
     current_index = 4 * i + j
     vector = f'eigenmode_{current_index:02}'
     pl.add_text(
-        f'mode {current_index}, freq. {computed_freqs_kHz[current_index]:.1f} kHz',
+        f'mode {current_index}, freq. {computed_freqs_khz[current_index]:.1f} kHz',
         font_size=10,
     )
     pl.add_mesh(

@@ -5,6 +5,7 @@ Slicing
 ~~~~~~~
 
 Extract thin planar slices from a volume.
+
 """
 
 import matplotlib.pyplot as plt
@@ -145,7 +146,7 @@ pl.show()
 
 
 # %%
-# Slice At Different Bearings
+# Slice at Different Bearings
 # +++++++++++++++++++++++++++
 #
 # From `pyvista-support#23 <https://github.com/pyvista/pyvista-support/issues/23>`_
@@ -187,6 +188,10 @@ pl.show()
 # Extract a single 2D slice from a 3D segmentation mask and plot it. Here we use
 # :func:`~pyvista.examples.examples.load_frog_tissues`.
 
+# sphinx_gallery_start_ignore
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
+
 mask = examples.load_frog_tissues()
 sliced = mask.slice_index(k=50)
 colored = sliced.color_labels()
@@ -203,7 +208,7 @@ colored = surface.color_labels()
 cpos = pv.CameraPosition(
     position=(520.0, 461.0, -402.0),
     focal_point=(372.0, 243.0, 52.0),
-    viewup=(-0.73, -0.50, -0.47),
+    viewup=(-0.73, -0.5, -0.47),
 )
 colored.plot(cpos=cpos)
 

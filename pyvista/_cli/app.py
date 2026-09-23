@@ -7,7 +7,7 @@ from rich.console import Console
 
 import pyvista as pv
 
-app = App(
+CLI_APP = App(
     name=pv.__name__,
     help_format='md',
     version=f'{pv.__name__} {pv.__version__}',

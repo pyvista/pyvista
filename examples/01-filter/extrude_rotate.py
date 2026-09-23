@@ -3,9 +3,8 @@
 
 Extrude Rotation
 ~~~~~~~~~~~~~~~~
-Sweep polygonal data creating "skirt" from free edges and lines, and
-lines from vertices using the :meth:`~pyvista.PolyDataFilters.extrude_rotate`
-filter.
+
+Sweep polygonal data into a "skirt" using :meth:`~pyvista.PolyDataFilters.extrude_rotate`.
 
 This takes polygonal data as input and generates polygonal data on
 output. The input dataset is swept around the z-axis to create
@@ -25,7 +24,7 @@ poly = line.extrude_rotate(resolution=resolution, capping=False)
 poly
 
 # %%
-# Plot the extruded line
+# Plot the Extruded Line
 # ~~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -56,7 +55,7 @@ pl.add_mesh(
 pl.show(cpos='xy')
 
 # %%
-# Create a spring
+# Create a Spring
 # ~~~~~~~~~~~~~~~
 
 # Create the spring profile (a circle).

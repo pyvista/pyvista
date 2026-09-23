@@ -1,7 +1,7 @@
 """
 .. _plotting_algorithms_example:
 
-Plotting with VTK Algorithms
+Plotting With VTK Algorithms
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Pass a :vtk:`vtkAlgorithm` to the ``Plotter`` for dynamic visualizations.
@@ -22,6 +22,7 @@ pipeline when adding data to the scene through methods like
 
 This example will walk through using a few :vtk:`vtkAlgorithm` filters directly
 and passing them to PyVista for dynamic visualization.
+
 """
 
 import pyvista as pv
@@ -35,7 +36,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 
 # %%
 # Use :vtk:`vtkConeSource` as a source algorithm. This source will dynamically
-# create a cone object depending on the instances's parameters. In this
+# create a cone object depending on the instance's parameters. In this
 # example, we will connect a callback to set the cone source algorithm's
 # resolution via :vtk:`vtkConeSource.SetResolution`.
 algo = pv.ConeSource()

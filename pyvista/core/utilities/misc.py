@@ -4,25 +4,29 @@ from __future__ import annotations
 
 from abc import ABCMeta
 from collections.abc import Sequence
-import enum
-from functools import cache
+from enum import Enum
+import functools
 import importlib
-from inspect import getattr_static
 import sys
 import threading
 import traceback
 from typing import TYPE_CHECKING
+from typing import Any
+from typing import Concatenate
 from typing import Literal
+from typing import ParamSpec
 from typing import TypeVar
+import warnings
 
 import numpy as np
 from typing_extensions import Self
 
+from pyvista import _vtk
 from pyvista._warn_external import warn_external
-from pyvista.core import _vtk_core as _vtk
+from pyvista.core.utilities.accessor_registry import _resolve_pending_accessor
 
 if TYPE_CHECKING:
-    from typing import Any
+    from collections.abc import Callable
 
     from pyvista._typing_core import ArrayLike
     from pyvista._typing_core import NumpyArray
@@ -43,7 +47,6 @@ _SMP_BACKEND_NAMES: dict[str, str] = {
 if sys.version_info >= (3, 11):
     from enum import StrEnum
 else:
-    from enum import Enum
 
     class StrEnum(str, Enum):  # noqa: D101
         def __str__(self) -> str:
@@ -111,7 +114,7 @@ def check_valid_vector(point: VectorLike[float], name: str = '') -> None:
 
 
 def abstract_class(cls_):  # noqa: ANN001, ANN201 # numpydoc ignore=RT01
-    """Decorate a class, overriding __new__.
+    """Decorate a class, overriding ``__new__``.
 
     Preventing a class from being instantiated similar to abc.ABCMeta
     but does not require an abstract method.
@@ -133,16 +136,34 @@ def abstract_class(cls_):  # noqa: ANN001, ANN201 # numpydoc ignore=RT01
     return cls_
 
 
-class AnnotatedIntEnum(int, enum.Enum):
+_P = ParamSpec('_P')
+_R = TypeVar('_R')
+
+
+def _wraps(
+    target: Callable[Concatenate[Any, _P], Any],
+) -> Callable[[Callable[..., _R]], Callable[Concatenate[Any, _P], _R]]:
+    """Give a forwarding method ``target``'s docstring, name and signature."""
+
+    def decorate(method: Callable[..., _R]) -> Callable[Concatenate[Any, _P], _R]:
+        functools.update_wrapper(method, target)
+        return method
+
+    return decorate
+
+
+class AnnotatedIntEnum(int, Enum):
     """Annotated enum type."""
 
     annotation: str
 
-    def __new__(cls, value: int, annotation: str) -> Self:
-        """Initialize."""
+    def __new__(cls, value: int, annotation: str, doc: str | None = None) -> Self:
+        """Initialize, optionally attaching a member docstring."""
         obj = int.__new__(cls, value)
         obj._value_ = value
         obj.annotation = annotation
+        if doc is not None:
+            obj.__doc__ = doc
         return obj
 
     @classmethod
@@ -202,7 +223,7 @@ class AnnotatedIntEnum(int, enum.Enum):
             raise TypeError(msg)
 
 
-@cache
+@functools.cache
 def has_module(module_name: str) -> bool:
     """Return if a module can be imported.
 
@@ -222,7 +243,17 @@ def has_module(module_name: str) -> bool:
 
 
 class _SMPToolsContext:
-    """Context manager that restores VTK SMP backend state on exit."""
+    """Context manager that restores VTK SMP backend state on exit.
+
+    Parameters
+    ----------
+    original_backend : str
+        SMP backend to restore on exit.
+
+    original_threads : int
+        Thread count to restore on exit.
+
+    """
 
     def __init__(self, original_backend: str, original_threads: int) -> None:
         self._original_backend = original_backend
@@ -270,7 +301,7 @@ def enable_smp_tools(
 
     Returns
     -------
-    _SMPToolsContext
+    contextlib.AbstractContextManager
         A context manager that restores the previous SMP backend and thread
         count when exited. The return value may be discarded when the change
         should apply for the remainder of the process.
@@ -373,7 +404,14 @@ def try_callback(func, *args) -> None:  # noqa: ANN001
         formatted_exception = 'Encountered issue in callback (most recent call last):\n' + ''.join(
             traceback.format_list(stack) + traceback.format_exception_only(etype, exc),
         ).rstrip('\n')
-        warn_external(formatted_exception)
+        # Force the warning to always be shown. Otherwise, callbacks bound to
+        # high-frequency events (e.g. ``MouseMoveEvent``) emit an identical
+        # warning at the same call site on every invocation, and Python's
+        # default filter de-duplicates it to a single message per session,
+        # making callback errors appear to be silently swallowed.
+        with warnings.catch_warnings():
+            warnings.simplefilter('always')
+            warn_external(formatted_exception)
 
 
 def threaded(fn):  # noqa: ANN001, ANN201
@@ -425,16 +463,6 @@ class conditional_decorator:  # noqa: N801
         return self.decorator(func)
 
 
-def _check_range(value: float, rng: Sequence[float], parm_name: str) -> None:
-    """Check if a parameter is within a range."""
-    if value < rng[0] or value > rng[1]:
-        msg = (
-            f'The value {float(value)} for `{parm_name}` is outside the '
-            f'acceptable range {tuple(rng)}.'
-        )
-        raise ValueError(msg)
-
-
 class _AutoFreezeMeta(type):
     """Metaclass to automatically freeze a class when called."""
 
@@ -448,22 +476,60 @@ class _AutoFreezeABCMeta(_AutoFreezeMeta, ABCMeta):
     """Metaclass to combine automatic attribute freezing with ABC support."""
 
 
-def _hasattr_static(obj: Any, attr: str) -> bool:
-    """Replicate behavior of hasattr using static lookup."""
+class _DataObjectMeta(_AutoFreezeABCMeta):
+    """Metaclass for ``DataObject`` that resolves accessor entry-points on class access.
+
+    Without this hook, class-level attribute access (for example, ``pv.PolyData.manifold``)
+    bypasses lazy loading of ``pyvista.accessors`` entry-point plugins and raises
+    ``AttributeError`` until the plugin happens to be imported some other way.
+    Instance access is handled by ``DataObject.__getattr__``.
+    """
+
+    def __getattr__(cls, name: str) -> Any:
+        # Check sys.meta_path to avoid dynamic imports when Python is shutting down
+        if sys.meta_path is None:  # pragma: no cover
+            return None  # type: ignore[unreachable]
+
+        if _resolve_pending_accessor(name):
+            return getattr(cls, name)
+        msg = f'type object {cls.__name__!r} has no attribute {name!r}'
+        raise AttributeError(msg)
+
+
+def _allow_ipython_completion(cls: type) -> None:
+    """Let IPython's default completion policy evaluate instances of ``cls``.
+
+    IPython's ``limited`` evaluation policy refuses attribute and item access on
+    any class that overrides ``__getattribute__`` or ``__getattr__``, which every
+    VTK subclass does, unless the exact type is allow-listed. Tab completion such
+    as ``mesh.point_data['`` depends on that evaluation.
+    """
+    if 'IPython' not in sys.modules:
+        return
+    # IPython 9.17+ loads the completer lazily, so the module has to be imported here
     try:
-        getattr_static(obj, attr)
-    except AttributeError:
-        return False
-    return True
+        guarded_eval = importlib.import_module('IPython.core.guarded_eval')
+    except ImportError:  # IPython < 8.8 has no evaluation policy
+        return
+    policy = getattr(guarded_eval, 'EVALUATION_POLICIES', {}).get('limited')
+    for name in ('allowed_getattr', 'allowed_getitem'):
+        allowed = getattr(policy, name, None)
+        if isinstance(allowed, set):
+            allowed.add(cls)
 
 
 class _NoNewAttrMixin(metaclass=_AutoFreezeABCMeta):
-    """Mixin to prevent adding new attributes.
+    """``Mixin`` to prevent adding new attributes.
 
     This class is mainly used to prevent users from setting the wrong attributes on an
     object. It freezes the attributes when called and prevents setting new ones via
     "normal" methods like ``obj.foo = 42``.
     """
+
+    def __init_subclass__(cls, **kwargs) -> None:
+        """Register each subclass with IPython's completion policy."""
+        super().__init_subclass__(**kwargs)
+        _allow_ipython_completion(cls)
 
     def _no_new_attributes(self, this_class: type) -> None:
         """Prevent setting additional attributes."""
@@ -471,43 +537,50 @@ class _NoNewAttrMixin(metaclass=_AutoFreezeABCMeta):
         object.__setattr__(self, '__frozen_by_class', this_class)
 
     def _check_new_attribute(self, key: str) -> None:
+        """Raise if a frozen instance is given a new attribute it does not allow."""
         # Check sys.meta_path to avoid dynamic imports when Python is shutting down
         if sys.meta_path is not None:
-            # Get mode for setting new attributes
-            try:
-                from pyvista import _ALLOW_NEW_ATTRIBUTES_MODE  # noqa: PLC0415
-            except ImportError:
-                # Circular import, set to False to disallow new attributes during initial import
-                _ALLOW_NEW_ATTRIBUTES_MODE = False
+            # Get mode for setting new attributes. Read straight out of the module
+            # dict: this runs on every __setattr__, and going through the import
+            # machinery (or getattr, which would hit pyvista's module-level
+            # __getattr__) is needless overhead. ``pyvista.core`` is imported
+            # before ``_ALLOW_NEW_ATTRIBUTES_MODE`` is defined, so a missing key
+            # means we are still mid-import: disallow new attributes, as before.
+            pyvista_module = sys.modules.get('pyvista')
+            _ALLOW_NEW_ATTRIBUTES_MODE = (
+                False
+                if pyvista_module is None
+                else pyvista_module.__dict__.get('_ALLOW_NEW_ATTRIBUTES_MODE', False)
+            )
 
             # Check if setting a new attribute is allowed
             if not (
                 _ALLOW_NEW_ATTRIBUTES_MODE is True
                 or (key.startswith('_') and _ALLOW_NEW_ATTRIBUTES_MODE == 'private')
             ):
-                # Check if this class froze itself. Any frozen state already set by parent classes,
-                # e.g. by calling super().__init__(), will be ignored. This allows subclasses to
-                # set attributes during init without being affected by a parent class init.
-                frozen = self.__dict__.get('__frozen', False)
-                frozen_by = self.__dict__.get('__frozen_by_class', None)
-                if (
-                    frozen
-                    and frozen_by is type(self)
-                    and not (key in type(self).__dict__ or _hasattr_static(self, key))
-                ):
-                    from pyvista import PyVistaAttributeError  # noqa: PLC0415
+                # Allow attributes that already exist on the instance or anywhere in the MRO
+                cls = type(self)
+                if key in object.__getattribute__(self, '__dict__'):
+                    return
+                for base in cls.__mro__:
+                    if key in base.__dict__:
+                        return
 
-                    msg = (
-                        f'Attribute {key!r} does not exist and cannot be added to class '
-                        f'{self.__class__.__name__!r}\nUse `pyvista.set_new_attribute` '
-                        f'or `pyvista.allow_new_attributes` to set new attributes.\n'
-                        f'Setting new private variables (with `_` prefix) is allowed by default.'
-                    )
-                    raise PyVistaAttributeError(msg)
+                from pyvista import PyVistaAttributeError  # noqa: PLC0415
+
+                msg = (
+                    f'Attribute {key!r} does not exist and cannot be added to class '
+                    f'{cls.__name__!r}\nUse `pyvista.set_new_attribute` '
+                    f'or `pyvista.allow_new_attributes` to set new attributes.\n'
+                    f'Setting new private variables (with `_` prefix) is allowed by default.'
+                )
+                raise PyVistaAttributeError(msg)
 
     def __setattr__(self, key: str, value: Any) -> None:
         """Prevent adding new attributes to classes using "normal" methods."""
-        self._check_new_attribute(key)
+        # Only check instances frozen by their own class, ignoring parent-set state
+        if object.__getattribute__(self, '__dict__').get('__frozen_by_class') is type(self):
+            _NoNewAttrMixin._check_new_attribute(self, key)
         object.__setattr__(self, key, value)
 
 
@@ -520,6 +593,17 @@ def set_new_attribute(obj: object, name: str, value: Any) -> None:
     to set it.
 
     Use :func:`set_new_attribute` to override this and set a new attribute anyway.
+
+    Parameters
+    ----------
+    obj : object
+        Object to set the attribute on.
+
+    name : str
+        Attribute name.
+
+    value : Any
+        Attribute value.
 
     See Also
     --------
@@ -570,7 +654,7 @@ def _reciprocal(
     tol : float
         Tolerance value. Values smaller than ``tol`` have a reciprocal of zero.
     value_if_division_by_zero : float
-        Default value given to values less than ``tol``, i.e. the value given if division
+        Default value given to values less than ``tol``, that is, the value given if division
         by zero is detected.
 
     Returns
@@ -590,7 +674,7 @@ def _reciprocal(
 class _classproperty(property):  # noqa: N801
     """Read-only class property decorator.
 
-    Use this decaorator as an alternative to chaining `@classmethod`
+    Use this decorator as an alternative to chaining `@classmethod`
     and `@property` which is deprecated.
 
     See:
@@ -615,6 +699,11 @@ class _NameMixin:
 
     .. versionadded:: 0.45
 
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
+
     """
 
     @property
@@ -638,6 +727,16 @@ class _NameMixin:
 
 
 class _BoundsSizeMixin:
+    """Add a ``bounds_size`` property to classes which define ``bounds``.
+
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
+
+
+    """
+
     @property
     def bounds_size(self) -> tuple[float, float, float]:
         """Return the size of each axis of the object's bounding box.
@@ -651,7 +750,7 @@ class _BoundsSizeMixin:
 
         Examples
         --------
-        Get the size of a cube. The cube has edge lengths af ``(1.0, 1.0, 1.0)``
+        Get the size of a cube. The cube has edge lengths of ``(1.0, 1.0, 1.0)``
         by default.
 
         >>> import pyvista as pv

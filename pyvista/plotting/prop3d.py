@@ -4,14 +4,14 @@ from __future__ import annotations
 
 from abc import ABC
 from abc import abstractmethod
-from functools import wraps
+import functools
 from typing import TYPE_CHECKING
 from typing import Literal
 
 import numpy as np
+import pyvista_validation as _validation
 
-from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core import _validation
+from pyvista import _vtk
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
@@ -20,7 +20,6 @@ from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.core.utilities.misc import _NameMixin
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 from pyvista.core.utilities.transform import Transform
-from pyvista.plotting import _vtk
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -35,7 +34,7 @@ class Prop3D(_NoNewAttrMixin, _NameMixin, _BoundsSizeMixin, DisableVtkSnakeCase,
     """Prop3D wrapper for :vtk:`vtkProp3D`.
 
     Used to represent an entity in a rendering scene. It provides spatial
-    properties and methods relating to an entity's position, orientation
+    properties and methods relating to an entity's position, orientation,
     and scale. It is used as parent class for :class:`pyvista.Actor`,
     :class:`pyvista.AxesActor`, and :class:`pyvista.plotting.volume.Volume`.
 
@@ -202,15 +201,16 @@ class Prop3D(_NoNewAttrMixin, _NameMixin, _BoundsSizeMixin, DisableVtkSnakeCase,
         Orientation angles of the axes which define rotations about the
         world's x-y-z axes. The angles are specified in degrees and in
         x-y-z order. However, the actual rotations are applied in the
-        following order: :func:`~rotate_y` first, then :func:`~rotate_x`
-        and finally :func:`~rotate_z`.
+        following order: :meth:`~pyvista.Prop3D.rotate_y` first, then
+        :meth:`~pyvista.Prop3D.rotate_x` and finally
+        :meth:`~pyvista.Prop3D.rotate_z`.
 
         Rotations are applied about the specified :attr:`~origin`.
 
         See Also
         --------
-        rotation_from
-            Alternative method for setting the :attr:`orientation`.
+        pyvista.Prop3D.rotation_from
+            Alternative method for setting the orientation.
 
         Examples
         --------
@@ -395,8 +395,8 @@ class Prop3D(_NoNewAttrMixin, _NameMixin, _BoundsSizeMixin, DisableVtkSnakeCase,
         multiply_mode: Literal['pre', 'post'] = 'post',
         *,
         inplace: bool = False,
-    ):
-        """Apply a transformation to this object's :attr:`~Prop3D.user_matrix`.
+    ) -> Self:
+        """Apply a transformation to this object's :attr:`~pyvista.Prop3D.user_matrix`.
 
         .. note::
 
@@ -418,15 +418,15 @@ class Prop3D(_NoNewAttrMixin, _NameMixin, _BoundsSizeMixin, DisableVtkSnakeCase,
         multiply_mode : 'pre' | 'post', default: 'post'
             Multiplication mode to use.
 
-            - ``'pre'``: pre-multiply ``trans`` with the :attr:`user_matrix`, i.e.
+            - ``'pre'``: pre-multiply ``trans`` with the :attr:`user_matrix`, that is
               ``user_matrix @ trans``. The transformation is applied `before` the
               current user-matrix.
-            - ``'post'``: post-multiply ``trans`` with the :attr:`user_matrix`, i.e.
+            - ``'post'``: post-multiply ``trans`` with the :attr:`user_matrix`, that is
               ``trans @ user_matrix``. The transformation is applied `after` the
               current user-matrix.
 
         inplace : bool, default: False
-            When ``True``, modifies the prop inplace. Otherwise, a copy is returned.
+            When ``True``, modifies the prop in-place. Otherwise, a copy is returned.
 
         Returns
         -------
@@ -456,12 +456,19 @@ class Prop3D(_NoNewAttrMixin, _NameMixin, _BoundsSizeMixin, DisableVtkSnakeCase,
         return output
 
     @abstractmethod
-    @_deprecate_positional_args
     def copy(
         self: Self,
-        deep: bool = True,  # noqa: FBT001, FBT002
+        *,
+        deep: bool = True,
     ) -> Self:  # numpydoc ignore=RT01
-        """Return a copy of this prop."""
+        """Return a copy of this prop.
+
+        Parameters
+        ----------
+        deep : bool, default: True
+            Return a deep copy of the prop.
+
+        """
         raise NotImplementedError  # pragma: no cover
 
     @property
@@ -561,7 +568,10 @@ def _orientation_as_rotation_matrix(orientation: VectorLike[float]) -> NumpyArra
         3x3 rotation matrix.
 
     """
-    valid_orientation = _validation.validate_array3(orientation, name='orientation')
+    # SetOrientation takes a mutable sequence
+    valid_orientation = _validation.validate_array3(
+        orientation, dtype_out=float, to_list=True, name='orientation'
+    )
     prop = _vtk.vtkActor()
     prop.SetOrientation(valid_orientation)
     matrix = _vtk.vtkMatrix4x4()
@@ -572,8 +582,14 @@ def _orientation_as_rotation_matrix(orientation: VectorLike[float]) -> NumpyArra
 class _Prop3DMixin(_BoundsSizeMixin, ABC):
     """Add 3D transformations to props which do not inherit from :class:`pyvista.Prop3D`.
 
-    Derived classes need to implement the :meth:`_post_set_update` method to define
-    their behavior, e.g. manually apply a transformation.
+    Derived classes need to implement the ``_post_set_update`` method to define
+    their behavior, for example, manually apply a transformation.
+
+    .. note::
+        This class is a private internal implementation detail. It is documented
+        solely so that its public members, which are inherited by public classes,
+        are visible in the documentation.
+
     """
 
     def __init__(self) -> None:
@@ -582,67 +598,67 @@ class _Prop3DMixin(_BoundsSizeMixin, ABC):
         self._prop3d = Actor()
 
     @property
-    @wraps(Prop3D.scale.fget)  # type: ignore[attr-defined]
+    @functools.wraps(Prop3D.scale.fget)  # type: ignore[attr-defined]
     def scale(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Wrap :class:`pyvista.Prop3D.scale."""
         return self._prop3d.scale
 
     @scale.setter
-    @wraps(Prop3D.scale.fset)  # type: ignore[attr-defined]
+    @functools.wraps(Prop3D.scale.fset)  # type: ignore[attr-defined]
     def scale(self, scale: VectorLike[float]) -> None:
         self._prop3d.scale = scale
         self._post_set_update()
 
     @property
-    @wraps(Prop3D.position.fget)  # type: ignore[attr-defined]
+    @functools.wraps(Prop3D.position.fget)  # type: ignore[attr-defined]
     def position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Wrap :class:`pyvista.Prop3D.position."""
         return self._prop3d.position
 
     @position.setter
-    @wraps(Prop3D.position.fset)  # type: ignore[attr-defined]
+    @functools.wraps(Prop3D.position.fset)  # type: ignore[attr-defined]
     def position(self, position: VectorLike[float]) -> None:
         self._prop3d.position = position
         self._post_set_update()
 
     @property
-    @wraps(Prop3D.orientation.fget)  # type: ignore[attr-defined]
+    @functools.wraps(Prop3D.orientation.fget)  # type: ignore[attr-defined]
     def orientation(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Wrap :class:`pyvista.Prop3D.orientation."""
         return self._prop3d.orientation
 
     @orientation.setter
-    @wraps(Prop3D.orientation.fset)  # type: ignore[attr-defined]
+    @functools.wraps(Prop3D.orientation.fset)  # type: ignore[attr-defined]
     def orientation(self, orientation: VectorLike[float]) -> None:
         self._prop3d.orientation = orientation
         self._post_set_update()
 
     @property
-    @wraps(Prop3D.origin.fget)  # type: ignore[attr-defined]
+    @functools.wraps(Prop3D.origin.fget)  # type: ignore[attr-defined]
     def origin(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Wrap :class:`pyvista.Prop3D.origin."""
         return self._prop3d.origin
 
     @origin.setter
-    @wraps(Prop3D.origin.fset)  # type: ignore[attr-defined]
+    @functools.wraps(Prop3D.origin.fset)  # type: ignore[attr-defined]
     def origin(self, origin: VectorLike[float]) -> None:
         self._prop3d.origin = origin
         self._post_set_update()
 
     @property
-    @wraps(Prop3D.user_matrix.fget)  # type: ignore[attr-defined]
+    @functools.wraps(Prop3D.user_matrix.fget)  # type: ignore[attr-defined]
     def user_matrix(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
         """Wrap :class:`pyvista.Prop3D.user_matrix."""
         return self._prop3d.user_matrix
 
     @user_matrix.setter
-    @wraps(Prop3D.user_matrix.fset)  # type: ignore[attr-defined]
+    @functools.wraps(Prop3D.user_matrix.fset)  # type: ignore[attr-defined]
     def user_matrix(self, matrix: TransformLike) -> None:
         self._prop3d.user_matrix = matrix
         self._post_set_update()
 
     @property
-    def _transformation_matrix(self):
+    def _transformation_matrix(self) -> NumpyArray[float]:
         """Transformation matrix applied to the actor.
 
         The transformation is computed from the attributes :attr:`position`
@@ -653,7 +669,7 @@ class _Prop3DMixin(_BoundsSizeMixin, ABC):
         return array_from_vtkmatrix(self._prop3d.GetMatrix())
 
     @abstractmethod
-    def _post_set_update(self):
+    def _post_set_update(self) -> None:
         """Update object after setting Prop3D attributes."""
 
     @abstractmethod
@@ -661,13 +677,13 @@ class _Prop3DMixin(_BoundsSizeMixin, ABC):
         """Return the object's 3D bounds."""
 
     @property
-    @wraps(Prop3D.bounds.fget)  # type: ignore[attr-defined]
+    @functools.wraps(Prop3D.bounds.fget)  # type: ignore[attr-defined]
     def bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
         """Wrap :class:`pyvista.Prop3D.bounds`."""
         return BoundsTuple(*self._get_bounds())
 
     @property
-    @wraps(Prop3D.center.fget)  # type: ignore[attr-defined]
+    @functools.wraps(Prop3D.center.fget)  # type: ignore[attr-defined]
     def center(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Wrap :class:`pyvista.Prop3D.center."""
         bnds = self.bounds
@@ -678,7 +694,7 @@ class _Prop3DMixin(_BoundsSizeMixin, ABC):
         )
 
     @property
-    @wraps(Prop3D.length.fget)  # type: ignore[attr-defined]
+    @functools.wraps(Prop3D.length.fget)  # type: ignore[attr-defined]
     def length(self) -> float:  # numpydoc ignore=RT01
         """Wrap :class:`pyvista.Prop3D.length."""
         bnds = self.bounds

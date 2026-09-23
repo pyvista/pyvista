@@ -2,25 +2,34 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 
 import pyvista as pv
-from pyvista._deprecate_positional_args import _deprecate_positional_args
-from pyvista.core import _vtk_core as _vtk
+from pyvista import _vtk
 from pyvista.core.filters import _get_output
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.utilities.misc import abstract_class
+
+if TYPE_CHECKING:
+    from pyvista.core._typing_core import VectorLike
 
 
 @abstract_class
 class StructuredGridFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for structured grid datasets."""
 
-    @_deprecate_positional_args(allowed=['voi', 'rate'])
-    def extract_subset(self, voi, rate=(1, 1, 1), boundary: bool = False):  # noqa: FBT001, FBT002
-        """Select piece (e.g., volume of interest).
+    def extract_subset(
+        self,
+        voi: VectorLike[int],
+        rate: VectorLike[int] = (1, 1, 1),
+        *,
+        boundary: bool = False,
+    ) -> pv.StructuredGrid:
+        r"""Select piece (for example, volume of interest).
 
-        To use this filter set the VOI ivar which are i-j-k min/max
+        To use this filter set the VOI ``ivar`` which are i-j-k min/max
         indices that specify a rectangular region in the data. (Note
         that these are 0-offset.) You can also specify a sampling rate
         to subsample the data.
@@ -33,12 +42,12 @@ class StructuredGridFilters(DataSetFilters):
         Parameters
         ----------
         voi : sequence[int]
-            Length 6 iterable of ints: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
+            Length 6 iterable of ``int``\ s: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
             These bounds specify the volume of interest in i-j-k min/max
             indices.
 
         rate : sequence[int], default: (1, 1, 1)
-            Length 3 iterable of ints: ``(xrate, yrate, zrate)``.
+            Length 3 iterable of ``int``\ s: ``(xrate, yrate, zrate)``.
 
         boundary : bool, default: False
             Control whether to enforce that the "boundary" of the grid
@@ -72,14 +81,16 @@ class StructuredGridFilters(DataSetFilters):
 
         """
         alg = _vtk.vtkExtractGrid()
-        alg.SetVOI(voi)
+        alg.SetVOI(voi)  # type: ignore[arg-type]
         alg.SetInputDataObject(self)
-        alg.SetSampleRate(rate)
+        alg.SetSampleRate(rate)  # type: ignore[arg-type]
         alg.SetIncludeBoundary(boundary)
         alg.Update()
         return _get_output(alg)
 
-    def concatenate(self, other, axis, tolerance=0.0):
+    def concatenate(
+        self, other: pv.StructuredGrid, axis: int, tolerance: float = 0.0
+    ) -> pv.StructuredGrid:
         """Concatenate a structured grid to this grid.
 
         Joins structured grids into a single structured grid.  Grids
@@ -149,7 +160,7 @@ class StructuredGridFilters(DataSetFilters):
         ):
             msg = (
                 f'Grids cannot be joined along axis {axis}, as points '
-                'are not coincident within tolerance of {tolerance}.'
+                f'are not coincident within tolerance of {tolerance}.'
             )
             raise RuntimeError(msg)
 
@@ -175,7 +186,7 @@ class StructuredGridFilters(DataSetFilters):
             ):
                 msg = (
                     f'Grids cannot be joined along axis {axis}, as field '
-                    '`{name}` is not identical along the seam.'
+                    f'`{name}` is not identical along the seam.'
                 )
                 raise RuntimeError(msg)
             new_point_data[name] = np.concatenate((arr_1[slice_spec], arr_2), axis=axis).ravel(

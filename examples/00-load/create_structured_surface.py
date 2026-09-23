@@ -4,8 +4,8 @@
 Creating a Structured Surface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Create a StructuredGrid surface from NumPy arrays
-using :class:`pyvista.StructuredGrid`.
+Create a StructuredGrid surface from NumPy arrays using :class:`pyvista.StructuredGrid`.
+
 """
 
 import numpy as np
@@ -18,7 +18,7 @@ from pyvista import examples
 # From NumPy Meshgrid
 # +++++++++++++++++++
 #
-# Create a simple meshgrid using NumPy. Note the usage of ij indexing.
+# Create a simple meshgrid using NumPy. Note the usage of ``ij`` indexing.
 
 # Make data
 xrng = np.linspace(-10, 10)
@@ -54,14 +54,14 @@ grid.points
 # tabular format where there exists some structure such that grid could be
 # built between the nodes you have. A great example is found in
 # `pyvista-support#16`_ where a structured grid that is rotated from the
-# cartesian reference frame is given as just XYZ points. In these cases, all
+# Cartesian reference frame is given as just XYZ points. In these cases, all
 # that is needed to recover the grid is the dimensions of the grid
-# (`nx` by `ny` by `nz`) and that the coordinates are ordered appropriately.
+# (``nx`` by ``ny`` by ``nz``) and that the coordinates are ordered appropriately.
 #
 # .. _pyvista-support#16: https://github.com/pyvista/pyvista-support/issues/16
 #
 # For this example, we will create a small dataset and rotate the
-# coordinates such that they are not on orthogonal to cartesian reference
+# coordinates such that they are not on orthogonal to Cartesian reference
 # frame.
 
 rng = np.random.default_rng(seed=0)

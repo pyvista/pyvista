@@ -3,9 +3,10 @@
 
 Visualize Modal Analysis of a Pump Bracket
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The following example demonstrates how to use PyVista to visualize the modal
-analysis of a pump bracket based on point arrays representing mode shapes for
-different modes of vibration.
+
+Visualize the modal analysis of a pump bracket.
+
+Based on point arrays representing mode shapes for different modes of vibration.
 
 **Background**
 Modal analysis is the study of the dynamic properties of mechanical structures
@@ -26,7 +27,7 @@ import pyvista as pv
 from pyvista import examples
 
 # %%
-# Load the dataset
+# Load the Dataset
 # ~~~~~~~~~~~~~~~~
 # Start by loading the dataset using :func:`download_pump_bracket()
 # <pyvista.examples.downloads.download_pump_bracket>`.
@@ -46,13 +47,13 @@ dataset
 # array represents an eigen solution or a single mode shape for a given mode of
 # vibration.
 #
-# Plot the 4th mode of the dataset. This is the first torsional mode for the
+# Plot the fourth mode of the dataset. This is the first torsional mode for the
 # bracket.
 
 cpos = pv.CameraPosition(
-    position=(0.744, -0.502, -0.830),
-    focal_point=(0.0520, -0.160, 0.0743),
-    viewup=(-0.180, -0.958, 0.224),
+    position=(0.744, -0.502, -0.83),
+    focal_point=(0.052, -0.16, 0.0743),
+    viewup=(-0.18, -0.958, 0.224),
 )
 
 dataset.plot(
@@ -103,7 +104,7 @@ pl.add_mesh(ds, lighting=True, color='w')
 pl.camera_position = cpos
 pl.enable_anti_aliasing('fxaa')
 
-n_frames = 16
+n_frames = 10
 pl.open_gif('pump_bracket_mode_shape.gif')
 for phase in np.linspace(0, 2 * np.pi, n_frames, endpoint=False):
     # use the original unmodified points, modify copy inplace

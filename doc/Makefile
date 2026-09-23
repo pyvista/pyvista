@@ -56,22 +56,17 @@ update-intersphinx:
 	cd intersphinx && ./update.sh
 
 gen-dataset-gallery:
-	@if [ ! -d "$(SOURCEDIR)/api/examples/dataset-gallery" ]; then \
-		echo "Dataset gallery directory not found, running make_table.py..."; \
-		mkdir -p "$(SOURCEDIR)/api/examples/dataset-gallery"; \
-		cd "$(SOURCEDIR)" && uv run python make_tables.py; \
+	@if [ -d "$(SOURCEDIR)/api/examples/dataset-gallery" ]; then \
+		echo "Dataset gallery directory already exists, skipping. Run clean-dataset-gallery to clear."; \
 	else \
-		echo "Dataset gallery directory already exists, skipping generation."; \
-		echo "Run clean-dataset-gallery to clear the gallery."; \
+		mkdir -p "$(SOURCEDIR)/api/examples/dataset-gallery" && cd "$(SOURCEDIR)" && uv run python make_tables.py -j auto; \
 	fi
 
 gen-external-examples:
-	@if [ ! -f "$(SOURCEDIR)/getting-started/external_examples.rst" ]; then \
-		echo "external_examples.rst not found, running make_external_examples.py..."; \
-		cd "$(SOURCEDIR)" && uv run python make_external_gallery.py; \
+	@if [ -f "$(SOURCEDIR)/getting-started/external_examples.rst" ]; then \
+		echo "external_examples.rst already exists, skipping. Run clean-external-examples to clear."; \
 	else \
-		echo "The file external_examples.rst already exists, skipping generation."; \
-		echo "Run clean-external-examples to clear the file."; \
+		cd "$(SOURCEDIR)" && uv run python make_external_gallery.py; \
 	fi
 
 # Spin up a local http server to view the rendered documentation.
@@ -87,8 +82,11 @@ ci-build:
 	@echo "Building documentation via tox (matches CI)"
 	@cd .. && uv run tox -e docs-build -- $(ARGS)
 
-# Test the built documentation via tox (matches CI `tox -e docs-test`).
-# Requires a prior successful `make ci-build` (or `make docs` at the root).
+# Test the built documentation via tox (matches CI `tox -e docs-test-build` and
+# `tox -e docs-test-images`, run together here). tox runs every listed env even
+# if an earlier one fails, so docs-test-images still runs after a docs-test-build
+# failure, matching CI. Requires a prior successful `make ci-build` (or `make docs`
+# at the root).
 ci-test:
 	@echo "Testing built documentation via tox (matches CI)"
-	@cd .. && uv run tox -e docs-test -- $(ARGS)
+	@cd .. && uv run tox -e docs-test-build,docs-test-images -- $(ARGS)

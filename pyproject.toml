@@ -23,42 +23,39 @@ dependencies = [
   'numpy>=1.21.0',
   'pillow',
   'pooch',
+  'pyobjc-framework-Cocoa; sys_platform == "darwin"', # see pyvista/pulls/7828, 8423, and 8832
+  'pyvista-validation==0.2.2', # Exact pin: the validation API is still unstable
   'scooby>=0.5.1',
   'typing-extensions>=4.10',
-  # VTK Python package is not available in WASM/WebAssembly environments.
-  # The platform markers exclude VTK from being installed when:
-  #   - platform_machine == 'wasm32' (WASM32 architecture)
-  #   - OR sys_platform == 'emscripten' (Emscripten/browser platform)
-  # In these environments, pyvista-wasm provides VTK.wasm (WebAssembly port of VTK C++)
-  # instead of the regular VTK Python package.
+  # The platform markers exclude VTK from WASM/WebAssembly environments
+  # (platform_machine == 'wasm32' or sys_platform == 'emscripten'); there,
+  # pyvista-wasm provides VTK.wasm instead of the regular VTK Python package.
   'vtk!=9.4.0; platform_machine != "wasm32" and sys_platform != "emscripten"',
   'vtk!=9.4.1; platform_machine != "wasm32" and sys_platform != "emscripten"',
-  'vtk<9.7.0; platform_machine != "wasm32" and sys_platform != "emscripten"',
-  'vtk>=9.2.2; platform_machine != "wasm32" and sys_platform != "emscripten"',
+  'vtk<9.8.0; platform_machine != "wasm32" and sys_platform != "emscripten"',
+  'vtk>=9.3.1; platform_machine != "wasm32" and sys_platform != "emscripten"',
 ]
-description = 'Easier Pythonic interface to VTK'
+description = '3D visualization and mesh analysis for science and engineering.'
 dynamic = ['version']
 keywords = ['mesh', 'numpy', 'plotting', 'vtk']
 license = 'MIT'
 name = 'pyvista'
-readme = 'README.rst'
+readme = 'README.md'
 requires-python = '>=3.10'
 
 [project.optional-dependencies]
-all = ['pyvista[colormaps,io,jupyter,wasm]']
+all = ['pyvista[colormaps,io,io-override,jupyter,wasm]']
 colormaps = ['cmcrameri', 'cmocean', 'colorcet']
-io = ['fsspec', 'imageio', 'meshio>=5.2', 'pyvista-zstd>=0.2.2']
-jupyter = [
-  'ipywidgets',
-  'jupyter-server-proxy',
-  'nest-asyncio2',
-  'trame-client>=2.12.7',
-  'trame-server >= 2.11.7, != 3.7.*, != 3.8.0',
-  'trame-vtk != 2.10.3, != 2.11.0, != 2.11.1, != 2.11.2, != 2.11.3, != 2.11.4, != 2.11.5, != 2.11.6',
-  'trame-vtk>=2.5.8, <2.11.8', # Pin indefinitely to avoid breakages
-  'trame-vuetify>=2.3.1',
-  'trame>=2.5.2',
+cvista = ['cvista[all]>=9.7.0.2,<9.8.0']
+io = [
+  'fsspec',
+  'imageio',
+  'meshio>=5.2',
+  'pyvista-frd-reader>=0.2.1',
+  'pyvista-zstd>=0.3.1',
 ]
+io-override = ['pyvista-miniply>=0.5.2', 'pyvista-stl>=0.5.3']
+jupyter = ['ipywidgets', 'nest-asyncio2', 'trame-pyvista']
 # WASM/Pyodide support for browser-based Python environments (JupyterLite, Pyodide, Stlite)
 # Note: In WASM environments, the regular VTK package is not used; instead VTK.wasm
 # is provided via pyvista-wasm. Install with: pip install "pyvista[wasm]"
@@ -67,121 +64,143 @@ wasm = ['pyvista-wasm>=0.3.0; python_version >= "3.12"']
 
 [dependency-groups]
 pinned = [ # Pinned versions of core dependencies
-  'cyclopts<4.11.0',
-  'matplotlib<3.10.9',
-  'numpy<2.4.0',
-  'pillow<12.2.0',
+  'cyclopts<4.25.1',
+  'filelock<3.33.0', # not a core dep; serializes parallel example downloads
+  'matplotlib<3.11.2',
+  'numpy<2.5.4',
+  'pillow<12.4.0',
   'pooch<1.10.0',
-  'scooby<0.12.0',
-  'typing-extensions<4.16.0',
+  'pyobjc-framework-Cocoa<12.3.0; sys_platform == "darwin"',
+  'scooby>=0.11.2,<0.12.0',
+  'typing-extensions<4.17.0',
 ]
+
+# Deliberately empty: integration envs use the target project's test deps, not ours (see tox.ini)
+integration = []
 
 typing = [
   'meshio<5.4.0',
-  'mypy<1.20.0',
+  'mypy<2.4.0',
   'npt-promote==0.2',
   'numpy>=2.0.0',
-  'trimesh<4.12.0',
+  'trimesh<5.1.0',
   { include-group = 'pinned' },
 ]
 
 test = [
-  'cmcrameri<1.10.0',
+  'cmcrameri<1.11.0',
   'cmocean<4.0.4',
-  'colorcet<3.2.0',
-  'embreex<2.17.8; sys_platform != "darwin" or platform_machine != "arm64"', # Does not work with arm-based macs
-  'fsspec<2026.4.0',
-  'hypothesis<6.151.10',
+  'colorcet<3.3.0',
+  'embreex<4.4.1',
+  'fsspec<2026.8.0',
+  'hypothesis<6.165.11',
   'imageio-ffmpeg<0.7.0',
   'imageio<2.38.0',
   'ipython<10.0.0',
   'ipywidgets<9.0.0',
-  'libcst<1.8.7',
+  'libcst<1.9.1',
   'meshio<5.4.0',
   'nest-asyncio2<1.8.0',
   'numpydoc<1.11.0',
   'pandas<=2.4.0',
-  'pyobjc-framework-Cocoa; sys_platform == "darwin"', # see pyvista/pulls/7828
+  'polars<=1.44',
+  'pyarrow<26.0.0',
   'pytest-cases<3.11.0',
+  'pytest-codspeed<5.1.0',
   'pytest-cov<7.2.0',
   'pytest-mock<3.16.0',
-  'pytest-mypy-plugins<4.1.0',
   'pytest-pyodide<0.30.0',
   'pytest-pyvista==0.3.3',
+  'pytest-timeout<2.5.0',
   'pytest-xdist<3.9.0',
   'pytest<9.1.0',
-  'pyvista-zstd>=0.2.2,<0.3.0',
-  'retry-requests<2.1.0',
+  'pyvista-frd-reader>=0.2.1,<0.3.0',
+  'pyvista-miniply>=0.5.2,<0.6.0',
+  'pyvista-stl>=0.5.3,<0.6.0',
+  'pyvista-zstd>=0.3.1,<0.5.0',
+  'refleak>=0.2.2,<0.3.0',
   'scipy<1.17.0',
-  'sphinx-book-theme<1.2.0',
-  'sphinx-design<0.7.0',
-  'sphinx-gallery<0.21.0',
-  'sphinx<8.3.0',
+  'sphinx-autocodelink[gallery]==0.12.0',
+  'sphinx-autoopengraph<0.3',
+  'sphinx-book-theme<1.5.0',
+  'sphinx-design<0.8.0',
+  'sphinx-examples-as-code[gallery]==0.6.1',
+  'sphinx-gallery<0.23.0',
+  'sphinx<9.2.0',
+  'sphinxext-opengraph<0.14.0',
   'sympy<1.15.0',
-  'tqdm<4.68.0',
-  'trame-vtk>=2.5.8,<2.11.8',
-  'trame-vuetify>=2.3.1,<3.3.0',
-  'trame>=2.5.2,<3.13.0',
-  'trimesh<4.12.0',
-  'typing-extensions<4.16.0',
-  { include-group = 'pinned' },
+  'tqdm<4.71.0',
+  'trame-pyvista<0.2.0',
+  'trimesh<5.1.0',
+  'type-assert==0.3.0',
+  'typing-extensions<4.17.0',
+  { include-group = 'typing' },
 ]
 
-test-playwright = ['playwright<1.59.0', { include-group = 'test' }]
+test-playwright = ['playwright<1.63.0', { include-group = 'test' }]
 
 docs = [
-  'atsphinx-mini18n==0.5.1',
-  'cmcrameri==1.9.0',
+  'cmcrameri==1.10',
   'cmocean==4.0.3',
-  'colorcet==3.1.0',
+  'colorcet==3.2.1',
   'colour-science==0.4.6; python_version < "3.14"',
   'colour-science==0.4.7; python_version >= "3.14"',
-  'enum-tools==0.13.0',
-  'fsspec==2026.3.0',
+  'erbsland-sphinx-ansi==1.2.4',
+  'fsspec==2026.7.0',
   'imageio-ffmpeg==0.6.0',
-  'imageio==2.37.3',
+  'imageio==2.37.4',
   'joblib==1.5.3',
   'jupyter-sphinx==0.5.3',
-  'jupyterlab==4.5.6',
-  'lxml==6.0.2',
+  'jupyterlab==4.6.3',
+  'lxml==6.1.2',
+  'matplotlib>=3.11; python_version >= "3.11"',
   'meshio==5.3.5',
   'mypy-extensions==1.1.0',
-  'mypy==1.19.1',
+  'mypy==2.3.1',
   'nest-asyncio2==1.7.2',
   'numpydoc==1.10.0',
-  'pydata-sphinx-theme==0.15.4', # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
+  'pandas==2.3.3',
+  'pyarrow==25.0.1',
+  'pydata-sphinx-theme==0.20.0; python_version >= "3.11"',
   'pypandoc==1.17',
   'pytest-sphinx==0.7.1',
-  'pyvista-zstd==0.2.2',
+  'pyvista-frd-reader==0.2.1',
+  'pyvista-miniply==0.5.2',
+  'pyvista-stl==0.5.3',
+  'pyvista-zstd==0.4.0',
   'ruamel-yaml<0.20.0',
   'scipy==1.16.3; python_version >= "3.11"',
-  'sphinx-autobuild==2024.10.3',
-  'sphinx-book-theme==1.1.4',
+  'sphinx-autobuild==2025.8.25; python_version >= "3.11"',
+  'sphinx-autocodelink[gallery]==0.12.0',
+  'sphinx-autoopengraph==0.2.1',
+  'sphinx-book-theme==1.4.0; python_version >= "3.11"',
   'sphinx-copybutton==0.5.2',
-  'sphinx-design==0.6.1',
-  'sphinx-gallery==0.20.0',
+  'sphinx-design==0.7.0; python_version >= "3.11"',
+  'sphinx-examples-as-code[gallery]==0.6.1',
+  'sphinx-gallery==0.22.1',
   'sphinx-notfound-page==1.1.0',
   'sphinx-sitemap==2.9.0',
   'sphinx-tags==0.4.0',
-  'sphinx-togglebutton==0.4.4',
-  'sphinx-toolbox==4.1.2',
-  'sphinx==8.2.3; python_version >= "3.11"',
+  'sphinx-togglebutton==0.4.5',
+  'sphinx-toolbox==4.3.0',
+  'sphinx-vtk-xref==0.3.0',
+  'sphinx==9.1.0; python_version >= "3.12"',
   'sphinxcontrib-asciinema==0.4.3',
+  'sphinxcontrib-programoutput==0.20',
   'sphinxcontrib-websupport==2.0.0',
   'sphinxext-opengraph==0.13.0',
   'sympy==1.14.0',
-  'trame-vtk==2.11.7',
-  'trame-vuetify==3.2.1',
-  'trame==3.12.0',
-  'trimesh==4.11.5',
-  'vtk-xref==0.1.1',
+  'trame-pyvista==0.1.7',
+  'trimesh==5.0.0',
   { include-group = 'pinned' },
 ]
 
 docs-test = [
   'pytest-pyvista[vtksz]==0.3.3',
   'pytest-xdist<3.9.0',
-  'trame-vtk==2.11.7',
+  'refleak>=0.2.2,<0.3.0', # tests/conftest.py imports it for the leak check
+  'trame-pyvista==0.1.7',
+  'type-assert==0.3.0', # registers the type_assert_cases option
   { include-group = 'pinned' },
 ]
 
@@ -242,7 +261,7 @@ source-dir = 'doc'
 upload-dir = 'doc/_build/html'
 
 [tool.codespell]
-ignore-words = 'doc/styles/Vocab/pyvista/accept.txt'
+ignore-words = 'doc/styles/config/vocabularies/pyvista/accept.txt'
 quiet-level = 3
 skip = '*.pyc,*.txt,*.gif,*.png,*.jpg,*.ply,*.vtk,*.vti,*.vtu,*.js,*.html,*.doctree,*.ttf,*.woff,*.woff2,*.eot,*.mp4,*.inv,*.pickle,*.ipynb,flycheck*,./.git/*,./.hypothesis/*,*.yml,doc/_build/*,./doc/images/*,./dist/*,*~,.hypothesis*,./doc/examples/*,*.mypy_cache/*,*cover,./tests/tinypages/_build/*,*/_autosummary/*'
 
@@ -256,13 +275,25 @@ report.exclude_also = [
 report.omit = [
   '*/pyvista/conftest.py',
   '*/pyvista/plotting/theme.py', # kept for backwards compatibility
+
+  # Under tests/, only files the `-cov` environments actually run are measured.
+  # Everything below runs somewhere else, so coverage would report it as dead.
+  '*/tests/check_doctest_names.py', # tox -e doctest-local
+  '*/tests/doc/doc_build/*', # tox -e docs-test-build
+  '*/tests/doc/vale/check_expected_failures.py', # .github/workflows/style-docstring.yml
+  '*/tests/generate_test_image_report.py', # tox -e image-report
+
+  # Sphinx projects used as build input, copied to a tmpdir and built in a subprocess.
+  '*/tests/doc/tinypages_autoenum/*',
+  '*/tests/plotting/tinypages/*',
+  '*/tests/plotting/tinypages_autocodelink/*',
 ]
 run.branch = true
 run.parallel = true
 run.patch = ["subprocess"]
 
 [tool.pytest.ini_options]
-addopts = ['--strict-config', '--strict-markers', '-ra']
+addopts = ['--durations=25', '--strict-config', '--strict-markers', '-ra']
 asyncio_default_fixture_loop_scope = 'function'
 doctest_optionflags = 'NUMBER ELLIPSIS'
 log_level = 'INFO'
@@ -272,18 +303,19 @@ filterwarnings = [
   'error',
 
   "ignore:'mode' parameter is deprecated and will be removed in Pillow 13:DeprecationWarning", # matplotlib toolbar icon creation with newer Pillow
+  'ignore:(?i).*_io\.FileIO.*pytest\.EXE:pytest.PytestUnraisableExceptionWarning', # the Windows launcher
   'ignore:.*A NumPy version .* is required for this version of SciPy.*:UserWarning',
   'ignore:.*Given trait value dtype "float64":UserWarning', # bogus numpy ABI warning (see numpy/#432)
   'ignore:.*The NumPy module was reloaded*:UserWarning', # bogus numpy ABI warning (see numpy/#432)
   'ignore:.*numpy.dtype size changed.*:RuntimeWarning', # bogus numpy ABI warning (see numpy/#432)
   'ignore:.*numpy.ufunc size changed.*:RuntimeWarning', # bogus numpy ABI warning (see numpy/#432)
-  'ignore:Call to deprecated method GetData:DeprecationWarning', # emitted by trame-vtk
+  'ignore:Call to deprecated method GetData:DeprecationWarning', # emitted by trame-vtk via trame-pyvista
   'ignore:Passing .{1}N.{1} to ListedColormap is deprecated since:DeprecationWarning', # https://github.com/matplotlib/cmocean/pull/114
-  'ignore:Setting the dtype on a NumPy array has been deprecated in NumPy 2\.\d+\.', # https://github.com/pyvista/pyvista/issues/8484 - triggered by pyvista_ndarray.view() and VTK's C++ code
   'ignore:Setting the shape on a NumPy array has been deprecated in NumPy 2.5.', # https://numpy.org/devdocs/release/2.5.0-notes.html#setting-the-shape-attribute-is-deprecated
   'ignore:The .*interactive_bk.* attribute was deprecated in Matplotlib 3\.9.*:matplotlib.MatplotlibDeprecationWarning', # https://github.com/microsoft/debugpy/issues/1623
   'ignore:The \(path.*\) argument is deprecated.*:pytest.PytestRemovedIn9Warning', # pytest-pyodide uses deprecated 'path' hook arg (py.path.local → pathlib.Path)
   'ignore:pyvista test \w+ image dir.* does not yet exist.  Creating dir.:UserWarning',
+  'ignore:pyvista\.trame.*is deprecated:pyvista.core.errors.PyVistaDeprecationWarning', # shim re-exports to trame-pyvista
 
   'always:(?s).*PYVISTA_VTK_DATA is not a valid directory.*:UserWarning',
   'always:(?s).*This test has multiple cached images.*:UserWarning',
@@ -292,18 +324,24 @@ filterwarnings = [
 junit_family = 'legacy'
 log_cli_level = "INFO"
 markers = [
-  'expect_check_gc_fail: Expect vtk leak.',
+  'expect_check_gc_fail: Expect vtk leak. Checked even under --no_check_gc.',
+  'needs_doc_build: this test requires the documentation to already be built and must be enabled with the --doc_build CLI flag',
   'needs_download: this test downloads data during execution',
+  'needs_io_extra: this test requires an IO-tier VTK module omitted from a core-only build (vtkIOHDF / vtkIOEnSight / vtkIOChemistry, e.g. .vtkhdf, EnSight .case, PDB/XYZ/GaussianCube readers). Auto-applied (only when the module is actually absent) via the HAS_IO_* probes in conftest.py. Deselect with `-m "not needs_io_extra"` alongside `not needs_rendering` to run the core-only subset against a rendering-free VTK backend (e.g. the core-only cvista wheel).',
   'needs_playwright: this test uses playwright and must be enabled with the --playwright CLI flag',
+  'needs_rendering: this test requires VTK rendering modules (Plotter, .plot(), screenshots, charts, widgets). Auto-applied to tests/plotting. Deselect with `-m "not needs_rendering"` to run the core-only subset against a rendering-free VTK backend (e.g. the core-only cvista wheel).',
   'needs_vtk_version(at_least, less_than, reason): skip test unless VTK version corresponds to at_least and greater_than values.',
   'pyodide: mark test as requiring Pyodide environment to run (pytest-pyodide)',
+  'security: security regression test (refusal of unsafe paths, untrusted-input handling). Run with `pytest -m security`.',
   'skip_check_gc: Disable the autouse check_gc fixture for this test.',
   'skip_egl(reason="Test fails when using OSMesa/EGL VTK build"): skip test for OSMesa/EGL.',
   'skip_mac(reason="Test fails on MacOS", machine=None, processor=None): skip test for MacOS and specific architectures if needed',
+  'skip_vtk_backend(backend, reason="..."): skip test when `pyvista.vtk_backend()` is `backend` (e.g. `cvista`). Use for behaviour that genuinely differs on an alternative VTK build -- attach it to the test itself, with a reason naming what diverges.',
   'skip_windows(reason="Test fails on Windows"): skip test for windows.',
 ]
 minversion = "7"
 testpaths = 'tests'
+type_assert_cases = 'tests/typing/cases'
 xfail_strict = true
 
 # pytest-pyvista options
@@ -318,7 +356,7 @@ image_cache_dir = 'tests/plotting/image_cache'
 image_format = 'png'
 include_vtksz = true
 max_image_size = 400 # pixels
-max_vtksz_file_size = 25 # MB
+max_vtksz_file_size = 5 # MB
 
 [tool.mypy]
 check_untyped_defs = true
@@ -329,8 +367,10 @@ exclude = ['pyvista/ext/']
 extra_checks = true
 follow_untyped_imports = true
 ignore_missing_imports = true
+native_parser = true
 no_implicit_reexport = true
 packages = ['pyvista']
+platform = 'linux'
 plugins = ['npt_promote', 'pyvista.typing.mypy_plugin']
 pretty = true
 show_error_context = true
@@ -351,10 +391,8 @@ checks = [
   'GL03', # Considering enforcing
   'GL06', # Found unknown section
   'GL07', # 'Sections are in the wrong order. Correct order is: {correct_sections}',
-  'GL08', # The object does not have a docstring
+  'GL08', # mostly @overload stubs and setters numpydoc cannot skip; ruff D1 and the hook cover the rest
   'GL09', # Deprecation warning should precede extended summary (check broken)
-  'PR01', # 'Parameters {missing_params} not documented',
-  'PR02', # 'Unknown parameters {unknown_params}',
   'PR03', # 'Wrong parameters order. Actual: {actual_params}. Documented: {documented_params}',
   'PR04', # 'Parameter "{param_name}" has no type',
   'PR05', # 'Parameter "{param_name}" type should not finish with "."',
@@ -370,11 +408,10 @@ checks = [
   'YD01', # Yields: No plan to enforce
 ]
 exclude = [ # don't report on objects that match any of these regex
-  '\.*Reader(\.|$)', # classes inherit from BaseReader
-  '\._.*$', # Ignore anything that's private (e.g., starts with _)
-  '^plot_directive\..*$',
-  '^viewer_directive\..*$',
+  '\._[a-z_][^.]*$', # private members and dunders; private classes are documented
 ]
+exclude_files = ['^pyvista/ext/'] # Sphinx machinery, not shipped API
+override_RT01 = ['\A[^\n]+\Z'] # summary-only; the annotation carries the type
 
 [tool.ruff]
 exclude = ['.git', 'build', 'dist', 'doc/_build', 'doc/examples', 'pycache__']
@@ -438,7 +475,7 @@ extend-select = [
   'RET',
   'RSE',
   'RUF',
-  'S101',
+  'S',
   'SIM',
   'T10',
   'T20',
@@ -463,7 +500,6 @@ ignore = [
   'D213', # Incompatible with D212
   'D402', # First line should not be the function's signature
   'D416', # Section name ends in colon
-  'E402', # module level import not at top of file
   'E731', # do not assign a lambda expression, use a def
   'E741', # ambiguous variable name
   'F403', # 'from module import *' used; unable to detect undefined names
@@ -479,6 +515,7 @@ ignore = [
   'RET505', # https://github.com/pyvista/pyvista/pull/5911
   'RET506', # https://github.com/pyvista/pyvista/pull/5911
   'RET507', # https://github.com/pyvista/pyvista/pull/5911
+  'S603', # subprocess calls pass argv lists, never a shell string
   'SIM102', # https://github.com/pyvista/pyvista/pull/5877
   'SIM117', # https://github.com/pyvista/pyvista/pull/5888
   'SIM118', # https://github.com/pyvista/pyvista/pull/5837
@@ -489,16 +526,89 @@ unfixable = ['F401', 'PLC0415']
 [tool.ruff.lint.flake8-comprehensions]
 allow-dict-calls-with-keyword-arguments = true
 
+[tool.ruff.lint.flake8-import-conventions]
+# Stdlib modules that must be namespace-imported (`re.escape`, not `escape`).
+# Counterpart: the 'namespace-stdlib-imports' hook in .pre-commit-config.yaml.
+# See "Import Conventions" in CONTRIBUTING.rst for the rule and how they interact.
+banned-from = [
+  'argparse',
+  'ast',
+  'asyncio',
+  'atexit',
+  'builtins',
+  'colorsys',
+  'contextlib',
+  'copy',
+  'ctypes',
+  'datetime',
+  'difflib',
+  'doctest',
+  'faulthandler',
+  'functools',
+  'gc',
+  'glob',
+  'hashlib',
+  'html',
+  'importlib',
+  'importlib.util',
+  'inspect',
+  'itertools',
+  'json',
+  'locale',
+  'logging',
+  'math',
+  'multiprocessing',
+  'numbers',
+  'operator',
+  'os',
+  'os.path',
+  'pickle',
+  'pkgutil',
+  'platform',
+  'posixpath',
+  're',
+  'reprlib',
+  'shlex',
+  'shutil',
+  'signal',
+  'string',
+  'subprocess',
+  'symtable',
+  'sys',
+  'tempfile',
+  'textwrap',
+  'threading',
+  'time',
+  'tomllib',
+  'traceback',
+  'unittest',
+  'urllib',
+  'urllib.parse',
+  'uuid',
+  'warnings',
+  'weakref',
+  'xml',
+]
+
 [tool.ruff.lint.flake8-import-conventions.aliases]
 pyvista = "pv"
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
-"vtk".msg = "Use targeted vtkmodules imports (e.g., from vtkmodules.vtkCommonDataModel import ...) to avoid pulling in the entire VTK package."
+"vtk".msg = "Use `pyvista._vtk` instead to lazily load from vtkmodules, and avoid pulling in the entire VTK package"
+"vtkmodules".msg = "Use `pyvista._vtk` instead to lazily load from vtkmodules"
 
 [tool.ruff.lint.per-file-ignores]
 # TODO: Add annotations to any files with 'ANN' ignores listed below
+'*/conf.py' = ['E402']
+# A command-line script bundled with an agent skill, not an importable package.
+'.claude/skills/*/scripts/*.py' = ['INP', 'T20']
+'.github/scripts/*.py' = ['INP', 'T20'] # CI script, not a package
 '__init__.py' = ['PLC0414']
+'benchmarks/*' = ['ANN', 'S101']
 'doc/*' = ['ANN', 'INP', 'PLC0415']
+'doc/make_dev_wheel.py' = ['S607'] # git comes from PATH
+# A command-line script: it reports what it runs, like `make` does.
+'doc/run_vale.py' = ['T20']
 'doc/source/make_tables.py' = [
   'D101',
   'D102',
@@ -509,8 +619,8 @@ pyvista = "pv"
   'S101',
   'T20',
 ]
-'examples*' = ['ANN', 'INP', 'PLC0415']
 'examples/*' = [
+  'ANN',
   'B015', # https://github.com/pyvista/pyvista/pull/6014
   'B018', # https://github.com/pyvista/pyvista/pull/6019
   'D102',
@@ -519,69 +629,65 @@ pyvista = "pv"
   'D212',
   'D400',
   'D415',
+  'E402',
+  'INP',
+  'PLC0415',
   'PLC0415', # https://github.com/pyvista/pyvista/pull/7676
   'S101',
   'SIM115',
   'T20',
 ]
+'examples/02-plot/composite_picking.py' = ['ARG001']
+'examples/02-plot/distance_measurement.py' = ['ARG001']
+'examples/99-advanced/customize_trame_toolbar.py' = ['ARG001']
+'examples/99-advanced/sphere_eversion.py' = ['PLR0917']
 'examples/99-advanced/warp_by_vector_eigenmodes.py' = ['N802', 'N803']
-'examples_trame/*' = ['D100', 'D103', 'T20']
-'examples_trame/tests/*' = ['D', 'S101']
 'hooks/*' = ['INP001']
 'pyvista/__init__.py' = ['ANN']
+'pyvista/_vtk.py' = ['ANN202', 'PLC0414', 'PLC0415']
 'pyvista/conftest.py' = ['ANN']
 'pyvista/core/_typing_core/_aliases.py' = ['PYI047', 'UP007']
 'pyvista/core/_typing_core/_array_like.py' = ['PYI047', 'UP007']
 'pyvista/core/_typing_core/_dataset_types.py' = ['PYI018']
-'pyvista/core/_validation/_cast_array.py' = ['ANN']
-'pyvista/core/_validation/validate.py' = ['ANN202']
-'pyvista/core/_vtk_core.py' = ['PLC0414']
-'pyvista/core/_vtk_utilities.py' = ['ANN']
 'pyvista/core/dataobject.py' = ['PLC0415']
-'pyvista/core/errors.py' = ['ANN']
-'pyvista/core/filters/*' = ['ANN', 'PYI019']
-'pyvista/core/objects.py' = ['ANN']
-'pyvista/core/partitioned.py' = ['ANN']
-'pyvista/core/pointset.py' = ['ANN']
-'pyvista/core/utilities/cell.py' = ['ANN']
-'pyvista/core/utilities/docs.py' = ['ANN']
-'pyvista/core/utilities/features.py' = ['ANN']
+'pyvista/core/filters/data_object.py' = ['ANN', 'PYI019']
+'pyvista/core/filters/data_set.py' = ['ANN', 'PYI019']
+'pyvista/core/filters/image_data.py' = ['PYI019']
+'pyvista/core/filters/poly_data.py' = ['PYI019']
+'pyvista/core/utilities/fileio.py' = ['S105'] # pass_data is not a password
 'pyvista/core/utilities/geometric_objects.py' = ['N802']
-'pyvista/core/utilities/helpers.py' = ['ANN']
-'pyvista/core/utilities/image_sources.py' = ['ANN']
-'pyvista/core/utilities/observers.py' = ['ANN']
 'pyvista/core/utilities/parametric_objects.py' = ['N802']
-'pyvista/core/utilities/reader.py' = ['ANN', 'N802']
+'pyvista/core/utilities/reader.py' = ['N802', 'S314'] # .pvd is trusted
 'pyvista/demos/*' = ['ANN']
 'pyvista/errors.py' = ['ANN']
-'pyvista/examples*' = ['ANN']
-'pyvista/examples/_dataset_loader.py' = [
-  'PTH112',
-  'PTH113',
-  'PTH117',
-  'PTH118',
-  'PTH202',
-  'S101',
-]
+'pyvista/examples/_get_example.py' = [
+  'E501',
+] # generated one-line overloads, unformatted
 'pyvista/examples/cells.py' = ['N802']
+'pyvista/examples/download_3ds.py' = ['ANN']
+'pyvista/examples/downloads.py' = ['ANN202']
+'pyvista/examples/examples.py' = ['ANN202']
+'pyvista/examples/gltf.py' = ['ANN']
+'pyvista/examples/planets.py' = ['ANN']
+'pyvista/examples/vrml.py' = ['ANN']
 'pyvista/ext/*' = ['ANN', 'D100', 'D101', 'D102', 'D103']
+'pyvista/ext/_autoenum.py' = [
+  'ARG002', # overrides of fixed third-party (Sphinx) method signatures
+  'ARG003',
+  'FBT001',
+  'FBT002',
+  'PLR0917',
+]
 'pyvista/jupyter*' = ['ANN']
 'pyvista/plotting/_plotting.py' = ['ANN']
-'pyvista/plotting/_property.py' = ['ANN']
 'pyvista/plotting/_typing.py' = ['PLC0414']
-'pyvista/plotting/_vtk*.py' = ['PLC0414']
-'pyvista/plotting/actor.py' = ['ANN']
 'pyvista/plotting/actor_properties.py' = ['ANN']
-'pyvista/plotting/affine_widget.py' = ['ANN']
 'pyvista/plotting/axes.py' = ['ANN']
-'pyvista/plotting/axes_actor.py' = ['ANN']
-'pyvista/plotting/axes_assembly.py' = ['ANN']
 'pyvista/plotting/background_renderer.py' = ['ANN']
-'pyvista/plotting/camera.py' = ['ANN']
+'pyvista/plotting/camera.py' = ['ANN', 'S314'] # .pvcc is trusted
 'pyvista/plotting/charts.py' = ['ANN']
 'pyvista/plotting/colors.py' = ['ANN']
 'pyvista/plotting/composite_mapper.py' = ['ANN']
-'pyvista/plotting/cube_axes_actor.py' = ['ANN']
 'pyvista/plotting/errors.py' = ['ANN']
 'pyvista/plotting/helpers.py' = ['ANN']
 'pyvista/plotting/lights.py' = ['ANN']
@@ -590,26 +696,23 @@ pyvista = "pv"
 'pyvista/plotting/opts.py' = ['ANN']
 'pyvista/plotting/picking.py' = ['ANN']
 'pyvista/plotting/plotting/__init__.py' = ['ANN']
-'pyvista/plotting/prop3d.py' = ['ANN']
-'pyvista/plotting/prop_collection.py' = ['ANN']
 'pyvista/plotting/render_passes.py' = ['ANN']
 'pyvista/plotting/render_window_interactor.py' = ['ANN']
-'pyvista/plotting/renderer.py' = ['ANN', 'PLC0415']
-'pyvista/plotting/renderers.py' = ['ANN']
+'pyvista/plotting/renderer.py' = ['PLC0415']
 'pyvista/plotting/scalar_bars.py' = ['ANN']
-'pyvista/plotting/text.py' = ['ANN']
-'pyvista/plotting/texture.py' = ['ANN']
 'pyvista/plotting/themes.py' = ['ANN', 'ICN001']
-'pyvista/plotting/tools.py' = ['ANN']
+'pyvista/plotting/tools.py' = ['S607'] # pgrep and xset come from PATH
 'pyvista/plotting/utilities/*.py' = ['ANN']
 'pyvista/plotting/utilities/algorithms.py' = ['N802', 'N803']
-'pyvista/plotting/volume.py' = ['ANN']
-'pyvista/plotting/volume_property.py' = ['ANN']
 'pyvista/plotting/widgets.py' = ['ANN', 'PLC0415']
-'pyvista/report.py' = ['ANN']
-'pyvista/trame/*' = ['ANN', 'FBT', 'PLR0917']
 'pyvista/utilities/*' = ['ANN', 'F401'] # deprecated modules
 'tests/*' = ['ANN', 'D', 'FBT', 'INP', 'PLC0415', 'PLR0917', 'S101', 'T20']
+'tests/core/test_accessor_registry.py' = ['S301'] # unpickles its own objects
+'tests/core/test_dataobject.py' = ['S301'] # unpickles its own objects
+'tests/core/test_helpers.py' = ['S106'] # pass_data is not a password
+'tests/core/test_utilities.py' = ['S301'] # unpickles its own objects
+'tests/doc/doc_build/test_gallery_examples.py' = ['S314'] # gallery junit report
+'tests/doc/vale/check_expected_failures.py' = ['S607'] # vale comes from PATH
 'tests/examples/test_dataset_loader.py' = [
   'PTH102',
   'PTH107',
@@ -619,6 +722,9 @@ pyvista = "pv"
   'PTH118',
   'PTH119',
 ]
+# Sphinx-Gallery examples are rendered verbatim, like those under 'examples/'
+'tests/plotting/tinypages/gallery_src/*' = ['I002']
+'tests/security/test_pickle_refused.py' = ['S301'] # unpickles its own objects
 
 [tool.ruff.lint.pylint]
 max-positional-args = 3

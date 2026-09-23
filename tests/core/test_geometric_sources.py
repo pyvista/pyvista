@@ -9,9 +9,10 @@ import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista import examples
-from pyvista.core import _vtk_core as _vtk
-from pyvista.core.utilities.geometric_objects import translate
+from pyvista.core.utilities.geometric_sources import _PartEnum
+from pyvista.core.utilities.geometric_sources import _translate_and_orient
 
 
 @pytest.fixture
@@ -22,20 +23,6 @@ def axes_geometry_source():
 @pytest.fixture
 def cube_faces_source():
     return pv.CubeFacesSource()
-
-
-@pytest.mark.needs_vtk_version(less_than=(9, 3))
-def test_capsule_source():
-    algo = pv.CapsuleSource()
-    assert np.array_equal(algo.center, (0.0, 0.0, 0.0))
-    assert np.array_equal(algo.direction, (1.0, 0.0, 0.0))
-    assert algo.radius == 0.5
-    assert algo.cylinder_length == 1.0
-    assert algo.theta_resolution == 30
-    assert algo.phi_resolution == 30
-    direction = np.random.default_rng().random(3)
-    algo.direction = direction
-    assert np.array_equal(algo.direction, direction)
 
 
 def test_cone_source():
@@ -79,7 +66,6 @@ def test_cylinder_source():
     assert np.array_equal(algo.direction, direction)
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_cylinder_capsule_cap():
     algo = pv.CylinderSource()
     algo.capsule_cap = True
@@ -112,7 +98,7 @@ def test_translate_direction_collinear(is_negative, delta, bunny):
     if is_negative:
         direction *= -1
     mesh_out = mesh_in.copy()
-    translate(mesh_out, direction=direction)
+    _translate_and_orient(mesh_out, direction=direction)
     points_in = mesh_in.points
     points_out = mesh_out.points
 
@@ -158,10 +144,7 @@ def test_text3d_source_empty_string():
     out = src.output
     assert out.n_points == 0
 
-    if pv.vtk_version_info == (9, 0, 3):
-        mx, mn = 1, -1
-    else:
-        mx, mn = _vtk.VTK_DOUBLE_MAX, _vtk.VTK_DOUBLE_MIN
+    mx, mn = _vtk.VTK_DOUBLE_MAX, _vtk.VTK_DOUBLE_MIN
 
     assert out.bounds == (mx, mn, mx, mn, mx, mn)
 
@@ -171,6 +154,20 @@ def test_text3d_source():
     assert src.string == 'Text'
     out = src.output
     assert len(out.split_bodies()) == 4
+
+
+@pytest.mark.parametrize('name', ['depth', 'height', 'width'])
+def test_text3d_source_size_setters(name):
+    src = pv.Text3DSource(string='Text')
+
+    setattr(src, name, 2.0)
+    assert getattr(src, name) == 2.0
+
+    setattr(src, name, None)
+    assert getattr(src, name) is None
+
+    with pytest.raises(ValueError, match=f'{name} values must all be greater than or equal'):
+        setattr(src, name, -1.0)
 
 
 @pytest.mark.parametrize('string', [' ', 'TEXT'])
@@ -374,9 +371,18 @@ def test_sphere_source():
     assert algo.end_theta == 360.0
     assert algo.start_phi == 0.0
     assert algo.end_phi == 180.0
+    assert algo.tessellation == 'triangle'
+    assert algo.texture_coordinates is False
     center = (1.0, 2.0, 3.0)
     algo = pv.SphereSource(center=center)
     assert algo.center == center
+
+    algo.tessellation = 'phi_theta'
+    assert algo.tessellation == 'phi_theta'
+    algo.tessellation = 'triangle'
+    assert algo.tessellation == 'triangle'
+    algo.texture_coordinates = True
+    assert algo.texture_coordinates is True
 
 
 def test_line_source():
@@ -484,6 +490,67 @@ def test_axes_geometry_source_symmetric_bounds_init():
     assert axes_geometry_source.output.bounds == (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
 
 
+@pytest.mark.parametrize('tip_type', ['sphere', 'cube'])
+def test_axes_geometry_source_symmetric_bounds_arrays(tip_type):
+    axes_geometry_source = pv.AxesGeometrySource(tip_type=tip_type, symmetric_bounds=True)
+    for tip in list(axes_geometry_source.output)[3:]:
+        assert tip.points.dtype == np.float32
+        for array in tip.point_data.values():
+            assert len(array) == tip.n_points
+        for array in tip.cell_data.values():
+            assert len(array) == tip.n_cells
+
+
+def test_axes_geometry_source_symmetric_bounds_anti_distortion():
+    axes_geometry_source = pv.AxesGeometrySource(symmetric_bounds=True)
+    axes_geometry_source._anti_distortion_factor = np.array([0.5, 1.0, 2.0])
+    bounds = axes_geometry_source.output.bounds
+    assert np.allclose(bounds[0::2], np.negative(bounds[1::2]))
+
+
+def test_axes_geometry_source_symmetric_set_get_updates_output(axes_geometry_source):
+    axes_geometry_source.symmetric = True
+    assert axes_geometry_source.output.bounds == (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
+    axes_geometry_source.symmetric = False
+    axes_geometry_source.symmetric_bounds = True
+    assert axes_geometry_source.output.bounds == (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
+    axes_geometry_source.symmetric_bounds = False
+    assert np.allclose(axes_geometry_source.output.bounds, (-0.1, 1.0, -0.1, 1.0, -0.1, 1.0))
+
+
+def test_axes_geometry_source_update_leaves_templates_unchanged(axes_geometry_source):
+    template = axes_geometry_source._templates[_PartEnum.shaft][0].mesh
+    points = template.points.copy()
+    normals = template.point_data['Normals'].copy()
+    axes_geometry_source.shaft_length = 0.3
+    axes_geometry_source.update()
+    assert np.array_equal(template.points, points)
+    assert np.array_equal(template.point_data['Normals'], normals)
+
+
+def test_axes_geometry_source_custom_part_normals_and_vectors():
+    part = pv.Cylinder(direction=(0, 0, 1))
+    part.point_data['vectors'] = np.ones((part.n_points, 3))
+    part.point_data.active_vectors_name = 'vectors'
+    axes_geometry_source = pv.AxesGeometrySource(
+        shaft_type=part, shaft_radius=0.1, shaft_length=2.0, symmetric=True
+    )
+    shaft = axes_geometry_source.output['z_shaft']
+    expected = part.scale((0.2, 0.2, 2.0), inplace=False)
+    n = expected.n_points
+    assert shaft.n_points == 2 * n
+    assert np.allclose(shaft.point_data['Normals'][:n], expected.point_data['Normals'])
+    assert np.allclose(shaft.point_data['vectors'][:n], expected.point_data['vectors'])
+    # The mirrored half is reflected across the origin along the axis
+    assert np.allclose(shaft.points[n:], shaft.points[:n] * (1, 1, -1))
+    assert np.allclose(
+        shaft.point_data['Normals'][n:], shaft.point_data['Normals'][:n] * (1, 1, -1)
+    )
+    assert np.allclose(
+        shaft.point_data['vectors'][n:], shaft.point_data['vectors'][:n] * (1, 1, -1)
+    )
+
+
 def test_axes_geometry_source_shaft_length_set_get(axes_geometry_source):
     assert axes_geometry_source.shaft_length == (0.8, 0.8, 0.8)
     new_length = (0.1, 0.2, 0.3)
@@ -582,7 +649,7 @@ def test_axes_geometry_source_bounds(axes_geometry_source, part):
         )
         assert np.allclose(actual_bounds, expected_bounds)
 
-    else:
+    else:  # pragma: no cover -- parametrize covers every case
         raise NotImplementedError
 
 
@@ -626,17 +693,14 @@ def test_axes_geometry_source_custom_part(axes_geometry_source):
     axes_geometry_source.tip_type = pv.ParametricKlein()
     assert axes_geometry_source.tip_type == 'custom'
 
-    match = (
-        'Custom axes part must be 3D. Got bounds:\n'
-        'BoundsTuple(x_min = -0.5,\n'
-        '            x_max =  0.5,\n'
-        '            y_min = -0.5,\n'
-        '            y_max =  0.5,\n'
-        '            z_min =  0.0,\n'
-        '            z_max =  0.0).'
-    )
+    match = 'Custom axes part must be 3D. Got dimensionality 2.'
     with pytest.raises(ValueError, match=re.escape(match)):
         axes_geometry_source.shaft_type = pv.Plane()
+    with pytest.raises(ValueError, match=re.escape(match)):
+        axes_geometry_source.shaft_type = pv.Plane().rotate_x(30).rotate_y(20)
+    match = 'Custom axes part must be 3D. Got dimensionality 1.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        axes_geometry_source.tip_type = pv.Line()
 
     match = (
         "Geometry 'foo' is not valid. Geometry must be one of: "
@@ -757,6 +821,13 @@ def test_orthogonal_planes_source_bounds():
     assert output['xy'].bounds == (xmin, xmax, ymin, ymax, zmid, zmid)
     assert output['yz'].bounds == (xmid, xmid, ymin, ymax, zmin, zmax)
     assert output['zx'].bounds == (xmin, xmax, ymid, ymid, zmin, zmax)
+
+
+@pytest.mark.parametrize('resolution', [2.7, (1, 2, 2.5)])
+def test_orthogonal_planes_source_resolution_rejects_fractions(resolution):
+    # The resolution is cast to an integer dtype, which would otherwise truncate it silently
+    with pytest.raises(ValueError, match='resolution must have integer-like values'):
+        pv.OrthogonalPlanesSource(resolution=resolution)
 
 
 def test_orthogonal_planes_source_names():

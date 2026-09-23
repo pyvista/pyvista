@@ -6,9 +6,15 @@ The data objects does not have any sort of spatial reference.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+from typing import NoReturn
+
 import numpy as np
 
-from . import _vtk_core as _vtk
+from pyvista import _vtk
+from pyvista._warn_external import warn_external
+from pyvista.core.errors import PyVistaDeprecationWarning
+
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .formatting_html import _data_array_section
@@ -19,12 +25,39 @@ from .utilities.arrays import RowLiteral
 from .utilities.arrays import get_array
 from .utilities.arrays import row_array
 
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+    from collections.abc import Mapping
+    from typing import Any
+
+    import pandas
+    import pyarrow
+
+    from pyvista import pyvista_ndarray
+    from pyvista.core._typing_core import MatrixLike
+    from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import VectorLike
+
 
 class Table(DataObject, _vtk.vtkTable):
     """Wrapper for the :vtk:`vtkTable` class.
 
     Create by passing a 2D NumPy array of shape (``n_rows`` by ``n_columns``)
     or from a dictionary containing NumPy arrays.
+
+    Parameters
+    ----------
+    *args : :vtk:`vtkTable`, numpy.ndarray, dict, pandas.DataFrame, optional
+        Data source used to initialize the table.
+
+    deep : bool, default: True
+        Deep copy the input when initializing from a :vtk:`vtkTable`.
+
+    **kwargs : dict, optional
+        Unused.
+
+        .. deprecated:: 0.49
+            These arguments have never had any effect and will be removed.
 
     Examples
     --------
@@ -35,8 +68,14 @@ class Table(DataObject, _vtk.vtkTable):
 
     """
 
-    def __init__(self, *args, deep: bool = True, **kwargs):  # noqa: ARG002
+    def __init__(self, *args, deep: bool = True, **kwargs) -> None:
         """Initialize the table."""
+        if kwargs:
+            warn_external(
+                'Passing unused keyword arguments to `Table` is deprecated and they will '
+                'be removed. Remove them from the call.',
+                PyVistaDeprecationWarning,
+            )
         super().__init__()
         if len(args) == 1:
             if isinstance(args[0], _vtk.vtkTable):
@@ -55,7 +94,7 @@ class Table(DataObject, _vtk.vtkTable):
                 raise TypeError(msg)
 
     @staticmethod
-    def _prepare_arrays(arrays):
+    def _prepare_arrays(arrays: MatrixLike[float] | VectorLike[float]) -> NumpyArray[float]:
         arrays = np.asarray(arrays)
         if arrays.ndim == 1:
             return np.reshape(arrays, (1, -1))
@@ -65,25 +104,25 @@ class Table(DataObject, _vtk.vtkTable):
             msg = 'Only 1D or 2D arrays are supported by Tables.'
             raise ValueError(msg)
 
-    def _from_arrays(self, arrays) -> None:
+    def _from_arrays(self, arrays: MatrixLike[float] | VectorLike[float]) -> None:
         np_table = self._prepare_arrays(arrays)
         for i, array in enumerate(np_table):
             self.row_arrays[f'Array {i}'] = array
 
-    def _from_dict(self, array_dict):
+    def _from_dict(self, array_dict: Mapping[str, Any]) -> None:
         for array in array_dict.values():
-            if not isinstance(array, np.ndarray) and array.ndim < 3:
+            if not (isinstance(array, np.ndarray) and array.ndim < 3):
                 msg = 'Dictionary must contain only NumPy arrays with maximum of 2D.'
                 raise ValueError(msg)
         for name, array in array_dict.items():
             self.row_arrays[name] = array
 
-    def _from_pandas(self, data_frame) -> None:
+    def _from_pandas(self, data_frame: pandas.DataFrame) -> None:
         for name in data_frame.keys():
             self.row_arrays[name] = data_frame[name].values
 
     @property
-    def n_rows(self):
+    def n_rows(self) -> int:
         """Return the number of rows.
 
         Returns
@@ -95,7 +134,7 @@ class Table(DataObject, _vtk.vtkTable):
         return self.GetNumberOfRows()
 
     @n_rows.setter
-    def n_rows(self, n) -> None:
+    def n_rows(self, n: int) -> None:
         """Set the number of rows.
 
         Parameters
@@ -107,7 +146,7 @@ class Table(DataObject, _vtk.vtkTable):
         self.SetNumberOfRows(n)
 
     @property
-    def n_columns(self):
+    def n_columns(self) -> int:
         """Return the number of columns.
 
         Returns
@@ -119,7 +158,7 @@ class Table(DataObject, _vtk.vtkTable):
         return self.GetNumberOfColumns()
 
     @property
-    def n_arrays(self):
+    def n_arrays(self) -> int:
         """Return the number of columns.
 
         Alias for: ``n_columns``.
@@ -132,24 +171,24 @@ class Table(DataObject, _vtk.vtkTable):
         """
         return self.n_columns
 
-    def _row_array(self, name=None):
-        """Return row scalars of a vtk object.
+    def _row_array(self, name: str | int) -> pyvista_ndarray:
+        """Return row scalars of a VTK object.
 
         Parameters
         ----------
-        name : str
-            Name of row scalars to retrieve.
+        name : str | int
+            Name or index of the row scalars to retrieve.
 
         Returns
         -------
         numpy.ndarray
-            Numpy array of the row.
+            NumPy array of the row.
 
         """
         return self.row_arrays.get_array(name)
 
     @property
-    def row_arrays(self):
+    def row_arrays(self) -> DataSetAttributes:
         """Return the all row arrays.
 
         Returns
@@ -164,7 +203,7 @@ class Table(DataObject, _vtk.vtkTable):
             association=FieldAssociation.ROW,
         )
 
-    def keys(self):
+    def keys(self) -> list[str]:
         """Return the table keys.
 
         Returns
@@ -175,7 +214,7 @@ class Table(DataObject, _vtk.vtkTable):
         """
         return self.row_arrays.keys()
 
-    def items(self):
+    def items(self) -> list[tuple[str, pyvista_ndarray]]:
         """Return the table items.
 
         Returns
@@ -186,7 +225,7 @@ class Table(DataObject, _vtk.vtkTable):
         """
         return self.row_arrays.items()
 
-    def values(self):
+    def values(self) -> list[pyvista_ndarray]:
         """Return the table values.
 
         Returns
@@ -197,29 +236,39 @@ class Table(DataObject, _vtk.vtkTable):
         """
         return self.row_arrays.values()
 
-    def update(self, data) -> None:
+    def update(
+        self,
+        data: (
+            DataSetAttributes
+            | dict[str, NumpyArray[float]]
+            | MatrixLike[float]
+            | VectorLike[float]
+        ),
+    ) -> None:
         """Set the table data using a dict-like update.
 
         Parameters
         ----------
-        data : DataSetAttributes
-            Other dataset attributes to update from.
+        data : DataSetAttributes | dict | MatrixLike[float] | VectorLike[float]
+            Other dataset attributes, mapping, or array data to update from.
 
         """
-        if isinstance(data, (np.ndarray, list)):
+        arrays: DataSetAttributes | dict[str, NumpyArray[float]]
+        if isinstance(data, (DataSetAttributes, dict)):
+            arrays = data
+        else:
             # Allow table updates using array data
-            data = self._prepare_arrays(data)
-            data = {f'Array {i}': array for i, array in enumerate(data)}
-        self.row_arrays.update(data)
+            arrays = {f'Array {i}': array for i, array in enumerate(self._prepare_arrays(data))}
+        self.row_arrays.update(arrays)
         self.Modified()
 
-    def pop(self, name):
+    def pop(self, name: str) -> pyvista_ndarray:
         """Pop off an array by the specified name.
 
         Parameters
         ----------
-        name : int or str
-            Index or name of the row array.
+        name : str
+            Name of the row array.
 
         Returns
         -------
@@ -229,14 +278,14 @@ class Table(DataObject, _vtk.vtkTable):
         """
         return self.row_arrays.pop(name)
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: str | int) -> pyvista_ndarray:
         """Search row data for an array."""
         return self._row_array(name=index)
 
-    def _ipython_key_completions_(self):
+    def _ipython_key_completions_(self) -> list[str]:
         return self.keys()
 
-    def get(self, index):
+    def get(self, index: str | int) -> pyvista_ndarray:
         """Get an array by its name.
 
         Parameters
@@ -252,30 +301,30 @@ class Table(DataObject, _vtk.vtkTable):
         """
         return self[index]
 
-    def __setitem__(self, name, scalars) -> None:
-        """Add/set an array in the row_arrays."""
+    def __setitem__(self, name: str, scalars: VectorLike[float]) -> None:
+        """Add/set an array in the ``row_arrays``."""
         self.row_arrays[name] = scalars
 
-    def _remove_array(self, _, key) -> None:
+    def _remove_array(self, _: FieldAssociation, key: str) -> None:
         """Remove a single array by name from each field (internal helper)."""
         self.row_arrays.remove(key)
 
-    def __delitem__(self, name) -> None:
+    def __delitem__(self, name: str) -> None:
         """Remove an array by the specified name."""
         del self.row_arrays[name]
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[pyvista_ndarray]:
         """Return the iterator across all arrays."""
         for array_name in self.row_arrays:
             yield self.row_arrays[array_name]
 
-    def _get_attrs(self):
+    def _get_attrs(self) -> list[tuple[str, Any, str]]:
         """Return the representation methods."""
         attrs = []
         attrs.append(('N Rows', self.n_rows, '{}'))
         return attrs
 
-    def _repr_html_(self):
+    def _repr_html_(self) -> str:
         """Return a pretty representation for Jupyter notebooks.
 
         It includes header details and information about all arrays.
@@ -310,15 +359,15 @@ class Table(DataObject, _vtk.vtkTable):
             text_repr=self.head(display=False, html=False),
         )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return the object representation."""
         return self.head(display=False, html=False)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return the object string representation."""
         return self.head(display=False, html=False)
 
-    def to_pandas(self):
+    def to_pandas(self) -> pandas.DataFrame:
         """Create a Pandas DataFrame from this Table.
 
         Returns
@@ -337,7 +386,56 @@ class Table(DataObject, _vtk.vtkTable):
             data_frame[name] = array
         return data_frame
 
-    def save(self, *args, **kwargs):  # pragma: no cover
+    def to_arrow(self) -> pyarrow.Table:
+        """Return this table as a :class:`pyarrow.Table`.
+
+        Each row array becomes a column with the same name and ``dtype``.
+
+        Requires :mod:`pyarrow`.
+
+        Returns
+        -------
+        pyarrow.Table
+            This table represented as an Arrow Table.
+
+        Notes
+        -----
+        1D contiguous numeric columns wrap the underlying VTK buffer
+        zero-copy. Booleans, complex numbers, and strings go through
+        pyvista's existing VTK conversion and are copied. Arrow buffers
+        are immutable by contract, so consumers cannot mutate VTK memory
+        through the returned table.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> table = pv.Table({'a': np.arange(3), 'b': np.array([0.5, 1.5, 2.5])})
+        >>> table.to_arrow().schema.names
+        ['a', 'b']
+
+        """
+        try:
+            import pyarrow as pa  # noqa: PLC0415
+        except ImportError:  # pragma: no cover
+            msg = 'Install ``pyarrow`` to use this feature.'
+            raise ImportError(msg) from None
+        return pa.table({name: np.asarray(array) for name, array in self.items()})
+
+    def __arrow_c_stream__(self, requested_schema: object | None = None) -> object:
+        """Export via the Arrow PyCapsule interface.
+
+        Implements `the Arrow PyCapsule interface
+        <https://arrow.apache.org/docs/format/CDataInterface/PyCapsuleInterface.html>`_
+        by delegating to :meth:`to_arrow`, so pandas, polars, DuckDB,
+        ibis, narwhals, and other Arrow-aware consumers can ingest this
+        table directly. Scalar 1D columns cross the boundary zero-copy.
+
+        Requires :mod:`pyarrow`.
+        """
+        return self.to_arrow().__arrow_c_stream__(requested_schema)
+
+    def save(self, *args, **kwargs) -> NoReturn:  # pragma: no cover  # numpydoc ignore=PR01
         """Save the table."""
         msg = "Please use the `to_pandas` method and harness Pandas' wonderful file IO methods."
         raise NotImplementedError(msg)
@@ -375,7 +473,7 @@ class Table(DataObject, _vtk.vtkTable):
         if arr.size == 0 or not np.issubdtype(arr.dtype, np.number):  # type: ignore[attr-defined]
             return (np.nan, np.nan)
         # Use the array range
-        return np.nanmin(arr), np.nanmax(arr)
+        return np.nanmin(arr), np.nanmax(arr)  # type: ignore[call-overload]
 
     @property
     def is_empty(self) -> bool:  # numpydoc ignore=RT01

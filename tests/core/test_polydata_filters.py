@@ -7,8 +7,6 @@ import pytest
 import pyvista as pv
 from pyvista import examples
 from pyvista.core.errors import MissingDataError
-from pyvista.core.errors import NotAllTrianglesError
-from pyvista.core.errors import PyVistaDeprecationWarning
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -63,8 +61,13 @@ def test_contour_banded_points(sphere):
     ids=['ugrid', 'image', 'structured'],
 )
 def test_boolean_raises(other_mesh):
-    with pytest.raises(TypeError, match=r'Input mesh must be PolyData.'):
+    with pytest.raises(TypeError, match=r'Input mesh must be an instance of'):
         pv.Sphere()._boolean('union', other_mesh=other_mesh, tolerance=0.0, progress_bar=False)
+
+
+def test_boolean_btype_raises(sphere):
+    with pytest.raises(ValueError, match=r"btype 'foo' is not valid"):
+        sphere._boolean('foo', other_mesh=pv.Sphere(center=(5, 0, 0)), tolerance=0.0)
 
 
 def test_clean_raises(mocker: MockerFixture):
@@ -78,16 +81,11 @@ def test_clean_raises(mocker: MockerFixture):
         sp.clean()
 
 
-def test_flip_normals_raises():
+def test_flip_normals_removed():
     plane = pv.Plane()
-    with (
-        pytest.raises(
-            NotAllTrianglesError, match=r'Can only flip normals on an all triangle mesh.'
-        ),
-        pytest.warns(
-            PyVistaDeprecationWarning,
-            match='`flip_normals` is deprecated. Use `flip_faces` instead',
-        ),
+    with pytest.raises(
+        pv.core.errors.DeprecationError,
+        match=r'`flip_normals` is deprecated\. Use `flip_faces` instead',
     ):
         plane.flip_normals()
 

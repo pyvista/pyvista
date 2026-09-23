@@ -4,9 +4,9 @@
 Physically Based Rendering
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-VTK 9 introduced Physically Based Rendering (PBR) and we have exposed
-that functionality in PyVista. Read the `blog about PBR
-<https://blog.kitware.com/vtk-pbr/>`_ for more details.
+VTK 9 introduced Physically Based Rendering (PBR), exposed in PyVista.
+
+Read the `blog about PBR <https://www.kitware.com/vtk-pbr/>`_ for more details.
 
 PBR is only supported for :class:`pyvista.PolyData` and can be
 triggered via the ``pbr`` keyword argument of ``add_mesh``. Also use
@@ -22,14 +22,13 @@ a statue as though it were metallic.
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
-from itertools import product
+import itertools
 
 import pyvista as pv
 from pyvista import examples
 
-# Load the statue mesh
-mesh = examples.download_nefertiti()
-mesh.rotate_x(-90.0, inplace=True)  # rotate to orient with the skybox
+# Load the bust mesh (George Washington, CC0, Smithsonian).
+mesh = examples.download_washington_bust().rotate_x(-90)
 
 # Download skybox
 cubemap = examples.download_sky_box_cube_map()
@@ -42,15 +41,8 @@ pl = pv.Plotter()
 pl.add_actor(cubemap.to_skybox())
 pl.set_environment_texture(cubemap)  # For reflecting the environment off the mesh
 pl.add_mesh(mesh, color='linen', pbr=True, metallic=0.8, roughness=0.1, diffuse=1)
-
-# Define a nice camera perspective
-cpos = pv.CameraPosition(
-    position=(-313.40, 66.09, 1000.61),
-    focal_point=(0.0, 0.0, 0.0),
-    viewup=(0.018, 0.99, -0.06),
-)
-
-pl.show(cpos=cpos)
+pl.view_xy(negative=True)
+pl.show()
 
 
 # %%
@@ -64,7 +56,7 @@ colors = ['red', 'teal', 'black', 'orange', 'silver']
 pl = pv.Plotter()
 pl.set_environment_texture(cubemap)
 
-for i, j in product(range(5), range(6)):
+for i, j in itertools.product(range(5), range(6)):
     sphere = pv.Sphere(radius=0.5, center=(0.0, 4 - i, j))
     pl.add_mesh(sphere, color=colors[i], pbr=True, metallic=i / 4, roughness=j / 5)
 

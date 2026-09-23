@@ -4,10 +4,10 @@
 Interpolate Before Mapping
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The :func:`add_mesh <pyvista.Plotter.add_mesh>` method has an
-``interpolate_before_map`` argument that affects the way scalar data is
-visualized with colors.  The effect of this can vary depending on the
-dataset's topology and the chosen colormap.
+The ``interpolate_before_map`` argument affects how scalar data is colored.
+
+Set via the :func:`add_mesh <pyvista.Plotter.add_mesh>` method. The effect
+can vary depending on the dataset's topology and the chosen colormap.
 
 This example serves to demo the difference and why we've chosen to enable this
 by default.
@@ -58,7 +58,7 @@ pl.add_mesh(
 )
 pl.link_views()
 pl.camera_position = pv.CameraPosition(
-    position=(-1.67, -5.10, 2.06), focal_point=(0.0, 0.0, 0.0), viewup=(0.00, 0.37, 0.93)
+    position=(-1.67, -5.1, 2.06), focal_point=(0.0, 0.0, 0.0), viewup=(0.0, 0.37, 0.93)
 )
 pl.show()
 
@@ -89,7 +89,7 @@ pl.add_mesh(
 )
 pl.link_views()
 pl.camera_position = pv.CameraPosition(
-    position=(-1.67, -5.10, 2.06), focal_point=(0.0, 0.0, 0.0), viewup=(0.00, 0.37, 0.93)
+    position=(-1.67, -5.1, 2.06), focal_point=(0.0, 0.0, 0.0), viewup=(0.0, 0.37, 0.93)
 )
 pl.show()
 

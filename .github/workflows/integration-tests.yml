@@ -14,7 +14,9 @@ on: # zizmor: ignore[cache-poisoning]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Runs started by the schedule or by hand never cancel an in-progress run, so a merge to
+  # `main` always finishes; they queue behind it, and are dropped if another merge arrives.
+  cancel-in-progress: ${{ github.event_name != 'schedule' && github.event_name != 'workflow_dispatch' }}
 
 env:
   ALLOW_PLOTTING: true
@@ -44,32 +46,68 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        project:
-          ["mne", "trame", "pyvistaqt", "geovista", "pyodide", "playwright"]
-    runs-on: ubuntu-22.04-self-hosted
+        include:
+          - project: mne
+            timeout: 30 # usually takes ~10, but the download can add time
+          - project: trame
+            timeout: 8 # usually takes ~3
+          - project: pyvistaqt
+            timeout: 6 # usually takes ~2
+          - project: geovista
+            timeout: 16 # usually takes ~5
+          - project: playwright
+            timeout: 6 # usually takes ~2
+          - project: pyodide
+            timeout: 80 # downloads the pyodide wheels and runs the WASM suite
+          - project: cvista
+            timeout: 80
+            runner: ubuntu-22.04
+          - project: numpy-nightly
+            timeout: 80 # runs the whole suite, like cvista
+            runner: ubuntu-22.04
+    runs-on: ${{ matrix.runner || 'ubuntu-latest' }}
+    timeout-minutes: ${{ matrix.timeout }}
     defaults:
       run:
         shell: bash -l {0}
-    env:
-      DISPLAY: ":99.0"
-      MNE_LOGGING_LEVEL: "info"
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
-      - uses: pyvista/setup-headless-display-action@5bc8de3bc71fcda7a96439571287a554901541a0
-        if: ${{matrix.project == 'pyvistaqt' || matrix.project == 'geovista' || matrix.project == 'playwright'}}
-        with:
-          qt: ${{matrix.project == 'pyvistaqt'}}
-          pyvista: ${{matrix.project != 'pyvistaqt'}}
+      - name: Set test timeout
+        env:
+          TIMEOUT: ${{ matrix.timeout }}
+        run: echo "retry_test_timeout=$(( TIMEOUT / 2 ))" | tee -a "$GITHUB_OUTPUT"
+        id: set_timeout
 
-      - uses: actions/setup-python@v6
+      - uses: pyvista/setup-headless-display-action@c103a2ff45650d38cb71684b5dc6cdfeb9442c79
+        with:
+          qt: ${{matrix.project == 'pyvistaqt' || matrix.project == 'mne'}}
+          pyvista: ${{matrix.project != 'pyvistaqt' && matrix.project != 'mne' && matrix.project != 'geovista'}}
+          wm: false
+
+      - uses: actions/setup-python@v7
         with:
           python-version: |
             3.13
             3.14
+
+      # The key is remote text, so keep it to one line of safe characters before
+      # it goes into GITHUB_ENV, and fail on an HTTP error instead of caching under it.
+      - name: Set cache key for mne
+        if: ${{ matrix.project == 'mne' }}
+        run: |
+          key="$(curl -fsSL https://github.com/mne-tools/mne-testing-data/raw/refs/heads/master/version.txt | head -n1 | tr -cd '[:alnum:]._-')"
+          [ -n "$key" ] || { echo "::error::mne-testing-data version.txt is empty"; exit 1; }
+          echo "MNE_DATA_KEY=$key" | tee -a "$GITHUB_ENV"
+
+      - uses: actions/cache@v6
+        if: ${{ env.USE_CACHE == 'true' && matrix.project == 'mne' }}
+        with:
+          key: mne-data-${{ env.MNE_DATA_KEY }}
+          path: ~/mne_data
 
       - name: Install tox-uv
         run: pip install tox-uv
@@ -79,35 +117,12 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Run tests (no xvfb)
-        if: ${{matrix.project != 'geovista'}}
+      - name: Run tests (${{ matrix.project }})
         uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60
         with:
-          timeout_minutes: 30
-          max_attempts: 3
-          command: tox run -e integration-${{matrix.project}}
-
-      - name: Run tests (geovista)
-        if: ${{matrix.project == 'geovista'}}
-        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60
-        with:
-          timeout_minutes: 30
-          max_attempts: 3
-          command: xvfb-run -a tox run -e integration-${{matrix.project}}
-
-      - name: Run tests (pyodide)
-        if: ${{matrix.project == 'pyodide'}}
-        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60
-        with:
-          timeout_minutes: 30
+          timeout_minutes: ${{ steps.set_timeout.outputs.retry_test_timeout }}
           max_attempts: 2
-          command: tox run -e integration-pyodide
-
-      - uses: actions/cache@v5
-        if: ${{ env.USE_CACHE == 'true' && matrix.project == 'mne' }}
-        with:
-          key: ${{ env.TESTING_VERSION }}
-          path: ~/mne_data
+          command: tox run -e integration-${{matrix.project}}
 
   alert-on-failure:
     needs: Integration
@@ -118,6 +133,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       issues: write
+      actions: read # to look up which matrix jobs failed
+      contents: read # to look up the commit title
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GH_REPO: ${{ github.repository }}
@@ -125,14 +142,56 @@ jobs:
       - name: Report integration test failure
         env:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          RUN_ID: ${{ github.run_id }}
           REF: ${{ github.ref }}
+          SHA: ${{ github.sha }}
+          COMMIT_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
         run: |
+          # Who to @-mention when a given integration breaks; leave empty to not ping anyone
+          declare -A maintainers=(
+            [mne]="@larsoner"
+            [trame]="@user27182"
+            [pyvistaqt]="@larsoner"
+            [geovista]="@bjlittle"
+            [playwright]="@user27182"
+            [pyodide]="@tkoyama010"
+            [cvista]="@akaszynski"
+            [numpy-nightly]="@user27182"
+          )
+
+          # The matrix job names are just the project names (see `name:` above)
+          failed=$(gh run view "$RUN_ID" --json jobs \
+            --jq '.jobs[] | select(.conclusion == "failure") | [.name, .url] | @tsv')
+
+          projects=""
+          pings=""
+          while IFS=$'\t' read -r project url; do
+            [ -n "$project" ] || continue
+            who="${maintainers[$project]:-}"
+            projects+="- [\`${project}\`](${url})${who:+ — ${who}}"$'\n'
+            case " $pings " in
+              *" $who "*) ;;
+              *) pings+="${who:+$who }" ;;
+            esac
+          done <<< "$failed"
+
+          [ -n "$projects" ] || projects="- (could not determine which jobs failed, see the run)"$'\n'
+
+          # Names the PR that landed; no `| head` since SIGPIPE under pipefail kills the step
+          title=$(gh api "repos/{owner}/{repo}/commits/${SHA}" \
+            --jq '.commit.message | split("\n")[0]' || true)
+
           body=$(cat <<EOF
           ### Integration Test Failure
 
           **Date:** $(date -u +%Y-%m-%d)
           **Run:** ${RUN_URL}
           **Ref:** \`${REF}\`
+          **Commit:** [\`${SHA:0:8}\`](${COMMIT_URL})${title:+ — ${title}}
+
+          **Failing integrations:**
+          ${projects}
+          ${pings:+${pings}please take a look.}
           EOF
           )
 

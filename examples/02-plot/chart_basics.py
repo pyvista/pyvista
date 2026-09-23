@@ -5,8 +5,10 @@ Chart Basics
 ~~~~~~~~~~~~
 
 This example shows how different types of charts can be added to the scene.
+
 A more complex example, showing how to combine multiple charts as overlays
 in the same renderer, is given in :ref:`chart_overlays_example`.
+
 """
 
 import numpy as np
@@ -23,7 +25,7 @@ rng = np.random.default_rng(
 
 # %%
 # This example shows how to create a 2D scatter plot from 100 randomly sampled
-# datapoints using :func:`~pyvista.Chart2D.scatter`. By default, the chart automatically
+# data points using :func:`~pyvista.Chart2D.scatter`. By default, the chart automatically
 # rescales its axes such that all plotted data is visible. By right clicking on the chart
 # you can enable zooming and panning of the chart.
 
@@ -34,7 +36,7 @@ chart.scatter(x, y, size=10, style='+')
 chart.show()
 
 # %%
-# To connect datapoints with lines, you can create a 2D line plot as shown in
+# To connect data points with lines, you can create a 2D line plot as shown in
 # the example below using :func:`~pyvista.Chart2D.line`. You can also dynamically
 # 'zoom in' on the plotted data by specifying a custom axis range yourself.
 

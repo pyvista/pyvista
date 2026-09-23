@@ -4,7 +4,7 @@
 Decimation
 ~~~~~~~~~~
 
-Decimate a mesh
+Decimate a mesh.
 
 """
 
@@ -19,10 +19,10 @@ mesh = examples.download_face()
 cpos = pv.CameraPosition(
     position=(0.4, -0.07, -0.31), focal_point=(0.05, -0.13, -0.06), viewup=(-0.1, 1, 0.08)
 )
-dargs = dict(show_edges=True, color=True)
+plot_kwargs = dict(show_edges=True, color=True)
 
 # Preview the mesh
-mesh.plot(cpos=cpos, **dargs)
+mesh.plot(cpos=cpos, **plot_kwargs)
 
 # %%
 # Now let's define a target reduction and compare the
@@ -34,13 +34,13 @@ print(f'Reducing {target_reduction * 100.0} percent out of the original mesh')
 # %%
 decimated = mesh.decimate(target_reduction)
 
-decimated.plot(cpos=cpos, **dargs)
+decimated.plot(cpos=cpos, **plot_kwargs)
 
 
 # %%
 pro_decimated = mesh.decimate_pro(target_reduction, preserve_topology=True)
 
-pro_decimated.plot(cpos=cpos, **dargs)
+pro_decimated.plot(cpos=cpos, **plot_kwargs)
 
 
 # %%
@@ -51,26 +51,21 @@ pro_decimated.plot(cpos=cpos, **dargs)
 PYVISTA_GALLERY_FORCE_STATIC = True
 # sphinx_gallery_end_ignore
 
-pl = pv.Plotter(shape=(1, 3))
-pl.add_mesh(mesh, **dargs)
-pl.add_text('Input mesh', font_size=24)
-pl.camera_position = cpos
-pl.reset_camera()
-pl.subplot(0, 1)
-pl.add_mesh(decimated, **dargs)
-pl.add_text('Decimated mesh', font_size=24)
-pl.camera_position = cpos
-pl.reset_camera()
-pl.subplot(0, 2)
-pl.add_mesh(pro_decimated, **dargs)
-pl.add_text('Pro Decimated mesh', font_size=24)
-pl.camera_position = cpos
-pl.reset_camera()
-pl.link_views()
-pl.show()
+datasets = {
+    'Input': mesh,
+    'Decimated': decimated,
+    'Pro Decimated': pro_decimated,
+}
+
+pv.plot_compare(
+    datasets,
+    label_size=24,
+    cpos=cpos,
+    **plot_kwargs,
+)
 
 # %%
-# Decimate Polyline Mesh
+# Decimate PolyLine Mesh
 # ----------------------
 #
 # Generate a fairly slow spiral polyline mesh.

@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import re
-from string import ascii_letters
-from string import digits
-from string import whitespace
+import string
 import sys
 
 from hypothesis import HealthCheck
@@ -14,9 +12,14 @@ from hypothesis.strategies import integers
 from hypothesis.strategies import lists
 from hypothesis.strategies import text
 import numpy as np
+import pandas as pd
+import polars as pl
+import pyarrow as pa
 import pytest
 
 import pyvista as pv
+from pyvista import _vtk
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import convert_array
 
@@ -115,18 +118,9 @@ def test_repr_field_attributes_with_string(hexbeam_field_attributes):
     assert 'DataSetAttributes' in repr_str
     assert 'Contains arrays : None' in repr_str
 
-    # Add string data
-    str_len_18 = 'stringlength18char'
-    assert len(str_len_18) == 18
-    str_len_19 = 'stringlength19chars'
-    assert len(str_len_19) == 19
-
-    hexbeam_field_attributes['string_data_18'] = str_len_18
-    hexbeam_field_attributes['string_data_19'] = str_len_19
-
+    hexbeam_field_attributes['string_data'] = ['hello', 'world']
     repr_str = str(hexbeam_field_attributes)
-    assert 'string_data_18          str        "stringlength18char"' in repr_str
-    assert 'string_data_19          str        "stringlength19c..."' in repr_str
+    assert 'string_data             <U5        (2,)' in repr_str
 
 
 def test_empty_active_vectors(hexbeam):
@@ -169,6 +163,29 @@ def test_active_scalars_name(sphere):
     assert sphere.point_data.active_scalars_name is None
 
 
+def test_active_scalars_name_unnamed_array(sphere):
+    sphere.clear_data()
+    scalars = pv.convert_array(np.arange(sphere.n_points, dtype=float))
+    sphere.point_data.VTKObject.SetScalars(scalars)
+    assert sphere.point_data.active_scalars_name == 'Unnamed_0'
+    assert sphere.active_scalars_name == 'Unnamed_0'
+
+
+@pytest.mark.parametrize('attr', ['active_scalars_name', 'active_texture_coordinates_name'])
+def test_active_name_setter_missing_array_raises(sphere, attr):
+    with pytest.raises(KeyError, match='missing'):
+        setattr(sphere.point_data, attr, 'missing')
+
+
+@pytest.mark.parametrize('attr', ['active_scalars_name', 'active_texture_coordinates_name'])
+def test_active_name_setter_ignores_string_array(plane, attr):
+    plane.point_data['strings'] = np.array(['a'] * plane.n_points)
+    before = getattr(plane.point_data, attr)
+    setattr(plane.point_data, attr, 'strings')
+    assert getattr(plane.point_data, attr) == before
+    assert before != 'strings'
+
+
 def test_active_normals_name():
     # Load dataset known to have active normals by default
     sphere = pv.Sphere()
@@ -193,7 +210,7 @@ def test_active_normals_name():
 
 
 def test_set_scalars(sphere):
-    scalars = np.array(sphere.n_points)
+    scalars = np.arange(sphere.n_points)
     key = 'scalars'
     sphere.point_data.set_scalars(scalars, key)
     assert sphere.point_data.active_scalars_name == key
@@ -362,7 +379,7 @@ def test_contains_empty_string_preserves_keys_rename_side_effect(hexbeam):
     """
     pd = hexbeam.point_data
     # Inject an anonymous array directly via VTK so it has an empty name.
-    arr = pv.core._vtk_core.vtkFloatArray()
+    arr = _vtk.vtkFloatArray()
     arr.SetNumberOfValues(hexbeam.n_points)
     pd.VTKObject.AddArray(arr)
     # Name is empty before the lookup.
@@ -387,19 +404,23 @@ def test_set_array_catch(hexbeam):
 @settings(max_examples=20, suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(scalar=integers(min_value=-sys.maxsize - 1, max_value=sys.maxsize))
 def test_set_array_should_accept_scalar_value(scalar, hexbeam_point_attributes):
-    hexbeam_point_attributes.set_array(scalar, name='int_array')
+    with pytest.warns(PyVistaDeprecationWarning, match='from a scalar is deprecated'):
+        hexbeam_point_attributes.set_array(scalar, name='int_array')
 
 
 @settings(max_examples=20, suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(scalar=integers(min_value=-sys.maxsize - 1, max_value=sys.maxsize))
 def test_set_array_scalar_value_should_give_array(scalar, hexbeam_point_attributes):
-    hexbeam_point_attributes.set_array(scalar, name='int_array')
+    with pytest.warns(PyVistaDeprecationWarning, match='from a scalar is deprecated'):
+        hexbeam_point_attributes.set_array(scalar, name='int_array')
     expected = np.full(hexbeam_point_attributes.dataset.n_points, scalar)
     assert np.array_equal(expected, hexbeam_point_attributes['int_array'])
 
 
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
-@given(arr=lists(text(alphabet=ascii_letters + digits + whitespace), max_size=16))
+@given(
+    arr=lists(text(alphabet=string.ascii_letters + string.digits + string.whitespace), max_size=16)
+)
 def test_set_array_string_lists_should_equal(arr, hexbeam_field_attributes):
     hexbeam_field_attributes['string_arr'] = arr
     assert arr == hexbeam_field_attributes['string_arr'].tolist()
@@ -440,20 +461,13 @@ def test_should_pop_array(insert_arange_narray):
     assert 'sample_array' not in dsa
 
 
-def test_pop_should_return_arange_narray(insert_arange_narray):
-    dsa, sample_array = insert_arange_narray
-    other_array = dsa.pop('sample_array')
-    assert np.array_equal(other_array, sample_array)
-
-
-def test_pop_should_return_bool_array(insert_bool_array):
-    dsa, sample_array = insert_bool_array
-    other_array = dsa.pop('sample_array')
-    assert np.array_equal(other_array, sample_array)
-
-
-def test_pop_should_return_string_array(insert_string_array):
-    dsa, sample_array = insert_string_array
+@pytest.mark.parametrize(
+    'inserted',
+    ['insert_arange_narray', 'insert_bool_array', 'insert_string_array'],
+)
+def test_pop_should_return_array(request, inserted):
+    """`pop` returns the array that was inserted, whatever its dtype."""
+    dsa, sample_array = request.getfixturevalue(inserted)
     other_array = dsa.pop('sample_array')
     assert np.array_equal(other_array, sample_array)
 
@@ -544,11 +558,7 @@ def test_values_should_be_pyvista_ndarrays(insert_arange_narray):
 
 def test_value_should_exist(insert_arange_narray):
     dsa, sample_array = insert_arange_narray
-    for arr in dsa.values():
-        if np.array_equal(sample_array, arr):
-            return
-    msg = 'Array not in values.'
-    raise AssertionError(msg)
+    assert any(np.array_equal(sample_array, arr) for arr in dsa.values()), 'Array not in values.'
 
 
 def test_active_scalars_setter(hexbeam_point_attributes):
@@ -720,6 +730,21 @@ def test_complex(plane, dtype_str):
     assert np.issubdtype(plane.point_data[name].dtype, real_type)
 
 
+@pytest.mark.parametrize('dtype', [np.complex64, np.complex128])
+def test_complex_singleton(dtype):
+    """Reading a singleton complex array returns an associated writable view."""
+    mesh = pv.PolyData(np.zeros((1, 3)))
+    mesh.point_data['values'] = np.array([1 + 2j], dtype=dtype)
+    array = mesh.point_data['values']
+    assert isinstance(array, pv.pyvista_ndarray)
+    assert array.shape == ()
+    assert array.dtype == dtype
+    assert array.item() == 1 + 2j
+    assert array.dataset.Get() is mesh
+    array[...] = 3 + 4j
+    assert mesh.point_data['values'].item() == 3 + 4j
+
+
 @pytest.mark.parametrize('copy', [True, False])
 def test_update(uniform, copy):
     new_mesh = pv.ImageData(dimensions=uniform.dimensions)
@@ -745,3 +770,431 @@ def test_update(uniform, copy):
             assert not shares_memory
         else:
             assert shares_memory
+
+
+# -----------------------------------------------------------------------------
+# Tabular export: to_pandas / to_arrow / __arrow_c_stream__
+# -----------------------------------------------------------------------------
+
+
+_NUMERIC_DTYPES = [
+    np.int8,
+    np.int16,
+    np.int32,
+    np.int64,
+    np.uint8,
+    np.uint16,
+    np.uint32,
+    np.uint64,
+    np.float32,
+    np.float64,
+]
+
+
+def test_to_pandas_point_data_row_count(hexbeam):
+    df = hexbeam.point_data.to_pandas()
+    assert len(df) == hexbeam.n_points
+
+
+def test_to_pandas_cell_data_row_count(hexbeam):
+    df = hexbeam.cell_data.to_pandas()
+    assert len(df) == hexbeam.n_cells
+
+
+def test_to_pandas_column_order_matches_keys(hexbeam):
+    hexbeam.clear_data()
+    hexbeam.point_data['a'] = np.arange(hexbeam.n_points)
+    hexbeam.point_data['b'] = np.arange(hexbeam.n_points) + 1
+    hexbeam.point_data['c'] = np.arange(hexbeam.n_points) + 2
+    df = hexbeam.point_data.to_pandas()
+    assert list(df.columns) == ['a', 'b', 'c']
+
+
+def test_to_pandas_scalar_values_equal(hexbeam):
+    hexbeam.clear_data()
+    expected = np.arange(hexbeam.n_points, dtype=np.int32)
+    hexbeam.point_data['scalars'] = expected
+    df = hexbeam.point_data.to_pandas()
+    assert np.array_equal(df['scalars'].to_numpy(), expected)
+
+
+def test_to_pandas_vector_expanded_columns(hexbeam):
+    hexbeam.clear_data()
+    hexbeam.point_data['vec'] = hexbeam.points.astype(np.float32)
+    df = hexbeam.point_data.to_pandas()
+    assert list(df.columns) == ['vec_0', 'vec_1', 'vec_2']
+    for i in range(3):
+        assert np.array_equal(df[f'vec_{i}'].to_numpy(), hexbeam.points[:, i].astype(np.float32))
+
+
+def test_to_pandas_two_component_vector(hexbeam):
+    hexbeam.clear_data()
+    arr = np.column_stack([np.arange(hexbeam.n_points), np.arange(hexbeam.n_points) + 100]).astype(
+        np.float64
+    )
+    hexbeam.point_data['pair'] = arr
+    df = hexbeam.point_data.to_pandas()
+    assert list(df.columns) == ['pair_0', 'pair_1']
+    assert np.array_equal(df['pair_0'].to_numpy(), arr[:, 0])
+    assert np.array_equal(df['pair_1'].to_numpy(), arr[:, 1])
+
+
+def test_to_pandas_four_component_rgba_preserves_dtype(hexbeam):
+    hexbeam.clear_data()
+    rgba = np.arange(hexbeam.n_points * 4, dtype=np.uint8).reshape(hexbeam.n_points, 4)
+    hexbeam.point_data['rgba'] = rgba
+    df = hexbeam.point_data.to_pandas()
+    assert list(df.columns) == ['rgba_0', 'rgba_1', 'rgba_2', 'rgba_3']
+    for i in range(4):
+        assert df[f'rgba_{i}'].dtype == np.uint8
+        assert np.array_equal(df[f'rgba_{i}'].to_numpy(), rgba[:, i])
+
+
+def test_to_pandas_tensor_flattens_to_nine_columns(hexbeam):
+    hexbeam.clear_data()
+    tensor = np.arange(hexbeam.n_points * 9, dtype=np.float64).reshape(hexbeam.n_points, 3, 3)
+    hexbeam.point_data['tensor'] = tensor
+    df = hexbeam.point_data.to_pandas()
+    assert list(df.columns) == [f'tensor_{i}' for i in range(9)]
+    stored = hexbeam.point_data['tensor']
+    flat = np.asarray(stored).reshape(hexbeam.n_points, -1)
+    for i in range(9):
+        assert np.array_equal(df[f'tensor_{i}'].to_numpy(), flat[:, i])
+
+
+@pytest.mark.parametrize('dtype', _NUMERIC_DTYPES)
+def test_to_pandas_numeric_dtypes_preserved(hexbeam, dtype):
+    hexbeam.clear_data()
+    expected = np.arange(hexbeam.n_points, dtype=dtype)
+    hexbeam.point_data['col'] = expected
+    df = hexbeam.point_data.to_pandas()
+    assert df['col'].dtype == dtype
+    assert np.array_equal(df['col'].to_numpy(), expected)
+
+
+def test_to_pandas_bool_preserved(hexbeam):
+    hexbeam.clear_data()
+    expected = np.arange(hexbeam.n_points) % 2 == 0
+    hexbeam.point_data['flag'] = expected
+    df = hexbeam.point_data.to_pandas()
+    assert df['flag'].dtype == bool
+    assert np.array_equal(df['flag'].to_numpy(), expected)
+
+
+@pytest.mark.parametrize('dtype', [np.complex64, np.complex128])
+def test_to_pandas_complex_preserved_as_single_column(hexbeam, dtype):
+    hexbeam.clear_data()
+    expected = (np.arange(hexbeam.n_points) + 1j * np.arange(hexbeam.n_points)).astype(dtype)
+    hexbeam.point_data['cplx'] = expected
+    df = hexbeam.point_data.to_pandas()
+    assert list(df.columns) == ['cplx']
+    assert df['cplx'].dtype == dtype
+    assert np.array_equal(df['cplx'].to_numpy(), expected)
+
+
+def test_to_pandas_string_column(hexbeam):
+    hexbeam.clear_data()
+    expected = np.array(['a', 'b'] * ((hexbeam.n_points + 1) // 2))[: hexbeam.n_points]
+    hexbeam.point_data['name'] = expected
+    df = hexbeam.point_data.to_pandas()
+    assert df['name'].dtype == object
+    assert np.array_equal(df['name'].to_numpy(), expected)
+
+
+def test_to_pandas_is_snapshot_not_view(hexbeam):
+    hexbeam.clear_data()
+    hexbeam.point_data['s'] = np.arange(hexbeam.n_points, dtype=np.float64)
+    df = hexbeam.point_data.to_pandas()
+    df.iloc[0, 0] = 999.0
+    assert hexbeam.point_data['s'][0] != 999.0
+    hexbeam.point_data['s'][0] = -7.0
+    assert df.iloc[0, 0] == 999.0
+
+
+def test_to_pandas_does_not_share_memory_with_vtk(hexbeam):
+    """Pandas consolidates into blocks during construction, which copies."""
+    hexbeam.clear_data()
+    hexbeam.point_data['s'] = np.arange(hexbeam.n_points, dtype=np.float64)
+    df = hexbeam.point_data.to_pandas()
+    assert not np.shares_memory(hexbeam.point_data['s'], df['s'].to_numpy())
+
+
+def test_to_arrow_scalar_column_is_zero_copy(hexbeam):
+    """1D contiguous numeric columns wrap VTK memory zero-copy."""
+    hexbeam.clear_data()
+    hexbeam.point_data['s'] = np.arange(hexbeam.n_points, dtype=np.float64)
+    table = hexbeam.point_data.to_arrow()
+    assert np.shares_memory(
+        hexbeam.point_data['s'],
+        table.column('s').to_numpy(zero_copy_only=False),
+    )
+
+
+def test_to_arrow_multi_component_column_is_copied(hexbeam):
+    """Expanded multi-component columns are strided slices; pyarrow copies."""
+    hexbeam.clear_data()
+    hexbeam.point_data['vec'] = hexbeam.points.astype(np.float64)
+    table = hexbeam.point_data.to_arrow()
+    assert not np.shares_memory(
+        hexbeam.point_data['vec'],
+        table.column('vec_0').to_numpy(zero_copy_only=False),
+    )
+
+
+def test_to_pandas_empty_point_data(hexbeam):
+    hexbeam.clear_data()
+    df = hexbeam.point_data.to_pandas()
+    # With zero arrays we can't recover the row count from the dict of columns;
+    # pandas builds a 0-row frame rather than one indexed over n_points.
+    assert list(df.columns) == []
+    assert len(df) == 0
+
+
+def test_to_pandas_field_data_raises(hexbeam):
+    with pytest.raises(ValueError, match=r'field data'):
+        hexbeam.field_data.to_pandas()
+
+
+def test_to_pandas_column_collision_raises(hexbeam):
+    hexbeam.clear_data()
+    hexbeam.point_data['vec'] = hexbeam.points.astype(np.float32)
+    hexbeam.point_data['vec_0'] = np.arange(hexbeam.n_points, dtype=np.int64)
+    with pytest.raises(ValueError, match=r"collision on 'vec_0'"):
+        hexbeam.point_data.to_pandas()
+
+
+@pytest.mark.parametrize('mesh_fixture', ['sphere', 'hexbeam', 'uniform', 'plane'])
+def test_to_pandas_across_dataset_types(request, mesh_fixture):
+    mesh = request.getfixturevalue(mesh_fixture)
+    mesh.clear_data()
+    mesh.point_data['scalar'] = np.arange(mesh.n_points, dtype=np.float64)
+    mesh.point_data['vec'] = np.arange(mesh.n_points * 3, dtype=np.float64).reshape(
+        mesh.n_points, 3
+    )
+    df = mesh.point_data.to_pandas()
+    assert len(df) == mesh.n_points
+    assert list(df.columns) == ['scalar', 'vec_0', 'vec_1', 'vec_2']
+
+
+def test_to_arrow_returns_table(hexbeam):
+    table = hexbeam.point_data.to_arrow()
+    assert isinstance(table, pa.Table)
+    assert table.num_rows == hexbeam.n_points
+
+
+def test_to_arrow_schema_matches_expanded_keys(hexbeam):
+    hexbeam.clear_data()
+    hexbeam.point_data['s'] = np.arange(hexbeam.n_points, dtype=np.int32)
+    hexbeam.point_data['v'] = hexbeam.points.astype(np.float32)
+    table = hexbeam.point_data.to_arrow()
+    assert table.schema.names == ['s', 'v_0', 'v_1', 'v_2']
+
+
+@pytest.mark.parametrize('dtype', _NUMERIC_DTYPES)
+def test_to_arrow_numeric_dtypes(hexbeam, dtype):
+    hexbeam.clear_data()
+    expected = np.arange(hexbeam.n_points, dtype=dtype)
+    hexbeam.point_data['col'] = expected
+    table = hexbeam.point_data.to_arrow()
+    assert table.column('col').type == pa.from_numpy_dtype(dtype)
+    assert np.array_equal(table.column('col').to_numpy(), expected)
+
+
+def test_to_arrow_and_to_pandas_agree(hexbeam):
+    hexbeam.clear_data()
+    hexbeam.point_data['s'] = np.arange(hexbeam.n_points, dtype=np.int64)
+    hexbeam.point_data['v'] = hexbeam.points.astype(np.float64)
+    table = hexbeam.point_data.to_arrow()
+    df_from_arrow = table.to_pandas()
+    df_direct = hexbeam.point_data.to_pandas()
+    pd.testing.assert_frame_equal(df_from_arrow, df_direct)
+
+
+def test_to_arrow_field_data_raises(hexbeam):
+    with pytest.raises(ValueError, match=r'field data'):
+        hexbeam.field_data.to_arrow()
+
+
+def test_arrow_c_stream_consumed_by_pyarrow(hexbeam):
+    hexbeam.clear_data()
+    hexbeam.point_data['s'] = np.arange(hexbeam.n_points, dtype=np.int64)
+    hexbeam.point_data['v'] = hexbeam.points.astype(np.float32)
+
+    table = pa.table(hexbeam.point_data)
+    direct = hexbeam.point_data.to_arrow()
+    assert table.schema.equals(direct.schema)
+    assert table.equals(direct)
+
+
+def test_arrow_c_stream_returns_pycapsule(hexbeam):
+    hexbeam.clear_data()
+    hexbeam.point_data['s'] = np.arange(hexbeam.n_points, dtype=np.int32)
+    capsule = hexbeam.point_data.__arrow_c_stream__()
+    assert type(capsule).__name__ == 'PyCapsule'
+
+
+def test_arrow_c_stream_field_data_raises(hexbeam):
+    with pytest.raises(ValueError, match=r'field data'):
+        hexbeam.field_data.__arrow_c_stream__()
+
+
+def test_arrow_c_stream_polars_round_trip(hexbeam):
+    hexbeam.clear_data()
+    hexbeam.point_data['s'] = np.arange(hexbeam.n_points, dtype=np.int64)
+    hexbeam.point_data['v'] = hexbeam.points.astype(np.float64)
+    pl_df = pl.from_arrow(pa.table(hexbeam.point_data))
+    assert pl_df.shape == (hexbeam.n_points, 4)
+    assert pl_df.columns == ['s', 'v_0', 'v_1', 'v_2']
+
+
+def test_iter_flat_columns_raises_on_mismatched_leading_dim(hexbeam, mocker):
+    """Defensive guard: if an array's leading dim disagrees with ``valid_array_len``."""
+    hexbeam.clear_data()
+    hexbeam.point_data['ok'] = np.arange(hexbeam.n_points)
+
+    rogue_items = [('rogue', np.arange(hexbeam.n_points + 5))]
+    mocker.patch.object(type(hexbeam.point_data), 'items', return_value=rogue_items)
+    with pytest.raises(ValueError, match=r"Array 'rogue' has leading dimension"):
+        list(hexbeam.point_data._iter_flat_columns())
+
+
+# -----------------------------------------------------------------------------
+# DataSet-level thin wrappers around point_data / cell_data
+# -----------------------------------------------------------------------------
+
+
+def test_dataset_to_pandas_defaults_to_point(hexbeam):
+    hexbeam.clear_data()
+    hexbeam.point_data['p'] = np.arange(hexbeam.n_points, dtype=np.float64)
+    hexbeam.cell_data['c'] = np.arange(hexbeam.n_cells, dtype=np.float64)
+    df = hexbeam.to_pandas()
+    assert list(df.columns) == ['p']
+    assert len(df) == hexbeam.n_points
+
+
+def test_dataset_to_pandas_cell_association(hexbeam):
+    hexbeam.clear_data()
+    hexbeam.point_data['p'] = np.arange(hexbeam.n_points, dtype=np.float64)
+    hexbeam.cell_data['c'] = np.arange(hexbeam.n_cells, dtype=np.float64)
+    df = hexbeam.to_pandas('cell')
+    assert list(df.columns) == ['c']
+    assert len(df) == hexbeam.n_cells
+
+
+def test_dataset_to_pandas_invalid_association_raises(hexbeam):
+    with pytest.raises(ValueError, match=r"association must resolve to 'point' or 'cell'"):
+        hexbeam.to_pandas('field')
+
+
+def test_dataset_to_pandas_bogus_association_raises(hexbeam):
+    # parse_field_choice rejects unknown strings
+    with pytest.raises(ValueError, match=r'not supported'):
+        hexbeam.to_pandas('nonsense')  # type: ignore[arg-type]
+
+
+def test_dataset_to_pandas_accepts_field_association_enum(hexbeam):
+    hexbeam.clear_data()
+    hexbeam.point_data['p'] = np.arange(hexbeam.n_points, dtype=np.float64)
+    hexbeam.cell_data['c'] = np.arange(hexbeam.n_cells, dtype=np.float64)
+    df_point = hexbeam.to_pandas(pv.FieldAssociation.POINT)
+    df_cell = hexbeam.to_pandas(pv.FieldAssociation.CELL)
+    assert list(df_point.columns) == ['p']
+    assert list(df_cell.columns) == ['c']
+
+
+def test_dataset_to_arrow_accepts_field_association_enum(hexbeam):
+    hexbeam.clear_data()
+    hexbeam.cell_data['s'] = np.arange(hexbeam.n_cells, dtype=np.int32)
+    table = hexbeam.to_arrow(pv.FieldAssociation.CELL)
+    assert table.num_rows == hexbeam.n_cells
+
+
+def test_dataset_attributes_for_association_rejects_row(hexbeam):
+    with pytest.raises(ValueError, match=r"association must resolve to 'point' or 'cell'"):
+        hexbeam._attributes_for_association(pv.FieldAssociation.ROW)
+
+
+def test_dataset_to_arrow_defaults_to_point(hexbeam):
+    hexbeam.clear_data()
+    hexbeam.point_data['s'] = np.arange(hexbeam.n_points, dtype=np.int32)
+    table = hexbeam.to_arrow()
+    assert table.num_rows == hexbeam.n_points
+    assert table.schema.names == ['s']
+
+
+def test_dataset_to_arrow_cell_association(hexbeam):
+    hexbeam.clear_data()
+    hexbeam.cell_data['s'] = np.arange(hexbeam.n_cells, dtype=np.int32)
+    table = hexbeam.to_arrow('cell')
+    assert table.num_rows == hexbeam.n_cells
+
+
+def test_dataset_arrow_c_stream_uses_point_data(hexbeam):
+    hexbeam.clear_data()
+    hexbeam.point_data['s'] = np.arange(hexbeam.n_points, dtype=np.int64)
+    table = pa.table(hexbeam)
+    assert table.num_rows == hexbeam.n_points
+    assert table.schema.names == ['s']
+
+
+def test_dataset_arrow_c_stream_returns_pycapsule(hexbeam):
+    hexbeam.clear_data()
+    hexbeam.point_data['s'] = np.arange(hexbeam.n_points, dtype=np.int32)
+    capsule = hexbeam.__arrow_c_stream__()
+    assert type(capsule).__name__ == 'PyCapsule'
+
+
+def test_dataset_to_arrow_invalid_association_raises(hexbeam):
+    with pytest.raises(ValueError, match=r"association must resolve to 'point' or 'cell'"):
+        hexbeam.to_arrow('field')
+
+
+@pytest.mark.parametrize('mesh_fixture', ['sphere', 'hexbeam', 'uniform', 'plane'])
+def test_dataset_to_pandas_across_dataset_types(request, mesh_fixture):
+    mesh = request.getfixturevalue(mesh_fixture)
+    mesh.clear_data()
+    mesh.point_data['s'] = np.arange(mesh.n_points, dtype=np.float64)
+    mesh.cell_data['c'] = np.arange(mesh.n_cells, dtype=np.float64)
+    assert len(mesh.to_pandas()) == mesh.n_points
+    assert len(mesh.to_pandas('cell')) == mesh.n_cells
+
+
+def test_dataset_to_pandas_cell_multi_component(hexbeam):
+    hexbeam.clear_data()
+    hexbeam.cell_data['vec'] = np.arange(hexbeam.n_cells * 3, dtype=np.float64).reshape(
+        hexbeam.n_cells, 3
+    )
+    df = hexbeam.to_pandas('cell')
+    assert list(df.columns) == ['vec_0', 'vec_1', 'vec_2']
+    assert len(df) == hexbeam.n_cells
+
+
+def test_dataset_to_arrow_schema_names_cell(hexbeam):
+    hexbeam.clear_data()
+    hexbeam.cell_data['s'] = np.arange(hexbeam.n_cells, dtype=np.int32)
+    hexbeam.cell_data['v'] = np.arange(hexbeam.n_cells * 3, dtype=np.float32).reshape(
+        hexbeam.n_cells, 3
+    )
+    table = hexbeam.to_arrow('cell')
+    assert table.schema.names == ['s', 'v_0', 'v_1', 'v_2']
+
+
+@pytest.mark.needs_vtk_version(9, 7)
+def test_to_pandas_matches_vtk_native(hexbeam):
+    """PyVista's ``to_pandas`` lines up with VTK's native ``to_pandas``.
+
+    VTK 9.7 added ``to_pandas`` on ``vtkFieldDataBase`` using the same
+    ``{name}_{i}`` expansion for multi-component arrays. We don't delegate
+    to keep our error contract independent of VTK, but for the main happy
+    path the two should agree column-for-column and value-for-value.
+    """
+    hexbeam.clear_data()
+    hexbeam.point_data['pressure'] = np.arange(hexbeam.n_points, dtype=np.float64)
+    hexbeam.point_data['velocity'] = np.arange(hexbeam.n_points * 3, dtype=np.float64).reshape(
+        hexbeam.n_points, 3
+    )
+
+    pv_df = hexbeam.point_data.to_pandas()
+    vtk_df = hexbeam.point_data.VTKObject.to_pandas()
+
+    pd.testing.assert_frame_equal(pv_df, vtk_df, check_dtype=False)

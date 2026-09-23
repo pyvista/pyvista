@@ -4,9 +4,9 @@
 Marching Cubes
 ~~~~~~~~~~~~~~
 
-Generate a surface from a scalar field using the flying edges and
-marching cubes filters as provided by the :func:`contour
-<pyvista.DataSetFilters.contour>` filter.
+Generate a surface from a scalar field using flying edges or marching cubes.
+
+Provided by the :func:`contour <pyvista.DataSetFilters.contour>` filter.
 
 Special thanks to GitHub user `stla <https://gist.github.com/stla>`_
 for providing examples.

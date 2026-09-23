@@ -83,7 +83,7 @@ This will add PyVista to your ``pixi.toml`` file and install it in your project 
 Pixi automatically handles all dependencies and ensures compatibility across different platforms.
 
 
-Installing the Current Development Branch from GitHub
+Installing the Current Development Branch From GitHub
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 There may be features or bug-fixes that have been implemented in PyVista but
 have not made their way into a release. To install ``pyvista`` from the latest
@@ -103,6 +103,50 @@ Alternatively, you can clone the repository with git and install it with pip.
 
 Note the development flag ``-e``. This allows you to change pyvista
 in-place without having to reinstall it for each change.
+
+
+.. _dev_wheels:
+
+Development Wheels
+~~~~~~~~~~~~~~~~~~
+
+The PyVista documentation site also hosts a `PEP 503
+<https://peps.python.org/pep-0503/>`_ "simple repository" of wheels built
+from the latest commit on ``main``. These wheels are rebuilt and
+republished by the documentation pipeline on every push to ``main``, so the
+index always points at the most recent ``main`` build, with no GitHub clone
+or checkout required.
+
+To install the latest development wheel:
+
+.. code-block:: bash
+
+   pip install --upgrade --pre --index-url https://dev.pyvista.org/wheels/simple/ pyvista
+
+To keep PyPI as the source for dependencies and only pull ``pyvista`` itself
+from the development index, use ``--extra-index-url`` instead:
+
+.. code-block:: bash
+
+   pip install --upgrade --pre --extra-index-url https://dev.pyvista.org/wheels/simple/ pyvista
+
+Each build is published with a `PEP 440
+<https://peps.python.org/pep-0440/>`_ local version segment of the form
+``<base>+g<short-sha>`` (for example ``0.48.dev0+g11c36e50``), so the
+specific commit a wheel was built from is always recoverable from its
+version string. Running ``pip install --pre -U pyvista`` against the
+development index will always pick up the newest commit's wheel.
+
+A human-readable landing page listing the current build is available at
+`dev.pyvista.org/wheels/ <https://dev.pyvista.org/wheels/>`_.
+
+.. warning::
+
+   These wheels are **unsupported development builds**. They may contain
+   in-progress changes, regressions, or breaking API changes that have not
+   yet been released. Use them for testing upcoming features or reproducing
+   reports against ``main``, not for production. For stable releases,
+   install from PyPI as usual.
 
 
 Optional Dependencies
@@ -129,6 +173,102 @@ The following are a list of optional dependencies and their purpose:
 | ``rtree``                         | Vectorised ray tracing                  |
 | ``pyembree``                      |                                         |
 +-----------------------------------+-----------------------------------------+
+
+
+.. _vtk_backend:
+
+VTK Backend
+~~~~~~~~~~~
+
+PyVista runs against stock `VTK <https://vtk.org/>`__ by default, and nothing
+below is required to use it.
+
+`cvista <https://github.com/pyvista/cvista>`_ is a community fork of VTK,
+developed in the open by the PyVista maintainers. It is smaller than the stock
+wheel and ships as three stackable packages, so an offline data-processing
+install need not carry the rendering stack. It is entirely opt-in::
+
+    pip install 'pyvista[cvista]'
+
+That installs the fork alongside stock ``vtk``; because it imports under its own
+``cvista`` name, it does not clobber an existing install. When it is present
+PyVista selects it automatically.
+
+The fork does not replace stock VTK -- ``vtk`` remains a hard requirement of
+PyVista, so both are installed. To install the fork *instead of* stock VTK,
+drop the requirement during resolution. This needs `uv <https://docs.astral.sh/uv/>`_;
+pip has no equivalent.
+
+For a project, declare it once and it is recorded in the lock file:
+
+.. code-block:: toml
+
+    [project]
+    dependencies = ['pyvista[cvista]']
+
+    [tool.uv]
+    exclude-dependencies = ['vtk']
+
+For a one-off install:
+
+.. tab-set::
+
+    .. tab-item:: bash / zsh
+
+        .. code-block:: bash
+
+            uv pip install --excludes <(echo vtk) 'pyvista[cvista]'
+
+    .. tab-item:: PowerShell
+
+        .. code-block:: powershell
+
+            'vtk' | Out-File -Encoding ascii no-vtk.txt
+            uv pip install --excludes no-vtk.txt 'pyvista[cvista]'
+
+    .. tab-item:: Any shell
+
+        .. code-block:: text
+
+            echo vtk > no-vtk.txt
+            uv pip install --excludes no-vtk.txt 'pyvista[cvista]'
+
+.. note::
+
+   The resulting environment is functionally correct but reports as
+   inconsistent, since PyVista's metadata still requires ``vtk``::
+
+       $ uv pip check
+       Found 4 incompatibilities
+       The package `pyvista` requires `vtk>=9.3.1`, but it's not installed
+       ...
+
+Set :envvar:`PYVISTA_VTK_BACKEND` to choose explicitly. It must be set **before**
+PyVista is imported, since the backend is resolved at import time::
+
+    PYVISTA_VTK_BACKEND=vtkmodules   # force stock VTK, even if cvista is installed
+    PYVISTA_VTK_BACKEND=cvista       # force the fork
+
+.. note::
+
+   A process must use **one** VTK build throughout. Libraries that import VTK
+   themselves default to stock VTK, so mixing them with a PyVista running on
+   cvista produces wrapped-type errors rather than a clean failure. ``trame``
+   is the common case; point it at the same build with its own setting::
+
+       VTK_MODULE_NAME=cvista
+
+Use :func:`pyvista.vtk_backend` to check which build is active at runtime --
+useful for raising a clear error when a build does not ship a module a feature
+needs, since the two do not carry identical module sets:
+
+.. code-block:: python
+
+    import pyvista as pv
+
+    if pv.vtk_backend() != 'vtk':
+        msg = f'This feature is not supported on the {pv.vtk_backend()} backend.'
+        raise RuntimeError(msg)
 
 
 Source / Developers
@@ -177,8 +317,8 @@ See other examples and demos:
     repository. For details on how to clone and test the PyVista source, please
     see our `Contributing Guide`_ and specifically, the `Testing`_ section.
 
-.. _Contributing Guide: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.rst
-.. _Testing: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.rst#user-content-testing
+.. _Contributing Guide: https://dev.pyvista.org/contributing
+.. _Testing: https://dev.pyvista.org/contributing#unit-testing
 
 
 Running on CI Services
@@ -248,9 +388,10 @@ and set up Python:
 
 With ``libegl1`` installed, VTK 9.5+ renders off-screen via EGL out of the
 box, so no ``Xvfb`` or ``DISPLAY`` configuration is required. Set
-``PYVISTA_OFF_SCREEN=true`` in your shell (or pass ``off_screen=True``
-when constructing a ``Plotter``) and ``pv.Plotter(off_screen=True)`` will
-just work.
+:envvar:`PYVISTA_OFF_SCREEN` to ``true`` in your shell (or pass
+``off_screen=True`` when constructing a ``Plotter``) and
+``pv.Plotter(off_screen=True)`` will just work. See :ref:`configuration`
+for all environment variables.
 
 Reconnect to the server with port-forwarding, and start Jupyter:
 
@@ -306,7 +447,7 @@ should be displayed in JupyterLab.
 
 Your visualizations should now be showing directly in the Jupyter frontend.
 
-Running with Sphinx-Gallery
+Running With Sphinx-Gallery
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 In your ``conf.py``, add the following:
 

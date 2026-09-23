@@ -121,13 +121,13 @@ def test_axes_assembly_repr(axes_assembly):
         "  Label color:                Color(name='black', hex='#000000ff', opacity=255)",
         '  Show labels:                True',
         '  Label position:             (0.8, 0.8, 0.8)',
-        '  X Color:                                     ',
+        '  X Color:',
         "      Shaft                   Color(name='tomato', hex='#ff6347ff', opacity=255)",
         "      Tip                     Color(name='tomato', hex='#ff6347ff', opacity=255)",
-        '  Y Color:                                     ',
+        '  Y Color:',
         "      Shaft                   Color(name='sea_green', hex='#2e8b57ff', opacity=255)",
         "      Tip                     Color(name='sea_green', hex='#2e8b57ff', opacity=255)",
-        '  Z Color:                                     ',
+        '  Z Color:',
         "      Shaft                   Color(name='medium_blue', hex='#0000cdff', opacity=255)",
         "      Tip                     Color(name='medium_blue', hex='#0000cdff', opacity=255)",
         '  Position:                   (0.0, 0.0, 0.0)',
@@ -238,6 +238,41 @@ def test_axes_assembly_label_position(axes_assembly):
     label_position = (1.0, 2.0, 3.0)
     axes_assembly.label_position = label_position
     assert np.allclose(axes_assembly.label_position, label_position)
+
+
+@pytest.mark.parametrize(
+    ('name', 'value', 'expected'),
+    [
+        ('shaft_length', 0.5, (0.5, 0.1, 0.1)),
+        ('tip_radius', 0.3, (0.8, 0.3, 0.3)),
+        ('tip_length', 0.4, (0.8, 0.1, 0.1)),
+    ],
+)
+@pytest.mark.parametrize('cls', [pv.AxesAssembly, pv.AxesAssemblySymmetric])
+def test_axes_assembly_label_position_follows_geometry(cls, name, value, expected):
+    axes_assembly = cls()
+    setattr(axes_assembly, name, value)
+    assert np.allclose(axes_assembly._label_actors[0].relative_position, expected)
+    if cls is pv.AxesAssemblySymmetric:
+        expected_minus = (-expected[0], expected[1], expected[2])
+        assert np.allclose(
+            axes_assembly._label_actors_symmetric[0].relative_position, expected_minus
+        )
+
+
+def test_axes_assembly_label_position_anti_distortion(axes_assembly):
+    axes_assembly.scale_mode = 'anti_distortion'
+    axes_assembly.scale = (1.0, 1.0, 8.0)
+    factor = axes_assembly._shaft_and_tip_geometry_source._anti_distortion_factor
+    assert np.allclose(factor, (2.0, 2.0, 0.25))
+    # Each shaft gains the length its tip loses
+    assert np.allclose(axes_assembly.label_position, (0.6, 0.6, 0.95))
+    assert np.allclose(axes_assembly._label_actors[2].relative_position, (0.2, 0.2, 0.95))
+
+
+def test_axes_assembly_scale_mode_raises():
+    with pytest.raises(ValueError, match='scale mode'):
+        pv.AxesAssembly(scale_mode='foo')
 
 
 def test_axes_assembly_label_position_init():

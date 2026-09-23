@@ -1,20 +1,19 @@
 from __future__ import annotations
 
-from math import pi
-import pathlib
+import math
 from pathlib import Path
 import re
 from unittest.mock import patch
-import warnings
 
 import numpy as np
 import pytest
+import trimesh
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.core._vtk_utilities import _SUPPORTS_FIXED_SIZE_STORAGE
 from pyvista.core.errors import CellSizeError
 from pyvista.core.errors import NotAllTrianglesError
-from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import PyVistaFutureWarning
 from tests.core.test_dataobject_filters import invalid_random_polydata  # noqa: F401
 
@@ -154,12 +153,12 @@ def test_init_as_points():
 
     vertices = np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0]])
     cells = np.array([1, 0, 1, 1, 1, 2], np.int16)
-    to_check = pv.PolyData._make_vertex_cells(len(vertices)).ravel()
+    to_check = pv.PolyData._make_vertex_cells(len(vertices)).cells
     assert np.allclose(to_check, cells)
 
     # from list
     mesh.verts = [[1, 0], [1, 1], [1, 2]]
-    to_check = pv.PolyData._make_vertex_cells(len(vertices)).ravel()
+    to_check = pv.PolyData._make_vertex_cells(len(vertices)).cells
     assert np.allclose(to_check, cells)
 
     mesh = pv.PolyData()
@@ -174,6 +173,12 @@ def test_init_as_points_from_list():
     points = [[0.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]
     mesh = pv.PolyData(points)
     assert np.allclose(mesh.points, points)
+
+
+def test_init_as_points_uses_fixed_size_storage():
+    mesh = pv.PolyData(np.zeros((3, 3)))
+    if _SUPPORTS_FIXED_SIZE_STORAGE:
+        assert mesh.GetVerts().IsStorageFixedSize()
 
 
 def test_invalid_init():
@@ -223,6 +228,21 @@ def test_invalid_connectivity_arrays(arr: str, value: list | np.ndarray, expecte
     match = re.escape(
         f'Cell array size is invalid. Size ({len(np.ravel(value))}) does not match expected size ({expected}).'  # noqa: E501
     )
+    with pytest.raises(CellSizeError, match=match):
+        setattr(mesh, arr, value)
+
+    with pytest.raises(CellSizeError, match=f'`{arr}` cell array size is invalid'):
+        _ = pv.PolyData(points, **{arr: value})
+
+
+@pytest.mark.parametrize('arr', ['faces', 'strips', 'lines', 'verts'])
+@pytest.mark.parametrize('value', [[-1, 2, 0], [0, -1, 3], [-2, 2, 0]])
+def test_invalid_connectivity_arrays_negative_size(arr: str, value: list[int]):
+    generator = np.random.default_rng(seed=None)
+    points = generator.random((10, 3))
+    mesh = pv.PolyData(points)
+
+    match = re.escape('Cell array size is invalid. A cell has a negative number of points.')
     with pytest.raises(CellSizeError, match=match):
         setattr(mesh, arr, value)
 
@@ -360,36 +380,41 @@ def test_ray_trace_origin():
 
 def test_vtk_obb_tree_raises():
     poly = pv.PolyData()
-    match = 'Building the OBB tree requires PolyData with points and cells.'
-    with pytest.raises(ValueError, match=match):
-        _ = poly.obbTree
+    match = 'Building vtkOBBTree requires a dataset with points and cells.'
+    match_warn = (
+        'The obbTree property is deprecated. This property is primarily for internal use only,'
+        '\nand the vtkOBBTree locator does not reliably find intersections in some cases.'
+    )
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match_warn):
+        with pytest.raises(ValueError, match=match):
+            _ = poly.obbTree
 
     poly = pv.PolyData()
     poly.points = [[0.0, 0.0, 0.0]]
     assert poly.n_points == 1
     assert poly.n_cells == 0
-    with pytest.raises(ValueError, match=match):
-        _ = poly.obbTree
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match_warn):
+        with pytest.raises(ValueError, match=match):
+            _ = poly.obbTree
 
     poly = pv.PolyData()
     poly.faces = [3, 0, 0, 0]
     assert poly.n_points == 0
     assert poly.n_cells == 1
-    with pytest.raises(ValueError, match=match):
-        _ = poly.obbTree
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match_warn):
+        with pytest.raises(ValueError, match=match):
+            _ = poly.obbTree
 
 
 def test_polydata_subclass_del():
-    class PolyDataDerived(pv.PolyData): ...
+    class PolyDataDerived(pv.PolyData):
+        pass
 
     poly = PolyDataDerived()
     del poly
 
 
 def test_multi_ray_trace(sphere):
-    trimesh = pytest.importorskip('trimesh')
-    if not trimesh.ray.has_embree:
-        pytest.skip('Requires Embree')
     origins = [[1, 0, 1], [0.5, 0, 1], [0.25, 0, 1], [0, 0, 5]]
     directions = [[0, 0, -1]] * 4
     points, ind_r, ind_t = sphere.multi_ray_trace(origins, directions)
@@ -468,8 +493,10 @@ def test_subtract(sphere, sphere_shifted):
 
 def test_isubtract(sphere, sphere_shifted):
     sub_mesh = sphere.copy()
+    alias = sub_mesh
     sub_mesh -= sphere_shifted
     assert sub_mesh.n_points == sphere.boolean_difference(sphere_shifted).n_points
+    assert sub_mesh is alias
 
 
 def test_append(
@@ -602,56 +629,75 @@ def test_merge_active_scalars(input_):
     assert merged.active_scalars_name == 'foo'
 
 
-@pytest.mark.parametrize(
-    'input_', [examples.load_hexbeam(), pv.Plane(i_resolution=1, j_resolution=1)]
-)
-@pytest.mark.parametrize('main_has_priority', [True, False])
-def test_merge_main_has_priority(input_, main_has_priority):
+_MERGE_PRIORITY_INPUTS = [
+    pytest.param(examples.load_hexbeam(), id='hexbeam'),
+    pytest.param(pv.Plane(i_resolution=1, j_resolution=1), id='plane'),
+]
+
+
+def _conflicting_scalars(input_):
+    """Return a mesh and a copy whose shared active scalars have the opposite sign."""
     mesh = input_.copy()
     data_main = np.arange(mesh.n_points, dtype=float)
     mesh.point_data['present_in_both'] = data_main
     mesh.set_active_scalars('present_in_both')
 
     other = mesh.copy()
-    data_other = -data_main
-    other.point_data['present_in_both'] = data_other
+    other.point_data['present_in_both'] = -data_main
     other.set_active_scalars('present_in_both')
+    return mesh, other
 
+
+def _matching_point_data(this, that, scalars_name):
+    """Return True if scalars on two meshes only differ by point order."""
     # note: order of points can change after point merging
-    def matching_point_data(this, that, scalars_name):
-        """Return True if scalars on two meshes only differ by point order."""
-        return all(
-            new_val == this.point_data[scalars_name][j]
-            for point, new_val in zip(that.points, that.point_data[scalars_name], strict=True)
-            for j in (this.points == point).all(-1).nonzero()
-        )
+    return all(
+        new_val == this.point_data[scalars_name][j]
+        for point, new_val in zip(that.points, that.point_data[scalars_name], strict=True)
+        for j in (this.points == point).all(-1).nonzero()
+    )
 
-    if pv.vtk_version_info >= (9, 5, 0):
-        merged = mesh.merge(other)
-        expected_to_match = mesh
-    else:
-        with pytest.warns(
-            pv.PyVistaDeprecationWarning,
-            match="The keyword 'main_has_priority' is deprecated and should not be used",
-        ):
-            merged = mesh.merge(other, main_has_priority=main_has_priority)
-        expected_to_match = mesh if main_has_priority else other
-    assert matching_point_data(merged, expected_to_match, 'present_in_both')
+
+@pytest.mark.parametrize('input_', _MERGE_PRIORITY_INPUTS)
+def test_merge_main_has_priority_by_default(input_):
+    mesh, other = _conflicting_scalars(input_)
+    merged = mesh.merge(other)
+    assert _matching_point_data(merged, mesh, 'present_in_both')
     assert merged.active_scalars_name == 'present_in_both'
 
 
+@pytest.mark.needs_vtk_version(
+    less_than=(9, 5, 0), reason='Main always has priority for vtk >= 9.5.'
+)
+@pytest.mark.parametrize('input_', _MERGE_PRIORITY_INPUTS)
 @pytest.mark.parametrize('main_has_priority', [True, False])
+def test_merge_main_has_priority(input_, main_has_priority):
+    mesh, other = _conflicting_scalars(input_)
+    if main_has_priority:
+        with pytest.warns(pv.PyVistaDeprecationWarning, match='is deprecated'):
+            merged = mesh.merge(other, main_has_priority=main_has_priority)
+    else:
+        merged = mesh.merge(other, main_has_priority=main_has_priority)
+    expected_to_match = mesh if main_has_priority else other
+    assert _matching_point_data(merged, expected_to_match, 'present_in_both')
+    assert merged.active_scalars_name == 'present_in_both'
+
+
+@pytest.mark.parametrize(
+    'main_has_priority', [True, False, 0, pytest.param(np.False_, id='np_False')]
+)
 def test_merge_main_has_priority_deprecated(sphere, main_has_priority):
-    match = (
-        "The keyword 'main_has_priority' is deprecated and should not be used.\n"
-        'The main mesh will always have priority in a future version.'
-    )
-    if main_has_priority is False and pv.vtk_version_info >= (9, 5, 0):
+    if main_has_priority:
+        match = "The keyword 'main_has_priority' is deprecated"
+        with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+            sphere.merge(sphere, main_has_priority=main_has_priority)
+    elif pv.vtk_version_info >= (9, 5, 0):
+        match = re.escape(f'main_has_priority={main_has_priority!r} is not supported')
         with pytest.raises(ValueError, match=match):
             sphere.merge(sphere, main_has_priority=main_has_priority)
     else:
-        with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
-            sphere.merge(sphere, main_has_priority=main_has_priority)
+        # The keyword still selects the winning mesh, so it is not deprecated yet.
+        sphere.merge(sphere, main_has_priority=main_has_priority)
 
 
 @pytest.mark.parametrize('main_has_priority', [True, False])
@@ -664,19 +710,17 @@ def test_merge_field_data(mesh, main_has_priority):
     other = mesh.copy()
     other.field_data[key] = data_other
 
-    match = (
-        "The keyword 'main_has_priority' is deprecated and should not be used.\n"
-        'The main mesh will always have priority in a future version, and this '
-        'keyword will be removed.'
-    )
-    if main_has_priority is False and pv.vtk_version_info >= (9, 5, 0):
-        match += '\nIts value cannot be False for vtk>=9.5.0.'
-        with pytest.raises(ValueError, match=re.escape(match)):
+    if main_has_priority:
+        match = "The keyword 'main_has_priority' is deprecated"
+        with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+            merged = mesh.merge(other, main_has_priority=main_has_priority)
+    elif pv.vtk_version_info >= (9, 5, 0):
+        match = re.escape(f'main_has_priority={main_has_priority!r} is not supported')
+        with pytest.raises(ValueError, match=match):
             mesh.merge(other, main_has_priority=main_has_priority)
         return
     else:
-        with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
-            merged = mesh.merge(other, main_has_priority=main_has_priority)
+        merged = mesh.merge(other, main_has_priority=main_has_priority)
 
     actual = merged.field_data[key]
     expected = data_main if main_has_priority else data_other
@@ -687,7 +731,7 @@ def test_add(sphere, sphere_shifted):
     merged = sphere + sphere_shifted
     assert isinstance(merged, pv.PolyData)
     assert merged.n_points == sphere.n_points + sphere_shifted.n_points
-    assert merged.n_faces_strict == sphere.n_faces_strict + sphere_shifted.n_faces_strict
+    assert merged.n_faces == sphere.n_faces + sphere_shifted.n_faces
 
 
 def test_intersection(sphere, sphere_shifted):
@@ -715,7 +759,9 @@ def test_intersection(sphere, sphere_shifted):
 
 @pytest.mark.parametrize('curv_type', ['mean', 'gaussian', 'maximum', 'minimum'])
 def test_curvature(sphere, curv_type):
-    curv = sphere.curvature(curv_type)
+    with pv.VtkErrorCatcher() as catcher:
+        curv = sphere.curvature(curv_type)
+    assert catcher.warning_events == []
     assert np.any(curv)
     assert curv.size == sphere.n_points
 
@@ -723,6 +769,12 @@ def test_curvature(sphere, curv_type):
 def test_invalid_curvature(sphere):
     with pytest.raises(ValueError):  # noqa: PT011
         sphere.curvature('not valid')
+
+
+def test_volume_empty():
+    with pv.VtkErrorCatcher() as catcher:
+        assert pv.PolyData().volume == 0.0
+    assert catcher.error_events == []
 
 
 @pytest.mark.parametrize('binary', [True, False])
@@ -767,7 +819,7 @@ def test_save(sphere, extension, binary, tmpdir):
 
 
 def test_pathlib_read_write(tmpdir, sphere):
-    path = pathlib.Path(str(tmpdir.mkdir('tmpdir').join('tmp.vtk')))
+    path = Path(str(tmpdir.mkdir('tmpdir').join('tmp.vtk')))
     sphere.save(path)
     assert path.is_file()
 
@@ -818,12 +870,25 @@ def test_triangulate_filter_pass_verts(plane: pv.PolyData, pass_verts: bool):
 def test_subdivision(sphere, subfilter):
     mesh = sphere.subdivide(1, subfilter, progress_bar=True)
     assert mesh.n_points > sphere.n_points
-    assert mesh.n_faces_strict > sphere.n_faces_strict
+    assert mesh.n_faces > sphere.n_faces
 
     mesh = sphere.copy()
     mesh.subdivide(1, subfilter, inplace=True)
     assert mesh.n_points > sphere.n_points
-    assert mesh.n_faces_strict > sphere.n_faces_strict
+    assert mesh.n_faces > sphere.n_faces
+
+
+@pytest.mark.parametrize('subfilter', ['butterfly', 'loop', 'linear'])
+def test_subdivision_32bit_faces(sphere, subfilter):
+    sphere.GetPolys().ConvertTo32BitStorage()
+    faces = sphere.regular_faces.copy()
+
+    mesh = sphere.subdivide(1, subfilter)
+
+    assert mesh.n_faces == 4 * sphere.n_faces
+    # The input keeps its own faces and their storage
+    assert np.array_equal(sphere.regular_faces, faces)
+    assert not sphere.GetPolys().IsStorage64Bit()
 
 
 def test_invalid_subdivision(sphere):
@@ -857,11 +922,11 @@ def test_extract_feature_edges_no_data():
 def test_decimate(sphere):
     mesh = sphere.decimate(0.5, progress_bar=True)
     assert mesh.n_points < sphere.n_points
-    assert mesh.n_faces_strict < sphere.n_faces_strict
+    assert mesh.n_faces < sphere.n_faces
 
     mesh.decimate(0.5, inplace=True, progress_bar=True)
     assert mesh.n_points < sphere.n_points
-    assert mesh.n_faces_strict < sphere.n_faces_strict
+    assert mesh.n_faces < sphere.n_faces
 
     # check non-triangulated
     mesh = pv.Cylinder()
@@ -872,11 +937,11 @@ def test_decimate(sphere):
 def test_decimate_pro(sphere):
     mesh = sphere.decimate_pro(0.5, progress_bar=True, max_degree=10)
     assert mesh.n_points < sphere.n_points
-    assert mesh.n_faces_strict < sphere.n_faces_strict
+    assert mesh.n_faces < sphere.n_faces
 
     mesh.decimate_pro(0.5, inplace=True, progress_bar=True)
     assert mesh.n_points < sphere.n_points
-    assert mesh.n_faces_strict < sphere.n_faces_strict
+    assert mesh.n_faces < sphere.n_faces
 
     # check non-triangulated
     mesh = pv.Cylinder()
@@ -996,7 +1061,7 @@ def test_cell_normals_computes_new_normals(ant):
 
 
 def test_face_normals(sphere):
-    assert sphere.face_normals.shape[0] == sphere.n_faces_strict
+    assert sphere.face_normals.shape[0] == sphere.n_faces
 
 
 def test_clip_plane(sphere):
@@ -1021,10 +1086,10 @@ def test_clip_plane(sphere):
 def test_extract_largest(sphere):
     mesh = sphere + pv.Sphere(radius=0.1, theta_resolution=5, phi_resolution=5)
     largest = mesh.extract_largest()
-    assert largest.n_faces_strict == sphere.n_faces_strict
+    assert largest.n_faces == sphere.n_faces
 
     mesh.extract_largest(inplace=True)
-    assert mesh.n_faces_strict == sphere.n_faces_strict
+    assert mesh.n_faces == sphere.n_faces
 
 
 def test_clean(sphere):
@@ -1048,7 +1113,7 @@ def test_clean(sphere):
 
 def test_area(sphere_dense, cube_dense):
     radius = 0.5
-    ideal_area = 4 * pi * radius**2
+    ideal_area = 4 * math.pi * radius**2
     assert np.isclose(sphere_dense.area, ideal_area, rtol=1e-3)
 
     ideal_area = 6 * np.cbrt(cube_dense.volume) ** 2
@@ -1056,10 +1121,16 @@ def test_area(sphere_dense, cube_dense):
 
 
 def test_volume(sphere_dense):
-    ideal_volume = (4 / 3.0) * pi * radius**3
+    ideal_volume = (4 / 3.0) * math.pi * radius**3
     assert np.isclose(sphere_dense.volume, ideal_volume, rtol=1e-3)
 
 
+REMOVE_POINTS_DEPRECATED = pytest.mark.filterwarnings(
+    'ignore:`remove_points` will return only:pyvista.core.errors.PyVistaDeprecationWarning'
+)
+
+
+@REMOVE_POINTS_DEPRECATED
 def test_remove_points_any(sphere):
     remove_mask = np.zeros(sphere.n_points, np.bool_)
     remove_mask[:3] = True
@@ -1068,15 +1139,27 @@ def test_remove_points_any(sphere):
     assert np.allclose(sphere_mod.points, sphere.points[ind])
 
 
+@REMOVE_POINTS_DEPRECATED
+def test_remove_points_uses_fixed_size_storage(sphere):
+    remove_mask = np.zeros(sphere.n_points, np.bool_)
+    remove_mask[:3] = True
+    sphere_mod, _ = sphere.remove_points(remove_mask, inplace=False, mode='any')
+    assert sphere_mod.is_all_triangles
+    if _SUPPORTS_FIXED_SIZE_STORAGE:
+        assert sphere_mod.GetPolys().IsStorageFixedSize()
+
+
+@REMOVE_POINTS_DEPRECATED
 def test_remove_points_all(sphere):
     sphere_copy = sphere.copy()
-    sphere_copy.cell_data['ind'] = np.arange(sphere_copy.n_faces_strict)
+    sphere_copy.cell_data['ind'] = np.arange(sphere_copy.n_faces)
     remove = sphere.faces[1:4]
     sphere_copy.remove_points(remove, inplace=True, mode='all')
     assert sphere_copy.n_points == sphere.n_points
-    assert sphere_copy.n_faces_strict == sphere.n_faces_strict - 1
+    assert sphere_copy.n_faces == sphere.n_faces - 1
 
 
+@REMOVE_POINTS_DEPRECATED
 def test_remove_points_fail(sphere, plane):
     # not triangles:
     with pytest.raises(NotAllTrianglesError):
@@ -1089,6 +1172,48 @@ def test_remove_points_fail(sphere, plane):
     # invalid mask type
     with pytest.raises(TypeError):
         sphere.remove_points([0.0])
+
+
+def test_remove_points_deprecated(sphere):
+    match = '`remove_points` will return only the mesh in a future version'
+    with pytest.warns(pv.PyVistaDeprecationWarning, match=match):
+        reduced, ridx = sphere.remove_points([0])
+    assert reduced.n_points == sphere.n_points - 1
+    assert len(ridx) == reduced.n_points
+
+    with pytest.raises(TypeError, match="missing required argument 'ind'"):
+        sphere.remove_points()
+    # The new keywords select the mesh return, so the index can stay positional
+    for kwargs in [dict(invert=True), dict(pass_point_ids=True), dict(progress_bar=False)]:
+        assert isinstance(sphere.remove_points([0], **kwargs), pv.PolyData)
+
+    if pv.version_info >= (0, 52):  # pragma: no cover -- fires at the version bump
+        pytest.fail('Convert the `remove_points` tuple return into an error.')
+
+
+def test_remove_points_ind(sphere, plane):
+    remove_mask = np.zeros(sphere.n_points, np.bool_)
+    remove_mask[:3] = True
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        expected, ridx = sphere.remove_points(remove_mask)
+
+    reduced = sphere.remove_points(ind=remove_mask)
+    assert isinstance(reduced, pv.PolyData)
+    assert np.array_equal(reduced.points, expected.points)
+    assert np.array_equal(reduced.faces, expected.faces)
+    assert np.array_equal(reduced['vtkOriginalPointIds'], ridx)
+
+    # Any mesh is supported
+    reduced = plane.remove_points(ind=[0])
+    assert reduced.n_cells == plane.n_cells - 1
+
+    match = 'Pass the points to remove with `ind` or `remove`, not both.'
+    with pytest.raises(TypeError, match=re.escape(match)):
+        sphere.remove_points([0], ind=[0])
+
+    match = '`keep_scalars` cannot be used with the mesh return. Use `clear_data`.'
+    with pytest.raises(TypeError, match=re.escape(match)):
+        sphere.remove_points(ind=[0], keep_scalars=False)
 
 
 def test_vertice_cells_on_read(tmpdir):
@@ -1284,9 +1409,10 @@ def test_extrude_capping_warnings():
         arc.extrude_rotate()
 
 
-def test_flip_normals(sphere):
-    with pytest.warns(
-        PyVistaDeprecationWarning, match='`flip_normals` is deprecated. Use `flip_faces` instead'
+def test_flip_normals_removed(sphere):
+    with pytest.raises(
+        pv.core.errors.DeprecationError,
+        match=r'`flip_normals` is deprecated\. Use `flip_faces` instead',
     ):
         sphere.flip_normals()
 
@@ -1331,7 +1457,7 @@ def test_n_lines():
     assert mesh.n_lines == 1
 
 
-def test_n_faces_strict():
+def test_n_faces():
     # Mesh with one face and one line
     mesh = pv.PolyData(
         [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)],
@@ -1339,69 +1465,22 @@ def test_n_faces_strict():
         lines=[2, 0, 1],
     )
     assert mesh.n_cells == 2  # n_faces + n_lines
-    assert mesh.n_faces_strict == 1
+    assert mesh.n_faces == 1
 
 
-@pytest.fixture
-def default_n_faces():
-    pv.PolyData._USE_STRICT_N_FACES = False
-    yield
-    pv.PolyData._USE_STRICT_N_FACES = False
-
-
-def test_n_faces():
-    if pv._version.version_info[:2] >= (0, 46):
-        # At version 0.46, n_faces should raise an error instead of warning
-        mesh = pv.PolyData(
-            [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)],
-            faces=[3, 0, 1, 2],
-            lines=[2, 0, 1],
-        )
-
-        # Should raise an AttributeError
-        with pytest.raises(
-            AttributeError,
-            match=r'The non-strict behavior of `pv.PolyData.n_faces` has been removed',
-        ):
-            _ = mesh.n_faces
-    else:
-        # Pre-0.46 behavior: warning
-        mesh = pv.PolyData(
-            [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)],
-            faces=[3, 0, 1, 2],
-            lines=[2, 0, 1],
-        )
-
-        # Should raise a warning the first time
-        with pytest.warns(
-            pv.PyVistaDeprecationWarning,
-            match='The current behavior of `pv.PolyData.n_faces` has been deprecated',
-        ):
-            nf = mesh.n_faces
-
-        # Current (deprecated) behavior is that n_faces is aliased to n_cells
-        assert nf == mesh.n_cells
-
-        # Shouldn't raise deprecation warning the second time
-        with warnings.catch_warnings():
-            warnings.simplefilter('error')
-            nf1 = mesh.n_faces
-
-        assert nf1 == nf
-
-    if pv._version.version_info[:2] > (0, 49):
-        msg = 'Convert default n_faces behavior to strict'
-        raise RuntimeError(msg)
-
-
-def test_opt_in_n_faces_strict():
-    pv.PolyData.use_strict_n_faces(True)
+def test_n_faces_strict_deprecated():
     mesh = pv.PolyData(
         [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)],
         faces=[3, 0, 1, 2],
         lines=[2, 0, 1],
     )
-    assert mesh.n_faces == mesh.n_faces_strict
+    with pytest.warns(pv.PyVistaDeprecationWarning, match='`n_faces_strict` is deprecated'):
+        assert mesh.n_faces_strict == mesh.n_faces
+
+
+def test_use_strict_n_faces_removed():
+    assert not hasattr(pv.PolyData, 'use_strict_n_faces')
+    assert not hasattr(pv.PolyData, '_USE_STRICT_N_FACES')
 
 
 def test_geodesic_disconnected(sphere, sphere_shifted):
@@ -1431,6 +1510,8 @@ def test_regular_faces(deep):
     expected_faces = np.hstack([np.full((len(faces), 1), 3), faces]).astype(pv.ID_TYPE).flatten()
     assert np.array_equal(mesh.faces, expected_faces)
     assert np.array_equal(mesh.regular_faces, faces)
+    if _SUPPORTS_FIXED_SIZE_STORAGE:
+        assert mesh.GetPolys().IsStorageFixedSize()
 
 
 def test_set_regular_faces():
@@ -1510,20 +1591,6 @@ def test_irregular_faces_mutable():
     _assert_irregular_faces_equal(mesh.irregular_faces, expected)
 
 
-@pytest.mark.parametrize('cells', ['faces', 'lines', 'strips', 'verts'])
-def test_n_faces_etc_deprecated(cells: str):
-    n_cells = 'n_' + cells
-    kwargs = {cells: [3, 0, 1, 2], n_cells: 1}  # e.g. specify faces and n_faces
-    with pytest.raises(
-        TypeError,
-        match=f'PolyData constructor parameter `{n_cells}` is deprecated and no longer used',
-    ):
-        _ = pv.PolyData(np.zeros((3, 3)), **kwargs)
-    if pv._version.version_info[:2] > (0, 48):
-        msg = f'Remove `PolyData` `{n_cells} constructor kwarg'
-        raise RuntimeError(msg)
-
-
 @pytest.mark.parametrize('inplace', [True, False])
 def test_merge_points(inplace):
     mesh = pv.Cylinder(resolution=4)
@@ -1532,3 +1599,11 @@ def test_merge_points(inplace):
     assert output.n_points == 8
     assert isinstance(mesh, pv.PolyData)
     assert (mesh is output) == inplace
+
+
+def test_offset_array():
+    # Private, but geovista reads it, so removing it breaks the integration tests.
+    # It still works while deprecated in favour of `face_offsets`.
+    mesh = pv.PolyData.from_regular_faces(np.zeros((4, 3)), [[0, 1, 2], [1, 2, 3]])
+    with pytest.warns(pv.PyVistaDeprecationWarning, match='`PolyData.face_offsets`'):
+        assert np.array_equal(mesh._offset_array, [0, 3, 6])

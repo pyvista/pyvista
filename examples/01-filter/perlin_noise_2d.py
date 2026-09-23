@@ -3,10 +3,10 @@
 
 Sample Function: Perlin Noise in 2D
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Here we use :func:`pyvista.core.utilities.features.sample_function` to sample
-Perlin noise over a region to generate random terrain.
 
-Perlin noise is atype of gradient noise often used by visual effects
+Sample 2D Perlin noise using :func:`~pyvista.core.utilities.features.sample_function`.
+
+Perlin noise is a type of gradient noise often used by visual effects
 artists to increase the appearance of realism in computer graphics.
 Source: `Perlin Noise Wikipedia <https://en.wikipedia.org/wiki/Perlin_noise>`_
 
@@ -19,18 +19,18 @@ effects for the motion picture industry.
 import pyvista as pv
 
 # %%
-# Generate Perlin Noise over a StructuredGrid
+# Generate Perlin Noise Over a StructuredGrid
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Feel free to change the values of ``freq`` to change the shape of
 # the "mountains".  For example, lowering the frequency will make the
 # terrain seem more like hills rather than mountains.
 freq = [0.689, 0.562, 0.683]
 noise = pv.perlin_noise(1, freq, (0, 0, 0))
-sampled = pv.sample_function(noise, bounds=(-10, 10, -10, 10, -10, 10), dim=(500, 500, 1))
+sampled = pv.sample_function(noise, bounds=(-10, 10, -10, 10, -10, 10), dim=(300, 300, 1))
 
 
 # %%
-# Warp by scalar
+# Warp by Scalar
 # ~~~~~~~~~~~~~~
 # Here we warp by scalar to give the terrain some height based on the
 # value of the Perlin noise.  This is necessary to the terrain its shape.
@@ -72,7 +72,7 @@ pl.show()
 
 
 # %%
-# Show the terrain with custom lighting and shadows
+# Show the terrain with custom lighting
 
 pl = pv.Plotter(lighting=None)
 pl.add_light(
@@ -92,7 +92,6 @@ pl.add_mesh(
     smooth_shading=True,
     clim=clim,
 )
-pl.enable_shadows = True
 pl.show()
 # %%
 # .. tags:: filter

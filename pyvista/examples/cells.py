@@ -11,18 +11,19 @@ from collections.abc import Iterable
 from collections.abc import Sequence
 import itertools
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import Literal
 from typing import cast
 from typing import get_args
 
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import CellType
 from pyvista import UnstructuredGrid
+from pyvista import _vtk
 from pyvista._warn_external import warn_external
-from pyvista.core import _validation
-from pyvista.core import _vtk_core as _vtk
 
 if TYPE_CHECKING:
     from pyvista import DataSet
@@ -57,8 +58,8 @@ _NOT_SUPPORTED_PARAMETRIC = [
 ]
 
 
-def plot_cell(
-    grid: DataSet | MultiBlock,
+def plot_cell(  # noqa: ANN201
+    grid: DataSet | MultiBlock[Any],
     cpos: CameraPositionOptions | None = None,
     *,
     line_width: int | None = None,
@@ -151,7 +152,7 @@ def plot_cell(
     font_size_ = config._font_size if font_size is None else font_size
     normals_scale_ = config._normals_scale if normals_scale is None else normals_scale
 
-    def _extract_surface(cell_):
+    def _extract_surface(cell_):  # noqa: ANN001, ANN202
         if cell_.type == pv.CellType.POLYHEDRON:
             # For Polyhedron, we don't use ``extract_surface`` directly because that may alter
             # the face orientation, so we iterate over each face directly to create separate
@@ -244,7 +245,7 @@ def Empty() -> UnstructuredGrid:
     List the grid's cells.
 
     >>> grid.cells
-    array([0])
+    array([0]...)
 
     List the grid's points.
 
@@ -279,7 +280,7 @@ def Vertex() -> UnstructuredGrid:
     List the grid's cells.
 
     >>> grid.cells
-    array([1, 0])
+    array([1, 0]...)
 
     List the grid's points.
 
@@ -318,7 +319,7 @@ def PolyVertex() -> UnstructuredGrid:
     List the grid's cells. This could be any number of points.
 
     >>> grid.cells
-    array([6, 0, 1, 2, 3, 4, 5])
+    array([6, 0, 1, 2, 3, 4, 5]...)
 
     List the grid's points.
 
@@ -362,7 +363,7 @@ def ConvexPointSet() -> UnstructuredGrid:
     List the grid's cells. This could be any number of points.
 
     >>> grid.cells
-    array([6, 0, 1, 2, 3, 4, 5])
+    array([6, 0, 1, 2, 3, 4, 5]...)
 
     List the grid's points.
 
@@ -404,7 +405,7 @@ def Line() -> UnstructuredGrid:
     List the grid's cells.
 
     >>> grid.cells
-    array([2, 0, 1])
+    array([2, 0, 1]...)
 
     List the grid's points.
 
@@ -444,7 +445,7 @@ def PolyLine() -> UnstructuredGrid:
     List the grid's cells. This could be any number of points.
 
     >>> grid.cells
-    array([4, 0, 1, 2, 3])
+    array([4, 0, 1, 2, 3]...)
 
     List the grid's points.
 
@@ -490,7 +491,7 @@ def Triangle() -> UnstructuredGrid:
     List the grid's cells.
 
     >>> grid.cells
-    array([3, 0, 1, 2])
+    array([3, 0, 1, 2]...)
 
     List the grid's points.
 
@@ -531,7 +532,7 @@ def TriangleStrip() -> UnstructuredGrid:
     List the grid's cells.
 
     >>> grid.cells
-    array([8, 0, 1, 2, 3, 4, 5, 6, 7])
+    array([8, 0, 1, 2, 3, 4, 5, 6, 7]...)
 
     List the grid's points.
 
@@ -584,7 +585,7 @@ def Polygon() -> UnstructuredGrid:
     List the grid's cells.
 
     >>> grid.cells
-    array([6, 0, 1, 2, 3, 4, 5])
+    array([6, 0, 1, 2, 3, 4, 5]...)
 
     List the grid's points.
 
@@ -662,7 +663,7 @@ def Pixel() -> UnstructuredGrid:
     List the grid's cells.
 
     >>> grid.cells
-    array([4, 0, 1, 2, 3])
+    array([4, 0, 1, 2, 3]...)
 
     List the grid's points.
 
@@ -702,7 +703,7 @@ def Quadrilateral() -> UnstructuredGrid:
     List the grid's cells.
 
     >>> grid.cells
-    array([4, 0, 1, 2, 3])
+    array([4, 0, 1, 2, 3]...)
 
     List the grid's points.
 
@@ -742,7 +743,7 @@ def Tetrahedron() -> UnstructuredGrid:
     List the grid's cells.
 
     >>> grid.cells
-    array([4, 0, 1, 2, 3])
+    array([4, 0, 1, 2, 3]...)
 
     List the grid's points.
 
@@ -795,7 +796,7 @@ def Hexahedron() -> UnstructuredGrid:
     List the grid's cells.
 
     >>> grid.cells
-    array([8, 0, 1, 2, 3, 4, 5, 6, 7])
+    array([8, 0, 1, 2, 3, 4, 5, 6, 7]...)
 
     List the grid's points.
 
@@ -848,7 +849,7 @@ def HexagonalPrism() -> UnstructuredGrid:
     List the grid's cells.
 
     >>> grid.cells
-    array([12,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11])
+    array([12,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11]...)
 
     List the grid's points.
 
@@ -911,17 +912,17 @@ def Wedge() -> UnstructuredGrid:
     List the grid's cells.
 
     >>> grid.cells
-    array([6, 0, 1, 2, 3, 4, 5])
+    array([6, 0, 1, 2, 3, 4, 5]...)
 
     List the grid's points.
 
     >>> grid.points
     pyvista_ndarray([[0.       , 1.       , 0.       ],
-                     [0.       , 0.       , 0.       ],
                      [0.       , 0.5      , 0.8660254],
+                     [0.       , 0.       , 0.       ],
                      [1.       , 1.       , 0.       ],
-                     [1.       , 0.       , 0.       ],
-                     [1.       , 0.5      , 0.8660254]])
+                     [1.       , 0.5      , 0.8660254],
+                     [1.       , 0.       , 0.       ]])
 
     >>> grid.celltypes  # same as pyvista.CellType.WEDGE
     array([13], dtype=uint8)
@@ -929,7 +930,7 @@ def Wedge() -> UnstructuredGrid:
     """
     R32 = np.sqrt(3) / 2
     points = [[0, 1, 0], [0, 0.5, R32], [0, 0, 0], [1, 1, 0], [1, 0.5, R32], [1, 0.0, 0.0]]
-    if pv.vtk_version_info < (9, 6, 99):  # < (9, 7, 0)
+    if pv.vtk_version_info < (9, 7):
         points[1], points[2] = points[2], points[1]
         points[4], points[5] = points[5], points[4]
     cells = [len(points), *list(range(len(points)))]
@@ -957,7 +958,7 @@ def PentagonalPrism() -> UnstructuredGrid:
     List the grid's cells.
 
     >>> grid.cells
-    array([10,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9])
+    array([10,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9]...)
 
     List the grid's points.
 
@@ -1014,7 +1015,7 @@ def Pyramid() -> UnstructuredGrid:
     List the grid's cells.
 
     >>> grid.cells
-    array([5, 0, 1, 2, 3, 4])
+    array([5, 0, 1, 2, 3, 4]...)
 
     List the grid's points.
 
@@ -1061,7 +1062,7 @@ def Voxel() -> UnstructuredGrid:
     List the grid's cells.
 
     >>> grid.cells
-    array([8, 0, 1, 2, 3, 4, 5, 6, 7])
+    array([8, 0, 1, 2, 3, 4, 5, 6, 7]...)
 
     List the grid's points.
 
@@ -1114,7 +1115,7 @@ def QuadraticEdge() -> UnstructuredGrid:
     List the grid's cells.
 
     >>> grid.cells
-    array([3, 0, 1, 2])
+    array([3, 0, 1, 2]...)
 
     List the grid's points.
 
@@ -1151,7 +1152,7 @@ def QuadraticTriangle() -> UnstructuredGrid:
     List the grid's cells.
 
     >>> grid.cells
-    array([6, 0, 1, 2, 3, 4, 5])
+    array([6, 0, 1, 2, 3, 4, 5]...)
 
     List the grid's points.
 
@@ -1191,7 +1192,7 @@ def QuadraticQuadrilateral() -> UnstructuredGrid:
     List the grid's cells.
 
     >>> grid.cells
-    array([8, 0, 1, 2, 3, 4, 5, 6, 7])
+    array([8, 0, 1, 2, 3, 4, 5, 6, 7]...)
 
     List the grid's points.
 
@@ -1233,7 +1234,7 @@ def QuadraticPolygon() -> UnstructuredGrid:
     List the grid's cells.
 
     >>> grid.cells
-    array([8, 0, 1, 2, 3, 4, 5, 6, 7])
+    array([8, 0, 1, 2, 3, 4, 5, 6, 7]...)
 
     List the grid's points.
 
@@ -1286,7 +1287,7 @@ def QuadraticTetrahedron() -> UnstructuredGrid:
     List the grid's cells.
 
     >>> grid.cells
-    array([10,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9])
+    array([10,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9]...)
 
     List the grid's points.
 
@@ -1331,7 +1332,7 @@ def QuadraticHexahedron() -> UnstructuredGrid:
 
     >>> grid.cells
     array([20,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
-           16, 17, 18, 19])
+           16, 17, 18, 19]...)
 
     List the grid's points.
 
@@ -1385,7 +1386,7 @@ def QuadraticWedge() -> UnstructuredGrid:
     List the grid's cells.
 
     >>> grid.cells
-    array([15,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14])
+    array([15,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14]...)
 
     List the grid's points.
 
@@ -1434,7 +1435,7 @@ def QuadraticPyramid() -> UnstructuredGrid:
     List the grid's cells.
 
     >>> grid.cells
-    array([13,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12])
+    array([13,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12]...)
 
     List the grid's points.
 
@@ -1481,7 +1482,7 @@ def BiQuadraticQuadrilateral() -> UnstructuredGrid:
     List the grid's cells.
 
     >>> grid.cells
-    array([9, 0, 1, 2, 3, 4, 5, 6, 7, 8])
+    array([9, 0, 1, 2, 3, 4, 5, 6, 7, 8]...)
 
     List the grid's points.
 
@@ -1525,7 +1526,7 @@ def TriQuadraticHexahedron() -> UnstructuredGrid:
 
     >>> grid.cells
     array([27,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
-           16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26])
+           16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]...)
 
     List the grid's points.
 
@@ -1587,7 +1588,7 @@ def TriQuadraticPyramid() -> UnstructuredGrid:
 
     >>> grid.cells
     array([19,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
-           16, 17, 18])
+           16, 17, 18]...)
 
     List the grid's points.
 
@@ -1640,7 +1641,7 @@ def QuadraticLinearQuadrilateral() -> UnstructuredGrid:
     List the grid's cells.
 
     >>> grid.cells
-    array([6, 0, 1, 2, 3, 4, 5])
+    array([6, 0, 1, 2, 3, 4, 5]...)
 
     List the grid's points.
 
@@ -1680,7 +1681,7 @@ def QuadraticLinearWedge() -> UnstructuredGrid:
     List the grid's cells.
 
     >>> grid.cells
-    array([12,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11])
+    array([12,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11]...)
 
     List the grid's points.
 
@@ -1727,7 +1728,7 @@ def BiQuadraticQuadraticWedge() -> UnstructuredGrid:
 
     >>> grid.cells
     array([18,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
-           16, 17])
+           16, 17]...)
 
     List the grid's points.
 
@@ -1781,7 +1782,7 @@ def BiQuadraticQuadraticHexahedron() -> UnstructuredGrid:
 
     >>> grid.cells
     array([24,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
-           16, 17, 18, 19, 20, 21, 22, 23])
+           16, 17, 18, 19, 20, 21, 22, 23]...)
 
     List the grid's points.
 
@@ -1839,7 +1840,7 @@ def BiQuadraticTriangle() -> UnstructuredGrid:
     List the grid's cells.
 
     >>> grid.cells
-    array([7, 0, 1, 2, 3, 4, 5, 6])
+    array([7, 0, 1, 2, 3, 4, 5, 6]...)
 
     List the grid's points.
 
@@ -1880,7 +1881,7 @@ def CubicLine() -> UnstructuredGrid:
     List the grid's cells.
 
     >>> grid.cells
-    array([4, 0, 1, 2, 3])
+    array([4, 0, 1, 2, 3]...)
 
     List the grid's points.
 
@@ -1923,7 +1924,7 @@ def LagrangeCurve(*, cell_order: int = 3) -> UnstructuredGrid:
     List the grid's cells.
 
     >>> grid.cells
-    array([4, 0, 1, 2, 3])
+    array([4, 0, 1, 2, 3]...)
 
     List the grid's points.
 
@@ -1968,7 +1969,7 @@ def LagrangeTriangle(*, cell_order: int = 3) -> UnstructuredGrid:
     List the grid's cells.
 
     >>> grid.cells
-    array([10,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9])
+    array([10,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9]...)
 
     List the grid's points.
 
@@ -2020,7 +2021,7 @@ def LagrangeQuadrilateral(*, cell_order: int = 3) -> UnstructuredGrid:
     List the grid's cells.
 
     >>> grid.cells
-    array([16,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15])
+    array([16,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15]...)
 
     List the grid's points.
 
@@ -2079,7 +2080,7 @@ def LagrangeTetrahedron(*, cell_order: int = 3) -> UnstructuredGrid:
 
     >>> grid.cells
     array([20,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
-           16, 17, 18, 19])
+           16, 17, 18, 19]...)
 
     List the grid's points.
 
@@ -2144,7 +2145,7 @@ def LagrangeHexahedron(*, cell_order: int = 3) -> UnstructuredGrid:
     array([64,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
            16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
            33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
-           50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63])
+           50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63]...)
 
     List the grid's points.
 
@@ -2252,7 +2253,7 @@ def LagrangeWedge(*, cell_order: int = 3) -> UnstructuredGrid:
     >>> grid.cells
     array([40,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
            16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
-           33, 34, 35, 36, 37, 38, 39])
+           33, 34, 35, 36, 37, 38, 39]...)
 
     List the grid's points.
 
@@ -2333,7 +2334,7 @@ def BezierCurve(*, cell_order: int = 3) -> UnstructuredGrid:
     List the grid's cells.
 
     >>> grid.cells
-    array([4, 0, 1, 2, 3])
+    array([4, 0, 1, 2, 3]...)
 
     List the grid's points.
 
@@ -2378,7 +2379,7 @@ def BezierTriangle(*, cell_order: int = 3) -> UnstructuredGrid:
     List the grid's cells.
 
     >>> grid.cells
-    array([10,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9])
+    array([10,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9]...)
 
     List the grid's points.
 
@@ -2429,7 +2430,7 @@ def BezierQuadrilateral(*, cell_order: int = 3) -> UnstructuredGrid:
     List the grid's cells.
 
     >>> grid.cells
-    array([16,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15])
+    array([16,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15]...)
 
     List the grid's points.
 
@@ -2488,7 +2489,7 @@ def BezierTetrahedron(*, cell_order: int = 3) -> UnstructuredGrid:
 
     >>> grid.cells
     array([20,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
-           16, 17, 18, 19])
+           16, 17, 18, 19]...)
 
     List the grid's points.
 
@@ -2553,7 +2554,7 @@ def BezierHexahedron(*, cell_order: int = 3) -> UnstructuredGrid:
     array([64,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
            16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
            33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
-           50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63])
+           50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63]...)
 
     List the grid's points.
 
@@ -2661,7 +2662,7 @@ def BezierWedge(*, cell_order: int = 3) -> UnstructuredGrid:
     >>> grid.cells
     array([40,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
            16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
-           33, 34, 35, 36, 37, 38, 39])
+           33, 34, 35, 36, 37, 38, 39]...)
 
     List the grid's points.
 
@@ -2741,7 +2742,7 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
     Parameters
     ----------
     cell_types : int | sequence[int]
-        Cell type(s) to generate. By default, only :class:`~pyvista.CellType` values are supported.
+        Cell types to generate. By default, only :class:`~pyvista.CellType` values are supported.
         Invalid cell type values may also be specified; these can be ignored by using the
         ``unsupported_action`` keyword.
 
@@ -2749,7 +2750,7 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
         Method for generating cell type blocks.
 
         - ``'examples'``: generate blocks using examples from :mod:`pyvista.examples.cells`. This
-          is a mixed collected of manually-defined linear cells, quadratic and cubic cells
+          is a mixed collected of manually defined linear cells, quadratic and cubic cells
           generated with ``'paramatric'``, and higher order cells generated with ``'source'``.
         - ``'parametric'``: generate blocks using :vtk:`vtkCell.GetParametricCoords`.
         - ``'source'``: generate blocks using :vtk:`vtkCellTypeSource`.
@@ -2760,7 +2761,7 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
              the other generators only support a subset.
            - Both ``'examples'`` and ``'parametric'`` only generate a `single` cell per block,
              whereas ``'source'`` may generate multiple cells of the same type in order to fill a
-             unit block (e.g. two triangles to fill a square, two wedges to fill a cube).
+             unit block (for example, two triangles to fill a square, two wedges to fill a cube).
 
     block_dimensions : VectorLike[int], optional
         Output dimensions of blocks to generate. By default, all blocks are stacked sequentially
@@ -2792,6 +2793,8 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
 
     Examples
     --------
+    .. autoopengraph_thumbnail:: 11
+
     Generate a single :attr:`~pyvista.CellType.TRIANGLE` cell.
 
     >>> import pyvista as pv
@@ -2904,9 +2907,13 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
     ... )
     >>> plot_cell(cell_blocks, cpos='xy', **size_kwargs)
 
-    Generate a 5x5x5 grid comprised of all 3D cell types with no gaps.
+    Generate a 5x5x5 grid comprised of all 3D concrete cell types with no gaps.
 
-    >>> cell_types = [ctype for ctype in pv.CellType if ctype.dimension == 3]
+    >>> cell_types = [
+    ...     ctype
+    ...     for ctype in pv.CellType
+    ...     if ctype.dimension == 3 and ctype.vtk_class is not None
+    ... ]
     >>> cell_blocks = generate_cell_blocks(
     ...     cell_types,
     ...     'source',
@@ -2929,12 +2936,12 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
      <CellType.BEZIER_TETRAHEDRON: 78>, <CellType.BEZIER_HEXAHEDRON: 79>,
      <CellType.BEZIER_WEDGE: 80>}
 
-    Compare the first 25 cell types from the different generators. Note that some values, e.g.
-    ``17``, do not correspond to any cell type, so gaps are expected in all outputs.
+    Compare the first 16 cell types from the different generators. Gaps are expected in the
+    output wherever a generator does not support a cell type.
 
     >>> kwargs = dict(
-    ...     cell_types=range(1, 26),
-    ...     block_dimensions=(5, 5, 1),
+    ...     cell_types=range(1, 17),
+    ...     block_dimensions=(4, 4, 1),
     ...     unsupported_action='skip',
     ... )
     >>> cell_blocks = generate_cell_blocks(generator='examples', **kwargs)
@@ -3005,7 +3012,9 @@ def generate_cell_blocks(  # numpydoc ignore=RT01
                 )
                 raise ValueError(msg)
         dimension = block_dimensions
-    dims = _validation.validate_array3(dimension, name='block_dimensions')
+    dims = _validation.validate_array3(
+        dimension, must_be_integer=True, dtype_out=int, name='block_dimensions'
+    )
     cell_centers = pv.ImageData(dimensions=dims + 1).cell_centers().points
 
     if generator == 'examples':

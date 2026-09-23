@@ -4,8 +4,7 @@
 Plot a Magnetic Field
 ---------------------
 
-The following example demonstrates how PyVista can be used to plot a magnetic
-field.
+The following example demonstrates how PyVista can be used to plot a magnetic field.
 
 This example relies on :func:`~pyvista.DataSetFilters.streamlines_from_source` to
 generate streamlines and :func:`add_volume() <pyvista.Plotter.add_volume>` to plot
@@ -66,7 +65,7 @@ strl = grid.streamlines_from_source(
 
 pl = pv.Plotter()
 pl.add_mesh(
-    strl.tube(radius=0.1),
+    strl.tube(radius=0.1, n_sides=6),
     cmap='bwr',
     ambient=0.2,
 )

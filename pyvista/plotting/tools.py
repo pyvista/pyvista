@@ -5,17 +5,29 @@ from __future__ import annotations
 from enum import Enum
 import os
 import platform
-from subprocess import PIPE
-from subprocess import Popen
-from subprocess import TimeoutExpired
+import subprocess
+import sys
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import Literal
+from typing import NoReturn
+from typing import overload
 
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
-from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista import _vtk
+from pyvista.core.errors import DeprecationError
 
-from . import _vtk
 from .colors import Color
+
+if TYPE_CHECKING:
+    from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import VectorLike
+
+    from ._typing import ColorLike
+    from ._typing import OpacityOptions
 
 
 class FONTS(Enum):
@@ -27,11 +39,85 @@ class FONTS(Enum):
 
 
 # Track render window support and plotting
-SUPPORTS_OPENGL = None
-SUPPORTS_PLOTTING = None
+SUPPORTS_OPENGL: bool | None = None
+SUPPORTS_PLOTTING: bool | None = None
 
 
-def supports_open_gl():
+def _validate_vector(vector: VectorLike[float], *, name: str) -> tuple[float, float, float]:
+    """Return a three-component vector as a tuple of floats."""
+    return _validation.validate_array3(vector, dtype_out=float, to_tuple=True, name=name)
+
+
+def _validate_viewup(vector: VectorLike[float]) -> tuple[float, float, float]:
+    """Return a view-up vector, which is normalized and so cannot be zero."""
+    viewup = _validate_vector(vector, name='viewup')
+    if np.allclose(viewup, 0.0):
+        msg = 'Camera up vector cannot be zero.'
+        raise ValueError(msg)
+    return viewup
+
+
+def _prepare_offscreen_macos_render_window(  # pragma: no cover
+    render_window: _vtk.vtkRenderWindow | None,
+) -> None:
+    """Configure ``render_window`` for quiet, off-screen use on macOS.
+
+    Two independent fixes for ``vtkCocoaRenderWindow`` behavior, both
+    needed because VTK's off-screen path doesn't fully suppress its
+    on-screen side effects:
+
+    1. Merely instantiating ``NSApplication``, which VTK does internally
+       in ``CreateAWindow()`` unconditionally, even for off-screen use,
+       is enough for an unbundled Python process to get a Dock icon. VTK
+       never reverses this, so we demote the activation policy via PyObjC.
+       ``Accessory`` hides the Dock icon while still allowing the process
+       to be activated later; ``Prohibited`` also forbids activation, which
+       leaves any later on-screen window stuck behind other applications.
+       An application already running on the ``Regular`` policy is left
+       alone: the activation policy is process-global, so demoting it
+       would strip the Dock icon and menu bar from a host GUI toolkit,
+       such as a Qt application embedding a plotter.
+    2. ``SetConnectContextToNSView(False)`` stops this particular render
+       window from creating a real NSWindow.
+
+    Safe to call unconditionally on any platform or render window type;
+    each step no-ops where it doesn't apply (non-macOS, missing PyObjC,
+    non-Cocoa render windows, a visible application).
+    """
+
+    def _suppress_dock_icon() -> None:
+        """Demote the activation policy so an off-screen process gets no Dock icon."""
+        if sys.platform != 'darwin':
+            return
+        try:  # type:ignore[unreachable]
+            from AppKit import NSApp  # noqa: PLC0415
+            from AppKit import NSApplication  # noqa: PLC0415
+            from AppKit import NSApplicationActivationPolicyAccessory  # noqa: PLC0415
+            from AppKit import NSApplicationActivationPolicyRegular  # noqa: PLC0415
+        except ImportError:
+            return
+
+        # NSApp() reads the shared application without creating one, so a
+        # process that has none still gets its Dock icon suppressed below
+        app = NSApp()
+        if app is not None and app.activationPolicy() == NSApplicationActivationPolicyRegular:
+            return
+        NSApplication.sharedApplication().setActivationPolicy_(
+            NSApplicationActivationPolicyAccessory,
+        )
+
+    def _disable_cocoa_nsview_context() -> None:
+        """Stop a Cocoa render window from creating a real window."""
+        if hasattr(render_window, 'SetConnectContextToNSView'):
+            render_window.SetConnectContextToNSView(False)  # type:ignore[union-attr]
+
+    if render_window is None:
+        return
+    _suppress_dock_icon()
+    _disable_cocoa_nsview_context()
+
+
+def supports_open_gl() -> bool:
     """Return if the system supports OpenGL.
 
     This function checks if the system supports OpenGL by creating a VTK render
@@ -47,8 +133,7 @@ def supports_open_gl():
     if SUPPORTS_OPENGL is None:
         ren_win = _vtk.vtkRenderWindow()
         ren_win.SetOffScreenRendering(True)
-        if hasattr(ren_win, 'SetConnectContextToNSView'):
-            ren_win.SetConnectContextToNSView(False)
+        _prepare_offscreen_macos_render_window(ren_win)
         SUPPORTS_OPENGL = bool(ren_win.SupportsOpenGL())
     return SUPPORTS_OPENGL
 
@@ -73,10 +158,15 @@ def _system_supports_plotting() -> bool:  # noqa: PLR0911
     # mac case
     if platform.system() == 'Darwin':
         # check if finder available
-        proc = Popen(['pgrep', '-qx', 'Finder'], stdout=PIPE, stderr=PIPE, encoding='utf8')
+        proc = subprocess.Popen(
+            ['pgrep', '-qx', 'Finder'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            encoding='utf8',
+        )
         try:
             proc.communicate(timeout=10)
-        except TimeoutExpired:
+        except subprocess.TimeoutExpired:
             return False
         if proc.returncode == 0:
             return True
@@ -89,9 +179,11 @@ def _system_supports_plotting() -> bool:  # noqa: PLR0911
         return True
 
     try:
-        proc = Popen(['xset', '-q'], stdout=PIPE, stderr=PIPE, encoding='utf8')
+        proc = subprocess.Popen(
+            ['xset', '-q'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8'
+        )
         proc.communicate(timeout=10)
-    except (OSError, TimeoutExpired):  # pragma: no cover
+    except (OSError, subprocess.TimeoutExpired):  # pragma: no cover
         # possible we have EGL support
         return supports_open_gl()
     else:  # pragma: no cover
@@ -115,36 +207,45 @@ def system_supports_plotting() -> bool:
     return SUPPORTS_PLOTTING
 
 
-def _update_axes_label_color(axes_actor, color=None):
+def _update_axes_label_color(
+    axes_actor: _vtk.vtkAxesActor | _vtk.vtkAnnotatedCubeActor | _vtk.vtkPropAssembly,
+    color: ColorLike | None = None,
+) -> None:
     """Set the axes label color (internal helper)."""
-    color = Color(color, default_color=pv.global_theme.font.color)
-    if isinstance(axes_actor, _vtk.vtkAxesActor):
-        prop_x = axes_actor.GetXAxisCaptionActor2D().GetCaptionTextProperty()
-        prop_y = axes_actor.GetYAxisCaptionActor2D().GetCaptionTextProperty()
-        prop_z = axes_actor.GetZAxisCaptionActor2D().GetCaptionTextProperty()
-        for prop in [prop_x, prop_y, prop_z]:
-            prop.SetColor(color.float_rgb)
-            prop.SetShadow(False)
-    elif isinstance(axes_actor, _vtk.vtkAnnotatedCubeActor):
-        axes_actor.GetTextEdgesProperty().SetColor(color.float_rgb)
+    label_color = Color(color, default_color=pv.global_theme.font.color)
+    if isinstance(axes_actor, _vtk.vtkPropAssembly):
+        parts = axes_actor.GetParts()
+        actors = [parts.GetItemAsObject(i) for i in range(parts.GetNumberOfItems())]
+    else:
+        actors = [axes_actor]
+    for actor in actors:
+        if isinstance(actor, _vtk.vtkAxesActor):
+            prop_x = actor.GetXAxisCaptionActor2D().GetCaptionTextProperty()
+            prop_y = actor.GetYAxisCaptionActor2D().GetCaptionTextProperty()
+            prop_z = actor.GetZAxisCaptionActor2D().GetCaptionTextProperty()
+            for prop in [prop_x, prop_y, prop_z]:
+                prop.SetColor(label_color.float_rgb)
+                prop.SetShadow(False)
+        elif isinstance(actor, _vtk.vtkAnnotatedCubeActor):
+            actor.GetTextEdgesProperty().SetColor(label_color.float_rgb)
 
 
-@_deprecate_positional_args
-def create_axes_marker(  # noqa: PLR0917
-    label_color=None,
-    x_color=None,
-    y_color=None,
-    z_color=None,
-    xlabel='X',
-    ylabel='Y',
-    zlabel='Z',
-    labels_off: bool = False,  # noqa: FBT001, FBT002
-    line_width=2,
-    cone_radius=0.4,
-    shaft_length=0.8,
-    tip_length=0.2,
-    ambient=0.5,
-    label_size=(0.25, 0.1),
+def create_axes_marker(
+    *,
+    label_color: ColorLike | None = None,
+    x_color: ColorLike | None = None,
+    y_color: ColorLike | None = None,
+    z_color: ColorLike | None = None,
+    xlabel: str = 'X',
+    ylabel: str = 'Y',
+    zlabel: str = 'Z',
+    labels_off: bool = False,
+    line_width: float = 2,
+    cone_radius: float = 0.4,
+    shaft_length: float = 0.8,
+    tip_length: float = 0.2,
+    ambient: float = 0.5,
+    label_size: VectorLike[float] = (0.25, 0.1),
 ) -> _vtk.vtkAxesActor:
     """Create an axis actor.
 
@@ -154,13 +255,13 @@ def create_axes_marker(  # noqa: PLR0917
         Color of the label text.
 
     x_color : ColorLike, optional
-        Color of the x-axis text.
+        Color of the x-axis shaft and tip.
 
     y_color : ColorLike, optional
-        Color of the y-axis text.
+        Color of the y-axis shaft and tip.
 
     z_color : ColorLike, optional
-        Color of the z-axis text.
+        Color of the z-axis shaft and tip.
 
     xlabel : str, default: "X"
         Text used for the x-axis.
@@ -227,16 +328,16 @@ def create_axes_marker(  # noqa: PLR0917
     >>> pl.show()
 
     """
-    x_color = Color(x_color, default_color=pv.global_theme.axes.x_color)
-    y_color = Color(y_color, default_color=pv.global_theme.axes.y_color)
-    z_color = Color(z_color, default_color=pv.global_theme.axes.z_color)
+    color_x = Color(x_color, default_color=pv.global_theme.axes.x_color)
+    color_y = Color(y_color, default_color=pv.global_theme.axes.y_color)
+    color_z = Color(z_color, default_color=pv.global_theme.axes.z_color)
     axes_actor = _vtk.vtkAxesActor()
-    axes_actor.GetXAxisShaftProperty().SetColor(x_color.float_rgb)
-    axes_actor.GetXAxisTipProperty().SetColor(x_color.float_rgb)
-    axes_actor.GetYAxisShaftProperty().SetColor(y_color.float_rgb)
-    axes_actor.GetYAxisTipProperty().SetColor(y_color.float_rgb)
-    axes_actor.GetZAxisShaftProperty().SetColor(z_color.float_rgb)
-    axes_actor.GetZAxisTipProperty().SetColor(z_color.float_rgb)
+    axes_actor.GetXAxisShaftProperty().SetColor(color_x.float_rgb)
+    axes_actor.GetXAxisTipProperty().SetColor(color_x.float_rgb)
+    axes_actor.GetYAxisShaftProperty().SetColor(color_y.float_rgb)
+    axes_actor.GetYAxisTipProperty().SetColor(color_y.float_rgb)
+    axes_actor.GetZAxisShaftProperty().SetColor(color_z.float_rgb)
+    axes_actor.GetZAxisTipProperty().SetColor(color_z.float_rgb)
     # Set labels
     axes_actor.SetXAxisLabelText(xlabel)
     axes_actor.SetYAxisLabelText(ylabel)
@@ -263,46 +364,56 @@ def create_axes_marker(  # noqa: PLR0917
         axes_actor.GetYAxisCaptionActor2D(),
         axes_actor.GetZAxisCaptionActor2D(),
     ]:
-        label_actor.SetWidth(label_size[0])
-        label_actor.SetHeight(label_size[1])
+        label_actor.SetWidth(float(label_size[0]))
+        label_actor.SetHeight(float(label_size[1]))
 
     _update_axes_label_color(axes_actor, label_color)
 
     return axes_actor
 
 
-@_deprecate_positional_args
-def create_axes_orientation_box(  # noqa: PLR0917
-    line_width=1,
-    text_scale=0.366667,
-    edge_color='black',
-    x_color=None,
-    y_color=None,
-    z_color=None,
-    xlabel='X',
-    ylabel='Y',
-    zlabel='Z',
-    x_face_color='red',
-    y_face_color='green',
-    z_face_color='blue',
-    color_box: bool = False,  # noqa: FBT001, FBT002
-    label_color=None,
-    labels_off: bool = False,  # noqa: FBT001, FBT002
-    opacity=0.5,
-    show_text_edges: bool = False,  # noqa: FBT001, FBT002
-):
+# fmt: off
+# ruff: disable[E501]
+@overload
+def create_axes_orientation_box(*, line_width: float = ..., text_scale: float = ..., edge_color: ColorLike = ..., x_color: ColorLike | None = ..., y_color: ColorLike | None = ..., z_color: ColorLike | None = ..., xlabel: str | None = ..., ylabel: str | None = ..., zlabel: str | None = ..., x_face_color: ColorLike = ..., y_face_color: ColorLike = ..., z_face_color: ColorLike = ..., color_box: Literal[True], label_color: ColorLike | None = ..., labels_off: bool = ..., opacity: float = ..., show_text_edges: bool = ...) -> _vtk.vtkPropAssembly: ...
+@overload
+def create_axes_orientation_box(*, line_width: float = ..., text_scale: float = ..., edge_color: ColorLike = ..., x_color: ColorLike | None = ..., y_color: ColorLike | None = ..., z_color: ColorLike | None = ..., xlabel: str | None = ..., ylabel: str | None = ..., zlabel: str | None = ..., x_face_color: ColorLike = ..., y_face_color: ColorLike = ..., z_face_color: ColorLike = ..., color_box: Literal[False] = False, label_color: ColorLike | None = ..., labels_off: bool = ..., opacity: float = ..., show_text_edges: bool = ...) -> _vtk.vtkAnnotatedCubeActor: ...
+@overload
+def create_axes_orientation_box(*, line_width: float = ..., text_scale: float = ..., edge_color: ColorLike = ..., x_color: ColorLike | None = ..., y_color: ColorLike | None = ..., z_color: ColorLike | None = ..., xlabel: str | None = ..., ylabel: str | None = ..., zlabel: str | None = ..., x_face_color: ColorLike = ..., y_face_color: ColorLike = ..., z_face_color: ColorLike = ..., color_box: bool = ..., label_color: ColorLike | None = ..., labels_off: bool = ..., opacity: float = ..., show_text_edges: bool = ...) -> _vtk.vtkAnnotatedCubeActor | _vtk.vtkPropAssembly: ...
+# ruff: enable[E501]
+# fmt: on
+def create_axes_orientation_box(
+    *,
+    line_width: float = 1,
+    text_scale: float = 0.366667,
+    edge_color: ColorLike = 'black',
+    x_color: ColorLike | None = None,
+    y_color: ColorLike | None = None,
+    z_color: ColorLike | None = None,
+    xlabel: str | None = 'X',
+    ylabel: str | None = 'Y',
+    zlabel: str | None = 'Z',
+    x_face_color: ColorLike = 'red',
+    y_face_color: ColorLike = 'green',
+    z_face_color: ColorLike = 'blue',
+    color_box: bool = False,
+    label_color: ColorLike | None = None,
+    labels_off: bool = False,
+    opacity: float = 0.5,
+    show_text_edges: bool = False,
+) -> _vtk.vtkAnnotatedCubeActor | _vtk.vtkPropAssembly:
     """Create a Box axes orientation widget with labels.
 
     Parameters
     ----------
-    line_width : float, optional
-        The width of the marker lines.
+    line_width : float, default: 1
+        The width of the text edge lines.
 
-    text_scale : float, optional
+    text_scale : float, default: 0.366667
         Size of the text relative to the faces.
 
-    edge_color : ColorLike, optional
-        Color of the edges.
+    edge_color : ColorLike, default: 'black'
+        Color of the cube edges.
 
     x_color : ColorLike, optional
         Color of the x-axis text.
@@ -313,78 +424,82 @@ def create_axes_orientation_box(  # noqa: PLR0917
     z_color : ColorLike, optional
         Color of the z-axis text.
 
-    xlabel : str, optional
+    xlabel : str, default: "X"
         Text used for the x-axis.
 
-    ylabel : str, optional
+    ylabel : str, default: "Y"
         Text used for the y-axis.
 
-    zlabel : str, optional
+    zlabel : str, default: "Z"
         Text used for the z-axis.
 
-    x_face_color : ColorLike, optional
-        Color used for the x-axis arrow.  Defaults to theme axes
-        parameters.
+    x_face_color : ColorLike, default: 'red'
+        Color of the two faces perpendicular to the x-axis. Only used when
+        ``color_box`` is ``True``.
 
-    y_face_color : ColorLike, optional
-        Color used for the y-axis arrow.  Defaults to theme axes
-        parameters.
+    y_face_color : ColorLike, default: 'green'
+        Color of the two faces perpendicular to the y-axis. Only used when
+        ``color_box`` is ``True``.
 
-    z_face_color : ColorLike, optional
-        Color used for the z-axis arrow.  Defaults to theme axes
-        parameters.
+    z_face_color : ColorLike, default: 'blue'
+        Color of the two faces perpendicular to the z-axis. Only used when
+        ``color_box`` is ``True``.
 
-    color_box : bool, optional
+    color_box : bool, default: False
         Enable or disable the face colors.  Otherwise, box is white.
 
     label_color : ColorLike, optional
-        Color of the labels.
+        Color of the text edges.
 
-    labels_off : bool, optional
+    labels_off : bool, default: False
         Enable or disable the text labels for the axes.
 
-    opacity : float, optional
+    opacity : float, default: 0.5
         Opacity in the range of ``[0, 1]`` of the orientation box.
 
-    show_text_edges : bool, optional
+    show_text_edges : bool, default: False
         Enable or disable drawing the vector text edges.
 
     Returns
     -------
-    :vtk:`vtkAnnotatedCubeActor`
-        Annotated cube actor.
+    :vtk:`vtkAnnotatedCubeActor` | :vtk:`vtkPropAssembly`
+        Annotated cube actor, or a prop assembly of that actor and a colored
+        cube when ``color_box`` is ``True``.
 
     Examples
     --------
-    Create and plot an orientation box
+    .. pyvista-plot::
+        :force_static:
 
-    >>> import pyvista as pv
-    >>> actor = pv.create_axes_orientation_box(
-    ...     line_width=1,
-    ...     text_scale=0.53,
-    ...     edge_color='black',
-    ...     x_color='k',
-    ...     y_color=None,
-    ...     z_color=None,
-    ...     xlabel='X',
-    ...     ylabel='Y',
-    ...     zlabel='Z',
-    ...     color_box=False,
-    ...     labels_off=False,
-    ...     opacity=1.0,
-    ... )
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_actor(actor)
-    >>> pl.show()
+        Create and plot an orientation box
+
+        >>> import pyvista as pv
+        >>> actor = pv.create_axes_orientation_box(
+        ...     line_width=1,
+        ...     text_scale=0.53,
+        ...     edge_color='black',
+        ...     x_color='k',
+        ...     y_color=None,
+        ...     z_color=None,
+        ...     xlabel='X',
+        ...     ylabel='Y',
+        ...     zlabel='Z',
+        ...     color_box=False,
+        ...     labels_off=False,
+        ...     opacity=1.0,
+        ... )
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_actor(actor)
+        >>> pl.show()
 
     """
-    x_color = Color(x_color, default_color=pv.global_theme.axes.x_color)
-    y_color = Color(y_color, default_color=pv.global_theme.axes.y_color)
-    z_color = Color(z_color, default_color=pv.global_theme.axes.z_color)
-    edge_color = Color(edge_color, default_color=pv.global_theme.edge_color)
-    x_face_color = Color(x_face_color)
-    y_face_color = Color(y_face_color)
-    z_face_color = Color(z_face_color)
+    color_x = Color(x_color, default_color=pv.global_theme.axes.x_color)
+    color_y = Color(y_color, default_color=pv.global_theme.axes.y_color)
+    color_z = Color(z_color, default_color=pv.global_theme.axes.z_color)
+    color_edge = Color(edge_color, default_color=pv.global_theme.edge_color)
+    face_color_x = Color(x_face_color)
+    face_color_y = Color(y_face_color)
+    face_color_z = Color(z_face_color)
     axes_actor = _vtk.vtkAnnotatedCubeActor()
     axes_actor.SetFaceTextScale(text_scale)
     if xlabel is not None:
@@ -401,21 +516,22 @@ def create_axes_orientation_box(  # noqa: PLR0917
     # https://github.com/pyvista/pyvista/pull/5382
     # axes_actor.GetTextEdgesProperty().SetColor(edge_color.float_rgb)
     axes_actor.GetTextEdgesProperty().SetLineWidth(line_width)
-    axes_actor.GetXPlusFaceProperty().SetColor(x_color.float_rgb)
-    axes_actor.GetXMinusFaceProperty().SetColor(x_color.float_rgb)
-    axes_actor.GetYPlusFaceProperty().SetColor(y_color.float_rgb)
-    axes_actor.GetYMinusFaceProperty().SetColor(y_color.float_rgb)
-    axes_actor.GetZPlusFaceProperty().SetColor(z_color.float_rgb)
-    axes_actor.GetZMinusFaceProperty().SetColor(z_color.float_rgb)
+    axes_actor.GetXPlusFaceProperty().SetColor(color_x.float_rgb)
+    axes_actor.GetXMinusFaceProperty().SetColor(color_x.float_rgb)
+    axes_actor.GetYPlusFaceProperty().SetColor(color_y.float_rgb)
+    axes_actor.GetYMinusFaceProperty().SetColor(color_y.float_rgb)
+    axes_actor.GetZPlusFaceProperty().SetColor(color_z.float_rgb)
+    axes_actor.GetZMinusFaceProperty().SetColor(color_z.float_rgb)
 
     axes_actor.GetCubeProperty().SetOpacity(opacity)
-    axes_actor.GetCubeProperty().SetEdgeColor(edge_color.float_rgb)
+    axes_actor.GetCubeProperty().SetEdgeColor(color_edge.float_rgb)
     axes_actor.GetCubeProperty().SetEdgeVisibility(True)
     axes_actor.GetCubeProperty().BackfaceCullingOn()
     if opacity < 1.0:
         # Hide the text edges
         axes_actor.GetTextEdgesProperty().SetOpacity(0)
 
+    actor: _vtk.vtkAnnotatedCubeActor | _vtk.vtkPropAssembly
     if color_box:
         # Hide the cube so we can color each face
         axes_actor.GetCubeProperty().SetOpacity(0)
@@ -425,12 +541,12 @@ def create_axes_orientation_box(  # noqa: PLR0917
         cube.clear_data()  # remove normals
         face_colors = np.array(
             [
-                x_face_color.int_rgb,
-                x_face_color.int_rgb,
-                y_face_color.int_rgb,
-                y_face_color.int_rgb,
-                z_face_color.int_rgb,
-                z_face_color.int_rgb,
+                face_color_x.int_rgb,
+                face_color_x.int_rgb,
+                face_color_y.int_rgb,
+                face_color_y.int_rgb,
+                face_color_z.int_rgb,
+                face_color_z.int_rgb,
             ],
             np.uint8,
         )
@@ -450,14 +566,14 @@ def create_axes_orientation_box(  # noqa: PLR0917
         prop_assembly.AddPart(cube_actor)
         actor = prop_assembly
     else:
-        actor = axes_actor  # type: ignore[assignment]
+        actor = axes_actor
 
     _update_axes_label_color(actor, label_color)
 
     return actor
 
 
-def create_north_arrow():
+def create_north_arrow() -> pv.PolyData:
     """Create a north arrow mesh.
 
     .. versionadded:: 0.44.0
@@ -517,41 +633,76 @@ def create_north_arrow():
     return pv.PolyData(points, faces)
 
 
-def normalize(x, minimum=None, maximum=None):
-    """Normalize the given value between [minimum, maximum].
+def normalize(
+    x: NumpyArray[Any],
+    minimum: float | None = None,
+    maximum: float | None = None,
+) -> NumpyArray[float]:
+    """Normalize the given values to the range ``[0, 1]``.
 
     Parameters
     ----------
     x : numpy.ndarray
         The array of values to normalize.
     minimum : float, optional
-        The minimum value to which ``x`` should be normalized. If not specified,
-        the minimum value in ``x`` will be used.
+        The value which is normalized to ``0``. If not specified, the minimum
+        value in ``x`` will be used.
     maximum : float, optional
-        The maximum value to which ``x`` should be normalized. If not specified,
-        the maximum value in ``x`` will be used.
+        The value which is normalized to ``1``. If not specified, the maximum
+        value in ``x`` will be used.
 
     Returns
     -------
     numpy.ndarray
-        The normalized array of values, where the values are scaled to the
-        range ``[minimum, maximum]``.
+        The normalized array of values.
 
     """
-    if minimum is None:
-        minimum = np.nanmin(x)
-    if maximum is None:
-        maximum = np.nanmax(x)
-    return (x - minimum) / (maximum - minimum)
+    low = np.nanmin(x) if minimum is None else minimum
+    high = np.nanmax(x) if maximum is None else maximum
+    return (x - low) / (high - low)
 
 
-@_deprecate_positional_args(allowed=['mapping', 'n_colors'])
-def opacity_transfer_function(  # noqa: PLR0917
-    mapping,
-    n_colors,
-    interpolate: bool = True,  # noqa: FBT001, FBT002
-    kind='linear',
-):
+def _opacity_transfer_functions(n_colors: int) -> dict[str, NumpyArray[np.uint8]]:
+    """Return every named opacity mapping, each ``n_colors`` values long."""
+
+    def sigmoid(x: NumpyArray[float]) -> NumpyArray[np.uint8]:  # numpydoc ignore=PR01,RT01
+        """Map ``x`` onto the [0, 255] opacity range with a logistic curve."""
+        return np.array(1 / (1 + np.exp(-x)) * 255, dtype=np.uint8)
+
+    transfer_func: dict[str, NumpyArray[np.uint8]] = {
+        'linear': np.linspace(0, 255, n_colors, dtype=np.uint8),
+        'geom': np.geomspace(1e-6, 255, n_colors, dtype=np.uint8),
+        'geom_r': np.geomspace(255, 1e-6, n_colors, dtype=np.uint8),
+        'sigmoid': sigmoid(np.linspace(-10.0, 10.0, n_colors)),
+        'sigmoid_1': sigmoid(np.linspace(-1.0, 1.0, n_colors)),
+        'sigmoid_2': sigmoid(np.linspace(-2.0, 2.0, n_colors)),
+        'sigmoid_3': sigmoid(np.linspace(-3.0, 3.0, n_colors)),
+        'sigmoid_4': sigmoid(np.linspace(-4.0, 4.0, n_colors)),
+        'sigmoid_5': sigmoid(np.linspace(-5.0, 5.0, n_colors)),
+        'sigmoid_6': sigmoid(np.linspace(-6.0, 6.0, n_colors)),
+        'sigmoid_7': sigmoid(np.linspace(-7.0, 7.0, n_colors)),
+        'sigmoid_8': sigmoid(np.linspace(-8.0, 8.0, n_colors)),
+        'sigmoid_9': sigmoid(np.linspace(-9.0, 9.0, n_colors)),
+        'sigmoid_10': sigmoid(np.linspace(-10.0, 10.0, n_colors)),
+        'sigmoid_15': sigmoid(np.linspace(-15.0, 15.0, n_colors)),
+        'sigmoid_20': sigmoid(np.linspace(-20.0, 20.0, n_colors)),
+        'foreground': np.hstack((0, [255] * (n_colors - 1))).astype(np.uint8),
+    }
+    reversible = [
+        name for name in transfer_func if name != 'foreground' and not name.endswith('_r')
+    ]
+    for name in reversible:
+        transfer_func.setdefault(f'{name}_r', transfer_func[name][::-1])
+    return transfer_func
+
+
+def opacity_transfer_function(
+    mapping: OpacityOptions | str | VectorLike[float],
+    n_colors: int,
+    *,
+    interpolate: bool = True,
+    kind: str = 'linear',
+) -> NumpyArray[np.uint8]:
     """Get the opacity transfer function for a mapping.
 
     These values will map on to a scalar bar range and thus the number of
@@ -571,22 +722,23 @@ def opacity_transfer_function(  # noqa: PLR0917
 
     Parameters
     ----------
-    mapping : list[float] | str
+    mapping : sequence[float] | str
         The opacity mapping to use. Can be a ``str`` name of a predefined
         mapping including ``'linear'``, ``'geom'``, ``'sigmoid'``,
-        ``'sigmoid_1-10,15,20'``, and ``foreground``. Append an ``'_r'`` to any
-        of those names (except ``foreground``) to reverse that mapping.
+        ``'sigmoid_1'`` through ``'sigmoid_10'``, ``'sigmoid_15'``,
+        ``'sigmoid_20'``, and ``'foreground'``. Append an ``'_r'`` to any of
+        those names (except ``'foreground'``) to reverse that mapping.
         The mapping can also be a custom user-defined array/list of values
         that will be interpolated across the ``n_color`` range.
 
     n_colors : int
         The number of colors that the opacities must be mapped to.
 
-    interpolate : bool
+    interpolate : bool, default: True
         Flag on whether or not to interpolate the opacity mapping for all
         colors.
 
-    kind : str
+    kind : str, default: 'linear'
         The interpolation kind if ``interpolate`` is ``True`` and ``scipy``
         is available. If ``scipy`` is not available, linear interpolation
         is always used. Options are:
@@ -623,32 +775,7 @@ def opacity_transfer_function(  # noqa: PLR0917
     >>> tf = pv.opacity_transfer_function(opacity, 256)
 
     """
-    sigmoid = lambda x: np.array(1 / (1 + np.exp(-x)) * 255, dtype=np.uint8)
-    transfer_func = {
-        'linear': np.linspace(0, 255, n_colors, dtype=np.uint8),
-        'geom': np.geomspace(1e-6, 255, n_colors, dtype=np.uint8),
-        'geom_r': np.geomspace(255, 1e-6, n_colors, dtype=np.uint8),
-        'sigmoid': sigmoid(np.linspace(-10.0, 10.0, n_colors)),
-        'sigmoid_1': sigmoid(np.linspace(-1.0, 1.0, n_colors)),
-        'sigmoid_2': sigmoid(np.linspace(-2.0, 2.0, n_colors)),
-        'sigmoid_3': sigmoid(np.linspace(-3.0, 3.0, n_colors)),
-        'sigmoid_4': sigmoid(np.linspace(-4.0, 4.0, n_colors)),
-        'sigmoid_5': sigmoid(np.linspace(-5.0, 5.0, n_colors)),
-        'sigmoid_6': sigmoid(np.linspace(-6.0, 6.0, n_colors)),
-        'sigmoid_7': sigmoid(np.linspace(-7.0, 7.0, n_colors)),
-        'sigmoid_8': sigmoid(np.linspace(-8.0, 8.0, n_colors)),
-        'sigmoid_9': sigmoid(np.linspace(-9.0, 9.0, n_colors)),
-        'sigmoid_10': sigmoid(np.linspace(-10.0, 10.0, n_colors)),
-        'sigmoid_15': sigmoid(np.linspace(-15.0, 15.0, n_colors)),
-        'sigmoid_20': sigmoid(np.linspace(-20.0, 20.0, n_colors)),
-        'foreground': np.hstack((0, [255] * (n_colors - 1))).astype(np.uint8),
-    }
-    transfer_func['linear_r'] = transfer_func['linear'][::-1]
-    transfer_func['sigmoid_r'] = transfer_func['sigmoid'][::-1]
-    for i in range(3, 11):
-        k = f'sigmoid_{i}'
-        rk = f'{k}_r'
-        transfer_func[rk] = transfer_func[k][::-1]
+    transfer_func = _opacity_transfer_functions(n_colors)
     if isinstance(mapping, str):
         try:
             return transfer_func[mapping]
@@ -659,16 +786,16 @@ def opacity_transfer_function(  # noqa: PLR0917
             )
             raise ValueError(msg) from None
     elif isinstance(mapping, (np.ndarray, list, tuple)):
-        mapping = np.array(mapping)
-        if mapping.size == n_colors:
+        values = np.array(mapping)
+        if values.size == n_colors:
             # User could pass transfer function ready for lookup table
             pass
-        elif mapping.size < n_colors:
+        elif values.size < n_colors:
             # User pass custom transfer function to be linearly interpolated
-            if np.max(mapping) > 1.0 or np.min(mapping) < 0.0:
-                mapping = normalize(mapping)
+            if np.max(values) > 1.0 or np.min(values) < 0.0:
+                values = normalize(values)
             # Interpolate transfer function to match lookup table
-            xo = np.linspace(0, n_colors, len(mapping), dtype=np.int_)
+            xo = np.linspace(0, n_colors, len(values), dtype=np.int_)
             xx = np.linspace(0, n_colors, n_colors, dtype=np.int_)
             try:
                 if not interpolate:
@@ -676,22 +803,22 @@ def opacity_transfer_function(  # noqa: PLR0917
                     raise ValueError(msg)
                 from scipy.interpolate import interp1d  # noqa: PLC0415
 
-                f = interp1d(xo, mapping, kind=kind)
+                f = interp1d(xo, values, kind=kind)
                 vals = f(xx)
                 vals[vals < 0] = 0.0
                 vals[vals > 1.0] = 1.0
-                mapping = (vals * 255.0).astype(np.uint8)
+                values = (vals * 255.0).astype(np.uint8)
 
             except (ImportError, ValueError):
                 # Otherwise use simple linear interp
-                mapping = (np.interp(xx, xo, mapping) * 255).astype(np.uint8)
+                values = (np.interp(xx, xo, values) * 255).astype(np.uint8)
         else:
             msg = (
                 f'Transfer function cannot have more values than `n_colors`. '
-                f'This has {mapping.size} elements'
+                f'This has {values.size} elements'
             )
             raise RuntimeError(msg)
-        return mapping
+        return values
     msg = f'Transfer function type ({type(mapping)}) not understood'
     raise TypeError(msg)
 
@@ -714,7 +841,7 @@ def parse_font_family(font_family: str) -> int:
     Raises
     ------
     ValueError
-        If the font_family is not one of the defined font names in the ``FONTS``
+        If the ``font_family`` is not one of the defined font names in the ``FONTS``
         enum class.
 
     """
@@ -726,36 +853,21 @@ def parse_font_family(font_family: str) -> int:
     return FONTS[font_family].value
 
 
-def check_math_text_support() -> bool:  # pragma: no cover
-    """Raise a DeprecationError as this has been moved.
-
-    Returns
-    -------
-    bool
-        Returns False for compatibility.
-
-    """
-    from pyvista.core.errors import DeprecationError  # noqa: PLC0415
-
+def check_math_text_support() -> NoReturn:
+    """Raise a DeprecationError as this has been moved."""
     # Deprecated on v0.47.0, estimated removal on v0.50.0
-    msg = '`check_math_text_support` is now imported from `pyvista.report`'
-    DeprecationError(msg)
+    msg = (
+        '`pyvista.plotting.check_math_text_support` is deprecated. '
+        'Use `pyvista.check_math_text_support` instead.'
+    )
+    raise DeprecationError(msg)
 
-    return False
 
-
-def check_matplotlib_vtk_compatibility() -> bool:  # pragma: no cover
-    """Raise a DeprecationError as this has been moved.
-
-    Returns
-    -------
-    bool
-        Returns False for compatibility.
-
-    """
-    from pyvista.core.errors import DeprecationError  # noqa: PLC0415
-
+def check_matplotlib_vtk_compatibility() -> NoReturn:
+    """Raise a DeprecationError as this has been moved."""
     # Deprecated on v0.47.0, estimated removal on v0.50.0
-    msg = '`check_matplotlib_vtk_compatibility` is now imported from `pyvista.report`'
-    DeprecationError(msg)
-    return False  # returning bool for compatibility
+    msg = (
+        '`pyvista.plotting.check_matplotlib_vtk_compatibility` is deprecated. '
+        'Use `pyvista.check_matplotlib_vtk_compatibility` instead.'
+    )
+    raise DeprecationError(msg)

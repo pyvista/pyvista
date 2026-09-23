@@ -5,6 +5,7 @@ Visible Vertices
 ~~~~~~~~~~~~~~~~
 
 Display vertices on a mesh in the same fashion as edge visibility.
+
 """
 
 # sphinx_gallery_thumbnail_number = 3

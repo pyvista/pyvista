@@ -86,7 +86,7 @@ Observer, <class 'pyvista.utilities.errors.Observer'>
 Octahedron, <function Octahedron at 0x1641c0f70>
 OpenFOAMReader, <class 'pyvista.utilities.reader.OpenFOAMReader'>
 PARAVIEW_BACKGROUND, (0.3215686274509804, 0.3411764705882353, 0.43137254901960786)
-PICKLE_FORMAT, xml
+# PICKLE_FORMAT, xml  # deprecated, accessing it emits a warning
 PLOT_DIRECTIVE_THEME, None
 PLYReader, <class 'pyvista.utilities.reader.PLYReader'>
 PNGReader, <class 'pyvista.utilities.reader.PNGReader'>
@@ -134,7 +134,6 @@ Pyramid, <function Pyramid at 0x1641c0a60>
 QtDeprecationError, <class 'pyvista.plotting.QtDeprecationError'>
 QtInteractor, <class 'pyvista.plotting.QtInteractor'>
 Quadrilateral, <function Quadrilateral at 0x1641c0c10>
-REPR_VOLUME_MAX_CELLS, 1000000.0
 Rectangle, <function Rectangle at 0x1641c0b80>
 RectilinearGrid, <class 'pyvista.core.grid.RectilinearGrid'>
 Renderer, <class 'pyvista.plotting.renderer.Renderer'>
@@ -164,7 +163,7 @@ VTKDataSetReader, <class 'pyvista.utilities.reader.VTKDataSetReader'>
 VTKPDataSetReader, <class 'pyvista.utilities.reader.VTKPDataSetReader'>
 VtkErrorCatcher, <class 'pyvista.utilities.errors.VtkErrorCatcher'>
 Wavelet, <function Wavelet at 0x1641c08b0>
-WidgetHelper, <class 'pyvista.plotting.widgets.WidgetHelper'>
+WidgetComponent, <class 'pyvista.plotting.widgets.WidgetComponent'>
 XMLImageDataReader, <class 'pyvista.utilities.reader.XMLImageDataReader'>
 XMLMultiBlockDataReader, <class 'pyvista.utilities.reader.XMLMultiBlockDataReader'>
 XMLPImageDataReader, <class 'pyvista.utilities.reader.XMLPImageDataReader'>
@@ -320,7 +319,7 @@ set_jupyter_backend, <function set_jupyter_backend at 0x1645b2f70>
 set_pickle_format, <function set_pickle_format at 0x163f3e3a0>
 set_plot_theme, <function set_plot_theme at 0x1647a4670>
 # sphinx_gallery, <module 'pyvista.utilities.sphinx_gallery' from 'pyvista/pyvista/utilities/sphinx_gallery.py'>
-start_xvfb, <function start_xvfb at 0x1641c8ca0>
+# start_xvfb, <function start_xvfb at 0x1641c8ca0>
 surface_from_para, <function surface_from_para at 0x1641c8670>
 system_supports_plotting, <function system_supports_plotting at 0x1641af550>
 # texture, <module 'pyvista.core.texture' from 'pyvista/pyvista/core/texture.py'>
@@ -330,7 +329,6 @@ threaded, <function threaded at 0x163f40dc0>
 # trans_from_matrix, <function trans_from_matrix at 0x163f40670>
 transform_vectors_sph_to_cart, <function transform_vectors_sph_to_cart at 0x1641b38b0>  # DEPRECATED
 # transformations, <module 'pyvista.utilities.transformations' from 'pyvista/pyvista/utilities/transformations.py'>
-translate, <function translate at 0x1641b3f70>
 # try_callback, <function try_callback at 0x163f40ca0>
 utilities, <module 'pyvista.utilities' from 'pyvista/pyvista/utilities/__init__.py'>
 vector_poly_data, <function vector_poly_data at 0x163f405e0>

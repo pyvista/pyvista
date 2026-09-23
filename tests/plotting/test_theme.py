@@ -2,28 +2,124 @@ from __future__ import annotations
 
 import os
 import re
+from typing import get_args
 
 from hypothesis import HealthCheck
 from hypothesis import given
 from hypothesis import settings
 from hypothesis import strategies as st
 import matplotlib as mpl
+import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista import colors
-from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista._version import _is_deprecation_due
 from pyvista.examples.downloads import download_file
 import pyvista.plotting
-from pyvista.plotting import _vtk
+from pyvista.plotting._typing import ThemeOptions
 from pyvista.plotting.themes import DarkTheme
 from pyvista.plotting.themes import Theme
 from pyvista.plotting.themes import _set_plot_theme_from_env
+
+# Theme attributes which supply the default of a Property attribute.
+THEME_PROPERTY_DEFAULTS = {
+    'edge_opacity': 'edge_opacity',
+    'lighting_params.ambient': 'ambient',
+    'lighting_params.diffuse': 'diffuse',
+    'lighting_params.interpolation': 'interpolation',
+    'lighting_params.metallic': 'metallic',
+    'lighting_params.roughness': 'roughness',
+    'lighting_params.specular': 'specular',
+    'lighting_params.specular_power': 'specular_power',
+    'line_width': 'line_width',
+    'opacity': 'opacity',
+    'point_size': 'point_size',
+}
+
+# Theme attributes with no Property counterpart, which document their own range.
+THEME_OWN_RANGES = {
+    'silhouette.decimate': (0.0, 1.0),
+    'silhouette.opacity': (0.0, 1.0),
+    'slider_styles.modern.cap_opacity': (0.0, 1.0),
+}
+
+# Valid range of every theme attribute with a two-sided range check.
+THEME_RANGES = {
+    'edge_opacity': (0.0, 1.0),
+    'lighting_params.ambient': (0.0, 1.0),
+    'lighting_params.diffuse': (0.0, 1.0),
+    'lighting_params.metallic': (0.0, 1.0),
+    'lighting_params.roughness': (0.0, 1.0),
+    'lighting_params.specular': (0.0, 1.0),
+    'lighting_params.specular_power': (0.0, 128.0),
+    'line_width': (0.0, np.inf),
+    'opacity': (0.0, 1.0),
+    'point_size': (0.0, np.inf),
+    'silhouette.decimate': (0.0, 1.0),
+    'silhouette.opacity': (0.0, 1.0),
+    'slider_styles.modern.cap_opacity': (0.0, 1.0),
+}
 
 
 @pytest.fixture
 def default_theme():
     return pv.plotting.themes.Theme()
+
+
+def _owner_of(theme, path):
+    """Return the object holding the last name of a dotted attribute path."""
+    *parents, _ = path.split('.')
+    for parent in parents:
+        theme = getattr(theme, parent)
+    return theme
+
+
+@pytest.mark.parametrize(('path', 'rng'), THEME_RANGES.items(), ids=THEME_RANGES)
+def test_theme_range_is_validated(default_theme, path, rng):
+    name = path.rsplit('.', maxsplit=1)[-1]
+    owner = _owner_of(default_theme, path)
+    lower, upper = rng
+
+    setattr(owner, name, lower)
+    assert getattr(owner, name) == lower
+    with pytest.raises(ValueError, match=f'{name} values must all be greater than or equal'):
+        setattr(owner, name, lower - 1.0)
+
+    if np.isfinite(upper):
+        setattr(owner, name, upper)
+        assert getattr(owner, name) == upper
+        with pytest.raises(ValueError, match=f'{name} values must all be less than or equal'):
+            setattr(owner, name, upper + 1.0)
+
+    else:
+        setattr(owner, name, 1e6)
+        assert getattr(owner, name) == 1e6
+        with pytest.raises(ValueError, match=f'{name} values must all be less than inf'):
+            setattr(owner, name, np.inf)
+
+
+@pytest.mark.parametrize(
+    ('path', 'prop_name'), THEME_PROPERTY_DEFAULTS.items(), ids=THEME_PROPERTY_DEFAULTS
+)
+def test_theme_default_cross_references_property(default_theme, path, prop_name):
+    name = path.rsplit('.', maxsplit=1)[-1]
+    owner = _owner_of(default_theme, path)
+    theme_doc = getattr(type(owner), name).__doc__
+    property_doc = getattr(pv.Property, prop_name).__doc__
+
+    assert f':attr:`pyvista.Property.{prop_name}`' in theme_doc
+    assert f':attr:`pyvista.plotting.themes.{type(owner).__name__}.{name}`' in property_doc
+    assert 'Must be in the range' not in theme_doc
+
+
+@pytest.mark.parametrize(('path', 'rng'), THEME_OWN_RANGES.items(), ids=THEME_OWN_RANGES)
+def test_theme_own_range_is_documented(default_theme, path, rng):
+    name = path.rsplit('.', maxsplit=1)[-1]
+    owner = _owner_of(default_theme, path)
+    lower, upper = rng
+    assert f'Must be in the range ``[{lower}, {upper}]``.' in getattr(type(owner), name).__doc__
 
 
 @pytest.mark.parametrize('trame', [1, None, object(), True, pv.Sphere()])
@@ -276,6 +372,12 @@ def test_colorbar_position_y(default_theme):
     assert default_theme.colorbar_horizontal.position_y == position_y
 
 
+def test_colorbar_title_pad(default_theme):
+    title_pad = 0.3
+    default_theme.colorbar_horizontal.title_pad = title_pad
+    assert default_theme.colorbar_horizontal.title_pad == title_pad
+
+
 @pytest.mark.parametrize('theme', pv.plotting.themes._NATIVE_THEMES)
 def test_themes(theme):
     try:
@@ -284,6 +386,17 @@ def test_themes(theme):
     finally:
         # always return to testing theme
         pv.set_plot_theme('testing')
+
+
+def test_theme_options_literal_matches_native_themes():
+    # ``ThemeOptions`` is a hand-written ``Literal`` covering only the distinct,
+    # user-facing built-in themes; it must stay in sync with ``_NATIVE_THEMES``
+    # minus the names deliberately left out (see ``ThemeOptions``'s comment).
+    # Use ``__members__`` since plain iteration skips value-aliases like ``default``.
+    excluded = {'default', 'vtk', 'testing', 'document_build'}
+    literal_names = set(get_args(ThemeOptions))
+    native_names = set(pv.plotting.themes._NATIVE_THEMES.__members__)
+    assert literal_names == native_names - excluded
 
 
 def test_invalid_theme():
@@ -335,8 +448,20 @@ def test_camera(default_theme):
     camera = {'position': [1, 0, 1], 'viewup': [1, 0, 1]}
     default_theme.camera = camera
 
-    assert default_theme.camera.position == camera['position']
-    assert default_theme.camera.viewup == camera['viewup']
+    assert default_theme.camera.position == tuple(camera['position'])
+    assert default_theme.camera.viewup == tuple(camera['viewup'])
+
+
+def test_camera_vectors_are_validated(default_theme):
+    default_theme.camera.position = np.array([1, 2, 3])
+
+    assert default_theme.camera.position == (1.0, 2.0, 3.0)
+
+    with pytest.raises(ValueError, match='which is not allowed'):
+        default_theme.camera.position = [1, 2]
+
+    with pytest.raises(ValueError, match=re.escape('Camera up vector cannot be zero.')):
+        default_theme.camera.viewup = [0, 0, 0]
 
 
 def test_camera_parallel_projection(default_theme):
@@ -420,6 +545,8 @@ def test_set_hidden_line_removal(default_theme):
         ('full_screen', True),
         ('nan_color', (0.5, 0.5, 0.5)),
         ('edge_color', (1.0, 0.0, 0.0)),
+        ('border_color', (0.25, 0.5, 0.75)),
+        ('border_width', 2.5),
         ('outline_color', (1.0, 0.0, 0.0)),
         ('floor_color', (1.0, 0.0, 0.0)),
         ('show_scalar_bar', False),
@@ -528,19 +655,11 @@ def test_plotter_theme_attribute_setter():
         'Set the theme when initializing the plotter instance instead.'
     )
 
-    with pytest.warns(PyVistaDeprecationWarning, match=match):
+    with pytest.raises(pv.core.errors.DeprecationError, match=match):
         pl.theme = my_theme
 
-    if pyvista.version_info >= (0, 49):
-        pytest.fail('Turn the warning to error')
-
-    if pyvista.version_info >= (0, 50):
+    if _is_deprecation_due((0, 50)):  # pragma: no cover
         pytest.fail('Remove the `theme` setter')
-
-    assert pl.theme.color == my_theme.color
-
-    assert pl.theme != pv.global_theme
-    assert pl.theme == my_theme
 
 
 @pytest.mark.filterwarnings(
@@ -555,6 +674,18 @@ def test_load_theme(tmpdir, default_theme):
 
     default_theme.load_theme(filename)
     assert default_theme == pv.plotting.themes.DarkTheme()
+
+
+@pytest.mark.filterwarnings(
+    'ignore:The jupyter_extension_available flag is read only and is automatically '
+    'detected:UserWarning'
+)
+def test_load_theme_unknown_key(default_theme):
+    dict_ = default_theme.to_dict()
+    dict_['a_stale_removed_property'] = True
+    with pytest.warns(UserWarning, match="'Theme' has no attribute 'a_stale_removed_property'"):
+        loaded_theme = Theme.from_dict(dict_)
+    assert loaded_theme == default_theme
 
 
 @pytest.mark.filterwarnings(
@@ -581,7 +712,7 @@ def test_save_before_close_callback(tmpdir, default_theme):
     dark_theme = pv.plotting.themes.DarkTheme()
 
     def fun(plotter):
-        pass
+        """Assigned to the theme, never called: the theme is saved, not used."""
 
     dark_theme.before_close_callback = fun
     assert dark_theme != pv.plotting.themes.DarkTheme()
@@ -795,3 +926,13 @@ def test_trame_config_server_proxy_prefix_absolute_url(monkeypatch):
 def test_box_axes(default_theme):
     default_theme.axes.box = True
     _ = pv.Sphere().plot(theme=default_theme)
+
+
+def test_testing_theme_pins_notebook_off():
+    """Detected notebook mode would route a plotting test through the trame backend.
+
+    That launches the process-lifetime ``pyvista-jupyter`` server, and whichever test
+    creates it first is blamed for the ``vtkWebApplication`` it leaves behind
+    (pyvista/pyvista#8929).
+    """
+    assert pv.plotting.themes._TestingTheme().notebook is False

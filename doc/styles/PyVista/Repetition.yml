@@ -1,0 +1,14 @@
+# A case-sensitive copy of `Vale.Repetition`, for numpydoc descriptions that
+# restate the type they document (`list` then "List of ..."). See `doc/.vale.ini`.
+#
+# `tokens` holds a dotted identifier together, so `pyvista.plotting.plotting` is
+# one word; a trailing sentence period stays outside it, so a doubled word
+# ending a sentence is still caught. `tests/doc/vale/repetition.rst` and its
+# `_invalid` counterpart pin both halves.
+extends: repetition
+message: "'%s' is repeated!"
+level: error
+alpha: true
+ignorecase: false
+tokens:
+  - '[^\s!?]*[^\s!?.]'

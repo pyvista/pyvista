@@ -10,10 +10,6 @@ from __future__ import annotations
 
 def test_mpl_backend():
     """Check if the backend is correctly set for testing."""
-    # only fail if matplotlib is otherwise available
-    try:
-        import matplotlib as mpl
-    except ImportError:
-        return
+    import matplotlib as mpl
 
     assert mpl.get_backend() == 'agg'

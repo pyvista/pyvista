@@ -4,14 +4,15 @@ from __future__ import annotations
 
 import os
 import sys
+from types import ModuleType
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import Literal
 
 from pyvista._plot import plot as plot
 from pyvista._version import __version__ as __version__
 from pyvista._version import version_info as version_info
 from pyvista.core import *
-from pyvista.core import _validation as _validation
 from pyvista.core._typing_core._dataset_types import _DataObjectType as _DataObjectType
 from pyvista.core._typing_core._dataset_types import (
     _DataSetOrMultiBlockType as _DataSetOrMultiBlockType,
@@ -19,20 +20,36 @@ from pyvista.core._typing_core._dataset_types import (
 from pyvista.core._typing_core._dataset_types import _DataSetType as _DataSetType
 from pyvista.core._typing_core._dataset_types import _GridType as _GridType
 from pyvista.core._typing_core._dataset_types import _PointGridType as _PointGridType
-from pyvista.core._typing_core._dataset_types import _PointSetType as _PointSetType
+from pyvista.core._typing_core._dataset_types import _PointSetBaseType as _PointSetBaseType
 from pyvista.core._vtk_utilities import _MIN_SUPPORTED_VTK_VERSION
 from pyvista.core._vtk_utilities import VersionInfo
+from pyvista.core._vtk_utilities import vtk_backend as vtk_backend
 from pyvista.core._vtk_utilities import vtk_version_info as vtk_version_info
 from pyvista.core.cell import _get_vtk_id_type
 from pyvista.core.filters.data_object import MeshValidationFields as MeshValidationFields
+from pyvista.core.utilities.accessor_registry import AccessorRegistration as AccessorRegistration
+from pyvista.core.utilities.accessor_registry import DataSetAccessor as DataSetAccessor
+from pyvista.core.utilities.accessor_registry import (
+    register_dataset_accessor as register_dataset_accessor,
+)
+from pyvista.core.utilities.accessor_registry import registered_accessors as registered_accessors
+from pyvista.core.utilities.accessor_registry import (
+    unregister_dataset_accessor as unregister_dataset_accessor,
+)
 from pyvista.core.utilities.observers import send_errors_to_logging
 from pyvista.core.utilities.reader_registry import LocalFileRequiredError as LocalFileRequiredError
+from pyvista.core.utilities.reader_registry import ReaderRegistration as ReaderRegistration
 from pyvista.core.utilities.reader_registry import has_scheme as has_scheme
 from pyvista.core.utilities.reader_registry import register_reader as register_reader
+from pyvista.core.utilities.reader_registry import registered_readers as registered_readers
+from pyvista.core.utilities.writer_registry import WriterRegistration as WriterRegistration
 from pyvista.core.utilities.writer_registry import register_writer as register_writer
+from pyvista.core.utilities.writer_registry import registered_writers as registered_writers
 from pyvista.core.wrappers import _wrappers as _wrappers
 from pyvista.jupyter import JupyterBackendOptions as JupyterBackendOptions
+from pyvista.jupyter import JupyterBackendRegistration as JupyterBackendRegistration
 from pyvista.jupyter import register_jupyter_backend as register_jupyter_backend
+from pyvista.jupyter import registered_jupyter_backends as registered_jupyter_backends
 from pyvista.jupyter import set_jupyter_backend as set_jupyter_backend
 from pyvista.report import GPUInfo as GPUInfo
 from pyvista.report import Report as Report
@@ -44,7 +61,7 @@ if TYPE_CHECKING:
     import numpy as np
 
 # get the int type from vtk
-ID_TYPE: type[np.int32 | np.int64] = _get_vtk_id_type()
+ID_TYPE: type[np.int32 | np.longlong] = _get_vtk_id_type()
 
 if vtk_version_info < _MIN_SUPPORTED_VTK_VERSION:  # pragma: no cover
     from pyvista.core.errors import VTKVersionError
@@ -57,9 +74,6 @@ OFF_SCREEN = os.environ.get('PYVISTA_OFF_SCREEN', 'false').lower() == 'true'
 
 # flag for when building the sphinx_gallery
 BUILDING_GALLERY = os.environ.get('PYVISTA_BUILDING_GALLERY', 'false').lower() == 'true'
-
-# A threshold for the max cells to compute a volume for when repr-ing
-REPR_VOLUME_MAX_CELLS = 1e6
 
 # Set where figures are saved
 FIGURE_PATH = os.environ.get('PYVISTA_FIGURE_PATH', None)
@@ -77,7 +91,7 @@ PLOT_DIRECTIVE_THEME = None
 FLOAT_FORMAT = '{:.3e}'
 
 # Serialization format to be used when pickling `DataObject`
-PICKLE_FORMAT: Literal['vtk', 'xml', 'legacy'] = 'vtk' if vtk_version_info >= (9, 3) else 'xml'
+_PICKLE_FORMAT: Literal['vtk', 'xml', 'legacy'] = 'vtk'
 
 # Name used for unnamed scalars
 DEFAULT_SCALARS_NAME = 'Data'
@@ -99,8 +113,55 @@ if TYPE_CHECKING:
     from pyvista.plotting import *
 
 
+# Tracks whether the ``PYVISTA_PLOT_THEME`` environment variable has been
+# applied yet. Applying a plugin theme runs arbitrary plugin code that can
+# call back into ``pyvista`` before this module has finished the caller's
+# original request; the flag keeps the apply single-shot.
+_env_theme_applied: bool = False
+
+
 # Lazily import/access the plotting module
-def __getattr__(name):
+def _get_deprecated_validation() -> ModuleType:
+    """Forward ``pyvista._validation`` to the ``pyvista_validation`` package with a warning."""
+    import pyvista_validation  # noqa: PLC0415
+
+    from pyvista._warn_external import warn_external  # noqa: PLC0415
+    from pyvista.core.errors import PyVistaDeprecationWarning  # noqa: PLC0415
+
+    msg = (
+        '`pyvista._validation` has moved to the `pyvista_validation` package; '
+        'use `from pyvista_validation import ...` instead.'
+    )
+    warn_external(msg, PyVistaDeprecationWarning)
+    if version_info >= (0, 51):  # pragma: no cover
+        msg = 'Convert this deprecation warning into an error.'
+        raise RuntimeError(msg)
+    if version_info >= (0, 52):  # pragma: no cover
+        msg = 'Remove the _validation forward.'
+        raise RuntimeError(msg)
+    return pyvista_validation
+
+
+def _warn_deprecated_pickle_format() -> None:
+    """Warn that the pickle format selector is deprecated."""
+    from pyvista._version import _is_deprecation_due  # noqa: PLC0415
+    from pyvista._warn_external import warn_external  # noqa: PLC0415
+    from pyvista.core.errors import PyVistaDeprecationWarning  # noqa: PLC0415
+
+    msg = (
+        '`pyvista.PICKLE_FORMAT` is deprecated. The `vtk` format is the only supported '
+        'pickle format and is always used.'
+    )
+    warn_external(msg, PyVistaDeprecationWarning)
+    if _is_deprecation_due((0, 53)):  # pragma: no cover
+        msg = 'Convert this deprecation warning into an error.'
+        raise RuntimeError(msg)
+    if _is_deprecation_due((0, 54)):  # pragma: no cover
+        msg = 'Remove the PICKLE_FORMAT deprecation.'
+        raise RuntimeError(msg)
+
+
+def __getattr__(name: str) -> Any:
     """Fetch an attribute ``name`` from ``globals()`` or the ``pyvista.plotting`` module.
 
     This override is implemented to prevent importing all of the plotting module
@@ -115,10 +176,23 @@ def __getattr__(name):
     import importlib  # noqa: PLC0415
     import inspect  # noqa: PLC0415
 
+    def _cache_attr_and_return(obj: Any) -> Any:
+        # Cache the attr on this module to avoid calls to __getattr__ on next access
+        globals()[name] = obj
+        return obj
+
     if name == 'hexcolors':
         from pyvista.plotting.colors import _get_deprecated_hexcolors  # noqa: PLC0415
 
+        # Do not cache since we want to re-issue the deprecation warning
         return _get_deprecated_hexcolors()
+    if name == '_validation':
+        # Not cached either, so the deprecation warning is re-issued on each access
+        return _get_deprecated_validation()
+    if name == 'PICKLE_FORMAT':
+        # Not cached either, so the deprecation warning is re-issued on each access
+        _warn_deprecated_pickle_format()
+        return _PICKLE_FORMAT
 
     allow = {
         'demos',
@@ -129,7 +203,7 @@ def __getattr__(name):
         'wasm',
     }
     if name in allow:
-        return importlib.import_module(f'pyvista.{name}')
+        return _cache_attr_and_return(importlib.import_module(f'pyvista.{name}'))
 
     # avoid recursive import
     if 'pyvista.plotting' not in sys.modules:
@@ -141,4 +215,32 @@ def __getattr__(name):
         msg = f"module 'pyvista' has no attribute '{name}'"
         raise AttributeError(msg) from None
 
-    return feature
+    # Apply ``PYVISTA_PLOT_THEME`` once, now that ``pyvista.plotting`` is fully
+    # loaded and the caller's requested attribute is already resolved. Doing
+    # this inside ``pyvista.plotting.__init__`` invites re-entrant access to a
+    # partially-initialized module when an entry-point-registered plugin is
+    # imported (Python 3.12 evaluates annotations like ``pv.Plotter`` eagerly
+    # at plugin module load). The flag is set before the call to prevent
+    # re-entrant double-application if a plugin's module body accesses
+    # attributes on ``pyvista`` during the theme apply.
+    global _env_theme_applied  # noqa: PLW0603
+    if not _env_theme_applied:
+        _env_theme_applied = True
+        sys.modules['pyvista.plotting']._set_plot_theme_from_env()
+
+    return _cache_attr_and_return(feature)
+
+
+class _PyVistaModule(ModuleType):
+    """Module type which intercepts assignment of deprecated module attributes."""
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        """Set a module attribute, redirecting deprecated names to their replacement."""
+        if name == 'PICKLE_FORMAT':
+            _warn_deprecated_pickle_format()
+            name = '_PICKLE_FORMAT'
+        super().__setattr__(name, value)
+
+
+# Module-level `__getattr__` covers reads only, so a subclass is needed to deprecate writes
+sys.modules[__name__].__class__ = _PyVistaModule

@@ -1,10 +1,11 @@
 """
 .. _moving_cmap_example:
 
-Create a GIF Movie of a Static Object with a Moving Colormap
+Create a GIF Movie of a Static Object With a Moving Colormap
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Generate a gif movie of a Hopf torus with a moving colormap,
-by updating the scalars.
+
+Generate a gif movie of a Hopf torus with a moving colormap, by updating the scalars.
+
 This example uses :meth:`~pyvista.Plotter.open_gif` and
 :meth:`~pyvista.Plotter.write_frame` to create the gif.
 
@@ -73,7 +74,7 @@ pl.add_mesh(
 )
 pl.open_gif('Hopf_torus.gif')
 
-for t in np.linspace(0, 2 * np.pi, 60, endpoint=False):
+for t in np.linspace(0, 2 * np.pi, 30, endpoint=False):
     mesh['distances'] = np.sin(dists - t)
     pl.write_frame()
 

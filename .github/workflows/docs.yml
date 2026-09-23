@@ -14,83 +14,117 @@ on: # zizmor: ignore[cache-poisoning]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Runs started by the schedule or by hand never cancel an in-progress run, so a merge to
+  # `main` always finishes; they queue behind it, and are dropped if another merge arrives.
+  cancel-in-progress: ${{ github.event_name != 'schedule' && github.event_name != 'workflow_dispatch' }}
 
 permissions:
   id-token: none
 
 jobs:
-  # Save PR metadata as an artifact so the separate deploy workflow (triggered
+  # Save the PR number as an artifact so the separate deploy workflow (triggered
   # via workflow_run) can associate the build with its PR — workflow_run events
-  # do not include pull_request data for fork PRs.
+  # do not include pull_request data for fork PRs. Nothing else goes in here:
+  # the deploy workflow takes the head SHA and fork status from its own event.
   pr-info:
     name: Save PR info
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     steps:
-      - name: Save PR metadata
+      - name: Save PR number
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          IS_FORK: ${{ github.event.pull_request.head.repo.fork }}
         run: |
           mkdir -p pr-info
           printf '%s' "$PR_NUMBER" > pr-info/pr_number.txt
-          printf '%s' "$HEAD_SHA" > pr-info/head_sha.txt
-          printf '%s' "$IS_FORK" > pr-info/is_fork.txt
       - uses: actions/upload-artifact@v7
         with:
           name: pr-info
           path: pr-info/
 
+  # A push to `main` comes out of the merge queue, which has already built the
+  # docs from the same tree. Find that build so the push can publish it
+  # instead of building it twice.
+  resolve:
+    name: Find a matching build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # A called workflow can only narrow the caller's token, and this file sets
+    # `id-token: none`, which zeroes every other scope.
+    permissions:
+      actions: read
+    uses: $/.github/workflows/find-tree-build.yml
+    with:
+      marker-prefix: docs-tree
+
+  # The cache, build and test jobs run on paid Blacksmith runners, except on a
+  # pull request without the `blacksmith` label. Blacksmith keeps its own
+  # cache, so the producer here has to run on the same kind of runner as the
+  # build job.
   cache-pyvista-data:
     name: Cache pyvista/data
-    uses: ./.github/workflows/cache-pyvista-data.yml
+    needs: resolve
+    if: ${{ !cancelled() && needs.resolve.outputs.run-id == '' }}
+    uses: $/.github/workflows/cache-pyvista-data.yml
     with:
-      # Runner should match the actual runner used by the build job
-      runs-on: "ubuntu-24.04-self-hosted-gpu"
+      runs-on: >-
+        ${{ (github.event_name != 'pull_request'
+        || contains(github.event.pull_request.labels.*.name, 'blacksmith'))
+        && 'blacksmith-8vcpu-ubuntu-2204' || 'ubuntu-22.04' }}
 
   doc:
     name: Build Documentation
-    runs-on: ubuntu-24.04-self-hosted-gpu
-    needs: cache-pyvista-data
+    runs-on: >-
+      ${{ (github.event_name != 'pull_request'
+      || contains(github.event.pull_request.labels.*.name, 'blacksmith'))
+      && 'blacksmith-8vcpu-ubuntu-2204' || 'ubuntu-22.04' }}
+    needs: [cache-pyvista-data, resolve]
+    if: ${{ !cancelled() && needs.cache-pyvista-data.result == 'success' && needs.resolve.outputs.run-id == '' }}
     env:
-      PARALLEL: "-j2" # Public GitHub runners have 2 real cores
       TOX_COLORED: "yes"
-      PYVISTA_VTK_DATA: ${{ github.workspace }}/pyvista-data
+      # Tag builds are the docs published to docs.pyvista.org; `conf.py` expands
+      # the sidebar navigation for them.
+      _PYVISTA_RELEASE: ${{ startsWith(github.ref, 'refs/tags/v') }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: 3.14
           cache: "pip"
 
-      - name: Set environment for self-hosted
-        if: runner.environment == 'self-hosted'
-        run: |
-          echo "PARALLEL=-j8" >> $GITHUB_ENV
+      - name: Set up headless display
+        uses: pyvista/setup-headless-display-action@c103a2ff45650d38cb71684b5dc6cdfeb9442c79
 
-      - uses: awalsh128/cache-apt-pkgs-action@acb598e5ddbc6f68a970c5da0688d2f3a9f04d05
-        if: runner.environment != 'self-hosted'
+      - uses: awalsh128/cache-apt-pkgs-action@553a35bb8ebd9fcabcb1c9451aa4c98e1b4ca8a9
         with:
           packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
           version: 3.0
 
       - name: Restore pyvista/data cache
-        uses: actions/cache/restore@v5
+        uses: $/.github/actions/restore-pyvista-data
         with:
-          path: pyvista-data
           key: ${{ needs.cache-pyvista-data.outputs.key }}
-          enableCrossOsArchive: true
 
       - name: Install tox-uv
         run: pip install tox-uv
 
       - name: Build Documentation
         run: timeout 3600 tox run -e docs-build
+
+      # Build a development wheel and bundle a PEP 503 simple index into the
+      # docs output. Once the docs deploy to dev.pyvista.org, users can
+      # install with:
+      #   pip install --pre --index-url https://dev.pyvista.org/wheels/simple/ pyvista
+      # The wheel version is <base>+g<shortsha>, so every commit produces a
+      # uniquely-named wheel that pip's resolver picks up via --pre -U.
+      # Built on every docs run so PR Netlify previews exercise the wheel
+      # tree end-to-end; only the main-branch deploy lands on dev.pyvista.org.
+      - name: Build development wheel and simple index
+        run: |
+          python -m pip install --upgrade build
+          python doc/make_dev_wheel.py --html-dir doc/_build/html
 
       - name: Dump Sphinx Build Warnings and Errors
         if: always()
@@ -108,39 +142,15 @@ jobs:
             cat "$f"
           done
 
-      # Only build the translations for release builds since they take over 3 hours to build
-      - uses: actions/checkout@v6
-        if: startsWith(github.ref, 'refs/tags/v')
-        with:
-          repository: pyvista/pyvista-doc-translations
-          path: pyvista-doc-translations
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: Build I18N Documentation
-        if: startsWith(github.ref, 'refs/tags/v')
-        run: |
-          tox run -e docs-build -- mini18n-html
-          find doc/_build/mini18n-html -mindepth 1 -maxdepth 1 -type d -exec cp -rf {} doc/_build/html/ \;
-          rm -rf doc/_build/mini18n-html
-
-      - name: Dump Sphinx Build Warnings and Errors
-        if: always()
-        run: if [ -e doc/sphinx_warnings.txt ]; then cat doc/sphinx_warnings.txt; fi
+      # Translated (i18n) docs are built in a dedicated pipeline in
+      # pyvista/pyvista-doc-translations. See issue #8626.
 
       - name: Upload HTML documentation
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
           name: docs-build
-          path:
-            | # Only vtksz files in 'doc/_build/html/_images/' are used. Exclude all others since these files may be large.
-            doc/_build/html/
-            !doc/_build/html/index-*.vtksz
-            !doc/_build/html/api/**/*.vtksz
-            !doc/_build/html/extras/**/*.vtksz
-            !doc/_build/html/getting-started/**/*.vtksz
-            !doc/_build/html/user-guide/**/*.vtksz
+          path: doc/_build/html/
 
       - name: Upload non-interactive HTML documentation
         if: ${{ !cancelled() }}
@@ -166,19 +176,79 @@ jobs:
           name: pyvista-notebooks
           path: _notebooks
 
-  test:
-    name: Test Documentation
+  # Republishes the matched build under this run, so everything downstream —
+  # `publish-notebooks` here, the Netlify deploy over in `netlify-deploy.yml` —
+  # keeps reading `docs-build` from the run it was triggered by. The dev wheel
+  # is rebuilt rather than copied: its version embeds the commit SHA, and two
+  # commits can share a tree.
+  reuse:
+    name: Reuse Documentation Build
     runs-on: ubuntu-22.04
-    needs: doc
-    if: ${{ !cancelled() }}
-    env:
-      TOX_COLORED: "yes"
+    needs: resolve
+    if: ${{ needs.resolve.outputs.run-id != '' }}
+    permissions:
+      actions: read
+      contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
+        with:
+          python-version: 3.14
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: docs-build
+          path: doc/_build/html
+          run-id: ${{ needs.resolve.outputs.run-id }}
+          github-token: ${{ github.token }}
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: pyvista-notebooks
+          path: _notebooks
+          run-id: ${{ needs.resolve.outputs.run-id }}
+          github-token: ${{ github.token }}
+
+      - name: Rebuild development wheel and simple index
+        run: |
+          rm -rf doc/_build/html/wheels
+          python -m pip install --upgrade build
+          python doc/make_dev_wheel.py --html-dir doc/_build/html
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: docs-build
+          path: doc/_build/html/
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: pyvista-notebooks
+          path: _notebooks
+
+  test:
+    name: Test Documentation
+    runs-on: >-
+      ${{ (github.event_name != 'pull_request'
+      || contains(github.event.pull_request.labels.*.name, 'blacksmith'))
+      && 'blacksmith-8vcpu-ubuntu-2204' || 'ubuntu-22.04' }}
+    needs: [doc, resolve]
+    # The merge queue tests the docs built from the tree that lands on `main`,
+    # so repeating that after the merge only reports a failure the queue would
+    # already have blocked. A push that matched no queue run built its docs
+    # here and is tested, as are tag builds: they are what docs.pyvista.org
+    # serves.
+    if: ${{ !cancelled() && (github.event_name != 'push' || startsWith(github.ref, 'refs/tags/') || needs.resolve.outputs.run-id == '') }}
+    env:
+      TOX_COLORED: "yes"
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v7
         with:
           python-version: 3.14
           cache: "pip"
@@ -193,7 +263,11 @@ jobs:
 
       - name: Test Documentation
         if: ${{ !cancelled() }}
-        run: tox r -e docs-test
+        run: tox r -e docs-test-build
+
+      - name: Test Documentation Images
+        if: ${{ !cancelled() }}
+        run: tox r -e docs-test-images
 
       - name: Upload Images for Failed Tests
         if: ${{ !cancelled() }}
@@ -209,6 +283,25 @@ jobs:
           name: doc-generated-test-images
           path: _doc_generated_test_images
 
+      # Advertise this build to the push to `main` that follows it out of the
+      # queue. Recorded here rather than in `doc` so a marker means the tree was
+      # built and tested, which is what lets the push skip both. The step `if`
+      # carries an implicit `success()`, so a run that failed never advertises
+      # itself.
+      - name: Record the tree that was built
+        id: tree
+        if: github.event_name == 'merge_group'
+        run: |
+          echo "sha=$(git rev-parse 'HEAD^{tree}')" >> "$GITHUB_OUTPUT"
+          touch tree-marker
+
+      - name: Upload the tree marker
+        if: github.event_name == 'merge_group'
+        uses: actions/upload-artifact@v7
+        with:
+          name: docs-tree-${{ steps.tree.outputs.sha }}
+          path: tree-marker
+
   # Netlify deploys (preview, image report, release) live in docs-deploy.yml,
   # triggered via workflow_run. Keeping them out of this workflow means fork PR
   # CI is never blocked waiting on a deployment approval.
@@ -216,13 +309,13 @@ jobs:
   publish-notebooks:
     name: Publish Notebooks for MyBinder
     runs-on: ubuntu-22.04
-    needs: doc
-    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    needs: [doc, reuse]
+    if: ${{ !cancelled() && (needs.doc.result == 'success' || needs.reuse.result == 'success') && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: 3.14
       - name: Install Dependencies
@@ -233,9 +326,13 @@ jobs:
           name: pyvista-notebooks
           path: .
 
+      # Pinned to a commit: cookiecutter runs the template's hooks, and this job
+      # later publishes the result with a write token.
       - name: Make Cookiecutter
+        env:
+          TEMPLATE_REF: 001da281b2e49efe97af86ab628176d47ce23e21
         run: |
-          cookiecutter -f --no-input --config-file ./doc/source/pyvista-binder-config.yml https://github.com/pyvista/cookiecutter-pyvista-binder.git;
+          cookiecutter -f --no-input --checkout "$TEMPLATE_REF" --config-file ./doc/source/pyvista-binder-config.yml https://github.com/pyvista/cookiecutter-pyvista-binder.git
           rm -rf ./pyvista-examples/notebooks/
           cp -r doc/source/examples/ ./pyvista-examples/
           ls -l ./pyvista-examples/
@@ -243,7 +340,7 @@ jobs:
       - name: Get app installation token (pyvista-examples)
         id: app-token
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
         with:
           app-id: ${{ vars.PYVISTA_BOT_APP_ID }}
           private-key: ${{ secrets.PYVISTA_BOT_APP_PRIVATE_KEY }}
@@ -255,7 +352,7 @@ jobs:
 
       - name: Publish notebooks on release
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e
+        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453
         with:
           external_repository: pyvista/pyvista-examples
           personal_token: ${{ steps.app-token.outputs.token }}

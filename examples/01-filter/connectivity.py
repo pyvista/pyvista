@@ -4,8 +4,7 @@
 Connectivity
 ~~~~~~~~~~~~
 
-This example highlights some applications of the
-:func:`~pyvista.DataSetFilters.connectivity` filter.
+Highlight some applications of the :func:`~pyvista.DataSetFilters.connectivity` filter.
 
 """
 
@@ -15,7 +14,7 @@ This example highlights some applications of the
 #
 # Use connectivity to remove noisy isosurfaces.
 #
-# This section is similar to `this VTK example <https://kitware.github.io/vtk-examples/site/Python/VisualizationAlgorithms/PineRootConnectivity/>`__.
+# This section is similar to `this VTK example <https://examples.vtk.org/site/Python/VisualizationAlgorithms/PineRootConnectivity/>`__.
 
 # sphinx_gallery_thumbnail_number = 2
 import numpy as np
@@ -28,8 +27,8 @@ pine_roots = examples.download_pine_roots()
 
 # Plot the raw data
 cpos = pv.CameraPosition(
-    position=(40.6018, -280.533, 47.0172),
-    focal_point=(40.6018, 37.2813, 50.1953),
+    position=(40.6, -280.5, 47.02),
+    focal_point=(40.6, 37.28, 50.2),
     viewup=(0.0, 0.0, 1.0),
 )
 pl = pv.Plotter()
@@ -123,8 +122,8 @@ mesh['Curvature'] = mesh.curvature()
 
 # %%
 # Visualize the peaks and valleys.
-# Peaks have large positive curvature (i.e. are convex).
-# Valleys have large negative curvature (i.e. are concave).
+# Peaks have large positive curvature (that is, they are convex).
+# Valleys have large negative curvature (that is, they are concave).
 # Flat regions have curvature close to zero.
 mesh.plot(
     clim=[-0.5, 0.5],

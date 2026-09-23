@@ -5,11 +5,13 @@ Detailed Interpolating Points
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This example uses :func:`pyvista.DataSetFilters.interpolate`.
+
 :func:`pyvista.DataObjectFilters.sample` is similar, and the two
 methods are compared in :ref:`interpolate_sample_example`.
 
 Interpolate one mesh's point/cell arrays onto another mesh's nodes using a
 Gaussian Kernel.
+
 """
 
 # sphinx_gallery_thumbnail_number = 4
@@ -66,9 +68,9 @@ grid.dimensions = (60, 75, 100)
 # %%
 dargs = dict(cmap='coolwarm', clim=[0, 300], scalars='temperature (C)')
 cpos = pv.CameraPosition(
-    position=(364280.5723737897, 4285326.164400684, 14093.431895014139),
-    focal_point=(337748.7217949739, 4261154.45054595, -637.1092549935128),
-    viewup=(-0.29629216102673206, -0.23840196609932093, 0.9248651025279784),
+    position=(364281.0, 4285326.0, 14093.0),
+    focal_point=(337749.0, 4261154.0, -637.0),
+    viewup=(-0.2963, -0.2384, 0.9249),
 )
 
 pl = pv.Plotter()

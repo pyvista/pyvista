@@ -7,16 +7,22 @@ from typing import get_args
 import numpy as np
 import pytest
 from pytest_cases import parametrize_with_cases
+from pyvista_validation._cast_array import _cast_to_tuple
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista import examples
-from pyvista.core._validation._cast_array import _cast_to_tuple
-from pyvista.core.errors import DeprecationError
-from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters.image_data import _InterpolationOptions
 from tests.conftest import NUMPY_VERSION_INFO
 
 BOUNDARY_LABELS = 'boundary_labels'
+DUPLICATE_CELL = _vtk.vtkDataSetAttributes.DUPLICATECELL
+DUPLICATE_POINT = _vtk.vtkDataSetAttributes.DUPLICATEPOINT
+EXTERIOR_CELL = _vtk.vtkDataSetAttributes.EXTERIORCELL
+GHOST_ARRAY_NAME = _vtk.vtkDataSetAttributes.GhostArrayName()
+HIDDEN_CELL = _vtk.vtkDataSetAttributes.HIDDENCELL
+HIDDEN_POINT = _vtk.vtkDataSetAttributes.HIDDENPOINT
+HIGH_CONNECTIVITY_CELL = _vtk.vtkDataSetAttributes.HIGHCONNECTIVITYCELL
 MORPHOLOGICAL_MAX_VAL = 42.0
 MORPHOLOGICAL_MID_VAL = 5.0
 MORPHOLOGICAL_MIN_VAL = 0.0
@@ -29,9 +35,9 @@ def beach():
 
 def variable_dimensionality_image(dimensions):
     image = pv.ImageData(dimensions=dimensions)
-    image.point_data['image'] = 99
-    image.point_data['other'] = 42
-    image.cell_data['data'] = 142
+    image.point_data['image'] = np.full(image.n_points, 99)
+    image.point_data['other'] = np.full(image.n_points, 42)
+    image.cell_data['data'] = np.full(image.n_cells, 142)
     return image
 
 
@@ -58,154 +64,6 @@ def three_dimensionality_image():
 @pytest.fixture
 def frog_tissues():
     return examples.load_frog_tissues()
-
-
-def test_contour_labeled_deprecated():
-    match = 'This filter produces unexpected results and is deprecated.'
-    with pytest.raises(PyVistaDeprecationWarning, match=match):
-        pv.ImageData().contour_labeled()
-
-
-@pytest.mark.needs_vtk_version(9, 3, 0)
-def test_contour_labeled(frog_tissues):
-    # Extract surface for each label
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match='This filter produces unexpected results and is deprecated',
-    ):
-        mesh = frog_tissues.contour_labeled()
-
-    assert frog_tissues.point_data.active_scalars.max() == 29
-    assert 'BoundaryLabels' in mesh.cell_data
-    assert np.max(mesh['BoundaryLabels'][:, 0]) == 29
-
-
-@pytest.mark.needs_vtk_version(9, 3, 0)
-def test_contour_labeled_with_smoothing(frog_tissues):
-    # Extract smooth surface for each label
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match='This filter produces unexpected results and is deprecated',
-    ):
-        mesh = frog_tissues.contour_labeled(smoothing=True)
-    # this somehow mutates the object... also the n_labels is likely not correct
-
-    assert 'BoundaryLabels' in mesh.cell_data
-    assert np.max(mesh['BoundaryLabels'][:, 0]) == 29
-
-
-@pytest.mark.needs_vtk_version(9, 3, 0)
-def test_contour_labeled_with_reduced_labels_count(frog_tissues):
-    # Extract surface for each label
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match='This filter produces unexpected results and is deprecated',
-    ):
-        mesh = frog_tissues.contour_labeled(n_labels=2)
-    # this somehow mutates the object... also the n_labels is likely not correct
-
-    assert 'BoundaryLabels' in mesh.cell_data
-    assert np.max(mesh['BoundaryLabels'][:, 0]) == 2
-
-
-@pytest.mark.needs_vtk_version(9, 3, 0)
-def test_contour_labeled_with_triangle_output_mesh(frog_tissues):
-    # Extract surface for each label
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match='This filter produces unexpected results and is deprecated',
-    ):
-        mesh = frog_tissues.contour_labeled(scalars='MetaImage', output_mesh_type='triangles')
-
-    assert 'BoundaryLabels' in mesh.cell_data
-    assert np.max(mesh['BoundaryLabels'][:, 0]) == 29
-
-
-@pytest.mark.needs_vtk_version(9, 3, 0)
-def test_contour_labeled_with_boundary_output_style(frog_tissues):
-    # Extract surface for each label
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match='This filter produces unexpected results and is deprecated',
-    ):
-        mesh = frog_tissues.contour_labeled(output_style='boundary')
-
-    assert 'BoundaryLabels' in mesh.cell_data
-    assert np.max(mesh['BoundaryLabels'][:, 0]) == 29
-
-
-@pytest.mark.needs_vtk_version(9, 3, 0)
-def test_contour_labeled_with_invalid_output_mesh_type(frog_tissues):
-    # Extract surface for each label
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match='This filter produces unexpected results and is deprecated',
-    ):
-        with pytest.raises(ValueError):  # noqa: PT011
-            frog_tissues.contour_labeled(output_mesh_type='invalid')
-
-
-@pytest.mark.needs_vtk_version(9, 3, 0)
-def test_contour_labeled_with_invalid_output_style(frog_tissues):
-    # Extract surface for each label
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match='This filter produces unexpected results and is deprecated',
-    ):
-        with pytest.raises(NotImplementedError):
-            frog_tissues.contour_labeled(output_style='selected')
-
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match='This filter produces unexpected results and is deprecated',
-    ):
-        with pytest.raises(ValueError):  # noqa: PT011
-            frog_tissues.contour_labeled(output_style='invalid')
-
-
-@pytest.mark.needs_vtk_version(9, 3, 0)
-def test_contour_labeled_with_scalars(frog_tissues):
-    # Create a new array with reduced number of labels
-    frog_tissues['labels'] = frog_tissues['MetaImage'] // 2
-
-    # Extract surface for each label
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match='This filter produces unexpected results and is deprecated',
-    ):
-        mesh = frog_tissues.contour_labeled(scalars='labels')
-
-    assert 'BoundaryLabels' in mesh.cell_data
-    assert np.max(mesh['BoundaryLabels'][:, 0]) == 14
-
-
-@pytest.mark.needs_vtk_version(9, 3, 0)
-def test_contour_labeled_with_invalid_scalars(frog_tissues):
-    # Nonexistent scalar key
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match='This filter produces unexpected results and is deprecated',
-    ):
-        with pytest.raises(KeyError):
-            frog_tissues.contour_labeled(scalars='nonexistent_key')
-
-    # Using cell data
-    frog_tissues.cell_data['cell_data'] = np.zeros(frog_tissues.n_cells)
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match='This filter produces unexpected results and is deprecated',
-    ):
-        with pytest.raises(ValueError, match='Can only process point data'):
-            frog_tissues.contour_labeled(scalars='cell_data')
-
-    # When no scalas are given and active scalars are not point data
-    frog_tissues.set_active_scalars('cell_data', preference='cell')
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match='This filter produces unexpected results and is deprecated',
-    ):
-        with pytest.raises(ValueError, match='active scalars must be point array'):
-            frog_tissues.contour_labeled()
 
 
 @pytest.fixture
@@ -244,7 +102,6 @@ def labeled_image():
 @pytest.mark.parametrize('smoothing', [True, False, None])
 @pytest.mark.parametrize('output_mesh_type', ['triangles', 'quads'])
 @pytest.mark.parametrize('scalars', ['labels', None])
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_scalars_smoothing_output_mesh_type(
     labeled_image,
     smoothing,
@@ -297,7 +154,6 @@ def _remove_duplicate_points(polydata):
     ids=['out_None', 'out_2', 'out_5', 'out_2_5'],
 )
 @pytest.mark.parametrize('boundary_style', ['all', 'external', 'internal'])
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_boundary_style(
     labeled_image,
     select_inputs,
@@ -373,8 +229,7 @@ def test_contour_labels_boundary_style(
 ALL_LABEL_IDS = {0, 2, 5}
 
 
-@pytest.mark.parametrize('background_value', ALL_LABEL_IDS)
-@pytest.mark.needs_vtk_version(9, 3, 0)
+@pytest.mark.parametrize('background_value', sorted(ALL_LABEL_IDS))
 def test_contour_labels_background_value(labeled_image, background_value):
     assert background_value in labeled_image.active_scalars
 
@@ -383,7 +238,6 @@ def test_contour_labels_background_value(labeled_image, background_value):
     assert background_value not in first_component
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_pad_background(labeled_image):
     mesh_closed = labeled_image.contour_labels(pad_background=True, output_mesh_type='quads')
     mesh_open = labeled_image.contour_labels(pad_background=False, output_mesh_type='quads')
@@ -392,7 +246,6 @@ def test_contour_labels_pad_background(labeled_image):
 
 @pytest.mark.parametrize('boundary_type', ['all', 'internal', 'external'])
 @pytest.mark.parametrize('simplify_output', [True, False, None])
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_simplify_output(labeled_image, boundary_type, simplify_output):
     poly = labeled_image.contour_labels(boundary_type, simplify_output=simplify_output)
     expected_ndim = (
@@ -401,7 +254,6 @@ def test_contour_labels_simplify_output(labeled_image, boundary_type, simplify_o
     assert poly[BOUNDARY_LABELS].ndim == expected_ndim
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_cell_data(channels):
     # Extract voxelized surface from image with cell voxels in two ways
     # Both should have an equal number of quad cells
@@ -417,7 +269,6 @@ def test_contour_labels_cell_data(channels):
     assert voxel_surface_contoured.n_cells == voxel_surface_extracted.n_cells
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_strict_external(channels):
     with pytest.warns(pv.PyVistaDeprecationWarning):
         contours = channels.contour_labels('strict_external', orient_faces=False)
@@ -426,14 +277,11 @@ def test_contour_labels_strict_external(channels):
     assert contours.active_scalars.ndim == 1
     assert np.all(contours.active_scalars > 0)
 
-    match = 'Selecting inputs and/or outputs is not supported by `strict_external`.'
-    with pytest.raises(TypeError, match=match):
-        channels.contour_labels('strict_external', select_inputs=[0])
-    with pytest.raises(TypeError, match=match):
-        channels.contour_labels('strict_external', select_outputs=[0])
+    # Test that selecting inputs/outputs works with this mode
+    channels.contour_labels('strict_external', select_inputs=[1])
+    channels.contour_labels('strict_external', select_outputs=[2])
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_raises(labeled_image):
     # Nonexistent scalar key
     with pytest.raises(KeyError):
@@ -444,20 +292,78 @@ def test_contour_labels_raises(labeled_image):
         pv.ImageData().contour_labels()
 
 
-@pytest.mark.needs_vtk_version(less_than=(9, 3, 0))
-def test_contour_labels_raises_vtkversionerror():
-    match = 'Surface nets 3D require VTK 9.3.0 or newer.'
-    with pytest.raises(pv.VTKVersionError, match=match):
-        pv.ImageData().contour_labels()
+@pytest.mark.parametrize(
+    ('dimensions', 'dimensionality'),
+    [
+        ((20, 20, 1), 2),
+        ((320, 220, 1), 2),
+        ((1, 20, 20), 2),
+        ((20, 1, 20), 2),
+        ((20, 1, 1), 1),
+        ((1, 1, 1), 0),
+    ],
+)
+@pytest.mark.parametrize('boundary_style', ['external', 'internal', 'all', 'strict_external'])
+def test_contour_labels_not_3d_raises(dimensions, dimensionality, boundary_style):
+    image = pv.ImageData(dimensions=dimensions)
+    mask = np.zeros(image.n_points, dtype=np.uint8)
+    mask[: image.n_points // 3] = 1
+    image.point_data['mask'] = mask
+
+    match = f'Input must be 3-dimensional. Got {dimensionality}-dimensional input instead.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        image.contour_labels(boundary_style)
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labels_not_3d_cell_data_raises():
+    # Cell scalars are re-meshed to points, so a single cell layer is 2-dimensional
+    image = pv.ImageData(dimensions=(21, 21, 2))
+    image.cell_data['mask'] = np.ones(image.n_cells, dtype=np.uint8)
+
+    match = 'Input must be 3-dimensional. Got 2-dimensional input instead.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        image.contour_labels()
+
+
+@pytest.mark.parametrize(
+    ('kwargs', 'expected_shape'),
+    [
+        ({'boundary_style': 'internal', 'select_inputs': 2, 'simplify_output': True}, (0,)),
+        ({'boundary_style': 'internal', 'select_inputs': 2, 'simplify_output': False}, (0, 2)),
+        ({'select_outputs': 99}, (0,)),
+        ({'select_outputs': 99, 'simplify_output': False}, (0, 2)),
+    ],
+)
+def test_contour_labels_no_boundary_cells(labeled_image, kwargs, expected_shape):
+    contours = labeled_image.contour_labels(**kwargs)
+    assert contours.is_empty
+    assert contours[BOUNDARY_LABELS].shape == expected_shape
+
+
+@pytest.mark.parametrize('simplify_output', [True, False, None])
+@pytest.mark.parametrize('boundary_style', ['external', 'internal', 'all', 'strict_external'])
+def test_contour_labels_no_background(boundary_style, simplify_output):
+    image = pv.ImageData(dimensions=(10, 10, 10))
+    image.point_data['labels'] = np.full(image.n_points, 5, dtype=np.uint8)
+
+    contours = image.contour_labels(
+        boundary_style, simplify_output=simplify_output, pad_background=False
+    )
+    expected_ndim = (
+        1 if simplify_output or (simplify_output is None and 'external' in boundary_style) else 2
+    )
+    assert contours.is_empty
+    assert contours[BOUNDARY_LABELS].ndim == expected_ndim
+    assert contours[BOUNDARY_LABELS].dtype == np.uint8
+
+
 def test_contour_labels_empty_input(frog_tissues):
     voi = frog_tissues.extract_subset((10, 100, 20, 200, 20, 80))
     background_value = 0
     assert np.allclose(voi.active_scalars, background_value)
     surface = voi.contour_labels(background_value=background_value)
     assert surface.is_empty
+    assert surface[BOUNDARY_LABELS].shape == (0,)
 
 
 @pytest.fixture
@@ -531,6 +437,114 @@ def test_cells_to_points(uniform_many_scalars, active_scalars, copy):
     ):
         shares_memory = np.shares_memory(cell_voxel_image[array_in], point_voxel_image[array_out])
         assert not shares_memory if copy else shares_memory
+
+
+@pytest.mark.parametrize(
+    ('point_flags', 'expected_cell_flags'),
+    [
+        ([HIDDEN_POINT, 0], [HIDDEN_CELL, 0]),
+        ([DUPLICATE_POINT, 0], [DUPLICATE_CELL, 0]),
+        ([DUPLICATE_POINT | HIDDEN_POINT, 0], [DUPLICATE_CELL | HIDDEN_CELL, 0]),
+    ],
+)
+def test_points_to_cells_ghost_array(uniform, point_flags, expected_cell_flags):
+    ghosts = np.resize(np.array(point_flags, dtype=np.uint8), uniform.n_points)
+    uniform.point_data[GHOST_ARRAY_NAME] = ghosts
+
+    converted = uniform.points_to_cells(copy=False)
+
+    expected = np.resize(np.array(expected_cell_flags, dtype=np.uint8), converted.n_cells)
+    assert converted.cell_data[GHOST_ARRAY_NAME].dtype == np.uint8
+    assert np.array_equal(converted.cell_data[GHOST_ARRAY_NAME], expected)
+    assert not np.shares_memory(converted.cell_data[GHOST_ARRAY_NAME], ghosts)
+    assert GHOST_ARRAY_NAME not in converted.point_data
+
+
+@pytest.mark.parametrize(
+    ('cell_flags', 'expected_point_flags'),
+    [
+        ([HIDDEN_CELL, 0], [HIDDEN_POINT, 0]),
+        ([DUPLICATE_CELL, 0], [DUPLICATE_POINT, 0]),
+        ([DUPLICATE_CELL | HIDDEN_CELL, 0], [DUPLICATE_POINT | HIDDEN_POINT, 0]),
+        ([HIGH_CONNECTIVITY_CELL, 0], [0, 0]),
+        ([HIDDEN_CELL | EXTERIOR_CELL, EXTERIOR_CELL], [HIDDEN_POINT, 0]),
+    ],
+)
+def test_cells_to_points_ghost_array(uniform, cell_flags, expected_point_flags):
+    ghosts = np.resize(np.array(cell_flags, dtype=np.uint8), uniform.n_cells)
+    uniform.cell_data[GHOST_ARRAY_NAME] = ghosts
+
+    converted = uniform.cells_to_points()
+
+    expected = np.resize(np.array(expected_point_flags, dtype=np.uint8), converted.n_points)
+    assert converted.point_data[GHOST_ARRAY_NAME].dtype == np.uint8
+    assert np.array_equal(converted.point_data[GHOST_ARRAY_NAME], expected)
+    assert GHOST_ARRAY_NAME not in converted.cell_data
+
+
+def test_points_to_cells_ghost_array_hides_unsampled_cells(uniform):
+    solid = pv.SolidSphere(outer_radius=3.0, center=uniform.center)
+    solid['data'] = solid.points[:, 2]
+    sampled = uniform.sample(solid)
+    hidden_points = sampled.point_data[GHOST_ARRAY_NAME] == HIDDEN_POINT
+    assert 0 < hidden_points.sum() < sampled.n_points
+
+    converted = sampled.points_to_cells()
+
+    hidden_cells = converted.cell_data[GHOST_ARRAY_NAME] == HIDDEN_CELL
+    assert np.array_equal(hidden_cells, hidden_points)
+    assert np.array_equal(
+        converted.cell_data['vtkValidPointMask'], sampled.point_data['vtkValidPointMask']
+    )
+
+
+def test_points_to_cells_and_cells_to_points_ghost_array_round_trip(uniform):
+    pattern = [HIDDEN_CELL | EXTERIOR_CELL, EXTERIOR_CELL]
+    uniform.cell_data[GHOST_ARRAY_NAME] = np.resize(
+        np.array(pattern, dtype=np.uint8), uniform.n_cells
+    )
+
+    converted = uniform.cells_to_points().points_to_cells()
+
+    expected = np.resize(np.array([HIDDEN_CELL, 0], dtype=np.uint8), converted.n_cells)
+    assert np.array_equal(converted.cell_data[GHOST_ARRAY_NAME], expected)
+
+
+@pytest.mark.parametrize('filter_name', ['points_to_cells', 'cells_to_points'])
+def test_remesh_ghost_array_is_kept_with_explicit_scalars(uniform, filter_name):
+    points_to_cells = filter_name == 'points_to_cells'
+    if points_to_cells:
+        scalars, data, flag = 'Spatial Point Data', uniform.point_data, HIDDEN_POINT
+    else:
+        scalars, data, flag = 'Spatial Cell Data', uniform.cell_data, HIDDEN_CELL
+    ghosts = np.resize(np.array([flag, 0], dtype=np.uint8), len(data[scalars]))
+    data[GHOST_ARRAY_NAME] = ghosts
+
+    converted = getattr(uniform, filter_name)(scalars)
+
+    new_data = converted.cell_data if points_to_cells else converted.point_data
+    assert set(new_data.keys()) == {scalars, GHOST_ARRAY_NAME}
+    assert converted.active_scalars_name == scalars
+    expected_flag = HIDDEN_CELL if points_to_cells else HIDDEN_POINT
+    assert np.array_equal(new_data[GHOST_ARRAY_NAME] == expected_flag, ghosts == flag)
+
+
+def test_points_to_cells_non_ghost_dtype_obeys_explicit_scalars(uniform):
+    uniform.point_data[GHOST_ARRAY_NAME] = np.zeros(uniform.n_points, dtype=float)
+
+    converted = uniform.points_to_cells('Spatial Point Data')
+
+    assert converted.cell_data.keys() == ['Spatial Point Data']
+
+
+def test_points_to_cells_ghost_array_ignores_non_ghost_dtype(uniform):
+    array = np.zeros(uniform.n_points, dtype=float)
+    uniform.point_data[GHOST_ARRAY_NAME] = array
+    assert uniform.GetPointData().GetGhostArray() is None
+
+    converted = uniform.points_to_cells()
+
+    assert np.array_equal(converted.cell_data[GHOST_ARRAY_NAME], array)
 
 
 def test_points_to_cells_scalars(uniform):
@@ -955,22 +969,11 @@ def test_pad_image_raises(zero_dimensionality_image, uniform, beach):
         beach.pad_image(pad_value=(0, 0, 0), pad_all_scalars=True)
 
 
-def test_pad_image_deprecation(zero_dimensionality_image):
-    match = 'Use of `pad_singleton_dims=True` is deprecated. Use `dimensionality="3D"` instead'
-    with pytest.raises(DeprecationError, match=match):
+def test_pad_image_pad_singleton_dims_removed(zero_dimensionality_image):
+    with pytest.raises(TypeError, match=r'unexpected keyword argument'):
         zero_dimensionality_image.pad_image(pad_value=1, pad_singleton_dims=True)
-    if pv._version.version_info[:2] > (0, 48):
-        msg = 'Remove `pad_singleton_dims`.'
-        raise RuntimeError(msg)
-
-    match = (
-        'Use of `pad_singleton_dims=False` is deprecated. Use `dimensionality="preserve"` instead'
-    )
-    with pytest.raises(DeprecationError, match=match):
+    with pytest.raises(TypeError, match=r'unexpected keyword argument'):
         zero_dimensionality_image.pad_image(pad_value=1, pad_singleton_dims=False)
-    if pv._version.version_info[:2] > (0, 48):
-        msg = 'Remove `pad_singleton_dims`.'
-        raise RuntimeError(msg)
 
 
 @pytest.fixture
@@ -1202,8 +1205,10 @@ def test_validate_dim_operation(
             'invalid',
             operator.add,
             ValueError,
-            '`invalid` is not a valid `operation_mask`. Use one of '
-            '[0, 1, 2, 3, "0D", "1D", "2D", "3D", "preserve"].',
+            (
+                '`invalid` is not a valid `operation_mask`. Use one of '
+                '[0, 1, 2, 3, "0D", "1D", "2D", "3D", "preserve"].'
+            ),
         ),
         (
             (1, 1, 1),
@@ -1224,24 +1229,30 @@ def test_validate_dim_operation(
             '1D',
             operator.add,
             ValueError,
-            'The operation requires to add at least [1 3 5] dimension(s) to (2, 2, 2). '
-            'A 1D ImageData with dims (>1, 1, 1) cannot be obtained.',
+            (
+                'The operation requires to add at least [1 3 5] dimension(s) to (2, 2, 2). '
+                'A 1D ImageData with dims (>1, 1, 1) cannot be obtained.'
+            ),
         ),
         (
             (2, 1, 2),
             '3D',
             operator.sub,
             ValueError,
-            'The operation requires to sub at least [1 3 5] dimension(s) to (2, 1, 2). '
-            'A 3D ImageData with dims (>1, >1, >1) cannot be obtained.',
+            (
+                'The operation requires to sub at least [1 3 5] dimension(s) to (2, 1, 2). '
+                'A 3D ImageData with dims (>1, >1, >1) cannot be obtained.'
+            ),
         ),
         (
             (1, 2, 5),
             (True, False, True),
             operator.sub,
             ValueError,
-            'The mask (True, False, True), size [1 3 5], and operation sub would result in '
-            '[0 2 0] which contains <= 0 dimensions.',
+            (
+                'The mask (True, False, True), size [1 3 5], and operation sub would result in '
+                '[0 2 0] which contains <= 0 dimensions.'
+            ),
         ),
     ],
 )
@@ -1252,6 +1263,16 @@ def test_validate_dim_operation_invalid_parameters(
     with pytest.raises(error, match=re.escape(error_message)):
         image._validate_dimensional_operation(
             operation_mask=operation_mask, operator=operator, operation_size=(1, 3, 5)
+        )
+
+
+@pytest.mark.parametrize('operation_size', [1.5, (1, 2, 2.5)])
+def test_validate_dim_operation_rejects_fractional_size(operation_size):
+    # The size is cast to an integer dtype, which would otherwise truncate it silently
+    image = pv.ImageData(dimensions=(5, 5, 5))
+    with pytest.raises(ValueError, match='must have integer-like values'):
+        image._validate_dimensional_operation(
+            operation_mask='preserve', operator=operator.add, operation_size=operation_size
         )
 
 
@@ -1349,14 +1370,14 @@ def test_resample_interpolation(uniform, interpolation, dtype, sample_rate):
 @pytest.mark.parametrize(
     ('interpolation', 'border_mode', 'expected_array'),
     [  # Exact values aren't important, we're just checking the values differ between modes
-        ('cubic', 'wrap', [0.0, 0.1839928, 0.75200433, 1.24799567, 1.8160072, 2.0]),
-        ('cubic', 'mirror', [0.0, 0.25599316, 0.76800391, 1.23199609, 1.74400684, 2.0]),
-        ('cubic', 'clamp', [0.0, 0.32799353, 0.78400348, 1.21599652, 1.67200647, 2.0]),
-        ('bspline', 'wrap', [0.5, 0.50799719, 0.80400287, 1.19599713, 1.49200281, 1.5]),
-        ('bspline', 'mirror', [0.3333333, 0.4719961, 0.8026696, 1.1973304, 1.52800391, 1.6666667]),
-        ('bspline', 'clamp', [0.16666667, 0.435995, 0.80133632, 1.19866368, 1.564005, 1.83333333]),
+        ('cubic', 'wrap', [0.359375, 0.0390625, 0.6796875, 1.3203125, 1.9609375, 1.640625]),
+        ('cubic', 'mirror', [0.109375, 0.109375, 0.703125, 1.296875, 1.890625, 1.890625]),
+        ('cubic', 'clamp', [-0.0703125, 0.1796875, 0.7265625, 1.2734375, 1.8203125, 2.0703125]),
+        ('bspline', 'wrap', [0.40625, -0.078125, 0.515625, 1.484375, 2.078125, 1.59375]),
+        ('bspline', 'mirror', [0.0859375, 0.0859375, 0.6328125, 1.3671875, 1.9140625, 1.9140625]),
+        ('bspline', 'clamp', [-0.115625, 0.184375, 0.703125, 1.296875, 1.815625, 2.115625]),
         ('bspline0', 'clamp', [0.0, 0.0, 1.0, 1.0, 2.0, 2.0]),
-        ('bspline9', 'clamp', [0.326433, 0.55864616, 0.84595512, 1.1540449, 1.44135384, 1.673567]),
+        ('bspline9', 'clamp', [-0.2413581, 0.149598, 0.6956133, 1.3043867, 1.850402, 2.2413581]),
     ],
 )
 def test_resample_border_mode(interpolation, border_mode, expected_array):
@@ -1415,6 +1436,30 @@ def test_resample_cell_data(uniform):
     assert np.allclose(uniform.bounds, resampled.bounds)
 
 
+@pytest.mark.parametrize(
+    'dimensions',
+    [(10, 10, 1), (10, 1, 1), (1, 1, 1), (5, 5, 1)],
+)
+def test_resample_dimensions_to_singleton(uniform, dimensions):
+    # Reducing a non-singleton axis to a single point requires a magnification
+    # factor of zero, which vtkImageResize silently ignores. Regression test for
+    # https://github.com/pyvista/pyvista/issues/8022
+    resampled = uniform.resample(dimensions=dimensions)
+    assert np.array_equal(resampled.dimensions, dimensions)
+
+
+def test_resample_dimensions_to_singleton_values():
+    # The collapsed axis is sampled at its center: a volume with five z-slices
+    # flattened to a single slice contains the values of the middle slice.
+    image = pv.ImageData(dimensions=(4, 4, 5))
+    image['v'] = np.arange(image.n_points, dtype=float)
+    resampled = image.resample(dimensions=(4, 4, 1))
+    assert np.array_equal(resampled.dimensions, (4, 4, 1))
+    middle_slice = image['v'].reshape(image.dimensions[::-1])[2].ravel()
+    assert np.array_equal(resampled.active_scalars, middle_slice)
+    assert np.allclose(resampled.origin, (0.0, 0.0, 2.0))
+
+
 def test_resample_inplace(uniform):
     resampled = uniform.resample()
     assert resampled is not uniform
@@ -1424,28 +1469,309 @@ def test_resample_inplace(uniform):
 
 def test_resample_raises(uniform):
     match = (
-        'Cannot specify a reference image along with `dimensions` or `sample_rate` parameters.\n'
-        '`reference_image` must define the geometry exclusively.'
+        'Cannot specify a reference image along with `sample_rate`, `dimensions`, `spacing`, '
+        'or `rounding_func` parameters.\n`reference_image` must define the geometry exclusively.'
     )
-    with pytest.raises(ValueError, match=re.escape(match)):
-        uniform.resample(sample_rate=2, reference_image=uniform)
-    with pytest.raises(ValueError, match=re.escape(match)):
-        uniform.resample(dimensions=(2, 2, 2), reference_image=uniform)
+    for kwargs in [
+        dict(sample_rate=2),
+        dict(dimensions=(2, 2, 2)),
+        dict(spacing=1.0),
+        dict(rounding_func=np.floor),
+    ]:
+        with pytest.raises(ValueError, match=re.escape(match)):
+            uniform.resample(reference_image=uniform, **kwargs)
 
     match = (
-        'Cannot specify a sample rate along with `reference_image` or `sample_rate` parameters.\n'
-        '`sample_rate` must define the sampling geometry exclusively.'
+        'Cannot specify `sample_rate` and `dimensions` together.\n'
+        'Only one of `sample_rate`, `dimensions`, or `spacing` may define the sampling geometry.'
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         uniform.resample(sample_rate=2, dimensions=(2, 2, 2))
+    match = 'Cannot specify `sample_rate` and `spacing` together.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        uniform.resample(sample_rate=2, spacing=1.0)
+    match = 'Cannot specify `sample_rate`, `dimensions` and `spacing` together.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        uniform.resample(sample_rate=2, dimensions=(2, 2, 2), spacing=1.0)
+    match = 'Cannot specify `dimensions` and `spacing` together.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        uniform.resample(dimensions=(2, 2, 2), spacing=1.0)
+
+    match = 'Cannot specify `rounding_func` along with the `dimensions` parameter.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        uniform.resample(dimensions=(2, 2, 2), rounding_func=np.floor)
+
+    match = 'spacing values must all be greater than 0.0.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        uniform.resample(spacing=0)
+    match = 'spacing must have finite values.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        uniform.resample(spacing=np.inf)
 
     match = '`extend_border` cannot be set when resampling cell data.'
     with pytest.raises(ValueError, match=re.escape(match)):
         uniform.resample(scalars='Spatial Cell Data', extend_border=True)
 
-    match = '`extend_border` cannot be set when a `image_reference` is provided.'
+    match = '`extend_border` cannot be set when a `reference_image` is provided.'
     with pytest.raises(ValueError, match=re.escape(match)):
         uniform.resample(reference_image=uniform, extend_border=True)
+
+    match = 'sample_rate must have finite values.'
+    for rate in [np.inf, np.nan]:
+        with pytest.raises(ValueError, match=re.escape(match)):
+            uniform.resample(sample_rate=rate)
+
+
+def test_resample_scalars_not_active():
+    image = pv.ImageData(dimensions=(3, 3, 1))
+    image['active'] = np.zeros(image.n_points)
+    image['other'] = np.arange(image.n_points, dtype=float)
+    image.set_active_scalars('active')
+
+    resampled = image.resample(2, scalars='other')
+    assert resampled.array_names == ['other']
+    assert resampled['other'].max() == image['other'].max()
+    assert image.active_scalars_name == 'active'
+
+
+def test_resample_reference_image_cell_data():
+    image = pv.ImageData(dimensions=(5, 5, 5))
+    image.cell_data['data'] = np.arange(image.n_cells, dtype=float)
+    reference = pv.ImageData(dimensions=(9, 9, 9), spacing=(0.5, 0.5, 0.5), origin=(1, 1, 1))
+
+    resampled = image.resample(reference_image=reference)
+    assert np.array_equal(resampled.dimensions, reference.dimensions)
+    assert np.allclose(resampled.spacing, reference.spacing)
+    assert np.allclose(resampled.origin, reference.origin)
+    assert np.allclose(resampled.bounds, reference.bounds)
+    assert resampled.array_names == ['data']
+
+
+def test_resample_cell_data_dimensions_raises():
+    image = pv.ImageData(dimensions=(5, 5, 5))
+    image.cell_data['data'] = np.arange(image.n_cells, dtype=float)
+    match = (
+        '`dimensions` must be at least 2 along each non-singleton axis when resampling cell data.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        image.resample(dimensions=(1, 5, 5))
+
+    match = (
+        '`reference_image` must have dimensions of at least 2 along each non-singleton axis '
+        'when resampling cell data.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        image.resample(reference_image=pv.ImageData(dimensions=(1, 5, 5)))
+
+
+def test_resample_extend_border_offset():
+    image = pv.ImageData(dimensions=(4, 4, 1), offset=(10, -3, 0))
+    image['data'] = np.arange(image.n_points, dtype=float)
+
+    resampled = image.resample(2)
+    assert np.array_equal(resampled.offset, image.offset)
+    assert np.allclose(resampled.points_to_cells().bounds, image.points_to_cells().bounds)
+
+
+def test_resample_cell_data_offset():
+    image = pv.ImageData(dimensions=(5, 5, 1), offset=(10, -3, 0))
+    image.cell_data['data'] = np.arange(image.n_cells, dtype=float)
+
+    resampled = image.resample(2)
+    assert np.array_equal(resampled.offset, image.offset)
+    assert np.allclose(resampled.bounds, image.bounds)
+
+
+@pytest.mark.parametrize('extend_border', [True, False])
+def test_resample_collapse_axis_spacing(extend_border):
+    image = pv.ImageData(dimensions=(4, 4, 4), spacing=(1, 2, 3))
+    image['data'] = np.arange(image.n_points, dtype=float)
+
+    resampled = image.resample(dimensions=(4, 4, 1), extend_border=extend_border)
+    assert np.array_equal(resampled.dimensions, (4, 4, 1))
+    expected_z_spacing = 12.0 if extend_border else 3.0
+    assert np.allclose(resampled.spacing, (1, 2, expected_z_spacing))
+
+
+@pytest.mark.parametrize('dtype', ['uint8', 'int32', 'uint32', 'int64', 'uint64', 'bool'])
+@pytest.mark.parametrize('interpolation', ['linear', 'bspline'])
+def test_resample_dtype(dtype, interpolation):
+    image = pv.ImageData(dimensions=(4, 4, 4))
+    values = np.arange(image.n_points) % 2 if dtype == 'bool' else np.arange(image.n_points)
+    image['data'] = values.astype(dtype)
+
+    resampled = image.resample(2, interpolation)
+    array = resampled['data']
+    assert array.dtype == dtype
+    if interpolation == 'linear':
+        assert array.min() == values.min()
+        assert array.max() == values.max()
+    else:
+        # B-spline overshoots slightly. Without clamping, an undershoot below zero wraps
+        # around to a huge value for the unsigned types.
+        overshoot = 5
+        assert int(array.min()) >= int(values.min()) - overshoot
+        assert int(array.max()) <= int(values.max()) + overshoot
+
+
+def test_resample_int64_rounding():
+    # 64-bit integers are cast to float for resampling and rounded like the other integers
+    image = pv.ImageData(dimensions=(3, 1, 1))
+    image['data'] = np.array([0, 3, 6], dtype=np.int32)
+    expected = image.resample(2, 'linear')['data']
+    image['data'] = np.array([0, 3, 6], dtype=np.int64)
+    assert np.array_equal(image.resample(2, 'linear')['data'], expected)
+
+
+@pytest.mark.parametrize('border_mode', ['clamp', 'wrap', 'mirror'])
+def test_resample_bspline_interpolates(border_mode):
+    # Cubic B-spline interpolation reproduces the input values at the input points
+    rng = np.random.default_rng(0)
+    image = pv.ImageData(dimensions=(16, 1, 1))
+    image['data'] = rng.random(16)
+    kwargs = dict(dimensions=(31, 1, 1), border_mode=border_mode, extend_border=False)
+
+    resampled = image.resample(interpolation='bspline', **kwargs)
+    assert np.allclose(resampled['data'][::2], image['data'])
+    # The spline degree changes the result
+    resampled5 = image.resample(interpolation='bspline5', **kwargs)
+    assert not np.allclose(resampled5['data'], resampled['data'])
+
+
+def test_resample_anti_aliasing_per_axis():
+    # Only down-sampled axes are blurred
+    image = pv.ImageData(dimensions=(8, 8, 1))
+    image['data'] = np.repeat(np.arange(8.0), 8)  # varies along y only
+
+    def resample(sample_rate, **kwargs):
+        return image.resample(sample_rate, 'linear', **kwargs)['data']
+
+    assert np.allclose(resample((0.5, 1, 1), anti_aliasing=True), resample((0.5, 1, 1)))
+    assert not np.allclose(resample((1, 0.5, 1), anti_aliasing=True), resample((1, 0.5, 1)))
+
+
+def test_resample_values_at_point_locations():
+    # A linear ramp is reproduced exactly at the resampled point locations
+    image = pv.ImageData(dimensions=(3, 1, 1))
+    image['ramp'] = np.arange(3, dtype=float)
+
+    resampled = image.resample(2, 'linear')
+    x = resampled.points[:, 0]
+    assert np.allclose(x, [-0.25, 0.25, 0.75, 1.25, 1.75, 2.25])
+    assert np.allclose(resampled['ramp'], np.clip(x, 0, 2))
+
+
+def test_resample_fractional_dimensions():
+    image = pv.ImageData(dimensions=(233, 171, 1))
+    image['data'] = np.zeros(image.n_points)
+    # numpy.round sends 116.5 to 116 and 85.5 to 86 (half to even)
+    assert np.array_equal(image.resample(0.5).dimensions, (116, 86, 1))
+    assert np.array_equal(image.resample(0.29).dimensions, (68, 50, 1))
+    assert image.resample(0.5, rounding_func=np.floor).dimensions == (116, 85, 1)
+    assert image.resample(0.5, rounding_func=np.ceil).dimensions == (117, 86, 1)
+
+    # A rate whose product is an integer but computes just below it is not rounded down
+    image = pv.ImageData(dimensions=(100, 100, 1))
+    image['data'] = np.zeros(image.n_points)
+    assert 100 * 0.29 < 29.0
+    assert np.array_equal(image.resample(0.29).dimensions, (29, 29, 1))
+
+
+def test_resample_anti_aliasing_blur_width():
+    # The blur matches a Gaussian whose width is the sampling ratio's box filter
+    rng = np.random.default_rng(0)
+    image = pv.ImageData(dimensions=(64, 64, 1))
+    image['data'] = rng.random(image.n_points)
+    ratio = 8
+
+    expected = image.gaussian_smooth(
+        std_dev=(ratio / np.sqrt(12), ratio / np.sqrt(12), 0.0), radius_factor=3.0
+    ).resample(1 / ratio, 'linear')
+    actual = image.resample(1 / ratio, 'linear', anti_aliasing=True)
+    assert np.allclose(actual['data'], expected['data'])
+
+    # A fixed blur, as used before, is not equivalent
+    fixed = image.gaussian_smooth(std_dev=(2.0, 2.0, 0.0), radius_factor=3.0).resample(
+        1 / ratio, 'linear'
+    )
+    assert not np.allclose(actual['data'], fixed['data'])
+
+
+@pytest.mark.parametrize('extend_border', [True, False])
+def test_resample_spacing(extend_border):
+    image = pv.ImageData(dimensions=(3, 2, 1), spacing=(1.0, 2.0, 5.0))
+    image['data'] = np.zeros(image.n_points)
+    resampled = image.resample(spacing=(0.5, 1.0, 1.0), extend_border=extend_border)
+    # A border adds half a voxel at each end, so the spacing divides the cell bounds
+    expected_dimensions = (6, 4, 1) if extend_border else (5, 3, 1)
+    assert resampled.dimensions == expected_dimensions
+    assert resampled.spacing == (0.5, 1.0, 5.0)
+    expected_bounds = image.points_to_cells().bounds if extend_border else image.bounds
+    reference = resampled.points_to_cells() if extend_border else resampled
+    assert np.allclose(reference.bounds, expected_bounds)
+
+    # A scalar spacing is broadcast
+    assert image.resample(spacing=0.5).dimensions == (6, 8, 1)
+
+
+def test_resample_spacing_rounding():
+    image = pv.ImageData(dimensions=(3, 2, 1))
+    image['data'] = np.zeros(image.n_points)
+    # 3 / 0.7 = 4.29 and 2 / 0.7 = 2.86 intervals
+    assert image.resample(spacing=0.7).dimensions == (4, 3, 1)
+    assert image.resample(spacing=0.7, rounding_func=np.floor).dimensions == (4, 2, 1)
+    assert image.resample(spacing=0.7, rounding_func=np.ceil).dimensions == (5, 3, 1)
+    # The actual spacing is the cell bounds divided by the rounded dimensions
+    assert np.allclose(image.resample(spacing=0.7, rounding_func=np.ceil).spacing, (0.6, 2 / 3, 1))
+
+    # A custom callable receives the fractional dimensions
+    received = []
+
+    def rounding_func(dimensions):
+        received.append(np.array(dimensions))
+        return np.ceil(dimensions)
+
+    image.resample(spacing=0.7, rounding_func=rounding_func)
+    assert np.allclose(received[0], (3 / 0.7, 2 / 0.7, 1))
+    assert received[0].dtype.kind == 'f'
+
+    # Singleton axes are never resampled, whatever the callable returns
+    resampled = image.resample(spacing=0.5, rounding_func=lambda _: np.full(3, 5))
+    assert resampled.dimensions == (5, 5, 1)
+    assert resampled.spacing[2] == 1.0
+
+    match = 'rounding_func output must have integer-like values.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        image.resample(spacing=0.5, rounding_func=lambda d: np.asarray(d) + 0.5)
+
+
+def test_resample_spacing_cell_data():
+    image = pv.ImageData(dimensions=(4, 3, 3), spacing=(1.0, 1.0, 1.0))
+    image.cell_data['data'] = np.zeros(image.n_cells)
+    resampled = image.resample(spacing=0.5)
+    assert resampled.dimensions == (7, 5, 5)
+    assert resampled.spacing == (0.5, 0.5, 0.5)
+    assert resampled.bounds == image.bounds
+    assert resampled.cell_data.keys() == ['data']
+
+    match = (
+        '`spacing` is too large, it must keep at least one cell along each axis when '
+        'resampling cell data.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        image.resample(spacing=10)
+
+
+def test_resample_cell_data_sample_rate_raises():
+    image = pv.ImageData(dimensions=(5, 5, 5))
+    image.cell_data['data'] = np.arange(image.n_cells, dtype=float)
+
+    match = (
+        '`sample_rate` is too small, it must keep at least one cell along each axis when '
+        'resampling cell data.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        image.resample(0.1)
 
 
 def test_select_values(uniform):
@@ -1453,6 +1779,165 @@ def test_select_values(uniform):
     assert isinstance(selected, pv.ImageData)
     assert selected is not uniform
     assert np.allclose(selected.active_scalars, uniform.active_scalars)
+
+
+@pytest.mark.parametrize('replacement_value', [1, None])
+@pytest.mark.parametrize('fill_value', [0, None])
+def test_select_values_like_threshold(
+    frog_tissues,
+    replacement_value,
+    fill_value,
+):
+    rng = frog_tissues.get_data_range()
+
+    selected = frog_tissues.select_values(
+        ranges=rng,
+        replacement_value=replacement_value,
+        fill_value=fill_value,
+    )
+    thresholded = frog_tissues.image_threshold(
+        rng, in_value=replacement_value, out_value=fill_value
+    )
+
+    assert selected == thresholded
+
+
+@pytest.mark.parametrize(
+    'kwargs',
+    [
+        # multiple ranges excludes the fast path
+        dict(ranges=[[10, 20], [50, 60]]),
+        dict(ranges=[[10, 20], [50, 60]], invert=True),
+        # multiple values excludes the fast path
+        dict(values=[10, 20, 30]),
+        dict(values=[10, 20], preference='cell', scalars='Spatial Cell Data'),
+    ],
+)
+def test_select_values_slow_path(uniform, kwargs):
+    selected = uniform.select_values(
+        replacement_value=99,
+        fill_value=-1,
+        **kwargs,
+    )
+    assert isinstance(selected, pv.ImageData)
+    array_name = kwargs.get('scalars') or uniform.active_scalars_name
+    out_values = set(np.asarray(selected[array_name]).tolist())
+    assert out_values <= {99, -1}
+
+
+def test_select_values_fast_and_slow_path_match(uniform):
+    rng = [10, 20]
+    fast = uniform.select_values(ranges=rng, replacement_value=1, fill_value=-1)
+    # Use ``invert=True`` then re-invert to force the slow path with equivalent semantics
+    arr = uniform.active_scalars
+    expected_mask = (arr >= rng[0]) & (arr <= rng[1])
+    slow = uniform.select_values(
+        ranges=[[float('-inf'), rng[0] - 1], [rng[1] + 1, float('inf')]],
+        replacement_value=-1,
+        fill_value=1,
+    )
+    np.testing.assert_array_equal(
+        np.asarray(fast.active_scalars),
+        np.where(expected_mask, 1, -1).astype(fast.active_scalars.dtype),
+    )
+    np.testing.assert_array_equal(
+        np.asarray(slow.active_scalars),
+        np.where(expected_mask, 1, -1).astype(slow.active_scalars.dtype),
+    )
+
+
+@pytest.mark.parametrize(
+    'kwargs',
+    [
+        dict(ranges=[10, 20]),
+        dict(ranges=[10, 20], invert=True),
+        dict(values=[10]),
+        dict(ranges=[10, 20], scalars='Spatial Cell Data', preference='cell'),
+        dict(ranges=[[10, 20], [50, 60]]),
+        dict(values=[10, 20], scalars='Spatial Cell Data', preference='cell'),
+    ],
+)
+def test_select_values_passes_other_arrays(uniform, kwargs):
+    uniform.point_data['other_point'] = np.arange(uniform.n_points)
+    uniform.cell_data['other_cell'] = np.arange(uniform.n_cells)
+    name = kwargs.get('scalars', 'Spatial Point Data')
+    before = uniform[name].copy()
+
+    selected = uniform.select_values(**kwargs, replacement_value=1, fill_value=0)
+
+    assert set(selected.array_names) == set(uniform.array_names)
+    assert selected.active_scalars_name == name
+    assert np.array_equal(selected['other_point'], uniform['other_point'])
+    assert np.array_equal(selected['other_cell'], uniform['other_cell'])
+    assert np.array_equal(uniform[name], before)
+    assert set(np.unique(selected[name])) <= {0, 1}
+
+
+@pytest.mark.parametrize('replacement_value', [1, None])
+@pytest.mark.parametrize('fill_value', [0, None])
+@pytest.mark.parametrize('preference', ['point', 'cell'])
+def test_select_values_threshold_paths_match(uniform, preference, fill_value, replacement_value):
+    # Single selections use ``image_threshold``, the rest of these use numpy
+    name = 'Spatial Point Data' if preference == 'point' else 'Spatial Cell Data'
+    kwargs = dict(
+        scalars=name,
+        preference=preference,
+        fill_value=fill_value,
+        replacement_value=replacement_value,
+    )
+    lower, upper = 10, 20
+    within = uniform.select_values(ranges=[lower, upper], **kwargs)
+    within_numpy = uniform.select_values(ranges=[[lower, upper], [upper, upper]], **kwargs)
+    assert within == within_numpy
+
+    outside = uniform.select_values(ranges=[lower, upper], invert=True, **kwargs)
+    outside_numpy = uniform.select_values(
+        ranges=[[lower, upper], [upper, upper]], invert=True, **kwargs
+    )
+    assert outside == outside_numpy
+
+    value = uniform[name][0]
+    single = uniform.select_values(values=[value], **kwargs)
+    single_numpy = uniform.select_values(values=[value, value], **kwargs)
+    assert single == single_numpy
+    assert single == uniform.select_values(ranges=[value, value], **kwargs)
+
+
+@pytest.mark.parametrize(
+    ('dtype', 'kwargs', 'match'),
+    [
+        (np.uint16, dict(fill_value=-1), '`fill_value` -1 is out of range for uint16 scalars.'),
+        (
+            np.uint8,
+            dict(replacement_value=300),
+            '`replacement_value` 300 is out of range for uint8 scalars.',
+        ),
+        (
+            np.int8,
+            dict(fill_value=[0, 200]),
+            '`fill_value` [0, 200] is out of range for int8 scalars.',
+        ),
+    ],
+)
+@pytest.mark.parametrize('ranges', [[1, 2], [[1, 2], [3, 4]]])
+def test_select_values_value_out_of_range_raises(dtype, kwargs, match, ranges):
+    image = pv.ImageData(dimensions=(3, 3, 3))
+    image['data'] = np.arange(image.n_points, dtype=dtype)
+    with pytest.raises(ValueError, match=re.escape(match)):
+        image.select_values(ranges=ranges, **kwargs)
+
+
+def test_select_values_multi_component_fill_replacement():
+    image = pv.ImageData(dimensions=(4, 1, 1))
+    image['rgb'] = np.array([[0, 0, 0], [5, 6, 7], [8, 9, 10], [255, 255, 255]], dtype=np.uint8)
+    selected = image.select_values(
+        ranges=[5, 8], component_mode=0, replacement_value=[1, 2, 3], fill_value=[9, 9, 9]
+    )
+    assert selected['rgb'].dtype == np.uint8
+    assert np.array_equal(selected['rgb'], [[9, 9, 9], [1, 2, 3], [1, 2, 3], [9, 9, 9]])
+
+    selected = image.select_values(ranges=[5, 8], component_mode=0, fill_value=None)
+    assert np.array_equal(selected['rgb'], image['rgb'])
 
 
 def test_select_values_split(uniform):
@@ -1543,43 +2028,55 @@ CROP_TEST_CASES = {
         dict(factor=CROP_FACTOR),
         {},
         dict(background_value=0.0),
-        "['margin', 'offset', 'dimensions', 'extent', 'normalized_bounds', 'mask', "
-        "'padding', 'background_value']",
+        (
+            "['margin', 'offset', 'dimensions', 'extent', 'normalized_bounds', 'mask', "
+            "'padding', 'background_value']"
+        ),
     ),
     'margin': (
         dict(margin=MARGIN),
         {},
         dict(background_value=0.0),
-        "['factor', 'offset', 'dimensions', 'extent', 'normalized_bounds', 'mask', "
-        "'padding', 'background_value']",
+        (
+            "['factor', 'offset', 'dimensions', 'extent', 'normalized_bounds', 'mask', "
+            "'padding', 'background_value']"
+        ),
     ),
     'normalized_bounds': (
         dict(normalized_bounds=NORMALIZED_BOUNDS),
         {},
         dict(background_value=0.0),
-        "['factor', 'margin', 'offset', 'dimensions', 'extent', 'mask', 'padding', "
-        "'background_value']",
+        (
+            "['factor', 'margin', 'offset', 'dimensions', 'extent', 'mask', 'padding', "
+            "'background_value']"
+        ),
     ),
     'extent': (
         dict(extent=CROPPED_EXTENT),
         {},
         dict(background_value=0.0),
-        "['factor', 'margin', 'offset', 'dimensions', 'normalized_bounds', 'mask', "
-        "'padding', 'background_value']",
+        (
+            "['factor', 'margin', 'offset', 'dimensions', 'normalized_bounds', 'mask', "
+            "'padding', 'background_value']"
+        ),
     ),
     'dims_offset': (
         dict(dimensions=CROPPED_DIMENSIONS, offset=CROPPED_OFFSET),
         {},
         dict(background_value=0.0),
-        "['factor', 'margin', 'extent', 'normalized_bounds', 'mask', 'padding', "
-        "'background_value']",
+        (
+            "['factor', 'margin', 'extent', 'normalized_bounds', 'mask', 'padding', "
+            "'background_value']"
+        ),
     ),
     'dimensions': (
         dict(dimensions=CROPPED_DIMENSIONS),
         {},
         dict(background_value=0.0),
-        "['factor', 'margin', 'extent', 'normalized_bounds', 'mask', 'padding', "
-        "'background_value']",
+        (
+            "['factor', 'margin', 'extent', 'normalized_bounds', 'mask', 'padding', "
+            "'background_value']"
+        ),
     ),
     'mask': (
         dict(mask=MASK_ARRAY_NAME),
@@ -1822,6 +2319,16 @@ def test_crop_keep_dimensions(image2x2, fill_value):
 
     # Test field data is preserved
     assert cropped.user_dict == user_dict
+
+
+def test_crop_clips_to_the_image_extent(uncropped_image):
+    extent = uncropped_image.extent
+    oversized = (extent[0] - 5, extent[1] + 5, extent[2], extent[3], extent[4], extent[5])
+
+    cropped = uncropped_image.crop(extent=oversized)
+
+    assert cropped.extent == extent
+    assert cropped == uncropped_image.crop(extent=extent)
 
 
 def test_crop_raises():

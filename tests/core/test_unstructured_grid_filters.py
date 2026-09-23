@@ -127,3 +127,13 @@ def test_remove_unused_points(mesh_type, inplace):
     out = empty.remove_unused_points(inplace=inplace)
     assert (out is empty) == inplace
     assert out.array_names == [key]
+
+
+@pytest.mark.parametrize('inplace', [True, False])
+def test_remove_unused_points_keeps_subclass(inplace):
+    class _Grid(pv.UnstructuredGrid):
+        pass
+
+    mesh = _Grid(pv.Cube(clean=False).cast_to_unstructured_grid())
+    assert type(mesh.remove_unused_points(inplace=inplace)) is _Grid
+    assert type(_Grid().remove_unused_points(inplace=inplace)) is _Grid

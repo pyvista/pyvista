@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 from typing import TypedDict
 
 from pyvista._warn_external import warn_external
+from pyvista.core.utilities._registry_helpers import handler_source
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -20,6 +21,7 @@ class _InteractorStyleRegistryState(TypedDict):
     """Stored registry state used by tests."""
 
     custom: dict[str, InteractorStyleHandler]
+    custom_sources: dict[str, str]
     discovered: dict[str, InteractorStyleHandler]
     discovered_sources: dict[str, str]
     loaded: bool
@@ -42,6 +44,7 @@ _BUILTIN_INTERACTOR_STYLE_METHODS = {
 }
 
 _custom_interactor_styles: dict[str, InteractorStyleHandler] = {}
+_custom_interactor_style_sources: dict[str, str] = {}
 _discovered_entry_point_styles: dict[str, InteractorStyleHandler] = {}
 _discovered_entry_point_sources: dict[str, str] = {}
 _entry_points_loaded: bool = False
@@ -56,6 +59,7 @@ def _save_registry_state() -> _InteractorStyleRegistryState:
     """Snapshot the current registry state for later restoration."""
     return {
         'custom': _custom_interactor_styles.copy(),
+        'custom_sources': _custom_interactor_style_sources.copy(),
         'discovered': _discovered_entry_point_styles.copy(),
         'discovered_sources': _discovered_entry_point_sources.copy(),
         'loaded': _entry_points_loaded,
@@ -67,6 +71,8 @@ def _restore_registry_state(state: _InteractorStyleRegistryState) -> None:
     global _entry_points_loaded  # noqa: PLW0603
     _custom_interactor_styles.clear()
     _custom_interactor_styles.update(state['custom'])
+    _custom_interactor_style_sources.clear()
+    _custom_interactor_style_sources.update(state['custom_sources'])
     _discovered_entry_point_styles.clear()
     _discovered_entry_point_styles.update(state['discovered'])
     _discovered_entry_point_sources.clear()
@@ -74,7 +80,12 @@ def _restore_registry_state(state: _InteractorStyleRegistryState) -> None:
     _entry_points_loaded = state['loaded']
 
 
-def register_interactor_style(name: str, handler: InteractorStyleHandler) -> None:
+def register_interactor_style(
+    name: str,
+    handler: InteractorStyleHandler,
+    *,
+    override: bool = False,
+) -> None:
     """Register a custom interactor style.
 
     Parameters
@@ -90,11 +101,23 @@ def register_interactor_style(name: str, handler: InteractorStyleHandler) -> Non
         or any callable with signature ``handler(interactor)`` that
         returns an interactor style instance.
 
+    override : bool, default: False
+        If ``True``, allow registering a name that collides with a
+        built-in interactor style. Also silences the warning emitted
+        when replacing an existing custom registration.
+
     Raises
     ------
     ValueError
-        If ``name`` is empty or collides with a built-in PyVista
-        interactor style.
+        If ``name`` is empty, or collides with a built-in PyVista
+        interactor style and ``override`` is ``False``.
+
+    Warns
+    -----
+    UserWarning
+        If ``name`` already refers to a registered custom interactor
+        style. The new registration replaces the old one (last wins);
+        pass ``override=True`` to silence the warning.
 
     Examples
     --------
@@ -123,14 +146,22 @@ def register_interactor_style(name: str, handler: InteractorStyleHandler) -> Non
     if not normalized_name:
         msg = 'Interactor style name must not be empty.'
         raise ValueError(msg)
-    if normalized_name in _BUILTIN_INTERACTOR_STYLE_METHODS:
+    if not override and normalized_name in _BUILTIN_INTERACTOR_STYLE_METHODS:
         msg = (
             f'Cannot register custom interactor style "{normalized_name}": '
-            'collides with a built-in interactor style.'
+            'collides with a built-in interactor style. '
+            'Use override=True to replace it.'
         )
         raise ValueError(msg)
+    if not override and normalized_name in _custom_interactor_styles:
+        existing_source = _custom_interactor_style_sources.get(normalized_name, '<unknown>')
+        warn_external(
+            f'Registering interactor style "{normalized_name}" replaces an '
+            f'existing custom registration from {existing_source}.',
+        )
 
     _custom_interactor_styles[normalized_name] = handler
+    _custom_interactor_style_sources[normalized_name] = handler_source(handler)
 
 
 def _get_interactor_style_handler(name: str) -> str | InteractorStyleHandler | None:

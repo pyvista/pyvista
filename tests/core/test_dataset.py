@@ -4,14 +4,15 @@ from __future__ import annotations
 
 import math
 import re
+import sys
 from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista import examples
-from pyvista.core import _vtk_core as _vtk
 from pyvista.core import dataset as dataset_module
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.examples import load_airplane
@@ -117,13 +118,13 @@ def test_cell_data_bad_value(hexbeam):
         hexbeam.cell_data['new_array'] = np.arange(hexbeam.n_cells - 1)
 
 
-@pytest.mark.parametrize('empty_shape', [(0,), (-1, 0), (0, -1), (0, 0)])
+@pytest.mark.parametrize('empty_shape', [(0,), (0, 2), (-1, 0), (0, -1), (0, 0)])
 @pytest.mark.parametrize('attribute', ['point_data', 'cell_data', 'field_data'])
 @pytest.mark.parametrize('mesh_is_empty', [True, False])
 def test_point_cell_field_data_empty_array(uniform, attribute, empty_shape, mesh_is_empty):
     # Test that setting empty arrays is only allowed when the mesh is
     # empty OR when setting field data.
-    # Empty arrays with non-zero shape values are never allowed.
+    # Arrays with zero components are never allowed.
 
     mesh = pv.PolyData() if mesh_is_empty else uniform
 
@@ -151,24 +152,18 @@ def test_point_cell_field_data_empty_array(uniform, attribute, empty_shape, mesh
 
     # Test setting the array
     data = getattr(mesh, attribute)
-    if empty_shape in [(0,), (0, 0)] and (attribute == 'field_data' or mesh_is_empty):
+    has_components = 0 not in empty_shape[1:]
+    has_expected_length = attribute == 'field_data' or mesh_is_empty
+    if has_components and has_expected_length:
         # Special case, no error raised
         data['new_array'] = empty_array
         assert 'new_array' in data
         assert data['new_array'].size == 0
-        # Note: the output shape is always (0,) and may not match the input shape (bug?)
-        assert data['new_array'].shape == (0,)
+        assert data['new_array'].shape == empty_shape
     else:
         # Expect error for all other cases
         with pytest.raises(ValueError, match=r'Invalid array shape.'):
             data['new_array'] = empty_array
-
-
-def test_point_cell_data_single_scalar_no_exception_raised():
-    m = pv.PolyData([0, 0, 0.0])
-    m.point_data['foo'] = 1
-    m.cell_data['bar'] = 1
-    m['baz'] = 1
 
 
 def test_field_data(hexbeam):
@@ -203,29 +198,71 @@ def test_field_data(hexbeam):
 
 
 def test_field_data_string(hexbeam):
-    # test `mesh.field_data`
-    field_name = 'foo'
-    field_value = 'bar'
-    hexbeam.field_data[field_name] = field_value
-    returned = hexbeam.field_data[field_name]
-    assert returned == field_value
-    assert isinstance(returned, str)
+    field_value = ['I could', 'write', 'notes', 'here']
+    hexbeam.add_field_data(field_value, 'spam')
+    assert hexbeam.field_data['spam'].tolist() == field_value
 
-    # test `mesh.add_field_data`
-    field_name = 'eggs'
-    field_value = 'ham'
-    hexbeam.add_field_data(array=field_value, name=field_name)
-    returned = hexbeam.field_data[field_name]
-    assert returned == field_value
-    assert isinstance(returned, str)
+    hexbeam.field_data['foo'] = ['bar']
+    returned = hexbeam.field_data['foo']
+    assert isinstance(returned, np.ndarray)
+    assert returned.tolist() == ['bar']
 
-    # test `mesh[name] = data`
-    field_name = 'baz'
-    field_value = 'a' * hexbeam.n_points
-    hexbeam[field_name] = field_value
-    returned = hexbeam.field_data[field_name]
-    assert returned == field_value
-    assert isinstance(returned, str)
+
+SCALAR_VALUES = [1, 1.5, True, 'bar', np.float32(2.0), np.array(3)]
+BROADCAST_HINT = 'Use numpy.full or numpy.broadcast_to to create an array with one value per '
+
+
+@pytest.mark.parametrize('value', SCALAR_VALUES)
+@pytest.mark.parametrize(
+    ('attribute', 'hint'),
+    [
+        ('point_data', BROADCAST_HINT + 'point.'),
+        ('cell_data', BROADCAST_HINT + 'cell.'),
+        (
+            'field_data',
+            (
+                'Use user_dict to store scalar metadata, '
+                'or pass [value] to store a one-element array.'
+            ),
+        ),
+    ],
+)
+def test_set_scalar_deprecated(hexbeam, attribute, hint, value):
+    data = getattr(hexbeam, attribute)
+    match = f"Setting array 'foo' from a scalar is deprecated. {hint}"
+    with pytest.warns(PyVistaDeprecationWarning, match=re.escape(match)):
+        data['foo'] = value
+    expected_len = 1 if attribute == 'field_data' else data.valid_array_len
+    assert data['foo'].shape == (expected_len,)
+    assert np.all(data['foo'] == value)
+
+
+@pytest.mark.parametrize('value', SCALAR_VALUES)
+def test_add_field_data_scalar_deprecated(hexbeam, value):
+    match = (
+        "Setting array 'foo' from a scalar is deprecated. Use user_dict to store scalar "
+        'metadata, or pass [value] to store a one-element array.'
+    )
+    with pytest.warns(PyVistaDeprecationWarning, match=re.escape(match)):
+        hexbeam.add_field_data(value, 'foo')
+    assert hexbeam.field_data['foo'].tolist() == [value]
+
+
+@pytest.mark.parametrize('value', SCALAR_VALUES)
+def test_setitem_scalar_deprecated(hexbeam, value):
+    match = (
+        "Setting array 'foo' from a scalar is deprecated. Use numpy.full or numpy.broadcast_to "
+        'to set point or cell data, or use user_dict to store scalar metadata.'
+    )
+    with pytest.warns(PyVistaDeprecationWarning, match=re.escape(match)):
+        with pytest.raises(ValueError, match='Number of scalars'):
+            hexbeam['foo'] = value
+    assert 'foo' not in hexbeam.array_names
+
+    single_point = pv.PolyData([0.0, 0.0, 0.0])
+    with pytest.warns(PyVistaDeprecationWarning, match=re.escape(match)):
+        single_point['foo'] = value
+    assert single_point.point_data['foo'].tolist() == [value]
 
 
 @pytest.mark.parametrize('field', [range(5), np.ones((3, 3))[:, 0]])
@@ -253,6 +290,80 @@ def test_active_scalars_cell(hexbeam):
     assert hexbeam.active_scalars_info[1] == 'sample_cell_scalars'
 
 
+OBSERVATIONS = [
+    pytest.param(lambda _mesh: None, id='nothing'),
+    pytest.param(lambda mesh: mesh.active_scalars_info, id='scalars_info'),
+    pytest.param(lambda mesh: mesh.active_vectors_info, id='vectors_info'),
+    pytest.param(lambda mesh: mesh._repr_html_(), id='repr_html'),
+    pytest.param(lambda mesh: mesh.copy(deep=True), id='deep_copy'),
+    pytest.param(lambda mesh: mesh.copy(deep=False), id='shallow_copy'),
+]
+
+
+@pytest.mark.parametrize('observe', OBSERVATIONS)
+def test_active_scalars_is_not_decided_by_reading_it(hexbeam, observe):
+    """Reading the active arrays must not decide which array a later one activates."""
+    observe(hexbeam)
+
+    hexbeam['new_point_array'] = np.ones((hexbeam.n_points, 3))
+
+    assert hexbeam.active_scalars_info.name == 'new_point_array'
+    assert hexbeam.active_scalars_info.association == pv.FieldAssociation.POINT
+
+
+@pytest.mark.parametrize('observe', OBSERVATIONS)
+def test_active_vectors_is_not_decided_by_reading_it(hexbeam, observe):
+    """The point vectors win over the cell vectors however late they are activated."""
+    hexbeam.cell_data['cell_vectors'] = np.ones((hexbeam.n_cells, 3))
+    hexbeam.cell_data.active_vectors_name = 'cell_vectors'
+    observe(hexbeam)
+
+    hexbeam.point_data['point_vectors'] = np.ones((hexbeam.n_points, 3))
+    hexbeam.point_data.active_vectors_name = 'point_vectors'
+
+    assert hexbeam.active_vectors_info.name == 'point_vectors'
+    assert hexbeam.active_vectors_info.association == pv.FieldAssociation.POINT
+    assert hexbeam.active_vectors.shape == (hexbeam.n_points, 3)
+
+
+@pytest.mark.parametrize('deep', [True, False], ids=['deep', 'shallow'])
+def test_active_scalars_keeps_an_explicit_choice(hexbeam, deep):
+    """An array chosen explicitly stays active when a new array is added, and is copied."""
+    hexbeam.set_active_scalars('sample_cell_scalars')
+
+    hexbeam['new_point_array'] = np.ones(hexbeam.n_points)
+    duplicate = hexbeam.copy(deep=deep)
+
+    for mesh in (hexbeam, duplicate):
+        assert mesh.active_scalars_info.name == 'sample_cell_scalars'
+        assert mesh.active_scalars_info.association == pv.FieldAssociation.CELL
+
+
+@pytest.mark.parametrize('deep', [True, False], ids=['deep', 'shallow'])
+def test_active_scalars_preference_survives_copy(hexbeam, deep):
+    """The preference between same-named arrays is copied, and the copy can change its own."""
+    hexbeam.point_data['data'] = np.arange(hexbeam.n_points)
+    hexbeam.cell_data['data'] = np.arange(hexbeam.n_cells)
+    hexbeam.set_active_scalars('data', preference='cell')
+
+    duplicate = hexbeam.copy(deep=deep)
+    assert duplicate.active_scalars_info.association == pv.FieldAssociation.CELL
+    duplicate.set_active_scalars('data', preference='point')
+
+    assert hexbeam.active_scalars_info.association == pv.FieldAssociation.CELL
+    assert hexbeam.active_scalars.shape == (hexbeam.n_cells,)
+    assert duplicate.active_scalars_info.association == pv.FieldAssociation.POINT
+    assert duplicate.active_scalars.shape == (duplicate.n_points,)
+
+
+def test_filter_output_resolves_its_own_active_scalars(hexbeam):
+    """A filter output resolves the array the filter activated when the input chose none."""
+    elevated = hexbeam.elevation()
+
+    assert elevated.active_scalars_info.name == 'Elevation'
+    assert elevated.active_scalars_info.association == pv.FieldAssociation.POINT
+
+
 def test_field_data_bad_value(hexbeam):
     with pytest.raises(TypeError):
         hexbeam.field_data['new_array'] = None
@@ -272,6 +383,8 @@ def test_copy_metadata(globe):
     """Ensure metadata is copied correctly."""
     globe.point_data['bitarray'] = np.zeros(globe.n_points, dtype=bool)
     globe.point_data['complex_data'] = np.zeros(globe.n_points, dtype=np.complex128)
+    # chosen, so the active-array assertions below compare a name rather than None
+    globe.set_active_scalars('bitarray')
 
     globe_shallow = globe.copy(deep=False)
     assert globe_shallow._active_scalars_info is globe._active_scalars_info
@@ -420,10 +533,8 @@ def test_html_repr(hexbeam):
     assert hexbeam._repr_html_() is not None
 
 
-def test_html_repr_string_scalar(hexbeam):
-    array_data = 'data'
-    array_name = 'name'
-    hexbeam.add_field_data(array_data, array_name)
+def test_html_repr_string_array(hexbeam):
+    hexbeam.add_field_data(['data'], 'name')
     assert hexbeam._repr_html_() is not None
 
 
@@ -510,7 +621,7 @@ def test_arrows_ndim_raises(mocker: MockerFixture):
 
 def test_set_active_scalars_raises(mocker: MockerFixture):
     sphere = pv.Sphere(radius=math.pi)
-    sphere.point_data[(f := 'foo')] = 1
+    sphere.point_data[(f := 'foo')] = np.ones(sphere.n_points)
 
     m = mocker.patch.object(dataset_module, 'get_array_association')
     m.return_value = 1
@@ -524,7 +635,7 @@ def test_set_active_scalars_raises(mocker: MockerFixture):
 
 def test_set_active_scalars_raises_vtk(mocker: MockerFixture):
     sphere = pv.Sphere(radius=math.pi)
-    sphere.point_data[(f := 'foo')] = 1
+    sphere.point_data[(f := 'foo')] = np.ones(sphere.n_points)
 
     m = mocker.patch.object(sphere, 'GetPointData')
     m().SetActiveScalars.return_value = -1
@@ -714,7 +825,7 @@ def test_rename_array_doesnt_delete():
     mesh = make_mesh()
     was_deleted = [False]
 
-    def on_delete(*_):
+    def on_delete(*_):  # pragma: no cover -- asserted never invoked
         # Would be easier to throw an exception here but even though the exception gets printed to
         # stderr pytest reports the test passing. See #5246 .
         was_deleted[0] = True
@@ -724,6 +835,56 @@ def test_rename_array_doesnt_delete():
     assert not was_deleted[0]
     mesh.point_data['renamed'].VTKObject.RemoveAllObservers()
     assert (mesh.point_data['renamed'] == 1).all()
+
+
+def test_rename_array_preserves_active_attributes():
+    # Regression test for issue #8746: renaming an array must not drop its active
+    # normals / texture coordinates / vectors / tensors designation, and must not
+    # promote the renamed array to the active scalars.
+    mesh = pv.Sphere()
+    n = mesh.n_points
+    point_data = mesh.point_data
+    point_data['my_normals'] = np.tile([0.0, 0.0, 1.0], (n, 1))
+    point_data.active_normals_name = 'my_normals'
+    point_data['my_tcoords'] = np.zeros((n, 2))
+    point_data.active_texture_coordinates_name = 'my_tcoords'
+    point_data['my_vectors'] = np.zeros((n, 3))
+    point_data.active_vectors_name = 'my_vectors'
+    point_data['my_tensors'] = np.zeros((n, 9))
+    mesh.active_tensors_name = 'my_tensors'
+    # Active normals/tcoords/vectors/tensors but explicitly NO active scalars:
+    # renaming must not add any.
+    point_data.active_scalars_name = None
+
+    def active_tensors_name():
+        # There is no attributes-level tensors accessor, and the dataset-level
+        # `active_tensors_name` reports stale state after a rename (see issue #8749),
+        # so read the actual state from VTK directly.
+        tensors = point_data.VTKObject.GetTensors()
+        return None if tensors is None else tensors.GetName()
+
+    # Sanity check the setup before renaming.
+    assert point_data.active_normals_name == 'my_normals'
+    assert point_data.active_texture_coordinates_name == 'my_tcoords'
+    assert point_data.active_vectors_name == 'my_vectors'
+    assert active_tensors_name() == 'my_tensors'
+    assert point_data.active_scalars_name is None
+    assert mesh.active_scalars_name is None
+
+    mesh.rename_array('my_normals', 'renamed_normals', preference='point')
+    mesh.rename_array('my_tcoords', 'renamed_tcoords', preference='point')
+    mesh.rename_array('my_vectors', 'renamed_vectors', preference='point')
+    mesh.rename_array('my_tensors', 'renamed_tensors', preference='point')
+
+    assert point_data.active_normals_name == 'renamed_normals'
+    assert point_data.active_normals is not None
+    assert point_data.active_texture_coordinates_name == 'renamed_tcoords'
+    assert point_data.active_texture_coordinates is not None
+    assert point_data.active_vectors_name == 'renamed_vectors'
+    assert point_data.active_vectors is not None
+    assert active_tensors_name() == 'renamed_tensors'
+    assert point_data.active_scalars_name is None
+    assert mesh.active_scalars_name is None
 
 
 def test_change_name_fail(hexbeam):
@@ -928,7 +1089,7 @@ def test_find_closest_cells():
     indices = mesh.find_closest_cell(fcent)
 
     # Make sure we match the face centers
-    assert np.allclose(indices, np.arange(mesh.n_faces_strict))
+    assert np.allclose(indices, np.arange(mesh.n_faces))
 
     # Make sure arg was not modified
     assert np.array_equal(fcent, fcent_copy)
@@ -996,6 +1157,106 @@ def test_find_cells_intersecting_line():
 
     with pytest.raises(TypeError):
         mesh.find_cells_intersecting_line([0, 0, 0.0], [1.0, 0])
+
+
+@pytest.mark.parametrize('points_dtype', [np.single, np.double])
+def test_intersect_with_line(points_dtype):
+    def assert_intersection_results(mesh_, points_, cell_ids_):
+        assert isinstance(points_, np.ndarray)
+        assert isinstance(cell_ids_, np.ndarray)
+        assert len(points_) == len(cell_ids_)
+        assert points_.dtype == mesh_.points.dtype
+        assert cell_ids_.dtype == np.int64
+        for idx in range(len(points_)):
+            cell = mesh_.get_cell(cell_ids_[idx])
+            point = points_[idx]
+            assert point in cell.points
+
+    # Manually create source to properly configure double precision points
+    source = _vtk.vtkSphereSource()
+    source.SetPhiResolution(10)
+    source.SetThetaResolution(10)
+    output_precision = (
+        _vtk.vtkAlgorithm.DOUBLE_PRECISION
+        if points_dtype == np.double
+        else _vtk.vtkAlgorithm.SINGLE_PRECISION
+    )
+    source.SetOutputPointsPrecision(output_precision)
+    source.Update()
+    mesh = pv.wrap(source.GetOutput())
+
+    assert mesh.points.dtype == points_dtype
+
+    # The exact value of pointb matters, see example from https://github.com/pyvista/pyvista/issues/8698
+    pointa = [0.0, 0, 5]
+    pointb = [0.0, 0, -1.687329400596207]
+    points, cell_ids = mesh.intersect_with_line(pointa, pointb)
+
+    expected_points = [
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+        [0.0, 0.0, -0.5],
+    ]
+    # Use a set since the exact order depends on the OS and the points precision
+    # The exact order doesn't matter here, and the cell-id matching the point is tested separately
+    lower_ids = set(range(10))
+    upper_ids = set(range(10, 20))
+    expected_cell_ids = lower_ids | upper_ids
+
+    assert np.allclose(points, expected_points)
+    assert set(cell_ids.tolist()) == expected_cell_ids
+    assert_intersection_results(mesh, points, cell_ids)
+
+    # Test again with deduplicated points
+    points, cell_ids = mesh.intersect_with_line(pointa, pointb, deduplicate_points=True)
+
+    expected_points = [[0.0, 0.0, 0.5], [0.0, 0.0, -0.5]]
+
+    assert_intersection_results(mesh, points, cell_ids)
+    assert np.allclose(points, expected_points)
+    # Only check cell id membership because the exact id returned depends on dtype and OS
+    assert cell_ids[0] in lower_ids
+    assert cell_ids[1] in upper_ids
+
+    # Test again with a tolerance of zero to show that zero tolerance can fail to properly
+    # locate both intersections (and therefore tolerance should not be zero by default)
+    points, cell_ids = mesh.intersect_with_line(
+        pointa, pointb, deduplicate_points=True, tolerance=0.0
+    )
+    assert points.ndim == 2
+    if sys.platform == 'darwin':
+        assert len(points) < 2
+    else:
+        assert len(points) == 2
+
+
+def test_build_locator_raises():
+    poly = pv.PolyData()
+    match = 'Building vtkStaticCellLocator requires a dataset with points and cells.'
+    with pytest.raises(ValueError, match=match):
+        _ = poly.intersect_with_line([0, 0, 0], [1, 1, 1])
+
+    poly = pv.PolyData()
+    match = 'Building vtkPointLocator requires a dataset with points.'
+    with pytest.raises(ValueError, match=match):
+        _ = poly.find_closest_point([0, 0, 0])
 
 
 def test_find_cells_within_bounds():
@@ -1106,8 +1367,7 @@ def test_actual_memory_size(hexbeam):
 
 
 def test_copy_structure(hexbeam):
-    classname = hexbeam.__class__.__name__
-    copy = eval(f'pv.{classname}')()
+    copy = type(hexbeam)()
     copy.copy_structure(hexbeam)
     assert copy.n_cells == hexbeam.n_cells
     assert copy.n_points == hexbeam.n_points
@@ -1128,8 +1388,7 @@ def test_copy_structure_self(datasets):
 
 
 def test_copy_attributes(hexbeam):
-    classname = hexbeam.__class__.__name__
-    copy = eval(f'pv.{classname}')()
+    copy = type(hexbeam)()
     copy.copy_attributes(hexbeam)
     assert copy.n_cells == 0
     assert copy.n_points == 0
@@ -1204,6 +1463,24 @@ def test_cast_to_pointset(sphere):
     assert not np.allclose(sphere.active_scalars, pointset.active_scalars)
 
 
+@pytest.mark.parametrize('cast', ['cast_to_pointset', 'cast_to_poly_points'])
+def test_cast_to_points_keeps_field_data(sphere, cast):
+    sphere.field_data['meta'] = [1.0, 2.0]
+    points = getattr(sphere, cast)()
+    assert np.allclose(points.field_data['meta'], [1.0, 2.0])
+    assert not np.may_share_memory(sphere.field_data['meta'], points.field_data['meta'])
+
+
+def test_cast_to_pointset_cell_scalars(sphere):
+    sphere.cell_data['cell_scalars'] = np.arange(sphere.n_cells)
+    sphere.set_active_scalars('cell_scalars')
+    pointset = sphere.cast_to_pointset()
+    assert isinstance(pointset, pv.PointSet)
+    assert pointset.active_scalars_name is None
+    pointset = sphere.cast_to_pointset(pass_cell_data=True)
+    assert pointset.active_scalars_name == 'cell_scalars'
+
+
 def test_cast_to_pointset_implicit(uniform):
     pointset = uniform.cast_to_pointset(pass_cell_data=True)
     assert isinstance(pointset, pv.PointSet)
@@ -1219,6 +1496,17 @@ def test_cast_to_pointset_implicit(uniform):
     for i, name in enumerate(uniform.point_data.keys()):
         pointset[name][:] = i
         assert not np.allclose(uniform[name], pointset[name])
+
+
+def test_cast_to_poly_points_cell_scalars(sphere):
+    sphere.cell_data['cell_scalars'] = np.arange(sphere.n_cells)
+    sphere.set_active_scalars('cell_scalars')
+    points = sphere.cast_to_poly_points()
+    assert isinstance(points, pv.PolyData)
+    assert points.active_scalars_name is None
+    points = sphere.cast_to_poly_points(pass_cell_data=True)
+    assert points.active_scalars_name == 'cell_scalars'
+    assert points.active_scalars_info.association == pv.FieldAssociation.CELL
 
 
 def test_cast_to_poly_points_implicit(uniform):
@@ -1257,7 +1545,11 @@ def test_explode(datasets):
     for dataset in datasets:
         out = dataset.explode()
         assert out.n_cells == dataset.n_cells
-        assert out.n_points > dataset.n_points
+        if dataset.n_cells == 0:
+            # no cells to separate, e.g. PointSet
+            assert out.n_points == dataset.n_points
+        else:
+            assert out.n_points > dataset.n_points
 
 
 def test_separate_cells(hexbeam):
@@ -1392,11 +1684,24 @@ def test_cell_point_neighbors_ids(grid: DataSet, i0):
         assert neighbor_points.isdisjoint(current_points)
 
 
+# The point ids of every cell's edges or faces, built once per grid since every
+# parametrization below walks all cells of the grid.
+_cell_point_sets_cache: dict[tuple[int, str], list[set[frozenset[int]]]] = {}
+
+
+def _cell_point_sets(grid: DataSet, parts: str) -> list[set[frozenset[int]]]:
+    key = (id(grid), parts)
+    if key not in _cell_point_sets_cache:
+        _cell_point_sets_cache[key] = [
+            {frozenset(part.point_ids) for part in getattr(cell, parts)} for cell in grid.cell
+        ]
+    return _cell_point_sets_cache[key]
+
+
 @pytest.mark.parametrize('grid', grids_cells, ids=ids_cells)
 @pytest.mark.parametrize('i0', i0s)
 def test_cell_edge_neighbors_ids(grid: DataSet, i0):
     cell_ids = grid.cell_neighbors(i0, 'edges')
-    cell = grid.get_cell(i0)
 
     assert isinstance(cell_ids, list)
     assert all(isinstance(id_, int) for id_ in cell_ids)
@@ -1405,30 +1710,15 @@ def test_cell_edge_neighbors_ids(grid: DataSet, i0):
 
     # Check that all the neighbors cells share at least one edge with the
     # current cell
-    current_points = set()
-    current_points.update(frozenset(e.point_ids) for e in cell.edges)
-
+    edge_points = _cell_point_sets(grid, 'edges')
+    current_points = edge_points[i0]
     for i in cell_ids:
-        neighbor_points = set()
-        neighbor_cell = grid.get_cell(i)
-
-        for ie in range(neighbor_cell.n_edges):
-            e = neighbor_cell.get_edge(ie)
-            neighbor_points.add(frozenset(e.point_ids))
-
-        assert not neighbor_points.isdisjoint(current_points)
+        assert not edge_points[i].isdisjoint(current_points)
 
     # Check that other cells do not share an edge with the current cell
     other_ids = [i for i in range(grid.n_cells) if (i not in cell_ids and i != i0)]
     for i in other_ids:
-        neighbor_points = set()
-        neighbor_cell = grid.get_cell(i)
-
-        for ie in range(neighbor_cell.n_edges):
-            e = neighbor_cell.get_edge(ie)
-            neighbor_points.add(frozenset(e.point_ids))
-
-        assert neighbor_points.isdisjoint(current_points)
+        assert edge_points[i].isdisjoint(current_points)
 
 
 # Slice grids since some do not contain faces
@@ -1436,7 +1726,6 @@ def test_cell_edge_neighbors_ids(grid: DataSet, i0):
 @pytest.mark.parametrize('i0', i0s)
 def test_cell_face_neighbors_ids(grid: DataSet, i0):
     cell_ids = grid.cell_neighbors(i0, 'faces')
-    cell = grid.get_cell(i0)
 
     assert isinstance(cell_ids, list)
     assert all(isinstance(id_, int) for id_ in cell_ids)
@@ -1445,30 +1734,15 @@ def test_cell_face_neighbors_ids(grid: DataSet, i0):
 
     # Check that all the neighbors cells share at least one face with the
     # current cell
-    current_points = set()
-    current_points.update(frozenset(f.point_ids) for f in cell.faces)
-
+    face_points = _cell_point_sets(grid, 'faces')
+    current_points = face_points[i0]
     for i in cell_ids:
-        neighbor_points = set()
-        neighbor_cell = grid.get_cell(i)
-
-        for ifa in range(neighbor_cell.n_faces):
-            f = neighbor_cell.get_face(ifa)
-            neighbor_points.add(frozenset(f.point_ids))
-
-        assert not neighbor_points.isdisjoint(current_points)
+        assert not face_points[i].isdisjoint(current_points)
 
     # Check that other cells do not share a face with the current cell
     other_ids = [i for i in range(grid.n_cells) if (i not in cell_ids and i != i0)]
     for i in other_ids:
-        neighbor_points = set()
-        neighbor_cell = grid.get_cell(i)
-
-        for ifa in range(neighbor_cell.n_faces):
-            f = neighbor_cell.get_face(ifa)
-            neighbor_points.add(frozenset(f.point_ids))
-
-        assert neighbor_points.isdisjoint(current_points)
+        assert face_points[i].isdisjoint(current_points)
 
 
 @pytest.mark.parametrize('grid', grids_cells, ids=ids_cells)
@@ -1495,7 +1769,9 @@ def test_cell_neighbors_levels(grid: DataSet, i0, n_levels, connections):
         assert set(cell_ids) == set(grid.cell_neighbors(i0, connections=connections))
 
     else:
-        assert len(list(cell_ids)) == n_levels
+        # `cell_ids` is a generator, so materialize it before asserting on it twice.
+        cell_ids = list(cell_ids)
+        assert len(cell_ids) == n_levels
         for ids in cell_ids:
             assert isinstance(ids, list)
             assert all(isinstance(id_, int) for id_ in ids)
@@ -1519,7 +1795,9 @@ def test_point_neighbors_levels(grid: DataSet, i0, n_levels):
         assert set(point_ids) == set(grid.point_neighbors(i0))
 
     else:
-        assert len(list(point_ids)) == n_levels
+        # `point_ids` is a generator, so materialize it before asserting on it twice.
+        point_ids = list(point_ids)
+        assert len(point_ids) == n_levels
         for ids in point_ids:
             assert isinstance(ids, list)
             assert all(isinstance(id_, int) for id_ in ids)
@@ -1532,13 +1810,8 @@ def mesh():
     return examples.load_globe()
 
 
-def test_active_array_info_deprecated():
-    match = 'ActiveArrayInfo is deprecated. Use ActiveArrayInfoTuple instead.'
-    with pytest.warns(PyVistaDeprecationWarning, match=match):
-        pv.core.dataset.ActiveArrayInfo(association=pv.FieldAssociation.POINT, name='name')
-    if pv._version.version_info[:2] > (0, 48):
-        msg = 'Remove this deprecated class'
-        raise RuntimeError(msg)
+def test_active_array_info_removed():
+    assert not hasattr(pv.core.dataset, 'ActiveArrayInfo')
 
 
 def test_dimensionality():
@@ -1596,8 +1869,8 @@ def test_dimensionality():
 
 
 @pytest.mark.parametrize('empty', [True, False])
-def test_min_max_cell_dimensionality(datasets_plus_pointset, empty):
-    for mesh in datasets_plus_pointset:
+def test_min_max_cell_dimensionality(datasets, empty):
+    for mesh in datasets:
         test_mesh = type(mesh)() if empty else mesh
         min_dimensionality = test_mesh.min_cell_dimensionality
         max_dimensionality = test_mesh.max_cell_dimensionality
@@ -1618,8 +1891,8 @@ def test_distinct_cell_types_unstructured_grid():
     assert distinct_cell_types == {pv.CellType.WEDGE, pv.CellType.QUAD}
 
 
-def test_distinct_cell_types_all_datasets(datasets_plus_pointset):
-    for dataset in datasets_plus_pointset:
+def test_distinct_cell_types_all_datasets(datasets):
+    for dataset in datasets:
         distinct_cell_types = dataset.distinct_cell_types
         assert all(isinstance(celltype, pv.CellType) for celltype in distinct_cell_types)
         if dataset.n_cells == 0:
@@ -1643,6 +1916,32 @@ def test_distinct_cell_types_dimensions(dimensions):
 
     structured = image.cast_to_structured_grid()
     assert_distinct_cell_types(structured)
+
+
+@pytest.mark.parametrize(
+    ('mesh_', 'expected_type'),
+    [
+        (examples.load_explicit_structured(), pv.CellType.HEXAHEDRON),
+        (examples.load_structured(), pv.CellType.QUAD),
+    ],
+)
+def test_distinct_cell_types_hidden_cells(mesh_, expected_type):
+    hidden = mesh_.hide_cells(range(mesh_.n_cells // 4, mesh_.n_cells // 2))
+
+    expected = {pv.CellType.EMPTY_CELL, expected_type}
+    assert hidden.distinct_cell_types == expected
+    assert {cell.type for cell in hidden.cell} == expected
+
+
+def test_min_max_cell_dimensionality_hidden_cells_legacy(monkeypatch):
+    # Simulate legacy VTK to exercise the `_distinct_cell_dimensions` fallback path.
+    monkeypatch.setattr(pv, 'vtk_version_info', (9, 0, 0))
+
+    mesh_ = examples.load_explicit_structured()
+    hidden = mesh_.hide_cells(range(mesh_.n_cells // 4, mesh_.n_cells // 2))
+
+    assert hidden.min_cell_dimensionality == 0
+    assert hidden.max_cell_dimensionality == 3
 
 
 def test_structured_grid_dimensionality():

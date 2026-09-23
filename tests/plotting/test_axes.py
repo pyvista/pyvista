@@ -1,17 +1,12 @@
 from __future__ import annotations
 
-import re
-
 import numpy as np
 import pytest
 
 import pyvista as pv
-from pyvista.plotting import _vtk
+from pyvista import _vtk
 from pyvista.plotting.opts import InterpolationType
 from pyvista.plotting.opts import RepresentationType
-
-# A large number of tests here fail gc
-pytestmark = pytest.mark.skip_check_gc
 
 
 @pytest.fixture
@@ -157,17 +152,35 @@ def test_axes_actor_labels_group(axes_actor):
     assert axes_actor.y_label == new_labels[1]
     assert axes_actor.z_label == new_labels[2]
 
-    match = 'Labels must be a list or tuple. Got abc instead.'
-    with pytest.raises(TypeError, match=match):
+    with pytest.raises(TypeError, match='Labels must be an instance of'):
         axes_actor.labels = 'abc'
 
-    match = "Labels must be a list or tuple with three items. Got ['1', '2'] instead."
-    with pytest.raises(ValueError, match=re.escape(match)):
+    with pytest.raises(ValueError, match='Labels must have a length equal to'):
         axes_actor.labels = ['1', '2']
 
 
-def test_axes_actor_properties():
-    prop = pv.ActorProperties(_vtk.vtkProperty())
+@pytest.mark.parametrize('axis', ['x', 'y', 'z'])
+@pytest.mark.parametrize('part', ['shaft', 'tip'])
+def test_axes_actor_properties(axes_actor, axis, part):
+    name = f'{axis}_axis_{part}_properties'
+    vtk_getter = getattr(axes_actor, f'Get{axis.upper()}Axis{part.title()}Property')
+
+    prop = getattr(axes_actor, name)
+    assert isinstance(prop, pv.Property)
+    assert vtk_getter() is prop
+    assert prop.color == getattr(pv.global_theme.axes, f'{axis}_color')
+    assert prop.interpolation == InterpolationType.GOURAUD
+
+    new_prop = pv.Property(color='purple')
+    setattr(axes_actor, name, new_prop)
+    assert getattr(axes_actor, name) is new_prop
+    assert vtk_getter() is new_prop
+
+
+def test_actor_properties_deprecated():
+    assert pv.version_info < (0, 52), 'Convert the `ActorProperties` deprecation to an error.'
+    with pytest.warns(pv.PyVistaDeprecationWarning, match='Use `pyvista.Property` instead'):
+        prop = pv.ActorProperties(_vtk.vtkProperty())
 
     prop.color = (1, 1, 1)
     assert prop.color == (1, 1, 1)

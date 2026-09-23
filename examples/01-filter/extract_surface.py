@@ -4,17 +4,16 @@
 Extract Surface
 ---------------
 
-You can extract the surface of nearly any object within ``pyvista``
-using the :meth:`~pyvista.DataObjectFilters.extract_surface` filter.
+Extract nearly any object surface with :meth:`~pyvista.DataObjectFilters.extract_surface`.
+
 """
 
 # sphinx_gallery_thumbnail_number = 2
 import numpy as np
 import pyvista as pv
-from pyvista import CellType
 
 # %%
-# Surface extraction of nonlinear cells
+# Surface Extraction of Nonlinear Cells
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Here we create a single :attr:`~pyvista.CellType.QUADRATIC_HEXAHEDRON` cell and then
 # extract its surface to demonstrate how to extract the surface of an
@@ -35,7 +34,7 @@ lin_pts = np.array(
 )
 
 # %%
-# Next, define the "midside" points of a quad cell. See the definition of a
+# Next, define the "mid-side" points of a quad cell. See the definition of a
 # :vtk:`vtkQuadraticHexahedron`.
 
 quad_pts = np.array(
@@ -65,13 +64,13 @@ pts = np.vstack((lin_pts, quad_pts))
 # %%
 # Create the grid
 cells = np.hstack((20, np.arange(20))).astype(np.int64, copy=False)
-celltypes = np.array([CellType.QUADRATIC_HEXAHEDRON])
+celltypes = np.array([pv.CellType.QUADRATIC_HEXAHEDRON])
 grid = pv.UnstructuredGrid(cells, celltypes, pts)
 
 # %%
 # Finally, extract the surface and plot it.
-# Note that the `'dataset_surface'` algorithm is necessary to use when generating surfaces
-# from non-linear cells. Setting ``algorithm=None`` also works.
+# Note that the ``'dataset_surface'`` algorithm is necessary to use when generating
+# surfaces from non-linear cells. Setting ``algorithm=None`` also works.
 surf = grid.extract_surface(algorithm='dataset_surface')
 surf.plot(show_scalar_bar=False)
 
@@ -82,7 +81,7 @@ surf.plot(show_scalar_bar=False)
 # generate a smooth surface based on the position of the
 # "mid-edge" nodes.  This allows the plotting of cells
 # containing curvature.  For additional reference, please see:
-# https://prod.sandia.gov/techlib-noauth/access-control.cgi/2004/041617.pdf
+# https://www.osti.gov/biblio/919127
 
 surf_subdivided = grid.extract_surface(
     algorithm='dataset_surface', nonlinear_subdivision=5
@@ -160,7 +159,7 @@ pl.show()
 
 grid = pv.ImageData(dimensions=(2, 2, 2))
 assert grid.n_cells == 1
-assert grid.distinct_cell_types == {CellType.VOXEL}
+assert grid.distinct_cell_types == {pv.CellType.VOXEL}
 assert grid.max_cell_dimensionality == 3
 
 # %%
@@ -169,12 +168,12 @@ assert grid.max_cell_dimensionality == 3
 
 poly_geometry = grid.extract_surface(algorithm='geometry')
 assert poly_geometry.n_cells == 6
-assert poly_geometry.distinct_cell_types == {CellType.QUAD}
+assert poly_geometry.distinct_cell_types == {pv.CellType.QUAD}
 assert poly_geometry.max_cell_dimensionality == 2
 
 poly_surface = grid.extract_surface(algorithm='dataset_surface')
 assert poly_surface.n_cells == 6
-assert poly_surface.distinct_cell_types == {CellType.QUAD}
+assert poly_surface.distinct_cell_types == {pv.CellType.QUAD}
 assert poly_geometry.max_cell_dimensionality == 2
 
 # %%
@@ -197,7 +196,7 @@ assert cleaned.n_points == 8
 assert cleaned.n_open_edges == 0
 
 # %%
-# Note that a closed surface is important for some calculations. E.g. the filter
+# Note that a closed surface is important for some calculations. For example, the filter
 # :meth:`~pyvista.DataSetFilters.select_interior_points` requires a closed surface by
 # default, and properties like :attr:`~pyvista.PolyData.volume` assume the input is a
 # closed surface.

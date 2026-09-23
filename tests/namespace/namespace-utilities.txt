@@ -183,14 +183,13 @@ set_default_active_scalars, <function set_default_active_scalars at 0x7f72f5e07e
 set_default_active_vectors, <function set_default_active_vectors at 0x7f72f5e07e50>
 set_error_output_file, <function set_error_output_file at 0x7f72f5cea3a0>
 sphinx_gallery, <module 'pyvista.utilities.sphinx_gallery' from 'pyvista/utilities/sphinx_gallery.py'>
-start_xvfb, <function start_xvfb at 0x7f72f5cb4940>
+# start_xvfb, <function start_xvfb at 0x7f72f5cb4940>
 surface_from_para, <function surface_from_para at 0x7f72f5cb4160>
 sys, <module 'sys' (built-in)>
 threaded, <function threaded at 0x7f72f5e07670>
 # trans_from_matrix, <function trans_from_matrix at 0x7f72f5e05ee0>
 transform_vectors_sph_to_cart, <function transform_vectors_sph_to_cart at 0x7f72f5d21280>
 transformations, <module 'pyvista.utilities.transformations' from 'pyvista/utilities/transformations.py'>
-translate, <function translate at 0x7f72f5d21940>
 try_callback, <function try_callback at 0x7f72f5e07550>
 vector_poly_data, <function vector_poly_data at 0x7f72f5e05e50>
 voxelize, <function voxelize at 0x7f72f5d210d0>
@@ -200,4 +199,4 @@ vtk_points, <function vtk_points at 0x7f72f5e05c10>
 vtkmatrix_from_array, <function vtkmatrix_from_array at 0x7f72f5e07040>
 wrap, <function wrap at 0x7f72f5e07160>
 wrappers, <module 'pyvista.utilities.wrappers' from 'pyvista/utilities/wrappers.py'>
-xvfb, <module 'pyvista.utilities.xvfb' from 'pyvista/utilities/xvfb.py'>
+# xvfb, <module 'pyvista.utilities.xvfb' from 'pyvista/utilities/xvfb.py'>

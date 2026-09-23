@@ -4,13 +4,16 @@
 Point Sprite Shapes
 ~~~~~~~~~~~~~~~~~~~
 
-By default, VTK renders points as squares. PyVista provides several
+By default, VTK renders points as squares.
+
+PyVista provides several
 built-in point sprite shapes that replace the default square with a
 custom shape via a GLSL fragment shader.
 
 The ``point_shape`` parameter can be passed directly to
 :func:`pyvista.Plotter.add_mesh` or set globally via
 :attr:`pyvista.global_theme.point_shape <pyvista.plotting.themes.Theme.point_shape>`.
+
 """
 
 # sphinx_gallery_start_ignore
@@ -53,7 +56,7 @@ pl.show()
 
 
 # %%
-# Using ``point_shape`` with ``add_mesh``
+# Using ``point_shape`` With ``add_mesh``
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The ``point_shape`` parameter works alongside ``point_size`` and
 # ``style='points'``. If ``render_points_as_spheres`` is ``True``

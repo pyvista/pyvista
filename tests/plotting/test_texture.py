@@ -4,8 +4,8 @@ import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista import examples
-from pyvista.plotting import _vtk
 from pyvista.plotting.texture import numpy_to_texture
 
 
@@ -33,6 +33,54 @@ def test_texture_empty_init():
     texture = pv.Texture()
     assert texture.dimensions == (0, 0)
     assert texture.n_components == 0
+
+
+def test_texture_not_abstract():
+    # Regression test: `Texture` must actually implement every `DataObject`
+    # abstractmethod, or type checkers correctly flag `pv.Texture()` as
+    # instantiating an abstract class even though it works at runtime.
+    assert not pv.Texture.__abstractmethods__
+
+
+def test_texture_is_empty():
+    assert pv.Texture().is_empty
+    assert not pv.Texture(examples.mapfile).is_empty
+
+
+def test_texture_empty_has_no_image():
+    with pytest.raises(ValueError, match='The texture is empty and has no image'):
+        pv.Texture().to_array()
+
+
+def test_texture_image_without_scalars():
+    texture = pv.Texture(pv.ImageData(dimensions=(2, 2, 1)))
+    with pytest.raises(ValueError, match='The texture image has no scalars'):
+        texture.to_array()
+
+
+def test_texture_copy_empty():
+    assert pv.Texture().copy().is_empty
+
+
+def test_texture_copy_shallow():
+    texture = pv.Texture(examples.mapfile)
+    shallow = texture.copy(deep=False)
+    assert shallow.dimensions == texture.dimensions
+
+
+def test_texture_get_data_range():
+    assert np.isnan(pv.Texture().get_data_range()).all()
+
+    texture = pv.Texture(np.zeros((2, 2, 1), dtype=np.uint8))
+    texture.to_image().point_data['Image'][0] = 255
+    assert texture.get_data_range() == (0, 255)
+    assert texture.get_data_range('Image') == (0, 255)
+
+
+def test_image_to_texture():
+    image = pv.ImageData(dimensions=(2, 2, 1))
+    texture = pv.image_to_texture(image)
+    assert isinstance(texture, pv.Texture)
 
 
 def test_texture_grayscale_init():
@@ -96,14 +144,32 @@ def test_texture_from_images(image):
 
 def test_skybox_example():
     texture = examples.load_globe_texture()
-    texture.cube_map = False
-    assert texture.cube_map is False
+    skybox = texture.to_skybox()
+    assert isinstance(skybox, _vtk.vtkOpenGLSkybox)
+    assert skybox.GetProjection() == 1
 
     texture.cube_map = True
     assert texture.cube_map is True
 
     skybox = texture.to_skybox()
     assert isinstance(skybox, _vtk.vtkOpenGLSkybox)
+    assert skybox.GetProjection() == 0
+
+
+def test_to_skybox_orients_floor():
+    texture = examples.load_globe_texture()
+    skybox = texture.to_skybox(
+        floor_plane=(0.0, 0.0, 1.0, 0.0),
+        floor_right=(1.0, 0.0, 0.0),
+    )
+    assert skybox.GetFloorPlane() == (0.0, 0.0, 1.0, 0.0)
+    assert skybox.GetFloorRight() == (1.0, 0.0, 0.0)
+
+
+def test_to_skybox_cube_projection_requires_cubemap():
+    texture = examples.load_globe_texture()
+    with pytest.raises(ValueError, match='Cube projection requires a cubemap texture'):
+        texture.to_skybox(projection='cube')
 
 
 def test_flip_x(texture):

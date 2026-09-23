@@ -1,22 +1,25 @@
 """
 .. _image_fft_perlin_noise_example:
 
-Fast Fourier Transform with Perlin Noise
+Fast Fourier Transform With Perlin Noise
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This example shows how to apply a Fast Fourier Transform (FFT) to a
-:class:`pyvista.ImageData` using :func:`pyvista.ImageDataFilters.fft`
-filter.
+Apply an FFT to a :class:`~pyvista.ImageData` sampled from Perlin noise.
+
+Uses the :func:`pyvista.ImageDataFilters.fft` filter.
 
 Here, we demonstrate FFT usage by first generating Perlin noise using
 :func:`pyvista.sample_function() <pyvista.core.utilities.features.sample_function>` to
 sample :func:`pyvista.perlin_noise <pyvista.core.utilities.features.perlin_noise>`,
 and then performing FFT of the sampled noise to show the frequency content of
 that noise.
+
 """
 
 import numpy as np
 import pyvista as pv
+
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 
 # %%
 # Generate Perlin Noise
@@ -70,6 +73,7 @@ subset = sampled_fft.extract_subset((0, xdim // 2, 0, ydim // 2, 0, 0))
 subset['scalars'] = np.abs(subset.active_scalars)
 warped_subset = subset.warp_by_scalar(factor=0.0001)
 
+PYVISTA_GALLERY_FORCE_STATIC = False
 pl = pv.Plotter(lighting='three lights')
 pl.add_mesh(warped_subset, cmap='blues', show_scalar_bar=False)
 pl.show_bounds(
@@ -188,7 +192,7 @@ init_mesh = warp_low_pass_noise(1e-2)
 pl.add_mesh(init_mesh, show_scalar_bar=False, lighting=False, n_colors=128)
 pl.camera.zoom(1.3)
 
-for freq in np.geomspace(1e-2, 10, 25):
+for freq in np.geomspace(1e-2, 10, 15):
     pl.clear()
     mesh = warp_low_pass_noise(freq)
     pl.add_mesh(mesh, show_scalar_bar=False, lighting=False, n_colors=128)
@@ -196,7 +200,7 @@ for freq in np.geomspace(1e-2, 10, 25):
     pl.write_frame()
 
 # write the last frame a few times to "pause" the gif
-for _ in range(10):
+for _ in range(5):
     pl.write_frame()
 
 pl.close()

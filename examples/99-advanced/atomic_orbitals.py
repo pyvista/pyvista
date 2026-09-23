@@ -3,6 +3,7 @@
 
 Plot Atomic Orbitals
 --------------------
+
 Visualize the wave functions (orbitals) of the hydrogen atom.
 
 """
@@ -109,7 +110,7 @@ contours.plot(
 
 
 # %%
-# Volumetric Plot: Plot the Orbitals using RGBA
+# Volumetric Plot: Plot the Orbitals Using RGBA
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Let's now combine some of the best parts of the two above plots. The
 # volumetric plot is great for showing the probability of the "electron cloud"
@@ -168,7 +169,7 @@ plot_orbital(hydro_orbital, clip_plane='-x')
 
 
 # %%
-# Volumetric Plot: :math:`4d_{z^2}` orbital
+# Volumetric Plot: :math:`4d_{z^2}` Orbital
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # sphinx_gallery_start_ignore
@@ -180,7 +181,7 @@ plot_orbital(hydro_orbital, clip_plane='-y')
 
 
 # %%
-# Volumetric Plot: :math:`4d_{xz}` orbital
+# Volumetric Plot: :math:`4d_{xz}` Orbital
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # sphinx_gallery_start_ignore
@@ -221,7 +222,7 @@ point_cloud['phase'] = hydro_orbital['real_wf'][indices] < 0
 # Turn the point cloud into individual spheres. We do this so we can improve
 # the plot by enabling surface space ambient occlusion (SSAO)
 dplot = point_cloud.glyph(
-    geom=pv.Sphere(theta_resolution=8, phi_resolution=8),
+    geom=pv.Sphere(theta_resolution=6, phi_resolution=6),
     scale=False,
     orient=False,
 )

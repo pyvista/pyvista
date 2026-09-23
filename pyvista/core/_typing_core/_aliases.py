@@ -8,7 +8,7 @@ from typing import Literal
 from typing import NamedTuple
 from typing import Union
 
-from pyvista.core import _vtk_core as _vtk
+from pyvista import _vtk
 
 from ._array_like import NumberType
 from ._array_like import _ArrayLike
@@ -16,7 +16,7 @@ from ._array_like import _ArrayLike1D
 from ._array_like import _ArrayLike2D
 
 if TYPE_CHECKING or os.environ.get(
-    'PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'
+    '_PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'
 ):  # pragma: no cover
     try:
         from scipy.spatial.transform import Rotation

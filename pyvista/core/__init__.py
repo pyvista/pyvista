@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from . import _vtk_core as _vtk_core
 from ._typing_core import *
 from .cell import Cell as Cell
 from .cell import CellArray as CellArray
 from .celltype import CellType as CellType
 from .composite import MultiBlock as MultiBlock
+from .config import global_config as global_config
 from .dataobject import DataObject as DataObject
 from .dataset import DataSet as DataSet
 from .datasetattributes import DataSetAttributes as DataSetAttributes
@@ -20,6 +20,7 @@ from .errors import NotAllTrianglesError as NotAllTrianglesError
 from .errors import PointSetCellOperationError as PointSetCellOperationError
 from .errors import PointSetDimensionReductionError as PointSetDimensionReductionError
 from .errors import PointSetNotSupported as PointSetNotSupported
+from .errors import PrecisionWarning as PrecisionWarning
 from .errors import PyVistaAttributeError as PyVistaAttributeError
 from .errors import PyVistaDeprecationWarning as PyVistaDeprecationWarning
 from .errors import PyVistaEfficiencyWarning as PyVistaEfficiencyWarning

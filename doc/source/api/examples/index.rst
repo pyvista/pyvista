@@ -1,5 +1,7 @@
-Examples
-========
+.. _examples_api:
+
+Examples & Datasets
+===================
 
 .. currentmodule:: pyvista
 
@@ -44,6 +46,61 @@ See the API reference for more downloads:
 
    examples.downloads
 
+Planets
+-------
+Examples of planets and celestial bodies are also included. See the
+API reference for details:
+
+.. autosummary::
+   :toctree: _autosummary
+
+   examples.planets
+
+Any Example
+-----------
+:func:`~pyvista.examples.get_example` looks up any built-in, downloadable, or
+planetary example by name and returns an :class:`~pyvista.examples.Example`: its
+files, where they came from, and the readers for them.
+:meth:`~pyvista.examples.Example.load` reads the dataset.
+
+.. pyvista-plot::
+
+   >>> from pyvista import examples
+   >>> mesh = examples.get_example('bunny').load()
+   >>> mesh.plot()
+
+See the API reference for details:
+
+.. autosummary::
+   :toctree: _autosummary
+
+   examples.get_example
+   examples.Example
+
+Dataset Gallery
+---------------
+Most of PyVista's datasets are showcased in the dataset gallery.
+You can browse the gallery to find a particular kind of dataset and
+view file and instance metadata for all datasets.
+
+.. toctree::
+   :maxdepth: 3
+
+   /api/examples/dataset_gallery
+
+Cells
+-----
+Many examples of VTK :class:`cell types <pyvista.CellType>` are
+available. These functions create single-cell :class:`pyvista.UnstructuredGrid`
+objects which can be useful for learning about the different cells.
+
+See the API reference for details:
+
+.. autosummary::
+   :toctree: _autosummary
+
+   examples.cells
+
 Demos
 -----
 PyVista also contains some demos which can be used to quickly
@@ -62,58 +119,6 @@ See the API reference for more demos:
    :toctree: _autosummary
 
    demos.demos
-
-Planets
--------
-Examples of planets and celestial bodies are also included. See the
-API reference for details:
-
-.. autosummary::
-   :toctree: _autosummary
-
-   examples.planets
-
-3D Scene Datasets
------------------
-Some file formats are imported directly by the :class:`pyvista.Plotter`
-instead of using :func:`pyvista.read`. These formats represent 3D geometry,
-materials, and scene structure.
-
-Examples of file formats supported by PyVista include ``VRML``
-(VirtualReality Modeling Language), ``3DS`` (3D Studio), and
-``glTF`` (Graphics Library Transmission Format).
-See the API reference for details:
-
-.. autosummary::
-   :toctree: _autosummary
-
-   examples.vrml
-   examples.download_3ds
-   examples.gltf
-
-Cells
------
-Many examples of VTK :class:`cell types <pyvista.CellType>` are
-available. These functions create single-cell :class:`pyvista.UnstructuredGrid`
-objects which can be useful for learning about the different cells.
-
-See the API reference for details:
-
-.. autosummary::
-   :toctree: _autosummary
-
-   examples.cells
-
-Dataset Gallery
----------------
-Most of PyVista's datasets are showcased in the dataset gallery.
-You can browse the gallery to find a particular kind of dataset and
-view file and instance metadata for all datasets.
-
-.. toctree::
-   :maxdepth: 3
-
-   /api/examples/dataset_gallery
 
 Usage Considerations
 --------------------
@@ -158,22 +163,22 @@ You can clear out the local cache with :func:`examples.delete_downloads()
 <pyvista.examples.downloads.delete_downloads>` if needed.
 
 If you want to override this local cache path, set the
-``PYVISTA_USERDATA_PATH`` environment variable. This path must be writable.
+:envvar:`PYVISTA_USERDATA_PATH` environment variable. This path must be
+writable. See :ref:`configuration` for all environment variables.
 
 
 Data Sources
 ~~~~~~~~~~~~
-PyVista uses `pyvista/data <https://github.com/pyvista/data.git>`_ as
+PyVista uses `pyvista/data <https://github.com/pyvista/data>`_ as
 the main source for example data. If you do not have internet access or you
 prefer using a local or network directory instead, you can override this
-source with the ``VTK_DATA_PATH`` environment variable.
+source with the :envvar:`PYVISTA_DATA` environment variable.
 
 The following example first clones the git repository and then exports that
-directory to PyVista via ``VTK_DATA_PATH``. Note how the path ends in
-``'Data'`` since we need to specify the exact directory of the Data for
-``pooch``.
+directory to PyVista via ``PYVISTA_DATA``. ``Data`` is appended to the
+path if it does not already end in it.
 
 .. code-block:: bash
 
    git clone https://github.com/pyvista/data.git
-   export VTK_DATA_PATH=/home/alex/python/pyvista/data/Data
+   export PYVISTA_DATA=/home/alex/python/pyvista/data/Data

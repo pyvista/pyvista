@@ -6,11 +6,11 @@ import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista import examples
 from pyvista.core.errors import PointSetCellOperationError
 from pyvista.core.errors import PointSetDimensionReductionError
 from pyvista.core.errors import PointSetNotSupported
-from pyvista.plotting import _vtk
 
 
 def test_pointset_basic():
@@ -94,10 +94,14 @@ def test_cast_to_polydata(pointset, deep):
     data = np.linspace(0, 1, pointset.n_points)
     key = 'key'
     pointset.point_data[key] = data
+    pointset.field_data['meta'] = [1.0, 2.0]
 
     pdata = pointset.cast_to_polydata(deep=deep)
     assert isinstance(pdata, pv.PolyData)
     assert key in pdata.point_data
+    assert np.allclose(pdata.field_data['meta'], [1.0, 2.0])
+    pdata.field_data['meta'][:] = 0
+    assert np.allclose(pointset.field_data['meta'], [1.0, 2.0] if deep else [0.0, 0.0])
     assert np.allclose(pdata.point_data[key], pointset.point_data[key])
     pdata.point_data[key][:] = 0
     if deep:
@@ -172,6 +176,19 @@ def test_points_to_double():
     np_points = np.array([[1, 2, 3]], np.int64)
     pset = pv.PointSet(np_points, force_float=False)
     assert pset.points_to_double().points.dtype == np.double
+
+
+def test_points_to_single():
+    np_points = np.random.default_rng().random((10, 3))
+    pset = pv.PointSet(np_points)
+    assert pset.points.dtype == np.double
+
+    assert pset.points_to_single() is pset
+    assert pset.points.dtype == np.single
+    assert np.allclose(pset.points, np_points.astype(np.single))
+
+    # idempotent
+    assert pset.points_to_single().points.dtype == np.single
 
 
 def test_translate():
@@ -281,6 +298,13 @@ def test_delaunay_3d(pointset):
     assert out.n_cells > 10
 
 
+def test_reconstruct_surface():
+    cloud = pv.PointSet(pv.Sphere().points)
+    surf = cloud.reconstruct_surface()
+    assert isinstance(surf, pv.PolyData)
+    assert surf.is_all_triangles
+
+
 def test_raise_unsupported(pointset):
     with pytest.raises(PointSetNotSupported):
         pointset.contour()
@@ -296,6 +320,9 @@ def test_raise_unsupported(pointset):
 
     with pytest.raises(PointSetCellOperationError):
         pointset.decimate_boundary()
+
+    with pytest.raises(PointSetCellOperationError):
+        pointset.streamlines_evenly_spaced_2D()
 
     with pytest.raises(PointSetCellOperationError):
         pointset.find_cells_along_line()
@@ -336,6 +363,65 @@ def test_raise_unsupported(pointset):
     with pytest.raises(PointSetCellOperationError):
         with pytest.warns(pv.PyVistaDeprecationWarning):
             pointset.extract_geometry()
+
+    with pytest.raises(PointSetCellOperationError):
+        pointset.cell_validator()
+
+    with pytest.raises(PointSetCellOperationError):
+        pointset.extract_cells([0])
+
+    with pytest.raises(PointSetCellOperationError):
+        pointset.extract_cells_by_type([pv.CellType.VERTEX])
+
+    with pytest.raises(PointSetCellOperationError):
+        pointset.surface_indices()
+
+    with pytest.raises(PointSetCellOperationError):
+        pointset.compute_boundary_mesh_quality()
+
+    with pytest.raises(PointSetCellOperationError):
+        pointset.voxelize()
+
+    with pytest.raises(PointSetCellOperationError):
+        pointset.voxelize_binary_mask()
+
+    with pytest.raises(PointSetCellOperationError):
+        pointset.voxelize_rectilinear()
+
+    with pytest.raises(PointSetCellOperationError):
+        pointset.extract_all_edges()
+
+    with pytest.raises(PointSetCellOperationError):
+        pointset.compute_cell_sizes()
+
+    with pytest.raises(PointSetCellOperationError):
+        pointset.cell_quality()
+
+
+def test_remove_nan_cells_pointset():
+    cloud = pv.PointSet([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [2.0, 0.0, 0.0]])
+    cloud.point_data['data'] = [0.0, np.nan, 2.0]
+
+    removed = cloud.remove_nan_cells()
+
+    assert isinstance(removed, pv.PointSet)
+    assert removed.n_points == 2
+    assert not np.isnan(removed.point_data['data']).any()
+
+
+@pytest.mark.parametrize('as_composite', [True, False])
+def test_partition_pointset(as_composite):
+    cloud = pv.PointSet(np.random.default_rng(0).random((20, 3)))
+
+    partitioned = cloud.partition(2, as_composite=as_composite)
+
+    if as_composite:
+        assert isinstance(partitioned, pv.MultiBlock)
+        assert all(isinstance(block, pv.PointSet) for block in partitioned)
+        assert sum(block.n_points for block in partitioned) == cloud.n_points
+    else:
+        assert isinstance(partitioned, pv.PointSet)
+        assert partitioned.n_points == cloud.n_points
 
 
 def test_rotate_x():

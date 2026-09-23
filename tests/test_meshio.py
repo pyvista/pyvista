@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import pathlib
+from pathlib import Path
 
 import meshio
 import numpy as np
@@ -266,7 +266,7 @@ def test_meshio(request, mesh_in_name):
 
 
 def test_pathlib_read_write(tmpdir, sphere):
-    path = pathlib.Path(str(tmpdir.mkdir('tmpdir').join('tmp.vtk')))
+    path = Path(str(tmpdir.mkdir('tmpdir').join('tmp.vtk')))
     pv.save_meshio(path, sphere)
     assert path.is_file()
 

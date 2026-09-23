@@ -2,35 +2,44 @@
 
 from __future__ import annotations
 
-from itertools import cycle
+import itertools
 import sys
 from typing import TYPE_CHECKING
+from typing import Any
 import weakref
 
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
-from pyvista import vtk_version_info
-from pyvista._deprecate_positional_args import _deprecate_positional_args
+from pyvista import _vtk
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.arrays import convert_string_array
-from pyvista.core.utilities.misc import _check_range
 from pyvista.core.utilities.misc import _NoNewAttrMixin
 
-from . import _vtk
 from .colors import Color
 from .colors import get_cycler
 from .mapper import _BaseMapper
+from .mapper import _clim_has_no_bounds
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
     from collections.abc import Sequence
 
     import cycler
 
+    from pyvista import DataObject
     from pyvista import MultiBlock
+    from pyvista.core._typing_core import VectorLike
+    from pyvista.core.utilities.arrays import CellLiteral
+    from pyvista.core.utilities.arrays import PointLiteral
+    from pyvista.themes import Theme
 
     from ._typing import ColorLike
+    from ._typing import ColormapOptions
+    from ._typing import ScalarBarArgs
+    from .lookup_table import LookupTable
 
 
 class BlockAttributes(_NoNewAttrMixin):
@@ -87,38 +96,42 @@ class BlockAttributes(_NoNewAttrMixin):
 
     """
 
-    def __init__(self, block, attr):
+    def __init__(self, block: DataObject, attr: CompositeAttributes) -> None:
         """Initialize the block attributes class."""
         self._block = block
         self.__attr = weakref.ref(attr)
 
     @property
-    def _attr(self):
+    def _attr(self) -> CompositeAttributes:
         """Return the CompositeAttributes."""
-        return self.__attr()
+        attr = self.__attr()
+        if attr is None:  # pragma: no cover
+            msg = 'The mapper holding these block attributes has been deleted.'
+            raise RuntimeError(msg)
+        return attr
 
     @property
-    def _has_color(self):
+    def _has_color(self) -> bool:
         """Return if a block has its color set."""
         return self._attr.HasBlockColor(self._block)
 
     @property
-    def _has_visibility(self):
+    def _has_visibility(self) -> bool:
         """Return if a block has its visibility set."""
         return self._attr.HasBlockVisibility(self._block)
 
     @property
-    def _has_opacity(self):
+    def _has_opacity(self) -> bool:
         """Return if a block has its opacity set."""
         return self._attr.HasBlockOpacity(self._block)
 
     @property
-    def _has_pickable(self):
+    def _has_pickable(self) -> bool:
         """Return if a block has its pickability set."""
         return self._attr.HasBlockPickability(self._block)
 
     @property
-    def color(self):  # numpydoc ignore=RT01
+    def color(self) -> Color | None:  # numpydoc ignore=RT01
         """Get or set the color of a block.
 
         Examples
@@ -142,7 +155,7 @@ class BlockAttributes(_NoNewAttrMixin):
         return Color(tuple(self._attr.GetBlockColor(self._block)))
 
     @color.setter
-    def color(self, new_color):
+    def color(self, new_color: ColorLike | None) -> None:
         if new_color is None:
             self._attr.RemoveBlockColor(self._block)
             self._attr.Modified()
@@ -173,7 +186,7 @@ class BlockAttributes(_NoNewAttrMixin):
         return self._attr.GetBlockVisibility(self._block)
 
     @visible.setter
-    def visible(self, new_visible: bool | None):
+    def visible(self, new_visible: bool | None) -> None:
         if new_visible is None:
             self._attr.RemoveBlockVisibility(self._block)
             self._attr.Modified()
@@ -207,13 +220,13 @@ class BlockAttributes(_NoNewAttrMixin):
         return self._attr.GetBlockOpacity(self._block)
 
     @opacity.setter
-    def opacity(self, new_opacity: float | None):
+    def opacity(self, new_opacity: float | None) -> None:
         if new_opacity is None:
             self._attr.RemoveBlockOpacity(self._block)
             self._attr.Modified()
             return
 
-        _check_range(new_opacity, (0, 1), 'opacity')
+        _validation.check_range(new_opacity, [0.0, 1.0], name='opacity')
         self._attr.SetBlockOpacity(self._block, new_opacity)
 
     @property
@@ -244,14 +257,14 @@ class BlockAttributes(_NoNewAttrMixin):
         return self._attr.GetBlockPickability(self._block)
 
     @pickable.setter
-    def pickable(self, new_pickable: bool | None):
+    def pickable(self, new_pickable: bool | None) -> None:
         if new_pickable is None:
             self._attr.RemoveBlockPickability(self._block)
             self._attr.Modified()
             return
         self._attr.SetBlockPickability(self._block, new_pickable)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Representation of block properties."""
         return '\n'.join(
             [
@@ -322,13 +335,13 @@ class CompositeAttributes(
 
     """
 
-    def __init__(self, mapper, dataset):
+    def __init__(self, mapper: CompositePolyDataMapper, dataset: MultiBlock[Any] | None) -> None:
         """Initialize CompositeAttributes."""
         super().__init__()
         mapper.SetCompositeDataDisplayAttributes(self)
         self._dataset = dataset
 
-    def reset_visibilities(self):
+    def reset_visibilities(self) -> None:
         """Reset the visibility of all blocks.
 
         Examples
@@ -350,7 +363,7 @@ class CompositeAttributes(
         """
         self.RemoveBlockVisibilities()
 
-    def reset_pickabilities(self):
+    def reset_pickabilities(self) -> None:
         """Reset the pickability of all blocks.
 
         Examples
@@ -378,7 +391,7 @@ class CompositeAttributes(
         """
         self.RemoveBlockPickabilities()
 
-    def reset_colors(self):
+    def reset_colors(self) -> None:
         """Reset the color of all blocks.
 
         Examples
@@ -397,7 +410,7 @@ class CompositeAttributes(
         """
         self.RemoveBlockColors()
 
-    def reset_opacities(self):
+    def reset_opacities(self) -> None:
         """Reset the opacities of all blocks.
 
         Examples
@@ -419,7 +432,7 @@ class CompositeAttributes(
         """
         self.RemoveBlockOpacities()
 
-    def get_block(self, index):
+    def get_block(self, index: int) -> DataObject:
         """Return a block by its flat index.
 
         Parameters
@@ -489,38 +502,31 @@ class CompositeAttributes(
             raise KeyError(msg) from None
         return block
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int) -> BlockAttributes:
         """Return a block attribute by its flat index."""
         return BlockAttributes(self.get_block(index), self)
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Return the number of blocks in this dataset."""
-        from pyvista import MultiBlock  # avoid circular  # noqa: PLC0415
-
+        if self._dataset is None:
+            return 0
         # start with 1 as there is always a composite dataset and this is the
         # root of the tree
         cc = 1
         for dataset in self._dataset:
-            if isinstance(dataset, MultiBlock):
+            if isinstance(dataset, pv.MultiBlock):
                 cc += len(dataset) + 1  # include the block itself
             else:
                 cc += 1
         return cc
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[BlockAttributes]:
         """Return an iterator of all the block attributes."""
         for ii in range(len(self)):
             yield self[ii]
 
 
-class CompositePolyDataMapper(
-    _BaseMapper,
-    (
-        _vtk.vtkCompositePolyDataMapper  # type: ignore[misc]
-        if vtk_version_info >= (9, 3)
-        else _vtk.vtkCompositePolyDataMapper2
-    ),
-):
+class CompositePolyDataMapper(_BaseMapper, _vtk.vtkCompositePolyDataMapper):
     """Composite PolyData mapper.
 
     Parameters
@@ -544,14 +550,14 @@ class CompositePolyDataMapper(
 
     """
 
-    @_deprecate_positional_args(allowed=['dataset'])
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
-        dataset=None,
-        theme=None,
-        color_missing_with_nan=None,
-        interpolate_before_map=None,
-    ):
+        dataset: MultiBlock[Any] | None = None,
+        *,
+        theme: Theme | None = None,
+        color_missing_with_nan: bool | None = None,
+        interpolate_before_map: bool | None = None,
+    ) -> None:
         """Initialize this composite mapper."""
         super().__init__(theme=theme)
         # this must be added to set the color, opacity, and visibility of
@@ -567,7 +573,7 @@ class CompositePolyDataMapper(
         self._orig_scalars_name: str | None = None
 
     @property
-    def dataset(self) -> MultiBlock:  # numpydoc ignore=RT01
+    def dataset(self) -> MultiBlock[Any] | None:  # numpydoc ignore=RT01
         """Return the composite dataset assigned to this mapper.
 
         Examples
@@ -587,7 +593,7 @@ class CompositePolyDataMapper(
         return self._dataset
 
     @dataset.setter
-    def dataset(self, obj: MultiBlock):
+    def dataset(self, obj: MultiBlock[Any] | None) -> None:
         self.SetInputDataObject(obj)
         self._dataset = obj
         self._attr._dataset = obj
@@ -657,13 +663,13 @@ class CompositePolyDataMapper(
         return self.GetColorMissingArraysWithNanColor()
 
     @color_missing_with_nan.setter
-    def color_missing_with_nan(self, value: bool):
+    def color_missing_with_nan(self, value: bool) -> None:
         self.SetColorMissingArraysWithNanColor(value)
 
     def set_unique_colors(
         self,
         color_cycler: bool | str | cycler.Cycler[str, ColorLike] | Sequence[ColorLike] = True,  # noqa: FBT001, FBT002
-    ):
+    ) -> None:
         """Set each block of the dataset to a unique color.
 
         This uses ``matplotlib``'s color cycler by default.
@@ -698,31 +704,31 @@ class CompositePolyDataMapper(
         self.scalar_visibility = False
 
         if isinstance(color_cycler, bool):
-            colors = cycle(get_cycler('matplotlib'))
+            colors = itertools.cycle(get_cycler('matplotlib'))
         else:
-            colors = cycle(get_cycler(color_cycler))
+            colors = itertools.cycle(get_cycler(color_cycler))
 
         for attr in self.block_attr:
             attr.color = next(colors)['color']
 
-    @_deprecate_positional_args(allowed=['scalars_name'])
-    def set_scalars(  # noqa: PLR0917
+    def set_scalars(
         self,
-        scalars_name,
-        preference,
-        component,
-        annotations,
-        rgb,
-        scalar_bar_args,
-        n_colors,
-        nan_color,
-        above_color,
-        below_color,
-        clim,
-        cmap,
-        flip_scalars,
-        log_scale,
-    ):
+        scalars_name: str,
+        *,
+        preference: PointLiteral | CellLiteral,
+        component: int | None,
+        annotations: dict[float, str] | None,
+        rgb: bool | None,
+        scalar_bar_args: ScalarBarArgs,
+        n_colors: int,
+        nan_color: ColorLike | None,
+        above_color: ColorLike | None,
+        below_color: ColorLike | None,
+        clim: VectorLike[float] | None,
+        cmap: ColormapOptions | LookupTable | None,
+        flip_scalars: bool,
+        log_scale: bool,
+    ) -> ScalarBarArgs:
         """Set the scalars of the mapper.
 
         Parameters
@@ -797,7 +803,7 @@ class CompositePolyDataMapper(
             are installed, their colormaps can be specified by name.
 
         flip_scalars : bool
-            Flip direction of cmap. Most colormaps allow ``*_r``
+            Flip direction of ``cmap``. Most colormaps allow ``*_r``
             suffix to do this as well.
 
         log_scale : bool
@@ -811,9 +817,17 @@ class CompositePolyDataMapper(
             Dictionary of scalar bar arguments.
 
         """
+        if _clim_has_no_bounds(clim):
+            clim = None
+
+        dataset = self._dataset
+        if dataset is None:  # pragma: no cover
+            msg = 'Cannot set scalars without a dataset.'
+            raise ValueError(msg)
+
         self._orig_scalars_name = scalars_name
 
-        field, scalars_name, dtype = self._dataset._activate_plotting_scalars(
+        field, scalars_name, dtype = dataset._activate_plotting_scalars(
             scalars_name=scalars_name,
             preference=preference,
             component=component,
@@ -825,27 +839,30 @@ class CompositePolyDataMapper(
             self.color_mode = 'direct'
             return scalar_bar_args
         else:
-            self.scalar_map_mode = field.name.lower()
+            self.scalar_map_mode = field
 
         scalar_bar_args.setdefault('title', scalars_name)
 
-        if clim is None:
-            clim = self._dataset.get_data_range(scalars_name, allow_missing=True)
-        self.scalar_range = clim
-
-        if log_scale and clim[0] <= 0:
-            clim = [sys.float_info.min, clim[1]]
+        bool_scalars = dtype == np.bool_ and not isinstance(cmap, pv.LookupTable)
+        if bool_scalars:
+            scalar_range = (-0.5, 1.5)
+        else:
+            if clim is None:
+                clim = dataset.get_data_range(scalars_name, allow_missing=True)
+            scalar_range = (float(clim[0]), float(clim[1]))
+        if log_scale and scalar_range[0] <= 0:
+            scalar_range = (sys.float_info.min, scalar_range[1])
+        self.scalar_range = scalar_range
 
         if isinstance(cmap, pv.LookupTable):
             self.lookup_table = cmap
         else:
-            if dtype == np.bool_:
+            if bool_scalars:
                 cats = np.array([b'False', b'True'], dtype='|S5')
                 values = np.array([0, 1])
                 n_colors = 2
                 scalar_bar_args.setdefault('n_labels', 0)
                 self.lookup_table.SetAnnotations(convert_array(values), convert_string_array(cats))
-                clim = [-0.5, 1.5]
 
             self.lookup_table.log_scale = log_scale
 

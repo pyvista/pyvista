@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
@@ -9,10 +8,9 @@ import pytest
 import pyvista as pv
 from pyvista import Color
 from pyvista import LookupTable
-from pyvista.plotting import _vtk
-
-if TYPE_CHECKING:
-    from pytest_mock import MockerFixture
+from pyvista import _vtk
+from pyvista.core.utilities.arrays import convert_array
+from pyvista.core.utilities.arrays import convert_string_array
 
 
 @pytest.fixture
@@ -33,17 +31,18 @@ def test_cmap_values_raises():
         LookupTable(cmap='foo', values='bar')
 
 
-def test_call_raises(lut: LookupError, mocker: MockerFixture):
-    from pyvista.plotting import lookup_table
+def test_call_numpy_scalar(lut: LookupTable):
+    rgba = lut(np.float32(0.5))
+    assert rgba.shape == (1, 4)
+    assert np.array_equal(rgba, lut([0.5]))
 
-    m = mocker.patch.object(lookup_table, 'np')
-    m.array.side_effect = TypeError
 
+def test_call_raises(lut: LookupTable):
     with pytest.raises(
         TypeError,
         match=re.escape('LookupTable __call__ expects a single value or an iterable.'),
     ):
-        lut('foo')
+        lut(object())
 
 
 def test_values(lut):
@@ -61,7 +60,6 @@ def test_values(lut):
         lut.n_values = 10
 
 
-@pytest.mark.skip_check_gc
 def test_apply_cmap(lut):
     n_values = 5
     lut.cmap = 'reds'
@@ -72,7 +70,7 @@ def test_apply_cmap(lut):
 
 def test_init_cmap():
     new_lut = LookupTable('gray', n_values=2, flip=True)
-    assert np.allclose([[254, 255, 255, 255], [0, 0, 0, 255]], new_lut.values)
+    assert np.allclose([[255, 255, 255, 255], [0, 0, 0, 255]], new_lut.values)
 
 
 def test_init_values():
@@ -122,6 +120,16 @@ def test_annotations(lut):
     anno = {0: 'low', 0.5: 'medium', 1: 'high'}
     lut.annotations = anno
     assert lut.annotations == anno
+
+
+def test_annotations_from_arrays(lut):
+    values = np.array([0, 1, 5])
+    labels = np.array(['a', 'b', 'c'])
+    lut.SetAnnotations(convert_array(values), convert_string_array(labels))
+    assert lut.annotations == {0.0: 'a', 1.0: 'b', 5.0: 'c'}
+    # Fewer annotations than the array once held
+    lut.annotations = {2.5: 'x'}
+    assert lut.annotations == {2.5: 'x'}
 
 
 def test_value_range(lut, lut_w_cmap):
@@ -187,6 +195,30 @@ def test_above_range_color(lut):
     assert lut.above_range_color == pv.global_theme.above_range_color
 
 
+def test_range_opacity_is_none_without_color(lut):
+    assert lut.above_range_color is None
+    assert lut.above_range_opacity is None
+    assert lut.below_range_color is None
+    assert lut.below_range_opacity is None
+
+
+def test_range_opacity(lut):
+    lut.above_range_color = 'grey'
+    lut.above_range_opacity = 0.5
+    assert lut.above_range_opacity == 128
+
+    lut.below_range_color = 'grey'
+    lut.below_range_opacity = 0.5
+    assert lut.below_range_opacity == 128
+
+
+def test_nan_opacity(lut):
+    assert lut.nan_opacity == 255
+    lut.nan_color = 'grey'
+    lut.nan_opacity = 0.5
+    assert lut.nan_opacity == 128
+
+
 def test_ramp(lut):
     lut.ramp = 'linear'
     assert lut.ramp == 'linear'
@@ -227,7 +259,6 @@ def test_table_cmap_list(lut):
     assert lut.n_values == 3
 
 
-@pytest.mark.skip_check_gc
 def test_table_values_update(lut):
     lut.cmap = 'Greens'
     lut.values[:, -1] = np.linspace(0, 255, lut.n_values)
@@ -246,14 +277,53 @@ def test_map_value(lut):
 
 def test_call(lut):
     n_values = 10
-    arr = lut(np.linspace(0, 1, n_values))
+    values = np.linspace(0, 1, n_values)
+    arr = lut(values)
+    expected = np.array([lut.map_value(value) for value in values])
+
     assert isinstance(arr, np.ndarray)
-    assert arr.shape[0] == n_values
+    assert arr.shape == (n_values, 4)
+    assert np.allclose(arr, expected)
 
-    assert lut.map_value(0.5) == lut.map_value(0.5)
+
+def test_call_list(lut):
+    values = [0.0, 0.5, 1.0]
+    arr = lut(values)
+    expected = np.array([lut.map_value(value) for value in values])
+
+    assert arr.shape == (3, 4)
+    assert np.allclose(arr, expected)
 
 
-@pytest.mark.skip_check_gc
+def test_call_bool_array(lut):
+    values = np.array([False, True, False, True])
+    arr = lut(values)
+    expected = np.array([lut.map_value(value) for value in values])
+
+    assert arr.shape == (4, 4)
+    assert np.allclose(arr, expected)
+
+
+def test_call_vtk_array(lut):
+    values = np.linspace(0, 1, 10)
+    arr = lut(pv.convert_array(values))
+    expected = np.array([lut.map_value(value) for value in values])
+
+    assert arr.shape == (10, 4)
+    assert np.allclose(arr, expected)
+
+
+def test_call_scalar(lut):
+    assert lut(0.5) == lut.map_value(0.5)
+
+
+def test_named_opacity_matching_n_values():
+    lut = pv.LookupTable()
+    lut.apply_cmap('viridis', len('linear'))
+    lut.apply_opacity('linear')
+    assert np.array_equal(lut.values[:, -1], np.linspace(0, 255, lut.n_values, dtype=np.uint8))
+
+
 def test_custom_opacity(lut):
     values_copy = lut.values.copy()
     lut.apply_opacity('sigmoid')
@@ -282,3 +352,14 @@ def test_to_opacity_tf(lut, clamping):
     tf = lut.to_opacity_tf(clamping=clamping)
     assert isinstance(tf, _vtk.vtkPiecewiseFunction)
     assert tf.GetClamping() == int(clamping)
+
+
+def test_values_views_keep_table(lut):
+    values = lut.values
+    assert values.table.Get() is lut
+    assert values.VTKObject is lut.GetTable()
+    assert values[:2].table is values.table
+    assert values[:2].VTKObject is values.VTKObject
+    assert values.copy().table is None
+    assert values.copy().VTKObject is None
+    assert values.GetNumberOfTuples() == lut.n_values

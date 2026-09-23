@@ -5,19 +5,16 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import numpy as np
+import pandas as pd
+import pyarrow as pa
 import pytest
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista import examples
-from pyvista.core import _vtk_core as _vtk
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
-
-try:
-    import pandas as pd
-except ImportError:
-    pd = None
 
 
 def test_table_init(tmpdir):
@@ -188,7 +185,6 @@ def test_table_repr():
     assert isinstance(text, str)
 
 
-@pytest.mark.skipif(pd is None, reason='Requires Pandas')
 def test_table_pandas():
     nr, nc = 50, 3
     arrays = np.random.default_rng().random((nr, nc))
@@ -230,3 +226,66 @@ def test_from_dict_raises(mocker: MockerFixture):
         ValueError, match=r'Dictionary must contain only NumPy arrays with maximum of 2D.'
     ):
         pv.Table(dict(a=m))
+
+
+@pytest.mark.parametrize(
+    'array', [[1.0, 2.0], np.zeros((2, 2, 2))], ids=['list', 'three-dimensional']
+)
+def test_from_dict_raises_for_invalid_arrays(array):
+    with pytest.raises(
+        ValueError, match=r'Dictionary must contain only NumPy arrays with maximum of 2D.'
+    ):
+        pv.Table(dict(a=array))
+
+
+def test_table_to_arrow():
+    table = pv.Table({'a': np.arange(5, dtype=np.int64), 'b': np.linspace(0, 1, 5)})
+    arrow_table = table.to_arrow()
+    assert isinstance(arrow_table, pa.Table)
+    assert arrow_table.num_rows == 5
+    assert arrow_table.schema.names == ['a', 'b']
+    assert arrow_table.column('a').type == pa.int64()
+    assert np.array_equal(arrow_table.column('a').to_numpy(), np.arange(5))
+
+
+def test_table_arrow_c_stream_round_trip():
+    table = pv.Table({'a': np.arange(5, dtype=np.int64), 'b': np.linspace(0, 1, 5)})
+    consumed = pa.table(table)
+    assert consumed.equals(table.to_arrow())
+
+
+def test_table_arrow_c_stream_returns_pycapsule():
+    table = pv.Table({'a': np.arange(3, dtype=np.int32)})
+    capsule = table.__arrow_c_stream__()
+    assert type(capsule).__name__ == 'PyCapsule'
+
+
+def test_table_to_arrow_empty():
+    table = pv.Table()
+    arrow_table = table.to_arrow()
+    assert arrow_table.num_rows == 0
+    assert arrow_table.num_columns == 0
+
+
+@pytest.mark.parametrize(
+    'dtype',
+    [np.int32, np.int64, np.uint8, np.float32, np.float64],
+)
+def test_table_to_arrow_preserves_dtype(dtype):
+    expected = np.arange(5, dtype=dtype)
+    table = pv.Table({'col': expected})
+    arrow_table = table.to_arrow()
+    assert arrow_table.column('col').type == pa.from_numpy_dtype(dtype)
+    assert np.array_equal(arrow_table.column('col').to_numpy(), expected)
+
+
+def test_table_to_arrow_matches_to_pandas():
+    arrays = np.random.default_rng(seed=0).random((10, 3))
+    table = pv.Table(arrays)
+    pd.testing.assert_frame_equal(table.to_arrow().to_pandas(), table.to_pandas())
+
+
+def test_table_unused_kwargs_deprecated():
+    """Unused keyword arguments warn instead of being silently swallowed."""
+    with pytest.warns(pv.core.errors.PyVistaDeprecationWarning, match='unused keyword'):
+        pv.Table(np.zeros((3, 2)), bogus=1)

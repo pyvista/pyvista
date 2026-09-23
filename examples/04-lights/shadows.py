@@ -4,8 +4,10 @@
 Shadows
 ~~~~~~~
 
-Demonstrate the usage of lights and shadows in PyVista with :class:`~pyvista.Light`
-objects and the :meth:`~pyvista.Plotter.enable_shadows` plotting method.
+Demonstrate the usage of lights and shadows in PyVista.
+
+Uses :class:`~pyvista.Light` objects and :meth:`~pyvista.Plotter.enable_shadows`.
+
 """
 
 import numpy as np
@@ -14,13 +16,13 @@ import numpy as np
 import pyvista as pv
 from pyvista import examples
 
-mesh = examples.download_dragon()
+mesh = examples.download_bunny()
 mesh.rotate_x(90, inplace=True)
 mesh.rotate_z(120, inplace=True)
 
 
 # %%
-# Using two lights, plot the Stanford Dragon with shadows.
+# Using two lights, plot the Stanford Bunny with shadows.
 #
 # .. Note::
 #    VTK has known issues when rendering shadows on certain window
@@ -107,7 +109,7 @@ pl.show()
 
 
 # %%
-# Here, we use a lower shadow_attenuation value to demonstrate how the
+# Here, we use a lower ``shadow_attenuation`` value to demonstrate how the
 # light can travel through more planes.
 
 pl = pv.Plotter(lighting=None, window_size=(800, 800))

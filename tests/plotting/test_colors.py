@@ -16,14 +16,17 @@ import numpy as np
 import pytest
 
 import pyvista as pv
-from pyvista.plotting import _vtk
+from pyvista import _vtk
+from pyvista.plotting import colors as _colors_module
 from pyvista.plotting.colors import _ALL_COLORS_LITERAL
 from pyvista.plotting.colors import _CMCRAMERI_CMAPS
 from pyvista.plotting.colors import _CMOCEAN_CMAPS
 from pyvista.plotting.colors import _COLORCET_CMAPS
 from pyvista.plotting.colors import _MATPLOTLIB_CMAPS
+from pyvista.plotting.colors import COLOR_SCHEMES
 from pyvista.plotting.colors import _format_color_name
 from pyvista.plotting.colors import _formatted_hex_colors
+from pyvista.plotting.colors import _validate_color_sequence
 from pyvista.plotting.colors import color_scheme_to_cycler
 from pyvista.plotting.colors import get_cmap_safe
 from pyvista.plotting.colors import hex_colors
@@ -49,10 +52,97 @@ def test_get_cmap_safe(cmap):
     assert isinstance(get_cmap_safe(cmap), mpl.colors.Colormap)
 
 
+# Regression test for https://github.com/pyvista/pyvista/issues/8553
+# These names exist in both matplotlib and third-party colormap packages.
+# ``get_cmap_safe`` must return matplotlib's version so that rendering is
+# reproducible regardless of which optional packages happen to be installed.
+_SHADOWED_MATPLOTLIB_CMAPS = [
+    'coolwarm',
+    'coolwarm_r',
+    'gray',
+    'gray_r',
+    'rainbow',
+    'rainbow_r',
+    'berlin',
+    'berlin_r',
+    'managua',
+    'managua_r',
+    'vanimo',
+    'vanimo_r',
+]
+
+
+@pytest.mark.parametrize('name', _SHADOWED_MATPLOTLIB_CMAPS)
+def test_get_cmap_safe_prefers_matplotlib(name):
+    if name not in mpl.colormaps:
+        pytest.xfail(reason=f'Matplotlib is missing colormap {name!r}.')
+    resolved = get_cmap_safe(name)
+    expected = mpl.colormaps[name]
+    # Matplotlib returns fresh instances on each access, so compare sampled
+    # RGBA values rather than object identity.
+    xs = np.linspace(0, 1, 64)
+    np.testing.assert_allclose(resolved(xs), expected(xs))
+
+
+def test_get_cmap_safe_returns_independent_copies():
+    cached = _colors_module._get_matplotlib_cmap('viridis')
+    assert _colors_module._get_matplotlib_cmap('viridis') is cached
+    first = get_cmap_safe('viridis')
+    second = get_cmap_safe('viridis')
+    assert first is not second
+    assert first is not cached
+    assert second is not cached
+    xs = np.linspace(0, 1, 64)
+    np.testing.assert_allclose(first(xs), second(xs))
+
+
+def test_get_cmap_safe_third_party_unique_names():
+    # Names only in the 3rd-party packages still resolve through them.
+    if importlib.util.find_spec('colorcet'):
+        assert get_cmap_safe('fire').name == 'fire'
+    if importlib.util.find_spec('cmocean'):
+        assert get_cmap_safe('algae').name == 'algae'
+    if importlib.util.find_spec('cmcrameri'):
+        assert get_cmap_safe('batlow').name == 'batlow'
+
+
+def test_get_cmap_safe_missing_third_party_raises(monkeypatch):
+    # If the 3rd-party package is missing but the name is in the curated
+    # set, raise ModuleNotFoundError pointing the user to `pyvista[colormaps]`.
+    real_import_module = _colors_module.importlib.import_module
+
+    def fake_import_module(name, *args, **kwargs):
+        if name == 'colorcet':
+            raise ImportError(name)
+        return real_import_module(name, *args, **kwargs)
+
+    monkeypatch.setattr(_colors_module.importlib, 'import_module', fake_import_module)
+    with pytest.raises(ModuleNotFoundError, match='colorcet'):
+        get_cmap_safe('fire')
+
+
 @pytest.mark.parametrize('scheme', [object(), 1.0, None])
 def test_color_scheme_to_cycler_raises(scheme):
-    with pytest.raises(TypeError, match=f'Color scheme not understood: {scheme}'):
+    with pytest.raises(TypeError, match='Color scheme must be an instance of'):
         color_scheme_to_cycler(scheme=scheme)
+
+
+def test_color_scheme_to_cycler_raises_unknown_name():
+    with pytest.raises(ValueError, match="Color scheme 'nope' is not valid"):
+        color_scheme_to_cycler(scheme='nope')
+
+
+def test_color_scheme_to_cycler_input_forms():
+    def scheme_colors(scheme):
+        """Return the RGB tuples the scheme cycles through."""
+        return [pv.Color(entry['color']).int_rgb for entry in color_scheme_to_cycler(scheme)]
+
+    scheme_id = COLOR_SCHEMES['spectrum']['id']
+    series = _vtk.vtkColorSeries()
+    series.SetColorScheme(scheme_id)
+
+    assert scheme_colors(scheme_id) == scheme_colors('spectrum')
+    assert scheme_colors(series) == scheme_colors('spectrum')
 
 
 def test_color():
@@ -123,10 +213,26 @@ def test_color():
         c[4]  # Invalid integer index
 
 
+def test_color_from_dict_without_alpha():
+    assert pv.Color({'r': 0, 'g': 0, 'b': 255}) == pv.Color('blue')
+    assert pv.Color({'r': 0, 'g': 0, 'b': 255}, default_opacity=128).opacity == 128
+
+
+@pytest.mark.parametrize('dct', [{'r': 0, 'b': 255}, {'g': 0, 'b': 255}, {'r': 0}])
+def test_color_from_dict_missing_channel_raises(dct):
+    with pytest.raises(ValueError, match='Invalid color input'):
+        pv.Color(dct)
+
+
+@pytest.mark.parametrize('other', [5, None, object(), 'not_a_color'])
+def test_color_eq_not_a_color(other):
+    assert pv.Color('red') != other
+
+
 @pytest.mark.parametrize('opacity', [275, -50, 2.4, -1.2, '#zz'])
 def test_color_invalid_opacity(opacity):
     match = (
-        'Must be an integer, float or string.  For example:'
+        'Must be an integer, float, or string.  For example:'
         "\n\t\topacity='1.0'"
         "\n\t\topacity='255'"
         "\n\t\topacity='#FF'"
@@ -145,6 +251,8 @@ def test_color_invalid_opacity(opacity):
         (-0.5, 0, 0),
         (0, 0),
         '#hh0000',
+        '#ff',
+        '#ff00ff00ff',
         'invalid_name',
         {'invalid_name': 100},
     ],
@@ -230,7 +338,6 @@ def assert_color_in_annotations(name: str, invert: bool = False):
         assert name in _ALL_ANNOTATED_COLORS, msg
 
 
-@pytest.mark.skip_check_gc
 def test_css4_colors(css4_color):
     # Test value
     name, value = css4_color
@@ -250,7 +357,6 @@ def test_css4_colors(css4_color):
         assert_color_in_annotations(delimited_name)
 
 
-@pytest.mark.skip_check_gc
 def test_tab_colors(tab_color):
     # Test value
     name, value = tab_color
@@ -261,7 +367,6 @@ def test_tab_colors(tab_color):
     assert_color_in_annotations(name)
 
 
-@pytest.mark.skip_check_gc
 def test_vtk_colors(vtk_color):
     name, value = vtk_color
     assert_color_in_annotations(name)
@@ -286,13 +391,12 @@ def _vtk_named_color_as_hex(name: str) -> str:
     # Get expected hex value from vtkNamedColors
     color3ub = _vtk.vtkNamedColors().GetColor3ub(name)
     int_rgb = (color3ub.GetRed(), color3ub.GetGreen(), color3ub.GetBlue())
-    if int_rgb == (0.0, 0.0, 0.0) and name != 'black':
+    if int_rgb == (0.0, 0.0, 0.0) and name != 'black':  # pragma: no cover -- failure path
         pytest.fail(f"Color '{name}' is not a valid VTK color.")
     return pv.Color(int_rgb).hex_rgb
 
 
-@pytest.mark.skip_check_gc
-@pytest.mark.needs_vtk_version(9, 6, 99)  # >= 9.7.0
+@pytest.mark.needs_vtk_version(9, 7)
 def test_paraview_colors(paraview_color):
     name, value = paraview_color
 
@@ -307,7 +411,6 @@ def test_paraview_colors(paraview_color):
     assert_color_in_annotations(name)
 
 
-@pytest.mark.skip_check_gc
 def test_color_synonyms(color_synonym):
     color = pv.Color(color_synonym)
     assert isinstance(color, pv.Color)
@@ -319,14 +422,13 @@ def test_color_synonyms(color_synonym):
 
 def test_unique_colors():
     duplicates = np.rec.find_duplicate(pv.hex_colors.values())
-    if len(duplicates) > 0:
+    if len(duplicates) > 0:  # pragma: no cover -- failure path
         pytest.fail(f'The following colors have duplicate definitions: {duplicates}.')
 
     assert len(pv.hex_colors) == len(_ALL_ANNOTATED_COLORS)
     assert set(pv.hex_colors.keys()) == set(_ALL_ANNOTATED_COLORS)
 
 
-@pytest.mark.skip_check_gc
 @pytest.mark.parametrize('color_annotation', _ALL_ANNOTATED_COLORS)
 def test_color_annotations(color_annotation):
     color = pv.Color(color_annotation)
@@ -396,3 +498,21 @@ def test_hexcolors_deprecated():
         _ = pv.hexcolors
     with pytest.warns(pv.PyVistaDeprecationWarning, match=re.escape(msg)):
         _ = pv.plotting.hexcolors
+
+
+@pytest.mark.parametrize(
+    ('n_colors', 'match'),
+    [
+        (
+            None,
+            'Input must be a single ColorLike color or a sequence of ColorLike colors.',
+        ),
+        (
+            42,
+            'Input must be a single ColorLike color or a sequence of 42 ColorLike colors.',
+        ),
+    ],
+)
+def test_validate_color_sequence_raises(n_colors, match):
+    with pytest.raises(ValueError, match=match):
+        _validate_color_sequence('foo', n_colors=n_colors)

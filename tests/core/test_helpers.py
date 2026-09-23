@@ -2,20 +2,25 @@ from __future__ import annotations
 
 import re
 from typing import TYPE_CHECKING
+import warnings
 
 import numpy as np
 import pytest
 import trimesh
 
 import pyvista as pv
-from pyvista.core import _vtk_core as _vtk
+from pyvista import _vtk
+from pyvista.core import filters
+from pyvista.core._vtk_utilities import _SUPPORTS_FIXED_SIZE_STORAGE
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import MissingDataError
+from pyvista.core.utilities import reader as reader_module
 from pyvista.core.utilities.arrays import set_default_active_scalars
 from pyvista.core.utilities.points import make_tri_mesh
 from pyvista.examples import cells
 from tests.core.test_dataobject_filters import grid_with_invalid_arrays  # noqa: F401
 from tests.core.test_dataobject_filters import sphere_with_invalid_arrays  # noqa: F401
+from tests.vtk_backend_divergence import INT32_CELL_STORAGE
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -66,12 +71,504 @@ def trimesh_mesh_with_invalid_arrays(sphere_with_invalid_arrays):  # noqa: F811
     return trimesh_poly
 
 
-@pytest.mark.needs_vtk_version(9, 3, 0, reason='no warning for older vtk')
 def test_wrap_invalid_vtk_mesh_warns(sphere_with_invalid_arrays):  # noqa: F811
     vtk_poly = _vtk.vtkPolyData()
     vtk_poly.ShallowCopy(sphere_with_invalid_arrays)
     with pytest.warns(pv.InvalidMeshWarning, match='Invalid array'):
         pv.wrap(vtk_poly)
+
+
+@pytest.fixture
+def vtk_poly_with_invalid_arrays(sphere_with_invalid_arrays):  # noqa: F811
+    # sphere_with_invalid_arrays is a pv.PolyData, we need a vtkPolyData
+    # to validate pv.wrap()'s validation behavior.
+    vtk_poly = _vtk.vtkPolyData()
+    vtk_poly.ShallowCopy(sphere_with_invalid_arrays)
+    return vtk_poly
+
+
+def test_wrap_validate_false_suppresses_warning(vtk_poly_with_invalid_arrays):
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', pv.InvalidMeshWarning)
+        pv.wrap(vtk_poly_with_invalid_arrays, validate=False)
+
+
+def test_wrap_validate_true_still_warns(vtk_poly_with_invalid_arrays):
+    with pytest.warns(pv.InvalidMeshWarning, match='Invalid array'):
+        pv.wrap(vtk_poly_with_invalid_arrays, validate=True)
+
+
+def test_wrap_honors_global_config(vtk_poly_with_invalid_arrays, monkeypatch):
+    # validate=None (default) defers to pv.global_config.validate_on_wrap.
+    assert pv.global_config.validate_on_wrap is True
+    monkeypatch.setattr(pv.global_config, 'validate_on_wrap', False)
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', pv.InvalidMeshWarning)
+        pv.wrap(vtk_poly_with_invalid_arrays)
+    monkeypatch.setattr(pv.global_config, 'validate_on_wrap', True)
+    with pytest.warns(pv.InvalidMeshWarning, match='Invalid array'):
+        pv.wrap(vtk_poly_with_invalid_arrays)
+
+
+@pytest.mark.parametrize(
+    ('vtk_composite_cls', 'set_block'),
+    [
+        (_vtk.vtkMultiBlockDataSet, _vtk.vtkMultiBlockDataSet.SetBlock),
+        (_vtk.vtkPartitionedDataSet, _vtk.vtkPartitionedDataSet.SetPartition),
+    ],
+)
+def test_wrap_composite_valid_data_does_not_warn(sphere, vtk_composite_cls, set_block):
+    # No explicit warnings.catch_warnings needed: the project's pytest config
+    # already turns any unexpected warning into a test failure.
+    vtk_poly = _vtk.vtkPolyData()
+    vtk_poly.ShallowCopy(sphere)
+    vtk_composite = vtk_composite_cls()
+    set_block(vtk_composite, 0, vtk_poly)
+    pv.wrap(vtk_composite)
+
+
+def test_wrap_nested_multiblock_valid_data_does_not_warn(sphere):
+    vtk_poly = _vtk.vtkPolyData()
+    vtk_poly.ShallowCopy(sphere)
+    nested = _vtk.vtkMultiBlockDataSet()
+    nested.SetBlock(0, vtk_poly)
+    outer = _vtk.vtkMultiBlockDataSet()
+    outer.SetBlock(0, nested)
+    pv.wrap(outer)
+
+
+@pytest.mark.parametrize(
+    ('vtk_composite_cls', 'set_block'),
+    [
+        (_vtk.vtkMultiBlockDataSet, _vtk.vtkMultiBlockDataSet.SetBlock),
+        (_vtk.vtkPartitionedDataSet, _vtk.vtkPartitionedDataSet.SetPartition),
+    ],
+)
+def test_wrap_composite_with_invalid_dataset_warns(
+    vtk_poly_with_invalid_arrays,
+    vtk_composite_cls,
+    set_block,
+):
+    # The invalid DataSet is a block directly inside the composite.
+    vtk_composite = vtk_composite_cls()
+    set_block(vtk_composite, 0, vtk_poly_with_invalid_arrays)
+    with pytest.warns(pv.InvalidMeshWarning, match='Invalid array'):
+        pv.wrap(vtk_composite)
+
+
+def test_wrap_nested_multiblock_with_invalid_dataset_warns(vtk_poly_with_invalid_arrays):
+    # The invalid DataSet is inside a nested MultiBlock (PartitionedDataSet can't nest).
+    nested = _vtk.vtkMultiBlockDataSet()
+    nested.SetBlock(0, vtk_poly_with_invalid_arrays)
+    outer = _vtk.vtkMultiBlockDataSet()
+    outer.SetBlock(0, nested)
+    with pytest.warns(pv.InvalidMeshWarning, match='Invalid array'):
+        pv.wrap(outer)
+
+
+def test_wrap_auto_names_unnamed_arrays():
+    # The pre-optimization wrap() path validated via keys(), which has the
+    # side effect of renaming unnamed arrays to ``Unnamed_<i>``. Filters
+    # like ``contour`` rely on that rename to remap filter output back to
+    # the caller's requested scalar name. The fast path must preserve it.
+    sphere = pv.Sphere()
+    sphere.clear_data()
+    vtk_poly = _vtk.vtkPolyData()
+    vtk_poly.ShallowCopy(sphere)
+    arr = _vtk.vtkFloatArray()
+    arr.SetNumberOfTuples(vtk_poly.GetNumberOfPoints())
+    vtk_poly.GetPointData().AddArray(arr)
+    assert not arr.GetName()
+    pv.wrap(vtk_poly)
+    assert arr.GetName() == 'Unnamed_0'
+
+
+def test_global_config_to_dict():
+    assert pv.global_config.to_dict() == {
+        'points_dtype': None,
+        'show_vtk_api': False,
+        'validate_on_wrap': True,
+    }
+
+
+def test_global_config_repr():
+    text = repr(pv.global_config)
+    assert text.startswith('PyVista Config')
+    assert 'validate_on_wrap' in text
+    assert 'True' in text
+
+
+def test_global_config_from_dict_round_trip(monkeypatch):
+    monkeypatch.setattr(pv.global_config, 'validate_on_wrap', False)
+    snapshot = pv.global_config.to_dict()
+    restored = type(pv.global_config).from_dict(snapshot)
+    assert restored.validate_on_wrap is False
+    assert restored == pv.global_config
+
+
+def test_global_config_item_access(monkeypatch):
+    monkeypatch.setattr(pv.global_config, 'validate_on_wrap', False)
+    assert pv.global_config['validate_on_wrap'] is False
+    pv.global_config['validate_on_wrap'] = True
+    assert pv.global_config.validate_on_wrap is True
+
+
+@pytest.mark.parametrize('value', [1, 'True', None, 0])
+def test_global_config_validate_on_wrap_rejects_non_bool(value, monkeypatch):
+    # Constrain the parameter space — silent ``bool(value)`` coercion would
+    # let typos like ``validate_on_wrap = 'false'`` (truthy) silently misbehave.
+    monkeypatch.setattr(pv.global_config, 'validate_on_wrap', True)
+    with pytest.raises(TypeError, match='must be a bool'):
+        pv.global_config.validate_on_wrap = value
+
+
+@pytest.mark.parametrize('value', [1, 'True', None, 0])
+def test_global_config_show_vtk_api_rejects_non_bool(value, monkeypatch):
+    monkeypatch.setattr(pv.global_config, 'show_vtk_api', False)
+    with pytest.raises(TypeError, match='must be a bool'):
+        pv.global_config.show_vtk_api = value
+
+
+@pytest.mark.parametrize(
+    ('value', 'expected'),
+    [
+        (None, None),
+        ('preserve', 'preserve'),
+        ('float32', 'float32'),
+        ('float64', 'float64'),
+        ('single', 'float32'),
+        ('double', 'float64'),
+        (np.float32, 'float32'),
+        (np.float64, 'float64'),
+        (float, 'float64'),
+        (np.dtype('f4'), 'float32'),
+    ],
+)
+def test_global_config_points_dtype_normalizes(value, expected, monkeypatch):
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'preserve')
+    pv.global_config.points_dtype = value
+    assert pv.global_config.points_dtype == expected
+
+
+@pytest.mark.parametrize('value', ['float16', int, np.int32])
+def test_global_config_points_dtype_rejects_other_dtypes(value, monkeypatch):
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'preserve')
+    with pytest.raises(ValueError, match="must be None, 'preserve', 'float32', or 'float64'"):
+        pv.global_config.points_dtype = value
+    assert pv.global_config.points_dtype == 'preserve'
+
+
+@pytest.mark.parametrize('value', ['nope', 3, object()])
+def test_global_config_points_dtype_rejects_non_dtypes(value, monkeypatch):
+    # ``np.dtype(None)`` is float64, so a non-dtype must not slip through as one
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'preserve')
+    with pytest.raises(TypeError, match="must be None, 'preserve', 'float32', or 'float64'"):
+        pv.global_config.points_dtype = value
+    assert pv.global_config.points_dtype == 'preserve'
+
+
+@pytest.mark.parametrize('input_dtype', [np.float32, np.float64])
+def test_points_dtype_preserve_keeps_filter_input_dtype(input_dtype, monkeypatch):
+    # https://github.com/pyvista/pyvista/issues/8166
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'preserve')
+    mesh = pv.Sphere()
+    mesh.points = mesh.points.astype(input_dtype)
+
+    with warnings.catch_warnings():
+        # a widening cast warns; this test is about the dtype it produces
+        warnings.simplefilter('ignore', pv.PrecisionWarning)
+        assert mesh.shrink().points.dtype == input_dtype  # no SetOutputPointsPrecision
+        assert mesh.decimate(0.5).points.dtype == input_dtype
+        assert mesh.triangulate().points.dtype == input_dtype
+        assert mesh.clip().points.dtype == input_dtype
+
+
+@pytest.mark.parametrize('dtype', ['float32', 'float64'])
+def test_points_dtype_applies_to_filters_and_sources(dtype, monkeypatch):
+    monkeypatch.setattr(pv.global_config, 'points_dtype', dtype)
+    expected = np.dtype(dtype)
+
+    assert pv.Sphere().points.dtype == expected  # source with output precision support
+    assert pv.ImageData(dimensions=(2, 2, 2)).points.dtype == expected  # generated points
+
+    # Sources and filters without output precision support are cast to match
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', pv.PrecisionWarning)
+        assert pv.Arrow().points.dtype == expected
+        assert pv.Sphere().shrink().points.dtype == expected
+
+
+@pytest.mark.parametrize('grid', [pv.ImageData(dimensions=(3, 3, 3)), pv.RectilinearGrid()])
+def test_points_dtype_preserve_ignores_generated_points(grid, monkeypatch, mocker):
+    # Reading `.points` on these materializes the lazy structured array VTK 9.4+
+    # returns, so 'preserve' must not touch it just to learn a dtype
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'preserve')
+    spy = mocker.patch.object(type(grid), 'points', new_callable=mocker.PropertyMock)
+
+    spy.assert_not_called()
+    assert filters._points_dtype(grid) is None
+    spy.assert_not_called()
+
+
+def test_points_dtype_preserve_leaves_image_filters_to_vtk(monkeypatch):
+    # These dtypes are VTK's own, unchanged by the setting; the test guards them
+    # against a VTK release moving them, not the enforcement path.
+    # ImageData generates its points from its always-double origin and spacing, so
+    # treating that as a request would double the output of every image pipeline
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'preserve')
+    image = pv.ImageData(dimensions=(5, 5, 5))
+    image['d'] = np.arange(image.n_points, dtype=float)
+
+    assert image.points.dtype == np.float64
+    assert image.contour().points.dtype == np.float32
+    # ... but casting the coordinates themselves must keep them (#7931)
+    assert image.cast_to_unstructured_grid().points.dtype == np.float64
+
+
+def test_points_dtype_preserve_takes_the_grid_intermediate_dtype(monkeypatch):
+    # `voxelize` builds an ImageData on the way and takes the dtype from it rather than
+    # from the input, so 'preserve' does not reach it. VTK decides this either way, so
+    # this guards the documented exclusion rather than the enforcement.
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'preserve')
+    mesh = pv.Sphere().points_to_double()
+    assert mesh.points.dtype == np.float64
+    assert mesh.voxelize(spacing=0.1).points.dtype == np.float32
+
+
+def test_points_dtype_preserve_ignores_integer_points(monkeypatch):
+    # Points can be stored as integers, and a filter's interpolated output would be
+    # truncated onto them if 'preserve' took that dtype as the target
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'preserve')
+    mesh = pv.PolyData(
+        [[0, 0, 1], [1, 0, 0], [0, 1, 0], [1, 1, 1]],
+        lines=[[2, 0, 1], [2, 2, 3]],
+        force_float=False,
+    )
+
+    assert mesh.points.dtype == np.int64
+    assert filters._points_dtype(mesh) is None
+
+    # ... so the filter's output is whatever it would be with the setting off
+    monkeypatch.setattr(pv.global_config, 'points_dtype', None)
+    untouched = mesh.ruled_surface(resolution=(21, 21)).points.dtype
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'preserve')
+    assert mesh.ruled_surface(resolution=(21, 21)).points.dtype == untouched
+
+
+def test_points_dtype_preserve_ignores_a_mesh_without_points(monkeypatch):
+    # `DataSet.points` installs an empty float64 array when there is no `vtkPoints`,
+    # so reading it would both report a dtype nobody chose and modify the input
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'preserve')
+    empty = pv.PolyData()
+
+    assert filters._points_dtype(empty) is None
+    assert empty.GetPoints() is None
+
+    # Accumulating into an empty mesh is a common idiom. Were the empty mesh's phantom
+    # float64 taken as the target, the float32 input would be cast up, and say so.
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', pv.PrecisionWarning)
+        assert (pv.PolyData() + pv.Sphere()).points.dtype == np.float32
+        assert pv.PolyData().merge(pv.Sphere()).points.dtype == np.float32
+
+
+def test_points_dtype_float64_does_not_warn_for_integer_points(monkeypatch):
+    # Widening integers to float64 is exact, so there is no precision to report losing
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'float64')
+    mesh = pv.PolyData(
+        np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0]], dtype=np.int32),
+        faces=[3, 0, 1, 2],
+        force_float=False,
+    )
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', pv.PrecisionWarning)
+        out = mesh.triangulate()
+    assert out.points.dtype == np.float64
+
+
+@pytest.mark.parametrize(
+    'filter_name', ['outline_corners', 'extrude_rotate', 'reconstruct_surface', 'convex_hull']
+)
+@pytest.mark.parametrize('dtype', ['float32', 'float64'])
+def test_points_dtype_applies_to_filters_wrapping_their_own_output(
+    filter_name, dtype, monkeypatch
+):
+    # These wrap the algorithm output themselves rather than going through
+    # `_get_output`, which is where the setting is enforced. Each starts from the dtype
+    # the filter is not being asked for, so the setting has to do the work. The three
+    # that generate single precision anyway cannot be distinguished from VTK for
+    # ``'float32'``; those cases guard against a regression rather than prove the cast.
+    monkeypatch.setattr(pv.global_config, 'points_dtype', dtype)
+    mesh = pv.Line().compute_arc_length() if filter_name == 'extrude_rotate' else pv.Sphere()
+    # The sources above already follow the setting, so force the other dtype in
+    mesh = mesh.points_to_double() if dtype == 'float32' else mesh.points_to_single()
+    kwargs = {'resolution': 4, 'capping': False} if filter_name == 'extrude_rotate' else {}
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', pv.PrecisionWarning)
+        out = getattr(mesh, filter_name)(**kwargs)
+    assert out.points.dtype == np.dtype(dtype)
+
+
+def test_points_dtype_float64_names_the_algorithm(monkeypatch):
+    # Casting up fixes the dtype but not the values, so say which algorithm did it
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'float64')
+    mesh = pv.Sphere()
+    mesh.points = mesh.points.astype(np.float32)  # a source would follow the setting
+
+    match = 'vtkShrinkFilter generated float32 points'
+    with pytest.warns(pv.PrecisionWarning, match=match):
+        filters._enforce_points_dtype(mesh, np.dtype(np.float64), algorithm=_vtk.vtkShrinkFilter())
+
+
+def test_points_dtype_float64_silent_when_vtk_delivers(monkeypatch):
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'float64')
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', pv.PrecisionWarning)
+        assert pv.Sphere().points.dtype == np.float64
+        assert cells.Hexahedron().triangulate().points.dtype == np.float64
+
+
+@pytest.mark.parametrize('setting', ['preserve', 'float64'])
+def test_points_dtype_warns_on_every_widening_cast(setting, monkeypatch):
+    # Widening fabricates precision the algorithm discarded, whichever setting asked.
+    # Driven directly: which filters degrade is VTK's business and varies by backend.
+    monkeypatch.setattr(pv.global_config, 'points_dtype', setting)
+    mesh = pv.Sphere()
+    mesh.points = mesh.points.astype(np.float32)  # a source would follow the setting
+    assert mesh.points.dtype == np.float32
+
+    with pytest.warns(pv.PrecisionWarning, match='vtkSphereSource'):
+        filters._enforce_points_dtype(mesh, np.dtype(np.float64), algorithm=_vtk.vtkSphereSource())
+    assert mesh.points.dtype == np.float64
+
+
+def test_points_dtype_does_not_warn_on_narrowing(monkeypatch):
+    # Discarding digits below the input's own representation error loses nothing
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'float32')
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', pv.PrecisionWarning)
+        assert cells.Hexahedron().shrink().points.dtype == np.float32
+        assert pv.Sphere().cell_centers().points.dtype == np.float32
+
+
+def test_points_dtype_none_never_intervenes(monkeypatch):
+    # The default is the status quo: no checks, no casts, no warnings. Which dtype VTK
+    # then produces is VTK's business and varies by backend, so assert only that
+    # PyVista leaves it alone.
+    monkeypatch.setattr(pv.global_config, 'points_dtype', None)
+    mesh = cells.Hexahedron()
+
+    assert filters._points_dtype(mesh) is None
+    assert filters._points_dtype() is None
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', pv.PrecisionWarning)
+        mesh.shrink()
+        pv.Sphere().cell_centers()
+        pv.Arrow()
+
+
+@pytest.mark.parametrize('dtype', ['float32', 'float64'])
+def test_points_dtype_leaves_user_arrays_alone(dtype, monkeypatch):
+    # The setting governs what PyVista generates, not what the caller hands it
+    monkeypatch.setattr(pv.global_config, 'points_dtype', dtype)
+    other = np.float64 if dtype == 'float32' else np.float32
+
+    mesh = pv.PolyData(np.zeros((3, 3), dtype=other))
+    assert mesh.points.dtype == other
+
+    mesh = pv.Sphere()
+    mesh.points = np.zeros((mesh.n_points, 3), dtype=other)
+    assert mesh.points.dtype == other
+
+    # ... but the geometry factories are sources, and do follow the setting
+    assert pv.Triangle(np.eye(3, dtype=other)).points.dtype == np.dtype(dtype)
+
+
+def test_points_dtype_applies_to_multiblock(monkeypatch):
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'float64')
+    multi = pv.MultiBlock([pv.Sphere(), pv.Cube()])
+    assert all(block.points.dtype == np.float64 for block in multi.clip())
+
+
+def test_points_dtype_preserve_pairs_multiblock_blocks(monkeypatch):
+    # A block keeps its own dtype, the same as it would outside the composite
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'preserve')
+    double, single = pv.Sphere().points_to_double(), pv.Sphere()
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', pv.PrecisionWarning)
+        assert double.clip_box().points.dtype == np.float64
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', pv.PrecisionWarning)
+        blocks = pv.MultiBlock([double, single]).clip_box()
+        nested = pv.MultiBlock([pv.MultiBlock([double]), single]).clip_box()
+    assert [block.points.dtype for block in blocks] == [np.float64, np.float32]
+    assert [b.points.dtype for b in nested.recursive_iterator()] == [np.float64, np.float32]
+
+
+def test_points_dtype_preserve_casts_both_directions(monkeypatch):
+    # vtkCellCenters computes in double whatever it is given; 'preserve' brings that
+    # back to the input's dtype rather than letting the dtype change
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'preserve')
+    mesh = pv.Sphere()
+
+    assert mesh.points.dtype == np.float32
+    assert mesh.cell_centers().points.dtype == np.float32
+    assert mesh.points_to_double().cell_centers().points.dtype == np.float64
+
+
+def test_points_dtype_restores_an_explicitly_configured_source(monkeypatch):
+    # A temporary global must not outlive itself on a source the caller configured
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'preserve')
+    source = pv.CubeSource(points_dtype='float64')
+    assert source.output.points.dtype == np.float64
+
+    pv.global_config.points_dtype = 'float32'
+    assert source.output.points.dtype == np.float32
+
+    pv.global_config.points_dtype = 'preserve'
+    assert source.points_dtype == 'float64'
+    assert source.output.points.dtype == np.float64
+
+
+def test_points_dtype_float64_does_not_warn_for_an_internal_template(monkeypatch):
+    # `glyph` builds its own arrow, which is scaled and copied onto the user's points;
+    # the template's precision is not something the caller can act on
+    monkeypatch.setattr(pv.global_config, 'points_dtype', 'float64')
+    mesh = pv.Sphere().points_to_double()
+    mesh['vectors'] = np.ones((mesh.n_points, 3))
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', pv.PrecisionWarning)
+        glyphed = mesh.glyph(orient='vectors', scale=False)
+    assert glyphed.points.dtype == np.float64
+
+
+def test_reader_forwards_validate_kwarg(mocker: MockerFixture):
+    # BaseReader.read(validate=...) must forward the kwarg through to wrap().
+    spy = mocker.spy(reader_module, 'wrap')
+    reader = pv.get_reader(pv.examples.hexbeamfile)
+
+    reader.read(validate=False)
+    _, kwargs = spy.call_args
+    assert kwargs.get('validate') is False
+
+    spy.reset_mock()
+    reader.read(validate=True)
+    _, kwargs = spy.call_args
+    assert kwargs.get('validate') is True
+
+
+def test_wrap_fast_path_skips_validate_mesh(sphere, mocker: MockerFixture):
+    # When the cheap array-length check passes, ``wrap`` must not call
+    # ``validate_mesh`` — that's the whole point of the fast path. See #8473.
+    vtk_poly = _vtk.vtkPolyData()
+    vtk_poly.ShallowCopy(sphere)
+    spy = mocker.spy(pv.PolyData, 'validate_mesh')
+    pv.wrap(vtk_poly)
+    assert spy.call_count == 0
 
 
 def test_wrap_invalid_trimesh_raises(trimesh_mesh_with_invalid_arrays):
@@ -111,7 +608,11 @@ def test_wrap_raises_unable():
     [
         (np.float64, _vtk.vtkDoubleArray),
         (np.float32, _vtk.vtkFloatArray),
-        (np.int64, _vtk.vtkTypeInt64Array),
+        # Pair with ``np.longlong``, not ``np.int64``: since VTK 9.7 the numpy-to-VTK
+        # mapping follows the underlying C type, so ``vtkTypeInt64Array`` (C ``long
+        # long``) corresponds to ``np.longlong`` on every platform, whereas ``np.int64``
+        # is C ``long`` on LP64 and maps to ``vtkLongArray`` there.
+        (np.longlong, _vtk.vtkTypeInt64Array),
         (np.int32, _vtk.vtkTypeInt32Array),
         (np.int8, _vtk.vtkSignedCharArray),
         (np.uint8, _vtk.vtkUnsignedCharArray),
@@ -238,7 +739,11 @@ def test_to_from_trimesh_empty_mesh():
     assert isinstance(pvmesh, pv.PolyData)
 
 
+@pytest.mark.skip_vtk_backend('cvista', reason=INT32_CELL_STORAGE)
 def test_to_from_trimesh_points_faces(ant):
+    # Zero-copy sharing requires int64 connectivity, which a reader is free not
+    # to produce, so build it rather than inheriting it from the example file.
+    ant = pv.PolyData(ant.points, faces=ant.faces.astype(np.int64))
     ant.points_to_double()
     tmesh = pv.to_trimesh(ant)
     assert np.shares_memory(tmesh.vertices, ant.points)
@@ -466,6 +971,8 @@ def test_make_tri_mesh(sphere):
 
     assert np.allclose(sphere.points, mesh.points)
     assert np.allclose(sphere.faces, mesh.faces)
+    if _SUPPORTS_FIXED_SIZE_STORAGE:
+        assert mesh.GetPolys().IsStorageFixedSize()
 
 
 def test_wrappers():

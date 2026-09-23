@@ -16,26 +16,49 @@ A string containing the plane orthogonal to the view direction.  For example:
 """
 
 
-class InvalidCameraError(ValueError):  # numpydoc ignore=PR01
-    """Exception when passed an invalid camera."""
+class InvalidCameraError(ValueError):
+    """Exception when passed an invalid camera.
 
-    def __init__(self, message=CAMERA_ERROR_MESSAGE):
+    Parameters
+    ----------
+    message : str, optional
+        Error message. Defaults to a description of the accepted camera values.
+
+    """
+
+    def __init__(self, message: str = CAMERA_ERROR_MESSAGE) -> None:
         """Call the base class constructor with the custom message."""
         super().__init__(message)
 
 
-class RenderWindowUnavailable(RuntimeError):  # numpydoc ignore=PR01 # noqa: N818
-    """Exception when the render window is not available."""
+class RenderWindowUnavailable(RuntimeError):  # noqa: N818
+    """Exception when the render window is not available.
 
-    def __init__(self, message='Render window is not available.'):
+    Parameters
+    ----------
+    message : str, optional
+        Error message. Defaults to ``'Render window is not available.'``.
+
+    """
+
+    def __init__(self, message: str = 'Render window is not available.') -> None:
         """Call the base class constructor with the custom message."""
         super().__init__(message)
 
 
-class MismatchedInteractorError(RuntimeError):  # numpydoc ignore=PR01  # pragma: no cover
-    """Exception when the interactor and render window backends are incompatible."""
+class MismatchedInteractorError(RuntimeError):  # pragma: no cover
+    """Exception when the interactor and render window backends are incompatible.
 
-    def __init__(self, message='Interactor and render window backends are incompatible.'):
+    Parameters
+    ----------
+    message : str, optional
+        Error message. Defaults to ``'Interactor and render window backends are incompatible.'``.
+
+    """
+
+    def __init__(
+        self, message: str = 'Interactor and render window backends are incompatible.'
+    ) -> None:
         """Call the base class constructor with the custom message."""
         super().__init__(message)
 

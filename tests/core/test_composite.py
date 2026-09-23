@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Generator
 import itertools
-import pathlib
+from pathlib import Path
 import re
 import weakref
 
@@ -15,8 +15,8 @@ from pyvista import MultiBlock
 from pyvista import PolyData
 from pyvista import RectilinearGrid
 from pyvista import StructuredGrid
+from pyvista import _vtk
 from pyvista import examples as ex
-from pyvista.core import _vtk_core as _vtk
 from pyvista.core.dataobject import USER_DICT_KEY
 from pyvista.core.errors import DeprecationError
 
@@ -392,7 +392,7 @@ def test_multi_block_repr(multiblock_all_with_nested_and_none):
 
 
 def test_multi_block_repr_bounds():
-    empty_poly = pv.PolyData().extract_cells(0)
+    empty_poly = pv.PolyData().extract_cells([])
     poly_x_bounds = repr(empty_poly).splitlines()[3]
     poly_y_bounds = repr(empty_poly).splitlines()[4]
     poly_z_bounds = repr(empty_poly).splitlines()[5]
@@ -436,7 +436,7 @@ def test_multi_block_io(
 ):
     filename = str(tmpdir.mkdir('tmpdir').join(f'tmp.{extension}'))
     if use_pathlib:
-        pathlib.Path(filename)
+        Path(filename)
 
     # Use non-nested multiblock with no None types for vtkhdf case
     # these cases are tested separately
@@ -565,6 +565,28 @@ def test_extract_geometry(multiblock_all_with_nested_and_none):
 def test_combine_filter(multiblock_all_with_nested_and_none):
     geom = multiblock_all_with_nested_and_none.combine()
     assert isinstance(geom, pv.UnstructuredGrid)
+
+
+def test_combine_filter_without_datasets():
+    # Nothing to append, so the result is empty rather than a VTK pipeline error
+    for multi in (pv.MultiBlock(), pv.MultiBlock({'a': None})):
+        combined = multi.combine()
+        assert isinstance(combined, pv.UnstructuredGrid)
+        assert combined.n_cells == 0
+
+
+@pytest.mark.parametrize('nested', [True, False])
+def test_outline_filters_output_type(multiblock_all_with_nested_and_none, nested):
+    # `vtkOutlineFilter` handles a composite itself and always gives one mesh,
+    # while `vtkOutlineCornerFilter` is run per block and gives one outline each
+    multi = multiblock_all_with_nested_and_none
+    assert isinstance(multi.outline(nested=nested), PolyData)
+    corners = multi.outline_corners(nested=nested)
+    if nested:
+        assert isinstance(corners, pv.MultiBlock)
+        assert corners.n_blocks == multi.n_blocks
+    else:
+        assert isinstance(corners, PolyData)
 
 
 @pytest.mark.parametrize('inplace', [True, False])
@@ -1293,7 +1315,7 @@ def test_move_nested_field_data_to_root_check_duplicate_keys():
 
     # Test nested field data key overrides root field data key
     root = _make_nested_multiblock(
-        root_field_data={NAME1: VALUE1}, nested1_field_data={NAME1: VALUE1}
+        root_field_data={NAME1: [VALUE1]}, nested1_field_data={NAME1: [VALUE1]}
     )
     match = (
         "The field data array 'name1' from nested MultiBlock at index [0] with name 'Block-00'\n"
@@ -1397,7 +1419,7 @@ def test_flatten(multiblock_all_with_nested_and_none):
     expected_n_blocks = len(root_names) + len(nested_names)
 
     match = (
-        "Block at index [6][0] with name 'Block-00' cannot be flattened. Another block \n"
+        "Block at index [7][0] with name 'Block-00' cannot be flattened. Another block \n"
         "with the same name already exists. Use `name_mode='reset'` "
         'or `check_duplicate_keys=False`.'
     )
@@ -1477,16 +1499,16 @@ def test_generic_filter_inplace(multiblock_all_with_nested_and_none, inplace):
     # Test root MultiBlock
     assert (input_ is output) == inplace
     # Test nested MultiBlock container
-    assert isinstance(input_[6], pv.MultiBlock)
-    assert (input_[6] is output[6]) == inplace
+    nested_index = next(i for i, block in enumerate(input_) if isinstance(block, pv.MultiBlock))
+    assert (input_[nested_index] is output[nested_index]) == inplace
 
 
 def test_generic_filter_raises(multiblock_all_with_nested_and_none):
     match = (
         "The filter 'resample'\ncould not be applied to the block at index 1 with name "
-        "'Block-01' and type RectilinearGrid."
+        "'Block-01' and type RectilinearGrid:\n'RectilinearGrid' object has no attribute"
     )
-    with pytest.raises(RuntimeError, match=match):
+    with pytest.raises(AttributeError, match=match):
         multiblock_all_with_nested_and_none.generic_filter(
             'resample',
         )
@@ -1494,22 +1516,49 @@ def test_generic_filter_raises(multiblock_all_with_nested_and_none):
     multi = pv.MultiBlock([multiblock_all_with_nested_and_none])
     match = (
         "The filter 'resample'\ncould not be applied to the nested block at index [0][1] "
-        "with name 'Block-01' and type RectilinearGrid."
+        "with name 'Block-01' and type RectilinearGrid:"
     )
-    with pytest.raises(RuntimeError, match=re.escape(match)):
+    with pytest.raises(AttributeError, match=re.escape(match)):
         multi.generic_filter(
             'resample',
         )
     # Test with invalid kwargs
     match = "The filter '<bound method DataSetFilters.align_xyz of ImageData"
-    with pytest.raises(RuntimeError, match=re.escape(match)):
+    with pytest.raises(TypeError, match=re.escape(match)):
         multiblock_all_with_nested_and_none.generic_filter('align_xyz', foo='bar')
+
     # Test with function
-    match = "The filter '<function test_generic_filter_raises"
-    with pytest.raises(RuntimeError, match=match):
-        multiblock_all_with_nested_and_none.generic_filter(
-            test_generic_filter_raises,
-        )
+    def fail(block):
+        msg = f'cannot filter {type(block).__name__}'
+        raise ValueError(msg)
+
+    match = "The filter '<function test_generic_filter_raises.<locals>.fail"
+    with pytest.raises(ValueError, match=match):
+        multiblock_all_with_nested_and_none.generic_filter(fail)
+
+
+def test_generic_filter_keeps_error_class(multiblock_all_with_nested_and_none):
+    class BlockError(Exception):
+        pass
+
+    def fail(block):
+        msg = f'cannot filter {type(block).__name__}'
+        raise BlockError(msg)
+
+    match = (
+        "could not be applied to the block at index 0 with name 'Block-00' and type "
+        'ImageData:\ncannot filter ImageData'
+    )
+    with pytest.raises(BlockError, match=match) as info:
+        multiblock_all_with_nested_and_none.generic_filter(fail)
+    assert info.value.__cause__ is None
+
+    # An error without a message gets the block, and nothing else
+    def fail_silently(_):
+        raise BlockError
+
+    with pytest.raises(BlockError, match=r'type ImageData\.$'):
+        multiblock_all_with_nested_and_none.generic_filter(fail_silently)
 
 
 def test_block_types(multiblock_all_with_nested_and_none):
@@ -1521,6 +1570,7 @@ def test_block_types(multiblock_all_with_nested_and_none):
         pv.PolyData,
         pv.UnstructuredGrid,
         pv.StructuredGrid,
+        pv.PointSet,
     }
     assert multi.nested_block_types == types
     types.add(pv.MultiBlock)

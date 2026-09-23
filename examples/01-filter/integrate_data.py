@@ -4,8 +4,7 @@
 Integrate Data
 ~~~~~~~~~~~~~~
 
-Integrate data over a surface using the
-:func:`pyvista.DataSetFilters.integrate_data` filter.
+Integrate data over a surface using :func:`~pyvista.DataSetFilters.integrate_data`.
 
 """
 

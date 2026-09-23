@@ -1,11 +1,10 @@
 """
 .. _distance_along_spline_example:
 
-Label based on Distance on Line
+Label Based on Distance on Line
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Create a spline and generate labels along the spline based on distance along a
-spline.
+Create a spline and generate labels along the spline based on distance along a spline.
 
 This is an extension of the :ref:`create_spline_example`.
 
@@ -15,7 +14,7 @@ import numpy as np
 import pyvista as pv
 
 # %%
-# Create a spline
+# Create a Spline
 # ~~~~~~~~~~~~~~~
 # Create a spline using :func:`pyvista.Spline`.
 
@@ -34,7 +33,7 @@ spline.point_data
 
 
 # %%
-# Determine the coordinates matching distance along a spline
+# Determine the Coordinates Matching Distance Along a Spline
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Here we write a simple function that gets the closest point matching a distance along a
 # spline and then generate labels for those points.
@@ -60,7 +59,7 @@ for dist in dists:
 labels
 
 # %%
-# Plot with Labels
+# Plot With Labels
 # ~~~~~~~~~~~~~~~~
 # Plot the spline with labeled points
 

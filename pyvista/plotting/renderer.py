@@ -5,24 +5,24 @@ from __future__ import annotations
 from collections.abc import Iterable
 from collections.abc import Sequence
 import contextlib
-from functools import partial
-from functools import wraps
-from html import escape
+import functools
+import html
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
 from typing import cast
+import weakref
 
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
 from pyvista import MAX_N_COLOR_BARS
+from pyvista import _vtk
 from pyvista import vtk_version_info
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 from pyvista._warn_external import warn_external
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
-from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.formatting_html import _copy_btn
 from pyvista.core.formatting_html import _load_css
@@ -30,10 +30,10 @@ from pyvista.core.formatting_html import _metadata_html
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _BoundsSizeMixin
 from pyvista.core.utilities.misc import _NoNewAttrMixin
+from pyvista.core.utilities.misc import _wraps
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import try_callback
 
-from . import _vtk
 from .actor import Actor
 from .camera import Camera
 from .charts import Charts
@@ -44,6 +44,8 @@ from .helpers import view_vectors
 from .mapper import DataSetMapper
 from .prop_collection import _PropCollection
 from .render_passes import RenderPasses
+from .tools import _validate_vector
+from .tools import _validate_viewup
 from .tools import create_axes_marker
 from .tools import create_axes_orientation_box
 from .tools import create_north_arrow
@@ -52,10 +54,21 @@ from .utilities.gl_checks import check_depth_peeling
 from .utilities.gl_checks import uses_egl
 
 if TYPE_CHECKING:
+    import cycler
+
+    from pyvista.core._typing_core import RotationLike
+    from pyvista.core._typing_core import VectorLike
+    from pyvista.core.composite import MultiBlock
+    from pyvista.core.dataset import DataSet
     from pyvista.core.pointset import PolyData
 
+    from ._typing import CameraPositionOptions
+    from ._typing import Chart
+    from ._typing import ColorLike
     from .cube_axes_actor import CubeAxesActor
     from .lights import Light
+    from .plotter import BasePlotter
+    from .texture import Texture
 
 ACTOR_LOC_MAP = [
     'upper right',
@@ -69,8 +82,26 @@ ACTOR_LOC_MAP = [
     'center',
 ]
 
+# Floor for the diffuse irradiance map: below 32 the diffuse term degrades
+# visibly on rough surfaces for little further speed-up.
+_MIN_IRRADIANCE_SIZE = 32
 
-def map_loc_to_pos(loc, size, border=0.05):
+# Floor for the specular prefilter; fewer samples show up as noise, not lost detail.
+_MIN_PREFILTER_SAMPLES = 32
+
+# Floors for the BRDF lookup table, which is smooth in both of its inputs.
+_MIN_LUT_SIZE = 128
+_MIN_LUT_SAMPLES = 128
+
+
+def _scale_ibl(default: int, minimum: int, rate: float) -> int:
+    """Scale an image-based lighting parameter, clamped between ``minimum`` and ``default``."""
+    return min(default, max(minimum, round(default * rate)))
+
+
+def map_loc_to_pos(
+    loc: str, size: Sequence[float], border: float = 0.05
+) -> tuple[float, float, Sequence[float]]:
     """Map location and size to a VTK position and position2.
 
     Parameters
@@ -94,9 +125,8 @@ def map_loc_to_pos(loc, size, border=0.05):
         If the ``size`` parameter is not a list of length 2.
 
     """
-    if not isinstance(size, Sequence) or len(size) != 2:
-        msg = f'`size` must be a list of length 2. Passed value is {size}'
-        raise ValueError(msg)
+    _validation.check_instance(size, Sequence, name='`size`')
+    _validation.check_length(size, exact_length=2, name='`size`')
 
     if 'right' in loc:
         x = 1 - size[1] - border
@@ -115,7 +145,7 @@ def map_loc_to_pos(loc, size, border=0.05):
     return x, y, size
 
 
-def make_legend_face(face) -> PolyData:
+def make_legend_face(face: str | pv.PolyData | None) -> PolyData:
     """Create the legend face based on the given face.
 
     Parameters
@@ -137,7 +167,7 @@ def make_legend_face(face) -> PolyData:
 
     """
 
-    def normalize(poly):
+    def normalize(poly: PolyData) -> PolyData:
         norm_poly = poly.copy()  # Avoid mutating input
         norm_poly.clear_data()
 
@@ -189,8 +219,9 @@ def make_legend_face(face) -> PolyData:
     return legendface
 
 
-@_deprecate_positional_args(allowed=['camera', 'point'])
-def scale_point(camera, point, invert=False):  # noqa: FBT002
+def scale_point(
+    camera: Camera, point: VectorLike[float], *, invert: bool = False
+) -> tuple[float, float, float]:
     """Scale a point using the camera's transform matrix.
 
     Parameters
@@ -219,7 +250,8 @@ def scale_point(camera, point, invert=False):  # noqa: FBT002
         mtx.Invert()
     else:
         mtx = camera.GetModelTransformMatrix()
-    scaled = mtx.MultiplyDoublePoint((point[0], point[1], point[2], 0.0))
+    x, y, z = _validation.validate_array3(point, dtype_out=float, name='point')
+    scaled = mtx.MultiplyDoublePoint((x, y, z, 0.0))
     return (scaled[0], scaled[1], scaled[2])
 
 
@@ -239,14 +271,19 @@ class CameraPosition(_NoNewAttrMixin):
 
     """
 
-    def __init__(self, position, focal_point, viewup) -> None:
+    def __init__(
+        self,
+        position: VectorLike[float],
+        focal_point: VectorLike[float],
+        viewup: VectorLike[float],
+    ) -> None:
         """Initialize a new camera position descriptor."""
-        self._position = position
-        self._focal_point = focal_point
-        self._viewup = viewup
+        self.position = position
+        self.focal_point = focal_point
+        self.viewup = viewup
 
-    def to_list(self):
-        """Convert to a list of the position, focal point, and viewup.
+    def to_list(self) -> list[tuple[float, float, float]]:
+        """Convert to a list of the position, focal point, and ``viewup``.
 
         Returns
         -------
@@ -278,7 +315,7 @@ class CameraPosition(_NoNewAttrMixin):
     def _repr_html_(self) -> str:
         """Return an HTML representation for Jupyter notebooks."""
 
-        def _fmt_vec(vec: tuple[float, ...]) -> str:
+        def _fmt_vec(vec: tuple[float, float, float]) -> str:
             return '(' + ', '.join(f'{v:.4f}' for v in vec) + ')'
 
         pos = _fmt_vec(self._position)
@@ -294,7 +331,7 @@ class CameraPosition(_NoNewAttrMixin):
                 ('viewup', [('', vup)], vup),
             ]
         )
-        text_fallback = escape(repr(self))
+        text_fallback = html.escape(repr(self))
 
         return (
             f'<div><style>{css}</style>'
@@ -308,48 +345,71 @@ class CameraPosition(_NoNewAttrMixin):
             '</div></div>'
         )
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int) -> tuple[float, float, float]:
         """Fetch a component by index location like a list."""
         return self.to_list()[index]
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         """Comparison operator to act on list version of CameraPosition object."""
         if isinstance(other, CameraPosition):
             return self.to_list() == other.to_list()
-        return self.to_list() == other
+        if not isinstance(other, (list, tuple, np.ndarray)):
+            return NotImplemented
+        try:
+            vectors = [_validate_vector(vector, name='camera position') for vector in other]
+        except (TypeError, ValueError):
+            # Anything that is not three vectors is not a camera position
+            return NotImplemented
+        return self.to_list() == vectors
 
     __hash__ = None  # type: ignore[assignment]  # https://github.com/pyvista/pyvista/pull/7671
 
     @property
-    def position(self):  # numpydoc ignore=RT01
+    def position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Location of the camera in world coordinates."""
         return self._position
 
     @position.setter
-    def position(self, value) -> None:
-        self._position = value
+    def position(self, value: VectorLike[float]) -> None:
+        self._position = _validate_vector(value, name='position')
 
     @property
-    def focal_point(self):  # numpydoc ignore=RT01
+    def focal_point(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Location of the camera's focus in world coordinates."""
         return self._focal_point
 
     @focal_point.setter
-    def focal_point(self, value) -> None:
-        self._focal_point = value
+    def focal_point(self, value: VectorLike[float]) -> None:
+        self._focal_point = _validate_vector(value, name='focal_point')
 
     @property
-    def viewup(self):  # numpydoc ignore=RT01
-        """Viewup vector of the camera."""
+    def viewup(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """The view-up vector of the camera."""
         return self._viewup
 
     @viewup.setter
-    def viewup(self, value) -> None:
-        self._viewup = value
+    def viewup(self, value: VectorLike[float]) -> None:
+        self._viewup = _validate_viewup(value)
 
 
 class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkOpenGLRenderer):
-    """Renderer class."""
+    """Renderer class.
+
+    Parameters
+    ----------
+    parent : pyvista.Plotter
+        Plotter this renderer belongs to.
+
+    border : bool, default: True
+        Draw a border around the renderer.
+
+    border_color : ColorLike, default: "w"
+        Color of the border.
+
+    border_width : float, default: 1.0
+        Width of the border.
+
+    """
 
     # map camera_position string to an attribute
     CAMERA_STR_ATTR_MAP: ClassVar[dict[str, str]] = {
@@ -362,21 +422,21 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         'iso': 'view_isometric',
     }
 
-    @_deprecate_positional_args(allowed=['parent'])
-    def __init__(  # noqa: PLR0917
+    def __init__(
         self,
-        parent,
-        border=True,  # noqa: FBT002
-        border_color='w',
-        border_width=2.0,
+        parent: BasePlotter,
+        *,
+        border: bool = True,
+        border_color: ColorLike = 'w',
+        border_width: float = 1.0,
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize the renderer."""
         super().__init__()
-        self._actors = _PropCollection(self.GetViewProps())
-        self.parent = parent  # weakref.proxy to the plotter from Renderers
+        self._actors: _PropCollection | None = _PropCollection(self.GetViewProps())
+        self.parent: BasePlotter | None = parent  # weakref.proxy to the plotter
         self._theme = parent.theme
         self.bounding_box_actor: Actor | None = None
-        self.axes_actor: _vtk.vtkAxesActor | None = None
+        self.axes_actor: _vtk.vtkAxesActor | _vtk.vtkPropAssembly | None = None
         self.axes_widget: _vtk.vtkOrientationMarkerWidget | None = None
         self.scale = [1.0, 1.0, 1.0]
         self.AutomaticLightCreationOff()
@@ -397,6 +457,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self._shadow_pass = None
         self._render_passes = RenderPasses(self)
         self.cube_axes_actor: CubeAxesActor | None = None
+        self._cube_axes_follow_scene = True
 
         # This is a private variable to keep track of how many colorbars exist
         # This allows us to keep adding colorbars without overlapping
@@ -405,6 +466,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self._charts: Charts | None = None
 
         self._border_actor: _vtk.vtkActor2D | None = None
+        self._border_actor_secondary: _vtk.vtkActor2D | None = None
+        self._border_requested_width: float | None = None
         if border:
             self.add_border(border_color, border_width)
 
@@ -415,17 +478,29 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self._marker_actor: _vtk.vtkAxesActor | None = None
 
     @property
+    def _plotter(self) -> BasePlotter:
+        """Return the plotter this renderer belongs to."""
+        if self.parent is None:
+            msg = 'The renderer has been closed and no longer has a plotter.'
+            raise RuntimeError(msg)
+        return self.parent
+
+    @property
     def camera_set(self) -> bool:  # numpydoc ignore=RT01
         """Get or set whether this camera has been configured."""
-        if self.camera is None:  # pragma: no cover
+        if self._camera is None:
+            # The renderer has been closed; it no longer holds a camera to configure.
             return False
-        return self.camera.is_set
+        return self._camera.is_set
 
     @camera_set.setter
     def camera_set(self, is_set: bool) -> None:
         self.camera.is_set = is_set
 
-    def set_color_cycler(self, color_cycler) -> None:
+    def set_color_cycler(
+        self,
+        color_cycler: str | cycler.Cycler[str, Any] | Sequence[ColorLike] | None,
+    ) -> None:
         """Set or reset this renderer's color cycler.
 
         This color cycler is iterated over by each sequential :meth:`~pyvista.Plotter.add_mesh`
@@ -451,7 +526,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         Parameters
         ----------
-        color_cycler : str | cycler.Cycler | sequence[ColorLike]
+        color_cycler : str | cycler.Cycler | sequence[ColorLike] | None
             The colors to cycle through.
 
         Examples
@@ -494,14 +569,14 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             self._color_cycle = None
 
     @property
-    def next_color(self):  # numpydoc ignore=RT01
+    def next_color(self) -> ColorLike:  # numpydoc ignore=RT01
         """Return next color from this renderer's color cycler."""
         if self._color_cycle is None:
             return self._theme.color
         return next(self._color_cycle)['color']
 
     @property
-    def camera_position(self):  # numpydoc ignore=RT01
+    def camera_position(self) -> CameraPosition:  # numpydoc ignore=RT01
         """Return or set the camera position of active render window.
 
         Returns
@@ -517,12 +592,12 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         )
 
     @camera_position.setter
-    def camera_position(self, camera_location):
+    def camera_position(self, camera_location: CameraPositionOptions | None) -> None:
         if camera_location is None:
             return
         elif isinstance(camera_location, str):
-            camera_location = camera_location.lower()
-            if camera_location not in self.CAMERA_STR_ATTR_MAP:
+            direction = camera_location.lower()
+            if direction not in self.CAMERA_STR_ATTR_MAP:
                 msg = (
                     'Invalid view direction.  '
                     'Use one of the following:\n   '
@@ -530,23 +605,32 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
                 )
                 raise InvalidCameraError(msg)
 
-            getattr(self, self.CAMERA_STR_ATTR_MAP[camera_location])()
+            getattr(self, self.CAMERA_STR_ATTR_MAP[direction])()
 
-        elif isinstance(camera_location[0], (int, float)):
-            if len(camera_location) != 3:
-                raise InvalidCameraError
-            self.view_vector(camera_location)
         else:
-            # check if a valid camera position
-            if not isinstance(camera_location, CameraPosition) and (
-                not len(camera_location) == 3 or any(len(item) != 3 for item in camera_location)
-            ):
-                raise InvalidCameraError
+            location = (
+                camera_location.to_list()
+                if isinstance(camera_location, CameraPosition)
+                else camera_location
+            )
+            try:
+                # A single vector points the camera, and three of them place it
+                position = _validation.validate_array(
+                    np.asarray(location, dtype=float),
+                    must_have_shape=[(3,), (3, 3)],
+                    name='camera position',
+                )
+                cpos = None if position.ndim == 1 else CameraPosition(*position)
+            except (TypeError, ValueError) as error:
+                raise InvalidCameraError(str(error)) from error
 
-            # everything is set explicitly
-            self.camera.position = scale_point(self.camera, camera_location[0], invert=False)
-            self.camera.focal_point = scale_point(self.camera, camera_location[1], invert=False)
-            self.camera.up = camera_location[2]
+            if cpos is None:
+                self.view_vector(position)
+            else:
+                # everything is set explicitly
+                self.camera.position = scale_point(self.camera, cpos.position, invert=False)
+                self.camera.focal_point = scale_point(self.camera, cpos.focal_point, invert=False)
+                self.camera.up = cpos.viewup
 
         # reset clipping range
         self.reset_camera_clipping_range()
@@ -561,19 +645,26 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.ResetCameraClippingRange()
 
     @property
-    def camera(self):  # numpydoc ignore=RT01
+    def camera(self) -> Camera:  # numpydoc ignore=RT01
         """Return the active camera for the rendering scene."""
+        if self._camera is None:
+            msg = 'The renderer has been closed and no longer has a camera.'
+            raise RuntimeError(msg)
         return self._camera
 
     @camera.setter
-    def camera(self, source) -> None:
+    def camera(self, source: Camera) -> None:
         self._camera = source
         self.SetActiveCamera(self._camera)
+        if self.cube_axes_actor is not None:
+            self.cube_axes_actor.camera = source
         self.camera_position = CameraPosition(
             scale_point(source, source.position, invert=True),
             scale_point(source, source.focal_point, invert=True),
             source.up,
         )
+        if source._renderer is None:
+            source._renderer = weakref.proxy(self)
         self.Modified()
         self.camera_set = True
 
@@ -652,15 +743,15 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             actor_type for actor_type in ignore_actors if isinstance(actor_type, type)
         ]
 
-        def _update_bounds(bounds) -> None:
-            def update_axis(ax) -> None:
+        def _update_bounds(bounds: VectorLike[float]) -> None:
+            def update_axis(ax: int) -> None:
                 the_bounds[ax * 2] = min(bounds[ax * 2], the_bounds[ax * 2])
                 the_bounds[ax * 2 + 1] = max(bounds[ax * 2 + 1], the_bounds[ax * 2 + 1])
 
             for ax in range(3):
                 update_axis(ax)
 
-        for name, actor in self._actors.items():
+        for name, actor in self.actors.items():
             if not actor.GetUseBounds() and not force_use_bounds:
                 continue
             if not actor.GetVisibility() and not force_visibility:
@@ -677,7 +768,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         return _fixup_bounds(the_bounds)
 
     @property
-    def length(self):  # numpydoc ignore=RT01
+    def length(self) -> float:  # numpydoc ignore=RT01
         """Return the length of the diagonal of the bounding box of the scene.
 
         Returns
@@ -704,23 +795,37 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         z = (bnds.z_max + bnds.z_min) / 2
         return x, y, z
 
+    def _unscaled_bounds(self) -> BoundsTuple:
+        """Return the scene bounds as an actor sees them before the renderer scale."""
+        scale = np.repeat(np.array(self.scale, dtype=float), 2)
+        return BoundsTuple(*(np.array(self.bounds) / scale).tolist())
+
+    def _place_ruler(self, ruler: _vtk.vtkAxisActor2D) -> None:
+        """Put a ruler's end points where the renderer scale moves the scene."""
+        scale = np.array(self.scale, dtype=float)
+        point_a, point_b = ruler._unscaled_points  # type: ignore[attr-defined]
+        ruler.GetPositionCoordinate().SetValue(*(point_a * scale))
+        ruler.GetPosition2Coordinate().SetValue(*(point_b * scale))
+
     @property
-    def background_color(self):  # numpydoc ignore=RT01
+    def background_color(self) -> Color:  # numpydoc ignore=RT01
         """Return the background color of this renderer."""
         return Color(self.GetBackground())
 
     @background_color.setter
-    def background_color(self, color) -> None:
+    def background_color(self, color: ColorLike | None) -> None:
         self.set_background(color)
         self.Modified()
 
-    def _before_render_event(self, *args, **kwargs) -> None:
+    def _before_render_event(self, *args: object, **kwargs: object) -> None:
         """Notify all charts about render event."""
         if self._charts is not None:
             for chart in self._charts:
                 chart._render_event(*args, **kwargs)
 
-    def enable_depth_peeling(self, number_of_peels=None, occlusion_ratio=None):
+    def enable_depth_peeling(
+        self, number_of_peels: int | None = None, occlusion_ratio: float | None = None
+    ) -> bool:
         """Enable depth peeling to improve rendering of translucent geometry.
 
         Parameters
@@ -762,7 +867,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.SetUseDepthPeeling(False)
         self.Modified()
 
-    def enable_anti_aliasing(self, aa_type='ssaa'):
+    def enable_anti_aliasing(self, aa_type: str = 'ssaa') -> None:
         """Enable anti-aliasing.
 
         Parameters
@@ -771,9 +876,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Anti-aliasing type. Either ``"fxaa"`` or ``"ssaa"``.
 
         """
-        if not isinstance(aa_type, str):
-            msg = f'`aa_type` must be a string, not {type(aa_type)}'
-            raise TypeError(msg)
+        _validation.check_instance(aa_type, str, name='`aa_type`')
         aa_type = aa_type.lower()
 
         if aa_type == 'fxaa':
@@ -811,7 +914,12 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.SetUseFXAA(False)
         self.Modified()
 
-    def add_border(self, color='white', width=2.0):
+    def add_border(
+        self,
+        color: ColorLike = 'white',
+        width: float = 1.0,
+        edges: list[str] | tuple[str, ...] | None = None,
+    ) -> _vtk.vtkActor2D:
         """Add borders around the frame.
 
         Parameters
@@ -819,8 +927,13 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         color : ColorLike, default: "white"
             Color of the border.
 
-        width : float, default: 2.0
+        width : float, default: 1.0
             Width of the border.
+
+        edges : list[str] | tuple[str, ...], optional
+            Which edges of the frame to draw. Any subset of
+            ``('top', 'left', 'bottom', 'right')``. When ``None``
+            (the default) all four edges are drawn.
 
         Returns
         -------
@@ -830,7 +943,20 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """
         points = np.array([[1.0, 1.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 0.0], [1.0, 0.0, 0.0]])
 
-        lines = np.array([[2, 0, 1], [2, 1, 2], [2, 2, 3], [2, 3, 0]]).ravel()
+        edge_lines = {
+            'top': [2, 0, 1],
+            'left': [2, 1, 2],
+            'bottom': [2, 2, 3],
+            'right': [2, 3, 0],
+        }
+        if edges is None:
+            edges = ('top', 'left', 'bottom', 'right')
+        else:
+            # A bare string would be read one character at a time
+            _validation.check_instance(edges, (list, tuple), name='edges')
+            for edge in edges:
+                _validation.check_contains(list(edge_lines), must_contain=edge, name='edges')
+        lines = np.array([edge_lines[e] for e in edges]).ravel()
 
         poly = pv.PolyData()
         poly.points = points
@@ -846,12 +972,19 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         actor = _vtk.vtkActor2D()
         actor.SetMapper(mapper)
         actor.GetProperty().SetColor(Color(color).float_rgb)
-        actor.GetProperty().SetLineWidth(width)
+        # Every edge drawn here sits exactly on this renderer's own 0/1
+        # viewport boundary, by construction. VTK's 2D line rasterizer
+        # clips away roughly half of a line's width right at that
+        # boundary, so the drawn width is doubled to compensate -- the
+        # border then actually renders at the requested `width`, e.g.
+        # matching interior lines drawn at the same nominal width.
+        actor.GetProperty().SetLineWidth(width * 2)
 
         self.AddViewProp(actor)
         self.Modified()
 
         self._border_actor = actor
+        self._border_requested_width = width
         return actor
 
     @property
@@ -860,20 +993,45 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         return self._border_actor is not None
 
     @property
-    def border_width(self):  # numpydoc ignore=RT01
-        """Return the border width."""
+    def border_width(self) -> float | None:  # numpydoc ignore=RT01
+        """Return the border width.
+
+        This is the width originally requested, not the (doubled) value
+        actually given to VTK to compensate for edge clipping -- see
+        :meth:`add_border`.
+        """
         if self.has_border:
-            return self._border_actor.GetProperty().GetLineWidth()  # type: ignore[union-attr]
+            return self._border_requested_width
         return 0
 
     @property
-    def border_color(self):  # numpydoc ignore=RT01
+    def border_color(self) -> Color | None:  # numpydoc ignore=RT01
         """Return the border color."""
         if self.has_border:
             return Color(self._border_actor.GetProperty().GetColor())  # type: ignore[union-attr]
         return None
 
-    def add_chart(self, chart, *charts):
+    def _drop_border_actor(self) -> None:
+        """Remove this renderer's own border actors, if any.
+
+        Used when subplot seams are being drawn by a shared overlay
+        renderer so neighboring renderers don't each rasterize their
+        own clipped copy of the boundary line.
+        """
+        border_actor = self._border_actor
+        secondary_actor = self._border_actor_secondary
+        if border_actor is None and secondary_actor is None:
+            return
+        if border_actor is not None:
+            self.RemoveViewProp(border_actor)
+        if secondary_actor is not None:
+            self.RemoveViewProp(secondary_actor)
+        self._border_actor = None
+        self._border_actor_secondary = None
+        self._border_requested_width = None
+        self.Modified()
+
+    def add_chart(self, chart: Chart, *charts: Chart) -> None:
         """Add a chart to this renderer.
 
         Parameters
@@ -886,26 +1044,32 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         Examples
         --------
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> _ = chart.plot(range(10), range(10))
-        >>> pl = pv.Plotter()
-        >>> pl.add_chart(chart)
-        >>> pl.show()
+        .. pyvista-plot::
+            :force_static:
+
+            >>> import pyvista as pv
+            >>> chart = pv.Chart2D()
+            >>> _ = chart.plot(range(10), range(10))
+            >>> pl = pv.Plotter()
+            >>> pl.add_chart(chart)
+            >>> pl.show()
 
         """
         # lazy instantiation here to avoid creating the charts object unless needed.
         if self._charts is None:
             self._charts = Charts(self)
-            self.AddObserver('StartEvent', partial(try_callback, self._before_render_event))  # type: ignore[arg-type]
+            self.AddObserver(
+                _vtk.vtkCommand.StartEvent,
+                functools.partial(try_callback, self._before_render_event),
+            )
         self._charts.add_chart(chart, *charts)
 
     @property
-    def has_charts(self):  # numpydoc ignore=RT01
+    def has_charts(self) -> bool:  # numpydoc ignore=RT01
         """Return whether this renderer has charts."""
         return self._charts is not None and len(self._charts) > 0
 
-    def get_charts(self):  # numpydoc ignore=RT01
+    def get_charts(self) -> list[Chart]:  # numpydoc ignore=RT01
         """Return a list of all charts in this renderer.
 
         Examples
@@ -922,24 +1086,24 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
            True
 
         """
-        return [*self._charts] if self.has_charts else []  # type: ignore[misc]
+        return [*self._charts] if self._charts else []
 
-    @wraps(Charts.set_interaction)
-    @_deprecate_positional_args(allowed=['interactive'])
+    @_wraps(Charts.set_interaction)
     def set_chart_interaction(  # numpydoc ignore=PR01,RT01
         self,
-        interactive,
-        toggle=False,  # noqa: FBT002
-    ):
+        interactive: bool | Chart | int | Sequence[Chart] | Sequence[int],  # noqa: FBT001
+        *,
+        toggle: bool = False,
+    ) -> list[Chart]:
         """Wrap ``Charts.set_interaction``."""
-        return self._charts.set_interaction(interactive, toggle=toggle) if self.has_charts else []  # type: ignore[union-attr]
+        return self._charts.set_interaction(interactive, toggle=toggle) if self._charts else []
 
-    @wraps(Charts.get_charts_by_pos)
-    def _get_charts_by_pos(self, pos):
+    @_wraps(Charts.get_charts_by_pos)
+    def _get_charts_by_pos(self, pos: tuple[float, float]) -> list[Chart]:
         """Wrap ``Charts.get_charts_by_pos``."""
-        return self._charts.get_charts_by_pos(pos) if self.has_charts else []  # type: ignore[union-attr]
+        return self._charts.get_charts_by_pos(pos) if self._charts else []
 
-    def remove_chart(self, chart_or_index) -> None:
+    def remove_chart(self, chart_or_index: Chart | int) -> None:
         """Remove a chart from this renderer.
 
         Parameters
@@ -949,33 +1113,36 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         Examples
         --------
-        First define a function to add two charts to a renderer.
+        .. pyvista-plot::
+            :force_static:
 
-        >>> import pyvista as pv
-        >>> def plotter_with_charts():
-        ...     pl = pv.Plotter()
-        ...     pl.background_color = 'w'
-        ...     chart_left = pv.Chart2D(size=(0.5, 1))
-        ...     _ = chart_left.line([0, 1, 2], [2, 1, 3])
-        ...     pl.add_chart(chart_left)
-        ...     chart_right = pv.Chart2D(size=(0.5, 1), loc=(0.5, 0))
-        ...     _ = chart_right.line([0, 1, 2], [3, 1, 2])
-        ...     pl.add_chart(chart_right)
-        ...     return pl, chart_left, chart_right
-        >>> pl, *_ = plotter_with_charts()
-        >>> pl.show()
+            First define a function to add two charts to a renderer.
 
-        Now reconstruct the same plotter but remove the right chart by index.
+            >>> import pyvista as pv
+            >>> def plotter_with_charts():
+            ...     pl = pv.Plotter()
+            ...     pl.background_color = 'w'
+            ...     chart_left = pv.Chart2D(size=(0.5, 1))
+            ...     _ = chart_left.line([0, 1, 2], [2, 1, 3])
+            ...     pl.add_chart(chart_left)
+            ...     chart_right = pv.Chart2D(size=(0.5, 1), loc=(0.5, 0))
+            ...     _ = chart_right.line([0, 1, 2], [3, 1, 2])
+            ...     pl.add_chart(chart_right)
+            ...     return pl, chart_left, chart_right
+            >>> pl, *_ = plotter_with_charts()
+            >>> pl.show()
 
-        >>> pl, *_ = plotter_with_charts()
-        >>> pl.remove_chart(1)
-        >>> pl.show()
+            Now reconstruct the same plotter but remove the right chart by index.
 
-        Finally, remove the left chart by reference.
+            >>> pl, *_ = plotter_with_charts()
+            >>> pl.remove_chart(1)
+            >>> pl.show()
 
-        >>> pl, chart_left, chart_right = plotter_with_charts()
-        >>> pl.remove_chart(chart_left)
-        >>> pl.show()
+            Finally, remove the left chart by reference.
+
+            >>> pl, chart_left, chart_right = plotter_with_charts()
+            >>> pl.remove_chart(chart_left)
+            >>> pl.show()
 
         """
         if self.has_charts:
@@ -992,39 +1159,46 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             The actors may also be unwrapped VTK objects.
 
         """
+        if self._actors is None:
+            # The renderer has been closed; it no longer holds any actors.
+            return {}
         return dict(self._actors.items())
 
-    @_deprecate_positional_args(allowed=['actor'])
-    def add_actor(  # noqa: PLR0917
+    def add_actor(
         self,
-        actor,
-        reset_camera=False,  # noqa: FBT002
-        name=None,
-        culling=False,  # noqa: FBT002
-        pickable=True,  # noqa: FBT002
-        render=True,  # noqa: FBT002
-        remove_existing_actor=True,  # noqa: FBT002
-    ):
+        actor: _vtk.vtkProp | _vtk.vtkMapper,
+        *,
+        reset_camera: bool | None = False,
+        name: str | None = None,
+        culling: str | bool = False,
+        pickable: bool = True,
+        render: bool = True,
+        remove_existing_actor: bool = True,
+    ) -> tuple[_vtk.vtkProp, _vtk.vtkProperty | _vtk.vtkVolumeProperty | None]:
         """Add an actor to render window.
 
         Creates an actor if input is a mapper.
 
         Parameters
         ----------
-        actor : :vtk:`vtkActor` | :vtk:`vtkMapper` | Actor
-            The actor to be added. Can be either :vtk:`vtkActor` or :vtk:`vtkMapper`.
+        actor : :vtk:`vtkProp` | :vtk:`vtkMapper` | Actor
+            The actor to be added. Can be any prop, or a mapper to wrap into an actor.
 
-        reset_camera : bool, default: False
-            Resets the camera when ``True``.
+        reset_camera : bool, optional
+            Resets the camera when ``True``. When ``None``, the camera is reset only if
+            it has not been set and no existing actor was replaced.
 
         name : str, optional
             Name to assign to the actor.  Defaults to the memory address.
 
-        culling : str, default: False
-            Does not render faces that are culled. Options are
-            ``'front'`` or ``'back'``. This can be helpful for dense
-            surface meshes, especially when edges are visible, but can
-            cause flat meshes to be partially displayed.
+        culling : str | bool, default: False
+            Does not render faces that are culled. This can be helpful for
+            dense surface meshes, especially when edges are visible, but can
+            cause flat meshes to be partially displayed. One of the following:
+
+            * ``True``, ``'b'``, ``'back'``, ``'backface'`` - Enable backface culling
+            * ``'f'``, ``'front'``, ``'frontface'`` - Enable frontface culling
+            * ``False``, ``'none'`` - Leave culling as the actor already has it
 
         pickable : bool, default: True
             Whether to allow this actor to be pickable within the
@@ -1040,11 +1214,11 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         Returns
         -------
-        actor : :vtk:`vtkActor` | Actor
+        actor : :vtk:`vtkProp`
             The actor.
 
-        actor_properties : vtk.Properties
-            Actor properties.
+        actor_properties : :vtk:`vtkProperty` | :vtk:`vtkVolumeProperty`
+            The property of the actor, or ``None`` if it has none.
 
         """
         # Remove actor by that name if present
@@ -1061,54 +1235,53 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
                 if (hasattr(actor, 'name') and actor.name)
                 else f'{type(actor).__name__}({actor.GetAddressAsString("")})'
             )
-        actor.name = name
+        # Every kind of prop carries its name as a dynamic attribute
+        actor.name = name  # type: ignore[attr-defined]
         actor.SetPickable(pickable)
         # Apply this renderer's scale to the actor (which can be further scaled)
-        if hasattr(actor, 'SetScale'):
+        if isinstance(actor, _vtk.vtkProp3D):
             actor.SetScale(np.array(actor.GetScale()) * np.array(self.scale))
         self.AddActor(actor)  # must add actor before resetting camera
 
         if reset_camera or (not self.camera_set and reset_camera is None and not rv):
             self.reset_camera(render=render)
         elif render:
-            self.parent.render()
+            self._plotter.render()
 
         self.update_bounds_axes()
 
         if isinstance(culling, str):
             culling = culling.lower()
 
-        if culling:
+        prop = actor.GetProperty() if hasattr(actor, 'GetProperty') else None
+
+        if culling and culling != 'none':
             if culling in [True, 'back', 'backface', 'b']:
-                with contextlib.suppress(AttributeError):
-                    actor.GetProperty().BackfaceCullingOn()
+                enable_culling = getattr(prop, 'BackfaceCullingOn', None)
             elif culling in ['front', 'frontface', 'f']:
-                with contextlib.suppress(AttributeError):
-                    actor.GetProperty().FrontfaceCullingOn()
+                enable_culling = getattr(prop, 'FrontfaceCullingOn', None)
             else:
                 msg = f'Culling option ({culling}) not understood.'
                 raise ValueError(msg)
+            if enable_culling is not None:
+                enable_culling()
 
         self.Modified()
 
-        prop = None
-        if hasattr(actor, 'GetProperty'):
-            prop = actor.GetProperty()
-
         return actor, prop
 
-    @_deprecate_positional_args
-    def add_axes_at_origin(  # noqa: PLR0917
+    def add_axes_at_origin(
         self,
-        x_color=None,
-        y_color=None,
-        z_color=None,
-        xlabel='X',
-        ylabel='Y',
-        zlabel='Z',
-        line_width=2,
-        labels_off=False,  # noqa: FBT002
-    ):
+        *,
+        x_color: ColorLike | None = None,
+        y_color: ColorLike | None = None,
+        z_color: ColorLike | None = None,
+        xlabel: str = 'X',
+        ylabel: str = 'Y',
+        zlabel: str = 'Z',
+        line_width: int = 2,
+        labels_off: bool = False,
+    ) -> _vtk.vtkAxesActor:
         """Add axes actor at origin.
 
         Parameters
@@ -1146,9 +1319,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         --------
         add_axes
 
-        :ref:`axes_objects_example`
-            Example showing different axes objects.
-
         Examples
         --------
         >>> import pyvista as pv
@@ -1175,7 +1345,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self._marker_actor = marker
         return marker
 
-    def _remove_axes_widget(self):
+    def _remove_axes_widget(self) -> None:
         """Remove and delete the current axes widget."""
         if self.axes_widget is not None:
             self.axes_actor = None
@@ -1188,22 +1358,22 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             self.Modified()
             self.axes_widget = None
 
-    @_deprecate_positional_args(allowed=['actor'])
-    def add_orientation_widget(  # noqa: PLR0917
+    def add_orientation_widget(
         self,
-        actor,
-        interactive=None,
-        color=None,
-        opacity=1.0,
-        viewport=None,
-    ):
+        actor: _vtk.vtkProp | DataSet,
+        *,
+        interactive: bool | None = None,
+        color: ColorLike | None = None,
+        opacity: float = 1.0,
+        viewport: Sequence[float] | None = None,
+    ) -> _vtk.vtkOrientationMarkerWidget:
         """Use the given actor in an orientation marker widget.
 
         Color and opacity are only valid arguments if a mesh is passed.
 
         Parameters
         ----------
-        actor : :vtk:`vtkActor` | DataSet
+        actor : :vtk:`vtkProp` | DataSet
             The mesh or actor to use as the marker.
 
         interactive : bool, optional
@@ -1238,9 +1408,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         add_north_arrow_widget
             Add north arrow as an orientation widget.
 
-        :ref:`axes_objects_example`
-            Example showing different axes objects.
-
         Examples
         --------
         Use an Arrow as the orientation widget.
@@ -1267,8 +1434,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         axes_widget = _vtk.vtkOrientationMarkerWidget()
         self.axes_widget = axes_widget
         axes_widget.SetOrientationMarker(actor)
-        if self.parent.iren is not None:
-            axes_widget.SetInteractor(self.parent.iren.interactor)
+        if self._plotter.iren is not None:
+            axes_widget.SetInteractor(self._plotter.iren.interactor)
             axes_widget.SetEnabled(1)
             axes_widget.SetInteractive(interactive)
         axes_widget.SetCurrentRenderer(self)
@@ -1277,24 +1444,23 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.Modified()
         return axes_widget
 
-    @_deprecate_positional_args
-    def add_axes(  # noqa: PLR0917
+    def add_axes(
         self,
-        interactive=None,
-        line_width=2,
-        color=None,
-        x_color=None,
-        y_color=None,
-        z_color=None,
-        xlabel='X',
-        ylabel='Y',
-        zlabel='Z',
-        labels_off=False,  # noqa: FBT002
-        box=None,
-        box_args=None,  # noqa: ARG002
-        viewport=(0, 0, 0.2, 0.2),
-        **kwargs,
-    ):
+        /,
+        *,
+        interactive: bool | None = None,
+        line_width: int = 2,
+        color: ColorLike | None = None,
+        x_color: ColorLike | None = None,
+        y_color: ColorLike | None = None,
+        z_color: ColorLike | None = None,
+        xlabel: str = 'X',
+        ylabel: str = 'Y',
+        zlabel: str = 'Z',
+        labels_off: bool = False,
+        viewport: Sequence[float] = (0, 0, 0.2, 0.2),
+        **kwargs: Any,
+    ) -> _vtk.vtkAxesActor:
         """Add an interactive axes widget in the bottom left corner.
 
         Parameters
@@ -1329,23 +1495,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         labels_off : bool, default: False
             Enable or disable the text labels for the axes.
 
-        box : bool, optional
-            Show a box orientation marker. Use ``box_args`` to adjust.
-            See :func:`pyvista.create_axes_orientation_box` for details.
-
-            .. deprecated:: 0.43.0
-                This parameter is deprecated. Use the ``add_box_axes`` method
-                instead.
-
-        box_args : dict, optional
-            Parameters for the orientation box widget when
-            ``box=True``. See the parameters of
-            :func:`pyvista.create_axes_orientation_box`.
-
-            .. deprecated:: 0.43.0
-                This parameter is deprecated. Use the ``add_box_axes`` method
-                instead.
-
         viewport : sequence[float], default: (0, 0, 0.2, 0.2)
             Viewport ``(xstart, ystart, xend, yend)`` of the widget.
 
@@ -1355,7 +1504,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         Returns
         -------
-        AxesActor
+        :vtk:`vtkAxesActor`
             Axes actor of the added widget.
 
         See Also
@@ -1374,9 +1523,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         add_orientation_widget
             Add any actor as an orientation widget.
-
-        :ref:`axes_objects_example`
-            Example showing different axes objects.
 
         Examples
         --------
@@ -1408,11 +1554,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             interactive = self._theme.interactive
         self._remove_axes_widget()
 
-        if box:
-            msg = '`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.'
-            raise DeprecationError(msg)
-
-        self.axes_actor = create_axes_marker(
+        axes_actor = create_axes_marker(
             label_color=color,
             line_width=line_width,
             x_color=x_color,
@@ -1424,28 +1566,28 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             labels_off=labels_off,
             **kwargs,
         )
+        self.axes_actor = axes_actor
         axes_widget = self.add_orientation_widget(
-            self.axes_actor,
+            axes_actor,
             interactive=interactive,
             color=None,
         )
         axes_widget.SetViewport(viewport)
-        return self.axes_actor
+        return axes_actor
 
-    @_deprecate_positional_args
-    def add_north_arrow_widget(  # noqa: PLR0917
+    def add_north_arrow_widget(
         self,
-        interactive=None,
-        color='#4169E1',
-        opacity=1.0,
-        line_width=2,
-        edge_color=None,
-        lighting=False,  # noqa: FBT002
-        viewport=(0, 0, 0.1, 0.1),
         *,
-        top_color=None,
-        bottom_color=None,
-    ):
+        interactive: bool | None = None,
+        color: ColorLike = '#4169E1',
+        opacity: float = 1.0,
+        line_width: float = 2,
+        edge_color: ColorLike | None = None,
+        lighting: bool = False,
+        viewport: Sequence[float] = (0, 0, 0.1, 0.1),
+        top_color: ColorLike | None = None,
+        bottom_color: ColorLike | None = None,
+    ) -> _vtk.vtkOrientationMarkerWidget:
         """Add a geographic north arrow to the scene.
 
         .. versionadded:: 0.44.0
@@ -1508,9 +1650,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         add_orientation_widget
             Add a custom mesh as an orientation widget.
 
-        :ref:`axes_objects_example`
-            Example showing different axes objects.
-
         Examples
         --------
         Use a north arrow as the orientation widget.
@@ -1571,25 +1710,25 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
     def add_box_axes(
         self,
         *,
-        interactive=None,
-        line_width=2,
-        text_scale=0.366667,
-        edge_color='black',
-        x_color=None,
-        y_color=None,
-        z_color=None,
-        xlabel='X',
-        ylabel='Y',
-        zlabel='Z',
-        x_face_color='white',
-        y_face_color='white',
-        z_face_color='white',
-        label_color=None,
-        labels_off=False,
-        opacity=0.5,
-        show_text_edges=False,
-        viewport=(0, 0, 0.2, 0.2),
-    ):
+        interactive: bool | None = None,
+        line_width: float = 2,
+        text_scale: float = 0.366667,
+        edge_color: ColorLike = 'black',
+        x_color: ColorLike | None = None,
+        y_color: ColorLike | None = None,
+        z_color: ColorLike | None = None,
+        xlabel: str = 'X',
+        ylabel: str = 'Y',
+        zlabel: str = 'Z',
+        x_face_color: ColorLike = 'white',
+        y_face_color: ColorLike = 'white',
+        z_face_color: ColorLike = 'white',
+        label_color: ColorLike | None = None,
+        labels_off: bool = False,
+        opacity: float = 0.5,
+        show_text_edges: bool = False,
+        viewport: Sequence[float] = (0, 0, 0.2, 0.2),
+    ) -> _vtk.vtkPropAssembly:
         """Add an interactive color box axes widget in the bottom left corner.
 
         Parameters
@@ -1653,7 +1792,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         Returns
         -------
-        :vtk:`vtkAnnotatedCubeActor`
+        :vtk:`vtkPropAssembly`
             Axes actor.
 
         See Also
@@ -1666,9 +1805,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         add_orientation_widget
             Add any actor as an orientation widget.
-
-        :ref:`axes_objects_example`
-            Example showing different axes objects.
 
         Examples
         --------
@@ -1684,7 +1820,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         if interactive is None:
             interactive = self._theme.interactive
         self._remove_axes_widget()
-        self.axes_actor = create_axes_orientation_box(
+        axes_actor = create_axes_orientation_box(
             line_width=line_width,
             text_scale=text_scale,
             edge_color=edge_color,
@@ -1703,13 +1839,14 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             opacity=opacity,
             show_text_edges=show_text_edges,
         )
+        self.axes_actor = axes_actor
         axes_widget = self.add_orientation_widget(
-            self.axes_actor,
+            axes_actor,
             interactive=interactive,
             color=None,
         )
         axes_widget.SetViewport(viewport)
-        return self.axes_actor
+        return axes_actor
 
     def hide_axes(self) -> None:
         """Hide the axes orientation widget.
@@ -1765,7 +1902,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.Modified()
 
     @property
-    def axes_enabled(self):
+    def axes_enabled(self) -> bool:
         """Return ``True`` when the axes widget is enabled.
 
         See Also
@@ -1794,41 +1931,42 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             return bool(self.axes_widget.GetEnabled())
         return False
 
-    @_deprecate_positional_args
-    def show_bounds(  # noqa: PLR0917
+    def show_bounds(
         self,
-        mesh=None,
-        bounds=None,
-        axes_ranges=None,
-        show_xaxis=True,  # noqa: FBT002
-        show_yaxis=True,  # noqa: FBT002
-        show_zaxis=True,  # noqa: FBT002
-        show_xlabels=True,  # noqa: FBT002
-        show_ylabels=True,  # noqa: FBT002
-        show_zlabels=True,  # noqa: FBT002
-        bold=True,  # noqa: FBT002
-        font_size=None,
-        font_family=None,
-        color=None,
-        xtitle='X Axis',
-        ytitle='Y Axis',
-        ztitle='Z Axis',
-        n_xlabels=5,
-        n_ylabels=5,
-        n_zlabels=5,
-        use_2d=False,  # noqa: FBT002
-        grid=None,
-        location='closest',
-        ticks=None,
-        all_edges=False,  # noqa: FBT002
-        corner_factor=0.5,
-        fmt=None,
-        minor_ticks=False,  # noqa: FBT002
-        padding=0.0,
-        use_3d_text: bool | None = None,  # noqa: FBT001
-        render=None,
-        **kwargs,
-    ):
+        /,
+        *,
+        mesh: DataSet | MultiBlock[Any] | None = None,
+        bounds: VectorLike[float] | None = None,
+        axes_ranges: VectorLike[float] | None = None,
+        show_xaxis: bool = True,
+        show_yaxis: bool = True,
+        show_zaxis: bool = True,
+        show_xlabels: bool = True,
+        show_ylabels: bool = True,
+        show_zlabels: bool = True,
+        bold: bool = True,
+        font_size: float | None = None,
+        font_family: str | None = None,
+        color: ColorLike | None = None,
+        xtitle: str = 'X Axis',
+        ytitle: str = 'Y Axis',
+        ztitle: str = 'Z Axis',
+        n_xlabels: int = 5,
+        n_ylabels: int = 5,
+        n_zlabels: int = 5,
+        use_2d: bool = False,
+        grid: bool | str | None = None,
+        location: str = 'closest',
+        ticks: str | None = None,
+        all_edges: bool = False,
+        corner_factor: float = 0.5,
+        fmt: str | None = None,
+        minor_ticks: bool = False,
+        padding: float = 0.0,
+        use_3d_text: bool | None = None,
+        render: bool = False,
+        **kwargs: str,
+    ) -> CubeAxesActor:
         """Add bounds axes.
 
         Shows the bounds of the most recent input mesh unless mesh is
@@ -1905,16 +2043,26 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Title of the z-axis.  Default ``"Z Axis"``.
 
         n_xlabels : int, default: 5
-            Number of labels for the x-axis.
+            At most this many labels for the x-axis. Where VTK's own tick
+            spacing fits the range, the labels sit on those ticks and the last may
+            stop short of the upper bound; otherwise fewer are spaced evenly
+            between the bounds.
 
         n_ylabels : int, default: 5
-            Number of labels for the y-axis.
+            At most this many labels for the y-axis. Where VTK's own tick
+            spacing fits the range, the labels sit on those ticks and the last may
+            stop short of the upper bound; otherwise fewer are spaced evenly
+            between the bounds.
 
         n_zlabels : int, default: 5
-            Number of labels for the z-axis.
+            At most this many labels for the z-axis. Where VTK's own tick
+            spacing fits the range, the labels sit on those ticks and the last may
+            stop short of the upper bound; otherwise fewer are spaced evenly
+            between the bounds.
 
         use_2d : bool, default: False
-            This can be enabled for smoother plotting.
+            This can be enabled for smoother plotting. VTK also hides the z-axis
+            in this mode, so it suits a scene viewed down a single axis.
 
         grid : bool or str, optional
             Add grid lines to the backface (``True``, ``'back'``, or
@@ -1966,7 +2114,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
                 the 3D labels may not render at all in some cases. This is a known VTK bug:
                 https://gitlab.kitware.com/vtk/vtk/-/issues/19729.
 
-        render : bool, optional
+        render : bool, default: False
             If the render window is being shown, trigger a render
             after showing bounds.
 
@@ -1983,11 +2131,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         show_grid
         remove_bounds_axes
         update_bounds_axes
-
-        :ref:`axes_objects_example`
-            Example showing different axes objects.
-        :ref:`bounds_example`
-            Additional examples using this method.
 
         Examples
         --------
@@ -2044,9 +2187,9 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.remove_bounds_axes()
 
         vtk_less_than_96 = pv.vtk_version_info < (9, 6, 0)
-        if use_3d_text is None:
-            # Use 2D for VTK 9.6 since 3D is broken https://gitlab.kitware.com/vtk/vtk/-/issues/19729
-            use_3d_text = vtk_less_than_96
+        if not np.allclose(self.scale, [1.0, 1.0, 1.0]):
+            # 3D text is not placed correctly when the renderer is scaled
+            use_3d_text = False
         if font_family is None:
             font_family = self._theme.font.family
         if font_size is None:
@@ -2075,14 +2218,15 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         color = Color(color, default_color=self._theme.font.color)
 
-        if mesh is None and bounds is None:
-            # Use the bounds of all data in the rendering window
-            bounds = np.array(self.bounds)
-        elif bounds is None:
-            # otherwise, use the bounds of the mesh (if available)
-            bounds = np.array(mesh.bounds)
+        follow_scene = mesh is None and bounds is None
+        if bounds is not None:
+            bounds_array = np.asanyarray(bounds, dtype=float)
+        elif mesh is not None:
+            # use the bounds of the mesh (if available)
+            bounds_array = np.array(mesh.bounds)
         else:
-            bounds = np.asanyarray(bounds, dtype=float)
+            # otherwise use the bounds of all data in the rendering window
+            bounds_array = np.array(self.bounds)
 
         # create actor
         cube_axes_actor = pv.CubeAxesActor(
@@ -2104,159 +2248,30 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             n_xlabels=n_xlabels,
             n_ylabels=n_ylabels,
             n_zlabels=n_zlabels,
+            color=color,
+            grid=grid,
+            location=location,
+            font_size=font_size,
+            font_family=font_family,
+            bold=bold,
+            use_3d_text=use_3d_text,
+            use_2d_mode=use_2d,
+            bounds=bounds_array,
+            axes_ranges=axes_ranges,
+            padding=padding,
         )
-
-        cube_axes_actor.use_2d_mode = use_2d or not np.allclose(self.scale, [1.0, 1.0, 1.0])
-
-        if grid:
-            grid = 'back' if grid is True else grid
-            if not isinstance(grid, str):
-                msg = f'`grid` must be a str, not {type(grid)}'
-                raise TypeError(msg)
-            grid = grid.lower()
-            if grid in ('front', 'frontface'):
-                cube_axes_actor.SetGridLineLocation(cube_axes_actor.VTK_GRID_LINES_CLOSEST)
-            elif grid in ('both', 'all'):
-                cube_axes_actor.SetGridLineLocation(cube_axes_actor.VTK_GRID_LINES_ALL)
-            elif grid in ('back', True):
-                cube_axes_actor.SetGridLineLocation(cube_axes_actor.VTK_GRID_LINES_FURTHEST)
-            else:
-                msg = f'`grid` must be either "front", "back, or, "all", not {grid}'
-                raise ValueError(msg)
-            # Only show user desired grid lines
-            cube_axes_actor.SetDrawXGridlines(show_xaxis)
-            cube_axes_actor.SetDrawYGridlines(show_yaxis)
-            cube_axes_actor.SetDrawZGridlines(show_zaxis)
-            # Set the colors
-            cube_axes_actor.GetXAxesGridlinesProperty().SetColor(color.float_rgb)
-            cube_axes_actor.GetYAxesGridlinesProperty().SetColor(color.float_rgb)
-            cube_axes_actor.GetZAxesGridlinesProperty().SetColor(color.float_rgb)
-
-        if isinstance(location, str):
-            location = location.lower()
-            if location in ('all'):
-                cube_axes_actor.SetFlyModeToStaticEdges()
-            elif location in ('origin'):
-                cube_axes_actor.SetFlyModeToStaticTriad()
-            elif location in ('outer'):
-                cube_axes_actor.SetFlyModeToOuterEdges()
-            elif location in ('default', 'closest', 'front'):
-                cube_axes_actor.SetFlyModeToClosestTriad()
-            elif location in ('furthest', 'back'):
-                cube_axes_actor.SetFlyModeToFurthestTriad()
-            else:
-                msg = (
-                    f'Value of location ("{location}") should be either "all", "origin",'
-                    ' "outer", "default", "closest", "front", "furthest", or "back".'
-                )
-                raise ValueError(msg)
-        elif location is not None:
-            msg = 'location must be a string'
-            raise TypeError(msg)
-
-        if isinstance(padding, (int, float)) and 0.0 <= padding < 1.0:
-            if not np.any(np.abs(bounds) == np.inf):
-                cushion = (
-                    np.array(
-                        [
-                            np.abs(bounds[1] - bounds[0]),
-                            np.abs(bounds[3] - bounds[2]),
-                            np.abs(bounds[5] - bounds[4]),
-                        ],
-                    )
-                    * padding
-                )
-                bounds[::2] -= cushion
-                bounds[1::2] += cushion
-        else:
-            msg = f'padding ({padding}) not understood. Must be float between 0 and 1'
-            raise ValueError(msg)
-        cube_axes_actor.bounds = bounds
-
-        # set axes ranges if input
-        if axes_ranges is not None:
-            if isinstance(axes_ranges, (Sequence, np.ndarray)):
-                axes_ranges = np.asanyarray(axes_ranges)
-            else:
-                msg = 'Input axes_ranges must be a numeric sequence.'
-                raise TypeError(msg)
-
-            if not np.issubdtype(axes_ranges.dtype, np.number):
-                msg = 'All of the elements of axes_ranges must be numbers.'
-                raise TypeError(msg)
-
-            # set the axes ranges
-            if axes_ranges.shape != (6,):
-                msg = (
-                    '`axes_ranges` must be passed as a '
-                    '(x_min, x_max, y_min, y_max, z_min, z_max) sequence.'
-                )
-                raise ValueError(msg)
-
-            cube_axes_actor.x_axis_range = axes_ranges[0], axes_ranges[1]
-            cube_axes_actor.y_axis_range = axes_ranges[2], axes_ranges[3]
-            cube_axes_actor.z_axis_range = axes_ranges[4], axes_ranges[5]
-
-        # set color
-        cube_axes_actor.GetXAxesLinesProperty().SetColor(color.float_rgb)
-        cube_axes_actor.GetYAxesLinesProperty().SetColor(color.float_rgb)
-        cube_axes_actor.GetZAxesLinesProperty().SetColor(color.float_rgb)
-
-        # set font
-        font_family = parse_font_family(font_family)
-
-        if not use_3d_text or not np.allclose(self.scale, [1.0, 1.0, 1.0]):
-            use_3d_text = False
-            cube_axes_actor.SetUseTextActor3D(False)
-        else:
-            cube_axes_actor.SetUseTextActor3D(True)
-
-        props = [
-            cube_axes_actor.GetTitleTextProperty(0),
-            cube_axes_actor.GetTitleTextProperty(1),
-            cube_axes_actor.GetTitleTextProperty(2),
-            cube_axes_actor.GetLabelTextProperty(0),
-            cube_axes_actor.GetLabelTextProperty(1),
-            cube_axes_actor.GetLabelTextProperty(2),
-        ]
-
-        # For 3D text, use `SetFontSize` to a relatively high value and use `SetScreenSize` to
-        # shrink it back down. This creates a higher-resolution font and makes it appear sharper.
-        # In VTK 9.6+, the 3D font size is also tied to the value set by SetFontSize, so we need
-        # an additional scaling factor.
-        default_screen_size = 10.0
-        default_font_size = 12
-        scaled_font_size = 50
-
-        for prop in props:
-            prop.SetColor(color.float_rgb)
-            prop.SetFontFamily(font_family)
-            prop.SetBold(bold)
-
-            if use_3d_text:
-                # this merely makes the font sharper
-                prop.SetFontSize(scaled_font_size)
-            else:
-                prop.SetFontSize(font_size)
-
-        if use_3d_text:
-            font_size_factor = 1.0 if vtk_less_than_96 else scaled_font_size / default_font_size
-            cube_axes_actor.SetScreenSize(
-                font_size / default_font_size / font_size_factor * default_screen_size
-            )
-        elif vtk_less_than_96:
-            cube_axes_actor.SetScreenSize(font_size / default_font_size * default_screen_size)
 
         if all_edges:
             self.add_bounding_box(color=color, corner_factor=corner_factor)
 
         self.add_actor(cube_axes_actor, reset_camera=False, pickable=False, render=render)
         self.cube_axes_actor = cube_axes_actor
+        self._cube_axes_follow_scene = follow_scene
 
         self.Modified()
         return cube_axes_actor
 
-    def show_grid(self, **kwargs):
+    def show_grid(self, /, **kwargs: Any) -> CubeAxesActor:
         """Show grid lines and bounds axes labels.
 
         A wrapped implementation of :func:`show_bounds()
@@ -2282,11 +2297,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         remove_bounds_axes
         update_bounds_axes
 
-        :ref:`axes_objects_example`
-            Example showing different axes objects.
-        :ref:`bounds_example`
-            Additional examples using this method.
-
         Examples
         --------
         >>> import pyvista as pv
@@ -2302,8 +2312,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         kwargs.setdefault('ticks', 'both')
         return self.show_bounds(**kwargs)
 
-    @_deprecate_positional_args
-    def remove_bounding_box(self, render=True) -> None:  # noqa: FBT002
+    def remove_bounding_box(self, *, render: bool = True) -> None:
         """Remove bounding box.
 
         Parameters
@@ -2326,19 +2335,19 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             self.remove_actor(actor, reset_camera=False, render=render)
             self.Modified()
 
-    @_deprecate_positional_args
-    def add_bounding_box(  # noqa: PLR0917
+    def add_bounding_box(
         self,
-        color='grey',
-        corner_factor=0.5,
-        line_width=None,
-        opacity=1.0,
-        render_lines_as_tubes=False,  # noqa: FBT002
-        lighting=None,
-        reset_camera=None,
-        outline=True,  # noqa: FBT002
-        culling='front',
-    ):
+        *,
+        color: ColorLike = 'grey',
+        corner_factor: float = 0.5,
+        line_width: float | None = None,
+        opacity: float = 1.0,
+        render_lines_as_tubes: bool = False,
+        lighting: bool | None = None,
+        reset_camera: bool | None = None,
+        outline: bool = True,
+        culling: str | bool = 'front',
+    ) -> Actor:
         """Add an unlabeled and unticked box at the boundaries of plot.
 
         Useful for when wanting to plot outer grids while still
@@ -2380,14 +2389,15 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Default is ``True``. when ``False``, a box with faces is
             shown with the specified culling.
 
-        culling : str, default: "front"
-            Does not render faces on the bounding box that are culled. Options
-            are ``'front'`` or ``'back'``.
+        culling : str | bool, default: "front"
+            Does not render faces on the bounding box that are culled. Takes
+            the same values as :meth:`add_actor`, such as ``'front'``,
+            ``'back'`` or ``'none'``.
 
         Returns
         -------
-        :vtk:`vtkActor`
-            VTK actor of the bounding box.
+        Actor
+            Actor of the bounding box.
 
         See Also
         --------
@@ -2414,7 +2424,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             box = source
         else:
             box = _vtk.vtkCubeSource()
-        box.SetBounds(self.bounds)
+        box.SetBounds(self._unscaled_bounds())
         box.Update()
         box_object = wrap(box.GetOutput())
         self._bounding_box = box
@@ -2423,15 +2433,18 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         mapper = _vtk.vtkDataSetMapper()
         mapper.SetInputData(box_object)
-        self.bounding_box_actor, prop = self.add_actor(
-            mapper,
+        actor = Actor(mapper=mapper, name=name)
+        self.bounding_box_actor = actor
+        self.add_actor(
+            actor,
             reset_camera=reset_camera,
             name=name,
             culling=culling,
             pickable=False,
         )
 
-        prop.SetColor(Color(color, default_color=self._theme.outline_color).float_rgb)
+        prop = actor.GetProperty()
+        prop.SetColor(*Color(color, default_color=self._theme.outline_color).float_rgb)
         prop.SetOpacity(opacity)
         if render_lines_as_tubes:
             prop.SetRenderLinesAsTubes(render_lines_as_tubes)
@@ -2446,26 +2459,26 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         prop.SetRepresentationToSurface()
         self.Modified()
-        return self.bounding_box_actor
+        return actor
 
-    @_deprecate_positional_args(allowed=['face'])
-    def add_floor(  # noqa: PLR0917
+    def add_floor(
         self,
-        face='-z',
-        i_resolution=10,
-        j_resolution=10,
-        color=None,
-        line_width=None,
-        opacity=1.0,
-        show_edges=False,  # noqa: FBT002
-        lighting=False,  # noqa: FBT002
-        edge_color=None,
-        reset_camera=None,
-        pad=0.0,
-        offset=0.0,
-        pickable=False,  # noqa: FBT002
-        store_floor_kwargs=True,  # noqa: FBT002
-    ):
+        face: str = '-z',
+        *,
+        i_resolution: int = 10,
+        j_resolution: int = 10,
+        color: ColorLike | None = None,
+        line_width: float | None = None,
+        opacity: float = 1.0,
+        show_edges: bool = False,
+        lighting: bool | None = False,
+        edge_color: ColorLike | None = None,
+        reset_camera: bool | None = None,
+        pad: float = 0.0,
+        offset: float = 0.0,
+        pickable: bool = False,
+        store_floor_kwargs: bool = True,
+    ) -> Actor:
         """Show a floor mesh.
 
         This generates planes at the boundaries of the scene to behave
@@ -2482,10 +2495,10 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             scene (minimum z).
 
         i_resolution : int, default: 10
-            Number of points on the plane in the i direction.
+            Number of points on the plane in the ``i`` direction.
 
         j_resolution : int, default: 10
-            Number of points on the plane in the j direction.
+            Number of points on the plane in the ``j`` direction.
 
         color : ColorLike, optional
             Color of all labels and axis titles.  Default gray.
@@ -2505,8 +2518,9 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Thickness of lines.  Only valid for wireframe and surface
             representations.
 
-        lighting : bool, default: False
-            Enable or disable view direction lighting.
+        lighting : bool, optional
+            Enable or disable view direction lighting. When ``None``, the theme's
+            lighting setting is used.
 
         edge_color : ColorLike, optional
             Color of the edges of the mesh.
@@ -2530,8 +2544,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         Returns
         -------
-        :vtk:`vtkActor`
-            VTK actor of the floor.
+        Actor
+            Actor of the floor.
 
         Examples
         --------
@@ -2548,36 +2562,37 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             kwargs = locals()
             kwargs.pop('self')
             self._floor_kwargs.append(kwargs)
-        ranges = np.ptp(np.array(self.bounds).reshape(-1, 2), axis=1)
+        bounds = self._unscaled_bounds()
+        ranges = np.ptp(np.array(bounds).reshape(-1, 2), axis=1)
         ranges += ranges * pad
-        center = np.array(self.center)
+        center = np.array(bounds).reshape(-1, 2).mean(axis=1)
         if face.lower() in '-z':
-            center[2] = self.bounds.z_min - (ranges[2] * offset)
+            center[2] = bounds.z_min - (ranges[2] * offset)
             normal = (0, 0, 1)
             i_size = ranges[0]
             j_size = ranges[1]
         elif face.lower() in '-y':
-            center[1] = self.bounds.y_min - (ranges[1] * offset)
+            center[1] = bounds.y_min - (ranges[1] * offset)
             normal = (0, 1, 0)
             i_size = ranges[2]
             j_size = ranges[0]
         elif face.lower() in '-x':
-            center[0] = self.bounds.x_min - (ranges[0] * offset)
+            center[0] = bounds.x_min - (ranges[0] * offset)
             normal = (1, 0, 0)
             i_size = ranges[2]
             j_size = ranges[1]
         elif face.lower() in '+z':
-            center[2] = self.bounds.z_max + (ranges[2] * offset)
+            center[2] = bounds.z_max + (ranges[2] * offset)
             normal = (0, 0, -1)
             i_size = ranges[0]
             j_size = ranges[1]
         elif face.lower() in '+y':
-            center[1] = self.bounds.y_max + (ranges[1] * offset)
+            center[1] = bounds.y_max + (ranges[1] * offset)
             normal = (0, -1, 0)
             i_size = ranges[2]
             j_size = ranges[0]
         elif face.lower() in '+x':
-            center[0] = self.bounds.x_max + (ranges[0] * offset)
+            center[0] = bounds.x_max + (ranges[0] * offset)
             normal = (-1, 0, 0)
             i_size = ranges[2]
             j_size = ranges[1]
@@ -2601,20 +2616,23 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.remove_bounding_box()
         mapper = DataSetMapper()
         mapper.SetInputData(self._floor)
-        actor, prop = self.add_actor(
-            mapper,
+        name = f'Floor({face})'
+        actor = Actor(mapper=mapper, name=name)
+        self.add_actor(
+            actor,
             reset_camera=reset_camera,
-            name=f'Floor({face})',
+            name=name,
             pickable=pickable,
         )
 
-        prop.SetColor(Color(color, default_color=self._theme.floor_color).float_rgb)
+        prop = actor.GetProperty()
+        prop.SetColor(*Color(color, default_color=self._theme.floor_color).float_rgb)
         prop.SetOpacity(opacity)
 
         # edge display style
         if show_edges:
             prop.EdgeVisibilityOn()
-        prop.SetEdgeColor(Color(edge_color, default_color=self._theme.edge_color).float_rgb)
+        prop.SetEdgeColor(*Color(edge_color, default_color=self._theme.edge_color).float_rgb)
 
         # lighting display style
         if lighting is False:
@@ -2628,8 +2646,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self._floors.append(actor)
         return actor
 
-    @_deprecate_positional_args
-    def remove_floors(self, clear_kwargs=True, render=True) -> None:  # noqa: FBT002
+    def remove_floors(self, *, clear_kwargs: bool = True, render: bool = True) -> None:
         """Remove all floor actors.
 
         Parameters
@@ -2681,9 +2698,10 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         if self.cube_axes_actor is not None:
             self.remove_actor(self.cube_axes_actor)
             self.cube_axes_actor = None
+            self._cube_axes_follow_scene = True
             self.Modified()
 
-    def add_light(self, light):
+    def add_light(self, light: _vtk.vtkLight | Light) -> None:
         """Add a light to the renderer.
 
         Parameters
@@ -2692,23 +2710,20 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Light to add.
 
         """
+        _validation.check_instance(light, _vtk.vtkLight, name='light')
         # convert from a vtk type if applicable
-        if isinstance(light, _vtk.vtkLight) and not isinstance(light, pv.Light):
-            light = pv.Light.from_vtk(light)
+        pv_light = light if isinstance(light, pv.Light) else pv.Light.from_vtk(light)
 
-        if not isinstance(light, pv.Light):
-            msg = f'Expected Light instance, got {type(light).__name__} instead.'
-            raise TypeError(msg)
-        self._lights.append(light)
-        self.AddLight(light)
+        self._lights.append(pv_light)
+        self.AddLight(pv_light)
         self.Modified()
 
         # we add the renderer to add/remove the light actor if
         # positional or cone angle is modified
-        light.add_renderer(self)
+        pv_light.add_renderer(self)
 
     @property
-    def lights(self):  # numpydoc ignore=RT01
+    def lights(self) -> list[_vtk.vtkLight]:  # numpydoc ignore=RT01
         """Return a list of all lights in the renderer.
 
         Returns
@@ -2761,13 +2776,19 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self._scalar_bar_slots = set(range(MAX_N_COLOR_BARS))
         self._scalar_bar_slot_lookup = {}
 
-    def set_focus(self, point) -> None:
+    def set_focus(self, point: VectorLike[float], *, render: bool = True) -> None:
         """Set focus to a point.
 
         Parameters
         ----------
         point : sequence[float]
             Cartesian point to focus on in the form of ``[x, y, z]``.
+
+        render : bool, default: True
+            If the render window is being shown, trigger a render
+            after setting the focus.
+
+            .. versionadded:: 0.50
 
         Examples
         --------
@@ -2786,9 +2807,12 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.camera.focal_point = scale_point(self.camera, point, invert=False)
         self.camera_set = True
         self.Modified()
+        if render:
+            self._plotter.render()
 
-    @_deprecate_positional_args(allowed=['point'])
-    def set_position(self, point, reset=False, render=True) -> None:  # noqa: FBT002
+    def set_position(
+        self, point: VectorLike[float], *, reset: bool = False, render: bool = True
+    ) -> None:
         """Set camera position to a point.
 
         Parameters
@@ -2824,14 +2848,15 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.camera_set = True
         self.Modified()
 
-    @_deprecate_positional_args(allowed=['vector'])
-    def set_viewup(self, vector, reset=True, render=True) -> None:  # noqa: FBT002
-        """Set camera viewup vector.
+    def set_viewup(
+        self, vector: VectorLike[float], *, reset: bool = True, render: bool = True
+    ) -> None:
+        """Set camera ``viewup`` vector.
 
         Parameters
         ----------
         vector : sequence[float]
-            New camera viewup vector.
+            New camera ``viewup`` vector.
 
         reset : bool, default: True
             Whether to reset the camera after setting the camera
@@ -2839,7 +2864,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         render : bool, default: True
             If the render window is being shown, trigger a render
-            after setting the viewup.
+            after setting the ``viewup``.
 
         Examples
         --------
@@ -2917,7 +2942,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.Modified()
 
     @property
-    def parallel_projection(self):  # numpydoc ignore=RT01
+    def parallel_projection(self) -> bool:  # numpydoc ignore=RT01
         """Return parallel projection state of active render window.
 
         Examples
@@ -2932,12 +2957,12 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         return self.camera.parallel_projection
 
     @parallel_projection.setter
-    def parallel_projection(self, state) -> None:
+    def parallel_projection(self, state: bool) -> None:
         self.camera.parallel_projection = state
         self.Modified()
 
     @property
-    def parallel_scale(self):  # numpydoc ignore=RT01
+    def parallel_scale(self) -> float:  # numpydoc ignore=RT01
         """Return parallel scale of active render window.
 
         Examples
@@ -2950,22 +2975,26 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         return self.camera.parallel_scale
 
     @parallel_scale.setter
-    def parallel_scale(self, value) -> None:
+    def parallel_scale(self, value: float) -> None:
         self.camera.parallel_scale = value
         self.Modified()
 
-    @_deprecate_positional_args(allowed=['actor'])
-    def remove_actor(self, actor, reset_camera=False, render=True):  # noqa: FBT002
+    def remove_actor(
+        self,
+        actor: str | _vtk.vtkProp | Sequence[str | _vtk.vtkProp] | None,
+        *,
+        reset_camera: bool | None = False,
+        render: bool = True,
+    ) -> bool:
         """Remove an actor from the Renderer.
 
         Parameters
         ----------
-        actor : str | :vtk:`vtkActor` | list | tuple
+        actor : str | :vtk:`vtkProp` | sequence
             If the type is ``str``, removes the previously added actor
-            with the given name. If the type is :vtk:`vtkActor`,
+            with the given name. If the type is :vtk:`vtkProp`,
             removes the actor if it's previously added to the
-            Renderer. If ``list`` or ``tuple``, removes iteratively
-            each actor.
+            Renderer. If a sequence, removes iteratively each actor.
 
         reset_camera : bool, optional
             Resets camera so all actors can be seen.
@@ -2995,53 +3024,55 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """
         if isinstance(actor, str):
             name = actor
-            keys = list(self._actors.keys())
-            names = [k for k in keys if k.startswith(f'{name}-')]
+            actors = self.actors
+            names = [k for k in actors if k.startswith(f'{name}-')]
             if len(names) > 0:
                 self.remove_actor(names, reset_camera=reset_camera, render=render)
-            try:
-                actor = self._actors[name]
-            except KeyError:
+            if name not in actors:
                 # If actor of that name is not present then return success
                 return False
-        if isinstance(actor, Iterable):
+            prop = actors[name]
+        elif isinstance(actor, Iterable):
             success = False
-            for a in actor:
-                rv = self.remove_actor(a, reset_camera=reset_camera, render=render)
+            for entry in actor:
+                rv = self.remove_actor(entry, reset_camera=reset_camera, render=render)
                 if rv or success:
                     success = True
             return success
-        if actor is None:
+        elif actor is None:
             return False
+        else:
+            prop = actor
 
         # remove any labels associated with the actor
-        self._labels.pop(actor.GetAddressAsString(''), None)
+        self._labels.pop(prop.GetAddressAsString(''), None)
 
         # ensure any scalar bars associated with this actor are removed
-        with contextlib.suppress(AttributeError, ReferenceError):
-            self.parent.scalar_bars._remove_mapper_from_plotter(actor)
-        self.RemoveActor(actor)
+        if self.parent is not None:
+            with contextlib.suppress(AttributeError, ReferenceError):
+                self.parent.scalar_bars._remove_mapper_from_plotter(prop)
+        self.RemoveActor(prop)
         self.update_bounds_axes()
         if reset_camera or (not self.camera_set and reset_camera is None):
             self.reset_camera(render=render)
         elif render:
-            self.parent.render()
+            self._plotter.render()
 
         self.Modified()
         return True
 
-    @_deprecate_positional_args(allowed=['xscale', 'yscale', 'zscale'])
-    def set_scale(  # noqa: PLR0917
+    def set_scale(
         self,
-        xscale=None,
-        yscale=None,
-        zscale=None,
-        reset_camera=True,  # noqa: FBT002
-        render=True,  # noqa: FBT002
+        xscale: float | None = None,
+        yscale: float | None = None,
+        zscale: float | None = None,
+        *,
+        reset_camera: bool = True,
+        render: bool = True,
     ) -> None:
         """Scale all the actors in the scene.
 
-        Scaling in performed independently on the X, Y and z-axis.
+        Scaling in performed independently on the X, Y, and z-axis.
         A scale of zero is illegal and will be replaced with one.
 
         .. warning::
@@ -3093,18 +3124,19 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         # Reset all actors to match this scale
         for actor in self.actors.values():
-            if hasattr(actor, 'SetScale'):
+            if isinstance(actor, _vtk.vtkAxisActor2D) and hasattr(actor, '_unscaled_points'):
+                self._place_ruler(actor)
+            elif hasattr(actor, 'SetScale'):
                 actor.SetScale(self.scale)
 
-        self.parent.render()
+        self._plotter.render()
         if reset_camera:
             self.update_bounds_axes()
             self.reset_camera(render=render)
         self.Modified()
 
-    @_deprecate_positional_args
-    def get_default_cam_pos(self, negative=False):  # noqa: FBT002
-        """Return the default focal points and viewup.
+    def get_default_cam_pos(self, *, negative: bool = False) -> list[VectorLike[float]]:
+        """Return the default focal points and ``viewup``.
 
         Uses ResetCamera to make a useful view.
 
@@ -3135,7 +3167,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
     def update_bounds_axes(self) -> None:
         """Update the bounds axes of the render window."""
         if self._box_object is not None and self.bounding_box_actor is not None:
-            if not np.allclose(self._box_object.bounds, self.bounds):
+            if not np.allclose(self._box_object.bounds, self._unscaled_bounds()):
                 color = self.bounding_box_actor.GetProperty().GetColor()
                 self.remove_bounding_box()
                 self.add_bounding_box(color=color)
@@ -3144,15 +3176,19 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
                     floor_kwargs['store_floor_kwargs'] = False
                     self.add_floor(**floor_kwargs)
         if self.cube_axes_actor is not None:
-            self.cube_axes_actor.update_bounds(self.bounds)
+            if self._cube_axes_follow_scene:
+                # Ignore the axes actor itself, or its padding compounds on every update
+                self.cube_axes_actor.update_bounds(
+                    self.compute_bounds(ignore_actors=[self.cube_axes_actor])
+                )
             if not np.allclose(self.scale, [1.0, 1.0, 1.0]):
-                self.cube_axes_actor.SetUse2DMode(True)
-            else:
-                self.cube_axes_actor.SetUse2DMode(False)
+                # 3D text is not placed correctly when the renderer is scaled
+                self.cube_axes_actor._disable_3d_text()
             self.Modified()
 
-    @_deprecate_positional_args
-    def reset_camera(self, render=True, bounds=None) -> None:  # noqa: FBT002
+    def reset_camera(
+        self, *, render: bool = True, bounds: VectorLike[float] | None = None
+    ) -> None:
         """Reset the camera of the active render window.
 
         The camera slides along the vector defined from camera
@@ -3188,7 +3224,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.reset_camera_clipping_range()
 
         if render:
-            self.parent.render()
+            self._plotter.render()
         self.Modified()
 
     def isometric_view(self) -> None:
@@ -3199,8 +3235,13 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """
         self.view_isometric()
 
-    @_deprecate_positional_args
-    def view_isometric(self, negative=False, render=True, bounds=None) -> None:  # noqa: FBT002
+    def view_isometric(
+        self,
+        *,
+        negative: bool = False,
+        render: bool = True,
+        bounds: VectorLike[float] | None = None,
+    ) -> None:
         """Reset the camera to a default isometric view.
 
         The view will show all the actors in the scene.
@@ -3240,13 +3281,13 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.camera_set = negative
         self.reset_camera(render=render, bounds=bounds)
 
-    @_deprecate_positional_args(allowed=['vector', 'viewup'])
-    def view_vector(  # noqa: PLR0917
+    def view_vector(
         self,
-        vector,
-        viewup=None,
-        render=True,  # noqa: FBT002
-        bounds=None,
+        vector: VectorLike[float],
+        viewup: VectorLike[float] | None = None,
+        *,
+        render: bool = True,
+        bounds: VectorLike[float] | None = None,
     ) -> None:
         """Point the camera in the direction of the given vector.
 
@@ -3274,8 +3315,13 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.camera_position = cpos
         self.reset_camera(render=render, bounds=bounds)
 
-    @_deprecate_positional_args
-    def view_xy(self, negative=False, render=True, bounds=None) -> None:  # noqa: FBT002
+    def view_xy(
+        self,
+        *,
+        negative: bool = False,
+        render: bool = True,
+        bounds: VectorLike[float] | None = None,
+    ) -> None:
         """View the XY plane.
 
         Parameters
@@ -3306,8 +3352,13 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """
         self.view_vector(*view_vectors('xy', negative=negative), render=render, bounds=bounds)
 
-    @_deprecate_positional_args
-    def view_yx(self, negative=False, render=True, bounds=None) -> None:  # noqa: FBT002
+    def view_yx(
+        self,
+        *,
+        negative: bool = False,
+        render: bool = True,
+        bounds: VectorLike[float] | None = None,
+    ) -> None:
         """View the YX plane.
 
         Parameters
@@ -3338,8 +3389,13 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """
         self.view_vector(*view_vectors('yx', negative=negative), render=render, bounds=bounds)
 
-    @_deprecate_positional_args
-    def view_xz(self, negative=False, render=True, bounds=None) -> None:  # noqa: FBT002
+    def view_xz(
+        self,
+        *,
+        negative: bool = False,
+        render: bool = True,
+        bounds: VectorLike[float] | None = None,
+    ) -> None:
         """View the XZ plane.
 
         Parameters
@@ -3370,8 +3426,13 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """
         self.view_vector(*view_vectors('xz', negative=negative), render=render, bounds=bounds)
 
-    @_deprecate_positional_args
-    def view_zx(self, negative=False, render=True, bounds=None) -> None:  # noqa: FBT002
+    def view_zx(
+        self,
+        *,
+        negative: bool = False,
+        render: bool = True,
+        bounds: VectorLike[float] | None = None,
+    ) -> None:
         """View the ZX plane.
 
         Parameters
@@ -3402,8 +3463,13 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """
         self.view_vector(*view_vectors('zx', negative=negative), render=render, bounds=bounds)
 
-    @_deprecate_positional_args
-    def view_yz(self, negative=False, render=True, bounds=None) -> None:  # noqa: FBT002
+    def view_yz(
+        self,
+        *,
+        negative: bool = False,
+        render: bool = True,
+        bounds: VectorLike[float] | None = None,
+    ) -> None:
         """View the YZ plane.
 
         Parameters
@@ -3434,8 +3500,13 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """
         self.view_vector(*view_vectors('yz', negative=negative), render=render, bounds=bounds)
 
-    @_deprecate_positional_args
-    def view_zy(self, negative=False, render=True, bounds=None) -> None:  # noqa: FBT002
+    def view_zy(
+        self,
+        *,
+        negative: bool = False,
+        render: bool = True,
+        bounds: VectorLike[float] | None = None,
+    ) -> None:
         """View the ZY plane.
 
         Parameters
@@ -3490,8 +3561,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         >>> pl.add_blurring()
         >>> pl.show()
 
-        See :ref:`blurring_example` for a full example using this method.
-
         """
         self._render_passes.add_blur_pass()
 
@@ -3512,8 +3581,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """
         self._render_passes.remove_blur_pass()
 
-    @_deprecate_positional_args
-    def enable_depth_of_field(self, automatic_focal_distance=True) -> None:  # noqa: FBT002
+    def enable_depth_of_field(self, *, automatic_focal_distance: bool = True) -> None:
         """Enable depth of field plotting.
 
         Parameters
@@ -3549,8 +3617,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         ... )
         >>> pl.enable_depth_of_field()
         >>> pl.show()
-
-        See :ref:`depth_of_field_example` for a full example using this method.
 
         """
         self._render_passes.enable_depth_of_field_pass(
@@ -3644,13 +3710,13 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """
         self._render_passes.disable_shadow_pass()
 
-    @_deprecate_positional_args
-    def enable_ssao(  # noqa: PLR0917
+    def enable_ssao(
         self,
-        radius=0.5,
-        bias=0.005,
-        kernel_size=256,
-        blur=True,  # noqa: FBT002
+        *,
+        radius: float = 0.5,
+        bias: float = 0.005,
+        kernel_size: int = 256,
+        blur: bool = True,
     ) -> None:
         """Enable surface space ambient occlusion (SSAO).
 
@@ -3678,10 +3744,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Controls if occlusion buffer should be blurred before combining it
             with the color buffer.
 
-        See Also
-        --------
-        :ref:`ssao_example`
-
         Examples
         --------
         Generate a :class:`pyvista.UnstructuredGrid` with many tetrahedrons
@@ -3708,7 +3770,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """Disable surface space ambient occlusion (SSAO)."""
         self._render_passes.disable_ssao_pass()
 
-    def get_pick_position(self):
+    def get_pick_position(self) -> tuple[float, float, float, float]:
         """Get the pick position/area as ``x0, y0, x1, y1``.
 
         Returns
@@ -3723,10 +3785,15 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         y1 = int(self.GetPickY2())
         return x0, y0, x1, y1
 
-    @_deprecate_positional_args(allowed=['color'])
-    def set_background(  # noqa: PLR0917
-        self, color, top=None, right=None, side=None, corner=None
-    ):
+    def set_background(
+        self,
+        color: ColorLike | None,
+        *,
+        top: ColorLike | None = None,
+        right: ColorLike | None = None,
+        side: ColorLike | None = None,
+        corner: ColorLike | None = None,
+    ) -> None:
         """Set the background color of this renderer.
 
         Parameters
@@ -3773,17 +3840,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         """
         self.SetBackground(Color(color, default_color=self._theme.background).float_rgb)
-        if not (right is side is corner is None) and vtk_version_info < (
-            9,
-            3,
-        ):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
-
-            msg = (
-                '`right` or `side` or `corner` cannot be used under VTK v9.3.0. '
-                'Try installing VTK v9.3.0 or newer.'
-            )
-            raise VTKVersionError(msg)
         if not (
             (top is right is side is corner is None)
             or (top is not None and right is side is corner is None)
@@ -3816,12 +3872,14 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             self.SetGradientBackground(False)
         self.Modified()
 
-    @_deprecate_positional_args(allowed=['texture'])
     def set_environment_texture(
         self,
-        texture,
-        is_srgb=False,  # noqa: FBT002
-        resample: bool | float | None = None,  # noqa: FBT001
+        texture: Texture,
+        *,
+        is_srgb: bool = False,
+        resample: bool | float | None = None,
+        rotation: RotationLike | None = None,
+        show_background: bool = True,
     ) -> None:
         """Set the environment texture used for image based lighting.
 
@@ -3843,27 +3901,57 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         resample : bool | float, optional
             Resample the environment texture. Set this to a float to set the
-            sampling rate explicitly or set to ``True`` to downsample the
-            texture to 1/16th of its original resolution. By default, the
+            sampling rate explicitly or set to ``True`` to down-sample the
+            texture to 1/16 of its original resolution. By default, the
             theme value for ``resample_environment_texture`` is used, which
             is ``False`` for the standard theme.
 
-            Downsampling the texture can substantially improve performance for
-            some environments, e.g. headless setups or if GPU support is limited.
+            Down-sampling the texture can substantially improve performance for
+            some environments, for example, headless setups or if GPU support is limited.
 
             .. note::
 
                 This will resample the texture used for image-based lighting only,
-                e.g. the texture used for rendering reflective surfaces. It
+                for example, the texture used for rendering reflective surfaces. It
                 does `not` resample the background texture.
 
             .. versionadded:: 0.45
+
+            .. versionchanged:: 0.48
+
+                Resampling now uses linear interpolation with anti-aliasing
+                instead of nearest-neighbor, which gives smoother results for
+                continuous environment textures.
+
+            .. versionchanged:: 0.49
+
+                The image-based lighting textures are down-sampled at the same
+                rate: the specular prefilter integrates fewer samples per texel,
+                and for cube map textures the diffuse irradiance map shrinks as
+                well. Both are clamped between a floor and their default size, so
+                a very low rate stops making them cheaper. Only a single rate is
+                accepted; a sequence of per-axis rates raises ``ValueError``.
+
+        rotation : RotationLike, optional
+            Rotation to apply to the environment texture for image-based
+            lighting and the background texture. Accepts any 3x3
+            :class:`numpy.ndarray`, :vtk:`vtkMatrix3x3`, or SciPy ``Rotation``.
+            Requires VTK >= 9.6.
+
+            .. versionadded:: 0.48
+
+        show_background : bool, default: True
+            Whether to also show the environment texture as the renderer
+            background. Set this to ``False`` to keep image-based lighting
+            enabled while using a solid or gradient background instead.
+
+            .. versionadded:: 0.48
 
         Examples
         --------
         Add a skybox cubemap as an environment texture and show that the
         lighting from the texture is mapped on to a sphere dataset. Note how
-        even when disabling the default lightkit, the scene lighting will still
+        even when disabling the default ``'light kit'``, the scene lighting will still
         be mapped onto the actor.
 
         >>> from pyvista import examples
@@ -3884,14 +3972,32 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.UseImageBasedLightingOn()
 
         if resample is None:
-            resample = pv.global_theme.resample_environment_texture
+            resample = self._theme.resample_environment_texture
+
+        default_size = _vtk.vtkPBRIrradianceTexture().GetIrradianceSize()
+        default_samples = _vtk.vtkPBRPrefilterTexture().GetPrefilterMaxSamples()
+        default_lut = _vtk.vtkPBRLUTTexture()
+        default_lut_size = default_lut.GetLUTSize()
+        default_lut_samples = default_lut.GetLUTSamples()
 
         if resample:
             resample = 1 / 16 if resample is True else resample
 
+            resample = _validation.validate_number(resample, must_be_finite=True, name='resample')
+
+            # Convolving the diffuse irradiance map dominates image-based lighting
+            # for cube maps, so scale it with the texture.
+            irradiance_size = _scale_ibl(default_size, _MIN_IRRADIANCE_SIZE, resample)
+
+            # The prefilter's resolution follows the texture, its sample count does not.
+            prefilter_samples = _scale_ibl(default_samples, _MIN_PREFILTER_SAMPLES, resample)
+
+            lut_size = _scale_ibl(default_lut_size, _MIN_LUT_SIZE, resample)
+            lut_samples = _scale_ibl(default_lut_samples, _MIN_LUT_SAMPLES, resample)
+
             # Copy the texture
             # TODO: use Texture.copy() once support for cubemaps is added, see https://github.com/pyvista/pyvista/issues/7300
-            texture_copy = pv.Texture()  # type: ignore[abstract]
+            texture_copy = pv.Texture()
             texture_copy.cube_map = texture.cube_map
             texture_copy.mipmap = texture.mipmap
             texture_copy.interpolate = texture.interpolate
@@ -3899,14 +4005,40 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
             # Resample the texture's images
             for i in range(6 if texture_copy.cube_map else 1):
-                texture_copy.SetInputDataObject(
-                    i, pv.wrap(texture.GetInputDataObject(i, 0)).resample(resample)
-                )
+                old_image = pv.wrap(texture.GetInputDataObject(i, 0))
+                new_image = old_image.resample(resample, 'linear', anti_aliasing=True)
+                texture_copy.SetInputDataObject(i, new_image)
             self.SetEnvironmentTexture(texture_copy, is_srgb)
         else:
+            irradiance_size = default_size
+            prefilter_samples = default_samples
+            lut_size = default_lut_size
+            lut_samples = default_lut_samples
             self.SetEnvironmentTexture(texture, is_srgb)
 
-        self.SetBackgroundTexture(texture)
+        # VTK convolves the irradiance map only when spherical harmonics are off,
+        # which is the cube map case handled above.
+        if texture.cube_map:
+            self.GetEnvMapIrradiance().SetIrradianceSize(irradiance_size)
+        self.GetEnvMapPrefiltered().SetPrefilterMaxSamples(prefilter_samples)
+        lookup_table = self.GetEnvMapLookupTable()
+        lookup_table.SetLUTSize(lut_size)
+        lookup_table.SetLUTSamples(lut_samples)
+
+        if rotation is not None:
+            if vtk_version_info < (9, 6):  # pragma: no cover
+                from pyvista.core.errors import VTKVersionError
+
+                msg = '`rotation` requires VTK >= 9.6. Try installing VTK v9.6.0 or newer.'
+                raise VTKVersionError(msg)
+            rotation_matrix = _validation.validate_rotation(
+                rotation,
+                must_have_handedness='right',
+                name='rotation',
+            )
+            self.SetEnvironmentRotationMatrix(pv.vtkmatrix_from_array(rotation_matrix))
+
+        self.SetBackgroundTexture(texture if show_background else None)  # type: ignore[arg-type]
         self.Modified()
 
     def remove_environment_texture(self) -> None:
@@ -3935,17 +4067,32 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.RemoveAllObservers()
         self._remove_axes_widget()
 
+        # Detach all props from the underlying vtkRenderer's actual scene graph.
+        # Just dropping our own Python-side references (below) isn't enough: VTK's
+        # own C++ reference counting keeps a prop (and everything it owns, e.g. the
+        # cube axes actor's axis label arrays) alive as long as it's still attached
+        # here, regardless of whether we still hold a Python attribute pointing to it.
+        self.RemoveAllViewProps()
+
         self._bounding_box = None
         self._box_object = None
         self._marker_actor = None
+        self._border_actor = None
+        self._border_actor_secondary = None
+        self._border_requested_width = None
+        self.cube_axes_actor = None
+        self._cube_axes_follow_scene = True
+        self._render_passes.close()
 
         if self._empty_str is not None:
             self._empty_str.SetReferenceCount(0)
             self._empty_str = None
 
-        # Remove ref to `vtkPropCollection` held by vtkRenderer
-        if hasattr(self, '_actors'):
-            del self._actors
+        # Release the `_PropCollection` (and its ref to the `vtkPropCollection` held by
+        # vtkRenderer) by setting it to None rather than deleting the attribute. Deleting it
+        # conflicts with `_NoNewAttributesMixin`, which freezes attributes after `__init__` and
+        # so prevents the attribute from ever being restored (see #8419).
+        self._actors = None
 
         self._closed = True
 
@@ -3956,8 +4103,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
                 # Notify Charts that plotter.render() is called
                 chart._render_event(plotter_render=True)
 
-    @_deprecate_positional_args
-    def deep_clean(self, render=False) -> None:  # noqa: FBT002
+    def deep_clean(self, *, render: bool = False) -> None:
         """Clean the renderer of the memory.
 
         Parameters
@@ -3969,6 +4115,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         """
         if self.cube_axes_actor is not None:
             self.cube_axes_actor = None
+            self._cube_axes_follow_scene = True
 
         if hasattr(self, 'edl_pass'):
             del self.edl_pass
@@ -3991,6 +4138,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self._bounding_box = None
         self._marker_actor = None
         self._border_actor = None
+        self._border_actor_secondary = None
+        self._border_requested_width = None
         self._box_object = None
         # remove reference to parent last
         self.parent = None
@@ -4008,19 +4157,19 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.UseHiddenLineRemovalOff()
 
     @property
-    def layer(self):  # numpydoc ignore=RT01
+    def layer(self) -> int:  # numpydoc ignore=RT01
         """Return or set the current layer of this renderer."""
         return self.GetLayer()
 
     @layer.setter
-    def layer(self, layer) -> None:
+    def layer(self, layer: int) -> None:
         self.SetLayer(layer)
 
     @property
-    def viewport(self):  # numpydoc ignore=RT01
-        """Viewport of the renderer.
+    def viewport(self) -> tuple[float, float, float, float]:  # numpydoc ignore=RT01
+        """The viewport of the renderer.
 
-        Viewport describes the ``(xstart, ystart, xend, yend)`` square
+        The viewport describes the ``(xstart, ystart, xend, yend)`` square
         of the renderer relative to the main renderer window.
 
         For example, a renderer taking up the entire window will have
@@ -4031,7 +4180,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         Returns
         -------
         tuple
-            Viewport in the form ``(xstart, ystart, xend, yend)``.
+            ``viewport`` in the form ``(xstart, ystart, xend, yend)``.
 
         Examples
         --------
@@ -4053,34 +4202,36 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         return self.GetViewport()
 
     @viewport.setter
-    def viewport(self, viewport) -> None:
+    def viewport(self, viewport: Sequence[float]) -> None:
         self.SetViewport(viewport)
 
     @property
-    def width(self):  # numpydoc ignore=RT01
+    def width(self) -> float:  # numpydoc ignore=RT01
         """Width of the renderer."""
         xmin, _, xmax, _ = self.viewport
-        return self.parent.window_size[0] * (xmax - xmin)
+        return self._plotter.window_size[0] * (xmax - xmin)
 
     @property
-    def height(self):  # numpydoc ignore=RT01
+    def height(self) -> float:  # numpydoc ignore=RT01
         """Height of the renderer."""
         _, ymin, _, ymax = self.viewport
-        return self.parent.window_size[1] * (ymax - ymin)
+        return self._plotter.window_size[1] * (ymax - ymin)
 
-    @_deprecate_positional_args(allowed=['labels'])
-    def add_legend(  # noqa: PLR0917
+    def add_legend(
         self,
-        labels=None,
-        bcolor=None,
-        border=False,  # noqa: FBT002
-        size=(0.2, 0.2),
-        name=None,
-        loc='upper right',
-        face=None,
-        font_family=None,
-        background_opacity=1.0,
-    ):
+        labels: Sequence[str | Sequence[Any] | dict[str, Any]]
+        | dict[str, ColorLike]
+        | None = None,
+        *,
+        bcolor: ColorLike | None = None,
+        border: bool = False,
+        size: Sequence[float] = (0.2, 0.2),
+        name: str | None = None,
+        loc: str = 'upper right',
+        face: str | pv.PolyData | None = None,
+        font_family: str | None = None,
+        background_opacity: float = 1.0,
+    ) -> _vtk.vtkLegendBoxActor:
         """Add a legend to render window.
 
         Entries must be a list containing one string and color entry for each
@@ -4106,7 +4257,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
               item to add, and ``color`` is the color of the label to add.
             * Three strings ([label, color, face]) where ``label`` is the name
               of the item to add, ``color`` is the color of the label to add,
-              and ``face`` is a string which defines the face (i.e. ``circle``,
+              and ``face`` is a string which defines the face (that is, ``circle``,
               ``triangle``, ``box``, etc.).
               ``face`` could be also ``"none"`` (no face shown for the entry),
               or a :class:`pyvista.PolyData`.
@@ -4117,7 +4268,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         bcolor : ColorLike, default: (0.5, 0.5, 0.5)
             Background color, either a three item 0 to 1 RGB color
-            list, or a matplotlib color string (e.g. ``'w'`` or ``'white'``
+            list, or a matplotlib color string (for example, ``'w'`` or ``'white'``
             for a white color).  If None, legend background is
             disabled.
 
@@ -4151,7 +4302,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         face : str | pyvista.PolyData, optional
             Face shape of legend face. Defaults to a triangle for most meshes,
             with the exception of glyphs where the glyph is shown
-            (e.g. arrows).
+            (for example, arrows).
 
             You may set it to one of the following:
 
@@ -4178,10 +4329,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         -------
         :vtk:`vtkLegendBoxActor`
             Actor for the legend.
-
-        See Also
-        --------
-        :ref:`legend_example`
 
         Examples
         --------
@@ -4241,11 +4388,14 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         else:
             self._legend.SetNumberOfEntries(len(labels))
 
+            entries: Sequence[Any]
             if isinstance(labels, dict):
                 face = 'triangle' if face is None else face
-                labels = list(labels.items())
+                entries = list(labels.items())
+            else:
+                entries = labels
 
-            for i, args in enumerate(labels):
+            for i, args in enumerate(entries):
                 face_ = None
                 if isinstance(args, (list, tuple)):
                     if len(args) == 2:
@@ -4288,9 +4438,9 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
                 allowed = '\n'.join([f'\t * "{item}"' for item in ACTOR_LOC_MAP])
                 msg = f'Invalid loc "{loc}".  Expected one of the following:\n{allowed}'
                 raise ValueError(msg)
-            x, y, size = map_loc_to_pos(loc, size, border=0.05)
+            x, y, legend_size = map_loc_to_pos(loc, size, border=0.05)
             self._legend.SetPosition(x, y)
-            self._legend.SetPosition2(size[0], size[1])
+            self._legend.SetPosition2(float(legend_size[0]), float(legend_size[1]))
 
         if bcolor is None:
             self._legend.SetUseBackground(False)
@@ -4303,16 +4453,14 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         if font_family is None:
             font_family = self._theme.font.family
 
-        font_family = parse_font_family(font_family)
-        self._legend.GetEntryTextProperty().SetFontFamily(font_family)
+        self._legend.GetEntryTextProperty().SetFontFamily(parse_font_family(font_family))
 
         self._legend.SetBackgroundOpacity(background_opacity)
 
         self.add_actor(self._legend, reset_camera=False, name=name, pickable=False)
         return self._legend
 
-    @_deprecate_positional_args
-    def remove_legend(self, render=True) -> None:  # noqa: FBT002
+    def remove_legend(self, *, render: bool = True) -> None:
         """Remove the legend actor.
 
         Parameters
@@ -4336,41 +4484,44 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             self._legend = None
 
     @property
-    def legend(self):  # numpydoc ignore=RT01
+    def legend(self) -> _vtk.vtkLegendBoxActor | None:  # numpydoc ignore=RT01
         """Legend actor."""
         return self._legend
 
-    @_deprecate_positional_args(allowed=['pointa', 'pointb'])
-    def add_ruler(  # noqa: PLR0917
+    def add_ruler(
         self,
-        pointa,
-        pointb,
-        flip_range=False,  # noqa: FBT002
-        number_labels=None,
-        show_labels=True,  # noqa: FBT002
-        font_size_factor=0.6,
-        label_size_factor=1.0,
-        label_format=None,
-        title='Distance',
-        number_minor_ticks=0,
-        tick_length=5,
-        minor_tick_length=3,
-        show_ticks=True,  # noqa: FBT002
-        tick_label_offset=2,
-        label_color=None,
-        tick_color=None,
-        scale=1.0,
-    ):
+        pointa: VectorLike[float],
+        pointb: VectorLike[float],
+        *,
+        flip_range: bool = False,
+        flip_side: bool = False,
+        number_labels: int | None = None,
+        snap_labels: bool = False,
+        show_labels: bool = True,
+        font_size_factor: float = 0.6,
+        label_size_factor: float = 1.0,
+        label_format: str | None = None,
+        title: str = 'Distance',
+        number_minor_ticks: int = 0,
+        tick_length: int = 5,
+        minor_tick_length: int = 3,
+        show_ticks: bool = True,
+        tick_label_offset: int = 2,
+        label_color: ColorLike | None = None,
+        tick_color: ColorLike | None = None,
+        scale: float = 1.0,
+    ) -> _vtk.vtkAxisActor2D:
         """Add ruler.
 
         The ruler is a 2D object that is not occluded by 3D objects.
         To avoid issues with perspective, it is recommended to use
-        parallel projection, i.e. :func:`Plotter.enable_parallel_projection`,
+        parallel projection, that is, :func:`Plotter.enable_parallel_projection`,
         and place the ruler orthogonal to the viewing direction.
 
-        The title and labels are placed to the right of ruler moving from
-        ``pointa`` to ``pointb``. Use ``flip_range`` to flip the ``0`` location,
-        if needed.
+        The labels are placed to the right of the ruler moving from ``pointa`` to
+        ``pointb``, so two rulers pointing opposite ways carry their labels on
+        opposite sides. Use ``flip_side`` to move them across, and ``flip_range``
+        to flip the ``0`` location.
 
         Since the ruler is placed in an overlay on the viewing scene, the camera
         does not automatically reset to include the ruler in the view.
@@ -4386,9 +4537,28 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         flip_range : bool, default: False
             If ``True``, the distance range goes from ``pointb`` to ``pointa``.
 
+        flip_side : bool, default: False
+            If ``True``, the labels and ticks are drawn on the other side of the
+            ruler. The distances they report are unchanged.
+
+            .. versionadded:: 0.50
+
         number_labels : int, optional
-            Number of labels to place on ruler.
-            If not supplied, the number will be adjusted for "nice" values.
+            Number of labels to place on the ruler, at least ``2``. If not
+            supplied, the number is adjusted for "nice" values.
+
+            .. note::
+                Below VTK 9.6 the maximum is ``25``.
+
+        snap_labels : bool, default: False
+            If ``True``, the labels are placed on round values and ``number_labels``
+            becomes a target rather than an exact count. The far end of the ruler
+            carries a label only when a round value lands on it.
+
+            .. note::
+                Requires VTK 9.4 or newer.
+
+            .. versionadded:: 0.50
 
         show_labels : bool, default: True
             Whether to show labels.
@@ -4400,7 +4570,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Factor to scale label size relative to title size.
 
         label_format : str, optional
-            A printf style format for labels, e.g. '%E'.
+            A ``printf`` style format for labels, for example, '%E'.
 
         title : str, default: "Distance"
             The title to display.
@@ -4424,9 +4594,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Either a string, rgb list, or hex color string for
             label and title colors.
 
-            .. warning::
-                This is either white or black.
-
         tick_color : ColorLike, optional
             Either a string, rgb list, or hex color string for
             tick line colors.
@@ -4438,8 +4605,8 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         Returns
         -------
-        :vtk:`vtkActor`
-            VTK actor of the ruler.
+        :vtk:`vtkAxisActor2D`
+            Actor of the ruler.
 
         Examples
         --------
@@ -4456,9 +4623,9 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         ...     title='X Distance',
         ... )
 
-        Measure y direction of cone and place ruler slightly to left.
-        The title and labels are placed to the right of the ruler when
-        traveling from ``pointa`` to ``pointb``.
+        Measure y direction of cone and place ruler slightly to left. The labels
+        are placed to the right of the ruler when traveling from ``pointa`` to
+        ``pointb``.
 
         >>> _ = pl.add_ruler(
         ...     pointa=[cone.bounds.x_min - 0.1, cone.bounds.y_max, 0.0],
@@ -4479,10 +4646,16 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         ruler.GetPositionCoordinate().SetCoordinateSystemToWorld()
         ruler.GetPosition2Coordinate().SetCoordinateSystemToWorld()
         ruler.GetPositionCoordinate().SetReferenceCoordinate(None)  # type: ignore[arg-type]
-        ruler.GetPositionCoordinate().SetValue(pointa[0], pointa[1], pointa[2])
-        ruler.GetPosition2Coordinate().SetValue(pointb[0], pointb[1], pointb[2])
+        point_a = _validation.validate_array3(pointa, dtype_out=float, name='pointa')
+        point_b = _validation.validate_array3(pointb, dtype_out=float, name='pointb')
+        if flip_side:
+            # VTK draws to the right of the axis direction
+            point_a, point_b = point_b, point_a
+            flip_range = not flip_range
+        ruler._unscaled_points = (point_a, point_b)  # type: ignore[attr-defined]
+        self._place_ruler(ruler)
 
-        distance = np.linalg.norm(np.asarray(pointa) - np.asarray(pointb))
+        distance = np.linalg.norm(point_a - point_b)
         if flip_range:
             ruler.SetRange(distance * scale, 0)
         else:
@@ -4491,17 +4664,32 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         ruler.SetTitle(title)
         ruler.SetFontFactor(font_size_factor)
         ruler.SetLabelFactor(label_size_factor)
+        if snap_labels:
+            if vtk_version_info < (9, 4):  # pragma: no cover
+                from pyvista.core.errors import VTKVersionError
+
+                msg = '`snap_labels` requires VTK >= 9.4. Try installing VTK v9.4.0 or newer.'
+                raise VTKVersionError(msg)
+            ruler.SnapLabelsToGridOn()
         if number_labels is not None:
-            ruler.AdjustLabelsOff()
+            # VTK clamps the label count to 25 below 9.6, silently dropping the rest
+            maximum = np.inf if vtk_version_info >= (9, 6) else 25
+            number_labels = _validation.validate_number(
+                number_labels,
+                must_be_integer=True,
+                must_be_in_range=[2, maximum],
+                dtype_out=int,
+                name='number_labels',
+            )
             ruler.SetNumberOfLabels(number_labels)
+            if not snap_labels:
+                ruler.AdjustLabelsOff()
         ruler.SetLabelVisibility(show_labels)
         if label_format:
             ruler.SetLabelFormat(label_format)
-        ruler.GetProperty().SetColor(*tick_color.int_rgb)
-        if label_color != Color('white'):
-            # This property turns black if set
-            ruler.GetLabelTextProperty().SetColor(*label_color.int_rgb)
-            ruler.GetTitleTextProperty().SetColor(*label_color.int_rgb)
+        ruler.GetProperty().SetColor(*tick_color.float_rgb)
+        ruler.GetLabelTextProperty().SetColor(*label_color.float_rgb)
+        ruler.GetTitleTextProperty().SetColor(*label_color.float_rgb)
         ruler.SetNumberOfMinorTicks(number_minor_ticks)
         ruler.SetTickVisibility(show_ticks)
         ruler.SetTickLength(tick_length)
@@ -4511,31 +4699,31 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
         self.add_actor(ruler, reset_camera=True, pickable=False)
         return ruler
 
-    @_deprecate_positional_args
-    def add_legend_scale(  # noqa: PLR0917
+    def add_legend_scale(
         self,
-        corner_offset_factor=2.0,
-        bottom_border_offset=30,
-        top_border_offset=30,
-        left_border_offset=30,
-        right_border_offset=30,
-        bottom_axis_visibility=True,  # noqa: FBT002
-        top_axis_visibility=True,  # noqa: FBT002
-        left_axis_visibility=True,  # noqa: FBT002
-        right_axis_visibility=True,  # noqa: FBT002
-        legend_visibility=True,  # noqa: FBT002
-        xy_label_mode=False,  # noqa: FBT002
-        render=True,  # noqa: FBT002
-        color=None,
-        font_size_factor=0.6,
-        label_size_factor=1.0,
-        label_format=None,
-        number_minor_ticks=0,
-        tick_length=5,
-        minor_tick_length=3,
-        show_ticks=True,  # noqa: FBT002
-        tick_label_offset=2,
-    ):
+        *,
+        corner_offset_factor: float = 2.0,
+        bottom_border_offset: int = 30,
+        top_border_offset: int = 30,
+        left_border_offset: int = 30,
+        right_border_offset: int = 30,
+        bottom_axis_visibility: bool = True,
+        top_axis_visibility: bool = True,
+        left_axis_visibility: bool = True,
+        right_axis_visibility: bool = True,
+        legend_visibility: bool = True,
+        xy_label_mode: bool = False,
+        render: bool = True,
+        color: ColorLike | None = None,
+        font_size_factor: float = 0.6,
+        label_size_factor: float = 1.0,
+        label_format: str | None = None,
+        number_minor_ticks: int = 0,
+        tick_length: int = 5,
+        minor_tick_length: int = 3,
+        show_ticks: bool = True,
+        tick_label_offset: int = 2,
+    ) -> tuple[_vtk.vtkLegendScaleActor, None]:
         """Annotate the render window with scale and distance information.
 
         Its basic goal is to provide an indication of the scale of the scene.
@@ -4589,9 +4777,6 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Either a string, rgb list, or hex color string for tick text
             and tick line colors.
 
-            .. warning::
-                The axis labels tend to be either white or black.
-
         font_size_factor : float, default: 0.6
             Factor to scale font size overall.
 
@@ -4599,7 +4784,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             Factor to scale label size relative to title size.
 
         label_format : str, optional
-            A printf style format for labels, e.g. ``'%E'``.
+            A ``printf`` style format for labels, for example, ``'%E'``.
             See :ref:`old-string-formatting`.
 
         number_minor_ticks : int, default: 0
@@ -4619,14 +4804,14 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         Returns
         -------
-        :vtk:`vtkActor`
-            The actor for the added :vtk:`vtkLegendScaleActor`.
+        tuple[:vtk:`vtkLegendScaleActor`, None]
+            The added actor and ``None``, since it carries no property.
 
         Warnings
         --------
         Please be aware that the axes and scale values are subject to perspective
         effects. The distances are computed in the focal plane of the camera. When
-        there are large view angles (i.e., perspective projection), the computed
+        there are large view angles (that is, perspective projection), the computed
         distances may provide users the wrong sense of scale. These effects are not
         present when parallel projection is enabled.
 
@@ -4663,19 +4848,15 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
 
         for text in ['Label', 'Title']:
             prop = getattr(legend_scale, f'GetLegend{text}Property')()
-            if color != Color('white'):
-                # This property turns black if set
-                prop.SetColor(*color.int_rgb)
+            prop.SetColor(*color.float_rgb)
             prop.SetFontSize(
                 int(font_size_factor * 20),
             )  # hack to avoid multiple font size arguments
 
         for ax in ['Bottom', 'Left', 'Right', 'Top']:
             axis = getattr(legend_scale, f'Get{ax}Axis')()
-            axis.GetProperty().SetColor(*color.int_rgb)
-            if color != Color('white'):
-                # This label property turns black if set
-                axis.GetLabelTextProperty().SetColor(*color.int_rgb)
+            axis.GetProperty().SetColor(*color.float_rgb)
+            axis.GetLabelTextProperty().SetColor(*color.float_rgb)
             axis.SetFontFactor(font_size_factor)
             axis.SetLabelFactor(label_size_factor)
             if label_format:
@@ -4686,7 +4867,7 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             axis.SetTickVisibility(show_ticks)
             axis.SetTickOffset(tick_label_offset)
 
-        return self.add_actor(
+        self.add_actor(
             legend_scale,
             reset_camera=False,
             name='_vtkLegendScaleActor',
@@ -4694,9 +4875,10 @@ class Renderer(_NoNewAttrMixin, _BoundsSizeMixin, DisableVtkSnakeCase, _vtk.vtkO
             pickable=False,
             render=render,
         )
+        return legend_scale, None
 
 
-def _fixup_bounds(bounds) -> BoundsTuple:
+def _fixup_bounds(bounds: VectorLike[float]) -> BoundsTuple:
     the_bounds = np.asarray(bounds)
     if np.any(the_bounds[::2] > the_bounds[1::2]):
         the_bounds[:] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)

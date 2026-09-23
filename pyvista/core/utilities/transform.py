@@ -4,15 +4,16 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import Literal
 from typing import cast
 from typing import overload
 
 import numpy as np
+import pyvista_validation as _validation
 
 import pyvista as pv
-from pyvista.core import _validation
-from pyvista.core import _vtk_core as _vtk
+from pyvista import _vtk
 from pyvista.core._vtk_utilities import DisableVtkSnakeCase
 from pyvista.core._vtk_utilities import vtkPyVistaOverride
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
@@ -52,7 +53,7 @@ class Transform(
     as affine) coordinate transformations in three dimensions, which are internally
     represented as a 4x4 homogeneous transformation matrix.
 
-    The transformation methods (e.g. :meth:`translate`, :meth:`rotate`,
+    The transformation methods (for example, :meth:`translate`, :meth:`rotate`,
     :meth:`compose`) can operate in either :meth:`pre_multiply` or
     :meth:`post_multiply` mode. In pre-multiply mode, any additional transformations
     will occur *before* any transformations represented by the current :attr:`matrix`.
@@ -133,7 +134,7 @@ class Transform(
 
     Compose the two transformations using ``*``. This will compose with
     post-multiplication such that the transformations are applied in order from left to
-    right, i.e. translate first, then scale.
+    right, that is, translate first, then scale.
 
     >>> transform_post = translation_T * scaling_T
     >>> transform_post.matrix
@@ -285,7 +286,7 @@ class Transform(
     def __add__(self: Transform, other: VectorLike[float]) -> Transform:
         """:meth:`translate` this transform using post-multiply semantics."""
         try:
-            return self.copy().translate(other, multiply_mode='post')
+            return self._copy_about_origin().translate(other, multiply_mode='post')
         except TypeError:
             msg = (
                 f"Unsupported operand type(s) for +: '{self.__class__.__name__}' "
@@ -304,7 +305,7 @@ class Transform(
     def __radd__(self: Transform, other: VectorLike[float]) -> Transform:
         """:meth:`translate` this transform using pre-multiply semantics."""
         try:
-            return self.copy().translate(other, multiply_mode='pre')
+            return self._copy_about_origin().translate(other, multiply_mode='pre')
         except TypeError:
             msg = (
                 f"Unsupported operand type(s) for +: '{type(other).__name__}' "
@@ -324,9 +325,10 @@ class Transform(
         """:meth:`compose` this transform using post-multiply semantics.
 
         Use :meth:`scale` for single numbers and length-3 vector inputs, and
-        :meth:`compose` otherwise for transform-like inputs.
+        :meth:`compose` otherwise for transform-like inputs. The operation is applied
+        about the origin, not about this transform's :attr:`point`.
         """
-        copied = self.copy()
+        copied = self._copy_about_origin()
         try:
             transform = copied.scale(other, multiply_mode='post')  # type: ignore[arg-type]
         except (ValueError, TypeError):
@@ -350,9 +352,13 @@ class Transform(
         return transform
 
     def __rmul__(self: Transform, other: float | VectorLike[float]) -> Transform:
-        """:meth:`scale` this transform using pre-multiply semantics."""
+        """:meth:`scale` this transform using pre-multiply semantics.
+
+        The operation is applied about the origin, not about this transform's
+        :attr:`point`.
+        """
         try:
-            return self.copy().scale(other, multiply_mode='pre')
+            return self._copy_about_origin().scale(other, multiply_mode='pre')
         except TypeError:
             msg = (
                 f"Unsupported operand type(s) for *: '{type(other).__name__}' "
@@ -367,6 +373,12 @@ class Transform(
                 f'The left-side argument must be a single number or a length-3 vector.'
             )
             raise ValueError(msg)
+
+    def _copy_about_origin(self: Transform) -> Transform:
+        """Return a copy which composes about the origin instead of the point."""
+        copied = self.copy()
+        copied.point = None
+        return copied
 
     def copy(self: Transform) -> Transform:
         """Return a deep copy of the transform.
@@ -406,6 +418,8 @@ class Transform(
 
         # Need to copy other props not stored by vtkTransform
         new_transform.multiply_mode = self.multiply_mode
+        new_transform.point = self.point
+        new_transform.check_finite = self.check_finite
 
         return new_transform
 
@@ -458,7 +472,7 @@ class Transform(
         Set this to ``'pre'`` to set the multiplication mode to :meth:`pre_multiply`.
         Set this to ``'post'`` to set it to :meth:`post_multiply`.
 
-        In pre-multiply mode, any additional transformations (e.g. using
+        In pre-multiply mode, any additional transformations (for example, using
         :meth:`translate`, :meth:`compose`, etc.) will occur *before* any
         transformations represented by the current :attr:`matrix`.
         In post-multiply mode, the additional transformation will occur *after* any
@@ -476,7 +490,7 @@ class Transform(
     def pre_multiply(self: Transform) -> Transform:  # numpydoc ignore=RT01
         """Set the multiplication mode to pre-multiply.
 
-        In pre-multiply mode, any additional transformations (e.g. using
+        In pre-multiply mode, any additional transformations (for example, using
         :meth:`translate`, :meth:`compose`, etc.) will occur *before* any
         transformations represented by the current :attr:`matrix`.
 
@@ -495,7 +509,7 @@ class Transform(
     def post_multiply(self: Transform) -> Transform:  # numpydoc ignore=RT01
         """Set the multiplication mode to post-multiply.
 
-        In post-multiply mode, any additional transformations (e.g. using
+        In post-multiply mode, any additional transformations (for example, using
         :meth:`translate`, :meth:`compose`, etc.) will occur *after* any
         transformations represented by the current :attr:`matrix`.
 
@@ -528,9 +542,9 @@ class Transform(
         Parameters
         ----------
         *factor : float | VectorLike[float]
-            Scale factor(s) to use. Use a single number for uniform scaling or
+            Scale factors to use. Use a single number for uniform scaling or
             three numbers for non-uniform scaling. The three factors may be
-            passed as a single vector (one arg) or an unpacked vector (three args).
+            passed as a single vector (one ``arg``) or an unpacked vector (three ``args``).
 
         point : VectorLike[float], optional
             Point to scale from. By default, the object's :attr:`point` is used,
@@ -604,11 +618,15 @@ class Transform(
                [0., 0., 0., 1.]])
 
         """
-        valid_factor = _validation.validate_array3(
-            factor,  # type: ignore[arg-type]
-            broadcast=True,
-            dtype_out=float,
-            name='scale factor',
+        valid_factor = cast(
+            'tuple[float, float, float]',
+            _validation.validate_array3(
+                factor,  # type: ignore[arg-type]
+                broadcast=True,
+                dtype_out=float,
+                to_tuple=True,
+                name='scale factor',
+            ),
         )
         transform = _vtk.vtkTransform()
         transform.Scale(valid_factor)
@@ -631,8 +649,8 @@ class Transform(
         Parameters
         ----------
         *normal : float | VectorLike[float]
-            Normal direction for reflection. May be a single vector (one arg) or
-            unpacked vector (three args).
+            Normal direction for reflection. May be a single vector (one ``arg``) or
+            unpacked vector (three ``args``).
 
         point : VectorLike[float], optional
             Point to reflect about. By default, the object's :attr:`point` is used,
@@ -904,8 +922,8 @@ class Transform(
         Parameters
         ----------
         *vector : float | VectorLike[float]
-            Vector to use for translation. May be a single vector (one arg) or
-            unpacked vector (three args).
+            Vector to use for translation. May be a single vector (one ``arg``) or
+            unpacked vector (three ``args``).
 
         multiply_mode : 'pre' | 'post', optional
             Multiplication mode to use when composing the matrix. By default, the
@@ -942,10 +960,14 @@ class Transform(
                [0., 0., 0., 1.]])
 
         """
-        valid_vector = _validation.validate_array3(
-            vector,  # type: ignore[arg-type]
-            dtype_out=float,
-            name='translation vector',
+        valid_vector = cast(
+            'tuple[float, float, float]',
+            _validation.validate_array3(
+                vector,  # type: ignore[arg-type]
+                dtype_out=float,
+                to_tuple=True,
+                name='translation vector',
+            ),
         )
         transform = _vtk.vtkTransform()
         transform.Translate(valid_vector)
@@ -1570,39 +1592,20 @@ class Transform(
         """Return the current number of composed transformations."""
         return self.GetNumberOfConcatenatedTransforms()
 
+    # `MultiBlock` also matches the array overload, so it is offered this one first.
+    # fmt: off
+    # ruff: disable[E501]
     @overload
-    def apply(
-        self: Transform,
-        obj: VectorLike[float] | MatrixLike[float],
-        /,
-        mode: Literal['points', 'vectors'] | None = ...,
-        *,
-        inverse: bool = ...,
-        copy: bool = ...,
-    ) -> NumpyArray[float]: ...
+    def apply(self: Transform, obj: _DataSetOrMultiBlockType, /, mode: Literal['active_vectors', 'all_vectors'] = ..., *, inverse: bool = ..., copy: bool = ...) -> _DataSetOrMultiBlockType: ...
     @overload
-    def apply(
-        self: Transform,
-        obj: _DataSetOrMultiBlockType,
-        /,
-        mode: Literal['active_vectors', 'all_vectors'] = ...,
-        *,
-        inverse: bool = ...,
-        copy: bool = ...,
-    ) -> _DataSetOrMultiBlockType: ...
+    def apply(self: Transform, obj: VectorLike[float] | MatrixLike[float], /, mode: Literal['points', 'vectors'] | None = ..., *, inverse: bool = ..., copy: bool = ...) -> NumpyArray[float]: ...
     @overload
+    def apply(self: Transform, obj: Prop3D, /, mode: Literal['replace', 'pre-multiply', 'post-multiply'] = ..., *, inverse: bool = ..., copy: bool = ...) -> Prop3D: ...
+    # ruff: enable[E501]
+    # fmt: on
     def apply(
         self: Transform,
-        obj: Prop3D,
-        /,
-        mode: Literal['replace', 'pre-multiply', 'post-multiply'] = ...,
-        *,
-        inverse: bool = ...,
-        copy: bool = ...,
-    ) -> Prop3D: ...
-    def apply(
-        self: Transform,
-        obj: VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock | Prop3D,
+        obj: VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock[Any] | Prop3D,
         /,
         mode: Literal[
             'points',
@@ -1652,7 +1655,7 @@ class Transform(
 
                 - ``'active_vectors'`` transforms active normals and active vectors
                   arrays only.
-                - ``'all_vectors'`` transforms `all` input vectors, i.e. all arrays
+                - ``'all_vectors'`` transforms `all` input vectors, that is, all arrays
                   with three components. This mode is equivalent to setting
                   ``transform_all_input_vectors=True``
                   with :meth:`pyvista.DataObjectFilters.transform`.
@@ -1964,7 +1967,7 @@ class Transform(
 
             - ``'active_vectors'`` transforms active normals and active vectors arrays
               only.
-            - ``'all_vectors'`` transforms `all` input vectors, i.e. all arrays with
+            - ``'all_vectors'`` transforms `all` input vectors, that is, all arrays with
               three components. This mode is equivalent to setting
               ``transform_all_input_vectors=True``
               with :meth:`pyvista.DataObjectFilters.transform`.
@@ -2072,7 +2075,7 @@ class Transform(
         such that, when represented as 4x4 matrices, ``M = TRNSK``. The decomposition is
         unique and is computed with polar matrix decomposition.
 
-        By default, compact representations of the transformations are returned (e.g. as a
+        By default, compact representations of the transformations are returned (for example, as a
         3-element vector or a 3x3 matrix). Optionally, 4x4 matrices may be returned instead.
 
         .. note::
@@ -2086,8 +2089,8 @@ class Transform(
         ----------
         homogeneous : bool, default: False
             If ``True``, return the components (translation, rotation, etc.) as 4x4
-            homogeneous matrices. By default, reflection is a scalar, translation and
-            scaling are length-3 vectors, and rotation and shear are 3x3 matrices.
+            homogeneous matrices. By default, reflection is a scalar; translation and
+            scaling are length-3 vectors; and rotation and shear are 3x3 matrices.
 
         Returns
         -------
@@ -2371,12 +2374,12 @@ class Transform(
         translate_before, translate_after = self._get_point_translations(
             point=point, multiply_mode=multiply_mode
         )
-        if translate_before:
+        if translate_before is not None:
             self._compose(translate_before, multiply_mode=multiply_mode)
 
         self._compose(transform, multiply_mode=multiply_mode)
 
-        if translate_after:
+        if translate_after is not None:
             self._compose(translate_after, multiply_mode=multiply_mode)
 
         return self
@@ -2385,12 +2388,15 @@ class Transform(
         self: Transform,
         point: VectorLike[float] | None,
         multiply_mode: Literal['pre', 'post'] | None,
-    ) -> tuple[None | Transform, None | Transform]:
+    ) -> tuple[_vtk.vtkTransform | None, _vtk.vtkTransform | None]:
         point = point if point is not None else self.point
         if point is not None:
             point_array = _validation.validate_array3(point, dtype_out=float, name='point')
-            translate_away = Transform().translate(-point_array)
-            translate_toward = Transform().translate(point_array)
+            # Optimization: a plain vtkTransform is what _compose concatenates anyway
+            translate_away = _vtk.vtkTransform()
+            translate_away.Translate(*(-point_array))
+            translate_toward = _vtk.vtkTransform()
+            translate_toward.Translate(*point_array)
             if multiply_mode == 'post' or (
                 multiply_mode is None and self._multiply_mode == 'post'
             ):
@@ -2404,8 +2410,8 @@ class Transform(
         """Check that the :attr:`~Transform.matrix` and :attr:`~Transform.inverse_matrix` have finite values.
 
         If ``True``, all transformations are checked to ensure they only contain
-        finite values (i.e. no ``NaN`` or ``Inf`` values) and a ``ValueError`` is raised
-        otherwise. This is useful to catch cases where the transformation(s) are poorly
+        finite values (that is, no ``NaN`` or ``Inf`` values) and a ``ValueError`` is raised
+        otherwise. This is useful to catch cases where the transformations are poorly
         defined and/or are numerically unstable.
 
         This flag is enabled by default.
@@ -2713,6 +2719,16 @@ class Transform(
         """  # noqa: E501
         return not np.allclose(self.shear_matrix, np.eye(3))
 
+    # fmt: off
+    # ruff: disable[E501]
+    @overload
+    def as_rotation(self, representation: None = ..., *args, **kwargs) -> Rotation: ...
+    @overload
+    def as_rotation(self, representation: Literal['quat', 'matrix', 'rotvec', 'mrp', 'euler', 'davenport'], *args, **kwargs) -> NumpyArray[float]: ...
+    @overload
+    def as_rotation(self, representation: Literal['quat', 'matrix', 'rotvec', 'mrp', 'euler', 'davenport'] | None = ..., *args, **kwargs) -> Rotation | NumpyArray[float]: ...
+    # ruff: enable[E501]
+    # fmt: on
     def as_rotation(
         self,
         representation: Literal['quat', 'matrix', 'rotvec', 'mrp', 'euler', 'davenport']

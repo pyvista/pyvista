@@ -12,66 +12,133 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import Literal
 
 import numpy as np
 
 import pyvista as pv
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+    from collections.abc import Iterable
+
+    from pyvista import Plotter
     from pyvista.jupyter import JupyterBackendOptions
     from pyvista.plotting._typing import CameraPositionOptions
     from pyvista.plotting._typing import ColorLike
     from pyvista.plotting._typing import PlottableType
+    from pyvista.plotting._typing import ThemeOptions
+    from pyvista.plotting.renderer import Renderer
     from pyvista.plotting.themes import Theme
 
 
-@_deprecate_positional_args(allowed=['var_item'])
-def plot(  # noqa: ANN202, PLR0917
+def _add_axes_widget(
+    renderers: Iterable[Renderer], *, show_axes: bool | None, theme: Theme
+) -> None:
+    """Add the axes orientation widget to each of the renderers, as :func:`pyvista.plot` does.
+
+    ``show_axes`` defaults to the theme, which also decides whether the widget drawn is
+    box axes or the plain orientation widget.
+    """
+    if show_axes is None:
+        show_axes = theme.axes.show
+    if show_axes:
+        for renderer in renderers:
+            renderer.add_box_axes() if theme.axes.box else renderer.add_axes()
+
+
+def _set_background(pl: Plotter, background: ColorLike | None) -> None:
+    """Set the background :func:`pyvista.plot` and :func:`pyvista.plot_compare` take.
+
+    A color is set as the background of every renderer at once, since ``set_background``
+    is a property of the whole collection of them rather than of any one. A path to an
+    image file is shown as a background image instead, behind every subplot alike for
+    the same reason, since ``set_background`` only takes a color and raises otherwise.
+    """
+    try:
+        pl.set_background(background)
+    except (ValueError, TypeError):
+        if isinstance(background, (str, Path)):
+            path = Path(background)
+            if path.is_file():
+                pl.add_background_image(path)
+        else:
+            msg = f'Background must be color-like or a file path. Got {background} instead.'
+            raise TypeError(msg)
+
+
+def _apply_render_options(
+    pl: Plotter,
+    renderers: Iterable[Renderer],
+    *,
+    anti_aliasing: Literal['ssaa', 'msaa', 'fxaa'] | bool | None,
+    eye_dome_lighting: bool,
+    parallel_projection: bool,
+    ssao: bool,
+) -> None:
+    """Apply the rendering options :func:`pyvista.plot` takes, in the terms it takes them.
+
+    ``anti_aliasing`` is a property of the render window, so it is applied once to the
+    plotter. ``eye_dome_lighting``, ``parallel_projection`` and ``ssao`` are each a
+    renderer's own, so they are applied to every one of ``renderers``; a plot with a
+    single renderer gives ``[pl.renderer]``.
+    """
+    if anti_aliasing is None:
+        pass
+    elif anti_aliasing is False:
+        pl.disable_anti_aliasing()
+    elif anti_aliasing is True:
+        pl.enable_anti_aliasing('msaa', multi_samples=pl.theme.multi_samples)
+    else:
+        pl.enable_anti_aliasing(anti_aliasing)
+
+    for renderer in renderers:
+        if eye_dome_lighting:
+            renderer.enable_eye_dome_lighting()
+        if parallel_projection:
+            renderer.enable_parallel_projection()
+        if ssao:
+            renderer.enable_ssao()
+
+
+def plot(  # noqa: ANN202
     var_item: list[PlottableType] | PlottableType,
-    off_screen: bool | None = None,  # noqa: FBT001
-    full_screen: bool | None = None,  # noqa: FBT001
-    screenshot: str | bool | None = None,  # noqa: FBT001
-    interactive: bool = True,  # noqa: FBT001, FBT002
+    *,
+    off_screen: bool | None = None,
+    full_screen: bool | None = None,
+    screenshot: str | bool | None = None,
+    interactive: bool = True,
     cpos: CameraPositionOptions | None = None,
     window_size: list[int] | None = None,
-    show_bounds: bool = False,  # noqa: FBT001, FBT002
-    show_axes: bool | None = None,  # noqa: FBT001
-    notebook: bool | None = None,  # noqa: FBT001
+    show_bounds: bool = False,
+    show_axes: bool | None = None,
+    notebook: bool | None = None,
     background: ColorLike | None = None,
     text: str = '',
-    return_img: bool = False,  # noqa: FBT001, FBT002
-    eye_dome_lighting: bool = False,  # noqa: FBT001, FBT002
-    volume: bool = False,  # noqa: FBT001, FBT002
-    parallel_projection: bool = False,  # noqa: FBT001, FBT002
+    return_img: bool = False,
+    eye_dome_lighting: bool = False,
+    volume: bool = False,
+    parallel_projection: bool = False,
     jupyter_backend: JupyterBackendOptions | None = None,
-    return_viewer: bool = False,  # noqa: FBT001, FBT002
-    return_cpos: bool = False,  # noqa: FBT001, FBT002
-    jupyter_kwargs: dict | None = None,  # type: ignore[type-arg]
-    theme: Theme | None = None,
-    anti_aliasing: Literal['ssaa', 'msaa', 'fxaa'] | bool | None = None,  # noqa: FBT001
+    return_viewer: bool = False,
+    return_cpos: bool = False,
+    jupyter_kwargs: dict[str, Any] | None = None,
+    theme: Theme | ThemeOptions | str | None = None,
+    anti_aliasing: Literal['ssaa', 'msaa', 'fxaa'] | bool | None = None,
     zoom: str | float | None = None,
-    border: bool = False,  # noqa: FBT001, FBT002
-    border_color: ColorLike = 'k',
-    border_width: float = 2.0,
-    ssao: bool = False,  # noqa: FBT001, FBT002
+    border: bool | None = None,
+    border_color: ColorLike | None = None,
+    border_width: float | None = None,
+    ssao: bool = False,
+    before_close_callback: Callable[[Plotter], None] | None = None,
     **kwargs,
 ):
-    """Plot a PyVista, numpy, or vtk object.
+    """Plot a PyVista, NumPy, or VTK object.
 
-    .. versionadded:: 0.47
-
-        ``plot`` can be invoked with the shell command:
-
-        .. code-block:: shell
-
-            pyvista plot <files> --screenshot output.png --off-screen
-
-        Run ``pyvista plot --help`` for more details on available parameters.
-
-        .. note::
-            Providing multiple files renders them inside the same window.
+    .. note::
+        This function is also available via command-line interface. See
+        :ref:`pyvista plot <cli_plot>` for details.
 
     Parameters
     ----------
@@ -126,7 +193,7 @@ def plot(  # noqa: ANN202, PLR0917
         Adds text at the bottom of the plot.
 
     return_img : bool, default: False
-        Returns numpy array of the last image rendered.
+        Returns a NumPy array of the last image rendered.
 
     eye_dome_lighting : bool, optional
         Enables eye dome lighting.
@@ -158,12 +225,13 @@ def plot(  # noqa: ANN202, PLR0917
         See :ref:`customize_trame_toolbar_example` for an example
         using this keyword.
 
-    theme : pyvista.plotting.themes.Theme, optional
-        Plot-specific theme.
+    theme : pyvista.plotting.themes.Theme | str, optional
+        Plot-specific theme. Accepts a ``Theme`` instance or a registered
+        theme name (for example, ``'dark'``); see :func:`~pyvista.registered_themes`.
 
     anti_aliasing : Literal['ssaa', 'msaa', 'fxaa'] | bool, optional
         Enable or disable anti-aliasing. If ``True``, uses ``"msaa"``. If False,
-        disables anti_aliasing. If a string, should be one of the following:
+        disables ``anti_aliasing``. If a string, should be one of the following:
 
         * ``"ssaa"`` - Super-Sample Anti-Aliasing
         * ``"msaa"`` - Multi-Sample Anti-Aliasing
@@ -176,23 +244,37 @@ def plot(  # noqa: ANN202, PLR0917
         is a zoom-in, a value less than 1 is a zoom-out.  Must be greater
         than 0.
 
-    border : bool, default: False
-        Draw a border around each render window.
+    border : bool, optional
+        Draw a border around the render window. None is drawn by default.
 
-    border_color : ColorLike, default: "k"
-        Either a string, rgb list, or hex color string.  For example:
+    border_color : ColorLike, optional
+        Color of the border. Defaults to
+        :attr:`pyvista.global_theme.border_color
+        <pyvista.plotting.themes.Theme.border_color>`. Accepts a string,
+        rgb list, or hex color string.  For example:
 
         * ``color='white'``
         * ``color='w'``
         * ``color=[1.0, 1.0, 1.0]``
         * ``color='#FFFFFF'``
 
-    border_width : float, default: 2.0
-        Width of the border in pixels when enabled.
+    border_width : float, optional
+        Width of the border in pixels when enabled. Defaults to
+        :attr:`pyvista.global_theme.border_width
+        <pyvista.plotting.themes.Theme.border_width>`.
 
     ssao : bool, optional
         Enable surface space ambient occlusion (SSAO). See
         :func:`Plotter.enable_ssao` for more details.
+
+    before_close_callback : Callable, optional
+        Callback that is called before the plotter is closed.
+        The function takes a single parameter, which is the plotter object
+        before it closes. An example of use is to capture a screenshot after
+        interaction::
+
+            def fun(plotter):
+                plotter.screenshot('file.png')
 
     **kwargs : dict, optional
         See :func:`pyvista.Plotter.add_mesh` for additional options.
@@ -206,7 +288,7 @@ def plot(  # noqa: ANN202, PLR0917
         jupyter notebook and ``return_viewer=True``.
 
     image : np.ndarray
-        Numpy array of the last image when either ``return_img=True``
+        NumPy array of the last image when either ``return_img=True``
         or ``screenshot=True`` is set. Not returned when in a
         jupyter notebook with ``return_viewer=True``. Optionally
         contains alpha values. Sized:
@@ -218,6 +300,12 @@ def plot(  # noqa: ANN202, PLR0917
 
     widget : ipywidgets.Widget
         IPython widget when ``return_viewer=True``.
+
+    See Also
+    --------
+    pyvista.plot_compare
+    pyvista.plot_arrows
+    pyvista.Plotter
 
     Examples
     --------
@@ -240,9 +328,6 @@ def plot(  # noqa: ANN202, PLR0917
     if jupyter_kwargs is None:
         jupyter_kwargs = {}
 
-    # undocumented kwarg used within pytest to run a function before closing
-    before_close_callback = kwargs.pop('before_close_callback', None)
-
     # pop from kwargs here to avoid including them in add_mesh or add_volume
     eye_dome_lighting = kwargs.pop('edl', eye_dome_lighting)
     show_grid = kwargs.pop('show_grid', False)
@@ -258,44 +343,20 @@ def plot(  # noqa: ANN202, PLR0917
         border_width=border_width,
     )
 
-    if show_axes is None:
-        show_axes = pl.theme.axes.show
-    if show_axes:
-        if pl.theme.axes.box:
-            pl.add_box_axes()
-        else:
-            pl.add_axes()
-
-    if anti_aliasing:
-        if anti_aliasing is True:
-            pl.enable_anti_aliasing('msaa', multi_samples=pv.global_theme.multi_samples)
-        else:
-            pl.enable_anti_aliasing(anti_aliasing)
-    elif anti_aliasing is False:
-        pl.disable_anti_aliasing()
-
-    try:
-        pl.set_background(background)
-    except (ValueError, TypeError):
-        if isinstance(background, (str, Path)):
-            path = Path(background)
-            if path.is_file():
-                pl.add_background_image(path)
-        else:
-            msg = f'Background must be color-like or a file path. Got {background} instead.'
-            raise TypeError(msg)
+    _add_axes_widget([pl.renderer], show_axes=show_axes, theme=pl.theme)
+    _set_background(pl, background)
 
     # Handle var_item input
     def _handle_list(var_item: list[PlottableType]) -> None:
-        if len(var_item) == 2 and all(
-            isinstance(item, np.ndarray) for item in var_item
-        ):  # might be arrows
-            pl.add_arrows(var_item[0], var_item[1])
-            return
+        if len(var_item) == 2:
+            first, second = var_item
+            if isinstance(first, np.ndarray) and isinstance(second, np.ndarray):  # arrows
+                pl.add_arrows(first, second)
+                return
 
         for item in var_item:
             if volume or (isinstance(item, np.ndarray) and item.ndim == 3):
-                pl.add_volume(item, **kwargs)
+                pl.add_volume(item, **kwargs)  # type: ignore[arg-type]
             else:
                 pl.add_mesh(item, **kwargs)
 
@@ -303,7 +364,7 @@ def plot(  # noqa: ANN202, PLR0917
         _handle_list(var_item=var_item)
 
     elif volume or (isinstance(var_item, np.ndarray) and var_item.ndim == 3):
-        pl.add_volume(var_item, **kwargs)
+        pl.add_volume(var_item, **kwargs)  # type: ignore[arg-type]
 
     elif isinstance(var_item, pv.MultiBlock):
         pl.add_composite(var_item, **kwargs)
@@ -326,14 +387,14 @@ def plot(  # noqa: ANN202, PLR0917
     else:
         pl.camera_position = cpos
 
-    if eye_dome_lighting:
-        pl.enable_eye_dome_lighting()
-
-    if parallel_projection:
-        pl.enable_parallel_projection()
-
-    if ssao:
-        pl.enable_ssao()
+    _apply_render_options(
+        pl,
+        [pl.renderer],
+        anti_aliasing=anti_aliasing,
+        eye_dome_lighting=eye_dome_lighting,
+        parallel_projection=parallel_projection,
+        ssao=ssao,
+    )
 
     if zoom is not None:
         pl.camera.zoom(zoom)
@@ -342,7 +403,7 @@ def plot(  # noqa: ANN202, PLR0917
         auto_close=auto_close,
         interactive=interactive,
         full_screen=full_screen,
-        screenshot=screenshot,
+        screenshot=False if screenshot is None else screenshot,
         return_img=return_img,
         jupyter_backend=jupyter_backend,
         before_close_callback=before_close_callback,

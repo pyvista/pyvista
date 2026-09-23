@@ -3,17 +3,28 @@
 from __future__ import annotations
 
 import time
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import Literal
+from typing import get_args
 
 import numpy as np
 
 import pyvista as pv
 from pyvista import examples
-from pyvista._deprecate_positional_args import _deprecate_positional_args
 
 from .logo import text_3d
 
+if TYPE_CHECKING:
+    from pyvista.core._typing_core import NumpyArray
+    from pyvista.plotting.plotter import _ShowReturnType
 
-def glyphs(grid_sz=3):
+_DatasetTypeOptions = Literal[
+    'PolyData', 'UnstructuredGrid', 'ImageData', 'RectilinearGrid', 'StructuredGrid'
+]
+
+
+def glyphs(grid_sz: int = 3) -> pv.PolyData:
     """Create several parametric supertoroids using VTK's glyph table functionality.
 
     Parameters
@@ -32,9 +43,12 @@ def glyphs(grid_sz=3):
 
     Examples
     --------
-    >>> from pyvista import demos
-    >>> mesh = demos.glyphs()
-    >>> mesh.plot()
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import demos
+        >>> mesh = demos.glyphs()
+        >>> mesh.plot()
 
     """
     # Seed rng for reproducible plots
@@ -49,8 +63,8 @@ def glyphs(grid_sz=3):
     geoms = [pv.ParametricSuperToroid(n1=n1, n2=n2) for n1, n2 in params]
 
     # get dataset where to put glyphs
-    grid_sz = float(grid_sz)
-    x, y, z = np.mgrid[:grid_sz, :grid_sz, :grid_sz]
+    size = float(grid_sz)
+    x, y, z = np.mgrid[:size, :size, :size]
     mesh = pv.StructuredGrid(x, y, z)
 
     # add random scalars
@@ -68,7 +82,7 @@ def glyphs(grid_sz=3):
     )
 
 
-def plot_glyphs(grid_sz=3, **kwargs):
+def plot_glyphs(grid_sz: int = 3, **kwargs: Any) -> _ShowReturnType:
     """Plot several parametric supertoroids using VTK's glyph table functionality.
 
     Parameters
@@ -87,8 +101,11 @@ def plot_glyphs(grid_sz=3, **kwargs):
 
     Examples
     --------
-    >>> from pyvista import demos
-    >>> demos.plot_glyphs()
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import demos
+        >>> demos.plot_glyphs()
 
     """
     # construct the glyphs on top of the mesh; don't scale by scalars now
@@ -104,7 +121,7 @@ def plot_glyphs(grid_sz=3, **kwargs):
     return pl.show()
 
 
-def orientation_cube():
+def orientation_cube() -> dict[str, pv.PolyData]:
     """Return a dictionary containing the meshes composing an orientation cube.
 
     Returns
@@ -189,7 +206,7 @@ def orientation_cube():
     }
 
 
-def orientation_plotter():
+def orientation_plotter() -> pv.Plotter:
     """Return a plotter containing the orientation cube.
 
     Returns
@@ -213,12 +230,17 @@ def orientation_plotter():
     pl.add_mesh(ocube['y_n'], color='green')
     pl.add_mesh(ocube['z_p'], color='red')
     pl.add_mesh(ocube['z_n'], color='red')
-    pl.show_axes()  # type: ignore[call-arg]
+    pl.show_axes()
     return pl
 
 
-@_deprecate_positional_args
-def plot_wave(fps=30, frequency=1, wavetime=3, notebook=None):  # noqa: PLR0917
+def plot_wave(
+    *,
+    fps: int = 30,
+    frequency: float = 1,
+    wavetime: float = 3,
+    notebook: bool | None = None,
+) -> NumpyArray[float]:
     """Plot a 3D moving wave in a render window.
 
     Parameters
@@ -249,9 +271,9 @@ def plot_wave(fps=30, frequency=1, wavetime=3, notebook=None):  # noqa: PLR0917
     """
     # camera position
     cpos = pv.CameraPosition(
-        position=(6.879481857604187, -32.143727535933195, 23.05622921691103),
-        focal_point=(-0.2336056403734026, -0.6960083534590372, -0.7226721553894022),
-        viewup=(-0.008900669873416645, 0.6018246347860926, 0.7985786667826725),
+        position=(6.879, -32.14, 23.06),
+        focal_point=(-0.2336, -0.696, -0.7227),
+        viewup=(-0.008901, 0.6018, 0.7986),
     )
 
     # Make data
@@ -287,7 +309,7 @@ def plot_wave(fps=30, frequency=1, wavetime=3, notebook=None):  # noqa: PLR0917
         telap = time.time() - tstart
         phase = telap * 2 * np.pi * frequency
         Z = np.sin(R + phase)
-        mesh.points[:, -1] = Z.ravel()  # type: ignore[index]
+        mesh.points[:, -1] = Z.ravel()
         mesh['Height'] = Z.ravel()
 
         mesh.compute_normals(inplace=True)
@@ -308,7 +330,7 @@ def plot_wave(fps=30, frequency=1, wavetime=3, notebook=None):  # noqa: PLR0917
     return mesh.points
 
 
-def plot_ants_plane(notebook=None):
+def plot_ants_plane(notebook: bool | None = None) -> None:  # noqa: FBT001
     """Plot two ants and airplane.
 
     Demonstrate how to create a plot class to plot multiple meshes while
@@ -316,7 +338,7 @@ def plot_ants_plane(notebook=None):
 
     This example plots the following:
 
-    .. code-block:: python
+    .. pyvista-plot::
 
        >>> import pyvista as pv
        >>> from pyvista import examples
@@ -394,7 +416,7 @@ def plot_ants_plane(notebook=None):
     pl.show()
 
 
-def plot_beam(notebook=None):
+def plot_beam(notebook: bool | None = None) -> None:  # noqa: FBT001
     """Plot a beam with displacement.
 
     Parameters
@@ -416,9 +438,9 @@ def plot_beam(notebook=None):
 
     # Camera position
     cpos = pv.CameraPosition(
-        position=(11.915126303095157, 6.11392754955802, 3.6124956735471914),
+        position=(11.92, 6.114, 3.612),
         focal_point=(0.0, 0.375, 2.0),
-        viewup=(-0.42546442225230097, 0.9024244135964158, -0.06789847673314177),
+        viewup=(-0.4255, 0.9024, -0.0679),
     )
 
     cmap = 'bwr'
@@ -437,7 +459,7 @@ def plot_beam(notebook=None):
     pl.show()
 
 
-def plot_datasets(dataset_type=None):
+def plot_datasets(dataset_type: _DatasetTypeOptions | None = None) -> None:
     """Plot the pyvista dataset types.
 
     This demo plots the following PyVista dataset types:
@@ -465,13 +487,7 @@ def plot_datasets(dataset_type=None):
     >>> demos.plot_datasets()
 
     """
-    allowable_types = [
-        'PolyData',
-        'UnstructuredGrid',
-        'ImageData',
-        'RectilinearGrid',
-        'StructuredGrid',
-    ]
+    allowable_types = list(get_args(_DatasetTypeOptions))
     if dataset_type is not None and dataset_type not in allowable_types:
         msg = (
             f'Invalid dataset_type {dataset_type}.  '

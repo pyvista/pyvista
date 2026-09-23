@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib
 from pathlib import Path
+import warnings
 
 import pytest
 
@@ -14,38 +15,46 @@ with namespace_data.open() as f:
     namespace = [n.split(', ')[0] for n in namespace if not n.startswith('#')]
 
 
-@pytest.mark.parametrize('name', namespace)
-def test_utilities_namespace(name):
+def test_utilities_namespace():
+    """Every recorded name still forwards from the deprecated `pyvista.utilities`."""
     import pyvista.utilities as utilities  # noqa: PLR0402
 
-    with pytest.warns(PyVistaDeprecationWarning):
-        assert hasattr(utilities, name)
+    failed = []
+    for name in namespace:
+        # Drop any cached attribute so ``pyvista.utilities.__getattr__`` fires.
+        utilities.__dict__.pop(name, None)
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter('always')
+            found = hasattr(utilities, name)
+        deprecated = any(issubclass(w.category, PyVistaDeprecationWarning) for w in caught)
+        if not (found and deprecated):  # pragma: no cover -- failure path
+            failed.append(name)
+    assert not failed, f'Not forwarded with a deprecation warning: {failed}'
 
 
-@pytest.mark.parametrize(
-    'name',
-    [
-        'algorithms',
-        'arrays',
-        'cell_type_helper',
-        'cells',
-        'common',
-        'docs',
-        'errors',
-        'features',
-        'fileio',
-        'geometric_objects',
-        'helpers',
-        'misc',
-        'parametric_objects',
-        'reader',
-        'regression',
-        'sphinx_gallery',
-        'transformations',
-        'wrappers',
-        'xvfb',
-    ],
-)
+UTILITIES_MODULES = [
+    'algorithms',
+    'arrays',
+    'cell_type_helper',
+    'cells',
+    'common',
+    'docs',
+    'errors',
+    'features',
+    'fileio',
+    'geometric_objects',
+    'helpers',
+    'misc',
+    'parametric_objects',
+    'reader',
+    'regression',
+    'sphinx_gallery',
+    'transformations',
+    'wrappers',
+]
+
+
+@pytest.mark.parametrize('name', UTILITIES_MODULES)
 def test_utilities_modules(name):
     # Smoke test to make sure same modules still exist
     importlib.import_module(f'pyvista.utilities.{name}')
@@ -79,7 +88,6 @@ def _import_all_utilities():
     from pyvista.utilities.geometric_objects import PlatonicSolid  # noqa: F401
     from pyvista.utilities.helpers import vtk_id_list_to_array  # noqa: F401
     from pyvista.utilities.sphinx_gallery import _get_sg_image_scraper  # noqa: F401
-    from pyvista.utilities.xvfb import start_xvfb  # noqa: F401
 
 
 def test_common_utilities_import_paths():

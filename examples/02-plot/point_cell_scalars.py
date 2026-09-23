@@ -4,9 +4,7 @@
 Point Cell Scalars
 ~~~~~~~~~~~~~~~~~~
 
-This example demonstrates how to add point scalars for each individual cell to
-a dataset.
-
+This example demonstrates how to add point scalars for each individual cell to a dataset.
 
 """
 
