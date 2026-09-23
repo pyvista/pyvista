@@ -194,6 +194,7 @@ def _triangulated(add_arrays):
 #: takes ``add_arrays``, which puts the current data arrangement on a mesh and returns it.
 MESH_OVERRIDES = {
     'concatenate': lambda add_arrays: _seam_grid(),  # noqa: ARG005
+    'dash_lines': _line_mesh,
     'high_pass': _frequency_image,
     'low_pass': _frequency_image,
     'rfft': _frequency_image,
@@ -366,6 +367,7 @@ KWARG_VALUES: dict[str, list[Any]] = {
     'null_value': [-1.0],
     'offset': [3.0],
     'orient': ['p_vectors', 'c_vectors'],
+    'pattern': [(0.2, 0.1)],
     'origin': [(0.0, 0.0, 0.0)],
     'output_scalars': ['renamed'],
     'percent': [0.3],
@@ -403,6 +405,7 @@ KWARG_VALUES: dict[str, list[Any]] = {
     'spacing': [0.3],
     'start_position': [(0.0, 0.0, 0.0)],
     'step_length': [0.2],
+    'style': [':', '-.'],
     'surface': [Fresh(_closed_surface)],
     'target': [Fresh(_sample_target)],
     'target_reduction': [0.2],
