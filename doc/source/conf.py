@@ -1266,6 +1266,9 @@ _REFERENCE_NAMES = {
 }
 
 
+# Types that are documented and linked elsewhere can still fail to resolve from signature
+# annotations, which Sphinx then reports as nitpick warnings, see sphinx-doc/sphinx#14003.
+# This resolves those missing links, such as `pv.PolyData` or a bare `Path`.
 def resolve_python_reference(  # noqa: PLR0917
     app: Sphinx,
     env: BuildEnvironment,
