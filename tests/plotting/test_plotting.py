@@ -32,6 +32,7 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.plotting import BackgroundPlotter
 from pyvista.plotting import QtDeprecationError
 from pyvista.plotting import QtInteractor
+from pyvista.plotting._plotting import process_opacity
 from pyvista.plotting._property import _HAS_NATIVE_POINT_SHAPES
 from pyvista.plotting._typing import OpacityOptions
 from pyvista.plotting.axes_assembly import ScaleModeOptions
@@ -3258,6 +3259,301 @@ def test_plot_compare_takes_what_plot_takes(compare_datasets, verify_image_cache
     }
 
 
+def _drawn_actors(datasets, describe=None, **kwargs):
+    """Return something describing the mesh actor drawn in each subplot.
+
+    Describes the color and line width of each by default. Holds nothing of the
+    plotter, which has to be free to be collected.
+    """
+    describe = describe or (lambda actor: (actor.prop.color.name, actor.prop.line_width))
+    drawn: list[Any] = []
+
+    def capture(plotter):
+        drawn.extend(
+            describe(actor)
+            for renderer in plotter.renderers
+            for actor in renderer.actors.values()
+            if isinstance(actor, pv.Actor)
+        )
+
+    pv.plot_compare(datasets, before_close_callback=capture, **kwargs)
+    return drawn
+
+
+def test_plot_compare_per_subplot_kwargs(verify_image_cache):
+    verify_image_cache.skip = True
+
+    # A keyword given one value per dataset draws each dataset with its own value,
+    # where a single value is drawn in every subplot
+    mesh = pv.Sphere()
+    assert _drawn_actors([mesh, mesh], color=['red', 'blue'], line_width=4) == [
+        ('red', 4.0),
+        ('blue', 4.0),
+    ]
+
+
+@pytest.mark.parametrize(
+    ('kwargs', 'n_datasets', 'shared', 'varying'),
+    [
+        # A keyword which never takes a sequence of its own varies per subplot
+        (
+            {'style': ['surface', 'wireframe']},
+            2,
+            {},
+            [{'style': 'surface'}, {'style': 'wireframe'}],
+        ),
+        ({'line_width': [2, 4]}, 2, {}, [{'line_width': 2}, {'line_width': 4}]),
+        ({'show_edges': [True, False]}, 2, {}, [{'show_edges': True}, {'show_edges': False}]),
+        # A view of a mapping is a value for each subplot, in the mapping's own order
+        (
+            {'show_edges': {'on': True, 'off': False}.values()},
+            2,
+            {},
+            [{'show_edges': True}, {'show_edges': False}],
+        ),
+        (
+            {'scalar_bar_args': [{'title': 'a'}, {'title': 'b'}]},
+            2,
+            {},
+            [{'scalar_bar_args': {'title': 'a'}}, {'scalar_bar_args': {'title': 'b'}}],
+        ),
+        (
+            {'silhouette': [{'color': 'red'}, {'color': 'blue'}]},
+            2,
+            {},
+            [{'silhouette': {'color': 'red'}}, {'silhouette': {'color': 'blue'}}],
+        ),
+        # A keyword whose own value can be a sequence keeps that value, however many
+        # datasets it is drawn beside
+        ({'color': [1, 0, 0]}, 3, {'color': [1, 0, 0]}, [{}, {}, {}]),
+        ({'clim': [0, 1]}, 2, {'clim': [0, 1]}, [{}, {}]),
+        ({'cmap': ['red', 'blue']}, 2, {'cmap': ['red', 'blue']}, [{}, {}]),
+        # `rng` and `colormap` are aliases which no signature shows
+        ({'rng': [0, 1]}, 2, {'rng': [0, 1]}, [{}, {}]),
+        ({'colormap': ['red', 'blue']}, 2, {'colormap': ['red', 'blue']}, [{}, {}]),
+        # A composite dataset cycles its blocks through a sequence of colors
+        ({'multi_colors': ['red', 'blue']}, 2, {'multi_colors': ['red', 'blue']}, [{}, {}]),
+        (
+            {'multi_colors': [True, False]},
+            2,
+            {},
+            [{'multi_colors': True}, {'multi_colors': False}],
+        ),
+        # 'gray' and 'pink' each name both a color and a colormap
+        ({'cmap': ['gray', 'pink']}, 2, {'cmap': ['gray', 'pink']}, [{}, {}]),
+        # ... except `opacity`, which is usually given one value rather than a
+        # transfer function
+        ({'opacity': [0.3, 0.9]}, 2, {}, [{'opacity': 0.3}, {'opacity': 0.9}]),
+        # ... and which keeps a sequence of any other length instead of rejecting it
+        ({'opacity': [0.3, 0.6, 0.9]}, 2, {'opacity': [0.3, 0.6, 0.9]}, [{}, {}]),
+        # ... unless what it is given is not one value of its own
+        ({'color': ['red', 'blue']}, 2, {}, [{'color': 'red'}, {'color': 'blue'}]),
+        ({'color': [1, 0]}, 2, {}, [{'color': 1}, {'color': 0}]),
+        ({'cmap': ['viridis', 'plasma']}, 2, {}, [{'cmap': 'viridis'}, {'cmap': 'plasma'}]),
+        ({'scalars': ['a', 'b']}, 2, {}, [{'scalars': 'a'}, {'scalars': 'b'}]),
+        # ... where numbers of a matching length are one array of components instead
+        ({'scalars': [[0, 1], [2, 3]]}, 2, {'scalars': [[0, 1], [2, 3]]}, [{}, {}]),
+        # ... or is nested one level deeper than its own value
+        ({'color': [[1, 0, 0], [0, 0, 1]]}, 2, {}, [{'color': [1, 0, 0]}, {'color': [0, 0, 1]}]),
+        ({'clim': [[0, 1], [0, 2]]}, 2, {}, [{'clim': [0, 1]}, {'clim': [0, 2]}]),
+        # ... or is a value of a length of its own, which is one value of nothing
+        ({'clim': [[0, 1], [0]]}, 2, {}, [{'clim': [0, 1]}, {'clim': [0]}]),
+    ],
+)
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_plot_compare_splits_per_subplot_kwargs(kwargs, n_datasets, shared, varying):
+    from pyvista.plotting.plot_compare import _split_kwargs
+
+    assert _split_kwargs(dict(kwargs), n_datasets=n_datasets) == (shared, varying)
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_plot_compare_raises_when_a_keyword_has_too_few_values():
+    """A keyword which takes no sequence of its own must be given one value each."""
+    datasets = [pv.Sphere()] * 3
+
+    for keyword, values in (
+        ('line_width', [2, 4]),
+        ('style', ['surface', 'wireframe']),
+        ('show_edges', [True, False]),
+    ):
+        match = f'Number of {keyword!r} values (2) must match the number of datasets (3).'
+        with pytest.raises(ValueError, match=re.escape(match)):
+            pv.plot_compare(datasets, **{keyword: values})
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_plot_compare_classifies_every_keyword_the_drawing_methods_take():
+    """Each keyword a drawing method takes is one the split has classified."""
+    from pyvista.plotting.plot_compare import _KEYWORDS_TAKING_A_SEQUENCE
+
+    # Every keyword `plot_compare` passes on. A new one fails here: add it to
+    # `_KEYWORDS_TAKING_A_SEQUENCE` if its own value can be a sequence, then name it
+    # here, so that no keyword is drawn one value per subplot without being considered.
+    expected = {
+        'above_color',
+        'ambient',
+        'annotations',
+        'backface_params',
+        'below_color',
+        'blending',
+        'categories',
+        'clim',
+        'cmap',
+        'color',
+        'color_missing_with_nan',
+        'component',
+        'copy_mesh',
+        'culling',
+        'diffuse',
+        'edge_color',
+        'edge_opacity',
+        'emissive',
+        'flip_scalars',
+        'force_opaque',
+        'interpolate_before_map',
+        'label',
+        'lighting',
+        'line_width',
+        'log_scale',
+        'mapper',
+        'metallic',
+        'multi_colors',
+        'n_colors',
+        'name',
+        'nan_color',
+        'nan_opacity',
+        'opacity',
+        'opacity_unit_distance',
+        'pbr',
+        'pickable',
+        'point_shape',
+        'point_size',
+        'preference',
+        'remove_existing_actor',
+        'render',
+        'render_lines_as_tubes',
+        'render_points_as_spheres',
+        'reset_camera',
+        'resolution',
+        'rgb',
+        'roughness',
+        'scalar_bar_args',
+        'scalars',
+        'shade',
+        'show_edges',
+        'show_scalar_bar',
+        'show_vertices',
+        'silhouette',
+        'smooth_shading',
+        'specular',
+        'specular_power',
+        'split_sharp_edges',
+        'static',
+        'style',
+        'texture',
+        'use_transparency',
+        'user_matrix',
+    }
+
+    taken = set()
+    for method in (pv.Plotter.add_mesh, pv.Plotter.add_volume, pv.Plotter.add_composite):
+        parameters = inspect.signature(method).parameters
+        taken |= {
+            name
+            for name, parameter in parameters.items()
+            if parameter.kind is not parameter.VAR_KEYWORD
+        }
+    # `self` and the data object are given by `plot_compare` itself
+    taken -= {'self', 'mesh', 'volume', 'dataset'}
+
+    assert taken == expected
+
+    # `_common_arg_parser` pops these from `**kwargs`, so no signature shows them
+    aliases = {'colormap', 'rng', 'vertex_color'}
+    assert set(_KEYWORDS_TAKING_A_SEQUENCE) - taken == aliases
+
+
+def _drawn_opacity(actor):
+    """Return the opacity the actor is drawn with."""
+    return actor.prop.opacity
+
+
+def _drawn_alpha_range(actor):
+    """Return the lowest and highest alpha of the actor's lookup table."""
+    alpha = actor.mapper.lookup_table.values[:, 3]
+    return int(alpha.min()), int(alpha.max())
+
+
+def test_plot_compare_per_subplot_opacity(verify_image_cache):
+    verify_image_cache.skip = True
+
+    mesh = pv.Sphere()
+    mesh['values'] = range(mesh.n_points)
+
+    # An opacity for each dataset is drawn one per subplot, which the actor carries
+    # and which leaves the lookup table opaque
+    assert _drawn_actors([mesh, mesh], _drawn_opacity, opacity=[0.3, 0.9]) == [
+        pytest.approx(0.3),
+        pytest.approx(0.9),
+    ]
+    assert _drawn_actors([mesh, mesh], _drawn_alpha_range, opacity=[0.3, 0.9]) == [
+        (255, 255),
+        (255, 255),
+    ]
+
+    # A sequence of any other length is still one transfer function, which the lookup
+    # table carries instead and which leaves the actor opaque
+    assert _drawn_actors([mesh, mesh], _drawn_opacity, opacity=[0.3, 0.6, 0.9]) == [1.0, 1.0]
+    assert _drawn_actors([mesh, mesh], _drawn_alpha_range, opacity=[0.3, 0.6, 0.9]) == [
+        (76, 229),
+        (76, 229),
+    ]
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_plot_compare_volume_keeps_the_opacity_transfer_function():
+    from pyvista.plotting.plot_compare import _split_kwargs
+
+    # A volume's opacity is usually the transfer function mapped over its scalars,
+    # so it keeps a sequence which a mesh would be drawn one value per subplot with
+    kwargs = {'opacity': [0.0, 0.5, 1.0]}
+    assert _split_kwargs(dict(kwargs), n_datasets=3, volume=True) == (kwargs, [{}] * 3)
+    assert _split_kwargs(dict(kwargs), n_datasets=3) == (
+        {},
+        [{'opacity': 0.0}, {'opacity': 0.5}, {'opacity': 1.0}],
+    )
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_plot_compare_shares_or_varies_a_sequence_valued_keyword():
+    from pyvista.plotting.plot_compare import _split_kwargs
+
+    # A volume's opacity is one transfer function for every subplot, and nesting the
+    # values gives each subplot its own
+    shared = [0.0, 1.0]
+    assert _split_kwargs({'opacity': shared}, n_datasets=2, volume=True) == (
+        {'opacity': shared},
+        [{}, {}],
+    )
+    assert _split_kwargs({'opacity': [shared, [1.0, 0.0]]}, n_datasets=2, volume=True) == (
+        {},
+        [{'opacity': shared}, {'opacity': [1.0, 0.0]}],
+    )
+
+    # Repeating a value is how a keyword which is itself a sequence is shared
+    assert _split_kwargs({'opacity': [shared, shared]}, n_datasets=2) == (
+        {},
+        [{'opacity': shared}, {'opacity': shared}],
+    )
+
+    # A colormap for each subplot needs no nesting, since a colormap name is not a color
+    assert _split_kwargs({'cmap': ['viridis', 'plasma']}, n_datasets=2) == (
+        {},
+        [{'cmap': 'viridis'}, {'cmap': 'plasma'}],
+    )
+
+
 def test_plot_compare_volume(verify_image_cache):
     verify_image_cache.skip = True
 
@@ -3535,6 +3831,57 @@ def test_opacity_mismatched_fail(uniform):
     with pytest.raises(ValueError):  # noqa: PT011
         # cell scalars vs point opacity
         pl.add_mesh(uniform, scalars='Spatial Cell Data', opacity='unc')
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_opacity_by_array_without_scalars(uniform):
+    opac = uniform['Spatial Point Data'] / uniform['Spatial Point Data'].max()
+    uniform['unc'] = opac
+    uniform.set_active_scalars(None)
+
+    pl = pv.Plotter()
+    actor = pl.add_mesh(uniform, opacity='unc')
+
+    rgba = next(arr for arr in actor.mapper.dataset.point_data.values() if arr.ndim == 2)
+    np.testing.assert_allclose(rgba[:, -1] / 255, opac, atol=2 / 255)
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_use_transparency_without_opacity(sphere):
+    pl = pv.Plotter()
+    actor = pl.add_mesh(sphere, use_transparency=True)
+
+    assert actor.prop.opacity == 1.0
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+@pytest.mark.parametrize(
+    ('opacity', 'expected'),
+    [([0.0, 0.25, 1.0], [1.0, 0.75, 0.0]), ([0, 64, 255], [255, 191, 0])],
+)
+def test_use_transparency_inverts_an_opacity_array(opacity, expected):
+    mesh = pv.Triangle()
+    _, values = process_opacity(
+        mesh=mesh,
+        opacity=opacity,
+        preference='point',
+        n_colors=8,
+        scalars=None,
+        use_transparency=True,
+    )
+
+    np.testing.assert_allclose(values, expected)
+
+
+@pytest.mark.usefixtures('no_images_to_verify')
+def test_opacity_accepts_any_sequence(sphere):
+    kwargs = dict(
+        mesh=sphere, preference='point', n_colors=8, scalars=None, use_transparency=False
+    )
+    _, from_range = process_opacity(opacity=range(5), **kwargs)
+    _, from_list = process_opacity(opacity=[0, 1, 2, 3, 4], **kwargs)
+
+    np.testing.assert_array_equal(from_range, from_list)
 
 
 @skip_windows_mesa

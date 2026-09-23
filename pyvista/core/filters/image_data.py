@@ -25,6 +25,8 @@ from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
+from pyvista.core.filters.data_object import _round_dimensions
+from pyvista.core.filters.data_object import _validate_spacing
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.filters.data_set import _ExtractValuesInputs
 from pyvista.core.utilities.arrays import CellLiteral
@@ -2986,7 +2988,7 @@ class ImageDataFilters(DataSetFilters):
                 unique_values = np.unique(internal_values, axis=0)
                 for i, value in enumerate(unique_values):
                     is_value = np.all(labels_array == value, axis=1)
-                    labels_array[is_value, 0] = -(i + 1)  # type: ignore[index]
+                    labels_array[is_value, 0] = -(i + 1)
 
             # Keep first component only
             output.cell_data[PV_NAME] = output.cell_data[PV_NAME][:, 0]
@@ -4301,6 +4303,8 @@ class ImageDataFilters(DataSetFilters):
         border_mode: _BorderModeOptions = 'clamp',
         reference_image: ImageData | None = None,
         dimensions: VectorLike[int] | None = None,
+        spacing: float | VectorLike[float] | None = None,
+        rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None = None,
         anti_aliasing: bool = False,
         extend_border: bool | None = None,
         scalars: str | None = None,
@@ -4317,6 +4321,8 @@ class ImageDataFilters(DataSetFilters):
         #. Specify the ``dimensions`` explicitly.
 
         #. Specify the ``sample_rate`` explicitly.
+
+        #. Specify the ``spacing`` explicitly.
 
         Use ``reference_image`` for full control of the resampled geometry. For
         all other options, the geometry is implicitly defined such that the resampled
@@ -4349,6 +4355,11 @@ class ImageDataFilters(DataSetFilters):
             Sampling rates to use. Can be a single value or vector of three values
             for each axis. Values greater than ``1.0`` will up-sample the axis and
             values less than ``1.0`` will down-sample it. Values must be greater than ``0``.
+            The output dimensions are rounded to integers with ``rounding_func``.
+
+            .. versionchanged:: 0.50
+                Fractional dimensions are rounded with :func:`numpy.round`. In version
+                0.49 they were rounded down.
 
         interpolation : 'nearest', 'linear', 'cubic', 'lanczos', 'hamming', 'blackman', 'bspline'
             Interpolation mode to use.
@@ -4400,6 +4411,28 @@ class ImageDataFilters(DataSetFilters):
                 `cell` data, each dimension should be one more than the number of
                 desired output cells (since there are ``N`` cells and ``N+1`` points
                 along each axis). See examples.
+
+        spacing : float | VectorLike[float], optional
+            Approximate :attr:`~pyvista.ImageData.spacing` of the resampled image. Can
+            be a single value or vector of three values for each axis. Values must be
+            greater than ``0``. The output dimensions are rounded to integers with
+            ``rounding_func``, so the actual spacing may differ. The spacing divides the
+            bounds of the image represented as cells, or the bounds of its points when
+            ``extend_border`` is ``False``. Singleton axes keep their spacing. See examples.
+
+            .. versionadded:: 0.50
+
+        rounding_func : Callable[VectorLike[float], VectorLike[int]], optional
+            Control how the dimensions computed from ``spacing`` or ``sample_rate`` are
+            rounded to integers. Should accept a length-3 vector containing the
+            dimension values along the three directions and return a length-3 vector.
+            :func:`numpy.round` is used by default.
+
+            Rounding the dimensions implies rounding the actual spacing.
+
+            Cannot be set together with ``reference_image`` or ``dimensions``.
+
+            .. versionadded:: 0.50
 
         anti_aliasing : bool, default: False
             Enable anti-aliasing to reduce image artifacts when down-sampling. Each
@@ -4520,6 +4553,24 @@ class ImageDataFilters(DataSetFilters):
         >>> upsampled = image.resample(dimensions=(6, 4, 1), interpolation='cubic')
         >>> plot = image_plotter(upsampled)
         >>> plot.show()
+
+        Alternatively, specify the output ``spacing``. The dimensions are rounded to
+        integers, so the actual spacing is only approximate.
+
+        >>> spaced = image.resample(spacing=(0.7, 0.4, 1.0))
+        >>> spaced.dimensions
+        (4, 5, 1)
+        >>> spaced.spacing
+        (0.75, 0.4, 1.0)
+
+        Use ``rounding_func=np.ceil`` to force the actual spacing to be no larger than
+        the requested spacing.
+
+        >>> spaced = image.resample(spacing=(0.7, 0.4, 1.0), rounding_func=np.ceil)
+        >>> spaced.dimensions
+        (5, 5, 1)
+        >>> spaced.spacing
+        (0.6, 0.4, 1.0)
 
         Compare the relative physical size of the image before and after resampling.
 
@@ -4769,19 +4820,26 @@ class ImageDataFilters(DataSetFilters):
             get_args(_BorderModeOptions), must_contain=border_mode, name='border_mode'
         )
         reference_image_provided = reference_image is not None
+        geometry = {'sample_rate': sample_rate, 'dimensions': dimensions, 'spacing': spacing}
+        specified = [f'`{key}`' for key, value in geometry.items() if value is not None]
         if reference_image_provided:
-            if dimensions is not None or sample_rate is not None:
+            if specified or rounding_func is not None:
                 msg = (
-                    'Cannot specify a reference image along with `dimensions` or `sample_rate` '
-                    'parameters.\n`reference_image` must define the geometry exclusively.'
+                    'Cannot specify a reference image along with `sample_rate`, `dimensions`, '
+                    '`spacing`, or `rounding_func` parameters.\n'
+                    '`reference_image` must define the geometry exclusively.'
                 )
                 raise ValueError(msg)
             _validation.check_instance(reference_image, pv.ImageData, name='reference_image')
-        elif sample_rate is not None and dimensions is not None:
+        elif len(specified) > 1:
             msg = (
-                'Cannot specify a sample rate along with the `dimensions` parameter.\n'
-                '`sample_rate` must define the sampling geometry exclusively.'
+                f'Cannot specify {", ".join(specified[:-1])} and {specified[-1]} together.\n'
+                'Only one of `sample_rate`, `dimensions`, or `spacing` may define the '
+                'sampling geometry.'
             )
+            raise ValueError(msg)
+        elif dimensions is not None and rounding_func is not None:
+            msg = 'Cannot specify `rounding_func` along with the `dimensions` parameter.'
             raise ValueError(msg)
 
         field, name = _scalars_info(self, scalars, preference)
@@ -4829,20 +4887,31 @@ class ImageDataFilters(DataSetFilters):
                 name='sample_rate',
             )
             new_dimensions = old_dimensions * sample_rate_
+        elif spacing is not None:
+            spacing_ = _validate_spacing(spacing)
+            # A border spans one interval per point, otherwise one less than the points
+            border = extend_border or processing_cell_scalars
+            n_intervals = (old_dimensions - (0 if border else 1)) * input_image.spacing
+            new_dimensions = n_intervals / spacing_ + (0 if border else 1)
         else:
             new_dimensions = old_dimensions
         if processing_cell_scalars and (reference_image_provided or dimensions is not None):
             # Dimensions count points, and there is one less cell than points along each axis
             new_dimensions = new_dimensions - 1
-        # Truncate fractional dimensions, with a tolerance for floating point error
-        new_dimensions = np.floor(new_dimensions + 1e-6).astype(int)
         # Singleton input dimensions are never resampled
+        new_dimensions = np.where(old_dimensions == 1, 1, new_dimensions)
+        new_dimensions = _round_dimensions(new_dimensions, rounding_func)
         new_dimensions[old_dimensions == 1] = 1
         if processing_cell_scalars and np.any(new_dimensions < 1):
             axes = 'at least 2 along each non-singleton axis when resampling cell data.'
             if sample_rate is not None:
                 msg = (
                     '`sample_rate` is too small, it must keep at least one cell along each '
+                    'axis when resampling cell data.'
+                )
+            elif spacing is not None:
+                msg = (
+                    '`spacing` is too large, it must keep at least one cell along each '
                     'axis when resampling cell data.'
                 )
             elif reference_image is not None:
@@ -5416,7 +5485,7 @@ class ImageDataFilters(DataSetFilters):
             ...     bird, mode='resample-proportional', resample_kwargs=resample_kwargs
             ... )
             >>> concatenated.dimensions
-            (233, 100, 1)
+            (234, 100, 1)
             >>> concatenated.plot(**plot_kwargs)
 
             Use ``'resample-proportional'`` again but concontenate along the z-axis instead. The

@@ -28,6 +28,7 @@ from pyvista import examples
 from pyvista.core.cell import _get_connectivity_array
 from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import PointSetCellOperationError
+from pyvista.core.errors import PointSetDimensionReductionError
 from pyvista.core.errors import PointSetNotSupported
 from pyvista.core.filters.data_object import _PYVISTA_CELL_STATUS_INFO
 from pyvista.core.filters.data_object import _SENTINEL
@@ -5133,6 +5134,16 @@ def test_resample_to_image_raises(sphere):
     with pytest.raises(ValueError, match="method 'nonsense' is not valid"):
         sphere.resample_to_image(dimensions=(4, 5, 6), method='nonsense')
 
+    match = 'spacing values must all be greater than 0.0.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        sphere.resample_to_image(spacing=0)
+    match = 'spacing must have finite values.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        sphere.resample_to_image(spacing=np.inf)
+    match = 'rounding_func output must have integer-like values.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        sphere.resample_to_image(spacing=0.1, rounding_func=lambda d: np.asarray(d) + 0.5)
+
     for name, value in [('radius', 0.1), ('sharpness', 4.0)]:
         match = f"`{name}` requires `method='interpolate'`, but `method='sample'`."
         with pytest.raises(TypeError, match=re.escape(match)):
@@ -5147,3 +5158,65 @@ def test_resample_to_image_raises(sphere):
     match = "`radius` requires `method='interpolate'`, but `method='sample'`, chosen for this"
     with pytest.raises(TypeError, match=re.escape(match)):
         sphere.delaunay_3d().resample_to_image(dimensions=(4, 5, 6), radius=0.1)
+
+
+def _surface():
+    return pv.Sphere(theta_resolution=8, phi_resolution=8)
+
+
+def _cloud():
+    return pv.PointSet(_surface().points)
+
+
+def _plane():
+    return generate_plane((1.0, 0.0, 0.0), (0.0, 0.0, 0.0))
+
+
+def _line():
+    return pv.Line((-2.0, -2.0, -2.0), (2.0, 2.0, 2.0), resolution=4)
+
+
+_COMPOSITE_FILTERS = {
+    'clip': lambda mesh: mesh.clip(),
+    'clip_box': lambda mesh: mesh.clip_box(),
+    'clip_slab': lambda mesh: mesh.clip_slab(thickness=0.5, normal='z'),
+    'slice': lambda mesh: mesh.slice(),
+    'slice_implicit': lambda mesh: mesh.slice_implicit(_plane()),
+    'slice_along_line': lambda mesh: mesh.slice_along_line(_line()),
+    'extract_all_edges': lambda mesh: mesh.extract_all_edges(),
+    'cell_centers': lambda mesh: mesh.cell_centers(),
+    'triangulate': lambda mesh: mesh.triangulate(),
+    'outline_corners': lambda mesh: mesh.outline_corners(nested=True),
+}
+
+_POINTSET_BLOCK_TYPE = {
+    'clip': pv.PointSet,
+    'clip_box': pv.PointSet,
+    'clip_slab': pv.PointSet,
+    'cell_centers': pv.PolyData,
+    'outline_corners': pv.PolyData,
+}
+
+_POINTSET_RAISES = {
+    'slice': PointSetDimensionReductionError,
+    'slice_implicit': PointSetDimensionReductionError,
+    'slice_along_line': PointSetDimensionReductionError,
+    'extract_all_edges': PointSetCellOperationError,
+    'triangulate': PointSetCellOperationError,
+}
+
+
+@pytest.mark.parametrize('name', sorted(_COMPOSITE_FILTERS))
+def test_composite_filter_pointset_block_type(name):
+    composite = pv.MultiBlock([_cloud()])
+    if name in _POINTSET_RAISES:
+        with pytest.raises(_POINTSET_RAISES[name]):
+            _COMPOSITE_FILTERS[name](composite)
+    else:
+        assert type(_COMPOSITE_FILTERS[name](composite)[0]) is _POINTSET_BLOCK_TYPE[name]
+
+
+@pytest.mark.parametrize('name', sorted(_COMPOSITE_FILTERS))
+def test_composite_filter_keeps_empty_block(name):
+    out = _COMPOSITE_FILTERS[name](pv.MultiBlock([_surface(), None]))
+    assert out[1] is None
