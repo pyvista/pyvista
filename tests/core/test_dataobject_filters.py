@@ -2435,6 +2435,46 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
         assert actual_cell_scalars_name == expected_cell_scalars_name
 
 
+@pytest.mark.parametrize('inplace', [True, False])
+def test_transform_active_attributes(datasets, inplace):
+    """Test the active vectors, normals, texture coordinates and tensors are kept."""
+
+    def set_active(attributes, prefix, n):
+        """Add an array of every attribute kind and mark them all active."""
+        attributes[f'{prefix}_vectors'] = np.random.default_rng().random((n, 3))
+        attributes[f'{prefix}_normals'] = np.random.default_rng().random((n, 3))
+        attributes[f'{prefix}_texture'] = np.random.default_rng().random((n, 2))
+        attributes[f'{prefix}_tensors'] = np.random.default_rng().random((n, 9))
+        attributes.active_vectors_name = f'{prefix}_vectors'
+        attributes.active_normals_name = f'{prefix}_normals'
+        attributes.active_texture_coordinates_name = f'{prefix}_texture'
+        attributes.SetActiveTensors(f'{prefix}_tensors')
+
+    def assert_active(attributes, prefix):
+        """Assert an array of every attribute kind is still marked active."""
+        assert attributes.active_vectors_name == f'{prefix}_vectors'
+        assert attributes.active_normals_name == f'{prefix}_normals'
+        assert attributes.active_texture_coordinates_name == f'{prefix}_texture'
+        assert attributes.GetTensors().GetName() == f'{prefix}_tensors'
+
+    scale = (1.0, 2.0, 3.0)
+    tf = pv.Transform().scale(scale)
+    for dataset in datasets:
+        dataset.clear_data()
+        has_cells = not isinstance(dataset, pv.PointSet)
+        set_active(dataset.point_data, 'point', dataset.n_points)
+        if has_cells:
+            set_active(dataset.cell_data, 'cell', dataset.n_cells)
+        expected_vectors = dataset.point_data.active_vectors * scale
+
+        transformed = dataset.transform(tf, inplace=inplace)
+
+        assert_active(transformed.point_data, 'point')
+        assert np.allclose(transformed.point_data.active_vectors, expected_vectors)
+        if has_cells:
+            assert_active(transformed.cell_data, 'cell')
+
+
 @pytest.mark.parametrize(
     ('num_cell_arrays', 'num_point_data'),
     itertools.product([0, 1, 2], [0, 1, 2]),

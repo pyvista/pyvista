@@ -61,7 +61,6 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
     from typing import ClassVar
 
-    from pyvista import DataObject
     from pyvista import DataSet
     from pyvista import DataSetAttributes
     from pyvista import ImageData
@@ -153,11 +152,13 @@ def _convert_transform_input_to_float(
     return converted
 
 
-def _copy_transformed_arrays(output: DataSet, filtered: DataObject, *, copy: bool) -> None:
+def _copy_transformed_arrays(output: DataSet, filtered: DataSet, *, copy: bool) -> None:
     """Copy the point, cell and field arrays the transform filter produced."""
     output.point_data.update(filtered.point_data, copy=copy)
     output.cell_data.update(filtered.cell_data, copy=copy)
     output.field_data.update(filtered.field_data, copy=copy)
+    # DataSetAttributes.update copies arrays without marking any of them active
+    _copy_active_attributes(filtered, output)
 
 
 def _orient_image_structure(output: ImageData, dataset: ImageData, transform: Transform) -> None:
